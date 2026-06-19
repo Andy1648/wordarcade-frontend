@@ -1,0 +1,27 @@
+/* index.css - global reset and base page styles only.
+   Component-specific styles live alongside their components, not here. */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: #0d0618;
+  min-height: 100vh;
+}
+
+body {
+  font-family: 'Space Mono', monospace;
+  color: #fff;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
