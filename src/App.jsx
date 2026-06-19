@@ -1,14 +1,41 @@
 // App.jsx
+import { useState } from 'react';
 import Homepage from './components/Homepage';
+import LobbyScreen from './components/LobbyScreen';
 
 /**
- * Top-level app component. Deliberately minimal for now - this build's
- * scope is the homepage/lobby grid only. Room flow (create/join screens)
- * and the WebSocket connection to the Chain Reaction backend are future
- * work that will likely introduce routing or simple view-state here.
+ * Top-level view state manager. `view` determines which screen renders.
+ * `lobbyMode` tells LobbyScreen whether the player clicked "solo",
+ * "join", or came from a specific game card (stored as the game id).
+ *
+ * Keeping this in App.jsx means each screen component stays stateless
+ * about navigation - they just call the callbacks they're given.
  */
 function App() {
-  return <Homepage />;
+  const [view, setView] = useState('home');
+  const [lobbyMode, setLobbyMode] = useState(null);
+
+  function goToLobby(mode) {
+    setLobbyMode(mode);
+    setView('lobby');
+  }
+
+  function goHome() {
+    setLobbyMode(null);
+    setView('home');
+  }
+
+  if (view === 'lobby') {
+    return <LobbyScreen mode={lobbyMode} onBack={goHome} />;
+  }
+
+  return (
+    <Homepage
+      onSelectGame={(gameId) => goToLobby(gameId)}
+      onPlaySolo={() => goToLobby('solo')}
+      onJoinRoom={() => goToLobby('join')}
+    />
+  );
 }
 
 export default App;
