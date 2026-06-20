@@ -1,18 +1,27 @@
 // RoomScreen.jsx
 import './RoomScreen.css';
 
+const DIFFICULTIES = ['easy', 'medium', 'hard'];
+// Mirrors gameLogic.js's MIN_PLAYERS_TO_START on the backend - the
+// server is the real source of truth and will reject a start_game
+// attempt below this count, but matching it here means the player gets
+// instant feedback (a disabled button) instead of a round-trip error.
+const MIN_PLAYERS_TO_START = 2;
+
 /**
- * Shown once a room has been successfully created or joined. This proves
- * the full create/join flow works end to end and gives the host a code
- * to share. Deliberately minimal for this piece - it shows the room code
- * and a live player list (which updates automatically as people join,
- * since `room` is refreshed from every room_update broadcast in App.jsx)
- * and a way to leave. A "start game" button, difficulty selector, and
- * actual waiting-room polish are the next piece of work, built on top of
- * this once the underlying connection is confirmed solid.
+ * Shown once a room has been successfully created or joined.
+ *
+ * `myId` (the player's own connection id, learned from the server's
+ * 'connected' message in App.jsx) determines whether host-only controls
+ * - the difficulty selector and Start Game button - are shown. Non-host
+ * players instead see the current difficulty as read-only text and a
+ * "waiting for host" message.
  */
-export default function RoomScreen({ room, onLeave }) {
+export default function RoomScreen({ room, myId, onLeave, onSetDifficulty, onStartGame }) {
   if (!room) return null;
+
+  const isHost = myId !== null && myId === room.hostId;
+  const canStart = room.players.length >= MIN_PLAYERS_TO_START;
 
   return (
     <div className="room-wrap">
@@ -30,6 +39,31 @@ export default function RoomScreen({ room, onLeave }) {
             </div>
           ))}
         </div>
+
+        <div className="room-section-label">DIFFICULTY</div>
+        {isHost ? (
+          <div className="room-difficulty-row">
+            {DIFFICULTIES.map((key) => (
+              <button
+                key={key}
+                className={`room-difficulty-btn${room.difficultyKey === key ? ' selected' : ''}`}
+                onClick={() => onSetDifficulty(key)}
+              >
+                {key.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="room-difficulty-readonly">{room.difficultyKey.toUpperCase()}</div>
+        )}
+
+        {isHost ? (
+          <button className="room-start-btn" onClick={onStartGame} disabled={!canStart}>
+            {canStart ? 'START GAME' : 'NEED 2+ PLAYERS TO START'}
+          </button>
+        ) : (
+          <div className="room-waiting-msg">WAITING FOR HOST TO START THE GAME...</div>
+        )}
 
         <button className="room-leave-btn" onClick={onLeave}>
           LEAVE ROOM

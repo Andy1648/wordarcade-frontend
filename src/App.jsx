@@ -7,26 +7,27 @@ import { useWebSocket } from './hooks/useWebSocket';
 
 /**
  * Top-level view state manager + the single shared WebSocket connection
- * for the whole app. The connection is opened here (not inside
- * LobbyScreen) deliberately - it needs to survive the transition from
- * lobby to room screen, and connecting eagerly on app load (rather than
- * waiting until the player clicks Continue) gives the connection time to
- * wake up from Render's free-tier cold start in the background.
+ * for the whole app.
  */
 function App() {
   const [view, setView] = useState('home');
   const [lobbyMode, setLobbyMode] = useState(null);
   const [room, setRoom] = useState(null);
   const [serverError, setServerError] = useState('');
+  // The server tells us our own connection id immediately on connect (see
+  // server.js's 'connected' message) - we need this to know things like
+  // "am I the host" (compare to room.hostId) since room broadcasts list
+  // every player's id but never single out which one is ours.
+  const [myId, setMyId] = useState(null);
 
   const { status: wsStatus, lastMessage, send } = useWebSocket();
 
-  // Reacts to incoming server messages regardless of which screen is
-  // showing. room_update arrives after a successful create/join AND
-  // every time the roster changes (someone else joins/leaves), so this
-  // naturally keeps RoomScreen's player list live without any extra work.
   useEffect(() => {
     if (!lastMessage) return;
+
+    if (lastMessage.type === 'connected') {
+      setMyId(lastMessage.payload.id);
+    }
 
     if (lastMessage.type === 'room_update') {
       setRoom(lastMessage.payload);
@@ -56,9 +57,6 @@ function App() {
     if (mode === 'join') {
       send('join_room', { code: roomCode, name });
     } else {
-      // 'solo' and any specific game-id mode both create a fresh room for
-      // now - letting the host pick which game to actually play inside
-      // that room is separate, later work.
       send('create_room', { name });
     }
   }
@@ -68,8 +66,24 @@ function App() {
     goHome();
   }
 
+  function handleSetDifficulty(difficultyKey) {
+    send('set_difficulty', { difficultyKey });
+  }
+
+  function handleStartGame() {
+    send('start_game', {});
+  }
+
   if (view === 'room' && room) {
-    return <RoomScreen room={room} onLeave={handleLeaveRoom} />;
+    return (
+      <RoomScreen
+        room={room}
+        myId={myId}
+        onLeave={handleLeaveRoom}
+        onSetDifficulty={handleSetDifficulty}
+        onStartGame={handleStartGame}
+      />
+    );
   }
 
   if (view === 'lobby') {
