@@ -4,27 +4,31 @@ import { GAMES } from '../gameData';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
+// Matches the backend's room code format exactly (see roomManager.js:
+// ROOM_CODE_LENGTH and ROOM_CODE_CHARS). Validating the shape client-side
+// gives instant feedback, but the server remains the actual source of
+// truth for whether a code corresponds to a real room.
+const ROOM_CODE_LENGTH = 5;
 
 /**
  * The screen a player lands on after leaving the homepage.
  * `mode` is either 'solo', 'join', or a game id (e.g. 'chain-reaction').
  * `onBack` navigates back to the homepage.
  *
- * This version adds the name input - validated for non-empty (after
- * trimming whitespace) and length-capped to match the 20-char limit the
- * backend already enforces (see server.js: `.slice(0, 20)`), so a name
- * never gets silently truncated by the server without the player
- * realizing it client-side first.
+ * Adds the room code field, shown only in 'join' mode. The input
+ * auto-uppercases as the player types since room codes are
+ * case-insensitive on the backend but displayed/shared in uppercase.
  *
- * `onContinue` isn't wired to anything real yet (room code field and
- * backend connection are separate, later pieces) - for now it just logs,
- * matching the same "log instead of silently doing nothing" pattern used
- * in Homepage.jsx so it's obvious during development that the click
- * registered.
+ * `onContinue` still isn't wired to anything real (backend connection is
+ * a later piece) - it logs the collected name (+ room code, if relevant)
+ * so it's clear during development that validation and submission work.
  */
 export default function LobbyScreen({ mode, onBack, onContinue }) {
   const [name, setName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
+
+  const isJoinMode = mode === 'join';
 
   function getTitle() {
     if (mode === 'solo') return 'PLAY SOLO';
@@ -40,9 +44,15 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
 
   function handleNameChange(event) {
     setName(event.target.value);
-    if (error) {
-      setError(''); // clear the error as soon as they start fixing it
-    }
+    if (error) setError('');
+  }
+
+  function handleRoomCodeChange(event) {
+    // Auto-uppercase and strip anything that isn't a letter/number, so a
+    // pasted code with stray spaces or lowercase letters still works.
+    const cleaned = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    setRoomCode(cleaned.slice(0, ROOM_CODE_LENGTH));
+    if (error) setError('');
   }
 
   function handleContinue() {
@@ -53,10 +63,20 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
       return;
     }
 
+    if (isJoinMode && roomCode.length !== ROOM_CODE_LENGTH) {
+      setError(`Room codes are ${ROOM_CODE_LENGTH} characters.`);
+      return;
+    }
+
+    const payload = { name: trimmedName, mode };
+    if (isJoinMode) {
+      payload.roomCode = roomCode;
+    }
+
     if (onContinue) {
-      onContinue({ name: trimmedName, mode });
+      onContinue(payload);
     } else {
-      console.log(`Continue clicked with name "${trimmedName}" (no onContinue handler wired up yet)`);
+      console.log('Continue clicked (no onContinue handler wired up yet):', payload);
     }
   }
 
@@ -66,7 +86,8 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
     }
   }
 
-  const isNameValid = name.trim().length > 0;
+  const isFormValid =
+    name.trim().length > 0 && (!isJoinMode || roomCode.length === ROOM_CODE_LENGTH);
 
   return (
     <div className="lobby-wrap">
@@ -92,14 +113,31 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
           maxLength={MAX_NAME_LENGTH}
           autoFocus
         />
-        {error && <div className="lobby-error">{error}</div>}
 
-        {/* Room code field for 'join' mode comes in the next piece */}
+        {isJoinMode && (
+          <div className="lobby-field-group">
+            <label className="lobby-field-label" htmlFor="room-code-input">
+              ROOM CODE
+            </label>
+            <input
+              id="room-code-input"
+              className="lobby-code-input"
+              type="text"
+              placeholder="XXXXX"
+              value={roomCode}
+              onChange={handleRoomCodeChange}
+              onKeyDown={handleKeyDown}
+              maxLength={ROOM_CODE_LENGTH}
+            />
+          </div>
+        )}
+
+        {error && <div className="lobby-error">{error}</div>}
 
         <button
           className="lobby-continue-btn"
           onClick={handleContinue}
-          disabled={!isNameValid}
+          disabled={!isFormValid}
         >
           CONTINUE
         </button>
