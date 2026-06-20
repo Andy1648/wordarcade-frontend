@@ -306,10 +306,14 @@ export default function GameScreen({
 
   const maxTimer = gameState.timerSeconds || 1;
   const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
-  const timerColor = ratio > 0.6 ? '#2EFFE0' : ratio >= 0.3 ? '#FFE94A' : '#FF5C5C';
-  // Urgency cues as the clock runs down (suppressed once the game is over).
-  const lowTime = !gameOver && timerSeconds <= 5;
-  const veryLowTime = !gameOver && timerSeconds < 3;
+  // During the countdown the timer hasn't started, so show a full bar (the
+  // backend also delays ticking, but this is a belt-and-suspenders guard).
+  const displayRatio = showCountdown ? 1 : ratio;
+  const timerColor =
+    displayRatio > 0.6 ? '#2EFFE0' : displayRatio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+  // Urgency cues as the clock runs down (suppressed during countdown / once over).
+  const lowTime = !gameOver && !showCountdown && timerSeconds <= 5;
+  const veryLowTime = !gameOver && !showCountdown && timerSeconds < 3;
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
@@ -390,7 +394,7 @@ export default function GameScreen({
           <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
             <div
               className="game-timer-fill"
-              style={{ width: `${ratio * 100}%`, background: timerColor }}
+              style={{ width: `${displayRatio * 100}%`, background: timerColor }}
             />
           </div>
           <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
@@ -626,9 +630,12 @@ function CategoryBlitzScreen({
   if (categoryRound) {
     const maxTimer = categoryRound.timerSeconds || 1;
     const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
-    const timerColor = ratio > 0.6 ? '#2EFFE0' : ratio >= 0.3 ? '#FFE94A' : '#FF5C5C';
-    const lowTime = timerSeconds <= 5;
-    const veryLowTime = timerSeconds < 3;
+    // Full bar while the countdown is up (timer hasn't started ticking yet).
+    const displayRatio = showCountdown ? 1 : ratio;
+    const timerColor =
+      displayRatio > 0.6 ? '#2EFFE0' : displayRatio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+    const lowTime = !showCountdown && timerSeconds <= 5;
+    const veryLowTime = !showCountdown && timerSeconds < 3;
     const others = roomPlayers.filter((p) => p.id !== myId);
 
     return (
@@ -661,7 +668,7 @@ function CategoryBlitzScreen({
             <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
               <div
                 className="game-timer-fill"
-                style={{ width: `${ratio * 100}%`, background: timerColor }}
+                style={{ width: `${displayRatio * 100}%`, background: timerColor }}
               />
             </div>
             <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
