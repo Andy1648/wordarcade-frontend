@@ -1,0 +1,272 @@
+// GameScreen.jsx
+import { useEffect, useRef, useState } from 'react';
+import './GameScreen.css';
+
+// Exact heart path supplied by the design - filled pink while the life is
+// intact, dark gray once it's been lost. Stroke stays black to match the
+// thick-outline cel style used everywhere else.
+const HEART_PATH =
+  'M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 0 1 8 4.5 3.5 3.5 0 0 1 13.5 7C13.5 10.5 8 14 8 14z';
+
+function Heart({ filled }) {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <path
+        d={HEART_PATH}
+        fill={filled ? '#FF2EC4' : '#555'}
+        stroke="#000"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+// Human-readable copy for each server rejection reason. [prefix] is filled
+// in with the prefix that was required at the moment of rejection.
+const REJECTION_MESSAGES = {
+  too_short: 'TOO SHORT — NEED 3+ LETTERS',
+  wrong_prefix: 'MUST START WITH [prefix]',
+  already_used: 'ALREADY USED — TRY AGAIN',
+  not_a_word: 'NOT A REAL WORD',
+};
+
+function rejectionMessage(reason, prefix) {
+  const template = REJECTION_MESSAGES[reason];
+  if (!template) return 'INVALID WORD';
+  return template.replace('[prefix]', prefix);
+}
+
+/**
+ * The live Chain Reaction play screen. All of its data is driven by props
+ * fed from App.jsx's WebSocket message handling:
+ *
+ *   gameState      - latest turn_update payload (players, chain, whose turn,
+ *                    per-turn timer max, round/difficulty)
+ *   myId           - this client's connection id, to know if it's our turn
+ *   timerSeconds   - live countdown for the current turn
+ *   lastWordResult - transient accept/reject of the most recent submission
+ *   gameOver       - final results once the game ends (null while playing)
+ *
+ * The only local state is the text the player is typing; everything else
+ * is authoritative server state passed down.
+ */
+export default function GameScreen({
+  gameState,
+  myId,
+  timerSeconds,
+  lastWordResult,
+  gameOver,
+  onSubmitWord,
+  onLeave,
+}) {
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef(null);
+
+  const isMyTurn = !!gameState && gameState.currentPlayerId === myId;
+  const inputEnabled = isMyTurn && !gameOver;
+
+  // Drop focus into the input the moment the turn swings to us, so the
+  // player can just start typing without clicking first.
+  useEffect(() => {
+    if (inputEnabled && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [inputEnabled]);
+
+  // Until the first turn_update lands there's nothing to render.
+  if (!gameState) {
+    return (
+      <div className="game-wrap">
+        <div className="game-loading">STARTING GAME...</div>
+      </div>
+    );
+  }
+
+  const players = gameState.players || [];
+  const chain = gameState.chain || [];
+  const lastWord = chain.length ? chain[chain.length - 1] : '';
+  const prefix = lastWord ? lastWord.slice(-2).toUpperCase() : '';
+  const recentWords = chain.slice(-5);
+
+  const difficultyLabel = (gameState.difficultyKey || gameState.difficulty || '')
+    .toString()
+    .toUpperCase();
+
+  // Total hearts to draw per player = the most lives anyone is known to
+  // have started with. Pulled defensively from whichever field the server
+  // provides so lost hearts still render gray for eliminated players.
+  const maxLives = Math.max(
+    gameState.maxLives || 0,
+    ...players.map((p) => p.maxLives || p.lives || 0),
+    1
+  );
+
+  const maxTimer = gameState.timerSeconds || 1;
+  const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
+  const timerColor = ratio > 0.6 ? '#2EFFE0' : ratio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+
+  const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
+  const iWon = !!gameOver && gameOver.winnerId === myId;
+
+  function submit() {
+    const word = draft.trim();
+    if (!word || !inputEnabled) return;
+    onSubmitWord(word);
+    setDraft('');
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      submit();
+    }
+  }
+
+  return (
+    <div className="game-wrap">
+      <div className="game-stage">
+        <div className="game-header">
+          <div className="game-title">CHAIN REACTION</div>
+          <div className="game-header-right">
+            <div className="game-meta">
+              {typeof gameState.round !== 'undefined' && (
+                <span className="game-meta-round">ROUND {gameState.round}</span>
+              )}
+              {difficultyLabel && (
+                <span className="game-meta-diff">{difficultyLabel}</span>
+              )}
+            </div>
+            <button className="game-leave-btn" onClick={onLeave}>
+              LEAVE
+            </button>
+          </div>
+        </div>
+
+        <div className="game-player-bar">
+          {players.map((player) => {
+            const eliminated = player.eliminated || player.lives <= 0;
+            const isCurrent = player.id === gameState.currentPlayerId;
+            const isMe = player.id === myId;
+            const cardClass = [
+              'game-player-card',
+              isCurrent && !eliminated ? 'current' : '',
+              eliminated ? 'eliminated' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
+
+            return (
+              <div key={player.id} className="game-player-slot">
+                {isCurrent && isMe && !gameOver && (
+                  <div className="game-your-turn">YOUR TURN</div>
+                )}
+                <div className={cardClass}>
+                  <div className="game-player-name">
+                    {player.name}
+                    {isMe && <span className="game-player-you">YOU</span>}
+                  </div>
+                  <div className="game-player-hearts">
+                    {Array.from({ length: maxLives }).map((_, i) => (
+                      <Heart key={i} filled={i < player.lives} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="game-timer-row">
+          <div className="game-timer-track">
+            <div
+              className="game-timer-fill"
+              style={{ width: `${ratio * 100}%`, background: timerColor }}
+            />
+          </div>
+          <div className="game-timer-num">{timerSeconds}s</div>
+        </div>
+
+        <div className="game-chain">
+          {recentWords.map((word, i) => (
+            <span key={`${word}-${i}`} className="game-chain-item">
+              <span
+                className={`game-chain-word${
+                  i === recentWords.length - 1 ? ' recent' : ''
+                }`}
+              >
+                {word.toUpperCase()}
+              </span>
+              <span className="game-chain-arrow">→</span>
+            </span>
+          ))}
+          <span className="game-chain-word placeholder">???</span>
+        </div>
+
+        <div className="game-prefix-box">
+          <div className="game-prefix-label">NEXT WORD STARTS WITH</div>
+          <div className="game-prefix">{prefix || '—'}</div>
+        </div>
+
+        <div className="game-input-row">
+          <input
+            ref={inputRef}
+            className="game-input"
+            type="text"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={!inputEnabled}
+            placeholder={
+              inputEnabled
+                ? `${prefix}...`
+                : gameOver
+                ? 'GAME OVER'
+                : 'WAIT YOUR TURN...'
+            }
+            maxLength={32}
+            autoComplete="off"
+            spellCheck="false"
+          />
+          <button
+            className="game-send-btn"
+            onClick={submit}
+            disabled={!inputEnabled}
+          >
+            SEND
+          </button>
+        </div>
+
+        {lastWordResult && (
+          <div
+            className={`game-toast ${
+              lastWordResult.accepted ? 'accepted' : 'rejected'
+            }`}
+          >
+            {lastWordResult.accepted
+              ? `NICE! "${(lastWordResult.word || '').toUpperCase()}" ACCEPTED`
+              : rejectionMessage(lastWordResult.reason, prefix)}
+          </div>
+        )}
+      </div>
+
+      {gameOver && (
+        <div className="game-over-overlay">
+          <div className="game-over-card">
+            <div className={`game-over-title${iWon ? ' win' : ''}`}>
+              {iWon ? 'YOU WIN!' : 'GAME OVER'}
+            </div>
+            {!iWon && (
+              <div className="game-over-winner">
+                {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
+              </div>
+            )}
+            <div className="game-over-stat">FINAL CHAIN: {chain.length} WORDS</div>
+            <button className="game-over-leave" onClick={onLeave}>
+              LEAVE
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

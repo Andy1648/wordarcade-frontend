@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
+import GameScreen from './components/GameScreen';
 import { useWebSocket } from './hooks/useWebSocket';
 
 /**
@@ -20,6 +21,16 @@ function App() {
   // every player's id but never single out which one is ours.
   const [myId, setMyId] = useState(null);
 
+  // Chain Reaction in-game state. gameState holds the latest turn_update
+  // payload (whose turn, lives, the word chain, etc.); timerSeconds is the
+  // countdown for the current turn (seeded by turn_update, then ticked
+  // down by timer_tick); lastWordResult is the transient accept/reject of
+  // the most recent submission; gameOver holds the final results once set.
+  const [gameState, setGameState] = useState(null);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [lastWordResult, setLastWordResult] = useState(null);
+  const [gameOver, setGameOver] = useState(null);
+
   const { status: wsStatus, lastMessage, send } = useWebSocket();
 
   useEffect(() => {
@@ -35,10 +46,47 @@ function App() {
       setView('room');
     }
 
+    if (lastMessage.type === 'game_started') {
+      setGameOver(null);
+      setServerError('');
+      setView('game');
+    }
+
+    if (lastMessage.type === 'turn_update') {
+      setGameState(lastMessage.payload);
+      setTimerSeconds(lastMessage.payload.timerSeconds);
+      setLastWordResult(null);
+    }
+
+    if (lastMessage.type === 'timer_tick') {
+      setTimerSeconds(lastMessage.payload.secondsRemaining);
+    }
+
+    if (lastMessage.type === 'word_result') {
+      setLastWordResult(lastMessage.payload);
+    }
+
+    // turn_timeout needs no handling here - the server sends a turn_update
+    // immediately after, which advances to the next player anyway.
+
+    if (lastMessage.type === 'game_over') {
+      setGameOver(lastMessage.payload);
+      setView('game');
+    }
+
     if (lastMessage.type === 'error') {
       setServerError(lastMessage.payload.message);
     }
   }, [lastMessage]);
+
+  // Auto-dismiss an accepted word toast after 2s. Rejections stick around
+  // until the next submission/turn so the player can read why it failed.
+  useEffect(() => {
+    if (lastWordResult && lastWordResult.accepted) {
+      const timeoutId = setTimeout(() => setLastWordResult(null), 2000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [lastWordResult]);
 
   function goToLobby(mode) {
     setLobbyMode(mode);
@@ -50,6 +98,10 @@ function App() {
     setLobbyMode(null);
     setRoom(null);
     setServerError('');
+    setGameState(null);
+    setTimerSeconds(0);
+    setLastWordResult(null);
+    setGameOver(null);
     setView('home');
   }
 
@@ -72,6 +124,24 @@ function App() {
 
   function handleStartGame() {
     send('start_game', {});
+  }
+
+  function handleSubmitWord(word) {
+    send('submit_word', { word });
+  }
+
+  if (view === 'game') {
+    return (
+      <GameScreen
+        gameState={gameState}
+        myId={myId}
+        timerSeconds={timerSeconds}
+        lastWordResult={lastWordResult}
+        gameOver={gameOver}
+        onSubmitWord={handleSubmitWord}
+        onLeave={handleLeaveRoom}
+      />
+    );
   }
 
   if (view === 'room' && room) {
