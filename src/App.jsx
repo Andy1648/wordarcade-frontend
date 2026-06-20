@@ -101,7 +101,7 @@ function App() {
   return (
     <Homepage
       onSelectGame={(gameId) => goToLobby(gameId)}
-      onPlaySolo={() => goToLobby('solo')}
+      onCreateRoom={() => goToLobby('solo')}
       onJoinRoom={() => goToLobby('join')}
     />
   );

@@ -10,7 +10,7 @@ import './Homepage.css';
  * fallback), since the create/join room flow and WebSocket wiring are
  * separate, later pieces of work.
  */
-export default function Homepage({ onSelectGame, onPlaySolo, onJoinRoom }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
   function handleSelectGame(gameId) {
     if (onSelectGame) {
       onSelectGame(gameId);
@@ -22,11 +22,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onJoinRoom }) {
     }
   }
 
-  function handlePlaySolo() {
-    if (onPlaySolo) {
-      onPlaySolo();
+  function handleCreateRoom() {
+    if (onCreateRoom) {
+      onCreateRoom();
     } else {
-      console.log('Play Solo clicked (no onPlaySolo handler wired up yet)');
+      console.log('Create Room clicked (no onCreateRoom handler wired up yet)');
     }
   }
 
@@ -54,8 +54,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onJoinRoom }) {
         <div className="homepage-hover-hint">[ HOVER A CARD TO PREVIEW ]</div>
 
         <div className="homepage-bottom-bar">
-          <button className="homepage-btn homepage-btn-play" onClick={handlePlaySolo}>
-            PLAY SOLO
+          <button className="homepage-btn homepage-btn-create" onClick={handleCreateRoom}>
+            CREATE ROOM
           </button>
           <button className="homepage-btn homepage-btn-join" onClick={handleJoinRoom}>
             JOIN ROOM
