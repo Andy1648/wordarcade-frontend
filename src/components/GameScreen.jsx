@@ -152,6 +152,101 @@ function CountdownOverlay({ onComplete }) {
   );
 }
 
+// Paint-splatter confetti colours (the same graffiti palette used everywhere).
+const CONFETTI_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+
+/**
+ * A burst of 25 throwaway confetti pieces that rain down the full viewport
+ * when the local player wins. Each piece picks its position, colour, size,
+ * shape, spin and timing once on mount (see confetti-fall in GameScreen.css).
+ * Fixed + pointer-events:none so it never blocks the game-over buttons.
+ * Only the parent decides whether to render it (winners only).
+ */
+function ConfettiEffect() {
+  const [pieces] = useState(() =>
+    Array.from({ length: 25 }, () => ({
+      left: Math.random() * 100, // 0-100% of screen width
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      size: 8 + Math.random() * 8, // 8-16px
+      rotation: Math.random() * 360, // starting tilt
+      duration: 2 + Math.random() * 2, // 2-4s fall
+      delay: Math.random(), // 0-1s stagger
+      circle: Math.random() < 0.5, // mix of circles and squares
+    }))
+  );
+
+  return (
+    <div className="confetti-layer" aria-hidden="true">
+      {pieces.map((piece, i) => (
+        <div
+          key={i}
+          className={`confetti-piece${piece.circle ? ' circle' : ''}`}
+          style={{
+            left: `${piece.left}%`,
+            width: `${piece.size}px`,
+            height: `${piece.size}px`,
+            background: piece.color,
+            animationDuration: `${piece.duration}s`,
+            animationDelay: `${piece.delay}s`,
+            '--confetti-rot': `${piece.rotation}deg`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Counts a number up from 0 to `to` over `duration` ms, used on the winner's
+ * final score so it tallies up dramatically instead of just appearing.
+ */
+function CountUp({ to, duration = 1000 }) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    const target = Number(to) || 0;
+    if (target <= 0) {
+      setValue(target);
+      return;
+    }
+    const steps = 30;
+    let frame = 0;
+    const intervalId = setInterval(() => {
+      frame += 1;
+      if (frame >= steps) {
+        setValue(target);
+        clearInterval(intervalId);
+      } else {
+        setValue(Math.round((target * frame) / steps));
+      }
+    }, duration / steps);
+    return () => clearInterval(intervalId);
+  }, [to, duration]);
+
+  return <>{value}</>;
+}
+
+/**
+ * Renders text with each letter wrapped in its own span carrying a staggered
+ * animation-delay, so the letters wobble out of sync (see letter-wobble).
+ * Used for the loser's "GAME OVER" title.
+ */
+function WobbleText({ text }) {
+  return (
+    <>
+      {text.split('').map((ch, i) => (
+        <span
+          key={i}
+          className="wobble-letter"
+          style={{ animationDelay: `${i * 80}ms` }}
+        >
+          {ch === ' ' ? ' ' : ch}
+        </span>
+      ))}
+    </>
+  );
+}
+
 /**
  * Watches lastWordResult and reacts to each new result:
  *   - accepted -> bump hypeKey (re-keys the hype popup + floating "+1" so they
@@ -483,9 +578,10 @@ export default function GameScreen({
 
       {gameOver && (
         <div className="game-over-overlay">
+          {iWon && <ConfettiEffect />}
           <div className="game-over-card">
-            <div className={`game-over-title${iWon ? ' win' : ''}`}>
-              {iWon ? 'YOU WIN!' : 'GAME OVER'}
+            <div className={`game-over-title${iWon ? ' win winner-bounce' : ''}`}>
+              {iWon ? 'YOU WIN!' : <WobbleText text="GAME OVER" />}
             </div>
             {!iWon && (
               <div className="game-over-winner">
@@ -493,13 +589,8 @@ export default function GameScreen({
               </div>
             )}
             <div className="game-over-stat">
-              {isCategory
-                ? `ANSWERS GIVEN: ${
-                    (gameState.usedAnswers ||
-                      (gameOver && gameOver.usedAnswers) ||
-                      []).length
-                  }`
-                : `WORDS PLAYED: ${usedItems.length}`}
+              WORDS PLAYED:{' '}
+              {iWon ? <CountUp to={usedItems.length} /> : usedItems.length}
             </div>
             <button className="game-over-leave" onClick={onLeave}>
               LEAVE
@@ -593,9 +684,10 @@ function CategoryBlitzScreen({
     return (
       <div className="game-wrap">
         <div className="game-over-overlay">
+          {iWon && <ConfettiEffect />}
           <div className="game-over-card">
-            <div className={`game-over-title${iWon ? ' win' : ''}`}>
-              {iWon ? 'YOU WIN!' : 'GAME OVER'}
+            <div className={`game-over-title${iWon ? ' win winner-bounce' : ''}`}>
+              {iWon ? 'YOU WIN!' : <WobbleText text="GAME OVER" />}
             </div>
             {!iWon && (
               <div className="game-over-winner">
@@ -613,7 +705,13 @@ function CategoryBlitzScreen({
                     {s.name}
                     {s.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
-                  <span className="cb-score-pts">{s.score}</span>
+                  <span className="cb-score-pts">
+                    {iWon && s.id === gameOver.winnerId ? (
+                      <CountUp to={s.score} />
+                    ) : (
+                      s.score
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
