@@ -11,6 +11,7 @@
 }
 
 .game-stage {
+  position: relative; /* positioning context for the centered hype popup */
   background: #1a0b2e;
   border: 4px solid #000;
   box-shadow: 7px 7px 0 #000;
@@ -18,6 +19,52 @@
   padding: 22px 20px 24px;
   width: 100%;
   max-width: 560px;
+}
+
+/* Brief screen shake when an answer is accepted. Toggled on for 200ms by a
+   state flag in GameScreen, then removed. */
+.game-stage.game-shake {
+  animation: game-shake 200ms ease-in-out;
+}
+
+@keyframes game-shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Hype word popup: a throwaway tag that bursts up from small, holds, then
+   blows out bigger while fading. Centered over the stage, never blocks
+   clicks. Colour + tilt (--hype-rot) come from inline styles per popup. */
+.hype-popup {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 20;
+  pointer-events: none;
+  font-family: 'Bungee', cursive;
+  font-size: 48px;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  animation: hype-pop 600ms ease-out forwards;
+}
+
+@keyframes hype-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3) rotate(var(--hype-rot, 0deg));
+    opacity: 1;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1.5) rotate(var(--hype-rot, 0deg));
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8) rotate(var(--hype-rot, 0deg));
+    opacity: 0;
+  }
 }
 
 .game-loading {

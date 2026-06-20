@@ -49,6 +49,61 @@ function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
   return template.replace('[combo]', combo);
 }
 
+// Hype feedback - a punchy popup word + a screen shake on every accepted
+// answer, shared by both game modes via the useHypeFeedback hook below.
+const HYPE_WORDS = ['SICK!', 'FIRE!', 'CLEAN!', 'NASTY!', 'EZ!', 'NICE!', 'DOPE!', 'LIT!', 'GOD!', 'BEAST!'];
+const HYPE_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+
+/**
+ * A single throwaway hype word that scales up, tilts, and fades out (see the
+ * hype-pop keyframes in GameScreen.css). The parent gives it a unique `key`
+ * (the trigger counter) so each accepted answer re-mounts a fresh one and
+ * replays the animation. It picks its word/color/tilt once on mount and
+ * removes itself when the animation ends. pointer-events:none (in CSS) keeps
+ * the input clickable underneath.
+ */
+function HypePopup() {
+  const [done, setDone] = useState(false);
+  const [look] = useState(() => ({
+    word: HYPE_WORDS[Math.floor(Math.random() * HYPE_WORDS.length)],
+    color: HYPE_COLORS[Math.floor(Math.random() * HYPE_COLORS.length)],
+    rotation: Math.floor(Math.random() * 31) - 15, // -15deg..15deg
+  }));
+
+  if (done) return null;
+
+  return (
+    <div
+      className="hype-popup"
+      style={{ color: look.color, '--hype-rot': `${look.rotation}deg` }}
+      onAnimationEnd={() => setDone(true)}
+      aria-hidden="true"
+    >
+      {look.word}
+    </div>
+  );
+}
+
+/**
+ * Watches lastWordResult and, on each transition to an accepted result, bumps
+ * a counter (used to re-key the hype popup so it replays) and fires a brief
+ * 200ms screen shake. Returns { hypeKey, shake } for the caller to render.
+ */
+function useHypeFeedback(lastWordResult) {
+  const [hypeKey, setHypeKey] = useState(0);
+  const [shake, setShake] = useState(false);
+
+  useEffect(() => {
+    if (!lastWordResult || !lastWordResult.accepted) return;
+    setHypeKey((k) => k + 1);
+    setShake(true);
+    const timeoutId = setTimeout(() => setShake(false), 200);
+    return () => clearTimeout(timeoutId);
+  }, [lastWordResult]);
+
+  return { hypeKey, shake };
+}
+
 /**
  * The live Chain Reaction play screen. All of its data is driven by props
  * fed from App.jsx's WebSocket message handling:
@@ -97,6 +152,10 @@ export default function GameScreen({
       inputRef.current.focus();
     }
   }, [inputEnabled]);
+
+  // Hype popup + screen shake on accepted submissions. Called before the
+  // category early-return so the hooks always run in the same order.
+  const { hypeKey, shake } = useHypeFeedback(lastWordResult);
 
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
@@ -186,7 +245,8 @@ export default function GameScreen({
 
   return (
     <div className="game-wrap">
-      <div className="game-stage">
+      <div className={`game-stage${shake ? ' game-shake' : ''}`}>
+        {hypeKey > 0 && <HypePopup key={hypeKey} />}
         <div className="game-header">
           <div className="game-title">{title}</div>
           <div className="game-header-right">
@@ -396,6 +456,10 @@ function CategoryBlitzScreen({
     }
   }, [roundActive, categoryRound && categoryRound.round]);
 
+  // Hype popup + screen shake on accepted answers (only rendered during an
+  // active round, below).
+  const { hypeKey, shake } = useHypeFeedback(lastWordResult);
+
   function submit() {
     const answer = draft.trim();
     if (!answer || !roundActive) return;
@@ -463,7 +527,8 @@ function CategoryBlitzScreen({
 
     return (
       <div className="game-wrap">
-        <div className="game-stage">
+        <div className={`game-stage${shake ? ' game-shake' : ''}`}>
+          {hypeKey > 0 && <HypePopup key={hypeKey} />}
           <div className="game-header">
             <div className="game-title">CATEGORY BLITZ</div>
             <div className="game-header-right">
