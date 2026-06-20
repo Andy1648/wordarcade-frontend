@@ -10,6 +10,9 @@
 html, body {
   background: #0d0618;
   min-height: 100vh;
+  /* Prevent a horizontal scrollbar while an incoming view slides in from
+     off-screen during a transition (see Transitions.css). */
+  overflow-x: hidden;
 }
 
 body {

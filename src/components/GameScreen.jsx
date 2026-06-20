@@ -8,12 +8,20 @@ import './GameScreen.css';
 const HEART_PATH =
   'M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 0 1 8 4.5 3.5 3.5 0 0 1 13.5 7C13.5 10.5 8 14 8 14z';
 
-function Heart({ filled }) {
+function Heart({ filled, shatter }) {
   return (
-    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <svg
+      className={shatter ? 'heart heart-shatter' : 'heart'}
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+    >
       <path
         d={HEART_PATH}
-        fill={filled ? '#FF2EC4' : '#555'}
+        // While shattering, keep the heart pink (it's bursting, not yet lost);
+        // once the animation clears it falls back to the gray "lost" fill.
+        fill={filled || shatter ? '#FF2EC4' : '#555'}
         stroke="#000"
         strokeWidth="1.5"
       />
@@ -334,6 +342,79 @@ export default function GameScreen({
   // before the category early-return so the hooks always run in the same order.
   const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
 
+  // ---- Heart-shatter + elimination detection (Word Bomb only) ----
+  // Each turn_update carries fresh lives/eliminated for every player. We diff
+  // against the previous snapshot so we can fire one-shot animations exactly
+  // on the transition: a heart that was just lost shatters, and a player who
+  // just went out tilts away. Hooks live before the category early-return so
+  // the hook order stays stable across renders.
+  const prevPlayersRef = useRef({});
+  // playerId -> true while the just-lost heart is mid-shatter (cleared after 500ms).
+  const [shatteredHearts, setShatteredHearts] = useState({});
+  // playerId -> true once eliminated; stays set so the card holds its final
+  // tilted/dimmed state (the animation is forwards and never replays).
+  const [eliminatingPlayers, setEliminatingPlayers] = useState({});
+
+  useEffect(() => {
+    if (!gameState || gameType !== 'word-bomb') return;
+    const players = gameState.players || [];
+    const prev = prevPlayersRef.current;
+
+    const shatterIds = [];
+    const eliminateIds = [];
+    players.forEach((p) => {
+      const before = prev[p.id];
+      if (!before) return; // first sighting - nothing to transition from
+      if (typeof p.lives === 'number' && p.lives < before.lives) {
+        shatterIds.push(p.id);
+      }
+      const nowEliminated = p.eliminated || p.lives <= 0;
+      if (!before.eliminated && nowEliminated) {
+        eliminateIds.push(p.id);
+      }
+    });
+
+    // Snapshot the current state for the next diff.
+    prevPlayersRef.current = Object.fromEntries(
+      players.map((p) => [
+        p.id,
+        { lives: p.lives, eliminated: p.eliminated || p.lives <= 0 },
+      ])
+    );
+
+    if (eliminateIds.length) {
+      setEliminatingPlayers((cur) => {
+        const next = { ...cur };
+        eliminateIds.forEach((id) => {
+          next[id] = true;
+        });
+        return next;
+      });
+    }
+
+    if (!shatterIds.length) return;
+
+    setShatteredHearts((cur) => {
+      const next = { ...cur };
+      shatterIds.forEach((id) => {
+        next[id] = true;
+      });
+      return next;
+    });
+    // Clear the shatter flag after the 500ms animation so the heart settles
+    // into its normal gray "lost" state.
+    const timerId = setTimeout(() => {
+      setShatteredHearts((cur) => {
+        const next = { ...cur };
+        shatterIds.forEach((id) => {
+          delete next[id];
+        });
+        return next;
+      });
+    }, 500);
+    return () => clearTimeout(timerId);
+  }, [gameState, gameType]);
+
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
   // than threading conditionals through the turn-based Word Bomb layout.
@@ -456,10 +537,13 @@ export default function GameScreen({
             const eliminated = player.eliminated || player.lives <= 0;
             const isCurrent = player.id === gameState.currentPlayerId;
             const isMe = player.id === myId;
+            const isEliminating = !!eliminatingPlayers[player.id];
+            const justShattered = !!shatteredHearts[player.id];
             const cardClass = [
               'game-player-card',
               isCurrent && !eliminated ? 'current' : '',
               eliminated ? 'eliminated' : '',
+              isEliminating ? 'eliminating' : '',
             ]
               .filter(Boolean)
               .join(' ');
@@ -470,13 +554,20 @@ export default function GameScreen({
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
                 <div className={cardClass}>
+                  {isEliminating && <div className="game-player-flash" />}
                   <div className="game-player-name">
                     {player.name}
                     {isMe && <span className="game-player-you">YOU</span>}
                   </div>
                   <div className="game-player-hearts">
                     {Array.from({ length: maxLives }).map((_, i) => (
-                      <Heart key={i} filled={i < player.lives} />
+                      <Heart
+                        key={i}
+                        filled={i < player.lives}
+                        // The just-lost heart is the first empty slot (index ===
+                        // remaining lives); shatter only that one.
+                        shatter={justShattered && i === player.lives}
+                      />
                     ))}
                   </div>
                 </div>

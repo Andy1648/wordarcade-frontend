@@ -5,6 +5,7 @@ import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
 import { useWebSocket } from './hooks/useWebSocket';
+import './Transitions.css';
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
 // for Join Room) or a specific game id picked from a homepage card. Only
@@ -22,6 +23,11 @@ function isPreselectableGame(mode) {
  */
 function App() {
   const [view, setView] = useState('home');
+  // Direction of the most recent view change, driving the slide transition:
+  // 'forward' (deeper into the flow) slides in from the right, 'back' (home)
+  // from the left. Set once per navigation; the whole home->lobby->room->game
+  // chain is forward, and only goHome is back.
+  const [transitionDir, setTransitionDir] = useState('forward');
   const [lobbyMode, setLobbyMode] = useState(null);
   const [room, setRoom] = useState(null);
   const [serverError, setServerError] = useState('');
@@ -177,12 +183,14 @@ function App() {
   }, [lastWordResult, gameType]);
 
   function goToLobby(mode) {
+    setTransitionDir('forward');
     setLobbyMode(mode);
     setServerError('');
     setView('lobby');
   }
 
   function goHome() {
+    setTransitionDir('back');
     setLobbyMode(null);
     setRoom(null);
     setServerError('');
@@ -244,8 +252,12 @@ function App() {
     send('skip_turn', {});
   }
 
+  // Pick the screen for the current view. It's wrapped in a single keyed
+  // slide container below so switching views animates, while in-view updates
+  // (player joins, turn_updates) re-render the same screen without replaying.
+  let screen;
   if (view === 'game') {
-    return (
+    screen = (
       <GameScreen
         gameState={gameState}
         gameType={gameType}
@@ -266,10 +278,8 @@ function App() {
         onLeave={handleLeaveRoom}
       />
     );
-  }
-
-  if (view === 'room' && room) {
-    return (
+  } else if (view === 'room' && room) {
+    screen = (
       <RoomScreen
         room={room}
         myId={myId}
@@ -280,10 +290,8 @@ function App() {
         onStartGame={handleStartGame}
       />
     );
-  }
-
-  if (view === 'lobby') {
-    return (
+  } else if (view === 'lobby') {
+    screen = (
       <LobbyScreen
         mode={lobbyMode}
         onBack={goHome}
@@ -292,14 +300,24 @@ function App() {
         serverError={serverError}
       />
     );
+  } else {
+    screen = (
+      <Homepage
+        onSelectGame={(gameId) => goToLobby(gameId)}
+        onCreateRoom={() => goToLobby('solo')}
+        onJoinRoom={() => goToLobby('join')}
+      />
+    );
   }
 
+  // `key={view}` remounts the wrapper only on an actual view change, so the
+  // slide animation fires then (not on every re-render within a view).
   return (
-    <Homepage
-      onSelectGame={(gameId) => goToLobby(gameId)}
-      onCreateRoom={() => goToLobby('solo')}
-      onJoinRoom={() => goToLobby('join')}
-    />
+    <div className="view-transition-root">
+      <div key={view} className={`view-screen view-${transitionDir}`}>
+        {screen}
+      </div>
+    </div>
   );
 }
 
