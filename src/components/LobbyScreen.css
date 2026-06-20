@@ -1,5 +1,263 @@
 /* LobbyScreen.css */
+/* LobbyScreen.css */
+/* LobbyScreen.css */
 
+.lobby-wrap {
+  background: #0d0618;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lobby-box {
+  background: #1a0b2e;
+  border: 4px solid #000;
+  box-shadow: 7px 7px 0 #000;
+  border-radius: 4px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+}
+
+.lobby-back-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  background: none;
+  border: 2.5px solid #2EFFE0;
+  padding: 5px 12px;
+  cursor: pointer;
+  margin-bottom: 28px;
+  display: inline-block;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.lobby-back-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.lobby-title {
+  font-family: 'Bungee', cursive;
+  font-size: 32px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.lobby-subtitle {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #C9B8E8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 32px;
+}
+
+.lobby-field-label {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.lobby-input {
+  width: 100%;
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a0b2e;
+  background: #fff;
+  border: 4px solid #000;
+  border-radius: 4px;
+  padding: 12px 14px;
+  outline: none;
+  box-shadow: 4px 4px 0 #000;
+  transition: box-shadow 0.1s, transform 0.1s;
+}
+
+.lobby-input:focus {
+  box-shadow: 4px 4px 0 #2EFFE0;
+}
+
+.lobby-input::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+.lobby-error {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #FF5C5C;
+  margin-top: 8px;
+}
+
+.lobby-continue-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
+  color: #000;
+  background: #FF2EC4;
+  border: 4px solid #000;
+  border-radius: 4px;
+  padding: 13px 0;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #000;
+  margin-top: 24px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.lobby-continue-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.lobby-continue-btn:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.lobby-continue-btn:disabled:active {
+  transform: none;
+  box-shadow: 5px 5px 0 #000;
+}
+.lobby-wrap {
+  background: #0d0618;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lobby-box {
+  background: #1a0b2e;
+  border: 4px solid #000;
+  box-shadow: 7px 7px 0 #000;
+  border-radius: 4px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+}
+
+.lobby-back-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  background: none;
+  border: 2.5px solid #2EFFE0;
+  padding: 5px 12px;
+  cursor: pointer;
+  margin-bottom: 28px;
+  display: inline-block;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.lobby-back-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.lobby-title {
+  font-family: 'Bungee', cursive;
+  font-size: 32px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.lobby-subtitle {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #C9B8E8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 32px;
+}
+
+.lobby-field-label {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.lobby-input {
+  width: 100%;
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a0b2e;
+  background: #fff;
+  border: 4px solid #000;
+  border-radius: 4px;
+  padding: 12px 14px;
+  outline: none;
+  box-shadow: 4px 4px 0 #000;
+  transition: box-shadow 0.1s, transform 0.1s;
+}
+
+.lobby-input:focus {
+  box-shadow: 4px 4px 0 #2EFFE0;
+}
+
+.lobby-input::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+.lobby-error {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #FF5C5C;
+  margin-top: 8px;
+}
+
+.lobby-continue-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
+  color: #000;
+  background: #FF2EC4;
+  border: 4px solid #000;
+  border-radius: 4px;
+  padding: 13px 0;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #000;
+  margin-top: 24px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.lobby-continue-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.lobby-continue-btn:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.lobby-continue-btn:disabled:active {
+  transform: none;
+  box-shadow: 5px 5px 0 #000;
+}
 .lobby-wrap {
   background: #0d0618;
   min-height: 100vh;
