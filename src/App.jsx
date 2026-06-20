@@ -30,6 +30,10 @@ function App() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [lastWordResult, setLastWordResult] = useState(null);
   const [gameOver, setGameOver] = useState(null);
+  // Which mode the in-progress game is - 'word-bomb' | 'category-blitz'.
+  // Learned authoritatively from the game_started message so GameScreen
+  // knows which prompt/fields to render.
+  const [gameType, setGameType] = useState('word-bomb');
 
   const { status: wsStatus, lastMessage, send } = useWebSocket();
 
@@ -47,6 +51,7 @@ function App() {
     }
 
     if (lastMessage.type === 'game_started') {
+      setGameType(lastMessage.payload.gameType || 'word-bomb');
       setGameOver(null);
       setServerError('');
       setView('game');
@@ -102,6 +107,7 @@ function App() {
     setTimerSeconds(0);
     setLastWordResult(null);
     setGameOver(null);
+    setGameType('word-bomb');
     setView('home');
   }
 
@@ -122,6 +128,10 @@ function App() {
     send('set_difficulty', { difficultyKey });
   }
 
+  function handleSetGameType(gameType) {
+    send('set_game_type', { gameType });
+  }
+
   function handleStartGame() {
     send('start_game', {});
   }
@@ -138,6 +148,7 @@ function App() {
     return (
       <GameScreen
         gameState={gameState}
+        gameType={gameType}
         myId={myId}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
@@ -155,6 +166,7 @@ function App() {
         room={room}
         myId={myId}
         onLeave={handleLeaveRoom}
+        onSetGameType={handleSetGameType}
         onSetDifficulty={handleSetDifficulty}
         onStartGame={handleStartGame}
       />

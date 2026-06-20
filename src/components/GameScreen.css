@@ -252,6 +252,17 @@
   transform: skewX(-3deg);
 }
 
+/* Category prompts are whole phrases ("THINGS IN A KITCHEN"), so they need
+   a smaller size, a thinner stroke, and room to wrap - unlike the 2-3 char
+   Word Bomb combo. Same yellow + skew so it still reads as the same prompt. */
+.game-combo.category {
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: 1px;
+  -webkit-text-stroke: 3px #000;
+  white-space: normal;
+}
+
 /* ---- Used words ---- */
 
 .game-used {

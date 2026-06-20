@@ -22,17 +22,24 @@ function Heart({ filled }) {
 }
 
 // Human-readable copy for each server rejection reason. [combo] is filled
-// in with the combo that was required at the moment of rejection.
+// in with the combo that was required at the moment of rejection. Word Bomb
+// and Category Blitz share most reasons; the too-short floor differs (3 vs
+// 2) and each mode has one reason the other never emits.
 const REJECTION_MESSAGES = {
   too_short: 'TOO SHORT — NEED 3+ LETTERS',
+  too_short_category: 'TOO SHORT — NEED 2+ LETTERS',
   missing_combo: 'MUST CONTAIN [combo]',
   already_used: 'ALREADY USED — TRY AGAIN',
   not_a_word: 'NOT A REAL WORD',
+  not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
 };
 
-function rejectionMessage(reason, combo) {
-  const template = REJECTION_MESSAGES[reason];
-  if (!template) return 'INVALID WORD';
+function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
+  // Category answers have a lower length floor, so reuse a mode-specific
+  // string for the same reason code.
+  const key = reason === 'too_short' && isCategory ? 'too_short_category' : reason;
+  const template = REJECTION_MESSAGES[key];
+  if (!template) return isCategory ? 'INVALID ANSWER' : 'INVALID WORD';
   return template.replace('[combo]', combo);
 }
 
@@ -40,8 +47,10 @@ function rejectionMessage(reason, combo) {
  * The live Chain Reaction play screen. All of its data is driven by props
  * fed from App.jsx's WebSocket message handling:
  *
- *   gameState      - latest turn_update payload (players, combo, used words,
- *                    whose turn, per-turn timer max, round/difficulty)
+ *   gameState      - latest turn_update payload (players, whose turn, timer
+ *                    max, and the mode-specific prompt/history fields)
+ *   gameType       - 'word-bomb' | 'category-blitz'; selects which prompt
+ *                    (combo vs category) and history (words vs answers) to show
  *   myId           - this client's connection id, to know if it's our turn
  *   timerSeconds   - live countdown for the current turn
  *   lastWordResult - transient accept/reject of the most recent submission
@@ -52,6 +61,7 @@ function rejectionMessage(reason, combo) {
  */
 export default function GameScreen({
   gameState,
+  gameType,
   myId,
   timerSeconds,
   lastWordResult,
@@ -83,9 +93,25 @@ export default function GameScreen({
     );
   }
 
+  const isCategory = gameType === 'category-blitz';
+
   const players = gameState.players || [];
-  const usedWords = gameState.usedWords || [];
+
+  // Mode-specific prompt + history. Word Bomb prompts with a letter combo
+  // and tracks used words; Category Blitz prompts with a category and
+  // tracks used answers. Everything downstream reads these shared locals.
   const combo = (gameState.combo || '').toUpperCase();
+  const categoryRaw = gameState.category || '';
+  const usedItems = (isCategory ? gameState.usedAnswers : gameState.usedWords) || [];
+
+  const title = isCategory ? 'CATEGORY BLITZ' : 'WORD BOMB';
+  const promptLabel = isCategory
+    ? 'NAME SOMETHING IN THIS CATEGORY'
+    : 'TYPE A WORD CONTAINING';
+  const promptValue = isCategory
+    ? categoryRaw.toUpperCase() || '—'
+    : combo || '—';
+  const usedLabel = isCategory ? 'USED ANSWERS' : 'USED WORDS';
 
   const difficultyLabel = (gameState.difficultyKey || gameState.difficulty || '')
     .toString()
@@ -125,7 +151,7 @@ export default function GameScreen({
     <div className="game-wrap">
       <div className="game-stage">
         <div className="game-header">
-          <div className="game-title">WORD BOMB</div>
+          <div className="game-title">{title}</div>
           <div className="game-header-right">
             <div className="game-meta">
               {typeof gameState.round !== 'undefined' && (
@@ -186,19 +212,23 @@ export default function GameScreen({
         </div>
 
         <div className="game-combo-box">
-          <div className="game-combo-label">TYPE A WORD CONTAINING</div>
-          <div className="game-combo">{combo || '—'}</div>
+          <div className="game-combo-label">{promptLabel}</div>
+          <div className={`game-combo${isCategory ? ' category' : ''}`}>
+            {promptValue}
+          </div>
         </div>
 
         <div className="game-used">
-          <div className="game-used-label">USED WORDS ({usedWords.length})</div>
+          <div className="game-used-label">
+            {usedLabel} ({usedItems.length})
+          </div>
           <div className="game-used-list">
-            {usedWords.length === 0 ? (
+            {usedItems.length === 0 ? (
               <span className="game-used-empty">NONE YET — BE THE FIRST</span>
             ) : (
-              usedWords.map((word, i) => (
-                <span key={`${word}-${i}`} className="game-used-chip">
-                  {word.toUpperCase()}
+              usedItems.map((item, i) => (
+                <span key={`${item}-${i}`} className="game-used-chip">
+                  {item.toUpperCase()}
                 </span>
               ))
             )}
@@ -216,7 +246,9 @@ export default function GameScreen({
             disabled={!inputEnabled}
             placeholder={
               inputEnabled
-                ? `Type a word with "${combo}"...`
+                ? isCategory
+                  ? `Name something in "${categoryRaw}"...`
+                  : `Type a word with "${combo}"...`
                 : gameOver
                 ? 'GAME OVER'
                 : 'WAIT YOUR TURN...'
@@ -252,7 +284,7 @@ export default function GameScreen({
           >
             {lastWordResult.accepted
               ? `NICE! "${(lastWordResult.word || '').toUpperCase()}" ACCEPTED`
-              : rejectionMessage(lastWordResult.reason, combo)}
+              : rejectionMessage(lastWordResult.reason, { combo, isCategory })}
           </div>
         )}
       </div>
@@ -268,7 +300,15 @@ export default function GameScreen({
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
-            <div className="game-over-stat">WORDS PLAYED: {usedWords.length}</div>
+            <div className="game-over-stat">
+              {isCategory
+                ? `ANSWERS GIVEN: ${
+                    (gameState.usedAnswers ||
+                      (gameOver && gameOver.usedAnswers) ||
+                      []).length
+                  }`
+                : `WORDS PLAYED: ${usedItems.length}`}
+            </div>
             <button className="game-over-leave" onClick={onLeave}>
               LEAVE
             </button>
