@@ -49,20 +49,46 @@
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   white-space: nowrap;
-  animation: hype-pop 600ms ease-out forwards;
+  animation: hype-pop 400ms ease-out forwards;
 }
 
 @keyframes hype-pop {
   0% {
-    transform: translate(-50%, -50%) scale(0.3) rotate(var(--hype-rot, 0deg));
+    transform: translate(-50%, -50%) scale(0.5) rotate(var(--hype-rot, 0deg));
     opacity: 1;
   }
-  40% {
-    transform: translate(-50%, -50%) scale(1.5) rotate(var(--hype-rot, 0deg));
+  30% {
+    transform: translate(-50%, -50%) scale(1.4) rotate(var(--hype-rot, 0deg));
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.8) rotate(var(--hype-rot, 0deg));
+    transform: translate(-50%, -50%) scale(1.6) rotate(var(--hype-rot, 0deg));
+    opacity: 0;
+  }
+}
+
+/* Floating "+1" that rises and fades by the input on each accepted answer. */
+.floating-score {
+  position: absolute;
+  right: 22px;
+  top: -6px;
+  z-index: 15;
+  pointer-events: none;
+  font-family: 'Bungee', cursive;
+  font-size: 20px;
+  color: #2EFFE0;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  animation: float-up 500ms ease-out forwards;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px);
     opacity: 0;
   }
 }
@@ -249,10 +275,23 @@
   overflow: hidden;
 }
 
+/* Pulses when time is running low (<= 5s). */
+.game-timer-track.urgent {
+  animation: timer-pulse 500ms ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
 .game-timer-fill {
   height: 100%;
-  /* width + background colour are set inline from the live countdown. */
-  transition: width 0.3s linear, background 0.3s linear;
+  /* width + background colour are set inline from the live countdown. The 1s
+     width transition matches the 1s tick so the bar drains smoothly instead
+     of stepping. */
+  transition: width 1s linear, background 0.3s linear;
 }
 
 .game-timer-num {
@@ -261,6 +300,19 @@
   color: #fff;
   min-width: 40px;
   text-align: right;
+}
+
+/* Jitters when under 3s, for extra panic. */
+.game-timer-num.shake {
+  animation: number-shake 200ms linear infinite;
+}
+
+@keyframes number-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(1px); }
 }
 
 /* ---- Combo prompt ---- */
@@ -342,6 +394,7 @@
   border-radius: 3px;
   padding: 3px 7px;
   transform: rotate(-1deg);
+  animation: chip-slide-in 300ms ease-out;
 }
 
 .game-used-list .game-used-chip:nth-child(even) {
@@ -358,9 +411,18 @@
 /* ---- Input ---- */
 
 .game-input-row {
+  position: relative; /* anchors the floating "+1" score */
   display: flex;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+/* Slide-in (with a slight overshoot bounce) for newly appended answer/word
+   chips. Only freshly mounted chips run this; already-rendered ones don't. */
+@keyframes chip-slide-in {
+  0% { transform: translateX(-20px); opacity: 0; }
+  60% { transform: translateX(4px); opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 
 .game-input {
@@ -388,6 +450,20 @@
   color: #9a8bbf;
   box-shadow: 2px 2px 0 #000;
   cursor: not-allowed;
+}
+
+/* Horizontal shake on a rejected submission - toggled on for 400ms. */
+.game-input.input-shake {
+  animation: input-shake 400ms ease-in-out;
+}
+
+@keyframes input-shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
 }
 
 .game-send-btn {
@@ -620,6 +696,7 @@
   border-radius: 3px;
   padding: 3px 7px;
   transform: rotate(-1deg);
+  animation: chip-slide-in 300ms ease-out;
 }
 
 .cb-answers-list .cb-answer-chip:nth-child(even),

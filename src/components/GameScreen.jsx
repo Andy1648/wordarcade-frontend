@@ -85,23 +85,53 @@ function HypePopup() {
 }
 
 /**
- * Watches lastWordResult and, on each transition to an accepted result, bumps
- * a counter (used to re-key the hype popup so it replays) and fires a brief
- * 200ms screen shake. Returns { hypeKey, shake } for the caller to render.
+ * A throwaway "+1" that floats up and fades near the input on each accepted
+ * answer. Re-keyed by the same hype counter so it replays per accept, and
+ * removes itself on animation end. pointer-events:none (in CSS).
+ */
+function FloatingScore() {
+  const [done, setDone] = useState(false);
+  if (done) return null;
+  return (
+    <div
+      className="floating-score"
+      onAnimationEnd={() => setDone(true)}
+      aria-hidden="true"
+    >
+      +1
+    </div>
+  );
+}
+
+/**
+ * Watches lastWordResult and reacts to each new result:
+ *   - accepted -> bump hypeKey (re-keys the hype popup + floating "+1" so they
+ *     replay) and fire a brief 200ms screen shake.
+ *   - rejected -> fire a 400ms horizontal input shake.
+ * Returns { hypeKey, shake, inputShake } for the caller to render.
  */
 function useHypeFeedback(lastWordResult) {
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
+  const [inputShake, setInputShake] = useState(false);
 
   useEffect(() => {
-    if (!lastWordResult || !lastWordResult.accepted) return;
-    setHypeKey((k) => k + 1);
-    setShake(true);
-    const timeoutId = setTimeout(() => setShake(false), 200);
+    if (!lastWordResult) return;
+
+    if (lastWordResult.accepted) {
+      setHypeKey((k) => k + 1);
+      setShake(true);
+      const timeoutId = setTimeout(() => setShake(false), 200);
+      return () => clearTimeout(timeoutId);
+    }
+
+    // Rejected: shake the input so the miss is felt, not just read.
+    setInputShake(true);
+    const timeoutId = setTimeout(() => setInputShake(false), 400);
     return () => clearTimeout(timeoutId);
   }, [lastWordResult]);
 
-  return { hypeKey, shake };
+  return { hypeKey, shake, inputShake };
 }
 
 /**
@@ -153,9 +183,9 @@ export default function GameScreen({
     }
   }, [inputEnabled]);
 
-  // Hype popup + screen shake on accepted submissions. Called before the
-  // category early-return so the hooks always run in the same order.
-  const { hypeKey, shake } = useHypeFeedback(lastWordResult);
+  // Hype popup + screen shake (accepted) and input shake (rejected). Called
+  // before the category early-return so the hooks always run in the same order.
+  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
 
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
@@ -225,6 +255,9 @@ export default function GameScreen({
   const maxTimer = gameState.timerSeconds || 1;
   const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
   const timerColor = ratio > 0.6 ? '#2EFFE0' : ratio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+  // Urgency cues as the clock runs down (suppressed once the game is over).
+  const lowTime = !gameOver && timerSeconds <= 5;
+  const veryLowTime = !gameOver && timerSeconds < 3;
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
@@ -299,13 +332,15 @@ export default function GameScreen({
         </div>
 
         <div className="game-timer-row">
-          <div className="game-timer-track">
+          <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
             <div
               className="game-timer-fill"
               style={{ width: `${ratio * 100}%`, background: timerColor }}
             />
           </div>
-          <div className="game-timer-num">{timerSeconds}s</div>
+          <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
+            {timerSeconds}s
+          </div>
         </div>
 
         <div className="game-combo-box">
@@ -335,7 +370,7 @@ export default function GameScreen({
         <div className="game-input-row">
           <input
             ref={inputRef}
-            className="game-input"
+            className={`game-input${inputShake ? ' input-shake' : ''}`}
             type="text"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
@@ -371,6 +406,7 @@ export default function GameScreen({
               <span className="game-skip-cost">-1 LIFE</span>
             </button>
           )}
+          {hypeKey > 0 && <FloatingScore key={hypeKey} />}
         </div>
 
         {lastWordResult && (
@@ -456,9 +492,9 @@ function CategoryBlitzScreen({
     }
   }, [roundActive, categoryRound && categoryRound.round]);
 
-  // Hype popup + screen shake on accepted answers (only rendered during an
-  // active round, below).
-  const { hypeKey, shake } = useHypeFeedback(lastWordResult);
+  // Hype popup + screen shake (accepted) and input shake (rejected), only
+  // rendered during an active round, below.
+  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
 
   function submit() {
     const answer = draft.trim();
@@ -523,6 +559,8 @@ function CategoryBlitzScreen({
     const maxTimer = categoryRound.timerSeconds || 1;
     const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
     const timerColor = ratio > 0.6 ? '#2EFFE0' : ratio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+    const lowTime = timerSeconds <= 5;
+    const veryLowTime = timerSeconds < 3;
     const others = roomPlayers.filter((p) => p.id !== myId);
 
     return (
@@ -549,19 +587,21 @@ function CategoryBlitzScreen({
           </div>
 
           <div className="game-timer-row">
-            <div className="game-timer-track">
+            <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
               <div
                 className="game-timer-fill"
                 style={{ width: `${ratio * 100}%`, background: timerColor }}
               />
             </div>
-            <div className="game-timer-num">{timerSeconds}s</div>
+            <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
+              {timerSeconds}s
+            </div>
           </div>
 
           <div className="game-input-row">
             <input
               ref={inputRef}
-              className="game-input"
+              className={`game-input${inputShake ? ' input-shake' : ''}`}
               type="text"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
@@ -574,6 +614,7 @@ function CategoryBlitzScreen({
             <button className="game-send-btn" onClick={submit}>
               SEND
             </button>
+            {hypeKey > 0 && <FloatingScore key={hypeKey} />}
           </div>
 
           {lastWordResult && (
