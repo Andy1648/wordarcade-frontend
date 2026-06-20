@@ -103,6 +103,55 @@ function FloatingScore() {
   );
 }
 
+// 3-2-1-GO! intro sequence. Each entry shows for 700ms; null marks the end.
+const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
+
+/**
+ * Fullscreen "3 2 1 GO!" countdown shown when gameplay (re)starts. Steps
+ * through COUNTDOWN_STEPS on a 700ms interval; when it reaches the trailing
+ * null it calls onComplete (once) so the parent can hide it and unblock the
+ * input. Each step gets a random tilt for graffiti energy, and is re-keyed so
+ * the countdown-pop animation replays per number.
+ */
+function CountdownOverlay({ onComplete }) {
+  const [index, setIndex] = useState(0);
+  const doneRef = useRef(false);
+  // One random tilt (-5deg..5deg) per step, picked once on mount.
+  const [rotations] = useState(() =>
+    COUNTDOWN_STEPS.map(() => Math.floor(Math.random() * 11) - 5)
+  );
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setIndex((i) => (i >= COUNTDOWN_STEPS.length - 1 ? i : i + 1));
+    }, 700);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    if (COUNTDOWN_STEPS[index] === null && !doneRef.current) {
+      doneRef.current = true;
+      onComplete();
+    }
+  }, [index, onComplete]);
+
+  const step = COUNTDOWN_STEPS[index];
+  if (step === null || step === undefined) return null;
+
+  return (
+    <div className="countdown-overlay">
+      <div
+        key={index}
+        className={`countdown-text${step === 'GO!' ? ' go' : ''}`}
+        style={{ '--cd-rot': `${rotations[index]}deg` }}
+        aria-hidden="true"
+      >
+        {step}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Watches lastWordResult and reacts to each new result:
  *   - accepted -> bump hypeKey (re-keys the hype popup + floating "+1" so they
@@ -171,9 +220,12 @@ export default function GameScreen({
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
+  // Intro countdown plays once when the screen mounts; the input stays
+  // disabled until it finishes.
+  const [showCountdown, setShowCountdown] = useState(true);
 
   const isMyTurn = !!gameState && gameState.currentPlayerId === myId;
-  const inputEnabled = isMyTurn && !gameOver;
+  const inputEnabled = isMyTurn && !gameOver && !showCountdown;
 
   // Drop focus into the input the moment the turn swings to us, so the
   // player can just start typing without clicking first.
@@ -278,6 +330,9 @@ export default function GameScreen({
 
   return (
     <div className="game-wrap">
+      {showCountdown && (
+        <CountdownOverlay onComplete={() => setShowCountdown(false)} />
+      )}
       <div className={`game-stage${shake ? ' game-shake' : ''}`}>
         {hypeKey > 0 && <HypePopup key={hypeKey} />}
         <div className="game-header">
@@ -481,16 +536,29 @@ function CategoryBlitzScreen({
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
+  // Countdown replays at the start of every NEW round (and the first one).
+  const [showCountdown, setShowCountdown] = useState(false);
+  const prevRoundRef = useRef(null);
 
   const roundActive = !!categoryRound && !gameOver;
+  const roundNumber = categoryRound && categoryRound.round;
 
-  // Auto-focus the input whenever a round becomes (or stays) active - no
-  // turn-taking here, so the player can fire answers continuously.
+  // Trigger the countdown whenever the round number changes (covers the first
+  // round on mount and every subsequent round).
   useEffect(() => {
-    if (roundActive && inputRef.current) {
+    if (roundNumber != null && roundNumber !== prevRoundRef.current) {
+      prevRoundRef.current = roundNumber;
+      setShowCountdown(true);
+    }
+  }, [roundNumber]);
+
+  // Auto-focus the input once a round is active AND its countdown has
+  // finished - no turn-taking here, so the player can fire answers freely.
+  useEffect(() => {
+    if (roundActive && !showCountdown && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [roundActive, categoryRound && categoryRound.round]);
+  }, [roundActive, showCountdown, roundNumber]);
 
   // Hype popup + screen shake (accepted) and input shake (rejected), only
   // rendered during an active round, below.
@@ -498,7 +566,7 @@ function CategoryBlitzScreen({
 
   function submit() {
     const answer = draft.trim();
-    if (!answer || !roundActive) return;
+    if (!answer || !roundActive || showCountdown) return;
     onSubmitAnswer(answer);
     setDraft('');
   }
@@ -565,6 +633,9 @@ function CategoryBlitzScreen({
 
     return (
       <div className="game-wrap">
+        {showCountdown && (
+          <CountdownOverlay onComplete={() => setShowCountdown(false)} />
+        )}
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
           {hypeKey > 0 && <HypePopup key={hypeKey} />}
           <div className="game-header">
@@ -606,6 +677,7 @@ function CategoryBlitzScreen({
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleKeyDown}
+              disabled={showCountdown}
               placeholder="Type an answer..."
               maxLength={32}
               autoComplete="off"

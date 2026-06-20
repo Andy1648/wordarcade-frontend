@@ -902,10 +902,47 @@
   -webkit-text-stroke: 0;
 }
 
+/* ---- 3-2-1-GO! countdown overlay ---- */
+
+.countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(13, 6, 24, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-text {
+  font-family: 'Bungee', cursive;
+  font-size: 120px;
+  line-height: 1;
+  color: #FFE94A; /* numbers in yellow */
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  animation: countdown-pop 700ms ease-out forwards;
+}
+
+.countdown-text.go {
+  color: #2EFFE0; /* GO! in cyan */
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0.3) rotate(var(--cd-rot, 0deg)); opacity: 0; }
+  15% { transform: scale(1.2) rotate(var(--cd-rot, 0deg)); opacity: 1; }
+  70% { transform: scale(1.2) rotate(var(--cd-rot, 0deg)); opacity: 1; }
+  100% { transform: scale(1.5) rotate(var(--cd-rot, 0deg)); opacity: 0; }
+}
+
 /* Responsive: let player cards stack into a tighter grid on narrow screens
    rather than squeezing below readable width. */
 @media (max-width: 480px) {
   .game-player-slot {
     min-width: calc(50% - 5px);
+  }
+
+  .countdown-text {
+    font-size: 84px;
   }
 }
