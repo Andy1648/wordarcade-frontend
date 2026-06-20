@@ -130,6 +130,10 @@ function App() {
     send('submit_word', { word });
   }
 
+  function handleSkipTurn() {
+    send('skip_turn', {});
+  }
+
   if (view === 'game') {
     return (
       <GameScreen
@@ -139,6 +143,7 @@ function App() {
         lastWordResult={lastWordResult}
         gameOver={gameOver}
         onSubmitWord={handleSubmitWord}
+        onSkipTurn={handleSkipTurn}
         onLeave={handleLeaveRoom}
       />
     );

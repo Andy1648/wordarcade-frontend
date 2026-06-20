@@ -57,6 +57,7 @@ export default function GameScreen({
   lastWordResult,
   gameOver,
   onSubmitWord,
+  onSkipTurn,
   onLeave,
 }) {
   const [draft, setDraft] = useState('');
@@ -234,6 +235,16 @@ export default function GameScreen({
           >
             SEND
           </button>
+          {inputEnabled && (
+            <button
+              className="game-skip-btn"
+              onClick={onSkipTurn}
+              title="Skip your turn — costs you a life"
+            >
+              SKIP
+              <span className="game-skip-cost">-1 LIFE</span>
+            </button>
+          )}
         </div>
 
         {lastWordResult && (
