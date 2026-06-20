@@ -21,27 +21,27 @@ function Heart({ filled }) {
   );
 }
 
-// Human-readable copy for each server rejection reason. [prefix] is filled
-// in with the prefix that was required at the moment of rejection.
+// Human-readable copy for each server rejection reason. [combo] is filled
+// in with the combo that was required at the moment of rejection.
 const REJECTION_MESSAGES = {
   too_short: 'TOO SHORT — NEED 3+ LETTERS',
-  wrong_prefix: 'MUST START WITH [prefix]',
+  missing_combo: 'MUST CONTAIN [combo]',
   already_used: 'ALREADY USED — TRY AGAIN',
   not_a_word: 'NOT A REAL WORD',
 };
 
-function rejectionMessage(reason, prefix) {
+function rejectionMessage(reason, combo) {
   const template = REJECTION_MESSAGES[reason];
   if (!template) return 'INVALID WORD';
-  return template.replace('[prefix]', prefix);
+  return template.replace('[combo]', combo);
 }
 
 /**
  * The live Chain Reaction play screen. All of its data is driven by props
  * fed from App.jsx's WebSocket message handling:
  *
- *   gameState      - latest turn_update payload (players, chain, whose turn,
- *                    per-turn timer max, round/difficulty)
+ *   gameState      - latest turn_update payload (players, combo, used words,
+ *                    whose turn, per-turn timer max, round/difficulty)
  *   myId           - this client's connection id, to know if it's our turn
  *   timerSeconds   - live countdown for the current turn
  *   lastWordResult - transient accept/reject of the most recent submission
@@ -84,10 +84,8 @@ export default function GameScreen({
   }
 
   const players = gameState.players || [];
-  const chain = gameState.chain || [];
-  const lastWord = chain.length ? chain[chain.length - 1] : '';
-  const prefix = lastWord ? lastWord.slice(-2).toUpperCase() : '';
-  const recentWords = chain.slice(-5);
+  const usedWords = gameState.usedWords || [];
+  const combo = (gameState.combo || '').toUpperCase();
 
   const difficultyLabel = (gameState.difficultyKey || gameState.difficulty || '')
     .toString()
@@ -127,7 +125,7 @@ export default function GameScreen({
     <div className="game-wrap">
       <div className="game-stage">
         <div className="game-header">
-          <div className="game-title">CHAIN REACTION</div>
+          <div className="game-title">WORD BOMB</div>
           <div className="game-header-right">
             <div className="game-meta">
               {typeof gameState.round !== 'undefined' && (
@@ -187,25 +185,24 @@ export default function GameScreen({
           <div className="game-timer-num">{timerSeconds}s</div>
         </div>
 
-        <div className="game-chain">
-          {recentWords.map((word, i) => (
-            <span key={`${word}-${i}`} className="game-chain-item">
-              <span
-                className={`game-chain-word${
-                  i === recentWords.length - 1 ? ' recent' : ''
-                }`}
-              >
-                {word.toUpperCase()}
-              </span>
-              <span className="game-chain-arrow">→</span>
-            </span>
-          ))}
-          <span className="game-chain-word placeholder">???</span>
+        <div className="game-combo-box">
+          <div className="game-combo-label">TYPE A WORD CONTAINING</div>
+          <div className="game-combo">{combo || '—'}</div>
         </div>
 
-        <div className="game-prefix-box">
-          <div className="game-prefix-label">NEXT WORD STARTS WITH</div>
-          <div className="game-prefix">{prefix || '—'}</div>
+        <div className="game-used">
+          <div className="game-used-label">USED WORDS ({usedWords.length})</div>
+          <div className="game-used-list">
+            {usedWords.length === 0 ? (
+              <span className="game-used-empty">NONE YET — BE THE FIRST</span>
+            ) : (
+              usedWords.map((word, i) => (
+                <span key={`${word}-${i}`} className="game-used-chip">
+                  {word.toUpperCase()}
+                </span>
+              ))
+            )}
+          </div>
         </div>
 
         <div className="game-input-row">
@@ -219,7 +216,7 @@ export default function GameScreen({
             disabled={!inputEnabled}
             placeholder={
               inputEnabled
-                ? `${prefix}...`
+                ? `Type a word with "${combo}"...`
                 : gameOver
                 ? 'GAME OVER'
                 : 'WAIT YOUR TURN...'
@@ -255,7 +252,7 @@ export default function GameScreen({
           >
             {lastWordResult.accepted
               ? `NICE! "${(lastWordResult.word || '').toUpperCase()}" ACCEPTED`
-              : rejectionMessage(lastWordResult.reason, prefix)}
+              : rejectionMessage(lastWordResult.reason, combo)}
           </div>
         )}
       </div>
@@ -271,7 +268,7 @@ export default function GameScreen({
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
-            <div className="game-over-stat">FINAL CHAIN: {chain.length} WORDS</div>
+            <div className="game-over-stat">WORDS PLAYED: {usedWords.length}</div>
             <button className="game-over-leave" onClick={onLeave}>
               LEAVE
             </button>
