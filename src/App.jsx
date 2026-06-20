@@ -1,40 +1,87 @@
 // App.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
-import ConnectionTest from './components/ConnectionTest';
-
-// TEMPORARY: set to true to verify the WebSocket connection works before
-// wiring it into the real LobbyScreen flow. Set back to false (or just
-// delete this flag + the ConnectionTest import/render) once confirmed -
-// this is a diagnostic detour, not a permanent part of the app.
-const SHOW_CONNECTION_TEST = true;
+import RoomScreen from './components/RoomScreen';
+import { useWebSocket } from './hooks/useWebSocket';
 
 /**
- * Top-level view state manager. `view` determines which screen renders.
- * `lobbyMode` tells LobbyScreen whether the player clicked "solo",
- * "join", or came from a specific game card (stored as the game id).
+ * Top-level view state manager + the single shared WebSocket connection
+ * for the whole app. The connection is opened here (not inside
+ * LobbyScreen) deliberately - it needs to survive the transition from
+ * lobby to room screen, and connecting eagerly on app load (rather than
+ * waiting until the player clicks Continue) gives the connection time to
+ * wake up from Render's free-tier cold start in the background.
  */
 function App() {
   const [view, setView] = useState('home');
   const [lobbyMode, setLobbyMode] = useState(null);
+  const [room, setRoom] = useState(null);
+  const [serverError, setServerError] = useState('');
 
-  if (SHOW_CONNECTION_TEST) {
-    return <ConnectionTest />;
-  }
+  const { status: wsStatus, lastMessage, send } = useWebSocket();
+
+  // Reacts to incoming server messages regardless of which screen is
+  // showing. room_update arrives after a successful create/join AND
+  // every time the roster changes (someone else joins/leaves), so this
+  // naturally keeps RoomScreen's player list live without any extra work.
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    if (lastMessage.type === 'room_update') {
+      setRoom(lastMessage.payload);
+      setServerError('');
+      setView('room');
+    }
+
+    if (lastMessage.type === 'error') {
+      setServerError(lastMessage.payload.message);
+    }
+  }, [lastMessage]);
 
   function goToLobby(mode) {
     setLobbyMode(mode);
+    setServerError('');
     setView('lobby');
   }
 
   function goHome() {
     setLobbyMode(null);
+    setRoom(null);
+    setServerError('');
     setView('home');
   }
 
+  function handleLobbyContinue({ name, mode, roomCode }) {
+    if (mode === 'join') {
+      send('join_room', { code: roomCode, name });
+    } else {
+      // 'solo' and any specific game-id mode both create a fresh room for
+      // now - letting the host pick which game to actually play inside
+      // that room is separate, later work.
+      send('create_room', { name });
+    }
+  }
+
+  function handleLeaveRoom() {
+    send('leave_room', {});
+    goHome();
+  }
+
+  if (view === 'room' && room) {
+    return <RoomScreen room={room} onLeave={handleLeaveRoom} />;
+  }
+
   if (view === 'lobby') {
-    return <LobbyScreen mode={lobbyMode} onBack={goHome} />;
+    return (
+      <LobbyScreen
+        mode={lobbyMode}
+        onBack={goHome}
+        onContinue={handleLobbyContinue}
+        wsStatus={wsStatus}
+        serverError={serverError}
+      />
+    );
   }
 
   return (

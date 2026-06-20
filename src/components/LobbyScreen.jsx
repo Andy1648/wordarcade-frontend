@@ -1,34 +1,30 @@
 // LobbyScreen.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GAMES } from '../gameData';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
-// Matches the backend's room code format exactly (see roomManager.js:
-// ROOM_CODE_LENGTH and ROOM_CODE_CHARS). Validating the shape client-side
-// gives instant feedback, but the server remains the actual source of
-// truth for whether a code corresponds to a real room.
 const ROOM_CODE_LENGTH = 5;
 
 /**
- * The screen a player lands on after leaving the homepage.
- * `mode` is either 'solo', 'join', or a game id (e.g. 'chain-reaction').
- * `onBack` navigates back to the homepage.
- *
- * Adds the room code field, shown only in 'join' mode. The input
- * auto-uppercases as the player types since room codes are
- * case-insensitive on the backend but displayed/shared in uppercase.
- *
- * `onContinue` still isn't wired to anything real (backend connection is
- * a later piece) - it logs the collected name (+ room code, if relevant)
- * so it's clear during development that validation and submission work.
+ * `wsStatus` and `serverError` are now real, coming from App.jsx's live
+ * WebSocket connection - `serverError` covers cases like "room not
+ * found" or "room full" that only the backend can know about, and is
+ * displayed through the same error UI as local validation errors so the
+ * player sees one consistent error experience regardless of source.
  */
-export default function LobbyScreen({ mode, onBack, onContinue }) {
+export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, serverError }) {
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
 
   const isJoinMode = mode === 'join';
+
+  useEffect(() => {
+    if (serverError) {
+      setError(serverError);
+    }
+  }, [serverError]);
 
   function getTitle() {
     if (mode === 'solo') return 'PLAY SOLO';
@@ -48,8 +44,6 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
   }
 
   function handleRoomCodeChange(event) {
-    // Auto-uppercase and strip anything that isn't a letter/number, so a
-    // pasted code with stray spaces or lowercase letters still works.
     const cleaned = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     setRoomCode(cleaned.slice(0, ROOM_CODE_LENGTH));
     if (error) setError('');
@@ -65,6 +59,11 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
 
     if (isJoinMode && roomCode.length !== ROOM_CODE_LENGTH) {
       setError(`Room codes are ${ROOM_CODE_LENGTH} characters.`);
+      return;
+    }
+
+    if (wsStatus !== 'open') {
+      setError('Still connecting to the server - try again in a moment.');
       return;
     }
 
@@ -88,6 +87,12 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
 
   const isFormValid =
     name.trim().length > 0 && (!isJoinMode || roomCode.length === ROOM_CODE_LENGTH);
+
+  const connectionLabel =
+    wsStatus === 'connecting' ? 'CONNECTING TO SERVER...'
+    : wsStatus === 'error' ? 'CONNECTION ERROR - TRY REFRESHING'
+    : wsStatus === 'closed' ? 'DISCONNECTED'
+    : null;
 
   return (
     <div className="lobby-wrap">
@@ -133,6 +138,7 @@ export default function LobbyScreen({ mode, onBack, onContinue }) {
         )}
 
         {error && <div className="lobby-error">{error}</div>}
+        {connectionLabel && <div className="lobby-connection-status">{connectionLabel}</div>}
 
         <button
           className="lobby-continue-btn"
