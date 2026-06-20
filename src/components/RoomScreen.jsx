@@ -29,7 +29,7 @@ const MIN_PLAYERS_TO_START = 2;
  * players instead see the current difficulty as read-only text and a
  * "waiting for host" message.
  */
-export default function RoomScreen({ room, myId, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
+export default function RoomScreen({ room, myId, preselectedGame, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
   if (!room) return null;
 
   const isHost = myId !== null && myId === room.hostId;
@@ -52,21 +52,28 @@ export default function RoomScreen({ room, myId, onLeave, onSetGameType, onSetDi
           ))}
         </div>
 
-        <div className="room-section-label">GAME MODE</div>
-        {isHost ? (
-          <div className="room-gametype-row">
-            {GAME_TYPES.map((gt) => (
-              <button
-                key={gt.key}
-                className={`room-gametype-btn${room.gameType === gt.key ? ' selected' : ''}`}
-                onClick={() => onSetGameType(gt.key)}
-              >
-                {gt.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="room-difficulty-readonly">{gameTypeLabel(room.gameType)}</div>
+        {/* The game-mode picker is hidden when the player already chose a
+            specific game from the homepage (preselectedGame) - it's locked in.
+            It only appears when they came through generic "Create Room". */}
+        {!preselectedGame && (
+          <>
+            <div className="room-section-label">GAME MODE</div>
+            {isHost ? (
+              <div className="room-gametype-row">
+                {GAME_TYPES.map((gt) => (
+                  <button
+                    key={gt.key}
+                    className={`room-gametype-btn${room.gameType === gt.key ? ' selected' : ''}`}
+                    onClick={() => onSetGameType(gt.key)}
+                  >
+                    {gt.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="room-difficulty-readonly">{gameTypeLabel(room.gameType)}</div>
+            )}
+          </>
         )}
 
         <div className="room-section-label">DIFFICULTY</div>

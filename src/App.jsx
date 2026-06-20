@@ -6,6 +6,16 @@ import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
 import { useWebSocket } from './hooks/useWebSocket';
 
+// The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
+// for Join Room) or a specific game id picked from a homepage card. Only
+// these two are real backend game types we can lock the room into and
+// preselect; other cards fall back to the in-room mode picker.
+const PRESELECTABLE_GAMES = ['word-bomb', 'category-blitz'];
+
+function isPreselectableGame(mode) {
+  return PRESELECTABLE_GAMES.includes(mode);
+}
+
 /**
  * Top-level view state manager + the single shared WebSocket connection
  * for the whole app.
@@ -195,6 +205,13 @@ function App() {
       send('join_room', { code: roomCode, name });
     } else {
       send('create_room', { name });
+      // If the player picked a specific game from the homepage, lock the room
+      // into it right away. The server processes messages in order over the
+      // same socket, so create_room (which registers the room) is handled
+      // before this set_game_type lands.
+      if (isPreselectableGame(mode)) {
+        send('set_game_type', { gameType: mode });
+      }
     }
   }
 
@@ -256,6 +273,7 @@ function App() {
       <RoomScreen
         room={room}
         myId={myId}
+        preselectedGame={isPreselectableGame(lobbyMode) ? lobbyMode : null}
         onLeave={handleLeaveRoom}
         onSetGameType={handleSetGameType}
         onSetDifficulty={handleSetDifficulty}
