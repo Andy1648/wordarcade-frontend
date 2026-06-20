@@ -8,20 +8,33 @@
   box-shadow: 5px 5px 0 #000;
   overflow: hidden;
   height: 168px;
+  transform: rotate(var(--rot, 0deg));
   transition: transform 0.12s, box-shadow 0.12s;
 }
+
+/* Each card sits slightly cockeyed at rest, like flyers pinned crooked to
+   a wall. The angle lives in a custom property so the hover/active states
+   can flatten it to 0 while the disabled card can still hold its tilt. */
+.game-card:nth-child(1) { --rot: -1.5deg; }
+.game-card:nth-child(2) { --rot: 1deg; }
+.game-card:nth-child(3) { --rot: -2deg; }
+.game-card:nth-child(4) { --rot: 1.5deg; }
+.game-card:nth-child(5) { --rot: -1deg; }
+.game-card:nth-child(6) { --rot: 2deg; }
 
 .game-card.dashed-border {
   border-style: dashed;
 }
 
+/* Snap to attention: straighten out and scale up rather than lift, so the
+   hovered card squares itself against the crooked crowd. */
 .game-card:hover {
-  transform: translate(-2px, -2px);
+  transform: rotate(0deg) scale(1.05);
   box-shadow: 7px 7px 0 #000;
 }
 
 .game-card:active {
-  transform: translate(3px, 3px);
+  transform: rotate(0deg) scale(0.98);
   box-shadow: 1px 1px 0 #000;
 }
 
@@ -98,13 +111,16 @@
   border: 2.5px solid #000;
   margin-top: auto;
   align-self: flex-start;
+  transform: rotate(-2deg);
 }
 
 .game-card.disabled {
   cursor: default;
 }
 
+/* The disabled card keeps its resting tilt on hover (no snap-to-attention,
+   since it isn't selectable). */
 .game-card.disabled:hover {
-  transform: none;
+  transform: rotate(var(--rot, 0deg));
   box-shadow: 5px 5px 0 #000;
 }
