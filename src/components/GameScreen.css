@@ -505,6 +505,279 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* ============================================================= */
+/* ==================  CATEGORY BLITZ LAYOUT  ==================== */
+/* ============================================================= */
+
+/* ---- Category display (the big graffiti tag) ---- */
+
+.cb-category-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #C9B8E8;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.cb-category-display {
+  font-family: 'Bungee', cursive;
+  font-size: 30px;
+  line-height: 1.1;
+  color: #FFE94A;
+  background: #0d0618;
+  border: 4px solid #000;
+  box-shadow: 5px 5px 0 #000;
+  border-radius: 4px;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  padding: 18px 14px;
+  margin-bottom: 18px;
+  transform: rotate(-1deg) skewX(-2deg);
+  word-break: break-word;
+}
+
+/* ---- Shared section labels for the CB sub-sections ---- */
+
+.cb-section-label {
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  color: #FF2EC4;
+  margin-bottom: 8px;
+}
+
+/* ---- Your answers ---- */
+
+.cb-my-answers {
+  margin-bottom: 18px;
+}
+
+.cb-answers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 110px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.cb-answer-chip {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: #000;
+  background: #2EFFE0;
+  border: 2.5px solid #000;
+  border-radius: 3px;
+  padding: 3px 7px;
+  transform: rotate(-1deg);
+}
+
+.cb-answers-list .cb-answer-chip:nth-child(even),
+.cb-result-answers .cb-answer-chip:nth-child(even) {
+  transform: rotate(1.5deg);
+}
+
+/* ---- Other players' progress (counts only) ---- */
+
+.cb-progress {
+  margin-bottom: 4px;
+}
+
+.cb-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #2a1450;
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  transform: skewX(-1deg);
+}
+
+.cb-progress-name {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #fff;
+  word-break: break-word;
+}
+
+.cb-progress-count {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: #2EFFE0;
+  flex-shrink: 0;
+}
+
+/* ---- Between-rounds results ---- */
+
+.cb-round-results {
+  margin-bottom: 16px;
+}
+
+.cb-results-title {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  transform: skewX(-3deg);
+  margin-bottom: 6px;
+}
+
+.cb-results-category {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #FFE94A;
+  text-align: center;
+  margin-bottom: 16px;
+  word-break: break-word;
+}
+
+.cb-result-player {
+  background: #2a1450;
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 10px;
+  margin-bottom: 10px;
+  transform: rotate(-0.5deg);
+}
+
+.cb-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cb-result-name {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  word-break: break-word;
+}
+
+.cb-result-scores {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cb-result-round {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #000;
+  background: #2EFFE0;
+  border: 2px solid #000;
+  padding: 2px 6px;
+}
+
+.cb-result-total {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  color: #C9B8E8;
+}
+
+.cb-result-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cb-next-round {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  text-align: center;
+  transform: skewX(-2deg);
+}
+
+/* ---- Final scoreboard (inside the game-over card) ---- */
+
+.cb-scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.cb-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #2a1450;
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 9px 10px;
+  transform: rotate(-0.5deg);
+}
+
+/* The winner row pops in yellow with a heavier outline-shadow. */
+.cb-score-row.winner {
+  background: #FFE94A;
+  box-shadow: 4px 4px 0 #000;
+  transform: rotate(0deg) scale(1.03);
+}
+
+.cb-score-rank {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.cb-score-row.winner .cb-score-rank {
+  color: #fff;
+}
+
+.cb-score-name {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  word-break: break-word;
+}
+
+.cb-score-row.winner .cb-score-name {
+  color: #000;
+}
+
+.cb-score-pts {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #2EFFE0;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  flex-shrink: 0;
+}
+
+.cb-score-row.winner .cb-score-pts {
+  color: #000;
+  -webkit-text-stroke: 0;
+}
+
 /* Responsive: let player cards stack into a tighter grid on narrow screens
    rather than squeezing below readable width. */
 @media (max-width: 480px) {

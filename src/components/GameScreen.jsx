@@ -30,9 +30,15 @@ const REJECTION_MESSAGES = {
   too_short_category: 'TOO SHORT — NEED 2+ LETTERS',
   missing_combo: 'MUST CONTAIN [combo]',
   already_used: 'ALREADY USED — TRY AGAIN',
+  already_said: 'ALREADY SAID — TRY ANOTHER',
   not_a_word: 'NOT A REAL WORD',
   not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
 };
+
+// Category Blitz is always a fixed 3 rounds (mirrors the backend's
+// TOTAL_ROUNDS); the round_start payload reports the current round but not
+// the total, so the total lives here.
+const TOTAL_CATEGORY_ROUNDS = 3;
 
 function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
   // Category answers have a lower length floor, so reuse a mode-specific
@@ -66,7 +72,15 @@ export default function GameScreen({
   timerSeconds,
   lastWordResult,
   gameOver,
+  roomPlayers,
+  categoryRound,
+  myAnswers,
+  playerProgress,
+  roundResults,
+  categoryScores,
+  categoryTotals,
   onSubmitWord,
+  onSubmitAnswer,
   onSkipTurn,
   onLeave,
 }) {
@@ -83,6 +97,29 @@ export default function GameScreen({
       inputRef.current.focus();
     }
   }, [inputEnabled]);
+
+  // Category Blitz is a completely different (simultaneous, round-based)
+  // experience, so it renders as its own component with its own state rather
+  // than threading conditionals through the turn-based Word Bomb layout.
+  if (gameType === 'category-blitz') {
+    return (
+      <CategoryBlitzScreen
+        myId={myId}
+        timerSeconds={timerSeconds}
+        lastWordResult={lastWordResult}
+        gameOver={gameOver}
+        roomPlayers={roomPlayers || []}
+        categoryRound={categoryRound}
+        myAnswers={myAnswers || []}
+        playerProgress={playerProgress || {}}
+        roundResults={roundResults}
+        categoryScores={categoryScores}
+        categoryTotals={categoryTotals || {}}
+        onSubmitAnswer={onSubmitAnswer}
+        onLeave={onLeave}
+      />
+    );
+  }
 
   // Until the first turn_update lands there's nothing to render.
   if (!gameState) {
@@ -315,6 +352,273 @@ export default function GameScreen({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * The Category Blitz play screen - a simultaneous, round-based mode with a
+ * layout entirely separate from Word Bomb. It has three faces, chosen by the
+ * incoming server state:
+ *
+ *   - GAME OVER (gameOver set): final scoreboard, winner highlighted.
+ *   - DURING A ROUND (categoryRound set): the category, a draining timer, an
+ *     always-on input, your own growing answer list, and a privacy-safe count
+ *     of how many answers each opponent has.
+ *   - BETWEEN ROUNDS (roundResults set, no active round): everyone's answers
+ *     revealed with per-round and cumulative scores, plus a 5s countdown note.
+ */
+function CategoryBlitzScreen({
+  myId,
+  timerSeconds,
+  lastWordResult,
+  gameOver,
+  roomPlayers,
+  categoryRound,
+  myAnswers,
+  playerProgress,
+  roundResults,
+  categoryScores,
+  categoryTotals,
+  onSubmitAnswer,
+  onLeave,
+}) {
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef(null);
+
+  const roundActive = !!categoryRound && !gameOver;
+
+  // Auto-focus the input whenever a round becomes (or stays) active - no
+  // turn-taking here, so the player can fire answers continuously.
+  useEffect(() => {
+    if (roundActive && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [roundActive, categoryRound && categoryRound.round]);
+
+  function submit() {
+    const answer = draft.trim();
+    if (!answer || !roundActive) return;
+    onSubmitAnswer(answer);
+    setDraft('');
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      submit();
+    }
+  }
+
+  // ---- GAME OVER: final scoreboard ----
+  if (gameOver) {
+    const scores = [...(categoryScores || gameOver.finalScores || [])].sort(
+      (a, b) => b.score - a.score
+    );
+    const iWon = gameOver.winnerId === myId;
+    const winnerName = (scores.find((s) => s.id === gameOver.winnerId) || {}).name;
+
+    return (
+      <div className="game-wrap">
+        <div className="game-over-overlay">
+          <div className="game-over-card">
+            <div className={`game-over-title${iWon ? ' win' : ''}`}>
+              {iWon ? 'YOU WIN!' : 'GAME OVER'}
+            </div>
+            {!iWon && (
+              <div className="game-over-winner">
+                {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
+              </div>
+            )}
+            <div className="cb-scoreboard">
+              {scores.map((s, i) => (
+                <div
+                  key={s.id}
+                  className={`cb-score-row${s.id === gameOver.winnerId ? ' winner' : ''}`}
+                >
+                  <span className="cb-score-rank">{i + 1}</span>
+                  <span className="cb-score-name">
+                    {s.name}
+                    {s.id === myId && <span className="game-player-you">YOU</span>}
+                  </span>
+                  <span className="cb-score-pts">{s.score}</span>
+                </div>
+              ))}
+            </div>
+            <button className="game-over-leave" onClick={onLeave}>
+              LEAVE
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- DURING A ROUND ----
+  if (categoryRound) {
+    const maxTimer = categoryRound.timerSeconds || 1;
+    const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
+    const timerColor = ratio > 0.6 ? '#2EFFE0' : ratio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+    const others = roomPlayers.filter((p) => p.id !== myId);
+
+    return (
+      <div className="game-wrap">
+        <div className="game-stage">
+          <div className="game-header">
+            <div className="game-title">CATEGORY BLITZ</div>
+            <div className="game-header-right">
+              <div className="game-meta">
+                <span className="game-meta-round">
+                  ROUND {categoryRound.round}/{TOTAL_CATEGORY_ROUNDS}
+                </span>
+              </div>
+              <button className="game-leave-btn" onClick={onLeave}>
+                LEAVE
+              </button>
+            </div>
+          </div>
+
+          <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
+          <div className="cb-category-display">
+            {(categoryRound.category || '').toUpperCase()}
+          </div>
+
+          <div className="game-timer-row">
+            <div className="game-timer-track">
+              <div
+                className="game-timer-fill"
+                style={{ width: `${ratio * 100}%`, background: timerColor }}
+              />
+            </div>
+            <div className="game-timer-num">{timerSeconds}s</div>
+          </div>
+
+          <div className="game-input-row">
+            <input
+              ref={inputRef}
+              className="game-input"
+              type="text"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type an answer..."
+              maxLength={32}
+              autoComplete="off"
+              spellCheck="false"
+            />
+            <button className="game-send-btn" onClick={submit}>
+              SEND
+            </button>
+          </div>
+
+          {lastWordResult && (
+            <div
+              className={`game-toast ${
+                lastWordResult.accepted ? 'accepted' : 'rejected'
+              }`}
+            >
+              {lastWordResult.accepted
+                ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
+                : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+            </div>
+          )}
+
+          <div className="cb-my-answers">
+            <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
+            <div className="cb-answers-list">
+              {myAnswers.length === 0 ? (
+                <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
+              ) : (
+                myAnswers.map((answer, i) => (
+                  <span key={`${answer}-${i}`} className="cb-answer-chip">
+                    {answer.toUpperCase()}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="cb-progress">
+            <div className="cb-section-label">OTHER PLAYERS</div>
+            {others.length === 0 ? (
+              <span className="game-used-empty">NO OTHER PLAYERS</span>
+            ) : (
+              others.map((p) => (
+                <div key={p.id} className="cb-progress-row">
+                  <span className="cb-progress-name">{p.name}</span>
+                  <span className="cb-progress-count">
+                    {playerProgress[p.id] || 0} answers
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- BETWEEN ROUNDS: results + countdown ----
+  if (roundResults) {
+    return (
+      <div className="game-wrap">
+        <div className="game-stage">
+          <div className="game-header">
+            <div className="game-title">CATEGORY BLITZ</div>
+            <button className="game-leave-btn" onClick={onLeave}>
+              LEAVE
+            </button>
+          </div>
+
+          <div className="cb-round-results">
+            <div className="cb-results-title">ROUND {roundResults.round} RESULTS</div>
+            <div className="cb-results-category">
+              {(roundResults.category || '').toUpperCase()}
+            </div>
+
+            {(roundResults.playerResults || []).map((pr) => (
+              <div key={pr.id} className="cb-result-player">
+                <div className="cb-result-head">
+                  <span className="cb-result-name">
+                    {pr.name}
+                    {pr.id === myId && <span className="game-player-you">YOU</span>}
+                  </span>
+                  <span className="cb-result-scores">
+                    <span className="cb-result-round">+{pr.roundScore}</span>
+                    <span className="cb-result-total">
+                      {categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore} TOTAL
+                    </span>
+                  </span>
+                </div>
+                <div className="cb-result-answers">
+                  {pr.answers.length === 0 ? (
+                    <span className="game-used-empty">NO ANSWERS</span>
+                  ) : (
+                    pr.answers.map((answer, i) => (
+                      <span key={`${answer}-${i}`} className="cb-answer-chip">
+                        {answer.toUpperCase()}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="cb-next-round">
+            {roundResults.round >= TOTAL_CATEGORY_ROUNDS
+              ? 'FINAL SCORES IN 5 SECONDS...'
+              : 'NEXT ROUND IN 5 SECONDS...'}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Brief gap between game_started and the first round_start.
+  return (
+    <div className="game-wrap">
+      <div className="game-loading">STARTING ROUND...</div>
     </div>
   );
 }
