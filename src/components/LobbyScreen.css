@@ -159,3 +159,26 @@
   transform: none;
   box-shadow: 5px 5px 0 #000;
 }
+
+/* ---- Responsive ---- */
+
+/* Phones: tighten the box padding, scale the title, and guarantee the
+   continue button is a comfortable tap target. (max-width 420px keeps the
+   box readable on large screens, so no large-screen tweaks are needed.) */
+@media (max-width: 600px) {
+  .lobby-wrap {
+    padding: 16px;
+  }
+
+  .lobby-box {
+    padding: 24px 18px;
+  }
+
+  .lobby-title {
+    font-size: 26px;
+  }
+
+  .lobby-continue-btn {
+    min-height: 44px;
+  }
+}

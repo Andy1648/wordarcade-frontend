@@ -265,3 +265,28 @@
   transform: none;
   box-shadow: 4px 4px 0 #000;
 }
+
+/* ---- Responsive ---- */
+
+/* Phones: ease the box padding, shrink the big room code so it never
+   overflows, and make the primary buttons full-height tap targets. The
+   420px max-width already keeps things tidy on large screens. */
+@media (max-width: 600px) {
+  .room-wrap {
+    padding: 16px;
+  }
+
+  .room-box {
+    padding: 24px 18px;
+  }
+
+  .room-code {
+    font-size: 34px;
+    letter-spacing: 5px;
+  }
+
+  .room-start-btn,
+  .room-leave-btn {
+    min-height: 44px;
+  }
+}

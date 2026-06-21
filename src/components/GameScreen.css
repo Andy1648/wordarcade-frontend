@@ -380,6 +380,8 @@
 
 .bomb-svg {
   display: block;
+  width: 150px;
+  height: auto;
   pointer-events: none;
 }
 
@@ -1326,14 +1328,61 @@
   100% { transform: scale(1.5) rotate(var(--cd-rot, 0deg)); opacity: 0; }
 }
 
-/* Responsive: let player cards stack into a tighter grid on narrow screens
-   rather than squeezing below readable width. */
-@media (max-width: 480px) {
-  .game-player-slot {
-    min-width: calc(50% - 5px);
-  }
+/* ============================================================= */
+/* ========================  RESPONSIVE  ======================= */
+/* ============================================================= */
 
-  .countdown-text {
-    font-size: 84px;
+/* Large screens: the stage already caps at 560px so it never stretches across
+   an ultrawide - just give the page a little more side breathing room. */
+@media (min-width: 1200px) {
+  .game-wrap {
+    padding: 32px 40px;
   }
+}
+
+/* Tablets and phones. */
+@media (max-width: 600px) {
+  .game-wrap { padding: 16px; }
+  .game-stage { padding: 18px 14px 20px; }
+
+  /* Player cards drop to two per row instead of one long line. */
+  .game-player-slot { min-width: calc(50% - 5px); }
+
+  /* Big Bungee type scales down ~80%. */
+  .game-title { font-size: 21px; }
+  .game-combo { font-size: 46px; letter-spacing: 2px; }
+  .game-combo.category { font-size: 22px; }
+  .cb-category-display { font-size: 24px; padding: 14px 12px; }
+  .cb-results-title { font-size: 16px; }
+  .game-over-title { font-size: 28px; }
+  .game-over-title.win { font-size: 34px; }
+  .countdown-text { font-size: 84px; }
+
+  /* Smaller bomb so it fits comfortably on a phone. */
+  .bomb-svg { width: 120px; }
+
+  /* Comfortable touch targets (Apple's 44px minimum). */
+  .game-input,
+  .game-send-btn,
+  .game-skip-btn,
+  .game-over-rematch,
+  .game-over-leave { min-height: 44px; }
+  .game-leave-btn { min-height: 40px; }
+
+  /* Game-over card eases its padding to fit narrow screens. */
+  .game-over-card { padding: 24px 18px; }
+}
+
+/* Very narrow phones: stack SEND / SKIP under the input instead of beside it.
+   Override the input's flex-grow so it doesn't stretch tall in the column. */
+@media (max-width: 420px) {
+  .game-input-row { flex-direction: column; }
+  .game-input-row .game-input { flex: none; width: 100%; }
+  .game-input-row .game-send-btn,
+  .game-input-row .game-skip-btn {
+    width: 100%;
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+  .countdown-text { font-size: 64px; }
 }

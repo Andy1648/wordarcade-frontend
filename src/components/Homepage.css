@@ -196,10 +196,31 @@
   color: #000;
 }
 
-/* Responsive: stack to 2 columns on narrow viewports rather than letting
-   cards get too cramped to read at 3-wide. */
-@media (max-width: 480px) {
+/* ---- Responsive ---- */
+
+/* Phones: stack the cards one per row so each stays readable, shrink the big
+   graffiti type ~80%, and give the action buttons full-height tap targets. */
+@media (max-width: 600px) {
+  .homepage-stage { padding: 18px 14px 0; }
+
   .homepage-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+  }
+
+  .homepage-logo {
+    font-size: 34px;
+    -webkit-text-stroke: 4px #000;
+  }
+
+  .homepage-section-label {
+    font-size: 12px;
+  }
+
+  .homepage-bottom-bar {
+    padding: 16px 14px 20px;
+  }
+
+  .homepage-btn {
+    min-height: 44px;
   }
 }
