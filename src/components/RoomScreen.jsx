@@ -1,5 +1,6 @@
 // RoomScreen.jsx
 import { useState, useEffect } from 'react';
+import WaveText from './WaveText';
 import './RoomScreen.css';
 
 // Each difficulty carries a short timer blurb so players know what they're
@@ -76,7 +77,9 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
     <div className="room-wrap">
       <div className="room-box">
         <div className="room-label">ROOM CODE</div>
-        <div className="room-code">{room.code}</div>
+        <div className="room-code">
+          <WaveText text={room.code} />
+        </div>
         <div className="room-hint">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
 
         <div className="room-players-label">PLAYERS ({room.players.length})</div>

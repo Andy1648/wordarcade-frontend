@@ -1,6 +1,7 @@
 // LobbyScreen.jsx
 import { useState, useEffect } from 'react';
 import { GAMES } from '../gameData';
+import WaveText from './WaveText';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
@@ -112,7 +113,9 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
           ← BACK
         </button>
 
-        <div className="lobby-title">{getTitle()}</div>
+        <div className="lobby-title">
+          <WaveText text={getTitle()} />
+        </div>
         <div className="lobby-subtitle">{getSubtitle()}</div>
 
         <label className="lobby-field-label" htmlFor="player-name-input">

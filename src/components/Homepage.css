@@ -236,3 +236,66 @@
     min-height: 44px;
   }
 }
+
+/* ============================================================= */
+/* ====================  IDLE ANIMATIONS  ====================== */
+/* ============================================================= */
+
+/* Tagline sticker: a gentle horizontal sway. The base rotate(-3deg)/skewX
+   sticker pose is baked into every keyframe so the tilt is preserved. */
+.homepage-tagline {
+  animation: tag-sway 2.5s ease-in-out infinite;
+}
+
+@keyframes tag-sway {
+  0% { transform: translateX(0) rotate(-3deg) skewX(-6deg); }
+  50% { transform: translateX(3px) rotate(-2deg) skewX(-6deg); }
+  100% { transform: translateX(0) rotate(-3deg) skewX(-6deg); }
+}
+
+/* Section label: a quiet opacity breathe (transform-free, so its skew stays). */
+.homepage-section-label {
+  animation: label-pulse 2.2s ease-in-out infinite;
+}
+
+/* Action buttons: a subtle scale "breathe", the two offset so they never pulse
+   in unison. skewX(-2deg) (the button's resting pose) is kept in the keyframe.
+   Hover/disabled cancel the loop so the press feedback and dim state win. */
+.homepage-btn {
+  animation: btn-breathe 2.1s ease-in-out infinite;
+}
+
+.homepage-btn-join {
+  animation-duration: 2.4s;
+  animation-delay: 0.3s;
+}
+
+.homepage-btn:hover,
+.homepage-btn:disabled,
+.homepage-btn.disabled {
+  animation: none;
+}
+
+@keyframes btn-breathe {
+  0% { transform: skewX(-2deg) scale(1); }
+  50% { transform: skewX(-2deg) scale(1.02); }
+  100% { transform: skewX(-2deg) scale(1); }
+}
+
+/* Paint splatters drift in a very slow, continuous rotation (linear so the spin
+   is constant). Alternating directions and prime-ish durations keep them from
+   ever lining up. */
+.homepage-splatter-1 { animation: splat-drift 72s linear infinite; }
+.homepage-splatter-2 { animation: splat-drift-rev 84s linear infinite; }
+.homepage-splatter-3 { animation: splat-drift 63s linear infinite; }
+.homepage-splatter-4 { animation: splat-drift-rev 90s linear infinite; }
+
+@keyframes splat-drift {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes splat-drift-rev {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}

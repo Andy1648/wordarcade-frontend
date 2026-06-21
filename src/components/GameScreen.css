@@ -1786,3 +1786,50 @@
   }
   .countdown-text { font-size: 64px; }
 }
+
+/* ============================================================= */
+/* ============  WORD BOMB - IDLE ANIMATIONS  ================= */
+/* ============================================================= */
+
+/* The combo prompt softly pulses so it reads as "alive, waiting for input".
+   The base skewX(-3deg) is kept in every keyframe so the prompt's slant holds. */
+.game-combo {
+  animation: combo-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes combo-pulse {
+  0% { transform: skewX(-3deg) scale(1); }
+  50% { transform: skewX(-3deg) scale(1.03); }
+  100% { transform: skewX(-3deg) scale(1); }
+}
+
+/* "TYPE A WORD CONTAINING" label: a quiet opacity breathe. */
+.game-combo-label {
+  animation: label-pulse 2.3s ease-in-out infinite;
+}
+
+/* The active player's card gets a pronounced bob + pulse to spotlight whose
+   turn it is (resting pose for .current is rotate(0) scale(1.05) - baked in). */
+.game-player-card.current {
+  animation: player-active-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes player-active-pulse {
+  0% { transform: translateY(0) rotate(0deg) scale(1.05); }
+  50% { transform: translateY(-3px) rotate(0deg) scale(1.07); }
+  100% { transform: translateY(0) rotate(0deg) scale(1.05); }
+}
+
+/* Everyone else (alive, not the active player, not mid/post elimination) rocks
+   subtly around their resting -1deg tilt. The :not() guards keep the
+   elimination animation and the static eliminated pose untouched. */
+.game-player-card:not(.current):not(.eliminated):not(.eliminating) {
+  animation: player-rock 2.2s ease-in-out infinite;
+}
+
+@keyframes player-rock {
+  0% { transform: rotate(-1deg); }
+  25% { transform: rotate(0deg); }
+  75% { transform: rotate(-2deg); }
+  100% { transform: rotate(-1deg); }
+}

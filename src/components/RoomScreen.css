@@ -291,3 +291,59 @@
     min-height: 44px;
   }
 }
+
+/* ============================================================= */
+/* ====================  IDLE ANIMATIONS  ====================== */
+/* ============================================================= */
+
+/* Player chips rock gently side to side, staggered so the list looks alive
+   rather than a synchronized row. */
+.room-player-chip {
+  animation: chip-rock 2s ease-in-out infinite;
+}
+
+.room-player-chip:nth-child(2n) {
+  animation-duration: 2.3s;
+  animation-delay: 0.2s;
+}
+
+.room-player-chip:nth-child(3n) {
+  animation-duration: 2.6s;
+  animation-delay: 0.45s;
+}
+
+@keyframes chip-rock {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  75% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Game-mode + difficulty buttons share the homepage "breathe", offset per
+   button. Hover cancels it so the press feedback (translate) wins. */
+.room-gametype-btn,
+.room-difficulty-btn {
+  animation: room-btn-breathe 2.1s ease-in-out infinite;
+}
+
+.room-gametype-btn:nth-child(2),
+.room-difficulty-btn:nth-child(2) {
+  animation-duration: 2.4s;
+  animation-delay: 0.25s;
+}
+
+.room-difficulty-btn:nth-child(3) {
+  animation-duration: 2.7s;
+  animation-delay: 0.5s;
+}
+
+.room-gametype-btn:hover,
+.room-difficulty-btn:hover {
+  animation: none;
+}
+
+@keyframes room-btn-breathe {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}

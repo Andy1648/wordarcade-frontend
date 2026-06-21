@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { GAMES } from '../gameData';
 import GameCard from './GameCard';
+import WaveText from './WaveText';
 import './Homepage.css';
 
 /**
@@ -85,7 +86,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
         <PaintSplatter className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
         <PaintSplatter className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
 
-        <div className="homepage-logo">WORDARCADE</div>
+        <div className="homepage-logo">
+          <WaveText text="WORDARCADE" />
+        </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
 

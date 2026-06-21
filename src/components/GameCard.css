@@ -10,6 +10,31 @@
   height: 168px;
   transform: rotate(var(--rot, 0deg));
   transition: transform 0.12s, box-shadow 0.12s;
+  /* Slow idle float - each card drifts up a few px and rocks half a degree off
+     its resting --rot tilt. Per-card durations/delays below keep them out of
+     sync. Hover cancels the loop so the snap-to-attention transform wins. */
+  animation: card-float 3.2s ease-in-out infinite;
+}
+
+@keyframes card-float {
+  0% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+  50% { transform: translateY(-5px) rotate(calc(var(--rot, 0deg) + 0.5deg)); }
+  100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+}
+
+/* Stagger each card's float so they bob independently. */
+.game-card:nth-child(1) { animation-duration: 3s; animation-delay: 0s; }
+.game-card:nth-child(2) { animation-duration: 3.4s; animation-delay: 0.4s; }
+.game-card:nth-child(3) { animation-duration: 3.8s; animation-delay: 0.8s; }
+.game-card:nth-child(4) { animation-duration: 3.3s; animation-delay: 0.2s; }
+.game-card:nth-child(5) { animation-duration: 3.6s; animation-delay: 0.6s; }
+.game-card:nth-child(6) { animation-duration: 4s; animation-delay: 1s; }
+
+/* Hovering (or pressing) freezes the float so the existing hover/active
+   transforms below take over cleanly. */
+.game-card:hover,
+.game-card:active {
+  animation: none;
 }
 
 /* Each card sits slightly cockeyed at rest, like flyers pinned crooked to
