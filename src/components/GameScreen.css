@@ -197,9 +197,9 @@
   transform: translateX(-50%) rotate(-3deg);
   font-family: 'Bungee', cursive;
   font-size: 8px;
-  color: #000;
-  background: #FFE94A;
-  border: 2.5px solid #000;
+  color: #FFE94A;
+  background: #000;
+  border: 2.5px solid #FFE94A;
   padding: 2px 6px;
   white-space: nowrap;
   z-index: 2;
@@ -248,8 +248,10 @@
   100% { opacity: 0; }
 }
 
+/* Active player runs warm (orange) now that the bomb theme owns Word Bomb -
+   the danger is "in their hands". */
 .game-player-card.current {
-  background: #2EFFE0;
+  background: #FF6B3D;
   transform: rotate(0deg) scale(1.05);
 }
 
@@ -365,13 +367,194 @@
   100% { transform: translateX(1px); }
 }
 
+/* ============================================================= */
+/* ==================  WORD BOMB - THE BOMB  ==================== */
+/* ============================================================= */
+
+/* The bomb replaces the timer bar for Word Bomb; its fuse IS the timer. */
+.bomb-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.bomb-svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* ---- Bomb-pass throw: the bomb lunges toward the next player, then snaps
+   back to center. Replays only while passDir is set (300ms). ---- */
+.bomb-passer {
+  transform-origin: center;
+}
+
+.bomb-passer.pass-left {
+  animation: bomb-throw-left 300ms ease-out;
+}
+
+.bomb-passer.pass-right {
+  animation: bomb-throw-right 300ms ease-out;
+}
+
+@keyframes bomb-throw-left {
+  0% { transform: translateX(0) rotate(0); }
+  50% { transform: translateX(-44px) rotate(-12deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes bomb-throw-right {
+  0% { transform: translateX(0) rotate(0); }
+  50% { transform: translateX(44px) rotate(12deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+/* ---- Tension states (set by remaining-time tier) ---- */
+.bomb-body-wrap {
+  transform-origin: center;
+  line-height: 0;
+}
+
+/* Calm: a barely-there idle sway. */
+.bomb-body-wrap.calm {
+  animation: bomb-idle 2s ease-in-out infinite;
+}
+
+/* Warning: a more insistent wobble. */
+.bomb-body-wrap.warning {
+  animation: bomb-wobble 1s ease-in-out infinite;
+}
+
+/* Critical: rapid shake + slight scale pulse. */
+.bomb-body-wrap.critical {
+  animation: bomb-critical 200ms linear infinite;
+}
+
+@keyframes bomb-idle {
+  0% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+  100% { transform: rotate(-1deg); }
+}
+
+@keyframes bomb-wobble {
+  0% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+  100% { transform: rotate(-3deg); }
+}
+
+@keyframes bomb-critical {
+  0% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-3px, 2px) scale(1.03); }
+  50% { transform: translate(3px, -2px) scale(1.05); }
+  75% { transform: translate(-2px, -2px) scale(1.03); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* Flame flicker (critical) - opacity only, so it never fights the flame's
+   inline translate/scale positioning transform. */
+.bomb-flame-flicker {
+  animation: flame-flicker 220ms ease-in-out infinite;
+}
+
+@keyframes flame-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Spark particles around the flame in the critical state. */
+.bomb-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bomb-spark-flicker 300ms ease-in-out infinite;
+}
+
+.bomb-spark.s2 { animation-delay: 100ms; }
+.bomb-spark.s3 { animation-delay: 200ms; }
+
+@keyframes bomb-spark-flicker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(0.5); }
+}
+
+/* ============================================================= */
+/* ===============  WORD BOMB - EXPLOSION (timeout)  =========== */
+/* ============================================================= */
+
+/* Full-screen, click-through layer for the detonation. Above the stage and
+   bomb, below the countdown overlay. */
+.explosion-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.explosion-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: screen-flash 200ms ease-out forwards;
+}
+
+@keyframes screen-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+/* Expanding blast rings - flat orange (outer) + delayed yellow (inner), each
+   with the signature thick black outline. Centered via margins so the scale
+   grows from the middle. */
+.explosion-blast {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 50%;
+  background: #FF6B3D;
+  border: 5px solid #000;
+  animation: blast-expand 800ms ease-out forwards;
+}
+
+.explosion-blast.inner {
+  width: 100px;
+  height: 100px;
+  margin: -50px 0 0 -50px;
+  background: #FFE94A;
+  animation: blast-expand 700ms ease-out 100ms forwards;
+}
+
+@keyframes blast-expand {
+  0% { transform: scale(0); opacity: 1; }
+  70% { transform: scale(3); opacity: 0.8; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+/* Debris shards flung outward (each carries its own --dx/--dy + size inline). */
+.explosion-debris {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  animation: debris-fly 800ms ease-out forwards;
+}
+
+@keyframes debris-fly {
+  0% { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx, 0), var(--dy, 0)) rotate(720deg) scale(0.3); opacity: 0; }
+}
+
 /* ---- Combo prompt ---- */
 
 /* The big centered bomb-fuse prompt: the combo every word this turn must
-   contain. Yellow + heavily outlined so it dominates the screen. */
+   contain. Warm dark box with an orange outline so it reads as "danger" -
+   yellow combo text glows against it. */
 .game-combo-box {
-  background: #0d0618;
-  border: 4px solid #000;
+  background: #1a1008;
+  border: 4px solid #FF6B3D;
   border-radius: 4px;
   box-shadow: 5px 5px 0 #000;
   padding: 16px 12px;
@@ -385,7 +568,7 @@
   font-weight: 700;
   font-size: 10px;
   letter-spacing: 1px;
-  color: #C9B8E8;
+  color: #FF6B3D;
   margin-bottom: 8px;
 }
 
@@ -421,7 +604,7 @@
 .game-used-label {
   font-family: 'Bungee', cursive;
   font-size: 9px;
-  color: #FF2EC4;
+  color: #FF6B3D;
   margin-bottom: 8px;
 }
 
@@ -439,7 +622,7 @@
   font-weight: 700;
   font-size: 11px;
   color: #1a0b2e;
-  background: #C9B8E8;
+  background: #E8B98A;
   border: 2.5px solid #000;
   border-radius: 3px;
   padding: 3px 7px;

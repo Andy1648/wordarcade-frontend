@@ -256,6 +256,165 @@ function WobbleText({ text }) {
 }
 
 /**
+ * Word Bomb's centerpiece: a cartoon bomb whose fuse length IS the turn timer.
+ * Newgrounds/graffiti style - flat solid fills, thick black outlines, a hard
+ * cel highlight, no gradients or glows. As time runs out the fuse shrinks, the
+ * flame grows, and the bomb escalates through three tension tiers (calm /
+ * warning / critical) driven by the bomb-* keyframes in GameScreen.css. The
+ * live seconds count sits inside the body and grows bolder as the clock drains.
+ */
+function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
+  // Fraction of time remaining (full while the 3-2-1 intro is still up).
+  const ratio = showCountdown
+    ? 1
+    : Math.max(0, Math.min(1, timerSeconds / (maxTimer || 1)));
+
+  // Tension tier drives the wobble/shake class plus a warmer body fill, a
+  // bigger flame, and (critical only) spark particles.
+  const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
+  const bodyFill =
+    tension === 'calm' ? '#2a2a2a' : tension === 'warning' ? '#3a2a2a' : '#4a2424';
+  const flameScale = tension === 'calm' ? 0.85 : tension === 'warning' ? 1.15 : 1.45;
+  const critical = tension === 'critical';
+
+  // Fuse shrinks toward the body as time drains; the flame rides its burning
+  // tip, curving off to one side for a bit of cartoon energy.
+  const fuseLen = 8 + 40 * ratio;
+  const tipX = 75 + 18 * ratio;
+  const tipY = 50 - fuseLen;
+  const ctrlX = 75 + 30 * ratio;
+  const ctrlY = 50 - fuseLen * 0.5;
+  const fusePath = `M75 50 Q ${ctrlX.toFixed(1)} ${ctrlY.toFixed(1)} ${tipX.toFixed(1)} ${tipY.toFixed(1)}`;
+
+  // Seconds grow bigger/bolder as time runs down.
+  const secondsFontSize = 32 + (1 - ratio) * 22;
+
+  return (
+    <div className={`bomb-body-wrap ${tension}`}>
+      <svg className="bomb-svg" viewBox="0 0 150 175" width="140" aria-hidden="true">
+        {/* Fuse drawn twice: a fat black outline first, the brown rope on top. */}
+        <path d={fusePath} fill="none" stroke="#000" strokeWidth="10" strokeLinecap="round" />
+        <path d={fusePath} fill="none" stroke="#6b4a2a" strokeWidth="5" strokeLinecap="round" />
+
+        {/* Connector cap where the fuse enters the body. */}
+        <rect x="64" y="46" width="22" height="22" rx="3" fill="#1a1a1a" stroke="#000" strokeWidth="5" />
+
+        {/* Bomb body. */}
+        <circle cx="75" cy="115" r="50" fill={bodyFill} stroke="#000" strokeWidth="5" />
+
+        {/* Flat cel highlight on the upper-left - a solid polygon, not a gradient. */}
+        <path
+          d="M48 102 C 48 80 63 71 80 71 C 67 76 59 90 59 106 C 55 108 50 107 48 102 Z"
+          fill="#444"
+        />
+
+        {/* Live seconds inside the body (white, heavy black outline). */}
+        <text
+          x="75"
+          y="117"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontFamily="'Bungee', cursive"
+          fontSize={secondsFontSize}
+          fill="#fff"
+          stroke="#000"
+          strokeWidth="4"
+          paintOrder="stroke"
+        >
+          {timerSeconds}
+        </text>
+
+        {/* Lit fuse tip: outer orange + inner yellow flame. Positioned via the
+            inline transform; the flicker (critical) animates opacity only so it
+            never fights that transform. */}
+        <g transform={`translate(${tipX.toFixed(1)} ${tipY.toFixed(1)}) scale(${flameScale})`}>
+          <g className={critical ? 'bomb-flame-flicker' : undefined}>
+            <path d="M0 2 C -7 -3 -8 -14 0 -22 C 8 -14 7 -3 0 2 Z" fill="#FF6B3D" stroke="#000" strokeWidth="3" />
+            <path d="M0 -2 C -4 -6 -4 -12 0 -17 C 4 -12 4 -6 0 -2 Z" fill="#FFE94A" />
+          </g>
+        </g>
+
+        {/* Critical-only spark particles near the flame. */}
+        {critical && (
+          <g>
+            <rect className="bomb-spark s1" x={tipX - 15} y={tipY - 4} width="5" height="5" fill="#FFE94A" stroke="#000" strokeWidth="1.5" />
+            <rect className="bomb-spark s2" x={tipX + 11} y={tipY} width="4" height="4" fill="#FF6B3D" stroke="#000" strokeWidth="1.5" />
+            <rect className="bomb-spark s3" x={tipX + 2} y={tipY - 15} width="4" height="4" fill="#FFE94A" stroke="#000" strokeWidth="1.5" />
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+// Flat debris colours for the explosion (orange/yellow/red + bomb-body gray).
+const EXPLOSION_DEBRIS_COLORS = ['#FF6B3D', '#FFE94A', '#FF5C5C', '#2a2a2a'];
+
+/**
+ * Full-screen bomb explosion, shown when a Word Bomb player times out or skips
+ * (i.e. a life is lost). A white flash, an expanding orange blast ring with a
+ * delayed yellow inner ring, and ~18 debris shards (outlined squares and
+ * triangles) flung outward. Self-removes after ~850ms. The parent re-keys it
+ * per detonation so it replays. Fixed + pointer-events:none, so it never blocks
+ * input underneath.
+ */
+function ExplosionEffect() {
+  const [done, setDone] = useState(false);
+  const [debris] = useState(() =>
+    Array.from({ length: 18 }, (_, i) => {
+      // Spread shards roughly evenly around the circle, with some jitter.
+      const angle = (Math.PI * 2 * i) / 18 + Math.random() * 0.5;
+      const dist = 120 + Math.random() * 120; // 120-240px outward
+      return {
+        dx: Math.round(Math.cos(angle) * dist),
+        dy: Math.round(Math.sin(angle) * dist),
+        color: EXPLOSION_DEBRIS_COLORS[Math.floor(Math.random() * EXPLOSION_DEBRIS_COLORS.length)],
+        size: 10 + Math.round(Math.random() * 10), // 10-20px
+        triangle: Math.random() < 0.4,
+        delay: Math.round(Math.random() * 80),
+      };
+    })
+  );
+
+  useEffect(() => {
+    const id = setTimeout(() => setDone(true), 850);
+    return () => clearTimeout(id);
+  }, []);
+
+  if (done) return null;
+
+  return (
+    <div className="explosion-layer" aria-hidden="true">
+      <div className="explosion-flash" />
+      <div className="explosion-blast" />
+      <div className="explosion-blast inner" />
+      {debris.map((d, i) => (
+        <svg
+          key={i}
+          className="explosion-debris"
+          width={d.size}
+          height={d.size}
+          viewBox="0 0 10 10"
+          style={{
+            '--dx': `${d.dx}px`,
+            '--dy': `${d.dy}px`,
+            marginLeft: `${-d.size / 2}px`,
+            marginTop: `${-d.size / 2}px`,
+            animationDelay: `${d.delay}ms`,
+          }}
+        >
+          {d.triangle ? (
+            <polygon points="5,0 10,10 0,10" fill={d.color} stroke="#000" strokeWidth="2" />
+          ) : (
+            <rect x="1" y="1" width="8" height="8" fill={d.color} stroke="#000" strokeWidth="2" />
+          )}
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+/**
  * Watches lastWordResult and reacts to each new result:
  *   - accepted -> bump hypeKey (re-keys the hype popup + floating "+1" so they
  *     replay) and fire a brief 200ms screen shake.
@@ -354,6 +513,13 @@ export default function GameScreen({
   // playerId -> true once eliminated; stays set so the card holds its final
   // tilted/dimmed state (the animation is forwards and never replays).
   const [eliminatingPlayers, setEliminatingPlayers] = useState({});
+  // Bumped each time a life is lost (timeout/skip) to re-key + replay the
+  // full-screen explosion.
+  const [explosionKey, setExplosionKey] = useState(0);
+  // The bomb-pass throw: direction ('left' | 'right') the bomb lunges when the
+  // turn hands off, cleared when that 300ms animation ends.
+  const [passDir, setPassDir] = useState(null);
+  const prevCurrentRef = useRef(null);
 
   useEffect(() => {
     if (!gameState || gameType !== 'word-bomb') return;
@@ -394,6 +560,9 @@ export default function GameScreen({
 
     if (!shatterIds.length) return;
 
+    // A life was lost (timeout/skip) - detonate the bomb.
+    setExplosionKey((k) => k + 1);
+
     setShatteredHearts((cur) => {
       const next = { ...cur };
       shatterIds.forEach((id) => {
@@ -413,6 +582,24 @@ export default function GameScreen({
       });
     }, 500);
     return () => clearTimeout(timerId);
+  }, [gameState, gameType]);
+
+  // ---- Bomb-pass throw (Word Bomb only) ----
+  // When the turn hands off to a new player, throw the bomb toward their side
+  // of the player bar: left if they sit in the left half, right otherwise.
+  useEffect(() => {
+    if (!gameState || gameType !== 'word-bomb') return;
+    const cur = gameState.currentPlayerId;
+    const prev = prevCurrentRef.current;
+    if (prev != null && cur != null && cur !== prev) {
+      const list = gameState.players || [];
+      const idx = list.findIndex((p) => p.id === cur);
+      if (idx >= 0 && list.length > 1) {
+        const mid = (list.length - 1) / 2;
+        setPassDir(idx <= mid ? 'left' : 'right');
+      }
+    }
+    prevCurrentRef.current = cur;
   }, [gameState, gameType]);
 
   // Category Blitz is a completely different (simultaneous, round-based)
@@ -480,16 +667,9 @@ export default function GameScreen({
     1
   );
 
+  // The per-turn starting seconds, used by the bomb to compute its fuse ratio.
+  // (Word Bomb has no timer bar - the bomb's fuse is the timer.)
   const maxTimer = gameState.timerSeconds || 1;
-  const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
-  // During the countdown the timer hasn't started, so show a full bar (the
-  // backend also delays ticking, but this is a belt-and-suspenders guard).
-  const displayRatio = showCountdown ? 1 : ratio;
-  const timerColor =
-    displayRatio > 0.6 ? '#2EFFE0' : displayRatio >= 0.3 ? '#FFE94A' : '#FF5C5C';
-  // Urgency cues as the clock runs down (suppressed during countdown / once over).
-  const lowTime = !gameOver && !showCountdown && timerSeconds <= 5;
-  const veryLowTime = !gameOver && !showCountdown && timerSeconds < 3;
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
@@ -513,6 +693,7 @@ export default function GameScreen({
       {showCountdown && (
         <CountdownOverlay onComplete={() => setShowCountdown(false)} />
       )}
+      {explosionKey > 0 && <ExplosionEffect key={explosionKey} />}
       <div className={`game-stage${shake ? ' game-shake' : ''}`}>
         {hypeKey > 0 && <HypePopup key={hypeKey} />}
         <div className="game-header">
@@ -576,15 +757,20 @@ export default function GameScreen({
           })}
         </div>
 
-        <div className="game-timer-row">
-          <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
-            <div
-              className="game-timer-fill"
-              style={{ width: `${displayRatio * 100}%`, background: timerColor }}
+        <div className="bomb-area">
+          <div
+            className={`bomb-passer${passDir ? ` pass-${passDir}` : ''}`}
+            onAnimationEnd={(e) => {
+              // Only clear on the pass animation itself, not bubbled child
+              // (tension/flame) animations.
+              if (e.target === e.currentTarget) setPassDir(null);
+            }}
+          >
+            <BombVisual
+              timerSeconds={timerSeconds}
+              maxTimer={maxTimer}
+              showCountdown={showCountdown}
             />
-          </div>
-          <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
-            {timerSeconds}s
           </div>
         </div>
 
