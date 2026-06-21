@@ -5,8 +5,18 @@ import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
 import WallScene from './components/WallScene';
+import TransitionOverlay from './components/TransitionOverlay';
+import LoadingScreen from './components/LoadingScreen';
 import { useWebSocket } from './hooks/useWebSocket';
 import './Transitions.css';
+
+// The word flashed mid-wipe when navigating to each view.
+const TRANSITION_WORDS = {
+  game: "LET'S GO!",
+  home: 'PEACE OUT',
+  lobby: 'READY?',
+  room: 'SQUAD UP',
+};
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
 // for Join Room) or a specific game id picked from a homepage card. Only
@@ -29,11 +39,13 @@ function App() {
   // message handlers can branch on the live view without re-running the effect.
   const viewRef = useRef('home');
   viewRef.current = view;
-  // Direction of the most recent view change, driving the slide transition:
-  // 'forward' (deeper into the flow) slides in from the right, 'back' (home)
-  // from the left. Set once per navigation; the whole home->lobby->room->game
-  // chain is forward, and only goHome is back.
-  const [transitionDir, setTransitionDir] = useState('forward');
+  // `view` is the live target; `renderedView` is what's actually on screen and
+  // lags it by 250ms during a wipe so the diagonal-bar TransitionOverlay can
+  // cover the swap (Persona 5 style). `transition` is the active overlay
+  // ({ word, key }) or null; the key re-keys the overlay so each wipe replays.
+  const [renderedView, setRenderedView] = useState('home');
+  const [transition, setTransition] = useState(null);
+  const transitionKeyRef = useRef(0);
   const [lobbyMode, setLobbyMode] = useState(null);
   const [room, setRoom] = useState(null);
   const [serverError, setServerError] = useState('');
@@ -366,15 +378,45 @@ function App() {
     }
   }, [lastWordResult, gameType]);
 
+  // Drive the bar wipe on every real view change: fire the overlay, swap the
+  // rendered screen at the half-way point (under cover of the bars), and clear
+  // the overlay when it finishes. Depends only on `view` (the last navigated
+  // view is tracked in a ref) so the mid-wipe setRenderedView doesn't re-run
+  // this effect and cancel the pending overlay-clear.
+  const lastNavViewRef = useRef('home');
+  useEffect(() => {
+    if (view === lastNavViewRef.current) return;
+    lastNavViewRef.current = view;
+    transitionKeyRef.current += 1;
+    setTransition({ word: TRANSITION_WORDS[view] || 'GO!', key: transitionKeyRef.current });
+    const swap = setTimeout(() => setRenderedView(view), 250);
+    const end = setTimeout(() => setTransition(null), 500);
+    return () => {
+      clearTimeout(swap);
+      clearTimeout(end);
+    };
+  }, [view]);
+
+  // Wipe to the homepage the moment the socket comes up (connecting -> open).
+  const prevWsRef = useRef(wsStatus);
+  useEffect(() => {
+    const prev = prevWsRef.current;
+    prevWsRef.current = wsStatus;
+    if (prev !== 'open' && wsStatus === 'open') {
+      transitionKeyRef.current += 1;
+      setTransition({ word: 'READY?', key: transitionKeyRef.current });
+      const end = setTimeout(() => setTransition(null), 500);
+      return () => clearTimeout(end);
+    }
+  }, [wsStatus]);
+
   function goToLobby(mode) {
-    setTransitionDir('forward');
     setLobbyMode(mode);
     setServerError('');
     setView('lobby');
   }
 
   function goHome() {
-    setTransitionDir('back');
     setLobbyMode(null);
     setRoom(null);
     setServerError('');
@@ -462,7 +504,7 @@ function App() {
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
   let screen;
-  if (view === 'game') {
+  if (renderedView === 'game') {
     screen = (
       <GameScreen
         gameState={gameState}
@@ -490,7 +532,7 @@ function App() {
         onRematch={handleRematch}
       />
     );
-  } else if (view === 'room' && room) {
+  } else if (renderedView === 'room' && room) {
     screen = (
       <RoomScreen
         room={room}
@@ -503,7 +545,7 @@ function App() {
         onStartGame={handleStartGame}
       />
     );
-  } else if (view === 'lobby') {
+  } else if (renderedView === 'lobby') {
     screen = (
       <LobbyScreen
         mode={lobbyMode}
@@ -526,24 +568,37 @@ function App() {
   // Ambient backdrop intensity: ramps with the Word Bomb turn timer so the whole
   // screen reacts to the danger level. Resting 'calm' on every other screen.
   let bgIntensity = 'calm';
-  if (view === 'game' && gameType === 'word-bomb' && !gameOver && gameState) {
+  if (renderedView === 'game' && gameType === 'word-bomb' && !gameOver && gameState) {
     const maxT = gameState.timerSeconds || 1;
     const ratio = Math.max(0, Math.min(1, timerSeconds / maxT));
     bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   }
 
-  // `key={view}` remounts the wrapper only on an actual view change, so the
-  // slide animation fires then (not on every re-render within a view). The
-  // WallScene lives OUTSIDE that keyed wrapper so it persists (never remounts)
-  // across screen transitions.
+  // Before the socket is up, gate the whole app behind the connecting / failed
+  // loading screen (the WallScene still shows behind it). RETRY just reloads to
+  // re-attempt the connection.
+  if (wsStatus === 'connecting' || wsStatus === 'error') {
+    return (
+      <>
+        <WallScene intensity="calm" />
+        <LoadingScreen status={wsStatus} onRetry={() => window.location.reload()} />
+      </>
+    );
+  }
+
+  // `key={renderedView}` remounts the wrapper only on an actual (committed) view
+  // change, so screen-mount effects (e.g. the in-game 3-2-1 countdown) replay
+  // then. The WallScene + TransitionOverlay live OUTSIDE that keyed wrapper so
+  // the backdrop persists and the wipe plays over the swap.
   return (
     <>
       <WallScene intensity={bgIntensity} />
       <div className="view-transition-root">
-        <div key={view} className={`view-screen view-${transitionDir}`}>
+        <div key={renderedView} className="view-screen">
           {screen}
         </div>
       </div>
+      {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
     </>
   );
 }

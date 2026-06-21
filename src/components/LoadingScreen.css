@@ -1,0 +1,58 @@
+/* LoadingScreen.css - the connecting / connection-failed gate. */
+
+.loading-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.loading-box {
+  text-align: center;
+}
+
+.loading-text {
+  font-family: 'Bungee', cursive;
+  font-size: 32px;
+  color: #2EFFE0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+
+.loading-failed {
+  font-family: 'Bungee', cursive;
+  font-size: 28px;
+  color: #FF5C5C;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  margin-bottom: 20px;
+  transform: skewX(-3deg);
+}
+
+.loading-retry {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #000;
+  background: #FFE94A;
+  border: 4px solid #B8A020;
+  border-radius: 8px;
+  padding: 12px 28px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #000;
+  transform: skewX(-2deg);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.loading-retry:active {
+  transform: skewX(-2deg) translate(3px, 3px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+@media (max-width: 600px) {
+  .loading-text { font-size: 24px; }
+  .loading-failed { font-size: 22px; }
+}

@@ -1,34 +1,17 @@
-/* Transitions.css - slide animations between the top-level app views
-   (home / lobby / room / game). The wrapper is keyed by view in App.jsx so
-   the animation only replays when the view actually changes, not on every
-   in-view re-render (e.g. a player joining the room or a new turn_update). */
+/* Transitions.css - the layout wrapper that lifts the app content above the
+   persistent WallScene. View-to-view motion is now handled by the Persona 5
+   bar wipe (TransitionOverlay), not CSS slides, so the old slide-in keyframes
+   have been removed. */
 
 .view-transition-root {
   position: relative;
   /* Sit above the persistent WallScene (z-index 0). Screen wraps are
      transparent so the ambient backdrop shows through around the content. */
   z-index: 1;
-  /* Keep the off-screen incoming view from spawning a horizontal scrollbar
-     mid-slide. */
+  /* Keep any off-screen decoration from spawning a horizontal scrollbar. */
   overflow-x: hidden;
 }
 
-/* Forward navigation (home -> lobby -> room -> game): slide in from the right. */
-.view-screen.view-forward {
-  animation: slide-in-right 300ms ease-out;
-}
-
-/* Back navigation (Leave / back to home): slide in from the left. */
-.view-screen.view-back {
-  animation: slide-in-left 300ms ease-out;
-}
-
-@keyframes slide-in-right {
-  0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slide-in-left {
-  0% { transform: translateX(-100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
+.view-screen {
+  position: relative;
 }
