@@ -2,7 +2,7 @@
 
 .game-wrap {
   position: relative;
-  /* Transparent so the ambient BackgroundScene (which reacts to turn tension)
+  /* Transparent so the ambient WallScene (which reacts to turn tension)
      shows through around the stage; dark base comes from body/#root. */
   background: transparent;
   width: 100%;

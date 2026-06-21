@@ -1,0 +1,162 @@
+/* WallScene.css
+   The persistent graffiti-alley backdrop. Sits behind every screen (z-index 0);
+   the app content layer is lifted to z-index 1 (see Transitions.css) and the
+   screen wraps are transparent so this shows through around the centred content.
+
+   All decorative layers are pointer-events:none and clipped to the viewport. */
+
+.wall-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #0d0618;
+}
+
+/* ---- Brick wall ---- */
+
+/* Running-bond brick courses built entirely from repeating gradients (no image):
+   one horizontal gradient lays the mortar courses, two offset vertical gradients
+   stagger the bricks course-to-course. Mortar lines are the warm #2a1a3a; the
+   whole layer is kept visible (0.38) so the wall reads as real texture. */
+.wall-bricks {
+  position: absolute;
+  inset: 0;
+  opacity: 0.38;
+  background-color: #1a0f2b;
+  background-image:
+    repeating-linear-gradient(0deg, #2a1a3a 0 3px, transparent 3px 44px),
+    repeating-linear-gradient(90deg, #2a1a3a 0 3px, transparent 3px 88px),
+    repeating-linear-gradient(90deg, #2a1a3a 0 3px, transparent 3px 88px);
+  background-size: 100% 88px, 88px 44px, 88px 44px;
+  background-position: 0 0, 0 0, 44px 44px;
+}
+
+/* The single permitted environmental gradient: the alley darkens toward the
+   ground. */
+.wall-floor-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* ---- Urban details ---- */
+
+.wall-pipe {
+  position: absolute;
+  top: 14%;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  opacity: 0.15;
+}
+
+.wall-crack {
+  position: absolute;
+  top: 0;
+  left: 64%;
+  width: 200px;
+  height: 100%;
+  opacity: 0.1;
+}
+
+/* ---- Dried vertical paint drips ---- */
+
+.wall-paint-drip {
+  position: absolute;
+  top: 0;
+  border-radius: 0 0 3px 3px;
+}
+
+/* ---- Graffiti tags ---- */
+
+.wall-tag {
+  position: absolute;
+  font-family: 'Bungee', cursive;
+  line-height: 1;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  transform-origin: center;
+}
+
+/* A thin paint drip running down from a tag (same colour, fades as it falls). */
+.wall-tag-drip {
+  position: absolute;
+  bottom: -4px;
+  left: 16%;
+  width: 3px;
+  border-radius: 0 0 3px 3px;
+  opacity: 0.7;
+}
+
+/* ---- Stickers ---- */
+
+/* Each sticker holds its resting tilt (--rot) in every keyframe and adds a slow
+   drift (small translate), so it bobs gently around its pinned position. */
+.wall-sticker {
+  position: absolute;
+  transform: rotate(var(--rot, 0deg));
+  will-change: transform;
+  animation: wall-sticker-drift var(--dur, 20s) ease-in-out infinite alternate;
+}
+
+@keyframes wall-sticker-drift {
+  from { transform: rotate(var(--rot, 0deg)) translate(0, 0); }
+  to { transform: rotate(var(--rot, 0deg)) translate(var(--dx, 8px), var(--dy, 8px)); }
+}
+
+/* ---- Comic halftone dot texture ---- */
+
+.wall-halftone {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
+  opacity: 0.05;
+}
+
+/* ---- Red tension wash (only animates under .critical) ---- */
+
+.wall-red {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 60, 60, 0) 45%,
+    rgba(255, 50, 50, 0.22) 100%
+  );
+}
+
+/* ============================================================= */
+/* ============  TENSION REACTION (Word Bomb turn)  =========== */
+/* ============================================================= */
+
+/* Warning: stickers drift a little faster as the turn tightens. */
+.wall-scene.warning .wall-sticker {
+  animation-duration: calc(var(--dur) * 0.7);
+}
+
+/* Critical: stickers drift hard and the red wash pulses across the wall. */
+.wall-scene.critical .wall-sticker {
+  animation-duration: calc(var(--dur) * 0.45);
+}
+
+.wall-scene.critical .wall-red {
+  animation: wall-red-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes wall-red-pulse {
+  0% { opacity: 0.05; }
+  50% { opacity: 0.16; }
+  100% { opacity: 0.05; }
+}
+
+/* Honour reduced-motion: keep the static wall but stop the looping motion. */
+@media (prefers-reduced-motion: reduce) {
+  .wall-sticker,
+  .wall-red {
+    animation: none !important;
+  }
+}

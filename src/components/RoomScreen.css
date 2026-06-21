@@ -1,7 +1,7 @@
 /* RoomScreen.css */
 
 .room-wrap {
-  /* Transparent so the persistent BackgroundScene shows behind the room box;
+  /* Transparent so the persistent WallScene shows behind the room box;
      dark base comes from body/#root. */
   background: transparent;
   width: 100%;

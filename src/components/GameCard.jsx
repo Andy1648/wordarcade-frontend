@@ -51,6 +51,11 @@ export default function GameCard({ game, onSelect }) {
       aria-disabled={!game.enabled}
       aria-label={`${game.name.replace('\n', ' ')} - ${game.badgeText}`}
     >
+      {/* Strips of tape pinning the "flyer" to the wall - one at each top corner,
+          angled opposite ways. Purely decorative. */}
+      <span className="game-card-tape game-card-tape-left" aria-hidden="true" />
+      <span className="game-card-tape game-card-tape-right" aria-hidden="true" />
+
       {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
 
       {ArtComponent && (

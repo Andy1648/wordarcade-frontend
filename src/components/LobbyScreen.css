@@ -1,7 +1,7 @@
 /* LobbyScreen.css */
 
 .lobby-wrap {
-  /* Transparent so the persistent BackgroundScene shows behind the form box;
+  /* Transparent so the persistent WallScene shows behind the form box;
      dark base comes from body/#root. */
   background: transparent;
   width: 100%;

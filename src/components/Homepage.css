@@ -4,7 +4,7 @@
    (no max-width, margin, or rounded corners against the viewport), and centres
    the content card both ways. */
 .homepage-wrap {
-  /* Transparent so the persistent BackgroundScene shows through around the
+  /* Transparent so the persistent WallScene shows through around the
      card; the page's dark base comes from body/#root. */
   background: transparent;
   width: 100%;

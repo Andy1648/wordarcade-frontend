@@ -67,6 +67,29 @@
   border-style: dashed;
 }
 
+/* Tape strips holding the card to the wall: small translucent-white rectangles
+   poking past the top corners, angled opposite ways. z-index above the card art
+   so they sit "on top" of the flyer; non-interactive. */
+.game-card-tape {
+  position: absolute;
+  top: -5px;
+  width: 30px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.game-card-tape-left {
+  left: 8px;
+  transform: rotate(-32deg);
+}
+
+.game-card-tape-right {
+  right: 8px;
+  transform: rotate(32deg);
+}
+
 /* Snap to attention: straighten out and scale up rather than lift, so the
    hovered card squares itself against the crooked crowd. */
 .game-card:hover {

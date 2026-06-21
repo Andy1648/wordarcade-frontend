@@ -4,7 +4,7 @@ import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
-import BackgroundScene from './components/BackgroundScene';
+import WallScene from './components/WallScene';
 import { useWebSocket } from './hooks/useWebSocket';
 import './Transitions.css';
 
@@ -534,11 +534,11 @@ function App() {
 
   // `key={view}` remounts the wrapper only on an actual view change, so the
   // slide animation fires then (not on every re-render within a view). The
-  // BackgroundScene lives OUTSIDE that keyed wrapper so it persists (never
-  // remounts) across screen transitions.
+  // WallScene lives OUTSIDE that keyed wrapper so it persists (never remounts)
+  // across screen transitions.
   return (
     <>
-      <BackgroundScene intensity={bgIntensity} />
+      <WallScene intensity={bgIntensity} />
       <div className="view-transition-root">
         <div key={view} className={`view-screen view-${transitionDir}`}>
           {screen}
