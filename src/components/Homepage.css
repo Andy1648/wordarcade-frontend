@@ -155,19 +155,19 @@
   display: inline-block;
   text-align: center;
   transform: rotate(-2deg) skewX(-4deg);
-  /* Rubbery elastic squash-stretch on the WHOLE word: a fast snap then a long
-     rest, so the wordmark feels like it's breathing with energy. */
-  animation: title-elastic 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  /* Constant, never-resting elastic bounce - a ball on a trampoline. Scale,
+     translate and rotate all peak at different keyframes so the motion never
+     settles. The base rotate(-2deg)/skewX(-4deg) pose is baked into each frame
+     so the wordmark keeps its tilt while it bounces. */
+  animation: title-bounce-forever 1.5s ease-in-out infinite;
 }
 
-@keyframes title-elastic {
-  0% { transform: rotate(-2deg) skewX(-4deg) scale(1, 1); }
-  4% { transform: rotate(-2deg) skewX(-4deg) scale(1.15, 0.88); }
-  8% { transform: rotate(-2deg) skewX(-4deg) scale(0.92, 1.1); }
-  12% { transform: rotate(-2deg) skewX(-4deg) scale(1.05, 0.95); }
-  16% { transform: rotate(-2deg) skewX(-4deg) scale(0.98, 1.02); }
-  20% { transform: rotate(-2deg) skewX(-4deg) scale(1, 1); }
-  100% { transform: rotate(-2deg) skewX(-4deg) scale(1, 1); }
+@keyframes title-bounce-forever {
+  0% { transform: rotate(-2deg) skewX(-4deg) scale(1.02, 0.98) translateY(2px) rotate(-0.5deg); }
+  25% { transform: rotate(-2deg) skewX(-4deg) scale(0.98, 1.03) translateY(-4px) rotate(0.5deg); }
+  50% { transform: rotate(-2deg) skewX(-4deg) scale(1.03, 0.97) translateY(1px) rotate(-0.3deg); }
+  75% { transform: rotate(-2deg) skewX(-4deg) scale(0.97, 1.02) translateY(-3px) rotate(0.7deg); }
+  100% { transform: rotate(-2deg) skewX(-4deg) scale(1.02, 0.98) translateY(2px) rotate(-0.5deg); }
 }
 
 @keyframes burst-spin {
@@ -383,16 +383,16 @@
   animation: label-pulse 2.2s ease-in-out infinite;
 }
 
-/* Action buttons: a quick upward "kick" then settle, resting for most of the
-   loop. skewX(-2deg) (the button's resting pose) is baked into each frame; the
-   two are offset so they never kick in unison. Hover/disabled cancel the loop
-   so the press feedback and dim state win. */
+/* Action buttons: a very subtle constant bounce that never rests. skewX(-2deg)
+   (the resting pose) is baked into each frame; the two run at slightly
+   different durations so they never sync. Hover/disabled cancel the loop so the
+   press feedback and dim state win. */
 .homepage-btn {
-  animation: btn-kick 2.8s ease-out infinite;
+  animation: btn-bounce-forever 2s ease-in-out infinite;
 }
 
 .homepage-btn-join {
-  animation-duration: 3.1s;
+  animation-duration: 2.2s;
   animation-delay: 0.3s;
 }
 
@@ -402,12 +402,12 @@
   animation: none;
 }
 
-@keyframes btn-kick {
-  0% { transform: skewX(-2deg) translateY(0); }
-  5% { transform: skewX(-2deg) translateY(-4px); }
-  10% { transform: skewX(-2deg) translateY(1px); }
-  15% { transform: skewX(-2deg) translateY(0); }
-  100% { transform: skewX(-2deg) translateY(0); }
+@keyframes btn-bounce-forever {
+  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
+  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px); }
+  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px); }
+  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px); }
+  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
 }
 
 /* Parallax drift: the splatters slowly translate, with the larger corner ones
