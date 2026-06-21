@@ -409,7 +409,27 @@
   100% { transform: translateX(0) rotate(0); }
 }
 
-/* ---- Tension states (set by remaining-time tier) ---- */
+/* Critical red vignette: a flat (no-blur) red ring around the bomb, cross-faded
+   in. Spread-only box-shadow keeps it hard-edged in the cel style. */
+.bomb-vignette {
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(255, 92, 92, 0);
+  transition: box-shadow 0.5s ease;
+}
+
+.bomb-vignette.critical {
+  box-shadow: 0 0 0 5px rgba(255, 92, 92, 0.35);
+}
+
+/* Smooth size step between tension tiers (scale lives here, on its own element,
+   so the per-tier rotation/shake animation below never overrides it). */
+.bomb-scale {
+  transform-origin: center;
+  transition: transform 0.5s ease;
+}
+
+/* ---- Tension motion (rotation/shake by tier) ---- */
 .bomb-body-wrap {
   transform-origin: center;
   line-height: 0;
@@ -422,12 +442,12 @@
 
 /* Warning: a more insistent wobble. */
 .bomb-body-wrap.warning {
-  animation: bomb-wobble 1s ease-in-out infinite;
+  animation: bomb-wobble 800ms ease-in-out infinite;
 }
 
-/* Critical: rapid shake + slight scale pulse. */
+/* Critical: rapid positional shake. */
 .bomb-body-wrap.critical {
-  animation: bomb-critical 200ms linear infinite;
+  animation: bomb-shake 150ms linear infinite;
 }
 
 @keyframes bomb-idle {
@@ -442,38 +462,71 @@
   100% { transform: rotate(-3deg); }
 }
 
-@keyframes bomb-critical {
-  0% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-3px, 2px) scale(1.03); }
-  50% { transform: translate(3px, -2px) scale(1.05); }
-  75% { transform: translate(-2px, -2px) scale(1.03); }
-  100% { transform: translate(0, 0) scale(1); }
+@keyframes bomb-shake {
+  0% { transform: translate(-3px, 2px); }
+  25% { transform: translate(3px, -2px); }
+  50% { transform: translate(-2px, -3px); }
+  75% { transform: translate(2px, 3px); }
+  100% { transform: translate(-3px, 1px); }
 }
 
-/* Flame flicker (critical) - opacity only, so it never fights the flame's
-   inline translate/scale positioning transform. */
-.bomb-flame-flicker {
-  animation: flame-flicker 220ms ease-in-out infinite;
+/* Smoothly burning fuse: stroke-dashoffset eases between the per-second values
+   so the fuse drains continuously instead of stepping. */
+.bomb-fuse {
+  transition: stroke-dashoffset 1s linear;
+}
+
+/* Tinted shapes (inner body + highlights) cross-fade between tier colours. */
+.bomb-tint {
+  transition: fill 0.5s linear;
+}
+
+/* Flame position rides the burning tip; its translate eases over the same 1s
+   as the fuse so the two stay locked together. (view-box so the px translate
+   is in SVG user units from the viewBox origin.) */
+.bomb-flame-pos {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  transition: transform 1s linear;
+}
+
+/* Flame flicker: snappy opacity + tiny scale, alternating - never floaty. */
+.bomb-flame-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: flame-flicker 150ms ease-in-out infinite alternate;
 }
 
 @keyframes flame-flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0% { opacity: 0.8; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1.05); }
 }
 
-/* Spark particles around the flame in the critical state. */
+/* Spark particles drift upward and fade out, looping (duration/delay set
+   per-spark inline). */
 .bomb-spark {
   transform-box: fill-box;
   transform-origin: center;
-  animation: bomb-spark-flicker 300ms ease-in-out infinite;
+  animation-name: spark-drift;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
 }
 
-.bomb-spark.s2 { animation-delay: 100ms; }
-.bomb-spark.s3 { animation-delay: 200ms; }
+@keyframes spark-drift {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.3); }
+}
 
-@keyframes bomb-spark-flicker {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.2; transform: scale(0.5); }
+/* Critical timer-number pulse. */
+.bomb-num-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bomb-num-pulse 400ms ease-in-out infinite;
+}
+
+@keyframes bomb-num-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
 }
 
 /* ============================================================= */

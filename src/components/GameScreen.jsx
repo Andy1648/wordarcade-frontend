@@ -255,13 +255,72 @@ function WobbleText({ text }) {
   );
 }
 
+// ---- Bomb tension lookups (keyed by tier) ----
+const BOMB_SCALE = { calm: 1.0, warning: 1.05, critical: 1.1 };
+const FLAME_SCALE = { calm: 1.0, warning: 1.35, critical: 1.7 };
+const BODY_INNER_FILL = { calm: '#2a2a2a', warning: '#3a1a1a', critical: '#5a1010' };
+const HIGHLIGHT_1 = { calm: '#444', warning: '#5a2a2a', critical: '#7a2020' };
+const HIGHLIGHT_2 = { calm: '#555', warning: '#6a3a3a', critical: '#8a3030' };
+
+// Spark particles around the flame - more (and bigger, redder) as tension
+// rises. Offsets are relative to the burning tip; values are fixed (not random
+// per render) so the sparks don't jitter every second as the flame moves.
+const BOMB_SPARKS = {
+  calm: [
+    { dx: -13, dy: -8, r: 2.5, c: '#FFE94A', delay: 0, dur: 520 },
+    { dx: 11, dy: -5, r: 2, c: '#FF6B3D', delay: 160, dur: 460 },
+    { dx: -3, dy: -18, r: 2, c: '#FFE94A', delay: 300, dur: 560 },
+    { dx: 6, dy: -14, r: 2.5, c: '#FF6B3D', delay: 420, dur: 500 },
+  ],
+  warning: [
+    { dx: -15, dy: -9, r: 3, c: '#FFE94A', delay: 0, dur: 520 },
+    { dx: 13, dy: -6, r: 2.5, c: '#FF6B3D', delay: 120, dur: 460 },
+    { dx: -5, dy: -20, r: 2.5, c: '#FFE94A', delay: 260, dur: 560 },
+    { dx: 8, dy: -16, r: 3, c: '#FF6B3D', delay: 380, dur: 500 },
+    { dx: -10, dy: -15, r: 2, c: '#FFE94A', delay: 200, dur: 540 },
+    { dx: 3, dy: -22, r: 2.5, c: '#FF6B3D', delay: 440, dur: 480 },
+  ],
+  critical: [
+    { dx: -17, dy: -10, r: 3.5, c: '#FFE94A', delay: 0, dur: 480 },
+    { dx: 15, dy: -7, r: 3, c: '#FF6B3D', delay: 90, dur: 440 },
+    { dx: -6, dy: -23, r: 3, c: '#FF5C5C', delay: 180, dur: 520 },
+    { dx: 9, dy: -19, r: 3.5, c: '#FFE94A', delay: 270, dur: 500 },
+    { dx: -12, dy: -17, r: 3, c: '#FF6B3D', delay: 150, dur: 460 },
+    { dx: 4, dy: -25, r: 3, c: '#FF5C5C', delay: 360, dur: 540 },
+    { dx: 18, dy: -13, r: 2.5, c: '#FFE94A', delay: 300, dur: 420 },
+    { dx: -19, dy: -5, r: 2.5, c: '#FF6B3D', delay: 420, dur: 500 },
+    { dx: 0, dy: -15, r: 3, c: '#FF5C5C', delay: 240, dur: 480 },
+  ],
+};
+
+// Fixed fuse curve (cap top -> up and right). Geometry never changes - the
+// burning is done purely with stroke-dashoffset, so it can transition smoothly.
+const FUSE_PATH = 'M 80 40 Q 120 14 110 2';
+// Quadratic control points, used to interpolate the flame onto the fuse.
+const FUSE_P0 = [80, 40];
+const FUSE_P1 = [120, 14];
+const FUSE_P2 = [110, 2];
+
+// Point on the fuse Bezier at parameter t (0 = cap, 1 = tip).
+function fusePointAt(t) {
+  const u = 1 - t;
+  const x = u * u * FUSE_P0[0] + 2 * u * t * FUSE_P1[0] + t * t * FUSE_P2[0];
+  const y = u * u * FUSE_P0[1] + 2 * u * t * FUSE_P1[1] + t * t * FUSE_P2[1];
+  return [x, y];
+}
+
 /**
- * Word Bomb's centerpiece: a cartoon bomb whose fuse length IS the turn timer.
- * Newgrounds/graffiti style - flat solid fills, thick black outlines, a hard
- * cel highlight, no gradients or glows. As time runs out the fuse shrinks, the
- * flame grows, and the bomb escalates through three tension tiers (calm /
- * warning / critical) driven by the bomb-* keyframes in GameScreen.css. The
- * live seconds count sits inside the body and grows bolder as the clock drains.
+ * Word Bomb's centerpiece: a detailed cartoon bomb whose fuse IS the turn
+ * timer. Newgrounds/graffiti vector style - thick black outlines, flat solid
+ * fills, hard-edged cel highlights/shadows, no gradients or glows.
+ *
+ * The fuse burns SMOOTHLY: its geometry is fixed and a stroke-dashoffset
+ * (transitioned 1s linear in CSS) drains the visible length continuously
+ * instead of jumping each second. The flame rides the burning tip (its
+ * translate eases over the same 1s so it stays glued to the fuse end), and the
+ * bomb escalates through calm/warning/critical tiers - warmer body, bigger
+ * flame, more sparks, harder shake, a pulsing red number, and a flat red
+ * vignette - with the colour/scale shifts cross-faded for a smooth ramp.
  */
 function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
   // Fraction of time remaining (full while the 3-2-1 intro is still up).
@@ -269,80 +328,135 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
     ? 1
     : Math.max(0, Math.min(1, timerSeconds / (maxTimer || 1)));
 
-  // Tension tier drives the wobble/shake class plus a warmer body fill, a
-  // bigger flame, and (critical only) spark particles.
   const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
-  const bodyFill =
-    tension === 'calm' ? '#2a2a2a' : tension === 'warning' ? '#3a2a2a' : '#4a2424';
-  const flameScale = tension === 'calm' ? 0.85 : tension === 'warning' ? 1.15 : 1.45;
   const critical = tension === 'critical';
 
-  // Fuse shrinks toward the body as time drains; the flame rides its burning
-  // tip, curving off to one side for a bit of cartoon energy.
-  const fuseLen = 8 + 40 * ratio;
-  const tipX = 75 + 18 * ratio;
-  const tipY = 50 - fuseLen;
-  const ctrlX = 75 + 30 * ratio;
-  const ctrlY = 50 - fuseLen * 0.5;
-  const fusePath = `M75 50 Q ${ctrlX.toFixed(1)} ${ctrlY.toFixed(1)} ${tipX.toFixed(1)} ${tipY.toFixed(1)}`;
+  // Fuse uses pathLength="100", so the offset is just the burnt-away percent;
+  // the flame sits at the matching point along the curve.
+  const fuseDashoffset = 100 * (1 - ratio);
+  const [flameX, flameY] = fusePointAt(ratio);
+  const flameScale = FLAME_SCALE[tension];
 
-  // Seconds grow bigger/bolder as time runs down.
-  const secondsFontSize = 32 + (1 - ratio) * 22;
+  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
+  const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
+  const numStroke = critical ? '#FF5C5C' : '#000';
+  const numStrokeWidth = critical ? 4 : 3;
+  const numSize = tension === 'calm' ? 32 : tension === 'warning' ? 36 : 44;
+
+  const sparks = BOMB_SPARKS[tension];
 
   return (
-    <div className={`bomb-body-wrap ${tension}`}>
-      <svg className="bomb-svg" viewBox="0 0 150 175" width="140" aria-hidden="true">
-        {/* Fuse drawn twice: a fat black outline first, the brown rope on top. */}
-        <path d={fusePath} fill="none" stroke="#000" strokeWidth="10" strokeLinecap="round" />
-        <path d={fusePath} fill="none" stroke="#6b4a2a" strokeWidth="5" strokeLinecap="round" />
+    <div className={`bomb-vignette ${tension}`}>
+      <div className="bomb-scale" style={{ transform: `scale(${BOMB_SCALE[tension]})` }}>
+        <div className={`bomb-body-wrap ${tension}`}>
+          <svg className="bomb-svg" viewBox="0 0 160 185" width="150" aria-hidden="true">
+            {/* ---- Fuse: fat black outline under a brown rope. Both burn down
+                 together via the shared dashoffset (smoothed in CSS). ---- */}
+            <path
+              className="bomb-fuse"
+              d={FUSE_PATH}
+              fill="none"
+              stroke="#000"
+              strokeWidth="7"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="100"
+              strokeDashoffset={fuseDashoffset}
+            />
+            <path
+              className="bomb-fuse"
+              d={FUSE_PATH}
+              fill="none"
+              stroke="#8B6914"
+              strokeWidth="3"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="100"
+              strokeDashoffset={fuseDashoffset}
+            />
 
-        {/* Connector cap where the fuse enters the body. */}
-        <rect x="64" y="46" width="22" height="22" rx="3" fill="#1a1a1a" stroke="#000" strokeWidth="5" />
+            {/* ---- Metal cap with ridge details. ---- */}
+            <rect x="66" y="40" width="28" height="24" rx="3" fill="#666" stroke="#000" strokeWidth="5" />
+            <line x1="73" y1="45" x2="73" y2="59" stroke="#000" strokeWidth="2" />
+            <line x1="80" y1="45" x2="80" y2="59" stroke="#000" strokeWidth="2" />
+            <line x1="87" y1="45" x2="87" y2="59" stroke="#000" strokeWidth="2" />
 
-        {/* Bomb body. */}
-        <circle cx="75" cy="115" r="50" fill={bodyFill} stroke="#000" strokeWidth="5" />
+            {/* ---- Body: outlined main circle + a tension-tinted inner disc. ---- */}
+            <circle cx="80" cy="120" r="58" fill="#2a2a2a" stroke="#000" strokeWidth="6" />
+            <circle className="bomb-tint" cx="80" cy="120" r="50" fill={BODY_INNER_FILL[tension]} />
 
-        {/* Flat cel highlight on the upper-left - a solid polygon, not a gradient. */}
-        <path
-          d="M48 102 C 48 80 63 71 80 71 C 67 76 59 90 59 106 C 55 108 50 107 48 102 Z"
-          fill="#444"
-        />
+            {/* ---- Hard-edged cel shadow (lower-right) + two stacked highlights
+                 (upper-left). Flat polygons, no gradients. ---- */}
+            <path
+              d="M 112 96 C 118 108 118 126 107 140 C 100 149 90 153 80 153 C 97 148 108 131 108 112 C 108 105 110 100 112 96 Z"
+              fill="#111"
+            />
+            <path
+              className="bomb-tint"
+              d="M 50 96 C 50 72 68 60 92 60 C 74 64 60 80 60 100 C 56 102 52 100 50 96 Z"
+              fill={HIGHLIGHT_1[tension]}
+            />
+            <path
+              className="bomb-tint"
+              d="M 56 112 C 56 100 64 94 74 94 C 66 98 62 106 62 116 C 60 117 57 116 56 112 Z"
+              fill={HIGHLIGHT_2[tension]}
+            />
 
-        {/* Live seconds inside the body (white, heavy black outline). */}
-        <text
-          x="75"
-          y="117"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontFamily="'Bungee', cursive"
-          fontSize={secondsFontSize}
-          fill="#fff"
-          stroke="#000"
-          strokeWidth="4"
-          paintOrder="stroke"
-        >
-          {timerSeconds}
-        </text>
+            {/* Subtle etched ring detail. */}
+            <circle cx="80" cy="120" r="42" fill="none" stroke="#444" strokeWidth="1.5" opacity="0.4" />
 
-        {/* Lit fuse tip: outer orange + inner yellow flame. Positioned via the
-            inline transform; the flicker (critical) animates opacity only so it
-            never fights that transform. */}
-        <g transform={`translate(${tipX.toFixed(1)} ${tipY.toFixed(1)}) scale(${flameScale})`}>
-          <g className={critical ? 'bomb-flame-flicker' : undefined}>
-            <path d="M0 2 C -7 -3 -8 -14 0 -22 C 8 -14 7 -3 0 2 Z" fill="#FF6B3D" stroke="#000" strokeWidth="3" />
-            <path d="M0 -2 C -4 -6 -4 -12 0 -17 C 4 -12 4 -6 0 -2 Z" fill="#FFE94A" />
-          </g>
-        </g>
+            {/* ---- Live seconds inside the body. ---- */}
+            <text
+              className={critical ? 'bomb-num-pulse' : undefined}
+              x="80"
+              y="121"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontFamily="'Bungee', cursive"
+              fontSize={numSize}
+              fill={numFill}
+              stroke={numStroke}
+              strokeWidth={numStrokeWidth}
+              paintOrder="stroke"
+              style={{ transition: 'font-size 0.4s ease, fill 0.4s linear, stroke 0.4s linear' }}
+            >
+              {timerSeconds}
+            </text>
 
-        {/* Critical-only spark particles near the flame. */}
-        {critical && (
-          <g>
-            <rect className="bomb-spark s1" x={tipX - 15} y={tipY - 4} width="5" height="5" fill="#FFE94A" stroke="#000" strokeWidth="1.5" />
-            <rect className="bomb-spark s2" x={tipX + 11} y={tipY} width="4" height="4" fill="#FF6B3D" stroke="#000" strokeWidth="1.5" />
-            <rect className="bomb-spark s3" x={tipX + 2} y={tipY - 15} width="4" height="4" fill="#FFE94A" stroke="#000" strokeWidth="1.5" />
-          </g>
-        )}
-      </svg>
+            {/* ---- Flame + sparks, glued to the burning tip. The position group
+                 eases its translate over 1s so it tracks the smooth fuse. ---- */}
+            <g
+              className="bomb-flame-pos"
+              style={{ transform: `translate(${flameX.toFixed(1)}px, ${flameY.toFixed(1)}px)` }}
+            >
+              {/* Flame: three layered ellipses (orange / yellow / bright core),
+                  sized by tension, with a snappy flicker. */}
+              <g transform={`scale(${flameScale})`}>
+                <g className="bomb-flame-core">
+                  <ellipse cx="0" cy="-13" rx="9" ry="17" fill="#FF6B3D" stroke="#000" strokeWidth="2.5" />
+                  <ellipse cx="0" cy="-15" rx="5.5" ry="12" fill="#FFE94A" />
+                  <ellipse cx="0" cy="-16" rx="2.5" ry="7" fill="#FFF6C8" />
+                </g>
+              </g>
+
+              {/* Sparks drift up and fade, looping. */}
+              {sparks.map((s, i) => (
+                <circle
+                  key={i}
+                  className="bomb-spark"
+                  cx={s.dx}
+                  cy={s.dy}
+                  r={s.r}
+                  fill={s.c}
+                  stroke="#000"
+                  strokeWidth="1.5"
+                  style={{ animationDelay: `${s.delay}ms`, animationDuration: `${s.dur}ms` }}
+                />
+              ))}
+            </g>
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
