@@ -13,31 +13,45 @@
   height: 168px;
   transform: rotate(var(--rot, 0deg));
   transition: transform 0.12s, box-shadow 0.12s;
-  /* Slow idle float - each card drifts up a few px and rocks half a degree off
-     its resting --rot tilt. Per-card durations/delays below keep them out of
-     sync. Hover cancels the loop so the snap-to-attention transform wins. */
-  animation: card-float 3.2s ease-in-out infinite;
+  /* Quick squash-and-stretch pop then a long rest - a rhythmic snap, not a
+     smooth float. The resting --rot tilt is baked into each frame. Per-card
+     durations/delays below keep them popping independently. */
+  animation: card-pop 3s ease-out infinite;
 }
 
-@keyframes card-float {
-  0% { transform: translateY(0) rotate(var(--rot, 0deg)); }
-  50% { transform: translateY(-5px) rotate(calc(var(--rot, 0deg) + 0.5deg)); }
-  100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+@keyframes card-pop {
+  0% { transform: rotate(var(--rot, 0deg)) scale(1, 1); }
+  8% { transform: rotate(var(--rot, 0deg)) scale(0.97, 1.03); }
+  16% { transform: rotate(var(--rot, 0deg)) scale(1.04, 0.96); }
+  24% { transform: rotate(var(--rot, 0deg)) scale(0.99, 1.01); }
+  30% { transform: rotate(var(--rot, 0deg)) scale(1, 1); }
+  100% { transform: rotate(var(--rot, 0deg)) scale(1, 1); }
 }
 
-/* Stagger each card's float so they bob independently. */
+/* Stagger each card's pop so they snap independently (all different durations). */
 .game-card:nth-child(1) { animation-duration: 3s; animation-delay: 0s; }
-.game-card:nth-child(2) { animation-duration: 3.4s; animation-delay: 0.4s; }
-.game-card:nth-child(3) { animation-duration: 3.8s; animation-delay: 0.8s; }
-.game-card:nth-child(4) { animation-duration: 3.3s; animation-delay: 0.2s; }
-.game-card:nth-child(5) { animation-duration: 3.6s; animation-delay: 0.6s; }
-.game-card:nth-child(6) { animation-duration: 4s; animation-delay: 1s; }
+.game-card:nth-child(2) { animation-duration: 3.3s; animation-delay: 0.5s; }
+.game-card:nth-child(3) { animation-duration: 3.6s; animation-delay: 1s; }
+.game-card:nth-child(4) { animation-duration: 3.1s; animation-delay: 0.3s; }
+.game-card:nth-child(5) { animation-duration: 3.4s; animation-delay: 0.7s; }
+.game-card:nth-child(6) { animation-duration: 3.9s; animation-delay: 1.2s; }
 
-/* Hovering (or pressing) freezes the float so the existing hover/active
-   transforms below take over cleanly. */
-.game-card:hover,
+/* Hover: cancel the idle loop and fire a single bigger pop that snaps the tilt
+   to 0 and settles at the resting hover scale. Pressing cancels animation so
+   the :active squash shows. */
+.game-card:hover {
+  animation: card-hover-pop 0.35s ease-out forwards;
+}
+
 .game-card:active {
   animation: none;
+}
+
+@keyframes card-hover-pop {
+  0% { transform: rotate(0deg) scale(1); }
+  40% { transform: rotate(0deg) scale(1.08); }
+  70% { transform: rotate(0deg) scale(1.03); }
+  100% { transform: rotate(0deg) scale(1.05); }
 }
 
 /* Each card sits slightly cockeyed at rest, like flyers pinned crooked to
@@ -153,6 +167,8 @@
 .game-card.disabled:hover {
   transform: rotate(var(--rot, 0deg));
   box-shadow: 5px 5px 0 #000;
+  /* The "more soon" card isn't selectable, so it doesn't pop on hover. */
+  animation: none;
 }
 
 /* The flagship card stands at attention (no tilt) with a heavier shadow so it

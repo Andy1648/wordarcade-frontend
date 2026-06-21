@@ -38,18 +38,22 @@ button {
 /* ==============  SHARED IDLE ANIMATIONS  ===================== */
 /* ============================================================= */
 
-/* The signature FNF title wave: each letter (wrapped by WaveText) bobs up and
-   down, offset by a per-letter animation-delay so they ripple like a flag.
-   inline-block is required for transform to take on an inline span. */
+/* The signature FNF title wave: each letter (wrapped by WaveText) does a fast
+   scale-pop on a staggered loop, then sits still for the rest of the cycle - a
+   rhythmic snap rather than a constant bob. inline-block is required for the
+   transform to take on an inline span. */
 .wave-letter {
   display: inline-block;
-  animation: letter-bounce 1.2s ease-in-out infinite;
+  animation: letter-pop 2.5s ease-out infinite;
 }
 
-@keyframes letter-bounce {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
+@keyframes letter-pop {
+  0% { transform: scale(1) rotate(0); }
+  10% { transform: scale(1.25) rotate(-3deg); }
+  20% { transform: scale(0.95) rotate(1deg); }
+  30% { transform: scale(1.05) rotate(0); }
+  40% { transform: scale(1) rotate(0); }
+  100% { transform: scale(1) rotate(0); }
 }
 
 /* Gentle "breathing" opacity pulse shared by quiet section labels. */
@@ -64,6 +68,8 @@ button {
    live on other classes and are left intact). */
 @media (prefers-reduced-motion: reduce) {
   .wave-letter,
+  .homepage-logo,
+  .homepage-logo::after,
   .homepage-tagline,
   .homepage-section-label,
   .homepage-btn,

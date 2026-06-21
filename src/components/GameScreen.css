@@ -1802,12 +1802,14 @@
 /* The combo prompt softly pulses so it reads as "alive, waiting for input".
    The base skewX(-3deg) is kept in every keyframe so the prompt's slant holds. */
 .game-combo {
-  animation: combo-pulse 1.6s ease-in-out infinite;
+  animation: prompt-throb 2s ease-out infinite;
 }
 
-@keyframes combo-pulse {
+@keyframes prompt-throb {
   0% { transform: skewX(-3deg) scale(1); }
-  50% { transform: skewX(-3deg) scale(1.03); }
+  5% { transform: skewX(-3deg) scale(1.06); }
+  12% { transform: skewX(-3deg) scale(0.98); }
+  18% { transform: skewX(-3deg) scale(1); }
   100% { transform: skewX(-3deg) scale(1); }
 }
 

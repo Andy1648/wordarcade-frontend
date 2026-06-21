@@ -5,7 +5,7 @@
 // @keyframes letter-bounce, defined globally in index.css); this component only
 // does the splitting and delay stagger. Spaces render as a non-breaking space
 // so word gaps are preserved without an animated empty span.
-export default function WaveText({ text, className = '', step = 0.08 }) {
+export default function WaveText({ text, className = '', step = 0.12 }) {
   const str = text == null ? '' : String(text);
   return (
     <span className={className} aria-label={str}>

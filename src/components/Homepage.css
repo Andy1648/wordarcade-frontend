@@ -126,6 +126,46 @@
   display: block;
   text-align: center;
   transform: rotate(-2deg) skewX(-4deg);
+  /* Brief RGB-split glitch every ~4s. step-end snaps between frames (no easing)
+     and the base rotate/skew pose is baked into each frame so the tilt holds.
+     The ::after ghost flashes in sync for the channel-split. */
+  animation: title-glitch 4.3s step-end infinite;
+}
+
+/* Cyan ghost copy of the wordmark, sitting just behind the real letters. It's
+   invisible except during the glitch frames, when it flashes offset to one
+   side to read as an RGB channel split. Flat Bungee (no shade) + no stroke so
+   it reads as a clean colour ghost rather than a second 3D logo. */
+.homepage-logo::after {
+  content: 'WORDARCADE';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Bungee', cursive;
+  color: #2EFFE0;
+  -webkit-text-stroke: 0;
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  animation: title-ghost 4.3s step-end infinite;
+}
+
+@keyframes title-glitch {
+  0% { transform: rotate(-2deg) skewX(-4deg) translateX(0); }
+  2% { transform: rotate(-2deg) skewX(-6deg) translateX(-3px); }
+  4% { transform: rotate(-2deg) skewX(-2deg) translateX(3px); }
+  5% { transform: rotate(-2deg) skewX(-4deg) translateX(0); }
+  100% { transform: rotate(-2deg) skewX(-4deg) translateX(0); }
+}
+
+@keyframes title-ghost {
+  0% { opacity: 0; transform: translateX(0); }
+  2% { opacity: 0.4; transform: translateX(-4px); }
+  4% { opacity: 0.4; transform: translateX(5px); }
+  5% { opacity: 0; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
 }
 
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
@@ -276,15 +316,16 @@
   animation: label-pulse 2.2s ease-in-out infinite;
 }
 
-/* Action buttons: a subtle scale "breathe", the two offset so they never pulse
-   in unison. skewX(-2deg) (the button's resting pose) is kept in the keyframe.
-   Hover/disabled cancel the loop so the press feedback and dim state win. */
+/* Action buttons: a quick upward "kick" then settle, resting for most of the
+   loop. skewX(-2deg) (the button's resting pose) is baked into each frame; the
+   two are offset so they never kick in unison. Hover/disabled cancel the loop
+   so the press feedback and dim state win. */
 .homepage-btn {
-  animation: btn-breathe 2.1s ease-in-out infinite;
+  animation: btn-kick 2.8s ease-out infinite;
 }
 
 .homepage-btn-join {
-  animation-duration: 2.4s;
+  animation-duration: 3.1s;
   animation-delay: 0.3s;
 }
 
@@ -294,10 +335,12 @@
   animation: none;
 }
 
-@keyframes btn-breathe {
-  0% { transform: skewX(-2deg) scale(1); }
-  50% { transform: skewX(-2deg) scale(1.02); }
-  100% { transform: skewX(-2deg) scale(1); }
+@keyframes btn-kick {
+  0% { transform: skewX(-2deg) translateY(0); }
+  5% { transform: skewX(-2deg) translateY(-4px); }
+  10% { transform: skewX(-2deg) translateY(1px); }
+  15% { transform: skewX(-2deg) translateY(0); }
+  100% { transform: skewX(-2deg) translateY(0); }
 }
 
 /* Parallax drift: the splatters slowly translate, with the larger corner ones
