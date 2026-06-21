@@ -690,7 +690,7 @@ function GameOverStats({ gameStats, players, winner }) {
       <div className="go-stats-summary">
         <div className="go-summary-item">
           <div className="go-summary-value">
-            <CountUp to={words.length} />
+            <CountUp to={words.length} duration={500} />
           </div>
           <div className="go-summary-label">WORDS</div>
         </div>
@@ -700,7 +700,7 @@ function GameOverStats({ gameStats, players, winner }) {
         </div>
         <div className="go-summary-item">
           <div className="go-summary-value">
-            <CountUp to={timeouts.length} />
+            <CountUp to={timeouts.length} duration={500} />
           </div>
           <div className="go-summary-label">TIMEOUTS</div>
         </div>
@@ -729,7 +729,7 @@ function GameOverStats({ gameStats, players, winner }) {
             <div className="go-player-grid">
               <div className="go-pstat">
                 <span className="go-pstat-val">
-                  <CountUp to={p.count} />
+                  <CountUp to={p.count} duration={500} />
                 </span>
                 <span className="go-pstat-key">WORDS</span>
               </div>
@@ -745,7 +745,7 @@ function GameOverStats({ gameStats, players, winner }) {
               </div>
               <div className="go-pstat">
                 <span className="go-pstat-val">
-                  <CountUp to={p.timeouts} />
+                  <CountUp to={p.timeouts} duration={500} />
                 </span>
                 <span className="go-pstat-key">TIMEOUTS</span>
               </div>

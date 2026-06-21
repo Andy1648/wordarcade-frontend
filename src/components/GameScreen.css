@@ -1555,14 +1555,11 @@
   opacity: 0.85;
 }
 
-/* Each award a different palette colour. */
-.go-award.wordsmith { background: #9A1AFF; }
-.go-award.wordsmith .go-award-label,
-.go-award.wordsmith .go-award-name { color: #fff; }
-.go-award.wordsmith .go-award-detail { color: #f0e0ff; opacity: 1; }
-
-.go-award.speed-demon { background: #FF6B3D; }
-.go-award.survivor { background: #FFE94A; }
+/* Each award its spec palette colour. All three are light enough that the
+   default black label/name/detail text stays legible. */
+.go-award.wordsmith { background: #FFE94A; }
+.go-award.speed-demon { background: #2EFFE0; }
+.go-award.survivor { background: #FF2EC4; }
 
 /* ---- Per-player stat cards ---- */
 
