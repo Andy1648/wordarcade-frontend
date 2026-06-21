@@ -112,6 +112,70 @@ function FloatingScore() {
   );
 }
 
+/**
+ * The submitted word "thrown" at the bomb: a throwaway element that flies from
+ * the input area up toward the bomb and fades out (see word-fly in the CSS).
+ * Re-keyed per submission so it replays, and removes itself on animation end.
+ * pointer-events:none (in CSS).
+ */
+function FlyingWord({ text }) {
+  const [done, setDone] = useState(false);
+  if (done) return null;
+  return (
+    <div className="flying-word" onAnimationEnd={() => setDone(true)} aria-hidden="true">
+      {(text || '').toUpperCase()}
+    </div>
+  );
+}
+
+/**
+ * A rejected word bouncing back off the bomb and shattering: each letter flies
+ * apart to a random offset/rotation and fades (see letter-shatter in the CSS).
+ * Offsets are picked once on mount. Removes itself when the first letter's
+ * animation ends. pointer-events:none.
+ */
+function ShatterWord({ text }) {
+  const [done, setDone] = useState(false);
+  const [letters] = useState(() =>
+    (text || '').toUpperCase().split('').map((ch) => ({
+      ch,
+      tx: Math.round(Math.random() * 60 - 30), // ±30px
+      ty: Math.round(Math.random() * 60 - 30),
+      rot: Math.round(Math.random() * 120 - 60),
+    }))
+  );
+  if (done || letters.length === 0) return null;
+  return (
+    <div className="word-shatter" aria-hidden="true">
+      {letters.map((l, i) => (
+        <span
+          key={i}
+          className="shatter-letter"
+          style={{ '--tx': `${l.tx}px`, '--ty': `${l.ty}px`, '--rot': `${l.rot}deg` }}
+          onAnimationEnd={i === 0 ? () => setDone(true) : undefined}
+        >
+          {l.ch === ' ' ? ' ' : l.ch}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The "CLUTCH!" slam shown instead of the normal hype word when a correct answer
+ * lands with <=2s left. Big pink Bungee with a unique slam-in animation; removes
+ * itself on animation end. pointer-events:none.
+ */
+function ClutchPopup() {
+  const [done, setDone] = useState(false);
+  if (done) return null;
+  return (
+    <div className="clutch-popup" onAnimationEnd={() => setDone(true)} aria-hidden="true">
+      CLUTCH!
+    </div>
+  );
+}
+
 // 3-2-1-GO! intro sequence. Each entry shows for 700ms; null marks the end.
 const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
 
@@ -891,6 +955,42 @@ export default function GameScreen({
   const [passDir, setPassDir] = useState(null);
   const prevCurrentRef = useRef(null);
 
+  // ---- Submit interaction (word flies at the bomb; bomb reacts) ----
+  // flyKey/flyText drive the word thrown toward the bomb on each submit;
+  // shatterKey/shatterText drive the rejected word bouncing back and shattering;
+  // bombReaction is the one-shot 'recoil' (accepted) / 'reject' class on the bomb;
+  // clutchFlag swaps the hype popup for CLUTCH! when the accept beat the buzzer.
+  const [flyKey, setFlyKey] = useState(0);
+  const [flyText, setFlyText] = useState('');
+  const [shatterKey, setShatterKey] = useState(0);
+  const [shatterText, setShatterText] = useState('');
+  const [bombReaction, setBombReaction] = useState(null);
+  const [clutchFlag, setClutchFlag] = useState(false);
+  // The timer reading + word captured at the moment of submit, so the result
+  // handler can judge "clutch" (<=2s left) and shatter the exact word even after
+  // the input has cleared / the turn has moved on.
+  const submitTimerRef = useRef(0);
+  const lastSubmitWordRef = useRef('');
+  const interactionResultRef = useRef(null);
+
+  // React to each accept/reject with the physical bomb interaction. Keyed off
+  // the result object identity (a fresh object per submission) so it fires once.
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    if (!lastWordResult || lastWordResult === interactionResultRef.current) return;
+    interactionResultRef.current = lastWordResult;
+    if (lastWordResult.accepted) {
+      setBombReaction('recoil');
+      const t = submitTimerRef.current;
+      setClutchFlag(t > 0 && t <= 2); // beat the buzzer
+    } else {
+      setBombReaction('reject');
+      setClutchFlag(false);
+      setShatterText(lastSubmitWordRef.current);
+      setShatterKey((k) => k + 1);
+    }
+  }, [lastWordResult, gameType]);
+
   useEffect(() => {
     if (!gameState || gameType !== 'word-bomb') return;
     const players = gameState.players || [];
@@ -1095,6 +1195,12 @@ export default function GameScreen({
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
+    // Snapshot what we need to react to the (async) result, then throw the word
+    // at the bomb so the toss reads before the accept/reject lands.
+    submitTimerRef.current = timerSeconds;
+    lastSubmitWordRef.current = word;
+    setFlyText(word);
+    setFlyKey((k) => k + 1);
     onSubmitWord(word);
     setDraft('');
     // Reset other players' view of our typing now that we've fired the word.
@@ -1122,7 +1228,9 @@ export default function GameScreen({
       )}
       {explosionKey > 0 && <ExplosionEffect key={explosionKey} />}
       <div className={`game-stage${shake ? ' game-shake' : ''}`}>
-        {hypeKey > 0 && <HypePopup key={hypeKey} />}
+        {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer. */}
+        {hypeKey > 0 &&
+          (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
         <div className="game-header">
           <div className="game-title">{title}</div>
           <div className="game-header-right">
@@ -1226,12 +1334,34 @@ export default function GameScreen({
               if (e.target === e.currentTarget) setPassDir(null);
             }}
           >
-            <BombVisual
-              timerSeconds={timerSeconds}
-              maxTimer={maxTimer}
-              showCountdown={showCountdown}
-            />
+            {/* The reactor adds the one-shot recoil (accepted) / reject shake +
+                red flash when a word hits the bomb, on top of the pass throw. */}
+            <div
+              className={`bomb-reactor${bombReaction ? ` ${bombReaction}` : ''}`}
+              onAnimationEnd={(e) => {
+                if (e.target === e.currentTarget) setBombReaction(null);
+              }}
+            >
+              <BombVisual
+                timerSeconds={timerSeconds}
+                maxTimer={maxTimer}
+                showCountdown={showCountdown}
+              />
+              {bombReaction === 'reject' && <div className="bomb-reject-flash" />}
+              {bombReaction === 'recoil' && (
+                <div className="bomb-spark-burst">
+                  {[0, 1, 2, 3].map((i) => (
+                    <span key={i} className={`burst-spark s${i}`} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Word thrown at the bomb on submit, and the rejected word shattering
+              back. Both are absolutely positioned over the bomb area. */}
+          {flyKey > 0 && <FlyingWord key={flyKey} text={flyText} />}
+          {shatterKey > 0 && <ShatterWord key={shatterKey} text={shatterText} />}
         </div>
 
         <div className="game-combo-box">

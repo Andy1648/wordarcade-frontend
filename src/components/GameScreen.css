@@ -460,9 +460,162 @@
 
 /* The bomb replaces the timer bar for Word Bomb; its fuse IS the timer. */
 .bomb-area {
+  position: relative; /* anchors the flying / shattering word overlays */
   display: flex;
   justify-content: center;
   margin-bottom: 18px;
+}
+
+/* ---- Submit interaction: word thrown at the bomb, bomb reacts ---- */
+
+/* The reactor wraps the bomb so a one-shot recoil/reject animation can play on
+   top of the (separate) pass-throw transform without disturbing the bomb's own
+   internal transitions. */
+.bomb-reactor {
+  position: relative;
+  transform-origin: center;
+  line-height: 0;
+}
+
+/* Accepted: the bomb takes the hit and recoils - a quick squash back to size. */
+.bomb-reactor.recoil {
+  animation: bomb-recoil 200ms ease-out;
+}
+
+@keyframes bomb-recoil {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* Rejected: the bomb shrugs the word off with a sharp shake. */
+.bomb-reactor.reject {
+  animation: bomb-reject 250ms ease-in-out;
+}
+
+@keyframes bomb-reject {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-6px) rotate(-3deg); }
+  50% { transform: translateX(6px) rotate(3deg); }
+  75% { transform: translateX(-4px) rotate(-2deg); }
+  100% { transform: translateX(0); }
+}
+
+/* Red flash washed over the bomb on a rejected word. */
+.bomb-reject-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 60, 60, 0.55) 0%, rgba(255, 60, 60, 0) 70%);
+  pointer-events: none;
+  animation: bomb-reject-flash 250ms ease-out forwards;
+}
+
+@keyframes bomb-reject-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* A brief burst of sparks flung off the bomb when a word is accepted. Four
+   small cel-outlined dots fired in different directions. */
+.bomb-spark-burst {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  pointer-events: none;
+}
+
+.burst-spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FFE94A;
+  border: 1.5px solid #000;
+  animation: burst-spark 300ms ease-out forwards;
+}
+
+.burst-spark.s0 { --bx: -34px; --by: -22px; background: #FFE94A; }
+.burst-spark.s1 { --bx: 30px;  --by: -28px; background: #FF6B3D; }
+.burst-spark.s2 { --bx: -26px; --by: 24px;  background: #FF6B3D; }
+.burst-spark.s3 { --bx: 36px;  --by: 16px;  background: #FFE94A; }
+
+@keyframes burst-spark {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--bx, 0), var(--by, 0)) scale(0.3); opacity: 0; }
+}
+
+/* The submitted word flying up from the input toward the bomb, fading as it
+   goes. Centered horizontally; starts low (near the input) and rises. */
+.flying-word {
+  position: absolute;
+  left: 50%;
+  bottom: -150px;
+  z-index: 18;
+  pointer-events: none;
+  font-family: 'Bungee', cursive;
+  font-size: 22px;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  animation: word-fly 300ms ease-in forwards;
+}
+
+@keyframes word-fly {
+  0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -180px) scale(0.55); opacity: 0; }
+}
+
+/* The rejected word shattering near the bomb: each letter flies apart. */
+.word-shatter {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 18;
+  pointer-events: none;
+  display: flex;
+  font-family: 'Bungee', cursive;
+  font-size: 22px;
+  color: #FF5C5C;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+
+.shatter-letter {
+  display: inline-block;
+  animation: letter-shatter 300ms ease-out forwards;
+}
+
+@keyframes letter-shatter {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0)); opacity: 0; }
+}
+
+/* CLUTCH! - the buzzer-beater slam, replacing the normal hype word. */
+.clutch-popup {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 22;
+  pointer-events: none;
+  font-family: 'Bungee', cursive;
+  font-size: 72px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  animation: clutch-slam 500ms ease-out forwards;
+}
+
+@keyframes clutch-slam {
+  0% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(0.95); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 .bomb-svg {
