@@ -377,13 +377,13 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
             />
 
             {/* ---- Metal cap with ridge details. ---- */}
-            <rect x="66" y="40" width="28" height="24" rx="3" fill="#666" stroke="#000" strokeWidth="5" />
+            <rect x="66" y="40" width="28" height="24" rx="3" fill="#666" stroke="#4A2A0A" strokeWidth="5" />
             <line x1="73" y1="45" x2="73" y2="59" stroke="#000" strokeWidth="2" />
             <line x1="80" y1="45" x2="80" y2="59" stroke="#000" strokeWidth="2" />
             <line x1="87" y1="45" x2="87" y2="59" stroke="#000" strokeWidth="2" />
 
             {/* ---- Body: outlined main circle + a tension-tinted inner disc. ---- */}
-            <circle cx="80" cy="120" r="58" fill="#2a2a2a" stroke="#000" strokeWidth="6" />
+            <circle cx="80" cy="120" r="58" fill="#2a2a2a" stroke="#4A2A0A" strokeWidth="6" />
             <circle className="bomb-tint" cx="80" cy="120" r="50" fill={BODY_INNER_FILL[tension]} />
 
             {/* ---- Hard-edged cel shadow (lower-right) + two stacked highlights
