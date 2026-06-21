@@ -1384,6 +1384,10 @@
   gap: 7px;
   background: #1a0b2e;
   border: 2.5px solid #000;
+  /* A thicker, event-coloured accent down the left edge (cyan accepted, red
+     timeout, etc.) on top of the black cel outline, so the row's type reads at
+     a glance even before the dot/text. Per-type colours set below. */
+  border-left-width: 5px;
   border-radius: 4px;
   box-shadow: 3px 3px 0 #000;
   padding: 7px 9px;
@@ -1404,6 +1408,12 @@
 .kill-feed-row.timeout .kill-feed-dot { background: #FF5C5C; }
 .kill-feed-row.skip .kill-feed-dot { background: #FFE94A; }
 .kill-feed-row.rejected .kill-feed-dot { background: #9A1AFF; }
+
+/* Left-edge accent colour, matched to each event type's dot. */
+.kill-feed-row.accepted { border-left-color: #2EFFE0; }
+.kill-feed-row.timeout { border-left-color: #FF5C5C; }
+.kill-feed-row.skip { border-left-color: #FFE94A; }
+.kill-feed-row.rejected { border-left-color: #9A1AFF; }
 
 .kill-feed-text {
   font-family: 'Space Mono', monospace;
@@ -1672,6 +1682,18 @@
   /* Per-player stats drop to a 2-column grid so values stay legible. */
   .go-player-grid { grid-template-columns: repeat(2, 1fr); gap: 8px 6px; }
   .go-summary-value { font-size: 17px; }
+
+  /* On phones the feed sits below the stage with little room, so trim it to the
+     3 most recent events. Rows render newest-first, so the first 3 children are
+     the latest; hide the rest. The fade mask is dropped since nothing scrolls
+     off under it anymore. */
+  .kill-feed-list {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .kill-feed-list .kill-feed-row:nth-child(n + 4) {
+    display: none;
+  }
 }
 
 /* Very narrow phones: stack SEND / SKIP under the input instead of beside it.
