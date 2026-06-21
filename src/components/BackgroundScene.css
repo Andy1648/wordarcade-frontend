@@ -1,0 +1,140 @@
+/* BackgroundScene.css
+   The persistent ambient backdrop. Sits behind every screen (z-index 0); the
+   app content layer is lifted to z-index 1 (see Transitions.css) and the screen
+   wraps are transparent so this shows through around the centred content.
+
+   Motion uses the individual `translate` / `rotate` transform properties (not
+   the `transform` shorthand) so a splatter can drift AND spin on independent
+   timelines from a single DOM node - keeping the total node count low. */
+
+.bg-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ---- Drifting + spinning paint splatters ---- */
+
+.bg-splat {
+  position: absolute;
+  will-change: translate, rotate;
+  animation:
+    bg-splat-drift var(--drift-dur, 21s) ease-in-out infinite alternate,
+    bg-splat-spin var(--spin-dur, 71s) linear infinite;
+}
+
+/* Reverse spinners just swap the rotation keyframe; durations (from the
+   shorthand above) are preserved by position. */
+.bg-splat.rev {
+  animation-name: bg-splat-drift, bg-splat-spin-rev;
+}
+
+@keyframes bg-splat-drift {
+  from { translate: 0 0; }
+  to { translate: var(--dx, 20px) var(--dy, 20px); }
+}
+
+@keyframes bg-splat-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@keyframes bg-splat-spin-rev {
+  from { rotate: 360deg; }
+  to { rotate: 0deg; }
+}
+
+/* ---- Rising particles ---- */
+
+.bg-particle {
+  position: absolute;
+  top: 0;
+  border-radius: 50%;
+  opacity: var(--p-op, 0.1);
+  will-change: translate;
+  animation: bg-particle-rise var(--dur, 15s) linear infinite var(--delay, 0s);
+}
+
+@keyframes bg-particle-rise {
+  from { translate: 0 100vh; }
+  to { translate: 0 -20px; }
+}
+
+/* ---- Scrolling diagonal scratch lines ---- */
+
+.bg-line {
+  position: absolute;
+  left: 20%;
+  width: 60%;
+  height: 3px;
+  opacity: 0.04;
+  rotate: var(--angle, 40deg);
+  will-change: translate;
+  animation: bg-line-scroll var(--dur, 35s) linear infinite var(--delay, 0s);
+}
+
+@keyframes bg-line-scroll {
+  from { translate: -120% 0; }
+  to { translate: 120% 0; }
+}
+
+/* ---- Red tension wash (only animates under .critical) ---- */
+
+.bg-red {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 60, 60, 0) 45%,
+    rgba(255, 50, 50, 0.22) 100%
+  );
+}
+
+/* ============================================================= */
+/* ============  TENSION REACTION (Word Bomb turn)  =========== */
+/* ============================================================= */
+
+/* Warning (30-60% time left): particles quicken and brighten, splatters drift
+   a little faster (spin unchanged - second duration in the list is kept). */
+.bg-scene.warning .bg-particle {
+  animation-duration: calc(var(--dur) * 0.6);
+  opacity: min(calc(var(--p-op) * 1.7), 0.4);
+}
+
+.bg-scene.warning .bg-splat {
+  animation-duration: calc(var(--drift-dur) * 0.7), var(--spin-dur);
+}
+
+/* Critical (<30%): particles race, splatters drift hard, and the red wash
+   pulses across the whole backdrop. */
+.bg-scene.critical .bg-particle {
+  animation-duration: calc(var(--dur) * 0.38);
+  opacity: min(calc(var(--p-op) * 2.4), 0.45);
+}
+
+.bg-scene.critical .bg-splat {
+  animation-duration: calc(var(--drift-dur) * 0.45), var(--spin-dur);
+}
+
+.bg-scene.critical .bg-red {
+  animation: bg-red-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes bg-red-pulse {
+  0% { opacity: 0.05; }
+  50% { opacity: 0.16; }
+  100% { opacity: 0.05; }
+}
+
+/* Honour reduced-motion: keep the ambient layout but stop the looping motion. */
+@media (prefers-reduced-motion: reduce) {
+  .bg-splat,
+  .bg-particle,
+  .bg-line,
+  .bg-red {
+    animation: none !important;
+  }
+}

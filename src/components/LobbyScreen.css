@@ -1,7 +1,9 @@
 /* LobbyScreen.css */
 
 .lobby-wrap {
-  background: #0d0618;
+  /* Transparent so the persistent BackgroundScene shows behind the form box;
+     dark base comes from body/#root. */
+  background: transparent;
   width: 100%;
   min-height: 100vh;
   display: flex;

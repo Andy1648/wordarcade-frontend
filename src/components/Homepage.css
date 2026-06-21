@@ -4,7 +4,9 @@
    (no max-width, margin, or rounded corners against the viewport), and centres
    the content card both ways. */
 .homepage-wrap {
-  background: #0d0618;
+  /* Transparent so the persistent BackgroundScene shows through around the
+     card; the page's dark base comes from body/#root. */
+  background: transparent;
   width: 100%;
   min-height: 100vh;
   position: relative;
@@ -35,7 +37,12 @@
 .homepage-stage::before {
   content: '';
   position: absolute;
-  inset: 0;
+  /* Slightly taller than the stage and clipped by its overflow, so a very slow
+     upward translate (one 76px course per loop) scrolls the wall seamlessly. */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100% + 80px);
   z-index: 0;
   pointer-events: none;
   opacity: 0.2;
@@ -45,6 +52,13 @@
     repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 76px);
   background-size: 100% 76px, 76px 38px, 76px 38px;
   background-position: 0 0, 0 0, 38px 38px;
+  animation: brick-scroll 60s linear infinite;
+  will-change: transform;
+}
+
+@keyframes brick-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-76px); }
 }
 
 /* Decorative paint splatters scattered around the stage edges. Behind the
@@ -61,7 +75,7 @@
 .homepage-splatter-1 {
   top: -34px;
   left: -40px;
-  opacity: 0.16;
+  opacity: 0.2;
   transform: rotate(18deg);
 }
 
@@ -70,7 +84,7 @@
   right: -46px;
   width: 180px;
   height: 180px;
-  opacity: 0.14;
+  opacity: 0.18;
   transform: rotate(-26deg);
 }
 
@@ -79,7 +93,7 @@
   left: -50px;
   width: 170px;
   height: 170px;
-  opacity: 0.15;
+  opacity: 0.2;
   transform: rotate(40deg);
 }
 
@@ -88,7 +102,7 @@
   right: -30px;
   width: 160px;
   height: 160px;
-  opacity: 0.13;
+  opacity: 0.18;
   transform: rotate(-12deg);
 }
 
@@ -282,20 +296,21 @@
   100% { transform: skewX(-2deg) scale(1); }
 }
 
-/* Paint splatters drift in a very slow, continuous rotation (linear so the spin
-   is constant). Alternating directions and prime-ish durations keep them from
-   ever lining up. */
-.homepage-splatter-1 { animation: splat-drift 72s linear infinite; }
-.homepage-splatter-2 { animation: splat-drift-rev 84s linear infinite; }
-.homepage-splatter-3 { animation: splat-drift 63s linear infinite; }
-.homepage-splatter-4 { animation: splat-drift-rev 90s linear infinite; }
-
-@keyframes splat-drift {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* Parallax drift: the splatters slowly translate, with the larger corner ones
+   moving further (and faster) than the smaller inner ones for a sense of depth.
+   Uses the individual `translate` property so each keeps its static resting
+   tilt (transform: rotate) underneath. Prime-ish durations keep them desynced. */
+.homepage-splatter {
+  animation: hp-splat-drift var(--hp-dur, 23s) ease-in-out infinite alternate;
+  will-change: translate;
 }
 
-@keyframes splat-drift-rev {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
+.homepage-splatter-1 { --hp-dur: 19s; --hx: 30px; --hy: 22px; }
+.homepage-splatter-2 { --hp-dur: 27s; --hx: -24px; --hy: 18px; }
+.homepage-splatter-3 { --hp-dur: 23s; --hx: 34px; --hy: -26px; }
+.homepage-splatter-4 { --hp-dur: 31s; --hx: -20px; --hy: -16px; }
+
+@keyframes hp-splat-drift {
+  from { translate: 0 0; }
+  to { translate: var(--hx, 20px) var(--hy, 20px); }
 }

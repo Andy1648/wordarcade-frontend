@@ -5,6 +5,9 @@
 
 .view-transition-root {
   position: relative;
+  /* Sit above the persistent BackgroundScene (z-index 0). Screen wraps are
+     transparent so the ambient backdrop shows through around the content. */
+  z-index: 1;
   /* Keep the off-screen incoming view from spawning a horizontal scrollbar
      mid-slide. */
   overflow-x: hidden;

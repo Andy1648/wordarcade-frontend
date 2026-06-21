@@ -2,7 +2,9 @@
 
 .game-wrap {
   position: relative;
-  background: #0d0618;
+  /* Transparent so the ambient BackgroundScene (which reacts to turn tension)
+     shows through around the stage; dark base comes from body/#root. */
+  background: transparent;
   width: 100%;
   min-height: 100vh;
   display: flex;

@@ -4,6 +4,7 @@ import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
+import BackgroundScene from './components/BackgroundScene';
 import { useWebSocket } from './hooks/useWebSocket';
 import './Transitions.css';
 
@@ -522,14 +523,28 @@ function App() {
     );
   }
 
+  // Ambient backdrop intensity: ramps with the Word Bomb turn timer so the whole
+  // screen reacts to the danger level. Resting 'calm' on every other screen.
+  let bgIntensity = 'calm';
+  if (view === 'game' && gameType === 'word-bomb' && !gameOver && gameState) {
+    const maxT = gameState.timerSeconds || 1;
+    const ratio = Math.max(0, Math.min(1, timerSeconds / maxT));
+    bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
+  }
+
   // `key={view}` remounts the wrapper only on an actual view change, so the
-  // slide animation fires then (not on every re-render within a view).
+  // slide animation fires then (not on every re-render within a view). The
+  // BackgroundScene lives OUTSIDE that keyed wrapper so it persists (never
+  // remounts) across screen transitions.
   return (
-    <div className="view-transition-root">
-      <div key={view} className={`view-screen view-${transitionDir}`}>
-        {screen}
+    <>
+      <BackgroundScene intensity={bgIntensity} />
+      <div className="view-transition-root">
+        <div key={view} className={`view-screen view-${transitionDir}`}>
+          {screen}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
