@@ -1,7 +1,21 @@
 // RoomScreen.jsx
 import './RoomScreen.css';
 
-const DIFFICULTIES = ['easy', 'medium', 'hard'];
+// Each difficulty carries a short timer blurb so players know what they're
+// picking. The `desc` mirrors the backend DIFFICULTY_PRESETS startSeconds in
+// gameLogic.js (easy 15s, medium 10s, hard 7s).
+const DIFFICULTIES = [
+  { key: 'easy', label: 'EASY', desc: '15s timer' },
+  { key: 'medium', label: 'MEDIUM', desc: '10s timer' },
+  { key: 'hard', label: 'HARD', desc: '7s timer' },
+];
+
+// Read-only readout for non-hosts: "MEDIUM — 10s timer" (falls back to the
+// bare key if it's somehow unknown).
+function difficultyReadout(key) {
+  const match = DIFFICULTIES.find((d) => d.key === key);
+  return match ? `${match.label} — ${match.desc}` : (key || '').toUpperCase();
+}
 // The two playable game modes. `key` is the value the server expects in
 // set_game_type / reports back in room_update's gameType; `label` is the
 // display text.
@@ -79,18 +93,19 @@ export default function RoomScreen({ room, myId, preselectedGame, onLeave, onSet
         <div className="room-section-label">DIFFICULTY</div>
         {isHost ? (
           <div className="room-difficulty-row">
-            {DIFFICULTIES.map((key) => (
+            {DIFFICULTIES.map((diff) => (
               <button
-                key={key}
-                className={`room-difficulty-btn${room.difficultyKey === key ? ' selected' : ''}`}
-                onClick={() => onSetDifficulty(key)}
+                key={diff.key}
+                className={`room-difficulty-btn${room.difficultyKey === diff.key ? ' selected' : ''}`}
+                onClick={() => onSetDifficulty(diff.key)}
               >
-                {key.toUpperCase()}
+                <span className="room-difficulty-name">{diff.label}</span>
+                <span className="room-difficulty-desc">{diff.desc}</span>
               </button>
             ))}
           </div>
         ) : (
-          <div className="room-difficulty-readonly">{room.difficultyKey.toUpperCase()}</div>
+          <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey)}</div>
         )}
 
         {isHost ? (

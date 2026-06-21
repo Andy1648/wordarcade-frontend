@@ -137,13 +137,17 @@
 
 .room-difficulty-btn {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   font-family: 'Bungee', cursive;
   font-size: 11px;
   color: #1a0b2e;
   background: #fff;
   border: 3px solid #000;
   border-radius: 4px;
-  padding: 10px 0;
+  padding: 9px 4px;
   cursor: pointer;
   box-shadow: 3px 3px 0 #000;
   transition: transform 0.1s, box-shadow 0.1s;
@@ -156,6 +160,22 @@
 
 .room-difficulty-btn.selected {
   background: #2EFFE0;
+}
+
+/* Difficulty name on top: bold + larger (inherits the Bungee button face). */
+.room-difficulty-name {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Timer blurb below: smaller, dimmer, and in the body mono font so it reads
+   as a sub-label rather than part of the button title. */
+.room-difficulty-desc {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 8px;
+  color: #666;
+  line-height: 1;
 }
 
 .room-difficulty-readonly {
