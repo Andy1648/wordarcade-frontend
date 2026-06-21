@@ -119,7 +119,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
           <svg className="homepage-burst" viewBox="-100 -100 200 200" aria-hidden="true">
             <polygon points={BURST_POINTS} fill="#FFE94A" />
           </svg>
-          <div className="homepage-logo">WORDARCADE</div>
+          <div className="homepage-logo" data-text="WORDARCADE">WORDARCADE</div>
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>

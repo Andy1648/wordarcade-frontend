@@ -170,6 +170,39 @@
   100% { transform: rotate(-2deg) skewX(-4deg) scale(1.02, 0.98) translateY(2px) rotate(-0.5deg); }
 }
 
+/* Glitch: a cyan duplicate of the wordmark (content pulled from data-text) sits
+   exactly over the title and is invisible except for a ~0.2s burst every 4s,
+   when it flashes in offset left/right - a quick colour-channel split. It lives
+   inside the title's transformed box, so it rides the bounce; its own animation
+   only adds the glitch offset on top. step-end keeps the jumps hard (no tween). */
+.homepage-logo {
+  position: relative;
+}
+
+.homepage-logo::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: #2EFFE0;
+  -webkit-text-stroke: 0;
+  opacity: 0;
+  pointer-events: none;
+  animation: title-glitch 4s step-end infinite;
+}
+
+@keyframes title-glitch {
+  0% { transform: translateX(0); opacity: 0; }
+  2% { transform: translateX(-3px) skewX(-2deg); opacity: 0.4; }
+  4% { transform: translateX(3px) skewX(2deg); opacity: 0.4; }
+  5% { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-logo::before { animation: none !important; opacity: 0; }
+}
+
 @keyframes burst-spin {
   from { rotate: 0deg; }
   to { rotate: 360deg; }
