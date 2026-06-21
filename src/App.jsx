@@ -23,6 +23,11 @@ function isPreselectableGame(mode) {
  */
 function App() {
   const [view, setView] = useState('home');
+  // The lastMessage effect only depends on lastMessage, so reading `view` from
+  // its closure could be stale. Mirror it into a ref (updated every render) so
+  // message handlers can branch on the live view without re-running the effect.
+  const viewRef = useRef('home');
+  viewRef.current = view;
   // Direction of the most recent view change, driving the slide transition:
   // 'forward' (deeper into the flow) slides in from the right, 'back' (home)
   // from the left. Set once per navigation; the whole home->lobby->room->game
@@ -113,6 +118,18 @@ function App() {
     if (lastMessage.type === 'room_update') {
       setRoom(lastMessage.payload);
       setServerError('');
+      // Only fall back to the room view if we're not currently in a game. A
+      // room_update can land right after game_started (host start) and would
+      // otherwise yank the player back out of the match. The rematch flow sends
+      // an explicit game_reset to drive the game -> room transition instead.
+      if (viewRef.current !== 'game') {
+        setView('room');
+      }
+    }
+
+    if (lastMessage.type === 'game_reset') {
+      // Host rematch: the room data already arrived via room_update; this is
+      // the explicit cue to leave the game view and return to the lobby.
       setView('room');
     }
 
