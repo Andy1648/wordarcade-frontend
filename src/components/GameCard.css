@@ -124,3 +124,32 @@
   transform: rotate(var(--rot, 0deg));
   box-shadow: 5px 5px 0 #000;
 }
+
+/* The flagship card stands at attention (no tilt) with a heavier shadow so it
+   reads as the primary pick among the crooked crowd. Declared after the
+   nth-child tilt rules so its --rot override wins at equal specificity. */
+.game-card.featured {
+  --rot: 0deg;
+  box-shadow: 7px 7px 0 #000;
+}
+
+.game-card.featured:hover {
+  box-shadow: 9px 9px 0 #000;
+}
+
+/* Little corner sticker calling out the featured game. */
+.game-card-featured-tag {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 4;
+  font-family: 'Bungee', cursive;
+  font-size: 7px;
+  color: #000;
+  background: #FFE94A;
+  border: 2px solid #000;
+  padding: 2px 5px;
+  transform: rotate(4deg);
+  box-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+}

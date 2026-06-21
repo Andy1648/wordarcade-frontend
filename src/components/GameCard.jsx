@@ -22,6 +22,7 @@ export default function GameCard({ game, onSelect }) {
     'game-card',
     game.dashedBorder ? 'dashed-border' : '',
     !game.enabled ? 'disabled' : '',
+    game.featured ? 'featured' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -50,6 +51,8 @@ export default function GameCard({ game, onSelect }) {
       aria-disabled={!game.enabled}
       aria-label={`${game.name.replace('\n', ' ')} - ${game.badgeText}`}
     >
+      {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
+
       {ArtComponent && (
         <div className="game-card-art">
           <ArtComponent />

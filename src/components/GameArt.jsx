@@ -5,27 +5,6 @@
 // style locked in for this project. GameCard.jsx looks these up by name
 // via the `artKey` field in gameData.js.
 
-export function ChainReactionArt() {
-  return (
-    <svg viewBox="0 0 140 168" width="100%" height="100%">
-      <g transform="translate(20,55) rotate(-12)">
-        <rect x="0" y="0" width="46" height="26" rx="13" fill="none" stroke="#000" strokeWidth="7" />
-        <rect x="2" y="2" width="46" height="26" rx="13" fill="none" stroke="#C200A0" strokeWidth="3" />
-      </g>
-      <g transform="translate(58,75) rotate(10)">
-        <rect x="0" y="0" width="46" height="26" rx="13" fill="none" stroke="#000" strokeWidth="7" />
-        <rect x="-2" y="-2" width="46" height="26" rx="13" fill="none" stroke="#FF74DC" strokeWidth="3" />
-      </g>
-      <g transform="translate(28,98) rotate(-15)">
-        <rect x="0" y="0" width="46" height="26" rx="13" fill="none" stroke="#000" strokeWidth="7" />
-        <rect x="2" y="2" width="46" height="26" rx="13" fill="none" stroke="#C200A0" strokeWidth="3" />
-      </g>
-      <circle cx="50" cy="40" r="5" fill="#FFE94A" stroke="#000" strokeWidth="2" />
-      <circle cx="90" cy="120" r="5" fill="#FFE94A" stroke="#000" strokeWidth="2" />
-    </svg>
-  );
-}
-
 export function WordBombArt() {
   return (
     <svg viewBox="0 0 140 168" width="100%" height="100%">
@@ -35,38 +14,6 @@ export function WordBombArt() {
       <circle cx="68" cy="105" r="42" fill="#3a0a3e" stroke="#000" strokeWidth="7" />
       <path d="M40 85 A42 42 0 0 1 68 63" fill="none" stroke="#7A1A80" strokeWidth="9" strokeLinecap="round" />
       <ellipse cx="50" cy="90" rx="11" ry="7" fill="#9A3AA0" opacity="0.8" />
-    </svg>
-  );
-}
-
-export function WordDuelArt() {
-  const sword = (rotation) => (
-    <g transform={`translate(70,95) rotate(${rotation})`}>
-      <rect x="-4" y="-55" width="8" height="65" rx="2" fill="#E8D6FF" stroke="#000" strokeWidth="5" />
-      <rect x="-16" y="6" width="32" height="9" rx="3" fill="#FFE94A" stroke="#000" strokeWidth="5" />
-      <rect x="-5" y="13" width="10" height="22" rx="3" fill="#6E10BD" stroke="#000" strokeWidth="5" />
-    </g>
-  );
-  return (
-    <svg viewBox="0 0 140 168" width="100%" height="100%">
-      {sword(-30)}
-      {sword(30)}
-    </svg>
-  );
-}
-
-export function SuffixSurgeArt() {
-  return (
-    <svg viewBox="0 0 140 168" width="100%" height="100%">
-      <g transform="translate(70,95)">
-        <polygon points="0,-50 18,10 0,25 -18,10" fill="#fff" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
-        <polygon points="0,-50 9,10 0,18" fill="#E0B400" opacity="0.7" />
-        <polygon points="-18,10 -32,32 -14,25" fill="#FF2EC4" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-        <polygon points="18,10 32,32 14,25" fill="#FF2EC4" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-        <circle cx="0" cy="-10" r="9" fill="#2EFFE0" stroke="#000" strokeWidth="4" />
-        <polygon points="-10,25 10,25 0,55" fill="#FF6B3D" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-        <polygon points="-5,25 5,25 0,42" fill="#FFB347" />
-      </g>
     </svg>
   );
 }
@@ -99,10 +46,7 @@ export function MoreSoonArt() {
 // Lookup map so GameCard can resolve `artKey` strings from gameData.js
 // to the actual component without a long if/else chain.
 export const GAME_ART_COMPONENTS = {
-  ChainReactionArt,
   WordBombArt,
-  WordDuelArt,
-  SuffixSurgeArt,
   CategoryBlitzArt,
   MoreSoonArt,
 };

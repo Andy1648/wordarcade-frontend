@@ -9,20 +9,6 @@
 
 export const GAMES = [
   {
-    id: 'chain-reaction',
-    artKey: 'ChainReactionArt',
-    name: 'CHAIN\nREACTION',
-    description: 'LAST 2 LETTERS START THE NEXT WORD.',
-    baseColor: '#FF2EC4',
-    iconBg: '#fff',
-    badgeText: 'MULTIPLAYER',
-    badgeBg: '#000',
-    badgeColor: '#FF2EC4',
-    textColor: '#000',
-    descColor: '#1a0b2e',
-    enabled: true,
-  },
-  {
     id: 'word-bomb',
     artKey: 'WordBombArt',
     name: 'WORD\nBOMB',
@@ -35,34 +21,9 @@ export const GAMES = [
     textColor: '#000',
     descColor: '#1a0b2e',
     enabled: true,
-  },
-  {
-    id: 'word-duel',
-    artKey: 'WordDuelArt',
-    name: 'WORD\nDUEL',
-    description: 'RACE TO TYPE THE LONGEST WORD.',
-    baseColor: '#9A1AFF',
-    iconBg: '#2EFFE0',
-    badgeText: 'MULTIPLAYER',
-    badgeBg: '#fff',
-    badgeColor: '#000',
-    textColor: '#fff',
-    descColor: '#F0E5FF',
-    enabled: true,
-  },
-  {
-    id: 'suffix-surge',
-    artKey: 'SuffixSurgeArt',
-    name: 'SUFFIX\nSURGE',
-    description: 'WORDS ENDING IN THE GIVEN SUFFIX.',
-    baseColor: '#FFE94A',
-    iconBg: '#000',
-    badgeText: 'SOLO / MULTI',
-    badgeBg: '#000',
-    badgeColor: '#FFE94A',
-    textColor: '#000',
-    descColor: '#1a0b2e',
-    enabled: true,
+    // The flagship game - GameCard gives it a "FEATURED" sticker and a
+    // straighter, heavier-shadowed treatment so it stands out from the crowd.
+    featured: true,
   },
   {
     id: 'category-blitz',
