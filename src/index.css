@@ -69,7 +69,8 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .wave-letter,
   .homepage-logo,
-  .homepage-logo::after,
+  .homepage-burst,
+  .homepage-speedlines,
   .homepage-tagline,
   .homepage-section-label,
   .homepage-btn,

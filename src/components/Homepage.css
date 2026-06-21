@@ -21,7 +21,10 @@
    a readable width and centred inside the full-bleed dark wrap. */
 .homepage-stage {
   position: relative;
-  background: #1a0b2e;
+  /* Card fill + a comic halftone dot texture on top of it. */
+  background-color: #1a0b2e;
+  background-image: radial-gradient(circle, rgba(255, 46, 196, 0.06) 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
   padding: 24px 18px 0;
   overflow: hidden;
   width: 100%;
@@ -116,56 +119,84 @@
   z-index: 1;
 }
 
+/* Title container: holds the spinning starburst (behind) and the wordmark. */
+.homepage-logo-wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Comic starburst behind the wordmark. translate centres it; the spin uses the
+   individual `rotate` property so it composes with the centring transform. */
+.homepage-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  opacity: 0.15;
+  pointer-events: none;
+  animation: burst-spin 30s linear infinite;
+}
+
 .homepage-logo {
+  position: relative;
+  z-index: 1;
   font-family: 'Bungee Shade', 'Bungee', cursive;
   font-size: 54px;
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
-  display: block;
+  display: inline-block;
   text-align: center;
   transform: rotate(-2deg) skewX(-4deg);
-  /* Brief RGB-split glitch every ~4s. step-end snaps between frames (no easing)
-     and the base rotate/skew pose is baked into each frame so the tilt holds.
-     The ::after ghost flashes in sync for the channel-split. */
-  animation: title-glitch 4.3s step-end infinite;
+  /* Rubbery elastic squash-stretch on the WHOLE word: a fast snap then a long
+     rest, so the wordmark feels like it's breathing with energy. */
+  animation: title-elastic 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
-/* Cyan ghost copy of the wordmark, sitting just behind the real letters. It's
-   invisible except during the glitch frames, when it flashes offset to one
-   side to read as an RGB channel split. Flat Bungee (no shade) + no stroke so
-   it reads as a clean colour ghost rather than a second 3D logo. */
-.homepage-logo::after {
-  content: 'WORDARCADE';
+@keyframes title-elastic {
+  0% { transform: rotate(-2deg) skewX(-4deg) scale(1, 1); }
+  4% { transform: rotate(-2deg) skewX(-4deg) scale(1.15, 0.88); }
+  8% { transform: rotate(-2deg) skewX(-4deg) scale(0.92, 1.1); }
+  12% { transform: rotate(-2deg) skewX(-4deg) scale(1.05, 0.95); }
+  16% { transform: rotate(-2deg) skewX(-4deg) scale(0.98, 1.02); }
+  20% { transform: rotate(-2deg) skewX(-4deg) scale(1, 1); }
+  100% { transform: rotate(-2deg) skewX(-4deg) scale(1, 1); }
+}
+
+@keyframes burst-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+/* Manga speed lines: each span is a long diameter through the centre, rotated
+   to its angle; the whole group spins as one (same 30s as the starburst). */
+.homepage-speedlines {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: burst-spin 30s linear infinite;
+}
+
+.homepage-speedlines span {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  text-align: center;
-  font-family: 'Bungee', cursive;
-  color: #2EFFE0;
-  -webkit-text-stroke: 0;
-  opacity: 0;
-  z-index: -1;
-  pointer-events: none;
-  animation: title-ghost 4.3s step-end infinite;
-}
-
-@keyframes title-glitch {
-  0% { transform: rotate(-2deg) skewX(-4deg) translateX(0); }
-  2% { transform: rotate(-2deg) skewX(-6deg) translateX(-3px); }
-  4% { transform: rotate(-2deg) skewX(-2deg) translateX(3px); }
-  5% { transform: rotate(-2deg) skewX(-4deg) translateX(0); }
-  100% { transform: rotate(-2deg) skewX(-4deg) translateX(0); }
-}
-
-@keyframes title-ghost {
-  0% { opacity: 0; transform: translateX(0); }
-  2% { opacity: 0.4; transform: translateX(-4px); }
-  4% { opacity: 0.4; transform: translateX(5px); }
-  5% { opacity: 0; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(0); }
+  width: 1400px;
+  height: 2px;
+  transform: translate(-50%, -50%) rotate(var(--angle, 0deg));
+  transform-origin: center;
+  opacity: 0.06;
 }
 
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
@@ -219,6 +250,7 @@
 }
 
 .homepage-btn {
+  position: relative;
   font-family: 'Bungee', cursive;
   font-size: 15px;
   /* Each variant sets its own darker-than-fill border colour below. */
@@ -232,6 +264,41 @@
   transform: skewX(-2deg);
   transition: transform 0.1s, box-shadow 0.1s;
 }
+
+/* "POW!" starburst that pops out from behind the button on hover. Sits behind
+   the opaque button (z-index -1) so only its spikes poke past the edges. */
+.homepage-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 230%;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0) rotate(-8deg);
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+  clip-path: polygon(
+    50% 0%, 60% 25%, 90% 10%, 78% 38%, 100% 50%, 78% 62%,
+    90% 90%, 60% 75%, 50% 100%, 40% 75%, 10% 90%, 22% 62%,
+    0% 50%, 22% 38%, 10% 10%, 40% 25%
+  );
+}
+
+.homepage-btn:hover::before {
+  opacity: 0.2;
+  transform: translate(-50%, -50%) scale(1) rotate(-8deg);
+}
+
+/* Disabled buttons don't pop. */
+.homepage-btn:disabled::before,
+.homepage-btn.disabled::before {
+  display: none;
+}
+
+.homepage-btn-create::before { background: #FF2EC4; }
+.homepage-btn-join::before { background: #2EFFE0; }
 
 .homepage-btn:active {
   transform: skewX(-2deg) translate(3px, 3px);

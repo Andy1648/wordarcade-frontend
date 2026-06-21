@@ -58,6 +58,41 @@ const LINES = [
   { top: 78, angle: 40,  dur: 41, delay: 13, color: '#FFE94A' },
 ];
 
+// Clean Y2K/comic geometric shapes - outlined (coloured stroke, no fill) - that
+// drift and spin independently. Each is a single inline-SVG node and reuses the
+// splatter drift/spin keyframes via the same --dx/--dy/--drift-dur/--spin-dur.
+const GEO_SHAPES = [
+  { kind: 'triangle', left: 9,  top: 24, size: 56, color: '#FF2EC4', op: 0.10, dx: 22,  dy: 18,  drift: 23, spin: 47, rev: false },
+  { kind: 'circle',   left: 85, top: 17, size: 46, color: '#2EFFE0', op: 0.10, dx: -20, dy: 24,  drift: 29, spin: 53, rev: true },
+  { kind: 'square',   left: 79, top: 73, size: 50, color: '#FFE94A', op: 0.09, dx: -24, dy: -20, drift: 19, spin: 61, rev: false },
+  { kind: 'star',     left: 15, top: 77, size: 62, color: '#9A1AFF', op: 0.11, dx: 26,  dy: -18, drift: 31, spin: 43, rev: true },
+  { kind: 'diamond',  left: 49, top: 11, size: 42, color: '#FF6B3D', op: 0.11, dx: 18,  dy: 22,  drift: 37, spin: 59, rev: false },
+  { kind: 'triangle', left: 62, top: 50, size: 46, color: '#2EFFE0', op: 0.08, dx: -22, dy: -16, drift: 41, spin: 67, rev: true },
+];
+
+// Stroke-only inner geometry for each shape kind (viewBox -50 -50 100 100).
+function GeoInner({ kind, color }) {
+  const stroke = { stroke: color, strokeWidth: 6, fill: 'none', strokeLinejoin: 'round' };
+  switch (kind) {
+    case 'circle':
+      return <circle cx="0" cy="0" r="40" {...stroke} />;
+    case 'square':
+      return <rect x="-36" y="-36" width="72" height="72" rx="4" {...stroke} />;
+    case 'diamond':
+      return <polygon points="0,-44 38,0 0,44 -38,0" {...stroke} />;
+    case 'star':
+      return (
+        <polygon
+          points="0,-46 11.2,-15.4 43.7,-14.2 18.1,5.9 27,37.2 0,19 -27,37.2 -18.1,5.9 -43.7,-14.2 -11.2,-15.4"
+          {...stroke}
+        />
+      );
+    case 'triangle':
+    default:
+      return <polygon points="0,-42 42,38 -42,38" {...stroke} />;
+  }
+}
+
 /**
  * @param {object} props
  * @param {'calm'|'warning'|'critical'} props.intensity - drives a tension class
@@ -67,6 +102,9 @@ const LINES = [
 export default function BackgroundScene({ intensity = 'calm' }) {
   return (
     <div className={`bg-scene ${intensity}`} aria-hidden="true">
+      {/* Comic halftone dot texture, painted first so it sits behind the rest. */}
+      <div className="bg-halftone" />
+
       {SPLATTERS.map((s, i) => (
         <div
           key={`s${i}`}
@@ -115,6 +153,28 @@ export default function BackgroundScene({ intensity = 'calm' }) {
             '--delay': `${l.delay}s`,
           }}
         />
+      ))}
+
+      {GEO_SHAPES.map((g, i) => (
+        <svg
+          key={`g${i}`}
+          className={`bg-geo${g.rev ? ' rev' : ''}`}
+          viewBox="-50 -50 100 100"
+          aria-hidden="true"
+          style={{
+            left: `${g.left}%`,
+            top: `${g.top}%`,
+            width: `${g.size}px`,
+            height: `${g.size}px`,
+            opacity: g.op,
+            '--dx': `${g.dx}px`,
+            '--dy': `${g.dy}px`,
+            '--drift-dur': `${g.drift}s`,
+            '--spin-dur': `${g.spin}s`,
+          }}
+        >
+          <GeoInner kind={g.kind} color={g.color} />
+        </svg>
       ))}
 
       {/* Red tension wash - invisible until the .critical class pulses it. */}

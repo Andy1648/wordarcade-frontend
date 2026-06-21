@@ -2,8 +2,29 @@
 import { useState } from 'react';
 import { GAMES } from '../gameData';
 import GameCard from './GameCard';
-import WaveText from './WaveText';
 import './Homepage.css';
+
+// Jagged comic starburst behind the title: 14 spikes, points computed once from
+// alternating outer/inner radii (deterministic - no randomness, so it never
+// shifts between renders).
+const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
+  const r = i % 2 === 0 ? 100 : 64;
+  const a = (Math.PI * i) / 14 - Math.PI / 2;
+  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
+}).join(' ');
+
+// Manga-style speed lines radiating from the homepage centre: 8 spokes (each a
+// full diameter, so 16 rays) in rotating palette colours.
+const SPEED_LINES = [
+  { angle: 0, color: '#FF2EC4' },
+  { angle: 23, color: '#2EFFE0' },
+  { angle: 45, color: '#FFE94A' },
+  { angle: 68, color: '#FF6B3D' },
+  { angle: 90, color: '#9A1AFF' },
+  { angle: 113, color: '#2EFFE0' },
+  { angle: 135, color: '#FF2EC4' },
+  { angle: 158, color: '#FFE94A' },
+];
 
 /**
  * Decorative paint-splatter blob. Purely cosmetic - rendered behind the
@@ -86,8 +107,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
         <PaintSplatter className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
         <PaintSplatter className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
 
-        <div className="homepage-logo">
-          <WaveText text="WORDARCADE" />
+        {/* Manga speed lines radiating from centre, behind the cards. */}
+        <div className="homepage-speedlines" aria-hidden="true">
+          {SPEED_LINES.map((s, i) => (
+            <span key={i} style={{ '--angle': `${s.angle}deg`, background: s.color }} />
+          ))}
+        </div>
+
+        {/* Title: a comic starburst behind the whole-word wordmark. */}
+        <div className="homepage-logo-wrap">
+          <svg className="homepage-burst" viewBox="-100 -100 200 200" aria-hidden="true">
+            <polygon points={BURST_POINTS} fill="#FFE94A" />
+          </svg>
+          <div className="homepage-logo">WORDARCADE</div>
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
