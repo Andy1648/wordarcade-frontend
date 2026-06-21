@@ -1,4 +1,5 @@
 // Homepage.jsx
+import { useState } from 'react';
 import { GAMES } from '../gameData';
 import GameCard from './GameCard';
 import './Homepage.css';
@@ -38,7 +39,14 @@ function PaintSplatter({ className, color }) {
  * separate, later pieces of work.
  */
 export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
+  // Once any navigation action fires we're about to transition away; lock the
+  // buttons so a rapid second click can't double-fire. State resets naturally
+  // because the component unmounts on the screen change.
+  const [navigating, setNavigating] = useState(false);
+
   function handleSelectGame(gameId) {
+    if (navigating) return;
+    setNavigating(true);
     if (onSelectGame) {
       onSelectGame(gameId);
     } else {
@@ -50,6 +58,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
   }
 
   function handleCreateRoom() {
+    if (navigating) return;
+    setNavigating(true);
     if (onCreateRoom) {
       onCreateRoom();
     } else {
@@ -58,6 +68,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
   }
 
   function handleJoinRoom() {
+    if (navigating) return;
+    setNavigating(true);
     if (onJoinRoom) {
       onJoinRoom();
     } else {
@@ -86,10 +98,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
         <div className="homepage-hover-hint">[ HOVER A CARD TO PREVIEW ]</div>
 
         <div className="homepage-bottom-bar">
-          <button className="homepage-btn homepage-btn-create" onClick={handleCreateRoom}>
+          <button
+            className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
+            onClick={handleCreateRoom}
+            disabled={navigating}
+          >
             CREATE ROOM
           </button>
-          <button className="homepage-btn homepage-btn-join" onClick={handleJoinRoom}>
+          <button
+            className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}
+            onClick={handleJoinRoom}
+            disabled={navigating}
+          >
             JOIN ROOM
           </button>
         </div>

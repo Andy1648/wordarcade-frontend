@@ -17,12 +17,17 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
+  // True once a valid Continue has been sent - locks the button until the
+  // screen transitions (success) or the server bounces it back (error below).
+  const [submitting, setSubmitting] = useState(false);
 
   const isJoinMode = mode === 'join';
 
   useEffect(() => {
     if (serverError) {
       setError(serverError);
+      // The submission failed (e.g. room not found / full) - let them fix and retry.
+      setSubmitting(false);
     }
   }, [serverError]);
 
@@ -50,6 +55,9 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
   }
 
   function handleContinue() {
+    // Already sent and waiting on the server - ignore repeat clicks / Enter.
+    if (submitting) return;
+
     const trimmedName = name.trim();
 
     if (trimmedName.length === 0) {
@@ -71,6 +79,9 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
     if (isJoinMode) {
       payload.roomCode = roomCode;
     }
+
+    // Validation passed and we're about to send - lock the button.
+    setSubmitting(true);
 
     if (onContinue) {
       onContinue(payload);
@@ -143,9 +154,9 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
         <button
           className="lobby-continue-btn"
           onClick={handleContinue}
-          disabled={!isFormValid}
+          disabled={!isFormValid || submitting}
         >
-          CONTINUE
+          {submitting ? 'CONNECTING...' : 'CONTINUE'}
         </button>
       </div>
     </div>

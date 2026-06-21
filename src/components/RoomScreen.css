@@ -215,6 +215,7 @@
   background: #555;
   color: #999;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .room-start-btn:disabled:active {
@@ -249,4 +250,18 @@
 .room-leave-btn:active {
   transform: translate(3px, 3px);
   box-shadow: 1px 1px 0 #000;
+}
+
+/* Disabled once you've clicked Leave - dimmed, unclickable, no press feedback. */
+.room-leave-btn:disabled,
+.room-leave-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.room-leave-btn:disabled:active,
+.room-leave-btn.disabled:active {
+  transform: none;
+  box-shadow: 4px 4px 0 #000;
 }

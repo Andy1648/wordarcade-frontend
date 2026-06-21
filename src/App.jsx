@@ -284,6 +284,7 @@ function App() {
         room={room}
         myId={myId}
         preselectedGame={isPreselectableGame(lobbyMode) ? lobbyMode : null}
+        serverError={serverError}
         onLeave={handleLeaveRoom}
         onSetGameType={handleSetGameType}
         onSetDifficulty={handleSetDifficulty}

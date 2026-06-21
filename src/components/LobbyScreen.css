@@ -152,6 +152,7 @@
   background: #555;
   color: #999;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .lobby-continue-btn:disabled:active {

@@ -1,4 +1,5 @@
 // RoomScreen.jsx
+import { useState, useEffect } from 'react';
 import './RoomScreen.css';
 
 // Each difficulty carries a short timer blurb so players know what they're
@@ -43,11 +44,33 @@ const MIN_PLAYERS_TO_START = 2;
  * players instead see the current difficulty as read-only text and a
  * "waiting for host" message.
  */
-export default function RoomScreen({ room, myId, preselectedGame, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
+export default function RoomScreen({ room, myId, preselectedGame, serverError, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
+  // Spam-click guards: lock Start once pressed (re-enabled if the server
+  // rejects it) and Leave once pressed (you're on your way out).
+  const [starting, setStarting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  // A server error means the start attempt bounced - let the host try again.
+  useEffect(() => {
+    if (serverError) setStarting(false);
+  }, [serverError]);
+
   if (!room) return null;
 
   const isHost = myId !== null && myId === room.hostId;
   const canStart = room.players.length >= MIN_PLAYERS_TO_START;
+
+  function handleStartGame() {
+    if (starting) return;
+    setStarting(true);
+    onStartGame();
+  }
+
+  function handleLeave() {
+    if (leaving) return;
+    setLeaving(true);
+    onLeave();
+  }
 
   return (
     <div className="room-wrap">
@@ -109,14 +132,26 @@ export default function RoomScreen({ room, myId, preselectedGame, onLeave, onSet
         )}
 
         {isHost ? (
-          <button className="room-start-btn" onClick={onStartGame} disabled={!canStart}>
-            {canStart ? 'START GAME' : 'NEED 2+ PLAYERS TO START'}
+          <button
+            className="room-start-btn"
+            onClick={handleStartGame}
+            disabled={!canStart || starting}
+          >
+            {!canStart
+              ? 'NEED 2+ PLAYERS TO START'
+              : starting
+              ? 'STARTING...'
+              : 'START GAME'}
           </button>
         ) : (
           <div className="room-waiting-msg">WAITING FOR HOST TO START THE GAME...</div>
         )}
 
-        <button className="room-leave-btn" onClick={onLeave}>
+        <button
+          className={`room-leave-btn${leaving ? ' disabled' : ''}`}
+          onClick={handleLeave}
+          disabled={leaving}
+        >
           LEAVE ROOM
         </button>
       </div>

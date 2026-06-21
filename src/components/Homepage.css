@@ -171,6 +171,20 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Disabled while navigating away - dimmed, unclickable, no press animation. */
+.homepage-btn:disabled,
+.homepage-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.homepage-btn:disabled:active,
+.homepage-btn.disabled:active {
+  transform: skewX(-2deg);
+  box-shadow: 4px 4px 0 #000;
+}
+
 .homepage-btn-create {
   background: #FF2EC4;
   color: #000;
