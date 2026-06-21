@@ -3,6 +3,7 @@
 .game-wrap {
   position: relative;
   background: #0d0618;
+  width: 100%;
   min-height: 100vh;
   display: flex;
   align-items: flex-start;

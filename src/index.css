@@ -9,6 +9,7 @@
 
 html, body {
   background: #0d0618;
+  width: 100%;
   min-height: 100vh;
   /* Prevent a horizontal scrollbar while an incoming view slides in from
      off-screen during a transition (see Transitions.css). */
@@ -20,8 +21,12 @@ body {
   color: #fff;
 }
 
+/* The React mount point fills the viewport so every screen's dark background
+   reaches all four edges with no white/empty gaps. */
 #root {
+  width: 100%;
   min-height: 100vh;
+  background: #0d0618;
 }
 
 button {

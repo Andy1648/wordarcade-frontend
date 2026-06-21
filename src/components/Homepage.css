@@ -1,19 +1,30 @@
 /* Homepage.css */
 
+/* Outer wrapper fills the whole viewport with the dark background edge to edge
+   (no max-width, margin, or rounded corners against the viewport), and centres
+   the content card both ways. */
 .homepage-wrap {
   background: #0d0618;
-  border-radius: 14px;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100vh;
   position: relative;
-  max-width: 680px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
 
+/* The content card keeps the brick-wall look and rounded corners, now capped to
+   a readable width and centred inside the full-bleed dark wrap. */
 .homepage-stage {
   position: relative;
   background: #1a0b2e;
   padding: 24px 18px 0;
   overflow: hidden;
+  width: 100%;
+  max-width: 900px;
+  border-radius: 14px;
 }
 
 /* Subtle brick-wall texture rendered entirely from repeating gradients
@@ -201,6 +212,7 @@
 /* Phones: stack the cards one per row so each stays readable, shrink the big
    graffiti type ~80%, and give the action buttons full-height tap targets. */
 @media (max-width: 600px) {
+  .homepage-wrap { padding: 14px; }
   .homepage-stage { padding: 18px 14px 0; }
 
   .homepage-cards-grid {
