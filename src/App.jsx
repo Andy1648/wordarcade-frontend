@@ -56,6 +56,11 @@ function App() {
   // knows which prompt/fields to render.
   const [gameType, setGameType] = useState('word-bomb');
 
+  // Live "what is everyone typing" map (Word Bomb): playerId -> their current
+  // in-progress text, streamed via typing_update keystroke relays. Reset to {}
+  // on every turn_update so each turn starts from a clean slate.
+  const [typingText, setTypingText] = useState({});
+
   // Live kill-feed for Word Bomb: a running, ordered log of game events
   // (accepted words, timeouts, skips, your own rejections), oldest first.
   // GameScreen renders the tail of it newest-first. The refs below are the
@@ -153,11 +158,19 @@ function App() {
       setView('game');
     }
 
+    if (lastMessage.type === 'typing_update') {
+      const { playerId, text } = lastMessage.payload;
+      setTypingText((prev) => ({ ...prev, [playerId]: text }));
+    }
+
     if (lastMessage.type === 'turn_update') {
       const payload = lastMessage.payload;
       setGameState(payload);
       setTimerSeconds(payload.timerSeconds);
       setLastWordResult(null);
+      // New turn - wipe the typing slate so a previous typist's leftover text
+      // doesn't linger under the (now stale) active player.
+      setTypingText({});
 
       // ---- Live feed bookkeeping (Word Bomb) ----
       const players = payload.players || [];
@@ -380,6 +393,7 @@ function App() {
     feedPrevLivesRef.current = {};
     feedReasonRef.current = null;
     setGameStats(EMPTY_STATS);
+    setTypingText({});
     setView('home');
   }
 
@@ -433,6 +447,12 @@ function App() {
     send('skip_turn', {});
   }
 
+  // Stream the active player's in-progress text to everyone else (Word Bomb).
+  // Sent on every keystroke - no debounce, the live typing is the point.
+  function handleTypingUpdate(text) {
+    send('typing_update', { text });
+  }
+
   // Whether this client is the room host (drives the host-only REMATCH button
   // on the game-over overlay). room comes from room_update, which carries hostId.
   const isHost = !!room && myId != null && room.hostId === myId;
@@ -454,6 +474,7 @@ function App() {
         roomPlayers={room ? room.players : []}
         feedEvents={feedEvents}
         gameStats={gameStats}
+        typingText={typingText}
         categoryRound={categoryRound}
         myAnswers={myAnswers}
         playerProgress={playerProgress}
@@ -463,6 +484,7 @@ function App() {
         onSubmitWord={handleSubmitWord}
         onSubmitAnswer={handleSubmitAnswer}
         onSkipTurn={handleSkipTurn}
+        onTypingUpdate={handleTypingUpdate}
         onLeave={handleLeaveRoom}
         onRematch={handleRematch}
       />

@@ -816,6 +816,7 @@ export default function GameScreen({
   roomPlayers,
   feedEvents = [],
   gameStats = { wordsPlayed: [], timeouts: [], skips: [], gameStartTime: null, gameEndTime: null },
+  typingText = {},
   categoryRound,
   myAnswers,
   playerProgress,
@@ -825,6 +826,7 @@ export default function GameScreen({
   onSubmitWord,
   onSubmitAnswer,
   onSkipTurn,
+  onTypingUpdate,
   onLeave,
   onRematch,
 }) {
@@ -851,6 +853,19 @@ export default function GameScreen({
       inputRef.current.focus();
     }
   }, [inputEnabled]);
+
+  // Whenever it stops being our turn (we submitted, timed out, or the turn moved
+  // on), drop any leftover draft and broadcast an empty string so other players'
+  // view of "what we're typing" resets. Also clears stale text at turn start.
+  useEffect(() => {
+    if (!isMyTurn) {
+      setDraft('');
+      if (onTypingUpdate) onTypingUpdate('');
+    }
+    // onTypingUpdate is intentionally omitted - it's a fresh closure each render
+    // and we only want this to fire on the turn transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMyTurn]);
 
   // Hype popup + screen shake (accepted) and input shake (rejected). Called
   // before the category early-return so the hooks always run in the same order.
@@ -1082,6 +1097,8 @@ export default function GameScreen({
     if (!word || !inputEnabled) return;
     onSubmitWord(word);
     setDraft('');
+    // Reset other players' view of our typing now that we've fired the word.
+    if (onTypingUpdate) onTypingUpdate('');
   }
 
   function handleKeyDown(event) {
@@ -1163,6 +1180,26 @@ export default function GameScreen({
                     {player.name}
                     {isMe && <span className="game-player-you">YOU</span>}
                   </div>
+                  {/* Live typing (BombParty style): only under the active
+                      player's card. For us it mirrors our own draft (the server
+                      doesn't echo our keystrokes back); for others it's the
+                      relayed typing_update text. Empty -> a dimmed "..." so the
+                      card keeps a stable height instead of jumping. */}
+                  {isCurrent && !eliminated && !gameOver && (
+                    <div className="player-typing">
+                      {(() => {
+                        const typed = isMe ? draft : typingText[player.id] || '';
+                        return typed ? (
+                          <span className="player-typing-text">
+                            {typed.toUpperCase()}
+                            <span className="typing-cursor">|</span>
+                          </span>
+                        ) : (
+                          <span className="player-typing-empty">...</span>
+                        );
+                      })()}
+                    </div>
+                  )}
                   <div className="game-player-hearts">
                     {Array.from({ length: maxLives }).map((_, i) => (
                       <Heart
@@ -1227,7 +1264,13 @@ export default function GameScreen({
             className={`game-input${inputShake ? ' input-shake' : ''}`}
             type="text"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setDraft(value);
+              // Broadcast every keystroke so others see us type in real time.
+              // No debounce - the frantic typing/deleting is the fun part.
+              if (onTypingUpdate) onTypingUpdate(value);
+            }}
             onKeyDown={handleKeyDown}
             disabled={!inputEnabled}
             placeholder={

@@ -313,6 +313,56 @@
   flex-shrink: 0;
 }
 
+/* ---- Live typing readout (BombParty style) ---- */
+
+/* Sits between the active player's name and hearts. Only rendered for the
+   current player's card. The reserved min-height keeps the card from jumping
+   as the text appears, clears, or swaps to the "..." placeholder. */
+.player-typing {
+  min-height: 16px;
+  margin-bottom: 6px;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-typing-text {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.2;
+  color: #FFE94A;
+  opacity: 0.9;
+  text-align: center;
+  /* Long in-progress words shouldn't blow out the narrow card. */
+  word-break: break-all;
+}
+
+/* Dimmed placeholder before the active player has typed anything. */
+.player-typing-empty {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: #FFE94A;
+  opacity: 0.4;
+  letter-spacing: 2px;
+}
+
+/* Blinking caret pinned to the end of the live text. */
+.typing-cursor {
+  display: inline-block;
+  margin-left: 1px;
+  color: #FFE94A;
+  animation: blink 500ms step-end infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 .game-player-hearts {
   display: flex;
   justify-content: center;
