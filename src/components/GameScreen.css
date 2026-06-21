@@ -860,8 +860,12 @@
   border-radius: 4px;
   padding: 32px 28px;
   text-align: center;
-  max-width: 380px;
+  max-width: 440px;
   width: 100%;
+  /* The Word Bomb stats panel can make this card tall; cap it to the viewport
+     and let it scroll rather than overflow off-screen. */
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
   transform: rotate(-1.5deg);
 }
 
@@ -1329,8 +1333,301 @@
 }
 
 /* ============================================================= */
+/* ==================  WORD BOMB - LIVE FEED  ================== */
+/* ============================================================= */
+
+/* The kill feed is a sibling of .game-stage inside the centered flex
+   .game-wrap, so on wide screens the stage + feed sit side by side as a
+   centered group, and on narrow screens (see the responsive block) the wrap
+   switches to a column and the feed drops below the stage. */
+.kill-feed {
+  width: 220px;
+  flex-shrink: 0;
+  margin-left: 18px;
+  margin-top: 16px;
+  align-self: flex-start;
+}
+
+.kill-feed-title {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  color: #FF6B3D;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  margin-bottom: 10px;
+  transform: skewX(-3deg);
+}
+
+.kill-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  /* Events scrolling off the bottom fade out under a gradient mask, so the
+     window of recent events visibly tapers instead of cutting hard. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+}
+
+.kill-feed-empty {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  color: #6b5a8a;
+}
+
+/* Each event row: a colour-coded dot + actor + description, in the same
+   thick-outline cel style as everything else. Freshly mounted rows slide in
+   from the top (only new events re-mount - see KillFeed's keying). */
+.kill-feed-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: #1a0b2e;
+  border: 2.5px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 7px 9px;
+  transform: skewX(-1deg);
+  animation: feed-slide-in 200ms ease-out;
+}
+
+.kill-feed-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.kill-feed-row.accepted .kill-feed-dot { background: #2EFFE0; }
+.kill-feed-row.timeout .kill-feed-dot { background: #FF5C5C; }
+.kill-feed-row.skip .kill-feed-dot { background: #FFE94A; }
+.kill-feed-row.rejected .kill-feed-dot { background: #9A1AFF; }
+
+.kill-feed-text {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #C9B8E8;
+  word-break: break-word;
+}
+
+.kill-feed-name {
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.kill-feed-word {
+  color: #FFE94A;
+  text-transform: uppercase;
+}
+
+.kill-feed-action {
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.kill-feed-row.timeout .kill-feed-action { color: #FF5C5C; }
+.kill-feed-row.skip .kill-feed-action { color: #FFE94A; }
+
+@keyframes feed-slide-in {
+  0% { transform: translateY(-10px) skewX(-1deg); opacity: 0; }
+  100% { transform: translateY(0) skewX(-1deg); opacity: 1; }
+}
+
+/* ============================================================= */
+/* ===========  WORD BOMB - GAME OVER STATISTICS  ============== */
+/* ============================================================= */
+
+/* The whole stats block: a dark inset panel with the signature thick outline,
+   slightly skewed for graffiti energy. Sits inside the game-over card between
+   the winner text and the action buttons. */
+.go-stats {
+  background: #0d0618;
+  border: 4px solid #000;
+  box-shadow: 5px 5px 0 #000;
+  border-radius: 4px;
+  padding: 14px 12px;
+  margin-bottom: 20px;
+  text-align: left;
+  transform: skewX(-1deg);
+}
+
+.go-section-label {
+  font-family: 'Bungee', cursive;
+  font-size: 10px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+  margin-bottom: 9px;
+}
+
+.go-section-label:not(:first-child) {
+  margin-top: 16px;
+}
+
+/* ---- Summary row: three even stat tiles ---- */
+
+.go-stats-summary {
+  display: flex;
+  gap: 8px;
+}
+
+.go-summary-item {
+  flex: 1;
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-radius: 4px;
+  padding: 9px 4px;
+  text-align: center;
+}
+
+.go-summary-value {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 19px;
+  color: #2EFFE0;
+  line-height: 1;
+}
+
+.go-summary-label {
+  font-family: 'Bungee', cursive;
+  font-size: 7px;
+  color: #C9B8E8;
+  margin-top: 5px;
+}
+
+/* ---- Awards: colourful pill badges, alternating tilt ---- */
+
+.go-awards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.go-award {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 3px solid #000;
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 6px 14px;
+  text-align: center;
+  transform: rotate(-2deg);
+}
+
+.go-award:nth-child(even) {
+  transform: rotate(2deg);
+}
+
+.go-award-label {
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  color: #000;
+}
+
+.go-award-name {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: #000;
+  word-break: break-word;
+}
+
+.go-award-detail {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 8px;
+  color: #1a0b2e;
+  opacity: 0.85;
+}
+
+/* Each award a different palette colour. */
+.go-award.wordsmith { background: #9A1AFF; }
+.go-award.wordsmith .go-award-label,
+.go-award.wordsmith .go-award-name { color: #fff; }
+.go-award.wordsmith .go-award-detail { color: #f0e0ff; opacity: 1; }
+
+.go-award.speed-demon { background: #FF6B3D; }
+.go-award.survivor { background: #FFE94A; }
+
+/* ---- Per-player stat cards ---- */
+
+.go-players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.go-player {
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 9px 10px;
+}
+
+.go-player-name {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #FFE94A;
+  margin-bottom: 7px;
+  word-break: break-word;
+}
+
+.go-player-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.go-pstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.go-pstat-val {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+.go-pstat-key {
+  font-family: 'Bungee', cursive;
+  font-size: 6px;
+  color: #9a8bbf;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================= */
 /* ========================  RESPONSIVE  ======================= */
 /* ============================================================= */
+
+/* Below ~860px the stage + feed no longer fit side by side, so the wrap stacks
+   them and the feed drops under the stage, capped to the stage's width. */
+@media (max-width: 860px) {
+  .game-wrap {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .kill-feed {
+    width: 100%;
+    max-width: 560px;
+    margin-left: 0;
+    margin-top: 18px;
+    align-self: auto;
+  }
+}
 
 /* Large screens: the stage already caps at 560px so it never stretches across
    an ultrawide - just give the page a little more side breathing room. */
@@ -1371,6 +1668,10 @@
 
   /* Game-over card eases its padding to fit narrow screens. */
   .game-over-card { padding: 24px 18px; }
+
+  /* Per-player stats drop to a 2-column grid so values stay legible. */
+  .go-player-grid { grid-template-columns: repeat(2, 1fr); gap: 8px 6px; }
+  .go-summary-value { font-size: 17px; }
 }
 
 /* Very narrow phones: stack SEND / SKIP under the input instead of beside it.

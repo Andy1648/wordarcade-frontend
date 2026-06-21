@@ -528,6 +528,235 @@ function ExplosionEffect() {
   );
 }
 
+// How many feed rows are visible at once; older events stay in the array (full
+// history) but scroll out of the rendered window under a fade mask.
+const FEED_MAX_VISIBLE = 8;
+
+/**
+ * Word Bomb's live kill feed: a scrolling log of game events shown to the side
+ * of the stage. Fed an ordered (oldest-first) array of event objects from
+ * App.jsx - { type: 'accepted'|'timeout'|'skip'|'rejected', playerName, word?,
+ * timestamp }. We render the most recent FEED_MAX_VISIBLE newest-first; each
+ * row carries a colour-coded dot, the actor's name, and a short description.
+ *
+ * Rows are keyed by their stable index in the full array (not their position in
+ * the visible slice), so a persisting event keeps its DOM node when a new event
+ * pushes it down - only the freshly-added row mounts and replays the slide-in,
+ * and the one scrolling off the end unmounts.
+ */
+function KillFeed({ events }) {
+  const list = events || [];
+  const visible = [];
+  for (let i = list.length - 1; i >= 0 && visible.length < FEED_MAX_VISIBLE; i--) {
+    visible.push({ ev: list[i], idx: i });
+  }
+
+  return (
+    <div className="kill-feed" aria-hidden="true">
+      <div className="kill-feed-title">LIVE FEED</div>
+      <div className="kill-feed-list">
+        {visible.length === 0 ? (
+          <div className="kill-feed-empty">WAITING FOR ACTION...</div>
+        ) : (
+          visible.map(({ ev, idx }) => (
+            <div key={idx} className={`kill-feed-row ${ev.type}`}>
+              <span className="kill-feed-dot" />
+              <span className="kill-feed-text">
+                <span className="kill-feed-name">{ev.playerName}</span>{' '}
+                {ev.type === 'accepted' && (
+                  <>
+                    typed{' '}
+                    <span className="kill-feed-word">
+                      {(ev.word || '').toUpperCase()}
+                    </span>
+                  </>
+                )}
+                {ev.type === 'timeout' && (
+                  <span className="kill-feed-action">TIMED OUT 💀</span>
+                )}
+                {ev.type === 'skip' && (
+                  <span className="kill-feed-action">SKIPPED</span>
+                )}
+                {ev.type === 'rejected' && (
+                  <span className="kill-feed-action">MISSED</span>
+                )}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Format a millisecond span as "Xm Ys" for the game-duration stat.
+function formatDuration(ms) {
+  if (!ms || ms < 0) return '—';
+  const totalSec = Math.round(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}m ${s}s`;
+}
+
+/**
+ * End-of-game statistics panel for Word Bomb, shown on the game-over overlay
+ * between the winner announcement and the action buttons. Three blocks:
+ *   - GAME SUMMARY  : total words, duration, total timeouts
+ *   - PER-PLAYER    : a card per player (words, longest, avg length, timeouts),
+ *                     sorted by words played descending
+ *   - AWARDS        : fun superlatives, only shown when there's a clear winner
+ *
+ * All of its data comes from the gameStats object accumulated in App.jsx; the
+ * `players` roster (final standings) seeds the per-player rows so everyone
+ * appears even if they never played a word.
+ */
+function GameOverStats({ gameStats, players, winner }) {
+  const words = gameStats.wordsPlayed || [];
+  const timeouts = gameStats.timeouts || [];
+  const durationMs =
+    gameStats.gameEndTime && gameStats.gameStartTime
+      ? gameStats.gameEndTime - gameStats.gameStartTime
+      : 0;
+
+  // Build a per-player accumulator seeded from the roster, then fold in each
+  // player's words and timeouts.
+  const byPlayer = new Map();
+  const ensure = (id, name) => {
+    if (!byPlayer.has(id)) byPlayer.set(id, { id, name, words: [], timeouts: 0 });
+    return byPlayer.get(id);
+  };
+  (players || []).forEach((p) => ensure(p.id, p.name));
+  words.forEach((w) => ensure(w.playerId, w.playerName).words.push(w.word || ''));
+  timeouts.forEach((t) => {
+    ensure(t.playerId, t.playerName).timeouts += 1;
+  });
+
+  const perPlayer = Array.from(byPlayer.values())
+    .map((p) => {
+      const total = p.words.length;
+      const longest = p.words.reduce((a, b) => (b.length > a.length ? b : a), '');
+      const avg = total
+        ? p.words.reduce((sum, w) => sum + w.length, 0) / total
+        : 0;
+      return { id: p.id, name: p.name, count: total, longest, avg, timeouts: p.timeouts };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  // ---- Awards (only shown when unambiguous) ----
+  const awards = [];
+
+  // WORDSMITH: the single longest word, as long as one player owns that length.
+  if (words.length) {
+    const maxLen = words.reduce((m, w) => Math.max(m, (w.word || '').length), 0);
+    const topWords = words.filter((w) => (w.word || '').length === maxLen);
+    const distinctOwners = new Set(topWords.map((w) => w.playerId));
+    if (distinctOwners.size === 1) {
+      awards.push({
+        key: 'wordsmith',
+        label: 'WORDSMITH',
+        name: topWords[0].playerName,
+        detail: (topWords[0].word || '').toUpperCase(),
+      });
+    }
+  }
+
+  // SPEED DEMON: most words played, only if there's a sole leader.
+  if (perPlayer.length && perPlayer[0].count > 0) {
+    const top = perPlayer[0].count;
+    const leaders = perPlayer.filter((p) => p.count === top);
+    if (leaders.length === 1) {
+      awards.push({
+        key: 'speed-demon',
+        label: 'SPEED DEMON',
+        name: leaders[0].name,
+        detail: `${top} WORDS`,
+      });
+    }
+  }
+
+  // SURVIVOR: the winner, framed as an award.
+  if (winner) {
+    awards.push({
+      key: 'survivor',
+      label: 'SURVIVOR',
+      name: winner.name,
+      detail: 'LAST ONE STANDING',
+    });
+  }
+
+  return (
+    <div className="go-stats">
+      <div className="go-section-label">GAME SUMMARY</div>
+      <div className="go-stats-summary">
+        <div className="go-summary-item">
+          <div className="go-summary-value">
+            <CountUp to={words.length} />
+          </div>
+          <div className="go-summary-label">WORDS</div>
+        </div>
+        <div className="go-summary-item">
+          <div className="go-summary-value">{formatDuration(durationMs)}</div>
+          <div className="go-summary-label">DURATION</div>
+        </div>
+        <div className="go-summary-item">
+          <div className="go-summary-value">
+            <CountUp to={timeouts.length} />
+          </div>
+          <div className="go-summary-label">TIMEOUTS</div>
+        </div>
+      </div>
+
+      {awards.length > 0 && (
+        <>
+          <div className="go-section-label">HIGHLIGHTS</div>
+          <div className="go-awards">
+            {awards.map((a) => (
+              <div key={a.key} className={`go-award ${a.key}`}>
+                <span className="go-award-label">{a.label}</span>
+                <span className="go-award-name">{a.name}</span>
+                {a.detail && <span className="go-award-detail">{a.detail}</span>}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="go-section-label">PLAYERS</div>
+      <div className="go-players">
+        {perPlayer.map((p) => (
+          <div key={p.id} className="go-player">
+            <div className="go-player-name">{p.name}</div>
+            <div className="go-player-grid">
+              <div className="go-pstat">
+                <span className="go-pstat-val">
+                  <CountUp to={p.count} />
+                </span>
+                <span className="go-pstat-key">WORDS</span>
+              </div>
+              <div className="go-pstat">
+                <span className="go-pstat-val">
+                  {p.longest ? p.longest.toUpperCase() : '—'}
+                </span>
+                <span className="go-pstat-key">LONGEST</span>
+              </div>
+              <div className="go-pstat">
+                <span className="go-pstat-val">{p.count ? p.avg.toFixed(1) : '—'}</span>
+                <span className="go-pstat-key">AVG LEN</span>
+              </div>
+              <div className="go-pstat">
+                <span className="go-pstat-val">
+                  <CountUp to={p.timeouts} />
+                </span>
+                <span className="go-pstat-key">TIMEOUTS</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Watches lastWordResult and reacts to each new result:
  *   - accepted -> bump hypeKey (re-keys the hype popup + floating "+1" so they
@@ -584,6 +813,8 @@ export default function GameScreen({
   lastWordResult,
   gameOver,
   roomPlayers,
+  feedEvents = [],
+  gameStats = { wordsPlayed: [], timeouts: [], skips: [], gameStartTime: null, gameEndTime: null },
   categoryRound,
   myAnswers,
   playerProgress,
@@ -971,6 +1202,8 @@ export default function GameScreen({
         )}
       </div>
 
+      <KillFeed events={feedEvents} />
+
       {gameOver && (
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
@@ -983,10 +1216,7 @@ export default function GameScreen({
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
-            <div className="game-over-stat">
-              WORDS PLAYED:{' '}
-              {iWon ? <CountUp to={usedItems.length} /> : usedItems.length}
-            </div>
+            <GameOverStats gameStats={gameStats} players={players} winner={winner} />
             <div className="game-over-actions">
               {isHost && (
                 <button className="game-over-rematch" onClick={onRematch}>

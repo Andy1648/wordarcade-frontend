@@ -1,5 +1,5 @@
 // App.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
@@ -51,6 +51,37 @@ function App() {
   // knows which prompt/fields to render.
   const [gameType, setGameType] = useState('word-bomb');
 
+  // Live kill-feed for Word Bomb: a running, ordered log of game events
+  // (accepted words, timeouts, skips, your own rejections), oldest first.
+  // GameScreen renders the tail of it newest-first. The refs below are the
+  // bookkeeping the feed needs but that doesn't belong in render state:
+  //   feedCurrentRef  - whose turn it is right now (set on each turn_update),
+  //                     so an incoming word_result can be attributed to the
+  //                     submitter before the turn advances past them.
+  //   feedPrevLivesRef - last seen lives per player id, diffed on each
+  //                     turn_update to spot who just lost a life.
+  //   feedReasonRef   - 'timeout' | 'skip', set by the turn_timeout/
+  //                     turn_skipped message that lands just before the
+  //                     turn_update, so the life-loss can be labelled.
+  const [feedEvents, setFeedEvents] = useState([]);
+  const feedCurrentRef = useRef({ id: null, name: 'SOMEONE' });
+  const feedPrevLivesRef = useRef({});
+  const feedReasonRef = useRef(null);
+
+  // End-of-game statistics for Word Bomb, accumulated across the whole game and
+  // handed to the game-over overlay for the summary/per-player/awards panels.
+  //   wordsPlayed - every accepted word with who played it and when
+  //   timeouts/skips - each life lost, by cause
+  //   gameStartTime/gameEndTime - wall-clock bounds for the duration stat
+  const EMPTY_STATS = {
+    wordsPlayed: [],
+    timeouts: [],
+    skips: [],
+    gameStartTime: null,
+    gameEndTime: null,
+  };
+  const [gameStats, setGameStats] = useState(EMPTY_STATS);
+
   // Category Blitz state. Unlike Word Bomb this mode is simultaneous and
   // round-based, so it has its own slice of state:
   //   categoryRound  - the active round { round, category, timerSeconds }, or
@@ -89,13 +120,83 @@ function App() {
       setGameType(lastMessage.payload.gameType || 'word-bomb');
       setGameOver(null);
       setServerError('');
+      // Fresh game - wipe the live feed and its bookkeeping.
+      setFeedEvents([]);
+      feedCurrentRef.current = { id: null, name: 'SOMEONE' };
+      feedPrevLivesRef.current = {};
+      feedReasonRef.current = null;
+      // Fresh game - reset stats and stamp the start time.
+      setGameStats({
+        wordsPlayed: [],
+        timeouts: [],
+        skips: [],
+        gameStartTime: Date.now(),
+        gameEndTime: null,
+      });
       setView('game');
     }
 
     if (lastMessage.type === 'turn_update') {
-      setGameState(lastMessage.payload);
-      setTimerSeconds(lastMessage.payload.timerSeconds);
+      const payload = lastMessage.payload;
+      setGameState(payload);
+      setTimerSeconds(payload.timerSeconds);
       setLastWordResult(null);
+
+      // ---- Live feed bookkeeping (Word Bomb) ----
+      const players = payload.players || [];
+      // Remember whose turn it is now so an incoming word_result can be
+      // attributed to the submitter - the turn hasn't advanced past them yet.
+      const cur = players.find((p) => p.id === payload.currentPlayerId);
+      feedCurrentRef.current = cur
+        ? { id: cur.id, name: cur.name }
+        : { id: payload.currentPlayerId, name: 'SOMEONE' };
+
+      // Diff lives against the previous snapshot: any player who just dropped a
+      // life timed out or skipped. Which one is carried by feedReasonRef, set
+      // by the turn_timeout/turn_skipped message that arrives just before this.
+      const prevLives = feedPrevLivesRef.current;
+      const reason = feedReasonRef.current || 'timeout';
+      const lostPlayers = [];
+      players.forEach((p) => {
+        const before = prevLives[p.id];
+        if (
+          typeof before === 'number' &&
+          typeof p.lives === 'number' &&
+          p.lives < before
+        ) {
+          lostPlayers.push({ id: p.id, name: p.name });
+        }
+      });
+      feedPrevLivesRef.current = Object.fromEntries(
+        players.map((p) => [p.id, p.lives])
+      );
+      feedReasonRef.current = null;
+      if (lostPlayers.length) {
+        const now = Date.now();
+        setFeedEvents((prev) => [
+          ...prev,
+          ...lostPlayers.map((p) => ({
+            type: reason,
+            playerName: p.name,
+            timestamp: now,
+          })),
+        ]);
+        // Record the life loss in the end-game stats under its cause.
+        setGameStats((prev) => {
+          const key = reason === 'skip' ? 'skips' : 'timeouts';
+          return {
+            ...prev,
+            [key]: [
+              ...prev[key],
+              ...lostPlayers.map((p) => ({
+                playerId: p.id,
+                playerName: p.name,
+                timestamp: now,
+              })),
+            ],
+          };
+        });
+      }
     }
 
     if (lastMessage.type === 'timer_tick') {
@@ -103,11 +204,61 @@ function App() {
     }
 
     if (lastMessage.type === 'word_result') {
-      setLastWordResult(lastMessage.payload);
+      const payload = lastMessage.payload;
+      setLastWordResult(payload);
+      // Attribute to whoever's turn it currently is (the submitter).
+      const submitter = feedCurrentRef.current;
+      const playerName = submitter.name || 'SOMEONE';
+      if (payload.accepted) {
+        const now = Date.now();
+        setFeedEvents((prev) => [
+          ...prev,
+          {
+            type: 'accepted',
+            playerName,
+            word: payload.word,
+            timestamp: now,
+          },
+        ]);
+        // Tally the accepted word for the end-game stats.
+        setGameStats((prev) => ({
+          ...prev,
+          wordsPlayed: [
+            ...prev.wordsPlayed,
+            {
+              word: payload.word,
+              playerId: submitter.id,
+              playerName,
+              timestamp: now,
+            },
+          ],
+        }));
+      } else {
+        // Rejections are only sent to the player who submitted, so this is
+        // always our own miss.
+        setFeedEvents((prev) => [
+          ...prev,
+          {
+            type: 'rejected',
+            playerName,
+            reason: payload.reason,
+            timestamp: Date.now(),
+          },
+        ]);
+      }
     }
 
-    // turn_timeout needs no handling here - the server sends a turn_update
-    // immediately after, which advances to the next player anyway.
+    // turn_timeout / turn_skipped arrive just before the turn_update that
+    // advances play. They carry no player id, so we don't emit the feed event
+    // here - we just record the reason and let the turn_update's life-loss diff
+    // attribute it to the right player.
+    if (lastMessage.type === 'turn_timeout') {
+      feedReasonRef.current = 'timeout';
+    }
+
+    if (lastMessage.type === 'turn_skipped') {
+      feedReasonRef.current = 'skip';
+    }
 
     // ---- Category Blitz (simultaneous, round-based) ----
 
@@ -163,6 +314,8 @@ function App() {
         setRoundResults(null);
       }
       setGameOver(payload);
+      // Stamp the end time so the overlay can show the game's duration.
+      setGameStats((prev) => ({ ...prev, gameEndTime: Date.now() }));
       setView('game');
     }
 
@@ -205,6 +358,11 @@ function App() {
     setRoundResults(null);
     setCategoryScores(null);
     setCategoryTotals({});
+    setFeedEvents([]);
+    feedCurrentRef.current = { id: null, name: 'SOMEONE' };
+    feedPrevLivesRef.current = {};
+    feedReasonRef.current = null;
+    setGameStats(EMPTY_STATS);
     setView('home');
   }
 
@@ -277,6 +435,8 @@ function App() {
         lastWordResult={lastWordResult}
         gameOver={gameOver}
         roomPlayers={room ? room.players : []}
+        feedEvents={feedEvents}
+        gameStats={gameStats}
         categoryRound={categoryRound}
         myAnswers={myAnswers}
         playerProgress={playerProgress}
