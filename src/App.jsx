@@ -240,6 +240,12 @@ function App() {
     send('start_game', {});
   }
 
+  // Host-only "play again": the server resets the room's game and broadcasts a
+  // room_update, which the handler above turns back into the 'room' view.
+  function handleRematch() {
+    send('rematch', {});
+  }
+
   function handleSubmitWord(word) {
     send('submit_word', { word });
   }
@@ -252,6 +258,10 @@ function App() {
     send('skip_turn', {});
   }
 
+  // Whether this client is the room host (drives the host-only REMATCH button
+  // on the game-over overlay). room comes from room_update, which carries hostId.
+  const isHost = !!room && myId != null && room.hostId === myId;
+
   // Pick the screen for the current view. It's wrapped in a single keyed
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
@@ -262,6 +272,7 @@ function App() {
         gameState={gameState}
         gameType={gameType}
         myId={myId}
+        isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
         gameOver={gameOver}
@@ -276,6 +287,7 @@ function App() {
         onSubmitAnswer={handleSubmitAnswer}
         onSkipTurn={handleSkipTurn}
         onLeave={handleLeaveRoom}
+        onRematch={handleRematch}
       />
     );
   } else if (view === 'room' && room) {

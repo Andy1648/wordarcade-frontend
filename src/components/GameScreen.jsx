@@ -579,6 +579,7 @@ export default function GameScreen({
   gameState,
   gameType,
   myId,
+  isHost,
   timerSeconds,
   lastWordResult,
   gameOver,
@@ -593,6 +594,7 @@ export default function GameScreen({
   onSubmitAnswer,
   onSkipTurn,
   onLeave,
+  onRematch,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
@@ -723,6 +725,7 @@ export default function GameScreen({
     return (
       <CategoryBlitzScreen
         myId={myId}
+        isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
         gameOver={gameOver}
@@ -735,6 +738,7 @@ export default function GameScreen({
         categoryTotals={categoryTotals || {}}
         onSubmitAnswer={onSubmitAnswer}
         onLeave={onLeave}
+        onRematch={onRematch}
       />
     );
   }
@@ -983,9 +987,19 @@ export default function GameScreen({
               WORDS PLAYED:{' '}
               {iWon ? <CountUp to={usedItems.length} /> : usedItems.length}
             </div>
-            <button className="game-over-leave" onClick={onLeave}>
-              LEAVE
-            </button>
+            <div className="game-over-actions">
+              {isHost && (
+                <button className="game-over-rematch" onClick={onRematch}>
+                  REMATCH
+                </button>
+              )}
+              <button
+                className={`game-over-leave${isHost ? ' secondary' : ''}`}
+                onClick={onLeave}
+              >
+                LEAVE
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1007,6 +1021,7 @@ export default function GameScreen({
  */
 function CategoryBlitzScreen({
   myId,
+  isHost,
   timerSeconds,
   lastWordResult,
   gameOver,
@@ -1019,6 +1034,7 @@ function CategoryBlitzScreen({
   categoryTotals,
   onSubmitAnswer,
   onLeave,
+  onRematch,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
@@ -1106,9 +1122,19 @@ function CategoryBlitzScreen({
                 </div>
               ))}
             </div>
-            <button className="game-over-leave" onClick={onLeave}>
-              LEAVE
-            </button>
+            <div className="game-over-actions">
+              {isHost && (
+                <button className="game-over-rematch" onClick={onRematch}>
+                  REMATCH
+                </button>
+              )}
+              <button
+                className={`game-over-leave${isHost ? ' secondary' : ''}`}
+                onClick={onLeave}
+              >
+                LEAVE
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -914,6 +914,45 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Game-over actions: host gets a primary REMATCH stacked over LEAVE; everyone
+   else just sees LEAVE at full prominence. */
+.game-over-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* REMATCH - the primary "play again" action: cyan, the biggest button. */
+.game-over-rematch {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #000;
+  background: #2EFFE0;
+  border: 4px solid #000;
+  border-radius: 4px;
+  padding: 14px 0;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.game-over-rematch:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* Alongside REMATCH, LEAVE steps down to a smaller secondary action. */
+.game-over-leave.secondary {
+  font-size: 13px;
+  padding: 9px 0;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.game-over-leave.secondary:active {
+  box-shadow: 1px 1px 0 #000;
+}
+
 /* ---- Game over celebration ---- */
 
 /* Winner's "YOU WIN!" title: a rubber-band bounce on entry. Layered on top of
