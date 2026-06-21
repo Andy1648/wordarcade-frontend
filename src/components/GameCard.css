@@ -19,12 +19,15 @@
   animation: card-bounce-forever 1.6s ease-in-out infinite;
 }
 
+/* --cs is the card's base scale (1 for normal cards, >1 for the featured Word
+   Bomb card). It's folded into every scale() here so the featured card stays
+   noticeably bigger while it bounces. */
 @keyframes card-bounce-forever {
-  0% { transform: rotate(var(--rot, 0deg)) scale(1.01, 0.99) translateY(2px); }
-  25% { transform: rotate(var(--rot, 0deg)) scale(0.99, 1.01) translateY(-2px); }
-  50% { transform: rotate(var(--rot, 0deg)) scale(1.01, 0.99) translateY(1px); }
-  75% { transform: rotate(var(--rot, 0deg)) scale(0.99, 1.01) translateY(-2px); }
-  100% { transform: rotate(var(--rot, 0deg)) scale(1.01, 0.99) translateY(2px); }
+  0% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(2px); }
+  25% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(-2px); }
+  50% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(1px); }
+  75% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(-2px); }
+  100% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(2px); }
 }
 
 /* Each card a slightly different duration so they never bounce in unison. */
@@ -47,21 +50,31 @@
 }
 
 @keyframes card-hover-pop {
-  0% { transform: rotate(0deg) scale(1); }
-  40% { transform: rotate(0deg) scale(1.08); }
-  70% { transform: rotate(0deg) scale(1.03); }
-  100% { transform: rotate(0deg) scale(1.05); }
+  0% { transform: rotate(0deg) scale(calc(1 * var(--cs, 1))); }
+  40% { transform: rotate(0deg) scale(calc(1.08 * var(--cs, 1))); }
+  70% { transform: rotate(0deg) scale(calc(1.03 * var(--cs, 1))); }
+  100% { transform: rotate(0deg) scale(calc(1.05 * var(--cs, 1))); }
 }
 
 /* Each card sits slightly cockeyed at rest, like flyers pinned crooked to
    a wall. The angle lives in a custom property so the hover/active states
-   can flatten it to 0 while the disabled card can still hold its tilt. */
-.game-card:nth-child(1) { --rot: -1.5deg; }
-.game-card:nth-child(2) { --rot: 1deg; }
-.game-card:nth-child(3) { --rot: -2deg; }
+   can flatten it to 0 while the disabled card can still hold its tilt. More
+   rotation variety now, with Word Bomb / Category Blitz / More Soon at the
+   spec angles. */
+.game-card:nth-child(1) { --rot: -3deg; }
+.game-card:nth-child(2) { --rot: 2.5deg; }
+.game-card:nth-child(3) { --rot: -1.5deg; }
 .game-card:nth-child(4) { --rot: 1.5deg; }
 .game-card:nth-child(5) { --rot: -1deg; }
 .game-card:nth-child(6) { --rot: 2deg; }
+
+/* Break the perfect grid: nudge cards to different vertical positions and let
+   them overlap a little, so they read as posters slapped up rather than a tidy
+   CSS grid. The featured card's larger scale (below) also bleeds over its
+   neighbours. Reset on phones (single column) further down. */
+.game-card:nth-child(1) { margin-top: 10px; z-index: 2; }
+.game-card:nth-child(2) { margin-top: -4px; margin-left: -10px; }
+.game-card:nth-child(3) { margin-top: 20px; margin-left: -8px; }
 
 .game-card.dashed-border {
   border-style: dashed;
@@ -93,12 +106,12 @@
 /* Snap to attention: straighten out and scale up rather than lift, so the
    hovered card squares itself against the crooked crowd. */
 .game-card:hover {
-  transform: rotate(0deg) scale(1.05);
+  transform: rotate(0deg) scale(calc(1.05 * var(--cs, 1)));
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
 }
 
 .game-card:active {
-  transform: rotate(0deg) scale(0.98);
+  transform: rotate(0deg) scale(calc(0.98 * var(--cs, 1)));
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 1px 1px 0 #000;
 }
 
@@ -193,16 +206,30 @@
   animation: none;
 }
 
-/* The flagship card stands at attention (no tilt) with a heavier shadow so it
-   reads as the primary pick among the crooked crowd. Declared after the
-   nth-child tilt rules so its --rot override wins at equal specificity. */
+/* The flagship card is the featured game: noticeably bigger (1.15x base scale,
+   folded into the bounce/hover transforms) with a heavier shadow so it reads as
+   the primary pick. It keeps its crooked tilt (from the nth-child rule) for the
+   slapped-on-a-wall look. */
 .game-card.featured {
-  --rot: 0deg;
+  --cs: 1.15;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
 }
 
 .game-card.featured:hover {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 9px 9px 0 #000;
+}
+
+/* Phones stack the cards one per row, so the grid-breaking overlap margins and
+   the featured 1.15x scale (which would overflow a full-width card) are reset -
+   each card just keeps its small resting tilt. */
+@media (max-width: 600px) {
+  .game-card.featured { --cs: 1; }
+  .game-card:nth-child(1),
+  .game-card:nth-child(2),
+  .game-card:nth-child(3) {
+    margin-top: 0;
+    margin-left: 0;
+  }
 }
 
 /* Little corner sticker calling out the featured game. */
