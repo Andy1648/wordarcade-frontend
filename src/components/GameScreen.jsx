@@ -1,5 +1,6 @@
 // GameScreen.jsx
 import { useEffect, useRef, useState } from 'react';
+import { useSoundEffects } from '../hooks/useSoundEffects';
 import './GameScreen.css';
 
 // Exact heart path supplied by the design - filled pink while the life is
@@ -833,6 +834,13 @@ export default function GameScreen({
   // disabled until it finishes.
   const [showCountdown, setShowCountdown] = useState(true);
 
+  // Word Bomb sound effects (Web Audio, synthesized). `muted` is toggled from
+  // the header; while muted every method is a no-op. The hook owns the lazily-
+  // created AudioContext and closes it on unmount. Category Blitz doesn't use
+  // this (it early-returns to its own component below).
+  const [muted, setMuted] = useState(false);
+  const sound = useSoundEffects(muted);
+
   const isMyTurn = !!gameState && gameState.currentPlayerId === myId;
   const inputEnabled = isMyTurn && !gameOver && !showCountdown;
 
@@ -949,6 +957,52 @@ export default function GameScreen({
     prevCurrentRef.current = cur;
   }, [gameState, gameType]);
 
+  // ---- Sound effects (Word Bomb only) ----
+
+  // Per-second tick. Fire only on a real countdown decrement (so the turn-start
+  // reset back up to max, and the pre-game 3-2-1, stay silent), with urgency
+  // scaled by how little time is left so the tick rises in pitch as it gets
+  // tense. The bomb/timer is shared, so this plays for every player's view.
+  const prevTimerRef = useRef(null);
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    const prev = prevTimerRef.current;
+    prevTimerRef.current = timerSeconds;
+    if (showCountdown || gameOver) return;
+    if (prev == null || typeof timerSeconds !== 'number') return;
+    if (timerSeconds <= 0 || timerSeconds >= prev) return; // only on a tick-down
+    const maxTimer = (gameState && gameState.timerSeconds) || 1;
+    sound.tick(1 - timerSeconds / maxTimer);
+  }, [timerSeconds, showCountdown, gameOver, gameType, gameState, sound]);
+
+  // Accepted -> rising chime; rejected -> low buzz. Keyed off the result object
+  // identity (a fresh object per submission, cleared to null between) so it
+  // plays once per result and never on the clear.
+  const prevResultRef = useRef(null);
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    if (!lastWordResult || lastWordResult === prevResultRef.current) return;
+    prevResultRef.current = lastWordResult;
+    if (lastWordResult.accepted) sound.correctDing();
+    else sound.wrongBuzz();
+  }, [lastWordResult, gameType, sound]);
+
+  // Life lost -> explosion, in lockstep with the visual detonation (explosionKey
+  // is bumped by the heart-shatter diff above).
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    if (explosionKey > 0) sound.explosion();
+  }, [explosionKey, gameType, sound]);
+
+  // Ambient fuse crackle while it's our turn; silence between turns / at game
+  // over / during the countdown. Cleanup also stops it on unmount.
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return undefined;
+    if (inputEnabled) sound.startSizzle();
+    else sound.stopSizzle();
+    return () => sound.stopSizzle();
+  }, [inputEnabled, gameType, sound]);
+
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
   // than threading conditionals through the turn-based Word Bomb layout.
@@ -1038,7 +1092,14 @@ export default function GameScreen({
   }
 
   return (
-    <div className="game-wrap">
+    // The first pointer/key interaction here unlocks the AudioContext (browsers
+    // block audio until a user gesture). Capture phase so it fires no matter
+    // what inner control is touched.
+    <div
+      className="game-wrap"
+      onPointerDownCapture={sound.unlock}
+      onKeyDownCapture={sound.unlock}
+    >
       {showCountdown && (
         <CountdownOverlay onComplete={() => setShowCountdown(false)} />
       )}
@@ -1056,9 +1117,22 @@ export default function GameScreen({
                 <span className="game-meta-diff">{difficultyLabel}</span>
               )}
             </div>
-            <button className="game-leave-btn" onClick={onLeave}>
-              LEAVE
-            </button>
+            <div className="game-header-actions">
+              <button
+                className="game-mute-btn"
+                onClick={() => {
+                  sound.unlock();
+                  setMuted((m) => !m);
+                }}
+                title={muted ? 'Unmute sound' : 'Mute sound'}
+                aria-label={muted ? 'Unmute sound' : 'Mute sound'}
+              >
+                {muted ? '🔇' : '🔊'}
+              </button>
+              <button className="game-leave-btn" onClick={onLeave}>
+                LEAVE
+              </button>
+            </div>
           </div>
         </div>
 

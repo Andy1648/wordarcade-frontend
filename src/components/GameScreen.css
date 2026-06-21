@@ -173,6 +173,34 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Mute toggle + LEAVE sit side by side under the meta badges. */
+.game-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Small, understated speaker toggle - matches the cel style but stays quiet
+   next to the louder LEAVE so it doesn't compete with the game UI. */
+.game-mute-btn {
+  font-size: 13px;
+  line-height: 1;
+  color: #fff;
+  background: #2a1450;
+  border: 3px solid #000;
+  border-radius: 3px;
+  padding: 5px 7px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transform: skewX(-4deg);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.game-mute-btn:active {
+  transform: skewX(-4deg) translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
 /* ---- Player bar ---- */
 
 .game-player-bar {
@@ -1671,7 +1699,8 @@
   .game-skip-btn,
   .game-over-rematch,
   .game-over-leave { min-height: 44px; }
-  .game-leave-btn { min-height: 40px; }
+  .game-leave-btn,
+  .game-mute-btn { min-height: 40px; }
 
   /* Game-over card eases its padding to fit narrow screens. */
   .game-over-card { padding: 24px 18px; }
