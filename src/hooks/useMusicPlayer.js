@@ -32,6 +32,8 @@ export function useMusicPlayer() {
   const sourceRef = useRef(null);
   const gainRef = useRef(null);
   const freqRef = useRef(null);
+  // Previous frame's spectrum, for the spectral-flux onset measure.
+  const prevSpectrumRef = useRef(null);
 
   // Create the audio element once.
   if (audioRef.current === null && typeof Audio !== 'undefined') {
@@ -94,9 +96,9 @@ export function useMusicPlayer() {
         const source = ctx.createMediaElementSource(audio);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
-        // Low smoothing keeps kick transients sharp (frame-to-frame), which the
-        // onset/delta beat detection in useBeatSync relies on.
-        analyser.smoothingTimeConstant = 0.4;
+        // Low smoothing keeps percussive transients sharp frame-to-frame, which
+        // the spectral-flux onset detection in useBeatSync relies on.
+        analyser.smoothingTimeConstant = 0.2;
         const gain = ctx.createGain();
         gain.gain.value = mutedRef.current ? 0 : volumeRef.current;
         // Analyser is a pre-gain tap (full amplitude); gain feeds the speakers.
@@ -115,15 +117,38 @@ export function useMusicPlayer() {
     }
   }, []);
 
-  // Live frequency snapshot, all bands normalized 0..1 (byte value / 255).
-  // kick: bins 0-2 (sub-bass, where kick-drum transients live - used for beat
-  // detection, narrower than bass so it ignores bass-guitar/synth notes);
-  // bass: bins 0-4; mid: 5-15 (vocals); high: 16-30 (hats); overall: all.
+  // Live frequency snapshot. Bands are normalized 0..1 (byte value / 255).
+  // `flux` is the spectral flux over the percussive low-mid range (bins 0-32):
+  // the average per-bin POSITIVE change since last frame, normalized 0..1. It
+  // spikes on broadband percussive onsets (kick + snare/clap) and stays low on
+  // sustained notes, so it's what useBeatSync uses to detect the beat.
+  // kick: bins 0-2; bass: 0-4; mid: 5-15; high: 16-30; overall: all.
+  const FLUX_BINS = 32;
   const getFrequencyData = useCallback(() => {
     const analyser = analyserRef.current;
     const arr = freqRef.current;
-    if (!analyser || !arr) return { kick: 0, bass: 0, mid: 0, high: 0, overall: 0 };
+    if (!analyser || !arr) {
+      return { kick: 0, bass: 0, mid: 0, high: 0, overall: 0, flux: 0 };
+    }
     analyser.getByteFrequencyData(arr);
+
+    // Spectral flux over the low-mid percussive range vs the previous frame.
+    let prev = prevSpectrumRef.current;
+    if (!prev || prev.length !== arr.length) {
+      prev = new Uint8Array(arr.length);
+      prevSpectrumRef.current = prev;
+    }
+    const hi = Math.min(FLUX_BINS, arr.length - 1);
+    let pos = 0;
+    let count = 0;
+    for (let i = 0; i <= hi; i++) {
+      const d = arr[i] - prev[i];
+      if (d > 0) pos += d;
+      prev[i] = arr[i];
+      count += 1;
+    }
+    const flux = count ? pos / count / 255 : 0;
+
     const band = (start, end) => {
       let sum = 0;
       let n = 0;
@@ -142,6 +167,7 @@ export function useMusicPlayer() {
       mid: band(5, 15),
       high: band(16, 30),
       overall,
+      flux,
     };
   }, []);
 
