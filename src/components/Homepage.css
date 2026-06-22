@@ -351,6 +351,42 @@ html[data-beat='true'] .homepage-logo::after {
   pointer-events: none;
 }
 
+/* Subtle credit footer - centered, quiet, doesn't compete with the cards. */
+.homepage-footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 18px 18px;
+}
+
+.homepage-credit-creator {
+  font-family: 'Bungee', cursive;
+  font-size: 10px;
+  color: #FF2EC4;
+  letter-spacing: 0.5px;
+}
+
+.homepage-credit-name {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 8px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* A little gap separating the creator credit from the music attribution. */
+.homepage-credit-music {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 8px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.homepage-credit-music a {
+  color: #888;
+}
+
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;

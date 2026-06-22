@@ -167,6 +167,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         >
           CREDITS
         </button>
+
+        {/* Subtle footer: creator credit + music attribution (CC BY-SA 4.0). */}
+        <div className="homepage-footer">
+          <div className="homepage-credit-creator">CREATED BY NOBUFFCOOKIES</div>
+          <div className="homepage-credit-name">Andy Wang</div>
+          <div className="homepage-credit-music">
+            Music:{' '}
+            <a
+              href="https://www.youtube.com/watch?v=ulfoU2MziOc"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              LEMMiNO - Firecracker
+            </a>{' '}
+            (CC BY-SA 4.0)
+          </div>
+        </div>
       </div>
     </div>
   );
