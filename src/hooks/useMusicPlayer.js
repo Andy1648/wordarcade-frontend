@@ -1,8 +1,14 @@
 // useMusicPlayer.js
 // Manages a single looping HTML5 <audio> element for background music
-// (LEMMiNO - Firecracker). The element is created once and lives for the app's
-// lifetime; the hook exposes simple controls. Nothing autoplays - browsers block
-// audio until a user gesture, so App kicks off play() on the first click.
+// (LEMMiNO - Firecracker) plus a Web Audio analysis graph for beat sync.
+//
+// Graph (built once on first play):
+//   MediaElementSource --> AnalyserNode            (analysis tap, full amplitude)
+//                      \-> GainNode --> destination (audible output, volume here)
+//
+// Volume/mute/duck are applied on the GAIN node, not the element, so the
+// analyser always sees the track at full amplitude even while the music is
+// quiet (0.3) or ducked in-game (0.15). That's what makes the beat sync punchy.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -10,33 +16,42 @@ const DEFAULT_VOLUME = 0.3;
 
 export function useMusicPlayer() {
   const audioRef = useRef(null);
-  // The "intended" (unmuted) volume. setVolume updates this and, when not muted,
-  // applies it live; toggleMute restores from it. Kept in a ref so the callbacks
-  // can stay stable (no re-creation on volume changes).
+  // The "intended" (unmuted) volume. setVolume updates this; toggleMute restores
+  // from it. In a ref so the callbacks stay stable across volume changes.
   const volumeRef = useRef(DEFAULT_VOLUME);
-  // Mirror of isMuted readable inside the stable callbacks without re-creating
-  // them on every mute toggle.
+  // Mirror of isMuted readable inside the stable callbacks.
   const mutedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Web Audio analysis pipeline (audio element -> source -> analyser ->
-  // destination), built lazily on first play so the beat-sync hook can read
-  // live frequency data. All optional - if Web Audio is unavailable the music
-  // still plays, just without reactive animations.
+  // Web Audio analysis pipeline, built lazily on first play. All optional - if
+  // Web Audio is unavailable the music still plays (volume falls back to the
+  // element), just without reactive animations.
   const audioCtxRef = useRef(null);
   const analyserRef = useRef(null);
   const sourceRef = useRef(null);
+  const gainRef = useRef(null);
   const freqRef = useRef(null);
 
   // Create the audio element once.
   if (audioRef.current === null && typeof Audio !== 'undefined') {
     const audio = new Audio('/firecracker.mp3');
     audio.loop = true;
-    audio.volume = DEFAULT_VOLUME;
+    audio.volume = DEFAULT_VOLUME; // used until the gain node takes over
     audio.preload = 'auto';
     audioRef.current = audio;
   }
+
+  // Push the current intended/muted volume to wherever loudness is controlled:
+  // the gain node once the graph exists, otherwise the bare element.
+  const applyVolume = useCallback(() => {
+    const desired = mutedRef.current ? 0 : volumeRef.current;
+    if (gainRef.current) {
+      gainRef.current.gain.value = desired;
+    } else if (audioRef.current) {
+      audioRef.current.volume = desired;
+    }
+  }, []);
 
   // Tear down on unmount so we never leak a playing element / audio context.
   useEffect(() => {
@@ -62,8 +77,8 @@ export function useMusicPlayer() {
     };
   }, []);
 
-  // Build the AudioContext + analyser once (a MediaElementSource can only be
-  // created once per element), and resume the context. Safe to call repeatedly.
+  // Build the AudioContext + analyser + gain once (a MediaElementSource can only
+  // be created once per element) and resume the context. Safe to call again.
   const ensureAnalyser = useCallback(() => {
     try {
       const audio = audioRef.current;
@@ -76,13 +91,22 @@ export function useMusicPlayer() {
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       if (!sourceRef.current) {
-        sourceRef.current = ctx.createMediaElementSource(audio);
+        const source = ctx.createMediaElementSource(audio);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.7;
-        sourceRef.current.connect(analyser);
-        analyser.connect(ctx.destination);
+        // Lower smoothing -> snappier, less smeared data so beats read crisp.
+        analyser.smoothingTimeConstant = 0.5;
+        const gain = ctx.createGain();
+        gain.gain.value = mutedRef.current ? 0 : volumeRef.current;
+        // Analyser is a pre-gain tap (full amplitude); gain feeds the speakers.
+        source.connect(analyser);
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        // The element is now full-volume; the gain node owns loudness.
+        audio.volume = 1;
+        sourceRef.current = source;
         analyserRef.current = analyser;
+        gainRef.current = gain;
         freqRef.current = new Uint8Array(analyser.frequencyBinCount);
       }
     } catch {
@@ -118,8 +142,9 @@ export function useMusicPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
     // Wire up the analyser graph on first play (within the gesture that allows
-    // audio), so frequency data is available while the music plays.
+    // audio), then push volume to whichever node now owns it.
     ensureAnalyser();
+    applyVolume();
     try {
       await audio.play();
       setIsPlaying(true);
@@ -127,7 +152,7 @@ export function useMusicPlayer() {
       // Autoplay blocked (no gesture yet) - stay silent and try again later.
       setIsPlaying(false);
     }
-  }, [ensureAnalyser]);
+  }, [ensureAnalyser, applyVolume]);
 
   const pause = useCallback(() => {
     const audio = audioRef.current;
@@ -140,25 +165,22 @@ export function useMusicPlayer() {
     setIsPlaying(false);
   }, []);
 
-  // Set the intended volume. Applies immediately unless currently muted (then
-  // the level is just remembered, to be restored on unmute).
-  const setVolume = useCallback((v) => {
-    const clamped = Math.max(0, Math.min(1, v));
-    volumeRef.current = clamped;
-    const audio = audioRef.current;
-    if (audio && !mutedRef.current) {
-      audio.volume = clamped;
-    }
-  }, []);
+  // Set the intended volume (applies immediately unless muted, in which case the
+  // level is remembered and restored on unmute).
+  const setVolume = useCallback(
+    (v) => {
+      volumeRef.current = Math.max(0, Math.min(1, v));
+      applyVolume();
+    },
+    [applyVolume]
+  );
 
-  // Mute -> volume 0; unmute -> restore the remembered intended volume.
+  // Mute -> 0; unmute -> restore the remembered intended volume.
   const toggleMute = useCallback(() => {
-    const next = !mutedRef.current;
-    mutedRef.current = next;
-    const audio = audioRef.current;
-    if (audio) audio.volume = next ? 0 : volumeRef.current;
-    setIsMuted(next);
-  }, []);
+    mutedRef.current = !mutedRef.current;
+    applyVolume();
+    setIsMuted(mutedRef.current);
+  }, [applyVolume]);
 
   return { play, pause, setVolume, isPlaying, isMuted, toggleMute, getFrequencyData };
 }

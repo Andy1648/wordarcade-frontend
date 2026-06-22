@@ -162,7 +162,9 @@
   transform: rotate(-2deg) skewX(-4deg)
     scale(var(--beat-scale, 1))
     translateY(calc(var(--beat-bounce, 0) * 1px));
-  transition: transform 0.05s ease-out;
+  /* Very short, linear: lets the envelope's instant attack read as a sharp kick
+     rather than smoothing it into a soft bob. */
+  transition: transform 0.03s linear;
 }
 
 /* Glitch: a cyan duplicate of the wordmark (content pulled from data-text) sits
