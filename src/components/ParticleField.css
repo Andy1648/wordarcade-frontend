@@ -1,0 +1,35 @@
+/* ParticleField.css - drifting beat-reactive dots behind all content. */
+
+.particle-field {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  opacity: var(--p-op, 0.12);
+  will-change: transform;
+  /* Slow constant rise; per-particle duration/delay keep them desynced. */
+  animation: particle-rise var(--p-dur, 16s) linear var(--p-delay, 0s) infinite;
+}
+
+@keyframes particle-rise {
+  from { transform: translateY(0); }
+  to { transform: translateY(-110vh); }
+}
+
+/* On a beat the whole field briefly speeds up (the dots "jump"). data-beat is
+   held ~120ms by useBeatSync, so the rise animation runs ~2.5x faster for that
+   window then eases back. */
+html[data-beat='true'] .particle {
+  animation-duration: calc(var(--p-dur, 16s) * 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particle { animation: none !important; }
+}

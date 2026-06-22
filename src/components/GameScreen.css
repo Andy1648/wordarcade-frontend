@@ -2242,3 +2242,51 @@ html[data-beat='true'] .cb-answer-chip {
     animation: none !important;
   }
 }
+
+/* ============================================================= */
+/* ================  SENSORY: TEMP / HEARTBEAT  =============== */
+/* ============================================================= */
+
+/* Color-temperature wash: a flat, very faint red over the whole game that
+   deepens as players are eliminated (opacity set inline from the count). Flat
+   fill, no glow - eases between levels so the warming is felt, not seen. */
+.game-warmth {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: #FF3A2A;
+  transition: opacity 0.8s ease;
+}
+
+/* Bomb heartbeat: in the fuse's final third the whole stage gets a fast, tiny
+   scale pulse (physiological tension). Suppressed while a one-shot game-shake is
+   playing so the shake reads cleanly. */
+.game-stage.heartbeat:not(.game-shake) {
+  animation: stage-heartbeat 300ms ease-in-out infinite;
+}
+
+@keyframes stage-heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.003); }
+}
+
+/* Input keystroke feedback: while keys are landing the field brightens its
+   border + scales a hair, eased back ~120ms after the last key. */
+.game-input {
+  transition: border-color 0.06s ease-out, transform 0.06s ease-out;
+}
+
+.game-input.typing-active {
+  border-color: #2EFFE0;
+  transform: scale(1.006);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-stage.heartbeat:not(.game-shake) {
+    animation: none !important;
+  }
+  .game-input.typing-active {
+    transform: none;
+  }
+}

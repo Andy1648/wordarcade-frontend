@@ -196,8 +196,12 @@ export default function WallScene({ intensity = 'calm' }) {
         </svg>
       ))}
 
-      {/* Comic halftone dot texture over the wall. */}
+      {/* Comic halftone dot texture over the wall (its opacity breathes with
+          the music's mid frequencies via --beat-mid). */}
       <div className="wall-halftone" />
+
+      {/* Whole-wall brightness flash on each detected beat (very subtle white). */}
+      <div className="wall-beat-bright" />
 
       {/* Red tension wash - invisible until the .critical class pulses it. */}
       <div className="wall-red" />

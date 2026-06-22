@@ -1,0 +1,202 @@
+/* SplashScreen.css - the attract/title screen. Transparent background so the
+   persistent WallScene + particles show through behind it. */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: pointer;
+  overflow: hidden;
+  /* A faint scrim so the big type reads cleanly over the busy wall. */
+  background: radial-gradient(ellipse at center, rgba(13, 6, 24, 0.45) 0%, rgba(13, 6, 24, 0.7) 100%);
+}
+
+/* Big slowly-rotating starburst behind the wordmark. */
+.splash-burst {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  width: min(560px, 90vw);
+  height: min(560px, 90vw);
+  transform: translate(-50%, -50%);
+  opacity: 0.12;
+  pointer-events: none;
+  animation: splash-burst-spin 30s linear infinite;
+}
+
+@keyframes splash-burst-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+/* ---- Title: massive, dramatic elastic bounce, continuous RGB split ---- */
+.splash-logo {
+  position: relative;
+  z-index: 2;
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  font-size: clamp(55px, 13vw, 104px);
+  line-height: 1;
+  color: #FF2EC4;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  /* Bigger squash/stretch range than the homepage title. */
+  animation: splash-bounce 1.5s ease-in-out infinite;
+}
+
+@keyframes splash-bounce {
+  0% { transform: scale(1.06, 0.94) translateY(4px) rotate(-1deg); }
+  25% { transform: scale(0.93, 1.08) translateY(-9px) rotate(1deg); }
+  50% { transform: scale(1.08, 0.92) translateY(2px) rotate(-0.6deg); }
+  75% { transform: scale(0.95, 1.06) translateY(-6px) rotate(1.3deg); }
+  100% { transform: scale(1.06, 0.94) translateY(4px) rotate(-1deg); }
+}
+
+/* RGB / chromatic split clones drifting continuously (cyan left, pink right),
+   screen-blended so the black stroke drops out and only the colour ghosts show. */
+.splash-logo::before,
+.splash-logo::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  -webkit-text-stroke: inherit;
+  paint-order: inherit;
+  text-align: center;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.splash-logo::before {
+  color: #2EFFE0;
+  animation: splash-rgb-left 3s ease-in-out infinite;
+}
+
+.splash-logo::after {
+  color: #FF2EC4;
+  animation: splash-rgb-right 3s ease-in-out infinite;
+}
+
+@keyframes splash-rgb-left {
+  0%, 100% { transform: translateX(0); opacity: 0.45; }
+  50% { transform: translateX(-2px); opacity: 0.75; }
+}
+
+@keyframes splash-rgb-right {
+  0%, 100% { transform: translateX(0); opacity: 0.45; }
+  50% { transform: translateX(2px); opacity: 0.75; }
+}
+
+/* ---- Cycling taglines ---- */
+.splash-taglines {
+  position: relative;
+  z-index: 2;
+  height: 22px;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-tagline {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #2EFFE0;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+  letter-spacing: 1px;
+  text-align: center;
+  transform: skewX(-3deg);
+  animation: splash-tagline-fade 2.5s ease-in-out;
+}
+
+@keyframes splash-tagline-fade {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+/* ---- "CLICK ANYWHERE TO START" - classic INSERT COIN pulse ---- */
+.splash-start {
+  position: relative;
+  z-index: 2;
+  margin-top: 40px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  color: #FFE94A;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  animation: splash-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes splash-blink {
+  0%, 100% { opacity: 0.55; transform: scale(0.95); letter-spacing: 3px; }
+  50% { opacity: 1; transform: scale(1.05); letter-spacing: 5px; }
+}
+
+/* ---- Halftone dot overlay ---- */
+.splash-halftone {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
+  opacity: 0.05;
+}
+
+/* ---- Dismiss: title scales up while a white flash blows out the screen ---- */
+.splash-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-screen.leaving .splash-logo {
+  animation: splash-exit 300ms ease-out forwards;
+}
+
+@keyframes splash-exit {
+  from { transform: scale(1); }
+  to { transform: scale(1.3); }
+}
+
+.splash-screen.leaving .splash-flash {
+  animation: splash-whiteout 300ms ease-out forwards;
+}
+
+@keyframes splash-whiteout {
+  from { opacity: 0; }
+  to { opacity: 0.8; }
+}
+
+@media (max-width: 600px) {
+  .splash-tagline { font-size: 11px; }
+  .splash-start { font-size: 12px; }
+}
+
+/* Reduced motion: keep the title static, no looping/scale animations. */
+@media (prefers-reduced-motion: reduce) {
+  .splash-burst,
+  .splash-logo,
+  .splash-logo::before,
+  .splash-logo::after,
+  .splash-start {
+    animation: none !important;
+  }
+  .splash-logo::before,
+  .splash-logo::after { opacity: 0; }
+}

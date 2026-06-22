@@ -34,6 +34,8 @@ export function useMusicPlayer() {
   const freqRef = useRef(null);
   // Previous frame's spectrum, for the spectral-flux onset measure.
   const prevSpectrumRef = useRef(null);
+  // Active volume-fade interval (so a new fade cancels the old).
+  const fadeRef = useRef(null);
 
   // Create the audio element once.
   if (audioRef.current === null && typeof Audio !== 'undefined') {
@@ -58,6 +60,10 @@ export function useMusicPlayer() {
   // Tear down on unmount so we never leak a playing element / audio context.
   useEffect(() => {
     return () => {
+      if (fadeRef.current) {
+        clearInterval(fadeRef.current);
+        fadeRef.current = null;
+      }
       const audio = audioRef.current;
       if (audio) {
         try {
@@ -217,5 +223,38 @@ export function useMusicPlayer() {
     setIsMuted(mutedRef.current);
   }, [applyVolume]);
 
-  return { play, pause, setVolume, isPlaying, isMuted, toggleMute, getFrequencyData };
+  // Smoothly ramp the intended volume to `target` over `ms` (used to fade the
+  // music in after the splash). A new fade cancels any in-flight one.
+  const fadeTo = useCallback(
+    (target, ms = 500) => {
+      const dest = Math.max(0, Math.min(1, target));
+      if (fadeRef.current) {
+        clearInterval(fadeRef.current);
+        fadeRef.current = null;
+      }
+      const start = volumeRef.current;
+      const steps = Math.max(1, Math.round(ms / 30));
+      let i = 0;
+      fadeRef.current = setInterval(() => {
+        i += 1;
+        setVolume(start + (dest - start) * (i / steps));
+        if (i >= steps) {
+          clearInterval(fadeRef.current);
+          fadeRef.current = null;
+        }
+      }, 30);
+    },
+    [setVolume]
+  );
+
+  return {
+    play,
+    pause,
+    setVolume,
+    fadeTo,
+    isPlaying,
+    isMuted,
+    toggleMute,
+    getFrequencyData,
+  };
 }

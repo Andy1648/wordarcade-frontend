@@ -3,6 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import './GameScreen.css';
 
+// Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
+// missing Vibration API can never throw.
+function vibrate(pattern) {
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern);
+    }
+  } catch {
+    /* no-op */
+  }
+}
+
 // Exact heart path supplied by the design - filled pink while the life is
 // intact, dark gray once it's been lost. Stroke stays black to match the
 // thick-outline cel style used everywhere else.
@@ -919,12 +931,24 @@ export default function GameScreen({
   musicSetVolume,
   reactions = [],
   onSpectatorReaction,
+  onShake,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
   // Intro countdown plays once when the screen mounts; the input stays
   // disabled until it finishes.
   const [showCountdown, setShowCountdown] = useState(true);
+
+  // Tiny tactile input feedback: while keys are landing, the field brightens its
+  // border + scales a hair (eased via a transition, see .game-input.typing-active),
+  // settling ~120ms after the last keystroke so typing feels alive.
+  const [typingActive, setTypingActive] = useState(false);
+  const typingActiveTimerRef = useRef(null);
+  function pulseInput() {
+    setTypingActive(true);
+    if (typingActiveTimerRef.current) clearTimeout(typingActiveTimerRef.current);
+    typingActiveTimerRef.current = setTimeout(() => setTypingActive(false), 120);
+  }
 
   // Duck the background music while a game is live (from the moment this screen
   // mounts / the countdown begins) so the synthesized SFX cut through, and
@@ -942,6 +966,12 @@ export default function GameScreen({
   // this (it early-returns to its own component below).
   const [muted, setMuted] = useState(false);
   const sound = useSoundEffects(muted);
+
+  // onShake is recreated each App render; hold it in a ref so the sound/feedback
+  // effects below can call it without listing it as a dep (which would re-fire
+  // them on every parent render).
+  const onShakeRef = useRef(onShake);
+  onShakeRef.current = onShake;
 
   const isMyTurn = !!gameState && gameState.currentPlayerId === myId;
   const inputEnabled = isMyTurn && !gameOver && !showCountdown;
@@ -1134,15 +1164,25 @@ export default function GameScreen({
     if (gameType !== 'word-bomb') return;
     if (!lastWordResult || lastWordResult === prevResultRef.current) return;
     prevResultRef.current = lastWordResult;
-    if (lastWordResult.accepted) sound.correctDing();
-    else sound.wrongBuzz();
+    if (lastWordResult.accepted) {
+      sound.correctDing();
+      vibrate(50); // short buzz on a good word
+    } else {
+      sound.wrongBuzz();
+      vibrate([50, 30, 50]); // double buzz on a miss
+    }
   }, [lastWordResult, gameType, sound]);
 
   // Life lost -> explosion, in lockstep with the visual detonation (explosionKey
-  // is bumped by the heart-shatter diff above).
+  // is bumped by the heart-shatter diff above). Also a heavy screen shake + a
+  // long haptic buzz.
   useEffect(() => {
     if (gameType !== 'word-bomb') return;
-    if (explosionKey > 0) sound.explosion();
+    if (explosionKey > 0) {
+      sound.explosion();
+      onShakeRef.current?.('heavy');
+      vibrate(200);
+    }
   }, [explosionKey, gameType, sound]);
 
   // Ambient fuse crackle while it's our turn; silence between turns / at game
@@ -1237,6 +1277,19 @@ export default function GameScreen({
   // How many players are out but still in the room - the live audience.
   const spectatorCount = players.filter((p) => p.eliminated || p.lives <= 0).length;
 
+  // ---- Subliminal intensity cues ----
+  // Color temperature: a faint red wash that deepens as players are eliminated,
+  // and noticeably warms when only the final two remain. Players FEEL the stakes
+  // rise without consciously clocking it.
+  const aliveCount = players.filter((p) => !(p.eliminated || p.lives <= 0)).length;
+  const warmth = gameOver
+    ? 0
+    : Math.min(0.12, spectatorCount * 0.02 + (aliveCount > 0 && aliveCount <= 2 ? 0.04 : 0));
+  // Heartbeat: when the fuse is in its final third, the whole stage gets a fast,
+  // subtle scale pulse (physiological tension on top of the tick speed-up).
+  const timeRatio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
+  const critical = !showCountdown && !gameOver && timeRatio < 0.3;
+
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
@@ -1268,6 +1321,10 @@ export default function GameScreen({
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
+      {/* Color-temperature wash: deepens with eliminations (subliminal). */}
+      {warmth > 0 && (
+        <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
+      )}
       {showCountdown && (
         <CountdownOverlay onComplete={() => setShowCountdown(false)} />
       )}
@@ -1290,7 +1347,7 @@ export default function GameScreen({
       <div
         className={`game-stage${shake ? ' game-shake' : ''}${
           isSpectating ? ' spectating' : ''
-        }`}
+        }${critical ? ' heartbeat' : ''}`}
       >
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer. */}
         {hypeKey > 0 &&
@@ -1476,12 +1533,15 @@ export default function GameScreen({
           <div className="game-input-row">
             <input
               ref={inputRef}
-              className={`game-input${inputShake ? ' input-shake' : ''}`}
+              className={`game-input${inputShake ? ' input-shake' : ''}${
+                typingActive ? ' typing-active' : ''
+              }`}
               type="text"
               value={draft}
               onChange={(event) => {
                 const value = event.target.value;
                 setDraft(value);
+                pulseInput(); // tiny per-keystroke visual response
                 // Broadcast every keystroke so others see us type in real time.
                 // No debounce - the frantic typing/deleting is the fun part.
                 if (onTypingUpdate) onTypingUpdate(value);

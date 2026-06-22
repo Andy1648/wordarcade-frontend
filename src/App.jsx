@@ -9,6 +9,8 @@ import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 import CreditsScreen from './components/CreditsScreen';
+import SplashScreen from './components/SplashScreen';
+import ParticleField from './components/ParticleField';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -146,25 +148,47 @@ function App() {
 
   const { status: wsStatus, lastMessage, send } = useWebSocket();
 
-  // Background music. Try to start immediately on load; most browsers block
-  // autoplay of audio with sound, so we also arm a one-shot click listener that
-  // starts it on the first user interaction as a fallback.
+  // Background music. It's started from the splash dismiss (the guaranteed first
+  // user gesture), so no autoplay attempt here - just the player + a fade-in.
   const music = useMusicPlayer();
-  const musicPlay = music.play;
-  useEffect(() => {
-    musicPlay(); // immediate attempt (no-op if the browser blocks it)
-    const startMusic = () => {
-      musicPlay();
-    };
-    window.addEventListener('click', startMusic, { once: true });
-    return () => window.removeEventListener('click', startMusic);
-  }, [musicPlay]);
+
+  // The splash/attract screen is the very first thing shown and only shows once
+  // per session (dismissing it never re-arms it).
+  const [showSplash, setShowSplash] = useState(true);
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
-  // off the live frequency analysis so animations pulse with the track. Idle
-  // (paused/muted) -> neutral values, so existing keyframe animations are
-  // unaffected when the music is off.
-  useBeatSync(music.getFrequencyData, music.isPlaying && !music.isMuted);
+  // (and the data-beat attribute) off the live frequency analysis so animations
+  // pulse with the track. beatCount increments per detected beat, which we use
+  // to fire a light app-wide shake.
+  const { beatCount } = useBeatSync(
+    music.getFrequencyData,
+    music.isPlaying && !music.isMuted
+  );
+
+  // App-wide screen shake at three intensities (light=beat, medium=accept,
+  // heavy=explosion/game over). A class on the top-level wrapper; cleared after
+  // the shake duration so it can replay.
+  const [shake, setShake] = useState(null);
+  const shakeTimerRef = useRef(null);
+  const SHAKE_MS = { light: 100, medium: 200, heavy: 300 };
+  function triggerShake(level) {
+    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    setShake(level);
+    shakeTimerRef.current = setTimeout(
+      () => setShake(null),
+      SHAKE_MS[level] || 150
+    );
+  }
+  // Light shake on every detected beat (skips the very first render).
+  const prevBeatRef = useRef(0);
+  useEffect(() => {
+    if (beatCount > prevBeatRef.current) {
+      prevBeatRef.current = beatCount;
+      triggerShake('light');
+    }
+    // triggerShake is stable enough; we only react to beatCount changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beatCount]);
 
   useEffect(() => {
     if (!lastMessage) return;
@@ -465,6 +489,22 @@ function App() {
     }
   }, [wsStatus]);
 
+  // Splash: unlock + start the music silently within the click gesture.
+  function handleSplashStart() {
+    music.setVolume(0);
+    music.play();
+  }
+
+  // Splash dismissed: hide it (never to return this session), wipe to the
+  // homepage with the bar overlay, and fade the music up after the wipe.
+  function handleSplashDismiss() {
+    setShowSplash(false);
+    transitionKeyRef.current += 1;
+    setTransition({ word: 'WORDARCADE', key: transitionKeyRef.current });
+    setTimeout(() => setTransition(null), 500);
+    setTimeout(() => music.fadeTo(0.3, 500), 500);
+  }
+
   function goToLobby(mode) {
     setLobbyMode(mode);
     setServerError('');
@@ -598,6 +638,7 @@ function App() {
         musicSetVolume={music.setVolume}
         reactions={reactions}
         onSpectatorReaction={handleSpectatorReaction}
+        onShake={triggerShake}
       />
     );
   } else if (renderedView === 'room' && room) {
@@ -645,6 +686,18 @@ function App() {
     bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   }
 
+  // The attract/splash screen is the very first thing shown (over the wall +
+  // particles). It connects in the background; clicking it starts everything.
+  if (showSplash) {
+    return (
+      <>
+        <WallScene intensity="calm" />
+        <ParticleField />
+        <SplashScreen onStart={handleSplashStart} onDismiss={handleSplashDismiss} />
+      </>
+    );
+  }
+
   // Before the socket is up, gate the whole app behind the connecting / failed
   // loading screen (the WallScene still shows behind it). RETRY just reloads to
   // re-attempt the connection.
@@ -652,6 +705,7 @@ function App() {
     return (
       <>
         <WallScene intensity="calm" />
+        <ParticleField />
         <LoadingScreen status={wsStatus} onRetry={() => window.location.reload()} />
         <MusicButton isMuted={music.isMuted} onToggle={music.toggleMute} accent="#FF2EC4" />
       </>
@@ -663,8 +717,11 @@ function App() {
   // then. The WallScene + TransitionOverlay live OUTSIDE that keyed wrapper so
   // the backdrop persists and the wipe plays over the swap.
   return (
-    <>
+    // The app-shake wrapper carries the intensity-graded screen shake (light on
+    // beat, heavier on accept/explosion) so it works across every screen.
+    <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
       <WallScene intensity={bgIntensity} />
+      <ParticleField />
       <div className="view-transition-root">
         <div key={renderedView} className="view-screen">
           {screen}
@@ -680,7 +737,7 @@ function App() {
         onToggle={music.toggleMute}
         accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
       />
-    </>
+    </div>
   );
 }
 

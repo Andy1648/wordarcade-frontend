@@ -113,7 +113,30 @@
   inset: 0;
   background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
   background-size: 12px 12px;
-  opacity: 0.05;
+  /* Breathes with the music's mids; rests at 0.05 when the music is off. */
+  opacity: calc(0.045 + var(--beat-mid, 0) * 0.06);
+}
+
+/* ---- Whole-wall beat brightness flash ---- */
+
+/* A flat white wash that flicks on for each detected beat - subliminal "the
+   room pulses with the music". Invisible at rest. */
+.wall-beat-bright {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-beat='true'] .wall-beat-bright {
+  animation: wall-beat-bright 100ms ease-out;
+}
+
+@keyframes wall-beat-bright {
+  0% { opacity: 0; }
+  40% { opacity: 0.03; }
+  100% { opacity: 0; }
 }
 
 /* ---- Red tension wash (only animates under .critical) ---- */
@@ -156,7 +179,8 @@
 /* Honour reduced-motion: keep the static wall but stop the looping motion. */
 @media (prefers-reduced-motion: reduce) {
   .wall-sticker,
-  .wall-red {
+  .wall-red,
+  .wall-beat-bright {
     animation: none !important;
   }
 }
