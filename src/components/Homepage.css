@@ -299,8 +299,13 @@ html[data-beat='true'] .homepage-logo::after {
 .homepage-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 11px;
+  /* Roomier gap so the featured card's slight upscale + idle drift never reach
+     into a neighbour. */
+  gap: 18px;
   padding: 0 2px;
+  /* Don't stretch the staggered (margin-top) wrappers to a common row height -
+     keep each at its card height so the idle sway rotates around the card. */
+  align-items: start;
 }
 
 .homepage-hover-hint {

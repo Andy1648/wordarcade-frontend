@@ -41,22 +41,27 @@ export default function GameCard({ game, onSelect }) {
   }
 
   return (
-    <div
-      className={cardClassName}
-      style={{ background: game.baseColor }}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={game.enabled ? 0 : -1}
-      aria-disabled={!game.enabled}
-      aria-label={`${game.name.replace('\n', ' ')} - ${game.badgeText}`}
-    >
-      {/* Strips of tape pinning the "flyer" to the wall - one at each top corner,
-          angled opposite ways. Purely decorative. */}
-      <span className="game-card-tape game-card-tape-left" aria-hidden="true" />
-      <span className="game-card-tape game-card-tape-right" aria-hidden="true" />
+    // The wrapper is the grid item and carries the constant idle sway (rotation
+    // + drift), so the inner card is free to run its beat-pop on top at the same
+    // time. Hovering raises the wrapper's z-index so a scaled card is never
+    // blocked by - nor blocks - its neighbours.
+    <div className="game-card-wrap">
+      <div
+        className={cardClassName}
+        style={{ background: game.baseColor }}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={game.enabled ? 0 : -1}
+        aria-disabled={!game.enabled}
+        aria-label={`${game.name.replace('\n', ' ')} - ${game.badgeText}`}
+      >
+        {/* Strips of tape pinning the "flyer" to the wall - one at each top corner,
+            angled opposite ways. Purely decorative. */}
+        <span className="game-card-tape game-card-tape-left" aria-hidden="true" />
+        <span className="game-card-tape game-card-tape-right" aria-hidden="true" />
 
-      {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
+        {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
 
       {ArtComponent && (
         <div className="game-card-art">
@@ -93,6 +98,7 @@ export default function GameCard({ game, onSelect }) {
         >
           {game.badgeText}
         </div>
+      </div>
       </div>
     </div>
   );
