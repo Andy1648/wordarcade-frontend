@@ -11,6 +11,7 @@ import MusicButton from './components/MusicButton';
 import CreditsScreen from './components/CreditsScreen';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
+import { useBeatSync } from './hooks/useBeatSync';
 import './Transitions.css';
 
 // The music button's border/glyph colour, matched to each screen's accent.
@@ -152,6 +153,12 @@ function App() {
     window.addEventListener('click', startMusic, { once: true });
     return () => window.removeEventListener('click', startMusic);
   }, [musicPlay]);
+
+  // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
+  // off the live frequency analysis so animations pulse with the track. Idle
+  // (paused/muted) -> neutral values, so existing keyframe animations are
+  // unaffected when the music is off.
+  useBeatSync(music.getFrequencyData, music.isPlaying && !music.isMuted);
 
   useEffect(() => {
     if (!lastMessage) return;

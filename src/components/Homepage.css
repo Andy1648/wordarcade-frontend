@@ -154,20 +154,15 @@
   paint-order: stroke fill;
   display: inline-block;
   text-align: center;
-  transform: rotate(-2deg) skewX(-4deg);
-  /* Constant, never-resting elastic bounce - a ball on a trampoline. Scale,
-     translate and rotate all peak at different keyframes so the motion never
-     settles. The base rotate(-2deg)/skewX(-4deg) pose is baked into each frame
-     so the wordmark keeps its tilt while it bounces. */
-  animation: title-bounce-forever 1.5s ease-in-out infinite;
-}
-
-@keyframes title-bounce-forever {
-  0% { transform: rotate(-2deg) skewX(-4deg) scale(1.02, 0.98) translateY(2px) rotate(-0.5deg); }
-  25% { transform: rotate(-2deg) skewX(-4deg) scale(0.98, 1.03) translateY(-4px) rotate(0.5deg); }
-  50% { transform: rotate(-2deg) skewX(-4deg) scale(1.03, 0.97) translateY(1px) rotate(-0.3deg); }
-  75% { transform: rotate(-2deg) skewX(-4deg) scale(0.97, 1.02) translateY(-3px) rotate(0.7deg); }
-  100% { transform: rotate(-2deg) skewX(-4deg) scale(1.02, 0.98) translateY(2px) rotate(-0.5deg); }
+  /* LIVE beat-driven bounce: the wordmark physically pulses/jumps with every
+     bass hit via the global --beat-* vars (set ~60fps by useBeatSync). The base
+     rotate(-2deg)/skewX(-4deg) pose is kept; the short transition smooths the
+     per-frame steps. When the music is off the vars sit at neutral (scale 1,
+     bounce 0) so the title just rests in its tilted pose. */
+  transform: rotate(-2deg) skewX(-4deg)
+    scale(var(--beat-scale, 1))
+    translateY(calc(var(--beat-bounce, 0) * 1px));
+  transition: transform 0.05s ease-out;
 }
 
 /* Glitch: a cyan duplicate of the wordmark (content pulled from data-text) sits
@@ -462,12 +457,14 @@
   animation: none;
 }
 
+/* The trailing scale() chains a very subtle beat-bass pulse on top of the idle
+   bounce (neutral ~1 when the music is off). */
 @keyframes btn-bounce-forever {
-  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
-  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px); }
-  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px); }
-  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px); }
-  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
+  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
+  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
+  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
+  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
+  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
 }
 
 /* Parallax drift: the splatters slowly translate, with the larger corner ones

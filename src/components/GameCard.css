@@ -21,13 +21,15 @@
 
 /* --cs is the card's base scale (1 for normal cards, >1 for the featured Word
    Bomb card). It's folded into every scale() here so the featured card stays
-   noticeably bigger while it bounces. */
+   noticeably bigger while it bounces. The translateY adds a small bass-driven
+   jump (--beat-bounce * 0.3px) on top of the idle bob - cards react to the beat
+   but far less dramatically than the title. Neutral (0) when the music is off. */
 @keyframes card-bounce-forever {
-  0% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(2px); }
-  25% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(-2px); }
-  50% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(1px); }
-  75% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(-2px); }
-  100% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(2px); }
+  0% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(calc(2px + var(--beat-bounce, 0) * 0.3px)); }
+  25% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(calc(-2px + var(--beat-bounce, 0) * 0.3px)); }
+  50% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(calc(1px + var(--beat-bounce, 0) * 0.3px)); }
+  75% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(calc(-2px + var(--beat-bounce, 0) * 0.3px)); }
+  100% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(calc(2px + var(--beat-bounce, 0) * 0.3px)); }
 }
 
 /* Each card a slightly different duration so they never bounce in unison. */
