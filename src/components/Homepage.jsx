@@ -60,7 +60,7 @@ function PaintSplatter({ className, color }) {
  * fallback), since the create/join room flow and WebSocket wiring are
  * separate, later pieces of work.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -96,6 +96,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
       onJoinRoom();
     } else {
       console.log('Join Room clicked (no onJoinRoom handler wired up yet)');
+    }
+  }
+
+  function handleCredits() {
+    if (navigating) return;
+    setNavigating(true);
+    if (onCredits) {
+      onCredits();
+    } else {
+      console.log('Credits clicked (no onCredits handler wired up yet)');
     }
   }
 
@@ -149,18 +159,14 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
           </button>
         </div>
 
-        {/* Background-music attribution (required by CC BY-SA 4.0). */}
-        <div className="homepage-credits">
-          Music:{' '}
-          <a
-            href="https://www.youtube.com/watch?v=ulfoU2MziOc"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            LEMMiNO - Firecracker
-          </a>{' '}
-          (CC BY-SA 4.0)
-        </div>
+        {/* Link to the standalone credits page (holds music attribution etc.). */}
+        <button
+          className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
+          onClick={handleCredits}
+          disabled={navigating}
+        >
+          CREDITS
+        </button>
       </div>
     </div>
   );

@@ -282,20 +282,31 @@
   padding: 18px 18px 24px;
 }
 
-/* Music attribution line (CC BY-SA 4.0 requirement) - small + unobtrusive. */
-.homepage-credits {
+/* Discreet link to the standalone credits page. */
+.homepage-credits-link {
+  display: block;
+  margin: 4px auto 0;
+  padding: 0 18px 16px;
+  background: none;
+  border: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #888;
+  cursor: pointer;
   position: relative;
   z-index: 1;
-  font-family: 'Space Mono', monospace;
-  font-size: 8px;
-  color: #666;
-  text-align: center;
-  margin-top: 20px;
-  padding: 0 18px 16px;
 }
 
-.homepage-credits a {
-  color: #888;
+.homepage-credits-link:hover {
+  color: #C9B8E8;
+  text-decoration: underline;
+}
+
+.homepage-credits-link.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .homepage-btn {

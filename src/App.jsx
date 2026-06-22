@@ -8,6 +8,7 @@ import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
+import CreditsScreen from './components/CreditsScreen';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import './Transitions.css';
@@ -18,6 +19,7 @@ const SCREEN_ACCENT = {
   lobby: '#2EFFE0',
   room: '#FFE94A',
   game: '#FF6B3D',
+  credits: '#9A1AFF',
 };
 
 // The word flashed mid-wipe when navigating to each view.
@@ -26,6 +28,7 @@ const TRANSITION_WORDS = {
   home: 'PEACE OUT',
   lobby: 'READY?',
   room: 'SQUAD UP',
+  credits: 'CREDITS',
 };
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
@@ -136,11 +139,13 @@ function App() {
 
   const { status: wsStatus, lastMessage, send } = useWebSocket();
 
-  // Background music. Doesn't autoplay (browsers block it); instead we kick it
-  // off on the very first user click anywhere, via a one-shot listener.
+  // Background music. Try to start immediately on load; most browsers block
+  // autoplay of audio with sound, so we also arm a one-shot click listener that
+  // starts it on the first user interaction as a fallback.
   const music = useMusicPlayer();
   const musicPlay = music.play;
   useEffect(() => {
+    musicPlay(); // immediate attempt (no-op if the browser blocks it)
     const startMusic = () => {
       musicPlay();
     };
@@ -438,6 +443,10 @@ function App() {
     setView('lobby');
   }
 
+  function goToCredits() {
+    setView('credits');
+  }
+
   function goHome() {
     setLobbyMode(null);
     setRoom(null);
@@ -578,12 +587,15 @@ function App() {
         serverError={serverError}
       />
     );
+  } else if (renderedView === 'credits') {
+    screen = <CreditsScreen onBack={goHome} />;
   } else {
     screen = (
       <Homepage
         onSelectGame={(gameId) => goToLobby(gameId)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={() => goToLobby('join')}
+        onCredits={goToCredits}
       />
     );
   }
