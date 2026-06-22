@@ -35,6 +35,37 @@ button {
 }
 
 /* ============================================================= */
+/* =================  WHOLE-VIEWPORT BEAT FLASH  =============== */
+/* ============================================================= */
+
+/* A single persistent overlay that flashes a palette colour very faintly on
+   each detected beat. Click-through; sits above content but below modals
+   (transition wipe z-100, music button z-70). Colour comes from --flash-color
+   (set per beat by useBeatSync); invisible at rest. */
+.screen-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  background-color: var(--flash-color, #FF2EC4);
+}
+
+html[data-beat='true'] .screen-flash {
+  animation: screen-beat-flash 150ms ease-out;
+}
+
+@keyframes screen-beat-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.06; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-flash { animation: none !important; opacity: 0; }
+}
+
+/* ============================================================= */
 /* ==============  SHARED IDLE ANIMATIONS  ===================== */
 /* ============================================================= */
 

@@ -13,6 +13,7 @@
   height: 168px;
   transform: rotate(var(--rot, 0deg));
   transition: transform 0.12s, box-shadow 0.12s;
+  will-change: transform, box-shadow;
   /* Constant, never-resting bounce (smaller than the title). The resting --rot
      tilt is baked into each frame; per-card durations below keep them out of
      sync so the grid is always alive. */
@@ -36,18 +37,44 @@
    with the title for a unified page-wide pulse, then settles back into the idle
    bounce. Hovered cards are skipped so hover feedback isn't disturbed; the
    resting tilt (--rot) and featured scale (--cs) are preserved. */
-html[data-beat='true'] .game-card:not(:hover) {
-  animation: card-beat-pop 120ms ease-out;
+/* Cards layer three beat effects (medium weight): the pop (scale + jump), a
+   box-shadow slam, and a skew snap that alternates direction per card. The pop
+   and skew share ONE transform keyframe (you can't run two transform animations
+   at once); the shadow slam animates box-shadow separately. Each keyframe keeps
+   the resting tilt (--rot) and featured scale (--cs). Hovered cards are skipped
+   so hover feedback isn't disturbed. */
+html[data-beat='true'] .game-card:not(:hover):nth-child(odd) {
+  animation: card-beat-pop-left 120ms ease-out, card-shadow-slam 120ms ease-out;
 }
 
-@keyframes card-beat-pop {
-  0% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0); }
+html[data-beat='true'] .game-card:not(:hover):nth-child(even) {
+  animation: card-beat-pop-right 120ms ease-out, card-shadow-slam 120ms ease-out;
+}
+
+@keyframes card-beat-pop-left {
+  0% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0) skewX(0deg); }
   35% {
     transform: rotate(var(--rot, 0deg))
       scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
-      translateY(-5px);
+      translateY(-5px) skewX(-4deg);
   }
-  100% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0); }
+  100% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0) skewX(0deg); }
+}
+
+@keyframes card-beat-pop-right {
+  0% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0) skewX(0deg); }
+  35% {
+    transform: rotate(var(--rot, 0deg))
+      scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
+      translateY(-5px) skewX(4deg);
+  }
+  100% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0) skewX(0deg); }
+}
+
+@keyframes card-shadow-slam {
+  0% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
+  40% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 10px 10px 0 #000; }
+  100% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
 }
 
 /* Each card a slightly different duration so they never bounce in unison. */

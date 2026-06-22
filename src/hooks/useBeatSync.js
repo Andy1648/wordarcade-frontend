@@ -29,6 +29,9 @@ const BEAT_HOLD_MS = 120; // how long data-beat stays "true" per hit
 // Slow decay of the observed max flux so --beat-intensity stays responsive.
 const MAX_DECAY = 0.999;
 
+// Palette the whole-viewport screen flash cycles through (one picked per beat).
+const FLASH_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+
 const NEUTRAL = {
   '--beat-bass': '0',
   '--beat-mid': '0',
@@ -86,6 +89,11 @@ export function useBeatSync(getFrequencyData, active) {
         lastBeatRef.current = now;
         const intensity = Math.min(1, flux / maxFluxRef.current);
         root.style.setProperty('--beat-intensity', intensity.toFixed(3));
+        // Pick a fresh palette colour for the whole-viewport screen flash.
+        root.style.setProperty(
+          '--flash-color',
+          FLASH_COLORS[Math.floor(Math.random() * FLASH_COLORS.length)]
+        );
 
         // Flip data-beat on for BEAT_HOLD_MS so CSS one-shot pops fire. Removing
         // and (next beat) re-adding the attribute restarts the animation.

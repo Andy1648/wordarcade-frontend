@@ -41,6 +41,7 @@
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   margin-bottom: 8px;
+  will-change: text-shadow;
 }
 
 .room-hint {
@@ -81,6 +82,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* box-shadow transition (not a keyframe) so the beat shadow-slam doesn't
+     restart the idle chip-rock transform animation. */
+  transition: box-shadow 80ms ease-out;
+  will-change: box-shadow;
 }
 
 .room-host-badge {
@@ -353,4 +358,56 @@
   0% { transform: scale(1); }
   50% { transform: scale(1.02); }
   100% { transform: scale(1); }
+}
+/* ============================================================= */
+/* ==================  BEAT REACTIONS (music)  ================= */
+/* ============================================================= */
+/* Keyed off data-beat="true" on <html> (set ~120ms per detected drum hit by
+   useBeatSync), matching the homepage so the room pulses in time too. */
+
+/* ---- Room code: chromatic RGB split (smaller magnitude, +-2px). The code is
+   rendered as per-letter WaveText spans, so a pseudo-element/clone split won't
+   line up - instead we flash offset cyan/pink drop shadows for the same effect
+   without disturbing the per-letter bounce. ---- */
+html[data-beat='true'] .room-code {
+  animation: room-code-rgb 120ms ease-out;
+}
+
+@keyframes room-code-rgb {
+  0% { text-shadow: -2px 1px 0 #2EFFE0, 2px -1px 0 #FF2EC4; }
+  60% { text-shadow: -2px 1px 0 #2EFFE0, 2px -1px 0 #FF2EC4; }
+  100% { text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+}
+
+/* ---- Player chips: shadow slam (3px -> 6px) via the box-shadow transition on
+   .room-player-chip, so the idle chip-rock keeps running. ---- */
+html[data-beat='true'] .room-player-chip {
+  box-shadow: 6px 6px 0 #000;
+}
+
+/* ---- Primary buttons: a small upward kick + white outline flash. ---- */
+html[data-beat='true'] .room-start-btn,
+html[data-beat='true'] .room-leave-btn {
+  animation: room-btn-kick 120ms ease-out, room-outline-flash 120ms ease-out;
+}
+
+@keyframes room-btn-kick {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes room-outline-flash {
+  30% { border-color: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-beat='true'] .room-code,
+  html[data-beat='true'] .room-start-btn,
+  html[data-beat='true'] .room-leave-btn {
+    animation: none !important;
+  }
+  html[data-beat='true'] .room-player-chip {
+    box-shadow: 3px 3px 0 #000;
+  }
 }

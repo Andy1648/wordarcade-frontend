@@ -642,6 +642,10 @@ function App() {
         </div>
       </div>
       {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
+      {/* Whole-viewport beat flash (subtlest effect): a single always-present
+          div that briefly flashes a palette colour on each beat (colour set by
+          useBeatSync via --flash-color). Click-through, below modals. */}
+      <div className="screen-flash" aria-hidden="true" />
       <MusicButton
         isMuted={music.isMuted}
         onToggle={music.toggleMute}

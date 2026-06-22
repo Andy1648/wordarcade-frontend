@@ -250,7 +250,10 @@
   padding: 9px 8px;
   text-align: center;
   transform: rotate(-1deg);
-  transition: transform 0.12s;
+  /* box-shadow transition (not a keyframe animation) so the beat shadow-slam
+     below doesn't replace - and stutter - the idle rock/pulse transform anims. */
+  transition: transform 0.12s, box-shadow 80ms ease-out;
+  will-change: box-shadow;
 }
 
 /* When a player is knocked out, their card flashes red then tilts and fades
@@ -2001,4 +2004,94 @@
   25% { transform: rotate(0deg); }
   75% { transform: rotate(-2deg); }
   100% { transform: rotate(-1deg); }
+}
+
+/* ============================================================= */
+/* ==================  BEAT REACTIONS (music)  ================= */
+/* ============================================================= */
+/* All keyed off data-beat="true" on <html> (set ~120ms per detected drum hit
+   by useBeatSync). Effects are layered to match the homepage so the whole app
+   pulses together. Elements that must keep a looping idle transform animation
+   (player cards) slam their shadow via a transition instead of a keyframe, so
+   the idle motion isn't restarted every beat. */
+
+/* ---- Word Bomb: combo prompt - shadow slam + scale pop ---- */
+html[data-beat='true'] .game-combo {
+  animation: combo-beat-pop 120ms ease-out, combo-shadow-slam 120ms ease-out;
+}
+
+@keyframes combo-beat-pop {
+  0% { transform: skewX(-3deg) scale(1); }
+  35% { transform: skewX(-3deg) scale(calc(1 + 0.08 * var(--beat-intensity, 1))); }
+  100% { transform: skewX(-3deg) scale(1); }
+}
+
+@keyframes combo-shadow-slam {
+  0% { text-shadow: 4px 4px 0 #000; }
+  40% { text-shadow: 8px 8px 0 #000; }
+  100% { text-shadow: 4px 4px 0 #000; }
+}
+
+/* ---- Word Bomb: the bomb THUMPS with the music (subtle scale kick) ---- */
+.bomb-vignette {
+  will-change: transform;
+}
+
+html[data-beat='true'] .bomb-vignette {
+  animation: bomb-thump 80ms ease-out;
+}
+
+@keyframes bomb-thump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Word Bomb: player cards - small shadow slam (3px -> 6px) via the
+   box-shadow transition declared on .game-player-card, so the idle rock/pulse
+   transform keeps running. Skips eliminating/eliminated cards. ---- */
+html[data-beat='true'] .game-player-card:not(.eliminating):not(.eliminated) {
+  box-shadow: 6px 6px 0 #000;
+}
+
+/* ---- Category Blitz: category text - shadow slam + scale pop ---- */
+.cb-category-display {
+  will-change: transform, text-shadow;
+}
+
+html[data-beat='true'] .cb-category-display {
+  animation: cb-category-pop 120ms ease-out, cb-category-shadow-slam 120ms ease-out;
+}
+
+@keyframes cb-category-pop {
+  0% { transform: rotate(-1deg) skewX(-2deg) scale(1); }
+  35% { transform: rotate(-1deg) skewX(-2deg) scale(calc(1 + 0.06 * var(--beat-intensity, 1))); }
+  100% { transform: rotate(-1deg) skewX(-2deg) scale(1); }
+}
+
+@keyframes cb-category-shadow-slam {
+  0% { box-shadow: 5px 5px 0 #000; }
+  40% { box-shadow: 10px 10px 0 #000; }
+  100% { box-shadow: 5px 5px 0 #000; }
+}
+
+/* ---- Category Blitz: answer chips - light outline flash ---- */
+html[data-beat='true'] .cb-answer-chip {
+  animation: cb-chip-outline-flash 120ms ease-out;
+}
+
+@keyframes cb-chip-outline-flash {
+  30% { border-color: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-beat='true'] .game-combo,
+  html[data-beat='true'] .bomb-vignette,
+  html[data-beat='true'] .cb-category-display,
+  html[data-beat='true'] .cb-answer-chip {
+    animation: none !important;
+  }
+  html[data-beat='true'] .game-player-card:not(.eliminating):not(.eliminated) {
+    box-shadow: 3px 3px 0 #000;
+  }
 }
