@@ -1839,7 +1839,10 @@ export default function GameScreen({
             {inputEnabled && (
               <button
                 className="game-skip-btn"
-                onClick={onSkipTurn}
+                onClick={() => {
+                  sound.skip(); // descending "whomp" before the turn deflates
+                  onSkipTurn();
+                }}
                 title="Skip your turn — costs you a life"
               >
                 SKIP

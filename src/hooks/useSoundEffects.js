@@ -160,6 +160,30 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
+    // Skip your turn: a quick descending "whomp" - a sine sliding 400Hz -> 200Hz
+    // over 200ms, like a deflating sigh.
+    skip() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.2); // slide down
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.01); // quick attack to 0.15
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2); // out by 200ms
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } catch {
+        /* no-op */
+      }
+    },
+
     // Ambient fuse crackle during your turn: tiny 10ms noise bursts at random
     // 100-300ms intervals, very quiet. Idempotent start; stoppable.
     startSizzle() {
