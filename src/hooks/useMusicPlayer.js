@@ -94,8 +94,9 @@ export function useMusicPlayer() {
         const source = ctx.createMediaElementSource(audio);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
-        // Lower smoothing -> snappier, less smeared data so beats read crisp.
-        analyser.smoothingTimeConstant = 0.5;
+        // Low smoothing keeps kick transients sharp (frame-to-frame), which the
+        // onset/delta beat detection in useBeatSync relies on.
+        analyser.smoothingTimeConstant = 0.4;
         const gain = ctx.createGain();
         gain.gain.value = mutedRef.current ? 0 : volumeRef.current;
         // Analyser is a pre-gain tap (full amplitude); gain feeds the speakers.
@@ -115,11 +116,13 @@ export function useMusicPlayer() {
   }, []);
 
   // Live frequency snapshot, all bands normalized 0..1 (byte value / 255).
-  // bass: bins 0-4 (kick), mid: 5-15 (vocals), high: 16-30 (hats), overall: all.
+  // kick: bins 0-2 (sub-bass, where kick-drum transients live - used for beat
+  // detection, narrower than bass so it ignores bass-guitar/synth notes);
+  // bass: bins 0-4; mid: 5-15 (vocals); high: 16-30 (hats); overall: all.
   const getFrequencyData = useCallback(() => {
     const analyser = analyserRef.current;
     const arr = freqRef.current;
-    if (!analyser || !arr) return { bass: 0, mid: 0, high: 0, overall: 0 };
+    if (!analyser || !arr) return { kick: 0, bass: 0, mid: 0, high: 0, overall: 0 };
     analyser.getByteFrequencyData(arr);
     const band = (start, end) => {
       let sum = 0;
@@ -133,7 +136,13 @@ export function useMusicPlayer() {
     let total = 0;
     for (let i = 0; i < arr.length; i++) total += arr[i];
     const overall = arr.length ? total / arr.length / 255 : 0;
-    return { bass: band(0, 4), mid: band(5, 15), high: band(16, 30), overall };
+    return {
+      kick: band(0, 2),
+      bass: band(0, 4),
+      mid: band(5, 15),
+      high: band(16, 30),
+      overall,
+    };
   }, []);
 
   // Start playback. Browsers reject play() outside a user gesture, so the

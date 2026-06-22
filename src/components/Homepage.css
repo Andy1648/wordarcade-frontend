@@ -175,8 +175,8 @@ html[data-beat='true'] .homepage-logo {
   }
   35% {
     transform: rotate(-2deg) skewX(-4deg)
-      scale(calc(1 + 0.22 * var(--beat-intensity, 1)))
-      translateY(calc(-12px * var(--beat-intensity, 1)));
+      scale(calc(1 + 0.08 * var(--beat-intensity, 1)))
+      translateY(calc(-8px * var(--beat-intensity, 1)));
   }
   100% {
     transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
@@ -475,14 +475,25 @@ html[data-beat='true'] .homepage-logo {
   animation: none;
 }
 
-/* The trailing scale() chains a very subtle beat-bass pulse on top of the idle
-   bounce (neutral ~1 when the music is off). */
 @keyframes btn-bounce-forever {
-  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
-  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
-  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
-  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
-  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px) scale(calc(0.998 + var(--beat-bass, 0) * 0.01)); }
+  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
+  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px); }
+  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px); }
+  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px); }
+  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
+}
+
+/* Crisp beat pop: on each detected drum hit (data-beat on <html>) the action
+   buttons kick up in sync with the title + cards, then settle back into their
+   idle bounce. Hovered/disabled buttons are excluded so press feedback wins. */
+html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
+  animation: btn-beat-pop 120ms ease-out;
+}
+
+@keyframes btn-beat-pop {
+  0% { transform: skewX(-2deg) translateY(0); }
+  35% { transform: skewX(-2deg) translateY(calc(-3px * var(--beat-intensity, 1))); }
+  100% { transform: skewX(-2deg) translateY(0); }
 }
 
 /* Parallax drift: the splatters slowly translate, with the larger corner ones

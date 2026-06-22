@@ -21,15 +21,33 @@
 
 /* --cs is the card's base scale (1 for normal cards, >1 for the featured Word
    Bomb card). It's folded into every scale() here so the featured card stays
-   noticeably bigger while it bounces. The translateY adds a small bass-driven
-   jump (--beat-bounce * 0.3px) on top of the idle bob - cards react to the beat
-   but far less dramatically than the title. Neutral (0) when the music is off. */
+   noticeably bigger while it bounces. Beat reaction is now a discrete pop (see
+   card-beat-pop below), not a continuous offset, so this idle bob is beat-free. */
 @keyframes card-bounce-forever {
-  0% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(calc(2px + var(--beat-bounce, 0) * 0.3px)); }
-  25% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(calc(-2px + var(--beat-bounce, 0) * 0.3px)); }
-  50% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(calc(1px + var(--beat-bounce, 0) * 0.3px)); }
-  75% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(calc(-2px + var(--beat-bounce, 0) * 0.3px)); }
-  100% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(calc(2px + var(--beat-bounce, 0) * 0.3px)); }
+  0% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(2px); }
+  25% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(-2px); }
+  50% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(1px); }
+  75% { transform: rotate(var(--rot, 0deg)) scale(calc(0.99 * var(--cs, 1)), calc(1.01 * var(--cs, 1))) translateY(-2px); }
+  100% { transform: rotate(var(--rot, 0deg)) scale(calc(1.01 * var(--cs, 1)), calc(0.99 * var(--cs, 1))) translateY(2px); }
+}
+
+/* Crisp beat pop: on each detected drum hit (data-beat on <html>) every card
+   snaps up + scales a touch (1.04 max, smaller than the title's 1.08), in sync
+   with the title for a unified page-wide pulse, then settles back into the idle
+   bounce. Hovered cards are skipped so hover feedback isn't disturbed; the
+   resting tilt (--rot) and featured scale (--cs) are preserved. */
+html[data-beat='true'] .game-card:not(:hover) {
+  animation: card-beat-pop 120ms ease-out;
+}
+
+@keyframes card-beat-pop {
+  0% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0); }
+  35% {
+    transform: rotate(var(--rot, 0deg))
+      scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
+      translateY(-5px);
+  }
+  100% { transform: rotate(var(--rot, 0deg)) scale(var(--cs, 1)) translateY(0); }
 }
 
 /* Each card a slightly different duration so they never bounce in unison. */
