@@ -717,26 +717,32 @@ function App() {
   // then. The WallScene + TransitionOverlay live OUTSIDE that keyed wrapper so
   // the backdrop persists and the wipe plays over the swap.
   return (
-    // The app-shake wrapper carries the intensity-graded screen shake (light on
-    // beat, heavier on accept/explosion) so it works across every screen.
-    <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
-      <WallScene intensity={bgIntensity} />
-      <ParticleField />
-      <div className="view-transition-root">
-        <div key={renderedView} className="view-screen">
-          {screen}
+    // .app-viewport is fixed + overflow:hidden so it clips the shake to the
+    // viewport (no scrollbars can ever appear from the shake). The inner
+    // .app-shake is the actual scroll container (overflow-y:auto) AND the
+    // element the intensity-graded shake (light=beat / medium=accept /
+    // heavy=explosion) is applied to - shaking it just moves it within the
+    // clipping outer box, while normal vertical scrolling still works.
+    <div className="app-viewport">
+      <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
+        <WallScene intensity={bgIntensity} />
+        <ParticleField />
+        <div className="view-transition-root">
+          <div key={renderedView} className="view-screen">
+            {screen}
+          </div>
         </div>
+        {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
+        {/* Whole-viewport beat flash (subtlest effect): a single always-present
+            div that briefly flashes a palette colour on each beat (colour set by
+            useBeatSync via --flash-color). Click-through, below modals. */}
+        <div className="screen-flash" aria-hidden="true" />
+        <MusicButton
+          isMuted={music.isMuted}
+          onToggle={music.toggleMute}
+          accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
+        />
       </div>
-      {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
-      {/* Whole-viewport beat flash (subtlest effect): a single always-present
-          div that briefly flashes a palette colour on each beat (colour set by
-          useBeatSync via --flash-color). Click-through, below modals. */}
-      <div className="screen-flash" aria-hidden="true" />
-      <MusicButton
-        isMuted={music.isMuted}
-        onToggle={music.toggleMute}
-        accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
-      />
     </div>
   );
 }

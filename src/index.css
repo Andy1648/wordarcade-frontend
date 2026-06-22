@@ -69,18 +69,22 @@ html[data-beat='true'] .screen-flash {
 /* ===================  APP-WIDE SCREEN SHAKE  ================= */
 /* ============================================================= */
 
-/* The whole app sits in .app-shake; a class adds a one-shot shake at the chosen
-   intensity (light = beat, medium = accept, heavy = explosion/game over). Cheap
-   transform-only animation; cleared in App so it can replay. */
-/* The shake translates content a few px; clip the overflow so it never spawns a
-   scrollbar (also belt-and-braces on html/body). */
-.app-shake,
-html,
-body {
-  overflow-x: hidden;
+/* Architecture: a FIXED, overflow:hidden outer container (.app-viewport) clips
+   everything to the viewport, so the shake can never push content out and spawn
+   a scrollbar. The inner .app-shake is the real scroll container (overflow-y:
+   auto, so tall screens still scroll normally) AND the element the one-shot
+   shake animation is applied to - shaking just nudges it inside the clip box. */
+.app-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
 }
 
 .app-shake {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
   transform-origin: center;
 }
 
@@ -90,23 +94,23 @@ body {
 
 @keyframes shake-light {
   0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-1px, 1px); }
+  50% { transform: translate(-0.5px, 0.5px); }
 }
 
 @keyframes shake-medium {
   0% { transform: translate(0, 0); }
-  25% { transform: translate(-2px, 1px); }
-  50% { transform: translate(2px, -1px); }
-  75% { transform: translate(-2px, -1px); }
+  25% { transform: translate(-1.5px, 1px); }
+  50% { transform: translate(1.5px, -1px); }
+  75% { transform: translate(-1px, -1px); }
   100% { transform: translate(0, 0); }
 }
 
 @keyframes shake-heavy {
   0% { transform: translate(0, 0); }
-  20% { transform: translate(-4px, 2px) rotate(-0.5deg); }
-  40% { transform: translate(4px, -2px) rotate(0.5deg); }
-  60% { transform: translate(-3px, -2px) rotate(-0.3deg); }
-  80% { transform: translate(3px, 2px) rotate(0.3deg); }
+  20% { transform: translate(-3px, 1.5px) rotate(-0.4deg); }
+  40% { transform: translate(3px, -1.5px) rotate(0.4deg); }
+  60% { transform: translate(-2px, -1.5px) rotate(-0.2deg); }
+  80% { transform: translate(2px, 1.5px) rotate(0.2deg); }
   100% { transform: translate(0, 0); }
 }
 
