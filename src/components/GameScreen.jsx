@@ -484,7 +484,7 @@ function fusePointAt(t) {
  * flame, more sparks, harder shake, a pulsing red number, and a flat red
  * vignette - with the colour/scale shifts cross-faded for a smooth ramp.
  */
-function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
+function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast, expression }) {
   // Fraction of time remaining (full while the 3-2-1 intro is still up).
   const ratio = showCountdown
     ? 1
@@ -493,17 +493,70 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
   const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   const critical = tension === 'critical';
 
+  // ---- The bomb's FACE state machine ----
+  // Transient expressions (relief on a correct word, explode on detonation) come
+  // from the parent and win; otherwise the face follows the tension tier, and at
+  // calm it watches whoever's typing.
+  const baseFace =
+    tension === 'critical'
+      ? 'panic'
+      : tension === 'warning'
+      ? 'nervous'
+      : typing
+      ? 'watching'
+      : 'idle';
+  const face = expression || baseFace;
+
+  // Spontaneous blinks (every 3-5s) and the occasional yawn (every 8-12s) keep
+  // the bomb alive when it's calm. Self-rescheduling timeouts, guarded so a late
+  // fire after unmount can't setState.
+  const [blink, setBlink] = useState(false);
+  const [yawn, setYawn] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    let blinkT;
+    let yawnT;
+    const scheduleBlink = () => {
+      blinkT = setTimeout(() => {
+        if (!alive) return;
+        setBlink(true);
+        setTimeout(() => alive && setBlink(false), 120);
+        scheduleBlink();
+      }, 3000 + Math.random() * 2000);
+    };
+    const scheduleYawn = () => {
+      yawnT = setTimeout(() => {
+        if (!alive) return;
+        setYawn(true);
+        setTimeout(() => alive && setYawn(false), 1000);
+        scheduleYawn();
+      }, 8000 + Math.random() * 4000);
+    };
+    scheduleBlink();
+    scheduleYawn();
+    return () => {
+      alive = false;
+      clearTimeout(blinkT);
+      clearTimeout(yawnT);
+    };
+  }, []);
+
+  const faceClass = `bomb-face face-${face}${blink ? ' blink' : ''}${
+    yawn ? ' yawn' : ''
+  }${typingFast ? ' fast' : ''}`;
+
   // Fuse uses pathLength="100", so the offset is just the burnt-away percent;
   // the flame sits at the matching point along the curve.
   const fuseDashoffset = 100 * (1 - ratio);
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
+  // Timer number: white -> red -> white-with-red-stroke, growing each tier. Sits
+  // lower (belly) now that the face owns the upper body, and a touch smaller.
   const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
   const numStroke = critical ? '#FF5C5C' : '#000';
   const numStrokeWidth = critical ? 4 : 3;
-  const numSize = tension === 'calm' ? 32 : tension === 'warning' ? 36 : 44;
+  const numSize = tension === 'calm' ? 26 : tension === 'warning' ? 30 : 34;
 
   const sparks = BOMB_SPARKS[tension];
 
@@ -567,11 +620,51 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown }) {
             {/* Subtle etched ring detail. */}
             <circle cx="80" cy="120" r="42" fill="none" stroke="#444" strokeWidth="1.5" opacity="0.4" />
 
-            {/* ---- Live seconds inside the body. ---- */}
+            {/* ---- The bomb's FACE: eyebrows, eyes (white + pupil), happy-eye
+                 overlay, a multi-purpose mouth, sweat drops and a tapping foot.
+                 All driven by the faceClass state machine in CSS. ---- */}
+            <g className={faceClass}>
+              <g className="brow-pos" transform="translate(63,82)">
+                <rect className="brow brow-l" x="-9" y="-2.2" width="18" height="4.5" rx="2.2" fill="#1a1a1a" />
+              </g>
+              <g className="brow-pos" transform="translate(97,82)">
+                <rect className="brow brow-r" x="-9" y="-2.2" width="18" height="4.5" rx="2.2" fill="#1a1a1a" />
+              </g>
+
+              <g transform="translate(64,98)">
+                <ellipse className="eye-white eye-white-l" cx="0" cy="0" rx="9" ry="11" fill="#fff" stroke="#1a1a1a" strokeWidth="3" />
+                <circle className="pupil pupil-l" cx="0" cy="0" r="4" fill="#111" />
+              </g>
+              <g transform="translate(96,98)">
+                <ellipse className="eye-white eye-white-r" cx="0" cy="0" rx="9" ry="11" fill="#fff" stroke="#1a1a1a" strokeWidth="3" />
+                <circle className="pupil pupil-r" cx="0" cy="0" r="4" fill="#111" />
+              </g>
+
+              {/* Happy ^^ eyes, shown only in the relief expression. */}
+              <path className="eye-happy" d="M 55 100 Q 64 91 73 100" fill="none" stroke="#1a1a1a" strokeWidth="3.5" strokeLinecap="round" />
+              <path className="eye-happy" d="M 87 100 Q 96 91 105 100" fill="none" stroke="#1a1a1a" strokeWidth="3.5" strokeLinecap="round" />
+
+              {/* Mouth: an "o"/"O" (yawn / explosion) and a happy curve (relief). */}
+              <ellipse className="mouth-o" cx="80" cy="117" rx="5.5" ry="6.5" fill="#1a1a1a" />
+              <path className="mouth-happy" d="M 71 115 Q 80 123 89 115" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+
+              {/* Sweat drops (positioned by the wrapping g; the path itself slides). */}
+              <g transform="translate(34,94)">
+                <path className="sweat sweat-l" d="M0 0 C2.5 4 4 5.5 4 7 A4 4 0 1 1 -4 7 C-4 5.5 -2.5 4 0 0 Z" fill="#2EFFE0" stroke="#1A9985" strokeWidth="1" />
+              </g>
+              <g transform="translate(126,94)">
+                <path className="sweat sweat-r" d="M0 0 C2.5 4 4 5.5 4 7 A4 4 0 1 1 -4 7 C-4 5.5 -2.5 4 0 0 Z" fill="#2EFFE0" stroke="#1A9985" strokeWidth="1" />
+              </g>
+
+              {/* A little foot that taps frantically when panicking. */}
+              <rect className="foot" x="74" y="174" width="16" height="7" rx="3.5" fill="#1a1a1a" />
+            </g>
+
+            {/* ---- Live seconds, sitting low like a belly counter. ---- */}
             <text
               className={critical ? 'bomb-num-pulse' : undefined}
               x="80"
-              y="121"
+              y="142"
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily="'Bungee', cursive"
@@ -1006,10 +1099,25 @@ export default function GameScreen({
   // settling ~120ms after the last keystroke so typing feels alive.
   const [typingActive, setTypingActive] = useState(false);
   const typingActiveTimerRef = useRef(null);
+  // typingFast: >3 keystrokes in the last second -> the bomb panics (it knows
+  // you're about to submit). Tracked from keystroke timestamps.
+  const [typingFast, setTypingFast] = useState(false);
+  const keyTimesRef = useRef([]);
+  const fastTimerRef = useRef(null);
   function pulseInput() {
     setTypingActive(true);
     if (typingActiveTimerRef.current) clearTimeout(typingActiveTimerRef.current);
     typingActiveTimerRef.current = setTimeout(() => setTypingActive(false), 120);
+
+    const now = Date.now();
+    const times = keyTimesRef.current;
+    times.push(now);
+    while (times.length && now - times[0] > 1000) times.shift();
+    if (times.length > 3) {
+      setTypingFast(true);
+      if (fastTimerRef.current) clearTimeout(fastTimerRef.current);
+      fastTimerRef.current = setTimeout(() => setTypingFast(false), 700);
+    }
   }
 
   // Duck the background music while a game is live (from the moment this screen
@@ -1101,6 +1209,19 @@ export default function GameScreen({
     }, ms);
   }
 
+  // Transient bomb-face override: 'relief' (correct word) / 'explode' (timeout),
+  // auto-cleared so the face returns to its tension-driven expression.
+  const [bombFace, setBombFace] = useState(null);
+  const bombFaceTimerRef = useRef(null);
+  function flashBombFace(name, ms) {
+    if (bombFaceTimerRef.current) clearTimeout(bombFaceTimerRef.current);
+    setBombFace(name);
+    bombFaceTimerRef.current = setTimeout(() => {
+      setBombFace(null);
+      bombFaceTimerRef.current = null;
+    }, ms);
+  }
+
   // ---- Submit interaction (word flies at the bomb; bomb reacts) ----
   // flyKey/flyText drive the word thrown toward the bomb on each submit;
   // shatterKey/shatterText drive the rejected word bouncing back and shattering;
@@ -1128,6 +1249,7 @@ export default function GameScreen({
     if (lastWordResult.accepted) {
       setBombReaction('recoil');
       freeze(50); // hitlag: 50ms freeze so the success lands with weight
+      flashBombFace('relief', 500); // the bomb sighs in relief
       const t = submitTimerRef.current;
       setClutchFlag(t > 0 && t <= 2); // beat the buzzer
     } else {
@@ -1185,6 +1307,7 @@ export default function GameScreen({
       //   t=80   the explosion animation + sound + heavy shake fire (explosionKey)
       setImpactKey((k) => k + 1);
       freeze(80);
+      flashBombFace('explode', 500); // eyes huge, mouth wide O
       timers.push(setTimeout(() => setExplosionKey((k) => k + 1), 80));
 
       setShatteredHearts((cur) => {
@@ -1402,6 +1525,11 @@ export default function GameScreen({
   // Panic sweat on your own card while time is critical and it's your turn.
   const panicking = isMyTurn && !showCountdown && !gameOver && timeRatio < 0.3;
 
+  // Is the active player typing right now? (your live draft, or the relayed
+  // typing text of whoever's turn it is) - drives the bomb's "watching" face.
+  const currentTyped = isMyTurn ? draft : typingText[gameState.currentPlayerId] || '';
+  const someoneTyping = !showCountdown && !gameOver && currentTyped.trim().length > 0;
+
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
@@ -1596,6 +1724,9 @@ export default function GameScreen({
                 timerSeconds={timerSeconds}
                 maxTimer={maxTimer}
                 showCountdown={showCountdown}
+                typing={someoneTyping}
+                typingFast={typingFast}
+                expression={bombFace}
               />
               {bombReaction === 'reject' && <div className="bomb-reject-flash" />}
               {bombReaction === 'recoil' && (

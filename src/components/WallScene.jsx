@@ -9,7 +9,30 @@
 // frequent parent re-render - e.g. the Word Bomb tension class flipping every
 // second - never reshuffles a fresh random layout. React just swaps the
 // `intensity` class on the container; the DOM nodes are stable.
+import { useEffect, useRef, useState } from 'react';
 import './WallScene.css';
+
+// ---- Self-writing graffiti: words that spray-paint themselves onto the wall
+// at random intervals and stay (capped, oldest drops off). ----
+const GRAFFITI_WORDS = [
+  'BOOM', 'POW', 'ZAP', 'WORD', 'FIRE', 'EZ', 'GG', 'WOW',
+  'YOLO', 'SICK', 'EPIC', 'NOOB', 'RIP', 'LOL', 'DOPE', 'HYPE',
+];
+const GRAFFITI_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+const MAX_LIVE_TAGS = 15;
+
+function makeGraffitiTag(id) {
+  const word = GRAFFITI_WORDS[(Math.random() * GRAFFITI_WORDS.length) | 0];
+  return {
+    id,
+    word,
+    color: GRAFFITI_COLORS[(Math.random() * GRAFFITI_COLORS.length) | 0],
+    size: 20 + Math.round(Math.random() * 16), // 20-36px
+    top: 8 + Math.random() * 78, // % of viewport
+    left: 4 + Math.random() * 78,
+    rot: Math.round(Math.random() * 40 - 20), // -20..20deg
+  };
+}
 
 // The graffiti palette + a darker shade of each fill used as its colored
 // outline (never black - per the project's colored-outline rule).
@@ -110,6 +133,30 @@ function StickerInner({ kind, fill, line }) {
  *   turn runs down. Defaults to the resting 'calm' on every non-game screen.
  */
 export default function WallScene({ intensity = 'calm' }) {
+  // Live self-writing tags. A new one spray-paints itself every 10-15s; the list
+  // is capped so the oldest drops off rather than the wall filling up forever.
+  const [tags, setTags] = useState([]);
+  const tagIdRef = useRef(0);
+  useEffect(() => {
+    let alive = true;
+    let timer;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        if (!alive) return;
+        setTags((prev) => {
+          const next = [...prev, makeGraffitiTag(tagIdRef.current++)];
+          return next.length > MAX_LIVE_TAGS ? next.slice(next.length - MAX_LIVE_TAGS) : next;
+        });
+        schedule();
+      }, 10000 + Math.random() * 5000);
+    };
+    schedule();
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
     <div className={`wall-scene ${intensity}`} aria-hidden="true">
       {/* Brick courses + mortar, painted first, behind everything. */}
@@ -195,6 +242,39 @@ export default function WallScene({ intensity = 'calm' }) {
           <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
         </svg>
       ))}
+
+      {/* Self-writing graffiti: each tag draws its outline stroke-by-stroke,
+          then the fill spray-fills in (see graffiti-draw in the CSS). */}
+      {tags.map((t) => {
+        const chars = t.word.length;
+        return (
+          <svg
+            key={t.id}
+            className="wall-graffiti"
+            style={{
+              left: `${t.left}%`,
+              top: `${t.top}%`,
+              width: `${chars * t.size * 0.85 + t.size}px`,
+              height: `${t.size * 1.5}px`,
+              transform: `rotate(${t.rot}deg)`,
+            }}
+            aria-hidden="true"
+          >
+            <text
+              className="wall-graffiti-text"
+              x="2"
+              y={t.size}
+              fontSize={t.size}
+              fontFamily="'Bungee', cursive"
+              fill={t.color}
+              stroke={t.color}
+              style={{ '--path-length': chars * t.size * 3 }}
+            >
+              {t.word}
+            </text>
+          </svg>
+        );
+      })}
 
       {/* Comic halftone dot texture over the wall (its opacity breathes with
           the music's mid frequencies via --beat-mid). */}

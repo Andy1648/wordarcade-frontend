@@ -106,6 +106,41 @@
   to { transform: rotate(var(--rot, 0deg)) translate(var(--dx, 8px), var(--dy, 8px)); }
 }
 
+/* ---- Self-writing graffiti tags ---- */
+
+.wall-graffiti {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+  opacity: 0.5; /* keep it ambient behind the content panels */
+  transform-origin: center;
+}
+
+/* The text starts as an invisible-fill, dashed stroke; the stroke "draws in"
+   (dashoffset -> 0), then the fill spray-fills after the outline lands. */
+.wall-graffiti-text {
+  stroke-width: 2;
+  fill-opacity: 0;
+  stroke-dasharray: var(--path-length, 400);
+  stroke-dashoffset: var(--path-length, 400);
+  animation: graffiti-draw 2.5s ease-out forwards;
+}
+
+@keyframes graffiti-draw {
+  0% { stroke-dashoffset: var(--path-length, 400); fill-opacity: 0; }
+  70% { stroke-dashoffset: 0; fill-opacity: 0; }
+  100% { stroke-dashoffset: 0; fill-opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall-graffiti-text {
+    animation: none;
+    stroke-dashoffset: 0;
+    fill-opacity: 0.7;
+  }
+}
+
 /* ---- Comic halftone dot texture ---- */
 
 .wall-halftone {

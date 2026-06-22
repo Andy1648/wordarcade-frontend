@@ -11,6 +11,7 @@ import MusicButton from './components/MusicButton';
 import CreditsScreen from './components/CreditsScreen';
 import SplashScreen from './components/SplashScreen';
 import ParticleField from './components/ParticleField';
+import CursorTrail from './components/CursorTrail';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -694,6 +695,7 @@ function App() {
         <WallScene intensity="calm" />
         <ParticleField />
         <SplashScreen onStart={handleSplashStart} onDismiss={handleSplashDismiss} />
+        <CursorTrail />
       </>
     );
   }
@@ -708,6 +710,7 @@ function App() {
         <ParticleField />
         <LoadingScreen status={wsStatus} onRetry={() => window.location.reload()} />
         <MusicButton isMuted={music.isMuted} onToggle={music.toggleMute} accent="#FF2EC4" />
+        <CursorTrail />
       </>
     );
   }
@@ -743,6 +746,9 @@ function App() {
           accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
         />
       </div>
+      {/* Cursor trail sits outside .app-shake so the screen shake never moves
+          it, and above everything (z 9999). */}
+      <CursorTrail />
     </div>
   );
 }
