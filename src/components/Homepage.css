@@ -154,17 +154,33 @@
   paint-order: stroke fill;
   display: inline-block;
   text-align: center;
-  /* LIVE beat-driven bounce: the wordmark physically pulses/jumps with every
-     bass hit via the global --beat-* vars (set ~60fps by useBeatSync). The base
-     rotate(-2deg)/skewX(-4deg) pose is kept; the short transition smooths the
-     per-frame steps. When the music is off the vars sit at neutral (scale 1,
-     bounce 0) so the title just rests in its tilted pose. */
-  transform: rotate(-2deg) skewX(-4deg)
-    scale(var(--beat-scale, 1))
-    translateY(calc(var(--beat-bounce, 0) * 1px));
-  /* Very short, linear: lets the envelope's instant attack read as a sharp kick
-     rather than smoothing it into a soft bob. */
-  transition: transform 0.03s linear;
+  /* Resting pose. The beat-driven motion is now a discrete one-shot POP fired by
+     data-beat (see below), not a continuous transform - so the wordmark sits
+     still and snaps on each detected drum hit instead of bobbing smoothly. */
+  transform: rotate(-2deg) skewX(-4deg);
+}
+
+/* CRISP beat pop: when useBeatSync flips data-beat="true" (for ~120ms on a
+   detected kick) the wordmark snaps up + out, scaled by --beat-intensity so
+   harder hits pop harder, then settles. The attribute is removed between beats,
+   so the animation restarts cleanly on the next hit. Keyframes carry the resting
+   rotate/skew pose so the tilt is preserved through the pop. */
+html[data-beat='true'] .homepage-logo {
+  animation: title-beat-pop 120ms ease-out;
+}
+
+@keyframes title-beat-pop {
+  0% {
+    transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
+  }
+  35% {
+    transform: rotate(-2deg) skewX(-4deg)
+      scale(calc(1 + 0.22 * var(--beat-intensity, 1)))
+      translateY(calc(-12px * var(--beat-intensity, 1)));
+  }
+  100% {
+    transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
+  }
 }
 
 /* Glitch: a cyan duplicate of the wordmark (content pulled from data-text) sits
