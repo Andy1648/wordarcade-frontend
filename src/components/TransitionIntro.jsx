@@ -49,11 +49,11 @@ export default function TransitionIntro({ onComplete }) {
     const timers = [];
     // 0-200ms: hold on full black (anticipation).
     timers.push(setTimeout(() => setStep('line1'), 200));
-    // "TYPE FAST." lands after its 400ms punch.
-    timers.push(setTimeout(impact, 600));
+    // Flash + shake right as the punch SQUASHES home (~210ms into the 320ms hit).
+    timers.push(setTimeout(impact, 410));
     // 900ms: "DIE SLOW." punches in from the right.
     timers.push(setTimeout(() => setStep('line2'), 900));
-    timers.push(setTimeout(impact, 1300));
+    timers.push(setTimeout(impact, 1110));
     // 1600ms: both lines explode outward over the starburst.
     timers.push(setTimeout(() => setStep('explode'), 1600));
     // 2000ms: hand back to App for the homepage wipe.

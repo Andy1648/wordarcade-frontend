@@ -8,7 +8,8 @@ import Mascot from './Mascot';
 import './SplashScreen.css';
 
 const TAGLINES = [
-  'TYPE FAST. DIE SLOW.',
+  // "TYPE FAST. DIE SLOW." intentionally lives in the post-dismiss intro card,
+  // not here, so it isn't shown twice.
   'WORDS ARE WEAPONS.',
   'YOUR VOCABULARY VS EVERYONE.',
   'NO SPELL CHECK. NO MERCY.',
