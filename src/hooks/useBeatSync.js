@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from 'react';
 
 // Onset tuning.
 const HISTORY_FRAMES = 43; // ~0.7s local window for the adaptive threshold
-const SENSITIVITY = 2.0; // current flux must exceed local-average flux * this
+const SENSITIVITY = 2.2; // current flux must exceed local-average flux * this
 // (lower = more sensitive / more beats; higher = only the strongest onsets)
 const MIN_FLUX = 0.025; // floor so quiet/steady passages don't false-trigger
 const COOLDOWN_MS = 130; // min gap between beats (no double-trigger per hit)
