@@ -282,6 +282,22 @@
   padding: 18px 18px 24px;
 }
 
+/* Music attribution line (CC BY-SA 4.0 requirement) - small + unobtrusive. */
+.homepage-credits {
+  position: relative;
+  z-index: 1;
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  color: #666;
+  text-align: center;
+  margin-top: 20px;
+  padding: 0 18px 16px;
+}
+
+.homepage-credits a {
+  color: #888;
+}
+
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;

@@ -148,6 +148,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom }) {
             JOIN ROOM
           </button>
         </div>
+
+        {/* Background-music attribution (required by CC BY-SA 4.0). */}
+        <div className="homepage-credits">
+          Music:{' '}
+          <a
+            href="https://www.youtube.com/watch?v=ulfoU2MziOc"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            LEMMiNO - Firecracker
+          </a>{' '}
+          (CC BY-SA 4.0)
+        </div>
       </div>
     </div>
   );

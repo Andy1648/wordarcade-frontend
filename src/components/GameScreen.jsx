@@ -893,12 +893,23 @@ export default function GameScreen({
   onTypingUpdate,
   onLeave,
   onRematch,
+  musicSetVolume,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
   // Intro countdown plays once when the screen mounts; the input stays
   // disabled until it finishes.
   const [showCountdown, setShowCountdown] = useState(true);
+
+  // Duck the background music while a game is live (from the moment this screen
+  // mounts / the countdown begins) so the synthesized SFX cut through, and
+  // restore it at game over and when leaving the screen. The SFX play on top of
+  // the (quieter) music, not in place of it.
+  useEffect(() => {
+    if (!musicSetVolume) return undefined;
+    musicSetVolume(gameOver ? 0.3 : 0.15);
+    return () => musicSetVolume(0.3);
+  }, [gameOver, musicSetVolume]);
 
   // Word Bomb sound effects (Web Audio, synthesized). `muted` is toggled from
   // the header; while muted every method is a no-op. The hook owns the lazily-

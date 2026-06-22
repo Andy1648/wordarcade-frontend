@@ -1,0 +1,62 @@
+/* MusicButton.css - fixed bottom-right background-music toggle. */
+
+.music-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 70; /* above the game-over / countdown overlays so it's always reachable */
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  background: #1a0b2e;
+  /* border colour + text colour are set inline to the screen's accent */
+  border: 3px solid #FF2EC4;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  /* Constant gentle bounce, matching the other buttons; never rests. */
+  animation: music-btn-bounce 2.1s ease-in-out infinite;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.music-btn:hover {
+  animation: none;
+  transform: scale(1.1);
+}
+
+.music-btn:active {
+  animation: none;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* Muted: a diagonal line struck through the note. */
+.music-btn.muted {
+  opacity: 0.8;
+}
+
+.music-btn.muted::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 3px;
+  background: currentColor;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  pointer-events: none;
+}
+
+@keyframes music-btn-bounce {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.005); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .music-btn { animation: none; }
+}

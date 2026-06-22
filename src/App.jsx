@@ -7,8 +7,18 @@ import GameScreen from './components/GameScreen';
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
+import MusicButton from './components/MusicButton';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useMusicPlayer } from './hooks/useMusicPlayer';
 import './Transitions.css';
+
+// The music button's border/glyph colour, matched to each screen's accent.
+const SCREEN_ACCENT = {
+  home: '#FF2EC4',
+  lobby: '#2EFFE0',
+  room: '#FFE94A',
+  game: '#FF6B3D',
+};
 
 // The word flashed mid-wipe when navigating to each view.
 const TRANSITION_WORDS = {
@@ -125,6 +135,18 @@ function App() {
   const [categoryTotals, setCategoryTotals] = useState({});
 
   const { status: wsStatus, lastMessage, send } = useWebSocket();
+
+  // Background music. Doesn't autoplay (browsers block it); instead we kick it
+  // off on the very first user click anywhere, via a one-shot listener.
+  const music = useMusicPlayer();
+  const musicPlay = music.play;
+  useEffect(() => {
+    const startMusic = () => {
+      musicPlay();
+    };
+    window.addEventListener('click', startMusic, { once: true });
+    return () => window.removeEventListener('click', startMusic);
+  }, [musicPlay]);
 
   useEffect(() => {
     if (!lastMessage) return;
@@ -530,6 +552,7 @@ function App() {
         onTypingUpdate={handleTypingUpdate}
         onLeave={handleLeaveRoom}
         onRematch={handleRematch}
+        musicSetVolume={music.setVolume}
       />
     );
   } else if (renderedView === 'room' && room) {
@@ -582,6 +605,7 @@ function App() {
       <>
         <WallScene intensity="calm" />
         <LoadingScreen status={wsStatus} onRetry={() => window.location.reload()} />
+        <MusicButton isMuted={music.isMuted} onToggle={music.toggleMute} accent="#FF2EC4" />
       </>
     );
   }
@@ -599,6 +623,11 @@ function App() {
         </div>
       </div>
       {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
+      <MusicButton
+        isMuted={music.isMuted}
+        onToggle={music.toggleMute}
+        accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
+      />
     </>
   );
 }
