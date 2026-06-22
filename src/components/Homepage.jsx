@@ -174,22 +174,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         >
           CREDITS
         </button>
-
-        {/* Subtle footer: music attribution (CC BY-SA 4.0). The creator credit
-            lives on the dedicated credits page. */}
-        <div className="homepage-footer">
-          <div className="homepage-credit-music">
-            Music:{' '}
-            <a
-              href="https://www.youtube.com/watch?v=ulfoU2MziOc"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LEMMiNO - Firecracker
-            </a>{' '}
-            (CC BY-SA 4.0)
-          </div>
-        </div>
       </div>
     </div>
   );

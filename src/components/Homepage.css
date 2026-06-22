@@ -352,24 +352,6 @@ html[data-beat='true'] .homepage-logo::after {
 }
 
 /* Subtle credit footer - centered, quiet, doesn't compete with the cards. */
-.homepage-footer {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 0 18px 18px;
-}
-
-.homepage-credit-music {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 8px;
-  color: #666;
-}
-
-.homepage-credit-music a {
-  color: #888;
-}
-
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;
