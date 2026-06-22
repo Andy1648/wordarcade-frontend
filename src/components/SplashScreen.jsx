@@ -80,7 +80,12 @@ export default function SplashScreen({ onStart, onDismiss }) {
         <polygon points={BURST_POINTS} fill="#FFE94A" />
       </svg>
 
-      <div className="splash-logo" data-text="WORDARCADE">
+      <div
+        className="splash-logo"
+        data-text="WORDARCADE"
+        role="img"
+        aria-label="WordArcade"
+      >
         WORDARCADE
       </div>
 

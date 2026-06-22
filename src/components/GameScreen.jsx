@@ -1548,6 +1548,7 @@ export default function GameScreen({
               }}
               onKeyDown={handleKeyDown}
               disabled={!inputEnabled}
+              aria-label={combo ? `Type a word containing ${combo}` : 'Type a word'}
               placeholder={
                 inputEnabled
                   ? isCategory
@@ -1823,6 +1824,7 @@ function CategoryBlitzScreen({
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleKeyDown}
               disabled={showCountdown}
+              aria-label="Type an answer for the category"
               placeholder="Type an answer..."
               maxLength={32}
               autoComplete="off"

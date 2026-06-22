@@ -151,8 +151,16 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
           </div>
         )}
 
-        {error && <div className="lobby-error">{error}</div>}
-        {connectionLabel && <div className="lobby-connection-status">{connectionLabel}</div>}
+        {error && (
+          <div className="lobby-error" role="alert">
+            {error}
+          </div>
+        )}
+        {connectionLabel && (
+          <div className="lobby-connection-status" role="status">
+            {connectionLabel}
+          </div>
+        )}
 
         <button
           className="lobby-continue-btn"
