@@ -211,6 +211,68 @@ function FloatingReaction({ emoji, name }) {
   );
 }
 
+// Jagged comic starburst behind the K.O. slam (same construction as the homepage
+// burst): alternating outer/inner radii, computed once.
+const KO_BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
+  const r = i % 2 === 0 ? 100 : 62;
+  const a = (Math.PI * i) / 14 - Math.PI / 2;
+  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
+}).join(' ');
+
+/**
+ * Fighting-game K.O. slam, played when a player is eliminated. Mounts (re-keyed)
+ * after the explosion; its CSS sequences itself: a 400ms freeze (nothing
+ * visible, the stage is hitlag-frozen by the parent), then a white impact flash,
+ * then "K.O." slams down with overshoot over a rising starburst, holds, and
+ * fades. Self-removes after the full ~1.6s timeline. Fixed + pointer-events:none.
+ */
+function KOOverlay() {
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setDone(true), 1600);
+    return () => clearTimeout(id);
+  }, []);
+  if (done) return null;
+  return (
+    <div className="ko-overlay" aria-hidden="true">
+      <div className="ko-impact-flash" />
+      <svg className="ko-burst" viewBox="-100 -100 200 200">
+        <polygon points={KO_BURST_POINTS} fill="#FFE94A" />
+      </svg>
+      <div className="ko-text">K.O.</div>
+    </div>
+  );
+}
+
+// Three teardrops for the panic "sweat" indicator.
+const SWEAT_DROPS = [
+  { left: 70, top: 4, delay: 0 },
+  { left: 84, top: 10, delay: 130 },
+  { left: 60, top: 14, delay: 260 },
+];
+
+/**
+ * Anime-style panic sweat: a few small blue teardrops that fling off the active
+ * player's card, repeating, while time is critical and it's your turn. Purely
+ * decorative; absolutely positioned within the (relative) player card.
+ */
+function SweatDrops() {
+  return (
+    <div className="sweat-layer" aria-hidden="true">
+      {SWEAT_DROPS.map((d, i) => (
+        <svg
+          key={i}
+          className="sweat-drop"
+          viewBox="0 0 10 14"
+          style={{ left: `${d.left}%`, top: `${d.top}%`, animationDelay: `${d.delay}ms` }}
+        >
+          <path d="M5 0 C8 6 10 8 10 10 A5 5 0 1 1 0 10 C0 8 2 6 5 0 Z" fill="#2EFFE0" stroke="#1A9985" strokeWidth="1" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 // 3-2-1-GO! intro sequence. Each entry shows for 700ms; null marks the end.
 const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
 
@@ -1021,6 +1083,24 @@ export default function GameScreen({
   const [passDir, setPassDir] = useState(null);
   const prevCurrentRef = useRef(null);
 
+  // ---- Cinematic feel: hitlag / impact frame / K.O. ----
+  // hitlag freezes every on-stage animation for a beat (impact weight); impactKey
+  // re-keys the one-frame white flash before an explosion; koKey re-keys the K.O.
+  // slam overlay when someone is eliminated.
+  const [hitlag, setHitlag] = useState(false);
+  const [impactKey, setImpactKey] = useState(0);
+  const [koKey, setKoKey] = useState(0);
+  const hitlagTimerRef = useRef(null);
+  // Freeze the stage for `ms` (a new freeze supersedes any in-flight one).
+  function freeze(ms) {
+    if (hitlagTimerRef.current) clearTimeout(hitlagTimerRef.current);
+    setHitlag(true);
+    hitlagTimerRef.current = setTimeout(() => {
+      setHitlag(false);
+      hitlagTimerRef.current = null;
+    }, ms);
+  }
+
   // ---- Submit interaction (word flies at the bomb; bomb reacts) ----
   // flyKey/flyText drive the word thrown toward the bomb on each submit;
   // shatterKey/shatterText drive the rejected word bouncing back and shattering;
@@ -1047,6 +1127,7 @@ export default function GameScreen({
     interactionResultRef.current = lastWordResult;
     if (lastWordResult.accepted) {
       setBombReaction('recoil');
+      freeze(50); // hitlag: 50ms freeze so the success lands with weight
       const t = submitTimerRef.current;
       setClutchFlag(t > 0 && t <= 2); // beat the buzzer
     } else {
@@ -1094,30 +1175,51 @@ export default function GameScreen({
       });
     }
 
-    if (!shatterIds.length) return;
+    if (!shatterIds.length && !eliminateIds.length) return;
 
-    // A life was lost (timeout/skip) - detonate the bomb.
-    setExplosionKey((k) => k + 1);
+    const timers = [];
 
-    setShatteredHearts((cur) => {
-      const next = { ...cur };
-      shatterIds.forEach((id) => {
-        next[id] = true;
-      });
-      return next;
-    });
-    // Clear the shatter flag after the 500ms animation so the heart settles
-    // into its normal gray "lost" state.
-    const timerId = setTimeout(() => {
+    if (shatterIds.length) {
+      // Cinematic detonation sequence:
+      //   t=0    one-frame white IMPACT flash + an 80ms hitlag FREEZE
+      //   t=80   the explosion animation + sound + heavy shake fire (explosionKey)
+      setImpactKey((k) => k + 1);
+      freeze(80);
+      timers.push(setTimeout(() => setExplosionKey((k) => k + 1), 80));
+
       setShatteredHearts((cur) => {
         const next = { ...cur };
         shatterIds.forEach((id) => {
-          delete next[id];
+          next[id] = true;
         });
         return next;
       });
-    }, 500);
-    return () => clearTimeout(timerId);
+      // Heart shatter plays once the freeze releases (~80ms) over ~500ms.
+      timers.push(
+        setTimeout(() => {
+          setShatteredHearts((cur) => {
+            const next = { ...cur };
+            shatterIds.forEach((id) => {
+              delete next[id];
+            });
+            return next;
+          });
+        }, 80 + 500)
+      );
+    }
+
+    if (eliminateIds.length) {
+      // K.O. slam comes AFTER the explosion (300ms after it triggers, i.e. 80+300),
+      // with its own 400ms freeze leading the slam.
+      timers.push(
+        setTimeout(() => {
+          setKoKey((k) => k + 1);
+          freeze(400);
+        }, 380)
+      );
+    }
+
+    return () => timers.forEach(clearTimeout);
   }, [gameState, gameType]);
 
   // ---- Bomb-pass throw (Word Bomb only) ----
@@ -1290,6 +1392,16 @@ export default function GameScreen({
   const timeRatio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
   const critical = !showCountdown && !gameOver && timeRatio < 0.3;
 
+  // Color drain: in the last 5s of YOUR turn the stage desaturates toward
+  // grayscale (tunnel vision), while the bomb + input stay colored (.drain-exempt
+  // counters it). Snaps back to full colour the instant the turn ends / resets.
+  const DRAIN_BY_SEC = { 5: 0.7, 4: 0.5, 3: 0.3, 2: 0.15, 1: 0.05 };
+  const draining =
+    isMyTurn && !showCountdown && !gameOver && timerSeconds >= 1 && timerSeconds <= 5;
+  const drainSat = draining ? DRAIN_BY_SEC[timerSeconds] ?? 1 : 1;
+  // Panic sweat on your own card while time is critical and it's your turn.
+  const panicking = isMyTurn && !showCountdown && !gameOver && timeRatio < 0.3;
+
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
@@ -1325,6 +1437,10 @@ export default function GameScreen({
       {warmth > 0 && (
         <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
       )}
+      {/* Anime impact frame: one white frame right before the explosion. */}
+      {impactKey > 0 && <div key={impactKey} className="impact-flash" aria-hidden="true" />}
+      {/* K.O. slam when a player is eliminated (self-removes). */}
+      {koKey > 0 && <KOOverlay key={koKey} />}
       {showCountdown && (
         <CountdownOverlay onComplete={() => setShowCountdown(false)} />
       )}
@@ -1345,12 +1461,17 @@ export default function GameScreen({
       )}
 
       <div
-        className={`game-stage${shake ? ' game-shake' : ''}${
+        className={`game-stage${shake && !hitlag ? ' game-shake' : ''}${
           isSpectating ? ' spectating' : ''
-        }${critical ? ' heartbeat' : ''}`}
+        }${critical ? ' heartbeat' : ''}${hitlag ? ' hitlag' : ''}${
+          draining ? ' draining' : ''
+        }`}
+        style={{ '--drain-sat': drainSat, filter: draining ? 'saturate(var(--drain-sat))' : undefined }}
       >
-        {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer. */}
-        {hypeKey > 0 &&
+        {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
+            Held back until the hitlag freeze releases so the reaction lands after
+            the impact, not during it. */}
+        {hypeKey > 0 && !hitlag &&
           (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
         <div className="game-header">
           <div className="game-title">{title}</div>
@@ -1405,6 +1526,8 @@ export default function GameScreen({
                 )}
                 <div className={cardClass}>
                   {isEliminating && <div className="game-player-flash" />}
+                  {/* Panic sweat flinging off your own card when time is dire. */}
+                  {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
                   <div className="game-player-name">
                     {player.name}
                     {isMe && <span className="game-player-you">YOU</span>}
@@ -1452,7 +1575,7 @@ export default function GameScreen({
           </div>
         )}
 
-        <div className="bomb-area">
+        <div className="bomb-area drain-exempt">
           <div
             className={`bomb-passer${passDir ? ` pass-${passDir}` : ''}`}
             onAnimationEnd={(e) => {
@@ -1530,7 +1653,7 @@ export default function GameScreen({
             ))}
           </div>
         ) : (
-          <div className="game-input-row">
+          <div className="game-input-row drain-exempt">
             <input
               ref={inputRef}
               className={`game-input${inputShake ? ' input-shake' : ''}${
@@ -1579,7 +1702,7 @@ export default function GameScreen({
                 <span className="game-skip-cost">-1 LIFE</span>
               </button>
             )}
-            {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+            {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
           </div>
         )}
 
