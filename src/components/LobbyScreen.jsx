@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { GAMES } from '../gameData';
 import WaveText from './WaveText';
+import Mascot from './Mascot';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
@@ -109,6 +110,7 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
   return (
     <div className="lobby-wrap">
       <div className="lobby-box">
+        <Mascot pose={submitting ? 'run' : 'idle'} size={80} className="lobby-mascot" />
         <button className="lobby-back-btn" onClick={onBack}>
           ← BACK
         </button>

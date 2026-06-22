@@ -1,6 +1,7 @@
 // RoomScreen.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import WaveText from './WaveText';
+import Mascot from './Mascot';
 import './RoomScreen.css';
 
 // Each difficulty carries a short timer blurb so players know what they're
@@ -56,6 +57,22 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
     if (serverError) setStarting(false);
   }, [serverError]);
 
+  // Mascot: idle while waiting, a 1s celebrate burst whenever a new player joins,
+  // and celebrate once the host kicks off the game.
+  const [mascotPose, setMascotPose] = useState('idle');
+  const prevCountRef = useRef(room ? room.players.length : 0);
+  const playerCount = room ? room.players.length : 0;
+  useEffect(() => {
+    if (playerCount > prevCountRef.current) {
+      setMascotPose('celebrate');
+      const t = setTimeout(() => setMascotPose('idle'), 1000);
+      prevCountRef.current = playerCount;
+      return () => clearTimeout(t);
+    }
+    prevCountRef.current = playerCount;
+    return undefined;
+  }, [playerCount]);
+
   if (!room) return null;
 
   const isHost = myId !== null && myId === room.hostId;
@@ -64,6 +81,7 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   function handleStartGame() {
     if (starting) return;
     setStarting(true);
+    setMascotPose('celebrate'); // hyped to start
     onStartGame();
   }
 
@@ -76,6 +94,7 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   return (
     <div className="room-wrap">
       <div className="room-box">
+        <Mascot pose={mascotPose} size={100} className="room-mascot" />
         <div className="room-label">ROOM CODE</div>
         <div className="room-code">
           <WaveText text={room.code} />

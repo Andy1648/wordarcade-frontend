@@ -4,6 +4,7 @@
 // the experience: it unlocks audio (within the user gesture), plays a quick
 // scale-up + white-flash exit, then App wipes to the homepage and fades music in.
 import { useEffect, useRef, useState } from 'react';
+import Mascot from './Mascot';
 import './SplashScreen.css';
 
 const TAGLINES = [
@@ -95,6 +96,9 @@ export default function SplashScreen({ onStart, onDismiss }) {
           {TAGLINES[tagIndex]}
         </span>
       </div>
+
+      {/* The mascot is the centrepiece - excited (celebrate) as you dismiss. */}
+      <Mascot pose={leaving ? 'celebrate' : 'idle'} size={200} className="splash-mascot" />
 
       <div className="splash-start">CLICK ANYWHERE TO START</div>
 

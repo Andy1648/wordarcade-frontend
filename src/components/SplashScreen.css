@@ -126,6 +126,13 @@
   100% { opacity: 0.8; }
 }
 
+/* ---- Mascot centrepiece ---- */
+.splash-mascot {
+  position: relative;
+  z-index: 2;
+  margin-top: 18px;
+}
+
 /* ---- "CLICK ANYWHERE TO START" - classic INSERT COIN pulse ---- */
 .splash-start {
   position: relative;

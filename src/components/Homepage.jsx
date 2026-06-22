@@ -2,7 +2,15 @@
 import { useState } from 'react';
 import { GAMES } from '../gameData';
 import GameCard from './GameCard';
+import Mascot from './Mascot';
 import './Homepage.css';
+
+// Which mascot pose to strike while hovering each card.
+const HOVER_POSE = {
+  'word-bomb': 'celebrate', // hyped about its own game
+  'category-blitz': 'taunt', // cocky about a rival game
+  'more-soon': 'idle',
+};
 
 // Jagged comic starburst behind the title: 14 spikes, points computed once from
 // alternating outer/inner radii (deterministic - no randomness, so it never
@@ -65,6 +73,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
   const [navigating, setNavigating] = useState(false);
+  // The card currently hovered (drives the mascot's reaction pose).
+  const [hoverGame, setHoverGame] = useState(null);
+
+  // While navigating away the mascot runs off; otherwise it reacts to hover.
+  const mascotPose = navigating ? 'run' : HOVER_POSE[hoverGame] || 'idle';
 
   function handleSelectGame(gameId) {
     if (navigating) return;
@@ -141,9 +154,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
 
+        {/* Mascot standing next to the cards, reacting to which one you hover. */}
+        <Mascot pose={mascotPose} size={130} className="homepage-mascot" />
+
         <div className="homepage-cards-grid">
           {GAMES.map((game) => (
-            <GameCard key={game.id} game={game} onSelect={handleSelectGame} />
+            <GameCard
+              key={game.id}
+              game={game}
+              onSelect={handleSelectGame}
+              onHover={setHoverGame}
+            />
           ))}
         </div>
 

@@ -14,7 +14,7 @@ import './GameCard.css';
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect }) {
+export default function GameCard({ game, onSelect, onHover }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
 
@@ -45,7 +45,13 @@ export default function GameCard({ game, onSelect }) {
     // + drift), so the inner card is free to run its beat-pop on top at the same
     // time. Hovering raises the wrapper's z-index so a scaled card is never
     // blocked by - nor blocks - its neighbours.
-    <div className="game-card-wrap">
+    <div
+      className="game-card-wrap"
+      onMouseEnter={() => onHover && onHover(game.id)}
+      onMouseLeave={() => onHover && onHover(null)}
+      onFocus={() => onHover && onHover(game.id)}
+      onBlur={() => onHover && onHover(null)}
+    >
       <div
         className={cardClassName}
         style={{ background: game.baseColor }}

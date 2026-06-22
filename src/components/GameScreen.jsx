@@ -1,6 +1,8 @@
 // GameScreen.jsx
 import { useEffect, useRef, useState } from 'react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
+import { useMascotPose } from '../hooks/useMascotPose';
+import Mascot from './Mascot';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1171,6 +1173,10 @@ export default function GameScreen({
   // before the category early-return so the hooks always run in the same order.
   const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
 
+  // Reactive mascot pose for Word Bomb (also called before the category return so
+  // hook order stays stable; Category Blitz computes its own pose below).
+  const mascotPose = useMascotPose(gameState, myId, timerSeconds, lastWordResult, gameOver);
+
   // ---- Heart-shatter + elimination detection (Word Bomb only) ----
   // Each turn_update carries fresh lives/eliminated for every player. We diff
   // against the previous snapshot so we can fire one-shot animations exactly
@@ -1852,6 +1858,9 @@ export default function GameScreen({
 
       <KillFeed events={feedEvents} />
 
+      {/* Reactive mascot in the corner, cheering / panicking with the action. */}
+      <Mascot pose={mascotPose} size={110} className="game-mascot" />
+
       {gameOver && (
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
@@ -1958,6 +1967,35 @@ function CategoryBlitzScreen({
     }
   }
 
+  // ---- Reactive mascot (Category Blitz) ----
+  // Accepted answer -> celebrate 1s, rejected -> panic 1s; between rounds / at
+  // game over it celebrates if you're leading/won, panics otherwise; else idle.
+  const [cbTransient, setCbTransient] = useState(null);
+  const cbTimerRef = useRef(null);
+  const cbPrevResultRef = useRef(null);
+  useEffect(() => {
+    if (!lastWordResult || lastWordResult === cbPrevResultRef.current) return;
+    cbPrevResultRef.current = lastWordResult;
+    if (cbTimerRef.current) clearTimeout(cbTimerRef.current);
+    setCbTransient(lastWordResult.accepted ? 'celebrate' : 'panic');
+    cbTimerRef.current = setTimeout(() => setCbTransient(null), 1000);
+  }, [lastWordResult]);
+  useEffect(() => () => clearTimeout(cbTimerRef.current), []);
+
+  const cbLeading = (() => {
+    const totals = categoryTotals || {};
+    const myScore = totals[myId] || 0;
+    const values = Object.values(totals);
+    const max = values.length ? Math.max(...values) : 0;
+    return myScore > 0 && myScore >= max;
+  })();
+
+  let cbMascotPose;
+  if (gameOver) cbMascotPose = gameOver.winnerId === myId ? 'celebrate' : 'panic';
+  else if (cbTransient) cbMascotPose = cbTransient;
+  else if (roundResults) cbMascotPose = cbLeading ? 'celebrate' : 'panic';
+  else cbMascotPose = 'idle';
+
   // ---- GAME OVER: final scoreboard ----
   if (gameOver) {
     const scores = [...(categoryScores || gameOver.finalScores || [])].sort(
@@ -2036,6 +2074,7 @@ function CategoryBlitzScreen({
         {showCountdown && (
           <CountdownOverlay onComplete={() => setShowCountdown(false)} />
         )}
+        <Mascot pose={cbMascotPose} size={110} className="game-mascot" />
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
           {hypeKey > 0 && <HypePopup key={hypeKey} />}
           <div className="game-header">
@@ -2141,6 +2180,7 @@ function CategoryBlitzScreen({
   if (roundResults) {
     return (
       <div className="game-wrap">
+        <Mascot pose={cbMascotPose} size={110} className="game-mascot" />
         <div className="game-stage">
           <div className="game-header">
             <div className="game-title">CATEGORY BLITZ</div>

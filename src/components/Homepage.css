@@ -296,6 +296,19 @@ html[data-beat='true'] .homepage-logo::after {
   transform: skewX(-4deg);
 }
 
+/* Mascot stands at the lower-left, slightly overlapping the card area like a
+   character leaning in. Non-interactive; hidden on phones where there's no room. */
+.homepage-mascot {
+  position: absolute;
+  left: 4px;
+  bottom: 84px;
+  z-index: 5;
+}
+
+@media (max-width: 760px) {
+  .homepage-mascot { display: none; }
+}
+
 .homepage-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
