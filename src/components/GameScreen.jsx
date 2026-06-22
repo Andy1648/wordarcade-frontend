@@ -176,6 +176,29 @@ function ClutchPopup() {
   );
 }
 
+/**
+ * A single floating spectator reaction: a big emoji with the spectator's name
+ * below it, popping in and drifting up before fading (see reaction-float). Picks
+ * a random horizontal position (20-80%) and a slight vertical jitter around the
+ * centre once on mount. pointer-events:none (in CSS); App removes it after 2s.
+ */
+function FloatingReaction({ emoji, name }) {
+  const [pos] = useState(() => ({
+    left: 20 + Math.random() * 60, // 20-80% of the game width
+    top: 42 + Math.random() * 16, // ~centre, with a little jitter
+  }));
+  return (
+    <div
+      className="floating-reaction"
+      style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
+      aria-hidden="true"
+    >
+      <span className="floating-reaction-emoji">{emoji}</span>
+      <span className="floating-reaction-name">{name}</span>
+    </div>
+  );
+}
+
 // 3-2-1-GO! intro sequence. Each entry shows for 700ms; null marks the end.
 const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
 
@@ -894,6 +917,8 @@ export default function GameScreen({
   onLeave,
   onRematch,
   musicSetVolume,
+  reactions = [],
+  onSpectatorReaction,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
@@ -1203,6 +1228,15 @@ export default function GameScreen({
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
 
+  // ---- Spectator mode ----
+  // A player who's lost all their lives keeps watching (read-only) until the
+  // game ends. They get no input, just quick-react buttons.
+  const myPlayer = players.find((p) => p.id === myId);
+  const isSpectating =
+    !!myPlayer && (myPlayer.eliminated || myPlayer.lives <= 0) && !gameOver;
+  // How many players are out but still in the room - the live audience.
+  const spectatorCount = players.filter((p) => p.eliminated || p.lives <= 0).length;
+
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
@@ -1238,7 +1272,26 @@ export default function GameScreen({
         <CountdownOverlay onComplete={() => setShowCountdown(false)} />
       )}
       {explosionKey > 0 && <ExplosionEffect key={explosionKey} />}
-      <div className={`game-stage${shake ? ' game-shake' : ''}`}>
+
+      {/* Persistent banner while you're out but the game's still running. */}
+      {isSpectating && (
+        <div className="game-spectator-banner">YOU'RE OUT — SPECTATING</div>
+      )}
+
+      {/* Floating spectator reactions, visible to everyone in the room. */}
+      {reactions.length > 0 && (
+        <div className="reaction-layer" aria-hidden="true">
+          {reactions.slice(-5).map((r) => (
+            <FloatingReaction key={r.id} emoji={r.emoji} name={r.playerName} />
+          ))}
+        </div>
+      )}
+
+      <div
+        className={`game-stage${shake ? ' game-shake' : ''}${
+          isSpectating ? ' spectating' : ''
+        }`}
+      >
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer. */}
         {hypeKey > 0 &&
           (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
@@ -1336,6 +1389,12 @@ export default function GameScreen({
           })}
         </div>
 
+        {spectatorCount > 0 && (
+          <div className="game-spectator-count">
+            👁 {spectatorCount} SPECTATING
+          </div>
+        )}
+
         <div className="bomb-area">
           <div
             className={`bomb-passer${passDir ? ` pass-${passDir}` : ''}`}
@@ -1399,53 +1458,69 @@ export default function GameScreen({
           </div>
         </div>
 
-        <div className="game-input-row">
-          <input
-            ref={inputRef}
-            className={`game-input${inputShake ? ' input-shake' : ''}`}
-            type="text"
-            value={draft}
-            onChange={(event) => {
-              const value = event.target.value;
-              setDraft(value);
-              // Broadcast every keystroke so others see us type in real time.
-              // No debounce - the frantic typing/deleting is the fun part.
-              if (onTypingUpdate) onTypingUpdate(value);
-            }}
-            onKeyDown={handleKeyDown}
-            disabled={!inputEnabled}
-            placeholder={
-              inputEnabled
-                ? isCategory
-                  ? `Name something in "${categoryRaw}"...`
-                  : `Type a word with "${combo}"...`
-                : gameOver
-                ? 'GAME OVER'
-                : 'WAIT YOUR TURN...'
-            }
-            maxLength={32}
-            autoComplete="off"
-            spellCheck="false"
-          />
-          <button
-            className="game-send-btn"
-            onClick={submit}
-            disabled={!inputEnabled}
-          >
-            SEND
-          </button>
-          {inputEnabled && (
+        {isSpectating ? (
+          /* Spectators get quick-react buttons where the input used to be. */
+          <div className="spectator-reactions">
+            {['💀', '🔥', '😂', '👏'].map((emoji) => (
+              <button
+                key={emoji}
+                className="spectator-react-btn"
+                onClick={() => onSpectatorReaction && onSpectatorReaction(emoji)}
+                aria-label={`React with ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="game-input-row">
+            <input
+              ref={inputRef}
+              className={`game-input${inputShake ? ' input-shake' : ''}`}
+              type="text"
+              value={draft}
+              onChange={(event) => {
+                const value = event.target.value;
+                setDraft(value);
+                // Broadcast every keystroke so others see us type in real time.
+                // No debounce - the frantic typing/deleting is the fun part.
+                if (onTypingUpdate) onTypingUpdate(value);
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={!inputEnabled}
+              placeholder={
+                inputEnabled
+                  ? isCategory
+                    ? `Name something in "${categoryRaw}"...`
+                    : `Type a word with "${combo}"...`
+                  : gameOver
+                  ? 'GAME OVER'
+                  : 'WAIT YOUR TURN...'
+              }
+              maxLength={32}
+              autoComplete="off"
+              spellCheck="false"
+            />
             <button
-              className="game-skip-btn"
-              onClick={onSkipTurn}
-              title="Skip your turn — costs you a life"
+              className="game-send-btn"
+              onClick={submit}
+              disabled={!inputEnabled}
             >
-              SKIP
-              <span className="game-skip-cost">-1 LIFE</span>
+              SEND
             </button>
-          )}
-          {hypeKey > 0 && <FloatingScore key={hypeKey} />}
-        </div>
+            {inputEnabled && (
+              <button
+                className="game-skip-btn"
+                onClick={onSkipTurn}
+                title="Skip your turn — costs you a life"
+              >
+                SKIP
+                <span className="game-skip-cost">-1 LIFE</span>
+              </button>
+            )}
+            {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+          </div>
+        )}
 
         {lastWordResult && (
           <div

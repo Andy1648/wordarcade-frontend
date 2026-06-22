@@ -88,6 +88,12 @@ function App() {
   // on every turn_update so each turn starts from a clean slate.
   const [typingText, setTypingText] = useState({});
 
+  // Spectator reactions (Word Bomb): transient floating emoji popups relayed
+  // from eliminated players. Each entry { id, emoji, playerName }; auto-removed
+  // 2s after it arrives. id is a monotonic counter (stable React key).
+  const [reactions, setReactions] = useState([]);
+  const reactionIdRef = useRef(0);
+
   // Live kill-feed for Word Bomb: a running, ordered log of game events
   // (accepted words, timeouts, skips, your own rejections), oldest first.
   // GameScreen renders the tail of it newest-first. The refs below are the
@@ -191,6 +197,7 @@ function App() {
       setServerError('');
       // Fresh game - wipe the live feed and its bookkeeping.
       setFeedEvents([]);
+      setReactions([]);
       feedCurrentRef.current = { id: null, name: 'SOMEONE' };
       feedPrevLivesRef.current = {};
       feedReasonRef.current = null;
@@ -208,6 +215,20 @@ function App() {
     if (lastMessage.type === 'typing_update') {
       const { playerId, text } = lastMessage.payload;
       setTypingText((prev) => ({ ...prev, [playerId]: text }));
+    }
+
+    if (lastMessage.type === 'spectator_reaction') {
+      const { emoji, playerName } = lastMessage.payload;
+      const id = reactionIdRef.current++;
+      setReactions((prev) => {
+        const next = [...prev, { id, emoji, playerName }];
+        // Cap at the 5 most recent so a flood can't pile up on screen.
+        return next.length > 5 ? next.slice(next.length - 5) : next;
+      });
+      // Auto-remove this reaction after its float animation (2s).
+      setTimeout(() => {
+        setReactions((prev) => prev.filter((r) => r.id !== id));
+      }, 2000);
     }
 
     if (lastMessage.type === 'turn_update') {
@@ -475,6 +496,7 @@ function App() {
     feedReasonRef.current = null;
     setGameStats(EMPTY_STATS);
     setTypingText({});
+    setReactions([]);
     setView('home');
   }
 
@@ -534,6 +556,11 @@ function App() {
     send('typing_update', { text });
   }
 
+  // Eliminated spectators fire emoji reactions the server relays to everyone.
+  function handleSpectatorReaction(emoji) {
+    send('spectator_reaction', { emoji });
+  }
+
   // Whether this client is the room host (drives the host-only REMATCH button
   // on the game-over overlay). room comes from room_update, which carries hostId.
   const isHost = !!room && myId != null && room.hostId === myId;
@@ -569,6 +596,8 @@ function App() {
         onLeave={handleLeaveRoom}
         onRematch={handleRematch}
         musicSetVolume={music.setVolume}
+        reactions={reactions}
+        onSpectatorReaction={handleSpectatorReaction}
       />
     );
   } else if (renderedView === 'room' && room) {
