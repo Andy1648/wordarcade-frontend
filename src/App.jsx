@@ -10,6 +10,7 @@ import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 import CreditsScreen from './components/CreditsScreen';
 import SplashScreen from './components/SplashScreen';
+import TransitionIntro from './components/TransitionIntro';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -156,6 +157,9 @@ function App() {
   // The splash/attract screen is the very first thing shown and only shows once
   // per session (dismissing it never re-arms it).
   const [showSplash, setShowSplash] = useState(true);
+  // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
+  // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
+  const [showIntro, setShowIntro] = useState(false);
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
@@ -496,14 +500,23 @@ function App() {
     music.play();
   }
 
-  // Splash dismissed: hide it (never to return this session), wipe to the
-  // homepage with the bar overlay, and fade the music up after the wipe.
+  // Splash dismissed: hand off to the anime fight-card intro sequence (it covers
+  // the screen black, so there's no flash of homepage underneath). The intro
+  // calls handleIntroComplete when it's done. Music is already playing silently
+  // (started in handleSplashStart on the click); it's faded up once we wipe in.
   function handleSplashDismiss() {
     setShowSplash(false);
+    setShowIntro(true);
+  }
+
+  // Intro finished: drop the overlay, run the Persona-5 bar wipe down to the
+  // homepage, and fade the music up DURING the wipe.
+  function handleIntroComplete() {
+    setShowIntro(false);
     transitionKeyRef.current += 1;
     setTransition({ word: 'WORDARCADE', key: transitionKeyRef.current });
     setTimeout(() => setTransition(null), 500);
-    setTimeout(() => music.fadeTo(0.3, 500), 500);
+    music.fadeTo(0.3, 500);
   }
 
   function goToLobby(mode) {
@@ -695,6 +708,19 @@ function App() {
         <WallScene intensity="calm" />
         <ParticleField />
         <SplashScreen onStart={handleSplashStart} onDismiss={handleSplashDismiss} />
+        <CursorTrail />
+      </>
+    );
+  }
+
+  // The anime fight-card intro plays over a black overlay between the splash and
+  // the homepage; when it finishes it wipes down to the homepage.
+  if (showIntro) {
+    return (
+      <>
+        <WallScene intensity="calm" />
+        <ParticleField />
+        <TransitionIntro onComplete={handleIntroComplete} />
         <CursorTrail />
       </>
     );

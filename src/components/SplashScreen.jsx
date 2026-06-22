@@ -106,7 +106,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
       <div className="splash-start">CLICK ANYWHERE TO START</div>
 
       <div className="splash-halftone" aria-hidden="true" />
-      {/* White flash that blows out the screen on dismiss. */}
+      {/* Darkens the backdrop to black on dismiss, cutting into the intro. */}
       <div className="splash-flash" aria-hidden="true" />
     </div>
   );

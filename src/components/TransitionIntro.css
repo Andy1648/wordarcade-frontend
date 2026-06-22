@@ -1,0 +1,173 @@
+/* TransitionIntro.css - the aggressive anime fight-card sequence.
+   Flat colors, thick black outlines, no gradients - consistent with the rest
+   of the app. Full-screen black overlay above everything (z 200). */
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* The card that holds the two lines + the burst. It's what shakes on impact, so
+   both lines and the starburst jolt together when a line lands. */
+.intro-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.intro-stage.shaking {
+  animation: intro-shake 220ms ease-in-out;
+}
+
+@keyframes intro-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-7px, 5px); }
+  40% { transform: translate(7px, -5px); }
+  60% { transform: translate(-5px, -3px); }
+  80% { transform: translate(5px, 3px); }
+}
+
+/* ---- The two punch-in lines ---- */
+
+.intro-line {
+  font-family: 'Bungee', cursive;
+  font-size: 60px;
+  line-height: 1;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  /* Hidden (but still occupying its row, so the layout never reflows) until its
+     `active` class reveals it. */
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.intro-line-type { color: #2EFFE0; } /* cyan */
+.intro-line-die { color: #FF2EC4; } /* pink */
+
+/* Revealed: opacity is held at 1 statically so that when the punch animation
+   ends (no `forwards`) the text stays put instead of snapping back to hidden. */
+.intro-line.active { opacity: 1; }
+
+/* The PUNCH: slams in from off-screen with an overshoot, then settles. */
+.intro-line-type.active {
+  animation: punch-in-left 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.intro-line-die.active {
+  animation: punch-in-right 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes punch-in-left {
+  0% { transform: translateX(-120%) rotate(-5deg) scale(1.2); }
+  60% { transform: translateX(10px) rotate(1deg) scale(1); }
+  80% { transform: translateX(-3px) rotate(0deg) scale(1); }
+  100% { transform: translateX(0) rotate(0deg) scale(1); }
+}
+
+@keyframes punch-in-right {
+  0% { transform: translateX(120%) rotate(5deg) scale(1.2); }
+  60% { transform: translateX(-10px) rotate(-1deg) scale(1); }
+  80% { transform: translateX(3px) rotate(0deg) scale(1); }
+  100% { transform: translateX(0) rotate(0deg) scale(1); }
+}
+
+/* ---- The explosion: both lines blow up + fade while splitting apart. These
+   are declared AFTER the punch rules and share their specificity, so they win
+   and override the (now-finished) punch animation. ---- */
+.intro-line.intro-explode-up {
+  opacity: 1;
+  animation: intro-explode-up 400ms ease-in forwards;
+}
+
+.intro-line.intro-explode-down {
+  opacity: 1;
+  animation: intro-explode-down 400ms ease-in forwards;
+}
+
+@keyframes intro-explode-up {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-170px) scale(2.5); opacity: 0; }
+}
+
+@keyframes intro-explode-down {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(170px) scale(2.5); opacity: 0; }
+}
+
+/* ---- Comic starburst that bursts out of the centre as the lines explode ---- */
+.intro-starburst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 440px;
+  height: 440px;
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  animation: intro-burst-expand 400ms ease-out forwards;
+}
+
+@keyframes intro-burst-expand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.3; }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+/* ---- One-frame white impact flash on each landing ---- */
+.intro-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #fff;
+  pointer-events: none;
+  opacity: 0;
+  animation: intro-flash 110ms ease-out forwards;
+}
+
+@keyframes intro-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* ---- Mobile: smaller type + a gentler shake ---- */
+@media (max-width: 600px) {
+  .intro-line {
+    font-size: 40px;
+    -webkit-text-stroke-width: 3px;
+  }
+
+  .intro-starburst {
+    width: 300px;
+    height: 300px;
+  }
+
+  .intro-stage.shaking {
+    animation: intro-shake-sm 220ms ease-in-out;
+  }
+}
+
+@keyframes intro-shake-sm {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, -1px); }
+}
+
+/* Reduced motion: keep the lines/flash readable but drop the violent motion. */
+@media (prefers-reduced-motion: reduce) {
+  .intro-stage.shaking,
+  .intro-line-type.active,
+  .intro-line-die.active {
+    animation: none;
+  }
+}
