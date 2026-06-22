@@ -16,7 +16,7 @@ export default function CreditsScreen({ onBack }) {
 
         <div className="credits-section">
           <div className="credits-section-label">// CREATED BY //</div>
-          <div className="credits-creator">NOBUFFCOOKIES</div>
+          <div className="credits-creator">NoBuffCookies</div>
           <div className="credits-creator-name">Andy Wang</div>
         </div>
 
