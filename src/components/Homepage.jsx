@@ -1,6 +1,7 @@
 // Homepage.jsx
 import { useState } from 'react';
 import { GAMES } from '../gameData';
+import { useSound } from '../contexts/SoundContext';
 import GameCard from './GameCard';
 import Mascot from './Mascot';
 import './Homepage.css';
@@ -78,6 +79,14 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   const [navigating, setNavigating] = useState(false);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
+  const { sound } = useSound();
+
+  // Hovering a card sets the pose state AND plays a subtle blip - but only when
+  // moving onto a NEW card, so it never machine-guns while you sit on one card.
+  function handleHover(id) {
+    if (id && id !== hoverGame) sound.menuHover();
+    setHoverGame(id);
+  }
 
   // While navigating away the mascot runs off; otherwise it reacts to hover.
   const mascotPose = navigating ? 'run' : HOVER_POSE[hoverGame] || 'idle';
@@ -100,6 +109,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   function handleSelectGame(gameId) {
     if (navigating) return;
+    sound.click();
     setNavigating(true);
     if (onSelectGame) {
       onSelectGame(gameId);
@@ -113,6 +123,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   function handleCreateRoom() {
     if (navigating) return;
+    sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
     if (onCreateRoom) {
       onCreateRoom();
@@ -123,6 +134,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   function handleJoinRoom() {
     if (navigating) return;
+    sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
     if (onJoinRoom) {
       onJoinRoom();
@@ -133,6 +145,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   function handleCredits() {
     if (navigating) return;
+    sound.click();
     setNavigating(true);
     if (onCredits) {
       onCredits();
@@ -182,7 +195,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
               key={game.id}
               game={game}
               onSelect={handleSelectGame}
-              onHover={setHoverGame}
+              onHover={handleHover}
               // The mascot rides on top of the Word Bomb (flagship) card.
               topper={game.id === 'word-bomb' ? wordBombMascot : null}
             />

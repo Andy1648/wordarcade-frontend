@@ -10,6 +10,7 @@
 // landing fires a one-frame white flash + a brief shake of the whole card to sell
 // the impact.
 import { useEffect, useRef, useState } from 'react';
+import { useSound } from '../contexts/SoundContext';
 import './TransitionIntro.css';
 
 // Same jagged comic starburst construction used on the splash / homepage, so the
@@ -34,9 +35,11 @@ export default function TransitionIntro({ onComplete }) {
   const [shaking, setShaking] = useState(false);
   const shakeTimerRef = useRef(null);
   const completedRef = useRef(false);
+  const { sound } = useSound();
 
-  // A line just SLAMMED home: flash the screen white for a frame and shake.
+  // A line just SLAMMED home: heavy punch + flash the screen white + shake.
   function impact() {
+    sound.punch();
     setFlashKey((k) => k + 1);
     setShaking(true);
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
@@ -54,8 +57,13 @@ export default function TransitionIntro({ onComplete }) {
     // 900ms: "DIE SLOW." punches in from the right.
     timers.push(setTimeout(() => setStep('line2'), 900));
     timers.push(setTimeout(impact, 1110));
-    // 1600ms: both lines explode outward over the starburst.
-    timers.push(setTimeout(() => setStep('explode'), 1600));
+    // 1600ms: both lines explode outward over the starburst, with a whoosh.
+    timers.push(
+      setTimeout(() => {
+        setStep('explode');
+        sound.whoosh();
+      }, 1600)
+    );
     // 2000ms: hand back to App for the homepage wipe.
     timers.push(
       setTimeout(() => {

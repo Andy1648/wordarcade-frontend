@@ -1,5 +1,6 @@
 // RoomScreen.jsx
 import { useState, useEffect, useRef } from 'react';
+import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import Mascot from './Mascot';
 import './RoomScreen.css';
@@ -51,6 +52,7 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   // rejects it) and Leave once pressed (you're on your way out).
   const [starting, setStarting] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const { sound } = useSound();
 
   // A server error means the start attempt bounced - let the host try again.
   useEffect(() => {
@@ -89,6 +91,7 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
 
   function handleStartGame() {
     if (starting) return;
+    sound.click(); // the countdown beeps follow once the game screen mounts
     setStarting(true);
     setMascotPose('run'); // leaps off the code as the game kicks off
     setMascotMod('jumping');
@@ -97,6 +100,7 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
 
   function handleLeave() {
     if (leaving) return;
+    sound.click();
     setLeaving(true);
     onLeave();
   }
@@ -136,7 +140,10 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
                   <button
                     key={gt.key}
                     className={`room-gametype-btn${room.gameType === gt.key ? ' selected' : ''}`}
-                    onClick={() => onSetGameType(gt.key)}
+                    onClick={() => {
+                      sound.click();
+                      onSetGameType(gt.key);
+                    }}
                   >
                     {gt.label}
                   </button>
@@ -155,7 +162,10 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
               <button
                 key={diff.key}
                 className={`room-difficulty-btn${room.difficultyKey === diff.key ? ' selected' : ''}`}
-                onClick={() => onSetDifficulty(diff.key)}
+                onClick={() => {
+                  sound.click();
+                  onSetDifficulty(diff.key);
+                }}
               >
                 <span className="room-difficulty-name">{diff.label}</span>
                 <span className="room-difficulty-desc">{diff.desc}</span>

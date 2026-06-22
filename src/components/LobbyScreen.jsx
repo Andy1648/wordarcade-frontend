@@ -1,6 +1,7 @@
 // LobbyScreen.jsx
 import { useState, useEffect } from 'react';
 import { GAMES } from '../gameData';
+import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import Mascot from './Mascot';
 import './LobbyScreen.css';
@@ -19,6 +20,7 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
+  const { sound } = useSound();
   // True once a valid Continue has been sent - locks the button until the
   // screen transitions (success) or the server bounces it back (error below).
   const [submitting, setSubmitting] = useState(false);
@@ -59,6 +61,8 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
   function handleContinue() {
     // Already sent and waiting on the server - ignore repeat clicks / Enter.
     if (submitting) return;
+
+    sound.click(); // the action press (button or Enter-to-submit), not typing
 
     const trimmedName = name.trim();
 
@@ -111,7 +115,13 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
     <div className="lobby-wrap">
       <div className="lobby-box">
         <Mascot pose={submitting ? 'run' : 'idle'} size={80} className="lobby-mascot" />
-        <button className="lobby-back-btn" onClick={onBack}>
+        <button
+          className="lobby-back-btn"
+          onClick={() => {
+            sound.click();
+            onBack();
+          }}
+        >
           ← BACK
         </button>
 

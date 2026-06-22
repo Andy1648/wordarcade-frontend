@@ -184,6 +184,190 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
+    // ---- App-wide UI / transition / outcome sounds ----
+
+    // Heavy impact for the "TYPE FAST" / "DIE SLOW" slams: a very short noise
+    // burst + a low 80Hz thud + a tiny high "crack" ping. A fist hitting a wall.
+    punch() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        playNoise(ctx, { start: now, dur: 0.05, peak: 0.3 }); // 50ms slap
+        // Low body thud (80Hz, decaying over 100ms).
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80, now);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+        // High crack on top (1000Hz, 20ms).
+        playTone(ctx, { freq: 1000, type: 'sine', start: now, dur: 0.02, peak: 0.1 });
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Snappy, very subtle UI click for every button in the app. Short enough
+    // (15ms, low gain) that it never grates even on rapid presses.
+    click() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1000, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.1, now + 0.002);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.02);
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Transition swoosh: bandpassed white noise (centred 2kHz, Q 1) swelling in
+    // over 100ms then out over 200ms - a fast whoosh under a screen wipe.
+    whoosh() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const dur = 0.3;
+        const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
+        const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource();
+        src.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2000, now);
+        filter.Q.setValueAtTime(1, now);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.1); // swell in
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.3); // out
+        src.connect(filter).connect(gain).connect(ctx.destination);
+        src.start(now);
+        src.stop(now + 0.31);
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Barely-there hover blip for the homepage game cards (660Hz, 30ms, very
+    // quiet). The "once per card" gating lives at the call site.
+    menuHover() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        playTone(ctx, { freq: 660, type: 'sine', start: ctx.currentTime, dur: 0.03, peak: 0.06 });
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // 3-2-1-GO countdown beep. The numbers are a 440Hz blip; GO! jumps an octave
+    // (880Hz), louder and longer, so the pitch change itself signals "now!".
+    countdown(isGo = false) {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        if (isGo) {
+          playTone(ctx, { freq: 880, type: 'sine', start: now, dur: 0.2, peak: 0.3 });
+        } else {
+          playTone(ctx, { freq: 440, type: 'sine', start: now, dur: 0.1, peak: 0.2 });
+        }
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // KO / elimination: a heavy low sine bending 100Hz -> 50Hz over 300ms, with a
+    // sharp metallic (high-Q bandpassed) noise clang layered in at 200ms.
+    ko() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); // pitch bend down
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.32);
+        // Metallic clang at 200ms: high-Q bandpassed noise burst.
+        const t = now + 0.2;
+        const dur = 0.12;
+        const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
+        const buf = ctx.createBuffer(1, frames, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < frames; i++) d[i] = Math.random() * 2 - 1;
+        const nSrc = ctx.createBufferSource();
+        nSrc.buffer = buf;
+        const filt = ctx.createBiquadFilter();
+        filt.type = 'bandpass';
+        filt.frequency.setValueAtTime(3000, t);
+        filt.Q.setValueAtTime(8, t);
+        const nGain = ctx.createGain();
+        nGain.gain.setValueAtTime(0.25, t);
+        nGain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        nSrc.connect(filt).connect(nGain).connect(ctx.destination);
+        nSrc.start(t);
+        nSrc.stop(t + dur + 0.01);
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Win fanfare: an ascending C-E-G major arpeggio on clean sines.
+    victory() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        playTone(ctx, { freq: 523.25, type: 'sine', start: now, dur: 0.15, peak: 0.25 }); // C5
+        playTone(ctx, { freq: 659.25, type: 'sine', start: now + 0.15, dur: 0.15, peak: 0.25 }); // E5
+        playTone(ctx, { freq: 783.99, type: 'sine', start: now + 0.3, dur: 0.3, peak: 0.25 }); // G5
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Lose sound: two descending sine notes (400Hz -> 200Hz), sad and deflating.
+    defeat() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        playTone(ctx, { freq: 400, type: 'sine', start: now, dur: 0.2, peak: 0.2 });
+        playTone(ctx, { freq: 200, type: 'sine', start: now + 0.2, dur: 0.4, peak: 0.2 });
+      } catch {
+        /* no-op */
+      }
+    },
+
     // Ambient fuse crackle during your turn: tiny 10ms noise bursts at random
     // 100-300ms intervals, very quiet. Idempotent start; stoppable.
     startSizzle() {

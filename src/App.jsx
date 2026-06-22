@@ -1,5 +1,5 @@
 // App.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
 import RoomScreen from './components/RoomScreen';
@@ -16,6 +16,8 @@ import CursorTrail from './components/CursorTrail';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
+import { useSoundEffects } from './hooks/useSoundEffects';
+import { SoundContext } from './contexts/SoundContext';
 import './Transitions.css';
 
 // The music button's border/glyph colour, matched to each screen's accent.
@@ -153,6 +155,17 @@ function App() {
   // Background music. It's started from the splash dismiss (the guaranteed first
   // user gesture), so no autoplay attempt here - just the player + a fade-in.
   const music = useMusicPlayer();
+
+  // App-wide synthesized sound effects + a single global SFX mute. Created once
+  // here and handed to every screen via SoundContext, so e.g. muting in the game
+  // persists back on the homepage. Separate from the music mute (MusicButton).
+  // The AudioContext is unlocked on the splash click (handleSplashStart).
+  const [sfxMuted, setSfxMuted] = useState(false);
+  const sound = useSoundEffects(sfxMuted);
+  const soundValue = useMemo(
+    () => ({ sound, muted: sfxMuted, setMuted: setSfxMuted }),
+    [sound, sfxMuted]
+  );
 
   // The splash/attract screen is the very first thing shown and only shows once
   // per session (dismissing it never re-arms it).
@@ -473,6 +486,7 @@ function App() {
     lastNavViewRef.current = view;
     transitionKeyRef.current += 1;
     setTransition({ word: TRANSITION_WORDS[view] || 'GO!', key: transitionKeyRef.current });
+    sound.whoosh(); // the diagonal bars sweep in
     const swap = setTimeout(() => setRenderedView(view), 250);
     const end = setTimeout(() => setTransition(null), 500);
     return () => {
@@ -489,15 +503,20 @@ function App() {
     if (prev !== 'open' && wsStatus === 'open') {
       transitionKeyRef.current += 1;
       setTransition({ word: 'READY?', key: transitionKeyRef.current });
+      sound.whoosh(); // the bars sweep (no-op if audio isn't unlocked yet)
       const end = setTimeout(() => setTransition(null), 500);
       return () => clearTimeout(end);
     }
   }, [wsStatus]);
 
-  // Splash: unlock + start the music silently within the click gesture.
+  // Splash: unlock audio + start the music silently within the click gesture.
+  // This click is the browser's autoplay-unlock gesture, so it's where we create
+  // the SFX AudioContext too; the dismiss itself lands with a punch.
   function handleSplashStart() {
     music.setVolume(0);
     music.play();
+    sound.unlock();
+    sound.punch();
   }
 
   // Splash dismissed: hand off to the anime fight-card intro sequence (it covers
@@ -515,6 +534,7 @@ function App() {
     setShowIntro(false);
     transitionKeyRef.current += 1;
     setTransition({ word: 'TYPE A WORD', key: transitionKeyRef.current });
+    sound.whoosh(); // the bar wipe down to the homepage
     setTimeout(() => setTransition(null), 500);
     music.fadeTo(0.3, 500);
   }
@@ -717,12 +737,12 @@ function App() {
   // the homepage; when it finishes it wipes down to the homepage.
   if (showIntro) {
     return (
-      <>
+      <SoundContext.Provider value={soundValue}>
         <WallScene intensity="calm" />
         <ParticleField />
         <TransitionIntro onComplete={handleIntroComplete} />
         <CursorTrail />
-      </>
+      </SoundContext.Provider>
     );
   }
 
@@ -752,6 +772,7 @@ function App() {
     // element the intensity-graded shake (light=beat / medium=accept /
     // heavy=explosion) is applied to - shaking it just moves it within the
     // clipping outer box, while normal vertical scrolling still works.
+    <SoundContext.Provider value={soundValue}>
     <div className="app-viewport">
       <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
         <WallScene intensity={bgIntensity} />
@@ -776,6 +797,7 @@ function App() {
           it, and above everything (z 9999). */}
       <CursorTrail />
     </div>
+    </SoundContext.Provider>
   );
 }
 

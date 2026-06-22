@@ -1,6 +1,6 @@
 // GameScreen.jsx
 import { useEffect, useRef, useState } from 'react';
-import { useSoundEffects } from '../hooks/useSoundEffects';
+import { useSound } from '../contexts/SoundContext';
 import { useMascotPose } from '../hooks/useMascotPose';
 import Mascot from './Mascot';
 import './GameScreen.css';
@@ -285,7 +285,7 @@ const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
  * input. Each step gets a random tilt for graffiti energy, and is re-keyed so
  * the countdown-pop animation replays per number.
  */
-function CountdownOverlay({ onComplete }) {
+function CountdownOverlay({ onComplete, onStep }) {
   const [index, setIndex] = useState(0);
   const doneRef = useRef(false);
   // One random tilt (-5deg..5deg) per step, picked once on mount.
@@ -299,6 +299,15 @@ function CountdownOverlay({ onComplete }) {
     }, 700);
     return () => clearInterval(intervalId);
   }, []);
+
+  // Fire the per-step callback (used for the countdown beep) as each visible
+  // step appears - the "3","2","1" numbers and the distinct "GO!".
+  useEffect(() => {
+    const step = COUNTDOWN_STEPS[index];
+    if (step !== null && step !== undefined && onStep) onStep(step);
+    // onStep is stable enough at the call site; only react to step changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
 
   useEffect(() => {
     if (COUNTDOWN_STEPS[index] === null && !doneRef.current) {
@@ -1137,12 +1146,10 @@ export default function GameScreen({
     return () => musicSetVolume(0.3);
   }, [gameOver, musicSetVolume]);
 
-  // Word Bomb sound effects (Web Audio, synthesized). `muted` is toggled from
-  // the header; while muted every method is a no-op. The hook owns the lazily-
-  // created AudioContext and closes it on unmount. Category Blitz doesn't use
-  // this (it early-returns to its own component below).
-  const [muted, setMuted] = useState(false);
-  const sound = useSoundEffects(muted);
+  // App-wide synthesized sound effects + the global SFX mute (shared via
+  // SoundContext, so the header mute toggle here persists on every other screen).
+  // While muted every method is a no-op. The header speaker button flips `muted`.
+  const { sound, muted, setMuted } = useSound();
 
   // onShake is recreated each App render; hold it in a ref so the sound/feedback
   // effects below can call it without listing it as a dep (which would re-fire
@@ -1421,6 +1428,21 @@ export default function GameScreen({
     }
   }, [explosionKey, gameType, sound]);
 
+  // KO slam -> a heavy, final elimination sound, in lockstep with the K.O.
+  // overlay (koKey is bumped when a player is knocked out).
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    if (koKey > 0) sound.ko();
+  }, [koKey, gameType, sound]);
+
+  // Game over -> a win fanfare or a defeat sting, once, when the result lands.
+  // Gated to Word Bomb (Category Blitz renders its own screen and stays silent).
+  useEffect(() => {
+    if (gameType !== 'word-bomb' || !gameOver) return;
+    if (gameOver.winnerId === myId) sound.victory();
+    else sound.defeat();
+  }, [gameOver, gameType, myId, sound]);
+
   // Ambient fuse crackle while it's our turn; silence between turns / at game
   // over / during the countdown. Cleanup also stops it on unmount.
   useEffect(() => {
@@ -1581,7 +1603,10 @@ export default function GameScreen({
       {/* K.O. slam when a player is eliminated (self-removes). */}
       {koKey > 0 && <KOOverlay key={koKey} />}
       {showCountdown && (
-        <CountdownOverlay onComplete={() => setShowCountdown(false)} />
+        <CountdownOverlay
+          onComplete={() => setShowCountdown(false)}
+          onStep={(step) => sound.countdown(step === 'GO!')}
+        />
       )}
       {explosionKey > 0 && <ExplosionEffect key={explosionKey} />}
 
@@ -1840,6 +1865,7 @@ export default function GameScreen({
               <button
                 className="game-skip-btn"
                 onClick={() => {
+                  sound.click();
                   sound.skip(); // descending "whomp" before the turn deflates
                   onSkipTurn();
                 }}
