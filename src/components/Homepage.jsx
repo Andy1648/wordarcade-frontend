@@ -175,10 +175,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           CREDITS
         </button>
 
-        {/* Subtle footer: creator credit + music attribution (CC BY-SA 4.0). */}
+        {/* Subtle footer: music attribution (CC BY-SA 4.0). The creator credit
+            lives on the dedicated credits page. */}
         <div className="homepage-footer">
-          <div className="homepage-credit-creator">CREATED BY NOBUFFCOOKIES</div>
-          <div className="homepage-credit-name">Andy Wang</div>
           <div className="homepage-credit-music">
             Music:{' '}
             <a
