@@ -161,13 +161,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           <svg className="homepage-burst" viewBox="-100 -100 200 200" aria-hidden="true">
             <polygon points={BURST_POINTS} fill="#FFE94A" />
           </svg>
+          {/* "TYPE A WORD": the non-breaking space keeps "TYPE A" together
+              so the title only ever wraps before "WORD" on narrow screens. The
+              data-text must match exactly so the RGB-split clones line up. */}
           <div
             className="homepage-logo"
-            data-text="WORDARCADE"
+            data-text={'TYPE A WORD'}
             role="img"
-            aria-label="WordArcade"
+            aria-label="Type a Word"
           >
-            WORDARCADE
+            {'TYPE A WORD'}
           </div>
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>

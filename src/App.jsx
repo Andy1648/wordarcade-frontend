@@ -514,7 +514,7 @@ function App() {
   function handleIntroComplete() {
     setShowIntro(false);
     transitionKeyRef.current += 1;
-    setTransition({ word: 'WORDARCADE', key: transitionKeyRef.current });
+    setTransition({ word: 'TYPE A WORD', key: transitionKeyRef.current });
     setTimeout(() => setTransition(null), 500);
     music.fadeTo(0.3, 500);
   }

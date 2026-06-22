@@ -1,6 +1,6 @@
-# WordArcade frontend
+# Type a Word frontend
 
-React + Vite homepage/lobby screen for WordArcade. This build's scope is
+React + Vite homepage/lobby screen for Type a Word (typeaword.com). This build's scope is
 intentionally just the game-selection grid - no routing, no room flow,
 no WebSocket connection yet. Those are separate follow-up pieces.
 

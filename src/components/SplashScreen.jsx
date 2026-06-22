@@ -82,13 +82,16 @@ export default function SplashScreen({ onStart, onDismiss }) {
 
       {/* The wordmark + the mascot dangling by its feet from the letters. */}
       <div className="splash-logo-wrap">
+        {/* "TYPE A WORD": the   (non-breaking space) binds "TYPE A" so the
+            title only ever wraps before "WORD" on narrow screens. data-text must
+            match the text exactly so the RGB-split clones stay aligned. */}
         <div
           className="splash-logo"
-          data-text="WORDARCADE"
+          data-text={'TYPE A WORD'}
           role="img"
-          aria-label="WordArcade"
+          aria-label="Type a Word"
         >
-          WORDARCADE
+          {'TYPE A WORD'}
         </div>
         {/* Hangs upside-down off a title letter, swinging gently; on dismiss it
             lets go and drops out of frame. */}
