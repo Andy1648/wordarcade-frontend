@@ -486,7 +486,7 @@ function fusePointAt(t) {
  * flame, more sparks, harder shake, a pulsing red number, and a flat red
  * vignette - with the colour/scale shifts cross-faded for a smooth ramp.
  */
-function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast, expression }) {
+function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast, expression, rider, flung }) {
   // Fraction of time remaining (full while the 3-2-1 intro is still up).
   const ratio = showCountdown
     ? 1
@@ -566,6 +566,11 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast,
     <div className={`bomb-vignette ${tension}`}>
       <div className="bomb-scale" style={{ transform: `scale(${BOMB_SCALE[tension]})` }}>
         <div className={`bomb-body-wrap ${tension}`}>
+          {/* The mascot RIDES the bomb: positioned inside the body wrap so it
+              inherits every wobble/shake/throw the bomb does. */}
+          {rider && (
+            <div className={`bomb-rider${flung ? ' flung' : ''}`}>{rider}</div>
+          )}
           <svg className="bomb-svg" viewBox="0 0 160 185" width="150" aria-hidden="true">
             {/* ---- Fuse: fat black outline under a brown rope. Both burn down
                  together via the shared dashoffset (smoothed in CSS). ---- */}
@@ -1733,6 +1738,8 @@ export default function GameScreen({
                 typing={someoneTyping}
                 typingFast={typingFast}
                 expression={bombFace}
+                rider={<Mascot pose={mascotPose} size={54} />}
+                flung={!!passDir}
               />
               {bombReaction === 'reject' && <div className="bomb-reject-flash" />}
               {bombReaction === 'recoil' && (
@@ -1857,9 +1864,6 @@ export default function GameScreen({
       </div>
 
       <KillFeed events={feedEvents} />
-
-      {/* Reactive mascot in the corner, cheering / panicking with the action. */}
-      <Mascot pose={mascotPose} size={110} className="game-mascot" />
 
       {gameOver && (
         <div className="game-over-overlay">
@@ -2074,7 +2078,6 @@ function CategoryBlitzScreen({
         {showCountdown && (
           <CountdownOverlay onComplete={() => setShowCountdown(false)} />
         )}
-        <Mascot pose={cbMascotPose} size={110} className="game-mascot" />
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
           {hypeKey > 0 && <HypePopup key={hypeKey} />}
           <div className="game-header">
@@ -2094,6 +2097,10 @@ function CategoryBlitzScreen({
           <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
           <div className="cb-category-display">
             {(categoryRound.category || '').toUpperCase()}
+            {/* Mascot sitting on the box's edge, legs dangling over the border. */}
+            <div className="cb-cat-mascot">
+              <Mascot pose={cbMascotPose} size={50} />
+            </div>
           </div>
 
           <div className="game-timer-row">

@@ -122,6 +122,12 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   pointer-events: none;
 }
 
+/* A card with a mascot perched on top drops its top tape strips - they'd poke
+   out from behind the character and read wrong. */
+.game-card.has-topper .game-card-tape {
+  display: none;
+}
+
 .game-card-tape-left {
   left: 8px;
   transform: rotate(-32deg);

@@ -5,11 +5,14 @@ import GameCard from './GameCard';
 import Mascot from './Mascot';
 import './Homepage.css';
 
-// Which mascot pose to strike while hovering each card.
+// Which mascot pose to strike while hovering each card. The mascot SITS on the
+// Word Bomb card, so it gets hyped on its own game, leans over to peek at
+// Category Blitz (idle pose + a CSS lean, handled below), and is unimpressed by
+// the locked "More Soon" card.
 const HOVER_POSE = {
   'word-bomb': 'celebrate', // hyped about its own game
-  'category-blitz': 'taunt', // cocky about a rival game
-  'more-soon': 'idle',
+  'category-blitz': 'idle', // leans over to look (lean is a CSS transform)
+  'more-soon': 'taunt', // unimpressed by the locked card
 };
 
 // Jagged comic starburst behind the title: 14 spikes, points computed once from
@@ -78,6 +81,22 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   // While navigating away the mascot runs off; otherwise it reacts to hover.
   const mascotPose = navigating ? 'run' : HOVER_POSE[hoverGame] || 'idle';
+  // Positional modifier for the mascot perched on the Word Bomb card: it leans
+  // toward Category Blitz when that card is hovered, and leaps off the side when
+  // navigating away.
+  const mascotMod = navigating
+    ? 'jumping'
+    : hoverGame === 'category-blitz'
+    ? 'leaning'
+    : '';
+
+  // The mascot that sits on top of the Word Bomb card (passed in as that card's
+  // "topper" so it's anchored to - and sways with - the card itself).
+  const wordBombMascot = (
+    <div className={`hp-card-mascot${mascotMod ? ` ${mascotMod}` : ''}`}>
+      <Mascot pose={mascotPose} size={70} />
+    </div>
+  );
 
   function handleSelectGame(gameId) {
     if (navigating) return;
@@ -154,9 +173,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
 
-        {/* Mascot standing next to the cards, reacting to which one you hover. */}
-        <Mascot pose={mascotPose} size={130} className="homepage-mascot" />
-
         <div className="homepage-cards-grid">
           {GAMES.map((game) => (
             <GameCard
@@ -164,6 +180,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
               game={game}
               onSelect={handleSelectGame}
               onHover={setHoverGame}
+              // The mascot rides on top of the Word Bomb (flagship) card.
+              topper={game.id === 'word-bomb' ? wordBombMascot : null}
             />
           ))}
         </div>

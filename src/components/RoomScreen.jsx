@@ -57,17 +57,26 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
     if (serverError) setStarting(false);
   }, [serverError]);
 
-  // Mascot: idle while waiting, a 1s celebrate burst whenever a new player joins,
-  // and celebrate once the host kicks off the game.
+  // Mascot sits ON the room code like a bench. It's idle while waiting (with a
+  // lazy head-bob from CSS), pops a 1.5s celebrate + a quick jump-up whenever a
+  // new player joins, and runs + leaps off the code once the host starts.
+  //   mascotPose - which PNG to show
+  //   mascotMod  - a positional CSS modifier ('bouncing' | 'jumping')
   const [mascotPose, setMascotPose] = useState('idle');
+  const [mascotMod, setMascotMod] = useState('');
   const prevCountRef = useRef(room ? room.players.length : 0);
   const playerCount = room ? room.players.length : 0;
   useEffect(() => {
     if (playerCount > prevCountRef.current) {
-      setMascotPose('celebrate');
-      const t = setTimeout(() => setMascotPose('idle'), 1000);
       prevCountRef.current = playerCount;
-      return () => clearTimeout(t);
+      setMascotPose('celebrate');
+      setMascotMod('bouncing'); // quick jump up, then settle back onto the code
+      const tPose = setTimeout(() => setMascotPose('idle'), 1500);
+      const tHop = setTimeout(() => setMascotMod(''), 320);
+      return () => {
+        clearTimeout(tPose);
+        clearTimeout(tHop);
+      };
     }
     prevCountRef.current = playerCount;
     return undefined;
@@ -81,7 +90,8 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   function handleStartGame() {
     if (starting) return;
     setStarting(true);
-    setMascotPose('celebrate'); // hyped to start
+    setMascotPose('run'); // leaps off the code as the game kicks off
+    setMascotMod('jumping');
     onStartGame();
   }
 
@@ -94,10 +104,13 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   return (
     <div className="room-wrap">
       <div className="room-box">
-        <Mascot pose={mascotPose} size={100} className="room-mascot" />
         <div className="room-label">ROOM CODE</div>
         <div className="room-code">
           <WaveText text={room.code} />
+          {/* The mascot sits ON the code like it's a bench, leaning back. */}
+          <div className={`room-mascot-sit${mascotMod ? ` ${mascotMod}` : ''}`}>
+            <Mascot pose={mascotPose} size={60} />
+          </div>
         </div>
         <div className="room-hint">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
 

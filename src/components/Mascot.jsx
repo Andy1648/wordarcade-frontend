@@ -17,12 +17,12 @@ const POSE_SRC = {
   taunt: '/mascot-taunt.png',
 };
 
-export default function Mascot({ pose = 'idle', size = 120, className = '' }) {
+export default function Mascot({ pose = 'idle', size = 120, className = '', style }) {
   const src = POSE_SRC[pose] || POSE_SRC.idle;
   return (
     <div
       className={`mascot-container${className ? ` ${className}` : ''}`}
-      style={{ '--mascot-size': `${size}px` }}
+      style={{ '--mascot-size': `${size}px`, ...style }}
       aria-hidden="true"
     >
       <div className="mascot-bounce">

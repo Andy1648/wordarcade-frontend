@@ -296,17 +296,30 @@ html[data-beat='true'] .homepage-logo::after {
   transform: skewX(-4deg);
 }
 
-/* Mascot stands at the lower-left, slightly overlapping the card area like a
-   character leaning in. Non-interactive; hidden on phones where there's no room. */
-.homepage-mascot {
+/* Mascot perched on the top edge of the Word Bomb card. It's a child of that
+   card's .game-card-wrap (position: relative), so it's anchored to the card and
+   rides the wrapper's idle sway with it. translateY(-60%) drops its lower body
+   over the top edge while the upper body sticks up above the card. */
+.hp-card-mascot {
   position: absolute;
-  left: 4px;
-  bottom: 84px;
-  z-index: 5;
+  top: 0;
+  left: 50%;
+  z-index: 6;
+  pointer-events: none;
+  transform: translate(-50%, -60%);
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
-@media (max-width: 760px) {
-  .homepage-mascot { display: none; }
+/* Leans over toward the Category Blitz card (to its right) to take a look. */
+.hp-card-mascot.leaning {
+  transform: translate(-50%, -60%) translateX(30px) rotate(15deg);
+}
+
+/* Leaps off the side and falls away as the homepage navigates out. */
+.hp-card-mascot.jumping {
+  transform: translate(-50%, -60%) translateX(200px) translateY(120px) rotate(20deg);
+  opacity: 0;
+  transition: transform 0.3s ease-in, opacity 0.3s ease-in;
 }
 
 .homepage-cards-grid {

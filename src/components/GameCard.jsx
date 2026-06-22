@@ -14,7 +14,7 @@ import './GameCard.css';
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover }) {
+export default function GameCard({ game, onSelect, onHover, topper }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
 
@@ -23,6 +23,9 @@ export default function GameCard({ game, onSelect, onHover }) {
     game.dashedBorder ? 'dashed-border' : '',
     !game.enabled ? 'disabled' : '',
     game.featured ? 'featured' : '',
+    // A mascot sits on this card's top edge - drop the top tape so it doesn't
+    // poke through where the character is perched.
+    topper ? 'has-topper' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -52,6 +55,9 @@ export default function GameCard({ game, onSelect, onHover }) {
       onFocus={() => onHover && onHover(game.id)}
       onBlur={() => onHover && onHover(null)}
     >
+      {/* A character perched on the card's top edge, riding the wrapper's idle
+          sway with it. Sits above the card; never intercepts pointer events. */}
+      {topper}
       <div
         className={cardClassName}
         style={{ background: game.baseColor }}

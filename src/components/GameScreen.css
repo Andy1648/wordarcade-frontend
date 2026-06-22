@@ -690,8 +690,34 @@
 
 /* ---- Tension motion (rotation/shake by tier) ---- */
 .bomb-body-wrap {
+  position: relative; /* anchors the mascot riding on top of the bomb */
   transform-origin: center;
   line-height: 0;
+}
+
+/* The mascot RIDING the bomb. It lives inside .bomb-body-wrap, so it inherits
+   every tension wobble/shake the bomb does (and the pass-throw / recoil from the
+   ancestors above) - it rides the bomb like a rodeo bull. Nudged left of centre
+   so the fuse + flame (upper-right) stay visible behind it. */
+.bomb-rider {
+  position: absolute;
+  left: 42%;
+  top: -2px;
+  z-index: 3;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+/* When the bomb is thrown to the next player, the motion flings the rider off
+   balance for a beat before he settles back onto the bomb. */
+.bomb-rider.flung {
+  animation: bomb-rider-fling 300ms ease-out;
+}
+
+@keyframes bomb-rider-fling {
+  0% { transform: translateX(-50%) translateY(0) rotate(0); }
+  40% { transform: translateX(-50%) translateY(-30px) rotate(45deg); }
+  100% { transform: translateX(-50%) translateY(0) rotate(0); }
 }
 
 /* Calm: a barely-there idle sway. */
@@ -1301,6 +1327,7 @@
 }
 
 .cb-category-display {
+  position: relative; /* anchors the mascot perched on the box edge */
   font-family: 'Bungee', cursive;
   font-size: 30px;
   line-height: 1.1;
@@ -1316,6 +1343,17 @@
   margin-bottom: 18px;
   transform: rotate(-1deg) skewX(-2deg);
   word-break: break-word;
+}
+
+/* Mascot sitting on the top-right edge of the category box, legs dangling over
+   the border. translateY(-55%) straddles the box's top edge. */
+.cb-cat-mascot {
+  position: absolute;
+  top: 0;
+  right: 16px;
+  z-index: 6;
+  pointer-events: none;
+  transform: translateY(-55%) rotate(4deg);
 }
 
 /* ---- Shared section labels for the CB sub-sections ---- */

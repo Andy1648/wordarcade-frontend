@@ -79,13 +79,21 @@ export default function SplashScreen({ onStart, onDismiss }) {
         <polygon points={BURST_POINTS} fill="#FFE94A" />
       </svg>
 
-      <div
-        className="splash-logo"
-        data-text="WORDARCADE"
-        role="img"
-        aria-label="WordArcade"
-      >
-        WORDARCADE
+      {/* The wordmark + the mascot dangling by its feet from the letters. */}
+      <div className="splash-logo-wrap">
+        <div
+          className="splash-logo"
+          data-text="WORDARCADE"
+          role="img"
+          aria-label="WordArcade"
+        >
+          WORDARCADE
+        </div>
+        {/* Hangs upside-down off a title letter, swinging gently; on dismiss it
+            lets go and drops out of frame. */}
+        <div className={`splash-mascot-hang${leaving ? ' dropping' : ''}`}>
+          <Mascot pose="idle" size={90} />
+        </div>
       </div>
 
       <div className="splash-taglines">
@@ -94,9 +102,6 @@ export default function SplashScreen({ onStart, onDismiss }) {
           {TAGLINES[tagIndex]}
         </span>
       </div>
-
-      {/* The mascot is the centrepiece - excited (celebrate) as you dismiss. */}
-      <Mascot pose={leaving ? 'celebrate' : 'idle'} size={200} className="splash-mascot" />
 
       <div className="splash-start">CLICK ANYWHERE TO START</div>
 
