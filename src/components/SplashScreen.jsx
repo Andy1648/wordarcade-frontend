@@ -49,7 +49,8 @@ export default function SplashScreen({ onStart, onDismiss }) {
     return () => clearInterval(id);
   }, []);
 
-  // Click or any key dismisses. Defined once; reads callbacks via refs.
+  // Only a click/tap dismisses (and unlocks audio) - NOT keyboard, so music
+  // never starts from a stray key press. Defined once; reads callbacks via refs.
   useEffect(() => {
     function dismiss() {
       if (dismissedRef.current) return;
@@ -60,12 +61,9 @@ export default function SplashScreen({ onStart, onDismiss }) {
         if (dismissRef.current) dismissRef.current();
       }, 300); // let the exit animation play first
     }
-    const onKey = () => dismiss();
     const onClick = () => dismiss();
-    window.addEventListener('keydown', onKey);
     window.addEventListener('click', onClick);
     return () => {
-      window.removeEventListener('keydown', onKey);
       window.removeEventListener('click', onClick);
     };
   }, []);
