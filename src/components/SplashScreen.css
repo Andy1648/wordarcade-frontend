@@ -184,6 +184,9 @@
 }
 
 @media (max-width: 600px) {
+  /* The desktop clamp floors at 55px, which overflows narrow phones (the splash
+     clips the title's edges). Shrink it so WORDARCADE always fits. */
+  .splash-logo { font-size: clamp(34px, 12vw, 60px); }
   .splash-tagline { font-size: 11px; }
   .splash-start { font-size: 12px; }
 }
