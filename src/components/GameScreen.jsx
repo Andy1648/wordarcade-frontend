@@ -96,6 +96,12 @@ function savePersonalBest(category, score) {
   }
 }
 
+// Solo Category Blitz tracks ONE overall personal best: the best TOTAL across a
+// full 3-round game. (The three categories are random each game, so a per-
+// category best no longer applies.) This is the pseudo-"category" it's stored
+// under -> localStorage key "typeaword-pb-category-blitz-solo".
+const SOLO_PB_KEY = 'category blitz solo';
+
 function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
   // Category answers have a lower length floor, so reuse a mode-specific
   // string for the same reason code.
@@ -995,6 +1001,8 @@ export default function GameScreen({
   roundResults,
   categoryScores,
   categoryTotals,
+  categoryRerolls,
+  lastReroll,
   imposterRound,
   imposterPhase,
   imposterAnswers,
@@ -1011,6 +1019,7 @@ export default function GameScreen({
   onLeave,
   onRematch,
   onPlayAgain,
+  onRerollCategory,
   musicSetVolume,
   reactions = [],
   onSpectatorReaction,
@@ -1411,10 +1420,13 @@ export default function GameScreen({
         roundResults={roundResults}
         categoryScores={categoryScores}
         categoryTotals={categoryTotals || {}}
+        categoryRerolls={categoryRerolls}
+        lastReroll={lastReroll}
         onSubmitAnswer={onSubmitAnswer}
         onLeave={onLeave}
         onRematch={onRematch}
         onPlayAgain={onPlayAgain}
+        onRerollCategory={onRerollCategory}
       />
     );
   }
@@ -1873,30 +1885,30 @@ export default function GameScreen({
 }
 
 /**
- * Solo Category Blitz results, shown the moment a solo round ends. Mounts once
- * (App keeps it alive across the round_end -> game_over transition via a stable
- * position + the gameNonce remount key), and on that single mount it reads the
- * old personal best, decides whether this run beat it, and - if so - writes the
- * new record. Doing that work in a useState initializer guarantees it happens
- * exactly once, so a re-render can't see the freshly-saved value and wrongly
- * conclude the record wasn't beaten.
+ * Solo Category Blitz results, shown at game over after the 3 rounds. Mounts
+ * once, and on that single mount it reads the old overall personal best (best
+ * TOTAL across a full 3-round game), decides whether this run beat it, and - if
+ * so - writes the new record. Doing that in a useState initializer guarantees it
+ * happens exactly once, so a re-render can't see the freshly-saved value and
+ * wrongly conclude the record wasn't beaten.
  *
- *   - YOUR SCORE counts up dramatically.
+ *   - YOUR SCORE (the 3-round total) counts up dramatically.
  *   - A NEW RECORD! celebration (yellow pop + confetti + celebrating mascot)
  *     fires when the old best is beaten; otherwise a "X away" nudge shows how
  *     close they came.
- *   - PLAY AGAIN is the primary action (a new random category, no room detour);
- *     CHANGE CATEGORY drops back to the room; LEAVE bails to the homepage.
+ *   - A per-round breakdown lists each round's category + score.
+ *   - PLAY AGAIN starts a fresh 3-round game (no room detour); NEW GAME MODE
+ *     drops back to the room to pick a different mode/difficulty; LEAVE exits.
  */
-function SoloResultsScreen({ category, score, answers, onPlayAgain, onChangeCategory, onLeave }) {
+function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave }) {
   // Resolve the personal best exactly once, on mount, and bank the new record
   // if it was beaten. Everything the render needs is frozen here.
   const [pb] = useState(() => {
-    const previousBest = loadPersonalBest(category); // number | null
+    const previousBest = loadPersonalBest(SOLO_PB_KEY); // number | null
     const hadRecord = previousBest != null;
     const baseline = hadRecord ? previousBest : 0;
     const isNewRecord = score > baseline;
-    if (isNewRecord) savePersonalBest(category, score);
+    if (isNewRecord) savePersonalBest(SOLO_PB_KEY, score);
     return {
       hadRecord,
       // The headline best to show: the new score if it's a record, else the old.
@@ -1925,7 +1937,7 @@ function SoloResultsScreen({ category, score, answers, onPlayAgain, onChangeCate
             <CountUp to={score} duration={900} />
           </div>
 
-          <div className="solo-category">{(category || '').toUpperCase()}</div>
+          <div className="solo-category">CATEGORY BLITZ · 3 ROUNDS</div>
 
           {/* Personal-best line + how-close nudge. */}
           <div className="solo-pb-line">
@@ -1943,18 +1955,17 @@ function SoloResultsScreen({ category, score, answers, onPlayAgain, onChangeCate
             </div>
           )}
 
-          {/* Accepted answers as chips. */}
-          <div className="cb-section-label solo-answers-label">
-            YOUR ANSWERS ({answers.length})
-          </div>
-          <div className="cb-answers-list solo-answers-list">
-            {answers.length === 0 ? (
-              <span className="game-used-empty">NO ANSWERS THIS TIME</span>
+          {/* Per-round breakdown: category + that round's score. */}
+          <div className="cb-section-label solo-answers-label">ROUND BREAKDOWN</div>
+          <div className="solo-rounds-list">
+            {rounds.length === 0 ? (
+              <span className="game-used-empty">NO ROUNDS PLAYED</span>
             ) : (
-              answers.map((answer, i) => (
-                <span key={`${answer}-${i}`} className="cb-answer-chip">
-                  {answer.toUpperCase()}
-                </span>
+              rounds.map((r) => (
+                <div key={r.round} className="solo-round-row">
+                  <span className="solo-round-cat">{(r.category || '').toUpperCase()}</span>
+                  <span className="solo-round-score">+{r.roundScore}</span>
+                </div>
               ))
             )}
           </div>
@@ -1963,8 +1974,8 @@ function SoloResultsScreen({ category, score, answers, onPlayAgain, onChangeCate
             <button className="solo-play-again-btn" onClick={onPlayAgain}>
               PLAY AGAIN
             </button>
-            <button className="solo-change-cat-btn" onClick={onChangeCategory}>
-              CHANGE CATEGORY
+            <button className="solo-change-cat-btn" onClick={onNewGameMode}>
+              NEW GAME MODE
             </button>
             <button className="game-over-leave secondary" onClick={onLeave}>
               LEAVE
@@ -2001,10 +2012,13 @@ function CategoryBlitzScreen({
   roundResults,
   categoryScores,
   categoryTotals,
+  categoryRerolls,
+  lastReroll,
   onSubmitAnswer,
   onLeave,
   onRematch,
   onPlayAgain,
+  onRerollCategory,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
@@ -2013,31 +2027,45 @@ function CategoryBlitzScreen({
   const prevRoundRef = useRef(null);
 
   // Solo mode: a lone player racing the clock. Auto-detected from the roster
-  // size (the backend gates the same way). It swaps the multiplayer results for
-  // a personal-best-driven solo screen and hides the (empty) opponents section.
+  // size (the backend gates the same way). It plays the same 3 rounds as
+  // multiplayer, but ends on a personal-best results screen.
   const isSolo = (roomPlayers || []).length === 1;
 
   const roundActive = !!categoryRound && !gameOver;
   const roundNumber = categoryRound && categoryRound.round;
 
-  // The category + answers of the most recent active round, captured so the
-  // solo results screen still has them after round_end clears categoryRound and
-  // game_over clears roundResults. Snapshotting in a ref keeps them stable
-  // across the round_end -> game_over transition.
-  const soloRoundRef = useRef({ category: '', answers: [] });
-  if (categoryRound && categoryRound.category) {
-    soloRoundRef.current = {
-      category: categoryRound.category,
-      answers: myAnswers || [],
-    };
-  } else if (myAnswers && myAnswers.length) {
-    // Round just ended (categoryRound cleared) but our answers are still here -
-    // keep the freshest answer list while holding the captured category.
-    soloRoundRef.current = {
-      category: soloRoundRef.current.category || (roundResults && roundResults.category) || '',
-      answers: myAnswers,
-    };
-  }
+  // Solo run log: each completed round's category + score, so the solo results
+  // screen can show a per-round breakdown. The component stays mounted for the
+  // whole 3-round game (it's remounted per game via gameNonce), so a ref
+  // persists cleanly; key off the round number to log each round exactly once.
+  const soloLogRef = useRef([]);
+  const soloLoggedRoundRef = useRef(0);
+  useEffect(() => {
+    if (!isSolo || !roundResults) return;
+    if (roundResults.round === soloLoggedRoundRef.current) return; // already logged
+    soloLoggedRoundRef.current = roundResults.round;
+    const mine = (roundResults.playerResults || []).find((r) => r.id === myId);
+    soloLogRef.current = [
+      ...soloLogRef.current,
+      {
+        round: roundResults.round,
+        category: roundResults.category,
+        roundScore: mine ? mine.roundScore : 0,
+      },
+    ];
+  }, [roundResults, isSolo, myId]);
+
+  // Reroll notice (multiplayer): when the HOST rerolls the category, non-host
+  // players get a brief banner. The player who rerolled (host / solo) gets none.
+  const [rerollNotice, setRerollNotice] = useState(null);
+  const rerollNoticeTimerRef = useRef(null);
+  useEffect(() => {
+    if (!lastReroll || lastReroll.byId === myId) return;
+    setRerollNotice(lastReroll.by || 'HOST');
+    if (rerollNoticeTimerRef.current) clearTimeout(rerollNoticeTimerRef.current);
+    rerollNoticeTimerRef.current = setTimeout(() => setRerollNotice(null), 2600);
+  }, [lastReroll, myId]);
+  useEffect(() => () => clearTimeout(rerollNoticeTimerRef.current), []);
 
   // Trigger the countdown whenever the round number changes (covers the first
   // round on mount and every subsequent round).
@@ -2103,38 +2131,25 @@ function CategoryBlitzScreen({
   else if (roundResults) cbMascotPose = cbLeading ? 'celebrate' : 'panic';
   else cbMascotPose = 'idle';
 
-  // ---- SOLO: personal-best results ----
-  // A solo run is one round, so the moment it ends (round_end, then the
-  // near-instant game_over) we show the dedicated solo results instead of the
-  // multiplayer round-results / scoreboard. Both states map here; the screen
-  // itself stays mounted across the transition (stable position + frozen PB).
-  if (isSolo && (roundResults || gameOver)) {
-    const myResult =
-      roundResults && (roundResults.playerResults || []).find((pr) => pr.id === myId);
+  // ---- SOLO: personal-best results (at game over, after all 3 rounds) ----
+  // Between-rounds in solo falls through to the normal round-results view below;
+  // only the final game_over shows the solo PB screen.
+  if (isSolo && gameOver) {
     const myFinal =
       (categoryScores || (gameOver && gameOver.finalScores) || []).find(
         (s) => s.id === myId
       );
-    const answers =
-      (myResult && myResult.answers) ||
-      soloRoundRef.current.answers ||
-      myAnswers ||
-      [];
-    const category =
-      (roundResults && roundResults.category) || soloRoundRef.current.category || '';
-    const score = myResult
-      ? myResult.roundScore
-      : myFinal
+    const rounds = soloLogRef.current;
+    const total = myFinal
       ? myFinal.score
-      : answers.length;
+      : rounds.reduce((sum, r) => sum + r.roundScore, 0);
 
     return (
       <SoloResultsScreen
-        category={category}
-        score={score}
-        answers={answers}
+        score={total}
+        rounds={rounds}
         onPlayAgain={onPlayAgain}
-        onChangeCategory={onRematch}
+        onNewGameMode={onRematch}
         onLeave={onLeave}
       />
     );
@@ -2214,8 +2229,16 @@ function CategoryBlitzScreen({
     const lowTime = !showCountdown && timerSeconds <= 5;
     const veryLowTime = !showCountdown && timerSeconds < 3;
     const others = roomPlayers.filter((p) => p.id !== myId);
-    // Solo: the score to beat for THIS category, shown up top as a live target.
-    const soloBest = isSolo ? loadPersonalBest(categoryRound.category) : null;
+    // Solo: the overall best total to beat (across a full 3-round game), shown
+    // up top as a live target.
+    const soloBest = isSolo ? loadPersonalBest(SOLO_PB_KEY) : null;
+    // Who can reroll the category: the solo player, or the host in multiplayer.
+    const canReroll = isSolo || isHost;
+    const rerollsLeft = categoryRerolls ?? 0;
+    // Reroll is only allowed in the round's opening window (server-enforced too);
+    // after the first ~5s the button locks for the rest of the round. The server
+    // is authoritative - this just mirrors it so the button looks right.
+    const withinRerollWindow = !showCountdown && timerSeconds > maxTimer - 5;
 
     return (
       <div className="game-wrap">
@@ -2242,11 +2265,16 @@ function CategoryBlitzScreen({
             </div>
           </div>
 
-          {/* Solo: the personal best for this category, an immediate target. */}
+          {/* Solo: the overall best total to beat, an immediate target. */}
           {isSolo && (
             <div className="solo-best-banner">
               {soloBest != null ? `YOUR BEST: ${soloBest}` : 'NO RECORD YET'}
             </div>
+          )}
+
+          {/* Non-host notice when the host rerolls the category on everyone. */}
+          {rerollNotice && (
+            <div className="cb-reroll-notice">HOST REROLLED — NEW CATEGORY</div>
           )}
 
           <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
@@ -2257,6 +2285,28 @@ function CategoryBlitzScreen({
               <Mascot pose={cbMascotPose} size={50} />
             </div>
           </div>
+
+          {/* Reroll: swap this category for another of the same tier. Host-only
+              in multiplayer; free (within the per-game limit) in solo. Disabled
+              when none remain (dashed-outline disabled style) or mid-countdown. */}
+          {canReroll && (
+            <div className="cb-reroll-row">
+              <button
+                className="cb-reroll-btn"
+                onClick={onRerollCategory}
+                disabled={rerollsLeft <= 0 || !withinRerollWindow}
+                title={
+                  rerollsLeft <= 0
+                    ? 'No rerolls left this game'
+                    : !withinRerollWindow
+                    ? 'Rerolls are only allowed at the start of a round'
+                    : 'Swap the current category for a different one'
+                }
+              >
+                NEW CATEGORY ({rerollsLeft})
+              </button>
+            </div>
+          )}
 
           <div className="game-timer-row">
             <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>

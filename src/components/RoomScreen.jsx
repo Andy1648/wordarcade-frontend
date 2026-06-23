@@ -7,17 +7,35 @@ import './RoomScreen.css';
 // Each difficulty carries a short timer blurb so players know what they're
 // picking. The `desc` mirrors the backend DIFFICULTY_PRESETS startSeconds in
 // gameLogic.js (easy 15s, medium 10s, hard 7s).
+// Display names are the edgy HARD / CRAZY / HELL tiers; the `key` (easy/medium/
+// hard) is unchanged so all the underlying timer logic stays put. The `desc` is
+// the Word Bomb per-turn timer (that mode still varies by tier).
 const DIFFICULTIES = [
-  { key: 'easy', label: 'EASY', desc: '15s timer' },
-  { key: 'medium', label: 'MEDIUM', desc: '10s timer' },
-  { key: 'hard', label: 'HARD', desc: '7s timer' },
+  { key: 'easy', label: 'HARD', desc: '15s timer' },
+  { key: 'medium', label: 'CRAZY', desc: '10s timer' },
+  { key: 'hard', label: 'HELL', desc: '7s timer' },
 ];
 
-// Read-only readout for non-hosts: "MEDIUM — 10s timer" (falls back to the
-// bare key if it's somehow unknown).
-function difficultyReadout(key) {
+// Category Blitz reroll allowance per tier (mirrors the backend). In that mode
+// the timer is a fixed 20s, so difficulty controls rerolls instead - which is
+// what the difficulty blurb shows there.
+const CB_REROLLS = { easy: 3, medium: 2, hard: 1 };
+
+function difficultyDesc(diff, gameType) {
+  if (gameType === 'category-blitz') {
+    const n = CB_REROLLS[diff.key] ?? 0;
+    return `20s · ${n} reroll${n === 1 ? '' : 's'}`;
+  }
+  return diff.desc;
+}
+
+// Read-only readout for non-hosts: "CRAZY — 10s timer" (falls back to the bare
+// key if it's somehow unknown).
+function difficultyReadout(key, gameType) {
   const match = DIFFICULTIES.find((d) => d.key === key);
-  return match ? `${match.label} — ${match.desc}` : (key || '').toUpperCase();
+  return match
+    ? `${match.label} — ${difficultyDesc(match, gameType)}`
+    : (key || '').toUpperCase();
 }
 // The two playable game modes. `key` is the value the server expects in
 // set_game_type / reports back in room_update's gameType; `label` is the
@@ -148,12 +166,12 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
                 }}
               >
                 <span className="room-difficulty-name">{diff.label}</span>
-                <span className="room-difficulty-desc">{diff.desc}</span>
+                <span className="room-difficulty-desc">{difficultyDesc(diff, room.gameType)}</span>
               </button>
             ))}
           </div>
         ) : (
-          <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey)}</div>
+          <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey, room.gameType)}</div>
         )}
 
         {isHost ? (
