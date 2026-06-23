@@ -39,7 +39,8 @@
   position: relative;
   z-index: 2;
   font-family: 'Bungee Shade', 'Bungee', cursive;
-  font-size: clamp(55px, 13vw, 104px);
+  /* MASSIVE on big screens, still fits on phones. */
+  font-size: clamp(50px, 12vw, 130px);
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 5px #000;
@@ -109,7 +110,7 @@
 
 .splash-tagline {
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  font-size: clamp(11px, 1.6vw, 18px);
   color: #2EFFE0;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -178,9 +179,9 @@
 .splash-start {
   position: relative;
   z-index: 2;
-  margin-top: 40px;
+  margin-top: clamp(28px, 4vw, 56px);
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(12px, 1.6vw, 18px);
   color: #FFE94A;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;

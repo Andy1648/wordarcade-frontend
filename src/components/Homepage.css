@@ -14,21 +14,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  /* Percentage-based side breathing room on big screens, tight on phones. */
+  padding: clamp(14px, 4vw, 72px);
 }
 
-/* The content card keeps the brick-wall look and rounded corners, now capped to
-   a readable width and centred inside the full-bleed dark wrap. */
+/* The content card fills most of the viewport width and only caps (and centres)
+   on ultrawide screens so it never stretches infinitely. */
 .homepage-stage {
   position: relative;
   /* Card fill + a comic halftone dot texture on top of it. */
   background-color: #1a0b2e;
   background-image: radial-gradient(circle, rgba(255, 46, 196, 0.06) 0.8px, transparent 0.8px);
   background-size: 12px 12px;
-  padding: 24px 18px 0;
+  padding: clamp(18px, 2.5vw, 40px) clamp(14px, 2vw, 32px) 0;
   overflow: hidden;
   width: 100%;
-  max-width: 1100px;
+  max-width: min(95vw, 1400px);
   border-radius: 14px;
 }
 
@@ -147,7 +148,8 @@
   position: relative;
   z-index: 1;
   font-family: 'Bungee Shade', 'Bungee', cursive;
-  font-size: 54px;
+  /* Scales with the viewport: comfortably big on desktop, capped on ultrawide. */
+  font-size: clamp(40px, 8vw, 100px);
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 5px #000;
@@ -273,7 +275,7 @@ html[data-beat='true'] .homepage-logo::after {
    off-axis, and sitting on a hard offset shadow. */
 .homepage-tagline {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(10px, 2vw, 16px);
   color: #0d0618;
   background: #2EFFE0;
   display: block;
@@ -287,12 +289,12 @@ html[data-beat='true'] .homepage-logo::after {
 
 .homepage-section-label {
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(12px, 2.2vw, 20px);
   color: #2EFFE0;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   text-align: center;
-  margin: 20px 0 14px;
+  margin: clamp(16px, 2.5vw, 32px) 0 clamp(12px, 1.6vw, 22px);
   transform: skewX(-4deg);
 }
 
@@ -324,10 +326,14 @@ html[data-beat='true'] .homepage-logo::after {
 
 .homepage-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Each card grows with the viewport (min 200px, ~25vw, capped 400px) and the
+     three columns centre as a group so they fill the width without stretching
+     infinitely. Collapses to a single column on small screens (below). */
+  grid-template-columns: repeat(3, clamp(200px, 25vw, 400px));
+  justify-content: center;
   /* Roomier gap so the featured card's slight upscale + idle drift never reach
      into a neighbour. */
-  gap: 18px;
+  gap: clamp(14px, 2vw, 28px);
   padding: 0 2px;
   /* Don't stretch the staggered (margin-top) wrappers to a common row height -
      keep each at its card height so the idle sway rotates around the card. */
@@ -346,8 +352,9 @@ html[data-beat='true'] .homepage-logo::after {
   position: relative;
   z-index: 1;
   display: flex;
-  gap: 10px;
-  padding: 18px 18px 24px;
+  justify-content: center;
+  gap: clamp(10px, 1.5vw, 22px);
+  padding: clamp(16px, 2vw, 30px) 18px clamp(20px, 2.5vw, 36px);
 }
 
 /* Discreet link to the standalone credits page. */
@@ -381,13 +388,16 @@ html[data-beat='true'] .homepage-logo::after {
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;
-  font-size: 15px;
+  font-size: clamp(15px, 1.8vw, 22px);
   /* Each variant sets its own darker-than-fill border colour below. */
   border: 4px solid #000;
   border-radius: 8px;
-  padding: 12px 0;
+  padding: clamp(12px, 1.4vw, 20px) 0;
   cursor: pointer;
   flex: 1;
+  /* Grow to fill the bar but cap each button so they stay a sane size on wide
+     screens (the bar centres them). */
+  max-width: 500px;
   text-align: center;
   box-shadow: 4px 4px 0 #000;
   transform: skewX(-2deg);
@@ -464,23 +474,22 @@ html[data-beat='true'] .homepage-logo::after {
 
 /* ---- Responsive ---- */
 
-/* Phones: stack the cards one per row so each stays readable, shrink the big
-   graffiti type ~80%, and give the action buttons full-height tap targets. */
+/* Below ~760px three clamp-sized cards would no longer fit across without
+   overflowing, so collapse to a single full-width column. */
+@media (max-width: 760px) {
+  .homepage-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phones: tighten padding and give the action buttons full-height tap targets.
+   (Type sizes are fluid via clamp() so no per-breakpoint font overrides needed.) */
 @media (max-width: 600px) {
   .homepage-wrap { padding: 14px; }
   .homepage-stage { padding: 18px 14px 0; }
 
-  .homepage-cards-grid {
-    grid-template-columns: 1fr;
-  }
-
   .homepage-logo {
-    font-size: 34px;
     -webkit-text-stroke: 4px #000;
-  }
-
-  .homepage-section-label {
-    font-size: 12px;
   }
 
   .homepage-bottom-bar {

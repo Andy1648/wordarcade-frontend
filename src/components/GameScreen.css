@@ -36,9 +36,10 @@
   border: 4px solid #000;
   box-shadow: 7px 7px 0 #000;
   border-radius: 8px;
-  padding: 22px 20px 24px;
+  padding: clamp(18px, 2.2vw, 36px) clamp(16px, 2vw, 36px) clamp(20px, 2.4vw, 38px);
   width: 100%;
-  max-width: 760px;
+  /* Fills most of the viewport and only caps + centres on ultrawide screens. */
+  max-width: min(95vw, 1400px);
 }
 
 /* Brief screen shake when an answer is accepted. Toggled on for 200ms by a
@@ -134,7 +135,7 @@
 
 .game-title {
   font-family: 'Bungee', cursive;
-  font-size: 32px;
+  font-size: clamp(24px, 4vw, 48px);
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 3px #000;
@@ -235,7 +236,8 @@
 .game-player-slot {
   position: relative;
   flex: 1 1 0;
-  min-width: 96px;
+  /* Player cards grow with the viewport so they're substantial on big screens. */
+  min-width: clamp(100px, 15vw, 200px);
   /* Reserve room for the YOUR TURN flag so cards don't jump when it shows. */
   padding-top: 16px;
 }
@@ -637,7 +639,8 @@
 
 .bomb-svg {
   display: block;
-  width: 150px;
+  /* The bomb is the centrepiece - scale it up with the viewport. */
+  width: clamp(120px, 20vw, 220px);
   height: auto;
   pointer-events: none;
 }
@@ -895,9 +898,12 @@
   border: 4px solid #FF6B3D;
   border-radius: 8px;
   box-shadow: 5px 5px 0 #000;
-  padding: 16px 12px;
+  padding: clamp(16px, 2vw, 32px) 12px;
   text-align: center;
-  margin-bottom: 16px;
+  /* Centred and width-capped so the prompt stays readable even when the stage
+     is very wide. */
+  max-width: 900px;
+  margin: 0 auto 16px;
   transform: rotate(-1deg);
 }
 
@@ -912,7 +918,7 @@
 
 .game-combo {
   font-family: 'Bungee', cursive;
-  font-size: 72px;
+  font-size: clamp(30px, 6vw, 70px);
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
@@ -926,7 +932,7 @@
    a smaller size, a thinner stroke, and room to wrap - unlike the 2-3 char
    Word Bomb combo. Same yellow + skew so it still reads as the same prompt. */
 .game-combo.category {
-  font-size: 26px;
+  font-size: clamp(22px, 3.5vw, 44px);
   line-height: 1.15;
   letter-spacing: 1px;
   -webkit-text-stroke: 3px #000;
@@ -985,7 +991,10 @@
   position: relative; /* anchors the floating "+1" score */
   display: flex;
   gap: 10px;
-  margin-bottom: 14px;
+  /* Centred and width-capped so the input + buttons stay a comfortable size on
+     a wide stage instead of stretching the full width. */
+  max-width: 760px;
+  margin: 0 auto 14px;
 }
 
 /* Slide-in (with a slight overshoot bounce) for newly appended answer/word
@@ -998,9 +1007,11 @@
 
 .game-input {
   flex: 1;
+  /* Caps the field so it never gets unwieldy on the widest layouts. */
+  max-width: 600px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: clamp(16px, 1.5vw, 20px);
   color: #1a0b2e;
   background: #fff;
   border: 4px solid #AAAAAA;
@@ -1639,7 +1650,7 @@
    centered group, and on narrow screens (see the responsive block) the wrap
    switches to a column and the feed drops below the stage. */
 .kill-feed {
-  width: 220px;
+  width: clamp(200px, 18vw, 320px);
   flex-shrink: 0;
   margin-left: 18px;
   margin-top: 16px;
@@ -1917,9 +1928,10 @@
 /* ========================  RESPONSIVE  ======================= */
 /* ============================================================= */
 
-/* Below ~1020px the wider stage + feed no longer fit side by side, so the wrap
-   stacks them and the feed drops under the stage, capped to the stage's width. */
-@media (max-width: 1020px) {
+/* The stage now fills most of the viewport, so the feed only fits beside it on
+   very wide screens. Below ~1800px the wrap stacks them and the feed drops under
+   the stage, capped to the stage's width. */
+@media (max-width: 1800px) {
   .game-wrap {
     flex-direction: column;
     align-items: center;
@@ -1927,18 +1939,17 @@
 
   .kill-feed {
     width: 100%;
-    max-width: 760px;
+    max-width: min(95vw, 1400px);
     margin-left: 0;
     margin-top: 18px;
     align-self: auto;
   }
 }
 
-/* Large screens: the stage already caps at 560px so it never stretches across
-   an ultrawide - just give the page a little more side breathing room. */
+/* Bigger screens get a touch more side breathing room (percentage-based). */
 @media (min-width: 1200px) {
   .game-wrap {
-    padding: 32px 40px;
+    padding: clamp(28px, 3vw, 48px) clamp(32px, 4vw, 72px);
   }
 }
 
