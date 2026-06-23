@@ -54,6 +54,10 @@
 .game-card-wrap:nth-child(3) { margin-top: 18px; }
 
 .game-card {
+  /* Animation-speed multiplier inherited by the constantly-animated card art
+     (GameCardArt.css): 1 at rest, dropped to 0.6 on hover so the motion speeds
+     up ~40% when you interact. */
+  --spd: 1;
   /* Colored outline: a translucent-black edge reads as a darker shade of
      whatever per-game fill the card carries (set inline). */
   border: 4px solid rgba(0, 0, 0, 0.4);
@@ -143,6 +147,8 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
 /* Hover: scale up (the wrapper keeps swaying; the wrapper's hover z-index lifts
    the whole card above its neighbours). */
 .game-card:hover {
+  /* Speed every background animation up ~40% (see GameCardArt.css). */
+  --spd: 0.6;
   animation: card-hover-pop 0.35s ease-out forwards;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
 }
@@ -160,8 +166,10 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   100% { transform: scale(calc(1.05 * var(--cs, 1))); }
 }
 
-/* The hover-reveal artwork layer. Opacity/transform only - no blur or filter
-   effects, since soft blur contradicts the flat cel-shaded style. */
+/* The animated background art (GameArt.jsx + GameCardArt.css) runs CONSTANTLY,
+   behind the text (z-index 2 < the content's 3), at low opacity so the text on
+   top stays readable. On hover it brightens (and the motion speeds up via the
+   --spd multiplier on the card). */
 .game-card-art {
   position: absolute;
   inset: 0;
@@ -169,15 +177,13 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  opacity: 0.42;
+  transition: opacity 0.25s ease-out;
   pointer-events: none;
 }
 
 .game-card:hover .game-card-art {
-  opacity: 1;
-  transform: scale(1);
+  opacity: 0.66;
 }
 
 .game-card-content {
@@ -216,13 +222,6 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   font-weight: 700;
   line-height: 1.3;
   margin-bottom: 6px;
-  transition: opacity 0.12s;
-}
-
-/* Description fades out on hover to make room for the artwork - the
-   title/icon/badge stay put as anchors. */
-.game-card:hover .game-card-desc {
-  opacity: 0;
 }
 
 .game-card-badge {
