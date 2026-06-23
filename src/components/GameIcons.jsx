@@ -24,12 +24,13 @@ export function CategoryIcon() {
   );
 }
 
-export function MoreSoonIcon() {
+export function ImposterIcon() {
+  // A watching eye - someone's hiding in plain sight.
   return (
     <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
-      <circle cx="6" cy="11" r="2.2" fill="#2EFFE0" />
-      <circle cx="11" cy="11" r="2.2" fill="#2EFFE0" />
-      <circle cx="16" cy="11" r="2.2" fill="#2EFFE0" />
+      <path d="M2 11 Q11 3 20 11 Q11 19 2 11 Z" stroke="#000" strokeWidth="2.3" strokeLinejoin="round" />
+      <circle cx="11" cy="11" r="3.4" fill="#9A1AFF" stroke="#000" strokeWidth="1.6" />
+      <circle cx="11" cy="11" r="1.2" fill="#000" />
     </svg>
   );
 }
@@ -37,5 +38,5 @@ export function MoreSoonIcon() {
 export const GAME_ICON_COMPONENTS = {
   'word-bomb': BombIcon,
   'category-blitz': CategoryIcon,
-  'more-soon': MoreSoonIcon,
+  'imposter-word': ImposterIcon,
 };

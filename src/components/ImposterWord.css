@@ -1,0 +1,453 @@
+/* ImposterWord.css - the social-deduction mode. Reuses the shared GameScreen
+   classes (.game-wrap/.game-stage/.game-input-row/.cb-* etc.) and adds the
+   imposter-specific pieces: the red "you're hiding" tint, the live answer feed,
+   the colour-coded vote cards, and the dramatic reveal. Same flat graffiti /
+   Newgrounds style as the rest of the app - thick black outlines, hard offset
+   shadows, no gradients-as-decoration beyond the subliminal red wash. */
+
+.iw-wrap {
+  position: relative;
+}
+
+/* The imposter's whole screen runs a faint, slowly-breathing red wash so they
+   subconsciously FEEL like they're hiding. Fixed + click-through, behind content. */
+.iw-imposter::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 60, 60, 0.16) 0%, rgba(255, 60, 60, 0.28) 100%);
+  animation: iw-hide-pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes iw-hide-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Imposter Word's accent is purple. */
+.iw-title {
+  color: #9A1AFF;
+}
+
+/* Mascot tucked in the lower-left margin (wide screens only). Above the reveal
+   overlay so it stays visible reacting during the big moment. */
+.iw-mascot {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 60;
+}
+
+@media (max-width: 1239px) {
+  .iw-mascot { display: none; }
+}
+
+/* ---- Answer phase: imposter banner ---- */
+
+.iw-imposter-banner-wrap {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.iw-imposter-banner {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(26px, 5vw, 52px);
+  line-height: 1.05;
+  color: #FF5C5C;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  transform: skewX(-3deg);
+  animation: iw-imposter-throb 1.3s ease-in-out infinite;
+}
+
+@keyframes iw-imposter-throb {
+  0%, 100% { transform: skewX(-3deg) scale(1); text-shadow: 4px 4px 0 #000; }
+  50% { transform: skewX(-3deg) scale(1.05); text-shadow: 6px 6px 0 #5a0000; }
+}
+
+.iw-imposter-sub {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(11px, 1.4vw, 15px);
+  color: #FFC9C9;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Live answer feed (how the imposter reverse-engineers the category) ---- */
+
+.iw-feed {
+  margin-top: 6px;
+}
+
+.iw-feed-title {
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  color: #9A1AFF;
+  margin-bottom: 8px;
+}
+
+.iw-feed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.iw-feed-chip {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  background: #1a0b2e;
+  border: 2.5px solid #000;
+  border-left-width: 5px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 2px 2px 0 #000;
+  animation: chip-slide-in 250ms ease-out;
+}
+
+.iw-feed-name {
+  text-transform: uppercase;
+  font-size: 10px;
+  margin-right: 2px;
+}
+
+.iw-myanswers {
+  margin: 16px 0;
+}
+
+/* ---- Voting phase ---- */
+
+.iw-vote-header {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(20px, 4vw, 36px);
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  transform: skewX(-3deg);
+  margin-bottom: 14px;
+}
+
+.iw-vote-progress {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.iw-vote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+}
+
+/* Each player's card carries THEIR colour as a thick border. */
+.iw-vote-card {
+  background: #1a0b2e;
+  border: 4px solid #9A1AFF;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #000;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: rotate(-0.5deg);
+}
+
+.iw-vote-card:nth-child(even) {
+  transform: rotate(0.6deg);
+}
+
+.iw-vote-name {
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  word-break: break-word;
+}
+
+.iw-vote-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 22px;
+}
+
+.iw-vote-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #000;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 8px;
+  padding: 9px 0;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+  margin-top: auto;
+}
+
+.iw-vote-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.iw-vote-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* Not-yet-voted disabled (someone else's card after you've locked in). */
+.iw-vote-btn:disabled:not(.voted) {
+  background: #3a2a55;
+  color: #9a8bbf;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* The card you voted for: filled in that player's colour. */
+.iw-vote-btn.voted {
+  color: #000;
+}
+
+/* ============================================================= */
+/* =====================  THE REVEAL  ========================== */
+/* ============================================================= */
+
+/* Full-screen dramatic overlay - THE moment of the whole mode. */
+.iw-reveal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 3, 16, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* "THE IMPOSTER WAS..." suspense beat (2s). */
+.iw-reveal-pre {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(22px, 4.5vw, 46px);
+  color: #fff;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  transform: skewX(-3deg);
+  animation: iw-pre-flicker 1s ease-in-out infinite;
+}
+
+.iw-reveal-dots {
+  display: inline-block;
+  animation: iw-dots 1.4s steps(4) infinite;
+}
+
+@keyframes iw-pre-flicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@keyframes iw-dots {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.iw-reveal-body {
+  width: 100%;
+  max-width: 540px;
+  text-align: center;
+}
+
+/* The imposter's name SLAMS in from huge with an overshoot + settle. */
+.iw-reveal-name {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(40px, 9vw, 90px);
+  line-height: 1;
+  color: #FF2EC4;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  word-break: break-word;
+  animation: iw-slam 420ms cubic-bezier(0.18, 1.3, 0.32, 1) forwards;
+}
+
+@keyframes iw-slam {
+  0% { transform: scale(3) rotate(-6deg); opacity: 0; }
+  55% { transform: scale(0.9) rotate(2deg); opacity: 1; }
+  72% { transform: scale(1.08) rotate(-1.5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.iw-reveal-verdict {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(20px, 4vw, 36px);
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  margin: 10px 0 18px;
+  transform: skewX(-3deg);
+  animation: iw-verdict-pop 400ms ease-out 200ms backwards;
+}
+
+.iw-reveal-verdict.caught {
+  color: #2EFF8F;
+}
+
+.iw-reveal-verdict.survived {
+  color: #FF5C5C;
+}
+
+@keyframes iw-verdict-pop {
+  0% { transform: skewX(-3deg) scale(0); }
+  60% { transform: skewX(-3deg) scale(1.2); }
+  100% { transform: skewX(-3deg) scale(1); }
+}
+
+.iw-reveal-cat {
+  background: #1a0b2e;
+  border: 3px solid #9A1AFF;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #000;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.iw-reveal-cat-label {
+  font-family: 'Bungee', cursive;
+  font-size: 8px;
+  color: #9A1AFF;
+  margin-bottom: 6px;
+}
+
+.iw-reveal-cat-value {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(16px, 3vw, 26px);
+  color: #FFE94A;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  word-break: break-word;
+}
+
+.iw-reveal-cat-note {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  color: #C9B8E8;
+  margin-top: 6px;
+}
+
+.iw-reveal-section {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.iw-reveal-section-label {
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  color: #FF2EC4;
+  margin-bottom: 6px;
+}
+
+.iw-reveal-vote-row,
+.iw-reveal-score-row {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.iw-reveal-score-row {
+  justify-content: space-between;
+  border-bottom: 1px dashed #3a2a55;
+}
+
+.iw-reveal-arrow {
+  color: #9a8bbf;
+}
+
+.iw-reveal-score-pts {
+  font-family: 'Bungee', cursive;
+  font-size: 15px;
+  color: #2EFFE0;
+}
+
+.iw-reveal-countdown {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #FFE94A;
+  text-align: center;
+  margin-top: 16px;
+  transform: skewX(-2deg);
+}
+
+/* ---- Awards on the game-over card ---- */
+
+.iw-awards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.iw-award {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 3px solid #000;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 10px 14px;
+  transform: rotate(-1deg);
+}
+
+.iw-award:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.iw-award.detective { background: #2EFFE0; }
+.iw-award.imposter { background: #FF5C5C; }
+
+.iw-award-label {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #000;
+}
+
+.iw-award-name {
+  font-family: 'Bungee', cursive;
+  font-size: 15px;
+  color: #000;
+  word-break: break-word;
+}
+
+.iw-award-detail {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  color: #1a0b2e;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-imposter::before,
+  .iw-imposter-banner,
+  .iw-reveal-pre,
+  .iw-reveal-dots,
+  .iw-reveal-name,
+  .iw-reveal-verdict {
+    animation: none !important;
+  }
+  .iw-reveal-name { opacity: 1; transform: none; }
+}

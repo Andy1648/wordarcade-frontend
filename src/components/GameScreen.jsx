@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import { useMascotPose } from '../hooks/useMascotPose';
 import Mascot from './Mascot';
+import ImposterWordScreen from './ImposterWordScreen';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -285,7 +286,7 @@ const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
  * input. Each step gets a random tilt for graffiti energy, and is re-keyed so
  * the countdown-pop animation replays per number.
  */
-function CountdownOverlay({ onComplete, onStep }) {
+export function CountdownOverlay({ onComplete, onStep }) {
   const [index, setIndex] = useState(0);
   const doneRef = useRef(false);
   // One random tilt (-5deg..5deg) per step, picked once on mount.
@@ -343,7 +344,7 @@ const CONFETTI_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
  * Fixed + pointer-events:none so it never blocks the game-over buttons.
  * Only the parent decides whether to render it (winners only).
  */
-function ConfettiEffect() {
+export function ConfettiEffect() {
   const [pieces] = useState(() =>
     Array.from({ length: 25 }, () => ({
       left: Math.random() * 100, // 0-100% of screen width
@@ -381,7 +382,7 @@ function ConfettiEffect() {
  * Counts a number up from 0 to `to` over `duration` ms, used on the winner's
  * final score so it tallies up dramatically instead of just appearing.
  */
-function CountUp({ to, duration = 1000 }) {
+export function CountUp({ to, duration = 1000 }) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
@@ -412,7 +413,7 @@ function CountUp({ to, duration = 1000 }) {
  * animation-delay, so the letters wobble out of sync (see letter-wobble).
  * Used for the loser's "GAME OVER" title.
  */
-function WobbleText({ text }) {
+export function WobbleText({ text }) {
   return (
     <>
       {text.split('').map((ch, i) => (
@@ -1093,8 +1094,17 @@ export default function GameScreen({
   roundResults,
   categoryScores,
   categoryTotals,
+  imposterRound,
+  imposterPhase,
+  imposterAnswers,
+  imposterVoteData,
+  imposterVoteCount,
+  imposterMyVote,
+  imposterResults,
+  imposterFinal,
   onSubmitWord,
   onSubmitAnswer,
+  onSubmitVote,
   onSkipTurn,
   onTypingUpdate,
   onLeave,
@@ -1451,6 +1461,34 @@ export default function GameScreen({
     else sound.stopSizzle();
     return () => sound.stopSizzle();
   }, [inputEnabled, gameType, sound]);
+
+  // Imposter Word is a separate (social-deduction, multi-phase) experience -
+  // its own component. Routed after the hooks above (which all no-op for this
+  // mode) so the hook order stays stable across game types.
+  if (gameType === 'imposter-word') {
+    return (
+      <ImposterWordScreen
+        myId={myId}
+        isHost={isHost}
+        timerSeconds={timerSeconds}
+        lastWordResult={lastWordResult}
+        round={imposterRound}
+        phase={imposterPhase}
+        liveAnswers={imposterAnswers || []}
+        myAnswers={myAnswers || []}
+        voteData={imposterVoteData}
+        voteCount={imposterVoteCount || { voted: 0, total: 0 }}
+        myVote={imposterMyVote}
+        results={imposterResults}
+        final={imposterFinal}
+        onSubmitAnswer={onSubmitAnswer}
+        onSubmitVote={onSubmitVote}
+        onLeave={onLeave}
+        onRematch={onRematch}
+        onShake={onShake}
+      />
+    );
+  }
 
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather

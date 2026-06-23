@@ -33,12 +33,24 @@ export function CategoryBlitzArt() {
   );
 }
 
-export function MoreSoonArt() {
+export function ImposterWordArt() {
+  // A sneaky domino/bandit mask - one eyehole winks shut (the imposter hiding).
   return (
     <svg viewBox="0 0 140 168" width="100%" height="100%">
-      <text x="70" y="120" textAnchor="middle" fontFamily="'Bungee', cursive" fontSize="70" fill="#2EFFE0" opacity="0.5">
-        ?
-      </text>
+      <g transform="translate(70,90)">
+        <path
+          d="M-50 -18 Q-50 -30 -34 -30 L34 -30 Q50 -30 50 -18 L50 8 Q50 26 30 26 Q14 26 6 12 Q0 4 -6 12 Q-14 26 -30 26 Q-50 26 -50 8 Z"
+          fill="#9A1AFF"
+          stroke="#000"
+          strokeWidth="6"
+          strokeLinejoin="round"
+        />
+        {/* Left eyehole: open, watching. */}
+        <ellipse cx="-26" cy="-4" rx="13" ry="10" fill="#0d0618" stroke="#000" strokeWidth="4" />
+        <circle cx="-23" cy="-5" r="3.5" fill="#fff" />
+        {/* Right eyehole: a sly squint - just a slit. */}
+        <path d="M14 -4 Q26 -10 38 -4" fill="none" stroke="#0d0618" strokeWidth="8" strokeLinecap="round" />
+      </g>
     </svg>
   );
 }
@@ -48,5 +60,5 @@ export function MoreSoonArt() {
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
   CategoryBlitzArt,
-  MoreSoonArt,
+  ImposterWordArt,
 };

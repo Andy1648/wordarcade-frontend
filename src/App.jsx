@@ -145,6 +145,27 @@ function App() {
   const [categoryScores, setCategoryScores] = useState(null);
   const [categoryTotals, setCategoryTotals] = useState({});
 
+  // Imposter Word state (social deduction, three phases per round). round_start
+  // is shared with Category Blitz, so it's disambiguated by the imposter-only
+  // `phase`/`isImposter` fields on the payload.
+  //   imposterRound   - { round, totalRounds, category, isImposter, players }
+  //   imposterPhase   - 'answering' | 'voting' | 'reveal' | 'finished'
+  //   imposterAnswers - live { playerId, playerName, answer } feed (this is how
+  //                     the imposter reverse-engineers the category), reset/round
+  //   imposterVoteData- { answers: [{playerId,playerName,answers}], players }
+  //   imposterVoteCount-{ voted, total } progress (never reveals who voted whom)
+  //   imposterMyVote  - the suspectId I locked in (optimistic), or null
+  //   imposterResults - the vote_results reveal payload for the current round
+  //   imposterFinal   - the game_over payload (final scores + award stats)
+  const [imposterRound, setImposterRound] = useState(null);
+  const [imposterPhase, setImposterPhase] = useState(null);
+  const [imposterAnswers, setImposterAnswers] = useState([]);
+  const [imposterVoteData, setImposterVoteData] = useState(null);
+  const [imposterVoteCount, setImposterVoteCount] = useState({ voted: 0, total: 0 });
+  const [imposterMyVote, setImposterMyVote] = useState(null);
+  const [imposterResults, setImposterResults] = useState(null);
+  const [imposterFinal, setImposterFinal] = useState(null);
+
   const { status: wsStatus, lastMessage, send } = useWebSocket();
 
   // Background music. It's started from the splash dismiss (the guaranteed first
@@ -402,16 +423,79 @@ function App() {
 
     if (lastMessage.type === 'round_start') {
       const payload = lastMessage.payload;
-      setCategoryRound(payload);
+      // Imposter Word and Category Blitz share round_start; the imposter variant
+      // carries a `phase`/`isImposter` field, so branch on that.
+      if (payload.phase === 'answering' || typeof payload.isImposter !== 'undefined') {
+        setImposterRound({
+          round: payload.round,
+          totalRounds: payload.totalRounds,
+          category: payload.category,
+          isImposter: !!payload.isImposter,
+          players: payload.players || [],
+          answerSeconds: payload.timerSeconds,
+        });
+        setImposterPhase('answering');
+        setImposterAnswers([]);
+        setImposterVoteData(null);
+        setImposterVoteCount({ voted: 0, total: (payload.players || []).length });
+        setImposterMyVote(null);
+        setImposterResults(null);
+        if (payload.round === 1) setImposterFinal(null); // fresh game
+        setMyAnswers([]);
+        setTimerSeconds(payload.timerSeconds);
+        setLastWordResult(null);
+        setGameOver(null);
+        setView('game');
+      } else {
+        setCategoryRound(payload);
+        setTimerSeconds(payload.timerSeconds);
+        setMyAnswers([]);
+        setPlayerProgress({});
+        setRoundResults(null);
+        setLastWordResult(null);
+        setGameOver(null);
+        setCategoryScores(null);
+        if (payload.round === 1) setCategoryTotals({}); // fresh game
+        setView('game');
+      }
+    }
+
+    // ---- Imposter Word relays ----
+
+    // Every accepted answer is broadcast to everyone in real time.
+    if (lastMessage.type === 'imposter_answer') {
+      const { playerId, playerName, answer } = lastMessage.payload;
+      setImposterAnswers((prev) => [...prev, { playerId, playerName, answer }]);
+    }
+
+    // Answering closed -> voting opens with all answers revealed.
+    if (lastMessage.type === 'vote_phase_start') {
+      const payload = lastMessage.payload;
+      setImposterVoteData({
+        answers: payload.answers || [],
+        players: payload.players || [],
+        voteSeconds: payload.timerSeconds,
+      });
+      setImposterPhase('voting');
+      setImposterVoteCount({ voted: 0, total: (payload.players || []).length });
       setTimerSeconds(payload.timerSeconds);
-      setMyAnswers([]);
-      setPlayerProgress({});
-      setRoundResults(null);
       setLastWordResult(null);
-      setGameOver(null);
-      setCategoryScores(null);
-      if (payload.round === 1) setCategoryTotals({}); // fresh game
-      setView('game');
+    }
+
+    // Live vote progress (counts only, never who-for-whom until the reveal).
+    if (lastMessage.type === 'vote_count') {
+      setImposterVoteCount(lastMessage.payload);
+    }
+
+    // My own vote bounced (e.g. voted for myself) - unlock so I can re-vote.
+    if (lastMessage.type === 'vote_result') {
+      if (!lastMessage.payload.accepted) setImposterMyVote(null);
+    }
+
+    // The reveal.
+    if (lastMessage.type === 'vote_results') {
+      setImposterResults(lastMessage.payload);
+      setImposterPhase('reveal');
     }
 
     if (lastMessage.type === 'answer_result') {
@@ -444,9 +528,12 @@ function App() {
 
     if (lastMessage.type === 'game_over') {
       const payload = lastMessage.payload;
-      // Category Blitz game_over carries finalScores; Word Bomb carries just
-      // winnerId. Detect by the presence of finalScores.
-      if (payload.finalScores) {
+      // Imposter Word and Category Blitz both carry finalScores, so check the
+      // explicit gameType first; Word Bomb carries just winnerId.
+      if (payload.gameType === 'imposter-word') {
+        setImposterFinal(payload);
+        setImposterPhase('finished');
+      } else if (payload.finalScores) {
         setCategoryScores(payload.finalScores);
         setCategoryRound(null);
         setRoundResults(null);
@@ -572,6 +659,14 @@ function App() {
     setGameStats(EMPTY_STATS);
     setTypingText({});
     setReactions([]);
+    setImposterRound(null);
+    setImposterPhase(null);
+    setImposterAnswers([]);
+    setImposterVoteData(null);
+    setImposterVoteCount({ voted: 0, total: 0 });
+    setImposterMyVote(null);
+    setImposterResults(null);
+    setImposterFinal(null);
     setView('home');
   }
 
@@ -621,6 +716,14 @@ function App() {
     send('submit_answer', { answer });
   }
 
+  // Imposter Word: vote for who the imposter is. Lock the choice locally
+  // (optimistic) so the UI shows "VOTED" immediately; the server confirms via
+  // vote_result and unlocks again only if it bounces (e.g. self-vote).
+  function handleSubmitVote(suspectId) {
+    setImposterMyVote(suspectId);
+    send('submit_vote', { suspectId });
+  }
+
   function handleSkipTurn() {
     send('skip_turn', {});
   }
@@ -664,8 +767,17 @@ function App() {
         roundResults={roundResults}
         categoryScores={categoryScores}
         categoryTotals={categoryTotals}
+        imposterRound={imposterRound}
+        imposterPhase={imposterPhase}
+        imposterAnswers={imposterAnswers}
+        imposterVoteData={imposterVoteData}
+        imposterVoteCount={imposterVoteCount}
+        imposterMyVote={imposterMyVote}
+        imposterResults={imposterResults}
+        imposterFinal={imposterFinal}
         onSubmitWord={handleSubmitWord}
         onSubmitAnswer={handleSubmitAnswer}
+        onSubmitVote={handleSubmitVote}
         onSkipTurn={handleSkipTurn}
         onTypingUpdate={handleTypingUpdate}
         onLeave={handleLeaveRoom}
