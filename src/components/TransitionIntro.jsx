@@ -35,6 +35,94 @@ const PREFERS_REDUCED =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// ---- Background SCENE config (purely presentational, sits BEHIND the title) ----
+
+// Diagonal action-comic speed lines streaking across behind the title. Static
+// config (no per-render randomness) so the layout never reshuffles. Each streak
+// has a row (top %), a length (w %), thickness, brand colour, base opacity, and
+// TWO durations: a fast one used while "TYPE FAST." is on screen and a slow,
+// heavier one once "DIE SLOW." lands (the phase class swaps which is active).
+const STREAKS = [
+  { top: 5,  w: 34, h: 4, c: '#2EFFE0', op: 0.5,  durF: 0.7, durS: 1.9, delay: 0.0 },
+  { top: 12, w: 22, h: 3, c: '#FFE94A', op: 0.4,  durF: 0.9, durS: 2.3, delay: 0.5 },
+  { top: 19, w: 44, h: 5, c: '#FF2EC4', op: 0.45, durF: 0.6, durS: 2.0, delay: 0.2 },
+  { top: 27, w: 18, h: 3, c: '#FF6B3D', op: 0.4,  durF: 1.0, durS: 2.6, delay: 0.8 },
+  { top: 34, w: 38, h: 4, c: '#FFE94A', op: 0.5,  durF: 0.8, durS: 2.1, delay: 0.35 },
+  { top: 42, w: 26, h: 3, c: '#2EFFE0', op: 0.42, durF: 0.65,durS: 2.4, delay: 1.0 },
+  { top: 56, w: 40, h: 5, c: '#FF2EC4', op: 0.45, durF: 0.75,durS: 2.0, delay: 0.15 },
+  { top: 63, w: 20, h: 3, c: '#FFE94A', op: 0.4,  durF: 0.95,durS: 2.5, delay: 0.6 },
+  { top: 71, w: 32, h: 4, c: '#FF6B3D', op: 0.5,  durF: 0.7, durS: 2.2, delay: 0.9 },
+  { top: 79, w: 24, h: 3, c: '#2EFFE0', op: 0.42, durF: 0.85,durS: 2.3, delay: 0.4 },
+  { top: 87, w: 42, h: 5, c: '#FF2EC4', op: 0.45, durF: 0.6, durS: 2.0, delay: 0.7 },
+  { top: 93, w: 18, h: 3, c: '#FFE94A', op: 0.4,  durF: 1.0, durS: 2.6, delay: 0.25 },
+];
+
+// Hard-edged graffiti vector accents scattered in the NEGATIVE SPACE around the
+// words (corners + far edges + top/bottom centre - never over the title). Each
+// pops in (staggered by `delay`) then idles forever. `rot` is the resting tilt;
+// `size` is the px width; `idleDur` desyncs the idle wobble.
+const ACCENTS = [
+  { shape: 'burst',    pos: { top: '11%', left: '7%' },     color: '#FFE94A', size: 78, rot: -12, delay: 0.15, idleDur: 5.5 },
+  { shape: 'bolt',     pos: { top: '14%', right: '8%' },    color: '#2EFFE0', size: 66, rot: 12,  delay: 0.3,  idleDur: 4.6 },
+  { shape: 'arrow',    pos: { top: '47%', left: '3%' },     color: '#FF6B3D', size: 96, rot: -6,  delay: 0.45, idleDur: 6.2 },
+  { shape: 'arrow',    pos: { top: '44%', right: '3%' },    color: '#2EFFE0', size: 88, rot: 174, delay: 0.5,  idleDur: 5.8 },
+  { shape: 'splatter', pos: { bottom: '12%', left: '9%' },  color: '#9A1AFF', size: 92, rot: 8,   delay: 0.35, idleDur: 6.6 },
+  { shape: 'bolt',     pos: { bottom: '15%', right: '7%' }, color: '#FFE94A', size: 70, rot: -14, delay: 0.55, idleDur: 4.2 },
+  { shape: 'tag',      pos: { top: '7%', left: '46%' },     color: '#FF2EC4', size: 64, rot: -5,  delay: 0.6,  idleDur: 5.0, label: '!!!' },
+  { shape: 'burst',    pos: { bottom: '9%', left: '47%' },  color: '#FF6B3D', size: 54, rot: 16,  delay: 0.7,  idleDur: 5.3 },
+];
+
+// Inline SVG (or div, for the tag) for each accent shape. Flat fill + hard black
+// outline; the hard offset shadow is applied in CSS (drop-shadow / box-shadow).
+function AccentShape({ shape, color, label }) {
+  if (shape === 'tag') {
+    return (
+      <div className="intro-accent-inner intro-accent-tag" style={{ background: color }}>
+        {label}
+      </div>
+    );
+  }
+  const props = { className: 'intro-accent-inner intro-accent-svg' };
+  if (shape === 'burst') {
+    return (
+      <svg {...props} viewBox="-112 -112 224 224">
+        <polygon points={BURST_POINTS} fill={color} stroke="#000" strokeWidth="10" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (shape === 'bolt') {
+    return (
+      <svg {...props} viewBox="0 0 64 64">
+        <polygon points="34,2 8,38 26,38 18,62 56,26 36,26 46,2" fill={color} stroke="#000" strokeWidth="5" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (shape === 'arrow') {
+    return (
+      <svg {...props} viewBox="0 0 100 60">
+        <polygon points="4,18 58,18 58,4 96,30 58,56 58,42 4,42" fill={color} stroke="#000" strokeWidth="6" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (shape === 'splatter') {
+    return (
+      <svg {...props} viewBox="-60 -60 120 120">
+        <polygon
+          points="0,-46 12,-20 40,-30 22,-6 50,8 20,12 30,40 6,20 -8,48 -16,18 -44,28 -20,4 -50,-10 -18,-12 -34,-38 -8,-20"
+          fill={color}
+          stroke="#000"
+          strokeWidth="6"
+          strokeLinejoin="round"
+        />
+        <circle cx="46" cy="-44" r="6" fill={color} stroke="#000" strokeWidth="4" />
+        <circle cx="-50" cy="40" r="5" fill={color} stroke="#000" strokeWidth="4" />
+        <circle cx="52" cy="42" r="4" fill={color} stroke="#000" strokeWidth="3" />
+      </svg>
+    );
+  }
+  return null;
+}
+
 // Split a phrase into per-letter spans so each letter can stagger in on its own
 // delay (`--i`). Spaces are rendered as a non-breaking space and flagged so they
 // never sprout a paint drip.
@@ -153,9 +241,59 @@ export default function TransitionIntro({ onComplete }) {
   // explode class overrides it at the end.
   const line1Active = step === 'line1' || step === 'line2' || exploding;
   const line2Active = step === 'line2' || exploding;
+  // Speed-line intensity tracks the phrases (cheap: just a class swap): busy/fast
+  // while "TYPE FAST." is up, slow/heavy once "DIE SLOW." has landed.
+  const speedPhase = step === 'line2' || exploding ? 'slow' : 'fast';
 
   return (
     <div className="intro-overlay" aria-hidden="true">
+      {/* Synthwave perspective grid floor, furthest back - gives the title a
+          space to float over. Pure CSS perspective + a transform-only scroll. */}
+      <div className="intro-grid">
+        <div className="intro-grid-plane" />
+      </div>
+
+      {/* Mid-ground action scene BEHIND the title: diagonal speed lines streaking
+          across + hard-edged graffiti vector accents popping in around the words.
+          Fades out as the title explodes. */}
+      <div className={`intro-scene${exploding ? ' exploding' : ''}`}>
+        <div className={`intro-speedlines phase-${speedPhase}`}>
+          {STREAKS.map((s, i) => (
+            <span
+              key={i}
+              className="intro-streak"
+              style={{
+                top: `${s.top}%`,
+                '--w': `${s.w}%`,
+                '--h': `${s.h}px`,
+                '--c': s.c,
+                '--op': s.op,
+                '--durF': `${s.durF}s`,
+                '--durS': `${s.durS}s`,
+                '--delay': `${s.delay}s`,
+              }}
+            />
+          ))}
+        </div>
+        <div className="intro-accents">
+          {ACCENTS.map((a, i) => (
+            <div
+              key={i}
+              className="intro-accent"
+              style={{
+                ...a.pos,
+                '--rot': `${a.rot}deg`,
+                '--size': `${a.size}px`,
+                '--pop-delay': `${a.delay}s`,
+                '--idle-dur': `${a.idleDur}s`,
+              }}
+            >
+              <AccentShape shape={a.shape} color={a.color} label={a.label} />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className={`intro-stage${shaking ? ' shaking' : ''}`}>
         {exploding && (
           <svg className="intro-starburst" viewBox="-100 -100 200 200">
