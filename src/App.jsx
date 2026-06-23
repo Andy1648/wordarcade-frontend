@@ -633,12 +633,12 @@ function App() {
 
   // Splash: unlock audio + start the music silently within the click gesture.
   // This click is the browser's autoplay-unlock gesture, so it's where we create
-  // the SFX AudioContext too; the dismiss itself lands with a punch.
+  // the SFX AudioContext too. No punch here - the intro's two title lines each
+  // land their own punch, so a leading hit on dismiss would just double up.
   function handleSplashStart() {
     music.setVolume(0);
     music.play();
     sound.unlock();
-    sound.punch();
   }
 
   // Splash dismissed: hand off to the anime fight-card intro sequence (it covers

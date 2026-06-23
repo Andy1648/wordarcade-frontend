@@ -99,6 +99,40 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
+    // Final-5s heartbeat: a physical low "lub-dub" thud, fired faster and faster
+    // by the call site as the clutch closes in (the bomb timer is shared, so
+    // everyone's pulse pounds). Two enveloped low sine thumps - a stronger "lub"
+    // then a softer "dub" ~130ms later - each pitch-dropping for body. `intensity`
+    // (0..1) scales loudness so the beats hit harder as the seconds run out.
+    heartbeat(intensity = 0) {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const i = Math.max(0, Math.min(1, intensity));
+        // One low thud: a sine that snaps in and drops in pitch (chest-thump body).
+        const thud = (start, freq, peak) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq * 1.7, start); // higher "knock" attack
+          osc.frequency.exponentialRampToValueAtTime(freq, start + 0.06); // settle low
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.linearRampToValueAtTime(peak, start + 0.008); // hard snap in
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16); // short tail
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.18);
+        };
+        const lub = 0.3 + i * 0.35; // 0.30 (5s) -> 0.65 (1s)
+        thud(now, 58, lub); // "lub"
+        thud(now + 0.13, 46, lub * 0.7); // softer, lower "dub"
+      } catch {
+        /* never let audio crash the game */
+      }
+    },
+
     // Accepted word: a pleasant two-tone rising chime (880Hz -> 1320Hz, a
     // musical fifth) on clean sine waves, with a 30ms gap between tones.
     correctDing() {

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
+import Mascot from './Mascot';
 import './RoomScreen.css';
 
 // Each difficulty carries a short timer blurb so players know what they're
@@ -125,6 +126,19 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
             </div>
           ))}
         </div>
+
+        {/* Fill the dead air while there still aren't enough players: the mascot
+            loiters next to the roster, impatiently swaying (the bored sway is a
+            wrapper animation, so it composes with the mascot's own idle bounce),
+            under a softly pulsing "waiting for players" cue. */}
+        {!canStart && (
+          <div className="room-waiting">
+            <div className="room-waiting-mascot">
+              <Mascot pose="idle" size={84} />
+            </div>
+            <div className="room-waiting-cue">WAITING FOR PLAYERS...</div>
+          </div>
+        )}
 
         {/* The game-mode picker is hidden when the player already chose a
             specific game from the homepage (preselectedGame) - it's locked in.

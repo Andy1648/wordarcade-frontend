@@ -1087,16 +1087,20 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Disabled keeps its personality - dark panel, DASHED accent outline, dimmed
+   but readable text - never a flat-grey system button. */
 .game-send-btn:disabled {
-  background: #555;
-  color: #999;
+  background: #1a0b2e;
+  color: #9a8bbf;
+  border-color: #1A9985;
+  border-style: dashed;
+  box-shadow: none;
   cursor: not-allowed;
-  box-shadow: 2px 2px 0 #000;
 }
 
 .game-send-btn:disabled:active {
   transform: skewX(-2deg);
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: none;
 }
 
 /* SKIP is a caution action - yellow to read as a warning and set it apart
@@ -1310,6 +1314,207 @@
   25% { transform: rotate(-3deg); }
   75% { transform: rotate(3deg); }
   100% { transform: rotate(0); }
+}
+
+/* ============================================================= */
+/* ===========  WORD BOMB END SCREEN: WIN / LOSS JUICE  ======== */
+/* ============================================================= */
+
+/* Keep the card above the win burst + loss flash (both sit at z-index 0). */
+.game-over-card {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- WIN: flat comic starburst behind the card ---- */
+.go-win-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 560px;
+  height: 560px;
+  max-width: 130vw;
+  max-height: 130vh;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  /* Pops in with an overshoot, then holds (both). */
+  animation: go-burst-in 500ms cubic-bezier(0.2, 1.45, 0.3, 1) both;
+}
+
+/* Inner element spins forever so the burst never sits dead-still (the pop lives
+   on the wrapper, the spin here, so the two transforms don't fight). */
+.go-win-burst-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  animation: go-burst-spin 14s linear infinite;
+}
+
+@keyframes go-burst-in {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(-40deg); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes go-burst-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ---- LOSS: "ELIMINATED" slam-in (overshoot punch, like the intro) ---- */
+.game-over-title.eliminated {
+  color: #FF5C5C;
+  font-size: 44px;
+  letter-spacing: 1px;
+  animation: go-eliminated-slam 380ms cubic-bezier(0.2, 1.5, 0.3, 1) both;
+}
+
+@keyframes go-eliminated-slam {
+  0% { transform: scale(2.4) skewX(-3deg); opacity: 0; }
+  55% { transform: scale(0.9) skewX(-3deg); opacity: 1; }
+  78% { transform: scale(1.1) skewX(-3deg); }
+  100% { transform: scale(1) skewX(-3deg); }
+}
+
+/* ---- LOSS: one flat white screen-flash on the slam (no blur/glow) ---- */
+.go-slam-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: go-slam-flash 220ms ease-out forwards;
+}
+
+@keyframes go-slam-flash {
+  0% { opacity: 0.75; }
+  100% { opacity: 0; }
+}
+
+/* ---- LOSS: flat spike-burst + hard shockwave rings framing the card ---- */
+.go-loss-impact {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.go-loss-burst-svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 540px;
+  height: 540px;
+  max-width: 130vw;
+  max-height: 130vh;
+  transform: translate(-50%, -50%);
+  /* Slams in with a hard overshoot, then holds (both). */
+  animation: go-loss-burst-in 420ms cubic-bezier(0.2, 1.5, 0.3, 1) both;
+}
+
+@keyframes go-loss-burst-in {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(18deg); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* A single hard-edged ring that punches outward once (stroke only, no blur). */
+.go-shockwave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border: 9px solid #FF5C5C;
+  border-radius: 50%;
+  opacity: 0;
+  animation: go-shockwave 560ms ease-out both;
+}
+
+.go-shockwave.white {
+  border-color: #fff;
+  border-width: 5px;
+  animation-delay: 110ms;
+}
+
+@keyframes go-shockwave {
+  0% { transform: scale(0.2); opacity: 0.9; }
+  100% { transform: scale(6.5); opacity: 0; }
+}
+
+/* ---- Card entrances: WIN pops, LOSS slams down (both rest at -1.5deg) ---- */
+.game-over-card.go-card-win {
+  animation: go-card-pop 460ms cubic-bezier(0.2, 1.5, 0.3, 1) both;
+}
+
+@keyframes go-card-pop {
+  0% { transform: scale(0.4) rotate(-1.5deg); opacity: 0; }
+  60% { transform: scale(1.06) rotate(-1.5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-1.5deg); opacity: 1; }
+}
+
+.game-over-card.go-card-loss {
+  animation: go-card-slam 440ms cubic-bezier(0.2, 1.3, 0.25, 1) both;
+}
+
+@keyframes go-card-slam {
+  0% { transform: translateY(-130%) scale(1.18) rotate(-1.5deg); opacity: 0; }
+  50% { transform: translateY(0) scale(1.18) rotate(-1.5deg); opacity: 1; }
+  68% { transform: translateY(0) scale(0.94) rotate(-3deg); }
+  84% { transform: translateY(0) scale(1.02) rotate(-0.5deg); }
+  100% { transform: translateY(0) scale(1) rotate(-1.5deg); }
+}
+
+/* ---- Mascot motion: WIN hops with joy, LOSS shivers in defeat ---- */
+.go-mascot-wrap {
+  display: inline-block;
+}
+
+.go-mascot-wrap.win {
+  animation: go-mascot-hop 700ms ease-in-out infinite;
+}
+
+@keyframes go-mascot-hop {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-11px) rotate(2deg); }
+}
+
+.go-mascot-wrap.loss {
+  /* A short, fast tremble that loops — reads as panic / defeat. */
+  animation: go-mascot-shiver 600ms ease-in-out infinite;
+}
+
+@keyframes go-mascot-shiver {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-1.5px, 1px) rotate(-1.5deg); }
+  40% { transform: translate(1.5px, 1px) rotate(1.5deg); }
+  60% { transform: translate(-1px, 2px) rotate(-1deg); }
+  80% { transform: translate(1px, 1px) rotate(1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .go-win-burst,
+  .go-win-burst-svg,
+  .go-loss-burst-svg,
+  .go-shockwave,
+  .go-mascot-wrap,
+  .game-over-card.go-card-win,
+  .game-over-card.go-card-loss,
+  .game-over-title.eliminated {
+    animation: none !important;
+  }
+  /* Keep the bursts visible (just static) and skip the flashes/rings entirely. */
+  .go-win-burst { opacity: 1; }
+  .go-loss-burst-svg { opacity: 1; }
+  .go-shockwave { display: none; }
+  .go-slam-flash { display: none; }
 }
 
 /* Paint-splatter confetti rained over the whole viewport for the winner. The
@@ -2358,7 +2563,7 @@ html[data-beat='true'] .cb-answer-chip {
 
 @keyframes stage-heartbeat {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.003); }
+  50% { transform: scale(1.01); }
 }
 
 /* Input keystroke feedback: while keys are landing the field brightens its

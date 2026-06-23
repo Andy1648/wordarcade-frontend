@@ -156,9 +156,14 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Disabled keeps its personality - dark panel, DASHED accent outline, dimmed
+   but readable text - never a flat-grey system button. */
 .lobby-continue-btn:disabled {
-  background: #555;
-  color: #999;
+  background: #1a0b2e;
+  color: #9a8bbf;
+  border-color: #991A75;
+  border-style: dashed;
+  box-shadow: none;
   cursor: not-allowed;
   pointer-events: none;
 }

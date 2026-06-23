@@ -1,9 +1,10 @@
 // TransitionIntro.jsx
 // The anime fight-card sequence played between the splash dismiss and the
 // homepage reveal. It's an aggressive ~2s title card:
-//   black beat -> "TYPE FAST." PUNCHES in from the left -> "DIE SLOW." PUNCHES
-//   in from the right -> both EXPLODE outward over a comic starburst -> onComplete
-// fires, and App plays its Persona-5 bar wipe down to the homepage.
+//   black beat -> "TYPE FAST." PUNCHES in (scale overshoot) -> "DIE SLOW."
+//   punches in ~180ms later as a second hit -> both EXPLODE outward over a comic
+//   starburst -> onComplete fires, and App plays its bar wipe to the homepage.
+// Each word rests at a different slant (hand-thrown), set on its slot wrapper.
 //
 // The component just sequences a `step` through the phases with setTimeout and
 // renders different content per step; the punch/explode motion is all CSS. Each
@@ -43,23 +44,22 @@ export default function TransitionIntro({ onComplete }) {
     setFlashKey((k) => k + 1);
     setShaking(true);
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-    shakeTimerRef.current = setTimeout(() => setShaking(false), 320);
+    shakeTimerRef.current = setTimeout(() => setShaking(false), 200);
   }
 
   // The whole timeline, scheduled once on mount (times are intro-local; the
   // splash already spent its own ~300ms dismissing before we mounted).
   useEffect(() => {
     const timers = [];
-    // Deliberately UNEVEN beats so the two landings never feel metronomic:
-    // a snappy first hit, then a long held pause, then the second hit cracks in.
+    // Two distinct hits, close together: "TYPE FAST." punches in, then
+    // "DIE SLOW." ~180ms later as its own impact.
     // 0-140ms: short black hold (anticipation).
     timers.push(setTimeout(() => setStep('line1'), 140));
-    // Flash + shake right as the punch SQUASHES home (~210ms into the 320ms hit).
-    timers.push(setTimeout(impact, 350));
-    // ~980ms: "DIE SLOW." cracks in from the right after a long, irregular beat
-    // (the gap to the first hit is nearly double the gap to the explosion).
-    timers.push(setTimeout(() => setStep('line2'), 980));
-    timers.push(setTimeout(impact, 1190));
+    // Flash + shake right as the punch snaps back home (~160ms into the hit).
+    timers.push(setTimeout(impact, 300));
+    // ~320ms: "DIE SLOW." punches in as a separate, second hit.
+    timers.push(setTimeout(() => setStep('line2'), 320));
+    timers.push(setTimeout(impact, 480));
     // 1620ms: both lines explode outward over the starburst, with a whoosh.
     timers.push(
       setTimeout(() => {

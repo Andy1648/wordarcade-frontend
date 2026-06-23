@@ -417,6 +417,70 @@ export function ConfettiEffect() {
 }
 
 /**
+ * A flat comic starburst that pops in behind the WIN card and slowly spins, so
+ * the victory reads as earned and screenshot-worthy. Locked style only: flat
+ * polygon fills, a HARD offset black duplicate as the shadow (no blur), thick
+ * black outlines, palette colours. Decorative + click-through.
+ */
+function WinBurst() {
+  return (
+    <div className="go-win-burst" aria-hidden="true">
+      <svg className="go-win-burst-svg" viewBox="-112 -112 224 224">
+        {/* Hard offset shadow: a flat black copy nudged down-right (no blur). */}
+        <polygon points={KO_BURST_POINTS} fill="#000" transform="translate(7 9)" />
+        {/* Big yellow burst. */}
+        <polygon points={KO_BURST_POINTS} fill="#FFE94A" stroke="#000" strokeWidth="5" />
+        {/* A smaller pink burst on top, rotated, for layered depth. */}
+        <polygon
+          points={KO_BURST_POINTS}
+          fill="#FF2EC4"
+          stroke="#000"
+          strokeWidth="6"
+          transform="scale(0.6) rotate(12)"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * LOSS impact, the counterpart to WinBurst: a flat red spike-burst that slams in
+ * behind the ELIMINATED card, plus two hard-edged shockwave rings that punch out
+ * from the centre once. Locked style only — flat polygon/ring fills, a HARD
+ * offset black shadow, thick black outlines, no blur/glow. Decorative +
+ * click-through; the parent only renders it for the eliminated player.
+ */
+function LossImpact() {
+  return (
+    <div className="go-loss-impact" aria-hidden="true">
+      <svg className="go-loss-burst-svg" viewBox="-112 -112 224 224">
+        {/* Hard offset shadow: flat black copy nudged down-right (no blur). */}
+        <polygon points={KO_BURST_POINTS} fill="#000" transform="translate(7 9)" />
+        {/* Big red spike burst, tilted so it reads as a violent hit. */}
+        <polygon
+          points={KO_BURST_POINTS}
+          fill="#FF5C5C"
+          stroke="#000"
+          strokeWidth="5"
+          transform="rotate(8)"
+        />
+        {/* A smaller dark-blood burst on top for layered depth. */}
+        <polygon
+          points={KO_BURST_POINTS}
+          fill="#7A1226"
+          stroke="#000"
+          strokeWidth="6"
+          transform="scale(0.6) rotate(-7)"
+        />
+      </svg>
+      {/* Hard flat shockwave rings (stroke only, no blur) — one red, one white. */}
+      <div className="go-shockwave" />
+      <div className="go-shockwave white" />
+    </div>
+  );
+}
+
+/**
  * Counts a number up from 0 to `to` over `duration` ms, used on the winner's
  * final score so it tallies up dramatically instead of just appearing.
  */
@@ -1318,6 +1382,31 @@ export default function GameScreen({
     sound.tick(1 - timerSeconds / maxTimer);
   }, [timerSeconds, showCountdown, gameOver, gameType, gameState, sound]);
 
+  // Accelerating heartbeat thud through the final 5 seconds of the SHARED bomb
+  // timer (everyone feels the clutch, like the tick). A self-scheduling loop
+  // whose period shrinks - and whose hits get louder - as the seconds drop, so
+  // the pulse pounds faster the closer the fuse gets to zero. The effect re-runs
+  // each second (timerSeconds changes), restarting the loop at the tighter
+  // cadence; it tears down the instant the clutch ends (turn reset / 0 / over).
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return undefined;
+    if (showCountdown || gameOver) return undefined;
+    if (typeof timerSeconds !== 'number' || timerSeconds < 1 || timerSeconds > 5) {
+      return undefined;
+    }
+    // Period (ms) between thuds at each remaining second: ~1.5/s -> ~4/s.
+    const HEARTBEAT_MS = { 5: 650, 4: 520, 3: 410, 2: 320, 1: 250 };
+    const period = HEARTBEAT_MS[timerSeconds] ?? 600;
+    const intensity = (6 - timerSeconds) / 5; // 5s -> 0.2, 1s -> 1.0
+    let timeoutId;
+    const beat = () => {
+      sound.heartbeat(intensity);
+      timeoutId = setTimeout(beat, period);
+    };
+    beat(); // thud immediately on entering each second, aligned to the tick
+    return () => clearTimeout(timeoutId);
+  }, [timerSeconds, showCountdown, gameOver, gameType, sound]);
+
   // Accepted -> rising chime; rejected -> low buzz. Keyed off the result object
   // identity (a fresh object per submission, cleared to null between) so it
   // plays once per result and never on the clear.
@@ -1358,8 +1447,11 @@ export default function GameScreen({
   // Gated to Word Bomb (Category Blitz renders its own screen and stays silent).
   useEffect(() => {
     if (gameType !== 'word-bomb' || !gameOver) return;
-    if (gameOver.winnerId === myId) sound.victory();
+    const won = gameOver.winnerId === myId;
+    if (won) sound.victory();
     else sound.defeat();
+    // Land the end screen with a screen impact - heavier for the loss slam.
+    onShakeRef.current?.(won ? 'medium' : 'heavy');
   }, [gameOver, gameType, myId, sound]);
 
   // Ambient fuse crackle while it's our turn; silence between turns / at game
@@ -1502,17 +1594,32 @@ export default function GameScreen({
   const timeRatio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
   const critical = !showCountdown && !gameOver && timeRatio < 0.3;
 
-  // The bomb mascot's pose: a brief celebrate/taunt flash wins; otherwise it
-  // panics when time is dire and is idle otherwise. (The bomb is shared, so this
-  // is driven by the shared timer tension, not whose turn it is.)
-  const bombPose = showCountdown ? 'idle' : bombFlash || (critical ? 'panic' : 'idle');
+  // The final-5s CLUTCH (shared bomb timer): the absolute last 5 seconds, felt by
+  // everyone regardless of whose turn it is. Drives the mascot's panic pose and
+  // the accelerating heartbeat; the colour drain layers on top for the active
+  // player only.
+  const lowTime =
+    !showCountdown &&
+    !gameOver &&
+    typeof timerSeconds === 'number' &&
+    timerSeconds >= 1 &&
+    timerSeconds <= 5;
 
-  // Color drain: in the last 5s of YOUR turn the stage desaturates toward
-  // grayscale (tunnel vision), while the bomb + input stay colored (.drain-exempt
-  // counters it). Snaps back to full colour the instant the turn ends / resets.
-  const DRAIN_BY_SEC = { 5: 0.7, 4: 0.5, 3: 0.3, 2: 0.15, 1: 0.05 };
-  const draining =
-    isMyTurn && !showCountdown && !gameOver && timerSeconds >= 1 && timerSeconds <= 5;
+  // The bomb mascot's pose: a brief celebrate/taunt flash wins; otherwise it
+  // PANICS through the entire final-5s clutch (or any time the fuse is otherwise
+  // dire) and is idle the rest of the time. (The bomb is shared, so this is
+  // driven by the shared timer tension, not whose turn it is.)
+  const bombPose = showCountdown
+    ? 'idle'
+    : bombFlash || (critical || lowTime ? 'panic' : 'idle');
+
+  // Color drain: in the last 5s of YOUR turn the stage desaturates HARD toward
+  // grayscale (tunnel vision) while the bomb + input stay colored (.drain-exempt
+  // counters it). Pushed deeper than a gentle wash - by 1s the room is nearly
+  // monochrome - so the clutch reads as the colour being sucked out of the world.
+  // Snaps back to full colour the instant the turn ends / resets.
+  const DRAIN_BY_SEC = { 5: 0.45, 4: 0.28, 3: 0.14, 2: 0.06, 1: 0.02 };
+  const draining = lowTime && isMyTurn;
   const drainSat = draining ? DRAIN_BY_SEC[timerSeconds] ?? 1 : 1;
   // Panic sweat on your own card while time is critical and it's your turn.
   const panicking = isMyTurn && !showCountdown && !gameOver && timeRatio < 0.3;
@@ -1851,13 +1958,25 @@ export default function GameScreen({
 
       {gameOver && (
         <div className="game-over-overlay">
+          {/* WIN: confetti rain + a flat starburst behind the card.
+              LOSS: a white screen-flash + a flat spike-burst & shockwave rings,
+              all framing the slammed-in ELIMINATED card. */}
           {iWon && <ConfettiEffect />}
-          <div className="game-over-card">
-            {/* The mascot's emotional reaction, large and centred above the title. */}
-            <Mascot pose={iWon ? 'celebrate' : 'panic'} size={150} className="game-over-mascot" />
-            <div className={`game-over-title${iWon ? ' win winner-bounce' : ''}`}>
-              {iWon ? 'YOU WIN!' : <WobbleText text="GAME OVER" />}
+          {iWon && <WinBurst />}
+          {!iWon && <div className="go-slam-flash" />}
+          {!iWon && <LossImpact />}
+          <div className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
+            {/* The mascot's emotional reaction, large and centred above the title.
+                The wrapper owns a dedicated transform (celebrate hop / defeat
+                tremble) so it never fights the mascot's own internal layers. */}
+            <div className={`go-mascot-wrap ${iWon ? 'win' : 'loss'}`}>
+              <Mascot pose={iWon ? 'celebrate' : 'panic'} size={150} className="game-over-mascot" />
             </div>
+            {iWon ? (
+              <div className="game-over-title win winner-bounce">YOU WIN!</div>
+            ) : (
+              <div className="game-over-title eliminated">ELIMINATED</div>
+            )}
             {!iWon && (
               <div className="game-over-winner">
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
