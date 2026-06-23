@@ -480,30 +480,137 @@
 }
 
 @keyframes intro-explode-up {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-170px) scale(2.5); opacity: 0; }
+  0% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  100% { transform: translateY(-280px) scale(3.4) rotate(-7deg); opacity: 0; }
 }
 
 @keyframes intro-explode-down {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(170px) scale(2.5); opacity: 0; }
+  0% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  100% { transform: translateY(280px) scale(3.4) rotate(7deg); opacity: 0; }
 }
 
-/* ---- Comic starburst that bursts out of the centre as the lines explode ---- */
+/* ===========================  EXPLOSION (BOOM)  ==========================
+   The punchier detonation as the two lines blow apart into the menu: a hard
+   white flash, two flat hard-edged shockwave rings, two counter-rotating
+   graffiti starbursts (pink behind, yellow in front, black-outlined), and radial
+   shrapnel shards. All flat colors + transform/opacity only. Sits above the
+   title (z 3) for the one big hit, then the App bar-wipe takes over. */
+.intro-boom {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Hard bright flash. */
+.intro-boom-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: intro-boom-flash 360ms ease-out forwards;
+}
+
+@keyframes intro-boom-flash {
+  0% { opacity: 0; }
+  10% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+/* Flat hard-edged shockwave rings - a thick brand-colour ring with a hard black
+   outline (box-shadow, 0 blur), punching outward. */
+.intro-shockwave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  border: 9px solid #2EFFE0;
+  box-shadow: 0 0 0 4px #000, inset 0 0 0 4px #000;
+  transform: scale(0);
+  opacity: 1;
+  animation: intro-shockwave 440ms cubic-bezier(0.15, 0.85, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.intro-shockwave.ring2 {
+  border-color: #FFE94A;
+  animation-delay: 70ms;
+}
+
+@keyframes intro-shockwave {
+  0% { transform: scale(0); opacity: 1; }
+  70% { opacity: 0.9; }
+  100% { transform: scale(6.5); opacity: 0; }
+}
+
+/* Counter-rotating layered starbursts. */
 .intro-starburst {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 440px;
-  height: 440px;
+  width: 540px;
+  height: 540px;
   transform: translate(-50%, -50%) scale(0);
   pointer-events: none;
-  animation: intro-burst-expand 400ms ease-out forwards;
+  will-change: transform, opacity;
 }
 
-@keyframes intro-burst-expand {
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.3; }
-  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+.intro-starburst--front {
+  animation: intro-burst-front 420ms cubic-bezier(0.15, 0.9, 0.25, 1) forwards;
+}
+
+.intro-starburst--back {
+  width: 640px;
+  height: 640px;
+  animation: intro-burst-back 470ms cubic-bezier(0.15, 0.9, 0.25, 1) forwards;
+}
+
+@keyframes intro-burst-front {
+  0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.15); opacity: 1; }
+  55% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(42deg) scale(1.5); opacity: 0; }
+}
+
+@keyframes intro-burst-back {
+  0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.15); opacity: 0.95; }
+  60% { opacity: 0.85; }
+  100% { transform: translate(-50%, -50%) rotate(-42deg) scale(1.75); opacity: 0; }
+}
+
+/* Radial shrapnel: flat shards with a hard black outline, flung out from centre.
+   transform-origin at the top so each rotates around the blast centre, then
+   translateY flings it outward along that angle. */
+.intro-shards {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+}
+
+.intro-shard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--sw, 9px);
+  height: var(--sh, 24px);
+  margin-left: calc(var(--sw, 9px) / -2);
+  border: 2px solid #000;
+  border-radius: 2px;
+  transform-origin: 50% 0;
+  transform: rotate(var(--ang, 0deg)) translateY(0) scaleY(0.4);
+  opacity: 0;
+  animation: intro-shard-fly 420ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes intro-shard-fly {
+  0% { transform: rotate(var(--ang, 0deg)) translateY(0) scaleY(0.4); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: rotate(var(--ang, 0deg)) translateY(calc(-1 * var(--dist, 240px))) scaleY(1.2); opacity: 0; }
 }
 
 /* ---- One-frame white impact flash on each landing ---- */
@@ -534,10 +641,8 @@
   .intro-slot-type { transform: translate(-4px, -6px) rotate(-5deg); }
   .intro-slot-die { transform: translate(6px, 8px) rotate(6deg); }
 
-  .intro-starburst {
-    width: 300px;
-    height: 300px;
-  }
+  .intro-starburst--front { width: 360px; height: 360px; }
+  .intro-starburst--back { width: 430px; height: 430px; }
 
   .intro-stage.shaking {
     animation: intro-shake-sm 200ms ease-in-out;
@@ -632,6 +737,10 @@
     opacity: 1;
     transform: rotate(var(--rot, 0deg)) scale(1);
   }
+
+  /* The explosion is motion by definition - drop it entirely; the lines just
+     fade out (intro-reduced-fadeout above) for a calm exit. */
+  .intro-boom { display: none; }
 }
 
 @keyframes intro-reduced-fadeout {

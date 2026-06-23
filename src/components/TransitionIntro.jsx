@@ -123,6 +123,18 @@ function AccentShape({ shape, color, label }) {
   return null;
 }
 
+// Radial shrapnel for the explosion: flat graffiti shards flung out from centre
+// on evenly-spaced angles (with a tiny per-shard skew + varied distance/size so
+// it doesn't look mechanical). Deterministic from the index - no randomness.
+const SHARD_COLORS = ['#FFE94A', '#2EFFE0', '#FF2EC4', '#FF6B3D'];
+const SHARDS = Array.from({ length: 14 }, (_, i) => ({
+  ang: (360 / 14) * i + (i % 2 ? 9 : -9),
+  dist: 230 + (i % 3) * 80,
+  c: SHARD_COLORS[i % SHARD_COLORS.length],
+  w: i % 2 ? 8 : 11,
+  h: i % 2 ? 30 : 20,
+}));
+
 // Split a phrase into per-letter spans so each letter can stagger in on its own
 // delay (`--i`). Spaces are rendered as a non-breaking space and flagged so they
 // never sprout a paint drip.
@@ -296,9 +308,38 @@ export default function TransitionIntro({ onComplete }) {
 
       <div className={`intro-stage${shaking ? ' shaking' : ''}`}>
         {exploding && (
-          <svg className="intro-starburst" viewBox="-100 -100 200 200">
-            <polygon points={BURST_POINTS} fill="#FFE94A" />
-          </svg>
+          <div className="intro-boom">
+            {/* Hard bright flash on detonation. */}
+            <div className="intro-boom-flash" />
+            {/* Two flat hard-edged shockwave rings punching outward. */}
+            <div className="intro-shockwave" />
+            <div className="intro-shockwave ring2" />
+            {/* Layered graffiti starburst: a pink one behind, a yellow one in
+                front, counter-rotating as they blow up - both with hard black
+                outlines (flat, no glow). */}
+            <svg className="intro-starburst intro-starburst--back" viewBox="-112 -112 224 224">
+              <polygon points={BURST_POINTS} fill="#FF2EC4" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
+            </svg>
+            <svg className="intro-starburst intro-starburst--front" viewBox="-112 -112 224 224">
+              <polygon points={BURST_POINTS} fill="#FFE94A" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
+            </svg>
+            {/* Radial shrapnel shards. */}
+            <div className="intro-shards">
+              {SHARDS.map((s, i) => (
+                <span
+                  key={i}
+                  className="intro-shard"
+                  style={{
+                    '--ang': `${s.ang}deg`,
+                    '--dist': `${s.dist}px`,
+                    '--sw': `${s.w}px`,
+                    '--sh': `${s.h}px`,
+                    background: s.c,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         )}
         {/* Tilt layer (cursor lean) wraps the breathe layer (idle breathing scale)
             wraps the two slots - each transform on its own element so they compose

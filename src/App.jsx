@@ -799,6 +799,9 @@ function App() {
 
   // Open the public-room browser. Clear any stale list so we don't flash an old
   // snapshot; the screen's mount effect immediately re-requests a fresh one.
+  // NOTE: the homepage "Browse Public Rooms" button was removed (public browsing
+  // is reachable from the Quick Play flow), so this + the 'browse' route below are
+  // retained but currently unlinked from the menu - the screen itself is kept.
   function handleOpenBrowser() {
     setServerError('');
     setPublicRooms([]);
@@ -1060,7 +1063,6 @@ function App() {
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={() => goToLobby('join')}
         onQuickPlay={handleQuickPlay}
-        onBrowseRooms={handleOpenBrowser}
         onCredits={goToCredits}
       />
     );

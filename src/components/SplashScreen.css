@@ -49,8 +49,9 @@
   position: relative;
   z-index: 2;
   font-family: 'Bungee Shade', 'Bungee', cursive;
-  /* MASSIVE on big screens, still fits on phones. */
-  font-size: clamp(50px, 12vw, 130px);
+  /* MASSIVE on big screens, still fits on phones. Capped by viewport HEIGHT too
+     (min of vw/vh) so it shrinks on short laptops instead of forcing clipping. */
+  font-size: clamp(40px, min(12vw, 13vh), 120px);
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 5px #000;
@@ -112,7 +113,7 @@
   position: relative;
   z-index: 2;
   height: 22px;
-  margin-top: 22px;
+  margin-top: clamp(10px, 2vh, 22px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,14 +156,14 @@
 }
 
 .splash-hero-mascot .mascot-img {
-  height: clamp(120px, 25vw, 200px);
+  height: clamp(96px, 20vh, 184px);
 }
 
 /* ---- "CLICK ANYWHERE TO START" - classic INSERT COIN pulse ---- */
 .splash-start {
   position: relative;
   z-index: 2;
-  margin-top: clamp(28px, 4vw, 56px);
+  margin-top: clamp(14px, 3vh, 40px);
   font-family: 'Bungee', cursive;
   font-size: clamp(12px, 1.6vw, 18px);
   color: #FFE94A;
@@ -193,7 +194,7 @@
 .splash-mascot-stage {
   position: relative;
   z-index: 2;
-  margin-top: clamp(10px, 2vw, 24px);
+  margin-top: clamp(6px, 1.4vh, 20px);
   transform-origin: center bottom;
   animation: splash-mascot-sway 4s ease-in-out infinite;
 }

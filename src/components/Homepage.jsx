@@ -41,7 +41,7 @@ const SPEED_LINES = [
  * fallback), since the create/join room flow and WebSocket wiring are
  * separate, later pieces of work.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onBrowseRooms, onCredits }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -105,17 +105,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     }
   }
 
-  function handleBrowseRooms() {
-    if (navigating) return;
-    sound.click();
-    setNavigating(true);
-    if (onBrowseRooms) {
-      onBrowseRooms();
-    } else {
-      console.log('Browse Rooms clicked (no onBrowseRooms handler wired up yet)');
-    }
-  }
-
   function handleCredits() {
     if (navigating) return;
     sound.click();
@@ -165,9 +154,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
-        {/* Instant-play row: the big QUICK PLAY drops you into the nearest open
-            public game; BROWSE opens the public lobby list. Both sit above the
-            game grid so jumping straight in is the most obvious path. */}
+        {/* Instant-play hero: QUICK PLAY drops you into the nearest open public
+            game (or makes one). Sits above the grid as the most obvious path in.
+            Public-room browsing is reachable from the Quick Play flow itself, so
+            it no longer needs its own menu button. */}
         <div className="homepage-quickplay">
           <button
             className={`homepage-quick-btn${navigating ? ' disabled' : ''}`}
@@ -175,13 +165,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             disabled={navigating}
           >
             ⚡ QUICK PLAY
-          </button>
-          <button
-            className={`homepage-browse-btn${navigating ? ' disabled' : ''}`}
-            onClick={handleBrowseRooms}
-            disabled={navigating}
-          >
-            BROWSE PUBLIC ROOMS
           </button>
         </div>
 
@@ -211,7 +194,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onClick={handleJoinRoom}
             disabled={navigating}
           >
-            JOIN ROOM
+            JOIN BY CODE
           </button>
         </div>
 

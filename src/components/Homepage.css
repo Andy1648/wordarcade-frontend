@@ -8,14 +8,21 @@
      card; the page's dark base comes from body/#root. */
   background: transparent;
   width: 100%;
-  min-height: 100vh;
+  /* Fit the whole menu within ONE screen height so the landing never grows a
+     vertical scrollbar. Pinned to the viewport (dvh handles mobile chrome) with
+     overflow hidden as the hard guarantee; the spacing below is trimmed so the
+     content genuinely fits rather than getting clipped. */
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Percentage-based side breathing room on big screens, tight on phones. */
-  padding: clamp(14px, 4vw, 72px);
+  /* Vertical padding is small + vh-based so it never eats the height budget on
+     short laptops; horizontal keeps the roomy side breathing room. */
+  padding: clamp(8px, 1.6vh, 20px) clamp(14px, 4vw, 72px);
 }
 
 /* The content card fills most of the viewport width and only caps (and centres)
@@ -26,9 +33,11 @@
   background-color: #1a0b2e;
   background-image: radial-gradient(circle, rgba(255, 46, 196, 0.06) 0.8px, transparent 0.8px);
   background-size: 12px 12px;
-  padding: clamp(18px, 2.5vw, 40px) clamp(14px, 2vw, 32px) 0;
+  padding: clamp(10px, 1.6vh, 28px) clamp(14px, 2vw, 32px) clamp(8px, 1.2vh, 16px);
   overflow: hidden;
   width: 100%;
+  /* Never exceed the wrap's height, so the card fits one screen. */
+  max-height: 100%;
   max-width: min(95vw, 1400px);
   border-radius: 14px;
 }
@@ -150,8 +159,9 @@
   position: relative;
   z-index: 1;
   font-family: 'Bungee Shade', 'Bungee', cursive;
-  /* Scales with the viewport: comfortably big on desktop, capped on ultrawide. */
-  font-size: clamp(40px, 8vw, 100px);
+  /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
+     desktop but shrinks on short laptops to help the menu fit one screen. */
+  font-size: clamp(34px, min(7.5vw, 9vh), 88px);
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 5px #000;
@@ -296,7 +306,7 @@ html[data-beat='true'] .homepage-logo::after {
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   text-align: center;
-  margin: clamp(16px, 2.5vw, 32px) 0 clamp(12px, 1.6vw, 22px);
+  margin: clamp(10px, 1.6vh, 22px) 0 clamp(8px, 1.2vh, 16px);
   transform: skewX(-4deg);
 }
 
@@ -309,7 +319,7 @@ html[data-beat='true'] .homepage-logo::after {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin: clamp(16px, 2.5vw, 28px) auto 0;
+  margin: clamp(10px, 1.6vh, 22px) auto 0;
   width: 100%;
   max-width: 560px;
 }
@@ -324,7 +334,7 @@ html[data-beat='true'] .homepage-logo::after {
   background: #FFE94A;
   border: 5px solid #B5A413;
   border-radius: 10px;
-  padding: clamp(14px, 1.8vw, 22px) 0;
+  padding: clamp(11px, 1.5vh, 18px) 0;
   cursor: pointer;
   box-shadow: 6px 6px 0 #000;
   transform: skewX(-2deg);
@@ -410,11 +420,11 @@ html[data-beat='true'] .homepage-logo::after {
   /* Each card grows with the viewport (min 200px, ~25vw, capped 400px) and the
      three columns centre as a group so they fill the width without stretching
      infinitely. Collapses to a single column on small screens (below). */
-  grid-template-columns: repeat(3, clamp(200px, 25vw, 400px));
+  grid-template-columns: repeat(3, clamp(150px, 20vw, 300px));
   justify-content: center;
   /* Roomier gap so the featured card's slight upscale + idle drift never reach
      into a neighbour. */
-  gap: clamp(14px, 2vw, 28px);
+  gap: clamp(10px, 1.4vw, 20px);
   padding: 0 2px;
   /* Don't stretch the staggered (margin-top) wrappers to a common row height -
      keep each at its card height so the idle sway rotates around the card. */
@@ -435,7 +445,7 @@ html[data-beat='true'] .homepage-logo::after {
   display: flex;
   justify-content: center;
   gap: clamp(10px, 1.5vw, 22px);
-  padding: clamp(16px, 2vw, 30px) 18px clamp(20px, 2.5vw, 36px);
+  padding: clamp(10px, 1.6vh, 22px) 18px clamp(8px, 1.4vh, 18px);
 }
 
 /* Discreet link to the standalone credits page. */
@@ -560,6 +570,18 @@ html[data-beat='true'] .homepage-logo::after {
 @media (max-width: 760px) {
   .homepage-cards-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Single-column = three tall stacked cards, which legitimately exceed a phone
+     screen. The fit-to-one-screen rule is a LAPTOP target; on narrow screens
+     allow normal vertical scrolling again instead of clipping the cards. */
+  .homepage-wrap {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .homepage-stage {
+    max-height: none;
   }
 }
 
