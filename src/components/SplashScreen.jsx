@@ -106,7 +106,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
         </span>
       </div>
 
-      {/* TEMP: "CLICK ANYWHERE TO START" hidden for a screenshot — restore after. */}
+      <div className="splash-start">CLICK ANYWHERE TO START</div>
 
       <div className="splash-halftone" aria-hidden="true" />
       {/* Darkens the backdrop to black on dismiss, cutting into the intro. */}
