@@ -18,8 +18,30 @@ import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
 import { SoundContext } from './contexts/SoundContext';
+import { buildPlayerColors } from './playerColors';
 import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
+
+// Kill-feed flavor lines shown when a player is eliminated (their last life is
+// lost). `{player}` is replaced with the eliminated player's name. FNF/Newgrounds
+// voice, curated from the content review pile.
+const KILL_FEED_LINES = [
+  '{player} CHOKED.',
+  '{player} ran out of words.',
+  '{player} got DELETED.',
+  'The bomb chose {player}.',
+  '{player} forgot how to read.',
+  '{player} typed nothing. bold strategy.',
+  '{player} got cooked.',
+  '{player} fumbled the bag.',
+  '{player} ran out of time AND talent.',
+  '{player} blew up. literally.',
+  "{player}'s brain buffered.",
+  '{player} got left on read by the dictionary.',
+  '{player} is no longer with us.',
+  '{player} rage quit (mentally).',
+  "{player} couldn't spell their way out.",
+];
 
 // The music button's border/glyph colour, matched to each screen's accent.
 const SCREEN_ACCENT = {
@@ -64,6 +86,14 @@ function App() {
   const transitionKeyRef = useRef(0);
   const [lobbyMode, setLobbyMode] = useState(null);
   const [room, setRoom] = useState(null);
+  // Per-player session colours, derived from the room roster's join order and
+  // keyed by stable player id. Built once per roster change and passed to every
+  // screen so a player wears the same colour in the room, the player bar, the
+  // kill feed and the stats. See playerColors.js.
+  const playerColors = useMemo(
+    () => buildPlayerColors(room ? room.players : []),
+    [room]
+  );
   const [serverError, setServerError] = useState('');
   // The server tells us our own connection id immediately on connect (see
   // server.js's 'connected' message) - we need this to know things like
@@ -246,6 +276,38 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beatCount]);
 
+  // Subtle hover blip on any real <button>, app-wide (Lobby / Room / game UI),
+  // via one delegated listener so we don't touch every button. The Homepage game
+  // cards are <div role="button">, so they're NOT matched here and keep their own
+  // per-card hover. De-duped per element (no re-fire while moving within a button)
+  // and time-debounced so sweeping the pointer across a row doesn't machine-gun.
+  useEffect(() => {
+    let lastBtn = null;
+    let lastAt = 0;
+    const onOver = (e) => {
+      const btn = e.target.closest ? e.target.closest('button') : null;
+      if (!btn || btn === lastBtn || btn.disabled) return;
+      lastBtn = btn;
+      const t = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (t - lastAt < 70) return; // debounce
+      lastAt = t;
+      sound.menuHover();
+    };
+    const onOut = (e) => {
+      // Only re-arm once the pointer truly LEAVES the button (not when it crosses
+      // between the button's own children), so a child boundary can't re-trigger.
+      if (lastBtn && !(e.relatedTarget && lastBtn.contains(e.relatedTarget))) {
+        lastBtn = null;
+      }
+    };
+    document.addEventListener('pointerover', onOver);
+    document.addEventListener('pointerout', onOut);
+    return () => {
+      document.removeEventListener('pointerover', onOver);
+      document.removeEventListener('pointerout', onOut);
+    };
+  }, [sound]);
+
   useEffect(() => {
     if (!messages.length) return;
     // Drain the FIFO queue in arrival order so co-arriving frames (e.g.
@@ -351,7 +413,7 @@ function App() {
           typeof p.lives === 'number' &&
           p.lives < before
         ) {
-          lostPlayers.push({ id: p.id, name: p.name });
+          lostPlayers.push({ id: p.id, name: p.name, lives: p.lives });
         }
       });
       feedPrevLivesRef.current = Object.fromEntries(
@@ -360,14 +422,34 @@ function App() {
       feedReasonRef.current = null;
       if (lostPlayers.length) {
         const now = Date.now();
-        setFeedEvents((prev) => [
-          ...prev,
-          ...lostPlayers.map((p) => ({
-            type: reason,
-            playerName: p.name,
-            timestamp: now,
-          })),
-        ]);
+        setFeedEvents((prev) => {
+          const next = [
+            ...prev,
+            ...lostPlayers.map((p) => ({
+              type: reason,
+              playerId: p.id,
+              playerName: p.name,
+              timestamp: now,
+            })),
+          ];
+          // Anyone who hit 0 lives is eliminated: add a flavor kill-feed line
+          // right after their life-loss row.
+          lostPlayers
+            .filter((p) => typeof p.lives === 'number' && p.lives <= 0)
+            .forEach((p) => {
+              const line = KILL_FEED_LINES[
+                Math.floor(Math.random() * KILL_FEED_LINES.length)
+              ].replace('{player}', p.name);
+              next.push({
+                type: 'eliminated',
+                playerId: p.id,
+                playerName: p.name,
+                message: line,
+                timestamp: now,
+              });
+            });
+          return next;
+        });
         // Record the life loss in the end-game stats under its cause.
         setGameStats((prev) => {
           const key = reason === 'skip' ? 'skips' : 'timeouts';
@@ -402,6 +484,7 @@ function App() {
           ...prev,
           {
             type: 'accepted',
+            playerId: submitter.id,
             playerName,
             word: payload.word,
             timestamp: now,
@@ -427,6 +510,7 @@ function App() {
           ...prev,
           {
             type: 'rejected',
+            playerId: submitter.id,
             playerName,
             reason: payload.reason,
             timestamp: Date.now(),
@@ -818,6 +902,7 @@ function App() {
         lastWordResult={lastWordResult}
         gameOver={gameOver}
         roomPlayers={room ? room.players : []}
+        playerColors={playerColors}
         feedEvents={feedEvents}
         gameStats={gameStats}
         typingText={typingText}
@@ -857,6 +942,7 @@ function App() {
       <RoomScreen
         room={room}
         myId={myId}
+        playerColors={playerColors}
         preselectedGame={isPreselectableGame(lobbyMode) ? lobbyMode : null}
         serverError={serverError}
         onLeave={handleLeaveRoom}

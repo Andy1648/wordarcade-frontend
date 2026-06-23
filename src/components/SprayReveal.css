@@ -1,0 +1,73 @@
+/* SprayReveal.css - the spray-paint reveal mask.
+
+   The effect is a left->right mask whose advancing edge is a SOFT, slightly
+   PATCHY alpha ramp (not a clean wipe), so it reads as spray paint / overspray.
+   The edge position (--spray-pos) is a registered @property so it interpolates
+   smoothly inside the mask gradient with NO per-frame JS. */
+
+@property --spray-pos {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 114%;
+}
+
+.spray-reveal {
+  display: inline-block;
+  max-width: 100%; /* still wraps inside its container; never forces overflow */
+  /* Base = fully revealed. If @property / mask aren't supported the text is just
+     plainly visible (fail-safe - it can never get stuck masked-out). */
+  --spray-pos: 114%;
+  --spray-angle: 90deg; /* 90deg = sweep to the right (reveal from the left) */
+
+  /* The advancing edge: solid behind --spray-pos, then a non-monotonic alpha
+     falloff (0.7 -> 0.3 -> 0.5 -> 0) that breaks the edge up into an irregular,
+     misty overspray rather than a straight line. */
+  -webkit-mask-image: linear-gradient(
+    var(--spray-angle),
+    #000 0%,
+    #000 var(--spray-pos),
+    rgba(0, 0, 0, 0.7) calc(var(--spray-pos) + 3%),
+    rgba(0, 0, 0, 0.3) calc(var(--spray-pos) + 6%),
+    rgba(0, 0, 0, 0.5) calc(var(--spray-pos) + 9%),
+    transparent calc(var(--spray-pos) + 13%)
+  );
+  mask-image: linear-gradient(
+    var(--spray-angle),
+    #000 0%,
+    #000 var(--spray-pos),
+    rgba(0, 0, 0, 0.7) calc(var(--spray-pos) + 3%),
+    rgba(0, 0, 0, 0.3) calc(var(--spray-pos) + 6%),
+    rgba(0, 0, 0, 0.5) calc(var(--spray-pos) + 9%),
+    transparent calc(var(--spray-pos) + 13%)
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  animation: spray-reveal var(--spray-dur, 700ms) cubic-bezier(0.45, 0, 0.25, 1)
+    var(--spray-delay, 0ms) both;
+  will-change: --spray-pos;
+}
+
+/* Right-to-left variant: flip the sweep direction. */
+.spray-reveal.spray-right {
+  --spray-angle: 270deg;
+}
+
+@keyframes spray-reveal {
+  from { --spray-pos: -16%; } /* fully masked out (nothing painted yet) */
+  to { --spray-pos: 114%; } /* fully revealed */
+}
+
+/* Reduced motion: no sweep - a plain, simple fade (always readable). */
+@media (prefers-reduced-motion: reduce) {
+  .spray-reveal {
+    -webkit-mask-image: none;
+    mask-image: none;
+    animation: spray-reveal-fade 300ms ease-out both;
+    will-change: opacity;
+  }
+  @keyframes spray-reveal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

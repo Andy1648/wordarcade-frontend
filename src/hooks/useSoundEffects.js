@@ -21,7 +21,7 @@ function playTone(ctx, { freq, type, start, dur, peak }) {
   gain.gain.setValueAtTime(0.0001, start);
   gain.gain.linearRampToValueAtTime(peak, start + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(getMaster(ctx));
   osc.start(start);
   osc.stop(start + dur + 0.02);
 }
@@ -40,9 +40,36 @@ function playNoise(ctx, { start, dur, peak }) {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(peak, start);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  src.connect(gain).connect(ctx.destination);
+  src.connect(gain).connect(getMaster(ctx));
   src.start(start);
   src.stop(start + dur + 0.01);
+}
+
+// Lazily build (once per AudioContext) a gentle master limiter that EVERY SFX
+// routes through before the speakers, so heavy simultaneous layering (e.g. a
+// keystroke tick under an accept ding under the heartbeat) can't clip. It's
+// stored on the context object itself, so it's discarded and rebuilt
+// automatically whenever the context is recreated. Falls back to the raw
+// destination if a compressor can't be made. The background-music graph has its
+// own gain/analyser chain and never touches this.
+function getMaster(ctx) {
+  if (!ctx) return null;
+  if (!ctx.__sfxMaster) {
+    try {
+      const comp = ctx.createDynamicsCompressor();
+      const now = ctx.currentTime;
+      comp.threshold.setValueAtTime(-3, now); // only catch the loud peaks
+      comp.knee.setValueAtTime(3, now);
+      comp.ratio.setValueAtTime(12, now); // limiter-ish above the threshold
+      comp.attack.setValueAtTime(0.003, now);
+      comp.release.setValueAtTime(0.12, now);
+      comp.connect(ctx.destination);
+      ctx.__sfxMaster = comp;
+    } catch {
+      return ctx.destination;
+    }
+  }
+  return ctx.__sfxMaster;
 }
 
 // Builds the sound API around a set of refs (so the returned object has a
@@ -74,6 +101,31 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       getCtx();
     },
 
+    // Soft percussive key tick. Fires on every character typed, so it's kept
+    // VERY quiet (peak 0.045 - well under click/tick/ding) with a fast ~25ms
+    // decay, and its pitch jitters a little per press so rapid typing doesn't
+    // sound robotic. Routes through the master limiter like every other SFX.
+    keystroke() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(420 + Math.random() * 150, now); // per-key jitter
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.045, now + 0.002); // very low, fast attack
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025); // short percussive tick
+        osc.connect(gain).connect(getMaster(ctx));
+        osc.start(now);
+        osc.stop(now + 0.03);
+      } catch {
+        /* never let audio crash the game */
+      }
+    },
+
     // Per-second turn tick. A subtle square-wave click whose pitch rises with
     // urgency (0 -> 600Hz calm, 1 -> 1200Hz tense), so the tick naturally gets
     // higher as time runs out. Low gain since it plays every second.
@@ -91,7 +143,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         gain.gain.setValueAtTime(0.0001, now);
         gain.gain.linearRampToValueAtTime(0.15, now + 0.005); // 5ms attack
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03); // 25ms release
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
         osc.stop(now + 0.035);
       } catch {
@@ -121,7 +173,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
           gain.gain.setValueAtTime(0.0001, start);
           gain.gain.linearRampToValueAtTime(peak, start + 0.008); // hard snap in
           gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16); // short tail
-          osc.connect(gain).connect(ctx.destination);
+          osc.connect(gain).connect(getMaster(ctx));
           osc.start(start);
           osc.stop(start + 0.18);
         };
@@ -148,6 +200,90 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
+    // Combo blip - a short bright up-chirp whose pitch CLIMBS with the streak
+    // length (clamped), so each hit in a chain rings a little higher. Kept subtle
+    // (it stacks over correctDing) and routes through the master limiter. Purely a
+    // hype cue - tied to the local player's own streak, nothing server-side.
+    combo(count = 1) {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const dest = getMaster(ctx);
+        const n = Math.max(1, Math.min(12, count));
+        const base = 440 + (n - 1) * 52; // ~440Hz -> ~1012Hz across the tiers
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(base, now);
+        osc.frequency.exponentialRampToValueAtTime(base * 1.5, now + 0.07); // quick chirp up
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+        osc.connect(gain).connect(dest);
+        osc.start(now);
+        osc.stop(now + 0.16);
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Combo lost - a descending "shatter": a downward saw sweep + a short noise
+    // crack, so dropping a streak stings. Routes through the master limiter.
+    comboBreak() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const dest = getMaster(ctx);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.28); // tumble down
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+        osc.connect(gain).connect(dest);
+        osc.start(now);
+        osc.stop(now + 0.32);
+        playNoise(ctx, { start: now, dur: 0.12, peak: 0.18 }); // glassy crack (routes to master)
+      } catch {
+        /* no-op */
+      }
+    },
+
+    // Clutch accent - a light, bright two-blip sparkle for a buzzer-beater save.
+    // Deliberately HIGH and quiet so it sits on top of correctDing/combo without
+    // muddying them; only fired on the hottest near-miss tier. Master-limited.
+    clutchPing() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const dest = getMaster(ctx);
+        const ping = (start, freq) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.linearRampToValueAtTime(0.09, start + 0.005); // light
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
+          osc.connect(gain).connect(dest);
+          osc.start(start);
+          osc.stop(start + 0.14);
+        };
+        ping(now, 1600);
+        ping(now + 0.08, 2100); // a quick up-step sparkle
+      } catch {
+        /* no-op */
+      }
+    },
+
     // Rejected word: a short low square-wave buzz with a sustain.
     wrongBuzz() {
       if (mutedRef.current) return;
@@ -163,7 +299,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         gain.gain.linearRampToValueAtTime(0.2, now + 0.01); // quick attack
         gain.gain.setValueAtTime(0.2, now + 0.12); // sustain
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15); // quick release
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
         osc.stop(now + 0.16);
       } catch {
@@ -186,7 +322,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.frequency.setValueAtTime(60, now);
         gain.gain.setValueAtTime(0.4, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
         osc.stop(now + 0.2);
       } catch {
@@ -210,7 +346,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         gain.gain.setValueAtTime(0.0001, now);
         gain.gain.linearRampToValueAtTime(0.15, now + 0.01); // quick attack to 0.15
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2); // out by 200ms
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
         osc.stop(now + 0.22);
       } catch {
@@ -240,14 +376,14 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         // Bus: everything -> compressor -> makeup gain -> out. The compressor
         // glues the layers and lets the makeup push perceived loudness/punch.
         const comp = ctx.createDynamicsCompressor();
-        comp.threshold.setValueAtTime(-18, now);
+        comp.threshold.setValueAtTime(-22, now);
         comp.knee.setValueAtTime(6, now);
-        comp.ratio.setValueAtTime(4, now);
+        comp.ratio.setValueAtTime(7, now);
         comp.attack.setValueAtTime(0.002, now);
-        comp.release.setValueAtTime(0.12, now);
+        comp.release.setValueAtTime(0.1, now);
         const master = ctx.createGain();
-        master.gain.setValueAtTime(1.25, now); // makeup
-        comp.connect(master).connect(ctx.destination);
+        master.gain.setValueAtTime(2.0, now); // makeup - cranked for a LOUD cartoon slam
+        comp.connect(master).connect(getMaster(ctx));
 
         // 1. "Bonk": a rounded triangle with a fast, comic pitch drop - the
         // classic cartoon-punch donk.
@@ -257,7 +393,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         bonk.frequency.setValueAtTime(520, now);
         bonk.frequency.exponentialRampToValueAtTime(130, now + 0.05);
         bonkGain.gain.setValueAtTime(0.0001, now);
-        bonkGain.gain.exponentialRampToValueAtTime(0.9, now + 0.004); // snap attack
+        bonkGain.gain.exponentialRampToValueAtTime(1.0, now + 0.004); // snap attack
         bonkGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
         bonk.connect(bonkGain).connect(comp);
         bonk.start(now);
@@ -275,11 +411,11 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         const lfoGain = ctx.createGain();
         lfo.type = 'sine';
         lfo.frequency.setValueAtTime(17, now); // wobble speed
-        lfoGain.gain.setValueAtTime(55, now); // wobble depth (Hz)
+        lfoGain.gain.setValueAtTime(78, now); // wobble depth (Hz) - springier boi-oing
         lfoGain.gain.linearRampToValueAtTime(0, now + 0.22); // spring settles
         lfo.connect(lfoGain).connect(boing.frequency);
         boingGain.gain.setValueAtTime(0.0001, now);
-        boingGain.gain.exponentialRampToValueAtTime(0.42, now + 0.01);
+        boingGain.gain.exponentialRampToValueAtTime(0.6, now + 0.01);
         boingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
         boing.connect(boingGain).connect(comp);
         boing.start(now);
@@ -301,7 +437,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         bp.frequency.setValueAtTime(1200, now);
         bp.Q.setValueAtTime(0.8, now);
         const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.setValueAtTime(0.62, now);
         noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
         noise.connect(bp).connect(noiseGain).connect(comp);
         noise.start(now);
@@ -315,7 +451,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         thump.frequency.setValueAtTime(140, now);
         thump.frequency.exponentialRampToValueAtTime(60, now + 0.1);
         thumpGain.gain.setValueAtTime(0.0001, now);
-        thumpGain.gain.exponentialRampToValueAtTime(0.5, now + 0.005);
+        thumpGain.gain.exponentialRampToValueAtTime(0.62, now + 0.005);
         thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
         thump.connect(thumpGain).connect(comp);
         thump.start(now);
@@ -328,7 +464,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         pop.frequency.setValueAtTime(900, now);
         pop.frequency.exponentialRampToValueAtTime(400, now + 0.02);
         popGain.gain.setValueAtTime(0.0001, now);
-        popGain.gain.linearRampToValueAtTime(0.22, now + 0.002);
+        popGain.gain.linearRampToValueAtTime(0.3, now + 0.002);
         popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
         pop.connect(popGain).connect(comp);
         pop.start(now);
@@ -353,7 +489,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         gain.gain.setValueAtTime(0.0001, now);
         gain.gain.linearRampToValueAtTime(0.1, now + 0.002);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
         osc.stop(now + 0.02);
       } catch {
@@ -384,7 +520,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         gain.gain.setValueAtTime(0.0001, now);
         gain.gain.linearRampToValueAtTime(0.15, now + 0.1); // swell in
         gain.gain.linearRampToValueAtTime(0.0001, now + 0.3); // out
-        src.connect(filter).connect(gain).connect(ctx.destination);
+        src.connect(filter).connect(gain).connect(getMaster(ctx));
         src.start(now);
         src.stop(now + 0.31);
       } catch {
@@ -438,7 +574,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); // pitch bend down
         gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-        osc.connect(gain).connect(ctx.destination);
+        osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
         osc.stop(now + 0.32);
         // Metallic clang at 200ms: high-Q bandpassed noise burst.
@@ -457,7 +593,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         const nGain = ctx.createGain();
         nGain.gain.setValueAtTime(0.25, t);
         nGain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        nSrc.connect(filt).connect(nGain).connect(ctx.destination);
+        nSrc.connect(filt).connect(nGain).connect(getMaster(ctx));
         nSrc.start(t);
         nSrc.stop(t + dur + 0.01);
       } catch {

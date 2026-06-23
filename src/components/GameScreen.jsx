@@ -1,8 +1,13 @@
 // GameScreen.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import ImposterWordScreen from './ImposterWordScreen';
+import PlayerDot from './PlayerDot';
+import ComboMeter from './ComboMeter';
+import SprayReveal from './SprayReveal';
+import { resolvePlayerColor } from '../playerColors';
+import { useCombo } from '../hooks/useCombo';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -113,8 +118,35 @@ function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
 
 // Hype feedback - a punchy popup word + a screen shake on every accepted
 // answer, shared by both game modes via the useHypeFeedback hook below.
-const HYPE_WORDS = ['SICK!', 'FIRE!', 'CLEAN!', 'NASTY!', 'EZ!', 'NICE!', 'DOPE!', 'LIT!', 'GOD!', 'BEAST!'];
+const HYPE_WORDS = [
+  // Original short slams.
+  'SICK!', 'FIRE!', 'CLEAN!', 'NASTY!', 'EZ!', 'NICE!', 'DOPE!', 'LIT!', 'GOD!', 'BEAST!',
+  // Curated hype batch (FNF/Newgrounds voice). The popup wraps now, so longer
+  // phrases are fine. ('GG EZ' was intentionally excluded.)
+  'NAH HE TYPING', 'THESAURUS REX', 'SPELL CHECK CANT SAVE YOU', 'COOKED',
+  'YOU ATE THAT', 'DEVOURED', 'WORD MURDER', 'EAT THE DICTIONARY', 'BARS',
+  'ABSOLUTELY DEMOLISHED', 'NO NOTES', 'CERTIFIED YAPPER', 'KEYBOARD WARRIOR',
+  'TOO FAST TOO LITERATE', 'VOCAB GOD', 'FINGERS OF FURY', 'LETTERS FEAR YOU',
+  'SHAKESPEARE WHO', 'BIG BRAIN ENERGY', 'GALAXY BRAIN', 'DICTIONARY DEMON',
+  'MENACE TO SOCIETY', 'BUILT DIFFERENT', 'HES HEATING UP', 'ON FIRE',
+  'COMBO KING', 'UNSTOPPABLE', 'FLAWLESS', 'SHEEEESH', 'TYPE NASTY',
+  'MAXIMUM YAP', 'THE CROWD GOES WILD', 'RENT FREE', 'CLUTCH',
+  'WORDSMITH UNLOCKED', 'BOMB DEFUSED', 'NO CAP JUST WORDS', 'FINGERS BLESSED',
+  'SPEED DEMON',
+];
 const HYPE_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+
+// End-of-game roast/hype blurbs shown on the Word Bomb game-over card (one
+// picked at random per result). ('WORDS WERE SAID. PEOPLE WERE HURT.' excluded.)
+const END_GAME_BLURBS = [
+  'GG. TOUCH GRASS.',
+  'THE DICTIONARY WINS AGAIN.',
+  'SCREENSHOT THIS AND HUMBLE THEM.',
+  'VOCABULARY: 1. YOU: 0.',
+  'NO SURVIVORS.',
+  'THE BOMB IS UNDEFEATED.',
+  'RUN IT BACK?',
+];
 
 /**
  * A single throwaway hype word that scales up, tilts, and fades out (see the
@@ -174,9 +206,17 @@ function FloatingScore() {
 function FlyingWord({ text }) {
   const [done, setDone] = useState(false);
   if (done) return null;
+  const letters = (text || '').toUpperCase().split('');
+  // The container still rides the word-fly throw up toward the bomb; each letter
+  // also does a quick staggered pop on launch, so the throw reads per-letter.
+  // onAnimationEnd is read from the container (the throw is the longest anim).
   return (
     <div className="flying-word" onAnimationEnd={() => setDone(true)} aria-hidden="true">
-      {(text || '').toUpperCase()}
+      {letters.map((ch, i) => (
+        <span key={i} className="flying-letter" style={{ '--i': i }}>
+          {ch === ' ' ? ' ' : ch}
+        </span>
+      ))}
     </div>
   );
 }
@@ -192,8 +232,10 @@ function ShatterWord({ text }) {
   const [letters] = useState(() =>
     (text || '').toUpperCase().split('').map((ch) => ({
       ch,
-      tx: Math.round(Math.random() * 60 - 30), // ±30px
-      ty: Math.round(Math.random() * 60 - 30),
+      tx: Math.round(Math.random() * 60 - 30), // ±30px sideways scatter
+      // Bias the vertical scatter DOWNWARD so the rejected letters drop/fall as
+      // they crumble (a small amount can still kick up).
+      ty: Math.round(Math.random() * 44 + 6), // +6..+50px (down)
       rot: Math.round(Math.random() * 120 - 60),
     }))
   );
@@ -215,6 +257,49 @@ function ShatterWord({ text }) {
 }
 
 /**
+ * Per-letter physics on a SUBMITTED answer (used by Category Blitz, which has no
+ * bomb to throw the word at). The word is split into transient spans animated
+ * individually + staggered, then the whole element self-removes:
+ *   - mode 'accept' : a quick, light, crisp pop-hop left-to-right that settles
+ *     then clears (fires constantly, so it stays subtle - not a celebration).
+ *   - mode 'reject' : a sharper scatter - each letter jitters then flings out
+ *     with a downward drop, in red. This IS the CB reject reaction (it replaces
+ *     CB's input-shake) so there's ONE coherent miss, not a box-shake + letters.
+ * Offsets picked once on mount; pointer-events:none (CSS); transform/opacity only.
+ */
+function SubmitLetters({ text, mode }) {
+  const [done, setDone] = useState(false);
+  const [letters] = useState(() =>
+    (text || '').toUpperCase().split('').map((ch) => ({
+      ch,
+      tx: Math.round(Math.random() * 50 - 25), // ±25px sideways
+      ty: Math.round(Math.random() * 34 + 8), // +8..+42px downward drop
+      rot: Math.round(Math.random() * 70 - 35),
+    }))
+  );
+  if (done || letters.length === 0) return null;
+  return (
+    <div className={`submit-letters submit-${mode}`} aria-hidden="true">
+      {letters.map((l, i) => (
+        <span
+          key={i}
+          className="submit-letter"
+          style={{
+            '--i': i,
+            '--tx': `${l.tx}px`,
+            '--ty': `${l.ty}px`,
+            '--rot': `${l.rot}deg`,
+          }}
+          onAnimationEnd={i === 0 ? () => setDone(true) : undefined}
+        >
+          {l.ch === ' ' ? ' ' : l.ch}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
  * The "CLUTCH!" slam shown instead of the normal hype word when a correct answer
  * lands with <=2s left. Big pink Bungee with a unique slam-in animation; removes
  * itself on animation end. pointer-events:none.
@@ -225,6 +310,39 @@ function ClutchPopup() {
   return (
     <div className="clutch-popup" onAnimationEnd={() => setDone(true)} aria-hidden="true">
       CLUTCH!
+    </div>
+  );
+}
+
+// Near-miss tier from the remaining-time value at the moment of a successful
+// submit. The shared game clock is WHOLE seconds (per-second timer_tick), so a
+// reading of 1 means "under 1s actually remained", 2 means "under 2s", etc. -
+// hence the "<Ns" copy. Returns null for anything that isn't a real close call.
+function clutchTier(secondsLeft) {
+  if (typeof secondsLeft !== 'number' || secondsLeft <= 0) return null;
+  if (secondsLeft <= 1) return 'clutch'; // landed in the final displayed second
+  if (secondsLeft <= 2) return 'close'; // landed with ~1-2s to spare
+  return null;
+}
+
+/**
+ * The near-miss / clutch callout: a quick emphasis pop near the input that
+ * surfaces HOW CLOSE a successful submit was ("<1s CLUTCH!" / "<2s CLOSE!").
+ * Tiered (close vs the hotter clutch); re-keyed per qualifying submit so it
+ * replays, and removes itself on animation end. pointer-events:none.
+ */
+function ClutchCallout({ seconds, tier }) {
+  const [done, setDone] = useState(false);
+  if (done) return null;
+  const label = tier === 'clutch' ? 'CLUTCH!' : 'CLOSE!';
+  return (
+    <div
+      className={`clutch-callout clutch-${tier}`}
+      onAnimationEnd={() => setDone(true)}
+      aria-hidden="true"
+    >
+      <span className="clutch-callout-time">&lt;{seconds}s</span>
+      <span className="clutch-callout-label">{label}</span>
     </div>
   );
 }
@@ -786,7 +904,7 @@ const FEED_MAX_VISIBLE = 8;
  * pushes it down - only the freshly-added row mounts and replays the slide-in,
  * and the one scrolling off the end unmounts.
  */
-function KillFeed({ events }) {
+function KillFeed({ events, playerColors = {} }) {
   const list = events || [];
   const visible = [];
   for (let i = list.length - 1; i >= 0 && visible.length < FEED_MAX_VISIBLE; i--) {
@@ -800,31 +918,48 @@ function KillFeed({ events }) {
         {visible.length === 0 ? (
           <div className="kill-feed-empty">WAITING FOR ACTION...</div>
         ) : (
-          visible.map(({ ev, idx }) => (
-            <div key={idx} className={`kill-feed-row ${ev.type}`}>
+          visible.map(({ ev, idx }) => {
+            // The row is identified by its actor's session colour (a left accent
+            // bar + the player's name in colour); the event TYPE is still read
+            // from the dot + the coloured action word (TIMED OUT, etc.).
+            const pc = resolvePlayerColor(playerColors, ev.playerId);
+            return (
+            <div
+              key={idx}
+              className={`kill-feed-row ${ev.type}`}
+              style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+            >
               <span className="kill-feed-dot" />
               <span className="kill-feed-text">
-                <span className="kill-feed-name">{ev.playerName}</span>{' '}
-                {ev.type === 'accepted' && (
+                {ev.type === 'eliminated' ? (
+                  // The flavor line already includes the player's name.
+                  <span className="kill-feed-action kill-feed-elim">{ev.message}</span>
+                ) : (
                   <>
-                    typed{' '}
-                    <span className="kill-feed-word">
-                      {(ev.word || '').toUpperCase()}
-                    </span>
+                    <span className="kill-feed-name">{ev.playerName}</span>{' '}
+                    {ev.type === 'accepted' && (
+                      <>
+                        typed{' '}
+                        <span className="kill-feed-word">
+                          {(ev.word || '').toUpperCase()}
+                        </span>
+                      </>
+                    )}
+                    {ev.type === 'timeout' && (
+                      <span className="kill-feed-action">TIMED OUT 💀</span>
+                    )}
+                    {ev.type === 'skip' && (
+                      <span className="kill-feed-action">SKIPPED</span>
+                    )}
+                    {ev.type === 'rejected' && (
+                      <span className="kill-feed-action">MISSED</span>
+                    )}
                   </>
-                )}
-                {ev.type === 'timeout' && (
-                  <span className="kill-feed-action">TIMED OUT 💀</span>
-                )}
-                {ev.type === 'skip' && (
-                  <span className="kill-feed-action">SKIPPED</span>
-                )}
-                {ev.type === 'rejected' && (
-                  <span className="kill-feed-action">MISSED</span>
                 )}
               </span>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -852,7 +987,7 @@ function formatDuration(ms) {
  * `players` roster (final standings) seeds the per-player rows so everyone
  * appears even if they never played a word.
  */
-function GameOverStats({ gameStats, players, winner }) {
+function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
   const words = gameStats.wordsPlayed || [];
   const timeouts = gameStats.timeouts || [];
   const durationMs =
@@ -965,9 +1100,18 @@ function GameOverStats({ gameStats, players, winner }) {
 
       <div className="go-section-label">PLAYERS</div>
       <div className="go-players">
-        {perPlayer.map((p) => (
-          <div key={p.id} className="go-player">
-            <div className="go-player-name">{p.name}</div>
+        {perPlayer.map((p) => {
+          const pc = resolvePlayerColor(playerColors, p.id);
+          return (
+          <div
+            key={p.id}
+            className="go-player"
+            style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+          >
+            <div className="go-player-name">
+              <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+              <span className="go-player-name-text">{p.name}</span>
+            </div>
             <div className="go-player-grid">
               <div className="go-pstat">
                 <span className="go-pstat-val">
@@ -993,7 +1137,8 @@ function GameOverStats({ gameStats, players, winner }) {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1056,6 +1201,7 @@ export default function GameScreen({
   lastWordResult,
   gameOver,
   roomPlayers,
+  playerColors = {},
   feedEvents = [],
   gameStats = { wordsPlayed: [], timeouts: [], skips: [], gameStartTime: null, gameEndTime: null },
   typingText = {},
@@ -1233,12 +1379,40 @@ export default function GameScreen({
   const [shatterText, setShatterText] = useState('');
   const [bombReaction, setBombReaction] = useState(null);
   const [clutchFlag, setClutchFlag] = useState(false);
+  // A buzzer-beater accept also fires a triumphant slow-mo beat + colour-pop
+  // (clutchSlow drives both, auto-cleared after the ~700ms beat), and every
+  // accepted word gives the prompt box a quick scale-punch (comboPunch re-keys
+  // it so the pop replays).
+  const [clutchSlow, setClutchSlow] = useState(false);
+  const clutchSlowTimerRef = useRef(null);
+  const [comboPunch, setComboPunch] = useState(0);
   // The timer reading + word captured at the moment of submit, so the result
-  // handler can judge "clutch" (<=2s left) and shatter the exact word even after
-  // the input has cleared / the turn has moved on.
+  // handler can judge "clutch" (final second left) and shatter the exact word
+  // even after the input has cleared / the turn has moved on.
   const submitTimerRef = useRef(0);
   const lastSubmitWordRef = useRef('');
   const interactionResultRef = useRef(null);
+
+  // ---- Personal combo/streak (Word Bomb) - CLIENT-SIDE HYPE ONLY ----
+  // Counts the local player's consecutive accepted words. comboAwaitRef gates it
+  // to OUR OWN result: it's set when WE submit (only possible on our turn), so a
+  // broadcast accept from another player never bumps our streak. Word Bomb is
+  // turn-based, so at most one of our results is in flight at a time. Reads only
+  // existing accept/reject + life-loss events; no scoring/server/WS involvement.
+  const streak = useCombo();
+  const comboAwaitRef = useRef(false);
+  // Near-miss / clutch callout (presentational): set from the EXISTING remaining
+  // time captured at submit when our own accept lands late. { key, seconds, tier }.
+  const [clutchCall, setClutchCall] = useState(null);
+  const clutchCallKeyRef = useRef(0);
+  // Reset the streak on a fresh game (gameNonce bumps per game_started) and when
+  // the game ends, so it never carries across games.
+  useEffect(() => {
+    streak.reset();
+    comboAwaitRef.current = false;
+    // streak.reset is stable; only re-run on a new-game / game-over transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameNonce, gameOver]);
 
   // React to each accept/reject with the physical bomb interaction. Keyed off
   // the result object identity (a fresh object per submission) so it fires once.
@@ -1250,13 +1424,46 @@ export default function GameScreen({
       setBombReaction('recoil');
       freeze(50); // hitlag: 50ms freeze so the success lands with weight
       flashBombPose('celebrate', 300); // the bomb mascot celebrates the word
-      const t = submitTimerRef.current;
-      setClutchFlag(t > 0 && t <= 2); // beat the buzzer
+      setComboPunch((k) => k + 1); // scale-punch the prompt on every correct word
+      // Was this OUR submission? (gates both the streak and the near-miss callout
+      // so a broadcast accept from another player never fires our feedback.)
+      const mine = comboAwaitRef.current;
+      if (mine) {
+        comboAwaitRef.current = false;
+        streak.hit();
+      }
+      const t = submitTimerRef.current; // the EXISTING clock value, snapshot at submit
+      const isClutch = t > 0 && t <= 1; // beat the buzzer in the final second
+      setClutchFlag(isClutch);
+      if (isClutch) {
+        // Triumphant slow-mo beat + colour-pop, snapping back after ~700ms.
+        if (clutchSlowTimerRef.current) clearTimeout(clutchSlowTimerRef.current);
+        setClutchSlow(true);
+        clutchSlowTimerRef.current = setTimeout(() => {
+          setClutchSlow(false);
+          clutchSlowTimerRef.current = null;
+        }, 700);
+      }
+      // Near-miss callout: surface how close it was (our own late accepts only).
+      if (mine) {
+        const tier = clutchTier(t);
+        if (tier) {
+          clutchCallKeyRef.current += 1;
+          setClutchCall({ key: clutchCallKeyRef.current, seconds: t, tier });
+          if (tier === 'clutch') sound.clutchPing(); // light accent, top tier only
+        }
+      }
     } else {
       setBombReaction('reject');
       setClutchFlag(false);
       setShatterText(lastSubmitWordRef.current);
       setShatterKey((k) => k + 1);
+      // Our own rejected word breaks the streak (rejections are sent only to the
+      // submitter, so this is always ours).
+      if (comboAwaitRef.current) {
+        comboAwaitRef.current = false;
+        streak.miss();
+      }
     }
   }, [lastWordResult, gameType]);
 
@@ -1287,6 +1494,10 @@ export default function GameScreen({
       ])
     );
 
+    // Our own life lost (a timeout or a skip - rejections don't cost a life)
+    // breaks our personal streak.
+    if (shatterIds.includes(myId)) streak.miss();
+
     if (eliminateIds.length) {
       setEliminatingPlayers((cur) => {
         const next = { ...cur };
@@ -1303,13 +1514,14 @@ export default function GameScreen({
 
     if (shatterIds.length) {
       // Cinematic detonation sequence:
-      //   t=0    one-frame white IMPACT flash + an 80ms hitlag FREEZE
-      //   t=80   the explosion animation + sound + heavy shake fire (explosionKey)
+      //   t=0    one-frame white IMPACT flash + a 130ms hitlag FREEZE
+      //   t=130  the explosion animation + sound + heavy shake fire (explosionKey)
+      // The 130ms freeze-frame gives the hit fighting-game weight before the blast.
       setImpactKey((k) => k + 1);
-      freeze(80);
+      freeze(130);
       // If an OPPONENT just lost a life, the bomb mascot taunts them for a beat.
       if (shatterIds.some((id) => id !== myId)) flashBombPose('taunt', 1000);
-      timers.push(setTimeout(() => setExplosionKey((k) => k + 1), 80));
+      timers.push(setTimeout(() => setExplosionKey((k) => k + 1), 130));
 
       setShatteredHearts((cur) => {
         const next = { ...cur };
@@ -1328,13 +1540,13 @@ export default function GameScreen({
             });
             return next;
           });
-        }, 80 + 500)
+        }, 130 + 500)
       );
     }
 
     if (eliminateIds.length) {
-      // K.O. slam comes AFTER the explosion (300ms after it triggers, i.e. 80+300),
-      // with its own 400ms freeze leading the slam.
+      // K.O. slam comes AFTER the explosion, with its own 400ms freeze leading
+      // the slam (timed from the elimination diff, independent of the blast).
       timers.push(
         setTimeout(() => {
           setKoKey((k) => k + 1);
@@ -1437,10 +1649,17 @@ export default function GameScreen({
   }, [explosionKey, gameType, sound]);
 
   // KO slam -> a heavy, final elimination sound, in lockstep with the K.O.
-  // overlay (koKey is bumped when a player is knocked out).
+  // overlay (koKey is bumped when a player is knocked out). A heavy screen shake
+  // is timed to the slam's downward impact (the overlay leads with a ~400ms freeze
+  // before "K.O." drops) so the knockout lands as an event, not a state change.
   useEffect(() => {
     if (gameType !== 'word-bomb') return;
-    if (koKey > 0) sound.ko();
+    if (koKey > 0) {
+      sound.ko();
+      const id = setTimeout(() => onShakeRef.current?.('heavy'), 600);
+      return () => clearTimeout(id);
+    }
+    return undefined;
   }, [koKey, gameType, sound]);
 
   // Game over -> a win fanfare or a defeat sting, once, when the result lands.
@@ -1471,6 +1690,7 @@ export default function GameScreen({
       <ImposterWordScreen
         myId={myId}
         isHost={isHost}
+        playerColors={playerColors}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
         round={imposterRound}
@@ -1506,6 +1726,7 @@ export default function GameScreen({
         lastWordResult={lastWordResult}
         gameOver={gameOver}
         roomPlayers={roomPlayers || []}
+        playerColors={playerColors}
         categoryRound={categoryRound}
         myAnswers={myAnswers || []}
         playerProgress={playerProgress || {}}
@@ -1571,6 +1792,12 @@ export default function GameScreen({
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
+  // One random end-game roast blurb, fixed for the duration of this result
+  // (re-picked only when a new game_over lands).
+  const endBlurb = useMemo(
+    () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
+    [gameOver]
+  );
 
   // ---- Spectator mode ----
   // A player who's lost all their lives keeps watching (read-only) until the
@@ -1632,6 +1859,9 @@ export default function GameScreen({
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
+    // Mark that the next result is OURS (we can only submit on our turn), so the
+    // combo only counts our own accepts/rejects.
+    comboAwaitRef.current = true;
     // Snapshot what we need to react to the (async) result, then throw the word
     // at the bomb so the toss reads before the accept/reject lands.
     submitTimerRef.current = timerSeconds;
@@ -1695,16 +1925,20 @@ export default function GameScreen({
           isSpectating ? ' spectating' : ''
         }${critical ? ' heartbeat' : ''}${hitlag ? ' hitlag' : ''}${
           draining ? ' draining' : ''
-        }`}
+        }${clutchSlow ? ' clutch-slowmo' : ''}`}
         style={{ '--drain-sat': drainSat, filter: draining ? 'saturate(var(--drain-sat))' : undefined }}
       >
+        {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
+        {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
             Held back until the hitlag freeze releases so the reaction lands after
             the impact, not during it. */}
         {hypeKey > 0 && !hitlag &&
           (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
         <div className="game-header">
-          <div className="game-title">{title}</div>
+          <div className="game-title">
+            <SprayReveal>{title}</SprayReveal>
+          </div>
           <div className="game-header-right">
             <div className="game-meta">
               {typeof gameState.round !== 'undefined' && (
@@ -1740,6 +1974,9 @@ export default function GameScreen({
             const isMe = player.id === myId;
             const isEliminating = !!eliminatingPlayers[player.id];
             const justShattered = !!shatteredHearts[player.id];
+            // The player's session colour, applied as card accent + name + the
+            // typing line + the elimination flash (all via the --pc vars below).
+            const pc = resolvePlayerColor(playerColors, player.id);
             const cardClass = [
               'game-player-card',
               isCurrent && !eliminated ? 'current' : '',
@@ -1754,12 +1991,16 @@ export default function GameScreen({
                 {isCurrent && isMe && !gameOver && (
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
-                <div className={cardClass}>
+                <div
+                  className={cardClass}
+                  style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+                >
                   {isEliminating && <div className="game-player-flash" />}
                   {/* Panic sweat flinging off your own card when time is dire. */}
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
                   <div className="game-player-name">
-                    {player.name}
+                    <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                    <span className="game-player-name-text">{player.name}</span>
                     {isMe && <span className="game-player-you">YOU</span>}
                   </div>
                   {/* Live typing (BombParty style): only under the active
@@ -1845,7 +2086,10 @@ export default function GameScreen({
           {shatterKey > 0 && <ShatterWord key={shatterKey} text={shatterText} />}
         </div>
 
-        <div className="game-combo-box">
+        <div
+          key={comboPunch}
+          className={`game-combo-box${comboPunch > 0 ? ' punch' : ''}`}
+        >
           <div className="game-combo-label">{promptLabel}</div>
           <div className={`game-combo${isCategory ? ' category' : ''}`}>
             {promptValue}
@@ -1885,6 +2129,16 @@ export default function GameScreen({
           </div>
         ) : (
           <div className="game-input-row drain-exempt">
+            {/* Personal hype streak, floats above the input (pointer-events:none). */}
+            <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* Near-miss callout for a late accept (also pointer-events:none). */}
+            {clutchCall && (
+              <ClutchCallout
+                key={clutchCall.key}
+                seconds={clutchCall.seconds}
+                tier={clutchCall.tier}
+              />
+            )}
             <input
               ref={inputRef}
               className={`game-input${inputShake ? ' input-shake' : ''}${
@@ -1894,6 +2148,9 @@ export default function GameScreen({
               value={draft}
               onChange={(event) => {
                 const value = event.target.value;
+                // Soft key tick on actual character entry (a char was added, not
+                // a deletion/select). onChange already ignores modifiers/arrows.
+                if (value.length > draft.length) sound.keystroke();
                 setDraft(value);
                 pulseInput(); // tiny per-keystroke visual response
                 // Broadcast every keystroke so others see us type in real time.
@@ -1954,7 +2211,7 @@ export default function GameScreen({
         )}
       </div>
 
-      <KillFeed events={feedEvents} />
+      <KillFeed events={feedEvents} playerColors={playerColors} />
 
       {gameOver && (
         <div className="game-over-overlay">
@@ -1970,7 +2227,12 @@ export default function GameScreen({
                 The wrapper owns a dedicated transform (celebrate hop / defeat
                 tremble) so it never fights the mascot's own internal layers. */}
             <div className={`go-mascot-wrap ${iWon ? 'win' : 'loss'}`}>
-              <Mascot pose={iWon ? 'celebrate' : 'panic'} size={150} className="game-over-mascot" />
+              <Mascot
+                pose={iWon ? 'celebrate' : 'panic'}
+                emote={iWon ? 'celebrate' : 'slump'}
+                size={150}
+                className="game-over-mascot"
+              />
             </div>
             {iWon ? (
               <div className="game-over-title win winner-bounce">YOU WIN!</div>
@@ -1982,7 +2244,14 @@ export default function GameScreen({
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
-            <GameOverStats gameStats={gameStats} players={players} winner={winner} />
+            {/* A random FNF-voice roast blurb under the result. */}
+            <div className="game-over-blurb">{endBlurb}</div>
+            <GameOverStats
+              gameStats={gameStats}
+              players={players}
+              winner={winner}
+              playerColors={playerColors}
+            />
             <div className="game-over-actions">
               {isHost && (
                 <button className="game-over-rematch" onClick={onRematch}>
@@ -2045,6 +2314,7 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave 
         <div className="game-over-card solo-results-card">
           <Mascot
             pose={pb.isNewRecord ? 'celebrate' : 'idle'}
+            emote={pb.isNewRecord ? 'celebrate' : null}
             size={130}
             className="game-over-mascot"
           />
@@ -2125,6 +2395,7 @@ function CategoryBlitzScreen({
   lastWordResult,
   gameOver,
   roomPlayers,
+  playerColors = {},
   categoryRound,
   myAnswers,
   playerProgress,
@@ -2139,11 +2410,29 @@ function CategoryBlitzScreen({
   onPlayAgain,
   onRerollCategory,
 }) {
+  const { sound } = useSound();
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
   // Countdown replays at the start of every NEW round (and the first one).
   const [showCountdown, setShowCountdown] = useState(false);
   const prevRoundRef = useRef(null);
+
+  // Personal combo/streak (Category Blitz) - CLIENT-SIDE HYPE ONLY. CB answer
+  // results are sent only to the submitter (opponents see counts, not words), so
+  // lastWordResult here is always OURS - no turn gating needed. Resets each round.
+  const streak = useCombo();
+  // Near-miss / clutch callout: snapshot the EXISTING round-timer value at submit
+  // (cbSubmitTimerRef) and surface how close a late accepted answer was.
+  const cbSubmitTimerRef = useRef(0);
+  const [clutchCall, setClutchCall] = useState(null);
+  const clutchCallKeyRef = useRef(0);
+  // Per-letter submit feedback (CB has no bomb to throw the word at): the last
+  // submitted answer text + whether it was accepted, re-keyed so SubmitLetters
+  // replays. The text prefers the result's own answer, falling back to what we
+  // captured at submit.
+  const cbSubmitWordRef = useRef('');
+  const [cbSubmitLetters, setCbSubmitLetters] = useState(null);
+  const cbSubmitLettersKeyRef = useRef(0);
 
   // Solo mode: a lone player racing the clock. Auto-detected from the roster
   // size (the backend gates the same way). It plays the same 3 rounds as
@@ -2187,12 +2476,16 @@ function CategoryBlitzScreen({
   useEffect(() => () => clearTimeout(rerollNoticeTimerRef.current), []);
 
   // Trigger the countdown whenever the round number changes (covers the first
-  // round on mount and every subsequent round).
+  // round on mount and every subsequent round). A new round also resets the
+  // personal streak (combos don't carry across rounds).
   useEffect(() => {
     if (roundNumber != null && roundNumber !== prevRoundRef.current) {
       prevRoundRef.current = roundNumber;
       setShowCountdown(true);
+      streak.reset();
     }
+    // streak.reset is stable; we only react to the round number changing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundNumber]);
 
   // Auto-focus the input once a round is active AND its countdown has
@@ -2203,13 +2496,16 @@ function CategoryBlitzScreen({
     }
   }, [roundActive, showCountdown, roundNumber]);
 
-  // Hype popup + screen shake (accepted) and input shake (rejected), only
-  // rendered during an active round, below.
-  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
+  // Hype popup + screen shake on an accepted answer. (The rejected-answer
+  // input-shake from this hook is intentionally unused in CB now - the per-letter
+  // SubmitLetters 'reject' scatter IS the miss reaction, so there's only one.)
+  const { hypeKey, shake } = useHypeFeedback(lastWordResult);
 
   function submit() {
     const answer = draft.trim();
     if (!answer || !roundActive || showCountdown) return;
+    cbSubmitTimerRef.current = timerSeconds; // snapshot the round clock at submit
+    cbSubmitWordRef.current = answer; // capture for the per-letter feedback
     onSubmitAnswer(answer);
     setDraft('');
   }
@@ -2233,8 +2529,74 @@ function CategoryBlitzScreen({
     if (cbTimerRef.current) clearTimeout(cbTimerRef.current);
     setCbTransient(lastWordResult.accepted ? 'celebrate' : 'panic');
     cbTimerRef.current = setTimeout(() => setCbTransient(null), 1000);
-  }, [lastWordResult]);
+    // Audio parity with Word Bomb: per-answer accept ding / reject buzz.
+    if (lastWordResult.accepted) sound.correctDing();
+    else sound.wrongBuzz();
+    // Personal streak: a correct answer extends it, a rejected one breaks it.
+    if (lastWordResult.accepted) {
+      streak.hit();
+      // Near-miss callout from the round-timer value snapshot at submit.
+      const tier = clutchTier(cbSubmitTimerRef.current);
+      if (tier) {
+        clutchCallKeyRef.current += 1;
+        setClutchCall({ key: clutchCallKeyRef.current, seconds: cbSubmitTimerRef.current, tier });
+        if (tier === 'clutch') sound.clutchPing(); // light accent, top tier only
+      }
+    } else {
+      streak.miss();
+    }
+    // Per-letter physics on the submitted answer (accept pop / reject scatter).
+    // This reject scatter REPLACES CB's input-shake (see the input below).
+    cbSubmitLettersKeyRef.current += 1;
+    setCbSubmitLetters({
+      key: cbSubmitLettersKeyRef.current,
+      text: lastWordResult.answer || cbSubmitWordRef.current,
+      mode: lastWordResult.accepted ? 'accept' : 'reject',
+    });
+  }, [lastWordResult, sound]);
   useEffect(() => () => clearTimeout(cbTimerRef.current), []);
+
+  // ---- Category Blitz audio parity (timer + outcome) ----
+  // Per-second round-timer tick, urgency-pitched, on a real decrement only (so
+  // the per-round reset back to full and the 3-2-1 countdown stay silent).
+  const cbPrevTimerRef = useRef(null);
+  useEffect(() => {
+    const prev = cbPrevTimerRef.current;
+    cbPrevTimerRef.current = timerSeconds;
+    if (!roundActive || showCountdown) return;
+    if (prev == null || typeof timerSeconds !== 'number') return;
+    if (timerSeconds <= 0 || timerSeconds >= prev) return; // only on a tick-down
+    const maxTimer = (categoryRound && categoryRound.timerSeconds) || 1;
+    sound.tick(1 - timerSeconds / maxTimer);
+  }, [timerSeconds, roundActive, showCountdown, categoryRound, sound]);
+
+  // Final-5s accelerating heartbeat thud, mirroring Word Bomb's clutch pulse.
+  useEffect(() => {
+    if (!roundActive || showCountdown) return undefined;
+    if (typeof timerSeconds !== 'number' || timerSeconds < 1 || timerSeconds > 5) {
+      return undefined;
+    }
+    const HEARTBEAT_MS = { 5: 650, 4: 520, 3: 410, 2: 320, 1: 250 };
+    const period = HEARTBEAT_MS[timerSeconds] ?? 600;
+    const intensity = (6 - timerSeconds) / 5; // 5s -> 0.2, 1s -> 1.0
+    let timeoutId;
+    const beat = () => {
+      sound.heartbeat(intensity);
+      timeoutId = setTimeout(beat, period);
+    };
+    beat();
+    return () => clearTimeout(timeoutId);
+  }, [timerSeconds, roundActive, showCountdown, sound]);
+
+  // Game over -> win fanfare / defeat sting, once. Solo completing the run is a
+  // win; multiplayer keys off the winner id (matches the Word Bomb end screen).
+  const cbOutcomePlayedRef = useRef(false);
+  useEffect(() => {
+    if (!gameOver || cbOutcomePlayedRef.current) return;
+    cbOutcomePlayedRef.current = true;
+    if (isSolo || gameOver.winnerId === myId) sound.victory();
+    else sound.defeat();
+  }, [gameOver, isSolo, myId, sound]);
 
   const cbLeading = (() => {
     const totals = categoryTotals || {};
@@ -2249,6 +2611,12 @@ function CategoryBlitzScreen({
   else if (cbTransient) cbMascotPose = cbTransient;
   else if (roundResults) cbMascotPose = cbLeading ? 'celebrate' : 'panic';
   else cbMascotPose = 'idle';
+
+  // Transient reaction emote for the in-round mascot: a happy bob on an accepted
+  // answer, a flinch on a rejected one. cbTransient is set per answer result and
+  // already cycles back to null after 1s, so the one-shot replays each time.
+  const cbEmote =
+    cbTransient === 'celebrate' ? 'bob' : cbTransient === 'panic' ? 'flinch' : null;
 
   // ---- SOLO: personal-best results (at game over, after all 3 rounds) ----
   // Between-rounds in solo falls through to the normal round-results view below;
@@ -2288,7 +2656,12 @@ function CategoryBlitzScreen({
           {iWon && <ConfettiEffect />}
           <div className="game-over-card">
             {/* The mascot's emotional reaction, large and centred above the title. */}
-            <Mascot pose={iWon ? 'celebrate' : 'panic'} size={150} className="game-over-mascot" />
+            <Mascot
+              pose={iWon ? 'celebrate' : 'panic'}
+              emote={iWon ? 'celebrate' : 'slump'}
+              size={150}
+              className="game-over-mascot"
+            />
             <div className={`game-over-title${iWon ? ' win winner-bounce' : ''}`}>
               {iWon ? 'YOU WIN!' : <WobbleText text="GAME OVER" />}
             </div>
@@ -2298,14 +2671,18 @@ function CategoryBlitzScreen({
               </div>
             )}
             <div className="cb-scoreboard">
-              {scores.map((s, i) => (
+              {scores.map((s, i) => {
+                const pc = resolvePlayerColor(playerColors, s.id);
+                return (
                 <div
                   key={s.id}
                   className={`cb-score-row${s.id === gameOver.winnerId ? ' winner' : ''}`}
+                  style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
                   <span className="cb-score-rank">{i + 1}</span>
                   <span className="cb-score-name">
-                    {s.name}
+                    <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                    <span className="cb-score-name-text">{s.name}</span>
                     {s.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-score-pts">
@@ -2316,7 +2693,8 @@ function CategoryBlitzScreen({
                     )}
                   </span>
                 </div>
-              ))}
+                );
+              })}
             </div>
             <div className="game-over-actions">
               {isHost && (
@@ -2367,7 +2745,9 @@ function CategoryBlitzScreen({
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
           {hypeKey > 0 && <HypePopup key={hypeKey} />}
           <div className="game-header">
-            <div className="game-title">CATEGORY BLITZ</div>
+            <div className="game-title">
+              <SprayReveal>CATEGORY BLITZ</SprayReveal>
+            </div>
             <div className="game-header-right">
               <div className="game-meta">
                 {isSolo ? (
@@ -2398,10 +2778,15 @@ function CategoryBlitzScreen({
 
           <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
           <div className="cb-category-display">
-            {(categoryRound.category || '').toUpperCase()}
+            {/* Sprays the category name on each new round/reroll (re-keyed by the
+                category text so the reveal replays). The box itself appears
+                normally - only the paint sweeps on. */}
+            <SprayReveal key={categoryRound.category} duration={780}>
+              {(categoryRound.category || '').toUpperCase()}
+            </SprayReveal>
             {/* Mascot sitting on the box's edge, legs dangling over the border. */}
             <div className="cb-cat-mascot">
-              <Mascot pose={cbMascotPose} size={50} />
+              <Mascot pose={cbMascotPose} emote={cbEmote} size={50} />
             </div>
           </div>
 
@@ -2440,12 +2825,37 @@ function CategoryBlitzScreen({
           </div>
 
           <div className="game-input-row">
+            {/* Personal hype streak, floats above the input (pointer-events:none). */}
+            <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
+            {clutchCall && (
+              <ClutchCallout
+                key={clutchCall.key}
+                seconds={clutchCall.seconds}
+                tier={clutchCall.tier}
+              />
+            )}
+            {/* Per-letter submit physics (accept pop / reject scatter). The reject
+                scatter REPLACES the input-shake, so the input below no longer
+                applies it - one coherent miss reaction. pointer-events:none. */}
+            {cbSubmitLetters && (
+              <SubmitLetters
+                key={cbSubmitLetters.key}
+                text={cbSubmitLetters.text}
+                mode={cbSubmitLetters.mode}
+              />
+            )}
             <input
               ref={inputRef}
-              className={`game-input${inputShake ? ' input-shake' : ''}`}
+              className="game-input"
               type="text"
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                // Soft key tick on actual character entry (parity with Word Bomb).
+                if (value.length > draft.length) sound.keystroke();
+                setDraft(value);
+              }}
               onKeyDown={handleKeyDown}
               disabled={showCountdown}
               aria-label="Type an answer for the category"
@@ -2494,14 +2904,24 @@ function CategoryBlitzScreen({
               {others.length === 0 ? (
                 <span className="game-used-empty">NO OTHER PLAYERS</span>
               ) : (
-                others.map((p) => (
-                  <div key={p.id} className="cb-progress-row">
-                    <span className="cb-progress-name">{p.name}</span>
+                others.map((p) => {
+                  const pc = resolvePlayerColor(playerColors, p.id);
+                  return (
+                  <div
+                    key={p.id}
+                    className="cb-progress-row"
+                    style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+                  >
+                    <span className="cb-progress-name">
+                      <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                      <span className="cb-progress-name-text">{p.name}</span>
+                    </span>
                     <span className="cb-progress-count">
                       {playerProgress[p.id] || 0} answers
                     </span>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
@@ -2517,23 +2937,38 @@ function CategoryBlitzScreen({
         <Mascot pose={cbMascotPose} size={110} className="game-mascot" />
         <div className="game-stage">
           <div className="game-header">
-            <div className="game-title">CATEGORY BLITZ</div>
+            <div className="game-title">
+              <SprayReveal>CATEGORY BLITZ</SprayReveal>
+            </div>
             <button className="game-leave-btn" onClick={onLeave}>
               LEAVE
             </button>
           </div>
 
           <div className="cb-round-results">
-            <div className="cb-results-title">ROUND {roundResults.round} RESULTS</div>
+            <div className="cb-results-title">
+              <SprayReveal key={roundResults.round}>
+                ROUND {roundResults.round} RESULTS
+              </SprayReveal>
+            </div>
             <div className="cb-results-category">
-              {(roundResults.category || '').toUpperCase()}
+              <SprayReveal key={roundResults.round} delay={140}>
+                {(roundResults.category || '').toUpperCase()}
+              </SprayReveal>
             </div>
 
-            {(roundResults.playerResults || []).map((pr) => (
-              <div key={pr.id} className="cb-result-player">
+            {(roundResults.playerResults || []).map((pr) => {
+              const pc = resolvePlayerColor(playerColors, pr.id);
+              return (
+              <div
+                key={pr.id}
+                className="cb-result-player"
+                style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+              >
                 <div className="cb-result-head">
                   <span className="cb-result-name">
-                    {pr.name}
+                    <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                    <span className="cb-result-name-text">{pr.name}</span>
                     {pr.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-result-scores">
@@ -2555,7 +2990,8 @@ function CategoryBlitzScreen({
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="cb-next-round">

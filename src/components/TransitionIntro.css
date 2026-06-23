@@ -1,6 +1,15 @@
 /* TransitionIntro.css - the aggressive anime fight-card sequence.
    Flat colors, thick black outlines, no gradients - consistent with the rest
-   of the app. Full-screen black overlay above everything (z 200). */
+   of the app. Full-screen black overlay above everything (z 200).
+
+   The two phrases animate OPPOSITELY (they mean opposite things):
+   - TYPE FAST  = fast/electric : snappy punch + tight machine-gun letters +
+                  chromatic RGB split + speed-lines.
+   - DIE SLOW   = slow/ominous  : heavy sinking drag + long tired letter settle +
+                  desaturation + brightness pulse + paint drips.
+   After the entrance the title stays ALIVE (breathing, occasional glitch twitch,
+   never-stopping drip, subtle cursor lean) instead of freezing. All of it is
+   gated off under prefers-reduced-motion at the bottom of this file. */
 
 .intro-overlay {
   position: fixed;
@@ -14,23 +23,51 @@
 }
 
 /* The card that holds the two lines + the burst. It's what shakes on impact, so
-   both lines and the starburst jolt together when a line lands. */
+   both lines and the starburst jolt together when a line lands. `perspective`
+   lets the cursor-lean layer below read as a real 3D tip. */
 .intro-stage {
   position: relative;
   width: 100%;
   height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 30px;
+  perspective: 900px;
+}
+
+/* Cursor-lean layer: tips a few degrees toward the pointer (vars written from JS,
+   eased here). Separate element from the shake (stage) and the breathing
+   (below), so the three transforms compose instead of overwriting each other. */
+.intro-tilt {
+  display: flex;
+  transform-style: preserve-3d;
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0)
+    rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 220ms ease-out;
+  will-change: transform;
+}
+
+/* Idle "breathing" layer: a constant, barely-there scale so the title is never
+   frozen. Holds the two stacked, gap-separated slots. */
+.intro-breathe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 120px;
+  animation: intro-breathe 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes intro-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
 }
 
 /* Each line lives in a slot that carries only its resting slant + a small
-   off-baseline nudge, kept OFF the line itself so the punch animation (which
-   scales the line) never fights or snaps against it. The two slots use
-   DIFFERENT angles and a slight vertical offset (not a clean mirror) so the
-   words look hand-thrown and crooked, not typeset. */
+   off-baseline nudge, kept OFF the line itself so the entrance animation (which
+   scales the line) never fights or snaps against it. The two slots use DIFFERENT
+   angles and a slight vertical offset (not a clean mirror) so the words look
+   hand-thrown and crooked, not typeset. */
 .intro-line-slot {
   position: relative;
 }
@@ -44,59 +81,212 @@
 }
 
 .intro-stage.shaking {
-  animation: intro-shake 200ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  animation: intro-shake 260ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
-/* Tiny, quick impact jolt on each word's landing - just a few px to sell the
-   weight of the hit, then gone. */
+/* A hard impact jolt on each word's landing - a big kick to sell the weight of
+   the punch, then settles fast. */
 @keyframes intro-shake {
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-5px, 3px); }
-  55% { transform: translate(4px, -3px); }
-  80% { transform: translate(-2px, 1px); }
+  20% { transform: translate(-10px, 6px); }
+  45% { transform: translate(9px, -6px); }
+  70% { transform: translate(-5px, 3px); }
+  88% { transform: translate(3px, -2px); }
 }
 
-/* ---- The two punch-in lines ---- */
+/* ---- The two lines ---- */
 
 .intro-line {
+  position: relative; /* anchors the speed-lines pseudo */
   font-family: 'Bungee', cursive;
   font-size: 60px;
   line-height: 1;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   white-space: nowrap;
-  /* Hidden (but still occupying its row, so the layout never reflows) until its
-     `active` class reveals it. */
-  opacity: 0;
-  will-change: transform, opacity;
+  /* The line container stays on; visibility is owned per-letter (letters fade in
+     0 -> 1 when the line goes .active), so the stagger reads crisply instead of
+     being smeared by a whole-word opacity fade. */
+  opacity: 1;
+  will-change: transform;
 }
 
 .intro-line-type { color: #2EFFE0; } /* cyan */
 .intro-line-die { color: #FF2EC4; } /* pink */
 
-/* Revealed: opacity is held at 1 statically so that when the punch animation
-   ends (no `forwards`) the text stays put instead of snapping back to hidden. */
-.intro-line.active { opacity: 1; }
+/* Each letter is its own box so it can stagger in; hidden until its line is
+   active. */
+.intro-letter {
+  display: inline-block;
+  position: relative;
+  opacity: 0;
+  will-change: transform, opacity;
+}
 
-/* The PUNCH: the word blasts in BIG (scale 1.5), then snaps down past 100% and
-   bounces back to rest - the snap-back is what sells the hit. Pure scale + fade
-   so it pops in place (the slant/offset lives on the slot); fast and snappy.
-   Both words share this; they're staggered in time, not mirrored in space. */
-.intro-line-type.active,
-.intro-line-die.active {
-  animation: intro-punch 280ms cubic-bezier(0.2, 1.4, 0.3, 1);
+/* =====================  TYPE FAST = fast / electric  ===================== */
+
+/* Whole-word snappy punch (the original feel, kept) + a looping electric glitch
+   that kicks in after the entrance settles. The two animations target transform
+   at non-overlapping times (punch 0-280ms; glitch starts at 0.8s), so they don't
+   fight. */
+.intro-line-type.active {
+  animation: intro-punch 280ms cubic-bezier(0.2, 1.4, 0.3, 1),
+    type-glitch 1.6s linear 0.8s infinite;
+}
+
+/* Tight left-to-right MACHINE-GUN: each letter snaps in fast (18ms apart) with a
+   converging chromatic RGB split - it should arrive almost too fast to read.
+   `both` so delayed letters stay hidden pre-delay and stay put after. */
+.intro-line-type.active .intro-letter {
+  animation: type-letter-in 120ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation-delay: calc(var(--i) * 18ms);
 }
 
 @keyframes intro-punch {
-  0% { opacity: 0; transform: scale(1.5); }
-  55% { opacity: 1; transform: scale(0.95); }
-  78% { transform: scale(1.04); }
+  0% { transform: scale(1.7); }
+  50% { transform: scale(0.9); }
+  72% { transform: scale(1.07); }
+  88% { transform: scale(0.98); }
   100% { transform: scale(1); }
 }
 
-/* ---- The explosion: both lines blow up + fade while splitting apart. These
-   are declared AFTER the punch rules and share their specificity, so they win
-   and override the (now-finished) punch animation. ---- */
+@keyframes type-letter-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-0.3em) scale(1.35);
+    text-shadow: -0.06em 0 #ff1e56, 0.06em 0 #21e7ff;
+  }
+  55% {
+    opacity: 1;
+    text-shadow: -0.02em 0 #ff1e56, 0.02em 0 #21e7ff;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    text-shadow: 0 0 transparent;
+  }
+}
+
+/* Idle electric twitch: a malfunctioning-sign jitter - mostly identity with two
+   brief RGB+position jolts per loop. */
+@keyframes type-glitch {
+  0%, 6%, 10%, 38%, 44%, 100% { transform: translate(0, 0); text-shadow: 0 0 transparent; }
+  7% { transform: translate(-2px, 1px); text-shadow: -0.05em 0 #ff1e56, 0.05em 0 #21e7ff; }
+  8.5% { transform: translate(2px, -1px); text-shadow: 0.045em 0 #ff1e56, -0.045em 0 #21e7ff; }
+  40% { transform: translate(1px, 0); text-shadow: -0.03em 0 #ff1e56, 0.03em 0 #21e7ff; }
+}
+
+/* Optional speed-lines streaking behind TYPE FAST on entry, then gone. */
+.intro-line-type::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -10%;
+  width: 120%;
+  height: 70%;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(46, 255, 224, 0) 0 7px,
+    rgba(46, 255, 224, 0.22) 7px 9px
+  );
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.intro-line-type.active::before {
+  animation: type-speedlines 380ms ease-out both;
+}
+
+@keyframes type-speedlines {
+  0% { opacity: 0; transform: translateY(-50%) translateX(-14%) scaleX(0.6); }
+  35% { opacity: 0.55; }
+  100% { opacity: 0; transform: translateY(-50%) translateX(10%) scaleX(1.05); }
+}
+
+/* =====================  DIE SLOW = slow / ominous  ====================== */
+
+/* Desaturated + slightly dim vs TYPE FAST (the contrast IS the effect). */
+.intro-line-die {
+  filter: saturate(0.82) brightness(0.96);
+}
+
+/* Heavy SINKING drag (no bouncy overshoot) + a slow ominous brightness pulse + a
+   rare heavy positional twitch. drag owns transform 0-560ms; die-glitch's twitch
+   starts at 0.7s, so they never overlap; die-pulse only touches `filter`. */
+.intro-line-die.active {
+  animation: intro-drag 560ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    die-pulse 2.4s ease-in-out 0.6s infinite,
+    die-glitch 1.7s linear 0.7s infinite;
+}
+
+/* Long, TIRED letter settle: big stagger (55ms), each letter drops from above,
+   sags past rest, then settles - like it's exhausted. */
+.intro-line-die.active .intro-letter {
+  animation: die-letter-in 420ms cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--i) * 55ms);
+}
+
+@keyframes intro-drag {
+  0% { transform: translateY(-0.18em) scale(1.14); }
+  60% { transform: translateY(0.05em) scale(0.99); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes die-letter-in {
+  0% { opacity: 0; transform: translateY(-0.4em) scale(1.06); }
+  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes die-pulse {
+  0%, 100% { filter: saturate(0.82) brightness(0.96); }
+  50% { filter: saturate(0.7) brightness(0.8); }
+}
+
+@keyframes die-glitch {
+  0%, 18%, 26%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(3px, 2px); }
+  23% { transform: translate(-2px, 0); }
+}
+
+/* Graffiti PAINT-DRIP bleeding down from each letter's bottom edge. A slow loop
+   that never fully stops (it fades to 0 at both ends, so the reset is invisible)
+   and is staggered per letter so the bleed looks organic. Spaces don't drip. */
+.intro-line-die .intro-letter::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.04em;
+  width: 0.08em;
+  height: 0.16em;
+  background: currentColor;
+  border-radius: 0 0 45% 45%;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: top center;
+  opacity: 0;
+  pointer-events: none;
+  animation: die-drip 3.6s ease-in-out infinite;
+  animation-delay: calc(0.3s + var(--i) * 0.35s);
+}
+
+.intro-line-die .intro-letter.is-space::after {
+  display: none;
+}
+
+@keyframes die-drip {
+  0% { transform: translateX(-50%) scaleY(0); opacity: 0; }
+  25% { opacity: 0.9; }
+  75% { transform: translateX(-50%) scaleY(1); opacity: 0.85; }
+  100% { transform: translateX(-50%) scaleY(1.3); opacity: 0; }
+}
+
+/* ---- The explosion: both lines blow up + fade while splitting apart. Declared
+   AFTER the entrance rules and sharing their specificity, so they win and
+   override the (now-finished) entrance animations. ---- */
 .intro-line.intro-explode-up {
   opacity: 1;
   animation: intro-explode-up 400ms ease-in forwards;
@@ -158,7 +348,7 @@
     -webkit-text-stroke-width: 3px;
   }
 
-  .intro-stage { gap: 22px; }
+  .intro-breathe { gap: 72px; }
   .intro-slot-type { transform: translate(-4px, -6px) rotate(-5deg); }
   .intro-slot-die { transform: translate(6px, 8px) rotate(6deg); }
 
@@ -178,11 +368,44 @@
   65% { transform: translate(3px, -2px); }
 }
 
-/* Reduced motion: keep the lines/flash readable but drop the violent motion. */
+/* ============================  REDUCED MOTION  ===========================
+   Drop EVERY added motion - shake, per-word punch/drag, breathing, glitch,
+   pulse, speed-lines, drips and the cursor lean. Letters just fade in together
+   when their line goes active (a single, calm entrance), and the explode becomes
+   a plain fade-out. */
 @media (prefers-reduced-motion: reduce) {
   .intro-stage.shaking,
+  .intro-breathe,
   .intro-line-type.active,
   .intro-line-die.active {
-    animation: none;
+    animation: none !important;
   }
+  .intro-tilt {
+    transform: none !important;
+    transition: none !important;
+  }
+  .intro-line-type::before { display: none; }
+  .intro-line-die .intro-letter::after { display: none; }
+  .intro-line-die { filter: none; }
+
+  .intro-letter {
+    animation: none !important;
+    transform: none !important;
+    text-shadow: none !important;
+    opacity: 0;
+  }
+  .intro-line.active .intro-letter {
+    opacity: 1;
+    transition: opacity 260ms ease-out;
+  }
+
+  .intro-line.intro-explode-up,
+  .intro-line.intro-explode-down {
+    animation: intro-reduced-fadeout 320ms ease-in both !important;
+  }
+}
+
+@keyframes intro-reduced-fadeout {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }

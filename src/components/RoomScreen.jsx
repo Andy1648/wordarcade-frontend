@@ -1,8 +1,10 @@
 // RoomScreen.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import Mascot from './Mascot';
+import PlayerDot from './PlayerDot';
+import { resolvePlayerColor } from '../playerColors';
 import './RoomScreen.css';
 
 // Each difficulty carries a short timer blurb so players know what they're
@@ -72,7 +74,7 @@ function minPlayersFor(gameType) {
  * players instead see the current difficulty as read-only text and a
  * "waiting for host" message.
  */
-export default function RoomScreen({ room, myId, preselectedGame, serverError, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
+export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
   // Spam-click guards: lock Start once pressed (re-enabled if the server
   // rejects it) and Leave once pressed (you're on your way out).
   const [starting, setStarting] = useState(false);
@@ -83,6 +85,25 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   useEffect(() => {
     if (serverError) setStarting(false);
   }, [serverError]);
+
+  // Mascot reacts when the roster GROWS: a quick excited pop (pure presentation,
+  // diffed off the existing player list - no new game state). The 600ms window
+  // also keeps the waiting mascot mounted just long enough to play the pop even
+  // when that same join makes the room startable (and the block would otherwise
+  // unmount instantly).
+  const [joinPop, setJoinPop] = useState(false);
+  const prevPlayerCountRef = useRef(room ? room.players.length : 0);
+  const joinPopTimerRef = useRef(null);
+  useEffect(() => {
+    const n = room ? room.players.length : 0;
+    if (n > prevPlayerCountRef.current) {
+      setJoinPop(true);
+      if (joinPopTimerRef.current) clearTimeout(joinPopTimerRef.current);
+      joinPopTimerRef.current = setTimeout(() => setJoinPop(false), 600);
+    }
+    prevPlayerCountRef.current = n;
+  }, [room]);
+  useEffect(() => () => clearTimeout(joinPopTimerRef.current), []);
 
   if (!room) return null;
 
@@ -119,24 +140,38 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
 
         <div className="room-players-label">PLAYERS ({room.players.length})</div>
         <div className="room-players-list">
-          {room.players.map((player) => (
-            <div key={player.id} className="room-player-chip">
-              <span>{player.name}</span>
-              {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
-            </div>
-          ))}
+          {room.players.map((player) => {
+            const pc = resolvePlayerColor(playerColors, player.id);
+            return (
+              <div
+                key={player.id}
+                className="room-player-chip"
+                style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+              >
+                <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                <span className="room-player-name">{player.name}</span>
+                {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
+              </div>
+            );
+          })}
         </div>
 
         {/* Fill the dead air while there still aren't enough players: the mascot
             loiters next to the roster, impatiently swaying (the bored sway is a
-            wrapper animation, so it composes with the mascot's own idle bounce),
-            under a softly pulsing "waiting for players" cue. */}
-        {!canStart && (
+            wrapper animation, so it composes with the mascot's own idle bounce +
+            its bored fidget), under a softly pulsing "waiting for players" cue.
+            Also shown briefly on a join so the excited pop can play even once the
+            room has become startable. */}
+        {(!canStart || joinPop) && (
           <div className="room-waiting">
             <div className="room-waiting-mascot">
-              <Mascot pose="idle" size={84} />
+              <Mascot
+                pose={joinPop ? 'celebrate' : 'idle'}
+                emote={joinPop ? 'pop' : 'bored'}
+                size={84}
+              />
             </div>
-            <div className="room-waiting-cue">WAITING FOR PLAYERS...</div>
+            {!canStart && <div className="room-waiting-cue">WAITING FOR PLAYERS...</div>}
           </div>
         )}
 

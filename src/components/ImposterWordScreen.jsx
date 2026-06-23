@@ -15,15 +15,21 @@ import './ImposterWord.css';
 
 // A distinct, stable colour per player (by roster index) - used for answer
 // chips, vote-card borders, and the vote/score lines so each player reads as
-// "theirs" at a glance.
-const PLAYER_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF', '#2EFF8F', '#FF8FE0', '#5C9AFF'];
+// "theirs" at a glance. This is a LOCAL fallback only: the real per-session
+// colour comes from the shared playerColors map (the locked 5-colour palette)
+// so a player is the same colour here as in the room and the other games.
+const PLAYER_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 const CONFETTI_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 const CD_STEPS = [3, 2, 1, 'GO!', null];
 
-function buildColorMap(roster) {
+// Build the id -> colour-string map the rest of this screen consumes. Prefers
+// the shared session map (keyed by stable id, locked palette); falls back to the
+// local roster-index palette for any id the shared map doesn't cover.
+function buildColorMap(roster, shared) {
   const map = {};
   (roster || []).forEach((p, i) => {
-    map[p.id] = PLAYER_COLORS[i % PLAYER_COLORS.length];
+    const fromShared = shared && shared[p.id] && shared[p.id].color;
+    map[p.id] = fromShared || PLAYER_COLORS[i % PLAYER_COLORS.length];
   });
   return map;
 }
@@ -265,10 +271,14 @@ function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch })
 
           <div className="cb-scoreboard">
             {scores.map((s, i) => (
-              <div key={s.id} className={`cb-score-row${s.id === final.winnerId ? ' winner' : ''}`}>
+              <div
+                key={s.id}
+                className={`cb-score-row${s.id === final.winnerId ? ' winner' : ''}`}
+                style={{ '--pc': colorMap[s.id], '--pc-dark': colorMap[s.id] }}
+              >
                 <span className="cb-score-rank">{i + 1}</span>
                 <span className="cb-score-name">
-                  {s.name}
+                  <span className="cb-score-name-text">{s.name}</span>
                   {s.id === myId && <span className="game-player-you">YOU</span>}
                 </span>
                 <span className="cb-score-pts">
@@ -319,6 +329,7 @@ function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch })
 export default function ImposterWordScreen({
   myId,
   isHost,
+  playerColors = {},
   timerSeconds,
   lastWordResult,
   round,
@@ -361,7 +372,7 @@ export default function ImposterWordScreen({
     (results && results.scores) ||
     (final && final.finalScores) ||
     [];
-  const colorMap = buildColorMap(roster);
+  const colorMap = buildColorMap(roster, playerColors);
   const nameById = {};
   roster.forEach((p) => {
     nameById[p.id] = p.name;
@@ -423,6 +434,11 @@ export default function ImposterWordScreen({
       : amImposter
       ? 'taunt'
       : 'idle';
+  // A one-shot reaction on the reveal: a happy bob when the imposter is caught,
+  // a flinch when they slip away. It returns to null between reveals (other
+  // phases), so the emote re-applies and replays on each new reveal.
+  const mascotEmote =
+    phase === 'reveal' && results ? (results.imposterCaught ? 'bob' : 'flinch') : null;
 
   return (
     <div className={`game-wrap iw-wrap${amImposter && phase !== 'reveal' ? ' iw-imposter' : ''}`}>
@@ -441,8 +457,9 @@ export default function ImposterWordScreen({
         />
       )}
 
-      {/* Mascot reacts: taunt while hiding (imposter), celebrate/panic on reveal. */}
-      <Mascot pose={mascotPose} size={92} className="iw-mascot" />
+      {/* Mascot reacts: taunt while hiding (imposter), celebrate/panic on reveal,
+          plus a one-shot bob/flinch as the reveal lands. */}
+      <Mascot pose={mascotPose} emote={mascotEmote} size={92} className="iw-mascot" />
 
       <div className="game-stage">
         <div className="game-header">

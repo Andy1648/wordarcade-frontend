@@ -66,10 +66,14 @@
   z-index: 20;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: 48px;
+  /* Scales down on small screens; the longer curated hype phrases wrap within a
+     capped width instead of overflowing (they used to be single words). */
+  font-size: clamp(28px, 8vw, 48px);
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
-  white-space: nowrap;
+  max-width: 86vw;
+  text-align: center;
+  line-height: 0.95;
   animation: hype-pop 400ms ease-out forwards;
 }
 
@@ -292,7 +296,8 @@
   inset: 0;
   z-index: 3;
   border-radius: 8px;
-  background: #FF5C5C;
+  /* Flashes in the eliminated player's session colour (falls back to red). */
+  background: var(--pc, #FF5C5C);
   pointer-events: none;
   animation: player-flash 600ms ease-out forwards;
 }
@@ -316,6 +321,21 @@
   opacity: 0.5;
 }
 
+/* The player's session colour caps the top of their card - an always-on identity
+   strip that survives every card state (active orange / eliminated dim), so the
+   colour reads even where the state owns the background. */
+.game-player-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--pc, transparent);
+  border-radius: 8px 8px 0 0;
+  z-index: 1;
+}
+
 .game-player-name {
   font-family: 'Bungee', cursive;
   font-size: 10px;
@@ -324,11 +344,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   word-break: break-word;
 }
 
-.game-player-card.current .game-player-name {
+/* Name in the player's colour on the dark card; all five palette hues read well
+   on #2a1450. */
+.game-player-name-text {
+  color: var(--pc, #fff);
+}
+
+/* On the active player's orange card (and the win badge), keep the name dark for
+   contrast - the dot + top strip already carry the identity colour there. */
+.game-player-card.current .game-player-name,
+.game-player-card.current .game-player-name-text {
   color: #000;
 }
 
@@ -360,8 +389,13 @@
   font-weight: 700;
   font-size: 11px;
   line-height: 1.2;
-  color: #FFE94A;
-  opacity: 0.9;
+  /* The live typing reads in the typer's session colour (the card sets --pc);
+     falls back to the old yellow when no colour is assigned. A thin black cel
+     stroke keeps every hue legible on the active card's orange background. */
+  color: var(--pc, #FFE94A);
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  opacity: 1;
   text-align: center;
   /* Long in-progress words shouldn't blow out the narrow card. */
   word-break: break-all;
@@ -572,6 +606,7 @@
   bottom: -150px;
   z-index: 18;
   pointer-events: none;
+  display: inline-flex; /* a row of per-letter spans */
   font-family: 'Bungee', cursive;
   font-size: 22px;
   color: #FFE94A;
@@ -584,6 +619,20 @@
 @keyframes word-fly {
   0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
   100% { transform: translate(-50%, -180px) scale(0.55); opacity: 0; }
+}
+
+/* Each thrown letter also does a quick staggered pop on launch (the container
+   carries the whole row up via word-fly), so the throw reads per-letter. */
+.flying-letter {
+  display: inline-block;
+  animation: flying-letter-pop 240ms ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 22ms);
+}
+
+@keyframes flying-letter-pop {
+  0% { transform: translateY(5px) scale(0.7); opacity: 0.5; }
+  50% { transform: translateY(-4px) scale(1.18); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 /* The rejected word shattering near the bomb: each letter flies apart. */
@@ -613,6 +662,84 @@
   100% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0)); opacity: 0; }
 }
 
+/* ---- Per-letter submit physics (Category Blitz) ---- */
+/* The submitted answer, split into per-letter spans, animated over the input.
+   pointer-events:none so it never blocks typing; transform/opacity only. */
+.submit-letters {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 18;
+  pointer-events: none;
+  display: inline-flex;
+  font-family: 'Bungee', cursive;
+  font-size: 22px;
+  line-height: 1;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+
+.submit-letter {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* ACCEPT: a crisp, light pop-hop left-to-right that settles then clears. Fires
+   constantly, so it's deliberately small + fast (NOT a celebration). Yellow. */
+.submit-accept { color: #FFE94A; }
+.submit-accept .submit-letter {
+  animation: submit-pop 340ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 26ms);
+}
+
+@keyframes submit-pop {
+  0% { transform: translateY(0) scale(0.85); opacity: 0; }
+  35% { transform: translateY(-9px) scale(1.14); opacity: 1; }
+  60% { transform: translateY(0) scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-3px) scale(1); opacity: 0; }
+}
+
+/* REJECT: a quick jitter, then each letter flings out with a downward DROP and
+   fades - sharper + felt, in red. This is CB's single coherent miss reaction. */
+.submit-reject { color: #FF5C5C; }
+.submit-reject .submit-letter {
+  animation: submit-scatter 460ms ease-in both;
+  animation-delay: calc(var(--i, 0) * 16ms);
+}
+
+@keyframes submit-scatter {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  15% { transform: translate(2px, -2px) rotate(3deg) scale(1.08); opacity: 1; }
+  30% { transform: translate(-2px, 0) rotate(-3deg) scale(1.04); opacity: 1; }
+  100% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0)) scale(0.78); opacity: 0; }
+}
+
+/* Reduced motion: drop ALL per-letter motion (throw pop, scatter, CB pop/scatter)
+   to a single readable fade. The element that owns the self-remove keeps a fade
+   so its animationEnd still fires (container for the throw; first letter else). */
+@media (prefers-reduced-motion: reduce) {
+  .flying-word { animation: submit-flash 300ms ease-out forwards !important; }
+  .flying-letter { animation: none !important; }
+  .shatter-letter {
+    animation: submit-flash 300ms ease-out forwards !important;
+    transform: none !important;
+  }
+  .submit-letter {
+    animation: submit-flash 320ms ease-out both !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+  }
+}
+
+@keyframes submit-flash {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* CLUTCH! - the buzzer-beater slam, replacing the normal hype word. */
 .clutch-popup {
   position: absolute;
@@ -635,6 +762,84 @@
   20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
   40% { transform: translate(-50%, -50%) scale(0.95); opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+/* ---- Near-miss / clutch callout: floats above the input, surfaces how close a
+   late accept was ("<1s CLUTCH!" / "<2s CLOSE!"). Absolutely positioned +
+   pointer-events:none so it never blocks the input or reflows on a key. Two
+   tiers: close (warm orange) and the hotter, bigger clutch (pink). ---- */
+.clutch-callout {
+  position: absolute;
+  left: 50%;
+  top: -54px;
+  z-index: 17;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 0.92;
+  font-family: 'Bungee', cursive;
+  white-space: nowrap;
+  transform-origin: center bottom;
+  animation: clutch-callout-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.clutch-callout-time {
+  font-size: 30px;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.clutch-callout-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+
+.clutch-callout.clutch-close .clutch-callout-time { color: #FF6B3D; }
+.clutch-callout.clutch-close .clutch-callout-label { color: #FFE94A; }
+
+.clutch-callout.clutch-clutch .clutch-callout-time { color: #FF2EC4; font-size: 40px; }
+.clutch-callout.clutch-clutch .clutch-callout-label { color: #FF2EC4; }
+
+/* Calm pop (close tier): up from small with an overshoot, then drift up + fade. */
+@keyframes clutch-callout-pop {
+  0% { transform: translateX(-50%) translateY(8px) scale(0.5); opacity: 0; }
+  20% { transform: translateX(-50%) translateY(-4px) scale(1.18); opacity: 1; }
+  35% { transform: translateX(-50%) translateY(0) scale(0.98); opacity: 1; }
+  45% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-14px) scale(1); opacity: 0; }
+}
+
+/* Hotter pop (clutch tier): bigger overshoot + a quick left/right shake baked
+   into the transform (so it's GPU-friendly - no margin/layout shake). */
+.clutch-callout.clutch-clutch {
+  animation: clutch-callout-pop-hot 950ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes clutch-callout-pop-hot {
+  0% { transform: translateX(-50%) translateY(8px) scale(0.5); opacity: 0; }
+  18% { transform: translateX(calc(-50% - 4px)) translateY(-6px) scale(1.32); opacity: 1; }
+  26% { transform: translateX(calc(-50% + 4px)) translateY(0) scale(1); opacity: 1; }
+  34% { transform: translateX(calc(-50% - 2px)) scale(1.08); }
+  42% { transform: translateX(-50%) scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-16px) scale(1); opacity: 0; }
+}
+
+/* Reduced motion: keep the callout readable, drop the pop/shake (a plain fade). */
+@media (prefers-reduced-motion: reduce) {
+  .clutch-callout,
+  .clutch-callout.clutch-clutch {
+    animation: clutch-callout-fade 900ms ease-out forwards;
+  }
+  @keyframes clutch-callout-fade {
+    0% { transform: translateX(-50%); opacity: 0; }
+    15% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateX(-50%); opacity: 0; }
+  }
 }
 
 .bomb-svg {
@@ -936,6 +1141,20 @@
   margin-bottom: 8px;
 }
 
+/* Quick scale-punch on the prompt box each time a word is accepted - the small
+   satisfying "pop" of a correct answer, layered on top of the +1 float, the bomb
+   recoil and the spark burst. Re-keyed in JSX so it replays per accept. The base
+   rotate(-1deg) is kept so the box's resting tilt holds. */
+.game-combo-box.punch {
+  animation: combo-box-punch 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes combo-box-punch {
+  0%   { transform: rotate(-1deg) scale(1); }
+  35%  { transform: rotate(-1deg) scale(1.07); }
+  100% { transform: rotate(-1deg) scale(1); }
+}
+
 .game-combo {
   font-family: 'Bungee', cursive;
   font-size: clamp(30px, 6vw, 70px);
@@ -1217,6 +1436,16 @@
   font-size: 14px;
   color: #2EFFE0;
   margin-bottom: 16px;
+}
+
+/* A random FNF-voice roast blurb under the win/loss title. */
+.game-over-blurb {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: #FFE94A;
+  margin: -2px 0 16px;
 }
 
 .game-over-stat {
@@ -1654,6 +1883,8 @@
   gap: 8px;
   background: #2a1450;
   border: 3px solid #000;
+  /* Identity edge in the player's darker shade. */
+  border-left: 7px solid var(--pc-dark, #000);
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
   padding: 8px 10px;
@@ -1665,7 +1896,14 @@
   font-family: 'Bungee', cursive;
   font-size: 11px;
   color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   word-break: break-word;
+}
+
+.cb-progress-name-text {
+  color: var(--pc, #fff);
 }
 
 .cb-progress-count {
@@ -1705,11 +1943,16 @@
 .cb-result-player {
   background: #2a1450;
   border: 3px solid #000;
+  border-left: 7px solid var(--pc-dark, #000);
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
   padding: 10px;
   margin-bottom: 10px;
   transform: rotate(-0.5deg);
+}
+
+.cb-result-name-text {
+  color: var(--pc, #fff);
 }
 
 .cb-result-head {
@@ -1782,10 +2025,21 @@
   gap: 8px;
   background: #2a1450;
   border: 3px solid #000;
+  border-left: 7px solid var(--pc-dark, #000);
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
   padding: 9px 10px;
   transform: rotate(-0.5deg);
+}
+
+.cb-score-name-text {
+  color: var(--pc, #fff);
+}
+
+/* The winner row is yellow - keep its name dark for contrast (the dot + the
+   coloured left edge still mark identity). */
+.cb-score-row.winner .cb-score-name-text {
+  color: #000;
 }
 
 /* The winner row pops in yellow with a heavier outline-shadow. */
@@ -1925,10 +2179,11 @@
   gap: 7px;
   background: #1a0b2e;
   border: 2.5px solid #000;
-  /* A thicker, event-coloured accent down the left edge (cyan accepted, red
-     timeout, etc.) on top of the black cel outline, so the row's type reads at
-     a glance even before the dot/text. Per-type colours set below. */
+  /* The thick left accent is the ACTOR's session colour (set via --pc per row),
+     so you can tell who a line is about at a glance; the event TYPE still reads
+     from the coloured dot + action word (TIMED OUT, MISSED...). */
   border-left-width: 5px;
+  border-left-color: var(--pc, #FF2EC4);
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
   padding: 7px 9px;
@@ -1949,12 +2204,7 @@
 .kill-feed-row.timeout .kill-feed-dot { background: #FF5C5C; }
 .kill-feed-row.skip .kill-feed-dot { background: #FFE94A; }
 .kill-feed-row.rejected .kill-feed-dot { background: #9A1AFF; }
-
-/* Left-edge accent colour, matched to each event type's dot. */
-.kill-feed-row.accepted { border-left-color: #2EFFE0; }
-.kill-feed-row.timeout { border-left-color: #FF5C5C; }
-.kill-feed-row.skip { border-left-color: #FFE94A; }
-.kill-feed-row.rejected { border-left-color: #9A1AFF; }
+.kill-feed-row.eliminated .kill-feed-dot { background: #FF2EC4; }
 
 .kill-feed-text {
   font-family: 'Space Mono', monospace;
@@ -1966,7 +2216,8 @@
 }
 
 .kill-feed-name {
-  color: #fff;
+  /* The actor's name in their session colour (falls back to white). */
+  color: var(--pc, #fff);
   text-transform: uppercase;
 }
 
@@ -1982,10 +2233,27 @@
 
 .kill-feed-row.timeout .kill-feed-action { color: #FF5C5C; }
 .kill-feed-row.skip .kill-feed-action { color: #FFE94A; }
+/* The elimination flavour line carries the eliminated player's colour (the line
+   already names them), keeping the kill identifiable by colour. */
+.kill-feed-row.eliminated .kill-feed-action { color: var(--pc, #FF2EC4); }
 
 @keyframes feed-slide-in {
   0% { transform: translateY(-10px) skewX(-1deg); opacity: 0; }
   100% { transform: translateY(0) skewX(-1deg); opacity: 1; }
+}
+
+/* The elimination line doesn't slide in quietly - it SLAMS in from the side with
+   an overshoot punch (same buzzer energy as the splash title), so a knockout
+   reads as an event in the feed, not just another row. */
+.kill-feed-row.eliminated {
+  animation: feed-slam 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes feed-slam {
+  0%   { transform: translateX(46px) skewX(-1deg) scale(1.16); opacity: 0; }
+  55%  { transform: translateX(-7px) skewX(-1deg) scale(1.06); opacity: 1; }
+  78%  { transform: translateX(3px) skewX(-1deg) scale(0.98); opacity: 1; }
+  100% { transform: translateX(0) skewX(-1deg) scale(1); opacity: 1; }
 }
 
 /* ============================================================= */
@@ -2113,6 +2381,7 @@
 .go-player {
   background: #1a0b2e;
   border: 3px solid #000;
+  border-left: 7px solid var(--pc-dark, #000);
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
   padding: 9px 10px;
@@ -2123,7 +2392,14 @@
   font-size: 11px;
   color: #FFE94A;
   margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   word-break: break-word;
+}
+
+.go-player-name-text {
+  color: var(--pc, #FFE94A);
 }
 
 .go-player-grid {
@@ -2557,7 +2833,7 @@ html[data-beat='true'] .cb-answer-chip {
 /* Bomb heartbeat: in the fuse's final third the whole stage gets a fast, tiny
    scale pulse (physiological tension). Suppressed while a one-shot game-shake is
    playing so the shake reads cleanly. */
-.game-stage.heartbeat:not(.game-shake) {
+.game-stage.heartbeat:not(.game-shake):not(.clutch-slowmo) {
   animation: stage-heartbeat 300ms ease-in-out infinite;
 }
 
@@ -2578,7 +2854,7 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-stage.heartbeat:not(.game-shake) {
+  .game-stage.heartbeat:not(.game-shake):not(.clutch-slowmo) {
     animation: none !important;
   }
   .game-input.typing-active {
@@ -2695,6 +2971,39 @@ html[data-beat='true'] .cb-answer-chip {
   .ko-burst { width: 280px; height: 280px; }
 }
 
+/* CLUTCH SLOW-MO: a buzzer-beater save earns a brief triumphant time-dilation -
+   the stage swells slowly, holds a beat, then snaps back. The heartbeat pulse is
+   excluded while this runs (see above) so the clutch beat reads cleanly. */
+.game-stage.clutch-slowmo {
+  animation: clutch-slowmo 700ms cubic-bezier(0.33, 0, 0.1, 1);
+}
+
+@keyframes clutch-slowmo {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.05); }
+  62%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* COLOUR-POP: a success-cyan radial wash over the stage on a clutch save, under
+   the CLUTCH! slam (z 22). Stays inside .game-stage so it never escapes the clip
+   box. Cyan is the game's "accepted/correct" colour (the +1 float, the feed dot),
+   so the pop reads as the player's success lighting up the screen. */
+.clutch-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 21;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(46, 255, 224, 0.5) 0%, rgba(46, 255, 224, 0) 62%);
+  animation: clutch-flash 700ms ease-out forwards;
+}
+
+@keyframes clutch-flash {
+  0%   { opacity: 0; }
+  14%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* COLOR DRAIN: the stage desaturates over the last 5s of your turn (saturate set
    inline from the seconds left). The bomb + input (.drain-exempt) counter it so
    they stay fully coloured - tunnel vision. Slow drain in (1s), instant snap
@@ -2732,6 +3041,12 @@ html[data-beat='true'] .cb-answer-chip {
 
 @media (prefers-reduced-motion: reduce) {
   .game-stage.hitlag { transform: none; }
+  .game-stage.clutch-slowmo { animation: none; transform: none; }
+  /* Drop the clutch colour-pop, the kill-feed slam and the prompt punch entirely
+     under reduced motion (no flashes / violent slams). */
+  .clutch-flash { animation: none; opacity: 0; }
+  .kill-feed-row.eliminated { animation: none; }
+  .game-combo-box.punch { animation: none; }
   .impact-flash,
   .ko-impact-flash,
   .ko-burst,

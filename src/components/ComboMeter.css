@@ -1,0 +1,165 @@
+/* ComboMeter.css - the escalating combo/streak HUD (Word Bomb + Category Blitz).
+   Locked style: flat colours, thick darker-shade outlines, hard black offset
+   shadows, Bungee, NO glow/blur/gradients. Intensity climbs by COLOUR + SCALE +
+   SHAKE + flat PARTICLE sparks per tier. Absolutely positioned + pointer-events
+   none, so it floats over the input without blocking it or reflowing on a key. */
+
+.combo-meter {
+  position: absolute;
+  top: -48px;
+  right: 4px;
+  z-index: 16;
+  pointer-events: none;
+}
+
+.combo-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #1a0b2e; /* dark panel per style; the hue lives in the outline+text */
+  border: 3px solid #B8A020;
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+  /* Per-tier scale via a var so the idle-shake keyframe can keep it. */
+  --combo-scale: 1;
+  transform: skewX(-4deg) scale(var(--combo-scale));
+  transform-origin: right bottom;
+}
+
+.combo-flame,
+.combo-label,
+.combo-count {
+  font-family: 'Bungee', cursive;
+  -webkit-text-stroke: 2.5px #000;
+  paint-order: stroke fill;
+  line-height: 1;
+}
+.combo-label {
+  font-size: 11px;
+  color: #fff;
+}
+.combo-count {
+  font-size: 20px;
+  color: #FFE94A;
+}
+.combo-flame {
+  font-size: 14px;
+  -webkit-text-stroke: 0;
+}
+
+/* The inner content is re-keyed by count, so this grow-pop replays per hit
+   WITHOUT restarting the badge's idle shake (which lives on the parent). */
+.combo-pop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: combo-pop-in 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes combo-pop-in {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Tiers: warming up -> hot -> on fire -> maxed ---- */
+.combo-warm { border-color: #B8A020; }
+.combo-warm .combo-count { color: #FFE94A; }
+
+.combo-hot { border-color: #B83D15; --combo-scale: 1.08; }
+.combo-hot .combo-count { color: #FF6B3D; }
+
+.combo-fire { border-color: #B02A2A; --combo-scale: 1.16; }
+.combo-fire .combo-count { color: #FF5C5C; }
+
+.combo-max { border-color: #991A75; --combo-scale: 1.26; }
+.combo-max .combo-count { color: #FF2EC4; }
+.combo-max .combo-label { color: #FF2EC4; }
+
+/* Idle shake from the "on fire" tier up - tighter (faster) at max. The base
+   skew+scale is baked into every frame so it isn't lost while shaking. */
+.combo-badge.combo-fire,
+.combo-badge.combo-max {
+  animation: combo-shake 200ms ease-in-out infinite;
+}
+.combo-badge.combo-max {
+  animation-duration: 150ms;
+}
+@keyframes combo-shake {
+  0%, 100% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(0, 0) rotate(0deg); }
+  25% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(-1.5px, 1px) rotate(-1deg); }
+  50% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(1.5px, -1px) rotate(1deg); }
+  75% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(-1px, 0) rotate(-0.5deg); }
+}
+
+/* Flat particle sparks at the top tiers - cel squares that fling out + fade. */
+.combo-spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border: 2px solid #000;
+  border-radius: 2px;
+  background: #FFE94A;
+  opacity: 0;
+  animation: combo-spark 720ms ease-out infinite;
+}
+.combo-spark.s0 { top: -7px; left: 14%; --sx: -11px; --sy: -10px; animation-delay: 0ms; background: #FFE94A; }
+.combo-spark.s1 { top: -5px; right: 22%; --sx: 11px; --sy: -13px; animation-delay: 230ms; background: #FF2EC4; }
+.combo-spark.s2 { bottom: -7px; left: 34%; --sx: -8px; --sy: 11px; animation-delay: 460ms; background: #2EFFE0; }
+@keyframes combo-spark {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(var(--sx, 0), var(--sy, 0)) scale(1); opacity: 0; }
+}
+
+/* ---- Break: the streak SHATTERS - the count drops + crumbles away. ---- */
+.combo-shatter {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+  transform-origin: right bottom;
+  animation: combo-shatter 600ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+.combo-shatter-count {
+  font-family: 'Bungee', cursive;
+  font-size: 22px;
+  color: #FF5C5C;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  line-height: 1;
+}
+.combo-shatter-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #FF5C5C;
+}
+@keyframes combo-shatter {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  18% { transform: translateY(-4px) scale(1.12) rotate(-2deg); opacity: 1; }
+  100% { transform: translateY(34px) scale(0.7) rotate(8deg); opacity: 0; }
+}
+
+/* ---- Reduced motion: keep the counter readable; drop shake/pop/particles and
+   make the break a simple fade. ---- */
+@media (prefers-reduced-motion: reduce) {
+  .combo-badge,
+  .combo-pop {
+    animation: none !important;
+  }
+  .combo-spark { display: none; }
+  .combo-shatter {
+    animation: combo-shatter-fade 500ms ease-out forwards;
+  }
+  @keyframes combo-shatter-fade {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+}

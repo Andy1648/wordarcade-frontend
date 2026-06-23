@@ -71,7 +71,11 @@
 
 .room-player-chip {
   background: #fff;
-  border: 3px solid #AAAAAA;
+  /* The player's session colour reads as the chip outline + a bold left accent
+     edge (the dot carries the hue too); the name stays dark for contrast on the
+     white chip. Falls back to the old grey when no colour is assigned. */
+  border: 3px solid var(--pc, #AAAAAA);
+  border-left: 8px solid var(--pc-dark, #AAAAAA);
   border-radius: 8px;
   padding: clamp(10px, 1.2vw, 16px) clamp(14px, 1.6vw, 22px);
   font-family: 'Space Mono', monospace;
@@ -82,11 +86,19 @@
   box-shadow: 3px 3px 0 #000;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
+  justify-content: flex-start;
   /* box-shadow transition (not a keyframe) so the beat shadow-slam doesn't
      restart the idle chip-rock transform animation. */
   transition: box-shadow 80ms ease-out;
   will-change: box-shadow;
+}
+
+.room-player-name {
+  /* Take the slack so the HOST badge is pushed to the right edge. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .room-host-badge {
