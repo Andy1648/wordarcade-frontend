@@ -253,6 +253,10 @@
    hand-thrown and crooked, not typeset. */
 .intro-line-slot {
   position: relative;
+  /* Hard flat offset shadow for the sticker/vinyl pop. On the SLOT (not the
+     line) so it stays put regardless of the line's per-phrase filter/text-shadow
+     animations (e.g. DIE's filter pulse). */
+  filter: drop-shadow(9px 10px 0 #000);
 }
 
 .intro-slot-type {
@@ -301,7 +305,9 @@
      punch through the speed lines + accents behind it. */
   font-size: clamp(56px, min(13vw, 15vh), 150px);
   line-height: 1;
-  -webkit-text-stroke: 6px #000;
+  /* CHUNKY cartoon/vinyl outline so the words read as sticker graphics, not
+     styled text. The hard offset shadow lives on the slot (below). */
+  -webkit-text-stroke: 9px #000;
   paint-order: stroke fill;
   white-space: nowrap;
   /* The line container stays on; visibility is owned per-letter (letters fade in
@@ -321,6 +327,45 @@
   position: relative;
   opacity: 0;
   will-change: transform, opacity;
+}
+
+/* ---- Comic impact burst BEHIND each word (graphic-poster flourish) ----
+   Flat starburst with a thick black outline that pops in with the word on its
+   slam, then idles. Sits behind the letters (z -1) so the word stays readable. */
+.intro-word-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 116%;
+  height: 175%;
+  z-index: -1;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.intro-word-burst svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.intro-line.active .intro-word-burst {
+  animation:
+    intro-wordburst-pop 440ms cubic-bezier(0.2, 1.5, 0.3, 1) both,
+    intro-wordburst-idle 4.5s ease-in-out 0.5s infinite;
+}
+
+@keyframes intro-wordburst-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+  60% { opacity: 0.92; transform: translate(-50%, -50%) scale(1.1) rotate(7deg); }
+  100% { opacity: 0.88; transform: translate(-50%, -50%) scale(1) rotate(6deg); }
+}
+
+@keyframes intro-wordburst-idle {
+  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(6deg); }
+  50% { transform: translate(-50%, -50%) scale(1.05) rotate(10deg); }
 }
 
 /* =====================  TYPE FAST = fast / electric  ===================== */
@@ -714,10 +759,13 @@
 @media (max-width: 600px) {
   .intro-line {
     /* Still a big hero on phones, but capped so "DIE SLOW." never clips the
-       edges; lighter stroke at small sizes. */
+       edges; chunky-but-lighter stroke at small sizes. */
     font-size: clamp(44px, 13vw, 84px);
-    -webkit-text-stroke-width: 4px;
+    -webkit-text-stroke-width: 6px;
   }
+
+  /* Smaller sticker shadow on phones. */
+  .intro-line-slot { filter: drop-shadow(6px 7px 0 #000); }
 
   .intro-breathe { gap: clamp(40px, 7vh, 76px); }
   .intro-slot-type { transform: translate(-4px, -6px) rotate(-5deg); }
@@ -792,6 +840,13 @@
   /* No impact frames / flashes / chromatic punch under reduced motion - the
      larger title simply appears (letters fade in below). */
   .intro-flash { display: none !important; }
+  /* The comic word-bursts stay (part of the static poster art) but don't animate
+     - shown in their resting state. */
+  .intro-line.active .intro-word-burst {
+    animation: none !important;
+    opacity: 0.88;
+    transform: translate(-50%, -50%) scale(1) rotate(6deg);
+  }
 
   .intro-letter {
     animation: none !important;

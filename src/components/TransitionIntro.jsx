@@ -153,6 +153,19 @@ function IntroLetters({ text }) {
   });
 }
 
+// A flat comic-book impact starburst that sits BEHIND a word and pops in with it
+// on the slam (then idles), for the graphic-poster look. Flat fill + thick black
+// outline; rendered behind the letters (z -1) so the word stays readable on top.
+function WordBurst({ color }) {
+  return (
+    <span className="intro-word-burst" aria-hidden="true">
+      <svg viewBox="-112 -112 224 224">
+        <polygon points={BURST_POINTS} fill={color} stroke="#000" strokeWidth="7" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
 /**
  * @param {object} props
  * @param {() => void} props.onComplete - called once the explosion finishes, so
@@ -369,6 +382,7 @@ export default function TransitionIntro({ onComplete }) {
                   exploding ? ' intro-explode-up' : ''
                 }`}
               >
+                <WordBurst color="#FFE94A" />
                 <IntroLetters text="TYPE FAST." />
               </div>
             </div>
@@ -378,6 +392,7 @@ export default function TransitionIntro({ onComplete }) {
                   exploding ? ' intro-explode-down' : ''
                 }`}
               >
+                <WordBurst color="#9A1AFF" />
                 <IntroLetters text="DIE SLOW." />
               </div>
             </div>

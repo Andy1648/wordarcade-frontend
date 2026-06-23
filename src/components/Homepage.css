@@ -444,8 +444,11 @@ html[data-beat='true'] .homepage-logo::after {
   z-index: 1;
   display: flex;
   justify-content: center;
-  gap: clamp(10px, 1.5vw, 22px);
-  padding: clamp(10px, 1.6vh, 22px) 18px clamp(8px, 1.4vh, 18px);
+  gap: clamp(8px, 1.2vw, 16px);
+  /* Extra horizontal inset so the two buttons (with their skew + hard offset
+     shadow) always sit comfortably INSIDE the card, never touching/spilling past
+     its rounded border. */
+  padding: clamp(10px, 1.6vh, 20px) clamp(16px, 3vw, 44px) clamp(8px, 1.4vh, 16px);
 }
 
 /* Discreet link to the standalone credits page. */
@@ -479,16 +482,18 @@ html[data-beat='true'] .homepage-logo::after {
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;
-  font-size: clamp(15px, 1.8vw, 22px);
+  /* More compact than the hero: smaller type + tighter vertical padding so the
+     pair fits inside the card at laptop size. */
+  font-size: clamp(13px, 1.5vw, 18px);
   /* Each variant sets its own darker-than-fill border colour below. */
   border: 4px solid #000;
   border-radius: 8px;
-  padding: clamp(12px, 1.4vw, 20px) 0;
+  padding: clamp(9px, 1.1vh, 14px) clamp(10px, 1.4vw, 18px);
   cursor: pointer;
   flex: 1;
-  /* Grow to fill the bar but cap each button so they stay a sane size on wide
+  /* Grow to fill the bar but cap each button so they stay compact on wide
      screens (the bar centres them). */
-  max-width: 500px;
+  max-width: 340px;
   text-align: center;
   box-shadow: 4px 4px 0 #000;
   transform: skewX(-2deg);

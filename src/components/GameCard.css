@@ -67,8 +67,10 @@
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000;
   overflow: hidden;
   /* Grows with the card's width so it stays roughly proportional as cards scale
-     up on big screens, capped so it never gets unwieldy. */
-  height: clamp(168px, 22vw, 300px);
+     up on big screens, but ALSO capped by viewport height (min of vw/vh) so the
+     three-card row shrinks on short laptops and the menu still fits one screen
+     without the bottom buttons spilling past the card. */
+  height: clamp(160px, min(21vw, 30vh), 280px);
   /* Rotation/drift lives on the wrapper; this element only scales (featured via
      --cs), skews and lifts - so the beat-pop can play over the idle sway. */
   transform: scale(var(--cs, 1));
@@ -262,6 +264,9 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
    upscale (which could overflow a full-width card) are reset. */
 @media (max-width: 600px) {
   .game-card.featured { --cs: 1; }
+  /* One card per row on phones (which scroll), so size by width, not the
+     short-laptop height cap. */
+  .game-card { height: clamp(170px, 46vw, 250px); }
   .game-card-wrap:nth-child(1),
   .game-card-wrap:nth-child(2),
   .game-card-wrap:nth-child(3) {
