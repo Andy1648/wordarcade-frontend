@@ -580,9 +580,10 @@ function App() {
     if (lastMessage.type === 'error') {
       setServerError(lastMessage.payload.message);
     }
-    // `view` is read above but intentionally NOT a dependency: adding it would
-    // re-run this effect (re-processing the last message) on every view change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Keyed on lastMessage so each incoming message is processed exactly once.
+    // Everything else this effect touches is stable (state setters + refs); it no
+    // longer reads `view` directly (the room_update guard uses a functional
+    // setView), so [lastMessage] is the complete, intended dependency list.
   }, [lastMessage]);
 
   // Auto-dismiss an accepted toast. Category Blitz answers fly fast, so they
