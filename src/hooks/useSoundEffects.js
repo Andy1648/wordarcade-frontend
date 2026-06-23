@@ -186,27 +186,60 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
 
     // ---- App-wide UI / transition / outcome sounds ----
 
-    // Heavy impact for the "TYPE FAST" / "DIE SLOW" slams: a very short noise
-    // burst + a low 80Hz thud + a tiny high "crack" ping. A fist hitting a wall.
+    // Heavy impact for the "TYPE FAST" / "DIE SLOW" slams - crisp, punchy, LOUD.
+    // Three stacked layers, all with near-instant attacks so the hit reads sharp:
+    //   1. a pitch-bent sub-thud (180->45Hz) for weight + punch,
+    //   2. a high-passed white-noise transient for the crisp "crack"/snap,
+    //   3. a bright square click on the very attack for extra bite.
     punch() {
       if (mutedRef.current) return;
       const ctx = getCtx();
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
-        playNoise(ctx, { start: now, dur: 0.05, peak: 0.3 }); // 50ms slap
-        // Low body thud (80Hz, decaying over 100ms).
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(80, now);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.12);
-        // High crack on top (1000Hz, 20ms).
-        playTone(ctx, { freq: 1000, type: 'sine', start: now, dur: 0.02, peak: 0.1 });
+
+        // 1. Sub-thud: drops in pitch fast for that "thwack" weight, loud.
+        const sub = ctx.createOscillator();
+        const subGain = ctx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(180, now);
+        sub.frequency.exponentialRampToValueAtTime(45, now + 0.09);
+        subGain.gain.setValueAtTime(0.0001, now);
+        subGain.gain.exponentialRampToValueAtTime(0.7, now + 0.004); // snap attack
+        subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        sub.connect(subGain).connect(ctx.destination);
+        sub.start(now);
+        sub.stop(now + 0.18);
+
+        // 2. Crisp transient: high-passed white noise, fast decay = a sharp snap.
+        const dur = 0.06;
+        const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
+        const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.setValueAtTime(1800, now);
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.55, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+        noise.connect(hp).connect(noiseGain).connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + dur + 0.01);
+
+        // 3. Bright click ping right on the attack for extra crispness/bite.
+        const click = ctx.createOscillator();
+        const clickGain = ctx.createGain();
+        click.type = 'square';
+        click.frequency.setValueAtTime(1500, now);
+        clickGain.gain.setValueAtTime(0.0001, now);
+        clickGain.gain.linearRampToValueAtTime(0.28, now + 0.002);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
+        click.connect(clickGain).connect(ctx.destination);
+        click.start(now);
+        click.stop(now + 0.035);
       } catch {
         /* no-op */
       }
