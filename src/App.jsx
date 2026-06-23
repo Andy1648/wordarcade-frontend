@@ -18,6 +18,7 @@ import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
 import { SoundContext } from './contexts/SoundContext';
+import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
 
 // The music button's border/glyph colour, matched to each screen's accent.
@@ -150,6 +151,16 @@ function App() {
   const [roundResults, setRoundResults] = useState(null);
   const [categoryScores, setCategoryScores] = useState(null);
   const [categoryTotals, setCategoryTotals] = useState({});
+  //   categoryRerolls - category rerolls remaining this game (from round_start,
+  //                     which also carries reroll restarts); drives the in-game
+  //                     NEW CATEGORY button.
+  //   lastReroll      - the most recent reroll event { by, byId, key } (set when
+  //                     a round_start arrives flagged reroll:true), so non-host
+  //                     clients can flash a "host rerolled" notice. key (a
+  //                     monotonic counter) re-fires the notice each time.
+  const [categoryRerolls, setCategoryRerolls] = useState(null);
+  const [lastReroll, setLastReroll] = useState(null);
+  const rerollKeyRef = useRef(0);
 
   // Imposter Word state (social deduction, three phases per round). round_start
   // is shared with Category Blitz, so it's disambiguated by the imposter-only
@@ -238,9 +249,6 @@ function App() {
   useEffect(() => {
     if (!lastMessage) return;
 
-    // TEMP debug: track message order vs the live view (remove after debugging).
-    console.log('MSG:', lastMessage.type, 'current view:', view);
-
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
     }
@@ -252,9 +260,9 @@ function App() {
       // room_update can land right after game_started (host start) and would
       // otherwise yank the player back out of the match. The rematch flow sends
       // an explicit game_reset to drive the game -> room transition instead.
-      if (view !== 'game') {
-        setView('room');
-      }
+      // Functional update so we read the LIVE view, not the stale `view` captured
+      // in this effect's closure (the effect is keyed only on [lastMessage]).
+      setView((prev) => (prev === 'game' ? prev : 'room'));
     }
 
     if (lastMessage.type === 'game_reset') {
@@ -266,6 +274,8 @@ function App() {
     if (lastMessage.type === 'game_started') {
       setGameType(lastMessage.payload.gameType || 'word-bomb');
       setGameNonce((n) => n + 1);
+      setCategoryRerolls(null);
+      setLastReroll(null);
       setGameOver(null);
       setServerError('');
       // Fresh game - wipe the live feed and its bookkeeping.
@@ -459,8 +469,15 @@ function App() {
         setGameOver(null);
         setView('game');
       } else {
+        // Category Blitz round_start. This is the SINGLE path for both a normal
+        // round and a host reroll (a server-authoritative round restart): either
+        // way we clear answers/progress, take the server's category + full timer,
+        // and update the reroll count. A reroll keeps the same round number (so
+        // CategoryBlitzScreen doesn't replay the 3-2-1) and carries `reroll`/`by`
+        // so non-host clients can flash the "host rerolled" notice.
         setCategoryRound(payload);
         setTimerSeconds(payload.timerSeconds);
+        setCategoryRerolls(payload.rerollsRemaining ?? null);
         setMyAnswers([]);
         setPlayerProgress({});
         setRoundResults(null);
@@ -468,6 +485,9 @@ function App() {
         setGameOver(null);
         setCategoryScores(null);
         if (payload.round === 1) setCategoryTotals({}); // fresh game
+        if (payload.reroll) {
+          setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
+        }
         setView('game');
       }
     }
@@ -522,6 +542,7 @@ function App() {
       const { playerId, answerCount } = lastMessage.payload;
       setPlayerProgress((prev) => ({ ...prev, [playerId]: answerCount }));
     }
+
 
     if (lastMessage.type === 'round_end') {
       const payload = lastMessage.payload;
@@ -664,6 +685,8 @@ function App() {
     setRoundResults(null);
     setCategoryScores(null);
     setCategoryTotals({});
+    setCategoryRerolls(null);
+    setLastReroll(null);
     setFeedEvents([]);
     feedCurrentRef.current = { id: null, name: 'SOMEONE' };
     feedPrevLivesRef.current = {};
@@ -730,6 +753,12 @@ function App() {
     send('start_game', {});
   }
 
+  // Category Blitz: swap the current round's category. The server enforces
+  // host-only (multiplayer) and the per-game reroll allowance; we just ask.
+  function handleRerollCategory() {
+    send('reroll_category', {});
+  }
+
   function handleSubmitWord(word) {
     send('submit_word', { word });
   }
@@ -790,6 +819,8 @@ function App() {
         roundResults={roundResults}
         categoryScores={categoryScores}
         categoryTotals={categoryTotals}
+        categoryRerolls={categoryRerolls}
+        lastReroll={lastReroll}
         imposterRound={imposterRound}
         imposterPhase={imposterPhase}
         imposterAnswers={imposterAnswers}
@@ -806,6 +837,7 @@ function App() {
         onLeave={handleLeaveRoom}
         onRematch={handleRematch}
         onPlayAgain={handlePlayAgain}
+        onRerollCategory={handleRerollCategory}
         musicSetVolume={music.setVolume}
         reactions={reactions}
         onSpectatorReaction={handleSpectatorReaction}
@@ -905,36 +937,45 @@ function App() {
   // then. The WallScene + TransitionOverlay live OUTSIDE that keyed wrapper so
   // the backdrop persists and the wipe plays over the swap.
   return (
-    // .app-viewport is fixed + overflow:hidden so it clips the shake to the
-    // viewport (no scrollbars can ever appear from the shake). The inner
-    // .app-shake is the actual scroll container (overflow-y:auto) AND the
-    // element the intensity-graded shake (light=beat / medium=accept /
-    // heavy=explosion) is applied to - shaking it just moves it within the
-    // clipping outer box, while normal vertical scrolling still works.
+    // Three nested roles, deliberately on separate elements so an animation can
+    // never spawn a scrollbar:
+    //   .app-viewport - fixed + overflow:hidden: the outermost CLIP box.
+    //   .app-shake    - the intensity-graded shake (light=beat / medium=accept /
+    //                   heavy=explosion) is applied HERE. It only transforms; it
+    //                   is neither the clip nor the scroll container, so a shake
+    //                   can't nudge content past a scrollable edge.
+    //   .app-scroll   - the actual scroll container (overflow-y:auto), inside the
+    //                   shake element, so genuinely tall screens still scroll
+    //                   while the shake (an ancestor transform) never affects it.
     <SoundContext.Provider value={soundValue}>
     <div className="app-viewport">
       <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
-        <WallScene intensity={bgIntensity} />
-        <ParticleField />
-        <div className="view-transition-root">
-          <div key={renderedView} className="view-screen">
-            {screen}
+        <div className="app-scroll">
+          <WallScene intensity={bgIntensity} />
+          <ParticleField />
+          <div className="view-transition-root">
+            <div key={renderedView} className="view-screen">
+              {screen}
+            </div>
           </div>
+          {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
+          {/* Whole-viewport beat flash (subtlest effect): a single always-present
+              div that briefly flashes a palette colour on each beat (colour set by
+              useBeatSync via --flash-color). Click-through, below modals. */}
+          <div className="screen-flash" aria-hidden="true" />
+          <MusicButton
+            isMuted={music.isMuted}
+            onToggle={music.toggleMute}
+            accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
+          />
         </div>
-        {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
-        {/* Whole-viewport beat flash (subtlest effect): a single always-present
-            div that briefly flashes a palette colour on each beat (colour set by
-            useBeatSync via --flash-color). Click-through, below modals. */}
-        <div className="screen-flash" aria-hidden="true" />
-        <MusicButton
-          isMuted={music.isMuted}
-          onToggle={music.toggleMute}
-          accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
-        />
       </div>
       {/* Cursor trail sits outside .app-shake so the screen shake never moves
           it, and above everything (z 9999). */}
       <CursorTrail />
+      {/* Vercel Web Analytics - renders nothing; beacons pageviews on the
+          deployed site (no-op on localhost). */}
+      <Analytics />
     </div>
     </SoundContext.Provider>
   );
