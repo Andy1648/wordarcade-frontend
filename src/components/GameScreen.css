@@ -2682,3 +2682,155 @@ html[data-beat='true'] .cb-answer-chip {
     animation: none !important;
   }
 }
+
+/* ============================================================= */
+/* =================  SOLO CATEGORY BLITZ  ==================== */
+/* ============================================================= */
+
+/* The personal-best target shown above the game area during a solo round:
+   small Bungee, graffiti yellow, an immediate number to beat. */
+.solo-best-banner {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #FFE94A;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  letter-spacing: 1px;
+  margin: -6px 0 14px;
+  transform: rotate(-1deg);
+}
+
+/* Solo results reuse the dark game-over panel; just give it room to breathe. */
+.solo-results-card {
+  transform: rotate(-1deg);
+}
+
+/* "NEW RECORD!" - big yellow Bungee with the same pop energy as the hype words,
+   bouncing in and holding (it stays on the results screen). */
+.solo-new-record {
+  font-family: 'Bungee', cursive;
+  font-size: 36px;
+  line-height: 1;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  margin-bottom: 10px;
+  transform: rotate(-2deg);
+  animation: solo-record-pop 600ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes solo-record-pop {
+  0% { transform: scale(0) rotate(-8deg); opacity: 0; }
+  50% { transform: scale(1.35) rotate(4deg); opacity: 1; }
+  70% { transform: scale(0.9) rotate(-2deg); }
+  100% { transform: scale(1) rotate(-2deg); opacity: 1; }
+}
+
+.solo-score-label {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #C9B8E8;
+  margin-bottom: 2px;
+}
+
+/* The headline score, counting up. */
+.solo-score-value {
+  font-family: 'Bungee', cursive;
+  font-size: 72px;
+  line-height: 1;
+  color: #2EFFE0;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  margin-bottom: 10px;
+  transform: skewX(-3deg);
+}
+
+.solo-category {
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
+  color: #FF2EC4;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  margin-bottom: 14px;
+  word-break: break-word;
+}
+
+.solo-pb-line {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #FFE94A;
+  margin-bottom: 4px;
+}
+
+.solo-away {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: #C9B8E8;
+  margin-bottom: 10px;
+}
+
+.solo-answers-label {
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Centre the chips and cap the height (long runs scroll). */
+.solo-answers-list {
+  justify-content: center;
+  max-height: 140px;
+  margin-bottom: 18px;
+}
+
+/* PLAY AGAIN - the primary action: cyan, the biggest button (same shape as the
+   game-over REMATCH it stands in for). */
+.solo-play-again-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 20px;
+  color: #000;
+  background: #2EFFE0;
+  border: 4px solid #1A9985;
+  border-radius: 8px;
+  padding: 16px 0;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.solo-play-again-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* CHANGE CATEGORY - secondary: yellow, a step down from PLAY AGAIN. */
+.solo-change-cat-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  color: #000;
+  background: #FFE94A;
+  border: 4px solid #B8A800;
+  border-radius: 8px;
+  padding: 11px 0;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.solo-change-cat-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+@media (max-width: 480px) {
+  .solo-score-value { font-size: 56px; }
+  .solo-new-record { font-size: 28px; }
+  .solo-play-again-btn { font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solo-new-record { animation: none !important; }
+}

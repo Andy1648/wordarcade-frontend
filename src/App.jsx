@@ -83,6 +83,12 @@ function App() {
   // Learned authoritatively from the game_started message so GameScreen
   // knows which prompt/fields to render.
   const [gameType, setGameType] = useState('word-bomb');
+  // Bumped on every game_started. Used as a remount key for the Category Blitz
+  // screen so the solo "PLAY AGAIN" loop (which fires a brand new game without
+  // ever leaving the game view) gets a clean slate and replays its 3-2-1
+  // countdown - the round number stays 1 across solo games, so the screen can't
+  // detect a new game from the round number alone.
+  const [gameNonce, setGameNonce] = useState(0);
 
   // Live "what is everyone typing" map (Word Bomb): playerId -> their current
   // in-progress text, streamed via typing_update keystroke relays. Reset to {}
@@ -259,6 +265,7 @@ function App() {
 
     if (lastMessage.type === 'game_started') {
       setGameType(lastMessage.payload.gameType || 'word-bomb');
+      setGameNonce((n) => n + 1);
       setGameOver(null);
       setServerError('');
       // Fresh game - wipe the live feed and its bookkeeping.
@@ -713,6 +720,16 @@ function App() {
     send('rematch', {});
   }
 
+  // Solo Category Blitz "PLAY AGAIN": fire a brand new game immediately without
+  // bouncing back through the room/lobby. The lone player is the host, so they
+  // can just start_game again; the server tears down the old game's timers,
+  // creates a fresh solo game with a new random category, and broadcasts
+  // game_started + round_start, which the gameNonce remount + the round_start
+  // handler turn into a fresh round (with countdown) on the same screen.
+  function handlePlayAgain() {
+    send('start_game', {});
+  }
+
   function handleSubmitWord(word) {
     send('submit_word', { word });
   }
@@ -757,6 +774,7 @@ function App() {
       <GameScreen
         gameState={gameState}
         gameType={gameType}
+        gameNonce={gameNonce}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -787,6 +805,7 @@ function App() {
         onTypingUpdate={handleTypingUpdate}
         onLeave={handleLeaveRoom}
         onRematch={handleRematch}
+        onPlayAgain={handlePlayAgain}
         musicSetVolume={music.setVolume}
         reactions={reactions}
         onSpectatorReaction={handleSpectatorReaction}

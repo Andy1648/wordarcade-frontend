@@ -69,7 +69,11 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
 
   const isHost = myId !== null && myId === room.hostId;
   const minPlayers = minPlayersFor(room.gameType);
-  const canStart = room.players.length >= minPlayers;
+  // Category Blitz has a solo mode: a single player racing the clock alone, so
+  // it can start with just one. Word Bomb and Imposter Word still need a crowd.
+  const isSoloCategoryBlitz =
+    room.gameType === 'category-blitz' && room.players.length === 1;
+  const canStart = isSoloCategoryBlitz || room.players.length >= minPlayers;
 
   function handleStartGame() {
     if (starting) return;
@@ -162,6 +166,8 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
               ? `NEED ${minPlayers}+ PLAYERS TO START`
               : starting
               ? 'STARTING...'
+              : isSoloCategoryBlitz
+              ? 'PLAY SOLO'
               : 'START GAME'}
           </button>
         ) : (

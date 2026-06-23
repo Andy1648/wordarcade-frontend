@@ -63,6 +63,39 @@ const REJECTION_MESSAGES = {
 // the total, so the total lives here.
 const TOTAL_CATEGORY_ROUNDS = 3;
 
+// ---- Solo Category Blitz personal bests (localStorage) ----
+// One record per category, so a player always has a concrete target to beat.
+// Key: "typeaword-pb-" + the category lower-cased with spaces -> dashes.
+// Value: JSON { score, date } where date is an ISO timestamp of when it was set.
+function pbStorageKey(category) {
+  return 'typeaword-pb-' + (category || '').toLowerCase().trim().replace(/\s+/g, '-');
+}
+
+// The best score on record for a category, or null if there's no record yet.
+// Defensive against missing/corrupt storage (private mode, hand-edited values).
+function loadPersonalBest(category) {
+  try {
+    const raw = localStorage.getItem(pbStorageKey(category));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return typeof parsed.score === 'number' ? parsed.score : null;
+  } catch {
+    return null;
+  }
+}
+
+// Persist a new personal best for a category (only called when it's beaten).
+function savePersonalBest(category, score) {
+  try {
+    localStorage.setItem(
+      pbStorageKey(category),
+      JSON.stringify({ score, date: new Date().toISOString() })
+    );
+  } catch {
+    /* storage unavailable - skip silently, the PB just won't persist */
+  }
+}
+
 function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
   // Category answers have a lower length floor, so reuse a mode-specific
   // string for the same reason code.
@@ -946,6 +979,7 @@ function useHypeFeedback(lastWordResult) {
 export default function GameScreen({
   gameState,
   gameType,
+  gameNonce,
   myId,
   isHost,
   timerSeconds,
@@ -976,6 +1010,7 @@ export default function GameScreen({
   onTypingUpdate,
   onLeave,
   onRematch,
+  onPlayAgain,
   musicSetVolume,
   reactions = [],
   onSpectatorReaction,
@@ -1361,6 +1396,9 @@ export default function GameScreen({
   if (gameType === 'category-blitz') {
     return (
       <CategoryBlitzScreen
+        // Remount per game so the solo PLAY AGAIN loop starts clean and replays
+        // its countdown (the round number stays 1 across solo games).
+        key={`cb-${gameNonce}`}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -1376,6 +1414,7 @@ export default function GameScreen({
         onSubmitAnswer={onSubmitAnswer}
         onLeave={onLeave}
         onRematch={onRematch}
+        onPlayAgain={onPlayAgain}
       />
     );
   }
@@ -1834,6 +1873,110 @@ export default function GameScreen({
 }
 
 /**
+ * Solo Category Blitz results, shown the moment a solo round ends. Mounts once
+ * (App keeps it alive across the round_end -> game_over transition via a stable
+ * position + the gameNonce remount key), and on that single mount it reads the
+ * old personal best, decides whether this run beat it, and - if so - writes the
+ * new record. Doing that work in a useState initializer guarantees it happens
+ * exactly once, so a re-render can't see the freshly-saved value and wrongly
+ * conclude the record wasn't beaten.
+ *
+ *   - YOUR SCORE counts up dramatically.
+ *   - A NEW RECORD! celebration (yellow pop + confetti + celebrating mascot)
+ *     fires when the old best is beaten; otherwise a "X away" nudge shows how
+ *     close they came.
+ *   - PLAY AGAIN is the primary action (a new random category, no room detour);
+ *     CHANGE CATEGORY drops back to the room; LEAVE bails to the homepage.
+ */
+function SoloResultsScreen({ category, score, answers, onPlayAgain, onChangeCategory, onLeave }) {
+  // Resolve the personal best exactly once, on mount, and bank the new record
+  // if it was beaten. Everything the render needs is frozen here.
+  const [pb] = useState(() => {
+    const previousBest = loadPersonalBest(category); // number | null
+    const hadRecord = previousBest != null;
+    const baseline = hadRecord ? previousBest : 0;
+    const isNewRecord = score > baseline;
+    if (isNewRecord) savePersonalBest(category, score);
+    return {
+      hadRecord,
+      // The headline best to show: the new score if it's a record, else the old.
+      best: isNewRecord ? score : baseline,
+      isNewRecord,
+      // How far short we fell (only meaningful when we didn't beat it).
+      away: baseline - score,
+    };
+  });
+
+  return (
+    <div className="game-wrap">
+      {pb.isNewRecord && <ConfettiEffect />}
+      <div className="game-over-overlay">
+        <div className="game-over-card solo-results-card">
+          <Mascot
+            pose={pb.isNewRecord ? 'celebrate' : 'idle'}
+            size={130}
+            className="game-over-mascot"
+          />
+
+          {pb.isNewRecord && <div className="solo-new-record">NEW RECORD!</div>}
+
+          <div className="solo-score-label">YOUR SCORE</div>
+          <div className="solo-score-value">
+            <CountUp to={score} duration={900} />
+          </div>
+
+          <div className="solo-category">{(category || '').toUpperCase()}</div>
+
+          {/* Personal-best line + how-close nudge. */}
+          <div className="solo-pb-line">
+            {pb.isNewRecord
+              ? pb.hadRecord
+                ? 'YOU BEAT YOUR PERSONAL BEST!'
+                : 'YOUR FIRST RECORD!'
+              : `PERSONAL BEST: ${pb.best}`}
+          </div>
+          {!pb.isNewRecord && pb.hadRecord && (
+            <div className="solo-away">
+              {pb.away <= 0
+                ? 'YOU TIED YOUR BEST!'
+                : `${pb.away} AWAY FROM YOUR BEST!`}
+            </div>
+          )}
+
+          {/* Accepted answers as chips. */}
+          <div className="cb-section-label solo-answers-label">
+            YOUR ANSWERS ({answers.length})
+          </div>
+          <div className="cb-answers-list solo-answers-list">
+            {answers.length === 0 ? (
+              <span className="game-used-empty">NO ANSWERS THIS TIME</span>
+            ) : (
+              answers.map((answer, i) => (
+                <span key={`${answer}-${i}`} className="cb-answer-chip">
+                  {answer.toUpperCase()}
+                </span>
+              ))
+            )}
+          </div>
+
+          <div className="game-over-actions">
+            <button className="solo-play-again-btn" onClick={onPlayAgain}>
+              PLAY AGAIN
+            </button>
+            <button className="solo-change-cat-btn" onClick={onChangeCategory}>
+              CHANGE CATEGORY
+            </button>
+            <button className="game-over-leave secondary" onClick={onLeave}>
+              LEAVE
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * The Category Blitz play screen - a simultaneous, round-based mode with a
  * layout entirely separate from Word Bomb. It has three faces, chosen by the
  * incoming server state:
@@ -1861,6 +2004,7 @@ function CategoryBlitzScreen({
   onSubmitAnswer,
   onLeave,
   onRematch,
+  onPlayAgain,
 }) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
@@ -1868,8 +2012,32 @@ function CategoryBlitzScreen({
   const [showCountdown, setShowCountdown] = useState(false);
   const prevRoundRef = useRef(null);
 
+  // Solo mode: a lone player racing the clock. Auto-detected from the roster
+  // size (the backend gates the same way). It swaps the multiplayer results for
+  // a personal-best-driven solo screen and hides the (empty) opponents section.
+  const isSolo = (roomPlayers || []).length === 1;
+
   const roundActive = !!categoryRound && !gameOver;
   const roundNumber = categoryRound && categoryRound.round;
+
+  // The category + answers of the most recent active round, captured so the
+  // solo results screen still has them after round_end clears categoryRound and
+  // game_over clears roundResults. Snapshotting in a ref keeps them stable
+  // across the round_end -> game_over transition.
+  const soloRoundRef = useRef({ category: '', answers: [] });
+  if (categoryRound && categoryRound.category) {
+    soloRoundRef.current = {
+      category: categoryRound.category,
+      answers: myAnswers || [],
+    };
+  } else if (myAnswers && myAnswers.length) {
+    // Round just ended (categoryRound cleared) but our answers are still here -
+    // keep the freshest answer list while holding the captured category.
+    soloRoundRef.current = {
+      category: soloRoundRef.current.category || (roundResults && roundResults.category) || '',
+      answers: myAnswers,
+    };
+  }
 
   // Trigger the countdown whenever the round number changes (covers the first
   // round on mount and every subsequent round).
@@ -1934,6 +2102,43 @@ function CategoryBlitzScreen({
   else if (cbTransient) cbMascotPose = cbTransient;
   else if (roundResults) cbMascotPose = cbLeading ? 'celebrate' : 'panic';
   else cbMascotPose = 'idle';
+
+  // ---- SOLO: personal-best results ----
+  // A solo run is one round, so the moment it ends (round_end, then the
+  // near-instant game_over) we show the dedicated solo results instead of the
+  // multiplayer round-results / scoreboard. Both states map here; the screen
+  // itself stays mounted across the transition (stable position + frozen PB).
+  if (isSolo && (roundResults || gameOver)) {
+    const myResult =
+      roundResults && (roundResults.playerResults || []).find((pr) => pr.id === myId);
+    const myFinal =
+      (categoryScores || (gameOver && gameOver.finalScores) || []).find(
+        (s) => s.id === myId
+      );
+    const answers =
+      (myResult && myResult.answers) ||
+      soloRoundRef.current.answers ||
+      myAnswers ||
+      [];
+    const category =
+      (roundResults && roundResults.category) || soloRoundRef.current.category || '';
+    const score = myResult
+      ? myResult.roundScore
+      : myFinal
+      ? myFinal.score
+      : answers.length;
+
+    return (
+      <SoloResultsScreen
+        category={category}
+        score={score}
+        answers={answers}
+        onPlayAgain={onPlayAgain}
+        onChangeCategory={onRematch}
+        onLeave={onLeave}
+      />
+    );
+  }
 
   // ---- GAME OVER: final scoreboard ----
   if (gameOver) {
@@ -2009,6 +2214,8 @@ function CategoryBlitzScreen({
     const lowTime = !showCountdown && timerSeconds <= 5;
     const veryLowTime = !showCountdown && timerSeconds < 3;
     const others = roomPlayers.filter((p) => p.id !== myId);
+    // Solo: the score to beat for THIS category, shown up top as a live target.
+    const soloBest = isSolo ? loadPersonalBest(categoryRound.category) : null;
 
     return (
       <div className="game-wrap">
@@ -2021,15 +2228,26 @@ function CategoryBlitzScreen({
             <div className="game-title">CATEGORY BLITZ</div>
             <div className="game-header-right">
               <div className="game-meta">
-                <span className="game-meta-round">
-                  ROUND {categoryRound.round}/{TOTAL_CATEGORY_ROUNDS}
-                </span>
+                {isSolo ? (
+                  <span className="game-meta-round">SOLO</span>
+                ) : (
+                  <span className="game-meta-round">
+                    ROUND {categoryRound.round}/{TOTAL_CATEGORY_ROUNDS}
+                  </span>
+                )}
               </div>
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
             </div>
           </div>
+
+          {/* Solo: the personal best for this category, an immediate target. */}
+          {isSolo && (
+            <div className="solo-best-banner">
+              {soloBest != null ? `YOUR BEST: ${soloBest}` : 'NO RECORD YET'}
+            </div>
+          )}
 
           <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
           <div className="cb-category-display">
@@ -2100,21 +2318,24 @@ function CategoryBlitzScreen({
             </div>
           </div>
 
-          <div className="cb-progress">
-            <div className="cb-section-label">OTHER PLAYERS</div>
-            {others.length === 0 ? (
-              <span className="game-used-empty">NO OTHER PLAYERS</span>
-            ) : (
-              others.map((p) => (
-                <div key={p.id} className="cb-progress-row">
-                  <span className="cb-progress-name">{p.name}</span>
-                  <span className="cb-progress-count">
-                    {playerProgress[p.id] || 0} answers
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+          {/* Opponents' live progress - hidden in solo (there are none). */}
+          {!isSolo && (
+            <div className="cb-progress">
+              <div className="cb-section-label">OTHER PLAYERS</div>
+              {others.length === 0 ? (
+                <span className="game-used-empty">NO OTHER PLAYERS</span>
+              ) : (
+                others.map((p) => (
+                  <div key={p.id} className="cb-progress-row">
+                    <span className="cb-progress-name">{p.name}</span>
+                    <span className="cb-progress-count">
+                      {playerProgress[p.id] || 0} answers
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
