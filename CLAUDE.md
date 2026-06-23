@@ -24,6 +24,15 @@
 - Categories must be niche and unexpected — no generic "things that are green" style
 - Always verify build passes after changes: npx vite build --logLevel error
 
+## Workflow (always follow, never ask)
+- After ANY code change: run the full sequence yourself — edit → commit relevant files → push to current branch → report preview URL. Never end with uncommitted work.
+- Never ask "want me to commit/push?" — just do it. Follow-up questions get dropped.
+- Commit msg: short, conventional (feat:/fix:/docs:). Don't ask to approve.
+- NEVER commit (unless told): LoadingScreen.jsx, .md audit reports, generated_content_review.js. Leave them untracked.
+- After pushing, give the Vercel preview URL on its own line. User tests on preview, not localhost. Get it via `npx vercel ls wordarcade-frontend` (newest Preview row that's ● Ready).
+- End every task with a one-line status: what's committed + the preview URL. No open questions.
+- Keep responses short.
+
 ## Backend
 - Located at: C:\Users\andyw_tnc0kix\Downloads\chain-reaction-backend\
 - Push separately from frontend
