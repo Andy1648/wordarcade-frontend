@@ -10,6 +10,14 @@
 // second - never reshuffles a fresh random layout. React just swaps the
 // `intensity` class on the container; the DOM nodes are stable.
 import { useEffect, useRef, useState } from 'react';
+import { StickerInner } from './decor/Stickers';
+import GraffitiTag from './decor/GraffitiTag';
+import {
+  PaintSplatter1,
+  PaintSplatter2,
+  PaintSplatter3,
+  PaintSplatter5,
+} from './decor/PaintSplatters';
 import './WallScene.css';
 
 // ---- Self-writing graffiti: words that spray-paint themselves onto the wall
@@ -68,8 +76,17 @@ const STICKERS = [
   { kind: 'bolt',    c: CYAN,   size: 40, rot: 18,  top: 14, left: 84, op: 0.20, dx: -10, dy: 12,  dur: 21 },
   { kind: 'skull',   c: PINK,   size: 44, rot: -8,  top: 68, left: 14, op: 0.18, dx: 11,  dy: -9,  dur: 19 },
   { kind: 'crown',   c: ORANGE, size: 45, rot: 12,  top: 40, left: 62, op: 0.21, dx: -12, dy: -8,  dur: 23 },
-  { kind: 'arrow',   c: PURPLE, size: 38, rot: -22, top: 78, left: 50, op: 0.17, dx: 13,  dy: 9,   dur: 15 },
+  { kind: 'bomb',    c: PURPLE, size: 38, rot: -22, top: 78, left: 50, op: 0.17, dx: 13,  dy: 9,   dur: 15 },
   { kind: 'speech',  c: PINK,   size: 44, rot: 8,   top: 35, left: 8,  op: 0.19, dx: -9,  dy: 11,  dur: 25 },
+];
+
+// A few detailed spray-paint splatters flung onto the wall - low opacity so they
+// read as wall grime/tags behind the content, not foreground art.
+const WALL_SPLATTERS = [
+  { comp: PaintSplatter1, color: '#FF2EC4', size: 150, top: 10, left: 60, rot: 14,  op: 0.12 },
+  { comp: PaintSplatter3, color: '#FFE94A', size: 130, top: 57, left: 7,  rot: -20, op: 0.11 },
+  { comp: PaintSplatter5, color: '#2EFFE0', size: 120, top: 73, left: 70, rot: 8,   op: 0.12 },
+  { comp: PaintSplatter2, color: '#9A1AFF', size: 140, top: 30, left: 37, rot: -10, op: 0.10 },
 ];
 
 // Five dried vertical paint streaks running down from the top of the wall.
@@ -81,50 +98,6 @@ const DRIPS = [
   { left: 74, w: 3, h: 150, c: ORANGE, op: 0.14 },
   { left: 90, w: 2, h: 200, c: PURPLE, op: 0.10 },
 ];
-
-// Inline SVG body for each sticker kind (viewBox -50 -50 100 100). Flat fill +
-// thick colored (darker-shade) outline.
-function StickerInner({ kind, fill, line }) {
-  const s = { fill, stroke: line, strokeWidth: 3, strokeLinejoin: 'round', strokeLinecap: 'round' };
-  switch (kind) {
-    case 'bolt':
-      return <polygon points="10,-46 -22,8 -2,8 -12,46 24,-10 2,-10" {...s} />;
-    case 'skull':
-      return (
-        <g {...s}>
-          <path d="M-26 -18 C-26 -42 26 -42 26 -18 L26 6 C26 16 16 20 10 22 L10 32 L-10 32 L-10 22 C-16 20 -26 16 -26 6 Z" />
-          <circle cx="-12" cy="-6" r="7" fill={line} stroke="none" />
-          <circle cx="12" cy="-6" r="7" fill={line} stroke="none" />
-          <polygon points="0,4 -5,16 5,16" fill={line} stroke="none" />
-        </g>
-      );
-    case 'crown':
-      return <polygon points="-38,28 -30,-22 -12,6 0,-30 12,6 30,-22 38,28" {...s} />;
-    case 'arrow':
-      return (
-        <g {...s}>
-          <line x1="-34" y1="0" x2="26" y2="0" />
-          <polyline points="6,-22 30,0 6,22" fill="none" />
-        </g>
-      );
-    case 'speech':
-      return (
-        <g>
-          <path d="M-40 -30 L40 -30 L40 18 L-2 18 L-20 38 L-16 18 L-40 18 Z" {...s} />
-          <text x="0" y="2" textAnchor="middle" dominantBaseline="central"
-            fontFamily="'Bungee', cursive" fontSize="26" fill={line} stroke="none">!!!</text>
-        </g>
-      );
-    case 'star':
-    default:
-      return (
-        <polygon
-          points="0,-46 11.2,-15.4 43.7,-14.2 18.1,5.9 27,37.2 0,19 -27,37.2 -18.1,5.9 -43.7,-14.2 -11.2,-15.4"
-          {...s}
-        />
-      );
-  }
-}
 
 /**
  * @param {object} props
@@ -180,6 +153,27 @@ export default function WallScene({ intensity = 'calm' }) {
         />
       </svg>
 
+      {/* Detailed spray-paint splatters (organic blob + droplets + drips). */}
+      {WALL_SPLATTERS.map((sp, i) => {
+        const Splat = sp.comp;
+        return (
+          <div
+            key={`splat${i}`}
+            className="wall-splatter"
+            style={{
+              top: `${sp.top}%`,
+              left: `${sp.left}%`,
+              width: `${sp.size}px`,
+              height: `${sp.size}px`,
+              opacity: sp.op,
+              transform: `rotate(${sp.rot}deg)`,
+            }}
+          >
+            <Splat color={sp.color} className="wall-splatter-svg" />
+          </div>
+        );
+      })}
+
       {/* Dried vertical paint drips. */}
       {DRIPS.map((d, i) => (
         <div
@@ -195,29 +189,21 @@ export default function WallScene({ intensity = 'calm' }) {
         />
       ))}
 
-      {/* Spray-painted graffiti tags (Bungee, colored text-stroke, some dripping). */}
+      {/* Spray-painted graffiti tags - each enhanced with per-letter rotation,
+          paint drips and an overspray haze so it reads as hand-sprayed, not typed. */}
       {TAGS.map((t, i) => (
-        <div
+        <GraffitiTag
           key={`tag${i}`}
-          className="wall-tag"
-          style={{
-            top: `${t.top}%`,
-            left: `${t.left}%`,
-            fontSize: `${t.size}px`,
-            color: t.c.fill,
-            opacity: t.op,
-            WebkitTextStroke: `${Math.max(2, t.size / 14)}px ${t.c.line}`,
-            transform: `rotate(${t.rot}deg)`,
-          }}
-        >
-          {t.word}
-          {t.drip > 0 && (
-            <span
-              className="wall-tag-drip"
-              style={{ height: `${t.drip}px`, background: t.c.fill }}
-            />
-          )}
-        </div>
+          word={t.word}
+          fill={t.c.fill}
+          line={t.c.line}
+          size={t.size}
+          top={t.top}
+          left={t.left}
+          rotation={t.rot}
+          opacity={t.op}
+          drip={t.drip}
+        />
       ))}
 
       {/* Stickers - each its own drifting inline SVG. */}

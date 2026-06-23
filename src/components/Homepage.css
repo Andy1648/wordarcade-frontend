@@ -74,6 +74,8 @@
   pointer-events: none;
   width: 150px;
   height: 150px;
+  /* Let the splatter's drips/droplets spill past the SVG viewBox. */
+  overflow: visible;
 }
 
 .homepage-splatter-1 {
