@@ -1,41 +1,248 @@
-/* LoadingScreen.css - the connecting / connection-failed gate. */
+/* LoadingScreen.css - the bomb-fuse boot screen. */
 
 .loading-wrap {
-  position: relative;
+  position: fixed;
+  inset: 0;
   z-index: 1;
-  width: 100%;
-  min-height: 100vh;
+  background: #0d0618;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: clamp(18px, 4vh, 40px);
   padding: 24px;
+  overflow: hidden;
 }
 
-.loading-box {
+/* ---- Title (smaller than the splash, no heavy animation) ---- */
+.loading-title {
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  font-size: clamp(30px, 5vw, 50px);
+  line-height: 1;
+  color: #FF2EC4;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-align: center;
+  transform: rotate(-2deg);
+}
+
+/* ---- The fuse scene: fuse line + flame + mascot ---- */
+.loading-scene {
+  position: relative;
+  width: min(90vw, 900px);
+  height: 140px;
+}
+
+.loading-fuse-svg {
+  position: absolute;
+  /* Fills the scene so the flame's path-derived % positions line up; the fuse
+     PATH itself only runs from ~2% to ~90% (the mascot sits over the right end),
+     so the visible fuse spans most of the width with the bomb at the far right. */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.loading-fuse-rope {
+  fill: none;
+  stroke: #8B6914;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.loading-fuse-shade {
+  fill: none;
+  stroke: #5c450d;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+/* The consumed part: dark and thinner, like the rope's been eaten away. */
+.loading-fuse-burned {
+  fill: none;
+  stroke: #1a1a1a;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+/* ---- Flame riding the burning tip ---- */
+.loading-flame-pos {
+  position: absolute;
+  /* left/top are set inline from the path point; sit the flame's base on the
+     fuse (the flame rises up from there). */
+  transform: translate(-50%, -68%);
+  pointer-events: none;
+}
+
+.loading-flame {
+  display: block;
+  width: 26px;
+  height: auto;
+  transform-origin: center bottom;
+  animation: loading-flame-flicker 150ms ease-in-out infinite alternate;
+}
+
+@keyframes loading-flame-flicker {
+  0% { opacity: 0.8; transform: scale(0.94, 0.98); }
+  100% { opacity: 1; transform: scale(1.06, 1.04); }
+}
+
+.loading-pct {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  font-family: 'Bungee', cursive;
+  font-size: 10px;
+  color: #FFE94A;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+
+.loading-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #FFE94A;
+  pointer-events: none;
+  animation: loading-spark 700ms ease-out infinite;
+}
+
+.loading-spark:nth-child(3) { background: #FF6B3D; }
+
+@keyframes loading-spark {
+  0% { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--sdx, 0px)), -180%); }
+}
+
+/* ---- The mascot bomb at the right end of the fuse ---- */
+.loading-mascot-wrap {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform-origin: center;
+  /* transform (translateY(-50%) + scale) is set inline so it grows with progress. */
+}
+
+.loading-mascot {
+  display: block;
+  height: clamp(70px, 14vw, 100px);
+  width: auto;
+  image-rendering: -webkit-optimize-contrast;
+  filter: drop-shadow(0 0 0 transparent);
+}
+
+.loading-mascot.shaking {
+  animation: loading-mascot-shake 110ms linear infinite;
+}
+
+@keyframes loading-mascot-shake {
+  0% { transform: translate(-2px, 1px); }
+  25% { transform: translate(2px, -1px); }
+  50% { transform: translate(-1px, -2px); }
+  75% { transform: translate(1px, 2px); }
+  100% { transform: translate(-2px, 1px); }
+}
+
+/* ---- Explosion on complete ---- */
+.loading-explosion {
+  position: absolute;
+  right: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.loading-explosion-flash {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: loading-flash 500ms ease-out forwards;
+}
+
+@keyframes loading-flash {
+  0% { opacity: 0; }
+  15% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+.loading-explosion-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  background: #FF6B3D;
+  border: 5px solid #000;
+  animation: loading-blast 600ms ease-out forwards;
+}
+
+.loading-explosion-ring.inner {
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  background: #FFE94A;
+  animation: loading-blast 500ms ease-out 80ms forwards;
+}
+
+@keyframes loading-blast {
+  0% { transform: scale(0); opacity: 1; }
+  70% { transform: scale(3); opacity: 0.8; }
+  100% { transform: scale(4.5); opacity: 0; }
+}
+
+/* ---- Flavor text ---- */
+.loading-msg-row {
+  min-height: 18px;
   text-align: center;
 }
 
-.loading-text {
-  font-family: 'Bungee', cursive;
-  font-size: 32px;
-  color: #2EFFE0;
-  -webkit-text-stroke: 3px #000;
-  paint-order: stroke fill;
+.loading-msg {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: #C9B8E8;
+  animation: loading-msg-fade 1.5s ease-in-out;
 }
 
-.loading-failed {
+@keyframes loading-msg-fade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* ---- Error state ---- */
+.loading-error {
+  text-align: center;
+}
+
+.loading-error-text {
   font-family: 'Bungee', cursive;
-  font-size: 28px;
+  font-size: clamp(18px, 3vw, 26px);
   color: #FF5C5C;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
-  margin-bottom: 20px;
   transform: skewX(-3deg);
+  margin-bottom: 16px;
 }
 
-.loading-retry {
+.loading-relight {
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: 16px;
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A020;
@@ -47,12 +254,26 @@
   transition: transform 0.1s, box-shadow 0.1s;
 }
 
-.loading-retry:active {
+.loading-relight:active {
   transform: skewX(-2deg) translate(3px, 3px);
   box-shadow: 2px 2px 0 #000;
 }
 
+/* ---- Mobile: scale things down ---- */
 @media (max-width: 600px) {
-  .loading-text { font-size: 24px; }
-  .loading-failed { font-size: 22px; }
+  .loading-scene {
+    width: 92vw;
+    height: 110px;
+  }
+  .loading-flame { width: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-flame,
+  .loading-spark,
+  .loading-mascot.shaking,
+  .loading-msg {
+    animation: none !important;
+  }
+  .loading-spark { opacity: 0; }
 }

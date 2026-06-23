@@ -183,8 +183,13 @@ function App() {
     [sound, sfxMuted]
   );
 
-  // The splash/attract screen is the very first thing shown and only shows once
-  // per session (dismissing it never re-arms it).
+  // The bomb-fuse loading screen is the very first thing shown; it holds until
+  // the socket connects (then "explodes" and hands off), at which point the
+  // splash takes over. `loadingDone` flips true once that explosion finishes.
+  const [loadingDone, setLoadingDone] = useState(false);
+
+  // The splash/attract screen is shown after loading, once per session
+  // (dismissing it never re-arms it).
   const [showSplash, setShowSplash] = useState(true);
   // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
   // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
@@ -833,8 +838,25 @@ function App() {
     bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   }
 
-  // The attract/splash screen is the very first thing shown (over the wall +
-  // particles). It connects in the background; clicking it starts everything.
+  // The bomb-fuse loading screen is the very first thing shown, holding until
+  // the socket connects (it plays an explosion on connect, then calls
+  // onComplete). It's also re-shown if the connection later drops (error/closed),
+  // where it shows its "fuse went out" state with a RELIGHT (reload) button.
+  if (!loadingDone || wsStatus === 'error' || wsStatus === 'closed') {
+    return (
+      <>
+        <LoadingScreen
+          status={wsStatus}
+          onComplete={() => setLoadingDone(true)}
+          onRetry={() => window.location.reload()}
+        />
+        <CursorTrail />
+      </>
+    );
+  }
+
+  // The attract/splash screen follows the loading screen. Clicking it starts
+  // everything (audio unlock, intro, etc.).
   if (showSplash) {
     return (
       <>
@@ -856,21 +878,6 @@ function App() {
         <TransitionIntro onComplete={handleIntroComplete} />
         <CursorTrail />
       </SoundContext.Provider>
-    );
-  }
-
-  // Before the socket is up, gate the whole app behind the connecting / failed
-  // loading screen (the WallScene still shows behind it). RETRY just reloads to
-  // re-attempt the connection.
-  if (wsStatus === 'connecting' || wsStatus === 'error') {
-    return (
-      <>
-        <WallScene intensity="calm" />
-        <ParticleField />
-        <LoadingScreen status={wsStatus} onRetry={() => window.location.reload()} />
-        <MusicButton isMuted={music.isMuted} onToggle={music.toggleMute} accent="#FF2EC4" />
-        <CursorTrail />
-      </>
     );
   }
 
