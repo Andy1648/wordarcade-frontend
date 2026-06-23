@@ -7,6 +7,7 @@ import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
+import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import './GameScreen.css';
 
@@ -2776,6 +2777,12 @@ function CategoryBlitzScreen({
             <div className="cb-reroll-notice">HOST REROLLED — NEW CATEGORY</div>
           )}
 
+          {/* Two-zone responsive layout: hero + action (main) | live state (rail).
+              Collapses to a single stack on phones/tablets via the .cb-round grid.
+              CB-only wrapper, so Word Bomb / Imposter layouts are untouched. */}
+          <div className="cb-round">
+            <div className="cb-round-main">
+
           <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
           <div className="cb-category-display">
             {/* Sprays the category name on each new round/reroll (re-keyed by the
@@ -2789,6 +2796,15 @@ function CategoryBlitzScreen({
               <Mascot pose={cbMascotPose} emote={cbEmote} size={50} />
             </div>
           </div>
+
+          {/* Format hint: one sample answer so players see the EXPECTED SHAPE
+              (word / phrase / fragment) of a valid answer. DISPLAY-ONLY - it is
+              never submitted, validated, scored, or pre-filled into the input. */}
+          {exampleFor(categoryRound.category) && (
+            <div className="cb-category-example">
+              e.g. {exampleFor(categoryRound.category)}
+            </div>
+          )}
 
           {/* Reroll: swap this category for another of the same tier. Host-only
               in multiplayer; free (within the per-game limit) in solo. Disabled
@@ -2882,6 +2898,10 @@ function CategoryBlitzScreen({
             </div>
           )}
 
+            </div>
+            {/* ---- Side rail: live state (your answers + opponents) ---- */}
+            <div className="cb-round-side">
+
           <div className="cb-my-answers">
             <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
             <div className="cb-answers-list">
@@ -2925,6 +2945,9 @@ function CategoryBlitzScreen({
               )}
             </div>
           )}
+
+            </div>
+          </div>
         </div>
       </div>
     );

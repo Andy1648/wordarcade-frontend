@@ -1788,6 +1788,92 @@
 
 /* ---- Category display (the big graffiti tag) ---- */
 
+/* ============================================================= */
+/* ==========  CATEGORY BLITZ - IN-ROUND LAYOUT  ============== */
+/* ============================================================= */
+/* Two-zone responsive layout. Mobile-first: a single clean stack. At >=900px it
+   becomes a 2-column grid - hero + action on the LEFT (main), live state (your
+   answers + opponents) in a RIGHT rail - so the wide stage is actually used and
+   the category reads as a big hero. EVERYTHING here is scoped under .cb-round, so
+   the shared classes it overrides (.game-input-row, .game-input, .game-timer-row,
+   .cb-category-display, ...) keep their Word Bomb / Imposter behaviour outside CB. */
+.cb-round {
+  display: grid;
+  grid-template-columns: 1fr; /* phones/tablets: single column */
+  gap: clamp(14px, 2vw, 28px);
+  align-items: start;
+}
+
+.cb-round-main,
+.cb-round-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* let children shrink instead of forcing overflow */
+}
+
+@media (min-width: 900px) {
+  .cb-round {
+    /* main grows; the rail is a comfortable band that never dominates */
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+    gap: clamp(24px, 3vw, 48px);
+  }
+}
+
+/* ---- Hero: the category is the dominant element, fluid up to large ---- */
+.cb-round .cb-category-label {
+  font-size: clamp(11px, 1.2vw, 14px);
+  margin-bottom: clamp(8px, 1vw, 14px);
+}
+
+.cb-round .cb-category-display {
+  font-size: clamp(26px, 5.2vw, 64px);
+  line-height: 1.05;
+  padding: clamp(18px, 2.4vw, 40px) clamp(14px, 2vw, 28px);
+  margin-bottom: clamp(8px, 1vw, 14px);
+}
+
+/* The format hint gets a clear home directly under the hero (subtle, not crammed). */
+.cb-round .cb-category-example {
+  font-size: clamp(12px, 1.3vw, 15px);
+  margin: 0 0 clamp(14px, 1.6vw, 22px);
+}
+
+/* The perched mascot scales up with the bigger hero on wide screens. */
+@media (min-width: 900px) {
+  .cb-round .cb-cat-mascot {
+    transform: translateY(-55%) rotate(4deg) scale(1.35);
+  }
+}
+
+/* ---- Action: timer + input fill the main column (drop the shared 760px cap) ---- */
+.cb-round .game-timer-row {
+  margin-bottom: clamp(12px, 1.6vw, 22px);
+}
+.cb-round .game-input-row {
+  max-width: none; /* override the shared Word Bomb cap, ONLY inside CB */
+  margin: 0 0 clamp(12px, 1.5vw, 18px);
+}
+.cb-round .game-input {
+  max-width: none; /* fill the column instead of sitting in a narrow band */
+}
+
+/* ---- Side rail: answers grow instead of a tiny 110px scroll box ---- */
+.cb-round .cb-my-answers {
+  margin-bottom: clamp(14px, 2vw, 22px);
+}
+.cb-round .cb-answers-list {
+  max-height: min(46vh, 360px); /* was a cramped 110px; only scroll when huge */
+  align-content: flex-start;
+}
+@media (min-width: 900px) {
+  .cb-round .cb-answers-list {
+    max-height: min(58vh, 560px); /* the rail has real vertical room on desktop */
+  }
+}
+.cb-round-side .cb-section-label {
+  font-size: 11px; /* a touch more presence so the rail has its own hierarchy */
+}
+
 .cb-category-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -1826,6 +1912,20 @@
   z-index: 6;
   pointer-events: none;
   transform: translateY(-55%) rotate(4deg);
+}
+
+/* Format hint tucked just under the category box: one sample answer so players
+   see the expected SHAPE of a valid answer. Deliberately quiet (small, dim,
+   italic) so it guides without competing with the category name or the answers -
+   reads as a helper, not a real answer in the list. */
+.cb-category-example {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  font-style: italic;
+  color: #8B7AA8;
+  text-align: center;
+  margin: -6px 0 16px;
 }
 
 /* ---- Shared section labels for the CB sub-sections ---- */
