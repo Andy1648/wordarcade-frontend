@@ -300,6 +300,88 @@ html[data-beat='true'] .homepage-logo::after {
   transform: skewX(-4deg);
 }
 
+/* ---- Instant-play row (Quick Play + Browse) ---- */
+
+.homepage-quickplay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: clamp(16px, 2.5vw, 28px) auto 0;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* The hero action: yellow, big, can't-miss, with a constant idle pulse. */
+.homepage-quick-btn {
+  position: relative;
+  width: 100%;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(20px, 3vw, 32px);
+  color: #000;
+  background: #FFE94A;
+  border: 5px solid #B5A413;
+  border-radius: 10px;
+  padding: clamp(14px, 1.8vw, 22px) 0;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 #000;
+  transform: skewX(-2deg);
+  transition: transform 0.1s, box-shadow 0.1s;
+  animation: quick-throb 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes quick-throb {
+  0%, 100% { transform: skewX(-2deg) scale(1); }
+  50% { transform: skewX(-2deg) scale(1.025); }
+}
+
+.homepage-quick-btn:active {
+  transform: skewX(-2deg) translate(4px, 4px);
+  box-shadow: 2px 2px 0 #000;
+  animation: none;
+}
+
+.homepage-browse-btn {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(12px, 1.5vw, 16px);
+  color: #2EFFE0;
+  background: transparent;
+  border: 3px solid #2EFFE0;
+  border-radius: 8px;
+  padding: 10px 22px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.1s, color 0.1s;
+  min-height: 44px;
+}
+
+.homepage-browse-btn:hover {
+  background: #2EFFE0;
+  color: #0d0618;
+}
+
+.homepage-browse-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.homepage-quick-btn:disabled,
+.homepage-quick-btn.disabled,
+.homepage-browse-btn:disabled,
+.homepage-browse-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-quick-btn { animation: none; }
+}
+
 /* The mascot as a graffiti stencil sprayed on the brick wall: large, faint, and
    tilted, sitting behind the cards (z-index 0, above only the wall texture) so
    it reads as part of the wall, not a character standing in the scene. Tucked to

@@ -15,10 +15,14 @@ const ROOM_CODE_LENGTH = 5;
  * displayed through the same error UI as local validation errors so the
  * player sees one consistent error experience regardless of source.
  */
-export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, serverError }) {
+export default function LobbyScreen({ mode, defaultPublic = false, onBack, onContinue, wsStatus, serverError }) {
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
+  // Create-room visibility. Private (default) = code-only, matching the original
+  // behavior; public lists the room in the browser / makes it quick-play-able.
+  // Only meaningful when creating a room (ignored in join mode).
+  const [isPublic, setIsPublic] = useState(defaultPublic);
   const { sound } = useSound();
   // True once a valid Continue has been sent - locks the button until the
   // screen transitions (success) or the server bounces it back (error below).
@@ -83,6 +87,9 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
     const payload = { name: trimmedName, mode };
     if (isJoinMode) {
       payload.roomCode = roomCode;
+    } else {
+      // Create flow: carry the public/private choice through to create_room.
+      payload.isPublic = isPublic;
     }
 
     // Validation passed and we're about to send - lock the button.
@@ -158,6 +165,41 @@ export default function LobbyScreen({ mode, onBack, onContinue, wsStatus, server
               onKeyDown={handleKeyDown}
               maxLength={ROOM_CODE_LENGTH}
             />
+          </div>
+        )}
+
+        {!isJoinMode && (
+          <div className="lobby-field-group">
+            <span className="lobby-field-label">ROOM VISIBILITY</span>
+            <div className="lobby-toggle" role="group" aria-label="Room visibility">
+              <button
+                type="button"
+                className={`lobby-toggle-btn${!isPublic ? ' active' : ''}`}
+                aria-pressed={!isPublic}
+                onClick={() => {
+                  sound.click();
+                  setIsPublic(false);
+                }}
+              >
+                🔒 PRIVATE
+              </button>
+              <button
+                type="button"
+                className={`lobby-toggle-btn${isPublic ? ' active' : ''}`}
+                aria-pressed={isPublic}
+                onClick={() => {
+                  sound.click();
+                  setIsPublic(true);
+                }}
+              >
+                🌐 PUBLIC
+              </button>
+            </div>
+            <div className="lobby-toggle-hint">
+              {isPublic
+                ? 'Anyone can find this room in the public browser.'
+                : 'Only people with the code can join.'}
+            </div>
           </div>
         )}
 

@@ -41,7 +41,7 @@ const SPEED_LINES = [
  * fallback), since the create/join room flow and WebSocket wiring are
  * separate, later pieces of work.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onBrowseRooms, onCredits }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -94,6 +94,28 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     }
   }
 
+  function handleQuickPlay() {
+    if (navigating) return;
+    sound.click();
+    setNavigating(true);
+    if (onQuickPlay) {
+      onQuickPlay();
+    } else {
+      console.log('Quick Play clicked (no onQuickPlay handler wired up yet)');
+    }
+  }
+
+  function handleBrowseRooms() {
+    if (navigating) return;
+    sound.click();
+    setNavigating(true);
+    if (onBrowseRooms) {
+      onBrowseRooms();
+    } else {
+      console.log('Browse Rooms clicked (no onBrowseRooms handler wired up yet)');
+    }
+  }
+
   function handleCredits() {
     if (navigating) return;
     sound.click();
@@ -142,6 +164,27 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           </div>
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
+
+        {/* Instant-play row: the big QUICK PLAY drops you into the nearest open
+            public game; BROWSE opens the public lobby list. Both sit above the
+            game grid so jumping straight in is the most obvious path. */}
+        <div className="homepage-quickplay">
+          <button
+            className={`homepage-quick-btn${navigating ? ' disabled' : ''}`}
+            onClick={handleQuickPlay}
+            disabled={navigating}
+          >
+            ⚡ QUICK PLAY
+          </button>
+          <button
+            className={`homepage-browse-btn${navigating ? ' disabled' : ''}`}
+            onClick={handleBrowseRooms}
+            disabled={navigating}
+          >
+            BROWSE PUBLIC ROOMS
+          </button>
+        </div>
+
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
 
         <div className="homepage-cards-grid">

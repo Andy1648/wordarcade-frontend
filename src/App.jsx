@@ -1,7 +1,9 @@
 // App.jsx
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
+import PublicRoomsScreen from './components/PublicRoomsScreen';
+import FindingScreen from './components/FindingScreen';
 import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
 import WallScene from './components/WallScene';
@@ -19,6 +21,7 @@ import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
 import { SoundContext } from './contexts/SoundContext';
 import { buildPlayerColors } from './playerColors';
+import { resolvePlayerName, rememberName } from './playerName';
 import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
 
@@ -47,6 +50,8 @@ const KILL_FEED_LINES = [
 const SCREEN_ACCENT = {
   home: '#FF2EC4',
   lobby: '#2EFFE0',
+  browse: '#2EFFE0',
+  finding: '#FFE94A',
   room: '#FFE94A',
   game: '#FF6B3D',
   credits: '#9A1AFF',
@@ -57,6 +62,8 @@ const TRANSITION_WORDS = {
   game: "LET'S GO!",
   home: 'PEACE OUT',
   lobby: 'READY?',
+  browse: 'BROWSE',
+  finding: 'FINDING…',
   room: 'SQUAD UP',
   credits: 'CREDITS',
 };
@@ -85,7 +92,21 @@ function App() {
   const [transition, setTransition] = useState(null);
   const transitionKeyRef = useRef(0);
   const [lobbyMode, setLobbyMode] = useState(null);
+  // Whether the create lobby should default to PUBLIC (set when arriving via the
+  // browser's "create public room" button); normal Create Room stays private.
+  const [lobbyPublicDefault, setLobbyPublicDefault] = useState(false);
   const [room, setRoom] = useState(null);
+  // Public-room browser: the latest list from `public_rooms`, plus the player
+  // name used by the no-prompt flows (Quick Play / tap-to-join). Seeded from the
+  // remembered/generated name so those flows never need a name screen.
+  const [publicRooms, setPublicRooms] = useState([]);
+  const [playerName, setPlayerNameState] = useState(() => resolvePlayerName());
+  // Set the working name AND persist it, so it carries across Quick Play, the
+  // browser, and the Create/Join lobby within and across sessions.
+  function setPlayerName(next) {
+    setPlayerNameState(next);
+    rememberName(next);
+  }
   // Per-player session colours, derived from the room roster's join order and
   // keyed by stable player id. Built once per roster change and passed to every
   // screen so a player wears the same colour in the room, the player bar, the
@@ -319,6 +340,11 @@ function App() {
 
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
+    }
+
+    // Public-room browser list refresh (response to list_public_rooms).
+    if (lastMessage.type === 'public_rooms') {
+      setPublicRooms(lastMessage.payload.rooms || []);
     }
 
     if (lastMessage.type === 'room_update') {
@@ -752,10 +778,51 @@ function App() {
     music.fadeTo(0.3, 500);
   }
 
-  function goToLobby(mode) {
+  function goToLobby(mode, publicDefault = false) {
     setLobbyMode(mode);
+    setLobbyPublicDefault(publicDefault);
     setServerError('');
     setView('lobby');
+  }
+
+  // Quick Play: fire quick_play and show the "finding a game…" interstitial. The
+  // server either joins us into the fullest open public room or spins up a fresh
+  // one; either way it broadcasts a room_update, which the handler above turns
+  // into the 'room' view - so we reuse the exact same room-entry path as
+  // create/join. On failure (rate limited / busy) an 'error' lands and the
+  // finding screen surfaces it with a way back.
+  function handleQuickPlay() {
+    setServerError('');
+    setView('finding');
+    send('quick_play', { name: (playerName || '').trim() || resolvePlayerName() });
+  }
+
+  // Open the public-room browser. Clear any stale list so we don't flash an old
+  // snapshot; the screen's mount effect immediately re-requests a fresh one.
+  function handleOpenBrowser() {
+    setServerError('');
+    setPublicRooms([]);
+    setView('browse');
+  }
+
+  // (Re)request the public-room list. Stable so the browser screen can call it on
+  // mount + on its auto-refresh interval without re-subscribing every render.
+  const handleRefreshPublicRooms = useCallback(() => {
+    send('list_public_rooms', {});
+  }, [send]);
+
+  // Join a specific public room from the browser - the SAME join-by-code path as
+  // the Join Room screen, just with the code taken from the tapped row.
+  function handleJoinPublicRoom(code, name) {
+    setPlayerName(name);
+    setServerError('');
+    send('join_room', { code, name });
+  }
+
+  // Browser empty-state "create public room": jump to the create lobby with the
+  // visibility toggle pre-set to PUBLIC.
+  function handleCreatePublicFromBrowser() {
+    goToLobby('solo', true);
   }
 
   function goToCredits() {
@@ -764,7 +831,9 @@ function App() {
 
   function goHome() {
     setLobbyMode(null);
+    setLobbyPublicDefault(false);
     setRoom(null);
+    setPublicRooms([]);
     setServerError('');
     setGameState(null);
     setTimerSeconds(0);
@@ -797,11 +866,15 @@ function App() {
     setView('home');
   }
 
-  function handleLobbyContinue({ name, mode, roomCode }) {
+  function handleLobbyContinue({ name, mode, roomCode, isPublic }) {
+    // Remember the name so Quick Play / the browser default to it next time.
+    setPlayerName(name);
     if (mode === 'join') {
       send('join_room', { code: roomCode, name });
     } else {
-      send('create_room', { name });
+      // Carry the public/private choice into create_room (defaults false server
+      // side, so a missing flag stays private/code-only as before).
+      send('create_room', { name, isPublic: !!isPublic });
       // If the player picked a specific game from the homepage, lock the room
       // into it right away. The server processes messages in order over the
       // same socket, so create_room (which registers the room) is handled
@@ -955,12 +1028,29 @@ function App() {
     screen = (
       <LobbyScreen
         mode={lobbyMode}
+        defaultPublic={lobbyPublicDefault}
         onBack={goHome}
         onContinue={handleLobbyContinue}
         wsStatus={wsStatus}
         serverError={serverError}
       />
     );
+  } else if (view === 'browse') {
+    screen = (
+      <PublicRoomsScreen
+        rooms={publicRooms}
+        serverError={serverError}
+        name={playerName}
+        onNameChange={setPlayerName}
+        onJoin={handleJoinPublicRoom}
+        onRefresh={handleRefreshPublicRooms}
+        onQuickPlay={handleQuickPlay}
+        onCreatePublic={handleCreatePublicFromBrowser}
+        onBack={goHome}
+      />
+    );
+  } else if (view === 'finding') {
+    screen = <FindingScreen error={serverError} onBack={goHome} />;
   } else if (view === 'credits') {
     screen = <CreditsScreen onBack={goHome} />;
   } else {
@@ -969,6 +1059,8 @@ function App() {
         onSelectGame={(gameId) => goToLobby(gameId)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={() => goToLobby('join')}
+        onQuickPlay={handleQuickPlay}
+        onBrowseRooms={handleOpenBrowser}
         onCredits={goToCredits}
       />
     );

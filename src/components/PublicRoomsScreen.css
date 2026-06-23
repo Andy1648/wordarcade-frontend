@@ -1,0 +1,310 @@
+/* PublicRoomsScreen.css */
+
+.browser-wrap {
+  background: transparent;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.browser-box {
+  background: #1a0b2e;
+  border: 4px solid #000;
+  box-shadow: 7px 7px 0 #000;
+  border-radius: 8px;
+  padding: clamp(22px, 2.6vw, 38px) clamp(18px, 2.2vw, 34px);
+  width: 100%;
+  max-width: clamp(380px, 52vw, 640px);
+  position: relative;
+  transform: rotate(-0.5deg);
+}
+
+.browser-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+  gap: 12px;
+}
+
+.browser-back-btn,
+.browser-refresh-btn {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  background: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+  min-height: 44px;
+}
+
+.browser-back-btn {
+  color: #2EFFE0;
+  border: 2.5px solid #2EFFE0;
+}
+
+.browser-refresh-btn {
+  color: #FFE94A;
+  border: 2.5px solid #FFE94A;
+}
+
+.browser-back-btn:active,
+.browser-refresh-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.browser-title {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(26px, 4.4vw, 48px);
+  color: #FF2EC4;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.browser-subtitle {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #C9B8E8;
+  margin-bottom: 22px;
+}
+
+.browser-field-label {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2EFFE0;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.browser-name-input {
+  width: 100%;
+  font-family: 'Space Mono', monospace;
+  /* >=16px so iOS Safari doesn't auto-zoom on focus. */
+  font-size: clamp(16px, 1.5vw, 20px);
+  font-weight: 700;
+  color: #1a0b2e;
+  background: #fff;
+  border: 4px solid #AAAAAA;
+  border-radius: 8px;
+  padding: 12px 14px;
+  outline: none;
+  box-shadow: 4px 4px 0 #000;
+  transition: box-shadow 0.1s;
+  margin-bottom: 8px;
+}
+
+.browser-name-input:focus {
+  box-shadow: 4px 4px 0 #2EFFE0;
+}
+
+.browser-name-input::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+.browser-error {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FF5C5C;
+  margin: 6px 0 4px;
+}
+
+/* ---- Room list ---- */
+
+.browser-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Cap height so a long list scrolls WITHIN the box instead of pushing the
+     page; the box itself never scrolls horizontally. */
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.browser-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  font-family: 'Space Mono', monospace;
+  background: #0d0618;
+  border: 3px solid var(--row-accent, #2EFFE0);
+  border-left-width: 8px;
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+  min-height: 44px;
+}
+
+.browser-row:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+
+.browser-row:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.browser-row:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.browser-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.browser-row-game {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(13px, 1.7vw, 17px);
+  color: var(--row-accent, #2EFFE0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browser-row-code {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #8a7bb0;
+}
+
+.browser-row-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.browser-row-count {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(14px, 1.9vw, 18px);
+  color: #2EFFE0;
+}
+
+.browser-row-count.full {
+  color: #FF5C5C;
+}
+
+.browser-row-status {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #FFE94A;
+}
+
+/* ---- Empty state ---- */
+
+.browser-empty {
+  text-align: center;
+  padding: 26px 8px 10px;
+}
+
+.browser-empty-emoji {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 14px;
+  animation: browser-empty-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes browser-empty-bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-8px) rotate(4deg); }
+}
+
+.browser-empty-title {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(16px, 2.4vw, 22px);
+  color: #FFE94A;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  line-height: 1.2;
+}
+
+.browser-empty-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #C9B8E8;
+  margin: 10px 0 22px;
+}
+
+.browser-empty-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* ---- Buttons ---- */
+
+.browser-btn {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(15px, 1.7vw, 20px);
+  color: #000;
+  border-radius: 8px;
+  border: 4px solid #000;
+  padding: 14px 18px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+  min-height: 48px;
+}
+
+.browser-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.browser-btn-quick {
+  background: #FFE94A;
+  border-color: #B5A413;
+}
+
+.browser-btn-create {
+  background: #2EFFE0;
+  border-color: #1A9985;
+}
+
+.browser-quick-footer {
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 600px) {
+  .browser-wrap { padding: 16px; }
+  .browser-box { padding: 22px 16px; transform: none; }
+  .browser-title { font-size: 30px; }
+  .browser-list { max-height: 52vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browser-empty-emoji { animation: none; }
+}
