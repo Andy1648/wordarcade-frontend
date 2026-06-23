@@ -298,30 +298,27 @@ html[data-beat='true'] .homepage-logo::after {
   transform: skewX(-4deg);
 }
 
-/* Mascot perched on the top edge of the Word Bomb card. It's a child of that
-   card's .game-card-wrap (position: relative), so it's anchored to the card and
-   rides the wrapper's idle sway with it. translateY(-60%) drops its lower body
-   over the top edge while the upper body sticks up above the card. */
-.hp-card-mascot {
+/* The mascot as a graffiti stencil sprayed on the brick wall: large, faint, and
+   tilted, sitting behind the cards (z-index 0, above only the wall texture) so
+   it reads as part of the wall, not a character standing in the scene. Tucked to
+   the upper-left so the cards/buttons never sit on top of its face awkwardly. */
+.homepage-graffiti {
   position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 6;
+  top: 6%;
+  left: -12px;
+  width: 150px;
+  height: auto;
+  z-index: 0;
+  opacity: 0.16;
   pointer-events: none;
-  transform: translate(-50%, -60%);
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform: rotate(-12deg);
+  /* Flatten it toward a one-colour stencil so it blends into the wall instead of
+     reading as the full-colour character art. */
+  filter: grayscale(0.4) contrast(1.1);
 }
 
-/* Leans over toward the Category Blitz card (to its right) to take a look. */
-.hp-card-mascot.leaning {
-  transform: translate(-50%, -60%) translateX(30px) rotate(15deg);
-}
-
-/* Leaps off the side and falls away as the homepage navigates out. */
-.hp-card-mascot.jumping {
-  transform: translate(-50%, -60%) translateX(200px) translateY(120px) rotate(20deg);
-  opacity: 0;
-  transition: transform 0.3s ease-in, opacity 0.3s ease-in;
+@media (max-width: 600px) {
+  .homepage-graffiti { width: 110px; top: 4%; left: -16px; }
 }
 
 .homepage-cards-grid {

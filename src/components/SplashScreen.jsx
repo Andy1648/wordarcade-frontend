@@ -80,7 +80,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
         <polygon points={BURST_POINTS} fill="#FFE94A" />
       </svg>
 
-      {/* The wordmark + the mascot dangling by its feet from the letters. */}
+      {/* The wordmark. */}
       <div className="splash-logo-wrap">
         {/* "TYPE A WORD": the   (non-breaking space) binds "TYPE A" so the
             title only ever wraps before "WORD" on narrow screens. data-text must
@@ -93,12 +93,11 @@ export default function SplashScreen({ onStart, onDismiss }) {
         >
           {'TYPE A WORD'}
         </div>
-        {/* Hangs upside-down off a title letter, swinging gently; on dismiss it
-            lets go and drops out of frame. */}
-        <div className={`splash-mascot-hang${leaving ? ' dropping' : ''}`}>
-          <Mascot pose="idle" size={90} />
-        </div>
       </div>
+
+      {/* The mascot is the HERO image - the splash screen's visual centrepiece,
+          large and centred just below the title. */}
+      <Mascot pose="idle" size={180} className="splash-hero-mascot" />
 
       <div className="splash-taglines">
         {/* re-keyed per index so the fade replays on each swap */}

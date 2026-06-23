@@ -35,7 +35,6 @@
 }
 
 .room-code {
-  position: relative; /* anchors the mascot sitting on top of the code */
   font-family: 'Bungee', cursive;
   font-size: clamp(30px, 6vw, 50px);
   letter-spacing: clamp(4px, 1.2vw, 8px);
@@ -44,48 +43,6 @@
   paint-order: stroke fill;
   margin-bottom: 8px;
   will-change: text-shadow;
-}
-
-/* Mascot sitting ON the room code like a bench: centered on the top edge,
-   dropped so it straddles the letters (legs dangling in front), leaning back
-   a touch. A lazy head-bob keeps it alive while you wait. */
-.room-mascot-sit {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 6;
-  pointer-events: none;
-  animation: room-mascot-bob 3s ease-in-out infinite;
-}
-
-@keyframes room-mascot-bob {
-  0%, 100% { transform: translate(-50%, -50%) rotate(-5deg); }
-  50% { transform: translate(-50%, -50%) rotate(-9deg); }
-}
-
-/* A new player joined: hop up briefly, then settle back down. */
-.room-mascot-sit.bouncing {
-  animation: room-mascot-jump 320ms ease-out;
-}
-
-@keyframes room-mascot-jump {
-  0% { transform: translate(-50%, -50%) rotate(-5deg); }
-  45% { transform: translate(-50%, calc(-50% - 20px)) rotate(-5deg); }
-  100% { transform: translate(-50%, -50%) rotate(-5deg); }
-}
-
-/* Host hit start: leap up and off the code, spinning away. */
-.room-mascot-sit.jumping {
-  animation: room-mascot-off 320ms ease-in forwards;
-}
-
-@keyframes room-mascot-off {
-  0% { transform: translate(-50%, -50%) rotate(-5deg); opacity: 1; }
-  100% { transform: translate(calc(-50% + 180px), calc(-50% - 150px)) rotate(35deg); opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .room-mascot-sit { animation: none; transform: translate(-50%, -50%) rotate(-5deg); }
 }
 
 .room-hint {

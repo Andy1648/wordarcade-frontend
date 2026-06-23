@@ -3,18 +3,7 @@ import { useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import GameCard from './GameCard';
-import Mascot from './Mascot';
 import './Homepage.css';
-
-// Which mascot pose to strike while hovering each card. The mascot SITS on the
-// Word Bomb card, so it gets hyped on its own game, leans over to peek at
-// Category Blitz (idle pose + a CSS lean, handled below), and is unimpressed by
-// the locked "More Soon" card.
-const HOVER_POSE = {
-  'word-bomb': 'celebrate', // hyped about its own game
-  'category-blitz': 'idle', // leans over to look (lean is a CSS transform)
-  'more-soon': 'taunt', // unimpressed by the locked card
-};
 
 // Jagged comic starburst behind the title: 14 spikes, points computed once from
 // alternating outer/inner radii (deterministic - no randomness, so it never
@@ -81,31 +70,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   const [hoverGame, setHoverGame] = useState(null);
   const { sound } = useSound();
 
-  // Hovering a card sets the pose state AND plays a subtle blip - but only when
-  // moving onto a NEW card, so it never machine-guns while you sit on one card.
+  // Hovering a card plays a subtle blip - but only when moving onto a NEW card,
+  // so it never machine-guns while you sit on one card. (hoverGame is kept just
+  // for that dedup now; the card art reveal is pure CSS :hover.)
   function handleHover(id) {
     if (id && id !== hoverGame) sound.menuHover();
     setHoverGame(id);
   }
-
-  // While navigating away the mascot runs off; otherwise it reacts to hover.
-  const mascotPose = navigating ? 'run' : HOVER_POSE[hoverGame] || 'idle';
-  // Positional modifier for the mascot perched on the Word Bomb card: it leans
-  // toward Category Blitz when that card is hovered, and leaps off the side when
-  // navigating away.
-  const mascotMod = navigating
-    ? 'jumping'
-    : hoverGame === 'category-blitz'
-    ? 'leaning'
-    : '';
-
-  // The mascot that sits on top of the Word Bomb card (passed in as that card's
-  // "topper" so it's anchored to - and sways with - the card itself).
-  const wordBombMascot = (
-    <div className={`hp-card-mascot${mascotMod ? ` ${mascotMod}` : ''}`}>
-      <Mascot pose={mascotPose} size={70} />
-    </div>
-  );
 
   function handleSelectGame(gameId) {
     if (navigating) return;
@@ -157,6 +128,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   return (
     <div className="homepage-wrap">
       <div className="homepage-stage">
+        {/* The mascot as a faint graffiti stencil sprayed on the wall - ambient
+            brand presence, part of the texture, NOT a character in the scene. */}
+        <img className="homepage-graffiti" src="/mascot-idle.png" alt="" aria-hidden="true" draggable="false" />
+
         <PaintSplatter className="homepage-splatter homepage-splatter-1" color="#FF2EC4" />
         <PaintSplatter className="homepage-splatter homepage-splatter-2" color="#2EFFE0" />
         <PaintSplatter className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
@@ -196,8 +171,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
               game={game}
               onSelect={handleSelectGame}
               onHover={handleHover}
-              // The mascot rides on top of the Word Bomb (flagship) card.
-              topper={game.id === 'word-bomb' ? wordBombMascot : null}
             />
           ))}
         </div>

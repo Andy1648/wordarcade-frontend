@@ -127,52 +127,25 @@
   100% { opacity: 0.8; }
 }
 
-/* ---- Mascot dangling from the wordmark ---- */
+/* ---- Mascot: the splash's HERO image ---- */
 
-/* The wordmark gets a positioning context so the mascot can hang off a letter. */
 .splash-logo-wrap {
   position: relative;
   z-index: 2;
   display: inline-block;
 }
 
-/* The mascot hangs by its feet off the lower edge of a letter (anchored near the
-   end of "TYPE A WORD"), flipped upside-down and swinging gently. top:100%
-   drops it to the baseline; the negative margin pulls its "feet" back up to
-   overlap the bottom of the letters so it reads as actually hanging FROM them. */
-.splash-mascot-hang {
-  position: absolute;
-  top: 100%;
-  left: 62%;
-  margin-top: -64px;
-  transform-origin: center top;
-  pointer-events: none;
-  animation: mascot-swing 2.5s ease-in-out infinite;
+/* Large, centred just below the title - the visual centrepiece of the splash
+   alongside the wordmark. The clamped height overrides the Mascot's own size var
+   so it scales fluidly with the viewport. */
+.splash-hero-mascot {
+  position: relative;
+  z-index: 2;
+  margin-top: clamp(10px, 2vw, 24px);
 }
 
-@keyframes mascot-swing {
-  0% { transform: rotate(175deg) scaleX(-1); }
-  50% { transform: rotate(185deg) scaleX(-1); }
-  100% { transform: rotate(175deg) scaleX(-1); }
-}
-
-/* On dismiss it "lets go": rotates upright, falls 300px, and fades out. */
-.splash-mascot-hang.dropping {
-  animation: mascot-drop 300ms ease-in forwards;
-}
-
-@keyframes mascot-drop {
-  0% { transform: rotate(180deg) scaleX(-1) translateY(0); opacity: 1; }
-  100% { transform: rotate(0deg) translateY(300px); opacity: 0; }
-}
-
-@media (max-width: 600px) {
-  /* The wordmark shrinks on phones; tuck the hanging mascot in tighter. */
-  .splash-mascot-hang { left: 60%; margin-top: -48px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .splash-mascot-hang { animation: none; transform: rotate(180deg) scaleX(-1); }
+.splash-hero-mascot .mascot-img {
+  height: clamp(120px, 25vw, 200px);
 }
 
 /* ---- "CLICK ANYWHERE TO START" - classic INSERT COIN pulse ---- */
@@ -220,6 +193,7 @@
 }
 
 .splash-screen.leaving .splash-logo,
+.splash-screen.leaving .splash-hero-mascot,
 .splash-screen.leaving .splash-taglines,
 .splash-screen.leaving .splash-start {
   animation: splash-content-out 200ms ease-in forwards;

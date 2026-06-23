@@ -1,7 +1,6 @@
 // GameScreen.jsx
 import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
-import { useMascotPose } from '../hooks/useMascotPose';
 import Mascot from './Mascot';
 import ImposterWordScreen from './ImposterWordScreen';
 import './GameScreen.css';
@@ -483,20 +482,24 @@ function fusePointAt(t) {
   return [x, y];
 }
 
+// The mascot pose PNGs - the mascot IS the bomb now (idle until the timer gets
+// dire, then panic; brief celebrate/taunt flashes are driven by the parent).
+const BOMB_MASCOT_SRC = {
+  idle: '/mascot-idle.png',
+  panic: '/mascot-panic.png',
+  celebrate: '/mascot-celebrate.png',
+  taunt: '/mascot-taunt.png',
+};
+
 /**
- * Word Bomb's centerpiece: a detailed cartoon bomb whose fuse IS the turn
- * timer. Newgrounds/graffiti vector style - thick black outlines, flat solid
- * fills, hard-edged cel highlights/shadows, no gradients or glows.
- *
- * The fuse burns SMOOTHLY: its geometry is fixed and a stroke-dashoffset
- * (transitioned 1s linear in CSS) drains the visible length continuously
- * instead of jumping each second. The flame rides the burning tip (its
- * translate eases over the same 1s so it stays glued to the fuse end), and the
- * bomb escalates through calm/warning/critical tiers - warmer body, bigger
- * flame, more sparks, harder shake, a pulsing red number, and a flat red
- * vignette - with the colour/scale shifts cross-faded for a smooth ramp.
+ * Word Bomb's centerpiece: the MASCOT is the bomb. The mascot PNG (chosen by the
+ * `pose` prop - idle, panic under 30%, or a brief celebrate/taunt flash) renders
+ * inside the SVG where the cartoon bomb body used to be, while the fuse still
+ * burns down over its head and the live seconds count over its belly. The
+ * calm/warning/critical tension tiers drive the same wobble / shake / scale /
+ * vignette as before - they now move the mascot image instead of an SVG bomb.
  */
-function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast, expression, rider, flung }) {
+function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   // Fraction of time remaining (full while the 3-2-1 intro is still up).
   const ratio = showCountdown
     ? 1
@@ -505,83 +508,29 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast,
   const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   const critical = tension === 'critical';
 
-  // ---- The bomb's FACE state machine ----
-  // Transient expressions (relief on a correct word, explode on detonation) come
-  // from the parent and win; otherwise the face follows the tension tier, and at
-  // calm it watches whoever's typing.
-  const baseFace =
-    tension === 'critical'
-      ? 'panic'
-      : tension === 'warning'
-      ? 'nervous'
-      : typing
-      ? 'watching'
-      : 'idle';
-  const face = expression || baseFace;
-
-  // Spontaneous blinks (every 3-5s) and the occasional yawn (every 8-12s) keep
-  // the bomb alive when it's calm. Self-rescheduling timeouts, guarded so a late
-  // fire after unmount can't setState.
-  const [blink, setBlink] = useState(false);
-  const [yawn, setYawn] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    let blinkT;
-    let yawnT;
-    const scheduleBlink = () => {
-      blinkT = setTimeout(() => {
-        if (!alive) return;
-        setBlink(true);
-        setTimeout(() => alive && setBlink(false), 120);
-        scheduleBlink();
-      }, 3000 + Math.random() * 2000);
-    };
-    const scheduleYawn = () => {
-      yawnT = setTimeout(() => {
-        if (!alive) return;
-        setYawn(true);
-        setTimeout(() => alive && setYawn(false), 1000);
-        scheduleYawn();
-      }, 8000 + Math.random() * 4000);
-    };
-    scheduleBlink();
-    scheduleYawn();
-    return () => {
-      alive = false;
-      clearTimeout(blinkT);
-      clearTimeout(yawnT);
-    };
-  }, []);
-
-  const faceClass = `bomb-face face-${face}${blink ? ' blink' : ''}${
-    yawn ? ' yawn' : ''
-  }${typingFast ? ' fast' : ''}`;
-
   // Fuse uses pathLength="100", so the offset is just the burnt-away percent;
   // the flame sits at the matching point along the curve.
   const fuseDashoffset = 100 * (1 - ratio);
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier. Sits
-  // lower (belly) now that the face owns the upper body, and a touch smaller.
+  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
   const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
   const numStroke = critical ? '#FF5C5C' : '#000';
   const numStrokeWidth = critical ? 4 : 3;
   const numSize = tension === 'calm' ? 26 : tension === 'warning' ? 30 : 34;
 
-  const sparks = BOMB_SPARKS[tension];
+  const src = BOMB_MASCOT_SRC[pose] || BOMB_MASCOT_SRC.idle;
 
   return (
     <div className={`bomb-vignette ${tension}`}>
       <div className="bomb-scale" style={{ transform: `scale(${BOMB_SCALE[tension]})` }}>
         <div className={`bomb-body-wrap ${tension}`}>
-          {/* The mascot RIDES the bomb: positioned inside the body wrap so it
-              inherits every wobble/shake/throw the bomb does. */}
-          {rider && (
-            <div className={`bomb-rider${flung ? ' flung' : ''}`}>{rider}</div>
-          )}
           <svg className="bomb-svg" viewBox="0 0 160 185" width="150" aria-hidden="true">
+            {/* The mascot IS the bomb. The default preserveAspectRatio fits +
+                centres it inside the box, so non-square art is never distorted.
+                Re-keyed per pose so each swap reads as a quick fade. */}
+            <image key={pose} className="bomb-mascot-image" href={src} x="10" y="35" width="140" height="140" />
             {/* ---- Fuse: fat black outline under a brown rope. Both burn down
                  together via the shared dashoffset (smoothed in CSS). ---- */}
             <path
@@ -607,81 +556,13 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast,
               strokeDashoffset={fuseDashoffset}
             />
 
-            {/* ---- Metal cap with ridge details. ---- */}
-            <rect x="66" y="40" width="28" height="24" rx="3" fill="#666" stroke="#4A2A0A" strokeWidth="5" />
-            <line x1="73" y1="45" x2="73" y2="59" stroke="#000" strokeWidth="2" />
-            <line x1="80" y1="45" x2="80" y2="59" stroke="#000" strokeWidth="2" />
-            <line x1="87" y1="45" x2="87" y2="59" stroke="#000" strokeWidth="2" />
+            {/* (The mascot <image> above is the bomb body now - no SVG body/face.) */}
 
-            {/* ---- Body: outlined main circle + a tension-tinted inner disc. ---- */}
-            <circle cx="80" cy="120" r="58" fill="#2a2a2a" stroke="#4A2A0A" strokeWidth="6" />
-            <circle className="bomb-tint" cx="80" cy="120" r="50" fill={BODY_INNER_FILL[tension]} />
-
-            {/* ---- Hard-edged cel shadow (lower-right) + two stacked highlights
-                 (upper-left). Flat polygons, no gradients. ---- */}
-            <path
-              d="M 112 96 C 118 108 118 126 107 140 C 100 149 90 153 80 153 C 97 148 108 131 108 112 C 108 105 110 100 112 96 Z"
-              fill="#111"
-            />
-            <path
-              className="bomb-tint"
-              d="M 50 96 C 50 72 68 60 92 60 C 74 64 60 80 60 100 C 56 102 52 100 50 96 Z"
-              fill={HIGHLIGHT_1[tension]}
-            />
-            <path
-              className="bomb-tint"
-              d="M 56 112 C 56 100 64 94 74 94 C 66 98 62 106 62 116 C 60 117 57 116 56 112 Z"
-              fill={HIGHLIGHT_2[tension]}
-            />
-
-            {/* Subtle etched ring detail. */}
-            <circle cx="80" cy="120" r="42" fill="none" stroke="#444" strokeWidth="1.5" opacity="0.4" />
-
-            {/* ---- The bomb's FACE: eyebrows, eyes (white + pupil), happy-eye
-                 overlay, a multi-purpose mouth, sweat drops and a tapping foot.
-                 All driven by the faceClass state machine in CSS. ---- */}
-            <g className={faceClass}>
-              <g className="brow-pos" transform="translate(63,82)">
-                <rect className="brow brow-l" x="-9" y="-2.2" width="18" height="4.5" rx="2.2" fill="#1a1a1a" />
-              </g>
-              <g className="brow-pos" transform="translate(97,82)">
-                <rect className="brow brow-r" x="-9" y="-2.2" width="18" height="4.5" rx="2.2" fill="#1a1a1a" />
-              </g>
-
-              <g transform="translate(64,98)">
-                <ellipse className="eye-white eye-white-l" cx="0" cy="0" rx="9" ry="11" fill="#fff" stroke="#1a1a1a" strokeWidth="3" />
-                <circle className="pupil pupil-l" cx="0" cy="0" r="4" fill="#111" />
-              </g>
-              <g transform="translate(96,98)">
-                <ellipse className="eye-white eye-white-r" cx="0" cy="0" rx="9" ry="11" fill="#fff" stroke="#1a1a1a" strokeWidth="3" />
-                <circle className="pupil pupil-r" cx="0" cy="0" r="4" fill="#111" />
-              </g>
-
-              {/* Happy ^^ eyes, shown only in the relief expression. */}
-              <path className="eye-happy" d="M 55 100 Q 64 91 73 100" fill="none" stroke="#1a1a1a" strokeWidth="3.5" strokeLinecap="round" />
-              <path className="eye-happy" d="M 87 100 Q 96 91 105 100" fill="none" stroke="#1a1a1a" strokeWidth="3.5" strokeLinecap="round" />
-
-              {/* Mouth: an "o"/"O" (yawn / explosion) and a happy curve (relief). */}
-              <ellipse className="mouth-o" cx="80" cy="117" rx="5.5" ry="6.5" fill="#1a1a1a" />
-              <path className="mouth-happy" d="M 71 115 Q 80 123 89 115" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-
-              {/* Sweat drops (positioned by the wrapping g; the path itself slides). */}
-              <g transform="translate(34,94)">
-                <path className="sweat sweat-l" d="M0 0 C2.5 4 4 5.5 4 7 A4 4 0 1 1 -4 7 C-4 5.5 -2.5 4 0 0 Z" fill="#2EFFE0" stroke="#1A9985" strokeWidth="1" />
-              </g>
-              <g transform="translate(126,94)">
-                <path className="sweat sweat-r" d="M0 0 C2.5 4 4 5.5 4 7 A4 4 0 1 1 -4 7 C-4 5.5 -2.5 4 0 0 Z" fill="#2EFFE0" stroke="#1A9985" strokeWidth="1" />
-              </g>
-
-              {/* A little foot that taps frantically when panicking. */}
-              <rect className="foot" x="74" y="174" width="16" height="7" rx="3.5" fill="#1a1a1a" />
-            </g>
-
-            {/* ---- Live seconds, sitting low like a belly counter. ---- */}
+            {/* ---- Live seconds, sitting over the mascot's belly. ---- */}
             <text
               className={critical ? 'bomb-num-pulse' : undefined}
               x="80"
-              y="142"
+              y="116"
               textAnchor="middle"
               dominantBaseline="central"
               fontFamily="'Bungee', cursive"
@@ -711,20 +592,6 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, typing, typingFast,
                 </g>
               </g>
 
-              {/* Sparks drift up and fade, looping. */}
-              {sparks.map((s, i) => (
-                <circle
-                  key={i}
-                  className="bomb-spark"
-                  cx={s.dx}
-                  cy={s.dy}
-                  r={s.r}
-                  fill={s.c}
-                  stroke="#000"
-                  strokeWidth="1.5"
-                  style={{ animationDelay: `${s.delay}ms`, animationDuration: `${s.dur}ms` }}
-                />
-              ))}
             </g>
           </svg>
         </div>
@@ -1195,10 +1062,6 @@ export default function GameScreen({
   // before the category early-return so the hooks always run in the same order.
   const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
 
-  // Reactive mascot pose for Word Bomb (also called before the category return so
-  // hook order stays stable; Category Blitz computes its own pose below).
-  const mascotPose = useMascotPose(gameState, myId, timerSeconds, lastWordResult, gameOver);
-
   // ---- Heart-shatter + elimination detection (Word Bomb only) ----
   // Each turn_update carries fresh lives/eliminated for every player. We diff
   // against the previous snapshot so we can fire one-shot animations exactly
@@ -1237,16 +1100,17 @@ export default function GameScreen({
     }, ms);
   }
 
-  // Transient bomb-face override: 'relief' (correct word) / 'explode' (timeout),
-  // auto-cleared so the face returns to its tension-driven expression.
-  const [bombFace, setBombFace] = useState(null);
-  const bombFaceTimerRef = useRef(null);
-  function flashBombFace(name, ms) {
-    if (bombFaceTimerRef.current) clearTimeout(bombFaceTimerRef.current);
-    setBombFace(name);
-    bombFaceTimerRef.current = setTimeout(() => {
-      setBombFace(null);
-      bombFaceTimerRef.current = null;
+  // Transient bomb mascot pose flash: 'celebrate' (a correct word, 300ms) or
+  // 'taunt' (an opponent times out, 1s), auto-cleared back to the tension-driven
+  // base pose (idle, or panic when time is dire).
+  const [bombFlash, setBombFlash] = useState(null);
+  const bombFlashTimerRef = useRef(null);
+  function flashBombPose(name, ms) {
+    if (bombFlashTimerRef.current) clearTimeout(bombFlashTimerRef.current);
+    setBombFlash(name);
+    bombFlashTimerRef.current = setTimeout(() => {
+      setBombFlash(null);
+      bombFlashTimerRef.current = null;
     }, ms);
   }
 
@@ -1277,7 +1141,7 @@ export default function GameScreen({
     if (lastWordResult.accepted) {
       setBombReaction('recoil');
       freeze(50); // hitlag: 50ms freeze so the success lands with weight
-      flashBombFace('relief', 500); // the bomb sighs in relief
+      flashBombPose('celebrate', 300); // the bomb mascot celebrates the word
       const t = submitTimerRef.current;
       setClutchFlag(t > 0 && t <= 2); // beat the buzzer
     } else {
@@ -1335,7 +1199,8 @@ export default function GameScreen({
       //   t=80   the explosion animation + sound + heavy shake fire (explosionKey)
       setImpactKey((k) => k + 1);
       freeze(80);
-      flashBombFace('explode', 500); // eyes huge, mouth wide O
+      // If an OPPONENT just lost a life, the bomb mascot taunts them for a beat.
+      if (shatterIds.some((id) => id !== myId)) flashBombPose('taunt', 1000);
       timers.push(setTimeout(() => setExplosionKey((k) => k + 1), 80));
 
       setShatteredHearts((cur) => {
@@ -1586,6 +1451,11 @@ export default function GameScreen({
   const timeRatio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
   const critical = !showCountdown && !gameOver && timeRatio < 0.3;
 
+  // The bomb mascot's pose: a brief celebrate/taunt flash wins; otherwise it
+  // panics when time is dire and is idle otherwise. (The bomb is shared, so this
+  // is driven by the shared timer tension, not whose turn it is.)
+  const bombPose = showCountdown ? 'idle' : bombFlash || (critical ? 'panic' : 'idle');
+
   // Color drain: in the last 5s of YOUR turn the stage desaturates toward
   // grayscale (tunnel vision), while the bomb + input stay colored (.drain-exempt
   // counters it). Snaps back to full colour the instant the turn ends / resets.
@@ -1798,11 +1668,7 @@ export default function GameScreen({
                 timerSeconds={timerSeconds}
                 maxTimer={maxTimer}
                 showCountdown={showCountdown}
-                typing={someoneTyping}
-                typingFast={typingFast}
-                expression={bombFace}
-                rider={<Mascot pose={mascotPose} size={54} />}
-                flung={!!passDir}
+                pose={bombPose}
               />
               {bombReaction === 'reject' && <div className="bomb-reject-flash" />}
               {bombReaction === 'recoil' && (
@@ -1936,6 +1802,8 @@ export default function GameScreen({
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
           <div className="game-over-card">
+            {/* The mascot's emotional reaction, large and centred above the title. */}
+            <Mascot pose={iWon ? 'celebrate' : 'panic'} size={150} className="game-over-mascot" />
             <div className={`game-over-title${iWon ? ' win winner-bounce' : ''}`}>
               {iWon ? 'YOU WIN!' : <WobbleText text="GAME OVER" />}
             </div>
@@ -2080,6 +1948,8 @@ function CategoryBlitzScreen({
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
           <div className="game-over-card">
+            {/* The mascot's emotional reaction, large and centred above the title. */}
+            <Mascot pose={iWon ? 'celebrate' : 'panic'} size={150} className="game-over-mascot" />
             <div className={`game-over-title${iWon ? ' win winner-bounce' : ''}`}>
               {iWon ? 'YOU WIN!' : <WobbleText text="GAME OVER" />}
             </div>

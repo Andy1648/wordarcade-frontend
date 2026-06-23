@@ -27,14 +27,6 @@
   transform: rotate(-0.6deg);
 }
 
-/* Mascot tucked into the top-right corner of the lobby box. */
-.lobby-mascot {
-  position: absolute;
-  top: -26px;
-  right: 6px;
-  z-index: 5;
-}
-
 .lobby-back-btn {
   font-family: 'Bungee', cursive;
   font-size: 11px;

@@ -645,6 +645,22 @@
   pointer-events: none;
 }
 
+/* The mascot rendered as the bomb body (an SVG <image>). Crisp scaling, and a
+   quick fade whenever the pose swaps (it's re-keyed per pose). */
+.bomb-mascot-image {
+  image-rendering: -webkit-optimize-contrast;
+  animation: bomb-mascot-fade 200ms ease-out;
+}
+
+@keyframes bomb-mascot-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bomb-mascot-image { animation: none; }
+}
+
 /* ---- Bomb-pass throw: the bomb lunges toward the next player, then snaps
    back to center. Replays only while passDir is set (300ms). ---- */
 .bomb-passer {
@@ -1163,6 +1179,13 @@
   max-height: calc(100vh - 48px);
   overflow-y: auto;
   transform: rotate(-1.5deg);
+}
+
+/* The mascot's emotional reaction (celebrate / panic), big and centred above
+   the result text. */
+.game-over-mascot {
+  display: block;
+  margin: 0 auto 6px;
 }
 
 .game-over-title {
