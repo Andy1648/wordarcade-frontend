@@ -55,11 +55,11 @@ function isPreselectableGame(mode) {
  */
 function App() {
   const [view, setView] = useState('home');
-  // `view` is the live target; `renderedView` is what's actually on screen and
-  // lags it by 250ms during a wipe so the diagonal-bar TransitionOverlay can
-  // cover the swap (Persona 5 style). `transition` is the active overlay
-  // ({ word, key }) or null; the key re-keys the overlay so each wipe replays.
-  const [renderedView, setRenderedView] = useState('home');
+  // The screen always renders off the live `view` (no lagging copy), so a view
+  // change shows immediately and can never be stranded behind a timer. The
+  // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
+  // the swap and fades out. `transition` is the active overlay ({ word, key }) or
+  // null; the key re-keys the overlay so each wipe replays.
   const [transition, setTransition] = useState(null);
   const transitionKeyRef = useRef(0);
   const [lobbyMode, setLobbyMode] = useState(null);
@@ -183,7 +183,7 @@ function App() {
   const [imposterResults, setImposterResults] = useState(null);
   const [imposterFinal, setImposterFinal] = useState(null);
 
-  const { status: wsStatus, lastMessage, send } = useWebSocket();
+  const { status: wsStatus, messages, consumeMessages, send } = useWebSocket();
 
   // Background music. It's started from the splash dismiss (the guaranteed first
   // user gesture), so no autoplay attempt here - just the player + a fade-in.
@@ -247,7 +247,13 @@ function App() {
   }, [beatCount]);
 
   useEffect(() => {
-    if (!lastMessage) return;
+    if (!messages.length) return;
+    // Drain the FIFO queue in arrival order so co-arriving frames (e.g.
+    // game_started immediately followed by room_update) are EACH processed -
+    // batched delivery can no longer collapse them into just the latest one.
+    // (Body left at its original indent so the fix reads as a pure wrapper.)
+    for (const lastMessage of messages) {
+    if (!lastMessage) continue;
 
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
@@ -580,11 +586,15 @@ function App() {
     if (lastMessage.type === 'error') {
       setServerError(lastMessage.payload.message);
     }
-    // Keyed on lastMessage so each incoming message is processed exactly once.
-    // Everything else this effect touches is stable (state setters + refs); it no
-    // longer reads `view` directly (the room_update guard uses a functional
-    // setView), so [lastMessage] is the complete, intended dependency list.
-  }, [lastMessage]);
+    } // end for-of: every queued frame handled in order
+    // Drop exactly the frames we just processed. The hook's consume is a
+    // functional update, so any frame that arrived after this snapshot is kept,
+    // never skipped.
+    consumeMessages(messages.length);
+    // Keyed on the queue: the effect re-runs whenever new frames land and drains
+    // every one. It no longer reads `view` directly (the room_update guard uses a
+    // functional setView), so [messages, consumeMessages] is the complete dep list.
+  }, [messages, consumeMessages]);
 
   // Auto-dismiss an accepted toast. Category Blitz answers fly fast, so they
   // clear quicker (1s) than Word Bomb's (2s). Rejections stick around until
@@ -597,11 +607,12 @@ function App() {
     }
   }, [lastWordResult, gameType]);
 
-  // Drive the bar wipe on every real view change: fire the overlay, swap the
-  // rendered screen at the half-way point (under cover of the bars), and clear
-  // the overlay when it finishes. Depends only on `view` (the last navigated
-  // view is tracked in a ref) so the mid-wipe setRenderedView doesn't re-run
-  // this effect and cancel the pending overlay-clear.
+  // Fire the cosmetic bar wipe on every real view change. The screen itself has
+  // already swapped (it renders off `view`); this only lays the overlay on top
+  // and clears it when the animation finishes. The early-return just avoids a
+  // spurious wipe when `view` didn't actually change (initial mount / no-op
+  // setState) - it can no longer strand the screen, since nothing gates the
+  // screen behind it anymore.
   const lastNavViewRef = useRef('home');
   useEffect(() => {
     if (view === lastNavViewRef.current) return;
@@ -609,12 +620,8 @@ function App() {
     transitionKeyRef.current += 1;
     setTransition({ word: TRANSITION_WORDS[view] || 'GO!', key: transitionKeyRef.current });
     sound.whoosh(); // the diagonal bars sweep in
-    const swap = setTimeout(() => setRenderedView(view), 250);
     const end = setTimeout(() => setTransition(null), 500);
-    return () => {
-      clearTimeout(swap);
-      clearTimeout(end);
-    };
+    return () => clearTimeout(end);
   }, [view]);
 
   // Wipe to the homepage the moment the socket comes up (connecting -> open).
@@ -799,7 +806,7 @@ function App() {
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
   let screen;
-  if (renderedView === 'game') {
+  if (view === 'game') {
     screen = (
       <GameScreen
         gameState={gameState}
@@ -845,7 +852,7 @@ function App() {
         onShake={triggerShake}
       />
     );
-  } else if (renderedView === 'room' && room) {
+  } else if (view === 'room' && room) {
     screen = (
       <RoomScreen
         room={room}
@@ -858,7 +865,7 @@ function App() {
         onStartGame={handleStartGame}
       />
     );
-  } else if (renderedView === 'lobby') {
+  } else if (view === 'lobby') {
     screen = (
       <LobbyScreen
         mode={lobbyMode}
@@ -868,7 +875,7 @@ function App() {
         serverError={serverError}
       />
     );
-  } else if (renderedView === 'credits') {
+  } else if (view === 'credits') {
     screen = <CreditsScreen onBack={goHome} />;
   } else {
     screen = (
@@ -884,11 +891,20 @@ function App() {
   // Ambient backdrop intensity: ramps with the Word Bomb turn timer so the whole
   // screen reacts to the danger level. Resting 'calm' on every other screen.
   let bgIntensity = 'calm';
-  if (renderedView === 'game' && gameType === 'word-bomb' && !gameOver && gameState) {
+  if (view === 'game' && gameType === 'word-bomb' && !gameOver && gameState) {
     const maxT = gameState.timerSeconds || 1;
     const ratio = Math.max(0, Math.min(1, timerSeconds / maxT));
     bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   }
+
+  // The bar wipe is the only motion the transition adds; honour reduced-motion by
+  // skipping the overlay entirely (the screen has already swapped underneath, so
+  // nothing is lost but the animation). Read live - it's a cheap media query and
+  // the overlay is purely cosmetic.
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // The bomb-fuse loading screen is the very first thing shown, holding until
   // the socket connects (it plays an explosion on connect, then calls
@@ -933,10 +949,11 @@ function App() {
     );
   }
 
-  // `key={renderedView}` remounts the wrapper only on an actual (committed) view
-  // change, so screen-mount effects (e.g. the in-game 3-2-1 countdown) replay
-  // then. The WallScene + TransitionOverlay live OUTSIDE that keyed wrapper so
-  // the backdrop persists and the wipe plays over the swap.
+  // `key={view}` remounts the wrapper the instant the view changes, so the new
+  // screen mounts immediately (its mount effects - e.g. the in-game 3-2-1
+  // countdown - replay then) instead of waiting on a timer. The WallScene +
+  // TransitionOverlay live OUTSIDE that keyed wrapper so the backdrop persists
+  // and the cosmetic wipe plays on top of the already-swapped screen.
   return (
     // Three nested roles, deliberately on separate elements so an animation can
     // never spawn a scrollbar:
@@ -955,11 +972,13 @@ function App() {
           <WallScene intensity={bgIntensity} />
           <ParticleField />
           <div className="view-transition-root">
-            <div key={renderedView} className="view-screen">
+            <div key={view} className="view-screen">
               {screen}
             </div>
           </div>
-          {transition && <TransitionOverlay key={transition.key} word={transition.word} />}
+          {transition && !prefersReducedMotion && (
+            <TransitionOverlay key={transition.key} word={transition.word} />
+          )}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
               useBeatSync via --flash-color). Click-through, below modals. */}
@@ -967,7 +986,7 @@ function App() {
           <MusicButton
             isMuted={music.isMuted}
             onToggle={music.toggleMute}
-            accent={SCREEN_ACCENT[renderedView] || '#FF2EC4'}
+            accent={SCREEN_ACCENT[view] || '#FF2EC4'}
           />
         </div>
       </div>
