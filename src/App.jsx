@@ -39,10 +39,10 @@ const TRANSITION_WORDS = {
 };
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
-// for Join Room) or a specific game id picked from a homepage card. Only
-// these two are real backend game types we can lock the room into and
-// preselect; other cards fall back to the in-room mode picker.
-const PRESELECTABLE_GAMES = ['word-bomb', 'category-blitz'];
+// for Join Room) or a specific game id picked from a homepage card. These are
+// the real backend game types we can lock the room into and preselect; any
+// other card would fall back to the in-room mode picker (and default Word Bomb).
+const PRESELECTABLE_GAMES = ['word-bomb', 'category-blitz', 'imposter-word'];
 
 function isPreselectableGame(mode) {
   return PRESELECTABLE_GAMES.includes(mode);

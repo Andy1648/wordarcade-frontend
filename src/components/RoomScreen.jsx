@@ -32,11 +32,17 @@ function gameTypeLabel(gameType) {
   const match = GAME_TYPES.find((gt) => gt.key === gameType);
   return (match || GAME_TYPES[0]).label;
 }
-// Mirrors gameLogic.js's MIN_PLAYERS_TO_START on the backend - the
-// server is the real source of truth and will reject a start_game
-// attempt below this count, but matching it here means the player gets
-// instant feedback (a disabled button) instead of a round-trip error.
+// Minimum players to start, by game type. Mirrors the backend (the server is
+// the real source of truth and will reject an under-count start_game), but
+// matching it here gives instant feedback (a disabled button) instead of a
+// round-trip error. Imposter Word needs 3 - it's no fun finding the imposter
+// among one other person.
 const MIN_PLAYERS_TO_START = 2;
+const MIN_PLAYERS_BY_TYPE = { 'imposter-word': 3 };
+
+function minPlayersFor(gameType) {
+  return MIN_PLAYERS_BY_TYPE[gameType] || MIN_PLAYERS_TO_START;
+}
 
 /**
  * Shown once a room has been successfully created or joined.
@@ -62,7 +68,8 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
   if (!room) return null;
 
   const isHost = myId !== null && myId === room.hostId;
-  const canStart = room.players.length >= MIN_PLAYERS_TO_START;
+  const minPlayers = minPlayersFor(room.gameType);
+  const canStart = room.players.length >= minPlayers;
 
   function handleStartGame() {
     if (starting) return;
@@ -152,7 +159,7 @@ export default function RoomScreen({ room, myId, preselectedGame, serverError, o
             disabled={!canStart || starting}
           >
             {!canStart
-              ? 'NEED 2+ PLAYERS TO START'
+              ? `NEED ${minPlayers}+ PLAYERS TO START`
               : starting
               ? 'STARTING...'
               : 'START GAME'}
