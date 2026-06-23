@@ -235,7 +235,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 120px;
+  /* Fluid gap so the two bigger lines always fit the viewport height. */
+  gap: clamp(48px, 8vh, 120px);
   animation: intro-breathe 4s ease-in-out infinite;
   will-change: transform;
 }
@@ -266,6 +267,20 @@
   animation: intro-shake 260ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
+/* The heaviest hit (DIE SLOW) shakes harder and longer than the sharp FAST hit.
+   Declared after .shaking so it wins for the slow variant. */
+.intro-stage.shaking--slow {
+  animation: intro-shake-heavy 320ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes intro-shake-heavy {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  18% { transform: translate(-16px, 9px) rotate(-1deg); }
+  40% { transform: translate(14px, -9px) rotate(0.8deg); }
+  62% { transform: translate(-9px, 5px) rotate(-0.5deg); }
+  82% { transform: translate(6px, -4px) rotate(0.3deg); }
+}
+
 /* A hard impact jolt on each word's landing - a big kick to sell the weight of
    the punch, then settles fast. */
 @keyframes intro-shake {
@@ -281,9 +296,12 @@
 .intro-line {
   position: relative; /* anchors the speed-lines pseudo */
   font-family: 'Bungee', cursive;
-  font-size: 60px;
+  /* HERO scale: dominates the busy background. Fluid on both axes (min of vw/vh)
+     so it fills a laptop without clipping or forcing scroll. Heavier stroke to
+     punch through the speed lines + accents behind it. */
+  font-size: clamp(56px, min(13vw, 15vh), 150px);
   line-height: 1;
-  -webkit-text-stroke: 4px #000;
+  -webkit-text-stroke: 6px #000;
   paint-order: stroke fill;
   white-space: nowrap;
   /* The line container stays on; visibility is owned per-letter (letters fade in
@@ -325,10 +343,13 @@
 }
 
 @keyframes intro-punch {
-  0% { transform: scale(1.7); }
-  50% { transform: scale(0.9); }
-  72% { transform: scale(1.07); }
-  88% { transform: scale(0.98); }
+  /* Slams in HUGE and FREEZES for a frame (the impact hold) before snapping to
+     rest - the "this hit hard" beat. */
+  0% { transform: scale(2.05); }
+  12% { transform: scale(2.0); }
+  46% { transform: scale(0.86); }
+  66% { transform: scale(1.1); }
+  84% { transform: scale(0.97); }
   100% { transform: scale(1); }
 }
 
@@ -413,15 +434,25 @@
 }
 
 @keyframes intro-drag {
-  0% { transform: translateY(-0.18em) scale(1.14); }
-  60% { transform: translateY(0.05em) scale(0.99); }
+  /* Heavier, slower impact: lands big and HOLDS (a weightier freeze than FAST's)
+     before sinking to rest. */
+  0% { transform: translateY(-0.06em) scale(1.32); }
+  16% { transform: translateY(-0.04em) scale(1.3); }
+  62% { transform: translateY(0.05em) scale(0.97); }
   100% { transform: translateY(0) scale(1); }
 }
 
 @keyframes die-letter-in {
-  0% { opacity: 0; transform: translateY(-0.4em) scale(1.06); }
-  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  /* Heavier drop + a chromatic-aberration punch that resolves as it settles -
+     the ominous weight of the SLOW hit. */
+  0% {
+    opacity: 0;
+    transform: translateY(-0.4em) scale(1.2);
+    text-shadow: -0.09em 0 #ff1e56, 0.09em 0 #21e7ff;
+  }
+  50% { text-shadow: -0.03em 0 #ff1e56, 0.03em 0 #21e7ff; }
+  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); text-shadow: 0 0 transparent; }
+  100% { opacity: 1; transform: translateY(0) scale(1); text-shadow: 0 0 transparent; }
 }
 
 @keyframes die-pulse {
@@ -613,31 +644,82 @@
   100% { transform: rotate(var(--ang, 0deg)) translateY(calc(-1 * var(--dist, 240px))) scaleY(1.2); opacity: 0; }
 }
 
-/* ---- One-frame white impact flash on each landing ---- */
+/* ---- Hard impact FRAME on each word landing ----
+   A full-screen white layer in mix-blend-mode:difference INVERTS the whole screen
+   for ~1-2 frames (the title flips to a hard silhouette over a blown-out frame),
+   hard-cut on/off via steps() - the anime "this hit hard" frame, not a fade. */
 .intro-flash {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 6;
   background: #fff;
   pointer-events: none;
   opacity: 0;
-  animation: intro-flash 150ms ease-out forwards;
+  mix-blend-mode: difference;
 }
 
-@keyframes intro-flash {
+/* FAST = a single SHARP inverted frame (~90ms, one hard step). */
+.intro-flash--fast {
+  animation: intro-impact-fast 90ms steps(1, end) forwards;
+}
+
+@keyframes intro-impact-fast {
   0% { opacity: 1; }
-  40% { opacity: 0.9; }
   100% { opacity: 0; }
+}
+
+/* SLOW = HEAVIER: a longer two-beat inverted stutter (steps(2)) + a chromatic
+   colour-split punch (the offset ghosts below) for the weighty hit. */
+.intro-flash--slow {
+  animation: intro-impact-slow 170ms steps(2, end) forwards;
+}
+
+@keyframes intro-impact-slow {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Chromatic punch on the heavy hit: offset red/cyan fields that flash and snap
+   back. screen-blended so only the colour ghosts read over the inverted frame. */
+.intro-flash--slow::before,
+.intro-flash--slow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.intro-flash--slow::before {
+  background: #ff1e56;
+  animation: intro-chroma-l 170ms steps(2, end) forwards;
+}
+
+.intro-flash--slow::after {
+  background: #21e7ff;
+  animation: intro-chroma-r 170ms steps(2, end) forwards;
+}
+
+@keyframes intro-chroma-l {
+  0% { opacity: 0.5; transform: translateX(-12px); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes intro-chroma-r {
+  0% { opacity: 0.5; transform: translateX(12px); }
+  100% { opacity: 0; transform: translateX(0); }
 }
 
 /* ---- Mobile: smaller type + a gentler shake ---- */
 @media (max-width: 600px) {
   .intro-line {
-    font-size: 40px;
-    -webkit-text-stroke-width: 3px;
+    /* Still a big hero on phones, but capped so "DIE SLOW." never clips the
+       edges; lighter stroke at small sizes. */
+    font-size: clamp(44px, 13vw, 84px);
+    -webkit-text-stroke-width: 4px;
   }
 
-  .intro-breathe { gap: 72px; }
+  .intro-breathe { gap: clamp(40px, 7vh, 76px); }
   .intro-slot-type { transform: translate(-4px, -6px) rotate(-5deg); }
   .intro-slot-die { transform: translate(6px, 8px) rotate(6deg); }
 
@@ -707,6 +789,9 @@
   .intro-line-type::before { display: none; }
   .intro-line-die .intro-letter::after { display: none; }
   .intro-line-die { filter: none; }
+  /* No impact frames / flashes / chromatic punch under reduced motion - the
+     larger title simply appears (letters fade in below). */
+  .intro-flash { display: none !important; }
 
   .intro-letter {
     animation: none !important;

@@ -165,6 +165,9 @@ export default function TransitionIntro({ onComplete }) {
   const [flashKey, setFlashKey] = useState(0);
   // Toggled briefly on each landing to shake the whole card.
   const [shaking, setShaking] = useState(false);
+  // Which kind of hit is landing - 'fast' (sharp/electric) or 'slow' (heavy/
+  // ominous) - so the impact flash + shake can differ per phrase.
+  const [impactKind, setImpactKind] = useState('fast');
   const shakeTimerRef = useRef(null);
   const completedRef = useRef(false);
   // The element that leans toward the cursor (separate from the shake/breathe
@@ -172,13 +175,21 @@ export default function TransitionIntro({ onComplete }) {
   const tiltRef = useRef(null);
   const { sound } = useSound();
 
-  // A line just SLAMMED home: heavy punch + flash the screen white + shake.
-  function impact() {
-    sound.punch();
+  // A word just SLAMMED home: fire the hard impact frame (full-screen invert
+  // flash + silhouette + freeze, all CSS, re-keyed so it replays) and a shake.
+  // `kind` swaps the flash/shake feel (fast = sharp, slow = heavy). The second
+  // word of each line lands as a lighter, silent one-two (opts.silent), so the
+  // SFX still fires only on the two primary slams.
+  function impact(kind, opts = {}) {
+    if (!opts.silent) sound.punch();
+    setImpactKind(kind);
     setFlashKey((k) => k + 1);
     setShaking(true);
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-    shakeTimerRef.current = setTimeout(() => setShaking(false), 200);
+    shakeTimerRef.current = setTimeout(
+      () => setShaking(false),
+      kind === 'slow' ? 280 : 180
+    );
   }
 
   // The whole timeline, scheduled once on mount (times are intro-local; the
@@ -189,11 +200,13 @@ export default function TransitionIntro({ onComplete }) {
     // lands, holds for a moment, then "DIE SLOW." slams in as its own hit.
     // 0-140ms: short black hold (anticipation).
     timers.push(setTimeout(() => setStep('line1'), 140));
-    // Flash + shake right as the punch snaps back home (~160ms into the hit).
-    timers.push(setTimeout(impact, 300));
-    // ~780ms: after a held pause, "DIE SLOW." punches in as a separate hit.
+    // TYPE then FAST each get their own sharp impact beat as the line fills in.
+    timers.push(setTimeout(() => impact('fast'), 300)); // TYPE
+    timers.push(setTimeout(() => impact('fast', { silent: true }), 450)); // FAST
+    // ~780ms: after a held pause, "DIE SLOW." slams in as its own heavier hit.
     timers.push(setTimeout(() => setStep('line2'), 780));
-    timers.push(setTimeout(impact, 940));
+    timers.push(setTimeout(() => impact('slow'), 940)); // DIE
+    timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
     // 2120ms: both lines explode outward over the starburst, with a whoosh.
     timers.push(
       setTimeout(() => {
@@ -306,7 +319,7 @@ export default function TransitionIntro({ onComplete }) {
         </div>
       </div>
 
-      <div className={`intro-stage${shaking ? ' shaking' : ''}`}>
+      <div className={`intro-stage${shaking ? ` shaking shaking--${impactKind}` : ''}`}>
         {exploding && (
           <div className="intro-boom">
             {/* Hard bright flash on detonation. */}
@@ -371,8 +384,12 @@ export default function TransitionIntro({ onComplete }) {
           </div>
         </div>
       </div>
-      {/* One-frame white impact flash, re-keyed per landing so it replays. */}
-      {flashKey > 0 && <div key={flashKey} className="intro-flash" />}
+      {/* Hard impact frame, re-keyed per word-landing so it replays. The variant
+          class swaps the feel: sharp invert for FAST, heavier double-beat +
+          chromatic for SLOW. (Reduced motion hides it entirely.) */}
+      {flashKey > 0 && (
+        <div key={flashKey} className={`intro-flash intro-flash--${impactKind}`} />
+      )}
     </div>
   );
 }
