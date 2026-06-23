@@ -54,11 +54,6 @@ function isPreselectableGame(mode) {
  */
 function App() {
   const [view, setView] = useState('home');
-  // The lastMessage effect only depends on lastMessage, so reading `view` from
-  // its closure could be stale. Mirror it into a ref (updated every render) so
-  // message handlers can branch on the live view without re-running the effect.
-  const viewRef = useRef('home');
-  viewRef.current = view;
   // `view` is the live target; `renderedView` is what's actually on screen and
   // lags it by 250ms during a wipe so the diagonal-bar TransitionOverlay can
   // cover the swap (Persona 5 style). `transition` is the active overlay
@@ -211,6 +206,9 @@ function App() {
   useEffect(() => {
     if (!lastMessage) return;
 
+    // TEMP debug: track message order vs the live view (remove after debugging).
+    console.log('MSG:', lastMessage.type, 'current view:', view);
+
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
     }
@@ -222,7 +220,7 @@ function App() {
       // room_update can land right after game_started (host start) and would
       // otherwise yank the player back out of the match. The rematch flow sends
       // an explicit game_reset to drive the game -> room transition instead.
-      if (viewRef.current !== 'game') {
+      if (view !== 'game') {
         setView('room');
       }
     }
@@ -462,6 +460,9 @@ function App() {
     if (lastMessage.type === 'error') {
       setServerError(lastMessage.payload.message);
     }
+    // `view` is read above but intentionally NOT a dependency: adding it would
+    // re-run this effect (re-processing the last message) on every view change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastMessage]);
 
   // Auto-dismiss an accepted toast. Category Blitz answers fly fast, so they
