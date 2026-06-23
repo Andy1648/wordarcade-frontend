@@ -43,26 +43,29 @@ export default function TransitionIntro({ onComplete }) {
     setFlashKey((k) => k + 1);
     setShaking(true);
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-    shakeTimerRef.current = setTimeout(() => setShaking(false), 220);
+    shakeTimerRef.current = setTimeout(() => setShaking(false), 320);
   }
 
   // The whole timeline, scheduled once on mount (times are intro-local; the
   // splash already spent its own ~300ms dismissing before we mounted).
   useEffect(() => {
     const timers = [];
-    // 0-200ms: hold on full black (anticipation).
-    timers.push(setTimeout(() => setStep('line1'), 200));
+    // Deliberately UNEVEN beats so the two landings never feel metronomic:
+    // a snappy first hit, then a long held pause, then the second hit cracks in.
+    // 0-140ms: short black hold (anticipation).
+    timers.push(setTimeout(() => setStep('line1'), 140));
     // Flash + shake right as the punch SQUASHES home (~210ms into the 320ms hit).
-    timers.push(setTimeout(impact, 410));
-    // 900ms: "DIE SLOW." punches in from the right.
-    timers.push(setTimeout(() => setStep('line2'), 900));
-    timers.push(setTimeout(impact, 1110));
-    // 1600ms: both lines explode outward over the starburst, with a whoosh.
+    timers.push(setTimeout(impact, 350));
+    // ~980ms: "DIE SLOW." cracks in from the right after a long, irregular beat
+    // (the gap to the first hit is nearly double the gap to the explosion).
+    timers.push(setTimeout(() => setStep('line2'), 980));
+    timers.push(setTimeout(impact, 1190));
+    // 1620ms: both lines explode outward over the starburst, with a whoosh.
     timers.push(
       setTimeout(() => {
         setStep('explode');
         sound.whoosh();
-      }, 1600)
+      }, 1620)
     );
     // 2000ms: hand back to App for the homepage wipe.
     timers.push(
@@ -95,19 +98,27 @@ export default function TransitionIntro({ onComplete }) {
             <polygon points={BURST_POINTS} fill="#FFE94A" />
           </svg>
         )}
-        <div
-          className={`intro-line intro-line-type${line1Active ? ' active' : ''}${
-            exploding ? ' intro-explode-up' : ''
-          }`}
-        >
-          TYPE FAST.
+        {/* Each line sits in a slot that holds its resting offset + tilt, so the
+            two titles land staggered and crooked. The slot transform is separate
+            from the punch/explode animations (which run on the inner .intro-line),
+            so a punch settling never snaps the resting position. */}
+        <div className="intro-line-slot intro-slot-type">
+          <div
+            className={`intro-line intro-line-type${line1Active ? ' active' : ''}${
+              exploding ? ' intro-explode-up' : ''
+            }`}
+          >
+            TYPE FAST.
+          </div>
         </div>
-        <div
-          className={`intro-line intro-line-die${line2Active ? ' active' : ''}${
-            exploding ? ' intro-explode-down' : ''
-          }`}
-        >
-          DIE SLOW.
+        <div className="intro-line-slot intro-slot-die">
+          <div
+            className={`intro-line intro-line-die${line2Active ? ' active' : ''}${
+              exploding ? ' intro-explode-down' : ''
+            }`}
+          >
+            DIE SLOW.
+          </div>
         </div>
       </div>
       {/* One-frame white impact flash, re-keyed per landing so it replays. */}

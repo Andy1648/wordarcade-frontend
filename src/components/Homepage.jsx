@@ -155,8 +155,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           ))}
         </div>
 
-        <div className="homepage-hover-hint">[ HOVER A CARD TO PREVIEW ]</div>
-
         <div className="homepage-bottom-bar">
           <button
             className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}

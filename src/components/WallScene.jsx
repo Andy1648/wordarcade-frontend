@@ -130,137 +130,206 @@ export default function WallScene({ intensity = 'calm' }) {
     };
   }, []);
 
+  // ---- Cursor parallax ----
+  // A smoothed, layered offset that gives the wall a fake-3D sense of depth as
+  // the mouse moves - the scene reacts as if you lean around it ("nothing is
+  // ever static"). Purely additive: we only publish two normalised CSS vars
+  // (--mx / --my, each -1..1, eased toward the cursor) on the root; the CSS
+  // turns those into per-layer transl(e). Skipped entirely for reduced-motion
+  // and non-cursor (touch) devices so neither tracks a phantom pointer.
+  const rootRef = useRef(null);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof window === 'undefined' || !window.matchMedia) return undefined;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (reduceMotion || !finePointer) return undefined; // no real cursor / less motion
+
+    root.classList.add('parallax-on');
+
+    let targetX = 0;
+    let targetY = 0;
+    let curX = 0;
+    let curY = 0;
+    let rafId = null;
+
+    const tick = () => {
+      // Lerp toward the cursor target so the layers lag and glide into place
+      // rather than snapping 1:1 - the one spot where smooth/floaty is correct.
+      curX += (targetX - curX) * 0.08;
+      curY += (targetY - curY) * 0.08;
+      root.style.setProperty('--mx', curX.toFixed(4));
+      root.style.setProperty('--my', curY.toFixed(4));
+      // Keep easing until we've effectively arrived, then idle until the next move.
+      if (Math.abs(targetX - curX) > 0.0005 || Math.abs(targetY - curY) > 0.0005) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        rafId = null;
+      }
+    };
+
+    // The move handler is intentionally tiny - it only records the target. Every
+    // DOM write happens in the rAF tick, which throttles them to the frame rate.
+    const onMove = (e) => {
+      targetX = (e.clientX / window.innerWidth) * 2 - 1; // -1 (left) .. 1 (right)
+      targetY = (e.clientY / window.innerHeight) * 2 - 1; // -1 (top) .. 1 (bottom)
+      if (rafId == null) rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      if (rafId != null) cancelAnimationFrame(rafId);
+      root.classList.remove('parallax-on');
+      root.style.removeProperty('--mx');
+      root.style.removeProperty('--my');
+    };
+  }, []);
+
   return (
-    <div className={`wall-scene ${intensity}`} aria-hidden="true">
-      {/* Brick courses + mortar, painted first, behind everything. */}
-      <div className="wall-bricks" />
-      {/* The one allowed environmental gradient: a subtle darkening toward the
-          bottom of the alley. */}
-      <div className="wall-floor-shade" />
+    <div ref={rootRef} className={`wall-scene ${intensity}`} aria-hidden="true">
+      {/* ===== DEEP layer: the wall structure. Parallaxes the LEAST and
+          OPPOSITE the cursor, so it reads as the furthest plane. ===== */}
+      <div className="wall-parallax-layer wall-layer-deep">
+        {/* Brick courses + mortar, painted first, behind everything. */}
+        <div className="wall-bricks" />
+        {/* The one allowed environmental gradient: a subtle darkening toward the
+            bottom of the alley. */}
+        <div className="wall-floor-shade" />
 
-      {/* Horizontal pipe running across the upper portion of the wall. */}
-      <svg className="wall-pipe" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
-        <rect x="0" y="10" width="1000" height="20" fill="#1c1230" stroke="#0a0414" strokeWidth="4" />
-        <rect x="120" y="4" width="26" height="32" fill="#241636" stroke="#0a0414" strokeWidth="4" />
-        <rect x="820" y="4" width="26" height="32" fill="#241636" stroke="#0a0414" strokeWidth="4" />
-      </svg>
-
-      {/* A thin jagged crack down the wall. */}
-      <svg className="wall-crack" viewBox="0 0 200 600" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          d="M120 0 L128 70 L112 130 L130 190 L116 250 L134 320 L118 390 L138 470 L120 540 L132 600"
-          fill="none" stroke="#000" strokeWidth="2.5"
-        />
-      </svg>
-
-      {/* Detailed spray-paint splatters (organic blob + droplets + drips). */}
-      {WALL_SPLATTERS.map((sp, i) => {
-        const Splat = sp.comp;
-        return (
-          <div
-            key={`splat${i}`}
-            className="wall-splatter"
-            style={{
-              top: `${sp.top}%`,
-              left: `${sp.left}%`,
-              width: `${sp.size}px`,
-              height: `${sp.size}px`,
-              opacity: sp.op,
-              transform: `rotate(${sp.rot}deg)`,
-            }}
-          >
-            <Splat color={sp.color} className="wall-splatter-svg" />
-          </div>
-        );
-      })}
-
-      {/* Dried vertical paint drips. */}
-      {DRIPS.map((d, i) => (
-        <div
-          key={`drip${i}`}
-          className="wall-paint-drip"
-          style={{
-            left: `${d.left}%`,
-            width: `${d.w}px`,
-            height: `${d.h}px`,
-            background: d.c.fill,
-            opacity: d.op,
-          }}
-        />
-      ))}
-
-      {/* Spray-painted graffiti tags - each enhanced with per-letter rotation,
-          paint drips and an overspray haze so it reads as hand-sprayed, not typed. */}
-      {TAGS.map((t, i) => (
-        <GraffitiTag
-          key={`tag${i}`}
-          word={t.word}
-          fill={t.c.fill}
-          line={t.c.line}
-          size={t.size}
-          top={t.top}
-          left={t.left}
-          rotation={t.rot}
-          opacity={t.op}
-          drip={t.drip}
-        />
-      ))}
-
-      {/* Stickers - each its own drifting inline SVG. */}
-      {STICKERS.map((st, i) => (
-        <svg
-          key={`stk${i}`}
-          className="wall-sticker"
-          viewBox="-50 -50 100 100"
-          aria-hidden="true"
-          style={{
-            top: `${st.top}%`,
-            left: `${st.left}%`,
-            width: `${st.size}px`,
-            height: `${st.size}px`,
-            opacity: st.op,
-            '--rot': `${st.rot}deg`,
-            '--dx': `${st.dx}px`,
-            '--dy': `${st.dy}px`,
-            '--dur': `${st.dur}s`,
-          }}
-        >
-          <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
+        {/* Horizontal pipe running across the upper portion of the wall. */}
+        <svg className="wall-pipe" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="0" y="10" width="1000" height="20" fill="#1c1230" stroke="#0a0414" strokeWidth="4" />
+          <rect x="120" y="4" width="26" height="32" fill="#241636" stroke="#0a0414" strokeWidth="4" />
+          <rect x="820" y="4" width="26" height="32" fill="#241636" stroke="#0a0414" strokeWidth="4" />
         </svg>
-      ))}
 
-      {/* Self-writing graffiti: each tag draws its outline stroke-by-stroke,
-          then the fill spray-fills in (see graffiti-draw in the CSS). */}
-      {tags.map((t) => {
-        const chars = t.word.length;
-        return (
-          <svg
-            key={t.id}
-            className="wall-graffiti"
-            style={{
-              left: `${t.left}%`,
-              top: `${t.top}%`,
-              width: `${chars * t.size * 0.85 + t.size}px`,
-              height: `${t.size * 1.5}px`,
-              transform: `rotate(${t.rot}deg)`,
-            }}
-            aria-hidden="true"
-          >
-            <text
-              className="wall-graffiti-text"
-              x="2"
-              y={t.size}
-              fontSize={t.size}
-              fontFamily="'Bungee', cursive"
-              fill={t.color}
-              stroke={t.color}
-              style={{ '--path-length': chars * t.size * 3 }}
+        {/* A thin jagged crack down the wall. */}
+        <svg className="wall-crack" viewBox="0 0 200 600" preserveAspectRatio="none" aria-hidden="true">
+          <path
+            d="M120 0 L128 70 L112 130 L130 190 L116 250 L134 320 L118 390 L138 470 L120 540 L132 600"
+            fill="none" stroke="#000" strokeWidth="2.5"
+          />
+        </svg>
+      </div>
+
+      {/* ===== MID layer: tags, splatters, stickers. Moderate travel, WITH the
+          cursor. ===== */}
+      <div className="wall-parallax-layer wall-layer-mid">
+        {/* Detailed spray-paint splatters (organic blob + droplets + drips). */}
+        {WALL_SPLATTERS.map((sp, i) => {
+          const Splat = sp.comp;
+          return (
+            <div
+              key={`splat${i}`}
+              className="wall-splatter"
+              style={{
+                top: `${sp.top}%`,
+                left: `${sp.left}%`,
+                width: `${sp.size}px`,
+                height: `${sp.size}px`,
+                opacity: sp.op,
+                transform: `rotate(${sp.rot}deg)`,
+              }}
             >
-              {t.word}
-            </text>
+              <Splat color={sp.color} className="wall-splatter-svg" />
+            </div>
+          );
+        })}
+
+        {/* Spray-painted graffiti tags - each enhanced with per-letter rotation,
+            paint drips and an overspray haze so it reads as hand-sprayed, not typed. */}
+        {TAGS.map((t, i) => (
+          <GraffitiTag
+            key={`tag${i}`}
+            word={t.word}
+            fill={t.c.fill}
+            line={t.c.line}
+            size={t.size}
+            top={t.top}
+            left={t.left}
+            rotation={t.rot}
+            opacity={t.op}
+            drip={t.drip}
+          />
+        ))}
+
+        {/* Stickers - each its own drifting inline SVG. */}
+        {STICKERS.map((st, i) => (
+          <svg
+            key={`stk${i}`}
+            className="wall-sticker"
+            viewBox="-50 -50 100 100"
+            aria-hidden="true"
+            style={{
+              top: `${st.top}%`,
+              left: `${st.left}%`,
+              width: `${st.size}px`,
+              height: `${st.size}px`,
+              opacity: st.op,
+              '--rot': `${st.rot}deg`,
+              '--dx': `${st.dx}px`,
+              '--dy': `${st.dy}px`,
+              '--dur': `${st.dur}s`,
+            }}
+          >
+            <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
           </svg>
-        );
-      })}
+        ))}
+
+        {/* Self-writing graffiti: each tag draws its outline stroke-by-stroke,
+            then the fill spray-fills in (see graffiti-draw in the CSS). */}
+        {tags.map((t) => {
+          const chars = t.word.length;
+          return (
+            <svg
+              key={t.id}
+              className="wall-graffiti"
+              style={{
+                left: `${t.left}%`,
+                top: `${t.top}%`,
+                width: `${chars * t.size * 0.85 + t.size}px`,
+                height: `${t.size * 1.5}px`,
+                transform: `rotate(${t.rot}deg)`,
+              }}
+              aria-hidden="true"
+            >
+              <text
+                className="wall-graffiti-text"
+                x="2"
+                y={t.size}
+                fontSize={t.size}
+                fontFamily="'Bungee', cursive"
+                fill={t.color}
+                stroke={t.color}
+                style={{ '--path-length': chars * t.size * 3 }}
+              >
+                {t.word}
+              </text>
+            </svg>
+          );
+        })}
+      </div>
+
+      {/* ===== FRONT layer: the dried paint drips. The MOST travel, WITH the
+          cursor, so it reads as the nearest plane. ===== */}
+      <div className="wall-parallax-layer wall-layer-front">
+        {/* Dried vertical paint drips. */}
+        {DRIPS.map((d, i) => (
+          <div
+            key={`drip${i}`}
+            className="wall-paint-drip"
+            style={{
+              left: `${d.left}%`,
+              width: `${d.w}px`,
+              height: `${d.h}px`,
+              background: d.c.fill,
+              opacity: d.op,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Comic halftone dot texture over the wall (its opacity breathes with
           the music's mid frequencies via --beat-mid). */}

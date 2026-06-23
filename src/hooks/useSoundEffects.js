@@ -186,13 +186,16 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
 
     // ---- App-wide UI / transition / outcome sounds ----
 
-    // Heavy impact for the "TYPE FAST" / "DIE SLOW" slams - crisp, punchy, LOUD.
-    // Four stacked layers feeding a compressor + makeup gain, so the level can be
-    // pushed hard for a glued, gut-punch hit instead of just clipping into mush:
-    //   1. a pitch-bent sub-thud (210->42Hz) for the initial "thwack",
-    //   2. a deeper, longer body thump (95->36Hz) for weight/punch,
-    //   3. a high-passed white-noise transient for the crisp "crack"/snap,
-    //   4. a bright square click on the very attack for extra bite.
+    // Cartoony "BONK!" impact for the "TYPE FAST" / "DIE SLOW" slams, the
+    // imposter reveal and the splash - Looney-Tunes/FNF, not movie-trailer.
+    // Five stacked layers feeding a compressor + makeup gain so it still hits
+    // LOUD and glued, but the timbre is comic, not cinematic:
+    //   1. a rounded pitched "bonk" (triangle, fast 520->130Hz drop),
+    //   2. a springy "boing" tail (triangle with a settling vibrato wobble) -
+    //      the signature cartoon element,
+    //   3. a short slappy midrange "smack" (bandpassed noise ~1.2kHz),
+    //   4. a light low thump for a bit of weight (no deep cinematic sub),
+    //   5. a quick "pop" on the very attack for bite.
     punch() {
       if (mutedRef.current) return;
       const ctx = getCtx();
@@ -209,64 +212,93 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         comp.attack.setValueAtTime(0.002, now);
         comp.release.setValueAtTime(0.12, now);
         const master = ctx.createGain();
-        master.gain.setValueAtTime(1.3, now); // makeup
+        master.gain.setValueAtTime(1.25, now); // makeup
         comp.connect(master).connect(ctx.destination);
 
-        // 1. Sub-thud: fast pitch drop = "thwack" weight.
-        const sub = ctx.createOscillator();
-        const subGain = ctx.createGain();
-        sub.type = 'sine';
-        sub.frequency.setValueAtTime(210, now);
-        sub.frequency.exponentialRampToValueAtTime(42, now + 0.09);
-        subGain.gain.setValueAtTime(0.0001, now);
-        subGain.gain.exponentialRampToValueAtTime(0.9, now + 0.004); // snap attack
-        subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-        sub.connect(subGain).connect(comp);
-        sub.start(now);
-        sub.stop(now + 0.2);
+        // 1. "Bonk": a rounded triangle with a fast, comic pitch drop - the
+        // classic cartoon-punch donk.
+        const bonk = ctx.createOscillator();
+        const bonkGain = ctx.createGain();
+        bonk.type = 'triangle';
+        bonk.frequency.setValueAtTime(520, now);
+        bonk.frequency.exponentialRampToValueAtTime(130, now + 0.05);
+        bonkGain.gain.setValueAtTime(0.0001, now);
+        bonkGain.gain.exponentialRampToValueAtTime(0.9, now + 0.004); // snap attack
+        bonkGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        bonk.connect(bonkGain).connect(comp);
+        bonk.start(now);
+        bonk.stop(now + 0.18);
 
-        // 2. Deep body thump: a lower, longer sine = extra weight + gut punch.
-        const body = ctx.createOscillator();
-        const bodyGain = ctx.createGain();
-        body.type = 'sine';
-        body.frequency.setValueAtTime(95, now);
-        body.frequency.exponentialRampToValueAtTime(36, now + 0.14);
-        bodyGain.gain.setValueAtTime(0.0001, now);
-        bodyGain.gain.exponentialRampToValueAtTime(0.72, now + 0.006);
-        bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
-        body.connect(bodyGain).connect(comp);
-        body.start(now);
-        body.stop(now + 0.26);
+        // 2. "Boing": a triangle whose pitch slides down WHILE a sine LFO wobbles
+        // it (vibrato), with the wobble depth settling to zero - that springy
+        // cartoon "bo-o-oing" tail. The LFO adds to the base frequency ramp.
+        const boing = ctx.createOscillator();
+        const boingGain = ctx.createGain();
+        boing.type = 'triangle';
+        boing.frequency.setValueAtTime(320, now);
+        boing.frequency.exponentialRampToValueAtTime(150, now + 0.22);
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(17, now); // wobble speed
+        lfoGain.gain.setValueAtTime(55, now); // wobble depth (Hz)
+        lfoGain.gain.linearRampToValueAtTime(0, now + 0.22); // spring settles
+        lfo.connect(lfoGain).connect(boing.frequency);
+        boingGain.gain.setValueAtTime(0.0001, now);
+        boingGain.gain.exponentialRampToValueAtTime(0.42, now + 0.01);
+        boingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+        boing.connect(boingGain).connect(comp);
+        boing.start(now);
+        boing.stop(now + 0.28);
+        lfo.start(now);
+        lfo.stop(now + 0.28);
 
-        // 3. Crisp transient: high-passed white noise, fast decay = a sharp snap.
-        const dur = 0.06;
+        // 3. "Smack": short BANDpassed noise centred in the midrange - a slappy
+        // comic thwack rather than a crisp cinematic crack.
+        const dur = 0.045;
         const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
         const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
         const noise = ctx.createBufferSource();
         noise.buffer = buffer;
-        const hp = ctx.createBiquadFilter();
-        hp.type = 'highpass';
-        hp.frequency.setValueAtTime(1700, now);
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(1200, now);
+        bp.Q.setValueAtTime(0.8, now);
         const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.6, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
-        noise.connect(hp).connect(noiseGain).connect(comp);
+        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+        noise.connect(bp).connect(noiseGain).connect(comp);
         noise.start(now);
         noise.stop(now + dur + 0.01);
 
-        // 4. Bright click ping right on the attack for extra crispness/bite.
-        const click = ctx.createOscillator();
-        const clickGain = ctx.createGain();
-        click.type = 'square';
-        click.frequency.setValueAtTime(1500, now);
-        clickGain.gain.setValueAtTime(0.0001, now);
-        clickGain.gain.linearRampToValueAtTime(0.3, now + 0.002);
-        clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
-        click.connect(clickGain).connect(comp);
-        click.start(now);
-        click.stop(now + 0.035);
+        // 4. Light low thump: a touch of weight so it still lands as a hit -
+        // deliberately NOT the deep 36Hz cinematic sub.
+        const thump = ctx.createOscillator();
+        const thumpGain = ctx.createGain();
+        thump.type = 'sine';
+        thump.frequency.setValueAtTime(140, now);
+        thump.frequency.exponentialRampToValueAtTime(60, now + 0.1);
+        thumpGain.gain.setValueAtTime(0.0001, now);
+        thumpGain.gain.exponentialRampToValueAtTime(0.5, now + 0.005);
+        thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+        thump.connect(thumpGain).connect(comp);
+        thump.start(now);
+        thump.stop(now + 0.16);
+
+        // 5. "Pop" on the attack: a quick triangle blip for a little cartoon bite.
+        const pop = ctx.createOscillator();
+        const popGain = ctx.createGain();
+        pop.type = 'triangle';
+        pop.frequency.setValueAtTime(900, now);
+        pop.frequency.exponentialRampToValueAtTime(400, now + 0.02);
+        popGain.gain.setValueAtTime(0.0001, now);
+        popGain.gain.linearRampToValueAtTime(0.22, now + 0.002);
+        popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
+        pop.connect(popGain).connect(comp);
+        pop.start(now);
+        pop.stop(now + 0.035);
       } catch {
         /* no-op */
       }

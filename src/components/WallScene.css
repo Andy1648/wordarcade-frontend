@@ -236,3 +236,55 @@ html[data-beat='true'] .wall-beat-bright {
     animation: none !important;
   }
 }
+
+/* ============================================================= */
+/* ============  CURSOR PARALLAX (fake-3D depth)  ============== */
+/* ============================================================= */
+
+/* Purely ADDITIVE motion: three depth layers that offset by a smoothed,
+   cursor-driven amount. --mx / --my are each normalised to -1..1 and lerped in
+   JS (WallScene.jsx), so the layers glide and lag rather than snapping 1:1.
+   Deeper layers move LESS and OPPOSITE the cursor; the foreground moves MOST
+   and WITH it, which reads as depth when you move around the scene.
+
+   Everything is gated on the .parallax-on class, which JS only adds on
+   fine-pointer, motion-OK devices - so reduced-motion and touch keep the wall
+   exactly as it was (the layer wrappers are inert, zero-transform pass-throughs
+   that don't shift any element from its original position). */
+
+.wall-parallax-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wall-scene.parallax-on .wall-parallax-layer {
+  will-change: transform;
+}
+
+/* Deepest plane (bricks / pipe / crack): a small shift, OPPOSITE the cursor.
+   Scaled up a hair so the offset can never expose the viewport edge behind the
+   full-bleed brick fill. The scale only applies while parallax is on, so the
+   resting wall is untouched. */
+.wall-scene.parallax-on .wall-layer-deep {
+  transform: scale(1.05)
+    translate(calc(var(--mx, 0) * -5px), calc(var(--my, 0) * -4px));
+}
+
+/* Mid plane (tags / splatters / stickers): moderate travel, WITH the cursor. */
+.wall-scene.parallax-on .wall-layer-mid {
+  transform: translate(calc(var(--mx, 0) * 9px), calc(var(--my, 0) * 7px));
+}
+
+/* Front plane (paint drips): the most travel, WITH the cursor - the nearest. */
+.wall-scene.parallax-on .wall-layer-front {
+  transform: translate(calc(var(--mx, 0) * 16px), calc(var(--my, 0) * 13px));
+}
+
+/* Belt-and-braces: even if the class somehow lingered, never parallax under
+   reduced-motion (JS also won't enable it there in the first place). */
+@media (prefers-reduced-motion: reduce) {
+  .wall-scene .wall-parallax-layer {
+    transform: none !important;
+  }
+}

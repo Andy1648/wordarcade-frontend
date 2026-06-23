@@ -69,11 +69,15 @@ html[data-beat='true'] .screen-flash {
 /* ===================  APP-WIDE SCREEN SHAKE  ================= */
 /* ============================================================= */
 
-/* Architecture: a FIXED, overflow:hidden outer container (.app-viewport) clips
-   everything to the viewport, so the shake can never push content out and spawn
-   a scrollbar. The inner .app-shake is the real scroll container (overflow-y:
-   auto, so tall screens still scroll normally) AND the element the one-shot
-   shake animation is applied to - shaking just nudges it inside the clip box. */
+/* Architecture: three nested elements, each with a single job, so a shake/pop
+   animation can never spawn a scrollbar:
+     .app-viewport - FIXED + overflow:hidden: the outermost CLIP box.
+     .app-shake    - the one-shot shake animation lives here (transform only).
+                     It is NOT the scroll container, so its transform can't grow
+                     a scrollable overflow.
+     .app-scroll   - the real scroll container (overflow-y:auto), nested inside
+                     the shake element, so tall screens still scroll while the
+                     shake (an ancestor transform) leaves its scroll area alone. */
 .app-viewport {
   position: fixed;
   inset: 0;
@@ -83,9 +87,14 @@ html[data-beat='true'] .screen-flash {
 .app-shake {
   width: 100%;
   height: 100%;
+  transform-origin: center;
+}
+
+.app-scroll {
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  transform-origin: center;
 }
 
 .app-shake.shake-light { animation: shake-light 100ms ease-in-out; }

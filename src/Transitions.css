@@ -8,8 +8,15 @@
   /* Sit above the persistent WallScene (z-index 0). Screen wraps are
      transparent so the ambient backdrop shows through around the content. */
   z-index: 1;
-  /* Keep any off-screen decoration from spawning a horizontal scrollbar. */
-  overflow-x: hidden;
+  /* Clip decorative overshoot on BOTH axes at the content box. The app is full
+     of looping/beat-driven transforms (player cards, combo box, splatters
+     scaling a few px on every beat); transformed content counts toward a scroll
+     container's overflow, so without this the outer .app-shake's vertical
+     scrollbar flickers in and out on every beat. overflow:clip (not hidden)
+     never becomes a scroll container itself - its box still grows with in-flow
+     content - so genuinely tall screens keep scrolling normally via .app-shake,
+     while the off-box transform overshoot that caused the flicker is cut. */
+  overflow: clip;
 }
 
 .view-screen {
