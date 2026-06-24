@@ -10,9 +10,10 @@
 // lines slam against it. There is deliberately NO background scene (no speed
 // lines, vector accents, perspective grid, halftone or drifting particles) -
 // nothing competes with the title. The impact effects (white flash + the shake
-// of the card itself) fire WITH each slam, then settle. There are deliberately
-// NO explosion/burst effects (no per-word starburst, no blow-apart) - the slam
-// + flash is the whole punch.
+// of the card itself + hairline impact cracks that spider out from each phrase)
+// fire WITH each slam, then settle. There are deliberately NO explosion/burst
+// effects (no per-word starburst, no blow-apart) - the slam, flash and cracks are
+// the whole punch.
 //
 // The two phrases animate OPPOSITELY on purpose - they mean opposite things:
 // TYPE FAST is fast/electric (tight stagger, chromatic aberration), DIE SLOW is
@@ -24,7 +25,7 @@
 // renders different content per step; the punch/drag/idle motion is all CSS.
 // Each landing fires a one-frame white flash + a brief shake of the whole card
 // to sell the impact.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import './TransitionIntro.css';
 
@@ -34,6 +35,147 @@ const PREFERS_REDUCED =
   typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ============================  IMPACT CRACKS  =============================
+// Hairline fractures that spider out from each phrase as it slams home, as if the
+// word cracked the black "screen surface" it hit. Paths are generated procedurally
+// (seeded, so they're stable per render and the two phrases differ) and drawn
+// outward with the SVG stroke-dashoffset line-draw technique. They are deliberately
+// NOT radial/uniform: origins are scattered along the word, every fissure zig-zags
+// at jittered angles, bows slightly, tapers, and ~half spawn a thinner branch -
+// the irregularity is what sells them as real impact damage rather than a pattern.
+
+// Tiny deterministic PRNG (mulberry32) so a given seed always yields the same
+// fracture - no Math.random, so React re-renders never reshuffle the cracks.
+function mulberry32(a) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Turn a zig-zag polyline into a path string, bowing each segment by a small
+// perpendicular offset (quadratic control point) so the crack curves organically
+// instead of reading as straight ruled lines. `curve` scales the bow.
+function crackPath(pts, curve, rng) {
+  let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1];
+    const [x1, y1] = pts[i];
+    const mx = (x0 + x1) / 2;
+    const my = (y0 + y1) / 2;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const off = curve * (rng() < 0.5 ? -1 : 1);
+    // control point = segment midpoint pushed along the segment's normal
+    const cx = mx - dy * off;
+    const cy = my + dx * off;
+    d += ` Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  }
+  return d;
+}
+
+// Build one phrase's fractures inside a 1000x400 viewBox (text band ~ the middle).
+// `kind` tunes the feel: 'fast' = shorter, straighter, more angular (sharp impact);
+// 'slow' = longer, more curved/sagging (heavier impact). Returns an ordered list of
+// { d, width, opacity, order } - `order` drives the draw stagger so the fracture
+// propagates outward rather than appearing at once.
+function buildCracks(seed, kind) {
+  const rng = mulberry32(seed);
+  const rnd = (a, b) => a + (b - a) * rng();
+  const W = 1000;
+  const cy = 200; // vertical centre of the 1000x400 box (the text band)
+  const slow = kind === 'slow';
+  const out = [];
+  const MAIN = 6 + Math.floor(rng() * 2); // 6-7 primary fissures
+  let order = 0;
+
+  for (let k = 0; k < MAIN; k++) {
+    // Scatter the origin ALONG the word (not one shared centre) near the text line.
+    const ox = rnd(120, 880);
+    const oy = cy + rnd(-22, 22);
+    const dirX = ox < W / 2 ? -1 : 1; // head outward, away from centre
+    const up = rng() < 0.5 ? -1 : 1; // and fan up or down
+    let ang = Math.atan2(up * rnd(0.45, 1.7), dirX * rnd(0.15, 1.1));
+    const segs = (slow ? 4 : 3) + Math.floor(rng() * 2);
+    const first = slow ? rnd(95, 170) : rnd(70, 135);
+    const curve = slow ? rnd(0.18, 0.4) : rnd(0.05, 0.2);
+    let x = ox;
+    let y = oy;
+    const pts = [[x, y]];
+    for (let s = 0; s < segs; s++) {
+      ang += rnd(-0.38, 0.38); // ~±22deg zig-zag per joint
+      const len = first * Math.pow(0.82, s) * rnd(0.8, 1.12); // taper out
+      x += Math.cos(ang) * len;
+      y += Math.sin(ang) * len;
+      pts.push([x, y]);
+    }
+    out.push({
+      d: crackPath(pts, curve, rng),
+      width: rnd(1.05, 1.7),
+      opacity: rnd(0.8, 1),
+      order: order++,
+    });
+
+    // ~half of the fissures throw off a thinner, shorter secondary branch from a
+    // mid joint, at a sharp angle - the branching that real fractures show.
+    if (rng() < 0.55 && pts.length >= 3) {
+      const bi = 1 + Math.floor(rng() * (pts.length - 2));
+      const [bx, by] = pts[bi];
+      const [px, py] = pts[bi - 1];
+      let bang =
+        Math.atan2(by - py, bx - px) + (rng() < 0.5 ? 1 : -1) * rnd(0.5, 1.05);
+      const bsegs = 2 + Math.floor(rng() * 2);
+      let xx = bx;
+      let yy = by;
+      const bpts = [[xx, yy]];
+      const blen = slow ? rnd(55, 100) : rnd(45, 80);
+      for (let s = 0; s < bsegs; s++) {
+        bang += rnd(-0.4, 0.4);
+        const len = blen * Math.pow(0.8, s);
+        xx += Math.cos(bang) * len;
+        yy += Math.sin(bang) * len;
+        bpts.push([xx, yy]);
+      }
+      out.push({
+        d: crackPath(bpts, curve * 1.2, rng),
+        width: rnd(0.5, 0.85),
+        opacity: rnd(0.55, 0.8),
+        order: order++,
+      });
+    }
+  }
+  return out;
+}
+
+// The fracture overlay for one phrase. Sits BEHIND the letters (the parent line is
+// z-index:1) so it never touches readability; pointer-events:none. The draw only
+// runs once `drawing` flips true (the word has slammed), and stays drawn after.
+// preserveAspectRatio="none" lets the 1000x400 field stretch to the word's box;
+// non-scaling-stroke (in CSS) keeps the hairlines a constant on-screen weight.
+function Cracks({ seed, kind, drawing }) {
+  const cracks = useMemo(() => buildCracks(seed, kind), [seed, kind]);
+  return (
+    <svg
+      className={`intro-cracks intro-cracks--${kind}${drawing ? ' is-drawing' : ''}`}
+      viewBox="0 0 1000 400"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {cracks.map((c, i) => (
+        <path
+          key={i}
+          d={c.d}
+          pathLength="1"
+          style={{ strokeWidth: c.width, '--o': c.order, '--op': c.opacity }}
+        />
+      ))}
+    </svg>
+  );
+}
 
 // Split a phrase into per-letter spans so each letter can stagger in on its own
 // delay (`--i`). Spaces are rendered as a non-breaking space and flagged so they
@@ -165,7 +307,7 @@ export default function TransitionIntro({ onComplete }) {
     <div className="intro-overlay" aria-hidden="true">
       {/* No background scene - the calm black field is the whole point. The two
           lines slam against it; the only other motion is the impact flash, the
-          card shake and the final explosion. */}
+          card shake and the hairline cracks that spider out from each slam. */}
       <div className={`intro-stage${shaking ? ` shaking shaking--${impactKind}` : ''}`}>
         {/* The title slams in, settles and holds - there is no explosion / blow-
             apart here. The screen-slicing KNIFE-SPLIT reveal to the menu is owned
@@ -182,6 +324,9 @@ export default function TransitionIntro({ onComplete }) {
                 separate from the entrance/explode animations (which run on the
                 inner .intro-line), so a landing never snaps the resting position. */}
             <div className="intro-line-slot intro-slot-type">
+              {/* Cracks sit in the slot (behind the line) so the line's punch-scale
+                  never zooms them; they draw when TYPE FAST lands. */}
+              <Cracks seed={1337} kind="fast" drawing={line1Active} />
               <div
                 className={`intro-line intro-line-type${line1Active ? ' active' : ''}`}
               >
@@ -189,6 +334,7 @@ export default function TransitionIntro({ onComplete }) {
               </div>
             </div>
             <div className="intro-line-slot intro-slot-die">
+              <Cracks seed={4242} kind="slow" drawing={line2Active} />
               <div
                 className={`intro-line intro-line-die${line2Active ? ' active' : ''}`}
               >
