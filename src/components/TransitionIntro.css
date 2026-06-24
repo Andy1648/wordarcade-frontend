@@ -157,11 +157,16 @@
   /* CHUNKY vinyl-cut outline so the words read as bold sticker/poster graphics,
      not styled web text. paint-order:stroke-fill paints the solid colour fill OVER
      the inner half of the stroke, so the VISIBLE black outline is ~half the
-     text-stroke width - 12px here reads as a ~6px hard vinyl edge. The flat solid
-     brand-colour fill (no gradient/glow) + the hard offset shadow on the slot
-     finish the drawn-not-typed look. */
-  -webkit-text-stroke: 12px #000;
+     text-stroke width - 14px here reads as a ~7px hard vinyl edge. The flat solid
+     brand-colour fill (no gradient/glow) is the whole fill; on top of the stroke a
+     tight 8-direction solid-black text-shadow RING hardens the corners the stroke
+     rounds off, so the edge reads die-cut/drawn rather than smoothed web type. The
+     hard offset shadow on the slot finishes the sticker pop. */
+  -webkit-text-stroke: 14px #000;
   paint-order: stroke fill;
+  text-shadow:
+    3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000;
   white-space: nowrap;
   /* The line container stays on; visibility is owned per-letter (letters fade in
      0 -> 1 when the line goes .active), so the stagger reads crisply instead of
@@ -466,7 +471,10 @@
     /* Still a big hero on phones, but capped so "DIE SLOW." never clips the
        edges; chunky-but-lighter stroke at small sizes. */
     font-size: clamp(44px, 13vw, 84px);
-    -webkit-text-stroke-width: 8px; /* ~4px visible vinyl edge at phone sizes */
+    -webkit-text-stroke-width: 10px; /* ~5px visible vinyl edge at phone sizes */
+    text-shadow:
+      2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+      2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
   }
 
   /* Smaller sticker shadow on phones. */
