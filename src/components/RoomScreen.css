@@ -515,3 +515,116 @@ html[data-beat='true'] .room-leave-btn {
     animation: none !important;
   }
 }
+
+/* ============================================================= */
+/* ===============  SOLO WORD BOMB BOT OPPONENT  =============== */
+/* ============================================================= */
+
+/* "BOT · MEDIUM" tag on the bot's player chip - cyan to read as the friendly
+   CPU opponent, distinct from the yellow HOST badge. */
+.room-bot-badge {
+  font-family: 'Bungee', cursive;
+  font-size: 8px;
+  background: #2EFFE0;
+  color: #000;
+  padding: 3px 6px;
+  border: 1.5px solid #1A9985;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* Little ✕ to kick the bot before starting. Hard pink button, snaps on press. */
+.room-bot-remove {
+  margin-left: auto;
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  background: #FF2EC4;
+  border: 2px solid #991A75;
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 44px;
+  min-height: 28px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #000;
+  flex-shrink: 0;
+}
+.room-bot-remove:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 #000;
+}
+
+/* The ADD BOT call-to-action block, shown when a lone player is in a Word Bomb
+   room instead of the "waiting for players" cue. */
+.room-addbot {
+  margin: 4px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.room-addbot-btn {
+  width: 100%;
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #000;
+  background: #FFE94A;
+  border: 3px solid #B8A020;
+  border-radius: 8px;
+  padding: 12px 10px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+}
+.room-addbot-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.room-addbot-label {
+  font-family: 'Bungee', cursive;
+  font-size: 10px;
+  color: #2EFFE0;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.room-addbot-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Bot difficulty buttons - same shape as the timer-difficulty buttons so they
+   feel native, but they pick the BOT's skill, not the timer. */
+.room-addbot-diff {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Bungee', cursive;
+  color: #1a0b2e;
+  background: #fff;
+  border: 3px solid #AAAAAA;
+  border-radius: 8px;
+  padding: 9px 4px;
+  min-height: 44px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+}
+.room-addbot-diff:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+.room-addbot-name {
+  font-size: 11px;
+  line-height: 1;
+}
+.room-addbot-desc {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 8px;
+  color: #666;
+  line-height: 1.1;
+  text-align: center;
+}

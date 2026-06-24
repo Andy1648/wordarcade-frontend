@@ -987,6 +987,16 @@ function App() {
     send('set_game_type', { gameType });
   }
 
+  // Solo Word Bomb: the host explicitly adds/removes a bot opponent (the server
+  // re-broadcasts room_update, so the bot just appears/disappears in the roster).
+  function handleAddBot(difficulty) {
+    send('add_bot', { difficulty });
+  }
+
+  function handleRemoveBot() {
+    send('remove_bot', {});
+  }
+
   function handleStartGame() {
     send('start_game', {});
   }
@@ -1112,6 +1122,8 @@ function App() {
         onSetGameType={handleSetGameType}
         onSetDifficulty={handleSetDifficulty}
         onStartGame={handleStartGame}
+        onAddBot={handleAddBot}
+        onRemoveBot={handleRemoveBot}
       />
     );
   } else if (view === 'lobby') {
