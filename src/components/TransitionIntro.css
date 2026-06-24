@@ -22,6 +22,27 @@
   overflow: hidden;
 }
 
+/* ---- ZOOM PUNCH: the "camera flinch" on each slam ----
+   On every word landing the WHOLE screen scales up a hair for a single frame, then
+   hard-snaps back to 1 - your eye feels the hit without registering a bounce. It
+   lives on the overlay (the whole-screen container) and is the ONLY transform here,
+   so scaling everything (bg, title, cracks, flash) together never fights the stage
+   shake / tilt / breathe nested below. Retriggered from JS per hit. The hold-then-
+   hard-cut keyframe (not an ease) is what makes it a one-frame punch, not a bounce.
+   FAST = sharper/smaller (1.05, ~14ms hold); SLOW = heavier/bigger (1.08, ~22ms). */
+.intro-overlay.punch-fast { animation: intro-zoom-fast 32ms linear; }
+.intro-overlay.punch-slow { animation: intro-zoom-slow 44ms linear; }
+
+@keyframes intro-zoom-fast {
+  0%, 44% { transform: scale(1.05); }
+  45%, 100% { transform: scale(1); }
+}
+
+@keyframes intro-zoom-slow {
+  0%, 50% { transform: scale(1.08); }
+  51%, 100% { transform: scale(1); }
+}
+
 /* The card that holds the two lines + the burst. It's what shakes on impact, so
    both lines and the starburst jolt together when a line lands. `perspective`
    lets the cursor-lean layer below read as a real 3D tip. */
@@ -437,6 +458,27 @@
   100% { opacity: 0; }
 }
 
+/* ---- BLACK FRAME: one-frame total blackout BEFORE each word (hitstop) ----
+   A full-screen opaque black layer above EVERYTHING in the overlay (incl. the
+   impact flash), re-keyed per word so it replays. steps(1,end) holds it fully
+   opaque for the whole ~48ms then hard-cuts to transparent - a single black frame,
+   not a fade. It's timed ~44ms before the word lands, so the screen snaps to black
+   then the word punches in out of the dark. (Reduced motion never mounts it.) */
+.intro-blackframe {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: #000;
+  pointer-events: none;
+  opacity: 0;
+  animation: intro-blackframe 48ms steps(1, end) both;
+}
+
+@keyframes intro-blackframe {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* ---- Mobile: smaller type + a gentler shake ---- */
 @media (max-width: 600px) {
   .intro-line {
@@ -472,6 +514,8 @@
 @media (prefers-reduced-motion: reduce) {
   .intro-stage.shaking,
   .intro-breathe,
+  .intro-overlay.punch-fast,
+  .intro-overlay.punch-slow,
   .intro-line-type.active,
   .intro-line-die.active {
     animation: none !important;
@@ -483,9 +527,10 @@
   .intro-line-type::before { display: none; }
   .intro-line-die .intro-letter::after { display: none; }
   .intro-line-die { filter: none; }
-  /* No impact frames / flashes / chromatic punch under reduced motion - the
-     larger title simply appears (letters fade in below). */
+  /* No impact frames / flashes / blackout / chromatic punch under reduced motion -
+     the larger title simply appears (letters fade in below). */
   .intro-flash { display: none !important; }
+  .intro-blackframe { display: none !important; }
 
   .intro-letter {
     animation: none !important;

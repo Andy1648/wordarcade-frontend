@@ -203,6 +203,9 @@ export default function TransitionIntro({ onComplete }) {
   const [step, setStep] = useState('black');
   // Bumped per impact so the white flash re-mounts and replays.
   const [flashKey, setFlashKey] = useState(0);
+  // Bumped to fire a one-frame total BLACKOUT right before each word slams in
+  // (fighting-game hitstop - the wind-up darkness that sells the incoming hit).
+  const [blackKey, setBlackKey] = useState(0);
   // Toggled briefly on each landing to shake the whole card.
   const [shaking, setShaking] = useState(false);
   // Which kind of hit is landing - 'fast' (sharp/electric) or 'slow' (heavy/
@@ -213,13 +216,19 @@ export default function TransitionIntro({ onComplete }) {
   // The element that leans toward the cursor (separate from the shake/breathe
   // layers so the transforms never fight).
   const tiltRef = useRef(null);
+  // The whole-screen container - it carries the one-frame ZOOM PUNCH on each slam.
+  // The zoom lives here (the only transform on the overlay) rather than on the
+  // stage, so it composes with the stage's shake / the tilt / the breathe nested
+  // below instead of clobbering them.
+  const overlayRef = useRef(null);
   const { sound } = useSound();
 
   // A word just SLAMMED home: fire the hard impact frame (full-screen invert
-  // flash + silhouette + freeze, all CSS, re-keyed so it replays) and a shake.
-  // `kind` swaps the flash/shake feel (fast = sharp, slow = heavy). The second
-  // word of each line lands as a lighter, silent one-two (opts.silent), so the
-  // SFX still fires only on the two primary slams.
+  // flash + silhouette + freeze, all CSS, re-keyed so it replays), a shake, and a
+  // single-frame ZOOM PUNCH (the camera flinch). `kind` swaps the feel (fast =
+  // sharp, slow = heavier/bigger). The second word of each line lands as a lighter,
+  // silent one-two (opts.silent), so the SFX still fires only on the two primary
+  // slams - but the flash/shake/zoom fire on every landing.
   function impact(kind, opts = {}) {
     if (!opts.silent) sound.punch();
     setImpactKind(kind);
@@ -230,6 +239,22 @@ export default function TransitionIntro({ onComplete }) {
       () => setShaking(false),
       kind === 'slow' ? 280 : 180
     );
+    // Zoom punch: retrigger the CSS scale-flinch by removing the class, forcing a
+    // reflow, then re-adding it - so it replays even on back-to-back same-kind hits.
+    const el = overlayRef.current;
+    if (el && !PREFERS_REDUCED) {
+      el.classList.remove('punch-fast', 'punch-slow');
+      void el.offsetWidth; // force reflow so the animation restarts
+      el.classList.add(kind === 'slow' ? 'punch-slow' : 'punch-fast');
+    }
+  }
+
+  // A one-frame total BLACKOUT, fired ~44ms BEFORE a word lands: the whole screen
+  // (title, cracks, bg) snaps to black, then the word punches in out of the dark.
+  // It's the wind-up; the slam is the payoff. (Skipped under reduced motion.)
+  function blackFrame() {
+    if (PREFERS_REDUCED) return;
+    setBlackKey((k) => k + 1);
   }
 
   // The whole timeline, scheduled once on mount (times are intro-local; the
@@ -238,12 +263,17 @@ export default function TransitionIntro({ onComplete }) {
     const timers = [];
     // Two big hits with a real BEAT between them: "TYPE FAST." punches in and
     // lands, holds for a moment, then "DIE SLOW." slams in as its own hit.
-    // 0-140ms: short black hold (anticipation).
+    // Each word's beat: BLACK FRAME (wind-up) -> word slams in -> zoom punch +
+    // impact flash + cracks (the hit). The blackout lands ~44ms before the word.
+    // 0-140ms: short black hold (anticipation), capped by the blackout at 96ms.
+    timers.push(setTimeout(blackFrame, 96));
     timers.push(setTimeout(() => setStep('line1'), 140));
     // TYPE then FAST each get their own sharp impact beat as the line fills in.
     timers.push(setTimeout(() => impact('fast'), 300)); // TYPE
     timers.push(setTimeout(() => impact('fast', { silent: true }), 450)); // FAST
-    // ~780ms: after a held pause, "DIE SLOW." slams in as its own heavier hit.
+    // ~780ms: after a held pause, a second blackout then "DIE SLOW." slams in as
+    // its own heavier hit (the blackout hides TYPE FAST for a frame first).
+    timers.push(setTimeout(blackFrame, 736));
     timers.push(setTimeout(() => setStep('line2'), 780));
     timers.push(setTimeout(() => impact('slow'), 940)); // DIE
     timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
@@ -302,7 +332,7 @@ export default function TransitionIntro({ onComplete }) {
   const line2Active = step === 'line2';
 
   return (
-    <div className="intro-overlay" aria-hidden="true">
+    <div className="intro-overlay" aria-hidden="true" ref={overlayRef}>
       {/* No background scene - the calm black field is the whole point. The two
           lines slam against it; the only other motion is the impact flash, the
           card shake and the hairline cracks that spider out from each slam. */}
@@ -348,6 +378,10 @@ export default function TransitionIntro({ onComplete }) {
       {flashKey > 0 && (
         <div key={flashKey} className={`intro-flash intro-flash--${impactKind}`} />
       )}
+      {/* One-frame total BLACKOUT (hitstop wind-up), re-keyed so it replays before
+          each word. Sits above everything (incl. the flash) so the screen truly
+          goes black for that frame, then hard-clears as the word slams in. */}
+      {blackKey > 0 && <div key={blackKey} className="intro-blackframe" />}
     </div>
   );
 }
