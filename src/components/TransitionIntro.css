@@ -176,9 +176,9 @@
    An SVG fracture field per phrase, sitting in the slot BEHIND the line (z-index:0
    vs the line's z-index:1), so it can never touch text readability. The 1000x400
    viewBox is stretched over a box wider + much taller than the word, so the cracks
-   spread off the letters into the surrounding black. Hairlines are a subtle WARM
-   tint (street/graffiti palette), kept on a constant on-screen weight via
-   non-scaling-stroke. Each path is hidden (dash fully offset) until the phrase has
+   spread off the letters into the surrounding black. Cracks are BRIGHT WHITE so
+   they read as sharp fractures in the glass/screen, kept on a constant on-screen
+   weight via non-scaling-stroke. Each path is hidden (dash fully offset) until the phrase has
    landed, then DRAWS outward and STAYS - damage that persists until the knife-split
    wipes the whole intro away. */
 .intro-cracks {
@@ -201,7 +201,7 @@
 
 .intro-cracks path {
   fill: none;
-  stroke: rgba(255, 200, 180, 0.16); /* warm hairline */
+  stroke: rgba(255, 255, 255, 0.65); /* bright white - sharp fractures in glass */
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke; /* constant hairline weight despite the stretch */
@@ -274,8 +274,8 @@
 }
 
 @keyframes type-letter-in {
-  /* Snappy machine-gun snap-in. The red/cyan chromatic ghosts were removed - only
-     the white/invert impact frame carries the colour punch now. */
+  /* Snappy machine-gun snap-in. No chroma - the plain white impact flash is the
+     whole colour punch now. */
   0% {
     opacity: 0;
     transform: translateX(-0.3em) scale(1.35);
@@ -363,7 +363,7 @@
 
 @keyframes die-letter-in {
   /* Heavy, tired drop that sags past rest then settles - the ominous weight of the
-     SLOW hit. The red/cyan chromatic ghosts were removed (white/invert flash only). */
+     SLOW hit. No chroma - the plain white impact flash is the whole punch. */
   0% {
     opacity: 0;
     transform: translateY(-0.4em) scale(1.2);
@@ -423,9 +423,13 @@
    counter-rotating starbursts + 14 shrapnel shards) was removed earlier. */
 
 /* ---- Hard impact FRAME on each word landing ----
-   A full-screen white layer in mix-blend-mode:difference INVERTS the whole screen
-   for ~1-2 frames (the title flips to a hard silhouette over a blown-out frame),
-   hard-cut on/off via steps() - the anime "this hit hard" frame, not a fade. */
+   A full-screen PLAIN WHITE layer (normal blend) that hard-cuts on/off via steps()
+   - the anime "this hit hard" white frame, not a fade.
+   IMPORTANT: this used to use mix-blend-mode:difference, which INVERTED the screen.
+   That inversion turned the cyan title red (#2EFFE0 -> ~209,0,31) and the pink
+   title green (#FF2EC4 -> ~0,209,59) for the flash frames - i.e. the "white/invert"
+   flash WAS the red/green that kept getting reported. Normal blend = a clean white
+   flash with zero colour shift. Do NOT reintroduce mix-blend-mode here. */
 .intro-flash {
   position: absolute;
   inset: 0;
@@ -433,10 +437,9 @@
   background: #fff;
   pointer-events: none;
   opacity: 0;
-  mix-blend-mode: difference;
 }
 
-/* FAST = a single SHARP inverted frame (~90ms, one hard step). */
+/* FAST = a single SHARP white frame (~90ms, one hard step). */
 .intro-flash--fast {
   animation: intro-impact-fast 90ms steps(1, end) forwards;
 }
@@ -446,9 +449,7 @@
   100% { opacity: 0; }
 }
 
-/* SLOW = HEAVIER: a longer two-beat inverted stutter (steps(2)) for the weighty
-   hit. Pure white/invert only - the cheap red/cyan colour-split ghosts that used
-   to fire here were removed. */
+/* SLOW = HEAVIER: a longer two-beat white stutter (steps(2)) for the weighty hit. */
 .intro-flash--slow {
   animation: intro-impact-slow 170ms steps(2, end) forwards;
 }

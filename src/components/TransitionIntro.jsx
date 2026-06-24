@@ -98,13 +98,13 @@ function buildCracks(seed, kind) {
     let y = oy;
     const pts = [[x, y]];
     for (let s = 0; s < segs; s++) {
-      // Mostly dead-straight (a tiny ~5deg wander), but ~35% of joints SNAP to a
-      // sharp new heading (a stress break) - that abrupt kink is what reads as a
-      // real fracture rather than a swirl.
+      // DEAD-straight between breaks (a hair of ~1deg wander only), then ~35% of
+      // joints SNAP to a sharp new heading (a stress break). Rigid straight runs +
+      // abrupt kinks = shattered glass, no curve.
       const sharp = rng() < 0.35;
       ang += sharp
         ? (rng() < 0.5 ? -1 : 1) * rnd(0.42, 1.0) // ~24-57deg sudden break
-        : rnd(-0.09, 0.09); // ~5deg wander on a near-straight run
+        : rnd(-0.02, 0.02); // ~1deg - effectively straight
       const len = first * Math.pow(0.82, s) * rnd(0.8, 1.12); // taper out
       x += Math.cos(ang) * len;
       y += Math.sin(ang) * len;
@@ -112,8 +112,8 @@ function buildCracks(seed, kind) {
     }
     out.push({
       d: crackPath(pts),
-      width: rnd(1.05, 1.7),
-      opacity: rnd(0.8, 1),
+      width: rnd(2.0, 3.0), // pronounced mains
+      opacity: rnd(0.85, 1),
       order: order++,
     });
 
@@ -131,8 +131,8 @@ function buildCracks(seed, kind) {
       const bpts = [[xx, yy]];
       const blen = slow ? rnd(55, 100) : rnd(45, 80);
       for (let s = 0; s < bsegs; s++) {
-        // Branches are short - keep them near-straight with the odd sharp kink too.
-        bang += rng() < 0.3 ? (rng() < 0.5 ? -1 : 1) * rnd(0.4, 0.9) : rnd(-0.08, 0.08);
+        // Branches are short - dead-straight with the odd sharp kink too.
+        bang += rng() < 0.3 ? (rng() < 0.5 ? -1 : 1) * rnd(0.4, 0.9) : rnd(-0.02, 0.02);
         const len = blen * Math.pow(0.8, s);
         xx += Math.cos(bang) * len;
         yy += Math.sin(bang) * len;
@@ -140,8 +140,8 @@ function buildCracks(seed, kind) {
       }
       out.push({
         d: crackPath(bpts),
-        width: rnd(0.5, 0.85),
-        opacity: rnd(0.55, 0.8),
+        width: rnd(1.0, 1.5), // visible branches
+        opacity: rnd(0.65, 0.9),
         order: order++,
       });
     }
@@ -223,8 +223,8 @@ export default function TransitionIntro({ onComplete }) {
   const overlayRef = useRef(null);
   const { sound } = useSound();
 
-  // A word just SLAMMED home: fire the hard impact frame (full-screen invert
-  // flash + silhouette + freeze, all CSS, re-keyed so it replays), a shake, and a
+  // A word just SLAMMED home: fire the hard impact frame (full-screen plain WHITE
+  // flash, all CSS, re-keyed so it replays), a shake, and a
   // single-frame ZOOM PUNCH (the camera flinch). `kind` swaps the feel (fast =
   // sharp, slow = heavier/bigger). The second word of each line lands as a lighter,
   // silent one-two (opts.silent), so the SFX still fires only on the two primary
@@ -372,9 +372,9 @@ export default function TransitionIntro({ onComplete }) {
           </div>
         </div>
       </div>
-      {/* Hard impact frame, re-keyed per word-landing so it replays. White/invert
-          only: sharp single invert for FAST, heavier double-beat for SLOW. (No
-          colour split any more; reduced motion hides it entirely.) */}
+      {/* Hard impact frame, re-keyed per word-landing so it replays. Plain WHITE
+          only: sharp single frame for FAST, heavier double-beat for SLOW. (Normal
+          blend - no invert, so no red/green; reduced motion hides it entirely.) */}
       {flashKey > 0 && (
         <div key={flashKey} className={`intro-flash intro-flash--${impactKind}`} />
       )}
