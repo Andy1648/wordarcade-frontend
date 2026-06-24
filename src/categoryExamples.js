@@ -98,6 +98,27 @@ export const CATEGORY_EXAMPLES = {
   'Things found in a frat house': 'ping pong table',
   "Things in an emo kid's room (2008)": 'band posters',
   'Excuses for not doing your homework': 'my dog ate it',
+  // Clean rapid-fire batch (gen6)
+  'Pizza toppings': 'pepperoni',
+  'Dog breeds': 'golden retriever',
+  'Candy bars': 'Snickers',
+  'Ice cream flavors': 'cookie dough',
+  'Cereal brands': 'Lucky Charms',
+  'Soda brands': 'Dr Pepper',
+  'Superheroes': 'Spider-Man',
+  'Halloween costumes': 'vampire',
+  'Sports': 'basketball',
+  'Musical instruments': 'guitar',
+  'Starbucks drinks': 'caramel macchiato',
+  'NBA teams': 'Lakers',
+  'Disney movies': 'Moana',
+  'Anime shows': 'Naruto',
+  'Chip & snack brands': 'Doritos',
+  'Video games': 'Minecraft',
+  'Zoo animals': 'giraffe',
+  'Breakfast foods': 'pancakes',
+  'Board games': 'Monopoly',
+  'Types of pasta': 'rigatoni',
 };
 
 // Look up the hint for a category name; returns '' when there's no example, so
