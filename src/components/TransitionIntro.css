@@ -4,7 +4,7 @@
 
    The two phrases animate OPPOSITELY (they mean opposite things):
    - TYPE FAST  = fast/electric : snappy punch + tight machine-gun letters +
-                  chromatic RGB split + speed-lines.
+                  speed-lines.
    - DIE SLOW   = slow/ominous  : heavy sinking drag + long tired letter settle +
                   desaturation + brightness pulse + paint drips.
    After the entrance the title stays ALIVE (breathing, occasional glitch twitch,
@@ -233,8 +233,8 @@
     type-glitch 1.6s linear 0.8s infinite;
 }
 
-/* Tight left-to-right MACHINE-GUN: each letter snaps in fast (18ms apart) with a
-   converging chromatic RGB split - it should arrive almost too fast to read.
+/* Tight left-to-right MACHINE-GUN: each letter snaps in fast (18ms apart) - it
+   should arrive almost too fast to read.
    `both` so delayed letters stay hidden pre-delay and stay put after. */
 .intro-line-type.active .intro-letter {
   animation: type-letter-in 120ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
@@ -253,29 +253,28 @@
 }
 
 @keyframes type-letter-in {
+  /* Snappy machine-gun snap-in. The red/cyan chromatic ghosts were removed - only
+     the white/invert impact frame carries the colour punch now. */
   0% {
     opacity: 0;
     transform: translateX(-0.3em) scale(1.35);
-    text-shadow: -0.06em 0 #ff1e56, 0.06em 0 #21e7ff;
   }
   55% {
     opacity: 1;
-    text-shadow: -0.02em 0 #ff1e56, 0.02em 0 #21e7ff;
   }
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
-    text-shadow: 0 0 transparent;
   }
 }
 
-/* Idle electric twitch: a malfunctioning-sign jitter - mostly identity with two
-   brief RGB+position jolts per loop. */
+/* Idle electric twitch: a malfunctioning-sign jitter - brief positional jolts per
+   loop (the colour split was removed; this is now a pure position twitch). */
 @keyframes type-glitch {
-  0%, 6%, 10%, 38%, 44%, 100% { transform: translate(0, 0); text-shadow: 0 0 transparent; }
-  7% { transform: translate(-2px, 1px); text-shadow: -0.05em 0 #ff1e56, 0.05em 0 #21e7ff; }
-  8.5% { transform: translate(2px, -1px); text-shadow: 0.045em 0 #ff1e56, -0.045em 0 #21e7ff; }
-  40% { transform: translate(1px, 0); text-shadow: -0.03em 0 #ff1e56, 0.03em 0 #21e7ff; }
+  0%, 6%, 10%, 38%, 44%, 100% { transform: translate(0, 0); }
+  7% { transform: translate(-2px, 1px); }
+  8.5% { transform: translate(2px, -1px); }
+  40% { transform: translate(1px, 0); }
 }
 
 /* Optional speed-lines streaking behind TYPE FAST on entry, then gone. */
@@ -342,16 +341,14 @@
 }
 
 @keyframes die-letter-in {
-  /* Heavier drop + a chromatic-aberration punch that resolves as it settles -
-     the ominous weight of the SLOW hit. */
+  /* Heavy, tired drop that sags past rest then settles - the ominous weight of the
+     SLOW hit. The red/cyan chromatic ghosts were removed (white/invert flash only). */
   0% {
     opacity: 0;
     transform: translateY(-0.4em) scale(1.2);
-    text-shadow: -0.09em 0 #ff1e56, 0.09em 0 #21e7ff;
   }
-  50% { text-shadow: -0.03em 0 #ff1e56, 0.03em 0 #21e7ff; }
-  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); text-shadow: 0 0 transparent; }
-  100% { opacity: 1; transform: translateY(0) scale(1); text-shadow: 0 0 transparent; }
+  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes die-pulse {

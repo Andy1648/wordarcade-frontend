@@ -16,7 +16,7 @@
 // the whole punch.
 //
 // The two phrases animate OPPOSITELY on purpose - they mean opposite things:
-// TYPE FAST is fast/electric (tight stagger, chromatic aberration), DIE SLOW is
+// TYPE FAST is fast/electric (tight stagger, snappy machine-gun snap), DIE SLOW is
 // slow/ominous (long stagger, sag, desaturated, drips). Once settled the title
 // stays ALIVE (breathing scale, an occasional glitch twitch, a never-stopping
 // drip, and a subtle lean toward the cursor) instead of going static.
@@ -41,9 +41,10 @@ const PREFERS_REDUCED =
 // word cracked the black "screen surface" it hit. Paths are generated procedurally
 // (seeded, so they're stable per render and the two phrases differ) and drawn
 // outward with the SVG stroke-dashoffset line-draw technique. They are deliberately
-// NOT radial/uniform: origins are scattered along the word, every fissure zig-zags
-// at jittered angles, bows slightly, tapers, and ~half spawn a thinner branch -
-// the irregularity is what sells them as real impact damage rather than a pattern.
+// NOT radial/uniform and NOT swirly: origins are scattered along the word, every
+// fissure runs in mostly-straight segments that SNAP to a sharp new heading at the
+// odd stress point (shattered glass, not tree roots), tapers, and ~half spawn a
+// thinner branch - the angular irregularity is what sells them as real impact damage.
 
 // Tiny deterministic PRNG (mulberry32) so a given seed always yields the same
 // fracture - no Math.random, so React re-renders never reshuffle the cracks.
@@ -57,23 +58,14 @@ function mulberry32(a) {
   };
 }
 
-// Turn a zig-zag polyline into a path string, bowing each segment by a small
-// perpendicular offset (quadratic control point) so the crack curves organically
-// instead of reading as straight ruled lines. `curve` scales the bow.
-function crackPath(pts, curve, rng) {
+// Turn the polyline into a path of STRAIGHT segments. Real impact fractures are
+// sharp and angular - mostly-straight runs that snap to a new direction at stress
+// points - not smooth curves, so the cracks are dead-straight lines and all the
+// character comes from the abrupt angle breaks between segments (set in buildCracks).
+function crackPath(pts) {
   let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1];
-    const [x1, y1] = pts[i];
-    const mx = (x0 + x1) / 2;
-    const my = (y0 + y1) / 2;
-    const dx = x1 - x0;
-    const dy = y1 - y0;
-    const off = curve * (rng() < 0.5 ? -1 : 1);
-    // control point = segment midpoint pushed along the segment's normal
-    const cx = mx - dy * off;
-    const cy = my + dx * off;
-    d += ` Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    d += ` L ${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)}`;
   }
   return d;
 }
@@ -102,19 +94,24 @@ function buildCracks(seed, kind) {
     let ang = Math.atan2(up * rnd(0.45, 1.7), dirX * rnd(0.15, 1.1));
     const segs = (slow ? 4 : 3) + Math.floor(rng() * 2);
     const first = slow ? rnd(95, 170) : rnd(70, 135);
-    const curve = slow ? rnd(0.18, 0.4) : rnd(0.05, 0.2);
     let x = ox;
     let y = oy;
     const pts = [[x, y]];
     for (let s = 0; s < segs; s++) {
-      ang += rnd(-0.38, 0.38); // ~±22deg zig-zag per joint
+      // Mostly dead-straight (a tiny ~5deg wander), but ~35% of joints SNAP to a
+      // sharp new heading (a stress break) - that abrupt kink is what reads as a
+      // real fracture rather than a swirl.
+      const sharp = rng() < 0.35;
+      ang += sharp
+        ? (rng() < 0.5 ? -1 : 1) * rnd(0.42, 1.0) // ~24-57deg sudden break
+        : rnd(-0.09, 0.09); // ~5deg wander on a near-straight run
       const len = first * Math.pow(0.82, s) * rnd(0.8, 1.12); // taper out
       x += Math.cos(ang) * len;
       y += Math.sin(ang) * len;
       pts.push([x, y]);
     }
     out.push({
-      d: crackPath(pts, curve, rng),
+      d: crackPath(pts),
       width: rnd(1.05, 1.7),
       opacity: rnd(0.8, 1),
       order: order++,
@@ -134,14 +131,15 @@ function buildCracks(seed, kind) {
       const bpts = [[xx, yy]];
       const blen = slow ? rnd(55, 100) : rnd(45, 80);
       for (let s = 0; s < bsegs; s++) {
-        bang += rnd(-0.4, 0.4);
+        // Branches are short - keep them near-straight with the odd sharp kink too.
+        bang += rng() < 0.3 ? (rng() < 0.5 ? -1 : 1) * rnd(0.4, 0.9) : rnd(-0.08, 0.08);
         const len = blen * Math.pow(0.8, s);
         xx += Math.cos(bang) * len;
         yy += Math.sin(bang) * len;
         bpts.push([xx, yy]);
       }
       out.push({
-        d: crackPath(bpts, curve * 1.2, rng),
+        d: crackPath(bpts),
         width: rnd(0.5, 0.85),
         opacity: rnd(0.55, 0.8),
         order: order++,
@@ -344,9 +342,9 @@ export default function TransitionIntro({ onComplete }) {
           </div>
         </div>
       </div>
-      {/* Hard impact frame, re-keyed per word-landing so it replays. The variant
-          class swaps the feel: sharp invert for FAST, heavier double-beat +
-          chromatic for SLOW. (Reduced motion hides it entirely.) */}
+      {/* Hard impact frame, re-keyed per word-landing so it replays. White/invert
+          only: sharp single invert for FAST, heavier double-beat for SLOW. (No
+          colour split any more; reduced motion hides it entirely.) */}
       {flashKey > 0 && (
         <div key={flashKey} className={`intro-flash intro-flash--${impactKind}`} />
       )}
