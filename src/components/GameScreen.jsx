@@ -682,40 +682,6 @@ export function WobbleText({ text }) {
 // ---- Bomb tension lookups (keyed by tier) ----
 const BOMB_SCALE = { calm: 1.0, warning: 1.05, critical: 1.1 };
 const FLAME_SCALE = { calm: 1.0, warning: 1.35, critical: 1.7 };
-const BODY_INNER_FILL = { calm: '#2a2a2a', warning: '#3a1a1a', critical: '#5a1010' };
-const HIGHLIGHT_1 = { calm: '#444', warning: '#5a2a2a', critical: '#7a2020' };
-const HIGHLIGHT_2 = { calm: '#555', warning: '#6a3a3a', critical: '#8a3030' };
-
-// Spark particles around the flame - more (and bigger, redder) as tension
-// rises. Offsets are relative to the burning tip; values are fixed (not random
-// per render) so the sparks don't jitter every second as the flame moves.
-const BOMB_SPARKS = {
-  calm: [
-    { dx: -13, dy: -8, r: 2.5, c: '#FFE94A', delay: 0, dur: 520 },
-    { dx: 11, dy: -5, r: 2, c: '#FF6B3D', delay: 160, dur: 460 },
-    { dx: -3, dy: -18, r: 2, c: '#FFE94A', delay: 300, dur: 560 },
-    { dx: 6, dy: -14, r: 2.5, c: '#FF6B3D', delay: 420, dur: 500 },
-  ],
-  warning: [
-    { dx: -15, dy: -9, r: 3, c: '#FFE94A', delay: 0, dur: 520 },
-    { dx: 13, dy: -6, r: 2.5, c: '#FF6B3D', delay: 120, dur: 460 },
-    { dx: -5, dy: -20, r: 2.5, c: '#FFE94A', delay: 260, dur: 560 },
-    { dx: 8, dy: -16, r: 3, c: '#FF6B3D', delay: 380, dur: 500 },
-    { dx: -10, dy: -15, r: 2, c: '#FFE94A', delay: 200, dur: 540 },
-    { dx: 3, dy: -22, r: 2.5, c: '#FF6B3D', delay: 440, dur: 480 },
-  ],
-  critical: [
-    { dx: -17, dy: -10, r: 3.5, c: '#FFE94A', delay: 0, dur: 480 },
-    { dx: 15, dy: -7, r: 3, c: '#FF6B3D', delay: 90, dur: 440 },
-    { dx: -6, dy: -23, r: 3, c: '#FF5C5C', delay: 180, dur: 520 },
-    { dx: 9, dy: -19, r: 3.5, c: '#FFE94A', delay: 270, dur: 500 },
-    { dx: -12, dy: -17, r: 3, c: '#FF6B3D', delay: 150, dur: 460 },
-    { dx: 4, dy: -25, r: 3, c: '#FF5C5C', delay: 360, dur: 540 },
-    { dx: 18, dy: -13, r: 2.5, c: '#FFE94A', delay: 300, dur: 420 },
-    { dx: -19, dy: -5, r: 2.5, c: '#FF6B3D', delay: 420, dur: 500 },
-    { dx: 0, dy: -15, r: 3, c: '#FF5C5C', delay: 240, dur: 480 },
-  ],
-};
 
 // Fixed fuse curve (cap top -> up and right). Geometry never changes - the
 // burning is done purely with stroke-dashoffset, so it can transition smoothly.

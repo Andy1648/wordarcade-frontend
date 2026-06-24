@@ -1112,31 +1112,6 @@
   line-height: 0;
 }
 
-/* The mascot RIDING the bomb. It lives inside .bomb-body-wrap, so it inherits
-   every tension wobble/shake the bomb does (and the pass-throw / recoil from the
-   ancestors above) - it rides the bomb like a rodeo bull. Nudged left of centre
-   so the fuse + flame (upper-right) stay visible behind it. */
-.bomb-rider {
-  position: absolute;
-  left: 42%;
-  top: -2px;
-  z-index: 3;
-  pointer-events: none;
-  transform: translateX(-50%);
-}
-
-/* When the bomb is thrown to the next player, the motion flings the rider off
-   balance for a beat before he settles back onto the bomb. */
-.bomb-rider.flung {
-  animation: bomb-rider-fling 300ms ease-out;
-}
-
-@keyframes bomb-rider-fling {
-  0% { transform: translateX(-50%) translateY(0) rotate(0); }
-  40% { transform: translateX(-50%) translateY(-30px) rotate(45deg); }
-  100% { transform: translateX(-50%) translateY(0) rotate(0); }
-}
-
 /* Calm: a barely-there idle sway. */
 .bomb-body-wrap.calm {
   animation: bomb-idle 2s ease-in-out infinite;
@@ -1180,11 +1155,6 @@
    the burn at a constant speed. */
 .bomb-fuse {
   transition: stroke-dashoffset 1.15s linear;
-}
-
-/* Tinted shapes (inner body + highlights) cross-fade between tier colours. */
-.bomb-tint {
-  transition: fill 0.5s linear;
 }
 
 /* Flame position rides the burning tip; its translate eases over the same
@@ -1695,15 +1665,6 @@
   letter-spacing: 0.5px;
   color: #FFE94A;
   margin: -2px 0 16px;
-}
-
-.game-over-stat {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  color: #C9B8E8;
-  letter-spacing: 0.5px;
-  margin-bottom: 22px;
 }
 
 .game-over-leave {
@@ -3480,149 +3441,6 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 /* ============================================================= */
-/* =================  LIVING BOMB - THE FACE  ================= */
-/* ============================================================= */
-/* A state machine driven by the faceClass on the <g class="bomb-face ...">:
-   face-idle / -watching / -nervous / -panic / -relief / -explode, plus the
-   modifiers .blink / .yawn / .fast. Defaults below; each state overrides the
-   relevant features. transform-box:fill-box lets each SVG part transform about
-   its own centre. */
-
-.bomb-face .brow {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.2s ease;
-}
-.bomb-face .eye-white {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.12s ease;
-}
-.bomb-face .pupil {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.15s ease;
-}
-.bomb-face .eye-happy { opacity: 0; }
-.bomb-face .mouth-o {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.2s ease, opacity 0.15s ease;
-}
-.bomb-face .mouth-happy { opacity: 0; transition: opacity 0.15s ease; }
-.bomb-face .sweat {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.bomb-face .foot {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: 0% 50%;
-}
-
-/* WATCHING (calm + someone typing): eyes look down toward the input, brows
-   raised in curiosity, the whole face tilts a touch. */
-.bomb-face.face-watching {
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: rotate(2deg);
-  transition: transform 0.3s ease;
-}
-.bomb-face.face-watching .pupil { transform: translateY(4px); }
-.bomb-face.face-watching .brow { transform: translateY(-2px); }
-
-/* NERVOUS (30-60%): eyes dart, brows angle in worry, one sweat drop drips. */
-.bomb-face.face-nervous .pupil { animation: bomb-pupil-dart 0.8s steps(1) infinite; }
-.bomb-face.face-nervous .brow-l { transform: rotate(18deg); }
-.bomb-face.face-nervous .brow-r { transform: rotate(-18deg); }
-.bomb-face.face-nervous .sweat-l { animation: bomb-sweat-drip 1.2s ease-in infinite; }
-
-@keyframes bomb-pupil-dart {
-  0%, 49% { transform: translateX(-3px); }
-  50%, 100% { transform: translateX(3px); }
-}
-@keyframes bomb-sweat-drip {
-  0% { opacity: 0; transform: translateY(0); }
-  20% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(14px); }
-}
-
-/* PANIC (<30%): eyes wide, pupils tiny + shaking, brows terrified, sweat flying
-   off both sides, a foot tapping frantically. */
-.bomb-face.face-panic .eye-white { transform: scaleY(1.3); }
-.bomb-face.face-panic .pupil {
-  animation: bomb-pupil-shake 0.1s ease-in-out infinite alternate;
-}
-.bomb-face.face-panic .brow-l { transform: translateY(-3px) rotate(22deg); }
-.bomb-face.face-panic .brow-r { transform: translateY(-3px) rotate(-22deg); }
-.bomb-face.face-panic .sweat-l { animation: bomb-sweat-fly 0.6s ease-in infinite; }
-.bomb-face.face-panic .sweat-r { animation: bomb-sweat-fly 0.6s ease-in infinite 0.3s; }
-.bomb-face.face-panic .foot { opacity: 1; animation: bomb-foot-tap 0.2s infinite; }
-
-@keyframes bomb-pupil-shake {
-  0% { transform: scale(0.6) translate(-1.5px, -1px); }
-  100% { transform: scale(0.6) translate(1.5px, 1px); }
-}
-@keyframes bomb-sweat-fly {
-  0% { opacity: 0; transform: translate(0, 0); }
-  20% { opacity: 1; }
-  100% { opacity: 0; transform: translate(0, 14px); }
-}
-@keyframes bomb-foot-tap {
-  0% { transform: rotate(0); }
-  50% { transform: rotate(15deg); }
-  100% { transform: rotate(0); }
-}
-
-/* EXPLODE (timeout, held over the hitlag): eyes huge, pupils fill, mouth wide. */
-.bomb-face.face-explode .eye-white { transform: scale(1.3); }
-.bomb-face.face-explode .pupil { transform: scale(2.2); }
-.bomb-face.face-explode .brow { transform: translateY(-3px); }
-.bomb-face.face-explode .mouth-o { opacity: 1; transform: scale(1.9); }
-
-/* RELIEF (correct word): happy closed ^^ eyes + a smile. */
-.bomb-face.face-relief .eye-white,
-.bomb-face.face-relief .pupil { opacity: 0; }
-.bomb-face.face-relief .eye-happy { opacity: 1; }
-.bomb-face.face-relief .mouth-happy { opacity: 1; }
-
-/* BLINK (idle/watching/nervous): eyes squash to a line for a beat. */
-.bomb-face.blink:not(.face-panic):not(.face-explode):not(.face-relief) .eye-white {
-  transform: scaleY(0.1);
-}
-.bomb-face.blink:not(.face-panic):not(.face-explode):not(.face-relief) .pupil {
-  opacity: 0;
-}
-
-/* YAWN (idle): eyes half-close, brows raise, a small "o" mouth. */
-.bomb-face.yawn:not(.face-panic):not(.face-explode):not(.face-relief) .eye-white {
-  transform: scaleY(0.5);
-}
-.bomb-face.yawn:not(.face-panic):not(.face-explode):not(.face-relief) .brow {
-  transform: translateY(-3px);
-}
-.bomb-face.yawn:not(.face-panic):not(.face-explode):not(.face-relief) .mouth-o {
-  opacity: 1;
-}
-
-/* FAST (typing fast): the bomb knows you're about to fire - eyes wide, pupils
-   shrink, extra sweat. Declared last so it wins over watching/idle. */
-.bomb-face.fast .eye-white { transform: scaleY(1.2); }
-.bomb-face.fast .pupil { transform: scale(0.7); }
-.bomb-face.fast .sweat-l { animation: bomb-sweat-fly 0.6s ease-in infinite; }
-.bomb-face.fast .sweat-r { animation: bomb-sweat-fly 0.6s ease-in infinite 0.3s; }
-
-@media (prefers-reduced-motion: reduce) {
-  .bomb-face .pupil,
-  .bomb-face .sweat,
-  .bomb-face .foot {
-    animation: none !important;
-  }
-}
-
-/* ============================================================= */
 /* =================  SOLO CATEGORY BLITZ  ==================== */
 /* ============================================================= */
 
@@ -3714,13 +3532,6 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-answers-label {
   margin-top: 6px;
   text-align: center;
-}
-
-/* Centre the chips and cap the height (long runs scroll). */
-.solo-answers-list {
-  justify-content: center;
-  max-height: 140px;
-  margin-bottom: 18px;
 }
 
 /* PLAY AGAIN - the primary action: cyan, the biggest button (same shape as the

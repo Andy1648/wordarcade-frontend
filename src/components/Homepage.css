@@ -125,8 +125,7 @@
 .homepage-logo,
 .homepage-tagline,
 .homepage-section-label,
-.homepage-cards-grid,
-.homepage-hover-hint {
+.homepage-cards-grid {
   position: relative;
   z-index: 1;
 }
@@ -364,34 +363,8 @@ html[data-beat='true'] .homepage-logo::after {
   transition: transform 0.05s ease-out, box-shadow 0.05s;
 }
 
-.homepage-browse-btn {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 1.5vw, 16px);
-  color: #2EFFE0;
-  background: transparent;
-  border: 3px solid #2EFFE0;
-  border-radius: 8px;
-  padding: 10px 22px;
-  cursor: pointer;
-  box-shadow: 3px 3px 0 #000;
-  transition: transform 0.1s, box-shadow 0.1s, background 0.1s, color 0.1s;
-  min-height: 44px;
-}
-
-.homepage-browse-btn:hover {
-  background: #2EFFE0;
-  color: #0d0618;
-}
-
-.homepage-browse-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 #000;
-}
-
 .homepage-quick-btn:disabled,
-.homepage-quick-btn.disabled,
-.homepage-browse-btn:disabled,
-.homepage-browse-btn.disabled {
+.homepage-quick-btn.disabled {
   opacity: 0.6;
   pointer-events: none;
   cursor: not-allowed;
@@ -441,14 +414,6 @@ html[data-beat='true'] .homepage-logo::after {
   /* Don't stretch the staggered (margin-top) wrappers to a common row height -
      keep each at its card height so the idle sway rotates around the card. */
   align-items: start;
-}
-
-.homepage-hover-hint {
-  text-align: center;
-  font-size: 9px;
-  color: #C9B8E8;
-  margin-top: 14px;
-  letter-spacing: 0.5px;
 }
 
 .homepage-bottom-bar {
