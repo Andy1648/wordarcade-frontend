@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Homepage from './components/Homepage';
 import LobbyScreen from './components/LobbyScreen';
 import PublicRoomsScreen from './components/PublicRoomsScreen';
-import FindingScreen from './components/FindingScreen';
 import RoomScreen from './components/RoomScreen';
 import GameScreen from './components/GameScreen';
 import WallScene from './components/WallScene';
@@ -76,7 +75,6 @@ const SCREEN_ACCENT = {
   home: '#FF2EC4',
   lobby: '#2EFFE0',
   browse: '#2EFFE0',
-  finding: '#FFE94A',
   room: '#FFE94A',
   game: '#FF6B3D',
   credits: '#9A1AFF',
@@ -87,8 +85,7 @@ const TRANSITION_WORDS = {
   game: "LET'S GO!",
   home: 'PEACE OUT',
   lobby: 'READY?',
-  browse: 'BROWSE',
-  finding: 'FINDING…',
+  browse: 'JOIN ROOM',
   room: 'SQUAD UP',
   credits: 'CREDITS',
 };
@@ -871,23 +868,11 @@ function App() {
     setView('lobby');
   }
 
-  // Quick Play: fire quick_play and show the "finding a game…" interstitial. The
-  // server either joins us into the fullest open public room or spins up a fresh
-  // one; either way it broadcasts a room_update, which the handler above turns
-  // into the 'room' view - so we reuse the exact same room-entry path as
-  // create/join. On failure (rate limited / busy) an 'error' lands and the
-  // finding screen surfaces it with a way back.
-  function handleQuickPlay() {
-    setServerError('');
-    setView('finding');
-    send('quick_play', { name: (playerName || '').trim() || resolvePlayerName() });
-  }
-
-  // Open the public-room browser. Clear any stale list so we don't flash an old
-  // snapshot; the screen's mount effect immediately re-requests a fresh one.
-  // NOTE: the homepage "Browse Public Rooms" button was removed (public browsing
-  // is reachable from the Quick Play flow), so this + the 'browse' route below are
-  // retained but currently unlinked from the menu - the screen itself is kept.
+  // Open the unified JOIN ROOM screen (code entry + public-room list). Clear any
+  // stale list so we don't flash an old snapshot; the screen's mount effect
+  // immediately re-requests a fresh one. This is the menu's "JOIN ROOM" button.
+  // (The backend `quick_play` handler still exists but is no longer called from
+  // the UI - the Quick Play entry point was removed.)
   function handleOpenBrowser() {
     setServerError('');
     setPublicRooms([]);
@@ -1146,13 +1131,10 @@ function App() {
         onNameChange={setPlayerName}
         onJoin={handleJoinPublicRoom}
         onRefresh={handleRefreshPublicRooms}
-        onQuickPlay={handleQuickPlay}
         onCreatePublic={handleCreatePublicFromBrowser}
         onBack={goHome}
       />
     );
-  } else if (view === 'finding') {
-    screen = <FindingScreen error={serverError} onBack={goHome} />;
   } else if (view === 'credits') {
     screen = <CreditsScreen onBack={goHome} />;
   } else {
@@ -1160,8 +1142,7 @@ function App() {
       <Homepage
         onSelectGame={(gameId) => goToLobby(gameId)}
         onCreateRoom={() => goToLobby('solo')}
-        onJoinRoom={() => goToLobby('join')}
-        onQuickPlay={handleQuickPlay}
+        onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
       />
     );

@@ -1,8 +1,9 @@
 // PublicRoomsScreen.jsx
-// The public-room browser. Presentational + messaging only: it asks App to
-// (re)fetch the list and to join a chosen room, but owns no game logic. Joining
-// a row reuses the exact same join-by-code path as the Join Room screen - App
-// sends `join_room` with the row's code - so there's one join flow, not two.
+// The unified JOIN ROOM screen. Two ways into a game, one screen:
+//   1. Type a room code at the top (the join-by-code flow), or
+//   2. Tap a room from the auto-refreshing public-games list below.
+// Both paths send the SAME `join_room` (via onJoin) - App owns the messaging;
+// this screen is presentational + validation only and holds no game logic.
 //
 // Refresh strategy: fetch on mount (entering the screen), a light auto-refresh
 // on an interval so the list doesn't go stale while you read it, and a manual
@@ -13,6 +14,7 @@ import { useSound } from '../contexts/SoundContext';
 import './PublicRoomsScreen.css';
 
 const MAX_NAME_LENGTH = 20;
+const ROOM_CODE_LENGTH = 5;
 const AUTO_REFRESH_MS = 5000;
 
 // gameType -> display label + accent colour, derived from the homepage game data
@@ -36,7 +38,6 @@ export default function PublicRoomsScreen({
   onNameChange,
   onJoin,
   onRefresh,
-  onQuickPlay,
   onCreatePublic,
   onBack,
 }) {
@@ -44,6 +45,8 @@ export default function PublicRoomsScreen({
   // The row we've sent a join for, locked until we either transition into the
   // room (this screen unmounts) or the server bounces it (cleared below).
   const [joiningCode, setJoiningCode] = useState(null);
+  // The code typed into the join-by-code field at the top.
+  const [codeInput, setCodeInput] = useState('');
   const [localError, setLocalError] = useState('');
   // True until the FIRST public_rooms response lands, so the initial render shows a
   // "loading" pulse instead of flashing the empty state (which looked like "no games"
@@ -91,6 +94,34 @@ export default function PublicRoomsScreen({
     onJoin(code, trimmed);
   }
 
+  function handleCodeChange(e) {
+    // Same normalization as the lobby join field: uppercase, alphanumerics only,
+    // capped at the fixed code length.
+    const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    setCodeInput(cleaned.slice(0, ROOM_CODE_LENGTH));
+    if (localError) setLocalError('');
+  }
+
+  // Join by the typed code. Reuses the SAME join path as tapping a row, with the
+  // same name-required guard, plus a code-length check.
+  function handleJoinByCode() {
+    if (joiningCode) return;
+    const trimmed = (name || '').trim();
+    if (!trimmed) {
+      setLocalError('DROP A NAME FIRST.');
+      return;
+    }
+    if (codeInput.length !== ROOM_CODE_LENGTH) {
+      setLocalError(`CODES ARE ${ROOM_CODE_LENGTH} CHARACTERS — CHECK IT.`);
+      return;
+    }
+    handleJoin(codeInput);
+  }
+
+  function handleCodeKeyDown(e) {
+    if (e.key === 'Enter') handleJoinByCode();
+  }
+
   function handleManualRefresh() {
     sound.click();
     setLoading(true); // cleared when the fresh list comes back (rooms prop changes)
@@ -118,8 +149,8 @@ export default function PublicRoomsScreen({
           </button>
         </div>
 
-        <div className="browser-title">PUBLIC GAMES</div>
-        <div className="browser-subtitle">TAP A ROOM TO JUMP IN</div>
+        <div className="browser-title">JOIN ROOM</div>
+        <div className="browser-subtitle">ENTER A CODE OR PICK A PUBLIC GAME</div>
 
         <label className="browser-field-label" htmlFor="browser-name-input">
           YOUR NAME
@@ -137,9 +168,38 @@ export default function PublicRoomsScreen({
           maxLength={MAX_NAME_LENGTH}
         />
 
+        {/* Join-by-code: a friend's room code + JOIN, the same path tapping a
+            public row uses (onJoin), just with a typed code. */}
+        <label className="browser-field-label" htmlFor="browser-code-input">
+          ROOM CODE
+        </label>
+        <div className="browser-code-row">
+          <input
+            id="browser-code-input"
+            className="browser-code-input"
+            type="text"
+            placeholder="XXXXX"
+            value={codeInput}
+            onChange={handleCodeChange}
+            onKeyDown={handleCodeKeyDown}
+            maxLength={ROOM_CODE_LENGTH}
+          />
+          <button
+            className="browser-code-join-btn"
+            onClick={handleJoinByCode}
+            disabled={!!joiningCode || codeInput.length !== ROOM_CODE_LENGTH}
+          >
+            JOIN
+          </button>
+        </div>
+
         {error && (
           <div className="browser-error" role="alert">{error}</div>
         )}
+
+        <div className="browser-divider">
+          <span>OR PICK A PUBLIC GAME</span>
+        </div>
 
         {loading && isEmpty ? (
           // Still waiting on the first list - a calm pulse, never the empty state
@@ -158,15 +218,6 @@ export default function PublicRoomsScreen({
             <div className="browser-empty-title">NO PUBLIC GAMES RIGHT NOW</div>
             <div className="browser-empty-sub">BE THE ONE WHO STARTS THE PARTY.</div>
             <div className="browser-empty-actions">
-              <button
-                className="browser-btn browser-btn-quick"
-                onClick={() => {
-                  sound.click();
-                  onQuickPlay();
-                }}
-              >
-                ⚡ QUICK PLAY
-              </button>
               <button
                 className="browser-btn browser-btn-create"
                 onClick={() => {
@@ -208,21 +259,6 @@ export default function PublicRoomsScreen({
               );
             })}
           </ul>
-        )}
-
-        {/* A persistent Quick Play under the list too, so it's always one tap
-            away even when rooms exist. Hidden in the empty state (it's already
-            front-and-centre there). */}
-        {!isEmpty && (
-          <button
-            className="browser-btn browser-btn-quick browser-quick-footer"
-            onClick={() => {
-              sound.click();
-              onQuickPlay();
-            }}
-          >
-            ⚡ QUICK PLAY INSTEAD
-          </button>
         )}
       </div>
     </div>

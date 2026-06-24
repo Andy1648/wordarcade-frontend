@@ -39,7 +39,7 @@ const SPEED_LINES = [
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -75,13 +75,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
     if (onJoinRoom) onJoinRoom();
-  }
-
-  function handleQuickPlay() {
-    if (navigating) return;
-    sound.click();
-    setNavigating(true);
-    if (onQuickPlay) onQuickPlay();
   }
 
   function handleCredits() {
@@ -129,20 +122,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
-        {/* Instant-play hero: QUICK PLAY drops you into the nearest open public
-            game (or makes one). Sits above the grid as the most obvious path in.
-            Public-room browsing is reachable from the Quick Play flow itself, so
-            it no longer needs its own menu button. */}
-        <div className="homepage-quickplay">
-          <button
-            className={`homepage-quick-btn${navigating ? ' disabled' : ''}`}
-            onClick={handleQuickPlay}
-            disabled={navigating}
-          >
-            ⚡ QUICK PLAY
-          </button>
-        </div>
-
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
 
         <div className="homepage-cards-grid">
@@ -169,7 +148,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onClick={handleJoinRoom}
             disabled={navigating}
           >
-            JOIN BY CODE
+            JOIN ROOM
           </button>
         </div>
 
