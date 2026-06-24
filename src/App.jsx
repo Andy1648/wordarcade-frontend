@@ -821,9 +821,9 @@ function App() {
     triggerShake('light'); // a tiny jolt as it parts
     setSlicing(true);
     if (sliceTimerRef.current) clearTimeout(sliceTimerRef.current);
-    // Cover the full knife-split: fast blade stroke + the slow ~1000ms widen
-    // (which starts at 150ms), so the slow menu reveal never gets cut short.
-    sliceTimerRef.current = setTimeout(() => setSlicing(false), 1250);
+    // Cover the full knife-split: fast blade stroke + the slow ~2200ms widen
+    // (which starts at 150ms), so the cinematic menu reveal never gets cut short.
+    sliceTimerRef.current = setTimeout(() => setSlicing(false), 2450);
   }
 
   function goToLobby(mode, publicDefault = false) {

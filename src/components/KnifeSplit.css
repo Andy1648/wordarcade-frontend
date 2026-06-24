@@ -34,18 +34,18 @@
    BOTTOM piece ("DIE SLOW") everything below. clip-path is static (set once) - only
    the transform animates, so there's no per-frame paint. The fast blade stroke is
    just the punctuation; the PAYOFF is the slow open. After the stroke the pieces
-   part SLOWLY and deliberately (~1000ms), PERPENDICULAR to the near-horizontal cut:
-   top lifts up (+ a hair left & tilt), bottom drops down (+ a hair right & tilt),
-   so the menu is revealed gradually through a widening gap - the unhurried opening
-   IS the drama. */
+   DRIFT apart gradually and cinematically (~2200ms), PERPENDICULAR to the near-
+   horizontal cut: top lifts up (+ a hair left & tilt), bottom drops down (+ a hair
+   right & tilt), so the menu is revealed slowly through a widening gap - the
+   unhurried, almost cinematic opening IS the whole drama. */
 .knife-half-top {
   clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
-  animation: knife-part-top 1000ms cubic-bezier(0.33, 0, 0.3, 1) 150ms both;
+  animation: knife-part-top 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
 }
 
 .knife-half-bottom {
   clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
-  animation: knife-part-bottom 1000ms cubic-bezier(0.33, 0, 0.3, 1) 150ms both;
+  animation: knife-part-bottom 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
 }
 
 @keyframes knife-part-top {
