@@ -1104,12 +1104,14 @@ function App() {
   }
 
   // The attract/splash screen follows the loading screen. Clicking it starts
-  // everything (audio unlock, intro, etc.).
+  // everything (audio unlock, intro, etc.). Like the intro, the shared WallScene +
+  // ParticleField are intentionally NOT mounted here: the splash is stripped back
+  // to a calm dark field so the wordmark + mascot are the only focal points, with
+  // no graffiti wall / halftone / drifting particles competing. Those backdrops
+  // still render on the menu and game.
   if (showSplash) {
     return (
       <>
-        <WallScene intensity="calm" />
-        <ParticleField />
         <SplashScreen onStart={handleSplashStart} onDismiss={handleSplashDismiss} />
         <CursorTrail />
       </>

@@ -1,7 +1,8 @@
-/* SplashScreen.css - the attract/title screen. A semi-transparent dimming veil
-   lets the persistent WallScene (graffiti wall) read through behind it, darkened
-   so the wordmark + mascot stay the focal point. Ambient embers drift up in
-   front of the wall, and the hero mascot has a cocky idle sway + fuse sparks. */
+/* SplashScreen.css - the attract/title screen. Stripped back to a calm, flat
+   dark field so the wordmark + the hero mascot are the only focal points: no
+   graffiti wall, no halftone, no drifting embers/particles competing. The shared
+   WallScene/ParticleField are no longer mounted behind it (see App.jsx). The
+   mascot keeps its cocky idle sway + fuse sparks (it's the hero, alive). */
 
 .splash-screen {
   position: fixed;
@@ -14,19 +15,13 @@
   padding: 24px;
   cursor: pointer;
   overflow: hidden;
-  /* A DIMMING veil over the persistent WallScene behind us: the graffiti wall
-     reads through (connecting the splash to the game world) but is darkened so
-     the wordmark + mascot stay the focal point. Lighter in the centre where the
-     content sits, with a stronger vignette toward the edges. */
-  background: radial-gradient(
-    ellipse at center,
-    rgba(13, 6, 24, 0.34) 0%,
-    rgba(13, 6, 24, 0.58) 62%,
-    rgba(13, 6, 24, 0.74) 100%
-  );
+  /* Clean flat brand-dark field (no WallScene behind us to dim anymore). */
+  background: #0d0618;
 }
 
-/* Big slowly-rotating starburst behind the wordmark. */
+/* Flat comic starburst behind the wordmark - part of the title's poster
+   composition. Static (no spin) so nothing in the background competes for the
+   eye; the wordmark + mascot own the screen. */
 .splash-burst {
   position: absolute;
   top: 44%;
@@ -36,12 +31,6 @@
   transform: translate(-50%, -50%);
   opacity: 0.12;
   pointer-events: none;
-  animation: splash-burst-spin 30s linear infinite;
-}
-
-@keyframes splash-burst-spin {
-  from { rotate: 0deg; }
-  to { rotate: 360deg; }
 }
 
 /* ---- Title: massive, dramatic elastic bounce, continuous RGB split ---- */
@@ -177,17 +166,6 @@
   50% { opacity: 1; transform: scale(1.05); letter-spacing: 5px; }
 }
 
-/* ---- Halftone dot overlay ---- */
-.splash-halftone {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
-  opacity: 0.05;
-}
-
 /* ---- Mascot idle: a slow, cocky sway on a wrapper OUTSIDE the Mascot's own
    transform layers (container=beat, bounce=breathe, img=enter), so it never
    fights them - the bomb leans and rolls like it's confidently waiting. ---- */
@@ -238,57 +216,6 @@
   100% { transform: translate(var(--s-dx), var(--s-dy)) scale(0.1); opacity: 0; }
 }
 
-/* ---- Ambient embers: motes drifting slowly UP behind the text. ---- */
-.splash-embers {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.splash-ember {
-  position: absolute;
-  bottom: -6%;
-  opacity: 0;
-  will-change: transform, opacity;
-  /* Steady (linear) vertical climb; the sideways drift in the keyframe gives it
-     a gentle, floaty S-curve. */
-  animation: splash-ember-rise var(--e-dur, 20s) linear var(--e-delay, 0s) infinite;
-}
-
-.splash-ember.spark {
-  border-radius: 50%;
-}
-
-/* Paint fleck: a small hard-edged square chip with a thin dark outline. */
-.splash-ember.fleck {
-  border: 1px solid rgba(0, 0, 0, 0.5);
-}
-
-/* Letter tile: a tiny flat panel - palette fill, hard dark outline, dark text -
-   kept low-opacity so it reads as drifting debris, not a second wordmark. */
-.splash-ember.tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5em;
-  height: 1.5em;
-  font-family: 'Bungee', cursive;
-  line-height: 1;
-  color: #0d0618;
-  border: 2px solid rgba(0, 0, 0, 0.6);
-  border-radius: 4px;
-}
-
-@keyframes splash-ember-rise {
-  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-  12%  { opacity: var(--e-op, 0.3); }
-  50%  { transform: translateY(-55vh) translateX(var(--e-drift, 0px)) rotate(calc(var(--e-rot, 0deg) * 0.5)); }
-  88%  { opacity: var(--e-op, 0.3); }
-  100% { transform: translateY(-112vh) translateX(0) rotate(var(--e-rot, 0deg)); opacity: 0; }
-}
-
 /* ---- Dismiss: the content fades out + shrinks while the screen darkens to
    solid black, handing off seamlessly into the black-screen beat of the intro
    sequence (no white flash - we're cutting to black, not blowing out). ---- */
@@ -307,8 +234,7 @@
 .splash-screen.leaving .splash-logo,
 .splash-screen.leaving .splash-mascot-stage,
 .splash-screen.leaving .splash-taglines,
-.splash-screen.leaving .splash-start,
-.splash-screen.leaving .splash-embers {
+.splash-screen.leaving .splash-start {
   animation: splash-content-out 200ms ease-in forwards;
 }
 
@@ -336,10 +262,9 @@
 }
 
 /* Reduced motion: keep the title static, no looping/scale animations. The
-   ambient ember + fuse-spark layers are removed entirely (they only exist to
-   move), and the mascot's idle sway is stopped so it rests still. */
+   fuse-spark layer is removed entirely (it only exists to move), and the
+   mascot's idle sway is stopped so it rests still. */
 @media (prefers-reduced-motion: reduce) {
-  .splash-burst,
   .splash-logo,
   .splash-logo::before,
   .splash-logo::after,
@@ -349,6 +274,5 @@
   }
   .splash-logo::before,
   .splash-logo::after { opacity: 0; }
-  .splash-embers,
   .splash-fuse { display: none; }
 }
