@@ -225,6 +225,52 @@
   padding: 26px 8px 10px;
 }
 
+/* First-fetch loading pulse - three bouncing dots in the game accents, so the
+   wait reads as "searching", never as an empty/broken list. */
+.browser-loading {
+  text-align: center;
+  padding: 34px 8px 24px;
+}
+
+.browser-loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.browser-loading-dots span {
+  color: #2EFFE0;
+  animation: browser-loading-bounce 1s ease-in-out infinite;
+}
+
+.browser-loading-dots span:nth-child(2) {
+  color: #FF2EC4;
+  animation-delay: 0.15s;
+}
+
+.browser-loading-dots span:nth-child(3) {
+  color: #FFE94A;
+  animation-delay: 0.3s;
+}
+
+@keyframes browser-loading-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50% { transform: translateY(-9px); opacity: 1; }
+}
+
+.browser-loading-text {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #C9B8E8;
+  margin-top: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browser-loading-dots span { animation: none; opacity: 1; }
+}
+
 .browser-empty-emoji {
   font-size: 44px;
   line-height: 1;

@@ -4,7 +4,7 @@
 
    The two phrases animate OPPOSITELY (they mean opposite things):
    - TYPE FAST  = fast/electric : snappy punch + tight machine-gun letters +
-                  chromatic RGB split + speed-lines.
+                  speed-lines.
    - DIE SLOW   = slow/ominous  : heavy sinking drag + long tired letter settle +
                   desaturation + brightness pulse + paint drips.
    After the entrance the title stays ALIVE (breathing, occasional glitch twitch,
@@ -20,6 +20,27 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/* ---- ZOOM PUNCH: the "camera flinch" on each slam ----
+   On every word landing the WHOLE screen scales up a hair for a single frame, then
+   hard-snaps back to 1 - your eye feels the hit without registering a bounce. It
+   lives on the overlay (the whole-screen container) and is the ONLY transform here,
+   so scaling everything (bg, title, cracks, flash) together never fights the stage
+   shake / tilt / breathe nested below. Retriggered from JS per hit. The hold-then-
+   hard-cut keyframe (not an ease) is what makes it a one-frame punch, not a bounce.
+   FAST = sharper/smaller (1.05, ~14ms hold); SLOW = heavier/bigger (1.08, ~22ms). */
+.intro-overlay.punch-fast { animation: intro-zoom-fast 32ms linear; }
+.intro-overlay.punch-slow { animation: intro-zoom-slow 44ms linear; }
+
+@keyframes intro-zoom-fast {
+  0%, 44% { transform: scale(1.05); }
+  45%, 100% { transform: scale(1); }
+}
+
+@keyframes intro-zoom-slow {
+  0%, 50% { transform: scale(1.08); }
+  51%, 100% { transform: scale(1); }
 }
 
 /* The card that holds the two lines + the burst. It's what shakes on impact, so
@@ -133,20 +154,91 @@
      punch through the speed lines + accents behind it. */
   font-size: clamp(56px, min(13vw, 15vh), 150px);
   line-height: 1;
-  /* CHUNKY cartoon/vinyl outline so the words read as sticker graphics, not
-     styled text. The hard offset shadow lives on the slot (below). */
-  -webkit-text-stroke: 9px #000;
+  /* CHUNKY vinyl-cut outline so the words read as bold sticker/poster graphics,
+     not styled web text. paint-order:stroke-fill paints the solid colour fill OVER
+     the inner half of the stroke, so the VISIBLE black outline is ~half the
+     text-stroke width - 14px here reads as a ~7px hard vinyl edge. The flat solid
+     brand-colour fill (no gradient/glow) is the whole fill; on top of the stroke a
+     tight 8-direction solid-black text-shadow RING hardens the corners the stroke
+     rounds off, so the edge reads die-cut/drawn rather than smoothed web type. The
+     hard offset shadow on the slot finishes the sticker pop. */
+  -webkit-text-stroke: 14px #000;
   paint-order: stroke fill;
+  text-shadow:
+    3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000;
   white-space: nowrap;
   /* The line container stays on; visibility is owned per-letter (letters fade in
      0 -> 1 when the line goes .active), so the stagger reads crisply instead of
      being smeared by a whole-word opacity fade. */
   opacity: 1;
+  /* Above the impact cracks (which sit in the slot behind), so the letters are
+     never obscured. */
+  z-index: 1;
   will-change: transform;
 }
 
 .intro-line-type { color: #2EFFE0; } /* cyan */
 .intro-line-die { color: #FF2EC4; } /* pink */
+
+/* ---- Impact CRACKS: hairline fractures that spider out from each slam ----
+   An SVG fracture field per phrase, sitting in the slot BEHIND the line (z-index:0
+   vs the line's z-index:1), so it can never touch text readability. The 1000x400
+   viewBox is stretched over a box wider + much taller than the word, so the cracks
+   spread off the letters into the surrounding black. Cracks are BRIGHT WHITE so
+   they read as sharp fractures in the glass/screen, kept on a constant on-screen
+   weight via non-scaling-stroke. Each path is hidden (dash fully offset) until the phrase has
+   landed, then DRAWS outward and STAYS - damage that persists until the knife-split
+   wipes the whole intro away. */
+.intro-cracks {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  height: 300%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+  /* Per-phrase draw timing (overridden by the --slow variant). --base delays the
+     draw to land right as the word settles; --o (per path) * --stagger propagates
+     the fracture outward. */
+  --base: 120ms;
+  --stagger: 24ms;
+  --dur: 240ms;
+}
+
+.intro-cracks path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.65); /* bright white - sharp fractures in glass */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke; /* constant hairline weight despite the stretch */
+  opacity: var(--op, 1); /* per-path: branches read fainter than main fissures */
+  /* pathLength=1 on each path, so the whole length is one dash unit: offset 1 = the
+     crack is undrawn, 0 = fully drawn. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* DIE SLOW spreads heavier + slower than the snappy FAST fracture. */
+.intro-cracks--slow {
+  --base: 160ms;
+  --stagger: 66ms;
+  --dur: 560ms;
+}
+
+/* Draw only once the phrase has slammed (the .is-drawing flag is set with the
+   line's active state), and keep it drawn (both/forwards). */
+.intro-cracks.is-drawing path {
+  animation: intro-crack-draw var(--dur) cubic-bezier(0.25, 0.8, 0.3, 1) both;
+  animation-delay: calc(var(--base) + var(--o, 0) * var(--stagger));
+}
+
+@keyframes intro-crack-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
 
 /* Each letter is its own box so it can stagger in; hidden until its line is
    active. */
@@ -171,8 +263,8 @@
     type-glitch 1.6s linear 0.8s infinite;
 }
 
-/* Tight left-to-right MACHINE-GUN: each letter snaps in fast (18ms apart) with a
-   converging chromatic RGB split - it should arrive almost too fast to read.
+/* Tight left-to-right MACHINE-GUN: each letter snaps in fast (18ms apart) - it
+   should arrive almost too fast to read.
    `both` so delayed letters stay hidden pre-delay and stay put after. */
 .intro-line-type.active .intro-letter {
   animation: type-letter-in 120ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
@@ -191,61 +283,36 @@
 }
 
 @keyframes type-letter-in {
+  /* Snappy machine-gun snap-in. No chroma - the plain white impact flash is the
+     whole colour punch now. */
   0% {
     opacity: 0;
     transform: translateX(-0.3em) scale(1.35);
-    text-shadow: -0.06em 0 #ff1e56, 0.06em 0 #21e7ff;
   }
   55% {
     opacity: 1;
-    text-shadow: -0.02em 0 #ff1e56, 0.02em 0 #21e7ff;
   }
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
-    text-shadow: 0 0 transparent;
   }
 }
 
-/* Idle electric twitch: a malfunctioning-sign jitter - mostly identity with two
-   brief RGB+position jolts per loop. */
+/* Idle electric twitch: a malfunctioning-sign jitter - brief positional jolts per
+   loop (the colour split was removed; this is now a pure position twitch). */
 @keyframes type-glitch {
-  0%, 6%, 10%, 38%, 44%, 100% { transform: translate(0, 0); text-shadow: 0 0 transparent; }
-  7% { transform: translate(-2px, 1px); text-shadow: -0.05em 0 #ff1e56, 0.05em 0 #21e7ff; }
-  8.5% { transform: translate(2px, -1px); text-shadow: 0.045em 0 #ff1e56, -0.045em 0 #21e7ff; }
-  40% { transform: translate(1px, 0); text-shadow: -0.03em 0 #ff1e56, 0.03em 0 #21e7ff; }
+  0%, 6%, 10%, 38%, 44%, 100% { transform: translate(0, 0); }
+  7% { transform: translate(-2px, 1px); }
+  8.5% { transform: translate(2px, -1px); }
+  40% { transform: translate(1px, 0); }
 }
 
-/* Optional speed-lines streaking behind TYPE FAST on entry, then gone. */
-.intro-line-type::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -10%;
-  width: 120%;
-  height: 70%;
-  transform: translateY(-50%);
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(46, 255, 224, 0) 0 7px,
-    rgba(46, 255, 224, 0.22) 7px 9px
-  );
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
-  opacity: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.intro-line-type.active::before {
-  animation: type-speedlines 380ms ease-out both;
-}
-
-@keyframes type-speedlines {
-  0% { opacity: 0; transform: translateY(-50%) translateX(-14%) scaleX(0.6); }
-  35% { opacity: 0.55; }
-  100% { opacity: 0; transform: translateY(-50%) translateX(10%) scaleX(1.05); }
-}
+/* The cyan speed-lines that used to streak in behind TYPE FAST on its slam were
+   REMOVED: rgba(46,255,224,...) is the cyan brand colour, so they flashed as a
+   green/cyan overlay timed exactly to the slam - the "green flash" that kept
+   getting reported. TYPE FAST's snappy machine-gun punch carries the FAST feel on
+   its own; there is now NO coloured overlay on either slam (only the plain white
+   impact flash + the white cracks). Do NOT reintroduce a coloured ::before here. */
 
 /* =====================  DIE SLOW = slow / ominous  ====================== */
 
@@ -280,16 +347,14 @@
 }
 
 @keyframes die-letter-in {
-  /* Heavier drop + a chromatic-aberration punch that resolves as it settles -
-     the ominous weight of the SLOW hit. */
+  /* Heavy, tired drop that sags past rest then settles - the ominous weight of the
+     SLOW hit. No chroma - the plain white impact flash is the whole punch. */
   0% {
     opacity: 0;
     transform: translateY(-0.4em) scale(1.2);
-    text-shadow: -0.09em 0 #ff1e56, 0.09em 0 #21e7ff;
   }
-  50% { text-shadow: -0.03em 0 #ff1e56, 0.03em 0 #21e7ff; }
-  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); text-shadow: 0 0 transparent; }
-  100% { opacity: 1; transform: translateY(0) scale(1); text-shadow: 0 0 transparent; }
+  65% { opacity: 1; transform: translateY(0.06em) scale(0.995); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes die-pulse {
@@ -343,9 +408,13 @@
    counter-rotating starbursts + 14 shrapnel shards) was removed earlier. */
 
 /* ---- Hard impact FRAME on each word landing ----
-   A full-screen white layer in mix-blend-mode:difference INVERTS the whole screen
-   for ~1-2 frames (the title flips to a hard silhouette over a blown-out frame),
-   hard-cut on/off via steps() - the anime "this hit hard" frame, not a fade. */
+   A full-screen PLAIN WHITE layer (normal blend) that hard-cuts on/off via steps()
+   - the anime "this hit hard" white frame, not a fade.
+   IMPORTANT: this used to use mix-blend-mode:difference, which INVERTED the screen.
+   That inversion turned the cyan title red (#2EFFE0 -> ~209,0,31) and the pink
+   title green (#FF2EC4 -> ~0,209,59) for the flash frames - i.e. the "white/invert"
+   flash WAS the red/green that kept getting reported. Normal blend = a clean white
+   flash with zero colour shift. Do NOT reintroduce mix-blend-mode here. */
 .intro-flash {
   position: absolute;
   inset: 0;
@@ -353,10 +422,9 @@
   background: #fff;
   pointer-events: none;
   opacity: 0;
-  mix-blend-mode: difference;
 }
 
-/* FAST = a single SHARP inverted frame (~90ms, one hard step). */
+/* FAST = a single SHARP white frame (~90ms, one hard step). */
 .intro-flash--fast {
   animation: intro-impact-fast 90ms steps(1, end) forwards;
 }
@@ -366,8 +434,7 @@
   100% { opacity: 0; }
 }
 
-/* SLOW = HEAVIER: a longer two-beat inverted stutter (steps(2)) + a chromatic
-   colour-split punch (the offset ghosts below) for the weighty hit. */
+/* SLOW = HEAVIER: a longer two-beat white stutter (steps(2)) for the weighty hit. */
 .intro-flash--slow {
   animation: intro-impact-slow 170ms steps(2, end) forwards;
 }
@@ -377,35 +444,25 @@
   100% { opacity: 0; }
 }
 
-/* Chromatic punch on the heavy hit: offset red/cyan fields that flash and snap
-   back. screen-blended so only the colour ghosts read over the inverted frame. */
-.intro-flash--slow::before,
-.intro-flash--slow::after {
-  content: '';
+/* ---- BLACK FRAME: one-frame total blackout BEFORE each word (hitstop) ----
+   A full-screen opaque black layer above EVERYTHING in the overlay (incl. the
+   impact flash), re-keyed per word so it replays. steps(1,end) holds it fully
+   opaque for the whole ~48ms then hard-cuts to transparent - a single black frame,
+   not a fade. It's timed ~44ms before the word lands, so the screen snaps to black
+   then the word punches in out of the dark. (Reduced motion never mounts it.) */
+.intro-blackframe {
   position: absolute;
   inset: 0;
-  mix-blend-mode: screen;
+  z-index: 10;
+  background: #000;
+  pointer-events: none;
   opacity: 0;
+  animation: intro-blackframe 48ms steps(1, end) both;
 }
 
-.intro-flash--slow::before {
-  background: #ff1e56;
-  animation: intro-chroma-l 170ms steps(2, end) forwards;
-}
-
-.intro-flash--slow::after {
-  background: #21e7ff;
-  animation: intro-chroma-r 170ms steps(2, end) forwards;
-}
-
-@keyframes intro-chroma-l {
-  0% { opacity: 0.5; transform: translateX(-12px); }
-  100% { opacity: 0; transform: translateX(0); }
-}
-
-@keyframes intro-chroma-r {
-  0% { opacity: 0.5; transform: translateX(12px); }
-  100% { opacity: 0; transform: translateX(0); }
+@keyframes intro-blackframe {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ---- Mobile: smaller type + a gentler shake ---- */
@@ -414,7 +471,10 @@
     /* Still a big hero on phones, but capped so "DIE SLOW." never clips the
        edges; chunky-but-lighter stroke at small sizes. */
     font-size: clamp(44px, 13vw, 84px);
-    -webkit-text-stroke-width: 6px;
+    -webkit-text-stroke-width: 10px; /* ~5px visible vinyl edge at phone sizes */
+    text-shadow:
+      2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+      2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
   }
 
   /* Smaller sticker shadow on phones. */
@@ -443,6 +503,8 @@
 @media (prefers-reduced-motion: reduce) {
   .intro-stage.shaking,
   .intro-breathe,
+  .intro-overlay.punch-fast,
+  .intro-overlay.punch-slow,
   .intro-line-type.active,
   .intro-line-die.active {
     animation: none !important;
@@ -451,12 +513,12 @@
     transform: none !important;
     transition: none !important;
   }
-  .intro-line-type::before { display: none; }
   .intro-line-die .intro-letter::after { display: none; }
   .intro-line-die { filter: none; }
-  /* No impact frames / flashes / chromatic punch under reduced motion - the
-     larger title simply appears (letters fade in below). */
+  /* No impact frames / flashes / blackout / chromatic punch under reduced motion -
+     the larger title simply appears (letters fade in below). */
   .intro-flash { display: none !important; }
+  .intro-blackframe { display: none !important; }
 
   .intro-letter {
     animation: none !important;
@@ -467,5 +529,10 @@
   .intro-line.active .intro-letter {
     opacity: 1;
     transition: opacity 260ms ease-out;
+  }
+  /* Cracks show statically (fully drawn) once the phrase lands - no spread anim. */
+  .intro-cracks.is-drawing path {
+    animation: none !important;
+    stroke-dashoffset: 0;
   }
 }

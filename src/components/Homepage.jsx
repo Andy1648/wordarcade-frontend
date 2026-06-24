@@ -35,11 +35,9 @@ const SPEED_LINES = [
 
 
 /**
- * The lobby/homepage screen. Scope for this build is intentionally just
- * this screen - clicking a card or the action buttons currently does
- * nothing beyond calling the passed-in handlers (or a console.log
- * fallback), since the create/join room flow and WebSocket wiring are
- * separate, later pieces of work.
+ * The lobby/homepage screen. Clicking a card or an action button calls the
+ * matching passed-in handler from App (which owns the create/join room flow and
+ * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
 export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -62,58 +60,35 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (navigating) return;
     sound.click();
     setNavigating(true);
-    if (onSelectGame) {
-      onSelectGame(gameId);
-    } else {
-      // No handler wired up yet - this is expected at this stage of the
-      // build. Logging instead of silently doing nothing makes it obvious
-      // during development that the click registered correctly.
-      console.log(`Selected game: ${gameId} (no onSelectGame handler wired up yet)`);
-    }
+    if (onSelectGame) onSelectGame(gameId);
   }
 
   function handleCreateRoom() {
     if (navigating) return;
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
-    if (onCreateRoom) {
-      onCreateRoom();
-    } else {
-      console.log('Create Room clicked (no onCreateRoom handler wired up yet)');
-    }
+    if (onCreateRoom) onCreateRoom();
   }
 
   function handleJoinRoom() {
     if (navigating) return;
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
-    if (onJoinRoom) {
-      onJoinRoom();
-    } else {
-      console.log('Join Room clicked (no onJoinRoom handler wired up yet)');
-    }
+    if (onJoinRoom) onJoinRoom();
   }
 
   function handleQuickPlay() {
     if (navigating) return;
     sound.click();
     setNavigating(true);
-    if (onQuickPlay) {
-      onQuickPlay();
-    } else {
-      console.log('Quick Play clicked (no onQuickPlay handler wired up yet)');
-    }
+    if (onQuickPlay) onQuickPlay();
   }
 
   function handleCredits() {
     if (navigating) return;
     sound.click();
     setNavigating(true);
-    if (onCredits) {
-      onCredits();
-    } else {
-      console.log('Credits clicked (no onCredits handler wired up yet)');
-    }
+    if (onCredits) onCredits();
   }
 
   return (

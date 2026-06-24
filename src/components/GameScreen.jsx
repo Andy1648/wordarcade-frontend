@@ -991,10 +991,48 @@ function formatDuration(ms) {
 function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
   const words = gameStats.wordsPlayed || [];
   const timeouts = gameStats.timeouts || [];
+  const skips = gameStats.skips || [];
   const durationMs =
     gameStats.gameEndTime && gameStats.gameStartTime
       ? gameStats.gameEndTime - gameStats.gameStartTime
       : 0;
+
+  // ---- Headline stats (screenshot-friendly big numbers) ----
+  // LONGEST word played across the whole table.
+  const longestWord = words.reduce(
+    (a, w) => ((w.word || '').length > a.length ? w.word : a),
+    ''
+  );
+  // FASTEST answer: the shortest gap between two consecutive accepted words (the
+  // quickest volley of the game). Needs >=2 words; words arrive in order but sort
+  // defensively by timestamp before diffing.
+  const wordTimes = words
+    .map((w) => w.timestamp)
+    .filter((t) => typeof t === 'number')
+    .sort((a, b) => a - b);
+  let fastestMs = 0;
+  for (let i = 1; i < wordTimes.length; i++) {
+    const gap = wordTimes[i] - wordTimes[i - 1];
+    if (gap > 0 && (fastestMs === 0 || gap < fastestMs)) fastestMs = gap;
+  }
+  // BEST COMBO: longest run of accepted words uninterrupted by a timeout or skip.
+  // Merge accepted words (+1) with the life-loss events (a break) on one timeline,
+  // ordered by timestamp, and track the longest unbroken accepted streak.
+  const timeline = [
+    ...words.map((w) => ({ t: w.timestamp || 0, hit: true })),
+    ...timeouts.map((e) => ({ t: e.timestamp || 0, hit: false })),
+    ...skips.map((e) => ({ t: e.timestamp || 0, hit: false })),
+  ].sort((a, b) => a.t - b.t);
+  let bestCombo = 0;
+  let run = 0;
+  timeline.forEach((e) => {
+    if (e.hit) {
+      run += 1;
+      if (run > bestCombo) bestCombo = run;
+    } else {
+      run = 0;
+    }
+  });
 
   // Build a per-player accumulator seeded from the roster, then fold in each
   // player's words and timeouts.
@@ -1073,8 +1111,26 @@ function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
           <div className="go-summary-label">WORDS</div>
         </div>
         <div className="go-summary-item">
+          <div className="go-summary-value">
+            {longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}
+          </div>
+          <div className="go-summary-label">LONGEST</div>
+        </div>
+        <div className="go-summary-item">
+          <div className="go-summary-value">
+            {fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}
+          </div>
+          <div className="go-summary-label">FASTEST</div>
+        </div>
+        <div className="go-summary-item">
           <div className="go-summary-value">{formatDuration(durationMs)}</div>
-          <div className="go-summary-label">DURATION</div>
+          <div className="go-summary-label">SURVIVED</div>
+        </div>
+        <div className="go-summary-item">
+          <div className="go-summary-value">
+            <CountUp to={bestCombo} duration={500} />
+          </div>
+          <div className="go-summary-label">BEST COMBO</div>
         </div>
         <div className="go-summary-item">
           <div className="go-summary-value">
@@ -1200,6 +1256,7 @@ export default function GameScreen({
   isHost,
   timerSeconds,
   lastWordResult,
+  checkingAnswer,
   gameOver,
   roomPlayers,
   playerColors = {},
@@ -1758,6 +1815,7 @@ export default function GameScreen({
         isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
+        checkingAnswer={checkingAnswer}
         gameOver={gameOver}
         roomPlayers={roomPlayers || []}
         playerColors={playerColors}
@@ -2040,6 +2098,10 @@ export default function GameScreen({
             const isMe = player.id === myId;
             const isEliminating = !!eliminatingPlayers[player.id];
             const justShattered = !!shatteredHearts[player.id];
+            // On their FINAL life (and not already out): drives a red pulse border +
+            // a LAST LIFE badge so the whole table feels the elimination tension.
+            // Guarded by maxLives > 1 so a 1-life mode doesn't flag everyone.
+            const lastLife = !eliminated && player.lives === 1 && maxLives > 1;
             // The player's session colour, applied as card accent + name + the
             // typing line + the elimination flash (all via the --pc vars below).
             const pc = resolvePlayerColor(playerColors, player.id);
@@ -2048,6 +2110,7 @@ export default function GameScreen({
               isCurrent && !eliminated ? 'current' : '',
               eliminated ? 'eliminated' : '',
               isEliminating ? 'eliminating' : '',
+              lastLife ? 'last-life' : '',
             ]
               .filter(Boolean)
               .join(' ');
@@ -2067,6 +2130,13 @@ export default function GameScreen({
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
                   {isEliminating && <div className="game-player-flash" />}
+                  {/* Final-life warning: a red badge pinned to the card (the red
+                      pulse border lives in CSS via .last-life). Hidden once out. */}
+                  {lastLife && (
+                    <div className="game-player-lastlife" aria-label="On their last life">
+                      LAST LIFE
+                    </div>
+                  )}
                   {/* Panic sweat flinging off your own card when time is dire. */}
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
                   <div className="game-player-name">
@@ -2330,10 +2400,18 @@ export default function GameScreen({
               playerColors={playerColors}
             />
             <div className="game-over-actions">
-              {isHost && (
+              {isHost ? (
                 <button className="game-over-rematch" onClick={onRematch}>
                   REMATCH
                 </button>
+              ) : (
+                /* Non-hosts can't trigger the rematch (host-only), so instead of a
+                   bare LEAVE they get a clear animated "waiting" cue - they keep the
+                   same room and drop straight into the next game when the host hits
+                   REMATCH. Purely presentational; no new server message. */
+                <div className="game-over-waiting" role="status">
+                  WAITING FOR HOST<span className="go-waiting-dots" aria-hidden="true" />
+                </div>
               )}
               <button
                 className={`game-over-leave${isHost ? ' secondary' : ''}`}
@@ -2470,6 +2548,7 @@ function CategoryBlitzScreen({
   isHost,
   timerSeconds,
   lastWordResult,
+  checkingAnswer,
   gameOver,
   roomPlayers,
   playerColors = {},
@@ -2726,6 +2805,9 @@ function CategoryBlitzScreen({
     );
     const iWon = gameOver.winnerId === myId;
     const winnerName = (scores.find((s) => s.id === gameOver.winnerId) || {}).name;
+    // Screenshot-friendly headline stats derived from the final scores.
+    const myScore = (scores.find((s) => s.id === myId) || {}).score ?? 0;
+    const topScore = scores.length ? scores[0].score : 0;
 
     return (
       <div className="game-wrap">
@@ -2747,6 +2829,26 @@ function CategoryBlitzScreen({
                 {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
+            <div className="go-stats-summary cb-stats-summary">
+              <div className="go-summary-item">
+                <div className="go-summary-value">
+                  <CountUp to={myScore} duration={500} />
+                </div>
+                <div className="go-summary-label">YOUR SCORE</div>
+              </div>
+              <div className="go-summary-item">
+                <div className="go-summary-value">
+                  <CountUp to={topScore} duration={500} />
+                </div>
+                <div className="go-summary-label">TOP SCORE</div>
+              </div>
+              <div className="go-summary-item">
+                <div className="go-summary-value">
+                  <CountUp to={scores.length} duration={500} />
+                </div>
+                <div className="go-summary-label">PLAYERS</div>
+              </div>
+            </div>
             <div className="cb-scoreboard">
               {scores.map((s, i) => {
                 const pc = resolvePlayerColor(playerColors, s.id);
@@ -2774,10 +2876,18 @@ function CategoryBlitzScreen({
               })}
             </div>
             <div className="game-over-actions">
-              {isHost && (
+              {isHost ? (
                 <button className="game-over-rematch" onClick={onRematch}>
                   REMATCH
                 </button>
+              ) : (
+                /* Non-hosts can't trigger the rematch (host-only), so instead of a
+                   bare LEAVE they get a clear animated "waiting" cue - they keep the
+                   same room and drop straight into the next game when the host hits
+                   REMATCH. Purely presentational; no new server message. */
+                <div className="game-over-waiting" role="status">
+                  WAITING FOR HOST<span className="go-waiting-dots" aria-hidden="true" />
+                </div>
               )}
               <button
                 className={`game-over-leave${isHost ? ' secondary' : ''}`}
@@ -2939,7 +3049,7 @@ function CategoryBlitzScreen({
             )}
             <input
               ref={inputRef}
-              className="game-input"
+              className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
               type="text"
               value={draft}
               onChange={(event) => {
@@ -2962,16 +3072,30 @@ function CategoryBlitzScreen({
             {hypeKey > 0 && <FloatingScore key={hypeKey} />}
           </div>
 
-          {lastWordResult && (
-            <div
-              className={`game-toast ${
-                lastWordResult.accepted ? 'accepted' : 'rejected'
-              }`}
-            >
-              {lastWordResult.accepted
-                ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
-                : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+          {/* While the AI judge is running (list-miss), show a subtle "checking…"
+              chip instead of the previous result toast; it clears the instant the
+              answer_result lands and the normal accept/reject toast plays. */}
+          {checkingAnswer ? (
+            <div className="game-toast cb-checking-toast" aria-live="polite">
+              checking
+              <span className="cb-checking-dots" aria-hidden="true">
+                <i>.</i>
+                <i>.</i>
+                <i>.</i>
+              </span>
             </div>
+          ) : (
+            lastWordResult && (
+              <div
+                className={`game-toast ${
+                  lastWordResult.accepted ? 'accepted' : 'rejected'
+                }`}
+              >
+                {lastWordResult.accepted
+                  ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
+                  : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+              </div>
+            )
           )}
 
             </div>

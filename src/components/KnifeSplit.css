@@ -1,16 +1,25 @@
 /* KnifeSplit.css - the intro -> menu sword-swipe reveal.
-   Flat colors, hard edges, no blur/glow (the cyan blade edge is a 0-blur
-   box-shadow). Transform / clip-path / opacity ONLY: a blade streaks across, then
-   two dark pieces clipped on the same shallow diagonal widen apart - GPU-friendly
-   and far cheaper than the explosion it replaced. Total ~450ms.
+   Flat colors, hard edges, no blur/glow. Transform / clip-path / opacity ONLY:
+   a white blade streaks across as two dark pieces (clipped on the same shallow
+   diagonal) widen apart - GPU-friendly and far cheaper than the explosion it
+   replaced.
+
+   ONE CONTINUOUS MOTION (no sequenced phases): the blade and BOTH halves start at
+   the SAME instant (zero delay) and ride the SAME long ease-out curve,
+   cubic-bezier(0.16, 1, 0.3, 1), across the full duration. There is no blade-then-
+   widen handoff and no phase boundary - the slash and the opening are the same
+   gesture, decelerating together. The curve front-loads the motion (a fast,
+   decisive cut) then glides smoothly to rest as the menu is revealed.
 
    The cut is a single SHALLOW (near-horizontal) diagonal, sloping gently down to
-   the right - from 46% height at the left edge to 54% at the right. It is aimed to
-   pass through the GAP between the two title lines, so the blade reads as splitting
-   "TYPE FAST" (which rides the TOP piece) from "DIE SLOW" (the BOTTOM piece). Both
-   pieces are clipped on that SAME line so the seam lines up exactly; the blade is
-   rotated to match it. */
+   the right - from 46% height at the left edge to 54% at the right, threaded
+   through the GAP between the two title lines so the blade reads as splitting
+   "TYPE FAST" (TOP piece) from "DIE SLOW" (BOTTOM piece). Both pieces are clipped
+   on that SAME line so the seam lines up exactly; the blade is rotated to match.
+   The blade is pure WHITE - no coloured edge (matching the intro's no-colour rule). */
 
+/* The single shared timing curve + duration - applied identically to the blade
+   and both halves so the whole reveal is one fluid motion. */
 .knife-split {
   position: fixed;
   inset: 0;
@@ -29,23 +38,19 @@
   will-change: transform;
 }
 
-/* Shared cut line: (0 46%) -> (100% 54%), threaded through the gap between the two
-   title lines. The TOP piece (carrying "TYPE FAST") is everything above it, the
-   BOTTOM piece ("DIE SLOW") everything below. clip-path is static (set once) - only
-   the transform animates, so there's no per-frame paint. The fast blade stroke is
-   just the punctuation; the PAYOFF is the slow open. After the stroke the pieces
-   DRIFT apart gradually and cinematically (~2200ms), PERPENDICULAR to the near-
-   horizontal cut: top lifts up (+ a hair left & tilt), bottom drops down (+ a hair
-   right & tilt), so the menu is revealed slowly through a widening gap - the
-   unhurried, almost cinematic opening IS the whole drama. */
+/* Shared cut line: (0 46%) -> (100% 54%). TOP piece is everything above it, BOTTOM
+   everything below. clip-path is static (set once) - only the transform animates.
+   Both start at t=0 on the shared cubic-bezier(0.16, 1, 0.3, 1), PERPENDICULAR to
+   the near-horizontal cut: top lifts up (+ a hair left & tilt), bottom drops down
+   (+ a hair right & tilt), gliding off-screen to reveal the menu. */
 .knife-half-top {
   clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
-  animation: knife-part-top 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
+  animation: knife-part-top 1900ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .knife-half-bottom {
   clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
-  animation: knife-part-bottom 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
+  animation: knife-part-bottom 1900ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes knife-part-top {
@@ -58,38 +63,43 @@
   to { transform: translate(3vw, 100vh) rotate(1.5deg); } /* drop down, off-screen */
 }
 
-/* ---- The blade: a thin bright line that streaks ACROSS the screen first ----
-   A wide, thin bar pinned just off the left edge at mid-height, rotated to the
-   shallow cut angle, drawn left -> right via scaleX (origin = left end), then
-   it fades. This is the visible "stroke" before the screen parts. */
+/* ---- The blade: a thin WHITE line streaking across the cut ----
+   Pinned just off the left edge at the cut height, rotated to the shallow cut
+   angle, drawn left -> right via scaleX (origin = left end). It rides the EXACT
+   SAME curve and duration as the two halves with NO internal percentage stops, so
+   the stroke and the opening are one fluid gesture: the curve front-loads both, so
+   the blade streaks across (fast) and fades to nothing AS the gap opens, then both
+   glide to rest together. No discrete blade-then-widen handoff - it's a single
+   continuous from->to on the shared cubic-bezier. */
 .knife-slash {
   position: absolute;
   left: -12vw;
-  top: 46%; /* starts at the cut's left edge (in the title gap) */
+  top: 46%;
   width: 124vw;
   height: 7px;
   margin-top: -3.5px;
-  background: #fff;
-  box-shadow: 0 0 0 2px #2EFFE0; /* hard cyan edge, 0 blur (flat, no glow) */
+  background: #fff; /* pure white - no coloured edge */
   transform-origin: left center;
-  transform: rotate(3.8deg) scaleX(0); /* shallower, matches the gentler cut */
-  animation: knife-slash 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transform: rotate(3.8deg) scaleX(0);
+  animation: knife-slash 1900ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Single continuous from->to: scaleX grows 0->1 and opacity fades 1->0 over the
+   whole duration on the shared curve. Because the curve is front-loaded the blade
+   visually streaks across and fades within the first stretch while the halves are
+   already parting on the identical curve - one motion, no phase boundary. */
 @keyframes knife-slash {
-  0% { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
-  50% { transform: rotate(3.8deg) scaleX(1); opacity: 1; } /* drawn fully across */
-  70% { opacity: 1; }
-  100% { transform: rotate(3.8deg) scaleX(1); opacity: 0; } /* fades as pieces part */
+  from { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
+  to { transform: rotate(3.8deg) scaleX(1); opacity: 0; }
 }
 
-/* ---- Quick white flash on the cut instant (single full-screen opacity anim) ---- */
+/* ---- Quick WHITE flash on the cut instant (starts with the motion, no delay) ---- */
 .knife-flash {
   position: absolute;
   inset: 0;
   background: #fff;
   opacity: 0;
-  animation: knife-flash 220ms ease-out 110ms both; /* peaks as the blade lands */
+  animation: knife-flash 220ms ease-out both;
 }
 
 @keyframes knife-flash {

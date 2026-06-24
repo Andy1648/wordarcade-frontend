@@ -514,8 +514,10 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
-    // Transition swoosh: bandpassed white noise (centred 2kHz, Q 1) swelling in
-    // over 100ms then out over 200ms - a fast whoosh under a screen wipe.
+    // Transition swoosh: bandpassed white noise (centred 2kHz, Q 1) with a FAST
+    // ~25ms attack then a 250ms tail - a snappy whoosh under a screen wipe. The
+    // attack is deliberately short so the swipe sound lands WITH the visual slash
+    // (a slower swell-in read as the sound lagging the blade).
     whoosh() {
       if (mutedRef.current) return;
       const ctx = getCtx();
@@ -535,7 +537,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         filter.Q.setValueAtTime(1, now);
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.15, now + 0.1); // swell in
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.025); // fast attack - lands with the slash
         gain.gain.linearRampToValueAtTime(0.0001, now + 0.3); // out
         src.connect(filter).connect(gain).connect(getMaster(ctx));
         src.start(now);

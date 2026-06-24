@@ -249,4 +249,10 @@
   .lobby-continue-btn {
     min-height: 44px;
   }
+
+  /* Back is a small text button on desktop; give it a proper tap target on phones. */
+  .lobby-back-btn {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
 }

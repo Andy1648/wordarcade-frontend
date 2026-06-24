@@ -34,6 +34,17 @@ button {
   cursor: pointer;
 }
 
+/* Keyboard focus ring. App-wide so every interactive element (native buttons,
+   inputs, links, and the role="button" game cards / splash) shows a clear, high-
+   contrast focus indicator for keyboard users. :focus-visible (not :focus) keeps
+   it off for mouse/touch presses, so it never fights the flat cartoon look during
+   normal play - it only appears when tabbing. (WCAG 2.4.7 Focus Visible.) */
+:focus-visible {
+  outline: 3px solid #FFE94A;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ============================================================= */
 /* =================  WHOLE-VIEWPORT BEAT FLASH  =============== */
 /* ============================================================= */
