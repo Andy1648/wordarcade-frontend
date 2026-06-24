@@ -1,0 +1,94 @@
+/* KnifeSplit.css - the intro -> menu "blade" reveal.
+   Flat colors, hard edges, no blur/glow (the cyan blade edge is a 0-blur
+   box-shadow). Transform/opacity ONLY: two dark halves translate apart, one
+   slash line scales in, one flash fades - GPU-friendly and far cheaper than the
+   explosion it replaced. Total ~450ms. */
+
+.knife-split {
+  position: fixed;
+  inset: 0;
+  z-index: 150; /* above the menu content; pointer-events:none so it never blocks */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ---- The two dark halves that cover the menu then slam apart ---- */
+.knife-half {
+  position: absolute;
+  inset: 0;
+  /* Matches the page/menu dark bg so the cover reads as the dark intro screen
+     being cut, with no visible seam-colour before the slice. */
+  background: #0d0618;
+  will-change: transform;
+}
+
+/* A slightly tilted, near-vertical "katana" seam from top (54%) to bottom (46%):
+   half A is everything LEFT of it, half B everything RIGHT. The clip-path is
+   static (set once) - only the transform animates, so there's no per-frame paint. */
+.knife-half-a {
+  clip-path: polygon(0 0, 54% 0, 46% 100%, 0 100%);
+  animation: knife-part-a 320ms cubic-bezier(0.5, 0, 0.2, 1) 130ms both;
+}
+
+.knife-half-b {
+  clip-path: polygon(54% 0, 100% 0, 100% 100%, 46% 100%);
+  animation: knife-part-b 320ms cubic-bezier(0.5, 0, 0.2, 1) 130ms both;
+}
+
+@keyframes knife-part-a {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-100vw, -8vh); } /* fling up-left, off-screen */
+}
+
+@keyframes knife-part-b {
+  from { transform: translate(0, 0); }
+  to { transform: translate(100vw, 8vh); } /* fling down-right, off-screen */
+}
+
+/* ---- The blade: a thin bright line streaking down the seam first ---- */
+.knife-slash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 150vh; /* over-tall so the tilted bar still spans top-to-bottom */
+  margin-left: -3px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #2EFFE0; /* hard cyan edge, 0 blur (flat, no glow) */
+  transform-origin: 50% 50%;
+  transform: translate(-50%, -50%) rotate(8deg) scaleY(0);
+  animation: knife-slash 300ms ease-out both;
+}
+
+@keyframes knife-slash {
+  0% { transform: translate(-50%, -50%) rotate(8deg) scaleY(0); opacity: 1; }
+  30% { transform: translate(-50%, -50%) rotate(8deg) scaleY(1); opacity: 1; }
+  60% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(8deg) scaleY(1); opacity: 0; }
+}
+
+/* ---- Quick white flash on the cut instant (single full-screen opacity anim) ---- */
+.knife-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: knife-flash 220ms ease-out both;
+}
+
+@keyframes knife-flash {
+  0% { opacity: 0; }
+  12% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+/* Reduced motion: App already skips mounting this, but if it ever renders, hold
+   everything parted/invisible so it never animates and never covers the menu. */
+@media (prefers-reduced-motion: reduce) {
+  .knife-half,
+  .knife-slash,
+  .knife-flash {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

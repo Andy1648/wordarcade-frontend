@@ -13,6 +13,7 @@ import MusicButton from './components/MusicButton';
 import CreditsScreen from './components/CreditsScreen';
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
+import KnifeSplit from './components/KnifeSplit';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -262,6 +263,10 @@ function App() {
   // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
   // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
   const [showIntro, setShowIntro] = useState(false);
+  // The intro -> menu KNIFE-SPLIT reveal (replaces the old explosion): true while
+  // the blade-slice overlay plays over the freshly-mounted menu. Cosmetic only.
+  const [slicing, setSlicing] = useState(false);
+  const sliceTimerRef = useRef(null);
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
@@ -802,8 +807,21 @@ function App() {
   // homepage, and fade the music up DURING the wipe.
   function handleIntroComplete() {
     setShowIntro(false);
-    runTransition('TYPE A WORD'); // same wipe down to the homepage
     music.fadeTo(0.3, 500);
+    // Reveal the menu with the KNIFE-SPLIT (this transition's signature, in place
+    // of the explosion + the generic bar wipe). Under reduced motion we skip the
+    // slice entirely and just cut to the menu.
+    const reduced =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+    sound.punch(); // the blade hits
+    sound.whoosh(); // the halves slam apart
+    triggerShake('light'); // a tiny jolt as it parts
+    setSlicing(true);
+    if (sliceTimerRef.current) clearTimeout(sliceTimerRef.current);
+    sliceTimerRef.current = setTimeout(() => setSlicing(false), 480);
   }
 
   function goToLobby(mode, publicDefault = false) {
@@ -1191,6 +1209,9 @@ function App() {
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} />
           )}
+          {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
+              auto-cleared after ~480ms). Replaces the old intro explosion. */}
+          {slicing && <KnifeSplit />}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
               useBeatSync via --flash-color). Click-through, below modals. */}
