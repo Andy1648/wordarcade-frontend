@@ -1116,13 +1116,15 @@ function App() {
     );
   }
 
-  // The anime fight-card intro plays over a black overlay between the splash and
-  // the homepage; when it finishes it wipes down to the homepage.
+  // The anime fight-card intro plays over a full black overlay between the splash
+  // and the homepage; when it finishes it wipes down to the homepage. The shared
+  // WallScene + ParticleField are intentionally NOT mounted here: the intro was
+  // stripped back to near-empty so the two lines (TYPE FAST / DIE SLOW) own a calm
+  // black field with nothing competing behind them (and no per-beat halftone
+  // repaint). Those backdrops still render on the splash, menu and game.
   if (showIntro) {
     return (
       <SoundContext.Provider value={soundValue}>
-        <WallScene intensity="calm" />
-        <ParticleField />
         <TransitionIntro onComplete={handleIntroComplete} />
         <CursorTrail />
       </SoundContext.Provider>

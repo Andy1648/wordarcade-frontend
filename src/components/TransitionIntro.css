@@ -27,8 +27,6 @@
    lets the cursor-lean layer below read as a real 3D tip. */
 .intro-stage {
   position: relative;
-  /* Above the grid floor (z 0) and the speed-line/accent scene (z 1) so the
-     title + explosion always read in front of the background. */
   z-index: 2;
   width: 100%;
   height: 100%;
@@ -38,184 +36,14 @@
   perspective: 900px;
 }
 
-/* ============================  BACKGROUND SCENE  ==========================
-   Three stacked layers, all BEHIND the title (.intro-stage is z 2):
-     .intro-grid   (z 0) - the synthwave perspective floor, furthest back
-     .intro-scene  (z 1) - speed lines + graffiti vector accents
-   Everything here is presentational and uses transform/opacity only. */
-
-/* ---- Perspective grid floor ---- */
-.intro-grid {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 58%;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  /* The 3D vanishing point: shallow perspective + origin near the top edge makes
-     the floor recede to a horizon line at the top of this box. */
-  perspective: 260px;
-  perspective-origin: 50% 0%;
-}
-
-/* A flat brand-colour horizon line where the grid converges. */
-.intro-grid::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #FF2EC4;
-  opacity: 0.55;
-}
-
-.intro-grid-plane {
-  position: absolute;
-  /* Oversized + extra-wide so the tilted plane fills the box and the one-tile
-     scroll never exposes an edge. */
-  left: -50%;
-  right: -50%;
-  bottom: 0;
-  height: 220%;
-  transform-origin: 50% 100%;
-  /* Tilt the plane back into the distance. Translating it by exactly one tile
-     (50px) reads as the rungs drifting toward the viewer; since the grid repeats
-     every 50px it loops seamlessly. transform-only = GPU-friendly. */
-  transform: rotateX(82deg) translateY(0);
-  background-image:
-    repeating-linear-gradient(0deg, transparent 0 48px, #9A1AFF 48px 50px),
-    repeating-linear-gradient(90deg, transparent 0 48px, #9A1AFF 48px 50px);
-  background-size: 50px 50px;
-  opacity: 0.5;
-  animation: intro-grid-scroll 1.5s linear infinite;
-  will-change: transform;
-}
-
-@keyframes intro-grid-scroll {
-  from { transform: rotateX(82deg) translateY(0); }
-  to { transform: rotateX(82deg) translateY(50px); }
-}
-
-/* ---- Mid-ground scene wrapper (speed lines + accents) ---- */
-.intro-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-/* Fade the whole scene out as the title explodes, so it doesn't clutter the
-   final burst. */
-.intro-scene.exploding {
-  animation: intro-scene-out 360ms ease-in forwards;
-}
-
-@keyframes intro-scene-out {
-  to { opacity: 0; }
-}
-
-/* ---- Speed lines ---- */
-.intro-speedlines {
-  position: absolute;
-  /* Oversized + rotated so the streaks read as diagonal action lines and run off
-     all edges (clipped by the overlay's overflow:hidden). */
-  inset: -30%;
-  transform: rotate(-19deg);
-}
-
-.intro-streak {
-  position: absolute;
-  left: 0;
-  width: var(--w, 30%);
-  height: var(--h, 3px);
-  background: var(--c, #2EFFE0);
-  opacity: var(--op, 0.5);
-  border-radius: 2px;
-  transform: translateX(-160%);
-  animation: intro-streak-fly var(--durF, 0.8s) linear var(--delay, 0s) infinite;
-  will-change: transform;
-}
-
-/* Phase swap: TYPE FAST = fast streaks; DIE SLOW = slower + heavier (thicker,
-   more opaque). Only retimes / restyles - no new animation. */
-.intro-speedlines.phase-fast .intro-streak {
-  animation-duration: var(--durF, 0.8s);
-}
-
-.intro-speedlines.phase-slow .intro-streak {
-  animation-duration: var(--durS, 2s);
-  opacity: calc(var(--op, 0.5) * 1.25);
-  transform: translateX(-160%) scaleY(1.5);
-}
-
-@keyframes intro-streak-fly {
-  from { transform: translateX(-160%); }
-  to { transform: translateX(420%); }
-}
-
-/* phase-slow needs its own fly keyframes to preserve the thicker scaleY. */
-.intro-speedlines.phase-slow .intro-streak {
-  animation-name: intro-streak-fly-heavy;
-}
-
-@keyframes intro-streak-fly-heavy {
-  from { transform: translateX(-160%) scaleY(1.5); }
-  to { transform: translateX(420%) scaleY(1.5); }
-}
-
-/* ---- Vector accents ---- */
-.intro-accent {
-  position: absolute;
-  /* Carries the resting tilt + sizing vars; the inner element animates. */
-  line-height: 0;
-}
-
-.intro-accent-inner {
-  display: block;
-  opacity: 0;
-  transform: rotate(var(--rot, 0deg)) scale(1);
-  /* Pop in (staggered, one-shot, holds final) then idle-wobble forever. The two
-     never overlap (idle starts after the pop's 0.42s), so they don't fight. */
-  animation:
-    intro-accent-pop 440ms cubic-bezier(0.2, 1.5, 0.3, 1) var(--pop-delay, 0s) both,
-    intro-accent-idle var(--idle-dur, 5s) ease-in-out calc(var(--pop-delay, 0s) + 0.44s) infinite;
-  will-change: transform, opacity;
-}
-
-.intro-accent-svg {
-  width: var(--size, 70px);
-  height: auto;
-  /* Hard black offset shadow that hugs the shape (0 blur = flat, no glow). */
-  filter: drop-shadow(3px 3px 0 #000);
-}
-
-.intro-accent-tag {
-  font-family: 'Bungee', cursive;
-  font-size: calc(var(--size, 64px) * 0.34);
-  color: #0d0618;
-  padding: 6px 12px;
-  border: 4px solid #000;
-  border-radius: 6px;
-  box-shadow: 4px 4px 0 #000;
-  white-space: nowrap;
-}
-
-@keyframes intro-accent-pop {
-  0% { opacity: 0; transform: rotate(var(--rot, 0deg)) scale(0); }
-  60% { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(1.25); }
-  100% { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(1); }
-}
-
-@keyframes intro-accent-idle {
-  0%, 100% { transform: rotate(var(--rot, 0deg)) scale(1); }
-  25% { transform: rotate(calc(var(--rot, 0deg) + 5deg)) scale(1.06); }
-  50% { transform: rotate(var(--rot, 0deg)) scale(1); }
-  75% { transform: rotate(calc(var(--rot, 0deg) - 5deg)) scale(0.95); }
-}
+/* ============================  BACKGROUND  ================================
+   Intentionally EMPTY. The intro was stripped back to near-empty: no speed
+   lines, vector accents, perspective grid, halftone or drifting particles -
+   nothing competes with the two lines. The calm flat-black .intro-overlay IS
+   the background; the shared WallScene/ParticleField are no longer mounted
+   behind the intro (see App.jsx). Drama comes from contrast: quiet -> SLAM ->
+   quiet. The title, impact flash, card shake and explosion below are all that
+   move. */
 
 /* Cursor-lean layer: tips a few degrees toward the pointer (vars written from JS,
    eased here). Separate element from the shake (stage) and the breathing
@@ -777,39 +605,6 @@
   .intro-stage.shaking {
     animation: intro-shake-sm 200ms ease-in-out;
   }
-
-  /* Scene scales down on phones: smaller accents, finer grid, taller floor so the
-     depth still reads on a narrow screen. */
-  .intro-accent-inner { transform: rotate(var(--rot, 0deg)) scale(0.6); }
-  .intro-grid { height: 52%; perspective: 200px; }
-  .intro-grid-plane {
-    background-size: 38px 38px;
-    background-image:
-      repeating-linear-gradient(0deg, transparent 0 36px, #9A1AFF 36px 38px),
-      repeating-linear-gradient(90deg, transparent 0 36px, #9A1AFF 36px 38px);
-    animation-name: intro-grid-scroll-sm;
-  }
-}
-
-/* Mobile grid scroll (one 38px tile) + the popped-accent resting scale (0.6) so
-   the entrance/idle animations land at the smaller size on phones. */
-@keyframes intro-grid-scroll-sm {
-  from { transform: rotateX(82deg) translateY(0); }
-  to { transform: rotateX(82deg) translateY(38px); }
-}
-
-@media (max-width: 600px) {
-  @keyframes intro-accent-pop {
-    0% { opacity: 0; transform: rotate(var(--rot, 0deg)) scale(0); }
-    60% { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(0.74); }
-    100% { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(0.6); }
-  }
-  @keyframes intro-accent-idle {
-    0%, 100% { transform: rotate(var(--rot, 0deg)) scale(0.6); }
-    25% { transform: rotate(calc(var(--rot, 0deg) + 5deg)) scale(0.64); }
-    50% { transform: rotate(var(--rot, 0deg)) scale(0.6); }
-    75% { transform: rotate(calc(var(--rot, 0deg) - 5deg)) scale(0.56); }
-  }
 }
 
 @keyframes intro-shake-sm {
@@ -862,20 +657,6 @@
   .intro-line.intro-explode-up,
   .intro-line.intro-explode-down {
     animation: intro-reduced-fadeout 320ms ease-in both !important;
-  }
-
-  /* ---- Background scene: render STATIC (no motion) ---- */
-  /* Grid floor: keep the perspective depth, kill the scroll. */
-  .intro-grid-plane { animation: none !important; }
-  /* Speed lines are motion by definition - simplify by removing them. */
-  .intro-speedlines { display: none; }
-  /* Accents stay as static graffiti: shown in their popped resting state, no
-     pop-in stagger, no idle wobble. */
-  .intro-scene.exploding { animation: none !important; }
-  .intro-accent-inner {
-    animation: none !important;
-    opacity: 1;
-    transform: rotate(var(--rot, 0deg)) scale(1);
   }
 
   /* The explosion is motion by definition - drop it entirely; the lines just
