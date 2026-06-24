@@ -2059,9 +2059,19 @@ export default function GameScreen({
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
             Held back until the hitlag freeze releases so the reaction lands after
-            the impact, not during it. */}
-        {hypeKey > 0 && !hitlag &&
-          (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
+            the impact, not during it.
+            The popup is keyed by hypeKey (bumped once per accept) so it replays
+            per accepted word. It MUST live in this always-present wrapper: as a
+            bare keyed child directly among .game-stage's many conditional unkeyed
+            siblings, React re-mounted it on nearly every re-render (the stage
+            re-renders ~12x/s), re-rolling a fresh random hype word each time -
+            that was the "AWESOME! spam while typing". The stable wrapper
+            (display:contents, zero layout effect) gives it a fixed reconciliation
+            slot so it mounts exactly once per accept. */}
+        <div style={{ display: 'contents' }}>
+          {hypeKey > 0 && !hitlag &&
+            (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
+        </div>
         <div className="game-header">
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
@@ -2344,7 +2354,12 @@ export default function GameScreen({
                 <span className="game-skip-cost">-1 LIFE</span>
               </button>
             )}
-            {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
+            {/* Stable wrapper so the keyed "+1" mounts once per accept instead of
+                re-mounting on every re-render amid the conditional siblings here
+                (same fix as the hype popup above). */}
+            <div style={{ display: 'contents' }}>
+              {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
+            </div>
           </div>
         )}
 
@@ -2933,7 +2948,12 @@ function CategoryBlitzScreen({
           <CountdownOverlay onComplete={() => setShowCountdown(false)} />
         )}
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
-          {hypeKey > 0 && <HypePopup key={hypeKey} />}
+          {/* Stable wrapper so the keyed hype popup mounts once per accept, not
+              on every re-render amid the conditional siblings (see the Word Bomb
+              note above). */}
+          <div style={{ display: 'contents' }}>
+            {hypeKey > 0 && <HypePopup key={hypeKey} />}
+          </div>
           <div className="game-header">
             <div className="game-title">
               <SprayReveal>CATEGORY BLITZ</SprayReveal>
@@ -3072,7 +3092,10 @@ function CategoryBlitzScreen({
             <button className="game-send-btn" onClick={submit}>
               SEND
             </button>
-            {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+            {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
+            <div style={{ display: 'contents' }}>
+              {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+            </div>
           </div>
 
           {/* While the AI judge is running (list-miss), show a subtle "checking…"
