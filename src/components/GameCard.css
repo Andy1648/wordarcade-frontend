@@ -78,41 +78,11 @@
   will-change: transform, box-shadow;
 }
 
-/* Beat pop (medium weight): on each detected drum hit (data-beat on <html>) the
-   inner card pops + skews + slams its shadow ON TOP of the wrapper's idle sway.
-   The skew direction alternates per card; nth-child is taken on the WRAPPER
-   (the card is an only child of it). Hovered cards are skipped. */
-html[data-beat='true'] .game-card-wrap:nth-child(odd) .game-card:not(:hover) {
-  animation: card-beat-pop-left 120ms ease-out, card-shadow-slam 120ms ease-out;
-}
-
-html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
-  animation: card-beat-pop-right 120ms ease-out, card-shadow-slam 120ms ease-out;
-}
-
-@keyframes card-beat-pop-left {
-  0% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-  35% {
-    transform: scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
-      translateY(-5px) skewX(-4deg);
-  }
-  100% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-}
-
-@keyframes card-beat-pop-right {
-  0% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-  35% {
-    transform: scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
-      translateY(-5px) skewX(4deg);
-  }
-  100% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-}
-
-@keyframes card-shadow-slam {
-  0% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
-  40% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 10px 10px 0 #000; }
-  100% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
-}
+/* Menu calm-down: the cards NO LONGER pop + slam their shadow on every drum hit.
+   That medium-weight beat pulse (firing on all three cards at once, alongside the
+   title, buttons and whole-app shake) was a big part of why the menu felt busy
+   and laggy. The cards keep only their gentle per-card idle sway (card-idle-1/2/3
+   above) - a calm Balatro-style undulation - so they're alive without pulsing. */
 
 .game-card.dashed-border {
   border-style: dashed;

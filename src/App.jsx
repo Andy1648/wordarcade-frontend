@@ -286,16 +286,20 @@ function App() {
       SHAKE_MS[level] || 150
     );
   }
-  // Light shake on every detected beat (skips the very first render).
+  // Light shake on every detected beat — IN-GAME ONLY. The ambient whole-screen
+  // beat-shake made the menu/lobby feel busy and laggy (it transforms the entire
+  // app tree on every drum hit), so it's now gated to the game view; the menu
+  // stays calm. `view` is in the deps so the guard reads the live view, not a
+  // stale closure (a view change alone never has a new beat, so it won't shake).
   const prevBeatRef = useRef(0);
   useEffect(() => {
     if (beatCount > prevBeatRef.current) {
       prevBeatRef.current = beatCount;
-      triggerShake('light');
+      if (view === 'game') triggerShake('light');
     }
-    // triggerShake is stable enough; we only react to beatCount changes.
+    // triggerShake is stable enough; we react to beatCount (and read live view).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beatCount]);
+  }, [beatCount, view]);
 
   // Subtle hover blip on any real <button>, app-wide (Lobby / Room / game UI),
   // via one delegated listener so we don't touch every button. The Homepage game
@@ -717,22 +721,53 @@ function App() {
     }
   }, [lastWordResult, gameType]);
 
-  // Fire the cosmetic bar wipe on every real view change. The screen itself has
-  // already swapped (it renders off `view`); this only lays the overlay on top
-  // and clears it when the animation finishes. The early-return just avoids a
-  // spurious wipe when `view` didn't actually change (initial mount / no-op
-  // setState) - it can no longer strand the screen, since nothing gates the
+  // ---- ONE consistent Persona-5 bar wipe for EVERY screen change ----
+  // Every transition in the app is fired through this single helper, so they all
+  // look and sound identical (same five bars, same whoosh, same 500ms): the
+  // initial connect, menu->room, room->game, game->results, and back to menu.
+  // The overlay (TransitionOverlay) is purely cosmetic - the screen has already
+  // swapped underneath - so this only lays the bars on top and clears them.
+  const transitionClearRef = useRef(null);
+  const runTransition = useCallback(
+    (word) => {
+      transitionKeyRef.current += 1;
+      setTransition({ word, key: transitionKeyRef.current });
+      sound.whoosh(); // the diagonal bars sweep in
+      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
+      transitionClearRef.current = setTimeout(() => setTransition(null), 500);
+    },
+    [sound]
+  );
+  useEffect(
+    () => () => {
+      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
+    },
+    []
+  );
+
+  // Fire the wipe on every real view change. The screen has already swapped (it
+  // renders off `view`); this only lays the overlay on top. The early-return
+  // avoids a spurious wipe when `view` didn't actually change (initial mount /
+  // no-op setState) - it can no longer strand the screen, since nothing gates the
   // screen behind it anymore.
   const lastNavViewRef = useRef('home');
   useEffect(() => {
     if (view === lastNavViewRef.current) return;
     lastNavViewRef.current = view;
-    transitionKeyRef.current += 1;
-    setTransition({ word: TRANSITION_WORDS[view] || 'GO!', key: transitionKeyRef.current });
-    sound.whoosh(); // the diagonal bars sweep in
-    const end = setTimeout(() => setTransition(null), 500);
-    return () => clearTimeout(end);
-  }, [view]);
+    runTransition(TRANSITION_WORDS[view] || 'GO!');
+  }, [view, runTransition]);
+
+  // game -> results is an in-`game` change: the game-over overlay reveals WITHOUT
+  // a view switch, so the view effect above never fires for it. Run the SAME wipe
+  // here the moment results first appear, so the outcome screen arrives with the
+  // identical transition as every other screen change. Purely cosmetic, fired
+  // from App watching gameOver - it touches no game-screen logic.
+  const prevGameOverRef = useRef(false);
+  useEffect(() => {
+    const now = !!gameOver;
+    if (now && !prevGameOverRef.current) runTransition('RESULTS');
+    prevGameOverRef.current = now;
+  }, [gameOver, runTransition]);
 
   // Wipe to the homepage the moment the socket comes up (connecting -> open).
   const prevWsRef = useRef(wsStatus);
@@ -740,13 +775,9 @@ function App() {
     const prev = prevWsRef.current;
     prevWsRef.current = wsStatus;
     if (prev !== 'open' && wsStatus === 'open') {
-      transitionKeyRef.current += 1;
-      setTransition({ word: 'READY?', key: transitionKeyRef.current });
-      sound.whoosh(); // the bars sweep (no-op if audio isn't unlocked yet)
-      const end = setTimeout(() => setTransition(null), 500);
-      return () => clearTimeout(end);
+      runTransition('READY?'); // the bars sweep (whoosh no-ops if audio isn't unlocked)
     }
-  }, [wsStatus]);
+  }, [wsStatus, runTransition]);
 
   // Splash: unlock audio + start the music silently within the click gesture.
   // This click is the browser's autoplay-unlock gesture, so it's where we create
@@ -771,10 +802,7 @@ function App() {
   // homepage, and fade the music up DURING the wipe.
   function handleIntroComplete() {
     setShowIntro(false);
-    transitionKeyRef.current += 1;
-    setTransition({ word: 'TYPE A WORD', key: transitionKeyRef.current });
-    sound.whoosh(); // the bar wipe down to the homepage
-    setTimeout(() => setTransition(null), 500);
+    runTransition('TYPE A WORD'); // same wipe down to the homepage
     music.fadeTo(0.3, 500);
   }
 
