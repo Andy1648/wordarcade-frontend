@@ -232,12 +232,17 @@ export default function TransitionIntro({ onComplete }) {
           only: sharp single frame for FAST, heavier double-beat for SLOW. (Normal
           blend - no invert, so no red/green; reduced motion hides it entirely.) */}
       {flashKey > 0 && (
-        <div key={flashKey} className={`intro-flash intro-flash--${impactKind}`} />
+        <div key={`flash-${flashKey}`} className={`intro-flash intro-flash--${impactKind}`} />
       )}
       {/* One-frame total BLACKOUT (hitstop wind-up), re-keyed so it replays before
           each word. Sits above everything (incl. the flash) so the screen truly
-          goes black for that frame, then hard-clears as the word slams in. */}
-      {blackKey > 0 && <div key={blackKey} className="intro-blackframe" />}
+          goes black for that frame, then hard-clears as the word slams in.
+          KEY MUST be namespaced: flashKey and blackKey are INDEPENDENT counters, so
+          a bare numeric key collides with the flash's (both reach 1, then 2) - two
+          siblings sharing a key is undefined React behaviour ("duplicate and/or
+          omit"), which can leave this OPAQUE BLACK frame mounted = a frozen black
+          screen. Prefixing the keys makes a collision impossible. */}
+      {blackKey > 0 && <div key={`black-${blackKey}`} className="intro-blackframe" />}
     </div>
   );
 }

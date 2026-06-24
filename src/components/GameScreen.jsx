@@ -2046,17 +2046,23 @@ export default function GameScreen({
       {warmth > 0 && (
         <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
       )}
-      {/* Anime impact frame: one white frame right before the explosion. */}
-      {impactKey > 0 && <div key={impactKey} className="impact-flash" aria-hidden="true" />}
+      {/* Anime impact frame: one white frame right before the explosion.
+          Keys on these one-shot overlays MUST be namespaced: impactKey, koKey and
+          explosionKey are INDEPENDENT counters that all step 0->1 on the first
+          life-loss, so bare numeric keys make these sibling overlays collide
+          (three children keyed `1`). Duplicate sibling keys are undefined React
+          behaviour ("duplicate and/or omit") and can leave a full-screen K.O./
+          explosion overlay STUCK = a frozen dark screen. Prefixes prevent it. */}
+      {impactKey > 0 && <div key={`impact-${impactKey}`} className="impact-flash" aria-hidden="true" />}
       {/* K.O. slam when a player is eliminated (self-removes). */}
-      {koKey > 0 && <KOOverlay key={koKey} />}
+      {koKey > 0 && <KOOverlay key={`ko-${koKey}`} />}
       {showCountdown && (
         <CountdownOverlay
           onComplete={() => setShowCountdown(false)}
           onStep={(step) => sound.countdown(step === 'GO!')}
         />
       )}
-      {explosionKey > 0 && <ExplosionEffect key={explosionKey} />}
+      {explosionKey > 0 && <ExplosionEffect key={`explosion-${explosionKey}`} />}
 
       {/* Persistent banner while you're out but the game's still running. */}
       {isSpectating && (
@@ -2267,8 +2273,10 @@ export default function GameScreen({
 
           {/* Word thrown at the bomb on submit, and the rejected word shattering
               back. Both are absolutely positioned over the bomb area. */}
-          {flyKey > 0 && <FlyingWord key={flyKey} text={flyText} />}
-          {shatterKey > 0 && <ShatterWord key={shatterKey} text={shatterText} />}
+          {/* Namespaced keys: flyKey/shatterKey are independent counters and these
+              are siblings, so bare numeric keys would collide (both reach 1). */}
+          {flyKey > 0 && <FlyingWord key={`fly-${flyKey}`} text={flyText} />}
+          {shatterKey > 0 && <ShatterWord key={`shatter-${shatterKey}`} text={shatterText} />}
         </div>
 
         <div
