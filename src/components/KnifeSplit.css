@@ -32,19 +32,20 @@
 /* Shared cut line: (0 46%) -> (100% 54%), threaded through the gap between the two
    title lines. The TOP piece (carrying "TYPE FAST") is everything above it, the
    BOTTOM piece ("DIE SLOW") everything below. clip-path is static (set once) - only
-   the transform animates, so there's no per-frame paint. After the fast blade
-   stroke the pieces part SLOWLY and deliberately, PERPENDICULAR to the near-
-   horizontal cut: top lifts up (+ a hair left & tilt), bottom drops down (+ a hair
-   right & tilt), so the menu is revealed through a widening gap (a slow ~700ms
-   reveal - the drama is in the unhurried opening). */
+   the transform animates, so there's no per-frame paint. The fast blade stroke is
+   just the punctuation; the PAYOFF is the slow open. After the stroke the pieces
+   part SLOWLY and deliberately (~1000ms), PERPENDICULAR to the near-horizontal cut:
+   top lifts up (+ a hair left & tilt), bottom drops down (+ a hair right & tilt),
+   so the menu is revealed gradually through a widening gap - the unhurried opening
+   IS the drama. */
 .knife-half-top {
   clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
-  animation: knife-part-top 700ms cubic-bezier(0.5, 0, 0.25, 1) 150ms both;
+  animation: knife-part-top 1000ms cubic-bezier(0.33, 0, 0.3, 1) 150ms both;
 }
 
 .knife-half-bottom {
   clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
-  animation: knife-part-bottom 700ms cubic-bezier(0.5, 0, 0.25, 1) 150ms both;
+  animation: knife-part-bottom 1000ms cubic-bezier(0.33, 0, 0.3, 1) 150ms both;
 }
 
 @keyframes knife-part-top {
