@@ -154,9 +154,13 @@
      punch through the speed lines + accents behind it. */
   font-size: clamp(56px, min(13vw, 15vh), 150px);
   line-height: 1;
-  /* CHUNKY cartoon/vinyl outline so the words read as sticker graphics, not
-     styled text. The hard offset shadow lives on the slot (below). */
-  -webkit-text-stroke: 9px #000;
+  /* CHUNKY vinyl-cut outline so the words read as bold sticker/poster graphics,
+     not styled web text. paint-order:stroke-fill paints the solid colour fill OVER
+     the inner half of the stroke, so the VISIBLE black outline is ~half the
+     text-stroke width - 12px here reads as a ~6px hard vinyl edge. The flat solid
+     brand-colour fill (no gradient/glow) + the hard offset shadow on the slot
+     finish the drawn-not-typed look. */
+  -webkit-text-stroke: 12px #000;
   paint-order: stroke fill;
   white-space: nowrap;
   /* The line container stays on; visibility is owned per-letter (letters fade in
@@ -298,36 +302,12 @@
   40% { transform: translate(1px, 0); }
 }
 
-/* Optional speed-lines streaking behind TYPE FAST on entry, then gone. */
-.intro-line-type::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -10%;
-  width: 120%;
-  height: 70%;
-  transform: translateY(-50%);
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(46, 255, 224, 0) 0 7px,
-    rgba(46, 255, 224, 0.22) 7px 9px
-  );
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
-  opacity: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.intro-line-type.active::before {
-  animation: type-speedlines 380ms ease-out both;
-}
-
-@keyframes type-speedlines {
-  0% { opacity: 0; transform: translateY(-50%) translateX(-14%) scaleX(0.6); }
-  35% { opacity: 0.55; }
-  100% { opacity: 0; transform: translateY(-50%) translateX(10%) scaleX(1.05); }
-}
+/* The cyan speed-lines that used to streak in behind TYPE FAST on its slam were
+   REMOVED: rgba(46,255,224,...) is the cyan brand colour, so they flashed as a
+   green/cyan overlay timed exactly to the slam - the "green flash" that kept
+   getting reported. TYPE FAST's snappy machine-gun punch carries the FAST feel on
+   its own; there is now NO coloured overlay on either slam (only the plain white
+   impact flash + the white cracks). Do NOT reintroduce a coloured ::before here. */
 
 /* =====================  DIE SLOW = slow / ominous  ====================== */
 
@@ -486,7 +466,7 @@
     /* Still a big hero on phones, but capped so "DIE SLOW." never clips the
        edges; chunky-but-lighter stroke at small sizes. */
     font-size: clamp(44px, 13vw, 84px);
-    -webkit-text-stroke-width: 6px;
+    -webkit-text-stroke-width: 8px; /* ~4px visible vinyl edge at phone sizes */
   }
 
   /* Smaller sticker shadow on phones. */
@@ -525,7 +505,6 @@
     transform: none !important;
     transition: none !important;
   }
-  .intro-line-type::before { display: none; }
   .intro-line-die .intro-letter::after { display: none; }
   .intro-line-die { filter: none; }
   /* No impact frames / flashes / blackout / chromatic punch under reduced motion -
