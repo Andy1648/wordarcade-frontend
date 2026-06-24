@@ -26,7 +26,7 @@
    On every word landing the WHOLE screen scales up a hair for a single frame, then
    hard-snaps back to 1 - your eye feels the hit without registering a bounce. It
    lives on the overlay (the whole-screen container) and is the ONLY transform here,
-   so scaling everything (bg, title, cracks, flash) together never fights the stage
+   so scaling everything (bg, title, flash) together never fights the stage
    shake / tilt / breathe nested below. Retriggered from JS per hit. The hold-then-
    hard-cut keyframe (not an ease) is what makes it a one-frame punch, not a bounce.
    FAST = sharper/smaller (1.05, ~14ms hold); SLOW = heavier/bigger (1.08, ~22ms). */
@@ -172,73 +172,13 @@
      0 -> 1 when the line goes .active), so the stagger reads crisply instead of
      being smeared by a whole-word opacity fade. */
   opacity: 1;
-  /* Above the impact cracks (which sit in the slot behind), so the letters are
-     never obscured. */
+  /* Sits above the slot's resting layer so the letters are never obscured. */
   z-index: 1;
   will-change: transform;
 }
 
 .intro-line-type { color: #2EFFE0; } /* cyan */
 .intro-line-die { color: #FF2EC4; } /* pink */
-
-/* ---- Impact CRACKS: hairline fractures that spider out from each slam ----
-   An SVG fracture field per phrase, sitting in the slot BEHIND the line (z-index:0
-   vs the line's z-index:1), so it can never touch text readability. The 1000x400
-   viewBox is stretched over a box wider + much taller than the word, so the cracks
-   spread off the letters into the surrounding black. Cracks are BRIGHT WHITE so
-   they read as sharp fractures in the glass/screen, kept on a constant on-screen
-   weight via non-scaling-stroke. Each path is hidden (dash fully offset) until the phrase has
-   landed, then DRAWS outward and STAYS - damage that persists until the knife-split
-   wipes the whole intro away. */
-.intro-cracks {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 150%;
-  height: 300%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  pointer-events: none;
-  overflow: visible;
-  /* Per-phrase draw timing (overridden by the --slow variant). --base delays the
-     draw to land right as the word settles; --o (per path) * --stagger propagates
-     the fracture outward. */
-  --base: 120ms;
-  --stagger: 24ms;
-  --dur: 240ms;
-}
-
-.intro-cracks path {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.65); /* bright white - sharp fractures in glass */
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke; /* constant hairline weight despite the stretch */
-  opacity: var(--op, 1); /* per-path: branches read fainter than main fissures */
-  /* pathLength=1 on each path, so the whole length is one dash unit: offset 1 = the
-     crack is undrawn, 0 = fully drawn. */
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-}
-
-/* DIE SLOW spreads heavier + slower than the snappy FAST fracture. */
-.intro-cracks--slow {
-  --base: 160ms;
-  --stagger: 66ms;
-  --dur: 560ms;
-}
-
-/* Draw only once the phrase has slammed (the .is-drawing flag is set with the
-   line's active state), and keep it drawn (both/forwards). */
-.intro-cracks.is-drawing path {
-  animation: intro-crack-draw var(--dur) cubic-bezier(0.25, 0.8, 0.3, 1) both;
-  animation-delay: calc(var(--base) + var(--o, 0) * var(--stagger));
-}
-
-@keyframes intro-crack-draw {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
-}
 
 /* Each letter is its own box so it can stagger in; hidden until its line is
    active. */
@@ -312,7 +252,7 @@
    green/cyan overlay timed exactly to the slam - the "green flash" that kept
    getting reported. TYPE FAST's snappy machine-gun punch carries the FAST feel on
    its own; there is now NO coloured overlay on either slam (only the plain white
-   impact flash + the white cracks). Do NOT reintroduce a coloured ::before here. */
+   impact flash). Do NOT reintroduce a coloured ::before here. */
 
 /* =====================  DIE SLOW = slow / ominous  ====================== */
 
@@ -529,10 +469,5 @@
   .intro-line.active .intro-letter {
     opacity: 1;
     transition: opacity 260ms ease-out;
-  }
-  /* Cracks show statically (fully drawn) once the phrase lands - no spread anim. */
-  .intro-cracks.is-drawing path {
-    animation: none !important;
-    stroke-dashoffset: 0;
   }
 }
