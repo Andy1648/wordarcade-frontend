@@ -86,27 +86,6 @@
   overflow: visible;
 }
 
-/* ---- Graffiti tags ---- */
-
-.wall-tag {
-  position: absolute;
-  font-family: 'Bungee', cursive;
-  line-height: 1;
-  paint-order: stroke fill;
-  white-space: nowrap;
-  transform-origin: center;
-}
-
-/* A thin paint drip running down from a tag (same colour, fades as it falls). */
-.wall-tag-drip {
-  position: absolute;
-  bottom: -4px;
-  left: 16%;
-  width: 3px;
-  border-radius: 0 0 3px 3px;
-  opacity: 0.7;
-}
-
 /* ---- Stickers ---- */
 
 /* Each sticker holds its resting tilt (--rot) in every keyframe and adds a slow

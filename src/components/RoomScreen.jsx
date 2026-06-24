@@ -65,6 +65,20 @@ function minPlayersFor(gameType) {
   return MIN_PLAYERS_BY_TYPE[gameType] || MIN_PLAYERS_TO_START;
 }
 
+// Bot opponent difficulty (Word Bomb solo). These are the BOT's own skill tiers
+// - how fast it answers and how often it whiffs - and are deliberately separate
+// from the game's timer difficulty (HARD/CRAZY/HELL above). The `key` matches the
+// backend's BOT_DIFFICULTY keys (easy/medium/hard).
+const BOT_DIFFICULTIES = [
+  { key: 'easy', label: 'EASY', desc: 'slow · misses a lot' },
+  { key: 'medium', label: 'MEDIUM', desc: 'quick · solid' },
+  { key: 'hard', label: 'HARD', desc: 'fast · brutal' },
+];
+
+function botDifficultyLabel(key) {
+  return (BOT_DIFFICULTIES.find((d) => d.key === key) || {}).label || 'BOT';
+}
+
 /**
  * Shown once a room has been successfully created or joined.
  *
@@ -74,11 +88,13 @@ function minPlayersFor(gameType) {
  * players instead see the current difficulty as read-only text and a
  * "waiting for host" message.
  */
-export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, onLeave, onSetGameType, onSetDifficulty, onStartGame }) {
+export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot }) {
   // Spam-click guards: lock Start once pressed (re-enabled if the server
   // rejects it) and Leave once pressed (you're on your way out).
   const [starting, setStarting] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  // Whether the bot difficulty picker is expanded (after tapping ADD BOT).
+  const [showBotPicker, setShowBotPicker] = useState(false);
   const { sound } = useSound();
 
   // A server error means the start attempt bounced - let the host try again.
@@ -117,6 +133,26 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   const isSoloCategoryBlitz =
     room.gameType === 'category-blitz' && room.players.length === 1;
   const canStart = isSoloCategoryBlitz || room.players.length >= minPlayers;
+
+  // ---- Solo Word Bomb bot opponent ----
+  const humanCount = room.players.filter((p) => !p.isBot).length;
+  const bot = room.players.find((p) => p.isBot);
+  // The host can add ONE bot when they're alone in a Word Bomb room. (The server
+  // enforces the same; this just shows/hides the control.)
+  const canAddBot =
+    isHost && room.gameType === 'word-bomb' && humanCount === 1 && !bot;
+
+  function handleAddBot(difficulty) {
+    sound.click();
+    setShowBotPicker(false);
+    if (onAddBot) onAddBot(difficulty);
+  }
+
+  function handleRemoveBot() {
+    sound.click();
+    setShowBotPicker(false);
+    if (onRemoveBot) onRemoveBot();
+  }
 
   function handleStartGame() {
     if (starting) return;
@@ -162,6 +198,21 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                   <span className="room-player-name">{player.name}</span>
                   {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
+                  {player.isBot && (
+                    <span className="room-bot-badge">
+                      BOT · {botDifficultyLabel(player.botDifficulty)}
+                    </span>
+                  )}
+                  {player.isBot && isHost && (
+                    <button
+                      className="room-bot-remove"
+                      onClick={handleRemoveBot}
+                      title="Remove this bot"
+                      aria-label="Remove bot"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -174,7 +225,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             its bored fidget), under a softly pulsing "waiting for players" cue.
             Also shown briefly on a join so the excited pop can play even once the
             room has become startable. */}
-        {(!canStart || joinPop) && (
+        {((!canStart && !canAddBot) || joinPop) && (
           <div className="room-waiting">
             <div className="room-waiting-mascot">
               <Mascot
@@ -183,7 +234,44 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                 size={84}
               />
             </div>
-            {!canStart && <div className="room-waiting-cue">WAITING FOR PLAYERS...</div>}
+            {!canStart && !canAddBot && (
+              <div className="room-waiting-cue">WAITING FOR PLAYERS...</div>
+            )}
+          </div>
+        )}
+
+        {/* Solo Word Bomb: rather than wait for a human, the lone player can add a
+            bot opponent at a difficulty of their choosing (the bot's own skill,
+            separate from the timer difficulty below). */}
+        {canAddBot && (
+          <div className="room-addbot">
+            {!showBotPicker ? (
+              <button
+                className="room-addbot-btn"
+                onClick={() => {
+                  sound.click();
+                  setShowBotPicker(true);
+                }}
+              >
+                🤖 ADD BOT OPPONENT
+              </button>
+            ) : (
+              <>
+                <div className="room-addbot-label">PICK BOT DIFFICULTY</div>
+                <div className="room-addbot-row">
+                  {BOT_DIFFICULTIES.map((d) => (
+                    <button
+                      key={d.key}
+                      className="room-addbot-diff"
+                      onClick={() => handleAddBot(d.key)}
+                    >
+                      <span className="room-addbot-name">{d.label}</span>
+                      <span className="room-addbot-desc">{d.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 

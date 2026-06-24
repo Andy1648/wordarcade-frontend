@@ -134,6 +134,13 @@ const HYPE_WORDS = [
   'MAXIMUM YAP', 'THE CROWD GOES WILD', 'RENT FREE', 'CLUTCH',
   'WORDSMITH UNLOCKED', 'BOMB DEFUSED', 'NO CAP JUST WORDS', 'FINGERS BLESSED',
   'SPEED DEMON',
+  // Second hype batch.
+  'CRACKED', 'GOATED', 'NO DIFF', 'TOO CLEAN', 'WORD WIZARD', 'TYPEMASTER',
+  'ILLEGAL', 'BANNED FOR THIS', 'CALL THE COPS', 'EASY WORK', 'PROFESSOR MODE',
+  'CERTIFIED HEATER', 'BARS ON BARS', 'PURE SKILL', 'KEYBOARD ON FIRE',
+  'YAP CHAMPION', 'LITERACY CHECK PASSED', 'SPELLING BEE FINALIST', 'TYPE LORD',
+  'DEMON TIME', 'ATE NO CRUMBS', 'WORD CRIME', 'SHEESH AGAIN', 'MASSIVE W',
+  'HE DIFFERENT', 'BRAIN UNLOCKED', 'TYPED THAT BLINDFOLDED',
 ];
 const HYPE_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 
@@ -147,6 +154,28 @@ const END_GAME_BLURBS = [
   'NO SURVIVORS.',
   'THE BOMB IS UNDEFEATED.',
   'RUN IT BACK?',
+  'STATISTICALLY, SOMEONE HAD TO LOSE.',
+  'WORDS: HARD. YOU: ALSO HARD.',
+  'SCREENSHOT IT BEFORE THEY DENY IT.',
+  'THE GROUP CHAT WILL HEAR ABOUT THIS.',
+  'CERTIFIED YAPPER OF THE LOBBY.',
+  'RESPECTFULLY, GET COOKED.',
+  'YOU VS THE ALPHABET: ALPHABET WINS.',
+  'ANOTHER ONE FOR THE HIGHLIGHT REEL.',
+  'TYPE FASTER NEXT TIME, CHAMP.',
+  'THE BOMB SENDS ITS REGARDS.',
+  'L + RAN OUT OF WORDS.',
+  'W IN THE CHAT.',
+  'GG. NOW TOUCH SOME GRASS.',
+  'HUMBLED BY A KEYBOARD.',
+  'NO WORDS? NO WIN.',
+  'BRAGGING RIGHTS: UNLOCKED.',
+  'CLUTCH OR CHOKE. YOU PICKED ONE.',
+  'SAVE A FEW WORDS FOR THE REST OF US.',
+  'CHAMPION OF TYPING THINGS.',
+  'YOUR FINGERS DID NOT FINGER.',
+  'BETTER LUCK NEXT ALPHABET.',
+  'OUTSPELLED AND OUTCLASSED.',
 ];
 
 /**
@@ -653,40 +682,6 @@ export function WobbleText({ text }) {
 // ---- Bomb tension lookups (keyed by tier) ----
 const BOMB_SCALE = { calm: 1.0, warning: 1.05, critical: 1.1 };
 const FLAME_SCALE = { calm: 1.0, warning: 1.35, critical: 1.7 };
-const BODY_INNER_FILL = { calm: '#2a2a2a', warning: '#3a1a1a', critical: '#5a1010' };
-const HIGHLIGHT_1 = { calm: '#444', warning: '#5a2a2a', critical: '#7a2020' };
-const HIGHLIGHT_2 = { calm: '#555', warning: '#6a3a3a', critical: '#8a3030' };
-
-// Spark particles around the flame - more (and bigger, redder) as tension
-// rises. Offsets are relative to the burning tip; values are fixed (not random
-// per render) so the sparks don't jitter every second as the flame moves.
-const BOMB_SPARKS = {
-  calm: [
-    { dx: -13, dy: -8, r: 2.5, c: '#FFE94A', delay: 0, dur: 520 },
-    { dx: 11, dy: -5, r: 2, c: '#FF6B3D', delay: 160, dur: 460 },
-    { dx: -3, dy: -18, r: 2, c: '#FFE94A', delay: 300, dur: 560 },
-    { dx: 6, dy: -14, r: 2.5, c: '#FF6B3D', delay: 420, dur: 500 },
-  ],
-  warning: [
-    { dx: -15, dy: -9, r: 3, c: '#FFE94A', delay: 0, dur: 520 },
-    { dx: 13, dy: -6, r: 2.5, c: '#FF6B3D', delay: 120, dur: 460 },
-    { dx: -5, dy: -20, r: 2.5, c: '#FFE94A', delay: 260, dur: 560 },
-    { dx: 8, dy: -16, r: 3, c: '#FF6B3D', delay: 380, dur: 500 },
-    { dx: -10, dy: -15, r: 2, c: '#FFE94A', delay: 200, dur: 540 },
-    { dx: 3, dy: -22, r: 2.5, c: '#FF6B3D', delay: 440, dur: 480 },
-  ],
-  critical: [
-    { dx: -17, dy: -10, r: 3.5, c: '#FFE94A', delay: 0, dur: 480 },
-    { dx: 15, dy: -7, r: 3, c: '#FF6B3D', delay: 90, dur: 440 },
-    { dx: -6, dy: -23, r: 3, c: '#FF5C5C', delay: 180, dur: 520 },
-    { dx: 9, dy: -19, r: 3.5, c: '#FFE94A', delay: 270, dur: 500 },
-    { dx: -12, dy: -17, r: 3, c: '#FF6B3D', delay: 150, dur: 460 },
-    { dx: 4, dy: -25, r: 3, c: '#FF5C5C', delay: 360, dur: 540 },
-    { dx: 18, dy: -13, r: 2.5, c: '#FFE94A', delay: 300, dur: 420 },
-    { dx: -19, dy: -5, r: 2.5, c: '#FF6B3D', delay: 420, dur: 500 },
-    { dx: 0, dy: -15, r: 3, c: '#FF5C5C', delay: 240, dur: 480 },
-  ],
-};
 
 // Fixed fuse curve (cap top -> up and right). Geometry never changes - the
 // burning is done purely with stroke-dashoffset, so it can transition smoothly.
@@ -1212,9 +1207,17 @@ function useHypeFeedback(lastWordResult) {
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
+  // Handle each distinct result object exactly once. The effect is keyed on
+  // lastWordResult's reference, but React StrictMode (dev) double-invokes mount
+  // effects - this ref makes a given accepted result bump hypeKey only ONCE so
+  // dev never double-pops the hype/score. Identity-based (not value), so two
+  // genuinely separate accepts of the same word still each fire. No prod change.
+  const handledResultRef = useRef(null);
 
   useEffect(() => {
     if (!lastWordResult) return;
+    if (lastWordResult === handledResultRef.current) return;
+    handledResultRef.current = lastWordResult;
 
     if (lastWordResult.accepted) {
       setHypeKey((k) => k + 1);
@@ -1773,6 +1776,18 @@ export default function GameScreen({
     return () => sound.stopSizzle();
   }, [inputEnabled, gameType, sound]);
 
+  // One random end-game roast blurb, fixed for the duration of this result
+  // (re-picked only when a new game_over lands). MUST live here, above every
+  // early return below, so the hook runs on every render regardless of game
+  // type or whether gameState has arrived yet - otherwise the null-gameState
+  // placeholder render skips it and the next render (with gameState) runs an
+  // extra hook, tripping React's "rendered more hooks than last time" (#310)
+  // and white-screening the whole app the instant a Word Bomb game starts.
+  const endBlurb = useMemo(
+    () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
+    [gameOver]
+  );
+
   // Imposter Word is a separate (social-deduction, multi-phase) experience -
   // its own component. Routed after the hooks above (which all no-op for this
   // mode) so the hook order stays stable across game types.
@@ -1884,12 +1899,8 @@ export default function GameScreen({
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
-  // One random end-game roast blurb, fixed for the duration of this result
-  // (re-picked only when a new game_over lands).
-  const endBlurb = useMemo(
-    () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
-    [gameOver]
-  );
+  // (endBlurb is computed above, before the early returns, so the hook order
+  // stays stable whether or not gameState has arrived yet.)
 
   // ---- Spectator mode ----
   // A player who's lost all their lives keeps watching (read-only) until the
@@ -1899,6 +1910,17 @@ export default function GameScreen({
     !!myPlayer && (myPlayer.eliminated || myPlayer.lives <= 0) && !gameOver;
   // How many players are out but still in the room - the live audience.
   const spectatorCount = players.filter((p) => p.eliminated || p.lives <= 0).length;
+  // First-person last-life: true only when WE personally are on our final life.
+  // Mirrors the roster chip's `lastLife` flag (lives === 1, not out, multi-life
+  // mode) but for myPlayer, and drives the screen-edge vignette below. Reads off
+  // the live players/gameState props (fed by turn_update), so it clears the moment
+  // we die (eliminated / lives <= 0) or claw back a life (lives !== 1).
+  const myLastLife =
+    !!myPlayer &&
+    !myPlayer.eliminated &&
+    myPlayer.lives === 1 &&
+    maxLives > 1 &&
+    !gameOver;
 
   // ---- Subliminal intensity cues ----
   // Color temperature: a faint red wash that deepens as players are eliminated,
@@ -1996,6 +2018,12 @@ export default function GameScreen({
           gradient is painted once, never recomputed per frame. Outside .game-stage
           so its position:fixed isn't trapped by the stage's drain filter. */}
       <div className="wb-danger-vignette" aria-hidden="true" />
+      {/* First-person LAST-LIFE vignette: a faint red edge-pulse shown only while
+          WE are on our final life, so the personal stakes are felt at the screen
+          edges (the roster chip already covers seeing OTHERS at last life). Its own
+          fixed layer (not the --danger vignette, not the beat shadow-slam), pulsing
+          at the SAME 760ms as the roster ring so the two read as one system. */}
+      {myLastLife && <div className="wb-lastlife-vignette" aria-hidden="true" />}
       {/* Bomb hand-off ghost: whips from the previous active player's card to the
           new one along an arc (transform-only), with a trailing after-image and a
           landing impact ring. Fixed at viewport coords measured from the cards. */}
@@ -2018,17 +2046,23 @@ export default function GameScreen({
       {warmth > 0 && (
         <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
       )}
-      {/* Anime impact frame: one white frame right before the explosion. */}
-      {impactKey > 0 && <div key={impactKey} className="impact-flash" aria-hidden="true" />}
+      {/* Anime impact frame: one white frame right before the explosion.
+          Keys on these one-shot overlays MUST be namespaced: impactKey, koKey and
+          explosionKey are INDEPENDENT counters that all step 0->1 on the first
+          life-loss, so bare numeric keys make these sibling overlays collide
+          (three children keyed `1`). Duplicate sibling keys are undefined React
+          behaviour ("duplicate and/or omit") and can leave a full-screen K.O./
+          explosion overlay STUCK = a frozen dark screen. Prefixes prevent it. */}
+      {impactKey > 0 && <div key={`impact-${impactKey}`} className="impact-flash" aria-hidden="true" />}
       {/* K.O. slam when a player is eliminated (self-removes). */}
-      {koKey > 0 && <KOOverlay key={koKey} />}
+      {koKey > 0 && <KOOverlay key={`ko-${koKey}`} />}
       {showCountdown && (
         <CountdownOverlay
           onComplete={() => setShowCountdown(false)}
           onStep={(step) => sound.countdown(step === 'GO!')}
         />
       )}
-      {explosionKey > 0 && <ExplosionEffect key={explosionKey} />}
+      {explosionKey > 0 && <ExplosionEffect key={`explosion-${explosionKey}`} />}
 
       {/* Persistent banner while you're out but the game's still running. */}
       {isSpectating && (
@@ -2056,9 +2090,19 @@ export default function GameScreen({
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
             Held back until the hitlag freeze releases so the reaction lands after
-            the impact, not during it. */}
-        {hypeKey > 0 && !hitlag &&
-          (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
+            the impact, not during it.
+            The popup is keyed by hypeKey (bumped once per accept) so it replays
+            per accepted word. It MUST live in this always-present wrapper: as a
+            bare keyed child directly among .game-stage's many conditional unkeyed
+            siblings, React re-mounted it on nearly every re-render (the stage
+            re-renders ~12x/s), re-rolling a fresh random hype word each time -
+            that was the "AWESOME! spam while typing". The stable wrapper
+            (display:contents, zero layout effect) gives it a fixed reconciliation
+            slot so it mounts exactly once per accept. */}
+        <div style={{ display: 'contents' }}>
+          {hypeKey > 0 && !hitlag &&
+            (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
+        </div>
         <div className="game-header">
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
@@ -2229,8 +2273,10 @@ export default function GameScreen({
 
           {/* Word thrown at the bomb on submit, and the rejected word shattering
               back. Both are absolutely positioned over the bomb area. */}
-          {flyKey > 0 && <FlyingWord key={flyKey} text={flyText} />}
-          {shatterKey > 0 && <ShatterWord key={shatterKey} text={shatterText} />}
+          {/* Namespaced keys: flyKey/shatterKey are independent counters and these
+              are siblings, so bare numeric keys would collide (both reach 1). */}
+          {flyKey > 0 && <FlyingWord key={`fly-${flyKey}`} text={flyText} />}
+          {shatterKey > 0 && <ShatterWord key={`shatter-${shatterKey}`} text={shatterText} />}
         </div>
 
         <div
@@ -2341,7 +2387,12 @@ export default function GameScreen({
                 <span className="game-skip-cost">-1 LIFE</span>
               </button>
             )}
-            {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
+            {/* Stable wrapper so the keyed "+1" mounts once per accept instead of
+                re-mounting on every re-render amid the conditional siblings here
+                (same fix as the hype popup above). */}
+            <div style={{ display: 'contents' }}>
+              {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
+            </div>
           </div>
         )}
 
@@ -2930,7 +2981,12 @@ function CategoryBlitzScreen({
           <CountdownOverlay onComplete={() => setShowCountdown(false)} />
         )}
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
-          {hypeKey > 0 && <HypePopup key={hypeKey} />}
+          {/* Stable wrapper so the keyed hype popup mounts once per accept, not
+              on every re-render amid the conditional siblings (see the Word Bomb
+              note above). */}
+          <div style={{ display: 'contents' }}>
+            {hypeKey > 0 && <HypePopup key={hypeKey} />}
+          </div>
           <div className="game-header">
             <div className="game-title">
               <SprayReveal>CATEGORY BLITZ</SprayReveal>
@@ -3069,7 +3125,10 @@ function CategoryBlitzScreen({
             <button className="game-send-btn" onClick={submit}>
               SEND
             </button>
-            {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+            {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
+            <div style={{ display: 'contents' }}>
+              {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+            </div>
           </div>
 
           {/* While the AI judge is running (list-miss), show a subtle "checking…"
