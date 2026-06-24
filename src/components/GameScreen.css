@@ -2902,7 +2902,9 @@
   .game-over-rematch,
   .game-over-leave { min-height: 44px; }
   .game-leave-btn,
-  .game-mute-btn { min-height: 40px; }
+  .game-mute-btn { min-height: 44px; }
+  /* The icon-only mute toggle also needs a 44px-wide hit area, not just height. */
+  .game-mute-btn { min-width: 44px; }
 
   /* Game-over card eases its padding to fit narrow screens. */
   .game-over-card { padding: 24px 18px; }
