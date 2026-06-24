@@ -321,6 +321,59 @@
   opacity: 0.5;
 }
 
+/* ---- LAST LIFE: a player one hit from elimination ----
+   The card keeps its idle rock / active bob (those own `animation`/transform) and
+   the beat shadow-slam (owns box-shadow), so the warning rides on a dedicated
+   ::after ring + a corner badge - no property collision. A HARD red border ring
+   (no glow, per the flat style) pulses its opacity so the threat reads across the
+   table. The badge sits at the top-right so it never fights the YOUR TURN tag. */
+.game-player-card.last-life::after {
+  content: '';
+  position: absolute;
+  inset: -3px; /* ring just outside the card's own 3px border */
+  border: 3px solid #FF2E2E;
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 4;
+  animation: last-life-ring 760ms ease-in-out infinite;
+}
+
+@keyframes last-life-ring {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+.game-player-lastlife {
+  position: absolute;
+  top: -9px;
+  right: -7px;
+  z-index: 5;
+  background: #FF2E2E;
+  color: #fff;
+  border: 2px solid #000;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.4px;
+  padding: 3px 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: rotate(6deg);
+  animation: last-life-badge 760ms ease-in-out infinite;
+}
+
+@keyframes last-life-badge {
+  0%, 100% { transform: rotate(6deg) scale(1); }
+  50% { transform: rotate(6deg) scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-player-card.last-life::after { animation: none; opacity: 0.9; }
+  .game-player-lastlife { animation: none; }
+}
+
 /* The player's session colour caps the top of their card - an always-on identity
    strip that survives every card state (active orange / eliminated dim), so the
    colour reads even where the state owns the background. */
@@ -1680,24 +1733,81 @@
   gap: 10px;
 }
 
-/* REMATCH - the primary "play again" action: cyan, the biggest button. */
+/* REMATCH - the primary "play again" action: cyan, the BIGGEST, loudest button.
+   A constant idle pulse keeps it from going static and pulls the eye straight to
+   it after the result lands. */
 .game-over-rematch {
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: 22px;
+  letter-spacing: 1px;
   color: #000;
   background: #2EFFE0;
-  border: 4px solid #1A9985;
+  border: 5px solid #1A9985;
   border-radius: 8px;
-  padding: 14px 0;
+  padding: 18px 0;
   width: 100%;
   cursor: pointer;
-  box-shadow: 5px 5px 0 #000;
+  box-shadow: 6px 6px 0 #000;
   transition: transform 0.1s, box-shadow 0.1s;
+  animation: rematch-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rematch-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.game-over-rematch:hover {
+  transform: scale(1.06) rotate(-1deg);
+  animation: none;
 }
 
 .game-over-rematch:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0 #000;
+  transform: translate(3px, 3px) scale(1);
+  box-shadow: 2px 2px 0 #000;
+  animation: none;
+}
+
+/* Non-host "waiting for host to rematch" cue - sits where REMATCH would be, so
+   non-hosts know the game can continue in this same room. Animated ellipsis +
+   a gentle breathe so it never reads as frozen/broken. */
+.game-over-waiting {
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: #2EFFE0;
+  background: #160a2b;
+  border: 4px dashed #1A9985;
+  border-radius: 8px;
+  padding: 14px 8px;
+  width: 100%;
+  text-align: center;
+  animation: go-waiting-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes go-waiting-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Animated trailing dots after WAITING FOR HOST. */
+.go-waiting-dots::after {
+  content: '';
+  animation: go-waiting-dots 1.4s steps(1, end) infinite;
+}
+
+@keyframes go-waiting-dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-over-rematch,
+  .game-over-waiting { animation: none; }
+  .go-waiting-dots::after { content: '...'; animation: none; }
 }
 
 /* Alongside REMATCH, LEAVE steps down to a smaller secondary action. */
@@ -2586,12 +2696,19 @@
 /* ---- Summary row: three even stat tiles ---- */
 
 .go-stats-summary {
-  display: flex;
+  /* 3-up grid so the six headline stats wrap into two tidy rows (big screenshot
+     numbers) instead of squeezing into one cramped strip. */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
+/* CB reuses the summary grid as a hero stat strip above the scoreboard. */
+.cb-stats-summary {
+  margin-bottom: 12px;
+}
+
 .go-summary-item {
-  flex: 1;
   background: #1a0b2e;
   border: 3px solid #000;
   border-radius: 8px;
