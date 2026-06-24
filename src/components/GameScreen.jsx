@@ -1768,6 +1768,18 @@ export default function GameScreen({
     return () => sound.stopSizzle();
   }, [inputEnabled, gameType, sound]);
 
+  // One random end-game roast blurb, fixed for the duration of this result
+  // (re-picked only when a new game_over lands). MUST live here, above every
+  // early return below, so the hook runs on every render regardless of game
+  // type or whether gameState has arrived yet - otherwise the null-gameState
+  // placeholder render skips it and the next render (with gameState) runs an
+  // extra hook, tripping React's "rendered more hooks than last time" (#310)
+  // and white-screening the whole app the instant a Word Bomb game starts.
+  const endBlurb = useMemo(
+    () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
+    [gameOver]
+  );
+
   // Imposter Word is a separate (social-deduction, multi-phase) experience -
   // its own component. Routed after the hooks above (which all no-op for this
   // mode) so the hook order stays stable across game types.
@@ -1879,12 +1891,8 @@ export default function GameScreen({
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
-  // One random end-game roast blurb, fixed for the duration of this result
-  // (re-picked only when a new game_over lands).
-  const endBlurb = useMemo(
-    () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
-    [gameOver]
-  );
+  // (endBlurb is computed above, before the early returns, so the hook order
+  // stays stable whether or not gameState has arrived yet.)
 
   // ---- Spectator mode ----
   // A player who's lost all their lives keeps watching (read-only) until the
