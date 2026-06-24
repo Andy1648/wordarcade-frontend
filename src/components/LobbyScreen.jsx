@@ -1,6 +1,7 @@
 // LobbyScreen.jsx
 import { useState, useEffect } from 'react';
 import { GAMES } from '../gameData';
+import { getStoredName, rememberName } from '../playerName';
 import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import './LobbyScreen.css';
@@ -16,7 +17,10 @@ const ROOM_CODE_LENGTH = 5;
  * player sees one consistent error experience regardless of source.
  */
 export default function LobbyScreen({ mode, defaultPublic = false, onBack, onContinue, wsStatus, serverError }) {
-  const [name, setName] = useState('');
+  // Pre-fill from the last name the player used (persisted in localStorage) so
+  // returning players don't retype it. Falls back to '' on a fresh device / when
+  // storage is unavailable. We keep the stored copy in sync as they edit.
+  const [name, setName] = useState(() => getStoredName());
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
   // Create-room visibility. Private (default) = code-only, matching the original
@@ -51,7 +55,12 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
   }
 
   function handleNameChange(event) {
-    setName(event.target.value);
+    const next = event.target.value;
+    setName(next);
+    // Persist as they type so the name carries to Quick Play / Browse and across
+    // sessions. rememberName trims + no-ops on empty, so clearing the field keeps
+    // the last good name rather than wiping it.
+    rememberName(next);
     if (error) setError('');
   }
 
@@ -92,14 +101,12 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
       payload.isPublic = isPublic;
     }
 
-    // Validation passed and we're about to send - lock the button.
+    // Validation passed and we're about to send - lock the button and persist the
+    // final trimmed name for the no-prompt flows / next visit.
+    rememberName(trimmedName);
     setSubmitting(true);
 
-    if (onContinue) {
-      onContinue(payload);
-    } else {
-      console.log('Continue clicked (no onContinue handler wired up yet):', payload);
-    }
+    if (onContinue) onContinue(payload);
   }
 
   function handleKeyDown(event) {
