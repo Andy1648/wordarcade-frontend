@@ -1150,14 +1150,15 @@ function App() {
   }
 
   // The attract/splash screen follows the loading screen. Clicking it starts
-  // everything (audio unlock, intro, etc.). Like the intro, the shared WallScene +
-  // ParticleField are intentionally NOT mounted here: the splash is stripped back
-  // to a calm dark field so the wordmark + mascot are the only focal points, with
-  // no graffiti wall / halftone / drifting particles competing. Those backdrops
-  // still render on the menu and game.
+  // everything (audio unlock, intro, etc.). The persistent WallScene +
+  // ParticleField render behind it - the splash's own translucent veil dims the
+  // graffiti wall so the wordmark + mascot stay the focal point. (Only the INTRO
+  // card is stripped to a bare black field; the splash keeps its full backdrop.)
   if (showSplash) {
     return (
       <>
+        <WallScene intensity="calm" />
+        <ParticleField />
         <SplashScreen onStart={handleSplashStart} onDismiss={handleSplashDismiss} />
         <CursorTrail />
       </>
