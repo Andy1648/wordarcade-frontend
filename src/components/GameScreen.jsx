@@ -1207,9 +1207,17 @@ function useHypeFeedback(lastWordResult) {
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
+  // Handle each distinct result object exactly once. The effect is keyed on
+  // lastWordResult's reference, but React StrictMode (dev) double-invokes mount
+  // effects - this ref makes a given accepted result bump hypeKey only ONCE so
+  // dev never double-pops the hype/score. Identity-based (not value), so two
+  // genuinely separate accepts of the same word still each fire. No prod change.
+  const handledResultRef = useRef(null);
 
   useEffect(() => {
     if (!lastWordResult) return;
+    if (lastWordResult === handledResultRef.current) return;
+    handledResultRef.current = lastWordResult;
 
     if (lastWordResult.accepted) {
       setHypeKey((k) => k + 1);
