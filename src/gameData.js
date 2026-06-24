@@ -29,7 +29,7 @@ export const GAMES = [
     id: 'category-blitz',
     artKey: 'CategoryBlitzArt',
     name: 'CATEGORY\nBLITZ',
-    description: 'NAME THINGS FAST. NO REPEATS.',
+    description: 'AI JUDGES YOUR ANSWERS — GET CREATIVE.',
     baseColor: '#FF6B3D',
     iconBg: '#fff',
     badgeText: 'SOLO / MULTI',

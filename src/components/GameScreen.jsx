@@ -1200,6 +1200,7 @@ export default function GameScreen({
   isHost,
   timerSeconds,
   lastWordResult,
+  checkingAnswer,
   gameOver,
   roomPlayers,
   playerColors = {},
@@ -1758,6 +1759,7 @@ export default function GameScreen({
         isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
+        checkingAnswer={checkingAnswer}
         gameOver={gameOver}
         roomPlayers={roomPlayers || []}
         playerColors={playerColors}
@@ -2470,6 +2472,7 @@ function CategoryBlitzScreen({
   isHost,
   timerSeconds,
   lastWordResult,
+  checkingAnswer,
   gameOver,
   roomPlayers,
   playerColors = {},
@@ -2939,7 +2942,7 @@ function CategoryBlitzScreen({
             )}
             <input
               ref={inputRef}
-              className="game-input"
+              className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
               type="text"
               value={draft}
               onChange={(event) => {
@@ -2962,16 +2965,30 @@ function CategoryBlitzScreen({
             {hypeKey > 0 && <FloatingScore key={hypeKey} />}
           </div>
 
-          {lastWordResult && (
-            <div
-              className={`game-toast ${
-                lastWordResult.accepted ? 'accepted' : 'rejected'
-              }`}
-            >
-              {lastWordResult.accepted
-                ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
-                : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+          {/* While the AI judge is running (list-miss), show a subtle "checking…"
+              chip instead of the previous result toast; it clears the instant the
+              answer_result lands and the normal accept/reject toast plays. */}
+          {checkingAnswer ? (
+            <div className="game-toast cb-checking-toast" aria-live="polite">
+              checking
+              <span className="cb-checking-dots" aria-hidden="true">
+                <i>.</i>
+                <i>.</i>
+                <i>.</i>
+              </span>
             </div>
+          ) : (
+            lastWordResult && (
+              <div
+                className={`game-toast ${
+                  lastWordResult.accepted ? 'accepted' : 'rejected'
+                }`}
+              >
+                {lastWordResult.accepted
+                  ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
+                  : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+              </div>
+            )
           )}
 
             </div>

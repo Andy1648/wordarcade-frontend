@@ -131,6 +131,12 @@ function App() {
   const [gameState, setGameState] = useState(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [lastWordResult, setLastWordResult] = useState(null);
+  // Category Blitz: the answer currently being judged by the AI fallback. Set when
+  // an `answer_checking` frame arrives (the server is calling Haiku on a list-miss)
+  // and cleared the instant the `answer_result` lands - drives a brief "checking…"
+  // indicator on the input. Null whenever nothing is mid-check (the common instant
+  // accept-list path never sends answer_checking, so this stays null there).
+  const [checkingAnswer, setCheckingAnswer] = useState(null);
   const [gameOver, setGameOver] = useState(null);
   // Which mode the in-progress game is - 'word-bomb' | 'category-blitz'.
   // Learned authoritatively from the game_started message so GameScreen
@@ -655,8 +661,15 @@ function App() {
       setImposterPhase('reveal');
     }
 
+    // AI fallback is judging this answer (list-miss). Show the "checking…"
+    // indicator until the authoritative answer_result lands.
+    if (lastMessage.type === 'answer_checking') {
+      setCheckingAnswer(lastMessage.payload?.answer ?? '');
+    }
+
     if (lastMessage.type === 'answer_result') {
       const payload = lastMessage.payload;
+      setCheckingAnswer(null); // result is in - drop the "checking…" state
       setLastWordResult(payload); // reused to drive the feedback toast
       if (payload.accepted) {
         setMyAnswers((prev) => [...prev, payload.answer]);
@@ -674,6 +687,7 @@ function App() {
       setRoundResults(payload);
       setCategoryRound(null); // round over - timer stops, show results
       setLastWordResult(null);
+      setCheckingAnswer(null); // drop any pending "checking…" if the round closed
       // Tally cumulative totals from this round's per-player scores.
       setCategoryTotals((prev) => {
         const next = { ...prev };
@@ -1024,6 +1038,7 @@ function App() {
         isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
+        checkingAnswer={checkingAnswer}
         gameOver={gameOver}
         roomPlayers={room ? room.players : []}
         playerColors={playerColors}
