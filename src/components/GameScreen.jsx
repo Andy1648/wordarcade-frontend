@@ -1821,6 +1821,12 @@ export default function GameScreen({
   // subtle scale pulse (physiological tension on top of the tick speed-up).
   const timeRatio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
   const critical = !showCountdown && !gameOver && timeRatio < 0.3;
+  // CONTINUOUS dread (0 calm -> 1 panic), derived purely from the EXISTING
+  // timeRatio (no new timer/state). Eased (^1.8) so it stays calm early and ramps
+  // hard in the final seconds; published as --danger to drive the screen vignette
+  // and the bomb rattle with opacity/transform only. Snaps to 0 the instant a word
+  // resets the clock (timeRatio jumps back to ~1) - that's the relief release.
+  const danger = showCountdown || gameOver ? 0 : Math.pow(1 - timeRatio, 1.8);
 
   // The final-5s CLUTCH (shared bomb timer): the absolute last 5 seconds, felt by
   // everyone regardless of whose turn it is. Drives the mascot's panic pose and
@@ -1888,9 +1894,17 @@ export default function GameScreen({
     // what inner control is touched.
     <div
       className="game-wrap"
+      style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
+      {/* Continuous DREAD vignette: a static red edge-gradient whose OPACITY rides
+          --danger (the eased timer) - calm/clear early, panicking red in the final
+          seconds, then snapping back to nothing the instant a word resets the clock
+          (the relief release). Opacity + a transform-scale "breathe" only; the
+          gradient is painted once, never recomputed per frame. Outside .game-stage
+          so its position:fixed isn't trapped by the stage's drain filter. */}
+      <div className="wb-danger-vignette" aria-hidden="true" />
       {/* Color-temperature wash: deepens with eliminations (subliminal). */}
       {warmth > 0 && (
         <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
@@ -2048,6 +2062,11 @@ export default function GameScreen({
         )}
 
         <div className="bomb-area drain-exempt">
+          {/* Continuous danger rattle: the bomb physically vibrates harder as
+              --danger climbs (amplitude scales from 0 at calm), on its OWN wrapper
+              so it composes with the pass-throw / reactor / tension animations
+              instead of fighting them. Transform-only; zero movement at rest. */}
+          <div className="bomb-rattle">
           <div
             className={`bomb-passer${passDir ? ` pass-${passDir}` : ''}`}
             onAnimationEnd={(e) => {
@@ -2079,6 +2098,7 @@ export default function GameScreen({
                 </div>
               )}
             </div>
+          </div>
           </div>
 
           {/* Word thrown at the bomb on submit, and the rejected word shattering

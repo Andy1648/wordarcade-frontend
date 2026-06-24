@@ -892,6 +892,69 @@
   100% { transform: translateX(0) rotate(0); }
 }
 
+/* ============================================================= */
+/* ===============  CONTINUOUS DREAD ESCALATION  ============== */
+/* ============================================================= */
+
+/* Whole-screen red dread vignette. The gradient is painted ONCE; only its
+   opacity (driven by --danger, the eased timer) and a transform-scale breathe
+   animate - no per-frame gradient recompute. Calm/clear early, panicking red in
+   the final seconds; the opacity transition gives the smooth ramp AND the snap-
+   back relief when an accepted word resets the clock (--danger -> 0). */
+.wb-danger-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 6; /* over the stage content; under the dramatic overlays (KO/explosion/countdown) */
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 40, 40, 0) 42%,
+    rgba(255, 40, 40, 0.5) 100%
+  );
+  opacity: calc(var(--danger, 0) * 0.9);
+  transition: opacity 0.5s ease;
+  animation: wb-danger-breathe 1s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* Edge "pulse in from the edges": a transform-scale breathe (separate property
+   from the --danger opacity, so the relief transition is never overridden). Its
+   visibility rides the opacity, so it's invisible when calm and pounds when red. */
+@keyframes wb-danger-breathe {
+  0%, 100% { transform: scale(1.05); }
+  50% { transform: scale(1); }
+}
+
+/* The bomb vibrates harder as --danger climbs - amplitude is multiplied by
+   --danger, so it's perfectly still when calm and rattles hard near zero. A hard
+   (stepped) rattle reads as a shaking bomb. transform-only. */
+.bomb-rattle {
+  animation: bomb-danger-rattle 130ms steps(2, end) infinite;
+}
+
+@keyframes bomb-danger-rattle {
+  0% {
+    transform: translate(calc(var(--danger, 0) * -2.2px), calc(var(--danger, 0) * 1.6px))
+      rotate(calc(var(--danger, 0) * -1.1deg));
+  }
+  50% {
+    transform: translate(calc(var(--danger, 0) * 2.4px), calc(var(--danger, 0) * -1.4px))
+      rotate(calc(var(--danger, 0) * 1.3deg));
+  }
+  100% {
+    transform: translate(calc(var(--danger, 0) * -1.6px), calc(var(--danger, 0) * 2px))
+      rotate(calc(var(--danger, 0) * -0.9deg));
+  }
+}
+
+/* Reduced motion: keep a readable STATIC red danger tint (the --danger opacity
+   stays - it's a colour cue, not motion), but drop the breathing pulse and the
+   bomb rattle. */
+@media (prefers-reduced-motion: reduce) {
+  .wb-danger-vignette { animation: none !important; transform: none !important; }
+  .bomb-rattle { animation: none !important; }
+}
+
 /* Critical red vignette: a flat (no-blur) red ring around the bomb, cross-faded
    in. Spread-only box-shadow keeps it hard-edged in the cel style. */
 .bomb-vignette {
