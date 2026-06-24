@@ -23,6 +23,7 @@ import { useSoundEffects } from './hooks/useSoundEffects';
 import { SoundContext } from './contexts/SoundContext';
 import { buildPlayerColors } from './playerColors';
 import { resolvePlayerName, rememberName } from './playerName';
+import { friendlyError } from './friendlyError';
 import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
 
@@ -717,7 +718,7 @@ function App() {
     }
 
     if (lastMessage.type === 'error') {
-      setServerError(lastMessage.payload.message);
+      setServerError(friendlyError(lastMessage.payload.message));
     }
     } // end for-of: every queued frame handled in order
     // Drop exactly the frames we just processed. The hook's consume is a

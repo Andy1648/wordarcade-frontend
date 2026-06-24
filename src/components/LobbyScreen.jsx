@@ -79,17 +79,17 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     const trimmedName = name.trim();
 
     if (trimmedName.length === 0) {
-      setError('Enter a name before continuing.');
+      setError('DROP A NAME FIRST.');
       return;
     }
 
     if (isJoinMode && roomCode.length !== ROOM_CODE_LENGTH) {
-      setError(`Room codes are ${ROOM_CODE_LENGTH} characters.`);
+      setError(`CODES ARE ${ROOM_CODE_LENGTH} CHARACTERS — CHECK IT.`);
       return;
     }
 
     if (wsStatus !== 'open') {
-      setError('Still connecting to the server - try again in a moment.');
+      setError('HOLD UP — STILL CONNECTING. TRY AGAIN IN A SEC.');
       return;
     }
 

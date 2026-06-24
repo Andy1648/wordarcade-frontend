@@ -45,6 +45,19 @@ export default function PublicRoomsScreen({
   // room (this screen unmounts) or the server bounces it (cleared below).
   const [joiningCode, setJoiningCode] = useState(null);
   const [localError, setLocalError] = useState('');
+  // True until the FIRST public_rooms response lands, so the initial render shows a
+  // "loading" pulse instead of flashing the empty state (which looked like "no games"
+  // when we simply hadn't heard back yet). App rebuilds the rooms array on every
+  // response, so a change in the rooms prop = a fresh response = loading done.
+  const [loading, setLoading] = useState(true);
+  const firstRoomsRef = useRef(true);
+  useEffect(() => {
+    if (firstRoomsRef.current) {
+      firstRoomsRef.current = false; // mount run carries App's initial [], not a response
+      return;
+    }
+    setLoading(false);
+  }, [rooms]);
 
   // onRefresh is stable (useCallback in App). Fetch on mount, then poll lightly.
   const refreshRef = useRef(onRefresh);
@@ -69,7 +82,7 @@ export default function PublicRoomsScreen({
     if (joiningCode) return; // already committing to a join
     const trimmed = (name || '').trim();
     if (!trimmed) {
-      setLocalError('Enter a name before joining.');
+      setLocalError('DROP A NAME FIRST.');
       return;
     }
     setLocalError('');
@@ -80,6 +93,7 @@ export default function PublicRoomsScreen({
 
   function handleManualRefresh() {
     sound.click();
+    setLoading(true); // cleared when the fresh list comes back (rooms prop changes)
     refreshRef.current();
   }
 
@@ -127,7 +141,16 @@ export default function PublicRoomsScreen({
           <div className="browser-error" role="alert">{error}</div>
         )}
 
-        {isEmpty ? (
+        {loading && isEmpty ? (
+          // Still waiting on the first list - a calm pulse, never the empty state
+          // (which would wrongly read as "no games" before we've heard back).
+          <div className="browser-loading" role="status">
+            <div className="browser-loading-dots" aria-hidden="true">
+              <span>●</span><span>●</span><span>●</span>
+            </div>
+            <div className="browser-loading-text">SCANNING FOR GAMES…</div>
+          </div>
+        ) : isEmpty ? (
           // CRITICAL: an empty list must never look broken. Friendly nudge +
           // two ways to start a game right now.
           <div className="browser-empty">
