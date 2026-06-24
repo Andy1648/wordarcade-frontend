@@ -175,23 +175,83 @@
   will-change: transform, text-shadow;
 }
 
-/* Calm idle life (Balatro-style): instead of a loud per-beat pop + hard
-   shadow-slam + chromatic RGB-split firing on EVERY drum hit (which made the
-   menu busy and was paint-heavy - text-shadow animation + two mix-blend-mode
-   clones), the wordmark just BREATHES slowly and continuously. Alive, not loud.
-   The resting rotate/skew pose is baked into each frame so it's preserved. The
-   beat no longer touches the title at all (one fewer thing pulsing per beat). */
-.homepage-logo {
-  animation: title-breathe 4.5s ease-in-out infinite;
+/* CRISP beat hit on the title (heaviest effect): when useBeatSync flips
+   data-beat="true" (~120ms on a detected kick) the wordmark snaps up + out
+   (scaled by --beat-intensity), its hard drop shadow slams bigger then back,
+   and the RGB-split clones (below) flash. The attribute is removed between
+   beats so the animations restart cleanly on the next hit. All three are 120ms
+   so they stay in sync; keyframes carry the resting rotate/skew pose. */
+html[data-beat='true'] .homepage-logo {
+  animation: title-beat-pop 120ms ease-out, title-shadow-slam 120ms ease-out;
 }
 
-@keyframes title-breathe {
-  0%, 100% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
-  50% { transform: rotate(-2deg) skewX(-4deg) scale(1.02) translateY(-3px); }
+@keyframes title-beat-pop {
+  0% {
+    transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
+  }
+  35% {
+    transform: rotate(-2deg) skewX(-4deg)
+      scale(calc(1 + 0.08 * var(--beat-intensity, 1)))
+      translateY(calc(-8px * var(--beat-intensity, 1)));
+  }
+  100% {
+    transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
+  }
+}
+
+@keyframes title-shadow-slam {
+  0% { text-shadow: 5px 5px 0 #000; }
+  40% { text-shadow: 10px 10px 0 #000; }
+  100% { text-shadow: 5px 5px 0 #000; }
+}
+
+/* RGB / chromatic split: two text clones (cyan offset left, pink offset right)
+   drawn over the wordmark via ::before/::after from the data-text attribute.
+   Invisible at rest; on each beat they flash in offset opposite directions then
+   snap back, for a heavy chromatic-aberration hit. mix-blend-mode: screen makes
+   the black stroke transparent so only the coloured ghosts show. */
+.homepage-logo::before,
+.homepage-logo::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  -webkit-text-stroke: inherit;
+  paint-order: inherit;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-beat='true'] .homepage-logo::before {
+  animation: rgb-split-left 120ms ease-out;
+  color: #2EFFE0;
+  mix-blend-mode: screen;
+}
+
+html[data-beat='true'] .homepage-logo::after {
+  animation: rgb-split-right 120ms ease-out;
+  color: #FF2EC4;
+  mix-blend-mode: screen;
+}
+
+@keyframes rgb-split-left {
+  0% { opacity: 0.7; transform: translateX(-4px) translateY(1px); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes rgb-split-right {
+  0% { opacity: 0.7; transform: translateX(4px) translateY(-1px); }
+  100% { opacity: 0; transform: translateX(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .homepage-logo { animation: none !important; }
+  .homepage-logo::before,
+  .homepage-logo::after { animation: none !important; opacity: 0; }
 }
 
 @keyframes burst-spin {
@@ -618,12 +678,36 @@
   100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
 }
 
-/* Menu calm-down: the action buttons and the Quick Play hero NO LONGER pop on
-   every beat (that was part of the "too many things pulsing at once" busyness).
-   They keep their gentle never-resting idle motion instead - btn-bounce-forever
-   on the action buttons and quick-throb on the hero - so the menu stays alive
-   but calm. The beat now only reads on the subtle whole-screen flash, not on
-   the individual menu controls. */
+/* Lightest beat effect on the action buttons: a small upward kick plus a quick
+   white outline flash, in sync with the title + cards. Hovered/disabled buttons
+   are excluded so press feedback wins. The border-color flash omits 0%/100% so
+   it interpolates from/to each button's own variant border colour. */
+html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
+  animation: btn-beat-pop 120ms ease-out, outline-flash 120ms ease-out;
+}
+
+@keyframes btn-beat-pop {
+  0% { transform: skewX(-2deg) translateY(0); }
+  35% { transform: skewX(-2deg) translateY(calc(-3px * var(--beat-intensity, 1))); }
+  100% { transform: skewX(-2deg) translateY(0); }
+}
+
+/* The Quick Play hero pulses on the beat too - it's a .homepage-quick-btn, not a
+   .homepage-btn, so it needs its own beat rule. A scale bob (it's the hero) scaled
+   by --beat-intensity, skipped while hovered/disabled. */
+html[data-beat='true'] .homepage-quick-btn:not(:hover):not(:disabled) {
+  animation: quick-beat-pop 130ms ease-out, outline-flash 130ms ease-out;
+}
+
+@keyframes quick-beat-pop {
+  0% { transform: skewX(-2deg) scale(1); }
+  35% { transform: skewX(-2deg) scale(calc(1 + 0.06 * var(--beat-intensity, 1))); }
+  100% { transform: skewX(-2deg) scale(1); }
+}
+
+@keyframes outline-flash {
+  30% { border-color: #fff; }
+}
 
 /* Parallax drift: the splatters slowly translate, with the larger corner ones
    moving further (and faster) than the smaller inner ones for a sense of depth.
