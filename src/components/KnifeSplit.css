@@ -1,8 +1,13 @@
-/* KnifeSplit.css - the intro -> menu "blade" reveal.
+/* KnifeSplit.css - the intro -> menu sword-swipe reveal.
    Flat colors, hard edges, no blur/glow (the cyan blade edge is a 0-blur
-   box-shadow). Transform/opacity ONLY: two dark halves translate apart, one
-   slash line scales in, one flash fades - GPU-friendly and far cheaper than the
-   explosion it replaced. Total ~450ms. */
+   box-shadow). Transform / clip-path / opacity ONLY: a blade streaks across, then
+   two dark pieces clipped on the same shallow diagonal widen apart - GPU-friendly
+   and far cheaper than the explosion it replaced. Total ~450ms.
+
+   The cut is a single SHALLOW (near-horizontal) diagonal, sloping gently down to
+   the right - from 40% height at the left edge to 60% at the right. Both pieces
+   are clipped on that SAME line so the seam lines up exactly; the blade is rotated
+   to match it. */
 
 .knife-split {
   position: fixed;
@@ -12,7 +17,7 @@
   overflow: hidden;
 }
 
-/* ---- The two dark halves that cover the menu then slam apart ---- */
+/* ---- The two dark pieces that cover the menu then widen apart ---- */
 .knife-half {
   position: absolute;
   inset: 0;
@@ -22,49 +27,54 @@
   will-change: transform;
 }
 
-/* A slightly tilted, near-vertical "katana" seam from top (54%) to bottom (46%):
-   half A is everything LEFT of it, half B everything RIGHT. The clip-path is
-   static (set once) - only the transform animates, so there's no per-frame paint. */
-.knife-half-a {
-  clip-path: polygon(0 0, 54% 0, 46% 100%, 0 100%);
-  animation: knife-part-a 320ms cubic-bezier(0.5, 0, 0.2, 1) 130ms both;
+/* Shared cut line: (0 40%) -> (100% 60%). The TOP piece is everything above it,
+   the BOTTOM piece everything below. clip-path is static (set once) - only the
+   transform animates, so there's no per-frame paint. The pieces part PERPENDICULAR
+   to the near-horizontal cut: top lifts up (+ a hair left & tilt), bottom drops
+   down (+ a hair right & tilt), so the gap opens like a wound. */
+.knife-half-top {
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 0 40%);
+  animation: knife-part-top 320ms cubic-bezier(0.45, 0, 0.2, 1) 150ms both;
 }
 
-.knife-half-b {
-  clip-path: polygon(54% 0, 100% 0, 100% 100%, 46% 100%);
-  animation: knife-part-b 320ms cubic-bezier(0.5, 0, 0.2, 1) 130ms both;
+.knife-half-bottom {
+  clip-path: polygon(0 40%, 100% 60%, 100% 100%, 0 100%);
+  animation: knife-part-bottom 320ms cubic-bezier(0.45, 0, 0.2, 1) 150ms both;
 }
 
-@keyframes knife-part-a {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-100vw, -8vh); } /* fling up-left, off-screen */
+@keyframes knife-part-top {
+  from { transform: translate(0, 0) rotate(0); }
+  to { transform: translate(-3vw, -100vh) rotate(-1.5deg); } /* lift up, off-screen */
 }
 
-@keyframes knife-part-b {
-  from { transform: translate(0, 0); }
-  to { transform: translate(100vw, 8vh); } /* fling down-right, off-screen */
+@keyframes knife-part-bottom {
+  from { transform: translate(0, 0) rotate(0); }
+  to { transform: translate(3vw, 100vh) rotate(1.5deg); } /* drop down, off-screen */
 }
 
-/* ---- The blade: a thin bright line streaking down the seam first ---- */
+/* ---- The blade: a thin bright line that streaks ACROSS the screen first ----
+   A wide, thin bar pinned just off the left edge at mid-height, rotated to the
+   shallow cut angle, drawn left -> right via scaleX (origin = left end), then
+   it fades. This is the visible "stroke" before the screen parts. */
 .knife-slash {
   position: absolute;
+  left: -12vw;
   top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 150vh; /* over-tall so the tilted bar still spans top-to-bottom */
-  margin-left: -3px;
+  width: 124vw;
+  height: 7px;
+  margin-top: -3.5px;
   background: #fff;
   box-shadow: 0 0 0 2px #2EFFE0; /* hard cyan edge, 0 blur (flat, no glow) */
-  transform-origin: 50% 50%;
-  transform: translate(-50%, -50%) rotate(8deg) scaleY(0);
-  animation: knife-slash 300ms ease-out both;
+  transform-origin: left center;
+  transform: rotate(9.2deg) scaleX(0);
+  animation: knife-slash 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @keyframes knife-slash {
-  0% { transform: translate(-50%, -50%) rotate(8deg) scaleY(0); opacity: 1; }
-  30% { transform: translate(-50%, -50%) rotate(8deg) scaleY(1); opacity: 1; }
-  60% { opacity: 1; }
-  100% { transform: translate(-50%, -50%) rotate(8deg) scaleY(1); opacity: 0; }
+  0% { transform: rotate(9.2deg) scaleX(0); opacity: 1; }
+  50% { transform: rotate(9.2deg) scaleX(1); opacity: 1; } /* drawn fully across */
+  70% { opacity: 1; }
+  100% { transform: rotate(9.2deg) scaleX(1); opacity: 0; } /* fades as pieces part */
 }
 
 /* ---- Quick white flash on the cut instant (single full-screen opacity anim) ---- */
@@ -73,12 +83,12 @@
   inset: 0;
   background: #fff;
   opacity: 0;
-  animation: knife-flash 220ms ease-out both;
+  animation: knife-flash 220ms ease-out 110ms both; /* peaks as the blade lands */
 }
 
 @keyframes knife-flash {
   0% { opacity: 0; }
-  12% { opacity: 0.5; }
+  18% { opacity: 0.5; }
   100% { opacity: 0; }
 }
 

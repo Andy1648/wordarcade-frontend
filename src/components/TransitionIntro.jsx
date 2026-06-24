@@ -3,14 +3,16 @@
 // homepage reveal. Stripped back to near-empty: the two lines ARE the screen.
 //   black beat -> "TYPE FAST." PUNCHES in (per-letter machine-gun snap + RGB
 //   split) -> "DIE SLOW." DRAGS in slower/heavier (tired settle + paint drip) ->
-//   both EXPLODE outward over a comic starburst -> onComplete fires, and App
-//   plays its bar wipe to the homepage.
+//   the title settles and holds -> onComplete fires, and App reveals the menu
+//   with the knife-split.
 //
 // The drama is contrast, not clutter: a calm flat-black field, then the two
 // lines slam against it. There is deliberately NO background scene (no speed
 // lines, vector accents, perspective grid, halftone or drifting particles) -
-// nothing competes with the title. The impact effects (white flash, the shake
-// of the card itself, the explosion shards) fire WITH each slam, then settle.
+// nothing competes with the title. The impact effects (white flash + the shake
+// of the card itself) fire WITH each slam, then settle. There are deliberately
+// NO explosion/burst effects (no per-word starburst, no blow-apart) - the slam
+// + flash is the whole punch.
 //
 // The two phrases animate OPPOSITELY on purpose - they mean opposite things:
 // TYPE FAST is fast/electric (tight stagger, chromatic aberration), DIE SLOW is
@@ -19,20 +21,12 @@
 // drip, and a subtle lean toward the cursor) instead of going static.
 //
 // The component just sequences a `step` through the phases with setTimeout and
-// renders different content per step; the punch/drag/explode/idle motion is all
-// CSS. Each landing fires a one-frame white flash + a brief shake of the whole
-// card to sell the impact.
+// renders different content per step; the punch/drag/idle motion is all CSS.
+// Each landing fires a one-frame white flash + a brief shake of the whole card
+// to sell the impact.
 import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import './TransitionIntro.css';
-
-// Same jagged comic starburst construction used on the splash / homepage, so the
-// explosion burst matches the rest of the app.
-const BURST_POINTS = Array.from({ length: 32 }, (_, i) => {
-  const r = i % 2 === 0 ? 100 : 60;
-  const a = (Math.PI * i) / 16 - Math.PI / 2;
-  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
-}).join(' ');
 
 // Whether the viewer asked for reduced motion. Read once - the card lives ~2.5s,
 // so it doesn't need to react to a mid-card preference change.
@@ -59,26 +53,13 @@ function IntroLetters({ text }) {
   });
 }
 
-// A flat comic-book impact starburst that sits BEHIND a word and pops in with it
-// on the slam (then idles), for the graphic-poster look. Flat fill + thick black
-// outline; rendered behind the letters (z -1) so the word stays readable on top.
-function WordBurst({ color }) {
-  return (
-    <span className="intro-word-burst" aria-hidden="true">
-      <svg viewBox="-112 -112 224 224">
-        <polygon points={BURST_POINTS} fill={color} stroke="#000" strokeWidth="7" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
 /**
  * @param {object} props
- * @param {() => void} props.onComplete - called once the explosion finishes, so
- *   App can run the bar wipe to the homepage and fade the music up.
+ * @param {() => void} props.onComplete - called once the title settles and holds,
+ *   so App can run the knife-split reveal to the homepage and fade the music up.
  */
 export default function TransitionIntro({ onComplete }) {
-  // 'black' -> 'line1' -> 'line2' -> 'explode'
+  // 'black' -> 'line1' -> 'line2'
   const [step, setStep] = useState('black');
   // Bumped per impact so the white flash re-mounts and replays.
   const [flashKey, setFlashKey] = useState(0);
@@ -126,14 +107,9 @@ export default function TransitionIntro({ onComplete }) {
     timers.push(setTimeout(() => setStep('line2'), 780));
     timers.push(setTimeout(() => impact('slow'), 940)); // DIE
     timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
-    // 2120ms: both lines explode outward over the starburst, with a whoosh.
-    timers.push(
-      setTimeout(() => {
-        setStep('explode');
-        sound.whoosh();
-      }, 2120)
-    );
-    // 2000ms: hand back to App for the homepage wipe.
+    // After the settle, the title simply holds on the calm black field (no
+    // explosion / blow-apart) until we hand off to App's knife-split reveal.
+    // 2500ms: hand back to App for the knife-split menu reveal.
     timers.push(
       setTimeout(() => {
         if (completedRef.current) return;
@@ -179,12 +155,11 @@ export default function TransitionIntro({ onComplete }) {
     };
   }, []);
 
-  const exploding = step === 'explode';
   // Both line elements stay mounted once revealed (so a punch never replays and
-  // the layout never reflows); their `active` class drives the entrance, and the
-  // explode class overrides it at the end.
-  const line1Active = step === 'line1' || step === 'line2' || exploding;
-  const line2Active = step === 'line2' || exploding;
+  // the layout never reflows); their `active` class drives the entrance, then the
+  // settled title just holds until App takes over with the knife-split.
+  const line1Active = step === 'line1' || step === 'line2';
+  const line2Active = step === 'line2';
 
   return (
     <div className="intro-overlay" aria-hidden="true">
@@ -192,11 +167,11 @@ export default function TransitionIntro({ onComplete }) {
           lines slam against it; the only other motion is the impact flash, the
           card shake and the final explosion. */}
       <div className={`intro-stage${shaking ? ` shaking shaking--${impactKind}` : ''}`}>
-        {/* The two lines blow apart (transform-only) as the intro ends; the
-            screen-slicing KNIFE-SPLIT reveal to the menu is owned by App (it needs
-            the menu mounted behind it, which the intro overlay isn't). The old
-            explosion (shockwave rings + counter-rotating starbursts + 14 shards)
-            was removed - the slice is far cheaper. */}
+        {/* The title slams in, settles and holds - there is no explosion / blow-
+            apart here. The screen-slicing KNIFE-SPLIT reveal to the menu is owned
+            by App (it needs the menu mounted behind it, which the intro overlay
+            isn't). The old explosion (shockwave rings + counter-rotating
+            starbursts + 14 shards) and the per-word starburst were removed. */}
         {/* Tilt layer (cursor lean) wraps the breathe layer (idle breathing scale)
             wraps the two slots - each transform on its own element so they compose
             instead of clobbering each other or the stage's impact shake. */}
@@ -208,21 +183,15 @@ export default function TransitionIntro({ onComplete }) {
                 inner .intro-line), so a landing never snaps the resting position. */}
             <div className="intro-line-slot intro-slot-type">
               <div
-                className={`intro-line intro-line-type${line1Active ? ' active' : ''}${
-                  exploding ? ' intro-explode-up' : ''
-                }`}
+                className={`intro-line intro-line-type${line1Active ? ' active' : ''}`}
               >
-                <WordBurst color="#FFE94A" />
                 <IntroLetters text="TYPE FAST." />
               </div>
             </div>
             <div className="intro-line-slot intro-slot-die">
               <div
-                className={`intro-line intro-line-die${line2Active ? ' active' : ''}${
-                  exploding ? ' intro-explode-down' : ''
-                }`}
+                className={`intro-line intro-line-die${line2Active ? ' active' : ''}`}
               >
-                <WordBurst color="#9A1AFF" />
                 <IntroLetters text="DIE SLOW." />
               </div>
             </div>
