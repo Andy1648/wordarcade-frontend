@@ -1336,6 +1336,16 @@ export default function GameScreen({
   // turn hands off, cleared when that 300ms animation ends.
   const [passDir, setPassDir] = useState(null);
   const prevCurrentRef = useRef(null);
+  // ---- Bomb hand-off FLIGHT (Word Bomb) ----
+  // The centrepiece bomb stays put; on a turn change we whip a small bomb GHOST
+  // from the PREVIOUS active player's card to the NEW one so the pass is
+  // trackable ("it's now YOUR turn"). Card positions are read live from the DOM
+  // via cardRefs (a Map keyed by player id) at hand-off time - no layout changes.
+  const cardRefs = useRef(new Map());
+  const [flight, setFlight] = useState(null); // { key, x, y, dx, dy } | null
+  const flightKeyRef = useRef(0);
+  const flightTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(flightTimerRef.current), []);
 
   // ---- Cinematic feel: hitlag / impact frame / K.O. ----
   // hitlag freezes every on-stage animation for a beat (impact weight); impactKey
@@ -1573,8 +1583,31 @@ export default function GameScreen({
         const mid = (list.length - 1) / 2;
         setPassDir(idx <= mid ? 'left' : 'right');
       }
+      // Whip a bomb ghost from the previous player's card to the new one. Skipped
+      // under reduced motion (the turn just changes instantly) and if either card
+      // can't be measured (e.g. the previous player was eliminated + removed).
+      const reduce =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fromEl = cardRefs.current.get(prev);
+      const toEl = cardRefs.current.get(cur);
+      if (!reduce && fromEl && toEl) {
+        const a = fromEl.getBoundingClientRect();
+        const b = toEl.getBoundingClientRect();
+        const x = a.left + a.width / 2;
+        const y = a.top + a.height / 2;
+        const dx = b.left + b.width / 2 - x;
+        const dy = b.top + b.height / 2 - y;
+        setFlight({ key: ++flightKeyRef.current, x, y, dx, dy });
+        sound.whoosh(); // reuse the existing throw swoosh
+        if (flightTimerRef.current) clearTimeout(flightTimerRef.current);
+        flightTimerRef.current = setTimeout(() => setFlight(null), 560);
+      }
     }
     prevCurrentRef.current = cur;
+    // sound is stable (apiRef); react to turn changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, gameType]);
 
   // ---- Sound effects (Word Bomb only) ----
@@ -1905,6 +1938,24 @@ export default function GameScreen({
           gradient is painted once, never recomputed per frame. Outside .game-stage
           so its position:fixed isn't trapped by the stage's drain filter. */}
       <div className="wb-danger-vignette" aria-hidden="true" />
+      {/* Bomb hand-off ghost: whips from the previous active player's card to the
+          new one along an arc (transform-only), with a trailing after-image and a
+          landing impact ring. Fixed at viewport coords measured from the cards. */}
+      {flight && (
+        <div
+          key={flight.key}
+          className="bomb-flight"
+          style={{
+            left: `${flight.x}px`,
+            top: `${flight.y}px`,
+            '--dx': `${flight.dx}px`,
+            '--dy': `${flight.dy}px`,
+          }}
+          aria-hidden="true"
+        >
+          <span className="bomb-flight-icon">💣</span>
+        </div>
+      )}
       {/* Color-temperature wash: deepens with eliminations (subliminal). */}
       {warmth > 0 && (
         <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
@@ -2007,6 +2058,11 @@ export default function GameScreen({
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
                 <div
+                  ref={(el) => {
+                    const m = cardRefs.current;
+                    if (el) m.set(player.id, el);
+                    else m.delete(player.id);
+                  }}
                   className={cardClass}
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
