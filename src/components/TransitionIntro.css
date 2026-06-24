@@ -366,8 +366,9 @@
   100% { opacity: 0; }
 }
 
-/* SLOW = HEAVIER: a longer two-beat inverted stutter (steps(2)) + a chromatic
-   colour-split punch (the offset ghosts below) for the weighty hit. */
+/* SLOW = HEAVIER: a longer two-beat inverted stutter (steps(2)) for the weighty
+   hit. Pure white/invert only - the cheap red/cyan colour-split ghosts that used
+   to fire here were removed. */
 .intro-flash--slow {
   animation: intro-impact-slow 170ms steps(2, end) forwards;
 }
@@ -375,37 +376,6 @@
 @keyframes intro-impact-slow {
   0% { opacity: 1; }
   100% { opacity: 0; }
-}
-
-/* Chromatic punch on the heavy hit: offset red/cyan fields that flash and snap
-   back. screen-blended so only the colour ghosts read over the inverted frame. */
-.intro-flash--slow::before,
-.intro-flash--slow::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  mix-blend-mode: screen;
-  opacity: 0;
-}
-
-.intro-flash--slow::before {
-  background: #ff1e56;
-  animation: intro-chroma-l 170ms steps(2, end) forwards;
-}
-
-.intro-flash--slow::after {
-  background: #21e7ff;
-  animation: intro-chroma-r 170ms steps(2, end) forwards;
-}
-
-@keyframes intro-chroma-l {
-  0% { opacity: 0.5; transform: translateX(-12px); }
-  100% { opacity: 0; transform: translateX(0); }
-}
-
-@keyframes intro-chroma-r {
-  0% { opacity: 0.5; transform: translateX(12px); }
-  100% { opacity: 0; transform: translateX(0); }
 }
 
 /* ---- Mobile: smaller type + a gentler shake ---- */

@@ -2,7 +2,13 @@
    Flat colors, hard edges, no blur/glow (the cyan blade edge is a 0-blur
    box-shadow). Transform / clip-path / opacity ONLY: a blade streaks across, then
    two dark pieces clipped on the same shallow diagonal widen apart - GPU-friendly
-   and far cheaper than the explosion it replaced. Total ~450ms.
+   and far cheaper than the explosion it replaced. Total ~2.4s.
+
+   EASING: the whole sequence is meant to read as ONE continuous, fluid motion,
+   not discrete steps. The blade decelerates smoothly (ease-out) as it lands, and
+   the widen begins RIGHT as the blade completes (overlapping its fade) on a soft
+   easeInOutSine - so there's no hard cut or dead pause between the stroke and the
+   open; the gap just glides apart.
 
    The cut is a single SHALLOW (near-horizontal) diagonal, sloping gently down to
    the right - from 46% height at the left edge to 54% at the right. It is aimed to
@@ -40,12 +46,13 @@
    unhurried, almost cinematic opening IS the whole drama. */
 .knife-half-top {
   clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
-  animation: knife-part-top 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
+  /* easeInOutSine: gentle pickup, near-constant glide, soft settle - fluid, no jerk */
+  animation: knife-part-top 2200ms cubic-bezier(0.37, 0, 0.63, 1) 180ms both;
 }
 
 .knife-half-bottom {
   clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
-  animation: knife-part-bottom 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
+  animation: knife-part-bottom 2200ms cubic-bezier(0.37, 0, 0.63, 1) 180ms both;
 }
 
 @keyframes knife-part-top {
@@ -73,14 +80,15 @@
   box-shadow: 0 0 0 2px #2EFFE0; /* hard cyan edge, 0 blur (flat, no glow) */
   transform-origin: left center;
   transform: rotate(3.8deg) scaleX(0); /* shallower, matches the gentler cut */
-  animation: knife-slash 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /* easeOutQuint: the stroke streaks out fast then decelerates smoothly into the
+     cut - no abrupt stop, so it hands off cleanly to the widen. */
+  animation: knife-slash 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes knife-slash {
   0% { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
-  50% { transform: rotate(3.8deg) scaleX(1); opacity: 1; } /* drawn fully across */
-  70% { opacity: 1; }
-  100% { transform: rotate(3.8deg) scaleX(1); opacity: 0; } /* fades as pieces part */
+  55% { transform: rotate(3.8deg) scaleX(1); opacity: 1; } /* drawn fully across */
+  100% { transform: rotate(3.8deg) scaleX(1); opacity: 0; } /* fades as the gap opens */
 }
 
 /* ---- Quick white flash on the cut instant (single full-screen opacity anim) ---- */
