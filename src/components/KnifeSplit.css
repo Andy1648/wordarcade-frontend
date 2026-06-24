@@ -1,0 +1,110 @@
+/* KnifeSplit.css - the intro -> menu sword-swipe reveal.
+   Flat colors, hard edges, no blur/glow (the cyan blade edge is a 0-blur
+   box-shadow). Transform / clip-path / opacity ONLY: a blade streaks across, then
+   two dark pieces clipped on the same shallow diagonal widen apart - GPU-friendly
+   and far cheaper than the explosion it replaced. Total ~450ms.
+
+   The cut is a single SHALLOW (near-horizontal) diagonal, sloping gently down to
+   the right - from 46% height at the left edge to 54% at the right. It is aimed to
+   pass through the GAP between the two title lines, so the blade reads as splitting
+   "TYPE FAST" (which rides the TOP piece) from "DIE SLOW" (the BOTTOM piece). Both
+   pieces are clipped on that SAME line so the seam lines up exactly; the blade is
+   rotated to match it. */
+
+.knife-split {
+  position: fixed;
+  inset: 0;
+  z-index: 150; /* above the menu content; pointer-events:none so it never blocks */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ---- The two dark pieces that cover the menu then widen apart ---- */
+.knife-half {
+  position: absolute;
+  inset: 0;
+  /* Matches the page/menu dark bg so the cover reads as the dark intro screen
+     being cut, with no visible seam-colour before the slice. */
+  background: #0d0618;
+  will-change: transform;
+}
+
+/* Shared cut line: (0 46%) -> (100% 54%), threaded through the gap between the two
+   title lines. The TOP piece (carrying "TYPE FAST") is everything above it, the
+   BOTTOM piece ("DIE SLOW") everything below. clip-path is static (set once) - only
+   the transform animates, so there's no per-frame paint. The fast blade stroke is
+   just the punctuation; the PAYOFF is the slow open. After the stroke the pieces
+   DRIFT apart gradually and cinematically (~2200ms), PERPENDICULAR to the near-
+   horizontal cut: top lifts up (+ a hair left & tilt), bottom drops down (+ a hair
+   right & tilt), so the menu is revealed slowly through a widening gap - the
+   unhurried, almost cinematic opening IS the whole drama. */
+.knife-half-top {
+  clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
+  animation: knife-part-top 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
+}
+
+.knife-half-bottom {
+  clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
+  animation: knife-part-bottom 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) 150ms both;
+}
+
+@keyframes knife-part-top {
+  from { transform: translate(0, 0) rotate(0); }
+  to { transform: translate(-3vw, -100vh) rotate(-1.5deg); } /* lift up, off-screen */
+}
+
+@keyframes knife-part-bottom {
+  from { transform: translate(0, 0) rotate(0); }
+  to { transform: translate(3vw, 100vh) rotate(1.5deg); } /* drop down, off-screen */
+}
+
+/* ---- The blade: a thin bright line that streaks ACROSS the screen first ----
+   A wide, thin bar pinned just off the left edge at mid-height, rotated to the
+   shallow cut angle, drawn left -> right via scaleX (origin = left end), then
+   it fades. This is the visible "stroke" before the screen parts. */
+.knife-slash {
+  position: absolute;
+  left: -12vw;
+  top: 46%; /* starts at the cut's left edge (in the title gap) */
+  width: 124vw;
+  height: 7px;
+  margin-top: -3.5px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #2EFFE0; /* hard cyan edge, 0 blur (flat, no glow) */
+  transform-origin: left center;
+  transform: rotate(3.8deg) scaleX(0); /* shallower, matches the gentler cut */
+  animation: knife-slash 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes knife-slash {
+  0% { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
+  50% { transform: rotate(3.8deg) scaleX(1); opacity: 1; } /* drawn fully across */
+  70% { opacity: 1; }
+  100% { transform: rotate(3.8deg) scaleX(1); opacity: 0; } /* fades as pieces part */
+}
+
+/* ---- Quick white flash on the cut instant (single full-screen opacity anim) ---- */
+.knife-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: knife-flash 220ms ease-out 110ms both; /* peaks as the blade lands */
+}
+
+@keyframes knife-flash {
+  0% { opacity: 0; }
+  18% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+/* Reduced motion: App already skips mounting this, but if it ever renders, hold
+   everything parted/invisible so it never animates and never covers the menu. */
+@media (prefers-reduced-motion: reduce) {
+  .knife-half,
+  .knife-slash,
+  .knife-flash {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

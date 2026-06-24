@@ -13,6 +13,7 @@ import MusicButton from './components/MusicButton';
 import CreditsScreen from './components/CreditsScreen';
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
+import KnifeSplit from './components/KnifeSplit';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -262,6 +263,10 @@ function App() {
   // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
   // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
   const [showIntro, setShowIntro] = useState(false);
+  // The intro -> menu KNIFE-SPLIT reveal (replaces the old explosion): true while
+  // the blade-slice overlay plays over the freshly-mounted menu. Cosmetic only.
+  const [slicing, setSlicing] = useState(false);
+  const sliceTimerRef = useRef(null);
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
@@ -286,16 +291,20 @@ function App() {
       SHAKE_MS[level] || 150
     );
   }
-  // Light shake on every detected beat (skips the very first render).
+  // Light shake on every detected beat — IN-GAME ONLY. The ambient whole-screen
+  // beat-shake made the menu/lobby feel busy and laggy (it transforms the entire
+  // app tree on every drum hit), so it's now gated to the game view; the menu
+  // stays calm. `view` is in the deps so the guard reads the live view, not a
+  // stale closure (a view change alone never has a new beat, so it won't shake).
   const prevBeatRef = useRef(0);
   useEffect(() => {
     if (beatCount > prevBeatRef.current) {
       prevBeatRef.current = beatCount;
-      triggerShake('light');
+      if (view === 'game') triggerShake('light');
     }
-    // triggerShake is stable enough; we only react to beatCount changes.
+    // triggerShake is stable enough; we react to beatCount (and read live view).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beatCount]);
+  }, [beatCount, view]);
 
   // Subtle hover blip on any real <button>, app-wide (Lobby / Room / game UI),
   // via one delegated listener so we don't touch every button. The Homepage game
@@ -717,22 +726,53 @@ function App() {
     }
   }, [lastWordResult, gameType]);
 
-  // Fire the cosmetic bar wipe on every real view change. The screen itself has
-  // already swapped (it renders off `view`); this only lays the overlay on top
-  // and clears it when the animation finishes. The early-return just avoids a
-  // spurious wipe when `view` didn't actually change (initial mount / no-op
-  // setState) - it can no longer strand the screen, since nothing gates the
+  // ---- ONE consistent Persona-5 bar wipe for EVERY screen change ----
+  // Every transition in the app is fired through this single helper, so they all
+  // look and sound identical (same five bars, same whoosh, same 500ms): the
+  // initial connect, menu->room, room->game, game->results, and back to menu.
+  // The overlay (TransitionOverlay) is purely cosmetic - the screen has already
+  // swapped underneath - so this only lays the bars on top and clears them.
+  const transitionClearRef = useRef(null);
+  const runTransition = useCallback(
+    (word) => {
+      transitionKeyRef.current += 1;
+      setTransition({ word, key: transitionKeyRef.current });
+      sound.whoosh(); // the diagonal bars sweep in
+      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
+      transitionClearRef.current = setTimeout(() => setTransition(null), 500);
+    },
+    [sound]
+  );
+  useEffect(
+    () => () => {
+      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
+    },
+    []
+  );
+
+  // Fire the wipe on every real view change. The screen has already swapped (it
+  // renders off `view`); this only lays the overlay on top. The early-return
+  // avoids a spurious wipe when `view` didn't actually change (initial mount /
+  // no-op setState) - it can no longer strand the screen, since nothing gates the
   // screen behind it anymore.
   const lastNavViewRef = useRef('home');
   useEffect(() => {
     if (view === lastNavViewRef.current) return;
     lastNavViewRef.current = view;
-    transitionKeyRef.current += 1;
-    setTransition({ word: TRANSITION_WORDS[view] || 'GO!', key: transitionKeyRef.current });
-    sound.whoosh(); // the diagonal bars sweep in
-    const end = setTimeout(() => setTransition(null), 500);
-    return () => clearTimeout(end);
-  }, [view]);
+    runTransition(TRANSITION_WORDS[view] || 'GO!');
+  }, [view, runTransition]);
+
+  // game -> results is an in-`game` change: the game-over overlay reveals WITHOUT
+  // a view switch, so the view effect above never fires for it. Run the SAME wipe
+  // here the moment results first appear, so the outcome screen arrives with the
+  // identical transition as every other screen change. Purely cosmetic, fired
+  // from App watching gameOver - it touches no game-screen logic.
+  const prevGameOverRef = useRef(false);
+  useEffect(() => {
+    const now = !!gameOver;
+    if (now && !prevGameOverRef.current) runTransition('RESULTS');
+    prevGameOverRef.current = now;
+  }, [gameOver, runTransition]);
 
   // Wipe to the homepage the moment the socket comes up (connecting -> open).
   const prevWsRef = useRef(wsStatus);
@@ -740,13 +780,9 @@ function App() {
     const prev = prevWsRef.current;
     prevWsRef.current = wsStatus;
     if (prev !== 'open' && wsStatus === 'open') {
-      transitionKeyRef.current += 1;
-      setTransition({ word: 'READY?', key: transitionKeyRef.current });
-      sound.whoosh(); // the bars sweep (no-op if audio isn't unlocked yet)
-      const end = setTimeout(() => setTransition(null), 500);
-      return () => clearTimeout(end);
+      runTransition('READY?'); // the bars sweep (whoosh no-ops if audio isn't unlocked)
     }
-  }, [wsStatus]);
+  }, [wsStatus, runTransition]);
 
   // Splash: unlock audio + start the music silently within the click gesture.
   // This click is the browser's autoplay-unlock gesture, so it's where we create
@@ -771,11 +807,23 @@ function App() {
   // homepage, and fade the music up DURING the wipe.
   function handleIntroComplete() {
     setShowIntro(false);
-    transitionKeyRef.current += 1;
-    setTransition({ word: 'TYPE A WORD', key: transitionKeyRef.current });
-    sound.whoosh(); // the bar wipe down to the homepage
-    setTimeout(() => setTransition(null), 500);
     music.fadeTo(0.3, 500);
+    // Reveal the menu with the KNIFE-SPLIT (this transition's signature, in place
+    // of the explosion + the generic bar wipe). Under reduced motion we skip the
+    // slice entirely and just cut to the menu.
+    const reduced =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+    sound.punch(); // the blade hits
+    sound.whoosh(); // the halves slam apart
+    triggerShake('light'); // a tiny jolt as it parts
+    setSlicing(true);
+    if (sliceTimerRef.current) clearTimeout(sliceTimerRef.current);
+    // Cover the full knife-split: fast blade stroke + the slow ~2200ms widen
+    // (which starts at 150ms), so the cinematic menu reveal never gets cut short.
+    sliceTimerRef.current = setTimeout(() => setSlicing(false), 2450);
   }
 
   function goToLobby(mode, publicDefault = false) {
@@ -799,6 +847,9 @@ function App() {
 
   // Open the public-room browser. Clear any stale list so we don't flash an old
   // snapshot; the screen's mount effect immediately re-requests a fresh one.
+  // NOTE: the homepage "Browse Public Rooms" button was removed (public browsing
+  // is reachable from the Quick Play flow), so this + the 'browse' route below are
+  // retained but currently unlinked from the menu - the screen itself is kept.
   function handleOpenBrowser() {
     setServerError('');
     setPublicRooms([]);
@@ -1060,7 +1111,6 @@ function App() {
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={() => goToLobby('join')}
         onQuickPlay={handleQuickPlay}
-        onBrowseRooms={handleOpenBrowser}
         onCredits={goToCredits}
       />
     );
@@ -1102,7 +1152,10 @@ function App() {
   }
 
   // The attract/splash screen follows the loading screen. Clicking it starts
-  // everything (audio unlock, intro, etc.).
+  // everything (audio unlock, intro, etc.). The persistent WallScene +
+  // ParticleField render behind it - the splash's own translucent veil dims the
+  // graffiti wall so the wordmark + mascot stay the focal point. (Only the INTRO
+  // card is stripped to a bare black field; the splash keeps its full backdrop.)
   if (showSplash) {
     return (
       <>
@@ -1114,13 +1167,15 @@ function App() {
     );
   }
 
-  // The anime fight-card intro plays over a black overlay between the splash and
-  // the homepage; when it finishes it wipes down to the homepage.
+  // The anime fight-card intro plays over a full black overlay between the splash
+  // and the homepage; when it finishes it wipes down to the homepage. The shared
+  // WallScene + ParticleField are intentionally NOT mounted here: the intro was
+  // stripped back to near-empty so the two lines (TYPE FAST / DIE SLOW) own a calm
+  // black field with nothing competing behind them (and no per-beat halftone
+  // repaint). Those backdrops still render on the splash, menu and game.
   if (showIntro) {
     return (
       <SoundContext.Provider value={soundValue}>
-        <WallScene intensity="calm" />
-        <ParticleField />
         <TransitionIntro onComplete={handleIntroComplete} />
         <CursorTrail />
       </SoundContext.Provider>
@@ -1157,6 +1212,9 @@ function App() {
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} />
           )}
+          {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
+              auto-cleared after ~480ms). Replaces the old intro explosion. */}
+          {slicing && <KnifeSplit />}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
               useBeatSync via --flash-color). Click-through, below modals. */}

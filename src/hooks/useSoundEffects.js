@@ -474,6 +474,23 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
+    // Player joined the lobby: a bright, friendly two-blip "bloop-bleep" arrival
+    // pop (C5 -> G5 on triangles), fired as the new player's chip slams into the
+    // roster. Quick and cheerful so a busy lobby filling up feels exciting, not
+    // naggy. Routes through the master limiter like every other SFX.
+    playerJoin() {
+      if (mutedRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        playTone(ctx, { freq: 523.25, type: 'triangle', start: now, dur: 0.09, peak: 0.18 }); // C5
+        playTone(ctx, { freq: 783.99, type: 'triangle', start: now + 0.08, dur: 0.13, peak: 0.18 }); // G5
+      } catch {
+        /* no-op */
+      }
+    },
+
     // Snappy, very subtle UI click for every button in the app. Short enough
     // (15ms, low gain) that it never grates even on rapid presses.
     click() {

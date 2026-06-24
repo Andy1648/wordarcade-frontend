@@ -38,12 +38,17 @@
   margin-bottom: 28px;
   display: inline-block;
   box-shadow: 3px 3px 0 #000;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
+}
+
+.lobby-back-btn:hover {
+  transform: scale(1.06);
 }
 
 .lobby-back-btn:active {
-  transform: translate(2px, 2px);
+  transform: scale(0.9);
   box-shadow: 1px 1px 0 #000;
+  transition: transform 0.05s ease-out, box-shadow 0.05s;
 }
 
 .lobby-title {
@@ -191,12 +196,19 @@
   cursor: pointer;
   box-shadow: 5px 5px 0 #000;
   margin-top: 24px;
-  transition: transform 0.1s, box-shadow 0.1s;
+  /* Overshoot bezier so hover/release POP (zoom-bounce). */
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
+}
+
+.lobby-continue-btn:hover:not(:disabled) {
+  transform: scale(1.05);
 }
 
 .lobby-continue-btn:active {
-  transform: translate(3px, 3px);
+  /* Squash-IN; release pops back via the bouncy transition. */
+  transform: scale(0.9);
   box-shadow: 1px 1px 0 #000;
+  transition: transform 0.05s ease-out, box-shadow 0.05s;
 }
 
 /* Disabled keeps its personality - dark panel, DASHED accent outline, dimmed

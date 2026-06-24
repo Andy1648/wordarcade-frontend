@@ -326,18 +326,20 @@
 /* ====================  IDLE ANIMATIONS  ====================== */
 /* ============================================================= */
 
-/* Player chips rock gently side to side, staggered so the list looks alive
-   rather than a synchronized row. */
-.room-player-chip {
+/* Player SLOTS rock gently side to side, staggered so the list looks alive
+   rather than a synchronized row. The rock lives on the slot (not the chip) so
+   it composes with the chip's one-shot slam-in entrance instead of fighting it
+   (you can't run two transform animations on one element). */
+.room-player-slot {
   animation: chip-rock 2s ease-in-out infinite;
 }
 
-.room-player-chip:nth-child(2n) {
+.room-player-slot:nth-child(2n) {
   animation-duration: 2.3s;
   animation-delay: 0.2s;
 }
 
-.room-player-chip:nth-child(3n) {
+.room-player-slot:nth-child(3n) {
   animation-duration: 2.6s;
   animation-delay: 0.45s;
 }
@@ -347,6 +349,35 @@
   25% { transform: rotate(1deg); }
   75% { transform: rotate(-1deg); }
   100% { transform: rotate(0deg); }
+}
+
+/* SLAM-IN: each chip slams in from the left with an overshoot bounce while its
+   background flashes the player's assigned colour, then settles to the white
+   chip - a colourful Jackbox-style arrival. One-shot on mount (so it replays
+   only for a newly-arrived player, and for the whole roster on first entry).
+   `both` holds the 0% state before the (delayed) start so a joiner never flashes
+   un-slammed for a frame. */
+.room-player-chip {
+  animation: chip-slam-in 460ms cubic-bezier(0.18, 1.5, 0.4, 1) both;
+}
+
+@keyframes chip-slam-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-44px) scale(1.18) rotate(-4deg);
+    background: var(--pc, #fff);
+  }
+  55% {
+    opacity: 1;
+    transform: translateX(5px) scale(1.06) rotate(1.5deg);
+    background: var(--pc, #fff);
+  }
+  78% { background: var(--pc, #fff); }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1) rotate(0deg);
+    background: #fff;
+  }
 }
 
 /* Game-mode + difficulty buttons share the homepage "breathe", offset per
@@ -475,6 +506,12 @@ html[data-beat='true'] .room-leave-btn {
 @media (prefers-reduced-motion: reduce) {
   .room-waiting-mascot,
   .room-waiting-cue {
+    animation: none !important;
+  }
+  /* No idle rock and no slam-in entrance: chips just appear, resting white. The
+     join sound still fires (audio isn't motion). */
+  .room-player-slot,
+  .room-player-chip {
     animation: none !important;
   }
 }

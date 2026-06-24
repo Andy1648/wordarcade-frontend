@@ -98,10 +98,13 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     const n = room ? room.players.length : 0;
     if (n > prevPlayerCountRef.current) {
       setJoinPop(true);
+      sound.playerJoin(); // a bright arrival pop as the new chip slams in
       if (joinPopTimerRef.current) clearTimeout(joinPopTimerRef.current);
       joinPopTimerRef.current = setTimeout(() => setJoinPop(false), 600);
     }
     prevPlayerCountRef.current = n;
+    // sound is stable (apiRef); react to roster changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
   useEffect(() => () => clearTimeout(joinPopTimerRef.current), []);
 
@@ -142,15 +145,24 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         <div className="room-players-list">
           {room.players.map((player) => {
             const pc = resolvePlayerColor(playerColors, player.id);
+            // Each player sits in a keyed SLOT. Because the list is keyed by
+            // player id, an existing player's slot is preserved across room
+            // updates while a newly-arrived player mounts a FRESH slot - which
+            // replays the one-shot colored slam-in entrance (chip-slam-in) on
+            // the inner chip. So people "slam into" the lobby as they arrive
+            // (Jackbox-style), and on first entry the whole roster slams in. The
+            // slot carries the gentle idle rock; the chip carries the entrance,
+            // so the two transforms never fight (same split as the game cards).
             return (
-              <div
-                key={player.id}
-                className="room-player-chip"
-                style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
-              >
-                <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                <span className="room-player-name">{player.name}</span>
-                {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
+              <div key={player.id} className="room-player-slot">
+                <div
+                  className="room-player-chip"
+                  style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+                >
+                  <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                  <span className="room-player-name">{player.name}</span>
+                  {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
+                </div>
               </div>
             );
           })}

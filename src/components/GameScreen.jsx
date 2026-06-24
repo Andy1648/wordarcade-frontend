@@ -1336,6 +1336,16 @@ export default function GameScreen({
   // turn hands off, cleared when that 300ms animation ends.
   const [passDir, setPassDir] = useState(null);
   const prevCurrentRef = useRef(null);
+  // ---- Bomb hand-off FLIGHT (Word Bomb) ----
+  // The centrepiece bomb stays put; on a turn change we whip a small bomb GHOST
+  // from the PREVIOUS active player's card to the NEW one so the pass is
+  // trackable ("it's now YOUR turn"). Card positions are read live from the DOM
+  // via cardRefs (a Map keyed by player id) at hand-off time - no layout changes.
+  const cardRefs = useRef(new Map());
+  const [flight, setFlight] = useState(null); // { key, x, y, dx, dy } | null
+  const flightKeyRef = useRef(0);
+  const flightTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(flightTimerRef.current), []);
 
   // ---- Cinematic feel: hitlag / impact frame / K.O. ----
   // hitlag freezes every on-stage animation for a beat (impact weight); impactKey
@@ -1573,8 +1583,31 @@ export default function GameScreen({
         const mid = (list.length - 1) / 2;
         setPassDir(idx <= mid ? 'left' : 'right');
       }
+      // Whip a bomb ghost from the previous player's card to the new one. Skipped
+      // under reduced motion (the turn just changes instantly) and if either card
+      // can't be measured (e.g. the previous player was eliminated + removed).
+      const reduce =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fromEl = cardRefs.current.get(prev);
+      const toEl = cardRefs.current.get(cur);
+      if (!reduce && fromEl && toEl) {
+        const a = fromEl.getBoundingClientRect();
+        const b = toEl.getBoundingClientRect();
+        const x = a.left + a.width / 2;
+        const y = a.top + a.height / 2;
+        const dx = b.left + b.width / 2 - x;
+        const dy = b.top + b.height / 2 - y;
+        setFlight({ key: ++flightKeyRef.current, x, y, dx, dy });
+        sound.whoosh(); // reuse the existing throw swoosh
+        if (flightTimerRef.current) clearTimeout(flightTimerRef.current);
+        flightTimerRef.current = setTimeout(() => setFlight(null), 560);
+      }
     }
     prevCurrentRef.current = cur;
+    // sound is stable (apiRef); react to turn changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, gameType]);
 
   // ---- Sound effects (Word Bomb only) ----
@@ -1821,6 +1854,12 @@ export default function GameScreen({
   // subtle scale pulse (physiological tension on top of the tick speed-up).
   const timeRatio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
   const critical = !showCountdown && !gameOver && timeRatio < 0.3;
+  // CONTINUOUS dread (0 calm -> 1 panic), derived purely from the EXISTING
+  // timeRatio (no new timer/state). Eased (^1.8) so it stays calm early and ramps
+  // hard in the final seconds; published as --danger to drive the screen vignette
+  // and the bomb rattle with opacity/transform only. Snaps to 0 the instant a word
+  // resets the clock (timeRatio jumps back to ~1) - that's the relief release.
+  const danger = showCountdown || gameOver ? 0 : Math.pow(1 - timeRatio, 1.8);
 
   // The final-5s CLUTCH (shared bomb timer): the absolute last 5 seconds, felt by
   // everyone regardless of whose turn it is. Drives the mascot's panic pose and
@@ -1888,9 +1927,35 @@ export default function GameScreen({
     // what inner control is touched.
     <div
       className="game-wrap"
+      style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
+      {/* Continuous DREAD vignette: a static red edge-gradient whose OPACITY rides
+          --danger (the eased timer) - calm/clear early, panicking red in the final
+          seconds, then snapping back to nothing the instant a word resets the clock
+          (the relief release). Opacity + a transform-scale "breathe" only; the
+          gradient is painted once, never recomputed per frame. Outside .game-stage
+          so its position:fixed isn't trapped by the stage's drain filter. */}
+      <div className="wb-danger-vignette" aria-hidden="true" />
+      {/* Bomb hand-off ghost: whips from the previous active player's card to the
+          new one along an arc (transform-only), with a trailing after-image and a
+          landing impact ring. Fixed at viewport coords measured from the cards. */}
+      {flight && (
+        <div
+          key={flight.key}
+          className="bomb-flight"
+          style={{
+            left: `${flight.x}px`,
+            top: `${flight.y}px`,
+            '--dx': `${flight.dx}px`,
+            '--dy': `${flight.dy}px`,
+          }}
+          aria-hidden="true"
+        >
+          <span className="bomb-flight-icon">💣</span>
+        </div>
+      )}
       {/* Color-temperature wash: deepens with eliminations (subliminal). */}
       {warmth > 0 && (
         <div className="game-warmth" style={{ opacity: warmth }} aria-hidden="true" />
@@ -1993,6 +2058,11 @@ export default function GameScreen({
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
                 <div
+                  ref={(el) => {
+                    const m = cardRefs.current;
+                    if (el) m.set(player.id, el);
+                    else m.delete(player.id);
+                  }}
                   className={cardClass}
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
@@ -2048,6 +2118,11 @@ export default function GameScreen({
         )}
 
         <div className="bomb-area drain-exempt">
+          {/* Continuous danger rattle: the bomb physically vibrates harder as
+              --danger climbs (amplitude scales from 0 at calm), on its OWN wrapper
+              so it composes with the pass-throw / reactor / tension animations
+              instead of fighting them. Transform-only; zero movement at rest. */}
+          <div className="bomb-rattle">
           <div
             className={`bomb-passer${passDir ? ` pass-${passDir}` : ''}`}
             onAnimationEnd={(e) => {
@@ -2079,6 +2154,7 @@ export default function GameScreen({
                 </div>
               )}
             </div>
+          </div>
           </div>
 
           {/* Word thrown at the bomb on submit, and the rejected word shattering

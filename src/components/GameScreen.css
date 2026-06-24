@@ -892,6 +892,146 @@
   100% { transform: translateX(0) rotate(0); }
 }
 
+/* ============================================================= */
+/* ===============  CONTINUOUS DREAD ESCALATION  ============== */
+/* ============================================================= */
+
+/* Whole-screen red dread vignette. The gradient is painted ONCE; only its
+   opacity (driven by --danger, the eased timer) and a transform-scale breathe
+   animate - no per-frame gradient recompute. Calm/clear early, panicking red in
+   the final seconds; the opacity transition gives the smooth ramp AND the snap-
+   back relief when an accepted word resets the clock (--danger -> 0). */
+.wb-danger-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 6; /* over the stage content; under the dramatic overlays (KO/explosion/countdown) */
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 40, 40, 0) 42%,
+    rgba(255, 40, 40, 0.5) 100%
+  );
+  opacity: calc(var(--danger, 0) * 0.9);
+  transition: opacity 0.5s ease;
+  animation: wb-danger-breathe 1s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* Edge "pulse in from the edges": a transform-scale breathe (separate property
+   from the --danger opacity, so the relief transition is never overridden). Its
+   visibility rides the opacity, so it's invisible when calm and pounds when red. */
+@keyframes wb-danger-breathe {
+  0%, 100% { transform: scale(1.05); }
+  50% { transform: scale(1); }
+}
+
+/* The bomb vibrates harder as --danger climbs - amplitude is multiplied by
+   --danger, so it's perfectly still when calm and rattles hard near zero. A hard
+   (stepped) rattle reads as a shaking bomb. transform-only. */
+.bomb-rattle {
+  animation: bomb-danger-rattle 130ms steps(2, end) infinite;
+}
+
+@keyframes bomb-danger-rattle {
+  0% {
+    transform: translate(calc(var(--danger, 0) * -2.2px), calc(var(--danger, 0) * 1.6px))
+      rotate(calc(var(--danger, 0) * -1.1deg));
+  }
+  50% {
+    transform: translate(calc(var(--danger, 0) * 2.4px), calc(var(--danger, 0) * -1.4px))
+      rotate(calc(var(--danger, 0) * 1.3deg));
+  }
+  100% {
+    transform: translate(calc(var(--danger, 0) * -1.6px), calc(var(--danger, 0) * 2px))
+      rotate(calc(var(--danger, 0) * -0.9deg));
+  }
+}
+
+/* Reduced motion: keep a readable STATIC red danger tint (the --danger opacity
+   stays - it's a colour cue, not motion), but drop the breathing pulse and the
+   bomb rattle. */
+@media (prefers-reduced-motion: reduce) {
+  .wb-danger-vignette { animation: none !important; transform: none !important; }
+  .bomb-rattle { animation: none !important; }
+}
+
+/* ============================================================= */
+/* ===============  BOMB HAND-OFF FLIGHT (throw)  ============= */
+/* ============================================================= */
+
+/* The ghost bomb whipped from the previous player's card to the new active one.
+   Fixed at the measured FROM point; the inner icon arcs to the delta (--dx/--dy)
+   with a lift + spin. transform-only (GPU), ~340ms. Cleared by a timer in JS. */
+.bomb-flight {
+  position: fixed;
+  z-index: 60; /* above the player cards, below the dramatic full-screen overlays */
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.bomb-flight-icon {
+  display: block;
+  font-size: 30px;
+  line-height: 1;
+  transform-origin: 50% 50%;
+  animation: bomb-flight-arc 340ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
+  will-change: transform;
+}
+
+/* Motion-smear after-image: the same arc, lagged + faded, so the throw reads as a
+   whip rather than a teleport. Pure opacity/transform (no blur). */
+.bomb-flight-icon::after {
+  content: '💣';
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.35;
+  animation: bomb-flight-arc 340ms cubic-bezier(0.45, 0, 0.35, 1) 45ms forwards;
+}
+
+@keyframes bomb-flight-arc {
+  0% { transform: translate(0, 0) scale(0.6) rotate(0deg); }
+  50% {
+    transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5 - 72px))
+      scale(1.2) rotate(220deg);
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.85) rotate(420deg);
+  }
+}
+
+/* Landing impact: a hard-edged ring pops at the destination (the new active
+   card) as the bomb arrives (~delay matches the arc end). Flat, 0-blur. */
+.bomb-flight::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  border: 3px solid #FF6B3D;
+  opacity: 0;
+  transform: translate(var(--dx), var(--dy)) scale(0.2);
+  animation: bomb-flight-land 240ms ease-out 300ms forwards;
+}
+
+@keyframes bomb-flight-land {
+  0% { opacity: 0.9; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.6); }
+}
+
+/* Reduced motion: App/GameScreen already skip mounting the flight, but if it ever
+   renders, never animate (it just won't show meaningfully). */
+@media (prefers-reduced-motion: reduce) {
+  .bomb-flight-icon,
+  .bomb-flight-icon::after,
+  .bomb-flight::before {
+    animation: none !important;
+  }
+}
+
 /* Critical red vignette: a flat (no-blur) red ring around the bomb, cross-faded
    in. Spread-only box-shadow keeps it hard-edged in the cel style. */
 .bomb-vignette {

@@ -165,8 +165,12 @@
   inset: 0;
   background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
   background-size: 12px 12px;
-  /* Breathes with the music's mids; rests at 0.05 when the music is off. */
-  opacity: calc(0.045 + var(--beat-mid, 0) * 0.06);
+  /* STATIC opacity. Previously this was calc(0.045 + var(--beat-mid) * 0.06),
+     which recomputed every frame off the per-frame --beat-mid var and forced a
+     full-viewport repaint of this halftone layer at 60fps - the single biggest
+     menu jank source. The breathe was near-imperceptible; a flat value removes
+     the repaint entirely (on every screen) for a large, free perf win. */
+  opacity: 0.05;
 }
 
 /* ---- Whole-wall beat brightness flash ---- */
