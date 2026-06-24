@@ -1910,6 +1910,17 @@ export default function GameScreen({
     !!myPlayer && (myPlayer.eliminated || myPlayer.lives <= 0) && !gameOver;
   // How many players are out but still in the room - the live audience.
   const spectatorCount = players.filter((p) => p.eliminated || p.lives <= 0).length;
+  // First-person last-life: true only when WE personally are on our final life.
+  // Mirrors the roster chip's `lastLife` flag (lives === 1, not out, multi-life
+  // mode) but for myPlayer, and drives the screen-edge vignette below. Reads off
+  // the live players/gameState props (fed by turn_update), so it clears the moment
+  // we die (eliminated / lives <= 0) or claw back a life (lives !== 1).
+  const myLastLife =
+    !!myPlayer &&
+    !myPlayer.eliminated &&
+    myPlayer.lives === 1 &&
+    maxLives > 1 &&
+    !gameOver;
 
   // ---- Subliminal intensity cues ----
   // Color temperature: a faint red wash that deepens as players are eliminated,
@@ -2007,6 +2018,12 @@ export default function GameScreen({
           gradient is painted once, never recomputed per frame. Outside .game-stage
           so its position:fixed isn't trapped by the stage's drain filter. */}
       <div className="wb-danger-vignette" aria-hidden="true" />
+      {/* First-person LAST-LIFE vignette: a faint red edge-pulse shown only while
+          WE are on our final life, so the personal stakes are felt at the screen
+          edges (the roster chip already covers seeing OTHERS at last life). Its own
+          fixed layer (not the --danger vignette, not the beat shadow-slam), pulsing
+          at the SAME 760ms as the roster ring so the two read as one system. */}
+      {myLastLife && <div className="wb-lastlife-vignette" aria-hidden="true" />}
       {/* Bomb hand-off ghost: whips from the previous active player's card to the
           new one along an arc (transform-only), with a trailing after-image and a
           landing impact ring. Fixed at viewport coords measured from the cards. */}

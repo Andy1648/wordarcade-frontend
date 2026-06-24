@@ -978,6 +978,33 @@
   50% { transform: scale(1); }
 }
 
+/* First-person LAST-LIFE vignette: a faint red edge-pulse shown only while the
+   LOCAL player is on their final life. Subtle (never a full-screen alarm) and on
+   its OWN fixed layer - separate from .wb-danger-vignette (timer dread) and the
+   beat shadow-slam - so it never collides. Pulses opacity at 760ms to match the
+   roster chip's .last-life ring, so the two read as one cue. Edges-only gradient
+   (transparent core), so the centre stays clear and readable. */
+.wb-lastlife-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 5; /* under the timer dread vignette (6) + dramatic overlays; over stage */
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 46, 46, 0) 56%,
+    rgba(255, 46, 46, 0.34) 100%
+  );
+  animation: wb-lastlife-pulse 760ms ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Opacity-only pulse, matching the roster ring's 760ms cadence (kept subtle:
+   ~0.18 floor so it never blares, ~0.5 peak so the threat still registers). */
+@keyframes wb-lastlife-pulse {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.5; }
+}
+
 /* The bomb vibrates harder as --danger climbs - amplitude is multiplied by
    --danger, so it's perfectly still when calm and rattles hard near zero. A hard
    (stepped) rattle reads as a shaking bomb. transform-only. */
@@ -1006,6 +1033,9 @@
 @media (prefers-reduced-motion: reduce) {
   .wb-danger-vignette { animation: none !important; transform: none !important; }
   .bomb-rattle { animation: none !important; }
+  /* Keep the last-life cue as a STATIC faint red tint (it's a colour signal, not
+     motion), mirroring how the roster ring drops its pulse under reduced motion. */
+  .wb-lastlife-vignette { animation: none !important; opacity: 0.34; }
 }
 
 /* ============================================================= */
