@@ -1542,6 +1542,16 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Locked the instant SKIP is tapped (skipPending) until the turn advances, so a
+   rapid double-tap can't fire a second skip_turn (which would cost a 2nd life).
+   Dimmed + pressed-in so the swallow reads as intentional, not a dead button. */
+.game-skip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: skewX(2deg) translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
 .game-skip-cost {
   font-size: 7px;
   letter-spacing: 0.5px;

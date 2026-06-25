@@ -1297,6 +1297,11 @@ export default function GameScreen({
   onShake,
 }) {
   const [draft, setDraft] = useState('');
+  // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
+  // double-tap must not send two skip_turn frames. This locks the button from the
+  // first click until the turn actually advances. Cleared by the turn-change effect
+  // below (keyed on the live currentPlayerId), so it re-arms next time we're up.
+  const [skipPending, setSkipPending] = useState(false);
   const inputRef = useRef(null);
   // Intro countdown plays once when the screen mounts; the input stays
   // disabled until it finishes.
@@ -1372,6 +1377,14 @@ export default function GameScreen({
     // and we only want this to fire on the turn transition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMyTurn]);
+
+  // Re-arm SKIP once the turn actually advances (the live currentPlayerId from
+  // the next turn_update changes) or the game ends. Reading the prop directly (not
+  // a stale copy) means the lock releases exactly when the server has moved play
+  // on - so our SKIP works normally next time we're up, and can never stick true.
+  useEffect(() => {
+    setSkipPending(false);
+  }, [gameState?.currentPlayerId, gameOver]);
 
   // Hype popup + screen shake (accepted) and input shake (rejected). Called
   // before the category early-return so the hooks always run in the same order.
@@ -2377,10 +2390,13 @@ export default function GameScreen({
               <button
                 className="game-skip-btn"
                 onClick={() => {
+                  if (skipPending) return; // swallow the rapid second tap only
+                  setSkipPending(true);
                   sound.click();
                   sound.skip(); // descending "whomp" before the turn deflates
                   onSkipTurn();
                 }}
+                disabled={skipPending}
                 title="Skip your turn — costs you a life"
               >
                 SKIP
