@@ -23,6 +23,12 @@
   /* Vertical padding is small + vh-based so it never eats the height budget on
      short laptops; horizontal keeps the roomy side breathing room. */
   padding: clamp(8px, 1.6vh, 20px) clamp(14px, 4vw, 72px);
+  /* Cancel the app-wide --app-scale zoom (applied on .view-screen). The landing
+     is deliberately locked to exactly one screen height (height:100dvh +
+     overflow:hidden) and is already fluid via vh units, so zooming it would
+     overflow that locked height and clip the buttons. Reciprocal zoom nets to
+     1 here, leaving the tuned one-screen layout untouched. */
+  zoom: calc(1 / var(--app-scale, 1));
 }
 
 /* The content card fills most of the viewport width and only caps (and centres)

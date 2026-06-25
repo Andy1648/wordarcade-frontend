@@ -21,4 +21,11 @@
 
 .view-screen {
   position: relative;
+  /* Single app-wide responsive scale anchor (factor set on :root by main.jsx).
+     The whole active screen scales up proportionally on large monitors so its
+     content fills the device instead of sitting tiny inside a fixed-width card.
+     Defaults to 1 (no-op) on phones / screens <=1400px. zoom (not transform) so
+     scaled-taller screens reflow and scroll normally rather than overflowing a
+     fixed box, and so it doesn't become a containing block for fixed children. */
+  zoom: var(--app-scale, 1);
 }
