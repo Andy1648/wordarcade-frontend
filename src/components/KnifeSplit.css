@@ -1,135 +1,158 @@
-/* KnifeSplit.css - the intro -> menu sword-swipe reveal.
-   Flat colors, hard edges, no blur/glow. Transform / clip-path / opacity ONLY:
-   a white blade streaks across as two dark pieces (clipped on the same shallow
-   diagonal) widen apart - GPU-friendly and far cheaper than the explosion it
-   replaced.
+/* KnifeSplit.css — the intro -> menu reveal.
+   Flat colours, hard edges, no blur/glow. Transform / opacity ONLY (GPU-friendly).
 
-   TWO SEQUENCED PHASES (the cut must LAND before the screen opens):
-     PHASE 1 - SLASH (0-200ms): the blade streaks across the still-covered dark
-       screen; a white flash punches as it lands. The halves do NOT move yet.
-     HOLD (200-250ms): the blade sits at full length for ~50ms so the eye reads the
-       completed cut (the seam) before anything opens.
-     PHASE 2 - OPEN (250-700ms): the two halves part ALONG the cut (animation-delay
-       250ms so they hold covered through phase 1+hold via backwards `both` fill).
-       The white cut does NOT fade - it lives on each half as a bright leading edge
-       (::before) that rides outward WITH its half, so the single slash splits into
-       two glowing borders peeling apart around the revealed menu. Snap-then-glide.
-   The whole gesture is ~700ms (well under 1s). The halves' delay is the seam that
-   keeps the slash and the open from blurring into one mushy motion.
+   Two FULLY INDEPENDENT timelines, each driven by its own CSS vars (set in
+   KnifeSplit.jsx so JS timers and CSS can never drift):
 
-   The cut is a single SHALLOW (near-horizontal) diagonal, sloping gently down to
-   the right - from 46% height at the left edge to 54% at the right, threaded
-   through the GAP between the two title lines so the blade reads as splitting
-   "TYPE FAST" (TOP piece) from "DIE SLOW" (BOTTOM piece). Both pieces are clipped
-   on that SAME line so the seam lines up exactly; the blade is rotated to match.
-   The blade is pure WHITE - no coloured edge (matching the intro's no-colour rule). */
+     OPEN  — two oversized cover panels, rotated to --ks-angle around the viewport
+             centre so their meeting edge is the diagonal seam. From t=0 they slide
+             apart PERPENDICULAR to that seam over --ks-open-travel (the slow
+             reveal). Their OUTER edges sit far off-screen at all times, so only the
+             inner cut edge is ever visible.
 
-/* The single shared timing curve + duration - applied identically to the blade
-   and both halves so the whole reveal is one fluid motion. */
+     SLASH — an independent flourish fired at --ks-open-offset: a thin white line at
+             --ks-angle streaks across (--ks-slash-draw) then fades (--ks-slash-fade),
+             with a brief white screen-flash punched as it crosses. Editing the
+             slash's look (thickness/colour) touches no open/timing value.
+
+   All keys on these elements are static JSX siblings (no array keys) — the
+   key-collision freeze cannot recur here. */
+
 .knife-split {
   position: fixed;
   inset: 0;
-  z-index: 150; /* above the menu content; pointer-events:none so it never blocks */
+  z-index: 150; /* above the menu; pointer-events:none so it never blocks input */
   pointer-events: none;
   overflow: hidden;
 }
 
-/* ---- The two dark pieces that cover the menu then widen apart ---- */
-.knife-half {
+/* ---- The two cover panels ----
+   Each is MUCH larger than the viewport (200% wide, 300% tall) and anchored with
+   one edge at the viewport's vertical centre; that anchored edge is the SEAM. Both
+   rotate by the SAME --ks-angle around the SAME centre point, so the two seam edges
+   stay coincident and form one clean diagonal cut. The far (outer) edges are pushed
+   hundreds of vh off-screen and never appear. */
+.knife-panel {
   position: absolute;
-  inset: 0;
-  /* Matches the page/menu dark bg so the cover reads as the dark intro screen
-     being cut, with no visible seam-colour before the slice. */
-  background: #0d0618;
+  left: -50%;
+  right: -50%; /* width 200%, centred — the tilted seam still overhangs both sides */
+  height: 300%;
+  background: #0d0618; /* matches the page bg so the cover reads as the dark screen */
   will-change: transform;
 }
 
-/* Shared cut line: (0 46%) -> (100% 54%). TOP piece is everything above it, BOTTOM
-   everything below. clip-path is static (set once) - only the transform animates.
-   Both start at t=0 on the shared cubic-bezier(0.16, 1, 0.3, 1), PERPENDICULAR to
-   the near-horizontal cut: top lifts up (+ a hair left & tilt), bottom drops down
-   (+ a hair right & tilt), gliding off-screen to reveal the menu. */
-.knife-half-top {
-  clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
-  /* PHASE 2: 250ms delay holds the cover in place through the slash + hold (the
-     backwards `both` fill keeps it at the `from` covering state), then it parts. */
-  animation: knife-part-top 450ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
+/* TOP panel: bottom edge sits on the centre line and is the seam; body extends far
+   up and off the top. Rotates about that bottom-centre point, then parts upward
+   (translateY is applied INSIDE the rotated frame, i.e. perpendicular to the seam). */
+.knife-panel-top {
+  bottom: 50%;
+  transform-origin: center bottom;
+  animation: ks-open-top var(--ks-open-travel) var(--ks-open-ease) both;
 }
 
-.knife-half-bottom {
-  clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
-  animation: knife-part-bottom 450ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
+/* BOTTOM panel: top edge is the seam; body extends far down and off the bottom. */
+.knife-panel-bottom {
+  top: 50%;
+  transform-origin: center top;
+  animation: ks-open-bottom var(--ks-open-travel) var(--ks-open-ease) both;
 }
 
-@keyframes knife-part-top {
-  from { transform: translate(0, 0) rotate(0); }
-  to { transform: translate(-3vw, -100vh) rotate(-1.5deg); } /* lift up, off-screen */
+@keyframes ks-open-top {
+  from {
+    transform: rotate(var(--ks-angle)) translateY(0);
+  }
+  to {
+    /* up, perpendicular to the seam, fully clearing the screen */
+    transform: rotate(var(--ks-angle)) translateY(calc(-1 * var(--ks-panel-travel)));
+  }
 }
 
-@keyframes knife-part-bottom {
-  from { transform: translate(0, 0) rotate(0); }
-  to { transform: translate(3vw, 100vh) rotate(1.5deg); } /* drop down, off-screen */
+@keyframes ks-open-bottom {
+  from {
+    transform: rotate(var(--ks-angle)) translateY(0);
+  }
+  to {
+    transform: rotate(var(--ks-angle)) translateY(var(--ks-panel-travel));
+  }
 }
 
-/* ---- The cut's bright WHITE edge - it BECOMES the parting borders ----
-   There is no separate fading blade. The white cut lives on EACH half as a ::before
-   strip pinned to the SHARED cut line, using the exact geometry the old blade had so
-   it reads as the identical line (left:-12vw, top:46%, width:124vw, rotate 3.8deg).
-   PHASE 1: both edges draw across together (scaleX 0->1) - coincident on the cut
-   line, so they read as ONE streaking white line, then hold at full length (the
-   seam). PHASE 2: because each ::before is a CHILD of its half, it inherits the
-   half's outward translate - so the single line visibly SPLITS into two bright
-   borders peeling apart around the revealed menu. Each half's clip-path keeps its
-   edge on its own parting side; the edge stays bright the whole open and only leaves
-   the screen when its half does - no fade-out, no slash->edge handoff gap. */
-.knife-half::before {
-  content: '';
+/* ---- The slash (independent flourish) ----
+   A thin white line pinned across the centre at --ks-angle. Two stacked animations:
+   DRAW grows it scaleX 0->1 (the streak); FADE then drops its opacity (no hold).
+   The draw's delay (--ks-open-offset) keeps it invisible — scaleX(0) — until the
+   flourish fires, well into the slow open. */
+.knife-slash {
   position: absolute;
-  left: -12vw;
-  top: 46%;
-  width: 124vw;
-  height: 12px; /* centred on the cut line; each half's clip shows ~6px on its side */
-  margin-top: -6px;
-  background: #fff; /* pure white - flat, no glow (matches the no-blur rule) */
+  top: 50%;
+  left: -10vw;
+  width: 120vw;
+  height: var(--ks-slash-thick);
+  margin-top: calc(var(--ks-slash-thick) / -2);
+  background: var(--ks-slash-color);
   transform-origin: left center;
-  transform: rotate(3.8deg) scaleX(0);
-  animation: knife-edge-draw 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform: rotate(var(--ks-angle)) scaleX(0);
+  opacity: 0;
+  animation:
+    ks-slash-draw var(--ks-slash-draw) cubic-bezier(0.2, 0.8, 0.2, 1)
+      var(--ks-open-offset) both,
+    ks-slash-fade var(--ks-slash-fade) ease-out
+      calc(var(--ks-open-offset) + var(--ks-slash-draw)) both;
 }
 
-/* Draw (0-62% ~= 0-200ms): scaleX 0->1 - the decisive cut; both edges coincident on
-   the cut line so it reads as one line. Hold (62-100%): stays full; the parent
-   half's translate (delay 250ms) then carries the edge outward. NO opacity fade -
-   the edge rides off-screen glued to its half. */
-@keyframes knife-edge-draw {
-  0%   { transform: rotate(3.8deg) scaleX(0); }
-  62%  { transform: rotate(3.8deg) scaleX(1); }
-  100% { transform: rotate(3.8deg) scaleX(1); }
+@keyframes ks-slash-draw {
+  from {
+    transform: rotate(var(--ks-angle)) scaleX(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(var(--ks-angle)) scaleX(1);
+    opacity: 1;
+  }
 }
 
-/* ---- Quick WHITE flash punched as the cut LANDS (~200ms), not at launch - it
-   marks the impact moment at the end of phase 1, then is gone before the open. ---- */
+/* Listed second, so it wins control of `opacity` once it starts (transform stays
+   held at scaleX(1) by the draw's forwards fill). */
+@keyframes ks-slash-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- The white screen-flash punched as the slash crosses ---- */
 .knife-flash {
   position: absolute;
   inset: 0;
   background: #fff;
   opacity: 0;
-  animation: knife-flash 280ms ease-out both;
+  animation: ks-flash var(--ks-flash-dur) ease-out var(--ks-flash-delay) both;
 }
 
-@keyframes knife-flash {
-  0%   { opacity: 0; }
-  55%  { opacity: 0; }   /* dark while the blade is mid-streak */
-  71%  { opacity: 0.5; } /* ~200ms: flash as the cut connects */
-  100% { opacity: 0; }   /* gone before the halves open */
+@keyframes ks-flash {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: var(--ks-flash-peak);
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
-/* Reduced motion: App already skips mounting this, but if it ever renders, hold
-   everything parted/invisible so it never animates and never covers the menu. */
+/* Reduced motion: the component already returns null under reduce, but if it ever
+   renders, no-op every animation and never cover the menu. */
 @media (prefers-reduced-motion: reduce) {
-  .knife-half,
+  .knife-panel,
   .knife-slash,
   .knife-flash {
     animation: none !important;
+  }
+  .knife-panel,
+  .knife-slash,
+  .knife-flash {
     opacity: 0 !important;
   }
 }

@@ -856,9 +856,21 @@ function App() {
     triggerShake('light'); // a tiny jolt as it parts
     setSlicing(true);
     if (sliceTimerRef.current) clearTimeout(sliceTimerRef.current);
-    // Cover the full knife-split: blade + both halves run as ONE 1900ms motion
-    // (no delay), so unmount just after it completes - the menu reveal isn't cut short.
-    sliceTimerRef.current = setTimeout(() => setSlicing(false), 2000);
+    // KnifeSplit now drives its OWN lifecycle (slow ~10s open, tap-to-skip,
+    // same-session/reduced-motion skip) and calls onComplete (handleSliceComplete)
+    // when it's done. This timer is only a safety net so the overlay can never get
+    // stuck mid-screen if that callback somehow never fires.
+    sliceTimerRef.current = setTimeout(() => setSlicing(false), 12000);
+  }
+
+  // KnifeSplit finished (or was skipped): tear down the overlay. Idempotent — the
+  // safety timer above and this callback are both guarded by clearing the ref.
+  function handleSliceComplete() {
+    if (sliceTimerRef.current) {
+      clearTimeout(sliceTimerRef.current);
+      sliceTimerRef.current = null;
+    }
+    setSlicing(false);
   }
 
   function goToLobby(mode, publicDefault = false) {
@@ -1246,7 +1258,7 @@ function App() {
           )}
           {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
               auto-cleared after ~480ms). Replaces the old intro explosion. */}
-          {slicing && <KnifeSplit />}
+          {slicing && <KnifeSplit onComplete={handleSliceComplete} />}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
               useBeatSync via --flash-color). Click-through, below modals. */}
