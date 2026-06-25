@@ -36,7 +36,11 @@
   padding: 5px 12px;
   cursor: pointer;
   margin-bottom: 28px;
-  display: inline-block;
+  /* 44px min hit height (a11y floor) on every width; "← BACK" stays 11px, centered.
+     inline-flex keeps it shrink-to-text wide rather than a full-width bar. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   box-shadow: 3px 3px 0 #000;
   transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
 }

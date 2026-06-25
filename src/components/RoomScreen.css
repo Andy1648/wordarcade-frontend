@@ -128,6 +128,11 @@
 
 .room-gametype-btn {
   flex: 1;
+  /* 44px min hit height (a11y floor); text stays 10px, centered in the taller box. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   font-family: 'Bungee', cursive;
   font-size: 10px;
   line-height: 1.2;
@@ -165,6 +170,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center; /* center the name+desc in the 44px min-height box */
+  min-height: 44px; /* a11y tap floor; label sizes unchanged */
   gap: 3px;
   font-family: 'Bungee', cursive;
   font-size: 11px;
@@ -548,6 +555,12 @@ html[data-beat='true'] .room-leave-btn {
 /* Little ✕ to kick the bot before starting. Hard pink button, snaps on press. */
 .room-bot-remove {
   margin-left: auto;
+  /* 44x44 minimum hit area (destructive control - mis-tap kicks the bot). The ✕
+     glyph stays 11px, centered in the bigger box; flex-shrink:0 + margin-left:auto
+     keep it pinned to the chip's right edge with no overlap on the badge/name. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Bungee', cursive;
   font-size: 11px;
   line-height: 1;
@@ -557,7 +570,7 @@ html[data-beat='true'] .room-leave-btn {
   border-radius: 6px;
   padding: 4px 8px;
   min-width: 44px;
-  min-height: 28px;
+  min-height: 44px;
   cursor: pointer;
   box-shadow: 2px 2px 0 #000;
   flex-shrink: 0;

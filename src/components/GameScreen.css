@@ -3675,6 +3675,11 @@ html[data-beat='true'] .cb-answer-chip {
 /* The reroll action: a purple "magic swap" panel button. Enabled = filled
    purple with the usual hard black offset shadow. */
 .cb-reroll-btn {
+  /* 44px min hit height (a11y floor); label stays 12px, centered. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   font-family: 'Bungee', cursive;
   font-size: 12px;
   letter-spacing: 0.5px;
