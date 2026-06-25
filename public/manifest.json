@@ -1,0 +1,21 @@
+{
+  "name": "Type a Word",
+  "short_name": "Type a Word",
+  "description": "Fast, chaotic multiplayer word games. Type fast, die slow.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0618",
+  "theme_color": "#0d0618",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "48x48"
+    }
+  ]
+}
