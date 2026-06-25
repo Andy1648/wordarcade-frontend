@@ -1,7 +1,8 @@
 // Homepage.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
+import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import {
   PaintSplatter1,
@@ -46,7 +47,26 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   const [navigating, setNavigating] = useState(false);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
-  const { sound } = useSound();
+  const { sound, muted } = useSound();
+
+  // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
+  // existing mute toggle silences the new press cues too (default on, honored).
+  useEffect(() => {
+    setJuiceMuted(muted);
+  }, [muted]);
+
+  // Fire the shared game-feel on a menu action button press: squash + color
+  // flash + a small spark burst from the button's center + a tap tick. The juice
+  // module self-gates on reduced-motion and the mute flag, so this stays
+  // unconditional here. `accent` tints the flash/sparks to the button's color.
+  function pressJuice(e, accent) {
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    squash(el);
+    flash(el, accent);
+    burst(r.left + r.width / 2, r.top + r.height / 2, { count: 16, colors: [accent], speed: 240 });
+    sfx('tap');
+  }
 
   // Hovering a card plays a subtle blip - but only when moving onto a NEW card,
   // so it never machine-guns while you sit on one card. (hoverGame is kept just
@@ -63,15 +83,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     if (onSelectGame) onSelectGame(gameId);
   }
 
-  function handleCreateRoom() {
+  function handleCreateRoom(e) {
     if (navigating) return;
+    pressJuice(e, '#FF2EC4'); // pink accent juice (squash + spark + tick)
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
     if (onCreateRoom) onCreateRoom();
   }
 
-  function handleJoinRoom() {
+  function handleJoinRoom(e) {
     if (navigating) return;
+    pressJuice(e, '#2EFFE0'); // cyan accent juice
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
     if (onJoinRoom) onJoinRoom();
@@ -139,6 +161,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           <button
             className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
             onClick={handleCreateRoom}
+            onMouseEnter={() => sfx('hover')}
             disabled={navigating}
           >
             CREATE ROOM
@@ -146,6 +169,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           <button
             className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}
             onClick={handleJoinRoom}
+            onMouseEnter={() => sfx('hover')}
             disabled={navigating}
           >
             JOIN ROOM
