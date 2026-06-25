@@ -24,6 +24,7 @@ import { buildPlayerColors } from './playerColors';
 import { resolvePlayerName, rememberName } from './playerName';
 import { friendlyError } from './friendlyError';
 import { useOneShotAction } from './hooks/useOneShotAction';
+import { track } from './analytics';
 
 // Server frames that RESOLVE a one-shot action (an ack, a state change, or a
 // rejection). Draining any of these bumps `serverEventId`, which re-enables the
@@ -393,6 +394,18 @@ function App() {
     };
   }, [sound]);
 
+  // ---- Analytics bookkeeping (fire-and-forget; never affects gameplay) ----
+  // The WS drain effect below is keyed only on [messages], so reading `room` /
+  // `gameStats` STATE directly inside it would be STALE. We mirror the few values
+  // game_completed needs into refs (always live) so the capture is accurate
+  // without making the drain effect depend on them.
+  const gameStartMsRef = useRef(null); // wall-clock ms when the current game started
+  const gameModeRef = useRef(null); // gameType of the current game (from game_started)
+  const playerCountRef = useRef(0); // live roster size, synced from room below
+  useEffect(() => {
+    playerCountRef.current = room?.players?.length || 0;
+  }, [room]);
+
   useEffect(() => {
     if (!messages.length) return;
     // Drain the FIFO queue in arrival order so co-arriving frames (e.g.
@@ -455,6 +468,12 @@ function App() {
         gameEndTime: null,
       });
       setView('game');
+      // Analytics: stamp start refs (read back at game_over for duration) and
+      // capture the start. mode comes straight off the message (never stale).
+      const startedMode = lastMessage.payload.gameType || 'word-bomb';
+      gameModeRef.current = startedMode;
+      gameStartMsRef.current = Date.now();
+      track('game_started', { mode: startedMode });
     }
 
     if (lastMessage.type === 'typing_update') {
@@ -767,6 +786,16 @@ function App() {
       // Stamp the end time so the overlay can show the game's duration.
       setGameStats((prev) => ({ ...prev, gameEndTime: Date.now() }));
       setView('game');
+      // Analytics: counts/enums only (no PII). mode + duration come from refs
+      // stamped at game_started; player_count from the room-synced ref — all live,
+      // never stale. duration omitted if we somehow never saw a start.
+      track('game_completed', {
+        mode: gameModeRef.current || payload.gameType || 'word-bomb',
+        player_count: playerCountRef.current,
+        duration_seconds: gameStartMsRef.current
+          ? Math.round((Date.now() - gameStartMsRef.current) / 1000)
+          : null,
+      });
     }
 
     if (lastMessage.type === 'error') {
@@ -939,6 +968,7 @@ function App() {
     setPlayerName(name);
     setServerError('');
     send('join_room', { code, name });
+    track('room_joined', { mode: 'join' }); // fire-and-forget; no name/PII
   }
 
   // Browser empty-state "create public room": jump to the create lobby with the
@@ -993,10 +1023,14 @@ function App() {
     setPlayerName(name);
     if (mode === 'join') {
       send('join_room', { code: roomCode, name });
+      track('room_joined', { mode: 'join' }); // fire-and-forget; no name/PII
     } else {
       // Carry the public/private choice into create_room (defaults false server
       // side, so a missing flag stays private/code-only as before).
       send('create_room', { name, isPublic: !!isPublic });
+      // Analytics: the selected mode is a game-id enum ('solo' generic create, or
+      // a preselected 'word-bomb' / 'category-blitz' / 'imposter-word'). No PII.
+      track('room_created', { mode });
       // If the player picked a specific game from the homepage, lock the room
       // into it right away. The server processes messages in order over the
       // same socket, so create_room (which registers the room) is handled
