@@ -10,8 +10,10 @@
      HOLD (200-250ms): the blade sits at full length for ~50ms so the eye reads the
        completed cut (the seam) before anything opens.
      PHASE 2 - OPEN (250-700ms): the two halves part ALONG the cut (animation-delay
-       250ms so they hold covered through phase 1+hold via backwards `both` fill),
-       and the blade fades out - revealing the menu. Snap-then-glide ease-out.
+       250ms so they hold covered through phase 1+hold via backwards `both` fill).
+       The white cut does NOT fade - it lives on each half as a bright leading edge
+       (::before) that rides outward WITH its half, so the single slash splits into
+       two glowing borders peeling apart around the revealed menu. Snap-then-glide.
    The whole gesture is ~700ms (well under 1s). The halves' delay is the seam that
    keeps the slash and the open from blurring into one mushy motion.
 
@@ -69,35 +71,39 @@
   to { transform: translate(3vw, 100vh) rotate(1.5deg); } /* drop down, off-screen */
 }
 
-/* ---- The blade: a thin WHITE line streaking across the cut (PHASE 1) ----
-   Pinned just off the left edge at the cut height, rotated to the shallow cut
-   angle, drawn left -> right via scaleX (origin = left end). This is the FIRST
-   phase and finishes BEFORE the halves move: it streaks fully across in ~200ms,
-   HOLDS at full length (still bright) for ~50ms so the completed cut registers,
-   then fades out as the halves begin to part (which only start at 250ms). */
-.knife-slash {
+/* ---- The cut's bright WHITE edge - it BECOMES the parting borders ----
+   There is no separate fading blade. The white cut lives on EACH half as a ::before
+   strip pinned to the SHARED cut line, using the exact geometry the old blade had so
+   it reads as the identical line (left:-12vw, top:46%, width:124vw, rotate 3.8deg).
+   PHASE 1: both edges draw across together (scaleX 0->1) - coincident on the cut
+   line, so they read as ONE streaking white line, then hold at full length (the
+   seam). PHASE 2: because each ::before is a CHILD of its half, it inherits the
+   half's outward translate - so the single line visibly SPLITS into two bright
+   borders peeling apart around the revealed menu. Each half's clip-path keeps its
+   edge on its own parting side; the edge stays bright the whole open and only leaves
+   the screen when its half does - no fade-out, no slash->edge handoff gap. */
+.knife-half::before {
+  content: '';
   position: absolute;
   left: -12vw;
   top: 46%;
   width: 124vw;
-  height: 7px;
-  margin-top: -3.5px;
-  background: #fff; /* pure white - no coloured edge */
+  height: 12px; /* centred on the cut line; each half's clip shows ~6px on its side */
+  margin-top: -6px;
+  background: #fff; /* pure white - flat, no glow (matches the no-blur rule) */
   transform-origin: left center;
   transform: rotate(3.8deg) scaleX(0);
-  animation: knife-slash 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: knife-edge-draw 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Streak (0-62% ~= 0-200ms): scaleX 0->1, fully opaque - the decisive cut.
-   Hold (62-78% ~= 200-250ms): stays at full length, still bright - the SEAM the eye
-   reads before anything opens.
-   Fade (78-100% ~= 250-320ms): opacity 1->0 as the halves start parting, so no
-   white line lingers over the opening cut. */
-@keyframes knife-slash {
-  0%   { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
-  62%  { transform: rotate(3.8deg) scaleX(1); opacity: 1; }
-  78%  { transform: rotate(3.8deg) scaleX(1); opacity: 1; }
-  100% { transform: rotate(3.8deg) scaleX(1); opacity: 0; }
+/* Draw (0-62% ~= 0-200ms): scaleX 0->1 - the decisive cut; both edges coincident on
+   the cut line so it reads as one line. Hold (62-100%): stays full; the parent
+   half's translate (delay 250ms) then carries the edge outward. NO opacity fade -
+   the edge rides off-screen glued to its half. */
+@keyframes knife-edge-draw {
+  0%   { transform: rotate(3.8deg) scaleX(0); }
+  62%  { transform: rotate(3.8deg) scaleX(1); }
+  100% { transform: rotate(3.8deg) scaleX(1); }
 }
 
 /* ---- Quick WHITE flash punched as the cut LANDS (~200ms), not at launch - it
