@@ -37,6 +37,53 @@
 - Located at: C:\Users\andyw_tnc0kix\Downloads\chain-reaction-backend\
 - Push separately from frontend
 
+## RISK TIERS — match ceremony to blast radius
+
+Every task falls in one tier. Use the workflow for that tier. Do NOT apply Tier 1 rigor to Tier 3 work (wastes time) or Tier 3 looseness to Tier 1 work (breaks prod).
+
+### TIER 1 — LIVE LOGIC (max caution, never loosen)
+Files: App.jsx (WS message handlers, view/state lifecycle), useWebSocket.js, server.js, gameLogic.js, roomManager.js, wordBombBot.js, categoryBlitzLogic.js, aiValidator.js / haikuValidator.js (validation flow).
+Anything touching: WebSocket messages, game state, turn logic, room lifecycle, the documented traps.
+Workflow:
+- ONE task at a time. Never batch.
+- DIAGNOSE before fixing — if asked to fix a bug, trace and report the cause FIRST; do not push a speculative fix. If you cannot reproduce, STOP and report (no no-op commits).
+- Supervised diff review before the next task.
+- After shipping, a 2-device live play-test is required (see REGRESSION CHECKLIST).
+- All documented traps apply (functional setView, live-view render, FIFO queue).
+
+### TIER 2 — UI / COMPONENTS (moderate)
+Files: GameScreen.jsx (rendering/layout, NOT its WS/state reads), RoomScreen.jsx, LobbyScreen.jsx, PublicRoomsScreen.jsx, ImposterWordScreen.jsx, component structure.
+Workflow:
+- May batch closely-related changes in one task.
+- Review by PLAYING the preview, not by reading every diff line.
+- Small judgment calls allowed; report them.
+- If a "UI" change touches a WS handler or game-state read, it's TIER 1 — escalate.
+
+### TIER 3 — STATIC / COSMETIC (loose, batch freely)
+Files: all .css, copy/text, index.html meta, public/* static files, dead-code removal, assets, console-log gating.
+Workflow:
+- Batch aggressively. Trust the build (vite build, exit 0) to catch breakage.
+- Spot-check the result; no line-by-line diff review needed.
+- Cannot blank/freeze the app, so no live-test gate.
+
+### ESCALATION RULE
+When unsure which tier, pick the HIGHER one. A task that "looks like CSS" but changes a conditional render is Tier 1/2, not Tier 3.
+
+## REGRESSION CHECKLIST — run after every TIER 1 change + every merge to main
+
+90-second 2-device pass (laptop + phone, both HARD-REFRESHED). Diffs cannot catch runtime-only bugs (the key-collision freeze passed every code check and still froze). This catches them.
+
+1. Load typeaword.com on both devices, hard-refresh.
+2. Device A: CREATE ROOM. Device B: JOIN by code.
+3. Device A: START a Word Bomb game.
+4. CONFIRM: both devices enter the game (no freeze, no dark screen, non-host not kicked to waiting).
+5. Play one full turn on each device (type a valid word, see it accepted).
+6. Confirm a turn passes between players correctly.
+7. (If WS/disconnect work was touched) Background the phone ~3s, foreground it — note behavior.
+8. Open console on at least one device: 0 red errors, 0 key-collision warnings.
+
+If any step fails → that's the regression, fix before anything else ships.
+
 ## Known Bugs — DO NOT REINTRODUCE
 - App.jsx room_update handler MUST use a functional state update to guard the view:
   `setView(prev => prev === 'game' ? prev : 'room')`
