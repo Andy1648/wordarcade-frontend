@@ -692,3 +692,47 @@ html[data-beat='true'] .homepage-quick-btn:not(:hover):not(:disabled) {
   from { translate: 0 0; }
   to { translate: var(--hx, 20px) var(--hy, 20px); }
 }
+
+/* ============================================================= */
+/* ==============  REDUCED MOTION (homepage)  ================== */
+/* ============================================================= */
+
+/* Fill the homepage's reduced-motion gap: silence ALL ambient/idle/beat-driven
+   loops - the brick-wall scroll, the starburst + speed-line spin, the splatter
+   parallax, the tagline sway, the section-label breathe, the action buttons' idle
+   bounce, and every data-beat pop (title + buttons). The page stays fully laid
+   out and legible, just calm. Resting design POSES are kept (the tagline's sticker
+   tilt, the buttons' skew), and the buttons swap their hover/press ZOOM for a
+   white-outline COLOUR cue so they still clearly respond to interaction.
+   (.homepage-logo::before/::after RGB-split and the dead .homepage-quick-btn are
+   already handled by their own reduce rules above - not repeated here.) */
+@media (prefers-reduced-motion: reduce) {
+  .homepage-stage::before,            /* brick-scroll */
+  .homepage-burst,                    /* burst-spin */
+  .homepage-speedlines,               /* burst-spin */
+  .homepage-tagline,                  /* tag-sway */
+  .homepage-section-label,            /* label-pulse */
+  .homepage-splatter,                 /* hp-splat-drift parallax */
+  .homepage-btn,                      /* btn-bounce-forever idle */
+  html[data-beat='true'] .homepage-logo,                            /* title-beat-pop + shadow-slam */
+  html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop */
+    animation: none !important;
+  }
+  /* The sway baked the sticker tilt into its keyframes, so restate it as a static
+     resting pose (otherwise animation:none would flatten the tagline). */
+  .homepage-tagline {
+    transform: rotate(-3deg) skewX(-6deg) !important;
+  }
+  /* Buttons respond via COLOUR, not motion: drop the hover zoom / press squash /
+     POW starburst, flash the outline white on hover instead. Resting skew kept. */
+  .homepage-btn:hover:not(:disabled) {
+    transform: skewX(-2deg) !important;
+    border-color: #fff !important;
+  }
+  .homepage-btn:active {
+    transform: skewX(-2deg) !important;
+  }
+  .homepage-btn::before {
+    display: none !important;
+  }
+}

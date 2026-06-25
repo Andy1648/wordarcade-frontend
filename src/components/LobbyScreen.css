@@ -232,6 +232,20 @@
   box-shadow: 5px 5px 0 #000;
 }
 
+/* Reduced motion: the lobby has NO looping/idle animation - its only motion is the
+   hover/press zoom-squash on the action buttons. Neutralise those transforms; the
+   static border, box-shadow and pointer cursor still signal interactivity. The
+   lobby box's resting -0.6deg sticker tilt and the toggle's tiny 2px press nudge
+   stay (neither is discomfort-grade motion). */
+@media (prefers-reduced-motion: reduce) {
+  .lobby-back-btn:hover,
+  .lobby-back-btn:active,
+  .lobby-continue-btn:hover:not(:disabled),
+  .lobby-continue-btn:active {
+    transform: none;
+  }
+}
+
 /* ---- Responsive ---- */
 
 /* Phones: tighten the box padding, scale the title, and guarantee the

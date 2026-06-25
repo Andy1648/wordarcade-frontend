@@ -1177,6 +1177,19 @@
   100% { transform: translate(-3px, 1px); }
 }
 
+/* Reduced motion: kill the bomb's per-tier idle SWAY / wobble / shake (the shake is
+   the most discomfort-prone loop in-game). The danger is still conveyed by the
+   colour vignette (.bomb-vignette.critical) and the size tier (.bomb-scale) - both
+   transitions, not loops - so the bomb still LOOKS calm / warning / critical, it
+   just no longer shakes. (The bomb-flight reduce rule above is separate.) */
+@media (prefers-reduced-motion: reduce) {
+  .bomb-body-wrap.calm,
+  .bomb-body-wrap.warning,
+  .bomb-body-wrap.critical {
+    animation: none !important;
+  }
+}
+
 /* Smoothly burning fuse: stroke-dashoffset eases between the per-second values
    so the fuse drains continuously instead of stepping. The ease runs a touch
    LONGER than the 1s server tick on purpose - the next tick redirects it while
@@ -2532,6 +2545,22 @@
   15% { transform: scale(1.2) rotate(var(--cd-rot, 0deg)); opacity: 1; }
   70% { transform: scale(1.2) rotate(var(--cd-rot, 0deg)); opacity: 1; }
   100% { transform: scale(1.5) rotate(var(--cd-rot, 0deg)); opacity: 0; }
+}
+
+/* Reduced motion: KEEP the 3-2-1 number fully readable each beat, but drop the
+   zoom-in / spin / zoom-out - a plain full-size opacity fade in/out on the same
+   700ms cadence, so the countdown still reads clearly without the violent scale. */
+@keyframes countdown-fade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown-text {
+    animation: countdown-fade 700ms ease-out forwards;
+  }
 }
 
 /* ============================================================= */
