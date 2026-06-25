@@ -23,6 +23,20 @@ import { SoundContext } from './contexts/SoundContext';
 import { buildPlayerColors } from './playerColors';
 import { resolvePlayerName, rememberName } from './playerName';
 import { friendlyError } from './friendlyError';
+import { useOneShotAction } from './hooks/useOneShotAction';
+
+// Server frames that RESOLVE a one-shot action (an ack, a state change, or a
+// rejection). Draining any of these bumps `serverEventId`, which re-enables the
+// useOneShotAction button guards. Deliberately EXCLUDES high-frequency in-game
+// frames (timer_tick, typing_update, etc.) so e.g. an in-flight reroll guard is
+// not cleared early by an unrelated tick.
+const RESOLVING_TYPES = new Set([
+  'room_update',
+  'game_reset',
+  'game_started',
+  'round_start',
+  'error',
+]);
 import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
 
@@ -138,6 +152,20 @@ function App() {
     [room]
   );
   const [serverError, setServerError] = useState('');
+  // Monotonic counter bumped on every RESOLVING server frame (see RESOLVING_TYPES).
+  // It is the fresh re-enable signal for the one-shot action guards below — a
+  // counter, not a string, so an identical repeated error still re-enables them.
+  const [serverEventId, setServerEventId] = useState(0);
+
+  // One reused guard per one-shot action (see useOneShotAction). Each disables its
+  // button on click, fires the send exactly once, and re-enables on the next
+  // serverEventId bump (ack/error) or a safety-timeout backstop. add_bot/remove_bot
+  // share one guard (mutually exclusive); rematch + solo play-again share one too.
+  const [startPending, fireStart] = useOneShotAction(serverEventId);
+  const [diffPending, fireDiff] = useOneShotAction(serverEventId);
+  const [botPending, fireBot] = useOneShotAction(serverEventId);
+  const [rematchPending, fireRematch] = useOneShotAction(serverEventId);
+  const [rerollPending, fireReroll] = useOneShotAction(serverEventId);
   // The server tells us our own connection id immediately on connect (see
   // server.js's 'connected' message) - we need this to know things like
   // "am I the host" (compare to room.hostId) since room broadcasts list
@@ -371,8 +399,12 @@ function App() {
     // game_started immediately followed by room_update) are EACH processed -
     // batched delivery can no longer collapse them into just the latest one.
     // (Body left at its original indent so the fix reads as a pure wrapper.)
+    let sawResolving = false;
     for (const lastMessage of messages) {
     if (!lastMessage) continue;
+    // Track whether this drain carried any action-resolving frame, so we bump the
+    // one-shot guard signal exactly once below (even if several arrive together).
+    if (RESOLVING_TYPES.has(lastMessage.type)) sawResolving = true;
 
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
@@ -741,6 +773,10 @@ function App() {
       setServerError(friendlyError(lastMessage.payload.message));
     }
     } // end for-of: every queued frame handled in order
+    // One fresh re-enable signal per drain that carried an ack/state-change/error.
+    // A counter (never an error string) so an identical repeated error still
+    // re-enables the one-shot button guards.
+    if (sawResolving) setServerEventId((n) => n + 1);
     // Drop exactly the frames we just processed. The hook's consume is a
     // functional update, so any frame that arrived after this snapshot is kept,
     // never skipped.
@@ -977,7 +1013,7 @@ function App() {
   }
 
   function handleSetDifficulty(difficultyKey) {
-    send('set_difficulty', { difficultyKey });
+    fireDiff(() => send('set_difficulty', { difficultyKey }));
   }
 
   function handleSetGameType(gameType) {
@@ -987,21 +1023,21 @@ function App() {
   // Solo Word Bomb: the host explicitly adds/removes a bot opponent (the server
   // re-broadcasts room_update, so the bot just appears/disappears in the roster).
   function handleAddBot(difficulty) {
-    send('add_bot', { difficulty });
+    fireBot(() => send('add_bot', { difficulty }));
   }
 
   function handleRemoveBot() {
-    send('remove_bot', {});
+    fireBot(() => send('remove_bot', {}));
   }
 
   function handleStartGame() {
-    send('start_game', {});
+    fireStart(() => send('start_game', {}));
   }
 
   // Host-only "play again": the server resets the room's game and broadcasts a
   // room_update, which the handler above turns back into the 'room' view.
   function handleRematch() {
-    send('rematch', {});
+    fireRematch(() => send('rematch', {}));
   }
 
   // Solo Category Blitz "PLAY AGAIN": fire a brand new game immediately without
@@ -1011,13 +1047,15 @@ function App() {
   // game_started + round_start, which the gameNonce remount + the round_start
   // handler turn into a fresh round (with countdown) on the same screen.
   function handlePlayAgain() {
-    send('start_game', {});
+    // Solo "play again" is a rematch sibling — share the rematch guard so the two
+    // post-game buttons can't double-fire (they're never both pressed together).
+    fireRematch(() => send('start_game', {}));
   }
 
   // Category Blitz: swap the current round's category. The server enforces
   // host-only (multiplayer) and the per-game reroll allowance; we just ask.
   function handleRerollCategory() {
-    send('reroll_category', {});
+    fireReroll(() => send('reroll_category', {}));
   }
 
   function handleSubmitWord(word) {
@@ -1101,6 +1139,8 @@ function App() {
         onRematch={handleRematch}
         onPlayAgain={handlePlayAgain}
         onRerollCategory={handleRerollCategory}
+        rematchPending={rematchPending}
+        rerollPending={rerollPending}
         musicSetVolume={music.setVolume}
         reactions={reactions}
         onSpectatorReaction={handleSpectatorReaction}
@@ -1115,6 +1155,9 @@ function App() {
         playerColors={playerColors}
         preselectedGame={isPreselectableGame(lobbyMode) ? lobbyMode : null}
         serverError={serverError}
+        startPending={startPending}
+        diffPending={diffPending}
+        botPending={botPending}
         onLeave={handleLeaveRoom}
         onSetGameType={handleSetGameType}
         onSetDifficulty={handleSetDifficulty}

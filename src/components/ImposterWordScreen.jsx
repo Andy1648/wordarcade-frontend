@@ -241,7 +241,7 @@ function topUnique(scores, field) {
   return leader;
 }
 
-function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch }) {
+function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch, rematchPending }) {
   const { sound } = useSound();
   const scores = [...(final.finalScores || [])].sort((a, b) => b.score - a.score);
   const iWon = final.winnerId === myId;
@@ -309,8 +309,8 @@ function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch })
 
           <div className="game-over-actions">
             {isHost && (
-              <button className="game-over-rematch" onClick={() => { sound.click(); onRematch(); }}>
-                REMATCH
+              <button className="game-over-rematch" onClick={() => { sound.click(); onRematch(); }} disabled={rematchPending}>
+                {rematchPending ? 'REMATCHING...' : 'REMATCH'}
               </button>
             )}
             <button
@@ -345,6 +345,7 @@ export default function ImposterWordScreen({
   onSubmitVote,
   onLeave,
   onRematch,
+  rematchPending,
   onShake,
 }) {
   const { sound } = useSound();
@@ -406,6 +407,7 @@ export default function ImposterWordScreen({
         colorMap={colorMap}
         onLeave={onLeave}
         onRematch={onRematch}
+        rematchPending={rematchPending}
       />
     );
   }

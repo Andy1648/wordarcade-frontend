@@ -1291,6 +1291,8 @@ export default function GameScreen({
   onRematch,
   onPlayAgain,
   onRerollCategory,
+  rematchPending,
+  rerollPending,
   musicSetVolume,
   reactions = [],
   onSpectatorReaction,
@@ -1825,6 +1827,7 @@ export default function GameScreen({
         onSubmitVote={onSubmitVote}
         onLeave={onLeave}
         onRematch={onRematch}
+        rematchPending={rematchPending}
         onShake={onShake}
       />
     );
@@ -1860,6 +1863,8 @@ export default function GameScreen({
         onRematch={onRematch}
         onPlayAgain={onPlayAgain}
         onRerollCategory={onRerollCategory}
+        rematchPending={rematchPending}
+        rerollPending={rerollPending}
       />
     );
   }
@@ -2477,8 +2482,8 @@ export default function GameScreen({
             />
             <div className="game-over-actions">
               {isHost ? (
-                <button className="game-over-rematch" onClick={onRematch}>
-                  REMATCH
+                <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                  {rematchPending ? 'REMATCHING...' : 'REMATCH'}
                 </button>
               ) : (
                 /* Non-hosts can't trigger the rematch (host-only), so instead of a
@@ -2519,7 +2524,7 @@ export default function GameScreen({
  *   - PLAY AGAIN starts a fresh 3-round game (no room detour); NEW GAME MODE
  *     drops back to the room to pick a different mode/difficulty; LEAVE exits.
  */
-function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave }) {
+function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave, actionPending }) {
   // Resolve the personal best exactly once, on mount, and bank the new record
   // if it was beaten. Everything the render needs is frozen here.
   const [pb] = useState(() => {
@@ -2591,10 +2596,10 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave 
           </div>
 
           <div className="game-over-actions">
-            <button className="solo-play-again-btn" onClick={onPlayAgain}>
+            <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
               PLAY AGAIN
             </button>
-            <button className="solo-change-cat-btn" onClick={onNewGameMode}>
+            <button className="solo-change-cat-btn" onClick={onNewGameMode} disabled={actionPending}>
               NEW GAME MODE
             </button>
             <button className="game-over-leave secondary" onClick={onLeave}>
@@ -2641,6 +2646,8 @@ function CategoryBlitzScreen({
   onRematch,
   onPlayAgain,
   onRerollCategory,
+  rematchPending,
+  rerollPending,
 }) {
   const { sound } = useSound();
   const [draft, setDraft] = useState('');
@@ -2870,6 +2877,7 @@ function CategoryBlitzScreen({
         onPlayAgain={onPlayAgain}
         onNewGameMode={onRematch}
         onLeave={onLeave}
+        actionPending={rematchPending}
       />
     );
   }
@@ -2953,8 +2961,8 @@ function CategoryBlitzScreen({
             </div>
             <div className="game-over-actions">
               {isHost ? (
-                <button className="game-over-rematch" onClick={onRematch}>
-                  REMATCH
+                <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                  {rematchPending ? 'REMATCHING...' : 'REMATCH'}
                 </button>
               ) : (
                 /* Non-hosts can't trigger the rematch (host-only), so instead of a
@@ -3081,7 +3089,7 @@ function CategoryBlitzScreen({
               <button
                 className="cb-reroll-btn"
                 onClick={onRerollCategory}
-                disabled={rerollsLeft <= 0 || !withinRerollWindow}
+                disabled={rerollsLeft <= 0 || !withinRerollWindow || rerollPending}
                 title={
                   rerollsLeft <= 0
                     ? 'No rerolls left this game'

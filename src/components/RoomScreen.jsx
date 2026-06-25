@@ -88,19 +88,15 @@ function botDifficultyLabel(key) {
  * players instead see the current difficulty as read-only text and a
  * "waiting for host" message.
  */
-export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot }) {
-  // Spam-click guards: lock Start once pressed (re-enabled if the server
-  // rejects it) and Leave once pressed (you're on your way out).
-  const [starting, setStarting] = useState(false);
+export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, startPending, diffPending, botPending, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot }) {
+  // Start / difficulty / bot are one-shot, server-acked actions: their guards
+  // (disable-on-click + recover-on-ack/error) live in App via useOneShotAction
+  // and arrive here as the *Pending booleans, so a repeated identical error can
+  // never strand a button. Leave is a one-way local lock (you're on your way out).
   const [leaving, setLeaving] = useState(false);
   // Whether the bot difficulty picker is expanded (after tapping ADD BOT).
   const [showBotPicker, setShowBotPicker] = useState(false);
   const { sound } = useSound();
-
-  // A server error means the start attempt bounced - let the host try again.
-  useEffect(() => {
-    if (serverError) setStarting(false);
-  }, [serverError]);
 
   // Mascot reacts when the roster GROWS: a quick excited pop (pure presentation,
   // diffed off the existing player list - no new game state). The 600ms window
@@ -155,9 +151,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   }
 
   function handleStartGame() {
-    if (starting) return;
+    if (startPending) return; // guard re-enables on the server ack/error (App)
     sound.click(); // the countdown beeps follow once the game screen mounts
-    setStarting(true);
     onStartGame();
   }
 
@@ -206,6 +201,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   {player.isBot && isHost && (
                     <button
                       className="room-bot-remove"
+                      disabled={botPending}
                       onClick={handleRemoveBot}
                       title="Remove this bot"
                       aria-label="Remove bot"
@@ -263,6 +259,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                     <button
                       key={d.key}
                       className="room-addbot-diff"
+                      disabled={botPending}
                       onClick={() => handleAddBot(d.key)}
                     >
                       <span className="room-addbot-name">{d.label}</span>
@@ -309,6 +306,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               <button
                 key={diff.key}
                 className={`room-difficulty-btn${room.difficultyKey === diff.key ? ' selected' : ''}`}
+                disabled={diffPending}
                 onClick={() => {
                   sound.click();
                   onSetDifficulty(diff.key);
@@ -335,11 +333,11 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           <button
             className="room-start-btn"
             onClick={handleStartGame}
-            disabled={!canStart || starting}
+            disabled={!canStart || startPending}
           >
             {!canStart
               ? `NEED ${minPlayers}+ PLAYERS TO START`
-              : starting
+              : startPending
               ? 'STARTING...'
               : isSoloCategoryBlitz
               ? 'PLAY SOLO'
