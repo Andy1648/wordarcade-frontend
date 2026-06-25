@@ -58,6 +58,31 @@
   );
 }
 
+/* The settled TYPE FAST / DIE SLOW title, rendered IN BOTH cover halves and centred
+   identically (full-viewport flex-centre) so it lines up exactly with
+   TransitionIntro's title at the handoff (no jump, no second source of truth — the
+   .intro-line styling is reused). Each cover's clip-path shows only this half's
+   portion: TYPE FAST reads in the top half, DIE SLOW in the bottom. Because it's a
+   child of the cover, it translates WITH the half when the cut opens. */
+.ks-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* MUST equal TransitionIntro's .intro-breathe gap — that gap is what sets the
+     space BETWEEN the two phrases. Without it the lines sit closer together than
+     the intro's and visibly snap inward at the handoff. */
+  gap: clamp(48px, 8vh, 120px);
+}
+
+@media (max-width: 600px) {
+  .ks-title {
+    gap: clamp(40px, 7vh, 76px); /* matches .intro-breathe's mobile override */
+  }
+}
+
 /* The halves only animate once JS adds .is-open (after the slash has drawn + held
    + the open-gap). forwards fill so they stay parted at the end. */
 .knife-split.is-open .knife-cover-top {

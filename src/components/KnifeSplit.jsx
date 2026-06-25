@@ -29,6 +29,10 @@
 // Cosmetic + pointer-events:none. Transform/opacity/clip only.
 import { useEffect, useRef, useState } from 'react';
 import './KnifeSplit.css';
+// Reuse the intro's EXACT title styling (.intro-line / slot classes) so the
+// phrases rendered in the cover halves are pixel-identical to TransitionIntro's —
+// the handoff is seamless and there's no second copy of the title CSS to drift.
+import './TransitionIntro.css';
 
 // ===== Shared geometry =====
 const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
@@ -45,7 +49,9 @@ const OPEN_DUR = 1100; // halves drift apart, perpendicular, off-screen
 const OPEN_EASE = 'cubic-bezier(.4,0,.2,1)';
 
 // ===== Appearance =====
-const COVER_COLOR = '#14161b'; // solid charcoal cover over the menu
+// MUST equal TransitionIntro's .intro-overlay background (#000) so the letters ->
+// slash -> open reads as ONE continuous screen — no grey-screen swap at handoff.
+const COVER_COLOR = '#000';
 
 // Whole gesture, mount through open end — used only as a safety backstop so the
 // overlay can never get stuck if an animationend/timer is somehow dropped.
@@ -186,12 +192,31 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
     (fadeOn ? ' is-fade' : '') +
     (openOn ? ' is-open' : '');
 
+  // The SAME two phrases TransitionIntro shows, in their settled state (plain text,
+  // no per-letter entrance), centred identically. Rendered inside BOTH cover halves
+  // so each half's clip shows its portion — TYPE FAST in the top half, DIE SLOW in
+  // the bottom — and each phrase rides its half off-screen when the cover parts.
+  // (Phrases must stay in sync with TransitionIntro's "TYPE FAST." / DIE_TEXT.)
+  const title = (
+    <div className="ks-title" aria-hidden="true">
+      <div className="intro-line-slot intro-slot-type">
+        <div className="intro-line intro-line-type">TYPE FAST.</div>
+      </div>
+      <div className="intro-line-slot intro-slot-die">
+        <div className="intro-line intro-line-die">DIE SLOW.</div>
+      </div>
+    </div>
+  );
+
   return (
     <div className={cls} style={vars} aria-hidden="true">
-      {/* Two cover copies clipped to opposite sides of the shared diagonal seam. */}
-      <div className="knife-cover knife-cover-top" />
-      <div className="knife-cover knife-cover-bottom" />
-      {/* The slash, rotated by the SAME angle, sits ABOVE the covers and draws first. */}
+      {/* Two cover copies clipped to opposite sides of the shared diagonal seam,
+          each carrying the full settled title so the phrases straddle the cut and
+          ride apart with the halves. */}
+      <div className="knife-cover knife-cover-top">{title}</div>
+      <div className="knife-cover knife-cover-bottom">{title}</div>
+      {/* The slash, rotated by the SAME angle, sits ABOVE the covers (between the
+          two phrases) and draws first. */}
       <div className="knife-slash">
         <div className="knife-streak" />
         <div className="knife-head" />
