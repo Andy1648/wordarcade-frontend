@@ -175,20 +175,15 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
   // so each half's clip shows its portion — TYPE FAST in the top half, DIE SLOW in
   // the bottom — and each phrase rides its half off-screen when the cover parts.
   // (Phrases must stay in sync with TransitionIntro's "TYPE FAST." / DIE_TEXT.)
-  // Same two phrases as TransitionIntro, each stacked into two words via the same
-  // full-width .is-space block break — so the 4-word layout is identical and the
-  // handoff stays seamless. TYPE/FAST ride up with the top half, DIE/SLOW down.
+  // Each phrase is ONE line: "TYPE FAST" rides up with the top half, "DIE SLOW"
+  // rides down with the bottom half — the cut passes between the two lines.
   const title = (
     <div className="ks-title" aria-hidden="true">
       <div className="intro-line-slot intro-slot-type">
-        <div className="intro-line intro-line-type">
-          TYPE<span className="intro-letter is-space"> </span>FAST.
-        </div>
+        <div className="intro-line intro-line-type">TYPE FAST.</div>
       </div>
       <div className="intro-line-slot intro-slot-die">
-        <div className="intro-line intro-line-die">
-          DIE<span className="intro-letter is-space"> </span>SLOW.
-        </div>
+        <div className="intro-line intro-line-die">DIE SLOW.</div>
       </div>
     </div>
   );
