@@ -35,7 +35,7 @@ const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
 const SLASH_DELAY = 180; // ms — title-drop end → slash start (absolute --slash-start = 1830ms)
 const SLASH_DRAW = 260; // ms — the streak draws across
 const SLASH_HOLD = 340; // ms — HOLDS bright so it's actually seen (draw+hold = 600)
-const SLASH_FADE = 220; // ms — then fades, as the open begins
+const SLASH_FADE = 240; // ms — then fades, as the open begins
 
 // ===== OPEN — timing =====
 const OPEN_GAP = 140; // ms — slash → open
@@ -118,8 +118,11 @@ export default function KnifeSplit({ onComplete }) {
   if (!play) return null;
 
   // d = vertical offset of the cut line at the screen edges (half-width away from
-  // centre). Shared by the slash rotation (implicitly, via --ks-cut-angle) and the
-  // seam clip, so both are the SAME line. Computed in px from the live viewport.
+  // centre). The seam clip uses ±d; the slash uses the rotation. BOTH derive from
+  // the single CUT_ANGLE here, so they are guaranteed collinear. The slash rotation
+  // is the NEGATIVE of the angle because the spec's clip seam rises to the right
+  // (left at 50%+d, right at 50%-d); rotate(-angle) gives that same slope. Computed
+  // in px from the live viewport (no CSS tan(), no nested calc).
   const d =
     typeof window !== 'undefined'
       ? (window.innerWidth / 2) * Math.tan((CUT_ANGLE * Math.PI) / 180)
@@ -127,6 +130,7 @@ export default function KnifeSplit({ onComplete }) {
 
   const vars = {
     '--ks-cut-angle': `${CUT_ANGLE}deg`,
+    '--ks-slash-rot': `${-CUT_ANGLE}deg`,
     '--ks-d': `${d}px`,
     '--ks-slash-delay': `${SLASH_DELAY}ms`,
     '--ks-slash-draw': `${SLASH_DRAW}ms`,

@@ -35,10 +35,11 @@
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(50% + var(--ks-d)),
-    0 calc(50% - var(--ks-d))
+    100% calc(50% - var(--ks-d)),
+    0 calc(50% + var(--ks-d))
   );
-  /* --ks-open-start = slash-delay + slash-draw + slash-hold + open-gap, so the
+  /* --ks-open-start is a single FLAT resolved value (ms) computed in JS, NOT a
+     calc-on-calc — a nested calc collapsed to 0 once and ate the slash. So the
      halves only part once the slash has drawn AND held (the cut registered). */
   animation: ks-open-top var(--ks-open-dur) var(--ks-open-ease)
     var(--ks-open-start) both;
@@ -46,8 +47,8 @@
 
 .knife-cover-bottom {
   clip-path: polygon(
-    0 calc(50% - var(--ks-d)),
-    100% calc(50% + var(--ks-d)),
+    0 calc(50% + var(--ks-d)),
+    100% calc(50% - var(--ks-d)),
     100% 100%,
     0 100%
   );
@@ -83,7 +84,7 @@
   left: 50%;
   width: 160vw;
   height: 4px;
-  transform: translate(-50%, -50%) rotate(var(--ks-cut-angle));
+  transform: translate(-50%, -50%) rotate(var(--ks-slash-rot));
   /* The streak draws, then HOLDS bright (the children's forwards fill keeps it on
      screen through slash-hold + open-gap), then this fades it out exactly as the
      open begins (delay = --ks-open-start). */

@@ -35,6 +35,10 @@ const PREFERS_REDUCED =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// The second title line. Its length is the number of per-letter entrance
+// animations we wait on before handing off (one `die-letter-in` per character).
+const DIE_TEXT = 'DIE SLOW.';
+
 // Split a phrase into per-letter spans so each letter can stagger in on its own
 // delay (`--i`). Spaces are rendered as a non-breaking space and flagged so they
 // never sprout a paint drip.
@@ -73,6 +77,10 @@ export default function TransitionIntro({ onComplete }) {
   const [impactKind, setImpactKind] = useState('fast');
   const shakeTimerRef = useRef(null);
   const completedRef = useRef(false);
+  // Counts DIE SLOW's per-letter entrance animations as they finish, so we hand
+  // off the instant the LAST letter lands (off the real animationend) rather than
+  // a hardcoded guess. Reduced motion (animations disabled) falls to a short timer.
+  const dieLandedRef = useRef(0);
   // The element that leans toward the cursor (separate from the shake/breathe
   // layers so the transforms never fight).
   const tiltRef = useRef(null);
@@ -117,6 +125,22 @@ export default function TransitionIntro({ onComplete }) {
     setBlackKey((k) => k + 1);
   }
 
+  // Hand off to App's knife-split reveal exactly once.
+  function finishIntro() {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete();
+  }
+
+  // Each DIE SLOW letter fires `die-letter-in` animationend as it settles; the
+  // last one IS the title landing. Triggering off that (not a hardcoded time)
+  // keeps the slash tight to the drop even if the drop's timing is later retuned.
+  function handleDieAnimEnd(e) {
+    if (e.animationName !== 'die-letter-in') return;
+    dieLandedRef.current += 1;
+    if (dieLandedRef.current >= DIE_TEXT.length) finishIntro();
+  }
+
   // The whole timeline, scheduled once on mount (times are intro-local; the
   // splash already spent its own ~300ms dismissing before we mounted).
   useEffect(() => {
@@ -137,17 +161,12 @@ export default function TransitionIntro({ onComplete }) {
     timers.push(setTimeout(() => setStep('line2'), 780));
     timers.push(setTimeout(() => impact('slow'), 940)); // DIE
     timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
-    // Hand off RIGHT AS the title lands (no long dead hold), so the knife-split's
-    // slash fires tight off the drop. DIE SLOW's last letter settles ~1640ms
-    // (line2 at 780ms + 8x55ms stagger + 420ms); 1650ms hands off just after.
-    // KnifeSplit's own --ks-slash-delay (180ms) is the gap before the slash draws.
-    timers.push(
-      setTimeout(() => {
-        if (completedRef.current) return;
-        completedRef.current = true;
-        onComplete();
-      }, 1650)
-    );
+    // Handoff is normally driven by the last DIE SLOW letter's animationend
+    // (handleDieAnimEnd) — no hardcoded landing time. This is only a SAFETY net:
+    // under reduced motion the entrance animations are disabled (no animationend),
+    // so a short timer hands off promptly; in normal motion it sits past the
+    // expected ~1640ms land so animationend always wins first.
+    timers.push(setTimeout(finishIntro, PREFERS_REDUCED ? 120 : 1900));
     return () => {
       timers.forEach(clearTimeout);
       if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
@@ -222,8 +241,9 @@ export default function TransitionIntro({ onComplete }) {
             <div className="intro-line-slot intro-slot-die">
               <div
                 className={`intro-line intro-line-die${line2Active ? ' active' : ''}`}
+                onAnimationEnd={handleDieAnimEnd}
               >
-                <IntroLetters text="DIE SLOW." />
+                <IntroLetters text={DIE_TEXT} />
               </div>
             </div>
           </div>
