@@ -24,7 +24,7 @@ import { buildPlayerColors } from './playerColors';
 import { resolvePlayerName, rememberName } from './playerName';
 import { friendlyError } from './friendlyError';
 import { useOneShotAction } from './hooks/useOneShotAction';
-import { track } from './analytics';
+import { track } from './lib/analytics';
 
 // Server frames that RESOLVE a one-shot action (an ack, a state change, or a
 // rejection). Draining any of these bumps `serverEventId`, which re-enables the

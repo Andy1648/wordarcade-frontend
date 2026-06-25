@@ -2,14 +2,13 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
-import { initSentry, Sentry } from './sentry'
-import { initAnalytics } from './analytics'
+import { initAnalytics, initSentry, Sentry } from './lib/analytics'
 
-// Stand up monitoring + analytics BEFORE the app mounts. Both are graceful no-ops
-// when their env keys are unset, and both are fully wrapped, so neither can block
-// or break startup.
-initSentry()
-initAnalytics()
+// Stand up analytics + monitoring BEFORE the app mounts. Both are graceful no-ops
+// when their env keys are unset and are internally wrapped; the extra try/catch
+// here is belt-and-suspenders so a bad SDK load can never block startup.
+try { initAnalytics() } catch { /* never block startup */ }
+try { initSentry() } catch { /* never block startup */ }
 
 // On-brand crash screen shown by the Sentry error boundary if a render throws, so
 // a crash reports to Sentry AND shows this instead of a blank white page.
