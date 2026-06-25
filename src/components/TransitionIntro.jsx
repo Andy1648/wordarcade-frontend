@@ -137,15 +137,16 @@ export default function TransitionIntro({ onComplete }) {
     timers.push(setTimeout(() => setStep('line2'), 780));
     timers.push(setTimeout(() => impact('slow'), 940)); // DIE
     timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
-    // After the settle, the title simply holds on the calm black field (no
-    // explosion / blow-apart) until we hand off to App's knife-split reveal.
-    // 2500ms: hand back to App for the knife-split menu reveal.
+    // Hand off RIGHT AS the title lands (no long dead hold), so the knife-split's
+    // slash fires tight off the drop. DIE SLOW's last letter settles ~1640ms
+    // (line2 at 780ms + 8x55ms stagger + 420ms); 1650ms hands off just after.
+    // KnifeSplit's own --ks-slash-delay (180ms) is the gap before the slash draws.
     timers.push(
       setTimeout(() => {
         if (completedRef.current) return;
         completedRef.current = true;
         onComplete();
-      }, 2500)
+      }, 1650)
     );
     return () => {
       timers.forEach(clearTimeout);

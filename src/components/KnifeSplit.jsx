@@ -30,20 +30,25 @@ import './KnifeSplit.css';
 const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
 
 // ===== SLASH — timing (independent of the open) =====
-const SLASH_DELAY = 150; // ms — beat before the streak draws
-const SLASH_DUR = 300; // ms — the streak draws across (quick flash, no hold)
-const SLASH_FADE = 200; // ms — then fades out
+// This mounts right as the title lands; SLASH_DELAY is the tight gap after that.
+const SLASH_DELAY = 180; // ms — title-land → slash start (tight)
+const SLASH_DRAW = 260; // ms — the streak draws across
+const SLASH_HOLD = 260; // ms — HOLDS bright so it's actually seen (the fix)
+const SLASH_FADE = 220; // ms — then fades, as the open begins
 
 // ===== OPEN — timing =====
-const OPEN_DELAY = 60; // ms — tiny beat after the slash so the open reads as caused by it
-const OPEN_DUR = 1200; // ms — halves part perpendicular off-screen (slow open)
+const OPEN_GAP = 100; // ms — slash → open
+const OPEN_DUR = 1100; // ms — halves drift apart perpendicular, off-screen (slow)
 const OPEN_EASE = 'cubic-bezier(.4,0,.2,1)'; // smooth deceleration into place
 
 // ===== Appearance =====
 const COVER_COLOR = '#14161b'; // solid charcoal cover over the menu
 
-// Whole gesture: slash (delay+draw) -> beat -> open (delay+dur).
-const TOTAL = SLASH_DELAY + SLASH_DUR + OPEN_DELAY + OPEN_DUR; // ~1710ms
+// The open begins after the slash has drawn AND held (so the cut is registered),
+// plus the small open-gap. The slash then fades AS the open starts.
+const OPEN_START = SLASH_DELAY + SLASH_DRAW + SLASH_HOLD + OPEN_GAP; // 800ms
+// Whole gesture, slash start through open end (~1.71s) + the lead-in gap.
+const TOTAL = OPEN_START + OPEN_DUR; // ~1900ms
 
 // Per-page-load fallback when sessionStorage is unavailable (private mode etc.).
 let introPlayedMemory = false;
@@ -122,9 +127,11 @@ export default function KnifeSplit({ onComplete }) {
     '--ks-cut-angle': `${CUT_ANGLE}deg`,
     '--ks-d': `${d}px`,
     '--ks-slash-delay': `${SLASH_DELAY}ms`,
-    '--ks-slash-dur': `${SLASH_DUR}ms`,
+    '--ks-slash-draw': `${SLASH_DRAW}ms`,
+    '--ks-slash-hold': `${SLASH_HOLD}ms`,
     '--ks-slash-fade': `${SLASH_FADE}ms`,
-    '--ks-open-delay': `${OPEN_DELAY}ms`,
+    '--ks-open-gap': `${OPEN_GAP}ms`,
+    '--ks-open-start': `${OPEN_START}ms`,
     '--ks-open-dur': `${OPEN_DUR}ms`,
     '--ks-open-ease': OPEN_EASE,
     '--ks-cover': COVER_COLOR,

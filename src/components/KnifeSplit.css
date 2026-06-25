@@ -38,8 +38,10 @@
     100% calc(50% + var(--ks-d)),
     0 calc(50% - var(--ks-d))
   );
+  /* --ks-open-start = slash-delay + slash-draw + slash-hold + open-gap, so the
+     halves only part once the slash has drawn AND held (the cut registered). */
   animation: ks-open-top var(--ks-open-dur) var(--ks-open-ease)
-    calc(var(--ks-slash-delay) + var(--ks-slash-dur) + var(--ks-open-delay)) both;
+    var(--ks-open-start) both;
 }
 
 .knife-cover-bottom {
@@ -50,7 +52,7 @@
     0 100%
   );
   animation: ks-open-bottom var(--ks-open-dur) var(--ks-open-ease)
-    calc(var(--ks-slash-delay) + var(--ks-slash-dur) + var(--ks-open-delay)) both;
+    var(--ks-open-start) both;
 }
 
 @keyframes ks-open-top {
@@ -82,10 +84,11 @@
   width: 160vw;
   height: 4px;
   transform: translate(-50%, -50%) rotate(var(--ks-cut-angle));
-  /* Visible through the draw, then fades out (forwards: no early flash, the
-     children gate their own pre-draw visibility). */
-  animation: ks-slash-fade var(--ks-slash-fade) ease-out
-    calc(var(--ks-slash-delay) + var(--ks-slash-dur)) forwards;
+  /* The streak draws, then HOLDS bright (the children's forwards fill keeps it on
+     screen through slash-hold + open-gap), then this fades it out exactly as the
+     open begins (delay = --ks-open-start). */
+  animation: ks-slash-fade var(--ks-slash-fade) ease-out var(--ks-open-start)
+    forwards;
 }
 
 @keyframes ks-slash-fade {
@@ -104,7 +107,7 @@
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
   transform-origin: left center;
   transform: scaleX(0); /* hidden until the draw fires */
-  animation: ks-streak-draw var(--ks-slash-dur) cubic-bezier(0.2, 0.7, 0.2, 1)
+  animation: ks-streak-draw var(--ks-slash-draw) cubic-bezier(0.2, 0.7, 0.2, 1)
     var(--ks-slash-delay) forwards;
 }
 
@@ -130,7 +133,7 @@
   box-shadow: 0 0 22px 7px rgba(255, 255, 255, 0.95);
   opacity: 0; /* hidden until the draw fires (forwards fill, no backwards flash) */
   transform: translateX(0);
-  animation: ks-head-run var(--ks-slash-dur) cubic-bezier(0.2, 0.7, 0.2, 1)
+  animation: ks-head-run var(--ks-slash-draw) cubic-bezier(0.2, 0.7, 0.2, 1)
     var(--ks-slash-delay) forwards;
 }
 
