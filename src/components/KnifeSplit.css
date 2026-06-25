@@ -155,6 +155,23 @@
   transform-origin: left center;
   transform: scaleX(0); /* hidden until the draw fires */
   filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.75));
+  /* Feather the very tips to transparent so the lens FADES out at both ends
+     instead of ending on a hard geometric point — a real slash has no hard
+     cutoff. Static (scales with the blade), so it costs nothing per frame. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
 }
 
 /* Draw runs the instant .is-slash is added; an ease-OUT (whip in, then decelerate)
@@ -168,9 +185,13 @@
 @keyframes ks-blade-draw {
   from {
     transform: scaleX(0);
+    /* whip-in motion-blur on the blade body, smeared as it streaks... */
+    filter: blur(3px) drop-shadow(0 0 9px rgba(255, 255, 255, 0.75));
   }
   to {
     transform: scaleX(1);
+    /* ...resolving to crisp as it decelerates into the hold. */
+    filter: blur(0) drop-shadow(0 0 9px rgba(255, 255, 255, 0.75));
   }
 }
 
