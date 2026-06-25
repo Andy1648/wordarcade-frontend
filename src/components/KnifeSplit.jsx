@@ -30,14 +30,15 @@ import './KnifeSplit.css';
 const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
 
 // ===== SLASH — timing (independent of the open) =====
-// This mounts right as the title lands; SLASH_DELAY is the tight gap after that.
-const SLASH_DELAY = 180; // ms — title-land → slash start (tight)
+// This mounts right as the title lands (TransitionIntro hands off at 1650ms), so
+// all delays here are RELATIVE to that mount. Absolute = 1650ms + the value.
+const SLASH_DELAY = 180; // ms — title-drop end → slash start (absolute --slash-start = 1830ms)
 const SLASH_DRAW = 260; // ms — the streak draws across
-const SLASH_HOLD = 260; // ms — HOLDS bright so it's actually seen (the fix)
+const SLASH_HOLD = 340; // ms — HOLDS bright so it's actually seen (draw+hold = 600)
 const SLASH_FADE = 220; // ms — then fades, as the open begins
 
 // ===== OPEN — timing =====
-const OPEN_GAP = 100; // ms — slash → open
+const OPEN_GAP = 140; // ms — slash → open
 const OPEN_DUR = 1100; // ms — halves drift apart perpendicular, off-screen (slow)
 const OPEN_EASE = 'cubic-bezier(.4,0,.2,1)'; // smooth deceleration into place
 
@@ -45,10 +46,11 @@ const OPEN_EASE = 'cubic-bezier(.4,0,.2,1)'; // smooth deceleration into place
 const COVER_COLOR = '#14161b'; // solid charcoal cover over the menu
 
 // The open begins after the slash has drawn AND held (so the cut is registered),
-// plus the small open-gap. The slash then fades AS the open starts.
-const OPEN_START = SLASH_DELAY + SLASH_DRAW + SLASH_HOLD + OPEN_GAP; // 800ms
-// Whole gesture, slash start through open end (~1.71s) + the lead-in gap.
-const TOTAL = OPEN_START + OPEN_DUR; // ~1900ms
+// plus the open-gap. The slash then fades AS the open starts.
+//   open-start = slash-start + (draw+hold = 600) + (gap = 140) = slash-start + 740
+const OPEN_START = SLASH_DELAY + SLASH_DRAW + SLASH_HOLD + OPEN_GAP; // 920ms (absolute --open-delay = 2570ms)
+// Whole gesture, mount through open end.
+const TOTAL = OPEN_START + OPEN_DUR; // ~2020ms
 
 // Per-page-load fallback when sessionStorage is unavailable (private mode etc.).
 let introPlayedMemory = false;
