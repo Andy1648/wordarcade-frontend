@@ -1,54 +1,51 @@
 // KnifeSplit.jsx
-// The intro -> menu reveal, rebuilt so the SLASH and the SCREEN-OPEN are two
-// FULLY INDEPENDENT timelines (the previous version conflated them into one
-// motion that never lined up). Each beat has its own named variables below, so
-// you can retune one without touching the other.
+// The intro -> menu reveal. A charcoal cover sits over the menu; a bright slash
+// streaks across the cut line; then the cover splits ALONG THAT SAME LINE and the
+// two halves part perpendicular (top up, bottom down) to reveal the menu.
 //
-// GEOMETRY (the part that earlier attempts got wrong):
-//   Two cover PANELS (top + bottom), each MUCH larger than the viewport so their
-//   OUTER edges are always far off-screen — the user only ever sees the inner cut
-//   edge. Both panels are rotated to the same ANGLE around the viewport centre:
-//     - top panel:    transform-origin center bottom; rotate(ANGLE)  (covers top)
-//     - bottom panel: transform-origin center top;    rotate(ANGLE)  (covers bottom)
-//   Their meeting edge IS the diagonal at ANGLE. The slash, the seam and the open
-//   all share ANGLE, so the screen opens parallel to the slash. The panels part by
-//   translating PERPENDICULAR to that diagonal (translateY inside the rotated
-//   frame), travelling far enough to fully clear the screen.
+// ALIGNMENT (the bug we keep hitting): the slash and the split seam MUST derive
+// from ONE shared angle so they are guaranteed collinear — never computed apart.
+//   - The seam is two full-viewport cover copies clipped to opposite sides of the
+//     same diagonal edge. That edge is defined by --ks-d, the vertical offset of
+//     the line at the screen edges: d = (viewportWidth / 2) * tan(cut-angle).
+//   - The slash is the same line, just rotated by the SAME --ks-cut-angle.
+//   Same angle in, same line out → the seam sits exactly where the slash was.
+//   (--ks-d is precomputed in JS here rather than via CSS tan() in calc(), for
+//   browser safety.)
 //
-// THE OPEN is slow (OPEN_TRAVEL). On mount the panels begin opening IMMEDIATELY
-// (t=0). THE SLASH is an independent flourish fired at OPEN_OFFSET (4700ms after
-// the open starts) — a quick white streak + screen-flash that draws, flashes and
-// fades. It does not need to align with the gap; it rides on top.
+// ORDER: slash draws (quick flash, no hold) -> tiny beat -> cover opens. The open
+// delay = slash-delay + slash-dur + open-delay, so the split reads as caused by
+// the slash. Slash and open timing are SEPARATE named vars (slash independently
+// editable). Total ~1.13s.
 //
-// PLAY FREQUENCY: the full intro plays only on the FIRST visit per browser
-// session (sessionStorage 'introPlayed'); same-session reloads skip straight to
-// the menu. Tap/click/key anywhere skips instantly. prefers-reduced-motion skips
-// the slow open entirely. In every case the component hands off cleanly via
-// onComplete — it never leaves a stuck overlay or panels frozen mid-screen.
+// GATING: plays once per browser session (sessionStorage); same-session reloads
+// skip to the menu. Tap/click/key skips instantly. prefers-reduced-motion skips
+// entirely. Every path hands off cleanly via onComplete — never a stuck overlay.
 //
-// Cosmetic + pointer-events:none — transform/opacity only, no per-frame repaints.
+// Cosmetic + pointer-events:none. Transform/opacity/clip only.
 import { useEffect, useRef, useState } from 'react';
 import './KnifeSplit.css';
 
-// ===== OPEN — timing/geometry (independent of the slash flourish) =====
-const ANGLE = 4; // deg — shared by slash, seam AND open so they stay parallel
-const OPEN_TRAVEL = 10000; // ms — panels take this long to fully slide apart
-const OPEN_OFFSET = 4700; // ms — open starts at t=0; the slash fires this much later
-const OPEN_EASE = 'cubic-bezier(.45,0,.35,1)'; // panel-separation easing
-const PANEL_TRAVEL = '120vh'; // perpendicular distance each panel clears (off-screen)
+// ===== Shared geometry =====
+const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
 
-// ===== SLASH — timing (independent of the open above) =====
-const SLASH_DRAW = 200; // ms — the streak draws across fast
-const SLASH_FADE = 150; // ms — then immediately fades (no sustained hold)
-const FLASH_DUR = 90; // ms — the white screen-punch as it crosses
+// ===== SLASH — timing (independent of the open) =====
+const SLASH_DELAY = 150; // ms — beat before the streak draws
+const SLASH_DUR = 300; // ms — the streak draws across (quick flash, no hold)
+const SLASH_FADE = 200; // ms — then fades out
 
-// ===== SLASH — appearance (edit freely; touches no open/timing value) =====
-const SLASH_THICK = 3; // px — line thickness
-const SLASH_COLOR = '#fff'; // line colour
-const FLASH_PEAK = 0.7; // peak opacity of the screen-flash
+// ===== OPEN — timing =====
+const OPEN_DELAY = 60; // ms — tiny beat after the slash so the open reads as caused by it
+const OPEN_DUR = 720; // ms — halves part perpendicular off-screen
+const OPEN_EASE = 'cubic-bezier(.7,0,.2,1)';
 
-// Per-page-load fallback when sessionStorage is unavailable (private mode etc.):
-// the intro then plays once per page-load instead of once per session.
+// ===== Appearance =====
+const COVER_COLOR = '#14161b'; // solid charcoal cover over the menu
+
+// Whole gesture: slash (delay+draw) -> beat -> open (delay+dur).
+const TOTAL = SLASH_DELAY + SLASH_DUR + OPEN_DELAY + OPEN_DUR; // ~1230ms
+
+// Per-page-load fallback when sessionStorage is unavailable (private mode etc.).
 let introPlayedMemory = false;
 
 function hasPlayed() {
@@ -92,25 +89,20 @@ export default function KnifeSplit({ onComplete }) {
   };
 
   useEffect(() => {
-    // Skip path: nothing to animate — hand straight off so the menu shows now.
     if (!play) {
       finishRef.current();
       return;
     }
-    // The intro is starting: set the session flag immediately so a same-session
-    // reload mid-intro won't replay the slow open.
-    markPlayed();
+    markPlayed(); // set as the intro STARTS, so a mid-intro reload won't replay it
 
-    // The open fully completes at OPEN_TRAVEL; hand off then. (Belt-and-braces:
-    // App also keeps a safety timer so the overlay can never get stuck.)
-    const openTimer = setTimeout(() => finishRef.current(), OPEN_TRAVEL);
+    const timer = setTimeout(() => finishRef.current(), TOTAL);
 
     // Tap/click/key anywhere skips instantly to the fully-revealed menu.
     const skip = () => finishRef.current();
     window.addEventListener('pointerdown', skip);
     window.addEventListener('keydown', skip);
     return () => {
-      clearTimeout(openTimer);
+      clearTimeout(timer);
       window.removeEventListener('pointerdown', skip);
       window.removeEventListener('keydown', skip);
     };
@@ -118,30 +110,36 @@ export default function KnifeSplit({ onComplete }) {
 
   if (!play) return null;
 
-  // Single source of truth: the named consts above flow into the CSS as vars, so
-  // the animations and the JS timers can never drift apart.
+  // d = vertical offset of the cut line at the screen edges (half-width away from
+  // centre). Shared by the slash rotation (implicitly, via --ks-cut-angle) and the
+  // seam clip, so both are the SAME line. Computed in px from the live viewport.
+  const d =
+    typeof window !== 'undefined'
+      ? (window.innerWidth / 2) * Math.tan((CUT_ANGLE * Math.PI) / 180)
+      : 0;
+
   const vars = {
-    '--ks-angle': `${ANGLE}deg`,
-    '--ks-open-travel': `${OPEN_TRAVEL}ms`,
-    '--ks-open-offset': `${OPEN_OFFSET}ms`,
-    '--ks-open-ease': OPEN_EASE,
-    '--ks-panel-travel': PANEL_TRAVEL,
-    '--ks-slash-draw': `${SLASH_DRAW}ms`,
+    '--ks-cut-angle': `${CUT_ANGLE}deg`,
+    '--ks-d': `${d}px`,
+    '--ks-slash-delay': `${SLASH_DELAY}ms`,
+    '--ks-slash-dur': `${SLASH_DUR}ms`,
     '--ks-slash-fade': `${SLASH_FADE}ms`,
-    '--ks-slash-thick': `${SLASH_THICK}px`,
-    '--ks-slash-color': SLASH_COLOR,
-    '--ks-flash-dur': `${FLASH_DUR}ms`,
-    '--ks-flash-peak': FLASH_PEAK,
-    // Flash punches mid-streak (half-way through the draw), riding on OPEN_OFFSET.
-    '--ks-flash-delay': `${OPEN_OFFSET + SLASH_DRAW / 2}ms`,
+    '--ks-open-delay': `${OPEN_DELAY}ms`,
+    '--ks-open-dur': `${OPEN_DUR}ms`,
+    '--ks-open-ease': OPEN_EASE,
+    '--ks-cover': COVER_COLOR,
   };
 
   return (
     <div className="knife-split" style={vars} aria-hidden="true">
-      <div className="knife-panel knife-panel-top" />
-      <div className="knife-panel knife-panel-bottom" />
-      <div className="knife-slash" />
-      <div className="knife-flash" />
+      {/* Two cover copies clipped to opposite sides of the shared diagonal seam. */}
+      <div className="knife-cover knife-cover-top" />
+      <div className="knife-cover knife-cover-bottom" />
+      {/* The slash, rotated by the SAME angle, sits on top and draws first. */}
+      <div className="knife-slash">
+        <div className="knife-streak" />
+        <div className="knife-head" />
+      </div>
     </div>
   );
 }

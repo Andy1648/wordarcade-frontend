@@ -1,22 +1,15 @@
 /* KnifeSplit.css — the intro -> menu reveal.
-   Flat colours, hard edges, no blur/glow. Transform / opacity ONLY (GPU-friendly).
+   Order: SLASH draws across the cut line (quick flash, no hold) -> tiny beat ->
+   the charcoal cover SPLITS along that same line, halves parting perpendicular.
 
-   Two FULLY INDEPENDENT timelines, each driven by its own CSS vars (set in
-   KnifeSplit.jsx so JS timers and CSS can never drift):
+   COLLINEARITY: the slash and the seam both derive from ONE shared angle.
+     - --ks-cut-angle rotates the slash.
+     - --ks-d (= half-width * tan(cut-angle), precomputed in JS) is the vertical
+       offset of the SAME line at the screen edges; the two cover copies are
+       clipped to opposite sides of it. Same angle in -> same line -> exact seam.
 
-     OPEN  — two oversized cover panels, rotated to --ks-angle around the viewport
-             centre so their meeting edge is the diagonal seam. From t=0 they slide
-             apart PERPENDICULAR to that seam over --ks-open-travel (the slow
-             reveal). Their OUTER edges sit far off-screen at all times, so only the
-             inner cut edge is ever visible.
-
-     SLASH — an independent flourish fired at --ks-open-offset: a thin white line at
-             --ks-angle streaks across (--ks-slash-draw) then fades (--ks-slash-fade),
-             with a brief white screen-flash punched as it crosses. Editing the
-             slash's look (thickness/colour) touches no open/timing value.
-
-   All keys on these elements are static JSX siblings (no array keys) — the
-   key-collision freeze cannot recur here. */
+   Transform / opacity / clip only. All elements are static JSX siblings (no array
+   keys) — the key-collision freeze cannot recur here. */
 
 .knife-split {
   position: fixed;
@@ -26,92 +19,75 @@
   overflow: hidden;
 }
 
-/* ---- The two cover panels ----
-   Each is MUCH larger than the viewport (200% wide, 300% tall) and anchored with
-   one edge at the viewport's vertical centre; that anchored edge is the SEAM. Both
-   rotate by the SAME --ks-angle around the SAME centre point, so the two seam edges
-   stay coincident and form one clean diagonal cut. The far (outer) edges are pushed
-   hundreds of vh off-screen and never appear. */
-.knife-panel {
+/* ---- The two cover halves ----
+   Full-viewport copies of a solid charcoal cover, each clipped to one side of the
+   shared diagonal seam: from (0, 50% - d) to (100%, 50% + d). They hold in place
+   (backwards `both` fill) through the slash, then translate perpendicular off the
+   screen. */
+.knife-cover {
   position: absolute;
-  left: -50%;
-  right: -50%; /* width 200%, centred — the tilted seam still overhangs both sides */
-  height: 300%;
-  background: #0d0618; /* matches the page bg so the cover reads as the dark screen */
+  inset: 0;
+  background: var(--ks-cover);
   will-change: transform;
 }
 
-/* TOP panel: bottom edge sits on the centre line and is the seam; body extends far
-   up and off the top. Rotates about that bottom-centre point, then parts upward
-   (translateY is applied INSIDE the rotated frame, i.e. perpendicular to the seam). */
-.knife-panel-top {
-  bottom: 50%;
-  transform-origin: center bottom;
-  animation: ks-open-top var(--ks-open-travel) var(--ks-open-ease) both;
+.knife-cover-top {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(50% + var(--ks-d)),
+    0 calc(50% - var(--ks-d))
+  );
+  animation: ks-open-top var(--ks-open-dur) var(--ks-open-ease)
+    calc(var(--ks-slash-delay) + var(--ks-slash-dur) + var(--ks-open-delay)) both;
 }
 
-/* BOTTOM panel: top edge is the seam; body extends far down and off the bottom. */
-.knife-panel-bottom {
-  top: 50%;
-  transform-origin: center top;
-  animation: ks-open-bottom var(--ks-open-travel) var(--ks-open-ease) both;
+.knife-cover-bottom {
+  clip-path: polygon(
+    0 calc(50% - var(--ks-d)),
+    100% calc(50% + var(--ks-d)),
+    100% 100%,
+    0 100%
+  );
+  animation: ks-open-bottom var(--ks-open-dur) var(--ks-open-ease)
+    calc(var(--ks-slash-delay) + var(--ks-slash-dur) + var(--ks-open-delay)) both;
 }
 
 @keyframes ks-open-top {
   from {
-    transform: rotate(var(--ks-angle)) translateY(0);
+    transform: translateY(0);
   }
   to {
-    /* up, perpendicular to the seam, fully clearing the screen */
-    transform: rotate(var(--ks-angle)) translateY(calc(-1 * var(--ks-panel-travel)));
+    transform: translateY(-130%); /* up, fully off-screen */
   }
 }
 
 @keyframes ks-open-bottom {
   from {
-    transform: rotate(var(--ks-angle)) translateY(0);
+    transform: translateY(0);
   }
   to {
-    transform: rotate(var(--ks-angle)) translateY(var(--ks-panel-travel));
+    transform: translateY(130%); /* down, fully off-screen */
   }
 }
 
-/* ---- The slash (independent flourish) ----
-   A thin white line pinned across the centre at --ks-angle. Two stacked animations:
-   DRAW grows it scaleX 0->1 (the streak); FADE then drops its opacity (no hold).
-   The draw's delay (--ks-open-offset) keeps it invisible — scaleX(0) — until the
-   flourish fires, well into the slow open. */
+/* ---- The slash ----
+   A streak rotated by the SAME --ks-cut-angle, centred and ~160vw wide to overshoot
+   the corners. The streak draws scaleX 0->1 (left->right) led by a glowing head,
+   then the whole slash fades. No hold. */
 .knife-slash {
   position: absolute;
   top: 50%;
-  left: -10vw;
-  width: 120vw;
-  height: var(--ks-slash-thick);
-  margin-top: calc(var(--ks-slash-thick) / -2);
-  background: var(--ks-slash-color);
-  transform-origin: left center;
-  transform: rotate(var(--ks-angle)) scaleX(0);
-  opacity: 0;
-  animation:
-    ks-slash-draw var(--ks-slash-draw) cubic-bezier(0.2, 0.8, 0.2, 1)
-      var(--ks-open-offset) both,
-    ks-slash-fade var(--ks-slash-fade) ease-out
-      calc(var(--ks-open-offset) + var(--ks-slash-draw)) both;
+  left: 50%;
+  width: 160vw;
+  height: 4px;
+  transform: translate(-50%, -50%) rotate(var(--ks-cut-angle));
+  /* Visible through the draw, then fades out (forwards: no early flash, the
+     children gate their own pre-draw visibility). */
+  animation: ks-slash-fade var(--ks-slash-fade) ease-out
+    calc(var(--ks-slash-delay) + var(--ks-slash-dur)) forwards;
 }
 
-@keyframes ks-slash-draw {
-  from {
-    transform: rotate(var(--ks-angle)) scaleX(0);
-    opacity: 1;
-  }
-  to {
-    transform: rotate(var(--ks-angle)) scaleX(1);
-    opacity: 1;
-  }
-}
-
-/* Listed second, so it wins control of `opacity` once it starts (transform stays
-   held at scaleX(1) by the draw's forwards fill). */
 @keyframes ks-slash-fade {
   from {
     opacity: 1;
@@ -121,38 +97,70 @@
   }
 }
 
-/* ---- The white screen-flash punched as the slash crosses ---- */
-.knife-flash {
+.knife-streak {
   position: absolute;
   inset: 0;
   background: #fff;
-  opacity: 0;
-  animation: ks-flash var(--ks-flash-dur) ease-out var(--ks-flash-delay) both;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
+  transform-origin: left center;
+  transform: scaleX(0); /* hidden until the draw fires */
+  animation: ks-streak-draw var(--ks-slash-dur) cubic-bezier(0.2, 0.7, 0.2, 1)
+    var(--ks-slash-delay) forwards;
 }
 
-@keyframes ks-flash {
-  0% {
-    opacity: 0;
+@keyframes ks-streak-draw {
+  from {
+    transform: scaleX(0);
   }
-  40% {
-    opacity: var(--ks-flash-peak);
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The glowing leading head, riding the front of the streak across the screen. */
+.knife-head {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 22px 7px rgba(255, 255, 255, 0.95);
+  opacity: 0; /* hidden until the draw fires (forwards fill, no backwards flash) */
+  transform: translateX(0);
+  animation: ks-head-run var(--ks-slash-dur) cubic-bezier(0.2, 0.7, 0.2, 1)
+    var(--ks-slash-delay) forwards;
+}
+
+@keyframes ks-head-run {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
   }
   100% {
+    transform: translateX(160vw); /* overshoot past the far corner */
     opacity: 0;
   }
 }
 
 /* Reduced motion: the component already returns null under reduce, but if it ever
-   renders, no-op every animation and never cover the menu. */
+   renders, no-op the animations and never cover the menu. */
 @media (prefers-reduced-motion: reduce) {
-  .knife-panel,
+  .knife-cover,
   .knife-slash,
-  .knife-flash {
+  .knife-streak,
+  .knife-head {
     animation: none !important;
   }
-  .knife-panel,
+  .knife-cover,
   .knife-slash,
-  .knife-flash {
+  .knife-streak,
+  .knife-head {
     opacity: 0 !important;
   }
 }
