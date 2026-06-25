@@ -2292,13 +2292,22 @@ export default function GameScreen({
           {shatterKey > 0 && <ShatterWord key={`shatter-${shatterKey}`} text={shatterText} />}
         </div>
 
-        <div
-          key={comboPunch}
-          className={`game-combo-box${comboPunch > 0 ? ' punch' : ''}`}
-        >
-          <div className="game-combo-label">{promptLabel}</div>
-          <div className={`game-combo${isCategory ? ' category' : ''}`}>
-            {promptValue}
+        {/* Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
+            carries the changing key, so the prompt box never unmounts/remounts
+            mid-game - the readable letters underneath stay put. Only the inner punch
+            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
+            keyed .combo-pop at ComboMeter.jsx:50). */}
+        <div className="game-combo-box">
+          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
+              Scoped to this inner node, so the surrounding box stays mounted. */}
+          <div
+            key={comboPunch}
+            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
+          >
+            <div className="game-combo-label">{promptLabel}</div>
+            <div className={`game-combo${isCategory ? ' category' : ''}`}>
+              {promptValue}
+            </div>
           </div>
         </div>
 

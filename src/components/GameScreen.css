@@ -1347,18 +1347,20 @@
   margin-bottom: 8px;
 }
 
-/* Quick scale-punch on the prompt box each time a word is accepted - the small
-   satisfying "pop" of a correct answer, layered on top of the +1 float, the bomb
-   recoil and the spark burst. Re-keyed in JSX so it replays per accept. The base
-   rotate(-1deg) is kept so the box's resting tilt holds. */
-.game-combo-box.punch {
+/* Quick scale-punch each time a word is accepted - the small satisfying "pop" of a
+   correct answer, layered on top of the +1 float, the bomb recoil and the spark
+   burst. It lives on the INNER .game-combo-punch (re-keyed in JSX) so it replays
+   per accept WITHOUT remounting the surrounding .game-combo-box frame. The box's
+   resting rotate(-1deg) tilt stays on the outer box, so the punch is scale-only
+   here (no rotate) to avoid fighting that tilt. */
+.game-combo-punch.punch {
   animation: combo-box-punch 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes combo-box-punch {
-  0%   { transform: rotate(-1deg) scale(1); }
-  35%  { transform: rotate(-1deg) scale(1.07); }
-  100% { transform: rotate(-1deg) scale(1); }
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
 }
 
 .game-combo {
@@ -3491,7 +3493,7 @@ html[data-beat='true'] .cb-answer-chip {
      under reduced motion (no flashes / violent slams). */
   .clutch-flash { animation: none; opacity: 0; }
   .kill-feed-row.eliminated { animation: none; }
-  .game-combo-box.punch { animation: none; }
+  .game-combo-punch.punch { animation: none; }
   .impact-flash,
   .ko-impact-flash,
   .ko-burst,
