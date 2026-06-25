@@ -4,12 +4,16 @@
    diagonal) widen apart - GPU-friendly and far cheaper than the explosion it
    replaced.
 
-   ONE CONTINUOUS MOTION (no sequenced phases): the blade and BOTH halves start at
-   the SAME instant (zero delay) and ride the SAME long ease-out curve,
-   cubic-bezier(0.16, 1, 0.3, 1), across the full duration. There is no blade-then-
-   widen handoff and no phase boundary - the slash and the opening are the same
-   gesture, decelerating together. The curve front-loads the motion (a fast,
-   decisive cut) then glides smoothly to rest as the menu is revealed.
+   TWO SEQUENCED PHASES (the cut must LAND before the screen opens):
+     PHASE 1 - SLASH (0-200ms): the blade streaks across the still-covered dark
+       screen; a white flash punches as it lands. The halves do NOT move yet.
+     HOLD (200-250ms): the blade sits at full length for ~50ms so the eye reads the
+       completed cut (the seam) before anything opens.
+     PHASE 2 - OPEN (250-700ms): the two halves part ALONG the cut (animation-delay
+       250ms so they hold covered through phase 1+hold via backwards `both` fill),
+       and the blade fades out - revealing the menu. Snap-then-glide ease-out.
+   The whole gesture is ~700ms (well under 1s). The halves' delay is the seam that
+   keeps the slash and the open from blurring into one mushy motion.
 
    The cut is a single SHALLOW (near-horizontal) diagonal, sloping gently down to
    the right - from 46% height at the left edge to 54% at the right, threaded
@@ -45,12 +49,14 @@
    (+ a hair right & tilt), gliding off-screen to reveal the menu. */
 .knife-half-top {
   clip-path: polygon(0 0, 100% 0, 100% 54%, 0 46%);
-  animation: knife-part-top 1900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* PHASE 2: 250ms delay holds the cover in place through the slash + hold (the
+     backwards `both` fill keeps it at the `from` covering state), then it parts. */
+  animation: knife-part-top 450ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
 }
 
 .knife-half-bottom {
   clip-path: polygon(0 46%, 100% 54%, 100% 100%, 0 100%);
-  animation: knife-part-bottom 1900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: knife-part-bottom 450ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
 }
 
 @keyframes knife-part-top {
@@ -63,14 +69,12 @@
   to { transform: translate(3vw, 100vh) rotate(1.5deg); } /* drop down, off-screen */
 }
 
-/* ---- The blade: a thin WHITE line streaking across the cut ----
+/* ---- The blade: a thin WHITE line streaking across the cut (PHASE 1) ----
    Pinned just off the left edge at the cut height, rotated to the shallow cut
-   angle, drawn left -> right via scaleX (origin = left end). It rides the EXACT
-   SAME curve and duration as the two halves with NO internal percentage stops, so
-   the stroke and the opening are one fluid gesture: the curve front-loads both, so
-   the blade streaks across (fast) and fades to nothing AS the gap opens, then both
-   glide to rest together. No discrete blade-then-widen handoff - it's a single
-   continuous from->to on the shared cubic-bezier. */
+   angle, drawn left -> right via scaleX (origin = left end). This is the FIRST
+   phase and finishes BEFORE the halves move: it streaks fully across in ~200ms,
+   HOLDS at full length (still bright) for ~50ms so the completed cut registers,
+   then fades out as the halves begin to part (which only start at 250ms). */
 .knife-slash {
   position: absolute;
   left: -12vw;
@@ -81,31 +85,36 @@
   background: #fff; /* pure white - no coloured edge */
   transform-origin: left center;
   transform: rotate(3.8deg) scaleX(0);
-  animation: knife-slash 1900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: knife-slash 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Single continuous from->to: scaleX grows 0->1 and opacity fades 1->0 over the
-   whole duration on the shared curve. Because the curve is front-loaded the blade
-   visually streaks across and fades within the first stretch while the halves are
-   already parting on the identical curve - one motion, no phase boundary. */
+/* Streak (0-62% ~= 0-200ms): scaleX 0->1, fully opaque - the decisive cut.
+   Hold (62-78% ~= 200-250ms): stays at full length, still bright - the SEAM the eye
+   reads before anything opens.
+   Fade (78-100% ~= 250-320ms): opacity 1->0 as the halves start parting, so no
+   white line lingers over the opening cut. */
 @keyframes knife-slash {
-  from { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
-  to { transform: rotate(3.8deg) scaleX(1); opacity: 0; }
+  0%   { transform: rotate(3.8deg) scaleX(0); opacity: 1; }
+  62%  { transform: rotate(3.8deg) scaleX(1); opacity: 1; }
+  78%  { transform: rotate(3.8deg) scaleX(1); opacity: 1; }
+  100% { transform: rotate(3.8deg) scaleX(1); opacity: 0; }
 }
 
-/* ---- Quick WHITE flash on the cut instant (starts with the motion, no delay) ---- */
+/* ---- Quick WHITE flash punched as the cut LANDS (~200ms), not at launch - it
+   marks the impact moment at the end of phase 1, then is gone before the open. ---- */
 .knife-flash {
   position: absolute;
   inset: 0;
   background: #fff;
   opacity: 0;
-  animation: knife-flash 220ms ease-out both;
+  animation: knife-flash 280ms ease-out both;
 }
 
 @keyframes knife-flash {
-  0% { opacity: 0; }
-  18% { opacity: 0.5; }
-  100% { opacity: 0; }
+  0%   { opacity: 0; }
+  55%  { opacity: 0; }   /* dark while the blade is mid-streak */
+  71%  { opacity: 0.5; } /* ~200ms: flash as the cut connects */
+  100% { opacity: 0; }   /* gone before the halves open */
 }
 
 /* Reduced motion: App already skips mounting this, but if it ever renders, hold
