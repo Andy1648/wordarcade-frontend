@@ -223,18 +223,24 @@
 }
 
 @keyframes type-letter-in {
-  /* Snappy machine-gun snap-in. No chroma - the plain white impact flash is the
-     whole colour punch now. */
+  /* Snappy machine-gun snap-in: each letter pops in PLACE (scale only, no chroma -
+     the plain white impact flash is the whole colour punch now).
+     NO horizontal translate: a translateX(-0.3em) entrance slid FAST's letters in
+     from ~45px left, overshooting into the word-gap so "TYPE FAST" briefly read as
+     "TYPEFAST" then spread as it settled - the phrase looked like it split apart.
+     Popping in place (like DIE SLOW's vertical drop) keeps the word-gap correct so
+     "TYPE FAST" stays intact the whole entrance; the left-to-right feel still comes
+     from the staggered per-letter delay. */
   0% {
     opacity: 0;
-    transform: translateX(-0.3em) scale(1.35);
+    transform: scale(1.35);
   }
   55% {
     opacity: 1;
   }
   100% {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: scale(1);
   }
 }
 

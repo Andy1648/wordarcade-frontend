@@ -51,7 +51,7 @@ function IntroLetters({ text }) {
         className={`intro-letter${space ? ' is-space' : ''}`}
         style={{ '--i': i }}
       >
-        {space ? ' ' : ch}
+        {space ? ' ' : ch}
       </span>
     );
   });
