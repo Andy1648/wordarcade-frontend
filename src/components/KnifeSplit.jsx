@@ -22,9 +22,9 @@
 //     seam rises to the right). Same angle in -> same line out.
 //   (--ks-d is precomputed in JS, not via CSS tan() in calc(), for browser safety.)
 //
-// GATING: plays once per browser session (sessionStorage); same-session reloads
-// skip to the menu. Tap/click/key skips instantly. prefers-reduced-motion skips
-// entirely. Every path hands off cleanly via onComplete — never a stuck overlay.
+// GATING: plays on EVERY mount/reload (no first-visit gating). Tap/click/key skips
+// instantly. prefers-reduced-motion skips entirely. Every path hands off cleanly
+// via onComplete — never a stuck overlay.
 //
 // Cosmetic + pointer-events:none. Transform/opacity/clip only.
 import { useEffect, useRef, useState } from 'react';
@@ -57,26 +57,6 @@ const COVER_COLOR = '#000';
 // overlay can never get stuck if an animationend/timer is somehow dropped.
 const TOTAL = SLASH_DELAY + SLASH_DRAW + SLASH_HOLD + OPEN_GAP + OPEN_DUR; // ~2020ms
 
-// Per-page-load fallback when sessionStorage is unavailable (private mode etc.).
-let introPlayedMemory = false;
-
-function hasPlayed() {
-  try {
-    return sessionStorage.getItem('introPlayed') === '1';
-  } catch {
-    return introPlayedMemory;
-  }
-}
-
-function markPlayed() {
-  introPlayedMemory = true;
-  try {
-    sessionStorage.setItem('introPlayed', '1');
-  } catch {
-    /* storage blocked — the in-memory flag above still gates this page-load */
-  }
-}
-
 function prefersReduced() {
   return (
     typeof window !== 'undefined' &&
@@ -86,9 +66,9 @@ function prefersReduced() {
 }
 
 export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
-  // Decide ONCE, on mount, whether the full intro plays. Same-session reloads and
-  // reduced-motion both fall to the skip path (immediate, clean hand-off).
-  const [play] = useState(() => !hasPlayed() && !prefersReduced());
+  // The full intro plays on EVERY mount/reload (no first-visit gating). Only
+  // reduced-motion falls to the skip path (immediate, clean hand-off).
+  const [play] = useState(() => !prefersReduced());
   const doneRef = useRef(false);
 
   // The three latching phase flags, advanced strictly in order by the chain below.
@@ -98,12 +78,11 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
   const [fadeOn, setFadeOn] = useState(false);
   const [openOn, setOpenOn] = useState(false);
 
-  // Single guarded completion: marks the session flag and hands off exactly once.
+  // Single guarded completion: hands off exactly once.
   const finishRef = useRef(null);
   finishRef.current = () => {
     if (doneRef.current) return;
     doneRef.current = true;
-    markPlayed();
     if (onComplete) onComplete();
   };
 
@@ -120,7 +99,6 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
       finishRef.current();
       return undefined;
     }
-    markPlayed(); // set as the intro STARTS, so a mid-intro reload won't replay it
 
     // STRICT SEQUENTIAL CHAIN — each phase is scheduled INSIDE the previous
     // phase's completion callback, so the open can never run on its own clock.
