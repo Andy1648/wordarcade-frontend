@@ -887,9 +887,9 @@ function App() {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return;
-    sound.punch(); // the blade hits
-    sound.whoosh(); // the halves slam apart
-    triggerShake('light'); // a tiny jolt as it parts
+    // The blade-hit / halves-apart cues + the jolt are fired BY KnifeSplit from
+    // its phase chain (onSlash/onOpen below), so each lands WITH its visual —
+    // not here at handoff, which is ~920ms before the halves actually part.
     setSlicing(true);
     if (sliceTimerRef.current) clearTimeout(sliceTimerRef.current);
     // KnifeSplit drives its OWN lifecycle (~2.0s slash+hold+open, tap-to-skip,
@@ -1301,7 +1301,16 @@ function App() {
           )}
           {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
               auto-cleared after ~480ms). Replaces the old intro explosion. */}
-          {slicing && <KnifeSplit onComplete={handleSliceComplete} />}
+          {slicing && (
+            <KnifeSplit
+              onComplete={handleSliceComplete}
+              onSlash={() => sound.punch()}
+              onOpen={() => {
+                sound.whoosh();
+                triggerShake('light');
+              }}
+            />
+          )}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
               useBeatSync via --flash-color). Click-through, below modals. */}

@@ -79,7 +79,7 @@ function prefersReduced() {
   );
 }
 
-export default function KnifeSplit({ onComplete }) {
+export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
   // Decide ONCE, on mount, whether the full intro plays. Same-session reloads and
   // reduced-motion both fall to the skip path (immediate, clean hand-off).
   const [play] = useState(() => !hasPlayed() && !prefersReduced());
@@ -101,6 +101,14 @@ export default function KnifeSplit({ onComplete }) {
     if (onComplete) onComplete();
   };
 
+  // Phase cues, fired from the chain so each lands WITH its visual (not at mount):
+  // onSlash as the blade draws, onOpen as the halves part. Held in refs so the
+  // timers never call a stale copy.
+  const onSlashRef = useRef(null);
+  onSlashRef.current = onSlash;
+  const onOpenRef = useRef(null);
+  onOpenRef.current = onOpen;
+
   useEffect(() => {
     if (!play) {
       finishRef.current();
@@ -117,15 +125,18 @@ export default function KnifeSplit({ onComplete }) {
       return id;
     };
 
-    // 1. slash-gap → draw the slash.
+    // 1. slash-gap → draw the slash (+ the blade-hit cue, in sync with the draw).
     push(() => {
       setSlashOn(true);
+      if (onSlashRef.current) onSlashRef.current();
       // 2. draw + hold complete → start the blade fade...
       push(() => {
         setFadeOn(true);
-        // 3. ...then, one open-gap later, part the halves (open begins mid-fade).
+        // 3. ...then, one open-gap later, part the halves (open begins mid-fade)
+        //    and fire the halves-apart cue WITH the visual open.
         push(() => {
           setOpenOn(true);
+          if (onOpenRef.current) onOpenRef.current();
           // 4. open done → hand off.
           push(() => finishRef.current(), OPEN_DUR);
         }, OPEN_GAP);
