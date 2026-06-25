@@ -168,6 +168,9 @@
     3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
     3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000;
   white-space: nowrap;
+  /* Each phrase stacks its two words (the space between them is a full-width block
+     break — see .intro-letter.is-space): TYPE over FAST, DIE over SLOW, centred. */
+  text-align: center;
   /* The line container stays on; visibility is owned per-letter (letters fade in
      0 -> 1 when the line goes .active), so the stagger reads crisply instead of
      being smeared by a whole-word opacity fade. */
@@ -187,6 +190,17 @@
   position: relative;
   opacity: 0;
   will-change: transform, opacity;
+}
+
+/* The space between the two words of a phrase becomes a full-width, zero-height
+   block, forcing the second word onto its own line — so each phrase reads as two
+   STACKED words (TYPE / FAST, DIE / SLOW). It's still a real .intro-letter, so it
+   keeps firing its die-letter-in animationend: the last-letter handoff count and
+   the entrance stagger are unchanged. */
+.intro-letter.is-space {
+  display: block;
+  width: 100%;
+  height: 0;
 }
 
 /* (The comic impact STARBURST that used to sit behind each word was removed -

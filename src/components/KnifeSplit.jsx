@@ -175,13 +175,20 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
   // so each half's clip shows its portion — TYPE FAST in the top half, DIE SLOW in
   // the bottom — and each phrase rides its half off-screen when the cover parts.
   // (Phrases must stay in sync with TransitionIntro's "TYPE FAST." / DIE_TEXT.)
+  // Same two phrases as TransitionIntro, each stacked into two words via the same
+  // full-width .is-space block break — so the 4-word layout is identical and the
+  // handoff stays seamless. TYPE/FAST ride up with the top half, DIE/SLOW down.
   const title = (
     <div className="ks-title" aria-hidden="true">
       <div className="intro-line-slot intro-slot-type">
-        <div className="intro-line intro-line-type">TYPE FAST.</div>
+        <div className="intro-line intro-line-type">
+          TYPE<span className="intro-letter is-space"> </span>FAST.
+        </div>
       </div>
       <div className="intro-line-slot intro-slot-die">
-        <div className="intro-line intro-line-die">DIE SLOW.</div>
+        <div className="intro-line intro-line-die">
+          DIE<span className="intro-letter is-space"> </span>SLOW.
+        </div>
       </div>
     </div>
   );
@@ -194,9 +201,41 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
       <div className="knife-cover knife-cover-top">{title}</div>
       <div className="knife-cover knife-cover-bottom">{title}</div>
       {/* The slash, rotated by the SAME angle, sits ABOVE the covers (between the
-          two phrases) and draws first. */}
+          two phrases) and draws first. A tapered lens (thick middle, thin tips):
+          a white core inside a thin cyan→magenta edge, led by a soft glint with a
+          blurred motion tail. preserveAspectRatio:none stretches it to the full
+          ~160vw blade width. */}
       <div className="knife-slash">
-        <div className="knife-streak" />
+        <svg
+          className="knife-blade"
+          viewBox="0 0 1000 40"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient
+              id="ks-edge"
+              x1="0"
+              y1="0"
+              x2="1000"
+              y2="0"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0" stopColor="#2EFFE0" />
+              <stop offset="1" stopColor="#FF2EC4" />
+            </linearGradient>
+          </defs>
+          <path
+            className="knife-edge"
+            d="M0,20 Q500,0 1000,20 Q500,40 0,20 Z"
+            fill="url(#ks-edge)"
+          />
+          <path
+            className="knife-core"
+            d="M40,20 Q500,7 960,20 Q500,33 40,20 Z"
+            fill="#fff"
+          />
+        </svg>
         <div className="knife-head" />
       </div>
     </div>
