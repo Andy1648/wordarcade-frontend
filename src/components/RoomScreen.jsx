@@ -323,6 +323,14 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey, room.gameType)}</div>
         )}
 
+        {/* A bounced start (server rejection: room full, game already going, etc.)
+            re-enables the button via the effect above - surface WHY right next to
+            START so the host isn't left guessing. Host-only (only they see START);
+            App clears serverError on the next room_update, so it never lingers. */}
+        {isHost && serverError && (
+          <div className="room-error" role="alert">{serverError}</div>
+        )}
+
         {isHost ? (
           <button
             className="room-start-btn"

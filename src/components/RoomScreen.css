@@ -264,6 +264,18 @@
   letter-spacing: 0.3px;
 }
 
+/* Start-failure message, pinned directly above START so the reason sits next to
+   the control that bounced. Matches the .lobby-error / .browser-error red. */
+.room-error {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #FF5C5C;
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+}
+
 .room-leave-btn {
   font-family: 'Bungee', cursive;
   font-size: 14px;
