@@ -204,11 +204,3 @@ export function PaintSplatter5({ className = '', color = '#FF2EC4' }) {
     </svg>
   );
 }
-
-export const PAINT_SPLATTERS = [
-  PaintSplatter1,
-  PaintSplatter2,
-  PaintSplatter3,
-  PaintSplatter4,
-  PaintSplatter5,
-];
