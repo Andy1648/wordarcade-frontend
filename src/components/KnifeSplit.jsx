@@ -36,14 +36,14 @@ const SLASH_FADE = 200; // ms — then fades out
 
 // ===== OPEN — timing =====
 const OPEN_DELAY = 60; // ms — tiny beat after the slash so the open reads as caused by it
-const OPEN_DUR = 720; // ms — halves part perpendicular off-screen
-const OPEN_EASE = 'cubic-bezier(.7,0,.2,1)';
+const OPEN_DUR = 1200; // ms — halves part perpendicular off-screen (slow open)
+const OPEN_EASE = 'cubic-bezier(.4,0,.2,1)'; // smooth deceleration into place
 
 // ===== Appearance =====
 const COVER_COLOR = '#14161b'; // solid charcoal cover over the menu
 
 // Whole gesture: slash (delay+draw) -> beat -> open (delay+dur).
-const TOTAL = SLASH_DELAY + SLASH_DUR + OPEN_DELAY + OPEN_DUR; // ~1230ms
+const TOTAL = SLASH_DELAY + SLASH_DUR + OPEN_DELAY + OPEN_DUR; // ~1710ms
 
 // Per-page-load fallback when sessionStorage is unavailable (private mode etc.).
 let introPlayedMemory = false;

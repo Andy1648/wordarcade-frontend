@@ -856,7 +856,7 @@ function App() {
     triggerShake('light'); // a tiny jolt as it parts
     setSlicing(true);
     if (sliceTimerRef.current) clearTimeout(sliceTimerRef.current);
-    // KnifeSplit drives its OWN lifecycle (~1.13s slash+open, tap-to-skip,
+    // KnifeSplit drives its OWN lifecycle (~1.71s slash+open, tap-to-skip,
     // same-session/reduced-motion skip) and calls onComplete (handleSliceComplete)
     // when it's done. This timer is only a safety net so the overlay can never get
     // stuck mid-screen if that callback somehow never fires.
