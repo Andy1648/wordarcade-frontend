@@ -1,9 +1,15 @@
 /* KnifeSplit.css — the intro -> menu reveal.
-   Order: SLASH draws across the cut line (quick flash, no hold) -> tiny beat ->
-   the charcoal cover SPLITS along that same line, halves parting perpendicular.
+   Order: SLASH draws across the cut line -> HOLDS bright -> the blade fades and the
+   charcoal cover SPLITS along that same line, halves parting perpendicular.
+
+   SEQUENCING: there are NO animation-delays here. Each phase's animation starts
+   the instant KnifeSplit.jsx adds its latching class (.is-slash -> .is-fade ->
+   .is-open), and the JS adds those classes as a strict chain (each off the
+   previous phase finishing). So the open is causally AFTER the slash — it can
+   never run on its own clock / overlap the slash (the bug that kept regressing).
 
    COLLINEARITY: the slash and the seam both derive from ONE shared angle.
-     - --ks-cut-angle rotates the slash.
+     - --ks-slash-rot rotates the slash.
      - --ks-d (= half-width * tan(cut-angle), precomputed in JS) is the vertical
        offset of the SAME line at the screen edges; the two cover copies are
        clipped to opposite sides of it. Same angle in -> same line -> exact seam.
@@ -21,13 +27,16 @@
 
 /* ---- The two cover halves ----
    Full-viewport copies of a solid charcoal cover, each clipped to one side of the
-   shared diagonal seam: from (0, 50% - d) to (100%, 50% + d). They hold in place
-   (backwards `both` fill) through the slash, then translate perpendicular off the
-   screen. */
+   shared diagonal seam: from (0, 50% - d) to (100%, 50% + d). They sit CLOSED
+   (transform: translateY(0), their default) over the menu until .is-open is added,
+   then translate perpendicular off the screen. z-index 1 keeps them BELOW the
+   slash (z-index 2) so the blade is never painted over. */
 .knife-cover {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: var(--ks-cover);
+  transform: translateY(0);
   will-change: transform;
 }
 
@@ -38,11 +47,6 @@
     100% calc(50% - var(--ks-d)),
     0 calc(50% + var(--ks-d))
   );
-  /* --ks-open-start is a single FLAT resolved value (ms) computed in JS, NOT a
-     calc-on-calc — a nested calc collapsed to 0 once and ate the slash. So the
-     halves only part once the slash has drawn AND held (the cut registered). */
-  animation: ks-open-top var(--ks-open-dur) var(--ks-open-ease)
-    var(--ks-open-start) both;
 }
 
 .knife-cover-bottom {
@@ -52,8 +56,16 @@
     100% 100%,
     0 100%
   );
-  animation: ks-open-bottom var(--ks-open-dur) var(--ks-open-ease)
-    var(--ks-open-start) both;
+}
+
+/* The halves only animate once JS adds .is-open (after the slash has drawn + held
+   + the open-gap). forwards fill so they stay parted at the end. */
+.knife-split.is-open .knife-cover-top {
+  animation: ks-open-top var(--ks-open-dur) var(--ks-open-ease) forwards;
+}
+
+.knife-split.is-open .knife-cover-bottom {
+  animation: ks-open-bottom var(--ks-open-dur) var(--ks-open-ease) forwards;
 }
 
 @keyframes ks-open-top {
@@ -75,21 +87,24 @@
 }
 
 /* ---- The slash ----
-   A streak rotated by the SAME --ks-cut-angle, centred and ~160vw wide to overshoot
-   the corners. The streak draws scaleX 0->1 (left->right) led by a glowing head,
-   then the whole slash fades. No hold. */
+   A streak rotated by the SAME --ks-slash-rot, centred and ~160vw wide to overshoot
+   the corners. Sits ABOVE the covers (z-index 2). It draws (scaleX 0->1, left->right)
+   led by a glowing head once .is-slash is added, holds bright, then fades once
+   .is-fade is added (the open begins partway through that fade). */
 .knife-slash {
   position: absolute;
   top: 50%;
   left: 50%;
+  z-index: 2;
   width: 160vw;
   height: 4px;
   transform: translate(-50%, -50%) rotate(var(--ks-slash-rot));
-  /* The streak draws, then HOLDS bright (the children's forwards fill keeps it on
-     screen through slash-hold + open-gap), then this fades it out exactly as the
-     open begins (delay = --ks-open-start). */
-  animation: ks-slash-fade var(--ks-slash-fade) ease-out var(--ks-open-start)
-    forwards;
+}
+
+/* The blade fades only once JS adds .is-fade (at the draw+hold point); forwards so
+   it stays gone as the halves finish parting. */
+.knife-split.is-fade .knife-slash {
+  animation: ks-slash-fade var(--ks-slash-fade) ease-out forwards;
 }
 
 @keyframes ks-slash-fade {
@@ -108,8 +123,13 @@
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
   transform-origin: left center;
   transform: scaleX(0); /* hidden until the draw fires */
+}
+
+/* Draw runs the instant .is-slash is added; forwards fill HOLDS it drawn (scaleX 1)
+   through the hold, the fade, and the open. */
+.knife-split.is-slash .knife-streak {
   animation: ks-streak-draw var(--ks-slash-draw) cubic-bezier(0.2, 0.7, 0.2, 1)
-    var(--ks-slash-delay) forwards;
+    forwards;
 }
 
 @keyframes ks-streak-draw {
@@ -132,10 +152,13 @@
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 22px 7px rgba(255, 255, 255, 0.95);
-  opacity: 0; /* hidden until the draw fires (forwards fill, no backwards flash) */
+  opacity: 0; /* hidden until the draw fires */
   transform: translateX(0);
+}
+
+.knife-split.is-slash .knife-head {
   animation: ks-head-run var(--ks-slash-draw) cubic-bezier(0.2, 0.7, 0.2, 1)
-    var(--ks-slash-delay) forwards;
+    forwards;
 }
 
 @keyframes ks-head-run {
