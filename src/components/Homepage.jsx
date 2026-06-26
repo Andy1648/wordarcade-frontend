@@ -5,12 +5,6 @@ import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import GraffitiTag from './decor/GraffitiTag';
-import {
-  PaintSplatter1,
-  PaintSplatter2,
-  PaintSplatter3,
-  PaintSplatter4,
-} from './decor/PaintSplatters';
 import './wall-system.css';
 import './Homepage.css';
 
@@ -22,22 +16,9 @@ const YELLOW = { fill: '#FFE94A', line: '#B8A020' };
 const ORANGE = { fill: '#FF6B3D', line: '#B83D15' };
 const PURPLE = { fill: '#9A1AFF', line: '#5A0EAA' };
 
-// ALLEY DEPTH (one-point perspective). Vanishing point sits behind the title,
-// up-centre; the wall recedes toward it. Lines below converge ON it (floor
-// boards + ceiling + side walls) and the tags are SCALE-GRADED to it: tiny &
-// faint near the VP (far away), large & stronger at the lower corners (near /
-// foreground). Together with the streetlight pool this builds real depth - a
-// place you look INTO, not a flat field. Deterministic (no randomness).
-const VANISHING = { x: 50, y: 40 };
-const PERSPECTIVE_ENDS = [
-  // floor boards (the strongest depth cue) running out to the bottom edge
-  [0, 100], [17, 100], [34, 100], [50, 100], [66, 100], [83, 100], [100, 100],
-  // ceiling
-  [0, 0], [100, 0],
-  // side walls meeting the floor
-  [0, 47], [100, 47],
-];
-
+// Floating word tags, kept over the quiet halftone dot field. The top/left
+// values are the positions they were authored at (formerly scale-graded toward a
+// vanishing point); they now read as scattered tags over the dots. Deterministic.
 const RECEDING_TAGS = [
   // deep background - small + faint, clustered near the vanishing point
   { word: 'RIP',  c: PURPLE, size: 20, top: 31, left: 47, rot: -6,  op: 0.12, drip: 0 },
@@ -125,16 +106,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   return (
     <div className="homepage-wrap">
-      <div className="homepage-stage wall-surface">
-        {/* ALLEY DEPTH: one-point perspective lines converging on a vanishing
-            point behind the title, plus scale-graded graffiti receding toward it
-            (tiny/faint = far, large = near). Reads as a place with depth. */}
+      <div className="homepage-stage">
+        {/* Floating word tags over the quiet halftone dot field (the dot field
+            itself lives on .homepage-wrap::before in Homepage.css). */}
         <div className="homepage-depth" aria-hidden="true">
-          <svg className="homepage-perspective" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {PERSPECTIVE_ENDS.map((e, i) => (
-              <line key={`pl${i}`} x1={VANISHING.x} y1={VANISHING.y} x2={e[0]} y2={e[1]} />
-            ))}
-          </svg>
           {RECEDING_TAGS.map((t, i) => (
             <GraffitiTag
               key={`tag${i}`}
@@ -150,19 +125,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             />
           ))}
         </div>
-
-        {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
-            point (title + cards), brightest at the top and falling off. */}
-        <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
-
-        {/* The mascot as a faint graffiti stencil sprayed on the wall - ambient
-            brand presence, part of the texture, NOT a character in the scene. */}
-        <img className="homepage-graffiti" src="/mascot-idle.png" alt="" aria-hidden="true" draggable="false" />
-
-        <PaintSplatter1 className="homepage-splatter homepage-splatter-1" color="#FF2EC4" />
-        <PaintSplatter2 className="homepage-splatter homepage-splatter-2" color="#2EFFE0" />
-        <PaintSplatter3 className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
-        <PaintSplatter4 className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
 
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}

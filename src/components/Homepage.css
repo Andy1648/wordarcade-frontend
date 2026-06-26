@@ -4,9 +4,11 @@
    (no max-width, margin, or rounded corners against the viewport), and centres
    the content card both ways. */
 .homepage-wrap {
-  /* Transparent so the persistent WallScene shows through around the
-     card; the page's dark base comes from body/#root. */
-  background: transparent;
+  /* Quiet halftone dot field replaces the alley-wall background. Opaque DESIGN.md
+     void (#0d0618) covers the persistent WallScene behind the menu; the dots
+     themselves are drawn on ::before (below) so the edge-fade mask + drift never
+     touch the foreground content. */
+  background: #0d0618;
   width: 100%;
   /* Fit the whole menu within ONE screen height so the landing never grows a
      vertical scrollbar. Pinned to the viewport (dvh handles mobile chrome) with
@@ -29,6 +31,40 @@
      overflow that locked height and clip the buttons. Reciprocal zoom nets to
      1 here, leaving the tuned one-screen layout untouched. */
   zoom: calc(1 / var(--app-scale, 1));
+}
+
+/* Halftone dot field: ~1.5px teal (DESIGN.md cyan #2EFFE0) dots on a ~26px grid
+   over the dark void. Dim (~0.5 via the dot colour's alpha). A radial mask keeps
+   it densest in the centre (behind the cards) and fades it to nothing at the
+   screen edges so it recedes instead of competing. Drawn on ::before (behind the
+   z-index:1 content, pointer-events:none) so the mask never clips the cards. The
+   inset overscan hides the tile edges as it slowly drifts. */
+.homepage-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    rgba(46, 255, 224, 0.5) 0 1.5px,
+    transparent 1.6px
+  );
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 28%, transparent 84%);
+  mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 28%, transparent 84%);
+  /* Very slow drift: exactly one 26px tile over 26s, so the loop is seamless
+     while the motion stays barely-there. */
+  animation: menu-dots-drift 26s linear infinite;
+}
+
+@keyframes menu-dots-drift {
+  from { background-position: 0 0; }
+  to { background-position: 26px 26px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-wrap::before { animation: none; }
 }
 
 /* The content card fills most of the viewport width and only caps (and centres)
@@ -59,83 +95,6 @@
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-}
-
-/* One-point perspective guide lines (floor boards / ceiling / side walls) all
-   converging on the vanishing point behind the title. Drawn in the mortar shade,
-   low opacity - structure you feel more than read. preserveAspectRatio:none lets
-   the 0-100 viewBox stretch to the stage while the lines keep converging. */
-.homepage-perspective {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.55;
-}
-
-.homepage-perspective line {
-  stroke: #000;
-  stroke-width: 0.18;
-  opacity: 0.5;
-}
-
-/* Streetlight pool: a tall warm cast from above, centred over the title + cards.
-   .wall-spotlight supplies the gradient + screen blend; this only places it. */
-.homepage-spotlight {
-  top: -10%;
-  left: 50%;
-  width: 78%;
-  height: 86%;
-  transform: translateX(-50%);
-  --spot-w: 60%;
-  --spot-h: 72%;
-}
-
-/* Decorative paint splatters scattered around the stage edges. Behind the
-   content (z-index 0), non-interactive, and clipped by the stage's
-   overflow so they bleed off the edges like real thrown paint. */
-.homepage-splatter {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  width: 150px;
-  height: 150px;
-  /* Let the splatter's drips/droplets spill past the SVG viewBox. */
-  overflow: visible;
-}
-
-.homepage-splatter-1 {
-  top: -34px;
-  left: -40px;
-  opacity: 0.2;
-  transform: rotate(18deg);
-}
-
-.homepage-splatter-2 {
-  top: 40px;
-  right: -46px;
-  width: 180px;
-  height: 180px;
-  opacity: 0.18;
-  transform: rotate(-26deg);
-}
-
-.homepage-splatter-3 {
-  bottom: 24px;
-  left: -50px;
-  width: 170px;
-  height: 170px;
-  opacity: 0.2;
-  transform: rotate(40deg);
-}
-
-.homepage-splatter-4 {
-  bottom: -36px;
-  right: -30px;
-  width: 160px;
-  height: 160px;
-  opacity: 0.18;
-  transform: rotate(-12deg);
 }
 
 /* Keep the real content above the brick texture and splatter layers. */
@@ -363,29 +322,6 @@ html[data-beat='true'] .homepage-logo::after {
   /* Handstyle extrude in cyan darker-shades (see .wall-handstyle, added in JSX). */
   --hs-dark: #1A9985;
   --hs-darker: #0E5F52;
-}
-
-/* The mascot as a graffiti stencil sprayed on the brick wall: large, faint, and
-   tilted, sitting behind the cards (z-index 0, above only the wall texture) so
-   it reads as part of the wall, not a character standing in the scene. Tucked to
-   the upper-left so the cards/buttons never sit on top of its face awkwardly. */
-.homepage-graffiti {
-  position: absolute;
-  top: 6%;
-  left: -12px;
-  width: 150px;
-  height: auto;
-  z-index: 0;
-  opacity: 0.16;
-  pointer-events: none;
-  transform: rotate(-12deg);
-  /* Flatten it toward a one-colour stencil so it blends into the wall instead of
-     reading as the full-colour character art. */
-  filter: grayscale(0.4) contrast(1.1);
-}
-
-@media (max-width: 600px) {
-  .homepage-graffiti { width: 110px; top: 4%; left: -16px; }
 }
 
 .homepage-cards-grid {
@@ -665,25 +601,6 @@ html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
   30% { border-color: #fff; }
 }
 
-/* Parallax drift: the splatters slowly translate, with the larger corner ones
-   moving further (and faster) than the smaller inner ones for a sense of depth.
-   Uses the individual `translate` property so each keeps its static resting
-   tilt (transform: rotate) underneath. Prime-ish durations keep them desynced. */
-.homepage-splatter {
-  animation: hp-splat-drift var(--hp-dur, 23s) ease-in-out infinite alternate;
-  will-change: translate;
-}
-
-.homepage-splatter-1 { --hp-dur: 19s; --hx: 30px; --hy: 22px; }
-.homepage-splatter-2 { --hp-dur: 27s; --hx: -24px; --hy: 18px; }
-.homepage-splatter-3 { --hp-dur: 23s; --hx: 34px; --hy: -26px; }
-.homepage-splatter-4 { --hp-dur: 31s; --hx: -20px; --hy: -16px; }
-
-@keyframes hp-splat-drift {
-  from { translate: 0 0; }
-  to { translate: var(--hx, 20px) var(--hy, 20px); }
-}
-
 /* ============================================================= */
 /* ==============  REDUCED MOTION (homepage)  ================== */
 /* ============================================================= */
@@ -700,7 +617,6 @@ html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
 @media (prefers-reduced-motion: reduce) {
   .homepage-tagline,                  /* tag-sway */
   .homepage-section-label,            /* label-pulse */
-  .homepage-splatter,                 /* hp-splat-drift parallax */
   .homepage-btn,                      /* btn-bounce-forever idle */
   html[data-beat='true'] .homepage-logo,                            /* title-beat-pop + shadow-slam */
   html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop */
