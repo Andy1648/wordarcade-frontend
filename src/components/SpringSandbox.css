@@ -1,0 +1,125 @@
+/* SpringSandbox.css  [night/spring-sandbox — throwaway demo] */
+
+.ss-root {
+  min-height: 100vh;
+  background: #0d0618;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  padding: 40px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ss-header {
+  text-align: center;
+  max-width: 760px;
+  margin-bottom: 56px;
+}
+
+.ss-header h1 {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(32px, 6vw, 64px);
+  color: #2EFFE0;
+  margin: 0 0 16px;
+  -webkit-text-stroke: 2px #000;
+  text-shadow: 5px 5px 0 #000;
+  letter-spacing: 1px;
+}
+
+.ss-header p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #cfc6e0;
+  margin: 0 0 8px;
+}
+
+.ss-note {
+  font-size: 12px;
+  color: #7a6f93;
+}
+
+.ss-note code {
+  color: #FFE94A;
+}
+
+/* The grid sets the 3D viewing distance for the cards' tilt. */
+.ss-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  width: 100%;
+  max-width: 1100px;
+  perspective: 1000px;
+}
+
+@media (max-width: 900px) {
+  .ss-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+}
+@media (max-width: 520px) {
+  .ss-grid { grid-template-columns: 1fr; }
+}
+
+.ss-card-slot {
+  display: flex;
+  justify-content: center;
+}
+
+/* The hover hit-area + 3D anchor. The inner element is what the spring transforms,
+   so the bounding box the cursor is measured against never itself rotates. */
+.ss-card {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.ss-card-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: #1a0b2e;
+  border: 4px solid var(--ss-accent, #2EFFE0);
+  box-shadow: 6px 6px 0 #000, inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  text-align: center;
+  /* GPU hint: only transform changes, set imperatively by the rAF spring loop. */
+  will-change: transform;
+}
+
+.ss-card-label {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(18px, 2.2vw, 26px);
+  color: var(--ss-accent, #2EFFE0);
+  letter-spacing: 1px;
+}
+
+.ss-card-blurb {
+  font-size: 12px;
+  color: #b6abce;
+  line-height: 1.3;
+}
+
+.ss-card-params {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8a7fa6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ss-card-params b {
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* JS already skips the tilt loop under reduced-motion; this is belt-and-braces
+     so the inner card never carries a leftover transform. */
+  .ss-card-inner { transform: none !important; }
+}

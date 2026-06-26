@@ -76,10 +76,34 @@ function applyAppScale() {
 applyAppScale();
 window.addEventListener('resize', applyAppScale);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
-      <App />
-    </Sentry.ErrorBoundary>
-  </React.StrictMode>,
-)
+// [night/spring-sandbox] Throwaway demo route. Reachable ONLY at `/#spring-sandbox`
+// (hash → no server rewrite needed, and the real app never matches it). Lazy-loaded
+// so the demo's code is code-split out of the normal app bundle. Remove this guard
+// (and the SpringSandbox component) before any merge to main.
+const isSpringSandbox =
+  typeof window !== 'undefined' &&
+  (window.location.hash === '#spring-sandbox' ||
+    window.location.pathname === '/spring-sandbox');
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+if (isSpringSandbox) {
+  const SpringSandbox = React.lazy(() => import('./components/SpringSandbox.jsx'));
+  root.render(
+    <React.StrictMode>
+      <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+        <React.Suspense fallback={null}>
+          <SpringSandbox />
+        </React.Suspense>
+      </Sentry.ErrorBoundary>
+    </React.StrictMode>,
+  );
+} else {
+  root.render(
+    <React.StrictMode>
+      <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+        <App />
+      </Sentry.ErrorBoundary>
+    </React.StrictMode>,
+  )
+}
