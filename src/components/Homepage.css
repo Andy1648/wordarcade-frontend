@@ -33,12 +33,13 @@
 
 /* The content card fills most of the viewport width and only caps (and centres)
    on ultrawide screens so it never stretches infinitely. */
+/* The menu stage IS the wall: a crafted weathered-concrete SURFACE (the texture,
+   grime, floor-shade and vignette all come from .wall-surface in wall-system.css
+   - applied in the JSX). This rule only owns the panel's box: size, padding,
+   clipping and the rounded edge that frames the wall against the surrounding
+   alley (the persistent WallScene shows through around it). */
 .homepage-stage {
   position: relative;
-  /* Card fill + a comic halftone dot texture on top of it. */
-  background-color: #1a0b2e;
-  background-image: radial-gradient(circle, rgba(255, 46, 196, 0.06) 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
   padding: clamp(10px, 1.6vh, 28px) clamp(14px, 2vw, 32px) clamp(8px, 1.2vh, 16px);
   overflow: hidden;
   width: 100%;
@@ -48,36 +49,17 @@
   border-radius: 14px;
 }
 
-/* Subtle brick-wall texture rendered entirely from repeating gradients
-   (no image asset): horizontal lines lay out the courses, the two offset
-   vertical gradients stagger the bricks course-to-course in a running
-   bond. Kept low-opacity so it reads as wall texture behind the flat
-   content rather than competing with it. */
-.homepage-stage::before {
-  content: '';
+/* ---- WALL DEPTH: oversized graffiti throw-ups (GraffitiTag) layered behind the
+   UI, so the wall reads as "a place" with depth - not a blank field. They sit at
+   z-index 0 (above the surface grain, below the z-index-1 content) and the opaque
+   cards crop them, leaving the pieces "half-visible behind" exactly like a real
+   packed wall. Clipped to the stage by its overflow. */
+.homepage-wall-depth {
   position: absolute;
-  /* Slightly taller than the stage and clipped by its overflow, so a very slow
-     upward translate (one 76px course per loop) scrolls the wall seamlessly. */
-  top: 0;
-  left: 0;
-  right: 0;
-  height: calc(100% + 80px);
+  inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.2;
-  background-image:
-    repeating-linear-gradient(0deg, #000 0 2px, transparent 2px 38px),
-    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 76px),
-    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 76px);
-  background-size: 100% 76px, 76px 38px, 76px 38px;
-  background-position: 0 0, 0 0, 38px 38px;
-  animation: brick-scroll 60s linear infinite;
-  will-change: transform;
-}
-
-@keyframes brick-scroll {
-  from { transform: translateY(0); }
-  to { transform: translateY(-76px); }
+  overflow: hidden;
 }
 
 /* Decorative paint splatters scattered around the stage edges. Behind the
@@ -145,21 +127,6 @@
   justify-content: center;
 }
 
-/* Comic starburst behind the wordmark. translate centres it; the spin uses the
-   individual `rotate` property so it composes with the centring transform. */
-.homepage-burst {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 280px;
-  height: 280px;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  opacity: 0.15;
-  pointer-events: none;
-  animation: burst-spin 30s linear infinite;
-}
-
 .homepage-logo {
   position: relative;
   z-index: 1;
@@ -177,7 +144,48 @@
      data-beat (see below), not a continuous transform - so the wordmark sits
      still and snaps on each detected drum hit instead of bobbing smoothly. */
   transform: rotate(-2deg) skewX(-4deg);
+  /* HANDSTYLE extrude: the .wall-handstyle class (applied in JSX) stacks a
+     spray-can 3D block behind the glyphs in these pink darker-shades down to
+     black, so the title reads hand-painted, not plainly set. */
+  --hs-dark: #B81E8E;
+  --hs-darker: #7A1460;
   will-change: transform, text-shadow;
+}
+
+/* Paint running off the bottom of the wordmark - a few drips with droplets, in
+   the title's pink, anchored under the letters. Sits behind the glyphs so the
+   paint reads as bleeding out of them. Static (dried paint); idle is elsewhere. */
+.homepage-logo-drip {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: min(60vw, 460px);
+  height: 40px;
+  transform: translateX(-50%) rotate(-2deg);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.homepage-logo-drip span {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: var(--len, 24px);
+  background: #FF2EC4;
+  border-radius: 0 0 4px 4px;
+}
+
+/* The fat droplet at the end of each run. */
+.homepage-logo-drip span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF2EC4;
+  transform: translateX(-50%);
 }
 
 /* CRISP beat hit on the title (heaviest effect): when useBeatSync flips
@@ -204,10 +212,12 @@ html[data-beat='true'] .homepage-logo {
   }
 }
 
+/* Beat slam keeps the handstyle 3D extrude and just rams it bigger on the hit,
+   then back - so the spray-can block stays consistent with the resting pose. */
 @keyframes title-shadow-slam {
-  0% { text-shadow: 5px 5px 0 #000; }
-  40% { text-shadow: 10px 10px 0 #000; }
-  100% { text-shadow: 5px 5px 0 #000; }
+  0% { text-shadow: 2px 2px 0 #B81E8E, 4px 4px 0 #7A1460, 6px 6px 0 #000; }
+  40% { text-shadow: 4px 4px 0 #B81E8E, 7px 7px 0 #7A1460, 11px 11px 0 #000; }
+  100% { text-shadow: 2px 2px 0 #B81E8E, 4px 4px 0 #7A1460, 6px 6px 0 #000; }
 }
 
 /* RGB / chromatic split: two text clones (cyan offset left, pink offset right)
@@ -259,35 +269,6 @@ html[data-beat='true'] .homepage-logo::after {
   .homepage-logo::after { animation: none !important; opacity: 0; }
 }
 
-@keyframes burst-spin {
-  from { rotate: 0deg; }
-  to { rotate: 360deg; }
-}
-
-/* Manga speed lines: each span is a long diameter through the centre, rotated
-   to its angle; the whole group spins as one (same 30s as the starburst). */
-.homepage-speedlines {
-  position: absolute;
-  top: 42%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  z-index: 0;
-  pointer-events: none;
-  animation: burst-spin 30s linear infinite;
-}
-
-.homepage-speedlines span {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1400px;
-  height: 2px;
-  transform: translate(-50%, -50%) rotate(var(--angle, 0deg));
-  transform-origin: center;
-  opacity: 0.06;
-}
-
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
    off-axis, and sitting on a hard offset shadow. */
 .homepage-tagline {
@@ -313,6 +294,9 @@ html[data-beat='true'] .homepage-logo::after {
   text-align: center;
   margin: clamp(10px, 1.6vh, 22px) 0 clamp(8px, 1.2vh, 16px);
   transform: skewX(-4deg);
+  /* Handstyle extrude in cyan darker-shades (see .wall-handstyle, added in JSX). */
+  --hs-dark: #1A9985;
+  --hs-darker: #0E5F52;
 }
 
 /* The mascot as a graffiti stencil sprayed on the brick wall: large, faint, and
@@ -632,9 +616,6 @@ html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
    (.homepage-logo::before/::after RGB-split is already handled by its own reduce
    rule above - not repeated here.) */
 @media (prefers-reduced-motion: reduce) {
-  .homepage-stage::before,            /* brick-scroll */
-  .homepage-burst,                    /* burst-spin */
-  .homepage-speedlines,               /* burst-spin */
   .homepage-tagline,                  /* tag-sway */
   .homepage-section-label,            /* label-pulse */
   .homepage-splatter,                 /* hp-splat-drift parallax */

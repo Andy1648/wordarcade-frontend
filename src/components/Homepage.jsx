@@ -4,36 +4,27 @@ import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
+import GraffitiTag from './decor/GraffitiTag';
 import {
   PaintSplatter1,
   PaintSplatter2,
   PaintSplatter3,
   PaintSplatter4,
 } from './decor/PaintSplatters';
+import './wall-system.css';
 import './Homepage.css';
 
-// Jagged comic starburst behind the title: 14 spikes, points computed once from
-// alternating outer/inner radii (deterministic - no randomness, so it never
-// shifts between renders).
-const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
-  const r = i % 2 === 0 ? 100 : 64;
-  const a = (Math.PI * i) / 14 - Math.PI / 2;
-  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
-}).join(' ');
-
-// Manga-style speed lines radiating from the homepage centre: 8 spokes (each a
-// full diameter, so 16 rays) in rotating palette colours.
-const SPEED_LINES = [
-  { angle: 0, color: '#FF2EC4' },
-  { angle: 23, color: '#2EFFE0' },
-  { angle: 45, color: '#FFE94A' },
-  { angle: 68, color: '#FF6B3D' },
-  { angle: 90, color: '#9A1AFF' },
-  { angle: 113, color: '#2EFFE0' },
-  { angle: 135, color: '#FF2EC4' },
-  { angle: 158, color: '#FFE94A' },
+// WALL DEPTH: oversized graffiti throw-ups layered behind the menu so the wall
+// reads as a real, lived-in place - not a blank panel. Built from the existing
+// hand-sprayed GraffitiTag (drips + overspray + per-letter rotation), reused
+// here at large scale and higher opacity. Positioned so the opaque cards crop
+// them, leaving each piece "half-visible behind" like a packed alley wall.
+// Deterministic config (no randomness) so the layout is stable across renders.
+const WALL_DEPTH_PIECES = [
+  { word: 'WORDS', fill: '#FF2EC4', line: '#991A75', size: 92,  top: 30, left: 2,  rot: -10, op: 0.5,  drip: 30 },
+  { word: 'BOMB',  fill: '#9A1AFF', line: '#5A0EAA', size: 104, top: 40, left: 64, rot: 8,   op: 0.46, drip: 36 },
+  { word: 'GG',    fill: '#FFE94A', line: '#B8A020', size: 80,  top: 6,  left: 44, rot: -6,  op: 0.42, drip: 0 },
 ];
-
 
 /**
  * The lobby/homepage screen. Clicking a card or an action button calls the
@@ -108,7 +99,27 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   return (
     <div className="homepage-wrap">
-      <div className="homepage-stage">
+      <div className="homepage-stage wall-surface">
+        {/* WALL DEPTH: oversized graffiti throw-ups behind everything, cropped by
+            the opaque cards so they read as half-visible pieces on a packed wall.
+            Reuses the hand-sprayed GraffitiTag vocabulary at large scale. */}
+        <div className="homepage-wall-depth" aria-hidden="true">
+          {WALL_DEPTH_PIECES.map((p, i) => (
+            <GraffitiTag
+              key={`depth${i}`}
+              word={p.word}
+              fill={p.fill}
+              line={p.line}
+              size={p.size}
+              top={p.top}
+              left={p.left}
+              rotation={p.rot}
+              opacity={p.op}
+              drip={p.drip}
+            />
+          ))}
+        </div>
+
         {/* The mascot as a faint graffiti stencil sprayed on the wall - ambient
             brand presence, part of the texture, NOT a character in the scene. */}
         <img className="homepage-graffiti" src="/mascot-idle.png" alt="" aria-hidden="true" draggable="false" />
@@ -118,33 +129,30 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         <PaintSplatter3 className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
         <PaintSplatter4 className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
 
-        {/* Manga speed lines radiating from centre, behind the cards. */}
-        <div className="homepage-speedlines" aria-hidden="true">
-          {SPEED_LINES.map((s, i) => (
-            <span key={i} style={{ '--angle': `${s.angle}deg`, background: s.color }} />
-          ))}
-        </div>
-
-        {/* Title: a comic starburst behind the whole-word wordmark. */}
+        {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
+            paint dripping off the letters - hand-painted on the wall, not set. */}
         <div className="homepage-logo-wrap">
-          <svg className="homepage-burst" viewBox="-100 -100 200 200" aria-hidden="true">
-            <polygon points={BURST_POINTS} fill="#FFE94A" />
-          </svg>
           {/* "TYPE A WORD": the non-breaking space keeps "TYPE A" together
               so the title only ever wraps before "WORD" on narrow screens. The
               data-text must match exactly so the RGB-split clones line up. */}
           <div
-            className="homepage-logo"
+            className="homepage-logo wall-handstyle"
             data-text={'TYPE A WORD'}
             role="img"
             aria-label="Type a Word"
           >
             {'TYPE A WORD'}
           </div>
+          {/* Paint running off the wordmark. */}
+          <div className="homepage-logo-drip" aria-hidden="true">
+            <span style={{ left: '17%', '--len': '20px' }} />
+            <span style={{ left: '49%', '--len': '34px' }} />
+            <span style={{ left: '78%', '--len': '16px' }} />
+          </div>
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
-        <div className="homepage-section-label">// SELECT YOUR GAME //</div>
+        <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
 
         <div className="homepage-cards-grid">
           {GAMES.map((game) => (
@@ -157,7 +165,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           ))}
         </div>
 
-        <div className="homepage-bottom-bar">
+        {/* CLEAN ZONE: a knocked-back sprayed patch under the action buttons so
+            CREATE / JOIN stay crisp against the grimy wall. */}
+        <div className="homepage-bottom-bar wall-clean-zone">
           <button
             className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
             onClick={handleCreateRoom}

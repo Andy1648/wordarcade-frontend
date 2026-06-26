@@ -1,0 +1,138 @@
+/* wall-system.css
+   ----------------------------------------------------------------------------
+   REUSABLE "ALLEY WALL" SURFACE SYSTEM.
+
+   Three pieces of vocabulary, used together, turn a flat panel into a crafted
+   graffiti wall that still reads as a usable menu:
+
+     .wall-surface     SURFACE  - weathered concrete: feTurbulence grain +
+                                  layered grime gradients + floor shade +
+                                  vignette. Real texture, not a flat field.
+     .wall-clean-zone  LEGIBILITY - a knocked-back, freshly-painted patch that
+                                  locally calms the grime so interactive controls
+                                  sitting on it stay crisp. Soul around it,
+                                  readable on it.
+     .wall-handstyle   LETTERING - pushes a plainly-set display face toward
+                                  hand-painted lettering with a chunky spray-can
+                                  3D extrude in the fill's own darker shades.
+                                  Pair with paint-drips for letters that bleed.
+
+   TUNABILITY (required): every wall exposes three dials as CSS custom
+   properties, so the loud<->restrained balance moves WITHOUT a rebuild. Override
+   any of them on a .wall-surface element (or an ancestor) to retune a whole
+   screen in one line:
+
+     --wall-texture-opacity  grain visibility      (0 = clean, 1 = gritty)
+     --wall-grime            staining / blotch density (0 = fresh, 1 = filthy)
+     --wall-contrast         punch of the grain     (1 = flat, >1 = harder)
+
+   Plus palette hooks (on-palette by default, DESIGN.md §2 — no new hues):
+     --wall-base             concrete fill color
+     --wall-tint             faint colored cast washed over the concrete
+
+   REUSE: the three game modes (#4) build ON this — they apply .wall-surface and
+   only override the tokens (Word Bomb grimier/hotter, Category Blitz electric
+   cyan, Imposter spotlight), inheriting the same surface + handstyle + clean-zone
+   vocabulary instead of each hardcoding its own background.
+   ---------------------------------------------------------------------------- */
+
+/* ============================ SURFACE ================================ */
+
+.wall-surface {
+  /* ---- tunable dials (confident loud default; turn DOWN in one line) ---- */
+  /* Base lifted off near-black so the overlay grain has tonal room to show -
+     near-black swallows the grit. Still firmly in the dark palette family. */
+  --wall-base: #1f1638;
+  --wall-tint: rgba(154, 26, 255, 0.07);
+  --wall-texture-opacity: 0.85;
+  --wall-grime: 0.62;
+  --wall-contrast: 1.18;
+
+  position: relative;
+  /* Scope the texture blend-modes to this surface so the grain blends with the
+     concrete underneath it, never with whatever sits behind the panel. */
+  isolation: isolate;
+  background-color: var(--wall-base);
+  background-image:
+    /* poured-concrete water-staining: a few large soft blotches; their darkness
+       scales with --wall-grime so the whole wall cleans up from one token. */
+    radial-gradient(ellipse 55% 42% at 16% 10%, rgba(0, 0, 0, calc(0.55 * var(--wall-grime))) 0%, transparent 72%),
+    radial-gradient(ellipse 48% 38% at 88% 26%, rgba(0, 0, 0, calc(0.5 * var(--wall-grime))) 0%, transparent 72%),
+    radial-gradient(ellipse 60% 50% at 70% 96%, rgba(0, 0, 0, calc(0.62 * var(--wall-grime))) 0%, transparent 78%),
+    /* faint colored cast so the concrete isn't a dead neutral */
+    radial-gradient(ellipse 45% 40% at 38% 46%, var(--wall-tint) 0%, transparent 70%),
+    /* the alley darkens toward the floor (lower third shadowed, per references) */
+    linear-gradient(to bottom, transparent 48%, rgba(0, 0, 0, 0.42) 100%),
+    /* edge vignette = depth, the panel recedes at its rim */
+    radial-gradient(ellipse 125% 125% at 50% 38%, transparent 58%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* FINE GRAIN - the actual concrete grit. feTurbulence noise, desaturated to
+   grey; `overlay` blend turns that grey into per-pixel light/dark on the base,
+   which is what makes it read as a rough surface instead of a colour. Sits above
+   the base gradients (z-index:-1 within the isolated surface) and below every
+   real child (decor at z 0, content at z 1). */
+.wall-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: var(--wall-texture-opacity);
+  mix-blend-mode: overlay;
+  filter: contrast(var(--wall-contrast));
+}
+
+/* COARSE MOTTLE - big soft cloud-noise for uneven staining across the whole
+   wall (low frequency = broad patches, not grain). `soft-light` keeps it gentle;
+   its strength tracks --wall-grime with the rest of the dirt. */
+.wall-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='600' height='600' filter='url(%23m)'/%3E%3C/svg%3E");
+  background-size: 600px 600px;
+  opacity: calc(0.5 * var(--wall-grime));
+  mix-blend-mode: soft-light;
+}
+
+/* ============================ CLEAN ZONE ============================= */
+
+/* A freshly-painted patch on the grimy wall: a FEATHERED dark wash (not a hard
+   rectangle) so it blends into the surface like sprayed-over area, knocking the
+   grime back wherever the actual controls live. Everything placed inside reads
+   crisp; the wall around it stays filthy. */
+.wall-clean-zone {
+  position: relative;
+  border-radius: 12px;
+  background: radial-gradient(
+    ellipse 100% 118% at 50% 50%,
+    rgba(7, 3, 15, 0.9) 52%,
+    rgba(7, 3, 15, 0) 100%
+  );
+}
+
+/* ============================ HANDSTYLE ============================== */
+
+/* Spray-can 3D extrude: stacked hard offset shadows in the fill's own darker
+   shades, ending in black. Callers set the two mid shades via --hs-dark /
+   --hs-darker (default both black -> a plain black extrude if unset). This is
+   the "make a typeface look hand-painted" treatment; combine with the element's
+   own outline/stroke + a resting slant for full handstyle character. */
+.wall-handstyle {
+  text-shadow:
+    2px 2px 0 var(--hs-dark, #000),
+    4px 4px 0 var(--hs-darker, #000),
+    6px 6px 0 #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The surface, clean-zone and handstyle extrude are all static, so nothing to
+     silence here - the wall stays exactly as drawn, just calm (the looping decor
+     that rides on top kills its own motion in its own files). */
+  .wall-surface { /* intentionally static */ }
+}
