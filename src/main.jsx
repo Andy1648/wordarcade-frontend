@@ -51,10 +51,19 @@ function CrashFallback() {
 // balloon. The homepage cancels it (it's height-locked to one screen).
 function applyAppScale() {
   const DESIGN_W = 1400;
-  // Natural height of the tallest CORE screen (the in-game stage, ~960-980px +
-  // padding). Used to cap the zoom by viewport HEIGHT so a wide screen can't zoom
-  // content taller than the viewport and force a vertical scroll.
-  const DESIGN_H = 1040;
+  // Height-fit cap. The scaled UI must never need a vertical scroll in-game, so we
+  // cap the zoom by viewport HEIGHT: a screen can't zoom taller than DESIGN_H lets it.
+  // DESIGN_H = the natural (zoom-1) height the TALLEST in-game screen must show, so
+  // the no-scroll guarantee is `must-fit <= DESIGN_H` at every window height.
+  // MEASURED (Chrome, zoom 1) the tallest in-game screen of each mode:
+  //   Word Bomb stage 868px (input bottom 819) ← tallest, the binding constraint
+  //   Imposter stage  471px · Category Blitz stage 378px (both far shorter)
+  // 1040 reserved ~170px of dead headroom over the real 868, making the UI feel
+  // small on big monitors. Lowered to 868 + ~52px safety margin so the app scales
+  // UP (e.g. 2560x1328: 1.277 -> 1.443) while staying safely above the tallest
+  // screen. Margin runs a touch over the usual 20-40 to buffer the states that
+  // can't be exercised solo (Imposter voting at max players, CB at max answers).
+  const DESIGN_H = 920;
   const w = window.innerWidth;
   const h = window.innerHeight;
   let scale;
@@ -75,6 +84,15 @@ function applyAppScale() {
 }
 applyAppScale();
 window.addEventListener('resize', applyAppScale);
+
+// One-time log so the real monitor's size + the resolved scale can be read back
+// (Andy's resolution is unknown; this prints the actual numbers). Never throws.
+try {
+  console.log(
+    `[viewport] ${window.innerWidth}x${window.innerHeight} -> --app-scale=` +
+    `${getComputedStyle(document.documentElement).getPropertyValue('--app-scale').trim()}`,
+  );
+} catch { /* never let a log break startup */ }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
