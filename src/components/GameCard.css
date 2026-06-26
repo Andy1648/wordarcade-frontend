@@ -28,6 +28,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .game-card-tilt { transform: none !important; transition: none !important; }
+  /* No press squash under reduced-motion (the click still registers fine). */
+  .game-card:active { transform: scale(var(--cs, 1)) !important; }
 }
 
 /* Hovering raises the card above its neighbours so a scaled card can never be
@@ -93,7 +95,8 @@
   /* Rotation/drift lives on the wrapper; this element only scales (featured via
      --cs), skews and lifts - so the beat-pop can play over the idle sway. */
   transform: scale(var(--cs, 1));
-  transition: transform 0.12s, box-shadow 0.12s;
+  /* Overshoot bezier so the press squash POPS back past rest on release. */
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s;
   will-change: transform, box-shadow;
 }
 
@@ -183,9 +186,14 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
 }
 
 .game-card:active {
+  /* Quick squash-IN on press (clear scale-down, beat-pop paused); on release the
+     base overshoot transition pops it back past rest then settles — tactile click
+     confirmation. The tilt + lift live on the separate .game-card-tilt layer, so
+     this squash composes with the hover feel rather than fighting it. */
   animation: none;
-  transform: scale(calc(0.98 * var(--cs, 1)));
+  transform: scale(calc(0.92 * var(--cs, 1)));
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 1px 1px 0 #000;
+  transition: transform 0.07s ease-out, box-shadow 0.07s;
 }
 
 @keyframes card-hover-pop {
