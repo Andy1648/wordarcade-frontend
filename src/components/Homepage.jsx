@@ -1,5 +1,5 @@
 // Homepage.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -26,6 +26,39 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   useEffect(() => {
     setJuiceMuted(muted);
   }, [muted]);
+
+  // Cursor-parallax for the dim background shapes. The pointer sets a target
+  // offset (-1..1 from screen centre); a rAF loop LERPS the live value toward it
+  // each frame (never snaps) and writes --px/--py on the wrap. Each shape in CSS
+  // multiplies those by its own depth factor, so nearer layers travel more. When
+  // the cursor is still the target stops changing and the lerp settles, so the
+  // field reads clean. Disabled entirely under reduced-motion.
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const target = { x: 0, y: 0 };
+    const cur = { x: 0, y: 0 };
+    let raf = 0;
+    const onMove = (e) => {
+      target.x = (e.clientX / window.innerWidth) * 2 - 1;
+      target.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    const tick = () => {
+      cur.x += (target.x - cur.x) * 0.06; // lerp factor = smooth settle
+      cur.y += (target.y - cur.y) * 0.06;
+      wrap.style.setProperty('--px', cur.x.toFixed(4));
+      wrap.style.setProperty('--py', cur.y.toFixed(4));
+      raf = requestAnimationFrame(tick);
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    raf = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   // Fire the shared game-feel on a menu action button press: squash + color
   // flash + a small spark burst from the button's center + a tap tick. The juice
@@ -79,7 +112,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   }
 
   return (
-    <div className="homepage-wrap">
+    <div className="homepage-wrap" ref={wrapRef}>
+      {/* Dim cursor-parallax depth shapes (behind everything). Near-invisible at
+          rest; they drift as the pointer moves (rAF-lerped --px/--py from the
+          effect above), nearer layers travelling more. Decorative, inert. */}
+      <div className="homepage-parallax" aria-hidden="true">
+        <span className="hp-shape hp-shape-1" />
+        <span className="hp-shape hp-shape-2" />
+        <span className="hp-shape hp-shape-3" />
+      </div>
       <div className="homepage-stage">
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}

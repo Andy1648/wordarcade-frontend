@@ -49,6 +49,59 @@
   border-radius: 14px;
 }
 
+/* Cursor-parallax depth field: 3 very large, very dim soft blobs in DESIGN.md
+   accent tints at different depths. They translate with the pointer (--px/--py
+   set by the rAF lerp in Homepage.jsx) — nearer layers travel more. Near-invisible
+   at rest so the flat field reads clean. Behind all content; inert. */
+.homepage-parallax {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hp-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform;
+}
+
+/* farthest (cyan) — travels least */
+.hp-shape-1 {
+  width: 46vw;
+  height: 46vw;
+  top: 6%;
+  left: 5%;
+  background: radial-gradient(circle, rgba(46, 255, 224, 0.10), transparent 70%);
+  transform: translate(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 8px));
+}
+
+/* mid (pink) */
+.hp-shape-2 {
+  width: 52vw;
+  height: 52vw;
+  bottom: -4%;
+  right: 3%;
+  background: radial-gradient(circle, rgba(255, 46, 196, 0.09), transparent 70%);
+  transform: translate(calc(var(--px, 0) * 22px), calc(var(--py, 0) * 18px));
+}
+
+/* nearest (purple) — travels most */
+.hp-shape-3 {
+  width: 38vw;
+  height: 38vw;
+  top: 28%;
+  left: 36%;
+  background: radial-gradient(circle, rgba(154, 26, 255, 0.10), transparent 70%);
+  transform: translate(calc(var(--px, 0) * 36px), calc(var(--py, 0) * 30px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-shape { transform: none !important; }
+}
+
 /* Keep the real content above the (now flat) background. */
 .homepage-logo,
 .homepage-tagline,
