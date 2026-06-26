@@ -331,6 +331,32 @@ function SubmitLetters({ text, mode }) {
 }
 
 /**
+ * [feat/ingame-typing-juice] Renders the live in-progress typing string as big
+ * per-letter cels so you SEE letters land keystroke-by-keystroke. PRESENTATION
+ * ONLY - it just renders the already-received string it's handed (the caller still
+ * reads `draft`/`typingText` exactly as before); it touches no WS/state/turn logic.
+ * Each char is its own span keyed by position+char, so a newly typed letter MOUNTS
+ * and plays a one-shot pop while the letters already on screen sit still (no
+ * restrobe). A solid block caret blinks at the end. Pop/caret are CSS-gated off
+ * under prefers-reduced-motion (the text still renders, just instantly + steady).
+ */
+function LiveTypingText({ text }) {
+  const chars = [...text];
+  return (
+    <span className="player-typing-text">
+      <span className="lt-word">
+        {chars.map((ch, i) => (
+          <span key={`${i}-${ch}`} className="lt-char">
+            {ch === ' ' ? ' ' : ch.toUpperCase()}
+          </span>
+        ))}
+      </span>
+      <span className="lt-caret" aria-hidden="true" />
+    </span>
+  );
+}
+
+/**
  * The "CLUTCH!" slam shown instead of the normal hype word when a correct answer
  * lands with <=2s left. Big pink Bungee with a unique slam-in animation; removes
  * itself on animation end. pointer-events:none.
@@ -2282,16 +2308,20 @@ export default function GameScreen({
                       relayed typing_update text. Empty -> a dimmed "..." so the
                       card keeps a stable height instead of jumping. */}
                   {isCurrent && !eliminated && !gameOver && (
-                    <div className="player-typing">
+                    <div className={`player-typing${!isMe ? ' opponent' : ''}`}>
                       {(() => {
                         const typed = isMe ? draft : typingText[player.id] || '';
                         return typed ? (
-                          <span className="player-typing-text">
-                            {typed.toUpperCase()}
-                            <span className="typing-cursor">|</span>
-                          </span>
+                          <LiveTypingText text={typed} />
                         ) : (
-                          <span className="player-typing-empty">...</span>
+                          // Idle "about to type" state: pulsing dots, stable height.
+                          <span className="player-typing-empty">
+                            <span className="lt-dots" aria-hidden="true">
+                              <i />
+                              <i />
+                              <i />
+                            </span>
+                          </span>
                         );
                       })()}
                     </div>

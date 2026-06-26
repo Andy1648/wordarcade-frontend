@@ -318,6 +318,10 @@
   background: #FF6B3D;
   border-color: #B83D15;
   transform: rotate(0deg) scale(1.08);
+  /* [feat/ingame-typing-juice] whose-turn glow in the player's own colour (--pc):
+     a crisp ring + halo so it's obvious who's on the clock. The glow PULSES via
+     player-active-pulse (below); this is the static base + reduced-motion fallback. */
+  box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--pc, #FF6B3D), 0 0 20px 5px var(--pc, #FF6B3D);
 }
 
 .game-player-card.eliminated {
@@ -432,8 +436,12 @@
 /* Sits between the active player's name and hearts. Only rendered for the
    current player's card. The reserved min-height keeps the card from jumping
    as the text appears, clears, or swaps to the "..." placeholder. */
+/* [feat/ingame-typing-juice] Live typing is the standout multiplayer moment, so
+   it's BIG + obvious: large per-letter cels that pop in as keys land, a solid
+   block caret, and a "typing" dot pulse before the first key. Reserve a stable
+   height so the card never jumps between states. */
 .player-typing {
-  min-height: 16px;
+  min-height: 30px;
   margin-bottom: 6px;
   padding: 0 2px;
   display: flex;
@@ -444,42 +452,101 @@
 .player-typing-text {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
-  line-height: 1.2;
+  /* Much larger than the old 11px so the live word is unmistakable. */
+  font-size: clamp(15px, 1.7vw, 22px);
+  line-height: 1.15;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   /* The live typing reads in the typer's session colour (the card sets --pc);
-     falls back to the old yellow when no colour is assigned. A thin black cel
-     stroke keeps every hue legible on the active card's orange background. */
+     a black cel stroke keeps every hue legible on the active card. */
   color: var(--pc, #FFE94A);
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
-  opacity: 1;
   text-align: center;
-  /* Long in-progress words shouldn't blow out the narrow card. */
   word-break: break-all;
 }
 
-/* Dimmed placeholder before the active player has typed anything. */
-.player-typing-empty {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  color: #FFE94A;
-  opacity: 0.4;
-  letter-spacing: 2px;
+.lt-word {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-/* Blinking caret pinned to the end of the live text. */
-.typing-cursor {
+/* Each freshly-typed letter pops in once (the span mounts when the char lands). */
+.lt-char {
   display: inline-block;
-  margin-left: 1px;
-  color: #FFE94A;
-  animation: blink 500ms step-end infinite;
+  animation: lt-pop 170ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
-@keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
+@keyframes lt-pop {
+  0% { transform: translateY(-3px) scale(0.4); opacity: 0; }
+  60% { transform: translateY(0) scale(1.18); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* Solid block caret (reads as a live cursor) blinking in the typer's colour. */
+.lt-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.05em;
+  margin-left: 1px;
+  background: var(--pc, #FFE94A);
+  box-shadow: 0 0 0 1.5px #000;
+  vertical-align: text-bottom;
+  animation: lt-caret-blink 600ms step-end infinite;
+}
+
+@keyframes lt-caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+/* "Typing" indicator: three dots pulsing in sequence, shown before the first key. */
+.player-typing-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+}
+
+.lt-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.lt-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pc, #FFE94A);
+  box-shadow: 0 0 0 1px #000;
+  display: inline-block;
+  animation: lt-dot-pulse 1s ease-in-out infinite;
+}
+
+.lt-dots i:nth-child(2) { animation-delay: 0.15s; }
+.lt-dots i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes lt-dot-pulse {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Opponent turns get a soft accent glow behind the live word - you're watching
+   someone else type RIGHT NOW. Subtle so it stays readable. */
+.player-typing.opponent .player-typing-text {
+  text-shadow: 0 0 10px color-mix(in srgb, var(--pc, #FFE94A) 60%, transparent);
+}
+
+/* Reduced-motion: no per-letter pop / caret blink / dot bounce (text + caret +
+   dots still render, just static). */
+@media (prefers-reduced-motion: reduce) {
+  .lt-char { animation: none !important; transform: none !important; opacity: 1 !important; }
+  .lt-caret { animation: none !important; opacity: 1 !important; }
+  .lt-dots i { animation: none !important; transform: none !important; opacity: 0.8 !important; }
 }
 
 .game-player-hearts {
@@ -3009,9 +3076,18 @@
 }
 
 @keyframes player-active-pulse {
-  0% { transform: translateY(0) rotate(0deg) scale(1.08); }
-  50% { transform: translateY(-3px) rotate(0deg) scale(1.11); }
-  100% { transform: translateY(0) rotate(0deg) scale(1.08); }
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1.08);
+    box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--pc, #FF6B3D), 0 0 14px 3px var(--pc, #FF6B3D);
+  }
+  50% {
+    transform: translateY(-3px) rotate(0deg) scale(1.11);
+    box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--pc, #FF6B3D), 0 0 30px 9px var(--pc, #FF6B3D);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1.08);
+    box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--pc, #FF6B3D), 0 0 14px 3px var(--pc, #FF6B3D);
+  }
 }
 
 /* Everyone else (alive, not the active player, not mid/post elimination) rocks
@@ -3116,6 +3192,10 @@ html[data-beat='true'] .cb-answer-chip {
   html[data-beat='true'] .game-player-card:not(.eliminating):not(.eliminated) {
     box-shadow: 3px 3px 0 #000;
   }
+  /* [feat/ingame-typing-juice] whose-turn highlight holds STATIC under reduced
+     motion: kill the bob/glow pulse, keep the static glow from the base .current
+     rule so it's still obvious who's on the clock. */
+  .game-player-card.current { animation: none !important; }
 }
 
 /* ============================================================= */
