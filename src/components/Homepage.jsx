@@ -164,25 +164,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         <PaintSplatter3 className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
         <PaintSplatter4 className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
 
-        {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
-            paint dripping off the letters - hand-painted on the wall, not set. */}
+        {/* Title: flat, bold-but-minimal wordmark - pink fill + thin dark outline,
+            no extrude / glow / drips (background left untouched). */}
         <div className="homepage-logo-wrap">
           {/* "TYPE A WORD": the non-breaking space keeps "TYPE A" together
               so the title only ever wraps before "WORD" on narrow screens. The
               data-text must match exactly so the RGB-split clones line up. */}
           <div
-            className="homepage-logo wall-handstyle"
+            className="homepage-logo"
             data-text={'TYPE A WORD'}
             role="img"
             aria-label="Type a Word"
           >
             {'TYPE A WORD'}
-          </div>
-          {/* Paint running off the wordmark. */}
-          <div className="homepage-logo-drip" aria-hidden="true">
-            <span style={{ left: '17%', '--len': '20px' }} />
-            <span style={{ left: '49%', '--len': '34px' }} />
-            <span style={{ left: '78%', '--len': '16px' }} />
           </div>
         </div>
         <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>

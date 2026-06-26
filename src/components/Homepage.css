@@ -159,13 +159,15 @@
 .homepage-logo {
   position: relative;
   z-index: 1;
-  font-family: 'Bungee Shade', 'Bungee', cursive;
+  /* Plain Bungee (not Bungee Shade) for a flat, clean face. */
+  font-family: 'Bungee', cursive;
   /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
      desktop but shrinks on short laptops to help the menu fit one screen. */
   font-size: clamp(34px, min(7.5vw, 9vh), 88px);
   line-height: 1;
   color: #FF2EC4;
-  -webkit-text-stroke: 5px #000;
+  /* Thin dark outline for legibility over the background. */
+  -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
   display: inline-block;
   text-align: center;
@@ -173,76 +175,9 @@
      data-beat (see below), not a continuous transform - so the wordmark sits
      still and snaps on each detected drum hit instead of bobbing smoothly. */
   transform: rotate(-2deg) skewX(-4deg);
-  /* HERO production-piece block (overrides the shared .wall-handstyle extrude -
-     this is THE focal art, so it's heavier): a lit top edge for volume, then a
-     deep spray-can 3D extrude graded from the pink fill down through
-     magenta/purple to a hard black cast. */
-  text-shadow:
-    0 -2px 0 rgba(255, 184, 227, 0.6),
-    2px 2px 0 #D41A9E,
-    4px 4px 0 #B81E8E,
-    6px 6px 0 #7A1460,
-    8px 9px 0 #4A0C3C,
-    10px 12px 0 #000;
+  /* Single subtle 2px drop - bold but minimal, no multilayer extrude. */
+  text-shadow: 2px 2px 0 #000;
   will-change: transform, text-shadow;
-}
-
-/* HERO HALO: a soft pink light blooming behind the wordmark so it lifts off the
-   wall as the centrepiece (screen blend = adds light, never a milky box). Sits
-   behind the glyphs + drips inside the logo-wrap's stacking context. */
-.homepage-logo-wrap::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 48%;
-  width: 118%;
-  height: 230%;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    rgba(255, 46, 196, 0.22) 0%,
-    rgba(255, 46, 196, 0.08) 42%,
-    transparent 70%
-  );
-  mix-blend-mode: screen;
-}
-
-/* Paint running off the bottom of the wordmark - a few drips with droplets, in
-   the title's pink, anchored under the letters. Sits behind the glyphs so the
-   paint reads as bleeding out of them. Static (dried paint); idle is elsewhere. */
-.homepage-logo-drip {
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: min(60vw, 460px);
-  height: 40px;
-  transform: translateX(-50%) rotate(-2deg);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.homepage-logo-drip span {
-  position: absolute;
-  top: 0;
-  width: 4px;
-  height: var(--len, 24px);
-  background: #FF2EC4;
-  border-radius: 0 0 4px 4px;
-}
-
-/* The fat droplet at the end of each run. */
-.homepage-logo-drip span::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #FF2EC4;
-  transform: translateX(-50%);
 }
 
 /* CRISP beat hit on the title (heaviest effect): when useBeatSync flips
@@ -252,7 +187,7 @@
    beats so the animations restart cleanly on the next hit. All three are 120ms
    so they stay in sync; keyframes carry the resting rotate/skew pose. */
 html[data-beat='true'] .homepage-logo {
-  animation: title-beat-pop 120ms ease-out, title-shadow-slam 120ms ease-out;
+  animation: title-beat-pop 120ms ease-out;
 }
 
 @keyframes title-beat-pop {
@@ -266,23 +201,6 @@ html[data-beat='true'] .homepage-logo {
   }
   100% {
     transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
-  }
-}
-
-/* Beat slam keeps the hero's deep 3D extrude and rams it bigger on the hit, then
-   back - so the spray-can block stays consistent with the resting pose. */
-@keyframes title-shadow-slam {
-  0% {
-    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
-      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
-  }
-  40% {
-    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
-      3px 3px 0 #D41A9E, 6px 6px 0 #B81E8E, 9px 9px 0 #7A1460, 12px 13px 0 #4A0C3C, 15px 17px 0 #000;
-  }
-  100% {
-    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
-      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
   }
 }
 

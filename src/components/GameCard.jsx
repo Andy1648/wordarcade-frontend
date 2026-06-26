@@ -1,7 +1,19 @@
 // GameCard.jsx
+import { useRef } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
 import './GameCard.css';
+
+// Max 3D tilt at the card's edge (degrees) — small, a lean toward the cursor.
+const MAX_TILT = 10;
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
 
 /**
  * Renders one game selection card. All visual variation (colors, text,
@@ -17,6 +29,43 @@ import './GameCard.css';
 export default function GameCard({ game, onSelect, onHover, topper }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
+
+  // 3D cursor-tilt: while hovered, the card leans toward the pointer (eased by a
+  // CSS transition on .game-card-tilt) and eases back to flat on leave. rAF-
+  // throttled, transform-only; disabled under reduced-motion (no angles ever set).
+  const tiltRef = useRef(null);
+  const rafRef = useRef(0);
+  const ptRef = useRef({ x: 0, y: 0 });
+
+  function applyTilt() {
+    rafRef.current = 0;
+    const el = tiltRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const nx = Math.max(-1, Math.min(1, (ptRef.current.x - (r.left + r.width / 2)) / (r.width / 2)));
+    const ny = Math.max(-1, Math.min(1, (ptRef.current.y - (r.top + r.height / 2)) / (r.height / 2)));
+    el.style.setProperty('--rx', `${(nx * MAX_TILT).toFixed(2)}deg`);
+    el.style.setProperty('--ry', `${(-ny * MAX_TILT).toFixed(2)}deg`);
+  }
+
+  function handlePointerMove(e) {
+    if (!game.enabled || prefersReducedMotion()) return;
+    ptRef.current = { x: e.clientX, y: e.clientY };
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(applyTilt);
+  }
+
+  function resetTilt() {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
+    const el = tiltRef.current;
+    if (el) {
+      el.style.setProperty('--rx', '0deg');
+      el.style.setProperty('--ry', '0deg');
+    }
+  }
 
   const cardClassName = [
     'game-card',
@@ -58,9 +107,17 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
       {/* A character perched on the card's top edge, riding the wrapper's idle
           sway with it. Sits above the card; never intercepts pointer events. */}
       {topper}
+      {/* Tilt layer: carries the 3D cursor-lean so the inner card keeps its own
+          transforms; perspective lives on the wrap. */}
+      <div
+        className="game-card-tilt"
+        ref={tiltRef}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={resetTilt}
+      >
       <div
         className={cardClassName}
-        style={{ background: game.baseColor }}
+        style={{ background: game.baseColor, '--card-accent': game.baseColor }}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         role="button"
@@ -110,6 +167,7 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
         >
           {game.badgeText}
         </div>
+      </div>
       </div>
       </div>
     </div>
