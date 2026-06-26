@@ -432,8 +432,12 @@
 /* Sits between the active player's name and hearts. Only rendered for the
    current player's card. The reserved min-height keeps the card from jumping
    as the text appears, clears, or swaps to the "..." placeholder. */
+/* [night/wordbomb-feel] Live typing is the standout multiplayer moment, so it's
+   amplified: bigger, per-letter pop-in, a solid block caret, and a "typing" dot
+   pulse. Reserve a stable height so the card never jumps between the idle dots
+   and a typed word. */
 .player-typing {
-  min-height: 16px;
+  min-height: 30px;
   margin-bottom: 6px;
   padding: 0 2px;
   display: flex;
@@ -444,42 +448,111 @@
 .player-typing-text {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
-  line-height: 1.2;
+  /* Much larger than the old 11px so the live word is glance-readable. */
+  font-size: clamp(15px, 1.7vw, 21px);
+  line-height: 1.15;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   /* The live typing reads in the typer's session colour (the card sets --pc);
-     falls back to the old yellow when no colour is assigned. A thin black cel
-     stroke keeps every hue legible on the active card's orange background. */
+     falls back to yellow when no colour is assigned. A black cel stroke keeps
+     every hue legible on the active card's orange background. */
   color: var(--pc, #FFE94A);
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
-  opacity: 1;
   text-align: center;
   /* Long in-progress words shouldn't blow out the narrow card. */
   word-break: break-all;
 }
 
-/* Dimmed placeholder before the active player has typed anything. */
-.player-typing-empty {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  color: #FFE94A;
-  opacity: 0.4;
-  letter-spacing: 2px;
+/* The word + caret sit on one line; chars are inline-block so the pop transform
+   applies (transforms don't affect inline elements). */
+.lt-word {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-/* Blinking caret pinned to the end of the live text. */
-.typing-cursor {
+/* Each freshly-typed letter pops in once (the span mounts when the char is
+   appended). GPU transform + opacity only. */
+.lt-char {
   display: inline-block;
-  margin-left: 1px;
-  color: #FFE94A;
-  animation: blink 500ms step-end infinite;
+  animation: lt-pop 180ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
-@keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
+@keyframes lt-pop {
+  0% { transform: translateY(-3px) scale(0.4); opacity: 0; }
+  60% { transform: translateY(0) scale(1.18); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* Solid block caret (reads as a live cursor, not just a thin line). Pulses in the
+   typer's colour at the end of the word. */
+.lt-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.05em;
+  margin-left: 2px;
+  background: var(--pc, #FFE94A);
+  box-shadow: 0 0 0 1.5px #000;
+  vertical-align: text-bottom;
+  animation: lt-caret-blink 600ms step-end infinite;
+}
+
+@keyframes lt-caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+/* "Typing" indicator: three dots that pulse in sequence. Shows next to the word
+   AND on its own in the idle state (before the first keystroke). */
+.lt-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.lt-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pc, #FFE94A);
+  box-shadow: 0 0 0 1px #000;
+  display: inline-block;
+  animation: lt-dot-pulse 1s ease-in-out infinite;
+}
+
+.lt-dots i:nth-child(2) { animation-delay: 0.15s; }
+.lt-dots i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes lt-dot-pulse {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Opponent turns get a touch more presence (you're watching someone else) - a
+   soft accent glow behind the live word. Kept subtle so it stays readable. */
+.player-typing.opponent .player-typing-text {
+  text-shadow: 0 0 10px color-mix(in srgb, var(--pc, #FFE94A) 60%, transparent);
+}
+
+/* Idle placeholder (active player hasn't typed yet): just the pulsing dots,
+   centered, holding the reserved height so nothing jumps when typing starts. */
+.player-typing-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 21px;
+}
+
+/* Reduced-motion: kill the pop / caret-blink / dot bounce. Letters still render
+   instantly, the caret stays solid, and the dots stay visible - the "who's typing
+   what" state is fully readable, just without the motion. */
+@media (prefers-reduced-motion: reduce) {
+  .lt-char { animation: none !important; transform: none !important; opacity: 1 !important; }
+  .lt-caret { animation: none !important; opacity: 1 !important; }
+  .lt-dots i { animation: none !important; transform: none !important; opacity: 0.8 !important; }
 }
 
 .game-player-hearts {
@@ -1249,7 +1322,14 @@
 
 @keyframes bomb-num-pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+  50% { transform: scale(1.18); }
+}
+
+/* The enlarged critical-timer pulse is decorative urgency - kill the loop under
+   reduced-motion (the number stays big + hot-red, so the state is still readable;
+   only the throb is removed). [night/wordbomb-feel] */
+@media (prefers-reduced-motion: reduce) {
+  .bomb-num-pulse { animation: none !important; transform: none !important; }
 }
 
 /* ============================================================= */

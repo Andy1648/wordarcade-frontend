@@ -732,11 +732,16 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
-  const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
-  const numStroke = critical ? '#FF5C5C' : '#000';
-  const numStrokeWidth = critical ? 4 : 3;
-  const numSize = tension === 'calm' ? 26 : tension === 'warning' ? 30 : 34;
+  // Timer number: the glance-readable focal countdown. White -> hot-orange ->
+  // red, and growing HARD each tier so "time is running out" reads instantly under
+  // pressure (escalation rides the same calm/warning/critical tiers as the fuse +
+  // vignette - building on the dread system, not replacing it). Bigger + thicker
+  // black cel-stroke (paintOrder=stroke) so it stays legible over the mascot belly.
+  // [night/wordbomb-feel] sizes bumped ~50% (was 26/30/34) for fast-glance reading.
+  const numFill = critical ? '#FFE94A' : tension === 'warning' ? '#FF6B3D' : '#fff';
+  const numStroke = critical ? '#FF2E2E' : '#000';
+  const numStrokeWidth = critical ? 6 : tension === 'warning' ? 5 : 4;
+  const numSize = tension === 'calm' ? 40 : tension === 'warning' ? 50 : 60;
 
   const src = BOMB_MASCOT_SRC[pose] || BOMB_MASCOT_SRC.idle;
 
@@ -815,6 +820,42 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * [night/wordbomb-feel] Live in-progress typing, amplified. Renders the word a
+ * player is CURRENTLY typing (already received over WS - this is DISPLAY ONLY,
+ * it reads the relayed text, it does not touch the stream) as big per-letter
+ * cels: each character is its own span keyed by position+char, so a newly typed
+ * letter MOUNTS and plays a one-shot pop while the letters already on screen sit
+ * still (no restrobe). A solid block caret blinks at the end and a small "typing"
+ * triple-dot pulses, so it's unmistakable you're watching a real person type
+ * right now. The pop + blink + dots are all CSS-gated off under
+ * prefers-reduced-motion (the letters still render, just instantly + steady).
+ * No sound is added here - opponent keystrokes would be chaos; the local player's
+ * own keystroke tick already fires (mute-gated) at the input.
+ */
+function LiveTypingText({ text }) {
+  const chars = [...text];
+  return (
+    <span className="player-typing-text">
+      <span className="lt-dots" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="lt-word">
+        {chars.map((ch, i) => (
+          // key = position+char so appending a letter mounts a fresh span (pops),
+          // while unchanged leading letters keep their key and don't re-animate.
+          <span key={`${i}-${ch}`} className="lt-char">
+            {ch === ' ' ? ' ' : ch.toUpperCase()}
+          </span>
+        ))}
+        <span className="lt-caret" aria-hidden="true" />
+      </span>
+    </span>
   );
 }
 
@@ -2282,16 +2323,22 @@ export default function GameScreen({
                       relayed typing_update text. Empty -> a dimmed "..." so the
                       card keeps a stable height instead of jumping. */}
                   {isCurrent && !eliminated && !gameOver && (
-                    <div className="player-typing">
+                    <div className={`player-typing${!isMe ? ' opponent' : ''}`}>
                       {(() => {
                         const typed = isMe ? draft : typingText[player.id] || '';
                         return typed ? (
-                          <span className="player-typing-text">
-                            {typed.toUpperCase()}
-                            <span className="typing-cursor">|</span>
-                          </span>
+                          <LiveTypingText text={typed} />
                         ) : (
-                          <span className="player-typing-empty">...</span>
+                          // Idle "waiting on them" state: the typing dots pulse on
+                          // their own so the card reads as live even before the
+                          // first keystroke (stable height, no jump).
+                          <span className="player-typing-empty">
+                            <span className="lt-dots" aria-hidden="true">
+                              <i />
+                              <i />
+                              <i />
+                            </span>
+                          </span>
                         );
                       })()}
                     </div>
