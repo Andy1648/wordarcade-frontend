@@ -11,6 +11,27 @@ decide explicitly, don't drift.
 
 ---
 
+## THE CRAFT BAR  (the gate every visual passes before it ships)
+The governing sentence for execution quality:
+> **Every visual must be intentional and crafted — real texture, depth, layering,
+> and hand character. Generic AI-default output is a FAIL.**
+
+What FAILS, no exceptions: plain emoji, basic flat stickers, default outlines,
+clip-art shapes — anything that reads as "a model generated this in one pass with no
+design intent." The test: **if a visual could be produced by any model from a one-line
+prompt with zero craft, it does not ship.**
+
+Where to pull from instead of defaults: the locked references in §1 (Friday Night
+Funkin', Jet Set Radio, Persona 5, Splatoon, Street Fighter) plus the Newgrounds /
+graffiti / Y2K Flash energy — and **real reference images**, not whatever a model
+reaches for on autopilot.
+
+This bar is about effort, not speed. **Quality and artfulness over speed — slow is fine,
+generic is not.** A thing that took longer but has hand character ships; a thing that was
+fast but reads as default does not.
+
+---
+
 ## 1. VOICE / PERSONALITY
 The sentence that governs every visual choice:
 > **Newgrounds / graffiti / Y2K Flash energy. Chaotic, fast, a little violent.
