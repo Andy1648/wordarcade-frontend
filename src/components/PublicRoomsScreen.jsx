@@ -214,7 +214,6 @@ export default function PublicRoomsScreen({
           // CRITICAL: an empty list must never look broken. Friendly nudge +
           // two ways to start a game right now.
           <div className="browser-empty">
-            <div className="browser-empty-emoji" aria-hidden="true">🎮</div>
             <div className="browser-empty-title">NO PUBLIC GAMES RIGHT NOW</div>
             <div className="browser-empty-sub">BE THE ONE WHO STARTS THE PARTY.</div>
             <div className="browser-empty-actions">

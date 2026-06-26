@@ -361,18 +361,6 @@
   .browser-loading-dots span { animation: none; opacity: 1; }
 }
 
-.browser-empty-emoji {
-  font-size: 44px;
-  line-height: 1;
-  margin-bottom: 14px;
-  animation: browser-empty-bob 2.4s ease-in-out infinite;
-}
-
-@keyframes browser-empty-bob {
-  0%, 100% { transform: translateY(0) rotate(-4deg); }
-  50% { transform: translateY(-8px) rotate(4deg); }
-}
-
 .browser-empty-title {
   font-family: 'Bungee', cursive;
   font-size: clamp(16px, 2.4vw, 22px);
@@ -429,8 +417,4 @@
   .browser-box { padding: 22px 16px; transform: none; }
   .browser-title { font-size: 30px; }
   .browser-list { max-height: 52vh; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .browser-empty-emoji { animation: none; }
 }
