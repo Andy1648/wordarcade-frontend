@@ -1,29 +1,39 @@
-// Homepage.jsx — Flat-Pop / Sticker-Bomb direction.
-// Layered, slightly-rotated die-cut stickers (Sticker primitive) on a FLAT palette
-// field. All menu LOGIC is unchanged from the previous direction: the CREATE/JOIN/
-// mode-select handlers, their bespoke juice (data-juice-self stays), and routing.
+// Homepage.jsx
 import { useEffect, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
-import Sticker from './Sticker';
+import {
+  PaintSplatter1,
+  PaintSplatter2,
+  PaintSplatter3,
+  PaintSplatter4,
+} from './decor/PaintSplatters';
 import './Homepage.css';
 
-// Decorative "sticker-bomb" scatter: small flat word-stickers slapped around the
-// field BEHIND the content. Organized density — faint + clipped so the interactive
-// stickers stay the focus and every label stays legible (outlines do the
-// separating). Each reuses the Sticker primitive, just decorative (no handlers).
-const SCATTER = [
-  { t: 'POW', cls: 'hp-scatter-1', color: '#FFE94A', rot: -13 },
-  { t: 'GG', cls: 'hp-scatter-2', color: '#2EFFE0', rot: 12 },
-  { t: 'BOOM', cls: 'hp-scatter-3', color: '#FF6B3D', rot: -7 },
-  { t: 'WOW', cls: 'hp-scatter-4', color: '#9A1AFF', rot: 10 },
-  { t: 'ZAP', cls: 'hp-scatter-5', color: '#FF2EC4', rot: -17 },
-  { t: 'NICE', cls: 'hp-scatter-6', color: '#2EFFE0', rot: 9 },
-  { t: 'EPIC', cls: 'hp-scatter-7', color: '#FFE94A', rot: 15 },
-  { t: 'OOF', cls: 'hp-scatter-8', color: '#FF6B3D', rot: -10 },
+// Jagged comic starburst behind the title: 14 spikes, points computed once from
+// alternating outer/inner radii (deterministic - no randomness, so it never
+// shifts between renders).
+const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
+  const r = i % 2 === 0 ? 100 : 64;
+  const a = (Math.PI * i) / 14 - Math.PI / 2;
+  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
+}).join(' ');
+
+// Manga-style speed lines radiating from the homepage centre: 8 spokes (each a
+// full diameter, so 16 rays) in rotating palette colours.
+const SPEED_LINES = [
+  { angle: 0, color: '#FF2EC4' },
+  { angle: 23, color: '#2EFFE0' },
+  { angle: 45, color: '#FFE94A' },
+  { angle: 68, color: '#FF6B3D' },
+  { angle: 90, color: '#9A1AFF' },
+  { angle: 113, color: '#2EFFE0' },
+  { angle: 135, color: '#FF2EC4' },
+  { angle: 158, color: '#FFE94A' },
 ];
+
 
 /**
  * The lobby/homepage screen. Clicking a card or an action button calls the
@@ -99,32 +109,40 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   return (
     <div className="homepage-wrap">
       <div className="homepage-stage">
-        {/* Flat-pop sticker-bomb scatter behind the content (decorative + faint). */}
-        <div className="homepage-scatter" aria-hidden="true">
-          {SCATTER.map((s) => (
-            <Sticker key={s.cls} className={`hp-scatter ${s.cls}`} color={s.color} rotate={s.rot}>
-              {s.t}
-            </Sticker>
+        {/* The mascot as a faint graffiti stencil sprayed on the wall - ambient
+            brand presence, part of the texture, NOT a character in the scene. */}
+        <img className="homepage-graffiti" src="/mascot-idle.png" alt="" aria-hidden="true" draggable="false" />
+
+        <PaintSplatter1 className="homepage-splatter homepage-splatter-1" color="#FF2EC4" />
+        <PaintSplatter2 className="homepage-splatter homepage-splatter-2" color="#2EFFE0" />
+        <PaintSplatter3 className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
+        <PaintSplatter4 className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
+
+        {/* Manga speed lines radiating from centre, behind the cards. */}
+        <div className="homepage-speedlines" aria-hidden="true">
+          {SPEED_LINES.map((s, i) => (
+            <span key={i} style={{ '--angle': `${s.angle}deg`, background: s.color }} />
           ))}
         </div>
 
-        {/* Title: the wordmark as a die-cut sticker word. data-text drives the
-            beat-synced RGB-split (kept from before — it's juice, not decoration). */}
+        {/* Title: a comic starburst behind the whole-word wordmark. */}
         <div className="homepage-logo-wrap">
+          <svg className="homepage-burst" viewBox="-100 -100 200 200" aria-hidden="true">
+            <polygon points={BURST_POINTS} fill="#FFE94A" />
+          </svg>
+          {/* "TYPE A WORD": the non-breaking space keeps "TYPE A" together
+              so the title only ever wraps before "WORD" on narrow screens. The
+              data-text must match exactly so the RGB-split clones line up. */}
           <div
             className="homepage-logo"
-            data-text={'TYPE A WORD'}
+            data-text={'TYPE A WORD'}
             role="img"
             aria-label="Type a Word"
           >
-            {'TYPE A WORD'}
+            {'TYPE A WORD'}
           </div>
         </div>
-
-        {/* Tagline sticker. */}
-        <Sticker className="homepage-tagline sticker--cyan" rotate={-3}>
-          INSERT BRAIN TO CONTINUE
-        </Sticker>
+        <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
         <div className="homepage-section-label">// SELECT YOUR GAME //</div>
 
@@ -139,33 +157,25 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           ))}
         </div>
 
-        {/* CREATE / JOIN as interactive stickers. Logic + bespoke juice unchanged:
-            the handlers, data-juice-self (so the global press-juice skips them and
-            their richer pressJuice runs), onMouseEnter hover sfx, and disabled
-            state all pass straight through the Sticker primitive. */}
         <div className="homepage-bottom-bar">
-          <Sticker
-            as="button"
-            className={`homepage-btn sticker--btn sticker--pink${navigating ? ' disabled' : ''}`}
-            rotate={-2}
+          <button
+            className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
             onClick={handleCreateRoom}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
             data-juice-self
           >
             CREATE ROOM
-          </Sticker>
-          <Sticker
-            as="button"
-            className={`homepage-btn sticker--btn sticker--cyan${navigating ? ' disabled' : ''}`}
-            rotate={2}
+          </button>
+          <button
+            className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}
             onClick={handleJoinRoom}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
             data-juice-self
           >
             JOIN ROOM
-          </Sticker>
+          </button>
         </div>
 
         {/* Link to the standalone credits page (holds music attribution etc.). */}

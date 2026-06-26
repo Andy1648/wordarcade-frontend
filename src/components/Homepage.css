@@ -1,16 +1,17 @@
-/* Homepage.css — Flat-Pop / Sticker-Bomb direction.
-   A FLAT palette field with layered, slightly-rotated die-cut stickers on top.
-   Visuals come from the shared Sticker primitive (Sticker.css); this file owns the
-   field, the layout, the title sticker-word, and the flat-pop decorative scatter.
-   The old textured-graffiti-wall layers (brick scroll, paint splatters, graffiti
-   stencil, manga speed-lines, halftone dots, comic starburst) are intentionally
-   gone — different locked direction. */
+/* Homepage.css */
 
-/* Outer wrapper: still pinned to one screen so the landing never scrolls, and
-   still cancels the app-wide --app-scale zoom (the landing is height-locked). */
+/* Outer wrapper fills the whole viewport with the dark background edge to edge
+   (no max-width, margin, or rounded corners against the viewport), and centres
+   the content card both ways. */
 .homepage-wrap {
+  /* Transparent so the persistent WallScene shows through around the
+     card; the page's dark base comes from body/#root. */
   background: transparent;
   width: 100%;
+  /* Fit the whole menu within ONE screen height so the landing never grows a
+     vertical scrollbar. Pinned to the viewport (dvh handles mobile chrome) with
+     overflow hidden as the hard guarantee; the spacing below is trimmed so the
+     content genuinely fits rather than getting clipped. */
   min-height: 100dvh;
   height: 100dvh;
   overflow: hidden;
@@ -19,117 +20,201 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* Vertical padding is small + vh-based so it never eats the height budget on
+     short laptops; horizontal keeps the roomy side breathing room. */
   padding: clamp(8px, 1.6vh, 20px) clamp(14px, 4vw, 72px);
+  /* Cancel the app-wide --app-scale zoom (applied on .view-screen). The landing
+     is deliberately locked to exactly one screen height (height:100dvh +
+     overflow:hidden) and is already fluid via vh units, so zooming it would
+     overflow that locked height and clip the buttons. Reciprocal zoom nets to
+     1 here, leaving the tuned one-screen layout untouched. */
   zoom: calc(1 / var(--app-scale, 1));
 }
 
-/* The field: a FLAT dark palette panel framed by a thick outline + hard offset
-   shadow (a big sticker "board" the smaller stickers sit on). Flat — no texture —
-   so the bright outlined stickers pop and every label stays crisp. */
+/* The content card fills most of the viewport width and only caps (and centres)
+   on ultrawide screens so it never stretches infinitely. */
 .homepage-stage {
   position: relative;
+  /* Card fill + a comic halftone dot texture on top of it. */
   background-color: #1a0b2e;
-  border: 5px solid #000;
-  border-radius: 16px;
-  box-shadow: 10px 10px 0 rgba(13, 6, 24, 0.55);
-  padding: clamp(12px, 1.8vh, 30px) clamp(16px, 2.4vw, 40px) clamp(10px, 1.4vh, 20px);
+  background-image: radial-gradient(circle, rgba(255, 46, 196, 0.06) 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
+  padding: clamp(10px, 1.6vh, 28px) clamp(14px, 2vw, 32px) clamp(8px, 1.2vh, 16px);
   overflow: hidden;
   width: 100%;
+  /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
-  max-width: min(95vw, 1320px);
+  max-width: min(95vw, 1400px);
+  border-radius: 14px;
 }
 
-/* ---- Flat-pop sticker-bomb scatter (decorative, behind everything) ---- */
-.homepage-scatter {
+/* Subtle brick-wall texture rendered entirely from repeating gradients
+   (no image asset): horizontal lines lay out the courses, the two offset
+   vertical gradients stagger the bricks course-to-course in a running
+   bond. Kept low-opacity so it reads as wall texture behind the flat
+   content rather than competing with it. */
+.homepage-stage::before {
+  content: '';
   position: absolute;
-  inset: 0;
+  /* Slightly taller than the stage and clipped by its overflow, so a very slow
+     upward translate (one 76px course per loop) scrolls the wall seamlessly. */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100% + 80px);
   z-index: 0;
   pointer-events: none;
+  opacity: 0.2;
+  background-image:
+    repeating-linear-gradient(0deg, #000 0 2px, transparent 2px 38px),
+    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 76px),
+    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 76px);
+  background-size: 100% 76px, 76px 38px, 76px 38px;
+  background-position: 0 0, 0 0, 38px 38px;
+  animation: brick-scroll 60s linear infinite;
+  will-change: transform;
 }
 
-.hp-scatter {
+@keyframes brick-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-76px); }
+}
+
+/* Decorative paint splatters scattered around the stage edges. Behind the
+   content (z-index 0), non-interactive, and clipped by the stage's
+   overflow so they bleed off the edges like real thrown paint. */
+.homepage-splatter {
   position: absolute;
-  font-size: clamp(18px, 3vw, 40px);
-  padding: 4px 12px;
-  /* Faint so the density reads as a busy field without fighting the content; the
-     outlines still keep each one a distinct die-cut shape. */
-  opacity: 0.16;
-  --st-keyline: 3px;
-  --st-drop: 4px 4px 0 rgba(0, 0, 0, 0.5);
-  will-change: translate;
-  animation: hp-scatter-bob var(--bob, 7s) ease-in-out infinite alternate;
+  z-index: 0;
+  pointer-events: none;
+  width: 150px;
+  height: 150px;
+  /* Let the splatter's drips/droplets spill past the SVG viewBox. */
+  overflow: visible;
 }
 
-.hp-scatter-1 { top: 4%; left: 2%; --bob: 6.5s; }
-.hp-scatter-2 { top: 9%; right: 4%; --bob: 8s; }
-.hp-scatter-3 { top: 46%; left: -1%; --bob: 7.4s; }
-.hp-scatter-4 { top: 40%; right: 1%; --bob: 6.9s; }
-.hp-scatter-5 { bottom: 6%; left: 5%; --bob: 8.6s; }
-.hp-scatter-6 { bottom: 9%; right: 6%; --bob: 7.1s; }
-.hp-scatter-7 { top: 70%; left: 44%; --bob: 9s; }
-.hp-scatter-8 { top: 22%; left: 40%; --bob: 6.2s; }
-
-@keyframes hp-scatter-bob {
-  from { translate: 0 0; }
-  to { translate: 0 -8px; }
+.homepage-splatter-1 {
+  top: -34px;
+  left: -40px;
+  opacity: 0.2;
+  transform: rotate(18deg);
 }
 
-/* Keep the real content above the scatter. */
-.homepage-logo-wrap,
+.homepage-splatter-2 {
+  top: 40px;
+  right: -46px;
+  width: 180px;
+  height: 180px;
+  opacity: 0.18;
+  transform: rotate(-26deg);
+}
+
+.homepage-splatter-3 {
+  bottom: 24px;
+  left: -50px;
+  width: 170px;
+  height: 170px;
+  opacity: 0.2;
+  transform: rotate(40deg);
+}
+
+.homepage-splatter-4 {
+  bottom: -36px;
+  right: -30px;
+  width: 160px;
+  height: 160px;
+  opacity: 0.18;
+  transform: rotate(-12deg);
+}
+
+/* Keep the real content above the brick texture and splatter layers. */
+.homepage-logo,
 .homepage-tagline,
 .homepage-section-label,
-.homepage-cards-grid,
-.homepage-bottom-bar,
-.homepage-credits-link {
+.homepage-cards-grid {
   position: relative;
   z-index: 1;
 }
 
-/* ---- Title: the wordmark as a die-cut sticker word ---- */
+/* Title container: holds the spinning starburst (behind) and the wordmark. */
 .homepage-logo-wrap {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Comic starburst behind the wordmark. translate centres it; the spin uses the
+   individual `rotate` property so it composes with the centring transform. */
+.homepage-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  opacity: 0.15;
+  pointer-events: none;
+  animation: burst-spin 30s linear infinite;
+}
+
 .homepage-logo {
   position: relative;
   z-index: 1;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(34px, min(7.6vw, 9vh), 90px);
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
+     desktop but shrinks on short laptops to help the menu fit one screen. */
+  font-size: clamp(34px, min(7.5vw, 9vh), 88px);
   line-height: 1;
-  color: #ff2ec4; /* flat fill */
-  -webkit-text-stroke: 6px #0d0618; /* thick dark outline */
+  color: #FF2EC4;
+  -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
-  /* White die-cut keyline (8-way white halo just outside the dark stroke) + a hard
-     offset drop shadow — the title reads as one big peeled sticker. */
-  text-shadow:
-    3px 0 0 #fff, -3px 0 0 #fff, 0 3px 0 #fff, 0 -3px 0 #fff,
-    3px 3px 0 #fff, -3px 3px 0 #fff, 3px -3px 0 #fff, -3px -3px 0 #fff,
-    9px 9px 0 rgba(13, 6, 24, 0.55);
   display: inline-block;
   text-align: center;
-  transform: rotate(-2deg);
+  /* Resting pose. The beat-driven motion is a discrete one-shot POP fired by
+     data-beat (see below), not a continuous transform - so the wordmark sits
+     still and snaps on each detected drum hit instead of bobbing smoothly. */
+  transform: rotate(-2deg) skewX(-4deg);
   will-change: transform, text-shadow;
 }
 
-/* CRISP beat hit on the title: snap up + out and slam the drop shadow bigger on
-   each detected kick (data-beat), then back. Keeps the resting rotate. */
+/* CRISP beat hit on the title (heaviest effect): when useBeatSync flips
+   data-beat="true" (~120ms on a detected kick) the wordmark snaps up + out
+   (scaled by --beat-intensity), its hard drop shadow slams bigger then back,
+   and the RGB-split clones (below) flash. The attribute is removed between
+   beats so the animations restart cleanly on the next hit. All three are 120ms
+   so they stay in sync; keyframes carry the resting rotate/skew pose. */
 html[data-beat='true'] .homepage-logo {
-  animation: title-beat-pop 120ms ease-out;
+  animation: title-beat-pop 120ms ease-out, title-shadow-slam 120ms ease-out;
 }
 
 @keyframes title-beat-pop {
-  0% { transform: rotate(-2deg) scale(1) translateY(0); }
-  35% {
-    transform: rotate(-2deg)
-      scale(calc(1 + 0.07 * var(--beat-intensity, 1)))
-      translateY(calc(-7px * var(--beat-intensity, 1)));
+  0% {
+    transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
   }
-  100% { transform: rotate(-2deg) scale(1) translateY(0); }
+  35% {
+    transform: rotate(-2deg) skewX(-4deg)
+      scale(calc(1 + 0.08 * var(--beat-intensity, 1)))
+      translateY(calc(-8px * var(--beat-intensity, 1)));
+  }
+  100% {
+    transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0);
+  }
 }
 
-/* RGB / chromatic split clones (cyan left, pink right) flash on each beat. */
+@keyframes title-shadow-slam {
+  0% { text-shadow: 5px 5px 0 #000; }
+  40% { text-shadow: 10px 10px 0 #000; }
+  100% { text-shadow: 5px 5px 0 #000; }
+}
+
+/* RGB / chromatic split: two text clones (cyan offset left, pink offset right)
+   drawn over the wordmark via ::before/::after from the data-text attribute.
+   Invisible at rest; on each beat they flash in offset opposite directions then
+   snap back, for a heavy chromatic-aberration hit. mix-blend-mode: screen makes
+   the black stroke transparent so only the coloured ghosts show. */
 .homepage-logo::before,
 .homepage-logo::after {
   content: attr(data-text);
@@ -143,20 +228,19 @@ html[data-beat='true'] .homepage-logo {
   -webkit-text-stroke: inherit;
   paint-order: inherit;
   text-align: center;
-  text-shadow: none;
   opacity: 0;
   pointer-events: none;
 }
 
 html[data-beat='true'] .homepage-logo::before {
   animation: rgb-split-left 120ms ease-out;
-  color: #2effe0;
+  color: #2EFFE0;
   mix-blend-mode: screen;
 }
 
 html[data-beat='true'] .homepage-logo::after {
   animation: rgb-split-right 120ms ease-out;
-  color: #ff2ec4;
+  color: #FF2EC4;
   mix-blend-mode: screen;
 }
 
@@ -170,69 +254,318 @@ html[data-beat='true'] .homepage-logo::after {
   100% { opacity: 0; transform: translateX(0); }
 }
 
-/* ---- Tagline sticker (uses the .sticker primitive for the die-cut look) ---- */
+@media (prefers-reduced-motion: reduce) {
+  .homepage-logo::before,
+  .homepage-logo::after { animation: none !important; opacity: 0; }
+}
+
+@keyframes burst-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+/* Manga speed lines: each span is a long diameter through the centre, rotated
+   to its angle; the whole group spins as one (same 30s as the starburst). */
+.homepage-speedlines {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: burst-spin 30s linear infinite;
+}
+
+.homepage-speedlines span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1400px;
+  height: 2px;
+  transform: translate(-50%, -50%) rotate(var(--angle, 0deg));
+  transform-origin: center;
+  opacity: 0.06;
+}
+
+/* Tagline styled like a sticker slapped on at an angle - skewed, rotated
+   off-axis, and sitting on a hard offset shadow. */
 .homepage-tagline {
+  font-family: 'Bungee', cursive;
   font-size: clamp(10px, 2vw, 16px);
+  color: #0d0618;
+  background: #2EFFE0;
+  display: block;
+  width: fit-content;
+  margin: 12px auto 0;
   padding: 6px 16px;
-  margin: clamp(10px, 1.6vh, 18px) auto 0;
-  /* Gentle idle via `translate` so it composes with the sticker's transform:rotate
-     instead of clobbering it. */
-  animation: hp-tag-sway 2.6s ease-in-out infinite alternate;
+  border: 4px solid #1A9985;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-3deg) skewX(-6deg);
 }
 
-@keyframes hp-tag-sway {
-  from { translate: 0 0; }
-  to { translate: 3px 0; }
-}
-
-/* ---- Section label ---- */
 .homepage-section-label {
   font-family: 'Bungee', cursive;
   font-size: clamp(12px, 2.2vw, 20px);
-  color: #2effe0;
+  color: #2EFFE0;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   text-align: center;
   margin: clamp(10px, 1.6vh, 22px) 0 clamp(8px, 1.2vh, 16px);
   transform: skewX(-4deg);
-  animation: hp-label-pulse 2.2s ease-in-out infinite;
 }
 
-@keyframes hp-label-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.78; }
+/* The mascot as a graffiti stencil sprayed on the brick wall: large, faint, and
+   tilted, sitting behind the cards (z-index 0, above only the wall texture) so
+   it reads as part of the wall, not a character standing in the scene. Tucked to
+   the upper-left so the cards/buttons never sit on top of its face awkwardly. */
+.homepage-graffiti {
+  position: absolute;
+  top: 6%;
+  left: -12px;
+  width: 150px;
+  height: auto;
+  z-index: 0;
+  opacity: 0.16;
+  pointer-events: none;
+  transform: rotate(-12deg);
+  /* Flatten it toward a one-colour stencil so it blends into the wall instead of
+     reading as the full-colour character art. */
+  filter: grayscale(0.4) contrast(1.1);
 }
 
-/* ---- Mode cards grid (cards themselves are styled in GameCard.css) ---- */
+@media (max-width: 600px) {
+  .homepage-graffiti { width: 110px; top: 4%; left: -16px; }
+}
+
 .homepage-cards-grid {
   display: grid;
+  /* Each card grows with the viewport (min 200px, ~25vw, capped 400px) and the
+     three columns centre as a group so they fill the width without stretching
+     infinitely. Collapses to a single column on small screens (below). */
   grid-template-columns: repeat(3, clamp(150px, 20vw, 300px));
   justify-content: center;
-  gap: clamp(12px, 1.6vw, 24px);
-  padding: 4px 2px;
+  /* Roomier gap so the featured card's slight upscale + idle drift never reach
+     into a neighbour. */
+  gap: clamp(10px, 1.4vw, 20px);
+  padding: 0 2px;
+  /* Don't stretch the staggered (margin-top) wrappers to a common row height -
+     keep each at its card height so the idle sway rotates around the card. */
   align-items: start;
 }
 
-/* ---- CREATE / JOIN bar (buttons are .sticker--btn; this just lays them out) ---- */
 .homepage-bottom-bar {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: clamp(14px, 2.4vw, 32px);
-  padding: clamp(14px, 2vh, 24px) clamp(16px, 3vw, 44px) clamp(8px, 1.4vh, 16px);
+  gap: clamp(8px, 1.2vw, 16px);
+  /* Extra horizontal inset so the two buttons (with their skew + hard offset
+     shadow) always sit comfortably INSIDE the card, never touching/spilling past
+     its rounded border. */
+  padding: clamp(10px, 1.6vh, 20px) clamp(16px, 3vw, 44px) clamp(8px, 1.4vh, 16px);
 }
 
+/* Discreet link to the standalone credits page. */
+.homepage-credits-link {
+  display: block;
+  margin: 4px auto 0;
+  padding: 0 18px 16px;
+  background: none;
+  border: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #888;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.homepage-credits-link:hover {
+  color: #C9B8E8;
+  text-decoration: underline;
+}
+
+.homepage-credits-link.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Subtle credit footer - centered, quiet, doesn't compete with the cards. */
 .homepage-btn {
+  position: relative;
+  font-family: 'Bungee', cursive;
+  /* More compact than the hero: smaller type + tighter vertical padding so the
+     pair fits inside the card at laptop size. */
   font-size: clamp(13px, 1.5vw, 18px);
-  padding: clamp(10px, 1.2vh, 15px) clamp(14px, 1.8vw, 26px);
-  text-align: center;
+  /* Each variant sets its own darker-than-fill border colour below. */
+  border: 4px solid #000;
+  border-radius: 8px;
+  padding: clamp(9px, 1.1vh, 14px) clamp(10px, 1.4vw, 18px);
+  cursor: pointer;
   flex: 1;
-  max-width: 320px;
-  /* Subtle never-resting idle (translate-only so the sticker rotate is kept). */
-  animation: hp-btn-bob 2.1s ease-in-out infinite alternate;
+  /* Grow to fill the bar but cap each button so they stay compact on wide
+     screens (the bar centres them). */
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 4px 4px 0 #000;
+  transform: skewX(-2deg);
+  /* Overshoot bezier so hover/release POP rather than ease smoothly. */
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
+  will-change: transform, border-color;
 }
 
-.homepage-btn.sticker--cyan { animation-duration: 2.4s; animation-delay: 0.3s; }
+/* Punchy zoom on hover (idle bounce yields to it via the :hover animation:none
+   in the idle section below). */
+.homepage-btn:hover:not(:disabled) {
+  transform: skewX(-2deg) scale(1.06);
+}
+
+/* "POW!" starburst that pops out from behind the button on hover. Sits behind
+   the opaque button (z-index -1) so only its spikes poke past the edges. */
+.homepage-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 230%;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0) rotate(-8deg);
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+  clip-path: polygon(
+    50% 0%, 60% 25%, 90% 10%, 78% 38%, 100% 50%, 78% 62%,
+    90% 90%, 60% 75%, 50% 100%, 40% 75%, 10% 90%, 22% 62%,
+    0% 50%, 22% 38%, 10% 10%, 40% 25%
+  );
+}
+
+.homepage-btn:hover::before {
+  opacity: 0.2;
+  transform: translate(-50%, -50%) scale(1) rotate(-8deg);
+}
+
+/* Disabled buttons don't pop. */
+.homepage-btn:disabled::before,
+.homepage-btn.disabled::before {
+  display: none;
+}
+
+.homepage-btn-create::before { background: #FF2EC4; }
+.homepage-btn-join::before { background: #2EFFE0; }
+
+.homepage-btn:active {
+  /* Squash-IN on press; release pops back via the bouncy transition. */
+  transform: skewX(-2deg) scale(0.9);
+  box-shadow: 1px 1px 0 #000;
+  transition: transform 0.05s ease-out, box-shadow 0.05s;
+}
+
+/* Disabled while navigating away - dimmed, unclickable, no press animation. */
+.homepage-btn:disabled,
+.homepage-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.homepage-btn:disabled:active,
+.homepage-btn.disabled:active {
+  transform: skewX(-2deg);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.homepage-btn-create {
+  background: #FF2EC4;
+  border-color: #991A75;
+  color: #000;
+  flex: 1.2;
+}
+
+.homepage-btn-join {
+  background: #2EFFE0;
+  border-color: #1A9985;
+  color: #000;
+}
+
+/* ---- Responsive ---- */
+
+/* Below ~760px three clamp-sized cards would no longer fit across without
+   overflowing, so collapse to a single full-width column. */
+@media (max-width: 760px) {
+  .homepage-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Single-column = three tall stacked cards, which legitimately exceed a phone
+     screen. The fit-to-one-screen rule is a LAPTOP target; on narrow screens
+     allow normal vertical scrolling again instead of clipping the cards. */
+  .homepage-wrap {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .homepage-stage {
+    max-height: none;
+  }
+}
+
+/* Phones: tighten padding and give the action buttons full-height tap targets.
+   (Type sizes are fluid via clamp() so no per-breakpoint font overrides needed.) */
+@media (max-width: 600px) {
+  .homepage-wrap { padding: 14px; }
+  .homepage-stage { padding: 18px 14px 0; }
+
+  .homepage-logo {
+    -webkit-text-stroke: 4px #000;
+  }
+
+  .homepage-bottom-bar {
+    padding: 16px 14px 20px;
+  }
+
+  .homepage-btn {
+    min-height: 44px;
+  }
+}
+
+/* ============================================================= */
+/* ====================  IDLE ANIMATIONS  ====================== */
+/* ============================================================= */
+
+/* Tagline sticker: a gentle horizontal sway. The base rotate(-3deg)/skewX
+   sticker pose is baked into every keyframe so the tilt is preserved. */
+.homepage-tagline {
+  animation: tag-sway 2.5s ease-in-out infinite;
+}
+
+@keyframes tag-sway {
+  0% { transform: translateX(0) rotate(-3deg) skewX(-6deg); }
+  50% { transform: translateX(3px) rotate(-2deg) skewX(-6deg); }
+  100% { transform: translateX(0) rotate(-3deg) skewX(-6deg); }
+}
+
+/* Section label: a quiet opacity breathe (transform-free, so its skew stays). */
+.homepage-section-label {
+  animation: label-pulse 2.2s ease-in-out infinite;
+}
+
+/* Action buttons: a very subtle constant bounce that never rests. skewX(-2deg)
+   (the resting pose) is baked into each frame; the two run at slightly
+   different durations so they never sync. Hover/disabled cancel the loop so the
+   press feedback and dim state win. */
+.homepage-btn {
+  animation: btn-bounce-forever 2s ease-in-out infinite;
+}
+
+.homepage-btn-join {
+  animation-duration: 2.2s;
+  animation-delay: 0.3s;
+}
 
 .homepage-btn:hover,
 .homepage-btn:disabled,
@@ -240,58 +573,91 @@ html[data-beat='true'] .homepage-logo::after {
   animation: none;
 }
 
-@keyframes hp-btn-bob {
-  from { translate: 0 1px; }
-  to { translate: 0 -2px; }
+@keyframes btn-bounce-forever {
+  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
+  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px); }
+  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px); }
+  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px); }
+  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
 }
 
-/* ---- Credits link ---- */
-.homepage-credits-link {
-  display: block;
-  margin: 6px auto 0;
-  padding: 0 18px 14px;
-  background: none;
-  border: none;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: #8a7bbf;
-  cursor: pointer;
+/* Lightest beat effect on the action buttons: a small upward kick plus a quick
+   white outline flash, in sync with the title + cards. Hovered/disabled buttons
+   are excluded so press feedback wins. The border-color flash omits 0%/100% so
+   it interpolates from/to each button's own variant border colour. */
+html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
+  animation: btn-beat-pop 120ms ease-out, outline-flash 120ms ease-out;
 }
 
-.homepage-credits-link:hover { color: #c9b8e8; text-decoration: underline; }
-.homepage-credits-link.disabled { opacity: 0.5; pointer-events: none; }
-
-/* ============================  RESPONSIVE  ============================ */
-
-/* Below ~760px the three cards no longer fit across — collapse to one column and
-   let the page scroll (the one-screen rule is a laptop target). */
-@media (max-width: 760px) {
-  .homepage-cards-grid { grid-template-columns: minmax(0, 1fr); }
-  .homepage-wrap { height: auto; min-height: 100dvh; overflow: visible; }
-  .homepage-stage { max-height: none; }
+@keyframes btn-beat-pop {
+  0% { transform: skewX(-2deg) translateY(0); }
+  35% { transform: skewX(-2deg) translateY(calc(-3px * var(--beat-intensity, 1))); }
+  100% { transform: skewX(-2deg) translateY(0); }
 }
 
-@media (max-width: 600px) {
-  .homepage-wrap { padding: 14px; }
-  .homepage-stage { padding: 18px 14px 12px; }
-  .homepage-logo { -webkit-text-stroke: 4px #0d0618; }
-  .homepage-bottom-bar { flex-direction: column; padding: 16px 14px 18px; }
-  .homepage-btn { min-height: 44px; width: 100%; max-width: 100%; }
-  /* Fewer scatter stickers on phones so the field stays calm. */
-  .hp-scatter-7, .hp-scatter-8 { display: none; }
+@keyframes outline-flash {
+  30% { border-color: #fff; }
 }
 
-/* ==========================  REDUCED MOTION  ========================== */
+/* Parallax drift: the splatters slowly translate, with the larger corner ones
+   moving further (and faster) than the smaller inner ones for a sense of depth.
+   Uses the individual `translate` property so each keeps its static resting
+   tilt (transform: rotate) underneath. Prime-ish durations keep them desynced. */
+.homepage-splatter {
+  animation: hp-splat-drift var(--hp-dur, 23s) ease-in-out infinite alternate;
+  will-change: translate;
+}
+
+.homepage-splatter-1 { --hp-dur: 19s; --hx: 30px; --hy: 22px; }
+.homepage-splatter-2 { --hp-dur: 27s; --hx: -24px; --hy: 18px; }
+.homepage-splatter-3 { --hp-dur: 23s; --hx: 34px; --hy: -26px; }
+.homepage-splatter-4 { --hp-dur: 31s; --hx: -20px; --hy: -16px; }
+
+@keyframes hp-splat-drift {
+  from { translate: 0 0; }
+  to { translate: var(--hx, 20px) var(--hy, 20px); }
+}
+
+/* ============================================================= */
+/* ==============  REDUCED MOTION (homepage)  ================== */
+/* ============================================================= */
+
+/* Fill the homepage's reduced-motion gap: silence ALL ambient/idle/beat-driven
+   loops - the brick-wall scroll, the starburst + speed-line spin, the splatter
+   parallax, the tagline sway, the section-label breathe, the action buttons' idle
+   bounce, and every data-beat pop (title + buttons). The page stays fully laid
+   out and legible, just calm. Resting design POSES are kept (the tagline's sticker
+   tilt, the buttons' skew), and the buttons swap their hover/press ZOOM for a
+   white-outline COLOUR cue so they still clearly respond to interaction.
+   (.homepage-logo::before/::after RGB-split is already handled by its own reduce
+   rule above - not repeated here.) */
 @media (prefers-reduced-motion: reduce) {
-  .hp-scatter,
-  .homepage-tagline,
-  .homepage-section-label,
-  .homepage-btn,
-  html[data-beat='true'] .homepage-logo {
+  .homepage-stage::before,            /* brick-scroll */
+  .homepage-burst,                    /* burst-spin */
+  .homepage-speedlines,               /* burst-spin */
+  .homepage-tagline,                  /* tag-sway */
+  .homepage-section-label,            /* label-pulse */
+  .homepage-splatter,                 /* hp-splat-drift parallax */
+  .homepage-btn,                      /* btn-bounce-forever idle */
+  html[data-beat='true'] .homepage-logo,                            /* title-beat-pop + shadow-slam */
+  html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop */
     animation: none !important;
   }
-  .homepage-logo::before,
-  .homepage-logo::after { animation: none !important; opacity: 0; }
+  /* The sway baked the sticker tilt into its keyframes, so restate it as a static
+     resting pose (otherwise animation:none would flatten the tagline). */
+  .homepage-tagline {
+    transform: rotate(-3deg) skewX(-6deg) !important;
+  }
+  /* Buttons respond via COLOUR, not motion: drop the hover zoom / press squash /
+     POW starburst, flash the outline white on hover instead. Resting skew kept. */
+  .homepage-btn:hover:not(:disabled) {
+    transform: skewX(-2deg) !important;
+    border-color: #fff !important;
+  }
+  .homepage-btn:active {
+    transform: skewX(-2deg) !important;
+  }
+  .homepage-btn::before {
+    display: none !important;
+  }
 }
