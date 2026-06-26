@@ -60,11 +60,13 @@
   --spd: 1;
   /* Colored outline: a translucent-black edge reads as a darker shade of
      whatever per-game fill the card carries (set inline). */
-  border: 4px solid rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
+  border: 4px solid #0d0618;
+  border-radius: 12px;
   position: relative;
   cursor: pointer;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000;
+  /* Die-cut sticker frame: a white keyline (outer ring) + a hard offset drop,
+     matching the Sticker primitive so the mode cards read as the same system. */
+  box-shadow: 0 0 0 4px #fff, 6px 6px 0 rgba(13, 6, 24, 0.55);
   overflow: hidden;
   /* Grows with the card's width so it stays roughly proportional as cards scale
      up on big screens, but ALSO capped by viewport height (min of vw/vh) so the
@@ -109,9 +111,9 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
 }
 
 @keyframes card-shadow-slam {
-  0% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
-  40% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 10px 10px 0 #000; }
-  100% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
+  0% { box-shadow: 0 0 0 4px #fff, 6px 6px 0 rgba(13, 6, 24, 0.55); }
+  40% { box-shadow: 0 0 0 4px #fff, 12px 12px 0 rgba(13, 6, 24, 0.55); }
+  100% { box-shadow: 0 0 0 4px #fff, 6px 6px 0 rgba(13, 6, 24, 0.55); }
 }
 
 .game-card.dashed-border {
@@ -121,6 +123,9 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
 /* Tape strips holding the card to the wall: small translucent-white rectangles
    poking past the top corners, angled opposite ways. */
 .game-card-tape {
+  /* Sticker direction: no masking tape (that was the wall-flyer metaphor); the
+     white die-cut keyline now does the "stuck on" job. */
+  display: none;
   position: absolute;
   top: -5px;
   width: 30px;

@@ -1,0 +1,79 @@
+/* Sticker.css — the Flat-Pop / Sticker-Bomb PRIMITIVE.
+   A die-cut "sticker": a flat palette fill, a thick dark outline, a white die-cut
+   keyline, a hard offset shadow, and a slight resting rotation. This EXTENDS the
+   DESIGN.md system (flat colors only, thick outlines, hard black offset shadows,
+   Bungee display type, small "sticker" resting tilts) — it does not invent a new
+   one. No new palette hues: fills are the locked palette; the white keyline and
+   the dark outline/shadow are structural NEUTRALS, the same category DESIGN.md
+   already uses #000 for (text strokes + shadows).
+
+   Reusable: ANY element becomes a sticker via the `.sticker` class + tokens, or via
+   the <Sticker> component (Sticker.jsx). The three game-mode identities inherit
+   this exact system, so tune the look HERE (tokens) and every sticker follows. */
+
+:root {
+  --st-fill: #ff2ec4;   /* flat fill — a locked palette colour */
+  --st-ink: #0d0618;    /* label colour that sits on the fill */
+  --st-edge: #0d0618;   /* thick outline (dark) */
+  --st-outline: 4px;
+  --st-keyline: 4px;    /* the white die-cut border */
+  --st-radius: 12px;
+  --st-drop: 6px 6px 0 rgba(13, 6, 24, 0.6); /* hard offset shadow */
+  --st-rot: -2deg;      /* resting sticker tilt */
+}
+
+.sticker {
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  background: var(--st-fill);
+  color: var(--st-ink);
+  border: var(--st-outline) solid var(--st-edge);
+  border-radius: var(--st-radius);
+  /* White die-cut keyline (outer ring) + the hard offset drop, layered so the
+     element reads as a physical sticker peeled and slapped onto the field. */
+  box-shadow: 0 0 0 var(--st-keyline) #fff, var(--st-drop);
+  transform: rotate(var(--st-rot));
+  font-family: 'Bungee', cursive;
+}
+
+/* ---- Palette fills (locked DESIGN.md colours; outline = a darker shade) ---- */
+.sticker--pink   { --st-fill: #ff2ec4; --st-edge: #7a1560; }
+.sticker--cyan   { --st-fill: #2effe0; --st-edge: #176f63; }
+.sticker--yellow { --st-fill: #ffe94a; --st-edge: #8a7a10; }
+.sticker--orange { --st-fill: #ff6b3d; --st-edge: #8a3315; }
+.sticker--purple { --st-fill: #9a1aff; --st-edge: #4d0d80; --st-ink: #fff; }
+.sticker--dark   { --st-fill: #1a0b2e; --st-edge: #000; --st-ink: #fff; }
+
+/* ---- Resting tilt helpers (layered + slightly rotated = sticker-bomb) ---- */
+.sticker--tl { --st-rot: -3deg; }
+.sticker--tr { --st-rot: 3deg; }
+.sticker--flat { --st-rot: 0deg; }
+
+/* ---- Interactive sticker: snappy pop on hover, squash on press (DESIGN.md
+   motion = snappy, never floaty). The base rotate is re-applied so the tilt is
+   kept through the scale. ---- */
+.sticker--btn {
+  cursor: pointer;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
+}
+.sticker--btn:hover:not(:disabled) {
+  transform: rotate(var(--st-rot)) scale(1.05);
+}
+.sticker--btn:active:not(:disabled) {
+  transform: rotate(var(--st-rot)) scale(0.94);
+  box-shadow: 0 0 0 var(--st-keyline) #fff, 2px 2px 0 rgba(13, 6, 24, 0.6);
+}
+.sticker--btn:disabled,
+.sticker--btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker--btn { transition: box-shadow 0.1s, border-color 0.1s; }
+  .sticker--btn:hover:not(:disabled),
+  .sticker--btn:active:not(:disabled) {
+    transform: rotate(var(--st-rot)); /* respond via colour/shadow, not motion */
+  }
+}
