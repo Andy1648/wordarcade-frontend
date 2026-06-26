@@ -9,6 +9,71 @@
   position: relative;
   /* Fallback idle; per-position rules below give each card its own rhythm. */
   animation: card-idle-1 2.5s ease-in-out infinite;
+  /* 3D viewing depth for the cursor-tilt layer inside (the wrap's own idle-sway
+     transform is unaffected - perspective only governs its children's 3D). */
+  perspective: 900px;
+}
+
+/* ---- CURSOR-TILT + NEON layer ----
+   Sits between the swaying wrapper and the scaling card so all three transforms
+   compose. JS writes --tilt-x / --tilt-y (degrees) on pointermove; the long
+   elastic transition makes it SPRING back to flat when they're zeroed on leave.
+   While hovered the transition is near-instant so the lean tracks the cursor. */
+.game-card-tilt {
+  /* ---- TUNABILITY TOKENS (one dial; default subtle, can go up) ----
+     --neon-idle   : glow opacity at rest        (0 = off, 1 = full)
+     --neon-on     : glow opacity on hover
+     --neon-flicker: flicker animation name      (set `none` to disable buzz)
+     (Tilt strength lives in GameCard.jsx as MAX_TILT - the one place it's set.) */
+  --neon-idle: 0.18;
+  --neon-on: 1;
+  --neon-flicker: neon-flicker;
+
+  position: relative;
+  transform: rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
+  transition: transform 0.5s cubic-bezier(0.18, 1.5, 0.4, 1); /* elastic spring-back */
+  will-change: transform;
+}
+
+.game-card-tilt:hover {
+  transition: transform 0.07s ease-out; /* follow the cursor live while over */
+}
+
+/* NEON IGNITE: a glow halo behind the card in its own accent. Dim at rest,
+   blooms to full on hover with a quick buzzing-sign flicker as it settles. Lives
+   on the tilt layer (NOT the overflow-hidden card) so the glow escapes; sits
+   behind the opaque card so only the outer bloom shows. */
+.game-card-tilt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  z-index: -1;
+  pointer-events: none;
+  box-shadow:
+    0 0 14px 1px var(--card-accent, #2EFFE0),
+    0 0 36px 7px var(--card-accent, #2EFFE0);
+  opacity: var(--neon-idle, 0.18); /* dim idle neon */
+  transition: opacity 0.2s ease-out;
+}
+
+.game-card-wrap:hover .game-card-tilt::after {
+  opacity: var(--neon-on, 1);
+  animation: var(--neon-flicker, neon-flicker) 0.42s steps(1, end);
+}
+
+/* A disabled card never ignites (it isn't selectable). */
+.game-card-tilt:has(.game-card.disabled)::after {
+  display: none;
+}
+
+@keyframes neon-flicker {
+  0% { opacity: 0.2; }
+  18% { opacity: 1; }
+  28% { opacity: 0.35; }
+  42% { opacity: 1; }
+  55% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 /* Hovering raises the card above its neighbours so a scaled card can never be
@@ -274,9 +339,19 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   }
 }
 
-/* Honour reduced-motion: stop the idle sway. */
+/* Honour reduced-motion: stop the idle sway, kill the 3D tilt + the neon flicker
+   buzz. The glow still IGNITES on hover (a calm steady bloom, no flicker) and the
+   tilt JS is separately gated (prefersReducedMotion) so no angles are ever set. */
 @media (prefers-reduced-motion: reduce) {
   .game-card-wrap { animation: none !important; }
+  .game-card-tilt {
+    transform: none !important;
+    transition: none !important;
+  }
+  .game-card-wrap:hover .game-card-tilt::after {
+    animation: none !important;
+    opacity: var(--neon-on, 1);
+  }
 }
 
 /* Little corner sticker calling out the featured game. */
