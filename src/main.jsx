@@ -47,8 +47,18 @@ function CrashFallback() {
 // factor, --app-scale, that the live screen zooms by (see .view-screen), so the
 // whole UI grows proportionally with the viewport. The factor is fit-to-1400 (a
 // scaled screen never exceeds ~95vw -> no horizontal scrollbar) and clamped to
-// [1, 1.6] so phones / screens <=1400px are untouched and ultrawides don't
-// balloon. The homepage cancels it (it's height-locked to one screen).
+// [1, MAX_WIDTH_ZOOM] so phones / screens <=1400px are untouched and large
+// monitors scale UP to fill the screen. The homepage cancels it (height-locked).
+//
+// The width zoom is then CAPPED by viewport height (heightCap) so a screen can
+// never zoom taller than the viewport — that's the in-game no-vertical-scroll
+// guarantee, and it stays in force regardless of the width ceiling below.
+
+// TOKEN: the width-zoom ceiling. Raised from 1.6 -> 2.5 so big monitors fill the
+// screen. This only lifts the WIDTH cap; the height cap (h / DESIGN_H) still
+// binds, so in-game screens never grow a vertical scrollbar. Tune here.
+const MAX_WIDTH_ZOOM = 2.5;
+
 function applyAppScale() {
   const DESIGN_W = 1400;
   // Natural height of the tallest CORE screen (the in-game stage, ~960-980px +
@@ -62,12 +72,13 @@ function applyAppScale() {
     // Phones: the dedicated mobile CSS owns the layout — never zoom it.
     scale = 1;
   } else {
-    // Original behaviour: zoom UP to fill wide monitors (>=1, capped at 1.6), so
-    // content never sits tiny in the fixed-width card. Screens <=1400px stay at 1.
-    const widthZoom = Math.min(1.6, Math.max(1, (w * 0.95) / DESIGN_W));
-    // NEW: fit-to-contain. Cap the zoom by viewport height so the scaled screen
-    // always fits vertically; on short windows this pulls the scale below 1 so the
-    // core screens shrink to fit instead of overflowing into a vertical scroll.
+    // Zoom UP to fill wide monitors (>=1, capped at MAX_WIDTH_ZOOM), so content
+    // never sits tiny in the fixed-width card. Screens <=1400px stay at 1.
+    const widthZoom = Math.min(MAX_WIDTH_ZOOM, Math.max(1, (w * 0.95) / DESIGN_W));
+    // fit-to-contain. Cap the zoom by viewport height so the scaled screen always
+    // fits vertically; on short windows this pulls the scale below 1 so the core
+    // screens shrink to fit instead of overflowing into a vertical scroll. This
+    // height cap is the in-game no-scroll guarantee and is UNCHANGED.
     const heightCap = h / DESIGN_H;
     scale = Math.max(0.6, Math.min(widthZoom, heightCap));
   }
@@ -75,6 +86,16 @@ function applyAppScale() {
 }
 applyAppScale();
 window.addEventListener('resize', applyAppScale);
+
+// One-time viewport log (Andy's monitor size is unknown and needed to tune the
+// scale ceiling). innerWidth × innerHeight + the resolved scale, once on load.
+try {
+  console.log(
+    `[viewport] ${window.innerWidth}×${window.innerHeight} · --app-scale=${
+      getComputedStyle(document.documentElement).getPropertyValue('--app-scale').trim()
+    } (width-zoom ceiling ${MAX_WIDTH_ZOOM})`,
+  );
+} catch { /* never let a log throw */ }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
