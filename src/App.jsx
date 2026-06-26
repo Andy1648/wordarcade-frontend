@@ -363,6 +363,16 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beatCount, view]);
 
+  // Reflect the live view on <html> so view-gated background VISUALS can react in
+  // pure CSS without threading `view` into every ambient layer. Used to switch the
+  // whole-viewport beat FLASH off on the in-game play screen (it strobes behind
+  // text players read fast = a readability + photosensitivity problem); it stays
+  // on the menu/lobby as energy. Compounds with prefers-reduced-motion, never
+  // bypasses it. Purely cosmetic — no WS/game logic.
+  useEffect(() => {
+    document.documentElement.setAttribute('data-view', view);
+  }, [view]);
+
   // Subtle hover blip on any real <button>, app-wide (Lobby / Room / game UI),
   // via one delegated listener so we don't touch every button. The Homepage game
   // cards are <div role="button">, so they're NOT matched here and keep their own

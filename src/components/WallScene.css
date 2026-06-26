@@ -168,6 +168,13 @@ html[data-beat='true'] .wall-beat-bright {
   animation: wall-beat-bright 100ms ease-out;
 }
 
+/* IN-GAME: stop the whole-wall beat brightness flash too (the play screen should
+   read calm behind fast text). Stays active on the menu/lobby. */
+html[data-view='game'] .wall-beat-bright {
+  animation: none !important;
+  opacity: 0 !important;
+}
+
 @keyframes wall-beat-bright {
   0% { opacity: 0; }
   40% { opacity: 0.03; }

@@ -72,6 +72,16 @@ html[data-beat='true'] .screen-flash {
   100% { opacity: 0; }
 }
 
+/* IN-GAME: kill the whole-viewport beat flash. On the play screen it strobes a
+   palette colour behind text players read fast — a readability + comfort issue and
+   a photosensitivity flag. The flash stays ACTIVE on the menu/lobby (data-view set
+   by App). This is separate from — and compounds with — the reduced-motion rule
+   below; it never bypasses it. */
+html[data-view='game'] .screen-flash {
+  animation: none !important;
+  opacity: 0 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .screen-flash { animation: none !important; opacity: 0; }
 }
