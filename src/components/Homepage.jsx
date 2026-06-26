@@ -14,16 +14,42 @@ import {
 import './wall-system.css';
 import './Homepage.css';
 
-// WALL DEPTH: oversized graffiti throw-ups layered behind the menu so the wall
-// reads as a real, lived-in place - not a blank panel. Built from the existing
-// hand-sprayed GraffitiTag (drips + overspray + per-letter rotation), reused
-// here at large scale and higher opacity. Positioned so the opaque cards crop
-// them, leaving each piece "half-visible behind" like a packed alley wall.
-// Deterministic config (no randomness) so the layout is stable across renders.
-const WALL_DEPTH_PIECES = [
-  { word: 'WORDS', fill: '#FF2EC4', line: '#991A75', size: 92,  top: 30, left: 2,  rot: -10, op: 0.5,  drip: 30 },
-  { word: 'BOMB',  fill: '#9A1AFF', line: '#5A0EAA', size: 104, top: 40, left: 64, rot: 8,   op: 0.46, drip: 36 },
-  { word: 'GG',    fill: '#FFE94A', line: '#B8A020', size: 80,  top: 6,  left: 44, rot: -6,  op: 0.42, drip: 0 },
+// Palette pairs (fill + a darker shade of the same hue for the sprayed outline -
+// never black, per the project's colored-outline rule).
+const PINK = { fill: '#FF2EC4', line: '#991A75' };
+const CYAN = { fill: '#2EFFE0', line: '#1A9985' };
+const YELLOW = { fill: '#FFE94A', line: '#B8A020' };
+const ORANGE = { fill: '#FF6B3D', line: '#B83D15' };
+const PURPLE = { fill: '#9A1AFF', line: '#5A0EAA' };
+
+// ALLEY DEPTH (one-point perspective). Vanishing point sits behind the title,
+// up-centre; the wall recedes toward it. Lines below converge ON it (floor
+// boards + ceiling + side walls) and the tags are SCALE-GRADED to it: tiny &
+// faint near the VP (far away), large & stronger at the lower corners (near /
+// foreground). Together with the streetlight pool this builds real depth - a
+// place you look INTO, not a flat field. Deterministic (no randomness).
+const VANISHING = { x: 50, y: 40 };
+const PERSPECTIVE_ENDS = [
+  // floor boards (the strongest depth cue) running out to the bottom edge
+  [0, 100], [17, 100], [34, 100], [50, 100], [66, 100], [83, 100], [100, 100],
+  // ceiling
+  [0, 0], [100, 0],
+  // side walls meeting the floor
+  [0, 47], [100, 47],
+];
+
+const RECEDING_TAGS = [
+  // deep background - small + faint, clustered near the vanishing point
+  { word: 'RIP',  c: PURPLE, size: 20, top: 31, left: 47, rot: -6,  op: 0.12, drip: 0 },
+  { word: 'POW',  c: CYAN,   size: 24, top: 27, left: 57, rot: 9,   op: 0.13, drip: 0 },
+  { word: 'EZ',   c: YELLOW, size: 22, top: 37, left: 39, rot: -10, op: 0.12, drip: 0 },
+  // mid distance - moderate, out toward the sides
+  { word: 'BOOM', c: ORANGE, size: 38, top: 13, left: 73, rot: 7,   op: 0.18, drip: 0 },
+  { word: 'FIRE', c: PURPLE, size: 44, top: 55, left: 3,  rot: -8,  op: 0.20, drip: 28 },
+  { word: 'ZAP',  c: CYAN,   size: 36, top: 60, left: 87, rot: 12,  op: 0.18, drip: 0 },
+  // foreground - large + stronger in the lower corners, reads IN FRONT
+  { word: 'WORD', c: PINK,   size: 56, top: 71, left: 1,  rot: 6,   op: 0.28, drip: 34 },
+  { word: 'GG',   c: YELLOW, size: 50, top: 75, left: 85, rot: -8,  op: 0.26, drip: 0 },
 ];
 
 /**
@@ -100,25 +126,34 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   return (
     <div className="homepage-wrap">
       <div className="homepage-stage wall-surface">
-        {/* WALL DEPTH: oversized graffiti throw-ups behind everything, cropped by
-            the opaque cards so they read as half-visible pieces on a packed wall.
-            Reuses the hand-sprayed GraffitiTag vocabulary at large scale. */}
-        <div className="homepage-wall-depth" aria-hidden="true">
-          {WALL_DEPTH_PIECES.map((p, i) => (
+        {/* ALLEY DEPTH: one-point perspective lines converging on a vanishing
+            point behind the title, plus scale-graded graffiti receding toward it
+            (tiny/faint = far, large = near). Reads as a place with depth. */}
+        <div className="homepage-depth" aria-hidden="true">
+          <svg className="homepage-perspective" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {PERSPECTIVE_ENDS.map((e, i) => (
+              <line key={`pl${i}`} x1={VANISHING.x} y1={VANISHING.y} x2={e[0]} y2={e[1]} />
+            ))}
+          </svg>
+          {RECEDING_TAGS.map((t, i) => (
             <GraffitiTag
-              key={`depth${i}`}
-              word={p.word}
-              fill={p.fill}
-              line={p.line}
-              size={p.size}
-              top={p.top}
-              left={p.left}
-              rotation={p.rot}
-              opacity={p.op}
-              drip={p.drip}
+              key={`tag${i}`}
+              word={t.word}
+              fill={t.c.fill}
+              line={t.c.line}
+              size={t.size}
+              top={t.top}
+              left={t.left}
+              rotation={t.rot}
+              opacity={t.op}
+              drip={t.drip}
             />
           ))}
         </div>
+
+        {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
+            point (title + cards), brightest at the top and falling off. */}
+        <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
 
         {/* The mascot as a faint graffiti stencil sprayed on the wall - ambient
             brand presence, part of the texture, NOT a character in the scene. */}
@@ -165,9 +200,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           ))}
         </div>
 
-        {/* CLEAN ZONE: a knocked-back sprayed patch under the action buttons so
-            CREATE / JOIN stay crisp against the grimy wall. */}
-        <div className="homepage-bottom-bar wall-clean-zone">
+        {/* TAG PANEL: a fresh dark tag sprayed under the action buttons (rough
+            torn edges + texture + cast shadow, NOT a flat box) so CREATE / JOIN
+            stay crisp. It's a background sibling so the torn clip never bites a
+            button. */}
+        <div className="homepage-bottom-bar">
+          <div className="homepage-tag-panel wall-tag-panel" aria-hidden="true" />
           <button
             className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
             onClick={handleCreateRoom}

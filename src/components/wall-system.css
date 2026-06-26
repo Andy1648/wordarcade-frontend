@@ -8,10 +8,17 @@
      .wall-surface     SURFACE  - weathered concrete: feTurbulence grain +
                                   layered grime gradients + floor shade +
                                   vignette. Real texture, not a flat field.
-     .wall-clean-zone  LEGIBILITY - a knocked-back, freshly-painted patch that
-                                  locally calms the grime so interactive controls
-                                  sitting on it stay crisp. Soul around it,
-                                  readable on it.
+     .wall-tag-panel   LEGIBILITY - a fresh dark tag sprayed onto the wall with
+                                  rough torn/sprayed edges, its own paper-noise
+                                  texture, overspray mist and a hard cast shadow.
+                                  Sits BEHIND the controls (a sibling, never the
+                                  parent, so it can't clip them) to give labels a
+                                  crisp surface that still belongs in the world.
+                                  NOT a flat rectangle.
+     .wall-spotlight   LIGHTING  - a streetlight pool: a soft warm radial cast
+                                  that brightens toward its source and fades out,
+                                  for dramatic light on the focal point. screen
+                                  blend so it adds light onto the dark wall.
      .wall-handstyle   LETTERING - pushes a plainly-set display face toward
                                   hand-painted lettering with a chunky spray-can
                                   3D extrude in the fill's own darker shades.
@@ -25,15 +32,17 @@
      --wall-texture-opacity  grain visibility      (0 = clean, 1 = gritty)
      --wall-grime            staining / blotch density (0 = fresh, 1 = filthy)
      --wall-contrast         punch of the grain     (1 = flat, >1 = harder)
+     --wall-light-strength   spotlight intensity    (0 = dark, 1 = lit, >1 = blown)
 
    Plus palette hooks (on-palette by default, DESIGN.md §2 — no new hues):
      --wall-base             concrete fill color
      --wall-tint             faint colored cast washed over the concrete
+     --wall-light            streetlight color (warm white by default)
 
    REUSE: the three game modes (#4) build ON this — they apply .wall-surface and
    only override the tokens (Word Bomb grimier/hotter, Category Blitz electric
-   cyan, Imposter spotlight), inheriting the same surface + handstyle + clean-zone
-   vocabulary instead of each hardcoding its own background.
+   cyan, Imposter spotlight), inheriting the same surface + tag-panel + spotlight
+   + handstyle vocabulary instead of each hardcoding its own background.
    ---------------------------------------------------------------------------- */
 
 /* ============================ SURFACE ================================ */
@@ -47,6 +56,8 @@
   --wall-texture-opacity: 0.85;
   --wall-grime: 0.62;
   --wall-contrast: 1.18;
+  --wall-light: 255, 240, 205; /* warm streetlight (R,G,B for rgba() composition) */
+  --wall-light-strength: 1;
 
   position: relative;
   /* Scope the texture blend-modes to this surface so the grain blends with the
@@ -100,20 +111,77 @@
   mix-blend-mode: soft-light;
 }
 
-/* ============================ CLEAN ZONE ============================= */
+/* ============================ TAG PANEL ============================= */
 
-/* A freshly-painted patch on the grimy wall: a FEATHERED dark wash (not a hard
-   rectangle) so it blends into the surface like sprayed-over area, knocking the
-   grime back wherever the actual controls live. Everything placed inside reads
-   crisp; the wall around it stays filthy. */
-.wall-clean-zone {
-  position: relative;
-  border-radius: 12px;
-  background: radial-gradient(
-    ellipse 100% 118% at 50% 50%,
-    rgba(7, 3, 15, 0.9) 52%,
-    rgba(7, 3, 15, 0) 100%
+/* A fresh dark tag sprayed straight onto the wall: rough torn/sprayed edges
+   (clip-path, deterministic), a sprayed dark fill so bright controls pop, its
+   own paper-noise texture, a soft overspray mist at the top, and a HARD cast
+   shadow (drop-shadow follows the torn shape, unlike box-shadow). Slightly
+   off-axis so it reads applied-by-hand, never a CSS rectangle.
+
+   Use it as a BACKGROUND SIBLING behind the controls (absolutely positioned,
+   z-index 0, with the buttons at z-index 1) - NOT as their container - so the
+   torn clip never bites into a button. */
+.wall-tag-panel {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  /* sprayed dark patch, a touch lighter toward the top like fresh wet paint */
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 22%, rgba(38, 24, 64, 0.96) 0%, rgba(20, 12, 38, 0.97) 55%, rgba(9, 5, 20, 0.98) 100%);
+  /* rough sprayed / torn rectangle - jittered points around the perimeter */
+  clip-path: polygon(
+    1% 12%, 9% 2%, 23% 9%, 39% 1%, 54% 8%, 69% 1%, 85% 7%, 98% 3%,
+    99% 30%, 100% 54%, 98% 78%, 99% 96%,
+    87% 99%, 71% 93%, 55% 100%, 38% 94%, 21% 99%, 6% 93%,
+    2% 74%, 0% 50%, 2% 30%
   );
+  filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, 0.5));
+  transform: rotate(-0.7deg);
+}
+
+/* Paper / spray grain on the panel (clipped with it). */
+.wall-tag-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+/* Overspray mist hazing off the top edge - a few soft dots so the spray reads
+   as feathered, not printed. */
+.wall-tag-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle 3px at 14% 6%, rgba(255, 255, 255, 0.05), transparent),
+    radial-gradient(circle 2px at 33% 3%, rgba(255, 255, 255, 0.05), transparent),
+    radial-gradient(circle 2.5px at 62% 5%, rgba(255, 255, 255, 0.05), transparent),
+    radial-gradient(circle 2px at 84% 4%, rgba(255, 255, 255, 0.04), transparent);
+  background-repeat: no-repeat;
+}
+
+/* ============================ SPOTLIGHT ============================= */
+
+/* A streetlight pool: warm light brightest near its source (top) and falling
+   off, dropped onto the focal point. screen blend ADDS light onto the dark wall
+   (never a milky overlay). Color + intensity come from the surface tokens, and
+   the caller positions/sizes it. */
+.wall-spotlight {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse var(--spot-w, 62%) var(--spot-h, 72%) at 50% 0%,
+    rgba(var(--wall-light, 255, 240, 205), calc(0.20 * var(--wall-light-strength, 1))) 0%,
+    rgba(var(--wall-light, 255, 240, 205), calc(0.07 * var(--wall-light-strength, 1))) 38%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
 }
 
 /* ============================ HANDSTYLE ============================== */
@@ -131,8 +199,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* The surface, clean-zone and handstyle extrude are all static, so nothing to
-     silence here - the wall stays exactly as drawn, just calm (the looping decor
-     that rides on top kills its own motion in its own files). */
+  /* The surface, tag-panel, spotlight and handstyle extrude are all static, so
+     nothing to silence here - the wall stays exactly as drawn, just calm (the
+     looping decor that rides on top kills its own motion in its own files). */
   .wall-surface { /* intentionally static */ }
 }

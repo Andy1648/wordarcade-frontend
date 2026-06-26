@@ -49,17 +49,46 @@
   border-radius: 14px;
 }
 
-/* ---- WALL DEPTH: oversized graffiti throw-ups (GraffitiTag) layered behind the
-   UI, so the wall reads as "a place" with depth - not a blank field. They sit at
-   z-index 0 (above the surface grain, below the z-index-1 content) and the opaque
-   cards crop them, leaving the pieces "half-visible behind" exactly like a real
-   packed wall. Clipped to the stage by its overflow. */
-.homepage-wall-depth {
+/* ---- ALLEY DEPTH: the perspective lines + scale-graded receding tags. Sits at
+   z-index 0 (above the surface grain, below the z-index-1 content); clipped to
+   the stage by its overflow. The receding GraffitiTags and the converging lines
+   together read as a one-point-perspective alley the eye looks INTO. */
+.homepage-depth {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+/* One-point perspective guide lines (floor boards / ceiling / side walls) all
+   converging on the vanishing point behind the title. Drawn in the mortar shade,
+   low opacity - structure you feel more than read. preserveAspectRatio:none lets
+   the 0-100 viewBox stretch to the stage while the lines keep converging. */
+.homepage-perspective {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+}
+
+.homepage-perspective line {
+  stroke: #000;
+  stroke-width: 0.18;
+  opacity: 0.5;
+}
+
+/* Streetlight pool: a tall warm cast from above, centred over the title + cards.
+   .wall-spotlight supplies the gradient + screen blend; this only places it. */
+.homepage-spotlight {
+  top: -10%;
+  left: 50%;
+  width: 78%;
+  height: 86%;
+  transform: translateX(-50%);
+  --spot-w: 60%;
+  --spot-h: 72%;
 }
 
 /* Decorative paint splatters scattered around the stage edges. Behind the
@@ -144,12 +173,40 @@
      data-beat (see below), not a continuous transform - so the wordmark sits
      still and snaps on each detected drum hit instead of bobbing smoothly. */
   transform: rotate(-2deg) skewX(-4deg);
-  /* HANDSTYLE extrude: the .wall-handstyle class (applied in JSX) stacks a
-     spray-can 3D block behind the glyphs in these pink darker-shades down to
-     black, so the title reads hand-painted, not plainly set. */
-  --hs-dark: #B81E8E;
-  --hs-darker: #7A1460;
+  /* HERO production-piece block (overrides the shared .wall-handstyle extrude -
+     this is THE focal art, so it's heavier): a lit top edge for volume, then a
+     deep spray-can 3D extrude graded from the pink fill down through
+     magenta/purple to a hard black cast. */
+  text-shadow:
+    0 -2px 0 rgba(255, 184, 227, 0.6),
+    2px 2px 0 #D41A9E,
+    4px 4px 0 #B81E8E,
+    6px 6px 0 #7A1460,
+    8px 9px 0 #4A0C3C,
+    10px 12px 0 #000;
   will-change: transform, text-shadow;
+}
+
+/* HERO HALO: a soft pink light blooming behind the wordmark so it lifts off the
+   wall as the centrepiece (screen blend = adds light, never a milky box). Sits
+   behind the glyphs + drips inside the logo-wrap's stacking context. */
+.homepage-logo-wrap::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 118%;
+  height: 230%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    rgba(255, 46, 196, 0.22) 0%,
+    rgba(255, 46, 196, 0.08) 42%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
 }
 
 /* Paint running off the bottom of the wordmark - a few drips with droplets, in
@@ -212,12 +269,21 @@ html[data-beat='true'] .homepage-logo {
   }
 }
 
-/* Beat slam keeps the handstyle 3D extrude and just rams it bigger on the hit,
-   then back - so the spray-can block stays consistent with the resting pose. */
+/* Beat slam keeps the hero's deep 3D extrude and rams it bigger on the hit, then
+   back - so the spray-can block stays consistent with the resting pose. */
 @keyframes title-shadow-slam {
-  0% { text-shadow: 2px 2px 0 #B81E8E, 4px 4px 0 #7A1460, 6px 6px 0 #000; }
-  40% { text-shadow: 4px 4px 0 #B81E8E, 7px 7px 0 #7A1460, 11px 11px 0 #000; }
-  100% { text-shadow: 2px 2px 0 #B81E8E, 4px 4px 0 #7A1460, 6px 6px 0 #000; }
+  0% {
+    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
+      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
+  }
+  40% {
+    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
+      3px 3px 0 #D41A9E, 6px 6px 0 #B81E8E, 9px 9px 0 #7A1460, 12px 13px 0 #4A0C3C, 15px 17px 0 #000;
+  }
+  100% {
+    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
+      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
+  }
 }
 
 /* RGB / chromatic split: two text clones (cyan offset left, pink offset right)
@@ -348,6 +414,22 @@ html[data-beat='true'] .homepage-logo::after {
      shadow) always sit comfortably INSIDE the card, never touching/spilling past
      its rounded border. */
   padding: clamp(10px, 1.6vh, 20px) clamp(16px, 3vw, 44px) clamp(8px, 1.4vh, 16px);
+}
+
+/* The sprayed tag panel behind the buttons: spans the bar (a touch taller than
+   the buttons), sits at z-index 0 BEHIND them. .wall-tag-panel draws the torn
+   sprayed look; this only places + sizes it. Pulled in horizontally so its torn
+   edge frames the pair without reaching the stage rim. */
+.homepage-tag-panel {
+  top: 2px;
+  bottom: 2px;
+  left: clamp(8px, 2vw, 28px);
+  right: clamp(8px, 2vw, 28px);
+}
+
+/* Lift the buttons above the panel so the torn clip + texture never touch them. */
+.homepage-bottom-bar .homepage-btn {
+  z-index: 1;
 }
 
 /* Discreet link to the standalone credits page. */
