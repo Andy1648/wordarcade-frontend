@@ -9,7 +9,7 @@ import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
-import { burst, flash } from '../juice';
+import { burst, flash, hitStop } from '../juice';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1661,6 +1661,28 @@ export default function GameScreen({
         setTimeout(() => {
           setKoKey((k) => k + 1);
           freeze(400);
+          // Big-moment juice (toolkit, additive): a heavy boom-debris burst at the
+          // KO'd card + a brief hitStop so the debris hangs for the freeze-frame.
+          // PURELY COSMETIC — the shared particle pool + hitStop only affect the
+          // canvas rAF loop; they never gate WS messages, the type loop, or game
+          // state, so a KO on one client can't stall/desync the room. Complements
+          // the existing freeze + onShake('heavy') + explosion (no extra shake/sfx).
+          eliminateIds.forEach((id) => {
+            const el = cardRefs.current.get(id);
+            const r = el && el.getBoundingClientRect();
+            const x = r ? r.left + r.width / 2 : window.innerWidth / 2;
+            const y = r ? r.top + r.height / 2 : window.innerHeight / 2;
+            burst(x, y, {
+              count: 36,
+              speed: 440,
+              spread: Math.PI * 2,
+              life: 0.9,
+              sizeMin: 4,
+              sizeMax: 11,
+              colors: ['#FF6B3D', '#FFE94A', '#FF2E2E'],
+            });
+          });
+          hitStop(120); // fire-and-forget; freezes only the debris, never input/WS
         }, 380)
       );
     }
@@ -1800,8 +1822,22 @@ export default function GameScreen({
   useEffect(() => {
     if (gameType !== 'word-bomb' || !gameOver) return;
     const won = gameOver.winnerId === myId;
-    if (won) sound.victory();
-    else sound.defeat();
+    if (won) {
+      sound.victory();
+      // Big-moment juice (toolkit, additive): the payoff beat. Celebratory confetti
+      // from three points across the top + a quick whole-screen win flash on the
+      // results. Cosmetic + self-gating (reduced-motion/mute aware); keeps the
+      // existing sound.victory + onShake. Richer than a normal accept.
+      const w = window.innerWidth;
+      const y = window.innerHeight * 0.32;
+      [0.25, 0.5, 0.75].forEach((fx) =>
+        burst(w * fx, y, { count: 26, speed: 520, spread: Math.PI * 2, life: 1.4, sizeMin: 4, sizeMax: 9 })
+      );
+      const root = document.getElementById('root');
+      if (root) flash(root, '#FFE94A');
+    } else {
+      sound.defeat();
+    }
     // Land the end screen with a screen impact - heavier for the loss slam.
     onShakeRef.current?.(won ? 'medium' : 'heavy');
   }, [gameOver, gameType, myId, sound]);
@@ -2101,7 +2137,17 @@ export default function GameScreen({
       {showCountdown && (
         <CountdownOverlay
           onComplete={() => setShowCountdown(false)}
-          onStep={(step) => sound.countdown(step === 'GO!')}
+          onStep={(step) => {
+            sound.countdown(step === 'GO!');
+            // FIGHT beat: a punchy toolkit spark-pop on the GO frame — i.e. exactly
+            // when input becomes live (the countdown already owns the input-gated
+            // window; this is overlay/cosmetic and adds no delay to input going live).
+            if (step === 'GO!') {
+              burst(window.innerWidth / 2, window.innerHeight / 2, {
+                count: 26, speed: 400, spread: Math.PI * 2, life: 0.7,
+              });
+            }
+          }}
         />
       )}
       {explosionKey > 0 && <ExplosionEffect key={`explosion-${explosionKey}`} />}
@@ -3035,7 +3081,18 @@ function CategoryBlitzScreen({
     return (
       <div className="game-wrap">
         {showCountdown && (
-          <CountdownOverlay onComplete={() => setShowCountdown(false)} />
+          <CountdownOverlay
+            onComplete={() => setShowCountdown(false)}
+            onStep={(step) => {
+              // FIGHT beat on each Category Blitz round-start GO (cosmetic; fires at
+              // input-live, no delay). CB stays silent by design, so no sfx here.
+              if (step === 'GO!') {
+                burst(window.innerWidth / 2, window.innerHeight / 2, {
+                  count: 26, speed: 400, spread: Math.PI * 2, life: 0.7,
+                });
+              }
+            }}
+          />
         )}
         <div className={`game-stage${shake ? ' game-shake' : ''}`}>
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
