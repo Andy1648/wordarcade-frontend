@@ -10,7 +10,7 @@ _Branch: `night/spring-sandbox` · 2026-06-26 · Tier 2 (UI) · NOT merged, thro
 A standalone decision aid to pick the tilt physics by eye. **Not wired into the real game** — no menu/cards/game logic touched.
 
 ### How to open
-- Preview: **`<PREVIEW_URL>/#spring-sandbox`** (hash route — works with no server rewrite)
+- Preview: **https://wordarcade-frontend-5g1r5bahc-beenchilling.vercel.app/#spring-sandbox** (hash route — works with no server rewrite)
 - The real app is unchanged: the root path still loads TYPE A WORD; only the `#spring-sandbox` hash renders the demo (verified both locally).
 
 ### What it is
