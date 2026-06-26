@@ -171,13 +171,15 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   /* Speed every background animation up ~40% (see GameCardArt.css). */
   --spd: 0.6;
   /* Enlarge-on-hover replaced by the cursor-tilt + lift (.game-card-tilt) plus a
-     soft edge-pop glow in the card's own colour (--card-accent set inline).
+     STRONG edge-pop glow in the card's own colour (--card-accent set inline): a
+     crisp colour ring + a tight inner bloom + a wide outer halo, clearly present.
      Eased via the transition already on .game-card. */
   box-shadow:
     inset 0 0 0 2px rgba(255, 255, 255, 0.3),
     7px 7px 0 #000,
     0 0 0 3px var(--card-accent, #fff),
-    0 0 22px 2px var(--card-accent, #fff);
+    0 0 18px 3px var(--card-accent, #fff),
+    0 0 42px 10px var(--card-accent, #fff);
 }
 
 .game-card:active {

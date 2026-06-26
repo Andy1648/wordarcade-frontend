@@ -1,7 +1,8 @@
-/* GameCardArt.css - the constantly-animated card backgrounds (see GameArt.jsx).
-   Everything runs all the time. `--spd` is a duration multiplier inherited from
-   the card: 1 at rest, 0.6 on hover, so every animation speeds up ~40% when you
-   interact. All motion is CSS; flat fills + colored outlines, no gradients. */
+/* GameCardArt.css - the card-mode artwork (see GameArt.jsx).
+   [feat/menu-v2] Cards sit STILL AT REST: none of this animates until the card is
+   hovered. On hover each card's interior reacts (eased), and it returns cleanly to
+   rest on mouse-leave. NOTHING animates while not hovered. All motion is CSS; flat
+   fills + coloured outlines, no gradients. */
 
 .card-art {
   display: block;
@@ -14,184 +15,162 @@
 /* ======================  WORD BOMB  ========================== */
 /* ============================================================= */
 
-/* Central bomb: constant pulse. */
 .wb-bomb {
   transform-box: fill-box;
   transform-origin: center;
-  animation: wb-pulse calc(1.5s * var(--spd, 1)) ease-in-out infinite;
 }
 
-@keyframes wb-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-
-/* Letter tiles orbiting the bomb centre (70,92), each its own radius + speed. */
+/* Tiles sit in a frozen "orbit snapshot" - distributed around the bomb via a
+   STATIC rotation on each wrapper (no idle spin). */
 .wb-orbit {
   transform-box: view-box;
   transform-origin: 70px 92px;
-  animation: wb-orbit calc(var(--odur, 6s) * var(--spd, 1)) linear infinite;
 }
+.wb-orbit:nth-child(1) { transform: rotate(0deg); }
+.wb-orbit:nth-child(2) { transform: rotate(60deg); }
+.wb-orbit:nth-child(3) { transform: rotate(120deg); }
+.wb-orbit:nth-child(4) { transform: rotate(180deg); }
+.wb-orbit:nth-child(5) { transform: rotate(240deg); }
+.wb-orbit:nth-child(6) { transform: rotate(300deg); }
 
-@keyframes wb-orbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Each tile flashes brighter on a staggered cycle (one "glows" every ~2s). The
-   flash animates opacity + brightness only, so it never fights the orbit. */
 .wb-tile {
   transform-box: fill-box;
-  animation: wb-tile-flash calc(12s * var(--spd, 1)) ease-in-out infinite;
-  animation-delay: var(--fdelay, 0s);
+  transform-origin: center;
 }
 
-@keyframes wb-tile-flash {
-  0%, 88%, 100% { opacity: 0.9; filter: brightness(1); }
-  92% { opacity: 1; filter: brightness(1.9); }
-  96% { opacity: 0.9; filter: brightness(1); }
-}
-
-/* Sparks rising off the fuse tip, looping with staggered delays. */
+/* Sparks are hidden at rest. */
 .wb-spark {
   transform-box: fill-box;
   transform-origin: center;
-  animation: wb-spark calc(1.4s * var(--spd, 1)) ease-out infinite;
+  opacity: 0;
 }
 
-.wb-spark-1 { animation-delay: 0s; }
-.wb-spark-2 { animation-delay: 0.35s; }
-.wb-spark-3 { animation-delay: 0.7s; }
-.wb-spark-4 { animation-delay: 1.05s; }
+/* ---- HOVER: bomb single-pulse; the loose tiles pop + scatter then settle; the
+   fuse sparks flare brighter and rise (looping while hovered). ---- */
+.game-card:hover .wb-bomb { animation: wb-pulse-once 0.5s ease-out; }
 
-@keyframes wb-spark {
-  0% { opacity: 1; transform: translate(0, 0) scale(1); }
-  100% { opacity: 0; transform: translate(-4px, -26px) scale(0.3); }
+.game-card:hover .wb-tile {
+  animation: wb-tile-pop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+/* small per-tile stagger -> a scatter ripple rather than one uniform pop */
+.game-card:hover .wb-orbit:nth-child(2) .wb-tile { animation-delay: 0.04s; }
+.game-card:hover .wb-orbit:nth-child(3) .wb-tile { animation-delay: 0.08s; }
+.game-card:hover .wb-orbit:nth-child(4) .wb-tile { animation-delay: 0.12s; }
+.game-card:hover .wb-orbit:nth-child(5) .wb-tile { animation-delay: 0.16s; }
+.game-card:hover .wb-orbit:nth-child(6) .wb-tile { animation-delay: 0.20s; }
+
+.game-card:hover .wb-spark { animation: wb-spark-flare 0.9s ease-out infinite; }
+.wb-spark-1 { animation-delay: 0s; }
+.wb-spark-2 { animation-delay: 0.2s; }
+.wb-spark-3 { animation-delay: 0.4s; }
+.wb-spark-4 { animation-delay: 0.6s; }
+
+@keyframes wb-pulse-once {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes wb-tile-pop {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-7px) scale(1.3); filter: brightness(1.7); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+@keyframes wb-spark-flare {
+  0% { opacity: 1; transform: translate(0, 0) scale(1.3); filter: brightness(1.9); }
+  100% { opacity: 0; transform: translate(-4px, -28px) scale(0.3); }
 }
 
 /* ============================================================= */
 /* ====================  CATEGORY BLITZ  ======================= */
 /* ============================================================= */
 
-/* Brain: a subtle constant throb, plus a brightness flash synced to bolt-2. */
 .cb-brain {
   transform-box: fill-box;
   transform-origin: center;
-  animation:
-    cb-throb calc(2.2s * var(--spd, 1)) ease-in-out infinite,
-    cb-illuminate calc(2.1s * var(--spd, 1)) linear infinite;
 }
 
-@keyframes cb-throb {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+/* ?s sit static + visible, lifted up around the brain (the rising idle is gone). */
+.cb-q {
+  transform-box: view-box;
+  opacity: 0.85;
+  transform: translateY(-70px);
 }
 
-@keyframes cb-illuminate {
-  0%, 90%, 100% { filter: brightness(1); }
-  93%, 97% { filter: brightness(1.7); }
-}
-
-/* Lightning bolts: dark most of the cycle, a ~100ms flash to full, each on its
-   own period so they fire independently. */
+/* Lightning bolts are hidden at rest (idle flashing removed; not part of the
+   hover reaction). */
 .cb-bolt {
   transform-box: fill-box;
   transform-origin: center;
   opacity: 0;
 }
 
-.cb-bolt-1 { animation: cb-flash calc(1.5s * var(--spd, 1)) linear infinite; }
-.cb-bolt-2 { animation: cb-flash calc(2.1s * var(--spd, 1)) linear infinite; }
-.cb-bolt-3 { animation: cb-flash calc(2.7s * var(--spd, 1)) linear infinite; }
-.cb-bolt-4 { animation: cb-flash calc(3.3s * var(--spd, 1)) linear infinite; }
+/* ---- HOVER: the brain pulses once; the ?s bounce. ---- */
+.game-card:hover .cb-brain { animation: cb-pulse-once 0.55s ease-out; }
+.game-card:hover .cb-q { animation: cb-q-bounce 0.6s ease-in-out; }
+.game-card:hover .cb-q:nth-of-type(2) { animation-delay: 0.06s; }
+.game-card:hover .cb-q:nth-of-type(3) { animation-delay: 0.12s; }
+.game-card:hover .cb-q:nth-of-type(4) { animation-delay: 0.18s; }
 
-@keyframes cb-flash {
-  0%, 90% { opacity: 0; transform: scale(0.9); }
-  92%, 96% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0; transform: scale(0.9); }
+@keyframes cb-pulse-once {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+  100% { transform: scale(1); }
 }
-
-/* Question marks rising like bubbles, fading at the top. */
-.cb-q {
-  transform-box: view-box;
-  opacity: 0;
-  animation: cb-q-rise calc(var(--qdur, 5s) * var(--spd, 1)) linear infinite;
-}
-
-@keyframes cb-q-rise {
-  0% { opacity: 0; transform: translateY(0); }
-  12% { opacity: 0.85; }
-  85% { opacity: 0.85; }
-  100% { opacity: 0; transform: translateY(-128px); }
+@keyframes cb-q-bounce {
+  0%, 100% { transform: translateY(-70px); }
+  30% { transform: translateY(-86px); }
+  60% { transform: translateY(-76px); }
 }
 
 /* ============================================================= */
 /* ====================  IMPOSTER WORD  ======================== */
 /* ============================================================= */
 
-/* The eye blinks. */
 .iw-eye {
   transform-box: fill-box;
   transform-origin: center;
-  animation: iw-blink calc(3.6s * var(--spd, 1)) ease-in-out infinite;
 }
-
-@keyframes iw-blink {
-  0%, 92%, 100% { transform: scaleY(1); }
-  95% { transform: scaleY(0.1); }
-  97% { transform: scaleY(1); }
-}
-
-/* The pupil scans left-right, like it's watching you. */
 .iw-pupil {
   transform-box: fill-box;
   transform-origin: center;
-  animation: iw-scan-eye calc(3s * var(--spd, 1)) ease-in-out infinite;
 }
 
-@keyframes iw-scan-eye {
-  0%, 100% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
+/* ?s static + visible at rest (idle drift removed). */
+.iw-q { transform-box: view-box; opacity: 0.7; }
+
+/* Scan line hidden at rest (idle scan removed; not part of the hover reaction). */
+.iw-scanline { transform-box: view-box; opacity: 0; }
+
+/* ---- HOVER: the pupil darts/glances side to side (looping while hovered); the
+   ?s bounce. ---- */
+.game-card:hover .iw-pupil { animation: iw-dart 1.1s ease-in-out infinite; }
+.game-card:hover .iw-q { animation: iw-q-bounce 0.6s ease-in-out; }
+.game-card:hover .iw-q-2 { animation-delay: 0.06s; }
+.game-card:hover .iw-q-3 { animation-delay: 0.12s; }
+.game-card:hover .iw-q-4 { animation-delay: 0.18s; }
+
+@keyframes iw-dart {
+  0%, 100% { transform: translateX(-6px); }
+  25% { transform: translateX(6px); }
+  50% { transform: translateX(-4px); }
+  75% { transform: translateX(5px); }
+}
+@keyframes iw-q-bounce {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-10px); }
+  65% { transform: translateY(-3px); }
 }
 
-/* Question marks drifting around the eye (the .imposter one is red). */
-.iw-q {
-  transform-box: view-box;
-}
-
-.iw-q-1 { animation: iw-drift-a calc(6s * var(--spd, 1)) ease-in-out infinite; }
-.iw-q-2 { animation: iw-drift-b calc(5.2s * var(--spd, 1)) ease-in-out infinite; }
-.iw-q-3 { animation: iw-drift-b calc(7s * var(--spd, 1)) ease-in-out infinite; }
-.iw-q-4 { animation: iw-drift-a calc(6.4s * var(--spd, 1)) ease-in-out infinite; }
-
-@keyframes iw-drift-a {
-  0%, 100% { transform: translate(0, 0) rotate(-8deg); opacity: 0.5; }
-  50% { transform: translate(6px, -8px) rotate(7deg); opacity: 0.85; }
-}
-
-@keyframes iw-drift-b {
-  0%, 100% { transform: translate(0, 0) rotate(6deg); opacity: 0.55; }
-  50% { transform: translate(-7px, 7px) rotate(-6deg); opacity: 0.9; }
-}
-
-/* Security-camera scan line scrolling down the card. */
-.iw-scanline {
-  transform-box: view-box;
-  opacity: 0.16;
-  animation: iw-scan calc(2s * var(--spd, 1)) linear infinite;
-}
-
-@keyframes iw-scan {
-  0% { transform: translateY(-6px); }
-  100% { transform: translateY(170px); }
-}
-
+/* Reduced-motion: no interior motion at all - the rest state is already static,
+   so just suppress every hover reaction (elements stay in their rest pose). */
 @media (prefers-reduced-motion: reduce) {
-  .wb-bomb, .wb-orbit, .wb-tile, .wb-spark,
-  .cb-brain, .cb-bolt, .cb-q,
-  .iw-eye, .iw-pupil, .iw-q, .iw-scanline {
+  .game-card:hover .wb-bomb,
+  .game-card:hover .wb-tile,
+  .game-card:hover .wb-spark,
+  .game-card:hover .cb-brain,
+  .game-card:hover .cb-q,
+  .game-card:hover .iw-pupil,
+  .game-card:hover .iw-q {
     animation: none !important;
   }
-  /* Keep the flashing bolts visible (faint) rather than stuck invisible. */
-  .cb-bolt { opacity: 0.5; }
 }
