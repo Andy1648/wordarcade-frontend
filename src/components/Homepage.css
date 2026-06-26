@@ -401,10 +401,10 @@ html[data-beat='true'] .homepage-logo::after {
   will-change: transform, border-color;
 }
 
-/* Punchy zoom on hover (idle bounce yields to it via the :hover animation:none
-   in the idle section below). */
+/* Hover: smooth lift toward the user (replaces the old zoom). The per-button
+   colour edge-glow is added in the variant rules below. */
 .homepage-btn:hover:not(:disabled) {
-  transform: skewX(-2deg) scale(1.06);
+  transform: skewX(-2deg) translateY(-4px);
 }
 
 /* "POW!" starburst that pops out from behind the button on hover. Sits behind
@@ -428,10 +428,8 @@ html[data-beat='true'] .homepage-logo::after {
   );
 }
 
-.homepage-btn:hover::before {
-  opacity: 0.2;
-  transform: translate(-50%, -50%) scale(1) rotate(-8deg);
-}
+/* (The POW starburst reveal is intentionally NOT triggered on hover anymore — the
+   hover treatment is the clean lift + colour edge-glow. The ::before stays hidden.) */
 
 /* Disabled buttons don't pop. */
 .homepage-btn:disabled::before,
@@ -442,11 +440,22 @@ html[data-beat='true'] .homepage-logo::after {
 .homepage-btn-create::before { background: #FF2EC4; }
 .homepage-btn-join::before { background: #2EFFE0; }
 
+/* Hover edge-glow in each button's own colour (keeps the hard offset shadow, adds
+   a tight bloom + wide halo). Pure colour, so it stays as the hover cue even under
+   reduced-motion (where the lift transform is suppressed). */
+.homepage-btn-create:hover:not(:disabled) {
+  box-shadow: 4px 4px 0 #000, 0 0 16px 2px #FF2EC4, 0 0 38px 7px #FF2EC4;
+}
+.homepage-btn-join:hover:not(:disabled) {
+  box-shadow: 4px 4px 0 #000, 0 0 16px 2px #2EFFE0, 0 0 38px 7px #2EFFE0;
+}
+
 .homepage-btn:active {
-  /* Squash-IN on press; release pops back via the bouncy transition. */
-  transform: skewX(-2deg) scale(0.9);
+  /* Quick squash-IN on press (slight scale-down, drops the hover lift); on release
+     the base transition's overshoot bezier pops it back past rest, then settles. */
+  transform: skewX(-2deg) scale(0.94);
   box-shadow: 1px 1px 0 #000;
-  transition: transform 0.05s ease-out, box-shadow 0.05s;
+  transition: transform 0.06s ease-out, box-shadow 0.06s;
 }
 
 /* Disabled while navigating away - dimmed, unclickable, no press animation. */
@@ -538,32 +547,8 @@ html[data-beat='true'] .homepage-logo::after {
   animation: label-pulse 2.2s ease-in-out infinite;
 }
 
-/* Action buttons: a very subtle constant bounce that never rests. skewX(-2deg)
-   (the resting pose) is baked into each frame; the two run at slightly
-   different durations so they never sync. Hover/disabled cancel the loop so the
-   press feedback and dim state win. */
-.homepage-btn {
-  animation: btn-bounce-forever 2s ease-in-out infinite;
-}
-
-.homepage-btn-join {
-  animation-duration: 2.2s;
-  animation-delay: 0.3s;
-}
-
-.homepage-btn:hover,
-.homepage-btn:disabled,
-.homepage-btn.disabled {
-  animation: none;
-}
-
-@keyframes btn-bounce-forever {
-  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
-  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px); }
-  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px); }
-  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px); }
-  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
-}
+/* Action buttons sit STILL at rest (the constant idle bounce was removed) — they
+   react only to hover/press below. */
 
 /* Lightest beat effect on the action buttons: a small upward kick plus a quick
    white outline flash, in sync with the title + cards. Hovered/disabled buttons
