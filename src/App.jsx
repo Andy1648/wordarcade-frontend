@@ -25,6 +25,7 @@ import { resolvePlayerName, rememberName } from './playerName';
 import { friendlyError } from './friendlyError';
 import { useOneShotAction } from './hooks/useOneShotAction';
 import { track } from './lib/analytics';
+import { squash, sfx, setMuted as setJuiceMuted } from './juice';
 
 // Server frames that RESOLVE a one-shot action (an ack, a state change, or a
 // rejection). Draining any of these bumps `serverEventId`, which re-enables the
@@ -405,6 +406,33 @@ function App() {
   useEffect(() => {
     playerCountRef.current = room?.players?.length || 0;
   }, [room]);
+
+  // ---- Shared game-feel ("juice") wiring (Tier 2; never blocks input) ----
+  // Keep the juice layer's sound flag synced to the app-wide SFX mute on EVERY
+  // screen (the menu synced it too, but this covers lobby/game/results), so muting
+  // in-game also silences the press ticks + word-accept sparks.
+  useEffect(() => {
+    setJuiceMuted(sfxMuted);
+  }, [sfxMuted]);
+
+  // ONE shared press-feedback handler for EVERY <button> in the app (menu, lobby,
+  // game, results): a light squash + tick on press, matching the CREATE/JOIN proof.
+  // Delegated at the document in the CAPTURE phase so it covers every screen with
+  // zero per-button wiring and fires even if a handler stops propagation. Buttons
+  // that run their own bespoke juice (CREATE/JOIN) opt out via [data-juice-self] so
+  // they never double-fire. squash() + sfx() self-gate on reduced-motion + mute
+  // inside the toolkit and neither blocks nor awaits, so the type loop is untouched.
+  useEffect(() => {
+    function onPointerDown(e) {
+      const btn = e.target?.closest?.('button');
+      if (!btn || btn.disabled) return;
+      if (btn.hasAttribute('data-juice-self')) return; // owns its own juice
+      squash(btn);
+      sfx('tap');
+    }
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, []);
 
   useEffect(() => {
     if (!messages.length) return;

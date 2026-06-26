@@ -163,6 +163,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             onClick={handleCreateRoom}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
+            data-juice-self
           >
             CREATE ROOM
           </button>
@@ -171,6 +172,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             onClick={handleJoinRoom}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
+            data-juice-self
           >
             JOIN ROOM
           </button>

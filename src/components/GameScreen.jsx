@@ -9,6 +9,7 @@ import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
+import { burst, flash } from '../juice';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1203,7 +1204,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
  *   - rejected -> fire a 400ms horizontal input shake.
  * Returns { hypeKey, shake, inputShake } for the caller to render.
  */
-function useHypeFeedback(lastWordResult) {
+function useHypeFeedback(lastWordResult, inputRef, promptRef) {
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
@@ -1222,11 +1223,31 @@ function useHypeFeedback(lastWordResult) {
     if (lastWordResult.accepted) {
       setHypeKey((k) => k + 1);
       setShake(true);
+      // Juice toolkit (additive): a LIGHT spark burst at the input + a quick confirm
+      // flash on the word-prompt box. Kept light because this fires on every accept
+      // (combo streaks too) — the shared pool caps particles so it can't tank FPS.
+      // The existing correctDing + hype + screen-shake stay; we do NOT add a second
+      // sound here (no double-fire). burst/flash are non-blocking, self-gate on
+      // reduced-motion + mute, and never touch the text input itself (DESIGN.md).
+      const el = inputRef && inputRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        burst(r.left + r.width / 2, r.top + r.height / 2, {
+          count: 10,
+          speed: 200,
+          life: 0.45,
+          colors: ['#2EFFE0', '#FFE94A', '#FF2EC4'],
+        });
+      }
+      if (promptRef && promptRef.current) flash(promptRef.current, '#2EFFE0');
       const timeoutId = setTimeout(() => setShake(false), 200);
       return () => clearTimeout(timeoutId);
     }
 
-    // Rejected: shake the input so the miss is felt, not just read.
+    // Rejected: shake the input so the miss is felt, not just read. The existing
+    // input shake + wrongBuzz (+ letter-shatter) already deliver the task's
+    // "shake + buzz" for a reject — we intentionally do NOT stack a second toolkit
+    // shake/sfx (that would double-fire and over-punish a fast-typing miss).
     setInputShake(true);
     const timeoutId = setTimeout(() => setInputShake(false), 400);
     return () => clearTimeout(timeoutId);
@@ -1388,9 +1409,12 @@ export default function GameScreen({
     setSkipPending(false);
   }, [gameState?.currentPlayerId, gameOver]);
 
+  // The word-prompt box, flashed on accept (the "word" — NOT the text input, which
+  // DESIGN.md says never to animate). Burst is anchored at the input via inputRef.
+  const comboBoxRef = useRef(null);
   // Hype popup + screen shake (accepted) and input shake (rejected). Called
   // before the category early-return so the hooks always run in the same order.
-  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult);
+  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef);
 
   // ---- Heart-shatter + elimination detection (Word Bomb only) ----
   // Each turn_update carries fresh lives/eliminated for every player. We diff
@@ -2302,7 +2326,7 @@ export default function GameScreen({
             mid-game - the readable letters underneath stay put. Only the inner punch
             layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
             keyed .combo-pop at ComboMeter.jsx:50). */}
-        <div className="game-combo-box">
+        <div className="game-combo-box" ref={comboBoxRef}>
           {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
               Scoped to this inner node, so the surrounding box stays mounted. */}
           <div
