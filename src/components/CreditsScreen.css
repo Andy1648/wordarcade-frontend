@@ -5,7 +5,8 @@
      comes from body/#root. */
   background: transparent;
   width: 100%;
-  min-height: 100vh;
+  /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). */
+  min-height: calc(100vh / var(--app-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;

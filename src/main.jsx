@@ -51,7 +51,26 @@ function CrashFallback() {
 // balloon. The homepage cancels it (it's height-locked to one screen).
 function applyAppScale() {
   const DESIGN_W = 1400;
-  const scale = Math.min(1.6, Math.max(1, (window.innerWidth * 0.95) / DESIGN_W));
+  // Natural height of the tallest CORE screen (the in-game stage, ~960-980px +
+  // padding). Used to cap the zoom by viewport HEIGHT so a wide screen can't zoom
+  // content taller than the viewport and force a vertical scroll.
+  const DESIGN_H = 1040;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  let scale;
+  if (w <= 600) {
+    // Phones: the dedicated mobile CSS owns the layout — never zoom it.
+    scale = 1;
+  } else {
+    // Original behaviour: zoom UP to fill wide monitors (>=1, capped at 1.6), so
+    // content never sits tiny in the fixed-width card. Screens <=1400px stay at 1.
+    const widthZoom = Math.min(1.6, Math.max(1, (w * 0.95) / DESIGN_W));
+    // NEW: fit-to-contain. Cap the zoom by viewport height so the scaled screen
+    // always fits vertically; on short windows this pulls the scale below 1 so the
+    // core screens shrink to fit instead of overflowing into a vertical scroll.
+    const heightCap = h / DESIGN_H;
+    scale = Math.max(0.6, Math.min(widthZoom, heightCap));
+  }
   document.documentElement.style.setProperty('--app-scale', scale.toFixed(3));
 }
 applyAppScale();

@@ -20,7 +20,11 @@
      shows through around the stage; dark base comes from body/#root. */
   background: transparent;
   width: 100%;
-  min-height: 100vh;
+  /* Fill exactly ONE viewport regardless of the --app-scale zoom: the zoom on
+     .view-screen multiplies heights, so a plain 100vh here renders as 100vh*scale
+     and overflows into a vertical scroll on wide monitors. Dividing by the scale
+     makes the rendered fill exactly one screen (matches the menu's one-screen fit). */
+  min-height: calc(100vh / var(--app-scale, 1));
   display: flex;
   align-items: flex-start;
   justify-content: center;

@@ -3,7 +3,10 @@
 .browser-wrap {
   background: transparent;
   width: 100%;
-  min-height: 100vh;
+  /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). The
+     public-rooms LIST may still exceed this and scroll when there are many rooms —
+     that's expected for this growing-list screen. */
+  min-height: calc(100vh / var(--app-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;
