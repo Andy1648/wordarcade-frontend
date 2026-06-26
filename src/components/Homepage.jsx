@@ -1,5 +1,5 @@
 // Homepage.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -78,8 +78,31 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     if (onCredits) onCredits();
   }
 
+  // Soft click ripple on the menu BACKGROUND. On pointer-down anywhere that isn't
+  // an interactive element (card / button / link), spawn one expanding-and-fading
+  // ring at the cursor and remove it when its animation ends. The ring is
+  // pointer-events:none and only spawns for non-interactive targets, so card and
+  // button clicks are never blocked or hijacked. Disabled under reduced-motion.
+  const wrapRef = useRef(null);
+  function handleBgPointerDown(e) {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (e.target.closest('.game-card, button, a, input, [role="button"]')) return; // interactive → no ripple
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    // Map viewport coords into the wrap's local (un-zoomed) space; the wrap carries
+    // a `zoom` so rect is post-zoom while children lay out in pre-zoom px.
+    const zoom = wrap.offsetWidth ? rect.width / wrap.offsetWidth : 1;
+    const ring = document.createElement('span');
+    ring.className = 'menu-ripple';
+    ring.style.left = `${(e.clientX - rect.left) / zoom}px`;
+    ring.style.top = `${(e.clientY - rect.top) / zoom}px`;
+    ring.addEventListener('animationend', () => ring.remove(), { once: true });
+    wrap.appendChild(ring);
+  }
+
   return (
-    <div className="homepage-wrap">
+    <div className="homepage-wrap" ref={wrapRef} onPointerDown={handleBgPointerDown}>
       <div className="homepage-stage">
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}

@@ -49,6 +49,33 @@
   border-radius: 14px;
 }
 
+/* Click ripple: a single soft ring spawned at the pointer on a background
+   pointer-down (see Homepage.jsx). Expands + fades once, then removes itself.
+   z-index 0 keeps it behind the z-index:1 content; pointer-events:none means it
+   never blocks clicks. Low-opacity DESIGN.md cyan accent. */
+.menu-ripple {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px; /* centre the ring on the click point */
+  border-radius: 50%;
+  border: 2px solid rgba(46, 255, 224, 0.5);
+  pointer-events: none;
+  z-index: 0;
+  animation: menu-ripple 600ms ease-out forwards;
+}
+
+@keyframes menu-ripple {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(13); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Belt-and-braces: even if one were spawned, don't animate it. (The JS already
+     skips spawning under reduced-motion.) */
+  .menu-ripple { display: none; }
+}
+
 /* Keep the real content above the (now flat) background. */
 .homepage-logo,
 .homepage-tagline,
