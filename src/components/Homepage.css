@@ -196,9 +196,11 @@
      still and snaps on each detected drum hit instead of bobbing smoothly. */
   transform: rotate(-2deg) skewX(-4deg);
   /* NO text-shadow: the 3D body comes from the Bungee Shade font itself - exactly
-     like the splash title, which also carries no extra extrude. (Both the bold-clean
-     single drop and the old 6-layer magenta extrude are intentionally gone, so the
-     menu title reads identical to the splash.) */
+     like the splash title, which carries no extra extrude. `none` also overrides the
+     shared .wall-handstyle extrude on this element (the logo doesn't set the --hs-*
+     vars, so that would otherwise leak a flat black 3-layer drop). Both the bold-clean
+     single drop and the old 6-layer magenta extrude are intentionally gone. */
+  text-shadow: none;
   will-change: transform;
 }
 
