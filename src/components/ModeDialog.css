@@ -1,0 +1,189 @@
+/* ModeDialog.css */
+
+/* The card -> dialog expand is a hand-rolled FLIP morph (see ModeDialog.jsx):
+   the shell is laid out at its FINAL centered dialog size, then a transform
+   (translate + scale) is applied to make it sit exactly on the clicked card, and
+   removed on the next frame so it eases out to the dialog. Only `transform`,
+   `border-radius` and `background-color` animate (all GPU-cheap), never
+   width/height/top/left. The whole thing is portaled to <body> so the stage's
+   overflow:hidden and the app-wide zoom never clip or skew it. */
+
+/* Full-viewport layer holding the scrim + the centered shell. Centering the shell
+   here (grid place-items) leaves its `transform` free for the FLIP. */
+.mode-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+}
+
+/* Dim + light blur behind the dialog so the menu reads as "pushed back". Fades in
+   via the .is-in class (added a frame after mount). Clicking it closes. */
+.mode-dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: rgba(13, 6, 24, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+.mode-dialog-scrim.is-in {
+  opacity: 1;
+}
+
+/* The morphing panel. Sized to the prototype's centered dialog; the resting fill
+   is the dark panel bg, framed by a thick border in the game's own colour (set
+   inline). border-radius animates 8px (card) -> 16px (dialog) during the morph;
+   the JS also cross-fades the fill from the card colour into the panel bg so it
+   reads as the card itself growing and settling. */
+.mode-dialog-shell {
+  position: relative;
+  z-index: 1;
+  width: min(90vw, 600px);
+  height: min(80vh, 460px);
+  box-sizing: border-box;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 16px;
+  box-shadow: 10px 10px 0 #000;
+  padding: clamp(20px, 4vh, 40px);
+  display: flex;
+  flex-direction: column;
+  /* transform/transition are driven imperatively from JS for the FLIP. */
+  transform-origin: top left;
+  will-change: transform, border-radius, background-color;
+  overflow: hidden;
+}
+
+/* Close (X): a small square chip in the top-right corner. Held hidden until the
+   morph is nearly done (.is-in, toggled with the content) so it doesn't float on
+   the still-growing shell, then fades in with the body. */
+.mode-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  opacity: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+}
+.mode-dialog-close.is-in {
+  opacity: 1;
+}
+.mode-dialog-close:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+.mode-dialog-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* Dialog body (mode name + desc + the two CTAs). Held at opacity 0 until ~240ms
+   into the morph (JS adds .is-in), then fades + pops up so it lands once the box
+   has nearly finished growing - no squashed text mid-morph. */
+.mode-dialog-content {
+  position: relative;
+  z-index: 2;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(12px, 2.4vh, 22px);
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+  transition: opacity 0.26s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mode-dialog-content.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.mode-dialog-name {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(30px, 6vw, 56px);
+  line-height: 1.02;
+  white-space: pre-line;
+  text-shadow: 3px 3px 0 #000;
+}
+
+.mode-dialog-desc {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(12px, 1.6vw, 16px);
+  color: #d9c7f0;
+  max-width: 30ch;
+}
+
+.mode-dialog-actions {
+  display: flex;
+  gap: clamp(10px, 2vw, 18px);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: clamp(4px, 1vh, 10px);
+}
+
+/* CTAs mirror the menu's bottom-bar buttons (Bungee, skew, hard offset shadow)
+   so the dialog feels of-a-piece with the homepage. */
+.mode-dialog-btn {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(14px, 1.6vw, 18px);
+  border: 4px solid #000;
+  border-radius: 8px;
+  padding: clamp(11px, 1.4vh, 16px) clamp(18px, 2.4vw, 30px);
+  cursor: pointer;
+  color: #000;
+  box-shadow: 4px 4px 0 #000;
+  transform: skewX(-2deg);
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.2s ease;
+}
+.mode-dialog-btn:hover {
+  transform: skewX(-2deg) translateY(-4px);
+  box-shadow: 6px 6px 0 #000, 0 0 22px 2px rgba(var(--cta-glow, 255, 255, 255), 0.7);
+}
+.mode-dialog-btn:active {
+  transform: skewX(-2deg) scale(0.95);
+  box-shadow: 2px 2px 0 #000;
+}
+.mode-dialog-btn-create {
+  background: #FF2EC4;
+  border-color: #991A75;
+  --cta-glow: 255, 46, 196;
+}
+.mode-dialog-btn-join {
+  background: #2EFFE0;
+  border-color: #1A9985;
+  --cta-glow: 46, 255, 224;
+}
+
+/* Reduced motion: the morph + content pop are dropped (the JS cross-fades the
+   shell instead); kill any residual transition-driven movement and the scrim blur
+   stays as a static dim. The content still fades, just without the slide/pop. */
+@media (prefers-reduced-motion: reduce) {
+  .mode-dialog-content {
+    transform: none;
+    transition: opacity 0.2s ease;
+  }
+  .mode-dialog-content.is-in {
+    transform: none;
+  }
+  .mode-dialog-btn,
+  .mode-dialog-close {
+    transition: box-shadow 0.15s ease;
+  }
+}

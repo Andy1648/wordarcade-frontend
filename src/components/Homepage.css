@@ -47,6 +47,26 @@
   max-height: 100%;
   max-width: min(95vw, 1400px);
   border-radius: 14px;
+  /* Eased so the menu gently "pushes back" when a mode dialog opens. */
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* While a mode dialog is open the menu recedes slightly behind the dialog's
+   scrim, reinforcing the focus shift. The scrim (in ModeDialog) owns the dim +
+   blur; this only adds the small scale-back. */
+.homepage-stage.is-dimmed {
+  transform: scale(0.965);
+}
+
+/* Reduced motion: drop the recede entirely (the dialog cross-fades; the scrim
+   still dims), so nothing scales. */
+@media (prefers-reduced-motion: reduce) {
+  .homepage-stage {
+    transition: none;
+  }
+  .homepage-stage.is-dimmed {
+    transform: none;
+  }
 }
 
 /* ---- ALLEY DEPTH: the perspective lines + scale-graded receding tags. Sits at

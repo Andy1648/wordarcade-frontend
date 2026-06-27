@@ -4,6 +4,7 @@ import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
+import ModeDialog from './ModeDialog';
 import GraffitiTag from './decor/GraffitiTag';
 import {
   PaintSplatter1,
@@ -64,6 +65,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   const [navigating, setNavigating] = useState(false);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
+  // The mode whose expand-dialog is open: { game, el } (el = the clicked card
+  // element, measured for the FLIP morph). Null when no dialog is showing.
+  const [dialog, setDialog] = useState(null);
   const { sound, muted } = useSound();
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
@@ -93,11 +97,34 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     setHoverGame(id);
   }
 
-  function handleSelectGame(gameId) {
+  // Clicking a mode card no longer navigates straight to the lobby - it expands
+  // the card into the intermediate dialog (CREATE / JOIN). `el` is the clicked
+  // .game-card node, handed to ModeDialog as the FLIP morph's origin box.
+  function handleOpenDialog(gameId, el) {
+    if (navigating) return;
+    const game = GAMES.find((g) => g.id === gameId);
+    if (!game || !game.enabled) return;
+    sound.click();
+    setDialog({ game, el });
+  }
+
+  // Dialog CREATE ROOM: the existing "pick this game -> lobby" path (App's
+  // onSelectGame => goToLobby(gameId)). The screen transitions away, unmounting
+  // the dialog with it, so no reverse-morph is needed here.
+  function handleDialogCreate() {
+    if (navigating || !dialog) return;
+    sound.click();
+    setNavigating(true);
+    if (onSelectGame) onSelectGame(dialog.game.id);
+  }
+
+  // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
+  // (App's onJoinRoom => handleOpenBrowser). Same flow as the bottom-bar JOIN.
+  function handleDialogJoin() {
     if (navigating) return;
     sound.click();
     setNavigating(true);
-    if (onSelectGame) onSelectGame(gameId);
+    if (onJoinRoom) onJoinRoom();
   }
 
   function handleCreateRoom(e) {
@@ -125,7 +152,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
 
   return (
     <div className="homepage-wrap">
-      <div className="homepage-stage wall-surface">
+      <div className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
         {/* ALLEY DEPTH: one-point perspective lines converging on a vanishing
             point behind the title, plus scale-graded graffiti receding toward it
             (tiny/faint = far, large = near). Reads as a place with depth. */}
@@ -193,7 +220,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             <GameCard
               key={game.id}
               game={game}
-              onSelect={handleSelectGame}
+              onSelect={handleOpenDialog}
               onHover={handleHover}
             />
           ))}
@@ -229,6 +256,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           CREDITS
         </button>
       </div>
+
+      {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
+          and the app zoom never clip it; closes back into the source card. */}
+      {dialog && (
+        <ModeDialog
+          game={dialog.game}
+          sourceEl={dialog.el}
+          onClose={() => setDialog(null)}
+          onCreate={handleDialogCreate}
+          onJoin={handleDialogJoin}
+        />
+      )}
     </div>
   );
 }

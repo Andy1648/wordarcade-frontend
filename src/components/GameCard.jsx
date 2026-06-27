@@ -30,16 +30,18 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
     .filter(Boolean)
     .join(' ');
 
-  function handleClick() {
+  // Pass the clicked card element up so the homepage can measure it for the
+  // card->dialog FLIP morph (the expand starts from exactly this box).
+  function handleClick(event) {
     if (game.enabled && onSelect) {
-      onSelect(game.id);
+      onSelect(game.id, event.currentTarget);
     }
   }
 
   function handleKeyDown(event) {
     if (game.enabled && (event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault();
-      handleClick();
+      handleClick(event);
     }
   }
 
