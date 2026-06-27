@@ -521,7 +521,12 @@ html[data-beat='true'] .homepage-logo {
   opacity: 0;
   z-index: 0;
   will-change: opacity;
-  background: radial-gradient(120% 78% at 50% 50%, transparent 46%, #FFC4D6 104%);
+  /* Concentrated on the OUTER frame band (transparent core out to 62%) so the
+     glow rings the stage edge - which IS the visible menu frame - and the inner
+     content stays clear. Redder pink (#FF8CAA). Kept inside .homepage-stage: the
+     stage's overflow:hidden + the persistent WallScene make outward bleed unsafe,
+     so no negative inset / .homepage-wrap move. */
+  background: radial-gradient(120% 82% at 50% 50%, transparent 62%, #FF8CAA 102%);
 }
 
 html[data-beat='true'] .homepage-beat-glow {
