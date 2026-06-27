@@ -74,8 +74,14 @@
   /* Rotation/drift lives on the wrapper; this element only scales (featured via
      --cs), skews and lifts - so the beat-pop can play over the idle sway. */
   transform: scale(var(--cs, 1));
-  transition: transform 0.12s, box-shadow 0.12s;
-  will-change: transform, box-shadow;
+  /* Press feedback rides on the INDEPENDENT `scale` property (not `transform`), so
+     a press squash MULTIPLIES on top of the hover lift / idle sway / beat-pop
+     transform instead of fighting it. The overshoot bezier makes the release pop
+     back a touch past rest, then settle. */
+  scale: 1;
+  transition: transform 0.12s, box-shadow 0.12s,
+    scale 0.18s cubic-bezier(0.34, 1.56, 0.5, 1);
+  will-change: transform, box-shadow, scale;
 }
 
 /* Beat pop (medium weight): on each detected drum hit (data-beat on <html>) the
@@ -155,10 +161,14 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
 }
 
-.game-card:active {
-  animation: none;
-  transform: scale(calc(0.98 * var(--cs, 1)));
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 1px 1px 0 #000;
+/* Press: a quick squash on mousedown via the independent `scale` property, which
+   layers cleanly OVER the hover lift (transform scale) and the idle sway (wrapper)
+   without cancelling either - no `animation: none`, so the hover/beat motion keeps
+   running underneath. Release pops back with a small overshoot via the bouncy
+   `scale` transition above. Tactile confirmation the click registered. */
+.game-card:active:not(.disabled) {
+  scale: 0.94;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 2px 2px 0 #000;
 }
 
 @keyframes card-hover-pop {
@@ -274,9 +284,11 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   }
 }
 
-/* Honour reduced-motion: stop the idle sway. */
+/* Honour reduced-motion: stop the idle sway, and drop the press SCALE motion (the
+   shadow change on press still confirms the click without any movement). */
 @media (prefers-reduced-motion: reduce) {
   .game-card-wrap { animation: none !important; }
+  .game-card:active:not(.disabled) { scale: 1; }
 }
 
 /* Little corner sticker calling out the featured game. */
