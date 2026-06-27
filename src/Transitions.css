@@ -17,10 +17,33 @@
      content - so genuinely tall screens keep scrolling normally via .app-shake,
      while the off-box transform overshoot that caused the flicker is cut. */
   overflow: clip;
+
+  /* CENTER the app-scale-zoomed .view-screen in the viewport on BOTH axes, so a
+     scaled stage sits centered instead of pinned to the top-left corner with
+     dead-space down the right/bottom. This is COSMETIC POSITIONING ONLY - it does
+     not touch the scale factor (computed in main.jsx) or any game logic.
+       - flex-row: main axis = horizontal, cross axis = vertical.
+       - justify-content:center centers horizontally; the child keeps width:100%
+         (below) so it still fills the viewport in the normal case, and any
+         overflow is split symmetrically rather than pinned left.
+       - align-items:safe center centers vertically WHEN the screen fits, but
+         FALLS BACK to top-aligned the moment a screen is taller than the viewport,
+         so tall / scrolling screens never get their top cut off and unreachable. */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: safe center;
+  /* Fill the scroll area so there is room to center a shorter-than-viewport screen
+     (resolves against .app-scroll, which has a definite height). */
+  min-height: 100%;
 }
 
 .view-screen {
   position: relative;
+  /* Fill the viewport width (the flex centering above is then a no-op in the
+     normal case); set explicitly so the flex item never collapses to its
+     content width. */
+  width: 100%;
   /* Single app-wide responsive scale anchor (factor set on :root by main.jsx).
      The whole active screen scales up proportionally on large monitors so its
      content fills the device instead of sitting tiny inside a fixed-width card.
