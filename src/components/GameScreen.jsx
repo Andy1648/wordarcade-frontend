@@ -331,6 +331,44 @@ function SubmitLetters({ text, mode }) {
 }
 
 /**
+ * Live opponent-typing readout, rendered per-glyph (KEYSTRIKE). Each NEWLY
+ * appended letter punches in once, then settles permanently at full opacity;
+ * letters accumulate and stay. Only the LAST glyph animates, and only when the
+ * text GREW (so backspace/clear never re-pops the settled letters). The popping
+ * glyph is re-keyed by length so the pop replays on every new char (mirrors
+ * ComboMeter's keyed .combo-pop at ComboMeter.jsx:50); settled glyphs keep a
+ * stable index key so React never remounts/re-animates them. The blinking caret
+ * trails the text. This is a READOUT only - it is never the field the user types
+ * into, so we never animate the user's own keystrokes mid-entry.
+ */
+function LiveTypeText({ text }) {
+  const up = (text || '').toUpperCase();
+  const len = up.length;
+  const prevLenRef = useRef(0);
+  const grew = len > prevLenRef.current;
+  const lastIndex = len - 1;
+  useEffect(() => {
+    prevLenRef.current = len;
+  }, [len]);
+  return (
+    <span className="player-typing-text">
+      {up.split('').map((ch, i) => {
+        const popping = i === lastIndex && grew;
+        return (
+          <span
+            key={popping ? `k${len}` : i}
+            className={popping ? 'g keystrike' : 'g'}
+          >
+            {ch === ' ' ? ' ' : ch}
+          </span>
+        );
+      })}
+      <span className="typing-cursor">|</span>
+    </span>
+  );
+}
+
+/**
  * The "CLUTCH!" slam shown instead of the normal hype word when a correct answer
  * lands with <=2s left. Big pink Bungee with a unique slam-in animation; removes
  * itself on animation end. pointer-events:none.
@@ -2327,10 +2365,7 @@ export default function GameScreen({
                       {(() => {
                         const typed = isMe ? draft : typingText[player.id] || '';
                         return typed ? (
-                          <span className="player-typing-text">
-                            {typed.toUpperCase()}
-                            <span className="typing-cursor">|</span>
-                          </span>
+                          <LiveTypeText text={typed} />
                         ) : (
                           <span className="player-typing-empty">...</span>
                         );

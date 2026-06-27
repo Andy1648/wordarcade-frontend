@@ -461,7 +461,9 @@
    current player's card. The reserved min-height keeps the card from jumping
    as the text appears, clears, or swaps to the "..." placeholder. */
 .player-typing {
-  min-height: 16px;
+  /* Reserve the taller (20px) line height so the card never jumps when the
+     dimmed "..." placeholder swaps to live text, or as letters accumulate. */
+  min-height: 26px;
   margin-bottom: 6px;
   padding: 0 2px;
   display: flex;
@@ -472,7 +474,7 @@
 .player-typing-text {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 20px;
   line-height: 1.2;
   /* The live typing reads in the typer's session colour (the card sets --pc);
      falls back to the old yellow when no colour is assigned. A thin black cel
@@ -484,6 +486,34 @@
   text-align: center;
   /* Long in-progress words shouldn't blow out the narrow card. */
   word-break: break-all;
+}
+
+/* Per-glyph KEYSTRIKE: each letter is its own inline-block span so transforms
+   apply. Settled glyphs render plain at full opacity (never re-animate); only
+   the newly-appended last glyph gets .keystrike to punch in once. Colour/stroke/
+   font inherit from .player-typing-text above. */
+.player-typing-text .g {
+  display: inline-block;
+}
+
+.player-typing-text .g.keystrike {
+  animation: keystrike 190ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+@keyframes keystrike {
+  0% { transform: translateY(-6px) scale(0.4); opacity: 0; }
+  55% { transform: translateY(-2px) scale(1.6); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Reduced motion: no punch. Letters just appear at rest, full opacity, so the
+   live count stays legible without any movement. */
+@media (prefers-reduced-motion: reduce) {
+  .player-typing-text .g.keystrike {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
 }
 
 /* Dimmed placeholder before the active player has typed anything. */

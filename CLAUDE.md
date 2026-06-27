@@ -96,4 +96,9 @@ If any step fails → that's the regression, fix before anything else ships.
   RULE: useWebSocket must buffer messages in a FIFO QUEUE (append every parsed frame). The App consumer must drain and process EVERY queued message in arrival order, never just the latest. No frame may be skipped on batched delivery.
 
 ## CANONICAL MENU TITLE (.homepage-logo) — do not flatten or alter without explicit request.
-Must match the SPLASH title treatment: Bungee Shade font, #FF2EC4 fill, 5px #000 stroke, continuous chromatic split (title-rgb-left/right), text-shadow: none (depth from the font, NO extrude). Plus menu-only: resting tilt rotate(-2deg) skewX(-4deg) and title-beat-pop on html[data-beat]. Defined in Homepage.css. Reference commit: 7835ff4.
+Wordmark: Bungee Shade font, #FF2EC4 fill, 5px #000 stroke, text-shadow: none (depth from the font, NO extrude). Menu-only: resting tilt rotate(-2deg) skewX(-4deg) and title-beat-pop on html[data-beat]. Defined in Homepage.css.
+- DELIBERATE DIVERGENCE FROM SPLASH (menu-compaction): the menu title DROPS the continuous chromatic split (title-rgb-left/right ghosts are display:none) — it no longer matches the splash, on purpose. Do not "restore" it without explicit request. (Wordmark fill/stroke/pose/beat-pop above are still locked.)
+
+## MENU MOTION LAW (Homepage) — idle removed, beat kept.
+The menu has NO idle/ambient loops (the old tagline sway, section-label breathe, button idle bounce, and splatter parallax were removed to stop visual "jumping"). Every element keeps its STATIC resting pose (matching its reduced-motion state). Motion is concentrated into two beat-driven moments only: (1) title-beat-pop on .homepage-logo, (2) the .homepage-beat-glow soft pink frame glow. Hover/press feedback stays. The button beat-pop was removed (beat = title + frame glow only). Do not reintroduce idle loops here.
+- DOCUMENTED FLAT-RULE EXCEPTION: .homepage-beat-glow is a pink radial-gradient pulse — an intentional, menu-frame-scoped exception to the "flat colors only, no gradients" rule. Opacity-only, beat-driven, reduced-motion-off.
