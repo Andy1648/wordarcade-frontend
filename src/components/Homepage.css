@@ -195,18 +195,11 @@
      data-beat (see below), not a continuous transform - so the wordmark sits
      still and snaps on each detected drum hit instead of bobbing smoothly. */
   transform: rotate(-2deg) skewX(-4deg);
-  /* HERO production-piece block (overrides the shared .wall-handstyle extrude -
-     this is THE focal art): a lit top edge for volume, then a deep spray-can 3D
-     extrude graded from the pink fill down through magenta/purple to a hard black
-     cast. This is the ORIGINAL look the bold-clean reweight flattened. */
-  text-shadow:
-    0 -2px 0 rgba(255, 184, 227, 0.6),
-    2px 2px 0 #D41A9E,
-    4px 4px 0 #B81E8E,
-    6px 6px 0 #7A1460,
-    8px 9px 0 #4A0C3C,
-    10px 12px 0 #000;
-  will-change: transform, text-shadow;
+  /* NO text-shadow: the 3D body comes from the Bungee Shade font itself - exactly
+     like the splash title, which also carries no extra extrude. (Both the bold-clean
+     single drop and the old 6-layer magenta extrude are intentionally gone, so the
+     menu title reads identical to the splash.) */
+  will-change: transform;
 }
 
 /* The paint drips stay OFF (the JSX element is still in the markup; hide it) - the
@@ -217,14 +210,14 @@
   display: none;
 }
 
-/* CRISP beat hit on the title (heaviest effect): when useBeatSync flips
-   data-beat="true" (~120ms on a detected kick) the wordmark snaps up + out (scaled by
-   --beat-intensity), its 3D extrude slams bigger then back, and the RGB-split clones
-   (below) flash. The attribute is removed between beats so the animations restart
-   cleanly on the next hit. All 120ms so they stay in sync; keyframes carry the resting
-   rotate/skew pose + the resting extrude. */
+/* Beat pulse: when useBeatSync flips data-beat="true" (~120ms on a detected kick) the
+   wordmark snaps up + out (scaled by --beat-intensity), then settles. data-beat is
+   cleared between hits so the one-shot pop restarts on the next beat. The keyframe
+   carries the resting rotate/skew pose so only the motion fires - the look is
+   unchanged at rest. (The continuous chromatic split below drifts independently,
+   matching the splash; the splash title has no beat-driven shadow slam.) */
 html[data-beat='true'] .homepage-logo {
-  animation: title-beat-pop 120ms ease-out, title-shadow-slam 120ms ease-out;
+  animation: title-beat-pop 120ms ease-out;
 }
 
 @keyframes title-beat-pop {
@@ -237,29 +230,10 @@ html[data-beat='true'] .homepage-logo {
   100% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
 }
 
-/* Beat slam keeps the hero's deep 3D extrude and rams it bigger on the hit, then back -
-   so the spray-can block stays consistent with the resting pose. (Original multilayer
-   extrude, restored - not the bold-clean single drop.) */
-@keyframes title-shadow-slam {
-  0% {
-    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
-      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
-  }
-  40% {
-    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
-      3px 3px 0 #D41A9E, 6px 6px 0 #B81E8E, 9px 9px 0 #7A1460, 12px 13px 0 #4A0C3C, 15px 17px 0 #000;
-  }
-  100% {
-    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
-      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
-  }
-}
-
-/* RGB / chromatic split: two text clones (cyan offset left, pink offset right) drawn
-   over the wordmark via ::before/::after from the data-text attribute. Invisible at
-   rest; on each beat they flash in offset opposite directions then snap back, for a
-   heavy chromatic-aberration hit. mix-blend-mode: screen makes the black stroke
-   transparent so only the coloured ghosts show. (Restored from the original.) */
+/* RGB / chromatic split clones drifting CONTINUOUSLY (cyan left, pink right),
+   screen-blended so the black stroke drops out and only the colour ghosts show. This
+   is copied verbatim from the splash title's treatment (continuous, always visible),
+   so the menu wordmark matches the splash. */
 .homepage-logo::before,
 .homepage-logo::after {
   content: attr(data-text);
@@ -273,30 +247,28 @@ html[data-beat='true'] .homepage-logo {
   -webkit-text-stroke: inherit;
   paint-order: inherit;
   text-align: center;
-  opacity: 0;
   pointer-events: none;
+  mix-blend-mode: screen;
 }
 
-html[data-beat='true'] .homepage-logo::before {
-  animation: title-rgb-split-left 120ms ease-out;
+.homepage-logo::before {
   color: #2EFFE0;
-  mix-blend-mode: screen;
+  animation: title-rgb-left 3s ease-in-out infinite;
 }
 
-html[data-beat='true'] .homepage-logo::after {
-  animation: title-rgb-split-right 120ms ease-out;
+.homepage-logo::after {
   color: #FF2EC4;
-  mix-blend-mode: screen;
+  animation: title-rgb-right 3s ease-in-out infinite;
 }
 
-@keyframes title-rgb-split-left {
-  0% { opacity: 0.7; transform: translateX(-4px) translateY(1px); }
-  100% { opacity: 0; transform: translateX(0); }
+@keyframes title-rgb-left {
+  0%, 100% { transform: translateX(0); opacity: 0.45; }
+  50% { transform: translateX(-2px); opacity: 0.75; }
 }
 
-@keyframes title-rgb-split-right {
-  0% { opacity: 0.7; transform: translateX(4px) translateY(-1px); }
-  100% { opacity: 0; transform: translateX(0); }
+@keyframes title-rgb-right {
+  0%, 100% { transform: translateX(0); opacity: 0.45; }
+  50% { transform: translateX(2px); opacity: 0.75; }
 }
 
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
@@ -653,11 +625,16 @@ html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
   .homepage-section-label,            /* label-pulse */
   .homepage-splatter,                 /* hp-splat-drift parallax */
   .homepage-btn,                      /* btn-bounce-forever idle */
-  html[data-beat='true'] .homepage-logo,                            /* title-beat-pop + shadow-slam */
-  html[data-beat='true'] .homepage-logo::before,                    /* chromatic split (cyan) */
-  html[data-beat='true'] .homepage-logo::after,                     /* chromatic split (pink) */
+  html[data-beat='true'] .homepage-logo,                            /* title-beat-pop */
   html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop */
     animation: none !important;
+  }
+  /* The continuous chromatic split is idle motion: stop it and hide the colour ghosts
+     entirely (mirrors the splash title's reduced-motion handling). */
+  .homepage-logo::before,
+  .homepage-logo::after {
+    animation: none !important;
+    opacity: 0 !important;
   }
   /* The sway baked the sticker tilt into its keyframes, so restate it as a static
      resting pose (otherwise animation:none would flatten the tagline). */
