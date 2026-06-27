@@ -179,44 +179,50 @@
 .homepage-logo {
   position: relative;
   z-index: 1;
-  /* Bungee (solid) - NOT Bungee Shade - so the glyphs read clean and bold with no
-     built-in shade layer baked into the type. Depth is one hard drop shadow only. */
-  font-family: 'Bungee', cursive;
+  /* Bungee Shade (with a Bungee fallback) - the built-in shade layer gives the
+     wordmark its 3D body, matching the splash title exactly. */
+  font-family: 'Bungee Shade', 'Bungee', cursive;
   /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
      desktop but shrinks on short laptops to help the menu fit one screen. */
   font-size: clamp(34px, min(7.5vw, 9vh), 88px);
   line-height: 1;
   color: #FF2EC4;
-  -webkit-text-stroke: 4px #000;
+  -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
   display: inline-block;
   text-align: center;
-  /* Resting pose - a slight off-axis tilt, on-brand, sitting still (no beat slam). */
+  /* Resting pose. The beat-driven motion is a discrete one-shot POP fired by
+     data-beat (see below), not a continuous transform - so the wordmark sits
+     still and snaps on each detected drum hit instead of bobbing smoothly. */
   transform: rotate(-2deg) skewX(-4deg);
-  /* BOLD-CLEAN: flat DESIGN.md pink fill + black stroke + ONE solid black drop
-     shadow at a single chunky offset. No multilayer extrude, no glow, no gradient -
-     a confident hand-painted block, not a busy 3D sign. (Overrides the shared
-     .wall-handstyle extrude.) */
-  text-shadow: 8px 8px 0 #000;
-  /* Compositor hint: the beat-pop animates transform + text-shadow. */
+  /* HERO production-piece block (overrides the shared .wall-handstyle extrude -
+     this is THE focal art): a lit top edge for volume, then a deep spray-can 3D
+     extrude graded from the pink fill down through magenta/purple to a hard black
+     cast. This is the ORIGINAL look the bold-clean reweight flattened. */
+  text-shadow:
+    0 -2px 0 rgba(255, 184, 227, 0.6),
+    2px 2px 0 #D41A9E,
+    4px 4px 0 #B81E8E,
+    6px 6px 0 #7A1460,
+    8px 9px 0 #4A0C3C,
+    10px 12px 0 #000;
   will-change: transform, text-shadow;
 }
 
-/* The magenta HERO HALO glow, the paint drips, the multilayer 3D extrude and the
-   RGB-split chromatic flash stay REMOVED - the wordmark keeps its BOLD-CLEAN look
-   (flat fill + black stroke + one hard drop shadow). Only the beat-driven MOTION is
-   wired back below. The .homepage-logo-drip element is still in the markup; hide it. */
+/* The paint drips stay OFF (the JSX element is still in the markup; hide it) - the
+   restored title is the wordmark itself, no extra decorative siblings. The HERO HALO
+   glow is intentionally NOT restored either (the splash title has none; this keeps the
+   menu title matching it). */
 .homepage-logo-drip {
   display: none;
 }
 
-/* CRISP beat hit on the title: when useBeatSync flips data-beat="true" (~120ms on a
-   detected kick) the wordmark snaps up + out (scaled by --beat-intensity) and its hard
-   drop shadow slams bigger, then both settle back. data-beat is cleared between hits so
-   the one-shot animations restart on the next beat. The keyframes carry the resting
-   rotate/skew pose and the resting 8px drop shadow, so ONLY the motion fires - the
-   bold-clean LOOK is unchanged at rest. (This is the beat motion the bold-clean reweight
-   dropped; restored here without touching the look.) */
+/* CRISP beat hit on the title (heaviest effect): when useBeatSync flips
+   data-beat="true" (~120ms on a detected kick) the wordmark snaps up + out (scaled by
+   --beat-intensity), its 3D extrude slams bigger then back, and the RGB-split clones
+   (below) flash. The attribute is removed between beats so the animations restart
+   cleanly on the next hit. All 120ms so they stay in sync; keyframes carry the resting
+   rotate/skew pose + the resting extrude. */
 html[data-beat='true'] .homepage-logo {
   animation: title-beat-pop 120ms ease-out, title-shadow-slam 120ms ease-out;
 }
@@ -231,13 +237,66 @@ html[data-beat='true'] .homepage-logo {
   100% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
 }
 
-/* Shadow slam re-keyed to the bold-clean SINGLE drop shadow (it was a 6-layer magenta
-   extrude before the flatten): ram the 8px offset out, then back, in sync with the pop.
-   0%/100% match the resting shadow so the look never changes between beats. */
+/* Beat slam keeps the hero's deep 3D extrude and rams it bigger on the hit, then back -
+   so the spray-can block stays consistent with the resting pose. (Original multilayer
+   extrude, restored - not the bold-clean single drop.) */
 @keyframes title-shadow-slam {
-  0% { text-shadow: 8px 8px 0 #000; }
-  40% { text-shadow: 12px 13px 0 #000; }
-  100% { text-shadow: 8px 8px 0 #000; }
+  0% {
+    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
+      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
+  }
+  40% {
+    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
+      3px 3px 0 #D41A9E, 6px 6px 0 #B81E8E, 9px 9px 0 #7A1460, 12px 13px 0 #4A0C3C, 15px 17px 0 #000;
+  }
+  100% {
+    text-shadow: 0 -2px 0 rgba(255, 184, 227, 0.6),
+      2px 2px 0 #D41A9E, 4px 4px 0 #B81E8E, 6px 6px 0 #7A1460, 8px 9px 0 #4A0C3C, 10px 12px 0 #000;
+  }
+}
+
+/* RGB / chromatic split: two text clones (cyan offset left, pink offset right) drawn
+   over the wordmark via ::before/::after from the data-text attribute. Invisible at
+   rest; on each beat they flash in offset opposite directions then snap back, for a
+   heavy chromatic-aberration hit. mix-blend-mode: screen makes the black stroke
+   transparent so only the coloured ghosts show. (Restored from the original.) */
+.homepage-logo::before,
+.homepage-logo::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  -webkit-text-stroke: inherit;
+  paint-order: inherit;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-beat='true'] .homepage-logo::before {
+  animation: title-rgb-split-left 120ms ease-out;
+  color: #2EFFE0;
+  mix-blend-mode: screen;
+}
+
+html[data-beat='true'] .homepage-logo::after {
+  animation: title-rgb-split-right 120ms ease-out;
+  color: #FF2EC4;
+  mix-blend-mode: screen;
+}
+
+@keyframes title-rgb-split-left {
+  0% { opacity: 0.7; transform: translateX(-4px) translateY(1px); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes title-rgb-split-right {
+  0% { opacity: 0.7; transform: translateX(4px) translateY(-1px); }
+  100% { opacity: 0; transform: translateX(0); }
 }
 
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
@@ -595,6 +654,8 @@ html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
   .homepage-splatter,                 /* hp-splat-drift parallax */
   .homepage-btn,                      /* btn-bounce-forever idle */
   html[data-beat='true'] .homepage-logo,                            /* title-beat-pop + shadow-slam */
+  html[data-beat='true'] .homepage-logo::before,                    /* chromatic split (cyan) */
+  html[data-beat='true'] .homepage-logo::after,                     /* chromatic split (pink) */
   html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop */
     animation: none !important;
   }
