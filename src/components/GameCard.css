@@ -1,50 +1,19 @@
 /* GameCard.css */
 
-/* Each card is wrapped in a .game-card-wrap (the grid item). The WRAPPER carries
-   the constant idle sway (rotation + drift) so the card never sits still, while
-   the inner .game-card carries scale / hover / beat-pop. Splitting them across
-   two elements lets the idle motion and the beat-pop run at the same time (you
-   can't run two transform animations on one element). */
+/* Each card is wrapped in a .game-card-wrap (the grid item). The wrapper is the
+   positioning + vertical-stagger context; the inner .game-card carries the scale
+   and hover lift. The cards sit DEAD STILL at rest - the old constant idle sway
+   (rotation + drift) was removed so the menu stops "jumping"; they react only on
+   hover now. (No resting tilt: the tilt lived only in the old sway keyframes, so
+   flat-at-rest matches the previous reduced-motion state.) */
 .game-card-wrap {
   position: relative;
-  /* Fallback idle; per-position rules below give each card its own rhythm. */
-  animation: card-idle-1 2.5s ease-in-out infinite;
 }
 
 /* Hovering raises the card above its neighbours so a scaled card can never be
    blocked by - nor block - an adjacent one. */
 .game-card-wrap:hover {
   z-index: 10;
-}
-
-/* Per-card idle: different rotation ranges, drift amounts and durations so the
-   three never sync - they sway like flyers loosely pinned to a wall. */
-.game-card-wrap:nth-child(1) { animation: card-idle-1 2.3s ease-in-out infinite; }
-.game-card-wrap:nth-child(2) { animation: card-idle-2 2.7s ease-in-out infinite; }
-.game-card-wrap:nth-child(3) { animation: card-idle-3 2.1s ease-in-out infinite; }
-
-@keyframes card-idle-1 {
-  0% { transform: rotate(-2deg) translateY(0px) translateX(0px); }
-  25% { transform: rotate(-1deg) translateY(-3px) translateX(1px); }
-  50% { transform: rotate(-3deg) translateY(1px) translateX(-1px); }
-  75% { transform: rotate(-1.5deg) translateY(-2px) translateX(2px); }
-  100% { transform: rotate(-2deg) translateY(0px) translateX(0px); }
-}
-
-@keyframes card-idle-2 {
-  0% { transform: rotate(2deg) translateY(0px) translateX(0px); }
-  25% { transform: rotate(3deg) translateY(-2px) translateX(-1px); }
-  50% { transform: rotate(1deg) translateY(2px) translateX(1px); }
-  75% { transform: rotate(2.5deg) translateY(-1px) translateX(-2px); }
-  100% { transform: rotate(2deg) translateY(0px) translateX(0px); }
-}
-
-@keyframes card-idle-3 {
-  0% { transform: rotate(-1deg) translateY(0px) translateX(0px); }
-  25% { transform: rotate(0deg) translateY(-2px) translateX(2px); }
-  50% { transform: rotate(-2deg) translateY(1px) translateX(-1px); }
-  75% { transform: rotate(-0.5deg) translateY(-3px) translateX(1px); }
-  100% { transform: rotate(-1deg) translateY(0px) translateX(0px); }
 }
 
 /* Vertical stagger so the row isn't a tidy line. No horizontal/negative margins
@@ -71,48 +40,15 @@
      three-card row shrinks on short laptops and the menu still fits one screen
      without the bottom buttons spilling past the card. */
   height: clamp(160px, min(21vw, 30vh), 280px);
-  /* Rotation/drift lives on the wrapper; this element only scales (featured via
-     --cs), skews and lifts - so the beat-pop can play over the idle sway. */
+  /* This element scales (featured via --cs) and lifts on hover. The cards no
+     longer sway or beat-pop, so it rests at its resting scale until hovered. */
   transform: scale(var(--cs, 1));
   transition: transform 0.12s, box-shadow 0.12s;
   will-change: transform, box-shadow;
 }
 
-/* Beat pop (medium weight): on each detected drum hit (data-beat on <html>) the
-   inner card pops + skews + slams its shadow ON TOP of the wrapper's idle sway.
-   The skew direction alternates per card; nth-child is taken on the WRAPPER
-   (the card is an only child of it). Hovered cards are skipped. */
-html[data-beat='true'] .game-card-wrap:nth-child(odd) .game-card:not(:hover) {
-  animation: card-beat-pop-left 120ms ease-out, card-shadow-slam 120ms ease-out;
-}
-
-html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
-  animation: card-beat-pop-right 120ms ease-out, card-shadow-slam 120ms ease-out;
-}
-
-@keyframes card-beat-pop-left {
-  0% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-  35% {
-    transform: scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
-      translateY(-5px) skewX(-4deg);
-  }
-  100% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-}
-
-@keyframes card-beat-pop-right {
-  0% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-  35% {
-    transform: scale(calc((1 + 0.04 * var(--beat-intensity, 1)) * var(--cs, 1)))
-      translateY(-5px) skewX(4deg);
-  }
-  100% { transform: scale(var(--cs, 1)) translateY(0) skewX(0deg); }
-}
-
-@keyframes card-shadow-slam {
-  0% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
-  40% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 10px 10px 0 #000; }
-  100% { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000; }
-}
+/* The card beat-pop was removed - only the menu TITLE syncs to the beat now.
+   Cards stay dead-still at rest and react solely on hover (card-hover-pop below). */
 
 .game-card.dashed-border {
   border-style: dashed;
@@ -274,7 +210,8 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   }
 }
 
-/* Honour reduced-motion: stop the idle sway. */
+/* The idle sway is now removed for everyone (not just reduced-motion); this stays
+   as belt-and-braces in case any wrapper loop is ever reintroduced. */
 @media (prefers-reduced-motion: reduce) {
   .game-card-wrap { animation: none !important; }
 }
