@@ -153,6 +153,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   return (
     <div className="homepage-wrap">
       <div className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
+        {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
+            menu's one piece of ambient motion now that the idle loops are gone.
+            Opacity-only, sits above the wall texture but below the content. */}
+        <div className="homepage-beat-glow" aria-hidden="true" />
         {/* ALLEY DEPTH: one-point perspective lines converging on a vanishing
             point behind the title, plus scale-graded graffiti receding toward it
             (tiny/faint = far, large = near). Reads as a place with depth. */}

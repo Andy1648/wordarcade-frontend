@@ -232,45 +232,14 @@ html[data-beat='true'] .homepage-logo {
   100% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
 }
 
-/* RGB / chromatic split clones drifting CONTINUOUSLY (cyan left, pink right),
-   screen-blended so the black stroke drops out and only the colour ghosts show. This
-   is copied verbatim from the splash title's treatment (continuous, always visible),
-   so the menu wordmark matches the splash. */
+/* CHROMATIC SPLIT INTENTIONALLY DROPPED. The menu title no longer carries the
+   splash's continuous cyan/pink ghost clones - the wordmark sits clean (Bungee
+   Shade body + stroke + beat-pop only). This is a deliberate divergence from the
+   splash (see the CLAUDE.md title-lock note); the ghost pseudo-elements are
+   turned off rather than removed so the markup/data-text contract stays intact. */
 .homepage-logo::before,
 .homepage-logo::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  font-family: inherit;
-  font-size: inherit;
-  -webkit-text-stroke: inherit;
-  paint-order: inherit;
-  text-align: center;
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-
-.homepage-logo::before {
-  color: #2EFFE0;
-  animation: title-rgb-left 3s ease-in-out infinite;
-}
-
-.homepage-logo::after {
-  color: #FF2EC4;
-  animation: title-rgb-right 3s ease-in-out infinite;
-}
-
-@keyframes title-rgb-left {
-  0%, 100% { transform: translateX(0); opacity: 0.45; }
-  50% { transform: translateX(-2px); opacity: 0.75; }
-}
-
-@keyframes title-rgb-right {
-  0%, 100% { transform: translateX(0); opacity: 0.45; }
-  50% { transform: translateX(2px); opacity: 0.75; }
+  display: none;
 }
 
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
@@ -527,115 +496,66 @@ html[data-beat='true'] .homepage-logo {
 }
 
 /* ============================================================= */
-/* ====================  IDLE ANIMATIONS  ====================== */
+/* ==================  BEAT-REACTIVE MOTION  ================== */
 /* ============================================================= */
 
-/* Tagline sticker: a gentle horizontal sway. The base rotate(-3deg)/skewX
-   sticker pose is baked into every keyframe so the tilt is preserved. */
-.homepage-tagline {
-  animation: tag-sway 2.5s ease-in-out infinite;
+/* The menu's idle/ambient loops (tagline sway, section-label breathe, button
+   idle bounce, splatter parallax) were intentionally REMOVED to stop the visual
+   "jumping" - every element now keeps its static resting pose (the same look its
+   reduced-motion state already showed). Motion is concentrated into exactly two
+   beat-driven moments: the title beat-pop (.homepage-logo, above) and the frame
+   glow below. Hover/press feedback is unchanged. */
+
+/* FRAME GLOW: a soft pink pool over the menu frame that pulses up on each
+   detected beat, then fades. Opacity-only (no transform/layout) over a single
+   static radial gradient, so it restarts cleanly per beat like the title pop and
+   stays 60fps. data-beat is cleared between hits, re-firing the one-shot. Sits
+   above the wall texture (z-index 0) but below the z-index:1 content, which stays
+   crisp on top. NOTE: this menu-scoped pink gradient is a documented, intentional
+   exception to the flat / no-gradient design rule. */
+.homepage-beat-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+  will-change: opacity;
+  background: radial-gradient(120% 78% at 50% 50%, transparent 46%, #FFC4D6 104%);
 }
 
-@keyframes tag-sway {
-  0% { transform: translateX(0) rotate(-3deg) skewX(-6deg); }
-  50% { transform: translateX(3px) rotate(-2deg) skewX(-6deg); }
-  100% { transform: translateX(0) rotate(-3deg) skewX(-6deg); }
+html[data-beat='true'] .homepage-beat-glow {
+  animation: menu-beat-glow 240ms ease-out;
 }
 
-/* Section label: a quiet opacity breathe (transform-free, so its skew stays). */
-.homepage-section-label {
-  animation: label-pulse 2.2s ease-in-out infinite;
-}
-
-/* Action buttons: a very subtle constant bounce that never rests. skewX(-2deg)
-   (the resting pose) is baked into each frame; the two run at slightly
-   different durations so they never sync. Hover/disabled cancel the loop so the
-   press feedback and dim state win. */
-.homepage-btn {
-  animation: btn-bounce-forever 2s ease-in-out infinite;
-}
-
-.homepage-btn-join {
-  animation-duration: 2.2s;
-  animation-delay: 0.3s;
-}
-
-.homepage-btn:hover,
-.homepage-btn:disabled,
-.homepage-btn.disabled {
-  animation: none;
-}
-
-@keyframes btn-bounce-forever {
-  0% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
-  25% { transform: skewX(-2deg) scale(0.995, 1.005) translateY(-1px); }
-  50% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(0.5px); }
-  75% { transform: skewX(-2deg) scale(0.997, 1.003) translateY(-1px); }
-  100% { transform: skewX(-2deg) scale(1.005, 0.995) translateY(1px); }
-}
-
-/* Lightest beat effect on the action buttons: a small upward kick plus a quick
-   white outline flash, in sync with the title + cards. Hovered/disabled buttons
-   are excluded so press feedback wins. The border-color flash omits 0%/100% so
-   it interpolates from/to each button's own variant border colour. */
-html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
-  animation: btn-beat-pop 120ms ease-out, outline-flash 120ms ease-out;
-}
-
-@keyframes btn-beat-pop {
-  0% { transform: skewX(-2deg) translateY(0); }
-  35% { transform: skewX(-2deg) translateY(calc(-3px * var(--beat-intensity, 1))); }
-  100% { transform: skewX(-2deg) translateY(0); }
-}
-
-@keyframes outline-flash {
-  30% { border-color: #fff; }
-}
-
-/* Parallax drift: the splatters slowly translate, with the larger corner ones
-   moving further (and faster) than the smaller inner ones for a sense of depth.
-   Uses the individual `translate` property so each keeps its static resting
-   tilt (transform: rotate) underneath. Prime-ish durations keep them desynced. */
-.homepage-splatter {
-  animation: hp-splat-drift var(--hp-dur, 23s) ease-in-out infinite alternate;
-  will-change: translate;
-}
-
-.homepage-splatter-1 { --hp-dur: 19s; --hx: 30px; --hy: 22px; }
-.homepage-splatter-2 { --hp-dur: 27s; --hx: -24px; --hy: 18px; }
-.homepage-splatter-3 { --hp-dur: 23s; --hx: 34px; --hy: -26px; }
-.homepage-splatter-4 { --hp-dur: 31s; --hx: -20px; --hy: -16px; }
-
-@keyframes hp-splat-drift {
-  from { translate: 0 0; }
-  to { translate: var(--hx, 20px) var(--hy, 20px); }
+@keyframes menu-beat-glow {
+  0% { opacity: 0; }
+  32% { opacity: calc(0.28 * var(--beat-intensity, 1)); }
+  100% { opacity: 0; }
 }
 
 /* ============================================================= */
 /* ==============  REDUCED MOTION (homepage)  ================== */
 /* ============================================================= */
 
-/* Fill the homepage's reduced-motion gap: silence ALL ambient/idle/beat-driven
-   loops - the brick-wall scroll, the starburst + speed-line spin, the splatter
-   parallax, the tagline sway, the section-label breathe, the action buttons' idle
-   bounce, and every data-beat pop (title + buttons). The page stays fully laid
-   out and legible, just calm. Resting design POSES are kept (the tagline's sticker
-   tilt, the buttons' skew), and the buttons swap their hover/press ZOOM for a
-   white-outline COLOUR cue so they still clearly respond to interaction. */
+/* Reduced-motion: silence the remaining beat-driven motion - the title beat-pop
+   and the new frame glow - on top of the (now permanently removed) idle loops.
+   The page stays fully laid out and legible, just calm. Resting design POSES are
+   kept (the tagline's sticker tilt, the buttons' skew), and the buttons swap their
+   hover/press ZOOM for a white-outline COLOUR cue so they still clearly respond to
+   interaction. The old idle selectors are retained here as belt-and-braces in case
+   a base loop is ever reintroduced. */
 @media (prefers-reduced-motion: reduce) {
-  .homepage-tagline,                  /* tag-sway */
-  .homepage-section-label,            /* label-pulse */
-  .homepage-splatter,                 /* hp-splat-drift parallax */
-  .homepage-btn,                      /* btn-bounce-forever idle */
-  html[data-beat='true'] .homepage-logo,                            /* title-beat-pop */
-  html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop */
+  .homepage-tagline,
+  .homepage-section-label,
+  .homepage-splatter,
+  .homepage-btn,
+  html[data-beat='true'] .homepage-logo,   /* title-beat-pop */
+  .homepage-beat-glow {                     /* menu-beat-glow */
     animation: none !important;
   }
-  /* The continuous chromatic split is idle motion: stop it and hide the colour ghosts
-     entirely (mirrors the splash title's reduced-motion handling). */
-  .homepage-logo::before,
-  .homepage-logo::after {
-    animation: none !important;
+  /* Keep the frame glow fully hidden when motion is reduced. */
+  .homepage-beat-glow {
     opacity: 0 !important;
   }
   /* The sway baked the sticker tilt into its keyframes, so restate it as a static

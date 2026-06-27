@@ -81,6 +81,9 @@ Rules:
   should feel dangerous, not clean.
 - One player = one color EVERYWHERE they appear (name, typing indicator, kill-feed,
   elimination, score), consistent room→game.
+- DOCUMENTED EXCEPTION to "flat colors only, no gradients": the menu's
+  `.homepage-beat-glow` is a soft pink radial-gradient pulse on the menu frame,
+  beat-driven and opacity-only. Scoped to the Homepage frame; intentional, not drift.
 
 Difficulty hues: HARD / CRAZY / HELL — [YOUR CALL: confirm the three hues if they're
 meant to be distinct heat levels].
@@ -130,6 +133,12 @@ Named motions (already built — reuse these, don't invent one-offs):
   screen white-flash, charred card on the eliminated player.
 - **IDLE** — subtle float/bob/jitter on idle elements; OFFSET so it feels alive, not
   mechanical. Hover PAUSES idle (`animation-play-state:paused`) and applies hover.
+  EXCEPTION — the MENU (Homepage) has had its idle loops removed: too many always-on
+  loops (tagline sway, label breathe, button bounce, splatter parallax) made it
+  "jump." The menu now follows an "idle = remove, beat = keep" law — static resting
+  poses, with motion concentrated into the title beat-pop + a beat-driven pink frame
+  glow (`.homepage-beat-glow`). The menu title also intentionally DROPS the splash's
+  chromatic split (it no longer matches the splash — deliberate). See CLAUDE.md.
 
 Hard rules:
 - Timing: snappy. Transitions ≤500ms, navigation wipes ~200–400ms. Persona-snappy,
