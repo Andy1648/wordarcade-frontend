@@ -116,6 +116,11 @@ html[data-view='game'] .screen-flash {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Reserve the vertical scrollbar gutter on BOTH edges so the centered content
+     stays symmetric in the true viewport and never jumps ~15px sideways when a
+     scrollbar appears/disappears between screens. (No-op where the OS uses
+     overlay scrollbars.) */
+  scrollbar-gutter: stable both-edges;
 }
 
 .app-shake.shake-light { animation: shake-light 100ms ease-in-out; }
