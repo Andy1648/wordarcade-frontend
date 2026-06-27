@@ -856,7 +856,8 @@ function ExplosionEffect() {
 
   return (
     <div className="explosion-layer" aria-hidden="true">
-      <div className="explosion-flash" />
+      {/* The white flash now lives in the single soft .impact-flash overlay (fired
+          together with the blast), so the blast body carries no second flash. */}
       <div className="explosion-blast" />
       <div className="explosion-blast inner" />
       {debris.map((d, i) => (
@@ -1464,6 +1465,23 @@ export default function GameScreen({
     }, ms);
   }
 
+  // LIGHT bomb-fail shake on the game-stage WRAPPER (not the whole app): toggles
+  // the .boom-shake class (the decaying asymmetric translate keyframe) for the
+  // animation's length so it replays on each detonation. Purely a CSS transform -
+  // no app-wide shake, no layout, no effect on input/WS/state.
+  const [boomShake, setBoomShake] = useState(false);
+  const boomShakeTimerRef = useRef(null);
+  function triggerBoomShake() {
+    if (boomShakeTimerRef.current) clearTimeout(boomShakeTimerRef.current);
+    setBoomShake(true);
+    boomShakeTimerRef.current = setTimeout(() => {
+      setBoomShake(false);
+      boomShakeTimerRef.current = null;
+    }, 470); // a touch past the 450ms animation so it fully settles
+  }
+  // The bomb wrapper, measured for the dust-puff origin on detonation.
+  const bombReactorRef = useRef(null);
+
   // Transient bomb mascot pose flash: 'celebrate' (a correct word, 300ms) or
   // 'taunt' (an opponent times out, 1s), auto-cleared back to the tension-driven
   // base pose (idle, or panic when time is dire).
@@ -1623,15 +1641,38 @@ export default function GameScreen({
     const timers = [];
 
     if (shatterIds.length) {
-      // Cinematic detonation sequence:
-      //   t=0    one-frame white IMPACT flash + a 130ms hitlag FREEZE
-      //   t=130  the explosion animation + sound + heavy shake fire (explosionKey)
-      // The 130ms freeze-frame gives the hit fighting-game weight before the blast.
-      setImpactKey((k) => k + 1);
-      freeze(130);
+      // LIGHT detonation sequence (presentation only — derived from the lives diff,
+      // never touches WS/state/turn logic):
+      //   t=0   ~60ms hit-stop: freeze the bomb + stage (animation-play-state paused)
+      //         for the beat before detonation.
+      //   t=60  detonate: a SOFT full-screen white flash + the blast/debris body + a
+      //         LIGHT decaying shake on the game-stage wrapper + a small dust puff at
+      //         the bomb. (Replaces the old app-wide 'heavy' shake.)
+      freeze(60);
       // If an OPPONENT just lost a life, the bomb mascot taunts them for a beat.
       if (shatterIds.some((id) => id !== myId)) flashBombPose('taunt', 1000);
-      timers.push(setTimeout(() => setExplosionKey((k) => k + 1), 130));
+      timers.push(
+        setTimeout(() => {
+          setImpactKey((k) => k + 1); // soft white flash
+          setExplosionKey((k) => k + 1); // blast + debris body
+          triggerBoomShake(); // light shake on the game-stage wrapper
+          // Dust puff: a small, subtle radial burst at the bomb. Cosmetic particle
+          // pool only - it rides the canvas rAF loop and never gates input/WS/state.
+          const bel = bombReactorRef.current;
+          if (bel) {
+            const r = bel.getBoundingClientRect();
+            burst(r.left + r.width / 2, r.top + r.height / 2, {
+              count: 12,
+              speed: 150,
+              spread: Math.PI * 2,
+              life: 0.55,
+              sizeMin: 2,
+              sizeMax: 6,
+              colors: ['#cabfae', '#9a8f7e', '#6b6356'],
+            });
+          }
+        }, 60)
+      );
 
       setShatteredHearts((cur) => {
         const next = { ...cur };
@@ -1640,7 +1681,7 @@ export default function GameScreen({
         });
         return next;
       });
-      // Heart shatter plays once the freeze releases (~80ms) over ~500ms.
+      // Heart shatter plays once the freeze releases over ~500ms.
       timers.push(
         setTimeout(() => {
           setShatteredHearts((cur) => {
@@ -1650,7 +1691,7 @@ export default function GameScreen({
             });
             return next;
           });
-        }, 130 + 500)
+        }, 60 + 500)
       );
     }
 
@@ -1792,13 +1833,13 @@ export default function GameScreen({
   }, [lastWordResult, gameType, sound]);
 
   // Life lost -> explosion, in lockstep with the visual detonation (explosionKey
-  // is bumped by the heart-shatter diff above). Also a heavy screen shake + a
-  // long haptic buzz.
+  // is bumped by the heart-shatter diff above). The screen shake now lives on the
+  // game-stage wrapper (triggerBoomShake, fired with the blast) instead of the old
+  // app-wide 'heavy' shake, so the jolt is LIGHT and contained to the play area.
   useEffect(() => {
     if (gameType !== 'word-bomb') return;
     if (explosionKey > 0) {
       sound.explosion();
-      onShakeRef.current?.('heavy');
       vibrate(200);
     }
   }, [explosionKey, gameType, sound]);
@@ -2168,10 +2209,10 @@ export default function GameScreen({
 
       <div
         className={`game-stage${shake && !hitlag ? ' game-shake' : ''}${
-          isSpectating ? ' spectating' : ''
-        }${critical ? ' heartbeat' : ''}${hitlag ? ' hitlag' : ''}${
-          draining ? ' draining' : ''
-        }${clutchSlow ? ' clutch-slowmo' : ''}`}
+          boomShake && !hitlag ? ' boom-shake' : ''
+        }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
+          hitlag ? ' hitlag' : ''
+        }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
         style={{ '--drain-sat': drainSat, filter: draining ? 'saturate(var(--drain-sat))' : undefined }}
       >
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
@@ -2336,6 +2377,7 @@ export default function GameScreen({
             {/* The reactor adds the one-shot recoil (accepted) / reject shake +
                 red flash when a word hits the bomb, on top of the pass throw. */}
             <div
+              ref={bombReactorRef}
               className={`bomb-reactor${bombReaction ? ` ${bombReaction}` : ''}`}
               onAnimationEnd={(e) => {
                 if (e.target === e.currentTarget) setBombReaction(null);

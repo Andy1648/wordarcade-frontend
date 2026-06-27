@@ -60,6 +60,34 @@
   100% { transform: translate(0, 0); }
 }
 
+/* BOMB-FAIL SHAKE (LIGHT): a decaying, ASYMMETRIC jolt of the play-area wrapper
+   on detonation. GPU translate3d only, peaks early and tapers to nothing over
+   ~450ms. --amp scales the whole motion (0.55 = the LIGHT setting). Declared
+   after .game-shake so it wins if an accept-shake ever overlaps a detonation. */
+.game-stage.boom-shake {
+  --amp: 0.55;
+  animation: boom-shake 450ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  will-change: transform;
+}
+
+@keyframes boom-shake {
+  0%   { transform: translate3d(0, 0, 0); }
+  10%  { transform: translate3d(calc(-10px * var(--amp, 0.55)), calc(6px * var(--amp, 0.55)), 0); }
+  22%  { transform: translate3d(calc(9px * var(--amp, 0.55)), calc(-7px * var(--amp, 0.55)), 0); }
+  35%  { transform: translate3d(calc(-7px * var(--amp, 0.55)), calc(-4px * var(--amp, 0.55)), 0); }
+  48%  { transform: translate3d(calc(6px * var(--amp, 0.55)), calc(5px * var(--amp, 0.55)), 0); }
+  62%  { transform: translate3d(calc(-4px * var(--amp, 0.55)), calc(2px * var(--amp, 0.55)), 0); }
+  78%  { transform: translate3d(calc(2px * var(--amp, 0.55)), calc(-2px * var(--amp, 0.55)), 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* Reduced-motion swap for the shake: NO movement - a colour border-pulse on the
+   wrapper instead (keeps the base offset shadow). */
+@keyframes boom-border-pulse {
+  0%, 100% { box-shadow: 7px 7px 0 #000, inset 0 0 0 0 rgba(255, 107, 61, 0); }
+  30% { box-shadow: 7px 7px 0 #000, inset 0 0 0 5px rgba(255, 107, 61, 0.85); }
+}
+
 /* Hype word popup: a throwaway tag that bursts up from small, holds, then
    blows out bigger while fading. Centered over the stage, never blocks
    clicks. Colour + tilt (--hype-rot) come from inline styles per popup. */
@@ -3328,7 +3356,8 @@ html[data-beat='true'] .cb-answer-chip {
   transition: none !important;
 }
 
-/* Anime IMPACT FRAME: one white frame right before the explosion plays. */
+/* Bomb-fail white flash: a SOFT full-screen wash fired with the blast (LIGHT
+   setting - peak 0.55, not a harsh strobe), easing out over ~250ms. */
 .impact-flash {
   position: fixed;
   inset: 0;
@@ -3336,12 +3365,12 @@ html[data-beat='true'] .cb-answer-chip {
   background: #fff;
   opacity: 0;
   pointer-events: none;
-  animation: impact-flash 50ms ease-out forwards;
+  animation: impact-flash 250ms ease-out forwards;
 }
 
 @keyframes impact-flash {
   0% { opacity: 0; }
-  40% { opacity: 0.8; }
+  30% { opacity: 0.55; }
   100% { opacity: 0; }
 }
 
@@ -3503,6 +3532,13 @@ html[data-beat='true'] .cb-answer-chip {
   .ko-burst,
   .sweat-drop {
     animation: none !important;
+  }
+  /* Bomb-fail: NO shake / NO white flash. The flash is killed above; swap the
+     wrapper shake for a static colour border-pulse (no movement) + the existing
+     K.O. cue still reads on elimination. */
+  .game-stage.boom-shake {
+    animation: boom-border-pulse 450ms ease-out both;
+    transform: none;
   }
   /* Show the K.O. statically (no violent slam) under reduced motion. */
   .ko-text {
