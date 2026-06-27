@@ -269,18 +269,7 @@
   padding: clamp(10px, 1.6vh, 20px) clamp(16px, 3vw, 44px) clamp(8px, 1.4vh, 16px);
 }
 
-/* The sprayed tag panel behind the buttons: spans the bar (a touch taller than
-   the buttons), sits at z-index 0 BEHIND them. .wall-tag-panel draws the torn
-   sprayed look; this only places + sizes it. Pulled in horizontally so its torn
-   edge frames the pair without reaching the stage rim. */
-.homepage-tag-panel {
-  top: 2px;
-  bottom: 2px;
-  left: clamp(8px, 2vw, 28px);
-  right: clamp(8px, 2vw, 28px);
-}
-
-/* Lift the buttons above the panel so the torn clip + texture never touch them. */
+/* Keep the buttons above the bar's stacking context. */
 .homepage-bottom-bar .homepage-btn {
   z-index: 1;
 }

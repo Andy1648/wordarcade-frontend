@@ -185,7 +185,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             <span style={{ left: '78%', '--len': '16px' }} />
           </div>
         </div>
-        <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
         <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
 
@@ -200,12 +199,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
           ))}
         </div>
 
-        {/* TAG PANEL: a fresh dark tag sprayed under the action buttons (rough
-            torn edges + texture + cast shadow, NOT a flat box) so CREATE / JOIN
-            stay crisp. It's a background sibling so the torn clip never bites a
-            button. */}
         <div className="homepage-bottom-bar">
-          <div className="homepage-tag-panel wall-tag-panel" aria-hidden="true" />
           <button
             className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
             onClick={handleCreateRoom}
