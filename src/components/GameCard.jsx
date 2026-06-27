@@ -43,6 +43,25 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
     }
   }
 
+  // Cursor-tracking 3D tilt: lean the card toward the pointer by writing --rx/--ry,
+  // which the :hover transform in GameCard.css turns into rotateX/rotateY. Skipped
+  // for disabled cards and under reduced-motion; reset on leave so it settles flat.
+  const TILT_DEG = 9; // max lean
+  function handlePointerMove(event) {
+    if (!game.enabled) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const el = event.currentTarget;
+    const r = el.getBoundingClientRect();
+    const px = (event.clientX - r.left) / r.width; // 0 (left) .. 1 (right)
+    const py = (event.clientY - r.top) / r.height; // 0 (top) .. 1 (bottom)
+    el.style.setProperty('--ry', `${(-(px - 0.5) * 2 * TILT_DEG).toFixed(2)}deg`);
+    el.style.setProperty('--rx', `${((py - 0.5) * 2 * TILT_DEG).toFixed(2)}deg`);
+  }
+  function handlePointerLeave(event) {
+    event.currentTarget.style.setProperty('--rx', '0deg');
+    event.currentTarget.style.setProperty('--ry', '0deg');
+  }
+
   return (
     // The wrapper is the grid item and carries the constant idle sway (rotation
     // + drift), so the inner card is free to run its beat-pop on top at the same
@@ -63,6 +82,8 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
         style={{ background: game.baseColor }}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
         role="button"
         tabIndex={game.enabled ? 0 : -1}
         aria-disabled={!game.enabled}

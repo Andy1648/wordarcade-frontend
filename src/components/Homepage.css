@@ -46,7 +46,9 @@
   width: 100%;
   /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
-  max-width: min(95vw, 1400px);
+  /* Pulled in from min(95vw, 1400px) so there's a clear margin and the outer
+     WallScene shows more around the panel - smaller, but still roomy. */
+  max-width: min(90vw, 1180px);
   border-radius: 14px;
 }
 

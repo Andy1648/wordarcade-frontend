@@ -115,7 +115,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             {'TYPE A WORD'}
           </div>
         </div>
-        <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
         <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
 

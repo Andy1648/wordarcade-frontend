@@ -74,7 +74,11 @@
   /* Rotation/drift lives on the wrapper; this element only scales (featured via
      --cs), skews and lifts - so the beat-pop can play over the idle sway. */
   transform: scale(var(--cs, 1));
-  transition: transform 0.12s, box-shadow 0.12s;
+  /* Big, FLUID hover: a smooth eased scale + lift + cursor-tracking 3D tilt (see
+     :hover). The transform eases fast enough that the tilt follows the pointer,
+     while the soft shadow grows more slowly so the lift reads as physical. */
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: transform, box-shadow;
 }
 
@@ -146,26 +150,53 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   transform: rotate(32deg);
 }
 
-/* Hover: scale up (the wrapper keeps swaying; the wrapper's hover z-index lifts
-   the whole card above its neighbours). */
+/* Hover: a BIG, obvious lift - scale up ~1.11, rise ~12px, a heavier offset
+   shadow so the card floats off the row, AND a 3D tilt that LEANS toward the
+   pointer (--rx/--ry are set per-frame by a pointermove handler in GameCard.jsx;
+   they default to 0). perspective() gives the rotate real depth; the lift is
+   applied before the rotate so the card rises straight up regardless of tilt. */
 .game-card:hover {
   /* Speed every background animation up ~40% (see GameCardArt.css). */
   --spd: 0.6;
-  animation: card-hover-pop 0.35s ease-out forwards;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
+  transform: perspective(820px) translateY(-12px)
+    scale(calc(1.11 * var(--cs, 1)))
+    rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 9px 16px 0 #000;
 }
 
 .game-card:active {
-  animation: none;
-  transform: scale(calc(0.98 * var(--cs, 1)));
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 1px 1px 0 #000;
+  transform: scale(calc(0.97 * var(--cs, 1)));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 2px 2px 0 #000;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
 }
 
-@keyframes card-hover-pop {
-  0% { transform: scale(calc(1 * var(--cs, 1))); }
-  40% { transform: scale(calc(1.08 * var(--cs, 1))); }
-  70% { transform: scale(calc(1.03 * var(--cs, 1))); }
-  100% { transform: scale(calc(1.05 * var(--cs, 1))); }
+/* Gloss/shine: a diagonal light streak that sweeps across once on hover-enter.
+   Clipped by the card's overflow:hidden; sits above art + text (z-index 4, below
+   the tape at 5) and never intercepts pointer events. */
+.game-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.38) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+}
+
+.game-card:hover::after {
+  animation: card-shine 0.6s ease-out;
+}
+
+@keyframes card-shine {
+  0% { transform: translateX(-120%); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: translateX(120%); opacity: 0; }
 }
 
 /* The animated background art (GameArt.jsx + GameCardArt.css) runs CONSTANTLY,
@@ -257,7 +288,7 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
 }
 
 .game-card.featured:hover {
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 9px 9px 0 #000;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 9px 16px 0 #000;
 }
 
 /* Phones stack the cards one per row, so the vertical stagger and the featured
@@ -274,9 +305,14 @@ html[data-beat='true'] .game-card-wrap:nth-child(even) .game-card:not(:hover) {
   }
 }
 
-/* Honour reduced-motion: stop the idle sway. */
+/* Honour reduced-motion: stop the idle sway, drop the hover scale/lift/tilt MOTION
+   and the shine sweep (the heavier shadow on hover still confirms the hover with no
+   movement). The cursor-tilt JS in GameCard.jsx is gated on the same query. */
 @media (prefers-reduced-motion: reduce) {
   .game-card-wrap { animation: none !important; }
+  .game-card { transition: box-shadow 0.2s ease; }
+  .game-card:hover { transform: scale(var(--cs, 1)); }
+  .game-card:hover::after { animation: none !important; }
 }
 
 /* Little corner sticker calling out the featured game. */
