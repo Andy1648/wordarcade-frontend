@@ -2,12 +2,17 @@
 
 /* Each card is wrapped in a .game-card-wrap (the grid item). The wrapper is the
    positioning + vertical-stagger context; the inner .game-card carries the scale
-   and hover lift. The cards sit DEAD STILL at rest - the old constant idle sway
-   (rotation + drift) was removed so the menu stops "jumping"; they react only on
-   hover now. (No resting tilt: the tilt lived only in the old sway keyframes, so
-   flat-at-rest matches the previous reduced-motion state.) */
+   and hover-pop. The cards sit DEAD STILL at rest - the old constant idle sway was
+   removed so the menu stops "jumping". Each card keeps a small STATIC resting
+   rotate (--rest-rot, the old sway's rest pose), and GameCard.jsx composes a
+   cursor-magnetic 3D lean ON TOP of that rest rotate by setting an inline
+   transform (rotate(rest) rotateX rotateY translateY). When the magnetic effect
+   is off (touch / reduced-motion / no pointer) no inline transform is set and
+   this CSS rest rotate is what shows. */
 .game-card-wrap {
   position: relative;
+  transform: rotate(var(--rest-rot, 0deg));
+  will-change: transform;
 }
 
 /* Hovering raises the card above its neighbours so a scaled card can never be
@@ -16,11 +21,12 @@
   z-index: 10;
 }
 
-/* Vertical stagger so the row isn't a tidy line. No horizontal/negative margins
-   anymore - those made the featured card overlap and block its neighbour. */
-.game-card-wrap:nth-child(1) { margin-top: 10px; }
-.game-card-wrap:nth-child(2) { margin-top: -4px; }
-.game-card-wrap:nth-child(3) { margin-top: 18px; }
+/* Vertical stagger so the row isn't a tidy line (no horizontal/negative margins -
+   those made the featured card overlap its neighbour), plus each card's static
+   resting rotate (--rest-rot), read by GameCard.jsx to compose the magnetic lean. */
+.game-card-wrap:nth-child(1) { margin-top: 10px; --rest-rot: -2deg; }
+.game-card-wrap:nth-child(2) { margin-top: -4px; --rest-rot: 2deg; }
+.game-card-wrap:nth-child(3) { margin-top: 18px; --rest-rot: -1deg; }
 
 .game-card {
   /* Animation-speed multiplier inherited by the constantly-animated card art

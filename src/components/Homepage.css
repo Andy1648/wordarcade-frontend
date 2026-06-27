@@ -297,6 +297,9 @@ html[data-beat='true'] .homepage-logo {
 
 .homepage-cards-grid {
   display: grid;
+  /* 3D depth for the cards' cursor-magnetic lean (rotateX/rotateY on each
+     .game-card-wrap reads against this parent perspective). Purely visual. */
+  perspective: 1000px;
   /* Each card grows with the viewport (min 200px, ~25vw, capped 400px) and the
      three columns centre as a group so they fill the width without stretching
      infinitely. Collapses to a single column on small screens (below). */
