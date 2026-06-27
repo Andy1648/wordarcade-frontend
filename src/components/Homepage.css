@@ -449,10 +449,30 @@
   animation: label-pulse 2.2s ease-in-out infinite;
 }
 
-/* Action buttons: NO idle animation and no beat-driven pop - the CREATE / JOIN
-   CTAs sit perfectly still at rest and react ONLY to hover (lift + edge-glow) and
-   press (squash + overshoot release), returning cleanly to rest. (The previous
-   constant btn-bounce-forever idle and the data-beat btn-beat-pop were removed.) */
+/* Action buttons: the constant idle BOUNCE stays OFF (no forever-loop), but the
+   BEAT-SYNCED pop is reactive - it responds to the music - so it stays ON. On each
+   detected drum hit (data-beat on <html>) a non-hovered CTA kicks up + flashes its
+   outline white. It's scoped to :not(:hover) so it never fights the hover lift; a
+   hovered or pressed button shows its own feedback instead. Net: the buttons pop on
+   the beat AND react to hover/press - both, not either/or. */
+html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) {
+  animation: btn-beat-pop 120ms ease-out, outline-flash 120ms ease-out;
+}
+
+/* The kick keeps the resting skewX(-2deg) pose in every frame and only adds a
+   short upward translate, so it layers over the static rest transform without a
+   jump (the 0%/100% frames equal the button's base transform). */
+@keyframes btn-beat-pop {
+  0% { transform: skewX(-2deg) translateY(0); }
+  35% { transform: skewX(-2deg) translateY(calc(-3px * var(--beat-intensity, 1))); }
+  100% { transform: skewX(-2deg) translateY(0); }
+}
+
+/* Outline flash omits 0%/100% so the border interpolates from/to each button's own
+   variant border colour. */
+@keyframes outline-flash {
+  30% { border-color: #fff; }
+}
 
 /* Parallax drift: the splatters slowly translate, with the larger corner ones
    moving further (and faster) than the smaller inner ones for a sense of depth.
@@ -479,16 +499,16 @@
 
 /* Fill the homepage's reduced-motion gap: silence ALL ambient/idle/beat-driven
    loops - the brick-wall scroll, the starburst + speed-line spin, the splatter
-   parallax, the tagline sway, and the section-label breathe. The page stays fully
-   laid out and legible, just calm. Resting design POSES are kept (the tagline's
-   sticker tilt, the buttons' skew). The CTAs no longer carry any idle/beat motion
-   to silence; under reduced motion they swap their hover LIFT and press SQUASH for
-   a no-motion cue - a white outline + the edge-glow (a static colour change, not
-   motion) - so they still clearly respond to interaction. */
+   parallax, the tagline sway, the section-label breathe, AND the CTA beat-pop. The
+   page stays fully laid out and legible, just calm. Resting design POSES are kept
+   (the tagline's sticker tilt, the buttons' skew). Under reduced motion the CTAs
+   swap their hover LIFT and press SQUASH for a no-motion cue - a white outline + the
+   edge-glow (a static colour change, not motion) - so they still clearly respond. */
 @media (prefers-reduced-motion: reduce) {
   .homepage-tagline,                  /* tag-sway */
   .homepage-section-label,            /* label-pulse */
-  .homepage-splatter {                /* hp-splat-drift parallax */
+  .homepage-splatter,                 /* hp-splat-drift parallax */
+  html[data-beat='true'] .homepage-btn:not(:hover):not(:disabled) { /* btn-beat-pop + outline-flash */
     animation: none !important;
   }
   /* The sway baked the sticker tilt into its keyframes, so restate it as a static
