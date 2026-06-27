@@ -185,7 +185,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             <span style={{ left: '78%', '--len': '16px' }} />
           </div>
         </div>
-        <div className="homepage-tagline">INSERT BRAIN TO CONTINUE</div>
 
         <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
 
