@@ -55,4 +55,59 @@ export const JUICE = {
     floaterSize: 22,
     floaterColor: '#2EFFE0',
   },
+
+  // JUICE 02 — Word Bomb tension ramp. t = 1 - remainingFraction (0 calm -> 1
+  // critical). Only the layers NOT already in GameScreen are here (the --danger
+  // vignette, bomb rattle, heartbeat, drain and panic pose are existing and stay
+  // as-is). All visuals are edge/atmosphere so the input + target letters stay
+  // legible at peak. ALL numbers tunable.
+  TENSION: {
+    ease: 6, // how fast the displayed t eases toward the real value (per second)
+
+    // Edge color grade: a transparent-center radial tint whose hue shifts
+    // teal -> orange -> red with t and whose alpha ramps to capAlpha. Center is
+    // kept clear (innerStop) so legibility is never reduced.
+    colorGrade: {
+      capAlpha: 0.28,
+      innerStop: 0.45, // 0..1 of half-diagonal kept fully transparent
+      calm: [46, 255, 224], // #2EFFE0 teal
+      warn: [255, 107, 61], // #FF6B3D orange
+      crit: [255, 46, 46], // #FF2E2E red
+      reducedCap: 0.12, // reduced-motion keeps only this faint shift
+    },
+
+    // Edge speed lines (vertical streaks hugging the L/R edges), density + alpha
+    // proportional to t. Skipped under reduced-motion.
+    speedLines: {
+      start: 0.45,
+      maxPerSide: 7,
+      color: '255, 255, 255',
+      maxAlpha: 0.22,
+      edgeBand: 90, // px from each edge the streaks live in
+    },
+
+    // Center-top prompt. HURRY! pulses in, becomes GET OUT! at the very end.
+    prompt: {
+      hurryAt: 0.6,
+      getOutAt: 0.92,
+      hurry: 'HURRY!',
+      getOut: 'GET OUT!',
+      color: '#FFE94A',
+      critColor: '#FF2E2E',
+      size: 34, // px (scaled up a touch by the pulse)
+      pulseHz: 3,
+    },
+
+    // Final-moment cosmetic throb (NO timing change): a soft full-screen red
+    // vignette breath near t -> 1. Pure opacity, reduced-motion -> faint/none.
+    finalPulse: { start: 0.9, hz: 6, maxAlpha: 0.16, color: '255, 46, 46' },
+
+    // Continuous audio voices (rumble + siren) on the shared AudioContext. The
+    // heartbeat is the EXISTING sound.heartbeat (not duplicated here).
+    audio: {
+      rumble: { start: 0.35, baseFreq: 40, freqRise: 30, maxGain: 0.16 },
+      siren: { start: 0.9, lo: 600, hi: 1000, sweepHz: 2.5, maxGain: 0.05 },
+      gainEase: 4, // per-second easing of voice gains (smooth in/out)
+    },
+  },
 };
