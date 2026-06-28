@@ -526,10 +526,10 @@ html[data-beat='true'] .homepage-logo {
   will-change: opacity;
   /* Concentrated on the OUTER frame band (transparent core out to 62%) so the
      glow rings the stage edge - which IS the visible menu frame - and the inner
-     content stays clear. Redder pink (#FF8CAA). Kept inside .homepage-stage: the
+     content stays clear. Redder pink (#FF7EC0). Kept inside .homepage-stage: the
      stage's overflow:hidden + the persistent WallScene make outward bleed unsafe,
      so no negative inset / .homepage-wrap move. */
-  background: radial-gradient(120% 82% at 50% 50%, transparent 62%, #FF8CAA 102%);
+  background: radial-gradient(120% 82% at 50% 50%, transparent 62%, #FF7EC0 102%);
 }
 
 html[data-beat='true'] .homepage-beat-glow {
@@ -538,7 +538,7 @@ html[data-beat='true'] .homepage-beat-glow {
 
 @keyframes menu-beat-glow {
   0% { opacity: 0; }
-  32% { opacity: calc(0.28 * var(--beat-intensity, 1)); }
+  32% { opacity: calc(0.20 * var(--beat-intensity, 1)); }
   100% { opacity: 0; }
 }
 

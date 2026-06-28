@@ -11,10 +11,10 @@ import './GameCard.css';
 // loop lerps every mounted card toward its target tilt, so the three cards share
 // one listener + one loop instead of each running its own. The lean composes on
 // top of each card's static resting rotate (--rest-rot, read from CSS).
-const MAXTILT = 15; // deg - peak lean at the card edge nearest the cursor
-const RANGE = 430; // px - magnetic falloff radius from each card's centre
+const MAXTILT = 22; // deg - peak lean at the card edge nearest the cursor
+const RANGE = 560; // px - magnetic falloff radius from each card's centre
 const SMOOTH = 0.16; // lerp factor toward the target each frame
-const LIFT = 12; // px - extra upward translate while hovered
+const LIFT = 18; // px - extra upward translate while hovered
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
