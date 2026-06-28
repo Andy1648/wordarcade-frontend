@@ -89,13 +89,14 @@ const CUES = {
 
   // Barely-there hover blip - lighter and quieter than tap.
   hover(c, now) {
-    tone(c, { freq: 640 + Math.random() * 80, type: 'sine', start: now, dur: 0.03, peak: 0.05 });
+    tone(c, { freq: 640 + Math.random() * 80, type: 'sine', start: now, dur: 0.03, peak: JUICE.MIX.hover });
   },
 
-  // Accepted: a pleasant two-tone rising chime (a musical fifth).
+  // Accepted: a two-tone rising chime (a musical fifth). TRIANGLE = arcade
+  // family, matching correctDing/validCue.
   accept(c, now) {
-    tone(c, { freq: 880, type: 'sine', start: now, dur: 0.08, peak: 0.22 });
-    tone(c, { freq: 1320, type: 'sine', start: now + 0.1, dur: 0.12, peak: 0.22 });
+    tone(c, { freq: 880, type: 'triangle', start: now, dur: 0.08, peak: JUICE.MIX.accept });
+    tone(c, { freq: 1320, type: 'triangle', start: now + 0.1, dur: 0.12, peak: JUICE.MIX.accept });
   },
 
   // Rejected: a short low square-wave buzz with a brief sustain.
@@ -105,8 +106,8 @@ const CUES = {
     o.type = 'square';
     o.frequency.setValueAtTime(150, now);
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(0.2, now + 0.01);
-    g.gain.setValueAtTime(0.2, now + 0.12);
+    g.gain.linearRampToValueAtTime(JUICE.MIX.wrongBuzz, now + 0.01);
+    g.gain.setValueAtTime(JUICE.MIX.wrongBuzz, now + 0.12);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
     o.connect(g).connect(getMaster(c));
     o.start(now);
@@ -167,19 +168,19 @@ const CUES = {
     o.frequency.setValueAtTime(110, now);
     o.frequency.exponentialRampToValueAtTime(42, now + 0.4); // boom bends down
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(0.4, now + 0.01);
+    g.gain.linearRampToValueAtTime(JUICE.MIX.ko, now + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
     o.connect(g).connect(dest);
     o.start(now);
     o.stop(now + 0.47);
-    noise(c, { start: now, dur: 0.18, peak: 0.4, dest }); // crack
+    noise(c, { start: now, dur: 0.18, peak: JUICE.MIX.ko, dest }); // crack
   },
 
-  // Win: an ascending C-E-G major arpeggio on clean sines.
+  // Win: an ascending C-E-G major arpeggio. TRIANGLE = arcade family (matches victory).
   win(c, now) {
-    tone(c, { freq: 523.25, type: 'sine', start: now, dur: 0.14, peak: 0.24 });
-    tone(c, { freq: 659.25, type: 'sine', start: now + 0.14, dur: 0.14, peak: 0.24 });
-    tone(c, { freq: 783.99, type: 'sine', start: now + 0.28, dur: 0.3, peak: 0.24 });
+    tone(c, { freq: 523.25, type: 'triangle', start: now, dur: 0.14, peak: JUICE.MIX.victory });
+    tone(c, { freq: 659.25, type: 'triangle', start: now + 0.14, dur: 0.14, peak: JUICE.MIX.victory });
+    tone(c, { freq: 783.99, type: 'triangle', start: now + 0.28, dur: 0.3, peak: JUICE.MIX.victory });
   },
 };
 
@@ -217,7 +218,7 @@ export function validCue(combo = 0) {
     o.frequency.setValueAtTime(base, now);
     o.frequency.exponentialRampToValueAtTime(base * 1.5, now + 0.12); // rising
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(0.2, now + 0.01);
+    g.gain.linearRampToValueAtTime(JUICE.MIX.accept, now + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
     o.connect(g).connect(getMaster(c));
     o.start(now);
@@ -244,12 +245,12 @@ export function stampThud() {
     o.frequency.setValueAtTime(160, now);
     o.frequency.exponentialRampToValueAtTime(48, now + 0.16);
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(0.34, now + 0.008);
+    g.gain.linearRampToValueAtTime(JUICE.MIX.stampThud, now + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
     o.connect(g).connect(dest);
     o.start(now);
     o.stop(now + 0.24);
-    noise(c, { start: now, dur: 0.06, peak: 0.22, dest });
+    noise(c, { start: now, dur: 0.06, peak: JUICE.MIX.stampThud * 0.7, dest });
   } catch { /* never throw */ }
 }
 
@@ -260,7 +261,7 @@ export function scoreTick(progress = 0) {
   if (!c) return;
   try {
     const p = Math.max(0, Math.min(1, progress));
-    tone(c, { freq: 520 + p * 520 + Math.random() * 30, type: 'square', start: c.currentTime, dur: 0.035, peak: 0.05 });
+    tone(c, { freq: 520 + p * 520 + Math.random() * 30, type: 'square', start: c.currentTime, dur: 0.035, peak: JUICE.MIX.scoreTick });
   } catch { /* never throw */ }
 }
 
@@ -272,7 +273,7 @@ export function fanfare() {
   try {
     const now = c.currentTime;
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
-      tone(c, { freq: f, type: 'triangle', start: now + i * 0.09, dur: 0.18, peak: 0.2 });
+      tone(c, { freq: f, type: 'triangle', start: now + i * 0.09, dur: 0.18, peak: JUICE.MIX.fanfare });
     });
   } catch { /* never throw */ }
 }
@@ -290,7 +291,7 @@ export function defeatTone() {
     o.frequency.setValueAtTime(300, now);
     o.frequency.exponentialRampToValueAtTime(90, now + 0.5);
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(0.16, now + 0.02);
+    g.gain.linearRampToValueAtTime(JUICE.MIX.defeat, now + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
     o.connect(g).connect(getMaster(c));
     o.start(now);
@@ -305,8 +306,8 @@ export function sparkle() {
   if (!c) return;
   try {
     const now = c.currentTime;
-    tone(c, { freq: 1568, type: 'triangle', start: now, dur: 0.08, peak: 0.16 });
-    tone(c, { freq: 2093, type: 'triangle', start: now + 0.08, dur: 0.1, peak: 0.16 });
+    tone(c, { freq: 1568, type: 'triangle', start: now, dur: 0.08, peak: JUICE.MIX.sparkle });
+    tone(c, { freq: 2093, type: 'triangle', start: now + 0.08, dur: 0.1, peak: JUICE.MIX.sparkle });
   } catch { /* never throw */ }
 }
 

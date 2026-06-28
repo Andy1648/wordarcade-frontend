@@ -111,6 +111,40 @@ export const JUICE = {
     },
   },
 
+  // JUICE 04 — unified SOUND MIX. One ranked level table (peak gains) for EVERY
+  // cue across both audio modules, now sharing ONE AudioContext + master. Ordered
+  // loudest -> quietest: impacts on top, UI/keystroke at the floor, so layered
+  // cues (valid + combo + tick) sum cleanly under the shared limiter. Palette law:
+  // melodic/positive = triangle, impact/body = sine + noise, ticks/UI = square,
+  // negative = saw/square. Tweak here; both modules read these.
+  MIX: {
+    explosion: 0.42, // life lost — loudest gameplay hit
+    ko: 0.34, // elimination
+    stampThud: 0.3, // results stamp slam
+    heartbeatLub: 0.26, // final-5s pulse (low freq, reads softer than its number)
+    countdownGo: 0.26, // "GO!"
+    victory: 0.22,
+    fanfare: 0.22,
+    accept: 0.18, // correctDing + validCue (shared accept identity)
+    defeat: 0.18,
+    countdown: 0.17, // 3-2-1 beeps
+    wrongBuzz: 0.16,
+    comboBreak: 0.16,
+    playerJoin: 0.15,
+    whoosh: 0.15, // wipe / open / slash family
+    skip: 0.13,
+    combo: 0.11,
+    tick: 0.09, // per-second turn tick (was 0.15)
+    clutchPing: 0.09,
+    sparkle: 0.13,
+    click: 0.06, // UI buttons (was 0.10)
+    hover: 0.05,
+    sizzle: 0.05,
+    scoreTick: 0.05,
+    keystroke: 0.04, // quietest — fires on every character (was 0.045)
+  },
+  PUNCH_MAKEUP: 1.6, // cartoon-slam makeup gain (was 2.0) — loud but less peak-hogging
+
   // JUICE 03 — Category Blitz SOLO results celebration. Presentational only: it
   // animates the DISPLAY of the score/new-best that the screen already computed.
   // isRecord (the existing pb.isNewRecord) is the WIN branch. Timings drive the
