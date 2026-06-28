@@ -12,6 +12,7 @@ import { useCombo } from '../hooks/useCombo';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetRatio,
+  shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
 import './GameScreen.css';
 
@@ -2760,6 +2761,125 @@ export default function GameScreen({
  *   - PLAY AGAIN starts a fresh 3-round game (no room detour); NEW GAME MODE
  *     drops back to the room to pick a different mode/difficulty; LEAVE exits.
  */
+// JUICE 03 — staged, SKIPPABLE celebration for the solo results screen. Purely
+// presentational: it animates the DISPLAY of the already-decided score/record
+// (it reads them, never computes/persists anything). Returns the bits the render
+// needs. A tap fast-forwards; the action buttons are never gated by it. Reduced
+// motion shows the score directly with a gentle fade and no shake/confetti/slam.
+function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
+  const C = JUICE.CELEBRATION;
+  const reduce =
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+  const [stage, setStage] = useState(reduce ? 3 : 0); // 0 entrance,1 stamp,2 score,3 stats
+  const [displayScore, setDisplayScore] = useState(reduce ? Number(score) || 0 : 0);
+  const [popping, setPopping] = useState(false);
+  const timersRef = useRef([]);
+  const rafRef = useRef(0);
+  const firedRef = useRef({ stamp: false, reveal: false });
+  const doneRef = useRef(false);
+
+  const fireStamp = () => {
+    if (firedRef.current.stamp) return;
+    firedRef.current.stamp = true;
+    stampThud();
+    if (reduce) return;
+    const card = cardRef.current;
+    if (card) setShakeRoot(card); // SCOPED shake (results card only, never whole-app)
+    juiceShake(isRecord ? C.stamp.shakeWin : C.stamp.shakeLoss);
+    screenFlash({
+      alpha: isRecord ? C.stamp.flashWin : C.stamp.flashLoss,
+      color: isRecord ? C.stamp.flashWinColor : C.stamp.flashLossColor,
+    });
+    if (!isRecord && card) {
+      const r = card.getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top + r.height * 0.3, {
+        count: C.stamp.ashCount, speed: 200, life: 1.0, colors: C.stamp.ashColors,
+      });
+    }
+  };
+
+  const fireReveal = () => {
+    if (firedRef.current.reveal) return;
+    firedRef.current.reveal = true;
+    setPopping(true);
+    timersRef.current.push(setTimeout(() => setPopping(false), 360));
+    if (isRecord) {
+      fanfare();
+      if (!reduce) {
+        const card = cardRef.current;
+        const r = card && card.getBoundingClientRect();
+        const cx = r ? r.left + r.width / 2 : window.innerWidth / 2;
+        burst(cx, window.innerHeight * 0.4, {
+          count: C.score.confettiCount, speed: C.score.confettiSpeed, spread: Math.PI * 2,
+          life: C.score.confettiLife, sizeMin: 4, sizeMax: 10, colors: C.score.confettiColors,
+        });
+      }
+      timersRef.current.push(setTimeout(() => sparkle(), 320)); // new-best badge ding
+    } else {
+      defeatTone();
+    }
+    // Pitched ticks as the stat lines stagger in.
+    for (let i = 0; i < (statLineCount || 0); i++) {
+      timersRef.current.push(setTimeout(() => scoreTick(0.5 + i * 0.08), 120 + i * C.statStagger));
+    }
+  };
+
+  const runCount = () => {
+    const target = Number(score) || 0;
+    if (target <= 0) { setDisplayScore(target); fireReveal(); setStage(3); return; }
+    const start = performance.now();
+    let lastTick = 0;
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / C.countMs);
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      const v = Math.round(target * eased);
+      setDisplayScore(v);
+      if (v - lastTick >= C.score.tickEvery) { lastTick = v; scoreTick(t); }
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        setDisplayScore(target);
+        fireReveal();
+        setStage(3);
+      }
+    };
+    rafRef.current = requestAnimationFrame(step);
+  };
+
+  const fastForward = () => {
+    if (doneRef.current || reduce) return;
+    doneRef.current = true;
+    timersRef.current.forEach(clearTimeout);
+    cancelAnimationFrame(rafRef.current);
+    fireStamp();
+    setDisplayScore(Number(score) || 0);
+    fireReveal();
+    setStage(3);
+  };
+
+  useEffect(() => {
+    if (reduce) {
+      // Gentle fade, score shown directly; audio payoff still plays (mute-gated).
+      if (isRecord) { fanfare(); sparkle(); } else { defeatTone(); }
+      return () => setShakeRoot(null);
+    }
+    const timers = timersRef.current;
+    timers.push(setTimeout(() => { setStage(1); fireStamp(); }, C.stampDelay));
+    timers.push(setTimeout(() => { setStage(2); runCount(); }, C.scoreDelay));
+    return () => {
+      timers.forEach(clearTimeout);
+      cancelAnimationFrame(rafRef.current);
+      setShakeRoot(null); // restore the default shake target on unmount
+    };
+    // Run the sequence exactly once on mount (score/isRecord are frozen by then).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return { stage, displayScore, popping, fastForward };
+}
+
 function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave, actionPending }) {
   // Resolve the personal best exactly once, on mount, and bank the new record
   // if it was beaten. Everything the render needs is frozen here.
@@ -2779,11 +2899,19 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
     };
   });
 
+  // JUICE 03 celebration: animates the DISPLAY of the score/record above. Reads
+  // pb.isNewRecord (no PB write here — that already happened in the initializer).
+  const cardRef = useRef(null);
+  const celeb = useScoreCelebration(score, pb.isNewRecord, cardRef, rounds.length);
+  const stageClass = ` celeb-stage-${celeb.stage}`;
+
   return (
-    <div className="game-wrap">
+    // Tapping anywhere fast-forwards the celebration; the action buttons below
+    // keep their own onClick and stay interactive throughout (never gated).
+    <div className="game-wrap" onClick={celeb.fastForward}>
       {pb.isNewRecord && <ConfettiEffect />}
       <div className="game-over-overlay">
-        <div className="game-over-card solo-results-card">
+        <div ref={cardRef} className={`game-over-card solo-results-card${stageClass}`}>
           <Mascot
             pose={pb.isNewRecord ? 'celebrate' : 'idle'}
             emote={pb.isNewRecord ? 'celebrate' : null}
@@ -2791,17 +2919,25 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
             className="game-over-mascot"
           />
 
-          {pb.isNewRecord && <div className="solo-new-record">NEW RECORD!</div>}
+          {pb.isNewRecord && (
+            <div className={`solo-new-record celeb-stamp${celeb.stage >= 1 ? ' slam' : ''}`}>
+              NEW RECORD!
+            </div>
+          )}
 
           <div className="solo-score-label">YOUR SCORE</div>
-          <div className="solo-score-value">
-            <CountUp to={score} duration={900} />
+          <div
+            className={`solo-score-value${celeb.stage < 2 ? ' celeb-pre-reveal' : ''}${
+              celeb.popping ? ' celeb-pop' : ''
+            }`}
+          >
+            {celeb.displayScore}
           </div>
 
           <div className="solo-category">AI CATEGORY BLITZ · 3 ROUNDS</div>
 
-          {/* Personal-best line + how-close nudge. */}
-          <div className="solo-pb-line">
+          {/* Personal-best line + how-close nudge. (Staggered in at stage 3.) */}
+          <div className="solo-pb-line celeb-statline" style={{ '--celeb-i': 0 }}>
             {pb.isNewRecord
               ? pb.hadRecord
                 ? 'YOU BEAT YOUR PERSONAL BEST!'
@@ -2809,7 +2945,7 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
               : `PERSONAL BEST: ${pb.best}`}
           </div>
           {!pb.isNewRecord && pb.hadRecord && (
-            <div className="solo-away">
+            <div className="solo-away celeb-statline" style={{ '--celeb-i': 1 }}>
               {pb.away <= 0
                 ? 'YOU TIED YOUR BEST!'
                 : `${pb.away} AWAY FROM YOUR BEST!`}
@@ -2822,8 +2958,12 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
             {rounds.length === 0 ? (
               <span className="game-used-empty">NO ROUNDS PLAYED</span>
             ) : (
-              rounds.map((r) => (
-                <div key={r.round} className="solo-round-row">
+              rounds.map((r, i) => (
+                <div
+                  key={r.round}
+                  className="solo-round-row celeb-statline"
+                  style={{ '--celeb-i': i + 2 }}
+                >
                   <span className="solo-round-cat">{(r.category || '').toUpperCase()}</span>
                   <span className="solo-round-score">+{r.roundScore}</span>
                 </div>

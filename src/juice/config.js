@@ -110,4 +110,35 @@ export const JUICE = {
       gainEase: 4, // per-second easing of voice gains (smooth in/out)
     },
   },
+
+  // JUICE 03 — Category Blitz SOLO results celebration. Presentational only: it
+  // animates the DISPLAY of the score/new-best that the screen already computed.
+  // isRecord (the existing pb.isNewRecord) is the WIN branch. Timings drive the
+  // staged sequence; the count-up READS the real final score.
+  CELEBRATION: {
+    entranceMs: 300, // card pop .85 -> 1.02 -> 1
+    stampDelay: 300, // when the stamp slams (after entrance)
+    scoreDelay: 600, // when the count-up starts (after the stamp)
+    countMs: 950, // count-up duration
+    statStagger: 110, // ms between stat lines
+
+    stamp: {
+      shakeWin: 14, // scoped card shake amplitude
+      shakeLoss: 20,
+      flashWin: 0.4, // screen flash alpha
+      flashLoss: 0.7,
+      flashWinColor: '#FFE94A',
+      flashLossColor: '#FFFFFF',
+      ashCount: 40, // dark puff on a non-record finish
+      ashColors: ['#3a3a3a', '#555555', '#222222', '#6b6356'],
+    },
+
+    score: {
+      tickEvery: 37, // pitched tick every N counted units
+      confettiCount: 120, // win-only burst at the reveal
+      confettiColors: ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF', '#FFFFFF'],
+      confettiSpeed: 540,
+      confettiLife: 1.5,
+    },
+  },
 };
