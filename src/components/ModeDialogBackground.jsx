@@ -19,7 +19,7 @@ export const MODES = {
   },
   bomb: {
     accent: '#FF6B3D', bg: ['#3a1206', '#160503'], anim: 'flame',
-    chip: 'MULTIPLAYER', t1: 'WORD', t2: 'BOMB',
+    chip: 'SOLO / MULTIPLAYER', t1: 'WORD', t2: 'BOMB',
     liner: 'Beat the bomb. Combo or choke.',
     sub: 'Turn-based · 2–8 players · type a word with the letters before it blows.',
     create: 'CREATE',

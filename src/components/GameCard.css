@@ -161,11 +161,22 @@
   white-space: pre-line;
 }
 
-.game-card-desc {
-  font-size: clamp(9px, 1.1vw, 14px);
-  font-weight: 700;
-  line-height: 1.3;
+/* Compact "AI JUDGED" pill on the AI-judged card (Category Blitz), sitting just
+   above the big title so the card reads as "AI Category Blitz" without changing
+   its two-line title text. */
+.game-card-ai-badge {
+  align-self: flex-start;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(9px, 1vw, 12px);
+  line-height: 1;
+  color: #04201c;
+  background: #2EFFE0;
+  border: 3px solid #000;
+  border-radius: 10px;
+  padding: 4px 8px;
   margin-bottom: 6px;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-2deg);
 }
 
 .game-card-badge {

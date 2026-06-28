@@ -224,12 +224,12 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
           {IconComponent && <IconComponent />}
         </div>
 
+        {game.aiJudged && (
+          <div className="game-card-ai-badge">AI JUDGED</div>
+        )}
+
         <div className="game-card-name" style={{ color: game.textColor }}>
           {game.name}
-        </div>
-
-        <div className="game-card-desc" style={{ color: game.descColor }}>
-          {game.description}
         </div>
 
         <div

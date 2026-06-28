@@ -195,6 +195,12 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
           </div>
 
           <div className="mode-dialog-lower">
+            {modeKey === 'blitz' && (
+              <div className="mode-dialog-ai-badge">
+                <span className="mode-dialog-ai-badge-ai">AI</span>
+                <span className="mode-dialog-ai-badge-judged">JUDGED</span>
+              </div>
+            )}
             <div className="mode-dialog-title">
               <span className="mode-dialog-title-w1">{mode.t1}</span>{' '}
               <span className="mode-dialog-title-w2" style={{ color: accent }}>
