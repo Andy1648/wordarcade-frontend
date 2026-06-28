@@ -15,7 +15,7 @@ export const GAMES = [
     description: 'USE THE COMBO BEFORE TIME RUNS OUT.',
     baseColor: '#2EFFE0',
     iconBg: '#FFE94A',
-    badgeText: 'SOLO / MULTIPLAYER',
+    badgeText: 'SOLO · MULTI',
     badgeBg: '#000',
     badgeColor: '#2EFFE0',
     textColor: '#000',
