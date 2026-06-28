@@ -7,6 +7,12 @@
 // game - sound simply doesn't play.
 
 import { useEffect, useRef } from 'react';
+import { getJuiceCtx, getJuiceMaster } from '../juice/audio';
+import { JUICE } from '../juice/config';
+
+// JUICE 04 — single shared mix-level table (peak gains per cue). One source of
+// truth so the whole game is balanced in one place; see juice/config.js.
+const MIX = JUICE.MIX;
 
 // ---- Module-level synthesis helpers (pure; take the live AudioContext) ----
 
@@ -45,54 +51,25 @@ function playNoise(ctx, { start, dur, peak }) {
   src.stop(start + dur + 0.01);
 }
 
-// Lazily build (once per AudioContext) a gentle master limiter that EVERY SFX
-// routes through before the speakers, so heavy simultaneous layering (e.g. a
-// keystroke tick under an accept ding under the heartbeat) can't clip. It's
-// stored on the context object itself, so it's discarded and rebuilt
-// automatically whenever the context is recreated. Falls back to the raw
-// destination if a compressor can't be made. The background-music graph has its
-// own gain/analyser chain and never touches this.
+// JUICE 04 — every SFX now routes through the ONE shared juice master limiter on
+// the ONE shared juice AudioContext (see juice/audio.js), so all game audio is
+// glued + limited together and can't clip when cues from both former systems
+// layer. `ctx` is the juice context the callers create via getCtx() below, so
+// nodes built on it connect to the same limiter. Falls back to the raw
+// destination if the shared master is unavailable.
 function getMaster(ctx) {
-  if (!ctx) return null;
-  if (!ctx.__sfxMaster) {
-    try {
-      const comp = ctx.createDynamicsCompressor();
-      const now = ctx.currentTime;
-      comp.threshold.setValueAtTime(-3, now); // only catch the loud peaks
-      comp.knee.setValueAtTime(3, now);
-      comp.ratio.setValueAtTime(12, now); // limiter-ish above the threshold
-      comp.attack.setValueAtTime(0.003, now);
-      comp.release.setValueAtTime(0.12, now);
-      comp.connect(ctx.destination);
-      ctx.__sfxMaster = comp;
-    } catch {
-      return ctx.destination;
-    }
-  }
-  return ctx.__sfxMaster;
+  return getJuiceMaster() || (ctx ? ctx.destination : null);
 }
 
 // Builds the sound API around a set of refs (so the returned object has a
 // stable identity across renders - effects can depend on it without churning).
 function createSoundApi(ctxRef, mutedRef, sizzleRef) {
-  // Lazily create (and resume) the shared AudioContext. Called on the first
-  // interaction via unlock(), and defensively by every method.
+  // JUICE 04 — use the ONE shared juice AudioContext (lazily created/resumed on
+  // first gesture by the juice singleton) instead of a second private context.
+  // ctxRef is retained only for API compatibility; it's no longer the owner, so
+  // the hook must NOT close this context on unmount (the juice layer owns it).
   function getCtx() {
-    try {
-      if (!ctxRef.current) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return null;
-        ctxRef.current = new AC();
-      }
-      // Autoplay policy can leave a freshly-made context suspended until a
-      // gesture resumes it.
-      if (ctxRef.current.state === 'suspended') {
-        ctxRef.current.resume().catch(() => {});
-      }
-      return ctxRef.current;
-    } catch {
-      return null;
-    }
+    return getJuiceCtx();
   }
 
   return {
@@ -116,7 +93,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(420 + Math.random() * 150, now); // per-key jitter
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.045, now + 0.002); // very low, fast attack
+        gain.gain.linearRampToValueAtTime(MIX.keystroke, now + 0.002); // quietest cue, fast attack
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025); // short percussive tick
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -139,9 +116,11 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(600 + u * 600, now);
+        // Pitch rises with urgency + a small per-tick jitter so the once-a-second
+        // tick doesn't machine-gun on a flat pitch.
+        osc.frequency.setValueAtTime(600 + u * 600 + Math.random() * 40, now);
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.15, now + 0.005); // 5ms attack
+        gain.gain.linearRampToValueAtTime(MIX.tick, now + 0.005); // 5ms attack (trimmed level)
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03); // 25ms release
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -177,7 +156,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
           osc.start(start);
           osc.stop(start + 0.18);
         };
-        const lub = 0.3 + i * 0.35; // 0.30 (5s) -> 0.65 (1s)
+        const lub = MIX.heartbeatLub * (0.9 + i * 0.5); // scales up as the clutch closes
         thud(now, 58, lub); // "lub"
         thud(now + 0.13, 46, lub * 0.7); // softer, lower "dub"
       } catch {
@@ -185,16 +164,17 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       }
     },
 
-    // Accepted word: a pleasant two-tone rising chime (880Hz -> 1320Hz, a
-    // musical fifth) on clean sine waves, with a 30ms gap between tones.
+    // Accepted word: a two-tone rising chime (880Hz -> 1320Hz, a musical fifth).
+    // TRIANGLE (arcade family) so it's a sibling of the Word Bomb validCue, not a
+    // different-game pure-sine ding.
     correctDing() {
       if (mutedRef.current) return;
       const ctx = getCtx();
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
-        playTone(ctx, { freq: 880, type: 'sine', start: now, dur: 0.08, peak: 0.25 });
-        playTone(ctx, { freq: 1320, type: 'sine', start: now + 0.11, dur: 0.12, peak: 0.25 });
+        playTone(ctx, { freq: 880, type: 'triangle', start: now, dur: 0.08, peak: MIX.accept });
+        playTone(ctx, { freq: 1320, type: 'triangle', start: now + 0.11, dur: 0.12, peak: MIX.accept });
       } catch {
         /* no-op */
       }
@@ -219,7 +199,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.frequency.setValueAtTime(base, now);
         osc.frequency.exponentialRampToValueAtTime(base * 1.5, now + 0.07); // quick chirp up
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.12, now + 0.008);
+        gain.gain.linearRampToValueAtTime(MIX.combo, now + 0.008);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
         osc.connect(gain).connect(dest);
         osc.start(now);
@@ -244,12 +224,12 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.frequency.setValueAtTime(520, now);
         osc.frequency.exponentialRampToValueAtTime(90, now + 0.28); // tumble down
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.18, now + 0.01);
+        gain.gain.linearRampToValueAtTime(MIX.comboBreak, now + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
         osc.connect(gain).connect(dest);
         osc.start(now);
         osc.stop(now + 0.32);
-        playNoise(ctx, { start: now, dur: 0.12, peak: 0.18 }); // glassy crack (routes to master)
+        playNoise(ctx, { start: now, dur: 0.12, peak: MIX.comboBreak }); // glassy crack (routes to master)
       } catch {
         /* no-op */
       }
@@ -271,7 +251,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, start);
           gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.linearRampToValueAtTime(0.09, start + 0.005); // light
+          gain.gain.linearRampToValueAtTime(MIX.clutchPing, start + 0.005); // light
           gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
           osc.connect(gain).connect(dest);
           osc.start(start);
@@ -296,8 +276,8 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.type = 'square';
         osc.frequency.setValueAtTime(150, now);
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.2, now + 0.01); // quick attack
-        gain.gain.setValueAtTime(0.2, now + 0.12); // sustain
+        gain.gain.linearRampToValueAtTime(MIX.wrongBuzz, now + 0.01); // quick attack (softened)
+        gain.gain.setValueAtTime(MIX.wrongBuzz, now + 0.12); // sustain
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15); // quick release
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -315,12 +295,12 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
-        playNoise(ctx, { start: now, dur: 0.4, peak: 0.4 });
+        playNoise(ctx, { start: now, dur: 0.4, peak: MIX.explosion });
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(60, now);
-        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.setValueAtTime(MIX.explosion, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -344,7 +324,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.frequency.setValueAtTime(400, now);
         osc.frequency.exponentialRampToValueAtTime(200, now + 0.2); // slide down
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.15, now + 0.01); // quick attack to 0.15
+        gain.gain.linearRampToValueAtTime(MIX.skip, now + 0.01); // quick attack
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2); // out by 200ms
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -382,7 +362,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         comp.attack.setValueAtTime(0.002, now);
         comp.release.setValueAtTime(0.1, now);
         const master = ctx.createGain();
-        master.gain.setValueAtTime(2.0, now); // makeup - cranked for a LOUD cartoon slam
+        master.gain.setValueAtTime(JUICE.PUNCH_MAKEUP, now); // makeup - LOUD cartoon slam (trimmed)
         comp.connect(master).connect(getMaster(ctx));
 
         // 1. "Bonk": a rounded triangle with a fast, comic pitch drop - the
@@ -484,8 +464,8 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
-        playTone(ctx, { freq: 523.25, type: 'triangle', start: now, dur: 0.09, peak: 0.18 }); // C5
-        playTone(ctx, { freq: 783.99, type: 'triangle', start: now + 0.08, dur: 0.13, peak: 0.18 }); // G5
+        playTone(ctx, { freq: 523.25, type: 'triangle', start: now, dur: 0.09, peak: MIX.playerJoin }); // C5
+        playTone(ctx, { freq: 783.99, type: 'triangle', start: now + 0.08, dur: 0.13, peak: MIX.playerJoin }); // G5
       } catch {
         /* no-op */
       }
@@ -502,9 +482,9 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(1000, now);
+        osc.frequency.setValueAtTime(1000 + Math.random() * 60, now); // tiny jitter on rapid presses
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.002);
+        gain.gain.linearRampToValueAtTime(MIX.click, now + 0.002);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -537,7 +517,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         filter.Q.setValueAtTime(1, now);
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.15, now + 0.025); // fast attack - lands with the slash
+        gain.gain.linearRampToValueAtTime(MIX.whoosh, now + 0.025); // fast attack - lands with the slash
         gain.gain.linearRampToValueAtTime(0.0001, now + 0.3); // out
         src.connect(filter).connect(gain).connect(getMaster(ctx));
         src.start(now);
@@ -554,7 +534,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       const ctx = getCtx();
       if (!ctx) return;
       try {
-        playTone(ctx, { freq: 660, type: 'sine', start: ctx.currentTime, dur: 0.03, peak: 0.06 });
+        playTone(ctx, { freq: 660, type: 'sine', start: ctx.currentTime, dur: 0.03, peak: MIX.hover });
       } catch {
         /* no-op */
       }
@@ -569,9 +549,9 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       try {
         const now = ctx.currentTime;
         if (isGo) {
-          playTone(ctx, { freq: 880, type: 'sine', start: now, dur: 0.2, peak: 0.3 });
+          playTone(ctx, { freq: 880, type: 'triangle', start: now, dur: 0.2, peak: MIX.countdownGo });
         } else {
-          playTone(ctx, { freq: 440, type: 'sine', start: now, dur: 0.1, peak: 0.2 });
+          playTone(ctx, { freq: 440, type: 'triangle', start: now, dur: 0.1, peak: MIX.countdown });
         }
       } catch {
         /* no-op */
@@ -591,7 +571,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(100, now);
         osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); // pitch bend down
-        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.setValueAtTime(MIX.ko, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
         osc.connect(gain).connect(getMaster(ctx));
         osc.start(now);
@@ -610,7 +590,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
         filt.frequency.setValueAtTime(3000, t);
         filt.Q.setValueAtTime(8, t);
         const nGain = ctx.createGain();
-        nGain.gain.setValueAtTime(0.25, t);
+        nGain.gain.setValueAtTime(MIX.ko * 0.55, t); // metallic clang, under the body
         nGain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
         nSrc.connect(filt).connect(nGain).connect(getMaster(ctx));
         nSrc.start(t);
@@ -627,9 +607,9 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
-        playTone(ctx, { freq: 523.25, type: 'sine', start: now, dur: 0.15, peak: 0.25 }); // C5
-        playTone(ctx, { freq: 659.25, type: 'sine', start: now + 0.15, dur: 0.15, peak: 0.25 }); // E5
-        playTone(ctx, { freq: 783.99, type: 'sine', start: now + 0.3, dur: 0.3, peak: 0.25 }); // G5
+        playTone(ctx, { freq: 523.25, type: 'triangle', start: now, dur: 0.15, peak: MIX.victory }); // C5
+        playTone(ctx, { freq: 659.25, type: 'triangle', start: now + 0.15, dur: 0.15, peak: MIX.victory }); // E5
+        playTone(ctx, { freq: 783.99, type: 'triangle', start: now + 0.3, dur: 0.3, peak: MIX.victory }); // G5
       } catch {
         /* no-op */
       }
@@ -642,8 +622,8 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
-        playTone(ctx, { freq: 400, type: 'sine', start: now, dur: 0.2, peak: 0.2 });
-        playTone(ctx, { freq: 200, type: 'sine', start: now + 0.2, dur: 0.4, peak: 0.2 });
+        playTone(ctx, { freq: 400, type: 'triangle', start: now, dur: 0.2, peak: MIX.defeat });
+        playTone(ctx, { freq: 200, type: 'triangle', start: now + 0.2, dur: 0.4, peak: MIX.defeat });
       } catch {
         /* no-op */
       }
@@ -665,7 +645,7 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
           // Gate playback (not scheduling) on mute, so unmuting mid-turn works.
           if (!mutedRef.current) {
             try {
-              playNoise(ctx, { start: ctx.currentTime, dur: 0.01, peak: 0.05 });
+              playNoise(ctx, { start: ctx.currentTime, dur: 0.01, peak: MIX.sizzle });
             } catch {
               /* no-op */
             }
@@ -707,19 +687,13 @@ export function useSoundEffects(muted) {
     mutedRef.current = muted;
   }, [muted]);
 
-  // Tear down on unmount: stop the sizzle loop and close the context.
+  // Tear down on unmount: stop the sizzle loop ONLY. The AudioContext is now the
+  // shared juice singleton (owned by the juice layer, used app-wide), so we must
+  // NOT close it here — doing so would kill all juice/particle/results audio too.
   useEffect(() => {
     return () => {
       try {
         apiRef.current?.stopSizzle();
-      } catch {
-        /* no-op */
-      }
-      try {
-        if (ctxRef.current) {
-          ctxRef.current.close();
-          ctxRef.current = null;
-        }
       } catch {
         /* no-op */
       }

@@ -3475,7 +3475,7 @@ function CategoryBlitzScreen({
             <div className="cb-reroll-row">
               <button
                 className="cb-reroll-btn"
-                onClick={onRerollCategory}
+                onClick={() => { sound.whoosh(); onRerollCategory(); }}
                 disabled={rerollsLeft <= 0 || !withinRerollWindow || rerollPending}
                 title={
                   rerollsLeft <= 0
