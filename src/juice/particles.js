@@ -22,6 +22,12 @@ let dpr = 1;
 let resizeBound = false;
 const marks = []; // persistent splats, kept so we can redraw on resize
 
+// Shockwave rings, a full-screen flash, and rising floating letters all share
+// the ONE fx canvas + the ONE rAF loop below (no new canvas, no new loop).
+const rings = []; // { x, y, maxR, life, maxLife, color, width }
+const floaters = []; // { x, y, vy, char, life, maxLife, color, size }
+let flash = null; // { life, maxLife, color, peak }
+
 // --- canvas plumbing -------------------------------------------------------
 function styleOverlay(c, z) {
   Object.assign(c.style, {
@@ -121,10 +127,71 @@ function tick(now) {
     fxCtx.fillRect(-s / 2, -s / 2, s, s);
     fxCtx.restore();
   }
+
+  // Shockwave rings: expand from r0 to maxR over their life, stroke fades out.
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i];
+    if (!frozen) {
+      r.life -= dt;
+      if (r.life <= 0) { rings.splice(i, 1); continue; }
+    }
+    any = true;
+    const t = 1 - r.life / r.maxLife; // 0 -> 1 as it expands
+    const cur = 4 + (r.maxR - 4) * t;
+    fxCtx.globalAlpha = Math.max(0, r.life / r.maxLife);
+    fxCtx.lineWidth = Math.max(0.5, r.width * (1 - t * 0.6));
+    fxCtx.strokeStyle = r.color;
+    fxCtx.beginPath();
+    fxCtx.arc(r.x, r.y, cur, 0, Math.PI * 2);
+    fxCtx.stroke();
+  }
+
+  // Floating letters: rise + fade.
+  if (floaters.length) {
+    fxCtx.textAlign = 'center';
+    fxCtx.textBaseline = 'middle';
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      if (!frozen) {
+        f.life -= dt;
+        if (f.life <= 0) { floaters.splice(i, 1); continue; }
+        f.y += f.vy * dt;
+        f.vy *= 1 - 0.6 * dt; // ease the rise
+      }
+      any = true;
+      fxCtx.globalAlpha = Math.max(0, f.life / f.maxLife);
+      fxCtx.fillStyle = f.color;
+      fxCtx.font = `700 ${f.size}px "Space Mono", monospace`;
+      fxCtx.fillText(f.char, f.x, f.y);
+    }
+  }
+
+  // Full-screen flash, drawn last so it sits over everything on the fx layer.
+  if (flash) {
+    if (!frozen) {
+      flash.life -= dt;
+      if (flash.life <= 0) flash = null;
+    }
+    if (flash) {
+      any = true;
+      fxCtx.globalAlpha = Math.max(0, flash.life / flash.maxLife) * flash.peak;
+      fxCtx.fillStyle = flash.color;
+      fxCtx.fillRect(0, 0, fxCanvas.width / dpr, fxCanvas.height / dpr);
+    }
+  }
+
   fxCtx.globalAlpha = 1;
-  // Keep looping while particles live; idle to save battery when the spray dies.
+  // Keep looping while anything lives; idle to save battery when it all dies.
   if (any) rafId = requestAnimationFrame(tick);
   else lastT = 0;
+}
+
+// Start the shared loop if it isn't already running.
+function kick() {
+  if (!rafId) {
+    lastT = 0;
+    rafId = requestAnimationFrame(tick);
+  }
 }
 
 // --- public API ------------------------------------------------------------
@@ -164,10 +231,56 @@ export function burst(x, y, opts = {}) {
     p.vr = (Math.random() - 0.5) * 12;
     spawned++;
   }
-  if (!rafId) {
-    lastT = 0;
-    rafId = requestAnimationFrame(tick);
-  }
+  kick();
+}
+
+// ring(x, y, opts): a single expanding shockwave ring on the shared fx canvas.
+// opts: radius (max), color, width, life (seconds). Pure flourish, so it is
+// SKIPPED under reduced-motion / motion-off (the flash still carries the beat).
+export function ring(x, y, opts = {}) {
+  if (!motionFlag() || reduced()) return;
+  ensureFx();
+  rings.push({
+    x,
+    y,
+    maxR: opts.radius ?? 120,
+    life: opts.life ?? 0.5,
+    maxLife: opts.life ?? 0.5,
+    color: opts.color || '#2EFFE0',
+    width: opts.width ?? 4,
+  });
+  kick();
+}
+
+// screenFlash(opts): a brief full-screen color wash on the fx canvas. opts:
+// alpha (peak), color, life. This is functional impact feedback, so it still
+// plays under reduced-motion (capped faint) — matching the "keep a faint flash
+// only" accessibility rule.
+export function screenFlash(opts = {}) {
+  ensureFx();
+  const requested = opts.alpha ?? 0.18;
+  const peak = reduced() ? Math.min(0.15, requested) : requested;
+  const life = opts.life ?? 0.18;
+  flash = { life, maxLife: life, color: opts.color || '#ffffff', peak };
+  kick();
+}
+
+// floater(x, y, char, opts): a single letter that rises + fades from a point.
+// Used for the optional keystroke flourish; skipped under reduced-motion.
+export function floater(x, y, char, opts = {}) {
+  if (!motionFlag() || reduced()) return;
+  ensureFx();
+  floaters.push({
+    x,
+    y,
+    vy: opts.vy ?? -64,
+    char: String(char),
+    life: opts.life ?? 0.7,
+    maxLife: opts.life ?? 0.7,
+    color: opts.color || '#2EFFE0',
+    size: opts.size ?? 22,
+  });
+  kick();
 }
 
 // --- persistent marks (background graffiti layer) --------------------------

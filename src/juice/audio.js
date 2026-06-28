@@ -6,6 +6,7 @@
 // audio stack never throws. Respects the global sound flag (mute).
 
 import { soundAllowed } from './settings';
+import { JUICE } from './config';
 
 let ctx = null;
 
@@ -192,6 +193,35 @@ export function sfx(name) {
   if (!cue) return;
   try {
     cue(c, c.currentTime);
+  } catch {
+    /* never let audio throw */
+  }
+}
+
+// validCue(combo): the Word Bomb accept sound — a short rising triangle whose
+// base pitch climbs with the combo so longer streaks read as higher-stakes.
+// Pitch jittered a touch so repeats don't fatigue. Replaces the flat accept
+// ding for Word Bomb (single sound per accept; honors the global mute).
+export function validCue(combo = 0) {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    const base =
+      (JUICE.VALID.cuePitchBase + combo * JUICE.VALID.cuePitchPerCombo) *
+      (0.98 + Math.random() * 0.04);
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(base, now);
+    o.frequency.exponentialRampToValueAtTime(base * 1.5, now + 0.12); // rising
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(0.2, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    o.connect(g).connect(getMaster(c));
+    o.start(now);
+    o.stop(now + 0.18);
   } catch {
     /* never let audio throw */
   }
