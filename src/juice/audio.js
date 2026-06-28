@@ -227,6 +227,89 @@ export function validCue(combo = 0) {
   }
 }
 
+// --- JUICE 03 celebration cues (results screen) ----------------------------
+// All route through the shared master limiter and honor the global mute.
+
+// Heavy stamp impact: a low thud (pitch bends down) + a short noise crack.
+export function stampThud() {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    const dest = getMaster(c);
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(160, now);
+    o.frequency.exponentialRampToValueAtTime(48, now + 0.16);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(0.34, now + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.connect(g).connect(dest);
+    o.start(now);
+    o.stop(now + 0.24);
+    noise(c, { start: now, dur: 0.06, peak: 0.22, dest });
+  } catch { /* never throw */ }
+}
+
+// One pitched tick during the score count-up; pitch rises with progress (0..1).
+export function scoreTick(progress = 0) {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const p = Math.max(0, Math.min(1, progress));
+    tone(c, { freq: 520 + p * 520 + Math.random() * 30, type: 'square', start: c.currentTime, dur: 0.035, peak: 0.05 });
+  } catch { /* never throw */ }
+}
+
+// Win fanfare: a quick bright ascending major arpeggio (richer than `win`).
+export function fanfare() {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      tone(c, { freq: f, type: 'triangle', start: now + i * 0.09, dur: 0.18, peak: 0.2 });
+    });
+  } catch { /* never throw */ }
+}
+
+// Loss sting: a short descending tone.
+export function defeatTone() {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(300, now);
+    o.frequency.exponentialRampToValueAtTime(90, now + 0.5);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(0.16, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    o.connect(g).connect(getMaster(c));
+    o.start(now);
+    o.stop(now + 0.57);
+  } catch { /* never throw */ }
+}
+
+// New-best sparkle: two quick high bright blips.
+export function sparkle() {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    tone(c, { freq: 1568, type: 'triangle', start: now, dur: 0.08, peak: 0.16 });
+    tone(c, { freq: 2093, type: 'triangle', start: now + 0.08, dur: 0.1, peak: 0.16 });
+  } catch { /* never throw */ }
+}
+
 // Shared-context accessors for the tension layer (rumble/siren) so it builds its
 // continuous voices on the ONE AudioContext + the ONE master limiter — never a
 // second context. Return null when Web Audio is unavailable. The tension layer

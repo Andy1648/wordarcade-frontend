@@ -17,7 +17,7 @@
 
 export { squash, flash, shake, hitStop, isHitStopped, setShakeRoot } from './motion';
 export { burst, mark, clearMarks, ring, screenFlash, floater, setOverlay } from './particles';
-export { sfx, validCue, unlockAudio } from './audio';
+export { sfx, validCue, unlockAudio, stampThud, scoreTick, fanfare, defeatTone, sparkle } from './audio';
 export { tensionStart, tensionStop, tensionSetRatio } from './tension';
 export { JUICE } from './config';
 export {
