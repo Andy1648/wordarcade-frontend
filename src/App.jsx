@@ -116,6 +116,16 @@ function isPreselectableGame(mode) {
   return PRESELECTABLE_GAMES.includes(mode);
 }
 
+// Portal embed (itch.io / Newgrounds / CrazyGames iframe): land straight on the
+// MENU, skipping the intro chain (loading → splash → fight-card intro → knife-
+// split). Gated so the DEFAULT build is byte-for-byte unchanged — it only flips
+// on for a portal build (VITE_PORTAL='1', set by `npm run build:portal`) or an
+// explicit ?portal=1 query param. With neither, the full intro plays as today.
+const PORTAL_SKIP_INTRO =
+  import.meta.env.VITE_PORTAL === '1' ||
+  (typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('portal') === '1');
+
 /**
  * Top-level view state manager + the single shared WebSocket connection
  * for the whole app.
@@ -312,11 +322,13 @@ function App() {
   // The bomb-fuse loading screen is the very first thing shown; it holds until
   // the socket connects (then "explodes" and hands off), at which point the
   // splash takes over. `loadingDone` flips true once that explosion finishes.
-  const [loadingDone, setLoadingDone] = useState(false);
+  // In a portal embed we skip straight to the menu, so the loading screen is
+  // pre-completed (the socket still connects in the background via useWebSocket).
+  const [loadingDone, setLoadingDone] = useState(PORTAL_SKIP_INTRO);
 
   // The splash/attract screen is shown after loading, once per session
-  // (dismissing it never re-arms it).
-  const [showSplash, setShowSplash] = useState(true);
+  // (dismissing it never re-arms it). Portal embeds skip it entirely.
+  const [showSplash, setShowSplash] = useState(!PORTAL_SKIP_INTRO);
   // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
   // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
   const [showIntro, setShowIntro] = useState(false);
