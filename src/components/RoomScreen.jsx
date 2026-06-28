@@ -45,7 +45,7 @@ function difficultyReadout(key, gameType) {
 // display text.
 const GAME_TYPES = [
   { key: 'word-bomb', label: 'WORD BOMB' },
-  { key: 'category-blitz', label: 'CATEGORY BLITZ' },
+  { key: 'category-blitz', label: 'AI CATEGORY BLITZ' },
   { key: 'imposter-word', label: 'IMPOSTER WORD' },
 ];
 

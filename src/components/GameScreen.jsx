@@ -2028,7 +2028,7 @@ export default function GameScreen({
   const categoryRaw = gameState.category || '';
   const usedItems = (isCategory ? gameState.usedAnswers : gameState.usedWords) || [];
 
-  const title = isCategory ? 'CATEGORY BLITZ' : 'WORD BOMB';
+  const title = isCategory ? 'AI CATEGORY BLITZ' : 'WORD BOMB';
   const promptLabel = isCategory
     ? 'NAME SOMETHING IN THIS CATEGORY'
     : 'TYPE A WORD CONTAINING';
@@ -2709,7 +2709,7 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
             <CountUp to={score} duration={900} />
           </div>
 
-          <div className="solo-category">CATEGORY BLITZ · 3 ROUNDS</div>
+          <div className="solo-category">AI CATEGORY BLITZ · 3 ROUNDS</div>
 
           {/* Personal-best line + how-close nudge. */}
           <div className="solo-pb-line">
@@ -3180,7 +3180,7 @@ function CategoryBlitzScreen({
           </div>
           <div className="game-header">
             <div className="game-title">
-              <SprayReveal>CATEGORY BLITZ</SprayReveal>
+              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-right">
               <div className="game-meta">
@@ -3411,7 +3411,7 @@ function CategoryBlitzScreen({
         <div className="game-stage">
           <div className="game-header">
             <div className="game-title">
-              <SprayReveal>CATEGORY BLITZ</SprayReveal>
+              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
             </div>
             <button className="game-leave-btn" onClick={onLeave}>
               LEAVE

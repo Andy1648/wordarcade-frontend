@@ -15,7 +15,7 @@ export const GAMES = [
     description: 'USE THE COMBO BEFORE TIME RUNS OUT.',
     baseColor: '#2EFFE0',
     iconBg: '#FFE94A',
-    badgeText: 'MULTIPLAYER',
+    badgeText: 'SOLO / MULTIPLAYER',
     badgeBg: '#000',
     badgeColor: '#2EFFE0',
     textColor: '#000',
@@ -38,6 +38,9 @@ export const GAMES = [
     textColor: '#000',
     descColor: '#1a0b2e',
     enabled: true,
+    // Drives the compact "AI JUDGED" pill on the card (GameCard.jsx) so it reads
+    // as "AI Category Blitz" without touching the big two-line title.
+    aiJudged: true,
   },
   {
     id: 'imposter-word',
