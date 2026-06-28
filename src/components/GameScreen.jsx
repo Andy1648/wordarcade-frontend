@@ -9,7 +9,7 @@ import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
-import { burst, flash, hitStop } from '../juice';
+import { burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE } from '../juice';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1243,7 +1243,11 @@ function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
  *   - rejected -> fire a 400ms horizontal input shake.
  * Returns { hypeKey, shake, inputShake } for the caller to render.
  */
-function useHypeFeedback(lastWordResult, inputRef, promptRef) {
+function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
+  // Word Bomb opts into the prototype-tuned values (combo-scaled burst, teal
+  // shockwave ring, screen flash, input squash, combo-pitched cue). Category
+  // Blitz passes nothing -> wordBomb=false -> its existing feel is untouched.
+  const { wordBomb = false, comboRef = null } = opts;
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
@@ -1261,33 +1265,59 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef) {
 
     if (lastWordResult.accepted) {
       setHypeKey((k) => k + 1);
-      setShake(true);
-      // Juice toolkit (additive): a LIGHT spark burst at the input + a quick confirm
-      // flash on the word-prompt box. Kept light because this fires on every accept
-      // (combo streaks too) — the shared pool caps particles so it can't tank FPS.
-      // The existing correctDing + hype + screen-shake stay; we do NOT add a second
-      // sound here (no double-fire). burst/flash are non-blocking, self-gate on
-      // reduced-motion + mute, and never touch the text input itself (DESIGN.md).
+      setShake(true); // the existing scoped .game-shake stays (one screen shake)
       const el = inputRef && inputRef.current;
-      if (el) {
-        const r = el.getBoundingClientRect();
-        burst(r.left + r.width / 2, r.top + r.height / 2, {
-          count: 10,
-          speed: 200,
-          life: 0.45,
-          colors: ['#2EFFE0', '#FFE94A', '#FF2EC4'],
-        });
+      const r = el && el.getBoundingClientRect();
+      if (wordBomb) {
+        // Word Bomb: combo-scaled blocky burst + one teal shockwave ring + a
+        // brief white screen flash + an input squash & teal border flash. The
+        // combo-pitched cue fires at the accept SOUND site (replacing correctDing),
+        // so no sound here. burst/ring/flash self-gate on reduced-motion + mute.
+        const combo = (comboRef && comboRef.current) || 0;
+        if (r) {
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          burst(cx, cy, {
+            count: JUICE.VALID.particleBase + combo * JUICE.VALID.particlePerCombo,
+            speed: JUICE.VALID.particleSpeed,
+            life: JUICE.VALID.particleLife,
+            colors: JUICE.VALID.colors,
+          });
+          ring(cx, cy, {
+            radius: JUICE.VALID.ringBase + combo * JUICE.VALID.ringPerCombo,
+            color: JUICE.VALID.ringColor,
+            width: JUICE.VALID.ringWidth,
+            life: JUICE.VALID.ringLife,
+          });
+          squash(el);
+          flash(el, JUICE.VALID.inputFlash);
+        }
+        screenFlash({ alpha: JUICE.VALID.flash, color: JUICE.VALID.flashColor });
+      } else {
+        // Category Blitz: EXACT existing behavior — light spark at the input +
+        // a confirm flash on the prompt box. Unchanged.
+        if (r) {
+          burst(r.left + r.width / 2, r.top + r.height / 2, {
+            count: 10,
+            speed: 200,
+            life: 0.45,
+            colors: ['#2EFFE0', '#FFE94A', '#FF2EC4'],
+          });
+        }
+        if (promptRef && promptRef.current) flash(promptRef.current, '#2EFFE0');
       }
-      if (promptRef && promptRef.current) flash(promptRef.current, '#2EFFE0');
       const timeoutId = setTimeout(() => setShake(false), 200);
       return () => clearTimeout(timeoutId);
     }
 
     // Rejected: shake the input so the miss is felt, not just read. The existing
-    // input shake + wrongBuzz (+ letter-shatter) already deliver the task's
-    // "shake + buzz" for a reject — we intentionally do NOT stack a second toolkit
-    // shake/sfx (that would double-fire and over-punish a fast-typing miss).
+    // input shake + wrongBuzz (+ letter-shatter) stay. For Word Bomb we ADD a
+    // red screen flash (and, since a reject has no existing SCREEN shake, that is
+    // the one place a small screen flash is new — no double-fire).
     setInputShake(true);
+    if (wordBomb) {
+      screenFlash({ alpha: JUICE.INVALID.flash, color: JUICE.INVALID.flashColor });
+    }
     const timeoutId = setTimeout(() => setInputShake(false), 400);
     return () => clearTimeout(timeoutId);
   }, [lastWordResult]);
@@ -1451,9 +1481,17 @@ export default function GameScreen({
   // The word-prompt box, flashed on accept (the "word" — NOT the text input, which
   // DESIGN.md says never to animate). Burst is anchored at the input via inputRef.
   const comboBoxRef = useRef(null);
+  // Latest personal combo, read by useHypeFeedback at accept time to scale the
+  // Word Bomb burst/ring/cue. Kept fresh from `streak` (defined below) each render.
+  const comboRef = useRef(0);
   // Hype popup + screen shake (accepted) and input shake (rejected). Called
   // before the category early-return so the hooks always run in the same order.
-  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef);
+  // Word Bomb opts into the prototype-tuned values; Category Blitz (gameType !==
+  // 'word-bomb') passes wordBomb=false and keeps its exact existing feel.
+  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef, {
+    wordBomb: gameType === 'word-bomb',
+    comboRef,
+  });
 
   // ---- Heart-shatter + elimination detection (Word Bomb only) ----
   // Each turn_update carries fresh lives/eliminated for every player. We diff
@@ -1566,6 +1604,7 @@ export default function GameScreen({
   // turn-based, so at most one of our results is in flight at a time. Reads only
   // existing accept/reject + life-loss events; no scoring/server/WS involvement.
   const streak = useCombo();
+  comboRef.current = streak.count; // keep the accept-time combo read fresh
   const comboAwaitRef = useRef(false);
   // Near-miss / clutch callout (presentational): set from the EXISTING remaining
   // time captured at submit when our own accept lands late. { key, seconds, tier }.
@@ -1751,16 +1790,23 @@ export default function GameScreen({
             const r = el && el.getBoundingClientRect();
             const x = r ? r.left + r.width / 2 : window.innerWidth / 2;
             const y = r ? r.top + r.height / 2 : window.innerHeight / 2;
+            // Bigger blast (prototype values): ~90 particles incl. white + two
+            // shockwave rings (yellow then orange). VISUALS ONLY — sound.explosion/
+            // ko + vibrate + the screen shake already fire elsewhere (no doubles).
             burst(x, y, {
-              count: 36,
-              speed: 440,
+              count: JUICE.EXPLOSION.particles,
+              speed: JUICE.EXPLOSION.particleSpeed,
               spread: Math.PI * 2,
-              life: 0.9,
+              life: JUICE.EXPLOSION.particleLife,
               sizeMin: 4,
               sizeMax: 11,
-              colors: ['#FF6B3D', '#FFE94A', '#FF2E2E'],
+              colors: JUICE.EXPLOSION.colors,
             });
+            ring(x, y, JUICE.EXPLOSION.ringYellow);
+            ring(x, y, JUICE.EXPLOSION.ringOrange);
           });
+          // One big white flash for the detonation (fires once, not per card).
+          screenFlash({ alpha: JUICE.EXPLOSION.flash, color: JUICE.EXPLOSION.flashColor });
           hitStop(120); // fire-and-forget; freezes only the debris, never input/WS
         }, 380)
       );
@@ -1862,7 +1908,9 @@ export default function GameScreen({
     if (!lastWordResult || lastWordResult === prevResultRef.current) return;
     prevResultRef.current = lastWordResult;
     if (lastWordResult.accepted) {
-      sound.correctDing();
+      // Combo-pitched rising cue REPLACES the flat correctDing for Word Bomb so
+      // longer streaks sound higher-stakes — still exactly ONE accept sound.
+      validCue(comboRef.current || 0);
       vibrate(50); // short buzz on a good word
     } else {
       sound.wrongBuzz();
@@ -2517,9 +2565,27 @@ export default function GameScreen({
                 const value = event.target.value;
                 // Soft key tick on actual character entry (a char was added, not
                 // a deletion/select). onChange already ignores modifiers/arrows.
-                if (value.length > draft.length) sound.keystroke();
+                if (value.length > draft.length) {
+                  sound.keystroke();
+                  // Optional floating-letter flourish (Word Bomb only, default
+                  // OFF via JUICE.FLOATERS — noisy at speed). Purely cosmetic.
+                  if (JUICE.FLOATERS && gameType === 'word-bomb' && inputRef.current) {
+                    const r = inputRef.current.getBoundingClientRect();
+                    floater(
+                      r.left + r.width / 2,
+                      r.top + r.height / 2,
+                      value[value.length - 1],
+                      {
+                        vy: JUICE.KEY.floaterRise,
+                        life: JUICE.KEY.floaterLife,
+                        size: JUICE.KEY.floaterSize,
+                        color: JUICE.KEY.floaterColor,
+                      }
+                    );
+                  }
+                }
                 setDraft(value);
-                pulseInput(); // tiny per-keystroke visual response
+                pulseInput(); // tiny per-keystroke visual response (+ bomb-panic)
                 // Broadcast every keystroke so others see us type in real time.
                 // No debounce - the frantic typing/deleting is the fun part.
                 if (onTypingUpdate) onTypingUpdate(value);

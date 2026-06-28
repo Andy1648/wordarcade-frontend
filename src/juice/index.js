@@ -16,8 +16,9 @@
 //   }
 
 export { squash, flash, shake, hitStop, isHitStopped, setShakeRoot } from './motion';
-export { burst, mark, clearMarks } from './particles';
-export { sfx, unlockAudio } from './audio';
+export { burst, mark, clearMarks, ring, screenFlash, floater } from './particles';
+export { sfx, validCue, unlockAudio } from './audio';
+export { JUICE } from './config';
 export {
   setMotion,
   setSound,
