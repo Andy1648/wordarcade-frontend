@@ -227,6 +227,18 @@ export function validCue(combo = 0) {
   }
 }
 
+// Shared-context accessors for the tension layer (rumble/siren) so it builds its
+// continuous voices on the ONE AudioContext + the ONE master limiter — never a
+// second context. Return null when Web Audio is unavailable. The tension layer
+// owns its own mute check (soundAllowed) since it runs persistent nodes.
+export function getJuiceCtx() {
+  return getCtx();
+}
+export function getJuiceMaster() {
+  const c = getCtx();
+  return c ? getMaster(c) : null;
+}
+
 // Create/resume the context inside a known user gesture (call from a real
 // click/keydown) so later cues are allowed to sound. Safe to call repeatedly.
 export function unlockAudio() {

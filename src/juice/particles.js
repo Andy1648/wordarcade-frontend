@@ -28,6 +28,19 @@ const rings = []; // { x, y, maxR, life, maxLife, color, width }
 const floaters = []; // { x, y, vy, char, life, maxLife, color, size }
 let flash = null; // { life, maxLife, color, peak }
 
+// An optional persistent overlay (e.g. the Word Bomb tension skin) drawn at the
+// START of every frame, BEHIND particles/flash, on this same canvas + loop. It
+// is fed (ctx, w, h, dt, frozen) and, while set, keeps the loop alive. Set to
+// null to remove it (the loop then idles once particles die). ONE overlay only.
+let overlay = null;
+export function setOverlay(fn) {
+  overlay = fn || null;
+  if (overlay) {
+    ensureFx();
+    kick();
+  }
+}
+
 // --- canvas plumbing -------------------------------------------------------
 function styleOverlay(c, z) {
   Object.assign(c.style, {
@@ -102,6 +115,19 @@ function tick(now) {
 
   fxCtx.clearRect(0, 0, fxCanvas.width / dpr, fxCanvas.height / dpr);
   let any = false;
+
+  // Persistent overlay (tension skin) draws first, behind particles/flash, and
+  // keeps the loop alive while it's installed. Wrapped so it can never break the
+  // particle loop. frozen (hitStop) is passed through so it can hold too.
+  if (overlay) {
+    any = true;
+    try {
+      overlay(fxCtx, fxCanvas.width / dpr, fxCanvas.height / dpr, dt, frozen);
+    } catch {
+      /* never let the overlay break the shared loop */
+    }
+    fxCtx.globalAlpha = 1;
+  }
   for (let i = 0; i < pool.length; i++) {
     const p = pool[i];
     if (!p.active) continue;

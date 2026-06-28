@@ -9,7 +9,10 @@ import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
-import { burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE } from '../juice';
+import {
+  burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
+  tensionStart, tensionStop, tensionSetRatio,
+} from '../juice';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1898,6 +1901,26 @@ export default function GameScreen({
     beat(); // thud immediately on entering each second, aligned to the tick
     return () => clearTimeout(timeoutId);
   }, [timerSeconds, showCountdown, gameOver, gameType, sound]);
+
+  // JUICE 02 tension skin (presentational): install it only during a live Word
+  // Bomb round and FULLY stop it (overlay removed + every audio node
+  // disconnected) on game over, leaving the screen, or unmount. It reads the
+  // remaining-time fraction below; it never drives the timer/WS/turn/scoring.
+  useEffect(() => {
+    if (gameType !== 'word-bomb' || gameOver) return undefined;
+    tensionStart();
+    return () => tensionStop();
+  }, [gameType, gameOver]);
+
+  // Feed the REAL remaining-time fraction each tick (read-only). tension.js eases
+  // a DISPLAYED value off this — it runs no clock of its own and the existing
+  // timeout/elimination event remains the sole explosion trigger.
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    const maxTimer = (gameState && gameState.timerSeconds) || 1;
+    const frac = Math.max(0, Math.min(1, timerSeconds / maxTimer));
+    tensionSetRatio(frac, { showCountdown, gameOver });
+  }, [timerSeconds, gameState, showCountdown, gameOver, gameType]);
 
   // Accepted -> rising chime; rejected -> low buzz. Keyed off the result object
   // identity (a fresh object per submission, cleared to null between) so it
