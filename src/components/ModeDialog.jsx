@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './ModeDialog.css';
+import ModeDialogBackground, { MODES } from './ModeDialogBackground';
 
 // Morph timing/feel. The dialog grows from the clicked card to a centered panel
 // over MORPH_MS with a snappy ease-out; the body fades/pops in CONTENT_DELAY into
@@ -12,11 +13,28 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const PANEL_BG = '#1a0b2e';
 const TRANSITION = `transform ${MORPH_MS}ms ${EASE}, border-radius ${MORPH_MS}ms ${EASE}, background-color ${MORPH_MS}ms ease`;
 
+// game.id -> animated-mode key (the prototype's MODES config keys).
+const MODE_KEY = {
+  'word-bomb': 'bomb',
+  'category-blitz': 'blitz',
+  'imposter-word': 'imposter',
+};
+
 function prefersReduced() {
   return (
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
+}
+
+// Darken a #rrggbb hex toward black by `f` (0..1) — used for the colored CTA
+// outline (DESIGN: outline is a darker shade of the fill, not black).
+function darken(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * (1 - f));
+  const g = Math.round(((n >> 8) & 255) * (1 - f));
+  const b = Math.round((n & 255) * (1 - f));
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 /**
@@ -25,12 +43,17 @@ function prefersReduced() {
  * live with getBoundingClientRect so the morph starts (and, on close, returns)
  * exactly on the card even as it sways. The dialog is the intermediate step:
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
+ * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
  */
 export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
   const [contentIn, setContentIn] = useState(false);
+  const [createHover, setCreateHover] = useState(false);
+
+  const modeKey = MODE_KEY[game.id] || 'bomb';
+  const mode = MODES[modeKey];
 
   // OPEN: position the (already final-sized) shell onto the card, then release to
   // its resting transform so it eases out into the dialog. Reads both rects before
@@ -130,6 +153,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
     return () => window.removeEventListener('keydown', onKey);
   }, [handleClose]);
 
+  const accent = mode.accent;
   const overlay = (
     <div className="mode-dialog-overlay" role="presentation">
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
@@ -138,10 +162,22 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
         ref={shellRef}
         role="dialog"
         aria-modal="true"
-        aria-label={`${game.name.replace('\n', ' ')} options`}
+        aria-label={`${mode.t1} ${mode.t2} options`}
         style={{ borderColor: game.baseColor }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Animated background layer: dark mode-gradient + canvas + bottom
+            legibility gradient. Sits BELOW the content; fades in with it so it
+            doesn't fight the morph cross-fade. */}
+        <div
+          className={`mode-dialog-bg${contentIn ? ' is-in' : ''}`}
+          aria-hidden="true"
+          style={{ background: `linear-gradient(160deg, ${mode.bg[0]}, ${mode.bg[1]})` }}
+        >
+          <ModeDialogBackground mode={modeKey} roar={createHover} />
+          <div className="mode-dialog-legibility" />
+        </div>
+
         <button
           className={`mode-dialog-close${contentIn ? ' is-in' : ''}`}
           onClick={handleClose}
@@ -149,24 +185,45 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
         >
           ✕
         </button>
+
         <div className={`mode-dialog-content${contentIn ? ' is-in' : ''}`}>
-          <div className="mode-dialog-name" style={{ color: game.baseColor }}>
-            {game.name}
+          <div
+            className="mode-dialog-chip"
+            style={{ color: accent, borderColor: accent }}
+          >
+            {mode.chip}
           </div>
-          <div className="mode-dialog-desc">{game.description}</div>
-          <div className="mode-dialog-actions">
-            <button
-              className="mode-dialog-btn mode-dialog-btn-create"
-              onClick={onCreate}
-            >
-              CREATE ROOM
-            </button>
-            <button
-              className="mode-dialog-btn mode-dialog-btn-join"
-              onClick={onJoin}
-            >
-              JOIN ROOM
-            </button>
+
+          <div className="mode-dialog-lower">
+            <div className="mode-dialog-title">
+              <span className="mode-dialog-title-w1">{mode.t1}</span>{' '}
+              <span className="mode-dialog-title-w2" style={{ color: accent }}>
+                {mode.t2}
+              </span>
+            </div>
+            <div className="mode-dialog-liner">{mode.liner}</div>
+            <div className="mode-dialog-howlabel" style={{ color: accent }}>
+              HOW IT WORKS
+            </div>
+            <div className="mode-dialog-sub">{mode.sub}</div>
+
+            <div className="mode-dialog-actions">
+              <button
+                className="mode-dialog-btn mode-dialog-btn-create"
+                style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                onClick={onCreate}
+                onMouseEnter={() => setCreateHover(true)}
+                onMouseLeave={() => setCreateHover(false)}
+              >
+                {mode.create}
+              </button>
+              <button
+                className="mode-dialog-btn mode-dialog-btn-join"
+                onClick={onJoin}
+              >
+                JOIN
+              </button>
+            </div>
           </div>
         </div>
       </div>
