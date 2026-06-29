@@ -59,11 +59,41 @@ const RECEDING_TAGS = [
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits, wsStatus }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
   const [navigating, setNavigating] = useState(false);
+  // CONNECT-GATING: the socket connects in the background while this menu is
+  // already live (a cold Render backend can take 30-60s). If the user fires a
+  // connect-dependent action (CREATE / JOIN) before the socket is open we must
+  // NOT no-op: we mark that control "CONNECTING…", stash the intent, and the
+  // effect below fires the SAME action the instant wsStatus flips to 'open'. When
+  // the socket is already open this path is byte-identical to firing immediately.
+  const [connecting, setConnecting] = useState(null); // 'create' | 'join' | null
+  const pendingActionRef = useRef(null);
+
+  // Run a connect-dependent action now if the socket is open; otherwise record
+  // the intent (and which control to show "CONNECTING…" on) for auto-fire.
+  function runWhenConnected(controlId, action) {
+    if (wsStatus === 'open') {
+      action();
+    } else {
+      setConnecting(controlId);
+      pendingActionRef.current = action;
+    }
+  }
+
+  // Fire the one queued intent the moment the socket opens (warm path leaves this
+  // a no-op - nothing was ever queued, so no "CONNECTING…" flash).
+  useEffect(() => {
+    if (wsStatus === 'open' && pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      setConnecting(null);
+      action();
+    }
+  }, [wsStatus]);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
@@ -124,7 +154,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     if (navigating || !dialog) return;
     sound.click();
     setNavigating(true);
-    if (onSelectGame) onSelectGame(dialog.game.id);
+    const gameId = dialog.game.id;
+    runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
   }
 
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
@@ -133,7 +164,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     if (navigating) return;
     sound.click();
     setNavigating(true);
-    if (onJoinRoom) onJoinRoom();
+    runWhenConnected('join', () => onJoinRoom && onJoinRoom());
   }
 
   function handleCreateRoom(e) {
@@ -141,7 +172,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     pressJuice(e, '#FF2EC4'); // pink accent juice (squash + spark + tick)
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
-    if (onCreateRoom) onCreateRoom();
+    runWhenConnected('create', () => onCreateRoom && onCreateRoom());
   }
 
   function handleJoinRoom(e) {
@@ -149,7 +180,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     pressJuice(e, '#2EFFE0'); // cyan accent juice
     sound.click(); // the whoosh follows from the screen transition in App
     setNavigating(true);
-    if (onJoinRoom) onJoinRoom();
+    runWhenConnected('join', () => onJoinRoom && onJoinRoom());
   }
 
   function handleCredits() {
@@ -250,7 +281,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
               disabled={navigating}
               data-juice-self
             >
-              CREATE ROOM
+              {connecting === 'create' ? 'CONNECTING…' : 'CREATE ROOM'}
             </button>
           </div>
           <div ref={joinMagnetRef} className="homepage-btn-magnet">
@@ -261,7 +292,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
               disabled={navigating}
               data-juice-self
             >
-              JOIN ROOM
+              {connecting === 'join' ? 'CONNECTING…' : 'JOIN ROOM'}
             </button>
           </div>
         </div>

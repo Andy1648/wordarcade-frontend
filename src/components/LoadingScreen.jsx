@@ -38,8 +38,6 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
   const failed = status === 'error' || status === 'closed';
 
   const [progress, setProgress] = useState(0);
-  const progressRef = useRef(0);
-  progressRef.current = progress;
   const [phase, setPhase] = useState('loading'); // 'loading' | 'exploding'
   const [textIndex, setTextIndex] = useState(0);
   const [pathLen, setPathLen] = useState(0);
@@ -70,54 +68,38 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
     }
   }, [progress, pathLen]);
 
-  // Fake progress crawl while connecting (capped at 90% until the socket opens).
-  // Recursive timeout so each tier can use its own increment + delay.
+  // FIXED-DURATION TIMED INTRO: the boot screen no longer waits on the socket -
+  // the flame burns the full fuse on a single time-based timeline (the socket
+  // connects in the background, via App). The flame reaches the bomb on schedule,
+  // then the mascot survives + explodes, then we hand off (onComplete) to the
+  // splash - REGARDLESS of wsStatus. (The socket no longer drives this component;
+  // App keeps the menu live once we hand off even if the socket is still warming.)
+  const INTRO_MS = 1900; // TUNABLE: boot intro length (full fuse burn)
   useEffect(() => {
-    if (status !== 'connecting') return undefined;
-    let alive = true;
-    let timer;
-    const schedule = () => {
-      const p = progressRef.current;
-      let inc;
-      let delay;
-      if (p < 50) { inc = 3 + Math.random() * 2; delay = 200; } // fast
-      else if (p < 70) { inc = 2; delay = 300; } // medium
-      else if (p < 85) { inc = 1; delay = 500; } // slow
-      else { inc = 0.5; delay = 800; } // crawl
-      timer = setTimeout(() => {
-        if (!alive) return;
-        setProgress((cur) => Math.min(90, cur + inc));
-        schedule();
-      }, delay);
+    let raf = 0;
+    let start = null;
+    let handoff;
+    const tick = (now) => {
+      if (start === null) start = now;
+      const t = Math.min(1, (now - start) / INTRO_MS);
+      setProgress(t * 100);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        // Flame reached the bomb: a beat of tension, the EXISTING explosion, then
+        // hand off (~600ms of explosion, mirroring the old snap+pause timing).
+        setPhase('exploding');
+        handoff = setTimeout(() => onComplete && onComplete(), 600);
+      }
     };
-    schedule();
+    raf = requestAnimationFrame(tick);
     return () => {
-      alive = false;
-      clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      clearTimeout(handoff);
     };
-  }, [status]);
-
-  // Connection open: snap to 100% (~300ms), a beat of tension, then the mascot
-  // survives + explodes, then hand off to the splash.
-  useEffect(() => {
-    if (status !== 'open') return undefined;
-    const snap = setInterval(() => {
-      setProgress((p) => {
-        const next = Math.min(100, p + 9);
-        if (next >= 100) clearInterval(snap);
-        return next;
-      });
-    }, 24);
-    const t1 = setTimeout(() => setPhase('exploding'), 520); // snap (~300) + pause (~200)
-    const t2 = setTimeout(() => onComplete && onComplete(), 1120);
-    return () => {
-      clearInterval(snap);
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-    // onComplete is stable from App; only react to the status flip.
+    // onComplete is stable from App; run the timeline once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, []);
 
   // Cycling flavor text.
   useEffect(() => {
