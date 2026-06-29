@@ -15,6 +15,18 @@
   will-change: transform;
 }
 
+/* Magnetic cursor-pull wrapper (its translate/scale + leaning box-shadow are set
+   inline by the shared controller in lib/magneticPull.js). A 1-cell grid so the
+   inner .game-card-wrap still stretches to the grid column exactly as before, and
+   it RE-PROVIDES the cards grid's perspective so the inner 3D tilt is unchanged.
+   No static transform/shadow here — at rest it's invisible. */
+.game-card-magnet {
+  display: grid;
+  perspective: 1000px;
+  border-radius: 8px;
+  will-change: transform;
+}
+
 /* Hovering raises the card above its neighbours so a scaled card can never be
    blocked by - nor block - an adjacent one. */
 .game-card-wrap:hover {
