@@ -1028,7 +1028,18 @@ function formatDuration(ms) {
  * `players` roster (final standings) seeds the per-player rows so everyone
  * appears even if they never played a word.
  */
-function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
+function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerIn = false, reduce = true }) {
+  // Entrance choreography only (JUICE 03 parity) — the data/calculations below
+  // are unchanged. reduce defaults true so any caller that doesn't opt in keeps
+  // the prior static render. Reuses JUICE 03's global @keyframes (no CSS change).
+  const summaryStyle = (i) => {
+    if (reduce) return undefined; // static, visible
+    if (!staggerIn) return { opacity: 0 }; // hidden until the stagger beat
+    return {
+      animation: 'celeb-statline-in 260ms ease-out both',
+      animationDelay: `${i * JUICE.CELEBRATION.statStagger}ms`,
+    };
+  };
   const words = gameStats.wordsPlayed || [];
   const timeouts = gameStats.timeouts || [];
   const skips = gameStats.skips || [];
@@ -1144,35 +1155,35 @@ function GameOverStats({ gameStats, players, winner, playerColors = {} }) {
     <div className="go-stats">
       <div className="go-section-label">GAME SUMMARY</div>
       <div className="go-stats-summary">
-        <div className="go-summary-item">
+        <div className="go-summary-item" style={summaryStyle(0)}>
           <div className="go-summary-value">
             <CountUp to={words.length} duration={500} />
           </div>
           <div className="go-summary-label">WORDS</div>
         </div>
-        <div className="go-summary-item">
+        <div className="go-summary-item" style={summaryStyle(1)}>
           <div className="go-summary-value">
             {longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}
           </div>
           <div className="go-summary-label">LONGEST</div>
         </div>
-        <div className="go-summary-item">
+        <div className="go-summary-item" style={summaryStyle(2)}>
           <div className="go-summary-value">
             {fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}
           </div>
           <div className="go-summary-label">FASTEST</div>
         </div>
-        <div className="go-summary-item">
+        <div className="go-summary-item" style={summaryStyle(3)}>
           <div className="go-summary-value">{formatDuration(durationMs)}</div>
           <div className="go-summary-label">SURVIVED</div>
         </div>
-        <div className="go-summary-item">
+        <div className="go-summary-item" style={summaryStyle(4)}>
           <div className="go-summary-value">
             <CountUp to={bestCombo} duration={500} />
           </div>
           <div className="go-summary-label">BEST COMBO</div>
         </div>
-        <div className="go-summary-item">
+        <div className="go-summary-item" style={summaryStyle(5)}>
           <div className="go-summary-value">
             <CountUp to={timeouts.length} duration={500} />
           </div>
@@ -1562,6 +1573,14 @@ export default function GameScreen({
   }
   // The bomb wrapper, measured for the dust-puff origin on detonation.
   const bombReactorRef = useRef(null);
+
+  // JUICE 03-parity celebration for the Word Bomb game-over card: a stamp-slam on
+  // the outcome title + a stat-stagger on the summary, mirroring the solo results
+  // hook's stage timing. Drives the title/stats entrance below; the shake scopes
+  // to this card ref (never the whole app).
+  const goCardRef = useRef(null);
+  const [goStamped, setGoStamped] = useState(false);
+  const [goStaggered, setGoStaggered] = useState(false);
 
   // Transient bomb mascot pose flash: 'celebrate' (a correct word, 300ms) or
   // 'taunt' (an opponent times out, 1s), auto-cleared back to the tension-driven
@@ -1977,22 +1996,74 @@ export default function GameScreen({
     if (won) {
       sound.victory();
       // Big-moment juice (toolkit, additive): the payoff beat. Celebratory confetti
-      // from three points across the top + a quick whole-screen win flash on the
-      // results. Cosmetic + self-gating (reduced-motion/mute aware); keeps the
-      // existing sound.victory + onShake. Richer than a normal accept.
+      // from three points across the top. The whole-screen flash + whole-app shake
+      // were REMOVED here — the stamp beat (useWbGameOverCelebration below) now owns
+      // a single SCOPED flash + card shake, matching the JUICE 03 solo results.
       const w = window.innerWidth;
       const y = window.innerHeight * 0.32;
       [0.25, 0.5, 0.75].forEach((fx) =>
         burst(w * fx, y, { count: 26, speed: 520, spread: Math.PI * 2, life: 1.4, sizeMin: 4, sizeMax: 9 })
       );
-      const root = document.getElementById('root');
-      if (root) flash(root, '#FFE94A');
     } else {
       sound.defeat();
     }
-    // Land the end screen with a screen impact - heavier for the loss slam.
-    onShakeRef.current?.(won ? 'medium' : 'heavy');
   }, [gameOver, gameType, myId, sound]);
+
+  // WB game-over STAMP + STAGGER beats (JUICE 03 parity). Runs once on the result
+  // landing, reusing JUICE.CELEBRATION delays so the two end screens are in
+  // lockstep. No count-up beat (Word Bomb has no score); the outcome takes the
+  // place of JUICE 03's record/non-record branch. Presentational only.
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return undefined;
+    if (!gameOver) {
+      // New game / cleared result — re-arm so the next game-over replays cleanly.
+      setGoStamped(false);
+      setGoStaggered(false);
+      return undefined;
+    }
+    const reduce =
+      typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        : false;
+    const won = gameOver.winnerId === myId;
+    const C = JUICE.CELEBRATION;
+    if (reduce) {
+      // Skip the slam/stagger — show the title + stats immediately. The audio
+      // payoff (sound.victory/defeat) already played in the land effect above.
+      setGoStamped(true);
+      setGoStaggered(true);
+      return () => setShakeRoot(null);
+    }
+    const timers = [];
+    // STAMP beat: slam the outcome title + a single SCOPED card shake + a flash.
+    timers.push(
+      setTimeout(() => {
+        setGoStamped(true);
+        stampThud();
+        if (goCardRef.current) setShakeRoot(goCardRef.current);
+        juiceShake(won ? C.stamp.shakeWin : C.stamp.shakeLoss);
+        // Win owns the single flash here; a LOSS already has its existing
+        // go-slam-flash, so we don't add a redundant second flash on loss.
+        if (won) screenFlash({ alpha: C.stamp.flashWin, color: C.stamp.flashWinColor });
+      }, C.stampDelay)
+    );
+    // STAGGER beat: cascade the six summary lines in, one pitched tick each.
+    timers.push(
+      setTimeout(() => {
+        setGoStaggered(true);
+        const LINES = 6; // go-summary-item count
+        for (let i = 0; i < LINES; i++) {
+          timers.push(setTimeout(() => scoreTick(0.5 + i * 0.08), i * C.statStagger));
+        }
+      }, C.scoreDelay)
+    );
+    return () => {
+      timers.forEach(clearTimeout);
+      setShakeRoot(null);
+    };
+    // Run once per result landing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameOver, gameType, myId]);
 
   // Ambient fuse crackle while it's our turn; silence between turns / at game
   // over / during the countdown. Cleanup also stops it on unmount.
@@ -2129,6 +2200,19 @@ export default function GameScreen({
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
+  // Reduced-motion gate for the game-over stamp/stagger entrance (mirrors the
+  // JUICE 03 reduce branch): animations off, content shown immediately.
+  const goReduce =
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+  // Inline stamp-slam style for the outcome title, reusing JUICE 03's existing
+  // global @keyframes (celeb-stamp-slam) so no CSS file changes are needed.
+  const goTitleStyle = goReduce
+    ? undefined
+    : goStamped
+    ? { animation: 'celeb-stamp-slam 280ms cubic-bezier(.34,1.7,.5,1) both' }
+    : { opacity: 0 };
   // (endBlurb is computed above, before the early returns, so the hook order
   // stays stable whether or not gameState has arrived yet.)
 
@@ -2688,7 +2772,7 @@ export default function GameScreen({
           {iWon && <WinBurst />}
           {!iWon && <div className="go-slam-flash" />}
           {!iWon && <LossImpact />}
-          <div className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
+          <div ref={goCardRef} className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
             {/* The mascot's emotional reaction, large and centred above the title.
                 The wrapper owns a dedicated transform (celebrate hop / defeat
                 tremble) so it never fights the mascot's own internal layers. */}
@@ -2700,10 +2784,12 @@ export default function GameScreen({
                 className="game-over-mascot"
               />
             </div>
+            {/* Outcome title routes through the JUICE 03 stamp-slam (win drops the
+                old winner-bounce); loss uses the same slam for consistency. */}
             {iWon ? (
-              <div className="game-over-title win winner-bounce">YOU WIN!</div>
+              <div className="game-over-title win" style={goTitleStyle}>YOU WIN!</div>
             ) : (
-              <div className="game-over-title eliminated">ELIMINATED</div>
+              <div className="game-over-title eliminated" style={goTitleStyle}>ELIMINATED</div>
             )}
             {!iWon && (
               <div className="game-over-winner">
@@ -2717,6 +2803,8 @@ export default function GameScreen({
               players={players}
               winner={winner}
               playerColors={playerColors}
+              staggerIn={goStaggered}
+              reduce={goReduce}
             />
             {/* Shareable result card — reads existing game-over data only. */}
             <ShareBar
