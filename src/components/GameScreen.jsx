@@ -14,6 +14,7 @@ import {
   tensionStart, tensionStop, tensionSetRatio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
+import { ShareBar } from '../share';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -2717,6 +2718,21 @@ export default function GameScreen({
               winner={winner}
               playerColors={playerColors}
             />
+            {/* Shareable result card — reads existing game-over data only. */}
+            <ShareBar
+              mode="word-bomb"
+              neon="#2EFFE0"
+              outcome={{ won: iWon }}
+              data={{
+                words: (gameStats.wordsPlayed || []).length,
+                longest:
+                  (gameStats.wordsPlayed || []).reduce(
+                    (m, w) => Math.max(m, (w.word || '').length),
+                    0
+                  ) || undefined,
+                players: players.length,
+              }}
+            />
             <div className="game-over-actions">
               {isHost ? (
                 <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
@@ -2971,6 +2987,19 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
             )}
           </div>
 
+          {/* Shareable result card — reads the existing solo score/record only. */}
+          <ShareBar
+            mode="category-blitz"
+            neon="#FF6B3D"
+            outcome={{ solo: true, isRecord: pb.isNewRecord }}
+            data={{
+              score,
+              rounds: rounds.length || undefined,
+              bestRound: rounds.length
+                ? rounds.reduce((m, r) => Math.max(m, r.roundScore || 0), 0)
+                : undefined,
+            }}
+          />
           <div className="game-over-actions">
             <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
               PLAY AGAIN
@@ -3335,6 +3364,17 @@ function CategoryBlitzScreen({
                 );
               })}
             </div>
+            {/* Shareable result card — reads the existing final scores only. */}
+            <ShareBar
+              mode="category-blitz"
+              neon="#FF6B3D"
+              outcome={{
+                solo: false,
+                place: (scores.findIndex((s) => s.id === myId) + 1) || undefined,
+                total: scores.length || undefined,
+              }}
+              data={{ score: myScore }}
+            />
             <div className="game-over-actions">
               {isHost ? (
                 <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>

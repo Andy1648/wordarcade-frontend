@@ -1,0 +1,44 @@
+/* src/share/ShareBar.css — brand-styled share control (flat, thick outline, hard
+   shadow, Bungee). --share-neon is set per mode by the caller. */
+.share-bar {
+  --share-neon: #FFE94A;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 14px 0 4px;
+}
+
+.share-btn {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #1a0b2e;
+  border: 3px solid var(--share-neon);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 12px 16px;
+  min-height: 44px; /* mobile touch target */
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.share-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+.share-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.share-btn.share-primary {
+  background: var(--share-neon);
+  color: #0d0618;
+}
+
+.share-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
