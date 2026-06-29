@@ -135,6 +135,16 @@
   position: relative;
   z-index: 2;
   flex: 1;
+  /* Let this flex child shrink below its content height and SCROLL inside the
+     shell on short viewports, instead of the action row sliding under the shell's
+     4px bottom border (overflow:hidden was clipping the CREATE/JOIN buttons +
+     their hard shadow). min-height:0 defeats the default flex min-height:auto. */
+  min-height: 0;
+  overflow-y: auto;
+  /* Breathing room so the buttons' 4px hard shadow never touches the bottom edge. */
+  padding-bottom: 8px;
+  /* Hide scrollbar chrome to keep the flat aesthetic; no layout change. */
+  scrollbar-width: none;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -142,6 +152,9 @@
   opacity: 0;
   transform: translateY(12px) scale(0.97);
   transition: opacity 0.26s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mode-dialog-content::-webkit-scrollbar {
+  display: none;
 }
 .mode-dialog-content.is-in {
   opacity: 1;
