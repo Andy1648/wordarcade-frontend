@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
+import { ShareBar } from '../share';
 import './ImposterWord.css';
 
 // A distinct, stable colour per player (by roster index) - used for answer
@@ -307,6 +308,17 @@ function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch, r
             </div>
           )}
 
+          {/* Shareable result card — reads the existing aggregate scoreboard
+              only (win + caught/fooled counts); never the secret word. */}
+          <ShareBar
+            mode="imposter-word"
+            neon="#9A1AFF"
+            outcome={{ won: iWon }}
+            data={{
+              caught: (scores.find((s) => s.id === myId) || {}).caughtCount,
+              fooled: (scores.find((s) => s.id === myId) || {}).survivedCount,
+            }}
+          />
           <div className="game-over-actions">
             {isHost && (
               <button className="game-over-rematch" onClick={() => { sound.click(); onRematch(); }} disabled={rematchPending}>
