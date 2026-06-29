@@ -27,51 +27,134 @@ import { BACKEND_WS_URL } from '../config';
  *                  rather than throwing, since UI code calling this
  *                  shouldn't have to wrap every call in a try/catch.
  *   error        - the most recent error event, if any
+ *
+ * Reconnect: on an unexpected close/error the hook re-opens the socket with
+ * exponential backoff (1s -> 2s -> 4s, cap 8s, small jitter), rewiring the same
+ * handlers. The OPTIONAL `canReconnectRef` lets the caller gate this: while
+ * `canReconnectRef.current === false` the hook does NOT open a new socket - it
+ * leaves status 'closed'/'error' for the caller to surface and just re-checks
+ * shortly, so it reconnects on its own the instant reconnect is re-allowed.
+ * This matters because the backend treats each connection as a fresh player
+ * (new id, no resume): silently reconnecting mid room/game would NOT restore the
+ * lost seat, so the app blocks reconnect while in an active room/game. When the
+ * ref is absent, reconnect is always allowed (e.g. boot / menu).
  */
-export function useWebSocket() {
+export function useWebSocket(canReconnectRef) {
   const [status, setStatus] = useState('connecting');
   // FIFO queue of received-but-unconsumed frames (see consumeMessages). A queue,
   // not a single slot, so batched/same-tick delivery can never drop a frame.
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
   const socketRef = useRef(null);
+  // Reconnect bookkeeping. `attemptRef` drives the backoff (reset on a healthy
+  // open); `timerRef` holds the single pending (re)connect/poll timer;
+  // `unmountedRef` flips true on teardown so a cleanup close never reconnects.
+  const timerRef = useRef(null);
+  const attemptRef = useRef(0);
+  const unmountedRef = useRef(false);
 
   useEffect(() => {
-    const socket = new WebSocket(BACKEND_WS_URL);
-    socketRef.current = socket;
+    unmountedRef.current = false;
 
-    socket.onopen = () => {
-      setStatus('open');
-      setError(null);
-    };
+    // Reconnect is allowed unless the caller's ref explicitly forbids it.
+    const reconnectAllowed = () =>
+      !canReconnectRef || canReconnectRef.current !== false;
 
-    socket.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(event.data);
-        // Append to the queue (functional update) so a burst of frames in one
-        // tick all survive instead of the last clobbering the rest.
-        setMessages((prev) => [...prev, parsed]);
-      } catch (parseError) {
-        // A malformed message from the server shouldn't crash the UI -
-        // log it so it's visible during development and move on.
-        console.error('Received malformed WebSocket message:', event.data, parseError);
+    const clearTimer = () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     };
 
-    socket.onerror = (event) => {
-      setStatus('error');
-      setError(event);
+    // Schedule the next (re)connect. While reconnect is currently disallowed we
+    // do NOT open a socket - we just re-poll, so the connection comes back on
+    // its own the instant the caller re-allows it (status meanwhile stays
+    // 'closed'/'error', set by the close/error handlers, for the caller to show).
+    const scheduleReconnect = () => {
+      if (unmountedRef.current) return;
+      clearTimer();
+      if (!reconnectAllowed()) {
+        timerRef.current = setTimeout(scheduleReconnect, 500);
+        return;
+      }
+      const n = attemptRef.current;
+      const base = Math.min(8000, 1000 * 2 ** n); // 1s -> 2s -> 4s -> cap 8s
+      const delay = base + Math.floor(Math.random() * 250); // small jitter
+      attemptRef.current = n + 1;
+      setStatus('connecting');
+      timerRef.current = setTimeout(connect, delay);
     };
 
-    socket.onclose = () => {
-      setStatus('closed');
-    };
+    function connect() {
+      if (unmountedRef.current) return;
+      // Re-check at the moment of opening (not just when scheduled): if the app
+      // entered a session during the backoff delay, don't open - poll instead.
+      // This makes "never reconnect while in an active session" hold regardless
+      // of timing.
+      if (!reconnectAllowed()) {
+        scheduleReconnect();
+        return;
+      }
+      const socket = new WebSocket(BACKEND_WS_URL);
+      socketRef.current = socket;
 
-    // Cleanup: close the socket when the component using this hook
-    // unmounts, so we never leak an open connection after navigating away.
+      // `socketRef.current !== socket` means a newer socket has superseded this
+      // one (a reconnect, or a StrictMode remount); its late events are stale, so
+      // ignore them - never let an abandoned socket drive status or reconnects.
+      const isCurrent = () => socketRef.current === socket;
+
+      socket.onopen = () => {
+        if (!isCurrent()) return;
+        attemptRef.current = 0; // healthy connection - reset the backoff
+        setStatus('open');
+        setError(null);
+      };
+
+      socket.onmessage = (event) => {
+        if (!isCurrent()) return;
+        try {
+          const parsed = JSON.parse(event.data);
+          // Append to the queue (functional update) so a burst of frames in one
+          // tick all survive instead of the last clobbering the rest.
+          setMessages((prev) => [...prev, parsed]);
+        } catch (parseError) {
+          // A malformed message from the server shouldn't crash the UI -
+          // log it so it's visible during development and move on.
+          console.error('Received malformed WebSocket message:', event.data, parseError);
+        }
+      };
+
+      socket.onerror = (event) => {
+        if (!isCurrent()) return;
+        setError(event);
+        if (unmountedRef.current) return;
+        // Only surface 'error' when we won't immediately retry; when reconnect is
+        // allowed we go straight to 'connecting' (no error flash during boot).
+        if (!reconnectAllowed()) setStatus('error');
+        scheduleReconnect();
+      };
+
+      socket.onclose = () => {
+        if (!isCurrent() || unmountedRef.current) return;
+        if (!reconnectAllowed()) setStatus('closed');
+        scheduleReconnect();
+      };
+    }
+
+    connect();
+
+    // Cleanup: close the socket and cancel any pending reconnect when the
+    // component using this hook unmounts, so we never leak a connection or
+    // resurrect one after navigating away.
     return () => {
-      socket.close();
+      unmountedRef.current = true;
+      clearTimer();
+      if (socketRef.current) socketRef.current.close();
     };
+    // canReconnectRef is a stable ref; the socket is managed for the hook's
+    // whole lifetime (reconnects are internal), so this runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const send = useCallback((type, payload) => {
