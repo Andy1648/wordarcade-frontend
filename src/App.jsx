@@ -1279,6 +1279,7 @@ function App() {
   } else {
     screen = (
       <Homepage
+        wsStatus={wsStatus}
         onSelectGame={(gameId) => goToLobby(gameId)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
@@ -1305,11 +1306,12 @@ function App() {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // The bomb-fuse loading screen is the very first thing shown, holding until
-  // the socket connects (it plays an explosion on connect, then calls
-  // onComplete). It's also re-shown if the connection later drops (error/closed),
-  // where it shows its "fuse went out" state with a RELIGHT (reload) button.
-  if (!loadingDone || wsStatus === 'error' || wsStatus === 'closed') {
+  // The bomb-fuse loading screen is the very first thing shown. It's now a
+  // FIXED-DURATION timed intro: it burns the fuse, explodes and hands off on its
+  // own schedule (calling onComplete), independent of the socket - which connects
+  // in the background. Once handed off we never replace the live menu with the
+  // loading/error screen, so a socket error/close after handoff can't blank the UI.
+  if (!loadingDone) {
     return (
       <>
         <LoadingScreen
