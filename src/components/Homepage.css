@@ -331,6 +331,17 @@ html[data-beat='true'] .homepage-logo {
   z-index: 1;
 }
 
+/* Magnetic cursor-pull wrapper for the CTAs. Shrink-wraps the button so the
+   flex-row layout (centered, gap) is unchanged; its translate/scale + leaning
+   box-shadow are set inline by lib/magneticPull.js. No static style of its own. */
+.homepage-btn-magnet {
+  display: inline-flex;
+  position: relative;
+  z-index: 1;
+  border-radius: 8px;
+  will-change: transform;
+}
+
 /* Discreet link to the standalone credits page. */
 .homepage-credits-link {
   display: block;

@@ -1,8 +1,9 @@
 // Homepage.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
+import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import ModeDialog from './ModeDialog';
 import GraffitiTag from './decor/GraffitiTag';
@@ -69,6 +70,14 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);
   const { sound, muted } = useSound();
+
+  // Magnetic cursor-pull on the CREATE / JOIN CTAs (wrapper divs, so the buttons'
+  // own :hover/:active transforms compose underneath). CTAs glow in their own
+  // fill color. Gated to fine-pointer + motion (see useMagneticPull).
+  const createMagnetRef = useRef(null);
+  const joinMagnetRef = useRef(null);
+  useMagneticPull(createMagnetRef, { max: 8, neon: '#FF2EC4', base: 6 });
+  useMagneticPull(joinMagnetRef, { max: 8, neon: '#2EFFE0', base: 6 });
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).
@@ -231,24 +240,30 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         </div>
 
         <div className="homepage-bottom-bar">
-          <button
-            className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
-            onClick={handleCreateRoom}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            data-juice-self
-          >
-            CREATE ROOM
-          </button>
-          <button
-            className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}
-            onClick={handleJoinRoom}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            data-juice-self
-          >
-            JOIN ROOM
-          </button>
+          {/* Magnetic wrappers — the buttons keep their own :hover/:active
+              transforms, the wrapper carries the cursor-pull (composes via nesting). */}
+          <div ref={createMagnetRef} className="homepage-btn-magnet">
+            <button
+              className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
+              onClick={handleCreateRoom}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              data-juice-self
+            >
+              CREATE ROOM
+            </button>
+          </div>
+          <div ref={joinMagnetRef} className="homepage-btn-magnet">
+            <button
+              className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}
+              onClick={handleJoinRoom}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              data-juice-self
+            >
+              JOIN ROOM
+            </button>
+          </div>
         </div>
 
         {/* Link to the standalone credits page (holds music attribution etc.). */}

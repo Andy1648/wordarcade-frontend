@@ -2,7 +2,16 @@
 import { useEffect, useRef } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
+import { useMagneticPull } from '../lib/magneticPull';
 import './GameCard.css';
+
+// Per-mode neon for the magnetic outer wrapper's proximity glow (does not touch
+// the card's own hover glow). Falls back to the card's fill for any other game.
+const CARD_NEON = {
+  'word-bomb': '#2EFFE0',
+  'category-blitz': '#FF6B3D',
+  'imposter-word': '#9A28FF',
+};
 
 // ---- CURSOR-MAGNETIC TILT (shared controller) ----------------------------
 // The mode cards sit dead still at rest but lean toward the cursor in 3D - they
@@ -124,6 +133,14 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   // hover lift without a React re-render.
   const wrapRef = useRef(null);
   const cardRef = useRef(null);
+  // Magnetic cursor-pull on a NEW OUTER wrapper, composing OUTSIDE the existing
+  // tilt/lift (which stays on .game-card-wrap). Gated to fine-pointer + motion.
+  const magnetRef = useRef(null);
+  useMagneticPull(magnetRef, {
+    max: 11,
+    neon: CARD_NEON[game.id] || game.baseColor,
+    base: 8,
+  });
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -174,12 +191,14 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   }
 
   return (
-    // The wrapper is the grid item. It sits at a static resting rotate and leans
-    // toward the cursor in 3D (driven by the shared magnet controller via an
-    // inline transform), so the inner card is free to run its hover-pop on its
-    // own element with no transform conflict. Hovering raises the wrapper's
-    // z-index so a scaled card is never blocked by - nor blocks - its neighbours.
-    <div
+    // Outermost MAGNETIC wrapper (cursor-pull translate + shadow-lean + neon
+    // glow) — a new div whose only job is that transform. It composes OUTSIDE the
+    // existing tilt/lift (which stays on .game-card-wrap) and re-provides the
+    // grid's perspective for the inner 3D tilt. See .game-card-magnet in the CSS.
+    <div ref={magnetRef} className="game-card-magnet">
+      {/* The grid item: static resting rotate + cursor-tilt via its own shared
+          controller, left fully intact — the magnet only wraps it. */}
+      <div
       ref={wrapRef}
       className="game-card-wrap"
       onMouseEnter={handleEnter}
@@ -242,6 +261,7 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
         >
           {game.badgeText}
         </div>
+      </div>
       </div>
       </div>
     </div>
