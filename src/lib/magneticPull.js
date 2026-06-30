@@ -12,7 +12,12 @@ import { useEffect } from 'react';
 
 const PULL = 0.34; // fraction of cursor-distance pulled toward
 const STIFF = 0.16; // spring stiffness toward the target
-const DAMP = 0.78; // underdamped -> slight overshoot on the spring-back
+// DAMP is the per-step velocity-RETENTION factor, so LOWER = more friction. At
+// 0.78 the spring was underdamped (~34% overshoot past target -> a visible bounce
+// on release). 0.5 is at/below the critical-damping point for STIFF=0.16, so the
+// element settles onto the target with NO overshoot while staying snappy (~27
+// frames). The magnetic pull itself (PULL/STIFF) is unchanged; only the wobble.
+const DAMP = 0.5; // critically damped -> no overshoot on the spring-back
 const ENGAGE_PAD = 40; // px past the element's half-diagonal where the pull begins
 const SCALE_MAX = 0.045; // proximity scale (1 -> 1.045 at closest approach)
 const SHADOW_LEAN = 1.4; // shadow shifts opposite the pull by offset * this
