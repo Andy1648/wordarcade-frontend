@@ -68,7 +68,7 @@ html[data-beat='true'] .screen-flash {
 
 @keyframes screen-beat-flash {
   0% { opacity: 0; }
-  20% { opacity: 0.021; } /* subtle pink wash (~35% of the old 0.06 peak), not a strobe */
+  20% { opacity: 0.004; } /* barely-there pink wash (~7% of the old 0.06 peak), not a strobe */
   100% { opacity: 0; }
 }
 
