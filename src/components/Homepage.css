@@ -40,6 +40,15 @@
    alley (the persistent WallScene shows through around it). */
 .homepage-stage {
   position: relative;
+  /* Homepage-only soft pink glow behind the title area. This element also carries
+     .wall-surface (the flat #160f28 base); since both set background-image on the
+     SAME element, this rule wins and REPLACES .wall-surface's image, so we re-
+     declare its edge vignette here as the 2nd layer to keep the panel rim receding.
+     (The glow was moved off .wall-surface so it no longer leaks onto the shared
+     game screens, which keep just the vignette.) */
+  background-image:
+    radial-gradient(ellipse 70% 55% at 50% 32%, rgba(255, 79, 163, 0.13) 0%, transparent 65%),
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.35) 100%);
   padding: clamp(10px, 1.6vh, 28px) clamp(14px, 2vw, 32px) clamp(8px, 1.2vh, 16px);
   overflow: hidden;
   width: 100%;

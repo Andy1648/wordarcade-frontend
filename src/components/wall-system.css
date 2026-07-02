@@ -64,11 +64,10 @@
      concrete underneath it, never with whatever sits behind the panel. */
   isolation: isolate;
   background-color: var(--wall-base);
-  /* Flat fill + a soft pink glow behind the title area + a soft edge vignette so
-     the rim still recedes (the 6-layer grimy-concrete gradient stack + the two
-     noise-texture pseudo-elements below were removed). */
+  /* Flat fill + just a soft edge vignette so the rim still recedes (the 6-layer
+     grimy-concrete gradient stack + the two noise-texture pseudo-elements below
+     were removed). */
   background-image:
-    radial-gradient(ellipse 70% 55% at 50% 32%, rgba(255, 79, 163, 0.13) 0%, transparent 65%),
     radial-gradient(ellipse 120% 90% at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.35) 100%);
 }
 
