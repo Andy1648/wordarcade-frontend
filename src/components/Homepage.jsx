@@ -5,6 +5,7 @@ import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
+import Mascot from './Mascot';
 import ModeDialog from './ModeDialog';
 import GraffitiTag from './decor/GraffitiTag';
 import {
@@ -221,6 +222,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             <span style={{ left: '49%', '--len': '34px' }} />
             <span style={{ left: '78%', '--len': '16px' }} />
           </div>
+        </div>
+
+        {/* Reusable bomb mascot (the shared <Mascot> PNG component) as a centered
+            focal accent between the title and the mode cards. */}
+        <div style={{ display: 'flex', justifyContent: 'center', margin: 'clamp(2px, 1vh, 8px) 0' }}>
+          <Mascot pose="idle" size={100} />
         </div>
 
         <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
