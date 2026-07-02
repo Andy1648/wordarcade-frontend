@@ -53,7 +53,8 @@
   /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
   max-width: min(95vw, 1400px);
-  border-radius: 14px;
+  /* No border / box-shadow / border-radius: the panel is a transparent, edgeless
+     content box so the WallScene reads as one continuous surface (no framed panel). */
   /* Eased so the menu gently "pushes back" when a mode dialog opens. */
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
