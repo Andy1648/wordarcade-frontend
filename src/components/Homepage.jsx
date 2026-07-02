@@ -197,43 +197,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
-        {/* ALLEY DEPTH: one-point perspective lines converging on a vanishing
-            point behind the title, plus scale-graded graffiti receding toward it
-            (tiny/faint = far, large = near). Reads as a place with depth. */}
-        <div className="homepage-depth" aria-hidden="true">
-          <svg className="homepage-perspective" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {PERSPECTIVE_ENDS.map((e, i) => (
-              <line key={`pl${i}`} x1={VANISHING.x} y1={VANISHING.y} x2={e[0]} y2={e[1]} />
-            ))}
-          </svg>
-          {RECEDING_TAGS.map((t, i) => (
-            <GraffitiTag
-              key={`tag${i}`}
-              word={t.word}
-              fill={t.c.fill}
-              line={t.c.line}
-              size={t.size}
-              top={t.top}
-              left={t.left}
-              rotation={t.rot}
-              opacity={t.op}
-              drip={t.drip}
-            />
-          ))}
-        </div>
-
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
-
-        {/* The mascot as a faint graffiti stencil sprayed on the wall - ambient
-            brand presence, part of the texture, NOT a character in the scene. */}
-        <img className="homepage-graffiti" src="/mascot-idle.png" alt="" aria-hidden="true" draggable="false" />
-
-        <PaintSplatter1 className="homepage-splatter homepage-splatter-1" color="#FF2EC4" />
-        <PaintSplatter2 className="homepage-splatter homepage-splatter-2" color="#2EFFE0" />
-        <PaintSplatter3 className="homepage-splatter homepage-splatter-3" color="#FFE94A" />
-        <PaintSplatter4 className="homepage-splatter homepage-splatter-4" color="#9A1AFF" />
 
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}
