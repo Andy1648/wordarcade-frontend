@@ -67,22 +67,24 @@ function rgba(hex, a) {
 }
 
 function apply(it) {
-  const lift = it.glow; // 0..1 proximity drives glow + shadow presence + scale
+  const lift = it.glow; // 0..1 proximity drives the scale (+ the on/off glow below)
   it.el.style.transform = `translate(${it.ox.toFixed(2)}px, ${it.oy.toFixed(2)}px) scale(${(
     1 +
     SCALE_MAX * lift
   ).toFixed(4)})`;
-  // At true rest, hand the look back to the element (no extra shadow), so the
-  // resting appearance is unchanged. Otherwise: leaning hard shadow + neon glow.
-  if (lift < 0.012 && Math.abs(it.ox) < 0.4 && Math.abs(it.oy) < 0.4) {
+  // The lift/neon glow is a box-shadow (PAINT). Rewriting it every frame was a
+  // full repaint per frame while engaged; instead set ONE static "lifted + neon"
+  // shadow when the element engages and clear it once on release. The transform
+  // above still tracks the pull every frame (compositor-cheap), and at true rest
+  // the shadow is cleared, so the resting appearance is unchanged. (Trade-off: the
+  // glow is now on/off rather than ramped with proximity - the SCALE still ramps.)
+  const engaged = !(lift < 0.012 && Math.abs(it.ox) < 0.4 && Math.abs(it.oy) < 0.4);
+  if (engaged && !it.shadowOn) {
+    it.el.style.boxShadow = `${it.base}px ${it.base}px 0 #000, 0 0 ${GLOW_BLUR}px ${rgba(it.neon, 0.85)}`;
+    it.shadowOn = true;
+  } else if (!engaged && it.shadowOn) {
     it.el.style.boxShadow = '';
-  } else {
-    const sx = (it.base * lift - it.ox * SHADOW_LEAN).toFixed(1);
-    const sy = (it.base * lift - it.oy * SHADOW_LEAN).toFixed(1);
-    it.el.style.boxShadow = `${sx}px ${sy}px 0 #000, 0 0 ${(GLOW_BLUR * lift).toFixed(1)}px ${rgba(
-      it.neon,
-      0.85 * lift
-    )}`;
+    it.shadowOn = false;
   }
 }
 
@@ -141,7 +143,7 @@ function frame() {
 
 export function registerMagnet(el, { max, neon, base = 6 }) {
   if (!el) return null;
-  const it = { el, max, neon, base, ox: 0, oy: 0, vx: 0, vy: 0, glow: 0 };
+  const it = { el, max, neon, base, ox: 0, oy: 0, vx: 0, vy: 0, glow: 0, shadowOn: false };
   items.add(it);
   bind();
   ensure();

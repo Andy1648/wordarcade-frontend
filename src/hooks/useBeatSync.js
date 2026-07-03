@@ -70,13 +70,18 @@ export function useBeatSync(getFrequencyData, active) {
 
     const loop = () => {
       const data = getFrequencyData();
-      const { bass, mid, high } = data;
+      const { mid } = data;
       const flux = typeof data.flux === 'number' ? data.flux : 0;
 
-      // Continuous vars (smooth reaction) for elements that want them.
-      root.style.setProperty('--beat-bass', bass.toFixed(3));
-      root.style.setProperty('--beat-mid', mid.toFixed(3));
-      root.style.setProperty('--beat-high', high.toFixed(3));
+      // Continuous var. Writing beat vars on :root every frame invalidates
+      // document-wide style, so we publish ONLY what has a live consumer:
+      // --beat-bass/--beat-high have none (removed), and --beat-mid's sole consumer
+      // is an in-game element (GameScreen.css). So write --beat-mid ONLY on the game
+      // screen (App sets data-view on <html>); on the menu nothing reads it, so we
+      // skip the write and its per-frame style recalc entirely.
+      if (root.getAttribute('data-view') === 'game') {
+        root.style.setProperty('--beat-mid', mid.toFixed(3));
+      }
 
       // Track a decaying observed max flux so intensity is relative to recent hits.
       maxFluxRef.current = Math.max(flux, maxFluxRef.current * MAX_DECAY, MIN_FLUX);
