@@ -305,7 +305,7 @@
 
 @keyframes die-pulse {
   0%, 100% { filter: saturate(0.82) brightness(0.96); }
-  50% { filter: saturate(0.7) brightness(0.8); }
+  50% { filter: saturate(0.82) brightness(0.94); }
 }
 
 @keyframes die-glitch {
@@ -376,7 +376,7 @@
 }
 
 @keyframes intro-impact-fast {
-  0% { opacity: 1; }
+  0% { opacity: 0.35; }
   100% { opacity: 0; }
 }
 
@@ -386,7 +386,7 @@
 }
 
 @keyframes intro-impact-slow {
-  0% { opacity: 1; }
+  0% { opacity: 0.3; }
   100% { opacity: 0; }
 }
 
@@ -407,7 +407,7 @@
 }
 
 @keyframes intro-blackframe {
-  0% { opacity: 1; }
+  0% { opacity: 0.55; }
   100% { opacity: 0; }
 }
 
