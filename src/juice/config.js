@@ -31,7 +31,7 @@ export const JUICE = {
   INVALID: {
     flash: 0.12,
     flashColor: '#FF2E2E',
-    shake: 3,
+    shake: 1,
   },
 
   // EXPLOSION (Word Bomb KO / elimination). VISUALS ONLY — the existing
