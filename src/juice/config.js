@@ -157,8 +157,8 @@ export const JUICE = {
     statStagger: 110, // ms between stat lines
 
     stamp: {
-      shakeWin: 14, // scoped card shake amplitude
-      shakeLoss: 20,
+      shakeWin: 5, // scoped card shake amplitude
+      shakeLoss: 7,
       flashWin: 0.4, // screen flash alpha
       flashLoss: 0.7,
       flashWinColor: '#FFE94A',

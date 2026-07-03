@@ -142,10 +142,10 @@ html[data-view='game'] .screen-flash {
 
 @keyframes shake-heavy {
   0% { transform: translate(0, 0); }
-  20% { transform: translate(-3px, 1.5px) rotate(-0.4deg); }
-  40% { transform: translate(3px, -1.5px) rotate(0.4deg); }
-  60% { transform: translate(-2px, -1.5px) rotate(-0.2deg); }
-  80% { transform: translate(2px, 1.5px) rotate(0.2deg); }
+  20% { transform: translate(-1px, 0.5px) rotate(-0.13deg); }
+  40% { transform: translate(1px, -0.5px) rotate(0.13deg); }
+  60% { transform: translate(-0.7px, -0.5px) rotate(-0.07deg); }
+  80% { transform: translate(0.7px, 0.5px) rotate(0.07deg); }
   100% { transform: translate(0, 0); }
 }
 
