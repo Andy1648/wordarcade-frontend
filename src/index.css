@@ -1,6 +1,24 @@
 /* index.css - global reset and base page styles only.
    Component-specific styles live alongside their components, not here. */
 
+/* Self-hosted Bungee Shade (latin subset) for the menu wordmark. Hosted on our
+   own origin so index.html can preload the woff2 with a STABLE url (Google's
+   hashed/versioned gstatic URL is unsafe to hardcode - a version bump would make
+   the preload a wasted double-fetch). The preload href MUST match this src url
+   exactly. font-display:swap mirrors the Google behaviour (fallback -> swap).
+   Bungee + Space Mono still come from Google (index.html <link>). */
+@font-face {
+  font-family: 'Bungee Shade';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/bungee-shade-latin.woff2') format('woff2');
+  /* latin subset (the wordmark is ASCII); non-latin falls back to Bungee/cursive. */
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

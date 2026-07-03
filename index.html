@@ -26,8 +26,16 @@
     <meta name="twitter:image:alt" content="Type a Word - multiplayer word games" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Self-hosted Bungee Shade (the huge menu wordmark): preload the latin woff2
+         from our own origin so the display font arrives early and the FOUT layout
+         shift on first paint is minimal. Same-origin font fetches are still CORS
+         (anonymous), so `crossorigin` is required for the preload to match the
+         @font-face fetch and avoid a double-fetch. (@font-face is in index.css.)
+         Bungee Shade is dropped from the Google link below since we host it now;
+         Bungee + Space Mono still load from Google via display=swap. -->
+    <link rel="preload" href="/fonts/bungee-shade-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Space+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
     <script defer src="https://cloud.umami.is/script.js" data-website-id="c1e456ac-c322-43f5-9098-2cafce036b67"></script>
