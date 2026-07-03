@@ -31,7 +31,7 @@ export const JUICE = {
   INVALID: {
     flash: 0.12,
     flashColor: '#FF2E2E',
-    shake: 3,
+    shake: 1,
   },
 
   // EXPLOSION (Word Bomb KO / elimination). VISUALS ONLY — the existing
@@ -157,8 +157,8 @@ export const JUICE = {
     statStagger: 110, // ms between stat lines
 
     stamp: {
-      shakeWin: 14, // scoped card shake amplitude
-      shakeLoss: 20,
+      shakeWin: 5, // scoped card shake amplitude
+      shakeLoss: 7,
       flashWin: 0.4, // screen flash alpha
       flashLoss: 0.7,
       flashWinColor: '#FFE94A',
