@@ -33,20 +33,30 @@
 
 /* The content card fills most of the viewport width and only caps (and centres)
    on ultrawide screens so it never stretches infinitely. */
-/* The menu stage IS the wall: a crafted weathered-concrete SURFACE (the texture,
-   grime, floor-shade and vignette all come from .wall-surface in wall-system.css
-   - applied in the JSX). This rule only owns the panel's box: size, padding,
-   clipping and the rounded edge that frames the wall against the surrounding
-   alley (the persistent WallScene shows through around it). */
+/* The menu stage is now a TRANSPARENT, EDGELESS container - no fill, border,
+   box-shadow or border-radius - so the persistent WallScene backdrop (brick +
+   graffiti) shows straight through it and the whole homepage reads as ONE
+   continuous surface rather than a framed panel. This rule only owns the box:
+   size, padding and content clipping. (The element still carries the shared
+   .wall-surface class, but its flat fill + image are overridden to transparent
+   here for the homepage only; the game screens keep their .wall-surface surface.) */
 .homepage-stage {
   position: relative;
+  /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
+     (brick + graffiti) shows straight through, so panel + backdrop read as one
+     continuous surface. This element also carries .wall-surface, so setting these
+     here overrides its flat fill + image on the HOMEPAGE element only - the shared
+     game screens keep their own .wall-surface surface untouched. */
+  background-color: transparent;
+  background-image: none;
   padding: clamp(10px, 1.6vh, 28px) clamp(14px, 2vw, 32px) clamp(8px, 1.2vh, 16px);
   overflow: hidden;
   width: 100%;
   /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
   max-width: min(95vw, 1400px);
-  border-radius: 14px;
+  /* No border / box-shadow / border-radius: the panel is a transparent, edgeless
+     content box so the WallScene reads as one continuous surface (no framed panel). */
   /* Eased so the menu gently "pushes back" when a mode dialog opens. */
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -49,9 +49,9 @@
 
 .wall-surface {
   /* ---- tunable dials (confident loud default; turn DOWN in one line) ---- */
-  /* Base lifted off near-black so the overlay grain has tonal room to show -
-     near-black swallows the grit. Still firmly in the dark palette family. */
-  --wall-base: #1f1638;
+  /* Flat dark panel base (the concrete gradient stack + noise textures were
+     removed). Still firmly in the dark palette family. */
+  --wall-base: #160f28;
   --wall-tint: rgba(154, 26, 255, 0.07);
   --wall-texture-opacity: 0.85;
   --wall-grime: 0.62;
@@ -64,51 +64,11 @@
      concrete underneath it, never with whatever sits behind the panel. */
   isolation: isolate;
   background-color: var(--wall-base);
+  /* Flat fill + just a soft edge vignette so the rim still recedes (the 6-layer
+     grimy-concrete gradient stack + the two noise-texture pseudo-elements below
+     were removed). */
   background-image:
-    /* poured-concrete water-staining: a few large soft blotches; their darkness
-       scales with --wall-grime so the whole wall cleans up from one token. */
-    radial-gradient(ellipse 55% 42% at 16% 10%, rgba(0, 0, 0, calc(0.55 * var(--wall-grime))) 0%, transparent 72%),
-    radial-gradient(ellipse 48% 38% at 88% 26%, rgba(0, 0, 0, calc(0.5 * var(--wall-grime))) 0%, transparent 72%),
-    radial-gradient(ellipse 60% 50% at 70% 96%, rgba(0, 0, 0, calc(0.62 * var(--wall-grime))) 0%, transparent 78%),
-    /* faint colored cast so the concrete isn't a dead neutral */
-    radial-gradient(ellipse 45% 40% at 38% 46%, var(--wall-tint) 0%, transparent 70%),
-    /* the alley darkens toward the floor (lower third shadowed, per references) */
-    linear-gradient(to bottom, transparent 48%, rgba(0, 0, 0, 0.42) 100%),
-    /* edge vignette = depth, the panel recedes at its rim */
-    radial-gradient(ellipse 125% 125% at 50% 38%, transparent 58%, rgba(0, 0, 0, 0.5) 100%);
-}
-
-/* FINE GRAIN - the actual concrete grit. feTurbulence noise, desaturated to
-   grey; `overlay` blend turns that grey into per-pixel light/dark on the base,
-   which is what makes it read as a rough surface instead of a colour. Sits above
-   the base gradients (z-index:-1 within the isolated surface) and below every
-   real child (decor at z 0, content at z 1). */
-.wall-surface::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  opacity: var(--wall-texture-opacity);
-  mix-blend-mode: overlay;
-  filter: contrast(var(--wall-contrast));
-}
-
-/* COARSE MOTTLE - big soft cloud-noise for uneven staining across the whole
-   wall (low frequency = broad patches, not grain). `soft-light` keeps it gentle;
-   its strength tracks --wall-grime with the rest of the dirt. */
-.wall-surface::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='600' height='600' filter='url(%23m)'/%3E%3C/svg%3E");
-  background-size: 600px 600px;
-  opacity: calc(0.5 * var(--wall-grime));
-  mix-blend-mode: soft-light;
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.35) 100%);
 }
 
 /* ============================ TAG PANEL ============================= */
