@@ -8,8 +8,8 @@ import './GameCard.css';
 // Per-mode neon for the magnetic outer wrapper's proximity glow (does not touch
 // the card's own hover glow). Falls back to the card's fill for any other game.
 const CARD_NEON = {
-  'word-bomb': '#2EFFE0',
-  'category-blitz': '#FF6B3D',
+  'word-bomb': '#FF6B3D',
+  'category-blitz': '#3DA8FF',
   'imposter-word': '#9A28FF',
 };
 

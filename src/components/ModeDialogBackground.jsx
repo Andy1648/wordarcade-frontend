@@ -25,7 +25,7 @@ export const MODES = {
     create: 'CREATE',
   },
   blitz: {
-    accent: '#2EFFE0', bg: ['#053b37', '#03140f'], anim: 'streaks',
+    accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
     chip: 'SOLO · MULTI', t1: 'CATEGORY', t2: 'BLITZ',
     liner: 'AI judges you. Get creative.',
     sub: 'Speed round · name as many as you can before time runs out.',
