@@ -58,10 +58,10 @@
   /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
   max-width: min(95vw, 1400px);
-  /* A subtle edge to DEFINE the panel. Background stays transparent (the WallScene
-     shows through) - no fill/glow/vignette/box-shadow, just a thin border + slight
-     radius. */
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  /* A neon edge to DEFINE the panel (Blitz blue #3DA8FF @ ~45% - reads over the
+     busy wall where the faint white edge didn't). Background stays transparent (the
+     WallScene shows through) - no fill/glow/vignette/box-shadow, just border + radius. */
+  border: 1px solid rgba(61, 168, 255, 0.45);
   border-radius: 10px;
   /* Eased so the menu gently "pushes back" when a mode dialog opens. */
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
