@@ -198,10 +198,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
-        {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
-            point (title + cards), brightest at the top and falling off. */}
-        <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
-
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}
         <div className="homepage-logo-wrap">

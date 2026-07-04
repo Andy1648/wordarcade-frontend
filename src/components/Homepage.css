@@ -109,18 +109,6 @@
   opacity: 0.5;
 }
 
-/* Streetlight pool: a tall warm cast from above, centred over the title + cards.
-   .wall-spotlight supplies the gradient + screen blend; this only places it. */
-.homepage-spotlight {
-  top: -10%;
-  left: 50%;
-  width: 78%;
-  height: 86%;
-  transform: translateX(-50%);
-  --spot-w: 60%;
-  --spot-h: 72%;
-}
-
 /* Decorative paint splatters scattered around the stage edges. Behind the
    content (z-index 0), non-interactive, and clipped by the stage's
    overflow so they bleed off the edges like real thrown paint. */
