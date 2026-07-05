@@ -4,21 +4,20 @@
 // ModeDialog. Pure visual iteration surface. View it at /#pack-preview (see
 // main.jsx conditional mount).
 //
-// Aesthetic: cute hand-drawn vector stickers slapped in a dialog, graffiti
-// energy — Newgrounds/FNF, NOT a polished component library. The KEY move is the
-// edge quality: every outline (pills, panel, buttons, title) is roughed by an SVG
-// feTurbulence + feDisplacementMap filter so the black outline reads as an inked
-// marker/spray line of uneven thickness, never a clean CSS border. The colored
-// fill + the crisp Bungee label ride ON TOP of the roughed ink layer, so text
-// stays legible while its frame wobbles.
+// Aesthetic: cute CHUNKY VECTOR STICKERS with a hand-inked outline — illustration
+// quality, not flat UI chips. Two things carry it:
+//   1) EDGE: every outline (pills, panel, buttons, title) is roughed by an SVG
+//      feTurbulence + feDisplacementMap filter so the fat black border reads as an
+//      inked marker line of uneven thickness, never a clean CSS border.
+//   2) BODY: each pill has a layered gradient fill (light tint up top → base →
+//      darker bottom) + an inner top-edge shine, so it reads as a glossy inflated
+//      vector object with depth. Crisp Bungee labels ride ABOVE the roughed layer.
 import { useState } from 'react';
 import './PackPickerPreview.css';
 
-// 14 packs. `color` = the high-saturation fill worn when SELECTED. `rot` = a
-// hand-placed resting tilt. `sticker` = an optional little graffiti accent
-// slapped on the tile (star / drip / spray dots) for character — only a few, so
-// it stays cute not cluttered. `ink` picks one of three displacement seeds so no
-// two tiles wobble identically.
+// 14 packs. `color` = the base fill; the CSS builds a light/deep gradient off it.
+// `rot` = hand-placed tilt. `sticker` = an optional chunky vector doodle slapped
+// on the tile. `ink` seed varies the wobble per tile.
 const PACKS = [
   { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#FF2EC4', rot: -3,   sticker: 'star' },
   { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null },
@@ -46,18 +45,25 @@ function darken(hex, f) {
   const b = Math.round((n & 255) * (1 - f));
   return `rgb(${r}, ${g}, ${b})`;
 }
+// Lighten toward white — the top highlight tint of the sticker gradient.
+function lighten(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) + (255 - ((n >> 16) & 255)) * f);
+  const g = Math.round(((n >> 8) & 255) + (255 - ((n >> 8) & 255)) * f);
+  const b = Math.round((n & 255) + (255 - (n & 255)) * f);
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
-// Hand-drawn checkmark stamped on selected tiles — a rough two-stroke tick, black
-// marker over a little pack-colored blob. Roughed by the thin ink filter.
+// Chunky filled vector checkmark on a bold badge — stamped on selected tiles.
 function RoughCheck() {
   return (
     <span className="ppp-check" aria-hidden="true">
-      <svg viewBox="0 0 28 28" className="ppp-check-svg">
+      <svg viewBox="0 0 30 30" className="ppp-check-svg">
         <path
-          d="M5 15 Q9 18 11 21 Q16 11 23 6"
+          d="M6 16 Q10 19 12.5 23 Q18 12 25 6"
           fill="none"
           stroke="#000"
-          strokeWidth="4.5"
+          strokeWidth="6"
           strokeLinecap="round"
           strokeLinejoin="round"
           filter="url(#ppp-ink-thin)"
@@ -67,20 +73,39 @@ function RoughCheck() {
   );
 }
 
-// Little slapped-on graffiti stickers. Each is a rough inked doodle.
+// Tiny 4-point sparkle — a chunky filled vector diamond-star with its own outline,
+// added to selected tiles for extra pop.
+function Sparkle() {
+  return (
+    <span className="ppp-spark" aria-hidden="true">
+      <svg viewBox="0 0 22 22">
+        <path
+          d="M11 0 C12 7 15 10 22 11 C15 12 12 15 11 22 C10 15 7 12 0 11 C7 10 10 7 11 0 Z"
+          fill="#fff"
+          stroke="#000"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          filter="url(#ppp-ink-thin)"
+        />
+      </svg>
+    </span>
+  );
+}
+
+// Slapped-on graffiti stickers — bold FILLED vector shapes with a thick black
+// outline (mini-stickers), each with a little white shine so they read as chunky
+// vector art, not thin line work.
 function Sticker({ kind }) {
   if (kind === 'star') {
     return (
       <span className="ppp-sticker ppp-sticker-star" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
+        <svg viewBox="0 0 26 26">
           <path
-            d="M12 2 L15 9 L22 9.5 L16.5 14 L18.5 21 L12 17 L5.5 21 L7.5 14 L2 9.5 L9 9 Z"
-            fill="#FFE94A"
-            stroke="#000"
-            strokeWidth="2.4"
-            strokeLinejoin="round"
+            d="M13 1 L16.5 9.5 L25 10 L18.5 15.5 L21 24 L13 19 L5 24 L7.5 15.5 L1 10 L9.5 9.5 Z"
+            fill="#FFE94A" stroke="#000" strokeWidth="3.4" strokeLinejoin="round"
             filter="url(#ppp-ink-thin)"
           />
+          <circle cx="10.5" cy="10.5" r="1.6" fill="#fff" />
         </svg>
       </span>
     );
@@ -88,37 +113,32 @@ function Sticker({ kind }) {
   if (kind === 'drip') {
     return (
       <span className="ppp-sticker ppp-sticker-drip" aria-hidden="true">
-        <svg viewBox="0 0 20 30">
+        <svg viewBox="0 0 22 32">
           <path
-            d="M10 1 C6 1 4 5 4 10 C4 16 10 18 10 26 C10 18 16 16 16 10 C16 5 14 1 10 1 Z"
-            fill="#FF2EC4"
-            stroke="#000"
-            strokeWidth="2.2"
-            strokeLinejoin="round"
+            d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
+            fill="#FF2EC4" stroke="#000" strokeWidth="3.2" strokeLinejoin="round"
             filter="url(#ppp-ink-thin)"
           />
+          <ellipse cx="8.5" cy="9" rx="1.6" ry="3" fill="#fff" opacity="0.8" />
         </svg>
       </span>
     );
   }
-  // dots — a little spray cluster
+  // dots — a chunky spray cluster
   return (
     <span className="ppp-sticker ppp-sticker-dots" aria-hidden="true">
-      <svg viewBox="0 0 26 22">
-        <g stroke="#000" strokeWidth="1.6" filter="url(#ppp-ink-thin)">
-          <circle cx="6" cy="7" r="3.4" fill="#2EFFE0" />
-          <circle cx="17" cy="5" r="2.4" fill="#FF6B3D" />
-          <circle cx="20" cy="14" r="3" fill="#FFE94A" />
-          <circle cx="10" cy="16" r="2" fill="#9A28FF" />
+      <svg viewBox="0 0 30 24">
+        <g stroke="#000" strokeWidth="2.6" filter="url(#ppp-ink-thin)">
+          <circle cx="7" cy="8" r="4.4" fill="#2EFFE0" />
+          <circle cx="20" cy="6" r="3.2" fill="#FF6B3D" />
+          <circle cx="23" cy="16" r="3.8" fill="#FFE94A" />
+          <circle cx="12" cy="17" r="2.6" fill="#9A28FF" />
         </g>
       </svg>
     </span>
   );
 }
 
-// One inked outline layer: sits behind the tile's label, wears the fill + the
-// thick black border, and gets the displacement filter (via CSS var --ink-url)
-// so its edge goes wobbly + the hard offset shadow follows the wobble.
 export default function PackPickerPreview() {
   const [selected, setSelected] = useState(() => new Set(ALL_IDS));
 
@@ -140,11 +160,9 @@ export default function PackPickerPreview() {
 
   return (
     <div className="ppp-stage">
-      {/* ---- Filter defs: the ink/roughen filters. Hidden, rendered once. ----
-          feTurbulence makes noise; feDisplacementMap pushes each pixel of the
-          source (the bordered box / stroked path) by that noise → a rough,
-          marker-drawn edge of uneven thickness. Different seeds = different
-          wobble so tiles don't all ripple in sync. */}
+      {/* ---- Ink/roughen filter defs: hidden, rendered once. feTurbulence makes
+          noise; feDisplacementMap pushes each pixel of the bordered box / stroked
+          path by it → a rough marker edge. Different seeds = different wobble. */}
       <svg className="ppp-defs" aria-hidden="true" focusable="false">
         <defs>
           <filter id="ppp-ink-a" x="-25%" y="-40%" width="150%" height="180%">
@@ -159,23 +177,18 @@ export default function PackPickerPreview() {
             <feTurbulence type="fractalNoise" baseFrequency="0.025 0.024" numOctaves="2" seed="15" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="4.5" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-          {/* Bigger, gentler wobble for the large panel frame. */}
           <filter id="ppp-ink-panel" x="-10%" y="-10%" width="120%" height="120%">
             <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-          {/* Buttons. */}
           <filter id="ppp-ink-btn" x="-20%" y="-40%" width="140%" height="180%">
             <feTurbulence type="fractalNoise" baseFrequency="0.016 0.022" numOctaves="2" seed="4" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-          {/* Title: small scale so the outlined lettering stays readable but the
-              stroke edge still ripples like it was inked by hand. */}
           <filter id="ppp-ink-title" x="-8%" y="-30%" width="116%" height="160%">
             <feTurbulence type="fractalNoise" baseFrequency="0.014 0.02" numOctaves="2" seed="3" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-          {/* Thin doodles (check, stickers). */}
           <filter id="ppp-ink-thin" x="-30%" y="-30%" width="160%" height="160%">
             <feTurbulence type="fractalNoise" baseFrequency="0.05 0.06" numOctaves="2" seed="6" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
@@ -185,10 +198,7 @@ export default function PackPickerPreview() {
 
       {/* MOCK of the Blitz mode dialog panel. */}
       <div className="ppp-panel">
-        {/* Roughed frame layer: the wobbly inked black border + its hard offset
-            shadow. Behind everything. */}
         <div className="ppp-panel-ink" aria-hidden="true" />
-        {/* Halftone dot grit — very low opacity. */}
         <div className="ppp-halftone" aria-hidden="true" />
 
         <div className="ppp-content">
@@ -198,32 +208,31 @@ export default function PackPickerPreview() {
           </div>
 
           <div className="ppp-title-wrap">
-            {/* graffiti star tucked by the title */}
             <span className="ppp-title-star" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
+              <svg viewBox="0 0 26 26">
                 <path
-                  d="M12 2 L15 9 L22 9.5 L16.5 14 L18.5 21 L12 17 L5.5 21 L7.5 14 L2 9.5 L9 9 Z"
-                  fill="#FFE94A" stroke="#000" strokeWidth="2.4" strokeLinejoin="round"
+                  d="M13 1 L16.5 9.5 L25 10 L18.5 15.5 L21 24 L13 19 L5 24 L7.5 15.5 L1 10 L9.5 9.5 Z"
+                  fill="#FFE94A" stroke="#000" strokeWidth="3.4" strokeLinejoin="round"
                   filter="url(#ppp-ink-thin)"
                 />
+                <circle cx="10.5" cy="10.5" r="1.6" fill="#fff" />
               </svg>
             </span>
             <h1 className="ppp-title">CATEGORY BLITZ</h1>
-            {/* a little paint drip off the title */}
             <span className="ppp-title-drip" aria-hidden="true">
-              <svg viewBox="0 0 20 30">
+              <svg viewBox="0 0 22 32">
                 <path
-                  d="M10 1 C6 1 4 5 4 10 C4 16 10 18 10 26 C10 18 16 16 16 10 C16 5 14 1 10 1 Z"
-                  fill="#3DA8FF" stroke="#000" strokeWidth="2.2" strokeLinejoin="round"
+                  d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
+                  fill="#3DA8FF" stroke="#000" strokeWidth="3.2" strokeLinejoin="round"
                   filter="url(#ppp-ink-thin)"
                 />
+                <ellipse cx="8.5" cy="9" rx="1.6" ry="3" fill="#fff" opacity="0.8" />
               </svg>
             </span>
           </div>
 
           <div className="ppp-subline">PICK YOUR PACKS — MIX &amp; MATCH</div>
 
-          {/* EVERYTHING master toggle. */}
           <button
             className={`ppp-every${allOn ? ' is-on' : ''}`}
             onClick={toggleEverything}
@@ -237,7 +246,6 @@ export default function PackPickerPreview() {
             </span>
           </button>
 
-          {/* The pack pills. */}
           <div className="ppp-grid">
             {PACKS.map((p, i) => {
               const on = selected.has(p.id);
@@ -250,7 +258,8 @@ export default function PackPickerPreview() {
                   onClick={() => togglePack(p.id)}
                   style={{
                     '--pack': p.color,
-                    '--pack-dark': darken(p.color, 0.5),
+                    '--pack-light': lighten(p.color, 0.5),
+                    '--pack-deep': darken(p.color, 0.3),
                     '--rot': `${p.rot}deg`,
                     '--ink-url': `url(#${inkId})`,
                   }}
@@ -263,12 +272,12 @@ export default function PackPickerPreview() {
                   </span>
                   {p.sticker && <Sticker kind={p.sticker} />}
                   {on && <RoughCheck />}
+                  {on && <Sparkle />}
                 </button>
               );
             })}
           </div>
 
-          {/* Count readout. */}
           <div className="ppp-count">
             {count === 0
               ? 'NO PACKS — PICK AT LEAST ONE'
