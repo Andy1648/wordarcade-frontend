@@ -565,7 +565,7 @@ html[data-beat='true'] .homepage-beat-glow {
 
 @keyframes menu-beat-glow {
   0% { opacity: 0; }
-  32% { opacity: calc(0.20 * var(--beat-intensity, 1)); }
+  32% { opacity: calc(0.03 * var(--beat-intensity, 1)); }
   100% { opacity: 0; }
 }
 

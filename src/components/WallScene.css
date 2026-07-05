@@ -177,7 +177,7 @@ html[data-view='game'] .wall-beat-bright {
 
 @keyframes wall-beat-bright {
   0% { opacity: 0; }
-  40% { opacity: 0.03; }
+  40% { opacity: 0.012; }
   100% { opacity: 0; }
 }
 

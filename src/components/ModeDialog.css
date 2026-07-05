@@ -44,7 +44,9 @@
   position: relative;
   z-index: 1;
   width: min(90vw, 600px);
-  height: min(80vh, 460px);
+  /* Size to content up to a viewport-relative cap (was a fixed `height` that clipped
+     tall content — e.g. the blitz dialog's extra AI badge — on short viewports). */
+  max-height: min(90vh, 520px);
   box-sizing: border-box;
   background: #1a0b2e;
   border: 4px solid #000;
@@ -175,10 +177,10 @@
   white-space: nowrap;
 }
 
-/* Everything below the chip is pushed to the bottom of the panel, sitting over
-   the legibility gradient. */
+/* The block below the chip. Flows from the top of the content area (was
+   margin-top:auto bottom-anchored, which pushed the top of tall content into the
+   shell's overflow cutoff on short viewports). */
 .mode-dialog-lower {
-  margin-top: auto;
   width: 100%;
   display: flex;
   flex-direction: column;
