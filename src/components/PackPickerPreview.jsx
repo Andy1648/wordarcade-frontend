@@ -4,20 +4,19 @@
 // ModeDialog. Pure visual iteration surface. View it at /#pack-preview (see
 // main.jsx conditional mount).
 //
-// Aesthetic: cute CHUNKY VECTOR STICKERS with a hand-inked outline — illustration
-// quality, not flat UI chips. Two things carry it:
-//   1) EDGE: every outline (pills, panel, buttons, title) is roughed by an SVG
-//      feTurbulence + feDisplacementMap filter so the fat black border reads as an
-//      inked marker line of uneven thickness, never a clean CSS border.
-//   2) BODY: each pill has a layered gradient fill (light tint up top → base →
-//      darker bottom) + an inner top-edge shine, so it reads as a glossy inflated
-//      vector object with depth. Crisp Bungee labels ride ABOVE the roughed layer.
+// LAYOUT: fixed chrome + one scrolling region. The title, AI badge, description,
+// "PICK YOUR PACKS" label, EVERYTHING toggle and the CREATE/JOIN buttons are all
+// FIXED. Only the 14 pack tiles scroll — inside a bounded, hand-inked inner
+// "window" (a recessed framed sub-panel, like FNF's song list). The dialog shell
+// itself does NOT scroll; it sizes to its now-bounded content.
+//
+// STYLE: cute chunky vector stickers with hand-inked outlines. Every outline
+// (pills, panel, window, buttons, title) is roughed by an SVG feTurbulence +
+// feDisplacementMap filter. Pills carry a layered gradient fill + inner shine for
+// glossy vector depth. Crisp Bungee labels ride above the roughed layers.
 import { useState } from 'react';
 import './PackPickerPreview.css';
 
-// 14 packs. `color` = the base fill; the CSS builds a light/deep gradient off it.
-// `rot` = hand-placed tilt. `sticker` = an optional chunky vector doodle slapped
-// on the tile. `ink` seed varies the wobble per tile.
 const PACKS = [
   { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#FF2EC4', rot: -3,   sticker: 'star' },
   { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null },
@@ -45,7 +44,6 @@ function darken(hex, f) {
   const b = Math.round((n & 255) * (1 - f));
   return `rgb(${r}, ${g}, ${b})`;
 }
-// Lighten toward white — the top highlight tint of the sticker gradient.
 function lighten(hex, f) {
   const n = parseInt(hex.slice(1), 16);
   const r = Math.round(((n >> 16) & 255) + (255 - ((n >> 16) & 255)) * f);
@@ -54,18 +52,14 @@ function lighten(hex, f) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-// Chunky filled vector checkmark on a bold badge — stamped on selected tiles.
 function RoughCheck() {
   return (
     <span className="ppp-check" aria-hidden="true">
       <svg viewBox="0 0 30 30" className="ppp-check-svg">
         <path
           d="M6 16 Q10 19 12.5 23 Q18 12 25 6"
-          fill="none"
-          stroke="#000"
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          fill="none" stroke="#000" strokeWidth="6"
+          strokeLinecap="round" strokeLinejoin="round"
           filter="url(#ppp-ink-thin)"
         />
       </svg>
@@ -73,18 +67,13 @@ function RoughCheck() {
   );
 }
 
-// Tiny 4-point sparkle — a chunky filled vector diamond-star with its own outline,
-// added to selected tiles for extra pop.
 function Sparkle() {
   return (
     <span className="ppp-spark" aria-hidden="true">
       <svg viewBox="0 0 22 22">
         <path
           d="M11 0 C12 7 15 10 22 11 C15 12 12 15 11 22 C10 15 7 12 0 11 C7 10 10 7 11 0 Z"
-          fill="#fff"
-          stroke="#000"
-          strokeWidth="2"
-          strokeLinejoin="round"
+          fill="#fff" stroke="#000" strokeWidth="2" strokeLinejoin="round"
           filter="url(#ppp-ink-thin)"
         />
       </svg>
@@ -92,9 +81,6 @@ function Sparkle() {
   );
 }
 
-// Slapped-on graffiti stickers — bold FILLED vector shapes with a thick black
-// outline (mini-stickers), each with a little white shine so they read as chunky
-// vector art, not thin line work.
 function Sticker({ kind }) {
   if (kind === 'star') {
     return (
@@ -124,7 +110,6 @@ function Sticker({ kind }) {
       </span>
     );
   }
-  // dots — a chunky spray cluster
   return (
     <span className="ppp-sticker ppp-sticker-dots" aria-hidden="true">
       <svg viewBox="0 0 30 24">
@@ -153,16 +138,13 @@ export default function PackPickerPreview() {
       return next;
     });
   }
-
   function toggleEverything() {
     setSelected((prev) => (prev.size === PACKS.length ? new Set() : new Set(ALL_IDS)));
   }
 
   return (
     <div className="ppp-stage">
-      {/* ---- Ink/roughen filter defs: hidden, rendered once. feTurbulence makes
-          noise; feDisplacementMap pushes each pixel of the bordered box / stroked
-          path by it → a rough marker edge. Different seeds = different wobble. */}
+      {/* ---- Ink/roughen filter defs: hidden, rendered once. ---- */}
       <svg className="ppp-defs" aria-hidden="true" focusable="false">
         <defs>
           <filter id="ppp-ink-a" x="-25%" y="-40%" width="150%" height="180%">
@@ -181,6 +163,11 @@ export default function PackPickerPreview() {
             <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" />
           </filter>
+          {/* Inner framed window — same ink treatment as tiles, medium wobble. */}
+          <filter id="ppp-ink-window" x="-12%" y="-12%" width="124%" height="124%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.013 0.016" numOctaves="2" seed="11" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
           <filter id="ppp-ink-btn" x="-20%" y="-40%" width="140%" height="180%">
             <feTurbulence type="fractalNoise" baseFrequency="0.016 0.022" numOctaves="2" seed="4" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" />
@@ -196,12 +183,13 @@ export default function PackPickerPreview() {
         </defs>
       </svg>
 
-      {/* MOCK of the Blitz mode dialog panel. */}
+      {/* MOCK of the Blitz mode dialog panel — sizes to content, does NOT scroll. */}
       <div className="ppp-panel">
         <div className="ppp-panel-ink" aria-hidden="true" />
         <div className="ppp-halftone" aria-hidden="true" />
 
         <div className="ppp-content">
+          {/* ---------------- FIXED CHROME (top) ---------------- */}
           <div className="ppp-chip">
             <span className="ppp-chip-ink" aria-hidden="true" />
             <span className="ppp-chip-text">SOLO · MULTI</span>
@@ -231,8 +219,22 @@ export default function PackPickerPreview() {
             </span>
           </div>
 
+          {/* AI JUDGED badge (fixed). */}
+          <div className="ppp-aibadge">
+            <span className="ppp-aibadge-ink" aria-hidden="true" />
+            <span className="ppp-aibadge-text">
+              <span className="ppp-aibadge-ai">AI</span>
+              <span className="ppp-aibadge-judged">JUDGED</span>
+            </span>
+          </div>
+
+          {/* Description line (fixed). */}
+          <div className="ppp-liner">Name as many as you can before the clock runs out.</div>
+
+          {/* Section label (fixed). */}
           <div className="ppp-subline">PICK YOUR PACKS — MIX &amp; MATCH</div>
 
+          {/* EVERYTHING toggle (fixed). */}
           <button
             className={`ppp-every${allOn ? ' is-on' : ''}`}
             onClick={toggleEverything}
@@ -246,38 +248,46 @@ export default function PackPickerPreview() {
             </span>
           </button>
 
-          <div className="ppp-grid">
-            {PACKS.map((p, i) => {
-              const on = selected.has(p.id);
-              const inkId = INK_IDS[i % INK_IDS.length];
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`ppp-pill${on ? ' is-on' : ''}`}
-                  onClick={() => togglePack(p.id)}
-                  style={{
-                    '--pack': p.color,
-                    '--pack-light': lighten(p.color, 0.5),
-                    '--pack-deep': darken(p.color, 0.3),
-                    '--rot': `${p.rot}deg`,
-                    '--ink-url': `url(#${inkId})`,
-                  }}
-                  aria-pressed={on}
-                >
-                  <span className="ppp-pill-ink" aria-hidden="true" />
-                  <span className="ppp-pill-body">
-                    <span className="ppp-pill-emoji" aria-hidden="true">{p.emoji}</span>
-                    <span className="ppp-pill-label">{p.label}</span>
-                  </span>
-                  {p.sticker && <Sticker kind={p.sticker} />}
-                  {on && <RoughCheck />}
-                  {on && <Sparkle />}
-                </button>
-              );
-            })}
+          {/* ---------------- SCROLLING REGION: the pack tiles only ----------------
+              A recessed, hand-inked framed window. Only this scrolls. */}
+          <div className="ppp-window">
+            <div className="ppp-window-ink" aria-hidden="true" />
+            <div className="ppp-window-scroll">
+              <div className="ppp-grid">
+                {PACKS.map((p, i) => {
+                  const on = selected.has(p.id);
+                  const inkId = INK_IDS[i % INK_IDS.length];
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`ppp-pill${on ? ' is-on' : ''}`}
+                      onClick={() => togglePack(p.id)}
+                      style={{
+                        '--pack': p.color,
+                        '--pack-light': lighten(p.color, 0.5),
+                        '--pack-deep': darken(p.color, 0.3),
+                        '--rot': `${p.rot}deg`,
+                        '--ink-url': `url(#${inkId})`,
+                      }}
+                      aria-pressed={on}
+                    >
+                      <span className="ppp-pill-ink" aria-hidden="true" />
+                      <span className="ppp-pill-body">
+                        <span className="ppp-pill-emoji" aria-hidden="true">{p.emoji}</span>
+                        <span className="ppp-pill-label">{p.label}</span>
+                      </span>
+                      {p.sticker && <Sticker kind={p.sticker} />}
+                      {on && <RoughCheck />}
+                      {on && <Sparkle />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
+          {/* ---------------- FIXED CHROME (bottom) ---------------- */}
           <div className="ppp-count">
             {count === 0
               ? 'NO PACKS — PICK AT LEAST ONE'
