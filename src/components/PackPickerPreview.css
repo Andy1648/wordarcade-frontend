@@ -1,0 +1,267 @@
+/* PackPickerPreview.css — THROWAWAY design preview.
+   FNF freeplay-menu aesthetic: thick black outlines, outlined arcade lettering,
+   high-saturation flat fills, chunky hard offset shadows, pill/capsule shapes,
+   hand-placed rotations, halftone grit. Everything is prefixed .ppp- so it can
+   never leak into the real app. */
+
+.ppp-stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  box-sizing: border-box;
+  /* Deep arcade wall — flat, slightly vignetted so the panel pops off it. */
+  background:
+    radial-gradient(120% 90% at 50% 0%, #241043 0%, #0d0618 70%);
+  overflow: auto;
+}
+
+/* ============================ THE PANEL ============================ */
+/* Mock of the Blitz mode dialog. Chunky FNF card: thick black border, big hard
+   offset shadow, generous radius. */
+.ppp-panel {
+  position: relative;
+  width: min(94vw, 620px);
+  background: #160826;
+  border: 5px solid #000;
+  border-radius: 14px;
+  box-shadow: 9px 9px 0 #000;
+  padding: clamp(22px, 4vw, 38px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Halftone dot grit — a fine dot lattice at very low opacity for texture. */
+.ppp-halftone {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(#ffffff 1.4px, transparent 1.5px);
+  background-size: 9px 9px;
+  background-position: 0 0;
+  opacity: 0.05;
+  mix-blend-mode: screen;
+}
+
+.ppp-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Stencil chip, tilted like a sticker. */
+.ppp-chip {
+  align-self: flex-start;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: #3DA8FF;
+  padding: 5px 12px;
+  border: 3px solid #000;
+  border-radius: 40px;
+  background: #0c1c33;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-3deg);
+  margin-bottom: 14px;
+}
+
+/* ============================ TITLE ============================ */
+/* Outlined arcade lettering — the core FNF move. Blitz blue fill, THICK black
+   stroke via -webkit-text-stroke with paint-order:stroke so the stroke sits
+   UNDER the fill (fill stays crisp), plus a hard offset drop shadow. Slight tilt. */
+.ppp-title {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(38px, 8.5vw, 74px);
+  line-height: 0.92;
+  margin: 0 0 4px;
+  text-align: center;
+  color: #3DA8FF;
+  -webkit-text-stroke: 6px #000;
+  paint-order: stroke fill;
+  text-shadow: 6px 6px 0 #000;
+  transform: rotate(-2deg) skewX(-4deg);
+  letter-spacing: 0.01em;
+}
+
+.ppp-subline {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(11px, 2vw, 14px);
+  color: #FFE94A;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+  transform: rotate(1deg);
+  margin: 10px 0 18px;
+  text-align: center;
+}
+
+/* ============================ EVERYTHING TOGGLE ============================ */
+.ppp-every {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(13px, 2.4vw, 18px);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #FFE94A; /* dimmed yellow label when OFF */
+  background: #3a2a06; /* dark/dimmed when OFF */
+  border: 4px solid #000;
+  border-radius: 40px;
+  padding: 12px 26px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-1.5deg);
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.12s ease,
+    background 0.12s ease, opacity 0.12s ease;
+  opacity: 0.72;
+  margin-bottom: 22px;
+}
+.ppp-every .ppp-every-star { color: #FFE94A; -webkit-text-stroke: 0; }
+.ppp-every.is-on {
+  background: #FFE94A;
+  color: #201800;
+  opacity: 1;
+  box-shadow: 5px 5px 0 #000;
+  transform: rotate(-1.5deg) translateY(-2px) scale(1.03);
+}
+.ppp-every.is-on .ppp-every-star { color: #201800; }
+.ppp-every:hover { transform: rotate(-1.5deg) translateY(-3px); box-shadow: 6px 6px 0 #000; }
+.ppp-every:active { transform: rotate(-1.5deg) scale(0.95); box-shadow: 2px 2px 0 #000; }
+
+/* ============================ PACK PILLS ============================ */
+.ppp-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 11px;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+/* Capsule pill. DESELECTED: dark chip, dimmed, small shadow. SELECTED: full
+   saturated fill, black label, big hard shadow, lifted + upright-ish. The two
+   states are obviously different in color + shadow + opacity. */
+.ppp-pill {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(11px, 1.7vw, 15px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 4px solid #000;
+  border-radius: 30px;
+  cursor: pointer;
+  /* deselected look */
+  background: #241132;
+  color: #6b5a80;
+  box-shadow: 3px 3px 0 #000;
+  opacity: 0.62;
+  transform: rotate(var(--rot));
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.14s ease,
+    background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+}
+.ppp-pill-emoji {
+  font-size: 1.15em;
+  filter: grayscale(0.7) brightness(0.8);
+  transition: filter 0.14s ease;
+}
+.ppp-pill-label { line-height: 1; }
+
+.ppp-pill:hover {
+  opacity: 0.85;
+  transform: rotate(var(--rot)) translateY(-3px);
+  box-shadow: 5px 5px 0 #000;
+}
+
+.ppp-pill.is-on {
+  background: var(--pack);
+  color: #000;
+  opacity: 1;
+  box-shadow: 5px 5px 0 #000;
+  /* selected pills straighten up + lift so they read as "popped forward" */
+  transform: rotate(calc(var(--rot) * 0.35)) translateY(-2px) scale(1.04);
+}
+.ppp-pill.is-on .ppp-pill-emoji {
+  filter: none;
+}
+.ppp-pill.is-on:hover {
+  transform: rotate(calc(var(--rot) * 0.35)) translateY(-5px) scale(1.05);
+  box-shadow: 7px 7px 0 #000;
+}
+.ppp-pill:active {
+  transform: rotate(var(--rot)) scale(0.94);
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* ============================ COUNT + ACTIONS ============================ */
+.ppp-count {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: #c8b8e0;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.ppp-actions {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+}
+
+.ppp-btn {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(15px, 2vw, 20px);
+  border: 5px solid #000;
+  border-radius: 40px; /* pill */
+  padding: 15px 22px;
+  cursor: pointer;
+  color: #000;
+  box-shadow: 5px 5px 0 #000;
+  transform: skewX(-3deg);
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.2s ease,
+    opacity 0.14s ease;
+}
+.ppp-btn:hover { transform: skewX(-3deg) translateY(-4px); box-shadow: 8px 8px 0 #000; }
+.ppp-btn:active { transform: skewX(-3deg) scale(0.95); box-shadow: 2px 2px 0 #000; }
+
+.ppp-btn-create {
+  flex: 1.7;
+  background: #3DA8FF;
+}
+.ppp-btn-create:disabled {
+  background: #2a3d52;
+  color: #5a6b7d;
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: skewX(-3deg);
+  box-shadow: 3px 3px 0 #000;
+}
+.ppp-btn-join {
+  flex: 1;
+  background: #fff;
+}
+
+.ppp-watermark {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #6b5a80;
+  opacity: 0.8;
+}
+
+/* Reduced motion: kill the springy transforms; keep the static poses + state
+   colors (still obviously readable as selected/deselected). */
+@media (prefers-reduced-motion: reduce) {
+  .ppp-pill, .ppp-btn, .ppp-every {
+    transition: background 0.1s ease, color 0.1s ease, opacity 0.1s ease;
+  }
+}

@@ -1,8 +1,16 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import PackPickerPreview from './components/PackPickerPreview.jsx'
 import './index.css'
 import { initAnalytics, initSentry, Sentry } from './lib/analytics'
+
+// TEMPORARY design-preview route. Visiting /#pack-preview renders the standalone
+// pack-picker preview instead of the app — no react-router, no Vercel rewrite
+// needed (the hash keeps the request on index.html). Throwaway; remove with the
+// preview/pack-picker branch.
+const IS_PACK_PREVIEW =
+  typeof window !== 'undefined' && window.location.hash.replace(/^#\/?/, '') === 'pack-preview'
 
 // Stand up analytics + monitoring BEFORE the app mounts. Both are graceful no-ops
 // when their env keys are unset and are internally wrapped; the extra try/catch
@@ -79,7 +87,7 @@ window.addEventListener('resize', applyAppScale);
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<CrashFallback />}>
-      <App />
+      {IS_PACK_PREVIEW ? <PackPickerPreview /> : <App />}
     </Sentry.ErrorBoundary>
   </React.StrictMode>,
 )
