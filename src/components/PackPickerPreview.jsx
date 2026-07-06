@@ -1,22 +1,22 @@
 // PackPickerPreview.jsx
-// THROWAWAY design preview — a Category Blitz pack-picker built into a MOCK of
-// the Blitz mode dialog. NOT wired to game logic, WS, createGame, or the real
-// ModeDialog. Pure visual iteration surface. View it at /#pack-preview.
+// THROWAWAY design preview — a Category Blitz pack-picker (MOCK of the Blitz mode
+// dialog). NOT wired to game logic / WS / createGame / the real ModeDialog.
+// View it at /#pack-preview. Two layouts (GRID / LIST) swapped by a dev toggle.
 //
-// Two LAYOUT VARIANTS to compare, swapped by a dev GRID/LIST toggle at the top:
-//   • GRID  — the chunky sticker grid, now with reactive JUICE: squash & stretch
-//             on press, a sympathetic CASCADE nudge to neighbours + a count pop on
-//             every toggle, and a press-down feel.
-//   • LIST  — an FNF freeplay-style focused list: the hovered row is BIG/bright/
-//             forward, the rest recede (smaller, dimmer, rotated away); focus
-//             transfers smoothly on hover. Select is separate from focus.
-// Shared: per-pack colors, real Bungee, hand-inked borders, EVERYTHING toggle,
-// CREATE/JOIN, the inner-scroll window, bigger shadows, and ONE shared beat clock.
-// All motion is transform/opacity only (GPU-friendly). No sound.
+// Reactions are INDIVIDUAL, not one canned global effect. Three axes of variation,
+// all precomputed once into MOTION[] and fed as inherited CSS vars on each item's
+// outer wrap (so every motion layer reads them):
+//   1) ANIMATION — 5 distinct select-pop keyframes, assigned by index (i % 5) so
+//      no two adjacent items share a pop; the LIST uses 3 row-safe variants.
+//   2) TIMING — bob phase/duration spread per item; the ONE shared beat interval
+//      is rippled by a per-item transition-delay (no extra timers); jittered
+//      durations so nothing locksteps; per-neighbour cascade decay.
+//   3) WEIGHT — each pack's category count → a 0..1 weight that scales amplitude,
+//      duration (heavy = slower/springier), overshoot and shadow throw. Big packs
+//      react heavy & chunky; small packs snap quick.
 import { useEffect, useRef, useState } from 'react';
 import './PackPickerPreview.css';
 
-// `count` = the (fake) number of categories in a pack, shown on list rows.
 const PACKS = [
   { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#FF2EC4', rot: -3,   sticker: 'star', count: 240 },
   { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 185 },
@@ -38,6 +38,43 @@ const ALL_IDS = PACKS.map((p) => p.id);
 const INK_IDS = ['ppp-ink-a', 'ppp-ink-b', 'ppp-ink-c'];
 const BURST_POINTS =
   '100,50 74,60 85.4,85.4 60,74 50,100 40,74 14.6,85.4 26,60 0,50 26,40 14.6,14.6 40,26 50,0 60,26 85.4,14.6 74,40';
+
+// 5 distinct GRID select-pop keyframes; 3 row-safe (no horizontal overflow) LIST ones.
+const VARIANTS = ['ppp-sel-wide', 'ppp-sel-tall', 'ppp-sel-wobble', 'ppp-sel-bounce', 'ppp-sel-punch'];
+const ROW_VARIANTS = ['ppp-row-punch', 'ppp-row-bounce', 'ppp-row-stretch'];
+
+// Deterministic per-index pseudo-random (stable across renders/resumes; no Math.random).
+function rand(n) { const x = Math.sin(n * 127.1 + 31.7) * 43758.5453; return x - Math.floor(x); }
+
+const COUNTS = PACKS.map((p) => p.count);
+const CMIN = Math.min(...COUNTS);
+const CMAX = Math.max(...COUNTS);
+
+// Precompute each pack's motion signature once.
+const MOTION = PACKS.map((p, i) => {
+  const w = CMAX > CMIN ? (p.count - CMIN) / (CMAX - CMIN) : 0.5; // 0 = snappy, 1 = heavy
+  const jitter = 0.88 + rand(i + 5) * 0.24;                       // ±~12% duration jitter
+  const amp = +(0.7 + w * 0.85).toFixed(3);                       // squash/overshoot multiplier 0.70..1.55
+  const variant = VARIANTS[i % VARIANTS.length];                  // adjacent indices differ
+  const rowVariant = ROW_VARIANTS[i % ROW_VARIANTS.length];
+  // Press squash bias flavours the hold per variant (some go wide-flat, one goes narrow-tall).
+  let sqx; let sqy;
+  if (variant === 'ppp-sel-tall') { sqx = 1 - 0.09 * amp; sqy = 1 + 0.11 * amp; }
+  else if (variant === 'ppp-sel-wobble') { sqx = 1 + 0.07 * amp; sqy = 1 - 0.05 * amp; }
+  else { sqx = 1 + 0.15 * amp; sqy = 1 - 0.13 * amp; }
+  return {
+    variant, rowVariant, amp,
+    popDur: +((0.30 + w * 0.26) * jitter).toFixed(3),   // heavy = slower
+    relDur: +((0.28 + w * 0.20) * jitter).toFixed(3),
+    nudgeDur: +((0.24 + w * 0.16) * jitter).toFixed(3),
+    bobDur: +(2.7 + rand(i + 3) * 0.9).toFixed(3),       // varied so they drift out of lockstep
+    bobDelay: +(i * -0.28).toFixed(3),                   // wider phase spread → travelling wave
+    beatDelay: +((i % 14) * 0.009).toFixed(3),           // beat ripples across items
+    selShadow: Math.round(6 + w * 8),                    // heavy packs throw a bigger shadow
+    sqx: +sqx.toFixed(3), sqy: +sqy.toFixed(3),
+    ease: w > 0.55 ? 'cubic-bezier(0.34, 1.8, 0.38, 1)' : 'cubic-bezier(0.3, 1.5, 0.5, 1)', // springier for heavy
+  };
+});
 
 function prefersReduced() {
   return typeof window !== 'undefined' &&
@@ -66,6 +103,26 @@ function packVars(p, inkId) {
     '--ink-url': `url(#${inkId})`,
   };
 }
+// The per-item motion signature as inherited CSS vars (set on the OUTER wrap).
+function motionVars(i) {
+  const m = MOTION[i];
+  return {
+    '--i': i,
+    '--amp': m.amp,
+    '--pop-name': m.variant,
+    '--row-pop-name': m.rowVariant,
+    '--pop-dur': `${m.popDur}s`,
+    '--rel-dur': `${m.relDur}s`,
+    '--nudge-dur': `${m.nudgeDur}s`,
+    '--bob-dur': `${m.bobDur}s`,
+    '--bob-delay': `${m.bobDelay}s`,
+    '--beat-delay': `${m.beatDelay}s`,
+    '--sel-shadow': `${m.selShadow}px`,
+    '--sqx': m.sqx,
+    '--sqy': m.sqy,
+    '--pop-ease': m.ease,
+  };
+}
 
 function CheckMark() {
   return (
@@ -75,9 +132,7 @@ function CheckMark() {
     </svg>
   );
 }
-function RoughCheck() {
-  return <span className="ppp-check" aria-hidden="true"><CheckMark /></span>;
-}
+function RoughCheck() { return <span className="ppp-check" aria-hidden="true"><CheckMark /></span>; }
 function Sparkle() {
   return (
     <span className="ppp-spark" aria-hidden="true">
@@ -128,19 +183,18 @@ function Sticker({ kind }) {
 export default function PackPickerPreview() {
   const [layout, setLayout] = useState('grid'); // 'grid' | 'list'
   const [selected, setSelected] = useState(() => new Set(ALL_IDS));
-  // Reaction state (all transient, cleared on animationend):
-  const [popIn, setPopIn] = useState(() => new Set());   // select punch + burst
-  const [popOut, setPopOut] = useState(() => new Set());  // deselect deflate
-  const [pressId, setPressId] = useState(null);           // squash-while-held
-  const [releasing, setReleasing] = useState(() => new Set()); // release stretch
-  const [nudging, setNudging] = useState(() => new Set()); // sympathetic cascade
-  const [focusRow, setFocusRow] = useState(0);            // LIST focused index
+  const [popIn, setPopIn] = useState(() => new Set());
+  const [popOut, setPopOut] = useState(() => new Set());
+  const [pressId, setPressId] = useState(null);
+  const [releasing, setReleasing] = useState(() => new Set());
+  const [nudging, setNudging] = useState(() => new Set());
+  const [focusRow, setFocusRow] = useState(0);
 
   const allOn = selected.size === PACKS.length;
   const count = selected.size;
 
-  // ONE shared beat clock → toggles data-beat on the stage; CSS pulses selected
-  // (and focused) items in sync, no per-item timer / no re-render per beat.
+  // ONE shared beat clock → toggles data-beat; CSS pulses selected items, rippled
+  // by each item's --beat-delay. No per-item timer, no re-render per beat.
   const stageRef = useRef(null);
   useEffect(() => {
     if (prefersReduced()) return undefined;
@@ -150,7 +204,7 @@ export default function PackPickerPreview() {
       if (!host) return;
       host.setAttribute('data-beat', '');
       window.clearTimeout(offTimer);
-      offTimer = window.setTimeout(() => host && host.removeAttribute('data-beat'), 150);
+      offTimer = window.setTimeout(() => host && host.removeAttribute('data-beat'), 210);
     }, 500);
     return () => { window.clearInterval(id); window.clearTimeout(offTimer); };
   }, []);
@@ -165,19 +219,14 @@ export default function PackPickerPreview() {
   function clearPop(id) { delFrom(setPopIn, id); delFrom(setPopOut, id); }
   function clearSquish(id) { delFrom(setReleasing, id); delFrom(setNudging, id); }
 
-  // Press-down / squash while held; release springs back (stretch).
   function press(id) { setPressId(id); }
-  function release(id) {
-    setPressId((cur) => (cur === id ? null : cur));
-    addTo(setReleasing, [id]);
-  }
+  function release(id) { setPressId((cur) => (cur === id ? null : cur)); addTo(setReleasing, [id]); }
 
   function togglePack(id) {
     const idx = PACKS.findIndex((p) => p.id === id);
     const willBe = !selected.has(id);
     setSelected((prev) => { const n = new Set(prev); willBe ? n.add(id) : n.delete(id); return n; });
     pop(id, willBe ? 'in' : 'out');
-    // CASCADE: immediate neighbours give a sympathetic nudge.
     const neighbours = [PACKS[idx - 1], PACKS[idx + 1]].filter(Boolean).map((p) => p.id);
     if (neighbours.length) addTo(setNudging, neighbours);
   }
@@ -244,13 +293,11 @@ export default function PackPickerPreview() {
         <div className="ppp-halftone" aria-hidden="true" />
 
         <div className="ppp-content">
-          {/* dev-only layout switch */}
           <div className="ppp-layout-toggle" role="group" aria-label="Layout (dev)">
             <button type="button" className={`ppp-lt-btn${layout === 'grid' ? ' is-on' : ''}`} onClick={() => setLayout('grid')}>GRID</button>
             <button type="button" className={`ppp-lt-btn${layout === 'list' ? ' is-on' : ''}`} onClick={() => setLayout('list')}>LIST</button>
           </div>
 
-          {/* ---------------- FIXED CHROME (top) ---------------- */}
           <div className="ppp-chip">
             <span className="ppp-chip-ink" aria-hidden="true" />
             <span className="ppp-chip-text">SOLO · MULTI</span>
@@ -294,20 +341,19 @@ export default function PackPickerPreview() {
             </span>
           </button>
 
-          {/* ---------------- SCROLLING REGION ---------------- */}
           <div className="ppp-window">
             <div className="ppp-window-ink" aria-hidden="true" />
             <div className="ppp-window-scroll">
 
               {layout === 'grid' ? (
-                /* ============ VARIANT A: GRID (juiced) ============ */
+                /* ============ VARIANT A: GRID (individualised juice) ============ */
                 <div className="ppp-grid">
                   {PACKS.map((p, i) => {
                     const on = selected.has(p.id);
                     const inkId = INK_IDS[i % INK_IDS.length];
                     const beatCls = (popIn.has(p.id) ? ' pop-in' : '') + (popOut.has(p.id) ? ' pop-out' : '');
                     return (
-                      <div className="ppp-pill-wrap" style={{ '--i': i }} key={p.id}>
+                      <div className="ppp-pill-wrap" style={{ ...packVars(p, inkId), ...motionVars(i) }} key={p.id}>
                         <div
                           className={`ppp-pill-beat${on ? ' is-on' : ''}${beatCls}`}
                           onAnimationEnd={(e) => { if (e.target === e.currentTarget) clearPop(p.id); }}
@@ -321,7 +367,6 @@ export default function PackPickerPreview() {
                               className={`ppp-pill${on ? ' is-on' : ''}`}
                               onClick={() => togglePack(p.id)}
                               {...pressProps(p.id)}
-                              style={packVars(p, inkId)}
                               aria-pressed={on}
                             >
                               {popIn.has(p.id) && (
@@ -356,9 +401,13 @@ export default function PackPickerPreview() {
                     const d = i - focusRow;
                     const rowScale = focused ? 1.07 : Math.max(0.84, 0.93 - Math.abs(d) * 0.02);
                     const rowRot = focused ? 0 : (d < 0 ? -2.5 : 2.5);
+                    const beatCls = (popIn.has(p.id) ? ' pop-in' : '') + (popOut.has(p.id) ? ' pop-out' : '');
                     return (
-                      <div className="ppp-row-wrap" key={p.id}>
-                        <div className={`ppp-row-beat${(on || focused) ? ' is-on' : ''}`}>
+                      <div className="ppp-row-wrap" style={{ ...packVars(p, inkId), ...motionVars(i) }} key={p.id}>
+                        <div
+                          className={`ppp-row-beat${(on || focused) ? ' is-on' : ''}${beatCls}`}
+                          onAnimationEnd={(e) => { if (e.target === e.currentTarget) clearPop(p.id); }}
+                        >
                           <div
                             className={`ppp-row-squish${squishCls(p.id)}`}
                             onAnimationEnd={(e) => { if (e.target === e.currentTarget) clearSquish(p.id); }}
@@ -370,7 +419,7 @@ export default function PackPickerPreview() {
                               onFocus={() => setFocusRow(i)}
                               onClick={() => togglePack(p.id)}
                               {...pressProps(p.id)}
-                              style={{ ...packVars(p, inkId), '--rowscale': rowScale, '--rowrot': `${rowRot}deg` }}
+                              style={{ '--rowscale': rowScale, '--rowrot': `${rowRot}deg` }}
                               aria-pressed={on}
                             >
                               <span className="ppp-row-ink" aria-hidden="true" />
@@ -392,7 +441,6 @@ export default function PackPickerPreview() {
             </div>
           </div>
 
-          {/* ---------------- FIXED CHROME (bottom) ---------------- */}
           <div className="ppp-count">
             <span className="ppp-count-num" key={count}>
               {count === 0 ? 'NO PACKS — PICK AT LEAST ONE' : `${count} PACK${count === 1 ? '' : 'S'} LOADED`}
