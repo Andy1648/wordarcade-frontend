@@ -4,17 +4,17 @@
 // ModeDialog. Pure visual iteration surface. View it at /#pack-preview (see
 // main.jsx conditional mount).
 //
-// LAYOUT: fixed chrome + one scrolling region. The title, AI badge, description,
-// "PICK YOUR PACKS" label, EVERYTHING toggle and the CREATE/JOIN buttons are all
-// FIXED. Only the 14 pack tiles scroll — inside a bounded, hand-inked inner
-// "window" (a recessed framed sub-panel, like FNF's song list). The dialog shell
-// itself does NOT scroll; it sizes to its now-bounded content.
-//
-// STYLE: cute chunky vector stickers with hand-inked outlines. Every outline
-// (pills, panel, window, buttons, title) is roughed by an SVG feTurbulence +
-// feDisplacementMap filter. Pills carry a layered gradient fill + inner shine for
-// glossy vector depth. Crisp Bungee labels ride above the roughed layers.
-import { useState } from 'react';
+// ALIVE with FNF-style motion (no faces/characters — emotion is motion + graphic
+// drama). Three transform layers per pill so nothing fights:
+//   • .ppp-pill-wrap  — continuous IDLE BOB (CSS keyframe, staggered by index so
+//                        the row is a wave, not a block).
+//   • .ppp-pill-beat  — BEAT PULSE (a shared data-beat attribute toggled by ONE
+//                        interval on the stage → CSS scales selected pills in sync,
+//                        no React re-render) + the SELECT PUNCH (pop-in keyframe).
+//   • .ppp-pill (btn) — rotation + springy HOVER lift + select lift.
+// Selecting fires an impact-star BURST behind the pill. All motion is transform/
+// opacity only (GPU-friendly).
+import { useEffect, useRef, useState } from 'react';
 import './PackPickerPreview.css';
 
 const PACKS = [
@@ -36,6 +36,15 @@ const PACKS = [
 
 const ALL_IDS = PACKS.map((p) => p.id);
 const INK_IDS = ['ppp-ink-a', 'ppp-ink-b', 'ppp-ink-c'];
+// Flat 8-point impact star (starburst) — the graphic-punch shape behind a pill on
+// select. Interleaved outer(r50)/inner(r26) points about (50,50).
+const BURST_POINTS =
+  '100,50 74,60 85.4,85.4 60,74 50,100 40,74 14.6,85.4 26,60 0,50 26,40 14.6,14.6 40,26 50,0 60,26 85.4,14.6 74,40';
+
+function prefersReduced() {
+  return typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 function darken(hex, f) {
   const n = parseInt(hex.slice(1), 16);
@@ -56,41 +65,29 @@ function RoughCheck() {
   return (
     <span className="ppp-check" aria-hidden="true">
       <svg viewBox="0 0 30 30" className="ppp-check-svg">
-        <path
-          d="M6 16 Q10 19 12.5 23 Q18 12 25 6"
-          fill="none" stroke="#000" strokeWidth="6"
-          strokeLinecap="round" strokeLinejoin="round"
-          filter="url(#ppp-ink-thin)"
-        />
+        <path d="M6 16 Q10 19 12.5 23 Q18 12 25 6" fill="none" stroke="#000"
+          strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" filter="url(#ppp-ink-thin)" />
       </svg>
     </span>
   );
 }
-
 function Sparkle() {
   return (
     <span className="ppp-spark" aria-hidden="true">
       <svg viewBox="0 0 22 22">
-        <path
-          d="M11 0 C12 7 15 10 22 11 C15 12 12 15 11 22 C10 15 7 12 0 11 C7 10 10 7 11 0 Z"
-          fill="#fff" stroke="#000" strokeWidth="2" strokeLinejoin="round"
-          filter="url(#ppp-ink-thin)"
-        />
+        <path d="M11 0 C12 7 15 10 22 11 C15 12 12 15 11 22 C10 15 7 12 0 11 C7 10 10 7 11 0 Z"
+          fill="#fff" stroke="#000" strokeWidth="2" strokeLinejoin="round" filter="url(#ppp-ink-thin)" />
       </svg>
     </span>
   );
 }
-
 function Sticker({ kind }) {
   if (kind === 'star') {
     return (
       <span className="ppp-sticker ppp-sticker-star" aria-hidden="true">
         <svg viewBox="0 0 26 26">
-          <path
-            d="M13 1 L16.5 9.5 L25 10 L18.5 15.5 L21 24 L13 19 L5 24 L7.5 15.5 L1 10 L9.5 9.5 Z"
-            fill="#FFE94A" stroke="#000" strokeWidth="3.4" strokeLinejoin="round"
-            filter="url(#ppp-ink-thin)"
-          />
+          <path d="M13 1 L16.5 9.5 L25 10 L18.5 15.5 L21 24 L13 19 L5 24 L7.5 15.5 L1 10 L9.5 9.5 Z"
+            fill="#FFE94A" stroke="#000" strokeWidth="3.4" strokeLinejoin="round" filter="url(#ppp-ink-thin)" />
           <circle cx="10.5" cy="10.5" r="1.6" fill="#fff" />
         </svg>
       </span>
@@ -100,11 +97,8 @@ function Sticker({ kind }) {
     return (
       <span className="ppp-sticker ppp-sticker-drip" aria-hidden="true">
         <svg viewBox="0 0 22 32">
-          <path
-            d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
-            fill="#FF2EC4" stroke="#000" strokeWidth="3.2" strokeLinejoin="round"
-            filter="url(#ppp-ink-thin)"
-          />
+          <path d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
+            fill="#FF2EC4" stroke="#000" strokeWidth="3.2" strokeLinejoin="round" filter="url(#ppp-ink-thin)" />
           <ellipse cx="8.5" cy="9" rx="1.6" ry="3" fill="#fff" opacity="0.8" />
         </svg>
       </span>
@@ -126,24 +120,62 @@ function Sticker({ kind }) {
 
 export default function PackPickerPreview() {
   const [selected, setSelected] = useState(() => new Set(ALL_IDS));
+  // Transient per-pill select/deselect punch classes (cleared on animationend).
+  const [popIn, setPopIn] = useState(() => new Set());
+  const [popOut, setPopOut] = useState(() => new Set());
 
   const allOn = selected.size === PACKS.length;
   const count = selected.size;
 
+  // ONE shared beat clock. Toggles data-beat on the stage ~every 500ms (~120bpm);
+  // CSS keys the pulse off that attribute so selected pills + the title pop in sync
+  // WITHOUT any React re-render per beat. Off under reduced motion.
+  const stageRef = useRef(null);
+  useEffect(() => {
+    if (prefersReduced()) return undefined;
+    const host = stageRef.current;
+    let offTimer = 0;
+    const id = window.setInterval(() => {
+      if (!host) return;
+      host.setAttribute('data-beat', '');
+      window.clearTimeout(offTimer);
+      offTimer = window.setTimeout(() => host && host.removeAttribute('data-beat'), 150);
+    }, 500);
+    return () => { window.clearInterval(id); window.clearTimeout(offTimer); };
+  }, []);
+
+  function pop(id, dir) {
+    if (dir === 'in') {
+      setPopIn((s) => new Set(s).add(id));
+      setPopOut((s) => { if (!s.has(id)) return s; const n = new Set(s); n.delete(id); return n; });
+    } else {
+      setPopOut((s) => new Set(s).add(id));
+      setPopIn((s) => { if (!s.has(id)) return s; const n = new Set(s); n.delete(id); return n; });
+    }
+  }
+  function clearPop(id) {
+    setPopIn((s) => { if (!s.has(id)) return s; const n = new Set(s); n.delete(id); return n; });
+    setPopOut((s) => { if (!s.has(id)) return s; const n = new Set(s); n.delete(id); return n; });
+  }
+
   function togglePack(id) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const willBe = !selected.has(id);
+    setSelected((prev) => { const n = new Set(prev); willBe ? n.add(id) : n.delete(id); return n; });
+    pop(id, willBe ? 'in' : 'out');
   }
   function toggleEverything() {
-    setSelected((prev) => (prev.size === PACKS.length ? new Set() : new Set(ALL_IDS)));
+    const turningOn = selected.size !== PACKS.length;
+    setSelected(turningOn ? new Set(ALL_IDS) : new Set());
+    // Fire a punch on every pill that actually flips.
+    ALL_IDS.forEach((id) => {
+      const was = selected.has(id);
+      if (turningOn && !was) pop(id, 'in');
+      if (!turningOn && was) pop(id, 'out');
+    });
   }
 
   return (
-    <div className="ppp-stage">
+    <div className="ppp-stage" ref={stageRef}>
       {/* ---- Ink/roughen filter defs: hidden, rendered once. ---- */}
       <svg className="ppp-defs" aria-hidden="true" focusable="false">
         <defs>
@@ -163,7 +195,6 @@ export default function PackPickerPreview() {
             <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-          {/* Inner framed window — same ink treatment as tiles, medium wobble. */}
           <filter id="ppp-ink-window" x="-12%" y="-12%" width="124%" height="124%">
             <feTurbulence type="fractalNoise" baseFrequency="0.013 0.016" numOctaves="2" seed="11" result="n" />
             <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" />
@@ -183,7 +214,6 @@ export default function PackPickerPreview() {
         </defs>
       </svg>
 
-      {/* MOCK of the Blitz mode dialog panel — sizes to content, does NOT scroll. */}
       <div className="ppp-panel">
         <div className="ppp-panel-ink" aria-hidden="true" />
         <div className="ppp-halftone" aria-hidden="true" />
@@ -198,28 +228,21 @@ export default function PackPickerPreview() {
           <div className="ppp-title-wrap">
             <span className="ppp-title-star" aria-hidden="true">
               <svg viewBox="0 0 26 26">
-                <path
-                  d="M13 1 L16.5 9.5 L25 10 L18.5 15.5 L21 24 L13 19 L5 24 L7.5 15.5 L1 10 L9.5 9.5 Z"
-                  fill="#FFE94A" stroke="#000" strokeWidth="3.4" strokeLinejoin="round"
-                  filter="url(#ppp-ink-thin)"
-                />
+                <path d="M13 1 L16.5 9.5 L25 10 L18.5 15.5 L21 24 L13 19 L5 24 L7.5 15.5 L1 10 L9.5 9.5 Z"
+                  fill="#FFE94A" stroke="#000" strokeWidth="3.4" strokeLinejoin="round" filter="url(#ppp-ink-thin)" />
                 <circle cx="10.5" cy="10.5" r="1.6" fill="#fff" />
               </svg>
             </span>
             <h1 className="ppp-title">CATEGORY BLITZ</h1>
             <span className="ppp-title-drip" aria-hidden="true">
               <svg viewBox="0 0 22 32">
-                <path
-                  d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
-                  fill="#3DA8FF" stroke="#000" strokeWidth="3.2" strokeLinejoin="round"
-                  filter="url(#ppp-ink-thin)"
-                />
+                <path d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
+                  fill="#3DA8FF" stroke="#000" strokeWidth="3.2" strokeLinejoin="round" filter="url(#ppp-ink-thin)" />
                 <ellipse cx="8.5" cy="9" rx="1.6" ry="3" fill="#fff" opacity="0.8" />
               </svg>
             </span>
           </div>
 
-          {/* AI JUDGED badge (fixed). */}
           <div className="ppp-aibadge">
             <span className="ppp-aibadge-ink" aria-hidden="true" />
             <span className="ppp-aibadge-text">
@@ -228,13 +251,10 @@ export default function PackPickerPreview() {
             </span>
           </div>
 
-          {/* Description line (fixed). */}
           <div className="ppp-liner">Name as many as you can before the clock runs out.</div>
 
-          {/* Section label (fixed). */}
-          <div className="ppp-subline">PICK YOUR PACKS — MIX &amp; MATCH</div>
+          <div className="ppp-subline">PICK YOUR PACKS</div>
 
-          {/* EVERYTHING toggle (fixed). */}
           <button
             className={`ppp-every${allOn ? ' is-on' : ''}`}
             onClick={toggleEverything}
@@ -248,8 +268,7 @@ export default function PackPickerPreview() {
             </span>
           </button>
 
-          {/* ---------------- SCROLLING REGION: the pack tiles only ----------------
-              A recessed, hand-inked framed window. Only this scrolls. */}
+          {/* ---------------- SCROLLING REGION: the pack tiles only ---------------- */}
           <div className="ppp-window">
             <div className="ppp-window-ink" aria-hidden="true" />
             <div className="ppp-window-scroll">
@@ -257,30 +276,46 @@ export default function PackPickerPreview() {
                 {PACKS.map((p, i) => {
                   const on = selected.has(p.id);
                   const inkId = INK_IDS[i % INK_IDS.length];
+                  const beatCls =
+                    (popIn.has(p.id) ? ' pop-in' : '') + (popOut.has(p.id) ? ' pop-out' : '');
                   return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`ppp-pill${on ? ' is-on' : ''}`}
-                      onClick={() => togglePack(p.id)}
-                      style={{
-                        '--pack': p.color,
-                        '--pack-light': lighten(p.color, 0.5),
-                        '--pack-deep': darken(p.color, 0.3),
-                        '--rot': `${p.rot}deg`,
-                        '--ink-url': `url(#${inkId})`,
-                      }}
-                      aria-pressed={on}
-                    >
-                      <span className="ppp-pill-ink" aria-hidden="true" />
-                      <span className="ppp-pill-body">
-                        <span className="ppp-pill-emoji" aria-hidden="true">{p.emoji}</span>
-                        <span className="ppp-pill-label">{p.label}</span>
-                      </span>
-                      {p.sticker && <Sticker kind={p.sticker} />}
-                      {on && <RoughCheck />}
-                      {on && <Sparkle />}
-                    </button>
+                    <div className="ppp-pill-wrap" style={{ '--i': i }} key={p.id}>
+                      <div
+                        className={`ppp-pill-beat${on ? ' is-on' : ''}${beatCls}`}
+                        onAnimationEnd={(e) => { if (e.target === e.currentTarget) clearPop(p.id); }}
+                      >
+                        <button
+                          type="button"
+                          className={`ppp-pill${on ? ' is-on' : ''}`}
+                          onClick={() => togglePack(p.id)}
+                          style={{
+                            '--pack': p.color,
+                            '--pack-light': lighten(p.color, 0.5),
+                            '--pack-deep': darken(p.color, 0.3),
+                            '--rot': `${p.rot}deg`,
+                            '--ink-url': `url(#${inkId})`,
+                          }}
+                          aria-pressed={on}
+                        >
+                          {/* impact-star burst on select — flat pack-color starburst */}
+                          {popIn.has(p.id) && (
+                            <span className="ppp-burst" aria-hidden="true">
+                              <svg viewBox="0 0 100 100">
+                                <polygon points={BURST_POINTS} fill="var(--pack)" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
+                              </svg>
+                            </span>
+                          )}
+                          <span className="ppp-pill-ink" aria-hidden="true" />
+                          <span className="ppp-pill-body">
+                            <span className="ppp-pill-emoji" aria-hidden="true">{p.emoji}</span>
+                            <span className="ppp-pill-label">{p.label}</span>
+                          </span>
+                          {p.sticker && <Sticker kind={p.sticker} />}
+                          {on && <RoughCheck />}
+                          {on && <Sparkle />}
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>

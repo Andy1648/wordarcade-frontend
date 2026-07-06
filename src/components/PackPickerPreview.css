@@ -1,14 +1,13 @@
 /* PackPickerPreview.css — THROWAWAY design preview.
    Cute CHUNKY VECTOR STICKERS with hand-inked outlines, in a dialog with FIXED
-   chrome + ONE scrolling region. The title/AI-badge/description/label/EVERYTHING
-   toggle and the CREATE/JOIN buttons are fixed; only the 14 pack tiles scroll,
-   inside a recessed hand-inked inner window. The dialog shell itself does NOT
-   scroll — it sizes to its now-bounded content.
-   Every framed thing has an "ink" layer (absolute, inset:0) carrying the fill +
-   a fat black border, roughed by an SVG feTurbulence/feDisplacementMap filter so
-   the edge ripples; the hard shadow is a drop-shadow() IN the filter chain. Pills
-   also get a layered gradient fill + inner shine for glossy vector depth. Labels
-   ride ABOVE the roughed layers, crisp. All prefixed .ppp- so nothing leaks. */
+   chrome + ONE scrolling region — now ALIVE with FNF-style motion.
+   Every framed thing has an "ink" layer roughed by an SVG displacement filter;
+   pills add a layered gradient fill + inner shine. Labels ride above, crisp.
+   MOTION lives on three stacked layers per pill so transforms never fight:
+     .ppp-pill-wrap  → idle bob (keyframe, staggered by --i)
+     .ppp-pill-beat  → beat pulse (via .ppp-stage[data-beat]) + select punch
+     .ppp-pill (btn) → rotation + springy hover/select lift
+   All prefixed .ppp- so nothing leaks. */
 
 .ppp-defs { position: absolute; width: 0; height: 0; }
 
@@ -18,15 +17,44 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* safe center: centers when it fits; on a too-short viewport the top stays
-     reachable. The panel no longer grows unbounded (the list is windowed), so in
-     practice there's no whole-dialog scrollbar. */
   justify-content: safe center;
   gap: 18px;
   padding: 24px;
   box-sizing: border-box;
   background: radial-gradient(120% 90% at 50% 0%, #241043 0%, #0d0618 70%);
   overflow: auto;
+}
+
+/* ============================ MOTION KEYFRAMES ============================ */
+/* Idle bob — gentle vertical sine. Staggered via negative delay per --i so the
+   pills form a travelling wave, not a synchronized block. */
+@keyframes ppp-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+/* Title breathes on its own slow cadence. */
+@keyframes ppp-title-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+/* Select PUNCH — overshoot then settle (FNF pop). */
+@keyframes ppp-pop-in {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.16); }
+  62%  { transform: scale(0.95); }
+  82%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+/* Deselect — quick deflate. */
+@keyframes ppp-pop-out {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(0.86); }
+  100% { transform: scale(1); }
+}
+/* Impact-star burst on select — explode out + fade. */
+@keyframes ppp-burst {
+  0%   { transform: scale(0.35) rotate(0deg); opacity: 0.95; }
+  100% { transform: scale(1.6) rotate(35deg); opacity: 0; }
 }
 
 /* ============================ THE PANEL ============================ */
@@ -44,7 +72,7 @@
   z-index: 0;
   border: 7px solid #000;
   border-radius: 16px;
-  filter: url(#ppp-ink-panel) drop-shadow(9px 9px 0 #000);
+  filter: url(#ppp-ink-panel) drop-shadow(11px 11px 0 #000);
   pointer-events: none;
 }
 .ppp-halftone {
@@ -93,7 +121,13 @@
 }
 
 /* ============================ TITLE ============================ */
-.ppp-title-wrap { position: relative; display: inline-block; margin: 2px 0; }
+/* Wrap carries the slow idle bob; the title itself pulses on the beat. */
+.ppp-title-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 2px 0;
+  animation: ppp-title-bob 3.4s ease-in-out infinite;
+}
 .ppp-title {
   font-family: 'Bungee', cursive;
   font-size: clamp(34px, 7.5vw, 66px);
@@ -103,10 +137,14 @@
   color: #3DA8FF;
   -webkit-text-stroke: 7px #000;
   paint-order: stroke fill;
-  text-shadow: 6px 6px 0 #000;
+  text-shadow: 7px 7px 0 #000;
   transform: rotate(-2deg) skewX(-4deg);
   letter-spacing: 0.01em;
   filter: url(#ppp-ink-title);
+  transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1);
+}
+.ppp-stage[data-beat] .ppp-title {
+  transform: rotate(-2deg) skewX(-4deg) scale(1.035);
 }
 .ppp-title-star {
   position: absolute;
@@ -116,7 +154,7 @@
   z-index: 3;
 }
 .ppp-title-star svg, .ppp-title-drip svg,
-.ppp-sticker svg, .ppp-check-svg, .ppp-spark svg {
+.ppp-sticker svg, .ppp-check-svg, .ppp-spark svg, .ppp-burst svg {
   width: 100%; height: 100%; display: block; overflow: visible;
 }
 .ppp-title-drip {
@@ -137,11 +175,11 @@
 .ppp-aibadge-ink {
   position: absolute;
   inset: 0;
-  border: 4px solid #000;
+  border: 5px solid #000;
   border-radius: 12px;
   background: linear-gradient(180deg, #b6fff4 0%, #2EFFE0 46%, #12b7a0 100%);
   box-shadow: inset 0 4px 0 -2px rgba(255, 255, 255, 0.6), inset 0 -3px 0 -2px rgba(0, 0, 0, 0.18);
-  filter: url(#ppp-ink-btn) drop-shadow(4px 4px 0 #000);
+  filter: url(#ppp-ink-btn) drop-shadow(5px 5px 0 #000);
 }
 .ppp-aibadge-text {
   position: relative;
@@ -167,14 +205,15 @@
 }
 .ppp-subline {
   font-family: 'Bungee', cursive;
-  font-size: clamp(11px, 2vw, 14px);
+  font-size: clamp(12px, 2.1vw, 16px);
   color: #FFE94A;
   -webkit-text-stroke: 2.5px #000;
   paint-order: stroke fill;
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 3px 3px 0 #000;
   transform: rotate(1deg);
   margin: 10px 0 12px;
   text-align: center;
+  letter-spacing: 0.04em;
   filter: url(#ppp-ink-title);
 }
 
@@ -187,7 +226,7 @@
   cursor: pointer;
   transform: rotate(-1.5deg);
   margin-bottom: 14px;
-  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.5, 1), opacity 0.12s ease;
+  transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1), opacity 0.12s ease;
   opacity: 0.74;
 }
 .ppp-every-ink {
@@ -197,8 +236,8 @@
   border-radius: 40px;
   background: linear-gradient(180deg, #4a3608 0%, #2e2105 100%);
   box-shadow: inset 0 3px 0 -1px rgba(255, 255, 255, 0.12);
-  filter: url(#ppp-ink-btn) drop-shadow(3px 3px 0 #000);
-  transition: background 0.12s ease;
+  filter: url(#ppp-ink-btn) drop-shadow(4px 4px 0 #000);
+  transition: background 0.12s ease, filter 0.12s ease;
 }
 .ppp-every-text {
   position: relative;
@@ -214,46 +253,38 @@
 .ppp-every.is-on .ppp-every-ink {
   background: linear-gradient(180deg, #FFF4A8 0%, #FFE94A 45%, #E0A806 100%);
   box-shadow: inset 0 5px 0 -2px rgba(255, 255, 255, 0.6), inset 0 -4px 0 -2px rgba(0, 0, 0, 0.18);
-  filter: url(#ppp-ink-btn) drop-shadow(5px 5px 0 #000);
+  filter: url(#ppp-ink-btn) drop-shadow(7px 7px 0 #000);
 }
 .ppp-every.is-on .ppp-every-text, .ppp-every.is-on .ppp-every-star { color: #201800; }
-.ppp-every:hover { transform: rotate(-1.5deg) translateY(-3px); }
+.ppp-every:hover { transform: rotate(-1.5deg) translateY(-3px) scale(1.04); }
 .ppp-every:active { transform: rotate(-1.5deg) scale(0.95); }
+/* the EVERYTHING pill rides the beat when it's on, too */
+.ppp-stage[data-beat] .ppp-every.is-on { transform: rotate(-1.5deg) translateY(-2px) scale(1.07); }
 
 /* ============================ SCROLLING WINDOW ============================ */
-/* Recessed, hand-inked framed sub-panel. Only this scrolls. */
-.ppp-window {
-  position: relative;
-  width: 100%;
-  margin-bottom: 16px;
-}
+.ppp-window { position: relative; width: 100%; margin-bottom: 16px; }
 .ppp-window-ink {
   position: absolute;
   inset: -2px;
   z-index: 0;
   border: 6px solid #000;
   border-radius: 22px;
-  filter: url(#ppp-ink-window) drop-shadow(5px 5px 0 #000);
+  filter: url(#ppp-ink-window) drop-shadow(6px 6px 0 #000);
   pointer-events: none;
 }
 .ppp-window-scroll {
   position: relative;
   z-index: 1;
-  max-height: 226px;                 /* ~2.5–3 rows: clearly a scroll region */
+  max-height: 226px;
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: 18px;
-  /* recessed darker well + inner shadow so it reads as a sunken window */
   background: linear-gradient(180deg, #0b0416 0%, #140826 100%);
   box-shadow: inset 0 7px 16px rgba(0, 0, 0, 0.72), inset 0 -3px 10px rgba(0, 0, 0, 0.5);
-  /* padding wide enough that the pills' stickers/checks/sparkles (which overhang
-     the pill box) aren't clipped by the scroll edge. */
   padding: 22px 22px;
-  /* Firefox thin custom bar */
   scrollbar-width: thin;
   scrollbar-color: #4d3268 #0b0416;
 }
-/* WebKit custom scrollbar — chunky dark thumb to fit the aesthetic. */
 .ppp-window-scroll::-webkit-scrollbar { width: 12px; }
 .ppp-window-scroll::-webkit-scrollbar-track { background: transparent; margin: 10px 0; }
 .ppp-window-scroll::-webkit-scrollbar-thumb {
@@ -267,11 +298,30 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 17px 14px;
+  gap: 18px 14px;
   width: 100%;
 }
 
-/* ============================ PACK PILLS ============================ */
+/* ============================ PILL MOTION LAYERS ============================ */
+/* Layer 1: idle bob. Negative stagger delay per index → travelling wave. */
+.ppp-pill-wrap {
+  display: inline-block;
+  animation: ppp-bob 3s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.22s);
+}
+/* Layer 2: beat pulse + select/deselect punch. */
+.ppp-pill-beat {
+  display: inline-block;
+  transform: scale(1);
+  transition: transform 0.12s cubic-bezier(0.34, 1.7, 0.5, 1);
+}
+/* Only SELECTED pills pulse; synced by the shared data-beat attribute. The beat
+   layer mirrors the pill's .is-on so we can target it without :has(). */
+.ppp-stage[data-beat] .ppp-pill-beat.is-on { transform: scale(1.06); }
+.ppp-pill-beat.pop-in { animation: ppp-pop-in 0.4s cubic-bezier(0.34, 1.7, 0.5, 1); }
+.ppp-pill-beat.pop-out { animation: ppp-pop-out 0.32s cubic-bezier(0.4, 0, 0.6, 1); }
+
+/* Layer 3: the button — rotation + hover/select lift. */
 .ppp-pill {
   position: relative;
   background: transparent;
@@ -281,7 +331,7 @@
   overflow: visible;
   opacity: 0.72;
   transform: rotate(var(--rot));
-  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), opacity 0.14s ease;
+  transition: transform 0.16s cubic-bezier(0.34, 1.7, 0.5, 1), opacity 0.14s ease;
 }
 .ppp-pill-ink {
   position: absolute;
@@ -290,8 +340,8 @@
   border-radius: 32px;
   background: linear-gradient(180deg, #33194a 0%, #1b0c2b 100%);
   box-shadow: inset 0 4px 0 -2px rgba(255, 255, 255, 0.12);
-  filter: var(--ink-url) drop-shadow(3px 3px 0 #000);
-  transition: background 0.14s ease, box-shadow 0.14s ease;
+  filter: var(--ink-url) drop-shadow(4px 4px 0 #000);
+  transition: background 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
 }
 .ppp-pill-body {
   position: relative;
@@ -308,21 +358,43 @@
   filter: grayscale(0.7) brightness(0.8);
   transition: filter 0.14s ease;
 }
-.ppp-pill:hover { opacity: 0.92; transform: rotate(var(--rot)) translateY(-3px); }
 
+/* HOVER — big springy reaction: jump up, scale up, straighten, shadow grows. */
+.ppp-pill:hover {
+  opacity: 0.95;
+  transform: rotate(calc(var(--rot) * 0.2)) translateY(-6px) scale(1.08);
+}
+.ppp-pill:hover .ppp-pill-ink { filter: var(--ink-url) drop-shadow(7px 7px 0 #000); }
+
+/* SELECTED resting — brighter glossy fill, thick outline, BIG shadow, lifted +
+   straightened. Pops off the panel vs. the dim deselected chips. */
 .ppp-pill.is-on {
   opacity: 1;
-  transform: rotate(calc(var(--rot) * 0.3)) translateY(-3px) scale(1.06);
+  transform: rotate(calc(var(--rot) * 0.3)) translateY(-3px);
 }
 .ppp-pill.is-on .ppp-pill-ink {
   background: linear-gradient(180deg, var(--pack-light) 0%, var(--pack) 46%, var(--pack-deep) 100%);
   box-shadow: inset 0 6px 0 -2px rgba(255, 255, 255, 0.62), inset 0 -5px 0 -2px rgba(0, 0, 0, 0.22);
-  filter: var(--ink-url) drop-shadow(6px 6px 0 #000);
+  filter: var(--ink-url) drop-shadow(9px 9px 0 #000);
 }
 .ppp-pill.is-on .ppp-pill-body { color: #000; }
 .ppp-pill.is-on .ppp-pill-emoji { filter: none; }
-.ppp-pill.is-on:hover { transform: rotate(calc(var(--rot) * 0.3)) translateY(-6px) scale(1.07); }
+.ppp-pill.is-on:hover {
+  transform: rotate(calc(var(--rot) * 0.15)) translateY(-8px) scale(1.08);
+}
+.ppp-pill.is-on:hover .ppp-pill-ink { filter: var(--ink-url) drop-shadow(12px 12px 0 #000); }
 .ppp-pill:active { transform: rotate(var(--rot)) scale(0.94); }
+
+/* Impact-star burst behind the pill on select. */
+.ppp-burst {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 150%; height: 210%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  pointer-events: none;
+  animation: ppp-burst 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
 
 /* Badges/accents — tucked so they don't clip against the scroll window edge. */
 .ppp-check {
@@ -371,7 +443,7 @@
   cursor: pointer;
   overflow: visible;
   transform: skewX(-3deg);
-  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), opacity 0.14s ease;
+  transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1), opacity 0.14s ease;
 }
 .ppp-btn-ink {
   position: absolute;
@@ -379,7 +451,8 @@
   border: 6px solid #000;
   border-radius: 40px;
   box-shadow: inset 0 5px 0 -2px rgba(255, 255, 255, 0.55), inset 0 -4px 0 -2px rgba(0, 0, 0, 0.2);
-  filter: url(#ppp-ink-btn) drop-shadow(5px 5px 0 #000);
+  filter: url(#ppp-ink-btn) drop-shadow(7px 7px 0 #000);
+  transition: filter 0.14s ease;
 }
 .ppp-btn-text {
   position: relative;
@@ -387,14 +460,15 @@
   font-size: clamp(15px, 2vw, 20px);
   color: #000;
 }
-.ppp-btn:hover { transform: skewX(-3deg) translateY(-4px); }
+.ppp-btn:hover { transform: skewX(-3deg) translateY(-5px) scale(1.03); }
+.ppp-btn:hover .ppp-btn-ink { filter: url(#ppp-ink-btn) drop-shadow(10px 10px 0 #000); }
 .ppp-btn:active { transform: skewX(-3deg) scale(0.95); }
 .ppp-btn-create { flex: 1.7; }
 .ppp-btn-create .ppp-btn-ink { background: linear-gradient(180deg, #9AD2FF 0%, #3DA8FF 46%, #1A6FC4 100%); }
 .ppp-btn-create:disabled { cursor: not-allowed; opacity: 0.6; transform: skewX(-3deg); }
 .ppp-btn-create:disabled .ppp-btn-ink {
   background: linear-gradient(180deg, #3a4d62 0%, #223040 100%);
-  filter: url(#ppp-ink-btn) drop-shadow(3px 3px 0 #000);
+  filter: url(#ppp-ink-btn) drop-shadow(4px 4px 0 #000);
 }
 .ppp-btn-create:disabled .ppp-btn-text { color: #5a6b7d; }
 .ppp-btn-join { flex: 1; }
@@ -408,7 +482,13 @@
   opacity: 0.8;
 }
 
+/* ============================ REDUCED MOTION ============================ */
+/* Kill the continuous loops + pops; keep the static poses + state colors. The
+   beat interval is also skipped in JS under reduced motion. */
 @media (prefers-reduced-motion: reduce) {
+  .ppp-pill-wrap, .ppp-title-wrap { animation: none; }
+  .ppp-pill-beat.pop-in, .ppp-pill-beat.pop-out { animation: none; }
+  .ppp-burst { animation: none; opacity: 0; }
   .ppp-pill, .ppp-btn, .ppp-every { transition: opacity 0.1s ease; }
   .ppp-pill-ink, .ppp-every-ink { transition: background 0.1s ease; }
 }
