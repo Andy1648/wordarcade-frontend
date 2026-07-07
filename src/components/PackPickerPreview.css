@@ -115,7 +115,11 @@
 }
 
 /* ============================ THE PANEL ============================ */
-.ppp-panel { position: relative; width: min(94vw, 620px); background: #160826; border-radius: 14px; padding: clamp(22px, 3.5vw, 36px); box-sizing: border-box; }
+.ppp-panel { position: relative; width: min(94vw, 620px); background: #160826; border-radius: 14px; padding: clamp(22px, 3.5vw, 36px); box-sizing: border-box;
+  /* Cyberpunk neon glow — sits BEHIND the FNF hard black shadow (that lives on .ppp-panel-ink). */
+  box-shadow: 0 0 34px rgba(61, 168, 255, 0.26), 0 0 72px rgba(61, 168, 255, 0.13);
+  transition: box-shadow 0.2s ease; }
+.ppp-stage[data-beat] .ppp-panel { box-shadow: 0 0 46px rgba(61, 168, 255, 0.4), 0 0 96px rgba(61, 168, 255, 0.2); }
 .ppp-panel-ink { position: absolute; inset: -2px; z-index: 0; border: 7px solid #000; border-radius: 16px; filter: url(#ppp-ink-panel) drop-shadow(11px 11px 0 #000); pointer-events: none; }
 .ppp-halftone { position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: 14px; background-image: radial-gradient(#ffffff 1.4px, transparent 1.5px); background-size: 9px 9px; opacity: 0.05; mix-blend-mode: screen; }
 .ppp-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
@@ -134,11 +138,27 @@
 /* ============================ TITLE ============================ */
 .ppp-title-wrap { position: relative; display: inline-block; margin: 2px 0; animation: ppp-title-bob 3.4s ease-in-out infinite; }
 .ppp-title {
+  position: relative;
   font-family: 'Bungee', cursive; font-size: clamp(34px, 7.5vw, 66px); line-height: 0.92; margin: 0; text-align: center; color: #3DA8FF;
   -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000;
   transform: rotate(-2deg) skewX(-4deg); letter-spacing: 0.01em; filter: url(#ppp-ink-title);
   transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1);
 }
+/* RGB-split chromatic aberration — magenta + cyan copies BEHIND the FNF title.
+   No stroke/shadow on the copies so they read as pure colour fringe. */
+.ppp-title::before, .ppp-title::after {
+  content: attr(data-text);
+  position: absolute; left: 0; top: 0; width: 100%; z-index: -1;
+  text-align: center; letter-spacing: inherit; pointer-events: none;
+  -webkit-text-stroke: 0; text-shadow: none;
+  mix-blend-mode: screen; will-change: transform;
+}
+.ppp-title::before { color: #FF2EC4; transform: translate(-3px, 2px); }
+.ppp-title::after  { color: #2EFFE0; transform: translate(3px, -2px); }
+/* On the shared beat: quick glitch-jitter the split wider (digital steps), then settle.
+   Re-fires every beat because data-beat is toggled off ~210ms later. No new timer. */
+.ppp-stage[data-beat] .ppp-title::before { animation: ppp-glitch-m 0.21s steps(3, end) both; }
+.ppp-stage[data-beat] .ppp-title::after  { animation: ppp-glitch-c 0.21s steps(3, end) both; }
 .ppp-stage[data-beat] .ppp-title { transform: rotate(-2deg) skewX(-4deg) scale(1.035); }
 .ppp-title-star { position: absolute; top: -22px; left: -20px; width: 44px; height: 44px; transform: rotate(-16deg); z-index: 3; }
 .ppp-title-star svg, .ppp-title-drip svg, .ppp-sticker svg, .ppp-check-svg, .ppp-spark svg, .ppp-burst svg { width: 100%; height: 100%; display: block; overflow: visible; }
@@ -271,6 +291,54 @@
 
 .ppp-watermark { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #6b5a80; opacity: 0.8; }
 
+/* ============================ CYBERPUNK SKIN (atmosphere layer over FNF) ============================ */
+/* Glitch-jitter keyframes for the RGB-split title. Steps() = digital snap, settles to base offset. */
+@keyframes ppp-glitch-m {
+  0%   { transform: translate(-3px, 2px); }
+  20%  { transform: translate(-9px, 4px); }
+  40%  { transform: translate(-4px, -1px); }
+  60%  { transform: translate(-8px, 3px); }
+  80%  { transform: translate(-3px, 2px); }
+  100% { transform: translate(-3px, 2px); }
+}
+@keyframes ppp-glitch-c {
+  0%   { transform: translate(3px, -2px); }
+  20%  { transform: translate(9px, -4px); }
+  40%  { transform: translate(4px, 1px); }
+  60%  { transform: translate(8px, -3px); }
+  80%  { transform: translate(3px, -2px); }
+  100% { transform: translate(3px, -2px); }
+}
+
+/* Scanline overlay — thin CRT lines across the whole panel, above content, non-interactive.
+   Very low effective opacity; faint slow vertical drift. */
+.ppp-scanlines {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 14px; overflow: hidden;
+  background-image: repeating-linear-gradient(0deg,
+    rgba(0, 0, 0, 0.38) 0px, rgba(0, 0, 0, 0.38) 1px,
+    transparent 1px, transparent 3px);
+  background-size: 100% 3px;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  animation: ppp-scan-drift 9s linear infinite;
+}
+@keyframes ppp-scan-drift { from { background-position: 0 0; } to { background-position: 0 3px; } }
+
+/* Terminal text accents — small monospace touches, FNF stays dominant. */
+.ppp-liner-prompt { color: #2EFFE0; font-weight: 700; opacity: 0.85; }
+.ppp-cursor { display: inline-block; color: #2EFFE0; font-weight: 700; margin-left: 1px; animation: ppp-blink 1.1s steps(1) infinite; }
+@keyframes ppp-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+.ppp-subline-glyph { font-family: 'Space Mono', monospace; -webkit-text-stroke: 0; color: #3DA8FF; text-shadow: 2px 2px 0 #000; margin-right: 2px; }
+
+/* Selected-pill corner node — tiny cyan "connected/active" square, black-outlined, with a faint neon halo.
+   ADD to the existing selected state (check-stamp + sparkle stay). */
+.ppp-pill.is-on::after {
+  content: ''; position: absolute; left: -5px; bottom: -5px;
+  width: 11px; height: 11px; z-index: 6; pointer-events: none;
+  background: #2EFFE0; border: 2.5px solid #000; border-radius: 2px;
+  box-shadow: 1px 1px 0 #000, 0 0 7px rgba(46, 255, 224, 0.65);
+}
+
 /* ============================ REDUCED MOTION ============================ */
 @media (prefers-reduced-motion: reduce) {
   .ppp-pill-wrap, .ppp-title-wrap { animation: none; }
@@ -282,4 +350,9 @@
   .ppp-burst { animation: none; opacity: 0; }
   .ppp-pill, .ppp-btn, .ppp-every, .ppp-row { transition: opacity 0.1s ease; }
   .ppp-pill-ink, .ppp-every-ink, .ppp-row-ink { transition: background 0.1s ease; }
+  /* Cyberpunk skin: kill all motion, keep the static atmosphere (RGB split, scanlines, node). */
+  .ppp-stage[data-beat] .ppp-title::before, .ppp-stage[data-beat] .ppp-title::after { animation: none; }
+  .ppp-scanlines { animation: none; }
+  .ppp-cursor { animation: none; opacity: 1; }
+  .ppp-panel, .ppp-stage[data-beat] .ppp-panel { transition: none; }
 }

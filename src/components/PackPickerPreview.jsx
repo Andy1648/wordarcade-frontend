@@ -311,7 +311,7 @@ export default function PackPickerPreview() {
                 <circle cx="10.5" cy="10.5" r="1.6" fill="#fff" />
               </svg>
             </span>
-            <h1 className="ppp-title">CATEGORY BLITZ</h1>
+            <h1 className="ppp-title" data-text="CATEGORY BLITZ">CATEGORY BLITZ</h1>
             <span className="ppp-title-drip" aria-hidden="true">
               <svg viewBox="0 0 22 32">
                 <path d="M11 1 C6.5 1 4 5.5 4 11 C4 17.5 11 19 11 28 C11 19 18 17.5 18 11 C18 5.5 15.5 1 11 1 Z"
@@ -329,8 +329,14 @@ export default function PackPickerPreview() {
             </span>
           </div>
 
-          <div className="ppp-liner">Name as many as you can before the clock runs out.</div>
-          <div className="ppp-subline">PICK YOUR PACKS</div>
+          <div className="ppp-liner">
+            <span className="ppp-liner-prompt" aria-hidden="true">&gt; </span>
+            Name as many as you can before the clock runs out.
+            <span className="ppp-cursor" aria-hidden="true">_</span>
+          </div>
+          <div className="ppp-subline">
+            <span className="ppp-subline-glyph" aria-hidden="true">▓</span> PICK YOUR PACKS
+          </div>
 
           <button className={`ppp-every${allOn ? ' is-on' : ''}`} onClick={toggleEverything} type="button">
             <span className="ppp-every-ink" aria-hidden="true" />
@@ -458,6 +464,9 @@ export default function PackPickerPreview() {
             </button>
           </div>
         </div>
+
+        {/* Cyberpunk skin: CRT scanline overlay, above content, non-interactive. */}
+        <div className="ppp-scanlines" aria-hidden="true" />
       </div>
 
       <div className="ppp-watermark">PREVIEW · /#pack-preview · GRID / LIST dev toggle · not wired</div>
