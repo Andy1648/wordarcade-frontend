@@ -211,7 +211,10 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
       {topper}
       <div
         className={cardClassName}
-        style={{ background: game.baseColor }}
+        // --card-glow: the card's mode accent, reused from CARD_NEON (same source
+        // as the magnetic proximity glow), consumed by the beat-glow ::after layer
+        // in GameCard.css. Opacity-only pulse — never touches this card's transform.
+        style={{ background: game.baseColor, '--card-glow': CARD_NEON[game.id] || game.baseColor }}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         role="button"

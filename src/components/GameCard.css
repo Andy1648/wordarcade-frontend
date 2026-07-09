@@ -122,6 +122,40 @@
   100% { transform: scale(calc(1.05 * var(--cs, 1))); }
 }
 
+/* BEAT GLOW (prototype): a neon edge-glow pulsing on each detected beat, reusing
+   the shared beat clock — useBeatSync flips html[data-beat='true'] for ~120ms and
+   publishes --beat-intensity (0–1), the same signal the wordmark's title-beat-pop
+   uses. Driven by OPACITY ONLY on a dedicated ::after layer so it can never clobber
+   the card's own transform (the JS cursor-lean lives on .game-card-wrap; this card
+   only scales/pops) nor its box-shadow/filter. Colour is the card's mode accent,
+   --card-glow, set inline from CARD_NEON in GameCard.jsx. (The card's overflow:hidden
+   keeps the bloom hugging the edge, so it rings the card without bleeding onto
+   neighbours.) */
+.game-card::after {
+  /* Two tunables — easy to change: */
+  --beat-glow-peak: 0.9;    /* peak opacity on a kick (then scaled by --beat-intensity) */
+  --beat-glow-blur: 22px;   /* neon bloom softness */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  box-shadow: 0 0 var(--beat-glow-blur) 2px var(--card-glow, #fff);
+}
+
+/* One-shot per kick; data-beat is cleared between hits, so it re-fires cleanly. */
+html[data-beat='true'] .game-card::after {
+  animation: card-beat-glow 130ms ease-out;
+}
+
+@keyframes card-beat-glow {
+  0% { opacity: 0; }
+  30% { opacity: calc(var(--beat-glow-peak) * var(--beat-intensity, 1)); }
+  100% { opacity: 0; }
+}
+
 /* The animated background art (GameArt.jsx + GameCardArt.css) runs CONSTANTLY,
    behind the text (z-index 2 < the content's 3), at low opacity so the text on
    top stays readable. On hover it brightens (and the motion speeds up via the
