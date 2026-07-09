@@ -560,7 +560,7 @@ html[data-beat='true'] .homepage-logo {
 }
 
 html[data-beat='true'] .homepage-beat-glow {
-  animation: menu-beat-glow 240ms ease-out;
+  animation: none;
 }
 
 @keyframes menu-beat-glow {

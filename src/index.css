@@ -81,7 +81,7 @@ button {
 }
 
 html[data-beat='true'] .screen-flash {
-  animation: screen-beat-flash 150ms ease-out;
+  animation: none;
 }
 
 @keyframes screen-beat-flash {
