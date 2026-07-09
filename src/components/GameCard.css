@@ -142,7 +142,10 @@
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
-  box-shadow: 0 0 var(--beat-glow-blur) 2px var(--card-glow, #fff);
+  /* INSET so the neon blooms INWARD from the edge — an outer glow would be clipped
+     by the card's overflow:hidden. The 2px spread keeps the inward rim from reading
+     too faint. */
+  box-shadow: inset 0 0 var(--beat-glow-blur) 2px var(--card-glow, #fff);
 }
 
 /* One-shot per kick; data-beat is cleared between hits, so it re-fires cleanly. */
