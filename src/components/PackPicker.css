@@ -87,8 +87,15 @@
 /* ============================ SCROLLING WINDOW ============================ */
 /* KEEP the inner scroll window so the pack grid never blows out the dialog height. */
 .ppp-window { position: relative; width: 100%; margin-bottom: 14px; }
+/* Static CRT scanline overlay on the picker's OWN scroll window (not the dialog
+   frame). Non-scrolling, non-interactive; reduced-motion-safe by construction. */
+.ppp-window::after {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border-radius: 18px;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.20) 0 1px, transparent 1px 3px);
+}
 .ppp-window-ink { position: absolute; inset: -2px; z-index: 0; border: 6px solid #000; border-radius: 22px; filter: url(#ppp-ink-window) drop-shadow(6px 6px 0 #000); pointer-events: none; }
-.ppp-window-scroll { position: relative; z-index: 1; max-height: 226px; overflow-y: auto; overflow-x: hidden; border-radius: 18px; background: linear-gradient(180deg, #0b0416 0%, #140826 100%); box-shadow: inset 0 7px 16px rgba(0, 0, 0, 0.72), inset 0 -3px 10px rgba(0, 0, 0, 0.5); padding: 22px 22px; scrollbar-width: thin; scrollbar-color: #4d3268 #0b0416; }
+.ppp-window-scroll { position: relative; z-index: 1; max-height: 226px; overflow-y: auto; overflow-x: hidden; border-radius: 18px; background: linear-gradient(180deg, #0b0416 0%, #140826 100%); box-shadow: inset 0 7px 16px rgba(0, 0, 0, 0.72), inset 0 -3px 10px rgba(0, 0, 0, 0.5), inset 0 0 22px rgba(46, 255, 224, 0.08); padding: 22px 22px; scrollbar-width: thin; scrollbar-color: #4d3268 #0b0416; }
 .ppp-window-scroll::-webkit-scrollbar { width: 12px; }
 .ppp-window-scroll::-webkit-scrollbar-track { background: transparent; margin: 10px 0; }
 .ppp-window-scroll::-webkit-scrollbar-thumb { background: #4d3268; border: 3px solid #0b0416; border-radius: 20px; }
