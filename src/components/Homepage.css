@@ -586,11 +586,13 @@ html[data-beat='true'] .homepage-beat-glow {
   .homepage-splatter,
   .homepage-btn,
   html[data-beat='true'] .homepage-logo,   /* title-beat-pop */
+  html[data-beat='true'] .game-card::after, /* card-beat-glow (prototype) */
   .homepage-beat-glow {                     /* menu-beat-glow */
     animation: none !important;
   }
-  /* Keep the frame glow fully hidden when motion is reduced. */
-  .homepage-beat-glow {
+  /* Keep the frame glow and the card beat-glow fully hidden when motion is reduced. */
+  .homepage-beat-glow,
+  .game-card::after {
     opacity: 0 !important;
   }
   /* The sway baked the sticker tilt into its keyframes, so restate it as a static
