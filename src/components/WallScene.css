@@ -165,7 +165,7 @@
 }
 
 html[data-beat='true'] .wall-beat-bright {
-  animation: wall-beat-bright 100ms ease-out;
+  animation: none;
 }
 
 /* IN-GAME: stop the whole-wall beat brightness flash too (the play screen should
