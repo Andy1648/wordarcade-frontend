@@ -159,6 +159,37 @@ html[data-beat='true'] .game-card::after {
   100% { opacity: 0; }
 }
 
+/* CHROMATIC GLITCH-POP (prototype): a one-shot RGB-split fringe + neon flash fired
+   when a card is clicked to open its dialog (GameCard.jsx toggles .game-card--glitch
+   for ~200ms). Pure accent — adds NO transform to the card; the card->dialog FLIP
+   morph owns the physical expansion. Beat-glow owns ::after, so this uses ::before.
+   The card's overflow:hidden clips outset shadows (same as the beat-glow), so the
+   fringe is INSET box-shadows. --card-glow (set inline per card) tints the flash. */
+.game-card::before {
+  --glitch-off: 4px;   /* one-number tunable: RGB-split fringe offset */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+}
+
+.game-card--glitch::before {
+  animation: card-glitch-pop 200ms steps(1) 1;
+}
+
+/* Front-loaded so the peak lands before the dialog covers the card. steps(1) makes
+   the fringe SNAP between states (digital feel), not slide. */
+@keyframes card-glitch-pop {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; box-shadow: inset var(--glitch-off, 4px) 0 0 rgba(255, 46, 196, 0.9), inset calc(-1 * var(--glitch-off, 4px)) 0 0 rgba(46, 255, 224, 0.9); }
+  30%  { opacity: 1; box-shadow: inset calc(-1 * var(--glitch-off, 4px)) 0 0 rgba(255, 46, 196, 0.7), inset var(--glitch-off, 4px) 0 0 rgba(46, 255, 224, 0.7); }
+  45%  { opacity: 0.8; box-shadow: inset 0 0 12px var(--card-glow, #fff); }
+  100% { opacity: 0; }
+}
+
 /* The animated background art (GameArt.jsx + GameCardArt.css) runs CONSTANTLY,
    behind the text (z-index 2 < the content's 3), at low opacity so the text on
    top stays readable. On hover it brightens (and the motion speeds up via the
@@ -279,7 +310,10 @@ html[data-beat='true'] .game-card::after {
 /* The idle sway is now removed for everyone (not just reduced-motion); this stays
    as belt-and-braces in case any wrapper loop is ever reintroduced. */
 @media (prefers-reduced-motion: reduce) {
-  .game-card-wrap { animation: none !important; }
+  .game-card-wrap,
+  .game-card--glitch::before { animation: none !important; }
+  /* Keep the glitch-pop layer fully hidden when motion is reduced. */
+  .game-card--glitch::before { opacity: 0 !important; }
 }
 
 /* Little corner sticker calling out the featured game. */

@@ -1,5 +1,5 @@
 // GameCard.jsx
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
@@ -142,6 +142,14 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
     base: 8,
   });
 
+  // One-shot chromatic glitch-pop on select: a pure ::before accent (RGB fringe +
+  // neon flash) that fires as the card->dialog FLIP morph springs out. It adds NO
+  // transform to the card — the morph owns the physical expansion. Cleared after
+  // ~200ms (one animation length); the timeout is cleared on unmount.
+  const [glitching, setGlitching] = useState(false);
+  const glitchTimerRef = useRef(0);
+  useEffect(() => () => window.clearTimeout(glitchTimerRef.current), []);
+
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return undefined;
@@ -171,6 +179,8 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
     // A mascot sits on this card's top edge - drop the top tape so it doesn't
     // poke through where the character is perched.
     topper ? 'has-topper' : '',
+    // One-shot chromatic glitch-pop while a select is animating out.
+    glitching ? 'game-card--glitch' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -178,8 +188,12 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   // Pass the clicked card element up so the homepage can measure it for the
   // card->dialog FLIP morph (the expand starts from exactly this box).
   function handleClick(event) {
-    if (game.enabled && onSelect) {
-      onSelect(game.id, event.currentTarget);
+    if (game.enabled) {
+      // Fire the one-shot glitch accent, then clear it after the animation length.
+      setGlitching(true);
+      window.clearTimeout(glitchTimerRef.current);
+      glitchTimerRef.current = window.setTimeout(() => setGlitching(false), 200);
+      if (onSelect) onSelect(game.id, event.currentTarget);
     }
   }
 
