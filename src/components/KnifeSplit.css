@@ -44,8 +44,8 @@
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(50% - var(--ks-d)),
-    0 calc(50% + var(--ks-d))
+    100% calc(50% - var(--ks-d) + 1px),
+    0 calc(50% + var(--ks-d) + 1px)
   );
 }
 
@@ -207,19 +207,6 @@
   opacity: 0; /* hidden until the draw fires */
   transform: translateX(0);
   will-change: transform;
-}
-
-.knife-head::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 10px; /* trails BEHIND the glint (to its left) */
-  width: 120px;
-  height: 7px;
-  transform: translateY(-50%);
-  border-radius: 4px;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.85), transparent);
-  filter: blur(3px); /* the motion-blur tail */
 }
 
 .knife-split.is-slash .knife-head {
