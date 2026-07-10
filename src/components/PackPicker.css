@@ -1,0 +1,157 @@
+/* PackPicker.css — the real Category Blitz pack-picker (Stage 1).
+   Adapted from the approved pack-picker preview: FNF chunky vector pills, hand-inked
+   outlines, cyberpunk pill corner-node + terminal ▓ label. GRID only. The dev
+   GRID/LIST toggle, the standalone-panel chrome (title/chip/AI-badge/liner/CREATE-
+   JOIN) and the #pack-preview harness are stripped — this widget embeds INSIDE the
+   Blitz ModeDialog, which owns that chrome. The pill LOOK + MOTION are unchanged.
+
+   Reactions are INDIVIDUAL: keyframes take amplitude/duration/ease from per-item
+   CSS vars (set on the outer wrap, inherited by every motion layer):
+     --amp        weight-scaled amplitude (heavy packs bigger)
+     --pop-name   which of the distinct pop keyframes this item uses
+     --pop-dur / --rel-dur / --nudge-dur / --bob-dur   jittered, weight-scaled times
+     --bob-delay  idle-bob phase (wave)
+     --beat-delay per-item delay so the shared beat RIPPLES across items
+     --sqx / --sqy  press-squash bias (varies by pop variant)
+     --sel-shadow weight-scaled selected shadow throw
+     --pop-ease   springier for heavy packs
+   Motion layers per item (nothing fights):
+     wrap → idle bob ; beat → beat pulse + select pop ; squish → press/release/
+     cascade ; button → rotation. All GPU transforms. All prefixed .ppp-. */
+
+.ppp-defs { position: absolute; width: 0; height: 0; }
+
+/* Root: an IN-FLOW block embedded in the Blitz dialog (NOT the preview's fixed,
+   full-screen stage). The dialog owns the surrounding panel/scrim. */
+.ppp-picker { position: relative; width: 100%; display: flex; flex-direction: column; align-items: stretch; }
+
+/* ============================ IDLE / MISC KEYFRAMES ============================ */
+@keyframes ppp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes ppp-burst { 0% { transform: scale(0.35) rotate(0deg); opacity: 0.95; } 100% { transform: scale(1.6) rotate(35deg); opacity: 0; } }
+@keyframes ppp-count-pop { 0% { transform: scale(0.7); opacity: 0.4; } 55% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); } }
+
+/* ============================ GRID SELECT-POP VARIANTS (amp-driven) ============================ */
+@keyframes ppp-sel-wide {
+  0% { transform: scaleX(1) scaleY(1); }
+  30% { transform: scaleX(calc(1 + 0.16 * var(--amp))) scaleY(calc(1 - 0.12 * var(--amp))); }
+  60% { transform: scaleX(calc(1 - 0.06 * var(--amp))) scaleY(calc(1 + 0.05 * var(--amp))); }
+  100% { transform: scaleX(1) scaleY(1); }
+}
+@keyframes ppp-sel-tall {
+  0% { transform: scaleX(1) scaleY(1); }
+  30% { transform: scaleX(calc(1 - 0.10 * var(--amp))) scaleY(calc(1 + 0.18 * var(--amp))); }
+  62% { transform: scaleX(calc(1 + 0.05 * var(--amp))) scaleY(calc(1 - 0.06 * var(--amp))); }
+  100% { transform: scaleX(1) scaleY(1); }
+}
+@keyframes ppp-sel-wobble {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(calc(-5deg * var(--amp))) scale(calc(1 + 0.08 * var(--amp))); }
+  55% { transform: rotate(calc(4deg * var(--amp))) scale(calc(1 + 0.03 * var(--amp))); }
+  80% { transform: rotate(calc(-2deg * var(--amp))) scale(1); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes ppp-sel-bounce {
+  0% { transform: scale(1); }
+  25% { transform: scale(calc(1 + 0.18 * var(--amp))); }
+  50% { transform: scale(calc(1 - 0.08 * var(--amp))); }
+  72% { transform: scale(calc(1 + 0.07 * var(--amp))); }
+  88% { transform: scale(calc(1 - 0.03 * var(--amp))); }
+  100% { transform: scale(1); }
+}
+@keyframes ppp-sel-punch {
+  0% { transform: scale(1); }
+  40% { transform: scale(calc(1 + 0.14 * var(--amp))); }
+  100% { transform: scale(1); }
+}
+@keyframes ppp-pop-out {
+  0% { transform: scale(1); }
+  45% { transform: scale(calc(1 - 0.14 * var(--amp))); }
+  100% { transform: scale(1); }
+}
+@keyframes ppp-squish-release {
+  0% { transform: scaleX(calc(1 - 0.08 * var(--amp))) scaleY(calc(1 + 0.12 * var(--amp))); }
+  45% { transform: scaleX(calc(1 + 0.05 * var(--amp))) scaleY(calc(1 - 0.04 * var(--amp))); }
+  75% { transform: scaleX(calc(1 - 0.02 * var(--amp))) scaleY(calc(1 + 0.02 * var(--amp))); }
+  100% { transform: scaleX(1) scaleY(1); }
+}
+@keyframes ppp-nudge {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(calc(-3px * var(--amp))) scale(calc(1 + 0.03 * var(--amp))); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* ============================ HEADER LABEL ("▓ PICK YOUR PACKS") ============================ */
+.ppp-subline { font-family: 'Bungee', cursive; font-size: clamp(12px, 2.1vw, 16px); color: #FFE94A; -webkit-text-stroke: 2.5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; transform: rotate(1deg); margin: 6px 0 12px; text-align: center; letter-spacing: 0.04em; filter: url(#ppp-ink-title); }
+.ppp-subline-glyph { font-family: 'Space Mono', monospace; -webkit-text-stroke: 0; color: #3DA8FF; text-shadow: 2px 2px 0 #000; margin-right: 2px; }
+
+/* ============================ SCROLLING WINDOW ============================ */
+/* KEEP the inner scroll window so the pack grid never blows out the dialog height. */
+.ppp-window { position: relative; width: 100%; margin-bottom: 14px; }
+.ppp-window-ink { position: absolute; inset: -2px; z-index: 0; border: 6px solid #000; border-radius: 22px; filter: url(#ppp-ink-window) drop-shadow(6px 6px 0 #000); pointer-events: none; }
+.ppp-window-scroll { position: relative; z-index: 1; max-height: 226px; overflow-y: auto; overflow-x: hidden; border-radius: 18px; background: linear-gradient(180deg, #0b0416 0%, #140826 100%); box-shadow: inset 0 7px 16px rgba(0, 0, 0, 0.72), inset 0 -3px 10px rgba(0, 0, 0, 0.5); padding: 22px 22px; scrollbar-width: thin; scrollbar-color: #4d3268 #0b0416; }
+.ppp-window-scroll::-webkit-scrollbar { width: 12px; }
+.ppp-window-scroll::-webkit-scrollbar-track { background: transparent; margin: 10px 0; }
+.ppp-window-scroll::-webkit-scrollbar-thumb { background: #4d3268; border: 3px solid #0b0416; border-radius: 20px; }
+.ppp-window-scroll::-webkit-scrollbar-thumb:hover { background: #63428a; }
+
+.ppp-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 14px; width: 100%; }
+
+/* ============================ GRID PILL MOTION LAYERS ============================ */
+.ppp-pill-wrap { display: inline-block; animation: ppp-bob var(--bob-dur, 3s) ease-in-out infinite; animation-delay: var(--bob-delay, 0s); }
+.ppp-pill-beat { display: inline-block; transform: scale(1); transition: transform 0.14s cubic-bezier(0.34, 1.7, 0.5, 1) var(--beat-delay, 0s); }
+.ppp-picker[data-beat] .ppp-pill-beat.is-on { transform: scale(calc(1 + 0.055 * var(--amp, 1))); }
+.ppp-pill-beat.pop-in { animation: var(--pop-name, ppp-sel-punch) var(--pop-dur, 0.4s) var(--pop-ease, cubic-bezier(0.34, 1.7, 0.5, 1)); }
+.ppp-pill-beat.pop-out { animation: ppp-pop-out var(--pop-dur, 0.34s) cubic-bezier(0.4, 0, 0.6, 1); }
+.ppp-pill-squish { display: inline-block; transform: scaleX(1) scaleY(1); transition: transform 0.09s ease-out; transform-origin: center bottom; }
+.ppp-pill-squish.pressing { transform: scaleX(var(--sqx, 1.15)) scaleY(var(--sqy, 0.85)) translateY(2px); }
+.ppp-pill-squish.releasing { animation: ppp-squish-release var(--rel-dur, 0.34s) cubic-bezier(0.3, 1.4, 0.5, 1); }
+.ppp-pill-squish.nudging { animation: ppp-nudge var(--nudge-dur, 0.3s) cubic-bezier(0.34, 1.5, 0.5, 1); }
+.ppp-pill-squish.pressing .ppp-pill-ink { filter: var(--ink-url) drop-shadow(1px 1px 0 #000); }
+
+.ppp-pill { position: relative; background: transparent; border: none; padding: 13px 24px; cursor: pointer; overflow: visible; opacity: 0.72; transform: rotate(var(--rot)); transition: transform 0.16s cubic-bezier(0.34, 1.7, 0.5, 1), opacity 0.14s ease; }
+.ppp-pill-ink { position: absolute; inset: 0; border: 6px solid #000; border-radius: 32px; background: linear-gradient(180deg, #33194a 0%, #1b0c2b 100%); box-shadow: inset 0 4px 0 -2px rgba(255, 255, 255, 0.12); filter: var(--ink-url) drop-shadow(4px 4px 0 #000); transition: background 0.14s ease, box-shadow 0.14s ease, filter 0.1s ease; }
+.ppp-pill-body { position: relative; display: inline-flex; align-items: center; gap: 8px; font-family: 'Bungee', cursive; font-size: clamp(11px, 1.7vw, 15px); color: #6b5a80; line-height: 1; }
+.ppp-pill-emoji { font-size: 1.2em; filter: grayscale(0.7) brightness(0.8); transition: filter 0.14s ease; }
+.ppp-pill:hover { opacity: 0.95; transform: rotate(calc(var(--rot) * 0.2)) translateY(-6px) scale(1.08); }
+.ppp-pill:hover .ppp-pill-ink { filter: var(--ink-url) drop-shadow(7px 7px 0 #000); }
+.ppp-pill.is-on { opacity: 1; transform: rotate(calc(var(--rot) * 0.3)) translateY(-3px); }
+.ppp-pill.is-on .ppp-pill-ink { background: linear-gradient(180deg, var(--pack-light) 0%, var(--pack) 46%, var(--pack-deep) 100%); box-shadow: inset 0 6px 0 -2px rgba(255, 255, 255, 0.62), inset 0 -5px 0 -2px rgba(0, 0, 0, 0.22); filter: var(--ink-url) drop-shadow(var(--sel-shadow, 9px) var(--sel-shadow, 9px) 0 #000); }
+.ppp-pill.is-on .ppp-pill-body { color: #000; }
+.ppp-pill.is-on .ppp-pill-emoji { filter: none; }
+.ppp-pill.is-on:hover { transform: rotate(calc(var(--rot) * 0.15)) translateY(-8px) scale(1.08); }
+.ppp-pill.is-on:hover .ppp-pill-ink { filter: var(--ink-url) drop-shadow(calc(var(--sel-shadow, 9px) + 4px) calc(var(--sel-shadow, 9px) + 4px) 0 #000); }
+
+.ppp-burst { position: absolute; left: 50%; top: 50%; width: 150%; height: 210%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; animation: ppp-burst 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
+
+.ppp-sticker svg, .ppp-check-svg, .ppp-spark svg, .ppp-burst svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.ppp-check { position: absolute; top: -12px; right: -10px; width: 32px; height: 32px; z-index: 5; transform: rotate(9deg); background: #fff; border: 3.5px solid #000; border-radius: 50%; display: grid; place-items: center; box-shadow: 2px 2px 0 #000; }
+.ppp-check-svg { width: 82%; height: 82%; }
+.ppp-spark { position: absolute; right: -6px; bottom: -8px; width: 19px; height: 19px; z-index: 5; transform: rotate(-8deg); pointer-events: none; }
+.ppp-sticker { position: absolute; z-index: 4; pointer-events: none; }
+.ppp-sticker-star { width: 24px; height: 24px; top: -13px; left: -9px; transform: rotate(-18deg); }
+.ppp-sticker-drip { width: 17px; height: 25px; bottom: -14px; left: 24px; transform: rotate(6deg); }
+.ppp-sticker-dots { width: 30px; height: 24px; top: -14px; left: 40%; transform: rotate(-6deg); }
+
+/* Selected-pill corner node — tiny cyan "connected/active" square, black-outlined,
+   with a faint neon halo (cyberpunk skin; check-stamp + sparkle stay). */
+.ppp-pill.is-on::after {
+  content: ''; position: absolute; left: -5px; bottom: -5px;
+  width: 11px; height: 11px; z-index: 6; pointer-events: none;
+  background: #2EFFE0; border: 2.5px solid #000; border-radius: 2px;
+  box-shadow: 1px 1px 0 #000, 0 0 7px rgba(46, 255, 224, 0.65);
+}
+
+/* ============================ COUNT ============================ */
+.ppp-count { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: 0.12em; color: #c8b8e0; margin-bottom: 4px; text-align: center; min-height: 1.2em; }
+.ppp-count-num { display: inline-block; animation: ppp-count-pop 0.3s cubic-bezier(0.34, 1.7, 0.5, 1); }
+
+/* ============================ REDUCED MOTION ============================ */
+@media (prefers-reduced-motion: reduce) {
+  .ppp-pill-wrap { animation: none; }
+  .ppp-pill-beat.pop-in, .ppp-pill-beat.pop-out,
+  .ppp-pill-squish.releasing, .ppp-pill-squish.nudging,
+  .ppp-count-num { animation: none; }
+  .ppp-burst { animation: none; opacity: 0; }
+  .ppp-pill { transition: opacity 0.1s ease; }
+  .ppp-pill-ink { transition: background 0.1s ease; }
+}

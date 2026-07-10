@@ -3,6 +3,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import './ModeDialog.css';
 import ModeDialogBackground, { MODES } from './ModeDialogBackground';
+import PackPicker from './PackPicker';
+import packs from '../data/packs';
 
 // Morph timing/feel. The dialog grows from the clicked card to a centered panel
 // over MORPH_MS with a snappy ease-out; the body fades/pops in CONTENT_DELAY into
@@ -54,6 +56,19 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
 
   const modeKey = MODE_KEY[game.id] || 'bomb';
   const mode = MODES[modeKey];
+
+  // Blitz-only: which category packs are selected. LOCAL to the dialog for Stage 1 —
+  // nothing is sent anywhere yet. Defaults to all packs on; at least one must stay on.
+  const [selectedPacks, setSelectedPacks] = useState(() => packs.map((p) => p.id));
+  const handleTogglePack = useCallback((id) => {
+    setSelectedPacks((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) return prev; // block deselecting the last pack (≥1 must stay)
+        return prev.filter((x) => x !== id);
+      }
+      return [...prev, id];
+    });
+  }, []);
 
   // OPEN: position the (already final-sized) shell onto the card, then release to
   // its resting transform so it eases out into the dialog. Reads both rects before
@@ -212,6 +227,14 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
               HOW IT WORKS
             </div>
             <div className="mode-dialog-sub">{mode.sub}</div>
+
+            {modeKey === 'blitz' && (
+              <PackPicker
+                packs={packs}
+                selected={selectedPacks}
+                onToggle={handleTogglePack}
+              />
+            )}
 
             <div className="mode-dialog-actions">
               <button
