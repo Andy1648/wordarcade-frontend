@@ -158,6 +158,11 @@ function App() {
       return [...prev, id];
     });
   }, []);
+  // SELECT ALL / CLEAR for the Blitz pack-picker. CLEAR intentionally leaves ONE
+  // pack (not zero), preserving the "keep ≥1" invariant the toggle also enforces.
+  const handleSetAllBlitzPacks = useCallback((all) => {
+    setBlitzPacks(all ? PACKS.map((p) => p.id) : PACKS.slice(0, 1).map((p) => p.id));
+  }, []);
   // Public-room browser: the latest list from `public_rooms`, plus the player
   // name used by the no-prompt flows (Quick Play / tap-to-join). Seeded from the
   // remembered/generated name so those flows never need a name screen.
@@ -1306,6 +1311,7 @@ function App() {
         onCredits={goToCredits}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
+        onSetAllBlitzPacks={handleSetAllBlitzPacks}
       />
     );
   }

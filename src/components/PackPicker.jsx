@@ -165,13 +165,14 @@ function Sticker({ kind }) {
   );
 }
 
-export default function PackPicker({ packs, selected, onToggle }) {
+export default function PackPicker({ packs, selected, onToggle, onSetAll }) {
   // Selection comes from props (controlled). Normalise Set|array to a Set for O(1) lookups.
   const selectedSet = useMemo(
     () => (selected instanceof Set ? selected : new Set(selected || [])),
     [selected],
   );
   const count = selectedSet.size;
+  const allOn = count === packs.length;
 
   // Motion signature per pack, recomputed only when the packs array identity changes.
   const MOTION = useMemo(() => computeMotion(packs), [packs]);
@@ -261,6 +262,14 @@ export default function PackPicker({ packs, selected, onToggle }) {
           </filter>
         </defs>
       </svg>
+
+      {onSetAll && (
+        <button type="button" className="ppp-selall"
+          onClick={() => onSetAll(!allOn)}
+          aria-label={allOn ? 'Clear pack selection' : 'Select all packs'}>
+          {allOn ? 'CLEAR' : 'SELECT ALL'}
+        </button>
+      )}
 
       <div className="ppp-subline">
         <span className="ppp-subline-glyph" aria-hidden="true">▓</span> PICK YOUR PACKS
