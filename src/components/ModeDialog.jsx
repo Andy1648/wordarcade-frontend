@@ -47,7 +47,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
  * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, blitzPacks, onToggleBlitzPack }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -220,6 +220,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                 packs={packs}
                 selected={blitzPacks}
                 onToggle={onToggleBlitzPack}
+                onSetAll={onSetAllBlitzPacks}
               />
             )}
 

@@ -162,3 +162,17 @@
   .ppp-pill { transition: opacity 0.1s ease; }
   .ppp-pill-ink { transition: background 0.1s ease; }
 }
+
+/* SELECT ALL / CLEAR toggle — pinned to the picker's top-right corner (.ppp-picker
+   is position:relative). Cyan chip with the FNF hard-black outline + shadow. */
+.ppp-selall {
+  position: absolute; top: 0; right: 0; z-index: 7;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #06121f;
+  background: #2EFFE0; border: 2.5px solid #000; border-radius: 9px;
+  padding: 5px 10px; cursor: pointer; box-shadow: 2px 2px 0 #000;
+  transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.08s ease;
+}
+.ppp-selall:hover { background: #6affe9; transform: translateY(-1px); }
+.ppp-selall:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #000; }
+@media (prefers-reduced-motion: reduce) { .ppp-selall { transition: none; } }
