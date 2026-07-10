@@ -15,6 +15,7 @@ import TransitionIntro from './components/TransitionIntro';
 import KnifeSplit from './components/KnifeSplit';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
+import PACKS from './data/packs';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -144,6 +145,19 @@ function App() {
   // browser's "create public room" button); normal Create Room stays private.
   const [lobbyPublicDefault, setLobbyPublicDefault] = useState(false);
   const [room, setRoom] = useState(null);
+  // Category Blitz pack selection, LIFTED to App so the choice made in the Blitz
+  // ModeDialog survives the dialog and is sent as set_packs on the create/host path.
+  // Defaults to all packs on; the toggle blocks removing the last one (≥1 stays).
+  const [blitzPacks, setBlitzPacks] = useState(() => PACKS.map((p) => p.id));
+  const handleToggleBlitzPack = useCallback((id) => {
+    setBlitzPacks((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) return prev; // keep at least one pack selected
+        return prev.filter((x) => x !== id);
+      }
+      return [...prev, id];
+    });
+  }, []);
   // Public-room browser: the latest list from `public_rooms`, plus the player
   // name used by the no-prompt flows (Quick Play / tap-to-join). Seeded from the
   // remembered/generated name so those flows never need a name screen.
@@ -1087,6 +1101,12 @@ function App() {
       // before this set_game_type lands.
       if (isPreselectableGame(mode)) {
         send('set_game_type', { gameType: mode });
+        // Category Blitz create/host path ONLY: lock in the host's chosen packs.
+        // Ordered after set_game_type on the same socket, so the room is already
+        // Blitz when set_packs lands. Never sent on join (that branch is above).
+        if (mode === 'category-blitz') {
+          send('set_packs', { packs: blitzPacks });
+        }
       }
     }
   }
@@ -1284,6 +1304,8 @@ function App() {
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
+        blitzPacks={blitzPacks}
+        onToggleBlitzPack={handleToggleBlitzPack}
       />
     );
   }

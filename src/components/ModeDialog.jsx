@@ -47,7 +47,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
  * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, blitzPacks, onToggleBlitzPack }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -56,19 +56,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
 
   const modeKey = MODE_KEY[game.id] || 'bomb';
   const mode = MODES[modeKey];
-
-  // Blitz-only: which category packs are selected. LOCAL to the dialog for Stage 1 —
-  // nothing is sent anywhere yet. Defaults to all packs on; at least one must stay on.
-  const [selectedPacks, setSelectedPacks] = useState(() => packs.map((p) => p.id));
-  const handleTogglePack = useCallback((id) => {
-    setSelectedPacks((prev) => {
-      if (prev.includes(id)) {
-        if (prev.length <= 1) return prev; // block deselecting the last pack (≥1 must stay)
-        return prev.filter((x) => x !== id);
-      }
-      return [...prev, id];
-    });
-  }, []);
 
   // OPEN: position the (already final-sized) shell onto the card, then release to
   // its resting transform so it eases out into the dialog. Reads both rects before
@@ -231,8 +218,8 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin }
             {modeKey === 'blitz' && (
               <PackPicker
                 packs={packs}
-                selected={selectedPacks}
-                onToggle={handleTogglePack}
+                selected={blitzPacks}
+                onToggle={onToggleBlitzPack}
               />
             )}
 
