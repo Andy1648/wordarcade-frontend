@@ -321,7 +321,22 @@ function App() {
   const [imposterResults, setImposterResults] = useState(null);
   const [imposterFinal, setImposterFinal] = useState(null);
 
-  const { status: wsStatus, messages, consumeMessages, send } = useWebSocket();
+  // Reconnect gate for useWebSocket. Auto-reconnect is allowed ONLY outside an
+  // active session: the backend treats every connection as a fresh player (new
+  // id, no resume), so a silent reconnect mid room/game would NOT restore the
+  // lost seat - we surface the drop instead (see the CONNECTION LOST overlay).
+  // The hook reads this ref on close/error; we keep it in sync below.
+  const canReconnectRef = useRef(true);
+  const { status: wsStatus, messages, consumeMessages, send } = useWebSocket(canReconnectRef);
+
+  // An "active session" = the player holds a server-side seat: the waiting room
+  // or a live game (NOT the menu/lobby/public browser, and NOT the post-game
+  // results, where a fresh connection is fine). A socket drop here can't be
+  // silently resumed, so we block reconnect and surface it instead.
+  const inActiveSession = view === 'room' || (view === 'game' && !gameOver);
+  useEffect(() => {
+    canReconnectRef.current = !inActiveSession;
+  }, [inActiveSession]);
 
   // Background music. It's started from the splash dismiss (the guaranteed first
   // user gesture), so no autoplay attempt here - just the player + a fade-in.
@@ -1383,6 +1398,13 @@ function App() {
     );
   }
 
+  // The connection dropped WHILE in an active room/game. The seat is gone
+  // server-side (no resume), so we don't auto-reconnect or reload here - we show
+  // a blocking overlay whose only exit is BACK TO MENU (the normal leave/reset
+  // path). Outside a session a drop reconnects transparently, so no overlay.
+  const connectionLost =
+    inActiveSession && (wsStatus === 'closed' || wsStatus === 'error');
+
   // `key={view}` remounts the wrapper the instant the view changes, so the new
   // screen mounts immediately (its mount effects - e.g. the in-game 3-2-1
   // countdown - replay then) instead of waiting on a timer. The WallScene +
@@ -1436,6 +1458,68 @@ function App() {
           />
         </div>
       </div>
+      {/* CONNECTION LOST: shown only when the socket drops mid room/game. The
+          seat can't be resumed (fresh connection id server-side), so the single
+          action is BACK TO MENU, which runs the normal leave/reset path (goHome).
+          Inline-styled to keep this surgical (connection-lifecycle change only). */}
+      {connectionLost && (
+        <div
+          role="alertdialog"
+          aria-label="Connection lost"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '20px',
+            padding: '24px',
+            textAlign: 'center',
+            background: 'rgba(13, 6, 24, 0.92)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'Bungee', sans-serif",
+              fontSize: 'clamp(28px, 7vw, 52px)',
+              color: '#FF2EC4',
+              WebkitTextStroke: '2px #000',
+              lineHeight: 1.1,
+            }}
+          >
+            CONNECTION LOST
+          </div>
+          <div
+            style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '15px',
+              color: '#FFE94A',
+              maxWidth: '420px',
+            }}
+          >
+            You were dropped from the game. Your seat is gone - hop back to the menu to play again.
+          </div>
+          <button
+            onClick={goHome}
+            style={{
+              fontFamily: "'Bungee', sans-serif",
+              fontSize: '18px',
+              color: '#0d0618',
+              background: '#2EFFE0',
+              border: '3px solid #1A9985',
+              borderRadius: '8px',
+              boxShadow: '4px 4px 0 #000',
+              padding: '14px 22px',
+              minHeight: '44px',
+              cursor: 'pointer',
+            }}
+          >
+            BACK TO MENU
+          </button>
+        </div>
+      )}
       {/* Cursor trail sits outside .app-shake so the screen shake never moves
           it, and above everything (z 9999). */}
       <CursorTrail />
