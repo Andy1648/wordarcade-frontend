@@ -299,26 +299,33 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           </>
         )}
 
-        <div className="room-section-label">DIFFICULTY</div>
-        {isHost ? (
-          <div className="room-difficulty-row">
-            {DIFFICULTIES.map((diff) => (
-              <button
-                key={diff.key}
-                className={`room-difficulty-btn${room.difficultyKey === diff.key ? ' selected' : ''}`}
-                disabled={diffPending}
-                onClick={() => {
-                  sound.click();
-                  onSetDifficulty(diff.key);
-                }}
-              >
-                <span className="room-difficulty-name">{diff.label}</span>
-                <span className="room-difficulty-desc">{difficultyDesc(diff, room.gameType)}</span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey, room.gameType)}</div>
+        {/* DIFFICULTY is a Word Bomb concept (the HARD/CRAZY/HELL timer tiers).
+            Category Blitz and Imposter have no difficulty control, so render none
+            for them — the desc/readout helpers stay defined, just not used here. */}
+        {room.gameType === 'word-bomb' && (
+          <>
+            <div className="room-section-label">DIFFICULTY</div>
+            {isHost ? (
+              <div className="room-difficulty-row">
+                {DIFFICULTIES.map((diff) => (
+                  <button
+                    key={diff.key}
+                    className={`room-difficulty-btn${room.difficultyKey === diff.key ? ' selected' : ''}`}
+                    disabled={diffPending}
+                    onClick={() => {
+                      sound.click();
+                      onSetDifficulty(diff.key);
+                    }}
+                  >
+                    <span className="room-difficulty-name">{diff.label}</span>
+                    <span className="room-difficulty-desc">{difficultyDesc(diff, room.gameType)}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey, room.gameType)}</div>
+            )}
+          </>
         )}
 
         {/* A bounced start (server rejection: room full, game already going, etc.)
