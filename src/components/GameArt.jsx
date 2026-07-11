@@ -55,6 +55,9 @@ export function CategoryBlitzArt() {
     { x: 110, size: 14, dur: 6.5, delay: 1.4, cyan: false },
     { x: 66, size: 16, dur: 5.8, delay: 2.8, cyan: false },
     { x: 96, size: 12, dur: 7.0, delay: 4.2, cyan: true },
+    { x: 48, size: 13, dur: 6.2, delay: 3.5, cyan: false },
+    { x: 124, size: 15, dur: 5.4, delay: 5.0, cyan: true },
+    { x: 14, size: 11, dur: 7.6, delay: 2.0, cyan: false },
   ];
   return (
     <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art cb-art" aria-hidden="true">
@@ -92,6 +95,13 @@ export function CategoryBlitzArt() {
         <path d="M88 66 Q82 72 88 78" fill="none" stroke="#B02F6E" strokeWidth="2.5" strokeLinecap="round" />
       </g>
 
+      {/* Synapse sparks: short curved strokes radiating off the brain, each
+          briefly flashing on its own cycle to read as neural activity. */}
+      <path className="cb-synapse cb-synapse-1" d="M54 70 Q46 66 38 60" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
+      <path className="cb-synapse cb-synapse-2" d="M90 72 Q99 68 107 62" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
+      <path className="cb-synapse cb-synapse-3" d="M58 106 Q52 112 46 120" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
+      <path className="cb-synapse cb-synapse-4" d="M84 106 Q91 112 97 120" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
+
       {/* Lightning bolts, each blinking on its own timing */}
       <g className="cb-bolt cb-bolt-1" transform="translate(26 80)">
         <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
@@ -103,6 +113,12 @@ export function CategoryBlitzArt() {
         <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
       </g>
       <g className="cb-bolt cb-bolt-4" transform="translate(98 128)">
+        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+      </g>
+      <g className="cb-bolt cb-bolt-5" transform="translate(118 40)">
+        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+      </g>
+      <g className="cb-bolt cb-bolt-6" transform="translate(22 132)">
         <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
       </g>
     </svg>
@@ -119,6 +135,9 @@ export function ImposterWordArt() {
       <text className="iw-q iw-q-2 imposter" x="112" y="58" fontSize="18" fontWeight="bold" fill="#FF5C5C" stroke="#7a1010" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
       <text className="iw-q iw-q-3" x="30" y="130" fontSize="14" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
       <text className="iw-q iw-q-4" x="110" y="122" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      <text className="iw-q iw-q-5" x="64" y="30" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      <text className="iw-q iw-q-6" x="94" y="140" fontSize="12" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      <text className="iw-q iw-q-7" x="18" y="92" fontSize="11" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
 
       {/* The eye: blinks; its pupil scans left-right. */}
       <g className="iw-eye">
@@ -130,8 +149,15 @@ export function ImposterWordArt() {
         </g>
       </g>
 
-      {/* Security-camera scan line scrolling down. */}
+      {/* Detection pings: rings that expand out from the pupil and fade,
+          like the eye is actively scanning. Stroked circles, no fill. */}
+      <circle className="iw-ping iw-ping-1" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
+      <circle className="iw-ping iw-ping-2" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
+      <circle className="iw-ping iw-ping-3" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
+
+      {/* Two security-camera scan lines sweeping in opposite directions. */}
       <rect className="iw-scanline" x="0" y="0" width="140" height="3.5" fill="#fff" />
+      <rect className="iw-scanline-2" x="0" y="0" width="140" height="3.5" fill="#fff" />
     </svg>
   );
 }
