@@ -47,17 +47,16 @@ export function WordBombArt() {
   );
 }
 
-// ---- CATEGORY BLITZ: a throbbing brain, randomly flashing bolts, rising ?s ----
+// ---- CATEGORY BLITZ: one heavy near-black brain bleeding off the bottom-right
+//      edge, big bolts rooted at its surface, rising ?s up the left ----
 export function CategoryBlitzArt() {
-  // Question marks rise like bubbles and fade at the top.
+  // Question marks rise like bubbles up the left side (the brain owns the
+  // right) and fade at the top.
   const qs = [
-    { x: 30, size: 18, dur: 5.0, delay: 0, cyan: true },
-    { x: 110, size: 14, dur: 6.5, delay: 1.4, cyan: false },
-    { x: 66, size: 16, dur: 5.8, delay: 2.8, cyan: false },
-    { x: 96, size: 12, dur: 7.0, delay: 4.2, cyan: true },
-    { x: 48, size: 13, dur: 6.2, delay: 3.5, cyan: false },
-    { x: 124, size: 15, dur: 5.4, delay: 5.0, cyan: true },
-    { x: 14, size: 11, dur: 7.6, delay: 2.0, cyan: false },
+    { x: 14, size: 15, dur: 5.2, delay: 0, cyan: true },
+    { x: 40, size: 12, dur: 6.6, delay: 2.2, cyan: false },
+    { x: 26, size: 16, dur: 5.8, delay: 3.6, cyan: false },
+    { x: 50, size: 11, dur: 7.2, delay: 1.2, cyan: true },
   ];
   return (
     <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art cb-art" aria-hidden="true">
@@ -80,82 +79,93 @@ export function CategoryBlitzArt() {
         </text>
       ))}
 
-      {/* Brain (throbs + briefly brightens in sync with the right-hand bolt) */}
-      <g className="cb-brain">
-        <path
-          className="cb-brain-fill"
-          d="M70 52 q22 -2 24 18 q12 6 4 20 q4 14 -12 16 q-6 10 -16 4 q-10 6 -16 -4 q-16 -2 -12 -16 q-8 -14 4 -20 q2 -20 24 -18 z"
-          fill="#FF6FB5"
-          stroke="#B02F6E"
-          strokeWidth="4"
-          strokeLinejoin="round"
-        />
-        <path d="M70 52 Q66 74 72 92 Q66 106 70 116" fill="none" stroke="#B02F6E" strokeWidth="3" strokeLinecap="round" />
-        <path d="M54 66 Q60 72 54 78" fill="none" stroke="#B02F6E" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M88 66 Q82 72 88 78" fill="none" stroke="#B02F6E" strokeWidth="2.5" strokeLinecap="round" />
+      {/* One heavy near-black brain, scaled up and bled off the bottom-right
+          card edge (the card's overflow:hidden clips it) so it reads as a
+          single dense silhouette like the bomb. The outer g is static
+          placement only - the animated inner g must NOT carry an attribute
+          transform, or the CSS animation transform would override it. */}
+      <g transform="translate(92 110) rotate(-8) scale(1.7) translate(-70 -84)">
+        <g className="cb-brain">
+          <path
+            className="cb-brain-fill"
+            d="M70 52 q22 -2 24 18 q12 6 4 20 q4 14 -12 16 q-6 10 -16 4 q-10 6 -16 -4 q-16 -2 -12 -16 q-8 -14 4 -20 q2 -20 24 -18 z"
+            fill="#2A0E33"
+            stroke="#150818"
+            strokeWidth="4"
+            strokeLinejoin="round"
+          />
+          {/* Pink is demoted to accents: fissures + one shine ellipse (same
+              highlight pattern as the bomb's #5A2A60). */}
+          <path d="M70 52 Q66 74 72 92 Q66 106 70 116" fill="none" stroke="#FF6FB5" strokeWidth="3" strokeLinecap="round" />
+          <path d="M54 66 Q60 72 54 78" fill="none" stroke="#FF6FB5" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M88 66 Q82 72 88 78" fill="none" stroke="#FF6FB5" strokeWidth="2.5" strokeLinecap="round" />
+          <ellipse cx="56" cy="64" rx="9" ry="6" fill="#FF6FB5" />
+        </g>
       </g>
 
-      {/* Synapse sparks: short curved strokes radiating off the brain, each
-          briefly flashing on its own cycle to read as neural activity. */}
-      <path className="cb-synapse cb-synapse-1" d="M54 70 Q46 66 38 60" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
-      <path className="cb-synapse cb-synapse-2" d="M90 72 Q99 68 107 62" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
-      <path className="cb-synapse cb-synapse-3" d="M58 106 Q52 112 46 120" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
-      <path className="cb-synapse cb-synapse-4" d="M84 106 Q91 112 97 120" fill="none" stroke="#B02F6E" strokeWidth="2" strokeLinecap="round" />
-
-      {/* Lightning bolts, each blinking on its own timing */}
-      <g className="cb-bolt cb-bolt-1" transform="translate(26 80)">
-        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+      {/* Big lightning bolts rooted at the brain's surface, arcing up-left
+          toward the title. Same static-outer / animated-inner split. */}
+      <g transform="translate(56 64) rotate(24) scale(2.8)">
+        <g className="cb-bolt cb-bolt-1">
+          <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2" strokeLinejoin="round" />
+        </g>
       </g>
-      <g className="cb-bolt cb-bolt-2" transform="translate(114 86)">
-        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+      <g transform="translate(34 102) rotate(52) scale(2.2)">
+        <g className="cb-bolt cb-bolt-2">
+          <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+        </g>
       </g>
-      <g className="cb-bolt cb-bolt-3" transform="translate(46 44)">
-        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
-      </g>
-      <g className="cb-bolt cb-bolt-4" transform="translate(98 128)">
-        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
-      </g>
-      <g className="cb-bolt cb-bolt-5" transform="translate(118 40)">
-        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
-      </g>
-      <g className="cb-bolt cb-bolt-6" transform="translate(22 132)">
-        <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+      <g transform="translate(88 36) rotate(-6) scale(1.9)">
+        <g className="cb-bolt cb-bolt-3">
+          <polygon points="4,-11 -4,1 1,1 -3,11 8,-3 2,-3" fill="#FFE94A" stroke="#B8A020" strokeWidth="2.5" strokeLinejoin="round" />
+        </g>
       </g>
     </svg>
   );
 }
 
-// ---- IMPOSTER WORD: a watching eye (scanning pupil + blink), drifting ?s,
-//      one red imposter ?, and a security-camera scan line. ----
+// ---- IMPOSTER WORD: a chunky near-black security-camera bezel framing a
+//      watching eye (scanning pupil + blink), bled off the bottom-left edge;
+//      drifting ?s along the top (one red imposter) + camera-feed scan lines. ----
 export function ImposterWordArt() {
   return (
     <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art iw-art" aria-hidden="true">
-      {/* Drifting question marks - one of them is the red imposter. */}
-      <text className="iw-q iw-q-1" x="28" y="48" fontSize="16" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-2 imposter" x="112" y="58" fontSize="18" fontWeight="bold" fill="#FF5C5C" stroke="#7a1010" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-3" x="30" y="130" fontSize="14" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-4" x="110" y="122" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-5" x="64" y="30" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-6" x="94" y="140" fontSize="12" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-7" x="18" y="92" fontSize="11" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      {/* Drifting question marks kept to the top strip, clear of the bezel -
+          iw-q-2 is the red imposter. */}
+      <text className="iw-q iw-q-1" x="16" y="26" fontSize="14" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      <text className="iw-q iw-q-2 imposter" x="120" y="22" fontSize="17" fontWeight="bold" fill="#FF5C5C" stroke="#7a1010" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      <text className="iw-q iw-q-3" x="52" y="16" fontSize="12" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
+      <text className="iw-q iw-q-4" x="88" y="26" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
 
-      {/* The eye: blinks; its pupil scans left-right. */}
-      <g className="iw-eye">
-        <path d="M28 84 Q70 48 112 84 Q70 120 28 84 Z" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="4" strokeLinejoin="round" />
-        <g className="iw-pupil">
-          <circle cx="70" cy="84" r="17" fill="#9A1AFF" stroke="#4B0A87" strokeWidth="3" />
-          <circle cx="70" cy="84" r="8" fill="#1a0b2e" />
-          <circle cx="64" cy="78" r="3.2" fill="#fff" />
+      {/* Camera bezel + eye, scaled up and bled off the bottom/left edges so
+          the near-black bezel is the card's dominant mass. The outer g is
+          static placement only - animated groups inside carry no attribute
+          transforms (a CSS animation transform would override one). */}
+      <g transform="translate(58 104) rotate(-6) scale(1.5) translate(-70 -84)">
+        {/* Mount stub poking out of the bezel's top edge, then the bezel. */}
+        <rect x="92" y="28" width="16" height="18" rx="3" fill="#1A0B2E" stroke="#0D0517" strokeWidth="4" />
+        <rect x="22" y="42" width="96" height="84" rx="14" fill="#1A0B2E" stroke="#0D0517" strokeWidth="5" />
+
+        {/* The eye: blinks; its pupil scans left-right. Lighter pupil ring so
+            it still pops now that the sclera sits inside the dark bezel. */}
+        <g className="iw-eye">
+          <path d="M28 84 Q70 48 112 84 Q70 120 28 84 Z" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="4" strokeLinejoin="round" />
+          <g className="iw-pupil">
+            <circle cx="70" cy="84" r="17" fill="#9A1AFF" stroke="#C05CFF" strokeWidth="3" />
+            <circle cx="70" cy="84" r="8" fill="#1a0b2e" />
+            <circle cx="64" cy="78" r="3.2" fill="#fff" />
+          </g>
         </g>
+
+        {/* Detection pings: rings that expand out from the pupil and fade,
+            like the camera is actively scanning. Stroked circles, no fill. */}
+        <circle className="iw-ping iw-ping-1" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
+        <circle className="iw-ping iw-ping-2" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
+        <circle className="iw-ping iw-ping-3" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
       </g>
 
-      {/* Detection pings: rings that expand out from the pupil and fade,
-          like the eye is actively scanning. Stroked circles, no fill. */}
-      <circle className="iw-ping iw-ping-1" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
-      <circle className="iw-ping iw-ping-2" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
-      <circle className="iw-ping iw-ping-3" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
-
-      {/* Two security-camera scan lines sweeping in opposite directions. */}
+      {/* Two scan lines sweeping in opposite directions - across the bezel
+          they read as the camera feed. */}
       <rect className="iw-scanline" x="0" y="0" width="140" height="3.5" fill="#fff" />
       <rect className="iw-scanline-2" x="0" y="0" width="140" height="3.5" fill="#fff" />
     </svg>
