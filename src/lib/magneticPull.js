@@ -80,7 +80,7 @@ function apply(it) {
   // glow is now on/off rather than ramped with proximity - the SCALE still ramps.)
   const engaged = !(lift < 0.012 && Math.abs(it.ox) < 0.4 && Math.abs(it.oy) < 0.4);
   if (engaged && !it.shadowOn) {
-    it.el.style.boxShadow = `${it.base}px ${it.base}px 0 #000, 0 0 ${GLOW_BLUR}px ${rgba(it.neon, 0.85)}`;
+    it.el.style.boxShadow = `${it.base}px ${it.base}px 0 #000`;
     it.shadowOn = true;
   } else if (!engaged && it.shadowOn) {
     it.el.style.boxShadow = '';
