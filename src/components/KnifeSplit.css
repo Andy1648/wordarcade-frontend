@@ -44,8 +44,8 @@
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(50% - var(--ks-d)),
-    0 calc(50% + var(--ks-d))
+    100% calc(50% - var(--ks-d) + 1px),
+    0 calc(50% + var(--ks-d) + 1px)
   );
 }
 
@@ -154,6 +154,7 @@
   overflow: visible;
   transform-origin: left center;
   transform: scaleX(0); /* hidden until the draw fires */
+  will-change: transform;
   filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.75));
   /* Feather the very tips to transparent so the lens FADES out at both ends
      instead of ending on a hard geometric point — a real slash has no hard
@@ -185,13 +186,9 @@
 @keyframes ks-blade-draw {
   from {
     transform: scaleX(0);
-    /* whip-in motion-blur on the blade body, smeared as it streaks... */
-    filter: blur(3px) drop-shadow(0 0 9px rgba(255, 255, 255, 0.75));
   }
   to {
     transform: scaleX(1);
-    /* ...resolving to crisp as it decelerates into the hold. */
-    filter: blur(0) drop-shadow(0 0 9px rgba(255, 255, 255, 0.75));
   }
 }
 
@@ -209,19 +206,7 @@
   box-shadow: 0 0 26px 9px rgba(255, 255, 255, 0.95);
   opacity: 0; /* hidden until the draw fires */
   transform: translateX(0);
-}
-
-.knife-head::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 10px; /* trails BEHIND the glint (to its left) */
-  width: 120px;
-  height: 7px;
-  transform: translateY(-50%);
-  border-radius: 4px;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.85), transparent);
-  filter: blur(3px); /* the motion-blur tail */
+  will-change: transform;
 }
 
 .knife-split.is-slash .knife-head {
