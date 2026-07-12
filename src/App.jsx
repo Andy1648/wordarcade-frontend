@@ -1270,6 +1270,7 @@ function App() {
         reactions={reactions}
         onSpectatorReaction={handleSpectatorReaction}
         onShake={triggerShake}
+        roomCode={room ? room.code : null}
       />
     );
   } else if (view === 'room' && room) {

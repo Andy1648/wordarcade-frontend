@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { prepareCard, shareFile, downloadPng, copySummary } from './shareCard';
 import './ShareBar.css';
 
-export default function ShareBar({ mode, outcome, data, neon }) {
+export default function ShareBar({ mode, outcome, data, neon, daily = null, link = null }) {
   const preparedRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -19,7 +19,7 @@ export default function ShareBar({ mode, outcome, data, neon }) {
   useEffect(() => {
     let alive = true;
     setReady(false);
-    prepareCard({ mode, outcome, data })
+    prepareCard({ mode, outcome, data, daily, link })
       .then((p) => {
         if (!alive) return;
         preparedRef.current = p;
@@ -32,7 +32,7 @@ export default function ShareBar({ mode, outcome, data, neon }) {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, JSON.stringify(outcome), JSON.stringify(data)]);
+  }, [mode, JSON.stringify(outcome), JSON.stringify(data), JSON.stringify(daily), link]);
 
   const onShare = async () => {
     if (!ready || busy) return;

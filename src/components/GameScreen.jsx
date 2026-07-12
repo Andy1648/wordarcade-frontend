@@ -15,6 +15,7 @@ import {
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
 import { ShareBar } from '../share';
+import { inviteLink } from '../share/links.js';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1403,6 +1404,7 @@ export default function GameScreen({
   reactions = [],
   onSpectatorReaction,
   onShake,
+  roomCode = null,
 }) {
   const [draft, setDraft] = useState('');
   // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
@@ -2112,6 +2114,7 @@ export default function GameScreen({
         onRematch={onRematch}
         rematchPending={rematchPending}
         onShake={onShake}
+        roomCode={roomCode}
       />
     );
   }
@@ -2148,6 +2151,7 @@ export default function GameScreen({
         onRerollCategory={onRerollCategory}
         rematchPending={rematchPending}
         rerollPending={rerollPending}
+        roomCode={roomCode}
       />
     );
   }
@@ -2806,20 +2810,42 @@ export default function GameScreen({
               staggerIn={goStaggered}
               reduce={goReduce}
             />
-            {/* Shareable result card — reads existing game-over data only. */}
+            {/* Shareable result card — reads existing game-over data only.
+                events/longestWord are MY chronological story (drives the emoji
+                grid in the copy text); the other fields feed the image card. */}
             <ShareBar
               mode="word-bomb"
               neon="#2EFFE0"
               outcome={{ won: iWon }}
-              data={{
-                words: (gameStats.wordsPlayed || []).length,
-                longest:
-                  (gameStats.wordsPlayed || []).reduce(
-                    (m, w) => Math.max(m, (w.word || '').length),
-                    0
-                  ) || undefined,
-                players: players.length,
-              }}
+              link={roomCode ? inviteLink(roomCode) : null}
+              data={(() => {
+                const myWords = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId);
+                const myLosses = [
+                  ...(gameStats.timeouts || []),
+                  ...(gameStats.skips || []),
+                ].filter((l) => l.playerId === myId);
+                const events = [
+                  ...myWords.map((w) => ({ t: 'word', len: (w.word || '').length, ts: w.timestamp })),
+                  ...myLosses.map((l) => ({ t: 'life', ts: l.timestamp })),
+                ]
+                  .sort((a, b) => (a.ts || 0) - (b.ts || 0))
+                  .map(({ t, len }) => ({ t, len }));
+                const longestWord = myWords.reduce(
+                  (best, w) => ((w.word || '').length > best.length ? w.word : best),
+                  ''
+                );
+                return {
+                  words: (gameStats.wordsPlayed || []).length,
+                  longest:
+                    (gameStats.wordsPlayed || []).reduce(
+                      (m, w) => Math.max(m, (w.word || '').length),
+                      0
+                    ) || undefined,
+                  players: players.length,
+                  events,
+                  longestWord: longestWord || undefined,
+                };
+              })()}
             />
             <div className="game-over-actions">
               {isHost ? (
@@ -3075,7 +3101,8 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
             )}
           </div>
 
-          {/* Shareable result card — reads the existing solo score/record only. */}
+          {/* Shareable result card — reads the existing solo score/record only.
+              roundScores feed the copy text's per-round emoji rows. */}
           <ShareBar
             mode="category-blitz"
             neon="#FF6B3D"
@@ -3086,6 +3113,7 @@ function SoloResultsScreen({ score, rounds, onPlayAgain, onNewGameMode, onLeave,
               bestRound: rounds.length
                 ? rounds.reduce((m, r) => Math.max(m, r.roundScore || 0), 0)
                 : undefined,
+              roundScores: rounds.map((r) => r.roundScore),
             }}
           />
           <div className="game-over-actions">
@@ -3141,6 +3169,7 @@ function CategoryBlitzScreen({
   onRerollCategory,
   rematchPending,
   rerollPending,
+  roomCode = null,
 }) {
   const { sound } = useSound();
   const [draft, setDraft] = useState('');
@@ -3174,14 +3203,15 @@ function CategoryBlitzScreen({
   const roundActive = !!categoryRound && !gameOver;
   const roundNumber = categoryRound && categoryRound.round;
 
-  // Solo run log: each completed round's category + score, so the solo results
-  // screen can show a per-round breakdown. The component stays mounted for the
-  // whole 3-round game (it's remounted per game via gameNonce), so a ref
+  // Per-round run log: each completed round's category + MY score. The solo
+  // results screen shows it as a breakdown, and the share text (solo AND
+  // multiplayer) renders it as the emoji grid rows. The component stays mounted
+  // for the whole 3-round game (it's remounted per game via gameNonce), so a ref
   // persists cleanly; key off the round number to log each round exactly once.
   const soloLogRef = useRef([]);
   const soloLoggedRoundRef = useRef(0);
   useEffect(() => {
-    if (!isSolo || !roundResults) return;
+    if (!roundResults) return;
     if (roundResults.round === soloLoggedRoundRef.current) return; // already logged
     soloLoggedRoundRef.current = roundResults.round;
     const mine = (roundResults.playerResults || []).find((r) => r.id === myId);
@@ -3193,7 +3223,7 @@ function CategoryBlitzScreen({
         roundScore: mine ? mine.roundScore : 0,
       },
     ];
-  }, [roundResults, isSolo, myId]);
+  }, [roundResults, myId]);
 
   // Reroll notice (multiplayer): when the HOST rerolls the category, non-host
   // players get a brief banner. The player who rerolled (host / solo) gets none.
@@ -3452,7 +3482,9 @@ function CategoryBlitzScreen({
                 );
               })}
             </div>
-            {/* Shareable result card — reads the existing final scores only. */}
+            {/* Shareable result card — reads the existing final scores only.
+                roundScores drive the copy text's emoji rows; the invite link
+                makes the paste a working "rematch me" for the group chat. */}
             <ShareBar
               mode="category-blitz"
               neon="#FF6B3D"
@@ -3461,7 +3493,11 @@ function CategoryBlitzScreen({
                 place: (scores.findIndex((s) => s.id === myId) + 1) || undefined,
                 total: scores.length || undefined,
               }}
-              data={{ score: myScore }}
+              link={roomCode ? inviteLink(roomCode) : null}
+              data={{
+                score: myScore,
+                roundScores: soloLogRef.current.map((r) => r.roundScore),
+              }}
             />
             <div className="game-over-actions">
               {isHost ? (

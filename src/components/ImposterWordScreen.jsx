@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import { ShareBar } from '../share';
+import { inviteLink } from '../share/links.js';
 import './ImposterWord.css';
 
 // A distinct, stable colour per player (by roster index) - used for answer
@@ -242,7 +243,7 @@ function topUnique(scores, field) {
   return leader;
 }
 
-function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch, rematchPending }) {
+function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch, rematchPending, roomCode = null }) {
   const { sound } = useSound();
   const scores = [...(final.finalScores || [])].sort((a, b) => b.score - a.score);
   const iWon = final.winnerId === myId;
@@ -314,6 +315,7 @@ function ImposterGameOver({ final, myId, isHost, colorMap, onLeave, onRematch, r
             mode="imposter-word"
             neon="#9A1AFF"
             outcome={{ won: iWon }}
+            link={roomCode ? inviteLink(roomCode) : null}
             data={{
               caught: (scores.find((s) => s.id === myId) || {}).caughtCount,
               fooled: (scores.find((s) => s.id === myId) || {}).survivedCount,
@@ -358,6 +360,7 @@ export default function ImposterWordScreen({
   onLeave,
   onRematch,
   rematchPending,
+  roomCode = null,
   onShake,
 }) {
   const { sound } = useSound();
@@ -396,6 +399,54 @@ export default function ImposterWordScreen({
     if (canAnswer && inputRef.current) inputRef.current.focus();
   }, [canAnswer]);
 
+  // ---- Audio parity with Word Bomb / Category Blitz (timer + outcome) ----
+  // Per-second phase-timer tick, urgency-pitched, on a real decrement only (so
+  // a phase change resetting the timer upward and the 3-2-1 countdown stay
+  // silent). Covers both timed phases: answering and voting.
+  const phaseActive =
+    (phase === 'answering' && !showCountdown) || phase === 'voting';
+  const phaseMax =
+    phase === 'voting'
+      ? (voteData && voteData.voteSeconds) || 1
+      : (round && round.answerSeconds) || 1;
+  const prevTimerRef = useRef(null);
+  useEffect(() => {
+    const prev = prevTimerRef.current;
+    prevTimerRef.current = timerSeconds;
+    if (!phaseActive) return;
+    if (prev == null || typeof timerSeconds !== 'number') return;
+    if (timerSeconds <= 0 || timerSeconds >= prev) return; // only on a tick-down
+    sound.tick(1 - timerSeconds / phaseMax);
+  }, [timerSeconds, phaseActive, phaseMax, sound]);
+
+  // Final-5s accelerating heartbeat thud, mirroring the other two modes.
+  useEffect(() => {
+    if (!phaseActive) return undefined;
+    if (typeof timerSeconds !== 'number' || timerSeconds < 1 || timerSeconds > 5) {
+      return undefined;
+    }
+    const HEARTBEAT_MS = { 5: 650, 4: 520, 3: 410, 2: 320, 1: 250 };
+    const period = HEARTBEAT_MS[timerSeconds] ?? 600;
+    const intensity = (6 - timerSeconds) / 5; // 5s -> 0.2, 1s -> 1.0
+    let timeoutId;
+    const beat = () => {
+      sound.heartbeat(intensity);
+      timeoutId = setTimeout(beat, period);
+    };
+    beat();
+    return () => clearTimeout(timeoutId);
+  }, [timerSeconds, phaseActive, sound]);
+
+  // Per-answer accept ding / reject buzz. The toast alone was SILENT here while
+  // Word Bomb and Category Blitz both sound every submission result.
+  const prevResultRef = useRef(null);
+  useEffect(() => {
+    if (!lastWordResult || lastWordResult === prevResultRef.current) return;
+    prevResultRef.current = lastWordResult;
+    if (lastWordResult.accepted) sound.correctDing();
+    else sound.wrongBuzz();
+  }, [lastWordResult, sound]);
+
   function submit() {
     const a = draft.trim();
     if (!a || !canAnswer) return;
@@ -420,6 +471,7 @@ export default function ImposterWordScreen({
         onLeave={onLeave}
         onRematch={onRematch}
         rematchPending={rematchPending}
+        roomCode={roomCode}
       />
     );
   }

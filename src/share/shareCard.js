@@ -64,7 +64,7 @@ export async function shareFile(prepared) {
   const { mode, file, model, blob } = prepared || {};
   try {
     if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-      await navigator.share({ files: [file], text: model.copy, url: REF_URL });
+      await navigator.share({ files: [file], text: model.copy, url: model.link || REF_URL });
       fire(mode, 'native');
       return 'native';
     }
