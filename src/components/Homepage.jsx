@@ -103,12 +103,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
   const { sound, muted } = useSound();
 
   // Magnetic cursor-pull on the CREATE / JOIN CTAs (wrapper divs, so the buttons'
-  // own :hover/:active transforms compose underneath). CTAs glow in their own
-  // fill color. Gated to fine-pointer + motion (see useMagneticPull).
+  // own :hover/:active transforms compose underneath). Gated to fine-pointer +
+  // motion (see useMagneticPull).
   const createMagnetRef = useRef(null);
   const joinMagnetRef = useRef(null);
-  useMagneticPull(createMagnetRef, { max: 8, neon: '#FF2EC4', base: 6 });
-  useMagneticPull(joinMagnetRef, { max: 8, neon: '#2EFFE0', base: 6 });
+  useMagneticPull(createMagnetRef, { max: 8, base: 6 });
+  useMagneticPull(joinMagnetRef, { max: 8, base: 6 });
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).

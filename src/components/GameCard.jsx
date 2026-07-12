@@ -5,8 +5,8 @@ import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
 import './GameCard.css';
 
-// Per-mode neon for the magnetic outer wrapper's proximity glow (does not touch
-// the card's own hover glow). Falls back to the card's fill for any other game.
+// Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
+// layer in GameCard.css. Falls back to the card's fill for any other game.
 const CARD_NEON = {
   'word-bomb': '#FF6B3D',
   'category-blitz': '#3DA8FF',
@@ -138,7 +138,6 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   const magnetRef = useRef(null);
   useMagneticPull(magnetRef, {
     max: 11,
-    neon: CARD_NEON[game.id] || game.baseColor,
     base: 8,
   });
 
@@ -205,8 +204,8 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   }
 
   return (
-    // Outermost MAGNETIC wrapper (cursor-pull translate + shadow-lean + neon
-    // glow) — a new div whose only job is that transform. It composes OUTSIDE the
+    // Outermost MAGNETIC wrapper (cursor-pull translate + lift shadow) — a new
+    // div whose only job is that transform. It composes OUTSIDE the
     // existing tilt/lift (which stays on .game-card-wrap) and re-provides the
     // grid's perspective for the inner 3D tilt. See .game-card-magnet in the CSS.
     <div ref={magnetRef} className="game-card-magnet">
@@ -225,9 +224,9 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
       {topper}
       <div
         className={cardClassName}
-        // --card-glow: the card's mode accent, reused from CARD_NEON (same source
-        // as the magnetic proximity glow), consumed by the beat-glow ::after layer
-        // in GameCard.css. Opacity-only pulse — never touches this card's transform.
+        // --card-glow: the card's mode accent from CARD_NEON, consumed by the
+        // beat-glow ::after layer in GameCard.css. Opacity-only pulse — never
+        // touches this card's transform.
         style={{ background: game.baseColor, '--card-glow': CARD_NEON[game.id] || game.baseColor }}
         onClick={handleClick}
         onKeyDown={handleKeyDown}

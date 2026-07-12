@@ -3,10 +3,10 @@
 // wrapper + the CREATE/JOIN CTAs' wrapper). Purely presentational, cursor-driven
 // only — NO idle/ambient motion. ONE shared rAF drives every registered element
 // (never one-per-element). Each element springs a small translate toward the
-// cursor as it nears, its hard offset shadow leans OPPOSITE and grows (the chip
-// reads as lifting off + leaning in), a per-element neon glow + a slight scale
-// ramp with proximity. Reduced-motion and coarse/no-hover pointers never
-// register, so those users keep the element's existing static hover/glow.
+// cursor as it nears, gains a static hard offset shadow while engaged (the chip
+// reads as lifting off) + a slight scale ramp with proximity. Reduced-motion and
+// coarse/no-hover pointers never register, so those users keep the element's
+// existing static hover/glow.
 
 import { useEffect } from 'react';
 
@@ -20,8 +20,6 @@ const STIFF = 0.16; // spring stiffness toward the target
 const DAMP = 0.5; // critically damped -> no overshoot on the spring-back
 const ENGAGE_PAD = 40; // px past the element's half-diagonal where the pull begins
 const SCALE_MAX = 0.045; // proximity scale (1 -> 1.045 at closest approach)
-const SHADOW_LEAN = 1.4; // shadow shifts opposite the pull by offset * this
-const GLOW_BLUR = 22; // px peak neon glow blur
 const GLOW_EASE = 0.2; // proximity glow/shadow lerp
 
 const items = new Set();
@@ -59,21 +57,14 @@ function ensure() {
   if (!raf && items.size) raf = requestAnimationFrame(frame);
 }
 
-function rgba(hex, a) {
-  const h = hex.replace('#', '');
-  const full = h.length === 3 ? h.replace(/(.)/g, '$1$1') : h;
-  const n = parseInt(full, 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a.toFixed(3)})`;
-}
-
 function apply(it) {
   const lift = it.glow; // 0..1 proximity drives the scale (+ the on/off glow below)
   it.el.style.transform = `translate(${it.ox.toFixed(2)}px, ${it.oy.toFixed(2)}px) scale(${(
     1 +
     SCALE_MAX * lift
   ).toFixed(4)})`;
-  // The lift/neon glow is a box-shadow (PAINT). Rewriting it every frame was a
-  // full repaint per frame while engaged; instead set ONE static "lifted + neon"
+  // The lift shadow is a box-shadow (PAINT). Rewriting it every frame was a
+  // full repaint per frame while engaged; instead set ONE static "lifted"
   // shadow when the element engages and clear it once on release. The transform
   // above still tracks the pull every frame (compositor-cheap), and at true rest
   // the shadow is cleared, so the resting appearance is unchanged. (Trade-off: the
@@ -141,9 +132,9 @@ function frame() {
   else raf = 0;
 }
 
-export function registerMagnet(el, { max, neon, base = 6 }) {
+export function registerMagnet(el, { max, base = 6 }) {
   if (!el) return null;
-  const it = { el, max, neon, base, ox: 0, oy: 0, vx: 0, vy: 0, glow: 0, shadowOn: false };
+  const it = { el, max, base, ox: 0, oy: 0, vx: 0, vy: 0, glow: 0, shadowOn: false };
   items.add(it);
   bind();
   ensure();
@@ -165,7 +156,7 @@ export function unregisterMagnet(it) {
 // React hook: register on mount, clean up on unmount. GATED — only a fine pointer
 // with motion allowed engages; touch/coarse + reduced-motion are no-ops, leaving
 // the element's existing static hover/press/glow untouched.
-export function useMagneticPull(ref, { max, neon, base = 6 }) {
+export function useMagneticPull(ref, { max, base = 6 }) {
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return undefined;
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -173,7 +164,7 @@ export function useMagneticPull(ref, { max, neon, base = 6 }) {
     if (!fine || reduce) return undefined;
     const el = ref.current;
     if (!el) return undefined;
-    const handle = registerMagnet(el, { max, neon, base });
+    const handle = registerMagnet(el, { max, base });
     return () => unregisterMagnet(handle);
-  }, [ref, max, neon, base]);
+  }, [ref, max, base]);
 }
