@@ -360,9 +360,12 @@ html[data-beat='true'] .homepage-logo {
 
 /* Discreet link to the standalone credits page. */
 .homepage-credits-link {
+  /* 44px min hit height (a11y floor); the discreet look is unchanged - the
+     extra hit area comes from padding, not a bigger glyph. */
   display: block;
   margin: 4px auto 0;
-  padding: 0 18px 16px;
+  padding: 14px 18px 16px;
+  min-height: 44px;
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
