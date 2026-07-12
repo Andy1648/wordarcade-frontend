@@ -65,15 +65,20 @@ function minPlayersFor(gameType) {
   return MIN_PLAYERS_BY_TYPE[gameType] || MIN_PLAYERS_TO_START;
 }
 
-// Bot opponent difficulty (Word Bomb solo). These are the BOT's own skill tiers
-// - how fast it answers and how often it whiffs - and are deliberately separate
-// from the game's timer difficulty (HARD/CRAZY/HELL above). The `key` matches the
-// backend's BOT_DIFFICULTY keys (easy/medium/hard).
+// Bot opponent difficulty (solo Word Bomb / Category Blitz). These are the
+// BOT's own skill tiers - how fast and how much it answers - and are
+// deliberately separate from the game's timer difficulty (HARD/CRAZY/HELL
+// above). The `key` matches the backend's BOT_DIFFICULTY keys
+// (easy/medium/hard); the descs stay mode-agnostic since both modes share
+// this picker.
 const BOT_DIFFICULTIES = [
-  { key: 'easy', label: 'EASY', desc: 'slow · misses a lot' },
+  { key: 'easy', label: 'EASY', desc: 'slow · beatable' },
   { key: 'medium', label: 'MEDIUM', desc: 'quick · solid' },
   { key: 'hard', label: 'HARD', desc: 'fast · brutal' },
 ];
+
+// Modes with a server-side bot opponent (roomManager's BOT_FACTORY_BY_GAME_TYPE).
+const BOT_GAME_TYPES = ['word-bomb', 'category-blitz'];
 
 function botDifficultyLabel(key) {
   return (BOT_DIFFICULTIES.find((d) => d.key === key) || {}).label || 'BOT';
@@ -130,13 +135,13 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     room.gameType === 'category-blitz' && room.players.length === 1;
   const canStart = isSoloCategoryBlitz || room.players.length >= minPlayers;
 
-  // ---- Solo Word Bomb bot opponent ----
+  // ---- Solo bot opponent (Word Bomb / Category Blitz) ----
   const humanCount = room.players.filter((p) => !p.isBot).length;
   const bot = room.players.find((p) => p.isBot);
-  // The host can add ONE bot when they're alone in a Word Bomb room. (The server
-  // enforces the same; this just shows/hides the control.)
+  // The host can add ONE bot when they're alone in a bot-capable mode. (The
+  // server enforces the same; this just shows/hides the control.)
   const canAddBot =
-    isHost && room.gameType === 'word-bomb' && humanCount === 1 && !bot;
+    isHost && BOT_GAME_TYPES.includes(room.gameType) && humanCount === 1 && !bot;
 
   function handleAddBot(difficulty) {
     sound.click();
@@ -236,9 +241,9 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           </div>
         )}
 
-        {/* Solo Word Bomb: rather than wait for a human, the lone player can add a
-            bot opponent at a difficulty of their choosing (the bot's own skill,
-            separate from the timer difficulty below). */}
+        {/* Solo Word Bomb / Category Blitz: rather than wait for a human, the
+            lone player can add a bot opponent at a difficulty of their choosing
+            (the bot's own skill, separate from the timer difficulty below). */}
         {canAddBot && (
           <div className="room-addbot">
             {!showBotPicker ? (

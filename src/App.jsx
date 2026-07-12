@@ -1144,8 +1144,9 @@ function App() {
     send('set_game_type', { gameType });
   }
 
-  // Solo Word Bomb: the host explicitly adds/removes a bot opponent (the server
-  // re-broadcasts room_update, so the bot just appears/disappears in the roster).
+  // Solo Word Bomb / Category Blitz: the host explicitly adds/removes a bot
+  // opponent (the server re-broadcasts room_update, so the bot just
+  // appears/disappears in the roster).
   function handleAddBot(difficulty) {
     fireBot(() => send('add_bot', { difficulty }));
   }
