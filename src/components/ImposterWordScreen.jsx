@@ -13,6 +13,7 @@ import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import { ShareBar } from '../share';
 import { inviteLink } from '../share/links.js';
+import { flash, burst } from '../juice';
 import './ImposterWord.css';
 
 // A distinct, stable colour per player (by roster index) - used for answer
@@ -438,13 +439,30 @@ export default function ImposterWordScreen({
   }, [timerSeconds, phaseActive, sound]);
 
   // Per-answer accept ding / reject buzz. The toast alone was SILENT here while
-  // Word Bomb and Category Blitz both sound every submission result.
+  // Word Bomb and Category Blitz both sound every submission result. The input
+  // itself also reacts (teal flash + spark burst on accept, red flash on
+  // reject) via the shared juice toolkit, which self-gates on reduced-motion.
   const prevResultRef = useRef(null);
   useEffect(() => {
     if (!lastWordResult || lastWordResult === prevResultRef.current) return;
     prevResultRef.current = lastWordResult;
-    if (lastWordResult.accepted) sound.correctDing();
-    else sound.wrongBuzz();
+    const el = inputRef.current;
+    if (lastWordResult.accepted) {
+      sound.correctDing();
+      if (el) {
+        flash(el, '#2EFFE0');
+        const r = el.getBoundingClientRect();
+        burst(r.left + r.width / 2, r.top, {
+          count: 12,
+          colors: ['#2EFFE0', '#FFE94A'],
+          angle: -Math.PI / 2,
+          spread: Math.PI * 0.9,
+        });
+      }
+    } else {
+      sound.wrongBuzz();
+      if (el) flash(el, '#FF5C5C');
+    }
   }, [lastWordResult, sound]);
 
   function submit() {
@@ -694,7 +712,13 @@ export default function ImposterWordScreen({
                         className={`iw-vote-btn${voted ? ' voted' : ''}`}
                         style={voted ? { background: color, borderColor: color } : undefined}
                         disabled={!!myVote}
-                        onClick={() => { sound.click(); onSubmitVote(p.playerId); }}
+                        onClick={(e) => {
+                          // Locking in an accusation is a big moment: a punch +
+                          // a flash of the accused's card, not a mere click.
+                          sound.punch();
+                          flash(e.currentTarget.closest('.iw-vote-card'), color);
+                          onSubmitVote(p.playerId);
+                        }}
                       >
                         {voted ? '✓ VOTED' : myVote ? 'VOTE LOCKED' : 'VOTE'}
                       </button>
