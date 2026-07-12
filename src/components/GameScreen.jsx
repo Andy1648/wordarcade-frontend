@@ -3822,6 +3822,19 @@ function CategoryBlitzScreen({
               </div>
               );
             })}
+
+            {(roundResults.sampleAnswers || []).length > 0 && (
+              <div className="cb-missed">
+                <div className="cb-missed-title">ANSWERS YOU MISSED</div>
+                <div className="cb-missed-answers">
+                  {roundResults.sampleAnswers.map((answer, i) => (
+                    <span key={`${answer}-${i}`} className="cb-missed-chip">
+                      {answer.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="cb-next-round">

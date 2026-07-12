@@ -2486,6 +2486,50 @@
   gap: 5px;
 }
 
+/* ---- Round-end reveal: sample accept-list answers nobody gave ---- */
+/* Ghost variant of the answer chip - same shape as .cb-answer-chip but a
+   dark fill, thin outline, and muted text, so it can never be mistaken for
+   a player's scored answers. Deliberately NOT .cb-answer-chip: that class
+   carries chip-slide-in + the beat outline flash, and this section must
+   stay static (5s intermission - instantly glanceable). */
+.cb-missed {
+  margin-top: 4px;
+}
+
+.cb-missed-title {
+  font-family: 'Bungee', cursive;
+  font-size: 10px;
+  color: #C9B8E8;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.cb-missed-answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  /* No scrolling - anything past ~3 chip rows just clips. */
+  max-height: 84px;
+  overflow: hidden;
+}
+
+.cb-missed-chip {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(201, 184, 232, 0.45);
+  border-radius: 3px;
+  padding: 3px 7px;
+  transform: rotate(-1deg);
+}
+
+.cb-missed-answers .cb-missed-chip:nth-child(even) {
+  transform: rotate(1.5deg);
+}
+
 .cb-next-round {
   font-family: 'Bungee', cursive;
   font-size: 11px;
