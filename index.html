@@ -15,8 +15,8 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TYPE A WORD</title>
-    <meta name="description" content="Fast, chaotic multiplayer word games - Word Bomb, AI Category Blitz and Imposter Word. Type fast, die slow." />
+    <title>TYPE A WORD — Free Multiplayer Word Games Online</title>
+    <meta name="description" content="Fast, chaotic multiplayer word games - Word Bomb, AI Category Blitz and Imposter Word. Free in your browser, no download. Type fast, die slow." />
     <link rel="canonical" href="https://typeaword.com/" />
     <!-- Open Graph / social share -->
     <meta property="og:site_name" content="Type a Word" />
@@ -48,6 +48,48 @@
       rel="stylesheet"
     />
     <script defer src="https://cloud.umami.is/script.js" data-website-id="c1e456ac-c322-43f5-9098-2cafce036b67"></script>
+    <!-- Structured data: the site plus its three games (each game's own
+         VideoGame schema lives on its static landing page in public/). -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "Type a Word",
+          "url": "https://typeaword.com/",
+          "description": "Fast, chaotic multiplayer word games - Word Bomb, AI Category Blitz and Imposter Word. Free in your browser."
+        },
+        {
+          "@type": "VideoGame",
+          "name": "Word Bomb",
+          "url": "https://typeaword.com/word-bomb/",
+          "genre": "Word game",
+          "playMode": ["MultiPlayer", "SinglePlayer"],
+          "gamePlatform": "Web browser",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "VideoGame",
+          "name": "AI Category Blitz",
+          "url": "https://typeaword.com/category-blitz/",
+          "genre": "Word game",
+          "playMode": ["MultiPlayer", "SinglePlayer"],
+          "gamePlatform": "Web browser",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "VideoGame",
+          "name": "Imposter Word",
+          "url": "https://typeaword.com/imposter-word/",
+          "genre": "Word game",
+          "playMode": "MultiPlayer",
+          "gamePlatform": "Web browser",
+          "isAccessibleForFree": true
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

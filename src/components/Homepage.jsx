@@ -278,6 +278,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         >
           CREDITS
         </button>
+
+        {/* Quiet footer nav to the static per-game guide pages (the
+            public/<game>/index.html files). Real <a href> links on purpose:
+            they give crawlers an internal link graph to the prerendered SEO
+            landing pages. */}
+        <nav className="homepage-guides-nav" aria-label="Game guides">
+          <a href="/word-bomb/">WORD BOMB GUIDE</a>
+          <a href="/category-blitz/">CATEGORY BLITZ GUIDE</a>
+          <a href="/imposter-word/">IMPOSTER WORD GUIDE</a>
+        </nav>
       </div>
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
