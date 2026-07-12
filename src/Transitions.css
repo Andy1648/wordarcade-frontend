@@ -52,3 +52,87 @@
      fixed box, and so it doesn't become a containing block for fixed children. */
   zoom: var(--app-scale, 1);
 }
+
+/* ---- CONNECTION LOST overlay (App.jsx) ----
+   The mid-game socket-drop dialog. It should land like a knockout, matching the
+   game's elimination language: title slams in (scale punch + slight tilt), the
+   panicking mascot and the copy/button rise in staggered underneath. The defeat
+   sting + heavy screen jolt fire from App the moment the drop is detected. */
+.connlost-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(13, 6, 24, 0.92);
+}
+
+.connlost-title {
+  font-family: 'Bungee', sans-serif;
+  font-size: clamp(28px, 7vw, 52px);
+  color: #FF2EC4;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  line-height: 1.1;
+  transform: rotate(-1deg);
+  animation: connlost-slam 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes connlost-slam {
+  0% { transform: scale(2.6) rotate(-5deg); opacity: 0; }
+  55% { transform: scale(0.94) rotate(0.5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-1deg); }
+}
+
+.connlost-mascot,
+.connlost-sub,
+.connlost-btn {
+  animation: connlost-rise 400ms ease-out both;
+}
+.connlost-mascot { animation-delay: 150ms; }
+.connlost-sub { animation-delay: 250ms; }
+.connlost-btn { animation-delay: 350ms; }
+
+@keyframes connlost-rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.connlost-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  color: #FFE94A;
+  max-width: 420px;
+}
+
+.connlost-btn {
+  font-family: 'Bungee', sans-serif;
+  font-size: 18px;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 3px solid #1A9985;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  padding: 14px 22px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.connlost-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .connlost-title,
+  .connlost-mascot,
+  .connlost-sub,
+  .connlost-btn {
+    animation: none !important;
+  }
+}

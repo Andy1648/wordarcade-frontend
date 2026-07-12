@@ -13,6 +13,7 @@ import CreditsScreen from './components/CreditsScreen';
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 import KnifeSplit from './components/KnifeSplit';
+import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
@@ -408,6 +409,28 @@ function App() {
     // triggerShake is stable enough; we react to beatCount (and read live view).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beatCount, view]);
+
+  // The connection dropped WHILE in an active room/game. The seat is gone
+  // server-side (no resume), so we don't auto-reconnect or reload - we show a
+  // blocking overlay (rendered at the bottom) whose only exit is BACK TO MENU.
+  // Outside a session a drop reconnects transparently, so no overlay. Computed
+  // up here (not at the render site) so the drama effect below can watch it.
+  const connectionLost =
+    inActiveSession && (wsStatus === 'closed' || wsStatus === 'error');
+
+  // Losing your seat should FEEL like a knockout, not a dialog: one defeat
+  // sting + a heavy jolt the moment the drop is detected (once per drop; the
+  // overlay's own slam-in animation lands with it).
+  const prevConnLostRef = useRef(false);
+  useEffect(() => {
+    if (connectionLost && !prevConnLostRef.current) {
+      sound.defeat();
+      triggerShake('heavy');
+    }
+    prevConnLostRef.current = connectionLost;
+    // sound is stable (apiRef); triggerShake is a hoisted stable helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionLost]);
 
   // Reflect the live view on <html> so view-gated background VISUALS can react in
   // pure CSS without threading `view` into every ambient layer. Used to switch the
@@ -1400,13 +1423,6 @@ function App() {
     );
   }
 
-  // The connection dropped WHILE in an active room/game. The seat is gone
-  // server-side (no resume), so we don't auto-reconnect or reload here - we show
-  // a blocking overlay whose only exit is BACK TO MENU (the normal leave/reset
-  // path). Outside a session a drop reconnects transparently, so no overlay.
-  const connectionLost =
-    inActiveSession && (wsStatus === 'closed' || wsStatus === 'error');
-
   // `key={view}` remounts the wrapper the instant the view changes, so the new
   // screen mounts immediately (its mount effects - e.g. the in-game 3-2-1
   // countdown - replay then) instead of waiting on a timer. The WallScene +
@@ -1463,61 +1479,18 @@ function App() {
       {/* CONNECTION LOST: shown only when the socket drops mid room/game. The
           seat can't be resumed (fresh connection id server-side), so the single
           action is BACK TO MENU, which runs the normal leave/reset path (goHome).
-          Inline-styled to keep this surgical (connection-lifecycle change only). */}
+          Styled/animated in Transitions.css; the defeat sting + heavy jolt fire
+          from the effect that watches connectionLost above. */}
       {connectionLost && (
-        <div
-          role="alertdialog"
-          aria-label="Connection lost"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '20px',
-            padding: '24px',
-            textAlign: 'center',
-            background: 'rgba(13, 6, 24, 0.92)',
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "'Bungee', sans-serif",
-              fontSize: 'clamp(28px, 7vw, 52px)',
-              color: '#FF2EC4',
-              WebkitTextStroke: '2px #000',
-              lineHeight: 1.1,
-            }}
-          >
-            CONNECTION LOST
+        <div className="connlost-overlay" role="alertdialog" aria-label="Connection lost">
+          <div className="connlost-mascot">
+            <Mascot pose="panic" emote="flinch" size={110} />
           </div>
-          <div
-            style={{
-              fontFamily: "'Space Mono', monospace",
-              fontSize: '15px',
-              color: '#FFE94A',
-              maxWidth: '420px',
-            }}
-          >
+          <div className="connlost-title">CONNECTION LOST</div>
+          <div className="connlost-sub">
             You were dropped from the game. Your seat is gone - hop back to the menu to play again.
           </div>
-          <button
-            onClick={goHome}
-            style={{
-              fontFamily: "'Bungee', sans-serif",
-              fontSize: '18px',
-              color: '#0d0618',
-              background: '#2EFFE0',
-              border: '3px solid #1A9985',
-              borderRadius: '8px',
-              boxShadow: '4px 4px 0 #000',
-              padding: '14px 22px',
-              minHeight: '44px',
-              cursor: 'pointer',
-            }}
-          >
+          <button className="connlost-btn" onClick={goHome}>
             BACK TO MENU
           </button>
         </div>
