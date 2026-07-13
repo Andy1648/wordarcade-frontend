@@ -643,3 +643,66 @@ html[data-beat='true'] .homepage-beat-glow {
     display: none !important;
   }
 }
+
+/* ---- [T4] Daily Challenge banner button ---- */
+/* Sits between the mascot and the SELECT YOUR GAME label: a slim, full-focal
+   yellow banner in the same sticker language as the CREATE/JOIN CTAs (hard
+   black offset shadow, dark border of the same hue, slight skew). */
+.homepage-daily-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: clamp(4px, 1vh, 10px) auto;
+  padding: 10px 22px;
+  min-height: 44px;
+  font-family: 'Bungee', sans-serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: #000;
+  background: #FFE94A;
+  border: 3px solid #B8A020;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  transform: skewX(-2deg);
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s;
+}
+
+.homepage-daily-btn:hover {
+  transform: skewX(-2deg) translate(-1px, -1px) scale(1.03);
+  box-shadow: 6px 6px 0 #000;
+}
+
+.homepage-daily-btn:active {
+  transform: skewX(-2deg) scale(0.92);
+  box-shadow: 1px 1px 0 #000;
+  transition: transform 0.05s ease-out, box-shadow 0.05s;
+}
+
+.homepage-daily-btn:disabled,
+.homepage-daily-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Already played today: calmer, outlined look — still tappable (replays are
+   allowed; the streak just doesn't double-count the day). */
+.homepage-daily-btn.played {
+  background: transparent;
+  color: #FFE94A;
+  border-color: #FFE94A;
+}
+
+.homepage-daily-streak {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 0.85em;
+}
+
+.homepage-daily-played {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7em;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}

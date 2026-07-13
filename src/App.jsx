@@ -24,6 +24,14 @@ import { useSoundEffects } from './hooks/useSoundEffects';
 import { SoundContext } from './contexts/SoundContext';
 import { buildPlayerColors } from './playerColors';
 import { resolvePlayerName, rememberName } from './playerName';
+import {
+  loadDailyState,
+  saveDailyState,
+  recordDailyResult,
+  hasPlayedDay,
+  currentDayNumber,
+  displayStreak,
+} from './daily/streak.js';
 import { friendlyError } from './friendlyError';
 import { useOneShotAction } from './hooks/useOneShotAction';
 import { track } from './lib/analytics';
@@ -327,6 +335,21 @@ function App() {
   const [imposterResults, setImposterResults] = useState(null);
   const [imposterFinal, setImposterFinal] = useState(null);
 
+  // ---- Daily Challenge (solo Category Blitz on the server's date-seeded board) ----
+  // dailyState: the persisted streak history (localStorage). dailyResult: the
+  // just-finished daily's { dayNumber, streak, bestStreak, score } for the
+  // results screen + share text; null while no completed daily is on screen.
+  // dailyStateRef mirrors dailyState for the WS drain effect (keyed only on
+  // [messages], so reading the state there would be stale — same pattern as
+  // playerCountRef below).
+  const [dailyState, setDailyState] = useState(() => loadDailyState());
+  const [dailyResult, setDailyResult] = useState(null);
+  const dailyStateRef = useRef(dailyState);
+  useEffect(() => {
+    dailyStateRef.current = dailyState;
+  }, [dailyState]);
+  const myIdRef = useRef(null);
+
   // Reconnect gate for useWebSocket. Auto-reconnect is allowed ONLY outside an
   // active session: the backend treats every connection as a fresh player (new
   // id, no resume), so a silent reconnect mid room/game would NOT restore the
@@ -533,6 +556,7 @@ function App() {
 
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
+      myIdRef.current = lastMessage.payload.id; // live copy for this drain effect
     }
 
     // Public-room browser list refresh (response to list_public_rooms).
@@ -592,12 +616,15 @@ function App() {
         gameEndTime: null,
       });
       setView('game');
+      // Daily Challenge: a fresh game clears any previous daily result; the
+      // game_over handler below re-fills it if THIS game is a daily.
+      setDailyResult(null);
       // Analytics: stamp start refs (read back at game_over for duration) and
       // capture the start. mode comes straight off the message (never stale).
       const startedMode = lastMessage.payload.gameType || 'word-bomb';
       gameModeRef.current = startedMode;
       gameStartMsRef.current = Date.now();
-      track('game_started', { mode: startedMode });
+      track('game_started', { mode: startedMode, daily: !!lastMessage.payload.daily });
     }
 
     if (lastMessage.type === 'typing_update') {
@@ -907,6 +934,25 @@ function App() {
         setRoundResults(null);
       }
       setGameOver(payload);
+      // Daily Challenge completed: fold the result into the persisted streak
+      // history, keyed by the SERVER's dayNumber (never the local clock).
+      // recordDailyResult is same-day-replay safe (streak counts a day once),
+      // so a PLAY-AGAIN-then-finish can't double-increment.
+      if (payload.daily && payload.finalScores) {
+        const mine = payload.finalScores.find((s) => s.id === myIdRef.current);
+        const next = recordDailyResult(
+          dailyStateRef.current,
+          payload.daily.dayNumber,
+          mine ? mine.score : 0
+        );
+        saveDailyState(next);
+        setDailyState(next);
+        setDailyResult({
+          dayNumber: payload.daily.dayNumber,
+          streak: next.streak,
+          bestStreak: next.bestStreak,
+        });
+      }
       // Stamp the end time so the overlay can show the game's duration.
       setGameStats((prev) => ({ ...prev, gameEndTime: Date.now() }));
       setView('game');
@@ -1139,7 +1185,24 @@ function App() {
     setImposterMyVote(null);
     setImposterResults(null);
     setImposterFinal(null);
+    setDailyResult(null);
     setView('home');
+  }
+
+  // Daily Challenge: ONE tap from the menu into today's board. Uses the
+  // remembered/generated name (no name prompt), creates a private room, locks
+  // it to Category Blitz, and starts with daily:true — the server processes
+  // the three frames in order on this socket, exactly like the lobby's
+  // create-and-preselect path. No set_packs: the daily ignores packs.
+  function handleStartDaily() {
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode('category-blitz');
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: 'category-blitz' });
+    send('start_game', { daily: true });
+    track('daily_started', { day: currentDayNumber() });
   }
 
   function handleLobbyContinue({ name, mode, roomCode, isPublic }) {
@@ -1214,7 +1277,11 @@ function App() {
   function handlePlayAgain() {
     // Solo "play again" is a rematch sibling — share the rematch guard so the two
     // post-game buttons can't double-fire (they're never both pressed together).
-    fireRematch(() => send('start_game', {}));
+    // After a DAILY run, play-again replays TODAY'S board (daily:true again):
+    // same-day replays are streak-safe (the streak counts a day once) and only
+    // the day's best score is kept.
+    const replayDaily = !!dailyResult;
+    fireRematch(() => send('start_game', replayDaily ? { daily: true } : {}));
   }
 
   // Category Blitz: swap the current round's category. The server enforces
@@ -1311,6 +1378,7 @@ function App() {
         onSpectatorReaction={handleSpectatorReaction}
         onShake={triggerShake}
         roomCode={room ? room.code : null}
+        dailyResult={dailyResult}
       />
     );
   } else if (view === 'room' && room) {
@@ -1369,6 +1437,12 @@ function App() {
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}
+        onDaily={handleStartDaily}
+        daily={{
+          dayNumber: currentDayNumber(),
+          played: hasPlayedDay(dailyState, currentDayNumber()),
+          streak: displayStreak(dailyState, currentDayNumber()),
+        }}
       />
     );
   }

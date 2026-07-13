@@ -60,7 +60,7 @@ const RECEDING_TAGS = [
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -191,6 +191,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     if (onCredits) onCredits();
   }
 
+  // Daily Challenge: one tap straight into today's board (App creates a room,
+  // locks Blitz and starts daily:true in one shot). Connect-gated like
+  // CREATE/JOIN so a cold backend shows CONNECTING… instead of a dead tap.
+  function handleDaily(e) {
+    if (navigating) return;
+    pressJuice(e, '#FFE94A'); // yellow accent — the daily's colour
+    sound.click();
+    setNavigating(true);
+    runWhenConnected('daily', () => onDaily && onDaily());
+  }
+
   return (
     <div className="homepage-wrap">
       <div className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
@@ -229,6 +240,29 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
         <div style={{ display: 'flex', justifyContent: 'center', margin: 'clamp(2px, 1vh, 8px) 0' }}>
           <Mascot pose="idle" size={100} />
         </div>
+
+        {/* DAILY CHALLENGE: the once-a-day hook. Same board for everyone today;
+            shows the day number, a live streak flame, and a PLAYED check after
+            today's run (replays allowed — the streak only counts a day once). */}
+        {daily && (
+          <button
+            className={`homepage-daily-btn${navigating ? ' disabled' : ''}${daily.played ? ' played' : ''}`}
+            onClick={handleDaily}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            data-juice-self
+          >
+            <span className="homepage-daily-label">
+              {connecting === 'daily' ? 'CONNECTING…' : `⚡ DAILY #${daily.dayNumber}`}
+            </span>
+            {connecting !== 'daily' && daily.streak > 0 && (
+              <span className="homepage-daily-streak">🔥 {daily.streak}</span>
+            )}
+            {connecting !== 'daily' && daily.played && (
+              <span className="homepage-daily-played">✓ PLAYED</span>
+            )}
+          </button>
+        )}
 
         <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
 
