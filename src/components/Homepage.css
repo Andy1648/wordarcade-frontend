@@ -358,14 +358,15 @@ html[data-beat='true'] .homepage-logo {
   will-change: transform;
 }
 
-/* Discreet link to the standalone credits page. */
+/* Discreet link to the standalone credits page. Desktop keeps the original
+   compact box: the homepage is height-locked to one screen (overflow:hidden),
+   so extra height here risks clipping the bottom nav on short laptops. The
+   44px tap floor is applied in the <=760px block below, where the homepage
+   switches to height:auto and the target is actually tapped by a finger. */
 .homepage-credits-link {
-  /* 44px min hit height (a11y floor); the discreet look is unchanged - the
-     extra hit area comes from padding, not a bigger glyph. */
   display: block;
   margin: 4px auto 0;
-  padding: 14px 18px 16px;
-  min-height: 44px;
+  padding: 0 18px 16px;
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
@@ -533,6 +534,13 @@ html[data-beat='true'] .homepage-logo {
   }
   .homepage-stage {
     max-height: none;
+  }
+
+  /* 44px tap floor for the credits link, phone-only: the wrap is height:auto
+     here so the taller box can never clip the one-screen desktop layout. */
+  .homepage-credits-link {
+    padding: 14px 18px 16px;
+    min-height: 44px;
   }
 }
 
