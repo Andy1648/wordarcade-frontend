@@ -184,6 +184,11 @@ function App() {
     [room]
   );
   const [serverError, setServerError] = useState('');
+  // Set when the SERVER closed our room (idle reap, or an internal error the
+  // backend contained to this one room). Drives the blocking ROOM CLOSED
+  // overlay below: the room is already gone server-side, so surfacing it with
+  // a route home is the only alternative to a frozen lobby.
+  const [roomClosedNotice, setRoomClosedNotice] = useState(null);
   // Monotonic counter bumped on every RESOLVING server frame (see RESOLVING_TYPES).
   // It is the fresh re-enable signal for the one-shot action guards below — a
   // counter, not a string, so an identical repeated error still re-enables them.
@@ -551,6 +556,18 @@ function App() {
       // Host rematch: the room data already arrived via room_update; this is
       // the explicit cue to leave the game view and return to the lobby.
       setView('room');
+    }
+
+    // The server closed the room out from under us (idle reap, or an internal
+    // error the backend contained to this room). There is no seat to return
+    // to, so surface a blocking notice whose only exit is the menu - the
+    // alternative is a lobby that silently stopped responding.
+    if (lastMessage.type === 'room_closed') {
+      setRoomClosedNotice(
+        lastMessage.payload?.reason === 'server_error'
+          ? 'THE SERVER HIT A GLITCH AND CLOSED THIS ROOM. GRAB A FRESH ONE.'
+          : 'THIS ROOM SAT QUIET TOO LONG, SO THE SERVER SWEPT IT AWAY.'
+      );
     }
 
     if (lastMessage.type === 'game_started') {
@@ -1491,6 +1508,28 @@ function App() {
             You were dropped from the game. Your seat is gone - hop back to the menu to play again.
           </div>
           <button className="connlost-btn" onClick={goHome}>
+            BACK TO MENU
+          </button>
+        </div>
+      )}
+      {/* ROOM CLOSED (by the server): idle reap or a contained server error.
+          Same treatment as CONNECTION LOST - the room is unrecoverable, the
+          only exit is home - so it reuses the connlost styles. connectionLost
+          wins if both somehow apply at once. */}
+      {roomClosedNotice && !connectionLost && (
+        <div className="connlost-overlay" role="alertdialog" aria-label="Room closed">
+          <div className="connlost-mascot">
+            <Mascot pose="panic" emote="flinch" size={110} />
+          </div>
+          <div className="connlost-title">ROOM CLOSED</div>
+          <div className="connlost-sub">{roomClosedNotice}</div>
+          <button
+            className="connlost-btn"
+            onClick={() => {
+              setRoomClosedNotice(null);
+              goHome();
+            }}
+          >
             BACK TO MENU
           </button>
         </div>
