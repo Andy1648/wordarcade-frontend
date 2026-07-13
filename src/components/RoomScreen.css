@@ -270,6 +270,15 @@
   text-align: center;
   margin-bottom: 14px;
   letter-spacing: 0.3px;
+  /* Same soft breathing as the under-count waiting cue, so the non-host's
+     "waiting for host" line reads alive rather than frozen. */
+  animation: room-waiting-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-waiting-msg {
+    animation: none !important;
+  }
 }
 
 /* Start-failure message, pinned directly above START so the reason sits next to
