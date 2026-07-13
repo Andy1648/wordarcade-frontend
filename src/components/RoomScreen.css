@@ -663,3 +663,42 @@ html[data-beat='true'] .room-leave-btn {
   line-height: 1.1;
   text-align: center;
 }
+
+/* ---- [T4] Invite link row (frictionless join) ---- */
+.room-invite-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px 0 4px;
+}
+
+.room-invite-btn {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 2px solid #B8A020;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 9px 16px;
+  min-height: 40px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.room-invite-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.room-invite-btn:active {
+  transform: translate(1px, 1px) scale(0.96);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.room-invite-share {
+  background: #2EFFE0;
+  border-color: #1A9985;
+}

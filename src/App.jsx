@@ -136,6 +136,21 @@ const PORTAL_SKIP_INTRO =
   (typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('portal') === '1');
 
+// Deep links (the invite loop): ?join=CODE drops a friend straight into that
+// room — no name prompt (remembered/generated handle), no lobby stops; ?daily=1
+// goes straight into today's Daily Challenge. Both skip the intro chain: a
+// friend tapping a group-chat link should land IN the game, not on a splash.
+// Read once at module load (same pattern as PORTAL_SKIP_INTRO).
+const LAUNCH_INTENT = (() => {
+  if (typeof window === 'undefined') return { join: null, daily: false };
+  const params = new URLSearchParams(window.location.search);
+  const join = (params.get('join') || '').trim().toUpperCase();
+  return { join: join || null, daily: params.get('daily') === '1' };
+})();
+
+// Any launch intent (portal embed, invite link, daily link) skips the intro.
+const SKIP_INTRO = PORTAL_SKIP_INTRO || !!LAUNCH_INTENT.join || LAUNCH_INTENT.daily;
+
 /**
  * Top-level view state manager + the single shared WebSocket connection
  * for the whole app.
@@ -350,6 +365,11 @@ function App() {
   }, [dailyState]);
   const myIdRef = useRef(null);
 
+  // Invite-link arrival: true from load until the ?join= room answers (join
+  // lands -> room_update, or fails -> error). Drives the JOINING ROOM banner
+  // so a cold backend (30-60s Render spin-up) doesn't read as a dead link.
+  const [linkJoinPending, setLinkJoinPending] = useState(!!LAUNCH_INTENT.join);
+
   // Reconnect gate for useWebSocket. Auto-reconnect is allowed ONLY outside an
   // active session: the backend treats every connection as a fresh player (new
   // id, no resume), so a silent reconnect mid room/game would NOT restore the
@@ -385,13 +405,14 @@ function App() {
   // The bomb-fuse loading screen is the very first thing shown; it holds until
   // the socket connects (then "explodes" and hands off), at which point the
   // splash takes over. `loadingDone` flips true once that explosion finishes.
-  // In a portal embed we skip straight to the menu, so the loading screen is
-  // pre-completed (the socket still connects in the background via useWebSocket).
-  const [loadingDone, setLoadingDone] = useState(PORTAL_SKIP_INTRO);
+  // In a portal embed — and on ?join= / ?daily= deep links — we skip straight
+  // to the menu, so the loading screen is pre-completed (the socket still
+  // connects in the background via useWebSocket).
+  const [loadingDone, setLoadingDone] = useState(SKIP_INTRO);
 
   // The splash/attract screen is shown after loading, once per session
-  // (dismissing it never re-arms it). Portal embeds skip it entirely.
-  const [showSplash, setShowSplash] = useState(!PORTAL_SKIP_INTRO);
+  // (dismissing it never re-arms it). Portal embeds and deep links skip it.
+  const [showSplash, setShowSplash] = useState(!SKIP_INTRO);
   // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
   // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
   const [showIntro, setShowIntro] = useState(false);
@@ -567,6 +588,7 @@ function App() {
     if (lastMessage.type === 'room_update') {
       setRoom(lastMessage.payload);
       setServerError('');
+      setLinkJoinPending(false); // invite-link join answered (we're in)
       // Only fall back to the room view if we're not currently in a game. A
       // room_update can land right after game_started (host start) and would
       // otherwise yank the player back out of the match. The rematch flow sends
@@ -970,6 +992,15 @@ function App() {
 
     if (lastMessage.type === 'error') {
       setServerError(friendlyError(lastMessage.payload.message));
+      setLinkJoinPending(false); // if a link join was in flight, it just failed
+      // A join that failed while we're still on the HOME screen (an invite
+      // link to a full/ended/unknown room) must not dead-end invisibly: land
+      // on the JOIN ROOM screen, which shows the error plus live public rooms
+      // to hop into instead. Functional update — the live view, not the
+      // closure's stale copy.
+      if (lastMessage.payload.context === 'join_room') {
+        setView((prev) => (prev === 'home' ? 'browse' : prev));
+      }
     }
     } // end for-of: every queued frame handled in order
     // One fresh re-enable signal per drain that carried an ack/state-change/error.
@@ -1043,6 +1074,28 @@ function App() {
     if (now && !prevGameOverRef.current) runTransition('RESULTS');
     prevGameOverRef.current = now;
   }, [gameOver, runTransition]);
+
+  // Deep-link auto-fire: the moment the socket first opens, act on the launch
+  // intent — join the invited room (?join=CODE) with the remembered/generated
+  // name (zero prompts: tap link -> in the room), or start today's daily
+  // (?daily=1). Once only; a later reconnect must not re-join/re-start.
+  const launchFiredRef = useRef(false);
+  useEffect(() => {
+    if (wsStatus !== 'open' || launchFiredRef.current) return;
+    if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily) return;
+    launchFiredRef.current = true;
+    if (LAUNCH_INTENT.join) {
+      const name = resolvePlayerName();
+      setPlayerNameState(name);
+      send('join_room', { code: LAUNCH_INTENT.join, name });
+      track('room_joined', { mode: 'invite_link' }); // enum only; no PII
+    } else {
+      handleStartDaily();
+    }
+    // handleStartDaily is a stable-enough function declaration; this effect
+    // only ever fires once (guarded by launchFiredRef).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsStatus, send]);
 
   // Wipe to the homepage the moment the socket comes up (connecting -> open).
   const prevWsRef = useRef(wsStatus);
@@ -1543,6 +1596,34 @@ function App() {
           </div>
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} />
+          )}
+          {/* Invite-link arrival: a friend tapped a ?join= link and we're
+              connecting + joining in the background. One clear line so the
+              wait (cold backend spin-up) never reads as a broken link.
+              Inline-styled, presentation-only. */}
+          {linkJoinPending && view === 'home' && (
+            <div
+              role="status"
+              style={{
+                position: 'fixed',
+                left: '50%',
+                bottom: '28px',
+                transform: 'translateX(-50%)',
+                zIndex: 9000,
+                fontFamily: "'Space Mono', monospace",
+                fontWeight: 700,
+                fontSize: '14px',
+                letterSpacing: '0.06em',
+                color: '#0d0618',
+                background: '#FFE94A',
+                border: '2px solid #B8A020',
+                borderRadius: '8px',
+                boxShadow: '3px 3px 0 #000',
+                padding: '10px 18px',
+              }}
+            >
+              JOINING ROOM {LAUNCH_INTENT.join}…
+            </div>
           )}
           {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
               auto-cleared after ~480ms). Replaces the old intro explosion. */}

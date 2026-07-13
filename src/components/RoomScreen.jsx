@@ -5,6 +5,8 @@ import WaveText from './WaveText';
 import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
 import { resolvePlayerColor } from '../playerColors';
+import { inviteLink } from '../share/links.js';
+import { track } from '../lib/analytics';
 import './RoomScreen.css';
 
 // Each difficulty carries a short timer blurb so players know what they're
@@ -168,6 +170,45 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     onLeave();
   }
 
+  // ---- Invite link (the frictionless join loop) ----
+  // COPY writes the ?join=CODE deep link to the clipboard (with a brief ✓
+  // confirmation); SHARE opens the native sheet where the platform has one
+  // (mobile). Both are room-code-pure — no game state touched.
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteCopiedTimerRef = useRef(null);
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+  useEffect(() => () => clearTimeout(inviteCopiedTimerRef.current), []);
+
+  async function handleCopyInvite() {
+    sound.click();
+    const link = inviteLink(room.code);
+    try {
+      await navigator.clipboard.writeText(link);
+      setInviteCopied(true);
+      clearTimeout(inviteCopiedTimerRef.current);
+      inviteCopiedTimerRef.current = setTimeout(() => setInviteCopied(false), 1600);
+      track('invite_link_copied', { method: 'copy' });
+    } catch {
+      // Clipboard blocked (permissions / http): fall back to the native sheet
+      // if there is one; otherwise select-able prompt is overkill — just no-op.
+      if (canNativeShare) handleShareInvite();
+    }
+  }
+
+  async function handleShareInvite() {
+    sound.click();
+    try {
+      await navigator.share({
+        title: 'TYPE A WORD',
+        text: `join my room — type fast. die slow. code ${room.code}`,
+        url: inviteLink(room.code),
+      });
+      track('invite_link_copied', { method: 'native' });
+    } catch {
+      /* user cancelled the sheet — nothing to do */
+    }
+  }
+
   return (
     <div className="room-wrap">
       <div className="room-box">
@@ -176,6 +217,20 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           <WaveText text={room.code} />
         </div>
         <div className="room-hint">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
+
+        {/* One-tap invite: copies (or natively shares, where supported) a
+            ?join=CODE deep link that drops a friend STRAIGHT into this room —
+            no name prompt, no code typing. */}
+        <div className="room-invite-row">
+          <button className="room-invite-btn" onClick={handleCopyInvite}>
+            {inviteCopied ? '✓ LINK COPIED' : '⧉ COPY INVITE LINK'}
+          </button>
+          {canNativeShare && (
+            <button className="room-invite-btn room-invite-share" onClick={handleShareInvite}>
+              📣 SHARE
+            </button>
+          )}
+        </div>
 
         <div className="room-players-label">PLAYERS ({room.players.length})</div>
         <div className="room-players-list">
