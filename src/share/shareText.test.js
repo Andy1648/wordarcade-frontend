@@ -55,7 +55,7 @@ test('word bomb: long games middle-ellipsize, keeping start and finish', () => {
 test('blitz rows: blocks match score, cap at 8, zero gets a dot', () => {
   assert.equal(blitzRoundRow(0, 3), 'R1 🟧🟧🟧 3');
   assert.equal(blitzRoundRow(1, 12), `R2 ${'🟧'.repeat(8)} 12`);
-  assert.equal(blitzRoundRow(2, 0), 'R3 ▪️ 0');
+  assert.equal(blitzRoundRow(2, 0), 'R3 🟥 0');
 });
 
 test('solo blitz: rounds render as rows, record flagged', () => {
@@ -102,7 +102,7 @@ test('0-point daily still reads like a share, not an error', () => {
     daily: { dayNumber: 42, streak: 1 },
   });
   const lines = txt.split('\n');
-  assert.equal(lines[1], 'R1 ▪️ 0');
+  assert.equal(lines[1], 'R1 🟥 0');
   assert.match(txt, /0 PTS\. brain fully buffered/);
   assert.match(txt, /🔥 1-day streak/);
   assert.doesNotMatch(txt, /undefined|NaN/);
@@ -149,6 +149,24 @@ test('imposter: zero caught & fooled has a fun fallback line', () => {
   });
   assert.match(txt, /pure chaos/);
   assert.match(txt, /GAME OVER/);
+});
+
+test('singular grammar: 1 player / 1 round render without a trailing s', () => {
+  const wb = buildShareText({
+    mode: 'word-bomb',
+    outcome: { won: true },
+    data: { players: 1, events: [{ t: 'word', len: 4 }] },
+  });
+  assert.match(wb, /1 player\b/);
+  assert.doesNotMatch(wb, /1 players/);
+
+  const imp = buildShareText({
+    mode: 'imposter-word',
+    outcome: { won: true },
+    data: { caught: 1, fooled: 0, rounds: 1 },
+  });
+  assert.match(imp, /1 round\b/);
+  assert.doesNotMatch(imp, /1 rounds/);
 });
 
 test('every mode ends with sign-off then link', () => {

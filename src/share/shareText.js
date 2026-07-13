@@ -32,7 +32,11 @@ const WB_MAX_GLYPHS = 16; // keep the grid one chat line; middle-ellipsize beyon
 // Category Blitz round rows: one block per point, capped so a monster round
 // doesn't wrap; the real number always follows the blocks.
 const CB_BLOCK = '🟧';
-const CB_ZERO = '▪️';
+// A whiffed (0-point) round. A colored emoji, NOT a themed black/white square:
+// '▪️' (U+25AA VS16) renders near-invisible on dark chat backgrounds, so a zero
+// round vanished. Red reads as "got nothing that round" and survives light AND
+// dark bubbles, on-brand for "die slow".
+const CB_ZERO = '🟥';
 const CB_MAX_BLOCKS = 8;
 
 const ORDINALS = ['', '1ST', '2ND', '3RD'];
@@ -101,7 +105,7 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
         won ? 'SURVIVED' : 'ELIMINATED',
         words === 0 ? '0 words. blink and you die' : `${words} word${words === 1 ? '' : 's'}`,
         data.longestWord ? `longest: ${String(data.longestWord).toUpperCase()}` : null,
-        data.players ? `${data.players} players` : null,
+        data.players ? `${data.players} player${data.players === 1 ? '' : 's'}` : null,
       ])
     );
   } else if (mode === 'category-blitz' && (outcome.solo || daily)) {
@@ -144,7 +148,10 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
     ]);
     lines.push(row || 'nobody fooled. nobody caught. pure chaos 🎪');
     lines.push(
-      statSuffix([won ? 'WINNER 👑' : 'GAME OVER', data.rounds ? `${data.rounds} rounds` : null])
+      statSuffix([
+        won ? 'WINNER 👑' : 'GAME OVER',
+        data.rounds ? `${data.rounds} round${data.rounds === 1 ? '' : 's'}` : null,
+      ])
     );
   } else {
     lines.push('TYPE A WORD ⚡');

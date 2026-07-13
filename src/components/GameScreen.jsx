@@ -2838,11 +2838,10 @@ export default function GameScreen({
                 );
                 return {
                   words: (gameStats.wordsPlayed || []).length,
-                  longest:
-                    (gameStats.wordsPlayed || []).reduce(
-                      (m, w) => Math.max(m, (w.word || '').length),
-                      0
-                    ) || undefined,
+                  // The card's LONGEST chip is MINE (matches the copy text's
+                  // "longest: …"), not the table's longest — the whole result
+                  // is about the sharer, so an opponent's word never headlines it.
+                  longest: longestWord ? longestWord.length : undefined,
                   players: players.length,
                   events,
                   longestWord: longestWord || undefined,
@@ -3070,14 +3069,14 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
             {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'AI CATEGORY BLITZ · 3 ROUNDS'}
           </div>
 
-          {/* Daily streak line: the retention hook, right under the score. */}
+          {/* Daily streak line: the retention hook, right under the score.
+              A just-completed daily always has streak >= 1 (first play = 1),
+              so this always shows a live count. */}
           {daily && (
             <div className="solo-pb-line celeb-statline" style={{ '--celeb-i': 0 }}>
-              {daily.streak > 0
-                ? `🔥 ${daily.streak}-DAY STREAK${
-                    daily.bestStreak > daily.streak ? ` · BEST ${daily.bestStreak}` : ''
-                  }`
-                : 'STREAK STARTS TOMORROW — COME BACK!'}
+              {`🔥 ${daily.streak}-DAY STREAK${
+                daily.bestStreak > daily.streak ? ` · BEST ${daily.bestStreak}` : ''
+              }`}
             </div>
           )}
 

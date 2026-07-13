@@ -36,8 +36,8 @@ test('consecutive days extend the streak', () => {
 
 test('a missed day resets the streak to 1 but keeps the best', () => {
   let s = emptyDailyState();
-  for (let day = 100; day < 103; day++) s = recordDailyResult(s, day, 5); // streak 3
-  s = recordDailyResult(s, 104 + 1, 5); // skipped day 103->105
+  for (let day = 100; day < 103; day++) s = recordDailyResult(s, day, 5); // last day 102, streak 3
+  s = recordDailyResult(s, 105, 5); // gap: 102 -> 105 skips 103 & 104
   assert.equal(s.streak, 1);
   assert.equal(s.bestStreak, 3);
 });
