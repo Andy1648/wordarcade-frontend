@@ -69,35 +69,62 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
   }, [progress, pathLen]);
 
   // FIXED-DURATION TIMED INTRO: the boot screen no longer waits on the socket -
-  // the flame burns the full fuse on a single time-based timeline (the socket
-  // connects in the background, via App). The flame reaches the bomb on schedule,
-  // then the mascot survives + explodes, then we hand off (onComplete) to the
-  // splash - REGARDLESS of wsStatus. (The socket no longer drives this component;
-  // App keeps the menu live once we hand off even if the socket is still warming.)
+  // the flame burns the full fuse on a time-based timeline (the socket connects
+  // in the background, via App), then we hand off (onComplete) to the splash.
   const INTRO_MS = 1900; // TUNABLE: boot intro length (full fuse burn)
+  // Absolute safety cap: no matter what, never sit on the boot screen past this.
+  const HARD_FALLBACK_MS = 5000;
+
+  // COSMETIC flame timeline (requestAnimationFrame). This ONLY advances the
+  // visual flame along the fuse. It must NEVER be what decides when we hand off:
+  // rAF is suspended in a backgrounded/hidden tab, which is exactly how the boot
+  // screen could hang forever (the flavor-text setInterval keeps firing, so the
+  // messages loop while the flame - and the hand-off - are frozen).
   useEffect(() => {
     let raf = 0;
     let start = null;
-    let handoff;
     const tick = (now) => {
       if (start === null) start = now;
       const t = Math.min(1, (now - start) / INTRO_MS);
       setProgress(t * 100);
-      if (t < 1) {
-        raf = requestAnimationFrame(tick);
-      } else {
-        // Flame reached the bomb: a beat of tension, the EXISTING explosion, then
-        // hand off (~600ms of explosion, mirroring the old snap+pause timing).
-        setPhase('exploding');
-        handoff = setTimeout(() => onComplete && onComplete(), 600);
-      }
+      if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(handoff);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Hand-off is TIMER-driven (setTimeout keeps firing in a hidden tab, unlike
+  // rAF), so the boot screen can NEVER hang. We complete after the intro's
+  // minimum on-screen time, immediately if a backgrounded tab becomes visible,
+  // and unconditionally by the hard fallback - whichever comes first. onComplete
+  // is read through a ref so App re-renders (ws messages, timer ticks) can't
+  // reset the timers by changing the callback identity.
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  useEffect(() => {
+    let done = false;
+    let handoff;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      setProgress(100); // snap the flame to the bomb even if rAF was suspended
+      setPhase('exploding');
+      // A beat of explosion, then hand off (mirrors the old snap+pause timing).
+      handoff = setTimeout(() => onCompleteRef.current && onCompleteRef.current(), 600);
     };
-    // onComplete is stable from App; run the timeline once on mount.
+    const introTimer = setTimeout(finish, INTRO_MS);
+    const hardTimer = setTimeout(finish, HARD_FALLBACK_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') finish();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearTimeout(introTimer);
+      clearTimeout(hardTimer);
+      clearTimeout(handoff);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    // Run once on mount; onComplete is read via ref above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
