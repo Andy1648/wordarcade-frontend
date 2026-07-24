@@ -111,6 +111,10 @@ export default function PublicRoomsScreen({
       setLocalError('DROP A NAME FIRST.');
       return;
     }
+    if (codeInput.length === 0) {
+      setLocalError('ENTER A ROOM CODE.');
+      return;
+    }
     if (codeInput.length !== ROOM_CODE_LENGTH) {
       setLocalError(`CODES ARE ${ROOM_CODE_LENGTH} CHARACTERS — CHECK IT.`);
       return;
@@ -187,7 +191,7 @@ export default function PublicRoomsScreen({
           <button
             className="browser-code-join-btn"
             onClick={handleJoinByCode}
-            disabled={!!joiningCode || codeInput.length !== ROOM_CODE_LENGTH}
+            disabled={!!joiningCode}
           >
             JOIN
           </button>

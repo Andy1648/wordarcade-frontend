@@ -259,6 +259,11 @@ function App() {
   // accept-list path never sends answer_checking, so this stays null there).
   const [checkingAnswer, setCheckingAnswer] = useState(null);
   const [gameOver, setGameOver] = useState(null);
+  // True while the in-progress game is a Daily Challenge run (learned from
+  // game_started.daily). Drives the mid-daily LEAVE confirmation so a stray tap
+  // can't silently forfeit the day's attempt.
+  const [isDailyGame, setIsDailyGame] = useState(false);
+  const [confirmLeaveDaily, setConfirmLeaveDaily] = useState(false);
   // Which mode the in-progress game is - 'word-bomb' | 'category-blitz'.
   // Learned authoritatively from the game_started message so GameScreen
   // knows which prompt/fields to render.
@@ -632,6 +637,7 @@ function App() {
 
     if (lastMessage.type === 'game_started') {
       setGameType(lastMessage.payload.gameType || 'word-bomb');
+      setIsDailyGame(!!lastMessage.payload.daily);
       setGameNonce((n) => n + 1);
       setCategoryRerolls(null);
       setLastReroll(null);
@@ -1233,6 +1239,8 @@ function App() {
     setTimerSeconds(0);
     setLastWordResult(null);
     setGameOver(null);
+    setIsDailyGame(false);
+    setConfirmLeaveDaily(false);
     setGameType('word-bomb');
     setCategoryRound(null);
     setMyAnswers([]);
@@ -1336,6 +1344,17 @@ function App() {
   function handleLeaveRoom() {
     send('leave_room', {});
     goHome();
+  }
+
+  // Mid-game LEAVE from the game screen. During a live Daily run, confirm first —
+  // leaving forfeits the day's attempt, and a stray tap shouldn't cost it. Any
+  // other game (or a finished daily on the results screen) leaves immediately.
+  function handleLeaveRequest() {
+    if (isDailyGame && !gameOver) {
+      setConfirmLeaveDaily(true);
+      return;
+    }
+    handleLeaveRoom();
   }
 
   function handleSetDifficulty(difficultyKey) {
@@ -1467,7 +1486,7 @@ function App() {
         onSubmitVote={handleSubmitVote}
         onSkipTurn={handleSkipTurn}
         onTypingUpdate={handleTypingUpdate}
-        onLeave={handleLeaveRoom}
+        onLeave={handleLeaveRequest}
         onRematch={handleRematch}
         onPlayAgain={handlePlayAgain}
         onRerollCategory={handleRerollCategory}
@@ -1713,6 +1732,31 @@ function App() {
           <button className="connlost-btn" onClick={goHome}>
             BACK TO MENU
           </button>
+        </div>
+      )}
+      {/* LEAVE MID-DAILY confirmation: the Daily is a one-shot streak run, so a
+          stray LEAVE tap shouldn't silently forfeit it. Reuses the connlost
+          overlay styling with a two-button choice. */}
+      {confirmLeaveDaily && (
+        <div className="connlost-overlay" role="alertdialog" aria-label="Leave the Daily Challenge?">
+          <div className="connlost-title">LEAVE THE DAILY?</div>
+          <div className="connlost-sub">
+            You're mid-run. Leaving now forfeits today's attempt — it won't count toward your streak.
+          </div>
+          <div className="daily-leave-actions">
+            <button className="connlost-btn" onClick={() => setConfirmLeaveDaily(false)}>
+              KEEP PLAYING
+            </button>
+            <button
+              className="connlost-btn daily-leave-danger"
+              onClick={() => {
+                setConfirmLeaveDaily(false);
+                handleLeaveRoom();
+              }}
+            >
+              LEAVE ANYWAY
+            </button>
+          </div>
         </div>
       )}
       {/* ROOM CLOSED (by the server): idle reap or a contained server error.

@@ -32,7 +32,7 @@
       "@type": "VideoGame",
       "name": "Word Bomb",
       "url": "https://typeaword.com/word-bomb/",
-      "description": "Fast-paced multiplayer word game: each turn you get a 2-3 letter combo and must type a real word containing it before the bomb timer runs out. Lose all 3 lives and you're out — last player standing wins.",
+      "description": "Fast-paced multiplayer word game: each turn you get a 2-3 letter combo and must type a real word containing it before the bomb timer runs out. Lose all your lives and you're out — last player standing wins.",
       "genre": ["Word game", "Party game"],
       "playMode": ["MultiPlayer", "SinglePlayer"],
       "gamePlatform": "Web browser",
@@ -63,7 +63,7 @@
 
         <section class="lp-section">
           <h2>What is Word Bomb?</h2>
-          <p>Word Bomb is a fast, chaotic multiplayer word game. Every turn, the game deals the current player a short <strong>letter combo</strong> &mdash; a common English sequence like <em>ing</em>, <em>ck</em> or <em>ough</em> &mdash; and starts a bomb timer. Type any real word that <strong>contains that combo</strong> and the bomb passes to the next player with a fresh combo. Freeze up and the bomb goes off: you lose one of your <strong>3 lives</strong>. Last player standing wins.</p>
+          <p>Word Bomb is a fast, chaotic multiplayer word game. Every turn, the game deals the current player a short <strong>letter combo</strong> &mdash; a common English sequence like <em>ing</em>, <em>ck</em> or <em>ough</em> &mdash; and starts a bomb timer. Type any real word that <strong>contains that combo</strong> and the bomb passes to the next player with a fresh combo. Freeze up and the bomb goes off: you lose a life. You start with <strong>2 lives</strong> on most difficulties (or <strong>3 on Chill</strong>, the relaxed default for new players). Lose them all and you're out &mdash; last player standing wins.</p>
           <p>If you've played BombParty on JKLM.fun, you already know the format &mdash; Word Bomb is our take on it: same hot-potato spelling panic, with shrinking timers, difficulty levels, combos that get harder as the game goes on, and a practice bot for solo play. It runs entirely in the browser, so you can start a room and have friends in it within seconds via a room code.</p>
         </section>
 
@@ -74,7 +74,7 @@
             <li>On your turn, a <strong>combo</strong> appears &mdash; 2 or 3 letters, always a sequence that real words actually contain.</li>
             <li><strong>Type any real word containing the combo</strong> and submit before the timer runs out. For <em>ust</em>, "trust", "mustard" and "adjustment" all work.</li>
             <li>A valid word passes the bomb to the next player, who gets a <strong>new combo</strong>.</li>
-            <li>If the bomb blows up on you, you <strong>lose a life</strong> &mdash; and the same combo passes on, so pay attention to what just failed. Three explosions and you're eliminated.</li>
+            <li>If the bomb blows up on you, you <strong>lose a life</strong> &mdash; and the same combo passes on, so pay attention to what just failed. Run out of lives (2 on most tiers, 3 on Chill) and you're eliminated.</li>
             <li>The <strong>last player alive wins</strong>. The timer gets shorter as the game goes on, so every game ends in a panic.</li>
           </ol>
         </section>
@@ -94,12 +94,13 @@
           <div class="lp-table-scroll">
             <table class="lp-table">
               <thead>
-                <tr><th>Difficulty</th><th>Starting timer</th><th>Timer shrinks</th><th>Minimum timer</th></tr>
+                <tr><th>Difficulty</th><th>Lives</th><th>Starting timer</th><th>Timer shrinks</th><th>Minimum timer</th></tr>
               </thead>
               <tbody>
-                <tr><td>Easy</td><td>15 seconds</td><td>&minus;1s every 3 turns</td><td>6 seconds</td></tr>
-                <tr><td>Medium</td><td>10 seconds</td><td>&minus;1s every 2 turns</td><td>4 seconds</td></tr>
-                <tr><td>Hard</td><td>7 seconds</td><td>&minus;1s every turn</td><td>3 seconds</td></tr>
+                <tr><td>Chill <em>(default for new players)</em></td><td>3</td><td>20 seconds</td><td>&minus;1s every 4 turns</td><td>8 seconds</td></tr>
+                <tr><td>Hard</td><td>2</td><td>15 seconds</td><td>&minus;1s every 3 turns</td><td>6 seconds</td></tr>
+                <tr><td>Crazy</td><td>2</td><td>10 seconds</td><td>&minus;1s every 2 turns</td><td>4 seconds</td></tr>
+                <tr><td>Hell</td><td>2</td><td>7 seconds</td><td>&minus;1s every turn</td><td>3 seconds</td></tr>
               </tbody>
             </table>
           </div>

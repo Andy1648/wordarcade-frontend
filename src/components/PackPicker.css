@@ -115,7 +115,10 @@
 .ppp-pill-squish.nudging { animation: ppp-nudge var(--nudge-dur, 0.3s) cubic-bezier(0.34, 1.5, 0.5, 1); }
 .ppp-pill-squish.pressing .ppp-pill-ink { filter: var(--ink-url) drop-shadow(1px 1px 0 #000); }
 
-.ppp-pill { position: relative; background: transparent; border: none; padding: 13px 24px; cursor: pointer; overflow: visible; opacity: 0.72; transform: rotate(var(--rot)); transition: transform 0.16s cubic-bezier(0.34, 1.7, 0.5, 1), opacity 0.14s ease; }
+.ppp-pill { position: relative; background: transparent; border: none; padding: 13px 24px; cursor: pointer; overflow: visible; opacity: 0.45; transform: rotate(var(--rot)); transition: transform 0.16s cubic-bezier(0.34, 1.7, 0.5, 1), opacity 0.14s ease, filter 0.14s ease; }
+/* Unselected pills read as clearly OFF: dimmed AND desaturated, so the selected
+   (full-colour + checkmark + cyan node) pills are unmistakable against them. */
+.ppp-pill:not(.is-on) { filter: grayscale(0.55); }
 .ppp-pill-ink { position: absolute; inset: 0; border: 6px solid #000; border-radius: 32px; background: linear-gradient(180deg, #33194a 0%, #1b0c2b 100%); box-shadow: inset 0 4px 0 -2px rgba(255, 255, 255, 0.12); filter: var(--ink-url) drop-shadow(4px 4px 0 #000); transition: background 0.14s ease, box-shadow 0.14s ease, filter 0.1s ease; }
 .ppp-pill-body { position: relative; display: inline-flex; align-items: center; gap: 8px; font-family: 'Bungee', cursive; font-size: clamp(11px, 1.7vw, 15px); color: #6b5a80; line-height: 1; }
 .ppp-pill-emoji { font-size: 1.2em; filter: grayscale(0.7) brightness(0.8); transition: filter 0.14s ease; }

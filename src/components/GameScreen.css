@@ -26,7 +26,11 @@
      makes the rendered fill exactly one screen (matches the menu's one-screen fit). */
   min-height: calc(100vh / var(--app-scale, 1));
   display: flex;
-  align-items: flex-start;
+  /* Center the stage vertically within the one-screen fill so a stage shorter
+     than the viewport sits centered instead of leaving dead space below it.
+     `safe` falls back to top-aligned when the stage is TALLER than the viewport,
+     so its top never gets cut off / unreachable. */
+  align-items: safe center;
   justify-content: center;
   padding: 24px;
 }

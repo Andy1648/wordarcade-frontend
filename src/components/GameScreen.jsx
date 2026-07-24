@@ -3430,9 +3430,12 @@ function CategoryBlitzScreen({
         (s) => s.id === myId
       );
     const rounds = soloLogRef.current;
-    const total = myFinal
-      ? myFinal.score
-      : rounds.reduce((sum, r) => sum + r.roundScore, 0);
+    // Headline == the sum of the per-round scores shown in the breakdown, so the
+    // two can never disagree. (A stale/blank finalScores entry used to zero the
+    // headline while the breakdown still summed to 3.) The server total is only a
+    // fallback for the edge case where no rounds were logged locally.
+    const roundSum = rounds.reduce((sum, r) => sum + r.roundScore, 0);
+    const total = rounds.length ? roundSum : myFinal ? myFinal.score : 0;
 
     return (
       <SoloResultsScreen

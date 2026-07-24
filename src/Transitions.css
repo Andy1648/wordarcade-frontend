@@ -128,6 +128,22 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* Mid-daily LEAVE confirmation: two side-by-side choices (keep playing / leave). */
+.daily-leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+/* The destructive choice reads as a warning (pink) vs the cyan default. */
+.daily-leave-danger {
+  background: #FF2EC4;
+  border-color: #991A75;
+  color: #fff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .connlost-title,
   .connlost-mascot,

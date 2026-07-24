@@ -14,7 +14,7 @@ export const MODES = {
     accent: '#9A1AFF', bg: ['#1d0e44', '#070313'], anim: 'stars',
     chip: 'MULTIPLAYER', t1: 'IMPOSTER', t2: 'WORD',
     liner: "One player's faking it. Find them.",
-    sub: 'Social deduction · 4–10 players · Everyone gets the word except one.',
+    sub: 'Social deduction · 3–8 players · Everyone gets the word except one.',
     create: 'CREATE',
   },
   bomb: {

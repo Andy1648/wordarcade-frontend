@@ -4,7 +4,6 @@
 // the experience: it unlocks audio (within the user gesture), plays a quick
 // scale-up + white-flash exit, then App wipes to the homepage and fades music in.
 import { useEffect, useRef, useState } from 'react';
-import Mascot from './Mascot';
 import './SplashScreen.css';
 
 const TAGLINES = [
@@ -74,15 +73,6 @@ const EMBERS = [
 // offsets so they don't jitter each render; each flickers in, drifts up-and-out
 // (dx/dy in px) and fades, on its own short loop - a lit-fuse "crackle". Overlay
 // EFFECT particles only (not character art): the bomb itself stays the PNG.
-const FUSE_SPARKS = [
-  { dx: 1,  dy: -12, r: 2.5, color: '#FFE94A', delay: 0,    dur: 0.7 },
-  { dx: -6, dy: -9,  r: 2,   color: '#FF6B3D', delay: 0.18, dur: 0.6 },
-  { dx: 7,  dy: -10, r: 2.5, color: '#FFE94A', delay: 0.32, dur: 0.65 },
-  { dx: -3, dy: -16, r: 2,   color: '#FF5C5C', delay: 0.5,  dur: 0.7 },
-  { dx: 5,  dy: -15, r: 2,   color: '#FF6B3D', delay: 0.24, dur: 0.55 },
-  { dx: 0,  dy: -7,  r: 3,   color: '#FFE94A', delay: 0.42, dur: 0.5 },
-];
-
 /**
  * @param {object} props
  * @param {() => void} props.onStart - called synchronously on the first
@@ -176,31 +166,6 @@ export default function SplashScreen({ onStart, onDismiss }) {
           aria-label="Type a Word"
         >
           {'TYPE A WORD'}
-        </div>
-      </div>
-
-      {/* The mascot is the HERO image - the splash screen's visual centrepiece,
-          large and centred just below the title. The stage wrapper carries a slow
-          "cocky" idle sway (so the bomb reads as alive/confident, not static) and
-          anchors the fuse sparks crackling off its tip. */}
-      <div className="splash-mascot-stage">
-        <Mascot pose="idle" size={180} className="splash-hero-mascot" />
-        <div className="splash-fuse" aria-hidden="true">
-          {FUSE_SPARKS.map((s, i) => (
-            <span
-              key={i}
-              className="splash-spark"
-              style={{
-                width: `${s.r * 2}px`,
-                height: `${s.r * 2}px`,
-                background: s.color,
-                '--s-dx': `${s.dx}px`,
-                '--s-dy': `${s.dy}px`,
-                '--s-delay': `${s.delay}s`,
-                '--s-dur': `${s.dur}s`,
-              }}
-            />
-          ))}
         </div>
       </div>
 

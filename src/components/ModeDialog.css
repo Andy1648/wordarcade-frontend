@@ -44,7 +44,9 @@
   position: relative;
   z-index: 1;
   width: min(90vw, 600px);
-  height: min(80vh, 460px);
+  /* Taller allowance on short viewports (90vh) so the pack list + CREATE/JOIN row
+     don't clip; still capped at 460px on tall screens. Internal scroll below. */
+  height: min(90vh, 460px);
   box-sizing: border-box;
   background: #1a0b2e;
   border: 4px solid #000;
@@ -143,8 +145,11 @@
   overflow-y: auto;
   /* Breathing room so the buttons' 4px hard shadow never touches the bottom edge. */
   padding-bottom: 8px;
-  /* Hide scrollbar chrome to keep the flat aesthetic; no layout change. */
-  scrollbar-width: none;
+  /* Show a thin scrollbar as a scroll AFFORDANCE when content overflows on short
+     viewports (previously hidden, so the clipped CREATE button looked like a
+     dead end with no hint that there was more below). */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
