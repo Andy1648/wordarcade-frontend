@@ -60,7 +60,7 @@ const RECEDING_TAGS = [
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -202,6 +202,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
     runWhenConnected('daily', () => onDaily && onDaily());
   }
 
+  // QUICK PLAY VS BOT: one tap into a live match against a medium bot (App
+  // creates a private room, adds the bot and starts in one shot). Connect-gated
+  // exactly like CREATE/JOIN/DAILY.
+  function handleQuickPlay(e) {
+    if (navigating) return;
+    pressJuice(e, '#2EFFE0'); // cyan accent
+    sound.click();
+    setNavigating(true);
+    runWhenConnected('quickplay', () => onQuickPlay && onQuickPlay());
+  }
+
   return (
     <div className="homepage-wrap">
       <div className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
@@ -263,6 +274,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onCre
             )}
           </button>
         )}
+
+        {/* QUICK PLAY VS BOT: the fastest path to a first word — one tap into a
+            live 1v1 against a medium bot (private room, no lobby stops). */}
+        <button
+          className={`homepage-quickplay-btn${navigating ? ' disabled' : ''}`}
+          onClick={handleQuickPlay}
+          onMouseEnter={() => sfx('hover')}
+          disabled={navigating}
+          data-juice-self
+        >
+          {connecting === 'quickplay' ? 'CONNECTING…' : '⚡ QUICK PLAY VS BOT'}
+        </button>
 
         <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
 

@@ -1090,13 +1090,18 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
   // player's words and timeouts.
   const byPlayer = new Map();
   const ensure = (id, name) => {
-    if (!byPlayer.has(id)) byPlayer.set(id, { id, name, words: [], timeouts: 0 });
+    if (!byPlayer.has(id)) byPlayer.set(id, { id, name, words: [], timeouts: 0, skips: 0 });
     return byPlayer.get(id);
   };
   (players || []).forEach((p) => ensure(p.id, p.name));
   words.forEach((w) => ensure(w.playerId, w.playerName).words.push(w.word || ''));
   timeouts.forEach((t) => {
     ensure(t.playerId, t.playerName).timeouts += 1;
+  });
+  // Skips are their OWN tally (a voluntary life burn), kept distinct from
+  // timeouts so the summary never conflates the two.
+  skips.forEach((s) => {
+    ensure(s.playerId, s.playerName).skips += 1;
   });
 
   const perPlayer = Array.from(byPlayer.values())
@@ -1106,7 +1111,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
       const avg = total
         ? p.words.reduce((sum, w) => sum + w.length, 0) / total
         : 0;
-      return { id: p.id, name: p.name, count: total, longest, avg, timeouts: p.timeouts };
+      return { id: p.id, name: p.name, count: total, longest, avg, timeouts: p.timeouts, skips: p.skips };
     })
     .sort((a, b) => b.count - a.count);
 
@@ -1190,6 +1195,12 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
           </div>
           <div className="go-summary-label">TIMEOUTS</div>
         </div>
+        <div className="go-summary-item" style={summaryStyle(6)}>
+          <div className="go-summary-value">
+            <CountUp to={skips.length} duration={500} />
+          </div>
+          <div className="go-summary-label">SKIPS</div>
+        </div>
       </div>
 
       {awards.length > 0 && (
@@ -1243,6 +1254,12 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
                   <CountUp to={p.timeouts} duration={500} />
                 </span>
                 <span className="go-pstat-key">TIMEOUTS</span>
+              </div>
+              <div className="go-pstat">
+                <span className="go-pstat-val">
+                  <CountUp to={p.skips} duration={500} />
+                </span>
+                <span className="go-pstat-key">SKIPS</span>
               </div>
             </div>
           </div>
@@ -1366,6 +1383,7 @@ export default function GameScreen({
   isHost,
   timerSeconds,
   lastWordResult,
+  onClearResult,
   checkingAnswer,
   gameOver,
   roomPlayers,
@@ -2701,6 +2719,11 @@ export default function GameScreen({
                 }
                 setDraft(value);
                 pulseInput(); // tiny per-keystroke visual response (+ bomb-panic)
+                // Editing the input invalidates the previous submission's verdict:
+                // drop the accept/reject banner so a stale "TOO SHORT" (or any
+                // rejection) can't linger over a now-valid word. Recomputed fresh
+                // on the next word_result.
+                if (lastWordResult && onClearResult) onClearResult();
                 // Broadcast every keystroke so others see us type in real time.
                 // No debounce - the frantic typing/deleting is the fun part.
                 if (onTypingUpdate) onTypingUpdate(value);

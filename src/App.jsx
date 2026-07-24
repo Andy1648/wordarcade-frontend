@@ -25,6 +25,12 @@ import { SoundContext } from './contexts/SoundContext';
 import { buildPlayerColors } from './playerColors';
 import { resolvePlayerName, rememberName } from './playerName';
 import {
+  hasSeenIntro,
+  markIntroSeen,
+  hasPlayedBefore,
+  markPlayed,
+} from './visitHistory';
+import {
   loadDailyState,
   saveDailyState,
   recordDailyResult,
@@ -150,6 +156,12 @@ const LAUNCH_INTENT = (() => {
 
 // Any launch intent (portal embed, invite link, daily link) skips the intro.
 const SKIP_INTRO = PORTAL_SKIP_INTRO || !!LAUNCH_INTENT.join || LAUNCH_INTENT.daily;
+
+// Repeat visitors have already seen the SQUAD-UP / "TYPE FAST. DIE SLOW." intro,
+// so we skip those two animations for them (the loading screen still plays).
+// Read once at module load, alongside the flags above. The flag is written when
+// the intro finishes on a first visit (handleIntroComplete).
+const SEEN_INTRO = hasSeenIntro();
 
 /**
  * Top-level view state manager + the single shared WebSocket connection
@@ -411,8 +423,10 @@ function App() {
   const [loadingDone, setLoadingDone] = useState(SKIP_INTRO);
 
   // The splash/attract screen is shown after loading, once per session
-  // (dismissing it never re-arms it). Portal embeds and deep links skip it.
-  const [showSplash, setShowSplash] = useState(!SKIP_INTRO);
+  // (dismissing it never re-arms it). Portal embeds and deep links skip it, and
+  // so do repeat visitors (SEEN_INTRO) — they go loading -> menu with no splash
+  // or fight-card intro.
+  const [showSplash, setShowSplash] = useState(!SKIP_INTRO && !SEEN_INTRO);
   // After the splash is dismissed we play the anime fight-card intro (TYPE FAST.
   // / DIE SLOW.) before wiping to the homepage. Shown once, between the two.
   const [showIntro, setShowIntro] = useState(false);
@@ -646,6 +660,8 @@ function App() {
       const startedMode = lastMessage.payload.gameType || 'word-bomb';
       gameModeRef.current = startedMode;
       gameStartMsRef.current = Date.now();
+      // No longer a first-timer: future rooms default to CRAZY instead of CHILL.
+      markPlayed();
       track('game_started', { mode: startedMode, daily: !!lastMessage.payload.daily });
     }
 
@@ -1130,6 +1146,9 @@ function App() {
   // homepage, and fade the music up DURING the wipe.
   function handleIntroComplete() {
     setShowIntro(false);
+    // First visit just finished the intro — remember it so repeat visits skip
+    // straight past the splash + fight-card animations (#6a).
+    markIntroSeen();
     music.fadeTo(0.3, 500);
     // Reveal the menu with the KNIFE-SPLIT (this transition's signature, in place
     // of the explosion + the generic bar wipe). Under reduced motion we skip the
@@ -1258,6 +1277,25 @@ function App() {
     track('daily_started', { day: currentDayNumber() });
   }
 
+  // QUICK PLAY VS BOT: one tap from the menu into a live 1v1 against a medium
+  // bot. Uses the remembered/generated name (no prompt), creates a PRIVATE room
+  // (so there's no public/private visibility question for solo-vs-bot — #6c),
+  // locks Word Bomb, adds a medium bot, and starts — the server processes the
+  // frames in order on this socket (same pattern as handleStartDaily). First
+  // timers get the gentler CHILL tier; returning players keep CRAZY.
+  function handleQuickPlayBot() {
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode('word-bomb');
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: 'word-bomb' });
+    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    send('add_bot', { difficulty: 'medium' });
+    send('start_game', {});
+    track('quick_play_bot', {});
+  }
+
   function handleLobbyContinue({ name, mode, roomCode, isPublic }) {
     // Remember the name so Quick Play / the browser default to it next time.
     setPlayerName(name);
@@ -1271,6 +1309,14 @@ function App() {
       // Analytics: the selected mode is a game-id enum ('solo' generic create, or
       // a preselected 'word-bomb' / 'category-blitz' / 'imposter-word'). No PII.
       track('room_created', { mode });
+      // Default a FIRST-TIMER's Word Bomb room to the gentler CHILL tier (20s /
+      // 3 lives); returning players keep the server default (CRAZY). 'solo' is a
+      // generic create that stays Word Bomb server-side. Ordered after create_room
+      // on the same socket. Category Blitz / Imposter ignore Word Bomb tiers.
+      const isWordBombCreate = mode === 'solo' || mode === 'word-bomb';
+      if (isWordBombCreate && !hasPlayedBefore()) {
+        send('set_difficulty', { difficultyKey: 'chill' });
+      }
       // If the player picked a specific game from the homepage, lock the room
       // into it right away. The server processes messages in order over the
       // same socket, so create_room (which registers the room) is handled
@@ -1392,6 +1438,7 @@ function App() {
         isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
+        onClearResult={() => setLastWordResult(null)}
         checkingAnswer={checkingAnswer}
         gameOver={gameOver}
         roomPlayers={room ? room.players : []}
@@ -1486,6 +1533,7 @@ function App() {
         onSelectGame={(gameId) => goToLobby(gameId)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
+        onQuickPlay={handleQuickPlayBot}
         onCredits={goToCredits}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}

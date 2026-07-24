@@ -140,7 +140,13 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
         {/* Flame + percentage + sparks, riding the burning tip. */}
         {!failed && pathLen > 0 && (
           <div className="loading-flame-pos" style={{ left: `${flame.x / 10}%`, top: `${flame.y}%` }}>
-            <div className="loading-pct">{Math.round(Math.min(progress, 100))}%</div>
+            {/* Indeterminate "working" cue riding the flame. We can't measure the
+                real socket/asset readiness (the connection warms in the
+                background), so we show pulsing dots instead of a fake percentage
+                that would appear frozen while a cold backend spins up. */}
+            <div className="loading-dots" role="status" aria-label="Loading">
+              <span></span><span></span><span></span>
+            </div>
             <svg className="loading-flame" viewBox="-12 -34 24 40" aria-hidden="true">
               <ellipse cx="0" cy="-13" rx="9" ry="17" fill="#FF6B3D" stroke="#B23C00" strokeWidth="2.5" />
               <ellipse cx="0" cy="-15" rx="5.5" ry="12" fill="#FFE94A" />

@@ -16,6 +16,7 @@ import './RoomScreen.css';
 // hard) is unchanged so all the underlying timer logic stays put. The `desc` is
 // the Word Bomb per-turn timer (that mode still varies by tier).
 const DIFFICULTIES = [
+  { key: 'chill', label: 'CHILL', desc: '20s · 3 lives' },
   { key: 'easy', label: 'HARD', desc: '15s timer' },
   { key: 'medium', label: 'CRAZY', desc: '10s timer' },
   { key: 'hard', label: 'HELL', desc: '7s timer' },
@@ -24,7 +25,7 @@ const DIFFICULTIES = [
 // Category Blitz reroll allowance per tier (mirrors the backend). In that mode
 // the timer is a fixed 20s, so difficulty controls rerolls instead - which is
 // what the difficulty blurb shows there.
-const CB_REROLLS = { easy: 3, medium: 2, hard: 1 };
+const CB_REROLLS = { chill: 3, easy: 3, medium: 2, hard: 1 };
 
 function difficultyDesc(diff, gameType) {
   if (gameType === 'category-blitz') {
