@@ -46,7 +46,15 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  gap: 24px;
   width: 100%;
+  /* Cap the group so the stage + feed sit adjacent and center TOGETHER. Without
+     this the panel spans the full viewport and the stage's width:100% basis gets
+     clamped to its own max-width, leaving the freed space as a dead gap that
+     splays the feed to the far right. Capped just past stage(~1150) + gap + feed
+     (~320), the stage shrinks below its max-width so there's no clamp, no gap. */
+  max-width: 1500px;
+  margin-inline: auto;
 }
 
 .game-stage {
@@ -2711,9 +2719,17 @@
 .kill-feed {
   width: clamp(200px, 18vw, 320px);
   flex-shrink: 0;
-  margin-left: 18px;
-  margin-top: 16px;
   align-self: flex-start;
+  /* Card matching the stage (same dark backdrop, halftone dots, chunky border
+     and offset shadow) so the feed reads as part of the composition instead of
+     bare text floating on the background. Spacing to the stage is the panel gap. */
+  background-color: #1a0b2e;
+  background-image: radial-gradient(circle, rgba(255, 46, 196, 0.05) 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
+  border: 4px solid #000;
+  box-shadow: 7px 7px 0 #000;
+  border-radius: 8px;
+  padding: 16px 16px 18px;
 }
 
 .kill-feed-title {
@@ -3028,8 +3044,7 @@
   .kill-feed {
     width: 100%;
     max-width: min(95vw, 1400px);
-    margin-left: 0;
-    margin-top: 18px;
+    /* Panel gap handles the vertical spacing to the stage in column mode. */
     align-self: auto;
   }
 }
