@@ -1004,6 +1004,12 @@ function App() {
         // compares against this, NOT the separate solo-CB personal best.
         const prevDailyBest =
           (dailyStateRef.current && dailyStateRef.current.bestScore) || 0;
+        // A REPLAY = today was already recorded before this run. Replays keep your
+        // best-of-day (streak counts a day once), so a replay that doesn't beat
+        // your best isn't re-recorded — the results screen says so.
+        const isReplay =
+          !!dailyStateRef.current &&
+          dailyStateRef.current.lastDayNumber === payload.daily.dayNumber;
         const next = recordDailyResult(
           dailyStateRef.current,
           payload.daily.dayNumber,
@@ -1017,6 +1023,7 @@ function App() {
           bestStreak: next.bestStreak,
           score: dailyScore,
           prevBest: prevDailyBest,
+          isReplay,
         });
       }
       // Stamp the end time so the overlay can show the game's duration.
