@@ -105,11 +105,22 @@ const DRIPS = [
  *   so the wall reddens (and its stickers drift a touch faster) as a Word Bomb
  *   turn runs down. Defaults to the resting 'calm' on every non-game screen.
  */
-export default function WallScene({ intensity = 'calm' }) {
+export default function WallScene({ intensity = 'calm', resetKey }) {
   // Live self-writing tags. A new one spray-paints itself every 10-15s; the list
   // is capped so the oldest drops off rather than the wall filling up forever.
   const [tags, setTags] = useState([]);
   const tagIdRef = useRef(0);
+
+  // WallScene is mounted ONCE and persists across every screen (it never
+  // unmounts), so without this the self-written tags accumulate for the whole
+  // session — the wall gets steadily busier than its designed initial set and
+  // the extra tags are "never removed". Clear them on each screen change
+  // (resetKey = the current view) so every screen starts from the static set and
+  // only picks up the odd fresh tag during its own dwell.
+  useEffect(() => {
+    setTags([]);
+  }, [resetKey]);
+
   useEffect(() => {
     let alive = true;
     let timer;

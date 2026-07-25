@@ -101,12 +101,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   const [dialog, setDialog] = useState(null);
   const { sound, muted } = useSound();
 
-  // Magnetic cursor-pull on the CREATE / JOIN CTAs (wrapper divs, so the buttons'
-  // own :hover/:active transforms compose underneath). Gated to fine-pointer +
-  // motion (see useMagneticPull).
-  const createMagnetRef = useRef(null);
+  // Magnetic cursor-pull on the JOIN CTA (wrapper div, so the button's own
+  // :hover/:active transforms compose underneath). Gated to fine-pointer + motion
+  // (see useMagneticPull).
   const joinMagnetRef = useRef(null);
-  useMagneticPull(createMagnetRef, { max: 8, base: 6 });
   useMagneticPull(joinMagnetRef, { max: 8, base: 6 });
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
@@ -165,14 +163,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     sound.click();
     setNavigating(true);
     runWhenConnected('join', () => onJoinRoom && onJoinRoom());
-  }
-
-  function handleCreateRoom(e) {
-    if (navigating) return;
-    pressJuice(e, '#FF2EC4'); // pink accent juice (squash + spark + tick)
-    sound.click(); // the whoosh follows from the screen transition in App
-    setNavigating(true);
-    runWhenConnected('create', () => onCreateRoom && onCreateRoom());
   }
 
   function handleJoinRoom(e) {
@@ -281,8 +271,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           {connecting === 'quickplay' ? 'CONNECTING…' : '⚡ QUICK PLAY VS BOT'}
         </button>
 
-        <div className="homepage-section-label wall-handstyle">// SELECT YOUR GAME //</div>
-
         <div className="homepage-cards-grid">
           {GAMES.map((game) => (
             <GameCard
@@ -295,19 +283,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
 
         <div className="homepage-bottom-bar">
-          {/* Magnetic wrappers — the buttons keep their own :hover/:active
-              transforms, the wrapper carries the cursor-pull (composes via nesting). */}
-          <div ref={createMagnetRef} className="homepage-btn-magnet">
-            <button
-              className={`homepage-btn homepage-btn-create${navigating ? ' disabled' : ''}`}
-              onClick={handleCreateRoom}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              data-juice-self
-            >
-              {connecting === 'create' ? 'CONNECTING…' : 'CREATE ROOM'}
-            </button>
-          </div>
+          {/* CREATE is per-game (each card's dialog has its own CREATE), so the
+              menu only needs JOIN here. Magnetic wrapper carries the cursor-pull. */}
           <div ref={joinMagnetRef} className="homepage-btn-magnet">
             <button
               className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}

@@ -1684,7 +1684,7 @@ function App() {
     <div className="app-viewport">
       <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
         <div className="app-scroll">
-          <WallScene intensity={bgIntensity} />
+          <WallScene intensity={bgIntensity} resetKey={view} />
           <ParticleField />
           <div className="view-transition-root">
             <div key={view} className="view-screen">
