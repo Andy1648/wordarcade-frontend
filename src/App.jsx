@@ -1000,6 +1000,10 @@ function App() {
           categoryTotalsRef.current[myIdRef.current],
           mine ? mine.score : undefined
         );
+        // The Daily's OWN previous best (before this run) — the daily screen
+        // compares against this, NOT the separate solo-CB personal best.
+        const prevDailyBest =
+          (dailyStateRef.current && dailyStateRef.current.bestScore) || 0;
         const next = recordDailyResult(
           dailyStateRef.current,
           payload.daily.dayNumber,
@@ -1012,6 +1016,7 @@ function App() {
           streak: next.streak,
           bestStreak: next.bestStreak,
           score: dailyScore,
+          prevBest: prevDailyBest,
         });
       }
       // Stamp the end time so the overlay can show the game's duration.

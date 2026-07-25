@@ -7,6 +7,7 @@ import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
+import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import {
@@ -2926,6 +2927,13 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
     typeof window !== 'undefined' && window.matchMedia
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false;
+  // Always-latest score. The count-up is armed once on mount (deps: []), but its
+  // deferred callbacks must animate to the CURRENT score, not whatever value was
+  // captured at mount — the Daily score can be threaded in on a render AFTER this
+  // screen first mounts, and a stale mount-time 0 must not freeze the headline
+  // while the breakdown shows the real total.
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
   const [stage, setStage] = useState(reduce ? 3 : 0); // 0 entrance,1 stamp,2 score,3 stats
   const [displayScore, setDisplayScore] = useState(reduce ? Number(score) || 0 : 0);
   const [popping, setPopping] = useState(false);
@@ -2981,7 +2989,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   };
 
   const runCount = () => {
-    const target = Number(score) || 0;
+    const target = Number(scoreRef.current) || 0;
     if (target <= 0) { setDisplayScore(target); fireReveal(); setStage(3); return; }
     const start = performance.now();
     let lastTick = 0;
@@ -3008,10 +3016,19 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
     timersRef.current.forEach(clearTimeout);
     cancelAnimationFrame(rafRef.current);
     fireStamp();
-    setDisplayScore(Number(score) || 0);
+    setDisplayScore(Number(scoreRef.current) || 0);
     fireReveal();
     setStage(3);
   };
+
+  // Safety net: once the count-up has settled (or under reduced motion, where the
+  // score shows immediately), keep the headline pinned to the LATEST score. If it
+  // arrived after the mount-time count-up ran (e.g. a Daily score threaded in a
+  // render later), this corrects a stale 0 to the real total. Never fires mid
+  // count-up (stage < 3), so it can't fight the animation.
+  useEffect(() => {
+    if (stage >= 3 || reduce) setDisplayScore(Number(score) || 0);
+  }, [score, stage, reduce]);
 
   useEffect(() => {
     if (reduce) {
@@ -3038,12 +3055,27 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
-  // immune to any read-side divergence that used to show "YOUR SCORE 0".
-  const effectiveScore =
-    daily && Number.isFinite(daily.score) ? daily.score : score;
+  // immune to any read-side divergence that used to show "YOUR SCORE 0". (Pure,
+  // unit-tested in soloScore.test.js — headline === breakdown sum.)
+  const effectiveScore = soloHeadlineScore(score, daily);
   // Resolve the personal best exactly once, on mount, and bank the new record
   // if it was beaten. Everything the render needs is frozen here.
   const [pb] = useState(() => {
+    if (daily) {
+      // A Daily references the DAILY's own best (threaded in as daily.prevBest),
+      // NOT the solo-CB personal best — and never writes the solo-CB PB, so daily
+      // scores can't pollute it (or vice-versa). This is why the screen used to
+      // show "AWAY FROM 9" (solo best) next to a daily score of 5.
+      const prevBest = Number.isFinite(daily.prevBest) ? daily.prevBest : 0;
+      const hadRecord = prevBest > 0;
+      const isNewRecord = effectiveScore > prevBest;
+      return {
+        hadRecord,
+        best: Math.max(prevBest, effectiveScore),
+        isNewRecord,
+        away: prevBest - effectiveScore,
+      };
+    }
     const previousBest = loadPersonalBest(SOLO_PB_KEY); // number | null
     const hadRecord = previousBest != null;
     const baseline = hadRecord ? previousBest : 0;
