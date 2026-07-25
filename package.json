@@ -9,6 +9,7 @@
     "build:portal": "vite build --mode portal",
     "lint": "eslint .",
     "test": "node --test \"src/**/*.test.js\"",
+    "test:e2e": "playwright test",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
