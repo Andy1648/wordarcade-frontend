@@ -35,6 +35,20 @@
   padding: 24px;
 }
 
+/* Board + live feed grouped as ONE centered panel (the JSX wraps .game-stage and
+   the KillFeed in this). It carries the row/column flex that used to sit on
+   .game-wrap directly, so .game-wrap just centers this whole panel within the
+   one-screen fill. Wide screens: the feed sits as a right-hand column attached
+   to the stage. Narrow screens (<=1800px, see the responsive block): the panel
+   stacks and the feed drops beneath the stage. At <=2 players the feed isn't
+   rendered, so the stage centers on its own. */
+.game-panel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
 .game-stage {
   position: relative; /* positioning context for the centered hype popup */
   /* Card fill + a comic halftone dot texture to match the rest of the app. */
@@ -2534,6 +2548,17 @@
   transform: rotate(1.5deg);
 }
 
+/* The "+N MORE" expander reads as a tappable chip (yellow) vs the answer chips. */
+.cb-missed-more {
+  cursor: pointer;
+  color: #FFE94A;
+  border-color: rgba(255, 233, 74, 0.6);
+  transform: rotate(0deg);
+}
+.cb-missed-more:hover {
+  background: rgba(255, 233, 74, 0.16);
+}
+
 .cb-next-round {
   font-family: 'Bungee', cursive;
   font-size: 11px;
@@ -2995,7 +3020,7 @@
    very wide screens. Below ~1800px the wrap stacks them and the feed drops under
    the stage, capped to the stage's width. */
 @media (max-width: 1800px) {
-  .game-wrap {
+  .game-panel {
     flex-direction: column;
     align-items: center;
   }

@@ -9,17 +9,17 @@ import { inviteLink } from '../share/links.js';
 import { track } from '../lib/analytics';
 import './RoomScreen.css';
 
-// Each difficulty carries a short timer blurb so players know what they're
-// picking. The `desc` mirrors the backend DIFFICULTY_PRESETS startSeconds in
-// gameLogic.js (easy 15s, medium 10s, hard 7s).
-// Display names are the edgy HARD / CRAZY / HELL tiers; the `key` (easy/medium/
-// hard) is unchanged so all the underlying timer logic stays put. The `desc` is
-// the Word Bomb per-turn timer (that mode still varies by tier).
+// Each difficulty carries a short blurb (timer · lives) so players know what
+// they're picking. Mirrors the backend DIFFICULTY_PRESETS in gameLogic.js:
+// chill 20s/3 lives, easy(HARD) 15s/2, medium(CRAZY) 10s/2, hard(HELL) 7s/2.
+// Display names are the edgy CHILL / HARD / CRAZY / HELL tiers; the `key` is
+// unchanged so all the underlying timer logic stays put. The `desc` is the Word
+// Bomb per-turn timer + lives (that mode varies both by tier).
 const DIFFICULTIES = [
   { key: 'chill', label: 'CHILL', desc: '20s · 3 lives' },
-  { key: 'easy', label: 'HARD', desc: '15s timer' },
-  { key: 'medium', label: 'CRAZY', desc: '10s timer' },
-  { key: 'hard', label: 'HELL', desc: '7s timer' },
+  { key: 'easy', label: 'HARD', desc: '15s · 2 lives' },
+  { key: 'medium', label: 'CRAZY', desc: '10s · 2 lives' },
+  { key: 'hard', label: 'HELL', desc: '7s · 2 lives' },
 ];
 
 // Category Blitz reroll allowance per tier (mirrors the backend). In that mode

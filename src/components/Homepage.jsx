@@ -248,13 +248,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             data-juice-self
           >
             <span className="homepage-daily-label">
-              {connecting === 'daily' ? 'CONNECTING…' : `⚡ DAILY #${daily.dayNumber}`}
+              {connecting === 'daily'
+                ? 'CONNECTING…'
+                : `DAILY #${daily.dayNumber}${daily.played ? ' ✓' : ''}`}
             </span>
             {connecting !== 'daily' && daily.streak > 0 && (
               <span className="homepage-daily-streak">🔥 {daily.streak}</span>
-            )}
-            {connecting !== 'daily' && daily.played && (
-              <span className="homepage-daily-played">✓ PLAYED</span>
             )}
           </button>
         )}

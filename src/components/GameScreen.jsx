@@ -1018,6 +1018,38 @@ function formatDuration(ms) {
   return `${m}m ${s}s`;
 }
 
+// Category Blitz between-rounds "ANSWERS YOU MISSED" list. Capped at MISSED_CAP
+// chips with a "+N MORE" expander so a fat sample list doesn't blow out the card.
+// Mounted with key={round} at the call site, so expansion resets each round.
+const MISSED_CAP = 6;
+function MissedAnswers({ answers }) {
+  const [expanded, setExpanded] = useState(false);
+  const list = answers || [];
+  const shown = expanded ? list : list.slice(0, MISSED_CAP);
+  const extra = list.length - MISSED_CAP;
+  return (
+    <div className="cb-missed">
+      <div className="cb-missed-title">ANSWERS YOU MISSED</div>
+      <div className="cb-missed-answers">
+        {shown.map((answer, i) => (
+          <span key={`${answer}-${i}`} className="cb-missed-chip">
+            {answer.toUpperCase()}
+          </span>
+        ))}
+        {!expanded && extra > 0 && (
+          <button
+            type="button"
+            className="cb-missed-chip cb-missed-more"
+            onClick={() => setExpanded(true)}
+          >
+            +{extra} MORE
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * End-of-game statistics panel for Word Bomb, shown on the game-over overlay
  * between the winner announcement and the action buttons. Three blocks:
@@ -1160,6 +1192,10 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
 
   return (
     <div className="go-stats">
+      {/* Aggregate headline stats only add value at 3+ players; in a 1v1 they just
+          duplicate what the HIGHLIGHTS + per-player breakdown below already show. */}
+      {players.length > 2 && (
+      <>
       <div className="go-section-label">GAME SUMMARY</div>
       <div className="go-stats-summary">
         <div className="go-summary-item" style={summaryStyle(0)}>
@@ -1203,6 +1239,8 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
           <div className="go-summary-label">SKIPS</div>
         </div>
       </div>
+      </>
+      )}
 
       {awards.length > 0 && (
         <>
@@ -2427,6 +2465,10 @@ export default function GameScreen({
         </div>
       )}
 
+      {/* Board + live-feed as ONE centered panel, so the board no longer anchors
+          left with the feed detached in the top-right. The feed is hidden at <=2
+          players (its events just duplicate the center-stage action). */}
+      <div className="game-panel">
       <div
         className={`game-stage${shake && !hitlag ? ' game-shake' : ''}${
           boomShake && !hitlag ? ' boom-shake' : ''
@@ -2536,6 +2578,16 @@ export default function GameScreen({
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text">{player.name}</span>
                     {isMe && <span className="game-player-you">YOU</span>}
+                    {/* Hearts live INSIDE the card, on the name row (right side). */}
+                    <div className="game-player-hearts">
+                      {Array.from({ length: maxLives }).map((_, i) => (
+                        <Heart
+                          key={i}
+                          filled={i < player.lives}
+                          shatter={justShattered && i === player.lives}
+                        />
+                      ))}
+                    </div>
                   </div>
                   {/* Live typing (BombParty style): only under the active
                       player's card. For us it mirrors our own draft (the server
@@ -2554,17 +2606,6 @@ export default function GameScreen({
                       })()}
                     </div>
                   )}
-                  <div className="game-player-hearts">
-                    {Array.from({ length: maxLives }).map((_, i) => (
-                      <Heart
-                        key={i}
-                        filled={i < player.lives}
-                        // The just-lost heart is the first empty slot (index ===
-                        // remaining lives); shatter only that one.
-                        shatter={justShattered && i === player.lives}
-                      />
-                    ))}
-                  </div>
                 </div>
               </div>
             );
@@ -2790,8 +2831,10 @@ export default function GameScreen({
           </div>
         )}
       </div>
-
-      <KillFeed events={feedEvents} playerColors={playerColors} />
+      {players.length > 2 && (
+        <KillFeed events={feedEvents} playerColors={playerColors} />
+      )}
+      </div>
 
       {gameOver && (
         <div className="game-over-overlay">
@@ -3511,6 +3554,9 @@ function CategoryBlitzScreen({
                 {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
+            {/* Aggregate row (your/top/players) only earns its space at 3+; in a
+                1v1 the scoreboard below already shows both scores. */}
+            {scores.length > 2 && (
             <div className="go-stats-summary cb-stats-summary">
               <div className="go-summary-item">
                 <div className="go-summary-value">
@@ -3531,6 +3577,7 @@ function CategoryBlitzScreen({
                 <div className="go-summary-label">PLAYERS</div>
               </div>
             </div>
+            )}
             <div className="cb-scoreboard">
               {scores.map((s, i) => {
                 const pc = resolvePlayerColor(playerColors, s.id);
@@ -3935,16 +3982,7 @@ function CategoryBlitzScreen({
             })}
 
             {(roundResults.sampleAnswers || []).length > 0 && (
-              <div className="cb-missed">
-                <div className="cb-missed-title">ANSWERS YOU MISSED</div>
-                <div className="cb-missed-answers">
-                  {roundResults.sampleAnswers.map((answer, i) => (
-                    <span key={`${answer}-${i}`} className="cb-missed-chip">
-                      {answer.toUpperCase()}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <MissedAnswers key={roundResults.round} answers={roundResults.sampleAnswers} />
             )}
           </div>
 
