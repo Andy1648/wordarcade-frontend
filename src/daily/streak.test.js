@@ -7,10 +7,40 @@ import {
   emptyDailyState,
   hasPlayedDay,
   recordDailyResult,
+  resolveDailyScore,
   displayStreak,
   loadDailyState,
   saveDailyState,
 } from './streak.js';
+
+// ---- Daily final score derivation (the "breakdown +4 but headline 0" fix) ----
+
+test('resolveDailyScore uses the round-sum breakdown when the scoreboard entry is missing/zero', () => {
+  // The exact reported bug: rounds summed to 4, the finalScores lookup returned 0
+  // (missing/mismatched id). The daily must show/record 4, not 0.
+  assert.equal(resolveDailyScore(4, 0), 4);
+  assert.equal(resolveDailyScore(4, undefined), 4);
+});
+
+test('resolveDailyScore falls back to the server score when no round-sum is available', () => {
+  assert.equal(resolveDailyScore(0, 4), 4);
+  assert.equal(resolveDailyScore(undefined, 4), 4);
+});
+
+test('resolveDailyScore agrees when both sources match, and never returns NaN/negative', () => {
+  assert.equal(resolveDailyScore(7, 7), 7);
+  assert.equal(resolveDailyScore(undefined, undefined), 0);
+  assert.equal(resolveDailyScore(NaN, NaN), 0);
+  assert.equal(resolveDailyScore(-3, 0), 0);
+});
+
+test('a Daily whose breakdown scored 4 records a score of 4 (not 0) into the streak', () => {
+  // End-to-end of the fix: derive the score, then fold it into the streak state.
+  const score = resolveDailyScore(4 /* round-sum */, 0 /* stale scoreboard */);
+  const next = recordDailyResult(emptyDailyState(), 206, score);
+  assert.equal(next.lastScore, 4);
+  assert.equal(next.lastDayNumber, 206);
+});
 
 test('currentDayNumber matches the backend formula (epoch day = 1)', () => {
   assert.equal(currentDayNumber(DAILY_EPOCH_UTC), 1);

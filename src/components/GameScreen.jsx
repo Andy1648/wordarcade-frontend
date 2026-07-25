@@ -3035,28 +3035,34 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
 }
 
 function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending }) {
+  // For a Daily run, the authoritative headline is the score App already derived
+  // and persisted (daily.score = the round-sum, breakdown-matching). It equals
+  // the `score` prop in the normal case; preferring it makes the Daily headline
+  // immune to any read-side divergence that used to show "YOUR SCORE 0".
+  const effectiveScore =
+    daily && Number.isFinite(daily.score) ? daily.score : score;
   // Resolve the personal best exactly once, on mount, and bank the new record
   // if it was beaten. Everything the render needs is frozen here.
   const [pb] = useState(() => {
     const previousBest = loadPersonalBest(SOLO_PB_KEY); // number | null
     const hadRecord = previousBest != null;
     const baseline = hadRecord ? previousBest : 0;
-    const isNewRecord = score > baseline;
-    if (isNewRecord) savePersonalBest(SOLO_PB_KEY, score);
+    const isNewRecord = effectiveScore > baseline;
+    if (isNewRecord) savePersonalBest(SOLO_PB_KEY, effectiveScore);
     return {
       hadRecord,
       // The headline best to show: the new score if it's a record, else the old.
-      best: isNewRecord ? score : baseline,
+      best: isNewRecord ? effectiveScore : baseline,
       isNewRecord,
       // How far short we fell (only meaningful when we didn't beat it).
-      away: baseline - score,
+      away: baseline - effectiveScore,
     };
   });
 
   // JUICE 03 celebration: animates the DISPLAY of the score/record above. Reads
   // pb.isNewRecord (no PB write here — that already happened in the initializer).
   const cardRef = useRef(null);
-  const celeb = useScoreCelebration(score, pb.isNewRecord, cardRef, rounds.length);
+  const celeb = useScoreCelebration(effectiveScore, pb.isNewRecord, cardRef, rounds.length);
   const stageClass = ` celeb-stage-${celeb.stage}`;
 
   return (

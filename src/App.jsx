@@ -34,6 +34,7 @@ import {
   loadDailyState,
   saveDailyState,
   recordDailyResult,
+  resolveDailyScore,
   hasPlayedDay,
   currentDayNumber,
   displayStreak,
@@ -381,6 +382,10 @@ function App() {
     dailyStateRef.current = dailyState;
   }, [dailyState]);
   const myIdRef = useRef(null);
+  // Synchronous mirror of categoryTotals (running per-player round-sum), so the
+  // game_over handler can read this game's authoritative total without waiting on
+  // a batched state commit. Reset each fresh game.
+  const categoryTotalsRef = useRef({});
 
   // Invite-link arrival: true from load until the ?join= room answers (join
   // lands -> room_update, or fails -> error). Drives the JOINING ROOM banner
@@ -882,7 +887,10 @@ function App() {
         setLastWordResult(null);
         setGameOver(null);
         setCategoryScores(null);
-        if (payload.round === 1) setCategoryTotals({}); // fresh game
+        if (payload.round === 1) {
+          setCategoryTotals({}); // fresh game
+          categoryTotalsRef.current = {};
+        }
         if (payload.reroll) {
           setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
         }
@@ -961,6 +969,7 @@ function App() {
         (payload.playerResults || []).forEach((pr) => {
           next[pr.id] = (next[pr.id] || 0) + pr.roundScore;
         });
+        categoryTotalsRef.current = next; // keep the sync mirror current
         return next;
       });
     }
@@ -984,10 +993,17 @@ function App() {
       // so a PLAY-AGAIN-then-finish can't double-increment.
       if (payload.daily && payload.finalScores) {
         const mine = payload.finalScores.find((s) => s.id === myIdRef.current);
+        // Authoritative score = the round-sum we tallied (matches the breakdown),
+        // with the server scoreboard as a fallback. Using finalScores alone let a
+        // missing/mismatched entry record AND show a 0 while rounds scored points.
+        const dailyScore = resolveDailyScore(
+          categoryTotalsRef.current[myIdRef.current],
+          mine ? mine.score : undefined
+        );
         const next = recordDailyResult(
           dailyStateRef.current,
           payload.daily.dayNumber,
-          mine ? mine.score : 0
+          dailyScore
         );
         saveDailyState(next);
         setDailyState(next);
@@ -995,6 +1011,7 @@ function App() {
           dayNumber: payload.daily.dayNumber,
           streak: next.streak,
           bestStreak: next.bestStreak,
+          score: dailyScore,
         });
       }
       // Stamp the end time so the overlay can show the game's duration.
@@ -1248,6 +1265,7 @@ function App() {
     setRoundResults(null);
     setCategoryScores(null);
     setCategoryTotals({});
+    categoryTotalsRef.current = {};
     setCategoryRerolls(null);
     setLastReroll(null);
     setFeedEvents([]);

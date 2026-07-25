@@ -44,6 +44,21 @@ export function hasPlayedDay(state, dayNumber) {
 }
 
 /**
+ * Authoritative final score for a Daily run. Prefers the score we tallied from
+ * the per-round breakdown (`roundTotal` — the exact number the results screen
+ * shows), falling back to the server scoreboard entry, and never NaN/undefined.
+ * This stops a missing/mismatched scoreboard entry (find() -> undefined -> 0)
+ * from recording AND displaying a 0 while the rounds actually scored points —
+ * the "breakdown +4 but headline 0" Daily bug. Taking the max means whichever
+ * source is present and non-zero wins; they agree in the normal case.
+ */
+export function resolveDailyScore(roundTotal, serverScore) {
+  const a = Number.isFinite(roundTotal) ? roundTotal : 0;
+  const b = Number.isFinite(serverScore) ? serverScore : 0;
+  return Math.max(a, b, 0);
+}
+
+/**
  * Folds one completed daily (server dayNumber + final score) into the state.
  * Pure — returns the NEXT state, never mutates.
  *
