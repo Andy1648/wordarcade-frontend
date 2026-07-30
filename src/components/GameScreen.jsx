@@ -1423,6 +1423,7 @@ export default function GameScreen({
   timerSeconds,
   lastWordResult,
   onClearResult,
+  onLocalWordResult,
   checkingAnswer,
   gameOver,
   roomPlayers,
@@ -2356,6 +2357,30 @@ export default function GameScreen({
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
+
+    // INSTANT LOCAL REJECT (feel/gameplay-smoothness, proposal a): the three Word
+    // Bomb checks the client can run deterministically from its OWN state — same
+    // trim/lowercase, same fragment, same used-words set the server uses — so there
+    // is zero client/server disagreement. Show the reject SAME-FRAME (via the normal
+    // lastWordResult path, so it gets the identical buzz/shake/toast) and skip the
+    // round-trip: a rejected word never consumes the turn server-side either, so not
+    // sending is equivalent. We keep the word in the box so it can be fixed. The
+    // dictionary check (not_a_word) still goes to the server below — only the client
+    // can't know it. Category Blitz is server-judged (no local accept-list), so this
+    // fast path is Word Bomb only.
+    if (!isCategory && onLocalWordResult) {
+      const w = word.toLowerCase();
+      const comboLc = (gameState.combo || '').toLowerCase();
+      let localReason = null;
+      if (w.length < 3) localReason = 'too_short';
+      else if (comboLc && !w.includes(comboLc)) localReason = 'missing_combo';
+      else if (usedItems.some((u) => String(u).toLowerCase() === w)) localReason = 'already_used';
+      if (localReason) {
+        onLocalWordResult({ accepted: false, reason: localReason });
+        return;
+      }
+    }
+
     // Mark that the next result is OURS (we can only submit on our turn), so the
     // combo only counts our own accepts/rejects.
     comboAwaitRef.current = true;
