@@ -581,7 +581,7 @@ export default function ImposterWordScreen({
               <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
                 <div
                   className="game-timer-fill"
-                  style={{ width: `${(showCountdown ? 1 : ratio) * 100}%`, background: timerColor }}
+                  style={{ transform: `scaleX(${showCountdown ? 1 : ratio})`, background: timerColor }}
                 />
               </div>
               <div className="game-timer-num">{timerSeconds}s</div>
@@ -676,7 +676,7 @@ export default function ImposterWordScreen({
 
             <div className="game-timer-row">
               <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
-                <div className="game-timer-fill" style={{ width: `${ratio * 100}%`, background: timerColor }} />
+                <div className="game-timer-fill" style={{ transform: `scaleX(${ratio})`, background: timerColor }} />
               </div>
               <div className="game-timer-num">{timerSeconds}s</div>
             </div>

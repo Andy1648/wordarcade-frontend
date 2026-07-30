@@ -3780,7 +3780,7 @@ function CategoryBlitzScreen({
             <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
               <div
                 className="game-timer-fill"
-                style={{ width: `${displayRatio * 100}%`, background: timerColor }}
+                style={{ transform: `scaleX(${displayRatio})`, background: timerColor }}
               />
             </div>
             <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>

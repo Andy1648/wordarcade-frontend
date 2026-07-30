@@ -621,10 +621,13 @@
 
 .game-timer-fill {
   height: 100%;
-  /* width + background colour are set inline from the live countdown. The 1s
-     width transition matches the 1s tick so the bar drains smoothly instead
-     of stepping. */
-  transition: width 1s linear, background 0.3s linear;
+  width: 100%;
+  transform-origin: left;
+  /* The drain is driven inline via transform: scaleX(ratio) (0..1) from the live
+     countdown, NOT width — scaleX is GPU-composited, so the per-frame 1s drain no
+     longer forces layout every frame. Visually identical for a flat-color bar. The
+     1s transform transition matches the 1s tick so it drains smoothly, not stepped. */
+  transition: transform 1s linear, background 0.3s linear;
 }
 
 .game-timer-num {
