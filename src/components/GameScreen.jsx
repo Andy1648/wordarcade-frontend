@@ -3406,6 +3406,9 @@ function CategoryBlitzScreen({
   const [cbTransient, setCbTransient] = useState(null);
   const cbTimerRef = useRef(null);
   const cbPrevResultRef = useRef(null);
+  // Feedback toast visibility: shown on each new result, auto-hidden after ~2s so a
+  // rejection ("DOESN'T FIT…") can never linger into the next answer or round.
+  const [resultVisible, setResultVisible] = useState(false);
   useEffect(() => {
     if (!lastWordResult || lastWordResult === cbPrevResultRef.current) return;
     cbPrevResultRef.current = lastWordResult;
@@ -3438,6 +3441,17 @@ function CategoryBlitzScreen({
     });
   }, [lastWordResult, sound]);
   useEffect(() => () => clearTimeout(cbTimerRef.current), []);
+  // Auto-dismiss the feedback toast ~2s after each result (a null lastWordResult on
+  // round change hides it immediately; this covers the "banner lingered" case #P1).
+  useEffect(() => {
+    if (!lastWordResult) {
+      setResultVisible(false);
+      return undefined;
+    }
+    setResultVisible(true);
+    const t = setTimeout(() => setResultVisible(false), 2000);
+    return () => clearTimeout(t);
+  }, [lastWordResult]);
 
   // ---- Category Blitz audio parity (timer + outcome) ----
   // Per-second round-timer tick, urgency-pitched, on a real decrement only (so
@@ -3857,7 +3871,7 @@ function CategoryBlitzScreen({
               </span>
             </div>
           ) : (
-            lastWordResult && (
+            lastWordResult && resultVisible && (
               <div
                 className={`game-toast ${
                   lastWordResult.accepted ? 'accepted' : 'rejected'
