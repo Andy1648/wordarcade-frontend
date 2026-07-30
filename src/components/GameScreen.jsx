@@ -70,6 +70,13 @@ const REJECTION_MESSAGES = {
   already_said: 'ALREADY SAID — TRY ANOTHER',
   not_a_word: 'NOT A REAL WORD',
   not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
+  // Submit-time-context outcomes (server judged against a round/turn that has
+  // since moved on): these are NOT "you were wrong" — the world rotated under an
+  // in-flight submission. Keep the copy benign so a valid late answer never shows
+  // a scary wrong-category / wrong-fragment error.
+  turn_over: 'TOO LATE — NEXT FRAGMENT!',
+  round_over: 'ROUND ENDED — TOO LATE',
+  stale_round: 'NEW ROUND — TRY AGAIN',
 };
 
 // Category Blitz is always a fixed 3 rounds (mirrors the backend's

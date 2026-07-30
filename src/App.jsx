@@ -1439,11 +1439,22 @@ function App() {
   }
 
   function handleSubmitWord(word) {
-    send('submit_word', { word });
+    // Tag the submission with the fragment we were SHOWING (gameState.combo, raw
+    // lowercase, matches the server's currentCombo). If the turn has since rotated,
+    // the server rejects it as `turn_over` instead of judging it against the NEW
+    // fragment ("MUST CONTAIN <new>"). Optional/backward-compatible on the server.
+    send('submit_word', { word, combo: gameState?.combo });
   }
 
   function handleSubmitAnswer(answer) {
-    send('submit_answer', { answer });
+    // Tag the answer with the category + round we were SHOWING, so the server judges
+    // it against THAT category's accept-list (not whatever the round has drifted to)
+    // and returns `stale_round` on a mismatch rather than a false off-category reject.
+    send('submit_answer', {
+      answer,
+      category: categoryRound?.category,
+      roundId: categoryRound?.round,
+    });
   }
 
   // Imposter Word: vote for who the imposter is. Lock the choice locally
