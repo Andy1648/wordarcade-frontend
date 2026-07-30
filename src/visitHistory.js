@@ -42,3 +42,28 @@ export function hasPlayedBefore() {
 export function markPlayed() {
   writeFlag(PLAYED_KEY);
 }
+
+// Last-used game difficulty, so Quick Play / room-create default to the player's
+// own preference instead of the server's CRAZY (key 'medium') default. Keys are
+// the shared tier ids chill(CHILL) / easy(HARD) / medium(CRAZY) / hard(HELL) —
+// the same space Word Bomb and Category Blitz both use, so this is mode-agnostic.
+const DIFFICULTY_KEY = 'wa_last_difficulty';
+const VALID_DIFFICULTIES = ['chill', 'easy', 'medium', 'hard'];
+
+export function getLastDifficulty() {
+  try {
+    const v = localStorage.getItem(DIFFICULTY_KEY);
+    return VALID_DIFFICULTIES.includes(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastDifficulty(key) {
+  if (!VALID_DIFFICULTIES.includes(key)) return;
+  try {
+    localStorage.setItem(DIFFICULTY_KEY, key);
+  } catch {
+    /* storage unavailable - preference just won't persist */
+  }
+}

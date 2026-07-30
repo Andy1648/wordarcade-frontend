@@ -29,6 +29,8 @@ import {
   markIntroSeen,
   hasPlayedBefore,
   markPlayed,
+  getLastDifficulty,
+  setLastDifficulty,
 } from './visitHistory';
 import {
   loadDailyState,
@@ -1319,8 +1321,9 @@ function App() {
   // bot. Uses the remembered/generated name (no prompt), creates a PRIVATE room
   // (so there's no public/private visibility question for solo-vs-bot — #6c),
   // locks Word Bomb, adds a medium bot, and starts — the server processes the
-  // frames in order on this socket (same pattern as handleStartDaily). First
-  // timers get the gentler CHILL tier; returning players keep CRAZY.
+  // frames in order on this socket (same pattern as handleStartDaily). Difficulty
+  // defaults to the player's last-used tier, else CHILL (20s/3 lives) — never the
+  // server's CRAZY (key 'medium') default, which made a first game brutal (#P2).
   function handleQuickPlayBot() {
     const name = playerName || resolvePlayerName();
     setPlayerName(name);
@@ -1328,7 +1331,7 @@ function App() {
     setLobbyMode('word-bomb');
     send('create_room', { name, isPublic: false });
     send('set_game_type', { gameType: 'word-bomb' });
-    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    send('set_difficulty', { difficultyKey: getLastDifficulty() || 'chill' });
     send('add_bot', { difficulty: 'medium' });
     send('start_game', {});
     track('quick_play_bot', {});
@@ -1347,13 +1350,14 @@ function App() {
       // Analytics: the selected mode is a game-id enum ('solo' generic create, or
       // a preselected 'word-bomb' / 'category-blitz' / 'imposter-word'). No PII.
       track('room_created', { mode });
-      // Default a FIRST-TIMER's Word Bomb room to the gentler CHILL tier (20s /
-      // 3 lives); returning players keep the server default (CRAZY). 'solo' is a
-      // generic create that stays Word Bomb server-side. Ordered after create_room
-      // on the same socket. Category Blitz / Imposter ignore Word Bomb tiers.
+      // Default a Word Bomb room to the player's last-used tier, else CHILL (20s /
+      // 3 lives) — never fall through to the server default (CRAZY, key 'medium'),
+      // which used to bite returning players who never explicitly chose it (#P2).
+      // 'solo' is a generic create that stays Word Bomb server-side. Ordered after
+      // create_room on the same socket. Category Blitz / Imposter ignore WB tiers.
       const isWordBombCreate = mode === 'solo' || mode === 'word-bomb';
-      if (isWordBombCreate && !hasPlayedBefore()) {
-        send('set_difficulty', { difficultyKey: 'chill' });
+      if (isWordBombCreate) {
+        send('set_difficulty', { difficultyKey: getLastDifficulty() || 'chill' });
       }
       // If the player picked a specific game from the homepage, lock the room
       // into it right away. The server processes messages in order over the
@@ -1388,6 +1392,8 @@ function App() {
   }
 
   function handleSetDifficulty(difficultyKey) {
+    // Remember the player's pick so Quick Play / room-create default to it next time.
+    setLastDifficulty(difficultyKey);
     fireDiff(() => send('set_difficulty', { difficultyKey }));
   }
 
