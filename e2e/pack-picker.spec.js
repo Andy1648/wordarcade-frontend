@@ -16,6 +16,9 @@ test.describe('Category Blitz pack picker', () => {
     await gotoMenu(page);
     await page.getByRole('button', { name: /CATEGORY BLITZ/i }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
+    // Pack selection is collapsed by default now (#P2 — a solo player never has to
+    // touch it since the default is all packs); reveal it before exercising it.
+    await page.getByRole('button', { name: /CUSTOMIZE PACKS/i }).click();
     await expect(page.locator('.ppp-picker')).toBeVisible();
   });
 

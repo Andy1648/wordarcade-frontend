@@ -59,7 +59,7 @@ const RECEDING_TAGS = [
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onPlaySolo, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -154,6 +154,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     setNavigating(true);
     const gameId = dialog.game.id;
     runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
+  }
+
+  // Dialog PLAY SOLO (Category Blitz only): straight into a solo game via App's
+  // one-shot create+start, skipping the lobby/room-code screens (#P2). Connect-
+  // gated like CREATE/JOIN so a cold backend shows CONNECTING… not a dead tap.
+  function handleDialogPlaySolo() {
+    if (navigating || !dialog) return;
+    sound.click();
+    setNavigating(true);
+    runWhenConnected('playsolo', () => onPlaySolo && onPlaySolo());
   }
 
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
@@ -325,6 +335,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           sourceEl={dialog.el}
           onClose={() => setDialog(null)}
           onCreate={handleDialogCreate}
+          onPlaySolo={handleDialogPlaySolo}
           onJoin={handleDialogJoin}
           blitzPacks={blitzPacks}
           onToggleBlitzPack={onToggleBlitzPack}

@@ -47,12 +47,15 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
  * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onPlaySolo, onJoin, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
   const [contentIn, setContentIn] = useState(false);
   const [createHover, setCreateHover] = useState(false);
+  // Pack selection is collapsed by default: the default is ALL packs, so a solo
+  // player never has to touch it. Revealed on demand via "CUSTOMIZE PACKS" (#P2).
+  const [showPacks, setShowPacks] = useState(false);
 
   const modeKey = MODE_KEY[game.id] || 'bomb';
   const mode = MODES[modeKey];
@@ -216,23 +219,56 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
             <div className="mode-dialog-sub">{mode.sub}</div>
 
             {modeKey === 'blitz' && (
-              <PackPicker
-                packs={packs}
-                selected={blitzPacks}
-                onToggle={onToggleBlitzPack}
-                onSetAll={onSetAllBlitzPacks}
-              />
+              <div className="mode-dialog-packs-collapse">
+                <button
+                  type="button"
+                  className="mode-dialog-packs-toggle"
+                  onClick={() => setShowPacks((v) => !v)}
+                  aria-expanded={showPacks}
+                  style={{ color: accent }}
+                >
+                  {showPacks ? '▾ CUSTOMIZE PACKS' : '▸ CUSTOMIZE PACKS'}
+                </button>
+                {showPacks && (
+                  <PackPicker
+                    packs={packs}
+                    selected={blitzPacks}
+                    onToggle={onToggleBlitzPack}
+                    onSetAll={onSetAllBlitzPacks}
+                  />
+                )}
+              </div>
             )}
 
             <div className="mode-dialog-actions">
+              {/* Category Blitz: a direct solo start that skips the lobby + room-
+                  code screens a solo player never needs (#P2). Primary CTA here;
+                  CREATE ROOM stays for playing with friends. */}
+              {modeKey === 'blitz' && onPlaySolo && (
+                <button
+                  className="mode-dialog-btn mode-dialog-btn-create"
+                  style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                  onClick={onPlaySolo}
+                  onMouseEnter={() => setCreateHover(true)}
+                  onMouseLeave={() => setCreateHover(false)}
+                >
+                  PLAY SOLO
+                </button>
+              )}
               <button
-                className="mode-dialog-btn mode-dialog-btn-create"
-                style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                className={`mode-dialog-btn ${
+                  modeKey === 'blitz' ? 'mode-dialog-btn-join' : 'mode-dialog-btn-create'
+                }`}
+                style={
+                  modeKey === 'blitz'
+                    ? undefined
+                    : { background: accent, borderColor: darken(accent, 0.45) }
+                }
                 onClick={onCreate}
                 onMouseEnter={() => setCreateHover(true)}
                 onMouseLeave={() => setCreateHover(false)}
               >
-                {mode.create}
+                {modeKey === 'blitz' ? 'CREATE ROOM' : mode.create}
               </button>
               <button
                 className="mode-dialog-btn mode-dialog-btn-join"

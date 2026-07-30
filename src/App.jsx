@@ -1337,6 +1337,24 @@ function App() {
     track('quick_play_bot', {});
   }
 
+  // PLAY SOLO (Category Blitz): one tap from the mode dialog straight into a solo
+  // game, skipping the name + public/private + room-code lobby a solo player never
+  // needs (#P2). Mirrors handleStartDaily's one-shot chain over a single socket
+  // (create → set_game_type → set_packs → start); the server auto-detects solo from
+  // the 1-player room, so no bot and no min-player gate. `packs` defaults to the
+  // homepage's current selection (all packs unless the player customized them).
+  function handlePlaySoloBlitz(packs = blitzPacks) {
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode('category-blitz');
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: 'category-blitz' });
+    if (Array.isArray(packs) && packs.length) send('set_packs', { packs });
+    send('start_game', {});
+    track('play_solo_blitz', {});
+  }
+
   function handleLobbyContinue({ name, mode, roomCode, isPublic }) {
     // Remember the name so Quick Play / the browser default to it next time.
     setPlayerName(name);
@@ -1600,6 +1618,7 @@ function App() {
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onQuickPlay={handleQuickPlayBot}
+        onPlaySolo={handlePlaySoloBlitz}
         onCredits={goToCredits}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}

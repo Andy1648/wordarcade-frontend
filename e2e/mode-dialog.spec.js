@@ -19,14 +19,16 @@ test.describe('mode dialog', () => {
     return dialog;
   }
 
-  test('a card expands into its dialog with the matching mode + CREATE/JOIN', async ({ page }) => {
+  test('a card expands into its dialog with the matching mode + actions', async ({ page }) => {
     const dialog = await openDialog(page, 'CATEGORY BLITZ');
 
-    // The dialog shows the mode it was opened from and its two actions.
+    // The dialog shows the mode it was opened from. Category Blitz now offers a
+    // direct PLAY SOLO shortcut alongside CREATE ROOM / JOIN (#P2).
     await expect(dialog.locator('.mode-dialog-title')).toContainText('CATEGORY');
     await expect(dialog.locator('.mode-dialog-title')).toContainText('BLITZ');
-    await expect(dialog.locator('.mode-dialog-btn-create')).toBeVisible();
-    await expect(dialog.locator('.mode-dialog-btn-join')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'PLAY SOLO' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'CREATE ROOM' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'JOIN' })).toBeVisible();
   });
 
   test('closes cleanly via the ✕ button', async ({ page }) => {
