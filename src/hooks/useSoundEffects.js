@@ -88,6 +88,12 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
       if (!ctx) return;
       try {
         const now = ctx.currentTime;
+        // Rate-limit (juice audit): keystrokes arriving <~22ms apart (fast typing
+        // bursts, held-key repeat, paste) used to stack into a buzzy clip. Drop any
+        // that land within the gap of the last one — inaudible at human typing speed
+        // (which is >60ms/char), but it kills the stacking. Cached on the shared ctx.
+        if (now - (ctx.__lastKeystrokeAt || 0) < 0.022) return;
+        ctx.__lastKeystrokeAt = now;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
