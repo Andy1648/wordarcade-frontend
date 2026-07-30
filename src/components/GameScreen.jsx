@@ -1197,6 +1197,24 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
     });
   }
 
+  // 1v1 COLLAPSE (#P2): in a bot / heads-up game one player almost always sweeps
+  // every highlight, so three identical name-cards read as filler. Collapse them
+  // into a single combined MVP badge. Keep all three at 3+ players, where the
+  // badges genuinely differentiate people.
+  if (players.length <= 2 && awards.length > 1) {
+    const distinctWinners = new Set(awards.map((a) => a.name));
+    if (distinctWinners.size === 1) {
+      const sweeper = awards[0].name;
+      awards.length = 0;
+      awards.push({
+        key: 'mvp',
+        label: 'MVP',
+        name: sweeper,
+        detail: 'SWEPT EVERY HIGHLIGHT',
+      });
+    }
+  }
+
   return (
     <div className="go-stats">
       {/* Aggregate headline stats only add value at 3+ players; in a 1v1 they just
