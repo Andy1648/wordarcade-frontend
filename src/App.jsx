@@ -1,18 +1,23 @@
 // App.jsx
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
 import Homepage from './components/Homepage';
-import LobbyScreen from './components/LobbyScreen';
-import PublicRoomsScreen from './components/PublicRoomsScreen';
-import RoomScreen from './components/RoomScreen';
-import GameScreen from './components/GameScreen';
+// Deferred screens: none are on the first-paint path (splash -> menu). Lazy-loading
+// them (esp. the 4k-line GameScreen, which drags the whole share/result-card render
+// subtree with it) carves the majority of the app out of the initial JS chunk. They
+// are warmed on idle right after paint (see the prefetch effect) so navigation into a
+// room/game shows no Suspense flash.
+const LobbyScreen = lazy(() => import('./components/LobbyScreen'));
+const PublicRoomsScreen = lazy(() => import('./components/PublicRoomsScreen'));
+const RoomScreen = lazy(() => import('./components/RoomScreen'));
+const GameScreen = lazy(() => import('./components/GameScreen'));
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
-import CreditsScreen from './components/CreditsScreen';
+const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
-import KnifeSplit from './components/KnifeSplit';
+const KnifeSplit = lazy(() => import('./components/KnifeSplit'));
 import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
@@ -1473,6 +1478,24 @@ function App() {
   // on the game-over overlay). room comes from room_update, which carries hostId.
   const isHost = !!room && myId != null && room.hostId === myId;
 
+  // Warm the deferred screen chunks on idle after first paint, so navigating into
+  // a lobby/room/game is instant (the Suspense fallback above never actually shows).
+  // Scheduled at idle and never blocks the menu's first paint.
+  useEffect(() => {
+    const warm = () => {
+      import('./components/GameScreen');
+      import('./components/RoomScreen');
+      import('./components/LobbyScreen');
+      import('./components/PublicRoomsScreen');
+    };
+    const ric = typeof window !== 'undefined' && window.requestIdleCallback;
+    const id = ric ? ric(warm, { timeout: 2500 }) : setTimeout(warm, 1200);
+    return () => {
+      if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id);
+      else clearTimeout(id);
+    };
+  }, []);
+
   // Pick the screen for the current view. It's wrapped in a single keyed
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
@@ -1688,7 +1711,10 @@ function App() {
           <ParticleField />
           <div className="view-transition-root">
             <div key={view} className="view-screen">
-              {screen}
+              {/* One Suspense boundary covers every lazy screen (game/room/lobby/
+                  browse/credits). Fallback is null: chunks are idle-prefetched after
+                  paint, and the screen-wipe overlay already covers the swap. */}
+              <Suspense fallback={null}>{screen}</Suspense>
             </div>
           </div>
           {transition && !prefersReducedMotion && (
@@ -1725,6 +1751,7 @@ function App() {
           {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
               auto-cleared after ~480ms). Replaces the old intro explosion. */}
           {slicing && (
+            <Suspense fallback={null}>
             <KnifeSplit
               onComplete={handleSliceComplete}
               onSlash={() => sound.punch()}
@@ -1733,6 +1760,7 @@ function App() {
                 triggerShake('light');
               }}
             />
+            </Suspense>
           )}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
