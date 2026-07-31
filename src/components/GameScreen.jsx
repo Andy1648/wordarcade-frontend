@@ -1857,12 +1857,19 @@ export default function GameScreen({
     }
 
     if (eliminateIds.length) {
+      // Juice audit: your OWN K.O. is your dramatic moment — full intensity. But a
+      // Word Bomb K.O. fires for ANY player, so an opponent dying while you passively
+      // wait used to blast your screen (0.85 white flash + 400ms freeze-frame + 90
+      // particles) every time — intrusive on repeat. When none of the eliminated is
+      // you, soften to a clear-but-quiet signal: lighter flash, no freeze-frame hitch,
+      // fewer particles. Presentation only — the ids/state are untouched.
+      const isMyElimination = eliminateIds.includes(myId);
       // K.O. slam comes AFTER the explosion, with its own 400ms freeze leading
       // the slam (timed from the elimination diff, independent of the blast).
       timers.push(
         setTimeout(() => {
           setKoKey((k) => k + 1);
-          freeze(400);
+          freeze(isMyElimination ? 400 : 160);
           // Big-moment juice (toolkit, additive): a heavy boom-debris burst at the
           // KO'd card + a brief hitStop so the debris hangs for the freeze-frame.
           // PURELY COSMETIC — the shared particle pool + hitStop only affect the
@@ -1878,7 +1885,9 @@ export default function GameScreen({
             // shockwave rings (yellow then orange). VISUALS ONLY — sound.explosion/
             // ko + vibrate + the screen shake already fire elsewhere (no doubles).
             burst(x, y, {
-              count: JUICE.EXPLOSION.particles,
+              count: isMyElimination
+                ? JUICE.EXPLOSION.particles
+                : Math.round(JUICE.EXPLOSION.particles * 0.5),
               speed: JUICE.EXPLOSION.particleSpeed,
               spread: Math.PI * 2,
               life: JUICE.EXPLOSION.particleLife,
@@ -1889,9 +1898,14 @@ export default function GameScreen({
             ring(x, y, JUICE.EXPLOSION.ringYellow);
             ring(x, y, JUICE.EXPLOSION.ringOrange);
           });
-          // One big white flash for the detonation (fires once, not per card).
-          screenFlash({ alpha: JUICE.EXPLOSION.flash, color: JUICE.EXPLOSION.flashColor });
-          hitStop(120); // fire-and-forget; freezes only the debris, never input/WS
+          // One white flash for the detonation (fires once, not per card). Full for
+          // your own K.O.; a much lighter flash when it's an opponent's (you're
+          // waiting — no full-screen strobe just because someone else died).
+          screenFlash({
+            alpha: isMyElimination ? JUICE.EXPLOSION.flash : JUICE.EXPLOSION.flash * 0.35,
+            color: JUICE.EXPLOSION.flashColor,
+          });
+          if (isMyElimination) hitStop(120); // freeze-frame only for your own K.O.; never input/WS
         }, 380)
       );
     }
