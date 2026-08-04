@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:portal": "vite build --mode portal",
-    "lint": "eslint .",
+    "lint": "eslint src",
     "test": "node --test \"src/**/*.test.js\"",
     "test:e2e": "playwright test",
     "preview": "vite preview"
