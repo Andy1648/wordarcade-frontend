@@ -37,7 +37,7 @@ test.describe('mode dialog', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
     // …and the menu underneath is interactive again.
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(4);
   });
 
   test('closes cleanly via the Escape key', async ({ page }) => {

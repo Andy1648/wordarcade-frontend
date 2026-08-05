@@ -7,7 +7,9 @@
 // GameCard looks it up dynamically rather than each game having its own
 // hardcoded SVG inline.
 
-export const GAMES = [
+import { SAT_RUSH_ENABLED } from './satRush/config';
+
+const BASE_GAMES = [
   {
     id: 'word-bomb',
     artKey: 'WordBombArt',
@@ -57,3 +59,25 @@ export const GAMES = [
     enabled: true,
   },
 ];
+
+// SAT RUSH — the solo vocab mode. Only appears on the menu when the mode flag is
+// on (SAT_RUSH_ENABLED); until it ships the grid stays exactly the three social
+// games. The card is a MANGA cover — off-white paper, black ink, ONE spot colour
+// (violet, on the in-art multiplier only) — so it reads as a different KIND of
+// thing next to the three saturated neon cards. The mode inside stays violet.
+const SAT_RUSH_GAME = {
+  id: 'sat-rush',
+  artKey: 'SatRushArt',
+  name: 'SAT\nRUSH',
+  description: 'SAT VOCAB, ARCADE SPEED. SOLO.',
+  baseColor: '#F2EFE7', // off-white paper (not pure white — that reads disabled)
+  iconBg: '#F2EFE7',
+  badgeText: 'SOLO',
+  badgeBg: '#111', // inverted badge: black fill, cream text
+  badgeColor: '#F2EFE7',
+  textColor: '#111', // "SAT RUSH" in solid black ink
+  descColor: '#333',
+  enabled: true,
+};
+
+export const GAMES = SAT_RUSH_ENABLED ? [...BASE_GAMES, SAT_RUSH_GAME] : BASE_GAMES;

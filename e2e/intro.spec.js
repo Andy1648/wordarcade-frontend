@@ -38,9 +38,9 @@ test.describe('intro sequence', () => {
     //    starts the fight-card intro, which then wipes to the homepage.
     await splash.click();
 
-    // 4) We end on the menu: the wordmark + the three mode cards are present.
+    // 4) We end on the menu: the wordmark + the four mode cards are present.
     await expect(page.getByRole('img', MENU)).toBeVisible();
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(4);
 
     // The whole time, the only backend contact was the intercepted socket attempt
     // — never the real server.
@@ -54,6 +54,6 @@ test.describe('intro sequence', () => {
     // No splash — the menu is shown immediately (loading is pre-completed).
     await expect(page.getByRole('img', MENU)).toBeVisible();
     await expect(page.locator('.splash-screen')).toHaveCount(0);
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(4);
   });
 });

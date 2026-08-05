@@ -55,6 +55,16 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     hero = outcome.place ? ordinal(outcome.place) : 'PLAYED';
     sub = outcome.total ? `OF ${outcome.total}` : '';
     chips = [chip('SCORE', data.score), chip('PLAYERS', outcome.total)];
+  } else if (mode === 'sat-rush') {
+    // Solo endless vocab run. Avg ante (mean base multiplier at clear) is the
+    // headline stat — how fast you knew them — so it's the big hero number; the
+    // hardest word cleared lives in the share TEXT (arbitrary-length words don't
+    // fit the fixed image chips/sub).
+    win = true;
+    const ante = data.avgAnte != null ? `${Number(data.avgAnte).toFixed(1)}×` : '—';
+    hero = ante;
+    sub = 'AVG ANTE';
+    chips = [chip('CLEARED', data.cleared), chip('STREAK', data.bestStreak), chip('SCORE', data.score)];
   } else if (mode === 'imposter-word') {
     // SPOILER-FREE: the end screen is a 5-round AGGREGATE (the role rotates each
     // round), so the card brags the win + how many you CAUGHT / FOOLED across the

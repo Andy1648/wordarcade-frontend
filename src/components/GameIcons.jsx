@@ -61,8 +61,23 @@ export function ImposterIcon() {
   );
 }
 
+export function SatRushIcon() {
+  // A graduation mortarboard, inked black on the manga card's cream icon box —
+  // reads "SAT / vocab" at a glance. Monochrome by design (the card's only spot
+  // colour is the in-art multiplier).
+  return (
+    <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+      <path d="M11 3 L20 8 L11 13 L2 8 Z" fill="#F2EFE7" stroke="#111" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M6 10.4 L6 15 Q11 18 16 15 L16 10.4" fill="#111" stroke="#111" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M20 8 L20 14" stroke="#111" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="20" cy="15.4" r="1.8" fill="#111" stroke="#111" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
 export const GAME_ICON_COMPONENTS = {
   'word-bomb': BombIcon,
   'category-blitz': CategoryIcon,
   'imposter-word': ImposterIcon,
+  'sat-rush': SatRushIcon,
 };

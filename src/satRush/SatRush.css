@@ -1,0 +1,680 @@
+/* SatRush.css — SAT RUSH mode. Visual system follows the prototype + DESIGN.md:
+   dark base, violet accent, chrome / amber / red state variants. All state is
+   ALSO conveyed by a text label or a distinct shape (never colour alone), and
+   every decorative animation is disabled under prefers-reduced-motion while the
+   functional signals (the drain bar, the caret, state tags) stay legible. */
+
+.sr-app {
+  --violet: #a855f7;
+  --violet-dim: #6d28d9;
+  --ink: #0b0710;
+  --chrome: #e8eef5;
+  --green: #39ff88;
+  --red: #ff3d6e;
+  --amber: #ffc53d;
+  /* The reading text (sentence + gloss) is PROPORTIONAL so it can be read fast;
+     the design system only ships Bungee (display) + Space Mono, so this is a
+     clean system sans. Everything else (meta, slots, HUD numbers) stays mono. */
+  --sr-prose: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: #fff;
+  font-family: 'Space Mono', 'Segoe UI', system-ui, sans-serif;
+  background: radial-gradient(ellipse at 50% -10%, #2a0f45 0%, var(--ink) 55%, #050308 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2.5vh, 32px) 16px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* The stack fills the viewport height and is vertically centred; the card can
+   shrink (never exceeding the viewport) so its reveal text scrolls internally
+   and the SLOTS stay pinned + always visible at every width and word length. */
+.sr-stage {
+  width: min(940px, 94vw);
+  max-height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.8vh, 18px);
+  min-height: 0;
+}
+
+/* ---------- HUD ---------- */
+.sr-hud {
+  display: flex;
+  gap: 26px;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+.sr-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sr-stat b {
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.sr-stat span {
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  opacity: 0.42;
+  text-transform: uppercase;
+}
+.sr-lives {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 26px;
+}
+.sr-life {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--violet);
+  box-shadow: 0 0 12px var(--violet);
+  transition: 0.35s;
+}
+.sr-life.gone {
+  background: #2c2140;
+  box-shadow: none;
+  transform: scale(0.55);
+}
+.sr-heatwrap {
+  min-width: 150px;
+}
+.sr-heatbar {
+  height: 6px;
+  background: #241633;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sr-heatfill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), #f472b6);
+  transition: width 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+/* ---------- ante ---------- */
+.sr-ante {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 0 0 auto;
+}
+/* The multiplier is the second-heaviest element after the sentence: large,
+   high-contrast, with a bright core and a strong violet bloom. */
+.sr-mult {
+  font-size: clamp(76px, 13vw, 128px);
+  font-weight: 900;
+  letter-spacing: -5px;
+  line-height: 0.8;
+  color: var(--violet);
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.35),
+    0 0 28px rgba(168, 85, 247, 0.95),
+    0 0 64px rgba(168, 85, 247, 0.65);
+}
+/* The drop animation is the juice squash/flash (juice.multiplierDrop), which is
+   reduced-motion aware — no CSS keyframe needed here. */
+.sr-anteright {
+  flex: 1;
+}
+.sr-antelabel {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  opacity: 0.55;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.sr-pips {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+.sr-pip {
+  width: 26px;
+  height: 4px;
+  background: #2c1b40;
+  border-radius: 2px;
+  transition: 0.25s;
+}
+.sr-pip.on {
+  background: var(--violet);
+  box-shadow: 0 0 9px var(--violet);
+}
+/* the always-visible drain bar toward the next stage */
+.sr-tick {
+  height: 4px;
+  background: #2c1b40;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sr-tickfill {
+  height: 100%;
+  width: 0;
+  background: var(--violet);
+  opacity: 0.6;
+  transform-origin: left;
+}
+.sr-tickfill.run {
+  animation: sr-drain linear forwards;
+}
+.sr-tickfill.grace {
+  background: var(--amber);
+  opacity: 0.8;
+}
+@keyframes sr-drain {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* ---------- card ---------- */
+.sr-card {
+  background: linear-gradient(165deg, rgba(30, 15, 50, 0.92), rgba(10, 6, 18, 0.96));
+  border: 1px solid rgba(168, 85, 247, 0.26);
+  border-radius: 18px;
+  padding: 26px 34px 30px;
+  box-shadow:
+    0 26px 70px -18px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  /* Sized to content, but never taller than the viewport: on a small screen the
+     reveals scroll and the slots stay pinned + visible instead of the card
+     running off-screen. The stack is vertically centred by .sr-stage. */
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.sr-meta {
+  flex: 0 0 auto;
+}
+/* The scrolling reveal region: sentence + gloss + root. Centred when there is
+   room; scrolls internally when a long word on a narrow screen overflows. */
+.sr-card-reveals {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* Reserve a little vertical room so the card has body at early stages and
+     doesn't jump as the gloss/root fade in. */
+  padding-block: clamp(6px, 2vh, 22px);
+}
+/* SILVER TONGUE brightens the CARD BODY itself (a chrome sheen), not just the
+   border — the state change is unmistakable at a glance. */
+.sr-card.silver {
+  background: linear-gradient(
+    135deg,
+    rgba(233, 240, 248, 0.3) 0%,
+    rgba(150, 168, 198, 0.14) 42%,
+    rgba(233, 240, 248, 0.24) 100%
+  );
+  border-color: rgba(240, 245, 250, 0.9);
+  box-shadow:
+    0 0 90px -4px rgba(232, 238, 245, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 40px rgba(255, 255, 255, 0.06);
+}
+.sr-card.deep {
+  border-color: rgba(255, 197, 61, 0.6);
+  box-shadow: 0 0 62px -8px rgba(255, 197, 61, 0.34);
+}
+.sr-card.rev {
+  border-color: rgba(255, 61, 110, 0.6);
+  box-shadow: 0 0 62px -8px rgba(255, 61, 110, 0.34);
+}
+.sr-card.shake {
+  animation: sr-shake 0.19s;
+}
+@keyframes sr-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-9px);
+  }
+  75% {
+    transform: translateX(9px);
+  }
+}
+
+/* state tag: colour + a distinct leading glyph + the text label */
+.sr-tag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 6px 15px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  font-weight: 800;
+  border-bottom-left-radius: 12px;
+  text-transform: uppercase;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+.sr-tag.deep {
+  background: var(--amber);
+  color: #2a1a00;
+}
+.sr-tag.rev {
+  background: var(--red);
+  color: #fff;
+}
+.sr-tag.silver {
+  background: var(--chrome);
+  color: #111;
+}
+
+.sr-meta {
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  opacity: 0.55;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.sr-reveal {
+  opacity: 0;
+  transform: translateY(7px);
+  transition: 0.42s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.sr-reveal.in {
+  opacity: 1;
+  transform: none;
+}
+/* the sentence is the largest element on screen; the multiplier is second.
+   PROPORTIONAL (not mono) so it reads fast — the core of the mechanic. */
+.sr-sentence {
+  font-family: var(--sr-prose);
+  font-size: clamp(20px, 2.6vw, 27px);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  font-weight: 400;
+}
+.sr-blank {
+  color: var(--violet);
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.sr-gloss {
+  font-family: var(--sr-prose);
+  font-size: clamp(15px, 1.8vw, 17px);
+  color: var(--green);
+  margin-bottom: 12px;
+  font-style: italic;
+  opacity: 0.92;
+}
+.sr-root {
+  font-size: 13.5px;
+  color: #c4b5fd;
+  margin-bottom: 4px;
+}
+.sr-root b {
+  color: #fff;
+  font-weight: 700;
+}
+.sr-root .cz {
+  opacity: 0.6;
+}
+
+/* ---------- slots ---------- */
+/* Slots shrink to fit the width, but NEVER below a legible minimum (--slot-min):
+   below that the letters read as dots, which breaks the input model. If the row
+   can't fit at the minimum, it WRAPS to another row — and because the slots block
+   is pinned (flex:0 0 auto) while the reveals above it scroll, every row stays
+   fully visible. `--n` (letter count) is set inline by Slots.jsx. */
+.sr-slots {
+  --gap: 8px;
+  --slot-min: 32px; /* keep the locked glyph readable */
+  --slot-max: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  margin-top: 20px;
+  width: 100%;
+  container-type: inline-size;
+  flex: 0 0 auto; /* pinned below the scrolling reveals — always visible */
+}
+.sr-slot {
+  --slotw: calc((100cqw - (var(--n) - 1) * var(--gap)) / var(--n));
+  --slot-size: clamp(var(--slot-min), var(--slotw), var(--slot-max));
+  position: relative;
+  width: var(--slot-size);
+  aspect-ratio: 19 / 26;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  border-bottom: 3px solid #3a2a52;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--slot-size) * 0.56);
+  font-weight: 800;
+  text-transform: uppercase;
+  transition: 0.14s;
+}
+/* typed/committed letter: solid green underline + the glyph itself */
+.sr-slot.typed {
+  border-bottom-color: var(--green);
+  color: var(--green);
+  background: rgba(57, 255, 136, 0.09);
+}
+/* current cursor: violet + a blinking caret (SHAPE cue, not colour alone) */
+.sr-slot.cur {
+  border-bottom-color: var(--violet);
+  background: rgba(168, 85, 247, 0.12);
+  box-shadow: 0 0 20px -4px var(--violet);
+}
+.sr-slot.cur::after {
+  content: '';
+  position: absolute;
+  bottom: 14%;
+  left: 50%;
+  width: 46%;
+  height: 3px;
+  transform: translateX(-50%);
+  background: var(--violet);
+  border-radius: 2px;
+  animation: sr-caret 0.9s steps(1, end) infinite;
+}
+@keyframes sr-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0.12;
+  }
+}
+/* revealed/locked letter: amber + a DOUBLE underline + a corner flag (SHAPE) */
+.sr-slot.revealed {
+  border-bottom: 3px double var(--amber);
+  color: var(--amber);
+  background: rgba(255, 197, 61, 0.08);
+}
+.sr-slot.revealed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-width: 0 8px 8px 0;
+  border-style: solid;
+  border-color: transparent var(--amber) transparent transparent;
+  border-top-right-radius: 8px;
+}
+.sr-slot.bad {
+  animation: sr-badpulse 0.3s;
+}
+@keyframes sr-badpulse {
+  0%,
+  100% {
+    background: rgba(255, 255, 255, 0.035);
+  }
+  40% {
+    background: rgba(255, 61, 110, 0.4);
+  }
+}
+
+.sr-msg {
+  margin-top: 14px;
+  min-height: 20px;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  flex: 0 0 auto;
+}
+.sr-msg.good {
+  color: var(--green);
+}
+.sr-msg.bad {
+  color: var(--red);
+}
+.sr-msg.near {
+  color: var(--amber);
+}
+
+/* ---------- start / results overlays ---------- */
+.sr-screen {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 3, 8, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  text-align: center;
+  padding: 30px;
+  z-index: 50;
+}
+.sr-title {
+  font-size: clamp(40px, 9vw, 84px);
+  font-weight: 900;
+  letter-spacing: -3px;
+  line-height: 0.9;
+  background: linear-gradient(180deg, #fff 30%, var(--violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sr-sub {
+  font-size: 14px;
+  opacity: 0.62;
+  max-width: 520px;
+  line-height: 1.65;
+}
+.sr-btn {
+  background: var(--violet);
+  color: #fff;
+  border: 0;
+  padding: 15px 38px;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: 0 0 34px -8px var(--violet);
+  transition: 0.16s;
+}
+.sr-btn:hover {
+  transform: translateY(-2px);
+}
+.sr-rules {
+  text-align: left;
+  font-size: 13px;
+  line-height: 2;
+  opacity: 0.75;
+  max-width: 470px;
+}
+.sr-rules code {
+  background: rgba(168, 85, 247, 0.2);
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: #ddd0ff;
+  font-size: 12px;
+}
+.sr-resstats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 8px 0 4px;
+}
+.sr-resstats .sr-stat {
+  align-items: center;
+}
+.sr-resstats .sr-stat b {
+  font-size: 34px;
+}
+.sr-seen {
+  font-size: 12px;
+  opacity: 0.6;
+  max-width: 620px;
+  line-height: 1.9;
+}
+.sr-seen .miss {
+  color: var(--red);
+  opacity: 0.9;
+}
+
+/* ---------- results (death / score reveal) ---------- */
+.sr-results {
+  gap: 14px;
+}
+/* DEAD stamp slams in at C.stampDelay. */
+.sr-dead {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(44px, 10vw, 96px);
+  letter-spacing: 0.05em;
+  color: var(--red);
+  text-shadow: 0 0 30px rgba(255, 61, 110, 0.5);
+  animation: sr-slam 0.4s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation-delay: 300ms;
+}
+@keyframes sr-slam {
+  0% {
+    transform: scale(2.4) rotate(-8deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(0.92) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+}
+/* AVG ANTE — the headline stat, biggest on the screen. */
+.sr-ante-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 2px;
+}
+.sr-ante-value {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(72px, 15vw, 150px);
+  line-height: 0.85;
+  text-shadow: 0 0 44px rgba(168, 85, 247, 0.6);
+}
+.sr-ante-label {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.sr-results .sr-resstats,
+.sr-hardest,
+.sr-results-actions {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.sr-results .sr-resstats.in,
+.sr-hardest.in,
+.sr-results-actions.in {
+  opacity: 1;
+  transform: none;
+}
+.sr-hardest {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  transition-delay: 0.08s;
+}
+.sr-results-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  transition-delay: 0.16s;
+}
+
+/* ---------- dev tuner (dev-only) ---------- */
+.sr-tuner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(8, 4, 14, 0.93);
+  border-top: 1px solid rgba(168, 85, 247, 0.24);
+  padding: 9px 16px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  font-size: 11px;
+  z-index: 60;
+  flex-wrap: wrap;
+}
+.sr-tuner label {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  opacity: 0.75;
+  letter-spacing: 0.04em;
+}
+.sr-tuner input[type='range'] {
+  width: 120px;
+  accent-color: var(--violet);
+}
+.sr-tuner b {
+  color: var(--violet);
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+  display: inline-block;
+}
+.sr-tuner .hint {
+  opacity: 0.34;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.sr-tuner .scene {
+  background: rgba(168, 85, 247, 0.18);
+  color: #ddd0ff;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* ---------- reduced motion: kill decoration, keep the signal ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .sr-card.shake,
+  .sr-slot.bad,
+  .sr-dead {
+    animation: none;
+  }
+  .sr-dead {
+    opacity: 1;
+  }
+  .sr-slot.cur::after {
+    animation: none;
+    opacity: 1;
+  } /* caret stays visible, just doesn't blink */
+  .sr-reveal {
+    transition: opacity 0.2s;
+    transform: none;
+  }
+  /* the drain bar is a functional countdown — kept, but linear/no easing extras */
+}

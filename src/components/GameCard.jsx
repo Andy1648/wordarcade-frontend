@@ -11,6 +11,10 @@ const CARD_NEON = {
   'word-bomb': '#FF6B3D',
   'category-blitz': '#3DA8FF',
   'imposter-word': '#9A28FF',
+  // SAT RUSH is a manga (cream) card: the neon glow does nothing on paper, so its
+  // beat/select FX are ink (see [data-game='sat-rush'] in GameCard.css). This
+  // keeps the click glitch-pop monochrome ink rather than a coloured flash.
+  'sat-rush': '#111111',
 };
 
 // ---- CURSOR-MAGNETIC TILT (shared controller) ----------------------------
@@ -208,7 +212,7 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
     // div whose only job is that transform. It composes OUTSIDE the
     // existing tilt/lift (which stays on .game-card-wrap) and re-provides the
     // grid's perspective for the inner 3D tilt. See .game-card-magnet in the CSS.
-    <div ref={magnetRef} className="game-card-magnet">
+    <div ref={magnetRef} className="game-card-magnet" data-game={game.id}>
       {/* The grid item: static resting rotate + cursor-tilt via its own shared
           controller, left fully intact — the magnet only wraps it. */}
       <div

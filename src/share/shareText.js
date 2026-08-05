@@ -67,6 +67,20 @@ export function wordBombGrid(events, won) {
   return row.length ? row.join('') : WB.empty;
 }
 
+// SAT Rush ante grid: one glyph per word — 🟨 answered fast (high ante), 🟪 a
+// normal clear, 🟥 a miss. Middle-ellipsized past the cap so a long run stays on
+// one chat line (keeps the start AND the dramatic ending).
+const SR_MAX_GLYPHS = 16;
+export function satRushGrid(log) {
+  if (!Array.isArray(log) || !log.length) return null;
+  const glyphs = log.map((e) => (!e.ok ? '🟥' : e.stage != null && e.stage <= 1 ? '🟨' : '🟪'));
+  let row = glyphs;
+  if (row.length > SR_MAX_GLYPHS) {
+    row = [...row.slice(0, 6), '…', ...row.slice(row.length - (SR_MAX_GLYPHS - 7))];
+  }
+  return row.join('');
+}
+
 /** "R1 🟧🟧🟧 3" — blocks capped, the real score always printed. */
 export function blitzRoundRow(roundIndex, score) {
   const n = Math.max(0, Number(score) || 0);
@@ -137,6 +151,20 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
         score === 0 ? '0 PTS. rough one' : `${score} PTS`,
       ])
     );
+  } else if (mode === 'sat-rush') {
+    lines.push('TYPE A WORD · SAT RUSH 🧠');
+    const grid = satRushGrid(data.runLog);
+    if (grid) lines.push(grid);
+    const words = Math.max(0, Number(data.cleared) || 0);
+    const ante = data.avgAnte != null ? `${Number(data.avgAnte).toFixed(1)}× avg ante` : null;
+    lines.push(
+      statSuffix([
+        words === 0 ? '0 words. brutal' : `${words} word${words === 1 ? '' : 's'}`,
+        data.bestStreak ? `streak ${data.bestStreak}` : null,
+        ante,
+      ])
+    );
+    if (data.hardest) lines.push(`hardest clear: ${String(data.hardest).toLowerCase()}`);
   } else if (mode === 'imposter-word') {
     const won = !!outcome.won;
     lines.push('TYPE A WORD · IMPOSTER WORD 🕵️');

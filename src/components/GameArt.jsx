@@ -162,10 +162,81 @@ export function ImposterWordArt() {
   );
 }
 
+// ---- SAT RUSH: a MANGA cover. Off-white paper, black ink, Ben-Day screentone,
+//      radial speed lines behind inked S·A·T tiles dropping into their slots, and
+//      the ante multiplier ticking 5x -> 2x in the ONE spot colour (violet) — the
+//      thread back to the mode's in-game violet. Everything else is black ink. ----
+const SR_FOCAL = { x: 70, y: 100 };
+const SR_SPEED_LINES = Array.from({ length: 22 }, (_, i) => {
+  const a = (i / 22) * Math.PI * 2 + 0.11;
+  const inner = 18 + (i % 3) * 4; // clear a hole around the tiles
+  const outer = 200; // runs off the frame (clipped) = a radial burst
+  return {
+    x1: SR_FOCAL.x + Math.cos(a) * inner,
+    y1: SR_FOCAL.y + Math.sin(a) * inner,
+    x2: SR_FOCAL.x + Math.cos(a) * outer,
+    y2: SR_FOCAL.y + Math.sin(a) * outer,
+    w: 1.5 + (i % 2) * 1.1, // heavier so the lines read as ink at menu scale
+  };
+});
+// A tile, drawn as an inked block with slightly irregular (hand-drawn) edges.
+const SR_TILES = [
+  { l: 'S', x: 44, delay: 0, d: 'M-11,-14 L10,-15 L12,13 L-10,15 Z' },
+  { l: 'A', x: 70, delay: 0.5, d: 'M-10,-15 L11,-14 L10,15 L-12,14 Z' },
+  { l: 'T', x: 96, delay: 1.0, d: 'M-12,-14 L10,-15 L11,15 L-10,13 Z' },
+];
+
+export function SatRushArt() {
+  return (
+    <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art sr-art" aria-hidden="true">
+      <defs>
+        {/* Ben-Day halftone screentone. */}
+        <pattern id="sr-tone" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="1.5" cy="1.5" r="1.5" fill="#111" />
+        </pattern>
+      </defs>
+
+      {/* Radial speed lines behind the tiles (intensify on the beat via CSS). */}
+      <g className="sr-speed">
+        {SR_SPEED_LINES.map((l, i) => (
+          <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#111" strokeWidth={l.w} strokeLinecap="round" />
+        ))}
+      </g>
+
+      {/* Screentone patches, top-left and lower-right corners. */}
+      <path d="M0 0 H50 L0 50 Z" fill="url(#sr-tone)" opacity="0.9" />
+      <path d="M140 168 H96 L140 120 Z" fill="url(#sr-tone)" opacity="0.9" />
+
+      {/* The ante multiplier — the ONE spot colour (violet), ticking 5x -> 2x. */}
+      <g className="sr-mult-art" transform="translate(70 40)">
+        <text className="sr-mult-5" x="0" y="0" fontSize="30" fontWeight="bold" fill="#A855F7" stroke="#111" strokeWidth="1.4" textAnchor="middle" fontFamily="'Bungee', sans-serif">5×</text>
+        <text className="sr-mult-2" x="0" y="0" fontSize="30" fontWeight="bold" fill="#A855F7" stroke="#111" strokeWidth="1.4" textAnchor="middle" fontFamily="'Bungee', sans-serif">2×</text>
+      </g>
+
+      {/* Inked slot row (heavy black outline on the cream page). */}
+      {SR_TILES.map((t) => (
+        <rect key={`slot-${t.l}`} x={t.x - 12} y="111" width="24" height="32" rx="2" fill="none" stroke="#111" strokeWidth="3.4" />
+      ))}
+      <rect className="sr-caret" x="58" y="137" width="12" height="3.4" rx="1" fill="#111" />
+
+      {/* Inked tiles that drop into the slots and settle (hand-drawn edges). */}
+      {SR_TILES.map((t) => (
+        <g key={t.l} transform={`translate(${t.x} 127)`}>
+          <g className="sr-tile" style={{ '--sdelay': `${t.delay}s` }}>
+            <path d={t.d} fill="#F2EFE7" stroke="#111" strokeWidth="3.2" strokeLinejoin="round" />
+            <text x="0" y="7" fontSize="16" fontWeight="bold" fill="#111" textAnchor="middle" fontFamily="'Bungee', sans-serif">{t.l}</text>
+          </g>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 // Lookup map so GameCard can resolve `artKey` strings from gameData.js to the
 // actual component without a long if/else chain.
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
   CategoryBlitzArt,
   ImposterWordArt,
+  SatRushArt,
 };

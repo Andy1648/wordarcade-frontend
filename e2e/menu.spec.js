@@ -1,19 +1,20 @@
 // e2e/menu.spec.js
 //
-// The menu (Homepage): the three mode cards render with their labels, and the
+// The menu (Homepage): the four mode cards render with their labels, and the
 // menu's navigation entries always lead somewhere with a way back (no dead-end).
 import { test, expect } from '@playwright/test';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 
 const MENU = { name: 'Type a Word' };
 
-// The shipped mode cards (src/gameData.js). NOTE: the app has THREE modes, not
-// two — see E2E_NOTES.md. We verify all three so the label check is faithful to
-// what actually ships.
+// The shipped mode cards (src/gameData.js). FOUR modes now ship: the three
+// social games plus SAT RUSH (the solo vocab mode). We verify all four so the
+// label check is faithful to what actually ships.
 const CARDS = [
   { name: 'WORD BOMB', badge: 'SOLO · MULTI' },
   { name: 'CATEGORY BLITZ', badge: 'SOLO / MULTI' },
   { name: 'IMPOSTER WORD', badge: 'MULTIPLAYER' },
+  { name: 'SAT RUSH', badge: 'SOLO' },
 ];
 
 test.describe('menu', () => {
@@ -22,7 +23,7 @@ test.describe('menu', () => {
     await gotoMenu(page);
   });
 
-  test('renders all three mode cards with correct name + badge labels', async ({ page }) => {
+  test('renders all four mode cards with correct name + badge labels', async ({ page }) => {
     const cards = page.locator('.game-card');
     await expect(cards).toHaveCount(CARDS.length);
 
@@ -49,7 +50,7 @@ test.describe('menu', () => {
     // …and the BACK control returns us to the menu — the path is reversible.
     await back.click();
     await expect(page.getByRole('img', MENU)).toBeVisible();
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(CARDS.length);
   });
 
   test('a mode card CREATE reaches the lobby and back returns to the menu', async ({ page }) => {

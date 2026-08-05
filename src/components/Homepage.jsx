@@ -59,7 +59,7 @@ const RECEDING_TAGS = [
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onSatRush, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -142,6 +142,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     const game = GAMES.find((g) => g.id === gameId);
     if (!game || !game.enabled) return;
     sound.click();
+    // SAT RUSH is solo — there is no room to CREATE/JOIN, so it skips the mode
+    // dialog and navigates straight in (same pattern as Daily / Quick Play).
+    if (gameId === 'sat-rush') {
+      setNavigating(true);
+      if (onSatRush) onSatRush();
+      return;
+    }
     setDialog({ game, el });
   }
 
@@ -270,7 +277,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           {connecting === 'quickplay' ? 'CONNECTING…' : '⚡ QUICK PLAY VS BOT'}
         </button>
 
-        <div className="homepage-cards-grid">
+        <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
           {GAMES.map((game) => (
             <GameCard
               key={game.id}
@@ -314,6 +321,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           <a href="/word-bomb/">WORD BOMB GUIDE</a>
           <a href="/category-blitz/">CATEGORY BLITZ GUIDE</a>
           <a href="/imposter-word/">IMPOSTER WORD GUIDE</a>
+          {GAMES.some((g) => g.id === 'sat-rush') && <a href="/sat-rush/">SAT RUSH GUIDE</a>}
         </nav>
       </div>
 

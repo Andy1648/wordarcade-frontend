@@ -46,7 +46,7 @@ export default [
 
       // Rules the EXISTING code already trips: kept ON as a signal but at `warn`
       // so the baseline stays green (0 errors) and a genuine new-code error is
-      // never buried. Not a license to write new violations — the src/silverTongue
+      // never buried. Not a license to write new violations — the src/satRush
       // override below restores them to `error` for the new mode's code.
       'react-hooks/rules-of-hooks': 'warn', // 3 pre-existing (RoomScreen)
       'react-hooks/exhaustive-deps': 'warn',
@@ -55,10 +55,10 @@ export default [
     },
   },
   {
-    // New code (SILVER TONGUE) is held to the strict bar: the same correctness
+    // New code (SAT RUSH) is held to the strict bar: the same correctness
     // rules that are `warn` globally (for legacy's sake) are `error` here, so
     // Steps 2-7 get the clean, failing signal the rest of the repo can't yet.
-    files: ['src/silverTongue/**/*.{js,jsx}'],
+    files: ['src/satRush/**/*.{js,jsx}'],
     rules: {
       'react-hooks/rules-of-hooks': 'error',
       'no-irregular-whitespace': 'error',

@@ -15,6 +15,8 @@ import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
+// SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
+const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 const KnifeSplit = lazy(() => import('./components/KnifeSplit'));
@@ -22,6 +24,7 @@ import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
+import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from './satRush/config';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -126,6 +129,7 @@ const TRANSITION_WORDS = {
   browse: 'JOIN ROOM',
   room: 'SQUAD UP',
   credits: 'CREDITS',
+  [SAT_RUSH_VIEW]: SAT_RUSH_TRANSITION_WORD,
 };
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
@@ -1263,6 +1267,13 @@ function App() {
     setView('credits');
   }
 
+  // SAT RUSH is a solo mode — no room/WebSocket — so selecting its menu card
+  // navigates straight to the mode view (the wipe fires automatically on the
+  // view change, like every other navigation).
+  function goToSatRush() {
+    setView(SAT_RUSH_VIEW);
+  }
+
   function goHome() {
     setLobbyMode(null);
     setLobbyPublicDefault(false);
@@ -1603,11 +1614,16 @@ function App() {
     );
   } else if (view === 'credits') {
     screen = <CreditsScreen onBack={goHome} />;
+  } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
+    // Flag-gated placeholder route. Nothing on the menu points here yet; the
+    // mode is reachable only with the flag on (?satRush=1) during dev.
+    screen = <SatRushGame onExit={goHome} />;
   } else {
     screen = (
       <Homepage
         wsStatus={wsStatus}
         onSelectGame={(gameId) => goToLobby(gameId)}
+        onSatRush={goToSatRush}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onQuickPlay={handleQuickPlayBot}

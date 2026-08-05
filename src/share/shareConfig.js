@@ -24,6 +24,7 @@ export const SHARE = {
     'word-bomb': { badge: 'WORD BOMB', neon: '#2EFFE0', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-panic.png' },
     'category-blitz': { badge: 'CATEGORY BLITZ', neon: '#FF6B3D', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-idle.png' },
     'imposter-word': { badge: 'IMPOSTER WORD', neon: '#9A1AFF', mascot: '/mascot-taunt.png', mascotLoss: '/mascot-idle.png' },
+    'sat-rush': { badge: 'SAT RUSH', neon: '#A855F7', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-idle.png' },
   },
   defaultMode: { badge: 'TYPE A WORD', neon: '#FFE94A', mascot: '/mascot-idle.png', mascotLoss: '/mascot-idle.png' },
 
