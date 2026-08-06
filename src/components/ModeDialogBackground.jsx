@@ -1,6 +1,6 @@
 // ModeDialogBackground.jsx
 // Per-mode animated canvas that fills the mode dialog behind its content.
-// The three render fns (stars / flame / streaks), the helpers (softDot,
+// The two render fns (flame / streaks), the helpers (softDot,
 // fireRamp, flow, gauss, hexToRgb) and the pointer-lean are ported VERBATIM
 // from the approved prototype (mode-dialogs-all3.html). Only the harness is
 // React-ified: the prototype's module-level globals live as per-instance
@@ -10,13 +10,6 @@ import { useEffect, useRef } from 'react';
 
 /* ===================== config (locked v5 values) ===================== */
 export const MODES = {
-  imposter: {
-    accent: '#9A1AFF', bg: ['#1d0e44', '#070313'], anim: 'stars',
-    chip: 'MULTIPLAYER', t1: 'IMPOSTER', t2: 'WORD',
-    liner: "One player's faking it. Find them.",
-    sub: 'Social deduction · 3–8 players · Everyone gets the word except one.',
-    create: 'CREATE',
-  },
   bomb: {
     accent: '#FF6B3D', bg: ['#3a1206', '#160503'], anim: 'flame',
     chip: 'SOLO · MULTI', t1: 'WORD', t2: 'BOMB',
@@ -223,32 +216,6 @@ export default function ModeDialogBackground({ mode = 'bomb', roar = false }) {
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    /* ===================== STARS (imposter) — v5 ===================== */
-    let stars = [];
-    function seedStars() {
-      stars = [];
-      for (let i = 0; i < 95; i++) {
-        stars.push({
-          x: Math.random() * W, y: Math.random() * H,
-          s: 0.6 + Math.random() * 2.0, ph: Math.random() * 6.28,
-          vx: 0.10 + Math.random() * 0.18, vy: 0.06 + Math.random() * 0.12,
-          big: Math.random() < 0.12,
-        });
-      }
-    }
-    function drawStars(t) {
-      ctx.globalCompositeOperation = 'lighter';
-      for (const st of stars) {
-        st.x += st.vx; st.y += st.vy;
-        if (st.x > W + 4) st.x = -4; if (st.y > H + 4) st.y = -4;
-        const tw = 0.45 + 0.55 * Math.sin(t * 1.6 + st.ph);
-        const a = tw * (st.big ? 0.9 : 0.55);
-        softDot(st.x, st.y, st.s * (st.big ? 3.2 : 2.0), [214, 178, 255], a);
-        if (st.big) softDot(st.x, st.y, st.s * 1.1, [255, 255, 255], a);
-      }
-      ctx.globalCompositeOperation = 'source-over';
-    }
-
     /* ===================== STREAKS (blitz) — v5 ===================== */
     let streaks = [];
     function newStreak(anywhere) {
@@ -293,7 +260,6 @@ export default function ModeDialogBackground({ mode = 'bomb', roar = false }) {
     /* ===================== loop ===================== */
     function seed() {
       if (cur === 'bomb') seedFlame();
-      else if (cur === 'imposter') seedStars();
       else seedStreaks();
     }
     function frame(now) {
@@ -303,7 +269,6 @@ export default function ModeDialogBackground({ mode = 'bomb', roar = false }) {
       lean += ((pointerX - 0.5) * Math.min(W, 260) * 0.6 - lean) * 0.06;
       roarV += (roarTargetRef.current - roarV) * 0.08;
       if (cur === 'bomb') drawFlame(t);
-      else if (cur === 'imposter') drawStars(t);
       else drawStreaks();
       raf = requestAnimationFrame(frame);
     }

@@ -136,7 +136,7 @@ const TRANSITION_WORDS = {
 // for Join Room) or a specific game id picked from a homepage card. These are
 // the real backend game types we can lock the room into and preselect; any
 // other card would fall back to the in-room mode picker (and default Word Bomb).
-const PRESELECTABLE_GAMES = ['word-bomb', 'category-blitz', 'imposter-word'];
+const PRESELECTABLE_GAMES = ['word-bomb', 'category-blitz'];
 
 function isPreselectableGame(mode) {
   return PRESELECTABLE_GAMES.includes(mode);
@@ -355,27 +355,6 @@ function App() {
   const [categoryRerolls, setCategoryRerolls] = useState(null);
   const [lastReroll, setLastReroll] = useState(null);
   const rerollKeyRef = useRef(0);
-
-  // Imposter Word state (social deduction, three phases per round). round_start
-  // is shared with Category Blitz, so it's disambiguated by the imposter-only
-  // `phase`/`isImposter` fields on the payload.
-  //   imposterRound   - { round, totalRounds, category, isImposter, players }
-  //   imposterPhase   - 'answering' | 'voting' | 'reveal' | 'finished'
-  //   imposterAnswers - live { playerId, playerName, answer } feed (this is how
-  //                     the imposter reverse-engineers the category), reset/round
-  //   imposterVoteData- { answers: [{playerId,playerName,answers}], players }
-  //   imposterVoteCount-{ voted, total } progress (never reveals who voted whom)
-  //   imposterMyVote  - the suspectId I locked in (optimistic), or null
-  //   imposterResults - the vote_results reveal payload for the current round
-  //   imposterFinal   - the game_over payload (final scores + award stats)
-  const [imposterRound, setImposterRound] = useState(null);
-  const [imposterPhase, setImposterPhase] = useState(null);
-  const [imposterAnswers, setImposterAnswers] = useState([]);
-  const [imposterVoteData, setImposterVoteData] = useState(null);
-  const [imposterVoteCount, setImposterVoteCount] = useState({ voted: 0, total: 0 });
-  const [imposterMyVote, setImposterMyVote] = useState(null);
-  const [imposterResults, setImposterResults] = useState(null);
-  const [imposterFinal, setImposterFinal] = useState(null);
 
   // ---- Daily Challenge (solo Category Blitz on the server's date-seeded board) ----
   // dailyState: the persisted streak history (localStorage). dailyResult: the
@@ -857,92 +836,29 @@ function App() {
 
     if (lastMessage.type === 'round_start') {
       const payload = lastMessage.payload;
-      // Imposter Word and Category Blitz share round_start; the imposter variant
-      // carries a `phase`/`isImposter` field, so branch on that.
-      if (payload.phase === 'answering' || typeof payload.isImposter !== 'undefined') {
-        setImposterRound({
-          round: payload.round,
-          totalRounds: payload.totalRounds,
-          category: payload.category,
-          isImposter: !!payload.isImposter,
-          players: payload.players || [],
-          answerSeconds: payload.timerSeconds,
-        });
-        setImposterPhase('answering');
-        setImposterAnswers([]);
-        setImposterVoteData(null);
-        setImposterVoteCount({ voted: 0, total: (payload.players || []).length });
-        setImposterMyVote(null);
-        setImposterResults(null);
-        if (payload.round === 1) setImposterFinal(null); // fresh game
-        setMyAnswers([]);
-        setTimerSeconds(payload.timerSeconds);
-        setLastWordResult(null);
-        setGameOver(null);
-        setView('game');
-      } else {
-        // Category Blitz round_start. This is the SINGLE path for both a normal
-        // round and a host reroll (a server-authoritative round restart): either
-        // way we clear answers/progress, take the server's category + full timer,
-        // and update the reroll count. A reroll keeps the same round number (so
-        // CategoryBlitzScreen doesn't replay the 3-2-1) and carries `reroll`/`by`
-        // so non-host clients can flash the "host rerolled" notice.
-        setCategoryRound(payload);
-        setTimerSeconds(payload.timerSeconds);
-        setCategoryRerolls(payload.rerollsRemaining ?? null);
-        setMyAnswers([]);
-        setPlayerProgress({});
-        setRoundResults(null);
-        setLastWordResult(null);
-        setGameOver(null);
-        setCategoryScores(null);
-        if (payload.round === 1) {
-          setCategoryTotals({}); // fresh game
-          categoryTotalsRef.current = {};
-        }
-        if (payload.reroll) {
-          setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
-        }
-        setView('game');
-      }
-    }
-
-    // ---- Imposter Word relays ----
-
-    // Every accepted answer is broadcast to everyone in real time.
-    if (lastMessage.type === 'imposter_answer') {
-      const { playerId, playerName, answer } = lastMessage.payload;
-      setImposterAnswers((prev) => [...prev, { playerId, playerName, answer }]);
-    }
-
-    // Answering closed -> voting opens with all answers revealed.
-    if (lastMessage.type === 'vote_phase_start') {
-      const payload = lastMessage.payload;
-      setImposterVoteData({
-        answers: payload.answers || [],
-        players: payload.players || [],
-        voteSeconds: payload.timerSeconds,
-      });
-      setImposterPhase('voting');
-      setImposterVoteCount({ voted: 0, total: (payload.players || []).length });
+      // Category Blitz round_start. This is the SINGLE path for both a normal
+      // round and a host reroll (a server-authoritative round restart): either
+      // way we clear answers/progress, take the server's category + full timer,
+      // and update the reroll count. A reroll keeps the same round number (so
+      // CategoryBlitzScreen doesn't replay the 3-2-1) and carries `reroll`/`by`
+      // so non-host clients can flash the "host rerolled" notice.
+      setCategoryRound(payload);
       setTimerSeconds(payload.timerSeconds);
+      setCategoryRerolls(payload.rerollsRemaining ?? null);
+      setMyAnswers([]);
+      setPlayerProgress({});
+      setRoundResults(null);
       setLastWordResult(null);
-    }
-
-    // Live vote progress (counts only, never who-for-whom until the reveal).
-    if (lastMessage.type === 'vote_count') {
-      setImposterVoteCount(lastMessage.payload);
-    }
-
-    // My own vote bounced (e.g. voted for myself) - unlock so I can re-vote.
-    if (lastMessage.type === 'vote_result') {
-      if (!lastMessage.payload.accepted) setImposterMyVote(null);
-    }
-
-    // The reveal.
-    if (lastMessage.type === 'vote_results') {
-      setImposterResults(lastMessage.payload);
-      setImposterPhase('reveal');
+      setGameOver(null);
+      setCategoryScores(null);
+      if (payload.round === 1) {
+        setCategoryTotals({}); // fresh game
+        categoryTotalsRef.current = {};
+      }
+      if (payload.reroll) {
+        setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
+      }
+      setView('game');
     }
 
     // AI fallback is judging this answer (list-miss). Show the "checking…"
@@ -985,12 +901,8 @@ function App() {
 
     if (lastMessage.type === 'game_over') {
       const payload = lastMessage.payload;
-      // Imposter Word and Category Blitz both carry finalScores, so check the
-      // explicit gameType first; Word Bomb carries just winnerId.
-      if (payload.gameType === 'imposter-word') {
-        setImposterFinal(payload);
-        setImposterPhase('finished');
-      } else if (payload.finalScores) {
+      // Category Blitz carries finalScores; Word Bomb carries just winnerId.
+      if (payload.finalScores) {
         setCategoryScores(payload.finalScores);
         setCategoryRound(null);
         setRoundResults(null);
@@ -1303,14 +1215,6 @@ function App() {
     setGameStats(EMPTY_STATS);
     setTypingText({});
     setReactions([]);
-    setImposterRound(null);
-    setImposterPhase(null);
-    setImposterAnswers([]);
-    setImposterVoteData(null);
-    setImposterVoteCount({ voted: 0, total: 0 });
-    setImposterMyVote(null);
-    setImposterResults(null);
-    setImposterFinal(null);
     setDailyResult(null);
     setView('home');
   }
@@ -1361,12 +1265,12 @@ function App() {
       // side, so a missing flag stays private/code-only as before).
       send('create_room', { name, isPublic: !!isPublic });
       // Analytics: the selected mode is a game-id enum ('solo' generic create, or
-      // a preselected 'word-bomb' / 'category-blitz' / 'imposter-word'). No PII.
+      // a preselected 'word-bomb' / 'category-blitz'). No PII.
       track('room_created', { mode });
       // Default a FIRST-TIMER's Word Bomb room to the gentler CHILL tier (20s /
       // 3 lives); returning players keep the server default (CRAZY). 'solo' is a
       // generic create that stays Word Bomb server-side. Ordered after create_room
-      // on the same socket. Category Blitz / Imposter ignore Word Bomb tiers.
+      // on the same socket. Category Blitz ignores Word Bomb tiers.
       const isWordBombCreate = mode === 'solo' || mode === 'word-bomb';
       if (isWordBombCreate && !hasPlayedBefore()) {
         send('set_difficulty', { difficultyKey: 'chill' });
@@ -1462,14 +1366,6 @@ function App() {
     send('submit_answer', { answer });
   }
 
-  // Imposter Word: vote for who the imposter is. Lock the choice locally
-  // (optimistic) so the UI shows "VOTED" immediately; the server confirms via
-  // vote_result and unlocks again only if it bounces (e.g. self-vote).
-  function handleSubmitVote(suspectId) {
-    setImposterMyVote(suspectId);
-    send('submit_vote', { suspectId });
-  }
-
   function handleSkipTurn() {
     send('skip_turn', {});
   }
@@ -1542,17 +1438,8 @@ function App() {
         categoryTotals={categoryTotals}
         categoryRerolls={categoryRerolls}
         lastReroll={lastReroll}
-        imposterRound={imposterRound}
-        imposterPhase={imposterPhase}
-        imposterAnswers={imposterAnswers}
-        imposterVoteData={imposterVoteData}
-        imposterVoteCount={imposterVoteCount}
-        imposterMyVote={imposterMyVote}
-        imposterResults={imposterResults}
-        imposterFinal={imposterFinal}
         onSubmitWord={handleSubmitWord}
         onSubmitAnswer={handleSubmitAnswer}
-        onSubmitVote={handleSubmitVote}
         onSkipTurn={handleSkipTurn}
         onTypingUpdate={handleTypingUpdate}
         onLeave={handleLeaveRequest}

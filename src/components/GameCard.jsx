@@ -10,7 +10,6 @@ import './GameCard.css';
 const CARD_NEON = {
   'word-bomb': '#FF6B3D',
   'category-blitz': '#3DA8FF',
-  'imposter-word': '#9A28FF',
   // SAT RUSH is a manga (cream) card: the neon glow does nothing on paper, so its
   // beat/select FX are ink (see [data-game='sat-rush'] in GameCard.css). This
   // keeps the click glitch-pop monochrome ink rather than a coloured flash.

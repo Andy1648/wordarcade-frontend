@@ -2209,7 +2209,7 @@
    answers + opponents) in a RIGHT rail - so the wide stage is actually used and
    the category reads as a big hero. EVERYTHING here is scoped under .cb-round, so
    the shared classes it overrides (.game-input-row, .game-input, .game-timer-row,
-   .cb-category-display, ...) keep their Word Bomb / Imposter behaviour outside CB. */
+   .cb-category-display, ...) keep their Word Bomb behaviour outside CB. */
 .cb-round {
   display: grid;
   grid-template-columns: 1fr; /* phones/tablets: single column */

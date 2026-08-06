@@ -5,7 +5,7 @@
 // mode is solo (no WebSocket) but the shared backend mock is still installed so
 // the app-level socket never touches production.
 //
-// `?satRush=1` enables the mode flag so the fourth card renders (the ship flag is
+// `?satRush=1` enables the mode flag so the third card renders (the ship flag is
 // off by default); `?portal=1` skips the intro straight to the menu; `?stage=500`
 // speeds the stage clock so the run is quick.
 import { test, expect } from '@playwright/test';
@@ -16,7 +16,7 @@ test.describe('SAT Rush', () => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1&stage=500');
 
-    // The fourth card is on the menu; clicking it navigates straight into the
+    // The SAT Rush card is on the menu; clicking it navigates straight into the
     // solo mode (no CREATE/JOIN dialog).
     const card = page.locator('[data-game="sat-rush"]');
     await expect(card).toBeVisible();

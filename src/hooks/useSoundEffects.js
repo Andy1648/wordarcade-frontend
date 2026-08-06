@@ -342,8 +342,8 @@ function createSoundApi(ctxRef, mutedRef, sizzleRef) {
 
     // ---- App-wide UI / transition / outcome sounds ----
 
-    // Cartoony "BONK!" impact for the "TYPE FAST" / "DIE SLOW" slams, the
-    // imposter reveal and the splash - Looney-Tunes/FNF, not movie-trailer.
+    // Cartoony "BONK!" impact for the "TYPE FAST" / "DIE SLOW" slams and the
+    // splash - Looney-Tunes/FNF, not movie-trailer.
     // Five stacked layers feeding a compressor + makeup gain so it still hits
     // LOUD and glued, but the timbre is comic, not cinematic:
     //   1. a rounded pitched "bonk" (triangle, fast 520->130Hz drop),

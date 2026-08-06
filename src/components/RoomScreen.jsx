@@ -49,7 +49,6 @@ function difficultyReadout(key, gameType) {
 const GAME_TYPES = [
   { key: 'word-bomb', label: 'WORD BOMB' },
   { key: 'category-blitz', label: 'AI CATEGORY BLITZ' },
-  { key: 'imposter-word', label: 'IMPOSTER WORD' },
 ];
 
 function gameTypeLabel(gameType) {
@@ -59,10 +58,9 @@ function gameTypeLabel(gameType) {
 // Minimum players to start, by game type. Mirrors the backend (the server is
 // the real source of truth and will reject an under-count start_game), but
 // matching it here gives instant feedback (a disabled button) instead of a
-// round-trip error. Imposter Word needs 3 - it's no fun finding the imposter
-// among one other person.
+// round-trip error.
 const MIN_PLAYERS_TO_START = 2;
-const MIN_PLAYERS_BY_TYPE = { 'imposter-word': 3 };
+const MIN_PLAYERS_BY_TYPE = {};
 
 function minPlayersFor(gameType) {
   return MIN_PLAYERS_BY_TYPE[gameType] || MIN_PLAYERS_TO_START;
@@ -133,7 +131,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   const isHost = myId !== null && myId === room.hostId;
   const minPlayers = minPlayersFor(room.gameType);
   // Category Blitz has a solo mode: a single player racing the clock alone, so
-  // it can start with just one. Word Bomb and Imposter Word still need a crowd.
+  // it can start with just one. Word Bomb still needs a crowd.
   const isSoloCategoryBlitz =
     room.gameType === 'category-blitz' && room.players.length === 1;
   const canStart = isSoloCategoryBlitz || room.players.length >= minPlayers;
@@ -361,8 +359,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         )}
 
         {/* DIFFICULTY is a Word Bomb concept (the HARD/CRAZY/HELL timer tiers).
-            Category Blitz and Imposter have no difficulty control, so render none
-            for them — the desc/readout helpers stay defined, just not used here. */}
+            Category Blitz has no difficulty control, so render none for it —
+            the desc/readout helpers stay defined, just not used here. */}
         {room.gameType === 'word-bomb' && (
           <>
             <div className="room-section-label">DIFFICULTY</div>

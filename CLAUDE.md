@@ -52,7 +52,7 @@ Workflow:
 - All documented traps apply (functional setView, live-view render, FIFO queue).
 
 ### TIER 2 — UI / COMPONENTS (moderate)
-Files: GameScreen.jsx (rendering/layout, NOT its WS/state reads), RoomScreen.jsx, LobbyScreen.jsx, PublicRoomsScreen.jsx, ImposterWordScreen.jsx, component structure.
+Files: GameScreen.jsx (rendering/layout, NOT its WS/state reads), RoomScreen.jsx, LobbyScreen.jsx, PublicRoomsScreen.jsx, component structure.
 Workflow:
 - May batch closely-related changes in one task.
 - Review by PLAYING the preview, not by reading every diff line.

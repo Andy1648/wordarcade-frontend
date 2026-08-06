@@ -2,7 +2,7 @@
 // Normalizes each mode's EXISTING result data into a single spoiler-free card
 // model { badge, neon, mascotSrc, hero, sub, chips, copy }. Pure: reads the
 // passed fields, invents nothing, and NEVER includes a secret word or anything
-// that ruins a round (Imposter shows the verdict + role, never the word).
+// that ruins a round.
 //
 // `copy` (the text used by SHARE and COPY) is the Wordle-style emoji-grid text
 // from shareText.js; `daily` / `link` pass straight through to it.
@@ -65,14 +65,6 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     hero = ante;
     sub = 'AVG ANTE';
     chips = [chip('CLEARED', data.cleared), chip('STREAK', data.bestStreak), chip('SCORE', data.score)];
-  } else if (mode === 'imposter-word') {
-    // SPOILER-FREE: the end screen is a 5-round AGGREGATE (the role rotates each
-    // round), so the card brags the win + how many you CAUGHT / FOOLED across the
-    // game — NEVER the secret word or who the imposter was.
-    win = !!outcome.won;
-    hero = win ? 'WINNER' : 'GAME OVER';
-    sub = 'IMPOSTER WORD';
-    chips = [chip('CAUGHT', data.caught), chip('FOOLED', data.fooled), chip('ROUNDS', data.rounds)];
   } else {
     hero = 'NICE RUN';
   }

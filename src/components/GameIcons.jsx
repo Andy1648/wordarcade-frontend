@@ -42,25 +42,6 @@ export function CategoryIcon() {
   );
 }
 
-export function ImposterIcon() {
-  // A bandit / superhero eye mask - hiding in plain sight.
-  return (
-    <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
-      <path
-        d="M2 8 Q3 5.5 6 6 L16 6 Q19 5.5 20 8 Q20.5 11 18.5 13 Q16.5 14.5 14.5 13 Q13 12 11 12 Q9 12 7.5 13 Q5.5 14.5 3.5 13 Q1.5 11 2 8 Z"
-        fill="#9A1AFF"
-        stroke="#4B0A87"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <circle cx="7" cy="9.3" r="2.1" fill="#fff" stroke="#4B0A87" strokeWidth="1.4" />
-      <circle cx="15" cy="9.3" r="2.1" fill="#fff" stroke="#4B0A87" strokeWidth="1.4" />
-      <circle cx="7" cy="9.3" r="0.9" fill="#222" />
-      <circle cx="15" cy="9.3" r="0.9" fill="#222" />
-    </svg>
-  );
-}
-
 export function SatRushIcon() {
   // A graduation mortarboard, inked black on the manga card's cream icon box —
   // reads "SAT / vocab" at a glance. Monochrome by design (the card's only spot
@@ -78,6 +59,5 @@ export function SatRushIcon() {
 export const GAME_ICON_COMPONENTS = {
   'word-bomb': BombIcon,
   'category-blitz': CategoryIcon,
-  'imposter-word': ImposterIcon,
   'sat-rush': SatRushIcon,
 };

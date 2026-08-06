@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
-import ImposterWordScreen from './ImposterWordScreen';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
@@ -1439,17 +1438,8 @@ export default function GameScreen({
   categoryTotals,
   categoryRerolls,
   lastReroll,
-  imposterRound,
-  imposterPhase,
-  imposterAnswers,
-  imposterVoteData,
-  imposterVoteCount,
-  imposterMyVote,
-  imposterResults,
-  imposterFinal,
   onSubmitWord,
   onSubmitAnswer,
-  onSubmitVote,
   onSkipTurn,
   onTypingUpdate,
   onLeave,
@@ -2160,37 +2150,6 @@ export default function GameScreen({
     () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
     [gameOver]
   );
-
-  // Imposter Word is a separate (social-deduction, multi-phase) experience -
-  // its own component. Routed after the hooks above (which all no-op for this
-  // mode) so the hook order stays stable across game types.
-  if (gameType === 'imposter-word') {
-    return (
-      <ImposterWordScreen
-        myId={myId}
-        isHost={isHost}
-        playerColors={playerColors}
-        timerSeconds={timerSeconds}
-        lastWordResult={lastWordResult}
-        round={imposterRound}
-        phase={imposterPhase}
-        liveAnswers={imposterAnswers || []}
-        myAnswers={myAnswers || []}
-        voteData={imposterVoteData}
-        voteCount={imposterVoteCount || { voted: 0, total: 0 }}
-        myVote={imposterMyVote}
-        results={imposterResults}
-        final={imposterFinal}
-        onSubmitAnswer={onSubmitAnswer}
-        onSubmitVote={onSubmitVote}
-        onLeave={onLeave}
-        onRematch={onRematch}
-        rematchPending={rematchPending}
-        onShake={onShake}
-        roomCode={roomCode}
-      />
-    );
-  }
 
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
@@ -3766,7 +3725,7 @@ function CategoryBlitzScreen({
 
           {/* Two-zone responsive layout: hero + action (main) | live state (rail).
               Collapses to a single stack on phones/tablets via the .cb-round grid.
-              CB-only wrapper, so Word Bomb / Imposter layouts are untouched. */}
+              CB-only wrapper, so Word Bomb layouts are untouched. */}
           <div className="cb-round">
             <div className="cb-round-main">
 

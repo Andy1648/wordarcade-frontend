@@ -44,24 +44,10 @@ const BASE_GAMES = [
     // as "AI Category Blitz" without touching the big two-line title.
     aiJudged: true,
   },
-  {
-    id: 'imposter-word',
-    artKey: 'ImposterWordArt',
-    name: 'IMPOSTER\nWORD',
-    description: 'ONE PLAYER IS FAKE. FIND THEM.',
-    baseColor: '#9A1AFF',
-    iconBg: '#fff',
-    badgeText: 'MULTIPLAYER',
-    badgeBg: '#000',
-    badgeColor: '#9A1AFF',
-    textColor: '#000',
-    descColor: '#1a0b2e',
-    enabled: true,
-  },
 ];
 
 // SAT RUSH — the solo vocab mode. Only appears on the menu when the mode flag is
-// on (SAT_RUSH_ENABLED); until it ships the grid stays exactly the three social
+// on (SAT_RUSH_ENABLED); until it ships the grid stays exactly the two social
 // games. The card is a MANGA cover — off-white paper, black ink, ONE spot colour
 // (violet, on the in-art multiplier only) — so it reads as a different KIND of
 // thing next to the three saturated neon cards. The mode inside stays violet.

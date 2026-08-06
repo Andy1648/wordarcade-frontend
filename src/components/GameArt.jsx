@@ -125,43 +125,6 @@ export function CategoryBlitzArt() {
   );
 }
 
-// ---- IMPOSTER WORD: a watching eye (scanning pupil + blink), drifting ?s,
-//      one red imposter ?, and a security-camera scan line. ----
-export function ImposterWordArt() {
-  return (
-    <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art iw-art" aria-hidden="true">
-      {/* Drifting question marks - one of them is the red imposter. */}
-      <text className="iw-q iw-q-1" x="28" y="48" fontSize="16" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-2 imposter" x="112" y="58" fontSize="18" fontWeight="bold" fill="#FF5C5C" stroke="#7a1010" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-3" x="30" y="130" fontSize="14" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-4" x="110" y="122" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-5" x="64" y="30" fontSize="13" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-6" x="94" y="140" fontSize="12" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-      <text className="iw-q iw-q-7" x="18" y="92" fontSize="11" fontWeight="bold" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="1.2" textAnchor="middle" fontFamily="'Bungee', sans-serif">?</text>
-
-      {/* The eye: blinks; its pupil scans left-right. */}
-      <g className="iw-eye">
-        <path d="M28 84 Q70 48 112 84 Q70 120 28 84 Z" fill="#FFFFFF" stroke="#4B0A87" strokeWidth="4" strokeLinejoin="round" />
-        <g className="iw-pupil">
-          <circle cx="70" cy="84" r="17" fill="#9A1AFF" stroke="#4B0A87" strokeWidth="3" />
-          <circle cx="70" cy="84" r="8" fill="#1a0b2e" />
-          <circle cx="64" cy="78" r="3.2" fill="#fff" />
-        </g>
-      </g>
-
-      {/* Detection pings: rings that expand out from the pupil and fade,
-          like the eye is actively scanning. Stroked circles, no fill. */}
-      <circle className="iw-ping iw-ping-1" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
-      <circle className="iw-ping iw-ping-2" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
-      <circle className="iw-ping iw-ping-3" cx="70" cy="84" r="11" fill="none" stroke="#9A1AFF" strokeWidth="2" />
-
-      {/* Two security-camera scan lines sweeping in opposite directions. */}
-      <rect className="iw-scanline" x="0" y="0" width="140" height="3.5" fill="#fff" />
-      <rect className="iw-scanline-2" x="0" y="0" width="140" height="3.5" fill="#fff" />
-    </svg>
-  );
-}
-
 // ---- SAT RUSH: a MANGA cover. Off-white paper, black ink, Ben-Day screentone,
 //      radial speed lines behind inked S·A·T tiles dropping into their slots, and
 //      the ante multiplier ticking 5x -> 2x in the ONE spot colour (violet) — the
@@ -237,6 +200,5 @@ export function SatRushArt() {
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
   CategoryBlitzArt,
-  ImposterWordArt,
   SatRushArt,
 };

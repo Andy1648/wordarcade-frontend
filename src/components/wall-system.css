@@ -39,10 +39,10 @@
      --wall-tint             faint colored cast washed over the concrete
      --wall-light            streetlight color (warm white by default)
 
-   REUSE: the three game modes (#4) build ON this — they apply .wall-surface and
-   only override the tokens (Word Bomb grimier/hotter, Category Blitz electric
-   cyan, Imposter spotlight), inheriting the same surface + tag-panel + spotlight
-   + handstyle vocabulary instead of each hardcoding its own background.
+   REUSE: the game modes build ON this — they apply .wall-surface and only
+   override the tokens (Word Bomb grimier/hotter, Category Blitz electric cyan),
+   inheriting the same surface + tag-panel + spotlight + handstyle vocabulary
+   instead of each hardcoding its own background.
    ---------------------------------------------------------------------------- */
 
 /* ============================ SURFACE ================================ */

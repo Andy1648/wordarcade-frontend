@@ -4,7 +4,7 @@
 //
 // PURE module: no DOM, no imports beyond shareConfig (also pure), so it runs
 // under `node --test` as-is. Spoiler-safe by construction — it never includes a
-// category name, a secret word, or who the imposter was.
+// category name or a secret word.
 //
 // Every mode's text follows the same shape so it reads as ONE brand in a chat:
 //   TYPE A WORD · <MODE BADGE> <emoji>
@@ -94,10 +94,10 @@ function statSuffix(parts) {
 
 /**
  * The share text. Args mirror ShareBar's props:
- *   mode    - 'word-bomb' | 'category-blitz' | 'imposter-word'
- *   outcome - word-bomb {won}; blitz {solo, isRecord, place, total}; imposter {won}
+ *   mode    - 'word-bomb' | 'category-blitz' | 'sat-rush'
+ *   outcome - word-bomb {won}; blitz {solo, isRecord, place, total}
  *   data    - word-bomb {words, longest, events:[{t:'word',len}|{t:'life'}]}
- *             blitz {score, roundScores:[...]}; imposter {caught, fooled, rounds}
+ *             blitz {score, roundScores:[...]}; sat-rush {cleared, avgAnte, ...}
  *   daily   - {dayNumber, streak} for the Daily Challenge (blitz solo), else null
  *   link    - URL for the last line (invite link for live rooms), default REF_URL
  */
@@ -165,22 +165,6 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
       ])
     );
     if (data.hardest) lines.push(`hardest clear: ${String(data.hardest).toLowerCase()}`);
-  } else if (mode === 'imposter-word') {
-    const won = !!outcome.won;
-    lines.push('TYPE A WORD · IMPOSTER WORD 🕵️');
-    const caught = Math.max(0, Number(data.caught) || 0);
-    const fooled = Math.max(0, Number(data.fooled) || 0);
-    const row = statSuffix([
-      caught ? `caught ${'✅'.repeat(Math.min(caught, 8))}` : null,
-      fooled ? `fooled ${'🎭'.repeat(Math.min(fooled, 8))}` : null,
-    ]);
-    lines.push(row || 'nobody fooled. nobody caught. pure chaos 🎪');
-    lines.push(
-      statSuffix([
-        won ? 'WINNER 👑' : 'GAME OVER',
-        data.rounds ? `${data.rounds} round${data.rounds === 1 ? '' : 's'}` : null,
-      ])
-    );
   } else {
     lines.push('TYPE A WORD ⚡');
     lines.push('a word game where you type fast or die slow');

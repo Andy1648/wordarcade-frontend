@@ -1,5 +1,5 @@
 /* landing.css — shared stylesheet for the static game landing pages
-   (/word-bomb/, /category-blitz/, /imposter-word/).
+   (/word-bomb/, /category-blitz/).
    These pages are plain prerendered HTML in public/ so crawlers get real
    content; they are NOT part of the React bundle. Style mirrors the app:
    flat colors only, thick colored outlines, hard black offset shadows,

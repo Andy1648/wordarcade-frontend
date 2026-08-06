@@ -129,29 +129,7 @@ test('multiplayer blitz: 4th place gets ordinal, no medal', () => {
   assert.doesNotMatch(txt, /🥇|🥈|🥉/);
 });
 
-test('imposter: spoiler-free, caught/fooled rows, win crown', () => {
-  const txt = buildShareText({
-    mode: 'imposter-word',
-    outcome: { won: true },
-    data: { caught: 3, fooled: 2, rounds: 5 },
-  });
-  assert.match(txt, /caught ✅✅✅/);
-  assert.match(txt, /fooled 🎭🎭/);
-  assert.match(txt, /WINNER 👑/);
-  assert.match(txt, /5 rounds/);
-});
-
-test('imposter: zero caught & fooled has a fun fallback line', () => {
-  const txt = buildShareText({
-    mode: 'imposter-word',
-    outcome: { won: false },
-    data: { caught: 0, fooled: 0, rounds: 5 },
-  });
-  assert.match(txt, /pure chaos/);
-  assert.match(txt, /GAME OVER/);
-});
-
-test('singular grammar: 1 player / 1 round render without a trailing s', () => {
+test('singular grammar: 1 player / 1 word render without a trailing s', () => {
   const wb = buildShareText({
     mode: 'word-bomb',
     outcome: { won: true },
@@ -160,17 +138,17 @@ test('singular grammar: 1 player / 1 round render without a trailing s', () => {
   assert.match(wb, /1 player\b/);
   assert.doesNotMatch(wb, /1 players/);
 
-  const imp = buildShareText({
-    mode: 'imposter-word',
-    outcome: { won: true },
-    data: { caught: 1, fooled: 0, rounds: 1 },
+  const sr = buildShareText({
+    mode: 'sat-rush',
+    outcome: {},
+    data: { cleared: 1, bestStreak: 0 },
   });
-  assert.match(imp, /1 round\b/);
-  assert.doesNotMatch(imp, /1 rounds/);
+  assert.match(sr, /1 word\b/);
+  assert.doesNotMatch(sr, /1 words/);
 });
 
 test('every mode ends with sign-off then link', () => {
-  for (const mode of ['word-bomb', 'category-blitz', 'imposter-word', 'unknown-mode']) {
+  for (const mode of ['word-bomb', 'category-blitz', 'sat-rush', 'unknown-mode']) {
     const lines = buildShareText({ mode }).split('\n');
     assert.equal(lines[lines.length - 2], SIGN_OFF, mode);
     assert.equal(lines[lines.length - 1], REF_URL, mode);

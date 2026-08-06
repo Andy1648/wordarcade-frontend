@@ -19,7 +19,6 @@ const TRANSITION = `transform ${MORPH_MS}ms ${EASE}, border-radius ${MORPH_MS}ms
 const MODE_KEY = {
   'word-bomb': 'bomb',
   'category-blitz': 'blitz',
-  'imposter-word': 'imposter',
 };
 
 function prefersReduced() {

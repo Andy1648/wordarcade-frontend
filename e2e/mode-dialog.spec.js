@@ -37,7 +37,7 @@ test.describe('mode dialog', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
     // …and the menu underneath is interactive again.
-    await expect(page.locator('.game-card')).toHaveCount(4);
+    await expect(page.locator('.game-card')).toHaveCount(3);
   });
 
   test('closes cleanly via the Escape key', async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe('mode dialog', () => {
   });
 
   test('closes cleanly via a scrim click', async ({ page }) => {
-    await openDialog(page, 'IMPOSTER WORD');
+    await openDialog(page, 'CATEGORY BLITZ');
     // The scrim is the dimmed backdrop outside the dialog shell.
     await page.locator('.mode-dialog-scrim').click({ position: { x: 5, y: 5 } });
     await expect(page.getByRole('dialog')).toHaveCount(0);
