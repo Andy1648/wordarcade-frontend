@@ -1,7 +1,7 @@
-// AnteMeter.jsx — the SECOND-largest thing on screen (after the sentence). The
-// whole "answer earlier = more points" read lives here: a big multiplier that
-// pops on every drop, a pip row that empties as the multiplier falls, and an
-// always-visible drain bar counting down to the next reveal.
+// AnteMeter.jsx — the ante read: a big Bungee INK multiplier with the violet
+// plate printed OFF-REGISTER (the ::before renders the same glyphs, shifted), a
+// double-ruled caption box, a row of ink stage-pips, and the always-visible drain
+// bar. The whole "answer earlier = more points" story lives here.
 export default function AnteMeter({
   multiplier,
   stage,
@@ -14,24 +14,34 @@ export default function AnteMeter({
 }) {
   const litPips = maxStage + 1 - stage; // more lit = more multiplier still on offer
   // Re-key the drain on each stage so it restarts cleanly. The multiplier node is
-  // deliberately STABLE (no key) so the juice squash/flash animate it in place
-  // (the number's text just updates) — see juice.multiplierDrop.
+  // deliberately STABLE (no key) so juice.multiplierDrop can squash it in place.
   const stageKey = `${wordNumber}-${stage}`;
+  const mult = `${multiplier}×`;
   return (
     <div className="sr-ante">
-      <div>
-        <div className="sr-mult" aria-label={`multiplier ${multiplier} times`}>
-          {multiplier}×
+      <div
+        className="sr-mult sr-print"
+        data-v={mult}
+        aria-label={`multiplier ${multiplier} times`}
+      >
+        {mult}
+      </div>
+      <div className="sr-anteright">
+        <div className={`sr-antebox${atFinal ? ' final' : ''}`}>
+          {atFinal ? (
+            <>
+              <span className="sr-accent">LAST CALL</span> — IT&rsquo;S PRINTING
+            </>
+          ) : (
+            <>
+              <span className="sr-accent">ANTE</span> — ANSWER NOW FOR MORE
+            </>
+          )}
         </div>
         <div className="sr-pips" aria-hidden="true">
           {Array.from({ length: maxStage + 1 }, (_, i) => (
             <div key={i} className={`sr-pip${i < litPips ? ' on' : ''}`} />
           ))}
-        </div>
-      </div>
-      <div className="sr-anteright">
-        <div className="sr-antelabel">
-          {atFinal ? 'last chance — answer now' : 'ante — answer now for more'}
         </div>
         <div className="sr-tick">
           {running ? (

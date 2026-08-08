@@ -35,13 +35,35 @@ function RevealRow({ type, visible, view }) {
     );
   }
   if (type === 'gloss') {
-    return <div className={`sr-gloss ${cls}`}>{visible ? `“${view.gloss}”` : ''}</div>;
+    return (
+      <div className={`sr-gloss ${cls}`}>
+        {visible ? (
+          <>
+            <span className="sr-tagchip" aria-hidden="true">
+              DEF
+            </span>
+            “{view.gloss}”
+          </>
+        ) : (
+          ''
+        )}
+      </div>
+    );
   }
   if (type === 'root') {
     if (!view.root) {
       return (
         <div className={`sr-root ${cls}`}>
-          {visible ? <span className="cz">no shared root — this one stands alone</span> : ''}
+          {visible ? (
+            <>
+              <span className="sr-tagchip" aria-hidden="true">
+                ROOT
+              </span>
+              <span className="cz">no shared root — this one stands alone</span>
+            </>
+          ) : (
+            ''
+          )}
         </div>
       );
     }
@@ -49,6 +71,9 @@ function RevealRow({ type, visible, view }) {
       <div className={`sr-root ${cls}`}>
         {visible ? (
           <>
+            <span className="sr-tagchip" aria-hidden="true">
+              ROOT
+            </span>
             <b>{view.root.morpheme}</b> — {view.root.meaning}{' '}
             <span className="cz">· {view.root.cousins.join(' · ')}</span>
           </>
