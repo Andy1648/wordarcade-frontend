@@ -30,11 +30,11 @@ export const SAT_RUSH_TRANSITION_WORD = 'SHARPEN UP';
 // Mode accent (violet), used by the card, the route background and the UI.
 export const SAT_RUSH_COLOR = '#A855F7';
 
-// Dev-only stage-interval override. 1400ms is a guess that needs tuning against
+// Dev-only stage-interval override. 2000ms is a guess that needs tuning against
 // a real build, so it is exposed the SAME way as the flag above — a query-string
 // escape hatch resolved once at module load. `?stage=1200` sets the starting
-// per-stage reveal interval (clamped to a sane range). Default stays 1400.
-export const DEFAULT_STAGE_MS = 1400;
+// per-stage reveal interval (clamped to a sane range). Default stays 2000.
+export const DEFAULT_STAGE_MS = 2000;
 export const SAT_RUSH_STAGE_MS = (() => {
   if (typeof window === 'undefined') return DEFAULT_STAGE_MS;
   const raw = new URLSearchParams(window.location.search).get('stage');

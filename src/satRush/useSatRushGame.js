@@ -5,7 +5,7 @@
 // rules (deep-cut interval scale, grace length) are read from engine.config; the
 // only thing this hook decides is the base stage interval (dev-tunable).
 import { useReducer, useRef, useEffect, useCallback } from 'react';
-import { createSatRushEngine } from './engine';
+import { createSatRushEngine, DEFAULT_CONFIG } from './engine';
 import { createSlotInput } from './input';
 import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
@@ -35,10 +35,22 @@ export function useSatRushGame() {
   const fxRef = useRef({ shake: 0, badIndex: -1, badKey: 0 }); // transient visual cues
   const pauseTimer = useRef(null);
   const stageTimer = useRef(null);
+  // The full spell-along drain window (ms), fixed at final-stage entry so the
+  // AnteMeter's drain bar spans the whole endgame without restarting per reveal.
+  const graceMsRef = useRef(0);
 
-  // Dev-tunable settings. Stage interval seeds from the ?stage= override and can
-  // be changed live without restarting; the structural knobs apply on next game.
-  const cfgRef = useRef({ stageMs: SAT_RUSH_STAGE_MS, deepEvery: 10, revGap: 6, climb: 8 });
+  // Dev-tunable settings. Stage/spell intervals seed from the config defaults (the
+  // stage interval also honours the ?stage= override) and can be changed live
+  // without restarting; the structural knobs apply on next game. deepEvery/climb
+  // mirror the engine's deepCutEvery/tierEvery defaults so the tuner starts in
+  // sync with the shipped values.
+  const cfgRef = useRef({
+    stageMs: SAT_RUSH_STAGE_MS,
+    spellMs: DEFAULT_CONFIG.spellAlongMs,
+    deepEvery: DEFAULT_CONFIG.deepCutEvery,
+    revGap: DEFAULT_CONFIG.revenantOffset,
+    climb: DEFAULT_CONFIG.tierEvery,
+  });
 
   const clearTimers = () => {
     clearTimeout(pauseTimer.current);
@@ -88,11 +100,15 @@ export function useSatRushGame() {
   const resolveClear = useCallback(
     (viaAlt) => {
       const eng = engineRef.current;
-      const r = eng.submitCorrect({ viaAlt });
+      // How many letters were revealed at completion — gates the heat bump in the
+      // engine, and tells PostHog whether players ante early or ride the spell-along.
+      const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
+      const r = eng.submitCorrect({ viaAlt, revealed });
       if (!r) return;
       track('word_resolved', {
         mode: 'sat-rush',
         stage: r.breakdown.stage, // THE key metric — are players anteing early?
+        revealed,
         multiplier: r.breakdown.effectiveMultiplier,
         outcome: viaAlt ? 'near' : 'exact',
       });
@@ -174,28 +190,71 @@ export function useSatRushGame() {
     const c = eng.getState().current;
     if (!c || c.resolved) return;
 
+    const lastStage = eng.config.stageMultipliers.length - 1;
     const scale = c.isDeepCut ? eng.config.deepCutIntervalScale : 1;
     const interval = Math.round(cfgRef.current.stageMs * scale);
 
-    if (c.stage < eng.config.stageMultipliers.length - 1) {
+    // The whole spell-along drain window from RIGHT NOW: one final-hold plus one
+    // tick per remaining auto-reveal. Fixed into graceMsRef at final-stage entry
+    // so the AnteMeter drain bar spans the endgame in a single sweep. tickMs is
+    // the live spell cadence (never deep-cut-scaled).
+    const spellWindowMs = () => {
+      const eg = eng.endgame();
+      if (!eg) return 0;
+      const tickMs = cfgRef.current.spellMs;
+      const revealedNow = inputRef.current ? inputRef.current.getState().revealed : 0;
+      return Math.max(0, eg.autoRevealMax - revealedNow) * tickMs + 2 * tickMs;
+    };
+
+    if (c.stage < lastStage) {
       stageTimer.current = setTimeout(() => {
         eng.advanceStage();
         const now = eng.getState().current;
         // PRIORITY 1: the multiplier drop — punch the number + a DESCENDING tick.
-        juice.multiplierDrop(now.stage, eng.config.stageMultipliers.length - 1);
-        // Stage 4 reveals the FIRST letter (only if none revealed yet).
-        if (now.stage >= 4 && inputRef.current.getState().revealed === 0) {
-          inputRef.current.revealNextLetter();
+        juice.multiplierDrop(now.stage, lastStage);
+        // Entering the final stage reveals the FREE first letter (only if none
+        // revealed yet) and fixes the spell-along drain window for the meter.
+        if (now.stage >= lastStage) {
+          if (inputRef.current.getState().revealed === 0) inputRef.current.revealNextLetter();
+          graceMsRef.current = spellWindowMs();
         }
         force();
       }, interval);
     } else {
-      // Final stage: a grace window (graceStages * interval) then it's a miss.
-      const grace = interval * eng.config.graceStages;
-      stageTimer.current = setTimeout(doMiss, grace);
+      // Final stage — the SPELL-ALONG endgame. Instead of a silent grace then a
+      // miss, keep auto-revealing one letter every tickMs until only the last
+      // letter is missing (autoRevealMax = length - 1), re-rendering each tick, so
+      // the player always gets to finish the word. Completing at any point runs
+      // the normal clear path (keyboard effect); Escape still skips. After the
+      // last possible reveal, one final hold, then it's a "walked away" miss.
+      graceMsRef.current = spellWindowMs();
+      const tickMs = cfgRef.current.spellMs;
+      const finalHoldMs = 2 * tickMs;
+      const autoRevealMax = eng.endgame().autoRevealMax;
+      const tick = () => {
+        if (pendingRef.current !== 'idle') return;
+        const input = inputRef.current;
+        if (!input) return;
+        const rev = input.revealNextLetter(); // locks the next target letter, snaps alt divergence
+        force();
+        if (rev.complete) {
+          resolveClear(input.getState().viaAlt);
+          return;
+        }
+        if (input.getState().revealed < autoRevealMax) {
+          stageTimer.current = setTimeout(tick, tickMs);
+        } else {
+          stageTimer.current = setTimeout(doMiss, finalHoldMs);
+        }
+      };
+      if (inputRef.current.getState().revealed < autoRevealMax) {
+        stageTimer.current = setTimeout(tick, tickMs);
+      } else {
+        stageTimer.current = setTimeout(doMiss, finalHoldMs);
+      }
     }
     return () => clearTimeout(stageTimer.current);
-  }, [phase, pending, stageForEffect, wordForEffect, doMiss]);
+  }, [phase, pending, stageForEffect, wordForEffect, doMiss, resolveClear]);
 
   // ---- keyboard ----
   useEffect(() => {
@@ -252,11 +311,12 @@ export function useSatRushGame() {
   // ---- public actions ----
   const freshEngine = useCallback(() => {
     clearTimers();
-    const { stageMs, deepEvery, revGap, climb } = cfgRef.current;
+    const { stageMs, spellMs, deepEvery, revGap, climb } = cfgRef.current;
     engineRef.current = createSatRushEngine({
       words: WORDS,
       config: {
         stageIntervalMs: stageMs,
+        spellAlongMs: spellMs,
         deepCutEvery: deepEvery,
         revenantOffset: revGap,
         tierEvery: climb,
@@ -276,6 +336,11 @@ export function useSatRushGame() {
   const setStageMs = useCallback((ms) => {
     cfgRef.current.stageMs = ms;
     force(); // the running stage effect picks up the new value on its next schedule
+  }, []);
+
+  const setSpellMs = useCallback((ms) => {
+    cfgRef.current.spellMs = ms;
+    force(); // the spell-along endgame picks up the new cadence on its next tick
   }, []);
 
   const setKnob = useCallback((key, value) => {
@@ -370,12 +435,14 @@ export function useSatRushGame() {
     msg: msgRef.current,
     fx: fxRef.current,
     cfg: cfgRef.current,
+    graceMs: graceMsRef.current, // spell-along drain window, fixed at final-stage entry
   });
 
   return {
     view,
     startGame,
     setStageMs,
+    setSpellMs,
     setKnob,
     scene,
     debugRevealTwo,
@@ -421,7 +488,7 @@ function buildView(state, cur, eng, input, extra) {
     maxStage: eng.config.stageMultipliers.length - 1,
     atFinal,
     interval,
-    graceMs: interval * eng.config.graceStages,
+    graceMs: extra.graceMs, // full spell-along window (fixed at final-stage entry)
     meta: `${POS_LABEL[cur.pos] || cur.pos} · ${cur.length} letters · tier ${cur.tier}`,
     reveals: cur.reveals.map((type, idx) => ({ type, idx, visible: idx <= cur.stage })),
     context: cur.context,

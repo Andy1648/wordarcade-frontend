@@ -2,7 +2,7 @@
 // against a real build, so it is a live slider (no reload) on top of the
 // ?stage= query-param override. The structural knobs apply on the next game.
 // Scene buttons jump straight to each state for tuning / QA / screenshots.
-export default function DevTuner({ cfg, setStageMs, setKnob, scene, debugRevealTwo }) {
+export default function DevTuner({ cfg, setStageMs, setSpellMs, setKnob, scene, debugRevealTwo }) {
   return (
     <div className="sr-tuner">
       <span className="hint">tune</span>
@@ -17,6 +17,18 @@ export default function DevTuner({ cfg, setStageMs, setKnob, scene, debugRevealT
           onChange={(e) => setStageMs(Number(e.target.value))}
         />
         <b>{cfg.stageMs}ms</b>
+      </label>
+      <label>
+        spell interval
+        <input
+          type="range"
+          min="600"
+          max="2000"
+          step="50"
+          value={cfg.spellMs}
+          onChange={(e) => setSpellMs(Number(e.target.value))}
+        />
+        <b>{cfg.spellMs}ms</b>
       </label>
       <label>
         deep cut every

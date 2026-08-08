@@ -79,6 +79,7 @@ export default function SatRushGame({ onExit }) {
         <DevTuner
           cfg={view.cfg}
           setStageMs={game.setStageMs}
+          setSpellMs={game.setSpellMs}
           setKnob={game.setKnob}
           scene={game.scene}
           debugRevealTwo={game.debugRevealTwo}
@@ -127,8 +128,9 @@ function StartScreen({ onPlay, onExit }) {
         </div>
       </div>
       <div className="sr-sub" style={{ opacity: 0.5 }}>
-        Wrong letters bounce — you can’t get stuck. 5 correct in a row → SILVER TONGUE, everything
-        doubles. Miss a word and it comes back angrier.
+        Stuck? It spells itself out — for scraps. Answer early for the real points. Miss only if you
+        walk away. 5 correct in a row → SILVER TONGUE, everything doubles. Miss a word and it comes
+        back angrier.
       </div>
       <button type="button" className="sr-btn" onClick={onPlay}>
         Play

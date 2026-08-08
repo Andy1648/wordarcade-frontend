@@ -210,20 +210,20 @@ test('a revenant enters at stage 2, pays double, and is requeued on a re-miss', 
 
 // --- deep-cut cadence ------------------------------------------------------
 
-test('deep cuts land on every 10th word (10/20/30), forced tier 5, slower cadence', () => {
+test('deep cuts land on every 15th word (15/30/45), forced tier 5, slower cadence', () => {
   const eng = engine({ perTier: 20 });
   const deepSlots = [];
-  for (let n = 1; n <= 30; n++) {
+  for (let n = 1; n <= 45; n++) {
     const cur = eng.nextWord();
     if (cur && cur.isDeepCut) deepSlots.push(n);
   }
-  assert.deepEqual(deepSlots, [10, 20, 30]);
+  assert.deepEqual(deepSlots, [15, 30, 45]);
 
   // Inspect slot 30's deep cut directly.
   const eng2 = engine({ perTier: 20 });
   const at30 = skipTo(eng2, 30);
   assert.equal(at30.isDeepCut, true);
-  assert.equal(at30.tier, 5); // forced regardless of the curve (curveTier(30)=4)
+  assert.equal(at30.tier, 5); // forced regardless of the curve (curveTier(30)=3)
   assert.equal(
     eng2.stageIntervalMs(),
     Math.round(DEFAULT_CONFIG.stageIntervalMs * DEFAULT_CONFIG.deepCutIntervalScale)
@@ -254,17 +254,17 @@ test('any miss zeroes heat, breaks silver, and resets the streak', () => {
 
 // --- tier curve boundaries -------------------------------------------------
 
-test('tier curve steps up exactly at 8/16/24/32', () => {
+test('tier curve steps up exactly at 12/24/36/48 (tierEvery 12)', () => {
   const pairs = [
     [1, 1],
-    [7, 1],
-    [8, 2],
-    [15, 2],
-    [16, 3],
-    [23, 3],
-    [24, 4],
-    [31, 4],
-    [32, 5],
+    [11, 1],
+    [12, 2],
+    [23, 2],
+    [24, 3],
+    [35, 3],
+    [36, 4],
+    [47, 4],
+    [48, 5],
     [100, 5],
   ];
   for (const [n, tier] of pairs) assert.equal(curveTier(n), tier, `wordNumber ${n}`);
@@ -297,18 +297,111 @@ test('wrong keystrokes bleed score but never below zero, and reveal every 3rd', 
   assert.equal(eng.getState().score, 0);
 });
 
+// --- spell-along heat rule -------------------------------------------------
+
+test('heat does NOT bump on a clear that used more than the free reveal', () => {
+  const eng = engine();
+  eng.nextWord();
+  const r = eng.submitCorrect({ revealed: 2 }); // leaned on the spell-along
+  assert.equal(eng.getState().heat, 0); // unchanged — never bumped
+  assert.equal(r.breakdown.silver, false);
+  // ...but it still SCORES and keeps the streak (1x is already the floor).
+  assert.equal(eng.getState().currentStreak, 1);
+  assert.equal(eng.getState().cleared, 1);
+  assert.ok(r.gained > 0);
+
+  // A clear at the free stage-4 letter (revealed <= heatMaxRevealed) DOES bump.
+  eng.nextWord();
+  eng.submitCorrect({ revealed: 1 });
+  assert.equal(eng.getState().heat, 1);
+  // And revealed lands in the run log (feeds the word_resolved analytics).
+  assert.deepEqual(
+    eng.results().runLog.map((e) => e.revealed),
+    [2, 1]
+  );
+});
+
+test('silver still requires heatCap clears earned with <= the free reveal', () => {
+  const eng = engine();
+  // Five spell-along clears never build heat -> silver never turns on.
+  for (let i = 0; i < 5; i++) {
+    eng.nextWord();
+    eng.submitCorrect({ revealed: 2 });
+  }
+  assert.equal(eng.getState().heat, 0);
+  assert.equal(eng.getState().silverTongue, false);
+
+  // Five clears at the free reveal reach the cap and earn silver.
+  for (let i = 0; i < 5; i++) {
+    eng.nextWord();
+    eng.submitCorrect({ revealed: 1 });
+  }
+  assert.equal(eng.getState().heat, DEFAULT_CONFIG.heatCap);
+  assert.equal(eng.getState().silverTongue, true);
+});
+
+test('a spell-along clear at heat cap keeps silver (heat UNCHANGED, not reset)', () => {
+  const eng = engine();
+  for (let i = 0; i < 5; i++) {
+    eng.nextWord();
+    eng.submitCorrect({ revealed: 1 });
+  }
+  assert.equal(eng.getState().silverTongue, true);
+
+  // Clearing while leaning on the spell-along must not RESET heat (only a miss
+  // does that) — it stays at the cap and the clear is still doubled.
+  eng.nextWord();
+  const r = eng.submitCorrect({ revealed: 3 });
+  assert.equal(eng.getState().heat, DEFAULT_CONFIG.heatCap);
+  assert.equal(eng.getState().silverTongue, true);
+  assert.equal(r.breakdown.silver, true);
+});
+
+// --- spell-along endgame data ----------------------------------------------
+
+test('endgame(): autoRevealMax = length-1, tickMs = spellAlongMs, finalHoldMs = 2*tickMs', () => {
+  const eng = engine();
+  const cur = eng.nextWord();
+  const eg = eng.endgame();
+  assert.equal(eg.tickMs, DEFAULT_CONFIG.spellAlongMs);
+  assert.equal(eg.autoRevealMax, cur.length - 1); // last letter is never auto-revealed
+  assert.equal(eg.finalHoldMs, 2 * DEFAULT_CONFIG.spellAlongMs);
+});
+
+test('the deep-cut interval scale slows the STAGE cadence but NEVER the spell-along tick', () => {
+  const eng = engine({ perTier: 20 });
+  const cut = skipTo(eng, 15); // a deep cut
+  assert.equal(cut.isDeepCut, true);
+  // Stage cadence is scaled up...
+  assert.equal(
+    eng.stageIntervalMs(),
+    Math.round(DEFAULT_CONFIG.stageIntervalMs * DEFAULT_CONFIG.deepCutIntervalScale)
+  );
+  // ...but the spell-along tick is the raw spellAlongMs, unscaled.
+  assert.equal(eng.endgame().tickMs, DEFAULT_CONFIG.spellAlongMs);
+  assert.equal(eng.endgame().finalHoldMs, 2 * DEFAULT_CONFIG.spellAlongMs);
+});
+
+test('endgame() tracks a custom spellAlongMs (tickMs and the 2x final hold)', () => {
+  const eng = engine({ config: { spellAlongMs: 700 } });
+  eng.nextWord();
+  const eg = eng.endgame();
+  assert.equal(eg.tickMs, 700);
+  assert.equal(eg.finalHoldMs, 1400);
+});
+
 // === INTERACTION CASES =====================================================
 
-test('INTERACTION: a revenant that is ALSO the 10th word stacks deep-cut + revenant', () => {
+test('INTERACTION: a revenant that is ALSO the 15th word stacks deep-cut + revenant', () => {
   const eng = engine();
-  // Miss word 4 -> revenant due at word 10 (a deep-cut slot).
-  skipTo(eng, 4);
+  // Miss word 9 -> revenant due at word 15 (a deep-cut slot) with revenantOffset 6.
+  skipTo(eng, 9);
   eng.miss();
-  const cur = skipTo(eng, 10);
+  const cur = skipTo(eng, 15);
 
   assert.equal(cur.isRevenant, true);
   assert.equal(cur.isDeepCut, true); // it landed on the deep-cut slot
-  assert.equal(cur.tier, 1); // a revenant keeps its own tier (word 4 was tier 1)
+  assert.equal(cur.tier, 1); // a revenant keeps its own tier (word 9 was tier 1)
   assert.equal(cur.stage, 2);
   assert.equal(eng.getState().heat, 0); // isolated from silver
   assert.equal(eng.currentMultiplier(), 3 * 2); // stage-2 3x * revenant 2
@@ -346,7 +439,7 @@ test('INTERACTION: a miss on a deep cut costs a life, zeroes heat, and requeues'
   const eng = engine({ perTier: 20 });
   clearN(eng, 3); // heat 3 mid-run
   assert.equal(eng.getState().heat, 3);
-  const cut = skipTo(eng, 10);
+  const cut = skipTo(eng, 15);
   assert.equal(cut.isDeepCut, true);
   assert.equal(cut.tier, 5);
 
@@ -355,7 +448,7 @@ test('INTERACTION: a miss on a deep cut costs a life, zeroes heat, and requeues'
   assert.equal(eng.getState().lives, livesBefore - 1);
   assert.equal(eng.getState().heat, 0); // heat broke mid-run
   assert.equal(eng.getState().silverTongue, false);
-  assert.equal(m.requeuedFor, 10 + DEFAULT_CONFIG.revenantOffset); // 16
+  assert.equal(m.requeuedFor, 15 + DEFAULT_CONFIG.revenantOffset); // 21
 });
 
 test('INTERACTION: under the gloss<->root flip, a t5 revenant re-enters HARDER than a t3', () => {
@@ -372,10 +465,10 @@ test('INTERACTION: under the gloss<->root flip, a t5 revenant re-enters HARDER t
   // enters at stage 2 with sentence + root and NO gloss — harder than a tier-3
   // revenant's sentence + gloss.
   const eng = engine({ perTier: 20 });
-  const cut = skipTo(eng, 10); // fresh deep cut, forced tier 5
+  const cut = skipTo(eng, 15); // fresh deep cut, forced tier 5
   assert.equal(cut.tier, 5);
-  eng.miss(); // tier-5 revenant due at 16
-  const rev = skipTo(eng, 16);
+  eng.miss(); // tier-5 revenant due at 21
+  const rev = skipTo(eng, 21);
   assert.equal(rev.tier, 5);
   assert.equal(rev.isRevenant, true);
   assert.equal(rev.stage, 2);
@@ -388,7 +481,7 @@ test('INTERACTION: under the gloss<->root flip, a t5 revenant re-enters HARDER t
 
 test('an alt clear is half credit (bonus included) and reports the real word', () => {
   const eng = engine({ perTier: 20 });
-  const cut = skipTo(eng, 10); // deep cut, tier 5, stage will be 0 after skip? no:
+  const cut = skipTo(eng, 15); // deep cut, tier 5, stage will be 0 after skip? no:
   // skipTo used nextWord (fresh), so stage 0; deep cut bonus applies on clear.
   assert.equal(cut.isDeepCut, true);
   const full = eng.currentMultiplier(); // stage 0 -> 5 (heat 0)
@@ -411,7 +504,7 @@ test('results(): avg ante is the mean clear MULTIPLIER and hardest word is the t
   eng.advanceStage();
   eng.submitCorrect(); // stage 2 -> 3x
   // A tier-5 deep cut cleared at stage 0 (5x) -> becomes the hardest word.
-  skipTo(eng, 10);
+  skipTo(eng, 15);
   eng.submitCorrect();
 
   const res = eng.results();
