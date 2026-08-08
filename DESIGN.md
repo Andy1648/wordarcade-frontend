@@ -181,6 +181,42 @@ If any answer is "no," it's not done — regardless of what the diff says.
 
 ---
 
+## SAT RUSH — retro-print sub-style  (scoped to `src/satRush/`)
+SAT RUSH deliberately diverges from the neon-sticker house look into a **vintage
+manga / pulp PAGE**: cream newsprint printed in black ink + violet, sitting on the
+site void (`#0d0618`). It still obeys the CRAFT BAR and the flat-colour / ink-outline
+/ hard-offset-shadow / Bungee+Space-Mono rules — it's "print-era, not sticker-era."
+This is a documented, intentional sub-style; do not "restore" it to the neon system.
+
+Tokens (CSS vars on `.sr-app`):
+- `--paper #F0EAD9` (newsprint) · `--tile #FBF7EC` (slot fill) · `--ink #111`
+- `--violet #A855F7` — the accent, printed **off-register** (a violet `::before`
+  plate offset −5px/−5px behind ink text)
+- `--redink #C8321E` — the mode's danger. **Documented divergence** from the house
+  neon danger red (`#FF5C5C`), scoped to this mode: on cream paper, print-red reads
+  right where neon does not. Do not swap it back.
+
+Surface:
+- **Double-rule borders** (a 4px ink border + an inset 3px-paper / 5px-ink rule) and
+  ONE hard offset shadow (`6px 6px 0 #111`) on every page/panel. Straight (no tilt).
+- **Decoration budget — nothing beyond this list ships:** the double-rule borders,
+  ONE halftone corner patch (`radial-gradient(circle,#111 30%,transparent 34%)` at
+  7px), and a 5% pulp grain (3px dot pattern). That's it.
+
+QUIET-BY-DEFAULT law (same spirit as the menu's "idle = remove"):
+- **At rest the ONLY motion is the caret blink.** No idle bob, no ambient loops, no
+  tilted elements (the ONE exception is the SFX stamp, ~4°).
+- **Speed lines are endgame-only** (hidden until the final "spell-along" stage).
+- **Beat response = the violet plate rattling ~1px** further off-register for ~120ms
+  (scaled by `--beat-intensity`). That is the entire beat response — no page flash.
+- **Stamps / the SILVER negative-reprint invert / the miss page-tear are EVENTS** —
+  they enter, land, and are gone; nothing new loops while a state holds. SILVER TONGUE
+  is expressed by INVERSION (the page reprints ink-on-paper → paper-on-ink), not by
+  added elements. `prefers-reduced-motion` turns stamps into opacity fades and kills
+  the flashes/rattle; state stays legible (shape + text, never colour alone).
+
+---
+
 ## 7. OPEN DESIGN DEBT
 - [ ] 192/512 install icons (manifest needs them)
 - [ ] combo-pop is content-scale only — does it feel flat without the border pop? (decide live)

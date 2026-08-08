@@ -866,22 +866,49 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   }
 }
 
-/* ---------- results (death / score reveal) — part 3 ---------- */
-/* Still on the dark void (not yet a page), so it keeps light text for legibility
-   until part 3 converts it. */
+/* ---------- results — one retro-print PAGE (death dominates entry) ---------- */
 .sr-results {
   flex-direction: column;
+  overflow-y: auto; /* the overlay scrolls; the page's own overflow stays visible */
+}
+.sr-respage {
+  position: relative;
+  margin: auto; /* centres when it fits, scrolls (via the overlay) when it doesn't */
+  width: min(560px, 94vw);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 14px;
-  color: var(--paper);
-}
-.sr-results.sr-screen {
   text-align: center;
+  background: var(--paper);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--ink);
+  padding: clamp(26px, 4.5vh, 44px) clamp(20px, 3.5vw, 34px);
 }
+.sr-respage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
+}
+.sr-respage > * {
+  position: relative;
+  z-index: 1;
+}
+/* DEAD slams in OVER the page (page overflow is visible, so it isn't clipped) */
 .sr-dead {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(44px, 10vw, 96px);
+  font-size: clamp(44px, 10vw, 88px);
   letter-spacing: 0.05em;
   color: var(--redink);
+  -webkit-text-stroke: 2px var(--ink);
   animation: sr-slam 0.4s cubic-bezier(0.2, 0.9, 0.2, 1) both;
   animation-delay: 300ms;
 }
@@ -899,80 +926,161 @@ html[data-beat='true'] .sr-mult.sr-print::before {
     opacity: 1;
   }
 }
-.sr-ante-hero {
+
+/* a reusable double-ruled results panel */
+.sr-panel {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
+  padding: 14px 18px;
+}
+.sr-panel-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+/* AVG ANTE — the headline: big Bungee ink with the violet plate off-register */
+.sr-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin: 4px 0 2px;
+  padding: clamp(14px, 2.5vh, 22px) 18px;
 }
 .sr-ante-value {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(72px, 15vw, 150px);
+  font-size: clamp(64px, 13vw, 116px);
   line-height: 0.85;
-  color: var(--violet);
 }
-.sr-ante-label {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  opacity: 0.55;
-}
-.sr-resstats {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 8px 0 4px;
-}
-.sr-resstats .sr-stat {
+/* SCORE — zero-padded Bungee ink */
+.sr-scorepanel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
 }
-.sr-resstats .sr-stat b {
-  font-size: 34px;
+.sr-score-value {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(30px, 6vw, 46px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
-.sr-resstats .sr-stat span {
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  opacity: 0.55;
-  text-transform: uppercase;
+/* cleared / missed / best — a ruled strip (reuses the HUD cells) */
+.sr-resstrip {
+  display: flex;
+  border: 2px solid var(--ink);
 }
-.sr-seen {
+.sr-resstrip .sr-hcell {
+  flex: 1;
+  align-items: center;
+  padding: 9px 8px;
+}
+.sr-resstrip .sr-hval {
+  font-size: clamp(20px, 4vw, 26px);
+}
+/* runLog film-strip: one small ruled frame per word (clear=ink, miss=redink;
+   deep/rev/silver keep a glyph so it reads by shape + label, not colour alone) */
+.sr-filmstrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  padding: 2px 0;
+}
+.sr-frame {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  font-family: 'Space Mono', monospace;
   font-size: 12px;
-  opacity: 0.7;
-  max-width: 620px;
-  line-height: 1.9;
+  line-height: 1;
 }
-.sr-seen .miss {
-  color: var(--redink);
+.sr-frame.ok {
+  background: var(--ink);
+  color: var(--paper);
 }
-.sr-results .sr-resstats,
-.sr-hardest,
+.sr-frame.miss {
+  background: var(--redink);
+  color: var(--paper);
+}
+/* hardest word — its own panel sitting on the ONE halftone patch */
+.sr-hardestpanel {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.sr-hardestpanel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--ink) 30%, transparent 34%);
+  background-size: 7px 7px;
+  opacity: 0.16;
+}
+.sr-hardestpanel > * {
+  position: relative;
+  z-index: 1;
+}
+.sr-hardest-word {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(22px, 4.5vw, 32px);
+  letter-spacing: 0.02em;
+}
+/* actions */
+.sr-results-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 4px;
+}
+.sr-share {
+  border-top: 2px solid var(--ink);
+  padding-top: 12px;
+  margin-bottom: 2px;
+}
+.sr-btn-ghost {
+  background: transparent;
+}
+/* staggered entrance: the panels below the counting hero fade in once landed */
+.sr-resstrip,
+.sr-filmstrip,
+.sr-hardestpanel,
 .sr-results-actions {
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity 0.34s ease, transform 0.34s ease;
 }
-.sr-results .sr-resstats.in,
-.sr-hardest.in,
+.sr-resstrip.in {
+  transition-delay: 0.04s;
+}
+.sr-filmstrip.in {
+  transition-delay: 0.1s;
+}
+.sr-hardestpanel.in {
+  transition-delay: 0.16s;
+}
+.sr-results-actions.in {
+  transition-delay: 0.22s;
+}
+.sr-resstrip.in,
+.sr-filmstrip.in,
+.sr-hardestpanel.in,
 .sr-results-actions.in {
   opacity: 1;
   transform: none;
-}
-.sr-hardest {
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  transition-delay: 0.08s;
-}
-.sr-results-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  transition-delay: 0.16s;
 }
 
 /* ---------- dev tuner (dev-only) ---------- */
@@ -1048,6 +1156,14 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   .sr-reveal {
     transition: opacity 0.2s;
     transform: none;
+  }
+  /* results panels fade in with NO travel (opacity only keeps the state legible) */
+  .sr-resstrip,
+  .sr-filmstrip,
+  .sr-hardestpanel,
+  .sr-results-actions {
+    transform: none;
+    transition: opacity 0.2s;
   }
   /* stamps become plain opacity fades (the tilt is static, so it stays) */
   .sr-stamp {

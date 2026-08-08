@@ -1,23 +1,21 @@
 // e2e/sat-rush.spec.js
 //
-// A full SAT RUSH run, end to end: the menu card navigates in, Play starts the
-// run, and giving up three words (Escape) ends it on the results screen. The
-// mode is solo (no WebSocket) but the shared backend mock is still installed so
-// the app-level socket never touches production.
+// SAT RUSH end to end: the mode opens from its menu card, a word can be CLEARED,
+// and running out of lives lands on the retro-print results PAGE. Solo mode (no
+// WebSocket), but the shared backend mock is installed so the app-level socket
+// never touches production.
 //
-// `?satRush=1` enables the mode flag so the third card renders (the ship flag is
-// off by default); `?portal=1` skips the intro straight to the menu; `?stage=500`
-// speeds the stage clock so the run is quick.
+// `?satRush=1` enables the mode flag so the third card renders; `?portal=1` skips
+// the intro straight to the menu.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
 test.describe('SAT Rush', () => {
-  test('menu card → play → death → results', async ({ page }) => {
+  test('menu card → play → clear a word → death → results page', async ({ page }) => {
     await installBackendMock(page);
-    await page.goto('/?satRush=1&portal=1&stage=500');
+    await page.goto('/?satRush=1&portal=1');
 
-    // The SAT Rush card is on the menu; clicking it navigates straight into the
-    // solo mode (no CREATE/JOIN dialog).
+    // The mode opens straight from its menu card (solo — no CREATE/JOIN dialog).
     const card = page.locator('[data-game="sat-rush"]');
     await expect(card).toBeVisible();
     await card.locator('.game-card').click();
@@ -35,20 +33,35 @@ test.describe('SAT Rush', () => {
     await page.keyboard.press('z');
     await expect(page.locator('.sr-mult')).toBeVisible();
 
-    // Out of lives: give up three words. Wait out each between-word pause so the
-    // next Escape isn't swallowed while a miss is still resolving.
+    // A word can be CLEARED without knowing the answer: mashing a wrong key reveals
+    // one letter every 3rd press (engine wrongKeystrokeRevealEvery), so enough
+    // presses reveal the whole word and complete it — a full-credit clear.
+    const scoreCell = page.locator('.sr-hud .sr-hcell').first().locator('.sr-hval');
+    await expect(scoreCell).toHaveText('000000');
+    for (let i = 0; i < 72; i++) await page.keyboard.press('q');
+    await expect(scoreCell).not.toHaveText('000000'); // a clear banked points
+
+    // Let the between-word pause settle onto a fresh, idle word.
+    await page.waitForTimeout(1000);
+
+    // Out of lives: give up three words (Escape). Wait out each miss pause so the
+    // next Escape isn't swallowed while one is still resolving.
     for (let i = 0; i < 3; i++) {
       await page.keyboard.press('Escape');
       await page.waitForTimeout(1800);
     }
 
-    // Results: the DEAD stamp, the AVG ANTE headline, and the share bar.
+    // Results: the retro-print PAGE, the DEAD stamp, the AVG ANTE hero, the share
+    // bar, and the paper actions.
+    await expect(page.locator('.sr-respage')).toBeVisible();
     await expect(page.locator('.sr-dead')).toBeVisible();
-    await expect(page.locator('.sr-ante-hero')).toBeVisible();
+    await expect(page.locator('.sr-ante-value')).toBeVisible();
     await expect(page.getByRole('button', { name: /SHARE/ })).toBeVisible();
+    const runItBack = page.getByRole('button', { name: 'Run it back' });
+    await expect(runItBack).toBeVisible();
 
-    // Play again returns to the run.
-    await page.getByRole('button', { name: 'Again' }).click();
+    // Run it back returns to a fresh run.
+    await runItBack.click();
     await expect(page.locator('.sr-slots')).toBeVisible();
   });
 });

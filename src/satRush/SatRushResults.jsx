@@ -1,9 +1,10 @@
-// SatRushResults.jsx — the death / score reveal. Reuses the shared juice
-// primitives and the JUICE.CELEBRATION timings (the same staged sequence the
-// Category Blitz solo results use): entrance -> DEAD stamp slam -> score count-up
-// with pitched ticks -> staggered stat reveal. AVG ANTE is the headline (bigger
-// than raw score — it's the one number that says "I knew these fast"). Ends with
-// the shared ShareBar (image card + QR + PostHog attribution).
+// SatRushResults.jsx — the death / score reveal, as one retro-print PAGE (the
+// part-1 language: --paper, double-ruled panels, ink + the off-register violet
+// plate). Death still dominates entry: the DEAD stamp slams, the score + AVG ANTE
+// count up on the shared JUICE.CELEBRATION timings (same staged sequence Category
+// Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
+// the headline. Once landed, nothing loops (quiet-by-default). ShareBar is kept
+// working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
@@ -12,17 +13,16 @@ import { SAT_RUSH_COLOR } from './config';
 
 const C = JUICE.CELEBRATION;
 
-function ExitLink({ onExit }) {
-  if (!onExit) return null;
-  return (
-    <button
-      type="button"
-      onClick={onExit}
-      style={{ background: 'none', border: 'none', boxShadow: 'none', opacity: 0.5, fontWeight: 400 }}
-    >
-      exit
-    </button>
-  );
+// One runLog entry -> its film-strip frame. Special states keep a GLYPH mark, so
+// clear/miss and deep/rev/silver read by shape + label, never colour alone.
+function frameOf(e) {
+  const glyph = e.silver ? '✦' : e.deepCut ? '◆' : e.revenant ? '↺' : e.ok ? '' : '✕';
+  const kind = e.ok ? 'ok' : 'miss';
+  const parts = [e.ok ? 'cleared' : 'missed'];
+  if (e.silver) parts.push('silver tongue');
+  if (e.deepCut) parts.push('deep cut');
+  if (e.revenant) parts.push('revenant');
+  return { glyph, kind, label: parts.join(', ') };
 }
 
 export default function SatRushResults({ results, onAgain, onExit }) {
@@ -83,6 +83,8 @@ export default function SatRushResults({ results, onAgain, onExit }) {
   }, []);
 
   const anteStr = finalAnte ? ante.toFixed(1) : '—';
+  const anteHero = `${anteStr}×`;
+  const scoreStr = String(score).padStart(6, '0');
   const hardest = results.hardestWord ? results.hardestWord.word.toUpperCase() : null;
 
   const shareData = {
@@ -96,44 +98,72 @@ export default function SatRushResults({ results, onAgain, onExit }) {
 
   return (
     <div className="sr-screen sr-results">
-      <div className="sr-dead">DEAD</div>
+      <div className="sr-respage">
+        <div className="sr-dead">DEAD</div>
 
-      {/* AVG ANTE — the headline stat, biggest thing on the screen. */}
-      <div className="sr-ante-hero">
-        <div className="sr-ante-value" style={{ color: SAT_RUSH_COLOR }}>
-          {anteStr}×
+        {/* AVG ANTE — the headline stat: big Bungee ink with the violet plate off-register. */}
+        <div className="sr-panel sr-hero">
+          <div className="sr-ante-value sr-print" data-v={anteHero} aria-label={`average ante ${anteStr} times`}>
+            {anteHero}
+          </div>
+          <div className="sr-panel-label">avg ante — how fast you knew them</div>
         </div>
-        <div className="sr-ante-label">avg ante — how fast you knew them</div>
-      </div>
 
-      {/* Secondary stats. */}
-      <div className={`sr-resstats${revealed ? ' in' : ''}`}>
-        <div className="sr-stat">
-          <b>{score}</b>
-          <span>score</span>
+        {/* SCORE — zero-padded Bungee ink. */}
+        <div className="sr-panel sr-scorepanel">
+          <div className="sr-score-value">{scoreStr}</div>
+          <div className="sr-panel-label">score</div>
         </div>
-        <div className="sr-stat">
-          <b>{results.cleared}</b>
-          <span>cleared</span>
-        </div>
-        <div className="sr-stat">
-          <b>{results.bestStreak}</b>
-          <span>best streak</span>
-        </div>
-      </div>
 
-      {hardest && (
-        <div className={`sr-hardest${revealed ? ' in' : ''}`}>
-          hardest clear — <b style={{ color: SAT_RUSH_COLOR }}>{hardest}</b>
+        {/* cleared / missed / best-streak — a ruled strip like the in-game HUD. */}
+        <div className={`sr-resstrip${revealed ? ' in' : ''}`}>
+          <div className="sr-hcell">
+            <span className="sr-hlabel">cleared</span>
+            <b className="sr-hval">{results.cleared}</b>
+          </div>
+          <div className="sr-hcell">
+            <span className="sr-hlabel">missed</span>
+            <b className="sr-hval">{results.missed}</b>
+          </div>
+          <div className="sr-hcell">
+            <span className="sr-hlabel">best streak</span>
+            <b className="sr-hval">{results.bestStreak}</b>
+          </div>
         </div>
-      )}
 
-      <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
-        <ShareBar mode="sat-rush" outcome={{ solo: true }} data={shareData} neon={SAT_RUSH_COLOR} />
-        <button type="button" className="sr-btn" onClick={onAgain}>
-          Again
-        </button>
-        <ExitLink onExit={onExit} />
+        {/* runLog film-strip: one small ruled frame per word, in order. */}
+        {results.runLog.length > 0 && (
+          <div className={`sr-filmstrip${revealed ? ' in' : ''}`} aria-label="run timeline">
+            {results.runLog.map((e, i) => {
+              const f = frameOf(e);
+              return (
+                <div key={i} className={`sr-frame ${f.kind}`} title={f.label} aria-label={f.label}>
+                  <span aria-hidden="true">{f.glyph}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* hardest word — its own panel, sitting on the one halftone patch. */}
+        {hardest && (
+          <div className={`sr-panel sr-hardestpanel${revealed ? ' in' : ''}`}>
+            <span className="sr-panel-label">hardest clear</span>
+            <b className="sr-hardest-word">{hardest}</b>
+          </div>
+        )}
+
+        <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
+          <div className="sr-share">
+            <ShareBar mode="sat-rush" outcome={{ solo: true }} data={shareData} neon={SAT_RUSH_COLOR} />
+          </div>
+          <button type="button" className="sr-btn" onClick={onAgain}>
+            Run it back
+          </button>
+          <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
+            Menu
+          </button>
+        </div>
       </div>
     </div>
   );
