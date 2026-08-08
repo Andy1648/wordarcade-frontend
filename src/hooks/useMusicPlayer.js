@@ -216,12 +216,20 @@ export function useMusicPlayer() {
     [applyVolume]
   );
 
-  // Mute -> 0; unmute -> restore the remembered intended volume.
+  // Mute -> 0; unmute -> restore the remembered intended volume. Unmuting while
+  // the element is paused (e.g. music never started on a no-splash load) must
+  // actually START playback - flipping the gain alone leaves a paused element
+  // silent. play() wires the analyser graph if needed and re-applies volume.
   const toggleMute = useCallback(() => {
-    mutedRef.current = !mutedRef.current;
+    const nowMuted = !mutedRef.current;
+    mutedRef.current = nowMuted;
     applyVolume();
-    setIsMuted(mutedRef.current);
-  }, [applyVolume]);
+    setIsMuted(nowMuted);
+    const audio = audioRef.current;
+    if (!nowMuted && audio && audio.paused) {
+      play();
+    }
+  }, [applyVolume, play]);
 
   // Smoothly ramp the intended volume to `target` over `ms` (used to fade the
   // music in after the splash). A new fade cancels any in-flight one.

@@ -41,7 +41,24 @@ export default defineConfig({
     reducedMotion: 'reduce',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      // The music test needs autoplay allowed (see the autoplay project below);
+      // keep it out of the default project so it only runs where that flag is on.
+      testIgnore: /repeat-visitor-music\.spec\.js/,
+    },
+    {
+      // Playwright launch args are per-PROJECT, not per-spec, so the one spec that
+      // must observe real <audio> playback gets its own project with autoplay
+      // unblocked. Everything else runs in the default `chromium` project above.
+      name: 'chromium-autoplay',
+      testMatch: /repeat-visitor-music\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
+      },
+    },
   ],
   // Build a fresh production bundle and serve it via `vite preview`. Locally we
   // reuse an already-running preview (fast iteration); CI always starts clean.

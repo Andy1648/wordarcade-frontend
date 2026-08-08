@@ -433,6 +433,37 @@ function App() {
   const [slicing, setSlicing] = useState(false);
   const sliceTimerRef = useRef(null);
 
+  // Music start for sessions that never show the splash. The splash click is
+  // normally music's first-gesture unlock (handleSplashStart), but repeat
+  // visitors (SEEN_INTRO), portal embeds, and ?join=/?daily= deep links skip
+  // the splash entirely — so without this the music would never start for them.
+  // We capture whether the splash WILL show at first render (splashWillShowRef);
+  // when it won't, we arm one-shot pointerdown+keydown listeners that unlock and
+  // fade the music in on the first real gesture, then remove both. Not armed
+  // when the splash will show, so we never double-start.
+  const splashWillShowRef = useRef(showSplash);
+  const firstGestureMusicRef = useRef(false);
+  useEffect(() => {
+    if (splashWillShowRef.current) return undefined;
+    const startMusicOnGesture = () => {
+      if (firstGestureMusicRef.current) return;
+      firstGestureMusicRef.current = true;
+      sound.unlock();
+      music.setVolume(0);
+      music.play();
+      music.fadeTo(0.3, 500);
+      window.removeEventListener('pointerdown', startMusicOnGesture);
+      window.removeEventListener('keydown', startMusicOnGesture);
+    };
+    window.addEventListener('pointerdown', startMusicOnGesture);
+    window.addEventListener('keydown', startMusicOnGesture);
+    return () => {
+      window.removeEventListener('pointerdown', startMusicOnGesture);
+      window.removeEventListener('keydown', startMusicOnGesture);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
   // pulse with the track. beatCount increments per detected beat, which we use
@@ -1504,7 +1535,7 @@ function App() {
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
-    screen = <SatRushGame onExit={goHome} />;
+    screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} />;
   } else {
     screen = (
       <Homepage

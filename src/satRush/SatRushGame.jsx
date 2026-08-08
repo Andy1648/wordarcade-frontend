@@ -30,7 +30,7 @@ import WordCard from './WordCard';
 import SatRushResults from './SatRushResults';
 import DevTuner from './DevTuner';
 
-export default function SatRushGame({ onExit }) {
+export default function SatRushGame({ onExit, musicSetVolume }) {
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
@@ -40,6 +40,17 @@ export default function SatRushGame({ onExit }) {
     setShakeTarget(appRef.current);
     return () => setShakeTarget(null);
   }, []);
+
+  // Duck the background music while a run is live so the SFX cut through, then
+  // bring it back at game over - mirroring GameScreen's music duck. 0.15 while
+  // playing, 0.3 on the results screen, and restore 0.3 when leaving the mode.
+  // Guarded for musicSetVolume being absent (the flag-gated dev route may not
+  // pass it).
+  useEffect(() => {
+    if (!musicSetVolume) return undefined;
+    musicSetVolume(view.phase === 'playing' ? 0.15 : 0.3);
+    return () => musicSetVolume(0.3);
+  }, [view.phase, musicSetVolume]);
 
   return (
     <div className="sr-app" ref={appRef}>
