@@ -42,9 +42,14 @@ export default function SatRushGame({ onExit }) {
   }, []);
 
   return (
-    <div className="sr-app" ref={appRef}>
+    // .silver flips the whole page into a negative reprint (CSS var inversion).
+    <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
       {/* manga focus lines: hidden until the final stage (endgame treatment) */}
       <SpeedLines active={view.hasWord && view.atFinal} />
+      {/* miss: a 2-frame page-tear flash, re-keyed per miss so it fires once */}
+      {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
+        <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
+      )}
       <div className="sr-stage">
         {view.hasWord && (
           <>

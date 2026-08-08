@@ -33,6 +33,11 @@ export function useSatRushGame() {
   const msgRef = useRef(null); // { text, kind }
   const prevSilverRef = useRef(false);
   const fxRef = useRef({ shake: 0, badIndex: -1, badKey: 0 }); // transient visual cues
+  // The paper stamp shown on the page's top corner. One at a time; set at each
+  // event (clear/miss/revenant entry), cleared at the next fresh word. `id` bumps
+  // per set so the component re-keys and the PUNCH-in replays.
+  const stampRef = useRef(null); // { text, tone, kind, id } | null
+  const stampSeq = useRef(0);
   const pauseTimer = useRef(null);
   const stageTimer = useRef(null);
   // The full spell-along drain window (ms), fixed at final-stage entry so the
@@ -91,6 +96,14 @@ export function useSatRushGame() {
     pendingRef.current = 'idle';
     msgRef.current = null;
     fxRef.current = { shake: 0, badIndex: -1, badKey: 0 };
+    // A revenant keeps its "IT'S BACK" stamp for the whole word; a fresh word
+    // clears the previous clear/miss stamp (Deep Cut is a ribbon, from view.kind).
+    if (cur.isRevenant) {
+      stampSeq.current += 1;
+      stampRef.current = { text: "IT'S BACK", tone: 'ink', kind: 'rev', id: stampSeq.current };
+    } else {
+      stampRef.current = null;
+    }
     // Entry juice (real play only — dev scenes set state without calling this).
     if (cur.isRevenant) juice.revenantEnter();
     else if (cur.isDeepCut) juice.deepCutEnter();
@@ -114,6 +127,15 @@ export function useSatRushGame() {
       });
       pendingRef.current = 'clear';
       const silverJustOn = r.silverTongue && !prevSilverRef.current;
+      // The clear stamp (all violet): SILVER TONGUE entry gets its own; a near/alt
+      // clear reads "CLOSE!"; otherwise "GOT IT!".
+      stampSeq.current += 1;
+      stampRef.current = {
+        text: silverJustOn ? 'SILVER TONGUE!' : viaAlt ? 'CLOSE!' : 'GOT IT!',
+        tone: 'violet',
+        kind: silverJustOn ? 'silver' : viaAlt ? 'close' : 'got',
+        id: stampSeq.current,
+      };
       // Clear juice: the SILVER TONGUE crack is its own big moment; otherwise a
       // state-coloured burst whose cue pitch rises with the streak.
       if (silverJustOn) juice.silverEnter();
@@ -157,6 +179,9 @@ export function useSatRushGame() {
     if (r.gameOver) trackRunEnd();
     pendingRef.current = 'miss';
     prevSilverRef.current = false;
+    // The miss stamp (drives the page-tear too, via kind === 'miss').
+    stampSeq.current += 1;
+    stampRef.current = { text: 'MISS!!', tone: 'redink', kind: 'miss', id: stampSeq.current };
     // Death dominates; otherwise a chrome-shatter if this miss broke SILVER
     // TONGUE, else a plain KO miss.
     if (r.gameOver) juice.death();
@@ -407,6 +432,14 @@ export function useSatRushGame() {
       for (let i = 0; i < SAT_RUSH_LOCK && inputRef.current; i++) {
         inputRef.current.revealNextLetter();
       }
+      // A revenant scene shows its "IT'S BACK" stamp (deep = ribbon via kind).
+      const sc = eng.getState().current;
+      if (sc && sc.isRevenant) {
+        stampSeq.current += 1;
+        stampRef.current = { text: "IT'S BACK", tone: 'ink', kind: 'rev', id: stampSeq.current };
+      } else {
+        stampRef.current = null;
+      }
       force();
     },
     [beginWord, freshEngine]
@@ -436,6 +469,7 @@ export function useSatRushGame() {
     fx: fxRef.current,
     cfg: cfgRef.current,
     graceMs: graceMsRef.current, // spell-along drain window, fixed at final-stage entry
+    stamp: stampRef.current, // paper stamp for the top corner (or null)
   });
 
   return {
@@ -457,6 +491,7 @@ function buildView(state, cur, eng, input, extra) {
     msg: extra.msg,
     fx: extra.fx,
     cfg: extra.cfg,
+    stamp: extra.stamp,
   };
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 

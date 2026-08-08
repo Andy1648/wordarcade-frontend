@@ -23,11 +23,6 @@
   --redink: #c8321e; /* the mode's vintage danger — a deliberate, documented
                         divergence from the neon #ff5c5c (print, not screen). */
   --void: #0d0618;
-  /* --- legacy accents, still used ONLY by the deferred event/results rules
-         (Silver Tongue / Deep Cut / Revenant / DEAD stamp) until parts 2-3 --- */
-  --amber: #ffc53d;
-  --red: #ff3d6e;
-  --chrome: #e8eef5;
 
   position: fixed;
   inset: 0;
@@ -609,48 +604,252 @@
 }
 
 /* =====================================================================
-   DEFERRED — event + results treatments (parts 2-3). Left in the OLD system
-   on purpose; not yet converted to print. Do not rely on these reading right
-   on the new page until their part lands.
+   PART 2 — game-feel: SFX stamps, the Deep Cut ribbon, the wrong-key tick, the
+   spell-along endgame, the SILVER negative reprint, the beat plate-rattle, and
+   the miss page-tear. Everything is an EVENT — it enters, lands, and is gone;
+   nothing here loops at rest.
    ===================================================================== */
 
-/* state tag: colour + a distinct leading glyph + the text label */
-.sr-tag {
+/* ---------- SFX stamp: a torn paper sticker on the panel's top corner ---------- */
+.sr-stamp {
+  position: absolute;
+  top: -16px;
+  right: -6px;
+  z-index: 6;
+  padding: 4px clamp(9px, 1.3vw, 13px) 6px;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(20px, 3.2vw, 26px); /* shrink on phones so it clears the meta line */
+  line-height: 1;
+  color: var(--stamp-tone, var(--violet));
+  -webkit-text-stroke: 2px var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(4deg); /* the ONLY tilted element in the mode */
+  clip-path: polygon(
+    0% 12%, 6% 0%, 34% 7%, 52% 1%, 74% 8%, 100% 2%,
+    97% 32%, 100% 66%, 95% 100%, 66% 93%, 38% 100%, 14% 94%, 0% 100%, 4% 60%
+  );
+  animation: sr-stamp-punch 0.28s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.sr-stamp.violet {
+  --stamp-tone: var(--violet);
+}
+.sr-stamp.redink {
+  --stamp-tone: var(--redink);
+}
+.sr-stamp.ink {
+  --stamp-tone: var(--ink);
+}
+@keyframes sr-stamp-punch {
+  0% {
+    transform: rotate(4deg) scale(0.55);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(4deg) scale(1.07);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(4deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------- Deep Cut: a straight black corner ribbon (holds for the word) ---------- */
+.sr-ribbon {
   position: absolute;
   top: 0;
   right: 0;
-  padding: 6px 15px;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  font-weight: 800;
-  border-bottom-left-radius: 12px;
-  text-transform: uppercase;
-  display: inline-flex;
-  gap: 7px;
-  align-items: center;
   z-index: 3;
+  padding: 4px 11px 5px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
 }
-.sr-tag.deep {
-  background: var(--amber);
-  color: #2a1a00;
+
+/* ---------- wrong key: a tiny "TCH!" tick just above the typing row ---------- */
+.sr-slotwrap {
+  position: relative;
+  flex: 0 0 auto;
+  margin-top: 18px;
 }
-.sr-tag.rev {
-  background: var(--red);
-  color: #fff;
+.sr-slotwrap .sr-slots {
+  margin-top: 0;
 }
-.sr-tag.silver {
-  background: var(--chrome);
-  color: #111;
+.sr-tch {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  margin-left: -20px;
+  z-index: 5;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--redink);
+  pointer-events: none;
+  animation: sr-tch 0.42s ease-out both;
 }
-.sr-card.silver {
-  border-color: var(--chrome);
+@keyframes sr-tch {
+  0% {
+    opacity: 0;
+    transform: translateY(5px) scale(0.8);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0) scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-9px) scale(1);
+  }
 }
-.sr-card.deep {
-  border-color: var(--amber);
+
+/* ---------- spell-along endgame row (under the slots, clear of the halftone) ---------- */
+.sr-spell {
+  flex: 0 0 auto;
+  margin-top: 12px;
 }
-.sr-card.rev {
-  border-color: var(--red);
+.sr-spell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
 }
+.sr-spell-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--redink);
+}
+.sr-scraps {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border: 2px solid var(--redink);
+  color: var(--redink);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.sr-spell-bar {
+  height: 8px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+.sr-spell-fill {
+  height: 100%;
+  width: 0;
+  background: var(--ink);
+  transform-origin: left;
+  animation: sr-drain linear forwards;
+}
+/* each auto-printed letter lands with a small squash (PUNCH-family) */
+.sr-slot.revealed {
+  animation: sr-print-squash 0.26s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes sr-print-squash {
+  0% {
+    transform: scale(1.16, 0.72);
+  }
+  60% {
+    transform: scale(0.96, 1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- miss: a 2-frame page tear (no blur) ---------- */
+.sr-tear {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: var(--redink);
+  animation: sr-tear 0.16s steps(1) 1 both;
+}
+@keyframes sr-tear {
+  0% {
+    opacity: 0.6;
+    clip-path: polygon(0 40%, 34% 34%, 62% 45%, 100% 32%, 100% 52%, 58% 60%, 22% 52%, 0 60%);
+  }
+  50% {
+    opacity: 0.55;
+    clip-path: polygon(0 30%, 42% 42%, 100% 28%, 100% 64%, 46% 55%, 0 68%);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- BEAT: the multiplier's violet plate rattles ~1px further off-register ---------- */
+.sr-mult.sr-print::before {
+  transition: transform 120ms ease-out;
+}
+html[data-beat='true'] .sr-mult.sr-print::before {
+  transform: translate(
+    calc(var(--beat-intensity, 1) * -1px),
+    calc(var(--beat-intensity, 1) * -1px)
+  );
+}
+
+/* ---------- SILVER TONGUE: the page reprints in NEGATIVE ---------- */
+/* One class on .sr-app flips the tokens; every panel/rule/label inherits. Only
+   the shadows (which must read VIOLET, not a swapped paper) and the halftone /
+   grain opacities are overridden. Nothing NEW animates while silver holds. */
+.sr-app.silver {
+  --paper: #111;
+  --ink: #f0ead9;
+  --tile: #191319;
+}
+.sr-app.silver .sr-stage {
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--violet);
+}
+.sr-app.silver .sr-slot {
+  box-shadow: 2px 2px 0 var(--violet);
+}
+.sr-app.silver .sr-stage::after {
+  opacity: 0.3;
+}
+.sr-app.silver .sr-stage::before {
+  opacity: 0.04;
+}
+/* enter: a 2-frame black/white impact flash (plays once when .silver is added) */
+.sr-app.silver::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  pointer-events: none;
+  animation: sr-silver-impact 0.18s steps(1) 1 both;
+}
+@keyframes sr-silver-impact {
+  0% {
+    background: #fff;
+    opacity: 1;
+  }
+  50% {
+    background: #111;
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- wrong-key shake wiring (unchanged from part 1) ---------- */
 .sr-card.shake {
   animation: sr-shake 0.19s;
 }
@@ -832,6 +1031,9 @@
 @media (prefers-reduced-motion: reduce) {
   .sr-card.shake,
   .sr-slot.bad,
+  .sr-slot.revealed,
+  .sr-tch,
+  .sr-tear,
   .sr-dead {
     animation: none;
   }
@@ -847,5 +1049,33 @@
     transition: opacity 0.2s;
     transform: none;
   }
-  /* the drain bar is a functional countdown — kept */
+  /* stamps become plain opacity fades (the tilt is static, so it stays) */
+  .sr-stamp {
+    animation: sr-stamp-fade 0.25s ease-out both;
+  }
+  /* the tear/silver-impact flashes are pure motion — off */
+  .sr-tch,
+  .sr-tear {
+    display: none;
+  }
+  .sr-app.silver::before {
+    animation: none;
+    display: none;
+  }
+  /* the beat plate-rattle is off */
+  .sr-mult.sr-print::before {
+    transition: none;
+  }
+  html[data-beat='true'] .sr-mult.sr-print::before {
+    transform: none;
+  }
+  /* the drain bar + spell-along fill are functional countdowns — kept */
+}
+@keyframes sr-stamp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
