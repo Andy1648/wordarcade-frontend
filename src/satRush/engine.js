@@ -1,11 +1,11 @@
 // engine.js — the pure rules core of SAT RUSH.
 //
 // NO React, NO DOM, NO timers. This is a deterministic state machine: the UI
-// owns the wall clock (setTimeout for stage ticks / grace) and calls into the
-// engine on each event (advanceStage, submitCorrect, registerWrongKeystroke,
-// miss). Time is expressed as DATA the engine computes (stageIntervalMs, graceMs)
-// so every rule here is unit-testable without a clock. The RNG is injected so
-// word selection is reproducible in tests.
+// owns the wall clock (setTimeout for stage ticks / the spell-along endgame) and
+// calls into the engine on each event (advanceStage, submitCorrect,
+// registerWrongKeystroke, miss). Time is expressed as DATA the engine computes
+// (stageIntervalMs, endgame()) so every rule here is unit-testable without a
+// clock. The RNG is injected so word selection is reproducible in tests.
 //
 // Stage / reveal / multiplier model (multiplier is tied to the STAGE INDEX, not
 // to the content, so the tier-4/5 flip never changes what a stage is worth):
@@ -22,15 +22,23 @@
 // tier-1-3 revenant's sentence + gloss.
 
 export const DEFAULT_CONFIG = {
-  stageIntervalMs: 1400, // per-stage reveal cadence (configurable)
+  stageIntervalMs: 2000, // per-stage reveal cadence (configurable)
   stageMultipliers: [5, 4, 3, 2, 1], // by stage index 0..4
-  graceStages: 5, // stage-4 grace window = graceStages * (effective) interval
+  // SPELL-ALONG endgame: at the final stage letters keep auto-revealing on this
+  // cadence (never scaled by the deep-cut interval) until only the last letter is
+  // missing, so every word is eventually typeable — the skill is answering EARLY.
+  spellAlongMs: 1100,
   lives: 3,
   heatCap: 5,
   silverMultiplier: 2, // at heat cap, all multipliers double
-  tierEvery: 8, // tier = min(5, 1 + floor(wordNumber / tierEvery))
+  // A clear only bumps heat when at most this many letters were revealed (the
+  // free stage-4 first letter). Leaning on the spell-along reveals scores
+  // normally and keeps the streak, but leaves heat unchanged (never reset), so
+  // SILVER TONGUE stays something you earn by knowing words.
+  heatMaxRevealed: 1,
+  tierEvery: 12, // tier = min(5, 1 + floor(wordNumber / tierEvery))
   tierMax: 5,
-  deepCutEvery: 10, // every Nth word is a deep cut (forced tier 5 when fresh)
+  deepCutEvery: 15, // every Nth word is a deep cut (forced tier 5 when fresh)
   deepCutIntervalScale: 1.55, // deep cut slows the reveal cadence
   deepCutBonus: 150, // flat, added after the multiplier
   revenantOffset: 6, // a miss requeues the word for wordNumber + offset
@@ -248,9 +256,24 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     return cw && cw.isDeepCut ? Math.round(base * cfg.deepCutIntervalScale) : base;
   }
 
-  /** The stage-4 grace window before a miss. */
-  function graceMs() {
-    return stageIntervalMs() * cfg.graceStages;
+  /**
+   * The SPELL-ALONG endgame schedule for the current word, as pure data (the
+   * hook owns the clock). At the final stage the UI auto-reveals one letter every
+   * `tickMs` until `autoRevealMax` letters are locked — the LAST letter is never
+   * auto-revealed, so the player always finishes the word — then holds for
+   * `finalHoldMs` before it counts as a "walked away" miss. tickMs is the raw
+   * spell-along cadence: the deep-cut interval scale applies to the STAGE cadence
+   * only, never here.
+   */
+  function endgame() {
+    const cw = state.current;
+    if (!cw) return null;
+    const tickMs = cfg.spellAlongMs;
+    return {
+      tickMs,
+      autoRevealMax: cw.length - 1, // last letter is never auto-revealed
+      finalHoldMs: 2 * tickMs,
+    };
   }
 
   /** Reveals visible at the current stage (types + payload). */
@@ -265,18 +288,26 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
   /**
    * Resolve the current word as a correct completion.
    * @param {object} [opts]
-   * @param {boolean} [opts.viaAlt] completed a valid same-length alt (half credit)
+   * @param {boolean} [opts.viaAlt]   completed a valid same-length alt (half credit)
+   * @param {number}  [opts.revealed] letters that were revealed on the word at
+   *   completion (input.getState().revealed); gates the heat bump — see below.
    */
-  function submitCorrect({ viaAlt = false } = {}) {
+  function submitCorrect({ viaAlt = false, revealed = 0 } = {}) {
     const cw = state.current;
     if (!cw || cw.resolved) return null;
 
     const stage = cw.stage;
-    // Silver is read from the heat AFTER this clear's bump, so the clear that
-    // REACHES the cap is itself doubled — the state change (UI goes chrome) and
-    // the score spike land on the same frame, and a player who earns silver then
-    // immediately misses still banked one doubled clear from it.
-    const heatAfter = Math.min(cfg.heatCap, state.heat + 1);
+    // Heat only advances on a clear the player earned with at most the free
+    // stage-4 letter revealed (heatMaxRevealed). A clear that leaned on more of
+    // the spell-along auto-reveals scores normally and keeps the streak, but
+    // leaves heat UNCHANGED — never reset — so SILVER TONGUE stays something you
+    // earn by knowing words, not by waiting for the letters.
+    const bumpsHeat = revealed <= cfg.heatMaxRevealed;
+    // Silver is read from the heat AFTER this clear's (possible) bump, so a clear
+    // that REACHES the cap is itself doubled — the state change (UI goes chrome)
+    // and the score spike land on the same frame, and a player who earns silver
+    // then immediately misses still banked one doubled clear from it.
+    const heatAfter = bumpsHeat ? Math.min(cfg.heatCap, state.heat + 1) : state.heat;
     const silver = heatAfter >= cfg.heatCap;
     let mult = cfg.stageMultipliers[stage];
     if (silver) mult *= cfg.silverMultiplier;
@@ -302,6 +333,7 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     state.runLog.push({
       ok: true,
       stage,
+      revealed,
       viaAlt,
       silver: state.silverTongue,
       deepCut: cw.isDeepCut,
@@ -435,7 +467,7 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     advanceStage,
     currentMultiplier,
     stageIntervalMs,
-    graceMs,
+    endgame,
     visibleReveals,
     submitCorrect,
     registerWrongKeystroke,

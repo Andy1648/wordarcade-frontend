@@ -1,27 +1,35 @@
-/* SatRush.css — SAT RUSH mode. Visual system follows the prototype + DESIGN.md:
-   dark base, violet accent, chrome / amber / red state variants. All state is
-   ALSO conveyed by a text label or a distinct shape (never colour alone), and
-   every decorative animation is disabled under prefers-reduced-motion while the
-   functional signals (the drain bar, the caret, state tags) stay legible. */
+/* SatRush.css — SAT RUSH mode, VINTAGE MANGA / PULP PAGE rebuild (part 1 of 3).
+   A cream newsprint page printed in black ink + violet, sitting on the site's
+   dark void. Follows DESIGN.md: flat colours ONLY, ink outlines, hard offset
+   shadows, Bungee (display) + Space Mono (body) — but PRINT-era, not sticker-era.
+
+   GOVERNING LAW — QUIET BY DEFAULT (same as the menu's "idle = remove"): at rest
+   the ONLY motion is the caret blink. No ambient loops, no idle bob, no speed
+   lines at rest, no tilt. The whole decoration budget is: the double-rule border,
+   ONE halftone corner patch, and a 5% pulp grain. Every state is ALSO conveyed by
+   a text label or a distinct shape, never colour alone, and reduced-motion kills
+   even the caret (it goes static).
+
+   Parts 2-3 own the event treatments (Deep Cut / Revenant tilt + tags) and the
+   Silver Tongue / results / stamps: those rules are DEFERRED verbatim below and
+   deliberately not yet converted to the print system. */
 
 .sr-app {
+  /* --- print tokens (the new system) --- */
+  --paper: #f0ead9; /* newsprint */
+  --tile: #fbf7ec; /* slot fill, a touch brighter than the page */
+  --ink: #111;
   --violet: #a855f7;
-  --violet-dim: #6d28d9;
-  --ink: #0b0710;
-  --chrome: #e8eef5;
-  --green: #39ff88;
-  --red: #ff3d6e;
-  --amber: #ffc53d;
-  /* The reading text (sentence + gloss) is PROPORTIONAL so it can be read fast;
-     the design system only ships Bungee (display) + Space Mono, so this is a
-     clean system sans. Everything else (meta, slots, HUD numbers) stays mono. */
-  --sr-prose: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --redink: #c8321e; /* the mode's vintage danger — a deliberate, documented
+                        divergence from the neon #ff5c5c (print, not screen). */
+  --void: #0d0618;
+
   position: fixed;
   inset: 0;
   overflow: hidden;
-  color: #fff;
+  color: var(--ink);
   font-family: 'Space Mono', 'Segoe UI', system-ui, sans-serif;
-  background: radial-gradient(ellipse at 50% -10%, #2a0f45 0%, var(--ink) 55%, #050308 100%);
+  background: var(--void); /* flat void — no radial gradient */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,76 +37,151 @@
   -webkit-user-select: none;
   user-select: none;
 }
-/* The stack fills the viewport height and is vertically centred; the card can
-   shrink (never exceeding the viewport) so its reveal text scrolls internally
-   and the SLOTS stay pinned + always visible at every width and word length. */
+
+/* ---------- speed lines (endgame only) ---------- */
+/* The manga focus lines EXIST but are hidden until the final stage — they frame
+   the page on the void when the word is "printing". Cream, faint, asymmetric,
+   varied widths. Static (no motion): they simply appear as a state cue. */
+.sr-speedlines {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: none;
+  opacity: 0.1;
+}
+.sr-speedlines.is-final {
+  display: block;
+}
+.sr-speedlines line {
+  stroke: var(--paper);
+}
+
+/* ---------- THE PAGE (was .sr-stage chrome) ---------- */
+/* Cream page, STRAIGHT (no tilt). 4px ink border + a vintage double rule (an inset
+   ring: 3px paper then 5px ink) and ONE hard offset shadow. Pulp grain + a single
+   halftone corner are the only surface decoration. */
 .sr-stage {
-  width: min(940px, 94vw);
-  max-height: 100%;
   position: relative;
+  z-index: 1;
+  width: min(920px, 94vw);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--ink);
+  overflow: hidden;
+}
+/* pulp grain (5%) */
+.sr-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
+}
+/* ONE halftone corner accent, bottom-right, clipped to a triangle */
+.sr-stage::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--ink) 30%, transparent 34%);
+  background-size: 7px 7px;
+  opacity: 0.5;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* ---------- HUD — one ruled arcade strip fused to the page top ---------- */
+.sr-hud {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border-bottom: 3px solid var(--ink);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.sr-hcell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  padding: 9px clamp(7px, 1.5vw, 18px);
+  border-right: 2px solid var(--ink);
+  min-width: 0;
+}
+.sr-hcell:last-child {
+  border-right: 0;
+}
+.sr-hlabel {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.sr-hval {
+  font-size: clamp(16px, 2.2vw, 22px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+/* lives — ink hearts; a lost heart drops to .25 opacity (shape stays, so the
+   count still reads without colour) */
+.sr-lives {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: clamp(15px, 2vw, 19px);
+  line-height: 1;
+}
+.sr-life {
+  color: var(--ink);
+}
+.sr-life.gone {
+  opacity: 0.25;
+}
+/* heat — five flat blocks; lit blocks fill violet (empty = hollow ink box) */
+.sr-heat {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+.sr-heatblock {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border: 2px solid var(--ink);
+  background: transparent;
+}
+.sr-heatblock.on {
+  background: var(--violet);
+}
+
+/* ---------- page body (padded content inside the double rule) ---------- */
+.sr-body {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vh, 18px);
-  min-height: 0;
-}
-
-/* ---------- HUD ---------- */
-.sr-hud {
-  display: flex;
-  gap: 26px;
-  align-items: flex-end;
-  font-variant-numeric: tabular-nums;
-  flex-wrap: wrap;
-  flex: 0 0 auto;
-}
-.sr-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.sr-stat b {
-  font-size: 26px;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-.sr-stat span {
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  opacity: 0.42;
-  text-transform: uppercase;
-}
-.sr-lives {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  height: 26px;
-}
-.sr-life {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--violet);
-  box-shadow: 0 0 12px var(--violet);
-  transition: 0.35s;
-}
-.sr-life.gone {
-  background: #2c2140;
-  box-shadow: none;
-  transform: scale(0.55);
-}
-.sr-heatwrap {
-  min-width: 150px;
-}
-.sr-heatbar {
-  height: 6px;
-  background: #241633;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.sr-heatfill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--violet), #f472b6);
-  transition: width 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
+  padding: clamp(12px, 2.2vh, 20px) clamp(14px, 2vw, 22px) clamp(14px, 2.4vh, 22px);
 }
 
 /* ---------- ante ---------- */
@@ -108,67 +191,89 @@
   gap: 20px;
   flex: 0 0 auto;
 }
-/* The multiplier is the second-heaviest element after the sentence: large,
-   high-contrast, with a bright core and a strong violet bloom. */
-.sr-mult {
-  font-size: clamp(76px, 13vw, 128px);
-  font-weight: 900;
-  letter-spacing: -5px;
-  line-height: 0.8;
-  color: var(--violet);
-  text-shadow:
-    0 0 8px rgba(255, 255, 255, 0.35),
-    0 0 28px rgba(168, 85, 247, 0.95),
-    0 0 64px rgba(168, 85, 247, 0.65);
+/* Big Bungee INK multiplier with the violet plate printed OFF-REGISTER (the
+   ::before renders the same glyphs, violet, shifted -5px/-5px, behind). No stroke,
+   no glow. juice.multiplierDrop still squashes THIS element in place. */
+.sr-print {
+  position: relative;
+  z-index: 0;
+  color: var(--ink);
 }
-/* The drop animation is the juice squash/flash (juice.multiplierDrop), which is
-   reduced-motion aware — no CSS keyframe needed here. */
+.sr-print::before {
+  content: attr(data-v);
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  z-index: -1;
+  color: var(--violet);
+  pointer-events: none;
+}
+.sr-mult {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(60px, 11vw, 108px);
+  line-height: 0.82;
+  letter-spacing: -2px;
+}
 .sr-anteright {
   flex: 1;
+  min-width: 0;
 }
-.sr-antelabel {
+/* ante label = a thin double-ruled caption box (2px border + inner 1px rule) */
+.sr-antebox {
+  display: inline-block;
+  padding: 5px 12px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink);
   font-size: 10px;
-  letter-spacing: 0.24em;
-  opacity: 0.55;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  margin-bottom: 7px;
+  color: var(--ink);
 }
+.sr-accent {
+  color: var(--violet);
+  font-weight: 700;
+}
+.sr-antebox.final .sr-accent {
+  color: var(--redink);
+}
+/* stage pips — 14px ink squares; a spent stage is hollow at .45 opacity */
 .sr-pips {
   display: flex;
-  gap: 5px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 10px;
 }
 .sr-pip {
-  width: 26px;
-  height: 4px;
-  background: #2c1b40;
-  border-radius: 2px;
-  transition: 0.25s;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ink);
+  background: transparent;
+  opacity: 0.45;
 }
 .sr-pip.on {
-  background: var(--violet);
-  box-shadow: 0 0 9px var(--violet);
+  background: var(--ink);
+  opacity: 1;
 }
-/* the always-visible drain bar toward the next stage */
+/* the always-visible drain bar toward the next stage / the spell-along window */
 .sr-tick {
-  height: 4px;
-  background: #2c1b40;
-  border-radius: 2px;
+  height: 8px;
+  margin-top: 10px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
   overflow: hidden;
 }
 .sr-tickfill {
   height: 100%;
   width: 0;
   background: var(--violet);
-  opacity: 0.6;
   transform-origin: left;
 }
 .sr-tickfill.run {
   animation: sr-drain linear forwards;
 }
 .sr-tickfill.grace {
-  background: var(--amber);
-  opacity: 0.8;
+  background: var(--redink);
 }
 @keyframes sr-drain {
   from {
@@ -179,31 +284,31 @@
   }
 }
 
-/* ---------- card ---------- */
+/* ---------- word panel ---------- */
+/* One inner double-ruled panel (3px border + inner rule), paper, straight. */
 .sr-card {
-  background: linear-gradient(165deg, rgba(30, 15, 50, 0.92), rgba(10, 6, 18, 0.96));
-  border: 1px solid rgba(168, 85, 247, 0.26);
-  border-radius: 18px;
-  padding: 26px 34px 30px;
-  box-shadow:
-    0 26px 70px -18px rgba(0, 0, 0, 0.85),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
-  overflow: hidden;
-  /* Sized to content, but never taller than the viewport: on a small screen the
-     reveals scroll and the slots stay pinned + visible instead of the card
-     running off-screen. The stack is vertically centred by .sr-stage. */
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: 100%;
   display: flex;
   flex-direction: column;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
+  padding: clamp(14px, 2.2vh, 22px) clamp(16px, 2vw, 24px);
 }
 .sr-meta {
   flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.7;
+  margin-bottom: 16px;
 }
-/* The scrolling reveal region: sentence + gloss + root. Centred when there is
-   room; scrolls internally when a long word on a narrow screen overflows. */
+/* the scrolling reveal region: sentence + gloss + root scroll internally on a
+   small screen while the slots below stay pinned + visible */
 .sr-card-reveals {
   flex: 1 1 auto;
   min-height: 0;
@@ -211,33 +316,540 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  /* Reserve a little vertical room so the card has body at early stages and
-     doesn't jump as the gloss/root fade in. */
-  padding-block: clamp(6px, 2vh, 22px);
+  padding-block: clamp(4px, 1.6vh, 16px);
 }
-/* SILVER TONGUE brightens the CARD BODY itself (a chrome sheen), not just the
-   border — the state change is unmistakable at a glance. */
-.sr-card.silver {
-  background: linear-gradient(
-    135deg,
-    rgba(233, 240, 248, 0.3) 0%,
-    rgba(150, 168, 198, 0.14) 42%,
-    rgba(233, 240, 248, 0.24) 100%
-  );
-  border-color: rgba(240, 245, 250, 0.9);
+/* reveal entrances are EVENTS (allowed): a snappy punch-in, 200-400ms */
+.sr-reveal {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.28s cubic-bezier(0.2, 0.9, 0.2, 1), transform 0.28s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.sr-reveal.in {
+  opacity: 1;
+  transform: none;
+}
+/* the sentence is the largest thing on the page: Space Mono 700, >=20px, ink */
+.sr-sentence {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(20px, 2.4vw, 25px);
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+/* the blank: violet glyphs over a solid 3px ink underline */
+.sr-blank {
+  color: var(--violet);
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 1px;
+}
+/* gloss / root each carry a small bordered tag chip (DEF / ROOT) */
+.sr-tagchip {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 6px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+.sr-gloss {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(16px, 1.9vw, 18px);
+  line-height: 1.5;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.sr-root {
+  font-family: 'Space Mono', monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.sr-root b {
+  font-weight: 700;
+}
+.sr-root .cz {
+  opacity: 0.6;
+}
+
+/* ---------- slots ---------- */
+/* Slots shrink to fit the width but never below a legible minimum; if the row
+   can't fit it WRAPS, and because the block is pinned (flex:0 0 auto) below the
+   scrolling reveals, every row stays visible. `--n` is set inline by Slots.jsx. */
+.sr-slots {
+  --gap: 8px;
+  --slot-min: 34px;
+  --slot-max: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  margin-top: 18px;
+  width: 100%;
+  container-type: inline-size;
+  flex: 0 0 auto;
+}
+.sr-slot {
+  --slotw: calc((100cqw - (var(--n) - 1) * var(--gap)) / var(--n));
+  --slot-size: clamp(var(--slot-min), var(--slotw), var(--slot-max));
+  position: relative;
+  width: var(--slot-size);
+  aspect-ratio: 48 / 56;
+  border: 3px solid var(--ink);
+  background: var(--tile);
+  box-shadow: 2px 2px 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: calc(var(--slot-size) * 0.5);
+  color: var(--ink);
+  text-transform: uppercase;
+}
+/* typed/committed letter: ink Bungee glyph */
+.sr-slot.typed {
+  color: var(--ink);
+}
+/* revealed/auto-printed letter: violet glyph (+ its Bungee weight) */
+.sr-slot.revealed {
+  color: var(--violet);
+}
+/* empty: dotted border, half opacity, no fill, no shadow */
+.sr-slot:not(.typed):not(.revealed):not(.cur) {
+  border-style: dotted;
+  border-width: 2.5px;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.5;
+}
+/* current cursor: solid border + a thick blinking ink underscore (SHAPE cue,
+   the ONE sanctioned idle motion) */
+.sr-slot.cur {
+  border-style: solid;
+  border-width: 3px;
+  background: var(--tile);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.sr-slot.cur::after {
+  content: '';
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  width: 50%;
+  height: 4px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  animation: sr-caret 0.9s steps(1, end) infinite;
+}
+@keyframes sr-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0.1;
+  }
+}
+/* wrong-key bounce/shake wiring is UNCHANGED (fx.badIndex/badKey drive these) */
+.sr-slot.bad {
+  animation: sr-badpulse 0.3s;
+}
+@keyframes sr-badpulse {
+  0%,
+  100% {
+    background: var(--tile);
+  }
+  40% {
+    background: rgba(200, 50, 30, 0.35);
+  }
+}
+
+.sr-msg {
+  margin-top: 14px;
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  flex: 0 0 auto;
+}
+.sr-msg.good {
+  color: var(--ink);
+}
+.sr-msg.bad {
+  color: var(--redink);
+}
+.sr-msg.near {
+  color: var(--violet);
+}
+
+/* ---------- start / cover page ---------- */
+.sr-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--void);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2.5vh, 32px) 16px;
+  z-index: 50;
+}
+/* the cover shares the page language: paper, double rule, hard offset, grain */
+.sr-cover {
+  position: relative;
+  width: min(560px, 92vw);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  background: var(--paper);
+  border: 4px solid var(--ink);
   box-shadow:
-    0 0 90px -4px rgba(232, 238, 245, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 0 40px rgba(255, 255, 255, 0.06);
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--ink);
+  padding: clamp(28px, 5vh, 44px) clamp(22px, 4vw, 40px);
 }
-.sr-card.deep {
-  border-color: rgba(255, 197, 61, 0.6);
-  box-shadow: 0 0 62px -8px rgba(255, 197, 61, 0.34);
+.sr-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
 }
-.sr-card.rev {
-  border-color: rgba(255, 61, 110, 0.6);
-  box-shadow: 0 0 62px -8px rgba(255, 61, 110, 0.34);
+.sr-cover > * {
+  position: relative;
+  z-index: 1;
 }
+.sr-title {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(44px, 9vw, 78px);
+  line-height: 0.9;
+  letter-spacing: 0;
+}
+.sr-sub {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(14px, 1.7vw, 16px);
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 460px;
+}
+.sr-sub.fine {
+  font-weight: 400;
+  font-size: 13px;
+  opacity: 0.75;
+}
+/* the 5x..1x rules as a tight ruled strip */
+.sr-rules {
+  width: 100%;
+  max-width: 400px;
+  border: 2px solid var(--ink);
+  text-align: left;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+}
+.sr-rules > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--ink);
+}
+.sr-rules > div:last-child {
+  border-bottom: 0;
+}
+.sr-rules code {
+  flex: 0 0 auto;
+  min-width: 34px;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--violet);
+}
+/* paper button: ink border, hard shadow; press = translate + shadow shrink */
+.sr-btn {
+  font-family: 'Bungee', system-ui, sans-serif;
+  background: var(--tile);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 14px 40px;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.sr-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.sr-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* =====================================================================
+   PART 2 — game-feel: SFX stamps, the Deep Cut ribbon, the wrong-key tick, the
+   spell-along endgame, the SILVER negative reprint, the beat plate-rattle, and
+   the miss page-tear. Everything is an EVENT — it enters, lands, and is gone;
+   nothing here loops at rest.
+   ===================================================================== */
+
+/* ---------- SFX stamp: a torn paper sticker on the panel's top corner ---------- */
+.sr-stamp {
+  position: absolute;
+  top: -16px;
+  right: -6px;
+  z-index: 6;
+  padding: 4px clamp(9px, 1.3vw, 13px) 6px;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(20px, 3.2vw, 26px); /* shrink on phones so it clears the meta line */
+  line-height: 1;
+  color: var(--stamp-tone, var(--violet));
+  -webkit-text-stroke: 2px var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(4deg); /* the ONLY tilted element in the mode */
+  clip-path: polygon(
+    0% 12%, 6% 0%, 34% 7%, 52% 1%, 74% 8%, 100% 2%,
+    97% 32%, 100% 66%, 95% 100%, 66% 93%, 38% 100%, 14% 94%, 0% 100%, 4% 60%
+  );
+  animation: sr-stamp-punch 0.28s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.sr-stamp.violet {
+  --stamp-tone: var(--violet);
+}
+.sr-stamp.redink {
+  --stamp-tone: var(--redink);
+}
+.sr-stamp.ink {
+  --stamp-tone: var(--ink);
+}
+@keyframes sr-stamp-punch {
+  0% {
+    transform: rotate(4deg) scale(0.55);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(4deg) scale(1.07);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(4deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------- Deep Cut: a straight black corner ribbon (holds for the word) ---------- */
+.sr-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  padding: 4px 11px 5px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- wrong key: a tiny "TCH!" tick just above the typing row ---------- */
+.sr-slotwrap {
+  position: relative;
+  flex: 0 0 auto;
+  margin-top: 18px;
+}
+.sr-slotwrap .sr-slots {
+  margin-top: 0;
+}
+.sr-tch {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  margin-left: -20px;
+  z-index: 5;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--redink);
+  pointer-events: none;
+  animation: sr-tch 0.42s ease-out both;
+}
+@keyframes sr-tch {
+  0% {
+    opacity: 0;
+    transform: translateY(5px) scale(0.8);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0) scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-9px) scale(1);
+  }
+}
+
+/* ---------- spell-along endgame row (under the slots, clear of the halftone) ---------- */
+.sr-spell {
+  flex: 0 0 auto;
+  margin-top: 12px;
+}
+.sr-spell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.sr-spell-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--redink);
+}
+.sr-scraps {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border: 2px solid var(--redink);
+  color: var(--redink);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.sr-spell-bar {
+  height: 8px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+.sr-spell-fill {
+  height: 100%;
+  width: 0;
+  background: var(--ink);
+  transform-origin: left;
+  animation: sr-drain linear forwards;
+}
+/* each auto-printed letter lands with a small squash (PUNCH-family) */
+.sr-slot.revealed {
+  animation: sr-print-squash 0.26s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes sr-print-squash {
+  0% {
+    transform: scale(1.16, 0.72);
+  }
+  60% {
+    transform: scale(0.96, 1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- miss: a 2-frame page tear (no blur) ---------- */
+.sr-tear {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: var(--redink);
+  animation: sr-tear 0.16s steps(1) 1 both;
+}
+@keyframes sr-tear {
+  0% {
+    opacity: 0.6;
+    clip-path: polygon(0 40%, 34% 34%, 62% 45%, 100% 32%, 100% 52%, 58% 60%, 22% 52%, 0 60%);
+  }
+  50% {
+    opacity: 0.55;
+    clip-path: polygon(0 30%, 42% 42%, 100% 28%, 100% 64%, 46% 55%, 0 68%);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- BEAT: the multiplier's violet plate rattles ~1px further off-register ---------- */
+.sr-mult.sr-print::before {
+  transition: transform 120ms ease-out;
+}
+html[data-beat='true'] .sr-mult.sr-print::before {
+  transform: translate(
+    calc(var(--beat-intensity, 1) * -1px),
+    calc(var(--beat-intensity, 1) * -1px)
+  );
+}
+
+/* ---------- SILVER TONGUE: the page reprints in NEGATIVE ---------- */
+/* One class on .sr-app flips the tokens; every panel/rule/label inherits. Only
+   the shadows (which must read VIOLET, not a swapped paper) and the halftone /
+   grain opacities are overridden. Nothing NEW animates while silver holds. */
+.sr-app.silver {
+  --paper: #111;
+  --ink: #f0ead9;
+  --tile: #191319;
+}
+.sr-app.silver .sr-stage {
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--violet);
+}
+.sr-app.silver .sr-slot {
+  box-shadow: 2px 2px 0 var(--violet);
+}
+.sr-app.silver .sr-stage::after {
+  opacity: 0.3;
+}
+.sr-app.silver .sr-stage::before {
+  opacity: 0.04;
+}
+/* enter: a 2-frame black/white impact flash (plays once when .silver is added) */
+.sr-app.silver::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  pointer-events: none;
+  animation: sr-silver-impact 0.18s steps(1) 1 both;
+}
+@keyframes sr-silver-impact {
+  0% {
+    background: #fff;
+    opacity: 1;
+  }
+  50% {
+    background: #111;
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- wrong-key shake wiring (unchanged from part 1) ---------- */
 .sr-card.shake {
   animation: sr-shake 0.19s;
 }
@@ -254,296 +866,49 @@
   }
 }
 
-/* state tag: colour + a distinct leading glyph + the text label */
-.sr-tag {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 6px 15px;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  font-weight: 800;
-  border-bottom-left-radius: 12px;
-  text-transform: uppercase;
-  display: inline-flex;
-  gap: 7px;
-  align-items: center;
-}
-.sr-tag.deep {
-  background: var(--amber);
-  color: #2a1a00;
-}
-.sr-tag.rev {
-  background: var(--red);
-  color: #fff;
-}
-.sr-tag.silver {
-  background: var(--chrome);
-  color: #111;
-}
-
-.sr-meta {
-  font-size: 11.5px;
-  letter-spacing: 0.16em;
-  opacity: 0.55;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-}
-.sr-reveal {
-  opacity: 0;
-  transform: translateY(7px);
-  transition: 0.42s cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-.sr-reveal.in {
-  opacity: 1;
-  transform: none;
-}
-/* the sentence is the largest element on screen; the multiplier is second.
-   PROPORTIONAL (not mono) so it reads fast — the core of the mechanic. */
-.sr-sentence {
-  font-family: var(--sr-prose);
-  font-size: clamp(20px, 2.6vw, 27px);
-  line-height: 1.5;
-  margin-bottom: 14px;
-  font-weight: 400;
-}
-.sr-blank {
-  color: var(--violet);
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-.sr-gloss {
-  font-family: var(--sr-prose);
-  font-size: clamp(15px, 1.8vw, 17px);
-  color: var(--green);
-  margin-bottom: 12px;
-  font-style: italic;
-  opacity: 0.92;
-}
-.sr-root {
-  font-size: 13.5px;
-  color: #c4b5fd;
-  margin-bottom: 4px;
-}
-.sr-root b {
-  color: #fff;
-  font-weight: 700;
-}
-.sr-root .cz {
-  opacity: 0.6;
-}
-
-/* ---------- slots ---------- */
-/* Slots shrink to fit the width, but NEVER below a legible minimum (--slot-min):
-   below that the letters read as dots, which breaks the input model. If the row
-   can't fit at the minimum, it WRAPS to another row — and because the slots block
-   is pinned (flex:0 0 auto) while the reveals above it scroll, every row stays
-   fully visible. `--n` (letter count) is set inline by Slots.jsx. */
-.sr-slots {
-  --gap: 8px;
-  --slot-min: 32px; /* keep the locked glyph readable */
-  --slot-max: 44px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap);
-  margin-top: 20px;
-  width: 100%;
-  container-type: inline-size;
-  flex: 0 0 auto; /* pinned below the scrolling reveals — always visible */
-}
-.sr-slot {
-  --slotw: calc((100cqw - (var(--n) - 1) * var(--gap)) / var(--n));
-  --slot-size: clamp(var(--slot-min), var(--slotw), var(--slot-max));
-  position: relative;
-  width: var(--slot-size);
-  aspect-ratio: 19 / 26;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  border-bottom: 3px solid #3a2a52;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(var(--slot-size) * 0.56);
-  font-weight: 800;
-  text-transform: uppercase;
-  transition: 0.14s;
-}
-/* typed/committed letter: solid green underline + the glyph itself */
-.sr-slot.typed {
-  border-bottom-color: var(--green);
-  color: var(--green);
-  background: rgba(57, 255, 136, 0.09);
-}
-/* current cursor: violet + a blinking caret (SHAPE cue, not colour alone) */
-.sr-slot.cur {
-  border-bottom-color: var(--violet);
-  background: rgba(168, 85, 247, 0.12);
-  box-shadow: 0 0 20px -4px var(--violet);
-}
-.sr-slot.cur::after {
-  content: '';
-  position: absolute;
-  bottom: 14%;
-  left: 50%;
-  width: 46%;
-  height: 3px;
-  transform: translateX(-50%);
-  background: var(--violet);
-  border-radius: 2px;
-  animation: sr-caret 0.9s steps(1, end) infinite;
-}
-@keyframes sr-caret {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0.12;
-  }
-}
-/* revealed/locked letter: amber + a DOUBLE underline + a corner flag (SHAPE) */
-.sr-slot.revealed {
-  border-bottom: 3px double var(--amber);
-  color: var(--amber);
-  background: rgba(255, 197, 61, 0.08);
-}
-.sr-slot.revealed::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  border-width: 0 8px 8px 0;
-  border-style: solid;
-  border-color: transparent var(--amber) transparent transparent;
-  border-top-right-radius: 8px;
-}
-.sr-slot.bad {
-  animation: sr-badpulse 0.3s;
-}
-@keyframes sr-badpulse {
-  0%,
-  100% {
-    background: rgba(255, 255, 255, 0.035);
-  }
-  40% {
-    background: rgba(255, 61, 110, 0.4);
-  }
-}
-
-.sr-msg {
-  margin-top: 14px;
-  min-height: 20px;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  flex: 0 0 auto;
-}
-.sr-msg.good {
-  color: var(--green);
-}
-.sr-msg.bad {
-  color: var(--red);
-}
-.sr-msg.near {
-  color: var(--amber);
-}
-
-/* ---------- start / results overlays ---------- */
-.sr-screen {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 3, 8, 0.94);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 20px;
-  text-align: center;
-  padding: 30px;
-  z-index: 50;
-}
-.sr-title {
-  font-size: clamp(40px, 9vw, 84px);
-  font-weight: 900;
-  letter-spacing: -3px;
-  line-height: 0.9;
-  background: linear-gradient(180deg, #fff 30%, var(--violet));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.sr-sub {
-  font-size: 14px;
-  opacity: 0.62;
-  max-width: 520px;
-  line-height: 1.65;
-}
-.sr-btn {
-  background: var(--violet);
-  color: #fff;
-  border: 0;
-  padding: 15px 38px;
-  border-radius: 11px;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.11em;
-  cursor: pointer;
-  text-transform: uppercase;
-  box-shadow: 0 0 34px -8px var(--violet);
-  transition: 0.16s;
-}
-.sr-btn:hover {
-  transform: translateY(-2px);
-}
-.sr-rules {
-  text-align: left;
-  font-size: 13px;
-  line-height: 2;
-  opacity: 0.75;
-  max-width: 470px;
-}
-.sr-rules code {
-  background: rgba(168, 85, 247, 0.2);
-  padding: 2px 7px;
-  border-radius: 5px;
-  color: #ddd0ff;
-  font-size: 12px;
-}
-.sr-resstats {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 8px 0 4px;
-}
-.sr-resstats .sr-stat {
-  align-items: center;
-}
-.sr-resstats .sr-stat b {
-  font-size: 34px;
-}
-.sr-seen {
-  font-size: 12px;
-  opacity: 0.6;
-  max-width: 620px;
-  line-height: 1.9;
-}
-.sr-seen .miss {
-  color: var(--red);
-  opacity: 0.9;
-}
-
-/* ---------- results (death / score reveal) ---------- */
+/* ---------- results — one retro-print PAGE (death dominates entry) ---------- */
 .sr-results {
-  gap: 14px;
+  flex-direction: column;
+  overflow-y: auto; /* the overlay scrolls; the page's own overflow stays visible */
 }
-/* DEAD stamp slams in at C.stampDelay. */
+.sr-respage {
+  position: relative;
+  margin: auto; /* centres when it fits, scrolls (via the overlay) when it doesn't */
+  width: min(560px, 94vw);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  text-align: center;
+  background: var(--paper);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--ink);
+  padding: clamp(26px, 4.5vh, 44px) clamp(20px, 3.5vw, 34px);
+}
+.sr-respage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
+}
+.sr-respage > * {
+  position: relative;
+  z-index: 1;
+}
+/* DEAD slams in OVER the page (page overflow is visible, so it isn't clipped) */
 .sr-dead {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(44px, 10vw, 96px);
+  font-size: clamp(44px, 10vw, 88px);
   letter-spacing: 0.05em;
-  color: var(--red);
-  text-shadow: 0 0 30px rgba(255, 61, 110, 0.5);
+  color: var(--redink);
+  -webkit-text-stroke: 2px var(--ink);
   animation: sr-slam 0.4s cubic-bezier(0.2, 0.9, 0.2, 1) both;
   animation-delay: 300ms;
 }
@@ -561,50 +926,161 @@
     opacity: 1;
   }
 }
-/* AVG ANTE — the headline stat, biggest on the screen. */
-.sr-ante-hero {
+
+/* a reusable double-ruled results panel */
+.sr-panel {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
+  padding: 14px 18px;
+}
+.sr-panel-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+/* AVG ANTE — the headline: big Bungee ink with the violet plate off-register */
+.sr-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin: 4px 0 2px;
+  padding: clamp(14px, 2.5vh, 22px) 18px;
 }
 .sr-ante-value {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(72px, 15vw, 150px);
+  font-size: clamp(64px, 13vw, 116px);
   line-height: 0.85;
-  text-shadow: 0 0 44px rgba(168, 85, 247, 0.6);
 }
-.sr-ante-label {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  opacity: 0.55;
-}
-.sr-results .sr-resstats,
-.sr-hardest,
-.sr-results-actions {
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
-.sr-results .sr-resstats.in,
-.sr-hardest.in,
-.sr-results-actions.in {
-  opacity: 1;
-  transform: none;
-}
-.sr-hardest {
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  transition-delay: 0.08s;
-}
-.sr-results-actions {
+/* SCORE — zero-padded Bungee ink */
+.sr-scorepanel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 5px;
+}
+.sr-score-value {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(30px, 6vw, 46px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+/* cleared / missed / best — a ruled strip (reuses the HUD cells) */
+.sr-resstrip {
+  display: flex;
+  border: 2px solid var(--ink);
+}
+.sr-resstrip .sr-hcell {
+  flex: 1;
+  align-items: center;
+  padding: 9px 8px;
+}
+.sr-resstrip .sr-hval {
+  font-size: clamp(20px, 4vw, 26px);
+}
+/* runLog film-strip: one small ruled frame per word (clear=ink, miss=redink;
+   deep/rev/silver keep a glyph so it reads by shape + label, not colour alone) */
+.sr-filmstrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  padding: 2px 0;
+}
+.sr-frame {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  line-height: 1;
+}
+.sr-frame.ok {
+  background: var(--ink);
+  color: var(--paper);
+}
+.sr-frame.miss {
+  background: var(--redink);
+  color: var(--paper);
+}
+/* hardest word — its own panel sitting on the ONE halftone patch */
+.sr-hardestpanel {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.sr-hardestpanel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--ink) 30%, transparent 34%);
+  background-size: 7px 7px;
+  opacity: 0.16;
+}
+.sr-hardestpanel > * {
+  position: relative;
+  z-index: 1;
+}
+.sr-hardest-word {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(22px, 4.5vw, 32px);
+  letter-spacing: 0.02em;
+}
+/* actions */
+.sr-results-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 4px;
+}
+.sr-share {
+  border-top: 2px solid var(--ink);
+  padding-top: 12px;
+  margin-bottom: 2px;
+}
+.sr-btn-ghost {
+  background: transparent;
+}
+/* staggered entrance: the panels below the counting hero fade in once landed */
+.sr-resstrip,
+.sr-filmstrip,
+.sr-hardestpanel,
+.sr-results-actions {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.34s ease, transform 0.34s ease;
+}
+.sr-resstrip.in {
+  transition-delay: 0.04s;
+}
+.sr-filmstrip.in {
+  transition-delay: 0.1s;
+}
+.sr-hardestpanel.in {
   transition-delay: 0.16s;
+}
+.sr-results-actions.in {
+  transition-delay: 0.22s;
+}
+.sr-resstrip.in,
+.sr-filmstrip.in,
+.sr-hardestpanel.in,
+.sr-results-actions.in {
+  opacity: 1;
+  transform: none;
 }
 
 /* ---------- dev tuner (dev-only) ---------- */
@@ -620,6 +1096,7 @@
   gap: 18px;
   align-items: center;
   font-size: 11px;
+  color: #fff;
   z-index: 60;
   flex-wrap: wrap;
 }
@@ -662,19 +1139,59 @@
 @media (prefers-reduced-motion: reduce) {
   .sr-card.shake,
   .sr-slot.bad,
+  .sr-slot.revealed,
+  .sr-tch,
+  .sr-tear,
   .sr-dead {
     animation: none;
   }
   .sr-dead {
     opacity: 1;
   }
+  /* the caret stops blinking and stays a static ink underscore */
   .sr-slot.cur::after {
     animation: none;
     opacity: 1;
-  } /* caret stays visible, just doesn't blink */
+  }
   .sr-reveal {
     transition: opacity 0.2s;
     transform: none;
   }
-  /* the drain bar is a functional countdown — kept, but linear/no easing extras */
+  /* results panels fade in with NO travel (opacity only keeps the state legible) */
+  .sr-resstrip,
+  .sr-filmstrip,
+  .sr-hardestpanel,
+  .sr-results-actions {
+    transform: none;
+    transition: opacity 0.2s;
+  }
+  /* stamps become plain opacity fades (the tilt is static, so it stays) */
+  .sr-stamp {
+    animation: sr-stamp-fade 0.25s ease-out both;
+  }
+  /* the tear/silver-impact flashes are pure motion — off */
+  .sr-tch,
+  .sr-tear {
+    display: none;
+  }
+  .sr-app.silver::before {
+    animation: none;
+    display: none;
+  }
+  /* the beat plate-rattle is off */
+  .sr-mult.sr-print::before {
+    transition: none;
+  }
+  html[data-beat='true'] .sr-mult.sr-print::before {
+    transform: none;
+  }
+  /* the drain bar + spell-along fill are functional countdowns — kept */
+}
+@keyframes sr-stamp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

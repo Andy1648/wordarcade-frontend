@@ -14,7 +14,6 @@ import {
   hitStop,
   setShakeRoot,
   burst,
-  ring,
   screenFlash,
   sfx,
   validCue,
@@ -25,10 +24,15 @@ import {
   unlockAudio,
 } from '../juice';
 
+// Print-role palette. The retro-print rebuild moved the STATE visuals onto the
+// page itself (stamps, the black corner ribbon, the negative-reprint invert, the
+// page tear), so the per-event particle bursts / screen washes are gone — cues
+// stay, screen-wide spam went. What survives here mostly plays sound; only a few
+// rare, high-impact moments (silver break, death) keep a wash. VIOLET stays;
+// CHROME retargets to --paper for the invert/shatter; the danger red now lives in
+// CSS (--redink), and Deep Cut is its audio cue + the CSS ribbon (no colour).
 const VIOLET = '#a855f7';
-const CHROME = '#e8eef5';
-const AMBER = '#ffc53d';
-const RED = '#ff3d6e';
+const PAPER = '#f0ead9';
 const WHITE = '#ffffff';
 
 const el = (sel) => (typeof document !== 'undefined' ? document.querySelector(sel) : null);
@@ -64,88 +68,53 @@ export function multiplierDrop(stage, maxStage) {
 }
 
 // --- a correct clear --------------------------------------------------------
-// Colour + intensity scale with the word's state. validCue's pitch rises with
-// the streak so a hot run reads as higher-stakes.
-export function answerCorrect({ streak = 0, viaAlt = false, silver, deepCut, revenant } = {}) {
-  const { x, y } = centerOf('.sr-slots', centerOf('.sr-card'));
-  const color = revenant ? RED : deepCut ? AMBER : silver ? CHROME : VIOLET;
-  const card = el('.sr-card');
-  if (card) flash(card, color);
+// The clear's VISUALS now live on the page (the "GOT IT!" / "CLOSE!" stamp, the
+// tile squash). juice just plays the cue, whose pitch rises with the streak so a
+// hot run reads as higher-stakes. No burst, no ring, no card flash.
+export function answerCorrect({ streak = 0 } = {}) {
   validCue(streak);
-  const big = deepCut || silver;
-  burst(x, y, {
-    count: viaAlt ? 10 : big ? 30 : 18,
-    colors: [color, WHITE],
-    speed: big ? 320 : 240,
-    life: 0.7,
-  });
-  ring(x, y, { radius: big ? 150 : 110, color, width: 4 });
-  if (deepCut) {
-    // the +150 flourish
-    sparkle();
-    screenFlash({ alpha: 0.18, color: AMBER, life: 0.2 });
-  }
 }
 
 // --- a rejected keystroke ---------------------------------------------------
-// Layered on top of the CSS shake/bad-pulse: a low buzz + a small red screen
-// wash so the reject reads without ever stranding the player.
+// Carried visually by the CSS shake / bad-pulse + the "TCH!" tick; juice just
+// plays the buzz (no screen wash, no juice shake — the CSS wiring owns the shake).
 export function wrongKey() {
   sfx('reject');
-  screenFlash({ alpha: 0.1, color: RED, life: 0.14 });
-  shake(4, 220);
 }
 
 // --- PRIORITY 2: SILVER TONGUE — the biggest moment -------------------------
-// Entry: a brief world-stop, a chrome flash-over, a fat burst + double ring, and
-// a bright fanfare. This should feel like the mode cracking open.
+// The page REPRINTS IN NEGATIVE (CSS invert + a 2-frame impact flash) — the state
+// IS the visual. juice just lands the fanfare.
 export function silverEnter() {
-  const { x, y } = centerOf('.sr-card');
-  hitStop(90); // fire-and-forget freeze; particles hold mid-air
-  screenFlash({ alpha: 0.55, color: CHROME, life: 0.32 });
-  burst(x, y, { count: 64, colors: [CHROME, WHITE, VIOLET], speed: 460, life: 1.1 });
-  ring(x, y, { radius: 260, color: CHROME, width: 6, life: 0.6 });
-  ring(x, y, { radius: 170, color: WHITE, width: 3, life: 0.5 });
-  shake(7, 360);
   fanfare();
-  sparkle();
 }
 
-// Break: the chrome shatters. A colder flash, a grey shard burst, a hard shake
-// and a downward tone — the loss of the flex, distinct from a normal miss.
+// Break: the existing shatter cue — a wash + a grey shard burst + a hard shake +
+// a downward tone — fires as the page snaps back out of negative.
 export function silverBreak() {
   const { x, y } = centerOf('.sr-card');
-  screenFlash({ alpha: 0.4, color: CHROME, life: 0.26 });
-  burst(x, y, { count: 40, colors: ['#c9d3df', '#8a95a6', CHROME], speed: 380, life: 0.9 });
+  screenFlash({ alpha: 0.4, color: PAPER, life: 0.26 });
+  burst(x, y, { count: 40, colors: ['#c9d3df', '#8a95a6', PAPER], speed: 380, life: 0.9 });
   shake(9, 380);
   defeatTone();
 }
 
 // --- PRIORITY 3: Deep Cut ---------------------------------------------------
-// Entry: a low whoosh, an amber wash + ring, a small shake — a dramatic arrival.
+// Marked for the whole word by the black corner ribbon (CSS); arrival is its whoosh.
 export function deepCutEnter() {
-  const { x, y } = centerOf('.sr-card');
   sfx('open');
-  screenFlash({ alpha: 0.22, color: AMBER, life: 0.34 });
-  ring(x, y, { radius: 220, color: AMBER, width: 5, life: 0.6 });
-  shake(4, 300);
 }
 
-// --- PRIORITY 4: Revenant — glitchy red entry -------------------------------
+// --- PRIORITY 4: Revenant ---------------------------------------------------
+// The "IT'S BACK" stamp (CSS) carries the arrival; juice plays the slash.
 export function revenantEnter() {
-  const { x, y } = centerOf('.sr-card');
   sfx('slash');
-  // Two quick offset red washes read as a glitch stutter.
-  screenFlash({ alpha: 0.24, color: RED, life: 0.12 });
-  shake(7, 320);
-  setTimeout(() => screenFlash({ alpha: 0.16, color: RED, life: 0.12 }), 90);
-  ring(x, y, { radius: 150, color: RED, width: 3, life: 0.4 });
 }
 
-// A plain miss (life lost, no silver to break): a red wash + KO thud + shake.
+// A plain miss (life lost, no silver to break): the "MISS!!" stamp + page tear
+// (CSS) carry it; the KO thud + a shake stay (shake is kept for miss + death).
 export function miss() {
   sfx('ko');
-  screenFlash({ alpha: 0.3, color: RED, life: 0.28 });
   shake(6, 340);
 }
 

@@ -53,7 +53,14 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   }, [view.phase, musicSetVolume]);
 
   return (
-    <div className="sr-app" ref={appRef}>
+    // .silver flips the whole page into a negative reprint (CSS var inversion).
+    <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
+      {/* manga focus lines: hidden until the final stage (endgame treatment) */}
+      <SpeedLines active={view.hasWord && view.atFinal} />
+      {/* miss: a 2-frame page-tear flash, re-keyed per miss so it fires once */}
+      {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
+        <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
+      )}
       <div className="sr-stage">
         {view.hasWord && (
           <>
@@ -66,17 +73,19 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
               heat={view.heat}
               heatCap={view.heatCap}
             />
-            <AnteMeter
-              multiplier={view.multiplier}
-              stage={view.stage}
-              maxStage={view.maxStage}
-              wordNumber={view.wordNumber}
-              interval={view.interval}
-              graceMs={view.graceMs}
-              atFinal={view.atFinal}
-              running={view.pending === 'idle'}
-            />
-            <WordCard view={view} />
+            <div className="sr-body">
+              <AnteMeter
+                multiplier={view.multiplier}
+                stage={view.stage}
+                maxStage={view.maxStage}
+                wordNumber={view.wordNumber}
+                interval={view.interval}
+                graceMs={view.graceMs}
+                atFinal={view.atFinal}
+                running={view.pending === 'idle'}
+              />
+              <WordCard view={view} />
+            </div>
           </>
         )}
       </div>
@@ -90,6 +99,7 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
         <DevTuner
           cfg={view.cfg}
           setStageMs={game.setStageMs}
+          setSpellMs={game.setSpellMs}
           setKnob={game.setKnob}
           scene={game.scene}
           debugRevealTwo={game.debugRevealTwo}
@@ -115,37 +125,82 @@ function ExitLink({ onExit }) {
 function StartScreen({ onPlay, onExit }) {
   return (
     <div className="sr-screen">
-      <div className="sr-title">SAT&nbsp;RUSH</div>
-      <div className="sr-sub">
-        Type the missing word. Information arrives in stages — and every stage you wait for costs
-        you multiplier.
+      {/* the cover page — same paper/ink/double-rule/grain language as the play page */}
+      <div className="sr-cover">
+        <div className="sr-title sr-print" data-v={'SAT RUSH'}>
+          SAT&nbsp;RUSH
+        </div>
+        <div className="sr-sub">
+          Type the missing word. Information arrives in stages — and every stage you wait for costs
+          you multiplier.
+        </div>
+        <div className="sr-rules">
+          <div>
+            <code>5×</code> part of speech + letter count
+          </div>
+          <div>
+            <code>4×</code> the sentence
+          </div>
+          <div>
+            <code>3×</code> the definition
+          </div>
+          <div>
+            <code>2×</code> the root
+          </div>
+          <div>
+            <code>1×</code> first letter
+          </div>
+        </div>
+        <div className="sr-sub fine">
+          Stuck? It spells itself out — for scraps. Answer early for the real points. Miss only if you
+          walk away. 5 correct in a row → SILVER TONGUE, everything doubles. Miss a word and it comes
+          back angrier.
+        </div>
+        <button type="button" className="sr-btn" onClick={onPlay}>
+          Play
+        </button>
+        <ExitLink onExit={onExit} />
       </div>
-      <div className="sr-rules">
-        <div>
-          <code>5×</code> part of speech + letter count
-        </div>
-        <div>
-          <code>4×</code> the sentence
-        </div>
-        <div>
-          <code>3×</code> the definition
-        </div>
-        <div>
-          <code>2×</code> the root
-        </div>
-        <div>
-          <code>1×</code> first letter
-        </div>
-      </div>
-      <div className="sr-sub" style={{ opacity: 0.5 }}>
-        Wrong letters bounce — you can’t get stuck. 5 correct in a row → SILVER TONGUE, everything
-        doubles. Miss a word and it comes back angrier.
-      </div>
-      <button type="button" className="sr-btn" onClick={onPlay}>
-        Play
-      </button>
-      <ExitLink onExit={onExit} />
     </div>
+  );
+}
+
+// SpeedLines — asymmetric manga focus lines converging on centre, cream + faint,
+// rendered full-bleed on the void behind the page. Hidden until `active` (the
+// final stage). Static: it's a state cue, not motion. Non-scaling strokes keep
+// the varied widths crisp under the stretch-to-fill viewBox.
+function SpeedLines({ active }) {
+  const CX = 50;
+  const CY = 50;
+  // hand-tuned so the spacing/widths read asymmetric, not a clean starburst
+  const angles = [-84, -61, -40, -12, 8, 33, 55, 78, 100, 128, 152, 168, -168, -140, -116];
+  const widths = [2, 1.2, 3, 1.6, 2.4, 1, 3.2, 1.4, 2, 1.2, 2.8, 1.6, 1, 2.2, 1.4];
+  const gap = [30, 40, 33, 44, 36, 30, 42, 34, 38, 31, 45, 33, 40, 36, 30]; // clear centre radius
+  const OUT = 80; // reach past the edges for full bleed
+  return (
+    <svg
+      className={`sr-speedlines${active ? ' is-final' : ''}`}
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {angles.map((a, i) => {
+        const rad = (a * Math.PI) / 180;
+        const dx = Math.cos(rad);
+        const dy = Math.sin(rad);
+        return (
+          <line
+            key={i}
+            x1={CX + dx * gap[i]}
+            y1={CY + dy * gap[i]}
+            x2={CX + dx * OUT}
+            y2={CY + dy * OUT}
+            strokeWidth={widths[i]}
+            vectorEffect="non-scaling-stroke"
+          />
+        );
+      })}
+    </svg>
   );
 }
 
