@@ -426,10 +426,13 @@ export function useSatRushGame() {
       } else {
         beginWord();
       }
-      // Advance to a representative stage so the card is populated for the shot:
-      // 'normal' shows just the sentence at 4x; the others reveal one step more;
-      // a ?lock= mid-word shot reveals the full clue stack.
-      const target = SAT_RUSH_LOCK ? 3 : which === 'normal' ? 1 : 2;
+      // Advance to a representative stage so the card is populated for the shot.
+      // In the 3-stage model stage 1 shows sentence + definition + aliases (a full,
+      // pre-endgame clue stack) — the right "mid-word" look for a scene; stage 2 is
+      // the final/spell-along stage, so scenes stop at 1. A ?lock= letter shot goes
+      // to the final stage (usually paired with ?freeze=1 to hold it still).
+      const maxStage = eng.config.stageMultipliers.length - 1;
+      const target = Math.min(maxStage, SAT_RUSH_LOCK ? maxStage : 1);
       while (eng.getState().current.stage < target) eng.advanceStage();
       for (let i = 0; i < SAT_RUSH_LOCK && inputRef.current; i++) {
         inputRef.current.revealNextLetter();
@@ -527,7 +530,7 @@ function buildView(state, cur, eng, input, extra) {
     interval,
     graceMs: extra.graceMs, // full spell-along window (fixed at final-stage entry)
     meta: `${POS_LABEL[cur.pos] || cur.pos} · ${cur.length} letters · tier ${cur.tier}`,
-    reveals: cur.reveals.map((type, idx) => ({ type, idx, visible: idx <= cur.stage })),
+    reveals: cur.reveals.map((r) => ({ type: r.type, stage: r.stage, visible: r.stage <= cur.stage })),
     context: cur.context,
     gloss: cur.gloss,
     root: cur.root,

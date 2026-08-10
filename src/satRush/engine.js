@@ -7,23 +7,22 @@
 // (stageIntervalMs, endgame()) so every rule here is unit-testable without a
 // clock. The RNG is injected so word selection is reproducible in tests.
 //
-// Stage / reveal / multiplier model (multiplier is tied to the STAGE INDEX, not
-// to the content, so the tier-4/5 flip never changes what a stage is worth):
-//   stage 0  meta (part of speech + letter count)   5x
-//   stage 1  sentence                               4x
-//   stage 2  C                                       3x
-//   stage 3  D                                       2x
-//   stage 4  first letter                           1x
-// where {C,D} = {gloss, root}: gloss-then-root for tiers 1-3, SWAPPED to
-// root-then-gloss for tiers >= 4 (see revealOrder). High tiers thus force
-// inference from context + morphology BEFORE the definition appears. This is
-// intentionally NOT stage-2-invariant: a tier-4/5 revenant entering at stage 2
-// has the sentence + root but NO gloss — a deliberately harder re-entry than a
-// tier-1-3 revenant's sentence + gloss.
+// Stage / reveal / multiplier model — THREE coarse stages (the multiplier is
+// tied to the STAGE INDEX, not to the content). Several reveal types share a
+// stage, so information arrives in bigger, slower beats:
+//   stage 0   5x   meta (part of speech + letter count) AND the sentence
+//   stage 1   3x   + the definition (gloss) AND the root / known aliases
+//   stage 2   1x   + the first letter — then the SPELL-ALONG endgame runs
+//                   (auto-reveal every spellAlongMs up to length-1, then a final
+//                   hold, then a "walked away" miss)
+// The reveal schedule (see revealSchedule) is therefore NOT one-type-per-stage.
+// A word with no root simply has no root reveal (no aliases row). The old
+// tier-4/5 gloss<->root flip is GONE — gloss and root co-reveal at stage 1, so
+// "answer early = more points" (and AVG ANTE) survives, just coarser.
 
 export const DEFAULT_CONFIG = {
-  stageIntervalMs: 2000, // per-stage reveal cadence (configurable)
-  stageMultipliers: [5, 4, 3, 2, 1], // by stage index 0..4
+  stageIntervalMs: 2800, // per-stage reveal cadence (configurable, live-tunable)
+  stageMultipliers: [5, 3, 1], // by stage index 0..2 (three coarse beats)
   // SPELL-ALONG endgame: at the final stage letters keep auto-revealing on this
   // cadence (never scaled by the deep-cut interval) until only the last letter is
   // missing, so every word is eventually typeable — the skill is answering EARLY.
@@ -32,22 +31,21 @@ export const DEFAULT_CONFIG = {
   heatCap: 5,
   silverMultiplier: 2, // at heat cap, all multipliers double
   // A clear only bumps heat when at most this many letters were revealed (the
-  // free stage-4 first letter). Leaning on the spell-along reveals scores
+  // free stage-2 first letter). Leaning on the spell-along reveals scores
   // normally and keeps the streak, but leaves heat unchanged (never reset), so
   // SILVER TONGUE stays something you earn by knowing words.
   heatMaxRevealed: 1,
   tierEvery: 12, // tier = min(5, 1 + floor(wordNumber / tierEvery))
   tierMax: 5,
   deepCutEvery: 15, // every Nth word is a deep cut (forced tier 5 when fresh)
-  deepCutIntervalScale: 1.55, // deep cut slows the reveal cadence
+  deepCutIntervalScale: 1.55, // deep cut slows the STAGE cadence only (never spell-along)
   deepCutBonus: 150, // flat, added after the multiplier
   revenantOffset: 6, // a miss requeues the word for wordNumber + offset
-  revenantEntryStage: 2, // revenants re-enter mid-reveal (sentence + gloss up)
+  revenantEntryStage: 1, // revenants re-enter having seen the sentence + definition
   revenantMultiplier: 2, // and pay double
   wrongKeystrokePenalty: -2, // per rejected key, never a life
   wrongKeystrokeRevealEvery: 3, // every 3rd wrong key reveals the next letter...
   wrongKeystrokeRevealPenalty: -8, // ...for this extra cost
-  tierFlipMin: 4, // tiers >= this swap the sentence/gloss reveal order
 };
 
 export const REVEAL_META = 'meta';
@@ -55,6 +53,16 @@ export const REVEAL_SENTENCE = 'sentence';
 export const REVEAL_GLOSS = 'gloss';
 export const REVEAL_ROOT = 'root';
 export const REVEAL_FIRST_LETTER = 'firstLetter';
+
+// The stage at which each reveal type appears. Multiple types share a stage:
+// meta + sentence at 0, gloss + root at 1, the first letter at 2.
+export const REVEAL_STAGE = {
+  [REVEAL_META]: 0,
+  [REVEAL_SENTENCE]: 0,
+  [REVEAL_GLOSS]: 1,
+  [REVEAL_ROOT]: 1,
+  [REVEAL_FIRST_LETTER]: 2,
+};
 
 // --- Pure helpers (exported for direct unit testing) -----------------------
 
@@ -65,33 +73,21 @@ export function curveTier(wordNumber, config = DEFAULT_CONFIG) {
 }
 
 /**
- * Does this word swap gloss<->root? Only when it is high-tier AND actually has a
- * root: a null-root word has no morphology to front-load, so it keeps the gloss
- * at stage 2 (the flip would otherwise leave stage 2 empty).
+ * The reveal schedule for a word: a list of { type, stage } entries (types can
+ * share a stage). meta + sentence at stage 0; gloss + root at stage 1; the first
+ * letter at stage 2 (then the spell-along endgame). A word with no root omits the
+ * root entry entirely (no aliases row). Every word follows the same schedule —
+ * there is no tier-dependent ordering.
  */
-export function isFlipped(tier, hasRoot = true, config = DEFAULT_CONFIG) {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
-  return hasRoot && tier >= cfg.tierFlipMin;
-}
-
-/**
- * The ordered reveal table for a word: one entry per stage 0..4. The sentence is
- * ALWAYS stage 1; stages 2 and 3 carry {gloss, root} and their order swaps for
- * tier >= tierFlipMin (root arrives before the gloss), so high tiers must infer
- * from usage + morphology before the definition lands. Because the swap is
- * gloss<->root, the stage-2 SET differs by tier: {gloss} normally vs {root} when
- * flipped — a tier-4/5 revenant's stage-2 entry therefore has no definition.
- * (A null-root high-tier word does not flip; see isFlipped.)
- */
-export function revealOrder(tier, hasRoot = true, config = DEFAULT_CONFIG) {
-  const flip = isFlipped(tier, hasRoot, config);
-  return [
-    REVEAL_META,
-    REVEAL_SENTENCE,
-    flip ? REVEAL_ROOT : REVEAL_GLOSS,
-    flip ? REVEAL_GLOSS : REVEAL_ROOT,
-    REVEAL_FIRST_LETTER,
+export function revealSchedule(hasRoot = true) {
+  const entries = [
+    { type: REVEAL_META, stage: REVEAL_STAGE[REVEAL_META] },
+    { type: REVEAL_SENTENCE, stage: REVEAL_STAGE[REVEAL_SENTENCE] },
+    { type: REVEAL_GLOSS, stage: REVEAL_STAGE[REVEAL_GLOSS] },
   ];
+  if (hasRoot) entries.push({ type: REVEAL_ROOT, stage: REVEAL_STAGE[REVEAL_ROOT] });
+  entries.push({ type: REVEAL_FIRST_LETTER, stage: REVEAL_STAGE[REVEAL_FIRST_LETTER] });
+  return entries;
 }
 
 function shuffle(arr, rng) {
@@ -205,7 +201,7 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
       root: row.root, // may be null
       alts: row.alts || [],
       firstLetter: row.word[0],
-      reveals: revealOrder(tier, row.root != null, cfg),
+      reveals: revealSchedule(row.root != null),
       isRevenant,
       isDeepCut,
       missCount,
@@ -308,13 +304,12 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     };
   }
 
-  /** Reveals visible at the current stage (types + payload). */
+  /** Reveals visible at the current stage: the { type, stage } entries whose
+   *  stage has been reached. (Several types can share a stage.) */
   function visibleReveals() {
     const cw = state.current;
     if (!cw) return [];
-    return cw.reveals
-      .map((type, stage) => ({ type, stage }))
-      .filter((r) => r.stage <= cw.stage);
+    return cw.reveals.filter((r) => r.stage <= cw.stage);
   }
 
   /**

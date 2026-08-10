@@ -4,8 +4,10 @@
 //   overline → WANTED header (off-register violet plate) → case id (the meta) →
 //   FIELDS (LAST SEEN / DESCRIPTION / KNOWN ALIASES) → mugshot SLOTS →
 //   REWARD footer (AnteMeter — the bounty is the ante) → fine print.
-// Reveals are still rendered in the ENGINE's order (view.reveals) so the tier-4/5
-// gloss<->root flip shows on screen. Event state stays in print: Deep Cut = the
+// Reveals are driven by the ENGINE's 3-stage schedule (view.reveals): meta +
+// sentence at stage 0, gloss + root at stage 1, first letter at stage 2. Several
+// types share a stage, so the fields light up in groups. Event state stays in
+// print: Deep Cut = the
 // MOST WANTED header + red overline; Revenant = the ESCAPED overprint slapped
 // across the header (a held state marker, not the corner stamp); clear/miss = a
 // paper STAMP; Silver Tongue = the page reprinting in negative (class on .sr-app).

@@ -1,14 +1,13 @@
 // engine.test.js — the rules of SAT RUSH. These tests matter more than the
 // implementation: every later step builds on this behaviour, so the interaction
-// cases (revenant x deep cut, silver x revenant, the flip x stage-2 entry) are
+// cases (revenant x deep cut, silver x revenant, the 3-stage reveal schedule) are
 // covered explicitly, not just each rule in isolation.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createSatRushEngine,
   curveTier,
-  isFlipped,
-  revealOrder,
+  revealSchedule,
   DEFAULT_CONFIG,
   REVEAL_META,
   REVEAL_SENTENCE,
@@ -89,7 +88,7 @@ function tierWords(tier, perTier = 12) {
 
 // --- multiplier decay ------------------------------------------------------
 
-test('multiplier decays 5-4-3-2-1 across the stages and clamps at the last', () => {
+test('multiplier decays 5-3-1 across the three stages and clamps at the last', () => {
   const eng = engine();
   eng.nextWord(); // fresh tier-1, heat 0, no revenant
   const seen = [eng.currentMultiplier()];
@@ -97,68 +96,59 @@ test('multiplier decays 5-4-3-2-1 across the stages and clamps at the last', () 
     eng.advanceStage();
     seen.push(eng.currentMultiplier());
   }
-  // 5,4,3,2,1 then clamped at 1 for the extra advances.
-  assert.deepEqual(seen, [5, 4, 3, 2, 1, 1, 1]);
+  // 5,3,1 then clamped at 1 for the extra advances (final stage is index 2).
+  assert.deepEqual(seen, [5, 3, 1, 1, 1, 1, 1]);
 });
 
-// --- the tier-4/5 stage flip ----------------------------------------------
+// --- the 3-stage reveal schedule (types share a stage) ---------------------
 
-test('the sentence is always stage 1; tiers 4-5 swap gloss<->root (root arrives first)', () => {
-  assert.equal(isFlipped(3), false);
-  assert.equal(isFlipped(4), true);
-  // Tiers 1-3: definition (gloss) before morphology (root).
-  assert.deepEqual(revealOrder(3), [
-    REVEAL_META,
-    REVEAL_SENTENCE,
-    REVEAL_GLOSS,
-    REVEAL_ROOT,
-    REVEAL_FIRST_LETTER,
-  ]);
-  // Tiers 4-5: root before gloss, so the definition is the LAST thing to land.
-  assert.deepEqual(revealOrder(5), [
-    REVEAL_META,
-    REVEAL_SENTENCE,
-    REVEAL_ROOT,
-    REVEAL_GLOSS,
-    REVEAL_FIRST_LETTER,
-  ]);
+test('the reveal schedule groups types: meta+sentence @0, gloss+root @1, first letter @2', () => {
+  const stageOf = Object.fromEntries(revealSchedule(true).map((r) => [r.type, r.stage]));
+  assert.deepEqual(stageOf, {
+    [REVEAL_META]: 0,
+    [REVEAL_SENTENCE]: 0,
+    [REVEAL_GLOSS]: 1,
+    [REVEAL_ROOT]: 1,
+    [REVEAL_FIRST_LETTER]: 2,
+  });
 });
 
-test('a null-root high-tier word does NOT flip, so stage 2 is never empty', () => {
-  // With a root, tier 5 flips (root before gloss)...
-  assert.equal(isFlipped(5, true), true);
-  assert.deepEqual(revealOrder(5, true), [
-    REVEAL_META,
-    REVEAL_SENTENCE,
-    REVEAL_ROOT,
-    REVEAL_GLOSS,
-    REVEAL_FIRST_LETTER,
-  ]);
-  // ...but with no morphology to front-load it stays in base order (gloss @ 2).
-  assert.equal(isFlipped(5, false), false);
-  assert.deepEqual(revealOrder(5, false), [
-    REVEAL_META,
-    REVEAL_SENTENCE,
-    REVEAL_GLOSS,
-    REVEAL_ROOT,
-    REVEAL_FIRST_LETTER,
-  ]);
+test('a root-null word simply has no root reveal (no aliases row), schedule otherwise intact', () => {
+  const sched = revealSchedule(false);
+  assert.ok(!sched.some((r) => r.type === REVEAL_ROOT));
+  assert.deepEqual(
+    sched.map((r) => [r.type, r.stage]),
+    [
+      [REVEAL_META, 0],
+      [REVEAL_SENTENCE, 0],
+      [REVEAL_GLOSS, 1],
+      [REVEAL_FIRST_LETTER, 2],
+    ]
+  );
 
-  // Grounded: a real tier-5 word with root:null keeps the gloss at stage 2.
+  // Grounded: a real root:null word exposes no root reveal in the engine.
   const rootless = [
-    {
-      word: 'aaaaa',
-      pos: 'adj',
-      tier: 5,
-      gloss: 'g',
-      context: 'use ___ now',
-      root: null,
-      alts: [],
-    },
+    { word: 'aaaaa', pos: 'adj', tier: 5, gloss: 'g', context: 'use ___ now', root: null, alts: [] },
   ];
   const eng = createSatRushEngine({ words: rootless, rng: IDENTITY_RNG });
   const cur = eng.nextWord();
-  assert.equal(cur.reveals[2], REVEAL_GLOSS);
+  assert.ok(!cur.reveals.some((r) => r.type === REVEAL_ROOT));
+});
+
+test('visibleReveals grows by stage: {meta,sentence} @0, +{gloss,root} @1, +firstLetter @2', () => {
+  const eng = engine();
+  eng.nextWord(); // stage 0
+  assert.deepEqual(
+    new Set(eng.visibleReveals().map((r) => r.type)),
+    new Set([REVEAL_META, REVEAL_SENTENCE])
+  );
+  eng.advanceStage(); // stage 1 — the definition and the root land together
+  assert.deepEqual(
+    new Set(eng.visibleReveals().map((r) => r.type)),
+    new Set([REVEAL_META, REVEAL_SENTENCE, REVEAL_GLOSS, REVEAL_ROOT])
+  );
+  eng.advanceStage(); // stage 2 — the first letter joins (then spell-along)
+  assert.ok(eng.visibleReveals().some((r) => r.type === REVEAL_FIRST_LETTER));
 });
 
 // --- silver tongue doubling -----------------------------------------------
@@ -200,7 +190,7 @@ test('earning silver banks a doubled clear even if the next word is missed', () 
 
 // --- revenant: double multiplier, stage-2 entry, requeue -------------------
 
-test('a revenant enters at stage 2, pays double, and is requeued on a re-miss', () => {
+test('a revenant enters at stage 1, pays double, and is requeued on a re-miss', () => {
   const eng = engine();
   eng.nextWord(); // word 1, fresh tier 1
   const missWord = eng.getState().current.word;
@@ -213,12 +203,13 @@ test('a revenant enters at stage 2, pays double, and is requeued on a re-miss', 
   assert.equal(eng.getState().wordNumber, 7);
   assert.equal(cur.isRevenant, true);
   assert.equal(cur.word, missWord); // same word came back
-  assert.equal(cur.stage, DEFAULT_CONFIG.revenantEntryStage); // 2
-  assert.equal(eng.currentMultiplier(), 3 * 2); // stage-2 base 3x * revenant 2
+  assert.equal(cur.stage, DEFAULT_CONFIG.revenantEntryStage); // 1
+  assert.equal(eng.currentMultiplier(), 3 * 2); // stage-1 base 3x * revenant 2
 
-  // The revenant enters with sentence + gloss already visible (+ meta).
+  // The revenant enters having seen the sentence + definition (+ meta + root):
+  // stage 1 reveals gloss AND root together.
   const types = new Set(eng.visibleReveals().map((r) => r.type));
-  assert.deepEqual(types, new Set([REVEAL_META, REVEAL_SENTENCE, REVEAL_GLOSS]));
+  assert.deepEqual(types, new Set([REVEAL_META, REVEAL_SENTENCE, REVEAL_GLOSS, REVEAL_ROOT]));
 
   // Miss it a SECOND time -> requeued again for now+6, missCount 2.
   const m2 = eng.miss();
@@ -467,9 +458,9 @@ test('INTERACTION: a revenant that is ALSO the 15th word stacks deep-cut + reven
   assert.equal(cur.isRevenant, true);
   assert.equal(cur.isDeepCut, true); // it landed on the deep-cut slot
   assert.equal(cur.tier, 1); // a revenant keeps its own tier (word 9 was tier 1)
-  assert.equal(cur.stage, 2);
+  assert.equal(cur.stage, 1); // revenants re-enter at stage 1 now
   assert.equal(eng.getState().heat, 0); // isolated from silver
-  assert.equal(eng.currentMultiplier(), 3 * 2); // stage-2 3x * revenant 2
+  assert.equal(eng.currentMultiplier(), 3 * 2); // stage-1 3x * revenant 2
 
   const r = eng.submitCorrect();
   const base = r.breakdown.base; // 1*10 + len*2
@@ -490,8 +481,8 @@ test('INTERACTION: silver tongue active on a revenant applies BOTH doublings', (
 
   const cur = eng.nextWord(); // word 7 = the revenant, heat at cap
   assert.equal(cur.isRevenant, true);
-  assert.equal(cur.stage, 2);
-  // stage-2 base 3 * silver 2 * revenant 2 = 12
+  assert.equal(cur.stage, 1);
+  // stage-1 base 3 * silver 2 * revenant 2 = 12
   assert.equal(eng.currentMultiplier(), 12);
   const r = eng.submitCorrect();
   assert.equal(r.breakdown.silver, true);
@@ -516,32 +507,6 @@ test('INTERACTION: a miss on a deep cut costs a life, zeroes heat, and requeues'
   assert.equal(m.requeuedFor, 15 + DEFAULT_CONFIG.revenantOffset); // 21
 });
 
-test('INTERACTION: under the gloss<->root flip, a t5 revenant re-enters HARDER than a t3', () => {
-  // The stage-2 entry SET now DIFFERS by tier (this is the whole point of moving
-  // the flip to gloss<->root): a low-tier revenant re-enters with the definition
-  // visible; a high-tier one re-enters with the ROOT and NO definition.
-  const setAt = (tier, stage) => new Set(revealOrder(tier).slice(0, stage + 1));
-  assert.deepEqual(setAt(3, 2), new Set([REVEAL_META, REVEAL_SENTENCE, REVEAL_GLOSS]));
-  assert.deepEqual(setAt(5, 2), new Set([REVEAL_META, REVEAL_SENTENCE, REVEAL_ROOT]));
-  assert.ok(!setAt(5, 2).has(REVEAL_GLOSS)); // the hard part: no definition on entry
-  assert.ok(setAt(5, 2).has(REVEAL_ROOT)); // morphology instead
-
-  // Grounded in the engine: a real tier-5 revenant (from a missed deep cut)
-  // enters at stage 2 with sentence + root and NO gloss — harder than a tier-3
-  // revenant's sentence + gloss.
-  const eng = engine({ perTier: 20 });
-  const cut = skipTo(eng, 15); // fresh deep cut, forced tier 5
-  assert.equal(cut.tier, 5);
-  eng.miss(); // tier-5 revenant due at 21
-  const rev = skipTo(eng, 21);
-  assert.equal(rev.tier, 5);
-  assert.equal(rev.isRevenant, true);
-  assert.equal(rev.stage, 2);
-  const types = new Set(eng.visibleReveals().map((r) => r.type));
-  assert.deepEqual(types, new Set([REVEAL_META, REVEAL_SENTENCE, REVEAL_ROOT]));
-  assert.ok(!types.has(REVEAL_GLOSS));
-});
-
 // --- alt half credit & results --------------------------------------------
 
 test('an alt clear is half credit (bonus included) and reports the real word', () => {
@@ -561,21 +526,21 @@ test('an alt clear is half credit (bonus included) and reports the real word', (
 
 test('results(): avg ante is the mean clear MULTIPLIER and hardest word is the top tier', () => {
   const eng = engine({ perTier: 20 });
-  // Clear one word at stage 0 (5x) and one at stage 2 (3x).
+  // Clear one word at stage 0 (5x) and one at stage 2 (1x).
   eng.nextWord();
   eng.submitCorrect(); // stage 0 -> 5x
   eng.nextWord();
   eng.advanceStage();
   eng.advanceStage();
-  eng.submitCorrect(); // stage 2 -> 3x
+  eng.submitCorrect(); // stage 2 -> 1x
   // A tier-5 deep cut cleared at stage 0 (5x) -> becomes the hardest word.
   skipTo(eng, 15);
   eng.submitCorrect();
 
   const res = eng.results();
   assert.equal(res.cleared, 3);
-  // mean of the base multipliers 5, 3, 5 — higher means answered earlier.
-  assert.equal(res.avgAnte, (5 + 3 + 5) / 3);
+  // mean of the base multipliers 5, 1, 5 — higher means answered earlier.
+  assert.equal(res.avgAnte, (5 + 1 + 5) / 3);
   assert.equal(res.hardestWord.tier, 5);
   assert.equal(res.runLog.length, 3);
   assert.ok(res.runLog.every((e) => e.ok));
