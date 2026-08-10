@@ -1,0 +1,824 @@
+[
+  {
+    "word": "adept",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "highly skilled at something",
+    "context": "After years of practice she grew remarkably ___ at defusing bombs under pressure.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "amiable",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "friendly and pleasant",
+    "context": "Their ___ neighbor waved every morning and always offered fresh cookies to the kids.",
+    "root": {
+      "morpheme": "am-",
+      "meaning": "love, friend",
+      "cousins": [
+        "amity",
+        "amicable",
+        "enamor"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "ardent",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "passionate and enthusiastic",
+    "context": "An ___ fan, he painted his whole body team colors and screamed through every game.",
+    "root": {
+      "morpheme": "ard-",
+      "meaning": "to burn",
+      "cousins": [
+        "ardor",
+        "arson"
+      ]
+    },
+    "alts": [
+      "fervid"
+    ]
+  },
+  {
+    "word": "arduous",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "very hard and demanding",
+    "context": "The climb was so ___ that half the team turned back before reaching the ridge.",
+    "root": null,
+    "alts": [
+      "onerous"
+    ]
+  },
+  {
+    "word": "austere",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "plain, strict, without comfort",
+    "context": "The monk's ___ room held only a mat, a candle, and a single wooden bowl.",
+    "root": null,
+    "alts": [
+      "spartan"
+    ]
+  },
+  {
+    "word": "bleak",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "gloomy and hopeless",
+    "context": "The future looked ___ after the factory closed and the town emptied out overnight.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "blunt",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "direct and tactless in speech; not sharp",
+    "context": "Her ___ reply stung, but at least everyone knew exactly where they stood.",
+    "root": null,
+    "alts": [
+      "frank"
+    ]
+  },
+  {
+    "word": "brisk",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "quick and energetic",
+    "context": "They set a ___ pace up the trail, breath fogging in the cold morning air.",
+    "root": null,
+    "alts": [
+      "swift"
+    ]
+  },
+  {
+    "word": "brittle",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "hard but easily broken",
+    "context": "The old paper was so ___ it crumbled the moment she turned the page.",
+    "root": null,
+    "alts": [
+      "crumbly"
+    ]
+  },
+  {
+    "word": "buoyant",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "cheerful; able to float",
+    "context": "Even after losing, she stayed ___, joking with teammates and planning the next match.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "cautious",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "careful to avoid risk",
+    "context": "Being ___, he checked the ice twice before letting anyone skate across the pond.",
+    "root": {
+      "morpheme": "caut-",
+      "meaning": "to beware",
+      "cousins": [
+        "caution",
+        "precaution",
+        "caveat"
+      ]
+    },
+    "alts": [
+      "watchful"
+    ]
+  },
+  {
+    "word": "coarse",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "rough in texture; crude",
+    "context": "The ___ fabric scratched his skin, nothing like the silk he was used to.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "coax",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "gently persuade",
+    "context": "She had to ___ the frightened kitten out from under the porch with treats.",
+    "root": null,
+    "alts": [
+      "lure"
+    ]
+  },
+  {
+    "word": "conceal",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "hide from view",
+    "context": "He tried to ___ the gift behind his back, but the ribbon poked out.",
+    "root": null,
+    "alts": [
+      "obscure"
+    ]
+  },
+  {
+    "word": "crave",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "want intensely",
+    "context": "After the long hike, they all began to ___ a hot meal and a soft bed.",
+    "root": null,
+    "alts": [
+      "yearn"
+    ]
+  },
+  {
+    "word": "deft",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "skillful and quick",
+    "context": "With one ___ motion, the chef flipped the omelet and slid it onto the plate.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "dire",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "terrible; urgent",
+    "context": "The village faced a ___ shortage of water after the well finally ran dry.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "dwindle",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "shrink or decrease gradually",
+    "context": "Supplies began to ___ as the storm trapped them in the cabin for weeks.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "eager",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "keenly wanting to do something",
+    "context": "The puppy was so ___ to play that it spun in circles by the door.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "elude",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "escape or avoid cleverly",
+    "context": "The fox managed to ___ the hounds by doubling back through the icy stream.",
+    "root": {
+      "morpheme": "lud-",
+      "meaning": "to play",
+      "cousins": [
+        "illusion",
+        "allude",
+        "prelude"
+      ]
+    },
+    "alts": [
+      "dodge"
+    ]
+  },
+  {
+    "word": "endure",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "suffer through; last",
+    "context": "They had to ___ freezing nights with only one blanket between the four of them.",
+    "root": {
+      "morpheme": "dur-",
+      "meaning": "to last, hard",
+      "cousins": [
+        "durable",
+        "duration",
+        "during"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "entice",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "attract by offering pleasure",
+    "context": "The bakery used the smell of fresh bread to ___ hungry passersby inside.",
+    "root": null,
+    "alts": [
+      "allure"
+    ]
+  },
+  {
+    "word": "erode",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "wear away gradually",
+    "context": "Waves slowly began to ___ the cliff, dropping chunks of rock into the sea.",
+    "root": {
+      "morpheme": "rod-",
+      "meaning": "to gnaw",
+      "cousins": [
+        "rodent",
+        "corrode",
+        "corrosion"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "feeble",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "weak and frail",
+    "context": "His grip was so ___ he could barely lift the spoon to his mouth.",
+    "root": null,
+    "alts": [
+      "infirm"
+    ]
+  },
+  {
+    "word": "flaw",
+    "pos": "n",
+    "tier": 1,
+    "gloss": "a fault or imperfection",
+    "context": "A single ___ in the diamond dropped its price by half at auction.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "fluent",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "speaking smoothly and easily",
+    "context": "After a year abroad, she was ___ enough to argue politics with the locals.",
+    "root": {
+      "morpheme": "flu-",
+      "meaning": "to flow",
+      "cousins": [
+        "fluid",
+        "influence",
+        "fluctuate"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "foster",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "encourage the growth of",
+    "context": "Good coaches ___ confidence, not just skill, in every young player they train.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "frail",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "weak and delicate",
+    "context": "The ___ old bridge swayed as they tiptoed across it one by one.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "gaunt",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "thin and bony from hunger or illness",
+    "context": "Weeks lost at sea left the sailors ___, their cheeks hollow and eyes sunken.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "glib",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "smooth-talking but insincere",
+    "context": "His ___ excuses came too easily, and no one believed a single word.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "grim",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "harsh, gloomy, or forbidding",
+    "context": "The doctor's ___ expression told them the news before she said a word.",
+    "root": null,
+    "alts": [
+      "dour"
+    ]
+  },
+  {
+    "word": "grudge",
+    "pos": "n",
+    "tier": 1,
+    "gloss": "lingering resentment",
+    "context": "She held a ___ for years over a joke he barely remembered making.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "hamper",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "hold back or hinder",
+    "context": "Heavy boots and thick gloves began to ___ their climb up the frozen wall.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "hoard",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "hide away a large supply",
+    "context": "The squirrel raced to ___ acorns before the first snow buried the ground.",
+    "root": null,
+    "alts": [
+      "amass",
+      "stash"
+    ]
+  },
+  {
+    "word": "idle",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "not active or working",
+    "context": "The machines sat ___ all week while the parts were stuck at the border.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "lenient",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "not strict; merciful",
+    "context": "The ___ teacher let them retake any quiz they failed, no questions asked.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "linger",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "stay longer than expected",
+    "context": "The smell of smoke seemed to ___ in the room long after the fire died.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "meager",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "small in amount; barely enough",
+    "context": "The ___ portion of rice on his plate left everyone at the table still hungry.",
+    "root": null,
+    "alts": [
+      "sparse",
+      "scanty"
+    ]
+  },
+  {
+    "word": "mimic",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "copy someone's speech or actions",
+    "context": "The parrot could ___ the doorbell so perfectly that guests kept knocking for nothing.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "murky",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "dark, cloudy, and hard to see through",
+    "context": "The ___ water of the swamp hid whatever creatures lurked below its surface.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "nimble",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "quick and light in movement",
+    "context": "The ___ gymnast leapt between the bars as if gravity barely applied to her.",
+    "root": null,
+    "alts": [
+      "limber"
+    ]
+  },
+  {
+    "word": "nuisance",
+    "pos": "n",
+    "tier": 1,
+    "gloss": "an annoying person or thing",
+    "context": "The barking dog next door became such a ___ that the neighbors finally complained.",
+    "root": null,
+    "alts": [
+      "irritant"
+    ]
+  },
+  {
+    "word": "oust",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "drive out of a position or place",
+    "context": "The rebels planned to ___ the corrupt mayor before the next election could happen.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "overt",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "done openly, not hidden",
+    "context": "His ___ disdain for the plan was obvious the moment he rolled his eyes.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "perilous",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "full of danger; risky",
+    "context": "The climbers faced a ___ ridge where one wrong step meant a very long fall.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "ponder",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "think about carefully",
+    "context": "She stopped to ___ the strange riddle before scribbling down her final answer.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "pristine",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "spotlessly clean and untouched",
+    "context": "The newly fallen snow lay ___ across the field, unbroken by any single footprint.",
+    "root": null,
+    "alts": [
+      "spotless"
+    ]
+  },
+  {
+    "word": "provoke",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "stir up a strong reaction",
+    "context": "Don't ___ the bull by waving that red cloth so close to the fence.",
+    "root": {
+      "morpheme": "voc",
+      "meaning": "call",
+      "cousins": [
+        "vocal",
+        "invoke",
+        "revoke"
+      ]
+    },
+    "alts": [
+      "incense"
+    ]
+  },
+  {
+    "word": "quaint",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "charmingly old-fashioned",
+    "context": "The ___ village had cobblestone streets and shops that hadn't changed in a century.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "quell",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "put an end to; suppress",
+    "context": "Police moved in quickly to ___ the riot before it could spread downtown.",
+    "root": null,
+    "alts": [
+      "quash"
+    ]
+  },
+  {
+    "word": "quirk",
+    "pos": "n",
+    "tier": 1,
+    "gloss": "an odd habit or trait",
+    "context": "Tapping his pen three times before speaking was just another ___ of his.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "rebuke",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "scold or criticize sharply",
+    "context": "The coach would ___ any player who dared to skip the morning practice.",
+    "root": null,
+    "alts": [
+      "berate"
+    ]
+  },
+  {
+    "word": "reckless",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "careless about danger or consequences",
+    "context": "His ___ driving on the icy road nearly sent the car into a ditch.",
+    "root": null,
+    "alts": [
+      "careless"
+    ]
+  },
+  {
+    "word": "relish",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "enjoy greatly",
+    "context": "She would ___ every bite of dessert, savoring it slowly down to the last crumb.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "rugged",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "rough, rocky, and tough",
+    "context": "The ___ coastline was all jagged cliffs and pounding waves against sharp rocks.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "ruthless",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "cruel; showing no mercy",
+    "context": "The ___ dictator crushed anyone who dared to question his absolute rule.",
+    "root": null,
+    "alts": [
+      "pitiless"
+    ]
+  },
+  {
+    "word": "scoff",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "mock or laugh at dismissively",
+    "context": "Critics would ___ at the young inventor, calling his flying machine a foolish dream.",
+    "root": null,
+    "alts": [
+      "sneer"
+    ]
+  },
+  {
+    "word": "serene",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "calm, peaceful, and untroubled",
+    "context": "The lake was perfectly ___ at dawn, its surface a mirror of the pink sky.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "shrewd",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "sharp and clever in judgment",
+    "context": "A ___ negotiator, she spotted the flaw in their offer within seconds.",
+    "root": null,
+    "alts": [
+      "astute"
+    ]
+  },
+  {
+    "word": "sluggish",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "slow-moving and lacking energy",
+    "context": "After the huge lunch, he felt ___ and could barely keep his eyes open.",
+    "root": null,
+    "alts": [
+      "listless"
+    ]
+  },
+  {
+    "word": "steadfast",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "firmly loyal and unwavering",
+    "context": "Her ___ support never faltered, even when everyone else abandoned the cause.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "stifle",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "hold back or smother",
+    "context": "She tried to ___ a yawn during the long, droning afternoon lecture.",
+    "root": null,
+    "alts": [
+      "muffle"
+    ]
+  },
+  {
+    "word": "stingy",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "unwilling to spend or give",
+    "context": "Their ___ uncle refused to leave even a single coin as a tip at the diner.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "subtle",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "delicate and not obvious",
+    "context": "There was a ___ hint of cinnamon in the sauce that most diners completely missed.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "taunt",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "provoke with mocking remarks",
+    "context": "The bullies would ___ him about his glasses until he finally stood up to them.",
+    "root": null,
+    "alts": [
+      "tease"
+    ]
+  },
+  {
+    "word": "tedious",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "long, slow, and boring",
+    "context": "Copying the entire ledger by hand was a ___ task that ate up all afternoon.",
+    "root": null,
+    "alts": [
+      "irksome"
+    ]
+  },
+  {
+    "word": "treacherous",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "full of hidden danger; likely to betray",
+    "context": "The ___ mountain pass was famous for sudden storms and hidden crevasses.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "unruly",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "hard to control or discipline",
+    "context": "The substitute teacher struggled with the ___ class throwing paper airplanes everywhere.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "valiant",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "brave and determined",
+    "context": "The ___ knight charged the dragon alone to save the trapped villagers.",
+    "root": null,
+    "alts": [
+      "gallant"
+    ]
+  },
+  {
+    "word": "vex",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "annoy or frustrate",
+    "context": "The unsolved puzzle continued to ___ her long after she had set it aside.",
+    "root": null,
+    "alts": [
+      "irk"
+    ]
+  },
+  {
+    "word": "vibrant",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "full of energy and bright color",
+    "context": "The market was ___ with music, spices, and stalls painted every shade imaginable.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "wane",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "gradually decrease or fade",
+    "context": "As summer began to ___, the days grew shorter and the nights turned cooler.",
+    "root": null,
+    "alts": [
+      "fade"
+    ]
+  },
+  {
+    "word": "weary",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "very tired and worn out",
+    "context": "The ___ hikers collapsed by the fire after twenty miles on the mountain trail.",
+    "root": null,
+    "alts": [
+      "tired",
+      "spent"
+    ]
+  },
+  {
+    "word": "wither",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "dry up and shrivel",
+    "context": "Without rain, the crops began to ___ under the relentless summer sun.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "wrath",
+    "pos": "n",
+    "tier": 1,
+    "gloss": "intense anger",
+    "context": "The storm unleashed its ___ on the tiny coastal town, tearing roofs clean away.",
+    "root": null,
+    "alts": [
+      "anger"
+    ]
+  },
+  {
+    "word": "yearn",
+    "pos": "v",
+    "tier": 1,
+    "gloss": "long for something deeply",
+    "context": "Far from home, the sailors began to ___ for familiar faces and their own beds.",
+    "root": null,
+    "alts": [
+      "crave"
+    ]
+  }
+]

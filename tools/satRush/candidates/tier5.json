@@ -1,0 +1,695 @@
+[
+  {
+    "word": "abecedarian",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a rank novice just learning the rudiments",
+    "context": "Every expert was once a raw ___, squinting at fundamentals that now feel utterly obvious and effortless to any veteran.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "aleatory",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "depending on luck, chance, or the roll of dice",
+    "context": "Because the outcome was purely ___, no amount of skill could sway it, since the dice alone decided everyone's fate.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "animadversion",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a harshly critical or censuring comment",
+    "context": "The critic's sharpest ___ stung the young author, a cutting rebuke aimed squarely at her clumsy, overwrought prose.",
+    "root": {
+      "morpheme": "vers",
+      "meaning": "to turn",
+      "cousins": [
+        "reverse",
+        "converse",
+        "diverse"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "apotheosis",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "the perfect culmination; a peak of glorified achievement",
+    "context": "That final symphony was the ___ of his career, the crowning summit toward which every earlier work had been climbing.",
+    "root": {
+      "morpheme": "theos",
+      "meaning": "god",
+      "cousins": [
+        "theology",
+        "theism",
+        "atheist"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "badinage",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "light, teasing, playful conversation",
+    "context": "Their dinner sparkled with witty ___, a stream of teasing jests and flirtatious banter that never once turned serious.",
+    "root": null,
+    "alts": [
+      "raillery",
+      "repartee"
+    ]
+  },
+  {
+    "word": "bloviate",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to speak pompously and at windy length",
+    "context": "The senator would ___ for an hour about his own genius, puffing empty phrases into a grand, self-important oration.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "bombinate",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to make a droning, buzzing hum",
+    "context": "Thousands of bees began to ___ around the hive, filling the orchard with a low, droning, insect murmur.",
+    "root": {
+      "morpheme": "bomb",
+      "meaning": "booming sound",
+      "cousins": [
+        "bombard",
+        "bombast"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "bowdlerize",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to censor by removing offensive parts",
+    "context": "Editors chose to ___ the novel, snipping out every risqué passage until the once-daring story read as prim and toothless.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "calumny",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "slanderous lies meant to ruin a reputation",
+    "context": "The senator's rivals spread vicious ___, inventing scandals and lies to destroy a reputation he had spent decades building.",
+    "root": null,
+    "alts": [
+      "slander",
+      "obloquy"
+    ]
+  },
+  {
+    "word": "clinquant",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "glittering with cheap, showy, tinselly brilliance",
+    "context": "Her ___ gown shimmered with fake gold thread, all flashy tinsel and gaudy sparkle but no real elegance.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "crapulous",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "sick or wretched from gross overindulgence in drink",
+    "context": "The morning after the feast, he felt ___, groaning and queasy from a night of gluttonous drinking and endless wine.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "crepuscular",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "relating to or active at twilight",
+    "context": "Bats and moths are ___ creatures, stirring only in the dim half-light as day fades slowly into evening dusk.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "defalcation",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "the theft or misuse of entrusted money",
+    "context": "The accountant's quiet ___ drained the trust fund, siphoning entrusted cash into his own pocket over many silent years.",
+    "root": {
+      "morpheme": "falc",
+      "meaning": "sickle, to cut off",
+      "cousins": [
+        "falcate",
+        "falchion"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "deracinate",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to tear up wholly by the roots; uproot",
+    "context": "War can ___ entire families, tearing them from ancestral soil and scattering them far from every familiar home.",
+    "root": {
+      "morpheme": "radix",
+      "meaning": "root",
+      "cousins": [
+        "radical",
+        "eradicate",
+        "radish"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "desuetude",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a state of disuse or inactivity",
+    "context": "The old customs fell into ___, abandoned so long that nobody alive still remembered how to practice them properly.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "diaphanous",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "so thin and delicate it seems see-through",
+    "context": "The dancer's ___ veil floated on the breeze, so fine that light passed straight through it.",
+    "root": {
+      "morpheme": "phan",
+      "meaning": "to show, appear",
+      "cousins": [
+        "phantom",
+        "phenomenon",
+        "fantasy"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "dolorous",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "marked by deep grief and aching sorrow",
+    "context": "A ___ hymn drifted from the chapel, its slow, grieving notes heavy with mourning and unmistakable sadness.",
+    "root": {
+      "morpheme": "dolor",
+      "meaning": "pain, grief",
+      "cousins": [
+        "doleful",
+        "condole"
+      ]
+    },
+    "alts": [
+      "mournful"
+    ]
+  },
+  {
+    "word": "effulgent",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "shining with dazzling, radiant brilliance",
+    "context": "The dawn broke ___, flooding the valley with such blinding radiance that the peaks glowed like molten, gleaming gold.",
+    "root": {
+      "morpheme": "fulg",
+      "meaning": "to shine",
+      "cousins": [
+        "fulgurate",
+        "fulgent"
+      ]
+    },
+    "alts": [
+      "refulgent"
+    ]
+  },
+  {
+    "word": "exiguous",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "extremely small in amount; meager",
+    "context": "His ___ salary barely covered rent, leaving only a pitifully tiny, scanty sum for food each thin week.",
+    "root": {
+      "morpheme": "exig",
+      "meaning": "to weigh out, demand",
+      "cousins": [
+        "exigent",
+        "exigency"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "flibbertigibbet",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a silly, flighty, scatterbrained chatterer",
+    "context": "That giddy ___ flitted from one distraction to the next, too scatterbrained and frivolous to finish a single serious thought.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "fuliginous",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "sooty; dark and murky as if from smoke",
+    "context": "A ___ pall hung over the factory town, the air thick with grimy soot and a dark, smoky haze.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "fulminate",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to protest or denounce with thunderous anger",
+    "context": "The preacher would ___ against greed for hours, thundering from the pulpit until his voice cracked.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "gallimaufry",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a confused jumble; a hodgepodge of odds and ends",
+    "context": "The attic held a strange ___ of broken clocks, moth-eaten coats, and rusty tools, a chaotic jumble of forgotten junk.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "grandiloquent",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "using pompous, lofty, inflated language",
+    "context": "His ___ toast piled flowery phrase upon phrase, so puffed with lofty pomp that nobody grasped the simple point.",
+    "root": {
+      "morpheme": "loqu",
+      "meaning": "to speak",
+      "cousins": [
+        "eloquent",
+        "loquacious",
+        "soliloquy"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "hagiography",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "an adoring, uncritical life-story of a revered figure",
+    "context": "The official ___ painted the dictator as flawless, an adoring account that scrubbed away every crime and worshipped his memory.",
+    "root": {
+      "morpheme": "graph",
+      "meaning": "to write",
+      "cousins": [
+        "graphic",
+        "autograph",
+        "paragraph"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "hidebound",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "rigidly conventional and narrow in outlook",
+    "context": "The ___ professor rejected every new idea, clinging stubbornly to musty old methods and refusing any change whatsoever.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "hortatory",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "strongly urging or exhorting toward action",
+    "context": "The coach delivered a ___ speech before the match, all rousing calls to fight harder and seize the win.",
+    "root": {
+      "morpheme": "hort",
+      "meaning": "to urge",
+      "cousins": [
+        "exhort",
+        "exhortation"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "imbroglio",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a messy, tangled, embarrassing predicament",
+    "context": "The merger collapsed into a legal ___, with lawsuits, leaked emails, and finger-pointing tangling everyone into hopeless confusion.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "imprecation",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a spoken curse invoking evil upon someone",
+    "context": "He hurled a bitter ___ at his betrayer, spitting a venomous curse that wished ruin and misery on the man.",
+    "root": {
+      "morpheme": "prec",
+      "meaning": "to pray, entreat",
+      "cousins": [
+        "deprecate",
+        "precatory",
+        "pray"
+      ]
+    },
+    "alts": [
+      "malediction"
+    ]
+  },
+  {
+    "word": "ineluctable",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "impossible to avoid, resist, or escape",
+    "context": "Death is ___, an outcome no cleverness can dodge; sooner or later it claims everyone, whatever they do.",
+    "root": {
+      "morpheme": "luct",
+      "meaning": "to struggle, wrestle",
+      "cousins": [
+        "reluctant",
+        "reluctance"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "jejune",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "naive and simplistic; dull and unsatisfying",
+    "context": "His ___ arguments struck the professor as childishly shallow, immature reasoning offering nothing nourishing to a serious mind.",
+    "root": null,
+    "alts": [
+      "callow"
+    ]
+  },
+  {
+    "word": "jocund",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "cheerful, merry, and lighthearted",
+    "context": "In a ___ mood, she hummed and skipped through the market, her merry laughter brightening every gloomy stall she passed.",
+    "root": null,
+    "alts": [
+      "blithe"
+    ]
+  },
+  {
+    "word": "kakistocracy",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "rule by a state's least competent, worst people",
+    "context": "Critics called the regime a ___, a corrupt government run by the most incompetent and villainous scoundrels imaginable.",
+    "root": {
+      "morpheme": "cracy",
+      "meaning": "power, rule",
+      "cousins": [
+        "democracy",
+        "autocracy",
+        "aristocracy"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "lachrymose",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "given to weeping; tearfully mournful",
+    "context": "The ___ widow dabbed her eyes through the whole service, weeping so freely that her sodden handkerchief was wrung twice.",
+    "root": {
+      "morpheme": "lacrim",
+      "meaning": "tear",
+      "cousins": [
+        "lacrimal",
+        "lacrimation"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "lambent",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "glowing or flickering with a soft, gentle radiance",
+    "context": "A ___ firelight played over their faces, its gentle flicker casting a soft, wavering glow across the darkened room.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "lucubration",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "laborious, painstaking study, often by lamplight at night",
+    "context": "Years of lonely ___ by candlelight produced the scholar's dense treatise, the fruit of countless late nights bent over books.",
+    "root": {
+      "morpheme": "luc",
+      "meaning": "light",
+      "cousins": [
+        "translucent",
+        "lucent"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "macerate",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to soften or break apart by soaking in liquid",
+    "context": "Chefs often ___ dried fruit in rum for hours so the pieces plump up and grow tender.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "malinger",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to feign sickness so as to dodge work or duty",
+    "context": "Suspecting the private wanted to ___ his way out of drills, the sergeant demanded a real doctor's note.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "martinet",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a rigid stickler for rules and strict discipline",
+    "context": "The new coach was such a ___ that players got benched for a single untied shoelace.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "mendicant",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a beggar who lives by asking for handouts",
+    "context": "Robed as a penniless ___, the friar wandered from town to town relying on strangers' coins.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "meretricious",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "showily attractive but cheap, tawdry, and worthless",
+    "context": "The lounge's ___ decor, all fake gold and plastic gems, dazzled tourists but disgusted the interior designer.",
+    "root": {
+      "morpheme": "mer(e)",
+      "meaning": "to earn, deserve",
+      "cousins": [
+        "merit",
+        "emeritus",
+        "meritorious"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "minatory",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "expressing a threatening, hostile intent",
+    "context": "The landlord's ___ letter warned, in no uncertain terms, that eviction would follow any late payment.",
+    "root": {
+      "morpheme": "min",
+      "meaning": "to threaten, jut",
+      "cousins": [
+        "menace",
+        "imminent"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "miscreant",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a villain or wrongdoer with no scruples",
+    "context": "Every heist in the comic was pinned on one masked ___ who terrorized the sleepy harbor town.",
+    "root": {
+      "morpheme": "cred",
+      "meaning": "to believe",
+      "cousins": [
+        "credible",
+        "creed",
+        "credence"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "multifarious",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "having great diversity; of many different kinds",
+    "context": "Her ___ hobbies ranged from beekeeping to fencing to restoring vintage jukeboxes and clocks.",
+    "root": {
+      "morpheme": "multi",
+      "meaning": "many",
+      "cousins": [
+        "multiple",
+        "multitude",
+        "multiply"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "nugatory",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "of little or no worth; trifling and useless",
+    "context": "The committee dismissed his objection as ___, a quibble too petty to delay the vote.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "opprobrium",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "harsh public disgrace or condemnation",
+    "context": "Caught cheating, the champion faced universal ___, his medals stripped and his name jeered by former fans.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "palliate",
+    "pos": "v",
+    "tier": 5,
+    "gloss": "to ease the harshness of something without truly curing it",
+    "context": "The medicine could only ___ her symptoms, dulling the pain while the disease kept advancing.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "recondite",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "obscure; understood by few experts",
+    "context": "His lecture on ___ medieval tax law lost the audience within minutes, baffling everyone but two specialists.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "redoubtable",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "formidable and commanding respect or wary fear",
+    "context": "The ___ chess champion had not lost a match in a decade, and rivals approached the board trembling.",
+    "root": {
+      "morpheme": "dout/dubit",
+      "meaning": "to fear, doubt",
+      "cousins": [
+        "doubt",
+        "indubitable"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "refractory",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "stubbornly resistant to control, authority, or treatment",
+    "context": "The ___ mule dug in its hooves and refused to budge no matter how hard the farmer pulled.",
+    "root": {
+      "morpheme": "fract",
+      "meaning": "to break",
+      "cousins": [
+        "fracture",
+        "fragment",
+        "fraction"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "salacious",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "indecent and lewd; stirring improper sexual interest",
+    "context": "The tabloid ran ___ rumors about the star's private life just to boost its flagging sales figures.",
+    "root": {
+      "morpheme": "sal",
+      "meaning": "to leap",
+      "cousins": [
+        "salient",
+        "sally",
+        "somersault"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "sonorous",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "producing a deep, full, richly resonant sound",
+    "context": "The preacher's ___ voice rolled through the cathedral, every deep note filling the vast stone hall.",
+    "root": {
+      "morpheme": "son",
+      "meaning": "sound",
+      "cousins": [
+        "sonic",
+        "unison",
+        "dissonance"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "stentorian",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "extremely loud and powerful, of a voice",
+    "context": "The sergeant's ___ voice boomed across the entire parade ground, so thunderous that recruits flinched at every barked command.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "turpitude",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "moral depravity; baseness of character",
+    "context": "The senator's financial ___ shocked voters when the audit revealed years of bribery and theft.",
+    "root": null,
+    "alts": [
+      "depravity"
+    ]
+  }
+]

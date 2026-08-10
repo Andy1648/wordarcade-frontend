@@ -1,0 +1,344 @@
+[
+  {
+    "word": "candid",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "honest and direct, holding nothing back",
+    "context": "Ask her opinion and you'll get a ___ answer, even when the truth stings a little.",
+    "root": null,
+    "alts": ["honest"]
+  },
+  {
+    "word": "adjacent",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "right next to something",
+    "context": "Our classroom sat ___ to the gym, so we heard every whistle and cheer through the wall.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "concise",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "short and clear, with no wasted words",
+    "context": "Keep the summary ___ — three sentences that land the point, not three rambling pages.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "hostile",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "unfriendly and ready to fight",
+    "context": "The crowd turned ___, booing and hurling cups at the referee after the blown call.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "timid",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "shy and easily frightened",
+    "context": "Too ___ to send the soup back, she ate every cold spoonful in silence.",
+    "root": null,
+    "alts": ["mousy"]
+  },
+  {
+    "word": "scarce",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "hard to find; in short supply",
+    "context": "Clean water grew ___ as the drought dragged on into its third parched month.",
+    "root": null,
+    "alts": ["sparse"]
+  },
+  {
+    "word": "sincere",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "genuine and heartfelt, not faked",
+    "context": "Her apology felt ___; you could hear the real regret cracking in her voice.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "vague",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "unclear and not exact",
+    "context": "His directions were so ___ that we circled the same block twice before giving up.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "wary",
+    "pos": "adj",
+    "tier": 1,
+    "gloss": "cautious and on guard",
+    "context": "Burned once before, she stayed ___ of any deal that sounded a little too generous.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "novice",
+    "pos": "n",
+    "tier": 1,
+    "gloss": "a beginner new to something",
+    "context": "A total ___ on skis, he gripped the poles, pointed downhill, and prayed.",
+    "root": { "morpheme": "nov-", "meaning": "new", "cousins": ["novel", "renovate", "novelty"] },
+    "alts": []
+  },
+  {
+    "word": "candor",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "frankness; honest, open speech",
+    "context": "I valued her ___; she owned the mistake flatly, without a single excuse or dodge.",
+    "root": { "morpheme": "cand-", "meaning": "to glow, be white", "cousins": ["candle", "candid", "incandescent"] },
+    "alts": []
+  },
+  {
+    "word": "coerce",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "force someone through threats or pressure",
+    "context": "No one could ___ him into signing; he tore the contract in half and walked out.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "elusive",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "hard to catch, find, or pin down",
+    "context": "Sleep was ___ that night; each time she drifted off, a car alarm split the dark.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "endorse",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "publicly approve or back something",
+    "context": "Three retired champions agreed to ___ the young fighter's bid for the title.",
+    "root": { "morpheme": "dors-", "meaning": "back", "cousins": ["dorsal", "dorsum"] },
+    "alts": ["support"]
+  },
+  {
+    "word": "indifferent",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "not caring one way or the other",
+    "context": "He gave a bored shrug, completely ___ to whether our team won or lost the final.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "meticulous",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "extremely careful about small details",
+    "context": "The watchmaker was ___, inspecting each tiny gear twice under a bright glass.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "pragmatic",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "practical, focused on what actually works",
+    "context": "Forget grand theory; she took a ___ tack and fixed whatever was broken first.",
+    "root": { "morpheme": "prag-", "meaning": "deed, to do", "cousins": ["practical", "practice", "praxis"] },
+    "alts": []
+  },
+  {
+    "word": "terse",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "brief and to the point, maybe curt",
+    "context": "His ___ reply to the long, pleading email was a single flat word: 'No.'",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "cajole",
+    "pos": "v",
+    "tier": 3,
+    "gloss": "coax someone with flattery and sweet talk",
+    "context": "It took an hour to ___ the stubborn toddler into shoes, one small bribe at a time.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "capacious",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "roomy; able to hold a great deal",
+    "context": "Her ___ tote swallowed two laptops, a packed lunch, and an umbrella with room left over.",
+    "root": { "morpheme": "cap-", "meaning": "to take, hold", "cousins": ["capacity", "capture", "receptacle"] },
+    "alts": []
+  },
+  {
+    "word": "laudable",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "deserving praise",
+    "context": "Tutoring kids every weekend is ___, but don't burn yourself out trying to save everyone.",
+    "root": { "morpheme": "laud-", "meaning": "to praise", "cousins": ["applaud", "laudatory", "plaudit"] },
+    "alts": []
+  },
+  {
+    "word": "impassive",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "showing no emotion at all",
+    "context": "The judge stayed ___ as the verdict was read aloud, her face a smooth blank mask.",
+    "root": { "morpheme": "pati-", "meaning": "to feel, suffer", "cousins": ["passion", "patient", "compassion"] },
+    "alts": []
+  },
+  {
+    "word": "abscond",
+    "pos": "v",
+    "tier": 3,
+    "gloss": "sneak off suddenly, often with stolen goods",
+    "context": "The treasurer chose to ___ overnight, vanishing with the entire club's savings in a duffel bag.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "pariah",
+    "pos": "n",
+    "tier": 3,
+    "gloss": "a social outcast everyone shuns",
+    "context": "After the scandal broke, the once-adored coach became a ___ nobody would sit beside.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "repudiate",
+    "pos": "v",
+    "tier": 3,
+    "gloss": "reject or disown completely",
+    "context": "The scientist was forced to ___ his own earlier claim once the fresh data fell apart.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "adroit",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "skillful and quick, especially with the hands",
+    "context": "An ___ pickpocket, he lifted the watch clean off while warmly shaking the man's hand.",
+    "root": null,
+    "alts": ["clever"]
+  },
+  {
+    "word": "amenable",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "willing to go along; easily persuaded",
+    "context": "Surprisingly ___ to the whole idea, she agreed before I had even finished pitching it.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "debacle",
+    "pos": "n",
+    "tier": 3,
+    "gloss": "a sudden, total, humiliating failure",
+    "context": "The launch was a ___: the rocket fizzled, the crowd jeered, and every sponsor bolted.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "florid",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "overly fancy and flowery; or flushed red",
+    "context": "His ___ prose dripped with so many curling adjectives that the actual story drowned.",
+    "root": { "morpheme": "flor-", "meaning": "flower", "cousins": ["floral", "flourish", "flora"] },
+    "alts": []
+  },
+  {
+    "word": "pithy",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "short but packed with meaning",
+    "context": "Her ___ advice — 'measure twice, cut once' — stuck with me for the rest of my life.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "sordid",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "dirty, sleazy, and morally low",
+    "context": "The biography dug up every ___ detail of the star's tangled, unhappy private life.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "tacit",
+    "pos": "adj",
+    "tier": 3,
+    "gloss": "understood without being said out loud",
+    "context": "There was a ___ agreement between the brothers never to mention that terrible summer.",
+    "root": { "morpheme": "tac-", "meaning": "silent", "cousins": ["taciturn", "reticent"] },
+    "alts": []
+  },
+  {
+    "word": "abstemious",
+    "pos": "adj",
+    "tier": 4,
+    "gloss": "sparing, especially with food and drink",
+    "context": "So ___ was the old monk that a single bowl of plain rice felt to him like a feast.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "cupidity",
+    "pos": "n",
+    "tier": 4,
+    "gloss": "intense greed for money or possessions",
+    "context": "Pure ___ drove him to swindle even his oldest friends out of their retirement savings.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "hegemony",
+    "pos": "n",
+    "tier": 4,
+    "gloss": "one group's dominance over all the others",
+    "context": "For a full century that empire held ___ over every trade route in the region.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "internecine",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "mutually destructive; deadly to both sides",
+    "context": "The two crime families waged an ___ feud so bloody it wiped out both their fortunes.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "jeremiad",
+    "pos": "n",
+    "tier": 5,
+    "gloss": "a long, mournful complaint or bitter lament",
+    "context": "His column read like a ___, forty gloomy paragraphs bewailing the death of good manners.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "labyrinthine",
+    "pos": "adj",
+    "tier": 5,
+    "gloss": "maze-like; extremely intricate and twisting",
+    "context": "The tax code is ___, a tangle of clauses that loops back on itself again and again.",
+    "root": null,
+    "alts": []
+  }
+]

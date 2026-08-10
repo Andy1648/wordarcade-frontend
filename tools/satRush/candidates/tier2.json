@@ -1,0 +1,1012 @@
+[
+  {
+    "word": "aloof",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "distant and emotionally uninvolved",
+    "context": "The new kid stayed ___ at lunch, watching everyone from a corner without saying a word.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "banal",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "boringly ordinary; lacking freshness or originality",
+    "context": "The critic yawned at the film's ___ plot, calling every twist predictable and utterly tired.",
+    "root": null,
+    "alts": [
+      "trite",
+      "stale"
+    ]
+  },
+  {
+    "word": "benign",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "gentle and harmless; posing no threat",
+    "context": "The scary-looking dog turned out to be ___, wagging its tail and licking every stranger.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "bolster",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to strengthen or prop up; give support to",
+    "context": "New evidence helped ___ the shaky theory, giving the researchers real confidence at last.",
+    "root": null,
+    "alts": [
+      "support"
+    ]
+  },
+  {
+    "word": "brusque",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "blunt and short in manner; rudely curt",
+    "context": "His ___ reply, just 'No, leave now,' startled the guests who expected a warmer greeting.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "cordial",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "warm and friendly",
+    "context": "Despite their rivalry, the two captains shared a ___ handshake before the match.",
+    "root": {
+      "morpheme": "cord-",
+      "meaning": "heart",
+      "cousins": [
+        "accord",
+        "concord",
+        "record"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "cryptic",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "mysterious; hard to understand",
+    "context": "The note left only a ___ clue: a single drawing of a key and a moon.",
+    "root": {
+      "morpheme": "crypt-",
+      "meaning": "hidden",
+      "cousins": [
+        "crypt",
+        "encrypt",
+        "cryptogram"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "cursory",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "hasty and superficial; done without care",
+    "context": "He gave the report only a ___ glance, missing every error hidden in the footnotes.",
+    "root": {
+      "morpheme": "curs",
+      "meaning": "run",
+      "cousins": [
+        "cursor",
+        "recur",
+        "excursion"
+      ]
+    },
+    "alts": [
+      "hurried"
+    ]
+  },
+  {
+    "word": "daunt",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "intimidate or discourage",
+    "context": "The huge crowd did not ___ her; she stepped up and sang without a tremble.",
+    "root": null,
+    "alts": [
+      "scare"
+    ]
+  },
+  {
+    "word": "debunk",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to expose as false or exaggerated",
+    "context": "The scientist set out to ___ the popular myth, showing the claim had no evidence.",
+    "root": null,
+    "alts": [
+      "refute"
+    ]
+  },
+  {
+    "word": "decry",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to condemn openly; criticize strongly",
+    "context": "Activists gathered to ___ the new law, denouncing it loudly outside the courthouse.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "deference",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "respectful yielding to another's wishes or judgment",
+    "context": "Out of ___ to her mentor, she followed his advice without a single objection.",
+    "root": {
+      "morpheme": "fer",
+      "meaning": "carry, bear",
+      "cousins": [
+        "transfer",
+        "confer",
+        "infer"
+      ]
+    },
+    "alts": [
+      "reverence"
+    ]
+  },
+  {
+    "word": "deplore",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to strongly disapprove of; regret deeply",
+    "context": "Teachers ___ cheating, viewing it as a betrayal of every honest student's effort.",
+    "root": null,
+    "alts": [
+      "condemn"
+    ]
+  },
+  {
+    "word": "diligent",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "hardworking and careful in one's efforts",
+    "context": "Her ___ study paid off; she reviewed each chapter nightly and never fell behind.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "disdain",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "contempt; a feeling that someone is worthless",
+    "context": "She looked at the cheap knockoff with ___, refusing even to touch it.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "elated",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "extremely happy and joyful; overjoyed",
+    "context": "She was ___ when the letter arrived, jumping and cheering around the kitchen.",
+    "root": null,
+    "alts": [
+      "joyful"
+    ]
+  },
+  {
+    "word": "eloquent",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "fluent and persuasive in speech or writing",
+    "context": "His ___ speech moved the crowd to tears, every phrase polished and powerful.",
+    "root": {
+      "morpheme": "loqu",
+      "meaning": "speak",
+      "cousins": [
+        "loquacious",
+        "colloquial",
+        "soliloquy"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "embellish",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to decorate; add fanciful details to a story",
+    "context": "He tends to ___ his fishing tales, adding a bigger catch each time he retells them.",
+    "root": {
+      "morpheme": "bell",
+      "meaning": "beautiful",
+      "cousins": [
+        "belle",
+        "beau",
+        "beautify"
+      ]
+    },
+    "alts": [
+      "embroider"
+    ]
+  },
+  {
+    "word": "eminent",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "famous and respected; standing above others",
+    "context": "The ___ physicist drew crowds wherever she lectured, her name known across the world.",
+    "root": {
+      "morpheme": "min",
+      "meaning": "project, stand out",
+      "cousins": [
+        "prominent",
+        "preeminent",
+        "imminent"
+      ]
+    },
+    "alts": [
+      "notable"
+    ]
+  },
+  {
+    "word": "emulate",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to imitate in order to match or surpass",
+    "context": "Young players try to ___ their heroes, copying every move they see on television.",
+    "root": null,
+    "alts": [
+      "imitate"
+    ]
+  },
+  {
+    "word": "enigma",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "a puzzling mystery; something hard to explain",
+    "context": "The abandoned ship remained an ___ for decades, its missing crew never explained.",
+    "root": null,
+    "alts": [
+      "puzzle",
+      "riddle"
+    ]
+  },
+  {
+    "word": "exemplary",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "outstandingly good; serving as a model",
+    "context": "Her ___ behavior earned praise; teachers held her up as the standard for others.",
+    "root": {
+      "morpheme": "exempl",
+      "meaning": "sample, pattern",
+      "cousins": [
+        "example",
+        "exemplify",
+        "sample"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "exuberant",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "joyfully energetic and enthusiastic; overflowing",
+    "context": "The ___ puppy bounded across the yard, unable to contain its wild, bouncing energy.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "facilitate",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to make an action or process easier",
+    "context": "A good moderator will ___ discussion, helping quiet members share their ideas comfortably.",
+    "root": {
+      "morpheme": "fac",
+      "meaning": "do, make",
+      "cousins": [
+        "facile",
+        "faculty",
+        "manufacture"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "fervent",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "intensely passionate",
+    "context": "Her ___ belief in the cause kept the volunteers marching through the rain.",
+    "root": {
+      "morpheme": "ferv-",
+      "meaning": "to boil",
+      "cousins": [
+        "fervor",
+        "fervid",
+        "effervescent"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "fickle",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "changing loyalties or moods often",
+    "context": "The ___ crowd cheered him one week and booed him the next.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "flourish",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to grow vigorously; thrive and do well",
+    "context": "Given sunlight and water, the garden began to ___, bursting with blossoms by June.",
+    "root": {
+      "morpheme": "flor",
+      "meaning": "flower",
+      "cousins": [
+        "floral",
+        "florist",
+        "flora"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "frugal",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "careful with money; economical and thrifty",
+    "context": "Being ___, she reused every jar and never bought anything she did not truly need.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "galvanize",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to shock into sudden, energetic action",
+    "context": "The stirring speech seemed to ___ the volunteers, who rushed out ready to work.",
+    "root": null,
+    "alts": [
+      "electrify",
+      "stimulate"
+    ]
+  },
+  {
+    "word": "genial",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "cheerful, warm, and pleasantly friendly",
+    "context": "Our ___ host greeted every guest with a wide grin and a warm cup of cocoa.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "grievance",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "a complaint about unfair or wrong treatment",
+    "context": "The workers filed a formal ___, protesting the unfair cut to their weekend pay.",
+    "root": {
+      "morpheme": "grav",
+      "meaning": "heavy, weighty",
+      "cousins": [
+        "grieve",
+        "aggrieve",
+        "gravity"
+      ]
+    },
+    "alts": [
+      "complaint"
+    ]
+  },
+  {
+    "word": "haphazard",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "lacking order or planning; random and careless",
+    "context": "His ___ packing left socks and books tossed together, nothing folded or sorted at all.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "haughty",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "arrogantly proud",
+    "context": "The ___ duchess looked down her nose at anyone without a title.",
+    "root": null,
+    "alts": [
+      "pompous"
+    ]
+  },
+  {
+    "word": "hinder",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "make progress difficult",
+    "context": "Tangled weeds and deep mud will ___ anyone trying to cross the marsh.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "hospitable",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "friendly and generous to guests or strangers",
+    "context": "Their ___ neighbors welcomed us with dinner, blankets, and a warm bed the first night.",
+    "root": {
+      "morpheme": "hospit",
+      "meaning": "guest, host",
+      "cousins": [
+        "host",
+        "hostel",
+        "hospital"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "impede",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "slow down or block progress",
+    "context": "A fallen tree began to ___ traffic on the only road into town.",
+    "root": {
+      "morpheme": "ped-",
+      "meaning": "foot",
+      "cousins": [
+        "pedal",
+        "pedestrian",
+        "expedite"
+      ]
+    },
+    "alts": [
+      "thwart"
+    ]
+  },
+  {
+    "word": "implicit",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "suggested without being directly stated; unspoken",
+    "context": "There was an ___ agreement between them; no one said it, yet all understood.",
+    "root": {
+      "morpheme": "plic",
+      "meaning": "fold",
+      "cousins": [
+        "complicate",
+        "replicate",
+        "implicate"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "incite",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to stir up or provoke to action",
+    "context": "The angry speech tried to ___ the mob, urging them to storm the gates.",
+    "root": {
+      "morpheme": "cit",
+      "meaning": "rouse, summon",
+      "cousins": [
+        "excite",
+        "recite",
+        "citation"
+      ]
+    },
+    "alts": [
+      "foment"
+    ]
+  },
+  {
+    "word": "indignant",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "angry at something seen as unfair or wrong",
+    "context": "She grew ___ when accused of lying, insisting furiously that she had told the truth.",
+    "root": {
+      "morpheme": "dign",
+      "meaning": "worthy",
+      "cousins": [
+        "dignity",
+        "dignify",
+        "dignitary"
+      ]
+    },
+    "alts": [
+      "resentful"
+    ]
+  },
+  {
+    "word": "innate",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "existing from birth; naturally inborn",
+    "context": "Some birds have an ___ sense of direction, migrating thousands of miles without a guide.",
+    "root": {
+      "morpheme": "nat",
+      "meaning": "born",
+      "cousins": [
+        "native",
+        "natal",
+        "nativity"
+      ]
+    },
+    "alts": [
+      "inborn"
+    ]
+  },
+  {
+    "word": "jovial",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "cheerful and good-humored",
+    "context": "The ___ host kept everyone laughing with stories all through dinner.",
+    "root": null,
+    "alts": [
+      "genial"
+    ]
+  },
+  {
+    "word": "kindle",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to ignite; spark a flame or strong feeling",
+    "context": "A single match was enough to ___ the campfire, and warm flames soon rose.",
+    "root": null,
+    "alts": [
+      "ignite"
+    ]
+  },
+  {
+    "word": "languid",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "slow, relaxed, and lacking energy; listless",
+    "context": "On the hot afternoon, the cat lay ___ on the porch, too drowsy to move.",
+    "root": {
+      "morpheme": "langu",
+      "meaning": "faint, weak",
+      "cousins": [
+        "languish",
+        "languor"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "lavish",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "extravagant and generous",
+    "context": "They threw a ___ party with ice sculptures, live music, and mountains of food.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "lucrative",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "producing much money; highly profitable",
+    "context": "Her side business proved surprisingly ___, earning more each month than her regular job.",
+    "root": {
+      "morpheme": "lucr",
+      "meaning": "gain, profit",
+      "cousins": [
+        "lucre",
+        "lucrativeness"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "maverick",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "an independent nonconformist who defies convention",
+    "context": "Refusing to follow party orders, the young senator became known as a fearless ___.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "mawkish",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "excessively sentimental in a sickly way",
+    "context": "The greeting card's ___ verses were so sugary they made even hopeless romantics cringe.",
+    "root": null,
+    "alts": [
+      "maudlin"
+    ]
+  },
+  {
+    "word": "meander",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to wind slowly with no fixed goal",
+    "context": "The lazy river seemed to ___ endlessly through the valley before finally reaching the sea.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "morose",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "gloomy and bad-tempered",
+    "context": "After losing the championship, he sat alone, ___ and unwilling to speak to anyone.",
+    "root": null,
+    "alts": [
+      "sullen",
+      "gloomy"
+    ]
+  },
+  {
+    "word": "muster",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to assemble or summon up collectively",
+    "context": "Somehow the exhausted troops had to ___ enough strength for one final desperate charge.",
+    "root": null,
+    "alts": [
+      "gather"
+    ]
+  },
+  {
+    "word": "nonchalant",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "calmly relaxed and unconcerned",
+    "context": "She stayed ___ even as the exam clock ticked down, doodling in her margins.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "notorious",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "widely known for something bad",
+    "context": "The ___ outlaw had robbed more trains than any other bandit in the territory.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "noxious",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "harmful, poisonous, or toxic",
+    "context": "Thick, ___ fumes poured from the wreck, forcing firefighters to wear heavy breathing masks.",
+    "root": {
+      "morpheme": "noc",
+      "meaning": "harm",
+      "cousins": [
+        "obnoxious",
+        "innocent"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "nuance",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "a subtle shade of meaning or difference",
+    "context": "A good translator captures every ___ that a clumsy, word-for-word version would flatten.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "nullify",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to cancel or make legally void",
+    "context": "A single technical error was enough to ___ the entire contract in front of the judge.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "oblique",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "indirect; slanting rather than straight",
+    "context": "Rather than criticize her boss directly, she made only ___ hints about the growing problem.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "obsolete",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "outdated; no longer in use",
+    "context": "Once smartphones arrived, standalone music players quickly became almost completely ___.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "ornate",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "covered in fancy, elaborate decoration",
+    "context": "The ballroom's ___ ceiling dripped with gold carvings and glittering crystal chandeliers.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "outlandish",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "bizarre; strikingly unusual",
+    "context": "His ___ theories about ancient aliens building the pyramids made serious scientists roll their eyes.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "paltry",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "very small and worthless",
+    "context": "They offered a ___ reward that barely covered the cost of the long search.",
+    "root": null,
+    "alts": [
+      "measly"
+    ]
+  },
+  {
+    "word": "paramount",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "supreme; more important than anything else",
+    "context": "In a busy emergency room, keeping the patient breathing is always the ___ concern.",
+    "root": {
+      "morpheme": "mont",
+      "meaning": "hill, rise",
+      "cousins": [
+        "surmount",
+        "amount",
+        "mountain"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "placate",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "calm someone's anger; soothe",
+    "context": "He offered free desserts to ___ the furious customer whose order had somehow vanished.",
+    "root": null,
+    "alts": [
+      "appease"
+    ]
+  },
+  {
+    "word": "pungent",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "sharply strong in smell or taste",
+    "context": "The ___ aroma of garlic and chili filled the kitchen the moment she opened the pot.",
+    "root": {
+      "morpheme": "pung",
+      "meaning": "to prick, point",
+      "cousins": [
+        "puncture",
+        "punctuate",
+        "compunction"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "rampant",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "spreading unchecked; flourishing widely",
+    "context": "Corruption grew so ___ that even the police openly demanded bribes at the border.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "raucous",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "loud, harsh, and disorderly",
+    "context": "The ___ crowd at the concert completely drowned out the announcer's frantic pleas.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "reclusive",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "avoiding others; withdrawn and solitary",
+    "context": "After his fame faded, the actor became ___, rarely leaving his gated mansion.",
+    "root": {
+      "morpheme": "clud",
+      "meaning": "to close, shut",
+      "cousins": [
+        "seclude",
+        "exclude",
+        "include"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "renounce",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to formally give up or reject",
+    "context": "The prince agreed to ___ his claim to the throne in exchange for lasting peace.",
+    "root": {
+      "morpheme": "nunci",
+      "meaning": "to report, declare",
+      "cousins": [
+        "announce",
+        "denounce",
+        "enunciate"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "resolute",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "firmly determined and unwavering",
+    "context": "Despite every threat against her family, she remained ___ in her decision to testify.",
+    "root": {
+      "morpheme": "solv",
+      "meaning": "to loosen",
+      "cousins": [
+        "dissolve",
+        "absolve",
+        "resolve"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "respite",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "a short period of rest or relief",
+    "context": "The sudden afternoon rain gave the firefighters a brief ___ from the relentless summer heat.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "ruminate",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to ponder or think deeply over",
+    "context": "He would ___ for hours over a single chess move before daring to touch a piece.",
+    "root": null,
+    "alts": [
+      "cogitate"
+    ]
+  },
+  {
+    "word": "spurious",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "false; not genuine or authentic",
+    "context": "The museum was horrified to learn its prized painting was actually a ___ imitation.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "squander",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "waste carelessly",
+    "context": "Don't ___ your savings on lottery tickets that almost never pay off.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "staunch",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "firmly loyal and steadfast",
+    "context": "A ___ ally of the reformers, she never wavered even under enormous pressure.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "stymie",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to block, thwart, or frustrate",
+    "context": "Constant delays from suppliers continued to ___ the factory's ambitious expansion plans.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "sullen",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "silently gloomy, sulky, and resentful",
+    "context": "The ___ teenager slouched at dinner, answering every polite question with a single grunt.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "superfluous",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "more than needed; unnecessary, excessive",
+    "context": "The sharp editor cut every ___ adjective until the sentence was lean and clear.",
+    "root": {
+      "morpheme": "flu",
+      "meaning": "to flow",
+      "cousins": [
+        "fluid",
+        "fluent",
+        "influx"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "thwart",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "block or prevent from succeeding",
+    "context": "The goalkeeper dove to ___ the striker's shot at the last possible moment.",
+    "root": null,
+    "alts": [
+      "hinder"
+    ]
+  },
+  {
+    "word": "tirade",
+    "pos": "n",
+    "tier": 2,
+    "gloss": "a long, angry, ranting speech",
+    "context": "Furious about the missed deadline, the coach launched into a ten-minute ___.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "upbraid",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to scold or criticize sharply",
+    "context": "The sergeant would ___ any recruit whose boots weren't polished to a mirror shine.",
+    "root": null,
+    "alts": []
+  },
+  {
+    "word": "vilify",
+    "pos": "v",
+    "tier": 2,
+    "gloss": "to defame; speak maliciously about",
+    "context": "Rival papers tried to ___ the whistleblower with a flood of baseless rumors.",
+    "root": {
+      "morpheme": "vil",
+      "meaning": "cheap, base",
+      "cousins": [
+        "vile",
+        "revile",
+        "vilest"
+      ]
+    },
+    "alts": []
+  },
+  {
+    "word": "whimsical",
+    "pos": "adj",
+    "tier": 2,
+    "gloss": "playfully fanciful and unpredictable",
+    "context": "The park's ___ statues of giant teapots delighted every child who wandered past.",
+    "root": null,
+    "alts": []
+  }
+]

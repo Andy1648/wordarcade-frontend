@@ -12,6 +12,9 @@ dist-ssr
 # E2E scratch notes — kept local, never committed
 E2E_NOTES.md
 
+# SAT Rush word-pipeline scratch intermediates (dev tooling)
+tools/satRush/.scratch/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
