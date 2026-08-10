@@ -25,7 +25,6 @@ import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
 import { setShakeTarget } from './juice';
 import Hud from './Hud';
-import AnteMeter from './AnteMeter';
 import WordCard from './WordCard';
 import SatRushResults from './SatRushResults';
 import DevTuner from './DevTuner';
@@ -74,16 +73,8 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
               heatCap={view.heatCap}
             />
             <div className="sr-body">
-              <AnteMeter
-                multiplier={view.multiplier}
-                stage={view.stage}
-                maxStage={view.maxStage}
-                wordNumber={view.wordNumber}
-                interval={view.interval}
-                graceMs={view.graceMs}
-                atFinal={view.atFinal}
-                running={view.pending === 'idle'}
-              />
+              {/* The ante row + word panel are now ONE bounty poster (WordCard);
+                  the multiplier lives in its REWARD footer. */}
               <WordCard view={view} />
             </div>
           </>
@@ -122,39 +113,48 @@ function ExitLink({ onExit }) {
   );
 }
 
+// The cover is a newspaper FRONT PAGE in the same paper/ink/double-rule/grain
+// language as the play poster: gazette name, the SAT RUSH masthead (off-register
+// violet plate), a ruled dateline, the reward schedule notice box, the bounty
+// how-to, and the paper PLAY button.
 function StartScreen({ onPlay, onExit }) {
   return (
     <div className="sr-screen">
-      {/* the cover page — same paper/ink/double-rule/grain language as the play page */}
       <div className="sr-cover">
-        <div className="sr-title sr-print" data-v={'SAT RUSH'}>
+        <div className="sr-gazette">Type&nbsp;a&nbsp;Word&nbsp;Gazette</div>
+        <div className="sr-title sr-print" data-v={'SAT RUSH'}>
           SAT&nbsp;RUSH
         </div>
-        <div className="sr-sub">
-          Type the missing word. Information arrives in stages — and every stage you wait for costs
-          you multiplier.
+        <div className="sr-dateline">
+          <span>VOL.&nbsp;1</span>
+          <span>EXTRA! EXTRA! WORDS AT LARGE</span>
+          <span>FREE</span>
         </div>
-        <div className="sr-rules">
-          <div>
-            <code>5×</code> part of speech + letter count
-          </div>
-          <div>
-            <code>4×</code> the sentence
-          </div>
-          <div>
-            <code>3×</code> the definition
-          </div>
-          <div>
-            <code>2×</code> the root
-          </div>
-          <div>
-            <code>1×</code> first letter
+        {/* reward schedule: the less information you capture on, the bigger the pay */}
+        <div className="sr-notice">
+          <div className="sr-notice-head">— Reward Schedule —</div>
+          <div className="sr-rules">
+            <div>
+              <code>5×</code> part of speech + letter count
+            </div>
+            <div>
+              <code>4×</code> the sentence — last seen
+            </div>
+            <div>
+              <code>3×</code> the description
+            </div>
+            <div>
+              <code>2×</code> known aliases (root)
+            </div>
+            <div>
+              <code>1×</code> first letter
+            </div>
           </div>
         </div>
         <div className="sr-sub fine">
-          Stuck? It spells itself out — for scraps. Answer early for the real points. Miss only if you
-          walk away. 5 correct in a row → SILVER TONGUE, everything doubles. Miss a word and it comes
-          back angrier.
+          Stuck? It spells itself out — for scraps. Capture early for the full bounty. Miss only if
+          you walk away. 5 captures in a row → SILVER TONGUE, everything doubles. Let one escape and
+          it comes back angrier.
         </div>
         <button type="button" className="sr-btn" onClick={onPlay}>
           Play
@@ -203,4 +203,3 @@ function SpeedLines({ active }) {
     </svg>
   );
 }
-

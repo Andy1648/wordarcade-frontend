@@ -215,6 +215,31 @@ QUIET-BY-DEFAULT law (same spirit as the menu's "idle = remove"):
   added elements. `prefers-reduced-motion` turns stamps into opacity fades and kills
   the flashes/rattle; state stays legible (shape + text, never colour alone).
 
+WANTED-POSTER structure (the play screen is ONE bounty poster — `WordCard`; the
+word is a fugitive, the multiplier is its REWARD, a missed word returns as an
+ESCAPEE):
+- Top→bottom: overline → **WANTED** header (Bungee + the off-register violet
+  plate; **MOST WANTED** on a deep cut) → case id (the meta, in a double-ruled
+  band) → FIELDS (**LAST SEEN** = the sentence with the violet blank,
+  **DESCRIPTION** = the gloss, **KNOWN ALIASES** = the root line with cousins in
+  muted violet; a root-null word omits the ALIASES row) → mugshot **SLOTS**
+  (centred) → the **REWARD** footer (the multiplier lives HERE — the bounty is the
+  ante: reward + ante note + pips + drain bar) → fine print.
+- Event framing is print, not corner tags: **deep cut** = the MOST WANTED header
+  + a red deep-cut overline (`--redink`); **revenant** = an ESCAPED overprint (a
+  red double-ruled stamp slapped across the header at ~4°, HELD for the whole word
+  as a state marker, reading `ESCAPED ×N — REWARD DOUBLED`); clear/miss = the
+  corner STAMP; silver = the whole poster reprints in negative (invert extends to
+  every poster element). The cover is a newspaper FRONT PAGE: gazette name, the
+  SAT RUSH masthead, a ruled dateline, a "— Reward Schedule —" notice box, the
+  bounty how-to.
+- Sanctioned copy (the bounty voice — keep it, don't drift): clear **CAPTURED!!**
+  (alt **CLOSE!**), miss **ESCAPED!!**, revenant **ESCAPED ×N — REWARD DOUBLED**,
+  deep cut **MOST WANTED** header, silver **SILVER TONGUE!**; ante note **ANTE —
+  CAPTURE NOW FOR MORE** / **LAST CALL — IT'S PRINTING**; the spell-along row
+  **MUGSHOT PRINTING… · 1× SCRAPS**; results entry stamp **CASE CLOSED**; the miss
+  line "the fugitive was X — it'll be back". (Verbs are CAPTURE, not ANSWER.)
+
 ---
 
 ## 7. OPEN DESIGN DEBT

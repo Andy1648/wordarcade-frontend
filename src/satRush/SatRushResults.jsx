@@ -18,7 +18,7 @@ const C = JUICE.CELEBRATION;
 function frameOf(e) {
   const glyph = e.silver ? '✦' : e.deepCut ? '◆' : e.revenant ? '↺' : e.ok ? '' : '✕';
   const kind = e.ok ? 'ok' : 'miss';
-  const parts = [e.ok ? 'cleared' : 'missed'];
+  const parts = [e.ok ? 'captured' : 'got away'];
   if (e.silver) parts.push('silver tongue');
   if (e.deepCut) parts.push('deep cut');
   if (e.revenant) parts.push('revenant');
@@ -99,7 +99,8 @@ export default function SatRushResults({ results, onAgain, onExit }) {
   return (
     <div className="sr-screen sr-results">
       <div className="sr-respage">
-        <div className="sr-dead">DEAD</div>
+        {/* entry stamp, bounty voice: the run is over — the case is closed. */}
+        <div className="sr-dead">CASE CLOSED</div>
 
         {/* AVG ANTE — the headline stat: big Bungee ink with the violet plate off-register. */}
         <div className="sr-panel sr-hero">

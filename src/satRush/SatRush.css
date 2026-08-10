@@ -184,16 +184,38 @@
   padding: clamp(12px, 2.2vh, 20px) clamp(14px, 2vw, 22px) clamp(14px, 2.4vh, 22px);
 }
 
-/* ---------- ante ---------- */
-.sr-ante {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+/* ---------- REWARD footer (the bounty IS the ante) ---------- */
+/* Sits at the foot of the poster under a double rule: a REWARD caption, the big
+   Bungee multiplier with the off-register violet plate, then the ante note +
+   stage pips + drain bar. Replaces the old separate ante row. */
+.sr-reward {
   flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'label right'
+    'mult  right';
+  align-items: center;
+  column-gap: clamp(14px, 2vw, 22px);
+  row-gap: 2px;
+  margin-top: clamp(10px, 1.6vh, 16px);
+  padding-top: clamp(10px, 1.6vh, 14px);
+  border-top: 5px double var(--ink);
+}
+.sr-reward-label {
+  grid-area: label;
+  align-self: end;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.65;
 }
 /* Big Bungee INK multiplier with the violet plate printed OFF-REGISTER (the
    ::before renders the same glyphs, violet, shifted -5px/-5px, behind). No stroke,
-   no glow. juice.multiplierDrop still squashes THIS element in place. */
+   no glow. juice.multiplierDrop still squashes THIS element in place. .sr-print is
+   the shared off-register plate technique (reused by .sr-wanted + cover title). */
 .sr-print {
   position: relative;
   z-index: 0;
@@ -209,13 +231,14 @@
   pointer-events: none;
 }
 .sr-mult {
+  grid-area: mult;
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(60px, 11vw, 108px);
+  font-size: clamp(46px, 8.5vw, 82px);
   line-height: 0.82;
   letter-spacing: -2px;
 }
 .sr-anteright {
-  flex: 1;
+  grid-area: right;
   min-width: 0;
 }
 /* ante label = a thin double-ruled caption box (2px border + inner 1px rule) */
@@ -284,8 +307,9 @@
   }
 }
 
-/* ---------- word panel ---------- */
-/* One inner double-ruled panel (3px border + inner rule), paper, straight. */
+/* ---------- THE BOUNTY POSTER (was word panel + ante) ---------- */
+/* One inner double-ruled panel (3px border + inner rule), paper, straight. The
+   whole wanted-poster anatomy stacks inside it; only the FIELDS region scrolls. */
 .sr-card {
   position: relative;
   flex: 1 1 auto;
@@ -295,28 +319,103 @@
   background: var(--paper);
   border: 3px solid var(--ink);
   box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
-  padding: clamp(14px, 2.2vh, 22px) clamp(16px, 2vw, 24px);
+  padding: clamp(12px, 2vh, 18px) clamp(16px, 2vw, 24px) clamp(10px, 1.6vh, 16px);
 }
-.sr-meta {
+/* overline: tiny letter-spaced masthead line; the deep-cut variant is red */
+.sr-overline {
   flex: 0 0 auto;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.sr-overline.deep {
+  color: var(--redink);
+  opacity: 1;
+}
+/* WANTED header — the poster's shout. Bungee, centred, with the off-register
+   violet plate (reuses .sr-print). MOST WANTED on a deep cut. */
+.sr-wanted-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 6px;
+}
+.sr-wanted {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(30px, 6vw, 52px);
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+/* ESCAPED overprint — a red double-ruled stamp slapped across the header at a
+   slight tilt, HELD for the whole word (a state marker, not a loop). */
+.sr-escaped {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  padding: 4px clamp(8px, 1.4vw, 14px) 5px;
+  white-space: nowrap;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(12px, 2vw, 17px);
+  letter-spacing: 0.02em;
+  color: var(--redink);
+  background: var(--paper);
+  border: 2px solid var(--redink);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--redink);
+}
+/* case id: the meta in a double-ruled band (rule top + bottom) */
+.sr-caseid {
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 6px 4px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  box-shadow: inset 0 3px 0 -1px var(--paper), inset 0 -3px 0 -1px var(--paper);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink);
-  opacity: 0.7;
-  margin-bottom: 16px;
+  opacity: 0.85;
 }
-/* the scrolling reveal region: sentence + gloss + root scroll internally on a
-   small screen while the slots below stay pinned + visible */
-.sr-card-reveals {
+/* the FIELDS region: LAST SEEN / DESCRIPTION / KNOWN ALIASES scroll internally on
+   a small screen while the mugshot slots below stay pinned + visible */
+.sr-fields {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-block: clamp(4px, 1.6vh, 16px);
+  gap: clamp(8px, 1.4vh, 14px);
+  padding-block: clamp(8px, 1.6vh, 16px);
+}
+/* one bounty field: a bordered label chip above its content, left-aligned */
+.sr-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.sr-fieldlabel {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  font-family: 'Space Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.sr-fieldbody {
+  width: 100%;
 }
 /* reveal entrances are EVENTS (allowed): a snappy punch-in, 200-400ms */
 .sr-reveal {
@@ -328,14 +427,14 @@
   opacity: 1;
   transform: none;
 }
-/* the sentence is the largest thing on the page: Space Mono 700, >=20px, ink */
+/* LAST SEEN — the sentence is the largest thing on the page: Space Mono 700,
+   >=20px, ink. (Field gap owns the spacing now, so no margin here.) */
 .sr-sentence {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: clamp(20px, 2.4vw, 25px);
   line-height: 1.55;
   color: var(--ink);
-  margin-bottom: 16px;
 }
 /* the blank: violet glyphs over a solid 3px ink underline */
 .sr-blank {
@@ -345,40 +444,27 @@
   border-bottom: 3px solid var(--ink);
   padding-bottom: 1px;
 }
-/* gloss / root each carry a small bordered tag chip (DEF / ROOT) */
-.sr-tagchip {
-  display: inline-block;
-  margin-right: 8px;
-  padding: 1px 6px;
-  border: 2px solid var(--ink);
-  background: var(--paper);
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  vertical-align: 2px;
-}
+/* DESCRIPTION — the gloss */
 .sr-gloss {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: clamp(16px, 1.9vw, 18px);
   line-height: 1.5;
   color: var(--ink);
-  margin-bottom: 12px;
 }
+/* KNOWN ALIASES — the root line; cousins in muted violet */
 .sr-root {
   font-family: 'Space Mono', monospace;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--ink);
-  margin-bottom: 4px;
 }
 .sr-root b {
   font-weight: 700;
 }
 .sr-root .cz {
-  opacity: 0.6;
+  color: var(--violet);
+  opacity: 0.75;
 }
 
 /* ---------- slots ---------- */
@@ -391,6 +477,7 @@
   --slot-max: 48px;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center; /* mugshot row is centred on the poster */
   gap: var(--gap);
   margin-top: 18px;
   width: 100%;
@@ -512,7 +599,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   text-align: center;
   background: var(--paper);
   border: 4px solid var(--ink);
@@ -520,7 +607,7 @@
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
     6px 6px 0 var(--ink);
-  padding: clamp(28px, 5vh, 44px) clamp(22px, 4vw, 40px);
+  padding: clamp(24px, 4.5vh, 40px) clamp(22px, 4vw, 40px);
 }
 .sr-cover::before {
   content: '';
@@ -535,11 +622,54 @@
   position: relative;
   z-index: 1;
 }
+/* small gazette name above the masthead */
+.sr-gazette {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
 .sr-title {
   font-family: 'Bungee', system-ui, sans-serif;
   font-size: clamp(44px, 9vw, 78px);
   line-height: 0.9;
   letter-spacing: 0;
+}
+/* ruled dateline row under the masthead */
+.sr-dateline {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 2px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sr-dateline span:nth-child(2) {
+  opacity: 0.7;
+}
+/* the reward-schedule notice box wrapping the 5x..1x table */
+.sr-notice {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.sr-notice-head {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
 }
 .sr-sub {
   font-family: 'Space Mono', monospace;
@@ -658,18 +788,19 @@
   }
 }
 
-/* ---------- Deep Cut: a straight black corner ribbon (holds for the word) ---------- */
-.sr-ribbon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 3;
-  padding: 4px 11px 5px;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.06em;
+/* Deep Cut is now shown by the MOST WANTED header + the red overline (WordCard),
+   so the old corner ribbon is gone. */
+
+/* ---------- fine print: tiny, low-opacity poster footer line ---------- */
+.sr-fineprint {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.4;
 }
 
 /* ---------- wrong key: a tiny "TCH!" tick just above the typing row ---------- */
@@ -905,8 +1036,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 /* DEAD slams in OVER the page (page overflow is visible, so it isn't clipped) */
 .sr-dead {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(44px, 10vw, 88px);
-  letter-spacing: 0.05em;
+  font-size: clamp(40px, 9vw, 74px);
+  line-height: 0.92;
+  letter-spacing: 0.04em;
   color: var(--redink);
   -webkit-text-stroke: 2px var(--ink);
   animation: sr-slam 0.4s cubic-bezier(0.2, 0.9, 0.2, 1) both;

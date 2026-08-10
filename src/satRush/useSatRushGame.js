@@ -100,14 +100,10 @@ export function useSatRushGame() {
     pendingRef.current = 'idle';
     msgRef.current = null;
     fxRef.current = { shake: 0, badIndex: -1, badKey: 0 };
-    // A revenant keeps its "IT'S BACK" stamp for the whole word; a fresh word
-    // clears the previous clear/miss stamp (Deep Cut is a ribbon, from view.kind).
-    if (cur.isRevenant) {
-      stampSeq.current += 1;
-      stampRef.current = { text: "IT'S BACK", tone: 'ink', kind: 'rev', id: stampSeq.current };
-    } else {
-      stampRef.current = null;
-    }
+    // A fresh word clears the previous clear/miss stamp. A revenant shows the
+    // ESCAPED overprint across the poster header (view-driven, held for the whole
+    // word) rather than a corner stamp; a deep cut shows the MOST WANTED header.
+    stampRef.current = null;
     // Entry juice (real play only — dev scenes set state without calling this).
     if (cur.isRevenant) juice.revenantEnter();
     else if (cur.isDeepCut) juice.deepCutEnter();
@@ -132,10 +128,10 @@ export function useSatRushGame() {
       pendingRef.current = 'clear';
       const silverJustOn = r.silverTongue && !prevSilverRef.current;
       // The clear stamp (all violet): SILVER TONGUE entry gets its own; a near/alt
-      // clear reads "CLOSE!"; otherwise "GOT IT!".
+      // clear reads "CLOSE!"; otherwise "CAPTURED!!" (the fugitive is caught).
       stampSeq.current += 1;
       stampRef.current = {
-        text: silverJustOn ? 'SILVER TONGUE!' : viaAlt ? 'CLOSE!' : 'GOT IT!',
+        text: silverJustOn ? 'SILVER TONGUE!' : viaAlt ? 'CLOSE!' : 'CAPTURED!!',
         tone: 'violet',
         kind: silverJustOn ? 'silver' : viaAlt ? 'close' : 'got',
         id: stampSeq.current,
@@ -183,15 +179,16 @@ export function useSatRushGame() {
     if (r.gameOver) trackRunEnd();
     pendingRef.current = 'miss';
     prevSilverRef.current = false;
-    // The miss stamp (drives the page-tear too, via kind === 'miss').
+    // The miss stamp = the fugitive got away (drives the page-tear too, via
+    // kind === 'miss').
     stampSeq.current += 1;
-    stampRef.current = { text: 'MISS!!', tone: 'redink', kind: 'miss', id: stampSeq.current };
+    stampRef.current = { text: 'ESCAPED!!', tone: 'redink', kind: 'miss', id: stampSeq.current };
     // Death dominates; otherwise a chrome-shatter if this miss broke SILVER
     // TONGUE, else a plain KO miss.
     if (r.gameOver) juice.death();
     else if (brokeSilver) juice.silverBreak();
     else juice.miss();
-    msgRef.current = { text: `the word was ${answer.toUpperCase()} — it'll be back`, kind: 'bad' };
+    msgRef.current = { text: `the fugitive was ${answer.toUpperCase()} — it'll be back`, kind: 'bad' };
     force();
     clearTimeout(pauseTimer.current);
     pauseTimer.current = setTimeout(() => {
@@ -437,14 +434,9 @@ export function useSatRushGame() {
       for (let i = 0; i < SAT_RUSH_LOCK && inputRef.current; i++) {
         inputRef.current.revealNextLetter();
       }
-      // A revenant scene shows its "IT'S BACK" stamp (deep = ribbon via kind).
-      const sc = eng.getState().current;
-      if (sc && sc.isRevenant) {
-        stampSeq.current += 1;
-        stampRef.current = { text: "IT'S BACK", tone: 'ink', kind: 'rev', id: stampSeq.current };
-      } else {
-        stampRef.current = null;
-      }
+      // Event framing is view-driven on the poster now (revenant = ESCAPED
+      // overprint, deep cut = MOST WANTED header), so no corner stamp is set here.
+      stampRef.current = null;
       force();
     },
     [beginWord, freshEngine]
@@ -506,6 +498,8 @@ function buildView(state, cur, eng, input, extra) {
 
   // Which state the card is in (for the tag + styling). Silver can co-exist with
   // deep/revenant; the tag prioritises the rarer overlay but silver still styles.
+  // The poster also reads the raw booleans directly: a revenant that is ALSO a
+  // deep cut wears the MOST WANTED header AND the ESCAPED overprint.
   let kind = 'normal';
   if (cur.isRevenant) kind = 'rev';
   else if (cur.isDeepCut) kind = 'deep';
@@ -513,6 +507,9 @@ function buildView(state, cur, eng, input, extra) {
   return {
     ...base,
     hasWord: true,
+    revenant: cur.isRevenant,
+    deepCut: cur.isDeepCut,
+    missCount: cur.missCount,
     score: state.score,
     streak: state.currentStreak,
     bestStreak: state.bestStreak,
