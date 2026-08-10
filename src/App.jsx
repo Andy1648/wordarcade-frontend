@@ -154,18 +154,25 @@ const PORTAL_SKIP_INTRO =
 
 // Deep links (the invite loop): ?join=CODE drops a friend straight into that
 // room — no name prompt (remembered/generated handle), no lobby stops; ?daily=1
-// goes straight into today's Daily Challenge. Both skip the intro chain: a
-// friend tapping a group-chat link should land IN the game, not on a splash.
+// goes straight into today's Daily Challenge; ?satrush=1 opens SAT Rush (a solo
+// mode — no room/WebSocket). All skip the intro chain: a friend tapping a
+// group-chat link should land IN the game, not on a splash.
 // Read once at module load (same pattern as PORTAL_SKIP_INTRO).
 const LAUNCH_INTENT = (() => {
-  if (typeof window === 'undefined') return { join: null, daily: false };
+  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false };
   const params = new URLSearchParams(window.location.search);
   const join = (params.get('join') || '').trim().toUpperCase();
-  return { join: join || null, daily: params.get('daily') === '1' };
+  return {
+    join: join || null,
+    daily: params.get('daily') === '1',
+    satrush: params.get('satrush') === '1',
+  };
 })();
 
-// Any launch intent (portal embed, invite link, daily link) skips the intro.
-const SKIP_INTRO = PORTAL_SKIP_INTRO || !!LAUNCH_INTENT.join || LAUNCH_INTENT.daily;
+// Any launch intent (portal embed, invite link, daily link, SAT Rush link) skips
+// the intro.
+const SKIP_INTRO =
+  PORTAL_SKIP_INTRO || !!LAUNCH_INTENT.join || LAUNCH_INTENT.daily || LAUNCH_INTENT.satrush;
 
 // Repeat visitors have already seen the SQUAD-UP / "TYPE FAST. DIE SLOW." intro,
 // so we skip those two animations for them (the loading screen still plays).
@@ -1084,7 +1091,18 @@ function App() {
   // (?daily=1). Once only; a later reconnect must not re-join/re-start.
   const launchFiredRef = useRef(false);
   useEffect(() => {
-    if (wsStatus !== 'open' || launchFiredRef.current) return;
+    if (launchFiredRef.current) return;
+    // SAT Rush is a SOLO mode (no room/WebSocket): a ?satrush=1 launch link opens
+    // the mode directly, on mount, WITHOUT waiting for the socket — pure view
+    // navigation that touches no WS handler, the functional setView room guard,
+    // or the FIFO message queue. Handled before the wsStatus gate so a solo link
+    // never hangs on the multiplayer backend being up.
+    if (LAUNCH_INTENT.satrush) {
+      launchFiredRef.current = true;
+      goToSatRush();
+      return;
+    }
+    if (wsStatus !== 'open') return;
     if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily) return;
     launchFiredRef.current = true;
     if (LAUNCH_INTENT.join) {
@@ -1095,8 +1113,8 @@ function App() {
     } else {
       handleStartDaily();
     }
-    // handleStartDaily is a stable-enough function declaration; this effect
-    // only ever fires once (guarded by launchFiredRef).
+    // handleStartDaily / goToSatRush are stable-enough function declarations; this
+    // effect only ever fires once (guarded by launchFiredRef).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsStatus, send]);
 

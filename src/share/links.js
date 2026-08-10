@@ -25,3 +25,8 @@ export function inviteLink(code, origin) {
 export function dailyLink(origin) {
   return `${resolveOrigin(origin)}/?daily=1&ref=share`;
 }
+
+/** Deep link that drops a friend straight into SAT Rush (see App's ?satrush= handling). */
+export function satRushLink(origin) {
+  return `${resolveOrigin(origin)}/?satrush=1&ref=share`;
+}

@@ -1,7 +1,7 @@
 // node --test — invite/daily deep-link builders (Feature: frictionless invite).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inviteLink, dailyLink } from './links.js';
+import { inviteLink, dailyLink, satRushLink } from './links.js';
 import { REF_URL } from './shareConfig.js';
 
 test('inviteLink builds the ?join deep link on the given origin', () => {
@@ -37,4 +37,9 @@ test('inviteLink outside a browser falls back to the production origin', () => {
 test('dailyLink deep-links straight into the daily', () => {
   assert.equal(dailyLink('https://typeaword.com'), 'https://typeaword.com/?daily=1&ref=share');
   assert.equal(dailyLink(), 'https://typeaword.com/?daily=1&ref=share');
+});
+
+test('satRushLink deep-links straight into SAT Rush', () => {
+  assert.equal(satRushLink('https://typeaword.com'), 'https://typeaword.com/?satrush=1&ref=share');
+  assert.equal(satRushLink(), 'https://typeaword.com/?satrush=1&ref=share');
 });

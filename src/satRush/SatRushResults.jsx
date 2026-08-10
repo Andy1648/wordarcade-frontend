@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import { ShareBar } from '../share';
+import { satRushLink } from '../share/links.js';
 import { SAT_RUSH_COLOR } from './config';
 
 const C = JUICE.CELEBRATION;
@@ -156,7 +157,13 @@ export default function SatRushResults({ results, onAgain, onExit }) {
 
         <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
           <div className="sr-share">
-            <ShareBar mode="sat-rush" outcome={{ solo: true }} data={shareData} neon={SAT_RUSH_COLOR} />
+            <ShareBar
+              mode="sat-rush"
+              outcome={{ solo: true }}
+              data={shareData}
+              link={satRushLink()}
+              neon={SAT_RUSH_COLOR}
+            />
           </div>
           <button type="button" className="sr-btn" onClick={onAgain}>
             Run it back

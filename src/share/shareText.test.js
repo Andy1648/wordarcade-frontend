@@ -147,6 +147,36 @@ test('singular grammar: 1 player / 1 word render without a trailing s', () => {
   assert.doesNotMatch(sr, /1 words/);
 });
 
+test('sat-rush reads as a challenge: ante leads the stats, a CTA dares back, passed link is last', () => {
+  const txt = buildShareText({
+    mode: 'sat-rush',
+    outcome: { solo: true },
+    data: {
+      cleared: 12,
+      bestStreak: 7,
+      avgAnte: 3.4,
+      hardest: 'obfuscate',
+      runLog: [{ ok: true, stage: 0 }, { ok: false }],
+    },
+    link: 'https://typeaword.com/?satrush=1&ref=share',
+  });
+  const lines = txt.split('\n');
+  assert.equal(lines[0], 'TYPE A WORD · SAT RUSH 🧠');
+  // stat line leads with the word count, then the ante FLEX ahead of streak.
+  assert.match(txt, /12 words · 3\.4× avg ante · streak 7/);
+  // the challenge CTA appears when avgAnte is present, echoing the same value.
+  assert.match(txt, /beat my 3\.4× avg ante 👀/);
+  // the passed SAT Rush deep link is the final line (url = link || REF_URL).
+  assert.ok(txt.endsWith('https://typeaword.com/?satrush=1&ref=share'));
+  assert.doesNotMatch(txt, /undefined|null|NaN/);
+});
+
+test('sat-rush with no avg ante (empty run) shows no challenge CTA', () => {
+  const txt = buildShareText({ mode: 'sat-rush', outcome: { solo: true }, data: { cleared: 0, bestStreak: 0 } });
+  assert.doesNotMatch(txt, /beat my/);
+  assert.match(txt, /0 words\. brutal/);
+});
+
 test('every mode ends with sign-off then link', () => {
   for (const mode of ['word-bomb', 'category-blitz', 'sat-rush', 'unknown-mode']) {
     const lines = buildShareText({ mode }).split('\n');

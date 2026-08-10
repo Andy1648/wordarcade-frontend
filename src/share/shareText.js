@@ -156,15 +156,19 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
     const grid = satRushGrid(data.runLog);
     if (grid) lines.push(grid);
     const words = Math.max(0, Number(data.cleared) || 0);
-    const ante = data.avgAnte != null ? `${Number(data.avgAnte).toFixed(1)}× avg ante` : null;
+    // avg ante is the flex, so it LEADS the stats (ahead of streak) and, when
+    // present, seeds a challenge CTA that turns the receipt into a dare. anteStr
+    // is computed once so the stat fragment and the CTA always show the same value.
+    const anteStr = data.avgAnte != null ? Number(data.avgAnte).toFixed(1) : null;
     lines.push(
       statSuffix([
         words === 0 ? '0 words. brutal' : `${words} word${words === 1 ? '' : 's'}`,
+        anteStr != null ? `${anteStr}× avg ante` : null,
         data.bestStreak ? `streak ${data.bestStreak}` : null,
-        ante,
       ])
     );
     if (data.hardest) lines.push(`hardest clear: ${String(data.hardest).toLowerCase()}`);
+    if (anteStr != null) lines.push(`beat my ${anteStr}× avg ante 👀`);
   } else {
     lines.push('TYPE A WORD ⚡');
     lines.push('a word game where you type fast or die slow');
