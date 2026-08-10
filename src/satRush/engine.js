@@ -112,12 +112,16 @@ function shuffle(arr, rng) {
  * @param {object[]} opts.words   the word rows ({word,pos,tier,gloss,context,root,alts})
  * @param {() => number} [opts.rng]  RNG in [0,1); injected for deterministic tests
  * @param {object}   [opts.config]  overrides for DEFAULT_CONFIG (e.g. stageIntervalMs)
+ * @param {Set<string>|string[]} [opts.recent]  words served on recent runs, to
+ *   DEPRIORITIZE (not ban) in fresh draws so returning players get variety. Pure
+ *   input — the engine never reads localStorage; the hook loads and passes it in.
  */
-export function createSatRushEngine({ words = [], rng = Math.random, config = {} } = {}) {
+export function createSatRushEngine({ words = [], rng = Math.random, config = {}, recent = new Set() } = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
 
   const pool = shuffle(words, rng);
   const used = new Set(); // word strings already served as fresh
+  const recentSet = recent instanceof Set ? recent : new Set(recent); // deprioritized, not banned
   const revenants = []; // { row, tier, dueWordNumber, missCount }
 
   const state = {
@@ -138,24 +142,52 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     wrongKeystrokes: 0, // for the current word (drives the reveal cadence)
   };
 
-  // Draw an unused fresh word of the requested tier, falling back to the nearest
-  // available tier when that bucket is empty. Returns null when the pool is dry.
+  // Draw an unused fresh word of the requested tier. Preference order:
+  //   1. target tier, not recently served  (the normal case)
+  //   2. target tier, recently served       (only if the tier is otherwise dry —
+  //      recency is a DEPRIORITIZATION, never a ban, so a small/mostly-seen tier
+  //      never softlocks)
+  //   3. nearest available tier, not recent  (target tier fully used)
+  //   4. nearest available tier, recent      (last resort before the pool is dry)
+  // Nearest picks the smallest tier distance, tie-breaking toward the lower tier
+  // for a gentler curve — unchanged from before. The pool is pre-shuffled with the
+  // injected RNG, so "first match in pool order" is the deterministic random pick.
+  // With an empty recent set this is byte-identical to the original draw (case 1
+  // returns the first exact-tier unused word; case 3 is the old nearest fallback).
   function drawWord(targetTier) {
-    let best = null;
-    let bestDist = Infinity;
+    let exactRecent = null; // case 2
+    let nearest = null; // case 3
+    let nearestDist = Infinity;
+    let nearestRecent = null; // case 4
+    let nearestRecentDist = Infinity;
+
     for (const row of pool) {
       if (used.has(row.word)) continue;
       const dist = Math.abs(row.tier - targetTier);
+      const isRecent = recentSet.has(row.word);
       if (dist === 0) {
-        best = row;
-        break;
+        if (!isRecent) {
+          used.add(row.word); // case 1 — best possible, take it immediately
+          return row;
+        }
+        if (!exactRecent) exactRecent = row; // remember the first recent exact-tier word
+        continue;
       }
-      // Prefer nearest tier; tie-break toward the lower tier for a gentler curve.
-      if (dist < bestDist || (dist === bestDist && row.tier < (best ? best.tier : Infinity))) {
-        best = row;
-        bestDist = dist;
+      if (!isRecent) {
+        if (dist < nearestDist || (dist === nearestDist && row.tier < (nearest ? nearest.tier : Infinity))) {
+          nearest = row;
+          nearestDist = dist;
+        }
+      } else if (
+        dist < nearestRecentDist ||
+        (dist === nearestRecentDist && row.tier < (nearestRecent ? nearestRecent.tier : Infinity))
+      ) {
+        nearestRecent = row;
+        nearestRecentDist = dist;
       }
     }
+
+    const best = exactRecent || nearest || nearestRecent;
     if (best) used.add(best.word);
     return best;
   }

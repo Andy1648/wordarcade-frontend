@@ -68,6 +68,25 @@ function clearN(eng, n) {
   return results;
 }
 
+// Build an engine seeded with a `recent` set (cross-run memory). Same
+// deterministic pool + identity RNG as engine(), so pool order == makePool order.
+function engineWithRecent(recent, overrides = {}) {
+  return createSatRushEngine({
+    words: makePool(overrides.perTier ?? 12),
+    rng: IDENTITY_RNG,
+    recent,
+    config: overrides.config ?? {},
+  });
+}
+
+// The tier-N words in pool order (x{N}a, x{N}b, ...), for building recent sets
+// without hard-coding names.
+function tierWords(tier, perTier = 12) {
+  return makePool(perTier)
+    .filter((r) => r.tier === tier)
+    .map((r) => r.word);
+}
+
 // --- multiplier decay ------------------------------------------------------
 
 test('multiplier decays 5-4-3-2-1 across the stages and clamps at the last', () => {
@@ -388,6 +407,52 @@ test('endgame() tracks a custom spellAlongMs (tickMs and the 2x final hold)', ()
   const eg = eng.endgame();
   assert.equal(eg.tickMs, 700);
   assert.equal(eg.finalHoldMs, 1400);
+});
+
+// --- cross-run recency (deprioritize, never ban) ---------------------------
+
+test('a fresh draw avoids recently-served words while a non-recent same-tier word exists', () => {
+  const t1 = tierWords(1);
+  const recent = new Set(t1.slice(0, -1)); // every tier-1 word recent EXCEPT the last
+  const eng = engineWithRecent(recent);
+  const cur = eng.nextWord(); // word 1 -> target tier 1, not a deep cut
+  assert.equal(cur.tier, 1);
+  assert.equal(cur.word, t1[t1.length - 1]); // the only non-recent tier-1 word
+  assert.ok(!recent.has(cur.word));
+});
+
+test('recency deprioritization holds across consecutive fresh draws (deterministic order)', () => {
+  const t1 = tierWords(1);
+  const recent = new Set(t1.slice(0, 3)); // first three tier-1 words are recent
+  const eng = engineWithRecent(recent);
+  // Words 1..3 all target tier 1; each should skip the recent trio, in pool order.
+  const served = [eng.nextWord().word, eng.nextWord().word, eng.nextWord().word];
+  for (const w of served) assert.ok(!recent.has(w), `${w} should be non-recent`);
+  assert.deepEqual(served, t1.slice(3, 6));
+});
+
+test('when EVERY same-tier word is recent, a fresh draw still returns one (no softlock)', () => {
+  const t1 = tierWords(1);
+  const recent = new Set(t1); // all tier-1 words are recent
+  const eng = engineWithRecent(recent);
+  const cur = eng.nextWord();
+  assert.ok(cur, 'must still serve a word — recency is a deprioritization, not a ban');
+  assert.equal(cur.tier, 1); // stayed in the target tier rather than drifting away
+  assert.ok(t1.includes(cur.word));
+});
+
+test('a recent-but-unused same-tier word is preferred over drifting to another tier', () => {
+  // Only ONE tier-1 word exists and it is recent; the draw must still serve THAT
+  // word (case 2) rather than fall through to a fresh tier-2 word (case 3).
+  const eng = engineWithRecent(new Set(['x1a']), { perTier: 1 });
+  const cur = eng.nextWord(); // target tier 1
+  assert.equal(cur.tier, 1);
+  assert.equal(cur.word, 'x1a');
+});
+
+test('an empty recent set draws identically to the original (first exact-tier word)', () => {
+  const eng = engineWithRecent(new Set());
+  assert.equal(eng.nextWord().word, tierWords(1)[0]); // x1a, exactly as before
 });
 
 // === INTERACTION CASES =====================================================

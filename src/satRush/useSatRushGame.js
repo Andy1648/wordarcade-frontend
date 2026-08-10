@@ -7,6 +7,7 @@
 import { useReducer, useRef, useEffect, useCallback } from 'react';
 import { createSatRushEngine, DEFAULT_CONFIG } from './engine';
 import { createSlotInput } from './input';
+import { readRecentWords, pushRecentWord } from './recentWords';
 import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
 import {
@@ -86,6 +87,9 @@ export function useSatRushGame() {
       force();
       return;
     }
+    // Remember every FRESHLY drawn word (not revenant re-entries) so future runs
+    // deprioritize it. Persisted immediately, so a mid-run quit still counts.
+    if (!cur.isRevenant) pushRecentWord(cur.word);
     track('word_served', {
       mode: 'sat-rush',
       tier: cur.tier,
@@ -339,6 +343,7 @@ export function useSatRushGame() {
     const { stageMs, spellMs, deepEvery, revGap, climb } = cfgRef.current;
     engineRef.current = createSatRushEngine({
       words: WORDS,
+      recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
       config: {
         stageIntervalMs: stageMs,
         spellAlongMs: spellMs,
