@@ -64,4 +64,23 @@ test.describe('SAT Rush', () => {
     await runItBack.click();
     await expect(page.locator('.sr-slots')).toBeVisible();
   });
+
+  test('?satrush=1 launch link opens SAT Rush directly (skips the intro + menu)', async ({ page }) => {
+    await installBackendMock(page);
+    // The shareable deep link (satRushLink() -> /?satrush=1&ref=share). No
+    // ?portal= and no menu-card click: the launch intent must skip the intro AND
+    // route straight into the mode on mount.
+    await page.goto('/?satrush=1&ref=share');
+
+    // Landed on the SAT Rush start cover with its Play button — not the menu.
+    await expect(page.locator('.sr-cover')).toBeVisible();
+    const play = page.getByRole('button', { name: 'Play' });
+    await expect(play).toBeVisible();
+    // The mode-menu card grid is NOT what we're looking at.
+    await expect(page.locator('[data-game="sat-rush"]')).toHaveCount(0);
+
+    // And it's really playable from here (not a dead render).
+    await play.click();
+    await expect(page.locator('.sr-slots')).toBeVisible();
+  });
 });
