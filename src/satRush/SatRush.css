@@ -656,60 +656,6 @@
 .sr-dateline span:nth-child(2) {
   opacity: 0.7;
 }
-/* the reward-schedule notice box wrapping the 5x..1x table */
-.sr-notice {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.sr-notice-head {
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-}
-.sr-sub {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: clamp(14px, 1.7vw, 16px);
-  line-height: 1.6;
-  color: var(--ink);
-  max-width: 460px;
-}
-.sr-sub.fine {
-  font-weight: 400;
-  font-size: 13px;
-  opacity: 0.75;
-}
-/* the 5x..1x rules as a tight ruled strip */
-.sr-rules {
-  width: 100%;
-  max-width: 400px;
-  border: 2px solid var(--ink);
-  text-align: left;
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-}
-.sr-rules > div {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--ink);
-}
-.sr-rules > div:last-child {
-  border-bottom: 0;
-}
-.sr-rules code {
-  flex: 0 0 auto;
-  min-width: 34px;
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 14px;
-  color: var(--violet);
-}
 /* paper button: ink border, hard shadow; press = translate + shadow shrink */
 .sr-btn {
   font-family: 'Bungee', system-ui, sans-serif;
@@ -1505,23 +1451,6 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   padding-top: 6px;
 }
 
-/* the small "show the study briefing" re-enable toggle on the cover */
-.sr-brief-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  opacity: 0.75;
-  cursor: pointer;
-}
-.sr-brief-toggle input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--violet);
-  cursor: pointer;
-}
-
 /* ---------- the re-encode teaching BEAT (miss / heavy clear) ---------- */
 /* Sits over the poster during the between-word pause. A single quiet punch-in on
    entry (reduced-motion drops it); no looping. */
@@ -1618,5 +1547,207 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 @media (prefers-reduced-motion: reduce) {
   .sr-reencode {
     animation: none;
+  }
+}
+
+/* =====================================================================
+   MODE SELECT — the two ways to play, right after the cover. Same paper /
+   double-rule / ink+violet language; two cards, one line each. The last choice
+   wears `.sel` (violet plate + heavier rule). No looping motion (quiet-by-default);
+   only the press feedback the paper buttons already use.
+   ===================================================================== */
+.sr-modeselect {
+  position: relative;
+  width: min(520px, 92vw);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--ink);
+  padding: clamp(24px, 4.5vh, 40px) clamp(20px, 4vw, 36px);
+}
+.sr-modeselect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
+}
+.sr-modeselect > * {
+  position: relative;
+  z-index: 1;
+}
+.sr-modeselect-head {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(26px, 5vw, 40px);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+.sr-modecards {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* one mode card: a paper button, ink border + hard offset shadow, left-aligned
+   title over its one-line pitch. Min height keeps a comfortable touch target. */
+.sr-modecard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 18px;
+  background: var(--tile);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.sr-modecard:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.sr-modecard:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+/* the preselected (last-chosen) card: a heavier rule + a violet inner plate */
+.sr-modecard.sel {
+  box-shadow:
+    inset 0 0 0 2px var(--paper),
+    inset 0 0 0 4px var(--violet),
+    4px 4px 0 var(--ink);
+}
+.sr-modecard-title {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(20px, 3.4vw, 26px);
+  letter-spacing: 0.02em;
+}
+.sr-modecard-line {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(12px, 1.6vw, 14px);
+  opacity: 0.75;
+}
+.sr-modeselect-exit {
+  background: none;
+  border: none;
+  box-shadow: none;
+  opacity: 0.5;
+  font-weight: 400;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* =====================================================================
+   SUSPECT LINEUP (LINEUP mode) — under the mugshot slots, in place of the
+   spell-along block. A ruled grid of same-length suspects; eliminated ones are
+   crossed out IN PLACE with a CLEARED alibi stamp. It narrows 6 → 4 → 2 with the
+   ante, so the multiplier is legible without a word of instruction. State reads by
+   SHAPE (strike + stamp + dim), never colour alone. No looping motion.
+   ===================================================================== */
+.sr-lineup {
+  flex: 0 0 auto;
+  margin-top: 12px;
+}
+.sr-lineup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.sr-lineup-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.sr-lineup-count {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border: 2px solid var(--violet);
+  color: var(--violet);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.sr-lineup-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  gap: 6px;
+}
+/* one suspect chip: a ruled paper card, the word in Bungee ink. */
+.sr-suspect {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+.sr-suspect-word {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(13px, 2.2vw, 17px);
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+/* CLEARED — the alibi: the word is struck through and dimmed IN PLACE, with a
+   tilted red stamp slapped over it. A short opacity/strike settle (event, not a
+   loop). */
+.sr-suspect.cleared {
+  border-color: var(--ink);
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.sr-suspect.cleared .sr-suspect-word {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  color: var(--ink);
+}
+.sr-suspect-alibi {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  transform: rotate(-6deg);
+  padding: 0 3px;
+  border: 1.5px solid var(--redink);
+  color: var(--redink);
+  background: var(--paper);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-suspect.cleared {
+    transition: none;
   }
 }

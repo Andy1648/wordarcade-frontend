@@ -44,6 +44,39 @@ function ReEncode({ data }) {
   );
 }
 
+// The SUSPECT LINEUP (LINEUP mode only). Every word is served with a lineup of
+// same-length suspects, one of which is the fugitive; the player still TYPES the
+// answer into the slots — this is a recognition aid, not the input. The lineup
+// NARROWS with the ante (6 → 4 → 2), which is the whole point: it makes the
+// multiplier visible, so answering early literally means answering with more
+// suspects still standing. Eliminated suspects are crossed out IN PLACE with a
+// CLEARED alibi treatment (a strikethrough + stamp; positions never move). No copy
+// explains any of this — the narrowing does.
+function SuspectLineup({ suspects }) {
+  const { lineup, standing, count } = suspects;
+  const cols = count >= 6 ? 3 : 2; // 6 → 3×2, 4 → 2×2, 2 → 2×1
+  return (
+    <div className="sr-lineup">
+      <div className="sr-lineup-head">
+        <span className="sr-lineup-label" aria-hidden="true">Suspects</span>
+        <span className="sr-lineup-count" aria-label={`${standing} suspects still standing`}>
+          {standing} STANDING
+        </span>
+      </div>
+      <ul className="sr-lineup-grid" style={{ '--cols': cols }}>
+        {lineup.map((s) => (
+          <li key={s.word} className={`sr-suspect${s.eliminated ? ' cleared' : ''}`}>
+            <span className="sr-suspect-word">{s.word.toUpperCase()}</span>
+            {s.eliminated && (
+              <span className="sr-suspect-alibi" aria-hidden="true">CLEARED</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // The blank's dash run matches the word's letter count EXACTLY (no cap), so it
 // never contradicts the "N letters" case-id line or the slot count.
 function Blank({ length }) {
@@ -102,7 +135,8 @@ function FieldRow({ type, visible, view }) {
 }
 
 export default function WordCard({ view }) {
-  const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode } = view;
+  const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode, mode, suspects } = view;
+  const isLineup = mode === 'lineup';
 
   // Reveals to render as fields (meta is the case id; firstLetter lives in slots).
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
@@ -160,8 +194,13 @@ export default function WordCard({ view }) {
         <Slots slots={view.slots} badIndex={fx.badIndex} badKey={fx.badKey} />
       </div>
 
-      {/* Spell-along endgame: the fugitive's mugshot prints itself out for scraps. */}
-      {atFinal && (
+      {/* LINEUP mode: the suspect lineup, narrowing with the ante. Replaces the
+          spell-along block (lineup has no spell-along — the lineup is the aid). */}
+      {isLineup && suspects && <SuspectLineup suspects={suspects} />}
+
+      {/* Spell-along endgame (BRIEFING mode only): the fugitive's mugshot prints
+          itself out for scraps. */}
+      {!isLineup && atFinal && (
         <div className="sr-spell">
           <div className="sr-spell-head">
             <span className="sr-spell-label">MUGSHOT PRINTING…</span>
@@ -187,6 +226,7 @@ export default function WordCard({ view }) {
         graceMs={view.graceMs}
         atFinal={view.atFinal}
         running={view.pending === 'idle'}
+        lineup={isLineup}
       />
 
       <div className={`sr-msg${msg ? ` ${msg.kind}` : ''}`}>{msg ? msg.text : ''}</div>

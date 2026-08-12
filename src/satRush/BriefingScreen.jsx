@@ -74,7 +74,7 @@ function BriefCard({ card }) {
   );
 }
 
-export default function Briefing({ briefing, onStart, onSkip }) {
+export default function Briefing({ briefing, onStart }) {
   if (!briefing) return null;
   const { familyMorpheme, cards } = briefing;
 
@@ -104,9 +104,6 @@ export default function Briefing({ briefing, onStart, onSkip }) {
         <div className="sr-brief-actions">
           <button type="button" className="sr-btn" onClick={onStart}>
             Start the run
-          </button>
-          <button type="button" className="sr-btn sr-btn-ghost" onClick={onSkip}>
-            Skip — don’t show this again
           </button>
         </div>
       </div>

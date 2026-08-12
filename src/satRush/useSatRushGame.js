@@ -10,6 +10,7 @@ import { createSlotInput } from './input';
 import { readRecentWords, pushRecentWord } from './recentWords';
 import * as lexicon from './lexicon';
 import { pickBriefing } from './briefing';
+import { suspectsStanding } from './suspects';
 import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
 import {
@@ -46,7 +47,11 @@ export function useSatRushGame() {
 
   const engineRef = useRef(null);
   const inputRef = useRef(null);
-  const phaseRef = useRef('start'); // 'start' | 'briefing' | 'playing' | 'over'
+  const phaseRef = useRef('start'); // 'start' | 'mode' | 'briefing' | 'playing' | 'over'
+  // The mode of the CURRENT run: 'briefing' (study screen + spell-along net) or
+  // 'lineup' (suspect lineup, no spell-along). Chosen at mode-select and fixed for
+  // the run; it drives the engine config, the final-stage endgame, and every event.
+  const modeRef = useRef('briefing');
   const pendingRef = useRef('idle'); // 'idle' | 'clear' | 'miss' — the between-word pause
   const msgRef = useRef(null); // { text, kind }
 
@@ -99,13 +104,18 @@ export function useSatRushGame() {
     lexicon.save(storageRef.current, lexRef.current);
   }, []);
 
-  // Fire-and-forget analytics. `word_resolved`'s `stage` is the key metric — it
-  // answers whether players are actually anteing (answering early). All events
-  // carry mode:'sat-rush' so the shared names never collide with other modes.
+  // Fire-and-forget analytics. Every SAT RUSH event carries `game:'sat-rush'` (the
+  // stable namespace so the shared event names never collide with other modes) AND
+  // `mode:'briefing'|'lineup'` — the sub-mode is THE experiment: cleared-rate and
+  // 7-day return, briefing vs lineup. `word_resolved`'s `stage`/`suspectsStanding`
+  // answer whether players are actually anteing (answering early).
+  const trackSR = useCallback((event, props = {}) => {
+    track(event, { game: 'sat-rush', mode: modeRef.current, ...props });
+  }, []);
+
   const trackRunEnd = useCallback(() => {
     const r = engineRef.current.results();
-    track('run_end', {
-      mode: 'sat-rush',
+    trackSR('run_end', {
       score: r.score,
       cleared: r.cleared,
       bestStreak: r.bestStreak,
@@ -113,7 +123,7 @@ export function useSatRushGame() {
       mastered: lexicon.masteredCount(lexRef.current),
     });
     persistLexicon();
-  }, [persistLexicon]);
+  }, [persistLexicon, trackSR]);
 
   // ---- engine/input orchestration (no rules here) ----
   const beginWord = useCallback(() => {
@@ -128,13 +138,32 @@ export function useSatRushGame() {
     // Remember every FRESHLY drawn word (not revenant re-entries) so future runs
     // deprioritize it. Persisted immediately, so a mid-run quit still counts.
     if (!cur.isRevenant) pushRecentWord(cur.word);
-    track('word_served', {
-      mode: 'sat-rush',
+    trackSR('word_served', {
       tier: cur.tier,
       isDeepCut: cur.isDeepCut,
       isRevenant: cur.isRevenant,
       wasBriefed: !!cur.isBriefed,
     });
+    // LINEUP mode: report the served lineup (size + which thin-pool fallback fired,
+    // if any) — this is where the mode's honesty lives. Also surface a dev console
+    // note when a fallback narrowed the lineup below the full six.
+    if (cur.suspects) {
+      trackSR('suspects_served', {
+        count: cur.suspects.count,
+        fallbackTier: cur.suspects.fallbackTier,
+      });
+      if (
+        (cur.suspects.fallbackTier > 0 || cur.suspects.reducedCount) &&
+        typeof import.meta !== 'undefined' &&
+        import.meta.env &&
+        import.meta.env.DEV
+      ) {
+        // eslint-disable-next-line no-console
+        console.info(
+          `[satRush] lineup fallback: ${cur.word} → ${cur.suspects.count} suspects (tier ${cur.suspects.fallbackTier})`
+        );
+      }
+    }
     inputRef.current = createSlotInput({ target: cur.word, alts: cur.alts });
     pendingRef.current = 'idle';
     msgRef.current = null;
@@ -148,7 +177,7 @@ export function useSatRushGame() {
     if (cur.isRevenant) juice.revenantEnter();
     else if (cur.isDeepCut) juice.deepCutEnter();
     force();
-  }, [trackRunEnd]);
+  }, [trackRunEnd, trackSR]);
 
   const resolveClear = useCallback(
     (viaAlt) => {
@@ -169,10 +198,12 @@ export function useSatRushGame() {
       });
       persistLexicon();
       const rec = lexRef.current.records[word];
-      track('word_resolved', {
-        mode: 'sat-rush',
+      trackSR('word_resolved', {
         stage: r.breakdown.stage, // THE key metric — are players anteing early?
         revealed,
+        // LINEUP: how many suspects were still standing when they answered — the
+        // recognition analogue of "anteing early" (more standing = harder call).
+        suspectsStanding: cw && cw.suspects ? suspectsStanding(cw.suspects.lineup, r.breakdown.stage) : null,
         multiplier: r.breakdown.effectiveMultiplier,
         outcome: viaAlt ? 'near' : 'exact',
         wasBriefed,
@@ -226,7 +257,7 @@ export function useSatRushGame() {
       const pause = reEncodeRef.current ? HEAVY_CLEAR_PAUSE_MS : viaAlt ? ALT_PAUSE_MS : CLEAR_PAUSE_MS;
       pauseTimer.current = setTimeout(beginWord, pause);
     },
-    [beginWord, persistLexicon]
+    [beginWord, persistLexicon, trackSR]
   );
 
   const doMiss = useCallback(() => {
@@ -243,7 +274,7 @@ export function useSatRushGame() {
     // Learning memory: a miss drops the word to box 0 (due again soon).
     lexicon.recordResult(lexRef.current, word, { cleared: false, stage, revealedCount: revealed });
     persistLexicon();
-    track('word_missed', { mode: 'sat-rush', missCount: r.missCount, wasBriefed });
+    trackSR('word_missed', { missCount: r.missCount, wasBriefed });
     if (r.gameOver) trackRunEnd();
     // The miss now TEACHES: the sentence filled in + definition + one cousin.
     if (cw) reEncodeRef.current = buildReEncode(cw, 'miss');
@@ -269,7 +300,7 @@ export function useSatRushGame() {
         beginWord();
       }
     }, MISS_PAUSE_MS);
-  }, [beginWord, trackRunEnd, persistLexicon]);
+  }, [beginWord, trackRunEnd, persistLexicon, trackSR]);
 
   // ---- the stage clock: advance reveals, then run the grace window ----
   const state = engineRef.current ? engineRef.current.getState() : null;
@@ -289,6 +320,11 @@ export function useSatRushGame() {
     const lastStage = eng.config.stageMultipliers.length - 1;
     const scale = c.isDeepCut ? eng.config.deepCutIntervalScale : 1;
     const interval = Math.round(cfgRef.current.stageMs * scale);
+    // LINEUP mode has NO spell-along: the narrowed lineup (2 suspects, differing at
+    // the first letter) is the aid, so the final stage is a plain decision window
+    // then a walked-away miss — and the free first letter is NOT revealed (it would
+    // give away which of the two remaining suspects is the answer).
+    const spellAlong = modeRef.current !== 'lineup';
 
     // The whole spell-along drain window from RIGHT NOW: one final-hold plus one
     // tick per remaining auto-reveal. Fixed into graceMsRef at final-stage entry
@@ -301,6 +337,9 @@ export function useSatRushGame() {
       const revealedNow = inputRef.current ? inputRef.current.getState().revealed : 0;
       return Math.max(0, eg.autoRevealMax - revealedNow) * tickMs + 2 * tickMs;
     };
+    // LINEUP's final-stage decision window: a base beat plus a little per-letter
+    // typing time, so long fugitives are still reachable once you've spotted them.
+    const lineupWindowMs = (len) => Math.round(cfgRef.current.stageMs * 1.4) + (len || 0) * 200;
 
     if (c.stage < lastStage) {
       stageTimer.current = setTimeout(() => {
@@ -308,14 +347,25 @@ export function useSatRushGame() {
         const now = eng.getState().current;
         // PRIORITY 1: the multiplier drop — punch the number + a DESCENDING tick.
         juice.multiplierDrop(now.stage, lastStage);
-        // Entering the final stage reveals the FREE first letter (only if none
-        // revealed yet) and fixes the spell-along drain window for the meter.
+        // Entering the final stage fixes the drain window for the meter. Briefing
+        // also reveals the FREE first letter (only if none revealed yet); lineup
+        // does not (see above).
         if (now.stage >= lastStage) {
-          if (inputRef.current.getState().revealed === 0) inputRef.current.revealNextLetter();
-          graceMsRef.current = spellWindowMs();
+          if (spellAlong) {
+            if (inputRef.current.getState().revealed === 0) inputRef.current.revealNextLetter();
+            graceMsRef.current = spellWindowMs();
+          } else {
+            graceMsRef.current = lineupWindowMs(now.length);
+          }
         }
         force();
       }, interval);
+    } else if (!spellAlong) {
+      // Final stage, LINEUP — hold the decision window, then a walked-away miss.
+      // Completing at any point runs the normal clear path (keyboard effect);
+      // Escape still skips. No auto-reveal.
+      graceMsRef.current = lineupWindowMs(c.length);
+      stageTimer.current = setTimeout(doMiss, graceMsRef.current);
     } else {
       // Final stage — the SPELL-ALONG endgame. Instead of a silent grace then a
       // miss, keep auto-revealing one letter every tickMs until only the last
@@ -423,14 +473,15 @@ export function useSatRushGame() {
   }, [persistLexicon]);
 
   // ---- public actions ----
-  const freshEngine = useCallback((briefed = []) => {
+  const freshEngine = useCallback((briefed = [], mode = 'briefing') => {
     clearTimers();
     const { stageMs, spellMs, deepEvery, revGap, climb } = cfgRef.current;
     engineRef.current = createSatRushEngine({
       words: WORDS,
       recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
-      briefed, // THE BRIEFING's words, served first this run
+      briefed, // THE BRIEFING's words, served first this run (briefing mode only)
       config: {
+        mode, // 'briefing' (spell-along net) | 'lineup' (suspect lineup, no spell-along)
         stageIntervalMs: stageMs,
         spellAlongMs: spellMs,
         deepCutEvery: deepEvery,
@@ -441,76 +492,75 @@ export function useSatRushGame() {
     prevSilverRef.current = false;
   }, []);
 
-  // Start the actual run: the briefed words are served first (engine), then the
-  // tier curve resumes. Fires the dwell metric if a briefing screen was shown.
-  const startRun = useCallback(() => {
-    juice.unlockAudio();
-    track('mode_start', { mode: 'sat-rush' });
-    const briefed = briefingRef.current ? briefingRef.current.words.map((r) => r.word) : [];
-    briefedSetRef.current = new Set(briefed);
-    if (dwellStartRef.current != null && typeof performance !== 'undefined') {
-      const ms = Math.round(performance.now() - dwellStartRef.current);
-      const words = briefed.length;
-      track('briefing_word_dwell_ms', {
-        mode: 'sat-rush',
-        ms,
-        words,
-        perWord: words ? Math.round(ms / words) : ms,
-      });
-    }
-    dwellStartRef.current = null;
-    freshEngine(briefed);
-    phaseRef.current = 'playing';
-    beginWord();
-  }, [beginWord, freshEngine]);
+  // Start the actual run in the given mode. BRIEFING serves the studied words first
+  // (engine) and fires the dwell metric; LINEUP serves no briefed words. modeRef is
+  // set here so every event and the final-stage endgame branch read the live mode.
+  const startRun = useCallback(
+    (mode) => {
+      juice.unlockAudio();
+      modeRef.current = mode;
+      const briefed =
+        mode === 'briefing' && briefingRef.current
+          ? briefingRef.current.words.map((r) => r.word)
+          : [];
+      briefedSetRef.current = new Set(briefed);
+      trackSR('mode_start');
+      if (mode === 'briefing' && dwellStartRef.current != null && typeof performance !== 'undefined') {
+        const ms = Math.round(performance.now() - dwellStartRef.current);
+        const words = briefed.length;
+        trackSR('briefing_word_dwell_ms', { ms, words, perWord: words ? Math.round(ms / words) : ms });
+      }
+      dwellStartRef.current = null;
+      freshEngine(briefed, mode);
+      phaseRef.current = 'playing';
+      beginWord();
+    },
+    [beginWord, freshEngine, trackSR]
+  );
 
-  // Play / Run it back: compute THE BRIEFING for the upcoming run, bump the session
-  // counter once, then either show the study screen or (if the player turned it
-  // off) drop straight into the run — the briefed words are served either way.
+  // Cover Play / results Run-it-back: bump the session counter once, then open the
+  // mode picker (always shown, preselected to the last choice — see chooseMode).
   const startGame = useCallback(() => {
     juice.unlockAudio(); // Play click is a valid gesture to unlock the audio context
     const lex = lexRef.current;
     lex.session = (lex.session || 0) + 1; // one bump per run start (session-counter time)
-    briefingRef.current = pickBriefing({
-      state: lex,
-      session: lex.session,
-      words: WORDS,
-      rng: Math.random,
-    });
     reEncodeRef.current = null;
-    if (lex.skipBriefing) {
-      startRun();
-      return;
-    }
-    track('briefing_shown', {
-      mode: 'sat-rush',
-      familyMorpheme: briefingRef.current.familyMorpheme,
-      reviewCount: briefingRef.current.reviewCount,
-    });
-    dwellStartRef.current = typeof performance !== 'undefined' ? performance.now() : null;
-    phaseRef.current = 'briefing';
+    briefingRef.current = null;
+    phaseRef.current = 'mode';
     force();
-  }, [startRun]);
+  }, []);
 
-  // From the briefing screen. START keeps the screen for next time; SKIP turns it
-  // off (remembered) and jumps in. Both begin the run with the briefed words.
-  const beginRunFromBriefing = useCallback(() => startRun(), [startRun]);
-  const skipBriefingAndRun = useCallback(() => {
-    lexRef.current.skipBriefing = true;
-    persistLexicon();
-    track('briefing_skipped', { mode: 'sat-rush' });
-    startRun();
-  }, [startRun, persistLexicon]);
-
-  // The small re-enable toggle on the cover.
-  const setSkipBriefing = useCallback(
-    (val) => {
-      lexRef.current.skipBriefing = !!val;
+  // From the mode picker. Remember the choice (so it preselects next time). BRIEFING
+  // computes + shows the MANDATORY study screen; LINEUP drops straight into the run
+  // (the suspect lineup is served per word by the engine). The mode choice IS the
+  // skip now — a decision the player owns, not a reflexive button.
+  const chooseMode = useCallback(
+    (mode) => {
+      juice.unlockAudio();
+      const lex = lexRef.current;
+      lex.mode = mode;
       persistLexicon();
+      modeRef.current = mode;
+      trackSR('mode_selected');
+      if (mode === 'lineup') {
+        briefingRef.current = null;
+        startRun('lineup');
+        return;
+      }
+      briefingRef.current = pickBriefing({ state: lex, session: lex.session, words: WORDS, rng: Math.random });
+      trackSR('briefing_shown', {
+        familyMorpheme: briefingRef.current.familyMorpheme,
+        reviewCount: briefingRef.current.reviewCount,
+      });
+      dwellStartRef.current = typeof performance !== 'undefined' ? performance.now() : null;
+      phaseRef.current = 'briefing';
       force();
     },
-    [persistLexicon]
+    [persistLexicon, startRun, trackSR]
   );
+
+  // From the briefing screen: begin the (briefing-mode) run. No skip path exists.
+  const beginRunFromBriefing = useCallback(() => startRun('briefing'), [startRun]);
 
   const setStageMs = useCallback((ms) => {
     cfgRef.current.stageMs = ms;
@@ -625,15 +675,15 @@ export function useSatRushGame() {
     reEncode: reEncodeRef.current, // the teaching beat shown during a miss/heavy-clear pause
     briefing: briefingRef.current,
     lex: lexRef.current,
-    skipBriefing: lexRef.current.skipBriefing,
+    mode: modeRef.current, // the current run's mode (drives the lineup UI / spell block)
+    lastMode: lexRef.current.mode, // remembered choice, for the picker's preselect
   });
 
   return {
     view,
     startGame,
+    chooseMode,
     startRun: beginRunFromBriefing,
-    skipBriefing: skipBriefingAndRun,
-    setSkipBriefing,
     setStageMs,
     setSpellMs,
     setKnob,
@@ -683,7 +733,8 @@ function buildView(state, cur, eng, input, extra) {
     stamp: extra.stamp,
     reEncode: extra.reEncode,
     briefing: buildBriefingView(extra.briefing, extra.lex),
-    skipBriefing: extra.skipBriefing,
+    mode: extra.mode, // 'briefing' | 'lineup' — the current run's mode
+    lastMode: extra.lastMode, // remembered choice, for the picker's preselect
   };
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 
@@ -728,6 +779,19 @@ function buildView(state, cur, eng, input, extra) {
     root: cur.root,
     wordLength: cur.length,
     slots: input ? input.getSlots() : [],
+    // LINEUP mode: the suspect lineup for the current word, each marked eliminated
+    // once its stage is reached. `isAnswer` is deliberately NOT exposed — the UI can
+    // never reveal which suspect is the fugitive. null in briefing mode.
+    suspects: cur.suspects
+      ? {
+          count: cur.suspects.count,
+          standing: suspectsStanding(cur.suspects.lineup, cur.stage),
+          lineup: cur.suspects.lineup.map((s) => ({
+            word: s.word,
+            eliminated: s.eliminatedAtStage != null && cur.stage >= s.eliminatedAtStage,
+          })),
+        }
+      : null,
     // Results carry the mastered count (box ≥ 3) so the end screen can headline it
     // as the number that makes the mode legibly a study tool.
     results: { ...eng.results(), mastered: lexicon.masteredCount(extra.lex) },

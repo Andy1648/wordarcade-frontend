@@ -15,6 +15,7 @@ export default function AnteMeter({
   graceMs,
   atFinal,
   running,
+  lineup = false,
 }) {
   const litPips = maxStage + 1 - stage; // more lit = more reward still on offer
   // Re-key the drain on each stage so it restarts cleanly. The multiplier node is
@@ -31,7 +32,9 @@ export default function AnteMeter({
         <div className={`sr-antebox${atFinal ? ' final' : ''}`}>
           {atFinal ? (
             <>
-              <span className="sr-accent">LAST CALL</span> — IT&rsquo;S PRINTING
+              {/* LINEUP has no mugshot printing — the note reads for the narrowed
+                  lineup (two suspects left) instead. */}
+              <span className="sr-accent">LAST CALL</span> — {lineup ? 'TWO LEFT' : 'IT’S PRINTING'}
             </>
           ) : (
             <>

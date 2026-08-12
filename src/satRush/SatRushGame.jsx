@@ -28,6 +28,7 @@ import Hud from './Hud';
 import WordCard from './WordCard';
 import SatRushResults from './SatRushResults';
 import Briefing from './BriefingScreen';
+import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
 
 export default function SatRushGame({ onExit, musicSetVolume }) {
@@ -82,17 +83,11 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
         )}
       </div>
 
-      {view.phase === 'start' && (
-        <StartScreen
-          onPlay={game.startGame}
-          onExit={onExit}
-          skipBriefing={view.skipBriefing}
-          onToggleBriefing={game.setSkipBriefing}
-        />
+      {view.phase === 'start' && <StartScreen onPlay={game.startGame} onExit={onExit} />}
+      {view.phase === 'mode' && (
+        <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={onExit} />
       )}
-      {view.phase === 'briefing' && (
-        <Briefing briefing={view.briefing} onStart={game.startRun} onSkip={game.skipBriefing} />
-      )}
+      {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} />}
       {view.phase === 'over' && (
         <SatRushResults results={view.results} onAgain={game.startGame} onExit={onExit} />
       )}
@@ -126,9 +121,10 @@ function ExitLink({ onExit }) {
 
 // The cover is a newspaper FRONT PAGE in the same paper/ink/double-rule/grain
 // language as the play poster: gazette name, the SAT RUSH masthead (off-register
-// violet plate), a ruled dateline, the reward schedule notice box, the bounty
-// how-to, and the paper PLAY button.
-function StartScreen({ onPlay, onExit, skipBriefing, onToggleBriefing }) {
+// violet plate), a ruled dateline, and the paper PLAY button. (The old "Reward
+// Schedule" notice box was cut in the copy purge — it explained the ante mechanic,
+// and listed a stale 5-stage 5×/4×/3×/2×/1× table the 3-stage engine never uses.)
+function StartScreen({ onPlay, onExit }) {
   return (
     <div className="sr-screen">
       <div className="sr-cover">
@@ -141,47 +137,9 @@ function StartScreen({ onPlay, onExit, skipBriefing, onToggleBriefing }) {
           <span>EXTRA! EXTRA! WORDS AT LARGE</span>
           <span>FREE</span>
         </div>
-        {/* reward schedule: the less information you capture on, the bigger the pay */}
-        <div className="sr-notice">
-          <div className="sr-notice-head">— Reward Schedule —</div>
-          <div className="sr-rules">
-            <div>
-              <code>5×</code> part of speech + letter count
-            </div>
-            <div>
-              <code>4×</code> the sentence — last seen
-            </div>
-            <div>
-              <code>3×</code> the description
-            </div>
-            <div>
-              <code>2×</code> known aliases (root)
-            </div>
-            <div>
-              <code>1×</code> first letter
-            </div>
-          </div>
-        </div>
-        <div className="sr-sub fine">
-          Stuck? It spells itself out — for scraps. Capture early for the full bounty. Miss only if
-          you walk away. 5 captures in a row → SILVER TONGUE, everything doubles. Let one escape and
-          it comes back angrier.
-        </div>
         <button type="button" className="sr-btn" onClick={onPlay}>
           Play
         </button>
-        {/* The study screen (THE BRIEFING) can be turned off; this small toggle
-            re-enables it once it's been skipped. */}
-        {onToggleBriefing && (
-          <label className="sr-brief-toggle">
-            <input
-              type="checkbox"
-              checked={!skipBriefing}
-              onChange={(e) => onToggleBriefing(!e.target.checked)}
-            />
-            Show the study briefing before each run
-          </label>
-        )}
         <ExitLink onExit={onExit} />
       </div>
     </div>
