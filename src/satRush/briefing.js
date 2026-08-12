@@ -1,23 +1,27 @@
-// briefing.js — chooses the 5 words THE BRIEFING studies before a run.
+// briefing.js — chooses the (up to) 5 words THE BRIEFING studies before a run.
 //
-// Pure, RNG injected (deterministic in tests). The selection encodes the two
-// design bets:
-//   1. REVIEW FIRST. Up to 2 slots go to words the memory says are due (weak
-//      words — cleared only when nearly given away — lead, then the rest of the
-//      Leitner-due queue). Spaced repetition is the whole reason the memory
-//      exists; it gets first claim.
-//   2. THEN A ROOT FAMILY. The remaining slots are filled from ONE morpheme with
-//      3+ un-mastered words in the pool — teaching `loqu-` with its family
-//      attached teaches four words for the price of one. Families with a member
-//      or cousin the player has already met are preferred: transfer lands harder
-//      when one of the family is familiar.
-//   3. FALLBACK. Early runs (nothing due, no family qualifies) or an exhausted
-//      pool fall back to fresh, tier-appropriate words with familyMorpheme null —
-//      the screen then reads as five words rather than "one root and its family".
+// Pure, RNG injected (deterministic in tests).
+//
+// WHY THIS SHAPE. The dataset's family structure lives in each word's `cousins`
+// field, not in shared headword morphemes: ~90% of morphemes appear on exactly one
+// headword, so gating a "root family" lesson on 3+ headwords sharing a morpheme
+// fired on almost nothing. But nearly every root-bearing word carries 2-4 verified
+// cousins — so the family lesson belongs on EVERY card (the screen teaches each
+// word's own morpheme + meaning + cousins), and it fires on ~100% of briefed cards.
+//
+// Selection is therefore simple:
+//   1. REVIEW FIRST — up to 2 words the memory says are due (weak words, cleared
+//      only when nearly given away, lead; then the rest of the Leitner-due queue).
+//   2. THE REST FRESH — tier-appropriate words, preferring ones that CARRY a root
+//      (so the card can teach a family), then unseen, then the gentlest tier.
+//   3. SHARED MORPHEME = BONUS, not a gate — if 2+ of the chosen words happen to
+//      share a morpheme, they're grouped adjacently and the screen is headed with
+//      it. Otherwise familyMorpheme is null (the common case) and the screen simply
+//      reads as five words, each still teaching its own root family.
 //
 // Returns { words:[≤count rows], familyMorpheme, reviewCount, reviewWords:Set }.
-// `words` are the raw pool rows (never mutated); `reviewWords` lets the screen
-// mark the ones the player has faced before.
+// `words` are the raw pool rows (never mutated); `reviewWords` lets the screen mark
+// the ones the player has faced before.
 import { weakWords, dueWords, isMastered, hasSeen } from './lexicon.js';
 
 // Fisher-Yates with an injected RNG — same idiom as engine.js, so a seeded RNG
@@ -31,6 +35,47 @@ function shuffle(arr, rng) {
     a[j] = t;
   }
   return a;
+}
+
+// The morpheme shared by the MOST chosen words, if any two share one (else null).
+// Ties break toward the morpheme that appears earliest among the chosen words
+// (Map iteration is insertion order), so the pick is deterministic.
+function dominantMorpheme(chosen) {
+  const counts = new Map();
+  for (const r of chosen) {
+    const m = r.root && r.root.morpheme;
+    if (m) counts.set(m, (counts.get(m) || 0) + 1);
+  }
+  let best = null;
+  let bestN = 1; // need at least 2 to be a shared root worth heading with
+  for (const [m, n] of counts) {
+    if (n >= 2 && n > bestN) {
+      best = m;
+      bestN = n;
+    }
+  }
+  return best;
+}
+
+// Move every word carrying `morpheme` into one contiguous block, anchored at the
+// first member's original position; everything else keeps its order. So a review
+// word chosen first stays first, and the shared-root words read together.
+function groupByMorpheme(chosen, morpheme) {
+  const isMember = (r) => r.root && r.root.morpheme === morpheme;
+  const members = chosen.filter(isMember);
+  const out = [];
+  let placed = false;
+  for (const r of chosen) {
+    if (isMember(r)) {
+      if (!placed) {
+        out.push(...members);
+        placed = true;
+      }
+    } else {
+      out.push(r);
+    }
+  }
+  return out;
 }
 
 /**
@@ -68,55 +113,27 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
   }
   const reviewCount = chosen.length;
 
-  // ---- 2. one root family for the rest ----
-  let familyMorpheme = null;
-  const families = new Map();
-  for (const row of words) {
-    if (!row.root || !row.root.morpheme) continue;
-    if (isMastered(state, row.word) || chosenSet.has(row.word)) continue;
-    const m = row.root.morpheme;
-    if (!families.has(m)) families.set(m, []);
-    families.get(m).push(row);
-  }
-  const candidates = [...families.entries()].filter(([, rows]) => rows.length >= 3);
-  if (candidates.length) {
-    const scored = candidates.map(([m, rows]) => ({
-      m,
-      rows,
-      // familiar if any family member OR any of their cousins has been met before
-      seenMember:
-        rows.some((r) => hasSeen(state, r.word)) ||
-        rows.some((r) => (r.root.cousins || []).some((c) => hasSeen(state, c))),
-    }));
-    // shuffle for variety, then bring the "has a familiar member" families to the
-    // front — a stable sort keeps the shuffle order within each group.
-    const ordered = shuffle(scored, rng).sort((a, b) => (b.seenMember ? 1 : 0) - (a.seenMember ? 1 : 0));
-    const pick = ordered[0];
-    familyMorpheme = pick.m;
-    // take up to 3 of the family (or fewer if review already left <3 slots),
-    // shuffled so it isn't always the same three. Capped at 3 so the family
-    // teaches a root without swallowing the whole briefing.
-    let famTaken = 0;
-    for (const row of shuffle(pick.rows, rng)) {
-      if (chosen.length >= count || famTaken >= 3) break;
-      if (take(row)) famTaken += 1;
-    }
+  // ---- 2. fill the rest with fresh, tier-appropriate words ----
+  // Prefer words that CARRY a root (so the card can teach its family), then unseen
+  // words, then the gentlest tier. Mastered words are never re-briefed as fresh.
+  const fresh = words.filter((r) => !chosenSet.has(r.word) && !isMastered(state, r.word));
+  const ordered = shuffle(fresh, rng).sort((a, b) => {
+    const ra = a.root ? 0 : 1;
+    const rb = b.root ? 0 : 1;
+    if (ra !== rb) return ra - rb; // root-bearing first — every card should teach a family
+    const sa = hasSeen(state, a.word) ? 1 : 0;
+    const sb = hasSeen(state, b.word) ? 1 : 0;
+    if (sa !== sb) return sa - sb; // unseen words first
+    return (a.tier || 1) - (b.tier || 1); // then the gentlest tier
+  });
+  for (const row of ordered) {
+    if (chosen.length >= count) break;
+    take(row);
   }
 
-  // ---- 3. fresh fallback to reach `count`: un-mastered, unseen-first, low-tier ----
-  if (chosen.length < count) {
-    const fresh = words.filter((r) => !chosenSet.has(r.word) && !isMastered(state, r.word));
-    const ordered = shuffle(fresh, rng).sort((a, b) => {
-      const sa = hasSeen(state, a.word) ? 1 : 0;
-      const sb = hasSeen(state, b.word) ? 1 : 0;
-      if (sa !== sb) return sa - sb; // unseen words first
-      return (a.tier || 1) - (b.tier || 1); // then the gentlest tier
-    });
-    for (const row of ordered) {
-      if (chosen.length >= count) break;
-      take(row);
-    }
-  }
+  // ---- 3. shared-morpheme BONUS ----
+  const familyMorpheme = dominantMorpheme(chosen);
+  const finalWords = familyMorpheme ? groupByMorpheme(chosen, familyMorpheme) : chosen;
 
-  return { words: chosen, familyMorpheme, reviewCount, reviewWords };
+  return { words: finalWords, familyMorpheme, reviewCount, reviewWords };
 }

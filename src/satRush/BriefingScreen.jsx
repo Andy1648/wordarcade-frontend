@@ -88,7 +88,7 @@ export default function Briefing({ briefing, onStart, onSkip }) {
           </div>
           {familyMorpheme ? (
             <div className="sr-brief-family">
-              TODAY’S ROOT — <b>{familyMorpheme}</b> and its family
+              TWO SHARE A ROOT — <b>{familyMorpheme}</b> — grouped below
             </div>
           ) : (
             <div className="sr-brief-family">Five words to know before the run</div>
