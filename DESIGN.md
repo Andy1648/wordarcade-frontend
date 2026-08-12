@@ -230,15 +230,23 @@ ESCAPEE):
   red double-ruled stamp slapped across the header at ~4°, HELD for the whole word
   as a state marker, reading `ESCAPED ×N — REWARD DOUBLED`); clear/miss = the
   corner STAMP; silver = the whole poster reprints in negative (invert extends to
-  every poster element). The cover is a newspaper FRONT PAGE: gazette name, the
-  SAT RUSH masthead, a ruled dateline, a "— Reward Schedule —" notice box, the
-  bounty how-to.
+  every poster element). The cover is a newspaper FRONT PAGE — gazette name, the
+  SAT RUSH masthead, a ruled dateline, the paper PLAY button — and nothing else:
+  Play opens the MODE SELECT (two paper cards, **BRIEFING** and **LINEUP**, one
+  line each; the last choice preselected with the violet plate). The old
+  "— Reward Schedule —" notice box + bounty how-to were cut in the copy purge —
+  they explained the ante mechanic, and the table listed a stale 5-stage
+  5×/4×/3×/2×/1× schedule the 3-stage engine never used. (No copy explains a
+  mode: BRIEFING teaches by making you study, LINEUP by the suspects narrowing.)
 - Sanctioned copy (the bounty voice — keep it, don't drift): clear **CAPTURED!!**
   (alt **CLOSE!**), miss **ESCAPED!!**, revenant **ESCAPED ×N — REWARD DOUBLED**,
   deep cut **MOST WANTED** header, silver **SILVER TONGUE!**; ante note **ANTE —
-  CAPTURE NOW FOR MORE** / **LAST CALL — IT'S PRINTING**; the spell-along row
-  **MUGSHOT PRINTING… · 1× SCRAPS**; results entry stamp **CASE CLOSED**; the miss
-  line "the fugitive was X — it'll be back". (Verbs are CAPTURE, not ANSWER.)
+  CAPTURE NOW FOR MORE** / final **LAST CALL — IT'S PRINTING** (briefing) ·
+  **LAST CALL — TWO LEFT** (lineup); the spell-along row **MUGSHOT PRINTING… · 1×
+  SCRAPS** (briefing only); the LINEUP suspect panel **SUSPECTS · N STANDING**
+  with a **CLEARED** alibi stamp on eliminated suspects; results entry stamp
+  **CASE CLOSED**; the miss line "the fugitive was X — it'll be back". (Verbs are
+  CAPTURE, not ANSWER.)
 
 ---
 

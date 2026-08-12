@@ -49,7 +49,7 @@ test('freshState / load-with-nothing is a clean empty state', () => {
   const s = freshState();
   assert.equal(s.v, 1);
   assert.equal(s.session, 0);
-  assert.equal(s.skipBriefing, false);
+  assert.equal(s.mode, 'briefing');
   assert.deepEqual(s.records, {});
   // load off empty storage matches
   assert.deepEqual(load(memStorage()), freshState());
@@ -84,12 +84,12 @@ test('save / load round-trips a real state', () => {
   const st = memStorage();
   const s = freshState();
   s.session = 4;
-  s.skipBriefing = true;
+  s.mode = 'lineup';
   clear(s, 'loquacious', { stage: 0 });
   save(st, s);
   const back = load(st);
   assert.equal(back.session, 4);
-  assert.equal(back.skipBriefing, true);
+  assert.equal(back.mode, 'lineup');
   assert.ok(back.records.loquacious);
   assert.equal(back.records.loquacious.cleared, 1);
 });

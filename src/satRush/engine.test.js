@@ -643,3 +643,70 @@ test('unknown briefed words are ignored, not served', () => {
   assert.equal(first.word, 'x2a', 'only the real word is briefed');
   assert.equal(first.isBriefed, true);
 });
+
+// --- LINEUP mode: suspects attached per word, briefing mode has none ---------
+
+// A pool that yields a full 6-suspect lineup: 5-letter adjectives, distinct first
+// letters, no shared roots, no shared 5-substrings. (makePool's words all share
+// morpheme 'r-', which the suspect rules exclude, so it can't be reused here.)
+function lineupPool() {
+  const words = ['brave', 'clean', 'dizzy', 'eager', 'faint', 'gaudy', 'happy', 'jumpy', 'lucky', 'moldy'];
+  return words.map((w) => ({
+    word: w,
+    pos: 'adj',
+    tier: 1,
+    gloss: `def ${w}`,
+    context: 'use ___ now',
+    root: { morpheme: `${w[0]}-`, meaning: 'm', cousins: ['ca'] }, // distinct morphemes
+    alts: [],
+  }));
+}
+
+function standing(lineup, stage) {
+  return lineup.filter((s) => s.eliminatedAtStage == null || s.eliminatedAtStage > stage).length;
+}
+
+test('briefing mode attaches NO suspects (default)', () => {
+  const eng = createSatRushEngine({ words: lineupPool(), rng: IDENTITY_RNG });
+  const cur = eng.nextWord();
+  assert.equal(cur.suspects, null);
+});
+
+test('lineup mode attaches a 6-suspect lineup that narrows 6 -> 4 -> 2', () => {
+  const eng = createSatRushEngine({ words: lineupPool(), rng: IDENTITY_RNG, config: { mode: 'lineup' } });
+  const cur = eng.nextWord();
+  assert.ok(cur.suspects, 'a lineup is attached in lineup mode');
+  assert.equal(cur.suspects.count, 6);
+  assert.equal(cur.suspects.lineup.length, 6);
+  assert.equal(cur.suspects.lineup.filter((s) => s.isAnswer).length, 1);
+  assert.ok(
+    cur.suspects.lineup.some((s) => s.isAnswer && s.word === cur.word),
+    'the answer suspect is the served word'
+  );
+  assert.equal(standing(cur.suspects.lineup, 0), 6);
+  assert.equal(standing(cur.suspects.lineup, 1), 4);
+  assert.equal(standing(cur.suspects.lineup, 2), 2);
+});
+
+test('lineup mode: the final surviving distractor differs from the answer at [0]', () => {
+  const eng = createSatRushEngine({ words: lineupPool(), rng: IDENTITY_RNG, config: { mode: 'lineup' } });
+  const cur = eng.nextWord();
+  const survivor = cur.suspects.lineup.find((s) => !s.isAnswer && s.eliminatedAtStage == null);
+  assert.ok(survivor, 'a surviving distractor exists');
+  assert.notEqual(survivor.word[0], cur.word[0]);
+});
+
+test('lineup mode: a revenant also carries a suspect lineup', () => {
+  const eng = createSatRushEngine({
+    words: lineupPool(),
+    rng: IDENTITY_RNG,
+    config: { mode: 'lineup', revenantOffset: 2 },
+  });
+  eng.nextWord();
+  eng.miss(); // requeue as a revenant for wordNumber + 2
+  let cur = eng.nextWord();
+  while (cur && !cur.isRevenant) cur = eng.nextWord();
+  assert.ok(cur && cur.isRevenant, 'a revenant comes back');
+  assert.ok(cur.suspects, 'the revenant still gets a lineup');
+  assert.equal(cur.suspects.lineup.length, cur.suspects.count);
+});

@@ -1,9 +1,12 @@
 // e2e/sat-rush.spec.js
 //
-// SAT RUSH end to end: the mode opens from its menu card, THE BRIEFING study
-// screen shows before the run, a word can be CLEARED, and running out of lives
-// lands on the retro-print results PAGE. Solo mode (no WebSocket), but the shared
-// backend mock is installed so the app-level socket never touches production.
+// SAT RUSH end to end. The mode opens from its menu card, the cover's Play leads
+// to the MODE SELECT (two cards: BRIEFING and LINEUP), and each mode plays:
+//   - BRIEFING → the mandatory study screen (no skip) → a word can be CLEARED →
+//     out of lives → the retro-print results PAGE.
+//   - LINEUP → straight into the run with a SUSPECT LINEUP, no study screen.
+// Solo mode (no WebSocket), but the shared backend mock is installed so the
+// app-level socket never touches production.
 //
 // `?satRush=1` enables the mode flag so the third card renders; `?portal=1` skips
 // the intro straight to the menu.
@@ -21,8 +24,17 @@ function contextOf(locator, innerSelector) {
   }, innerSelector);
 }
 
+// Cover → Play → the mode picker's chosen card. Returns once the choice is made.
+async function pickMode(page, mode) {
+  await page.getByRole('button', { name: 'Play' }).click();
+  const picker = page.locator('.sr-modeselect');
+  await expect(picker).toBeVisible();
+  const name = mode === 'lineup' ? /LINEUP/ : /BRIEFING/;
+  await page.getByRole('button', { name }).click();
+}
+
 test.describe('SAT Rush', () => {
-  test('menu card → briefing → play → clear a word → death → results page', async ({ page }) => {
+  test('menu card → mode select → BRIEFING → play → clear → death → results', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
 
@@ -31,14 +43,14 @@ test.describe('SAT Rush', () => {
     await expect(card).toBeVisible();
     await card.locator('.game-card').click();
 
-    // Start screen → Play.
-    const play = page.getByRole('button', { name: 'Play' });
-    await expect(play).toBeVisible();
-    await play.click();
+    // Cover → Play → the mode picker, then choose BRIEFING.
+    await pickMode(page, 'briefing');
 
-    // THE BRIEFING shows before the run: five study cards, then Start the run.
+    // THE BRIEFING is now MANDATORY: five study cards, one Start button, and NO
+    // skip path anywhere on the screen.
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await expect(page.locator('.sr-brief-card')).toHaveCount(5);
+    await expect(page.getByRole('button', { name: /skip/i })).toHaveCount(0);
     await page.getByRole('button', { name: 'Start the run' }).click();
 
     // Playing: the ante multiplier and the letter slots are up.
@@ -78,18 +90,45 @@ test.describe('SAT Rush', () => {
     const runItBack = page.getByRole('button', { name: 'Run it back' });
     await expect(runItBack).toBeVisible();
 
-    // Run it back returns through the briefing to a fresh run.
+    // Run it back returns to the MODE PICKER (always shown, preselected to the last
+    // choice), not straight into a run.
     await runItBack.click();
+    await expect(page.locator('.sr-modeselect')).toBeVisible();
+    await page.getByRole('button', { name: /BRIEFING/ }).click();
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await page.getByRole('button', { name: 'Start the run' }).click();
     await expect(page.locator('.sr-slots')).toBeVisible();
+  });
+
+  test('LINEUP mode: no study screen, a suspect lineup is served with the word', async ({ page }) => {
+    await installBackendMock(page);
+    await page.goto('/?satRush=1&portal=1');
+    await page.locator('[data-game="sat-rush"] .game-card').click();
+
+    // Choose LINEUP — it drops straight into the run (no briefing screen).
+    await pickMode(page, 'lineup');
+    await expect(page.locator('.sr-brief-page')).toHaveCount(0);
+    await expect(page.locator('.sr-slots')).toBeVisible();
+    await expect(page.locator('.sr-mult')).toBeVisible();
+
+    // The suspect lineup is up, with between 2 and 6 suspects (thin-pool words can
+    // serve a reduced lineup), and no spell-along block.
+    await expect(page.locator('.sr-lineup')).toBeVisible();
+    const suspects = await page.locator('.sr-suspect').count();
+    expect(suspects).toBeGreaterThanOrEqual(2);
+    expect(suspects).toBeLessThanOrEqual(6);
+    await expect(page.locator('.sr-spell')).toHaveCount(0);
+
+    // Still typeable: a rejected key must not crash or strand the field.
+    await page.keyboard.press('z');
+    await expect(page.locator('.sr-mult')).toBeVisible();
   });
 
   test('the briefing studies 5 words and the first served word is one of them', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
     await page.locator('[data-game="sat-rush"] .game-card').click();
-    await page.getByRole('button', { name: 'Play' }).click();
+    await pickMode(page, 'briefing');
 
     // Five cards; capture each word's surrounding sentence context.
     const cards = page.locator('.sr-brief-card');
@@ -123,8 +162,8 @@ test.describe('SAT Rush', () => {
     // The mode-menu card grid is NOT what we're looking at.
     await expect(page.locator('[data-game="sat-rush"]')).toHaveCount(0);
 
-    // And it's really playable from here (through the briefing, not a dead render).
-    await play.click();
+    // And it's really playable from here (through the picker + briefing).
+    await pickMode(page, 'briefing');
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await page.getByRole('button', { name: 'Start the run' }).click();
     await expect(page.locator('.sr-slots')).toBeVisible();

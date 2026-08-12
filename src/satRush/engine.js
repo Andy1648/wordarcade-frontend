@@ -20,7 +20,18 @@
 // tier-4/5 gloss<->root flip is GONE — gloss and root co-reveal at stage 1, so
 // "answer early = more points" (and AVG ANTE) survives, just coarser.
 
+import { generateSuspects } from './suspects.js';
+
 export const DEFAULT_CONFIG = {
+  // MODE — the two ways to play, chosen at mode-select:
+  //   'briefing' studies five words first, then the SPELL-ALONG endgame is the net
+  //             (every word is eventually typeable; the skill is answering early);
+  //   'lineup'  teaches nothing but serves every word with a SUSPECT LINEUP that
+  //             narrows as the ante drops — recognition instead of recall, and the
+  //             narrowing makes the ante visible. LINEUP has NO spell-along (the
+  //             lineup is the aid), so the hook runs a plain grace-then-miss at the
+  //             final stage; suspects are attached to each presentation here.
+  mode: 'briefing',
   stageIntervalMs: 2800, // per-stage reveal cadence (configurable, live-tunable)
   stageMultipliers: [5, 3, 1], // by stage index 0..2 (three coarse beats)
   // SPELL-ALONG endgame: at the final stage letters keep auto-revealing on this
@@ -224,6 +235,10 @@ export function createSatRushEngine({
       alts: row.alts || [],
       firstLetter: row.word[0],
       reveals: revealSchedule(row.root != null),
+      // LINEUP mode only: the suspect lineup for this word (answer + distractors),
+      // narrowing with the stage. Pure — generated from the same word pool with the
+      // injected RNG. null in briefing mode. Attached to every word (revenants too).
+      suspects: cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng }) : null,
       isRevenant,
       isDeepCut,
       isBriefed,

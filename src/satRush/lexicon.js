@@ -48,9 +48,11 @@ const MASTERY_BOX = 3; // box >= this === mastered
 const ANTES_WINDOW = 3; // how many recent ante scores we keep per word
 const MAX_RECORDS = 2000; // hard cap on stored records (see evict)
 
-/** A clean, empty state. Returned for a fresh player and for any unreadable blob. */
+/** A clean, empty state. Returned for a fresh player and for any unreadable blob.
+ *  `mode` remembers the last mode-select choice ('briefing' | 'lineup') so the
+ *  picker can preselect it; a fresh player defaults to 'briefing'. */
 export function freshState() {
-  return { v: VERSION, session: 0, skipBriefing: false, records: {} };
+  return { v: VERSION, session: 0, mode: 'briefing', records: {} };
 }
 
 // True only for a blob that is safe to trust as-is. Anything else → fresh state,
@@ -80,7 +82,7 @@ export function load(storage) {
     return {
       v: VERSION,
       session: blob.session,
-      skipBriefing: !!blob.skipBriefing,
+      mode: blob.mode === 'lineup' ? 'lineup' : 'briefing',
       records: blob.records,
     };
   } catch {
