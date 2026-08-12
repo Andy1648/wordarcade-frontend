@@ -27,6 +27,7 @@ import { setShakeTarget } from './juice';
 import Hud from './Hud';
 import WordCard from './WordCard';
 import SatRushResults from './SatRushResults';
+import Briefing from './BriefingScreen';
 import DevTuner from './DevTuner';
 
 export default function SatRushGame({ onExit, musicSetVolume }) {
@@ -81,7 +82,17 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
         )}
       </div>
 
-      {view.phase === 'start' && <StartScreen onPlay={game.startGame} onExit={onExit} />}
+      {view.phase === 'start' && (
+        <StartScreen
+          onPlay={game.startGame}
+          onExit={onExit}
+          skipBriefing={view.skipBriefing}
+          onToggleBriefing={game.setSkipBriefing}
+        />
+      )}
+      {view.phase === 'briefing' && (
+        <Briefing briefing={view.briefing} onStart={game.startRun} onSkip={game.skipBriefing} />
+      )}
       {view.phase === 'over' && (
         <SatRushResults results={view.results} onAgain={game.startGame} onExit={onExit} />
       )}
@@ -117,7 +128,7 @@ function ExitLink({ onExit }) {
 // language as the play poster: gazette name, the SAT RUSH masthead (off-register
 // violet plate), a ruled dateline, the reward schedule notice box, the bounty
 // how-to, and the paper PLAY button.
-function StartScreen({ onPlay, onExit }) {
+function StartScreen({ onPlay, onExit, skipBriefing, onToggleBriefing }) {
   return (
     <div className="sr-screen">
       <div className="sr-cover">
@@ -159,6 +170,18 @@ function StartScreen({ onPlay, onExit }) {
         <button type="button" className="sr-btn" onClick={onPlay}>
           Play
         </button>
+        {/* The study screen (THE BRIEFING) can be turned off; this small toggle
+            re-enables it once it's been skipped. */}
+        {onToggleBriefing && (
+          <label className="sr-brief-toggle">
+            <input
+              type="checkbox"
+              checked={!skipBriefing}
+              onChange={(e) => onToggleBriefing(!e.target.checked)}
+            />
+            Show the study briefing before each run
+          </label>
+        )}
         <ExitLink onExit={onExit} />
       </div>
     </div>

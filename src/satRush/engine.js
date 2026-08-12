@@ -111,14 +111,36 @@ function shuffle(arr, rng) {
  * @param {Set<string>|string[]} [opts.recent]  words served on recent runs, to
  *   DEPRIORITIZE (not ban) in fresh draws so returning players get variety. Pure
  *   input — the engine never reads localStorage; the hook loads and passes it in.
+ * @param {string[]} [opts.briefed]  words THE BRIEFING studied this run, served
+ *   FIRST (shuffled) before the tier curve resumes — retrieval immediately after
+ *   encoding is the point. Each keeps its own tier (like a revenant). Unknown
+ *   words are ignored; the default [] is byte-identical to no briefing at all.
  */
-export function createSatRushEngine({ words = [], rng = Math.random, config = {}, recent = new Set() } = {}) {
+export function createSatRushEngine({
+  words = [],
+  rng = Math.random,
+  config = {},
+  recent = new Set(),
+  briefed = [],
+} = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
 
   const pool = shuffle(words, rng);
   const used = new Set(); // word strings already served as fresh
   const recentSet = recent instanceof Set ? recent : new Set(recent); // deprioritized, not banned
   const revenants = []; // { row, tier, dueWordNumber, missCount }
+
+  // The briefed queue: resolve the studied words to rows, dedupe, shuffle with the
+  // injected RNG, and mark them used so the normal draw never re-serves them.
+  const wordMap = new Map(words.map((r) => [r.word, r]));
+  const briefedQueue = [];
+  for (const w of shuffle([...new Set(briefed)], rng)) {
+    const row = wordMap.get(w);
+    if (row && !used.has(row.word)) {
+      used.add(row.word);
+      briefedQueue.push(row);
+    }
+  }
 
   const state = {
     score: 0,
@@ -188,7 +210,7 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     return best;
   }
 
-  function buildPresentation(row, tier, { isRevenant, isDeepCut, missCount = 0 }) {
+  function buildPresentation(row, tier, { isRevenant, isDeepCut, missCount = 0, isBriefed = false }) {
     const length = row.word.length;
     return {
       row,
@@ -204,6 +226,7 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
       reveals: revealSchedule(row.root != null),
       isRevenant,
       isDeepCut,
+      isBriefed,
       missCount,
       stage: isRevenant ? cfg.revenantEntryStage : 0,
       resolved: false,
@@ -216,6 +239,23 @@ export function createSatRushEngine({ words = [], rng = Math.random, config = {}
     if (state.gameOver) return null;
     const n = state.wordNumber + 1;
     const isDeepCutSlot = n % cfg.deepCutEvery === 0;
+
+    // Briefed words are served FIRST (already shuffled), ahead of the tier curve
+    // and any revenant — retrieval right after the study screen is the whole
+    // point. They occupy the first slots, well before revenants come due
+    // (revenantOffset) or a deep-cut slot lands, so nothing else competes here.
+    if (briefedQueue.length) {
+      const row = briefedQueue.shift();
+      const present = buildPresentation(row, row.tier, {
+        isRevenant: false,
+        isDeepCut: isDeepCutSlot,
+        isBriefed: true,
+      });
+      state.wordNumber = n;
+      state.wrongKeystrokes = 0;
+      state.current = present;
+      return present;
+    }
 
     // A due revenant takes priority over a fresh draw for this slot.
     let dueIdx = -1;

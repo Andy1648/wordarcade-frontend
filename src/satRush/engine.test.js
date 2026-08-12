@@ -590,3 +590,56 @@ test('game over after three misses; nextWord then returns null', () => {
   assert.equal(eng.getState().lives, 0);
   assert.equal(eng.nextWord(), null);
 });
+
+// --- briefed words (THE BRIEFING) ------------------------------------------
+// The 5 studied words are served FIRST, before the tier curve resumes. Each
+// keeps its OWN tier (not the early-slot curve tier), carries isBriefed, and the
+// empty default stays byte-identical to no briefing (covered by every test above,
+// which passes no `briefed`).
+
+function briefedEngine(briefed) {
+  return createSatRushEngine({
+    words: makePool(12),
+    rng: IDENTITY_RNG,
+    briefed,
+  });
+}
+
+test('briefed words are served first and keep their own tier', () => {
+  // Two high-tier words that the early tier curve (tier 1) would never pick.
+  const eng = briefedEngine(['x5a', 'x3b']);
+  const first = eng.nextWord();
+  const second = eng.nextWord();
+  const servedFirstTwo = new Set([first.word, second.word]);
+  assert.deepEqual(servedFirstTwo, new Set(['x5a', 'x3b']), 'both briefed words come out first');
+  assert.ok(first.isBriefed && second.isBriefed, 'flagged as briefed');
+  // Tiers are the words own (5 and 3), not the slot-1/2 curve tier (1).
+  const tierOf = (w) => (w === 'x5a' ? 5 : 3);
+  assert.equal(first.tier, tierOf(first.word));
+  assert.equal(second.tier, tierOf(second.word));
+
+  // The curve resumes after: slot 3 is a normal fresh tier-1 draw, not briefed.
+  const third = eng.nextWord();
+  assert.equal(third.isBriefed, false);
+  assert.equal(third.tier, 1);
+});
+
+test('a briefed word is never re-served as a fresh draw', () => {
+  const eng = briefedEngine(['x1a']);
+  const first = eng.nextWord();
+  assert.equal(first.word, 'x1a');
+  const seen = new Set([first.word]);
+  for (let i = 0; i < 11; i++) {
+    const w = eng.nextWord();
+    if (!w) break;
+    assert.ok(!seen.has(w.word), `duplicate served: ${w.word}`);
+    seen.add(w.word);
+  }
+});
+
+test('unknown briefed words are ignored, not served', () => {
+  const eng = briefedEngine(['not-in-pool', 'x2a']);
+  const first = eng.nextWord();
+  assert.equal(first.word, 'x2a', 'only the real word is briefed');
+  assert.equal(first.isBriefed, true);
+});

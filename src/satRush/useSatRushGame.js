@@ -8,6 +8,8 @@ import { useReducer, useRef, useEffect, useCallback } from 'react';
 import { createSatRushEngine, DEFAULT_CONFIG } from './engine';
 import { createSlotInput } from './input';
 import { readRecentWords, pushRecentWord } from './recentWords';
+import * as lexicon from './lexicon';
+import { pickBriefing } from './briefing';
 import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
 import {
@@ -22,16 +24,44 @@ import * as juice from './juice';
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
 const CLEAR_PAUSE_MS = 850;
 const ALT_PAUSE_MS = 1500;
-const MISS_PAUSE_MS = 1600;
+const MISS_PAUSE_MS = 1800; // the miss now TEACHES (sentence + def + cousin), so hold a beat longer
+// A clear that leaned on more than the free first letter didn't really land — it
+// gets the same re-encode beat as a miss, over the (longer) heavy-clear pause.
+const HEAVY_REVEAL_MIN = 2;
+const HEAVY_CLEAR_PAUSE_MS = 1800;
+
+// localStorage, but access-safe: even reading window.localStorage can throw in a
+// locked-down browser. lexicon.load/save also guard, so a null here just means
+// "remember nothing" — the mode plays fully in memory.
+function safeStorage() {
+  try {
+    return typeof window !== 'undefined' ? window.localStorage : null;
+  } catch {
+    return null;
+  }
+}
 
 export function useSatRushGame() {
   const [, force] = useReducer((x) => x + 1, 0);
 
   const engineRef = useRef(null);
   const inputRef = useRef(null);
-  const phaseRef = useRef('start'); // 'start' | 'playing' | 'over'
+  const phaseRef = useRef('start'); // 'start' | 'briefing' | 'playing' | 'over'
   const pendingRef = useRef('idle'); // 'idle' | 'clear' | 'miss' — the between-word pause
   const msgRef = useRef(null); // { text, kind }
+
+  // ---- learning memory (lexicon) + THE BRIEFING ----
+  const storageRef = useRef(null);
+  if (storageRef.current === null) storageRef.current = safeStorage();
+  const lexRef = useRef(null);
+  if (lexRef.current === null) lexRef.current = lexicon.load(storageRef.current);
+  const briefingRef = useRef(null); // the current run's { words, familyMorpheme, reviewCount, reviewWords }
+  const briefedSetRef = useRef(new Set()); // word strings briefed this run (for wasBriefed analytics)
+  const dwellStartRef = useRef(null); // performance.now() when the briefing screen opened
+  // The re-encode BEAT shown during the between-word pause on a miss (or a clear
+  // that leaned on the spell-along): sentence filled in + definition + one cousin.
+  // { word, context, gloss, cousin, kind: 'miss' | 'weak' } | null
+  const reEncodeRef = useRef(null);
   const prevSilverRef = useRef(false);
   const fxRef = useRef({ shake: 0, badIndex: -1, badKey: 0 }); // transient visual cues
   // The paper stamp shown on the page's top corner. One at a time; set at each
@@ -63,6 +93,12 @@ export function useSatRushGame() {
     clearTimeout(stageTimer.current);
   };
 
+  // Persist the learning memory (fire-and-forget, guarded). Called after each
+  // recorded outcome and on unmount, so a mid-run exit is never lost.
+  const persistLexicon = useCallback(() => {
+    lexicon.save(storageRef.current, lexRef.current);
+  }, []);
+
   // Fire-and-forget analytics. `word_resolved`'s `stage` is the key metric — it
   // answers whether players are actually anteing (answering early). All events
   // carry mode:'sat-rush' so the shared names never collide with other modes.
@@ -74,8 +110,10 @@ export function useSatRushGame() {
       cleared: r.cleared,
       bestStreak: r.bestStreak,
       avgAnte: r.avgAnte,
+      mastered: lexicon.masteredCount(lexRef.current),
     });
-  }, []);
+    persistLexicon();
+  }, [persistLexicon]);
 
   // ---- engine/input orchestration (no rules here) ----
   const beginWord = useCallback(() => {
@@ -95,10 +133,12 @@ export function useSatRushGame() {
       tier: cur.tier,
       isDeepCut: cur.isDeepCut,
       isRevenant: cur.isRevenant,
+      wasBriefed: !!cur.isBriefed,
     });
     inputRef.current = createSlotInput({ target: cur.word, alts: cur.alts });
     pendingRef.current = 'idle';
     msgRef.current = null;
+    reEncodeRef.current = null; // a fresh word clears the previous re-encode beat
     fxRef.current = { shake: 0, badIndex: -1, badKey: 0 };
     // A fresh word clears the previous clear/miss stamp. A revenant shows the
     // ESCAPED overprint across the poster header (view-driven, held for the whole
@@ -113,18 +153,37 @@ export function useSatRushGame() {
   const resolveClear = useCallback(
     (viaAlt) => {
       const eng = engineRef.current;
+      const cw = eng.getState().current;
+      const word = cw ? cw.word : '';
+      const wasBriefed = cw ? !!cw.isBriefed : false;
       // How many letters were revealed at completion — gates the heat bump in the
       // engine, and tells PostHog whether players ante early or ride the spell-along.
       const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
       const r = eng.submitCorrect({ viaAlt, revealed });
       if (!r) return;
+      // Learning memory: a clear promotes the word's Leitner box.
+      lexicon.recordResult(lexRef.current, word, {
+        cleared: true,
+        stage: r.breakdown.stage,
+        revealedCount: revealed,
+      });
+      persistLexicon();
+      const rec = lexRef.current.records[word];
       track('word_resolved', {
         mode: 'sat-rush',
         stage: r.breakdown.stage, // THE key metric — are players anteing early?
         revealed,
         multiplier: r.breakdown.effectiveMultiplier,
         outcome: viaAlt ? 'near' : 'exact',
+        wasBriefed,
+        box: rec ? rec.box : 0,
       });
+      // A clear that leaned on the spell-along (more than the free first letter)
+      // didn't really land — give it the same re-encode beat a miss gets, so the
+      // word gets a proper second look instead of vanishing.
+      if (!viaAlt && revealed >= HEAVY_REVEAL_MIN && cw) {
+        reEncodeRef.current = buildReEncode(cw, 'weak');
+      }
       pendingRef.current = 'clear';
       const silverJustOn = r.silverTongue && !prevSilverRef.current;
       // The clear stamp (all violet): SILVER TONGUE entry gets its own; a near/alt
@@ -164,19 +223,30 @@ export function useSatRushGame() {
       prevSilverRef.current = r.silverTongue;
       force();
       clearTimeout(pauseTimer.current);
-      pauseTimer.current = setTimeout(beginWord, viaAlt ? ALT_PAUSE_MS : CLEAR_PAUSE_MS);
+      const pause = reEncodeRef.current ? HEAVY_CLEAR_PAUSE_MS : viaAlt ? ALT_PAUSE_MS : CLEAR_PAUSE_MS;
+      pauseTimer.current = setTimeout(beginWord, pause);
     },
-    [beginWord]
+    [beginWord, persistLexicon]
   );
 
   const doMiss = useCallback(() => {
     const eng = engineRef.current;
+    const cw = eng.getState().current;
+    const word = cw ? cw.word : '';
+    const wasBriefed = cw ? !!cw.isBriefed : false;
+    const stage = cw ? cw.stage : 0;
+    const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
     const answer = inputRef.current ? inputRef.current.answer() : '';
     const brokeSilver = prevSilverRef.current; // read before the reset below
     const r = eng.miss();
     if (!r) return;
-    track('word_missed', { mode: 'sat-rush', missCount: r.missCount });
+    // Learning memory: a miss drops the word to box 0 (due again soon).
+    lexicon.recordResult(lexRef.current, word, { cleared: false, stage, revealedCount: revealed });
+    persistLexicon();
+    track('word_missed', { mode: 'sat-rush', missCount: r.missCount, wasBriefed });
     if (r.gameOver) trackRunEnd();
+    // The miss now TEACHES: the sentence filled in + definition + one cousin.
+    if (cw) reEncodeRef.current = buildReEncode(cw, 'miss');
     pendingRef.current = 'miss';
     prevSilverRef.current = false;
     // The miss stamp = the fugitive got away (drives the page-tear too, via
@@ -199,7 +269,7 @@ export function useSatRushGame() {
         beginWord();
       }
     }, MISS_PAUSE_MS);
-  }, [beginWord, trackRunEnd]);
+  }, [beginWord, trackRunEnd, persistLexicon]);
 
   // ---- the stage clock: advance reveals, then run the grace window ----
   const state = engineRef.current ? engineRef.current.getState() : null;
@@ -287,7 +357,21 @@ export function useSatRushGame() {
     if (phase !== 'playing') return undefined;
     const onKey = (e) => {
       juice.unlockAudio(); // real keydown is a valid gesture to start the audio context
-      if (pendingRef.current !== 'idle') return;
+      if (pendingRef.current !== 'idle') {
+        // A re-encode teaching beat (miss / heavy clear) is showing: any key skips
+        // it so fast players aren't held on the second look they don't need.
+        if (reEncodeRef.current) {
+          clearTimeout(pauseTimer.current);
+          if (pendingRef.current === 'miss' && engineRef.current.getState().gameOver) {
+            reEncodeRef.current = null;
+            phaseRef.current = 'over';
+            force();
+          } else {
+            beginWord();
+          }
+        }
+        return;
+      }
       const eng = engineRef.current;
       const input = inputRef.current;
       const c = eng.getState().current;
@@ -330,17 +414,22 @@ export function useSatRushGame() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, doMiss, resolveClear]);
+  }, [phase, doMiss, resolveClear, beginWord]);
 
-  useEffect(() => () => clearTimers(), []);
+  // Persist the learning memory on unmount (a mid-run exit still counts).
+  useEffect(() => () => {
+    clearTimers();
+    persistLexicon();
+  }, [persistLexicon]);
 
   // ---- public actions ----
-  const freshEngine = useCallback(() => {
+  const freshEngine = useCallback((briefed = []) => {
     clearTimers();
     const { stageMs, spellMs, deepEvery, revGap, climb } = cfgRef.current;
     engineRef.current = createSatRushEngine({
       words: WORDS,
       recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
+      briefed, // THE BRIEFING's words, served first this run
       config: {
         stageIntervalMs: stageMs,
         spellAlongMs: spellMs,
@@ -352,13 +441,76 @@ export function useSatRushGame() {
     prevSilverRef.current = false;
   }, []);
 
-  const startGame = useCallback(() => {
-    juice.unlockAudio(); // Play click is a valid gesture to unlock the audio context
+  // Start the actual run: the briefed words are served first (engine), then the
+  // tier curve resumes. Fires the dwell metric if a briefing screen was shown.
+  const startRun = useCallback(() => {
+    juice.unlockAudio();
     track('mode_start', { mode: 'sat-rush' });
-    freshEngine();
+    const briefed = briefingRef.current ? briefingRef.current.words.map((r) => r.word) : [];
+    briefedSetRef.current = new Set(briefed);
+    if (dwellStartRef.current != null && typeof performance !== 'undefined') {
+      const ms = Math.round(performance.now() - dwellStartRef.current);
+      const words = briefed.length;
+      track('briefing_word_dwell_ms', {
+        mode: 'sat-rush',
+        ms,
+        words,
+        perWord: words ? Math.round(ms / words) : ms,
+      });
+    }
+    dwellStartRef.current = null;
+    freshEngine(briefed);
     phaseRef.current = 'playing';
     beginWord();
   }, [beginWord, freshEngine]);
+
+  // Play / Run it back: compute THE BRIEFING for the upcoming run, bump the session
+  // counter once, then either show the study screen or (if the player turned it
+  // off) drop straight into the run — the briefed words are served either way.
+  const startGame = useCallback(() => {
+    juice.unlockAudio(); // Play click is a valid gesture to unlock the audio context
+    const lex = lexRef.current;
+    lex.session = (lex.session || 0) + 1; // one bump per run start (session-counter time)
+    briefingRef.current = pickBriefing({
+      state: lex,
+      session: lex.session,
+      words: WORDS,
+      rng: Math.random,
+    });
+    reEncodeRef.current = null;
+    if (lex.skipBriefing) {
+      startRun();
+      return;
+    }
+    track('briefing_shown', {
+      mode: 'sat-rush',
+      familyMorpheme: briefingRef.current.familyMorpheme,
+      reviewCount: briefingRef.current.reviewCount,
+    });
+    dwellStartRef.current = typeof performance !== 'undefined' ? performance.now() : null;
+    phaseRef.current = 'briefing';
+    force();
+  }, [startRun]);
+
+  // From the briefing screen. START keeps the screen for next time; SKIP turns it
+  // off (remembered) and jumps in. Both begin the run with the briefed words.
+  const beginRunFromBriefing = useCallback(() => startRun(), [startRun]);
+  const skipBriefingAndRun = useCallback(() => {
+    lexRef.current.skipBriefing = true;
+    persistLexicon();
+    track('briefing_skipped', { mode: 'sat-rush' });
+    startRun();
+  }, [startRun, persistLexicon]);
+
+  // The small re-enable toggle on the cover.
+  const setSkipBriefing = useCallback(
+    (val) => {
+      lexRef.current.skipBriefing = !!val;
+      persistLexicon();
+      force();
+    },
+    [persistLexicon]
+  );
 
   const setStageMs = useCallback((ms) => {
     cfgRef.current.stageMs = ms;
@@ -470,17 +622,54 @@ export function useSatRushGame() {
     cfg: cfgRef.current,
     graceMs: graceMsRef.current, // spell-along drain window, fixed at final-stage entry
     stamp: stampRef.current, // paper stamp for the top corner (or null)
+    reEncode: reEncodeRef.current, // the teaching beat shown during a miss/heavy-clear pause
+    briefing: briefingRef.current,
+    lex: lexRef.current,
+    skipBriefing: lexRef.current.skipBriefing,
   });
 
   return {
     view,
     startGame,
+    startRun: beginRunFromBriefing,
+    skipBriefing: skipBriefingAndRun,
+    setSkipBriefing,
     setStageMs,
     setSpellMs,
     setKnob,
     scene,
     debugRevealTwo,
   };
+}
+
+// Pure: the data for the re-encode teaching beat — the sentence (the UI fills the
+// blank with the answer and highlights it), the definition, and ONE cousin from
+// the root if there is one. Built from the live presentation at the moment of a
+// miss or a heavy-reveal clear.
+function buildReEncode(cw, kind) {
+  const cousin = cw.root && Array.isArray(cw.root.cousins) && cw.root.cousins.length ? cw.root.cousins[0] : null;
+  return { word: cw.word, context: cw.context, gloss: cw.gloss, root: cw.root, cousin, kind };
+}
+
+// Pure: build the per-card data THE BRIEFING renders — the filled sentence is the
+// encode step, so it's front and centre; cousins the player has already met get a
+// "you know this one" tick (the transfer moment made visible).
+function buildBriefingView(briefing, lex) {
+  if (!briefing) return null;
+  const cards = briefing.words.map((row) => ({
+    word: row.word,
+    pos: POS_LABEL[row.pos] || row.pos,
+    length: row.word.length,
+    context: row.context,
+    gloss: row.gloss,
+    root: row.root,
+    isReview: briefing.reviewWords.has(row.word),
+    knownCousins:
+      row.root && Array.isArray(row.root.cousins)
+        ? row.root.cousins.filter((c) => lexicon.hasSeen(lex, c))
+        : [],
+  }));
+  return { familyMorpheme: briefing.familyMorpheme, reviewCount: briefing.reviewCount, cards };
 }
 
 // Pure: assemble everything the components render from the engine/input state.
@@ -492,6 +681,9 @@ function buildView(state, cur, eng, input, extra) {
     fx: extra.fx,
     cfg: extra.cfg,
     stamp: extra.stamp,
+    reEncode: extra.reEncode,
+    briefing: buildBriefingView(extra.briefing, extra.lex),
+    skipBriefing: extra.skipBriefing,
   };
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 
@@ -536,6 +728,8 @@ function buildView(state, cur, eng, input, extra) {
     root: cur.root,
     wordLength: cur.length,
     slots: input ? input.getSlots() : [],
-    results: eng.results(),
+    // Results carry the mastered count (box ≥ 3) so the end screen can headline it
+    // as the number that makes the mode legibly a study tool.
+    results: { ...eng.results(), mastered: lexicon.masteredCount(extra.lex) },
   };
 }

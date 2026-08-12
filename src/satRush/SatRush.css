@@ -1327,3 +1327,296 @@ html[data-beat='true'] .sr-mult.sr-print::before {
     opacity: 1;
   }
 }
+
+/* ============================================================================
+   THE BRIEFING — the pre-run STUDY screen. Same paper/ink/violet print language
+   as the cover and poster, but CALM: no timer, no drain bar, no idle motion. A
+   quiet reading surface. The filled sentence is the hero of each card.
+   ============================================================================ */
+.sr-brief-screen {
+  /* the screen wrapper already centres on the void; allow the tall page to scroll */
+  overflow-y: auto;
+  padding: clamp(12px, 2.5vh, 32px) 16px;
+}
+.sr-brief-page {
+  position: relative;
+  width: min(620px, 94vw);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    6px 6px 0 var(--ink);
+  padding: clamp(20px, 3.5vh, 34px) clamp(18px, 3.5vw, 34px);
+}
+.sr-brief-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
+}
+.sr-brief-page > * {
+  position: relative;
+  z-index: 1;
+}
+.sr-brief-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 12px;
+}
+.sr-brief-title {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(30px, 6.5vw, 50px);
+  line-height: 0.95;
+}
+.sr-brief-family {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.sr-brief-family b {
+  color: var(--violet);
+  font-size: 14px;
+}
+
+/* the card list */
+.sr-brief-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sr-brief-card {
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  background: var(--tile);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sr-brief-card.review {
+  border-color: var(--redink);
+  box-shadow: 3px 3px 0 var(--redink);
+}
+.sr-brief-review {
+  align-self: flex-start;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--redink);
+  padding: 3px 8px;
+  border: 2px solid var(--redink);
+}
+.sr-brief-wordrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sr-brief-word {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(22px, 4.5vw, 30px);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.sr-brief-meta {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+/* the encode step — the filled sentence, the most important thing on the card */
+.sr-brief-sentence {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(14px, 1.9vw, 16px);
+  line-height: 1.6;
+}
+/* the answer, filled in and highlighted (shared by the re-encode beat) */
+.sr-brief-fill {
+  background: var(--violet);
+  color: var(--paper);
+  padding: 0 5px;
+  font-weight: 700;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.sr-brief-def {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.8;
+}
+.sr-brief-root {
+  font-family: 'Space Mono', monospace;
+  font-size: 12.5px;
+  border-top: 1px dashed var(--ink);
+  padding-top: 8px;
+}
+.sr-brief-morph {
+  font-weight: 700;
+  color: var(--violet);
+}
+.sr-brief-mean {
+  opacity: 0.85;
+}
+.sr-brief-cousins {
+  opacity: 0.85;
+}
+.sr-brief-cousin.known {
+  font-weight: 700;
+  color: var(--ink);
+  opacity: 1;
+}
+.sr-brief-tick {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--violet);
+  font-weight: 700;
+}
+
+.sr-brief-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+/* the small "show the study briefing" re-enable toggle on the cover */
+.sr-brief-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  opacity: 0.75;
+  cursor: pointer;
+}
+.sr-brief-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--violet);
+  cursor: pointer;
+}
+
+/* ---------- the re-encode teaching BEAT (miss / heavy clear) ---------- */
+/* Sits over the poster during the between-word pause. A single quiet punch-in on
+   entry (reduced-motion drops it); no looping. */
+.sr-reencode {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 20px;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  animation: sr-reencode-in 0.16s ease-out both;
+}
+.sr-reencode.miss {
+  border-color: var(--redink);
+}
+.sr-reencode-tag {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.sr-reencode.miss .sr-reencode-tag {
+  color: var(--redink);
+  opacity: 1;
+}
+.sr-reencode-word {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(28px, 6vw, 42px);
+  line-height: 1;
+}
+.sr-reencode-sentence {
+  margin: 4px 0 0;
+  max-width: 42ch;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(13px, 1.8vw, 15px);
+  line-height: 1.6;
+}
+.sr-reencode-def {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.8;
+}
+.sr-reencode-cousin {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 12.5px;
+}
+.sr-reencode-cousin b {
+  color: var(--violet);
+}
+.sr-reencode-hint {
+  margin-top: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+@keyframes sr-reencode-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- results: words mastered, beside AVG ANTE ---------- */
+.sr-mastered {
+  margin-top: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sr-mastered b {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 16px;
+  color: var(--violet);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-reencode {
+    animation: none;
+  }
+}

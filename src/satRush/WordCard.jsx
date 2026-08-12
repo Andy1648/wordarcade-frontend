@@ -16,6 +16,34 @@
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
 
+// The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
+// flow flashed the word for half a second; this teaches instead — the SENTENCE
+// with the answer filled in and highlighted (the same encode step as the
+// briefing), the definition, and ONE cousin from the root if there is one. Held
+// for the between-word pause, or dismissed early by any key (handled in the hook).
+function ReEncode({ data }) {
+  const { word, context, gloss, cousin, kind } = data;
+  const [before, after] = context.split(/_+/);
+  return (
+    <div className={`sr-reencode ${kind}`} role="status">
+      <div className="sr-reencode-tag">{kind === 'miss' ? 'IT WAS' : 'BARELY — REMEMBER IT'}</div>
+      <div className="sr-reencode-word">{word}</div>
+      <p className="sr-reencode-sentence">
+        {before}
+        <mark className="sr-brief-fill">{word}</mark>
+        {after}
+      </p>
+      <p className="sr-reencode-def">“{gloss}”</p>
+      {cousin && (
+        <p className="sr-reencode-cousin">
+          same root as <b>{cousin}</b>
+        </p>
+      )}
+      <div className="sr-reencode-hint" aria-hidden="true">press any key</div>
+    </div>
+  );
+}
+
 // The blank's dash run matches the word's letter count EXACTLY (no cap), so it
 // never contradicts the "N letters" case-id line or the slot count.
 function Blank({ length }) {
@@ -74,7 +102,7 @@ function FieldRow({ type, visible, view }) {
 }
 
 export default function WordCard({ view }) {
-  const { fx, msg, stamp, atFinal, deepCut, revenant, missCount } = view;
+  const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode } = view;
 
   // Reveals to render as fields (meta is the case id; firstLetter lives in slots).
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
@@ -167,6 +195,9 @@ export default function WordCard({ view }) {
       <div className="sr-fineprint" aria-hidden="true">
         ISSUED BY TYPEAWORD.COM · SAT RUSH DIVISION
       </div>
+
+      {/* The re-encode teaching beat sits over the poster during the pause. */}
+      {reEncode && <ReEncode data={reEncode} />}
     </div>
   );
 }

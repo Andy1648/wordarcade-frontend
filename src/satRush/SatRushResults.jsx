@@ -109,6 +109,11 @@ export default function SatRushResults({ results, onAgain, onExit }) {
             {anteHero}
           </div>
           <div className="sr-panel-label">avg ante — how fast you knew them</div>
+          {/* Words mastered (box ≥ 3) — the number that makes the mode legibly a
+              study tool, sitting beside the ante. */}
+          <div className="sr-mastered" aria-label={`${results.mastered || 0} words mastered`}>
+            <b>{results.mastered || 0}</b> {results.mastered === 1 ? 'word' : 'words'} mastered
+          </div>
         </div>
 
         {/* SCORE — zero-padded Bungee ink. */}
