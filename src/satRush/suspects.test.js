@@ -20,12 +20,12 @@ function mulberry32(seed) {
   };
 }
 
-function row(word, { pos = 'adj', morpheme = null, cousins = [], alts = [] } = {}) {
+function row(word, { pos = 'adj', morpheme = null, cousins = [], alts = [], gloss } = {}) {
   return {
     word,
     pos,
     tier: 1,
-    gloss: `def of ${word}`,
+    gloss: gloss || `def of ${word}`,
     context: `use ___ (${word})`,
     root: morpheme ? { morpheme, meaning: 'x', cousins } : null,
     alts,
@@ -110,6 +110,57 @@ test('words sharing a 5-character substring with the answer are excluded', () =>
     const { lineup } = generateSuspects({ answer, pool, rng: mulberry32(seed) });
     assert.ok(!lineup.some((s) => s.word === 'bravey'), `seed ${seed}: 5-substring leaked`);
   }
+});
+
+// --- the SYNONYM GUARD (gloss overlap) — the worst-failure case --------------
+// Same-length, same-POS words whose glosses mean the same thing but aren't
+// cross-listed in alts must never appear as a distractor for each other, or a
+// player who fully understood the sentence gets rejected for typing the true
+// synonym. These use the REAL dataset glosses for the two named pairs.
+
+// 9-letter adjective fillers with glosses that share no content with the pair
+// below (so the lineup still fills to six once the synonym is excluded).
+const NINE_FILLERS = ['malicious', 'ferocious', 'strenuous', 'audacious', 'garrulous'].map((w, i) =>
+  row(w, { gloss: `filler descriptor number ${i}` })
+);
+const TEN_FILLERS = ['diplomatic', 'methodical', 'articulate', 'boisterous', 'despondent'].map((w, i) =>
+  row(w, { gloss: `filler descriptor number ${i}` })
+);
+
+test('SYNONYM GUARD: transient and ephemeral never stand in for each other', () => {
+  const transient = row('transient', { gloss: 'here for a short while and then gone' });
+  const ephemeral = row('ephemeral', { gloss: 'here for a moment and then gone' });
+  const pool = [transient, ephemeral, ...NINE_FILLERS];
+  for (let seed = 0; seed < 60; seed++) {
+    const forT = generateSuspects({ answer: transient, pool, rng: mulberry32(seed) });
+    assert.ok(!forT.lineup.some((s) => s.word === 'ephemeral'), `seed ${seed}: ephemeral stood in for transient`);
+    assert.equal(forT.count, 6, 'the lineup still fills to six (a safe distractor replaces the synonym)');
+    const forE = generateSuspects({ answer: ephemeral, pool, rng: mulberry32(seed) });
+    assert.ok(!forE.lineup.some((s) => s.word === 'transient'), `seed ${seed}: transient stood in for ephemeral`);
+  }
+});
+
+test('SYNONYM GUARD: benevolent and altruistic never stand in for each other', () => {
+  const benevolent = row('benevolent', { gloss: 'kind and generous, wanting good things for people' });
+  const altruistic = row('altruistic', { gloss: "putting other people's good ahead of your own" });
+  const pool = [benevolent, altruistic, ...TEN_FILLERS];
+  for (let seed = 0; seed < 60; seed++) {
+    const forB = generateSuspects({ answer: benevolent, pool, rng: mulberry32(seed) });
+    assert.ok(!forB.lineup.some((s) => s.word === 'altruistic'), `seed ${seed}: altruistic stood in for benevolent`);
+    assert.equal(forB.count, 6);
+    const forA = generateSuspects({ answer: altruistic, pool, rng: mulberry32(seed) });
+    assert.ok(!forA.lineup.some((s) => s.word === 'benevolent'), `seed ${seed}: benevolent stood in for altruistic`);
+  }
+});
+
+test('SYNONYM GUARD is a HEURISTIC: an unrelated-gloss word of the same shape is still allowed', () => {
+  // The guard keys on shared gloss vocabulary, so a genuinely-different word with
+  // no content-word overlap is a fine distractor (it must be able to fill the lineup).
+  const transient = row('transient', { gloss: 'here for a short while and then gone' });
+  const pool = [transient, ...NINE_FILLERS];
+  const { lineup, count } = generateSuspects({ answer: transient, pool, rng: mulberry32(1) });
+  assert.equal(count, 6);
+  assert.ok(lineup.some((s) => NINE_FILLERS.map((r) => r.word).includes(s.word)), 'fillers are allowed');
 });
 
 test('fallback tier 1: no exact-length distractors, widen to +-1', () => {

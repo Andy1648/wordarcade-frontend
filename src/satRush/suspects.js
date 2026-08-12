@@ -20,6 +20,10 @@
 //     be related in meaning — an arguably-correct distractor is worse than an easy
 //     one).
 //   - Never sharing a 5-character substring with the answer.
+//   - Never a word whose GLOSS shares >= 2 content words with the answer's gloss —
+//     the synonym guard (see glossOverlap below). This catches same-meaning pairs
+//     the alts lists miss (transient/ephemeral), so a player who understood the
+//     sentence can't be rejected for typing the true synonym standing in the lineup.
 // Then the answer is shuffled into the 5 and 6 suspects are returned.
 //
 // THE ELIMINATION SCHEDULE narrows with the stage/ante:
@@ -69,15 +73,59 @@ function sharesSubstring(x, y, n = 5) {
   return false;
 }
 
+// --- gloss overlap (the SEMANTIC-COLLISION heuristic) ----------------------
+// The alts exclusion can't catch same-meaning distractors, because the dataset's
+// alts lists were never built as exhaustive synonym lists: there are same-length,
+// same-POS pairs whose GLOSSES describe the same thing but aren't cross-listed
+// (transient/ephemeral, benevolent/altruistic, ...). If one is the answer and the
+// other stands in the lineup, a player who FULLY understood the sentence picks the
+// synonym and is rejected — the worst failure this mode can produce.
+//
+// So a candidate is also excluded if its gloss shares >= 2 content words with the
+// answer's gloss. IMPORTANT: this is a cheap HEURISTIC, not a semantic check. It
+// lowercases both glosses, drops stopwords and words of <= 3 letters, and counts
+// shared remaining words. It kills the obvious collisions (measured: it touches
+// ~0.06% of same-length/same-POS pairs, and every one is a real synonym pair), but
+// it WILL MISS synonym pairs whose glosses happen to use different vocabulary —
+// catching those would need a real similarity pass over the dataset.
+const GLOSS_STOPWORDS = new Set([
+  'that', 'this', 'with', 'from', 'your', 'yours', 'their', 'they', 'them', 'than',
+  'then', 'when', 'what', 'whom', 'whose', 'which', 'while', 'will', 'would', 'could',
+  'should', 'shall', 'have', 'having', 'been', 'being', 'into', 'onto', 'upon', 'over',
+  'such', 'these', 'those', 'some', 'very', 'just', 'like', 'also', 'only', 'more',
+  'most', 'much', 'many', 'each', 'every', 'does', 'done', 'about', 'before', 'after',
+  'because', 'though', 'although', 'however', 'someone', 'something', 'anyone',
+  'anything', 'everyone', 'everything', 'still', 'even', 'make', 'makes', 'making',
+  'without',
+]);
+
+function glossContentWords(gloss) {
+  return new Set(
+    String(gloss)
+      .toLowerCase()
+      .split(/[^a-z]+/) // punctuation / apostrophes become separators
+      .filter((w) => w.length > 3 && !GLOSS_STOPWORDS.has(w))
+  );
+}
+
+function glossOverlap(a, b) {
+  const A = glossContentWords(a);
+  const B = glossContentWords(b);
+  let n = 0;
+  for (const w of A) if (B.has(w)) n += 1;
+  return n;
+}
+
 // The full set of hard constraints EXCEPT the length rule (which the fallback
 // relaxes on its own axis). Same POS, not the answer, not an alt, not same-root,
-// no shared 5-substring.
+// no shared 5-substring, and no >=2-content-word gloss overlap (the synonym guard).
 function passesCore(d, answer, altSet) {
   if (d.word === answer.word) return false;
   if (d.pos !== answer.pos) return false;
   if (altSet.has(d.word)) return false;
   if (answer.root && d.root && d.root.morpheme === answer.root.morpheme) return false;
   if (sharesSubstring(d.word, answer.word)) return false;
+  if (d.gloss && answer.gloss && glossOverlap(d.gloss, answer.gloss) >= 2) return false;
   return true;
 }
 
