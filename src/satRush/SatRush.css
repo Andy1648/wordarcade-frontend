@@ -1,28 +1,40 @@
-/* SatRush.css — SAT RUSH mode, VINTAGE MANGA / PULP PAGE rebuild (part 1 of 3).
-   A cream newsprint page printed in black ink + violet, sitting on the site's
-   dark void. Follows DESIGN.md: flat colours ONLY, ink outlines, hard offset
-   shadows, Bungee (display) + Space Mono (body) — but PRINT-era, not sticker-era.
+/* SatRush.css — SAT RUSH mode, MANGA / PULP PAGE. A cream newsprint page printed
+   in a STRICT DUOTONE (ink #111, newsprint #F0EAD9, violet #A855F7 — the whole
+   palette, no fourth hue) on a flat ink-black gutter.
 
-   GOVERNING LAW — QUIET BY DEFAULT (same as the menu's "idle = remove"): at rest
-   the ONLY motion is the caret blink. No ambient loops, no idle bob, no speed
-   lines at rest, no tilt. The whole decoration budget is: the double-rule border,
-   ONE halftone corner patch, and a 5% pulp grain. Every state is ALSO conveyed by
-   a text label or a distinct shape, never colour alone, and reduced-motion kills
-   even the caret (it goes static).
+   THE MANGA PASS (see the block at the bottom of this file) adds FORM on top of the
+   palette: the page leans a few degrees, its edge is torn (a clip-path silhouette
+   the violet hard-offset shadow follows), the HUD skews into an off-horizontal
+   ticker, the WANTED banner is white-on-black slashed on a focus-line burst, the
+   suspects are independently-tilted mugshots whose CLEARED is a Bangers slash, and
+   CAPTURED!!/ESCAPED!! punch in as jagged Bangers bursts. Type: Dela Gothic One
+   shouts the headers, Bangers slams the stamps, Space Mono stays the calm body.
 
-   Parts 2-3 own the event treatments (Deep Cut / Revenant tilt + tags) and the
-   Silver Tongue / results / stamps: those rules are DEFERRED verbatim below and
-   deliberately not yet converted to the print system. */
+   TWO LAWS hold throughout: (1) LEGIBILITY — containers tilt, running text never
+   does (the sentence + suspect names stay upright; checked at 390px). (2) MOTION —
+   tilt / torn edges / screentone / skew / mugshot lean / the CLEARED slash are all
+   static FORM and survive prefers-reduced-motion; only the bursts, the snap, and
+   the beat rattle are motion and are disabled there.
+
+   THE BRIEFING is the deliberate CALM exception: the new type + a restrained card
+   lean, and nothing else — a study surface where reading comfort beats energy. */
 
 .sr-app {
-  /* --- print tokens (the new system) --- */
+  /* --- STRICT DUOTONE (the whole palette — nothing else ships) --- */
   --paper: #f0ead9; /* newsprint */
-  --tile: #fbf7ec; /* slot fill, a touch brighter than the page */
+  --tile: #f0ead9; /* slot / inset fill = newsprint; ink linework carries every edge */
   --ink: #111;
-  --violet: #a855f7;
-  --redink: #c8321e; /* the mode's vintage danger — a deliberate, documented
-                        divergence from the neon #ff5c5c (print, not screen). */
-  --void: #0d0618;
+  --violet: #a855f7; /* the one accent */
+  /* the page sits on a flat ink-black gutter; it floats on a VIOLET hard-offset
+     shadow (ink-on-ink wouldn't read) — three colours, no fourth hue. Red ink is
+     dropped entirely: danger reads through heavy ink, jagged form, and violet. */
+  --void: #111;
+  /* type: Dela Gothic One shouts the headers, Bangers slams the impact stamps,
+     Space Mono (set below) stays the calm body. */
+  --font-head: 'Dela Gothic One', system-ui, sans-serif;
+  --font-impact: 'Bangers', 'Dela Gothic One', system-ui, cursive;
+  /* tilt + tone knobs reused across surfaces */
+  --tilt: -1.1deg; /* the page's manga lean (static; reduced-motion keeps it) */
 
   position: fixed;
   inset: 0;
@@ -74,7 +86,7 @@
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--ink);
+    6px 6px 0 var(--violet);
   overflow: hidden;
 }
 /* pulp grain (5%) */
@@ -232,7 +244,7 @@
 }
 .sr-mult {
   grid-area: mult;
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(46px, 8.5vw, 82px);
   line-height: 0.82;
   letter-spacing: -2px;
@@ -259,7 +271,7 @@
   font-weight: 700;
 }
 .sr-antebox.final .sr-accent {
-  color: var(--redink);
+  color: var(--ink);
 }
 /* stage pips — 14px ink squares; a spent stage is hollow at .45 opacity */
 .sr-pips {
@@ -296,7 +308,7 @@
   animation: sr-drain linear forwards;
 }
 .sr-tickfill.grace {
-  background: var(--redink);
+  background: var(--ink);
 }
 @keyframes sr-drain {
   from {
@@ -333,7 +345,7 @@
   opacity: 0.6;
 }
 .sr-overline.deep {
-  color: var(--redink);
+  color: var(--ink);
   opacity: 1;
 }
 /* WANTED header — the poster's shout. Bungee, centred, with the off-register
@@ -346,7 +358,7 @@
   margin: 2px 0 6px;
 }
 .sr-wanted {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(30px, 6vw, 52px);
   line-height: 0.9;
   letter-spacing: 0.02em;
@@ -362,13 +374,13 @@
   transform: translate(-50%, -50%) rotate(-4deg);
   padding: 4px clamp(8px, 1.4vw, 14px) 5px;
   white-space: nowrap;
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(12px, 2vw, 17px);
   letter-spacing: 0.02em;
-  color: var(--redink);
+  color: var(--ink);
   background: var(--paper);
-  border: 2px solid var(--redink);
-  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--redink);
+  border: 2px solid var(--ink);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
 }
 /* case id: the meta in a double-ruled band (rule top + bottom) */
 .sr-caseid {
@@ -496,7 +508,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: calc(var(--slot-size) * 0.5);
   color: var(--ink);
   text-transform: uppercase;
@@ -556,7 +568,7 @@
     background: var(--tile);
   }
   40% {
-    background: rgba(200, 50, 30, 0.35);
+    background: rgba(168, 85, 247, 0.32);
   }
 }
 
@@ -573,7 +585,7 @@
   color: var(--ink);
 }
 .sr-msg.bad {
-  color: var(--redink);
+  color: var(--ink);
 }
 .sr-msg.near {
   color: var(--violet);
@@ -606,7 +618,7 @@
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--ink);
+    6px 6px 0 var(--violet);
   padding: clamp(24px, 4.5vh, 40px) clamp(22px, 4vw, 40px);
 }
 .sr-cover::before {
@@ -632,7 +644,7 @@
   opacity: 0.6;
 }
 .sr-title {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(44px, 9vw, 78px);
   line-height: 0.9;
   letter-spacing: 0;
@@ -658,7 +670,7 @@
 }
 /* paper button: ink border, hard shadow; press = translate + shadow shrink */
 .sr-btn {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   background: var(--tile);
   color: var(--ink);
   border: 3px solid var(--ink);
@@ -693,7 +705,7 @@
   right: -6px;
   z-index: 6;
   padding: 4px clamp(9px, 1.3vw, 13px) 6px;
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(20px, 3.2vw, 26px); /* shrink on phones so it clears the meta line */
   line-height: 1;
   color: var(--stamp-tone, var(--violet));
@@ -714,7 +726,7 @@
   --stamp-tone: var(--violet);
 }
 .sr-stamp.redink {
-  --stamp-tone: var(--redink);
+  --stamp-tone: var(--ink);
 }
 .sr-stamp.ink {
   --stamp-tone: var(--ink);
@@ -768,7 +780,7 @@
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.04em;
-  color: var(--redink);
+  color: var(--ink);
   pointer-events: none;
   animation: sr-tch 0.42s ease-out both;
 }
@@ -804,13 +816,13 @@
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.14em;
-  color: var(--redink);
+  color: var(--ink);
 }
 .sr-scraps {
   flex: 0 0 auto;
   padding: 1px 7px;
-  border: 2px solid var(--redink);
-  color: var(--redink);
+  border: 2px solid var(--ink);
+  color: var(--ink);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: 10px;
@@ -851,7 +863,7 @@
   inset: 0;
   z-index: 45;
   pointer-events: none;
-  background: var(--redink);
+  background: var(--ink);
   animation: sr-tear 0.16s steps(1) 1 both;
 }
 @keyframes sr-tear {
@@ -886,7 +898,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-app.silver {
   --paper: #111;
   --ink: #f0ead9;
-  --tile: #191319;
+  --tile: #111;
 }
 .sr-app.silver .sr-stage {
   box-shadow:
@@ -914,7 +926,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 @keyframes sr-silver-impact {
   0% {
-    background: #fff;
+    background: #f0ead9;
     opacity: 1;
   }
   50% {
@@ -963,7 +975,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--ink);
+    6px 6px 0 var(--violet);
   padding: clamp(26px, 4.5vh, 44px) clamp(20px, 3.5vw, 34px);
 }
 .sr-respage::before {
@@ -981,11 +993,11 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 /* DEAD slams in OVER the page (page overflow is visible, so it isn't clipped) */
 .sr-dead {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(40px, 9vw, 74px);
   line-height: 0.92;
   letter-spacing: 0.04em;
-  color: var(--redink);
+  color: var(--ink);
   -webkit-text-stroke: 2px var(--ink);
   animation: sr-slam 0.4s cubic-bezier(0.2, 0.9, 0.2, 1) both;
   animation-delay: 300ms;
@@ -1029,7 +1041,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   padding: clamp(14px, 2.5vh, 22px) 18px;
 }
 .sr-ante-value {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(64px, 13vw, 116px);
   line-height: 0.85;
 }
@@ -1041,7 +1053,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   gap: 5px;
 }
 .sr-score-value {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(30px, 6vw, 46px);
   line-height: 1;
   letter-spacing: 0.02em;
@@ -1081,13 +1093,15 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-size: 12px;
   line-height: 1;
 }
+/* captured = a solid ink cel; got-away = a hollow paper cel with an ink ✕. The
+   fill/hollow split reads at a glance in duotone (no second hue needed). */
 .sr-frame.ok {
   background: var(--ink);
   color: var(--paper);
 }
 .sr-frame.miss {
-  background: var(--redink);
-  color: var(--paper);
+  background: var(--paper);
+  color: var(--ink);
 }
 /* hardest word — its own panel sitting on the ONE halftone patch */
 .sr-hardestpanel {
@@ -1112,7 +1126,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   z-index: 1;
 }
 .sr-hardest-word {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(22px, 4.5vw, 32px);
   letter-spacing: 0.02em;
 }
@@ -1167,14 +1181,14 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(8, 4, 14, 0.93);
+  background: rgba(17, 17, 17, 0.94);
   border-top: 1px solid rgba(168, 85, 247, 0.24);
   padding: 9px 16px;
   display: flex;
   gap: 18px;
   align-items: center;
   font-size: 11px;
-  color: #fff;
+  color: var(--paper);
   z-index: 60;
   flex-wrap: wrap;
 }
@@ -1203,7 +1217,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-tuner .scene {
   background: rgba(168, 85, 247, 0.18);
-  color: #ddd0ff;
+  color: var(--paper);
   border: 1px solid rgba(168, 85, 247, 0.4);
   border-radius: 6px;
   padding: 4px 9px;
@@ -1296,7 +1310,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--ink);
+    6px 6px 0 var(--violet);
   padding: clamp(20px, 3.5vh, 34px) clamp(18px, 3.5vw, 34px);
 }
 .sr-brief-page::before {
@@ -1322,7 +1336,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   padding-bottom: 12px;
 }
 .sr-brief-title {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(30px, 6.5vw, 50px);
   line-height: 0.95;
 }
@@ -1357,8 +1371,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   gap: 8px;
 }
 .sr-brief-card.review {
-  border-color: var(--redink);
-  box-shadow: 3px 3px 0 var(--redink);
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 .sr-brief-review {
   align-self: flex-start;
@@ -1368,9 +1382,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--paper);
-  background: var(--redink);
+  background: var(--ink);
   padding: 3px 8px;
-  border: 2px solid var(--redink);
+  border: 2px solid var(--ink);
 }
 .sr-brief-wordrow {
   display: flex;
@@ -1380,7 +1394,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   flex-wrap: wrap;
 }
 .sr-brief-word {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(22px, 4.5vw, 30px);
   line-height: 1;
   letter-spacing: 0.01em;
@@ -1470,7 +1484,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   animation: sr-reencode-in 0.16s ease-out both;
 }
 .sr-reencode.miss {
-  border-color: var(--redink);
+  border-color: var(--ink);
 }
 .sr-reencode-tag {
   font-family: 'Space Mono', monospace;
@@ -1481,11 +1495,11 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   opacity: 0.7;
 }
 .sr-reencode.miss .sr-reencode-tag {
-  color: var(--redink);
+  color: var(--ink);
   opacity: 1;
 }
 .sr-reencode-word {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(28px, 6vw, 42px);
   line-height: 1;
 }
@@ -1539,7 +1553,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   text-transform: uppercase;
 }
 .sr-mastered b {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: 16px;
   color: var(--violet);
 }
@@ -1571,7 +1585,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--ink);
+    6px 6px 0 var(--violet);
   padding: clamp(24px, 4.5vh, 40px) clamp(20px, 4vw, 36px);
 }
 .sr-modeselect::before {
@@ -1588,7 +1602,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   z-index: 1;
 }
 .sr-modeselect-head {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(26px, 5vw, 40px);
   line-height: 0.95;
   letter-spacing: 0;
@@ -1633,7 +1647,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
     4px 4px 0 var(--ink);
 }
 .sr-modecard-title {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(20px, 3.4vw, 26px);
   letter-spacing: 0.02em;
 }
@@ -1713,7 +1727,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   overflow: hidden;
 }
 .sr-suspect-word {
-  font-family: 'Bungee', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: clamp(13px, 2.2vw, 17px);
   letter-spacing: 0.01em;
   color: var(--ink);
@@ -1737,8 +1751,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   bottom: 2px;
   transform: rotate(-6deg);
   padding: 0 3px;
-  border: 1.5px solid var(--redink);
-  color: var(--redink);
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
   background: var(--paper);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -1750,4 +1764,228 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   .sr-suspect.cleared {
     transition: none;
   }
+}
+
+/* ============================================================================
+   THE MANGA PASS — form, not palette. Tilt, jagged/torn edges, hard black masses,
+   screentone, and impact that punches in. Everything here is STATIC form except a
+   couple of clearly-marked EVENT animations (the burst punch); the reduced-motion
+   block at the very bottom disables only those, keeping every tilt/tone/tear.
+   Legibility law: containers tilt, running text does NOT — the sentence and the
+   suspect names stay upright and readable under the clock.
+   ============================================================================ */
+.sr-app {
+  /* one irregular torn-newsprint silhouette, reused by every page frame */
+  --torn: polygon(
+    0.6% 2.4%, 3% 0.3%, 21% 1.8%, 39% 0.2%, 58% 1.9%, 79% 0.4%, 97% 1.6%, 99.5% 3.4%,
+    98.6% 26%, 100% 49%, 98.4% 73%, 99.6% 96%, 97% 99.6%, 78% 98.2%, 59% 100%, 38% 98.4%,
+    20% 99.8%, 3% 98.6%, 0.4% 96%, 1.6% 74%, 0% 50%, 1.4% 27%
+  );
+}
+
+/* ---- the page frames: a few degrees of lean + a torn edge that the hard violet
+   offset shadow follows (drop-shadow, not box-shadow, so it tracks the tear). The
+   inset double-rule stays and rides the torn silhouette. ---- */
+.sr-stage,
+.sr-cover,
+.sr-modeselect,
+.sr-respage {
+  clip-path: var(--torn);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 8px var(--ink);
+  filter: drop-shadow(6px 6px 0 var(--violet));
+}
+.sr-stage { transform: rotate(var(--tilt)); }
+.sr-cover { transform: rotate(calc(var(--tilt) * -1.3)); }
+.sr-modeselect { transform: rotate(calc(var(--tilt) * 1.1)); }
+.sr-respage { transform: rotate(calc(var(--tilt) * -0.9)); }
+
+/* the ONE screentone wedge: the old hard-triangle halftone becomes a bigger corner
+   wedge MASKED so it fades into the page instead of sitting as a flat block. */
+.sr-stage::after {
+  width: 46%;
+  height: 62%;
+  opacity: 0.55;
+  clip-path: none;
+  -webkit-mask-image: radial-gradient(120% 120% at 100% 100%, #111 18%, transparent 66%);
+  mask-image: radial-gradient(120% 120% at 100% 100%, #111 18%, transparent 66%);
+}
+
+/* ---- HUD: an ink ticker running off-horizontal. The strip skews into a
+   parallelogram; the cell CONTENTS counter-skew back to upright (legible). ---- */
+.sr-hud { transform: skewX(-6deg); }
+.sr-hud .sr-hcell > * { transform: skewX(6deg); }
+
+/* ---- WANTED banner: white-on-black, slashed at an angle, on a focus-line burst.
+   The off-register violet plate is dropped here (the black bar is the treatment);
+   a violet hard shadow keeps the accent. ---- */
+.sr-wanted-wrap { isolation: isolate; }
+.sr-wanted-wrap::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 340px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, var(--ink) 0deg 1.3deg, transparent 1.3deg 9deg);
+  opacity: 0.16;
+  -webkit-mask-image: radial-gradient(closest-side, #111 8%, transparent 72%);
+  mask-image: radial-gradient(closest-side, #111 8%, transparent 72%);
+}
+.sr-wanted.sr-print::before { display: none; } /* kill the plate under the black bar */
+.sr-wanted {
+  display: inline-block;
+  padding: 4px clamp(14px, 3vw, 30px) 7px;
+  background: var(--ink);
+  color: var(--paper);
+  transform: rotate(-2.2deg);
+  box-shadow: 4px 4px 0 var(--violet);
+  clip-path: polygon(3% 0, 100% 6%, 97% 100%, 0 92%); /* a slashed sign, not a clean rect */
+}
+
+/* ---- REVENANT overprint: a black slash across the header (paper Bangers on ink),
+   held for the whole word. ---- */
+.sr-escaped {
+  font-family: var(--font-impact);
+  font-size: clamp(13px, 2.2vw, 19px);
+  letter-spacing: 1px;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  box-shadow: 3px 3px 0 var(--violet);
+  transform: translate(-50%, -50%) rotate(-5deg);
+  clip-path: polygon(2% 0, 100% 8%, 98% 100%, 0 90%);
+}
+
+/* ---- SUSPECT LINEUP → mugshot cards: each tilted independently (static, varied
+   per index), hard ink border + offset, uneven. ---- */
+.sr-suspect {
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  background: var(--paper);
+}
+.sr-suspect:nth-child(1) { transform: rotate(-3deg); }
+.sr-suspect:nth-child(2) { transform: rotate(2.2deg); }
+.sr-suspect:nth-child(3) { transform: rotate(-1.4deg); }
+.sr-suspect:nth-child(4) { transform: rotate(3deg); }
+.sr-suspect:nth-child(5) { transform: rotate(-2.4deg); }
+.sr-suspect:nth-child(6) { transform: rotate(1.6deg); }
+.sr-suspect-word { font-family: var(--font-head); }
+/* CLEARED = a Bangers stamp SLASHED across the whole mugshot (a black diagonal band
+   with paper type), not a strike-through. The name dims behind it. */
+.sr-suspect.cleared { opacity: 1; }
+.sr-suspect.cleared .sr-suspect-word {
+  text-decoration: none;
+  opacity: 0.3;
+}
+.sr-suspect-alibi {
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%) rotate(-12deg);
+  display: block;
+  text-align: center;
+  padding: 3px 0;
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-impact);
+  font-size: clamp(13px, 2.7vw, 18px);
+  letter-spacing: 2px;
+  box-shadow: 0 2px 0 var(--violet);
+}
+
+/* ---- IMPACT STAMP → a jagged Bangers burst that PUNCHES in and settles (no fade).
+   Repositioned fully inside the poster so it never fights the torn clip. Capture =
+   a violet burst; escape = a black burst; the label carries the rest. ---- */
+.sr-stamp {
+  --stamp-rot: -5deg;
+  top: 8px;
+  right: 8px;
+  padding: 10px 20px 12px;
+  font-family: var(--font-impact);
+  font-size: clamp(26px, 5vw, 42px);
+  letter-spacing: 1px;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  -webkit-text-stroke: 0;
+  box-shadow: 3px 3px 0 var(--violet);
+  transform: rotate(var(--stamp-rot));
+  clip-path: polygon(
+    0% 32%, 14% 24%, 10% 4%, 30% 16%, 46% 0%, 58% 15%, 78% 5%, 76% 25%, 100% 22%,
+    88% 42%, 100% 62%, 82% 66%, 90% 92%, 66% 80%, 52% 100%, 40% 82%, 20% 96%, 22% 72%,
+    0% 74%, 12% 52%
+  );
+  animation: sr-burst-punch 0.3s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.sr-stamp.violet { background: var(--violet); color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.sr-stamp.redink,
+.sr-stamp.ink { background: var(--ink); color: var(--paper); box-shadow: 3px 3px 0 var(--violet); }
+@keyframes sr-burst-punch {
+  0% { transform: rotate(var(--stamp-rot)) scale(0.4); opacity: 0; }
+  55% { transform: rotate(var(--stamp-rot)) scale(1.12); opacity: 1; }
+  100% { transform: rotate(var(--stamp-rot)) scale(1); opacity: 1; }
+}
+
+/* ---- CASE CLOSED (results) → heavy Bangers with a violet drop ---- */
+.sr-dead {
+  font-family: var(--font-impact);
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+  text-shadow: 4px 4px 0 var(--violet);
+  letter-spacing: 2px;
+}
+
+/* ---- danger/special ACCENTS that read best in violet (the one hue), restored
+   after the blanket red->ink sweep ---- */
+.sr-overline.deep { color: var(--violet); }
+.sr-brief-card.review { border-color: var(--violet); box-shadow: 3px 3px 0 var(--violet); }
+.sr-brief-review { background: var(--violet); }
+
+/* ---- MODE-SELECT cards: give them the mugshot lean too ---- */
+.sr-modecard:nth-child(1) { transform: rotate(-1.4deg); }
+.sr-modecard:nth-child(2) { transform: rotate(1.2deg); }
+.sr-modecard:hover { transform: translate(-1px, -1px) rotate(-0.6deg); }
+
+/* ============================================================================
+   THE BRIEFING — the DELIBERATE calm exception. It gets the new type and a
+   RESTRAINED tilt on the card edges, and NOTHING else: no torn frame, no
+   screentone flood, no bursts, no speed lines. This is a study surface read at
+   length, so where manga energy and reading comfort conflict, comfort wins.
+   ============================================================================ */
+.sr-brief-page { transform: rotate(-0.5deg); } /* a whisper of lean, no torn edge */
+.sr-brief-card:nth-child(odd) { transform: rotate(-0.7deg); }
+.sr-brief-card:nth-child(even) { transform: rotate(0.7deg); }
+
+/* ============================================================================
+   ShareBar, as it appears in SAT RUSH only (scoped to .sr-share) — de-neoned to
+   the duotone print language: paper buttons, ink linework, violet primary, hard
+   ink offset, no rounded corners. Other modes' ShareBar is untouched.
+   ============================================================================ */
+.sr-share .share-btn {
+  font-family: var(--font-head);
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.sr-share .share-btn.share-primary {
+  background: var(--violet);
+  color: var(--ink);
+}
+.sr-share .share-btn:hover:not(:disabled) { box-shadow: 4px 4px 0 var(--ink); }
+.sr-share .share-btn:active:not(:disabled) { box-shadow: 1px 1px 0 var(--ink); }
+
+/* ============================================================================
+   REDUCED MOTION (manga pass) — the tilt, torn edges, screentone, skew, mugshot
+   lean and CLEARED slash are all FORM and stay. Only the burst punch is motion.
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .sr-stamp { animation: sr-stamp-fade 0.25s ease-out both; }
 }
