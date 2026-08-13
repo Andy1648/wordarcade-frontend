@@ -10,10 +10,13 @@
 // NOT change the input model.
 //
 // PICKING THE 5 DISTRACTORS (relative to the answer row):
-//   - SAME letter count as the answer. Non-negotiable (the slots already show the
-//     length, so a different-length suspect would be eliminated for free). Only
-//     relaxed by the thin-pool fallback below.
-//   - SAME part of speech.
+//   - SAME letter count as the answer. This is the LAST thing relaxed (see the
+//     ladder below), because the slots show an exact letter count on screen — a
+//     wrong-length suspect is eliminated FOR FREE and adds nothing to the choice.
+//   - SAME part of speech, PREFERRED but relaxed before length. Part of speech is
+//     shown too, but a player has to actually KNOW the word's POS to rule a suspect
+//     out — that's reasoning, not a freebie — so a same-length wrong-POS suspect is
+//     still a real suspect. A smaller honest lineup beats a padded fake one.
 //   - Never one of the answer's `alts` (that recreates the marked-wrong-for-a-
 //     good-answer problem).
 //   - Never a word sharing the answer's `root.morpheme` (same-root words tend to
@@ -40,12 +43,16 @@
 // survivor is chosen from the distractors that differ at the first letter) and
 // asserted in the tests.
 //
-// THIN-POOL FALLBACK (long words especially): if fewer than 5 exact-length
-// distractors exist, widen the letter count to +/-1, then +/-2. If fewer than 3
-// distractors exist even then, serve a 4-suspect or 2-suspect lineup and compress
-// the schedule to match. Never fewer than 2 suspects. `fallbackTier` (0/1/2 for
-// the length widening) and the reduced `count` are returned so the caller can log
-// which fallback fired.
+// THE FALLBACK LADDER (relax the cheapest signal first — LENGTH is the freebie, so
+// it goes last). `fallbackTier` reports which rung fired:
+//   0. same length + same POS, full six            (ideal)
+//   1. same length, ANY POS, full six              (covers ~98% of the pool)
+//   2. same length, reduce the count to 4, then 2  (a smaller HONEST lineup)
+//   3. widen the letter count (+/-1, +/-2)          (ABSOLUTE last resort)
+// Rung 3 means the pool is too thin at that exact length — a CONTENT problem, not a
+// code one — so it is logged LOUDLY by the caller (the returned `widened` flag).
+// Never fewer than 2 suspects. `count` and `fallbackTier` are returned so the
+// caller can report which rung fired.
 
 // Fisher-Yates with an injected RNG — identical idiom to engine.js/briefing.js,
 // so a seeded RNG makes every draw reproducible.
@@ -116,12 +123,12 @@ function glossOverlap(a, b) {
   return n;
 }
 
-// The full set of hard constraints EXCEPT the length rule (which the fallback
-// relaxes on its own axis). Same POS, not the answer, not an alt, not same-root,
+// The hard semantic constraints, which hold at EVERY rung regardless of POS/length
+// (those two are the ladder's own axes): not the answer, not an alt, not same-root,
 // no shared 5-substring, and no >=2-content-word gloss overlap (the synonym guard).
+// POS is deliberately NOT checked here — the ladder relaxes it before length.
 function passesCore(d, answer, altSet) {
   if (d.word === answer.word) return false;
-  if (d.pos !== answer.pos) return false;
   if (altSet.has(d.word)) return false;
   if (answer.root && d.root && d.root.morpheme === answer.root.morpheme) return false;
   if (sharesSubstring(d.word, answer.word)) return false;
@@ -129,7 +136,8 @@ function passesCore(d, answer, altSet) {
   return true;
 }
 
-// Candidate distractors at a given length tolerance (0 = exact, 1 = +/-1, ...).
+// Candidate distractors at a given length tolerance (0 = exact, 1 = +/-1, ...),
+// ANY part of speech (POS is the ladder's axis, applied by the caller).
 function candidatesAt(answer, pool, altSet, tol) {
   const target = answer.word.length;
   return pool.filter(
@@ -147,8 +155,10 @@ function candidatesAt(answer, pool, altSet, tol) {
  *
  * @returns {object} {
  *   count,          // 6 | 4 | 2 — total suspects served
- *   fallbackTier,   // 0 | 1 | 2 — the length widening that was needed (0 = exact)
+ *   fallbackTier,   // 0 same-len+same-POS · 1 same-len any-POS · 2 same-len reduced
+ *                   //   count · 3 length widened (the loud, content-problem rung)
  *   reducedCount,   // true when the pool was too thin for a full 6-suspect lineup
+ *   widened,        // true only on rung 3 — every suspect is same-length otherwise
  *   lineup,         // display order (answer shuffled in), STABLE for the whole word:
  *                   //   [{ word, isAnswer, eliminatedAtStage }]
  *                   // eliminatedAtStage is the stage index at which a suspect is
@@ -160,54 +170,74 @@ export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) 
   const altSet = new Set((answer.alts || []).map((a) => String(a).toLowerCase()));
   const aFirst = answer.word[0];
 
-  // 1. Widen the length tolerance until we have >= 5 candidates (a full lineup),
-  //    remembering the tier at which we stopped. If +/-2 still can't reach 5, we
-  //    keep the widest set and reduce the suspect count below.
-  let candidates = [];
-  let fallbackTier = 0;
-  for (let tol = 0; tol <= 2; tol++) {
-    candidates = candidatesAt(answer, pool, altSet, tol);
-    fallbackTier = tol;
-    if (candidates.length >= 5) break;
-  }
+  // 1. THE LADDER (relax POS before length; widen length only as a last resort).
+  //    Every rung EXCEPT 3 keeps the answer's exact letter count.
+  const isSamePos = (d) => d.pos === answer.pos;
+  const exactLen = candidatesAt(answer, pool, altSet, 0); // same length, any POS
+  const exactSamePos = exactLen.filter(isSamePos);
 
-  // 2. Choose the suspect count from how many distractors the pool can offer.
-  //    5+ -> 6 suspects; 3-4 -> 4 suspects; 1-2 -> 2 suspects; 0 -> relax the
-  //    POS rule as a last resort so we can always stand up at least 2 suspects.
-  if (candidates.length === 0) {
-    // Extremely thin (a unique-shape word): drop the POS constraint, then the
-    // substring constraint, purely to guarantee a >= 2-suspect lineup exists.
-    const relaxed = pool.filter(
-      (d) => d.word !== answer.word && !altSet.has(d.word) && Math.abs(d.word.length - answer.word.length) <= 2
-    );
-    candidates = relaxed.length
-      ? relaxed
-      : pool.filter((d) => d.word !== answer.word);
-    fallbackTier = 2;
-  }
-
+  let candidates;
   let count;
-  if (candidates.length >= 5) count = 6;
-  else if (candidates.length >= 3) count = 4;
-  else count = 2;
+  let fallbackTier;
+  let widened = false;
+
+  if (exactSamePos.length >= 5) {
+    candidates = exactSamePos; // rung 0 — ideal: same length + same POS
+    count = 6;
+    fallbackTier = 0;
+  } else if (exactLen.length >= 5) {
+    candidates = exactLen; // rung 1 — same length, any POS (POS is preferred in the pick)
+    count = 6;
+    fallbackTier = 1;
+  } else if (exactLen.length >= 1) {
+    candidates = exactLen; // rung 2 — same length, HONEST reduced count (4, then 2)
+    count = exactLen.length >= 3 ? 4 : 2;
+    fallbackTier = 2;
+  } else {
+    // rung 3 — no same-length candidate exists at ALL: widen the letter count as an
+    // absolute last resort. This is a content problem (the pool is too thin at this
+    // length); the caller logs `widened` loudly.
+    widened = true;
+    fallbackTier = 3;
+    candidates = [];
+    for (let tol = 1; tol <= 2 && candidates.length === 0; tol++) {
+      candidates = candidatesAt(answer, pool, altSet, tol);
+    }
+    if (candidates.length === 0) {
+      // pathological: relax the substring/root/gloss guards too, purely so a >= 2
+      // lineup can always stand up (essentially never reached with the real pool).
+      candidates = pool.filter(
+        (d) => d.word !== answer.word && !altSet.has(d.word) && Math.abs(d.word.length - answer.word.length) <= 2
+      );
+      if (candidates.length === 0) candidates = pool.filter((d) => d.word !== answer.word);
+    }
+    count = candidates.length >= 5 ? 6 : candidates.length >= 3 ? 4 : 2;
+  }
   const reducedCount = count < 6;
   const distractorsNeeded = count - 1;
 
-  // 3. Choose the SURVIVOR first — a distractor that differs from the answer at
-  //    the first letter (the solvability invariant). If somehow none differ (the
-  //    pool is pathological), fall back to any distractor so we still return a
-  //    lineup; the tests assert the invariant holds for real pools.
+  // 2. Choose the SURVIVOR — a distractor that differs from the answer at the first
+  //    letter (the solvability invariant), PREFERRING one that also shares the POS.
+  //    If none differ (a pathological pool), fall back to any distractor so we still
+  //    return a lineup; the tests assert the invariant holds for real pools.
   const diffFirst = candidates.filter((d) => d.word[0] !== aFirst);
-  const survivor = diffFirst.length
-    ? shuffle(diffFirst, rng)[0]
-    : shuffle(candidates, rng)[0];
+  const diffFirstSamePos = diffFirst.filter(isSamePos);
+  const survivor = (
+    diffFirstSamePos.length
+      ? shuffle(diffFirstSamePos, rng)
+      : diffFirst.length
+        ? shuffle(diffFirst, rng)
+        : shuffle(candidates, rng)
+  )[0];
 
-  // 4. The remaining distractors get eliminated across stages 1 and 2, split as
-  //    evenly as possible (stage 1 first). The survivor is never eliminated.
-  const rest = shuffle(
-    candidates.filter((d) => d.word !== survivor.word),
-    rng
-  ).slice(0, distractorsNeeded - 1);
+  // 3. The remaining distractors, SAME-POS preferred (so a reduced or any-POS lineup
+  //    still shows the most honest suspects it can), get eliminated across stages 1
+  //    and 2 (stage 1 first). The survivor is never eliminated.
+  const remaining = candidates.filter((d) => d.word !== survivor.word);
+  const rest = [
+    ...shuffle(remaining.filter(isSamePos), rng),
+    ...shuffle(remaining.filter((d) => !isSamePos(d)), rng),
+  ].slice(0, distractorsNeeded - 1);
   const half = Math.floor(rest.length / 2); // eliminated at stage 1; the rest at stage 2
 
   const distractorEntries = [
@@ -226,7 +256,7 @@ export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) 
     rng
   );
 
-  return { count, fallbackTier, reducedCount, lineup };
+  return { count, fallbackTier, reducedCount, widened, lineup };
 }
 
 /**
