@@ -144,15 +144,21 @@ export function useSatRushGame() {
       isRevenant: cur.isRevenant,
       wasBriefed: !!cur.isBriefed,
     });
-    // LINEUP mode: report the served lineup (size + which thin-pool fallback fired,
-    // if any) — this is where the mode's honesty lives. Also surface a dev console
-    // note when a fallback narrowed the lineup below the full six.
+    // LINEUP mode: report the served lineup (size + which fallback rung fired) —
+    // this is where the mode's honesty lives. A widened lineup (rung 3) means the
+    // pool is too thin at that exact length: a CONTENT problem, so warn LOUDLY
+    // (always, not just dev). Lesser fallbacks get a dev-only info note.
     if (cur.suspects) {
       trackSR('suspects_served', {
         count: cur.suspects.count,
         fallbackTier: cur.suspects.fallbackTier,
       });
-      if (
+      if (cur.suspects.widened) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[satRush] LINEUP CONTENT GAP: "${cur.word}" (${cur.word.length} letters, ${cur.pos}) has no same-length suspects — widened the letter count (fake suspects). Add more ${cur.word.length}-letter words to the pool.`
+        );
+      } else if (
         (cur.suspects.fallbackTier > 0 || cur.suspects.reducedCount) &&
         typeof import.meta !== 'undefined' &&
         import.meta.env &&
@@ -160,7 +166,7 @@ export function useSatRushGame() {
       ) {
         // eslint-disable-next-line no-console
         console.info(
-          `[satRush] lineup fallback: ${cur.word} → ${cur.suspects.count} suspects (tier ${cur.suspects.fallbackTier})`
+          `[satRush] lineup fallback: ${cur.word} → ${cur.suspects.count} suspects (rung ${cur.suspects.fallbackTier})`
         );
       }
     }

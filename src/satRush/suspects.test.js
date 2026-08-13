@@ -163,49 +163,88 @@ test('SYNONYM GUARD is a HEURISTIC: an unrelated-gloss word of the same shape is
   assert.ok(lineup.some((s) => NINE_FILLERS.map((r) => r.word).includes(s.word)), 'fillers are allowed');
 });
 
-test('fallback tier 1: no exact-length distractors, widen to +-1', () => {
-  const answer = row('brave'); // 5 letters
-  // NO other 5-letter words; plenty of 4/6-letter same-POS words at +-1.
+// --- THE FALLBACK LADDER: relax POS BEFORE length; widen length as a last resort.
+// The bug this guards against: a 4-letter noun has ~1 same-length same-POS word in
+// the real pool, so the old ladder widened length and served (say) a 6-letter
+// suspect a player eliminates FOR FREE by counting the slots — a fake choice. The
+// fix relaxes POS first (same length, any POS) and only widens length when no
+// same-length suspect exists at all.
+
+test('rung 1: same length + ANY POS is used BEFORE widening the letter count', () => {
+  // A 4-letter NOUN with only ONE same-length same-POS word, but plenty of 4-letter
+  // words of OTHER parts of speech. Every served suspect must stay 4 letters.
+  const answer = row('bark', { pos: 'n' });
   const pool = [
     answer,
-    ...['tall', 'slim', 'wide', 'cold', 'warm'].map((w) => row(w)), // 4
+    row('reef', { pos: 'n' }), // the one same-length, same-POS word
+    ...['calm', 'bold', 'tidy', 'glum', 'wary'].map((w) => row(w, { pos: 'adj' })), // 4-letter adj
+    ...['gaze', 'roam', 'mend', 'sway'].map((w) => row(w, { pos: 'v' })), // 4-letter verbs
+    ...['gloomy', 'strong', 'ancient'].map((w) => row(w, { pos: 'n' })), // longer nouns — must NOT appear
+  ];
+  for (let seed = 0; seed < 40; seed++) {
+    const { count, fallbackTier, widened, lineup } = generateSuspects({ answer, pool, rng: mulberry32(seed) });
+    assert.equal(count, 6, `seed ${seed}: still a full six`);
+    assert.equal(fallbackTier, 1, `seed ${seed}: same-length any-POS rung`);
+    assert.equal(widened, false, `seed ${seed}: length never widened while same-length words exist`);
+    for (const s of lineup) assert.equal(s.word.length, 4, `seed ${seed}: ${s.word} must be 4 letters`);
+  }
+});
+
+test('rung 2: reduce the count (4, then 2) at the SAME length — never a free elimination', () => {
+  const answer = row('bark', { pos: 'n' });
+  // Exactly THREE same-length words (mixed POS) → a 4-suspect lineup, all 4 letters.
+  const pool4 = [
+    answer,
+    row('reef', { pos: 'n' }),
+    row('calm', { pos: 'adj' }),
+    row('gaze', { pos: 'v' }),
+    ...['gloomy', 'strong'].map((w) => row(w)), // longer — must never appear
+  ];
+  const a = generateSuspects({ answer, pool: pool4, rng: mulberry32(2) });
+  assert.equal(a.count, 4);
+  assert.equal(a.fallbackTier, 2);
+  assert.equal(a.widened, false);
+  for (const s of a.lineup) assert.equal(s.word.length, 4);
+  assert.equal(suspectsStanding(a.lineup, 2), 2, 'still narrows to 2 at the final stage');
+
+  // Exactly ONE same-length word → a 2-suspect lineup, both 4 letters.
+  const pool2 = [answer, row('reef', { pos: 'v' }), ...['gloomy', 'strong'].map((w) => row(w))];
+  const b = generateSuspects({ answer, pool: pool2, rng: mulberry32(3) });
+  assert.equal(b.count, 2);
+  assert.equal(b.fallbackTier, 2);
+  assert.equal(b.widened, false);
+  for (const s of b.lineup) assert.equal(s.word.length, 4);
+});
+
+test('rung 3: length is widened ONLY when NO same-length suspect exists at all', () => {
+  const answer = row('brave'); // 5 letters — nothing else here is 5 letters
+  const pool = [
+    answer,
+    ...['tall', 'slim', 'cold'].map((w) => row(w)), // 4
     ...['gloomy', 'strong'].map((w) => row(w)), // 6
   ];
-  const { fallbackTier, count } = generateSuspects({ answer, pool, rng: mulberry32(2) });
-  assert.equal(fallbackTier, 1);
-  assert.equal(count, 6);
+  const { fallbackTier, widened, lineup, count } = generateSuspects({ answer, pool, rng: mulberry32(5) });
+  assert.equal(widened, true, 'widened only because no 5-letter suspect exists');
+  assert.equal(fallbackTier, 3);
+  assert.ok(count >= 2);
+  assert.ok(
+    lineup.some((s) => !s.isAnswer && s.word.length !== 5),
+    'the content gap forced a different-length suspect'
+  );
 });
 
-test('fallback tier 2: nothing within +-1, widen to +-2', () => {
-  const answer = row('brave'); // 5
-  const pool = [
-    answer,
-    ...['odd', 'shy', 'big', 'wee', 'coy'].map((w) => row(w)), // 3 (delta 2)
-    ...['awkward', 'genuine'].map((w) => row(w)), // 7 (delta 2)
-  ];
-  const { fallbackTier, count } = generateSuspects({ answer, pool, rng: mulberry32(5) });
-  assert.equal(fallbackTier, 2);
-  assert.equal(count, 6);
-});
-
-test('reduced count 4: only 3 valid distractors → a 4-suspect lineup', () => {
-  const answer = row('brave');
-  const pool = richPool().slice(0, 4); // 'brave' + exactly 3 others
-  const { count, lineup } = generateSuspects({ answer, pool, rng: mulberry32(9) });
-  assert.equal(count, 4);
-  assert.equal(lineup.length, 4);
-  assert.equal(suspectsStanding(lineup, 0), 4);
-  assert.equal(suspectsStanding(lineup, 2), 2, 'still narrows to 2 at the final stage');
-});
-
-test('reduced count 2: only 1 valid distractor → a 2-suspect lineup', () => {
-  const answer = row('brave');
-  const pool = [answer, row('clean')]; // one distractor only
-  const { count, lineup } = generateSuspects({ answer, pool, rng: mulberry32(4) });
-  assert.equal(count, 2);
-  assert.equal(lineup.length, 2);
-  assert.equal(suspectsStanding(lineup, 0), 2);
-  assert.equal(suspectsStanding(lineup, 2), 2);
+test('tiers 0-2 keep the EXACT letter count for every suspect (across many seeds)', () => {
+  const answer = row('brave', { pos: 'adj' });
+  const pool = richPool([
+    row('crane', { pos: 'n' }), row('drive', { pos: 'v' }), // same length, other POS
+    row('sad'), row('tall'), row('gloomy'), row('ancient'), // wrong length — must never appear
+  ]);
+  for (let seed = 0; seed < 40; seed++) {
+    const { fallbackTier, widened, lineup } = generateSuspects({ answer, pool, rng: mulberry32(seed) });
+    assert.equal(widened, false, `seed ${seed}: no widening needed`);
+    assert.ok(fallbackTier <= 2, `seed ${seed}: rung <= 2`);
+    for (const s of lineup) assert.equal(s.word.length, 5, `seed ${seed}: ${s.word} must be 5 letters`);
+  }
 });
 
 test('the narrowing schedule is 6 → 4 → 2 for a full lineup', () => {
