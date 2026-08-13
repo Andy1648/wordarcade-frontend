@@ -28,12 +28,12 @@ import {
 // page itself (stamps, the black corner ribbon, the negative-reprint invert, the
 // page tear), so the per-event particle bursts / screen washes are gone — cues
 // stay, screen-wide spam went. What survives here mostly plays sound; only a few
-// rare, high-impact moments (silver break, death) keep a wash. VIOLET stays;
-// CHROME retargets to --paper for the invert/shatter; the danger red now lives in
-// CSS (--redink), and Deep Cut is its audio cue + the CSS ribbon (no colour).
+// rare, high-impact moments (silver break, death) keep a wash. STRICT DUOTONE:
+// every wash/shard is ink, paper, or violet — no chrome greys, no white, and no
+// red (danger reads through heavy ink + jagged form + violet). Deep Cut is its
+// audio cue + the CSS treatment (no colour).
 const VIOLET = '#a855f7';
 const PAPER = '#f0ead9';
-const WHITE = '#ffffff';
 
 const el = (sel) => (typeof document !== 'undefined' ? document.querySelector(sel) : null);
 function centerOf(sel, fallback) {
@@ -94,7 +94,7 @@ export function silverEnter() {
 export function silverBreak() {
   const { x, y } = centerOf('.sr-card');
   screenFlash({ alpha: 0.4, color: PAPER, life: 0.26 });
-  burst(x, y, { count: 40, colors: ['#c9d3df', '#8a95a6', PAPER], speed: 380, life: 0.9 });
+  burst(x, y, { count: 40, colors: [VIOLET, PAPER], speed: 380, life: 0.9 });
   shake(9, 380);
   defeatTone();
 }
@@ -125,7 +125,7 @@ export function death() {
   hitStop(120);
   sfx('ko');
   defeatTone();
-  screenFlash({ alpha: 0.7, color: WHITE, life: 0.4 });
+  screenFlash({ alpha: 0.7, color: PAPER, life: 0.4 });
   shake(11, 460);
 }
 
@@ -133,7 +133,7 @@ export function death() {
 export { scoreTick, sfx as resultSfx, burst as resultBurst, screenFlash as resultFlash };
 export function resultsStamp() {
   sfx('ko'); // heavy slam for the DEAD stamp
-  screenFlash({ alpha: 0.5, color: WHITE, life: 0.3 });
+  screenFlash({ alpha: 0.5, color: PAPER, life: 0.3 });
   shake(6, 320);
 }
 export function resultsSting() {
