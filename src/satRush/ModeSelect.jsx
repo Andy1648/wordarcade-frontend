@@ -1,5 +1,5 @@
 // ModeSelect.jsx — the two ways to play, shown right after the cover. Two cards,
-// one line each, in the bounty/gazette voice. There is deliberately NO paragraph
+// one line each, in the bounty voice. There is deliberately NO paragraph
 // explaining how either mode works: a mechanic that needs a sentence of
 // instructions isn't legible enough, and the sentence doesn't fix that (the
 // copy-purge rule). The modes teach themselves — BRIEFING by making you study,
@@ -26,7 +26,6 @@ export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit }) 
   return (
     <div className="sr-screen">
       <div className="sr-modeselect">
-        <div className="sr-gazette">Type&nbsp;a&nbsp;Word&nbsp;Gazette — Assignment&nbsp;Desk</div>
         <div className="sr-modeselect-head sr-print" data-v={'PICK YOUR BEAT'}>
           PICK&nbsp;YOUR&nbsp;BEAT
         </div>

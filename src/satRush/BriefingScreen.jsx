@@ -82,7 +82,6 @@ export default function Briefing({ briefing, onStart }) {
     <div className="sr-screen sr-brief-screen">
       <div className="sr-brief-page">
         <div className="sr-brief-head">
-          <div className="sr-gazette">Type&nbsp;a&nbsp;Word&nbsp;Gazette — Case&nbsp;File</div>
           <div className="sr-brief-title sr-print" data-v={'THE BRIEFING'}>
             THE&nbsp;BRIEFING
           </div>

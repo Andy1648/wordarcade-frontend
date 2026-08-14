@@ -1,18 +1,19 @@
-// WordCard.jsx — the BOUNTY POSTER. The ante row and the word panel are now ONE
-// wanted poster: the word is a fugitive, the multiplier is its REWARD, a missed
-// word returns as an ESCAPEE. Anatomy, top to bottom:
-//   overline → WANTED header (off-register violet plate) → case id (the meta) →
+// WordCard.jsx — the MANGA PANEL / bounty notice. The ante row and the word panel
+// are ONE wanted notice: the word is a fugitive, the multiplier is its REWARD, a
+// missed word returns as an ESCAPEE. Anatomy, top to bottom:
+//   WANTED header (screentone plate) → case id (the meta) →
 //   FIELDS (LAST SEEN / DESCRIPTION / KNOWN ALIASES) → mugshot SLOTS →
-//   REWARD footer (AnteMeter — the bounty is the ante) → fine print.
+//   REWARD footer (AnteMeter — the bounty is the ante).
 // Reveals are driven by the ENGINE's 3-stage schedule (view.reveals): meta +
 // sentence at stage 0, gloss + root at stage 1, first letter at stage 2. Several
-// types share a stage, so the fields light up in groups. Event state stays in
-// print: Deep Cut = the
-// MOST WANTED header + red overline; Revenant = the ESCAPED overprint slapped
-// across the header (a held state marker, not the corner stamp); clear/miss = a
-// paper STAMP; Silver Tongue = the page reprinting in negative (class on .sr-app).
-// Every state still carries a text label. The root .sr-card class is load-bearing
-// (juice centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+// types share a stage, so the fields light up in groups.
+// STATE READS THROUGH THE PANEL'S SHAPE (the deep/revenant/atfinal classes on the
+// root reshape .sr-cardframe): Deep Cut = a jagged starburst frame + the MOST
+// WANTED header; Revenant = a wavy/broken frame + the ESCAPED overprint; final
+// stage = the frame tightens + tone rises; Silver Tongue = the panel inverts
+// (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
+// state still carries a text label. The root .sr-card class is load-bearing (juice
+// centres bursts on it and the wrong-key shake keys off .sr-card.shake).
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
 
@@ -142,23 +143,32 @@ export default function WordCard({ view }) {
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
 
   return (
-    // key on the shake counter so the shake animation restarts on each wrong key
-    <div className={`sr-card sr-poster${fx.shake ? ' shake' : ''}`} key={`card-${fx.shake}`}>
-      {/* The paper STAMP (clear / miss only — revenant now uses the ESCAPED
-          overprint below). One at a time; re-keyed per event so the PUNCH-in
-          replays. The only tilted corner element in the mode. */}
+    // The OUTER .sr-card is an unclipped positioning shell: the SFX burst is its
+    // child so it can break PAST the panel edge (see .sr-stamp), while the visible
+    // panel is the inner .sr-cardframe — that's what carries the state SHAPE
+    // (deep = starburst, revenant = wavy/broken, atfinal = tightened) via clip-path,
+    // so clipping the frame never clips the overflowing SFX. .sr-card stays load-
+    // bearing (juice centres bursts on it; the wrong-key shake keys off .sr-card.shake).
+    // key on the shake counter so the shake animation restarts on each wrong key.
+    <div
+      className={`sr-card sr-poster${deepCut ? ' deep' : ''}${revenant ? ' revenant' : ''}${
+        atFinal ? ' atfinal' : ''
+      }${fx.shake ? ' shake' : ''}`}
+      key={`card-${fx.shake}`}
+    >
+      {/* The SFX BURST (clear / miss only). It's a child of the UNCLIPPED outer card
+          so it overflows/breaks past the panel edge, rotated, with a heavy ink
+          outline + offset fill. Re-keyed per event so the PUNCH-in replays. */}
       {stamp && (
         <div className={`sr-stamp ${stamp.tone}`} key={`stamp-${stamp.id}`} aria-label={stamp.text}>
           {stamp.text}
         </div>
       )}
 
-      {/* Overline: the gazette masthead line normally; the deep-cut notice (red). */}
-      <div className={`sr-overline${deepCut ? ' deep' : ''}`}>
-        {deepCut ? 'TIER 5 — DEEP CUT · REWARD +150' : 'TYPE A WORD GAZETTE — BOUNTY DIV.'}
-      </div>
-
-      {/* WANTED header (off-register violet plate); MOST WANTED on a deep cut. */}
+      {/* The visible panel: the manga PANEL whose EDGE reads the state (narrator
+          rectangle → deep-cut starburst → revenant wavy break → tightened final). */}
+      <div className="sr-cardframe">
+      {/* WANTED header; MOST WANTED on a deep cut. */}
       <div className="sr-wanted-wrap">
         <div className="sr-wanted sr-print" data-v={deepCut ? 'MOST WANTED' : 'WANTED'}>
           {deepCut ? 'MOST WANTED' : 'WANTED'}
@@ -230,11 +240,8 @@ export default function WordCard({ view }) {
       />
 
       <div className={`sr-msg${msg ? ` ${msg.kind}` : ''}`}>{msg ? msg.text : ''}</div>
-
-      {/* Fine print. */}
-      <div className="sr-fineprint" aria-hidden="true">
-        ISSUED BY TYPEAWORD.COM · SAT RUSH DIVISION
       </div>
+      {/* /.sr-cardframe */}
 
       {/* The re-encode teaching beat sits over the poster during the pause. */}
       {reEncode && <ReEncode data={reEncode} />}

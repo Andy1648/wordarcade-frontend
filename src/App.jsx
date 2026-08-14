@@ -119,6 +119,9 @@ const SCREEN_ACCENT = {
   room: '#FFE94A',
   game: '#FF6B3D',
   credits: '#9A1AFF',
+  // SAT RUSH is a duotone manga surface; the ♫ button floats over the black gutter,
+  // so it wears PAPER (reads on the void) instead of the house pink.
+  'sat-rush': '#F0EAD9',
 };
 
 // The word flashed mid-wipe when navigating to each view.
@@ -440,33 +443,41 @@ function App() {
   const [slicing, setSlicing] = useState(false);
   const sliceTimerRef = useRef(null);
 
-  // Music start for sessions that never show the splash. The splash click is
-  // normally music's first-gesture unlock (handleSplashStart), but repeat
-  // visitors (SEEN_INTRO), portal embeds, and ?join=/?daily= deep links skip
-  // the splash entirely — so without this the music would never start for them.
-  // We capture whether the splash WILL show at first render (splashWillShowRef);
-  // when it won't, we arm one-shot pointerdown+keydown listeners that unlock and
-  // fade the music in on the first real gesture, then remove both. Not armed
-  // when the splash will show, so we never double-start.
+  // Music starts on the FIRST user gesture anywhere on the site — a click, key,
+  // or touch on ANY element (the splash cover, the menu, a landing page). Browsers
+  // block autoplay until a gesture, so this is the earliest legal moment; the
+  // listener is document-level, one-shot, and covers every entry path (cold splash,
+  // SEEN_INTRO repeat visitor with no splash, ?satrush=1 / ?join= / ?daily= deep
+  // links, and landing-page → home). pointerdown+keydown+touchstart so a mouse, a
+  // key, or a bare touch all unlock it.
+  //
+  // Volume choreography differs by path and is preserved here: during the splash /
+  // fight-card intro the music must stay SILENT until the menu wipe (handleIntro-
+  // Complete fades it up), so on a splash session we start at 0 and DON'T fade;
+  // every other path fades up to 0.3 immediately. splashWillShowRef is captured at
+  // first render so the branch is stable.
   const splashWillShowRef = useRef(showSplash);
   const firstGestureMusicRef = useRef(false);
   useEffect(() => {
-    if (splashWillShowRef.current) return undefined;
     const startMusicOnGesture = () => {
       if (firstGestureMusicRef.current) return;
       firstGestureMusicRef.current = true;
       sound.unlock();
       music.setVolume(0);
       music.play();
-      music.fadeTo(0.3, 500);
-      window.removeEventListener('pointerdown', startMusicOnGesture);
-      window.removeEventListener('keydown', startMusicOnGesture);
+      // Splash sessions hold the track silent until the menu wipe fades it up.
+      if (!splashWillShowRef.current) music.fadeTo(0.3, 500);
+      document.removeEventListener('pointerdown', startMusicOnGesture);
+      document.removeEventListener('keydown', startMusicOnGesture);
+      document.removeEventListener('touchstart', startMusicOnGesture);
     };
-    window.addEventListener('pointerdown', startMusicOnGesture);
-    window.addEventListener('keydown', startMusicOnGesture);
+    document.addEventListener('pointerdown', startMusicOnGesture);
+    document.addEventListener('keydown', startMusicOnGesture);
+    document.addEventListener('touchstart', startMusicOnGesture);
     return () => {
-      window.removeEventListener('pointerdown', startMusicOnGesture);
-      window.removeEventListener('keydown', startMusicOnGesture);
+      document.removeEventListener('pointerdown', startMusicOnGesture);
+      document.removeEventListener('keydown', startMusicOnGesture);
+      document.removeEventListener('touchstart', startMusicOnGesture);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

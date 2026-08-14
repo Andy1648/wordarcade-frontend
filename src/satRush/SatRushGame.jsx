@@ -119,23 +119,16 @@ function ExitLink({ onExit }) {
   );
 }
 
-// The cover is a newspaper FRONT PAGE in the same paper/ink/double-rule/grain
-// language as the play poster: gazette name, the SAT RUSH masthead (off-register
-// violet plate), a ruled dateline, and the paper PLAY button. (The old "Reward
-// Schedule" notice box was cut in the copy purge — it explained the ante mechanic,
-// and listed a stale 5-stage 5×/4×/3×/2×/1× table the 3-stage engine never uses.)
+// The cover is a manga PANEL, not a newspaper: the SAT RUSH masthead (Dela Gothic
+// with a screentone off-plate) and the paper PLAY button on the torn page — the
+// the old newsprint masthead / date row / shouty broadsheet furniture was cut
+// (this is a manga page, not a printed newspaper).
 function StartScreen({ onPlay, onExit }) {
   return (
     <div className="sr-screen">
       <div className="sr-cover">
-        <div className="sr-gazette">Type&nbsp;a&nbsp;Word&nbsp;Gazette</div>
         <div className="sr-title sr-print" data-v={'SAT RUSH'}>
           SAT&nbsp;RUSH
-        </div>
-        <div className="sr-dateline">
-          <span>VOL.&nbsp;1</span>
-          <span>EXTRA! EXTRA! WORDS AT LARGE</span>
-          <span>FREE</span>
         </div>
         <button type="button" className="sr-btn" onClick={onPlay}>
           Play
