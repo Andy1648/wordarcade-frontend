@@ -27,8 +27,10 @@ export const SAT_RUSH_ENABLED =
 export const SAT_RUSH_VIEW = 'sat-rush';
 export const SAT_RUSH_TRANSITION_WORD = 'SHARPEN UP';
 
-// Mode accent (violet), used by the card, the route background and the UI.
-export const SAT_RUSH_COLOR = '#A855F7';
+// Mode accent — INK. SAT RUSH is a duotone manga surface (ink #111 + paper
+// #F0EAD9 + screentone); there is no spot colour. Kept as a named export so the
+// route background / share card stay on-palette.
+export const SAT_RUSH_COLOR = '#111111';
 
 // Dev-only stage-interval override. The 3-stage model uses longer beats (2800ms),
 // exposed the SAME way as the flag above — a query-string escape hatch resolved

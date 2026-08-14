@@ -1,6 +1,6 @@
-// SatRushResults.jsx — the death / score reveal, as one retro-print PAGE (the
-// part-1 language: --paper, double-ruled panels, ink + the off-register violet
-// plate). Death still dominates entry: the DEAD stamp slams, the score + AVG ANTE
+// SatRushResults.jsx — the death / score reveal, as one manga PAGE (ink on paper,
+// double-ruled panels, screentone plates — no spot colour). Death still dominates
+// entry: the CASE CLOSED stamp slams, the score + AVG ANTE
 // count up on the shared JUICE.CELEBRATION timings (same staged sequence Category
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
 // the headline. Once landed, nothing loops (quiet-by-default). ShareBar is kept
@@ -103,7 +103,7 @@ export default function SatRushResults({ results, onAgain, onExit }) {
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
         <div className="sr-dead">CASE CLOSED</div>
 
-        {/* AVG ANTE — the headline stat: big Bungee ink with the violet plate off-register. */}
+        {/* AVG ANTE — the headline stat: big ink display with the screentone plate behind. */}
         <div className="sr-panel sr-hero">
           <div className="sr-ante-value sr-print" data-v={anteHero} aria-label={`average ante ${anteStr} times`}>
             {anteHero}

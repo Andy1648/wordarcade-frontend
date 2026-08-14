@@ -1,5 +1,5 @@
 // AnteMeter.jsx — the REWARD footer of the bounty poster. The bounty IS the ante:
-// a "REWARD" label + the big Bungee INK multiplier with the violet plate printed
+// a "REWARD" label + the big INK multiplier with a screentone plate printed
 // OFF-REGISTER (the ::before renders the same glyphs, shifted), the ante note
 // ("CAPTURE NOW FOR MORE" / the final "IT'S PRINTING"), a row of ink stage-pips,
 // and the always-visible drain bar. It sits at the foot of WordCard, under a

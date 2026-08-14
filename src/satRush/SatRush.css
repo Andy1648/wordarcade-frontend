@@ -1,14 +1,17 @@
-/* SatRush.css — SAT RUSH mode, MANGA / PULP PAGE. A cream newsprint page printed
-   in a STRICT DUOTONE (ink #111, newsprint #F0EAD9, violet #A855F7 — the whole
-   palette, no fourth hue) on a flat ink-black gutter.
+/* SatRush.css — SAT RUSH mode, ACTUAL MANGA. Ink on cream paper, tone from
+   SCREENTONE — no spot colour. The whole palette is TWO hues: ink #111 and paper
+   #F0EAD9. Every grey on the surface is ink at a DENSITY (a halftone dot pattern),
+   never a third hex — that is how manga makes tone, and it's what keeps this from
+   reading as a coloured western comic.
 
-   THE MANGA PASS (see the block at the bottom of this file) adds FORM on top of the
-   palette: the page leans a few degrees, its edge is torn (a clip-path silhouette
-   the violet hard-offset shadow follows), the HUD skews into an off-horizontal
-   ticker, the WANTED banner is white-on-black slashed on a focus-line burst, the
-   suspects are independently-tilted mugshots whose CLEARED is a Bangers slash, and
-   CAPTURED!!/ESCAPED!! punch in as jagged Bangers bursts. Type: Dela Gothic One
-   shouts the headers, Bangers slams the stamps, Space Mono stays the calm body.
+   STATE READS THROUGH FORM, not colour: the word PANEL changes shape — a hard
+   narrator rectangle for a normal word, a jagged starburst (the shout balloon) for
+   a Deep Cut, a wavy/broken frame for a Revenant, a white-on-black reprint for
+   Silver Tongue, and a tightened frame + denser tone at the final stage. SFX
+   (CAPTURED!! / ESCAPED!!) are drawn OVER and PAST the panel edge, rotated, with a
+   heavy outline. Type: Dela Gothic One shouts the headers, Bangers slams the SFX,
+   the body sentence stays a plain readable face (reading speed is the mechanic);
+   emphasis is BOLD, never italic.
 
    TWO LAWS hold throughout: (1) LEGIBILITY — containers tilt, running text never
    does (the sentence + suspect names stay upright; checked at 390px). (2) MOTION —
@@ -16,21 +19,26 @@
    static FORM and survive prefers-reduced-motion; only the bursts, the snap, and
    the beat rattle are motion and are disabled there.
 
-   THE BRIEFING is the deliberate CALM exception: the new type + a restrained card
+   THE BRIEFING is the deliberate CALM exception: the type + a restrained card
    lean, and nothing else — a study surface where reading comfort beats energy. */
 
 .sr-app {
-  /* --- STRICT DUOTONE (the whole palette — nothing else ships) --- */
-  --paper: #f0ead9; /* newsprint */
-  --tile: #f0ead9; /* slot / inset fill = newsprint; ink linework carries every edge */
+  /* --- THE WHOLE PALETTE: ink + paper. Nothing else ships. --- */
+  --paper: #f0ead9; /* cream paper */
+  --tile: #f0ead9; /* slot / inset fill = paper; ink linework carries every edge */
   --ink: #111;
-  --violet: #a855f7; /* the one accent */
-  /* the page sits on a flat ink-black gutter; it floats on a VIOLET hard-offset
-     shadow (ink-on-ink wouldn't read) — three colours, no fourth hue. Red ink is
-     dropped entirely: danger reads through heavy ink, jagged form, and violet. */
+  /* the page sits on a flat ink-black gutter (canonical manga). No spot colour and
+     no drop shadow — the torn edge on the black gutter carries the separation. */
   --void: #111;
-  /* type: Dela Gothic One shouts the headers, Bangers slams the impact stamps,
-     Space Mono (set below) stays the calm body. */
+  /* SCREENTONE — grey is ink at a coverage. Three densities, each a halftone dot
+     grid; masks (per use) fade them along a shape so tone reads as DRAWN, not as a
+     flat CSS rectangle. light = background wash, mid = form shading, heavy = weight. */
+  --tone-cell: 6px 6px;
+  --tone-light: radial-gradient(circle, var(--ink) 12%, transparent 16%);
+  --tone-mid: radial-gradient(circle, var(--ink) 26%, transparent 30%);
+  --tone-heavy: radial-gradient(circle, var(--ink) 42%, transparent 46%);
+  /* type: Dela Gothic One shouts the headers, Bangers slams the impact SFX,
+     Space Mono (set below) stays the calm readable body. */
   --font-head: 'Dela Gothic One', system-ui, sans-serif;
   --font-impact: 'Bangers', 'Dela Gothic One', system-ui, cursive;
   /* tilt + tone knobs reused across surfaces */
@@ -86,7 +94,7 @@
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--violet);
+    6px 6px 0 var(--ink);
   overflow: hidden;
 }
 /* pulp grain (5%) */
@@ -167,7 +175,7 @@
 .sr-life.gone {
   opacity: 0.25;
 }
-/* heat — five flat blocks; lit blocks fill violet (empty = hollow ink box) */
+/* heat — five flat blocks; lit blocks fill ink (empty = hollow ink box) */
 .sr-heat {
   display: flex;
   gap: 3px;
@@ -181,7 +189,7 @@
   background: transparent;
 }
 .sr-heatblock.on {
-  background: var(--violet);
+  background: var(--ink);
 }
 
 /* ---------- page body (padded content inside the double rule) ---------- */
@@ -198,7 +206,7 @@
 
 /* ---------- REWARD footer (the bounty IS the ante) ---------- */
 /* Sits at the foot of the poster under a double rule: a REWARD caption, the big
-   Bungee multiplier with the off-register violet plate, then the ante note +
+   Bungee multiplier with the screentone plate, then the ante note +
    stage pips + drain bar. Replaces the old separate ante row. */
 .sr-reward {
   flex: 0 0 auto;
@@ -224,10 +232,12 @@
   text-transform: uppercase;
   opacity: 0.65;
 }
-/* Big Bungee INK multiplier with the violet plate printed OFF-REGISTER (the
-   ::before renders the same glyphs, violet, shifted -5px/-5px, behind). No stroke,
-   no glow. juice.multiplierDrop still squashes THIS element in place. .sr-print is
-   the shared off-register plate technique (reused by .sr-wanted + cover title). */
+/* Big INK display glyph with a SCREENTONE ECHO printed behind it, offset -5/-5:
+   the ::before re-renders the same glyphs but filled with a halftone dot grid
+   (background-clip: text) instead of a second colour — the manga tonal drop-shadow.
+   No stroke, no glow. juice.multiplierDrop still squashes THIS element in place.
+   .sr-print is the shared tone-plate technique (reused by .sr-wanted, cover title,
+   mode-select head, brief title, avg-ante). */
 .sr-print {
   position: relative;
   z-index: 0;
@@ -239,7 +249,11 @@
   left: -5px;
   top: -5px;
   z-index: -1;
-  color: var(--violet);
+  color: transparent;
+  background-image: var(--tone-heavy);
+  background-size: var(--tone-cell);
+  -webkit-background-clip: text;
+  background-clip: text;
   pointer-events: none;
 }
 .sr-mult {
@@ -267,7 +281,7 @@
   color: var(--ink);
 }
 .sr-accent {
-  color: var(--violet);
+  color: var(--ink);
   font-weight: 700;
 }
 .sr-antebox.final .sr-accent {
@@ -301,7 +315,7 @@
 .sr-tickfill {
   height: 100%;
   width: 0;
-  background: var(--violet);
+  background: var(--ink);
   transform-origin: left;
 }
 .sr-tickfill.run {
@@ -319,10 +333,19 @@
   }
 }
 
-/* ---------- THE BOUNTY POSTER (was word panel + ante) ---------- */
-/* One inner double-ruled panel (3px border + inner rule), paper, straight. The
-   whole wanted-poster anatomy stacks inside it; only the FIELDS region scrolls. */
+/* ---------- THE MANGA PANEL (was word panel + ante) ---------- */
+/* .sr-card is the UNCLIPPED outer shell (positioning + shake + SFX overflow live
+   here). The visible panel is .sr-cardframe — that carries the fill, the rule, the
+   tone, and the STATE SHAPE (see the state-frame block in the manga pass). Only the
+   FIELDS region scrolls. */
 .sr-card {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sr-cardframe {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
@@ -333,23 +356,79 @@
   box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
   padding: clamp(12px, 2vh, 18px) clamp(16px, 2vw, 24px) clamp(10px, 1.6vh, 16px);
 }
-/* overline: tiny letter-spaced masthead line; the deep-cut variant is red */
-.sr-overline {
-  flex: 0 0 auto;
-  text-align: center;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  opacity: 0.6;
+/* MID screentone form-shading, masked to bloom from the bottom-left corner and fade
+   out — it FOLLOWS the panel corner, so it reads as drawn tone, not a flat block. */
+.sr-cardframe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--tone-mid);
+  background-size: var(--tone-cell);
+  opacity: 0.4;
+  -webkit-mask-image: radial-gradient(80% 90% at 0% 100%, #111 6%, transparent 60%);
+  mask-image: radial-gradient(80% 90% at 0% 100%, #111 6%, transparent 60%);
 }
-.sr-overline.deep {
-  color: var(--ink);
-  opacity: 1;
+/* keep the panel's own content above its tone */
+.sr-cardframe > * {
+  position: relative;
+  z-index: 1;
 }
-/* WANTED header — the poster's shout. Bungee, centred, with the off-register
-   violet plate (reuses .sr-print). MOST WANTED on a deep cut. */
+
+/* ---------- STATE THROUGH FORM: the panel EDGE is the signal ----------
+   Normal = the hard rectangle above (narrator box). Deep Cut, Revenant and the
+   final stage reshape THIS panel; Silver Tongue inverts it (see .sr-app.silver).
+   Shapes are clip-paths on .sr-cardframe, so the SFX on the unclipped outer card
+   still breaks past. Deep/Revenant drop the straight border (clip would cut its
+   corners) and carry the rule as an inset shadow that RIDES the shape, like the
+   torn page frames do. */
+.sr-card.deep .sr-cardframe,
+.sr-card.revenant .sr-cardframe {
+  border: none;
+  /* more breathing room so the spikes/waves never bite into the text */
+  padding: clamp(18px, 2.7vh, 26px) clamp(22px, 2.7vw, 32px) clamp(16px, 2.2vh, 22px);
+}
+/* DEEP CUT = the SHOUT BALLOON: a jagged starburst frame. */
+.sr-card.deep .sr-cardframe {
+  clip-path: polygon(
+    0% 5%, 8% 0%, 17% 5%, 25% 0%, 33% 5%, 42% 0%, 50% 5%, 58% 0%, 67% 5%, 75% 0%, 83% 5%, 92% 0%, 100% 5%,
+    95% 13%, 100% 21%, 95% 29%, 100% 38%, 95% 46%, 100% 54%, 95% 63%, 100% 71%, 95% 79%, 100% 88%, 95% 95%,
+    92% 100%, 83% 95%, 75% 100%, 67% 95%, 58% 100%, 50% 95%, 42% 100%, 33% 95%, 25% 100%, 17% 95%, 8% 100%, 0% 95%,
+    5% 88%, 0% 79%, 5% 71%, 0% 63%, 5% 54%, 0% 46%, 5% 38%, 0% 29%, 5% 21%, 0% 13%, 5% 5%
+  );
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 6px var(--ink); /* a thicker shout rule */
+}
+/* REVENANT = it's back and it's WRONG: a wavy, broken, distorted frame (note the
+   deep notch bitten out of the right edge). */
+.sr-card.revenant .sr-cardframe {
+  clip-path: polygon(
+    0% 3%, 14% 1%, 27% 4%, 41% 0%, 55% 3%, 69% 1%, 82% 4%, 100% 1%,
+    98% 10%, 100% 20%, 97% 30%, 88% 33%, 100% 40%, 97% 52%, 100% 64%, 97% 76%, 100% 86%, 98% 96%,
+    86% 98%, 72% 95%, 60% 99%, 46% 96%, 34% 100%, 20% 96%, 8% 99%, 0% 96%,
+    3% 86%, 0% 74%, 3% 62%, 0% 50%, 3% 40%, 0% 30%, 2% 20%, 0% 10%
+  );
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 4px var(--ink);
+}
+/* FINAL STAGE (or two suspects standing) = pressure without a colour change: the
+   frame TIGHTENS (a second rule closes in via ::after) and the tone DENSITY RISES
+   (::before → heavy, fuller mask). Composes with deep/revenant (both clipped). */
+.sr-card.atfinal .sr-cardframe::before {
+  background-image: var(--tone-heavy);
+  opacity: 0.5;
+  -webkit-mask-image: radial-gradient(120% 130% at 0% 100%, #111 20%, transparent 82%);
+  mask-image: radial-gradient(120% 130% at 0% 100%, #111 20%, transparent 82%);
+}
+.sr-card.atfinal .sr-cardframe::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  z-index: 0;
+  pointer-events: none;
+  border: 2px solid var(--ink); /* the tightening rule closing inward */
+}
+/* WANTED header — the poster's shout. Dela Gothic, centred, with the screentone
+   plate (reuses .sr-print). MOST WANTED on a deep cut. */
 .sr-wanted-wrap {
   position: relative;
   flex: 0 0 auto;
@@ -402,6 +481,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -448,9 +528,9 @@
   line-height: 1.55;
   color: var(--ink);
 }
-/* the blank: violet glyphs over a solid 3px ink underline */
+/* the blank: ink glyphs over a solid 3px ink underline */
 .sr-blank {
-  color: var(--violet);
+  color: var(--ink);
   font-weight: 700;
   letter-spacing: 1px;
   border-bottom: 3px solid var(--ink);
@@ -464,7 +544,7 @@
   line-height: 1.5;
   color: var(--ink);
 }
-/* KNOWN ALIASES — the root line; cousins in muted violet */
+/* KNOWN ALIASES — the root line; cousins in muted ink */
 .sr-root {
   font-family: 'Space Mono', monospace;
   font-size: 13.5px;
@@ -475,7 +555,7 @@
   font-weight: 700;
 }
 .sr-root .cz {
-  color: var(--violet);
+  color: var(--ink);
   opacity: 0.75;
 }
 
@@ -513,13 +593,16 @@
   color: var(--ink);
   text-transform: uppercase;
 }
-/* typed/committed letter: ink Bungee glyph */
+/* typed/committed letter: solid ink glyph on clean paper */
 .sr-slot.typed {
   color: var(--ink);
 }
-/* revealed/auto-printed letter: violet glyph (+ its Bungee weight) */
+/* revealed/auto-printed letter: the machine printed it, so the tile wears a MID
+   screentone under an ink glyph — distinct from a typed tile by TONE, not colour. */
 .sr-slot.revealed {
-  color: var(--violet);
+  color: var(--ink);
+  background-image: var(--tone-mid);
+  background-size: var(--tone-cell);
 }
 /* empty: dotted border, half opacity, no fill, no shadow */
 .sr-slot:not(.typed):not(.revealed):not(.cur) {
@@ -568,7 +651,7 @@
     background: var(--tile);
   }
   40% {
-    background: rgba(168, 85, 247, 0.32);
+    background: rgba(17, 17, 17, 0.28); /* a hard ink tint — reject reads by density */
   }
 }
 
@@ -588,7 +671,7 @@
   color: var(--ink);
 }
 .sr-msg.near {
-  color: var(--violet);
+  color: var(--ink);
 }
 
 /* ---------- start / cover page ---------- */
@@ -608,6 +691,7 @@
   width: min(560px, 92vw);
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -618,7 +702,7 @@
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--violet);
+    6px 6px 0 var(--ink);
   padding: clamp(24px, 4.5vh, 40px) clamp(22px, 4vw, 40px);
 }
 .sr-cover::before {
@@ -634,39 +718,11 @@
   position: relative;
   z-index: 1;
 }
-/* small gazette name above the masthead */
-.sr-gazette {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
 .sr-title {
   font-family: var(--font-head);
   font-size: clamp(44px, 9vw, 78px);
   line-height: 0.9;
   letter-spacing: 0;
-}
-/* ruled dateline row under the masthead */
-.sr-dateline {
-  width: 100%;
-  max-width: 440px;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 2px;
-  border-top: 2px solid var(--ink);
-  border-bottom: 2px solid var(--ink);
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.sr-dateline span:nth-child(2) {
-  opacity: 0.7;
 }
 /* paper button: ink border, hard shadow; press = translate + shadow shrink */
 .sr-btn {
@@ -698,38 +754,14 @@
    nothing here loops at rest.
    ===================================================================== */
 
-/* ---------- SFX stamp: a torn paper sticker on the panel's top corner ---------- */
+/* ---------- SFX BURST base — positioning + layering only. The LOOK (drawn,
+   outlined, panel-breaking) is set in the manga-pass .sr-stamp block below; here we
+   just anchor it above the panel so it can overflow. ---------- */
 .sr-stamp {
   position: absolute;
-  top: -16px;
-  right: -6px;
   z-index: 6;
-  padding: 4px clamp(9px, 1.3vw, 13px) 6px;
-  font-family: var(--font-head);
-  font-size: clamp(20px, 3.2vw, 26px); /* shrink on phones so it clears the meta line */
-  line-height: 1;
-  color: var(--stamp-tone, var(--violet));
-  -webkit-text-stroke: 2px var(--ink);
-  background: var(--paper);
-  border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
-  transform: rotate(4deg); /* the ONLY tilted element in the mode */
-  clip-path: polygon(
-    0% 12%, 6% 0%, 34% 7%, 52% 1%, 74% 8%, 100% 2%,
-    97% 32%, 100% 66%, 95% 100%, 66% 93%, 38% 100%, 14% 94%, 0% 100%, 4% 60%
-  );
-  animation: sr-stamp-punch 0.28s cubic-bezier(0.2, 0.9, 0.2, 1) both;
   pointer-events: none;
   white-space: nowrap;
-}
-.sr-stamp.violet {
-  --stamp-tone: var(--violet);
-}
-.sr-stamp.redink {
-  --stamp-tone: var(--ink);
-}
-.sr-stamp.ink {
-  --stamp-tone: var(--ink);
 }
 @keyframes sr-stamp-punch {
   0% {
@@ -746,20 +778,8 @@
   }
 }
 
-/* Deep Cut is now shown by the MOST WANTED header + the red overline (WordCard),
-   so the old corner ribbon is gone. */
-
-/* ---------- fine print: tiny, low-opacity poster footer line ---------- */
-.sr-fineprint {
-  flex: 0 0 auto;
-  margin-top: 8px;
-  text-align: center;
-  font-family: 'Space Mono', monospace;
-  font-size: 8.5px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  opacity: 0.4;
-}
+/* Deep Cut is shown by the starburst PANEL FRAME + the MOST WANTED header
+   (WordCard); the old corner ribbon and the newsprint furniture are gone. */
 
 /* ---------- wrong key: a tiny "TCH!" tick just above the typing row ---------- */
 .sr-slotwrap {
@@ -880,7 +900,7 @@
   }
 }
 
-/* ---------- BEAT: the multiplier's violet plate rattles ~1px further off-register ---------- */
+/* ---------- BEAT: the multiplier's screentone plate rattles ~1px further off-register ---------- */
 .sr-mult.sr-print::before {
   transition: transform 120ms ease-out;
 }
@@ -891,10 +911,10 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   );
 }
 
-/* ---------- SILVER TONGUE: the page reprints in NEGATIVE ---------- */
-/* One class on .sr-app flips the tokens; every panel/rule/label inherits. Only
-   the shadows (which must read VIOLET, not a swapped paper) and the halftone /
-   grain opacities are overridden. Nothing NEW animates while silver holds. */
+/* ---------- SILVER TONGUE: the panel INVERTS — white on black, "the page turns" ---------- */
+/* One class on .sr-app flips the two tokens; every panel / rule / label / tone dot
+   inherits (tone is var(--ink), so it inverts to paper too). Only the halftone /
+   grain opacities are nudged. Nothing NEW animates while silver holds. */
 .sr-app.silver {
   --paper: #111;
   --ink: #f0ead9;
@@ -903,11 +923,10 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-app.silver .sr-stage {
   box-shadow:
     inset 0 0 0 3px var(--paper),
-    inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--violet);
+    inset 0 0 0 8px var(--ink);
 }
 .sr-app.silver .sr-slot {
-  box-shadow: 2px 2px 0 var(--violet);
+  box-shadow: 2px 2px 0 var(--ink);
 }
 .sr-app.silver .sr-stage::after {
   opacity: 0.3;
@@ -958,7 +977,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 /* ---------- results — one retro-print PAGE (death dominates entry) ---------- */
 .sr-results {
   flex-direction: column;
-  overflow-y: auto; /* the overlay scrolls; the page's own overflow stays visible */
+  overflow-y: auto;
+  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */ /* the overlay scrolls; the page's own overflow stays visible */
 }
 .sr-respage {
   position: relative;
@@ -975,7 +995,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--violet);
+    6px 6px 0 var(--ink);
   padding: clamp(26px, 4.5vh, 44px) clamp(20px, 3.5vw, 34px);
 }
 .sr-respage::before {
@@ -1032,7 +1052,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   text-transform: uppercase;
   opacity: 0.7;
 }
-/* AVG ANTE — the headline: big Bungee ink with the violet plate off-register */
+/* AVG ANTE — the headline: big Bungee ink with the screentone plate off-register */
 .sr-hero {
   display: flex;
   flex-direction: column;
@@ -1182,7 +1202,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   left: 0;
   right: 0;
   background: rgba(17, 17, 17, 0.94);
-  border-top: 1px solid rgba(168, 85, 247, 0.24);
+  border-top: 1px solid rgba(240, 234, 217, 0.24);
   padding: 9px 16px;
   display: flex;
   gap: 18px;
@@ -1201,10 +1221,10 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-tuner input[type='range'] {
   width: 120px;
-  accent-color: var(--violet);
+  accent-color: var(--ink);
 }
 .sr-tuner b {
-  color: var(--violet);
+  color: var(--paper);
   font-variant-numeric: tabular-nums;
   min-width: 46px;
   display: inline-block;
@@ -1216,9 +1236,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   text-transform: uppercase;
 }
 .sr-tuner .scene {
-  background: rgba(168, 85, 247, 0.18);
+  background: rgba(240, 234, 217, 0.16);
   color: var(--paper);
-  border: 1px solid rgba(168, 85, 247, 0.4);
+  border: 1px solid rgba(240, 234, 217, 0.4);
   border-radius: 6px;
   padding: 4px 9px;
   font-size: 10px;
@@ -1289,13 +1309,14 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 
 /* ============================================================================
-   THE BRIEFING — the pre-run STUDY screen. Same paper/ink/violet print language
+   THE BRIEFING — the pre-run STUDY screen. Same paper/ink/screentone print language
    as the cover and poster, but CALM: no timer, no drain bar, no idle motion. A
    quiet reading surface. The filled sentence is the hero of each card.
    ============================================================================ */
 .sr-brief-screen {
   /* the screen wrapper already centres on the void; allow the tall page to scroll */
   overflow-y: auto;
+  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
   padding: clamp(12px, 2.5vh, 32px) 16px;
 }
 .sr-brief-page {
@@ -1310,7 +1331,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--violet);
+    6px 6px 0 var(--ink);
   padding: clamp(20px, 3.5vh, 34px) clamp(18px, 3.5vw, 34px);
 }
 .sr-brief-page::before {
@@ -1348,7 +1369,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   opacity: 0.8;
 }
 .sr-brief-family b {
-  color: var(--violet);
+  color: var(--ink);
   font-size: 14px;
 }
 
@@ -1415,7 +1436,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 /* the answer, filled in and highlighted (shared by the re-encode beat) */
 .sr-brief-fill {
-  background: var(--violet);
+  background: var(--ink);
   color: var(--paper);
   padding: 0 5px;
   font-weight: 700;
@@ -1426,7 +1447,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   margin: 0;
   font-family: 'Space Mono', monospace;
   font-size: 13px;
-  font-style: italic;
+  font-weight: 700; /* emphasis is BOLD, never italic (manga lettering convention) */
   opacity: 0.8;
 }
 .sr-brief-root {
@@ -1437,7 +1458,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-brief-morph {
   font-weight: 700;
-  color: var(--violet);
+  color: var(--ink);
 }
 .sr-brief-mean {
   opacity: 0.85;
@@ -1453,7 +1474,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-tick {
   display: inline-block;
   margin-left: 2px;
-  color: var(--violet);
+  color: var(--ink);
   font-weight: 700;
 }
 
@@ -1514,7 +1535,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   margin: 0;
   font-family: 'Space Mono', monospace;
   font-size: 13px;
-  font-style: italic;
+  font-weight: 700; /* emphasis is BOLD, never italic */
   opacity: 0.8;
 }
 .sr-reencode-cousin {
@@ -1523,7 +1544,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-size: 12.5px;
 }
 .sr-reencode-cousin b {
-  color: var(--violet);
+  color: var(--ink);
 }
 .sr-reencode-hint {
   margin-top: 6px;
@@ -1555,7 +1576,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-mastered b {
   font-family: var(--font-head);
   font-size: 16px;
-  color: var(--violet);
+  color: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1566,8 +1587,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 
 /* =====================================================================
    MODE SELECT — the two ways to play, right after the cover. Same paper /
-   double-rule / ink+violet language; two cards, one line each. The last choice
-   wears `.sel` (violet plate + heavier rule). No looping motion (quiet-by-default);
+   double-rule / ink+screentone language; two cards, one line each. The last choice
+   wears `.sel` (screentone plate + heavier rule). No looping motion (quiet-by-default);
    only the press feedback the paper buttons already use.
    ===================================================================== */
 .sr-modeselect {
@@ -1575,6 +1596,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   width: min(520px, 92vw);
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1585,7 +1607,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 8px var(--ink),
-    6px 6px 0 var(--violet);
+    6px 6px 0 var(--ink);
   padding: clamp(24px, 4.5vh, 40px) clamp(20px, 4vw, 36px);
 }
 .sr-modeselect::before {
@@ -1639,11 +1661,11 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 var(--ink);
 }
-/* the preselected (last-chosen) card: a heavier rule + a violet inner plate */
+/* the preselected (last-chosen) card: a heavier rule + a ink inner plate */
 .sr-modecard.sel {
   box-shadow:
     inset 0 0 0 2px var(--paper),
-    inset 0 0 0 4px var(--violet),
+    inset 0 0 0 4px var(--ink),
     4px 4px 0 var(--ink);
 }
 .sr-modecard-title {
@@ -1699,8 +1721,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-lineup-count {
   flex: 0 0 auto;
   padding: 1px 7px;
-  border: 2px solid var(--violet);
-  color: var(--violet);
+  border: 2px solid var(--ink);
+  color: var(--ink);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: 10px;
@@ -1783,16 +1805,15 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   );
 }
 
-/* ---- the page frames: a few degrees of lean + a torn edge that the hard violet
-   offset shadow follows (drop-shadow, not box-shadow, so it tracks the tear). The
-   inset double-rule stays and rides the torn silhouette. ---- */
+/* ---- the page frames: a few degrees of lean + a torn edge. No drop shadow —
+   manga panels sit flush on the black gutter; the torn silhouette + the inset
+   double-rule (which rides the tear) carry the separation. ---- */
 .sr-stage,
 .sr-cover,
 .sr-modeselect,
 .sr-respage {
   clip-path: var(--torn);
   box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 8px var(--ink);
-  filter: drop-shadow(6px 6px 0 var(--violet));
 }
 .sr-stage { transform: rotate(var(--tilt)); }
 .sr-cover { transform: rotate(calc(var(--tilt) * -1.3)); }
@@ -1815,9 +1836,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-hud { transform: skewX(-6deg); }
 .sr-hud .sr-hcell > * { transform: skewX(6deg); }
 
-/* ---- WANTED banner: white-on-black, slashed at an angle, on a focus-line burst.
-   The off-register violet plate is dropped here (the black bar is the treatment);
-   a violet hard shadow keeps the accent. ---- */
+/* ---- WANTED banner: paper-on-ink, slashed at an angle, on a focus-line tone
+   burst. The screentone plate is dropped here (the solid black bar IS the
+   treatment); a hard ink offset gives it depth on the page. ---- */
 .sr-wanted-wrap { isolation: isolate; }
 .sr-wanted-wrap::before {
   content: '';
@@ -1841,7 +1862,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   background: var(--ink);
   color: var(--paper);
   transform: rotate(-2.2deg);
-  box-shadow: 4px 4px 0 var(--violet);
+  box-shadow: 4px 4px 0 var(--ink);
   clip-path: polygon(3% 0, 100% 6%, 97% 100%, 0 92%); /* a slashed sign, not a clean rect */
 }
 
@@ -1854,7 +1875,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   color: var(--paper);
   background: var(--ink);
   border: none;
-  box-shadow: 3px 3px 0 var(--violet);
+  box-shadow: 3px 3px 0 var(--ink);
   transform: translate(-50%, -50%) rotate(-5deg);
   clip-path: polygon(2% 0, 100% 8%, 98% 100%, 0 90%);
 }
@@ -1896,56 +1917,57 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: var(--font-impact);
   font-size: clamp(13px, 2.7vw, 18px);
   letter-spacing: 2px;
-  box-shadow: 0 2px 0 var(--violet);
+  box-shadow: 0 2px 0 var(--ink);
 }
 
-/* ---- IMPACT STAMP → a jagged Bangers burst that PUNCHES in and settles (no fade).
-   Repositioned fully inside the poster so it never fights the torn clip. Capture =
-   a violet burst; escape = a black burst; the label carries the rest. ---- */
+/* ---- IMPACT SFX → hand-lettered Bangers DRAWN OVER AND PAST the panel edge, the
+   way manga sound effects overlap the frame. No plate: the letters themselves carry
+   it — paper fill, a HEAVY ink outline, and an OFFSET INK FILL (the drop copy) for
+   depth. Anchored to the UNCLIPPED outer .sr-card with negative offsets so it pokes
+   past the panel's top-right, rotated. It punches in and settles (no fade). ---- */
 .sr-stamp {
-  --stamp-rot: -5deg;
-  top: 8px;
-  right: 8px;
-  padding: 10px 20px 12px;
+  --stamp-rot: -8deg;
+  top: -24px;
+  right: -16px;
+  padding: 0;
   font-family: var(--font-impact);
-  font-size: clamp(26px, 5vw, 42px);
+  font-size: clamp(30px, 6.5vw, 56px);
+  line-height: 1;
   letter-spacing: 1px;
-  color: var(--paper);
-  background: var(--ink);
+  color: var(--paper); /* front fill */
+  background: transparent;
   border: none;
-  -webkit-text-stroke: 0;
-  box-shadow: 3px 3px 0 var(--violet);
+  clip-path: none;
+  box-shadow: none;
+  -webkit-text-stroke: 3px var(--ink); /* the heavy outline */
+  paint-order: stroke fill; /* outline behind the fill so the paper reads clean */
+  text-shadow: 6px 6px 0 var(--ink); /* the offset ink fill = depth */
   transform: rotate(var(--stamp-rot));
-  clip-path: polygon(
-    0% 32%, 14% 24%, 10% 4%, 30% 16%, 46% 0%, 58% 15%, 78% 5%, 76% 25%, 100% 22%,
-    88% 42%, 100% 62%, 82% 66%, 90% 92%, 66% 80%, 52% 100%, 40% 82%, 20% 96%, 22% 72%,
-    0% 74%, 12% 52%
-  );
   animation: sr-burst-punch 0.3s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
-.sr-stamp.violet { background: var(--violet); color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
-.sr-stamp.redink,
-.sr-stamp.ink { background: var(--ink); color: var(--paper); box-shadow: 3px 3px 0 var(--violet); }
+/* capture (clear) vs escape (miss): same lettering, mirrored lean so they don't
+   read as the same beat; the label (CAPTURED!! / ESCAPED?!) carries the rest. */
+.sr-stamp.capture { --stamp-rot: -8deg; }
+.sr-stamp.escape { --stamp-rot: 7deg; }
 @keyframes sr-burst-punch {
   0% { transform: rotate(var(--stamp-rot)) scale(0.4); opacity: 0; }
   55% { transform: rotate(var(--stamp-rot)) scale(1.12); opacity: 1; }
   100% { transform: rotate(var(--stamp-rot)) scale(1); opacity: 1; }
 }
 
-/* ---- CASE CLOSED (results) → heavy Bangers with a violet drop ---- */
+/* ---- CASE CLOSED (results) → heavy Bangers with a tonal drop ---- */
 .sr-dead {
   font-family: var(--font-impact);
   color: var(--ink);
   -webkit-text-stroke: 0;
-  text-shadow: 4px 4px 0 var(--violet);
+  /* depth from a TONAL ghost (ink at ~35% via alpha), not a second colour */
+  text-shadow: 5px 5px 0 rgba(17, 17, 17, 0.35);
   letter-spacing: 2px;
 }
 
-/* ---- danger/special ACCENTS that read best in violet (the one hue), restored
-   after the blanket red->ink sweep ---- */
-.sr-overline.deep { color: var(--violet); }
-.sr-brief-card.review { border-color: var(--violet); box-shadow: 3px 3px 0 var(--violet); }
-.sr-brief-review { background: var(--violet); }
+/* ---- REVIEW / SEEN-BEFORE = a heavy ink flag (form, not colour). ---- */
+.sr-brief-card.review { border-color: var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.sr-brief-review { background: var(--ink); }
 
 /* ---- MODE-SELECT cards: give them the mugshot lean too ---- */
 .sr-modecard:nth-child(1) { transform: rotate(-1.4deg); }
@@ -1964,8 +1986,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 
 /* ============================================================================
    ShareBar, as it appears in SAT RUSH only (scoped to .sr-share) — de-neoned to
-   the duotone print language: paper buttons, ink linework, violet primary, hard
-   ink offset, no rounded corners. Other modes' ShareBar is untouched.
+   the ink/paper print language: paper buttons, ink linework, a SOLID INK primary
+   (paper type), hard ink offset, no rounded corners. Other modes' ShareBar untouched.
    ============================================================================ */
 .sr-share .share-btn {
   font-family: var(--font-head);
@@ -1976,8 +1998,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow: 3px 3px 0 var(--ink);
 }
 .sr-share .share-btn.share-primary {
-  background: var(--violet);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
 }
 .sr-share .share-btn:hover:not(:disabled) { box-shadow: 4px 4px 0 var(--ink); }
 .sr-share .share-btn:active:not(:disabled) { box-shadow: 1px 1px 0 var(--ink); }

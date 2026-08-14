@@ -29,10 +29,10 @@ import {
 // page tear), so the per-event particle bursts / screen washes are gone — cues
 // stay, screen-wide spam went. What survives here mostly plays sound; only a few
 // rare, high-impact moments (silver break, death) keep a wash. STRICT DUOTONE:
-// every wash/shard is ink, paper, or violet — no chrome greys, no white, and no
-// red (danger reads through heavy ink + jagged form + violet). Deep Cut is its
-// audio cue + the CSS treatment (no colour).
-const VIOLET = '#a855f7';
+// every wash/shard is INK or PAPER — no spot colour, no chrome greys, no white, no
+// red. Danger reads through heavy ink + jagged form + screentone. Deep Cut is its
+// audio cue + the CSS treatment (form, not colour).
+const INK = '#111111';
 const PAPER = '#f0ead9';
 
 const el = (sel) => (typeof document !== 'undefined' ? document.querySelector(sel) : null);
@@ -61,7 +61,7 @@ export function multiplierDrop(stage, maxStage) {
   const m = el('.sr-mult');
   if (m) {
     squash(m);
-    flash(m, VIOLET);
+    flash(m, INK);
   }
   // Higher stage = lower ante = lower pitch. scoreTick maps 0..1 -> pitch.
   scoreTick(maxStage > 0 ? 1 - stage / maxStage : 0);
@@ -94,7 +94,7 @@ export function silverEnter() {
 export function silverBreak() {
   const { x, y } = centerOf('.sr-card');
   screenFlash({ alpha: 0.4, color: PAPER, life: 0.26 });
-  burst(x, y, { count: 40, colors: [VIOLET, PAPER], speed: 380, life: 0.9 });
+  burst(x, y, { count: 40, colors: [INK, PAPER], speed: 380, life: 0.9 });
   shake(9, 380);
   defeatTone();
 }

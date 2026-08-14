@@ -223,12 +223,13 @@ export function useSatRushGame() {
       }
       pendingRef.current = 'clear';
       const silverJustOn = r.silverTongue && !prevSilverRef.current;
-      // The clear stamp (all violet): SILVER TONGUE entry gets its own; a near/alt
-      // clear reads "CLOSE!"; otherwise "CAPTURED!!" (the fugitive is caught).
+      // The clear SFX (tone 'capture'): SILVER TONGUE entry gets its own; a near/alt
+      // clear reads "SO CLOSE…!" (a cut-off realisation — manga punctuation grammar);
+      // otherwise "CAPTURED!!" (the fugitive is caught).
       stampSeq.current += 1;
       stampRef.current = {
-        text: silverJustOn ? 'SILVER TONGUE!' : viaAlt ? 'CLOSE!' : 'CAPTURED!!',
-        tone: 'violet',
+        text: silverJustOn ? 'SILVER TONGUE!' : viaAlt ? 'SO CLOSE…!' : 'CAPTURED!!',
+        tone: 'capture',
         kind: silverJustOn ? 'silver' : viaAlt ? 'close' : 'got',
         id: stampSeq.current,
       };
@@ -289,7 +290,7 @@ export function useSatRushGame() {
     // The miss stamp = the fugitive got away (drives the page-tear too, via
     // kind === 'miss').
     stampSeq.current += 1;
-    stampRef.current = { text: 'ESCAPED!!', tone: 'redink', kind: 'miss', id: stampSeq.current };
+    stampRef.current = { text: 'ESCAPED?!', tone: 'escape', kind: 'miss', id: stampSeq.current };
     // Death dominates; otherwise a chrome-shatter if this miss broke SILVER
     // TONGUE, else a plain KO miss.
     if (r.gameOver) juice.death();
