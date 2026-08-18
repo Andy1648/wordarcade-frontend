@@ -33,6 +33,13 @@ export const DEFAULT_CONFIG = {
   //             final stage; suspects are attached to each presentation here.
   mode: 'briefing',
   stageIntervalMs: 2800, // per-stage reveal cadence (configurable, live-tunable)
+  // LINEUP-only stage-cadence multiplier. Recognition among 6 unknown words needs
+  // reading time that recall-after-study (briefing) doesn't — briefing already
+  // knows the words, lineup is scanning a fresh sentence + six suspect words each
+  // stage. The engine stays mode-agnostic: it exposes this in config only and
+  // never branches on mode for timing; the hook multiplies the stage delay by it
+  // (and by the deep-cut scale, multiplicatively) when the run is in lineup mode.
+  lineupStageScale: 3.0,
   stageMultipliers: [5, 3, 1], // by stage index 0..2 (three coarse beats)
   // SPELL-ALONG endgame: at the final stage letters keep auto-revealing on this
   // cadence (never scaled by the deep-cut interval) until only the last letter is
@@ -81,6 +88,37 @@ export const REVEAL_STAGE = {
 export function curveTier(wordNumber, config = DEFAULT_CONFIG) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   return Math.min(cfg.tierMax, 1 + Math.floor(wordNumber / cfg.tierEvery));
+}
+
+/**
+ * The effective per-stage cadence for the UI clock, as a PURE formula so the
+ * timeline is unit-testable without a React render (the engine never schedules;
+ * the hook owns the wall clock and reads this). Two scales STACK multiplicatively
+ * on the base:
+ *   deep cut → base * deepCutIntervalScale (dramatic slow, either mode)
+ *   lineup   → base * lineupStageScale     (reading time for 6 unknown words)
+ * With mode 'briefing' and no deep cut this returns the base unchanged, so the
+ * briefing timeline is byte-identical to before this knob existed.
+ * @param {number} baseMs  the base stage interval (the live/dev-tunable value)
+ * @param {object} [opts]   { isDeepCut, mode }
+ * @param {object} [config] overrides for the scales (deepCutIntervalScale, lineupStageScale)
+ */
+export function effectiveStageIntervalMs(baseMs, { isDeepCut = false, mode = 'briefing' } = {}, config = DEFAULT_CONFIG) {
+  const cfg = { ...DEFAULT_CONFIG, ...config };
+  const deepScale = isDeepCut ? cfg.deepCutIntervalScale : 1;
+  const lineupScale = mode === 'lineup' ? cfg.lineupStageScale : 1;
+  return Math.round(baseMs * deepScale * lineupScale);
+}
+
+/**
+ * LINEUP's final-stage last-call decision window: a base beat plus a little
+ * per-letter typing time so long fugitives stay reachable once spotted. PURE, and
+ * computed from the UNSCALED base ONLY — lineupStageScale must NEVER stretch this
+ * coin-flip (a 3x window would be 12s+). Kept as a shared helper so the hook and
+ * the tests read the one formula.
+ */
+export function lineupWindowMs(baseMs, len = 0) {
+  return Math.round(baseMs * 1.4) + (len || 0) * 200;
 }
 
 /**

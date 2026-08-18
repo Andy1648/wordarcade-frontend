@@ -5,7 +5,7 @@
 // rules (deep-cut interval scale, grace length) are read from engine.config; the
 // only thing this hook decides is the base stage interval (dev-tunable).
 import { useReducer, useRef, useEffect, useCallback } from 'react';
-import { createSatRushEngine, DEFAULT_CONFIG } from './engine';
+import { createSatRushEngine, DEFAULT_CONFIG, effectiveStageIntervalMs, lineupWindowMs } from './engine';
 import { createSlotInput } from './input';
 import { readRecentWords, pushRecentWord } from './recentWords';
 import * as lexicon from './lexicon';
@@ -15,6 +15,7 @@ import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
 import {
   SAT_RUSH_STAGE_MS,
+  SAT_RUSH_LINEUP_SCALE,
   SAT_RUSH_SCENE,
   SAT_RUSH_DEV_TUNER,
   SAT_RUSH_FREEZE,
@@ -88,6 +89,10 @@ export function useSatRushGame() {
   const cfgRef = useRef({
     stageMs: SAT_RUSH_STAGE_MS,
     spellMs: DEFAULT_CONFIG.spellAlongMs,
+    // LINEUP-only stage-cadence multiplier (seeds from the ?lineupx= escape hatch,
+    // live-tunable). Applied to the stage delay in lineup runs only — never to the
+    // last-call window, never in briefing.
+    lineupScale: SAT_RUSH_LINEUP_SCALE,
     deepEvery: DEFAULT_CONFIG.deepCutEvery,
     revGap: DEFAULT_CONFIG.revenantOffset,
     climb: DEFAULT_CONFIG.tierEvery,
@@ -325,8 +330,14 @@ export function useSatRushGame() {
     if (!c || c.resolved) return;
 
     const lastStage = eng.config.stageMultipliers.length - 1;
-    const scale = c.isDeepCut ? eng.config.deepCutIntervalScale : 1;
-    const interval = Math.round(cfgRef.current.stageMs * scale);
+    // Effective stage delay: deep-cut and LINEUP scales stack multiplicatively on
+    // the base. lineupScale is read LIVE from cfgRef (dev-tunable), so it overrides
+    // the value baked into eng.config at engine creation.
+    const interval = effectiveStageIntervalMs(
+      cfgRef.current.stageMs,
+      { isDeepCut: c.isDeepCut, mode: modeRef.current },
+      { ...eng.config, lineupStageScale: cfgRef.current.lineupScale }
+    );
     // LINEUP mode has NO spell-along: the narrowed lineup (2 suspects, differing at
     // the first letter) is the aid, so the final stage is a plain decision window
     // then a walked-away miss — and the free first letter is NOT revealed (it would
@@ -346,7 +357,9 @@ export function useSatRushGame() {
     };
     // LINEUP's final-stage decision window: a base beat plus a little per-letter
     // typing time, so long fugitives are still reachable once you've spotted them.
-    const lineupWindowMs = (len) => Math.round(cfgRef.current.stageMs * 1.4) + (len || 0) * 200;
+    // CRITICAL: computed from the UNSCALED base cfgRef.current.stageMs — the
+    // lineupScale must never stretch the last-call coin flip (a 3x window = 12s+).
+    const lineupWindow = (len) => lineupWindowMs(cfgRef.current.stageMs, len);
 
     if (c.stage < lastStage) {
       stageTimer.current = setTimeout(() => {
@@ -362,7 +375,7 @@ export function useSatRushGame() {
             if (inputRef.current.getState().revealed === 0) inputRef.current.revealNextLetter();
             graceMsRef.current = spellWindowMs();
           } else {
-            graceMsRef.current = lineupWindowMs(now.length);
+            graceMsRef.current = lineupWindow(now.length);
           }
         }
         force();
@@ -371,7 +384,7 @@ export function useSatRushGame() {
       // Final stage, LINEUP — hold the decision window, then a walked-away miss.
       // Completing at any point runs the normal clear path (keyboard effect);
       // Escape still skips. No auto-reveal.
-      graceMsRef.current = lineupWindowMs(c.length);
+      graceMsRef.current = lineupWindow(c.length);
       stageTimer.current = setTimeout(doMiss, graceMsRef.current);
     } else {
       // Final stage — the SPELL-ALONG endgame. Instead of a silent grace then a
@@ -482,7 +495,7 @@ export function useSatRushGame() {
   // ---- public actions ----
   const freshEngine = useCallback((briefed = [], mode = 'briefing') => {
     clearTimers();
-    const { stageMs, spellMs, deepEvery, revGap, climb } = cfgRef.current;
+    const { stageMs, spellMs, lineupScale, deepEvery, revGap, climb } = cfgRef.current;
     engineRef.current = createSatRushEngine({
       words: WORDS,
       recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
@@ -491,6 +504,7 @@ export function useSatRushGame() {
         mode, // 'briefing' (spell-along net) | 'lineup' (suspect lineup, no spell-along)
         stageIntervalMs: stageMs,
         spellAlongMs: spellMs,
+        lineupStageScale: lineupScale, // LINEUP stage-cadence multiplier (mode-agnostic in the engine)
         deepCutEvery: deepEvery,
         revenantOffset: revGap,
         tierEvery: climb,
@@ -745,8 +759,14 @@ function buildView(state, cur, eng, input, extra) {
   };
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 
-  const scale = cur.isDeepCut ? eng.config.deepCutIntervalScale : 1;
-  const interval = Math.round(extra.cfg.stageMs * scale);
+  // The drain-bar animation must match the ACTUAL stage timer, so it carries the
+  // same deep-cut × lineup scaling (lineupScale read live from cfg). atFinal words
+  // drain over graceMs instead (the lineup last-call / spell-along window).
+  const interval = effectiveStageIntervalMs(
+    extra.cfg.stageMs,
+    { isDeepCut: cur.isDeepCut, mode: extra.mode },
+    { ...eng.config, lineupStageScale: extra.cfg.lineupScale }
+  );
   const atFinal = cur.stage >= eng.config.stageMultipliers.length - 1;
 
   // Which state the card is in (for the tag + styling). Silver can co-exist with

@@ -11,12 +11,24 @@ export default function DevTuner({ cfg, setStageMs, setSpellMs, setKnob, scene, 
         <input
           type="range"
           min="400"
-          max="3000"
+          max="6000"
           step="50"
           value={cfg.stageMs}
           onChange={(e) => setStageMs(Number(e.target.value))}
         />
         <b>{cfg.stageMs}ms</b>
+      </label>
+      <label>
+        lineup x
+        <input
+          type="range"
+          min="1"
+          max="4"
+          step="0.25"
+          value={cfg.lineupScale}
+          onChange={(e) => setKnob('lineupScale', Number(e.target.value))}
+        />
+        <b>{cfg.lineupScale}x</b>
       </label>
       <label>
         spell interval
