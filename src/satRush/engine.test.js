@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import {
   createSatRushEngine,
   curveTier,
+  effectiveStageIntervalMs,
+  lineupWindowMs,
   revealSchedule,
   DEFAULT_CONFIG,
   REVEAL_META,
@@ -398,6 +400,78 @@ test('endgame() tracks a custom spellAlongMs (tickMs and the 2x final hold)', ()
   const eg = eng.endgame();
   assert.equal(eg.tickMs, 700);
   assert.equal(eg.finalHoldMs, 1400);
+});
+
+// --- LINEUP stage-cadence scale (recognition needs reading time) -----------
+// LINEUP serves six unknown suspect words plus a fresh sentence each stage, so its
+// stage cadence gets its own multiplier that briefing (recall-after-study) doesn't.
+// The formula lives in effectiveStageIntervalMs so the hook's timeline is testable.
+
+test('(a) lineup stage advances run at base*lineupStageScale; briefing runs at base', () => {
+  const base = DEFAULT_CONFIG.stageIntervalMs;
+  // Briefing is exactly the base cadence — no scale applied.
+  assert.equal(effectiveStageIntervalMs(base, { mode: 'briefing' }), base);
+  // Lineup is base * lineupStageScale.
+  assert.equal(
+    effectiveStageIntervalMs(base, { mode: 'lineup' }),
+    Math.round(base * DEFAULT_CONFIG.lineupStageScale)
+  );
+  // Sanity: with the shipped 3.0 default a 2800ms base becomes an 8400ms lineup beat.
+  assert.equal(effectiveStageIntervalMs(2800, { mode: 'lineup' }), 8400);
+});
+
+test('the deep-cut and LINEUP scales STACK multiplicatively (lineup deep cut)', () => {
+  const base = DEFAULT_CONFIG.stageIntervalMs;
+  assert.equal(
+    effectiveStageIntervalMs(base, { mode: 'lineup', isDeepCut: true }),
+    Math.round(base * DEFAULT_CONFIG.deepCutIntervalScale * DEFAULT_CONFIG.lineupStageScale)
+  );
+  // A briefing deep cut only carries the deep-cut scale (lineup scale absent).
+  assert.equal(
+    effectiveStageIntervalMs(base, { mode: 'briefing', isDeepCut: true }),
+    Math.round(base * DEFAULT_CONFIG.deepCutIntervalScale)
+  );
+});
+
+test('(b) the last-call window is UNCHANGED by the lineup scale (never a 12s coin flip)', () => {
+  const base = DEFAULT_CONFIG.stageIntervalMs;
+  const len = 7;
+  const expected = Math.round(base * 1.4) + len * 200;
+  // lineupWindowMs takes the UNSCALED base only — there is no scale argument that
+  // could stretch it, so a 3x (or any) stage scale leaves the window identical.
+  assert.equal(lineupWindowMs(base, len), expected);
+  // Explicit guard on the requirement: the window stays well under 12s at the
+  // shipped base, whereas a scaled stage beat (8400ms) would blow past it.
+  assert.ok(expected < 12000, 'last-call window must stay a snappy coin flip');
+  assert.ok(effectiveStageIntervalMs(base, { mode: 'lineup' }) > expected);
+});
+
+test('(c) lineupStageScale: 1 reproduces today\'s lineup timeline exactly', () => {
+  const base = DEFAULT_CONFIG.stageIntervalMs;
+  const noScale = { lineupStageScale: 1 };
+  // With the scale at 1 a lineup stage beat equals the briefing (base) beat...
+  assert.equal(
+    effectiveStageIntervalMs(base, { mode: 'lineup' }, noScale),
+    effectiveStageIntervalMs(base, { mode: 'briefing' })
+  );
+  // ...and equals the raw base — byte-identical to a mode with no scaling at all.
+  assert.equal(effectiveStageIntervalMs(base, { mode: 'lineup' }, noScale), base);
+  // Deep cut with the scale at 1 also matches the briefing deep-cut beat exactly.
+  assert.equal(
+    effectiveStageIntervalMs(base, { mode: 'lineup', isDeepCut: true }, noScale),
+    effectiveStageIntervalMs(base, { mode: 'briefing', isDeepCut: true })
+  );
+});
+
+test('briefing cadence is byte-identical to the engine stageIntervalMs() (scale is lineup-only)', () => {
+  const eng = engine();
+  eng.nextWord(); // briefing mode default, word 1 (not a deep cut)
+  const c = eng.getState().current;
+  assert.equal(c.isDeepCut, false);
+  assert.equal(
+    effectiveStageIntervalMs(eng.config.stageIntervalMs, { mode: 'briefing', isDeepCut: c.isDeepCut }, eng.config),
+    eng.stageIntervalMs()
+  );
 });
 
 // --- cross-run recency (deprioritize, never ban) ---------------------------
