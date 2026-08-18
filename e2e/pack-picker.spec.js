@@ -9,6 +9,13 @@ import { installBackendMock, gotoMenu } from './support/backendMock.js';
 import PACKS from '../src/data/packs.js';
 
 const PACK_COUNT = PACKS.length; // 15
+const TOTAL_CATS = PACKS.reduce((s, p) => s + p.count, 0); // sum of every pack's category count
+const MOVIES = PACKS.find((p) => p.id === 'movies'); // toggled in the count test
+// CLEAR leaves exactly the first pack selected (App handleSetAllBlitzPacks → PACKS.slice(0, 1)).
+const CLEAR_PACK = PACKS[0];
+// The footer copy: "N PACKS · M CATEGORIES LOADED" (M = summed counts of the selected packs).
+const loaded = (n, cats) =>
+  `${n} PACK${n === 1 ? '' : 'S'} · ${cats} ${cats === 1 ? 'CATEGORY' : 'CATEGORIES'} LOADED`;
 
 test.describe('Category Blitz pack picker', () => {
   test.beforeEach(async ({ page }) => {
@@ -30,7 +37,7 @@ test.describe('Category Blitz pack picker', () => {
 
     // Default: all packs on, count reflects it.
     await expect(page.locator('.ppp-pill.is-on')).toHaveCount(PACK_COUNT);
-    await expect(page.locator('.ppp-count-num')).toHaveText(`${PACK_COUNT} PACKS LOADED`);
+    await expect(page.locator('.ppp-count-num')).toHaveText(loaded(PACK_COUNT, TOTAL_CATS));
   });
 
   test('toggling a pack updates its pressed state and the count', async ({ page }) => {
@@ -40,12 +47,12 @@ test.describe('Category Blitz pack picker', () => {
     await movies.click();
     await expect(movies).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('.ppp-pill.is-on')).toHaveCount(PACK_COUNT - 1);
-    await expect(page.locator('.ppp-count-num')).toHaveText(`${PACK_COUNT - 1} PACKS LOADED`);
+    await expect(page.locator('.ppp-count-num')).toHaveText(loaded(PACK_COUNT - 1, TOTAL_CATS - MOVIES.count));
 
     // Toggling back on restores it.
     await movies.click();
     await expect(movies).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.ppp-count-num')).toHaveText(`${PACK_COUNT} PACKS LOADED`);
+    await expect(page.locator('.ppp-count-num')).toHaveText(loaded(PACK_COUNT, TOTAL_CATS));
   });
 
   test('CLEAR leaves exactly one pack, then SELECT ALL restores every pack', async ({ page }) => {
@@ -57,12 +64,12 @@ test.describe('Category Blitz pack picker', () => {
     // CLEAR intentionally keeps one pack selected (the "≥1 pack" invariant), and
     // the control flips to SELECT ALL.
     await expect(page.locator('.ppp-pill.is-on')).toHaveCount(1);
-    await expect(page.locator('.ppp-count-num')).toHaveText('1 PACK LOADED');
+    await expect(page.locator('.ppp-count-num')).toHaveText(loaded(1, CLEAR_PACK.count));
     await expect(setAll).toHaveText('SELECT ALL');
 
     await setAll.click();
     await expect(page.locator('.ppp-pill.is-on')).toHaveCount(PACK_COUNT);
-    await expect(page.locator('.ppp-count-num')).toHaveText(`${PACK_COUNT} PACKS LOADED`);
+    await expect(page.locator('.ppp-count-num')).toHaveText(loaded(PACK_COUNT, TOTAL_CATS));
     await expect(setAll).toHaveText('CLEAR');
   });
 
@@ -75,6 +82,6 @@ test.describe('Category Blitz pack picker', () => {
     const lastOn = page.locator('.ppp-pill.is-on');
     await lastOn.click();
     await expect(page.locator('.ppp-pill.is-on')).toHaveCount(1);
-    await expect(page.locator('.ppp-count-num')).toHaveText('1 PACK LOADED');
+    await expect(page.locator('.ppp-count-num')).toHaveText(loaded(1, CLEAR_PACK.count));
   });
 });
