@@ -13,6 +13,7 @@ import { pickBriefing } from './briefing';
 import { suspectsStanding } from './suspects';
 import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
+import { addWords } from '../wordCount';
 import {
   SAT_RUSH_STAGE_MS,
   SAT_RUSH_LINEUP_SCALE,
@@ -201,6 +202,9 @@ export function useSatRushGame() {
       const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
       const r = eng.submitCorrect({ viaAlt, revealed });
       if (!r) return;
+      // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
+      // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
+      addWords('sat-rush');
       // Learning memory: a clear promotes the word's Leitner box.
       lexicon.recordResult(lexRef.current, word, {
         cleared: true,
