@@ -244,28 +244,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
 
 
-        {/* DAILY CHALLENGE: the once-a-day hook. Same board for everyone today;
-            shows the day number, a live streak flame, and a PLAYED check after
-            today's run (replays allowed — the streak only counts a day once). */}
-        {daily && (
-          <button
-            className={`homepage-daily-btn${navigating ? ' disabled' : ''}${daily.played ? ' played' : ''}`}
-            onClick={handleDaily}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            data-juice-self
-          >
-            <span className="homepage-daily-label">
-              {connecting === 'daily'
-                ? 'CONNECTING…'
-                : `DAILY #${daily.dayNumber}${daily.played ? ' ✓' : ''}`}
-            </span>
-            {connecting !== 'daily' && daily.streak > 0 && (
-              <span className="homepage-daily-streak">🔥 {daily.streak}</span>
-            )}
-          </button>
-        )}
-
         {/* QUICK PLAY VS BOT: the fastest path to a first word — one tap into a
             live 1v1 against a medium bot (private room, no lobby stops). */}
         <button
@@ -308,6 +286,24 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             </button>
           </div>
         </div>
+
+        {/* DAILY CHALLENGE entry — now a quiet text link under JOIN ROOM (it used
+            to be a big yellow hero chip up top). Same onDaily handler + day
+            number; the daily feature and its streak logic are untouched, only
+            the entry point moved and shrank. */}
+        {daily && (
+          <button
+            className={`homepage-daily-link${navigating ? ' disabled' : ''}`}
+            onClick={handleDaily}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            aria-label={`Daily challenge number ${daily.dayNumber} — keep the streak`}
+          >
+            {connecting === 'daily'
+              ? 'CONNECTING…'
+              : `🔥 DAILY #${daily.dayNumber} — KEEP THE STREAK`}
+          </button>
+        )}
 
         {/* Link to the standalone credits page (holds music attribution etc.). */}
         <button

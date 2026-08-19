@@ -1,20 +1,31 @@
 /* WordCountChip.css — the menu's lifetime WORDS TYPED odometer.
-   Dark chip, Bungee yellow digits in inset slots, Space Mono label with a pink
-   accent, comma separators, a -0.6deg tilt, 3px black border + hard offset shadow.
+   Now the menu CENTERPIECE (~2.4× the original chip): dark slab, big Bungee
+   yellow digits in inset slots, Space Mono WORDS/TYPED label with a pink accent,
+   comma separators, a -0.6deg tilt, 3px black border + hard offset shadow.
    COMPLETELY still at idle — the only motion is the per-digit roll (transform on
-   .wc-strip) on entrance / increment, plus the +N floater. */
+   .wc-strip) on entrance / increment, plus the +N floater.
+
+   ODOMETER MECHANIC (unchanged from the JSX): each digit rides a 10-tall strip
+   that translateY(-d em)s, where `em` resolves against .wc-strip's OWN font-size.
+   So the slot height, the digit-box height, and that translate step MUST all be
+   equal. To make the inset slot LOOSER than the glyph (52px slot around a 32px
+   digit) we set .wc-strip's font-size to the 52px step and shrink only the glyph
+   on .wc-digit — the roll math in the JSX (translateY(-d em)) is untouched. */
 
 .wc-chip {
   display: flex;
   width: fit-content;
-  margin: 2px auto 6px;
+  margin: 4px auto 10px;
   align-items: center;
-  gap: 10px;
-  padding: 7px 13px;
+  gap: 16px;
+  padding: 12px 22px;
   background: #1a0b2e;
   border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
+  border-radius: 14px;
+  /* Hard black offset + a slightly stronger inset pink glow now that it's the
+     focal element (opacity-low, scoped to this one chip — the same sanctioned
+     small exception the menu already makes for its beat glow). */
+  box-shadow: 5px 5px 0 #000, inset 0 0 16px rgba(255, 46, 196, 0.22);
   transform: rotate(-0.6deg);
   position: relative;
   user-select: none;
@@ -25,39 +36,46 @@
   display: inline-flex;
   align-items: center;
   font-family: 'Bungee', cursive;
-  font-size: 22px;
+  font-size: 32px; /* glyph size */
   line-height: 1;
   color: #FFE94A;
 }
-/* Each digit sits in an inset slot; overflow clips the 0-9 strip to one digit. */
+/* Each digit sits in an inset slot; overflow clips the strip to one digit. The
+   slot is deliberately taller/wider than the glyph for a display-panel feel. */
 .wc-col {
   display: inline-block;
-  width: 0.66em;
-  height: 1em;
+  width: 38px;
+  height: 52px;
   overflow: hidden;
-  margin: 0 1px;
+  margin: 0 2px;
   text-align: center;
   background: #0d0618;
-  border-radius: 3px;
-  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.75), inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.78), inset 0 -2px 3px rgba(0, 0, 0, 0.55);
 }
 .wc-strip {
   display: flex;
   flex-direction: column;
+  /* The translate step (-d em in the JSX) resolves against THIS font-size, so it
+     equals the 52px slot height — keeping the roll aligned with the bigger slots. */
+  font-size: 52px;
   transition-property: transform;
   will-change: transform;
 }
 .wc-digit {
-  height: 1em;
-  line-height: 1;
+  height: 52px;
+  line-height: 52px; /* box = the 52px step; glyph vertically centered in it */
+  font-size: 32px; /* the actual digit size (smaller than its box) */
+  text-shadow: 0 2.5px 0 rgba(0, 0, 0, 0.5);
 }
 .wc-comma {
   font-family: 'Bungee', cursive;
-  font-size: 22px;
+  font-size: 34px;
   line-height: 1;
   color: #FFE94A;
   align-self: flex-end;
-  padding: 0 1px;
+  padding: 0 2px;
+  text-shadow: 0 2.5px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* ---- label ---- */
@@ -66,8 +84,8 @@
   flex-direction: column;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 10px;
-  line-height: 1.15;
+  font-size: 12px;
+  line-height: 14px;
   letter-spacing: 0.1em;
 }
 .wc-label-top {
@@ -80,10 +98,10 @@
 /* ---- teal +N floater on an increment ---- */
 .wc-floater {
   position: absolute;
-  top: -8px;
-  right: 12px;
+  top: -12px;
+  right: 16px;
   font-family: 'Bungee', cursive;
-  font-size: 15px;
+  font-size: 21px;
   color: #2EFFE0;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -91,9 +109,9 @@
   animation: wc-float 1s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 @keyframes wc-float {
-  0% { transform: translateY(4px); opacity: 0; }
+  0% { transform: translateY(6px); opacity: 0; }
   20% { opacity: 1; }
-  100% { transform: translateY(-22px); opacity: 0; }
+  100% { transform: translateY(-30px); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
