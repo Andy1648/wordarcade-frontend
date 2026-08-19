@@ -5,8 +5,9 @@
    .wc-strip) on entrance / increment, plus the +N floater. */
 
 .wc-chip {
-  align-self: center;
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
+  margin: 2px auto 6px;
   align-items: center;
   gap: 10px;
   padding: 7px 13px;
