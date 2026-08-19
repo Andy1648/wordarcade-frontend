@@ -19,7 +19,10 @@ const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
-const KnifeSplit = lazy(() => import('./components/KnifeSplit'));
+// Eager (not lazy): KnifeSplit must cover the menu on the FIRST frame after the
+// intro unmounts. As a lazy chunk, the Suspense gap while it downloaded left the
+// menu visible for a beat before the cover snapped on — the flash we're fixing.
+import KnifeSplit from './components/KnifeSplit';
 import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
@@ -1737,7 +1740,6 @@ function App() {
           {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,
               auto-cleared after ~480ms). Replaces the old intro explosion. */}
           {slicing && (
-            <Suspense fallback={null}>
             <KnifeSplit
               onComplete={handleSliceComplete}
               onSlash={() => sound.punch()}
@@ -1746,7 +1748,6 @@ function App() {
                 triggerShake('light');
               }}
             />
-            </Suspense>
           )}
           {/* Whole-viewport beat flash (subtlest effect): a single always-present
               div that briefly flashes a palette colour on each beat (colour set by
