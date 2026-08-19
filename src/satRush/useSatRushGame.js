@@ -7,6 +7,7 @@
 import { useReducer, useRef, useEffect, useCallback } from 'react';
 import { createSatRushEngine, DEFAULT_CONFIG, effectiveStageIntervalMs, lineupWindowMs } from './engine';
 import { createSlotInput } from './input';
+import { clearRunTimers } from './runTimers';
 import { readRecentWords, pushRecentWord } from './recentWords';
 import * as lexicon from './lexicon';
 import { pickBriefing } from './briefing';
@@ -99,10 +100,9 @@ export function useSatRushGame() {
     climb: DEFAULT_CONFIG.tierEvery,
   });
 
-  const clearTimers = () => {
-    clearTimeout(pauseTimer.current);
-    clearTimeout(stageTimer.current);
-  };
+  // Cancel both run-clock timers (see runTimers.js). The single stop path used by
+  // abandon + unmount, so no queued doMiss / stage tick fires after a run ends.
+  const clearTimers = () => clearRunTimers(pauseTimer, stageTimer);
 
   // Persist the learning memory (fire-and-forget, guarded). Called after each
   // recorded outcome and on unmount, so a mid-run exit is never lost.
@@ -587,6 +587,27 @@ export function useSatRushGame() {
   // From the briefing screen: begin the (briefing-mode) run. No skip path exists.
   const beginRunFromBriefing = useCallback(() => startRun('briefing'), [startRun]);
 
+  // CLEAN mid-run abandon (the HUD exit ✕): stop the run without finishing it.
+  //  - clearTimers() cancels the between-word pause + the stage/spell tick, so NO
+  //    queued doMiss / stage tick fires after we leave (see runTimers.js).
+  //  - drop out of 'playing' (→ 'start') so the stage effect can't reschedule and
+  //    the music-duck effect restores the normal level BEFORE unmount — the same
+  //    restore the results-screen exit gets (verified: phase ≠ 'playing' ⇒ 0.3,
+  //    and the effect cleanup restores 0.3 again on unmount either way).
+  //  - fire run_abandoned for analytics. NOT run_end: the run didn't finish.
+  //  - lexicon/localStorage is already persisted at every outcome (and again on
+  //    unmount), so there is nothing to save here — this only STOPS the clock.
+  // The component follows this with onExit() (goHome); no results screen is shown.
+  const abandonRun = useCallback(() => {
+    clearTimers();
+    const wordNumber = engineRef.current ? engineRef.current.getState().wordNumber : 0;
+    trackSR('run_abandoned', { wordNumber });
+    pendingRef.current = 'idle';
+    phaseRef.current = 'start';
+    force();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackSR]);
+
   const setStageMs = useCallback((ms) => {
     cfgRef.current.stageMs = ms;
     force(); // the running stage effect picks up the new value on its next schedule
@@ -709,6 +730,7 @@ export function useSatRushGame() {
     startGame,
     chooseMode,
     startRun: beginRunFromBriefing,
+    abandonRun,
     setStageMs,
     setSpellMs,
     setKnob,

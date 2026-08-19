@@ -1,7 +1,9 @@
 // Hud.jsx — top status row: one ruled arcade strip fused to the page's top edge.
 // SCORE (zero-padded to 6) / STREAK / WORD # / LIVES (ink hearts) / HEAT (five
-// flat blocks). Pure display. Every value reads as text/shape, not colour alone.
-export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, heatCap }) {
+// flat blocks), and — at the far end — an EXIT ✕ that abandons the run. Pure
+// display: every value reads as text/shape, not colour alone. `onExit` (present
+// only mid-run) wires the ✕ to a clean abandon + go-home.
+export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, heatCap, onExit }) {
   return (
     <div className="sr-hud">
       <div className="sr-hcell">
@@ -34,6 +36,11 @@ export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, 
           ))}
         </div>
       </div>
+      {onExit && (
+        <button type="button" className="sr-hud-exit" onClick={onExit} aria-label="Exit run">
+          ✕
+        </button>
+      )}
     </div>
   );
 }

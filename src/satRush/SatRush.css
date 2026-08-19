@@ -148,6 +148,31 @@
 .sr-hcell:last-child {
   border-right: 0;
 }
+/* EXIT ✕ — the run's escape hatch, fused to the far end of the ruled strip.
+   ink-on-paper to match the HUD; a left rule sets it off from HEAT; hover inverts
+   to ink-fill / paper-glyph. Min 40px keeps it a real touch target. */
+.sr-hud-exit {
+  margin-left: auto;
+  align-self: stretch;
+  min-width: 40px;
+  padding: 0 clamp(9px, 1.6vw, 16px);
+  border: none;
+  border-left: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-head);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.sr-hud-exit:hover,
+.sr-hud-exit:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+  outline: none;
+}
 .sr-hlabel {
   font-size: 9px;
   letter-spacing: 0.22em;
@@ -1679,17 +1704,34 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-size: clamp(12px, 1.6vw, 14px);
   opacity: 0.75;
 }
-.sr-modeselect-exit {
-  background: none;
-  border: none;
-  box-shadow: none;
-  opacity: 0.5;
-  font-weight: 400;
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  cursor: pointer;
+/* Quiet-but-visible EXIT chip — a bordered ink chip on paper (replaces the old
+   half-opacity "exit" text so the escape hatch is actually findable). Shared by
+   the cover and the mode-select screens; hover inverts like the HUD ✕. Still
+   understated: small, ink-on-paper, tucked below the primary actions. */
+.sr-exit-chip {
+  margin-top: 4px;
+  padding: 6px 16px;
+  background: var(--paper);
   color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.sr-exit-chip:hover,
+.sr-exit-chip:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+  outline: none;
+}
+.sr-modeselect-exit {
+  align-self: center;
 }
 
 /* =====================================================================
