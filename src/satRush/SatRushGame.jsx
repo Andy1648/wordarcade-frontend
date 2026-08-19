@@ -36,6 +36,14 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   const { view } = game;
   const appRef = useRef(null);
 
+  // HUD ✕ mid-run: clean abandon (stops the clock, fires run_abandoned, no results)
+  // then go home. The hook's phase drop + unmount restore the music duck (see the
+  // effect below) exactly like the results-screen exit does.
+  function handleExitRun() {
+    game.abandonRun();
+    if (onExit) onExit();
+  }
+
   // Own the screen-shake root while this mode is mounted (release on exit).
   useEffect(() => {
     setShakeTarget(appRef.current);
@@ -73,6 +81,7 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
               maxLives={view.maxLives}
               heat={view.heat}
               heatCap={view.heatCap}
+              onExit={handleExitRun}
             />
             <div className="sr-body">
               {/* The ante row + word panel are now ONE bounty poster (WordCard);
@@ -109,12 +118,8 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
 function ExitLink({ onExit }) {
   if (!onExit) return null;
   return (
-    <button
-      type="button"
-      onClick={onExit}
-      style={{ background: 'none', border: 'none', boxShadow: 'none', opacity: 0.5, fontWeight: 400 }}
-    >
-      exit
+    <button type="button" className="sr-exit-chip" onClick={onExit} aria-label="Exit">
+      EXIT
     </button>
   );
 }
