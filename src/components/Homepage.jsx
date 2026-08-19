@@ -55,6 +55,49 @@ const RECEDING_TAGS = [
   { word: 'GG',   c: YELLOW, size: 50, top: 75, left: 85, rot: -8,  op: 0.26, drip: 0 },
 ];
 
+// How long a queued connect attempt shows the plain CONNECTING… state before we
+// assume a COLD START (the Render free tier sleeps when idle and takes ~30-60s to
+// wake) and switch to the reassuring WAKING THE SERVER… copy — a static spinner
+// reads as broken over that long, so people bail. Named production default; a
+// dev/test override (?coldstart=<ms>, 0-60000) lets E2E trip the phase-2 copy
+// without a real 4s wait. The connect/auto-fire flow itself is untouched.
+const COLD_START_HINT_MS = 4000;
+function coldStartHintMs() {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('coldstart');
+    if (raw != null) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0 && n <= 60000) return n;
+    }
+  } catch {
+    /* location unavailable — fall back to the default */
+  }
+  return COLD_START_HINT_MS;
+}
+
+// The in-button connect feedback. Phase 1 (cold=false): a spinning ink ring +
+// CONNECTING…. Phase 2 (cold=true, after COLD_START_HINT_MS): the same spinner
+// with WAKING THE SERVER… and a Space Mono reassurance sub-line. The spinner is
+// FEEDBACK during an active wait (allowed under the menu's no-idle-motion law);
+// reduced motion swaps the ring for a static ⏳ (handled in CSS). aria-live lets a
+// screen reader announce the phase-1 → phase-2 shift.
+function ConnectingContent({ cold }) {
+  return (
+    <span className="connecting" aria-live="polite">
+      <span className="connecting-spinner" aria-hidden="true" />
+      <span className="connecting-spinner-rm" aria-hidden="true">⏳</span>
+      <span className="connecting-text">
+        <span className="connecting-main">
+          {cold ? 'WAKING THE SERVER…' : 'CONNECTING…'}
+        </span>
+        {cold && (
+          <span className="connecting-sub">free hosting naps — ~30s, game starts by itself</span>
+        )}
+      </span>
+    </span>
+  );
+}
+
 /**
  * The lobby/homepage screen. Clicking a card or an action button calls the
  * matching passed-in handler from App (which owns the create/join room flow and
@@ -95,6 +138,22 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       action();
     }
   }, [wsStatus]);
+
+  // COLD-START HINT (presentation only): while a connect attempt is pending and
+  // the socket still isn't open, arm a per-attempt timer; when it fires we flip
+  // the pending control from CONNECTING… to the WAKING THE SERVER… copy. Reset the
+  // instant the attempt clears or the socket opens, and the effect's cleanup
+  // clears the timer on any of those + on unmount. This layers ON TOP of the
+  // connect/auto-fire flow above without changing it.
+  const [coldStart, setColdStart] = useState(false);
+  useEffect(() => {
+    if (connecting && wsStatus !== 'open') {
+      const t = setTimeout(() => setColdStart(true), coldStartHintMs());
+      return () => clearTimeout(t);
+    }
+    setColdStart(false);
+    return undefined;
+  }, [connecting, wsStatus]);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
@@ -249,16 +308,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             today's run (replays allowed — the streak only counts a day once). */}
         {daily && (
           <button
-            className={`homepage-daily-btn${navigating ? ' disabled' : ''}${daily.played ? ' played' : ''}`}
+            className={`homepage-daily-btn${navigating ? ' disabled' : ''}${daily.played ? ' played' : ''}${connecting === 'daily' && coldStart ? ' is-waking' : ''}`}
             onClick={handleDaily}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
             data-juice-self
           >
             <span className="homepage-daily-label">
-              {connecting === 'daily'
-                ? 'CONNECTING…'
-                : `DAILY #${daily.dayNumber}${daily.played ? ' ✓' : ''}`}
+              {connecting === 'daily' ? (
+                <ConnectingContent cold={coldStart} />
+              ) : (
+                `DAILY #${daily.dayNumber}${daily.played ? ' ✓' : ''}`
+              )}
             </span>
             {connecting !== 'daily' && daily.streak > 0 && (
               <span className="homepage-daily-streak">🔥 {daily.streak}</span>
@@ -269,13 +330,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {/* QUICK PLAY VS BOT: the fastest path to a first word — one tap into a
             live 1v1 against a medium bot (private room, no lobby stops). */}
         <button
-          className={`homepage-quickplay-btn${navigating ? ' disabled' : ''}`}
+          className={`homepage-quickplay-btn${navigating ? ' disabled' : ''}${connecting === 'quickplay' && coldStart ? ' is-waking' : ''}`}
           onClick={handleQuickPlay}
           onMouseEnter={() => sfx('hover')}
           disabled={navigating}
           data-juice-self
         >
-          {connecting === 'quickplay' ? 'CONNECTING…' : '⚡ QUICK PLAY VS BOT'}
+          {connecting === 'quickplay' ? (
+            <ConnectingContent cold={coldStart} />
+          ) : (
+            '⚡ QUICK PLAY VS BOT'
+          )}
         </button>
 
         {/* Lifetime WORDS TYPED odometer — a passive stat between the CTAs and the
@@ -298,13 +363,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
               menu only needs JOIN here. Magnetic wrapper carries the cursor-pull. */}
           <div ref={joinMagnetRef} className="homepage-btn-magnet">
             <button
-              className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}`}
+              className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}${connecting === 'join' && coldStart ? ' is-waking' : ''}`}
               onClick={handleJoinRoom}
               onMouseEnter={() => sfx('hover')}
               disabled={navigating}
               data-juice-self
             >
-              {connecting === 'join' ? 'CONNECTING…' : 'JOIN ROOM'}
+              {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN ROOM'}
             </button>
           </div>
         </div>
