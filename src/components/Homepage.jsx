@@ -6,6 +6,7 @@ import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import ModeDialog from './ModeDialog';
+import WordCountChip from './WordCountChip';
 import GraffitiTag from './decor/GraffitiTag';
 import {
   PaintSplatter1,
@@ -276,6 +277,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         >
           {connecting === 'quickplay' ? 'CONNECTING…' : '⚡ QUICK PLAY VS BOT'}
         </button>
+
+        {/* Lifetime WORDS TYPED odometer — a passive stat between the CTAs and the
+            game cards. Reads/subscribes to the count itself (no props). */}
+        <WordCountChip />
 
         <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
           {GAMES.map((game) => (

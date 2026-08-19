@@ -39,6 +39,7 @@ import {
   hasPlayedBefore,
   markPlayed,
 } from './visitHistory';
+import { addWords } from './wordCount';
 import {
   loadDailyState,
   saveDailyState,
@@ -848,6 +849,9 @@ function App() {
       const playerName = submitter.name || 'SOMEONE';
       if (payload.accepted) {
         const now = Date.now();
+        // Lifetime WORDS TYPED: count ONLY the local player's own accepted words.
+        // (Daily flows through this same path and counts as word-bomb — fine.)
+        if (submitter.id === myIdRef.current) addWords('word-bomb');
         setFeedEvents((prev) => [
           ...prev,
           {
@@ -940,6 +944,8 @@ function App() {
       setLastWordResult(payload); // reused to drive the feedback toast
       if (payload.accepted) {
         setMyAnswers((prev) => [...prev, payload.answer]);
+        // answer_result is always about MY answer, so an accept is my own word.
+        addWords('category-blitz');
       }
     }
 
