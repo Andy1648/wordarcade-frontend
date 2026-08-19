@@ -27,6 +27,10 @@ const BACKEND_WS_RE = /onrender\.com/;
  * @param {boolean} [opts.autoConnect=true] - send a `connected` frame on open so
  *   the app's wsStatus flips to 'open' (matching a real backend handshake), which
  *   is what unblocks the connect-gated CREATE / JOIN buttons on the menu.
+ * @param {number} [opts.openDelayMs=0] - hold the socket in the 'connecting' state
+ *   for this long before it opens (awaited inside the route handler, which delays
+ *   the client's `onopen`). Simulates a cold Render backend so a test can observe
+ *   the app's CONNECTING… / WAKING THE SERVER… copy before the queued action fires.
  * @returns {Promise<{
  *   connectionAttempts: () => number,
  *   sentFrames: () => Array<object|string>,
@@ -36,7 +40,7 @@ const BACKEND_WS_RE = /onrender\.com/;
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true } = opts;
+  const { autoConnect = true, openDelayMs = 0 } = opts;
 
   const state = {
     attempts: 0,
@@ -60,7 +64,7 @@ export async function installBackendMock(page, opts = {}) {
     return route.abort();
   });
 
-  await page.routeWebSocket(BACKEND_WS_RE, (ws) => {
+  await page.routeWebSocket(BACKEND_WS_RE, async (ws) => {
     // A connection was attempted to the backend URL. We deliberately do NOT call
     // ws.connectToServer(), so Playwright answers as the server and the real
     // Render backend is never contacted.
@@ -75,6 +79,12 @@ export async function installBackendMock(page, opts = {}) {
         state.sent.push(message);
       }
     });
+
+    // Cold-backend simulation: awaiting here holds the route handler open, which
+    // delays the client's `onopen` (and thus the app's wsStatus flip to 'open').
+    if (openDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, openDelayMs));
+    }
 
     if (autoConnect) {
       // Mirror the real server's first frame (server.js `connected`) so the app

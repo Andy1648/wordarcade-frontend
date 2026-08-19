@@ -729,3 +729,94 @@ html[data-beat='true'] .homepage-beat-glow {
   pointer-events: none;
   cursor: not-allowed;
 }
+
+/* ---- Connect / cold-start feedback (rendered INSIDE a tapped CTA) ----
+   Shown while a connect-gated action waits for the socket to open. The spinning
+   ink ring is FEEDBACK during an active wait, not idle motion, so it's a
+   sanctioned exception to the menu's no-idle-motion law. Phase 1 = CONNECTING…;
+   phase 2 (after COLD_START_HINT_MS, marked by .is-waking on the button) recolours
+   the slab yellow and adds the reassurance sub-line. Reduced motion swaps the ring
+   for a static ⏳. */
+.connecting {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.1;
+}
+.connecting-spinner {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  border-top-color: currentColor; /* ink — tracks the button's text colour */
+  border-radius: 50%;
+  animation: connecting-spin 0.7s linear infinite;
+}
+/* Static stand-in for the ring, only shown under reduced motion (see below). */
+.connecting-spinner-rm {
+  display: none;
+  font-size: 14px;
+  line-height: 1;
+}
+.connecting-text {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.connecting-main {
+  white-space: nowrap;
+}
+.connecting-sub {
+  font-family: 'Space Mono', monospace;
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+@keyframes connecting-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Phase 2 — the tapped slab shifts to the yellow WAKING variant. Compound
+   selectors out-specify each button's base fill, so no !important is needed. */
+.homepage-quickplay-btn.is-waking,
+.homepage-btn-join.is-waking {
+  background: #FFE94A;
+  border-color: #B8A020;
+  color: #000;
+}
+
+/* The daily entry is a small text LINK, not a slab, so its WAKING variant just
+   brightens the text to full yellow (its hover colour) rather than painting a
+   yellow background block, and the in-link spinner + sub-line are sized down to
+   the smaller type. Same phase-2 feedback, scaled to the link. */
+.homepage-daily-link.is-waking {
+  color: #FFE94A;
+}
+.homepage-daily-link .connecting-spinner,
+.homepage-daily-link .connecting-spinner-rm {
+  width: 11px;
+  height: 11px;
+  font-size: 11px;
+}
+.homepage-daily-link .connecting-spinner {
+  border-width: 2px;
+}
+.homepage-daily-link .connecting-sub {
+  font-size: 9px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .connecting-spinner {
+    display: none;
+  }
+  .connecting-spinner-rm {
+    display: inline-block;
+  }
+}

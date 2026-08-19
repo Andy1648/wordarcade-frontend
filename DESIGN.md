@@ -146,6 +146,11 @@ Named motions (already built — reuse these, don't invent one-offs):
   poses, with motion concentrated into the title beat-pop + a beat-driven pink frame
   glow (`.homepage-beat-glow`). The menu title also intentionally DROPS the splash's
   chromatic split (it no longer matches the splash — deliberate). See CLAUDE.md.
+  SPINNER EXCEPTION — a loading spinner shown DURING an active wait (e.g. the
+  CONNECTING… / WAKING THE SERVER… ring inside a tapped CTA while the cold Render
+  backend wakes) is FEEDBACK, not idle motion, so it's allowed here despite the
+  no-idle-motion law. It exists only while the wait is in progress and reduced-motion
+  swaps it for a static ⏳. Idle loops with no active wait stay banned on the menu.
 
 Hard rules:
 - Timing: snappy. Transitions ≤500ms, navigation wipes ~200–400ms. Persona-snappy,
