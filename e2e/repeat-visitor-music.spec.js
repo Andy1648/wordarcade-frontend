@@ -1,11 +1,11 @@
 // e2e/repeat-visitor-music.spec.js
 //
 // Regression for the silent-menu bug: music was only ever started from the
-// splash click (handleSplashStart). Repeat visitors have wa_intro_seen set, so
-// the splash never renders and the music never started for them — a silent menu
-// and silent games. App.jsx now arms a one-shot window pointerdown/keydown
-// listener on no-splash loads that unlocks + fades the music in on the first
-// real gesture. This test drives exactly that path.
+// splash click (handleSplashStart). A same-session visitor (last seen < 30 min
+// ago) skips the splash, so the splash never rendered the music and it never
+// started for them — a silent menu and silent games. App.jsx now arms a one-shot
+// window pointerdown/keydown listener on no-splash loads that unlocks + fades the
+// music in on the first real gesture. This test drives exactly that path.
 //
 // Two things make the assertion possible:
 //  1. This spec runs under the `chromium-autoplay` project (playwright.config.js),
@@ -23,10 +23,11 @@ test.describe('repeat-visitor music', () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      // Repeat visitor: intro already seen -> App boots straight to the menu with
-      // no splash, so the splash click can't be music's unlock gesture.
+      // Same-session visitor: last seen just now (< 30 min ago) -> App boots
+      // straight to the menu with no splash, so the splash click can't be music's
+      // unlock gesture. wa_last_seen holds an epoch-ms stamp (see visitHistory.js).
       try {
-        window.localStorage.setItem('wa_intro_seen', '1');
+        window.localStorage.setItem('wa_last_seen', String(Date.now()));
       } catch {
         /* storage may be unavailable; the test will surface the boot failure */
       }

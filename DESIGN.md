@@ -125,6 +125,13 @@ Named motions (already built — reuse these, don't invent one-offs):
   aggressive) on EVERY screen navigation, with a mid-wipe flash word (§3 copy). Fires
   splash→menu→lobby→room→game→end→rematch + back. Consistency is the whole point.
 - **KNIFE-SPLIT / IMPACT FRAME** — intro transition: zoom punch + black frame.
+  The full intro (LoadingScreen → splash → "TYPE FAST. DIE SLOW." → knife split)
+  replays once per SESSION, not once per visitor: a 30-minute absence from the site
+  is the session boundary (same window GA uses). It's gated on a last-seen timestamp
+  (`wa_last_seen`, see `src/visitHistory.js` `INTRO_COOLDOWN_MS`), refreshed on load
+  and on pagehide — so a refresh after a long play session does NOT replay it, but a
+  fresh visit after 30+ min away does (which also re-arms music via the splash's
+  CLICK ANYWHERE TO START gesture). `?portal=1` still hard-skips regardless.
 - **DREAD** — Word Bomb tension: bomb scales up, shakes harder, heat-shifts as fuse
   burns; screen micro-shakes <3s; player card pulses red on the bomb-holder.
 - **SPRAY-REVEAL** — accepted words tagged on like graffiti (Jet Set Radio).

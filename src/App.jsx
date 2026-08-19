@@ -35,6 +35,7 @@ import { resolvePlayerName, rememberName } from './playerName';
 import {
   hasSeenIntro,
   markIntroSeen,
+  stampLastSeen,
   hasPlayedBefore,
   markPlayed,
 } from './visitHistory';
@@ -379,6 +380,23 @@ function App() {
   useEffect(() => {
     dailyStateRef.current = dailyState;
   }, [dailyState]);
+
+  // Session presence: refresh the last-seen stamp on load and again on
+  // pagehide/beforeunload, so the intro's 30-minute session boundary measures
+  // absence from the SITE, not time since the intro (a refresh after a long play
+  // session must not replay it). This runs AFTER SEEN_INTRO was read at module
+  // load, so stamping now never suppresses this load's own intro.
+  useEffect(() => {
+    stampLastSeen();
+    const stamp = () => stampLastSeen();
+    window.addEventListener('pagehide', stamp);
+    window.addEventListener('beforeunload', stamp);
+    return () => {
+      window.removeEventListener('pagehide', stamp);
+      window.removeEventListener('beforeunload', stamp);
+    };
+  }, []);
+
   const myIdRef = useRef(null);
   // Synchronous mirror of categoryTotals (running per-player round-sum), so the
   // game_over handler can read this game's authoritative total without waiting on
