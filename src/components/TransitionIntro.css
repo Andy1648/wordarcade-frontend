@@ -14,7 +14,11 @@
 .intro-overlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  /* Sits over the whole menu tree (which now renders BEHIND the intro, not after
+     it — see App.jsx): above all menu chrome (MusicButton z70, the join toast
+     z9000) so nothing shows through the calm black field, but below the cursor
+     trail (z9999) so it still draws over the intro as before. */
+  z-index: 9500;
   background: #000;
   display: flex;
   align-items: center;
