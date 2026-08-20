@@ -1130,6 +1130,147 @@
 }
 
 /* ============================================================= */
+/* ========  JUICE 02 — TENSION SKIN (composited CSS)  ========= */
+/* ============================================================= */
+/* Replaces the old full-viewport CANVAS repaint loop (tension.js) that redrew a
+   gradient + speed lines + HURRY! text every frame for the whole turn. These are
+   plain fixed layers; intensity is a data-tension TIER on .game-wrap (build/warn/
+   crit — the block is unmounted at calm), and every keyframe animates transform/
+   opacity with LITERAL values (no var() in keyframes, so it stays composited). */
+
+.wb-tension {
+  position: fixed;
+  inset: 0;
+  z-index: 7; /* over the stage + the danger vignette; under KO/explosion/countdown */
+  pointer-events: none;
+}
+
+/* --- edge colour-grade vignette: transparent centre (legibility) -> coloured
+   edge. Hue steps teal -> orange -> red per tier; opacity eases in per tier while
+   the element breathes via a transform-scale keyframe. --- */
+.wb-tension-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center,
+    rgba(46, 255, 224, 0) 45%, rgba(46, 255, 224, 0.9) 100%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  animation: wb-tension-breathe 2.4s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+@keyframes wb-tension-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+[data-tension='build'] .wb-tension-vignette { opacity: 0.13; }
+[data-tension='warn'] .wb-tension-vignette {
+  opacity: 0.2;
+  background: radial-gradient(ellipse at center,
+    rgba(255, 107, 61, 0) 45%, rgba(255, 107, 61, 0.9) 100%);
+}
+[data-tension='crit'] .wb-tension-vignette {
+  opacity: 0.28;
+  background: radial-gradient(ellipse at center,
+    rgba(255, 46, 46, 0) 45%, rgba(255, 46, 46, 0.9) 100%);
+}
+
+/* --- edge speed lines: fixed streaks hugging the L/R edges, each scrolling down
+   via a transform-translateY keyframe (transform ONLY). Density/brightness read
+   through the container's per-tier opacity. --- */
+.wb-tension-lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+[data-tension='build'] .wb-tension-lines { opacity: 0.45; }
+[data-tension='warn'] .wb-tension-lines { opacity: 0.75; }
+[data-tension='crit'] .wb-tension-lines { opacity: 1; }
+
+.wb-tension-line {
+  position: absolute;
+  top: -30%;
+  width: 2px;
+  height: 26%;
+  background: rgba(255, 255, 255, 0.32);
+  /* i = 0..5 hug the left edge, 6..11 the right; within a 90px edge band. */
+  left: calc(3px + var(--i) * 15px);
+  animation: wb-tension-line-scroll linear infinite;
+  animation-duration: calc(0.85s + var(--i) * 0.06s);
+  animation-delay: calc(var(--i) * -0.13s);
+}
+.wb-tension-line:nth-child(n + 7) {
+  left: auto;
+  right: calc(3px + (var(--i) - 6) * 15px);
+}
+.wb-tension-line:nth-child(even) { height: 42%; }
+@keyframes wb-tension-line-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(150vh); }
+}
+
+/* --- centre-top prompt: HURRY! (warn) -> GET OUT! (crit), pulsing via a
+   transform+opacity keyframe. --- */
+.wb-tension-prompt {
+  position: absolute;
+  top: min(16vh, 120px);
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+.wb-tension-hurry,
+.wb-tension-getout {
+  display: none;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 34px;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px rgba(0, 0, 0, 0.9);
+  paint-order: stroke fill;
+  animation: wb-tension-pulse 0.33s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+[data-tension='warn'] .wb-tension-hurry { display: inline-block; }
+[data-tension='crit'] .wb-tension-getout {
+  display: inline-block;
+  color: #FF2E2E;
+  font-size: 39px;
+}
+@keyframes wb-tension-pulse {
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(1.12); opacity: 1; }
+}
+
+/* --- final-moment throb: a soft red full-screen opacity breath at crit only. --- */
+.wb-tension-throb {
+  position: absolute;
+  inset: 0;
+  background: #FF2E2E;
+  opacity: 0;
+}
+[data-tension='crit'] .wb-tension-throb {
+  animation: wb-tension-throb-breath 0.34s ease-in-out infinite;
+}
+@keyframes wb-tension-throb-breath {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.16; }
+}
+
+/* Reduced motion: keep ONLY a faint static edge tint (a colour cue, not motion);
+   drop the breathe, the speed lines, the pulsing prompt and the throb entirely —
+   matching the old canvas skin's reduced-motion path (faint colour shift only). */
+@media (prefers-reduced-motion: reduce) {
+  .wb-tension-vignette { animation: none !important; }
+  [data-tension='build'] .wb-tension-vignette { opacity: 0.06; }
+  [data-tension='warn'] .wb-tension-vignette { opacity: 0.09; }
+  [data-tension='crit'] .wb-tension-vignette { opacity: 0.12; }
+  .wb-tension-lines,
+  .wb-tension-prompt,
+  .wb-tension-throb { display: none !important; }
+}
+
+/* ============================================================= */
 /* ===============  BOMB HAND-OFF FLIGHT (throw)  ============= */
 /* ============================================================= */
 
@@ -1740,6 +1881,86 @@
   .game-toast.cb-checking-toast,
   .cb-checking-dots i,
   .game-input.cb-checking {
+    animation: none !important;
+  }
+}
+
+/* ---- Word Bomb INSTANT-ACK chip ---- */
+/* The submitted word locks in here the moment you hit send (flight, with a pulsing
+   dot indicator), then the server verdict resolves ON it — accept (cyan + combo) /
+   reject (red + reason). Floats just above the input, click-through, so the
+   ~120-400ms socket round-trip is acknowledged instead of dead air. */
+.wb-pending {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 92%;
+  white-space: nowrap;
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 12px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  pointer-events: none;
+  animation: wb-pending-in 0.14s ease-out;
+}
+@keyframes wb-pending-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.wb-pending-word {
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wb-pending-tag { font-size: 11px; }
+
+/* flight: a neutral "sending…" panel with a three-dot heartbeat. */
+.wb-pending-flight {
+  background: #1a0b2e;
+  border-color: #6a4aa0;
+  color: #cbb8ff;
+}
+.wb-pending-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.wb-pending-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: wb-pending-dot 1s ease-in-out infinite;
+}
+.wb-pending-dots i:nth-child(2) { animation-delay: 0.16s; }
+.wb-pending-dots i:nth-child(3) { animation-delay: 0.32s; }
+@keyframes wb-pending-dot {
+  0%, 70%, 100% { opacity: 0.25; transform: scale(0.85); }
+  35% { opacity: 1; transform: scale(1); }
+}
+
+/* accept / reject readouts — mirror the accept/reject toast palette. */
+.wb-pending-accept {
+  background: #2EFFE0;
+  border-color: #1A9985;
+  color: #04201c;
+}
+.wb-pending-reject {
+  background: #FF5C5C;
+  border-color: #B83A3A;
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-pending,
+  .wb-pending-dots i {
     animation: none !important;
   }
 }
@@ -3135,15 +3356,19 @@
   animation: prompt-throb 2s ease-out infinite;
 }
 
-/* The trailing scale() chains a subtle mid-frequency pulse onto the idle throb,
-   so the combo/category prompt breathes with the music during gameplay (neutral
-   ~1 when the music is off). */
+/* Literal-valued idle throb only. It used to chain scale(calc(1 + var(--beat-mid)
+   * 0.02)) for a music breathe, but that made the transform var-dependent — it
+   can't be composited and forced a document-wide style invalidation on every
+   frame off useBeatSync's per-frame --beat-mid write (the same jank WallScene.css
+   called out for .wall-halftone). The per-beat reaction is kept by the literal
+   combo-beat-pop below (retriggered on the data-beat class); the ~2% continuous
+   breathe was imperceptible and is dropped along with the per-frame write. */
 @keyframes prompt-throb {
-  0% { transform: skewX(-3deg) scale(1) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  5% { transform: skewX(-3deg) scale(1.06) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  12% { transform: skewX(-3deg) scale(0.98) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  18% { transform: skewX(-3deg) scale(1) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  100% { transform: skewX(-3deg) scale(1) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
+  0% { transform: skewX(-3deg) scale(1); }
+  5% { transform: skewX(-3deg) scale(1.06); }
+  12% { transform: skewX(-3deg) scale(0.98); }
+  18% { transform: skewX(-3deg) scale(1); }
+  100% { transform: skewX(-3deg) scale(1); }
 }
 
 /* "TYPE A WORD CONTAINING" label: a quiet opacity breathe. */
@@ -3442,23 +3667,17 @@ html[data-beat='true'] .cb-answer-chip {
   50% { transform: scale(1.01); }
 }
 
-/* Input keystroke feedback: while keys are landing the field brightens its
-   border + scales a hair, eased back ~120ms after the last key. */
+/* The focused field is NEVER transformed — scaling it per keystroke re-rasterises
+   its text and lags the caret on mobile (DESIGN.md:158). The old per-key
+   typing-active scale/border pulse was removed; a plain border-color transition
+   (for focus/reject state changes) is all that remains. */
 .game-input {
-  transition: border-color 0.06s ease-out, transform 0.06s ease-out;
-}
-
-.game-input.typing-active {
-  border-color: #2EFFE0;
-  transform: scale(1.006);
+  transition: border-color 0.06s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .game-stage.heartbeat:not(.game-shake):not(.clutch-slowmo) {
     animation: none !important;
-  }
-  .game-input.typing-active {
-    transform: none;
   }
 }
 
@@ -3605,18 +3824,25 @@ html[data-beat='true'] .cb-answer-chip {
   100% { opacity: 0; }
 }
 
-/* COLOR DRAIN: the stage desaturates over the last 5s of your turn (saturate set
-   inline from the seconds left). The bomb + input (.drain-exempt) counter it so
-   they stay fully coloured - tunnel vision. Slow drain in (1s), instant snap
-   back to colour when the turn ends (the .draining class - and its transition -
-   simply drop). */
-.game-stage.draining {
+/* COLOR DRAIN: the stage desaturates over the last 5s of your turn (--drain-sat is
+   set inline from the seconds left) — the bomb + input (.drain-exempt) stay fully
+   coloured: tunnel vision. Slow drain in (1s), instant snap back to colour when the
+   turn ends (the .draining class + its transition simply drop).
+
+   The saturate() is applied to each stage CHILD, with the exempt ones opting out —
+   NOT to .game-stage itself. Previously the stage (an ancestor of the input) was
+   filtered and the exempt children ran a counter-filter to cancel it; that meant
+   the input sat inside two filters that both animate for 5s, re-rasterising the
+   caret/text at the moment you type fastest. Filtering per-child leaves the input
+   (and its ancestors) filter-free while the result is pixel-identical: saturate is
+   per-pixel and the children don't overlap, so per-child == whole-stage. */
+.game-stage.draining > * {
+  filter: saturate(var(--drain-sat, 1));
   transition: filter 1s linear;
 }
 
-.game-stage.draining .drain-exempt {
-  filter: saturate(calc(1 / var(--drain-sat, 1)));
-  transition: filter 1s linear;
+.game-stage.draining > .drain-exempt {
+  filter: none;
 }
 
 /* PANIC SWEAT: teardrops flinging off your card when time is dire. */

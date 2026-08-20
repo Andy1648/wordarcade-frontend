@@ -11,8 +11,9 @@
 // tracks the drum pulse rather than melody.
 //
 // On a beat we flip data-beat="true" on <html> for 120ms (what CSS one-shot
-// @keyframes key off of) and publish --beat-intensity for pop strength. A few
-// continuous --beat-* vars remain for elements that want a smooth reaction.
+// @keyframes key off of) and publish --beat-intensity for pop strength. Beats are
+// entirely DISCRETE now — no continuous per-frame :root vars — so nothing writes
+// document-wide style off the animation loop.
 //
 // The loop only runs while `active` (music playing + unmuted); when it stops
 // everything resets to neutral.
@@ -35,9 +36,6 @@ const MAX_DECAY = 0.999;
 const FLASH_COLOR = '#FF2EC4';
 
 const NEUTRAL = {
-  '--beat-bass': '0',
-  '--beat-mid': '0',
-  '--beat-high': '0',
   '--beat-intensity': '0',
 };
 
@@ -70,18 +68,14 @@ export function useBeatSync(getFrequencyData, active) {
 
     const loop = () => {
       const data = getFrequencyData();
-      const { mid } = data;
       const flux = typeof data.flux === 'number' ? data.flux : 0;
 
-      // Continuous var. Writing beat vars on :root every frame invalidates
-      // document-wide style, so we publish ONLY what has a live consumer:
-      // --beat-bass/--beat-high have none (removed), and --beat-mid's sole consumer
-      // is an in-game element (GameScreen.css). So write --beat-mid ONLY on the game
-      // screen (App sets data-view on <html>); on the menu nothing reads it, so we
-      // skip the write and its per-frame style recalc entirely.
-      if (root.getAttribute('data-view') === 'game') {
-        root.style.setProperty('--beat-mid', mid.toFixed(3));
-      }
+      // No per-frame :root custom-property write. --beat-mid used to be published
+      // here every frame for the combo prompt's music breathe, but a var-dependent
+      // transform can't be composited and each write invalidated document-wide
+      // style against the whole stylesheet at 60fps — the biggest in-game jank
+      // source. The prompt's per-beat reaction now runs entirely off the discrete
+      // data-beat class + the once-per-beat --beat-intensity below.
 
       // Track a decaying observed max flux so intensity is relative to recent hits.
       maxFluxRef.current = Math.max(flux, maxFluxRef.current * MAX_DECAY, MIN_FLUX);
