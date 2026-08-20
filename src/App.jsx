@@ -1504,7 +1504,6 @@ function App() {
         isHost={isHost}
         timerSeconds={timerSeconds}
         lastWordResult={lastWordResult}
-        onClearResult={() => setLastWordResult(null)}
         // Instant local Word Bomb reject (proposal a): GameScreen surfaces the three
         // client-determinable rejects through the SAME lastWordResult path a server
         // word_result would, so the feedback (buzz/shake/toast) is identical — just

@@ -3135,15 +3135,19 @@
   animation: prompt-throb 2s ease-out infinite;
 }
 
-/* The trailing scale() chains a subtle mid-frequency pulse onto the idle throb,
-   so the combo/category prompt breathes with the music during gameplay (neutral
-   ~1 when the music is off). */
+/* Literal-valued idle throb only. It used to chain scale(calc(1 + var(--beat-mid)
+   * 0.02)) for a music breathe, but that made the transform var-dependent — it
+   can't be composited and forced a document-wide style invalidation on every
+   frame off useBeatSync's per-frame --beat-mid write (the same jank WallScene.css
+   called out for .wall-halftone). The per-beat reaction is kept by the literal
+   combo-beat-pop below (retriggered on the data-beat class); the ~2% continuous
+   breathe was imperceptible and is dropped along with the per-frame write. */
 @keyframes prompt-throb {
-  0% { transform: skewX(-3deg) scale(1) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  5% { transform: skewX(-3deg) scale(1.06) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  12% { transform: skewX(-3deg) scale(0.98) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  18% { transform: skewX(-3deg) scale(1) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
-  100% { transform: skewX(-3deg) scale(1) scale(calc(1 + var(--beat-mid, 0) * 0.02)); }
+  0% { transform: skewX(-3deg) scale(1); }
+  5% { transform: skewX(-3deg) scale(1.06); }
+  12% { transform: skewX(-3deg) scale(0.98); }
+  18% { transform: skewX(-3deg) scale(1); }
+  100% { transform: skewX(-3deg) scale(1); }
 }
 
 /* "TYPE A WORD CONTAINING" label: a quiet opacity breathe. */
@@ -3442,23 +3446,17 @@ html[data-beat='true'] .cb-answer-chip {
   50% { transform: scale(1.01); }
 }
 
-/* Input keystroke feedback: while keys are landing the field brightens its
-   border + scales a hair, eased back ~120ms after the last key. */
+/* The focused field is NEVER transformed — scaling it per keystroke re-rasterises
+   its text and lags the caret on mobile (DESIGN.md:158). The old per-key
+   typing-active scale/border pulse was removed; a plain border-color transition
+   (for focus/reject state changes) is all that remains. */
 .game-input {
-  transition: border-color 0.06s ease-out, transform 0.06s ease-out;
-}
-
-.game-input.typing-active {
-  border-color: #2EFFE0;
-  transform: scale(1.006);
+  transition: border-color 0.06s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .game-stage.heartbeat:not(.game-shake):not(.clutch-slowmo) {
     animation: none !important;
-  }
-  .game-input.typing-active {
-    transform: none;
   }
 }
 
@@ -3605,18 +3603,25 @@ html[data-beat='true'] .cb-answer-chip {
   100% { opacity: 0; }
 }
 
-/* COLOR DRAIN: the stage desaturates over the last 5s of your turn (saturate set
-   inline from the seconds left). The bomb + input (.drain-exempt) counter it so
-   they stay fully coloured - tunnel vision. Slow drain in (1s), instant snap
-   back to colour when the turn ends (the .draining class - and its transition -
-   simply drop). */
-.game-stage.draining {
+/* COLOR DRAIN: the stage desaturates over the last 5s of your turn (--drain-sat is
+   set inline from the seconds left) — the bomb + input (.drain-exempt) stay fully
+   coloured: tunnel vision. Slow drain in (1s), instant snap back to colour when the
+   turn ends (the .draining class + its transition simply drop).
+
+   The saturate() is applied to each stage CHILD, with the exempt ones opting out —
+   NOT to .game-stage itself. Previously the stage (an ancestor of the input) was
+   filtered and the exempt children ran a counter-filter to cancel it; that meant
+   the input sat inside two filters that both animate for 5s, re-rasterising the
+   caret/text at the moment you type fastest. Filtering per-child leaves the input
+   (and its ancestors) filter-free while the result is pixel-identical: saturate is
+   per-pixel and the children don't overlap, so per-child == whole-stage. */
+.game-stage.draining > * {
+  filter: saturate(var(--drain-sat, 1));
   transition: filter 1s linear;
 }
 
-.game-stage.draining .drain-exempt {
-  filter: saturate(calc(1 / var(--drain-sat, 1)));
-  transition: filter 1s linear;
+.game-stage.draining > .drain-exempt {
+  filter: none;
 }
 
 /* PANIC SWEAT: teardrops flinging off your card when time is dire. */

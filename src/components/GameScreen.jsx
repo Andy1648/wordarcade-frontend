@@ -1421,7 +1421,6 @@ export default function GameScreen({
   isHost,
   timerSeconds,
   lastWordResult,
-  onClearResult,
   onLocalWordResult,
   checkingAnswer,
   gameOver,
@@ -1466,31 +1465,17 @@ export default function GameScreen({
   // disabled until it finishes.
   const [showCountdown, setShowCountdown] = useState(true);
 
-  // Tiny tactile input feedback: while keys are landing, the field brightens its
-  // border + scales a hair (eased via a transition, see .game-input.typing-active),
-  // settling ~120ms after the last keystroke so typing feels alive.
-  const [typingActive, setTypingActive] = useState(false);
-  const typingActiveTimerRef = useRef(null);
-  // typingFast: >3 keystrokes in the last second -> the bomb panics (it knows
-  // you're about to submit). Tracked from keystroke timestamps.
-  const [typingFast, setTypingFast] = useState(false);
-  const keyTimesRef = useRef([]);
-  const fastTimerRef = useRef(null);
-  function pulseInput() {
-    setTypingActive(true);
-    if (typingActiveTimerRef.current) clearTimeout(typingActiveTimerRef.current);
-    typingActiveTimerRef.current = setTimeout(() => setTypingActive(false), 120);
+  // (Removed) The per-keystroke input "pulse" tell — it toggled a class that
+  // scaled the focused field on every key, re-rasterising its text and lagging
+  // the caret on mobile (DESIGN.md:158 bans animating the focused field). Its
+  // companion state (typingFast / someoneTyping) was set but never read, so it
+  // only cost extra renders. Removed wholesale; the border stays static.
 
-    const now = Date.now();
-    const times = keyTimesRef.current;
-    times.push(now);
-    while (times.length && now - times[0] > 1000) times.shift();
-    if (times.length > 3) {
-      setTypingFast(true);
-      if (fastTimerRef.current) clearTimeout(fastTimerRef.current);
-      fastTimerRef.current = setTimeout(() => setTypingFast(false), 700);
-    }
-  }
+  // The result banner is hidden the moment you start editing again (so a stale
+  // "TOO SHORT" can't sit over a now-valid word). We track the dismissed result
+  // in a ref rather than clearing App's lastWordResult, so the first keystroke of
+  // every word doesn't trigger a whole-App re-render (see the onChange handler).
+  const dismissedResultRef = useRef(null);
 
   // Duck the background music while a game is live (from the moment this screen
   // mounts / the countdown begins) so the synthesized SFX cut through, and
@@ -2322,11 +2307,6 @@ export default function GameScreen({
   // Panic sweat on your own card while time is critical and it's your turn.
   const panicking = isMyTurn && !showCountdown && !gameOver && timeRatio < 0.3;
 
-  // Is the active player typing right now? (your live draft, or the relayed
-  // typing text of whoever's turn it is) - drives the bomb's "watching" face.
-  const currentTyped = isMyTurn ? draft : typingText[gameState.currentPlayerId] || '';
-  const someoneTyping = !showCountdown && !gameOver && currentTyped.trim().length > 0;
-
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
@@ -2473,7 +2453,7 @@ export default function GameScreen({
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
-        style={{ '--drain-sat': drainSat, filter: draining ? 'saturate(var(--drain-sat))' : undefined }}
+        style={{ '--drain-sat': drainSat }}
       >
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
@@ -2692,8 +2672,12 @@ export default function GameScreen({
             {usedItems.length === 0 ? (
               <span className="game-used-empty">NONE YET — BE THE FIRST</span>
             ) : (
-              usedItems.map((item, i) => (
-                <span key={`${item}-${i}`} className="game-used-chip">
+              // The list grows unbounded all game and is reconciled on every
+              // keystroke, but CSS only ever shows ~2 rows (max-height 92px). Render
+              // just the most recent 24 (words are unique, so key by the word) — the
+              // count label above still shows the true total.
+              usedItems.slice(-24).map((item) => (
+                <span key={item} className="game-used-chip">
                   {item.toUpperCase()}
                 </span>
               ))
@@ -2729,9 +2713,7 @@ export default function GameScreen({
             )}
             <input
               ref={inputRef}
-              className={`game-input${inputShake ? ' input-shake' : ''}${
-                typingActive ? ' typing-active' : ''
-              }`}
+              className={`game-input${inputShake ? ' input-shake' : ''}`}
               type="text"
               value={draft}
               onChange={(event) => {
@@ -2758,12 +2740,16 @@ export default function GameScreen({
                   }
                 }
                 setDraft(value);
-                pulseInput(); // tiny per-keystroke visual response (+ bomb-panic)
                 // Editing the input invalidates the previous submission's verdict:
                 // drop the accept/reject banner so a stale "TOO SHORT" (or any
-                // rejection) can't linger over a now-valid word. Recomputed fresh
-                // on the next word_result.
-                if (lastWordResult && onClearResult) onClearResult();
+                // rejection) can't linger over a now-valid word. We hide it LOCALLY
+                // (a ref the banner render checks) instead of clearing App's
+                // lastWordResult — the old onClearResult() re-rendered the whole App
+                // (incl. the unmemoized WallScene, ~250 SVG nodes) on the FIRST key
+                // of every word. A new word_result is a fresh object, so it won't
+                // match this ref and the banner shows again; turn_update still clears
+                // the App state as before.
+                if (lastWordResult) dismissedResultRef.current = lastWordResult;
                 // Broadcast every keystroke so others see us type in real time.
                 // No debounce - the frantic typing/deleting is the fun part.
                 if (onTypingUpdate) onTypingUpdate(value);
@@ -2817,7 +2803,7 @@ export default function GameScreen({
           </div>
         )}
 
-        {lastWordResult && (
+        {lastWordResult && lastWordResult !== dismissedResultRef.current && (
           <div
             className={`game-toast ${
               lastWordResult.accepted ? 'accepted' : 'rejected'
