@@ -88,18 +88,13 @@
 
 /* ---- Stickers ---- */
 
-/* Each sticker holds its resting tilt (--rot) in every keyframe and adds a slow
-   drift (small translate), so it bobs gently around its pinned position. */
+/* Each sticker sits STATIC at its resting tilt (--rot). The old idle drift (an
+   8px translate over 20s) was the menu's largest animated area and invisible in
+   normal play, so it was removed along with the no-longer-needed will-change layer
+   — the resting pose is exactly the drift's `from` frame, so the wall is unchanged. */
 .wall-sticker {
   position: absolute;
   transform: rotate(var(--rot, 0deg));
-  will-change: transform;
-  animation: wall-sticker-drift var(--dur, 20s) ease-in-out infinite alternate;
-}
-
-@keyframes wall-sticker-drift {
-  from { transform: rotate(var(--rot, 0deg)) translate(0, 0); }
-  to { transform: rotate(var(--rot, 0deg)) translate(var(--dx, 8px), var(--dy, 8px)); }
 }
 
 /* ---- Self-writing graffiti tags ---- */
@@ -198,16 +193,8 @@ html[data-view='game'] .wall-beat-bright {
 /* ============  TENSION REACTION (Word Bomb turn)  =========== */
 /* ============================================================= */
 
-/* Warning: stickers drift a little faster as the turn tightens. */
-.wall-scene.warning .wall-sticker {
-  animation-duration: calc(var(--dur) * 0.7);
-}
-
-/* Critical: stickers drift hard and the red wash pulses across the wall. */
-.wall-scene.critical .wall-sticker {
-  animation-duration: calc(var(--dur) * 0.45);
-}
-
+/* Critical: the red wash pulses across the wall. (The stickers no longer drift,
+   so the old warning/critical drift-speed overrides were dropped with the loop.) */
 .wall-scene.critical .wall-red {
   animation: wall-red-pulse 1.3s ease-in-out infinite;
 }
@@ -220,7 +207,6 @@ html[data-view='game'] .wall-beat-bright {
 
 /* Honour reduced-motion: keep the static wall but stop the looping motion. */
 @media (prefers-reduced-motion: reduce) {
-  .wall-sticker,
   .wall-red,
   .wall-beat-bright {
     animation: none !important;

@@ -69,15 +69,15 @@ const TAGS = [
 ];
 
 // Six decorative stickers slapped on the wall (kind drives the inline SVG body).
-// Flat fill + a thick darker-shade outline, slight rotation, low opacity, each
-// with its own slow drift cycle (dx/dy amplitude in px, dur in seconds).
+// Flat fill + a thick darker-shade outline, slight rotation, low opacity. Static
+// now — the old per-sticker idle drift (dx/dy/dur) was removed as invisible motion.
 const STICKERS = [
-  { kind: 'star',    c: YELLOW, size: 42, rot: -14, top: 22, left: 30, op: 0.22, dx: 12,  dy: 10,  dur: 17 },
-  { kind: 'bolt',    c: CYAN,   size: 40, rot: 18,  top: 14, left: 84, op: 0.20, dx: -10, dy: 12,  dur: 21 },
-  { kind: 'skull',   c: PINK,   size: 44, rot: -8,  top: 68, left: 14, op: 0.18, dx: 11,  dy: -9,  dur: 19 },
-  { kind: 'crown',   c: ORANGE, size: 45, rot: 12,  top: 40, left: 62, op: 0.21, dx: -12, dy: -8,  dur: 23 },
-  { kind: 'bomb',    c: PURPLE, size: 38, rot: -22, top: 78, left: 50, op: 0.17, dx: 13,  dy: 9,   dur: 15 },
-  { kind: 'speech',  c: PINK,   size: 44, rot: 8,   top: 35, left: 8,  op: 0.19, dx: -9,  dy: 11,  dur: 25 },
+  { kind: 'star',    c: YELLOW, size: 42, rot: -14, top: 22, left: 30, op: 0.22 },
+  { kind: 'bolt',    c: CYAN,   size: 40, rot: 18,  top: 14, left: 84, op: 0.20 },
+  { kind: 'skull',   c: PINK,   size: 44, rot: -8,  top: 68, left: 14, op: 0.18 },
+  { kind: 'crown',   c: ORANGE, size: 45, rot: 12,  top: 40, left: 62, op: 0.21 },
+  { kind: 'bomb',    c: PURPLE, size: 38, rot: -22, top: 78, left: 50, op: 0.17 },
+  { kind: 'speech',  c: PINK,   size: 44, rot: 8,   top: 35, left: 8,  op: 0.19 },
 ];
 
 // A few detailed spray-paint splatters flung onto the wall - low opacity so they
@@ -102,8 +102,8 @@ const DRIPS = [
 /**
  * @param {object} props
  * @param {'calm'|'warning'|'critical'} props.intensity - drives a tension class
- *   so the wall reddens (and its stickers drift a touch faster) as a Word Bomb
- *   turn runs down. Defaults to the resting 'calm' on every non-game screen.
+ *   so the wall reddens as a Word Bomb turn runs down. Defaults to the resting
+ *   'calm' on every non-game screen.
  */
 export default function WallScene({ intensity = 'calm', resetKey }) {
   // Live self-writing tags. A new one spray-paints itself every 10-15s; the list
@@ -266,7 +266,7 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
           />
         ))}
 
-        {/* Stickers - each its own drifting inline SVG. */}
+        {/* Stickers - each a static inline SVG at its resting tilt. */}
         {STICKERS.map((st, i) => (
           <svg
             key={`stk${i}`}
@@ -280,9 +280,6 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
               height: `${st.size}px`,
               opacity: st.op,
               '--rot': `${st.rot}deg`,
-              '--dx': `${st.dx}px`,
-              '--dy': `${st.dy}px`,
-              '--dur': `${st.dur}s`,
             }}
           >
             <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
