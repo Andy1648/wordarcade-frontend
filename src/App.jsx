@@ -1667,20 +1667,19 @@ function App() {
     );
   }
 
-  // The anime fight-card intro plays over a full black overlay between the splash
-  // and the homepage; when it finishes it wipes down to the homepage. The shared
-  // WallScene + ParticleField are intentionally NOT mounted here: the intro was
-  // stripped back to near-empty so the two lines (TYPE FAST / DIE SLOW) own a calm
-  // black field with nothing competing behind them (and no per-beat halftone
-  // repaint). Those backdrops still render on the splash, menu and game.
-  if (showIntro) {
-    return (
-      <SoundContext.Provider value={soundValue}>
-        <TransitionIntro onComplete={handleIntroComplete} />
-        <CursorTrail />
-      </SoundContext.Provider>
-    );
-  }
+  // The anime fight-card intro plays between the splash dismiss and the homepage
+  // reveal. It is NOT an early return: rendering only the intro here would defer
+  // the entire menu tree (WallScene + its 12 tags, ParticleField, Homepage, the
+  // odometer) until showIntro flips off — i.e. it would all mount at the exact
+  // instant the knife-split starts, dumping 300ms+ of layout/paint into the
+  // slice's first frames. Instead the normal app tree renders NOW and the intro
+  // sits ON TOP as a fixed, opaque, full-viewport black overlay (see the
+  // `showIntro && <TransitionIntro/>` mount inside the main return, and
+  // .intro-overlay's z-index in TransitionIntro.css). The menu mounts and paints
+  // behind the intro's black card where the cost is invisible, its entrance
+  // animations run there once (so they don't visibly replay when the slice opens),
+  // and the knife then animates over an already-painted menu. The overlay is still
+  // a bare calm-black field — the two lines own it, nothing shows through.
 
   // `key={view}` remounts the wrapper the instant the view changes, so the new
   // screen mounts immediately (its mount effects - e.g. the in-game 3-2-1
@@ -1832,6 +1831,12 @@ function App() {
           </button>
         </div>
       )}
+      {/* Fight-card intro overlay. Mounted on TOP of the already-rendered menu
+          (fixed, opaque, full-viewport — z-index below CursorTrail so the cursor
+          trail still draws over it, above all menu chrome so nothing shows
+          through). The menu underneath has already mounted + painted, so the knife
+          animates over it with no first-frame mount cost. */}
+      {showIntro && <TransitionIntro onComplete={handleIntroComplete} />}
       {/* Cursor trail sits outside .app-shake so the screen shake never moves
           it, and above everything (z 9999). */}
       <CursorTrail />

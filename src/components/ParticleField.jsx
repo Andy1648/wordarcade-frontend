@@ -1,9 +1,9 @@
 // ParticleField.jsx
-// A persistent, lightweight field of small glowing dots drifting up the screen
-// at all times, behind the content. Pure CSS motion; on a detected beat (the
-// html[data-beat] hook set by useBeatSync) they all briefly speed up, so the
-// field "jumps" with the music. Static module config (no per-render randomness)
-// so the layout never reshuffles on re-render. 12 nodes total.
+// A persistent, lightweight field of small dots behind the content. The constant
+// upward drift (and its on-beat speed-up) was removed as idle ambient motion the
+// menu's no-idle-loops rule bans — the dots now rest off the bottom edge, so the
+// field is inert (the markup is kept so it can be re-enabled deliberately later).
+// Static module config (no per-render randomness) so nothing reshuffles. 12 nodes.
 import './ParticleField.css';
 
 const PARTICLES = [
@@ -34,8 +34,6 @@ export default function ParticleField() {
             height: `${p.size}px`,
             background: p.color,
             '--p-op': p.op,
-            '--p-dur': `${p.dur}s`,
-            '--p-delay': `${p.delay}s`,
           }}
         />
       ))}

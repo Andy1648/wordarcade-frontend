@@ -8,28 +8,14 @@
   overflow: hidden;
 }
 
+/* The constant upward drift (particle-rise) was pure idle ambience — exactly the
+   kind of always-on motion the menu's no-idle-loops rule bans — so it was removed
+   (12 infinite animations + 12 will-change layers gone). The markup stays; each
+   dot simply rests at its start position (bottom: -10px, off the bottom edge), so
+   nothing new appears on screen. */
 .particle {
   position: absolute;
   bottom: -10px;
   border-radius: 50%;
   opacity: var(--p-op, 0.12);
-  will-change: transform;
-  /* Slow constant rise; per-particle duration/delay keep them desynced. */
-  animation: particle-rise var(--p-dur, 16s) linear var(--p-delay, 0s) infinite;
-}
-
-@keyframes particle-rise {
-  from { transform: translateY(0); }
-  to { transform: translateY(-110vh); }
-}
-
-/* On a beat the whole field briefly speeds up (the dots "jump"). data-beat is
-   held ~120ms by useBeatSync, so the rise animation runs ~2.5x faster for that
-   window then eases back. */
-html[data-beat='true'] .particle {
-  animation-duration: calc(var(--p-dur, 16s) * 0.4);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .particle { animation: none !important; }
 }

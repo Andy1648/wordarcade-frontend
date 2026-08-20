@@ -149,7 +149,12 @@
 /* ---- SAT RUSH: tiles drop into the slots (loop), ante ticks 5x -> 2x ---- */
 .sr-tile {
   animation: sr-tile-drop 4.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-  animation-delay: var(--sdelay, 0s);
+  /* Negative base offset (on top of each tile's --sdelay stagger) so that when the
+     loop is PAUSED at rest (see the play-state rule below), the frozen frame lands
+     inside the 22%–80% "settled in slot" window rather than the 0% pre-drop frame
+     (tiles hidden above the slots). Keeps the resting card showing S·A·T in their
+     slots; when the loop runs on hover it just plays from a shifted phase. */
+  animation-delay: calc(var(--sdelay, 0s) - 2s);
 }
 @keyframes sr-tile-drop {
   0%, 8% { transform: translateY(-46px); opacity: 0; }
@@ -190,6 +195,24 @@ html[data-beat='true'] .sr-speed {
   0% { opacity: 0.6; transform: scale(1); }
   28% { opacity: calc(0.6 + 0.4 * var(--beat-intensity, 1)); transform: scale(1.06); }
   100% { opacity: 0.6; transform: scale(1); }
+}
+
+/* ============================================================= */
+/* ===============  IDLE FRAME BUDGET (pause at rest)  ========== */
+/* ============================================================= */
+/* A phone-size menu ran ~36 of these card-art loops at once with no card even
+   touched. They're now PAUSED at rest and only animate while the card is hovered,
+   focus-within or pressed — driven by --art-play (paused/running), set on
+   .game-card in GameCard.css and inherited down to the SVG art here. Every keyframe
+   and resting pose is unchanged, so a paused element renders its normal frame (the
+   same still poses reduced-motion users already see; .sr-tile carries a phase
+   offset above so its paused frame is the settled-in-slot one). NOTE: .cb-brain's
+   throb and .sr-caret's blink are intentionally NOT paused — the caret is the one
+   loop that stays alive at rest. */
+.wb-bomb, .wb-orbit, .wb-tile, .wb-spark,
+.cb-bolt, .cb-q, .cb-synapse,
+.sr-tile, .sr-mult-5, .sr-mult-2 {
+  animation-play-state: var(--art-play, paused);
 }
 
 @media (prefers-reduced-motion: reduce) {

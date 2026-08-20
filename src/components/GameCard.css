@@ -45,6 +45,11 @@
      (GameCardArt.css): 1 at rest, dropped to 0.6 on hover so the motion speeds
      up ~40% when you interact. */
   --spd: 1;
+  /* Idle frame budget: the card art loops are PAUSED at rest and only run while
+     the card is interacted with. Inherited by the art elements, which set
+     `animation-play-state: var(--art-play)` (see GameCardArt.css). Touch devices
+     have no hover, so the art just rests still — that stillness is the point. */
+  --art-play: paused;
   /* Colored outline: a translucent-black edge reads as a darker shade of
      whatever per-game fill the card carries (set inline). */
   border: 4px solid rgba(0, 0, 0, 0.4);
@@ -107,6 +112,15 @@
   --spd: 0.6;
   animation: card-hover-pop 0.35s ease-out forwards;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
+}
+
+/* Run the paused card-art loops only while the card is actually being used —
+   hovered, keyboard-focused (focus-within catches focus on the card or anything
+   inside it), or pressed. At rest --art-play stays `paused` from .game-card. */
+.game-card:hover,
+.game-card:focus-within,
+.game-card:active {
+  --art-play: running;
 }
 
 .game-card:active {
