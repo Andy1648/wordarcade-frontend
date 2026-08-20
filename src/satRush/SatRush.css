@@ -1456,8 +1456,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-sentence {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(14px, 1.9vw, 16px);
+  font-size: 13px;
   line-height: 1.6;
+  opacity: 0.85; /* the example is now secondary to the definition above it */
 }
 /* the answer, filled in and highlighted (shared by the re-encode beat) */
 .sr-brief-fill {
@@ -1471,9 +1472,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-def {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  font-size: clamp(14px, 1.9vw, 16px); /* now the PRIMARY line, directly under the word */
+  line-height: 1.6;
   font-weight: 700; /* emphasis is BOLD, never italic (manga lettering convention) */
-  opacity: 0.8;
 }
 .sr-brief-root {
   font-family: 'Space Mono', monospace;

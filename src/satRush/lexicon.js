@@ -50,9 +50,11 @@ const MAX_RECORDS = 2000; // hard cap on stored records (see evict)
 
 /** A clean, empty state. Returned for a fresh player and for any unreadable blob.
  *  `mode` remembers the last mode-select choice ('briefing' | 'lineup') so the
- *  picker can preselect it; a fresh player defaults to 'briefing'. */
+ *  picker can preselect it; a fresh player defaults to 'briefing'. `lastBriefed`
+ *  is the words the previous briefing dealt, so the next one can exclude them and
+ *  never re-deal the same deck. */
 export function freshState() {
-  return { v: VERSION, session: 0, mode: 'briefing', records: {} };
+  return { v: VERSION, session: 0, mode: 'briefing', lastBriefed: [], records: {} };
 }
 
 // True only for a blob that is safe to trust as-is. Anything else → fresh state,
@@ -83,6 +85,11 @@ export function load(storage) {
       v: VERSION,
       session: blob.session,
       mode: blob.mode === 'lineup' ? 'lineup' : 'briefing',
+      // Backfill lastBriefed: accept only an array of strings, else an empty deck.
+      lastBriefed:
+        Array.isArray(blob.lastBriefed) && blob.lastBriefed.every((w) => typeof w === 'string')
+          ? blob.lastBriefed
+          : [],
       records: blob.records,
     };
   } catch {

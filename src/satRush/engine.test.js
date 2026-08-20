@@ -581,21 +581,20 @@ test('INTERACTION: a miss on a deep cut costs a life, zeroes heat, and requeues'
   assert.equal(m.requeuedFor, 15 + DEFAULT_CONFIG.revenantOffset); // 21
 });
 
-// --- alt half credit & results --------------------------------------------
+// --- clear scoring & results ----------------------------------------------
 
-test('an alt clear is half credit (bonus included) and reports the real word', () => {
+test('a deep-cut clear is full credit: base × stage mult + the flat deep-cut bonus', () => {
   const eng = engine({ perTier: 20 });
-  const cut = skipTo(eng, 15); // deep cut, tier 5, stage will be 0 after skip? no:
-  // skipTo used nextWord (fresh), so stage 0; deep cut bonus applies on clear.
+  const cut = skipTo(eng, 15); // deep cut, tier 5; skipTo used nextWord (fresh) → stage 0
   assert.equal(cut.isDeepCut, true);
-  const full = eng.currentMultiplier(); // stage 0 -> 5 (heat 0)
-  assert.equal(full, 5);
-  const r = eng.submitCorrect({ viaAlt: true });
+  assert.equal(eng.currentMultiplier(), 5); // stage 0 → 5× (heat 0)
+  const r = eng.submitCorrect();
   const base = r.breakdown.base;
-  const expectedFull = base * 5 + DEFAULT_CONFIG.deepCutBonus;
-  assert.equal(r.gained, Math.round(expectedFull * 0.5));
-  assert.equal(r.viaAlt, true);
-  assert.equal(r.actualWord, cut.word);
+  // Full credit — no half-credit halving now that alt typing is gone; the deep-cut
+  // bonus is added flat (not multiplied).
+  assert.equal(r.gained, base * 5 + DEFAULT_CONFIG.deepCutBonus);
+  assert.equal(r.breakdown.deepCutBonus, DEFAULT_CONFIG.deepCutBonus);
+  assert.equal(r.actualWord, cut.word); // still reports the real word for the UI
 });
 
 test('results(): avg ante is the mean clear MULTIPLIER and hardest word is the top tier', () => {

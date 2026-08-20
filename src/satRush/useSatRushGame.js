@@ -27,7 +27,6 @@ import * as juice from './juice';
 
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
 const CLEAR_PAUSE_MS = 850;
-const ALT_PAUSE_MS = 1500;
 const MISS_PAUSE_MS = 1800; // the miss now TEACHES (sentence + def + cousin), so hold a beat longer
 // A clear that leaned on more than the free first letter didn't really land — it
 // gets the same re-encode beat as a miss, over the (longer) heavy-clear pause.
@@ -176,7 +175,7 @@ export function useSatRushGame() {
         );
       }
     }
-    inputRef.current = createSlotInput({ target: cur.word, alts: cur.alts });
+    inputRef.current = createSlotInput({ target: cur.word });
     pendingRef.current = 'idle';
     msgRef.current = null;
     reEncodeRef.current = null; // a fresh word clears the previous re-encode beat
@@ -192,7 +191,7 @@ export function useSatRushGame() {
   }, [trackRunEnd, trackSR]);
 
   const resolveClear = useCallback(
-    (viaAlt) => {
+    () => {
       const eng = engineRef.current;
       const cw = eng.getState().current;
       const word = cw ? cw.word : '';
@@ -200,7 +199,7 @@ export function useSatRushGame() {
       // How many letters were revealed at completion — gates the heat bump in the
       // engine, and tells PostHog whether players ante early or ride the spell-along.
       const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
-      const r = eng.submitCorrect({ viaAlt, revealed });
+      const r = eng.submitCorrect({ revealed });
       if (!r) return;
       // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
       // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
@@ -220,26 +219,25 @@ export function useSatRushGame() {
         // recognition analogue of "anteing early" (more standing = harder call).
         suspectsStanding: cw && cw.suspects ? suspectsStanding(cw.suspects.lineup, r.breakdown.stage) : null,
         multiplier: r.breakdown.effectiveMultiplier,
-        outcome: viaAlt ? 'near' : 'exact',
+        outcome: 'exact', // only the target's own letters can complete a word now
         wasBriefed,
         box: rec ? rec.box : 0,
       });
       // A clear that leaned on the spell-along (more than the free first letter)
       // didn't really land — give it the same re-encode beat a miss gets, so the
       // word gets a proper second look instead of vanishing.
-      if (!viaAlt && revealed >= HEAVY_REVEAL_MIN && cw) {
+      if (revealed >= HEAVY_REVEAL_MIN && cw) {
         reEncodeRef.current = buildReEncode(cw, 'weak');
       }
       pendingRef.current = 'clear';
       const silverJustOn = r.silverTongue && !prevSilverRef.current;
-      // The clear SFX (tone 'capture'): SILVER TONGUE entry gets its own; a near/alt
-      // clear reads "SO CLOSE…!" (a cut-off realisation — manga punctuation grammar);
-      // otherwise "CAPTURED!!" (the fugitive is caught).
+      // The clear SFX (tone 'capture'): SILVER TONGUE entry gets its own; otherwise
+      // "CAPTURED!!" (the fugitive is caught).
       stampSeq.current += 1;
       stampRef.current = {
-        text: silverJustOn ? 'SILVER TONGUE!' : viaAlt ? 'SO CLOSE…!' : 'CAPTURED!!',
+        text: silverJustOn ? 'SILVER TONGUE!' : 'CAPTURED!!',
         tone: 'capture',
-        kind: silverJustOn ? 'silver' : viaAlt ? 'close' : 'got',
+        kind: silverJustOn ? 'silver' : 'got',
         id: stampSeq.current,
       };
       // Clear juice: the SILVER TONGUE crack is its own big moment; otherwise a
@@ -248,18 +246,12 @@ export function useSatRushGame() {
       else
         juice.answerCorrect({
           streak: eng.getState().currentStreak,
-          viaAlt,
           silver: r.silverTongue,
           deepCut: r.breakdown.deepCutBonus > 0,
           revenant: r.breakdown.revenant,
         });
       if (silverJustOn) {
         msgRef.current = { text: 'SILVER TONGUE — multipliers doubled', kind: 'good' };
-      } else if (viaAlt) {
-        msgRef.current = {
-          text: `accepted — the word was ${r.actualWord.toUpperCase()} · half credit +${r.gained}`,
-          kind: 'near',
-        };
       } else {
         const bonus = r.breakdown.deepCutBonus ? ' · DEEP CUT BONUS' : '';
         msgRef.current = {
@@ -270,7 +262,7 @@ export function useSatRushGame() {
       prevSilverRef.current = r.silverTongue;
       force();
       clearTimeout(pauseTimer.current);
-      const pause = reEncodeRef.current ? HEAVY_CLEAR_PAUSE_MS : viaAlt ? ALT_PAUSE_MS : CLEAR_PAUSE_MS;
+      const pause = reEncodeRef.current ? HEAVY_CLEAR_PAUSE_MS : CLEAR_PAUSE_MS;
       pauseTimer.current = setTimeout(beginWord, pause);
     },
     [beginWord, persistLexicon, trackSR]
@@ -405,10 +397,10 @@ export function useSatRushGame() {
         if (pendingRef.current !== 'idle') return;
         const input = inputRef.current;
         if (!input) return;
-        const rev = input.revealNextLetter(); // locks the next target letter, snaps alt divergence
+        const rev = input.revealNextLetter(); // locks the next target letter
         force();
         if (rev.complete) {
-          resolveClear(input.getState().viaAlt);
+          resolveClear();
           return;
         }
         if (input.getState().revealed < autoRevealMax) {
@@ -465,7 +457,7 @@ export function useSatRushGame() {
 
       const res = input.typeLetter(e.key);
       if (res.accepted) {
-        if (res.complete) resolveClear(res.viaAlt);
+        if (res.complete) resolveClear();
         else force();
       } else {
         // Rejected key: engine bleeds score / decides the every-3rd reveal.
@@ -473,7 +465,7 @@ export function useSatRushGame() {
         if (k && k.revealedLetter) {
           const rev = input.revealNextLetter();
           if (rev.complete) {
-            resolveClear(input.getState().viaAlt);
+            resolveClear();
             return;
           }
         }
@@ -572,7 +564,17 @@ export function useSatRushGame() {
         startRun('lineup');
         return;
       }
-      briefingRef.current = pickBriefing({ state: lex, session: lex.session, words: WORDS, rng: Math.random });
+      // Exclude the previous deck so the briefing refreshes every time (never
+      // re-deals the same set); then remember THIS deck for the next exclusion.
+      briefingRef.current = pickBriefing({
+        state: lex,
+        session: lex.session,
+        words: WORDS,
+        rng: Math.random,
+        exclude: lex.lastBriefed || [],
+      });
+      lex.lastBriefed = briefingRef.current.words.map((r) => r.word);
+      persistLexicon();
       trackSR('briefing_shown', {
         familyMorpheme: briefingRef.current.familyMorpheme,
         reviewCount: briefingRef.current.reviewCount,
@@ -651,7 +653,7 @@ export function useSatRushGame() {
 
       const present = () => {
         const c = eng.getState().current;
-        inputRef.current = createSlotInput({ target: c.word, alts: c.alts });
+        inputRef.current = createSlotInput({ target: c.word });
         pendingRef.current = 'idle';
         msgRef.current = null;
         prevSilverRef.current = eng.getState().silverTongue;
