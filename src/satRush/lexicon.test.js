@@ -11,6 +11,7 @@ import {
   recordResult,
   dueWords,
   weakWords,
+  needsReview,
   masteredCount,
   isMastered,
   hasSeen,
@@ -111,10 +112,10 @@ test('Leitner: miss → box 0, each clear promotes (capped at 4)', () => {
 test('dueWords respects the INTERVALS schedule per box', () => {
   const s = freshState();
   s.session = 1;
-  clear(s, 'a'); // box 1, lastSeen 1 → interval INTERVALS[1] = 2
-  assert.equal(INTERVALS[1], 2);
-  assert.deepEqual(dueWords(s, 2), [], 'not due one session later');
-  assert.deepEqual(dueWords(s, 3), ['a'], 'due once the interval elapses');
+  clear(s, 'a'); // box 1, lastSeen 1 → interval INTERVALS[1] = 3
+  assert.equal(INTERVALS[1], 3);
+  assert.deepEqual(dueWords(s, 3), [], 'not due two sessions later');
+  assert.deepEqual(dueWords(s, 4), ['a'], 'due once the (widened) interval elapses');
 
   // A miss (box 0, interval 1) is due the very next session.
   s.session = 5;
@@ -167,6 +168,39 @@ test('weak = last two encounters both given-away clears', () => {
   assert.ok(!weakWords(s2).includes('x'), 'needs BOTH of the last two to be given away');
 });
 
+test('needsReview: true only when the LAST encounter was a miss or a give-away', () => {
+  const s = freshState();
+  // Never seen → not review (nothing to re-study).
+  assert.equal(needsReview(s, 'unseen'), false);
+
+  // Last encounter a MISS (ante 0) → review.
+  miss(s, 'missed');
+  assert.equal(needsReview(s, 'missed'), true);
+
+  // Last encounter a GIVE-AWAY clear (ante 1) → review.
+  clear(s, 'given', { stage: 2, revealedCount: 4 });
+  assert.equal(needsReview(s, 'given'), true);
+
+  // Cleared COLD (ante 5) → NOT review, even the very first time.
+  clear(s, 'cold', { stage: 0, revealedCount: 0 });
+  assert.equal(needsReview(s, 'cold'), false);
+
+  // Cleared at stage 1 with no reveals (ante 3) → still "known", not review.
+  clear(s, 'quick', { stage: 1, revealedCount: 0 });
+  assert.equal(needsReview(s, 'quick'), false);
+
+  // ONLY the last encounter counts: a shaky word later nailed cold is NOT review.
+  const s2 = freshState();
+  miss(s2, 'redeemed');
+  clear(s2, 'redeemed', { stage: 0, revealedCount: 0 }); // cold now
+  assert.equal(needsReview(s2, 'redeemed'), false, 'a cold clear clears the review flag');
+
+  // ...and the reverse: a cold clear then a fresh miss IS review again.
+  clear(s2, 'relapsed', { stage: 0, revealedCount: 0 });
+  miss(s2, 'relapsed');
+  assert.equal(needsReview(s2, 'relapsed'), true, 'a later miss re-flags it');
+});
+
 test('bestStage tracks the best ante ever, antes window is bounded', () => {
   const s = freshState();
   clear(s, 'w', { stage: 2, revealedCount: 4 }); // ante 1
@@ -176,6 +210,30 @@ test('bestStage tracks the best ante ever, antes window is bounded', () => {
   clear(s, 'w');
   clear(s, 'w');
   assert.ok(s.records.w.antes.length <= 3, 'antes window stays small');
+});
+
+test('load migrates lastBriefed: old flat deck → wrapped, new decks → last 3', () => {
+  const st = memStorage();
+  const base = { v: 1, session: 2, mode: 'briefing', records: {} };
+
+  // OLD format: a flat array of word strings (one deck) → wrapped as a single deck.
+  st.setItem('wa_satrush_lexicon', JSON.stringify({ ...base, lastBriefed: ['a', 'b', 'c'] }));
+  assert.deepEqual(load(st).lastBriefed, [['a', 'b', 'c']]);
+
+  // Empty flat array → no decks.
+  st.setItem('wa_satrush_lexicon', JSON.stringify({ ...base, lastBriefed: [] }));
+  assert.deepEqual(load(st).lastBriefed, []);
+
+  // NEW format with more than 3 decks → keep only the newest 3.
+  st.setItem('wa_satrush_lexicon', JSON.stringify({
+    ...base,
+    lastBriefed: [['d1'], ['d2'], ['d3'], ['d4']],
+  }));
+  assert.deepEqual(load(st).lastBriefed, [['d2'], ['d3'], ['d4']]);
+
+  // Malformed (not an array) → empty, never a throw.
+  st.setItem('wa_satrush_lexicon', JSON.stringify({ ...base, lastBriefed: 'nope' }));
+  assert.deepEqual(load(st).lastBriefed, []);
 });
 
 test('storage-blocked: load → fresh, save → silent, in-memory play still works', () => {

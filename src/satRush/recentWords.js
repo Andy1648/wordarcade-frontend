@@ -1,7 +1,7 @@
 // recentWords.js
 // Cross-run memory of the words SAT RUSH has recently served, so a returning
 // player is not handed the same early words every run. It is a plain ring buffer
-// of the last ~80 served word strings in localStorage; the engine treats these
+// of the last ~250 served word strings in localStorage; the engine treats these
 // as DEPRIORITIZED, never banned (see engine.js drawWord).
 //
 // Same defensive pattern as visitHistory.js: every read/write is wrapped so a
@@ -9,7 +9,9 @@
 // remembered rather than throwing.
 
 const RECENT_KEY = 'wa_satrush_recent';
-const RECENT_CAP = 80; // how many recent words we keep (the ring size)
+// How many recent words we keep (the ring size). At ~12 words/run, 80 only
+// protected ~7 runs — which is why LINEUP still repeated. 250 covers ~20 runs.
+const RECENT_CAP = 250;
 
 function readList() {
   try {
