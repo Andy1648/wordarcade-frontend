@@ -6,6 +6,7 @@ import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import ModeDialog from './ModeDialog';
+import ConnectingContent from './ConnectingContent';
 import WordCountChip from './WordCountChip';
 import GraffitiTag from './decor/GraffitiTag';
 import {
@@ -75,35 +76,12 @@ function coldStartHintMs() {
   return COLD_START_HINT_MS;
 }
 
-// The in-button connect feedback. Phase 1 (cold=false): a spinning ink ring +
-// CONNECTING…. Phase 2 (cold=true, after COLD_START_HINT_MS): the same spinner
-// with WAKING THE SERVER… and a Space Mono reassurance sub-line. The spinner is
-// FEEDBACK during an active wait (allowed under the menu's no-idle-motion law);
-// reduced motion swaps the ring for a static ⏳ (handled in CSS). aria-live lets a
-// screen reader announce the phase-1 → phase-2 shift.
-function ConnectingContent({ cold }) {
-  return (
-    <span className="connecting" aria-live="polite">
-      <span className="connecting-spinner" aria-hidden="true" />
-      <span className="connecting-spinner-rm" aria-hidden="true">⏳</span>
-      <span className="connecting-text">
-        <span className="connecting-main">
-          {cold ? 'WAKING THE SERVER…' : 'CONNECTING…'}
-        </span>
-        {cold && (
-          <span className="connecting-sub">free hosting naps — ~30s, game starts by itself</span>
-        )}
-      </span>
-    </span>
-  );
-}
-
 /**
  * The lobby/homepage screen. Clicking a card or an action button calls the
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onSatRush, wsStatus, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onSatRush, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -120,24 +98,46 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // Run a connect-dependent action now if the socket is open; otherwise record
   // the intent (and which control to show "CONNECTING…" on) for auto-fire.
   function runWhenConnected(controlId, action) {
+    // Mark the control pending on BOTH paths. On the warm path (socket already
+    // open) the action fires immediately, but for quickplay/daily it only SENDS
+    // create+start over the socket — the view doesn't change until game_started
+    // lands — so without this the button would show nothing but opacity 0.6 for
+    // the whole round-trip. (For CREATE/JOIN, whose action changes the view
+    // synchronously, this commits in the same batch as the view swap and never
+    // paints, so the warm path stays instant.) The pending state is cleared on the
+    // serverEventId bump (see the effect below), not here.
+    setConnecting(controlId);
     if (wsStatus === 'open') {
       action();
     } else {
-      setConnecting(controlId);
       pendingActionRef.current = action;
     }
   }
 
   // Fire the one queued intent the moment the socket opens (warm path leaves this
-  // a no-op - nothing was ever queued, so no "CONNECTING…" flash).
+  // a no-op - nothing was ever queued, so no "CONNECTING…" flash). We deliberately
+  // do NOT clear `connecting` here: the socket opening is only the FIRST half of
+  // the wait — quickplay/daily then round-trip create+start before the view flips
+  // on game_started. The pending state is cleared on the serverEventId bump below.
   useEffect(() => {
     if (wsStatus === 'open' && pendingActionRef.current) {
       const action = pendingActionRef.current;
       pendingActionRef.current = null;
-      setConnecting(null);
       action();
     }
   }, [wsStatus]);
+
+  // Clear the pending state when a server frame actually RESOLVES — serverEventId
+  // (App.jsx) bumps once per drain carrying room_update/game_started/etc, i.e. the
+  // moment the view is about to change. This keeps the spinner up through the whole
+  // wait (connect + the create→start round-trip) instead of dying the instant the
+  // socket opens. On the home screen no resolving frames arrive until our own
+  // action triggers them, so this only ever fires for the action we started; the
+  // mount run is a no-op (connecting is already null).
+  useEffect(() => {
+    setConnecting(null);
+    pendingActionRef.current = null;
+  }, [serverEventId]);
 
   // COLD-START HINT (presentation only): while a connect attempt is pending and
   // the socket still isn't open, arm a per-attempt timer; when it fires we flip
@@ -399,6 +399,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           onClose={() => setDialog(null)}
           onCreate={handleDialogCreate}
           onJoin={handleDialogJoin}
+          connecting={connecting}
+          coldStart={coldStart}
           blitzPacks={blitzPacks}
           onToggleBlitzPack={onToggleBlitzPack}
           onSetAllBlitzPacks={onSetAllBlitzPacks}
