@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import './ModeDialog.css';
 import ModeDialogBackground, { MODES } from './ModeDialogBackground';
+import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 
@@ -46,7 +47,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
  * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -223,6 +224,11 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               />
             )}
 
+            {/* CREATE/JOIN show the shared CONNECTING… / WAKING THE SERVER…
+                feedback IN PLACE of their label while their action is pending —
+                inside the dialog, above ModeDialog's own scrim (the Homepage
+                bottom-bar indicator would be hidden behind that scrim). Both are
+                disabled while EITHER is pending so a second tap can't double-fire. */}
             <div className="mode-dialog-actions">
               <button
                 className="mode-dialog-btn mode-dialog-btn-create"
@@ -230,14 +236,16 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                 onClick={onCreate}
                 onMouseEnter={() => setCreateHover(true)}
                 onMouseLeave={() => setCreateHover(false)}
+                disabled={!!connecting}
               >
-                {mode.create}
+                {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : mode.create}
               </button>
               <button
                 className="mode-dialog-btn mode-dialog-btn-join"
                 onClick={onJoin}
+                disabled={!!connecting}
               >
-                JOIN
+                {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN'}
               </button>
             </div>
           </div>

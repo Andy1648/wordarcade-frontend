@@ -1596,6 +1596,7 @@ function App() {
     screen = (
       <Homepage
         wsStatus={wsStatus}
+        serverEventId={serverEventId}
         onSelectGame={(gameId) => goToLobby(gameId)}
         onSatRush={goToSatRush}
         onCreateRoom={() => goToLobby('solo')}
