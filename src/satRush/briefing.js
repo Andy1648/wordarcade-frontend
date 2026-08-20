@@ -85,12 +85,29 @@ function groupByMorpheme(chosen, morpheme) {
  * @param {object[]} opts.words    the full word pool (rows with root/tier/…)
  * @param {() => number} [opts.rng]  RNG in [0,1); injected for determinism
  * @param {number}   [opts.count]  how many words to brief (default 5)
+ * @param {Iterable<string>} [opts.exclude]  words to skip (e.g. the previous deck)
+ *   so a briefing never re-deals the same set. SOFT: if the exclusion leaves the
+ *   pool short of `count`, non-mastered excluded words are backfilled so a full
+ *   deck always ships.
  */
-export function pickBriefing({ state, session, words = [], rng = Math.random, count = 5 } = {}) {
+export function pickBriefing({ state, session, words = [], rng = Math.random, count = 5, exclude = [] } = {}) {
   const byWord = new Map(words.map((r) => [r.word, r]));
+  const excludeSet = new Set(Array.from(exclude, (w) => String(w)));
   const chosen = [];
   const chosenSet = new Set();
   const reviewWords = new Set();
+
+  // Shared ordering for fresh + backfill fill: root-bearing first (every card can
+  // teach a family), then unseen, then the gentlest tier.
+  const freshOrder = (a, b) => {
+    const ra = a.root ? 0 : 1;
+    const rb = b.root ? 0 : 1;
+    if (ra !== rb) return ra - rb;
+    const sa = hasSeen(state, a.word) ? 1 : 0;
+    const sb = hasSeen(state, b.word) ? 1 : 0;
+    if (sa !== sb) return sa - sb;
+    return (a.tier || 1) - (b.tier || 1);
+  };
 
   const take = (row) => {
     if (!row || chosenSet.has(row.word)) return false;
@@ -108,6 +125,7 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
   dueWords(state, session).forEach(pushReview);
   for (const w of reviewOrder) {
     if (chosen.length >= 2) break;
+    if (excludeSet.has(w)) continue; // just-briefed — don't re-deal (soft; may backfill)
     const row = byWord.get(w); // ignore memory for words no longer in the pool
     if (row && take(row)) reviewWords.add(w);
   }
@@ -115,20 +133,32 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
 
   // ---- 2. fill the rest with fresh, tier-appropriate words ----
   // Prefer words that CARRY a root (so the card can teach its family), then unseen
-  // words, then the gentlest tier. Mastered words are never re-briefed as fresh.
-  const fresh = words.filter((r) => !chosenSet.has(r.word) && !isMastered(state, r.word));
-  const ordered = shuffle(fresh, rng).sort((a, b) => {
-    const ra = a.root ? 0 : 1;
-    const rb = b.root ? 0 : 1;
-    if (ra !== rb) return ra - rb; // root-bearing first — every card should teach a family
-    const sa = hasSeen(state, a.word) ? 1 : 0;
-    const sb = hasSeen(state, b.word) ? 1 : 0;
-    if (sa !== sb) return sa - sb; // unseen words first
-    return (a.tier || 1) - (b.tier || 1); // then the gentlest tier
-  });
+  // words, then the gentlest tier. Mastered and just-briefed (excluded) words are
+  // never re-briefed as fresh.
+  const fresh = words.filter(
+    (r) => !chosenSet.has(r.word) && !isMastered(state, r.word) && !excludeSet.has(r.word)
+  );
+  const ordered = shuffle(fresh, rng).sort(freshOrder);
   for (const row of ordered) {
     if (chosen.length >= count) break;
     take(row);
+  }
+
+  // ---- 2b. SOFT-exclusion backfill ----
+  // If excluding the previous deck left us short of a full deck, backfill from the
+  // non-mastered EXCLUDED words (same ordering) so a full deck always ships rather
+  // than dealing fewer than `count`.
+  if (chosen.length < count) {
+    const backfill = shuffle(
+      words.filter(
+        (r) => excludeSet.has(r.word) && !chosenSet.has(r.word) && !isMastered(state, r.word)
+      ),
+      rng
+    ).sort(freshOrder);
+    for (const row of backfill) {
+      if (chosen.length >= count) break;
+      take(row);
+    }
   }
 
   // ---- 3. shared-morpheme BONUS ----

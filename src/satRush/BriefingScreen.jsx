@@ -3,12 +3,12 @@
 // CALM: no timer, no countdown, no drain bar, no pressure. It's the one screen in
 // SAT RUSH that isn't rushing anyone.
 //
-// Each of the (up to) five cards leads with the WORD, then the SENTENCE WITH THE
-// WORD FILLED IN AND HIGHLIGHTED — that filled sentence is the encode step and the
-// most important element on the card; we never show a bare word–definition pair.
-// The definition is secondary; the root and its cousins come next (cousins the
-// player has already met wear a "you know this one" tick — the transfer moment made
-// visible); a review word is quietly marked as one they've faced before.
+// Each of the (up to) five cards reads WORD → DEFINITION → filled example SENTENCE:
+// the definition sits directly under the word so the meaning lands first, then the
+// example sentence (the word filled in and highlighted) shows it in use. The root
+// and its cousins come next (cousins the player has already met wear a "you know
+// this one" tick — the transfer moment made visible); a review word is quietly
+// marked as one they've faced before.
 //
 // If the run is built around a root family, the screen is headed by that morpheme
 // so the framing is "here's one root and its family," not "here are five words".
@@ -43,10 +43,11 @@ function BriefCard({ card }) {
         </span>
       </div>
 
-      {/* the encode step — the most important element on the card */}
-      <FilledSentence context={context} word={word} />
-
+      {/* definition first — the meaning lands directly under the word */}
       <p className="sr-brief-def">“{gloss}”</p>
+
+      {/* then the word in use — the example sentence, filled in and highlighted */}
+      <FilledSentence context={context} word={word} />
 
       {root && (
         <div className="sr-brief-root">

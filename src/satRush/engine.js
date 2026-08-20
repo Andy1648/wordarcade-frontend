@@ -408,11 +408,10 @@ export function createSatRushEngine({
   /**
    * Resolve the current word as a correct completion.
    * @param {object} [opts]
-   * @param {boolean} [opts.viaAlt]   completed a valid same-length alt (half credit)
    * @param {number}  [opts.revealed] letters that were revealed on the word at
    *   completion (input.getState().revealed); gates the heat bump — see below.
    */
-  function submitCorrect({ viaAlt = false, revealed = 0 } = {}) {
+  function submitCorrect({ revealed = 0 } = {}) {
     const cw = state.current;
     if (!cw || cw.resolved) return null;
 
@@ -436,7 +435,6 @@ export function createSatRushEngine({
     const base = cw.tier * 10 + cw.length * 2;
     let raw = base * mult;
     if (cw.isDeepCut) raw += cfg.deepCutBonus; // flat, not multiplied
-    if (viaAlt) raw *= 0.5; // half credit (bonus included)
     let gained = Math.max(0, Math.round(raw));
 
     state.score = Math.max(0, state.score + gained);
@@ -454,7 +452,6 @@ export function createSatRushEngine({
       ok: true,
       stage,
       revealed,
-      viaAlt,
       silver: state.silverTongue,
       deepCut: cw.isDeepCut,
       revenant: cw.isRevenant,
@@ -463,8 +460,7 @@ export function createSatRushEngine({
     return {
       gained,
       score: state.score,
-      viaAlt,
-      actualWord: cw.word, // UI shows this on an alt clear ("the word was PLACID")
+      actualWord: cw.word, // UI shows this on a clear ("the word was PLACID")
       breakdown: {
         base,
         stage,

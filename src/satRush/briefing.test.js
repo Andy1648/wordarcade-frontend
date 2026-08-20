@@ -130,3 +130,65 @@ test('falls back to root-less words when root-bearing ones run out', () => {
   assert.equal(b.familyMorpheme, null);
   assert.equal(new Set(b.words.map((r) => r.word)).size, 5);
 });
+
+// --- exclude: the briefing refreshes every time ---------------------------
+
+// A generous pool (40 distinct root-bearing words) so back-to-back decks can be
+// fully disjoint without touching the soft-backfill path.
+function bigPool(n = 40) {
+  return Array.from({ length: n }, (_, i) => {
+    const id = String(i).padStart(2, '0');
+    return row(`word${id}`, 1, `m${id}-`, [`c${id}`]);
+  });
+}
+
+test('back-to-back decks are disjoint when the previous deck is excluded', () => {
+  const pool = bigPool(40);
+  const s = freshState();
+  const first = pickBriefing({ state: s, session: 1, words: pool, rng: IDENTITY_RNG });
+  const firstWords = first.words.map((r) => r.word);
+  const second = pickBriefing({
+    state: s,
+    session: 1,
+    words: pool,
+    rng: IDENTITY_RNG,
+    exclude: firstWords,
+  });
+  const secondWords = second.words.map((r) => r.word);
+  assert.equal(second.words.length, 5);
+  const overlap = secondWords.filter((w) => firstWords.includes(w));
+  assert.deepEqual(overlap, [], 'the second deck shares no words with the first');
+});
+
+test('a just-briefed due word is excluded when passed in exclude', () => {
+  const s = freshState();
+  s.session = 1;
+  // Miss 'bravo' → box 0, due next session; normally it would LEAD as a review word.
+  recordResult(s, 'bravo', { cleared: false, stage: 2, revealedCount: 5 });
+  const b = pickBriefing({
+    state: s,
+    session: 2,
+    words: mixedPool(),
+    rng: IDENTITY_RNG,
+    exclude: ['bravo'],
+  });
+  assert.ok(!b.words.some((r) => r.word === 'bravo'), 'the excluded due word is not re-dealt');
+  assert.ok(!b.reviewWords.has('bravo'));
+  assert.equal(b.words.length, 5); // a full deck still ships from the rest of the pool
+});
+
+test('tiny-pool fallback: excluding everything still fills a full deck (soft)', () => {
+  const pool = mixedPool(); // 8 words, none mastered
+  const everything = pool.map((r) => r.word);
+  const b = pickBriefing({
+    state: freshState(),
+    session: 1,
+    words: pool,
+    rng: IDENTITY_RNG,
+    exclude: everything,
+  });
+  // Nothing is left un-excluded, so the SOFT backfill pulls non-mastered excluded
+  // words back in rather than shipping a short deck.
+  assert.equal(b.words.length, 5);
+  assert.equal(new Set(b.words.map((r) => r.word)).size, 5);
+});

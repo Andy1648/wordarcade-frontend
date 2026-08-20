@@ -1,75 +1,56 @@
 // input.js — the fixed-slot input model for SAT RUSH. Pure: no React, no DOM.
 //
 // This is the mechanic that keeps the mode a VOCAB game and not a spelling test.
-// The letter count (known from stage 0) is fixed and shown as one slot per
-// letter; a key is accepted ONLY if it keeps the word reachable:
+// The letter count (known from stage 0) is fixed and shown as one slot per letter;
+// a key is accepted ONLY if it is the target's next letter. A rejected key does NOT
+// enter the field — the cursor never advances — so the player can never get
+// stranded in a wrong prefix, and `typed` is always a prefix of the target.
 //
-//   A key at cursor index i is accepted iff some candidate — the target OR a
-//   same-length alt still consistent with what's typed — has that letter at i.
-//   A rejected key does NOT enter the field: the cursor never advances, so the
-//   player can never get stranded in a wrong prefix.
-//
-// Same-length alts are the whole point: for "voracious" a player might type the
-// everyday synonym; nine slots can accept "ravenous" (a valid alt) but never
-// "hungry" (wrong length). Completing an alt is a half-credit clear that still
-// teaches the target ("accepted — the word was PLACID").
+// TARGET ONLY. There used to be a same-length "alt" (synonym) mechanic: typing a
+// valid synonym of the same length completed the word for half credit. Playtests
+// read it as a BUG, not a feature — typing 'a' for SHREWD "landed" because the
+// same-length synonym ASTUTE was reachable, and then the TARGET's own letters were
+// rejected until you backspaced, a trap under the timer. So alt typing is gone:
+// only the target's letters are ever accepted. The `alts` field STAYS in words.json
+// — the suspect picker (suspects.js) uses it to avoid unfair distractors — it is
+// just no longer typeable here.
 //
 // The engine decides WHEN letters are revealed (stage-4 first letter, every 3rd
 // wrong keystroke); this module just applies a reveal to the slots.
 
 /**
- * @param {object}   opts
- * @param {string}   opts.target  the word to reach
- * @param {string[]} [opts.alts]  accepted same-length alternatives (half credit)
+ * @param {object} opts
+ * @param {string} opts.target  the word to reach (the only word that can be typed)
  */
-export function createSlotInput({ target, alts = [] } = {}) {
+export function createSlotInput({ target } = {}) {
   const word = String(target).toLowerCase();
   const length = word.length;
-  // Only same-length alts that aren't the target itself can ever be typed into
-  // the slots — anything else is unreachable and is dropped defensively.
-  const altList = [
-    ...new Set(
-      alts
-        .map((a) => String(a).toLowerCase())
-        .filter((a) => a.length === length && a !== word)
-    ),
-  ];
 
-  let typed = ''; // current slot contents, left to right (a valid prefix)
+  let typed = ''; // current slot contents, left to right — always a target prefix
   let revealed = 0; // count of locked leading letters (always the target prefix)
 
-  // Candidates still consistent with what's typed. Derived (not mutated) so
-  // backspace and reveal stay trivially correct.
-  const candidates = () => [word, ...altList].filter((c) => c.startsWith(typed));
-
   const isComplete = () => typed.length === length;
-  const viaAltNow = () => typed !== word; // meaningful only once complete
 
   function result(extra) {
     return {
       typed,
       revealed,
       complete: isComplete(),
-      viaAlt: isComplete() ? viaAltNow() : false,
-      actualWord: isComplete() ? word : null,
       ...extra,
     };
   }
 
   /**
-   * Try to accept a typed letter. Returns { accepted, complete, viaAlt,
-   * actualWord, ... }. A rejected key leaves the field untouched (the caller
-   * shakes / bleeds score; the cursor does not advance).
+   * Try to accept a typed letter. Accepted iff it is the target's next letter.
+   * Returns { accepted, complete, reason, ... }. A rejected key leaves the field
+   * untouched (the caller shakes / bleeds score; the cursor does not advance).
    */
   function typeLetter(raw) {
     const letter = String(raw).toLowerCase();
     if (isComplete()) return result({ accepted: false, reason: 'complete' });
     if (!/^[a-z]$/.test(letter)) return result({ accepted: false, reason: 'invalid' });
-
-    const i = typed.length;
-    const nextChars = new Set(candidates().map((c) => c[i]));
-    if (!nextChars.has(letter)) {
-      // No reachable word has this letter here — reject, do not advance.
+    if (word[typed.length] !== letter) {
+      // Not the target's next letter — reject, do not advance.
       return result({ accepted: false, reason: 'reject' });
     }
     typed += letter;
@@ -77,23 +58,14 @@ export function createSlotInput({ target, alts = [] } = {}) {
   }
 
   /**
-   * Reveal the next (leftmost unrevealed) letter of the TARGET and lock it. This
-   * narrows the candidates toward the target; if the player had diverged onto an
-   * alt-only path, the reveal snaps the field back onto the target prefix,
-   * discarding the divergent tail (the reveal is a help that places the *right*
-   * letter). Target-consistent typing is preserved.
+   * Reveal the next (leftmost unrevealed) letter of the target and lock it. `typed`
+   * is always a target prefix, so this just locks one more leading letter, filling
+   * the slot if the player hasn't typed that far yet. No divergence to snap back.
    */
   function revealNextLetter() {
-    if (revealed >= length) return result({ revealed: revealed, revealedLetter: null });
+    if (revealed >= length) return result({ revealedLetter: null });
     const next = revealed + 1;
-    if (word.startsWith(typed)) {
-      // On the target path already: just lock one more, filling the slot if the
-      // player hasn't reached it yet.
-      if (typed.length < next) typed = word.slice(0, next);
-    } else {
-      // Diverged (alt path): snap onto the target, dropping the divergent tail.
-      typed = word.slice(0, next);
-    }
+    if (typed.length < next) typed = word.slice(0, next);
     revealed = next;
     return result({ revealedLetter: word[revealed - 1], revealedIndex: revealed - 1 });
   }
@@ -125,8 +97,6 @@ export function createSlotInput({ target, alts = [] } = {}) {
       typed,
       revealed,
       complete: isComplete(),
-      viaAlt: isComplete() ? viaAltNow() : false,
-      candidateCount: candidates().length,
     };
   }
 
@@ -138,7 +108,6 @@ export function createSlotInput({ target, alts = [] } = {}) {
     getSlots,
     getState,
     isComplete,
-    liveCandidates: candidates, // exposed for tests / debugging
     answer: () => word, // the target — for the "the word was X" reveal on a clear
   };
 }

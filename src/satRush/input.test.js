@@ -1,6 +1,7 @@
-// input.test.js — the fixed-slot / alt-matching model. The divergent-alt paths
-// are the heart of it: once you commit letters toward one word, the others must
-// become unreachable, and a rejected key must never advance the cursor.
+// input.test.js — the fixed-slot model, TARGET ONLY. Only the target's own letters
+// are ever accepted; a rejected key must never enter the field or advance the
+// cursor, so `typed` is always a prefix of the target. (The old same-length "alt"
+// synonym typing was removed — see the regression test at the bottom.)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSlotInput } from './input.js';
@@ -11,116 +12,65 @@ function typeAll(input, str) {
 }
 
 test('typing the target to the end is a full-credit clear', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
+  const input = createSlotInput({ target: 'placid' });
   const results = typeAll(input, 'placid');
   assert.ok(results.slice(0, -1).every((r) => r.accepted && !r.complete));
   const last = results[results.length - 1];
   assert.equal(last.accepted, true);
   assert.equal(last.complete, true);
-  assert.equal(last.viaAlt, false);
-  assert.equal(last.actualWord, 'placid');
+  assert.equal(input.answer(), 'placid');
 });
 
-test('typing a valid same-length alt is a half-credit clear that names the target', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
-  const last = typeAll(input, 'smooth').at(-1);
-  assert.equal(last.complete, true);
-  assert.equal(last.viaAlt, true);
-  assert.equal(last.actualWord, 'placid'); // "accepted — the word was PLACID"
-});
-
-test('a rejected key does not enter the field or advance the cursor', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
-  input.typeLetter('p'); // now committed to placid
+test('a wrong letter is rejected and does not enter the field or advance the cursor', () => {
+  const input = createSlotInput({ target: 'placid' });
+  input.typeLetter('p'); // typed = 'p'
   const before = input.getState().typed;
-  const r = input.typeLetter('z'); // no reachable word has z at index 1
+  const r = input.typeLetter('z'); // target[1] is 'l', not 'z'
   assert.equal(r.accepted, false);
   assert.equal(r.reason, 'reject');
   assert.equal(input.getState().typed, before); // unchanged — cursor didn't move
 });
 
-test('DIVERGENCE: target placid, alt smooth — after "p", smooth is unreachable', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
-  // Before any input, both first letters are acceptable.
-  assert.equal(input.typeLetter('p').accepted, true);
-  // 'p' pruned smooth (it starts with 's'); now only placid is live.
-  assert.deepEqual(input.liveCandidates(), ['placid']);
-  const r = input.typeLetter('s'); // 's' would be smooth[1]? no — placid[1] is 'l'
-  assert.equal(r.accepted, false);
-  assert.equal(input.getState().candidateCount, 1);
-});
-
-test('DIVERGENCE the other way: committing to the alt makes the target unreachable', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
-  assert.equal(input.typeLetter('s').accepted, true); // toward smooth
-  assert.deepEqual(input.liveCandidates(), ['smooth']);
-  assert.equal(input.typeLetter('l').accepted, false); // placid path is gone
-});
-
-test('the player is never stranded: every accepted prefix leaves ≥1 completable word', () => {
-  // Two alts that diverge at different points.
-  const input = createSlotInput({ target: 'stone', alts: ['stern', 'shone'] });
-  // 's' keeps all three; 't' drops shone; 'o' drops stern; finishing reaches stone.
-  for (const ch of 'stone') {
-    const r = input.typeLetter(ch);
-    assert.equal(r.accepted, true);
-    assert.ok(input.getState().candidateCount >= 1); // always something to finish
-  }
+test('only the target advances the cursor, one letter at a time', () => {
+  const input = createSlotInput({ target: 'stone' });
+  // Any non-target next letter is rejected; the target letter is accepted.
+  assert.equal(input.typeLetter('x').accepted, false);
+  assert.equal(input.getState().typed, '');
+  for (const ch of 'stone') assert.equal(input.typeLetter(ch).accepted, true);
   assert.equal(input.isComplete(), true);
-  assert.equal(input.getState().viaAlt, false);
 });
 
-test('an alt equal in length only up to a point still resolves correctly', () => {
-  // 'stern' shares "st" with the target then diverges.
-  const input = createSlotInput({ target: 'stone', alts: ['stern', 'shone'] });
-  typeAll(input, 'st'); // shone dropped at 't'
-  assert.deepEqual(input.liveCandidates().sort(), ['stern', 'stone']);
-  const last = typeAll(input, 'ern').at(-1); // commit to the alt
-  assert.equal(last.viaAlt, true);
-  assert.equal(last.actualWord, 'stone');
+test('typing past a completed word is rejected with reason "complete"', () => {
+  const input = createSlotInput({ target: 'placid' });
+  typeAll(input, 'placid');
+  const r = input.typeLetter('x');
+  assert.equal(r.accepted, false);
+  assert.equal(r.reason, 'complete');
+});
+
+test('a non-letter key is rejected as "invalid" without advancing', () => {
+  const input = createSlotInput({ target: 'placid' });
+  const r = input.typeLetter('4');
+  assert.equal(r.accepted, false);
+  assert.equal(r.reason, 'invalid');
+  assert.equal(input.getState().typed, '');
 });
 
 test('matching is case-insensitive', () => {
   const input = createSlotInput({ target: 'placid' });
   const last = typeAll(input, 'PLACID').at(-1);
   assert.equal(last.complete, true);
-  assert.equal(last.viaAlt, false);
-});
-
-test('wrong-length or headword-equal alts are dropped as unreachable', () => {
-  // 'hungry' (6) is the wrong length for 'voracious' (9) and can never be typed.
-  const input = createSlotInput({ target: 'voracious', alts: ['ravenous', 'hungry'] });
-  assert.deepEqual(input.liveCandidates(), ['voracious']); // ravenous is 8, hungry 6
-  // Only same-length alts survive; here neither alt matches length 9.
-  assert.equal(input.getState().candidateCount, 1);
-});
-
-test('a same-length alt is honoured when the lengths actually match', () => {
-  const input = createSlotInput({ target: 'candid', alts: ['honest'] }); // both 6
-  const last = typeAll(input, 'honest').at(-1);
-  assert.equal(last.viaAlt, true);
-  assert.equal(last.actualWord, 'candid');
 });
 
 // --- reveals ---------------------------------------------------------------
 
-test('revealing the first letter locks slot 0 and prunes divergent alts', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
+test('revealing the first letter locks slot 0', () => {
+  const input = createSlotInput({ target: 'placid' });
   const r = input.revealNextLetter();
   assert.equal(r.revealedLetter, 'p');
   assert.equal(input.getState().typed, 'p');
   assert.equal(input.getState().revealed, 1);
-  assert.deepEqual(input.liveCandidates(), ['placid']); // smooth pruned by the reveal
   assert.equal(input.getSlots()[0].state, 'revealed');
-});
-
-test('a reveal on a diverged alt path snaps back onto the target', () => {
-  const input = createSlotInput({ target: 'placid', alts: ['smooth'] });
-  input.typeLetter('s'); // committed toward the alt
-  assert.deepEqual(input.liveCandidates(), ['smooth']);
-  input.revealNextLetter(); // reveals target[0] = 'p'
-  assert.equal(input.getState().typed, 'p'); // divergent 's' discarded
-  assert.deepEqual(input.liveCandidates(), ['placid']);
 });
 
 test('a reveal preserves target-consistent typing instead of discarding it', () => {
@@ -143,11 +93,10 @@ test('revealed letters cannot be backspaced, but typed ones can', () => {
   assert.equal(input.getState().revealed, 1);
 });
 
-test('revealing every letter completes the word as the target (full credit path)', () => {
-  const input = createSlotInput({ target: 'abrupt', alts: ['sudden'] });
+test('revealing every letter completes the word as the target', () => {
+  const input = createSlotInput({ target: 'abrupt' });
   for (let i = 0; i < 6; i++) input.revealNextLetter();
   assert.equal(input.isComplete(), true);
-  assert.equal(input.getState().viaAlt, false);
   assert.equal(input.answer(), 'abrupt');
 });
 
@@ -161,4 +110,21 @@ test('getSlots reports the right count and per-slot state', () => {
   assert.equal(slots[1].state, 'typed');
   assert.equal(slots[2].state, 'empty');
   assert.equal(slots[2].char, null);
+});
+
+// --- regression: no more synonym-alt typing --------------------------------
+
+test('REGRESSION: a same-length synonym is NOT typeable — only the target is', () => {
+  // The classic trap: SHREWD's synonym ASTUTE is the same length, so under the old
+  // alt model typing 'a' "landed" and then SHREWD's own letters were rejected.
+  // Now the alts arg is ignored entirely: 'a' is rejected, the field stays empty,
+  // and the target's real first letter 's' is accepted.
+  const input = createSlotInput({ target: 'shrewd', alts: ['astute'] });
+  const a = input.typeLetter('a');
+  assert.equal(a.accepted, false);
+  assert.equal(a.reason, 'reject');
+  assert.equal(input.getState().typed, ''); // nothing entered
+  const s = input.typeLetter('s'); // the target's actual first letter
+  assert.equal(s.accepted, true);
+  assert.equal(input.getState().typed, 's');
 });
