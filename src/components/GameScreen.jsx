@@ -11,7 +11,7 @@ import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
-  tensionStart, tensionStop, tensionSetRatio,
+  tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
 import { ShareBar } from '../share';
@@ -1650,6 +1650,23 @@ export default function GameScreen({
   const [clutchSlow, setClutchSlow] = useState(false);
   const clutchSlowTimerRef = useRef(null);
   const [comboPunch, setComboPunch] = useState(0);
+  // INSTANT-ACK CHIP (Word Bomb's answer to Category Blitz's cb-checking): on
+  // submit the word locks into an "in flight" chip near the input so the ~120-400ms
+  // of Render-socket silence isn't dead air; the server verdict then resolves ON
+  // the chip. { word, phase: 'flight'|'accept'|'reject', reason?, combo? }.
+  const [pending, setPending] = useState(null);
+  const pendingClearRef = useRef(null);
+  // Live draft mirror so the async result handler can tell whether the field is
+  // still empty (safe to restore a rejected word) without a stale closure.
+  const draftRef = useRef('');
+  draftRef.current = draft;
+  function schedulePendingClear(ms) {
+    if (pendingClearRef.current) clearTimeout(pendingClearRef.current);
+    pendingClearRef.current = setTimeout(() => {
+      setPending(null);
+      pendingClearRef.current = null;
+    }, ms);
+  }
   // The timer reading + word captured at the moment of submit, so the result
   // handler can judge "clutch" (final second left) and shatter the exact word
   // even after the input has cleared / the turn has moved on.
@@ -1696,6 +1713,12 @@ export default function GameScreen({
       if (mine) {
         comboAwaitRef.current = false;
         streak.hit();
+        // Resolve the in-flight chip to an accepted readout (combo = the new count;
+        // comboRef holds the pre-hit value). It clears shortly, or when the turn
+        // passes to the next player. Does NOT gate any of the feedback above/below.
+        const combo = (comboRef.current || 0) + 1;
+        setPending((p) => (p ? { ...p, phase: 'accept', combo } : p));
+        schedulePendingClear(900);
       }
       const t = submitTimerRef.current; // the EXISTING clock value, snapshot at submit
       const isClutch = t > 0 && t <= 1; // beat the buzzer in the final second
@@ -1724,13 +1747,45 @@ export default function GameScreen({
       setShatterText(lastSubmitWordRef.current);
       setShatterKey((k) => k + 1);
       // Our own rejected word breaks the streak (rejections are sent only to the
-      // submitter, so this is always ours).
+      // submitter, so this is always ours). comboAwaitRef is true only for a word
+      // we actually SENT (the instant local rejects return before setting it), so
+      // this branch handles the server not_a_word reject.
       if (comboAwaitRef.current) {
         comboAwaitRef.current = false;
         streak.miss();
+        // Resolve the chip to a red reject with the reason.
+        setPending((p) => (p ? { ...p, phase: 'reject', reason: lastWordResult.reason } : p));
+        schedulePendingClear(2400);
+        // RESTORE the word so it can be fixed — a server not_a_word cleared it at
+        // submit, whereas the local-reject path deliberately keeps it. Only restore
+        // when the field is still empty, so we never clobber a word the player has
+        // already started retyping during the round-trip.
+        if (draftRef.current === '') {
+          setDraft(lastSubmitWordRef.current);
+          if (onTypingUpdate) onTypingUpdate(lastSubmitWordRef.current);
+        }
       }
     }
   }, [lastWordResult, gameType]);
+
+  // Clear the in-flight chip when it's no longer our turn or the game ends: an
+  // accepted word passes the bomb (turn moves on) and a rejected chip must never
+  // outlive the turn. A reject keeps the turn, so its chip lingers until it times
+  // out (schedulePendingClear) or the next submit replaces it.
+  useEffect(() => {
+    if (!isMyTurn || gameOver) {
+      setPending(null);
+      if (pendingClearRef.current) {
+        clearTimeout(pendingClearRef.current);
+        pendingClearRef.current = null;
+      }
+    }
+  }, [isMyTurn, gameOver]);
+
+  // Never let the chip's clear-timer fire onto an unmounted component.
+  useEffect(() => () => {
+    if (pendingClearRef.current) clearTimeout(pendingClearRef.current);
+  }, []);
 
   useEffect(() => {
     if (!gameState || gameType !== 'word-bomb') return;
@@ -1973,25 +2028,45 @@ export default function GameScreen({
     return () => clearTimeout(timeoutId);
   }, [timerSeconds, showCountdown, gameOver, gameType, sound]);
 
-  // JUICE 02 tension skin (presentational): install it only during a live Word
-  // Bomb round and FULLY stop it (overlay removed + every audio node
-  // disconnected) on game over, leaving the screen, or unmount. It reads the
-  // remaining-time fraction below; it never drives the timer/WS/turn/scoring.
+  // JUICE 02 tension skin: AUDIO lifecycle for a live Word Bomb round (the visuals
+  // are now pure composited CSS — see the tension-tier effect + data-tension layers
+  // below). Fully stop it (every audio node disconnected) on game over, leaving the
+  // screen, or unmount. It never drives the timer/WS/turn/scoring.
   useEffect(() => {
     if (gameType !== 'word-bomb' || gameOver) return undefined;
     tensionStart();
     return () => tensionStop();
   }, [gameType, gameOver]);
 
-  // Feed the REAL remaining-time fraction each tick (read-only). tension.js eases
-  // a DISPLAYED value off this — it runs no clock of its own and the existing
-  // timeout/elimination event remains the sole explosion trigger.
+  // DISCRETE tension tier for the CSS tension skin (edge vignette / speed lines /
+  // HURRY! prompt / final throb). Thresholds mirror the old canvas skin on
+  // t = 1 - remainingFraction (speed lines at t≥0.45, HURRY at t≥0.6, GET OUT!/
+  // throb/siren at t≥0.9). Computed HERE (before the CB / no-gameState early
+  // returns) so the audio hooks below keep a stable order; the .game-wrap JSX reads
+  // it as `tensionTier`. A tier CLASS (not a per-frame value) keeps every CSS layer
+  // composited — transform/opacity only, no var() in keyframes.
+  const wbMaxTimer = (gameState && gameState.timerSeconds) || 1;
+  const wbRatio = Math.max(0, Math.min(1, timerSeconds / wbMaxTimer));
+  const wbTensionTier =
+    gameType !== 'word-bomb' || showCountdown || gameOver ? 'calm'
+    : wbRatio > 0.55 ? 'calm'
+    : wbRatio > 0.4 ? 'build'
+    : wbRatio > 0.1 ? 'warn'
+    : 'crit';
+
+  // Schedule the tension AUDIO when the tier changes (tension.js no-ops on an
+  // unchanged tier, so this only reschedules on a real change) — never per frame.
   useEffect(() => {
     if (gameType !== 'word-bomb') return;
-    const maxTimer = (gameState && gameState.timerSeconds) || 1;
-    const frac = Math.max(0, Math.min(1, timerSeconds / maxTimer));
-    tensionSetRatio(frac, { showCountdown, gameOver });
-  }, [timerSeconds, gameState, showCountdown, gameOver, gameType]);
+    tensionSetTier(wbTensionTier);
+  }, [wbTensionTier, gameType]);
+
+  // A mute toggle isn't a tier change, so re-evaluate the tension audio when the
+  // sound-muted flag flips (tears the voices down when muted, restores on unmute).
+  useEffect(() => {
+    if (gameType !== 'word-bomb') return;
+    tensionRefreshAudio();
+  }, [muted, gameType]);
 
   // Accepted -> rising chime; rejected -> low buzz. Keyed off the result object
   // identity (a fresh object per submission, cleared to null between) so it
@@ -2277,6 +2352,13 @@ export default function GameScreen({
   // resets the clock (timeRatio jumps back to ~1) - that's the relief release.
   const danger = showCountdown || gameOver ? 0 : Math.pow(1 - timeRatio, 1.8);
 
+  // DISCRETE tension tier for the CSS tension skin (edge vignette / speed lines /
+  // HURRY! prompt / final throb). Thresholds mirror the old canvas skin's on
+  // t = 1 - timeRatio (speed lines at t≥0.45, HURRY at t≥0.6, GET OUT!/throb/siren
+  // at t≥0.9). Driving the visuals by a TIER CLASS instead of a per-frame value
+  // keeps every layer composited (transform/opacity only, no var() in keyframes).
+  const tensionTier = wbTensionTier;
+
   // The final-5s CLUTCH (shared bomb timer): the absolute last 5 seconds, felt by
   // everyone regardless of whose turn it is. Drives the mascot's panic pose and
   // the accelerating heartbeat; the colour drain layers on top for the active
@@ -2343,6 +2425,14 @@ export default function GameScreen({
     lastSubmitWordRef.current = word;
     setFlyText(word);
     setFlyKey((k) => k + 1);
+    // Commit the word into the in-flight ACK chip SAME-FRAME (no artificial delay):
+    // instant acknowledgement while the server verdict is in transit. Its verdict
+    // is resolved on the chip by the word_result effect below.
+    if (pendingClearRef.current) {
+      clearTimeout(pendingClearRef.current);
+      pendingClearRef.current = null;
+    }
+    setPending({ word, phase: 'flight' });
     onSubmitWord(word);
     setDraft('');
     // Reset other players' view of our typing now that we've fired the word.
@@ -2362,10 +2452,39 @@ export default function GameScreen({
     // what inner control is touched.
     <div
       className="game-wrap"
+      data-tension={tensionTier}
       style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
+      {/* JUICE 02 tension skin — composited CSS layers (was a full-viewport canvas
+          repaint loop; see tension.js). All fixed, click-through, aria-hidden, and
+          driven purely by data-tension on .game-wrap: nothing here writes style per
+          frame, and every keyframe animates transform/opacity with literal values
+          only. Mounted only while a tier is active so calm has zero live layers. */}
+      {tensionTier !== 'calm' && (
+        <div className="wb-tension" aria-hidden="true">
+          {/* Edge colour-grade vignette: transparent centre → coloured edge, hue
+              stepping teal→orange→red per tier; opacity eases in per tier and the
+              element breathes via a transform-scale keyframe. */}
+          <div className="wb-tension-vignette" />
+          {/* Edge speed lines: fixed streaks hugging the L/R edges, each scrolling
+              via a transform-translateY keyframe (transform only). */}
+          <div className="wb-tension-lines">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span key={i} className="wb-tension-line" style={{ '--i': i }} />
+            ))}
+          </div>
+          {/* Centre-top prompt: HURRY! (warn) → GET OUT! (crit), pulsing via a
+              transform+opacity keyframe. Two stacked labels, shown per tier. */}
+          <div className="wb-tension-prompt">
+            <span className="wb-tension-hurry">HURRY!</span>
+            <span className="wb-tension-getout">GET OUT!</span>
+          </div>
+          {/* Final-moment throb: a soft red full-screen opacity breath at crit. */}
+          <div className="wb-tension-throb" />
+        </div>
+      )}
       {/* Continuous DREAD vignette: a static red edge-gradient whose OPACITY rides
           --danger (the eased timer) - calm/clear early, panicking red in the final
           seconds, then snapping back to nothing the instant a word resets the clock
@@ -2710,6 +2829,30 @@ export default function GameScreen({
                 seconds={clutchCall.seconds}
                 tier={clutchCall.tier}
               />
+            )}
+            {/* Instant-ACK chip: the submitted word locks in here same-frame and the
+                server verdict resolves ON it (flight → accept / reject). */}
+            {pending && (
+              <div className={`wb-pending wb-pending-${pending.phase}`} aria-live="polite">
+                <span className="wb-pending-word">{pending.word.toUpperCase()}</span>
+                {pending.phase === 'flight' && (
+                  <span className="wb-pending-dots" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
+                {pending.phase === 'accept' && (
+                  <span className="wb-pending-tag">
+                    ✓{pending.combo > 1 ? ` ×${pending.combo}` : ''}
+                  </span>
+                )}
+                {pending.phase === 'reject' && (
+                  <span className="wb-pending-tag">
+                    {rejectionMessage(pending.reason, { combo, isCategory })}
+                  </span>
+                )}
+              </div>
             )}
             <input
               ref={inputRef}
