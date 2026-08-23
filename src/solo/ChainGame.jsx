@@ -5,10 +5,12 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
-import { PB_KEYS } from './shared.js';
+import { PB_KEYS, bumpChainRuns } from './shared.js';
+import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import SoloShell from './SoloShell.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
+const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
 
 export default function ChainGame({ onExit }) {
   const [data, setData] = useState(null);
@@ -53,7 +55,16 @@ export default function ChainGame({ onExit }) {
 }
 
 function ChainInner({ data, createEngine, adapter, onExit }) {
-  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.CHAIN });
+  // Persisted all-time CHAIN run count. onRunStart fires from the hook on the FIRST run
+  // (mount) and on every restart — button OR Enter — so both restart paths are counted
+  // (the Enter path lives inside the hook, which is why the bump must live there too).
+  const [runs, setRuns] = useState(0);
+  const g = useSoloGame({
+    createEngine,
+    adapter,
+    pbKey: PB_KEYS.CHAIN,
+    onRunStart: () => setRuns(bumpChainRuns()),
+  });
   const s = g.engine.state;
   const required = s.requiredLetter;
   const supply = g.engine.supply(required);
@@ -105,20 +116,13 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     </>
   );
 
-  const overCard = (
-    <>
-      <h2>CHAIN BROKE</h2>
-      <div className="solo-death-killed">
-        {s.killedLetter ? `nothing left starting with "${s.killedLetter.toUpperCase()}"` : 'time ran out'}
-      </div>
-      <div className="solo-death-links">
-        {s.lastLinks.map((l, i) => (
-          <span key={i}>
-            {l.word.toUpperCase()} · +{l.score}
-          </span>
-        ))}
-      </div>
-    </>
+  // First-run tutorial card: the player's very first CHAIN run (runs === 1), OR any run
+  // that ended under 3 words — the runs where a how-to-play card beats a score card.
+  const firstRun = runs === 1 || s.k < 3;
+  const overCard = firstRun ? (
+    <ChainFirstRunCard />
+  ) : (
+    <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} />
   );
 
   return (
@@ -137,8 +141,17 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       reason={g.reason}
       placeholder={`start with "${required.toUpperCase()}" — min 3 letters`}
       maxLength={data.maxAcceptLen}
+      armHint={ARM_HINT}
       phase={g.phase}
-      over={{ score: s.score, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard }}
+      over={{
+        score: s.score,
+        best: g.best,
+        restartArmed: g.restartArmed,
+        restart: g.restart,
+        card: overCard,
+        bare: firstRun, // tutorial card: no SCORE/BEST line
+        restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
+      }}
       onExit={onExit}
     />
   );

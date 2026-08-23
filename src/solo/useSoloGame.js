@@ -15,9 +15,22 @@ import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB } from './shared
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-export function useSoloGame({ createEngine, adapter, pbKey }) {
+export function useSoloGame({ createEngine, adapter, pbKey, onRunStart }) {
   const engineRef = useRef(null);
   if (engineRef.current === null) engineRef.current = createEngine();
+
+  // Optional "a run just began" hook, fired on the first run (mount) and on every restart
+  // — button OR Enter — so a caller-owned run counter can't miss the Enter path (which
+  // lives in this hook). Kept in a ref so restart's identity doesn't depend on it.
+  const onRunStartRef = useRef(onRunStart);
+  onRunStartRef.current = onRunStart;
+  const firstRunFiredRef = useRef(false);
+  useEffect(() => {
+    if (firstRunFiredRef.current) return undefined;
+    firstRunFiredRef.current = true;
+    onRunStartRef.current?.();
+    return undefined;
+  }, []);
 
   const runIndexRef = useRef(0);
   const armedRef = useRef(false);
@@ -142,6 +155,7 @@ export function useSoloGame({ createEngine, adapter, pbKey }) {
     setRestartArmed(false);
     setRemaining(turnBudgetRef.current);
     setPhase('playing');
+    onRunStartRef.current?.(); // count this new run (covers both button and Enter)
   }, [createEngine, adapter]);
 
   // Enter restarts from the death card, but only once armed (guards the tutorial).

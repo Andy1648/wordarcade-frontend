@@ -350,6 +350,30 @@
   font-size: 14px;
   color: #d8c9f0;
 }
+
+/* First-run tutorial card — the worked chain example + the goal line. Pivot letters
+   (the join letters) are drawn in the accent cyan; everything else stays white. */
+.solo-chain-example {
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.solo-chain-example .cx-pivot {
+  color: #2effe0;
+}
+.solo-chain-example .cx-arrow {
+  color: #6b5a86;
+}
+.solo-firstrun-goal {
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
+  color: #ffe94a;
+  letter-spacing: 0.04em;
+}
 .solo-scoreline {
   display: flex;
   justify-content: space-between;

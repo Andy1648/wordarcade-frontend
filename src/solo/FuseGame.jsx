@@ -118,6 +118,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       reason={g.reason}
       placeholder={`type a word with "${(s.fragment || '').toUpperCase()}" in it`}
       maxLength={data.maxAcceptLen}
+      armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
       phase={g.phase}
       over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard }}
       onExit={onExit}

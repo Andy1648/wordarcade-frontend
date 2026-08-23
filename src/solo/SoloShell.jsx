@@ -6,7 +6,6 @@
 // clock give feedback). The sill "flash" is an OPACITY pulse of an always-red bar (so we
 // stay within transform/opacity-only animation). There is no idle animation anywhere.
 import { useEffect, useRef } from 'react';
-import { ARM_HINT } from './shared.js';
 import './Solo.css';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
@@ -48,8 +47,9 @@ export default function SoloShell({
   reason,
   placeholder,
   maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
+  armHint, // per-mode "how to play" line, shown until the clock arms
   phase,
-  over, // { score, best, restartArmed, restart, card }
+  over, // { score, best, restartArmed, restart, card, bare?, restartLabel? }
   onExit,
 }) {
   const inputRef = useRef(null);
@@ -109,22 +109,25 @@ export default function SoloShell({
       <div className="solo-reason" aria-live="polite">
         {phase === 'playing' && reason ? reason : ''}
       </div>
-      {phase === 'playing' && !clock.armed ? <div className="solo-armhint">{ARM_HINT}</div> : null}
+      {phase === 'playing' && !clock.armed && armHint ? <div className="solo-armhint">{armHint}</div> : null}
 
       {phase === 'over' ? (
         <div className="solo-over">
           <div className="solo-deathcard">
             {over.card}
-            <div className="solo-scoreline">
-              <span>SCORE {over.score}</span>
-              <span>BEST {over.best}</span>
-            </div>
+            {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
+            {over.bare ? null : (
+              <div className="solo-scoreline">
+                <span>SCORE {over.score}</span>
+                <span>BEST {over.best}</span>
+              </div>
+            )}
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
               onClick={over.restart}
             >
-              {over.restartArmed ? 'RESTART · ENTER' : 'RESTART'}
+              {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
             </button>
           </div>
         </div>

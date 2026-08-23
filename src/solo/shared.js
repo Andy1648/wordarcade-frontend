@@ -9,9 +9,9 @@ export const RED_ZONE_MS = 1600;
 
 // ---- Arm state ------------------------------------------------------------------
 // The run clock does NOT start until the player's first accepted character on word 1,
-// so word 1 can't be lost before the rule has even been read. This is the prompt shown
-// until then.
-export const ARM_HINT = 'the clock starts when you type your first letter';
+// so word 1 can't be lost before the rule has even been read. The prompt shown until
+// then is PER-MODE now (each screen passes its own `armHint` to SoloShell), because the
+// old shared line explained the clock, not the game.
 
 // ---- Reject reasons -------------------------------------------------------------
 // A rejected word NEVER clears the input and NEVER shakes — the sill flashes and one of
@@ -88,6 +88,36 @@ export const PB_KEYS = {
   CHAIN: 'wa_solo_chain_best',
   FUSE: 'wa_solo_fuse_best',
 };
+
+// ---- CHAIN run counter ----------------------------------------------------------
+// Persisted count of CHAIN runs STARTED (all-time, this browser). Drives the first-run
+// tutorial death card: run 1 gets the how-to-play card instead of the score card. Every
+// access is wrapped, so a storage-blocked browser degrades to "always run 0" (which just
+// means the tutorial card shows whenever the run also ended under 3 words).
+const CHAIN_RUNS_KEY = 'taw.chain.runs';
+
+export function getChainRuns() {
+  try {
+    const raw = localStorage.getItem(CHAIN_RUNS_KEY);
+    if (raw == null) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+// Increment on run START and return the new count (the count of THIS run). Falls back to
+// getChainRuns()+1 without persisting if storage throws.
+export function bumpChainRuns() {
+  const next = getChainRuns() + 1;
+  try {
+    localStorage.setItem(CHAIN_RUNS_KEY, String(next));
+  } catch {
+    // storage blocked — the return value still lets this run behave correctly
+  }
+  return next;
+}
 
 // ---- Seeded RNG -----------------------------------------------------------------
 // mulberry32 — a tiny deterministic PRNG. The engines take an injected rng (default
