@@ -39,6 +39,9 @@
 .game-card-wrap:nth-child(1) { margin-top: 10px; --rest-rot: -2deg; }
 .game-card-wrap:nth-child(2) { margin-top: -4px; --rest-rot: 2deg; }
 .game-card-wrap:nth-child(3) { margin-top: 18px; --rest-rot: -1deg; }
+/* New CHAIN / FUSE slots (grid grew from 3 to 5 cards). */
+.game-card-wrap:nth-child(4) { margin-top: 2px; --rest-rot: 2.5deg; }
+.game-card-wrap:nth-child(5) { margin-top: 14px; --rest-rot: -2.5deg; }
 
 .game-card {
   /* Animation-speed multiplier inherited by the constantly-animated card art
@@ -360,7 +363,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card { height: clamp(170px, 46vw, 250px); }
   .game-card-wrap:nth-child(1),
   .game-card-wrap:nth-child(2),
-  .game-card-wrap:nth-child(3) {
+  .game-card-wrap:nth-child(3),
+  .game-card-wrap:nth-child(4),
+  .game-card-wrap:nth-child(5) {
     margin-top: 0;
   }
 }

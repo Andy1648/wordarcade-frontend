@@ -195,10 +195,72 @@ export function SatRushArt() {
   );
 }
 
+// ---- CHAIN: three interlocking links holding two tilted letter tiles (E→R),
+//      with a small handoff arrow above showing the last letter becoming the
+//      next word's first. Flat fills, 4px black outline (house style). ----
+export function ChainArt() {
+  return (
+    <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art chain-art" aria-hidden="true">
+      {/* Three interlocking rounded-rect links (no fill, black outline). */}
+      <g fill="none" stroke="#000" strokeWidth="4">
+        <rect x="12" y="86" width="52" height="30" rx="15" />
+        <rect x="55" y="72" width="30" height="52" rx="15" />
+        <rect x="76" y="86" width="52" height="30" rx="15" />
+      </g>
+
+      {/* Handoff arrow above the tiles — the last letter becomes the next first. */}
+      <g className="chain-arrow-g">
+        <path d="M44 58 Q70 38 96 58" fill="none" stroke="#000" strokeWidth="4" strokeLinecap="round" />
+        <path d="M96 58 L86 55 M96 58 L91 48" fill="none" stroke="#000" strokeWidth="4" strokeLinecap="round" />
+      </g>
+
+      {/* Two tilted letter tiles: E dark, R cream. */}
+      <g transform="rotate(-9 40 101)">
+        <rect x="27" y="88" width="26" height="26" rx="5" fill="#0D2B28" stroke="#000" strokeWidth="4" />
+        <text x="40" y="107" fontSize="16" fontWeight="bold" fill="#F3E2BE" textAnchor="middle" fontFamily="'Bungee', sans-serif">E</text>
+      </g>
+      <g transform="rotate(9 100 101)">
+        <rect x="87" y="88" width="26" height="26" rx="5" fill="#F3E2BE" stroke="#000" strokeWidth="4" />
+        <text x="100" y="107" fontSize="16" fontWeight="bold" fill="#0D2B28" textAnchor="middle" fontFamily="'Bungee', sans-serif">R</text>
+      </g>
+    </svg>
+  );
+}
+
+// ---- FUSE: a thick burnt cord enters from the left into a cream fragment tile
+//      reading AIN, then exits right into a lit flame with sparks. Flat fills,
+//      4px black outline. ----
+export function FuseArt() {
+  return (
+    <svg viewBox="0 0 140 168" width="100%" height="100%" className="card-art fuse-art" aria-hidden="true">
+      {/* Burnt cord: in from the left, out to the flame on the right. */}
+      <path d="M-8 104 C 18 84, 34 120, 50 100" fill="none" stroke="#2A1A0E" strokeWidth="8" strokeLinecap="round" />
+      <path d="M90 100 C 106 84, 118 118, 132 96" fill="none" stroke="#2A1A0E" strokeWidth="8" strokeLinecap="round" />
+
+      {/* Cream fragment tile reading AIN (the "piece"). */}
+      <g transform="rotate(-4 70 100)">
+        <rect x="48" y="84" width="44" height="32" rx="5" fill="#F3E2BE" stroke="#000" strokeWidth="4" />
+        <text x="70" y="106" fontSize="16" fontWeight="bold" fill="#2A1A0E" textAnchor="middle" letterSpacing="1.5" fontFamily="'Bungee', sans-serif">AIN</text>
+      </g>
+
+      {/* Lit flame at the cord's right tip. */}
+      <g className="fuse-flame" transform="translate(130 94)">
+        <path d="M0 12 C -9 3, -5 -7, 0 -14 C 5 -7, 9 3, 0 12 Z" fill="#FF6B3D" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
+      </g>
+
+      {/* Sparks flicking off the flame. */}
+      <circle className="fuse-spark fuse-spark-1" cx="122" cy="86" r="3" fill="#FF4B4B" />
+      <circle className="fuse-spark fuse-spark-2" cx="134" cy="100" r="2.4" fill="#FFB347" />
+    </svg>
+  );
+}
+
 // Lookup map so GameCard can resolve `artKey` strings from gameData.js to the
 // actual component without a long if/else chain.
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
   CategoryBlitzArt,
   SatRushArt,
+  ChainArt,
+  FuseArt,
 };

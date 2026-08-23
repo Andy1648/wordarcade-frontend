@@ -37,6 +37,7 @@ export default function SoloShell({
   title,
   hud, // top bar node (score/best/multiplier | lives/strip)
   center, // the required letter / the fragment
+  motif, // optional static SVG backdrop behind the stage (per-mode; never animated)
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
   outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
@@ -76,6 +77,10 @@ export default function SoloShell({
       <div className="solo-hud">{hud}</div>
 
       <div className="solo-stage">
+        {/* Per-mode static backdrop motif. A SIBLING of the stage content and of the
+            input's chain (the input lives outside .solo-stage), so it can never touch
+            either. No animation — house rule: nothing idles here. */}
+        {motif}
         <ClockRing {...clock} />
         <div className="solo-center">{center}</div>
         {supply ? <div className="solo-supply">{supply}</div> : null}

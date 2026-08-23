@@ -66,4 +66,45 @@ const SAT_RUSH_GAME = {
   enabled: true,
 };
 
-export const GAMES = SAT_RUSH_ENABLED ? [...BASE_GAMES, SAT_RUSH_GAME] : BASE_GAMES;
+// CHAIN + FUSE — the two solo word modes, previously dark-launched behind
+// ?chain=1 / ?fuse=1 (src/solo/config.js). Their cards route straight into the
+// mode (no room/WebSocket), exactly like SAT RUSH. Field colour = each mode's
+// in-game accent (CHAIN teal, FUSE yellow); the card art is drawn with the
+// house 4px black outline.
+const CHAIN_GAME = {
+  id: 'chain',
+  artKey: 'ChainArt',
+  name: 'CHAIN',
+  description: 'Each word starts where the last one ended',
+  baseColor: '#2EFFE0', // teal field (the mode's accent)
+  iconBg: '#0D2B28', // dark teal so the cyan link icon reads
+  badgeText: 'SOLO',
+  badgeBg: '#000',
+  badgeColor: '#2EFFE0',
+  textColor: '#000',
+  descColor: '#0A3B34',
+  enabled: true,
+};
+const FUSE_GAME = {
+  id: 'fuse',
+  artKey: 'FuseArt',
+  name: 'FUSE',
+  description: 'Type a word that contains the piece',
+  baseColor: '#FFE94A', // yellow field (the mode's accent)
+  iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
+  badgeText: 'SOLO',
+  badgeBg: '#000',
+  badgeColor: '#FFE94A',
+  textColor: '#000',
+  descColor: '#4A3A10',
+  enabled: true,
+};
+
+// SAT RUSH (when enabled) keeps slot 3; CHAIN + FUSE are the new slots 4 and 5,
+// so the stagger/rotation rules keyed to those slots land on the new cards.
+export const GAMES = [
+  ...BASE_GAMES,
+  ...(SAT_RUSH_ENABLED ? [SAT_RUSH_GAME] : []),
+  CHAIN_GAME,
+  FUSE_GAME,
+];

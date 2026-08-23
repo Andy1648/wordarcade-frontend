@@ -319,7 +319,9 @@ html[data-beat='true'] .homepage-logo {
   /* Each card grows with the viewport (min 200px, ~25vw, capped 400px) and the
      three columns centre as a group so they fill the width without stretching
      infinitely. Collapses to a single column on small screens (below). */
-  grid-template-columns: repeat(var(--card-count, 3), clamp(150px, 20vw, 300px));
+  /* At 5 cards, 20vw columns summed 100vw of track before gaps and overflowed at
+     every desktop width; 18vw keeps 5 columns + gaps inside the viewport. */
+  grid-template-columns: repeat(var(--card-count, 3), clamp(140px, 18vw, 300px));
   justify-content: center;
   /* Roomier gap so the featured card's slight upscale + idle drift never reach
      into a neighbour. */
