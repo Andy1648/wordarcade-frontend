@@ -39,10 +39,21 @@ const PREFERS_REDUCED =
 // animations we wait on before handing off (one `die-letter-in` per character).
 const DIE_TEXT = 'DIE SLOW.';
 
+// After the title lands we don't hand off immediately — we SETTLE to a neutral
+// pose first (see beginSettle): breathe locks to scale 1, the cursor-lean glides
+// back to 0 via .intro-tilt's 220ms transition, and the idle glitch freezes. So
+// the intro's LAST frame is the same static pose the knife-split renders, and the
+// handoff is a visual no-op. A hair longer than the 220ms tilt transition so the
+// glide fully lands before we swap.
+const SETTLE_MS = 260;
+
 // Split a phrase into per-letter spans so each letter can stagger in on its own
 // delay (`--i`). Spaces are rendered as a non-breaking space and flagged so they
-// never sprout a paint drip.
-function IntroLetters({ text }) {
+// never sprout a paint drip. EXPORTED so KnifeSplit renders the two phrases with
+// this EXACT markup — inline-block letters round each advance the same way, so the
+// per-letter width/kerning is byte-identical and the intro→knife handoff doesn't
+// jump (a plain text node kerns differently and was ~20px wider).
+export function IntroLetters({ text }) {
   return text.split('').map((ch, i) => {
     const space = ch === ' ';
     return (
@@ -77,6 +88,12 @@ export default function TransitionIntro({ onComplete }) {
   const [impactKind, setImpactKind] = useState('fast');
   const shakeTimerRef = useRef(null);
   const completedRef = useRef(false);
+  // Settle phase: `settling` adds .is-settling (CSS freezes breathe/line/letters to
+  // their resting pose); settlingRef gates it to run once and tells the pointermove
+  // handler to stop writing tilt values; settleTimerRef holds the handoff timer.
+  const [settling, setSettling] = useState(false);
+  const settlingRef = useRef(false);
+  const settleTimerRef = useRef(null);
   // Counts DIE SLOW's per-letter entrance animations as they finish, so we hand
   // off the instant the LAST letter lands (off the real animationend) rather than
   // a hardcoded guess. Reduced motion (animations disabled) falls to a short timer.
@@ -132,13 +149,41 @@ export default function TransitionIntro({ onComplete }) {
     onComplete();
   }
 
+  // The title has LANDED. Before handing off, run the settle phase so the intro's
+  // final frame matches the knife-split's static title exactly (no pop):
+  //   - add .is-settling: CSS locks .intro-breathe to scale 1 and freezes the idle
+  //     glitch, so the breathing/twitch stops nudging the title;
+  //   - reset the cursor-lean vars to 0: .intro-tilt's `transition: transform 220ms`
+  //     GLIDES back to neutral instead of the old hard snap at handoff;
+  //   - the pointermove handler stops writing new tilt values (settlingRef guard).
+  // Then hand off after the glide completes. Runs at most once. Under reduced motion
+  // none of breathe/tilt/glitch ever ran, so there's nothing to settle — hand off now.
+  function beginSettle() {
+    if (settlingRef.current || completedRef.current) return;
+    settlingRef.current = true;
+    if (PREFERS_REDUCED) {
+      finishIntro();
+      return;
+    }
+    setSettling(true);
+    const el = tiltRef.current;
+    if (el) {
+      el.style.setProperty('--tx', '0px');
+      el.style.setProperty('--ty', '0px');
+      el.style.setProperty('--rx', '0deg');
+      el.style.setProperty('--ry', '0deg');
+    }
+    settleTimerRef.current = setTimeout(finishIntro, SETTLE_MS);
+  }
+
   // Each DIE SLOW letter fires `die-letter-in` animationend as it settles; the
   // last one IS the title landing. Triggering off that (not a hardcoded time)
-  // keeps the slash tight to the drop even if the drop's timing is later retuned.
+  // keeps the settle+handoff tight to the drop even if the drop's timing is later
+  // retuned.
   function handleDieAnimEnd(e) {
     if (e.animationName !== 'die-letter-in') return;
     dieLandedRef.current += 1;
-    if (dieLandedRef.current >= DIE_TEXT.length) finishIntro();
+    if (dieLandedRef.current >= DIE_TEXT.length) beginSettle();
   }
 
   // The whole timeline, scheduled once on mount (times are intro-local; the
@@ -161,15 +206,16 @@ export default function TransitionIntro({ onComplete }) {
     timers.push(setTimeout(() => setStep('line2'), 780));
     timers.push(setTimeout(() => impact('slow'), 940)); // DIE
     timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
-    // Handoff is normally driven by the last DIE SLOW letter's animationend
-    // (handleDieAnimEnd) — no hardcoded landing time. This is only a SAFETY net:
-    // under reduced motion the entrance animations are disabled (no animationend),
-    // so a short timer hands off promptly; in normal motion it sits past the
-    // expected ~1640ms land so animationend always wins first.
-    timers.push(setTimeout(finishIntro, PREFERS_REDUCED ? 120 : 1900));
+    // Settle+handoff is normally driven by the last DIE SLOW letter's animationend
+    // (handleDieAnimEnd → beginSettle) — no hardcoded landing time. This is only a
+    // SAFETY net: under reduced motion the entrance animations are disabled (no
+    // animationend), so a short timer settles promptly; in normal motion it sits
+    // past the expected ~1640ms land so animationend always wins first.
+    timers.push(setTimeout(beginSettle, PREFERS_REDUCED ? 120 : 1900));
     return () => {
       timers.forEach(clearTimeout);
       if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     };
     // onComplete is stable from App; run this exactly once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,6 +231,9 @@ export default function TransitionIntro({ onComplete }) {
     if (!el) return undefined;
     let raf = 0;
     const onMove = (e) => {
+      // Once settling starts, the tilt glides back to neutral — stop feeding it new
+      // cursor values or it would fight the glide and hand off from a tilted pose.
+      if (settlingRef.current) return;
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
@@ -225,7 +274,7 @@ export default function TransitionIntro({ onComplete }) {
         {/* Tilt layer (cursor lean) wraps the breathe layer (idle breathing scale)
             wraps the two slots - each transform on its own element so they compose
             instead of clobbering each other or the stage's impact shake. */}
-        <div className="intro-tilt" ref={tiltRef}>
+        <div className={`intro-tilt${settling ? ' is-settling' : ''}`} ref={tiltRef}>
           <div className="intro-breathe">
             {/* Each line sits in a slot that holds its resting offset + tilt, so
                 the two titles land staggered and crooked. The slot transform is

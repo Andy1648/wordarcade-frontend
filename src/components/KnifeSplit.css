@@ -83,6 +83,22 @@
   }
 }
 
+/* The title uses TransitionIntro's per-letter <span> markup (IntroLetters) so the
+   per-letter metrics match the intro exactly. Render the letters in their SETTLED
+   state — opacity 1, no entrance animation, no stagger delay — which is the pose the
+   intro freezes to (its .is-settling state) just before handing off. Without this the
+   .intro-letter base (opacity 0) would hide them. */
+.ks-title .intro-letter {
+  opacity: 1;
+  animation: none;
+}
+
+/* No idle paint-drips on the static knife title — the intro's settle phase drops its
+   drips too, so the two DIE SLOW lines match at the handoff. */
+.ks-title .intro-line-die .intro-letter::after {
+  display: none;
+}
+
 /* The halves only animate once JS adds .is-open (after the slash has drawn + held
    + the open-gap). forwards fill so they stay parted at the end. */
 .knife-split.is-open .knife-cover-top {
