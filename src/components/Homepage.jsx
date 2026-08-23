@@ -261,7 +261,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   }, [dialog]);
 
   useEffect(() => {
-    const limiter = createRateLimiter({ capacity: 8, windowMs: 1000 });
+    const limiter = createRateLimiter({ capacity: 16, windowMs: 1000 });
     const onKey = (e) => {
       // No-op if a mode dialog/modal is open, or the key isn't a plain creditable
       // keystroke (handles held keys, modifier chords, and any focused field).

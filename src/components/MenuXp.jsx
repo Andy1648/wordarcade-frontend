@@ -47,12 +47,17 @@ const POP_MS = 320;
 const POP_EASE = 'cubic-bezier(.2,.7,.2,1)';
 const LEVELUP_MS = 480;
 const CENTER = 'translate(-50%,-50%) ';
-const POOL = 4;
-// Rough popup half-size, used only to keep a spawn OUTSIDE the panel border (never a
-// per-keystroke measurement).
-const HALF_W = 12;
-const HALF_H = 10;
-const PAD = 4;
+const POOL = 8;
+const POP_CAP = 5; // 5 pops + 1 fill transition = the menu's 6-concurrent finite budget
+// Rough popup half-size (now larger — font clamp(22,4vw,34)), used only to keep spawns
+// OUTSIDE the panel border and to space the slots (never a per-keystroke measurement).
+const HALF_W = 22;
+const HALF_H = 22;
+const PAD = 6;
+// Vertical slots per side gutter. Consecutive slots alternate sides + step down the
+// panel, so any run of pops alive together (≤POP_CAP) lands on distinct, non-overlapping
+// spots instead of random x/y that could stack while both are visible.
+const SLOTS_PER_SIDE = 6;
 
 // MenuXpFx — imperative: popup('+1') per credited keystroke, celebrate() on level-up.
 export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
@@ -61,11 +66,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelupRef = useRef(null);
   const popAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
-  const bandsRef = useRef([]);
+  const slotsRef = useRef([]);
+  const slotIdxRef = useRef(0);
   const nextRef = useRef(0);
 
-  // Measure the margin bands (areas of the backdrop OUTSIDE the panel) on mount + resize.
-  // The layer is inset:0 within .homepage-wrap, so its own rect is the wrap's box.
+  // Measure a ROTATING SET OF SPAWN SLOTS in the backdrop margin OUTSIDE the panel, on
+  // mount + resize. The layer is inset:0 within .homepage-wrap, so its own rect is the
+  // wrap's box. Slots are anchored just past the L/R panel borders and stepped down the
+  // panel; consecutive slots alternate sides so any pops alive together are separated.
   useEffect(() => {
     const layer = layerRef.current;
     if (!layer) return undefined;
@@ -75,21 +83,25 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       if (!stage) return;
       const wrap = layer.getBoundingClientRect();
       const s = stage.getBoundingClientRect();
-      const W = wrap.width;
       const H = wrap.height;
       const sL = s.left - wrap.left;
       const sR = s.right - wrap.left;
-      const sT = s.top - wrap.top;
-      const sB = s.bottom - wrap.top;
-      // Each band is a CENTER-position range that keeps the popup box outside the panel
-      // border (clipping at the viewport edge by overflow:hidden is fine).
-      const bands = [];
-      if (sL > PAD) bands.push({ x0: -HALF_W, x1: sL - PAD - HALF_W, y0: HALF_H, y1: H - HALF_H }); // left gutter
-      if (W - sR > PAD) bands.push({ x0: sR + PAD + HALF_W, x1: W + HALF_W, y0: HALF_H, y1: H - HALF_H }); // right gutter
-      if (sT > PAD + 2 * HALF_H) bands.push({ x0: HALF_W, x1: W - HALF_W, y0: HALF_H, y1: sT - PAD - HALF_H }); // top
-      if (H - sB > PAD + 2 * HALF_H) bands.push({ x0: HALF_W, x1: W - HALF_W, y0: sB + PAD + HALF_H, y1: H - HALF_H }); // bottom
-      // Keep only bands with a real span.
-      bandsRef.current = bands.filter((b) => b.x1 > b.x0 && b.y1 > b.y0);
+      const hasLeft = sL > PAD;
+      const hasRight = wrap.width - sR > PAD;
+      const leftX = sL - PAD - HALF_W; // center just outside the left border
+      const rightX = sR + PAD + HALF_W; // center just outside the right border
+      const y0 = HALF_H + PAD;
+      const y1 = H - HALF_H - PAD;
+      const span = Math.max(0, y1 - y0);
+      const slots = [];
+      for (let r = 0; r < SLOTS_PER_SIDE; r++) {
+        // stagger left vs right rows by half a step so they never share a y
+        const yl = y0 + (span * (r + 0.5)) / SLOTS_PER_SIDE;
+        const yr = y0 + (span * (r + 1)) / SLOTS_PER_SIDE;
+        if (hasLeft) slots.push({ x: leftX, y: yl });
+        if (hasRight) slots.push({ x: rightX, y: yr });
+      }
+      slotsRef.current = slots;
     };
 
     measure();
@@ -135,17 +147,17 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
 
   useImperativeHandle(ref, () => ({
     popup(text) {
-      const bands = bandsRef.current;
+      const slots = slotsRef.current;
       const anims = popAnimsRef.current;
-      if (!bands.length || !anims.length) return;
-      // Pick a node while HARD-CAPPING the whole menu-xp layer at 3 concurrent running
-      // animations. The bar's fill transition counts as 1, so pops are capped at 2; and
+      if (!slots.length || !anims.length) return;
+      // Pick a node while HARD-CAPPING the whole menu-xp layer at 6 concurrent running
+      // animations. The bar's fill transition counts as 1, so pops are capped at 5; and
       // while the one-shot level-up is celebrating (another running animation) pops drop
-      // to 1, so pops + fill + level-up can never exceed 3. Prefer a free node; at the cap
+      // to 1, so pops + fill + level-up can never exceed 6. Prefer a free node; at the cap
       // recycle the oldest-running pop.
       const levelupRunning =
         levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const cap = levelupRunning ? 1 : 2;
+      const cap = levelupRunning ? 1 : POP_CAP;
       const running = [];
       let free = -1;
       for (let n = 0; n < anims.length; n++) {
@@ -162,10 +174,13 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const el = popRefs.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
-      const band = bands[(Math.random() * bands.length) | 0];
+      // Rotate through the fixed slots so consecutive pops never share a spot (no visual
+      // overlap even though the glyphs are large). Pure index rotation — no random x/y.
+      const slot = slots[slotIdxRef.current % slots.length];
+      slotIdxRef.current = (slotIdxRef.current + 1) % slots.length;
       el.textContent = text;
-      el.style.left = `${band.x0 + Math.random() * (band.x1 - band.x0)}px`;
-      el.style.top = `${band.y0 + Math.random() * (band.y1 - band.y0)}px`;
+      el.style.left = `${slot.x}px`;
+      el.style.top = `${slot.y}px`;
       anim.cancel();
       anim.play();
     },

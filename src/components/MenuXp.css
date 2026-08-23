@@ -72,10 +72,10 @@
   top: 0;
   opacity: 0;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(22px, 4vw, 34px);
   line-height: 1;
   color: #ffe94a;
-  -webkit-text-stroke: 3px #000;
+  -webkit-text-stroke: 3px #000; /* + paint-order below: the outline scales with the glyph */
   paint-order: stroke fill;
   white-space: nowrap;
 }
