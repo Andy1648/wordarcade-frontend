@@ -10,10 +10,13 @@
 // word's own morpheme + meaning + cousins), and it fires on ~100% of briefed cards.
 //
 // Selection is therefore simple:
-//   1. REVIEW FIRST — up to 2 words the memory says are due (weak words, cleared
-//      only when nearly given away, lead; then the rest of the Leitner-due queue).
-//   2. THE REST FRESH — tier-appropriate words, preferring ones that CARRY a root
-//      (so the card can teach a family), then unseen, then the gentlest tier.
+//   1. REVIEW — AT MOST 1 word, and only when one genuinely needs re-studying
+//      (needsReview(): last encounter a miss or a give-away clear) AND its Leitner
+//      interval has elapsed. Weakest (lowest last ante) leads. If nothing qualifies
+//      the whole deck is fresh — a review slot is never backfilled just to fill it,
+//      so a strong player is not fed repeats.
+//   2. THE REST FRESH — UNSEEN words first (that's what keeps coverage wide across
+//      the pool), root-bearing a weak tiebreak so a card can still teach a family.
 //   3. SHARED MORPHEME = BONUS, not a gate — if 2+ of the chosen words happen to
 //      share a morpheme, they're grouped adjacently and the screen is headed with
 //      it. Otherwise familyMorpheme is null (the common case) and the screen simply
@@ -22,7 +25,7 @@
 // Returns { words:[≤count rows], familyMorpheme, reviewCount, reviewWords:Set }.
 // `words` are the raw pool rows (never mutated); `reviewWords` lets the screen mark
 // the ones the player has faced before.
-import { weakWords, dueWords, isMastered, hasSeen } from './lexicon.js';
+import { dueWords, isMastered, hasSeen, needsReview } from './lexicon.js';
 
 // Fisher-Yates with an injected RNG — same idiom as engine.js, so a seeded RNG
 // makes every draw reproducible.
@@ -97,16 +100,23 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
   const chosenSet = new Set();
   const reviewWords = new Set();
 
-  // Shared ordering for fresh + backfill fill: root-bearing first (every card can
-  // teach a family), then unseen, then the gentlest tier.
+  // Shared ordering for fresh + backfill fill. UNSEEN is the PRIMARY key so every
+  // run reaches for words the player hasn't studied yet — that's what widens
+  // coverage across the 600-word pool. Root-bearing is only a WEAK tiebreak (a
+  // root-bearing card can teach a family, so it's mildly preferred among words of
+  // equal seen-ness) and tier is dropped entirely: the old order (root-bearing
+  // PRIMARY, then tier) stable-sorted the shuffle away and collapsed the effective
+  // pool onto the same ~40 tier-1 root words. Because the sort is stable and runs
+  // AFTER the shuffle, the injected RNG still decides order WITHIN each
+  // unseen/root-bearing bucket (which holds hundreds of words), so the draw stays
+  // wide and varied instead of deterministic.
   const freshOrder = (a, b) => {
-    const ra = a.root ? 0 : 1;
-    const rb = b.root ? 0 : 1;
-    if (ra !== rb) return ra - rb;
     const sa = hasSeen(state, a.word) ? 1 : 0;
     const sb = hasSeen(state, b.word) ? 1 : 0;
-    if (sa !== sb) return sa - sb;
-    return (a.tier || 1) - (b.tier || 1);
+    if (sa !== sb) return sa - sb; // unseen first — PRIMARY
+    const ra = a.root ? 0 : 1;
+    const rb = b.root ? 0 : 1;
+    return ra - rb; // root-bearing a weak tiebreak; shuffle decides the rest
   };
 
   const take = (row) => {
@@ -116,18 +126,31 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
     return true;
   };
 
-  // ---- 1. review words (up to 2): weak first, then the rest of the due queue ----
-  const reviewOrder = [];
-  const pushReview = (w) => {
-    if (!reviewOrder.includes(w)) reviewOrder.push(w);
-  };
-  weakWords(state).forEach(pushReview);
-  dueWords(state, session).forEach(pushReview);
-  for (const w of reviewOrder) {
-    if (chosen.length >= 2) break;
-    if (excludeSet.has(w)) continue; // just-briefed — don't re-deal (soft; may backfill)
+  // ---- 1. review (AT MOST 1 slot) ----
+  // A review slot is warranted ONLY for a word that genuinely needs re-studying —
+  // needsReview() (last encounter a miss or a give-away) — AND whose Leitner
+  // interval has actually elapsed (it's in dueWords). A word cleared cold does NOT
+  // come back. Among the qualifiers, take the WEAKEST (lowest last ante) so the
+  // shakiest word leads. If NOTHING qualifies we deal 5 fresh — we never backfill a
+  // review slot just to fill it. (This is the fix for the "33% repeats regardless
+  // of skill" bug: dueWords used to treat everything seen as due, and the old step
+  // force-filled 2 review slots whenever anything was due.)
+  const dueSet = new Set(dueWords(state, session));
+  const reviewCandidates = [];
+  for (const w of Object.keys(state.records)) {
+    if (!dueSet.has(w)) continue; // Leitner interval not elapsed yet
+    if (!needsReview(state, w)) continue; // knows it cold — nothing to re-study
+    if (excludeSet.has(w)) continue; // dealt in the recent window — don't re-deal
     const row = byWord.get(w); // ignore memory for words no longer in the pool
-    if (row && take(row)) reviewWords.add(w);
+    if (!row) continue;
+    const antes = state.records[w].antes;
+    reviewCandidates.push({ w, row, lastAnte: antes[antes.length - 1] });
+  }
+  // Weakest-first: lowest last ante (misses before give-aways); word name breaks ties.
+  reviewCandidates.sort((a, b) => a.lastAnte - b.lastAnte || (a.w < b.w ? -1 : 1));
+  if (reviewCandidates.length) {
+    const c = reviewCandidates[0];
+    if (take(c.row)) reviewWords.add(c.w);
   }
   const reviewCount = chosen.length;
 

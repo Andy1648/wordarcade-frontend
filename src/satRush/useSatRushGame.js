@@ -564,16 +564,19 @@ export function useSatRushGame() {
         startRun('lineup');
         return;
       }
-      // Exclude the previous deck so the briefing refreshes every time (never
-      // re-deals the same set); then remember THIS deck for the next exclusion.
+      // Exclude the last 3 decks so the briefing refreshes every time (never
+      // re-deals a word from the recent window); then append THIS deck and keep only
+      // the newest 3. lastBriefed is an array of decks (word-string arrays).
+      const recentDecks = Array.isArray(lex.lastBriefed) ? lex.lastBriefed : [];
       briefingRef.current = pickBriefing({
         state: lex,
         session: lex.session,
         words: WORDS,
         rng: Math.random,
-        exclude: lex.lastBriefed || [],
+        exclude: recentDecks.flat(),
       });
-      lex.lastBriefed = briefingRef.current.words.map((r) => r.word);
+      const dealtDeck = briefingRef.current.words.map((r) => r.word);
+      lex.lastBriefed = [...recentDecks, dealtDeck].slice(-3);
       persistLexicon();
       trackSR('briefing_shown', {
         familyMorpheme: briefingRef.current.familyMorpheme,

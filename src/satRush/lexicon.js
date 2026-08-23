@@ -33,8 +33,10 @@ const VERSION = 1;
 
 // Leitner review intervals by box (in SESSIONS). A word in box b is due when
 // currentSession - lastSeen >= INTERVALS[b]. Miss drops to box 0 (due next run);
-// each clear promotes it, stretching the gap.
-export const INTERVALS = [1, 2, 5, 10, 20];
+// each clear promotes it, stretching the gap. Widened from [1,2,5,10,20] so ONE
+// clear buys real rest — a word nailed cold shouldn't reappear a run or two later
+// (the old box-0/1 gaps of 1-2 sessions made almost everything perpetually "due").
+export const INTERVALS = [1, 3, 8, 20, 40];
 
 // Ante by stage index — decoupled from engine.js on purpose (this is a learning
 // score, not a scoring rule), but kept numerically in sync with stageMultipliers.
@@ -51,10 +53,24 @@ const MAX_RECORDS = 2000; // hard cap on stored records (see evict)
 /** A clean, empty state. Returned for a fresh player and for any unreadable blob.
  *  `mode` remembers the last mode-select choice ('briefing' | 'lineup') so the
  *  picker can preselect it; a fresh player defaults to 'briefing'. `lastBriefed`
- *  is the words the previous briefing dealt, so the next one can exclude them and
- *  never re-deal the same deck. */
+ *  is the LAST 3 briefing DECKS (an array of up-to-3 word-string arrays, newest
+ *  last), so the next briefing can exclude the recent window and not re-deal a word
+ *  it dealt in any of the last three runs. */
 export function freshState() {
   return { v: VERSION, session: 0, mode: 'briefing', lastBriefed: [], records: {} };
+}
+
+// Normalise a stored lastBriefed into the current shape: an array of up-to-3 decks
+// (each a string[]). Migrates the OLD flat string[] (a single deck) by wrapping it
+// as one deck; drops anything malformed. Safe on any input.
+function normalizeLastBriefed(v) {
+  if (!Array.isArray(v)) return [];
+  // Old format: a flat array of word strings === one deck. (An empty array is
+  // ambiguous but maps to "no decks" either way.)
+  if (v.every((x) => typeof x === 'string')) return v.length ? [v] : [];
+  // New format: an array of decks. Keep only valid string[] decks, newest 3.
+  const decks = v.filter((d) => Array.isArray(d) && d.every((x) => typeof x === 'string'));
+  return decks.slice(-3);
 }
 
 // True only for a blob that is safe to trust as-is. Anything else → fresh state,
@@ -85,11 +101,8 @@ export function load(storage) {
       v: VERSION,
       session: blob.session,
       mode: blob.mode === 'lineup' ? 'lineup' : 'briefing',
-      // Backfill lastBriefed: accept only an array of strings, else an empty deck.
-      lastBriefed:
-        Array.isArray(blob.lastBriefed) && blob.lastBriefed.every((w) => typeof w === 'string')
-          ? blob.lastBriefed
-          : [],
+      // Migrate lastBriefed to the last-3-decks shape (old flat string[] → one deck).
+      lastBriefed: normalizeLastBriefed(blob.lastBriefed),
       records: blob.records,
     };
   } catch {
@@ -201,6 +214,22 @@ export function weakWords(state) {
     }
   }
   return out;
+}
+
+/**
+ * Does this word genuinely need re-studying? TRUE only when the player's LAST
+ * encounter with it was a miss (ante 0) or a give-away clear (ante 1) — i.e. they
+ * do NOT know it cold. A word cleared cold (ante 3 or 5) on its last encounter
+ * does NOT need review, even if earlier attempts were shaky: only the most recent
+ * result counts. A never-seen word is not "review" (there's nothing to re-study).
+ * This is the gate the briefing uses to decide whether a review slot is warranted
+ * at all — separate from Leitner timing (dueWords), which says WHEN it's time.
+ */
+export function needsReview(state, word) {
+  const rec = state.records[word];
+  if (!rec || rec.antes.length === 0) return false;
+  const lastAnte = rec.antes[rec.antes.length - 1];
+  return lastAnte <= 1; // antes are only ever 0/1/3/5, so this catches miss + give-away
 }
 
 /** How many words the player has mastered (box >= MASTERY_BOX). The results stat. */
