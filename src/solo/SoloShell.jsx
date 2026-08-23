@@ -1,0 +1,127 @@
+// SoloShell.jsx — the shared chrome for CHAIN and FUSE: the clock ring, the input with
+// its reject sill, the reason line, the arm hint, and the death card. Mode-specific
+// content (the required letter / the fragment, the HUD) is passed in as nodes.
+//
+// DESIGN LAW honored here: the INPUT element is never animated (only the sill and the
+// clock give feedback). The sill "flash" is an OPACITY pulse of an always-red bar (so we
+// stay within transform/opacity-only animation). There is no idle animation anywhere.
+import { useEffect, useRef } from 'react';
+import { ARM_HINT } from './shared.js';
+import './Solo.css';
+
+// A thin countdown ring. Progress is driven by React state every frame (not a CSS
+// keyframe), so there's no idle animation and no var() inside keyframes.
+function ClockRing({ remaining, tMax, redZone, armed }) {
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  const frac = armed ? Math.max(0, Math.min(1, remaining / tMax)) : 1;
+  const secs = Math.max(0, remaining / 1000);
+  return (
+    <svg className="solo-clock" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
+      <circle className="solo-clock-track" cx="60" cy="60" r={R} />
+      <circle
+        className={`solo-clock-fill${redZone ? ' is-red' : ''}`}
+        cx="60"
+        cy="60"
+        r={R}
+        style={{ strokeDasharray: C, strokeDashoffset: C * (1 - frac) }}
+      />
+      <text className={`solo-clock-num${redZone ? ' is-red' : ''}`} x="60" y="60" dy="0.35em" textAnchor="middle">
+        {secs >= 10 ? Math.ceil(secs) : secs.toFixed(1)}
+      </text>
+    </svg>
+  );
+}
+
+export default function SoloShell({
+  accent,
+  title,
+  hud, // top bar node (score/best/multiplier | lives/strip)
+  center, // the required letter / the fragment
+  supply, // optional readout node under the center
+  clock, // { remaining, tMax, redZone, armed }
+  input,
+  onInput,
+  onSubmit,
+  sillKey,
+  reason,
+  placeholder,
+  phase,
+  over, // { score, best, restartArmed, restart, card }
+  onExit,
+}) {
+  const inputRef = useRef(null);
+
+  // Keep focus on the field while playing so typing always lands (the field is never
+  // cleared on reject, so focus + caret position are the player's evidence).
+  useEffect(() => {
+    if (phase === 'playing' && inputRef.current) inputRef.current.focus();
+  }, [phase]);
+
+  const submit = (e) => {
+    e.preventDefault();
+    onSubmit();
+  };
+
+  return (
+    <div className="solo-root" style={{ '--solo-accent': accent }}>
+      <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
+        ✕
+      </button>
+
+      <div className="solo-hud">{hud}</div>
+
+      <div className="solo-stage">
+        <ClockRing {...clock} />
+        <div className="solo-center">{center}</div>
+        {supply ? <div className="solo-supply">{supply}</div> : null}
+      </div>
+
+      {phase === 'playing' ? (
+        <form className="solo-inputwrap" onSubmit={submit}>
+          <input
+            ref={inputRef}
+            className="solo-input"
+            type="text"
+            value={input}
+            onChange={(e) => onInput(e.target.value)}
+            placeholder={placeholder}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck="false"
+            aria-label={title}
+          />
+          {/* The reject sill: an always-red bar whose OPACITY pulses on each reject
+              (keyed remount re-fires the 140ms opacity animation). */}
+          <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />
+        </form>
+      ) : null}
+
+      {/* Reason line (reject) or the arm hint before the clock starts. */}
+      <div className="solo-reason" aria-live="polite">
+        {phase === 'playing' && reason ? reason : ''}
+      </div>
+      {phase === 'playing' && !clock.armed ? <div className="solo-armhint">{ARM_HINT}</div> : null}
+
+      {phase === 'over' ? (
+        <div className="solo-over">
+          <div className="solo-deathcard">
+            {over.card}
+            <div className="solo-scoreline">
+              <span>SCORE {over.score}</span>
+              <span>BEST {over.best}</span>
+            </div>
+            <button
+              type="button"
+              className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
+              onClick={over.restart}
+            >
+              {over.restartArmed ? 'RESTART · ENTER' : 'RESTART'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
