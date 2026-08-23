@@ -99,6 +99,34 @@
   50% { transform: scale(1.015); }
 }
 
+/* ---- SETTLE (pre-handoff) ----
+   When JS adds .is-settling (the title has landed and we're about to hand off to the
+   knife-split), freeze the title into its RESTING pose so the intro's last frame is
+   pixel-identical to the knife's static title — no pop at the swap:
+   - lock .intro-breathe to scale 1 (it was mid-cycle, ~1.013; the knife has no breathe
+     wrapper, so it sits at 1);
+   - stop the per-line idle glitch/pulse so nothing nudges the line off centre (the
+     knife's lines carry no .active idle loop);
+   - hold the letters at their settled opacity (removing their entrance animation would
+     otherwise revert .intro-letter to its opacity:0 base);
+   - drop the paint-drips (the knife's static title shows none).
+   The cursor-lean (.intro-tilt) is NOT frozen here — it GLIDES to neutral via its own
+   `transition: transform 220ms` when JS resets --tx/--ty/--rx/--ry to 0. */
+.intro-tilt.is-settling .intro-breathe {
+  animation: none;
+  transform: none;
+}
+.intro-tilt.is-settling .intro-line {
+  animation: none;
+}
+.intro-tilt.is-settling .intro-letter {
+  animation: none;
+  opacity: 1;
+}
+.intro-tilt.is-settling .intro-line-die .intro-letter::after {
+  display: none;
+}
+
 /* Each line lives in a slot that carries only its resting slant + a small
    off-baseline nudge, kept OFF the line itself so the entrance animation (which
    scales the line) never fights or snaps against it. The two slots use DIFFERENT

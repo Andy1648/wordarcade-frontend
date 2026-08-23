@@ -33,6 +33,10 @@ import './KnifeSplit.css';
 // phrases rendered in the cover halves are pixel-identical to TransitionIntro's —
 // the handoff is seamless and there's no second copy of the title CSS to drift.
 import './TransitionIntro.css';
+// ...and the intro's EXACT per-letter markup: rendering the phrases as the same
+// inline-block <span> letters (not a plain text node) makes the per-letter advance
+// rounding / kerning identical, so the title width doesn't jump at the handoff.
+import { IntroLetters } from './TransitionIntro.jsx';
 
 // ===== Shared geometry =====
 const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
@@ -170,20 +174,26 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
     (fadeOn ? ' is-fade' : '') +
     (openOn ? ' is-open' : '');
 
-  // The SAME two phrases TransitionIntro shows, in their settled state (plain text,
-  // no per-letter entrance), centred identically. Rendered inside BOTH cover halves
-  // so each half's clip shows its portion — TYPE FAST in the top half, DIE SLOW in
-  // the bottom — and each phrase rides its half off-screen when the cover parts.
-  // (Phrases must stay in sync with TransitionIntro's "TYPE FAST." / DIE_TEXT.)
-  // Each phrase is ONE line: "TYPE FAST" rides up with the top half, "DIE SLOW"
-  // rides down with the bottom half — the cut passes between the two lines.
+  // The SAME two phrases TransitionIntro shows, in their SETTLED state, using its
+  // EXACT per-letter markup (IntroLetters) so the metrics are identical — the letters
+  // render at rest (opacity 1, no entrance animation, no stagger; see KnifeSplit.css),
+  // which is the pose the intro freezes to in its settle phase before handoff. Rendered
+  // inside BOTH cover halves so each half's clip shows its portion — TYPE FAST in the
+  // top half, DIE SLOW in the bottom — and each phrase rides its half off-screen when
+  // the cover parts. (Phrases must stay in sync with TransitionIntro's "TYPE FAST." /
+  // DIE_TEXT.) Each phrase is ONE line: "TYPE FAST" rides up with the top half, "DIE
+  // SLOW" rides down with the bottom half — the cut passes between the two lines.
   const title = (
     <div className="ks-title" aria-hidden="true">
       <div className="intro-line-slot intro-slot-type">
-        <div className="intro-line intro-line-type">TYPE FAST.</div>
+        <div className="intro-line intro-line-type">
+          <IntroLetters text="TYPE FAST." />
+        </div>
       </div>
       <div className="intro-line-slot intro-slot-die">
-        <div className="intro-line intro-line-die">DIE SLOW.</div>
+        <div className="intro-line intro-line-die">
+          <IntroLetters text="DIE SLOW." />
+        </div>
       </div>
     </div>
   );
