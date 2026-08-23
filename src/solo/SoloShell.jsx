@@ -40,6 +40,7 @@ export default function SoloShell({
   center, // the required letter / the fragment
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
+  outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
   input,
   onInput,
   onSubmit,
@@ -77,6 +78,10 @@ export default function SoloShell({
         <div className="solo-center">{center}</div>
         {supply ? <div className="solo-supply">{supply}</div> : null}
       </div>
+
+      {/* OUT tile (CHAIN) — a SIBLING of the input, never an ancestor, so it can update
+          on every keystroke without ever animating the input or its container. */}
+      {phase === 'playing' && outTile ? outTile : null}
 
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit}>

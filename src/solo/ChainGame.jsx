@@ -2,7 +2,7 @@
 // and drives it through the shared clock hook + shell. All rules live in chain.js; this
 // file is glue + presentation.
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { createChainEngine } from './chain.js';
+import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { PB_KEYS } from './shared.js';
@@ -58,6 +58,39 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   const required = s.requiredLetter;
   const supply = g.engine.supply(required);
 
+  // OUT tile — the last letter of the word being typed RIGHT NOW (recomputed every
+  // keystroke, since onInput bumps `input` and re-renders this component). Purely a
+  // read of state chain.js already tracks: supply() for the FEW LEFT / DEAD END states
+  // and endCountOf() for the heat bar. No engine mutation, no input animation.
+  const typed = g.input.trim().toLowerCase();
+  const outLetter = typed.length ? typed[typed.length - 1] : '';
+  const outSupply = outLetter ? g.engine.supply(outLetter) : null;
+  const outState = outSupply
+    ? outSupply.count < DEAD_END_BELOW
+      ? 'dead' // < 3 unused common continuations → dead end (dashed red)
+      : outSupply.count < FEW_LEFT_BELOW
+        ? 'thin' // < 35 → few left (dashed yellow)
+        : ''
+    : '';
+  // Heat as a 0..1 fill: endCount * 0.06 / 0.95 (the heatMul ramp, normalised to its cap).
+  const outHeat = outLetter ? Math.min(1, (g.engine.endCountOf(outLetter) * 0.06) / 0.95) : 0;
+  const outTile = (
+    <div className={`solo-out${outState ? ` is-${outState}` : ''}`} aria-hidden="true">
+      <div className="solo-out-face">
+        <span className={`solo-out-letter${outLetter ? '' : ' is-empty'}`}>
+          {outLetter ? outLetter.toUpperCase() : '·'}
+        </span>
+        <div
+          className={`solo-out-heat${outHeat >= 0.36 ? ' is-hot' : ''}`}
+          style={{ transform: `scaleX(${outHeat})`, opacity: outHeat > 0 ? 1 : 0 }}
+        />
+      </div>
+      <div className="solo-out-cap">
+        {outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : ''}
+      </div>
+    </div>
+  );
+
   const hud = (
     <>
       <div className="solo-stat">
@@ -96,6 +129,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       center={required.toUpperCase()}
       supply={<span className={supply.count < 3 ? 'is-dead' : ''}>{supply.label}</span>}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
+      outTile={outTile}
       input={g.input}
       onInput={g.onInput}
       onSubmit={g.onSubmit}
