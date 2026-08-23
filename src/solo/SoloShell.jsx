@@ -48,6 +48,8 @@ export default function SoloShell({
   placeholder,
   maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
   armHint, // per-mode "how to play" line, shown until the clock arms
+  rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
+  fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
   phase,
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel? }
   onExit,
@@ -66,7 +68,7 @@ export default function SoloShell({
   };
 
   return (
-    <div className="solo-root" style={{ '--solo-accent': accent }}>
+    <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
       <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
         ✕
       </button>
@@ -132,6 +134,11 @@ export default function SoloShell({
           </div>
         </div>
       ) : null}
+
+      {/* FX overlay (CHAIN OUT→IN travel). Absolutely positioned, pointer-events:none,
+          on top of the already-correct screen; it is a SIBLING of the input's chain,
+          never an ancestor, so it can animate without touching the input. */}
+      {fx}
     </div>
   );
 }

@@ -1,12 +1,13 @@
 // ChainGame.jsx — CHAIN mode screen. Loads the (lazy) word data, builds the pure engine,
 // and drives it through the shared clock hook + shell. All rules live in chain.js; this
 // file is glue + presentation.
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
+import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
@@ -66,6 +67,53 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     onRunStart: () => setRuns(bumpChainRuns()),
   });
   const s = g.engine.state;
+
+  // ---- OUT → IN travel FX (presentational) -------------------------------------
+  // Pooled: one traveler + one fader, reused for every accept (never a node per accept).
+  // Geometry is measured on mount/resize by the helper; the accept path does no reflow.
+  const rootRef = useRef(null);
+  const travelerRef = useRef(null);
+  const faderRef = useRef(null);
+  const fxRef = useRef(null); // the createTravelFx() controller
+  const prevKRef = useRef(s.k); // last links count we animated from
+  const prevReqRef = useRef(s.requiredLetter); // the IN letter before this accept
+
+  useLayoutEffect(() => {
+    fxRef.current = createTravelFx({
+      root: rootRef.current,
+      traveler: travelerRef.current,
+      fader: faderRef.current,
+    });
+    fxRef.current.measure();
+    // A second measure after layout/fonts settle keeps the cached centres accurate.
+    const raf = requestAnimationFrame(() => fxRef.current && fxRef.current.measure());
+    const onResize = () => fxRef.current && fxRef.current.measure();
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
+  // Fire the travel whenever a link is accepted (links count increased). The traveler
+  // carries the accepted word's LAST letter (from lastLinks, since the input is cleared
+  // by accept); the fader carries the letter that was required before this accept.
+  useEffect(() => {
+    if (s.k > prevKRef.current) {
+      const links = s.lastLinks;
+      const travelLetter = links.length ? links[links.length - 1].word.slice(-1) : s.requiredLetter;
+      if (fxRef.current) fxRef.current.play(travelLetter, prevReqRef.current);
+    }
+    prevKRef.current = s.k;
+    prevReqRef.current = s.requiredLetter;
+  }, [s.k, s.requiredLetter]);
+
+  const fxLayer = (
+    <div className="solo-fx" aria-hidden="true">
+      <span className="solo-fx-glyph" ref={travelerRef} />
+      <span className="solo-fx-glyph" ref={faderRef} />
+    </div>
+  );
   const required = s.requiredLetter;
   const supply = g.engine.supply(required);
 
@@ -142,6 +190,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       placeholder={`start with "${required.toUpperCase()}" — min 3 letters`}
       maxLength={data.maxAcceptLen}
       armHint={ARM_HINT}
+      rootRef={rootRef}
+      fx={fxLayer}
       phase={g.phase}
       over={{
         score: s.score,

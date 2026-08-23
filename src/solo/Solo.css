@@ -242,6 +242,30 @@
   color: #ff4b4b;
 }
 
+/* OUT→IN travel FX layer (CHAIN). Absolutely positioned over the root, non-interactive.
+   Its two glyphs are POOLED (reused per accept). Base opacity 0 → invisible at rest; the
+   stored WAAPI animations drive transform+opacity. This layer is a SIBLING of the input's
+   ancestor chain, so nothing here animates the input or its containers. */
+.solo-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.solo-fx-glyph {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  font-family: 'Bungee', cursive;
+  font-size: 48px;
+  line-height: 1;
+  color: #2effe0;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  will-change: transform, opacity;
+}
+
 /* Input — NEVER animated. 16px min font (no iOS zoom), 44px min target. */
 .solo-inputwrap {
   position: relative;
