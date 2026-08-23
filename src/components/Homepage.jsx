@@ -5,6 +5,16 @@ import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
+import { MenuXpBar, MenuXpFx } from './MenuXp';
+import {
+  loadProgress,
+  saveProgress,
+  creditXp,
+  createRateLimiter,
+  isCreditableKey,
+  levelFromXp,
+  XP_MULTIPLIERS,
+} from '../progress/xp';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
 import WordCountChip from './WordCountChip';
@@ -237,6 +247,43 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (el) el.scrollBy({ top: cardsRowhRef.current || 0, behavior: 'smooth' });
   };
 
+  // ---- Menu XP meta-progression (presentational) -------------------------------
+  // Typing anywhere on the menu earns XP. There is NO text input here — keystrokes are
+  // captured globally and only ever surface as the "+1" popups + the bar. Persisted via
+  // the pure xp.js module; the model/cap/persistence are unit-tested there.
+  const xpRef = useRef(null);
+  if (xpRef.current === null) xpRef.current = loadProgress();
+  const [xpTotal, setXpTotal] = useState(xpRef.current.xp);
+  const xpFxRef = useRef(null);
+  const dialogOpenRef = useRef(false);
+  useEffect(() => {
+    dialogOpenRef.current = !!dialog;
+  }, [dialog]);
+
+  useEffect(() => {
+    const limiter = createRateLimiter({ capacity: 8, windowMs: 1000 });
+    const onKey = (e) => {
+      // No-op if a mode dialog/modal is open, or the key isn't a plain creditable
+      // keystroke (handles held keys, modifier chords, and any focused field).
+      if (dialogOpenRef.current) return;
+      if (!isCreditableKey(e)) return;
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (!limiter.tryConsume(now)) return; // over the anti-mash cap → silently dropped
+      const res = creditXp(xpRef.current, XP_MULTIPLIERS.menu, 1);
+      xpRef.current = res.state;
+      saveProgress(res.state);
+      setXpTotal(res.state.xp);
+      if (xpFxRef.current) {
+        xpFxRef.current.popup(`+${XP_MULTIPLIERS.menu}`);
+        if (res.leveledUp) xpFxRef.current.celebrate();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const xpProgress = levelFromXp(xpTotal);
+
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).
   useEffect(() => {
@@ -405,6 +452,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             game cards. Reads/subscribes to the count itself (no props). */}
         <WordCountChip />
 
+        {/* XP meta-progression bar — LV + fill + "N TO LV n+1". Fed by global keystroke
+            capture (see the effect above); no text input of its own. */}
+        <MenuXpBar level={xpProgress.level} toNext={xpProgress.toNext} frac={xpProgress.frac} />
+
         <div className="homepage-cards-region">
           <div
             ref={cardsScrollRef}
@@ -494,6 +545,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           {GAMES.some((g) => g.id === 'sat-rush') && <a href="/sat-rush/">SAT RUSH GUIDE</a>}
         </nav>
       </div>
+
+      {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
+          the "+N" popups spawn outside the panel border and never overlap its content. */}
+      <MenuXpFx ref={xpFxRef} />
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
           and the app zoom never clip it; closes back into the source card. */}
