@@ -131,8 +131,6 @@ export default function SplashScreen({ onStart, onDismiss }) {
   return (
     <div
       className={`splash-screen${leaving ? ' leaving' : ''}`}
-      role="button"
-      tabIndex={0}
       aria-label={fine ? 'Type or click to start' : 'Tap to start'}
     >
       <svg className="splash-burst" viewBox="-100 -100 200 200" aria-hidden="true">

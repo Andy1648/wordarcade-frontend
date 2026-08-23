@@ -100,6 +100,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const slotIdxRef = useRef(0);
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
+  const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
+  const barBoxRef = useRef(null); // XP bar box (layer-local) — taps must not cover it
 
   // Measure a 6×4 grid of spawn slots across the WHOLE fx area (panel included), excluding
   // any slot that would overlap the XP bar's box (so the readout is never covered). On
@@ -109,6 +111,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     if (!layer) return undefined;
     const measure = () => {
       const wrap = layer.getBoundingClientRect();
+      layerRectRef.current = { left: wrap.left, top: wrap.top };
       const W = wrap.width;
       const H = wrap.height;
       const bar = document.querySelector('.menu-xp-bar');
@@ -117,6 +120,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         const b = bar.getBoundingClientRect();
         box = { l: b.left - wrap.left, t: b.top - wrap.top, r: b.right - wrap.left, bt: b.bottom - wrap.top };
       }
+      barBoxRef.current = box;
       const slots = [];
       for (let r = 0; r < GRID_ROWS; r++) {
         for (let c = 0; c < GRID_COLS; c++) {
@@ -199,13 +203,47 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       slotIdxRef.current = (slotIdxRef.current + 1) % slots.length;
       const jx = Math.random() * (JITTER * 2) - JITTER;
       const jy = Math.random() * (JITTER * 2) - JITTER;
+      el.classList.remove('is-tap'); // reset if this node was last used for a tap
       // children: [0] = letter (tier colour), [1] = "+N" (always yellow, via CSS)
       el.children[0].textContent = letter;
       el.children[0].style.color = colour;
       el.children[1].textContent = plusText;
+      el.children[1].style.color = ''; // back to CSS yellow
       el.style.left = `${slot.x + jx}px`;
       el.style.top = `${slot.y + jy}px`;
       // Streak tier scales the pop via the TRANSFORM (not font-size), baked into keyframes.
+      anim.effect.setKeyframes([
+        { transform: `${CENTER}scale(${scale}) translateY(4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}scale(${scale}) translateY(-4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}scale(${scale}) translateY(-22px)`, opacity: 0, offset: 1 },
+      ]);
+      anim.cancel();
+      anim.play();
+    },
+    // Tap pop: no letter — the "+N" ALONE, at the letter's size (via .is-tap CSS), in the
+    // tier colour, spawned AT the tap client coords (converted to layer-local), still kept
+    // out of the XP bar's box.
+    tapPop(plusText, scale = 1, colour = '#2EFFE0', clientX = 0, clientY = 0) {
+      const anims = popAnimsRef.current;
+      if (!anims.length) return;
+      const lr = layerRectRef.current;
+      let x = clientX - lr.left;
+      let y = clientY - lr.top;
+      const box = barBoxRef.current;
+      if (box && x > box.l && x < box.r && y > box.t && y < box.bt) {
+        // tap landed on the readout → nudge the pop just clear of it (above, else below)
+        y = box.t - POP_HALF > 0 ? box.t - POP_HALF : box.bt + POP_HALF;
+      }
+      const levelup = levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const el = popElsRef.current[i];
+      const anim = anims[i];
+      if (!el || !anim) return;
+      el.classList.add('is-tap'); // hides the letter span, upsizes the "+N" (CSS)
+      el.children[1].textContent = plusText;
+      el.children[1].style.color = colour; // tier colour for the tap
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
       anim.effect.setKeyframes([
         { transform: `${CENTER}scale(${scale}) translateY(4px)`, opacity: 0, offset: 0 },
         { transform: `${CENTER}scale(${scale}) translateY(-4px)`, opacity: 1, offset: 0.25 },

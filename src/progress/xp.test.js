@@ -9,6 +9,8 @@ import {
   createRateLimiter,
   isCreditableKey,
   loadProgress,
+  getTaps,
+  saveTaps,
   XP_MULTIPLIERS,
 } from './xp.js';
 
@@ -59,6 +61,31 @@ test('levelFromXp: worked example at level 7', () => {
   assert.equal(r.cost, need(7)); // 1852
   assert.equal(r.intoLevel, 500);
   assert.equal(r.toNext, 1852 - 500);
+});
+
+test('a tap credits xp but NOT lifetimeLetters (rawKeys 0)', () => {
+  const r = creditXp({ xp: 0, lifetimeLetters: 7 }, XP_MULTIPLIERS.menu, 0); // a tap
+  assert.equal(r.state.xp, 10); // +10 xp
+  assert.equal(r.state.lifetimeLetters, 7); // unchanged — taps never bump lifetimeLetters
+});
+
+test('getTaps defaults to 0 and survives storage failure; saveTaps never throws', () => {
+  const saved = globalThis.localStorage;
+  globalThis.localStorage = {
+    getItem() {
+      throw new Error('blocked');
+    },
+    setItem() {
+      throw new Error('blocked');
+    },
+  };
+  try {
+    assert.equal(getTaps(), 0);
+    assert.doesNotThrow(() => saveTaps(5));
+  } finally {
+    if (saved === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = saved;
+  }
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {

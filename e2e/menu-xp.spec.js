@@ -122,3 +122,76 @@ test.describe('splash XP', () => {
     expect(r.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
   });
 });
+
+test.describe('tap XP (coarse pointer)', () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { width: 1024, height: 768 } });
+
+  test('tap on empty space credits +10 (not lifetimeLetters); tap on a card credits 0', async ({ page }) => {
+    await installBackendMock(page);
+    await page.goto('/?portal=1');
+    await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
+    expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+    await page.waitForTimeout(600);
+
+    const tap = (x, y) =>
+      page.evaluate(([px, py]) => {
+        const el = document.elementFromPoint(px, py) || document.body;
+        const opts = { pointerId: 1, pointerType: 'touch', clientX: px, clientY: py, bubbles: true };
+        el.dispatchEvent(new PointerEvent('pointerdown', opts));
+        el.dispatchEvent(new PointerEvent('pointerup', opts));
+      }, [x, y]);
+    const read = () =>
+      page.evaluate(() => ({
+        xp: Number(localStorage.getItem('taw.xp')) || 0,
+        letters: Number(localStorage.getItem('taw.letters')) || 0,
+        taps: Number(localStorage.getItem('taw.taps')) || 0,
+      }));
+
+    // (a) tap on a game card → credits nothing (interactive target)
+    const card = await page.locator('.game-card').first().boundingBox();
+    const b1 = await read();
+    await tap(Math.round(card.x + card.width / 2), Math.round(card.y + card.height / 2));
+    await page.waitForTimeout(60);
+    const afterCard = await read();
+    expect(afterCard.xp - b1.xp).toBe(0);
+
+    // (b) tap on empty backdrop (top-left corner, outside the panel) → +10, letters unchanged
+    const b2 = await read();
+    await tap(8, 8);
+    await page.waitForTimeout(60);
+    const afterEmpty = await read();
+    expect(afterEmpty.xp - b2.xp).toBe(10);
+    expect(afterEmpty.letters).toBe(b2.letters); // taps NEVER bump lifetimeLetters
+    expect(afterEmpty.taps - b2.taps).toBe(1); // the taw.taps counter did bump
+  });
+
+  test('a tap that scrolls (>10px move) credits nothing', async ({ page }) => {
+    await installBackendMock(page);
+    await page.goto('/?portal=1');
+    await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
+    await page.waitForTimeout(400);
+    const b = await page.evaluate(() => Number(localStorage.getItem('taw.xp')) || 0);
+    await page.evaluate(() => {
+      const el = document.elementFromPoint(8, 8) || document.body;
+      const base = { pointerId: 2, pointerType: 'touch', bubbles: true };
+      el.dispatchEvent(new PointerEvent('pointerdown', { ...base, clientX: 8, clientY: 8 }));
+      el.dispatchEvent(new PointerEvent('pointermove', { ...base, clientX: 8, clientY: 40 })); // >10px
+      el.dispatchEvent(new PointerEvent('pointerup', { ...base, clientX: 8, clientY: 40 }));
+    });
+    await page.waitForTimeout(60);
+    const a = await page.evaluate(() => Number(localStorage.getItem('taw.xp')) || 0);
+    expect(a - b).toBe(0);
+  });
+});
+
+test.describe('no tap-to-earn on a fine pointer', () => {
+  test('a mouse click on empty menu space credits nothing', async ({ page }) => {
+    await gotoMenuLive(page);
+    expect(await page.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
+    const before = await page.evaluate(() => Number(localStorage.getItem('taw.xp')) || 0);
+    await page.mouse.click(8, 8); // empty backdrop, fine pointer
+    await page.waitForTimeout(60);
+    const after = await page.evaluate(() => Number(localStorage.getItem('taw.xp')) || 0);
+    expect(after - before).toBe(0);
+  });
+});

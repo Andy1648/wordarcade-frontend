@@ -98,6 +98,7 @@ export function isCreditableKey(e) {
 // storage-blocked or storage-less environment reads back 0 and never throws.
 export const XP_KEY = 'taw.xp';
 export const LETTERS_KEY = 'taw.letters';
+export const TAPS_KEY = 'taw.taps';
 
 function readNum(key) {
   try {
@@ -120,5 +121,25 @@ export function saveProgress(state) {
     localStorage.setItem(LETTERS_KEY, String(state.lifetimeLetters));
   } catch {
     // storage blocked — progress simply isn't persisted this session.
+  }
+}
+
+// taw.taps — a SEPARATE all-time counter of credited TAPS (touch), distinct from
+// lifetimeLetters (which counts only raw keystrokes). Same wrapped treatment; defaults 0.
+export function getTaps() {
+  try {
+    const raw = localStorage.getItem(TAPS_KEY);
+    if (raw == null) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+export function saveTaps(n) {
+  try {
+    localStorage.setItem(TAPS_KEY, String(n));
+  } catch {
+    // storage blocked
   }
 }
