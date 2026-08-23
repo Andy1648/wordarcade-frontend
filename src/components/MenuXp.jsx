@@ -21,9 +21,14 @@ export function MenuXpBar({ level, toNext, frac }) {
     if (level > prevLevelRef.current) {
       el.setAttribute('data-jump', ''); // transition:none for this frame
       el.style.transform = `scaleX(${clamped})`; // commits instantly (no ease-back)
+      el.classList.add('is-levelflash'); // flash the fill to yellow (no colour transition)
       const raf = requestAnimationFrame(() => el.removeAttribute('data-jump'));
+      const flash = setTimeout(() => el.classList.remove('is-levelflash'), 180);
       prevLevelRef.current = level;
-      return () => cancelAnimationFrame(raf);
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(flash);
+      };
     }
     el.style.transform = `scaleX(${clamped})`; // normal eased update
     prevLevelRef.current = level;
@@ -45,10 +50,10 @@ export function MenuXpBar({ level, toNext, frac }) {
 
 const CENTER = 'translate(-50%,-50%) ';
 
-// Letter pops — the typed char, in the outer panel margin. Pool 16, cap 9 running.
+// Letter pops — the typed char, in the outer panel margin. Pool 16, cap 8 running.
 const LETTER_MS = 260;
 const LETTER_POOL = 16;
-const LETTER_CAP = 9;
+const LETTER_CAP = 8;
 const SLOTS_PER_SIDE = 6;
 const HALF_W = 22;
 const HALF_H = 22;
@@ -59,10 +64,17 @@ const XP_MS = 220;
 const XP_POOL = 8;
 const XP_CAP = 4;
 
-// The two pop caps sum to 13; + the bar's fill transition (1) = the menu's 14-concurrent
-// finite budget. During a level-up both caps drop to 1 and celebrate() clears in-flight
-// pops, so pops + fill + level-up stays within budget.
+// Screen-edge pulse on a streak-tier crossing. Pool 2 (crossings never overlap). 260ms.
+const EDGE_MS = 260;
+const EDGE_POOL = 2;
+
+// Budget: letter cap 8 + xp cap 4 + fill transition 1 + one edge pulse 1 = the menu's
+// 14-concurrent finite budget. During a level-up the pop caps drop to 1 and celebrate()
+// clears in-flight pops, so the whole layer stays within 14.
 const LEVELUP_MS = 700; // ~100ms appear + 420ms hold + 180ms fade
+
+// One line under "LEVEL N", indexed by level and cycling.
+const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
 
 function pickIndex(anims, poolSize, cap, nextRef) {
   const running = [];
@@ -87,14 +99,19 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const layerRef = useRef(null);
   const letterElsRef = useRef([]);
   const xpElsRef = useRef([]);
+  const edgeElsRef = useRef([]);
   const levelupRef = useRef(null);
+  const levelTitleRef = useRef(null);
+  const levelSubRef = useRef(null);
   const letterAnimsRef = useRef([]);
   const xpAnimsRef = useRef([]);
+  const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
   const slotsRef = useRef([]);
   const slotIdxRef = useRef(0);
   const letterNextRef = useRef(0);
   const xpNextRef = useRef(0);
+  const edgeNextRef = useRef(0);
   const rngRef = useRef(0); // deterministic-ish jitter cursor for the centre XP pops
 
   // Measure a ROTATING SET OF SPAWN SLOTS in the backdrop margin OUTSIDE the panel, on
@@ -166,6 +183,20 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       return a;
     });
 
+    const edgeOpts = { duration: EDGE_MS, easing: 'ease-out', fill: 'both' };
+    edgeAnimsRef.current = edgeElsRef.current.map((el) => {
+      const a = el.animate(
+        [
+          { opacity: 0, offset: 0 },
+          { opacity: 0.35, offset: 0.4 },
+          { opacity: 0, offset: 1 },
+        ],
+        edgeOpts
+      );
+      a.cancel();
+      return a;
+    });
+
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
@@ -183,7 +214,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   }, []);
 
   useImperativeHandle(ref, () => ({
-    letterPop(text) {
+    letterPop(text, scale = 1, colour = '#2EFFE0') {
       const slots = slotsRef.current;
       const anims = letterAnimsRef.current;
       if (!slots.length || !anims.length) return;
@@ -195,8 +226,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const slot = slots[slotIdxRef.current % slots.length];
       slotIdxRef.current = (slotIdxRef.current + 1) % slots.length;
       el.textContent = text;
+      el.style.color = colour; // tier colour (fill; the black stroke stays)
       el.style.left = `${slot.x}px`;
       el.style.top = `${slot.y}px`;
+      // Streak tier scales the pop via the TRANSFORM (not font-size) — baked into the
+      // keyframes so it composes with the translate/centring the animation already owns.
+      anim.effect.setKeyframes([
+        { transform: `${CENTER}scale(${scale}) translateY(4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}scale(${scale}) translateY(-4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}scale(${scale}) translateY(-22px)`, opacity: 0, offset: 1 },
+      ]);
       anim.cancel();
       anim.play();
     },
@@ -219,6 +258,18 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       anim.cancel();
       anim.play();
     },
+    edgePulse(colour) {
+      const anims = edgeAnimsRef.current;
+      if (!anims.length) return;
+      const i = edgeNextRef.current % EDGE_POOL;
+      edgeNextRef.current = (i + 1) % EDGE_POOL;
+      const el = edgeElsRef.current[i];
+      const anim = anims[i];
+      if (!el || !anim) return;
+      el.style.boxShadow = `inset 0 0 64px 14px ${colour}`;
+      anim.cancel();
+      anim.play();
+    },
     celebrate(level) {
       const a = levelupAnimRef.current;
       if (!a) return;
@@ -226,7 +277,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       // per pool while celebrating) keeps pops + fill + level-up within the 14 budget.
       for (const p of letterAnimsRef.current) p.cancel();
       for (const p of xpAnimsRef.current) p.cancel();
-      if (levelupRef.current) levelupRef.current.textContent = `LEVEL ${level}`;
+      if (levelTitleRef.current) levelTitleRef.current.textContent = `LEVEL ${level}`;
+      if (levelSubRef.current) {
+        levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
+      }
       a.cancel();
       a.play();
     },
@@ -252,8 +306,20 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           }}
         />
       ))}
+      {Array.from({ length: EDGE_POOL }, (_, i) => (
+        <div
+          key={`e${i}`}
+          className="menu-xp-edge"
+          ref={(n) => {
+            edgeElsRef.current[i] = n;
+          }}
+        />
+      ))}
       <div className="menu-xp-levelup" ref={levelupRef}>
-        LEVEL UP
+        <span className="menu-xp-levelup-title" ref={levelTitleRef}>
+          LEVEL UP
+        </span>
+        <span className="menu-xp-levelup-sub" ref={levelSubRef} />
       </div>
     </div>
   );

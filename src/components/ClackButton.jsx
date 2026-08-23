@@ -6,6 +6,7 @@ import { useState } from 'react';
 import {
   enableClack,
   disableClack,
+  isClackEnabled,
   getClackProfile,
   setClackProfile,
   CLACK_PROFILES,
@@ -13,7 +14,9 @@ import {
 import './ClackButton.css';
 
 export default function ClackButton({ accent = '#FFE94A' }) {
-  const [on, setOn] = useState(false);
+  // Default ON (see clack.js). The AudioContext is NOT created here — it's created lazily
+  // inside the first user gesture (this toggle click OR the first keydown via playClack).
+  const [on, setOn] = useState(() => isClackEnabled());
   const [profile, setProfile] = useState(() => getClackProfile());
 
   const toggle = () => {

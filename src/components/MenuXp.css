@@ -26,7 +26,11 @@
   position: relative;
   flex: 1;
   height: 16px;
-  background: #1a0b2e;
+  /* 10 static notch marks (thin lines every 10%) painted on the track background via a
+     repeating gradient — zero extra elements, no animation. Shown under the fill. */
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1.5px, transparent 1.5px 10%),
+    #1a0b2e;
   border: 2px solid #000;
   border-radius: 8px;
   overflow: hidden;
@@ -36,15 +40,20 @@
   inset: 0;
   transform-origin: left center;
   transform: scaleX(0); /* set imperatively via scaleX(frac) — never width */
-  background: #ffe94a;
+  background: #2effe0; /* teal at rest; flashes yellow on level-up (below) */
   /* Ease between values instead of snapping. Transform only; NO will-change (the
-     site-wide will-change budget is exactly .clock-fill + .burn). */
+     site-wide will-change budget is exactly .clock-fill + .burn). NO transition on the
+     colour — the level-up flash is an instant class swap. */
   transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 /* On a level-up the fill resets from ~1 back to ~0 — suppress the transition for that
    single committed frame so it JUMPS instead of easing backwards across the whole bar. */
 .menu-xp-fill[data-jump] {
   transition: none;
+}
+/* Level-up flash: fill turns yellow for 180ms (instant, no colour transition) then reverts. */
+.menu-xp-fill.is-levelflash {
+  background: #ffe94a;
 }
 .menu-xp-next {
   font-family: 'Space Mono', monospace;
@@ -98,14 +107,31 @@
   white-space: nowrap;
 }
 
-/* One-shot big centre-screen level-up moment ("LEVEL 7"). position:absolute so it never
-   pushes layout or changes the menu height. Hidden at rest (opacity 0). */
+/* Screen-edge pulse (streak-tier crossing). Inset box-shadow (tier colour set inline);
+   only opacity animates. position:absolute inset:0 so it never affects layout. */
+.menu-xp-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* One-shot big centre-screen level-up moment: "LEVEL N" + a phrase line under it.
+   position:absolute so it never pushes layout or changes the menu height. Hidden at rest.
+   The scale/rotate/opacity animate on this container; both lines ride along. */
 .menu-xp-levelup {
   position: absolute;
   left: 50%;
   top: 46%;
   transform: translate(-50%, -50%) rotate(-3deg) scale(1);
   opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.menu-xp-levelup-title {
   font-family: 'Bungee', cursive;
   font-size: clamp(48px, 12vw, 110px);
   line-height: 1;
@@ -113,5 +139,14 @@
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
   letter-spacing: 0.03em;
-  white-space: nowrap;
+}
+.menu-xp-levelup-sub {
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #ffe94a;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.12em;
 }

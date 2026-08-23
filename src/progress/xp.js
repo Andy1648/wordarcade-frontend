@@ -7,18 +7,18 @@
 // per-word/letter award. `lifetimeLetters` counts RAW keystrokes (unmultiplied) and is a
 // SEPARATE running total for a future profile screen — never surfaced on the menu.
 
-// Per-source XP multipliers, all in one place. Menu typing is the 1x baseline.
+// Per-source XP multipliers, all in one place. Menu typing is the 10x baseline.
 export const XP_MULTIPLIERS = {
-  menu: 1,
-  'word-bomb': 2,
-  'category-blitz': 2,
-  'sat-rush': 3,
+  menu: 10,
+  'word-bomb': 20,
+  'category-blitz': 20,
+  'sat-rush': 30,
 };
 
 // Cost to advance FROM level n to n+1. Superlinear so later levels take real play.
-//   need(1)=10  need(5)=112  need(10)=316  need(20)=894
+//   need(1)=100  need(5)=1118  need(10)=3162
 export function need(n) {
-  return Math.round(10 * Math.pow(n, 1.5));
+  return Math.round(100 * Math.pow(n, 1.5));
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at

@@ -79,7 +79,7 @@ test.describe('menu XP', () => {
 
     // The whole point: the concurrent FINITE running-animation count stays within budget.
     expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(14);
-    // Sanity: the burst actually credited XP and crossed at least one level.
-    expect(result.xp).toBeGreaterThanOrEqual(10);
+    // Sanity: the burst actually credited XP and crossed at least one level (need(1)=100).
+    expect(result.xp).toBeGreaterThanOrEqual(100);
   });
 });
