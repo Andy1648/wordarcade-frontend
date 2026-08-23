@@ -20,6 +20,7 @@ const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 // CHAIN / FUSE (solo word modes, flag-gated). Lazy — the 357KB word chunk they pull
 // must never touch the menu's first paint.
 const ChainGame = lazy(() => import('./solo/ChainGame'));
+const FuseGame = lazy(() => import('./solo/FuseGame'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 // Eager (not lazy): KnifeSplit must cover the menu on the FIRST frame after the
@@ -31,7 +32,14 @@ import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
 import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from './satRush/config';
-import { CHAIN_VIEW, CHAIN_TRANSITION_WORD, SOLO_LAUNCH, SOLO_MODES_ENABLED } from './solo/config';
+import {
+  CHAIN_VIEW,
+  CHAIN_TRANSITION_WORD,
+  FUSE_VIEW,
+  FUSE_TRANSITION_WORD,
+  SOLO_LAUNCH,
+  SOLO_MODES_ENABLED,
+} from './solo/config';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -143,6 +151,7 @@ const TRANSITION_WORDS = {
   credits: 'CREDITS',
   [SAT_RUSH_VIEW]: SAT_RUSH_TRANSITION_WORD,
   [CHAIN_VIEW]: CHAIN_TRANSITION_WORD,
+  [FUSE_VIEW]: FUSE_TRANSITION_WORD,
 };
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
@@ -1156,6 +1165,11 @@ function App() {
       goToChain();
       return;
     }
+    if (SOLO_LAUNCH.fuse) {
+      launchFiredRef.current = true;
+      goToFuse();
+      return;
+    }
     if (wsStatus !== 'open') return;
     if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily) return;
     launchFiredRef.current = true;
@@ -1292,6 +1306,10 @@ function App() {
   // CHAIN / FUSE are solo (no room/WebSocket) — navigate straight to the mode view.
   function goToChain() {
     setView(CHAIN_VIEW);
+  }
+
+  function goToFuse() {
+    setView(FUSE_VIEW);
   }
 
   function goHome() {
@@ -1615,6 +1633,9 @@ function App() {
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
     screen = <ChainGame onExit={goHome} />;
+  } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
+    // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
+    screen = <FuseGame onExit={goHome} />;
   } else {
     screen = (
       <Homepage
