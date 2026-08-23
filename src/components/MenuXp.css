@@ -22,6 +22,15 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
+
+/* Splash mini readout: LV + a 6px fill bar, capped at 220px. Same fill/flash logic. */
+.menu-xp-bar.is-mini {
+  max-width: 220px;
+}
+.menu-xp-bar.is-mini .menu-xp-track {
+  height: 6px;
+  background: #1a0b2e; /* no notches on the mini bar */
+}
 .menu-xp-track {
   position: relative;
   flex: 1;
@@ -74,37 +83,36 @@
   z-index: 6;
 }
 
-/* Pooled LETTER popups (the typed char, in the outer panel margin). Base opacity 0 →
-   invisible at rest; the stored WAAPI animation drives transform (translate incl. the
-   -50%,-50% centring) + opacity. */
+/* Pooled COMBINED popups: "[LETTER] [+N]" in ONE element (one animation). Base opacity 0 →
+   invisible at rest; the stored WAAPI animation drives transform (translate + tier scale,
+   incl. the -50%,-50% centring) + opacity. Baseline-aligned so the small +N sits on the
+   letter's baseline, 6px gap. */
 .menu-xp-pop {
   position: absolute;
   left: -9999px;
   top: 0;
   opacity: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+.menu-xp-pop-letter {
   font-family: 'Bungee', cursive;
   font-size: clamp(22px, 4vw, 34px);
   line-height: 1;
-  color: #ffe94a;
-  -webkit-text-stroke: 3px #000; /* + paint-order below: the outline scales with the glyph */
+  color: #2effe0; /* tier colour set inline; the +N below stays yellow */
+  -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
-  white-space: nowrap;
 }
-
-/* Pooled XP popups ("+N", small, near screen centre). Positioned off CSS % (no measure);
-   the animation rises 18px and fades. Base opacity 0 → invisible at rest. */
-.menu-xp-xppop {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  opacity: 0;
+.menu-xp-pop-plus {
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 2.4vw, 20px);
+  /* 0.5× the letter size, baseline-aligned. */
+  font-size: clamp(11px, 2vw, 17px);
   line-height: 1;
-  color: #ffe94a;
+  color: #ffe94a; /* always yellow */
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
-  white-space: nowrap;
 }
 
 /* Screen-edge pulse (streak-tier crossing). Inset box-shadow (tier colour set inline);

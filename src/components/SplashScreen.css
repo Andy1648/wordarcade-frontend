@@ -352,3 +352,13 @@
   .splash-embers,
   .splash-fuse { display: none; }
 }
+
+/* Mini XP readout under the start prompt, centred; hidden entirely when xp === 0. */
+.splash-xp {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

@@ -22,16 +22,18 @@ async function gotoMenuLive(page) {
 }
 
 test.describe('menu XP', () => {
-  test('popups show the typed letter, uppercased (not "+N")', async ({ page }) => {
+  test('combined pop shows the typed LETTER + "+N" in one element', async ({ page }) => {
     await gotoMenuLive(page);
     await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'q', bubbles: true })));
     await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '7', bubbles: true })));
-    const texts = await page.evaluate(() =>
-      [...document.querySelectorAll('.menu-xp-pop')].map((p) => p.textContent).filter(Boolean)
-    );
-    expect(texts).toContain('Q');
-    expect(texts).toContain('7');
-    expect(texts.some((t) => t.includes('+'))).toBe(false);
+    const r = await page.evaluate(() => ({
+      letters: [...document.querySelectorAll('.menu-xp-pop-letter')].map((n) => n.textContent).filter(Boolean),
+      plus: [...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter(Boolean),
+    }));
+    expect(r.letters).toContain('Q');
+    expect(r.letters).toContain('7');
+    // menu multiplier is 10 → the "+N" span reads +10
+    expect(r.plus).toContain('+10');
   });
 
   test('sustained 30 keys/sec burst never exceeds 14 concurrent finite animations', async ({ page }) => {
@@ -81,5 +83,42 @@ test.describe('menu XP', () => {
     expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(14);
     // Sanity: the burst actually credited XP and crossed at least one level (need(1)=100).
     expect(result.xp).toBeGreaterThanOrEqual(100);
+  });
+});
+
+test.describe('splash XP', () => {
+  test('TYPE TO START: a keydown dismisses, credits XP, fires a pop, and unlocks audio', async ({ page }) => {
+    await installBackendMock(page);
+    // Count AudioContext constructions (the keydown must create/resume one).
+    await page.addInitScript(() => {
+      window.__ac = 0;
+      const O = window.AudioContext || window.webkitAudioContext;
+      if (O) {
+        window.AudioContext = class extends O {
+          constructor(...a) {
+            super(...a);
+            window.__ac += 1;
+          }
+        };
+      }
+    });
+    await page.goto('/'); // fresh context → the splash shows (no ?portal skip)
+    await page.locator('.splash-screen').waitFor({ state: 'visible' });
+    // Desktop Chrome is a fine pointer → the prompt invites typing.
+    await expect(page.locator('.splash-start')).toHaveText('TYPE TO START');
+
+    await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
+    await page.waitForTimeout(80);
+
+    const r = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      poppedA: [...document.querySelectorAll('.menu-xp-pop-letter')].some((n) => n.textContent === 'A'),
+      xp: (() => { try { return Number(localStorage.getItem('taw.xp')) || 0; } catch { return 0; } })(),
+      audioContexts: window.__ac,
+    }));
+    expect(r.leaving).toBe(true); // typing dismissed the splash
+    expect(r.poppedA).toBe(true); // a pop fired ON the splash
+    expect(r.xp).toBeGreaterThanOrEqual(10); // credited normally (+10)
+    expect(r.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
   });
 });

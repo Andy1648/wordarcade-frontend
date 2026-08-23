@@ -6,20 +6,7 @@ import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
-import {
-  loadProgress,
-  saveProgress,
-  creditXp,
-  createRateLimiter,
-  isCreditableKey,
-  levelFromXp,
-  XP_MULTIPLIERS,
-} from '../progress/xp';
-import { playClack } from '../progress/clack';
-
-// Streak tier → letter-pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
-const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
-const TIER_COLORS = ['#2EFFE0', '#FFE94A', '#FF6B3D', '#FF2EC4'];
+import { useXpCapture } from '../progress/useXpCapture';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -252,66 +239,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   };
 
   // ---- Menu XP meta-progression (presentational) -------------------------------
-  // Typing anywhere on the menu earns XP. There is NO text input here — keystrokes are
-  // captured globally and only ever surface as the "+1" popups + the bar. Persisted via
-  // the pure xp.js module; the model/cap/persistence are unit-tested there.
-  const xpRef = useRef(null);
-  if (xpRef.current === null) xpRef.current = loadProgress();
-  const [xpTotal, setXpTotal] = useState(xpRef.current.xp);
+  // Typing anywhere on the menu earns XP (no text input here). The capture/credit/streak
+  // logic is the SHARED hook (also used by the splash) so the two can't drift; it only
+  // ever surfaces as the pops + the bar. No-ops while a mode dialog is open.
   const xpFxRef = useRef(null);
-  // Streak: consecutive credited keystrokes, reset after 1200ms of no input. Tiers cross
-  // at 10 / 25 / 50 → tier index 0..3, which scales/colours the letter pops, climbs the
-  // audio pitch ladder, and (on a crossing only) fires one screen-edge pulse.
-  const streakRef = useRef({ count: 0, lastTime: 0, tier: 0 });
   const dialogOpenRef = useRef(false);
   useEffect(() => {
     dialogOpenRef.current = !!dialog;
   }, [dialog]);
-
-  useEffect(() => {
-    const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
-    const onKey = (e) => {
-      // No-op if a mode dialog/modal is open, or the key isn't a plain creditable
-      // keystroke (handles held keys, modifier chords, and any focused field).
-      if (dialogOpenRef.current) return;
-      if (!isCreditableKey(e)) return;
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (!limiter.tryConsume(now)) return; // over the anti-mash cap → silently dropped
-
-      // Advance the streak (reset if the gap since the last credit exceeded 1200ms).
-      const st = streakRef.current;
-      if (now - st.lastTime > 1200) {
-        st.count = 0;
-        st.tier = 0;
-      }
-      st.count += 1;
-      st.lastTime = now;
-      const tier = st.count >= 50 ? 3 : st.count >= 25 ? 2 : st.count >= 10 ? 1 : 0;
-      const crossed = tier > st.tier;
-      st.tier = tier;
-
-      playClack(st.count - 1); // key sound; pitch climbs the ladder by streak position
-      const res = creditXp(xpRef.current, XP_MULTIPLIERS.menu, 1);
-      xpRef.current = res.state;
-      saveProgress(res.state);
-      setXpTotal(res.state.xp);
-      if (xpFxRef.current) {
-        // Celebrate BEFORE the pops so, on a level-up frame, celebrate() clears in-flight
-        // pops and the pops below respect the "1 while celebrating" caps (stays in budget).
-        if (res.leveledUp) xpFxRef.current.celebrate(res.level);
-        // Two pops per credited keystroke: the typed char in the outer margin (scaled +
-        // coloured by streak tier), and a small "+N" near centre.
-        xpFxRef.current.letterPop(e.key.toUpperCase(), TIER_SCALES[tier], TIER_COLORS[tier]);
-        xpFxRef.current.xpPop(`+${XP_MULTIPLIERS.menu}`);
-        // Edge pulse ONLY on the frame a tier boundary is first crossed.
-        if (crossed && tier > 0) xpFxRef.current.edgePulse(TIER_COLORS[tier]);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const xpProgress = levelFromXp(xpTotal);
+  const { progress: xpProgress } = useXpCapture({
+    fxRef: xpFxRef,
+    isBlocked: () => dialogOpenRef.current,
+  });
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).
