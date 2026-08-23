@@ -14,6 +14,7 @@ import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
+import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
@@ -1810,6 +1811,9 @@ function App() {
             onToggle={music.toggleMute}
             accent={SCREEN_ACCENT[view] || '#FF2EC4'}
           />
+          {/* Keyboard-sound (clack) control — sits beside the music toggle in the same
+              corner cluster. Default OFF; enabling creates the AudioContext in-gesture. */}
+          <ClackButton accent={SCREEN_ACCENT[view] || '#FFE94A'} />
         </div>
       </div>
       {/* CONNECTION LOST: shown only when the socket drops mid room/game. The

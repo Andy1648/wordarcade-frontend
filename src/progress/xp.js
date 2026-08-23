@@ -63,7 +63,7 @@ export function creditXp(state, xpGain, rawKeys = 1) {
 // given an injected `now` (ms). Over-cap calls return false so the caller drops them
 // silently (no XP, no popup, no sound). Held keys / modifier chords are filtered upstream
 // by isCreditableKey, not here.
-export function createRateLimiter({ capacity = 16, windowMs = 1000 } = {}) {
+export function createRateLimiter({ capacity = 30, windowMs = 1000 } = {}) {
   let stamps = [];
   return {
     tryConsume(now) {

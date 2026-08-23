@@ -1,9 +1,9 @@
-// MenuXp.jsx — the menu XP UI: a persistent progress row (MenuXpBar, lives INSIDE the
-// menu panel) and the feedback layer (MenuXpFx, lives in the outer backdrop margin,
-// OUTSIDE the panel border). All motion is finite, transform/opacity only, and nothing
-// animates at rest. No will-change anywhere (the site-wide budget is exactly two
-// elements). No getBoundingClientRect in the per-keystroke path — spawn zones are
-// measured on mount/resize and cached.
+// MenuXp.jsx — the menu XP UI: a persistent progress bar (MenuXpBar, INSIDE the panel)
+// and the feedback layer (MenuXpFx, in the outer backdrop + over centre). All motion is
+// finite, transform/opacity only, nothing animates at rest, and there is NO will-change
+// anywhere (the site-wide budget is exactly two elements). No getBoundingClientRect in
+// any per-keystroke path — letter-pop slots are measured on mount/resize and cached; the
+// centre XP pops + level-up position off CSS % so they need no measurement.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
 
@@ -43,41 +43,66 @@ export function MenuXpBar({ level, toNext, frac }) {
   );
 }
 
-const POP_MS = 320;
-const POP_EASE = 'cubic-bezier(.2,.7,.2,1)';
-const LEVELUP_MS = 480;
 const CENTER = 'translate(-50%,-50%) ';
-const POOL = 8;
-const POP_CAP = 5; // 5 pops + 1 fill transition = the menu's 6-concurrent finite budget
-// Rough popup half-size (now larger — font clamp(22,4vw,34)), used only to keep spawns
-// OUTSIDE the panel border and to space the slots (never a per-keystroke measurement).
+
+// Letter pops — the typed char, in the outer panel margin. Pool 16, cap 9 running.
+const LETTER_MS = 260;
+const LETTER_POOL = 16;
+const LETTER_CAP = 9;
+const SLOTS_PER_SIDE = 6;
 const HALF_W = 22;
 const HALF_H = 22;
 const PAD = 6;
-// Vertical slots per side gutter. Consecutive slots alternate sides + step down the
-// panel, so any run of pops alive together (≤POP_CAP) lands on distinct, non-overlapping
-// spots instead of random x/y that could stack while both are visible.
-const SLOTS_PER_SIDE = 6;
 
-// MenuXpFx — imperative: popup('+1') per credited keystroke, celebrate() on level-up.
+// XP pops — "+N", small, near screen centre with a slight random offset. Pool 8, cap 4.
+const XP_MS = 220;
+const XP_POOL = 8;
+const XP_CAP = 4;
+
+// The two pop caps sum to 13; + the bar's fill transition (1) = the menu's 14-concurrent
+// finite budget. During a level-up both caps drop to 1 and celebrate() clears in-flight
+// pops, so pops + fill + level-up stays within budget.
+const LEVELUP_MS = 700; // ~100ms appear + 420ms hold + 180ms fade
+
+function pickIndex(anims, poolSize, cap, nextRef) {
+  const running = [];
+  let free = -1;
+  for (let n = 0; n < anims.length; n++) {
+    if (anims[n].playState === 'running') running.push(n);
+    else if (free === -1) free = n;
+  }
+  let i;
+  if (running.length >= cap) {
+    i = running.reduce((oldest, n) => ((anims[n].startTime ?? 0) < (anims[oldest].startTime ?? 0) ? n : oldest), running[0]);
+  } else {
+    i = free !== -1 ? free : nextRef.current % poolSize;
+  }
+  nextRef.current = (i + 1) % poolSize;
+  return i;
+}
+
+// MenuXpFx — imperative: letterPop(char) + xpPop("+N") per credited keystroke,
+// celebrate(level) on a level-up.
 export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const layerRef = useRef(null);
-  const popRefs = useRef([]);
+  const letterElsRef = useRef([]);
+  const xpElsRef = useRef([]);
   const levelupRef = useRef(null);
-  const popAnimsRef = useRef([]);
+  const letterAnimsRef = useRef([]);
+  const xpAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
   const slotsRef = useRef([]);
   const slotIdxRef = useRef(0);
-  const nextRef = useRef(0);
+  const letterNextRef = useRef(0);
+  const xpNextRef = useRef(0);
+  const rngRef = useRef(0); // deterministic-ish jitter cursor for the centre XP pops
 
   // Measure a ROTATING SET OF SPAWN SLOTS in the backdrop margin OUTSIDE the panel, on
-  // mount + resize. The layer is inset:0 within .homepage-wrap, so its own rect is the
-  // wrap's box. Slots are anchored just past the L/R panel borders and stepped down the
-  // panel; consecutive slots alternate sides so any pops alive together are separated.
+  // mount + resize. Slots anchor just past the L/R panel borders, stepped down the panel;
+  // consecutive slots alternate sides so pops alive together never overlap.
   useEffect(() => {
     const layer = layerRef.current;
     if (!layer) return undefined;
-
     const measure = () => {
       const stage = document.querySelector('.homepage-stage');
       if (!stage) return;
@@ -88,14 +113,13 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const sR = s.right - wrap.left;
       const hasLeft = sL > PAD;
       const hasRight = wrap.width - sR > PAD;
-      const leftX = sL - PAD - HALF_W; // center just outside the left border
-      const rightX = sR + PAD + HALF_W; // center just outside the right border
+      const leftX = sL - PAD - HALF_W;
+      const rightX = sR + PAD + HALF_W;
       const y0 = HALF_H + PAD;
       const y1 = H - HALF_H - PAD;
       const span = Math.max(0, y1 - y0);
       const slots = [];
       for (let r = 0; r < SLOTS_PER_SIDE; r++) {
-        // stagger left vs right rows by half a step so they never share a y
         const yl = y0 + (span * (r + 0.5)) / SLOTS_PER_SIDE;
         const yr = y0 + (span * (r + 1)) / SLOTS_PER_SIDE;
         if (hasLeft) slots.push({ x: leftX, y: yl });
@@ -103,9 +127,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       }
       slotsRef.current = slots;
     };
-
     measure();
-    const raf = requestAnimationFrame(measure); // after fonts/layout settle
+    const raf = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
     return () => {
       cancelAnimationFrame(raf);
@@ -114,28 +137,42 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   }, []);
 
   // Create the pooled WAAPI animations ONCE (idle at rest). Keyframes are constant; the
-  // spawn point is set per call via left/top (not via keyframes).
+  // spawn point is set per call via left/top (letter slots) or a CSS-% base (XP pops).
   useEffect(() => {
-    const opts = { duration: POP_MS, easing: POP_EASE, fill: 'both' };
-    popAnimsRef.current = popRefs.current.map((el) => {
+    const letterOpts = { duration: LETTER_MS, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' };
+    letterAnimsRef.current = letterElsRef.current.map((el) => {
       const a = el.animate(
         [
           { transform: `${CENTER}translateY(4px)`, opacity: 0, offset: 0 },
           { transform: `${CENTER}translateY(-4px)`, opacity: 1, offset: 0.25 },
           { transform: `${CENTER}translateY(-22px)`, opacity: 0, offset: 1 },
         ],
-        opts
+        letterOpts
       );
       a.cancel();
       return a;
     });
+
+    const xpOpts = { duration: XP_MS, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' };
+    xpAnimsRef.current = xpElsRef.current.map((el) => {
+      const a = el.animate(
+        [
+          { transform: `${CENTER}translateY(0)`, opacity: 1, offset: 0 },
+          { transform: `${CENTER}translateY(-18px)`, opacity: 0, offset: 1 },
+        ],
+        xpOpts
+      );
+      a.cancel();
+      return a;
+    });
+
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
-          { transform: `${CENTER}scale(0.6)`, opacity: 0, offset: 0 },
-          { transform: `${CENTER}scale(1.15)`, opacity: 1, offset: 0.4 },
-          { transform: `${CENTER}scale(1)`, opacity: 1, offset: 0.72 },
-          { transform: `${CENTER}scale(1)`, opacity: 0, offset: 1 },
+          { transform: `${CENTER}rotate(-3deg) scale(1.6)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.143 },
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.743 },
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 },
         ],
         { duration: LEVELUP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
       );
@@ -146,36 +183,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   }, []);
 
   useImperativeHandle(ref, () => ({
-    popup(text) {
+    letterPop(text) {
       const slots = slotsRef.current;
-      const anims = popAnimsRef.current;
+      const anims = letterAnimsRef.current;
       if (!slots.length || !anims.length) return;
-      // Pick a node while HARD-CAPPING the whole menu-xp layer at 6 concurrent running
-      // animations. The bar's fill transition counts as 1, so pops are capped at 5; and
-      // while the one-shot level-up is celebrating (another running animation) pops drop
-      // to 1, so pops + fill + level-up can never exceed 6. Prefer a free node; at the cap
-      // recycle the oldest-running pop.
-      const levelupRunning =
-        levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const cap = levelupRunning ? 1 : POP_CAP;
-      const running = [];
-      let free = -1;
-      for (let n = 0; n < anims.length; n++) {
-        if (anims[n].playState === 'running') running.push(n);
-        else if (free === -1) free = n;
-      }
-      let i;
-      if (running.length >= cap) {
-        i = running.reduce((oldest, n) => ((anims[n].startTime ?? 0) < (anims[oldest].startTime ?? 0) ? n : oldest), running[0]);
-      } else {
-        i = free !== -1 ? free : nextRef.current % POOL;
-      }
-      nextRef.current = (i + 1) % POOL;
-      const el = popRefs.current[i];
+      const levelup = levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const i = pickIndex(anims, LETTER_POOL, levelup ? 1 : LETTER_CAP, letterNextRef);
+      const el = letterElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
-      // Rotate through the fixed slots so consecutive pops never share a spot (no visual
-      // overlap even though the glyphs are large). Pure index rotation — no random x/y.
       const slot = slots[slotIdxRef.current % slots.length];
       slotIdxRef.current = (slotIdxRef.current + 1) % slots.length;
       el.textContent = text;
@@ -184,13 +200,33 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       anim.cancel();
       anim.play();
     },
-    celebrate() {
+    xpPop(text) {
+      const anims = xpAnimsRef.current;
+      if (!anims.length) return;
+      const levelup = levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const i = pickIndex(anims, XP_POOL, levelup ? 1 : XP_CAP, xpNextRef);
+      const el = xpElsRef.current[i];
+      const anim = anims[i];
+      if (!el || !anim) return;
+      // Small jitter around centre so consecutive XP pops don't stack. Cheap LCG cursor,
+      // no getBoundingClientRect (positions off CSS % base).
+      rngRef.current = (rngRef.current * 1103515245 + 12345) & 0x7fffffff;
+      const ox = ((rngRef.current % 91) - 45); // -45..45 px
+      const oy = (((rngRef.current >> 8) % 61) - 30); // -30..30 px
+      el.textContent = text;
+      el.style.left = `calc(50% + ${ox}px)`;
+      el.style.top = `calc(48% + ${oy}px)`;
+      anim.cancel();
+      anim.play();
+    },
+    celebrate(level) {
       const a = levelupAnimRef.current;
       if (!a) return;
-      // Clear any in-flight pops so the celebration OWNS the concurrency budget: at the
-      // level-up instant this drops pops to 0, and the dynamic cap (1 while celebrating)
-      // keeps pops + fill + level-up ≤ 3 for the rest of the 480ms.
-      for (const p of popAnimsRef.current) p.cancel();
+      // Clear in-flight pops so the big centre moment OWNS the budget; the dynamic cap (1
+      // per pool while celebrating) keeps pops + fill + level-up within the 14 budget.
+      for (const p of letterAnimsRef.current) p.cancel();
+      for (const p of xpAnimsRef.current) p.cancel();
+      if (levelupRef.current) levelupRef.current.textContent = `LEVEL ${level}`;
       a.cancel();
       a.play();
     },
@@ -198,12 +234,21 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
 
   return (
     <div className="menu-xp-fx" ref={layerRef} aria-hidden="true">
-      {Array.from({ length: POOL }, (_, i) => (
+      {Array.from({ length: LETTER_POOL }, (_, i) => (
         <span
-          key={i}
+          key={`l${i}`}
           className="menu-xp-pop"
           ref={(n) => {
-            popRefs.current[i] = n;
+            letterElsRef.current[i] = n;
+          }}
+        />
+      ))}
+      {Array.from({ length: XP_POOL }, (_, i) => (
+        <span
+          key={`x${i}`}
+          className="menu-xp-xppop"
+          ref={(n) => {
+            xpElsRef.current[i] = n;
           }}
         />
       ))}

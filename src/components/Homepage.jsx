@@ -15,9 +15,9 @@ import {
   levelFromXp,
   XP_MULTIPLIERS,
 } from '../progress/xp';
+import { playClack } from '../progress/clack';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
-import WordCountChip from './WordCountChip';
 import GraffitiTag from './decor/GraffitiTag';
 import {
   PaintSplatter1,
@@ -261,7 +261,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   }, [dialog]);
 
   useEffect(() => {
-    const limiter = createRateLimiter({ capacity: 16, windowMs: 1000 });
+    const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
     const onKey = (e) => {
       // No-op if a mode dialog/modal is open, or the key isn't a plain creditable
       // keystroke (handles held keys, modifier chords, and any focused field).
@@ -269,17 +269,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       if (!isCreditableKey(e)) return;
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
       if (!limiter.tryConsume(now)) return; // over the anti-mash cap → silently dropped
+      playClack(); // procedural key sound (no-op unless enabled in settings); non-blocking
       const res = creditXp(xpRef.current, XP_MULTIPLIERS.menu, 1);
       xpRef.current = res.state;
       saveProgress(res.state);
       setXpTotal(res.state.xp);
       if (xpFxRef.current) {
-        // Celebrate BEFORE the pop so, on a level-up frame, celebrate() clears in-flight
-        // pops and the pop below respects the "1 while celebrating" cap (total stays ≤3).
-        if (res.leveledUp) xpFxRef.current.celebrate();
-        // The pop shows the actual typed character (uppercased); the multiplier still
-        // scales the XP award above, it just no longer appears in the pop.
-        xpFxRef.current.popup(e.key.toUpperCase());
+        // Celebrate BEFORE the pops so, on a level-up frame, celebrate() clears in-flight
+        // pops and the pops below respect the "1 while celebrating" caps (stays in budget).
+        if (res.leveledUp) xpFxRef.current.celebrate(res.level);
+        // Two pops per credited keystroke: the typed char in the outer margin, and a small
+        // "+N" near centre. The multiplier scales the XP award and shows in the +N pop.
+        xpFxRef.current.letterPop(e.key.toUpperCase());
+        xpFxRef.current.xpPop(`+${XP_MULTIPLIERS.menu}`);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -452,12 +454,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           )}
         </button>
 
-        {/* Lifetime WORDS TYPED odometer — a passive stat between the CTAs and the
-            game cards. Reads/subscribes to the count itself (no props). */}
-        <WordCountChip />
-
-        {/* XP meta-progression bar — LV + fill + "N TO LV n+1". Fed by global keystroke
-            capture (see the effect above); no text input of its own. */}
+        {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
+            odometer used to occupy (that chip was removed). LV + fill + "N TO LV n+1",
+            fed by global keystroke capture (see the effect above); no text input. */}
         <MenuXpBar level={xpProgress.level} toNext={xpProgress.toNext} frac={xpProgress.frac} />
 
         <div className="homepage-cards-region">

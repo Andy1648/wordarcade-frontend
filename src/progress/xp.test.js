@@ -72,18 +72,18 @@ test('creditXp reports a level-up exactly when the boundary is crossed', () => {
 });
 
 // ---- rate cap ----
-test('40 keystrokes in one 1000ms window credit exactly 16 (the shipped cap)', () => {
-  const rl = createRateLimiter({ capacity: 16, windowMs: 1000 });
+test('60 keystrokes in one 1000ms window credit exactly 30 (the shipped cap)', () => {
+  const rl = createRateLimiter({ capacity: 30, windowMs: 1000 });
   let credited = 0;
-  for (let i = 0; i < 40; i++) if (rl.tryConsume(0)) credited++;
-  assert.equal(credited, 16);
+  for (let i = 0; i < 60; i++) if (rl.tryConsume(0)) credited++;
+  assert.equal(credited, 30);
 });
 
-test('createRateLimiter defaults to the shipped cap of 16', () => {
+test('createRateLimiter defaults to the shipped cap of 30', () => {
   const rl = createRateLimiter();
   let credited = 0;
-  for (let i = 0; i < 40; i++) if (rl.tryConsume(0)) credited++;
-  assert.equal(credited, 16);
+  for (let i = 0; i < 60; i++) if (rl.tryConsume(0)) credited++;
+  assert.equal(credited, 30);
 });
 
 test('rate cap is rolling: the window slides forward', () => {

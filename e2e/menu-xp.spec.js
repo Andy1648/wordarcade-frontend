@@ -34,7 +34,7 @@ test.describe('menu XP', () => {
     expect(texts.some((t) => t.includes('+'))).toBe(false);
   });
 
-  test('sustained 16 keys/sec burst never exceeds 6 concurrent finite animations', async ({ page }) => {
+  test('sustained 30 keys/sec burst never exceeds 14 concurrent finite animations', async ({ page }) => {
     await gotoMenuLive(page);
 
     const result = await page.evaluate(async () => {
@@ -59,13 +59,13 @@ test.describe('menu XP', () => {
       const idleBaseline = runningFinite().length;
       let peak = 0;
       let peakNames = [];
-      // ~64 keystrokes at ~62ms (≈16/sec) over ~4s. Crosses several levels (need(1)=10,
-      // need(2)=28…) so the level-up celebration fires mid-burst — the worst case.
-      for (let i = 0; i < 64; i++) {
+      // ~120 keystrokes at ~33ms (≈30/sec) over ~4s. Crosses several levels so the
+      // level-up celebration fires mid-burst — the worst case for concurrency.
+      for (let i = 0; i < 120; i++) {
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
-        // sample across the inter-keystroke gap to catch transient overlaps
+        // sample twice across the inter-keystroke gap to catch transient overlaps
         for (let s = 0; s < 2; s++) {
-          await sleep(28);
+          await sleep(16);
           const a = runningFinite();
           if (a.length > peak) {
             peak = a.length;
@@ -78,7 +78,7 @@ test.describe('menu XP', () => {
     });
 
     // The whole point: the concurrent FINITE running-animation count stays within budget.
-    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(6);
+    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(14);
     // Sanity: the burst actually credited XP and crossed at least one level.
     expect(result.xp).toBeGreaterThanOrEqual(10);
   });
