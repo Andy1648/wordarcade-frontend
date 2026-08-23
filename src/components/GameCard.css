@@ -35,13 +35,16 @@
 
 /* Vertical stagger so the row isn't a tidy line (no horizontal/negative margins -
    those made the featured card overlap its neighbour), plus each card's static
-   resting rotate (--rest-rot), read by GameCard.jsx to compose the magnetic lean. */
-.game-card-wrap:nth-child(1) { margin-top: 10px; --rest-rot: -2deg; }
-.game-card-wrap:nth-child(2) { margin-top: -4px; --rest-rot: 2deg; }
-.game-card-wrap:nth-child(3) { margin-top: 18px; --rest-rot: -1deg; }
+   resting rotate (--rest-rot), read by GameCard.jsx to compose the magnetic lean.
+   Keyed off .game-card-magnet (the GRID ITEM): .game-card-wrap is that magnet's
+   only child, so a :nth-child() on the wrap itself would always match slot 1 and
+   every card would share one pose. The magnet's index is the real slot. */
+.game-card-magnet:nth-child(1) .game-card-wrap { margin-top: 10px; --rest-rot: -2deg; }
+.game-card-magnet:nth-child(2) .game-card-wrap { margin-top: -4px; --rest-rot: 2deg; }
+.game-card-magnet:nth-child(3) .game-card-wrap { margin-top: 18px; --rest-rot: -1deg; }
 /* New CHAIN / FUSE slots (grid grew from 3 to 5 cards). */
-.game-card-wrap:nth-child(4) { margin-top: 2px; --rest-rot: 2.5deg; }
-.game-card-wrap:nth-child(5) { margin-top: 14px; --rest-rot: -2.5deg; }
+.game-card-magnet:nth-child(4) .game-card-wrap { margin-top: 2px; --rest-rot: 2.5deg; }
+.game-card-magnet:nth-child(5) .game-card-wrap { margin-top: 14px; --rest-rot: -2.5deg; }
 
 .game-card {
   /* Animation-speed multiplier inherited by the constantly-animated card art
@@ -361,11 +364,11 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   /* One card per row on phones (which scroll), so size by width, not the
      short-laptop height cap. */
   .game-card { height: clamp(170px, 46vw, 250px); }
-  .game-card-wrap:nth-child(1),
-  .game-card-wrap:nth-child(2),
-  .game-card-wrap:nth-child(3),
-  .game-card-wrap:nth-child(4),
-  .game-card-wrap:nth-child(5) {
+  .game-card-magnet:nth-child(1) .game-card-wrap,
+  .game-card-magnet:nth-child(2) .game-card-wrap,
+  .game-card-magnet:nth-child(3) .game-card-wrap,
+  .game-card-magnet:nth-child(4) .game-card-wrap,
+  .game-card-magnet:nth-child(5) .game-card-wrap {
     margin-top: 0;
   }
 }
