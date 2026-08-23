@@ -9,7 +9,24 @@ import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import poolsRaw from './fragmentPools.json';
 
-const ACCENT = '#FF6B3D'; // orange
+const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
+
+// Static backdrop motif: two curving cord paths, yellow stroke, round caps, NO
+// animation. Purely decorative (opacity .07 via .solo-motif).
+const FUSE_MOTIF = (
+  <svg
+    className="solo-motif"
+    viewBox="0 0 400 120"
+    preserveAspectRatio="xMidYMid slice"
+    fill="none"
+    stroke={ACCENT}
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M-20 44 C 70 6, 130 96, 210 52 S 350 14, 420 60" strokeWidth="9" />
+    <path d="M-20 82 C 60 62, 150 26, 240 82 S 360 104, 420 70" strokeWidth="7" />
+  </svg>
+);
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const POOLS = {
   e: poolsRaw.e.split(' '),
@@ -104,6 +121,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       title="Type a word containing the fragment"
       hud={hud}
       center={(s.fragment || '').toUpperCase()}
+      motif={FUSE_MOTIF}
       supply={
         <>
           {s.shortPenalty ? <div className="is-dead">SHORT WORD — next fuse ×0.8</div> : null}

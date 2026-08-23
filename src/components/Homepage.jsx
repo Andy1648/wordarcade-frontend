@@ -81,7 +81,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onSatRush, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -167,6 +167,76 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   const joinMagnetRef = useRef(null);
   useMagneticPull(joinMagnetRef, { max: 8, base: 6 });
 
+  // ---- Cards peek-scroll region (presentational) -------------------------------
+  // The 3-column grid can wrap to >1 row; the region shows one full row + a peek of
+  // the next and a "N MORE" pager scrolls down a row at a time. --rowh (the row-1
+  // card height incl. its stagger margin) is MEASURED here on mount + resize and
+  // written as a CSS var; the accept path never measures.
+  const cardsScrollRef = useRef(null);
+  const cardsRowhRef = useRef(0);
+  const [cardsBelow, setCardsBelow] = useState(0); // cards below the fold
+  const [cardsAtEnd, setCardsAtEnd] = useState(false);
+  const [cardsScrollable, setCardsScrollable] = useState(false);
+  const [cardsMobile, setCardsMobile] = useState(false); // <=760px: no region/button
+
+  useEffect(() => {
+    const el = cardsScrollRef.current;
+    if (!el) return undefined;
+    const mq = window.matchMedia('(max-width: 760px)');
+
+    // Measure the tallest row-1 card (incl. its stagger margin-top) → --rowh.
+    const measure = () => {
+      const grid = el.querySelector('.homepage-cards-grid');
+      if (!grid) return;
+      const cards = grid.querySelectorAll('.game-card-magnet');
+      if (!cards.length) return;
+      const gridTop = grid.getBoundingClientRect().top;
+      const rowOne = Math.min(3, cards.length);
+      let rowh = 0;
+      for (let i = 0; i < rowOne; i += 1) {
+        const bottom = cards[i].getBoundingClientRect().bottom - gridTop;
+        if (bottom > rowh) rowh = bottom;
+      }
+      if (rowh > 0) {
+        cardsRowhRef.current = rowh;
+        el.style.setProperty('--rowh', `${rowh}px`);
+      }
+    };
+
+    // Recompute the fold count + fade/end flags (also on every scroll).
+    const updateState = () => {
+      const regionBottom = el.getBoundingClientRect().bottom;
+      let below = 0;
+      el.querySelectorAll('.game-card-magnet').forEach((c) => {
+        if (c.getBoundingClientRect().bottom > regionBottom + 1) below += 1;
+      });
+      setCardsBelow(below);
+      setCardsScrollable(el.scrollHeight > el.clientHeight + 1);
+      setCardsAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 1);
+    };
+
+    const refresh = () => {
+      setCardsMobile(mq.matches);
+      measure();
+      updateState();
+    };
+
+    refresh();
+    const raf = requestAnimationFrame(refresh); // second pass after layout/fonts settle
+    el.addEventListener('scroll', updateState, { passive: true });
+    window.addEventListener('resize', refresh);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener('scroll', updateState);
+      window.removeEventListener('resize', refresh);
+    };
+  }, []);
+
+  const scrollCardsDown = () => {
+    const el = cardsScrollRef.current;
+    if (el) el.scrollBy({ top: cardsRowhRef.current || 0, behavior: 'smooth' });
+  };
+
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).
   useEffect(() => {
@@ -207,6 +277,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (gameId === 'sat-rush') {
       setNavigating(true);
       if (onSatRush) onSatRush();
+      return;
+    }
+    // CHAIN / FUSE are solo too (previously dark-launched behind ?chain=1 / ?fuse=1);
+    // their cards navigate straight into the mode, no room dialog.
+    if (gameId === 'chain') {
+      setNavigating(true);
+      if (onChain) onChain();
+      return;
+    }
+    if (gameId === 'fuse') {
+      setNavigating(true);
+      if (onFuse) onFuse();
       return;
     }
     setDialog({ game, el });
@@ -323,15 +405,38 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             game cards. Reads/subscribes to the count itself (no props). */}
         <WordCountChip />
 
-        <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
-          {GAMES.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              onSelect={handleOpenDialog}
-              onHover={handleHover}
-            />
-          ))}
+        <div className="homepage-cards-region">
+          <div
+            ref={cardsScrollRef}
+            className={`homepage-cards-scroll${cardsScrollable && !cardsAtEnd ? '' : ' is-atend'}`}
+          >
+            <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
+              {GAMES.map((game) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  onSelect={handleOpenDialog}
+                  onHover={handleHover}
+                />
+              ))}
+            </div>
+          </div>
+          {/* "N MORE" pager — desktop only, and only while cards sit below the fold
+              (so it's absent for a single row and once scrolled to the end). */}
+          {!cardsMobile && cardsBelow > 0 && (
+            <button
+              type="button"
+              className="homepage-cards-more"
+              onClick={scrollCardsDown}
+              onMouseEnter={() => sfx('hover')}
+              aria-label={`Show ${cardsBelow} more game${cardsBelow === 1 ? '' : 's'}`}
+            >
+              {cardsBelow} MORE{' '}
+              <span className="homepage-cards-more-chev" aria-hidden="true">
+                ▾
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="homepage-bottom-bar">

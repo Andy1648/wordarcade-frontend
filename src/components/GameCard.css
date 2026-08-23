@@ -35,10 +35,15 @@
 
 /* Vertical stagger so the row isn't a tidy line (no horizontal/negative margins -
    those made the featured card overlap its neighbour), plus each card's static
-   resting rotate (--rest-rot), read by GameCard.jsx to compose the magnetic lean. */
-.game-card-wrap:nth-child(1) { margin-top: 10px; --rest-rot: -2deg; }
-.game-card-wrap:nth-child(2) { margin-top: -4px; --rest-rot: 2deg; }
-.game-card-wrap:nth-child(3) { margin-top: 18px; --rest-rot: -1deg; }
+   resting rotate (--rest-rot), read by GameCard.jsx to compose the magnetic lean.
+   Keyed off .game-card-magnet (the GRID ITEM) with a 3n+k pattern so the pose REPEATS
+   per row of the 3-column grid — card 4 matches card 1, card 5 matches card 2, etc.
+   (.game-card-wrap is the magnet's only child, so a :nth-child() on the wrap itself
+   would always match slot 1.) --rest-rot is set on the magnet and inherits down to the
+   wrap, which keeps `transform: rotate(var(--rest-rot,0deg))`. */
+.game-card-magnet:nth-child(3n + 1) { --rest-rot: -2deg; margin-top: 10px; }
+.game-card-magnet:nth-child(3n + 2) { --rest-rot: 2deg; margin-top: -4px; }
+.game-card-magnet:nth-child(3n + 3) { --rest-rot: -1deg; margin-top: 18px; }
 
 .game-card {
   /* Animation-speed multiplier inherited by the constantly-animated card art
@@ -358,9 +363,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   /* One card per row on phones (which scroll), so size by width, not the
      short-laptop height cap. */
   .game-card { height: clamp(170px, 46vw, 250px); }
-  .game-card-wrap:nth-child(1),
-  .game-card-wrap:nth-child(2),
-  .game-card-wrap:nth-child(3) {
+  /* Flat single column: zero the per-magnet stagger margin (now set on the magnet
+     itself via the 3n+k rules above). */
+  .homepage-cards-grid .game-card-magnet {
     margin-top: 0;
   }
 }

@@ -14,6 +14,8 @@ const CARD_NEON = {
   // beat/select FX are ink (see [data-game='sat-rush'] in GameCard.css). This
   // keeps the click glitch-pop monochrome ink rather than a coloured flash.
   'sat-rush': '#111111',
+  chain: '#2EFFE0',
+  fuse: '#FFE94A',
 };
 
 // ---- CURSOR-MAGNETIC TILT (shared controller) ----------------------------

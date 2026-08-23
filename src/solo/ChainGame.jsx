@@ -13,6 +13,29 @@ import SoloShell from './SoloShell.jsx';
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
 
+// Static backdrop motif: a horizontal row of interlocking rounded-rect chain links,
+// teal stroke, no fill, NO animation. Purely decorative (opacity .07 via .solo-motif).
+const CHAIN_MOTIF = (
+  <svg
+    className="solo-motif"
+    viewBox="0 0 400 120"
+    preserveAspectRatio="xMidYMid slice"
+    fill="none"
+    stroke={ACCENT}
+    strokeWidth="8"
+    aria-hidden="true"
+  >
+    {/* alternating horizontal / vertical links, overlapping so they interlock */}
+    <rect x="-18" y="42" width="86" height="46" rx="23" />
+    <rect x="50" y="26" width="50" height="78" rx="25" />
+    <rect x="90" y="42" width="86" height="46" rx="23" />
+    <rect x="158" y="26" width="50" height="78" rx="25" />
+    <rect x="198" y="42" width="86" height="46" rx="23" />
+    <rect x="266" y="26" width="50" height="78" rx="25" />
+    <rect x="306" y="42" width="86" height="46" rx="23" />
+  </svg>
+);
+
 export default function ChainGame({ onExit }) {
   const [data, setData] = useState(null);
 
@@ -179,6 +202,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       title="Type a word starting with the letter"
       hud={hud}
       center={required.toUpperCase()}
+      motif={CHAIN_MOTIF}
       supply={<span className={supply.count < 3 ? 'is-dead' : ''}>{supply.label}</span>}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
       outTile={outTile}

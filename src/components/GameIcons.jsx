@@ -56,8 +56,30 @@ export function SatRushIcon() {
   );
 }
 
+export function ChainIcon() {
+  // Two interlocking links — the chain glyph, in the mode's teal on a dark box.
+  return (
+    <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+      <rect x="2.5" y="7.5" width="12" height="7" rx="3.5" fill="none" stroke="#2EFFE0" strokeWidth="2.4" />
+      <rect x="8.5" y="7" width="11" height="8" rx="4" fill="none" stroke="#2EFFE0" strokeWidth="2.4" />
+    </svg>
+  );
+}
+
+export function FuseIcon() {
+  // A lit flame at the end of a short burnt cord — the fuse glyph.
+  return (
+    <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+      <path d="M2 16 Q7 11 11 14" fill="none" stroke="#FFE94A" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M14 20 C 8 15, 12 9, 15 4 C 18 9, 22 15, 14 20 Z" fill="#FF6B3D" stroke="#B83D15" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export const GAME_ICON_COMPONENTS = {
   'word-bomb': BombIcon,
   'category-blitz': CategoryIcon,
   'sat-rush': SatRushIcon,
+  chain: ChainIcon,
+  fuse: FuseIcon,
 };

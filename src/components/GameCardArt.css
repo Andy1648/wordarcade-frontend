@@ -198,6 +198,48 @@ html[data-beat='true'] .sr-speed {
 }
 
 /* ============================================================= */
+/* ========================  CHAIN  ============================ */
+/* ============================================================= */
+
+/* The handoff arrow bobs, hinting the letter passing from one tile to the next.
+   Paused at rest (added to the --art-play gate below); runs on hover. */
+.chain-arrow-g {
+  transform-box: view-box;
+  transform-origin: center;
+  animation: chain-bob calc(2.8s * var(--spd, 1)) ease-in-out infinite;
+}
+@keyframes chain-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ============================================================= */
+/* =========================  FUSE  ============================ */
+/* ============================================================= */
+
+/* The flame flickers; sparks flick up off the tip. Paused at rest, run on hover. */
+.fuse-flame {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: fuse-flicker calc(0.9s * var(--spd, 1)) ease-in-out infinite;
+}
+@keyframes fuse-flicker {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.14) rotate(3deg); }
+}
+.fuse-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fuse-spark-rise calc(1.6s * var(--spd, 1)) ease-in-out infinite;
+}
+.fuse-spark-2 { animation-delay: 0.55s; }
+@keyframes fuse-spark-rise {
+  0% { transform: translateY(4px) scale(0.5); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateY(-9px) scale(1); opacity: 0; }
+}
+
+/* ============================================================= */
 /* ===============  IDLE FRAME BUDGET (pause at rest)  ========== */
 /* ============================================================= */
 /* A phone-size menu ran ~36 of these card-art loops at once with no card even
@@ -211,7 +253,8 @@ html[data-beat='true'] .sr-speed {
    loop that stays alive at rest. */
 .wb-bomb, .wb-orbit, .wb-tile, .wb-spark,
 .cb-bolt, .cb-q, .cb-synapse,
-.sr-tile, .sr-mult-5, .sr-mult-2 {
+.sr-tile, .sr-mult-5, .sr-mult-2,
+.chain-arrow-g, .fuse-flame, .fuse-spark {
   animation-play-state: var(--art-play, paused);
 }
 
@@ -219,7 +262,8 @@ html[data-beat='true'] .sr-speed {
   .wb-bomb, .wb-orbit, .wb-tile, .wb-spark,
   .cb-brain, .cb-bolt, .cb-q, .cb-synapse,
   .iw-eye, .iw-pupil, .iw-q, .iw-ping, .iw-scanline, .iw-scanline-2,
-  .sr-tile, .sr-mult-5, .sr-mult-2, .sr-caret, .sr-speed {
+  .sr-tile, .sr-mult-5, .sr-mult-2, .sr-caret, .sr-speed,
+  .chain-arrow-g, .fuse-flame, .fuse-spark {
     animation: none !important;
   }
   /* Keep the flashing bolts visible (faint) rather than stuck invisible. */

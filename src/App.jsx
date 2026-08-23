@@ -1643,6 +1643,8 @@ function App() {
         serverEventId={serverEventId}
         onSelectGame={(gameId) => goToLobby(gameId)}
         onSatRush={goToSatRush}
+        onChain={goToChain}
+        onFuse={goToFuse}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onQuickPlay={handleQuickPlayBot}
