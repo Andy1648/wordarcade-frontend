@@ -274,8 +274,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       saveProgress(res.state);
       setXpTotal(res.state.xp);
       if (xpFxRef.current) {
-        xpFxRef.current.popup(`+${XP_MULTIPLIERS.menu}`);
+        // Celebrate BEFORE the pop so, on a level-up frame, celebrate() clears in-flight
+        // pops and the pop below respects the "1 while celebrating" cap (total stays ≤3).
         if (res.leveledUp) xpFxRef.current.celebrate();
+        // The pop shows the actual typed character (uppercased); the multiplier still
+        // scales the XP award above, it just no longer appears in the pop.
+        xpFxRef.current.popup(e.key.toUpperCase());
       }
     };
     window.addEventListener('keydown', onKey);

@@ -34,8 +34,16 @@
   position: absolute;
   inset: 0;
   transform-origin: left center;
-  transform: scaleX(0); /* set inline via scaleX(frac) — never width */
+  transform: scaleX(0); /* set imperatively via scaleX(frac) — never width */
   background: #ffe94a;
+  /* Ease between values instead of snapping. Transform only; NO will-change (the
+     site-wide will-change budget is exactly .clock-fill + .burn). */
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* On a level-up the fill resets from ~1 back to ~0 — suppress the transition for that
+   single committed frame so it JUMPS instead of easing backwards across the whole bar. */
+.menu-xp-fill[data-jump] {
+  transition: none;
 }
 .menu-xp-next {
   font-family: 'Space Mono', monospace;

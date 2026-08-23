@@ -4,16 +4,37 @@
 // animates at rest. No will-change anywhere (the site-wide budget is exactly two
 // elements). No getBoundingClientRect in the per-keystroke path — spawn zones are
 // measured on mount/resize and cached.
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
 
-// The persistent bar: "LV 7" · fill · "142 TO LV 8". Fill is scaleX, never width.
+// The persistent bar: "LV 7" · fill · "142 TO LV 8". Fill is scaleX (never width) and
+// EASES between values (200ms). On a level-up the frac drops from ~1 to ~0; we suppress
+// the transition for that one committed frame (data-jump) so it snaps back instead of
+// sweeping backwards, re-enabling it on the next rAF — no offsetWidth reflow hack.
 export function MenuXpBar({ level, toNext, frac }) {
+  const fillRef = useRef(null);
+  const prevLevelRef = useRef(level);
+  useLayoutEffect(() => {
+    const el = fillRef.current;
+    if (!el) return undefined;
+    const clamped = Math.max(0, Math.min(1, frac));
+    if (level > prevLevelRef.current) {
+      el.setAttribute('data-jump', ''); // transition:none for this frame
+      el.style.transform = `scaleX(${clamped})`; // commits instantly (no ease-back)
+      const raf = requestAnimationFrame(() => el.removeAttribute('data-jump'));
+      prevLevelRef.current = level;
+      return () => cancelAnimationFrame(raf);
+    }
+    el.style.transform = `scaleX(${clamped})`; // normal eased update
+    prevLevelRef.current = level;
+    return undefined;
+  }, [level, frac]);
+
   return (
     <div className="menu-xp-bar" aria-hidden="true">
       <span className="menu-xp-lv">LV {level}</span>
       <span className="menu-xp-track">
-        <span className="menu-xp-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, frac))})` }} />
+        <span className="menu-xp-fill" ref={fillRef} />
       </span>
       <span className="menu-xp-next">
         {toNext} TO LV {level + 1}
@@ -117,9 +138,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const bands = bandsRef.current;
       const anims = popAnimsRef.current;
       if (!bands.length || !anims.length) return;
-      // Pick a node while HARD-CAPPING concurrent finite animations at 3 (the site budget):
-      // prefer a free node; but once 3 pops are already running, recycle the oldest-running
-      // one instead of lighting the 4th — the 4th node stays as spare headroom.
+      // Pick a node while HARD-CAPPING the whole menu-xp layer at 3 concurrent running
+      // animations. The bar's fill transition counts as 1, so pops are capped at 2; and
+      // while the one-shot level-up is celebrating (another running animation) pops drop
+      // to 1, so pops + fill + level-up can never exceed 3. Prefer a free node; at the cap
+      // recycle the oldest-running pop.
+      const levelupRunning =
+        levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const cap = levelupRunning ? 1 : 2;
       const running = [];
       let free = -1;
       for (let n = 0; n < anims.length; n++) {
@@ -127,7 +153,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         else if (free === -1) free = n;
       }
       let i;
-      if (running.length >= 3) {
+      if (running.length >= cap) {
         i = running.reduce((oldest, n) => ((anims[n].startTime ?? 0) < (anims[oldest].startTime ?? 0) ? n : oldest), running[0]);
       } else {
         i = free !== -1 ? free : nextRef.current % POOL;
@@ -146,6 +172,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     celebrate() {
       const a = levelupAnimRef.current;
       if (!a) return;
+      // Clear any in-flight pops so the celebration OWNS the concurrency budget: at the
+      // level-up instant this drops pops to 0, and the dynamic cap (1 while celebrating)
+      // keeps pops + fill + level-up ≤ 3 for the rest of the 480ms.
+      for (const p of popAnimsRef.current) p.cancel();
       a.cancel();
       a.play();
     },
