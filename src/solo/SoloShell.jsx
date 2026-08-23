@@ -46,6 +46,7 @@ export default function SoloShell({
   sillKey,
   reason,
   placeholder,
+  maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
   phase,
   over, // { score, best, restartArmed, restart, card }
   onExit,
@@ -86,6 +87,7 @@ export default function SoloShell({
             value={input}
             onChange={(e) => onInput(e.target.value)}
             placeholder={placeholder}
+            maxLength={maxLength}
             autoComplete="off"
             autoCapitalize="off"
             autoCorrect="off"

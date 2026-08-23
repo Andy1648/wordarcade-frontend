@@ -10,9 +10,12 @@
 // bridge between the committed .txt assets and the running app only.
 //
 // Shape returned:
-//   recall     string[]  — the ~31.5k RECALL words, FREQUENCY-ORDERED (index === rank)
-//   accept     Set<string> — RECALL ∪ the accept increment (~88k words); membership set
-//   topCommon  string[]  — recall.slice(0, TOP_COMMON) — CHAIN's "common words" set
+//   recall       string[]  — the ~31.5k RECALL words, FREQUENCY-ORDERED (index === rank)
+//   accept       Set<string> — RECALL ∪ the accept increment (~88k words); membership set
+//   topCommon    string[]  — recall.slice(0, TOP_COMMON) — CHAIN's "common words" set
+//   maxAcceptLen number    — the longest word length in the built ACCEPT union. Derived
+//                            from the list itself (one pass at load), never hardcoded, so
+//                            the input maxlength can never lag the shipped word data.
 //
 // ACCEPT is built as RECALL ∪ increment because words.accept.txt stores only the
 // increment (see scripts/build-words.mjs), which keeps the shipped assets inside the
@@ -30,7 +33,9 @@ export async function loadSoloWords() {
   const recall = recallRaw.split(' ');
   const accept = new Set(recall);
   for (const w of acceptExtraRaw.split(' ')) accept.add(w);
-  cache = { recall, accept, topCommon: recall.slice(0, TOP_COMMON) };
+  let maxAcceptLen = 0;
+  for (const w of accept) if (w.length > maxAcceptLen) maxAcceptLen = w.length;
+  cache = { recall, accept, topCommon: recall.slice(0, TOP_COMMON), maxAcceptLen };
   return cache;
 }
 

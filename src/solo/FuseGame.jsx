@@ -58,10 +58,10 @@ export default function FuseGame({ onExit }) {
       </div>
     );
   }
-  return <FuseInner createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return <FuseInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
 }
 
-function FuseInner({ createEngine, adapter, onExit }) {
+function FuseInner({ data, createEngine, adapter, onExit }) {
   const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE });
   const s = g.engine.state;
 
@@ -117,6 +117,7 @@ function FuseInner({ createEngine, adapter, onExit }) {
       sillKey={g.sillKey}
       reason={g.reason}
       placeholder={`type a word with "${(s.fragment || '').toUpperCase()}" in it`}
+      maxLength={data.maxAcceptLen}
       phase={g.phase}
       over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard }}
       onExit={onExit}

@@ -52,7 +52,7 @@ export default function ChainGame({ onExit }) {
   return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
 }
 
-function ChainInner({ createEngine, adapter, onExit }) {
+function ChainInner({ data, createEngine, adapter, onExit }) {
   const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.CHAIN });
   const s = g.engine.state;
   const required = s.requiredLetter;
@@ -102,6 +102,7 @@ function ChainInner({ createEngine, adapter, onExit }) {
       sillKey={g.sillKey}
       reason={g.reason}
       placeholder={`start with "${required.toUpperCase()}" — min 3 letters`}
+      maxLength={data.maxAcceptLen}
       phase={g.phase}
       over={{ score: s.score, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard }}
       onExit={onExit}
