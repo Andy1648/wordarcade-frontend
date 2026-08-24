@@ -188,11 +188,59 @@
   color: #fff;
   letter-spacing: 0.02em;
 }
-.shop-card-mult {
+.shop-card-blurb {
   font-size: 12px;
   font-weight: 700;
-  color: #ffe94a;
+  color: #b9a7d6; /* flair descriptor (pop colour / sound character), not an XP figure */
   letter-spacing: 0.04em;
+}
+
+/* KEY POWER — the primary (repeatable) upgrade card: highlighted yellow border. */
+.shop-keypower {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 6px;
+  background: #0d0618;
+  border: 3px solid #ffe94a;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.shop-kp-info {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 200px;
+}
+.shop-kp-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #d8c9f0;
+}
+.shop-kp-row b {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  color: #ffe94a;
+}
+.shop-kp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.shop-card-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 .shop-card-tag {
   font-family: 'Bungee', cursive;

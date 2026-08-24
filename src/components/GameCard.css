@@ -395,3 +395,53 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   box-shadow: 2px 2px 0 #000;
   pointer-events: none;
 }
+
+/* ---- Level gate (CHAIN/FUSE locked until a level) ---------------------------------- */
+/* The card stays fully visible; a scrim + padlock mark it locked. The scrim is
+   click-through so a tap still reaches the card (which shakes once). */
+.game-card.locked .game-card-art,
+.game-card.locked .game-card-content {
+  opacity: 0.4;
+}
+.game-card-lock {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(13, 6, 24, 0.45);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.game-card-lock-icon {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(2px 2px 0 #000);
+}
+.game-card-lock-label {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #ffe94a;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  text-align: center;
+}
+
+/* One-shot locked-card shake (finite 200ms, transform only). */
+@keyframes game-card-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+.game-card--shake {
+  animation: game-card-shake 200ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-card--shake { animation: none; }
+}

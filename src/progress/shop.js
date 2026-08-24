@@ -1,24 +1,26 @@
-// shop.js — the cosmetic shop catalog + ownership + equipped loadout. IDS ARE STABLE SAVE
-// KEYS — never rename them. Each item carries an XP multiplier that feeds the single
-// multiplier stack (see xp.js xpPerInput). localStorage-backed, wrapped, sensible defaults.
-// Buying deducts from taw.wins only (never winsLifetime); purchases are permanent and
-// survive rebirth.
+// shop.js — the cosmetic shop catalog + ownership + equipped loadout, plus the Key Power
+// purchase helpers. IDS ARE STABLE SAVE KEYS — never rename them. Cosmetics are PURE FLAIR
+// now (they change pop colour / sound character, NOT XP); the only XP upgrade is Key Power
+// (see xp.js). localStorage-backed, wrapped, sensible defaults. Buying deducts from taw.wins
+// only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
+import { getKeyPower, saveKeyPower, keyPowerCost } from './xp.js';
 
+// `blurb` = what the cosmetic actually changes (shown on the card instead of an XP figure).
 export const POP_STYLES = [
-  { id: 'classic', name: 'CLASSIC', price: 0, mult: 1.0 },
-  { id: 'chrome', name: 'CHROME', price: 150, mult: 1.05 },
-  { id: 'inferno', name: 'INFERNO', price: 400, mult: 1.1 },
-  { id: 'void', name: 'VOID', price: 900, mult: 1.15 },
-  { id: 'prism', name: 'PRISM', price: 2000, mult: 1.25 },
+  { id: 'classic', name: 'CLASSIC', price: 0, blurb: 'Cyan pop' },
+  { id: 'chrome', name: 'CHROME', price: 150, blurb: 'Chrome shine' },
+  { id: 'inferno', name: 'INFERNO', price: 400, blurb: 'Orange blaze' },
+  { id: 'void', name: 'VOID', price: 900, blurb: 'Purple void' },
+  { id: 'prism', name: 'PRISM', price: 2000, blurb: 'Rainbow split' },
 ];
 export const SOUND_PACKS = [
-  { id: 'thock', name: 'THOCK', price: 0, mult: 1.0 },
-  { id: 'clack', name: 'CLACK', price: 0, mult: 1.0 },
-  { id: 'cream', name: 'CREAM', price: 0, mult: 1.0 },
-  { id: 'marble', name: 'MARBLE', price: 250, mult: 1.05 },
-  { id: 'typewriter', name: 'TYPEWRITER', price: 600, mult: 1.1 },
-  { id: 'silent', name: 'SILENT', price: 1200, mult: 1.15 },
+  { id: 'thock', name: 'THOCK', price: 0, blurb: 'Deep thock' },
+  { id: 'clack', name: 'CLACK', price: 0, blurb: 'Sharp clack' },
+  { id: 'cream', name: 'CREAM', price: 0, blurb: 'Soft cream' },
+  { id: 'marble', name: 'MARBLE', price: 250, blurb: 'Marble click' },
+  { id: 'typewriter', name: 'TYPEWRITER', price: 600, blurb: 'Typewriter' },
+  { id: 'silent', name: 'SILENT', price: 1200, blurb: 'Near silent' },
 ];
 
 export const OWNED_KEY = 'taw.owned';
@@ -84,14 +86,6 @@ export function saveEquipped(eq) {
 export function getEquippedSoundPack() {
   return getEquipped().soundPack;
 }
-export function equippedPopStyleMult() {
-  const it = itemById(getEquipped().popStyle);
-  return it ? it.mult : 1;
-}
-export function equippedSoundPackMult() {
-  const it = itemById(getEquipped().soundPack);
-  return it ? it.mult : 1;
-}
 
 // Buy an item: it must exist, not already be owned, and be affordable. Deducts from wins
 // ONLY (winsLifetime is untouched). Returns { ok, reason?, wins }.
@@ -105,6 +99,40 @@ export function buy(id) {
   saveWins(next); // spendable balance only — never winsLifetime
   saveOwned([...getOwned(), id]);
   return { ok: true, wins: next };
+}
+
+// Buy ONE Key Power level: deducts the next-level cost from wins, bumps taw.keypower.
+// Returns { ok, wins, level, spent }.
+export function buyKeyPower() {
+  const level = getKeyPower();
+  const cost = keyPowerCost(level);
+  const wins = getWins();
+  if (wins < cost) return { ok: false, wins, level, spent: 0 };
+  const nextWins = wins - cost;
+  saveWins(nextWins);
+  saveKeyPower(level + 1);
+  return { ok: true, wins: nextWins, level: level + 1, spent: cost };
+}
+
+// Buy AS MANY Key Power levels as the current wins balance affords, in one action. Returns
+// { ok, bought, spent, wins, level }.
+export function buyKeyPowerMax() {
+  let level = getKeyPower();
+  let wins = getWins();
+  let spent = 0;
+  let bought = 0;
+  while (wins >= keyPowerCost(level)) {
+    const cost = keyPowerCost(level);
+    wins -= cost;
+    spent += cost;
+    level += 1;
+    bought += 1;
+  }
+  if (bought > 0) {
+    saveKeyPower(level);
+    saveWins(wins);
+  }
+  return { ok: bought > 0, bought, spent, wins, level };
 }
 
 // True when the player can afford at least one item they don't already own — drives the

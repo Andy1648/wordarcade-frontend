@@ -19,6 +19,9 @@ import {
   canRebirth,
   doRebirth,
   getRebirths,
+  keyPowerCost,
+  keyPowerBaseXp,
+  getKeyPower,
 } from './xp.js';
 
 // A fresh in-memory localStorage installed as the global for a test body.
@@ -44,19 +47,34 @@ function cumCost(level) {
   return acc;
 }
 
-// ---- level cost curve ----
+// ---- level cost curve (exponential) ----
 test('need() matches the pinned anchor values', () => {
-  assert.equal(need(1), 100);
-  assert.equal(need(5), 1118);
-  assert.equal(need(10), 3162);
-  assert.equal(need(20), 8944);
+  assert.equal(need(1), 118);
+  assert.equal(need(5), 229);
+  assert.equal(need(10), 523);
+  assert.equal(need(20), 2739);
+  assert.equal(need(30), 14337);
 });
 
-test('XP_MULTIPLIERS are the sanctioned per-source values', () => {
-  assert.equal(XP_MULTIPLIERS.menu, 10);
-  assert.equal(XP_MULTIPLIERS['word-bomb'], 20);
-  assert.equal(XP_MULTIPLIERS['category-blitz'], 20);
-  assert.equal(XP_MULTIPLIERS['sat-rush'], 30);
+test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
+  assert.equal(XP_MULTIPLIERS.menu, 1);
+  assert.equal(XP_MULTIPLIERS['word-bomb'], 2);
+  assert.equal(XP_MULTIPLIERS['category-blitz'], 2);
+  assert.equal(XP_MULTIPLIERS['sat-rush'], 3);
+  assert.equal(XP_MULTIPLIERS.chain, 4);
+  assert.equal(XP_MULTIPLIERS.fuse, 5);
+});
+
+// ---- Key Power ----
+test('keyPowerCost grows 15%/level: lv0=50, lv5=101, lv20=818', () => {
+  assert.equal(keyPowerCost(0), 50);
+  assert.equal(keyPowerCost(5), 101);
+  assert.equal(keyPowerCost(20), 818);
+});
+
+test('keyPowerBaseXp = 10 + 2·level', () => {
+  assert.equal(keyPowerBaseXp(0), 10);
+  assert.equal(keyPowerBaseXp(20), 50);
 });
 
 // ---- level derived from cumulative xp, swept 0..100000 ----
@@ -84,20 +102,19 @@ test('level derived from cumulative xp is correct across a 0..100000 sweep', () 
   }
 });
 
-test('levelFromXp: worked example at level 7', () => {
-  // cumCost to reach L7 = need(1..6) = 100+283+520+800+1118+1470 = 4291; +500 into L7.
-  const r = levelFromXp(4291 + 500);
+test('levelFromXp: worked example at level 7 (curve-independent)', () => {
+  const r = levelFromXp(cumCost(7) + 100); // 100 xp into level 7
   assert.equal(r.level, 7);
-  assert.equal(r.cost, need(7)); // 1852
-  assert.equal(r.intoLevel, 500);
-  assert.equal(r.toNext, 1852 - 500);
+  assert.equal(r.cost, need(7));
+  assert.equal(r.intoLevel, 100);
+  assert.equal(r.toNext, need(7) - 100);
 });
 
-test('the multiplier stack (single source): base cases + the rounding rule', () => {
-  // menu + no rebirth + classic (×1) + thock (×1) = 10.
-  assert.equal(xpPerInput({ mode: 'menu', rebirthCount: 0, popStyleMult: 1, soundPackMult: 1 }), 10);
-  // sat-rush + R2 + prism (×1.25) + silent (×1.15) = 10·3·2.0·1.25·1.15 = 86.25 → 86 (Math.round).
-  assert.equal(xpPerInput({ mode: 'sat-rush', rebirthCount: 2, popStyleMult: 1.25, soundPackMult: 1.15 }), 86);
+test('the XP stack (single source): key power × mode × rebirth', () => {
+  // key power 0 + menu (×1) + R0 (×1) = 10.
+  assert.equal(xpPerInput({ mode: 'menu', keyPowerLevel: 0, rebirthCount: 0 }), 10);
+  // key power 20 + sat-rush (×3) + R1 (×1.5) = (10+40)·3·1.5 = 225.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyPowerLevel: 20, rebirthCount: 1 }), 225);
 });
 
 test('rebirth thresholds: rebirths 0→15, 1→18, 2→21; multipliers 1.5/2.0/2.5', () => {
@@ -129,6 +146,7 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
       'taw.equipped': JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }),
       'taw.rebirths': '1',
       'taw.taps': '42',
+      'taw.keypower': '7',
     },
     (map) => {
       const rc = doRebirth();
@@ -142,6 +160,8 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
       assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
       assert.equal(map.get('taw.taps'), '42');
+      assert.equal(map.get('taw.keypower'), '7'); // Key Power SURVIVES rebirth
+      assert.equal(getKeyPower(), 7);
     }
   );
   // a from-scratch rebirth (empty storage) still works and doesn't throw.
@@ -151,7 +171,7 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
 });
 
 test('a tap credits xp but NOT lifetimeLetters (rawKeys 0)', () => {
-  const r = creditXp({ xp: 0, lifetimeLetters: 7 }, XP_MULTIPLIERS.menu, 0); // a tap
+  const r = creditXp({ xp: 0, lifetimeLetters: 7 }, 10, 0); // a tap worth +10
   assert.equal(r.state.xp, 10); // +10 xp
   assert.equal(r.state.lifetimeLetters, 7); // unchanged — taps never bump lifetimeLetters
 });
@@ -176,11 +196,11 @@ test('getTaps defaults to 0 and survives storage failure; saveTaps never throws'
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {
-  const a = creditXp({ xp: 90, lifetimeLetters: 0 }, 10, 1); // 90 -> 100 crosses L1->2 (need 100)
-  assert.equal(a.state.xp, 100);
+  const a = creditXp({ xp: 110, lifetimeLetters: 0 }, 10, 1); // 110 -> 120 crosses L1->2 (need(1)=118)
+  assert.equal(a.state.xp, 120);
   assert.equal(a.state.lifetimeLetters, 1); // raw keystroke count, unmultiplied
   assert.equal(a.leveledUp, true);
-  const b = creditXp({ xp: 100, lifetimeLetters: 5 }, 10, 1); // 100 -> 110, still L2
+  const b = creditXp({ xp: 120, lifetimeLetters: 5 }, 10, 1); // 120 -> 130, still L2 (L2 ends at 257)
   assert.equal(b.leveledUp, false);
   assert.equal(b.state.lifetimeLetters, 6);
 });

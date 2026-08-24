@@ -1,7 +1,7 @@
 // useXpCapture.js — the SHARED menu/splash XP capture. One place owns the rate limiter,
 // the streak, the persisted xp store, and the pop/level-up/edge feedback, so the splash
 // and the homepage credit identically (no forked logic). Keystrokes always credit; on a
-// COARSE pointer, taps on empty space credit too (touch-only tap-to-earn) — both go
+// ANY pointer (mouse included), a click/tap on empty space credits too — both go
 // through the SAME limiter and the SAME streak. Mount with the fx layer's ref.
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -90,50 +90,43 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     };
     window.addEventListener('keydown', onKey);
 
-    // ---- Tap-to-earn: COARSE pointer only (desktop mouse credits nothing) ----
-    const coarse = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
-    let onDown;
-    let onMove;
-    let onUp;
-    let onCancel;
-    if (coarse) {
-      const pending = new Map(); // pointerId → { x, y, moved, ignore }
-      onDown = (e) => {
-        if (e.pointerType === 'mouse') return; // never credit a mouse, even on a coarse device
-        const t = e.target;
-        const ignore = !!(t && t.closest && (t.closest(INTERACTIVE) || t.closest('[role="dialog"]')));
-        pending.set(e.pointerId, { x: e.clientX, y: e.clientY, moved: false, ignore });
-      };
-      onMove = (e) => {
-        const p = pending.get(e.pointerId);
-        if (!p) return;
-        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > TAP_MOVE_TOLERANCE) p.moved = true;
-      };
-      onUp = (e) => {
-        const p = pending.get(e.pointerId);
-        pending.delete(e.pointerId);
-        if (!p || p.ignore || p.moved) return; // interactive target or a scroll → no credit
-        if (blockedRef.current && blockedRef.current()) return;
-        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-        if (!limiter.tryConsume(now)) return; // SAME limiter as keystrokes (multitouch shares it)
-        credit(now, { kind: 'tap', x: p.x, y: p.y });
-      };
-      onCancel = (e) => pending.delete(e.pointerId);
-      // Capture phase so we always observe the gesture even if an app handler stops it.
-      window.addEventListener('pointerdown', onDown, true);
-      window.addEventListener('pointermove', onMove, true);
-      window.addEventListener('pointerup', onUp, true);
-      window.addEventListener('pointercancel', onCancel, true);
-    }
+    // ---- Click / tap-to-earn: ANY pointer (desktop mouse included) ----
+    // A click/tap on empty menu space credits exactly like a keystroke — feeding taw.taps
+    // (never lifetimeLetters). All ignore rules stay: an interactive target (button/link/
+    // card/dialog) or a >10px drag credits nothing.
+    const pending = new Map(); // pointerId → { x, y, moved, ignore }
+    const onDown = (e) => {
+      const t = e.target;
+      const ignore = !!(t && t.closest && (t.closest(INTERACTIVE) || t.closest('[role="dialog"]')));
+      pending.set(e.pointerId, { x: e.clientX, y: e.clientY, moved: false, ignore });
+    };
+    const onMove = (e) => {
+      const p = pending.get(e.pointerId);
+      if (!p) return;
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > TAP_MOVE_TOLERANCE) p.moved = true;
+    };
+    const onUp = (e) => {
+      const p = pending.get(e.pointerId);
+      pending.delete(e.pointerId);
+      if (!p || p.ignore || p.moved) return; // interactive target or a scroll → no credit
+      if (blockedRef.current && blockedRef.current()) return;
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (!limiter.tryConsume(now)) return; // SAME limiter as keystrokes (multitouch shares it)
+      credit(now, { kind: 'tap', x: p.x, y: p.y });
+    };
+    const onCancel = (e) => pending.delete(e.pointerId);
+    // Capture phase so we always observe the gesture even if an app handler stops it.
+    window.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('pointermove', onMove, true);
+    window.addEventListener('pointerup', onUp, true);
+    window.addEventListener('pointercancel', onCancel, true);
 
     return () => {
       window.removeEventListener('keydown', onKey);
-      if (coarse) {
-        window.removeEventListener('pointerdown', onDown, true);
-        window.removeEventListener('pointermove', onMove, true);
-        window.removeEventListener('pointerup', onUp, true);
-        window.removeEventListener('pointercancel', onCancel, true);
-      }
+      window.removeEventListener('pointerdown', onDown, true);
+      window.removeEventListener('pointermove', onMove, true);
+      window.removeEventListener('pointerup', onUp, true);
+      window.removeEventListener('pointercancel', onCancel, true);
     };
   }, [active, fxRef]);
 

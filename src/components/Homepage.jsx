@@ -528,6 +528,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   game={game}
                   onSelect={handleOpenDialog}
                   onHover={handleHover}
+                  locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
                 />
               ))}
             </div>

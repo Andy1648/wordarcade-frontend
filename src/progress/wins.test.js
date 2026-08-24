@@ -42,6 +42,13 @@ test('awardWins: <3 words pays 0; 3 -> 16; 10 -> 30', () => {
   assert.equal(awardWins({ wordsAccepted: 0 }), 0);
 });
 
+test('awardWins: CHAIN pays 3× and FUSE 5× the base payout', () => {
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'chain' }), 48); // 16 × 3
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'fuse' }), 80); // 16 × 5
+  assert.equal(awardWins({ wordsAccepted: 2, mode: 'fuse' }), 0); // still gated on <3
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'word-bomb' }), 16); // other modes ×1
+});
+
 test('wins balance and winsLifetime move independently', () => {
   withStorage(() => {
     // A payout raises BOTH.

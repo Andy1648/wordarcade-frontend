@@ -289,14 +289,34 @@ test.describe('tap XP (coarse pointer)', () => {
   });
 });
 
-test.describe('no tap-to-earn on a fine pointer', () => {
-  test('a mouse click on empty menu space credits nothing', async ({ page }) => {
+test.describe('desktop clicks count (fine pointer)', () => {
+  test('a click on empty menu space credits (via taps, not letters); a click on a game card credits 0', async ({ page }) => {
     await gotoMenuLive(page);
     expect(await page.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
-    const before = await page.evaluate(() => Number(localStorage.getItem('taw.xp')) || 0);
-    await page.mouse.click(8, 8); // empty backdrop, fine pointer
+
+    const read = () =>
+      page.evaluate(() => ({
+        xp: Number(localStorage.getItem('taw.xp')) || 0,
+        taps: Number(localStorage.getItem('taw.taps')) || 0,
+        letters: Number(localStorage.getItem('taw.letters')) || 0,
+      }));
+
+    // (a) click on empty backdrop (top-left; the SHOP button is top-right) → credits like a
+    // keystroke, into taw.taps only (never lifetimeLetters).
+    const b1 = await read();
+    await page.mouse.click(8, 8);
     await page.waitForTimeout(60);
-    const after = await page.evaluate(() => Number(localStorage.getItem('taw.xp')) || 0);
-    expect(after - before).toBe(0);
+    const a1 = await read();
+    expect(a1.xp).toBeGreaterThan(b1.xp); // desktop click now credits
+    expect(a1.taps - b1.taps).toBe(1); // via the taps counter
+    expect(a1.letters).toBe(b1.letters); // NOT lifetimeLetters
+
+    // (b) click on a game card → credits nothing (interactive target is ignored)
+    const card = await page.locator('.game-card').first().boundingBox();
+    const b2 = await read();
+    await page.mouse.click(Math.round(card.x + card.width / 2), Math.round(card.y + card.height / 2));
+    await page.waitForTimeout(60);
+    const a2 = await read();
+    expect(a2.xp - b2.xp).toBe(0);
   });
 });

@@ -129,7 +129,7 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
 
@@ -153,6 +153,17 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   const [glitching, setGlitching] = useState(false);
   const glitchTimerRef = useRef(0);
   useEffect(() => () => window.clearTimeout(glitchTimerRef.current), []);
+
+  // Locked (level-gated) cards do nothing on click but shake ONCE (finite 200ms, transform
+  // only) — the card stays visible with a padlock + "UNLOCKS AT LV n".
+  const [shaking, setShaking] = useState(false);
+  const shakeTimerRef = useRef(0);
+  useEffect(() => () => window.clearTimeout(shakeTimerRef.current), []);
+  function shakeOnce() {
+    setShaking(true);
+    window.clearTimeout(shakeTimerRef.current);
+    shakeTimerRef.current = window.setTimeout(() => setShaking(false), 200);
+  }
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -185,6 +196,9 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
     topper ? 'has-topper' : '',
     // One-shot chromatic glitch-pop while a select is animating out.
     glitching ? 'game-card--glitch' : '',
+    // Level-gated: dimmed with a padlock; click only shakes.
+    locked ? 'locked' : '',
+    shaking ? 'game-card--shake' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -192,6 +206,10 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   // Pass the clicked card element up so the homepage can measure it for the
   // card->dialog FLIP morph (the expand starts from exactly this box).
   function handleClick(event) {
+    if (locked) {
+      shakeOnce(); // gated: no navigation, just the shake
+      return;
+    }
     if (game.enabled) {
       // Fire the one-shot glitch accent, then clear it after the animation length.
       setGlitching(true);
@@ -202,7 +220,7 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
   }
 
   function handleKeyDown(event) {
-    if (game.enabled && (event.key === 'Enter' || event.key === ' ')) {
+    if ((game.enabled || locked) && (event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault();
       handleClick(event);
     }
@@ -236,14 +254,30 @@ export default function GameCard({ game, onSelect, onHover, topper }) {
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         role="button"
-        tabIndex={game.enabled ? 0 : -1}
-        aria-disabled={!game.enabled}
-        aria-label={`${game.name.replace('\n', ' ')} - ${game.badgeText}`}
+        tabIndex={game.enabled || locked ? 0 : -1}
+        aria-disabled={!game.enabled || locked}
+        aria-label={
+          locked
+            ? `${game.name.replace('\n', ' ')} — locked, unlocks at level ${game.unlockLevel}`
+            : `${game.name.replace('\n', ' ')} - ${game.badgeText}`
+        }
       >
         {/* Strips of tape pinning the "flyer" to the wall - one at each top corner,
             angled opposite ways. Purely decorative. */}
         <span className="game-card-tape game-card-tape-left" aria-hidden="true" />
         <span className="game-card-tape game-card-tape-right" aria-hidden="true" />
+
+        {/* Level gate: a padlock + threshold over the (dimmed) card. Visible-but-locked. */}
+        {locked && (
+          <div className="game-card-lock">
+            <svg className="game-card-lock-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4.5" y="10" width="15" height="10.5" rx="2" fill="#0d0618" stroke="#000" strokeWidth="1.5" />
+              <path d="M8 10V6.8a4 4 0 0 1 8 0V10" fill="none" stroke="#0d0618" strokeWidth="2.6" />
+              <circle cx="12" cy="15" r="1.7" fill="#FFE94A" />
+            </svg>
+            <div className="game-card-lock-label">UNLOCKS AT LV {game.unlockLevel}</div>
+          </div>
+        )}
 
         {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
 
