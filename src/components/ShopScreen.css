@@ -1,0 +1,239 @@
+/* ShopScreen.css — cosmetic shop overlay. Mode-dialog register: flat #1a0b2e panel, thick
+   black border, hard offset shadow, 8px radius. STATIC — the only motion is the buttons'
+   existing hover/press. Body scrolls internally; panel capped at 100dvh. */
+.shop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(13, 6, 24, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Space Mono', monospace;
+}
+.shop-panel {
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 10px;
+  border-bottom: 3px solid #000;
+}
+.shop-title {
+  margin: 0;
+  flex: 1;
+  font-family: 'Bungee', cursive;
+  font-size: 26px;
+  color: #ffe94a;
+  letter-spacing: 0.04em;
+}
+.shop-wins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #ffe94a;
+}
+.shop-close {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #0d0618;
+  color: #fff;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  font-size: 16px;
+  cursor: pointer;
+}
+.shop-close:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.shop-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 18px 6px;
+}
+.shop-subtitle {
+  margin: 16px 0 8px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: #2effe0;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  text-align: center;
+}
+.shop-card.is-equipped {
+  border-color: #2effe0;
+}
+.shop-card.is-locked {
+  opacity: 0.5; /* visible but dimmed — locked content stays visible */
+}
+.shop-card-name {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.shop-card-mult {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffe94a;
+  letter-spacing: 0.04em;
+}
+.shop-card-tag {
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  color: #2effe0;
+  letter-spacing: 0.06em;
+}
+.shop-card-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  color: #b9a7d6;
+}
+.shop-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  color: #0d0618;
+  background: #ffe94a;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+}
+.shop-card-btn:hover {
+  transform: translateY(-1px);
+}
+.shop-card-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.shop-card-btn.ghost {
+  background: #1a0b2e;
+  color: #fff;
+}
+.shop-card-btn.danger {
+  background: #ff4b4b;
+  color: #0d0618;
+}
+
+/* A flat coin glyph (matches the menu Wins chip). */
+.shop-coin {
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 50%;
+  background: #ffe94a;
+  border: 2px solid #b8a020;
+  box-shadow: inset 0 0 0 1.5px #1a0b2e;
+  flex: 0 0 auto;
+}
+
+/* Rebirth entry + confirmation. */
+.shop-rebirth {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #0d0618;
+  background: #9a1aff;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  color: #fff;
+}
+.shop-rebirth:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+.shop-confirm {
+  margin-bottom: 14px;
+  padding: 14px;
+  background: #0d0618;
+  border: 3px solid #9a1aff;
+  border-radius: 8px;
+}
+.shop-confirm-title {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #9a1aff;
+  margin-bottom: 8px;
+}
+.shop-confirm-detail {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #d8c9f0;
+}
+.shop-confirm-detail b {
+  color: #ffe94a;
+}
+.shop-confirm-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.shop-back {
+  flex: 0 0 auto;
+  margin: 10px 18px 18px;
+  padding: 12px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #0d0618;
+  background: #2effe0;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+}
+.shop-back:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}

@@ -2,23 +2,45 @@
 // the STATS footer link. Styled like the mode dialog (thick black border, hard offset
 // shadow, #1a0b2e panel). Scrolls internally on a short viewport; never breaks 100dvh.
 import './StatsScreen.css';
-import { loadProgress, levelFromXp, getTaps } from '../progress/xp';
+import {
+  loadProgress,
+  levelFromXp,
+  getTaps,
+  getRebirths,
+  rebirthMult,
+  rebirthThreshold,
+} from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
+import { equippedPopStyleMult, equippedSoundPackMult } from '../progress/shop';
 
 const fmt = (n) => (Number.isFinite(n) ? n : 0).toLocaleString();
+const x = (n) => `×${n.toFixed(2)}`;
 
 export default function StatsScreen({ onBack }) {
   const { xp, lifetimeLetters } = loadProgress();
   const level = levelFromXp(xp).level;
   const rounds = getRounds();
+  const rebirths = getRebirths();
+
+  const rbMult = rebirthMult(rebirths);
+  const popMult = equippedPopStyleMult();
+  const soundMult = equippedSoundPackMult();
+  const totalMult = rbMult * popMult * soundMult; // the menu-typing stack (mode = ×1)
 
   const progression = [
     ['LEVEL', level],
     ['TOTAL XP', xp],
+    ['REBIRTHS', rebirths],
     ['LETTERS TYPED', lifetimeLetters],
     ['TAPS', getTaps()],
     ['WINS BALANCE', getWins()],
     ['WINS EARNED (ALL-TIME)', getWinsLifetime()],
+  ];
+  const multipliers = [
+    ['REBIRTH', x(rbMult)],
+    ['POP STYLE', x(popMult)],
+    ['SOUND PACK', x(soundMult)],
+    ['TOTAL', x(totalMult)],
   ];
   const roundsPlayed = [
     ['WORD BOMB', rounds.wordBomb],
@@ -45,6 +67,18 @@ export default function StatsScreen({ onBack }) {
               </div>
             ))}
           </dl>
+
+          <h3 className="stats-subtitle">XP MULTIPLIER</h3>
+          <dl className="stats-list">
+            {multipliers.map(([k, v]) => (
+              <div className="stats-row" key={k}>
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          {/* Visible-but-locked from day one: the next rebirth target, always shown. */}
+          <div className="stats-rebirth-at">REBIRTH AT LV {rebirthThreshold(rebirths)}</div>
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>
           <dl className="stats-list">
