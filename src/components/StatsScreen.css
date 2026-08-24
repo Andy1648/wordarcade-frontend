@@ -1,0 +1,122 @@
+/* StatsScreen.css — read-only stats overlay. Mode-dialog register: flat #1a0b2e panel,
+   thick black border, hard offset shadow, 8px radius. ZERO animation. Scrolls INTERNALLY
+   on a short viewport; the overlay is height-capped so it never breaks 100dvh. */
+.stats-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(13, 6, 24, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Space Mono', monospace;
+}
+
+.stats-panel {
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100dvh - 40px); /* never exceed the viewport */
+  display: flex;
+  flex-direction: column;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  color: #fff;
+  overflow: hidden; /* the BODY scrolls, not the panel frame */
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 10px;
+  border-bottom: 3px solid #000;
+}
+.stats-title {
+  margin: 0;
+  font-family: 'Bungee', cursive;
+  font-size: 26px;
+  color: #ffe94a;
+  letter-spacing: 0.04em;
+}
+.stats-close {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #0d0618;
+  color: #fff;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  font-size: 16px;
+  cursor: pointer;
+}
+.stats-close:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+/* The scroll region — everything between the header and the back button. */
+.stats-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 18px 4px;
+}
+
+.stats-subtitle {
+  margin: 18px 0 8px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: #2effe0;
+}
+
+.stats-list {
+  margin: 0;
+}
+.stats-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.14);
+}
+.stats-row:last-child {
+  border-bottom: none;
+}
+.stats-row dt {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #b9a7d6;
+}
+.stats-row dd {
+  margin: 0;
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  color: #ffe94a;
+}
+
+.stats-back {
+  flex: 0 0 auto;
+  margin: 10px 18px 18px;
+  padding: 12px;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #0d0618;
+  background: #2effe0;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+}
+.stats-back:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}

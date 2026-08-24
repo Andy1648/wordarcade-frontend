@@ -21,6 +21,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef } from 'react';
 import './SatRush.css';
+import { recordRound } from '../progress/wins';
 import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
 import { setShakeTarget } from './juice';
@@ -35,6 +36,21 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
+
+  // WINS: when a run ENDS, pay out on the correct answers (engine's cleared count). Fire
+  // once per run-end (reset the guard when a new run starts), reading data the run already
+  // has — no new game logic. recordRound queues the "+N WINS" menu stamp.
+  const satWinRecordedRef = useRef(false);
+  useEffect(() => {
+    if (view.phase === 'over') {
+      if (!satWinRecordedRef.current) {
+        satWinRecordedRef.current = true;
+        recordRound({ mode: 'satRush', wordsAccepted: (view.results && view.results.cleared) || 0 });
+      }
+    } else {
+      satWinRecordedRef.current = false;
+    }
+  }, [view.phase, view.results]);
 
   // HUD ✕ mid-run: clean abandon (stops the clock, fires run_abandoned, no results)
   // then go home. The hook's phase drop + unmount restore the music duck (see the
