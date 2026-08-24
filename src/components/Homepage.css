@@ -896,3 +896,14 @@ html[data-beat='true'] .homepage-beat-glow {
     display: inline-block;
   }
 }
+
+/* STATS + CREDITS quiet footer links, side by side. */
+.homepage-footer-links {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 22px;
+}
+.homepage-footer-links .homepage-credits-link {
+  margin: 4px 0 0;
+}

@@ -10,7 +10,7 @@ import './MenuXp.css';
 // (200ms). On a level-up the frac drops from ~1 to ~0; we suppress the transition for that
 // one committed frame (data-jump) so it snaps back, and flash the fill yellow for 180ms.
 // `variant="mini"` (splash) drops the "TO LV" line and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full' }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null }) {
   const fillRef = useRef(null);
   const prevLevelRef = useRef(level);
   useLayoutEffect(() => {
@@ -37,6 +37,12 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full' }) {
   return (
     <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden="true">
       <span className="menu-xp-lv">LV {level}</span>
+      {variant !== 'mini' && wins != null && (
+        <span className="menu-wins-chip" aria-label={`${wins} wins`}>
+          <span className="menu-wins-coin" aria-hidden="true" />
+          {wins}
+        </span>
+      )}
       <span className="menu-xp-track">
         <span className="menu-xp-fill" ref={fillRef} />
       </span>
@@ -93,9 +99,11 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelupRef = useRef(null);
   const levelTitleRef = useRef(null);
   const levelSubRef = useRef(null);
+  const winsStampRef = useRef(null);
   const popAnimsRef = useRef([]);
   const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
+  const winsStampAnimRef = useRef(null);
   const slotsRef = useRef([]);
   const slotIdxRef = useRef(0);
   const popNextRef = useRef(0);
@@ -186,6 +194,21 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       a.cancel();
       levelupAnimRef.current = a;
     }
+
+    // Wins stamp — same pooled-element pattern as the level-up (finite, ≤700ms, one node).
+    if (winsStampRef.current) {
+      const a = winsStampRef.current.animate(
+        [
+          { transform: `${CENTER}rotate(-4deg) scale(1.5)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 1, offset: 0.16 },
+          { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 1, offset: 0.7 },
+          { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 0, offset: 1 },
+        ],
+        { duration: LEVELUP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+      );
+      a.cancel();
+      winsStampAnimRef.current = a;
+    }
     return undefined;
   }, []);
 
@@ -275,6 +298,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       a.cancel();
       a.play();
     },
+    // One finite "+N WINS" stamp (menu return after a paying round). Same pooled pattern.
+    winsStamp(amount) {
+      const a = winsStampAnimRef.current;
+      if (!a || !winsStampRef.current) return;
+      winsStampRef.current.textContent = `+${amount} WINS`;
+      a.cancel();
+      a.play();
+    },
   }));
 
   return (
@@ -306,6 +337,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         </span>
         <span className="menu-xp-levelup-sub" ref={levelSubRef} />
       </div>
+      <div className="menu-xp-winsstamp" ref={winsStampRef} />
     </div>
   );
 });

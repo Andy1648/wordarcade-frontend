@@ -16,6 +16,7 @@ import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
+const StatsScreen = lazy(() => import('./components/StatsScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 // CHAIN / FUSE (solo word modes, flag-gated). Lazy — the 357KB word chunk they pull
@@ -56,6 +57,7 @@ import {
   markPlayed,
 } from './visitHistory';
 import { addWords } from './wordCount';
+import { recordRound } from './progress/wins';
 import {
   loadDailyState,
   saveDailyState,
@@ -376,6 +378,11 @@ function App() {
   //                    scores, so we tally totals client-side)
   const [categoryRound, setCategoryRound] = useState(null);
   const [myAnswers, setMyAnswers] = useState([]);
+  // WINS: count MY accepted words per round/game, client-side from data that already
+  // arrives (word_result / answer_result). Refs (not state) so the message handler reads a
+  // live value. Word Bomb pays at game_over; Category Blitz pays at each round_end.
+  const myWbAcceptedRef = useRef(0); // Word Bomb: my accepts this game
+  const myBlitzAcceptedRef = useRef(0); // Category Blitz: my accepts this round
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
   const [categoryScores, setCategoryScores] = useState(null);
@@ -741,6 +748,7 @@ function App() {
         gameStartTime: Date.now(),
         gameEndTime: null,
       });
+      myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -874,7 +882,10 @@ function App() {
         const now = Date.now();
         // Lifetime WORDS TYPED: count ONLY the local player's own accepted words.
         // (Daily flows through this same path and counts as word-bomb — fine.)
-        if (submitter.id === myIdRef.current) addWords('word-bomb');
+        if (submitter.id === myIdRef.current) {
+          addWords('word-bomb');
+          myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
+        }
         setFeedEvents((prev) => [
           ...prev,
           {
@@ -940,6 +951,7 @@ function App() {
       setTimerSeconds(payload.timerSeconds);
       setCategoryRerolls(payload.rerollsRemaining ?? null);
       setMyAnswers([]);
+      myBlitzAcceptedRef.current = 0; // fresh round → reset my Wins accept count
       setPlayerProgress({});
       setRoundResults(null);
       setLastWordResult(null);
@@ -969,6 +981,7 @@ function App() {
         setMyAnswers((prev) => [...prev, payload.answer]);
         // answer_result is always about MY answer, so an accept is my own word.
         addWords('category-blitz');
+        myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
       }
     }
 
@@ -980,6 +993,8 @@ function App() {
 
     if (lastMessage.type === 'round_end') {
       const payload = lastMessage.payload;
+      // WINS: a Category Blitz round ended — pay out on MY accepted answers this round.
+      recordRound({ mode: 'blitz', wordsAccepted: myBlitzAcceptedRef.current });
       setRoundResults(payload);
       setCategoryRound(null); // round over - timer stops, show results
       setLastWordResult(null);
@@ -1002,6 +1017,9 @@ function App() {
         setCategoryScores(payload.finalScores);
         setCategoryRound(null);
         setRoundResults(null);
+      } else {
+        // WINS: a Word Bomb game ended — pay out on MY accepted words this game.
+        recordRound({ mode: 'wordBomb', wordsAccepted: myWbAcceptedRef.current });
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak
@@ -1291,6 +1309,10 @@ function App() {
   // visibility toggle pre-set to PUBLIC.
   function handleCreatePublicFromBrowser() {
     goToLobby('solo', true);
+  }
+
+  function goToStats() {
+    setView('stats');
   }
 
   function goToCredits() {
@@ -1627,6 +1649,8 @@ function App() {
     );
   } else if (view === 'credits') {
     screen = <CreditsScreen onBack={goHome} />;
+  } else if (view === 'stats') {
+    screen = <StatsScreen onBack={goHome} />;
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
@@ -1650,6 +1674,7 @@ function App() {
         onJoinRoom={handleOpenBrowser}
         onQuickPlay={handleQuickPlayBot}
         onCredits={goToCredits}
+        onStats={goToStats}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}

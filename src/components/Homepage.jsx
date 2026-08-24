@@ -7,6 +7,7 @@ import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import { useXpCapture } from '../progress/useXpCapture';
+import { getWins, consumePendingWinsStamp } from '../progress/wins';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -82,7 +83,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -251,6 +252,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
   });
+  // Wins balance shown in the chip (read once on menu mount). On arriving at the menu after
+  // a round that paid out, fire ONE "+N WINS" stamp for the queued total.
+  const [wins] = useState(() => getWins());
+  useEffect(() => {
+    const stamp = consumePendingWinsStamp();
+    if (stamp > 0 && xpFxRef.current) xpFxRef.current.winsStamp(stamp);
+  }, []);
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).
@@ -337,6 +345,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     runWhenConnected('join', () => onJoinRoom && onJoinRoom());
   }
 
+  function handleStats() {
+    if (navigating) return;
+    sound.click();
+    if (onStats) onStats();
+  }
+
   function handleCredits() {
     if (navigating) return;
     sound.click();
@@ -419,7 +433,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
             odometer used to occupy (that chip was removed). LV + fill + "N TO LV n+1",
             fed by global keystroke capture (see the effect above); no text input. */}
-        <MenuXpBar level={xpProgress.level} toNext={xpProgress.toNext} frac={xpProgress.frac} />
+        <MenuXpBar level={xpProgress.level} toNext={xpProgress.toNext} frac={xpProgress.frac} wins={wins} />
 
         <div className="homepage-cards-region">
           <div
@@ -491,14 +505,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </button>
         )}
 
-        {/* Link to the standalone credits page (holds music attribution etc.). */}
-        <button
-          className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
-          onClick={handleCredits}
-          disabled={navigating}
-        >
-          CREDITS
-        </button>
+        {/* Quiet footer links: STATS (the progression/stats overlay) + CREDITS. */}
+        <div className="homepage-footer-links">
+          <button
+            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
+            onClick={handleStats}
+            disabled={navigating}
+          >
+            STATS
+          </button>
+          <button
+            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
+            onClick={handleCredits}
+            disabled={navigating}
+          >
+            CREDITS
+          </button>
+        </div>
 
         {/* Quiet footer nav to the static per-game guide pages (the
             public/<game>/index.html files). Real <a href> links on purpose:
