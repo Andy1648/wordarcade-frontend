@@ -1417,6 +1417,7 @@ export default function GameScreen({
   gameState,
   gameType,
   gameNonce,
+  cgMode = false,
   myId,
   isHost,
   timerSeconds,
@@ -1462,8 +1463,10 @@ export default function GameScreen({
   const [skipPending, setSkipPending] = useState(false);
   const inputRef = useRef(null);
   // Intro countdown plays once when the screen mounts; the input stays
-  // disabled until it finishes.
-  const [showCountdown, setShowCountdown] = useState(true);
+  // disabled until it finishes. On the CrazyGames path (cgMode) it's SKIPPED so
+  // the server's ~3s pre-timer grace becomes free combo-reading time — the real
+  // combo shows with the timer frozen at full instead of hidden behind 3-2-1.
+  const [showCountdown, setShowCountdown] = useState(!cgMode);
 
   // (Removed) The per-keystroke input "pulse" tell — it toggled a class that
   // scaled the focused field on every key, re-rasterising its text and lagging

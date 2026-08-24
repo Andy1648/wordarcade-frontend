@@ -25,6 +25,21 @@
   padding: 0;
 }
 
+/* CrazyGames embed (?cg=1 only, toggled by the html.cg-embed class in App.jsx):
+   disable text selection per CrazyGames' embed guidelines, but keep it ON for
+   the text inputs so gameplay typing/editing is unaffected. Absent on the default
+   entry, so the normal site keeps native selection. */
+html.cg-embed,
+html.cg-embed body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+html.cg-embed input,
+html.cg-embed textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 html, body {
   background: #0d0618;
   width: 100%;

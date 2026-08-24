@@ -24,6 +24,9 @@ const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 // must never touch the menu's first paint.
 const ChainGame = lazy(() => import('./solo/ChainGame'));
 const FuseGame = lazy(() => import('./solo/FuseGame'));
+// CrazyGames zero-click direct entry (?cg=1). Lazy so the default (no-flag)
+// bundle is unchanged — the arm screen only ever loads on a cg session.
+const CgArmScreen = lazy(() => import('./components/CgArmScreen'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 // Eager (not lazy): KnifeSplit must cover the menu on the FIRST frame after the
@@ -43,6 +46,7 @@ import {
   SOLO_LAUNCH,
   SOLO_MODES_ENABLED,
 } from './solo/config';
+import { CG_ENTRY, cgRoomReady, isCoarsePointer } from './cg/cgEntry';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -139,6 +143,7 @@ const SCREEN_ACCENT = {
   browse: '#2EFFE0',
   room: '#FFE94A',
   game: '#FF6B3D',
+  'cg-arm': '#FF6B3D', // matches the game accent (cg arm hands straight into it)
   credits: '#9A1AFF',
   // SAT RUSH is a duotone manga surface; the ♫ button floats over the black gutter,
   // so it wears PAPER (reads on the void) instead of the house pink.
@@ -148,6 +153,7 @@ const SCREEN_ACCENT = {
 // The word flashed mid-wipe when navigating to each view.
 const TRANSITION_WORDS = {
   game: "LET'S GO!",
+  'cg-arm': 'GET READY',
   home: 'PEACE OUT',
   lobby: 'READY?',
   browse: 'JOIN ROOM',
@@ -203,7 +209,8 @@ const SKIP_INTRO =
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
   SOLO_LAUNCH.chain ||
-  SOLO_LAUNCH.fuse;
+  SOLO_LAUNCH.fuse ||
+  CG_ENTRY; // CrazyGames wants gameplay immediately — no splash/intro chain.
 
 // Repeat visitors have already seen the SQUAD-UP / "TYPE FAST. DIE SLOW." intro,
 // so we skip those two animations for them (the loading screen still plays).
@@ -216,7 +223,9 @@ const SEEN_INTRO = hasSeenIntro();
  * for the whole app.
  */
 function App() {
-  const [view, setView] = useState('home');
+  // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
+  // starts on the home menu, exactly as before.
+  const [view, setView] = useState(CG_ENTRY ? 'cg-arm' : 'home');
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
@@ -708,9 +717,12 @@ function App() {
       // room_update can land right after game_started (host start) and would
       // otherwise yank the player back out of the match. The rematch flow sends
       // an explicit game_reset to drive the game -> room transition instead.
+      // 'cg-arm' is guarded the SAME way: the cg provisioning add_bot broadcasts a
+      // room_update while the player is still on the arm screen — it must NOT pull
+      // them into the waiting room; they leave cg-arm only via game_started.
       // Functional update so we read the LIVE view, not the stale `view` captured
       // in this effect's closure (the effect is keyed only on [lastMessage]).
-      setView((prev) => (prev === 'game' ? prev : 'room'));
+      setView((prev) => (prev === 'game' || prev === 'cg-arm' ? prev : 'room'));
     }
 
     if (lastMessage.type === 'game_reset') {
@@ -1147,7 +1159,7 @@ function App() {
   // avoids a spurious wipe when `view` didn't actually change (initial mount /
   // no-op setState) - it can no longer strand the screen, since nothing gates the
   // screen behind it anymore.
-  const lastNavViewRef = useRef('home');
+  const lastNavViewRef = useRef(CG_ENTRY ? 'cg-arm' : 'home');
   useEffect(() => {
     if (view === lastNavViewRef.current) return;
     lastNavViewRef.current = view;
@@ -1209,6 +1221,69 @@ function App() {
     // effect only ever fires once (guarded by launchFiredRef).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsStatus, send]);
+
+  // ---- CrazyGames zero-click entry (?cg=1) ----
+  // Provision the solo-vs-bot room the moment the socket opens: the SAME frames
+  // handleQuickPlayBot sends, MINUS start_game (held until the player arms). The
+  // server processes them in order on this socket, so by the time the player
+  // engages the room + bot are seated and start_game is instant. Fires once.
+  const cgProvisionFiredRef = useRef(false);
+  useEffect(() => {
+    if (!CG_ENTRY) return;
+    if (wsStatus !== 'open') return;
+    if (cgProvisionFiredRef.current) return;
+    cgProvisionFiredRef.current = true;
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setLobbyMode('word-bomb');
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: 'word-bomb' });
+    // Difficulty = the current menu default (first-timers get the gentler CHILL,
+    // returning players CRAZY... i.e. medium), mirroring handleQuickPlayBot.
+    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    send('add_bot', { difficulty: 'medium' });
+    // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsStatus, send]);
+
+  // The arm gesture (first keystroke on desktop / TAP TO START on mobile). Fire
+  // start_game ONLY once the room + bot are provisioned; if the player armed
+  // during the wake/spin-up, remember it (cgArmPendingRef) and the effect below
+  // starts the instant the roster is ready. game_started then swaps us to the
+  // live GameScreen (view 'game'), which mounts fresh — so the input is empty
+  // when the real combo first renders (the arming key was discarded, never seeded).
+  const cgArmedRef = useRef(false);
+  const cgArmPendingRef = useRef(false);
+  const handleCgArm = useCallback(() => {
+    if (cgArmedRef.current) return;
+    if (cgRoomReady(room)) {
+      cgArmedRef.current = true;
+      send('start_game', {});
+      track('cg_direct_entry', {});
+    } else {
+      cgArmPendingRef.current = true;
+    }
+  }, [room, send]);
+  useEffect(() => {
+    if (!CG_ENTRY) return;
+    if (cgArmedRef.current || !cgArmPendingRef.current) return;
+    if (!cgRoomReady(room)) return;
+    cgArmedRef.current = true;
+    cgArmPendingRef.current = false;
+    send('start_game', {});
+    track('cg_direct_entry', {});
+  }, [room, send]);
+
+  // CrazyGames compliance (cg path only): user-select:none on the body. Scoped by
+  // the html.cg-embed class (see index.css) so the default entry is untouched.
+  useEffect(() => {
+    if (!CG_ENTRY) return;
+    document.documentElement.classList.add('cg-embed');
+    return () => document.documentElement.classList.remove('cg-embed');
+  }, []);
+
+  // Touch vs mouse for the arm screen — computed once (fine=autofocus, coarse=tap).
+  const cgCoarse = useMemo(() => isCoarsePointer(), []);
 
   // Wipe to the homepage the moment the socket comes up (connecting -> open).
   const prevWsRef = useRef(wsStatus);
@@ -1573,6 +1648,9 @@ function App() {
         gameState={gameState}
         gameType={gameType}
         gameNonce={gameNonce}
+        // cg entry skips the 3-2-1 so the server's ~3s pre-timer window becomes
+        // free combo-reading time (timer frozen at full, clock not yet moving).
+        cgMode={CG_ENTRY}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -1674,6 +1752,12 @@ function App() {
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
     screen = <FuseGame onExit={goHome} />;
+  } else if (view === 'cg-arm') {
+    // CrazyGames arm state: full play layout, timer frozen, start_game held until
+    // the player engages. Only reachable on a ?cg=1 session.
+    screen = (
+      <CgArmScreen wsStatus={wsStatus} coarse={cgCoarse} onArm={handleCgArm} />
+    );
   } else {
     screen = (
       <Homepage
