@@ -5,9 +5,10 @@ import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
+import { MenuXpBar, MenuXpFx } from './MenuXp';
+import { useXpCapture } from '../progress/useXpCapture';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
-import WordCountChip from './WordCountChip';
 import GraffitiTag from './decor/GraffitiTag';
 import {
   PaintSplatter1,
@@ -237,6 +238,20 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (el) el.scrollBy({ top: cardsRowhRef.current || 0, behavior: 'smooth' });
   };
 
+  // ---- Menu XP meta-progression (presentational) -------------------------------
+  // Typing anywhere on the menu earns XP (no text input here). The capture/credit/streak
+  // logic is the SHARED hook (also used by the splash) so the two can't drift; it only
+  // ever surfaces as the pops + the bar. No-ops while a mode dialog is open.
+  const xpFxRef = useRef(null);
+  const dialogOpenRef = useRef(false);
+  useEffect(() => {
+    dialogOpenRef.current = !!dialog;
+  }, [dialog]);
+  const { progress: xpProgress } = useXpCapture({
+    fxRef: xpFxRef,
+    isBlocked: () => dialogOpenRef.current,
+  });
+
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
   // existing mute toggle silences the new press cues too (default on, honored).
   useEffect(() => {
@@ -401,9 +416,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           )}
         </button>
 
-        {/* Lifetime WORDS TYPED odometer — a passive stat between the CTAs and the
-            game cards. Reads/subscribes to the count itself (no props). */}
-        <WordCountChip />
+        {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
+            odometer used to occupy (that chip was removed). LV + fill + "N TO LV n+1",
+            fed by global keystroke capture (see the effect above); no text input. */}
+        <MenuXpBar level={xpProgress.level} toNext={xpProgress.toNext} frac={xpProgress.frac} />
 
         <div className="homepage-cards-region">
           <div
@@ -494,6 +510,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           {GAMES.some((g) => g.id === 'sat-rush') && <a href="/sat-rush/">SAT RUSH GUIDE</a>}
         </nav>
       </div>
+
+      {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
+          the "+N" popups spawn outside the panel border and never overlap its content. */}
+      <MenuXpFx ref={xpFxRef} />
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
           and the app zoom never clip it; closes back into the source card. */}

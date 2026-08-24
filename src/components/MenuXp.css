@@ -1,0 +1,170 @@
+/* MenuXp.css — the menu XP bar + feedback layer. House style: flat, thick black outline,
+   Bungee/Space Mono. NO will-change (site budget is exactly .clock-fill + .burn). NO
+   idle/infinite animation — the pop + level-up are one-shot WAAPI, invisible at rest. */
+
+/* ---- Persistent progress bar (inside the panel) ---- */
+.menu-xp-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  /* Compact so it fits the one-screen height budget without pushing layout. Now the
+     PRIMARY element in the space the words-typed odometer used to occupy. */
+  padding: 2px 2px;
+}
+.menu-xp-lv {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(12px, 2.4vw, 20px);
+  line-height: 1;
+  color: #2effe0;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Splash mini readout: LV + a 6px fill bar, capped at 220px. Same fill/flash logic. */
+.menu-xp-bar.is-mini {
+  max-width: 220px;
+}
+.menu-xp-bar.is-mini .menu-xp-track {
+  height: 6px;
+  background: #1a0b2e; /* no notches on the mini bar */
+}
+.menu-xp-track {
+  position: relative;
+  flex: 1;
+  height: 16px;
+  /* 10 static notch marks (thin lines every 10%) painted on the track background via a
+     repeating gradient — zero extra elements, no animation. Shown under the fill. */
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1.5px, transparent 1.5px 10%),
+    #1a0b2e;
+  border: 2px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.menu-xp-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0); /* set imperatively via scaleX(frac) — never width */
+  background: #2effe0; /* teal at rest; flashes yellow on level-up (below) */
+  /* Ease between values instead of snapping. Transform only; NO will-change (the
+     site-wide will-change budget is exactly .clock-fill + .burn). NO transition on the
+     colour — the level-up flash is an instant class swap. */
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* On a level-up the fill resets from ~1 back to ~0 — suppress the transition for that
+   single committed frame so it JUMPS instead of easing backwards across the whole bar. */
+.menu-xp-fill[data-jump] {
+  transition: none;
+}
+/* Level-up flash: fill turns yellow for 180ms (instant, no colour transition) then reverts. */
+.menu-xp-fill.is-levelflash {
+  background: #ffe94a;
+}
+.menu-xp-next {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  color: #b9a7d6;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ---- Feedback layer (outer backdrop margin, outside the panel border) ---- */
+.menu-xp-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden; /* clips a popup that runs off the viewport edge in a thin gutter */
+  z-index: 6;
+}
+
+/* Pooled COMBINED popups: "[LETTER] [+N]" in ONE element (one animation). Base opacity 0 →
+   invisible at rest; the stored WAAPI animation drives transform (translate + tier scale,
+   incl. the -50%,-50% centring) + opacity. Baseline-aligned so the small +N sits on the
+   letter's baseline, 6px gap. */
+.menu-xp-pop {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  opacity: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+.menu-xp-pop-letter {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(22px, 4vw, 34px);
+  line-height: 1;
+  color: #2effe0; /* tier colour set inline; the +N below stays yellow */
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.menu-xp-pop-plus {
+  font-family: 'Bungee', cursive;
+  /* 0.5× the letter size, baseline-aligned. */
+  font-size: clamp(11px, 2vw, 17px);
+  line-height: 1;
+  color: #ffe94a; /* always yellow */
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+
+/* Tap pop (touch): no letter, so the "+N" stands alone at the LETTER's size, tier-coloured
+   (colour set inline). */
+.menu-xp-pop.is-tap .menu-xp-pop-letter {
+  display: none;
+}
+.menu-xp-pop.is-tap .menu-xp-pop-plus {
+  font-size: clamp(22px, 4vw, 34px);
+  -webkit-text-stroke: 3px #000;
+}
+
+/* Screen-edge pulse (streak-tier crossing). Inset box-shadow (tier colour set inline);
+   only opacity animates. position:absolute inset:0 so it never affects layout. */
+.menu-xp-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* One-shot big centre-screen level-up moment: "LEVEL N" + a phrase line under it.
+   position:absolute so it never pushes layout or changes the menu height. Hidden at rest.
+   The scale/rotate/opacity animate on this container; both lines ride along. */
+.menu-xp-levelup {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%) rotate(-3deg) scale(1);
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.menu-xp-levelup-title {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(48px, 12vw, 110px);
+  line-height: 1;
+  color: #ffe94a;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.03em;
+}
+.menu-xp-levelup-sub {
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #ffe94a;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.12em;
+}

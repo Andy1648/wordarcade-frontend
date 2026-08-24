@@ -5,6 +5,8 @@
 // scale-up + white-flash exit, then App wipes to the homepage and fades music in.
 import { useEffect, useRef, useState } from 'react';
 import './SplashScreen.css';
+import { useXpCapture } from '../progress/useXpCapture';
+import { MenuXpBar, MenuXpFx } from './MenuXp';
 
 const TAGLINES = [
   // "TYPE FAST. DIE SLOW." intentionally lives in the post-dismiss intro card,
@@ -83,47 +85,53 @@ const EMBERS = [
 export default function SplashScreen({ onStart, onDismiss }) {
   const [tagIndex, setTagIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
+  // Fine pointer (mouse/trackpad + keyboard) → "TYPE TO START"; coarse (touch) → "TAP".
+  const [fine] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(pointer: fine)').matches);
   const dismissedRef = useRef(false);
-  // Keep the latest callbacks reachable from the once-bound key listener.
   const startRef = useRef(onStart);
   const dismissRef = useRef(onDismiss);
   startRef.current = onStart;
   dismissRef.current = onDismiss;
+  const fxRef = useRef(null);
+
+  function dismiss() {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    if (startRef.current) startRef.current(); // unlock audio (music) in the gesture
+    setLeaving(true);
+    setTimeout(() => {
+      if (dismissRef.current) dismissRef.current();
+    }, 300); // let the exit animation play first
+  }
+
+  // SHARED capture — the splash credits + pops exactly like the menu (no forked logic).
+  // A creditable keydown is a user gesture, so playClack (inside the hook) creates/resumes
+  // the AudioContext there; on the first credited key we also dismiss (which unlocks music
+  // via onStart). Disabled once we start leaving.
+  const { xpTotal, progress } = useXpCapture({
+    fxRef,
+    active: !leaving,
+    onCredit: () => dismiss(),
+  });
 
   // Cycle the taglines every 2.5s.
   useEffect(() => {
-    const id = setInterval(
-      () => setTagIndex((i) => (i + 1) % TAGLINES.length),
-      2500
-    );
+    const id = setInterval(() => setTagIndex((i) => (i + 1) % TAGLINES.length), 2500);
     return () => clearInterval(id);
   }, []);
 
-  // Only a click/tap dismisses (and unlocks audio) - NOT keyboard, so music
-  // never starts from a stray key press. Defined once; reads callbacks via refs.
+  // Click/tap dismisses (and unlocks audio) on EVERY device.
   useEffect(() => {
-    function dismiss() {
-      if (dismissedRef.current) return;
-      dismissedRef.current = true;
-      if (startRef.current) startRef.current(); // unlock audio in the gesture
-      setLeaving(true);
-      setTimeout(() => {
-        if (dismissRef.current) dismissRef.current();
-      }, 300); // let the exit animation play first
-    }
     const onClick = () => dismiss();
     window.addEventListener('click', onClick);
-    return () => {
-      window.removeEventListener('click', onClick);
-    };
+    return () => window.removeEventListener('click', onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div
       className={`splash-screen${leaving ? ' leaving' : ''}`}
-      role="button"
-      tabIndex={0}
-      aria-label="Click anywhere to start"
+      aria-label={fine ? 'Type or click to start' : 'Tap to start'}
     >
       <svg className="splash-burst" viewBox="-100 -100 200 200" aria-hidden="true">
         <polygon points={BURST_POINTS} fill="#FFE94A" />
@@ -176,11 +184,22 @@ export default function SplashScreen({ onStart, onDismiss }) {
         </span>
       </div>
 
-      <div className="splash-start">CLICK ANYWHERE TO START</div>
+      <div className="splash-start">{fine ? 'TYPE TO START' : 'TAP TO START'}</div>
+
+      {/* Mini XP readout under the prompt — hidden entirely for a first-time visitor
+          (xp === 0). Same store + scaleX fill as the menu bar. */}
+      {xpTotal > 0 && (
+        <div className="splash-xp">
+          <MenuXpBar level={progress.level} toNext={progress.toNext} frac={progress.frac} variant="mini" />
+        </div>
+      )}
 
       <div className="splash-halftone" aria-hidden="true" />
       {/* Darkens the backdrop to black on dismiss, cutting into the intro. */}
       <div className="splash-flash" aria-hidden="true" />
+
+      {/* Pops fire on the splash too (spawn-anywhere over this layer). */}
+      <MenuXpFx ref={fxRef} />
     </div>
   );
 }
