@@ -8,7 +8,7 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import { useXpCapture } from '../progress/useXpCapture';
 import { getWins, consumePendingWinsStamp } from '../progress/wins';
-import { consumePendingRebirth } from '../progress/xp';
+import { consumePendingRebirth, getRebirths } from '../progress/xp';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -256,6 +256,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // Wins balance shown in the chip (read once on menu mount). On arriving at the menu after
   // a round that paid out, fire ONE "+N WINS" stamp for the queued total.
   const [wins] = useState(() => getWins());
+  // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
+  // happen on other screens, which remount this component, so a snapshot is correct.
+  const [rebirths] = useState(() => getRebirths());
   useEffect(() => {
     const rb = consumePendingRebirth();
     if (rb > 0 && xpFxRef.current) {
@@ -443,9 +446,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </button>
 
         {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
-            odometer used to occupy (that chip was removed). LV + fill + "N TO LV n+1",
-            fed by global keystroke capture (see the effect above); no text input. */}
-        <MenuXpBar level={xpProgress.level} toNext={xpProgress.toNext} frac={xpProgress.frac} wins={wins} />
+            odometer used to occupy (that chip was removed). LV chip + fill + an "XP-into /
+            XP-needed" readout, fed by global keystroke capture (see the effect above). */}
+        <MenuXpBar
+          level={xpProgress.level}
+          toNext={xpProgress.toNext}
+          frac={xpProgress.frac}
+          intoLevel={xpProgress.intoLevel}
+          cost={xpProgress.cost}
+          rebirths={rebirths}
+          wins={wins}
+        />
 
         <div className="homepage-cards-region">
           <div

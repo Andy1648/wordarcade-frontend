@@ -6,51 +6,125 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
 
-// The progress bar: "LV 7" · fill · "142 TO LV 8". Fill is scaleX (never width) and EASES
-// (200ms). On a level-up the frac drops from ~1 to ~0; we suppress the transition for that
-// one committed frame (data-jump) so it snaps back, and flash the fill yellow for 180ms.
-// `variant="mini"` (splash) drops the "TO LV" line and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null }) {
+// The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
+// a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
+// The fill is scaleX (never width) and glides via a rAF LERP (displayed += (target −
+// displayed)·0.18), not a CSS transition — the loop only runs while it has ground to cover
+// and stops at rest (nothing scheduled between keystrokes). On a level-up the displayed
+// value SNAPS to 0 (no backwards glide) and fills forward, flashing yellow for 180ms. Fill
+// colour keys off the rebirth count (class/attr swap only). `variant="mini"` (splash) drops
+// the readout and shrinks the track.
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0 }) {
   const fillRef = useRef(null);
+  const markerRef = useRef(null);
+  const trackRef = useRef(null);
+  const displayedRef = useRef(0);
+  const targetRef = useRef(0);
+  const rafRef = useRef(0);
+  const trackWRef = useRef(0);
   const prevLevelRef = useRef(level);
+
+  // Cache the track's pixel width so the leading-edge marker can ride the fill via a
+  // TRANSFORM (translateX), not a layout property. Measured on mount + resize only.
   useLayoutEffect(() => {
-    const el = fillRef.current;
-    if (!el) return undefined;
-    const clamped = Math.max(0, Math.min(1, frac));
-    if (level > prevLevelRef.current) {
-      el.setAttribute('data-jump', '');
-      el.style.transform = `scaleX(${clamped})`;
-      el.classList.add('is-levelflash');
-      const raf = requestAnimationFrame(() => el.removeAttribute('data-jump'));
-      const flash = setTimeout(() => el.classList.remove('is-levelflash'), 180);
-      prevLevelRef.current = level;
-      return () => {
-        cancelAnimationFrame(raf);
-        clearTimeout(flash);
-      };
+    const track = trackRef.current;
+    if (!track) return undefined;
+    const measure = () => {
+      trackWRef.current = track.clientWidth;
+    };
+    measure();
+    let ro;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(measure);
+      ro.observe(track);
+      return () => ro.disconnect();
     }
-    el.style.transform = `scaleX(${clamped})`;
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  // One rAF writing one transform (plus the marker, riding the same displayed value). Reads
+  // and writes only refs, so a stale instance left over from a re-render behaves identically.
+  function writeFrame(v) {
+    const fill = fillRef.current;
+    if (fill) fill.style.transform = `scaleX(${v})`;
+    const marker = markerRef.current;
+    if (marker) {
+      let w = trackWRef.current;
+      if (!w && trackRef.current) {
+        w = trackRef.current.clientWidth;
+        trackWRef.current = w;
+      }
+      marker.style.transform = `translateX(${v * w - 2}px)`;
+      marker.style.opacity = v > 0.004 ? '1' : '0';
+    }
+  }
+  function tick() {
+    const target = targetRef.current;
+    let d = displayedRef.current + (targetRef.current - displayedRef.current) * 0.18;
+    if (Math.abs(target - d) < 0.0005) {
+      displayedRef.current = target; // snap
+      writeFrame(target);
+      rafRef.current = 0; // converged — schedule nothing at rest
+      return;
+    }
+    displayedRef.current = d;
+    writeFrame(d);
+    rafRef.current = requestAnimationFrame(tick);
+  }
+  function startLoop() {
+    if (rafRef.current) return; // already gliding
+    rafRef.current = requestAnimationFrame(tick);
+  }
+
+  // Retarget on level/frac change; kick the loop only when the target actually moves.
+  useLayoutEffect(() => {
+    const fill = fillRef.current;
+    if (!fill) return undefined;
+    const clamped = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
+    if (level > prevLevelRef.current) {
+      // Level-up: snap the fill to empty instantly, then glide forward into the new level.
+      displayedRef.current = 0;
+      writeFrame(0);
+      fill.classList.add('is-levelflash');
+      const flash = setTimeout(() => fill.classList.remove('is-levelflash'), 180);
+      prevLevelRef.current = level;
+      targetRef.current = clamped;
+      startLoop();
+      return () => clearTimeout(flash);
+    }
     prevLevelRef.current = level;
+    targetRef.current = clamped;
+    startLoop();
     return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, frac]);
+
+  // Cancel any in-flight glide on unmount.
+  useEffect(() => () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const reb = Math.min(3, Math.max(0, Math.floor(rebirths) || 0));
 
   return (
     <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden="true">
-      <span className="menu-xp-lv">LV {level}</span>
       {variant !== 'mini' && wins != null && (
         <span className="menu-wins-chip" aria-label={`${wins} wins`}>
           <span className="menu-wins-coin" aria-hidden="true" />
           {wins}
         </span>
       )}
-      <span className="menu-xp-track">
-        <span className="menu-xp-fill" ref={fillRef} />
+      <span className="menu-xp-lv">LV {level}</span>
+      <span className="menu-xp-track" ref={trackRef}>
+        <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
+        <span className="menu-xp-marker" ref={markerRef} />
+        {variant !== 'mini' && (
+          <span className="menu-xp-readout">
+            {Math.max(0, Math.round(intoLevel)).toLocaleString()} / {Math.max(0, Math.round(cost)).toLocaleString()}
+          </span>
+        )}
       </span>
-      {variant !== 'mini' && (
-        <span className="menu-xp-next">
-          {toNext} TO LV {level + 1}
-        </span>
-      )}
     </div>
   );
 }
@@ -63,15 +137,34 @@ const POP_POOL = 16;
 const POP_CAP = 12; // 12 pops + fill transition 1 + one edge pulse 1 = the 14 menu budget
 const GRID_COLS = 6;
 const GRID_ROWS = 4;
-const JITTER = 12; // ±px per spawn
+const JITTER = 22; // ±px per spawn
 const POP_HALF = 30; // keep grid slots this far off the bar box
+const RECENT_SLOTS = 4; // reject a slot used by the last N spawns (no visible repeat/march)
 
 // Screen-edge pulse on a streak-tier crossing. Pool 2 (crossings never overlap). 260ms.
 const EDGE_MS = 260;
 const EDGE_POOL = 2;
 
-const LEVELUP_MS = 700; // ~100ms appear + 420ms hold + 180ms fade
+// Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
+// 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
+const LEVELUP_MS = 1500;
+const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
+
+// Pick a spawn slot at RANDOM, rejecting any used by the last few spawns (so pops neither
+// repeat a spot nor march in a visible pattern). Records the choice in `recent`.
+function pickSlot(slots, recent) {
+  if (slots.length <= 1) return 0;
+  const ban = new Set(recent.slice(-Math.min(RECENT_SLOTS, slots.length - 1)));
+  let idx = 0;
+  for (let tries = 0; tries < 24; tries++) {
+    idx = Math.floor(Math.random() * slots.length);
+    if (!ban.has(idx)) break;
+  }
+  recent.push(idx);
+  if (recent.length > RECENT_SLOTS) recent.shift();
+  return idx;
+}
 
 function pickIndex(anims, poolSize, cap, nextRef) {
   const running = [];
@@ -99,13 +192,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelupRef = useRef(null);
   const levelTitleRef = useRef(null);
   const levelSubRef = useRef(null);
+  const levelDetailRef = useRef(null);
   const winsStampRef = useRef(null);
   const popAnimsRef = useRef([]);
   const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
   const winsStampAnimRef = useRef(null);
   const slotsRef = useRef([]);
-  const slotIdxRef = useRef(0);
+  const recentSlotsRef = useRef([]); // indices of the last few chosen slots (anti-repeat)
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
   const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
@@ -184,10 +278,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
-          { transform: `${CENTER}rotate(-3deg) scale(1.6)`, opacity: 0, offset: 0 },
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.143 },
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.743 },
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 },
+          { transform: `${CENTER}rotate(-3deg) scale(1.7)`, opacity: 0, offset: 0 }, // 0ms
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.1 }, // 150ms — in
+          { transform: `${CENTER}rotate(-3deg) scale(1.06)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
         ],
         { duration: LEVELUP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
       );
@@ -204,7 +300,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 1, offset: 0.7 },
           { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 0, offset: 1 },
         ],
-        { duration: LEVELUP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+        { duration: WINSSTAMP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
       );
       a.cancel();
       winsStampAnimRef.current = a;
@@ -222,8 +318,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
-      const slot = slots[slotIdxRef.current % slots.length];
-      slotIdxRef.current = (slotIdxRef.current + 1) % slots.length;
+      const slot = slots[pickSlot(slots, recentSlotsRef.current)];
       const jx = Math.random() * (JITTER * 2) - JITTER;
       const jy = Math.random() * (JITTER * 2) - JITTER;
       el.classList.remove('is-tap'); // reset if this node was last used for a tap
@@ -234,11 +329,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       el.children[1].style.color = ''; // back to CSS yellow
       el.style.left = `${slot.x + jx}px`;
       el.style.top = `${slot.y + jy}px`;
-      // Streak tier scales the pop via the TRANSFORM (not font-size), baked into keyframes.
+      // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
+      // small random rotation + scale multiplier on top so no two pops read identical.
+      const rot = Math.random() * 20 - 10; // [-10°, +10°]
+      const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}scale(${scale}) translateY(4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}scale(${scale}) translateY(-4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}scale(${scale}) translateY(-22px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -267,10 +365,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       el.children[1].style.color = colour; // tier colour for the tap
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
+      const rot = Math.random() * 20 - 10; // [-10°, +10°]
+      const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}scale(${scale}) translateY(4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}scale(${scale}) translateY(-4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}scale(${scale}) translateY(-22px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -295,16 +395,18 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       if (levelSubRef.current) {
         levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
       }
+      if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
       a.cancel();
       a.play();
     },
-    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (700ms ≤ 900).
+    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms).
     rebirthCelebration(n) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel();
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
       if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
+      if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
       a.cancel();
       a.play();
     },
@@ -346,6 +448,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           LEVEL UP
         </span>
         <span className="menu-xp-levelup-sub" ref={levelSubRef} />
+        <span className="menu-xp-levelup-detail" ref={levelDetailRef} />
       </div>
       <div className="menu-xp-winsstamp" ref={winsStampRef} />
     </div>

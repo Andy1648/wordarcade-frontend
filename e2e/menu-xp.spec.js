@@ -23,6 +23,13 @@ async function gotoMenuLive(page) {
 
 test.describe('menu XP', () => {
   test('combined pop shows the typed LETTER + "+N" in one element', async ({ page }) => {
+    // Seed a very high XP so one keystroke nudges the fill fraction by only ~0.0006 — the
+    // realistic case for the rAF-lerp rest check below. The lerp then converges in 1–2 frames
+    // (frame-count-bound, so robust even when parallel test load throttles the frame rate); a
+    // huge fresh-context 0→0.8 gap would instead take many frames and isn't what "at rest" means.
+    await page.addInitScript(() => {
+      try { localStorage.setItem('taw.xp', '200000'); } catch { /* storage blocked */ }
+    });
     await gotoMenuLive(page);
     await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'q', bubbles: true })));
     await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '7', bubbles: true })));
@@ -34,6 +41,37 @@ test.describe('menu XP', () => {
     expect(r.letters).toContain('7');
     // menu multiplier is 10 → the "+N" span reads +10
     expect(r.plus).toContain('+10');
+
+    // The bar fill glides via a rAF LERP that MUST stop at rest — nothing scheduled once it
+    // converges. The menu also runs a persistent beat-sync rAF, so we isolate the XP loop by
+    // counting only rAF callbacks that MUTATE the fill transform. 500ms after the last
+    // keystroke, that count must be zero (the lerp has settled and scheduled nothing more).
+    const xpFramesAtRest = await page.evaluate(async () => {
+      const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+      const fill = document.querySelector('.menu-xp-fill');
+      // Wait for the initial mount fill-in glide to settle to a true resting bar — poll the
+      // transform until it stops changing (frame-count robust; no fixed wall-clock guess).
+      let last = fill.style.transform;
+      for (let stable = 0, guard = 0; stable < 10 && guard < 400; guard += 1) {
+        await sleep(16);
+        if (fill.style.transform === last) stable += 1;
+        else { stable = 0; last = fill.style.transform; }
+      }
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+      await sleep(500); // 500ms after the last keystroke
+      let xp = 0;
+      const orig = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = (cb) =>
+        orig((t) => {
+          const before = fill.style.transform;
+          cb(t);
+          if (fill.style.transform !== before) xp += 1;
+        });
+      await sleep(300);
+      window.requestAnimationFrame = orig;
+      return xp;
+    });
+    expect(xpFramesAtRest).toBe(0);
   });
 
   test('sustained 30 keys/sec burst never exceeds 14 concurrent finite animations', async ({ page }) => {
