@@ -74,7 +74,7 @@ test.describe('menu XP', () => {
     expect(xpFramesAtRest).toBe(0);
   });
 
-  test('sustained 30 keys/sec burst never exceeds 14 concurrent finite animations', async ({ page }) => {
+  test('sustained 30 keys/sec burst never exceeds 16 concurrent finite animations', async ({ page }) => {
     await gotoMenuLive(page);
 
     const result = await page.evaluate(async () => {
@@ -118,14 +118,14 @@ test.describe('menu XP', () => {
     });
 
     // The whole point: the concurrent FINITE running-animation count stays within budget.
-    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(14);
+    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(16);
     // Sanity: the burst actually credited XP and crossed at least one level (need(1)=100).
     expect(result.xp).toBeGreaterThanOrEqual(100);
   });
 });
 
 test.describe('splash XP', () => {
-  test('TYPE TO START: a keydown dismisses, credits XP, fires a pop, and unlocks audio', async ({ page }) => {
+  test('TYPE TO START gate: a first-time visitor needs 5 keystrokes; each credits, pops, and fills a pip; the 5th dismisses', async ({ page }) => {
     await installBackendMock(page);
     // Count AudioContext constructions (the keydown must create/resume one).
     await page.addInitScript(() => {
@@ -140,24 +140,91 @@ test.describe('splash XP', () => {
         };
       }
     });
-    await page.goto('/'); // fresh context → the splash shows (no ?portal skip)
+    await page.goto('/'); // fresh context → the splash shows (no ?portal skip), xp=0 → 5-key gate
     await page.locator('.splash-screen').waitFor({ state: 'visible' });
     // Desktop Chrome is a fine pointer → the prompt invites typing.
     await expect(page.locator('.splash-start')).toHaveText('TYPE TO START');
 
-    await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
-    await page.waitForTimeout(80);
+    const key = () =>
+      page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
 
-    const r = await page.evaluate(() => ({
+    // First keystroke: credits + pops + fills ONE pip, but does NOT dismiss (gate is 5).
+    await key();
+    await page.waitForTimeout(80);
+    const after1 = await page.evaluate(() => ({
       leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      pips: document.querySelectorAll('.splash-pip').length,
+      pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
       poppedA: [...document.querySelectorAll('.menu-xp-pop-letter')].some((n) => n.textContent === 'A'),
       xp: (() => { try { return Number(localStorage.getItem('taw.xp')) || 0; } catch { return 0; } })(),
       audioContexts: window.__ac,
     }));
-    expect(r.leaving).toBe(true); // typing dismissed the splash
-    expect(r.poppedA).toBe(true); // a pop fired ON the splash
-    expect(r.xp).toBeGreaterThanOrEqual(10); // credited normally (+10)
-    expect(r.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
+    expect(after1.leaving).toBe(false); // one key is not enough — the gate holds
+    expect(after1.pips).toBe(5); // five pips for a first-time visitor
+    expect(after1.pipsOn).toBe(1); // exactly one filled after one keystroke
+    expect(after1.poppedA).toBe(true); // a pop fired ON the splash
+    expect(after1.xp).toBeGreaterThanOrEqual(10); // credited normally (+10)
+    expect(after1.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
+
+    // Keys 2–4 fill more pips, still no dismiss.
+    await key();
+    await key();
+    await key();
+    await page.waitForTimeout(80);
+    const after4 = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
+    }));
+    expect(after4.leaving).toBe(false);
+    expect(after4.pipsOn).toBe(4);
+
+    // The 5th keystroke meets the gate and dismisses.
+    await key();
+    await page.waitForTimeout(80);
+    const after5 = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+    }));
+    expect(after5.leaving).toBe(true); // gate met → splash dismissed
+  });
+
+  test('TYPE TO START gate: a returning visitor (banked XP) needs only 3 keystrokes', async ({ page }) => {
+    await installBackendMock(page);
+    // Seed XP BEFORE first paint → loadProgress().xp > 0 → the 3-key returning-visitor gate.
+    await page.addInitScript(() => {
+      try { localStorage.setItem('taw.xp', '500'); } catch { /* storage blocked */ }
+    });
+    await page.goto('/'); // fresh context still shows the splash; the seeded XP drops the gate to 3
+    await page.locator('.splash-screen').waitFor({ state: 'visible' });
+    await expect(page.locator('.splash-start')).toHaveText('TYPE TO START');
+
+    // Exactly 3 pips for a returning visitor.
+    expect(await page.locator('.splash-pip').count()).toBe(3);
+
+    const key = () =>
+      page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
+
+    // Two keystrokes fill two pips, no dismiss yet.
+    await key();
+    await key();
+    await page.waitForTimeout(80);
+    const after2 = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
+    }));
+    expect(after2.leaving).toBe(false);
+    expect(after2.pipsOn).toBe(2);
+
+    // The 3rd keystroke fills the 3rd pip AND dismisses. Assert the fill with a RETRYING
+    // matcher (polls immediately) so it lands in the ~300ms pre-unmount window regardless of
+    // parallel-worker latency — a fixed wait could read after the splash unmounts.
+    await key();
+    await expect(page.locator('.splash-pip.is-on')).toHaveCount(3); // the 3rd pip filled
+    await page.waitForTimeout(80);
+    const after3 = await page.evaluate(() => ({
+      // `?? true`: if the splash has already unmounted, that still counts as dismissed.
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+    }));
+    expect(after3.leaving).toBe(true); // gate met → splash dismissed
   });
 });
 

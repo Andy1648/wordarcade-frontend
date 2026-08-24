@@ -1,28 +1,36 @@
 // MenuXp.jsx — the menu/splash XP UI: a progress bar (MenuXpBar) and the feedback layer
 // (MenuXpFx). All motion is finite, transform/opacity only, nothing animates at rest, and
-// there is NO will-change anywhere. Pop spawn SLOTS are measured on mount/resize and cached
-// (never per keystroke); the only exclusion is the XP bar's box, so the readout is never
-// covered.
+// there is NO will-change anywhere. The fx-layer size + XP bar box are measured on
+// mount/resize and cached (never per keystroke); each pop then picks a continuous random
+// position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
 
 // The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
 // a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
-// The fill is scaleX (never width) and glides via a rAF LERP (displayed += (target −
-// displayed)·0.18), not a CSS transition — the loop only runs while it has ground to cover
-// and stops at rest (nothing scheduled between keystrokes). On a level-up the displayed
-// value SNAPS to 0 (no backwards glide) and fills forward, flashing yellow for 180ms. Fill
-// colour keys off the rebirth count (class/attr swap only). `variant="mini"` (splash) drops
-// the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0 }) {
+// The fill is scaleX (never width) and glides via a rAF exponential ease that is
+// framerate-independent (k = 1 − exp(−dt/90), dt clamped to 50ms), not a CSS transition —
+// the loop only runs while it has ground to cover and stops at rest (nothing scheduled
+// between keystrokes). The readout's left number counts up off the same `displayed` value.
+// On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
+// flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
+// `variant="mini"` (splash) drops the readout and shrinks the track.
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
+  const readoutNumRef = useRef(null);
   const displayedRef = useRef(0);
   const targetRef = useRef(0);
   const rafRef = useRef(0);
+  const lastFrameRef = useRef(null);
   const trackWRef = useRef(0);
+  const costRef = useRef(cost);
   const prevLevelRef = useRef(level);
+
+  // Mirror `cost` so the rAF frame can read it without a stale closure (the loop
+  // outlives any single render). Assigned during render — a plain mirror ref.
+  costRef.current = cost;
 
   // Cache the track's pixel width so the leading-edge marker can ride the fill via a
   // TRANSFORM (translateX), not a layout property. Measured on mount + resize only.
@@ -58,14 +66,25 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       marker.style.transform = `translateX(${v * w - 2}px)`;
       marker.style.opacity = v > 0.004 ? '1' : '0';
     }
+    // Count the readout's left number up smoothly off `displayed` (not the stepped
+    // prop). Absent on the mini variant → guarded.
+    const num = readoutNumRef.current;
+    if (num) num.textContent = Math.max(0, Math.round(v * costRef.current)).toLocaleString();
   }
-  function tick() {
+  // Framerate-independent exponential smoothing: with the rAF timestamp as `now`,
+  // the same wall-clock ease plays whether the display runs at 60/120/30Hz.
+  function tick(now) {
+    const last = lastFrameRef.current;
+    lastFrameRef.current = now;
     const target = targetRef.current;
-    let d = displayedRef.current + (targetRef.current - displayedRef.current) * 0.18;
+    const dt = Math.min((last == null ? 16 : now - last), 50);
+    const k = 1 - Math.exp(-dt / 90);
+    let d = displayedRef.current + (target - displayedRef.current) * k;
     if (Math.abs(target - d) < 0.0005) {
       displayedRef.current = target; // snap
       writeFrame(target);
       rafRef.current = 0; // converged — schedule nothing at rest
+      lastFrameRef.current = null;
       return;
     }
     displayedRef.current = d;
@@ -74,6 +93,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   }
   function startLoop() {
     if (rafRef.current) return; // already gliding
+    lastFrameRef.current = null; // seed the first frame's dt from a nominal 16ms
     rafRef.current = requestAnimationFrame(tick);
   }
 
@@ -107,21 +127,32 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
   const reb = Math.min(3, Math.max(0, Math.floor(rebirths) || 0));
 
+  // The mini (splash) bar is fully decorative → aria-hidden. The full bar exposes ONLY the
+  // wins button (an interactive shop entry) to assistive tech; the LV/fill/readout stay
+  // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
-    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden="true">
+    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden={variant === 'mini' ? 'true' : undefined}>
       {variant !== 'mini' && wins != null && (
-        <span className="menu-wins-chip" aria-label={`${wins} wins`}>
-          <span className="menu-wins-coin" aria-hidden="true" />
-          {wins}
-        </span>
+        onWinsClick ? (
+          <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
+            <span className="menu-wins-coin" aria-hidden="true" />
+            {wins}
+          </button>
+        ) : (
+          <span className="menu-wins-chip" aria-label={`${wins} wins`}>
+            <span className="menu-wins-coin" aria-hidden="true" />
+            {wins}
+          </span>
+        )
       )}
-      <span className="menu-xp-lv">LV {level}</span>
-      <span className="menu-xp-track" ref={trackRef}>
+      <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
+      <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
         <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
         <span className="menu-xp-marker" ref={markerRef} />
         {variant !== 'mini' && (
           <span className="menu-xp-readout">
-            {Math.max(0, Math.round(intoLevel)).toLocaleString()} / {Math.max(0, Math.round(cost)).toLocaleString()}
+            <span ref={readoutNumRef}>{Math.max(0, Math.round(intoLevel)).toLocaleString()}</span>
+            {' '}/ {Math.max(0, Math.round(cost)).toLocaleString()}
           </span>
         )}
       </span>
@@ -131,15 +162,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
 const CENTER = 'translate(-50%,-50%) ';
 
-// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 16, cap 12 running.
-const POP_MS = 260;
+// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 16, cap 14 running.
+// At 30 keys/sec × 0.42s ≈ 12.6 concurrent, so the cap sits just above at 14.
+const POP_MS = 420;
 const POP_POOL = 16;
-const POP_CAP = 12; // 12 pops + fill transition 1 + one edge pulse 1 = the 14 menu budget
-const GRID_COLS = 6;
-const GRID_ROWS = 4;
-const JITTER = 22; // ±px per spawn
-const POP_HALF = 30; // keep grid slots this far off the bar box
-const RECENT_SLOTS = 4; // reject a slot used by the last N spawns (no visible repeat/march)
+const POP_CAP = 14; // 14 pops + fill transition 1 + one edge pulse 1 = the 16 menu budget
+const POP_HALF = 30; // keep a pop this far off the fx-layer edge and the bar box
+const POP_MIN_GAP = 90; // reject a candidate within this many px of the last few spawns
+const RECENT_POS = 6; // ring buffer: reject against the last N accepted positions
+const POP_TRIES = 12; // random attempts before accepting the last candidate anyway
 
 // Screen-edge pulse on a streak-tier crossing. Pool 2 (crossings never overlap). 260ms.
 const EDGE_MS = 260;
@@ -151,19 +182,40 @@ const LEVELUP_MS = 1500;
 const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
 
-// Pick a spawn slot at RANDOM, rejecting any used by the last few spawns (so pops neither
-// repeat a spot nor march in a visible pattern). Records the choice in `recent`.
-function pickSlot(slots, recent) {
-  if (slots.length <= 1) return 0;
-  const ban = new Set(recent.slice(-Math.min(RECENT_SLOTS, slots.length - 1)));
-  let idx = 0;
-  for (let tries = 0; tries < 24; tries++) {
-    idx = Math.floor(Math.random() * slots.length);
-    if (!ban.has(idx)) break;
+// Pick a CONTINUOUS random spawn position inside the fx layer (inset by POP_HALF),
+// rejecting a candidate that overlaps the XP bar box (expanded by POP_HALF) or lands
+// within POP_MIN_GAP of any of the last RECENT_POS accepted positions — so pops read as
+// scattered, never as marching rows. Up to POP_TRIES attempts; if all fail the last
+// candidate is accepted. Records the accepted position in the `recent` ring buffer.
+function pickPosition(w, h, box, recent) {
+  const minX = POP_HALF;
+  const minY = POP_HALF;
+  const spanX = Math.max(0, w - POP_HALF * 2);
+  const spanY = Math.max(0, h - POP_HALF * 2);
+  const gap2 = POP_MIN_GAP * POP_MIN_GAP;
+  let cand = { x: minX + spanX / 2, y: minY + spanY / 2 };
+  for (let tries = 0; tries < POP_TRIES; tries++) {
+    const x = minX + Math.random() * spanX;
+    const y = minY + Math.random() * spanY;
+    cand = { x, y };
+    if (box && x > box.l - POP_HALF && x < box.r + POP_HALF && y > box.t - POP_HALF && y < box.bt + POP_HALF) {
+      continue; // over the bar box
+    }
+    let tooClose = false;
+    for (let n = 0; n < recent.length; n++) {
+      const dx = x - recent[n].x;
+      const dy = y - recent[n].y;
+      if (dx * dx + dy * dy < gap2) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (tooClose) continue;
+    break; // accepted
   }
-  recent.push(idx);
-  if (recent.length > RECENT_SLOTS) recent.shift();
-  return idx;
+  recent.push(cand);
+  if (recent.length > RECENT_POS) recent.shift();
+  return cand;
 }
 
 function pickIndex(anims, poolSize, cap, nextRef) {
@@ -198,24 +250,23 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
   const winsStampAnimRef = useRef(null);
-  const slotsRef = useRef([]);
-  const recentSlotsRef = useRef([]); // indices of the last few chosen slots (anti-repeat)
+  const layerSizeRef = useRef({ w: 0, h: 0 }); // fx-layer px size (mount/resize only)
+  const recentPosRef = useRef([]); // ring buffer of the last few accepted {x,y} (anti-repeat)
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
   const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
   const barBoxRef = useRef(null); // XP bar box (layer-local) — taps must not cover it
 
-  // Measure a 6×4 grid of spawn slots across the WHOLE fx area (panel included), excluding
-  // any slot that would overlap the XP bar's box (so the readout is never covered). On
-  // mount + resize only — never per keystroke.
+  // Cache the fx-layer's pixel size and the XP bar's box (layer-local), so per-keystroke
+  // pop placement is a pure random pick with no layout reads. On mount + resize only —
+  // never per keystroke.
   useEffect(() => {
     const layer = layerRef.current;
     if (!layer) return undefined;
     const measure = () => {
       const wrap = layer.getBoundingClientRect();
       layerRectRef.current = { left: wrap.left, top: wrap.top };
-      const W = wrap.width;
-      const H = wrap.height;
+      layerSizeRef.current = { w: wrap.width, h: wrap.height };
       const bar = document.querySelector('.menu-xp-bar');
       let box = null;
       if (bar) {
@@ -223,18 +274,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         box = { l: b.left - wrap.left, t: b.top - wrap.top, r: b.right - wrap.left, bt: b.bottom - wrap.top };
       }
       barBoxRef.current = box;
-      const slots = [];
-      for (let r = 0; r < GRID_ROWS; r++) {
-        for (let c = 0; c < GRID_COLS; c++) {
-          const x = ((c + 0.5) / GRID_COLS) * W;
-          const y = ((r + 0.5) / GRID_ROWS) * H;
-          if (box && x > box.l - POP_HALF && x < box.r + POP_HALF && y > box.t - POP_HALF && y < box.bt + POP_HALF) {
-            continue; // never cover the bar
-          }
-          slots.push({ x, y });
-        }
-      }
-      slotsRef.current = slots.length ? slots : [{ x: W / 2, y: H * 0.25 }];
     };
     measure();
     const raf = requestAnimationFrame(measure);
@@ -251,9 +290,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     popAnimsRef.current = popElsRef.current.map((el) => {
       const a = el.animate(
         [
-          { transform: `${CENTER}translateY(4px)`, opacity: 0, offset: 0 },
-          { transform: `${CENTER}translateY(-4px)`, opacity: 1, offset: 0.25 },
-          { transform: `${CENTER}translateY(-22px)`, opacity: 0, offset: 1 },
+          { transform: `${CENTER}translateY(6.4px)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}translateY(-6.4px)`, opacity: 1, offset: 0.25 },
+          { transform: `${CENTER}translateY(-35.2px)`, opacity: 0, offset: 1 },
         ],
         popOpts
       );
@@ -310,33 +349,31 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
 
   useImperativeHandle(ref, () => ({
     letterPop(letter, plusText, scale = 1, colour = '#2EFFE0') {
-      const slots = slotsRef.current;
+      const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
-      if (!slots.length || !anims.length) return;
+      if (!w || !h || !anims.length) return; // not measured yet, or no pool
       const levelup = levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
       const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
-      const slot = slots[pickSlot(slots, recentSlotsRef.current)];
-      const jx = Math.random() * (JITTER * 2) - JITTER;
-      const jy = Math.random() * (JITTER * 2) - JITTER;
+      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
       el.classList.remove('is-tap'); // reset if this node was last used for a tap
       // children: [0] = letter (tier colour), [1] = "+N" (always yellow, via CSS)
       el.children[0].textContent = letter;
       el.children[0].style.color = colour;
       el.children[1].textContent = plusText;
       el.children[1].style.color = ''; // back to CSS yellow
-      el.style.left = `${slot.x + jx}px`;
-      el.style.top = `${slot.y + jy}px`;
+      el.style.left = `${pos.x}px`;
+      el.style.top = `${pos.y}px`;
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(6.4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-6.4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-35.2px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -368,9 +405,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(6.4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-6.4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-35.2px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();

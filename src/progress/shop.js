@@ -107,6 +107,14 @@ export function buy(id) {
   return { ok: true, wins: next };
 }
 
+// True when the player can afford at least one item they don't already own — drives the
+// menu wins-chip's "something to buy" dot. Pure given wins/owned (defaults read live).
+export function canAffordAny(wins = getWins(), owned = getOwned()) {
+  const ownedSet = new Set(owned);
+  const bal = Number.isFinite(wins) ? wins : 0;
+  return ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price);
+}
+
 // Equip an OWNED item (instant + free) into its type's slot. Returns true on success.
 export function equip(id) {
   if (!isOwned(id)) return false;

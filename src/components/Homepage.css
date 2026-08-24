@@ -74,6 +74,55 @@
   transform: scale(0.965);
 }
 
+/* SHOP entry button — loud top-right, deliberately NOT a circle (distinct from the round
+   audio toggles): flat yellow, thick black border, hard offset shadow, bag glyph. */
+.homepage-shop-btn {
+  position: absolute;
+  top: clamp(10px, 1.6vh, 20px);
+  right: clamp(12px, 2vw, 24px);
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffe94a;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.homepage-shop-btn svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.homepage-shop-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.homepage-shop-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+.homepage-shop-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+/* Affordable-item dot — a contrasting pink badge (a yellow dot would vanish on the yellow
+   button); static, no animation, corner-anchored so it adds no layout. */
+.homepage-shop-dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff2ec4;
+  border: 2px solid #000;
+}
+
 /* Reduced motion: drop the recede entirely (the dialog cross-fades; the scrim
    still dims), so nothing scales. */
 @media (prefers-reduced-motion: reduce) {

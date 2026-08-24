@@ -384,6 +384,10 @@ function App() {
   // live value. Word Bomb pays at game_over; Category Blitz pays at each round_end.
   const myWbAcceptedRef = useRef(0); // Word Bomb: my accepts this game
   const myBlitzAcceptedRef = useRef(0); // Category Blitz: my accepts this round
+  // Which menu control ('shop' | 'stats' | null) opened the overlay we're in, so the
+  // homepage can restore focus to it when the overlay closes (a11y). A ref (not state):
+  // it's read once by the remounting Homepage, never drives a render.
+  const overlayReturnRef = useRef(null);
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
   const [categoryScores, setCategoryScores] = useState(null);
@@ -1313,10 +1317,12 @@ function App() {
   }
 
   function goToStats() {
+    overlayReturnRef.current = 'stats'; // restore focus here when Stats closes
     setView('stats');
   }
 
   function goToShop() {
+    overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
     setView('shop');
   }
 
@@ -1683,6 +1689,10 @@ function App() {
         onCredits={goToCredits}
         onStats={goToStats}
         onShop={goToShop}
+        restoreFocus={overlayReturnRef.current}
+        onFocusRestored={() => {
+          overlayReturnRef.current = null;
+        }}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}

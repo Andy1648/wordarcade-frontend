@@ -1,6 +1,7 @@
 // StatsScreen.jsx — a read-only, static progression readout (no animation). Reachable from
 // the STATS footer link. Styled like the mode dialog (thick black border, hard offset
 // shadow, #1a0b2e panel). Scrolls internally on a short viewport; never breaks 100dvh.
+import { useEffect, useRef } from 'react';
 import './StatsScreen.css';
 import {
   loadProgress,
@@ -8,7 +9,6 @@ import {
   getTaps,
   getRebirths,
   rebirthMult,
-  rebirthThreshold,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { equippedPopStyleMult, equippedSoundPackMult } from '../progress/shop';
@@ -17,6 +17,19 @@ const fmt = (n) => (Number.isFinite(n) ? n : 0).toLocaleString();
 const x = (n) => `×${n.toFixed(2)}`;
 
 export default function StatsScreen({ onBack }) {
+  const overlayRef = useRef(null);
+  const onBackRef = useRef(onBack);
+  onBackRef.current = onBack;
+  // A11y: move focus into the dialog on open; Escape closes it (once on mount).
+  useEffect(() => {
+    overlayRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') onBackRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const { xp, lifetimeLetters } = loadProgress();
   const level = levelFromXp(xp).level;
   const rounds = getRounds();
@@ -49,7 +62,7 @@ export default function StatsScreen({ onBack }) {
   ];
 
   return (
-    <div className="stats-overlay" role="dialog" aria-label="Stats">
+    <div className="stats-overlay" role="dialog" aria-modal="true" aria-label="Stats" tabIndex={-1} ref={overlayRef}>
       <div className="stats-panel">
         <div className="stats-header">
           <h2 className="stats-title">STATS</h2>
@@ -77,8 +90,6 @@ export default function StatsScreen({ onBack }) {
               </div>
             ))}
           </dl>
-          {/* Visible-but-locked from day one: the next rebirth target, always shown. */}
-          <div className="stats-rebirth-at">REBIRTH AT LV {rebirthThreshold(rebirths)}</div>
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>
           <dl className="stats-list">
