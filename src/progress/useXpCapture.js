@@ -13,8 +13,10 @@ import {
   createRateLimiter,
   isCreditableKey,
   levelFromXp,
+  levelUpWins,
   xpPerInput,
 } from './xp';
+import { grantWins } from './wins';
 import { playClack } from './clack';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
@@ -62,6 +64,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
+      // Capture the level BEFORE crediting so a level-up can pay out for each boundary crossed.
+      const beforeLevel = levelFromXp(xpRef.current.xp).level;
       const res = creditXp(xpRef.current, menuGain, isTap ? 0 : 1);
       xpRef.current = res.state;
       saveProgress(res.state);
@@ -71,9 +75,18 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
         saveTaps(tapsRef.current);
       }
 
+      // LEVEL-UPS PAY WINS: this is the only path that credits wins from menu play, so a
+      // player who just types on the menu can still earn enough to buy upgrades. Granted
+      // whether or not the fx layer is mounted; the celebration shows the "+N WINS" line.
+      let leveledWins = 0;
+      if (res.leveledUp) {
+        leveledWins = levelUpWins(beforeLevel, res.level);
+        if (leveledWins > 0) grantWins(leveledWins);
+      }
+
       const fx = fxRef && fxRef.current;
       if (fx) {
-        if (res.leveledUp) fx.celebrate(res.level);
+        if (res.leveledUp) fx.celebrate(res.level, leveledWins);
         if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], opts.x, opts.y);
         else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier]);
         if (crossed && tier > 0) fx.edgePulse(TIER_COLORS[tier]);
@@ -97,7 +110,13 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     const pending = new Map(); // pointerId → { x, y, moved, ignore }
     const onDown = (e) => {
       const t = e.target;
-      const ignore = !!(t && t.closest && (t.closest(INTERACTIVE) || t.closest('[role="dialog"]')));
+      // A LOCKED (level-gated) card credits XP exactly like empty space — being locked must
+      // not feel dead. Every other interactive target (buttons, links, UNLOCKED cards, open
+      // dialogs) still credits nothing.
+      const card = t && t.closest && t.closest('.game-card');
+      const lockedCard = !!(card && card.classList.contains('locked'));
+      const ignore =
+        !lockedCard && !!(t && t.closest && (t.closest(INTERACTIVE) || t.closest('[role="dialog"]')));
       pending.set(e.pointerId, { x: e.clientX, y: e.clientY, moved: false, ignore });
     };
     const onMove = (e) => {

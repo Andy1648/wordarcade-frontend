@@ -655,8 +655,13 @@ function App() {
   const gameStartMsRef = useRef(null); // wall-clock ms when the current game started
   const gameModeRef = useRef(null); // gameType of the current game (from game_started)
   const playerCountRef = useRef(0); // live roster size, synced from room below
+  // The active game's difficulty tier (chill/easy/medium/hard), mirrored from the room so
+  // the WS drain effect (keyed on [messages]) reads it live, never stale — recordRound
+  // scales the wins payout by it (DIFFICULTY_MULT). Solo/no-difficulty modes leave it null.
+  const gameDifficultyRef = useRef(null);
   useEffect(() => {
     playerCountRef.current = room?.players?.length || 0;
+    gameDifficultyRef.current = room?.difficultyKey || null;
   }, [room]);
 
   // ---- Shared game-feel ("juice") wiring (Tier 2; never blocks input) ----
@@ -1011,7 +1016,11 @@ function App() {
     if (lastMessage.type === 'round_end') {
       const payload = lastMessage.payload;
       // WINS: a Category Blitz round ended — pay out on MY accepted answers this round.
-      recordRound({ mode: 'blitz', wordsAccepted: myBlitzAcceptedRef.current });
+      recordRound({
+        mode: 'blitz',
+        wordsAccepted: myBlitzAcceptedRef.current,
+        difficulty: gameDifficultyRef.current,
+      });
       setRoundResults(payload);
       setCategoryRound(null); // round over - timer stops, show results
       setLastWordResult(null);
@@ -1036,7 +1045,11 @@ function App() {
         setRoundResults(null);
       } else {
         // WINS: a Word Bomb game ended — pay out on MY accepted words this game.
-        recordRound({ mode: 'wordBomb', wordsAccepted: myWbAcceptedRef.current });
+        recordRound({
+          mode: 'wordBomb',
+          wordsAccepted: myWbAcceptedRef.current,
+          difficulty: gameDifficultyRef.current,
+        });
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak

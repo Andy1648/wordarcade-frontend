@@ -128,14 +128,37 @@ export function keyPowerCost(level) {
   const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
   return Math.round(50 * Math.pow(1.15, lv));
 }
-// Base XP per input at a given key-power level.
+// Base XP per input at a given key-power level (= purchase count). The linear +2/level
+// crawl is punctuated by a MILESTONE DOUBLER: every 10th purchase permanently ×2s the base,
+// and the doublers stack — base = (10 + 2·purchases) · 2^floor(purchases/10). So 9→28,
+// 10→60, 20→200: the every-10th jump is what makes the curve feel exponential, not linear.
 export function keyPowerBaseXp(level) {
   const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
-  return 10 + 2 * lv;
+  return (10 + 2 * lv) * Math.pow(2, Math.floor(lv / 10));
+}
+
+// The NEXT milestone doubler from a given purchase count: the next multiple of 10, and how
+// many purchases remain to reach it. Drives the card's "×2 AT 10 PURCHASES (3 TO GO)" line.
+export function keyPowerNextDoubler(level) {
+  const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
+  const at = (Math.floor(lv / 10) + 1) * 10;
+  return { at, toGo: at - lv };
+}
+
+// Wins granted for crossing from one level to another. Every level-up pays Math.round(25·L)
+// for the level L reached, summed across each boundary a single award crossed (a big credit
+// can jump several levels at once). PURE — the caller grants the total and celebrates it.
+export function levelUpWins(fromLevel, toLevel) {
+  const from = Number.isFinite(fromLevel) ? Math.floor(fromLevel) : 0;
+  const to = Number.isFinite(toLevel) ? Math.floor(toLevel) : 0;
+  let sum = 0;
+  for (let L = from + 1; L <= to; L += 1) sum += Math.round(25 * L);
+  return sum;
 }
 
 // ---- The XP stack — SINGLE source of truth --------------------------------------------
-// xpPerInput = (10 + 2·keyPowerLevel) · modeMult · rebirthMult. Cosmetics are NOT in it.
+// xpPerInput = keyPowerBaseXp(keyPowerLevel) · modeMult · rebirthMult. Cosmetics are NOT in
+// it. The base carries the milestone doublers (see keyPowerBaseXp).
 // Factors default to the live key-power + rebirth counts, or can be passed in (unit tests).
 export function xpPerInput({ mode = 'menu', keyPowerLevel, rebirthCount } = {}) {
   const kp = Number.isFinite(keyPowerLevel) ? keyPowerLevel : getKeyPower();

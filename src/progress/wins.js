@@ -71,12 +71,31 @@ export function saveRounds(rounds) {
 // Every other mode is ×1.
 export const WINS_MULT = { chain: 3, fuse: 5 };
 
-// Wins granted for a round (PURE). <3 words → 0; else (10 + 2·words) × the mode multiplier.
-//   2 → 0   3 → 16   10 → 30   (chain 3 → 48   fuse 3 → 80)
-export function awardWins({ wordsAccepted, mode } = {}) {
+// Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
+// The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
+// player-facing labels are CHILL / HARD / CRAZY / HELL). We map that ladder onto the spec's
+// 1.0 → 2.0 ramp, so the easiest tier pays base and the hardest (HELL) doubles. Modes with
+// no difficulty (or an unknown/absent key) fall through to ×1.
+export const DIFFICULTY_MULT = { chill: 1.0, easy: 1.25, medium: 1.5, hard: 2.0 };
+
+// A representative round used ONLY to preview a mode's payout on its menu card. Ten accepted
+// words puts the base at 30, so the card reads "~30 WINS / ROUND" at ×1 (CHAIN ~90, FUSE ~150).
+export const TYPICAL_ROUND_WORDS = 10;
+
+// Wins granted for a round (PURE). <3 words → 0; else (10 + 2·words) × difficulty × mode mult,
+// rounded. Difficulty defaults to ×1 (unspecified/no-difficulty modes), so the base payouts
+// are unchanged:  3 → 16   10 → 30   (chain 3 → 48   fuse 3 → 80).
+export function awardWins({ wordsAccepted, mode, difficulty } = {}) {
   const w = Number.isFinite(wordsAccepted) ? wordsAccepted : 0;
   if (w < MIN_WORDS) return 0;
-  return (10 + 2 * w) * (WINS_MULT[mode] || 1);
+  const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
+  return Math.round((10 + 2 * w) * diffMult * (WINS_MULT[mode] || 1));
+}
+
+// The card's payout preview: the wins a typical round would pay for this mode at the given
+// difficulty (defaults to the easiest tier / ×1). Pure wrapper over awardWins.
+export function roundWinsEstimate({ mode, difficulty } = {}) {
+  return awardWins({ wordsAccepted: TYPICAL_ROUND_WORDS, mode, difficulty });
 }
 
 // A finite "+N WINS" menu stamp is queued here when a round pays out, and consumed by the
@@ -88,10 +107,22 @@ export function consumePendingWinsStamp() {
   return s;
 }
 
+// Grant wins directly (no round gating) into BOTH the spendable balance and the never-
+// decremented lifetime total. Used by the menu level-up payout. Returns the new balance.
+export function grantWins(n) {
+  const amt = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  if (amt <= 0) return getWins();
+  const next = getWins() + amt;
+  saveWins(next);
+  saveWinsLifetime(getWinsLifetime() + amt);
+  return next;
+}
+
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round
-// counter — but ONLY when wordsAccepted >= MIN_WORDS. Returns the wins granted.
-export function recordRound({ mode, wordsAccepted } = {}) {
-  const granted = awardWins({ wordsAccepted, mode });
+// counter — but ONLY when wordsAccepted >= MIN_WORDS. Returns the wins granted. `difficulty`
+// (Word Bomb / Category Blitz tier key) scales the payout via DIFFICULTY_MULT.
+export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
+  const granted = awardWins({ wordsAccepted, mode, difficulty });
   const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= MIN_WORDS;
   if (counts) {
     saveWins(getWins() + granted);

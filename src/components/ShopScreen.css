@@ -231,6 +231,49 @@
   font-size: 14px;
   color: #ffe94a;
 }
+/* KEY POWER copy: the current XP-per-letter value, the next value + cost, and the milestone
+   doubler ahead. No level is ever shown — the integer stays internal. */
+.shop-kp-current {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #d8c9f0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.shop-kp-current b {
+  font-family: 'Bungee', cursive;
+  font-size: 26px;
+  line-height: 1;
+  color: #ffe94a;
+}
+.shop-kp-next {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #b9a8d6;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.shop-kp-next b {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  color: #ffe94a;
+}
+/* The exponential jump — cyan so it reads as the reward to chase. */
+.shop-kp-doubler {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: #2effe0;
+  -webkit-text-stroke: 0.5px #0a3b34;
+}
 .shop-kp-actions {
   display: flex;
   flex-direction: column;

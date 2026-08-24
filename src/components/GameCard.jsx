@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
+import { roundWinsEstimate } from '../progress/wins';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -129,7 +130,7 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper, locked = false }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
 
@@ -267,13 +268,25 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         <span className="game-card-tape game-card-tape-left" aria-hidden="true" />
         <span className="game-card-tape game-card-tape-right" aria-hidden="true" />
 
-        {/* Level gate: a padlock + threshold over the (dimmed) card. Visible-but-locked. */}
+        {/* Level gate: the card dims to 55% and a chain-and-padlock is slung across the top
+            corner; the "UNLOCKS AT LV n" label stays. A locked tap still credits XP (see
+            useXpCapture) so the card never feels dead — it only doesn't navigate. */}
         {locked && (
           <div className="game-card-lock">
-            <svg className="game-card-lock-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="4.5" y="10" width="15" height="10.5" rx="2" fill="#0d0618" stroke="#000" strokeWidth="1.5" />
-              <path d="M8 10V6.8a4 4 0 0 1 8 0V10" fill="none" stroke="#0d0618" strokeWidth="2.6" />
-              <circle cx="12" cy="15" r="1.7" fill="#FFE94A" />
+            {/* Chain drawn diagonally across the top-right corner, padlock at its middle.
+                Inline SVG, thick black outlines, flat fills — no external asset. */}
+            <svg className="game-card-lock-chain" viewBox="0 0 90 90" aria-hidden="true">
+              <g stroke="#000" strokeWidth="3.4" fill="#c4c4d0">
+                <ellipse cx="34" cy="4" rx="7" ry="4.4" transform="rotate(45 34 4)" />
+                <ellipse cx="44" cy="14" rx="7" ry="4.4" transform="rotate(45 44 14)" />
+                <ellipse cx="76" cy="46" rx="7" ry="4.4" transform="rotate(45 76 46)" />
+                <ellipse cx="86" cy="56" rx="7" ry="4.4" transform="rotate(45 86 56)" />
+              </g>
+              {/* Padlock at the diagonal's midpoint (60,30). */}
+              <path d="M55 27 v-4 a5 5 0 0 1 10 0 v4" fill="none" stroke="#000" strokeWidth="4.2" />
+              <rect x="51" y="26" width="18" height="15" rx="3" fill="#FFE94A" stroke="#000" strokeWidth="3.4" />
+              <circle cx="60" cy="32.5" r="1.9" fill="#000" />
+              <rect x="59.1" y="32.5" width="1.8" height="5" fill="#000" />
             </svg>
             <div className="game-card-lock-label">UNLOCKS AT LV {game.unlockLevel}</div>
           </div>
@@ -305,6 +318,15 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         <div className="game-card-name" style={{ color: game.textColor }}>
           {game.name}
         </div>
+
+        {/* Payout preview: what a typical round of this mode pays, at the selected difficulty
+            (else the easy baseline). CHAIN/FUSE carry their 3×/5× solo multiplier here.
+            Sits under the title so it always shows (the badge is bottom-pinned). */}
+        {game.enabled && (
+          <div className="game-card-payout">
+            ~{roundWinsEstimate({ mode: game.id, difficulty })} WINS / ROUND
+          </div>
+        )}
 
         <div
           className="game-card-badge"

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyKeyPowerMax } from '../progress/shop';
 import { getWins } from '../progress/wins';
-import { loadProgress, levelFromXp, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp } from '../progress/xp';
+import { loadProgress, levelFromXp, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp, keyPowerNextDoubler } from '../progress/xp';
 import { formatNum } from '../format';
 
 export default function ShopScreen({ onBack }) {
@@ -136,21 +136,24 @@ export default function ShopScreen({ onBack }) {
             <h3 className="shop-subtitle">KEY POWER</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
-                <div className="shop-kp-row">
-                  <span>LEVEL</span>
-                  <b>{keyPower}</b>
+                {/* Current base XP per letter — the value, never a level. */}
+                <div className="shop-kp-current">
+                  <b>{formatNum(keyPowerBaseXp(keyPower))}</b> XP PER LETTER
                 </div>
-                <div className="shop-kp-row">
-                  <span>XP / LETTER</span>
+                {/* What the next purchase gives + what it costs. */}
+                <div className="shop-kp-next">
+                  NEXT: <b>{formatNum(keyPowerBaseXp(keyPower + 1))} XP</b>
+                  {'  ·  '}
                   <b>
-                    {formatNum(keyPowerBaseXp(keyPower))} → {formatNum(keyPowerBaseXp(keyPower + 1))}
+                    <span className="shop-coin" aria-hidden="true" /> {formatNum(keyPowerCost(keyPower))} WINS
                   </b>
                 </div>
-                <div className="shop-kp-row">
-                  <span>NEXT LEVEL</span>
-                  <b>
-                    <span className="shop-coin" aria-hidden="true" /> {formatNum(keyPowerCost(keyPower))}
-                  </b>
+                {/* The milestone doubler ahead — the exponential jump every 10th purchase. */}
+                <div className="shop-kp-doubler">
+                  {(() => {
+                    const d = keyPowerNextDoubler(keyPower);
+                    return `×2 AT ${d.at} PURCHASES (${d.toGo} TO GO)`;
+                  })()}
                 </div>
               </div>
               <div className="shop-kp-actions">
