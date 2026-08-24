@@ -15,7 +15,7 @@ async function openShop(page, seed) {
   }, seed);
   await page.goto('/?portal=1');
   await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
-  await page.locator('.homepage-footer-links button', { hasText: 'SHOP' }).click();
+  await page.locator('.homepage-shop-btn').click(); // loud top-right SHOP button
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
 
@@ -26,7 +26,7 @@ test.describe('shop', () => {
     // All catalog cards render; unaffordable ones are visible-but-dimmed (not hidden).
     await expect(page.locator('.shop-card')).toHaveCount(11);
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
-    await expect(page.locator('.shop-rebirth')).toHaveCount(0); // level 1 → no rebirth
+    await expect(page.locator('.shop-rebirth')).toHaveCount(0); // SHOP tab shows no rebirth control
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });
     await chrome.locator('.shop-card-btn').click(); // BUY (150)
@@ -35,21 +35,28 @@ test.describe('shop', () => {
     await chrome.locator('.shop-card-btn').click(); // now EQUIP
     await expect(chrome.locator('.shop-card-tag')).toHaveText('EQUIPPED');
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
+
+    // On the REBIRTH tab at level 1 the action is present but DISABLED (requirement shown).
+    await page.locator('.shop-tab', { hasText: 'REBIRTH' }).click();
+    await expect(page.locator('.shop-rebirth')).toBeDisabled();
   });
 
   test('rebirth is gated by level, confirms what changes, zeroes xp and keeps everything else', async ({ page }) => {
     // Seed a high XP (well past level 15) + a purchase; rebirth must appear.
     await openShop(page, { 'taw.xp': '60000', 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
-    await expect(page.locator('.shop-rebirth')).toBeVisible();
+    // Rebirth lives on its own tab now.
+    await page.locator('.shop-tab', { hasText: 'REBIRTH' }).click();
+    const rebirth = page.locator('.shop-rebirth');
+    await expect(rebirth).toBeEnabled(); // past level 15 → eligible
 
-    await page.locator('.shop-rebirth').click();
-    const confirm = page.locator('.shop-confirm');
-    await expect(confirm).toBeVisible();
-    await expect(confirm).toContainText('LOSE'); // states exactly what is lost/gained
-    await expect(confirm).toContainText('KEEP');
-    await expect(confirm).toContainText('GAIN');
+    // The rebirth screen states exactly what is lost/kept/gained.
+    const detail = page.locator('.shop-confirm-detail');
+    await expect(detail).toContainText('LOSE');
+    await expect(detail).toContainText('KEEP');
+    await expect(detail).toContainText('GAIN');
 
-    await confirm.locator('.shop-card-btn.danger').click(); // CONFIRM
+    await rebirth.click(); // arm the confirmation
+    await page.locator('.shop-confirm-actions .shop-card-btn.danger').click(); // CONFIRM
     await page.locator('.menu-xp-bar').waitFor({ state: 'visible' }); // returned to menu
 
     const after = await page.evaluate(() => ({

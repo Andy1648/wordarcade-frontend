@@ -15,7 +15,7 @@ import './MenuXp.css';
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, winsAffordable = false }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -137,13 +137,11 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {wins}
-            {winsAffordable && <span className="menu-wins-dot" aria-hidden="true" />}
           </button>
         ) : (
           <span className="menu-wins-chip" aria-label={`${wins} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {wins}
-            {winsAffordable && <span className="menu-wins-dot" aria-hidden="true" />}
           </span>
         )
       )}

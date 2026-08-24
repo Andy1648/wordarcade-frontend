@@ -433,6 +433,36 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
 
+        {/* SHOP entry — loud, top-right, distinct from the round audio buttons (square,
+            yellow, bag glyph). The affordable-item dot rides its corner. */}
+        <button
+          ref={shopLinkRef}
+          type="button"
+          className={`homepage-shop-btn${navigating ? ' disabled' : ''}`}
+          onClick={handleShop}
+          onMouseEnter={() => sfx('hover')}
+          disabled={navigating}
+          aria-label={`Open shop${winsAffordable ? ' — items available' : ''}`}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M5 8h14l-1.1 11.1a1.5 1.5 0 0 1-1.5 1.35H7.6a1.5 1.5 0 0 1-1.5-1.35L5 8z"
+              fill="none"
+              stroke="#0d0618"
+              strokeWidth="2.2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"
+              fill="none"
+              stroke="#0d0618"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+          </svg>
+          {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
+        </button>
+
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}
         <div className="homepage-logo-wrap">
@@ -483,7 +513,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           cost={xpProgress.cost}
           rebirths={rebirths}
           wins={wins}
-          winsAffordable={winsAffordable}
           onWinsClick={handleShop}
         />
 
@@ -557,16 +586,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </button>
         )}
 
-        {/* Quiet footer links: SHOP + STATS + CREDITS. */}
+        {/* Quiet footer links: STATS + CREDITS. (SHOP moved to the loud top-right button.) */}
         <div className="homepage-footer-links">
-          <button
-            ref={shopLinkRef}
-            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
-            onClick={handleShop}
-            disabled={navigating}
-          >
-            SHOP
-          </button>
           <button
             ref={statsLinkRef}
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}

@@ -252,17 +252,6 @@ button.menu-wins-chip:focus-visible {
   outline-offset: 2px;
   border-radius: 4px;
 }
-/* Affordability dot: the player can buy at least one unowned item. 6px, flat yellow,
-   static (no animation), absolutely placed so it never changes the menu's height. */
-.menu-wins-dot {
-  position: absolute;
-  top: -3px;
-  right: -6px;
-  width: 6px;
-  height: 6px;
-  background: #ffe94a;
-  border-radius: 50%;
-}
 .menu-wins-coin {
   width: 0.85em;
   height: 0.85em;

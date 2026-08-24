@@ -9,7 +9,6 @@ import {
   getTaps,
   getRebirths,
   rebirthMult,
-  rebirthThreshold,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { equippedPopStyleMult, equippedSoundPackMult } from '../progress/shop';
@@ -91,8 +90,6 @@ export default function StatsScreen({ onBack }) {
               </div>
             ))}
           </dl>
-          {/* Visible-but-locked from day one: the next rebirth target, always shown. */}
-          <div className="stats-rebirth-at">REBIRTH AT LV {rebirthThreshold(rebirths)}</div>
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>
           <dl className="stats-list">
