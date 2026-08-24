@@ -9,11 +9,13 @@ import {
   getTaps,
   getRebirths,
   rebirthMult,
+  getKeyPower,
+  keyPowerBaseXp,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
-import { equippedPopStyleMult, equippedSoundPackMult } from '../progress/shop';
+import { formatNum } from '../format';
 
-const fmt = (n) => (Number.isFinite(n) ? n : 0).toLocaleString();
+const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
 const x = (n) => `×${n.toFixed(2)}`;
 
 export default function StatsScreen({ onBack }) {
@@ -36,9 +38,9 @@ export default function StatsScreen({ onBack }) {
   const rebirths = getRebirths();
 
   const rbMult = rebirthMult(rebirths);
-  const popMult = equippedPopStyleMult();
-  const soundMult = equippedSoundPackMult();
-  const totalMult = rbMult * popMult * soundMult; // the menu-typing stack (mode = ×1)
+  const keyPower = getKeyPower();
+  const baseXp = keyPowerBaseXp(keyPower); // 10 + 2·keyPower
+  const menuXp = Math.round(baseXp * rbMult); // per menu keystroke (mode ×1)
 
   const progression = [
     ['LEVEL', level],
@@ -49,11 +51,12 @@ export default function StatsScreen({ onBack }) {
     ['WINS BALANCE', getWins()],
     ['WINS EARNED (ALL-TIME)', getWinsLifetime()],
   ];
+  // XP stack is now Key Power (base) × rebirth. Cosmetics are pure flair — not shown here.
   const multipliers = [
+    ['KEY POWER', `LV ${keyPower}`],
+    ['BASE XP / LETTER', fmt(baseXp)],
     ['REBIRTH', x(rbMult)],
-    ['POP STYLE', x(popMult)],
-    ['SOUND PACK', x(soundMult)],
-    ['TOTAL', x(totalMult)],
+    ['MENU XP / LETTER', fmt(menuXp)],
   ];
   const roundsPlayed = [
     ['WORD BOMB', rounds.wordBomb],
@@ -81,7 +84,7 @@ export default function StatsScreen({ onBack }) {
             ))}
           </dl>
 
-          <h3 className="stats-subtitle">XP MULTIPLIER</h3>
+          <h3 className="stats-subtitle">XP STACK</h3>
           <dl className="stats-list">
             {multipliers.map(([k, v]) => (
               <div className="stats-row" key={k}>

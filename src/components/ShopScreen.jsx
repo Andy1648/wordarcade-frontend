@@ -6,9 +6,10 @@
 // animation beyond the buttons' existing hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip } from '../progress/shop';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyKeyPowerMax } from '../progress/shop';
 import { getWins } from '../progress/wins';
-import { loadProgress, levelFromXp, getRebirths, rebirthThreshold, rebirthMult, doRebirth } from '../progress/xp';
+import { loadProgress, levelFromXp, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp } from '../progress/xp';
+import { formatNum } from '../format';
 
 export default function ShopScreen({ onBack }) {
   const [wins, setWins] = useState(() => getWins());
@@ -16,6 +17,7 @@ export default function ShopScreen({ onBack }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [tab, setTab] = useState('shop'); // 'shop' | 'rebirth'
   const [confirming, setConfirming] = useState(false);
+  const [keyPower, setKeyPower] = useState(() => getKeyPower());
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -40,9 +42,16 @@ export default function ShopScreen({ onBack }) {
     setWins(getWins());
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
+    setKeyPower(getKeyPower());
   };
   const onBuy = (id) => {
     if (buy(id).ok) refresh();
+  };
+  const onBuyKeyPower = () => {
+    if (buyKeyPower().ok) refresh();
+  };
+  const onBuyKeyPowerMax = () => {
+    if (buyKeyPowerMax().ok) refresh();
   };
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
@@ -65,7 +74,7 @@ export default function ShopScreen({ onBack }) {
     return (
       <div className={`shop-card is-${cls}`}>
         <div className="shop-card-name">{item.name}</div>
-        <div className="shop-card-mult">×{item.mult.toFixed(2)} XP</div>
+        <div className="shop-card-blurb">{item.blurb}</div>
         {isEquipped ? (
           <div className="shop-card-tag">EQUIPPED</div>
         ) : isOwnedItem ? (
@@ -75,12 +84,12 @@ export default function ShopScreen({ onBack }) {
         ) : affordable ? (
           <button type="button" className="shop-card-btn" onClick={() => onBuy(item.id)}>
             <span className="shop-coin" aria-hidden="true" />
-            {item.price}
+            {formatNum(item.price)}
           </button>
         ) : (
           <div className="shop-card-price">
             <span className="shop-coin" aria-hidden="true" />
-            {item.price}
+            {formatNum(item.price)}
           </div>
         )}
       </div>
@@ -94,7 +103,7 @@ export default function ShopScreen({ onBack }) {
           <h2 className="shop-title">SHOP</h2>
           <div className="shop-wins" aria-label={`${wins} wins`}>
             <span className="shop-coin" aria-hidden="true" />
-            {wins.toLocaleString()}
+            {formatNum(wins)}
           </div>
           <button type="button" className="shop-close" onClick={onBack} aria-label="Back to menu">
             ✕
@@ -124,6 +133,47 @@ export default function ShopScreen({ onBack }) {
 
         {tab === 'shop' ? (
           <div className="shop-body">
+            <h3 className="shop-subtitle">KEY POWER</h3>
+            <div className="shop-keypower">
+              <div className="shop-kp-info">
+                <div className="shop-kp-row">
+                  <span>LEVEL</span>
+                  <b>{keyPower}</b>
+                </div>
+                <div className="shop-kp-row">
+                  <span>XP / LETTER</span>
+                  <b>
+                    {formatNum(keyPowerBaseXp(keyPower))} → {formatNum(keyPowerBaseXp(keyPower + 1))}
+                  </b>
+                </div>
+                <div className="shop-kp-row">
+                  <span>NEXT LEVEL</span>
+                  <b>
+                    <span className="shop-coin" aria-hidden="true" /> {formatNum(keyPowerCost(keyPower))}
+                  </b>
+                </div>
+              </div>
+              <div className="shop-kp-actions">
+                <button
+                  type="button"
+                  className="shop-card-btn"
+                  disabled={wins < keyPowerCost(keyPower)}
+                  onClick={onBuyKeyPower}
+                >
+                  <span className="shop-coin" aria-hidden="true" />
+                  {formatNum(keyPowerCost(keyPower))}
+                </button>
+                <button
+                  type="button"
+                  className="shop-card-btn ghost"
+                  disabled={wins < keyPowerCost(keyPower)}
+                  onClick={onBuyKeyPowerMax}
+                >
+                  BUY MAX
+                </button>
+              </div>
+            </div>
+
             <h3 className="shop-subtitle">POP STYLES</h3>
             <div className="shop-grid">
               {POP_STYLES.map((item) => (

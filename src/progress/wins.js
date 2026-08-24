@@ -67,11 +67,16 @@ export function saveRounds(rounds) {
   }
 }
 
-// Wins granted for a round (PURE). <3 words → 0; else 10 + 2·words.
-//   2 → 0   3 → 16   10 → 30
-export function awardWins({ wordsAccepted } = {}) {
+// Per-mode wins multiplier on the base payout: CHAIN pays 3×, FUSE 5× (harder solo modes).
+// Every other mode is ×1.
+export const WINS_MULT = { chain: 3, fuse: 5 };
+
+// Wins granted for a round (PURE). <3 words → 0; else (10 + 2·words) × the mode multiplier.
+//   2 → 0   3 → 16   10 → 30   (chain 3 → 48   fuse 3 → 80)
+export function awardWins({ wordsAccepted, mode } = {}) {
   const w = Number.isFinite(wordsAccepted) ? wordsAccepted : 0;
-  return w < MIN_WORDS ? 0 : 10 + 2 * w;
+  if (w < MIN_WORDS) return 0;
+  return (10 + 2 * w) * (WINS_MULT[mode] || 1);
 }
 
 // A finite "+N WINS" menu stamp is queued here when a round pays out, and consumed by the
@@ -86,7 +91,7 @@ export function consumePendingWinsStamp() {
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round
 // counter — but ONLY when wordsAccepted >= MIN_WORDS. Returns the wins granted.
 export function recordRound({ mode, wordsAccepted } = {}) {
-  const granted = awardWins({ wordsAccepted });
+  const granted = awardWins({ wordsAccepted, mode });
   const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= MIN_WORDS;
   if (counts) {
     saveWins(getWins() + granted);

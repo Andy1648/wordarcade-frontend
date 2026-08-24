@@ -5,6 +5,7 @@
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
+import { formatNum } from '../format';
 
 // The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
 // a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
@@ -69,7 +70,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
     // Count the readout's left number up smoothly off `displayed` (not the stepped
     // prop). Absent on the mini variant → guarded.
     const num = readoutNumRef.current;
-    if (num) num.textContent = Math.max(0, Math.round(v * costRef.current)).toLocaleString();
+    if (num) num.textContent = formatNum(Math.max(0, Math.round(v * costRef.current)));
   }
   // Framerate-independent exponential smoothing: with the rAF timestamp as `now`,
   // the same wall-clock ease plays whether the display runs at 60/120/30Hz.
@@ -136,12 +137,12 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         onWinsClick ? (
           <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
-            {wins}
+            {formatNum(wins)}
           </button>
         ) : (
           <span className="menu-wins-chip" aria-label={`${wins} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
-            {wins}
+            {formatNum(wins)}
           </span>
         )
       )}
@@ -151,8 +152,8 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         <span className="menu-xp-marker" ref={markerRef} />
         {variant !== 'mini' && (
           <span className="menu-xp-readout">
-            <span ref={readoutNumRef}>{Math.max(0, Math.round(intoLevel)).toLocaleString()}</span>
-            {' '}/ {Math.max(0, Math.round(cost)).toLocaleString()}
+            <span ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>
+            {' '}/ {formatNum(Math.max(0, Math.round(cost)))}
           </span>
         )}
       </span>

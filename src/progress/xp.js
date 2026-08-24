@@ -7,20 +7,21 @@
 // per-word/letter award. `lifetimeLetters` counts RAW keystrokes (unmultiplied) and is a
 // SEPARATE running total for a future profile screen — never surfaced on the menu.
 
-import { equippedPopStyleMult, equippedSoundPackMult } from './shop.js';
-
-// Per-source BASE (= 10 × mode) XP factor, all in one place. Menu typing is the 10× base.
+// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from Key Power
+// (10 + 2·level); this only scales it by which mode produced the input.
 export const XP_MULTIPLIERS = {
-  menu: 10,
-  'word-bomb': 20,
-  'category-blitz': 20,
-  'sat-rush': 30,
+  menu: 1,
+  'word-bomb': 2,
+  'category-blitz': 2,
+  'sat-rush': 3,
+  chain: 4,
+  fuse: 5,
 };
 
-// Cost to advance FROM level n to n+1. Superlinear so later levels take real play.
-//   need(1)=100  need(5)=1118  need(10)=3162
+// Cost to advance FROM level n to n+1. EXPONENTIAL so later levels take real play.
+//   need(1)=118  need(10)=523  need(30)=14,337
 export function need(n) {
-  return Math.round(100 * Math.pow(n, 1.5));
+  return Math.round(100 * Math.pow(1.18, n));
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -100,17 +101,47 @@ export function doRebirth() {
   return rc;
 }
 
-// ---- The multiplier stack — SINGLE source of truth ------------------------------------
-// xpPerInput = 10 · mode · rebirth · popStyle · soundPack (10·mode is XP_MULTIPLIERS[mode]).
-// Every XP award goes through this; no multiplier maths lives anywhere else. Factors
-// default to the live rebirth count + equipped-item multipliers, or can be passed in
-// (used by the unit test). Rounded to a whole number.
-export function xpPerInput({ mode = 'menu', rebirthCount, popStyleMult, soundPackMult } = {}) {
-  const base = XP_MULTIPLIERS[mode] ?? 10;
+// ---- Key Power — the repeatable base-XP upgrade ---------------------------------------
+// Level stored at taw.keypower (int, default 0). The NEXT level costs 50·1.15^level wins;
+// each level adds +2 to the base XP per input. SURVIVES rebirth (its own key, untouched by
+// doRebirth). Cosmetics no longer affect XP at all — they're pure flair now.
+export const KEYPOWER_KEY = 'taw.keypower';
+export function getKeyPower() {
+  try {
+    const raw = localStorage.getItem(KEYPOWER_KEY);
+    if (raw == null) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
+}
+export function saveKeyPower(n) {
+  try {
+    localStorage.setItem(KEYPOWER_KEY, String(Math.max(0, Math.floor(n))));
+  } catch {
+    /* storage blocked */
+  }
+}
+// Cost (in wins) to buy the NEXT level, standing at `level`.
+export function keyPowerCost(level) {
+  const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
+  return Math.round(50 * Math.pow(1.15, lv));
+}
+// Base XP per input at a given key-power level.
+export function keyPowerBaseXp(level) {
+  const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
+  return 10 + 2 * lv;
+}
+
+// ---- The XP stack — SINGLE source of truth --------------------------------------------
+// xpPerInput = (10 + 2·keyPowerLevel) · modeMult · rebirthMult. Cosmetics are NOT in it.
+// Factors default to the live key-power + rebirth counts, or can be passed in (unit tests).
+export function xpPerInput({ mode = 'menu', keyPowerLevel, rebirthCount } = {}) {
+  const kp = Number.isFinite(keyPowerLevel) ? keyPowerLevel : getKeyPower();
+  const modeMult = XP_MULTIPLIERS[mode] ?? 1;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  const ps = Number.isFinite(popStyleMult) ? popStyleMult : equippedPopStyleMult();
-  const sp = Number.isFinite(soundPackMult) ? soundPackMult : equippedSoundPackMult();
-  return Math.round(base * rebirthMult(rc) * ps * sp);
+  return Math.round(keyPowerBaseXp(kp) * modeMult * rebirthMult(rc));
 }
 
 // Apply a credited award. Pure: returns the next {xp, lifetimeLetters} and whether the
