@@ -293,6 +293,9 @@ test.describe('desktop clicks count (fine pointer)', () => {
   test('a click on empty menu space credits (via taps, not letters); a click on a game card credits 0', async ({ page }) => {
     await gotoMenuLive(page);
     expect(await page.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
+    // Let useXpCapture's effect attach its window pointer listeners before the first click
+    // (the bar being visible doesn't guarantee the effect has run — clicking too early misses).
+    await page.waitForTimeout(500);
 
     const read = () =>
       page.evaluate(() => ({
