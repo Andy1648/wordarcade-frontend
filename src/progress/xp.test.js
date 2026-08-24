@@ -100,10 +100,10 @@ test('the multiplier stack (single source): base cases + the rounding rule', () 
   assert.equal(xpPerInput({ mode: 'sat-rush', rebirthCount: 2, popStyleMult: 1.25, soundPackMult: 1.15 }), 86);
 });
 
-test('rebirth thresholds: rebirths 0→15, 1→25, 2→35; multipliers 1.5/2.0/2.5', () => {
+test('rebirth thresholds: rebirths 0→15, 1→18, 2→21; multipliers 1.5/2.0/2.5', () => {
   assert.equal(rebirthThreshold(0), 15);
-  assert.equal(rebirthThreshold(1), 25);
-  assert.equal(rebirthThreshold(2), 35);
+  assert.equal(rebirthThreshold(1), 18);
+  assert.equal(rebirthThreshold(2), 21);
   assert.equal(rebirthMult(1), 1.5);
   assert.equal(rebirthMult(2), 2.0);
   assert.equal(rebirthMult(3), 2.5);

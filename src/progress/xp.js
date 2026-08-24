@@ -47,11 +47,11 @@ export function levelFromXp(xp) {
 
 // ---- Rebirth --------------------------------------------------------------------------
 // Rebirth zeroes XP/level for a permanent multiplier. Thresholds: first at LEVEL 15, then
-// +10 (15, 25, 35 …). Multiplier: 1 + 0.5·rebirthCount (R1 ×1.5, R2 ×2.0 …). Everything
+// +3 (15, 18, 21 …). Multiplier: 1 + 0.5·rebirthCount (R1 ×1.5, R2 ×2.0 …). Everything
 // EXCEPT xp survives (wins, winsLifetime, owned, equipped, lifetimeLetters, taps, rounds).
 export const REBIRTH_KEY = 'taw.rebirths';
 const REBIRTH_BASE = 15;
-const REBIRTH_STEP = 10;
+const REBIRTH_STEP = 3;
 
 export function getRebirths() {
   try {
@@ -72,7 +72,7 @@ export function saveRebirths(n) {
 }
 export function rebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : 0;
-  return REBIRTH_BASE + REBIRTH_STEP * rc; // rc 0→15, 1→25, 2→35
+  return REBIRTH_BASE + REBIRTH_STEP * rc; // rc 0→15, 1→18, 2→21
 }
 export function rebirthMult(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : 0;
