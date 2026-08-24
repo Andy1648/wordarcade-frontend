@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './SplashScreen.css';
 import { useXpCapture } from '../progress/useXpCapture';
+import { loadProgress } from '../progress/xp';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 
 const TAGLINES = [
@@ -87,6 +88,14 @@ export default function SplashScreen({ onStart, onDismiss }) {
   const [leaving, setLeaving] = useState(false);
   // Fine pointer (mouse/trackpad + keyboard) → "TYPE TO START"; coarse (touch) → "TAP".
   const [fine] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(pointer: fine)').matches);
+  // A returning visitor (any XP already banked) already knows the game — they enter faster.
+  const [returning] = useState(() => loadProgress().xp > 0);
+  // Entry gate: on a FINE pointer, require this many credited KEYSTROKES before dismissing
+  // (5 first-time, 3 for a returning visitor). A COARSE tap always enters on ONE (5 taps to
+  // enter is hostile on mobile), and a click anywhere is the immediate escape hatch below.
+  const needed = fine ? (returning ? 3 : 5) : 1;
+  const filledRef = useRef(0); // authoritative credited-keystroke count (never double-counts)
+  const [filled, setFilled] = useState(0); // mirror for the pip render
   const dismissedRef = useRef(false);
   const startRef = useRef(onStart);
   const dismissRef = useRef(onDismiss);
@@ -106,12 +115,21 @@ export default function SplashScreen({ onStart, onDismiss }) {
 
   // SHARED capture — the splash credits + pops exactly like the menu (no forked logic).
   // A creditable keydown is a user gesture, so playClack (inside the hook) creates/resumes
-  // the AudioContext there; on the first credited key we also dismiss (which unlocks music
-  // via onStart). Disabled once we start leaving.
+  // the AudioContext there. Every credit still credits XP + fires a pop + plays the clack;
+  // we only DISMISS once the keystroke gate is met (which unlocks music via onStart). A
+  // coarse tap dismisses on the first credit. Disabled once we start leaving.
   const { xpTotal, progress } = useXpCapture({
     fxRef,
     active: !leaving,
-    onCredit: () => dismiss(),
+    onCredit: () => {
+      if (!fine) {
+        dismiss(); // coarse tap → enter immediately
+        return;
+      }
+      filledRef.current += 1;
+      setFilled(filledRef.current);
+      if (filledRef.current >= needed) dismiss(); // gate met on the Nth keystroke
+    },
   });
 
   // Cycle the taglines every 2.5s.
@@ -185,6 +203,16 @@ export default function SplashScreen({ onStart, onDismiss }) {
       </div>
 
       <div className="splash-start">{fine ? 'TYPE TO START' : 'TAP TO START'}</div>
+
+      {/* Keystroke-gate progress: one pip per required keystroke, filled left-to-right.
+          Fine pointer only (a coarse tap enters on one). Instant class swap, no animation. */}
+      {fine && (
+        <div className="splash-pips" aria-hidden="true">
+          {Array.from({ length: needed }, (_, i) => (
+            <span key={i} className={`splash-pip${i < filled ? ' is-on' : ''}`} />
+          ))}
+        </div>
+      )}
 
       {/* Mini XP readout under the prompt — hidden entirely for a first-time visitor
           (xp === 0). Same store + scaleX fill as the menu bar. */}

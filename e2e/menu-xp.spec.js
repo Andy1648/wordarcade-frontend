@@ -125,7 +125,7 @@ test.describe('menu XP', () => {
 });
 
 test.describe('splash XP', () => {
-  test('TYPE TO START: a keydown dismisses, credits XP, fires a pop, and unlocks audio', async ({ page }) => {
+  test('TYPE TO START gate: a first-time visitor needs 5 keystrokes; each credits, pops, and fills a pip; the 5th dismisses', async ({ page }) => {
     await installBackendMock(page);
     // Count AudioContext constructions (the keydown must create/resume one).
     await page.addInitScript(() => {
@@ -140,24 +140,51 @@ test.describe('splash XP', () => {
         };
       }
     });
-    await page.goto('/'); // fresh context → the splash shows (no ?portal skip)
+    await page.goto('/'); // fresh context → the splash shows (no ?portal skip), xp=0 → 5-key gate
     await page.locator('.splash-screen').waitFor({ state: 'visible' });
     // Desktop Chrome is a fine pointer → the prompt invites typing.
     await expect(page.locator('.splash-start')).toHaveText('TYPE TO START');
 
-    await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
-    await page.waitForTimeout(80);
+    const key = () =>
+      page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
 
-    const r = await page.evaluate(() => ({
+    // First keystroke: credits + pops + fills ONE pip, but does NOT dismiss (gate is 5).
+    await key();
+    await page.waitForTimeout(80);
+    const after1 = await page.evaluate(() => ({
       leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      pips: document.querySelectorAll('.splash-pip').length,
+      pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
       poppedA: [...document.querySelectorAll('.menu-xp-pop-letter')].some((n) => n.textContent === 'A'),
       xp: (() => { try { return Number(localStorage.getItem('taw.xp')) || 0; } catch { return 0; } })(),
       audioContexts: window.__ac,
     }));
-    expect(r.leaving).toBe(true); // typing dismissed the splash
-    expect(r.poppedA).toBe(true); // a pop fired ON the splash
-    expect(r.xp).toBeGreaterThanOrEqual(10); // credited normally (+10)
-    expect(r.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
+    expect(after1.leaving).toBe(false); // one key is not enough — the gate holds
+    expect(after1.pips).toBe(5); // five pips for a first-time visitor
+    expect(after1.pipsOn).toBe(1); // exactly one filled after one keystroke
+    expect(after1.poppedA).toBe(true); // a pop fired ON the splash
+    expect(after1.xp).toBeGreaterThanOrEqual(10); // credited normally (+10)
+    expect(after1.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
+
+    // Keys 2–4 fill more pips, still no dismiss.
+    await key();
+    await key();
+    await key();
+    await page.waitForTimeout(80);
+    const after4 = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
+    }));
+    expect(after4.leaving).toBe(false);
+    expect(after4.pipsOn).toBe(4);
+
+    // The 5th keystroke meets the gate and dismisses.
+    await key();
+    await page.waitForTimeout(80);
+    const after5 = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+    }));
+    expect(after5.leaving).toBe(true); // gate met → splash dismissed
   });
 });
 
