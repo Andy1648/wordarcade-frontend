@@ -9,10 +9,40 @@ import {
   createRateLimiter,
   isCreditableKey,
   loadProgress,
+  saveProgress,
   getTaps,
   saveTaps,
   XP_MULTIPLIERS,
+  xpPerInput,
+  rebirthThreshold,
+  rebirthMult,
+  canRebirth,
+  doRebirth,
+  getRebirths,
 } from './xp.js';
+
+// A fresh in-memory localStorage installed as the global for a test body.
+function withStorage(seed, fn) {
+  const saved = globalThis.localStorage;
+  const map = new Map(Object.entries(seed || {}));
+  globalThis.localStorage = {
+    getItem: (k) => (map.has(k) ? map.get(k) : null),
+    setItem: (k, v) => map.set(k, String(v)),
+    removeItem: (k) => map.delete(k),
+  };
+  try {
+    return fn(map);
+  } finally {
+    if (saved === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = saved;
+  }
+}
+// cumulative XP to REACH a level (sum need(1..L-1)).
+function cumCost(level) {
+  let acc = 0;
+  for (let k = 1; k < level; k++) acc += need(k);
+  return acc;
+}
 
 // ---- level cost curve ----
 test('need() matches the pinned anchor values', () => {
@@ -61,6 +91,63 @@ test('levelFromXp: worked example at level 7', () => {
   assert.equal(r.cost, need(7)); // 1852
   assert.equal(r.intoLevel, 500);
   assert.equal(r.toNext, 1852 - 500);
+});
+
+test('the multiplier stack (single source): base cases + the rounding rule', () => {
+  // menu + no rebirth + classic (×1) + thock (×1) = 10.
+  assert.equal(xpPerInput({ mode: 'menu', rebirthCount: 0, popStyleMult: 1, soundPackMult: 1 }), 10);
+  // sat-rush + R2 + prism (×1.25) + silent (×1.15) = 10·3·2.0·1.25·1.15 = 86.25 → 86 (Math.round).
+  assert.equal(xpPerInput({ mode: 'sat-rush', rebirthCount: 2, popStyleMult: 1.25, soundPackMult: 1.15 }), 86);
+});
+
+test('rebirth thresholds: rebirths 0→15, 1→18, 2→21; multipliers 1.5/2.0/2.5', () => {
+  assert.equal(rebirthThreshold(0), 15);
+  assert.equal(rebirthThreshold(1), 18);
+  assert.equal(rebirthThreshold(2), 21);
+  assert.equal(rebirthMult(1), 1.5);
+  assert.equal(rebirthMult(2), 2.0);
+  assert.equal(rebirthMult(3), 2.5);
+});
+
+test('rebirth is refused at LV14 and allowed at LV15', () => {
+  const xp14 = cumCost(14); // exactly at the start of level 14
+  const xp15 = cumCost(15); // exactly at the start of level 15
+  assert.equal(levelFromXp(xp14).level, 14);
+  assert.equal(levelFromXp(xp15).level, 15);
+  assert.equal(canRebirth(xp14, 0), false);
+  assert.equal(canRebirth(xp15, 0), true);
+});
+
+test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebirths+1', () => {
+  withStorage(
+    {
+      'taw.xp': String(cumCost(20)),
+      'taw.letters': '1234',
+      'taw.wins': '500',
+      'taw.winsLifetime': '900',
+      'taw.owned': JSON.stringify(['classic', 'thock', 'prism']),
+      'taw.equipped': JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }),
+      'taw.rebirths': '1',
+      'taw.taps': '42',
+    },
+    (map) => {
+      const rc = doRebirth();
+      assert.equal(rc, 2); // rebirth count bumped
+      assert.equal(getRebirths(), 2);
+      assert.equal(loadProgress().xp, 0); // xp zeroed
+      assert.equal(loadProgress().lifetimeLetters, 1234); // preserved
+      // everything else untouched (their own keys)
+      assert.equal(map.get('taw.wins'), '500');
+      assert.equal(map.get('taw.winsLifetime'), '900');
+      assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
+      assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
+      assert.equal(map.get('taw.taps'), '42');
+    }
+  );
+  // a from-scratch rebirth (empty storage) still works and doesn't throw.
+  withStorage({}, () => {
+    assert.doesNotThrow(() => saveProgress({ xp: 0, lifetimeLetters: 0 }));
+  });
 });
 
 test('a tap credits xp but NOT lifetimeLetters (rawKeys 0)', () => {

@@ -17,6 +17,7 @@ import MusicButton from './components/MusicButton';
 import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 const StatsScreen = lazy(() => import('./components/StatsScreen'));
+const ShopScreen = lazy(() => import('./components/ShopScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 // CHAIN / FUSE (solo word modes, flag-gated). Lazy — the 357KB word chunk they pull
@@ -1315,6 +1316,10 @@ function App() {
     setView('stats');
   }
 
+  function goToShop() {
+    setView('shop');
+  }
+
   function goToCredits() {
     setView('credits');
   }
@@ -1651,6 +1656,8 @@ function App() {
     screen = <CreditsScreen onBack={goHome} />;
   } else if (view === 'stats') {
     screen = <StatsScreen onBack={goHome} />;
+  } else if (view === 'shop') {
+    screen = <ShopScreen onBack={goHome} />;
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
@@ -1675,6 +1682,7 @@ function App() {
         onQuickPlay={handleQuickPlayBot}
         onCredits={goToCredits}
         onStats={goToStats}
+        onShop={goToShop}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}

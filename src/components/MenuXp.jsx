@@ -298,6 +298,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       a.cancel();
       a.play();
     },
+    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (700ms ≤ 900).
+    rebirthCelebration(n) {
+      const a = levelupAnimRef.current;
+      if (!a) return;
+      for (const p of popAnimsRef.current) p.cancel();
+      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
+      if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
+      a.cancel();
+      a.play();
+    },
     // One finite "+N WINS" stamp (menu return after a paying round). Same pooled pattern.
     winsStamp(amount) {
       const a = winsStampAnimRef.current;

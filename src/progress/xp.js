@@ -7,7 +7,9 @@
 // per-word/letter award. `lifetimeLetters` counts RAW keystrokes (unmultiplied) and is a
 // SEPARATE running total for a future profile screen — never surfaced on the menu.
 
-// Per-source XP multipliers, all in one place. Menu typing is the 10x baseline.
+import { equippedPopStyleMult, equippedSoundPackMult } from './shop.js';
+
+// Per-source BASE (= 10 × mode) XP factor, all in one place. Menu typing is the 10× base.
 export const XP_MULTIPLIERS = {
   menu: 10,
   'word-bomb': 20,
@@ -41,6 +43,74 @@ export function levelFromXp(xp) {
     toNext: cost - intoLevel,
     frac: cost > 0 ? intoLevel / cost : 0,
   };
+}
+
+// ---- Rebirth --------------------------------------------------------------------------
+// Rebirth zeroes XP/level for a permanent multiplier. Thresholds: first at LEVEL 15, then
+// +3 (15, 18, 21 …). Multiplier: 1 + 0.5·rebirthCount (R1 ×1.5, R2 ×2.0 …). Everything
+// EXCEPT xp survives (wins, winsLifetime, owned, equipped, lifetimeLetters, taps, rounds).
+export const REBIRTH_KEY = 'taw.rebirths';
+const REBIRTH_BASE = 15;
+const REBIRTH_STEP = 3;
+
+export function getRebirths() {
+  try {
+    const raw = localStorage.getItem(REBIRTH_KEY);
+    if (raw == null) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
+}
+export function saveRebirths(n) {
+  try {
+    localStorage.setItem(REBIRTH_KEY, String(n));
+  } catch {
+    /* storage blocked */
+  }
+}
+export function rebirthThreshold(rebirthCount) {
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : 0;
+  return REBIRTH_BASE + REBIRTH_STEP * rc; // rc 0→15, 1→18, 2→21
+}
+export function rebirthMult(rebirthCount) {
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : 0;
+  return 1 + 0.5 * rc;
+}
+export function canRebirth(xp, rebirthCount = getRebirths()) {
+  return levelFromXp(xp).level >= rebirthThreshold(rebirthCount);
+}
+// A one-shot "REBIRTH N" celebration queued on confirm, consumed by the homepage on the
+// next menu visit (same pattern as the wins stamp).
+let pendingRebirth = 0;
+export function consumePendingRebirth() {
+  const n = pendingRebirth;
+  pendingRebirth = 0;
+  return n;
+}
+// Perform a rebirth: zero XP (keep lifetimeLetters), bump the rebirth count. Returns the
+// new count. Wins/owned/equipped/taps/rounds live under their own keys — untouched.
+export function doRebirth() {
+  const prog = loadProgress();
+  saveProgress({ xp: 0, lifetimeLetters: prog.lifetimeLetters });
+  const rc = getRebirths() + 1;
+  saveRebirths(rc);
+  pendingRebirth = rc;
+  return rc;
+}
+
+// ---- The multiplier stack — SINGLE source of truth ------------------------------------
+// xpPerInput = 10 · mode · rebirth · popStyle · soundPack (10·mode is XP_MULTIPLIERS[mode]).
+// Every XP award goes through this; no multiplier maths lives anywhere else. Factors
+// default to the live rebirth count + equipped-item multipliers, or can be passed in
+// (used by the unit test). Rounded to a whole number.
+export function xpPerInput({ mode = 'menu', rebirthCount, popStyleMult, soundPackMult } = {}) {
+  const base = XP_MULTIPLIERS[mode] ?? 10;
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  const ps = Number.isFinite(popStyleMult) ? popStyleMult : equippedPopStyleMult();
+  const sp = Number.isFinite(soundPackMult) ? soundPackMult : equippedSoundPackMult();
+  return Math.round(base * rebirthMult(rc) * ps * sp);
 }
 
 // Apply a credited award. Pure: returns the next {xp, lifetimeLetters} and whether the

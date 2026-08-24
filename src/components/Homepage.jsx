@@ -8,6 +8,7 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import { useXpCapture } from '../progress/useXpCapture';
 import { getWins, consumePendingWinsStamp } from '../progress/wins';
+import { consumePendingRebirth } from '../progress/xp';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -83,7 +84,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -256,8 +257,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // a round that paid out, fire ONE "+N WINS" stamp for the queued total.
   const [wins] = useState(() => getWins());
   useEffect(() => {
-    const stamp = consumePendingWinsStamp();
-    if (stamp > 0 && xpFxRef.current) xpFxRef.current.winsStamp(stamp);
+    const rb = consumePendingRebirth();
+    if (rb > 0 && xpFxRef.current) {
+      xpFxRef.current.rebirthCelebration(rb);
+    } else {
+      const stamp = consumePendingWinsStamp();
+      if (stamp > 0 && xpFxRef.current) xpFxRef.current.winsStamp(stamp);
+    }
   }, []);
 
   // Keep the juice layer's sound flag in sync with the app-wide SFX mute, so the
@@ -349,6 +355,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (navigating) return;
     sound.click();
     if (onStats) onStats();
+  }
+
+  function handleShop() {
+    if (navigating) return;
+    sound.click();
+    if (onShop) onShop();
   }
 
   function handleCredits() {
@@ -505,8 +517,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </button>
         )}
 
-        {/* Quiet footer links: STATS (the progression/stats overlay) + CREDITS. */}
+        {/* Quiet footer links: SHOP + STATS + CREDITS. */}
         <div className="homepage-footer-links">
+          <button
+            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
+            onClick={handleShop}
+            disabled={navigating}
+          >
+            SHOP
+          </button>
           <button
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
             onClick={handleStats}

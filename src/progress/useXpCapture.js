@@ -13,7 +13,7 @@ import {
   createRateLimiter,
   isCreditableKey,
   levelFromXp,
-  XP_MULTIPLIERS,
+  xpPerInput,
 } from './xp';
 import { playClack } from './clack';
 
@@ -41,6 +41,9 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
   useEffect(() => {
     if (!active) return undefined;
     const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
+    // The per-input XP from the single multiplier stack (menu mode). Stable for this menu
+    // session — equipping/rebirth happen on another screen, which remounts this hook.
+    const menuGain = xpPerInput({ mode: 'menu' });
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; a tap credits
     // xp but NOT lifetimeLetters (rawKeys 0) and bumps taw.taps instead; its pop is the
@@ -59,7 +62,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      const res = creditXp(xpRef.current, XP_MULTIPLIERS.menu, isTap ? 0 : 1);
+      const res = creditXp(xpRef.current, menuGain, isTap ? 0 : 1);
       xpRef.current = res.state;
       saveProgress(res.state);
       setXpTotal(res.state.xp);
@@ -71,8 +74,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const fx = fxRef && fxRef.current;
       if (fx) {
         if (res.leveledUp) fx.celebrate(res.level);
-        if (isTap) fx.tapPop(`+${XP_MULTIPLIERS.menu}`, TIER_SCALES[tier], TIER_COLORS[tier], opts.x, opts.y);
-        else fx.letterPop(opts.letter, `+${XP_MULTIPLIERS.menu}`, TIER_SCALES[tier], TIER_COLORS[tier]);
+        if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], opts.x, opts.y);
+        else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier]);
         if (crossed && tier > 0) fx.edgePulse(TIER_COLORS[tier]);
       }
       if (creditRef.current) creditRef.current();

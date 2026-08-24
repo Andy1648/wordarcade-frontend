@@ -7,14 +7,19 @@
 // (playClack). Never throws if audio is blocked. Web Audio buffers only, never
 // HTMLAudioElement; playClack() never blocks the keydown handler.
 
-const PROFILES = {
+import { getEquippedSoundPack } from './shop.js';
+
+// Sound params keyed by the equipped SOUND PACK (shop.js is the source). `silent` is null —
+// it plays nothing but its shop multiplier still applies (that lives in the xp stack).
+const PARAMS = {
   thock: { lowpass: 1200, body: 100, press: 0.85 },
   clack: { lowpass: 2600, body: 165, press: 0.72 },
   cream: { lowpass: 1700, body: 128, press: 0.78 },
+  marble: { lowpass: 2000, body: 150, press: 0.8 },
+  typewriter: { lowpass: 3200, body: 220, press: 0.7 },
+  silent: null,
 };
-export const CLACK_PROFILES = Object.keys(PROFILES);
 const CLACK_KEY = 'taw.clack';
-const DEFAULT_PROFILE = 'thock';
 // Pentatonic semitone ladder (offsets 0,2,4,7,9 then +12 and repeat), capped at +24.
 const PENT = [0, 2, 4, 7, 9];
 // Three subtle body-detune variants; we never play the same one twice in a row.
@@ -25,28 +30,26 @@ let sfxGain = null; // master (0.9) → compressor → destination
 let noiseBuffer = null;
 let lastVariant = -1;
 
-// Persist BOTH enable + profile under taw.clack. Unset ⇒ ON with 'thock'.
-function readState() {
+// Persist only the on/off flag under taw.clack (unset ⇒ ON). The SOUND PACK now lives in
+// the shop's equipped loadout, so there's no separate profile here.
+function readEnabled() {
   try {
     const raw = localStorage.getItem(CLACK_KEY);
-    if (raw == null) return { enabled: true, profile: DEFAULT_PROFILE };
+    if (raw == null) return true;
     const o = JSON.parse(raw);
-    return {
-      enabled: o && typeof o.enabled === 'boolean' ? o.enabled : true,
-      profile: o && PROFILES[o.profile] ? o.profile : DEFAULT_PROFILE,
-    };
+    return o && typeof o.enabled === 'boolean' ? o.enabled : true;
   } catch {
-    return { enabled: true, profile: DEFAULT_PROFILE };
+    return true;
   }
 }
 function writeState() {
   try {
-    localStorage.setItem(CLACK_KEY, JSON.stringify({ enabled, profile }));
+    localStorage.setItem(CLACK_KEY, JSON.stringify({ enabled }));
   } catch {
     /* storage blocked */
   }
 }
-let { enabled, profile } = readState();
+let enabled = readEnabled();
 
 // A short white-noise buffer with a cubic decay envelope (50ms). Built once per context.
 function makeNoiseBuffer(context) {
@@ -98,8 +101,7 @@ function ensureCtx() {
 }
 
 // Called from the settings toggle click gesture.
-export function enableClack(p) {
-  if (p && PROFILES[p]) profile = p;
+export function enableClack() {
   enabled = true;
   writeState();
   ensureCtx();
@@ -111,14 +113,6 @@ export function disableClack() {
 }
 export function isClackEnabled() {
   return enabled;
-}
-export function getClackProfile() {
-  return profile;
-}
-export function setClackProfile(p) {
-  if (!PROFILES[p]) return;
-  profile = p;
-  writeState();
 }
 
 // One press voice: a noise burst through a lowpass + a sine "body" with a 60ms exp decay.
@@ -155,8 +149,9 @@ function voice(when, cfg, rate, gainJitter, gainScale, bodyMul) {
 // base when the caller resets the streak (step 0). Cheap + non-blocking; no-op if disabled.
 export function playClack(step = 0) {
   if (!enabled) return;
+  const cfg = PARAMS[getEquippedSoundPack()];
+  if (!cfg) return; // 'silent' pack (or unknown) — plays nothing; the multiplier still applies
   if (!ensureCtx()) return; // lazily creates the context inside the calling gesture
-  const cfg = PROFILES[profile];
   const now = ctx.currentTime;
 
   // pentatonic pitch ladder for this streak position
