@@ -1,6 +1,11 @@
 /* ShopScreen.css — cosmetic shop overlay. Mode-dialog register: flat #1a0b2e panel, thick
    black border, hard offset shadow, 8px radius. STATIC — the only motion is the buttons'
    existing hover/press. Body scrolls internally; panel capped at 100dvh. */
+/* The overlay is programmatically focused on open (a11y) — no ring on the container itself;
+   interactive controls inside keep their own focus styles. */
+.shop-overlay:focus {
+  outline: none;
+}
 .shop-overlay {
   position: fixed;
   inset: 0;

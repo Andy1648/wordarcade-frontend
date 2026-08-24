@@ -15,7 +15,7 @@ import './MenuXp.css';
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0 }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, winsAffordable = false }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -127,16 +127,28 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
   const reb = Math.min(3, Math.max(0, Math.floor(rebirths) || 0));
 
+  // The mini (splash) bar is fully decorative → aria-hidden. The full bar exposes ONLY the
+  // wins button (an interactive shop entry) to assistive tech; the LV/fill/readout stay
+  // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
-    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden="true">
+    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden={variant === 'mini' ? 'true' : undefined}>
       {variant !== 'mini' && wins != null && (
-        <span className="menu-wins-chip" aria-label={`${wins} wins`}>
-          <span className="menu-wins-coin" aria-hidden="true" />
-          {wins}
-        </span>
+        onWinsClick ? (
+          <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
+            <span className="menu-wins-coin" aria-hidden="true" />
+            {wins}
+            {winsAffordable && <span className="menu-wins-dot" aria-hidden="true" />}
+          </button>
+        ) : (
+          <span className="menu-wins-chip" aria-label={`${wins} wins`}>
+            <span className="menu-wins-coin" aria-hidden="true" />
+            {wins}
+            {winsAffordable && <span className="menu-wins-dot" aria-hidden="true" />}
+          </span>
+        )
       )}
-      <span className="menu-xp-lv">LV {level}</span>
-      <span className="menu-xp-track" ref={trackRef}>
+      <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
+      <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
         <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
         <span className="menu-xp-marker" ref={markerRef} />
         {variant !== 'mini' && (
@@ -152,10 +164,11 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
 const CENTER = 'translate(-50%,-50%) ';
 
-// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 16, cap 12 running.
-const POP_MS = 260;
+// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 16, cap 14 running.
+// At 30 keys/sec × 0.42s ≈ 12.6 concurrent, so the cap sits just above at 14.
+const POP_MS = 420;
 const POP_POOL = 16;
-const POP_CAP = 12; // 12 pops + fill transition 1 + one edge pulse 1 = the 14 menu budget
+const POP_CAP = 14; // 14 pops + fill transition 1 + one edge pulse 1 = the 16 menu budget
 const POP_HALF = 30; // keep a pop this far off the fx-layer edge and the bar box
 const POP_MIN_GAP = 90; // reject a candidate within this many px of the last few spawns
 const RECENT_POS = 6; // ring buffer: reject against the last N accepted positions
@@ -279,9 +292,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     popAnimsRef.current = popElsRef.current.map((el) => {
       const a = el.animate(
         [
-          { transform: `${CENTER}translateY(4px)`, opacity: 0, offset: 0 },
-          { transform: `${CENTER}translateY(-4px)`, opacity: 1, offset: 0.25 },
-          { transform: `${CENTER}translateY(-22px)`, opacity: 0, offset: 1 },
+          { transform: `${CENTER}translateY(6.4px)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}translateY(-6.4px)`, opacity: 1, offset: 0.25 },
+          { transform: `${CENTER}translateY(-35.2px)`, opacity: 0, offset: 1 },
         ],
         popOpts
       );
@@ -360,9 +373,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(6.4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-6.4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-35.2px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -394,9 +407,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(6.4px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-6.4px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-35.2px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();

@@ -9,6 +9,7 @@ import { MenuXpBar, MenuXpFx } from './MenuXp';
 import { useXpCapture } from '../progress/useXpCapture';
 import { getWins, consumePendingWinsStamp } from '../progress/wins';
 import { consumePendingRebirth, getRebirths } from '../progress/xp';
+import { canAffordAny } from '../progress/shop';
 import ModeDialog from './ModeDialog';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -84,7 +85,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily, restoreFocus = null, onFocusRestored }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -224,13 +225,26 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       updateState();
     };
 
+    // Coalesce scroll-driven layout reads into ONE rAF: a burst of scroll events (mobile
+    // momentum can fire ~1/frame) schedules at most one measurement per frame instead of
+    // forcing a full read of every card on every event.
+    let scrollRaf = 0;
+    const onScroll = () => {
+      if (scrollRaf) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0;
+        updateState();
+      });
+    };
+
     refresh();
     const raf = requestAnimationFrame(refresh); // second pass after layout/fonts settle
-    el.addEventListener('scroll', updateState, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', refresh);
     return () => {
       cancelAnimationFrame(raf);
-      el.removeEventListener('scroll', updateState);
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      el.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', refresh);
     };
   }, []);
@@ -259,6 +273,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
+  // Can the player buy at least one unowned item? Drives the wins-chip dot (snapshot on
+  // mount; a purchase remounts this component so it re-reads).
+  const [winsAffordable] = useState(() => canAffordAny());
+  const shopLinkRef = useRef(null);
+  const statsLinkRef = useRef(null);
+  // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
+  // restore focus to that footer link on this remount, then clear the flag.
+  useEffect(() => {
+    if (restoreFocus === 'shop' && shopLinkRef.current) shopLinkRef.current.focus();
+    else if (restoreFocus === 'stats' && statsLinkRef.current) statsLinkRef.current.focus();
+    if (restoreFocus && onFocusRestored) onFocusRestored();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const rb = consumePendingRebirth();
     if (rb > 0 && xpFxRef.current) {
@@ -456,6 +483,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           cost={xpProgress.cost}
           rebirths={rebirths}
           wins={wins}
+          winsAffordable={winsAffordable}
+          onWinsClick={handleShop}
         />
 
         <div className="homepage-cards-region">
@@ -531,6 +560,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {/* Quiet footer links: SHOP + STATS + CREDITS. */}
         <div className="homepage-footer-links">
           <button
+            ref={shopLinkRef}
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
             onClick={handleShop}
             disabled={navigating}
@@ -538,6 +568,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             SHOP
           </button>
           <button
+            ref={statsLinkRef}
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
             onClick={handleStats}
             disabled={navigating}

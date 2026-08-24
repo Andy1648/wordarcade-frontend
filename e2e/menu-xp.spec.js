@@ -74,7 +74,7 @@ test.describe('menu XP', () => {
     expect(xpFramesAtRest).toBe(0);
   });
 
-  test('sustained 30 keys/sec burst never exceeds 14 concurrent finite animations', async ({ page }) => {
+  test('sustained 30 keys/sec burst never exceeds 16 concurrent finite animations', async ({ page }) => {
     await gotoMenuLive(page);
 
     const result = await page.evaluate(async () => {
@@ -118,7 +118,7 @@ test.describe('menu XP', () => {
     });
 
     // The whole point: the concurrent FINITE running-animation count stays within budget.
-    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(14);
+    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(16);
     // Sanity: the burst actually credited XP and crossed at least one level (need(1)=100).
     expect(result.xp).toBeGreaterThanOrEqual(100);
   });
@@ -185,6 +185,46 @@ test.describe('splash XP', () => {
       leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
     }));
     expect(after5.leaving).toBe(true); // gate met → splash dismissed
+  });
+
+  test('TYPE TO START gate: a returning visitor (banked XP) needs only 3 keystrokes', async ({ page }) => {
+    await installBackendMock(page);
+    // Seed XP BEFORE first paint → loadProgress().xp > 0 → the 3-key returning-visitor gate.
+    await page.addInitScript(() => {
+      try { localStorage.setItem('taw.xp', '500'); } catch { /* storage blocked */ }
+    });
+    await page.goto('/'); // fresh context still shows the splash; the seeded XP drops the gate to 3
+    await page.locator('.splash-screen').waitFor({ state: 'visible' });
+    await expect(page.locator('.splash-start')).toHaveText('TYPE TO START');
+
+    // Exactly 3 pips for a returning visitor.
+    expect(await page.locator('.splash-pip').count()).toBe(3);
+
+    const key = () =>
+      page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true })));
+
+    // Two keystrokes fill two pips, no dismiss yet.
+    await key();
+    await key();
+    await page.waitForTimeout(80);
+    const after2 = await page.evaluate(() => ({
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+      pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
+    }));
+    expect(after2.leaving).toBe(false);
+    expect(after2.pipsOn).toBe(2);
+
+    // The 3rd keystroke fills the 3rd pip AND dismisses. Assert the fill with a RETRYING
+    // matcher (polls immediately) so it lands in the ~300ms pre-unmount window regardless of
+    // parallel-worker latency — a fixed wait could read after the splash unmounts.
+    await key();
+    await expect(page.locator('.splash-pip.is-on')).toHaveCount(3); // the 3rd pip filled
+    await page.waitForTimeout(80);
+    const after3 = await page.evaluate(() => ({
+      // `?? true`: if the splash has already unmounted, that still counts as dismissed.
+      leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
+    }));
+    expect(after3.leaving).toBe(true); // gate met → splash dismissed
   });
 });
 

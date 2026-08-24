@@ -4,7 +4,7 @@
 // instant + free. A REBIRTH button appears only when the level threshold is met, behind a
 // confirmation that states exactly what's lost and gained. Mode-dialog styling; static —
 // no animation beyond the buttons' existing hover/press.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip } from '../progress/shop';
 import { getWins } from '../progress/wins';
@@ -15,6 +15,19 @@ export default function ShopScreen({ onBack }) {
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
+  const overlayRef = useRef(null);
+  const onBackRef = useRef(onBack);
+  onBackRef.current = onBack;
+  // A11y: move focus into the dialog on open; Escape closes it. Once on mount (ref keeps the
+  // latest onBack) so re-renders never re-steal focus.
+  useEffect(() => {
+    overlayRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') onBackRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const level = levelFromXp(loadProgress().xp).level;
   const rebirths = getRebirths();
@@ -69,7 +82,7 @@ export default function ShopScreen({ onBack }) {
   };
 
   return (
-    <div className="shop-overlay" role="dialog" aria-label="Shop">
+    <div className="shop-overlay" role="dialog" aria-modal="true" aria-label="Shop" tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
         <div className="shop-header">
           <h2 className="shop-title">SHOP</h2>

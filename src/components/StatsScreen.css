@@ -1,6 +1,10 @@
 /* StatsScreen.css — read-only stats overlay. Mode-dialog register: flat #1a0b2e panel,
    thick black border, hard offset shadow, 8px radius. ZERO animation. Scrolls INTERNALLY
    on a short viewport; the overlay is height-capped so it never breaks 100dvh. */
+/* Programmatically focused on open (a11y) — no ring on the container itself. */
+.stats-overlay:focus {
+  outline: none;
+}
 .stats-overlay {
   position: fixed;
   inset: 0;
