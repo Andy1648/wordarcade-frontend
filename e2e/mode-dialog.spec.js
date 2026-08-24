@@ -4,6 +4,7 @@
 // centered dialog, which must open with the right mode and close cleanly by
 // every affordance (✕, Escape, scrim click) with no lingering overlay.
 import { test, expect } from '@playwright/test';
+import { GAMES } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 
 test.describe('mode dialog', () => {
@@ -37,7 +38,7 @@ test.describe('mode dialog', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
     // …and the menu underneath is interactive again.
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
   });
 
   test('closes cleanly via the Escape key', async ({ page }) => {

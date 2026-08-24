@@ -1,20 +1,17 @@
 // e2e/menu.spec.js
 //
-// The menu (Homepage): the three mode cards render with their labels, and the
+// The menu (Homepage): the mode cards render with their labels, and the
 // menu's navigation entries always lead somewhere with a way back (no dead-end).
 import { test, expect } from '@playwright/test';
+import { GAMES } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 
 const MENU = { name: 'Type a Word' };
 
-// The shipped mode cards (src/gameData.js). THREE modes now ship: two social
-// games plus SAT RUSH (the solo vocab mode). We verify all three so the
-// label check is faithful to what actually ships.
-const CARDS = [
-  { name: 'WORD BOMB', badge: 'SOLO · MULTI' },
-  { name: 'CATEGORY BLITZ', badge: 'SOLO / MULTI' },
-  { name: 'SAT RUSH', badge: 'SOLO' },
-];
+// The shipped mode cards, derived from the single source of truth (src/gameData.js)
+// so adding a mode never silently breaks this. Names render across two lines
+// ("WORD\nBOMB"); we normalize the newline to a space for the label assertions.
+const CARDS = GAMES.map((g) => ({ name: g.name.replace('\n', ' '), badge: g.badgeText }));
 
 test.describe('menu', () => {
   test.beforeEach(async ({ page }) => {
@@ -22,7 +19,7 @@ test.describe('menu', () => {
     await gotoMenu(page);
   });
 
-  test('renders all three mode cards with correct name + badge labels', async ({ page }) => {
+  test('renders all mode cards with correct name + badge labels', async ({ page }) => {
     const cards = page.locator('.game-card');
     await expect(cards).toHaveCount(CARDS.length);
 

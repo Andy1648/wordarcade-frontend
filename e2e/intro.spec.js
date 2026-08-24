@@ -5,6 +5,7 @@
 // visits see the whole thing; the app has a built-in skip (?portal=1) that lands
 // straight on the menu, which the rest of the suite uses.
 import { test, expect } from '@playwright/test';
+import { GAMES } from '../src/gameData.js';
 import { installBackendMock } from './support/backendMock.js';
 
 const MENU = { name: 'Type a Word' };
@@ -32,15 +33,17 @@ test.describe('intro sequence', () => {
     //    we wait for the splash's call-to-action to appear).
     const splash = page.locator('.splash-screen');
     await expect(splash).toBeVisible();
-    await expect(page.getByText('CLICK ANYWHERE TO START')).toBeVisible();
+    // Playwright's default is a fine pointer, so the splash shows the "TYPE TO
+    // START" call-to-action (touch devices get the "TAP TO START" variant).
+    await expect(page.getByText(/TYPE TO START/i)).toBeVisible();
 
     // 3) Any click dismisses the splash (also the app's audio-unlock gesture) and
     //    starts the fight-card intro, which then wipes to the homepage.
     await splash.click();
 
-    // 4) We end on the menu: the wordmark + the three mode cards are present.
+    // 4) We end on the menu: the wordmark + the mode cards are present.
     await expect(page.getByRole('img', MENU)).toBeVisible();
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
 
     // The whole time, the only backend contact was the intercepted socket attempt
     // — never the real server.
@@ -54,6 +57,6 @@ test.describe('intro sequence', () => {
     // No splash — the menu is shown immediately (loading is pre-completed).
     await expect(page.getByRole('img', MENU)).toBeVisible();
     await expect(page.locator('.splash-screen')).toHaveCount(0);
-    await expect(page.locator('.game-card')).toHaveCount(3);
+    await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
   });
 });
