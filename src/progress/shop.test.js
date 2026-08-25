@@ -2,8 +2,8 @@
 // owned, unaffordable), and equipping (instant, per-type slot). IDs are stable save keys.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buy, equip, isOwned, getOwned, getEquipped, buyKeyPower, buyKeyPowerMax } from './shop.js';
-import { getKeyPower } from './xp.js';
+import { buy, equip, isOwned, getOwned, getEquipped, buyKeyPower } from './shop.js';
+import { getKeyTier } from './xp.js';
 
 function withStorage(seed, fn) {
   const saved = globalThis.localStorage;
@@ -60,32 +60,21 @@ test('cannot buy an unaffordable item; wins unchanged', () => {
   });
 });
 
-test('buyKeyPower: one level deducts the next-level cost and bumps taw.keypower', () => {
-  withStorage({ 'taw.wins': '60', 'taw.keypower': '0' }, (map) => {
-    const r = buyKeyPower(); // lv0 costs 50
+test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', () => {
+  withStorage({ 'taw.wins': '600', 'taw.keytier': '0' }, (map) => {
+    const r = buyKeyPower(); // T0→T1 costs 500
     assert.equal(r.ok, true);
-    assert.equal(r.level, 1);
-    assert.equal(r.wins, 10);
-    assert.equal(map.get('taw.keypower'), '1');
-    assert.equal(map.get('taw.wins'), '10');
-    // Can't afford lv1 (costs 60, snapped to a round 10) with 10 left.
+    assert.equal(r.tier, 1);
+    assert.equal(r.spent, 500);
+    assert.equal(r.wins, 100);
+    assert.equal(map.get('taw.keytier'), '1');
+    assert.equal(map.get('taw.wins'), '100');
+    // Can't afford T2 (costs 3,000) with 100 left.
     const again = buyKeyPower();
     assert.equal(again.ok, false);
-    assert.equal(map.get('taw.keypower'), '1'); // unchanged
-  });
-});
-
-test('buyKeyPowerMax: 500 wins from lv0 buys 6 levels for 450, leaving 50', () => {
-  withStorage({ 'taw.wins': '500', 'taw.keypower': '0' }, (map) => {
-    // Economy v5 costs snap to a round 10: 50,60,70,80,90,100 (sum 450); lv6 is 120 > 50.
-    const r = buyKeyPowerMax();
-    assert.equal(r.ok, true);
-    assert.equal(r.bought, 6);
-    assert.equal(r.spent, 450);
-    assert.equal(r.wins, 50);
-    assert.equal(r.level, 6);
-    assert.equal(getKeyPower(), 6);
-    assert.equal(map.get('taw.wins'), '50');
+    assert.equal(again.spent, 0);
+    assert.equal(map.get('taw.keytier'), '1'); // unchanged
+    assert.equal(getKeyTier(), 1);
   });
 });
 

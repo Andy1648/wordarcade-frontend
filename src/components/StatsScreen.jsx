@@ -8,8 +8,8 @@ import {
   getTaps,
   getRebirths,
   rebirthMult,
-  getKeyPower,
-  keyPowerBaseXp,
+  getKeyTier,
+  keyTierXp,
   need,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
@@ -63,8 +63,8 @@ export default function StatsScreen({ onBack }) {
   const rebirths = getRebirths();
 
   const rbMult = rebirthMult(rebirths);
-  const keyPower = getKeyPower();
-  const baseXp = keyPowerBaseXp(keyPower); // snapped ×10 base XP per letter
+  const keyTier = getKeyTier();
+  const baseXp = keyTierXp(keyTier); // Key Power TIER's XP per letter
   const menuXp = Math.round((baseXp * rbMult) / 10) * 10; // per menu keystroke (mode ×1), ×10
 
   const progression = [
