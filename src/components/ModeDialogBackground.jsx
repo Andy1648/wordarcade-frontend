@@ -24,6 +24,22 @@ export const MODES = {
     sub: 'Speed round · Name as many as you can before time runs out.',
     create: 'CREATE',
   },
+  // Solo modes (CHAIN / FUSE). `solo: true` flips ModeDialog to a single PLAY
+  // button. `name` is the whole-word title (these aren't a two-word split).
+  chain: {
+    accent: '#2EFFE0', bg: ['#052a2a', '#02100f'], anim: 'streaks', solo: true,
+    chip: 'SOLO', name: 'CHAIN', t1: 'CHAIN', t2: '',
+    liner: 'Each word starts where the last one ended.',
+    sub: 'Solo · Keep the chain alive — every answer begins with the previous word\'s last letter.',
+    create: 'PLAY',
+  },
+  fuse: {
+    accent: '#FFE94A', bg: ['#3a2a06', '#160f03'], anim: 'flame', solo: true,
+    chip: 'SOLO', name: 'FUSE', t1: 'FUSE', t2: '',
+    liner: 'Type a word that contains the piece.',
+    sub: 'Solo · Race the burning fuse — every word must contain the given fragment.',
+    create: 'PLAY',
+  },
 };
 
 function prefersReduced() {
@@ -56,6 +72,9 @@ export default function ModeDialogBackground({ mode = 'bomb', roar = false }) {
 
     const reduceMotion = prefersReduced();
     const cur = mode;
+    // Which animation this mode draws — from the config's `anim` field, so a new mode
+    // (e.g. FUSE → flame) picks its animation by data, not by key equality.
+    const anim = (MODES[cur] || MODES.bomb).anim;
 
     /* ===================== state (was module-level) ===================== */
     let W = 0, H = 0, DPR = 1, lastW = 0, lastH = 0;
@@ -259,7 +278,7 @@ export default function ModeDialogBackground({ mode = 'bomb', roar = false }) {
 
     /* ===================== loop ===================== */
     function seed() {
-      if (cur === 'bomb') seedFlame();
+      if (anim === 'flame') seedFlame();
       else seedStreaks();
     }
     function frame(now) {
@@ -268,7 +287,7 @@ export default function ModeDialogBackground({ mode = 'bomb', roar = false }) {
       ctx.clearRect(0, 0, W, H);
       lean += ((pointerX - 0.5) * Math.min(W, 260) * 0.6 - lean) * 0.06;
       roarV += (roarTargetRef.current - roarV) * 0.08;
-      if (cur === 'bomb') drawFlame(t);
+      if (anim === 'flame') drawFlame(t);
       else drawStreaks();
       raf = requestAnimationFrame(frame);
     }

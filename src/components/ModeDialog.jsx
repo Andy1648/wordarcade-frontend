@@ -6,6 +6,7 @@ import ModeDialogBackground, { MODES } from './ModeDialogBackground';
 import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
+import { wordWinsEstimate } from '../progress/wins';
 
 // Morph timing/feel. The dialog grows from the clicked card to a centered panel
 // over MORPH_MS with a snappy ease-out; the body fades/pops in CONTENT_DELAY into
@@ -20,6 +21,8 @@ const TRANSITION = `transform ${MORPH_MS}ms ${EASE}, border-radius ${MORPH_MS}ms
 const MODE_KEY = {
   'word-bomb': 'bomb',
   'category-blitz': 'blitz',
+  chain: 'chain',
+  fuse: 'fuse',
 };
 
 function prefersReduced() {
@@ -47,7 +50,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
  * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -56,6 +59,11 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
 
   const modeKey = MODE_KEY[game.id] || 'bomb';
   const mode = MODES[modeKey];
+  // SOLO variant (CHAIN / FUSE): one PLAY button + a per-word wins line, instead of
+  // CREATE/JOIN. Driven by `onPlay` being wired AND the mode being flagged solo — the
+  // unlocked sibling of LockedPreviewDialog. Everything else (morph, bg, layout) is shared.
+  const isSolo = !!onPlay && !!mode.solo;
+  const soloPay = isSolo ? wordWinsEstimate({ mode: game.id }) : 0;
 
   // OPEN: position the (already final-sized) shell onto the card, then release to
   // its resting transform so it eases out into the dialog. Reads both rects before
@@ -204,10 +212,18 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               </div>
             )}
             <div className="mode-dialog-title">
-              <span className="mode-dialog-title-w1">{mode.t1}</span>{' '}
-              <span className="mode-dialog-title-w2" style={{ color: accent }}>
-                {mode.t2}
-              </span>
+              {isSolo ? (
+                <span className="mode-dialog-title-w2" style={{ color: accent }}>
+                  {mode.name}
+                </span>
+              ) : (
+                <>
+                  <span className="mode-dialog-title-w1">{mode.t1}</span>{' '}
+                  <span className="mode-dialog-title-w2" style={{ color: accent }}>
+                    {mode.t2}
+                  </span>
+                </>
+              )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
             <div className="mode-dialog-howlabel" style={{ color: accent }}>
@@ -224,30 +240,51 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               />
             )}
 
-            {/* CREATE/JOIN show the shared CONNECTING… / WAKING THE SERVER…
-                feedback IN PLACE of their label while their action is pending —
-                inside the dialog, above ModeDialog's own scrim (the Homepage
-                bottom-bar indicator would be hidden behind that scrim). Both are
-                disabled while EITHER is pending so a second tap can't double-fire. */}
-            <div className="mode-dialog-actions">
-              <button
-                className="mode-dialog-btn mode-dialog-btn-create"
-                style={{ background: accent, borderColor: darken(accent, 0.45) }}
-                onClick={onCreate}
-                onMouseEnter={() => setCreateHover(true)}
-                onMouseLeave={() => setCreateHover(false)}
-                disabled={!!connecting}
-              >
-                {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : mode.create}
-              </button>
-              <button
-                className="mode-dialog-btn mode-dialog-btn-join"
-                onClick={onJoin}
-                disabled={!!connecting}
-              >
-                {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN'}
-              </button>
-            </div>
+            {/* SOLO (CHAIN/FUSE): per-word wins line, then a single PLAY button — the
+                unlocked sibling of LockedPreviewDialog's "N WINS / WORD" teaser. */}
+            {isSolo ? (
+              <>
+                <div className="mode-dialog-pay">
+                  <span className="mode-dialog-pay-num" style={{ color: accent }}>{soloPay}</span> WINS / WORD
+                </div>
+                <div className="mode-dialog-actions">
+                  <button
+                    className="mode-dialog-btn mode-dialog-btn-create"
+                    style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                    onClick={onPlay}
+                    onMouseEnter={() => setCreateHover(true)}
+                    onMouseLeave={() => setCreateHover(false)}
+                  >
+                    PLAY
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* CREATE/JOIN show the shared CONNECTING… / WAKING THE SERVER…
+                 feedback IN PLACE of their label while their action is pending —
+                 inside the dialog, above ModeDialog's own scrim (the Homepage
+                 bottom-bar indicator would be hidden behind that scrim). Both are
+                 disabled while EITHER is pending so a second tap can't double-fire. */
+              <div className="mode-dialog-actions">
+                <button
+                  className="mode-dialog-btn mode-dialog-btn-create"
+                  style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                  onClick={onCreate}
+                  onMouseEnter={() => setCreateHover(true)}
+                  onMouseLeave={() => setCreateHover(false)}
+                  disabled={!!connecting}
+                >
+                  {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : mode.create}
+                </button>
+                <button
+                  className="mode-dialog-btn mode-dialog-btn-join"
+                  onClick={onJoin}
+                  disabled={!!connecting}
+                >
+                  {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

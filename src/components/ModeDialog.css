@@ -253,6 +253,26 @@
   max-width: 44ch;
 }
 
+/* SOLO per-word wins line (CHAIN / FUSE) — the unlocked sibling of
+   LockedPreviewDialog's ".lp-pay". Bungee number in the mode accent, mono label. */
+.mode-dialog-pay {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(15px, 1.8vw, 18px);
+  letter-spacing: 0.12em;
+  color: #c8b8e0;
+  margin-top: clamp(10px, 2vh, 16px);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.mode-dialog-pay-num {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1;
+  -webkit-text-stroke: 1.5px #000;
+}
+
 .mode-dialog-actions {
   display: flex;
   width: 100%;
