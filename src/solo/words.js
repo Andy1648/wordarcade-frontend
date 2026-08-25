@@ -39,9 +39,45 @@ export async function loadSoloWords() {
   return cache;
 }
 
+// ---- Acceptance extension (lazy, AFTER the first run) --------------------------------
+// The shipped accept set (RECALL ∪ words.accept.txt ≈ 88k) is FREQUENCY-filtered, so many
+// real English words are wrongly rejected as "NOT IN OUR WORD LIST". loadSoloAcceptExt()
+// pulls the ~182k-word extension (its own ~423KB-brotli lazy chunk) and ADDS it, in place,
+// to the SAME live `cache.accept` Set the running engines already reference — so the current
+// run and every later run instantly accept the bigger vocabulary. It is called only AFTER a
+// run ENDS (never on mount), so the extension never delays the first game; until it lands the
+// 88k set applies. Idempotent + single-flight: the fetch/merge happens exactly once.
+let extState = 'idle'; // 'idle' | 'loading' | 'done'
+let extPromise = null;
+
+export function loadSoloAcceptExt() {
+  if (extState === 'done') return Promise.resolve(cache);
+  if (extPromise) return extPromise;
+  extState = 'loading';
+  extPromise = (async () => {
+    if (!cache) await loadSoloWords(); // base must exist to merge into
+    const { acceptExtRaw } = await import('./wordsAcceptExt.js');
+    for (const w of acceptExtRaw.split(' ')) {
+      if (!w) continue;
+      cache.accept.add(w);
+      if (w.length > cache.maxAcceptLen) cache.maxAcceptLen = w.length;
+    }
+    extState = 'done';
+    return cache;
+  })();
+  return extPromise;
+}
+
+// Whether the extension has finished merging (mainly for tests / diagnostics).
+export function isSoloAcceptExtLoaded() {
+  return extState === 'done';
+}
+
 // Test/SSR hook: lets a caller inject already-parsed data (e.g. a node test that read
 // the .txt files with fs) so the rest of the app can call loadSoloWords() without the
-// Vite ?raw loader. Never used in the browser.
+// Vite ?raw loader. Never used in the browser. Also resets the extension latch.
 export function __setSoloWordsForTest(data) {
   cache = data;
+  extState = 'idle';
+  extPromise = null;
 }

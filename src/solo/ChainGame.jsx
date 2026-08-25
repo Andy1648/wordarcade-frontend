@@ -3,7 +3,7 @@
 // file is glue + presentation.
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
-import { loadSoloWords } from './words.js';
+import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
@@ -90,6 +90,13 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     onRunStart: () => setRuns(bumpChainRuns()),
   });
   const s = g.engine.state;
+
+  // Fetch the big acceptance extension the moment the FIRST run ends — never on mount, so
+  // it can't delay the first game. Idempotent (words.js single-flights it), so firing on
+  // every subsequent run-over is harmless; its words merge into the live accept set in place.
+  useEffect(() => {
+    if (g.phase === 'over') loadSoloAcceptExt();
+  }, [g.phase]);
 
   // ---- OUT → IN travel FX (presentational) -------------------------------------
   // Pooled: one traveler + one fader, reused for every accept (never a node per accept).
