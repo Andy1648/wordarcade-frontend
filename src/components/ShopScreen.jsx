@@ -1,9 +1,9 @@
-// ShopScreen.jsx — the cosmetic shop overlay (opened from the loud top-right SHOP button or
-// the menu Wins chip). Two TABS: SHOP (pop-style + sound-pack item cards with OWNED /
-// EQUIPPED state; unaffordable items visible-but-dimmed with the price shown) and REBIRTH
-// (its own screen — count, multiplier, next threshold, what's lost/kept, and the action,
-// disabled with the requirement shown when not eligible). Mode-dialog styling; static — no
-// animation beyond the buttons' existing hover/press.
+// ShopScreen.jsx — the SHOP / REBIRTH overlay. Which one it shows is set by `initialView`
+// (the menu now has TWO top-corner icons — SHOP and REBIRTH — each opening straight into its
+// own view; there are no in-panel tabs). SHOP: Key Power tier + pop-style / sound-pack cards
+// (OWNED / EQUIPPED state; unaffordable items visible-but-dimmed). REBIRTH: count, multiplier,
+// next threshold, what's lost/kept, and the action (disabled with the requirement shown when
+// not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
@@ -11,11 +11,11 @@ import { getWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { formatNum } from '../format';
 
-export default function ShopScreen({ onBack }) {
+export default function ShopScreen({ onBack, initialView = 'shop' }) {
+  const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
   const [wins, setWins] = useState(() => getWins());
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
-  const [tab, setTab] = useState('shop'); // 'shop' | 'rebirth'
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
   const overlayRef = useRef(null);
@@ -58,10 +58,6 @@ export default function ShopScreen({ onBack }) {
     setConfirming(false);
     onBack();
   };
-  const goTab = (next) => {
-    setTab(next);
-    setConfirming(false);
-  };
 
   const Card = ({ item, type }) => {
     const isOwnedItem = owned.has(item.id);
@@ -97,10 +93,10 @@ export default function ShopScreen({ onBack }) {
   };
 
   return (
-    <div className="shop-overlay" role="dialog" aria-modal="true" aria-label="Shop" tabIndex={-1} ref={overlayRef}>
+    <div className="shop-overlay" role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
         <div className="shop-header">
-          <h2 className="shop-title">SHOP</h2>
+          <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'SHOP'}</h2>
           <div className="shop-wins" aria-label={`${wins} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}
@@ -110,28 +106,7 @@ export default function ShopScreen({ onBack }) {
           </button>
         </div>
 
-        <div className="shop-tabs" role="tablist" aria-label="Shop sections">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'shop'}
-            className={`shop-tab${tab === 'shop' ? ' is-active' : ''}`}
-            onClick={() => goTab('shop')}
-          >
-            SHOP
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'rebirth'}
-            className={`shop-tab${tab === 'rebirth' ? ' is-active' : ''}`}
-            onClick={() => goTab('rebirth')}
-          >
-            REBIRTH
-          </button>
-        </div>
-
-        {tab === 'shop' ? (
+        {view === 'shop' ? (
           <div className="shop-body">
             <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
             <div className="shop-keypower">

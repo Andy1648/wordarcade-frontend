@@ -10,6 +10,12 @@
   position: fixed;
   inset: 0;
   z-index: 120;
+  /* Cancel the --app-scale zoom that .view-screen applies to this overlay's ancestor.
+     zoom scales position:fixed descendants too, so without this the panel's inset:0 +
+     88dvh cap render at 88dvh × app-scale — on a wide monitor (app-scale up to 1.6) that
+     is >100dvh and the panel runs off the top AND bottom. Netting the zoom back to 1 makes
+     inset:0 the REAL viewport and 88dvh a real 88%, so the panel always centres and fits. */
+  zoom: calc(1 / var(--app-scale, 1));
   background: rgba(13, 6, 24, 0.86);
   display: flex;
   align-items: center;

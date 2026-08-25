@@ -407,6 +407,9 @@ function App() {
   // homepage can restore focus to it when the overlay closes (a11y). A ref (not state):
   // it's read once by the remounting Homepage, never drives a render.
   const overlayReturnRef = useRef(null);
+  // Which view the shared Shop/Rebirth overlay opens into ('shop' | 'rebirth'), set by the
+  // two menu icons and read by the ShopScreen render below. A ref: it never drives a render.
+  const shopViewRef = useRef('shop');
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
   const [categoryScores, setCategoryScores] = useState(null);
@@ -1442,7 +1445,16 @@ function App() {
   }
 
   function goToShop() {
+    shopViewRef.current = 'shop';
     overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
+    setView('shop');
+  }
+
+  // REBIRTH is its own top-corner icon now (separate from SHOP): it opens the same overlay
+  // straight into the rebirth view. Focus returns to the rebirth icon on close.
+  function goToRebirth() {
+    shopViewRef.current = 'rebirth';
+    overlayReturnRef.current = 'rebirth';
     setView('shop');
   }
 
@@ -1800,8 +1812,8 @@ function App() {
     );
   } else if (view === 'shop') {
     screen = (
-      <Suspense fallback={<OverlaySkeleton title="SHOP" />}>
-        <ShopScreen onBack={goHome} />
+      <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'SHOP'} />}>
+        <ShopScreen onBack={goHome} initialView={shopViewRef.current} />
       </Suspense>
     );
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
@@ -1834,6 +1846,7 @@ function App() {
         onCredits={goToCredits}
         onStats={goToStats}
         onShop={goToShop}
+        onRebirth={goToRebirth}
         restoreFocus={overlayReturnRef.current}
         onFocusRestored={() => {
           overlayReturnRef.current = null;

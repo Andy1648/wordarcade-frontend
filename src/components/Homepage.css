@@ -59,7 +59,9 @@
      game screens keep their own .wall-surface surface untouched. */
   background-color: transparent;
   background-image: none;
-  padding: clamp(10px, 1.6vh, 28px) clamp(14px, 2vw, 32px) clamp(8px, 1.2vh, 16px);
+  /* Tighter padding so the content sits close to the neon frame (item 2 — was clamp
+     10-28 / 14-32). */
+  padding: clamp(8px, 1vh, 14px) clamp(10px, 1vw, 16px) clamp(8px, 1vh, 14px);
   /* Clips content to one screen. FUTURE (not implemented here): to let the panel
      SCROLL once more mode cards are added, switch this to overflow-y:auto with a
      bounded max-height (the max-height below is what a scroll would attach to). */
@@ -67,7 +69,9 @@
   width: 100%;
   /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
-  max-width: min(95vw, 1400px);
+  /* Narrower so the frame hugs the content (item 2): the card grid then fills most of the
+     width, leaving only a 16-32px gutter to the inner edge instead of ~200px of dead space. */
+  max-width: min(94vw, 1180px);
   /* A neon edge to DEFINE the panel (Blitz blue #3DA8FF @ ~45% - reads over the
      busy wall where the faint white edge didn't). Background stays transparent (the
      WallScene shows through) - no fill/glow/vignette/box-shadow, just border + radius. */
@@ -131,6 +135,44 @@
   border-radius: 50%;
   background: #ff2ec4;
   border: 2px solid #000;
+}
+
+/* REBIRTH entry — same 44×44 icon treatment as SHOP, tucked directly UNDER it on the right
+   edge (52px = the 44px button + an 8px gap). Purple fill + white renewal-loop glyph, so the
+   two right-edge icons read as SHOP (yellow) then REBIRTH (purple) — two icons, two views. */
+.homepage-rebirth-btn {
+  position: absolute;
+  top: calc(clamp(10px, 1.6vh, 20px) + 52px);
+  right: clamp(12px, 2vw, 24px);
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #9a1aff;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.homepage-rebirth-btn svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.homepage-rebirth-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.homepage-rebirth-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+.homepage-rebirth-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* STATS entry — same treatment as SHOP (flat panel, thick black border, hard offset shadow)
@@ -427,13 +469,17 @@ html[data-beat='true'] .homepage-logo {
      one-row 18vw shrink is reverted — at 3 columns that's only 60vw, so the original
      20vw sizing fits again. --card-count no longer drives the columns (kept only in
      case other code reads it). Collapses to a single column below 760px (query below). */
-  grid-template-columns: repeat(3, clamp(150px, 20vw, 300px));
+  /* Fill the (padded) scroll region with three EQUAL columns so the grid takes the width
+     reclaimed by the tighter frame (item 2), instead of three fixed 300px cards floating in
+     the middle. minmax(0,1fr) lets a column shrink below content so nothing forces h-scroll. */
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   justify-content: center;
   /* Roomier gap so the featured card's slight upscale + idle drift never reach
      into a neighbour. --gap is the single source (the scroll region's max-height calc
      reads the same variable). */
   gap: var(--gap, clamp(10px, 1.4vw, 20px));
-  padding: 0 2px;
+  padding: 0;
   /* Don't stretch the staggered (margin-top) wrappers to a common row height -
      keep each at its card height so the idle sway rotates around the card. */
   align-items: start;
@@ -447,6 +493,8 @@ html[data-beat='true'] .homepage-logo {
 .homepage-cards-region {
   position: relative;
   z-index: 1;
+  /* Fill the stage width so the grid (and its 16-32px gutter below) span it (item 2). */
+  width: 100%;
   /* Keys off --menu-scale (item 1). zoom scales the WHOLE card subtree — including the
      cards' fixed min-heights — proportionally, so short screens shrink the region to fit
      instead of the columns narrowing while the cards stay tall. */
@@ -454,6 +502,13 @@ html[data-beat='true'] .homepage-logo {
 }
 .homepage-cards-scroll {
   --gap: clamp(10px, 1.4vw, 20px);
+  width: 100%;
+  box-sizing: border-box;
+  /* Horizontal padding does double duty (items 2 + 3): it is the 16-32px gutter between the
+     grid and the stage's inner edge, AND it gives the leftmost card's rest tilt / featured
+     upscale room to lean WITHOUT being clipped by overflow-x:hidden (the Word Bomb card was
+     poking ~11px past the clip edge and getting cut off). */
+  padding: 0 clamp(18px, 1.8vw, 30px);
   max-height: calc(var(--rowh, 320px) * 1.46 + var(--gap));
   overflow-y: auto;
   overflow-x: hidden;

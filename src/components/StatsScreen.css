@@ -9,6 +9,9 @@
   position: fixed;
   inset: 0;
   z-index: 120;
+  /* Cancel the ancestor .view-screen --app-scale zoom (see ShopScreen.css) so this fixed
+     overlay is sized to the REAL viewport and always centres/fits, not app-scale × 88dvh. */
+  zoom: calc(1 / var(--app-scale, 1));
   background: rgba(13, 6, 24, 0.86);
   display: flex;
   align-items: center;

@@ -5,6 +5,9 @@
   position: fixed;
   inset: 0;
   z-index: 50;
+  /* Match the real overlays: cancel the ancestor --app-scale zoom so the loading chrome
+     is sized to the real viewport (see ShopScreen.css). */
+  zoom: calc(1 / var(--app-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;

@@ -86,7 +86,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily, restoreFocus = null, onFocusRestored }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily, restoreFocus = null, onFocusRestored }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -348,11 +348,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   });
   const shopLinkRef = useRef(null);
   const statsLinkRef = useRef(null);
+  const rebirthLinkRef = useRef(null);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
   useEffect(() => {
     if (restoreFocus === 'shop' && shopLinkRef.current) shopLinkRef.current.focus();
     else if (restoreFocus === 'stats' && statsLinkRef.current) statsLinkRef.current.focus();
+    else if (restoreFocus === 'rebirth' && rebirthLinkRef.current) rebirthLinkRef.current.focus();
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -466,6 +468,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (onShop) onShop();
   }
 
+  function handleRebirth() {
+    if (navigating) return;
+    sound.click();
+    if (onRebirth) onRebirth();
+  }
+
   function handleCredits() {
     if (navigating) return;
     sound.click();
@@ -533,6 +541,27 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             />
           </svg>
           {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
+        </button>
+
+        {/* REBIRTH entry — its own top-right icon, tucked UNDER the SHOP bag (same 44×44
+            treatment) with a distinct circular-renewal glyph and a purple fill, so SHOP and
+            REBIRTH read as two icons → two destinations (the in-panel tabs are gone). */}
+        <button
+          ref={rebirthLinkRef}
+          type="button"
+          className={`homepage-rebirth-btn${navigating ? ' disabled' : ''}`}
+          onClick={handleRebirth}
+          onMouseEnter={() => sfx('hover')}
+          disabled={navigating}
+          aria-label="Open rebirth"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            {/* Two arcs forming a renewal loop, each with an arrowhead. */}
+            <path d="M19 12a7 7 0 0 1-11.9 5" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M5 12A7 7 0 0 1 16.9 7" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M16.4 3.6 17.2 7.2 13.6 7.9" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7.6 20.4 6.8 16.8 10.4 16.1" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
 
         {/* STATS entry — its own top-corner icon button, same treatment as SHOP (square,
