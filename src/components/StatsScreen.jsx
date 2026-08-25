@@ -79,7 +79,7 @@ export default function StatsScreen({ onBack }) {
   ];
   // XP stack is now Key Power (base) × rebirth. Cosmetics are pure flair — not shown here.
   const multipliers = [
-    ['KEY POWER', `LV ${keyPower}`],
+    ['KEY POWER', `T${keyTier}`],
     ['BASE XP / LETTER', fmt(baseXp)],
     ['REBIRTH', x(rbMult)],
     ['MENU XP / LETTER', fmt(menuXp)],
