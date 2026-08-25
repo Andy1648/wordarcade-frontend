@@ -170,7 +170,7 @@
 .mode-dialog-chip {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(10px, 1.3vw, 13px);
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.16em;
   padding: 5px 11px;
   border: 2px solid currentColor;
@@ -212,7 +212,7 @@
   font-size: 26px;
 }
 .mode-dialog-ai-badge-judged {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 2px;
 }
 
@@ -231,7 +231,7 @@
 .mode-dialog-liner {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(14px, 1.9vw, 19px);
+  font-size: clamp(16px, 2vw, 19px);
   color: #f3ecff;
   max-width: 32ch;
 }
@@ -239,7 +239,7 @@
 .mode-dialog-howlabel {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(9px, 1.1vw, 11px);
+  font-size: clamp(16px, 1.8vw, 18px);
   letter-spacing: 0.22em;
   margin-top: clamp(12px, 2.2vh, 18px);
   opacity: 0.9;
@@ -247,7 +247,7 @@
 
 .mode-dialog-sub {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(11px, 1.4vw, 14px);
+  font-size: clamp(16px, 2vw, 18px);
   color: #c8b8e0;
   line-height: 1.45;
   max-width: 44ch;
@@ -266,7 +266,7 @@
    accent fill + outline are set inline per mode. */
 .mode-dialog-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 1.6vw, 18px);
+  font-size: clamp(16px, 2vw, 18px);
   border: 4px solid #000;
   border-radius: 8px;
   padding: clamp(12px, 1.5vh, 17px) clamp(14px, 2vw, 24px);

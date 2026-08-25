@@ -11,6 +11,7 @@ import { getWins, consumePendingWinsStamp } from '../progress/wins';
 import { consumePendingRebirth, getRebirths } from '../progress/xp';
 import { canAffordAny } from '../progress/shop';
 import ModeDialog from './ModeDialog';
+import LockedPreviewDialog from './LockedPreviewDialog';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
 import {
@@ -163,6 +164,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);
+  // The locked mode whose read-only preview is open ({ game }), or null. Opened by clicking
+  // a level-gated CHAIN/FUSE card; closes on scrim/Escape/✕. No play button.
+  const [lockedPreview, setLockedPreview] = useState(null);
   const { sound, muted } = useSound();
 
   // Magnetic cursor-pull on the JOIN CTA (wrapper div, so the button's own
@@ -419,15 +423,14 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     runWhenConnected('daily', () => onDaily && onDaily());
   }
 
-  // QUICK PLAY VS BOT: one tap into a live match against a medium bot (App
-  // creates a private room, adds the bot and starts in one shot). Connect-gated
-  // exactly like CREATE/JOIN/DAILY.
-  function handleQuickPlay(e) {
+  // A locked (level-gated) card was clicked: open its read-only preview dialog instead of
+  // navigating. `gameId` comes from GameCard's locked-click hook.
+  function handleLockedSelect(gameId) {
     if (navigating) return;
-    pressJuice(e, '#2EFFE0'); // cyan accent
+    const game = GAMES.find((g) => g.id === gameId);
+    if (!game) return;
     sound.click();
-    setNavigating(true);
-    runWhenConnected('quickplay', () => onQuickPlay && onQuickPlay());
+    setLockedPreview({ game });
   }
 
   return (
@@ -471,6 +474,25 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
         </button>
 
+        {/* STATS entry — its own top-corner icon button, same treatment as SHOP (square,
+            thick black border, hard shadow) but top-LEFT with a bar-chart glyph so the two
+            corner controls read as a distinct pair. Replaces the old footer STATS link. */}
+        <button
+          ref={statsLinkRef}
+          type="button"
+          className={`homepage-stats-btn${navigating ? ' disabled' : ''}`}
+          onClick={handleStats}
+          onMouseEnter={() => sfx('hover')}
+          disabled={navigating}
+          aria-label="Open stats"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="13" width="4" height="7" fill="none" stroke="#0d0618" strokeWidth="2.2" strokeLinejoin="round" />
+            <rect x="10" y="9" width="4" height="11" fill="none" stroke="#0d0618" strokeWidth="2.2" strokeLinejoin="round" />
+            <rect x="16" y="5" width="4" height="15" fill="none" stroke="#0d0618" strokeWidth="2.2" strokeLinejoin="round" />
+          </svg>
+        </button>
+
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}
         <div className="homepage-logo-wrap">
@@ -493,22 +515,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </div>
         </div>
 
-
-        {/* QUICK PLAY VS BOT: the fastest path to a first word — one tap into a
-            live 1v1 against a medium bot (private room, no lobby stops). */}
-        <button
-          className={`homepage-quickplay-btn${navigating ? ' disabled' : ''}${connecting === 'quickplay' && coldStart ? ' is-waking' : ''}`}
-          onClick={handleQuickPlay}
-          onMouseEnter={() => sfx('hover')}
-          disabled={navigating}
-          data-juice-self
-        >
-          {connecting === 'quickplay' ? (
-            <ConnectingContent cold={coldStart} />
-          ) : (
-            '⚡ QUICK PLAY VS BOT'
-          )}
-        </button>
 
         {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
             odometer used to occupy (that chip was removed). LV chip + fill + an "XP-into /
@@ -535,6 +541,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   key={game.id}
                   game={game}
                   onSelect={handleOpenDialog}
+                  onLockedSelect={handleLockedSelect}
                   onHover={handleHover}
                   locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
                 />
@@ -595,16 +602,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </button>
         )}
 
-        {/* Quiet footer links: STATS + CREDITS. (SHOP moved to the loud top-right button.) */}
+        {/* Quiet footer link: CREDITS only. (SHOP + STATS are the loud top-corner icon
+            buttons now; the guide/help nav was removed to keep the menu clean.) */}
         <div className="homepage-footer-links">
-          <button
-            ref={statsLinkRef}
-            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
-            onClick={handleStats}
-            disabled={navigating}
-          >
-            STATS
-          </button>
           <button
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
             onClick={handleCredits}
@@ -613,16 +613,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             CREDITS
           </button>
         </div>
-
-        {/* Quiet footer nav to the static per-game guide pages (the
-            public/<game>/index.html files). Real <a href> links on purpose:
-            they give crawlers an internal link graph to the prerendered SEO
-            landing pages. */}
-        <nav className="homepage-guides-nav" aria-label="Game guides">
-          <a href="/word-bomb/">WORD BOMB GUIDE</a>
-          <a href="/category-blitz/">CATEGORY BLITZ GUIDE</a>
-          {GAMES.some((g) => g.id === 'sat-rush') && <a href="/sat-rush/">SAT RUSH GUIDE</a>}
-        </nav>
       </div>
 
       {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
@@ -643,6 +633,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           blitzPacks={blitzPacks}
           onToggleBlitzPack={onToggleBlitzPack}
           onSetAllBlitzPacks={onSetAllBlitzPacks}
+        />
+      )}
+
+      {/* Locked-mode preview (level-gated CHAIN/FUSE). Read-only teaser — no play button. */}
+      {lockedPreview && (
+        <LockedPreviewDialog
+          game={lockedPreview.game}
+          level={xpProgress.level}
+          onClose={() => setLockedPreview(null)}
         />
       )}
     </div>

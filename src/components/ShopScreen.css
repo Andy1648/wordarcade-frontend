@@ -42,7 +42,7 @@
   margin: 0;
   flex: 1;
   font-family: 'Bungee', cursive;
-  font-size: 26px;
+  font-size: clamp(28px, 5vw, 36px);
   color: #ffe94a;
   letter-spacing: 0.04em;
 }
@@ -51,7 +51,7 @@
   align-items: center;
   gap: 6px;
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: clamp(18px, 2.6vw, 22px);
   color: #ffe94a;
 }
 .shop-close {
@@ -82,7 +82,7 @@
   flex: 1;
   padding: 10px;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(16px, 2.4vw, 20px);
   letter-spacing: 0.06em;
   color: #b9a7d6;
   background: #0d0618;
@@ -116,19 +116,20 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap; /* long labels wrap the value below rather than overflow at 320px */
+  gap: 4px 12px;
   padding: 10px 12px;
   background: #0d0618;
   border: 3px solid #000;
   border-radius: 8px;
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.06em;
   color: #d8c9f0;
 }
 .shop-rb-stat b {
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: clamp(18px, 2.6vw, 22px);
   color: #2effe0;
 }
 .shop-rebirth:disabled {
@@ -141,7 +142,7 @@
 .shop-subtitle {
   margin: 16px 0 8px;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.4vw, 22px);
   letter-spacing: 0.08em;
   color: #2effe0;
 }
@@ -189,7 +190,7 @@
   letter-spacing: 0.02em;
 }
 .shop-card-blurb {
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   font-weight: 700;
   color: #b9a7d6; /* flair descriptor (pop colour / sound character), not an XP figure */
   letter-spacing: 0.04em;
@@ -235,7 +236,7 @@
    doubler ahead. No level is ever shown — the integer stays internal. */
 .shop-kp-current {
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.06em;
   color: #d8c9f0;
   display: inline-flex;
@@ -250,7 +251,7 @@
 }
 .shop-kp-next {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.04em;
   color: #b9a8d6;
   display: flex;
@@ -263,13 +264,13 @@
   align-items: center;
   gap: 4px;
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  font-size: clamp(18px, 2.2vw, 20px);
   color: #ffe94a;
 }
 /* The exponential jump — cyan so it reads as the reward to chase. */
 .shop-kp-doubler {
   font-family: 'Bungee', cursive;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.03em;
   color: #2effe0;
   -webkit-text-stroke: 0.5px #0a3b34;
@@ -287,7 +288,7 @@
 }
 .shop-card-tag {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #2effe0;
   letter-spacing: 0.06em;
 }
@@ -296,7 +297,7 @@
   align-items: center;
   gap: 5px;
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 2.4vw, 18px);
+  font-size: clamp(18px, 2.6vw, 20px);
   color: #b9a7d6;
 }
 .shop-card-btn {
@@ -305,7 +306,7 @@
   gap: 5px;
   padding: 8px 14px;
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 2.4vw, 18px);
+  font-size: clamp(18px, 2.6vw, 20px);
   color: #0d0618;
   background: #ffe94a;
   border: 3px solid #000;
@@ -346,7 +347,7 @@
   margin-bottom: 12px;
   padding: 12px;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.6vw, 20px);
   letter-spacing: 0.04em;
   color: #0d0618;
   background: #9a1aff;
@@ -369,14 +370,14 @@
 }
 .shop-confirm-title {
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: clamp(20px, 3vw, 24px);
   color: #9a1aff;
   margin-bottom: 8px;
 }
 .shop-confirm-detail {
   margin: 0 0 12px;
   padding-left: 18px;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   line-height: 1.6;
   color: #d8c9f0;
 }
@@ -394,7 +395,7 @@
   margin: 10px 18px 18px;
   padding: 12px;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.6vw, 20px);
   letter-spacing: 0.04em;
   color: #0d0618;
   background: #2effe0;
@@ -412,7 +413,7 @@
 .shop-card-xp {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.04em;
   color: #2effe0;
   margin-top: 2px;

@@ -30,7 +30,7 @@
 
 .room-label {
   font-family: 'Bungee', cursive;
-  font-size: 12px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #2EFFE0;
   margin-bottom: 8px;
 }
@@ -48,7 +48,7 @@
 
 .room-hint {
   font-family: 'Space Mono', monospace;
-  font-size: 9px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #C9B8E8;
   font-weight: 700;
   margin-bottom: 28px;
@@ -57,7 +57,7 @@
 
 .room-players-label {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #FF2EC4;
   margin-bottom: 12px;
   text-align: left;
@@ -81,7 +81,7 @@
   padding: clamp(10px, 1.2vw, 16px) clamp(14px, 1.6vw, 22px);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(13px, 1.4vw, 17px);
+  font-size: clamp(16px, 2vw, 18px);
   color: #1a0b2e;
   text-align: left;
   box-shadow: 3px 3px 0 #000;
@@ -104,7 +104,7 @@
 
 .room-host-badge {
   font-family: 'Bungee', cursive;
-  font-size: 8px;
+  font-size: clamp(13px, 1.5vw, 16px); /* slack-wins: small end <16 so the badge never crowds the name at 320px */
   background: #FFE94A;
   color: #000;
   padding: 3px 6px;
@@ -115,7 +115,7 @@
 
 .room-section-label {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #FF2EC4;
   margin-bottom: 12px;
   text-align: left;
@@ -135,7 +135,7 @@
   justify-content: center;
   min-height: 44px;
   font-family: 'Bungee', cursive;
-  font-size: 10px;
+  font-size: clamp(14px, 1.9vw, 16px); /* slack-wins: <16 small end so 2 mode buttons fit one row at 320px */
   line-height: 1.2;
   color: #1a0b2e;
   background: #fff;
@@ -175,7 +175,7 @@
   min-height: 44px; /* a11y tap floor; label sizes unchanged */
   gap: 3px;
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(14px, 1.7vw, 16px);
   color: #1a0b2e;
   background: #fff;
   border: 3px solid #AAAAAA;
@@ -198,7 +198,7 @@
 
 /* Difficulty name on top: bold + larger (inherits the Bungee button face). */
 .room-difficulty-name {
-  font-size: 11px;
+  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: <16 small end so 3–4 difficulty buttons fit one row at 320px */
   line-height: 1;
 }
 
@@ -207,14 +207,14 @@
 .room-difficulty-desc {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 8px;
+  font-size: clamp(11px, 1.3vw, 13px); /* slack-wins: timer sub-label kept <16 so the 3–4-across button row never overflows at 320px */
   color: #666;
   line-height: 1;
 }
 
 .room-difficulty-readonly {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   font-weight: 700;
   color: #fff;
   background: #2a1450;
@@ -227,7 +227,7 @@
 
 .room-start-btn {
   font-family: 'Bungee', cursive;
-  font-size: 16px;
+  font-size: clamp(18px, 2.8vw, 22px);
   color: #000;
   background: #2EFFE0;
   border: 4px solid #1A9985;
@@ -264,7 +264,7 @@
 
 .room-waiting-msg {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  font-size: clamp(16px, 2vw, 18px);
   font-weight: 700;
   color: #C9B8E8;
   text-align: center;
@@ -285,7 +285,7 @@
    the control that bounced. Matches the .lobby-error / .browser-error red. */
 .room-error {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  font-size: clamp(16px, 2vw, 18px);
   font-weight: 700;
   color: #FF5C5C;
   text-align: center;
@@ -295,7 +295,7 @@
 
 .room-leave-btn {
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.6vw, 20px);
   color: #fff;
   background: #FF5C5C;
   border: 4px solid #B83A3A;
@@ -519,7 +519,7 @@ html[data-beat='true'] .room-leave-btn {
 
 .room-waiting-cue {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 1px;
   color: #FFE94A;
   margin-top: 6px;
@@ -553,7 +553,7 @@ html[data-beat='true'] .room-leave-btn {
    CPU opponent, distinct from the yellow HOST badge. */
 .room-bot-badge {
   font-family: 'Bungee', cursive;
-  font-size: 8px;
+  font-size: clamp(13px, 1.5vw, 16px); /* slack-wins: small end <16 so the bot tag never crowds the name at 320px */
   background: #2EFFE0;
   color: #000;
   padding: 3px 6px;
@@ -602,7 +602,7 @@ html[data-beat='true'] .room-leave-btn {
 .room-addbot-btn {
   width: 100%;
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  font-size: clamp(16px, 2.4vw, 18px);
   color: #000;
   background: #FFE94A;
   border: 3px solid #B8A020;
@@ -618,7 +618,7 @@ html[data-beat='true'] .room-leave-btn {
 
 .room-addbot-label {
   font-family: 'Bungee', cursive;
-  font-size: 10px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #2EFFE0;
   letter-spacing: 1px;
   text-align: center;
@@ -652,13 +652,13 @@ html[data-beat='true'] .room-leave-btn {
   box-shadow: 1px 1px 0 #000;
 }
 .room-addbot-name {
-  font-size: 11px;
+  font-size: clamp(14px, 1.7vw, 16px);
   line-height: 1;
 }
 .room-addbot-desc {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 8px;
+  font-size: clamp(11px, 1.3vw, 13px); /* slack-wins: sub-label kept <16 so the 3-across bot-difficulty row never overflows at 320px */
   color: #666;
   line-height: 1.1;
   text-align: center;
@@ -675,7 +675,7 @@ html[data-beat='true'] .room-leave-btn {
 .room-invite-btn {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 13px;
+  font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.04em;
   color: #0d0618;
   background: #FFE94A;

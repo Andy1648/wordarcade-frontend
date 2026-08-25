@@ -33,6 +33,9 @@ import TransitionIntro from './components/TransitionIntro';
 // intro unmounts. As a lazy chunk, the Suspense gap while it downloaded left the
 // menu visible for a beat before the cover snapped on — the flash we're fixing.
 import KnifeSplit from './components/KnifeSplit';
+// Eager: the skeleton chrome shown while a lazy overlay (Stats/Shop) chunk downloads, so an
+// open never flashes an empty box. Tiny + static, so eager import costs nothing meaningful.
+import OverlaySkeleton from './components/OverlaySkeleton';
 import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
@@ -1671,6 +1674,11 @@ function App() {
       import('./components/RoomScreen');
       import('./components/LobbyScreen');
       import('./components/PublicRoomsScreen');
+      // Overlays too: Stats/Shop open OVER the menu, so a cold chunk fetch there reads as a
+      // blank box (the shared Suspense fallback is null). Warming them makes the common open
+      // instant; the OverlaySkeleton below covers the rare still-cold open.
+      import('./components/StatsScreen');
+      import('./components/ShopScreen');
     };
     const ric = typeof window !== 'undefined' && window.requestIdleCallback;
     const id = ric ? ric(warm, { timeout: 2500 }) : setTimeout(warm, 1200);
@@ -1783,9 +1791,19 @@ function App() {
   } else if (view === 'credits') {
     screen = <CreditsScreen onBack={goHome} />;
   } else if (view === 'stats') {
-    screen = <StatsScreen onBack={goHome} />;
+    // Inner Suspense with a skeleton fallback: a cold chunk fetch shows the panel chrome,
+    // never an empty box (data itself is synchronous localStorage, so it paints at once).
+    screen = (
+      <Suspense fallback={<OverlaySkeleton title="STATS" />}>
+        <StatsScreen onBack={goHome} />
+      </Suspense>
+    );
   } else if (view === 'shop') {
-    screen = <ShopScreen onBack={goHome} />;
+    screen = (
+      <Suspense fallback={<OverlaySkeleton title="SHOP" />}>
+        <ShopScreen onBack={goHome} />
+      </Suspense>
+    );
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
@@ -1813,7 +1831,6 @@ function App() {
         onFuse={goToFuse}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
-        onQuickPlay={handleQuickPlayBot}
         onCredits={goToCredits}
         onStats={goToStats}
         onShop={goToShop}

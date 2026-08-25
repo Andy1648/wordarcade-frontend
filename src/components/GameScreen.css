@@ -2051,7 +2051,7 @@
 
 .game-over-winner {
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.6vw, 22px);
   color: #2EFFE0;
   margin-bottom: 16px;
 }
@@ -2060,7 +2060,7 @@
 .game-over-blurb {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 13px;
+  font-size: clamp(16px, 2.2vw, 18px);
   letter-spacing: 0.5px;
   color: #FFE94A;
   margin: -2px 0 16px;
@@ -2068,7 +2068,7 @@
 
 .game-over-leave {
   font-family: 'Bungee', cursive;
-  font-size: 16px;
+  font-size: clamp(18px, 2.6vw, 20px);
   color: #fff;
   background: #FF2EC4;
   border: 4px solid #991A75;
@@ -2133,7 +2133,7 @@
    a gentle breathe so it never reads as frozen/broken. */
 .game-over-waiting {
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(16px, 2.2vw, 18px);
   letter-spacing: 0.5px;
   color: #2EFFE0;
   background: #160a2b;
@@ -2172,7 +2172,7 @@
 
 /* Alongside REMATCH, LEAVE steps down to a smaller secondary action. */
 .game-over-leave.secondary {
-  font-size: 13px;
+  font-size: clamp(16px, 2.2vw, 18px);
   padding: 9px 0;
   box-shadow: 3px 3px 0 #000;
 }
@@ -2609,7 +2609,7 @@
 
 .cb-section-label {
   font-family: 'Bungee', cursive;
-  font-size: 9px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #FF2EC4;
   margin-bottom: 8px;
 }
@@ -2699,7 +2699,7 @@
 
 .cb-results-title {
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: clamp(20px, 3.4vw, 28px);
   color: #FF2EC4;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -2710,7 +2710,7 @@
 
 .cb-results-category {
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #FFE94A;
   text-align: center;
   margin-bottom: 16px;
@@ -2742,7 +2742,7 @@
 
 .cb-result-name {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2759,7 +2759,7 @@
 
 .cb-result-round {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: per-round score badge, small end <16 so the head row never overflows at 320px */
   color: #000;
   background: #2EFFE0;
   border: 2px solid #1A9985;
@@ -2769,7 +2769,7 @@
 .cb-result-total {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 9px;
+  font-size: clamp(12px, 1.4vw, 14px); /* slack-wins: running-total sub-figure kept <16 so it never crowds the score badge at 320px */
   color: #C9B8E8;
 }
 
@@ -2791,7 +2791,7 @@
 
 .cb-missed-title {
   font-family: 'Bungee', cursive;
-  font-size: 10px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #C9B8E8;
   text-align: center;
   margin-bottom: 8px;
@@ -2810,7 +2810,7 @@
 .cb-missed-chip {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: clamp(13px, 1.5vw, 15px); /* slack-wins: ghost "missed answers" chips in a 84px-clipped box — kept <16 so fewer rows clip */
   color: rgba(255, 255, 255, 0.75);
   background: rgba(0, 0, 0, 0.35);
   border: 1.5px solid rgba(201, 184, 232, 0.45);
@@ -2836,7 +2836,7 @@
 
 .cb-next-round {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #2EFFE0;
   text-align: center;
   transform: skewX(-2deg);
@@ -2884,12 +2884,12 @@
 
 .cb-score-rank {
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #FF2EC4;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
   flex-shrink: 0;
-  width: 18px;
+  width: 22px;
   text-align: center;
 }
 
@@ -2899,7 +2899,7 @@
 
 .cb-score-name {
   font-family: 'Bungee', cursive;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2914,7 +2914,7 @@
 
 .cb-score-pts {
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: clamp(18px, 2.6vw, 22px);
   color: #2EFFE0;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -3132,7 +3132,7 @@
 
 .go-section-label {
   font-family: 'Bungee', cursive;
-  font-size: 10px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #FF2EC4;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -3169,14 +3169,14 @@
 .go-summary-value {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 19px;
+  font-size: clamp(18px, 2.4vw, 22px);
   color: #2EFFE0;
   line-height: 1;
 }
 
 .go-summary-label {
   font-family: 'Bungee', cursive;
-  font-size: 7px;
+  font-size: clamp(11px, 1.5vw, 13px); /* slack-wins: 3-up stat-tile label kept <16 so the tiles never overflow at 320px */
   color: #C9B8E8;
   margin-top: 5px;
 }
@@ -3207,14 +3207,14 @@
 
 .go-award-label {
   font-family: 'Bungee', cursive;
-  font-size: 9px;
+  font-size: clamp(12px, 1.5vw, 14px); /* slack-wins: award-pill label kept <16 so the pill row wraps tidily at 320px */
   color: #000;
 }
 
 .go-award-name {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #000;
   word-break: break-word;
 }
@@ -3222,7 +3222,7 @@
 .go-award-detail {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 8px;
+  font-size: clamp(12px, 1.4vw, 13px); /* slack-wins: award-pill sub-detail kept <16 to keep the pill compact at 320px */
   color: #1a0b2e;
   opacity: 0.85;
 }
@@ -3252,7 +3252,7 @@
 
 .go-player-name {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #FFE94A;
   margin-bottom: 7px;
   display: flex;
@@ -3282,7 +3282,7 @@
 .go-pstat-val {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 12px;
+  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: 4-up per-player stat value, small end <16 so the grid never overflows at 320px */
   color: #fff;
   line-height: 1.1;
   word-break: break-word;
@@ -3290,7 +3290,7 @@
 
 .go-pstat-key {
   font-family: 'Bungee', cursive;
-  font-size: 6px;
+  font-size: clamp(10px, 1.3vw, 12px); /* slack-wins: 4-up per-player stat label kept <16 so four columns fit at 320px */
   color: #9a8bbf;
   letter-spacing: 0.3px;
 }
@@ -3360,7 +3360,7 @@
 
   /* Per-player stats drop to a 2-column grid so values stay legible. */
   .go-player-grid { grid-template-columns: repeat(2, 1fr); gap: 8px 6px; }
-  .go-summary-value { font-size: 17px; }
+  .go-summary-value { font-size: 18px; }
 
   /* On phones the feed sits below the stage with little room, so trim it to the
      3 most recent events. Rows render newest-first, so the first 3 children are
@@ -3987,7 +3987,7 @@ html[data-beat='true'] .cb-answer-chip {
 
 .solo-score-label {
   font-family: 'Bungee', cursive;
-  font-size: 12px;
+  font-size: clamp(16px, 2.2vw, 18px);
   letter-spacing: 2px;
   color: #C9B8E8;
   margin-bottom: 2px;
@@ -4017,7 +4017,7 @@ html[data-beat='true'] .cb-answer-chip {
 
 .solo-pb-line {
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  font-size: clamp(16px, 2.2vw, 18px);
   color: #FFE94A;
   margin-bottom: 4px;
 }
@@ -4025,7 +4025,7 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-away {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #C9B8E8;
   margin-bottom: 10px;
 }
@@ -4059,7 +4059,7 @@ html[data-beat='true'] .cb-answer-chip {
 /* CHANGE CATEGORY - secondary: yellow, a step down from PLAY AGAIN. */
 .solo-change-cat-btn {
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.4vw, 20px);
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A800;
@@ -4079,7 +4079,7 @@ html[data-beat='true'] .cb-answer-chip {
 @media (max-width: 480px) {
   .solo-score-value { font-size: 56px; }
   .solo-new-record { font-size: 28px; }
-  .solo-play-again-btn { font-size: 17px; }
+  .solo-play-again-btn { font-size: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4110,7 +4110,7 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-round-cat {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #C9B8E8;
   text-align: left;
   word-break: break-word;
@@ -4118,7 +4118,7 @@ html[data-beat='true'] .cb-answer-chip {
 
 .solo-round-score {
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -4142,7 +4142,7 @@ html[data-beat='true'] .cb-answer-chip {
   justify-content: center;
   min-height: 44px;
   font-family: 'Bungee', cursive;
-  font-size: 12px;
+  font-size: clamp(16px, 2.2vw, 18px);
   letter-spacing: 0.5px;
   color: #fff;
   background: #9A1AFF;
@@ -4172,7 +4172,7 @@ html[data-beat='true'] .cb-answer-chip {
 /* Brief banner shown to non-host players when the host rerolls the category. */
 .cb-reroll-notice {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(16px, 2vw, 18px);
   color: #FFE94A;
   text-align: center;
   background: #1a0b2e;

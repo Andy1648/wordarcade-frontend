@@ -1,7 +1,7 @@
 // StatsScreen.jsx — a read-only, static progression readout (no animation). Reachable from
 // the STATS footer link. Styled like the mode dialog (thick black border, hard offset
 // shadow, #1a0b2e panel). Scrolls internally on a short viewport; never breaks 100dvh.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import {
   loadProgress,
@@ -16,12 +16,36 @@ import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { formatNum } from '../format';
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
-const x = (n) => `×${n.toFixed(2)}`;
+const x = (n) => `×${formatNum(Number.isFinite(n) ? n : 0)}`; // formatNum so ×1e11 stays compact
+
+// RESET ALL PROGRESS: wipe every taw.* key (xp, level, wins, purchases, rebirths, lifetime
+// stats — all live under the taw. namespace) and hard-reload so every screen re-reads zeros.
+// Wrapped so a blocked/absent store can't throw; the reload still fires.
+function resetAllProgress() {
+  try {
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('taw.')) doomed.push(k);
+    }
+    doomed.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* storage blocked — nothing to clear */
+  }
+  try {
+    window.location.reload();
+  } catch {
+    /* non-browser env — no-op */
+  }
+}
 
 export default function StatsScreen({ onBack }) {
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
+  // Two-step guard for the destructive reset: the button reveals a confirm panel that names
+  // exactly what is destroyed; only its second button actually wipes.
+  const [confirmingReset, setConfirmingReset] = useState(false);
   // A11y: move focus into the dialog on open; Escape closes it (once on mount).
   useEffect(() => {
     overlayRef.current?.focus();
@@ -103,6 +127,30 @@ export default function StatsScreen({ onBack }) {
               </div>
             ))}
           </dl>
+
+          {/* DANGER ZONE — hard-separated from everything above so RESET is never a mis-tap. */}
+          <div className="stats-danger">
+            {confirmingReset ? (
+              <div className="stats-danger-confirm" role="alertdialog" aria-label="Confirm reset">
+                <p className="stats-danger-warn">
+                  This <b>permanently destroys</b> your XP, level, wins, all purchases,
+                  rebirths, and every lifetime stat. It cannot be undone.
+                </p>
+                <div className="stats-danger-actions">
+                  <button type="button" className="stats-reset-confirm" onClick={resetAllProgress}>
+                    YES, WIPE EVERYTHING
+                  </button>
+                  <button type="button" className="stats-reset-cancel" onClick={() => setConfirmingReset(false)}>
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" className="stats-reset" onClick={() => setConfirmingReset(true)}>
+                RESET ALL PROGRESS
+              </button>
+            )}
+          </div>
         </div>
 
         <button type="button" className="stats-back" onClick={onBack}>

@@ -42,7 +42,7 @@
 .stats-title {
   margin: 0;
   font-family: 'Bungee', cursive;
-  font-size: 26px;
+  font-size: clamp(28px, 5vw, 36px);
   color: #ffe94a;
   letter-spacing: 0.04em;
 }
@@ -74,7 +74,7 @@
 .stats-subtitle {
   margin: 18px 0 8px;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.4vw, 22px);
   letter-spacing: 0.08em;
   color: #2effe0;
 }
@@ -86,7 +86,8 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap; /* long labels wrap the value below rather than overflow at 320px */
+  gap: 4px 12px;
   padding: 9px 0;
   border-bottom: 1px dashed rgba(255, 255, 255, 0.14);
 }
@@ -94,7 +95,7 @@
   border-bottom: none;
 }
 .stats-row dt {
-  font-size: 12px;
+  font-size: clamp(16px, 2vw, 18px);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #b9a7d6;
@@ -102,7 +103,7 @@
 .stats-row dd {
   margin: 0;
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  font-size: clamp(18px, 2.4vw, 22px);
   color: #ffe94a;
 }
 
@@ -111,7 +112,7 @@
   margin: 10px 18px 18px;
   padding: 12px;
   font-family: 'Bungee', cursive;
-  font-size: 14px;
+  font-size: clamp(18px, 2.6vw, 20px);
   letter-spacing: 0.04em;
   color: #0d0618;
   background: #2effe0;
@@ -126,3 +127,92 @@
 }
 
 /* Next rebirth target — always shown (visible-but-locked from day one). */
+
+/* ── DANGER ZONE (RESET ALL PROGRESS) ──────────────────────────────────────
+   Hard-separated from the stats above by a heavy top rule + generous space, so
+   the destructive control is never a mis-tap. Red — deliberately NOT the yellow
+   action colour — with the house flat outline + hard offset shadow. */
+.stats-danger {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 3px dashed #ff3b3b;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.stats-reset {
+  align-self: center;
+  padding: 12px 20px;
+  font-family: 'Bungee', cursive;
+  font-size: 1rem;
+  color: #ff3b3b;
+  background: #1a0b2e;
+  border: 3px solid #ff3b3b;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.stats-reset:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.stats-reset:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+.stats-danger-confirm {
+  border: 3px solid #ff3b3b;
+  border-radius: 8px;
+  background: rgba(255, 59, 59, 0.08);
+  padding: 14px;
+  box-shadow: 4px 4px 0 #000;
+}
+.stats-danger-warn {
+  margin: 0 0 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #ffd7d7;
+}
+.stats-danger-warn b {
+  color: #ff3b3b;
+}
+.stats-danger-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.stats-reset-confirm {
+  flex: 1 1 auto;
+  padding: 12px 14px;
+  font-family: 'Bungee', cursive;
+  font-size: 1rem;
+  color: #fff;
+  background: #ff3b3b;
+  border: 3px solid #a11414;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.stats-reset-confirm:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+.stats-reset-cancel {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  font-family: 'Bungee', cursive;
+  font-size: 1rem;
+  color: #2effe0;
+  background: #1a0b2e;
+  border: 3px solid #2effe0;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.stats-reset-cancel:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}

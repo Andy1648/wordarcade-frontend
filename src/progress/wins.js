@@ -98,6 +98,17 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
   return awardWins({ wordsAccepted: TYPICAL_ROUND_WORDS, mode, difficulty });
 }
 
+// PER-WORD wins preview shown on the menu cards. Base 10 per word, keyed by game.id (not the
+// round-mode key), ×2 SAT Rush · ×3 CHAIN · ×5 FUSE, then × difficulty, snapped to a round
+// multiple of 10 (word-bomb/blitz 10, sat-rush 20, chain 30, fuse 50 at the ×1 default).
+export const WORD_WINS_BASE = 10;
+export const WORD_WINS_MULT = { 'sat-rush': 2, chain: 3, fuse: 5 };
+export function wordWinsEstimate({ mode, difficulty } = {}) {
+  const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
+  const modeMult = WORD_WINS_MULT[mode] || 1;
+  return Math.round((WORD_WINS_BASE * modeMult * diffMult) / 10) * 10;
+}
+
 // A finite "+N WINS" menu stamp is queued here when a round pays out, and consumed by the
 // homepage on the next menu visit (so returning to the menu shows one stamp for the total).
 let pendingStamp = 0;
