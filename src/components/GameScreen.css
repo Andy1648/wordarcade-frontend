@@ -1195,20 +1195,22 @@
 .wb-tension-line {
   position: absolute;
   top: -30%;
-  width: 2px;
-  height: 26%;
-  background: rgba(255, 255, 255, 0.32);
-  /* i = 0..5 hug the left edge, 6..11 the right; within a 90px edge band. */
-  left: calc(3px + var(--i) * 15px);
+  /* PERF: 3 lines now, so each is THICKER + BRIGHTER to keep the same read
+     (was 2px / 0.32 alpha across 12 lines). transform-translateY only. */
+  width: 5px;
+  height: 34%;
+  background: rgba(255, 255, 255, 0.7);
+  /* i = 0,1 hug the left edge; i = 2 hugs the right. */
+  left: calc(4px + var(--i) * 16px);
   animation: wb-tension-line-scroll linear infinite;
-  animation-duration: calc(0.85s + var(--i) * 0.06s);
-  animation-delay: calc(var(--i) * -0.13s);
+  animation-duration: calc(0.85s + var(--i) * 0.08s);
+  animation-delay: calc(var(--i) * -0.2s);
 }
-.wb-tension-line:nth-child(n + 7) {
+.wb-tension-line:nth-child(n + 3) {
   left: auto;
-  right: calc(3px + (var(--i) - 6) * 15px);
+  right: 4px;
 }
-.wb-tension-line:nth-child(even) { height: 42%; }
+.wb-tension-line:nth-child(even) { height: 46%; }
 @keyframes wb-tension-line-scroll {
   from { transform: translateY(0); }
   to { transform: translateY(150vh); }
@@ -1259,6 +1261,26 @@
 @keyframes wb-tension-throb-breath {
   0%, 100% { opacity: 0; }
   50% { opacity: 0.16; }
+}
+
+/* =====================================================================
+   PERF (perf/wb-tension): trim the critical-tier VFX load. Keep exactly ONE
+   full-viewport wash — the edge vignette (.wb-tension-vignette). The other red
+   washes overlap into the SAME pixels, so at crit they are stopped: the final-
+   moment throb, the timer-dread danger vignette, the bomb halo (also a box-shadow
+   PAINT), and wall-red (WallScene.css). Every survivor animates transform/opacity
+   only — the bomb halo's box-shadow animation is removed here. */
+[data-tension='crit'] .wb-tension-throb { animation: none; opacity: 0; }
+[data-tension='crit'] .wb-danger-vignette { animation: none; opacity: 0; }
+[data-tension='crit'] .bomb-vignette.critical { box-shadow: none; }
+
+/* On (pointer:coarse) — phones, least headroom / most players — halve whatever
+   survives at crit again: one speed line (not three), a STATIC edge wash (no
+   breathe), and no sweat. */
+@media (pointer: coarse) {
+  [data-tension='crit'] .wb-tension-line:nth-child(n + 2) { display: none; }
+  [data-tension='crit'] .wb-tension-vignette { animation: none; }
+  [data-tension='crit'] .sweat-layer { display: none; }
 }
 
 /* Reduced motion: keep ONLY a faint static edge tint (a colour cue, not motion);
