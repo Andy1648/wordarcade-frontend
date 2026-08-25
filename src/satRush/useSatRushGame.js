@@ -818,6 +818,7 @@ function buildView(state, cur, eng, input, extra) {
     streak: state.currentStreak,
     bestStreak: state.bestStreak,
     wordNumber: state.wordNumber,
+    cleared: state.cleared, // running count of cleared words (drives the live wins pill)
     lives: state.lives,
     maxLives: eng.config.lives,
     heat: state.heat,

@@ -9,6 +9,7 @@ import { resolvePlayerColor } from '../playerColors';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
+import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
@@ -1418,24 +1419,6 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // so far, ticking up as answers are accepted (fixed, pointer-events:none so it never blocks
 // play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
 // total on the game-over card, large. Both are purely presentational.
-function WinsHudPill({ amount }) {
-  if (!amount || amount <= 0) return null;
-  return (
-    <div className="wins-hud" aria-live="polite" aria-label={`${amount} wins so far`}>
-      <span className="wins-hud-plus">+{amount}</span>
-      <span className="wins-hud-label">WINS</span>
-    </div>
-  );
-}
-function WinsEarnedTotal({ amount }) {
-  if (!amount || amount <= 0) return null;
-  return (
-    <div className="wins-earned">
-      <span className="wins-earned-num">+{amount}</span>
-      <span className="wins-earned-label">WINS EARNED</span>
-    </div>
-  );
-}
 export default function GameScreen({
   gameState,
   gameType,

@@ -59,9 +59,10 @@
      game screens keep their own .wall-surface surface untouched. */
   background-color: transparent;
   background-image: none;
-  /* Tighter padding so the content sits close to the neon frame (item 2 — was clamp
-     10-28 / 14-32). */
-  padding: clamp(8px, 1vh, 14px) clamp(10px, 1vw, 16px) clamp(8px, 1vh, 14px);
+  /* Tighter padding so the content sits close to the neon frame (items 2 + 3). Vertical
+     padding trimmed further (was clamp 8-14); the 16-40px breathing gap to the content
+     column is now owned by the --menu-scale RESERVE (Homepage.jsx), not this padding. */
+  padding: clamp(4px, 0.6vh, 10px) clamp(10px, 1vw, 16px) clamp(4px, 0.6vh, 10px);
   /* Clips content to one screen. FUTURE (not implemented here): to let the panel
      SCROLL once more mode cards are added, switch this to overflow-y:auto with a
      bounded max-height (the max-height below is what a scroll would attach to). */

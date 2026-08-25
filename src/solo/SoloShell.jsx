@@ -7,6 +7,7 @@
 // stay within transform/opacity-only animation). There is no idle animation anywhere.
 import { useEffect, useRef } from 'react';
 import './Solo.css';
+import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -52,7 +53,8 @@ export default function SoloShell({
   rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
   fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
   phase,
-  over, // { score, best, restartArmed, restart, card, bare?, restartLabel? }
+  winsTally = 0, // live "+N WINS" pill amount (0 hides it until the 3-word gate)
+  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
 }) {
   const inputRef = useRef(null);
@@ -73,6 +75,10 @@ export default function SoloShell({
       <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
         ✕
       </button>
+
+      {/* Live "+N WINS" pill — same shared component + position as Word Bomb / Blitz (item 2).
+          Hidden once the run is over (the total shows on the death card instead). */}
+      {phase === 'playing' && <WinsHudPill amount={winsTally} />}
 
       <div className="solo-hud">{hud}</div>
 
@@ -122,6 +128,8 @@ export default function SoloShell({
         <div className="solo-over">
           <div className="solo-deathcard">
             {over.card}
+            {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
+            {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} />}
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">

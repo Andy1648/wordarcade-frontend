@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } fr
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
+import { recordRound, awardWins } from '../progress/wins.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
@@ -91,12 +92,28 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   });
   const s = g.engine.state;
 
-  // Fetch the big acceptance extension the moment the FIRST run ends — never on mount, so
-  // it can't delay the first game. Idempotent (words.js single-flights it), so firing on
-  // every subsequent run-over is harmless; its words merge into the live accept set in place.
+  // WINS (item 1): CHAIN was never wired to pay out. On run-over, grant wins on the links
+  // completed (the count the game already has) — same recordRound pattern SAT Rush uses. Fire
+  // ONCE per run-end (guard reset when a fresh run starts); store the granted total for the
+  // game-over "WINS EARNED" line. Also lazy-load the acceptance extension here (never on mount).
+  const [winsEarned, setWinsEarned] = useState(0);
+  const winRecordedRef = useRef(false);
   useEffect(() => {
-    if (g.phase === 'over') loadSoloAcceptExt();
+    if (g.phase === 'over') {
+      loadSoloAcceptExt();
+      if (!winRecordedRef.current) {
+        winRecordedRef.current = true;
+        setWinsEarned(recordRound({ mode: 'chain', wordsAccepted: g.engine.state.k }));
+      }
+    } else {
+      winRecordedRef.current = false;
+      setWinsEarned(0);
+    }
   }, [g.phase]);
+
+  // Live wins tally (item 2): what the run will pay so far, ticking up as links land (0 until
+  // the 3-word payout gate). Pure recompute each render from the link count.
+  const winsTally = awardWins({ mode: 'chain', wordsAccepted: s.k });
 
   // ---- OUT → IN travel FX (presentational) -------------------------------------
   // Pooled: one traveler + one fader, reused for every accept (never a node per accept).
@@ -224,6 +241,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       rootRef={rootRef}
       fx={fxLayer}
       phase={g.phase}
+      winsTally={winsTally}
       over={{
         score: s.score,
         best: g.best,
@@ -232,6 +250,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         card: overCard,
         bare: firstRun, // tutorial card: no SCORE/BEST line
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
+        winsEarned,
       }}
       onExit={onExit}
     />
