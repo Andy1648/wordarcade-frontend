@@ -245,6 +245,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelupRef = useRef(null);
   const levelTitleRef = useRef(null);
   const levelSubRef = useRef(null);
+  const levelWinsRef = useRef(null);
   const levelDetailRef = useRef(null);
   const winsStampRef = useRef(null);
   const popAnimsRef = useRef([]);
@@ -425,13 +426,18 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       anim.cancel();
       anim.play();
     },
-    celebrate(level) {
+    celebrate(level, winsAwarded = 0) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
       if (levelTitleRef.current) levelTitleRef.current.textContent = `LEVEL ${level}`;
       if (levelSubRef.current) {
         levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
+      }
+      // "+N WINS" reward line under the LEVEL text — the payout that lets menu-only players
+      // actually afford upgrades. Blank (and hidden via :empty) when the level-up paid nothing.
+      if (levelWinsRef.current) {
+        levelWinsRef.current.textContent = winsAwarded > 0 ? `+${winsAwarded} WINS` : '';
       }
       if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
       a.cancel();
@@ -444,6 +450,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       for (const p of popAnimsRef.current) p.cancel();
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
       if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
+      if (levelWinsRef.current) levelWinsRef.current.textContent = ''; // rebirth pays no wins line
       if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
       a.cancel();
       a.play();
@@ -486,6 +493,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           LEVEL UP
         </span>
         <span className="menu-xp-levelup-sub" ref={levelSubRef} />
+        <span className="menu-xp-levelup-wins" ref={levelWinsRef} />
         <span className="menu-xp-levelup-detail" ref={levelDetailRef} />
       </div>
       <div className="menu-xp-winsstamp" ref={winsStampRef} />

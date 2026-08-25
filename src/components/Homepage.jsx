@@ -263,19 +263,27 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   useEffect(() => {
     dialogOpenRef.current = !!dialog;
   }, [dialog]);
-  const { progress: xpProgress } = useXpCapture({
-    fxRef: xpFxRef,
-    isBlocked: () => dialogOpenRef.current,
-  });
-  // Wins balance shown in the chip (read once on menu mount). On arriving at the menu after
-  // a round that paid out, fire ONE "+N WINS" stamp for the queued total.
-  const [wins] = useState(() => getWins());
+  // Wins balance shown in the chip. Seeded on mount, then kept LIVE: level-ups now pay wins
+  // while the player is still on the menu (see useXpCapture), so a mount-only snapshot would
+  // sit stale until a remount. onCredit below refreshes it (and the affordability dot).
+  const [wins, setWins] = useState(() => getWins());
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
-  // Can the player buy at least one unowned item? Drives the wins-chip dot (snapshot on
-  // mount; a purchase remounts this component so it re-reads).
-  const [winsAffordable] = useState(() => canAffordAny());
+  // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
+  // alongside the balance so earning enough on the menu lights the dot immediately.
+  const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
+  const { progress: xpProgress } = useXpCapture({
+    fxRef: xpFxRef,
+    isBlocked: () => dialogOpenRef.current,
+    // Fires on every credited keystroke/tap. getWins() only moves on a level-up payout, so
+    // the balance setState is a no-op (same value) until then — cheap to check each credit.
+    onCredit: () => {
+      const w = getWins();
+      setWins((prev) => (prev !== w ? w : prev));
+      setWinsAffordable(canAffordAny(w));
+    },
+  });
   const shopLinkRef = useRef(null);
   const statsLinkRef = useRef(null);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we

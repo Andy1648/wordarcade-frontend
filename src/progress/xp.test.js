@@ -21,6 +21,8 @@ import {
   getRebirths,
   keyPowerCost,
   keyPowerBaseXp,
+  keyPowerNextDoubler,
+  levelUpWins,
   getKeyPower,
 } from './xp.js';
 
@@ -72,9 +74,30 @@ test('keyPowerCost grows 15%/level: lv0=50, lv5=101, lv20=818', () => {
   assert.equal(keyPowerCost(20), 818);
 });
 
-test('keyPowerBaseXp = 10 + 2·level', () => {
+test('keyPowerBaseXp = (10 + 2·purchases)·2^floor(purchases/10) — milestone doublers stack', () => {
+  // Below the first milestone it's the linear +2 crawl.
   assert.equal(keyPowerBaseXp(0), 10);
-  assert.equal(keyPowerBaseXp(20), 50);
+  assert.equal(keyPowerBaseXp(5), 20);
+  assert.equal(keyPowerBaseXp(9), 28);
+  // Each 10th purchase permanently ×2s the base, and they stack.
+  assert.equal(keyPowerBaseXp(10), 60); // (10+20)·2
+  assert.equal(keyPowerBaseXp(20), 200); // (10+40)·4
+  assert.equal(keyPowerBaseXp(30), 560); // (10+60)·8
+});
+
+test('keyPowerNextDoubler: the next multiple of 10, and how far to go', () => {
+  assert.deepEqual(keyPowerNextDoubler(0), { at: 10, toGo: 10 });
+  assert.deepEqual(keyPowerNextDoubler(7), { at: 10, toGo: 3 });
+  assert.deepEqual(keyPowerNextDoubler(10), { at: 20, toGo: 10 });
+  assert.deepEqual(keyPowerNextDoubler(23), { at: 30, toGo: 7 });
+});
+
+test('levelUpWins: Math.round(25·L) per level crossed, summed across a multi-level jump', () => {
+  assert.equal(levelUpWins(4, 5), 125); // reaching level 5 pays 125
+  assert.equal(levelUpWins(1, 2), 50); // reaching level 2 pays 50
+  assert.equal(levelUpWins(9, 10), 250);
+  assert.equal(levelUpWins(3, 3), 0); // no level-up → nothing
+  assert.equal(levelUpWins(3, 5), 100 + 125); // crossed 4 AND 5
 });
 
 // ---- level derived from cumulative xp, swept 0..100000 ----
@@ -113,8 +136,9 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
 test('the XP stack (single source): key power × mode × rebirth', () => {
   // key power 0 + menu (×1) + R0 (×1) = 10.
   assert.equal(xpPerInput({ mode: 'menu', keyPowerLevel: 0, rebirthCount: 0 }), 10);
-  // key power 20 + sat-rush (×3) + R1 (×1.5) = (10+40)·3·1.5 = 225.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyPowerLevel: 20, rebirthCount: 1 }), 225);
+  // key power 20 (base 200, incl. the ×4 milestone doublers) + sat-rush (×3) + R1 (×1.5)
+  // = 200·3·1.5 = 900.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyPowerLevel: 20, rebirthCount: 1 }), 900);
 });
 
 test('rebirth thresholds: rebirths 0→15, 1→18, 2→21; multipliers 1.5/2.0/2.5', () => {

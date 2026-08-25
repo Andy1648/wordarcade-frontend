@@ -335,6 +335,18 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   transform: rotate(-2deg);
 }
 
+/* Payout preview: what a round of this mode pays. Small mono line under the badge so it
+   reads as at-a-glance info, not chrome. Dark ink on the (bright) card fill. */
+.game-card-payout {
+  align-self: flex-start;
+  margin-top: 5px;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(8px, 0.95vw, 11px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.62);
+}
+
 .game-card.disabled {
   cursor: default;
 }
@@ -403,7 +415,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    click-through so a tap still reaches the card (which shakes once). */
 .game-card.locked .game-card-art,
 .game-card.locked .game-card-content {
-  opacity: 0.4;
+  opacity: 0.55;
 }
 .game-card-lock {
   position: absolute;
@@ -413,15 +425,21 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: rgba(13, 6, 24, 0.45);
+  background: rgba(13, 6, 24, 0.4);
   border-radius: inherit;
   pointer-events: none;
 }
-.game-card-lock-icon {
-  width: 42px;
-  height: 42px;
-  filter: drop-shadow(2px 2px 0 #000);
+/* Chain-and-padlock slung across the top-right corner. Positioned (not in the flex flow)
+   so the label stays centered at the bottom. Hard black drop-shadow for the flat cartoon
+   pop. overflow visible so links can sit right on the corner edges. */
+.game-card-lock-chain {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 74px;
+  height: 74px;
+  overflow: visible;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
 }
 .game-card-lock-label {
   font-family: 'Bungee', cursive;

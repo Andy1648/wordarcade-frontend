@@ -211,6 +211,22 @@
   paint-order: stroke fill;
   letter-spacing: 0.12em;
 }
+/* "+N WINS" reward line under the LEVEL text — cyan (the accept/positive colour) so the
+   payout reads distinct from the gold title. Hidden when the level-up granted nothing. */
+.menu-xp-levelup-wins {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(18px, 4.4vw, 40px);
+  line-height: 1;
+  color: #2effe0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.menu-xp-levelup-wins:empty {
+  display: none;
+}
+
 /* Second line under the phrase — "LV n-1 → LV n" at ~0.3× the title size. */
 .menu-xp-levelup-detail {
   font-family: 'Bungee', cursive;
