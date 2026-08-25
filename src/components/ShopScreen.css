@@ -407,3 +407,13 @@
   transform: translate(4px, 4px);
   box-shadow: none;
 }
+
+/* Economy v3: the restored XP multiplier a cosmetic carries, shown on its card. */
+.shop-card-xp {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: #2effe0;
+  margin-top: 2px;
+}

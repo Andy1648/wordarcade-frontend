@@ -163,11 +163,12 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
 const CENTER = 'translate(-50%,-50%) ';
 
-// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 16, cap 14 running.
-// At 30 keys/sec × 0.42s ≈ 12.6 concurrent, so the cap sits just above at 14.
-const POP_MS = 420;
-const POP_POOL = 16;
-const POP_CAP = 14; // 14 pops + fill transition 1 + one edge pulse 1 = the 16 menu budget
+// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 20, cap 18 running.
+// At 30 keys/sec × 0.6s = 18 concurrent, so the cap sits exactly there (Economy v3 slows
+// pops to 600ms for a longer, floatier read).
+const POP_MS = 600;
+const POP_POOL = 20;
+const POP_CAP = 18; // 18 pops + fill transition 1 + one edge pulse 1 = the 20 menu budget
 const POP_HALF = 30; // keep a pop this far off the fx-layer edge and the bar box
 const POP_MIN_GAP = 90; // reject a candidate within this many px of the last few spawns
 const RECENT_POS = 6; // ring buffer: reject against the last N accepted positions
@@ -245,7 +246,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelupRef = useRef(null);
   const levelTitleRef = useRef(null);
   const levelSubRef = useRef(null);
-  const levelWinsRef = useRef(null);
   const levelDetailRef = useRef(null);
   const winsStampRef = useRef(null);
   const popAnimsRef = useRef([]);
@@ -292,9 +292,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     popAnimsRef.current = popElsRef.current.map((el) => {
       const a = el.animate(
         [
-          { transform: `${CENTER}translateY(6.4px)`, opacity: 0, offset: 0 },
-          { transform: `${CENTER}translateY(-6.4px)`, opacity: 1, offset: 0.25 },
-          { transform: `${CENTER}translateY(-35.2px)`, opacity: 0, offset: 1 },
+          { transform: `${CENTER}translateY(8.96px)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}translateY(-8.96px)`, opacity: 1, offset: 0.25 },
+          { transform: `${CENTER}translateY(-49.28px)`, opacity: 0, offset: 1 },
         ],
         popOpts
       );
@@ -373,9 +373,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(6.4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-6.4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-35.2px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-8.96px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-49.28px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -407,9 +407,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(6.4px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-6.4px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-35.2px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-8.96px)`, opacity: 1, offset: 0.25 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-49.28px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -426,7 +426,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       anim.cancel();
       anim.play();
     },
-    celebrate(level, winsAwarded = 0) {
+    celebrate(level) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
@@ -434,11 +434,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       if (levelSubRef.current) {
         levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
       }
-      // "+N WINS" reward line under the LEVEL text — the payout that lets menu-only players
-      // actually afford upgrades. Blank (and hidden via :empty) when the level-up paid nothing.
-      if (levelWinsRef.current) {
-        levelWinsRef.current.textContent = winsAwarded > 0 ? `+${winsAwarded} WINS` : '';
-      }
+      // Economy v3: level-ups no longer pay wins, so there is no "+N WINS" reward line here.
       if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
       a.cancel();
       a.play();
@@ -450,7 +446,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       for (const p of popAnimsRef.current) p.cancel();
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
       if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
-      if (levelWinsRef.current) levelWinsRef.current.textContent = ''; // rebirth pays no wins line
       if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
       a.cancel();
       a.play();
@@ -493,7 +488,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           LEVEL UP
         </span>
         <span className="menu-xp-levelup-sub" ref={levelSubRef} />
-        <span className="menu-xp-levelup-wins" ref={levelWinsRef} />
         <span className="menu-xp-levelup-detail" ref={levelDetailRef} />
       </div>
       <div className="menu-xp-winsstamp" ref={winsStampRef} />

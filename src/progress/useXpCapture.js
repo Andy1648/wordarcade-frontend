@@ -13,10 +13,9 @@ import {
   createRateLimiter,
   isCreditableKey,
   levelFromXp,
-  levelUpWins,
   xpPerInput,
 } from './xp';
-import { grantWins } from './wins';
+import { equippedPopMult, equippedSoundMult } from './shop';
 import { playClack } from './clack';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
@@ -43,9 +42,14 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
   useEffect(() => {
     if (!active) return undefined;
     const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
-    // The per-input XP from the single multiplier stack (menu mode). Stable for this menu
-    // session — equipping/rebirth happen on another screen, which remounts this hook.
-    const menuGain = xpPerInput({ mode: 'menu' });
+    // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
+    // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
+    // and rebirth happen on another screen, which remounts this hook and re-reads them.
+    const menuGain = xpPerInput({
+      mode: 'menu',
+      popMult: equippedPopMult(),
+      soundMult: equippedSoundMult(),
+    });
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; a tap credits
     // xp but NOT lifetimeLetters (rawKeys 0) and bumps taw.taps instead; its pop is the
@@ -75,18 +79,11 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
         saveTaps(tapsRef.current);
       }
 
-      // LEVEL-UPS PAY WINS: this is the only path that credits wins from menu play, so a
-      // player who just types on the menu can still earn enough to buy upgrades. Granted
-      // whether or not the fx layer is mounted; the celebration shows the "+N WINS" line.
-      let leveledWins = 0;
-      if (res.leveledUp) {
-        leveledWins = levelUpWins(beforeLevel, res.level);
-        if (leveledWins > 0) grantWins(leveledWins);
-      }
-
+      // Level-ups no longer pay wins (Economy v3): wins come only from finishing rounds.
+      // A level-up is still celebrated — it just no longer shows a "+N WINS" line.
       const fx = fxRef && fxRef.current;
       if (fx) {
-        if (res.leveledUp) fx.celebrate(res.level, leveledWins);
+        if (res.leveledUp) fx.celebrate(res.level);
         if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], opts.x, opts.y);
         else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier]);
         if (crossed && tier > 0) fx.edgePulse(TIER_COLORS[tier]);

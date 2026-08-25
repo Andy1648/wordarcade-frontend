@@ -22,7 +22,6 @@ import {
   keyPowerCost,
   keyPowerBaseXp,
   keyPowerNextDoubler,
-  levelUpWins,
   getKeyPower,
 } from './xp.js';
 
@@ -92,14 +91,6 @@ test('keyPowerNextDoubler: the next multiple of 10, and how far to go', () => {
   assert.deepEqual(keyPowerNextDoubler(23), { at: 30, toGo: 7 });
 });
 
-test('levelUpWins: Math.round(25·L) per level crossed, summed across a multi-level jump', () => {
-  assert.equal(levelUpWins(4, 5), 125); // reaching level 5 pays 125
-  assert.equal(levelUpWins(1, 2), 50); // reaching level 2 pays 50
-  assert.equal(levelUpWins(9, 10), 250);
-  assert.equal(levelUpWins(3, 3), 0); // no level-up → nothing
-  assert.equal(levelUpWins(3, 5), 100 + 125); // crossed 4 AND 5
-});
-
 // ---- level derived from cumulative xp, swept 0..100000 ----
 test('level derived from cumulative xp is correct across a 0..100000 sweep', () => {
   // Independent oracle: precompute cumulative thresholds cum[L] = XP needed to REACH L.
@@ -141,13 +132,22 @@ test('the XP stack (single source): key power × mode × rebirth', () => {
   assert.equal(xpPerInput({ mode: 'sat-rush', keyPowerLevel: 20, rebirthCount: 1 }), 900);
 });
 
-test('rebirth thresholds: rebirths 0→15, 1→18, 2→21; multipliers 1.5/2.0/2.5', () => {
-  assert.equal(rebirthThreshold(0), 15);
-  assert.equal(rebirthThreshold(1), 18);
-  assert.equal(rebirthThreshold(2), 21);
+test('rebirth gates: widening table (15,25,40,60,85,115,150,190,235,285) then +50 per step', () => {
+  const table = [15, 25, 40, 60, 85, 115, 150, 190, 235, 285];
+  table.forEach((v, i) => assert.equal(rebirthThreshold(i), v));
+  assert.equal(rebirthThreshold(10), 335); // +50 past the last tabled gate
+  assert.equal(rebirthThreshold(11), 385);
+});
+
+test('rebirth multipliers: R1-R10 = 1+0.5n (×1.5…×6), then ×10 each rebirth (×60,×600)', () => {
+  assert.equal(rebirthMult(0), 1); // no rebirths yet
   assert.equal(rebirthMult(1), 1.5);
   assert.equal(rebirthMult(2), 2.0);
   assert.equal(rebirthMult(3), 2.5);
+  assert.equal(rebirthMult(10), 6); // R10 caps the linear ramp
+  assert.equal(rebirthMult(11), 60); // R11 ×10s from ×6
+  assert.equal(rebirthMult(12), 600);
+  assert.equal(rebirthMult(13), 6000);
 });
 
 test('rebirth is refused at LV14 and allowed at LV15', () => {
