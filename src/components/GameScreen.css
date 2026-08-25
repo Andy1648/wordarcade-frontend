@@ -2499,6 +2499,10 @@
 }
 .cb-round .game-input {
   max-width: none; /* fill the column instead of sitting in a narrow band */
+  /* Font-size comes from the base .game-input clamp(16px, 2.1vw, 30px) (the site-wide
+     text-scale pass, measured across all six viewports). We intentionally do NOT set a
+     CB-specific size here: blitz-scale's clamp(26px, 2vw, 30px) had a 26px MIN that made
+     the field 26px on phones, where the base correctly keeps it 16px. */
 }
 
 /* ---- Side rail: answers grow instead of a tiny 110px scroll box ---- */
@@ -2516,6 +2520,13 @@
 }
 .cb-round-side .cb-section-label {
   font-size: 11px; /* a touch more presence so the rail has its own hierarchy */
+}
+/* Accepted-answer chips read larger so the running list is legible at a glance
+   (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
+   screen's chips are unchanged. Padding grows a touch to match. */
+.cb-round .cb-answer-chip {
+  font-size: clamp(13px, 1vw, 15px);
+  padding: 4px 9px;
 }
 
 .cb-category-label {
