@@ -4,11 +4,13 @@ import App from './App.jsx'
 import './index.css'
 import { initAnalytics, initSentry, Sentry } from './lib/analytics'
 
-// Stand up analytics + monitoring BEFORE the app mounts. Both are graceful no-ops
-// when their env keys are unset and are internally wrapped; the extra try/catch
-// here is belt-and-suspenders so a bad SDK load can never block startup.
-try { initAnalytics() } catch { /* never block startup */ }
+// Monitoring (Sentry) stands up BEFORE mount so an early render crash is still caught +
+// reported. Product analytics (PostHog, a ~207KB chunk) is DEFERRED to idle after first paint
+// — it must never block interactivity — and dynamic-imports posthog itself. Both are graceful
+// no-ops without their env keys and internally wrapped; the try/catch here is belt-and-braces.
 try { initSentry() } catch { /* never block startup */ }
+const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
+idle(() => { try { initAnalytics() } catch { /* never block */ } });
 
 // On-brand crash screen shown by the Sentry error boundary if a render throws, so
 // a crash reports to Sentry AND shows this instead of a blank white page.

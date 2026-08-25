@@ -21,3 +21,11 @@ Hard rails: no merge/push to main, no deploy, no backend edits. Branch + push on
 - (J2 SHIPPED) feat/econ5 pushed. Preview: https://wordarcade-frontend-5vkowaff9-beenchilling.vercel.app · build exit 0 · 253/253 tests pass.
 - (J3) progression-research.md written on feat/econ5 in claude/ (untracked, not committed — it's a report per CLAUDE.md).
 - (J1.2 measurement) Playwright per-viewport measurement of ROOM/LOBBY/GAME-OVER is backend-gated (needs a live WS room + a played game) and a browser-automation rabbit hole with no way to ask for help. Decision: spec-driven CSS audit — static clamp() whose ≥1366 value meets each target and whose floor stays ≥16px — across every listed screen, which directly satisfies the numeric acceptance. Menu-reachable overlays (Shop/Stats/mode dialog/pack picker/locked preview) are additionally eyeball-verifiable from the menu. Reported honestly in claude/ui-scale-2.md.
+
+## perf/bundle (autonomous, 2026-08-25)
+Finding: the named split targets (game screens, shop/stats overlays, SAT Rush 193KB) were ALREADY lazy chunks. The 600KB entry was dominated by eagerly-bundled vendor libs: posthog-js (~211KB), @sentry/react (~86KB), react-dom (~143KB).
+Actions (most conservative that meets acceptance):
+- vite manualChunks: split react-vendor (react/react-dom/scheduler) + sentry out of the entry (build-config only, zero behaviour change).
+- DEFER posthog: dynamic-import inside initAnalytics(), and schedule initAnalytics on requestIdleCallback after mount (main.jsx). posthog's 211KB chunk now loads AFTER first paint. track() already no-ops until posthog is ready, so no lost-event risk beyond a sub-second init delay.
+- Sentry kept EAGER on purpose: its ErrorBoundary must be mounted to catch a render crash (it is the safety net the Stats crash would have hit). Deferring it was rejected as too risky.
+Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600KB -> 391KB (index 162 + react-vendor 143 + sentry 86; posthog 211 deferred). No route slower to interactive (parallel HTTP/2; lazy game/overlay chunks unchanged). 262 unit + 99 e2e green.
