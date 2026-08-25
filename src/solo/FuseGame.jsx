@@ -3,7 +3,7 @@
 // live in fuse.js; this file is glue + presentation.
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
-import { loadSoloWords } from './words.js';
+import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
@@ -81,6 +81,13 @@ export default function FuseGame({ onExit }) {
 function FuseInner({ data, createEngine, adapter, onExit }) {
   const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE });
   const s = g.engine.state;
+
+  // Fetch the big acceptance extension the moment the FIRST run ends — never on mount, so it
+  // can't delay the first game. Idempotent (words.js single-flights it); its words merge into
+  // the live accept set in place, so later runs accept the fuller vocabulary.
+  useEffect(() => {
+    if (g.phase === 'over') loadSoloAcceptExt();
+  }, [g.phase]);
 
   const hud = (
     <>
