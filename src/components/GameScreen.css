@@ -2489,6 +2489,11 @@
 }
 .cb-round .game-input {
   max-width: none; /* fill the column instead of sitting in a narrow band */
+  /* Scale the answer field up so it reads as a real primary input, never below
+     26px on the target desktop/laptop widths (base .game-input tops out at 20px,
+     which read tiny next to the hero category). Static clamp() — font-size is
+     never animated. CB-scoped, so Word Bomb's input is untouched. */
+  font-size: clamp(26px, 2vw, 30px);
 }
 
 /* ---- Side rail: answers grow instead of a tiny 110px scroll box ---- */
@@ -2506,6 +2511,13 @@
 }
 .cb-round-side .cb-section-label {
   font-size: 11px; /* a touch more presence so the rail has its own hierarchy */
+}
+/* Accepted-answer chips read larger so the running list is legible at a glance
+   (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
+   screen's chips are unchanged. Padding grows a touch to match. */
+.cb-round .cb-answer-chip {
+  font-size: clamp(13px, 1vw, 15px);
+  padding: 4px 9px;
 }
 
 .cb-category-label {
