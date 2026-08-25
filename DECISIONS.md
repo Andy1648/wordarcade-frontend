@@ -44,3 +44,11 @@ CHAIN/FUSE are timed solo runs needing valid typed words). Building that harness
 the time-boxed budget and would risk a flaky test. NOTE: SAT Rush results IS already covered by
 sat-rush.spec (reaches death → results) + sat-rush-exit (zero console errors during SAT play).
 Suite: 262 unit + 111 e2e green.
+
+## perf/bundle (autonomous, 2026-08-25)
+Finding: the named split targets (game screens, shop/stats overlays, SAT Rush 193KB) were ALREADY lazy chunks. The 600KB entry was dominated by eagerly-bundled vendor libs: posthog-js (~211KB), @sentry/react (~86KB), react-dom (~143KB).
+Actions (most conservative that meets acceptance):
+- vite manualChunks: split react-vendor (react/react-dom/scheduler) + sentry out of the entry (build-config only, zero behaviour change).
+- DEFER posthog: dynamic-import inside initAnalytics(), and schedule initAnalytics on requestIdleCallback after mount (main.jsx). posthog's 211KB chunk now loads AFTER first paint. track() already no-ops until posthog is ready, so no lost-event risk beyond a sub-second init delay.
+- Sentry kept EAGER on purpose: its ErrorBoundary must be mounted to catch a render crash (it is the safety net the Stats crash would have hit). Deferring it was rejected as too risky.
+Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600KB -> 391KB (index 162 + react-vendor 143 + sentry 86; posthog 211 deferred). No route slower to interactive (parallel HTTP/2; lazy game/overlay chunks unchanged). 262 unit + 99 e2e green.

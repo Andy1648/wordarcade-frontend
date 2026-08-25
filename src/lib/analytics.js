@@ -8,17 +8,22 @@
 // Exports initAnalytics / initSentry / track, plus the Sentry namespace so the
 // app root can wrap itself in Sentry.ErrorBoundary (the boundary helper in the
 // installed @sentry/react v10 API).
-import posthog from 'posthog-js';
+// posthog is loaded LAZILY inside initAnalytics (deferred to idle after first paint by
+// main.jsx) so its ~207KB chunk never blocks interactivity. Sentry stays EAGER — its
+// ErrorBoundary must be present at mount to catch a render crash — and is exported below.
 import * as Sentry from '@sentry/react';
 
 export { Sentry };
 
+let posthog = null;
 let posthogReady = false;
 
-export function initAnalytics() {
+export async function initAnalytics() {
   try {
     const key = import.meta.env.VITE_POSTHOG_KEY;
     if (!key) return; // no key (local dev / unconfigured) -> silent no-op
+    const mod = await import('posthog-js'); // dynamic: its chunk is off the first-paint path
+    posthog = mod.default;
     // REGION: US assumed. If the PostHog project is EU cloud, change api_host to
     // 'https://eu.i.posthog.com'.
     posthog.init(key, {
