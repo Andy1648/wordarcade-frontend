@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyKeyPowerMax } from '../progress/shop';
 import { getWins } from '../progress/wins';
-import { loadProgress, levelFromXp, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp, keyPowerNextDoubler } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp, keyPowerNextDoubler } from '../progress/xp';
 import { formatNum } from '../format';
 
 export default function ShopScreen({ onBack }) {
@@ -32,7 +32,7 @@ export default function ShopScreen({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const level = levelFromXp(loadProgress().xp).level;
+  const level = loadProgress().level;
   const rebirths = getRebirths();
   const threshold = rebirthThreshold(rebirths);
   const nextMult = rebirthMult(rebirths + 1);
@@ -203,11 +203,16 @@ export default function ShopScreen({ onBack }) {
               </div>
               <div className="shop-rb-stat">
                 <span>CURRENT MULTIPLIER</span>
-                <b>×{rebirthMult(rebirths).toFixed(1)}</b>
+                <b>×{formatNum(rebirthMult(rebirths))}</b>
               </div>
+              {/* The NEXT rebirth's level + multiplier, shown at all times (Economy v4). */}
               <div className="shop-rb-stat">
                 <span>NEXT REBIRTH AT</span>
                 <b>LEVEL {threshold}</b>
+              </div>
+              <div className="shop-rb-stat">
+                <span>NEXT MULTIPLIER</span>
+                <b>×{formatNum(nextMult)}</b>
               </div>
             </div>
 
@@ -219,7 +224,7 @@ export default function ShopScreen({ onBack }) {
                 <b>KEEP:</b> wins, all purchases, lifetime stats — everything else.
               </li>
               <li>
-                <b>GAIN:</b> a permanent ×{nextMult.toFixed(1)} XP multiplier.
+                <b>GAIN:</b> a permanent ×{formatNum(nextMult)} XP multiplier.
               </li>
             </ul>
 
@@ -235,7 +240,7 @@ export default function ShopScreen({ onBack }) {
                 </div>
               ) : (
                 <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)}>
-                  REBIRTH {rebirths + 1} — GAIN ×{nextMult.toFixed(1)} XP
+                  REBIRTH {rebirths + 1} — GAIN ×{formatNum(nextMult)} XP
                 </button>
               )
             ) : (

@@ -79,29 +79,37 @@ export const WINS_MULT = { satRush: 2, chain: 3, fuse: 5 };
 export const DIFFICULTY_MULT = { chill: 1.0, easy: 1.25, medium: 1.5, hard: 2.0 };
 
 // A representative round used ONLY to preview a mode's payout on its menu card. Ten accepted
-// words puts the base at 30, so the card reads "~30 WINS / ROUND" at ×1 (CHAIN ~90, FUSE ~150).
+// words at the ×1 base reads "~100 WINS / ROUND" (SAT ~200, CHAIN ~300, FUSE ~500).
 export const TYPICAL_ROUND_WORDS = 10;
 
-// Wins granted for a round (PURE). <3 words → 0; else (10 + 2·words) × difficulty × mode mult,
-// rounded. Difficulty defaults to ×1 (unspecified/no-difficulty modes), so the base payouts
-// are unchanged:  3 → 16   10 → 30   (chain 3 → 48   fuse 3 → 80).
-export function awardWins({ wordsAccepted, mode, difficulty } = {}) {
-  const w = Number.isFinite(wordsAccepted) ? wordsAccepted : 0;
-  if (w < MIN_WORDS) return 0;
+// Economy v5: wins are paid PER WORD. The per-word rate is 10 base × mode mult × difficulty,
+// snapped to a round multiple of 10 (word-bomb/blitz 10, SAT 20, CHAIN 30, FUSE 50 at ×1).
+export const WORD_WINS_BASE = 10;
+export function perWordWins({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
-  return Math.round((10 + 2 * w) * diffMult * (WINS_MULT[mode] || 1));
+  const modeMult = WINS_MULT[mode] || 1;
+  return Math.round((WORD_WINS_BASE * modeMult * diffMult) / 10) * 10;
 }
 
-// The card's payout preview: the wins a typical round would pay for this mode at the given
-// difficulty (defaults to the easiest tier / ×1). Pure wrapper over awardWins.
+// Wins granted for a round (PURE). <3 accepted words → 0; else wordsAccepted × the per-word
+// rate. Both factors keep the total a round multiple of 10 (Economy v5 — every payout ends in
+// a zero). Difficulty defaults to ×1 (unspecified / no-difficulty modes).
+export function awardWins({ wordsAccepted, mode, difficulty } = {}) {
+  const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
+  if (w < MIN_WORDS) return 0;
+  return w * perWordWins({ mode, difficulty });
+}
+
+// The card's per-ROUND payout preview: a typical round's wins for this mode/difficulty
+// (defaults to the easiest tier / ×1). Pure wrapper over awardWins.
 export function roundWinsEstimate({ mode, difficulty } = {}) {
   return awardWins({ wordsAccepted: TYPICAL_ROUND_WORDS, mode, difficulty });
 }
 
-// PER-WORD wins preview shown on the menu cards. Base 10 per word, keyed by game.id (not the
-// round-mode key), ×2 SAT Rush · ×3 CHAIN · ×5 FUSE, then × difficulty, snapped to a round
-// multiple of 10 (word-bomb/blitz 10, sat-rush 20, chain 30, fuse 50 at the ×1 default).
-export const WORD_WINS_BASE = 10;
+// PER-WORD wins preview shown on the menu cards. Base 10 per word, keyed by game.id (NOT the
+// round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×2 SAT Rush ·
+// ×3 CHAIN · ×5 FUSE, then × difficulty, snapped to a round multiple of 10 (word-bomb/blitz
+// 10, sat-rush 20, chain 30, fuse 50 at the ×1 default). Reuses WORD_WINS_BASE from above.
 export const WORD_WINS_MULT = { 'sat-rush': 2, chain: 3, fuse: 5 };
 export function wordWinsEstimate({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;

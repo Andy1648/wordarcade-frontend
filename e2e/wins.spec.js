@@ -29,14 +29,14 @@ async function playBlitzRound(mock, page, answers) {
 }
 
 test.describe('wins wiring', () => {
-  test('a Blitz round_end with 3 accepted answers pays 16 and counts the round', async ({ page }) => {
+  test('a Blitz round_end with 3 accepted answers pays 30 and counts the round', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
-    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 accepted → awardWins(3) = 16
+    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 accepted → awardWins(3) = 3×10 = 30 (Economy v5 per-word)
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(16);
-    expect(after.lifetime - before.lifetime).toBe(16);
+    expect(after.wins - before.wins).toBe(30);
+    expect(after.lifetime - before.lifetime).toBe(30);
     expect(after.blitz - before.blitz).toBe(1);
   });
 

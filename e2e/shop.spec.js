@@ -59,14 +59,25 @@ test.describe('shop', () => {
     await page.locator('.shop-confirm-actions .shop-card-btn.danger').click(); // CONFIRM
     await page.locator('.menu-xp-bar').waitFor({ state: 'visible' }); // returned to menu
 
-    const after = await page.evaluate(() => ({
-      xp: Number(localStorage.getItem('taw.xp')),
-      rebirths: Number(localStorage.getItem('taw.rebirths')),
-      wins: Number(localStorage.getItem('taw.wins')),
-      keepsInferno: JSON.parse(localStorage.getItem('taw.owned') || '[]').includes('inferno'),
-      celeb: document.querySelector('.menu-xp-levelup-title')?.textContent,
-    }));
-    expect(after.xp).toBe(0); // XP zeroed
+    const after = await page.evaluate(() => {
+      let xp = {};
+      try {
+        xp = JSON.parse(localStorage.getItem('taw.xp') || '{}') || {};
+      } catch {
+        xp = {};
+      }
+      return {
+        // Economy v5: taw.xp is the compact { lv, into } shape, not a cumulative number.
+        lv: xp.lv,
+        into: xp.into,
+        rebirths: Number(localStorage.getItem('taw.rebirths')),
+        wins: Number(localStorage.getItem('taw.wins')),
+        keepsInferno: JSON.parse(localStorage.getItem('taw.owned') || '[]').includes('inferno'),
+        celeb: document.querySelector('.menu-xp-levelup-title')?.textContent,
+      };
+    });
+    expect(after.lv).toBe(1); // rebirth resets to level 1
+    expect(after.into).toBe(0); // …with zero XP into it
     expect(after.rebirths).toBe(1);
     expect(after.wins).toBe(400); // wins preserved
     expect(after.keepsInferno).toBe(true); // purchases survive rebirth

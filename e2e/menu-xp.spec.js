@@ -113,14 +113,18 @@ test.describe('menu XP', () => {
           }
         }
       }
-      const xp = (() => { try { return Number(localStorage.getItem('taw.xp')) || 0; } catch { return 0; } })();
-      return { idleBaseline, peak, peakNames, xp };
+      // Economy v5: taw.xp is the compact { lv, into } shape, not a cumulative number.
+      const prog = (() => { try { return JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { return {}; } })();
+      return { idleBaseline, peak, peakNames, lv: Number(prog.lv) || 1, into: Number(prog.into) || 0 };
     });
 
     // The whole point: the concurrent FINITE running-animation count stays within budget.
     expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(20);
-    // Sanity: the burst actually credited XP and crossed at least one level (need(1)=100).
-    expect(result.xp).toBeGreaterThanOrEqual(100);
+    // Sanity: the burst actually credited XP and crossed at least one level. ~120 keys × +10
+    // clears several levels (need(1)=110), so the stored level advances past 1 and the residual
+    // xp-into-level stays a clean multiple of 10 (every v5 credit is snapped to ÷10).
+    expect(result.lv).toBeGreaterThanOrEqual(2);
+    expect(result.into % 10).toBe(0);
   });
 });
 
@@ -156,14 +160,18 @@ test.describe('splash XP', () => {
       pips: document.querySelectorAll('.splash-pip').length,
       pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
       poppedA: [...document.querySelectorAll('.menu-xp-pop-letter')].some((n) => n.textContent === 'A'),
-      xp: (() => { try { return Number(localStorage.getItem('taw.xp')) || 0; } catch { return 0; } })(),
+      // Economy v5: taw.xp is the compact { lv, into } shape, not a cumulative number.
+      prog: (() => { try { return JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { return {}; } })(),
       audioContexts: window.__ac,
     }));
     expect(after1.leaving).toBe(false); // one key is not enough — the gate holds
     expect(after1.pips).toBe(5); // five pips for a first-time visitor
     expect(after1.pipsOn).toBe(1); // exactly one filled after one keystroke
     expect(after1.poppedA).toBe(true); // a pop fired ON the splash
-    expect(after1.xp).toBeGreaterThanOrEqual(10); // credited normally (+10)
+    // credited normally: one menu-rate keystroke on a fresh visitor puts +10 into level 1
+    // (need(1)=110, so no boundary is crossed yet).
+    expect(after1.prog.lv).toBe(1);
+    expect(after1.prog.into).toBe(10);
     expect(after1.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
 
     // Keys 2–4 fill more pips, still no dismiss.
@@ -245,12 +253,18 @@ test.describe('tap XP (coarse pointer)', () => {
         el.dispatchEvent(new PointerEvent('pointerdown', opts));
         el.dispatchEvent(new PointerEvent('pointerup', opts));
       }, [x, y]);
+    // Economy v5: taw.xp is the compact { lv, into } shape — read xp-into-level, not a total.
     const read = () =>
-      page.evaluate(() => ({
-        xp: Number(localStorage.getItem('taw.xp')) || 0,
-        letters: Number(localStorage.getItem('taw.letters')) || 0,
-        taps: Number(localStorage.getItem('taw.taps')) || 0,
-      }));
+      page.evaluate(() => {
+        let prog = {};
+        try { prog = JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { prog = {}; }
+        return {
+          lv: Number(prog.lv) || 1,
+          into: Number(prog.into) || 0,
+          letters: Number(localStorage.getItem('taw.letters')) || 0,
+          taps: Number(localStorage.getItem('taw.taps')) || 0,
+        };
+      });
 
     // (a) tap on a game card → credits nothing (interactive target)
     const card = await page.locator('.game-card').first().boundingBox();
@@ -258,14 +272,16 @@ test.describe('tap XP (coarse pointer)', () => {
     await tap(Math.round(card.x + card.width / 2), Math.round(card.y + card.height / 2));
     await page.waitForTimeout(60);
     const afterCard = await read();
-    expect(afterCard.xp - b1.xp).toBe(0);
+    expect(afterCard.into - b1.into).toBe(0);
+    expect(afterCard.lv).toBe(b1.lv);
 
     // (b) tap on empty backdrop (top-left corner, outside the panel) → +10, letters unchanged
     const b2 = await read();
     await tap(8, 8);
     await page.waitForTimeout(60);
     const afterEmpty = await read();
-    expect(afterEmpty.xp - b2.xp).toBe(10);
+    expect(afterEmpty.into - b2.into).toBe(10); // +10 into the level (no boundary crossed on a fresh menu)
+    expect(afterEmpty.lv).toBe(b2.lv);
     expect(afterEmpty.letters).toBe(b2.letters); // taps NEVER bump lifetimeLetters
     expect(afterEmpty.taps - b2.taps).toBe(1); // the taw.taps counter did bump
   });
@@ -297,12 +313,18 @@ test.describe('desktop clicks count (fine pointer)', () => {
     // (the bar being visible doesn't guarantee the effect has run — clicking too early misses).
     await page.waitForTimeout(500);
 
+    // Economy v5: taw.xp is the compact { lv, into } shape — read xp-into-level, not a total.
     const read = () =>
-      page.evaluate(() => ({
-        xp: Number(localStorage.getItem('taw.xp')) || 0,
-        taps: Number(localStorage.getItem('taw.taps')) || 0,
-        letters: Number(localStorage.getItem('taw.letters')) || 0,
-      }));
+      page.evaluate(() => {
+        let prog = {};
+        try { prog = JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { prog = {}; }
+        return {
+          lv: Number(prog.lv) || 1,
+          into: Number(prog.into) || 0,
+          taps: Number(localStorage.getItem('taw.taps')) || 0,
+          letters: Number(localStorage.getItem('taw.letters')) || 0,
+        };
+      });
 
     // (a) click on empty backdrop (top-left; the SHOP button is top-right) → credits like a
     // keystroke, into taw.taps only (never lifetimeLetters).
@@ -310,7 +332,8 @@ test.describe('desktop clicks count (fine pointer)', () => {
     await page.mouse.click(8, 8);
     await page.waitForTimeout(60);
     const a1 = await read();
-    expect(a1.xp).toBeGreaterThan(b1.xp); // desktop click now credits
+    expect(a1.into - b1.into).toBe(10); // desktop click credits +10 into the level
+    expect(a1.lv).toBe(b1.lv); // (no boundary crossed on a fresh menu)
     expect(a1.taps - b1.taps).toBe(1); // via the taps counter
     expect(a1.letters).toBe(b1.letters); // NOT lifetimeLetters
 
@@ -320,6 +343,7 @@ test.describe('desktop clicks count (fine pointer)', () => {
     await page.mouse.click(Math.round(card.x + card.width / 2), Math.round(card.y + card.height / 2));
     await page.waitForTimeout(60);
     const a2 = await read();
-    expect(a2.xp - b2.xp).toBe(0);
+    expect(a2.into - b2.into).toBe(0);
+    expect(a2.lv).toBe(b2.lv);
   });
 });
