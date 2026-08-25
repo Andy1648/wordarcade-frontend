@@ -112,7 +112,21 @@
   /* Item 2: scroll is VERTICAL only — the card grid (fr columns) must never force a
      horizontal scrollbar. Clip any stray overflow instead of letting it push width. */
   overflow-x: hidden;
+  /* Themed scrollbar (dialog-quality item 3): thin, #2a1f3d track, #FF4FA3 thumb. */
+  scrollbar-width: thin;
+  scrollbar-color: #ff4fa3 #2a1f3d;
   padding: 14px 18px 6px;
+}
+.shop-body::-webkit-scrollbar {
+  width: 8px;
+}
+.shop-body::-webkit-scrollbar-track {
+  background: #2a1f3d;
+  border-radius: 8px;
+}
+.shop-body::-webkit-scrollbar-thumb {
+  background: #ff4fa3;
+  border-radius: 8px;
 }
 
 /* REBIRTH tab: read-only stat rows above the lose/keep/gain detail + the action. */

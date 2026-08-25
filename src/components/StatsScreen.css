@@ -71,7 +71,21 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Themed scrollbar (dialog-quality item 3): thin, #2a1f3d track, #FF4FA3 thumb. */
+  scrollbar-width: thin;
+  scrollbar-color: #ff4fa3 #2a1f3d;
   padding: 14px 18px 4px;
+}
+.stats-body::-webkit-scrollbar {
+  width: 8px;
+}
+.stats-body::-webkit-scrollbar-track {
+  background: #2a1f3d;
+  border-radius: 8px;
+}
+.stats-body::-webkit-scrollbar-thumb {
+  background: #ff4fa3;
+  border-radius: 8px;
 }
 
 .stats-subtitle {
