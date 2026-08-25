@@ -21,3 +21,11 @@ Hard rails: no merge/push to main, no deploy, no backend edits. Branch + push on
 - (J2 SHIPPED) feat/econ5 pushed. Preview: https://wordarcade-frontend-5vkowaff9-beenchilling.vercel.app · build exit 0 · 253/253 tests pass.
 - (J3) progression-research.md written on feat/econ5 in claude/ (untracked, not committed — it's a report per CLAUDE.md).
 - (J1.2 measurement) Playwright per-viewport measurement of ROOM/LOBBY/GAME-OVER is backend-gated (needs a live WS room + a played game) and a browser-automation rabbit hole with no way to ask for help. Decision: spec-driven CSS audit — static clamp() whose ≥1366 value meets each target and whose floor stays ≥16px — across every listed screen, which directly satisfies the numeric acceptance. Menu-reachable overlays (Shop/Stats/mode dialog/pack picker/locked preview) are additionally eyeball-verifiable from the menu. Reported honestly in claude/ui-scale-2.md.
+
+## chore/dead-code (autonomous, 2026-08-25)
+DELETION CANDIDATES (all proven zero references before deleting):
+- src/components/WordCountChip.jsx — 0 imports anywhere in src (orphaned since the odometer was removed).
+- src/components/WordCountChip.css — imported only by WordCountChip.jsx; its wc-* classes have 0 refs outside those files.
+- .shop-tabs / .shop-tab (+ .is-active, :focus-visible) in ShopScreen.css — 0 JSX references since the SHOP|REBIRTH tabs became two top-corner icons (ui-pass-3).
+- handleQuickPlayBot() in src/App.jsx — defined but only referenced in 2 comments; touches no unique state (only shared setPlayerName/setServerError/setLobbyMode/send/track). Comments updated, not deleted.
+Scan method: exact-name grep per symbol/class against src/; a naive basename-orphan scan flagged SoloShell/chainCards/useSoloGame/streak/juice-index/etc. but those are real imports (directory-barrel or dynamic) — NOT deleted. Conservative: deleted only proven-zero-ref items.

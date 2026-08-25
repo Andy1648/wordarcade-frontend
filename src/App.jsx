@@ -1271,8 +1271,9 @@ function App() {
   }, [wsStatus, send]);
 
   // ---- CrazyGames zero-click entry (?cg=1) ----
-  // Provision the solo-vs-bot room the moment the socket opens: the SAME frames
-  // handleQuickPlayBot sends, MINUS start_game (held until the player arms). The
+  // Provision the solo-vs-bot room the moment the socket opens: the same
+  // create_room / set_game_type / set_difficulty / add_bot frames, MINUS start_game
+  // (held until the player arms). The
   // server processes them in order on this socket, so by the time the player
   // engages the room + bot are seated and start_game is instant. Fires once.
   const cgProvisionFiredRef = useRef(false);
@@ -1287,7 +1288,7 @@ function App() {
     send('create_room', { name, isPublic: false });
     send('set_game_type', { gameType: 'word-bomb' });
     // Difficulty = the current menu default (first-timers get the gentler CHILL,
-    // returning players CRAZY... i.e. medium), mirroring handleQuickPlayBot.
+    // returning players CRAZY... i.e. medium).
     send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
     send('add_bot', { difficulty: 'medium' });
     // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
@@ -1533,19 +1534,6 @@ function App() {
   // locks Word Bomb, adds a medium bot, and starts — the server processes the
   // frames in order on this socket (same pattern as handleStartDaily). First
   // timers get the gentler CHILL tier; returning players keep CRAZY.
-  function handleQuickPlayBot() {
-    const name = playerName || resolvePlayerName();
-    setPlayerName(name);
-    setServerError('');
-    setLobbyMode('word-bomb');
-    send('create_room', { name, isPublic: false });
-    send('set_game_type', { gameType: 'word-bomb' });
-    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
-    send('add_bot', { difficulty: 'medium' });
-    send('start_game', {});
-    track('quick_play_bot', {});
-  }
-
   function handleLobbyContinue({ name, mode, roomCode, isPublic }) {
     // Remember the name so Quick Play / the browser default to it next time.
     setPlayerName(name);
