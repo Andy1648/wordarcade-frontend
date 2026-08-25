@@ -42,6 +42,16 @@
    here for the homepage only; the game screens keep their .wall-surface surface.) */
 .homepage-stage {
   position: relative;
+  /* Fit-to-height flex column (item 1). A real row-gap guarantees the title never
+     collides with the XP bar; justify-content:center + the tall card region fill the
+     screen on large displays; --menu-scale (measured in Homepage.jsx) shrinks the
+     title/cards/XP together so short screens fit without overflow. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  row-gap: clamp(24px, 3.4vh, 60px);
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
      continuous surface. This element also carries .wall-surface, so setting these
@@ -286,8 +296,9 @@
      wordmark its 3D body, matching the splash title exactly. */
   font-family: 'Bungee Shade', 'Bungee', cursive;
   /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
-     desktop but shrinks on short laptops to help the menu fit one screen. */
-  font-size: clamp(34px, min(7.5vw, 9vh), 88px);
+     desktop but shrinks on short laptops to help the menu fit one screen, then the
+     container-driven --menu-scale trims it further to clear the XP bar / fit. */
+  font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * var(--menu-scale, 1));
   line-height: 1;
   color: #FF2EC4;
   -webkit-text-stroke: 5px #000;
@@ -398,6 +409,13 @@ html[data-beat='true'] .homepage-logo {
   .homepage-graffiti { width: 110px; top: 4%; left: -16px; }
 }
 
+/* The XP bar keys off the same --menu-scale (item 1) so it shrinks in step with the
+   title/cards on short screens. zoom (not transform) so its box footprint shrinks too,
+   keeping the fit math honest. */
+.homepage-stage .menu-xp-bar {
+  zoom: var(--menu-scale, 1);
+}
+
 .homepage-cards-grid {
   display: grid;
   /* 3D depth for the cards' cursor-magnetic lean (rotateX/rotateY on each
@@ -429,6 +447,10 @@ html[data-beat='true'] .homepage-logo {
 .homepage-cards-region {
   position: relative;
   z-index: 1;
+  /* Keys off --menu-scale (item 1). zoom scales the WHOLE card subtree — including the
+     cards' fixed min-heights — proportionally, so short screens shrink the region to fit
+     instead of the columns narrowing while the cards stay tall. */
+  zoom: var(--menu-scale, 1);
 }
 .homepage-cards-scroll {
   --gap: clamp(10px, 1.4vw, 20px);

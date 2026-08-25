@@ -103,6 +103,9 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Item 2: scroll is VERTICAL only — the card grid (fr columns) must never force a
+     horizontal scrollbar. Clip any stray overflow instead of letting it push width. */
+  overflow-x: hidden;
   padding: 14px 18px 6px;
 }
 
@@ -169,6 +172,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  /* Let a 1fr grid column shrink below the card's content width so a long label can
+     never widen the track and force a horizontal scroll (item 2). */
+  min-width: 0;
   min-height: 120px;
   padding: 14px 10px;
   background: #0d0618;

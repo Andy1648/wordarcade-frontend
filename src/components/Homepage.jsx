@@ -1,5 +1,5 @@
 // Homepage.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -180,6 +180,64 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // the next and a "N MORE" pager scrolls down a row at a time. --rowh (the row-1
   // card height incl. its stagger margin) is MEASURED here on mount + resize and
   // written as a CSS var; the accept path never measures.
+  // ---- Container-driven menu scale (item 1: title↔XP collision + fit/fill) ------
+  // The stage is a fit-to-height flex column. We measure the available inner height
+  // once on mount + on resize and derive --menu-scale — the factor the TITLE, CARD
+  // GRID and XP BAR all key off — so the menu shrinks to fit short screens (no
+  // overlap, no overflow) and the tall card region fills large screens. Capped at 1
+  // (never grows past the tuned base sizes); floored so it never becomes illegible.
+  const stageRef = useRef(null);
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+    let raf = 0;
+    const compute = () => {
+      // Reset to the natural (unscaled) size for a clean, non-compounding measurement.
+      stage.style.setProperty('--menu-scale', '1');
+      const cs = getComputedStyle(stage);
+      const padT = parseFloat(cs.paddingTop) || 0;
+      const padB = parseFloat(cs.paddingBottom) || 0;
+      const rowGap = parseFloat(cs.rowGap) || 0;
+      const inner = stage.clientHeight - padT - padB;
+      if (inner <= 0) return;
+      // In-flow (flex) children only — the absolutely-positioned glow/spotlight/corner
+      // buttons don't take part in the column's height.
+      const kids = Array.from(stage.children).filter((el) => {
+        const p = getComputedStyle(el).position;
+        return p !== 'absolute' && p !== 'fixed' && el.offsetHeight > 0;
+      });
+      if (!kids.length) return;
+      // Only the TITLE, XP BAR and CARD REGION key off --menu-scale; the bottom bar /
+      // daily link / footer stay fixed. Split the two so the fit math is exact: solve
+      // scale·scalable + fixed + gaps = inner.
+      const SCALES = ['homepage-logo-wrap', 'menu-xp-bar', 'homepage-cards-region'];
+      let scalable = 0;
+      let fixed = 0;
+      for (const el of kids) {
+        if (SCALES.some((c) => el.classList.contains(c))) scalable += el.offsetHeight;
+        else fixed += el.offsetHeight;
+      }
+      const gaps = rowGap * Math.max(0, kids.length - 1);
+      if (scalable <= 0) return;
+      // Never grow past 1 (justify-content:center + the tall card region fill big
+      // screens); floor so it never becomes illegible.
+      const raw = (inner - gaps - fixed) / scalable;
+      const scale = Math.max(0.55, Math.min(1, raw));
+      stage.style.setProperty('--menu-scale', scale.toFixed(4));
+    };
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(compute);
+    };
+    compute();
+    raf = requestAnimationFrame(compute); // second pass after fonts/layout settle
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
   const cardsScrollRef = useRef(null);
   const cardsRowhRef = useRef(0);
   const [cardsBelow, setCardsBelow] = useState(0); // cards below the fold
@@ -350,18 +408,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       if (onSatRush) onSatRush();
       return;
     }
-    // CHAIN / FUSE are solo too (previously dark-launched behind ?chain=1 / ?fuse=1);
-    // their cards navigate straight into the mode, no room dialog.
-    if (gameId === 'chain') {
-      setNavigating(true);
-      if (onChain) onChain();
-      return;
-    }
-    if (gameId === 'fuse') {
-      setNavigating(true);
-      if (onFuse) onFuse();
-      return;
-    }
+    // CHAIN / FUSE are solo, but (unlocked) they now open the SAME mode dialog as
+    // Word Bomb / Blitz — a solo variant with one PLAY button — so entering a mode
+    // reads consistent across the menu. The PLAY button calls onChain/onFuse.
     setDialog({ game, el });
   }
 
@@ -383,6 +432,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     sound.click();
     setNavigating(true);
     runWhenConnected('join', () => onJoinRoom && onJoinRoom());
+  }
+
+  // Dialog PLAY (solo CHAIN / FUSE): local modes, no socket round-trip — navigate
+  // straight into the mode via the matching handler. The dialog unmounts with the
+  // screen change, so no reverse-morph is needed.
+  function handleDialogPlay() {
+    if (navigating || !dialog) return;
+    sound.click();
+    setNavigating(true);
+    const id = dialog.game.id;
+    if (id === 'chain' && onChain) onChain();
+    else if (id === 'fuse' && onFuse) onFuse();
   }
 
   function handleJoinRoom(e) {
@@ -435,7 +496,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
 
   return (
     <div className="homepage-wrap">
-      <div className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
+      <div ref={stageRef} className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
@@ -628,6 +689,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           onClose={() => setDialog(null)}
           onCreate={handleDialogCreate}
           onJoin={handleDialogJoin}
+          onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
           connecting={connecting}
           coldStart={coldStart}
           blitzPacks={blitzPacks}
