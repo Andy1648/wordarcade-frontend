@@ -25,6 +25,13 @@ Five modes on the homepage grid:
 Locked-but-visible cards render a read-only `LockedPreviewDialog.jsx` ("UNLOCKS AT LV N").
 CHAIN/FUSE route straight into the mode like SAT RUSH (no room/WebSocket).
 
+Both the unlocked `ModeDialog.jsx` and the `LockedPreviewDialog` now embed a **static worked-example
+preview** (`ModeExample.jsx` + `modeExamples.js`) that shows the *actual mechanic* — CHAIN's
+pivot-letter chain (`word → word` with first/last letters highlighted), FUSE's fragment highlighted
+inside a word, etc. — plus the per-word wins rate (`wordWinsEstimate`) and typical round length. It
+is static (no animation, no prev/next stepper). This is the "real mode previews / word-example"
+work; see §10.
+
 ## 3. XP / level storage — Economy v5/v6 shape (`src/progress/xp.js`)
 - Persisted under `taw.xp` as JSON **`{ lv, into }`** (level stored exactly; `into` = XP into the
   current level, always < that level's cost). In-memory model is `{ level, intoLevel,
@@ -124,9 +131,11 @@ engine source as ground truth if they diverge.) Engine is PURE (no timers); the 
 ## 10. Corrections vs the previously-stale doc
 - **"KE" / "Knowledge Energy" currency does NOT exist.** The only currencies are **XP** (meta
   progression) and **WINS** (spendable). If the old doc referenced KE, it is obsolete — see §5/§6.
-- **No prev/next "word-nav buttons" exist in current code.** A thorough `.jsx` sweep found only
-  decorative `→` separators (chain examples) and "← BACK" screen buttons. If a word-navigation
-  stepper was ever planned/removed, it is not present now — do not assume it.
+- **"Word-nav" = the mode-preview worked examples, NOT prev/next buttons.** The `fix/ui-pass-4`
+  merge message's "word nav" refers to `ModeExample.jsx` (§2) — a *static* preview that walks
+  through example words with `→` separators and highlighted pivot/fragment letters. There is no
+  interactive prev/next word stepper anywhere in the app; a `.jsx` sweep found only those
+  decorative arrows and "← BACK" screen buttons. Document the preview, not a button that isn't there.
 - **No named level→tier ladder** (no Bronze/Silver-style level grouping). "Tier" progression =
   the **Key Power tiers** (§4). Mode gating is per-card `unlockLevel` only (§2).
 - CHAIN unlocks **LV15** (raised from 10), FUSE **LV22** (raised from 20).
