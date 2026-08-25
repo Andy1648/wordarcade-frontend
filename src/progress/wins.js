@@ -67,9 +67,9 @@ export function saveRounds(rounds) {
   }
 }
 
-// Per-mode wins multiplier on the base payout: CHAIN pays 3×, FUSE 5× (harder solo modes).
-// Every other mode is ×1.
-export const WINS_MULT = { chain: 3, fuse: 5 };
+// Per-mode wins multiplier on the base payout: SAT Rush pays 2×, CHAIN 3×, FUSE 5× (the
+// solo modes). Every other mode is ×1. (Key matches recordRound's mode: 'satRush'.)
+export const WINS_MULT = { satRush: 2, chain: 3, fuse: 5 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the

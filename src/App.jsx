@@ -62,7 +62,7 @@ import {
   markPlayed,
 } from './visitHistory';
 import { addWords } from './wordCount';
-import { recordRound } from './progress/wins';
+import { recordRound, awardWins } from './progress/wins';
 import {
   loadDailyState,
   saveDailyState,
@@ -393,6 +393,13 @@ function App() {
   // live value. Word Bomb pays at game_over; Category Blitz pays at each round_end.
   const myWbAcceptedRef = useRef(0); // Word Bomb: my accepts this game
   const myBlitzAcceptedRef = useRef(0); // Category Blitz: my accepts this round
+  // WINS visibility (Economy v3): a LIVE running estimate of the wins this round/game will
+  // pay, shown in the in-game HUD and ticking up as MY answers are accepted; and the total
+  // actually EARNED this run, shown large on the game-over screen. `winsTally` is the pending
+  // per-round (Blitz) / per-game (Word Bomb) estimate; `winsEarnedTotal` accumulates the real
+  // recordRound() payouts across the run.
+  const [winsTally, setWinsTally] = useState(0);
+  const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
   // Which menu control ('shop' | 'stats' | null) opened the overlay we're in, so the
   // homepage can restore focus to it when the overlay closes (a11y). A ref (not state):
   // it's read once by the remounting Homepage, never drives a render.
@@ -771,6 +778,8 @@ function App() {
         gameEndTime: null,
       });
       myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
+      setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
+      setWinsEarnedTotal(0);
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -907,6 +916,14 @@ function App() {
         if (submitter.id === myIdRef.current) {
           addWords('word-bomb');
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
+          // Live HUD tally: the wins this game will pay so far (pending; paid at game_over).
+          setWinsTally(
+            awardWins({
+              wordsAccepted: myWbAcceptedRef.current,
+              mode: 'wordBomb',
+              difficulty: gameDifficultyRef.current,
+            })
+          );
         }
         setFeedEvents((prev) => [
           ...prev,
@@ -974,6 +991,7 @@ function App() {
       setCategoryRerolls(payload.rerollsRemaining ?? null);
       setMyAnswers([]);
       myBlitzAcceptedRef.current = 0; // fresh round → reset my Wins accept count
+      setWinsTally(0); // fresh round → reset the live HUD wins tally (Blitz pays per round)
       setPlayerProgress({});
       setRoundResults(null);
       setLastWordResult(null);
@@ -982,6 +1000,7 @@ function App() {
       if (payload.round === 1) {
         setCategoryTotals({}); // fresh game
         categoryTotalsRef.current = {};
+        setWinsEarnedTotal(0); // fresh Blitz game → reset the run's earned-wins total
       }
       if (payload.reroll) {
         setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
@@ -1004,6 +1023,14 @@ function App() {
         // answer_result is always about MY answer, so an accept is my own word.
         addWords('category-blitz');
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
+        // Live HUD tally: the wins THIS round will pay so far (pending; paid at round_end).
+        setWinsTally(
+          awardWins({
+            wordsAccepted: myBlitzAcceptedRef.current,
+            mode: 'blitz',
+            difficulty: gameDifficultyRef.current,
+          })
+        );
       }
     }
 
@@ -1016,11 +1043,12 @@ function App() {
     if (lastMessage.type === 'round_end') {
       const payload = lastMessage.payload;
       // WINS: a Category Blitz round ended — pay out on MY accepted answers this round.
-      recordRound({
+      const blitzGranted = recordRound({
         mode: 'blitz',
         wordsAccepted: myBlitzAcceptedRef.current,
         difficulty: gameDifficultyRef.current,
       });
+      setWinsEarnedTotal((prev) => prev + blitzGranted); // accumulate across the game's rounds
       setRoundResults(payload);
       setCategoryRound(null); // round over - timer stops, show results
       setLastWordResult(null);
@@ -1045,11 +1073,12 @@ function App() {
         setRoundResults(null);
       } else {
         // WINS: a Word Bomb game ended — pay out on MY accepted words this game.
-        recordRound({
+        const wbGranted = recordRound({
           mode: 'wordBomb',
           wordsAccepted: myWbAcceptedRef.current,
           difficulty: gameDifficultyRef.current,
         });
+        setWinsEarnedTotal(wbGranted); // one payout per WB game
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak
@@ -1704,6 +1733,8 @@ function App() {
         onShake={triggerShake}
         roomCode={room ? room.code : null}
         dailyResult={dailyResult}
+        winsTally={winsTally}
+        winsEarnedTotal={winsEarnedTotal}
       />
     );
   } else if (view === 'room' && room) {

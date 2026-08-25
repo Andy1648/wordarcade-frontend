@@ -6,21 +6,23 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyPower, saveKeyPower, keyPowerCost } from './xp.js';
 
-// `blurb` = what the cosmetic actually changes (shown on the card instead of an XP figure).
+// `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
+// cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
+// xpPerInput stack (the free defaults are ×1). Pop style and sound pack stack multiplicatively.
 export const POP_STYLES = [
-  { id: 'classic', name: 'CLASSIC', price: 0, blurb: 'Cyan pop' },
-  { id: 'chrome', name: 'CHROME', price: 150, blurb: 'Chrome shine' },
-  { id: 'inferno', name: 'INFERNO', price: 400, blurb: 'Orange blaze' },
-  { id: 'void', name: 'VOID', price: 900, blurb: 'Purple void' },
-  { id: 'prism', name: 'PRISM', price: 2000, blurb: 'Rainbow split' },
+  { id: 'classic', name: 'CLASSIC', price: 0, xpMult: 1.0, blurb: 'Cyan pop' },
+  { id: 'chrome', name: 'CHROME', price: 150, xpMult: 1.05, blurb: 'Chrome shine' },
+  { id: 'inferno', name: 'INFERNO', price: 400, xpMult: 1.1, blurb: 'Orange blaze' },
+  { id: 'void', name: 'VOID', price: 900, xpMult: 1.15, blurb: 'Purple void' },
+  { id: 'prism', name: 'PRISM', price: 2000, xpMult: 1.25, blurb: 'Rainbow split' },
 ];
 export const SOUND_PACKS = [
-  { id: 'thock', name: 'THOCK', price: 0, blurb: 'Deep thock' },
-  { id: 'clack', name: 'CLACK', price: 0, blurb: 'Sharp clack' },
-  { id: 'cream', name: 'CREAM', price: 0, blurb: 'Soft cream' },
-  { id: 'marble', name: 'MARBLE', price: 250, blurb: 'Marble click' },
-  { id: 'typewriter', name: 'TYPEWRITER', price: 600, blurb: 'Typewriter' },
-  { id: 'silent', name: 'SILENT', price: 1200, blurb: 'Near silent' },
+  { id: 'thock', name: 'THOCK', price: 0, xpMult: 1.0, blurb: 'Deep thock' },
+  { id: 'clack', name: 'CLACK', price: 0, xpMult: 1.0, blurb: 'Sharp clack' },
+  { id: 'cream', name: 'CREAM', price: 0, xpMult: 1.0, blurb: 'Soft cream' },
+  { id: 'marble', name: 'MARBLE', price: 250, xpMult: 1.05, blurb: 'Marble click' },
+  { id: 'typewriter', name: 'TYPEWRITER', price: 600, xpMult: 1.1, blurb: 'Typewriter' },
+  { id: 'silent', name: 'SILENT', price: 1200, xpMult: 1.15, blurb: 'Near silent' },
 ];
 
 export const OWNED_KEY = 'taw.owned';
@@ -85,6 +87,20 @@ export function saveEquipped(eq) {
 
 export function getEquippedSoundPack() {
   return getEquipped().soundPack;
+}
+
+// The XP multiplier carried by an item id (1.0 if unknown / has none). Used to feed the
+// xpPerInput stack (Economy v3). Pure lookups over the catalog above.
+export function xpMultOf(id) {
+  const it = itemById(id);
+  return it && Number.isFinite(it.xpMult) && it.xpMult > 0 ? it.xpMult : 1;
+}
+// The equipped pop-style / sound-pack XP multipliers (read live from the equipped loadout).
+export function equippedPopMult() {
+  return xpMultOf(getEquipped().popStyle);
+}
+export function equippedSoundMult() {
+  return xpMultOf(getEquipped().soundPack);
 }
 
 // Buy an item: it must exist, not already be owned, and be affordable. Deducts from wins

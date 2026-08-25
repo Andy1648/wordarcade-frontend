@@ -75,6 +75,9 @@ export default function ShopScreen({ onBack }) {
       <div className={`shop-card is-${cls}`}>
         <div className="shop-card-name">{item.name}</div>
         <div className="shop-card-blurb">{item.blurb}</div>
+        {item.xpMult > 1 && (
+          <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% XP</div>
+        )}
         {isEquipped ? (
           <div className="shop-card-tag">EQUIPPED</div>
         ) : isOwnedItem ? (

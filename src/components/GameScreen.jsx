@@ -1413,6 +1413,29 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
  * The only local state is the text the player is typing; everything else
  * is authoritative server state passed down.
  */
+
+// WINS visibility (Economy v3). The in-game HUD pill shows the wins this round/game will pay
+// so far, ticking up as answers are accepted (fixed, pointer-events:none so it never blocks
+// play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
+// total on the game-over card, large. Both are purely presentational.
+function WinsHudPill({ amount }) {
+  if (!amount || amount <= 0) return null;
+  return (
+    <div className="wins-hud" aria-live="polite" aria-label={`${amount} wins so far`}>
+      <span className="wins-hud-plus">+{amount}</span>
+      <span className="wins-hud-label">WINS</span>
+    </div>
+  );
+}
+function WinsEarnedTotal({ amount }) {
+  if (!amount || amount <= 0) return null;
+  return (
+    <div className="wins-earned">
+      <span className="wins-earned-num">+{amount}</span>
+      <span className="wins-earned-label">WINS EARNED</span>
+    </div>
+  );
+}
 export default function GameScreen({
   gameState,
   gameType,
@@ -1454,6 +1477,8 @@ export default function GameScreen({
   onShake,
   roomCode = null,
   dailyResult = null,
+  winsTally = 0,
+  winsEarnedTotal = 0,
 }) {
   const [draft, setDraft] = useState('');
   // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
@@ -2248,6 +2273,8 @@ export default function GameScreen({
         rerollPending={rerollPending}
         roomCode={roomCode}
         dailyResult={dailyResult}
+        winsTally={winsTally}
+        winsEarnedTotal={winsEarnedTotal}
       />
     );
   }
@@ -2460,6 +2487,8 @@ export default function GameScreen({
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
+      {/* WINS: live running tally, hidden once the game is over (the total shows there). */}
+      {!gameOver && <WinsHudPill amount={winsTally} />}
       {/* JUICE 02 tension skin — composited CSS layers (was a full-viewport canvas
           repaint loop; see tension.js). All fixed, click-through, aria-hidden, and
           driven purely by data-tension on .game-wrap: nothing here writes style per
@@ -3003,6 +3032,7 @@ export default function GameScreen({
             )}
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
+            <WinsEarnedTotal amount={winsEarnedTotal} />
             <GameOverStats
               gameStats={gameStats}
               players={players}
@@ -3416,6 +3446,8 @@ function CategoryBlitzScreen({
   rerollPending,
   roomCode = null,
   dailyResult = null,
+  winsTally = 0,
+  winsEarnedTotal = 0,
 }) {
   const { sound } = useSound();
   const [draft, setDraft] = useState('');
@@ -3686,6 +3718,7 @@ function CategoryBlitzScreen({
                 {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
+            <WinsEarnedTotal amount={winsEarnedTotal} />
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (
@@ -3804,6 +3837,8 @@ function CategoryBlitzScreen({
 
     return (
       <div className="game-wrap">
+        {/* WINS: live running tally for this round (Blitz pays per round). */}
+        <WinsHudPill amount={winsTally} />
         {showCountdown && (
           <CountdownOverlay
             onComplete={() => setShowCountdown(false)}

@@ -47,12 +47,17 @@ export function levelFromXp(xp) {
 }
 
 // ---- Rebirth --------------------------------------------------------------------------
-// Rebirth zeroes XP/level for a permanent multiplier. Thresholds: first at LEVEL 15, then
-// +3 (15, 18, 21 …). Multiplier: 1 + 0.5·rebirthCount (R1 ×1.5, R2 ×2.0 …). Everything
-// EXCEPT xp survives (wins, winsLifetime, owned, equipped, lifetimeLetters, taps, rounds).
+// Rebirth zeroes XP/level for a permanent multiplier. Gates GROW: the level needed for the
+// next rebirth is a table whose gaps widen by +5 each step (15, 25, 40, 60, 85, 115, 150,
+// 190, 235, 285), then +50 per rebirth beyond the table. Multiplier: R1–R10 = 1 + 0.5·n
+// (×1.5 … ×6); from R11 it ×10s each rebirth (×60, ×600, ×6000 …) — late game is meant to
+// feel absurd. Everything EXCEPT xp survives (wins, winsLifetime, owned, equipped,
+// lifetimeLetters, taps, rounds).
 export const REBIRTH_KEY = 'taw.rebirths';
-const REBIRTH_BASE = 15;
-const REBIRTH_STEP = 3;
+// The level required to perform rebirth N (index = number of rebirths already done). Gaps
+// grow +5 each: 15, +10, +15, +20, +25, +30, +35, +40, +45, +50. Beyond it, +50 per step.
+const REBIRTH_GATES = [15, 25, 40, 60, 85, 115, 150, 190, 235, 285];
+const REBIRTH_GATE_STEP = 50; // added per rebirth past the last tabled gate
 
 export function getRebirths() {
   try {
@@ -72,12 +77,15 @@ export function saveRebirths(n) {
   }
 }
 export function rebirthThreshold(rebirthCount) {
-  const rc = Number.isFinite(rebirthCount) ? rebirthCount : 0;
-  return REBIRTH_BASE + REBIRTH_STEP * rc; // rc 0→15, 1→18, 2→21
+  const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
+  if (rc < REBIRTH_GATES.length) return REBIRTH_GATES[rc]; // 0→15, 1→25, … 9→285
+  const last = REBIRTH_GATES.length - 1;
+  return REBIRTH_GATES[last] + REBIRTH_GATE_STEP * (rc - last); // 10→335, 11→385, …
 }
 export function rebirthMult(rebirthCount) {
-  const rc = Number.isFinite(rebirthCount) ? rebirthCount : 0;
-  return 1 + 0.5 * rc;
+  const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
+  if (rc <= 10) return 1 + 0.5 * rc; // R0 ×1, R1 ×1.5 … R10 ×6
+  return 6 * Math.pow(10, rc - 10); // R11 ×60, R12 ×600, R13 ×6000 …
 }
 export function canRebirth(xp, rebirthCount = getRebirths()) {
   return levelFromXp(xp).level >= rebirthThreshold(rebirthCount);
@@ -145,26 +153,22 @@ export function keyPowerNextDoubler(level) {
   return { at, toGo: at - lv };
 }
 
-// Wins granted for crossing from one level to another. Every level-up pays Math.round(25·L)
-// for the level L reached, summed across each boundary a single award crossed (a big credit
-// can jump several levels at once). PURE — the caller grants the total and celebrates it.
-export function levelUpWins(fromLevel, toLevel) {
-  const from = Number.isFinite(fromLevel) ? Math.floor(fromLevel) : 0;
-  const to = Number.isFinite(toLevel) ? Math.floor(toLevel) : 0;
-  let sum = 0;
-  for (let L = from + 1; L <= to; L += 1) sum += Math.round(25 * L);
-  return sum;
-}
+// (Level-ups no longer pay wins — wins come ONLY from finishing rounds. The old
+// levelUpWins() payout was removed with Economy v3.)
 
 // ---- The XP stack — SINGLE source of truth --------------------------------------------
-// xpPerInput = keyPowerBaseXp(keyPowerLevel) · modeMult · rebirthMult. Cosmetics are NOT in
-// it. The base carries the milestone doublers (see keyPowerBaseXp).
-// Factors default to the live key-power + rebirth counts, or can be passed in (unit tests).
-export function xpPerInput({ mode = 'menu', keyPowerLevel, rebirthCount } = {}) {
+// xpPerInput = keyPowerBaseXp(keyPowerLevel) · modeMult · rebirthMult · popMult · soundMult.
+// The base carries the milestone doublers (see keyPowerBaseXp); the two cosmetic multipliers
+// (equipped pop style + sound pack) are passed IN by the caller — xp.js stays free of the
+// shop import (shop.js already imports xp.js; keeping the dependency one-way avoids a cycle).
+// Factors default to the live key-power + rebirth counts (cosmetic mults default to ×1).
+export function xpPerInput({ mode = 'menu', keyPowerLevel, rebirthCount, popMult = 1, soundMult = 1 } = {}) {
   const kp = Number.isFinite(keyPowerLevel) ? keyPowerLevel : getKeyPower();
   const modeMult = XP_MULTIPLIERS[mode] ?? 1;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  return Math.round(keyPowerBaseXp(kp) * modeMult * rebirthMult(rc));
+  const pm = Number.isFinite(popMult) && popMult > 0 ? popMult : 1;
+  const sm = Number.isFinite(soundMult) && soundMult > 0 ? soundMult : 1;
+  return Math.round(keyPowerBaseXp(kp) * modeMult * rebirthMult(rc) * pm * sm);
 }
 
 // Apply a credited award. Pure: returns the next {xp, lifetimeLetters} and whether the

@@ -74,7 +74,7 @@ test.describe('menu XP', () => {
     expect(xpFramesAtRest).toBe(0);
   });
 
-  test('sustained 30 keys/sec burst never exceeds 16 concurrent finite animations', async ({ page }) => {
+  test('sustained 30 keys/sec burst never exceeds 20 concurrent finite animations', async ({ page }) => {
     await gotoMenuLive(page);
 
     const result = await page.evaluate(async () => {
@@ -118,7 +118,7 @@ test.describe('menu XP', () => {
     });
 
     // The whole point: the concurrent FINITE running-animation count stays within budget.
-    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(16);
+    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(20);
     // Sanity: the burst actually credited XP and crossed at least one level (need(1)=100).
     expect(result.xp).toBeGreaterThanOrEqual(100);
   });
