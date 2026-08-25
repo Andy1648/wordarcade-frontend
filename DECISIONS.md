@@ -29,3 +29,18 @@ DELETION CANDIDATES (all proven zero references before deleting):
 - .shop-tabs / .shop-tab (+ .is-active, :focus-visible) in ShopScreen.css — 0 JSX references since the SHOP|REBIRTH tabs became two top-corner icons (ui-pass-3).
 - handleQuickPlayBot() in src/App.jsx — defined but only referenced in 2 comments; touches no unique state (only shared setPlayerName/setServerError/setLobbyMode/send/track). Comments updated, not deleted.
 Scan method: exact-name grep per symbol/class against src/; a naive basename-orphan scan flagged SoloShell/chainCards/useSoloGame/streak/juice-index/etc. but those are real imports (directory-barrel or dynamic) — NOT deleted. Conservative: deleted only proven-zero-ref items.
+
+## test/coverage-gaps (autonomous, 2026-08-25)
+Before: only overlays.spec (Shop/Rebirth/Stats) and sat-rush-exit asserted ZERO console errors.
+Screens with NO such test (the gaps) — now covered by e2e/coverage.spec.js (12 tests, all assert
+zero page/console errors, network noise filtered):
+  splash, WORD BOMB dialog, CATEGORY BLITZ dialog + PACK PICKER, CHAIN dialog, FUSE dialog,
+  CHAIN locked preview, FUSE locked preview, CREDITS, LOBBY, PUBLIC ROOMS browser, ROOM
+  (via a room_update frame), WORD BOMB in-game view (via game_started).
+COULD NOT cover, with reason (conservative — no flaky game-sim): the Word Bomb / Blitz / CHAIN /
+FUSE GAME-OVER screens. Probes confirmed the game-over overlay only renders under the FULL game-
+state protocol (WB/Blitz need game_started + live game_state + game_over with real players/scores;
+CHAIN/FUSE are timed solo runs needing valid typed words). Building that harness reliably exceeds
+the time-boxed budget and would risk a flaky test. NOTE: SAT Rush results IS already covered by
+sat-rush.spec (reaches death → results) + sat-rush-exit (zero console errors during SAT play).
+Suite: 262 unit + 111 e2e green.
