@@ -18,10 +18,13 @@ export const XP_MULTIPLIERS = {
   fuse: 5,
 };
 
-// Cost to advance FROM level n to n+1. EXPONENTIAL so later levels take real play.
-//   need(1)=118  need(10)=523  need(30)=14,337
+// Cost to advance FROM level n to n+1. GENTLE exponential (1.05/level), snapped to a round
+// multiple of 10 so the bar never shows an ugly 118. Keyboard-Escape-shaped: shallow per-level
+// growth so play runs all the way to ~level 600, where the rebirth table's huge multipliers
+// take over. (The old 1.18/level curve capped the game around level 30.)
+//   need(1)=110  need(10)=160  need(50)=1,150  need(100)=13,150 — always a multiple of 10.
 export function need(n) {
-  return Math.round(100 * Math.pow(1.18, n));
+  return Math.round((100 * Math.pow(1.05, n)) / 10) * 10;
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -47,17 +50,38 @@ export function levelFromXp(xp) {
 }
 
 // ---- Rebirth --------------------------------------------------------------------------
-// Rebirth zeroes XP/level for a permanent multiplier. Gates GROW: the level needed for the
-// next rebirth is a table whose gaps widen by +5 each step (15, 25, 40, 60, 85, 115, 150,
-// 190, 235, 285), then +50 per rebirth beyond the table. Multiplier: R1–R10 = 1 + 0.5·n
-// (×1.5 … ×6); from R11 it ×10s each rebirth (×60, ×600, ×6000 …) — late game is meant to
-// feel absurd. Everything EXCEPT xp survives (wins, winsLifetime, owned, equipped,
-// lifetimeLetters, taps, rounds).
+// Rebirth zeroes XP/level for a permanent multiplier. The ladder is the REAL Keyboard Escape
+// curve, HARDCODED as a table (index 0 = R1): each entry is the LEVEL required to perform that
+// rebirth and the permanent XP MULTIPLIER it grants. Multipliers ramp gently through R10 (×10)
+// then explode (R11 ×100 … R20 ×1e11). Past R20 the pattern continues: +50 levels and ×10 per
+// rebirth. Stored as DATA, not a formula, so the published curve is the source of truth.
+// Everything EXCEPT xp survives a rebirth (wins, winsLifetime, owned, equipped, lifetimeLetters,
+// taps, rounds).
 export const REBIRTH_KEY = 'taw.rebirths';
-// The level required to perform rebirth N (index = number of rebirths already done). Gaps
-// grow +5 each: 15, +10, +15, +20, +25, +30, +35, +40, +45, +50. Beyond it, +50 per step.
-const REBIRTH_GATES = [15, 25, 40, 60, 85, 115, 150, 190, 235, 285];
-const REBIRTH_GATE_STEP = 50; // added per rebirth past the last tabled gate
+export const REBIRTH_TABLE = [
+  { level: 15, mult: 1.5 }, //   R1
+  { level: 25, mult: 2 }, //     R2
+  { level: 40, mult: 2.5 }, //   R3
+  { level: 60, mult: 3 }, //     R4
+  { level: 75, mult: 3.5 }, //   R5
+  { level: 100, mult: 4 }, //    R6
+  { level: 125, mult: 5 }, //    R7
+  { level: 150, mult: 6 }, //    R8
+  { level: 175, mult: 8 }, //    R9
+  { level: 200, mult: 10 }, //   R10
+  { level: 225, mult: 100 }, //  R11
+  { level: 260, mult: 1000 }, // R12
+  { level: 300, mult: 10000 }, //R13
+  { level: 340, mult: 100000 }, // R14
+  { level: 380, mult: 1e6 }, //  R15
+  { level: 420, mult: 1e7 }, //  R16
+  { level: 465, mult: 1e8 }, //  R17
+  { level: 510, mult: 1e9 }, //  R18
+  { level: 560, mult: 1e10 }, // R19
+  { level: 600, mult: 1e11 }, // R20
+];
+const REBIRTH_PAST_LEVEL_STEP = 50; // +50 levels per rebirth past R20 (R21→650, R22→700 …)
+const REBIRTH_PAST_MULT_STEP = 10; // ×10 multiplier per rebirth past R20 (R21→1e12 …)
 
 export function getRebirths() {
   try {
@@ -76,16 +100,22 @@ export function saveRebirths(n) {
     /* storage blocked */
   }
 }
+// The LEVEL required to perform the NEXT rebirth, given how many are already done. rc=0 gates
+// R1 at LV15; rc=19 gates R20 at LV600; past that, +50 levels each (R21→650, R22→700 …).
 export function rebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  if (rc < REBIRTH_GATES.length) return REBIRTH_GATES[rc]; // 0→15, 1→25, … 9→285
-  const last = REBIRTH_GATES.length - 1;
-  return REBIRTH_GATES[last] + REBIRTH_GATE_STEP * (rc - last); // 10→335, 11→385, …
+  if (rc < REBIRTH_TABLE.length) return REBIRTH_TABLE[rc].level;
+  const last = REBIRTH_TABLE.length - 1; // R20
+  return REBIRTH_TABLE[last].level + REBIRTH_PAST_LEVEL_STEP * (rc - last);
 }
+// The permanent XP multiplier AFTER `rebirthCount` rebirths. rc=0 → ×1 (none done); rc=n≤20 →
+// Rn's tabled multiplier; past R20 → ×10 per rebirth from R20's ×1e11 (R21→1e12 …).
 export function rebirthMult(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  if (rc <= 10) return 1 + 0.5 * rc; // R0 ×1, R1 ×1.5 … R10 ×6
-  return 6 * Math.pow(10, rc - 10); // R11 ×60, R12 ×600, R13 ×6000 …
+  if (rc === 0) return 1;
+  if (rc <= REBIRTH_TABLE.length) return REBIRTH_TABLE[rc - 1].mult;
+  const last = REBIRTH_TABLE.length - 1; // R20
+  return REBIRTH_TABLE[last].mult * Math.pow(REBIRTH_PAST_MULT_STEP, rc - REBIRTH_TABLE.length);
 }
 export function canRebirth(xp, rebirthCount = getRebirths()) {
   return levelFromXp(xp).level >= rebirthThreshold(rebirthCount);

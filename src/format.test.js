@@ -22,6 +22,16 @@ test('rounding never overflows the 5-char budget (carries to the next unit)', ()
   assert.equal(formatNum(2000000000000), '2.0T');
 });
 
+test('Economy v4 big tiers: rebirth multipliers and huge XP stay compact (up to 1e18)', () => {
+  assert.equal(formatNum(1e11), '100.0B'); // R20 multiplier
+  assert.equal(formatNum(1e12), '1.0T'); // R21 multiplier
+  assert.equal(formatNum(1e13), '10.0T');
+  assert.equal(formatNum(1e15), '1.0Qa'); // quadrillion
+  assert.equal(formatNum(1.03e16), '10.3Qa'); // ~cumulative XP to reach LV600 (R20 gate)
+  assert.equal(formatNum(1e18), '1.0Qi'); // quintillion
+  assert.ok(!/(NaN|Infinity)/.test(formatNum(1e21))); // never throws / never NaN past the ladder
+});
+
 test('non-finite input degrades to 0', () => {
   assert.equal(formatNum(NaN), '0');
   assert.equal(formatNum(undefined), '0');

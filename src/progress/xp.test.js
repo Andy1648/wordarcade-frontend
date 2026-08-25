@@ -50,11 +50,12 @@ function cumCost(level) {
 
 // ---- level cost curve (exponential) ----
 test('need() matches the pinned anchor values', () => {
-  assert.equal(need(1), 118);
-  assert.equal(need(5), 229);
-  assert.equal(need(10), 523);
-  assert.equal(need(20), 2739);
-  assert.equal(need(30), 14337);
+  assert.equal(need(1), 110);
+  assert.equal(need(10), 160);
+  assert.equal(need(50), 1150);
+  assert.equal(need(100), 13150);
+  // The gentle 1.05 curve is snapped to a round multiple of 10 at every level.
+  for (const n of [1, 2, 5, 17, 50, 100, 300, 600]) assert.equal(need(n) % 10, 0);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -132,22 +133,28 @@ test('the XP stack (single source): key power × mode × rebirth', () => {
   assert.equal(xpPerInput({ mode: 'sat-rush', keyPowerLevel: 20, rebirthCount: 1 }), 900);
 });
 
-test('rebirth gates: widening table (15,25,40,60,85,115,150,190,235,285) then +50 per step', () => {
-  const table = [15, 25, 40, 60, 85, 115, 150, 190, 235, 285];
-  table.forEach((v, i) => assert.equal(rebirthThreshold(i), v));
-  assert.equal(rebirthThreshold(10), 335); // +50 past the last tabled gate
-  assert.equal(rebirthThreshold(11), 385);
+test('rebirth gate table: R1 LV15 … R20 LV600, then +50 levels per rebirth', () => {
+  assert.equal(rebirthThreshold(0), 15); // gate for R1
+  assert.equal(rebirthThreshold(1), 25); // R2
+  assert.equal(rebirthThreshold(3), 60); // R4
+  assert.equal(rebirthThreshold(9), 200); // R10
+  assert.equal(rebirthThreshold(10), 225); // R11
+  assert.equal(rebirthThreshold(19), 600); // R20
+  assert.equal(rebirthThreshold(20), 650); // R21 = +50
+  assert.equal(rebirthThreshold(21), 700); // R22
 });
 
-test('rebirth multipliers: R1-R10 = 1+0.5n (×1.5…×6), then ×10 each rebirth (×60,×600)', () => {
+test('rebirth multiplier table: R1 ×1.5 … R20 ×1e11, then ×10 per rebirth', () => {
   assert.equal(rebirthMult(0), 1); // no rebirths yet
-  assert.equal(rebirthMult(1), 1.5);
-  assert.equal(rebirthMult(2), 2.0);
-  assert.equal(rebirthMult(3), 2.5);
-  assert.equal(rebirthMult(10), 6); // R10 caps the linear ramp
-  assert.equal(rebirthMult(11), 60); // R11 ×10s from ×6
-  assert.equal(rebirthMult(12), 600);
-  assert.equal(rebirthMult(13), 6000);
+  assert.equal(rebirthMult(1), 1.5); // R1
+  assert.equal(rebirthMult(2), 2); // R2
+  assert.equal(rebirthMult(9), 8); // R9
+  assert.equal(rebirthMult(10), 10); // R10
+  assert.equal(rebirthMult(11), 100); // R11
+  assert.equal(rebirthMult(19), 1e10); // R19
+  assert.equal(rebirthMult(20), 1e11); // R20
+  assert.equal(rebirthMult(21), 1e12); // R21 = ×10 past R20
+  assert.equal(rebirthMult(22), 1e13); // R22
 });
 
 test('rebirth is refused at LV14 and allowed at LV15', () => {
@@ -220,11 +227,11 @@ test('getTaps defaults to 0 and survives storage failure; saveTaps never throws'
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {
-  const a = creditXp({ xp: 110, lifetimeLetters: 0 }, 10, 1); // 110 -> 120 crosses L1->2 (need(1)=118)
+  const a = creditXp({ xp: 100, lifetimeLetters: 0 }, 20, 1); // 100 -> 120 crosses L1->2 (need(1)=110)
   assert.equal(a.state.xp, 120);
   assert.equal(a.state.lifetimeLetters, 1); // raw keystroke count, unmultiplied
   assert.equal(a.leveledUp, true);
-  const b = creditXp({ xp: 120, lifetimeLetters: 5 }, 10, 1); // 120 -> 130, still L2 (L2 ends at 257)
+  const b = creditXp({ xp: 120, lifetimeLetters: 5 }, 10, 1); // 120 -> 130, still L2 (L2 ends at 220)
   assert.equal(b.leveledUp, false);
   assert.equal(b.state.lifetimeLetters, 6);
 });
