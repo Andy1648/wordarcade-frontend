@@ -1,10 +1,11 @@
 // FuseGame.jsx — FUSE mode screen. Loads the (lazy) word data + the fragment pools,
 // builds the pure engine, and drives it through the shared clock hook + shell. Rules
 // live in fuse.js; this file is glue + presentation.
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
+import { recordRound, awardWins } from '../progress/wins.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import poolsRaw from './fragmentPools.json';
@@ -82,12 +83,28 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE });
   const s = g.engine.state;
 
-  // Fetch the big acceptance extension the moment the FIRST run ends — never on mount, so it
-  // can't delay the first game. Idempotent (words.js single-flights it); its words merge into
-  // the live accept set in place, so later runs accept the fuller vocabulary.
+  // WINS (item 1): FUSE was never wired to pay out. On run-over, grant wins on the words solved
+  // (the count the game already has) — same recordRound pattern SAT Rush uses. Fire ONCE per
+  // run-end (guard reset on a fresh run); store the granted total for the game-over line. Also
+  // lazy-load the acceptance extension here (never on mount).
+  const [winsEarned, setWinsEarned] = useState(0);
+  const winRecordedRef = useRef(false);
   useEffect(() => {
-    if (g.phase === 'over') loadSoloAcceptExt();
+    if (g.phase === 'over') {
+      loadSoloAcceptExt();
+      if (!winRecordedRef.current) {
+        winRecordedRef.current = true;
+        setWinsEarned(recordRound({ mode: 'fuse', wordsAccepted: g.engine.state.wordsSolved }));
+      }
+    } else {
+      winRecordedRef.current = false;
+      setWinsEarned(0);
+    }
   }, [g.phase]);
+
+  // Live wins tally (item 2): what the run will pay so far, ticking up as words solve (0 until
+  // the 3-word payout gate).
+  const winsTally = awardWins({ mode: 'fuse', wordsAccepted: s.wordsSolved });
 
   const hud = (
     <>
@@ -145,7 +162,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       maxLength={data.maxAcceptLen}
       armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
       phase={g.phase}
-      over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard }}
+      winsTally={winsTally}
+      over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard, winsEarned }}
       onExit={onExit}
     />
   );

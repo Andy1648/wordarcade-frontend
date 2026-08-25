@@ -75,13 +75,20 @@ function BriefCard({ card }) {
   );
 }
 
-export default function Briefing({ briefing, onStart }) {
+export default function Briefing({ briefing, onStart, onExit }) {
   if (!briefing) return null;
   const { familyMorpheme, cards } = briefing;
 
   return (
     <div className="sr-screen sr-brief-screen">
       <div className="sr-brief-page">
+        {/* EXIT to menu (item 4) — top-right, away from the bottom Start button, so the one
+            SAT Rush screen that lacked a way back now has one, consistent with the others. */}
+        {onExit && (
+          <button type="button" className="sr-brief-exit" onClick={onExit} aria-label="Exit to menu">
+            EXIT
+          </button>
+        )}
         <div className="sr-brief-head">
           <div className="sr-brief-title sr-print" data-v={'THE BRIEFING'}>
             THE&nbsp;BRIEFING

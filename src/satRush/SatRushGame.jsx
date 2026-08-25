@@ -19,9 +19,10 @@
 //      that's a design project of its own.
 // So: playable + laid out on mobile, but input is desktop-keyboard only for now.
 // ────────────────────────────────────────────────────────────────────────────
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { recordRound } from '../progress/wins';
+import { recordRound, awardWins } from '../progress/wins';
+import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
 import { setShakeTarget } from './juice';
@@ -41,16 +42,22 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   // once per run-end (reset the guard when a new run starts), reading data the run already
   // has — no new game logic. recordRound queues the "+N WINS" menu stamp.
   const satWinRecordedRef = useRef(false);
+  const [winsEarned, setWinsEarned] = useState(0);
   useEffect(() => {
     if (view.phase === 'over') {
       if (!satWinRecordedRef.current) {
         satWinRecordedRef.current = true;
-        recordRound({ mode: 'satRush', wordsAccepted: (view.results && view.results.cleared) || 0 });
+        setWinsEarned(recordRound({ mode: 'satRush', wordsAccepted: (view.results && view.results.cleared) || 0 }));
       }
     } else {
       satWinRecordedRef.current = false;
+      setWinsEarned(0);
     }
   }, [view.phase, view.results]);
+
+  // Live wins tally (item 2): what the run will pay so far, from the running cleared count
+  // (0 until the 3-word payout gate). Recomputed each render — pure.
+  const winsTally = awardWins({ mode: 'satRush', wordsAccepted: view.cleared || 0 });
 
   // HUD ✕ mid-run: clean abandon (stops the clock, fires run_abandoned, no results)
   // then go home. The hook's phase drop + unmount restore the music duck (see the
@@ -86,6 +93,8 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
         <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
       )}
+      {/* Live "+N WINS" pill — shared component + position with every other mode (item 2). */}
+      {view.hasWord && view.phase === 'playing' && <WinsHudPill amount={winsTally} />}
       <div className="sr-stage">
         {view.hasWord && (
           <>
@@ -112,9 +121,9 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       {view.phase === 'mode' && (
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={onExit} />
       )}
-      {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} />}
+      {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} onExit={onExit} />}
       {view.phase === 'over' && (
-        <SatRushResults results={view.results} onAgain={game.startGame} onExit={onExit} />
+        <SatRushResults results={view.results} winsEarned={winsEarned} onAgain={game.startGame} onExit={onExit} />
       )}
 
       {SAT_RUSH_DEV_TUNER && !SAT_RUSH_SCENE && (

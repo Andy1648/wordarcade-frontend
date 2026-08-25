@@ -173,6 +173,43 @@ test('a round that ends with <3 words does not increment the mode round counter 
   });
 });
 
+// ---- CHAIN / FUSE run payouts (fix/ui-pass-5 item 1: the modes were never wired) ----
+// A completed run grants words × 20 × modeMult × rebirthMult; a <3-word run grants 0. This is
+// the payout the ChainGame/FuseGame run-over handlers now call via recordRound.
+test('a completed CHAIN run grants links × 20 × 10 × rebirthMult; <3 grants 0', () => {
+  withStorage(() => {
+    // 7 links at R0: 7 × (20 × 10 × 1) = 1400.
+    assert.equal(recordRound({ mode: 'chain', wordsAccepted: 7 }), 7 * 20 * 10);
+    assert.equal(getWins(), 1400);
+  });
+  withStorage(() => {
+    localStorage.setItem('taw.rebirths', '3'); // R3 → ×2.5
+    // 5 links: 5 × (20 × 10 × 2.5) = 2500.
+    assert.equal(recordRound({ mode: 'chain', wordsAccepted: 5 }), 5 * 20 * 10 * 2.5);
+  });
+  withStorage(() => {
+    assert.equal(recordRound({ mode: 'chain', wordsAccepted: 2 }), 0); // <3 → nothing
+    assert.equal(getWins(), 0);
+  });
+});
+
+test('a completed FUSE run grants words × 20 × 15 × rebirthMult; <3 grants 0', () => {
+  withStorage(() => {
+    // 6 words at R0: 6 × (20 × 15 × 1) = 1800.
+    assert.equal(recordRound({ mode: 'fuse', wordsAccepted: 6 }), 6 * 20 * 15);
+    assert.equal(getWins(), 1800);
+  });
+  withStorage(() => {
+    localStorage.setItem('taw.rebirths', '1'); // R1 → ×1.5
+    // 4 words: 4 × (20 × 15 × 1.5) = 1800.
+    assert.equal(recordRound({ mode: 'fuse', wordsAccepted: 4 }), 4 * 20 * 15 * 1.5);
+  });
+  withStorage(() => {
+    assert.equal(recordRound({ mode: 'fuse', wordsAccepted: 2 }), 0); // <3 → nothing
+    assert.equal(getWins(), 0);
+  });
+});
+
 test('localStorage failure defaults to 0 and does not throw', () => {
   withStorage(
     () => {

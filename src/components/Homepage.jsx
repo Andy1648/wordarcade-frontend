@@ -219,10 +219,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       }
       const gaps = rowGap * Math.max(0, kids.length - 1);
       if (scalable <= 0) return;
-      // Never grow past 1 (justify-content:center + the tall card region fill big
-      // screens); floor so it never becomes illegible.
-      const raw = (inner - gaps - fixed) / scalable;
-      const scale = Math.max(0.55, Math.min(1, raw));
+      // Fit the content to inner MINUS a vertical RESERVE (item 3), so the centred column
+      // keeps a 16-40px breathing gap at the stage's inner top AND bottom edge instead of
+      // filling flush (or overflowing on short screens / floating on tall ones). The reserve
+      // is split evenly by justify-content:center, so ~RESERVE/2 lands on each side. The
+      // clamp is widened to [0.42, 1.35] so the content can grow to fill a tall 2560 screen
+      // and shrink to keep the reserve on a short 1163×501 one.
+      const RESERVE = 56;
+      const raw = (inner - RESERVE - gaps - fixed) / scalable;
+      const scale = Math.max(0.42, Math.min(1.35, raw));
       stage.style.setProperty('--menu-scale', scale.toFixed(4));
     };
     const onResize = () => {

@@ -26,7 +26,7 @@ function frameOf(e) {
   return { glyph, kind, label: parts.join(', ') };
 }
 
-export default function SatRushResults({ results, onAgain, onExit }) {
+export default function SatRushResults({ results, winsEarned = 0, onAgain, onExit }) {
   const finalScore = results.score || 0;
   const finalAnte = results.avgAnte ?? 0;
   const [score, setScore] = useState(0);
@@ -120,6 +120,13 @@ export default function SatRushResults({ results, onAgain, onExit }) {
         <div className="sr-panel sr-scorepanel">
           <div className="sr-score-value">{scoreStr}</div>
           <div className="sr-panel-label">score</div>
+        </div>
+
+        {/* WINS EARNED (item 2) — the run's payout, large, kept in the manga ink register
+            rather than the neon pill so the sanctioned SAT Rush treatment stays intact. */}
+        <div className="sr-panel sr-winspanel">
+          <div className="sr-score-value">+{winsEarned}</div>
+          <div className="sr-panel-label">wins earned</div>
         </div>
 
         {/* cleared / missed / best-streak — a ruled strip like the in-game HUD. */}

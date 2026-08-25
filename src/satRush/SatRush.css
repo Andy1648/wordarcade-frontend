@@ -1359,6 +1359,28 @@ html[data-beat='true'] .sr-mult.sr-print::before {
     6px 6px 0 var(--ink);
   padding: clamp(20px, 3.5vh, 34px) clamp(18px, 3.5vw, 34px);
 }
+/* EXIT to menu (item 4) — top-right of the briefing page, manga ink register, away from the
+   bottom Start button. z-index above the ::before halftone plate. */
+.sr-brief-exit {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  padding: 5px 11px;
+  font-family: var(--font-head);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+}
+.sr-brief-exit:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
 .sr-brief-page::before {
   content: '';
   position: absolute;
