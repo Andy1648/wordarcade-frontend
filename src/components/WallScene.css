@@ -193,10 +193,14 @@ html[data-view='game'] .wall-beat-bright {
 /* ============  TENSION REACTION (Word Bomb turn)  =========== */
 /* ============================================================= */
 
-/* Critical: the red wash pulses across the wall. (The stickers no longer drift,
-   so the old warning/critical drift-speed overrides were dropped with the loop.) */
+/* PERF (perf/wb-tension): the wall's red wash is one of THREE full-viewport red
+   washes that stacked at Word Bomb critical (with the edge vignette + bomb halo),
+   all repainting the same pixels. We keep the edge vignette and stop this one, so
+   `.critical` no longer animates wall-red. (`.wall-scene.critical` only occurs during
+   a Word Bomb low-timer turn, so nothing else is affected.) */
 .wall-scene.critical .wall-red {
-  animation: wall-red-pulse 1.3s ease-in-out infinite;
+  animation: none;
+  opacity: 0;
 }
 
 @keyframes wall-red-pulse {

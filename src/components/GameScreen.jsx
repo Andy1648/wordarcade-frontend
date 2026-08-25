@@ -479,10 +479,10 @@ function KOOverlay() {
 }
 
 // Three teardrops for the panic "sweat" indicator.
+// PERF (perf/wb-tension): one sweat drop (was 3). Sweat + the bomb-number pulse are
+// capped at 2 concurrent animations total at critical.
 const SWEAT_DROPS = [
-  { left: 70, top: 4, delay: 0 },
-  { left: 84, top: 10, delay: 130 },
-  { left: 60, top: 14, delay: 260 },
+  { left: 74, top: 6, delay: 0 },
 ];
 
 /**
@@ -2474,7 +2474,9 @@ export default function GameScreen({
           {/* Edge speed lines: fixed streaks hugging the L/R edges, each scrolling
               via a transform-translateY keyframe (transform only). */}
           <div className="wb-tension-lines">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {/* PERF (perf/wb-tension): 12 -> 3 speed lines. The survivors are made
+                thicker/brighter in CSS to keep the same read without the count. */}
+            {Array.from({ length: 3 }).map((_, i) => (
               <span key={i} className="wb-tension-line" style={{ '--i': i }} />
             ))}
           </div>
