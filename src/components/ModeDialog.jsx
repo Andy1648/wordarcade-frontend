@@ -226,10 +226,17 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            <div className="mode-dialog-howlabel" style={{ color: accent }}>
-              HOW IT WORKS
-            </div>
-            <div className="mode-dialog-sub">{mode.sub}</div>
+            {/* SOLO keeps it tight (name · one-line rule · wins · PLAY) — the HOW IT WORKS
+                block is only for the CREATE/JOIN modes, and dropping it gives the PLAY
+                button room on shorter dialogs. */}
+            {!isSolo && (
+              <>
+                <div className="mode-dialog-howlabel" style={{ color: accent }}>
+                  HOW IT WORKS
+                </div>
+                <div className="mode-dialog-sub">{mode.sub}</div>
+              </>
+            )}
 
             {modeKey === 'blitz' && (
               <PackPicker
