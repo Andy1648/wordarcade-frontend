@@ -4,7 +4,7 @@
 // (see xp.js). localStorage-backed, wrapped, sensible defaults. Buying deducts from taw.wins
 // only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
-import { getKeyPower, saveKeyPower, keyPowerCost } from './xp.js';
+import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
@@ -117,38 +117,18 @@ export function buy(id) {
   return { ok: true, wins: next };
 }
 
-// Buy ONE Key Power level: deducts the next-level cost from wins, bumps taw.keypower.
-// Returns { ok, wins, level, spent }.
+// Buy the NEXT Key Power TIER: deducts the next tier's cost from wins, bumps taw.keytier by 1.
+// Tiers are one at a time — each is a real decision, so there is NO "buy max" (Economy v6).
+// Returns { ok, wins, tier, spent }.
 export function buyKeyPower() {
-  const level = getKeyPower();
-  const cost = keyPowerCost(level);
+  const tier = getKeyTier();
+  const cost = keyTierCost(tier); // cost to reach tier+1
   const wins = getWins();
-  if (wins < cost) return { ok: false, wins, level, spent: 0 };
+  if (wins < cost) return { ok: false, wins, tier, spent: 0 };
   const nextWins = wins - cost;
   saveWins(nextWins);
-  saveKeyPower(level + 1);
-  return { ok: true, wins: nextWins, level: level + 1, spent: cost };
-}
-
-// Buy AS MANY Key Power levels as the current wins balance affords, in one action. Returns
-// { ok, bought, spent, wins, level }.
-export function buyKeyPowerMax() {
-  let level = getKeyPower();
-  let wins = getWins();
-  let spent = 0;
-  let bought = 0;
-  while (wins >= keyPowerCost(level)) {
-    const cost = keyPowerCost(level);
-    wins -= cost;
-    spent += cost;
-    level += 1;
-    bought += 1;
-  }
-  if (bought > 0) {
-    saveKeyPower(level);
-    saveWins(wins);
-  }
-  return { ok: bought > 0, bought, spent, wins, level };
+  saveKeyTier(tier + 1);
+  return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
 }
 
 // True when the player can afford at least one item they don't already own — drives the

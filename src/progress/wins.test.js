@@ -16,7 +16,7 @@ import {
   getRounds,
 } from './wins.js';
 import { POP_STYLES, SOUND_PACKS } from './shop.js';
-import { keyPowerCost } from './xp.js';
+import { keyTierCostAt } from './xp.js';
 
 // A fresh in-memory localStorage per test, installed as the global.
 function withStorage(fn, opts = {}) {
@@ -41,70 +41,87 @@ function withStorage(fn, opts = {}) {
   }
 }
 
-test('perWordWins: 10 base × mode, snapped to a round 10 (Economy v5)', () => {
-  assert.equal(perWordWins({ mode: 'word-bomb' }), 10);
-  assert.equal(perWordWins({ mode: 'satRush' }), 20); // ×2
-  assert.equal(perWordWins({ mode: 'chain' }), 30); // ×3
-  assert.equal(perWordWins({ mode: 'fuse' }), 50); // ×5
+test('perWordWins: 20 base × mode × rebirth, snapped to a round 10 (Economy v6)', () => {
+  // R0 (rebirthCount 0) base rates.
+  assert.equal(perWordWins({ mode: 'word-bomb', rebirthCount: 0 }), 20);
+  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0 }), 100); // ×5
+  assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0 }), 200); // ×10
+  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0 }), 300); // ×15
   // Difficulty scales the per-word rate, still snapped to 10.
-  assert.equal(perWordWins({ difficulty: 'medium' }), 20); // 10×1.5 → 20
-  assert.equal(perWordWins({ difficulty: 'hard' }), 20); // 10×2 → 20
+  assert.equal(perWordWins({ difficulty: 'medium', rebirthCount: 0 }), 30); // 20×1.5 → 30
+  assert.equal(perWordWins({ difficulty: 'hard', rebirthCount: 0 }), 40); // 20×2 → 40
 });
 
-test('awardWins: <3 words pays 0; else wordsAccepted × per-word (3 -> 30, 10 -> 100)', () => {
-  assert.equal(awardWins({ wordsAccepted: 2 }), 0);
-  assert.equal(awardWins({ wordsAccepted: 3 }), 30); // 3 × 10
-  assert.equal(awardWins({ wordsAccepted: 10 }), 100); // 10 × 10
-  assert.equal(awardWins({ wordsAccepted: 0 }), 0);
+test('perWordWins: REBIRTH multiplies wins on the same ladder as XP', () => {
+  // Word Bomb base 20 × rebirthMult: R1 ×1.5 → 30, R2 ×2 → 40, R3 ×2.5 → 50, R10 ×10 → 200.
+  assert.equal(perWordWins({ mode: 'word-bomb', rebirthCount: 1 }), 30);
+  assert.equal(perWordWins({ mode: 'word-bomb', rebirthCount: 2 }), 40);
+  assert.equal(perWordWins({ mode: 'word-bomb', rebirthCount: 3 }), 50);
+  assert.equal(perWordWins({ mode: 'word-bomb', rebirthCount: 10 }), 200);
+  // FUSE (×15) at R5 (×3.5): 20×15×3.5 = 1050.
+  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 5 }), 1050);
 });
 
-test('awardWins: SAT Rush pays 2×, CHAIN 3×, FUSE 5× per word', () => {
-  assert.equal(awardWins({ wordsAccepted: 3, mode: 'satRush' }), 60); // 3 × 20
-  assert.equal(awardWins({ wordsAccepted: 3, mode: 'chain' }), 90); // 3 × 30
-  assert.equal(awardWins({ wordsAccepted: 3, mode: 'fuse' }), 150); // 3 × 50
-  assert.equal(awardWins({ wordsAccepted: 2, mode: 'fuse' }), 0); // still gated on <3
-  assert.equal(awardWins({ wordsAccepted: 3, mode: 'word-bomb' }), 30); // other modes ×1
+test('awardWins: <3 words pays 0; else wordsAccepted × per-word (R0: 3 -> 60, 10 -> 200)', () => {
+  assert.equal(awardWins({ wordsAccepted: 2, rebirthCount: 0 }), 0);
+  assert.equal(awardWins({ wordsAccepted: 3, rebirthCount: 0 }), 60); // 3 × 20
+  assert.equal(awardWins({ wordsAccepted: 10, rebirthCount: 0 }), 200); // 10 × 20
+  assert.equal(awardWins({ wordsAccepted: 0, rebirthCount: 0 }), 0);
 });
 
-test('awardWins: difficulty scales the per-word rate (chill/easy → 10, medium/hard → 20)', () => {
-  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'chill' }), 100); // 10 × 10
-  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'easy' }), 100); // 10×1.25 → per-word 10
-  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'medium' }), 200); // per-word 20
-  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'hard' }), 200); // per-word 20
-  // Difficulty stacks with the mode multiplier: chain hard per-word = 10×3×2 → 60.
-  assert.equal(awardWins({ wordsAccepted: 10, mode: 'chain', difficulty: 'hard' }), 600);
+test('awardWins: SAT Rush pays 5×, CHAIN 10×, FUSE 15× per word (R0)', () => {
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'satRush', rebirthCount: 0 }), 300); // 3 × 100
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'chain', rebirthCount: 0 }), 600); // 3 × 200
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'fuse', rebirthCount: 0 }), 900); // 3 × 300
+  assert.equal(awardWins({ wordsAccepted: 2, mode: 'fuse', rebirthCount: 0 }), 0); // still gated on <3
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'word-bomb', rebirthCount: 0 }), 60); // other modes ×1
+});
+
+test('awardWins: difficulty scales the per-word rate (chill/easy → 20, medium → 30, hard → 40)', () => {
+  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'chill', rebirthCount: 0 }), 200); // 10 × 20
+  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'easy', rebirthCount: 0 }), 200); // 20×1.25→20
+  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'medium', rebirthCount: 0 }), 300); // per-word 30
+  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'hard', rebirthCount: 0 }), 400); // per-word 40
+  // Difficulty stacks with mode: chain hard per-word = 20×10×2 → 400.
+  assert.equal(awardWins({ wordsAccepted: 10, mode: 'chain', difficulty: 'hard', rebirthCount: 0 }), 4000);
   // Unknown / missing difficulty falls through to ×1.
-  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'zzz' }), 100);
-  assert.equal(awardWins({ wordsAccepted: 10 }), 100);
-  assert.equal(awardWins({ wordsAccepted: 2, difficulty: 'hard' }), 0);
+  assert.equal(awardWins({ wordsAccepted: 10, difficulty: 'zzz', rebirthCount: 0 }), 200);
+  assert.equal(awardWins({ wordsAccepted: 10, rebirthCount: 0 }), 200);
+  assert.equal(awardWins({ wordsAccepted: 2, difficulty: 'hard', rebirthCount: 0 }), 0);
 });
 
-test('round/word estimates: card previews (per-word 10/20/30/50; per-round ×10 words)', () => {
-  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 10);
-  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 10);
-  assert.equal(wordWinsEstimate({ mode: 'chain' }), 30);
-  assert.equal(wordWinsEstimate({ mode: 'fuse' }), 50);
-  assert.equal(roundWinsEstimate({ mode: 'word-bomb' }), 100);
-  assert.equal(roundWinsEstimate({ mode: 'chain' }), 300);
-  assert.equal(roundWinsEstimate({ mode: 'fuse' }), 500);
-  assert.equal(roundWinsEstimate({ mode: 'word-bomb', difficulty: 'hard' }), 200);
+test('round/word estimates: card previews (per-word 20/100/200/300; per-round ×10 words)', () => {
+  // wordWinsEstimate is the R0 BASE preview (never rebirth-scaled) shown on game cards.
+  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 20);
+  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 20);
+  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 100);
+  assert.equal(wordWinsEstimate({ mode: 'chain' }), 200);
+  assert.equal(wordWinsEstimate({ mode: 'fuse' }), 300);
+  // roundWinsEstimate = a typical 10-word round (reads live rebirths → R0 here).
+  assert.equal(roundWinsEstimate({ mode: 'word-bomb', rebirthCount: 0 }), 200);
+  assert.equal(roundWinsEstimate({ mode: 'chain', rebirthCount: 0 }), 2000);
+  assert.equal(roundWinsEstimate({ mode: 'fuse', rebirthCount: 0 }), 3000);
+  assert.equal(roundWinsEstimate({ mode: 'word-bomb', difficulty: 'hard', rebirthCount: 0 }), 400);
 });
 
-test('EVERYTHING ENDS IN A ZERO: every catalog price and every payout is divisible by 10', () => {
+test('EVERYTHING ENDS IN A ZERO: every catalog price, tier cost and payout is divisible by 10', () => {
   // Shop cosmetics.
   for (const item of [...POP_STYLES, ...SOUND_PACKS]) {
     assert.equal(item.price % 10, 0, `${item.id} price ${item.price}`);
   }
-  // Key Power costs across a wide sweep.
-  for (let lv = 0; lv <= 80; lv++) assert.equal(keyPowerCost(lv) % 10, 0, `keyPowerCost(${lv})`);
-  // Every wins payout across modes × difficulties × word counts.
+  // Key Power TIER costs across the exact-integer range.
+  for (let t = 0; t <= 15; t++) assert.equal(keyTierCostAt(t) % 10, 0, `keyTierCostAt(${t})`);
+  // Every wins payout across modes × difficulties × rebirths × word counts.
   const modes = [undefined, 'word-bomb', 'wordBomb', 'blitz', 'satRush', 'chain', 'fuse'];
   const diffs = [undefined, 'chill', 'easy', 'medium', 'hard', 'zzz'];
+  const rebirths = [0, 1, 2, 3, 5, 10, 15];
   for (const mode of modes) {
     for (const difficulty of diffs) {
-      assert.equal(perWordWins({ mode, difficulty }) % 10, 0, `perWord ${mode}/${difficulty}`);
-      for (let w = 0; w <= 40; w++) {
-        assert.equal(awardWins({ wordsAccepted: w, mode, difficulty }) % 10, 0, `award ${mode}/${difficulty}/${w}`);
+      for (const rebirthCount of rebirths) {
+        assert.equal(perWordWins({ mode, difficulty, rebirthCount }) % 10, 0, `perWord ${mode}/${difficulty}/R${rebirthCount}`);
+        for (let w = 0; w <= 20; w++) {
+          assert.equal(awardWins({ wordsAccepted: w, mode, difficulty, rebirthCount }) % 10, 0, `award ${mode}/${difficulty}/R${rebirthCount}/${w}`);
+        }
       }
     }
   }
@@ -129,18 +146,18 @@ test('grantWins: adds to BOTH balance and lifetime; non-positive is a no-op', ()
 
 test('wins balance and winsLifetime move independently', () => {
   withStorage(() => {
-    // A payout raises BOTH.
-    recordRound({ mode: 'wordBomb', wordsAccepted: 5 }); // grants 5 × 10 = 50
-    assert.equal(getWins(), 50);
-    assert.equal(getWinsLifetime(), 50);
+    // A payout raises BOTH (R0, base 20/word).
+    recordRound({ mode: 'wordBomb', wordsAccepted: 5 }); // grants 5 × 20 = 100
+    assert.equal(getWins(), 100);
+    assert.equal(getWinsLifetime(), 100);
     // Spending lowers the balance but NEVER the lifetime total.
-    saveWins(5); // spent 45
+    saveWins(5); // spent 95
     assert.equal(getWins(), 5);
-    assert.equal(getWinsLifetime(), 50);
+    assert.equal(getWinsLifetime(), 100);
     // Another payout adds to both from their current values.
-    recordRound({ mode: 'blitz', wordsAccepted: 3 }); // grants 3 × 10 = 30
-    assert.equal(getWins(), 5 + 30);
-    assert.equal(getWinsLifetime(), 50 + 30);
+    recordRound({ mode: 'blitz', wordsAccepted: 3 }); // grants 3 × 20 = 60
+    assert.equal(getWins(), 5 + 60);
+    assert.equal(getWinsLifetime(), 100 + 60);
   });
 });
 

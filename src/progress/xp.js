@@ -7,8 +7,8 @@
 // per-word/letter award. `lifetimeLetters` counts RAW keystrokes (unmultiplied) and is a
 // SEPARATE running total for a future profile screen — never surfaced on the menu.
 
-// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from Key Power
-// (10 + 2·level); this only scales it by which mode produced the input.
+// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
+// TIER table (see keyTierXp); this only scales it by which mode produced the input.
 export const XP_MULTIPLIERS = {
   menu: 1,
   'word-bomb': 2,
@@ -18,22 +18,36 @@ export const XP_MULTIPLIERS = {
   fuse: 5,
 };
 
-// Cost to advance FROM level n to n+1 — PIECEWISE (Economy v4.1, late-game runaway cap):
-//   n <= 200 : gentle 1.05/level (unchanged) — need(1)=110 … need(100)=13,150, need(200)≈1.73M.
-//   n  > 200 : need(200) · 1.11^(n-200) — a STEEPER top so the curve keeps pace with the
-//              ×10-per-rebirth multipliers instead of one keystroke clearing many levels.
-// Every value is snapped to a round multiple of 10.
-//
-// KNOWN LIMITATION (see the sim in the Economy v4.1 report): steepening raises cumulative XP,
-// so it moves the float64 precision cliff (cumXP > MAX_SAFE_INTEGER) EARLIER, not later — the
-// opposite of what a "precision above LV600" goal needs. No exponent can give both ≥200
-// letters/run at R19 AND keep cumXP under MAX_SAFE through LV600; the real fix is BigInt xp.
-export const CURVE_BREAK = 200; // level at which the curve steepens
-export const TOP_CURVE_EXP = 1.11; // per-level growth above the break
+// round10 — snap to the nearest multiple of 10, HALF-TO-EVEN. Half-to-even (not JS's
+// default half-up Math.round) is deliberate: it is what reproduces the Economy v6 published
+// level table exactly — need(1)=120 comes from round-half-even(12.5)=12, where plain
+// Math.round(12.5)=13 would give 130. Used for EVERY snapped economy value (level curve, wins
+// payouts, past-table Key-Power extension) so the whole system rounds one consistent way and
+// every published figure lands where the spec says.
+export function round10(x) {
+  const q = (Number.isFinite(x) ? x : 0) / 10;
+  const f = Math.floor(q);
+  const r = q - f;
+  let n;
+  if (r < 0.5) n = f;
+  else if (r > 0.5) n = f + 1;
+  else n = f % 2 === 0 ? f : f + 1; // exactly .5 → round to the even neighbour
+  return n * 10;
+}
+
+// Cost to advance FROM level n to n+1 — Economy v6, properly exponential where people play:
+//   n <= 60 : round10(100 · 1.25^n) — the steep early climb. First levels come out
+//             120 / 160 / 200 / 240 / 310 / 380 / 480 — visibly growing, not the old flat 100/110/120.
+//   n  > 60 : need(60) · 1.08^(n-60), round10 — a gentler 1.08 tail so LV600 stays reachable
+//             instead of the cost exploding out of range.
+// Every value is snapped to a round multiple of 10 (round10, half-to-even).
+export const CURVE_BREAK = 60; // level at which the curve eases from 1.25 to the 1.08 tail
+export const EARLY_CURVE_EXP = 1.25; // per-level growth at/below the break
+export const TOP_CURVE_EXP = 1.08; // per-level growth above the break
 export function need(n) {
-  if (n <= CURVE_BREAK) return Math.round((100 * Math.pow(1.05, n)) / 10) * 10;
-  const base = Math.round((100 * Math.pow(1.05, CURVE_BREAK)) / 10) * 10; // need(200)
-  return Math.round((base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK)) / 10) * 10;
+  if (n <= CURVE_BREAK) return round10(100 * Math.pow(EARLY_CURVE_EXP, n));
+  const base = round10(100 * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)); // need(60)
+  return round10(base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK));
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -148,14 +162,41 @@ export function doRebirth() {
   return rc;
 }
 
-// ---- Key Power — the repeatable base-XP upgrade ---------------------------------------
-// Level stored at taw.keypower (int, default 0). The NEXT level costs 50·1.15^level wins;
-// each level adds +2 to the base XP per input. SURVIVES rebirth (its own key, untouched by
-// doRebirth). Cosmetics no longer affect XP at all — they're pure flair now.
-export const KEYPOWER_KEY = 'taw.keypower';
-export function getKeyPower() {
+// ---- Key Power — DISCRETE TIERS (Economy v6) ------------------------------------------
+// Tier stored at taw.keytier (int, default 0). Key Power is no longer a per-level crawl with
+// a doubler — it is a hardcoded TABLE of tiers, each a real one-at-a-time decision. `xp` is the
+// XP PER LETTER granted at that tier; `cost` is the wins price to REACH that tier (T0 is the
+// free start, so its cost is 0). Every cost is a round multiple of 10; effect values are the
+// published figures and need NOT end in a zero (375, 5875, 14690). SURVIVES rebirth (its own
+// key, untouched by doRebirth).
+//   T0   10 XP/letter    free (start)
+//   T1   25              500 wins
+//   T2   60              3,000
+//   T3   150             18,000
+//   T4   375             108,000
+//   T5   940             648,000
+//   T6   2,350           3,888,000
+//   T7   5,875           23,328,000
+//   T8   14,690          139,968,000
+// Past T8 the pattern continues: effect ×2.5, cost ×6, each round10 (half-to-even).
+export const KEYTIER_KEY = 'taw.keytier';
+export const KEY_TIERS = [
+  { xp: 10, cost: 0 }, //          T0
+  { xp: 25, cost: 500 }, //        T1
+  { xp: 60, cost: 3000 }, //       T2
+  { xp: 150, cost: 18000 }, //     T3
+  { xp: 375, cost: 108000 }, //    T4
+  { xp: 940, cost: 648000 }, //    T5
+  { xp: 2350, cost: 3888000 }, //  T6
+  { xp: 5875, cost: 23328000 }, // T7
+  { xp: 14690, cost: 139968000 }, //T8
+];
+const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
+const TIER_COST_STEP = 6; // cost multiplier per tier past T8
+
+export function getKeyTier() {
   try {
-    const raw = localStorage.getItem(KEYPOWER_KEY);
+    const raw = localStorage.getItem(KEYTIER_KEY);
     if (raw == null) return 0;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
@@ -163,55 +204,56 @@ export function getKeyPower() {
     return 0;
   }
 }
-export function saveKeyPower(n) {
+export function saveKeyTier(n) {
   try {
-    localStorage.setItem(KEYPOWER_KEY, String(Math.max(0, Math.floor(n))));
+    localStorage.setItem(KEYTIER_KEY, String(Math.max(0, Math.floor(n))));
   } catch {
     /* storage blocked */
   }
 }
-// Cost (in wins) to buy the NEXT level, standing at `level`. Snapped to a round multiple of
-// 10 (Economy v5: every displayed number ends in a zero).
-export function keyPowerCost(level) {
-  const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
-  return Math.round((50 * Math.pow(1.15, lv)) / 10) * 10;
-}
-// Base XP per input at a given key-power level (= purchase count). The linear +2/level
-// crawl is punctuated by a MILESTONE DOUBLER: every 10th purchase permanently ×2s the base,
-// and the doublers stack — base = (10 + 2·purchases) · 2^floor(purchases/10). So 9→28,
-// 10→60, 20→200: the every-10th jump is what makes the curve feel exponential, not linear.
-export function keyPowerBaseXp(level) {
-  const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
-  // Snapped to a round multiple of 10 (Economy v5: every displayed XP amount ends in a zero).
-  return Math.round(((10 + 2 * lv) * Math.pow(2, Math.floor(lv / 10))) / 10) * 10;
-}
 
-// The NEXT milestone doubler from a given purchase count: the next multiple of 10, and how
-// many purchases remain to reach it. Drives the card's "×2 AT 10 PURCHASES (3 TO GO)" line.
-export function keyPowerNextDoubler(level) {
-  const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
-  const at = (Math.floor(lv / 10) + 1) * 10;
-  return { at, toGo: at - lv };
+// XP PER LETTER at a given tier. Within the table it's the published value; past T8 it extends
+// ×2.5 per tier from T8's 14,690, each step round10 (half-to-even).
+export function keyTierXp(tier) {
+  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
+  if (t < KEY_TIERS.length) return KEY_TIERS[t].xp;
+  let xp = KEY_TIERS[KEY_TIERS.length - 1].xp;
+  for (let i = KEY_TIERS.length; i <= t; i++) xp = round10(xp * TIER_XP_STEP);
+  return xp;
+}
+// The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past
+// T8 it extends ×6 per tier from T8's 139,968,000, each step round10.
+export function keyTierCostAt(tier) {
+  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
+  if (t < KEY_TIERS.length) return KEY_TIERS[t].cost;
+  let cost = KEY_TIERS[KEY_TIERS.length - 1].cost;
+  for (let i = KEY_TIERS.length; i <= t; i++) cost = round10(cost * TIER_COST_STEP);
+  return cost;
+}
+// The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
+export function keyTierCost(tier) {
+  const t = Number.isFinite(tier) && tier >= 0 ? Math.floor(tier) : 0;
+  return keyTierCostAt(t + 1);
 }
 
 // (Level-ups no longer pay wins — wins come ONLY from finishing rounds. The old
 // levelUpWins() payout was removed with Economy v3.)
 
 // ---- The XP stack — SINGLE source of truth --------------------------------------------
-// xpPerInput = keyPowerBaseXp(keyPowerLevel) · modeMult · rebirthMult · popMult · soundMult.
-// The base carries the milestone doublers (see keyPowerBaseXp); the two cosmetic multipliers
-// (equipped pop style + sound pack) are passed IN by the caller — xp.js stays free of the
-// shop import (shop.js already imports xp.js; keeping the dependency one-way avoids a cycle).
-// Factors default to the live key-power + rebirth counts (cosmetic mults default to ×1).
-export function xpPerInput({ mode = 'menu', keyPowerLevel, rebirthCount, popMult = 1, soundMult = 1 } = {}) {
-  const kp = Number.isFinite(keyPowerLevel) ? keyPowerLevel : getKeyPower();
+// xpPerInput = keyTierXp(keyTier) · modeMult · rebirthMult · popMult · soundMult. The base is
+// the Key Power TIER's XP-per-letter (Economy v6); the two cosmetic multipliers (equipped pop
+// style + sound pack) are passed IN by the caller — xp.js stays free of the shop import (shop.js
+// already imports xp.js; keeping the dependency one-way avoids a cycle). Factors default to the
+// live key-tier + rebirth counts (cosmetic mults default to ×1).
+export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1 } = {}) {
+  const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const modeMult = XP_MULTIPLIERS[mode] ?? 1;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const pm = Number.isFinite(popMult) && popMult > 0 ? popMult : 1;
   const sm = Number.isFinite(soundMult) && soundMult > 0 ? soundMult : 1;
   // Snapped to a round multiple of 10 so every credited/displayed "+N" ends in a zero, and
-  // so the accumulated xpIntoLevel stays a clean multiple of 10 (Economy v5).
-  return Math.round((keyPowerBaseXp(kp) * modeMult * rebirthMult(rc) * pm * sm) / 10) * 10;
+  // so the accumulated xpIntoLevel stays a clean multiple of 10.
+  return round10(keyTierXp(kt) * modeMult * rebirthMult(rc) * pm * sm);
 }
 
 // Apply a credited award. Pure: takes and returns the {level, intoLevel, lifetimeLetters}

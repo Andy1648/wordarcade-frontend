@@ -6,9 +6,9 @@
 // animation beyond the buttons' existing hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyKeyPowerMax } from '../progress/shop';
-import { getWins } from '../progress/wins';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp, keyPowerNextDoubler } from '../progress/xp';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
+import { getWins, perWordWins } from '../progress/wins';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { formatNum } from '../format';
 
 export default function ShopScreen({ onBack }) {
@@ -17,7 +17,7 @@ export default function ShopScreen({ onBack }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [tab, setTab] = useState('shop'); // 'shop' | 'rebirth'
   const [confirming, setConfirming] = useState(false);
-  const [keyPower, setKeyPower] = useState(() => getKeyPower());
+  const [keyTier, setKeyTier] = useState(() => getKeyTier());
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -42,16 +42,13 @@ export default function ShopScreen({ onBack }) {
     setWins(getWins());
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
-    setKeyPower(getKeyPower());
+    setKeyTier(getKeyTier());
   };
   const onBuy = (id) => {
     if (buy(id).ok) refresh();
   };
   const onBuyKeyPower = () => {
     if (buyKeyPower().ok) refresh();
-  };
-  const onBuyKeyPowerMax = () => {
-    if (buyKeyPowerMax().ok) refresh();
   };
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
@@ -136,46 +133,35 @@ export default function ShopScreen({ onBack }) {
 
         {tab === 'shop' ? (
           <div className="shop-body">
-            <h3 className="shop-subtitle">KEY POWER</h3>
+            <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
-                {/* Current base XP per letter — the value, never a level. */}
+                {/* Current XP per letter at this tier. */}
                 <div className="shop-kp-current">
-                  <b>{formatNum(keyPowerBaseXp(keyPower))}</b> XP PER LETTER
+                  <b>{formatNum(keyTierXp(keyTier))}</b> XP PER LETTER
                 </div>
-                {/* What the next purchase gives + what it costs. */}
+                {/* What the NEXT tier gives + what it costs (one tier at a time — no buy max). */}
                 <div className="shop-kp-next">
-                  NEXT: <b>{formatNum(keyPowerBaseXp(keyPower + 1))} XP</b>
+                  NEXT TIER: <b>{formatNum(keyTierXp(keyTier + 1))} XP</b>
                   {'  ·  '}
                   <b>
-                    <span className="shop-coin" aria-hidden="true" /> {formatNum(keyPowerCost(keyPower))} WINS
+                    <span className="shop-coin" aria-hidden="true" /> {formatNum(keyTierCost(keyTier))} WINS
                   </b>
                 </div>
-                {/* The milestone doubler ahead — the exponential jump every 10th purchase. */}
-                <div className="shop-kp-doubler">
-                  {(() => {
-                    const d = keyPowerNextDoubler(keyPower);
-                    return `×2 AT ${d.at} PURCHASES (${d.toGo} TO GO)`;
-                  })()}
+                {/* Your current per-word win rate — context for how far the tier cost is. */}
+                <div className="shop-kp-rate">
+                  YOUR RATE: <b>{formatNum(perWordWins({ mode: 'wordBomb' }))} WINS / WORD</b>
                 </div>
               </div>
               <div className="shop-kp-actions">
                 <button
                   type="button"
                   className="shop-card-btn"
-                  disabled={wins < keyPowerCost(keyPower)}
+                  disabled={wins < keyTierCost(keyTier)}
                   onClick={onBuyKeyPower}
                 >
                   <span className="shop-coin" aria-hidden="true" />
-                  {formatNum(keyPowerCost(keyPower))}
-                </button>
-                <button
-                  type="button"
-                  className="shop-card-btn ghost"
-                  disabled={wins < keyPowerCost(keyPower)}
-                  onClick={onBuyKeyPowerMax}
-                >
-                  BUY MAX
+                  {formatNum(keyTierCost(keyTier))}
                 </button>
               </div>
             </div>

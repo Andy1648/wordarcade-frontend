@@ -6,6 +6,8 @@
 // A round only "counts" (pays wins + bumps its mode counter) when the player got at least
 // MIN_WORDS accepted — a sub-3 round is treated as not-really-played.
 
+import { rebirthMult, getRebirths, round10 } from './xp.js';
+
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
 export const ROUNDS_KEY = 'taw.rounds';
@@ -67,9 +69,10 @@ export function saveRounds(rounds) {
   }
 }
 
-// Per-mode wins multiplier on the base payout: SAT Rush pays 2×, CHAIN 3×, FUSE 5× (the
-// solo modes). Every other mode is ×1. (Key matches recordRound's mode: 'satRush'.)
-export const WINS_MULT = { satRush: 2, chain: 3, fuse: 5 };
+// Per-mode wins multiplier on the base payout (Economy v6, exponential): SAT Rush ×5, CHAIN
+// ×10, FUSE ×15 (the solo modes). Word Bomb / Blitz are ×1. (Key matches recordRound's mode:
+// 'satRush'.)
+export const WINS_MULT = { satRush: 5, chain: 10, fuse: 15 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
@@ -79,25 +82,29 @@ export const WINS_MULT = { satRush: 2, chain: 3, fuse: 5 };
 export const DIFFICULTY_MULT = { chill: 1.0, easy: 1.25, medium: 1.5, hard: 2.0 };
 
 // A representative round used ONLY to preview a mode's payout on its menu card. Ten accepted
-// words at the ×1 base reads "~100 WINS / ROUND" (SAT ~200, CHAIN ~300, FUSE ~500).
+// words at the ×1 base reads "~200 WINS / ROUND" (SAT ~1000, CHAIN ~2000, FUSE ~3000).
 export const TYPICAL_ROUND_WORDS = 10;
 
-// Economy v5: wins are paid PER WORD. The per-word rate is 10 base × mode mult × difficulty,
-// snapped to a round multiple of 10 (word-bomb/blitz 10, SAT 20, CHAIN 30, FUSE 50 at ×1).
-export const WORD_WINS_BASE = 10;
-export function perWordWins({ mode, difficulty } = {}) {
+// Economy v6: wins are paid PER WORD and go EXPONENTIAL. The per-word rate is
+//   20 base × mode mult × difficulty × REBIRTH mult, snapped to a round multiple of 10.
+// At R0 that reads word-bomb/blitz 20, SAT 100 (×5), CHAIN 200 (×10), FUSE 300 (×15). Rebirth
+// multiplies wins on the SAME ladder as XP (×1.5, ×2, ×2.5 …), read live from taw.rebirths
+// unless a `rebirthCount` is passed (keeps the function pure/testable).
+export const WORD_WINS_BASE = 20;
+export function perWordWins({ mode, difficulty, rebirthCount } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
   const modeMult = WINS_MULT[mode] || 1;
-  return Math.round((WORD_WINS_BASE * modeMult * diffMult) / 10) * 10;
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  return round10(WORD_WINS_BASE * modeMult * diffMult * rebirthMult(rc));
 }
 
-// Wins granted for a round (PURE). <3 accepted words → 0; else wordsAccepted × the per-word
-// rate. Both factors keep the total a round multiple of 10 (Economy v5 — every payout ends in
-// a zero). Difficulty defaults to ×1 (unspecified / no-difficulty modes).
-export function awardWins({ wordsAccepted, mode, difficulty } = {}) {
+// Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else
+// wordsAccepted × the per-word rate. Both factors keep the total a round multiple of 10
+// (every payout ends in a zero). Difficulty defaults to ×1 (unspecified / no-difficulty modes).
+export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount } = {}) {
   const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
   if (w < MIN_WORDS) return 0;
-  return w * perWordWins({ mode, difficulty });
+  return w * perWordWins({ mode, difficulty, rebirthCount });
 }
 
 // The card's per-ROUND payout preview: a typical round's wins for this mode/difficulty
@@ -106,15 +113,17 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
   return awardWins({ wordsAccepted: TYPICAL_ROUND_WORDS, mode, difficulty });
 }
 
-// PER-WORD wins preview shown on the menu cards. Base 10 per word, keyed by game.id (NOT the
-// round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×2 SAT Rush ·
-// ×3 CHAIN · ×5 FUSE, then × difficulty, snapped to a round multiple of 10 (word-bomb/blitz
-// 10, sat-rush 20, chain 30, fuse 50 at the ×1 default). Reuses WORD_WINS_BASE from above.
-export const WORD_WINS_MULT = { 'sat-rush': 2, chain: 3, fuse: 5 };
+// PER-WORD wins preview shown on the menu cards. Base 20 per word, keyed by game.id (NOT the
+// round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×5 SAT Rush ·
+// ×10 CHAIN · ×15 FUSE, then × difficulty, snapped to a round multiple of 10 (word-bomb/blitz
+// 20, sat-rush 100, chain 200, fuse 300 at the ×1 difficulty default). This is the R0 BASE
+// preview — the game card copy is stable ("20 WINS / WORD"), NOT rebirth-scaled; the live
+// rebirth boost is folded into the ACTUAL payout (perWordWins/awardWins) and shown in the shop.
+export const WORD_WINS_MULT = { 'sat-rush': 5, chain: 10, fuse: 15 };
 export function wordWinsEstimate({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
   const modeMult = WORD_WINS_MULT[mode] || 1;
-  return Math.round((WORD_WINS_BASE * modeMult * diffMult) / 10) * 10;
+  return round10(WORD_WINS_BASE * modeMult * diffMult);
 }
 
 // A finite "+N WINS" menu stamp is queued here when a round pays out, and consumed by the

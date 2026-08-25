@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   need,
+  round10,
   levelFromXp,
   creditXp,
   createRateLimiter,
@@ -19,10 +20,11 @@ import {
   canRebirth,
   doRebirth,
   getRebirths,
-  keyPowerCost,
-  keyPowerBaseXp,
-  keyPowerNextDoubler,
-  getKeyPower,
+  KEY_TIERS,
+  keyTierCost,
+  keyTierCostAt,
+  keyTierXp,
+  getKeyTier,
   progressOf,
   XP_KEY,
 } from './xp.js';
@@ -50,26 +52,44 @@ function cumCost(level) {
   return acc;
 }
 
-// ---- level cost curve (exponential) ----
-test('need() matches the pinned anchor values', () => {
-  assert.equal(need(1), 110);
-  assert.equal(need(10), 160);
-  assert.equal(need(50), 1150);
-  assert.equal(need(100), 13150);
-  // The curve is snapped to a round multiple of 10 at every level (both branches). Checked
-  // only where need(n) is still an exact integer (< 2^53 ≈ LV414); above that, float64 can't
-  // represent the value — let alone its %10 — exactly, which is the very precision cliff the
-  // v4.1 report flags.
-  for (const n of [1, 2, 5, 17, 50, 100, 200, 300, 410]) assert.equal(need(n) % 10, 0);
+// ---- round10: half-to-even snap (reproduces the published tables) ----
+test('round10 snaps to the nearest 10, half-to-even', () => {
+  assert.equal(round10(125), 120); // 12.5 → even neighbour 12 (NOT 130 like Math.round)
+  assert.equal(round10(135), 140); // 13.5 → even neighbour 14
+  assert.equal(round10(124), 120);
+  assert.equal(round10(126), 130);
+  assert.equal(round10(0), 0);
+  for (const v of [0, 25, 125, 156.25, 305.17, 999.99]) assert.equal(round10(v) % 10, 0);
 });
 
-test('need() steepens above LV200 to 1.11/level (Economy v4.1 late-game cap)', () => {
-  assert.equal(need(200), 1729260); // low branch, unchanged at the break
-  assert.equal(need(201), 1919480); // need(200) × 1.11 → nearest 10
-  // Above the break each level grows ~1.11× (steeper than the 1.05 base below it).
-  const r = need(300) / need(299);
-  assert.ok(r > 1.1 && r < 1.12, `ratio ${r}`);
-  assert.ok(need(201) > need(200));
+// ---- level cost curve (Economy v6 — properly exponential where people play) ----
+test('need() matches the published early levels 120/160/200/240/310/380/480', () => {
+  // n<=60: round10(100·1.25^n). These are the spec's illustrative first-level costs.
+  assert.equal(need(1), 120);
+  assert.equal(need(2), 160);
+  assert.equal(need(3), 200);
+  assert.equal(need(4), 240);
+  assert.equal(need(5), 310);
+  assert.equal(need(6), 380);
+  assert.equal(need(7), 480);
+});
+
+test('need() eases from 1.25 (early) to a 1.08 tail above LV60, keeping LV600 in range', () => {
+  // Below the break each level grows ~1.25×.
+  const early = need(30) / need(29);
+  assert.ok(early > 1.24 && early < 1.26, `early ratio ${early}`);
+  // need(60) is the break value; the tail is need(60)·1.08^(n-60).
+  assert.equal(need(60), round10(100 * Math.pow(1.25, 60)));
+  const tail = need(100) / need(99);
+  assert.ok(tail > 1.07 && tail < 1.09, `tail ratio ${tail}`);
+  assert.ok(need(61) > need(60));
+  // The gentle tail keeps LV600's cost finite and representable (not the runaway 1.11 top).
+  assert.ok(Number.isFinite(need(600)) && need(600) > need(300));
+});
+
+test('every level requirement is divisible by 10 (through the exact-integer range)', () => {
+  // round10 forces %10===0 by construction; verified where need(n) stays below 2^53 (~LV250).
+  for (let n = 1; n <= 250; n++) assert.equal(need(n) % 10, 0, `need(${n})=${need(n)}`);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -81,33 +101,32 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
   assert.equal(XP_MULTIPLIERS.fuse, 5);
 });
 
-// ---- Key Power ----
-test('keyPowerCost grows 15%/level, snapped to a round 10: lv0=50, lv5=100, lv20=820', () => {
-  assert.equal(keyPowerCost(0), 50);
-  assert.equal(keyPowerCost(5), 100);
-  assert.equal(keyPowerCost(20), 820);
-  // Every cost across a wide sweep ends in a zero (Economy v5).
-  for (let lv = 0; lv <= 60; lv++) assert.equal(keyPowerCost(lv) % 10, 0, `keyPowerCost(${lv})`);
+// ---- Key Power — discrete tiers (Economy v6) ----
+test('keyTierXp: the hardcoded XP-per-letter table, ×2.5 past T8', () => {
+  const table = [10, 25, 60, 150, 375, 940, 2350, 5875, 14690];
+  table.forEach((xp, t) => assert.equal(keyTierXp(t), xp, `T${t}`));
+  // Past T8 the effect keeps going ×2.5, round10 (half-to-even): 14690×2.5=36725 → 36720.
+  assert.equal(keyTierXp(9), round10(14690 * 2.5));
+  assert.equal(keyTierXp(10), round10(round10(14690 * 2.5) * 2.5));
 });
 
-test('keyPowerBaseXp = (10 + 2·purchases)·2^floor(purchases/10), snapped ×10 — doublers stack', () => {
-  // Below the first milestone it's the linear +2 crawl, snapped to a round 10 (Economy v5).
-  assert.equal(keyPowerBaseXp(0), 10);
-  assert.equal(keyPowerBaseXp(5), 20);
-  assert.equal(keyPowerBaseXp(9), 30); // 28 → nearest 10
-  // Each 10th purchase permanently ×2s the base, and they stack.
-  assert.equal(keyPowerBaseXp(10), 60); // (10+20)·2
-  assert.equal(keyPowerBaseXp(20), 200); // (10+40)·4
-  assert.equal(keyPowerBaseXp(30), 560); // (10+60)·8
-  // Every base value ends in a zero.
-  for (let lv = 0; lv <= 40; lv++) assert.equal(keyPowerBaseXp(lv) % 10, 0, `keyPowerBaseXp(${lv})`);
+test('keyTierCostAt: the published cost-to-reach table (T0 free), ×6 past T8', () => {
+  const costs = [0, 500, 3000, 18000, 108000, 648000, 3888000, 23328000, 139968000];
+  costs.forEach((c, t) => assert.equal(keyTierCostAt(t), c, `T${t} cost`));
+  // Past T8 the cost keeps going ×6, round10: 139968000×6 = 839,808,000.
+  assert.equal(keyTierCostAt(9), round10(139968000 * 6));
 });
 
-test('keyPowerNextDoubler: the next multiple of 10, and how far to go', () => {
-  assert.deepEqual(keyPowerNextDoubler(0), { at: 10, toGo: 10 });
-  assert.deepEqual(keyPowerNextDoubler(7), { at: 10, toGo: 3 });
-  assert.deepEqual(keyPowerNextDoubler(10), { at: 20, toGo: 10 });
-  assert.deepEqual(keyPowerNextDoubler(23), { at: 30, toGo: 7 });
+test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
+  assert.equal(keyTierCost(0), 500); // standing at T0, buying T1 costs 500
+  assert.equal(keyTierCost(3), 108000); // at T3, T4 costs 108,000
+  assert.equal(keyTierCost(7), 139968000); // at T7, T8 costs 139,968,000
+});
+
+test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
+  // Costs stay below 2^53 through ~T15; verify %10===0 across that range.
+  for (let t = 0; t <= 15; t++) assert.equal(keyTierCostAt(t) % 10, 0, `keyTierCostAt(${t})`);
+  assert.equal(KEY_TIERS.length, 9); // T0..T8 hardcoded
 });
 
 // ---- level derived from cumulative xp, swept 0..100000 ----
@@ -143,12 +162,13 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, need(7) - 100);
 });
 
-test('the XP stack (single source): key power × mode × rebirth', () => {
-  // key power 0 + menu (×1) + R0 (×1) = 10.
-  assert.equal(xpPerInput({ mode: 'menu', keyPowerLevel: 0, rebirthCount: 0 }), 10);
-  // key power 20 (base 200, incl. the ×4 milestone doublers) + sat-rush (×3) + R1 (×1.5)
-  // = 200·3·1.5 = 900.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyPowerLevel: 20, rebirthCount: 1 }), 900);
+test('the XP stack (single source): key tier × mode × rebirth', () => {
+  // tier 0 (10 XP/letter) + menu (×1) + R0 (×1) = 10.
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0 }), 10);
+  // tier 2 (60 XP/letter) + sat-rush (×3) + R1 (×1.5) = 60·3·1.5 = 270.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 270);
+  // tier 4 (375 XP/letter) at menu R0, snapped ×10 → 380.
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0 }), round10(375));
 });
 
 test('rebirth gate table: R1 LV15 … R20 LV600, then +50 levels per rebirth', () => {
@@ -195,7 +215,7 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
       'taw.equipped': JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }),
       'taw.rebirths': '1',
       'taw.taps': '42',
-      'taw.keypower': '7',
+      'taw.keytier': '3',
     },
     (map) => {
       const rc = doRebirth();
@@ -210,8 +230,8 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
       assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
       assert.equal(map.get('taw.taps'), '42');
-      assert.equal(map.get('taw.keypower'), '7'); // Key Power SURVIVES rebirth
-      assert.equal(getKeyPower(), 7);
+      assert.equal(map.get('taw.keytier'), '3'); // Key Power tier SURVIVES rebirth
+      assert.equal(getKeyTier(), 3);
     }
   );
   // a from-scratch rebirth (empty storage) still works and doesn't throw.
@@ -247,13 +267,13 @@ test('getTaps defaults to 0 and survives storage failure; saveTaps never throws'
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {
-  // 100 into L1 + 20 = 120 ≥ need(1)=110 → carries to L2 with 10 into it.
+  // 100 into L1 + 20 = 120 = need(1)=120 → carries to L2 with 0 into it (Economy v6 curve).
   const a = creditXp({ level: 1, intoLevel: 100, lifetimeLetters: 0 }, 20, 1);
   assert.equal(a.state.level, 2);
-  assert.equal(a.state.intoLevel, 10);
+  assert.equal(a.state.intoLevel, 0);
   assert.equal(a.state.lifetimeLetters, 1); // raw keystroke count, unmultiplied
   assert.equal(a.leveledUp, true);
-  // 10 into L2 + 10 = 20, still below need(2)=110 → no level-up.
+  // 10 into L2 + 10 = 20, still below need(2)=160 → no level-up.
   const b = creditXp({ level: 2, intoLevel: 10, lifetimeLetters: 5 }, 10, 1);
   assert.equal(b.leveledUp, false);
   assert.equal(b.state.level, 2);

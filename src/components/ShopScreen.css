@@ -267,8 +267,8 @@
   font-size: clamp(18px, 2.2vw, 20px);
   color: #ffe94a;
 }
-/* The exponential jump — cyan so it reads as the reward to chase. */
-.shop-kp-doubler {
+/* The player's current per-word win rate — cyan, context for how far the tier cost is. */
+.shop-kp-rate {
   font-family: 'Bungee', cursive;
   font-size: clamp(16px, 2vw, 18px);
   letter-spacing: 0.03em;
