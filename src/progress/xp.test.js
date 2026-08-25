@@ -23,6 +23,8 @@ import {
   keyPowerBaseXp,
   keyPowerNextDoubler,
   getKeyPower,
+  progressOf,
+  XP_KEY,
 } from './xp.js';
 
 // A fresh in-memory localStorage installed as the global for a test body.
@@ -80,21 +82,25 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
 });
 
 // ---- Key Power ----
-test('keyPowerCost grows 15%/level: lv0=50, lv5=101, lv20=818', () => {
+test('keyPowerCost grows 15%/level, snapped to a round 10: lv0=50, lv5=100, lv20=820', () => {
   assert.equal(keyPowerCost(0), 50);
-  assert.equal(keyPowerCost(5), 101);
-  assert.equal(keyPowerCost(20), 818);
+  assert.equal(keyPowerCost(5), 100);
+  assert.equal(keyPowerCost(20), 820);
+  // Every cost across a wide sweep ends in a zero (Economy v5).
+  for (let lv = 0; lv <= 60; lv++) assert.equal(keyPowerCost(lv) % 10, 0, `keyPowerCost(${lv})`);
 });
 
-test('keyPowerBaseXp = (10 + 2·purchases)·2^floor(purchases/10) — milestone doublers stack', () => {
-  // Below the first milestone it's the linear +2 crawl.
+test('keyPowerBaseXp = (10 + 2·purchases)·2^floor(purchases/10), snapped ×10 — doublers stack', () => {
+  // Below the first milestone it's the linear +2 crawl, snapped to a round 10 (Economy v5).
   assert.equal(keyPowerBaseXp(0), 10);
   assert.equal(keyPowerBaseXp(5), 20);
-  assert.equal(keyPowerBaseXp(9), 28);
+  assert.equal(keyPowerBaseXp(9), 30); // 28 → nearest 10
   // Each 10th purchase permanently ×2s the base, and they stack.
   assert.equal(keyPowerBaseXp(10), 60); // (10+20)·2
   assert.equal(keyPowerBaseXp(20), 200); // (10+40)·4
   assert.equal(keyPowerBaseXp(30), 560); // (10+60)·8
+  // Every base value ends in a zero.
+  for (let lv = 0; lv <= 40; lv++) assert.equal(keyPowerBaseXp(lv) % 10, 0, `keyPowerBaseXp(${lv})`);
 });
 
 test('keyPowerNextDoubler: the next multiple of 10, and how far to go', () => {
@@ -195,7 +201,8 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
       const rc = doRebirth();
       assert.equal(rc, 2); // rebirth count bumped
       assert.equal(getRebirths(), 2);
-      assert.equal(loadProgress().xp, 0); // xp zeroed
+      assert.equal(loadProgress().level, 1); // level reset to 1
+      assert.equal(loadProgress().intoLevel, 0); // xp-into-level zeroed
       assert.equal(loadProgress().lifetimeLetters, 1234); // preserved
       // everything else untouched (their own keys)
       assert.equal(map.get('taw.wins'), '500');
@@ -209,13 +216,14 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
   );
   // a from-scratch rebirth (empty storage) still works and doesn't throw.
   withStorage({}, () => {
-    assert.doesNotThrow(() => saveProgress({ xp: 0, lifetimeLetters: 0 }));
+    assert.doesNotThrow(() => saveProgress({ level: 1, intoLevel: 0, lifetimeLetters: 0 }));
   });
 });
 
 test('a tap credits xp but NOT lifetimeLetters (rawKeys 0)', () => {
-  const r = creditXp({ xp: 0, lifetimeLetters: 7 }, 10, 0); // a tap worth +10
-  assert.equal(r.state.xp, 10); // +10 xp
+  const r = creditXp({ level: 1, intoLevel: 0, lifetimeLetters: 7 }, 10, 0); // a tap worth +10
+  assert.equal(r.state.intoLevel, 10); // +10 into the level
+  assert.equal(r.state.level, 1); // still level 1 (need(1)=110)
   assert.equal(r.state.lifetimeLetters, 7); // unchanged — taps never bump lifetimeLetters
 });
 
@@ -239,13 +247,64 @@ test('getTaps defaults to 0 and survives storage failure; saveTaps never throws'
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {
-  const a = creditXp({ xp: 100, lifetimeLetters: 0 }, 20, 1); // 100 -> 120 crosses L1->2 (need(1)=110)
-  assert.equal(a.state.xp, 120);
+  // 100 into L1 + 20 = 120 ≥ need(1)=110 → carries to L2 with 10 into it.
+  const a = creditXp({ level: 1, intoLevel: 100, lifetimeLetters: 0 }, 20, 1);
+  assert.equal(a.state.level, 2);
+  assert.equal(a.state.intoLevel, 10);
   assert.equal(a.state.lifetimeLetters, 1); // raw keystroke count, unmultiplied
   assert.equal(a.leveledUp, true);
-  const b = creditXp({ xp: 120, lifetimeLetters: 5 }, 10, 1); // 120 -> 130, still L2 (L2 ends at 220)
+  // 10 into L2 + 10 = 20, still below need(2)=110 → no level-up.
+  const b = creditXp({ level: 2, intoLevel: 10, lifetimeLetters: 5 }, 10, 1);
   assert.equal(b.leveledUp, false);
+  assert.equal(b.state.level, 2);
+  assert.equal(b.state.intoLevel, 20);
   assert.equal(b.state.lifetimeLetters, 6);
+});
+
+// ---- Economy v5 storage refactor: {level, intoLevel} + migration ----
+test('storage round-trips the {level, intoLevel} shape', () => {
+  withStorage({}, (map) => {
+    saveProgress({ level: 7, intoLevel: 100, lifetimeLetters: 42 });
+    // Persisted as the compact bounded shape, never a cumulative total.
+    assert.equal(map.get(XP_KEY), JSON.stringify({ lv: 7, into: 100 }));
+    const p = loadProgress();
+    assert.equal(p.level, 7);
+    assert.equal(p.intoLevel, 100);
+    assert.equal(p.lifetimeLetters, 42);
+  });
+});
+
+test('a legacy cumulative taw.xp is migrated to {level, intoLevel} on first read', () => {
+  const cumulative = cumCost(7) + 100; // 100 xp into level 7, old cumulative shape (bare number)
+  withStorage({ 'taw.xp': String(cumulative) }, (map) => {
+    const p = loadProgress();
+    assert.equal(p.level, 7);
+    assert.equal(p.intoLevel, 100); // already a round 10 here, so floor-to-10 is a no-op
+    // The migration rewrote storage in the new compact shape (no longer the huge number).
+    assert.equal(map.get('taw.xp'), JSON.stringify({ lv: 7, into: 100 }));
+  });
+});
+
+test('stored xp-into-level never exceeds one level cost, even after a huge legacy total', () => {
+  // A cumulative total that would sit deep in the curve. After migration the STORED `into`
+  // is bounded by need(level) — the whole point of the refactor (no MAX_SAFE cliff).
+  withStorage({ 'taw.xp': String(cumCost(120) + 500) }, (map) => {
+    const p = loadProgress();
+    assert.equal(p.level, 120);
+    assert.ok(p.intoLevel < need(120));
+    const stored = JSON.parse(map.get('taw.xp'));
+    assert.equal(stored.lv, 120);
+    assert.ok(stored.into < need(120));
+  });
+});
+
+test('progressOf mirrors the levelFromXp fields from the {level, intoLevel} shape', () => {
+  const r = progressOf({ level: 7, intoLevel: 100 });
+  assert.equal(r.level, 7);
+  assert.equal(r.intoLevel, 100);
+  assert.equal(r.cost, need(7));
+  assert.equal(r.toNext, need(7) - 100);
+  assert.ok(r.frac > 0 && r.frac < 1);
 });
 
 // ---- rate cap ----
@@ -306,7 +365,7 @@ test('localStorage failure does not throw and defaults to 0', () => {
   };
   try {
     const p = loadProgress();
-    assert.deepEqual(p, { xp: 0, lifetimeLetters: 0 });
+    assert.deepEqual(p, { level: 1, intoLevel: 0, lifetimeLetters: 0 });
   } finally {
     if (saved === undefined) delete globalThis.localStorage;
     else globalThis.localStorage = saved;

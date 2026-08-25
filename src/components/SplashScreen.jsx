@@ -88,8 +88,12 @@ export default function SplashScreen({ onStart, onDismiss }) {
   const [leaving, setLeaving] = useState(false);
   // Fine pointer (mouse/trackpad + keyboard) → "TYPE TO START"; coarse (touch) → "TAP".
   const [fine] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(pointer: fine)').matches);
-  // A returning visitor (any XP already banked) already knows the game — they enter faster.
-  const [returning] = useState(() => loadProgress().xp > 0);
+  // A returning visitor (any progress already banked) already knows the game — they enter
+  // faster. Economy v5 stores {level, intoLevel}, so "any progress" is past LV1 or mid-level.
+  const [returning] = useState(() => {
+    const p = loadProgress();
+    return p.level > 1 || p.intoLevel > 0;
+  });
   // Entry gate: on a FINE pointer, require this many credited KEYSTROKES before dismissing
   // (5 first-time, 3 for a returning visitor). A COARSE tap always enters on ONE (5 taps to
   // enter is hostile on mobile), and a click anywhere is the immediate escape hatch below.
@@ -118,7 +122,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
   // the AudioContext there. Every credit still credits XP + fires a pop + plays the clack;
   // we only DISMISS once the keystroke gate is met (which unlocks music via onStart). A
   // coarse tap dismisses on the first credit. Disabled once we start leaving.
-  const { xpTotal, progress } = useXpCapture({
+  const { progress } = useXpCapture({
     fxRef,
     active: !leaving,
     onCredit: () => {
@@ -215,8 +219,8 @@ export default function SplashScreen({ onStart, onDismiss }) {
       )}
 
       {/* Mini XP readout under the prompt — hidden entirely for a first-time visitor
-          (xp === 0). Same store + scaleX fill as the menu bar. */}
-      {xpTotal > 0 && (
+          (no progress yet). Same store + scaleX fill as the menu bar. */}
+      {(progress.level > 1 || progress.intoLevel > 0) && (
         <div className="splash-xp">
           <MenuXpBar level={progress.level} toNext={progress.toNext} frac={progress.frac} variant="mini" />
         </div>

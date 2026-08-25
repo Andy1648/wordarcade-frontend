@@ -141,7 +141,7 @@ export function consumePendingRebirth() {
 // new count. Wins/owned/equipped/taps/rounds live under their own keys — untouched.
 export function doRebirth() {
   const prog = loadProgress();
-  saveProgress({ xp: 0, lifetimeLetters: prog.lifetimeLetters });
+  saveProgress({ level: 1, intoLevel: 0, lifetimeLetters: prog.lifetimeLetters });
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   pendingRebirth = rc;
@@ -170,10 +170,11 @@ export function saveKeyPower(n) {
     /* storage blocked */
   }
 }
-// Cost (in wins) to buy the NEXT level, standing at `level`.
+// Cost (in wins) to buy the NEXT level, standing at `level`. Snapped to a round multiple of
+// 10 (Economy v5: every displayed number ends in a zero).
 export function keyPowerCost(level) {
   const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
-  return Math.round(50 * Math.pow(1.15, lv));
+  return Math.round((50 * Math.pow(1.15, lv)) / 10) * 10;
 }
 // Base XP per input at a given key-power level (= purchase count). The linear +2/level
 // crawl is punctuated by a MILESTONE DOUBLER: every 10th purchase permanently ×2s the base,
@@ -181,7 +182,8 @@ export function keyPowerCost(level) {
 // 10→60, 20→200: the every-10th jump is what makes the curve feel exponential, not linear.
 export function keyPowerBaseXp(level) {
   const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
-  return (10 + 2 * lv) * Math.pow(2, Math.floor(lv / 10));
+  // Snapped to a round multiple of 10 (Economy v5: every displayed XP amount ends in a zero).
+  return Math.round(((10 + 2 * lv) * Math.pow(2, Math.floor(lv / 10))) / 10) * 10;
 }
 
 // The NEXT milestone doubler from a given purchase count: the next multiple of 10, and how
@@ -207,23 +209,30 @@ export function xpPerInput({ mode = 'menu', keyPowerLevel, rebirthCount, popMult
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const pm = Number.isFinite(popMult) && popMult > 0 ? popMult : 1;
   const sm = Number.isFinite(soundMult) && soundMult > 0 ? soundMult : 1;
-  return Math.round(keyPowerBaseXp(kp) * modeMult * rebirthMult(rc) * pm * sm);
+  // Snapped to a round multiple of 10 so every credited/displayed "+N" ends in a zero, and
+  // so the accumulated xpIntoLevel stays a clean multiple of 10 (Economy v5).
+  return Math.round((keyPowerBaseXp(kp) * modeMult * rebirthMult(rc) * pm * sm) / 10) * 10;
 }
 
-// Apply a credited award. Pure: returns the next {xp, lifetimeLetters} and whether the
-// award crossed a level boundary (so the caller can fire the one-shot celebration).
+// Apply a credited award. Pure: takes and returns the {level, intoLevel, lifetimeLetters}
+// shape (Economy v5 — level is stored EXACTLY, xpIntoLevel only ever holds progress within
+// the current level so the persisted number never approaches MAX_SAFE_INTEGER). Adds the gain
+// to intoLevel and carries whole levels forward via need(); reports whether a boundary was
+// crossed so the caller can fire the one-shot celebration.
 export function creditXp(state, xpGain, rawKeys = 1) {
-  const prev = {
-    xp: Number.isFinite(state && state.xp) ? state.xp : 0,
-    lifetimeLetters: Number.isFinite(state && state.lifetimeLetters) ? state.lifetimeLetters : 0,
-  };
-  const beforeLevel = levelFromXp(prev.xp).level;
-  const next = {
-    xp: prev.xp + xpGain,
-    lifetimeLetters: prev.lifetimeLetters + rawKeys,
-  };
-  const afterLevel = levelFromXp(next.xp).level;
-  return { state: next, leveledUp: afterLevel > beforeLevel, level: afterLevel };
+  let level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
+  let intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
+  const lifetimeLetters = Number.isFinite(state && state.lifetimeLetters) ? state.lifetimeLetters : 0;
+  const gain = Number.isFinite(xpGain) && xpGain > 0 ? xpGain : 0;
+  const beforeLevel = level;
+  intoLevel += gain;
+  // Carry whole levels forward. need(level) is always > 0, so this terminates.
+  while (intoLevel >= need(level)) {
+    intoLevel -= need(level);
+    level += 1;
+  }
+  const next = { level, intoLevel, lifetimeLetters: lifetimeLetters + rawKeys };
+  return { state: next, leveledUp: level > beforeLevel, level };
 }
 
 // Anti-mash rate cap: at most `capacity` credited keystrokes per rolling `windowMs`. Pure
@@ -261,8 +270,13 @@ export function isCreditableKey(e) {
 }
 
 // ---- Persistence ---------------------------------------------------------------------
-// { xp, lifetimeLetters } ⇄ localStorage taw.xp / taw.letters. Every access wrapped: a
-// storage-blocked or storage-less environment reads back 0 and never throws.
+// Economy v5 storage shape: taw.xp holds { lv, into } — the level (an exact integer) and the
+// XP INTO that level (always < need(lv)). The stored number therefore never exceeds one
+// level's cost, so the float64 MAX_SAFE_INTEGER cliff that cumulative XP hit above ~LV600 is
+// gone. loadProgress/saveProgress speak the { level, intoLevel, lifetimeLetters } model shape;
+// an OLD cumulative value (a bare number written by v4 and earlier) is migrated on first read.
+// Every access wrapped: a storage-blocked/absent environment reads back the fresh LV1 state
+// and never throws.
 export const XP_KEY = 'taw.xp';
 export const LETTERS_KEY = 'taw.letters';
 export const TAPS_KEY = 'taw.taps';
@@ -278,17 +292,76 @@ function readNum(key) {
   }
 }
 
+// A fresh, valid { level, intoLevel } for any state we can't trust.
+const FRESH = { level: 1, intoLevel: 0 };
+
+// Read + normalise { level, intoLevel } from taw.xp, migrating the legacy cumulative-number
+// shape exactly once. New shape: '{"lv":n,"into":m}'. Legacy shape: a bare number string.
+function readLevelState() {
+  let raw;
+  try {
+    raw = localStorage.getItem(XP_KEY);
+  } catch {
+    return { ...FRESH };
+  }
+  if (raw == null) return { ...FRESH };
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ...FRESH };
+  }
+  // New shape.
+  if (parsed && typeof parsed === 'object' && Number.isFinite(parsed.lv)) {
+    let level = Math.max(1, Math.floor(parsed.lv));
+    let into = Number.isFinite(parsed.into) && parsed.into > 0 ? parsed.into : 0;
+    const cost = need(level);
+    if (into >= cost) into = 0; // corrupt/overflowed → clamp into the level
+    return { level, intoLevel: into };
+  }
+  // Legacy cumulative number → derive {level, into} once and rewrite in the new shape. Floor
+  // the carried progress to a round 10 so the very first post-migration readout still ends in 0.
+  if (typeof parsed === 'number' && Number.isFinite(parsed) && parsed > 0) {
+    const d = levelFromXp(parsed);
+    const migrated = { level: d.level, intoLevel: Math.floor(d.intoLevel / 10) * 10 };
+    writeLevelState(migrated.level, migrated.intoLevel);
+    return migrated;
+  }
+  return { ...FRESH };
+}
+
+function writeLevelState(level, intoLevel) {
+  try {
+    localStorage.setItem(XP_KEY, JSON.stringify({ lv: Math.max(1, Math.floor(level)), into: Math.max(0, intoLevel) }));
+  } catch {
+    /* storage blocked */
+  }
+}
+
 export function loadProgress() {
-  return { xp: readNum(XP_KEY), lifetimeLetters: readNum(LETTERS_KEY) };
+  const { level, intoLevel } = readLevelState();
+  return { level, intoLevel, lifetimeLetters: readNum(LETTERS_KEY) };
 }
 
 export function saveProgress(state) {
+  const level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
+  const intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
+  writeLevelState(level, intoLevel);
   try {
-    localStorage.setItem(XP_KEY, String(state.xp));
-    localStorage.setItem(LETTERS_KEY, String(state.lifetimeLetters));
+    localStorage.setItem(LETTERS_KEY, String(Number.isFinite(state && state.lifetimeLetters) ? state.lifetimeLetters : 0));
   } catch {
     // storage blocked — progress simply isn't persisted this session.
   }
+}
+
+// The display-progress object for a { level, intoLevel } state: the level, XP into it, that
+// level's cost, the remainder, and the 0..1 fill fraction for the bar. The direct-from-shape
+// analogue of levelFromXp (which still derives the same fields from a cumulative total).
+export function progressOf(state) {
+  const level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
+  const intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
+  const cost = need(level);
+  return { level, intoLevel, cost, toNext: cost - intoLevel, frac: cost > 0 ? intoLevel / cost : 0 };
 }
 
 // taw.taps — a SEPARATE all-time counter of credited TAPS (touch), distinct from

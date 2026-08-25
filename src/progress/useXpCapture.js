@@ -12,7 +12,7 @@ import {
   creditXp,
   createRateLimiter,
   isCreditableKey,
-  levelFromXp,
+  progressOf,
   xpPerInput,
 } from './xp';
 import { equippedPopMult, equippedSoundMult } from './shop';
@@ -32,7 +32,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
   if (xpRef.current === null) xpRef.current = loadProgress();
   const tapsRef = useRef(null);
   if (tapsRef.current === null) tapsRef.current = getTaps();
-  const [xpTotal, setXpTotal] = useState(xpRef.current.xp);
+  const [progress, setProgress] = useState(() => progressOf(xpRef.current));
   const streakRef = useRef({ count: 0, lastTime: 0, tier: 0 });
   const blockedRef = useRef(isBlocked);
   const creditRef = useRef(onCredit);
@@ -68,12 +68,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      // Capture the level BEFORE crediting so a level-up can pay out for each boundary crossed.
-      const beforeLevel = levelFromXp(xpRef.current.xp).level;
       const res = creditXp(xpRef.current, menuGain, isTap ? 0 : 1);
       xpRef.current = res.state;
       saveProgress(res.state);
-      setXpTotal(res.state.xp);
+      setProgress(progressOf(res.state));
       if (isTap) {
         tapsRef.current += 1;
         saveTaps(tapsRef.current);
@@ -146,5 +144,5 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     };
   }, [active, fxRef]);
 
-  return { xpTotal, progress: levelFromXp(xpTotal) };
+  return { progress };
 }

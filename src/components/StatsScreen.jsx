@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import {
   loadProgress,
-  levelFromXp,
   getTaps,
   getRebirths,
   rebirthMult,
   getKeyPower,
   keyPowerBaseXp,
+  need,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { formatNum } from '../format';
@@ -56,19 +56,21 @@ export default function StatsScreen({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const { xp, lifetimeLetters } = loadProgress();
-  const level = levelFromXp(xp).level;
+  // Economy v5 storage: {level, intoLevel}. There is no cumulative "total XP" any more (that
+  // was the number that hit the float64 cliff), so the readout shows XP INTO the current level.
+  const { level, intoLevel, lifetimeLetters } = loadProgress();
   const rounds = getRounds();
   const rebirths = getRebirths();
 
   const rbMult = rebirthMult(rebirths);
   const keyPower = getKeyPower();
-  const baseXp = keyPowerBaseXp(keyPower); // 10 + 2·keyPower
-  const menuXp = Math.round(baseXp * rbMult); // per menu keystroke (mode ×1)
+  const baseXp = keyPowerBaseXp(keyPower); // snapped ×10 base XP per letter
+  const menuXp = Math.round((baseXp * rbMult) / 10) * 10; // per menu keystroke (mode ×1), ×10
 
   const progression = [
     ['LEVEL', level],
-    ['TOTAL XP', xp],
+    ['XP INTO LEVEL', intoLevel],
+    ['XP TO NEXT LEVEL', Math.max(0, need(level) - intoLevel)],
     ['REBIRTHS', rebirths],
     ['LETTERS TYPED', lifetimeLetters],
     ['TAPS', getTaps()],

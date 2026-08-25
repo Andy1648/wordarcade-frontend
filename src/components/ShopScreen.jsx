@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyKeyPowerMax } from '../progress/shop';
 import { getWins } from '../progress/wins';
-import { loadProgress, levelFromXp, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp, keyPowerNextDoubler } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyPower, keyPowerCost, keyPowerBaseXp, keyPowerNextDoubler } from '../progress/xp';
 import { formatNum } from '../format';
 
 export default function ShopScreen({ onBack }) {
@@ -32,7 +32,7 @@ export default function ShopScreen({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const level = levelFromXp(loadProgress().xp).level;
+  const level = loadProgress().level;
   const rebirths = getRebirths();
   const threshold = rebirthThreshold(rebirths);
   const nextMult = rebirthMult(rebirths + 1);
