@@ -12,7 +12,7 @@
 
 /* ============================ HEADER LABEL ("▓ PICK YOUR PACKS") ============================ */
 /* Flat: yellow Bungee, no tilt, no ink filter. */
-.ppp-subline { font-family: 'Bungee', cursive; font-size: clamp(12px, 2.1vw, 16px); color: #FFE94A; -webkit-text-stroke: 2.5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; margin: 6px 0 12px; text-align: center; letter-spacing: 0.04em; }
+.ppp-subline { font-family: 'Bungee', cursive; font-size: clamp(16px, 2.4vw, 20px); color: #FFE94A; -webkit-text-stroke: 2.5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; margin: 6px 0 12px; text-align: center; letter-spacing: 0.04em; }
 .ppp-subline-glyph { font-family: 'Space Mono', monospace; -webkit-text-stroke: 0; color: #3DA8FF; text-shadow: 2px 2px 0 #000; margin-right: 2px; }
 
 /* ============================ SCROLLING WINDOW ============================ */
@@ -59,7 +59,7 @@
 
 .ppp-pill-emoji { font-size: 1.2em; line-height: 1; filter: grayscale(0.75) brightness(0.75); }
 .ppp-pill.is-on .ppp-pill-emoji { filter: none; }
-.ppp-pill-label { flex: 1; min-width: 0; font-family: 'Bungee', cursive; font-size: clamp(10px, 1.6vw, 13px); line-height: 1.05; color: #7f9dc9; overflow: hidden; text-overflow: ellipsis; }
+.ppp-pill-label { flex: 1; min-width: 0; font-family: 'Bungee', cursive; font-size: clamp(13px, 1.9vw, 16px); line-height: 1.05; color: #7f9dc9; overflow: hidden; text-overflow: ellipsis; }
 .ppp-pill.is-on .ppp-pill-label { color: #000; }
 
 /* Per-tile category count — small mono chip on the right. Black-on-blue when ON,
@@ -73,7 +73,7 @@
 .ppp-check svg { width: 14px; height: 14px; display: block; }
 
 /* ============================ FOOTER COUNT ============================ */
-.ppp-count { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: 0.1em; color: #c8d6ec; margin-bottom: 4px; text-align: center; min-height: 1.2em; }
+.ppp-count { font-family: 'Space Mono', monospace; font-weight: 700; font-size: clamp(16px, 2vw, 18px); letter-spacing: 0.1em; color: #c8d6ec; margin-bottom: 4px; text-align: center; min-height: 1.2em; }
 .ppp-count-num { display: inline-block; animation: ppp-count-pop 0.3s cubic-bezier(0.34, 1.7, 0.5, 1); }
 
 /* ============================ SELECT ALL / CLEAR ============================ */

@@ -17,7 +17,7 @@ const BASE_GAMES = [
     description: 'USE THE COMBO BEFORE TIME RUNS OUT.',
     baseColor: '#FF6B3D',
     iconBg: '#FFE94A',
-    badgeText: 'SOLO · MULTI',
+    badgeText: 'SOLO/MULTI',
     badgeBg: '#000',
     badgeColor: '#FF6B3D',
     textColor: '#000',

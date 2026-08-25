@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
-import { roundWinsEstimate } from '../progress/wins';
+import { wordWinsEstimate } from '../progress/wins';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -130,7 +130,7 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
 
@@ -208,7 +208,10 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // card->dialog FLIP morph (the expand starts from exactly this box).
   function handleClick(event) {
     if (locked) {
-      shakeOnce(); // gated: no navigation, just the shake
+      shakeOnce(); // gated: a quick tactile shake…
+      // …then open the preview dialog (mode rules + payout + unlock level). Falls back to
+      // the shake-only behaviour when no handler is wired.
+      if (onLockedSelect) onLockedSelect(game.id, event.currentTarget);
       return;
     }
     if (game.enabled) {
@@ -319,12 +322,12 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           {game.name}
         </div>
 
-        {/* Payout preview: what a typical round of this mode pays, at the selected difficulty
-            (else the easy baseline). CHAIN/FUSE carry their 3×/5× solo multiplier here.
-            Sits under the title so it always shows (the badge is bottom-pinned). */}
+        {/* Payout preview: what each accepted WORD pays in this mode, at the selected
+            difficulty (else the easy baseline). SAT Rush/CHAIN/FUSE carry their 2×/3×/5×
+            solo multiplier here. Sits under the title so it always shows (badge bottom-pinned). */}
         {game.enabled && (
           <div className="game-card-payout">
-            ~{roundWinsEstimate({ mode: game.id, difficulty })} WINS / ROUND
+            {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
           </div>
         )}
 

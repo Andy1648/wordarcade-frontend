@@ -1,0 +1,63 @@
+/* OverlaySkeleton.css — placeholder chrome for a still-loading Stats/Shop overlay. House
+   style: flat #1a0b2e panel, thick black border, hard offset shadow. One gentle shimmer on
+   the bars (feedback during an active load, not idle decoration); off under reduced motion. */
+.ovsk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(13, 6, 24, 0.72);
+}
+.ovsk-panel {
+  width: min(520px, 94vw);
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 16px;
+  box-shadow: 8px 8px 0 #000;
+  padding: 28px 26px;
+}
+.ovsk-title {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(28px, 5vw, 40px);
+  color: #2effe0;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.ovsk-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ovsk-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ovsk-bar {
+  height: 18px;
+  border-radius: 6px;
+  background: #2a1745;
+}
+.ovsk-bar-k {
+  flex: 0 0 45%;
+}
+.ovsk-bar-v {
+  flex: 0 0 25%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ovsk-bar {
+    animation: ovsk-shimmer 1.1s ease-in-out infinite;
+  }
+  .ovsk-row:nth-child(2) .ovsk-bar { animation-delay: 0.1s; }
+  .ovsk-row:nth-child(3) .ovsk-bar { animation-delay: 0.2s; }
+  .ovsk-row:nth-child(4) .ovsk-bar { animation-delay: 0.3s; }
+  .ovsk-row:nth-child(5) .ovsk-bar { animation-delay: 0.4s; }
+  .ovsk-row:nth-child(6) .ovsk-bar { animation-delay: 0.5s; }
+}
+@keyframes ovsk-shimmer {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
