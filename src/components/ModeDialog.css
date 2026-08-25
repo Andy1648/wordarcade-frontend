@@ -56,15 +56,15 @@
   padding: clamp(20px, 4vh, 40px);
   display: flex;
   flex-direction: column;
-  /* transform/transition are driven imperatively from JS for the FLIP. */
-  transform-origin: top left;
-  will-change: transform, border-radius, background-color;
+  /* opacity/transform are driven imperatively from JS for the single open/close transition.
+     Centre origin so the 0.96→1 scale pops from the middle, not the corner. */
+  transform-origin: center;
+  will-change: transform, opacity;
   overflow: hidden;
 }
 
-/* Close (X): a small square chip in the top-right corner. Held hidden until the
-   morph is nearly done (.is-in, toggled with the content) so it doesn't float on
-   the still-growing shell, then fades in with the body. */
+/* Close (X): a small square chip in the top-right corner. Visible immediately — the shell
+   fades in as one unit, so nothing here animates separately. */
 .mode-dialog-close {
   position: absolute;
   top: 12px;
@@ -81,11 +81,7 @@
   line-height: 1;
   cursor: pointer;
   box-shadow: 3px 3px 0 #000;
-  opacity: 0;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
-}
-.mode-dialog-close.is-in {
-  opacity: 1;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .mode-dialog-close:hover {
   transform: translate(-1px, -1px);
@@ -96,30 +92,25 @@
   box-shadow: 1px 1px 0 #000;
 }
 
-/* Animated background layer: the dark per-mode gradient (inline), the canvas on
-   top of it, and a bottom legibility gradient. position:absolute so it fills the
-   whole shell (under the padding) without touching the flex layout, z BELOW the
-   content. Held hidden until .is-in (with the content) so it doesn't fight the
-   morph's solid cross-fade. */
+/* STATIC background layer: the dark per-mode gradient (inline) + one static SVG starburst +
+   the bottom legibility gradient. Fills the shell under the padding, z BELOW the content.
+   No fade of its own — it appears with the shell (item 2). */
 .mode-dialog-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
   border-radius: inherit;
   overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.3s ease;
   pointer-events: none;
 }
-.mode-dialog-bg.is-in {
-  opacity: 1;
-}
-.mode-dialog-bg-canvas {
+/* The single static starburst (SVG), faint, radiating from up-centre. No animation. */
+.mode-dialog-bg-burst {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+  opacity: 0.16;
 }
 /* Keeps the lower-left text (title/liner/sub/CTAs) legible over the animation. */
 .mode-dialog-legibility {
@@ -131,40 +122,38 @@
   background: linear-gradient(to bottom, rgba(10, 4, 16, 0) 0%, rgba(10, 4, 16, 0.82) 100%);
 }
 
-/* Dialog body (chip + title + liner + sub + the two CTAs). Held at opacity 0
-   until ~240ms into the morph (JS adds .is-in), then fades + pops up so it lands
-   once the box has nearly finished growing - no squashed text mid-morph. */
+/* Dialog body (chip + title + liner + example + the CTAs). Visible immediately — it fades in
+   with the shell as one unit (item 2), no separate stagger. */
 .mode-dialog-content {
   position: relative;
   z-index: 2;
   flex: 1;
-  /* Let this flex child shrink below its content height and SCROLL inside the
-     shell on short viewports, instead of the action row sliding under the shell's
-     4px bottom border (overflow:hidden was clipping the CREATE/JOIN buttons +
-     their hard shadow). min-height:0 defeats the default flex min-height:auto. */
+  /* min-height:0 (defeats flex min-height:auto) so the body can shrink and scroll inside the
+     shell on a short viewport instead of the CTA row sliding under the border. On tall screens
+     it fits and never scrolls. When it DOES scroll, the bar is themed (item 3). */
   min-height: 0;
   overflow-y: auto;
-  /* Breathing room so the buttons' 4px hard shadow never touches the bottom edge. */
-  padding-bottom: 8px;
-  /* Show a thin scrollbar as a scroll AFFORDANCE when content overflows on short
-     viewports (previously hidden, so the clipped CREATE button looked like a
-     dead end with no hint that there was more below). */
+  /* Breathing room on all sides so the sticker-tilted chip / title (rotate/skew) never poke
+     past the content's clip edge (dialog-quality item 4 — the rotated chip corner was ~4px
+     over the top, the title ~4px over the sides). */
+  padding: 7px 8px 8px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  scrollbar-color: #ff4fa3 #2a1f3d;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  opacity: 0;
-  transform: translateY(12px) scale(0.97);
-  transition: opacity 0.26s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .mode-dialog-content::-webkit-scrollbar {
-  display: none;
+  width: 8px;
 }
-.mode-dialog-content.is-in {
-  opacity: 1;
-  transform: none;
+.mode-dialog-content::-webkit-scrollbar-track {
+  background: #2a1f3d;
+  border-radius: 8px;
+}
+.mode-dialog-content::-webkit-scrollbar-thumb {
+  background: #ff4fa3;
+  border-radius: 8px;
 }
 
 /* Stencil chip top-left, tilted like a sticker. */
@@ -314,17 +303,9 @@
   border-color: #000;
 }
 
-/* Reduced motion: the morph + content pop are dropped (the JS cross-fades the
-   shell instead); kill any residual transition-driven movement and the scrim blur
-   stays as a static dim. The content still fades, just without the slide/pop. */
+/* Reduced motion: the JS already drops the scale (opacity-only fade); keep the buttons'
+   press feedback shadow-only so nothing slides. */
 @media (prefers-reduced-motion: reduce) {
-  .mode-dialog-content {
-    transform: none;
-    transition: opacity 0.2s ease;
-  }
-  .mode-dialog-content.is-in {
-    transform: none;
-  }
   .mode-dialog-btn,
   .mode-dialog-close {
     transition: box-shadow 0.15s ease;

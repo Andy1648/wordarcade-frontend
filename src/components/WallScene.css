@@ -16,21 +16,17 @@
 
 /* ---- Brick wall ---- */
 
-/* Running-bond brick courses built entirely from repeating gradients (no image):
-   one horizontal gradient lays the mortar courses, two offset vertical gradients
-   stagger the bricks course-to-course. Mortar lines are the warm #2a1a3a; the
-   whole layer is kept visible (0.38) so the wall reads as real texture. */
+/* Wall tone. Was three repeating-linear-gradients forming brick courses (one horizontal
+   mortar, two staggered verticals) — at large sizes the 44/88px grid tiled visibly across
+   the viewport (fix/dialog-quality item 5). Replaced with a SINGLE static, non-tiling
+   gradient: a soft top-lit tone that gives the wall depth without any repeat. The graffiti
+   tags + floor shade still carry the alley. */
 .wall-bricks {
   position: absolute;
   inset: 0;
-  opacity: 0.38;
-  background-color: #1a0f2b;
-  background-image:
-    repeating-linear-gradient(0deg, #2a1a3a 0 3px, transparent 3px 44px),
-    repeating-linear-gradient(90deg, #2a1a3a 0 3px, transparent 3px 88px),
-    repeating-linear-gradient(90deg, #2a1a3a 0 3px, transparent 3px 88px);
-  background-size: 100% 88px, 88px 44px, 88px 44px;
-  background-position: 0 0, 0 0, 44px 44px;
+  opacity: 0.55;
+  background-color: #160c24;
+  background-image: linear-gradient(165deg, #241436 0%, #160c24 48%, #0f0819 100%);
 }
 
 /* The single permitted environmental gradient: the alley darkens toward the

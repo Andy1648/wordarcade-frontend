@@ -1,21 +1,20 @@
 // ModeDialog.jsx
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './ModeDialog.css';
-import ModeDialogBackground, { MODES } from './ModeDialogBackground';
+import ModeDialogBackground from './ModeDialogBackground';
+import { MODES } from './modeDialogConfig';
 import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
 
-// Morph timing/feel. The dialog grows from the clicked card to a centered panel
-// over MORPH_MS with a snappy ease-out; the body fades/pops in CONTENT_DELAY into
-// the morph so text never shows squashed mid-grow.
-const MORPH_MS = 400;
-const CONTENT_DELAY = 240;
+// Open/close feel (fix/dialog-quality item 2): ONE transform+opacity transition on ONE element
+// (the shell), 200ms ease-out. No FLIP morph, no separate content transition, no canvas repaint
+// competing — the scrim fades separately (CSS, also 200ms) and nothing else animates.
+const OPEN_MS = 200;
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
-const PANEL_BG = '#1a0b2e';
-const TRANSITION = `transform ${MORPH_MS}ms ${EASE}, border-radius ${MORPH_MS}ms ${EASE}, background-color ${MORPH_MS}ms ease`;
+const OPEN_TRANSITION = `transform ${OPEN_MS}ms ${EASE}, opacity ${OPEN_MS}ms ${EASE}`;
 
 // game.id -> animated-mode key (the prototype's MODES config keys).
 const MODE_KEY = {
@@ -43,19 +42,15 @@ function darken(hex, f) {
 }
 
 /**
- * A mode card expanded into a centered dialog via a hand-rolled FLIP morph (no
- * animation library). `sourceEl` is the clicked .game-card DOM node, measured
- * live with getBoundingClientRect so the morph starts (and, on close, returns)
- * exactly on the card even as it sways. The dialog is the intermediate step:
- * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin.
- * Behind the content sits a per-mode animated canvas (ModeDialogBackground).
+ * A mode card expanded into a centered dialog. It fades + scales in as one element
+ * (200ms, item 2); `sourceEl` is unused now (the old card→dialog FLIP morph is gone).
+ * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin. Behind the
+ * content sits a STATIC per-mode background (ModeDialogBackground — no canvas, no rAF).
  */
 export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
-  const [contentIn, setContentIn] = useState(false);
-  const [createHover, setCreateHover] = useState(false);
 
   const modeKey = MODE_KEY[game.id] || 'bomb';
   const mode = MODES[modeKey];
@@ -64,94 +59,43 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   // unlocked sibling of LockedPreviewDialog. Everything else (morph, bg, layout) is shared.
   const isSolo = !!onPlay && !!mode.solo;
 
-  // OPEN: position the (already final-sized) shell onto the card, then release to
-  // its resting transform so it eases out into the dialog. Reads both rects before
-  // any write. Under reduced motion this degrades to a plain cross-fade.
+  // OPEN: fade + gentle scale-up the shell as ONE element (transform+opacity, 200ms). No FLIP
+  // morph, no content stagger, no canvas repaint. `sourceEl` is unused now (the card→dialog
+  // morph is gone), kept only for call-site compatibility. Reduced motion drops the scale.
   useLayoutEffect(() => {
     const shell = shellRef.current;
     if (!shell) return undefined;
     const reduce = prefersReduced();
-    const first = sourceEl ? sourceEl.getBoundingClientRect() : null;
-
-    let raf = 0;
-    let contentTimer = 0;
-
-    if (reduce || !first) {
-      shell.style.opacity = '0';
-      raf = requestAnimationFrame(() => {
-        shell.style.transition = `opacity ${MORPH_MS}ms ease`;
-        shell.style.opacity = '1';
-      });
-      contentTimer = window.setTimeout(() => setContentIn(true), 120);
-    } else {
-      // READ: the shell's resting (dialog) rect + the card rect.
-      const last = shell.getBoundingClientRect();
-      const dx = first.left - last.left;
-      const dy = first.top - last.top;
-      const sx = first.width / last.width;
-      const sy = first.height / last.height;
-
-      // WRITE: snap onto the card (no transition), wearing the card's fill/radius.
-      shell.style.transition = 'none';
-      shell.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-      shell.style.borderRadius = '8px';
-      shell.style.background = game.baseColor;
-
-      // Next frame: release to identity so it morphs out to the dialog.
-      raf = requestAnimationFrame(() => {
-        shell.style.transition = TRANSITION;
-        shell.style.transform = 'translate(0px, 0px) scale(1, 1)';
-        shell.style.borderRadius = '16px';
-        shell.style.background = PANEL_BG;
-      });
-      contentTimer = window.setTimeout(() => setContentIn(true), CONTENT_DELAY);
-    }
-
-    // Fade the scrim in a frame after mount.
+    shell.style.opacity = '0';
+    shell.style.transform = reduce ? 'none' : 'scale(0.96)';
+    const raf = requestAnimationFrame(() => {
+      shell.style.transition = reduce ? `opacity ${OPEN_MS}ms ${EASE}` : OPEN_TRANSITION;
+      shell.style.opacity = '1';
+      shell.style.transform = 'scale(1)';
+    });
     const scrim = scrimRef.current;
     const scrimRaf = requestAnimationFrame(() => scrim && scrim.classList.add('is-in'));
-
     return () => {
       cancelAnimationFrame(raf);
       cancelAnimationFrame(scrimRaf);
-      window.clearTimeout(contentTimer);
     };
-  }, [sourceEl, game.baseColor]);
+  }, []);
 
-  // CLOSE: reverse the morph back into the (re-measured) source card, then unmount.
+  // CLOSE: fade + scale the shell back out over the same 200ms, then unmount.
   const handleClose = useCallback(() => {
     if (closingRef.current) return;
     closingRef.current = true;
-    setContentIn(false);
-
     const shell = shellRef.current;
     const scrim = scrimRef.current;
     if (scrim) scrim.classList.remove('is-in');
-
     const reduce = prefersReduced();
-    const first = sourceEl ? sourceEl.getBoundingClientRect() : null;
-
-    if (!shell || reduce || !first) {
-      if (shell) {
-        shell.style.transition = 'opacity 200ms ease';
-        shell.style.opacity = '0';
-      }
-      window.setTimeout(onClose, 200);
-      return;
+    if (shell) {
+      shell.style.transition = reduce ? `opacity ${OPEN_MS}ms ${EASE}` : OPEN_TRANSITION;
+      shell.style.opacity = '0';
+      if (!reduce) shell.style.transform = 'scale(0.96)';
     }
-
-    const last = shell.getBoundingClientRect();
-    const dx = first.left - last.left;
-    const dy = first.top - last.top;
-    const sx = first.width / last.width;
-    const sy = first.height / last.height;
-
-    shell.style.transition = TRANSITION;
-    shell.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-    shell.style.borderRadius = '8px';
-    shell.style.background = game.baseColor;
-    window.setTimeout(onClose, MORPH_MS);
-  }, [sourceEl, game.baseColor, onClose]);
+    window.setTimeout(onClose, OPEN_MS);
+  }, [onClose]);
 
   // Escape closes (matches the scrim click).
   useEffect(() => {
@@ -175,27 +119,26 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
         style={{ borderColor: game.baseColor }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Animated background layer: dark mode-gradient + canvas + bottom
-            legibility gradient. Sits BELOW the content; fades in with it so it
-            doesn't fight the morph cross-fade. */}
+        {/* STATIC background layer: a flat 2-stop mode gradient + one static SVG starburst +
+            the bottom legibility gradient. No canvas, no rAF (item 1). */}
         <div
-          className={`mode-dialog-bg${contentIn ? ' is-in' : ''}`}
+          className="mode-dialog-bg"
           aria-hidden="true"
           style={{ background: `linear-gradient(160deg, ${mode.bg[0]}, ${mode.bg[1]})` }}
         >
-          <ModeDialogBackground mode={modeKey} roar={createHover} />
+          <ModeDialogBackground mode={modeKey} />
           <div className="mode-dialog-legibility" />
         </div>
 
         <button
-          className={`mode-dialog-close${contentIn ? ' is-in' : ''}`}
+          className="mode-dialog-close"
           onClick={handleClose}
           aria-label="Close"
         >
           ✕
         </button>
 
-        <div className={`mode-dialog-content${contentIn ? ' is-in' : ''}`}>
+        <div className="mode-dialog-content">
           <div
             className="mode-dialog-chip"
             style={{ color: accent, borderColor: accent }}
@@ -246,8 +189,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                   className="mode-dialog-btn mode-dialog-btn-create"
                   style={{ background: accent, borderColor: darken(accent, 0.45) }}
                   onClick={onPlay}
-                  onMouseEnter={() => setCreateHover(true)}
-                  onMouseLeave={() => setCreateHover(false)}
                 >
                   PLAY
                 </button>
@@ -263,8 +204,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                   className="mode-dialog-btn mode-dialog-btn-create"
                   style={{ background: accent, borderColor: darken(accent, 0.45) }}
                   onClick={onCreate}
-                  onMouseEnter={() => setCreateHover(true)}
-                  onMouseLeave={() => setCreateHover(false)}
                   disabled={!!connecting}
                 >
                   {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : mode.create}
