@@ -298,7 +298,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 
 .game-card-name {
   font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 1.6vw, 22px);
+  /* Scaled up so titles read on a laptop: >=28px at >=1366px wide, still 12px on
+     phones (min). Static clamp() — never animated. */
+  font-size: clamp(12px, 2.1vw, 30px);
   line-height: 1.1;
   margin-bottom: 4px;
   white-space: pre-line;

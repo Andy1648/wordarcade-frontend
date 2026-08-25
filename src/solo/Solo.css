@@ -98,7 +98,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  /* Strip counter to the >=16px floor at >=1366px wide; 12px on phones. aspect-ratio
+     fixes the cell height, so this bump costs no vertical space. Static clamp(). */
+  font-size: clamp(12px, 1.2vw, 16px);
   border-radius: 4px;
   background: #1a0b2e;
   color: #6b5a86;
@@ -165,7 +167,10 @@
 /* The big center token: the required letter (CHAIN) or the fragment (FUSE). */
 .solo-center {
   font-family: 'Bungee', cursive;
-  font-size: clamp(48px, 14vw, 96px);
+  /* The hero token stays far above the 44px floor, but a vh term (min) shrinks it on
+     SHORT laptops so the column keeps >=24px slack there. Phones keep 14vw (unchanged).
+     Static font-size — the tier escalation stays a transform: scale() elsewhere. */
+  font-size: clamp(44px, min(14vw, 14vh), 76px);
   line-height: 1;
   color: var(--solo-accent);
   -webkit-text-stroke: 6px #000;
@@ -174,7 +179,7 @@
   text-align: center;
 }
 .solo-supply {
-  font-size: 13px;
+  font-size: clamp(13px, 1.3vw, 16px);
   letter-spacing: 0.06em;
   color: #b9a7d6;
   text-align: center;
@@ -294,7 +299,10 @@
   width: 100%;
   height: 56px;
   font-family: 'Space Mono', monospace;
-  font-size: 20px;
+  /* >=28px input target at >=1366px wide; 20px on phones (min). The fixed 56px height
+     means this bump costs no vertical space. Static font-size only — this element keeps
+     NO transition/animation/transform/filter/will-change (nor any ancestor up to .solo-root). */
+  font-size: clamp(20px, 2.1vw, 28px);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -338,14 +346,15 @@
 
 .solo-reason {
   min-height: 20px;
-  font-size: 14px;
+  /* Message line to the >=16px floor at >=1366px wide; 14px on phones. Static clamp(). */
+  font-size: clamp(14px, 1.3vw, 16px);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #ff4b4b;
   text-align: center;
 }
 .solo-armhint {
-  font-size: 13px;
+  font-size: clamp(13px, 1.3vw, 16px);
   color: #b9a7d6;
   text-align: center;
   max-width: 320px;
