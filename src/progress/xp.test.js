@@ -54,8 +54,20 @@ test('need() matches the pinned anchor values', () => {
   assert.equal(need(10), 160);
   assert.equal(need(50), 1150);
   assert.equal(need(100), 13150);
-  // The gentle 1.05 curve is snapped to a round multiple of 10 at every level.
-  for (const n of [1, 2, 5, 17, 50, 100, 300, 600]) assert.equal(need(n) % 10, 0);
+  // The curve is snapped to a round multiple of 10 at every level (both branches). Checked
+  // only where need(n) is still an exact integer (< 2^53 ≈ LV414); above that, float64 can't
+  // represent the value — let alone its %10 — exactly, which is the very precision cliff the
+  // v4.1 report flags.
+  for (const n of [1, 2, 5, 17, 50, 100, 200, 300, 410]) assert.equal(need(n) % 10, 0);
+});
+
+test('need() steepens above LV200 to 1.11/level (Economy v4.1 late-game cap)', () => {
+  assert.equal(need(200), 1729260); // low branch, unchanged at the break
+  assert.equal(need(201), 1919480); // need(200) × 1.11 → nearest 10
+  // Above the break each level grows ~1.11× (steeper than the 1.05 base below it).
+  const r = need(300) / need(299);
+  assert.ok(r > 1.1 && r < 1.12, `ratio ${r}`);
+  assert.ok(need(201) > need(200));
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {

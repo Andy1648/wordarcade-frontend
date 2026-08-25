@@ -18,13 +18,22 @@ export const XP_MULTIPLIERS = {
   fuse: 5,
 };
 
-// Cost to advance FROM level n to n+1. GENTLE exponential (1.05/level), snapped to a round
-// multiple of 10 so the bar never shows an ugly 118. Keyboard-Escape-shaped: shallow per-level
-// growth so play runs all the way to ~level 600, where the rebirth table's huge multipliers
-// take over. (The old 1.18/level curve capped the game around level 30.)
-//   need(1)=110  need(10)=160  need(50)=1,150  need(100)=13,150 — always a multiple of 10.
+// Cost to advance FROM level n to n+1 — PIECEWISE (Economy v4.1, late-game runaway cap):
+//   n <= 200 : gentle 1.05/level (unchanged) — need(1)=110 … need(100)=13,150, need(200)≈1.73M.
+//   n  > 200 : need(200) · 1.11^(n-200) — a STEEPER top so the curve keeps pace with the
+//              ×10-per-rebirth multipliers instead of one keystroke clearing many levels.
+// Every value is snapped to a round multiple of 10.
+//
+// KNOWN LIMITATION (see the sim in the Economy v4.1 report): steepening raises cumulative XP,
+// so it moves the float64 precision cliff (cumXP > MAX_SAFE_INTEGER) EARLIER, not later — the
+// opposite of what a "precision above LV600" goal needs. No exponent can give both ≥200
+// letters/run at R19 AND keep cumXP under MAX_SAFE through LV600; the real fix is BigInt xp.
+export const CURVE_BREAK = 200; // level at which the curve steepens
+export const TOP_CURVE_EXP = 1.11; // per-level growth above the break
 export function need(n) {
-  return Math.round((100 * Math.pow(1.05, n)) / 10) * 10;
+  if (n <= CURVE_BREAK) return Math.round((100 * Math.pow(1.05, n)) / 10) * 10;
+  const base = Math.round((100 * Math.pow(1.05, CURVE_BREAK)) / 10) * 10; // need(200)
+  return Math.round((base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK)) / 10) * 10;
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
