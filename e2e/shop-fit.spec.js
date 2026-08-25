@@ -41,7 +41,7 @@ async function measure(page) {
 }
 
 for (const { w, h } of VIEWPORTS) {
-  for (const [view, selector] of [['SHOP', '.homepage-shop-btn'], ['REBIRTH', '.homepage-rebirth-btn']]) {
+  for (const [view, selector] of [['SHOP', '.homepage-nav-btn.is-shop'], ['REBIRTH', '.homepage-nav-btn.is-rebirth']]) {
     test(`${view} panel fits ${w}x${h}: top>=0 and bottom<=innerHeight`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await openVia(page, selector);

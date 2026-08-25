@@ -1,0 +1,88 @@
+/* ModeExample.css — the worked-example block (item 2). Newgrounds treatment: flat dark fill,
+   thick black border, hard offset shadow. Static — no animation. */
+.mode-ex {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  margin: clamp(8px, 1.6vh, 14px) 0 0;
+  padding: clamp(10px, 1.6vh, 14px) clamp(12px, 1.6vw, 16px);
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.mode-ex-tag {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(10px, 1.2vw, 12px);
+  letter-spacing: 0.14em;
+  border: 2px solid;
+  border-radius: 6px;
+}
+.mode-ex-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(15px, 1.9vw, 20px);
+  letter-spacing: 0.03em;
+  color: #f3ecff;
+  line-height: 1.3;
+}
+.mode-ex-tok {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px 8px;
+}
+.mode-ex-word {
+  white-space: nowrap;
+}
+.mode-ex-arrow {
+  color: #b9a7d6;
+  font-weight: 700;
+}
+.mode-ex-sep {
+  color: #b9a7d6;
+}
+/* SAT RUSH definition wraps to its own softer line. */
+.mode-ex-define {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.mode-ex-def {
+  font-family: 'Space Mono', monospace;
+  font-weight: 400;
+  font-size: clamp(13px, 1.5vw, 16px);
+  color: #c8b8e0;
+  white-space: normal;
+}
+.mode-ex-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 14px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 2px dashed #2a1b3f;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(12px, 1.4vw, 14px);
+  letter-spacing: 0.06em;
+  color: #b9a7d6;
+}
+.mode-ex-pay b {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(15px, 1.8vw, 20px);
+  -webkit-text-stroke: 1.2px #000;
+}
+.mode-ex-round {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(11px, 1.3vw, 14px);
+  letter-spacing: 0.06em;
+  color: #f3ecff;
+}

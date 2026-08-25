@@ -76,7 +76,7 @@ const CHAIN_GAME = {
   artKey: 'ChainArt',
   name: 'CHAIN',
   description: 'Each word starts where the last one ended',
-  unlockLevel: 10, // gated: visible-but-locked until the player reaches LV 10
+  unlockLevel: 15, // gated: visible-but-locked until the player reaches LV 15 (raised from 10 — ~1088 letters, ~4 sessions)
   baseColor: '#2EFFE0', // teal field (the mode's accent)
   iconBg: '#0D2B28', // dark teal so the cyan link icon reads
   badgeText: 'SOLO',
@@ -91,7 +91,7 @@ const FUSE_GAME = {
   artKey: 'FuseArt',
   name: 'FUSE',
   description: 'Type a word that contains the piece',
-  unlockLevel: 20, // gated: visible-but-locked until the player reaches LV 20
+  unlockLevel: 22, // gated: visible-but-locked until the player reaches LV 22 (raised from 20 — ~5371 letters, ~18 sessions)
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',
