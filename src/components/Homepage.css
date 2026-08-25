@@ -88,44 +88,54 @@
   transform: scale(0.965);
 }
 
-/* SHOP entry button — loud top-right, deliberately NOT a circle (distinct from the round
-   audio toggles): flat yellow, thick black border, hard offset shadow, bag glyph. */
-.homepage-shop-btn {
+/* Corner nav (item 3) — SHOP / REBIRTH / STATS as WORD buttons, stacked in the top-right
+   corner. Each is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall,
+   width auto — the three read as one matched set. */
+.homepage-corner-nav {
   position: absolute;
   top: clamp(10px, 1.6vh, 20px);
   right: clamp(12px, 2vw, 24px);
   z-index: 6;
-  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* right-align the auto-width buttons into a clean stack */
+  gap: 8px;
+}
+.homepage-nav-btn {
+  position: relative;
   height: 44px;
+  width: auto;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffe94a;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(13px, 1.4vw, 16px);
+  letter-spacing: 0.04em;
+  color: #0d0618;
   border: 3px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.homepage-shop-btn svg {
-  width: 24px;
-  height: 24px;
-  display: block;
-}
-.homepage-shop-btn:hover {
+.homepage-nav-btn.is-shop { background: #ffe94a; }
+.homepage-nav-btn.is-rebirth { background: #9a1aff; color: #fff; }
+.homepage-nav-btn.is-stats { background: #2effe0; }
+.homepage-nav-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px 0 #000;
 }
-.homepage-shop-btn:active {
+.homepage-nav-btn:active {
   transform: translate(4px, 4px);
   box-shadow: none;
 }
-.homepage-shop-btn.disabled {
+.homepage-nav-btn.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
-/* Affordable-item dot — a contrasting pink badge (a yellow dot would vanish on the yellow
-   button); static, no animation, corner-anchored so it adds no layout. */
+/* Affordable-item dot — a contrasting pink badge on the SHOP button corner; static, corner-
+   anchored so it adds no layout. */
 .homepage-shop-dot {
   position: absolute;
   top: -5px;
@@ -135,82 +145,6 @@
   border-radius: 50%;
   background: #ff2ec4;
   border: 2px solid #000;
-}
-
-/* REBIRTH entry — same 44×44 icon treatment as SHOP, tucked directly UNDER it on the right
-   edge (52px = the 44px button + an 8px gap). Purple fill + white renewal-loop glyph, so the
-   two right-edge icons read as SHOP (yellow) then REBIRTH (purple) — two icons, two views. */
-.homepage-rebirth-btn {
-  position: absolute;
-  top: calc(clamp(10px, 1.6vh, 20px) + 52px);
-  right: clamp(12px, 2vw, 24px);
-  z-index: 6;
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #9a1aff;
-  border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.homepage-rebirth-btn svg {
-  width: 24px;
-  height: 24px;
-  display: block;
-}
-.homepage-rebirth-btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 #000;
-}
-.homepage-rebirth-btn:active {
-  transform: translate(4px, 4px);
-  box-shadow: none;
-}
-.homepage-rebirth-btn.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* STATS entry — same treatment as SHOP (flat panel, thick black border, hard offset shadow)
-   but top-LEFT with a bar-chart glyph, so the two corner icon buttons read as a matched pair.
-   Cyan fill distinguishes it from the yellow shop bag. */
-.homepage-stats-btn {
-  position: absolute;
-  top: clamp(10px, 1.6vh, 20px);
-  left: clamp(12px, 2vw, 24px);
-  z-index: 6;
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #2effe0;
-  border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.homepage-stats-btn svg {
-  width: 24px;
-  height: 24px;
-  display: block;
-}
-.homepage-stats-btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 #000;
-}
-.homepage-stats-btn:active {
-  transform: translate(4px, 4px);
-  box-shadow: none;
-}
-.homepage-stats-btn.disabled {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 /* Reduced motion: drop the recede entirely (the dialog cross-fades; the scrim
@@ -504,27 +438,16 @@ html[data-beat='true'] .homepage-logo {
   --gap: clamp(10px, 1.4vw, 20px);
   width: 100%;
   box-sizing: border-box;
-  /* Horizontal padding does double duty (items 2 + 3): it is the 16-32px gutter between the
-     grid and the stage's inner edge, AND it gives the leftmost card's rest tilt / featured
-     upscale room to lean WITHOUT being clipped by overflow-x:hidden (the Word Bomb card was
-     poking ~11px past the clip edge and getting cut off). */
+  /* Horizontal padding is the 16-32px gutter between the grid and the stage's inner edge
+     (item 2). */
   padding: 0 clamp(18px, 1.8vw, 30px);
-  max-height: calc(var(--rowh, 320px) * 1.46 + var(--gap));
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-  scrollbar-width: none; /* Firefox */
-  /* Bottom fade over the last 46px, hinting there's more below. Removed (below) once
-     scrolled to the end or when the region doesn't actually scroll. */
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 46px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 46px), transparent);
-}
-.homepage-cards-scroll::-webkit-scrollbar {
-  display: none; /* WebKit */
-}
-.homepage-cards-scroll.is-atend {
-  -webkit-mask-image: none;
-  mask-image: none;
+  /* NO clipping here (fix/ui-pass-4, item 1): the REAL cause of the "still clipped" cards was
+     THIS element — its overflow-y:auto (with a 1.46-row max-height) clipped the row-1 card tops
+     (rest-rotate / featured upscale poked a few px above the scroll top) and hid the whole
+     second row below the fold. Every OTHER ancestor already clears every card with a wide
+     margin, so simply not clipping here shows all five cards uncut; --menu-scale (measured in
+     Homepage.jsx over the now-two-row region) shrinks the menu to keep it one screen tall. */
+  overflow: visible;
 }
 
 /* "N MORE" pager — centred on the bottom edge of the scroll region. Same treatment as

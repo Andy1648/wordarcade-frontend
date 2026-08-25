@@ -19,8 +19,8 @@ async function openVia(page, seed, selector) {
   await page.locator(selector).click();
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
-const openShop = (page, seed) => openVia(page, seed, '.homepage-shop-btn');
-const openRebirth = (page, seed) => openVia(page, seed, '.homepage-rebirth-btn');
+const openShop = (page, seed) => openVia(page, seed, '.homepage-nav-btn.is-shop');
+const openRebirth = (page, seed) => openVia(page, seed, '.homepage-nav-btn.is-rebirth');
 
 test.describe('shop', () => {
   test('SHOP icon: no tabs; locked items visible+dimmed; buying deducts wins only and enables equip', async ({ page }) => {

@@ -6,7 +6,7 @@ import ModeDialogBackground, { MODES } from './ModeDialogBackground';
 import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
-import { wordWinsEstimate } from '../progress/wins';
+import ModeExample from './ModeExample';
 
 // Morph timing/feel. The dialog grows from the clicked card to a centered panel
 // over MORPH_MS with a snappy ease-out; the body fades/pops in CONTENT_DELAY into
@@ -63,7 +63,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   // CREATE/JOIN. Driven by `onPlay` being wired AND the mode being flagged solo — the
   // unlocked sibling of LockedPreviewDialog. Everything else (morph, bg, layout) is shared.
   const isSolo = !!onPlay && !!mode.solo;
-  const soloPay = isSolo ? wordWinsEstimate({ mode: game.id }) : 0;
 
   // OPEN: position the (already final-sized) shell onto the card, then release to
   // its resting transform so it eases out into the dialog. Reads both rects before
@@ -226,17 +225,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            {/* SOLO keeps it tight (name · one-line rule · wins · PLAY) — the HOW IT WORKS
-                block is only for the CREATE/JOIN modes, and dropping it gives the PLAY
-                button room on shorter dialogs. */}
-            {!isSolo && (
-              <>
-                <div className="mode-dialog-howlabel" style={{ color: accent }}>
-                  HOW IT WORKS
-                </div>
-                <div className="mode-dialog-sub">{mode.sub}</div>
-              </>
-            )}
+            {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
+                rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
+            <ModeExample mode={game.id} accent={accent} />
 
             {modeKey === 'blitz' && (
               <PackPicker
@@ -247,25 +238,20 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               />
             )}
 
-            {/* SOLO (CHAIN/FUSE): per-word wins line, then a single PLAY button — the
-                unlocked sibling of LockedPreviewDialog's "N WINS / WORD" teaser. */}
+            {/* SOLO (CHAIN/FUSE): a single PLAY button (the wins rate now lives in the example
+                block above). */}
             {isSolo ? (
-              <>
-                <div className="mode-dialog-pay">
-                  <span className="mode-dialog-pay-num" style={{ color: accent }}>{soloPay}</span> WINS / WORD
-                </div>
-                <div className="mode-dialog-actions">
-                  <button
-                    className="mode-dialog-btn mode-dialog-btn-create"
-                    style={{ background: accent, borderColor: darken(accent, 0.45) }}
-                    onClick={onPlay}
-                    onMouseEnter={() => setCreateHover(true)}
-                    onMouseLeave={() => setCreateHover(false)}
-                  >
-                    PLAY
-                  </button>
-                </div>
-              </>
+              <div className="mode-dialog-actions">
+                <button
+                  className="mode-dialog-btn mode-dialog-btn-create"
+                  style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                  onClick={onPlay}
+                  onMouseEnter={() => setCreateHover(true)}
+                  onMouseLeave={() => setCreateHover(false)}
+                >
+                  PLAY
+                </button>
+              </div>
             ) : (
               /* CREATE/JOIN show the shared CONNECTING… / WAKING THE SERVER…
                  feedback IN PLACE of their label while their action is pending —

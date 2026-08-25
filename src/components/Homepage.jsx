@@ -513,75 +513,45 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
 
-        {/* SHOP entry — loud, top-right, distinct from the round audio buttons (square,
-            yellow, bag glyph). The affordable-item dot rides its corner. */}
-        <button
-          ref={shopLinkRef}
-          type="button"
-          className={`homepage-shop-btn${navigating ? ' disabled' : ''}`}
-          onClick={handleShop}
-          onMouseEnter={() => sfx('hover')}
-          disabled={navigating}
-          aria-label={`Open shop${winsAffordable ? ' — items available' : ''}`}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M5 8h14l-1.1 11.1a1.5 1.5 0 0 1-1.5 1.35H7.6a1.5 1.5 0 0 1-1.5-1.35L5 8z"
-              fill="none"
-              stroke="#0d0618"
-              strokeWidth="2.2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"
-              fill="none"
-              stroke="#0d0618"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-          </svg>
-          {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
-        </button>
-
-        {/* REBIRTH entry — its own top-right icon, tucked UNDER the SHOP bag (same 44×44
-            treatment) with a distinct circular-renewal glyph and a purple fill, so SHOP and
-            REBIRTH read as two icons → two destinations (the in-panel tabs are gone). */}
-        <button
-          ref={rebirthLinkRef}
-          type="button"
-          className={`homepage-rebirth-btn${navigating ? ' disabled' : ''}`}
-          onClick={handleRebirth}
-          onMouseEnter={() => sfx('hover')}
-          disabled={navigating}
-          aria-label="Open rebirth"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            {/* Two arcs forming a renewal loop, each with an arrowhead. */}
-            <path d="M19 12a7 7 0 0 1-11.9 5" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
-            <path d="M5 12A7 7 0 0 1 16.9 7" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
-            <path d="M16.4 3.6 17.2 7.2 13.6 7.9" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M7.6 20.4 6.8 16.8 10.4 16.1" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-
-        {/* STATS entry — its own top-corner icon button, same treatment as SHOP (square,
-            thick black border, hard shadow) but top-LEFT with a bar-chart glyph so the two
-            corner controls read as a distinct pair. Replaces the old footer STATS link. */}
-        <button
-          ref={statsLinkRef}
-          type="button"
-          className={`homepage-stats-btn${navigating ? ' disabled' : ''}`}
-          onClick={handleStats}
-          onMouseEnter={() => sfx('hover')}
-          disabled={navigating}
-          aria-label="Open stats"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="4" y="13" width="4" height="7" fill="none" stroke="#0d0618" strokeWidth="2.2" strokeLinejoin="round" />
-            <rect x="10" y="9" width="4" height="11" fill="none" stroke="#0d0618" strokeWidth="2.2" strokeLinejoin="round" />
-            <rect x="16" y="5" width="4" height="15" fill="none" stroke="#0d0618" strokeWidth="2.2" strokeLinejoin="round" />
-          </svg>
-        </button>
+        {/* Corner nav — three WORD buttons (not glyphs), stacked in the top-right corner. Each
+            is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
+            auto (item 3). SHOP keeps its affordable-item dot. */}
+        <nav className="homepage-corner-nav" aria-label="Menu">
+          <button
+            ref={shopLinkRef}
+            type="button"
+            className={`homepage-nav-btn is-shop${navigating ? ' disabled' : ''}`}
+            onClick={handleShop}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            aria-label={`Open shop${winsAffordable ? ' — items available' : ''}`}
+          >
+            SHOP
+            {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
+          </button>
+          <button
+            ref={rebirthLinkRef}
+            type="button"
+            className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
+            onClick={handleRebirth}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            aria-label="Open rebirth"
+          >
+            REBIRTH
+          </button>
+          <button
+            ref={statsLinkRef}
+            type="button"
+            className={`homepage-nav-btn is-stats${navigating ? ' disabled' : ''}`}
+            onClick={handleStats}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            aria-label="Open stats"
+          >
+            STATS
+          </button>
+        </nav>
 
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
             paint dripping off the letters - hand-painted on the wall, not set. */}

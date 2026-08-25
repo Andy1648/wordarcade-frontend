@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './LockedPreviewDialog.css';
-import { wordWinsEstimate } from '../progress/wins';
+import ModeExample from './ModeExample';
 
 export default function LockedPreviewDialog({ game, level = 0, onClose }) {
   const panelRef = useRef(null);
@@ -26,7 +26,6 @@ export default function LockedPreviewDialog({ game, level = 0, onClose }) {
 
   if (!game) return null;
   const name = String(game.name || '').replace('\n', ' ');
-  const pay = wordWinsEstimate({ mode: game.id });
   const accent = game.baseColor || '#2EFFE0';
 
   const overlay = (
@@ -58,9 +57,9 @@ export default function LockedPreviewDialog({ game, level = 0, onClose }) {
         <div className="lp-name" style={{ color: accent }}>{name}</div>
         <div className="lp-rules">{game.description}</div>
 
-        <div className="lp-pay">
-          <span className="lp-pay-num" style={{ color: accent }}>{pay}</span> WINS / WORD
-        </div>
+        {/* Real worked example + wins rate + round length (item 2) — same block the unlocked
+            dialog shows, so locked and unlocked read as siblings. */}
+        <ModeExample mode={game.id} accent={accent} />
 
         <div className="lp-gate">
           UNLOCKS AT LV {game.unlockLevel}

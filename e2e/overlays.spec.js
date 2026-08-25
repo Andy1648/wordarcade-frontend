@@ -44,7 +44,7 @@ test.describe('overlays render without console errors', () => {
   test('STATS opens, renders the panel, and throws zero errors', async ({ page }) => {
     const errors = [];
     await gotoSeededMenu(page, errors);
-    await page.locator('.homepage-stats-btn').click();
+    await page.locator('.homepage-nav-btn.is-stats').click();
     const panel = page.locator('.stats-panel');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('KEY POWER'); // the row that used to crash
@@ -56,7 +56,7 @@ test.describe('overlays render without console errors', () => {
   test('SHOP opens, renders the panel, and throws zero errors', async ({ page }) => {
     const errors = [];
     await gotoSeededMenu(page, errors);
-    await page.locator('.homepage-shop-btn').click();
+    await page.locator('.homepage-nav-btn.is-shop').click();
     const panel = page.locator('.shop-panel');
     await expect(panel).toBeVisible();
     await expect(page.locator('.shop-title')).toHaveText('SHOP');
@@ -67,7 +67,7 @@ test.describe('overlays render without console errors', () => {
   test('REBIRTH opens, renders the panel, and throws zero errors', async ({ page }) => {
     const errors = [];
     await gotoSeededMenu(page, errors);
-    await page.locator('.homepage-rebirth-btn').click();
+    await page.locator('.homepage-nav-btn.is-rebirth').click();
     const panel = page.locator('.shop-panel');
     await expect(panel).toBeVisible();
     await expect(page.locator('.shop-title')).toHaveText('REBIRTH');
