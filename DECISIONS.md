@@ -120,3 +120,24 @@ Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600K
 - category-blitz occupancy: my first metric (name+badge+payout union) read it low (53% @1440)
   because it excludes the AI JUDGED pill (a text element above the title). Counting it, all 5 cards
   are 55-75% at every viewport. Metric now includes the ai-badge.
+
+## data/sat-words — SAT Rush word expansion (JOB 3, autonomous 2026-08-26)
+- STARTING COUNT: 612 words in src/data/satRush/words.json (array of {word,pos,tier,gloss,context,
+  root,alts}; context blanks the word with "___"). No separate source list.
+- Generated in 3 batches by letter range (A-H, I-P, Q-Z), each real SAT-prep-list vocabulary
+  (Barron's/Kaplan/Princeton/Magoosh), student-readable gloss, one-blank context that infers the
+  meaning without leaking the word or repeating the gloss.
+- Batch A-H: 127 generated · Batch I-P: 120 · Batch Q-Z: 122 · TOTAL generated 369.
+- VALIDATED against the wordSchema.test contract + JOB 3 rules (dedupe case-insensitively vs the
+  612; exactly one blank; no 5+ char substring of the word in gloss OR context; gloss not repeated
+  verbatim in context). ADDED 344, REJECTED 25:
+    - 21 rejected because the word is already an `alt` of an EXISTING entry (adding it as a headword
+      would violate the schema's "alt is not a headword" rule — e.g. existing "conceal"→alt "obscure").
+      Conservatively excluded rather than editing curated existing entries.
+    - 4 rejected for a 5+ char word-leak in the gloss/context (credence, intricate, palatable,
+      quintessential — the clue contained a chunk of the answer).
+- RUNNING TOTAL: 612 → 956. Full unit suite (262 tests incl. wordSchema.test) green.
+- HONEST GAP: 956 vs the 1,200 target — ~244 short. The letter-range approach kept batches clean and
+  non-overlapping; a further batch would need to mine the thinner middle-difficulty band and the
+  many alt-collision words (which require deciding whether to demote an existing entry's alt). Left
+  for a follow-up rather than padding with weak/off-level words (quality bar over volume, as asked).
