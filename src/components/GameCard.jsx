@@ -298,6 +298,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
 
         {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
 
+        {game.limited && <div className="game-card-limited-tag">LIMITED</div>}
+
       {ArtComponent && (
         <div className="game-card-art">
           <ArtComponent />

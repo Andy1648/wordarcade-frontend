@@ -21,7 +21,8 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { recordRound, awardWins } from '../progress/wins';
+import { recordRound, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { formatNum } from '../format';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
@@ -156,12 +157,39 @@ function ExitLink({ onExit }) {
 // the old newsprint masthead / date row / shouty broadsheet furniture was cut
 // (this is a manga page, not a printed newspaper).
 function StartScreen({ onPlay, onExit }) {
+  // Sell the mode the way the other modes' dialogs do: what it pays PER WORD (the SAT
+  // ×5 rate, with the live rebirth boost annotated like the cards), the run framing, and
+  // a worked example of the mechanic — kept in SAT RUSH's own retro-print manga language
+  // (paper + ink + red accent), NOT the neon house dialog look.
+  const wins = wordWinsEstimate({ mode: 'sat-rush' });
+  const mult = currentRebirthMult();
   return (
     <div className="sr-screen">
       <div className="sr-cover">
         <div className="sr-title sr-print" data-v={'SAT RUSH'}>
           SAT&nbsp;RUSH
         </div>
+        <p className="sr-cover-tag">
+          SAT vocab at arcade speed. Read the clue and type the word before it spells itself.
+        </p>
+
+        {/* Worked example — the mechanic, in one clue → answer beat. */}
+        <div className="sr-cover-example">
+          <div className="sr-cover-ex-label">EXAMPLE</div>
+          <div className="sr-cover-ex-clue">“lasting only a very short time”</div>
+          <div className="sr-cover-ex-arrow" aria-hidden="true">▼</div>
+          <div className="sr-cover-ex-answer">EPHEMERAL</div>
+        </div>
+
+        {/* Per-word wins + run framing — the SAT equivalent of the dialogs' meta row. */}
+        <div className="sr-cover-meta">
+          <span className="sr-cover-pay">
+            <b>{wins}</b> WINS / WORD
+            {mult > 1 && <span className="sr-cover-mult"> (×{formatNum(mult)})</span>}
+          </span>
+          <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
+        </div>
+
         <button type="button" className="sr-btn" onClick={onPlay}>
           Play
         </button>

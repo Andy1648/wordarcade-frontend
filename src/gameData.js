@@ -64,6 +64,9 @@ const SAT_RUSH_GAME = {
   textColor: '#111', // "SAT RUSH" in solid black ink
   descColor: '#333',
   enabled: true,
+  // Scarcity framing: a red-ink "LIMITED" stamp (its manga --redink), so the mono card
+  // still earns a second look next to the three neon games.
+  limited: true,
 };
 
 // CHAIN + FUSE — the two solo word modes, previously dark-launched behind

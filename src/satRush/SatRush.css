@@ -730,6 +730,77 @@
     6px 6px 0 var(--ink);
   padding: clamp(24px, 4.5vh, 40px) clamp(22px, 4vw, 40px);
 }
+
+/* Cover info (post-card screen) — the SAT equivalent of the mode-dialog worked example +
+   per-word wins + run length. Retro-print manga language only: ink on paper, red accent on
+   the answer, a ruled example box with the same hard ink offset the page uses. */
+.sr-cover-tag {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  max-width: 40ch;
+  color: var(--ink);
+  opacity: 0.85;
+}
+.sr-cover-example {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 14px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.sr-cover-ex-label {
+  font-family: var(--font-head);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  opacity: 0.6;
+}
+.sr-cover-ex-clue {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+}
+.sr-cover-ex-arrow {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.6;
+}
+.sr-cover-ex-answer {
+  font-family: var(--font-head);
+  font-size: clamp(18px, 4vw, 24px);
+  letter-spacing: 0.06em;
+  color: #c8321e; /* the documented danger red — the one spot accent SAT Rush allows */
+}
+.sr-cover-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 6px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.sr-cover-pay b {
+  font-family: var(--font-head);
+  font-size: 16px;
+}
+.sr-cover-mult {
+  color: #c8321e;
+  font-weight: 700;
+}
+.sr-cover-round {
+  opacity: 0.75;
+}
 .sr-cover::before {
   content: '';
   position: absolute;
@@ -1343,6 +1414,11 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   overflow-y: auto;
   overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
   padding: clamp(12px, 2.5vh, 32px) 16px;
+  /* TOP-ALIGN (was inheriting .sr-screen's align-items:center): a briefing taller than
+     the viewport was centred, pushing its heading ABOVE the top edge where scroll can't
+     reach it (the classic flex-centre overflow clip). Aligning to the start keeps the
+     "THE BRIEFING" heading inside the viewport at every size; the page scrolls downward. */
+  align-items: flex-start;
 }
 .sr-brief-page {
   position: relative;

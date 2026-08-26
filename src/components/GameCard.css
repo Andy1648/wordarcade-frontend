@@ -416,6 +416,25 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   pointer-events: none;
 }
 
+/* SAT Rush "LIMITED" scarcity stamp — red ink on cream, matching the card's retro-print
+   manga palette (not the neon house yellow). Top-right, tilted, hard offset shadow. */
+.game-card-limited-tag {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 4;
+  font-family: 'Bungee', cursive;
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  color: #C8321E;
+  background: #F2EFE7;
+  border: 2px solid #C8321E;
+  padding: 2px 5px;
+  transform: rotate(4deg);
+  box-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+}
+
 /* ---- Level gate (CHAIN/FUSE locked until a level) ---------------------------------- */
 /* The card stays fully visible; a scrim + padlock mark it locked. The scrim is
    click-through so a tap still reaches the card (which shakes once). */
