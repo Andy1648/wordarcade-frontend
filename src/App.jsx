@@ -73,7 +73,6 @@ import {
   resolveDailyScore,
   hasPlayedDay,
   currentDayNumber,
-  displayStreak,
 } from './daily/streak.js';
 import { friendlyError } from './friendlyError';
 import { useOneShotAction } from './hooks/useOneShotAction';
@@ -1149,10 +1148,11 @@ function App() {
         );
         saveDailyState(next);
         setDailyState(next);
+        // NOTE: the daily STREAK feature was removed — the streak/bestStreak counters
+        // are no longer surfaced anywhere. The day-tracking (best score + replay
+        // detection via lastDayNumber) stays so the Daily Challenge itself still works.
         setDailyResult({
           dayNumber: payload.daily.dayNumber,
-          streak: next.streak,
-          bestStreak: next.bestStreak,
           score: dailyScore,
           prevBest: prevDailyBest,
           isReplay,
@@ -1883,7 +1883,6 @@ function App() {
         daily={{
           dayNumber: currentDayNumber(),
           played: hasPlayedDay(dailyState, currentDayNumber()),
-          streak: displayStreak(dailyState, currentDayNumber()),
         }}
       />
     );

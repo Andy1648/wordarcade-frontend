@@ -3308,16 +3308,8 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
             {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'AI CATEGORY BLITZ · 3 ROUNDS'}
           </div>
 
-          {/* Daily streak line: the retention hook, right under the score.
-              A just-completed daily always has streak >= 1 (first play = 1),
-              so this always shows a live count. */}
-          {daily && (
-            <div className="solo-pb-line celeb-statline" style={{ '--celeb-i': 0 }}>
-              {`🔥 ${daily.streak}-DAY STREAK${
-                daily.bestStreak > daily.streak ? ` · BEST ${daily.bestStreak}` : ''
-              }`}
-            </div>
-          )}
+          {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
+              above is enough. This reclaims the vertical space it used.) */}
 
           {/* Personal-best line + how-close nudge. (Staggered in at stage 3.) */}
           <div className="solo-pb-line celeb-statline" style={{ '--celeb-i': 0 }}>
@@ -3364,12 +3356,12 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
 
           {/* Shareable result card — reads the existing solo score/record only.
               roundScores feed the copy text's per-round emoji rows; a daily run
-              brands the text with day # + streak and deep-links ?daily=1. */}
+              brands the text with the day # and deep-links ?daily=1. */}
           <ShareBar
             mode="category-blitz"
             neon={daily ? '#FFE94A' : '#FF6B3D'}
             outcome={{ solo: true, isRecord: pb.isNewRecord }}
-            daily={daily ? { dayNumber: daily.dayNumber, streak: daily.streak } : null}
+            daily={daily ? { dayNumber: daily.dayNumber } : null}
             link={daily ? dailyLink() : null}
             data={{
               score,

@@ -73,25 +73,25 @@ test('solo blitz: rounds render as rows, record flagged', () => {
   assert.match(lines[4], /NEW RECORD!/);
 });
 
-test('daily: header has day number, stat line has streak, no category names', () => {
+test('daily: header has day number, NO streak fragment (streak feature removed)', () => {
   const txt = buildShareText({
     mode: 'category-blitz',
     outcome: { solo: true },
     data: { score: 11, roundScores: [4, 4, 3] },
-    daily: { dayNumber: 193, streak: 5 },
+    daily: { dayNumber: 193 },
   });
   assert.match(txt, /DAILY #193 ⚡/);
-  assert.match(txt, /🔥 5-day streak/);
+  assert.doesNotMatch(txt, /streak/i);
 });
 
-test('daily: streak of 0 shows no streak fragment', () => {
+test('daily: streak is never shown, even if a stray streak field is passed', () => {
   const txt = buildShareText({
     mode: 'category-blitz',
     outcome: { solo: true },
     data: { score: 2, roundScores: [2, 0, 0] },
-    daily: { dayNumber: 1, streak: 0 },
+    daily: { dayNumber: 1, streak: 7 }, // ignored — the feature is gone
   });
-  assert.doesNotMatch(txt, /streak/);
+  assert.doesNotMatch(txt, /streak/i);
 });
 
 test('0-point daily still reads like a share, not an error', () => {
@@ -99,12 +99,12 @@ test('0-point daily still reads like a share, not an error', () => {
     mode: 'category-blitz',
     outcome: { solo: true },
     data: { score: 0, roundScores: [0, 0, 0] },
-    daily: { dayNumber: 42, streak: 1 },
+    daily: { dayNumber: 42 },
   });
   const lines = txt.split('\n');
   assert.equal(lines[1], 'R1 🟥 0');
   assert.match(txt, /0 PTS\. brain fully buffered/);
-  assert.match(txt, /🔥 1-day streak/);
+  assert.doesNotMatch(txt, /streak/i);
   assert.doesNotMatch(txt, /undefined|NaN/);
 });
 

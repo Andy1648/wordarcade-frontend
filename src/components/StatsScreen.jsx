@@ -10,7 +10,6 @@ import {
   rebirthMult,
   getKeyTier,
   keyTierXp,
-  need,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { formatNum } from '../format';
@@ -70,7 +69,7 @@ export default function StatsScreen({ onBack }) {
   const progression = [
     ['LEVEL', level],
     ['XP INTO LEVEL', intoLevel],
-    ['XP TO NEXT LEVEL', Math.max(0, need(level) - intoLevel)],
+    // ('XP TO NEXT LEVEL' row removed by request — the level + XP-into read is enough.)
     ['REBIRTHS', rebirths],
     ['LETTERS TYPED', lifetimeLetters],
     ['TAPS', getTaps()],
