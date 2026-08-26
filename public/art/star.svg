@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- hard offset shadow (flat black, no blur) -->
+  <path d="M58 14 L68.6 45.4 L101.8 45.8 L75.1 65.6 L85 97.2 L58 78 L31 97.2 L40.9 65.6 L14.2 45.8 L47.4 45.4 Z"
+        transform="translate(6,6)" fill="#0d0618"/>
+  <!-- chunky 5-point star: flat yellow fill, thick black outline, rounded joins -->
+  <path d="M58 14 L68.6 45.4 L101.8 45.8 L75.1 65.6 L85 97.2 L58 78 L31 97.2 L40.9 65.6 L14.2 45.8 L47.4 45.4 Z"
+        fill="#FFE94A" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+</svg>
