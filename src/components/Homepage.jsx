@@ -194,6 +194,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     const compute = () => {
       // Reset to the natural (unscaled) size for a clean, non-compounding measurement.
       stage.style.setProperty('--menu-scale', '1');
+      // Phones (≤760px) own their layout in CSS: a fixed frame (title + XP + action buttons)
+      // with the CARD LIST scrolling in the middle, so all five cards are reachable and the XP
+      // bar never scrolls out. The fit-to-one-screen scale is a laptop concept — leave scale at
+      // 1 there so the cards keep full size and the card region's internal scroll takes over.
+      if (window.innerWidth <= 760) return;
       const cs = getComputedStyle(stage);
       const padT = parseFloat(cs.paddingTop) || 0;
       const padB = parseFloat(cs.paddingBottom) || 0;
