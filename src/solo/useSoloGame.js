@@ -15,6 +15,21 @@ import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB } from './shared
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+// DEV/TEST-ONLY per-turn clock cap, read once from ?soloms=<100..20000>. Lets an e2e drive a
+// CHAIN/FUSE run to its death-card screen deterministically instead of waiting the real ~18s
+// word-1 timer. null (the default) leaves the shipped clock untouched. Mirrors satRush's ?stage=.
+const SOLO_CLOCK_CAP_MS = (() => {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('soloms');
+    if (raw == null) return null;
+    const n = Number(raw);
+    if (Number.isFinite(n) && n >= 100 && n <= 20000) return n;
+  } catch {
+    /* location unavailable — no override */
+  }
+  return null;
+})();
+
 export function useSoloGame({ createEngine, adapter, pbKey, onRunStart }) {
   const engineRef = useRef(null);
   if (engineRef.current === null) engineRef.current = createEngine();
@@ -81,7 +96,11 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart }) {
   // Start a fresh turn's clock (or the very first, once armed).
   const startTurnClock = useCallback(() => {
     turnStartRef.current = now();
-    turnBudgetRef.current = adapter.budgetMs(engineRef.current);
+    const budget = adapter.budgetMs(engineRef.current);
+    // DEV/TEST-ONLY override (mirrors SAT Rush's ?stage=): ?soloms=<100..20000> caps the per-turn
+    // budget so the run-over / death-card screen is reachable deterministically in e2e without
+    // waiting the real ~18s word-1 clock. No effect unless the param is present.
+    turnBudgetRef.current = SOLO_CLOCK_CAP_MS != null ? Math.min(budget, SOLO_CLOCK_CAP_MS) : budget;
     setRemaining(turnBudgetRef.current);
   }, [adapter]);
 

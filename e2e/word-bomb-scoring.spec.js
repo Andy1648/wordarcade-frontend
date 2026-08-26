@@ -54,9 +54,10 @@ test.describe('Word Bomb scoring (item 2)', () => {
       await page.waitForTimeout(40);
     }
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
-    await page.waitForTimeout(150);
+    // Poll for the payout instead of a fixed wait: game_over → recordRound → localStorage is an
+    // async React drain, so a fixed sleep occasionally reads the pre-payout value (the flake).
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(60);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(60); // 3 × 20 per-word @ R0
     expect(after.lifetime - before.lifetime).toBe(60);
     expect(after.wb - before.wb).toBe(1);
   });
@@ -67,10 +68,19 @@ test.describe('Word Bomb scoring (item 2)', () => {
   // path (so the app tracks my in-flight word), then push turn_update BEFORE my accept.
   // With the fix, the word is attributed to me by word-match and still scores.
   const input = (page) => page.locator('.game-input');
-  async function typeSend(page, word) {
+  // Type a word and submit it, then WAIT until the app has actually sent that word's submit_word
+  // frame. That send is the moment handleSubmitWord runs, which is also when the word lands in
+  // myOutstandingWordsRef — so blocking on it guarantees the word is in the outstanding queue
+  // BEFORE the test pushes its word_result. (Not doing this for BAT/HAT was the flake: the
+  // word_result could beat the submit registration, so the word wasn't matched and got dropped
+  // under the 3-word gate → an intermittent 0/40 instead of 60.)
+  async function typeSend(page, mock, word) {
     await expect(input(page)).toBeEnabled({ timeout: 8000 }); // waits out the 3-2-1 countdown
     await input(page).fill(word);
     await page.locator('.game-send-btn').click();
+    await expect
+      .poll(() => mock.sentFrames().some((f) => f && f.type === 'submit_word' && f.payload && f.payload.word === word), { timeout: 8000 })
+      .toBe(true);
   }
   const turnTo = (mock, who, used) => mock.pushToClient({
     type: 'turn_update',
@@ -82,26 +92,25 @@ test.describe('Word Bomb scoring (item 2)', () => {
     await gotoMenu(page);
     const before = await readWins(page);
     await startMyTurn(mock, page, { combo: 'at' });
-    // #1 CAT — submit for real, then a normal accept.
-    await typeSend(page, 'CAT');
-    await mock.waitForSent('submit_word');
+    // #1 CAT — submit for real (typeSend blocks until the submit is sent), then a normal accept.
+    await typeSend(page, mock, 'CAT');
     mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'CAT' } });
     await page.waitForTimeout(40);
-    // #2 BAT — submit, then the ADVERSARIAL interleave: turn advances to p2 BEFORE my
-    // accept for BAT lands. Pre-fix this dropped BAT (→ 2 words → under the 3-word gate → 0).
-    await typeSend(page, 'BAT');
+    // #2 BAT — submit (now guaranteed registered), THEN the ADVERSARIAL interleave: the turn
+    // advances to p2 BEFORE my accept for BAT lands. The fix must still attribute BAT to me.
+    await typeSend(page, mock, 'BAT');
     turnTo(mock, 'p2', ['cat']);
     mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'BAT' } });
     await page.waitForTimeout(40);
     // #3 HAT — back to me.
     turnTo(mock, ME, ['cat', 'bat']);
-    await typeSend(page, 'HAT');
+    await typeSend(page, mock, 'HAT');
     mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'HAT' } });
     await page.waitForTimeout(40);
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
-    await page.waitForTimeout(150);
-    const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(60); // all 3 mine → 60; pre-fix the race gave 0
+    // Poll for the payout (see the happy-path test): the fixed-wait read of the async game_over
+    // payout was the intermittent-flake source, not the race logic itself.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(60);
   });
 
   test('a server already_used rejection shows a visible, specific message', async ({ page }) => {

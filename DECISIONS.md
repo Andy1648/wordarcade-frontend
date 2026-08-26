@@ -60,3 +60,24 @@ Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600K
   claiming 2000 was STALE — the retune to 2000 never landed. Corrected the doc to 2800 and
   annotated that the retune never shipped; engine source is the source of truth. No code changed
   (the code was already correct at 2800).
+
+## test/gameover-coverage (JOB 4, autonomous 2026-08-26)
+- GAME-OVER COVERAGE: e2e/gameover-coverage.spec.js drives each mode to its game-over and asserts
+  zero console/page errors. WORD BOMB + CATEGORY BLITZ are server-driven (game_started → turn_update
+  → game_over) via the mock. CHAIN + FUSE run-over is LOCAL-state driven: the real word-1 clock is
+  ~18s, so I added a DEV-ONLY ?soloms=<100..20000> cap to useSoloGame (mirrors satRush's ?stage=;
+  no effect without the param) so the death card is reachable deterministically in <1s. Arm the
+  clock via input.fill() (deterministic) not keyboard.type() (ambient-focus dependent — the initial
+  flakiness). All 4 pass, stable across repeats.
+- FLAKY TEST IDENTIFIED: e2e/word-bomb-scoring.spec.js:80 "RACE: turn_update just before my accepted
+  word_result still scores" — surfaced by `playwright test --retries=2 --repeat-each=8` (1 flaky /
+  1047 passed), and reproduced at ~5% under --repeat-each=40 --workers=4.
+- CAUSE (a TEST race, not a product bug): the test read taw.wins from localStorage after a fixed
+  150ms wait, but game_over → recordRound → localStorage.setItem is an async React drain; under load
+  150ms occasionally beat it, so the read caught the pre-payout value (0) → 0 ≠ 60. Instrumented
+  proof: submits were always [CAT,BAT,HAT] and the eventual payout was always 60 — only the read
+  timing raced.
+- FIX (deterministic, NOT a retry): replaced the fixed-wait reads with `expect.poll(() => wins - before).toBe(60)`
+  in both wins tests, so the assertion syncs on the actual async payout. Also hardened typeSend to
+  wait until each word's submit_word frame is sent before pushing its word_result. 240/240 green
+  across two --repeat-each=40 --workers=4 stress runs (was ~2/40 failing).
