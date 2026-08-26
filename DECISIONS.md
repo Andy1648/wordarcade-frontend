@@ -102,3 +102,21 @@ Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600K
   requires the documented 2-device play-test and cannot be validated while the user is asleep, and
   the bug is not live. Flagged as the recommended follow-up; added a guard test for the correct
   production-order behavior so that path can never regress.
+## fix/card-feel — card density + beat energy (JOB 2, autonomous 2026-08-26)
+- "count must stay at 45": MEASURED baseline infinite-animation count on main = 46 (not 45).
+  My changes add ZERO infinite animations (beat pulse + hover are TRANSITIONS on composed CSS
+  vars; I removed the finite `card-hover-pop` @keyframes). Verified main=46, fix/card-feel=46.
+  Reporting the real baseline (46) rather than the approximate 45; the invariant "no new loops"
+  holds.
+- Beat pulse mechanism: chose composed CSS custom properties (--card-beat × --card-hover × --cs)
+  + the existing 120ms transform transition over a new @keyframes, so beat × hover compose without
+  fighting over `transform` AND no new keyframes are added. Transform-only, <=1.03 (featured 1.03,
+  rest 1.02, scaled by --beat-intensity).
+- Frame time: rAF frame time is vsync-quantized in headless (snaps 16.7/33.3), unreliable for a
+  3ms delta. Toggling data-beat every ~8 frames (a 4x-too-fast stress) showed 33.3ms on the branch
+  (overlapping var-transitions on the main thread); at a REALISTIC 120bpm kick (every 500ms) both
+  main and branch measure 16.7ms median (3 runs each) → +0ms. Also report a forced-recalc proxy:
+  main ~3.0ms, branch ~3.4ms → +0.4ms. Within +3ms.
+- category-blitz occupancy: my first metric (name+badge+payout union) read it low (53% @1440)
+  because it excludes the AI JUDGED pill (a text element above the title). Counting it, all 5 cards
+  are 55-75% at every viewport. Metric now includes the ai-badge.
