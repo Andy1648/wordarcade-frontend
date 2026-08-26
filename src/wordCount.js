@@ -11,6 +11,8 @@
 // plain localStorage the user can rewrite at will — so any future leaderboard
 // MUST use server-validated counts and NEVER trust this value.
 
+import { recordStreakActivity } from './progress/streak.js';
+
 const KEY = 'wa_words';
 const VERSION = 1;
 const MODES = ['word-bomb', 'category-blitz', 'sat-rush'];
@@ -70,6 +72,13 @@ export function addWords(mode, n = 1) {
     cur.byMode[mode] += Math.floor(n);
   }
   write(cur);
+  // A word was accepted → the player was active today. Idempotent within a day, so calling it
+  // on every accepted word is cheap. Wrapped so a streak failure can never break word counting.
+  try {
+    recordStreakActivity();
+  } catch {
+    /* streak is a non-critical reward layer — never let it disrupt the core count */
+  }
   listeners.forEach((fn) => {
     try {
       fn(cur);

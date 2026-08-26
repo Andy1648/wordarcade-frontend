@@ -7,14 +7,18 @@ export const MODES = {
     chip: 'SOLO/MULTI', t1: 'WORD', t2: 'BOMB',
     liner: 'Beat the bomb. Combo or choke.',
     sub: 'Turn-based · 1–8 players · Type a word with the letters before it blows.',
-    create: 'CREATE',
+    // Primary CTA reads PLAY, not CREATE: it opens a room you can play solo immediately (and
+    // share the code to add friends). A newcomer shouldn't have to decode CREATE-vs-JOIN just to
+    // start (audit #4). JOIN (with a code) stays as the secondary action in ModeDialog.
+    create: 'PLAY',
   },
   blitz: {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
     chip: 'SOLO · MULTI', t1: 'CATEGORY', t2: 'BLITZ',
     liner: 'AI judges you. Get creative.',
     sub: 'Speed round · Name as many as you can before time runs out.',
-    create: 'CREATE',
+    // PLAY (not CREATE) — see the note on bomb above.
+    create: 'PLAY',
   },
   // Solo modes (CHAIN / FUSE). `solo: true` flips ModeDialog to a single PLAY
   // button. `name` is the whole-word title (these aren't a two-word split).

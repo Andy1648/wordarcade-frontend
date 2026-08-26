@@ -10,6 +10,8 @@ import { rebirthMult, getRebirths, round10 } from './xp.js';
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
+// One-time flag: has the "WINS BUY UPGRADES IN THE SHOP" first-earn explainer been shown yet?
+export const WINS_HINT_KEY = 'taw.seenWinsHint';
 export const ROUNDS_KEY = 'taw.rounds';
 export const ROUND_MODES = ['wordBomb', 'blitz', 'satRush'];
 // The payout gate: a round pays nothing until this many words are accepted. Exported
@@ -42,6 +44,23 @@ export function saveWins(n) {
 }
 export function getWinsLifetime() {
   return readInt(WINS_LIFETIME_KEY);
+}
+
+// The one-time first-earn WINS explainer: read/set its "already shown" flag. Guarded like every
+// other access — a blocked store simply never remembers, so the worst case is the tip re-showing.
+export function hasSeenWinsHint() {
+  try {
+    return localStorage.getItem(WINS_HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+export function markWinsHintSeen() {
+  try {
+    localStorage.setItem(WINS_HINT_KEY, '1');
+  } catch {
+    /* storage blocked */
+  }
 }
 export function saveWinsLifetime(n) {
   writeInt(WINS_LIFETIME_KEY, n);

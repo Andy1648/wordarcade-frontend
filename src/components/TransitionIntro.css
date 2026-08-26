@@ -303,16 +303,17 @@
    rare heavy positional twitch. drag owns transform 0-560ms; die-glitch's twitch
    starts at 0.7s, so they never overlap; die-pulse only touches `filter`. */
 .intro-line-die.active {
-  animation: intro-drag 560ms cubic-bezier(0.22, 0.61, 0.36, 1),
+  animation: intro-drag 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
     die-pulse 2.4s ease-in-out 0.6s infinite,
     die-glitch 1.7s linear 0.7s infinite;
 }
 
-/* Long, TIRED letter settle: big stagger (55ms), each letter drops from above,
-   sags past rest, then settles - like it's exhausted. */
+/* TIRED letter settle: each letter drops from above, sags past rest, then settles. Duration +
+   stagger were halved (fix/firstrun #6) so the last letter lands ~850ms in — keeping the whole
+   intro→knife gate under 2s — while the heavy drop still reads. */
 .intro-line-die.active .intro-letter {
-  animation: die-letter-in 420ms cubic-bezier(0.22, 0.7, 0.3, 1) both;
-  animation-delay: calc(var(--i) * 55ms);
+  animation: die-letter-in 240ms cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--i) * 26ms);
 }
 
 @keyframes intro-drag {

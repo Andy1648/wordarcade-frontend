@@ -120,3 +120,44 @@ Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600K
 - category-blitz occupancy: my first metric (name+badge+payout union) read it low (53% @1440)
   because it excludes the AI JUDGED pill (a text element above the title). Counting it, all 5 cards
   are 55-75% at every viewport. Metric now includes the ai-badge.
+
+## fix/firstrun (first-run UX fixes + daily streak) — 2026-08-26
+
+Autonomous 2-job task. Conservative choices logged below.
+
+- JOB1.1 REBIRTH visibility: shown only when `rebirths>0 || winsLifetime>0 || level>=rebirthThreshold(rebirths)`.
+  Used winsLifetime (never-decremented) not the spendable balance so spending wins can't re-hide it.
+  Updated shop.spec.js (its old test asserted the icon present at LV1; now hidden for a brand-new
+  account, shown once wins are earned).
+- JOB1.2 XP caption: gated on `level<2 && winsLifetime===0 && rebirths===0` (a rebirthed player back
+  at LV1 must NOT see "TYPE ANYWHERE TO EARN XP"). Added a permanent "LEVEL" kicker to the bar.
+  Caption is hidden below 560px viewport height (a short landscape screen has no room; keeps the
+  one-screen fit's symmetric top/bottom gaps — the caption is registered in the fit's scalable set
+  and zooms with --menu-scale otherwise).
+- JOB1.3 WINS explainer: one-time 3s stamp on the FIRST round payout, gated by a localStorage flag
+  (taw.seenWinsHint). Reused the existing pooled-WAAPI stamp pattern; subsequent payouts show the
+  normal "+N WINS".
+- JOB1.4 PLAY primary: relabeled the multiplayer primary CTA CREATE→"PLAY" (it opens a room you can
+  play solo AND share); JOIN→"JOIN WITH CODE" (secondary). Did NOT add a separate third CREATE
+  button — PLAY and CREATE are the same underlying action here, so a third button would just
+  reintroduce the CREATE/JOIN confusion. Matches the audit's own rec #4. Solo CHAIN/FUSE already
+  said PLAY. Tests select by class, not label, so unaffected.
+- JOB1.5 Locked path: showed "YOU'RE LV n · N TO GO" as LEVELS remaining, not raw cumulative XP.
+  Spec said "the remaining XP"; chose levels because a big cumulative-XP number reinforces exactly
+  the opacity the audit flagged, and the gate is level-based. DELIBERATE divergence for legibility.
+  Added to both the card stamp (GameCard) and the LockedPreviewDialog gate.
+- JOB1.6 Intro gate: measured first-visit gate ≈ 3.9s (TransitionIntro ~1.9s + KnifeSplit ~2.0s).
+  Compressed to ~1.8s: TransitionIntro schedule + letter-entrance CSS halved (~1.0s), KnifeSplit
+  timing constants cut (~0.83s). Preserved the two-beat structure/art at a faster tempo; did NOT
+  skip the intro or touch App.jsx orchestration (its 2500ms slice safety-net still exceeds the new
+  ~0.83s knife). NOTE: the intro is already first-visit-only (SEEN_INTRO/hasSeenIntro) — repeat
+  visitors skip straight to the menu — so the audit's "every load" premise held only for a new
+  visitor; this shortens that one-time gate.
+- JOB2 Daily streak: stored taw.streak as {count,lastDay,freezes} — extended the spec's
+  {count,lastDay} with a `freezes` field (required for the freeze-token mechanic). Streak is bumped
+  from wordCount.addWords, which the three SCORING modes (word-bomb, category-blitz, sat-rush) all
+  call — so any accepted word in those modes counts the day. GAP: solo CHAIN/FUSE record wins
+  directly and do NOT route through addWords, so they don't currently advance the streak; low impact
+  (the main modes cover daily engagement) — revisit if CHAIN/FUSE-only players report resets. The
+  reward multiplier folds into xpPerInput (live default; explicit param in tests). Menu shows the
+  count only at >=2 (a small flame chip). Day boundary = local-midnight day index.

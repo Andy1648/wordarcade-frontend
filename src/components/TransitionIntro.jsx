@@ -45,7 +45,7 @@ const DIE_TEXT = 'DIE SLOW.';
 // the intro's LAST frame is the same static pose the knife-split renders, and the
 // handoff is a visual no-op. A hair longer than the 220ms tilt transition so the
 // glide fully lands before we swap.
-const SETTLE_MS = 260;
+const SETTLE_MS = 150;
 
 // Split a phrase into per-letter spans so each letter can stagger in on its own
 // delay (`--i`). Spaces are rendered as a non-breaking space and flagged so they
@@ -195,23 +195,27 @@ export default function TransitionIntro({ onComplete }) {
     // Each word's beat: BLACK FRAME (wind-up) -> word slams in -> zoom punch +
     // impact flash (the hit). The blackout lands ~44ms before the word.
     // 0-140ms: short black hold (anticipation), capped by the blackout at 96ms.
-    timers.push(setTimeout(blackFrame, 96));
-    timers.push(setTimeout(() => setStep('line1'), 140));
+    // TIMELINE COMPRESSED (fix/firstrun #6): the two-beat structure (black → TYPE FAST → beat →
+    // DIE SLOW → settle) is preserved, but every gap is roughly halved so the whole gate — this
+    // intro PLUS the knife-split reveal that follows — lands under 2s (audit measured ~3.9s). The
+    // letter-entrance CSS was sped up to match, so the title still fully lands before the handoff.
+    timers.push(setTimeout(blackFrame, 50));
+    timers.push(setTimeout(() => setStep('line1'), 80));
     // TYPE then FAST each get their own sharp impact beat as the line fills in.
-    timers.push(setTimeout(() => impact('fast'), 300)); // TYPE
-    timers.push(setTimeout(() => impact('fast', { silent: true }), 450)); // FAST
-    // ~780ms: after a held pause, a second blackout then "DIE SLOW." slams in as
+    timers.push(setTimeout(() => impact('fast'), 180)); // TYPE
+    timers.push(setTimeout(() => impact('fast', { silent: true }), 300)); // FAST
+    // ~400ms: after a short pause, a second blackout then "DIE SLOW." slams in as
     // its own heavier hit (the blackout hides TYPE FAST for a frame first).
-    timers.push(setTimeout(blackFrame, 736));
-    timers.push(setTimeout(() => setStep('line2'), 780));
-    timers.push(setTimeout(() => impact('slow'), 940)); // DIE
-    timers.push(setTimeout(() => impact('slow', { silent: true }), 1120)); // SLOW
+    timers.push(setTimeout(blackFrame, 360));
+    timers.push(setTimeout(() => setStep('line2'), 400));
+    timers.push(setTimeout(() => impact('slow'), 540)); // DIE
+    timers.push(setTimeout(() => impact('slow', { silent: true }), 680)); // SLOW
     // Settle+handoff is normally driven by the last DIE SLOW letter's animationend
     // (handleDieAnimEnd → beginSettle) — no hardcoded landing time. This is only a
     // SAFETY net: under reduced motion the entrance animations are disabled (no
     // animationend), so a short timer settles promptly; in normal motion it sits
-    // past the expected ~1640ms land so animationend always wins first.
-    timers.push(setTimeout(beginSettle, PREFERS_REDUCED ? 120 : 1900));
+    // just past the sped-up ~850ms land so animationend always wins first.
+    timers.push(setTimeout(beginSettle, PREFERS_REDUCED ? 120 : 1100));
     return () => {
       timers.forEach(clearTimeout);
       if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);

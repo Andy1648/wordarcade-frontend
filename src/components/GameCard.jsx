@@ -131,7 +131,7 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
 
@@ -292,7 +292,15 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               <circle cx="60" cy="32.5" r="1.9" fill="#000" />
               <rect x="59.1" y="32.5" width="1.8" height="5" fill="#000" />
             </svg>
-            <div className="game-card-lock-label">UNLOCKS AT LV {game.unlockLevel}</div>
+            {/* Show the PATH, not just the gate (audit #5): the unlock level, the player's
+                current level, and how many levels remain — so "locked" reads as reachable, not a
+                dead end. Levels-to-go (not raw XP) keeps it legible to a newcomer. */}
+            <div className="game-card-lock-label">
+              UNLOCKS AT LV {game.unlockLevel}
+              <span className="game-card-lock-sub">
+                YOU'RE LV {playerLevel} · {Math.max(0, game.unlockLevel - playerLevel)} TO GO
+              </span>
+            </div>
           </div>
         )}
 

@@ -44,12 +44,15 @@ const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
 // ===== Timing — FLAT ms, all measured as gaps between phases (no nested calc).
 // The chain below schedules each phase off the previous one's completion, so
 // these are the GAPS/durations of a sequence, not absolute offsets from mount.
-const SLASH_DELAY = 180; // mount → slash starts
-const SLASH_DRAW = 260; // streak draws across
-const SLASH_HOLD = 340; // holds bright so it's actually seen
-const SLASH_FADE = 240; // blade fade (begins at draw+hold end, runs through the open)
-const OPEN_GAP = 140; // slash draw+hold done → open starts (open begins during the fade)
-const OPEN_DUR = 1100; // halves drift apart, perpendicular, off-screen
+// Timings compressed (fix/firstrun #6) so the intro→knife gate lands under 2s: the chain
+// (delay+draw+hold+gap+open ≈ 830ms) plus the sped-up fight-card (~1.0s) totals ~1.8s. The
+// slash still draws and holds long enough to read; the open is quicker but reads clean.
+const SLASH_DELAY = 80; // mount → slash starts
+const SLASH_DRAW = 160; // streak draws across
+const SLASH_HOLD = 110; // holds bright so it's actually seen
+const SLASH_FADE = 170; // blade fade (begins at draw+hold end, runs through the open)
+const OPEN_GAP = 80; // slash draw+hold done → open starts (open begins during the fade)
+const OPEN_DUR = 400; // halves drift apart, perpendicular, off-screen
 const OPEN_EASE = 'cubic-bezier(.4,0,.2,1)';
 
 // ===== Appearance =====

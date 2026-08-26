@@ -7,8 +7,9 @@ import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import { useXpCapture } from '../progress/useXpCapture';
-import { getWins, consumePendingWinsStamp } from '../progress/wins';
-import { consumePendingRebirth, getRebirths } from '../progress/xp';
+import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
+import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
+import { getStreak } from '../progress/streak';
 import { canAffordAny } from '../progress/shop';
 import ModeDialog from './ModeDialog';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -215,7 +216,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // Only the TITLE, XP BAR and CARD REGION key off --menu-scale; the bottom bar /
       // daily link / footer stay fixed. Split the two so the fit math is exact: solve
       // scale·scalable + fixed + gaps = inner.
-      const SCALES = ['homepage-logo-wrap', 'menu-xp-bar', 'homepage-cards-region'];
+      const SCALES = ['homepage-logo-wrap', 'menu-xp-bar', 'homepage-cards-region', 'menu-xp-caption'];
       let scalable = 0;
       let fixed = 0;
       for (const el of kids) {
@@ -345,6 +346,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
+  // All-time wins earned + the current daily-streak count, both snapshotted on mount (they only
+  // change inside a round, which remounts this screen on return). winsLifetime drives the
+  // first-run gating (hide REBIRTH / the XP caption until the player has actually earned wins);
+  // streak drives the menu chip (shown only at >= 2 days).
+  const [winsLifetime] = useState(() => getWinsLifetime());
+  const [streak] = useState(() => getStreak().count);
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
@@ -377,7 +384,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       xpFxRef.current.rebirthCelebration(rb);
     } else {
       const stamp = consumePendingWinsStamp();
-      if (stamp > 0 && xpFxRef.current) xpFxRef.current.winsStamp(stamp);
+      if (stamp > 0 && xpFxRef.current) {
+        // The FIRST time a round ever pays out, show the one-time explainer ("WINS BUY UPGRADES
+        // IN THE SHOP") instead of the bare "+N WINS" — a newcomer has no idea what wins are for
+        // (the audit's #1 leak). Every later payout shows the normal stamp.
+        if (!hasSeenWinsHint()) {
+          markWinsHintSeen();
+          xpFxRef.current.winsHint();
+        } else {
+          xpFxRef.current.winsStamp(stamp);
+        }
+      }
     }
   }, []);
 
@@ -542,17 +559,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             SHOP
             {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
-          <button
-            ref={rebirthLinkRef}
-            type="button"
-            className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
-            onClick={handleRebirth}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            aria-label="Open rebirth"
-          >
-            REBIRTH
-          </button>
+          {/* REBIRTH is a prestige-RESET mechanic — noise to a level-1 newcomer with nothing to
+              reset (the audit's #2 leak). Show it ONLY once it means something: the player can
+              actually rebirth now (level has reached the next threshold), OR has ever earned wins,
+              OR has already rebirthed. Until then it stays out of the top nav entirely. */}
+          {(rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths)) && (
+            <button
+              ref={rebirthLinkRef}
+              type="button"
+              className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
+              onClick={handleRebirth}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label="Open rebirth"
+            >
+              REBIRTH
+            </button>
+          )}
           <button
             ref={statsLinkRef}
             type="button"
@@ -601,7 +624,14 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           rebirths={rebirths}
           wins={wins}
           onWinsClick={handleShop}
+          streak={streak}
         />
+        {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
+            only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
+            rebirthed player back at LV1 never sees it), then never again once they reach LV2. */}
+        {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
+          <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
+        )}
 
         <div className="homepage-cards-region">
           <div
@@ -617,6 +647,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   onLockedSelect={handleLockedSelect}
                   onHover={handleHover}
                   locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
+                  playerLevel={xpProgress.level}
                 />
               ))}
             </div>

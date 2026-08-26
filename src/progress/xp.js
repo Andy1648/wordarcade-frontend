@@ -6,6 +6,11 @@
 // Currency is XP (not letters). A menu keystroke is worth 1 XP; game modes multiply the
 // per-word/letter award. `lifetimeLetters` counts RAW keystrokes (unmultiplied) and is a
 // SEPARATE running total for a future profile screen — never surfaced on the menu.
+//
+// The one dependency is the daily-streak reward multiplier (streak.js — itself dependency-free,
+// so no import cycle). It only participates in xpPerInput, and only via the live default; every
+// pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
+import { getStreakMult } from './streak.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -245,15 +250,18 @@ export function keyTierCost(tier) {
 // style + sound pack) are passed IN by the caller — xp.js stays free of the shop import (shop.js
 // already imports xp.js; keeping the dependency one-way avoids a cycle). Factors default to the
 // live key-tier + rebirth counts (cosmetic mults default to ×1).
-export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1 } = {}) {
+export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1, streakMult } = {}) {
   const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const modeMult = XP_MULTIPLIERS[mode] ?? 1;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const pm = Number.isFinite(popMult) && popMult > 0 ? popMult : 1;
   const sm = Number.isFinite(soundMult) && soundMult > 0 ? soundMult : 1;
+  // Daily-streak reward multiplier folds into the SAME stack (defaults to the live streak, 1 at
+  // <3 days). Passed explicitly by tests; live-read otherwise, exactly like keyTier/rebirth.
+  const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
   // Snapped to a round multiple of 10 so every credited/displayed "+N" ends in a zero, and
   // so the accumulated xpIntoLevel stays a clean multiple of 10.
-  return round10(keyTierXp(kt) * modeMult * rebirthMult(rc) * pm * sm);
+  return round10(keyTierXp(kt) * modeMult * rebirthMult(rc) * pm * sm * stm);
 }
 
 // Apply a credited award. Pure: takes and returns the {level, intoLevel, lifetimeLetters}
