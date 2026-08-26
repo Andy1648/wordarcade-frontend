@@ -39,24 +39,18 @@ async function enterGame(page) {
   await page.waitForTimeout(120);
   return mock;
 }
-const feedNames = (page) =>
-  page.evaluate(() =>
-    Array.from(document.querySelectorAll('.kill-feed-name')).map((n) => ({
-      name: n.textContent,
-      word: n.parentElement?.querySelector('.kill-feed-word')?.textContent || '',
-    })),
-  );
 
 test('a broadcast accept is credited to the submitter in the real server order (word_result → turn_update)', async ({ page }) => {
   const mock = await enterGame(page);
   turn(mock, 'p2'); // BOB's turn
   await page.waitForTimeout(60);
   mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'CATFISH' } }); // server broadcasts this FIRST
-  await page.waitForTimeout(40);
+  // WAIT for the accepted word to actually render in the feed (auto-retrying) before advancing
+  // the turn or reading — a fixed sleep raced the async word_result drain under full-suite load.
+  const catfishRow = page.locator('.kill-feed-row', { hasText: 'CATFISH' });
+  await expect(catfishRow).toBeVisible({ timeout: 5000 });
   turn(mock, 'p3'); // then the turn advances
-  await page.waitForTimeout(60);
-  const feed = await feedNames(page);
-  const entry = feed.find((f) => (f.word || '').toUpperCase().includes('CATFISH'));
-  expect(entry, 'CATFISH should be in the feed').toBeTruthy();
-  expect(entry.name, 'BOB played CATFISH — must be credited to BOB, not the next player').toBe('BOB');
+  // The word stays attributed to BOB (feedCurrentRef still pointed to BOB when word_result was
+  // processed — the production order). Read the name from CATFISH's own row.
+  await expect(catfishRow.locator('.kill-feed-name')).toHaveText('BOB');
 });
