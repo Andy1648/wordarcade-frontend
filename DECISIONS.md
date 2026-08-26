@@ -52,3 +52,11 @@ Actions (most conservative that meets acceptance):
 - DEFER posthog: dynamic-import inside initAnalytics(), and schedule initAnalytics on requestIdleCallback after mount (main.jsx). posthog's 211KB chunk now loads AFTER first paint. track() already no-ops until posthog is ready, so no lost-event risk beyond a sub-second init delay.
 - Sentry kept EAGER on purpose: its ErrorBoundary must be mounted to catch a render crash (it is the safety net the Stats crash would have hit). Deferring it was rejected as too risky.
 Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600KB -> 391KB (index 162 + react-vendor 143 + sentry 86; posthog 211 deferred). No route slower to interactive (parallel HTTP/2; lazy game/overlay chunks unchanged). 262 unit + 99 e2e green.
+
+## docs/art-rule (JOB 1, autonomous 2026-08-26)
+- Added the ART VS MOTION design rule to CLAUDE.md (verbatim from the brief).
+- stageIntervalMs discrepancy RESOLVED from source: engine.js:35 DEFAULT_CONFIG = 2800 AND
+  config.js:41 DEFAULT_STAGE_MS = 2800 (comment "Default is 2800"). The CLAUDE.md retune note
+  claiming 2000 was STALE — the retune to 2000 never landed. Corrected the doc to 2800 and
+  annotated that the retune never shipped; engine source is the source of truth. No code changed
+  (the code was already correct at 2800).
