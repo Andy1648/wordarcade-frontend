@@ -6,6 +6,7 @@ import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { recordRound, awardWins } from '../progress/wins.js';
+import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
@@ -89,6 +90,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     adapter,
     pbKey: PB_KEYS.CHAIN,
     onRunStart: () => setRuns(bumpChainRuns()),
+    // Each accepted CHAIN word counts toward the daily streak (this mode never calls addWords).
+    onAccept: touchStreak,
   });
   const s = g.engine.state;
 

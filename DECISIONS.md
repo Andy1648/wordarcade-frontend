@@ -161,3 +161,19 @@ Autonomous 2-job task. Conservative choices logged below.
   (the main modes cover daily engagement) — revisit if CHAIN/FUSE-only players report resets. The
   reward multiplier folds into xpPerInput (live default; explicit param in tests). Menu shows the
   count only at >=2 (a small flame chip). Day boundary = local-midnight day index.
+
+## fix/firstrun addendum — CHAIN/FUSE streak gap closed — 2026-08-26
+
+The earlier note flagged that solo CHAIN/FUSE didn't advance the daily streak (they never call
+wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
+- Extracted the single guarded touch `touchStreak()` in progress/streak.js — the ONE entry point
+  both the word counter and the solo modes call. wordCount.addWords now calls it too (was an inline
+  recordStreakActivity + try/catch).
+- Added `submitSoloWord(engine, word, onAccept)` in solo/shared.js (framework-free): runs the
+  engine submit and fires onAccept ONCE per accepted word, never on reject, never on run-over.
+  useSoloGame.onSubmit routes both modes through it.
+- ChainGame + FuseGame pass `onAccept: touchStreak`. Both modes now count each accepted word toward
+  the streak the same way, on a single shared path.
+- Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
+  word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
+  nothing. 277 unit + 134 e2e green.

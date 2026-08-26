@@ -114,10 +114,22 @@ export function getStreakMult() {
 }
 
 // Record that the player got a word accepted TODAY. Idempotent within a day (a second call the
-// same day is a no-op write of the same state). Returns the new streak state. Called from the
-// shared accepted-word counter (wordCount.addWords) so every scoring mode feeds it.
+// same day is a no-op write of the same state). Returns the new streak state.
 export function recordStreakActivity(now) {
   const next = advanceStreak(getStreak(), localDayIndex(now));
   saveStreak(next);
   return next;
+}
+
+// The SINGLE guarded streak "touch" every accepted-word path calls: the shared word counter
+// (wordCount.addWords) AND the solo CHAIN/FUSE accept path (useSoloGame, which never routes
+// through addWords). Wraps recordStreakActivity so a streak failure can never disrupt the caller.
+// Returns the new streak, or null if it threw. Keeping this the one entry point means no mode can
+// have its own copy of the day logic drift out of sync.
+export function touchStreak(now) {
+  try {
+    return recordStreakActivity(now);
+  } catch {
+    return null;
+  }
 }
