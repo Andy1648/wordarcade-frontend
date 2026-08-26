@@ -22,6 +22,33 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
+/* Static "LEVEL" kicker — small, muted, uppercase Space Mono. Tells a newcomer the LV chip +
+   readout is the leveling bar. Sits just left of the LV chip; no idle motion. */
+.menu-xp-label {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(8px, 1.5vw, 11px);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(240, 234, 217, 0.6);
+  white-space: nowrap;
+}
+/* Daily-streak chip — flame + count, inline with the LV/wins chrome (no added bar height). */
+.menu-streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(12px, 2.4vw, 20px);
+  line-height: 1;
+  color: #ff6b3d; /* ember orange — reads as a streak/heat without a new asset */
+  white-space: nowrap;
+}
+.menu-streak-flame {
+  font-size: 0.9em;
+  line-height: 1;
+}
 /* Full bar: the LV label is its own chip sitting on the track's left cap (overlaps it via
    a negative margin; opaque dark fill so it reads over the track). Vertically centred by
    the bar's flex align-items:center. */
@@ -115,6 +142,31 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
   pointer-events: none;
+}
+
+/* First-visit XP caption — a single quiet line under the bar telling a newcomer where XP comes
+   from. Static (no idle motion, per the menu motion law); removed for good once they hit LV2. */
+.menu-xp-caption {
+  width: 100%;
+  max-width: 760px;
+  margin: 4px auto 0;
+  text-align: center;
+  /* Shrinks in step with the title/bar/cards on short screens (matches the other one-screen-fit
+     elements) so its extra line never breaks the symmetric top/bottom frame gap. */
+  zoom: var(--menu-scale, 1);
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(10px, 1.8vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(240, 234, 217, 0.72);
+}
+/* On a very short screen the one-screen menu has no room to spare, so drop this optional
+   onboarding line entirely (display:none also removes it from the fit measurement). */
+@media (max-height: 560px) {
+  .menu-xp-caption {
+    display: none;
+  }
 }
 
 /* ---- Feedback layer (outer backdrop margin, outside the panel border) ---- */
@@ -294,4 +346,28 @@ button.menu-wins-chip:focus-visible {
   paint-order: stroke fill;
   letter-spacing: 0.04em;
   white-space: nowrap;
+}
+
+/* One-time WINS explainer banner — "WINS BUY UPGRADES IN THE SHOP". A single finite pooled
+   element (3s WAAPI envelope), hidden at rest; position:absolute so it never affects layout.
+   Smaller than the payout stamp and wrappable (it's a sentence), boxed like a call-out so it
+   reads as a tip, not a score. */
+.menu-xp-winshint {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%) rotate(-2deg) scale(1);
+  opacity: 0;
+  max-width: min(88vw, 460px);
+  padding: 12px 18px;
+  text-align: center;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(15px, 3.4vw, 26px);
+  line-height: 1.15;
+  color: #0d0618;
+  background: #ffe94a;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  letter-spacing: 0.02em;
 }

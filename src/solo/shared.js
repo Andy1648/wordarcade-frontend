@@ -119,6 +119,19 @@ export function bumpChainRuns() {
   return next;
 }
 
+// ---- Accepted-word submit (shared by both solo screens) -------------------------
+// Runs the engine's submit and, ONLY on an accepted word, fires the onAccept side-effect exactly
+// once. CHAIN and FUSE both drive their engine through this one path (via useSoloGame), so the
+// "a word was accepted" hook — currently bumping the daily streak, see progress/streak.touchStreak
+// — is wired identically for both and can't be attached to one mode but forgotten on the other.
+// The touch fires PER ACCEPTED WORD (mid-run), never on run-over, so a player who never finishes a
+// run still counts the day. A rejected word fires nothing. Returns the engine result unchanged.
+export function submitSoloWord(engine, word, onAccept) {
+  const r = engine.submit(word);
+  if (r && r.ok && typeof onAccept === 'function') onAccept();
+  return r;
+}
+
 // ---- Seeded RNG -----------------------------------------------------------------
 // mulberry32 — a tiny deterministic PRNG. The engines take an injected rng (default
 // Math.random) so simulations/tests are reproducible. Same idiom as the satRush tests.

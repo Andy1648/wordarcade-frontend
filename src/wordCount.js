@@ -11,6 +11,8 @@
 // plain localStorage the user can rewrite at will — so any future leaderboard
 // MUST use server-validated counts and NEVER trust this value.
 
+import { touchStreak } from './progress/streak.js';
+
 const KEY = 'wa_words';
 const VERSION = 1;
 const MODES = ['word-bomb', 'category-blitz', 'sat-rush'];
@@ -70,6 +72,10 @@ export function addWords(mode, n = 1) {
     cur.byMode[mode] += Math.floor(n);
   }
   write(cur);
+  // A word was accepted → the player was active today. touchStreak is idempotent within a day and
+  // self-guarded, so a streak failure can never break word counting. (CHAIN/FUSE don't call
+  // addWords — they touch the streak on their own accept path via the same touchStreak.)
+  touchStreak();
   listeners.forEach((fn) => {
     try {
       fn(cur);

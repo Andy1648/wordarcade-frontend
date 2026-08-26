@@ -44,8 +44,19 @@ test.describe('shop', () => {
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
   });
 
-  test('REBIRTH icon: opens the rebirth view directly; disabled at level 1', async ({ page }) => {
-    await openRebirth(page, { 'taw.wins': '400', 'taw.xp': '0' });
+  test('REBIRTH icon: hidden for a brand-new level-1 player (nothing to reset)', async ({ page }) => {
+    // fix/firstrun #1: a prestige-RESET mechanic is noise to a fresh account. With no wins ever
+    // earned, no rebirths, and level 1, the top-nav REBIRTH icon is not rendered at all.
+    await installBackendMock(page);
+    await page.goto('/?portal=1');
+    await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
+    await expect(page.locator('.homepage-nav-btn.is-rebirth')).toHaveCount(0);
+  });
+
+  test('REBIRTH icon: reappears once wins are earned; opens the view, disabled at level 1', async ({ page }) => {
+    // Any lifetime wins (or reaching the first rebirth level) brings the icon back. Opening it
+    // lands straight on the rebirth view, still disabled at level 1 (below the first gate).
+    await openRebirth(page, { 'taw.wins': '400', 'taw.winsLifetime': '400', 'taw.xp': '0' });
     await expect(page.locator('.shop-title')).toHaveText('REBIRTH');
     await expect(page.locator('.shop-tab')).toHaveCount(0);
     await expect(page.locator('.shop-rebirth')).toBeDisabled(); // level 1 → not eligible

@@ -140,3 +140,59 @@ Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600K
   elements have no `content` set anywhere, so they generated no boxes and the rule did nothing.
 - VERIFIED: infinite-animation count stays at 46 (unchanged); build exit 0; menu/card e2e green;
   screenshots confirm the star, drips, and hover burst all render.
+## fix/firstrun (first-run UX fixes + daily streak) — 2026-08-26
+
+Autonomous 2-job task. Conservative choices logged below.
+
+- JOB1.1 REBIRTH visibility: shown only when `rebirths>0 || winsLifetime>0 || level>=rebirthThreshold(rebirths)`.
+  Used winsLifetime (never-decremented) not the spendable balance so spending wins can't re-hide it.
+  Updated shop.spec.js (its old test asserted the icon present at LV1; now hidden for a brand-new
+  account, shown once wins are earned).
+- JOB1.2 XP caption: gated on `level<2 && winsLifetime===0 && rebirths===0` (a rebirthed player back
+  at LV1 must NOT see "TYPE ANYWHERE TO EARN XP"). Added a permanent "LEVEL" kicker to the bar.
+  Caption is hidden below 560px viewport height (a short landscape screen has no room; keeps the
+  one-screen fit's symmetric top/bottom gaps — the caption is registered in the fit's scalable set
+  and zooms with --menu-scale otherwise).
+- JOB1.3 WINS explainer: one-time 3s stamp on the FIRST round payout, gated by a localStorage flag
+  (taw.seenWinsHint). Reused the existing pooled-WAAPI stamp pattern; subsequent payouts show the
+  normal "+N WINS".
+- JOB1.4 PLAY primary: relabeled the multiplayer primary CTA CREATE→"PLAY" (it opens a room you can
+  play solo AND share); JOIN→"JOIN WITH CODE" (secondary). Did NOT add a separate third CREATE
+  button — PLAY and CREATE are the same underlying action here, so a third button would just
+  reintroduce the CREATE/JOIN confusion. Matches the audit's own rec #4. Solo CHAIN/FUSE already
+  said PLAY. Tests select by class, not label, so unaffected.
+- JOB1.5 Locked path: showed "YOU'RE LV n · N TO GO" as LEVELS remaining, not raw cumulative XP.
+  Spec said "the remaining XP"; chose levels because a big cumulative-XP number reinforces exactly
+  the opacity the audit flagged, and the gate is level-based. DELIBERATE divergence for legibility.
+  Added to both the card stamp (GameCard) and the LockedPreviewDialog gate.
+- JOB1.6 Intro gate: measured first-visit gate ≈ 3.9s (TransitionIntro ~1.9s + KnifeSplit ~2.0s).
+  Compressed to ~1.8s: TransitionIntro schedule + letter-entrance CSS halved (~1.0s), KnifeSplit
+  timing constants cut (~0.83s). Preserved the two-beat structure/art at a faster tempo; did NOT
+  skip the intro or touch App.jsx orchestration (its 2500ms slice safety-net still exceeds the new
+  ~0.83s knife). NOTE: the intro is already first-visit-only (SEEN_INTRO/hasSeenIntro) — repeat
+  visitors skip straight to the menu — so the audit's "every load" premise held only for a new
+  visitor; this shortens that one-time gate.
+- JOB2 Daily streak: stored taw.streak as {count,lastDay,freezes} — extended the spec's
+  {count,lastDay} with a `freezes` field (required for the freeze-token mechanic). Streak is bumped
+  from wordCount.addWords, which the three SCORING modes (word-bomb, category-blitz, sat-rush) all
+  call — so any accepted word in those modes counts the day. GAP: solo CHAIN/FUSE record wins
+  directly and do NOT route through addWords, so they don't currently advance the streak; low impact
+  (the main modes cover daily engagement) — revisit if CHAIN/FUSE-only players report resets. The
+  reward multiplier folds into xpPerInput (live default; explicit param in tests). Menu shows the
+  count only at >=2 (a small flame chip). Day boundary = local-midnight day index.
+
+## fix/firstrun addendum — CHAIN/FUSE streak gap closed — 2026-08-26
+
+The earlier note flagged that solo CHAIN/FUSE didn't advance the daily streak (they never call
+wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
+- Extracted the single guarded touch `touchStreak()` in progress/streak.js — the ONE entry point
+  both the word counter and the solo modes call. wordCount.addWords now calls it too (was an inline
+  recordStreakActivity + try/catch).
+- Added `submitSoloWord(engine, word, onAccept)` in solo/shared.js (framework-free): runs the
+  engine submit and fires onAccept ONCE per accepted word, never on reject, never on run-over.
+  useSoloGame.onSubmit routes both modes through it.
+- ChainGame + FuseGame pass `onAccept: touchStreak`. Both modes now count each accepted word toward
+  the streak the same way, on a single shared path.
+- Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
+  word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
+  nothing. 277 unit + 134 e2e green.

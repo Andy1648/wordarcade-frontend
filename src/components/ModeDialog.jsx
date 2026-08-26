@@ -213,7 +213,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                   onClick={onJoin}
                   disabled={!!connecting}
                 >
-                  {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN'}
+                  {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN WITH CODE'}
                 </button>
               </div>
             )}

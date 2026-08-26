@@ -11,7 +11,7 @@
 //   getScore(engine)   → the run's score for the personal best
 //   rejectCtx(engine)  → { letter, fragment } to fill a reject message
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB } from './shared.js';
+import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -30,7 +30,7 @@ const SOLO_CLOCK_CAP_MS = (() => {
   return null;
 })();
 
-export function useSoloGame({ createEngine, adapter, pbKey, onRunStart }) {
+export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept }) {
   const engineRef = useRef(null);
   if (engineRef.current === null) engineRef.current = createEngine();
 
@@ -39,6 +39,11 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart }) {
   // lives in this hook). Kept in a ref so restart's identity doesn't depend on it.
   const onRunStartRef = useRef(onRunStart);
   onRunStartRef.current = onRunStart;
+  // Optional "a word was accepted" hook, fired PER accepted word (see onSubmit). CHAIN/FUSE pass
+  // progress/streak.touchStreak so playing either mode counts toward the daily streak — they never
+  // route through wordCount.addWords. Kept in a ref so onSubmit's identity doesn't depend on it.
+  const onAcceptRef = useRef(onAccept);
+  onAcceptRef.current = onAccept;
   const firstRunFiredRef = useRef(false);
   useEffect(() => {
     if (firstRunFiredRef.current) return undefined;
@@ -147,7 +152,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart }) {
     if (phase !== 'playing') return;
     const word = input.trim().toLowerCase();
     if (!word) return;
-    const r = engineRef.current.submit(word);
+    // submitSoloWord fires onAccept (streak touch) exactly once on an accepted word, mid-run.
+    const r = submitSoloWord(engineRef.current, word, onAcceptRef.current);
     if (r.ok) {
       setReason('');
       setInput('');

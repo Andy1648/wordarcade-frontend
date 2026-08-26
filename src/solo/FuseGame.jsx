@@ -6,6 +6,7 @@ import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { recordRound, awardWins } from '../progress/wins.js';
+import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import poolsRaw from './fragmentPools.json';
@@ -80,7 +81,8 @@ export default function FuseGame({ onExit }) {
 }
 
 function FuseInner({ data, createEngine, adapter, onExit }) {
-  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE });
+  // Each accepted FUSE word counts toward the daily streak (this mode never calls addWords).
+  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, onAccept: touchStreak });
   const s = g.engine.state;
 
   // WINS (item 1): FUSE was never wired to pay out. On run-over, grant wins on the words solved

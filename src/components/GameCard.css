@@ -515,6 +515,20 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+/* The "YOU'RE LV n · N TO GO" path line — smaller, Space Mono, cream — under the gate. Shows
+   the unlock is reachable rather than a bare wall. */
+.game-card-lock-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #f0ead9;
+  -webkit-text-stroke: 0;
 }
 
 /* One-shot locked-card shake (finite 200ms, transform only). */

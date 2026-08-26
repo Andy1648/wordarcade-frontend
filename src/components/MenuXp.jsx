@@ -16,7 +16,7 @@ import { formatNum } from '../format';
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, streak = 0 }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -146,6 +146,18 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )
       )}
+      {/* Daily-streak chip — only once the streak is worth showing (>= 2 days). Flame emoji
+          as content (house allows emoji-as-content, cf. the ⚡ DAILY link), tiny + inline so
+          it adds no bar height. Announced to AT; the rest of the bar chrome stays decorative. */}
+      {variant !== 'mini' && Number(streak) >= 2 && (
+        <span className="menu-streak-chip" aria-label={`${streak} day streak`}>
+          <span className="menu-streak-flame" aria-hidden="true">🔥</span>
+          {formatNum(streak)}
+        </span>
+      )}
+      {/* Static "LEVEL" kicker so a newcomer reads the "LV n · into/cost" chrome as the
+          leveling bar it is (the audit flagged it as unexplained). Full bar only. */}
+      {variant !== 'mini' && <span className="menu-xp-label" aria-hidden="true">LEVEL</span>}
       <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
         <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
@@ -182,6 +194,7 @@ const EDGE_POOL = 2;
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
 const LEVELUP_MS = 1500;
 const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
+const WINSHINT_MS = 3000; // one-time "WINS BUY UPGRADES IN THE SHOP" explainer — a full 3s read
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
 
 // Pick a CONTINUOUS random spawn position inside the fx layer (inset by POP_HALF),
@@ -248,10 +261,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelSubRef = useRef(null);
   const levelDetailRef = useRef(null);
   const winsStampRef = useRef(null);
+  const winsHintRef = useRef(null);
   const popAnimsRef = useRef([]);
   const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
   const winsStampAnimRef = useRef(null);
+  const winsHintAnimRef = useRef(null);
   const layerSizeRef = useRef({ w: 0, h: 0 }); // fx-layer px size (mount/resize only)
   const recentPosRef = useRef([]); // ring buffer of the last few accepted {x,y} (anti-repeat)
   const popNextRef = useRef(0);
@@ -345,6 +360,22 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       );
       a.cancel();
       winsStampAnimRef.current = a;
+    }
+
+    // Wins EXPLAINER — the one-time "WINS BUY UPGRADES IN THE SHOP" banner. 3s envelope
+    // (pop in 0-0.08, hold, fade out over the last 0.15) so a newcomer can actually read it.
+    if (winsHintRef.current) {
+      const a = winsHintRef.current.animate(
+        [
+          { transform: `${CENTER}rotate(-2deg) scale(1.35)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}rotate(-2deg) scale(1)`, opacity: 1, offset: 0.08 },
+          { transform: `${CENTER}rotate(-2deg) scale(1)`, opacity: 1, offset: 0.85 },
+          { transform: `${CENTER}rotate(-2deg) scale(1)`, opacity: 0, offset: 1 },
+        ],
+        { duration: WINSHINT_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+      );
+      a.cancel();
+      winsHintAnimRef.current = a;
     }
     return undefined;
   }, []);
@@ -458,6 +489,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       a.cancel();
       a.play();
     },
+    // One-time WINS explainer — shown the first time the player earns any wins (3s). Copy is
+    // fixed; the caller owns the "only once" gate (a localStorage flag).
+    winsHint() {
+      const a = winsHintAnimRef.current;
+      if (!a || !winsHintRef.current) return;
+      winsHintRef.current.textContent = 'WINS BUY UPGRADES IN THE SHOP';
+      a.cancel();
+      a.play();
+    },
   }));
 
   return (
@@ -491,6 +531,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         <span className="menu-xp-levelup-detail" ref={levelDetailRef} />
       </div>
       <div className="menu-xp-winsstamp" ref={winsStampRef} />
+      <div className="menu-xp-winshint" ref={winsHintRef} />
     </div>
   );
 });
