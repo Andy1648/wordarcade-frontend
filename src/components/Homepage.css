@@ -653,16 +653,39 @@ html[data-beat='true'] .homepage-logo {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Single-column = three tall stacked cards, which legitimately exceed a phone
-     screen. The fit-to-one-screen rule is a LAPTOP target; on narrow screens
-     allow normal vertical scrolling again instead of clipping the cards. */
+  /* Single-column = five tall stacked cards, which exceed a phone screen. Rather than
+     grow the page (which let the XP bar scroll out of view) or clip the cards (which made
+     the lower cards unreachable), the menu stays ONE SCREEN and the CARD LIST scrolls inside
+     a fixed frame: title + XP bar + action buttons are pinned, only the cards scroll. So
+     every card is reachable and the XP bar is always visible. */
   .homepage-wrap {
-    height: auto;
+    height: 100dvh;
     min-height: 100dvh;
-    overflow: visible;
+    overflow: hidden;
   }
   .homepage-stage {
-    max-height: none;
+    max-height: 100%;
+    /* Tighter section spacing than the laptop layout (clamp 24-60): the fixed frame's
+       gaps eat into the scrolling card window, so trim them to give the cards more room. */
+    row-gap: clamp(10px, 1.6vh, 16px);
+  }
+  /* The card region takes the leftover height between the XP bar and the action buttons and
+     scrolls internally. min-height:0 lets a flex item shrink below its content so overflow
+     actually engages; overflow-x:hidden keeps card shadows from promoting a horizontal bar. */
+  .homepage-cards-region {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Everything that frames the scroll stays put (never compresses). */
+  .homepage-logo-wrap,
+  .menu-xp-bar,
+  .homepage-bottom-bar,
+  .homepage-daily-link,
+  .homepage-footer-links {
+    flex-shrink: 0;
   }
 
   /* 44px tap floor for the credits link, phone-only: the wrap is height:auto
