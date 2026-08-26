@@ -68,15 +68,32 @@
      three-card row shrinks on short laptops and the menu still fits one screen
      without the bottom buttons spilling past the card. */
   height: clamp(160px, min(21vw, 30vh), 280px);
-  /* This element scales (featured via --cs) and lifts on hover. The cards no
-     longer sway or beat-pop, so it rests at its resting scale until hovered. */
-  transform: scale(var(--cs, 1));
-  transition: transform 0.12s, box-shadow 0.12s;
+  /* The card face composes THREE independent scale factors + a tilt into ONE transform,
+     each driven by a CSS variable so they never fight over `transform`:
+       --cs         featured resting scale (unchanged)
+       --card-beat  the beat pulse (set on html[data-beat]; 1 at rest, <=1.03 on a kick)
+       --card-hover the hover/press scale (1 at rest)
+       --card-tilt  the hover tilt (0 at rest)
+     Every change animates through the SAME 120ms transition below — so the beat is a
+     transition, NOT a new @keyframes loop (the infinite-animation count is unchanged),
+     and beat × hover multiply cleanly instead of clobbering each other. Transform-only. */
+  transform:
+    scale(calc(var(--cs, 1) * var(--card-beat, 1) * var(--card-hover, 1)))
+    rotate(var(--card-tilt, 0deg));
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
   will-change: transform, box-shadow;
 }
 
-/* The card beat-pop was removed - only the menu TITLE syncs to the beat now.
-   Cards stay dead-still at rest and react solely on hover (card-hover-pop below). */
+/* BEAT PULSE — the card face consumes the shared beat clock (html[data-beat='true'] for
+   ~120ms per kick + --beat-intensity 0-1). Scale ONLY, capped at 1.02 (featured 1.03), scaled
+   by the kick strength so soft beats barely move. No new animation: it just retargets
+   --card-beat and the face's existing 120ms transform transition eases in and back out. */
+html[data-beat='true'] .game-card {
+  --card-beat: calc(1 + 0.02 * var(--beat-intensity, 1));
+}
+html[data-beat='true'] .game-card.featured {
+  --card-beat: calc(1 + 0.03 * var(--beat-intensity, 1)); /* the flagship pulses harder */
+}
 
 .game-card.dashed-border {
   border-style: dashed;
@@ -110,13 +127,15 @@
   transform: rotate(32deg);
 }
 
-/* Hover: scale up (the wrapper keeps swaying; the wrapper's hover z-index lifts
-   the whole card above its neighbours). */
+/* Hover: a snappy 120ms tilt + scale + the hard offset shadow TIGHTENING (5px→3px, the
+   card presses toward the wall). All via the composed transform vars + the face's box-shadow
+   transition — no keyframes. The wrapper's hover z-index lifts it above its neighbours. */
 .game-card:hover {
   /* Speed every background animation up ~40% (see GameCardArt.css). */
   --spd: 0.6;
-  animation: card-hover-pop 0.35s ease-out forwards;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
+  --card-hover: 1.04;
+  --card-tilt: -1.6deg;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 3px 3px 0 #000;
 }
 
 /* Run the paused card-art loops only while the card is actually being used —
@@ -129,16 +148,22 @@
 }
 
 .game-card:active {
-  animation: none;
-  transform: scale(calc(0.98 * var(--cs, 1)));
+  --card-hover: 0.97;
+  --card-tilt: 0deg;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 1px 1px 0 #000;
 }
 
-@keyframes card-hover-pop {
-  0% { transform: scale(calc(1 * var(--cs, 1))); }
-  40% { transform: scale(calc(1.08 * var(--cs, 1))); }
-  70% { transform: scale(calc(1.03 * var(--cs, 1))); }
-  100% { transform: scale(calc(1.05 * var(--cs, 1))); }
+/* Reduced motion: no beat pulse, no hover tilt/scale (the shadow-tighten stays as a static
+   press cue). Keeps the card dead-still for anyone who asked for it. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-beat='true'] .game-card,
+  html[data-beat='true'] .game-card.featured {
+    --card-beat: 1;
+  }
+  .game-card:hover {
+    --card-hover: 1;
+    --card-tilt: 0deg;
+  }
 }
 
 /* BEAT GLOW (prototype): a neon edge-glow pulsing on each detected beat, reusing
@@ -276,7 +301,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-content {
   position: relative;
   z-index: 3;
-  padding: 12px 10px 10px;
+  /* Tighter padding so the text sits closer to the card border and fills more of the
+     face (density pass). Was 12px 10px 10px. */
+  padding: 8px 8px 7px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -298,10 +325,11 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 
 .game-card-name {
   font-family: 'Bungee', cursive;
-  /* Scaled up so titles read on a laptop: >=28px at >=1366px wide, still 12px on
-     phones (min). Static clamp() — never animated. */
-  font-size: clamp(12px, 2.1vw, 30px);
-  line-height: 1.1;
+  /* Density pass: titles read big on a laptop — >=34px at >=1366px (2.6vw hits 35.5px at
+     1366, caps at 46px on ultrawide), scaling down to 14px on phones. Static clamp() —
+     never animated. */
+  font-size: clamp(14px, 2.6vw, 46px);
+  line-height: 1.03;
   margin-bottom: 4px;
   white-space: pre-line;
 }
@@ -312,7 +340,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-ai-badge {
   align-self: flex-start;
   font-family: 'Bungee', cursive;
-  font-size: clamp(9px, 1vw, 12px);
+  font-size: clamp(10px, 1.15vw, 16px);
   line-height: 1;
   color: #04201c;
   background: #2EFFE0;
@@ -326,9 +354,10 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 
 .game-card-badge {
   display: inline-block;
-  font-size: clamp(8.5px, 1vw, 13px);
+  /* Density pass: >=18px at >=1366 (1.5vw = 20.5px at 1366), scaling to 12px on phones. */
+  font-size: clamp(12px, 1.5vw, 22px);
   font-weight: 700;
-  padding: 3px 7px;
+  padding: 4px 9px;
   border: 2.5px solid rgba(0, 0, 0, 0.35);
   margin-top: auto;
   align-self: flex-start;
@@ -341,7 +370,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   align-self: flex-start;
   margin-top: 5px;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(8px, 0.95vw, 11px);
+  /* Density pass: >=18px at >=1366 (1.4vw = 19.1px at 1366), scaling to 12px on phones. */
+  font-size: clamp(12px, 1.4vw, 20px);
   font-weight: 700;
   letter-spacing: 0.02em;
   color: rgba(0, 0, 0, 0.62);
