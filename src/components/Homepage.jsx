@@ -219,13 +219,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       }
       const gaps = rowGap * Math.max(0, kids.length - 1);
       if (scalable <= 0) return;
-      // Fit the content to inner MINUS a vertical RESERVE (item 3), so the centred column
-      // keeps a 16-40px breathing gap at the stage's inner top AND bottom edge instead of
-      // filling flush (or overflowing on short screens / floating on tall ones). The reserve
-      // is split evenly by justify-content:center, so ~RESERVE/2 lands on each side. The
-      // clamp is widened to [0.42, 1.35] so the content can grow to fill a tall 2560 screen
-      // and shrink to keep the reserve on a short 1163×501 one.
-      const RESERVE = 56;
+      // Fit the content to inner MINUS a vertical RESERVE, so the centred column keeps a
+      // breathing gap at the stage's inner top AND bottom edge instead of filling flush (or
+      // overflowing on short screens / floating on tall ones). The reserve is split evenly by
+      // justify-content:center, so ~RESERVE/2 lands on each side — the gaps are SYMMETRIC by
+      // construction (top == bottom). Reduced 56→44 so the visible gap to the neon FRAME
+      // (reserve/2 + the stage's own vertical padding) stays inside the 16-32px band at every
+      // width — at 56 the 2560/1920 frame gaps ran 35-36px (just over 32). Smaller reserve =
+      // the content column grows to fill the extra room. Clamp [0.42, 1.35] unchanged so
+      // content can still fill a tall 2560 screen and shrink on a short 1163×501 one.
+      const RESERVE = 44;
       const raw = (inner - RESERVE - gaps - fixed) / scalable;
       const scale = Math.max(0.42, Math.min(1.35, raw));
       stage.style.setProperty('--menu-scale', scale.toFixed(4));
