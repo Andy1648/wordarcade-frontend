@@ -323,15 +323,9 @@ html[data-beat='true'] .homepage-logo {
   100% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
 }
 
-/* CHROMATIC SPLIT INTENTIONALLY DROPPED. The menu title no longer carries the
-   splash's continuous cyan/pink ghost clones - the wordmark sits clean (Bungee
-   Shade body + stroke + beat-pop only). This is a deliberate divergence from the
-   splash (see the CLAUDE.md title-lock note); the ghost pseudo-elements are
-   turned off rather than removed so the markup/data-text contract stays intact. */
-.homepage-logo::before,
-.homepage-logo::after {
-  display: none;
-}
+/* (Removed the dead `.homepage-logo::before/::after { display:none }` block: those pseudo-
+   elements have no `content` set anywhere, so they generate no boxes and the rule did nothing.
+   The chromatic-split ghosts were already gone; the markup/data-text contract is unaffected.) */
 
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
    off-axis, and sitting on a hard offset shadow. */
@@ -589,11 +583,11 @@ html[data-beat='true'] .homepage-logo {
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0) rotate(-8deg);
   transition: transform 0.25s ease-out, opacity 0.25s ease-out;
-  clip-path: polygon(
-    50% 0%, 60% 25%, 90% 10%, 78% 38%, 100% 50%, 78% 62%,
-    90% 90%, 60% 75%, 50% 100%, 40% 75%, 10% 90%, 22% 62%,
-    0% 50%, 22% 38%, 10% 10%, 40% 25%
-  );
+  /* The burst SHAPE is now a real SVG asset (public/art/starburst.svg) — a 12-spike comic
+     "POW!" burst — masked in so each button tints it via `background` below. Was a hand-rolled
+     clip-path polygon. CSS only tints, scales, and fades it on hover. */
+  -webkit-mask: url(/art/starburst.svg) center / 100% 100% no-repeat;
+  mask: url(/art/starburst.svg) center / 100% 100% no-repeat;
 }
 
 .homepage-btn:hover::before {

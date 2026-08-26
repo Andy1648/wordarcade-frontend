@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 64" fill="none" preserveAspectRatio="none">
+  <!-- A dried paint run: a heavy pooled top, a wandering tail, and a bulbous droplet
+       at the tip. Real bezier curves — this is the SHAPE; CSS colours + fades it. -->
+  <path d="M6 0
+           C4 9, 7 15, 6.5 24
+           C6 32, 8 38, 7.4 44
+           C6.6 49, 5.4 53, 6.6 56.5
+           C7.4 59.4, 9.2 61, 12 61
+           C14.8 61, 16.6 59.4, 17.4 56.5
+           C18.6 53, 17.4 49, 16.6 44
+           C16 38, 17.6 32, 17 24
+           C16.2 15, 19 9, 17 0
+           Z"
+        fill="#ffffff"/>
+</svg>

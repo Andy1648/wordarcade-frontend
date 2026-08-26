@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- A comic "POW!" burst: 12 uneven spikes for hand-drawn energy. White fill so CSS
+       tints it per button (the SHAPE is the asset; CSS scales + fades it on hover). -->
+  <path d="M50 2 L58 26 L74 8 L70 32 L94 22 L76 40 L99 50 L76 60 L94 78 L70 68 L74 92
+           L58 74 L50 98 L42 74 L26 92 L30 68 L6 78 L24 60 L1 50 L24 40 L6 22 L30 32
+           L26 8 L42 26 Z"
+        fill="#ffffff"/>
+</svg>

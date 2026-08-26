@@ -296,7 +296,12 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           </div>
         )}
 
-        {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
+        {game.featured && (
+          <div className="game-card-featured-tag">
+            <img src="/art/star.svg" className="game-card-featured-star" alt="" aria-hidden="true" />
+            FEATURED
+          </div>
+        )}
 
         {game.limited && <div className="game-card-limited-tag">LIMITED</div>}
 

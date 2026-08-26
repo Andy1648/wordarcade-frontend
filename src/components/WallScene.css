@@ -62,7 +62,12 @@
 .wall-paint-drip {
   position: absolute;
   top: 0;
-  border-radius: 0 0 3px 3px;
+  /* The drip SHAPE is now a real SVG asset (public/art/paint-drip.svg) with proper bezier
+     curves + a bulbous droplet tip — masked in so each drip keeps its per-instance colour
+     (inline `background`) and opacity. Was a plain border-radius rectangle. CSS only colours,
+     sizes, and (via the parallax layer) moves it. */
+  -webkit-mask: url(/art/paint-drip.svg) center / 100% 100% no-repeat;
+  mask: url(/art/paint-drip.svg) center / 100% 100% no-repeat;
 }
 
 /* ---- Detailed spray-paint splatters ---- */

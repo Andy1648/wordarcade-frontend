@@ -435,6 +435,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   top: 7px;
   right: 7px;
   z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-family: 'Bungee', cursive;
   font-size: 7px;
   color: #000;
@@ -444,6 +447,14 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   transform: rotate(4deg);
   box-shadow: 2px 2px 0 #000;
   pointer-events: none;
+}
+/* The FEATURED badge's star is now a real SVG asset (public/art/star.svg) — a chunky
+   Newgrounds 5-point star with a thick black outline + hard offset shadow — replacing the
+   old "★" glyph. Sized to the cap height; CSS only places it. */
+.game-card-featured-star {
+  width: 11px;
+  height: 11px;
+  display: block;
 }
 
 /* SAT Rush "LIMITED" scarcity stamp — red ink on cream, matching the card's retro-print

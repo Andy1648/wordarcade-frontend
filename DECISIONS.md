@@ -120,3 +120,23 @@ Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600K
 - category-blitz occupancy: my first metric (name+badge+payout union) read it low (53% @1440)
   because it excludes the AI JUDGED pill (a text element above the title). Counting it, all 5 cards
   are 55-75% at every viewport. Metric now includes the ai-badge.
+
+## fix/real-art (JOB 2, autonomous 2026-08-26)
+- Replaced 3 CSS-drawn art pieces with real SVG assets in public/art/ (ART VS MOTION rule):
+  1. FEATURED "★" glyph → public/art/star.svg: a chunky 5-point Newgrounds star, flat #FFE94A
+     fill, 7px black outline, hard #0d0618 offset shadow. Rendered as an <img> foreground badge.
+  2. .wall-paint-drip CSS rectangles (border-radius:0 0 3px 3px) → public/art/paint-drip.svg: a
+     real bezier drip with a bulbous droplet tip, applied as a CSS mask so each drip keeps its
+     per-instance colour + opacity. CSS only colours/sizes/parallaxes it.
+  3. .homepage-btn::before clip-path polygon → public/art/starburst.svg: a 12-spike comic burst,
+     applied as a CSS mask so each button tints it (create pink / join cyan). CSS scales+fades on hover.
+- JUDGMENT (logged per the standing rule): the drips and the button burst are per-colour, low-opacity
+  BACKGROUND accents, so they use the SVG as a MASK (shape from the asset, colour from CSS) rather than
+  a fully-painted <img> — a mask can't carry the spec's black outline, and a black outline on a
+  0.14-opacity wall stain / a 0.2-opacity behind-button burst would read as mud. The full bold spec
+  (thick outline + hard shadow + flat fill) is applied to the FEATURED star, which is a solid
+  foreground badge. All three now get their SHAPE from a real vector asset, never from CSS.
+- Deleted the dead `.homepage-logo::before/::after { display:none }` block: verified those pseudo-
+  elements have no `content` set anywhere, so they generated no boxes and the rule did nothing.
+- VERIFIED: infinite-animation count stays at 46 (unchanged); build exit 0; menu/card e2e green;
+  screenshots confirm the star, drips, and hover burst all render.
