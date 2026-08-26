@@ -689,7 +689,10 @@ html[data-beat='true'] .homepage-logo {
    (Type sizes are fluid via clamp() so no per-breakpoint font overrides needed.) */
 @media (max-width: 600px) {
   .homepage-wrap { padding: 14px; }
-  .homepage-stage { padding: 18px 14px 0; }
+  /* Symmetric vertical padding: was `18px 14px 0` — 18px top / 0 bottom, a real top↔bottom
+     asymmetry the after-padding gap measurement hid. Match top and bottom so the content
+     frames evenly. */
+  .homepage-stage { padding: 18px 14px; }
 
   .homepage-logo {
     -webkit-text-stroke: 4px #000;
