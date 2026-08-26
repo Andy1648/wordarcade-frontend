@@ -4,7 +4,8 @@
 // offset shadow, flat fill) lives in ModeExample.css. STATIC — no animation.
 import './ModeExample.css';
 import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
-import { wordWinsEstimate } from '../progress/wins';
+import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { formatNum } from '../format';
 
 // Highlight the first occurrence of `sub` within `word` in `color`.
 function hiSub(word, sub, color) {
@@ -95,6 +96,9 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
       <div className="mode-ex-meta">
         <span className="mode-ex-pay">
           <b style={{ color: accent }}>{wins}</b> WINS / WORD
+          {currentRebirthMult() > 1 && (
+            <span className="mode-ex-mult"> (×{formatNum(currentRebirthMult())})</span>
+          )}
         </span>
         <span className="mode-ex-round">{round}</span>
       </div>

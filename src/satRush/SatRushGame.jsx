@@ -94,7 +94,9 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
         <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
       )}
       {/* Live "+N WINS" pill — shared component + position with every other mode (item 2). */}
-      {view.hasWord && view.phase === 'playing' && <WinsHudPill amount={winsTally} />}
+      {view.hasWord && view.phase === 'playing' && (
+        <WinsHudPill amount={winsTally} words={view.cleared || 0} />
+      )}
       <div className="sr-stage">
         {view.hasWord && (
           <>

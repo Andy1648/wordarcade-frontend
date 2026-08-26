@@ -410,6 +410,9 @@ function App() {
   // per-round (Blitz) / per-game (Word Bomb) estimate; `winsEarnedTotal` accumulates the real
   // recordRound() payouts across the run.
   const [winsTally, setWinsTally] = useState(0);
+  // MY accepted-word count this round/game — drives the HUD pill's pre-gate "3 WORDS TO
+  // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
+  const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
   // Which menu control ('shop' | 'stats' | null) opened the overlay we're in, so the
   // homepage can restore focus to it when the overlay closes (a11y). A ref (not state):
@@ -799,6 +802,7 @@ function App() {
       myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
       myOutstandingWordsRef.current = []; // fresh game → drop any stale in-flight submits
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
+      setWinsWords(0);
       setWinsEarnedTotal(0);
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
@@ -947,6 +951,7 @@ function App() {
         if (isMine) {
           addWords('word-bomb');
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
+          setWinsWords(myWbAcceptedRef.current); // drives the pill's pre-gate state
           // Live HUD tally: the wins this game will pay so far (pending; paid at game_over).
           setWinsTally(
             awardWins({
@@ -1023,6 +1028,7 @@ function App() {
       setMyAnswers([]);
       myBlitzAcceptedRef.current = 0; // fresh round → reset my Wins accept count
       setWinsTally(0); // fresh round → reset the live HUD wins tally (Blitz pays per round)
+      setWinsWords(0);
       setPlayerProgress({});
       setRoundResults(null);
       setLastWordResult(null);
@@ -1054,6 +1060,7 @@ function App() {
         // answer_result is always about MY answer, so an accept is my own word.
         addWords('category-blitz');
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
+        setWinsWords(myBlitzAcceptedRef.current); // drives the pill's pre-gate state
         // Live HUD tally: the wins THIS round will pay so far (pending; paid at round_end).
         setWinsTally(
           awardWins({
@@ -1771,6 +1778,7 @@ function App() {
         roomCode={room ? room.code : null}
         dailyResult={dailyResult}
         winsTally={winsTally}
+        winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
       />
     );

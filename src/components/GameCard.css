@@ -346,6 +346,12 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   letter-spacing: 0.02em;
   color: rgba(0, 0, 0, 0.62);
 }
+/* Live rebirth boost annotation, e.g. "(×2)" — reads as a bonus, so it's darker/bolder
+   than the base rate rather than a separate colour that would fight the flat card fill. */
+.game-card-payout-mult {
+  color: #000;
+  font-weight: 700;
+}
 
 .game-card.disabled {
   cursor: default;

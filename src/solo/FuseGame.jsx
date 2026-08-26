@@ -163,6 +163,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
       phase={g.phase}
       winsTally={winsTally}
+      winsWords={s.wordsSolved}
       over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard, winsEarned }}
       onExit={onExit}
     />

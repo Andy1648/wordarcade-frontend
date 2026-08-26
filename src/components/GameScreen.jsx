@@ -1461,6 +1461,7 @@ export default function GameScreen({
   roomCode = null,
   dailyResult = null,
   winsTally = 0,
+  winsWords = 0,
   winsEarnedTotal = 0,
 }) {
   const [draft, setDraft] = useState('');
@@ -2257,6 +2258,7 @@ export default function GameScreen({
         roomCode={roomCode}
         dailyResult={dailyResult}
         winsTally={winsTally}
+        winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
       />
     );
@@ -2475,7 +2477,7 @@ export default function GameScreen({
       onKeyDownCapture={sound.unlock}
     >
       {/* WINS: live running tally, hidden once the game is over (the total shows there). */}
-      {!gameOver && <WinsHudPill amount={winsTally} />}
+      {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} />}
       {/* JUICE 02 tension skin — composited CSS layers (was a full-viewport canvas
           repaint loop; see tension.js). All fixed, click-through, aria-hidden, and
           driven purely by data-tension on .game-wrap: nothing here writes style per
@@ -3434,6 +3436,7 @@ function CategoryBlitzScreen({
   roomCode = null,
   dailyResult = null,
   winsTally = 0,
+  winsWords = 0,
   winsEarnedTotal = 0,
 }) {
   const { sound } = useSound();
@@ -3825,7 +3828,7 @@ function CategoryBlitzScreen({
     return (
       <div className="game-wrap">
         {/* WINS: live running tally for this round (Blitz pays per round). */}
-        <WinsHudPill amount={winsTally} />
+        <WinsHudPill amount={winsTally} words={winsWords} />
         {showCountdown && (
           <CountdownOverlay
             onComplete={() => setShowCountdown(false)}

@@ -19,6 +19,13 @@
   box-shadow: 4px 4px 0 #000;
   color: #1a0b2e;
 }
+/* Pre-gate state ("3 WORDS TO EARN"): muted cream fill so it reads as a target to
+   hit, not wins already banked. Flips back to the solid yellow pill at 3 words. */
+.wins-hud--gate {
+  background: #fff7cc;
+  border-color: #d9c65a;
+  color: #6b5e1a;
+}
 .wins-hud-plus {
   font-family: 'Bungee', cursive;
   font-size: 1.3rem;

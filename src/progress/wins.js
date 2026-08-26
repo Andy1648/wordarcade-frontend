@@ -12,7 +12,9 @@ export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
 export const ROUNDS_KEY = 'taw.rounds';
 export const ROUND_MODES = ['wordBomb', 'blitz', 'satRush'];
-const MIN_WORDS = 3;
+// The payout gate: a round pays nothing until this many words are accepted. Exported
+// so the in-game HUD pill can show the gate ("3 WORDS TO EARN") before it's crossed.
+export const MIN_WORDS = 3;
 
 function readInt(key) {
   try {
@@ -117,13 +119,22 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
 // round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×5 SAT Rush ·
 // ×10 CHAIN · ×15 FUSE, then × difficulty, snapped to a round multiple of 10 (word-bomb/blitz
 // 20, sat-rush 100, chain 200, fuse 300 at the ×1 difficulty default). This is the R0 BASE
-// preview — the game card copy is stable ("20 WINS / WORD"), NOT rebirth-scaled; the live
-// rebirth boost is folded into the ACTUAL payout (perWordWins/awardWins) and shown in the shop.
+// per-word rate; the card/dialog copy shows it and ANNOTATES the active rebirth boost
+// separately via currentRebirthMult() below (e.g. "200 WINS / WORD (×2)"), so the stable base
+// stays readable while the rebirth gain is visible.
 export const WORD_WINS_MULT = { 'sat-rush': 5, chain: 10, fuse: 15 };
 export function wordWinsEstimate({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
   const modeMult = WORD_WINS_MULT[mode] || 1;
   return round10(WORD_WINS_BASE * modeMult * diffMult);
+}
+
+// The player's live rebirth WINS multiplier (same ladder as XP), 1 at R0. Exposed so the menu
+// card + mode-dialog copy can annotate the per-word rate with the active rebirth boost. Reads
+// taw.rebirths unless a count is passed (keeps it pure/testable).
+export function currentRebirthMult(rebirthCount) {
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  return rebirthMult(rc);
 }
 
 // A finite "+N WINS" menu stamp is queued here when a round pays out, and consumed by the

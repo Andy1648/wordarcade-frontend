@@ -53,7 +53,8 @@ export default function SoloShell({
   rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
   fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
   phase,
-  winsTally = 0, // live "+N WINS" pill amount (0 hides it until the 3-word gate)
+  winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
+  winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
 }) {
@@ -78,7 +79,7 @@ export default function SoloShell({
 
       {/* Live "+N WINS" pill — same shared component + position as Word Bomb / Blitz (item 2).
           Hidden once the run is over (the total shows on the death card instead). */}
-      {phase === 'playing' && <WinsHudPill amount={winsTally} />}
+      {phase === 'playing' && <WinsHudPill amount={winsTally} words={winsWords} />}
 
       <div className="solo-hud">{hud}</div>
 
