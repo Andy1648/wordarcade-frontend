@@ -396,6 +396,14 @@ function App() {
   // live value. Word Bomb pays at game_over; Category Blitz pays at each round_end.
   const myWbAcceptedRef = useRef(0); // Word Bomb: my accepts this game
   const myBlitzAcceptedRef = useRef(0); // Category Blitz: my accepts this round
+  // WINS attribution (Word Bomb): the words I've submitted this game whose word_result
+  // hasn't come back yet. My accepted words are counted by WORD MATCH against this list,
+  // NOT by the live turn pointer (feedCurrentRef) — a turn_update processed just before
+  // my word_result advances that pointer off me and used to drop my word from the count,
+  // and dropping one word can fall under the 3-word wins gate → a valid word "didn't
+  // score" (see e2e/word-bomb-scoring RACE). Reset each game_started; entries are consumed
+  // on match, and the server always answers a submit so the list self-drains.
+  const myOutstandingWordsRef = useRef([]);
   // WINS visibility (Economy v3): a LIVE running estimate of the wins this round/game will
   // pay, shown in the in-game HUD and ticking up as MY answers are accepted; and the total
   // actually EARNED this run, shown large on the game-over screen. `winsTally` is the pending
@@ -456,6 +464,11 @@ function App() {
   }, []);
 
   const myIdRef = useRef(null);
+  // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
+  // attribute my own accepted word to me by name even when the turn pointer has raced
+  // ahead. Assigned every render — playerName rarely changes mid-game.
+  const myNameRef = useRef(playerName);
+  myNameRef.current = playerName;
   // Synchronous mirror of categoryTotals (running per-player round-sum), so the
   // game_over handler can read this game's authoritative total without waiting on
   // a batched state commit. Reset each fresh game.
@@ -784,6 +797,7 @@ function App() {
         gameEndTime: null,
       });
       myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
+      myOutstandingWordsRef.current = []; // fresh game → drop any stale in-flight submits
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsEarnedTotal(0);
       setView('game');
@@ -912,14 +926,25 @@ function App() {
     if (lastMessage.type === 'word_result') {
       const payload = lastMessage.payload;
       setLastWordResult(payload);
-      // Attribute to whoever's turn it currently is (the submitter).
+      // Attribute this result. Prefer a WORD MATCH against my own outstanding submits
+      // over the live turn pointer (feedCurrentRef): a turn_update processed just before
+      // this frame advances the pointer off me, which used to drop my accepted word from
+      // the wins count (see e2e/word-bomb-scoring RACE). A match => it's mine wherever the
+      // turn pointer is; no match => fall back to feedCurrentRef (a broadcast accept for
+      // another player). Rejections are only sent to the submitter, so those are mine too.
+      const resultWord = (payload.word || '').trim().toLowerCase();
+      const q = myOutstandingWordsRef.current;
+      const qIdx = resultWord ? q.indexOf(resultWord) : -1;
+      if (qIdx !== -1) q.splice(qIdx, 1);
       const submitter = feedCurrentRef.current;
-      const playerName = submitter.name || 'SOMEONE';
+      const isMine = qIdx !== -1 || submitter.id === myIdRef.current;
+      const attributedId = isMine ? myIdRef.current : submitter.id;
+      const playerName = isMine ? myNameRef.current || 'YOU' : submitter.name || 'SOMEONE';
       if (payload.accepted) {
         const now = Date.now();
-        // Lifetime WORDS TYPED: count ONLY the local player's own accepted words.
+        // Lifetime WORDS TYPED + Wins: count ONLY the local player's own accepted words.
         // (Daily flows through this same path and counts as word-bomb — fine.)
-        if (submitter.id === myIdRef.current) {
+        if (isMine) {
           addWords('word-bomb');
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
           // Live HUD tally: the wins this game will pay so far (pending; paid at game_over).
@@ -935,7 +960,7 @@ function App() {
           ...prev,
           {
             type: 'accepted',
-            playerId: submitter.id,
+            playerId: attributedId,
             playerName,
             word: payload.word,
             timestamp: now,
@@ -948,7 +973,7 @@ function App() {
             ...prev.wordsPlayed,
             {
               word: payload.word,
-              playerId: submitter.id,
+              playerId: attributedId,
               playerName,
               timestamp: now,
             },
@@ -961,7 +986,7 @@ function App() {
           ...prev,
           {
             type: 'rejected',
-            playerId: submitter.id,
+            playerId: attributedId,
             playerName,
             reason: payload.reason,
             timestamp: Date.now(),
@@ -1639,6 +1664,10 @@ function App() {
   }
 
   function handleSubmitWord(word) {
+    // Remember my in-flight word so its word_result is attributed to ME by word match,
+    // no matter what turn_update lands first (see the word_result handler + myOutstandingWordsRef).
+    const w = (word || '').trim().toLowerCase();
+    if (w) myOutstandingWordsRef.current.push(w);
     send('submit_word', { word });
   }
 

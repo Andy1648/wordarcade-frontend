@@ -2412,10 +2412,12 @@ export default function GameScreen({
     // is zero client/server disagreement. Show the reject SAME-FRAME (via the normal
     // lastWordResult path, so it gets the identical buzz/shake/toast) and skip the
     // round-trip: a rejected word never consumes the turn server-side either, so not
-    // sending is equivalent. We keep the word in the box so it can be fixed. The
-    // dictionary check (not_a_word) still goes to the server below — only the client
-    // can't know it. Category Blitz is server-judged (no local accept-list), so this
-    // fast path is Word Bomb only.
+    // sending is equivalent. We CLEAR the box on reject so the player can type the
+    // next word immediately (no backspacing the dead word). The dictionary check
+    // (not_a_word) goes to the server below and already clears the box on send.
+    // Category Blitz is server-judged (no local accept-list), so this fast path is
+    // Word Bomb only. (CHAIN/FUSE keep their text — that is specced, and they are
+    // separate components in src/solo/, not this one.)
     if (!isCategory && onLocalWordResult) {
       const w = word.toLowerCase();
       const comboLc = (gameState.combo || '').toLowerCase();
@@ -2425,6 +2427,8 @@ export default function GameScreen({
       else if (usedItems.some((u) => String(u).toLowerCase() === w)) localReason = 'already_used';
       if (localReason) {
         onLocalWordResult({ accepted: false, reason: localReason });
+        setDraft('');
+        if (onTypingUpdate) onTypingUpdate('');
         return;
       }
     }
