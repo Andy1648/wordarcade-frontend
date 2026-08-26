@@ -1,8 +1,10 @@
 # TYPE A WORD — Handoff / Block State
 
-**Refreshed:** 2026-08-25. Every number below was read from source at this checkout (branch
-`docs/block-state-refresh` off `main`), not copied forward. Where an old claim did not match the
-code, it is flagged in **§10 Corrections**. File references are `path:line`.
+**Refreshed:** 2026-08-26 (branch `docs/block-state-2` off `main`). Every number below was
+re-verified against source at this checkout, not copied forward. **§12 (Recent changes) is the
+part a returning reader should read first** — it covers the mobile scroll fix, the word-attribution
+race fix, the card-feel pass, the ART VS MOTION rule, the CSS-art audit, and the current test
+counts, none of which the previous handoff knew about. File references are `path:line`.
 
 ---
 
@@ -109,8 +111,10 @@ pays 0 unless ≥ `MIN_WORDS=3` accepted (`wins.js:15`).
   run ends (`loadSoloAcceptExt`, `words.js:53-69`). Fully-loaded acceptance set ≈ **~270k tokens**
   before Set dedup.
 
-**SAT RUSH** — `src/data/satRush/words.json`, **~612 entries** (structured objects w/ defs +
-sentences). Separate corpus from the solo lists.
+**SAT RUSH** — `src/data/satRush/words.json`, **612 entries** on `main` (structured objects w/
+defs + sentences). Separate corpus from the solo lists. (An unmerged branch `data/sat-words`
+expands this to **956** — schema-validated, dedup'd — but it is NOT on `main`; treat 612 as the
+shipped number until that branch lands.)
 
 ## 8. SAT RUSH engine defaults (`src/satRush/engine.js:25-67` `DEFAULT_CONFIG`)
 `stageIntervalMs 2800`, `spellAlongMs 1100`, `stageMultipliers [5,3,1]`, `lineupStageScale 3.0`,
@@ -124,7 +128,7 @@ engine source as ground truth if they diverge.) Engine is PURE (no timers); the 
 
 ## 9. Tests & build
 - **Unit:** `npm test` → `node --test "src/**/*.test.js"` → **262 pass / 0 fail**.
-- **E2E:** `npm run test:e2e` → Playwright → **99 tests in 23 spec files**.
+- **E2E:** `npm run test:e2e` → Playwright → **133 tests in 30 spec files**.
 - Build gate: `npx vite build --logLevel error` (exit 0). Portal build: `npm run build:portal`
   → `dist-portal/`.
 
@@ -146,3 +150,53 @@ Tier-1 files (`App.jsx` WS handlers, `useWebSocket.js`, backend `server.js`/`gam
 documented traps that pass code review but fail at runtime: the **functional `setView` room_update
 guard**, the **screen must render off live `view`** (never a lagging copy), and the **FIFO message
 queue** in `useWebSocket`. Any change touching those must run the 2-device regression checklist.
+
+## 12. Recent changes the previous handoff did not know about
+Six things landed on `main` after the last doc refresh. Read this section first; each claim was
+re-verified against source at this checkout.
+
+### 12a. Mobile menu is a fixed one-screen frame; only the cards scroll
+Below the desktop breakpoint the menu is a locked frame, NOT a page that scrolls as one unit
+(`Homepage.css:661-689`). `.homepage-wrap` is `height:100dvh; overflow:hidden`. The wordmark
+(`.homepage-logo-wrap`), the XP bar (`.menu-xp-bar`), the action buttons (`.homepage-bottom-bar`),
+the daily link, and the footer links are all `flex-shrink:0` — they never compress and stay pinned.
+`.homepage-cards-region` (`Homepage.css:675`) takes the leftover height (`flex:1 1 auto;
+min-height:0; overflow-y:auto`) and scrolls the card list INTERNALLY. Net effect: the XP bar is
+always visible and every card is reachable, with no full-page scroll clipping the layout. The
+one-screen fit is measured, not hardcoded — `Homepage.jsx:217-219` scales `homepage-logo-wrap`,
+`menu-xp-bar`, and `homepage-cards-region` to fit. (Below 760px, §-note at `Homepage.css:699`, the
+single column reverts to normal page scroll.)
+
+### 12b. Word Bomb word-attribution race fix (`App.jsx` word_result handler)
+The wins count used to drop a player's own accepted word when a `turn_update` was processed in the
+same frame just before the `word_result` (it advanced the turn pointer off you). Fixed at
+`App.jsx:929-945`: the handler now attributes a result by **matching the word against your own
+outstanding submits** (`myOutstandingWordsRef`, seeded on submit at `App.jsx:1677`, reset per game
+at `:802`) BEFORE falling back to the live turn pointer (`feedCurrentRef`). A word match ⇒ it's
+mine wherever the pointer is; no match ⇒ it's a broadcast accept for another player; rejections are
+only sent to the submitter so those are mine too. Covered by `e2e/word-bomb-scoring` (the RACE
+spec). This is a Tier-1 handler — treat with §11 caution.
+
+### 12c. Card-feel pass — denser cards + beat-driven pulse
+Game cards consume the shared beat clock instead of sitting static. On each detected kick
+`html[data-beat='true']` retargets `--card-beat` to `1 + 0.02·--beat-intensity` (featured cards
+`+0.03`), a **scale-only** pulse capped ~1.02/1.03 that eases in and back out on the face's existing
+120ms transform transition — no new looping animation (`GameCard.css:74-96`). A separate
+opacity-only edge-glow fires once per kick on a dedicated `::after` layer (`GameCard.css:196-201`;
+SAT Rush gets its own ink variant at `:241`). Both are killed under `prefers-reduced-motion`
+(`GameCard.css:158-162`). Motion is beat-driven, not idle — consistent with the menu motion law.
+
+### 12d. ART VS MOTION rule (CLAUDE.md) + CSS-art audit
+A new design rule is now in CLAUDE.md (`CLAUDE.md:20`): **visual art must come from real vector/PNG
+assets in `/public`, never assembled from CSS shapes, gradients, or borders; CSS is for MOTION
+(transform/opacity) applied to those assets.** A shape that isn't a rectangle or circle is an asset,
+not a CSS trick — this is why the mascot is a PNG, not code. `claude/css-art-audit.md` (report-only)
+audited the codebase against this rule and found it **unusually clean**: nearly every illustration
+is already a real asset (`GameArt.jsx`, `GameIcons.jsx`, `decor/*.jsx`, `mascot-*.png`, the padlock,
+the wall pipe/crack, both starbursts). The `fix/real-art` branch replaced the few remaining CSS-art
+offenders with SVG assets in `/public/art/` (drip, star, starburst).
+
+### 12e. Test counts moved
+Unit **262** (was ~fewer), e2e **133 tests in 30 files** (was 99 in 23) — see §9. Two previously
+flaky e2e specs were stabilised with locator/`expect.poll` auto-retry waits instead of fixed sleeps
+(`feed-attribution.spec.js`, `word-bomb-scoring.spec.js`).
