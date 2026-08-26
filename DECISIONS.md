@@ -52,3 +52,24 @@ Actions (most conservative that meets acceptance):
 - DEFER posthog: dynamic-import inside initAnalytics(), and schedule initAnalytics on requestIdleCallback after mount (main.jsx). posthog's 211KB chunk now loads AFTER first paint. track() already no-ops until posthog is ready, so no lost-event risk beyond a sub-second init delay.
 - Sentry kept EAGER on purpose: its ErrorBoundary must be mounted to catch a render crash (it is the safety net the Stats crash would have hit). Deferring it was rejected as too risky.
 Measured: entry chunk 600KB -> 162KB (<450 target). Total FIRST-PAINT bytes 600KB -> 391KB (index 162 + react-vendor 143 + sentry 86; posthog 211 deferred). No route slower to interactive (parallel HTTP/2; lazy game/overlay chunks unchanged). 262 unit + 99 e2e green.
+
+## fix/feed-attribution (JOB 5, autonomous 2026-08-26)
+- VERIFIED with the mock-WS harness: the live feed CAN credit another player's word to the WRONG
+  name IF a turn_update is processed BEFORE that word's word_result (App.jsx:945 falls back to
+  feedCurrentRef.name for non-mine words). Proved: in the adversarial order (advance to CAI, then
+  BOB's accept lands) BOB's "BATBOY" was credited to CAI.
+- BUT NOT PRODUCTION-REACHABLE: the server broadcasts word_result (roomManager.js:815) BEFORE the
+  turn_update (:820), WebSocket delivery is ordered, and useWebSocket's FIFO queue preserves arrival
+  order — so word_result is always processed while feedCurrentRef still points to the submitter.
+  Proved: in the realistic order BOB's "CATFISH" is correctly credited to BOB. Guarded by
+  e2e/feed-attribution.spec.js.
+- "Fix it the same way" (myOutstandingWordsRef word-match) is IMPOSSIBLE for other players' words:
+  the client only knows ITS OWN outstanding submits, and word_result carries no submitter id
+  (payload = {accepted, word, reason}). The my-own-word display name is already race-proof (isMine
+  → myNameRef).
+- CONSERVATIVE DECISION: did NOT change App.jsx (the production path is already correct; a client
+  fix can't improve it) and did NOT touch the backend. The only robust fix is a Tier-1 backend
+  change — add the submitter id to the word_result payload so the client can attribute by id — which
+  requires the documented 2-device play-test and cannot be validated while the user is asleep, and
+  the bug is not live. Flagged as the recommended follow-up; added a guard test for the correct
+  production-order behavior so that path can never regress.
