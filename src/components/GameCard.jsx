@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
-import { wordWinsEstimate } from '../progress/wins';
+import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { formatNum } from '../format';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -297,6 +298,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
 
         {game.featured && <div className="game-card-featured-tag">★ FEATURED</div>}
 
+        {game.limited && <div className="game-card-limited-tag">LIMITED</div>}
+
       {ArtComponent && (
         <div className="game-card-art">
           <ArtComponent />
@@ -328,6 +331,9 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         {game.enabled && (
           <div className="game-card-payout">
             {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
+            {currentRebirthMult() > 1 && (
+              <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
+            )}
           </div>
         )}
 

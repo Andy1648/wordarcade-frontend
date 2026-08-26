@@ -98,7 +98,7 @@ function statSuffix(parts) {
  *   outcome - word-bomb {won}; blitz {solo, isRecord, place, total}
  *   data    - word-bomb {words, longest, events:[{t:'word',len}|{t:'life'}]}
  *             blitz {score, roundScores:[...]}; sat-rush {cleared, avgAnte, ...}
- *   daily   - {dayNumber, streak} for the Daily Challenge (blitz solo), else null
+ *   daily   - {dayNumber} for the Daily Challenge (blitz solo), else null
  *   link    - URL for the last line (invite link for live rooms), default REF_URL
  */
 export function buildShareText({ mode, outcome = {}, data = {}, daily = null, link } = {}) {
@@ -130,12 +130,11 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
         : 'TYPE A WORD · CATEGORY BLITZ 🔥'
     );
     (data.roundScores || []).forEach((s, i) => lines.push(blitzRoundRow(i, s)));
-    const streak = daily && daily.streak > 0 ? daily.streak : 0;
+    // (Daily streak removed from the share copy — the streak feature is gone.)
     lines.push(
       statSuffix([
         score === 0 ? '0 PTS. brain fully buffered' : `${score} PTS`,
         outcome.isRecord ? 'NEW RECORD!' : null,
-        streak ? `🔥 ${streak}-day streak` : null,
       ])
     );
   } else if (mode === 'category-blitz') {

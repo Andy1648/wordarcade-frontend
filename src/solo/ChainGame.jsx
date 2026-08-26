@@ -242,6 +242,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       fx={fxLayer}
       phase={g.phase}
       winsTally={winsTally}
+      winsWords={s.k}
       over={{
         score: s.score,
         best: g.best,

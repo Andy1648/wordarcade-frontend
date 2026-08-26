@@ -346,6 +346,12 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   letter-spacing: 0.02em;
   color: rgba(0, 0, 0, 0.62);
 }
+/* Live rebirth boost annotation, e.g. "(×2)" — reads as a bonus, so it's darker/bolder
+   than the base rate rather than a separate colour that would fight the flat card fill. */
+.game-card-payout-mult {
+  color: #000;
+  font-weight: 700;
+}
 
 .game-card.disabled {
   cursor: default;
@@ -404,6 +410,25 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   color: #000;
   background: #FFE94A;
   border: 2px solid #B8A020;
+  padding: 2px 5px;
+  transform: rotate(4deg);
+  box-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+}
+
+/* SAT Rush "LIMITED" scarcity stamp — red ink on cream, matching the card's retro-print
+   manga palette (not the neon house yellow). Top-right, tilted, hard offset shadow. */
+.game-card-limited-tag {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 4;
+  font-family: 'Bungee', cursive;
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  color: #C8321E;
+  background: #F2EFE7;
+  border: 2px solid #C8321E;
   padding: 2px 5px;
   transform: rotate(4deg);
   box-shadow: 2px 2px 0 #000;

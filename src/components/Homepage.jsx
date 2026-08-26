@@ -647,22 +647,21 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </div>
         </div>
 
-        {/* DAILY CHALLENGE entry — now a quiet text link under JOIN ROOM (it used
-            to be a big yellow hero chip up top). Same onDaily handler + day
-            number; the daily feature and its streak logic are untouched, only
-            the entry point moved and shrank. */}
+        {/* DAILY CHALLENGE entry — a quiet text link under JOIN ROOM. Same onDaily
+            handler + day number. (The daily-STREAK feature was removed, so the copy no
+            longer references a streak — just the day #.) */}
         {daily && (
           <button
             className={`homepage-daily-link${navigating ? ' disabled' : ''}${connecting === 'daily' && coldStart ? ' is-waking' : ''}`}
             onClick={handleDaily}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
-            aria-label={`Daily challenge number ${daily.dayNumber} — keep the streak`}
+            aria-label={`Daily challenge number ${daily.dayNumber}`}
           >
             {connecting === 'daily' ? (
               <ConnectingContent cold={coldStart} />
             ) : (
-              `🔥 DAILY #${daily.dayNumber} — KEEP THE STREAK`
+              `⚡ DAILY #${daily.dayNumber}`
             )}
           </button>
         )}

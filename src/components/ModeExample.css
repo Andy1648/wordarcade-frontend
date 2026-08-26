@@ -80,6 +80,12 @@
   font-size: clamp(15px, 1.8vw, 20px);
   -webkit-text-stroke: 1.2px #000;
 }
+/* Rebirth boost annotation on the dialog example, e.g. "(×2)". Cyan accent so it reads
+   as an earned bonus next to the yellow base rate. */
+.mode-ex-mult {
+  color: #2effe0;
+  font-weight: 700;
+}
 .mode-ex-round {
   font-family: 'Bungee', cursive;
   font-size: clamp(11px, 1.3vw, 14px);
