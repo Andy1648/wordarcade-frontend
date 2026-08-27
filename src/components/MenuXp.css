@@ -371,3 +371,18 @@ button.menu-wins-chip:focus-visible {
   box-shadow: 5px 5px 0 #000;
   letter-spacing: 0.02em;
 }
+
+/* RANK TITLE (Job 5) — the level band's name in the LV bar. Static, on-brand chip. */
+.menu-xp-rank {
+  flex: 0 0 auto;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(9px, 1.4vw, 12px);
+  letter-spacing: 0.5px;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 2px 7px;
+  box-shadow: 2px 2px 0 #000;
+  white-space: nowrap;
+}
