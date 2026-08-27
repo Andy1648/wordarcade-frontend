@@ -11,6 +11,7 @@ import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
+import CopyResultButton from '../share/CopyResultButton.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -255,6 +256,16 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
+        share: (
+          <CopyResultButton
+            mode="chain"
+            words={s.k}
+            points={s.score}
+            tiers={g.tierLog}
+            killed
+            className="solo-share-btn"
+          />
+        ),
       }}
       onExit={onExit}
     />

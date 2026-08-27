@@ -16,6 +16,7 @@ import {
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
 import { ShareBar } from '../share';
+import CopyResultButton from '../share/CopyResultButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import './GameScreen.css';
 
@@ -3066,6 +3067,19 @@ export default function GameScreen({
                 };
               })()}
             />
+            {/* One-tap shareable result receipt (Job 1) — MY accepted words; ⬛ if eliminated. */}
+            {(() => {
+              const myWbWords = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId).length;
+              return (
+                <CopyResultButton
+                  mode="word-bomb"
+                  words={myWbWords}
+                  tiers={Array(myWbWords).fill('fast')}
+                  killed={!iWon}
+                  className="game-over-copy-result"
+                />
+              );
+            })()}
             <div className="game-over-actions">
               {isHost ? (
                 <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
@@ -3371,6 +3385,16 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
                 : undefined,
               roundScores: rounds.map((r) => r.roundScore),
             }}
+          />
+          {/* One-tap shareable result receipt (Job 1). Blitz has no per-word timing; each
+              accepted answer (score point) is a 🟩. pts omitted (== word count). */}
+          <CopyResultButton
+            mode="category-blitz"
+            words={Math.max(0, score)}
+            points={null}
+            tiers={Array(Math.max(0, score)).fill('fast')}
+            killed={false}
+            className="game-over-copy-result"
           />
           <div className="game-over-actions">
             <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
@@ -3767,6 +3791,15 @@ function CategoryBlitzScreen({
                 score: myScore,
                 roundScores: soloLogRef.current.map((r) => r.roundScore),
               }}
+            />
+            {/* One-tap shareable result receipt (Job 1) — MY score's worth of 🟩. */}
+            <CopyResultButton
+              mode="category-blitz"
+              words={Math.max(0, myScore)}
+              points={null}
+              tiers={Array(Math.max(0, myScore)).fill('fast')}
+              killed={false}
+              className="game-over-copy-result"
             />
             <div className="game-over-actions">
               {isHost ? (

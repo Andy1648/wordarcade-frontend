@@ -138,6 +138,9 @@ export default function SoloShell({
                 <span>BEST {over.best}</span>
               </div>
             )}
+            {/* One-tap shareable result receipt (Job 1). Self-suppresses under 3 words and
+                never shows on the first-run tutorial card. */}
+            {over.bare ? null : over.share}
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}

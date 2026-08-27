@@ -9,6 +9,7 @@ import { recordRound, awardWins } from '../progress/wins.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
+import CopyResultButton from '../share/CopyResultButton.jsx';
 import poolsRaw from './fragmentPools.json';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
@@ -166,7 +167,25 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}
-      over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard, winsEarned }}
+      over={{
+        score: s.wordsSolved,
+        best: g.best,
+        restartArmed: g.restartArmed,
+        restart: g.restart,
+        card: overCard,
+        winsEarned,
+        // FUSE score == word count, so pts is redundant — omit it (points=null).
+        share: (
+          <CopyResultButton
+            mode="fuse"
+            words={s.wordsSolved}
+            points={null}
+            tiers={g.tierLog}
+            killed
+            className="solo-share-btn"
+          />
+        ),
+      }}
       onExit={onExit}
     />
   );

@@ -1,0 +1,41 @@
+/* CopyResultButton.css — house style: Bungee, thick black outline, hard offset shadow,
+   flat neon fill. Press feedback only; NO idle/infinite animation (menu-motion-law safe). */
+.copy-result-btn {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: #000;
+  background: #2EFFE0;
+  border: 3px solid #000;
+  border-radius: 8px;
+  padding: 12px 18px;
+  min-height: 44px; /* mobile touch target */
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.copy-result-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.copy-result-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+.copy-result-btn.is-copied {
+  background: #FFE94A; /* flat yellow confirm — no glow, no loop */
+}
+.copy-result-btn:focus-visible {
+  outline: 3px solid #FF2EC4;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .copy-result-btn { transition: none; }
+}
+
+/* Layout helpers per host screen (the button's look is the same everywhere). */
+.copy-result-btn { display: inline-block; margin-top: 12px; }
+.solo-share-btn,
+.game-over-copy-result { display: block; margin: 12px auto 0; }
+.sr-copy-result { margin-top: 10px; }
