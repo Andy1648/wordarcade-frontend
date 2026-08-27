@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-beat-intensity="1">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>TYPE A WORD — Card Redesign Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d0618; --panel: #1a0b2e; --ink: #fff;
+    --pink: #FF2EC4; --cyan: #2EFFE0; --yellow: #FFE94A; --orange: #FF6B3D; --purple: #9A1AFF;
+  }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    -webkit-font-smoothing: antialiased;
+    padding: 24px 16px 64px; min-height: 100vh;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  .head h1 { font-family: 'Bungee', sans-serif; font-size: clamp(22px, 4vw, 38px); color: var(--pink); -webkit-text-stroke: 2px #000; }
+  .head p { margin-top: 8px; max-width: 760px; color: #cbb8e0; font-size: 14px; line-height: 1.5; }
+  .beatdot { display:inline-flex; align-items:center; gap:8px; margin-top:12px; font-size:12px; color:#9a86bb; }
+  .beatdot i { width:12px; height:12px; border-radius:50%; background:#4a3a66; border:2px solid #000; transition: background 120ms ease, transform 120ms ease; }
+  html[data-beat] .beatdot i { background: var(--pink); transform: scale(1.3); }
+
+  .cols { display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px; }
+  @media (max-width: 760px){ .cols { grid-template-columns: 1fr; } }
+  .col h2 { font-family:'Bungee', sans-serif; font-size: 18px; color:#000; background: var(--yellow); border:3px solid #000; box-shadow:4px 4px 0 #000; border-radius:8px; padding:8px 12px; display:inline-block; }
+  .col .subttl { font-size:12px; color:#9a86bb; margin:8px 0 18px; }
+  .deck { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  @media (max-width:420px){ .deck { grid-template-columns:1fr; } }
+
+  /* ============ DIRECTION A — DIE-CUT STICKER ============ */
+  .dir-a .pcard {
+    position:relative; border:4px solid #000; border-radius:14px;
+    box-shadow: 8px 8px 0 #000; padding:14px 12px 12px; overflow:hidden;
+    transition: transform 140ms cubic-bezier(.2,1.3,.4,1), box-shadow 140ms ease;
+    transform-origin:center bottom;
+  }
+  html[data-beat] .dir-a .pcard { transform: scale(calc(1 + 0.028 * var(--beat-intensity,1))); }
+  .dir-a .pcard:nth-child(2){ transition-delay:40ms } .dir-a .pcard:nth-child(3){ transition-delay:80ms }
+  .dir-a .pcard:nth-child(4){ transition-delay:120ms } .dir-a .pcard:nth-child(5){ transition-delay:60ms }
+  .dir-a .tape { position:absolute; top:-8px; width:44px; height:18px; background:rgba(255,255,255,.5); border:2px solid rgba(0,0,0,.35); }
+  .dir-a .tape.l { left:14px; transform:rotate(-8deg) } .dir-a .tape.r { right:14px; transform:rotate(7deg) }
+  .dir-a .sticker { display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.14); border:3px solid #000; border-radius:12px; padding:6px; margin-bottom:10px; }
+  .dir-a .sticker svg { width:100%; height:118px; display:block; }
+  .dir-a .pname { font-family:'Bungee', sans-serif; font-size:16px; line-height:1; white-space:pre-line; }
+  .dir-a .pbadge { display:inline-block; margin-top:8px; font-family:'Bungee',sans-serif; font-size:9px; color:#fff; background:#000; border-radius:5px; padding:3px 7px; }
+
+  /* ============ DIRECTION B — ARCADE CABINET ============ */
+  .dir-b .pcard {
+    position:relative; background:#0a0512; border:4px solid #000; border-radius:12px;
+    box-shadow: 8px 8px 0 #000; padding:0; overflow:hidden;
+  }
+  .dir-b .marquee {
+    position:relative; text-align:center; padding:9px 6px; border-bottom:4px solid #000;
+    font-family:'Bungee', sans-serif; font-size:13px; line-height:1; color:#000; white-space:pre-line;
+  }
+  .dir-b .marquee .glow { position:absolute; inset:0; background:#fff; opacity:0; mix-blend-mode:overlay; transition:opacity 140ms ease; }
+  html[data-beat] .dir-b .marquee .glow { opacity: calc(0.5 * var(--beat-intensity,1)); }
+  .dir-b .bulbs { position:absolute; top:3px; left:0; right:0; display:flex; justify-content:space-around; padding:0 10px; }
+  .dir-b .bulbs i { width:5px; height:5px; border-radius:50%; background:#000; opacity:.5; transition:opacity 120ms ease; }
+  html[data-beat] .dir-b .bulbs i { opacity: 1; }
+  .dir-b .screen { position:relative; background: radial-gradient(circle at 50% 40%, #241241, #0a0512 75%); padding:10px; border-bottom:4px solid #000; }
+  .dir-b .screen .scan { position:absolute; inset:0; background:repeating-linear-gradient(#0000 0 3px, #0004 3px 4px); pointer-events:none; opacity:.35; }
+  .dir-b .screen svg { width:100%; height:112px; display:block; position:relative; transition: transform 140ms ease; transform-origin:center; }
+  html[data-beat] .dir-b .screen svg { transform: scale(calc(1 + 0.03 * var(--beat-intensity,1))); }
+  .dir-b .plate { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; }
+  .dir-b .plate .coin { width:16px;height:16px;border-radius:50%;border:2px solid #000; }
+  .dir-b .plate .pbadge { font-family:'Space Mono',monospace; font-weight:700; font-size:9px; color:#0d0618; border-radius:4px; padding:2px 6px; border:2px solid #000; }
+
+  /* ---- shared SVG art motion (beat-keyed one-shots, transform/opacity only) ---- */
+  .pa-spark, .pa-tile, .pa-sway, .pa-bob, .pa-tick { transform-box: fill-box; transform-origin: center; }
+  html[data-beat] .pa-spark { animation: pa-spark 210ms ease-out; }
+  html[data-beat] .pa-tile  { animation: pa-tile 220ms ease-out; }
+  html[data-beat] .pa-sway  { animation: pa-sway 260ms ease-in-out; }
+  html[data-beat] .pa-bob   { animation: pa-bob 240ms ease-out; }
+  html[data-beat] .pa-tick  { animation: pa-tick 220ms ease-out; }
+  @keyframes pa-spark { 0%{transform:scale(1) rotate(0)} 45%{transform:scale(1.28) rotate(9deg)} 100%{transform:scale(1) rotate(0)} }
+  @keyframes pa-tile  { 0%{transform:translateY(0) rotate(0)} 40%{transform:translateY(-5px) rotate(-6deg)} 100%{transform:translateY(0) rotate(0)} }
+  @keyframes pa-sway  { 0%{transform:rotate(0)} 50%{transform:rotate(3deg)} 100%{transform:rotate(0)} }
+  @keyframes pa-bob   { 0%{transform:translateY(0)} 45%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
+  @keyframes pa-tick  { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
+
+  @media (prefers-reduced-motion: reduce) {
+    html[data-beat] .dir-a .pcard, html[data-beat] .dir-b .screen svg,
+    html[data-beat] .pa-spark, html[data-beat] .pa-tile, html[data-beat] .pa-sway,
+    html[data-beat] .pa-bob, html[data-beat] .pa-tick { animation: none !important; transform: none !important; }
+  }
+  .foot { margin-top:34px; font-size:12px; color:#7d6a9c; line-height:1.6; }
+  .foot b { color:#cbb8e0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>CARD REDESIGN — TWO DIRECTIONS</h1>
+    <p>Prototype only. Both directions use REAL authored SVG art (in <b>/public/art/proto/</b>), thick black outlines, hard offset shadows, flat neon fills. All motion is transform/opacity, keyed to a simulated beat clock (<b>html[data-beat]</b> + <b>--beat-intensity</b>) — the same signal the live menu uses. Zero new infinite CSS animations. Pick a direction.</p>
+    <div class="beatdot"><i></i> live beat pulse (simulated ~107 BPM)</div>
+  </div>
+
+  <div class="cols">
+    <div class="col dir-a">
+      <h2>A · DIE-CUT STICKER</h2>
+      <div class="subttl">Glossy die-cut sticker with tape corners. Beat = the whole sticker pops + the art's spark/tile snaps.</div>
+      <div class="deck" id="deckA"></div>
+    </div>
+    <div class="col dir-b">
+      <h2>B · ARCADE CABINET</h2>
+      <div class="subttl">Framed like a lit cabinet: marquee + bulbs on top, art in a scanline "screen". Beat = marquee glow + bulbs light + screen breathes.</div>
+      <div class="deck" id="deckB"></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Concurrent infinite CSS animations added by this page: <b>0</b> (all motion is one-shot, fired per simulated beat).
+    The five source assets live at <b>/public/art/proto/{bomb,blitz,sat,chain,fuse}.svg</b> and are inlined here so their parts can be beat-animated.
+  </div>
+</div>
+
+<script>
+/* ---- inline SVG art (identical to the files in /public/art/proto/) ---- */
+const ART = {
+  'word-bomb': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- WORD BOMB — flat neon, thick black outline, hard shadow. Personality: overspray dots,
+       an off-centre highlight, a drip. Motion parts are classed (animated by the page, not here). -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <circle cx="60" cy="74" r="34" fill="#000" opacity="0.9"/>
+  </g>
+  <!-- overspray specks -->
+  <circle cx="24" cy="40" r="2.6" fill="#FF6B3D"/>
+  <circle cx="98" cy="52" r="2" fill="#FFE94A"/>
+  <circle cx="30" cy="96" r="2.2" fill="#FF6B3D"/>
+  <!-- bomb body -->
+  <circle cx="58" cy="74" r="34" fill="#2E1432" stroke="#000" stroke-width="5"/>
+  <ellipse cx="46" cy="60" rx="11" ry="7" fill="#5A2A60"/>
+  <path d="M40 96 q6 10 2 16" fill="none" stroke="#150818" stroke-width="4" stroke-linecap="round"/>
+  <!-- cap -->
+  <rect x="48" y="34" width="20" height="11" rx="2" fill="#5A4A2A" stroke="#000" stroke-width="4"/>
+  <!-- fuse -->
+  <path class="pa-sway" d="M60 34 Q84 20 90 6" fill="none" stroke="#B23C00" stroke-width="5" stroke-linecap="round"/>
+  <!-- spark -->
+  <g class="pa-spark">
+    <polygon points="90,-4 96,8 108,4 99,14 106,24 92,20 88,32 84,20 72,22 82,12 76,2 88,8"
+      fill="#FFE94A" stroke="#FF6B3D" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+  <!-- orbiting letter tile -->
+  <g class="pa-tile" transform="translate(96 78)">
+    <rect x="-11" y="-11" width="22" height="22" rx="4" fill="#F3E2BE" stroke="#000" stroke-width="4"/>
+    <text x="0" y="6" font-size="15" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#2E1432">A</text>
+  </g>
+  <!-- drip -->
+  <path d="M54 106 q3 12 0 16 q-3 -4 0 -16" fill="#2E1432" stroke="#000" stroke-width="2"/>
+</svg>`,
+  'category-blitz': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- CATEGORY BLITZ — an AI speech bubble judging an answer with a bolt + tick. Blue neon. -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="16" y="24" width="88" height="60" rx="12" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="102" cy="26" r="2.4" fill="#3DA8FF"/>
+  <circle cx="18" cy="92" r="2.2" fill="#2EFFE0"/>
+  <!-- speech bubble -->
+  <g class="pa-bob">
+    <rect x="14" y="22" width="88" height="60" rx="12" fill="#0E2A44" stroke="#000" stroke-width="5"/>
+    <path d="M40 82 l0 20 l22 -20 z" fill="#0E2A44" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+    <!-- AI bolt -->
+    <g class="pa-spark">
+      <polygon points="52,30 44,56 58,56 50,78 74,46 60,46 68,30" fill="#FFE94A" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+    </g>
+    <!-- approved tick -->
+    <g class="pa-tick">
+      <circle cx="82" cy="54" r="13" fill="#2EFFE0" stroke="#000" stroke-width="4"/>
+      <path d="M76 54 l4 5 l8 -11" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <!-- category tag -->
+  <rect x="26" y="96" width="52" height="16" rx="4" fill="#3DA8FF" stroke="#000" stroke-width="4"/>
+  <text x="52" y="108" font-size="9" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#052033">A–Z</text>
+</svg>`,
+  'sat-rush': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- SAT RUSH — a bounty/study book with a rising star. Violet + cream (manga register). -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="22" y="30" width="76" height="70" rx="6" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="98" cy="34" r="2.3" fill="#9A1AFF"/>
+  <circle cx="22" cy="98" r="2.2" fill="#FFD429"/>
+  <!-- book -->
+  <g class="pa-bob">
+    <rect x="20" y="28" width="76" height="70" rx="6" fill="#F2EFE7" stroke="#000" stroke-width="5"/>
+    <line x1="58" y1="30" x2="58" y2="96" stroke="#000" stroke-width="4"/>
+    <!-- ruled lines (personality: uneven) -->
+    <line x1="28" y1="46" x2="52" y2="46" stroke="#9A1AFF" stroke-width="3"/>
+    <line x1="28" y1="58" x2="50" y2="58" stroke="#111" stroke-width="2"/>
+    <line x1="28" y1="70" x2="53" y2="70" stroke="#111" stroke-width="2"/>
+    <line x1="64" y1="52" x2="88" y2="52" stroke="#111" stroke-width="2"/>
+    <line x1="64" y1="64" x2="86" y2="64" stroke="#9A1AFF" stroke-width="3"/>
+    <line x1="64" y1="76" x2="88" y2="76" stroke="#111" stroke-width="2"/>
+  </g>
+  <!-- rising star -->
+  <g class="pa-spark" transform="translate(60 20)">
+    <polygon points="0,-16 5,-5 17,-5 7,3 11,15 0,7 -11,15 -7,3 -17,-5 -5,-5"
+      fill="#FFD429" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+  </g>
+</svg>`,
+  chain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- CHAIN — three interlocking links, the middle one snapping tight on the beat. Teal neon. -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="14" y="44" width="92" height="34" rx="17" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="16" cy="30" r="2.4" fill="#2EFFE0"/>
+  <circle cx="104" cy="92" r="2.2" fill="#2EFFE0"/>
+  <!-- left link -->
+  <rect x="12" y="46" width="44" height="30" rx="15" fill="none" stroke="#0A3B34" stroke-width="11"/>
+  <rect x="12" y="46" width="44" height="30" rx="15" fill="none" stroke="#2EFFE0" stroke-width="5"/>
+  <!-- right link -->
+  <rect x="64" y="46" width="44" height="30" rx="15" fill="none" stroke="#0A3B34" stroke-width="11"/>
+  <rect x="64" y="46" width="44" height="30" rx="15" fill="none" stroke="#2EFFE0" stroke-width="5"/>
+  <!-- centre link (snaps on beat) -->
+  <g class="pa-spark">
+    <rect x="42" y="38" width="36" height="46" rx="18" fill="#0d0618" stroke="#0A3B34" stroke-width="11"/>
+    <rect x="42" y="38" width="36" height="46" rx="18" fill="none" stroke="#FFE94A" stroke-width="5"/>
+    <text x="60" y="66" font-size="16" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#2EFFE0">N</text>
+  </g>
+</svg>`,
+  fuse: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- FUSE — a burning cord with a fragment tile; the flame flares on the beat. Yellow neon. -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="20" y="52" width="80" height="24" rx="12" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="26" cy="34" r="2.4" fill="#FFE94A"/>
+  <circle cx="100" cy="92" r="2.2" fill="#FF6B3D"/>
+  <!-- cord -->
+  <path class="pa-sway" d="M18 64 C 40 44, 60 84, 82 62" fill="none" stroke="#2A1A0E" stroke-width="13" stroke-linecap="round"/>
+  <path class="pa-sway" d="M18 64 C 40 44, 60 84, 82 62" fill="none" stroke="#FFE94A" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 7"/>
+  <!-- fragment tile -->
+  <g class="pa-tile" transform="translate(30 64)">
+    <rect x="-13" y="-13" width="26" height="26" rx="4" fill="#2A1A0E" stroke="#000" stroke-width="4"/>
+    <text x="0" y="6" font-size="13" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#FFE94A">UR</text>
+  </g>
+  <!-- flame -->
+  <g class="pa-spark" transform="translate(84 60)">
+    <path d="M0 -22 C 12 -10, 12 2, 2 10 C 10 2, 6 -8, 0 -12 C -2 -4, -8 0, -6 8 C -14 -2, -8 -14, 0 -22 Z"
+      fill="#FF6B3D" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M0 -10 C 5 -4, 4 2, 0 6 C 3 1, 1 -4, 0 -6 Z" fill="#FFE94A"/>
+  </g>
+</svg>`,
+};
+const CARDS = [
+  { id:'word-bomb', name:'WORD\nBOMB', fill:'#FF6B3D', text:'#000', badge:'SOLO/MULTI' },
+  { id:'category-blitz', name:'CATEGORY\nBLITZ', fill:'#3DA8FF', text:'#000', badge:'AI JUDGED' },
+  { id:'sat-rush', name:'SAT\nRUSH', fill:'#F2EFE7', text:'#111', badge:'SOLO' },
+  { id:'chain', name:'CHAIN', fill:'#2EFFE0', text:'#000', badge:'SOLO' },
+  { id:'fuse', name:'FUSE', fill:'#FFE94A', text:'#000', badge:'SOLO' },
+];
+
+const deckA = document.getElementById('deckA');
+const deckB = document.getElementById('deckB');
+for (const c of CARDS) {
+  // Direction A — sticker
+  const a = document.createElement('div');
+  a.className = 'pcard'; a.style.background = c.fill; a.style.color = c.text;
+  a.innerHTML =
+    `<span class="tape l"></span><span class="tape r"></span>`+
+    `<div class="sticker">${ART[c.id]}</div>`+
+    `<div class="pname" style="color:${c.text}">${c.name}</div>`+
+    `<div class="pbadge">${c.badge}</div>`;
+  deckA.appendChild(a);
+
+  // Direction B — cabinet
+  const b = document.createElement('div');
+  b.className = 'pcard';
+  b.innerHTML =
+    `<div class="marquee" style="background:${c.fill};color:${c.text}">`+
+      `<div class="bulbs">${'<i></i>'.repeat(6)}</div>`+
+      `<div class="glow"></div>${c.name.replace('\\n',' ')}`+
+    `</div>`+
+    `<div class="screen"><div class="scan"></div>${ART[c.id]}</div>`+
+    `<div class="plate"><span class="coin" style="background:${c.fill}"></span>`+
+      `<span class="pbadge" style="background:${c.fill}">${c.badge}</span></div>`;
+  deckB.appendChild(b);
+}
+
+/* ---- beat simulator: fire html[data-beat] for 120ms per kick (~107 BPM). This is the SAME
+   discrete-pulse mechanism the live app's useBeatSync uses; it drives one-shot transitions,
+   never an infinite CSS loop. ---- */
+const root = document.documentElement;
+const PATTERN = [1, 0.55, 0.82, 0.6];
+let k = 0;
+setInterval(() => {
+  root.style.setProperty('--beat-intensity', String(PATTERN[k % PATTERN.length]));
+  root.setAttribute('data-beat', 'true');
+  setTimeout(() => root.removeAttribute('data-beat'), 120);
+  k += 1;
+}, 560);
+</script>
+</body>
+</html>

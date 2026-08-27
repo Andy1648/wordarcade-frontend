@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- SAT RUSH — a bounty/study book with a rising star. Violet + cream (manga register). -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="22" y="30" width="76" height="70" rx="6" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="98" cy="34" r="2.3" fill="#9A1AFF"/>
+  <circle cx="22" cy="98" r="2.2" fill="#FFD429"/>
+  <!-- book -->
+  <g class="pa-bob">
+    <rect x="20" y="28" width="76" height="70" rx="6" fill="#F2EFE7" stroke="#000" stroke-width="5"/>
+    <line x1="58" y1="30" x2="58" y2="96" stroke="#000" stroke-width="4"/>
+    <!-- ruled lines (personality: uneven) -->
+    <line x1="28" y1="46" x2="52" y2="46" stroke="#9A1AFF" stroke-width="3"/>
+    <line x1="28" y1="58" x2="50" y2="58" stroke="#111" stroke-width="2"/>
+    <line x1="28" y1="70" x2="53" y2="70" stroke="#111" stroke-width="2"/>
+    <line x1="64" y1="52" x2="88" y2="52" stroke="#111" stroke-width="2"/>
+    <line x1="64" y1="64" x2="86" y2="64" stroke="#9A1AFF" stroke-width="3"/>
+    <line x1="64" y1="76" x2="88" y2="76" stroke="#111" stroke-width="2"/>
+  </g>
+  <!-- rising star -->
+  <g class="pa-spark" transform="translate(60 20)">
+    <polygon points="0,-16 5,-5 17,-5 7,3 11,15 0,7 -11,15 -7,3 -17,-5 -5,-5"
+      fill="#FFD429" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+  </g>
+</svg>

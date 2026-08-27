@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- FUSE — a burning cord with a fragment tile; the flame flares on the beat. Yellow neon. -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="20" y="52" width="80" height="24" rx="12" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="26" cy="34" r="2.4" fill="#FFE94A"/>
+  <circle cx="100" cy="92" r="2.2" fill="#FF6B3D"/>
+  <!-- cord -->
+  <path class="pa-sway" d="M18 64 C 40 44, 60 84, 82 62" fill="none" stroke="#2A1A0E" stroke-width="13" stroke-linecap="round"/>
+  <path class="pa-sway" d="M18 64 C 40 44, 60 84, 82 62" fill="none" stroke="#FFE94A" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 7"/>
+  <!-- fragment tile -->
+  <g class="pa-tile" transform="translate(30 64)">
+    <rect x="-13" y="-13" width="26" height="26" rx="4" fill="#2A1A0E" stroke="#000" stroke-width="4"/>
+    <text x="0" y="6" font-size="13" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#FFE94A">UR</text>
+  </g>
+  <!-- flame -->
+  <g class="pa-spark" transform="translate(84 60)">
+    <path d="M0 -22 C 12 -10, 12 2, 2 10 C 10 2, 6 -8, 0 -12 C -2 -4, -8 0, -6 8 C -14 -2, -8 -14, 0 -22 Z"
+      fill="#FF6B3D" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M0 -10 C 5 -4, 4 2, 0 6 C 3 1, 1 -4, 0 -6 Z" fill="#FFE94A"/>
+  </g>
+</svg>

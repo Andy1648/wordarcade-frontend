@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- WORD BOMB — flat neon, thick black outline, hard shadow. Personality: overspray dots,
+       an off-centre highlight, a drip. Motion parts are classed (animated by the page, not here). -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <circle cx="60" cy="74" r="34" fill="#000" opacity="0.9"/>
+  </g>
+  <!-- overspray specks -->
+  <circle cx="24" cy="40" r="2.6" fill="#FF6B3D"/>
+  <circle cx="98" cy="52" r="2" fill="#FFE94A"/>
+  <circle cx="30" cy="96" r="2.2" fill="#FF6B3D"/>
+  <!-- bomb body -->
+  <circle cx="58" cy="74" r="34" fill="#2E1432" stroke="#000" stroke-width="5"/>
+  <ellipse cx="46" cy="60" rx="11" ry="7" fill="#5A2A60"/>
+  <path d="M40 96 q6 10 2 16" fill="none" stroke="#150818" stroke-width="4" stroke-linecap="round"/>
+  <!-- cap -->
+  <rect x="48" y="34" width="20" height="11" rx="2" fill="#5A4A2A" stroke="#000" stroke-width="4"/>
+  <!-- fuse -->
+  <path class="pa-sway" d="M60 34 Q84 20 90 6" fill="none" stroke="#B23C00" stroke-width="5" stroke-linecap="round"/>
+  <!-- spark -->
+  <g class="pa-spark">
+    <polygon points="90,-4 96,8 108,4 99,14 106,24 92,20 88,32 84,20 72,22 82,12 76,2 88,8"
+      fill="#FFE94A" stroke="#FF6B3D" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+  <!-- orbiting letter tile -->
+  <g class="pa-tile" transform="translate(96 78)">
+    <rect x="-11" y="-11" width="22" height="22" rx="4" fill="#F3E2BE" stroke="#000" stroke-width="4"/>
+    <text x="0" y="6" font-size="15" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#2E1432">A</text>
+  </g>
+  <!-- drip -->
+  <path d="M54 106 q3 12 0 16 q-3 -4 0 -16" fill="#2E1432" stroke="#000" stroke-width="2"/>
+</svg>

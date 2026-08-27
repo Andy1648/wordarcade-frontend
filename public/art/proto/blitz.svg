@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="pa" aria-hidden="true">
+  <!-- CATEGORY BLITZ — an AI speech bubble judging an answer with a bolt + tick. Blue neon. -->
+  <g class="pa-shadow" transform="translate(5 6)">
+    <rect x="16" y="24" width="88" height="60" rx="12" fill="#000" opacity="0.9"/>
+  </g>
+  <circle cx="102" cy="26" r="2.4" fill="#3DA8FF"/>
+  <circle cx="18" cy="92" r="2.2" fill="#2EFFE0"/>
+  <!-- speech bubble -->
+  <g class="pa-bob">
+    <rect x="14" y="22" width="88" height="60" rx="12" fill="#0E2A44" stroke="#000" stroke-width="5"/>
+    <path d="M40 82 l0 20 l22 -20 z" fill="#0E2A44" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+    <!-- AI bolt -->
+    <g class="pa-spark">
+      <polygon points="52,30 44,56 58,56 50,78 74,46 60,46 68,30" fill="#FFE94A" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+    </g>
+    <!-- approved tick -->
+    <g class="pa-tick">
+      <circle cx="82" cy="54" r="13" fill="#2EFFE0" stroke="#000" stroke-width="4"/>
+      <path d="M76 54 l4 5 l8 -11" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <!-- category tag -->
+  <rect x="26" y="96" width="52" height="16" rx="4" fill="#3DA8FF" stroke="#000" stroke-width="4"/>
+  <text x="52" y="108" font-size="9" font-weight="700" text-anchor="middle" font-family="Bungee, sans-serif" fill="#052033">A–Z</text>
+</svg>
