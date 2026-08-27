@@ -120,12 +120,19 @@ export function perWordWins({ mode, difficulty, rebirthCount } = {}) {
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else
-// wordsAccepted × the per-word rate. Both factors keep the total a round multiple of 10
-// (every payout ends in a zero). Difficulty defaults to ×1 (unspecified / no-difficulty modes).
-export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount } = {}) {
+// (weighted or plain) word count × the per-word rate, snapped to a round 10. Difficulty
+// defaults to ×1 (unspecified / no-difficulty modes).
+//
+// LUCKY WORDS (Job 4): an optional `weightedWords` — a reward-weighted word count where a
+// lucky word counts as 5 (see progress/luck.js) — REPLACES the raw count in the multiplication
+// when it's a positive number. The <3-word GATE still uses the raw integer count, so a lucky
+// weight can't sneak a sub-3 run past the gate. Omitting weightedWords (every existing caller)
+// is unchanged: perWordWins is a multiple of 10, so round10(count × rate) == count × rate.
+export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords } = {}) {
   const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
   if (w < MIN_WORDS) return 0;
-  return w * perWordWins({ mode, difficulty, rebirthCount });
+  const weight = Number.isFinite(weightedWords) && weightedWords > 0 ? weightedWords : w;
+  return round10(weight * perWordWins({ mode, difficulty, rebirthCount }));
 }
 
 // The card's per-ROUND payout preview: a typical round's wins for this mode/difficulty
@@ -179,8 +186,8 @@ export function grantWins(n) {
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round
 // counter — but ONLY when wordsAccepted >= MIN_WORDS. Returns the wins granted. `difficulty`
 // (Word Bomb / Category Blitz tier key) scales the payout via DIFFICULTY_MULT.
-export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
-  const granted = awardWins({ wordsAccepted, mode, difficulty });
+export function recordRound({ mode, wordsAccepted, difficulty, weightedWords } = {}) {
+  const granted = awardWins({ wordsAccepted, mode, difficulty, weightedWords });
   const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= MIN_WORDS;
   if (counts) {
     saveWins(getWins() + granted);

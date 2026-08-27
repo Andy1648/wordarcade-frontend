@@ -470,3 +470,51 @@
     animation: none;
   }
 }
+
+/* ===== LUCKY WORD burst (Job 4) =====================================================
+   A finite 400ms gold flash fired when an accepted word is lucky (5x XP + 5x wins).
+   Transform/opacity only, self-removed by animation end (React re-keys per hit). NO
+   idle/infinite animation — the concurrent-animation budget is unchanged. */
+.solo-lucky {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 30;
+}
+.solo-lucky-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 8px solid #FFD429;
+  box-shadow: 0 0 0 4px #000;
+  opacity: 0;
+  animation: solo-lucky-ring 400ms ease-out 1;
+}
+.solo-lucky-label {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 34px;
+  color: #FFD429;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  opacity: 0;
+  animation: solo-lucky-label 400ms cubic-bezier(0.2, 1.4, 0.4, 1) 1;
+}
+@keyframes solo-lucky-ring {
+  0% { transform: scale(0.3); opacity: 0.95; }
+  70% { opacity: 0.6; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes solo-lucky-label {
+  0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  35% { transform: scale(1.15) rotate(2deg); opacity: 1; }
+  70% { transform: scale(1) rotate(0); opacity: 1; }
+  100% { transform: scale(1) translateY(-14px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .solo-lucky-ring, .solo-lucky-label { animation-duration: 1ms; }
+}

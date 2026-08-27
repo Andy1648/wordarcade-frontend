@@ -12,6 +12,8 @@
 //   rejectCtx(engine)  → { letter, fragment } to fill a reject message
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
+import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
+import { xpPerInput, creditXp, loadProgress, saveProgress } from '../progress/xp.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -30,7 +32,7 @@ const SOLO_CLOCK_CAP_MS = (() => {
   return null;
 })();
 
-export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept }) {
+export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept, mode }) {
   const engineRef = useRef(null);
   if (engineRef.current === null) engineRef.current = createEngine();
 
@@ -56,6 +58,12 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   const armedRef = useRef(false);
   const turnStartRef = useRef(0);
   const turnBudgetRef = useRef(0);
+  // LUCKY WORDS (Job 4): a per-run seeded oracle decides, AFTER each accept, whether the word
+  // is lucky (1/40) — paying 5× wins (via the reward-weighted word count fed to the payout) and
+  // 5× XP. Pure oracle + weighted sum kept in refs; a bumped `luckyKey` re-fires the gold burst.
+  const luckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
+  const luckyWeightedRef = useRef(0);
+  const luckyCountRef = useRef(0);
   const rafRef = useRef(0);
   const restartTimerRef = useRef(null);
 
@@ -155,6 +163,17 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     // submitSoloWord fires onAccept (streak touch) exactly once on an accepted word, mid-run.
     const r = submitSoloWord(engineRef.current, word, onAcceptRef.current);
     if (r.ok) {
+      // LUCKY check — AFTER acceptance only (never telegraphed). A lucky word counts as 5
+      // toward the reward-weighted word total (5× wins) and banks 5× the mode's per-word XP.
+      const reward = luckyReward(luckyOracleRef.current.next());
+      luckyWeightedRef.current += reward.winsWeight;
+      if (reward.lucky) {
+        luckyCountRef.current += 1;
+        if (mode) {
+          const gain = xpPerInput({ mode }) * reward.xpMult;
+          saveProgress(creditXp(loadProgress(), gain, 0).state);
+        }
+      }
       setReason('');
       setInput('');
       startTurnClock(); // the next turn's budget (new required letter / new fragment)
@@ -172,6 +191,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     stopRaf();
     engineRef.current = createEngine();
     runIndexRef.current += 1;
+    // Fresh run → fresh lucky oracle (new seed) + zeroed reward weight.
+    luckyOracleRef.current = makeLuckyOracle(randomSeed());
+    luckyWeightedRef.current = 0;
+    luckyCountRef.current = 0;
     armedRef.current = false;
     turnBudgetRef.current = adapter.budgetMs(engineRef.current);
     setArmed(false);
@@ -216,5 +239,9 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     restart,
     restartArmed,
     best,
+    // LUCKY (live): the reward-weighted word count for the payout, plus a bumping key that
+    // re-fires the gold burst on each lucky hit.
+    luckyWeighted: luckyWeightedRef.current,
+    luckyKey: luckyCountRef.current,
   };
 }

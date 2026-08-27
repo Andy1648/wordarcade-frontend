@@ -55,6 +55,7 @@ export default function SoloShell({
   phase,
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
+  luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
 }) {
@@ -148,6 +149,16 @@ export default function SoloShell({
           </div>
         </div>
       ) : null}
+
+      {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY ×5" stamp, re-keyed per lucky
+          hit so it replays. Absolutely positioned, pointer-events:none, transform/opacity only —
+          no idle/infinite animation. */}
+      {phase === 'playing' && luckyKey > 0 && (
+        <div className="solo-lucky" key={luckyKey} aria-hidden="true">
+          <span className="solo-lucky-ring" />
+          <span className="solo-lucky-label">LUCKY ×5</span>
+        </div>
+      )}
 
       {/* FX overlay (CHAIN OUT→IN travel). Absolutely positioned, pointer-events:none,
           on top of the already-correct screen; it is a SIBLING of the input's chain,
