@@ -229,6 +229,21 @@
   opacity: 0;
 }
 
+/* KEY POWER tier T2+ particle shards (feat/purchase-feel item 1). Pooled squares,
+   idle at opacity 0; a spawn sets background + WAAPI transform/opacity (<=400ms). */
+.menu-xp-shard {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate(-50%, -50%);
+}
+
 /* One-shot big centre-screen level-up moment: "LEVEL N" + a phrase line under it.
    position:absolute so it never pushes layout or changes the menu height. Hidden at rest.
    The scale/rotate/opacity animate on this container; both lines ride along. */
