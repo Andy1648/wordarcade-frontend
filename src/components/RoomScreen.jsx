@@ -126,6 +126,18 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   }, [room]);
   useEffect(() => () => clearTimeout(joinPopTimerRef.current), []);
 
+  // ---- Invite link (the frictionless join loop) ----
+  // COPY writes the ?join=CODE deep link to the clipboard (with a brief ✓
+  // confirmation); SHARE opens the native sheet where the platform has one
+  // (mobile). Both are room-code-pure — no game state touched. These hooks MUST
+  // sit ABOVE the `if (!room) return null` guard so they run on every render
+  // (Rules of Hooks) — they were previously declared after it, which called
+  // useState/useRef/useEffect conditionally and could desync React's hook state.
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteCopiedTimerRef = useRef(null);
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+  useEffect(() => () => clearTimeout(inviteCopiedTimerRef.current), []);
+
   if (!room) return null;
 
   const isHost = myId !== null && myId === room.hostId;
@@ -168,15 +180,6 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     setLeaving(true);
     onLeave();
   }
-
-  // ---- Invite link (the frictionless join loop) ----
-  // COPY writes the ?join=CODE deep link to the clipboard (with a brief ✓
-  // confirmation); SHARE opens the native sheet where the platform has one
-  // (mobile). Both are room-code-pure — no game state touched.
-  const [inviteCopied, setInviteCopied] = useState(false);
-  const inviteCopiedTimerRef = useRef(null);
-  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
-  useEffect(() => () => clearTimeout(inviteCopiedTimerRef.current), []);
 
   async function handleCopyInvite() {
     sound.click();
