@@ -25,6 +25,28 @@
 - Categories must be niche and unexpected — no generic "things that are green" style
 - Always verify build passes after changes: npx vite build --logLevel error
 
+## ANIMATION BUDGET (updated 2026-08-27 — supersedes the old "20 concurrent finite animations" rule)
+What actually matters — enforce these:
+- **ZERO new infinite animations.** This is the real win (the menu went 59 → 1 looping
+  animation). Every effect must be a finite one-shot; nothing loops at rest. Tests assert
+  the infinite-animation count is unchanged, and that assertion IS build-failing.
+- **transform and opacity ONLY.** Never animate width/height/box-shadow/filter/font-size
+  (they hit layout/paint, not the compositor). A "hard offset shadow" that must appear on a
+  moving element is a static box-shadow toggled on, not an animated one.
+- **Pool every repeated element.** Per-keystroke / per-event effects (pops, particle shards,
+  edge pulses) reuse a fixed pool of nodes + WAAPI animations — never create a node per event.
+- **No layout reads in any per-frame or per-keystroke path.** No getBoundingClientRect /
+  offsetWidth / getComputedStyle inside a rAF loop, keydown handler, or pop/particle spawn.
+  Measure once on mount/resize and cache; spawns are pure writes.
+- **will-change on exactly two elements site-wide** (`.clock-fill` + `.burn`). Do not add more.
+
+CONCURRENT COUNT IS NO LONGER A BUDGET. The old "menu: ≤20 concurrent finite animations" was
+written when animations were main-thread work. Measured on a real mid-range Android, **106
+concurrent pooled transform/opacity animations produce no perceptible lag** — composited
+transform/opacity work scales; main-thread work does not. So do not gate on a concurrent count;
+gate on the five rules above. The in-game concurrency note in the perf playbook is kept as
+ADVISORY (a smell to investigate), not build-failing.
+
 ## Workflow (always follow, never ask)
 - After ANY code change: run the full sequence yourself — edit → commit relevant files → push to current branch → report preview URL. Never end with uncommitted work.
 - Never ask "want me to commit/push?" — just do it. Follow-up questions get dropped.

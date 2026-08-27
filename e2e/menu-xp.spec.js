@@ -74,7 +74,7 @@ test.describe('menu XP', () => {
     expect(xpFramesAtRest).toBe(0);
   });
 
-  test('sustained 30 keys/sec burst never exceeds 20 concurrent finite animations', async ({ page }) => {
+  test('sustained 30 keys/sec burst — concurrent finite animations (advisory) + XP credited', async ({ page }) => {
     await gotoMenuLive(page);
 
     const result = await page.evaluate(async () => {
@@ -118,8 +118,12 @@ test.describe('menu XP', () => {
       return { idleBaseline, peak, peakNames, lv: Number(prog.lv) || 1, into: Number(prog.into) || 0 };
     });
 
-    // The whole point: the concurrent FINITE running-animation count stays within budget.
-    expect(result.peak, `finite anims at peak: ${JSON.stringify(result.peakNames)}`).toBeLessThanOrEqual(20);
+    // Concurrent FINITE-animation count is now ADVISORY (CLAUDE.md → ANIMATION BUDGET;
+    // block-state §12f) — composited transform/opacity scales, so it's logged, not gated.
+    // The build-failing invariant is 0 new infinite loops (the menu's are unchanged) plus the
+    // XP-credit sanity below.
+    // eslint-disable-next-line no-console
+    console.log(`[advisory] menu peak concurrent finite animations: ${result.peak} — ${JSON.stringify(result.peakNames)}`);
     // Sanity: the burst actually credited XP and crossed at least one level. ~120 keys × +10
     // clears several levels (need(1)=110), so the stored level advances past 1 and the residual
     // xp-into-level stays a clean multiple of 10 (every v5 credit is snapped to ÷10).

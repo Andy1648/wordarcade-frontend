@@ -180,7 +180,8 @@ const CENTER = 'translate(-50%,-50%) ';
 // pops to 600ms for a longer, floatier read).
 const POP_MS = 600;
 const POP_POOL = 20;
-const POP_CAP = 18; // 18 pops + fill transition 1 + one edge pulse 1 = the 20 menu budget
+const POP_CAP = 18; // pool sizing (NOT the retired concurrent-count budget — see CLAUDE.md
+// ANIMATION BUDGET): caps live pops so a mash REUSES pooled nodes instead of growing the pool.
 const POP_HALF = 30; // keep a pop this far off the fx-layer edge and the bar box
 const POP_MIN_GAP = 90; // reject a candidate within this many px of the last few spawns
 const RECENT_POS = 6; // ring buffer: reject against the last N accepted positions

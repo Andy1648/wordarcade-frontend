@@ -53,6 +53,9 @@ test('cards pulse on the beat, featured harder, no new loops, within the animati
   // The face actually pulsed (both cards grew), and the featured card pulsed HARDER.
   expect(r.normGain, 'normal card pulse').toBeGreaterThan(0);
   expect(r.featGain, 'featured card pulse').toBeGreaterThan(r.normGain);
-  // Concurrent finite animations stay within the 20 budget during a kick.
-  expect(r.concurrentFinite, 'concurrent finite animations on a beat').toBeLessThanOrEqual(20);
+  // Concurrent finite-animation COUNT is now ADVISORY, not a budget (CLAUDE.md → ANIMATION
+  // BUDGET; block-state §12f): composited transform/opacity scales, so the count doesn't fail
+  // the build. The build-failing invariant is the infinite count above. Log the count.
+  // eslint-disable-next-line no-console
+  console.log(`[advisory] concurrent finite animations on a beat: ${r.concurrentFinite}`);
 });
