@@ -200,3 +200,24 @@ offenders with SVG assets in `/public/art/` (drip, star, starburst).
 Unit **262** (was ~fewer), e2e **133 tests in 30 files** (was 99 in 23) — see §9. Two previously
 flaky e2e specs were stabilised with locator/`expect.poll` auto-retry waits instead of fixed sleeps
 (`feed-attribution.spec.js`, `word-bomb-scoring.spec.js`).
+
+### 12f. Animation budget UPDATED — concurrent count retired (2026-08-27)
+The old **"menu: ≤20 concurrent finite animations"** budget is STALE. It was written when
+animations were main-thread work. Measured on a real mid-range Android, **106 concurrent pooled
+transform/opacity animations produce no perceptible lag** — composited transform/opacity work
+scales; main-thread work does not. The concurrent COUNT is no longer a budget.
+
+What replaces it (authoritative list in `CLAUDE.md` → **ANIMATION BUDGET**), all build-failing:
+1. **ZERO new infinite animations** — the real 59→1 win; the infinite-count assertion stays hard.
+2. **transform / opacity ONLY** — never width/height/box-shadow/filter/font-size.
+3. **pool every repeated element** — never a node per event.
+4. **no layout reads** (getBoundingClientRect/offsetWidth/getComputedStyle) in any per-frame or
+   per-keystroke path — measure once on mount/resize, cache, spawns are pure writes.
+5. **will-change on exactly two elements site-wide** (`.clock-fill` + `.burn`).
+
+Enforcement changed to match: the `≤20` count assertions in `menu-xp.spec.js` and
+`card-beat.spec.js` are now **advisory** (they log the peak/concurrent count, no longer fail the
+build); both specs KEEP their build-failing infinite-count assertions. The in-game concurrency note
+(`GameScreen.jsx:484`, "≤2 concurrent at critical") is likewise ADVISORY — a smell to investigate,
+not a gate. This is what unblocked the KEY POWER tier particle shards (`feat/purchase-feel`), which
+peak at ~106 concurrent pooled finite animations with zero measured frame cost.
