@@ -12,6 +12,7 @@
 //   rejectCtx(engine)  → { letter, fragment } to fill a reject message
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
+import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -56,6 +57,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   const armedRef = useRef(false);
   const turnStartRef = useRef(0);
   const turnBudgetRef = useRef(0);
+  // WINS COMBO (Job 2): consecutive accepts build a multiplier that boosts the run's wins
+  // payout; a reject/timeout resets it. Pure state kept in a ref (mutated at the same points
+  // that already trigger a re-render), read live by the HUD readout and the round-end payout.
+  const comboRef = useRef(freshCombo());
   const rafRef = useRef(0);
   const restartTimerRef = useRef(null);
 
@@ -115,6 +120,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     const tick = () => {
       const rem = turnBudgetRef.current - (now() - turnStartRef.current);
       if (rem <= 0) {
+        comboRef.current = comboBreak(comboRef.current); // a timeout resets the wins combo
         const { dead } = adapter.onTimeout(engineRef.current);
         if (dead) {
           setRemaining(0);
@@ -155,6 +161,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     // submitSoloWord fires onAccept (streak touch) exactly once on an accepted word, mid-run.
     const r = submitSoloWord(engineRef.current, word, onAcceptRef.current);
     if (r.ok) {
+      comboRef.current = comboAccept(comboRef.current); // grow the wins combo
       setReason('');
       setInput('');
       startTurnClock(); // the next turn's budget (new required letter / new fragment)
@@ -162,6 +169,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     } else {
       // Reject: the input is NEVER cleared and there is NO shake — the sill flashes and a
       // named reason prints, so the evidence of the attempt survives.
+      comboRef.current = comboBreak(comboRef.current); // a reject resets the wins combo
       setReason(rejectMessage(r.reason, adapter.rejectCtx(engineRef.current)));
       setSillKey((k) => k + 1);
     }
@@ -172,6 +180,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     stopRaf();
     engineRef.current = createEngine();
     runIndexRef.current += 1;
+    comboRef.current = freshCombo(); // fresh run → fresh wins combo
     armedRef.current = false;
     turnBudgetRef.current = adapter.budgetMs(engineRef.current);
     setArmed(false);
@@ -216,5 +225,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     restart,
     restartArmed,
     best,
+    // WINS combo (live): { streak, mult, weighted, breaks }. `mult`/`breaks` drive the HUD
+    // readout; `weighted` is passed to recordRound at round end to boost the payout.
+    combo: comboRef.current,
   };
 }

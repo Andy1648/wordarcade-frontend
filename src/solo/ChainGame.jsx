@@ -106,7 +106,9 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       loadSoloAcceptExt();
       if (!winRecordedRef.current) {
         winRecordedRef.current = true;
-        setWinsEarned(recordRound({ mode: 'chain', wordsAccepted: g.engine.state.k }));
+        setWinsEarned(
+          recordRound({ mode: 'chain', wordsAccepted: g.engine.state.k, weightedWords: g.combo.weighted })
+        );
       }
     } else {
       winRecordedRef.current = false;
@@ -116,7 +118,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
 
   // Live wins tally (item 2): what the run will pay so far, ticking up as links land (0 until
   // the 3-word payout gate). Pure recompute each render from the link count.
-  const winsTally = awardWins({ mode: 'chain', wordsAccepted: s.k });
+  const winsTally = awardWins({ mode: 'chain', wordsAccepted: s.k, weightedWords: g.combo.weighted });
 
   // ---- OUT → IN travel FX (presentational) -------------------------------------
   // Pooled: one traveler + one fader, reused for every accept (never a node per accept).
@@ -246,6 +248,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.k}
+      comboMult={g.combo.mult}
+      comboBreaks={g.combo.breaks}
       over={{
         score: s.score,
         best: g.best,
