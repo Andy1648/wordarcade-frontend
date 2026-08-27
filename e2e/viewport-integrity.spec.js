@@ -166,8 +166,14 @@ async function integrity(page, rootSel, overlay, noScroll) {
       // never acceptable anywhere. VERTICAL overflow is fine for content panels
       // (shop/stats/menu scroll by design) but NOT for dialogs / preview cards /
       // game-over cards, which must shrink to fit (noScroll screens).
-      const hOver = el.scrollWidth > el.clientWidth + TOL;
-      const vOver = el.scrollHeight > el.clientHeight + TOL;
+      // A scrollBAR only exists when the axis is auto/scroll — overflow:hidden/clip
+      // CLIPS (no bar) even though scrollWidth still reports the hidden content (e.g.
+      // a decorative burst behind the game-over card). So (7) keys off auto/scroll,
+      // not the hidden clip.
+      const scrollsX = /^(auto|scroll)$/.test(cs.overflowX);
+      const scrollsY = /^(auto|scroll)$/.test(cs.overflowY);
+      const hOver = scrollsX && el.scrollWidth > el.clientWidth + TOL;
+      const vOver = scrollsY && el.scrollHeight > el.clientHeight + TOL;
       // Designated inner scroll regions are legitimate lists/tables (the pack
       // picker "shrinks and scrolls" per §2's spec; the game-over stats table).
       // Their VERTICAL scroll is allowed even inside a noScroll card; horizontal

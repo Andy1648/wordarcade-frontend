@@ -1960,6 +1960,19 @@
   border-color: #6a4aa0;
   color: #cbb8ff;
 }
+/* waiting: the submit has been silent >400ms (a cold Render wake) — the SAME chip
+   turns amber with a "WAKING SERVER…" label so the word never looks ignored during
+   the ~20s wake (fix/qa-sweep §5). Keeps the three-dot heartbeat. */
+.wb-pending-waiting {
+  background: #2a1c05;
+  border-color: #FFB020;
+  color: #FFE94A;
+}
+.wb-pending-waking {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: #FFB020;
+}
 .wb-pending-dots {
   display: inline-flex;
   gap: 3px;
