@@ -51,7 +51,12 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  row-gap: clamp(24px, 3.4vh, 60px);
+  /* 16-32px band (was 24-60): the 60px cap let the cards->JOIN/DAILY gap balloon to
+     ~49px on big screens while the bottom block floated in dead space (fix/qa-sweep §8).
+     space-evenly (was center) spreads the leftover height into EQUAL gaps above, between
+     and below every block, so the bottom block no longer floats. */
+  row-gap: clamp(16px, 2.4vh, 32px);
+  justify-content: space-evenly;
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
      continuous surface. This element also carries .wall-surface, so setting these
@@ -105,7 +110,10 @@
 .homepage-nav-btn {
   position: relative;
   height: 44px;
-  width: auto;
+  /* max-content (not auto) so the box includes the TRAILING letter-spacing —
+     otherwise "SHOP" laid out 5px wider than the auto content box and clipped
+     (fix/qa-sweep §5). */
+  width: max-content;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;

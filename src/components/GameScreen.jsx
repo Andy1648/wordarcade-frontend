@@ -1679,6 +1679,20 @@ export default function GameScreen({
       pendingClearRef.current = null;
     }, ms);
   }
+  // COLD-WAKE ESCALATION (fix/qa-sweep §5). The flight chip is tuned for the normal
+  // ~120-400ms round-trip; on a COLD Render wake the socket can be silent ~20s and
+  // the plain dots read as "the word was ignored". If a submission is STILL in flight
+  // 400ms after it was sent, escalate the SAME chip to a visible "WAKING SERVER…"
+  // state so any un-answered submit is unmistakably pending. It resolves the instant
+  // the verdict lands (the word_result effect flips phase to accept/reject, which
+  // changes `pending` and tears this timer down).
+  useEffect(() => {
+    if (!pending || pending.phase !== 'flight') return undefined;
+    const t = setTimeout(() => {
+      setPending((p) => (p && p.phase === 'flight' ? { ...p, phase: 'waiting' } : p));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [pending]);
   // The timer reading + word captured at the moment of submit, so the result
   // handler can judge "clutch" (final second left) and shatter the exact word
   // even after the input has cleared / the turn has moved on.
@@ -2858,12 +2872,15 @@ export default function GameScreen({
             {pending && (
               <div className={`wb-pending wb-pending-${pending.phase}`} aria-live="polite">
                 <span className="wb-pending-word">{pending.word.toUpperCase()}</span>
-                {pending.phase === 'flight' && (
+                {(pending.phase === 'flight' || pending.phase === 'waiting') && (
                   <span className="wb-pending-dots" aria-hidden="true">
                     <i />
                     <i />
                     <i />
                   </span>
+                )}
+                {pending.phase === 'waiting' && (
+                  <span className="wb-pending-tag wb-pending-waking">WAKING SERVER…</span>
                 )}
                 {pending.phase === 'accept' && (
                   <span className="wb-pending-tag">

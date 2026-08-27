@@ -8,7 +8,9 @@
    motion signature. All classes prefixed .ppp-. */
 
 /* Root: an IN-FLOW block embedded in the Blitz dialog (the dialog owns the panel/scrim). */
-.ppp-picker { position: relative; width: 100%; display: flex; flex-direction: column; align-items: stretch; }
+/* flex:1 + min-height:0 so the picker is the part of the dialog that shrinks on
+   short viewports (its pack list scrolls) rather than the whole dialog scrolling. */
+.ppp-picker { position: relative; width: 100%; display: flex; flex-direction: column; align-items: stretch; flex: 1 1 auto; min-height: 0; }
 
 /* ============================ HEADER LABEL ("▓ PICK YOUR PACKS") ============================ */
 /* Flat: yellow Bungee, no tilt, no ink filter. */
@@ -18,9 +20,9 @@
 /* ============================ SCROLLING WINDOW ============================ */
 /* KEEP the inner scroll window so the pack grid never blows out the dialog height.
    Flat navy panel: 3px black border, hard offset shadow, inset shadow for depth. */
-.ppp-window { position: relative; width: 100%; margin-bottom: 14px; }
+.ppp-window { position: relative; width: 100%; margin-bottom: 14px; flex: 1 1 auto; min-height: 0; display: flex; }
 .ppp-window-scroll {
-  max-height: 226px; overflow-y: auto; overflow-x: hidden;
+  flex: 1 1 auto; min-height: 96px; max-height: 226px; overflow-y: auto; overflow-x: hidden;
   background: #0a1424; border: 3px solid #000; border-radius: 12px;
   box-shadow: 4px 4px 0 #000, inset 0 4px 14px rgba(0, 0, 0, 0.62);
   padding: 16px; scrollbar-width: thin; scrollbar-color: #274063 #0a1424;
@@ -31,7 +33,13 @@
 .ppp-window-scroll::-webkit-scrollbar-thumb:hover { background: #365a86; }
 
 /* ============================ 3-PER-ROW TILE GRID ============================ */
-.ppp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+/* minmax(0,1fr) — NOT 1fr: plain 1fr floors each column at its min-content, so a
+   long pack-name word blew the 3 columns out to 173/197/197 and the grid overran
+   the window's overflow-x:hidden clip (fix/qa-sweep §7). minmax(0,…) forces equal
+   columns and lets the ellipsized labels shrink. */
+/* auto-fill + minmax(128px,1fr): 3 columns on wide dialogs, 2 on a phone — so pill
+   labels always have room instead of collapsing to 0 and clipping (fix/qa-sweep §7). */
+.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; width: 100%; }
 
 /* ============================ MOTION KEYFRAMES ============================ */
 /* ONE select-pop — a ~180ms overshoot on toggle. */
@@ -59,7 +67,10 @@
 
 .ppp-pill-emoji { font-size: 1.2em; line-height: 1; filter: grayscale(0.75) brightness(0.75); }
 .ppp-pill.is-on .ppp-pill-emoji { filter: none; }
-.ppp-pill-label { flex: 1; min-width: 0; font-family: 'Bungee', cursive; font-size: clamp(13px, 1.9vw, 16px); line-height: 1.05; color: #7f9dc9; overflow: hidden; text-overflow: ellipsis; }
+/* No white-space:nowrap — labels WRAP to fit the (now minmax(0,1fr)) column;
+   nowrap would ellipsize readable pack names ("MOVIES"→"MOVI…"). The column can't
+   blow out anymore, so wrapping stays inside the pill (fix/qa-sweep §7). */
+.ppp-pill-label { flex: 1; min-width: 0; font-family: 'Bungee', cursive; font-size: clamp(11px, 1.5vw, 14px); line-height: 1.05; color: #7f9dc9; overflow: hidden; overflow-wrap: anywhere; }
 .ppp-pill.is-on .ppp-pill-label { color: #000; }
 
 /* Per-tile category count — small mono chip on the right. Black-on-blue when ON,
@@ -97,3 +108,7 @@
   .ppp-picker[data-beat] .ppp-pill-wrap.is-on { transform: none; }
   .ppp-selall { transition: none; }
 }
+
+/* On very short viewports let the pack list shrink further (still comfortably
+   scrollable) so the whole picker fits without the dialog scrolling. */
+@media (max-height: 560px) { .ppp-window-scroll { min-height: 72px; } }
