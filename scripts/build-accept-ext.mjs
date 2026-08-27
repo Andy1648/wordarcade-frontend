@@ -23,6 +23,9 @@ import { dirname, resolve, join } from 'node:path';
 import { brotliCompressSync, constants as zc } from 'node:zlib';
 import { createChainEngine } from '../src/solo/chain.js';
 import { mulberry32 } from '../src/solo/shared.js';
+// Content-safety (fix/dict-safety): acceptance-only asset — drop slurs (never
+// accepted/scored); mild profanity may remain accepted.
+import { isSlur } from '../src/moderation/blockedTerms.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -48,7 +51,7 @@ for (const raw of wordList) {
 }
 
 const ext = []; // the increment we ship: real words not already accepted
-for (const w of bigFiltered) if (!union.has(w)) ext.push(w);
+for (const w of bigFiltered) if (!union.has(w) && !isSlur(w)) ext.push(w);
 ext.sort(); // membership-only asset; sorted for a stable, diff-friendly file
 
 writeFileSync(join(SOLO, 'words.accept-ext.txt'), ext.join(' '));
