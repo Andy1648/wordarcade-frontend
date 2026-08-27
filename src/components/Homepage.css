@@ -105,7 +105,10 @@
 .homepage-nav-btn {
   position: relative;
   height: 44px;
-  width: auto;
+  /* max-content (not auto) so the box includes the TRAILING letter-spacing —
+     otherwise "SHOP" laid out 5px wider than the auto content box and clipped
+     (fix/qa-sweep §5). */
+  width: max-content;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;

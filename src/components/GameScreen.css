@@ -2022,6 +2022,10 @@
   /* The Word Bomb stats panel can make this card tall; cap it to the viewport
      and let it scroll rather than overflow off-screen. */
   max-height: calc(100vh - 48px);
+  /* overflow-x:hidden (not the auto that overflow-y:auto implies): the decorative
+     win/loss burst behind the card is ~560px and otherwise gave the card a
+     horizontal scrollbar on big viewports (fix/qa-sweep §2). */
+  overflow-x: hidden;
   overflow-y: auto;
   transform: rotate(-1.5deg);
 }
@@ -3339,6 +3343,10 @@
   .cb-results-title { font-size: 16px; }
   .game-over-title { font-size: 28px; }
   .game-over-title.win { font-size: 34px; }
+  /* .eliminated has its own 44px rule (higher specificity than the base above), so
+     it must be shrunk explicitly or "ELIMINATED" overflows the card at 360px
+     (fix/qa-sweep §2/§4). */
+  .game-over-title.eliminated { font-size: 30px; }
   .countdown-text { font-size: 84px; }
 
   /* Smaller bomb so it fits comfortably on a phone. */

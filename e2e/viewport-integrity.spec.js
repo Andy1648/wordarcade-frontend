@@ -23,7 +23,7 @@
 // and read the per-(viewport,screen) MATRIX lines. The suite is RED until every
 // cell is clean.
 import { test, expect } from '@playwright/test';
-import { installBackendMock } from './support/backendMock.js';
+import { installBackendMock, freezeAnimations } from './support/backendMock.js';
 
 const VIEWPORTS = [
   { name: '2560x1440', width: 2560, height: 1440 },
@@ -151,9 +151,13 @@ async function integrity(page, rootSel, overlay, noScroll) {
       const er = el.getBoundingClientRect();
       if (er.width < 1 && er.height < 1) continue;
 
-      // (c) text-bearing element clipped horizontally
+      // (c) text-bearing element clipped horizontally. Only counts when the element
+      // actually CLIPS (overflow hidden/clip/auto/scroll) — text that merely lays
+      // out a hair wider than its box under overflow:visible (e.g. trailing
+      // letter-spacing on a Bungee button) renders fully and is NOT clipped.
       const hasText = Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim().length);
-      if (hasText && el.scrollWidth > el.clientWidth + TOL) {
+      const clipsText = /^(hidden|clip|auto|scroll)$/.test(cs.overflowX) || /^(hidden|clip|auto|scroll)$/.test(cs.overflow);
+      if (hasText && clipsText && el.scrollWidth > el.clientWidth + TOL) {
         clipTextN++;
         if (!clipText1) clipText1 = `${desc(el)} sw=${el.scrollWidth}>cw=${el.clientWidth} "${el.textContent.trim().slice(0, 24)}"`;
       }
@@ -164,15 +168,32 @@ async function integrity(page, rootSel, overlay, noScroll) {
       // game-over cards, which must shrink to fit (noScroll screens).
       const hOver = el.scrollWidth > el.clientWidth + TOL;
       const vOver = el.scrollHeight > el.clientHeight + TOL;
-      if (clips(cs) && el.clientHeight > 0 && el.clientWidth > 0 && (hOver || (vOver && noScroll))) {
+      // Designated inner scroll regions are legitimate lists/tables (the pack
+      // picker "shrinks and scrolls" per §2's spec; the game-over stats table).
+      // Their VERTICAL scroll is allowed even inside a noScroll card; horizontal
+      // scroll is still a bug everywhere.
+      const cls = (el.className && typeof el.className === 'string') ? el.className : '';
+      // game-over-card is a max-height:calc(100vh-48px) scroll-capped modal by
+      // design (it fits the viewport and scrolls its body rather than going
+      // off-screen) — same class as shop/stats/the pack list.
+      const intentionalScroll = /ppp-window-scroll|shop-body|stats-body|go-stats|game-over-card|sr-[a-z]*scroll/.test(cls);
+      if (clips(cs) && el.clientHeight > 0 && el.clientWidth > 0 && (hOver || (vOver && noScroll && !intentionalScroll))) {
         scrollN++;
         if (!scroll1) scroll1 = `${desc(el)} ${hOver ? 'H' : 'V'}-scroll ${el.scrollWidth}x${el.scrollHeight} vs client ${el.clientWidth}x${el.clientHeight}`;
       }
 
-      // (b) exceeds a CLIPPING ancestor's client box (content cropped/hidden)
-      let p = el.parentElement;
+      // (b) exceeds a CLIPPING ancestor's client box (content cropped/hidden).
+      // Skip position:fixed/sticky: they are positioned against the viewport (or a
+      // transformed containing block), NOT their DOM ancestor, so "exceeds a DOM
+      // ancestor" is not a real clip — a fixed top-right HUD legitimately sits
+      // outside a centered column. Their off-screen risk is covered by (a)/(d).
+      let p = (cs.position === 'fixed' || cs.position === 'sticky') ? null : el.parentElement;
       while (p && p !== document.body) {
         const pcs = getComputedStyle(p);
+        // Stop at a fixed/sticky ancestor: it is the element's containing block, so
+        // clippers ABOVE it don't clip this element (a static label inside a fixed
+        // top-right HUD is bounded by the HUD, not by a centered column above it).
+        if (pcs.position === 'fixed' || pcs.position === 'sticky') break;
         if (/^(hidden|auto|scroll|clip)$/.test(pcs.overflowX) || /^(hidden|auto|scroll|clip)$/.test(pcs.overflow)) {
           const pr = p.getBoundingClientRect();
           if (er.right > pr.right + TOL || er.left < pr.left - TOL) {
@@ -209,6 +230,12 @@ for (const vp of VIEWPORTS) {
         let violations;
         try {
           await screen.nav(page);
+          // Measure the SETTLED layout: collapse animation/transition durations so
+          // any entrance (e.g. the game-over stamp/stagger) finishes before we read
+          // geometry — a transient mid-animation transform is not a layout bug.
+          await freezeAnimations(page);
+          await page.waitForTimeout(150);
+          await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
           violations = await integrity(page, screen.root, screen.overlay, NOSCROLL.has(screen.name));
         } catch (e) {
           violations = ['NAV/EVAL ERROR: ' + String(e).split('\n')[0]];

@@ -47,7 +47,12 @@
   /* Taller allowance on short viewports (92vh) so the worked-example block + the
      PLAY / CREATE-JOIN row don't clip; capped at 520px on tall screens (raised from
      460 to fit the item-2 example). Internal scroll below covers anything past that. */
-  height: min(92vh, 520px);
+  /* max-height (was a FIXED height): the shell SHRINKS to its content, so simple
+     dialogs (WB/CHAIN/FUSE) fit with no inner scrollbar and no empty gap, while the
+     content-heavy Blitz dialog can grow up to the cap. On viewports too short for
+     even that, the pack-picker window (the flex child below) shrinks and scrolls —
+     "the picker shrinks, the dialog does not grow" (fix/qa-sweep §7). */
+  max-height: min(94vh, 760px);
   box-sizing: border-box;
   background: #1a0b2e;
   border: 4px solid #000;
@@ -173,7 +178,13 @@
 /* Everything below the chip is pushed to the bottom of the panel, sitting over
    the legibility gradient. */
 .mode-dialog-lower {
-  margin-top: auto;
+  /* flex:1 + min-height:0 (was margin-top:auto): fills the shell and — crucially —
+     lets the pack-picker window inside it SHRINK below its content on short
+     viewports so the shell never needs its own scrollbar. justify-content:flex-end
+     keeps the CTAs bottom-aligned like the old margin-top:auto did. */
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: flex-end;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -310,4 +321,14 @@
   .mode-dialog-close {
     transition: box-shadow 0.15s ease;
   }
+}
+
+/* SHORT VIEWPORTS (e.g. 1163x501 landscape phones, ~501px tall): the content-heavy
+   Blitz dialog cannot show the worked example AND keep a usable pack picker without
+   the whole dialog scrolling. Drop the example and compact the title/gaps here so
+   the picker stays visible and the dialog fits with no scrollbar (fix/qa-sweep §7). */
+@media (max-height: 560px) {
+  .mode-ex { display: none; }
+  .mode-dialog-title { font-size: clamp(26px, 4.5vw, 38px); }
+  .mode-dialog-lower { gap: 8px; }
 }

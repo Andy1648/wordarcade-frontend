@@ -6,7 +6,9 @@
 .wins-hud {
   position: fixed;
   top: 12px;
-  right: 12px;
+  /* 16px (was 12): the in-game view-transition-root is the fixed HUD's containing
+     block and clips at a 15px inset, so right:12 poked 3px past it (fix/qa-sweep §6). */
+  right: 16px;
   z-index: 60;
   pointer-events: none;
   display: flex;

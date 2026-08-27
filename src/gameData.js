@@ -94,7 +94,7 @@ const FUSE_GAME = {
   artKey: 'FuseArt',
   name: 'FUSE',
   description: 'Type a word that contains the piece',
-  unlockLevel: 30, // gated: visible-but-locked until LV 30 (raised from 22 per fix/qa-sweep §9 — ~32262 letters at the current curve; was LV22 ≈ 5371. NOTE: ~6× jump — steep.)
+  unlockLevel: 25, // gated: visible-but-locked until LV 25 (fix/qa-sweep §10 — ~10538 letters; LV30's ~32262 was ~100 sessions, too steep for an existing mode). Was LV22 ≈ 5371.
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',
