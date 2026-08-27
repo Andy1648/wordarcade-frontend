@@ -23,7 +23,11 @@ import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { recordRound, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { formatNum } from '../format';
-import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+// NOTE: the run's wins total IS shown on the results screen, but SatRushResults
+// renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
+// deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
+// rule). So only WinsHudPill is imported here.
+import { WinsHudPill } from '../components/WinsHud';
 import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
 import { setShakeTarget } from './juice';

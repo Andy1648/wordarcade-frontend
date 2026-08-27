@@ -1,0 +1,55 @@
+# CI: install -> lint -> test -> build on every push to main and every PR.
+# Mirrors the backend's ci.yml (chain-reaction-backend/.github/workflows/ci.yml).
+#
+# LINT FAILS ON ERRORS ONLY, NOT WARNINGS. `npm run lint` runs `eslint src`,
+# which exits non-zero only on ERRORS by default — warnings never fail the job.
+# That is deliberate: there are ~25 pre-existing warnings (react-hooks/
+# exhaustive-deps, no-unused-vars, no-irregular-whitespace) and blocking on them
+# would stop all work. New real errors (e.g. an unused import under the strict
+# src/satRush override) still fail the build. Do NOT add `--max-warnings 0`.
+#
+# E2E IS INTENTIONALLY LEFT OUT of CI for now: Playwright needs browsers
+# installed (`npx playwright install`) and the suite runs a full `vite build`
+# + `vite preview` per run (~1.5-2 min), which is too slow/heavy for the gate.
+# Run it locally with `npm run test:e2e`. Revisit if flakes start slipping past.
+name: CI
+
+# push is restricted to long-lived branches so a push to a PR branch runs once
+# (as pull_request), not twice.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Don't cancel in-flight runs on main: every main commit should keep a
+  # completed CI status.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
