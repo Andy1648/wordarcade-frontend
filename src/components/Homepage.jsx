@@ -11,6 +11,7 @@ import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, mar
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { canAffordAny } from '../progress/shop';
+import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import ConnectingContent from './ConnectingContent';
@@ -216,7 +217,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // Only the TITLE, XP BAR and CARD REGION key off --menu-scale; the bottom bar /
       // daily link / footer stay fixed. Split the two so the fit math is exact: solve
       // scale·scalable + fixed + gaps = inner.
-      const SCALES = ['homepage-logo-wrap', 'menu-xp-bar', 'homepage-cards-region', 'menu-xp-caption'];
+      const SCALES = ['homepage-logo-wrap', 'menu-xp-bar', 'homepage-cards-region', 'menu-xp-caption', 'menu-next-unlock'];
       let scalable = 0;
       let fixed = 0;
       for (const el of kids) {
@@ -366,6 +367,22 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       setWinsAffordable(canAffordAny(w));
     },
   });
+  // FREE UNLOCK LADDER (Job 3): grant every level-reached cosmetic (idempotent, its own
+  // storage — separate from the shop), then hold the owned set so the "NEXT UNLOCK" line and
+  // the applied theme/frame stay in sync as XP climbs on the menu.
+  const [freeUnlocks, setFreeUnlocks] = useState(() => getFreeUnlocks());
+  useEffect(() => {
+    const fresh = grantUnlocks(xpProgress.level);
+    // Also catch up any rebirth cosmetics already earned (rebirth happens on another screen,
+    // which remounts this one, so a mount-time sweep is enough — no ShopScreen coupling).
+    let rebirthFresh = false;
+    for (let r = 1; r <= rebirths; r++) if (grantRebirthUnlock(r)) rebirthFresh = true;
+    if (fresh.length || rebirthFresh) setFreeUnlocks(getFreeUnlocks());
+  }, [xpProgress.level, rebirths]);
+  const nextUnlockItem = nextUnlock(freeUnlocks, rebirths);
+  const menuTheme = currentCosmetic(freeUnlocks, 'theme', rebirths) || '';
+  const menuFrame = currentCosmetic(freeUnlocks, 'frame', rebirths) || '';
+
   const shopLinkRef = useRef(null);
   const statsLinkRef = useRef(null);
   const rebirthLinkRef = useRef(null);
@@ -534,7 +551,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
 
   return (
     <div className="homepage-wrap">
-      <div ref={stageRef} className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}>
+      <div
+        ref={stageRef}
+        className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}
+        data-menu-theme={menuTheme || undefined}
+        data-menu-frame={menuFrame || undefined}
+      >
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
@@ -632,6 +654,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
           <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
         )}
+        {/* NEXT UNLOCK (Job 3): always-visible teaser of the next FREE cosmetic on the ladder.
+            Static at rest (menu-motion-law safe) — no idle animation. */}
+        <div className="menu-next-unlock" aria-live="polite">
+          <span className="menu-next-unlock-tag">NEXT</span>
+          <span className="menu-next-unlock-name">
+            {nextUnlockItem.name} {nextUnlockItem.kindLabel}
+          </span>
+          <span className="menu-next-unlock-at">{nextUnlockItem.at}</span>
+        </div>
 
         <div className="homepage-cards-region">
           <div
