@@ -34,7 +34,7 @@ const BASE_GAMES = [
     description: 'AI JUDGES YOUR ANSWERS — GET CREATIVE.',
     baseColor: '#3DA8FF',
     iconBg: '#fff',
-    badgeText: 'SOLO / MULTI',
+    badgeText: 'SOLO/MULTI', // no spaces — matches Word Bomb's badge and fits the pill (fix/qa-sweep §3)
     badgeBg: '#000',
     badgeColor: '#3DA8FF',
     textColor: '#000',
@@ -79,7 +79,7 @@ const CHAIN_GAME = {
   artKey: 'ChainArt',
   name: 'CHAIN',
   description: 'Each word starts where the last one ended',
-  unlockLevel: 15, // gated: visible-but-locked until the player reaches LV 15 (raised from 10 — ~1088 letters, ~4 sessions)
+  unlockLevel: 20, // gated: visible-but-locked until LV 20 (raised from 15 per fix/qa-sweep §9 — ~3420 letters at the current curve; was LV15 ≈ 1088)
   baseColor: '#2EFFE0', // teal field (the mode's accent)
   iconBg: '#0D2B28', // dark teal so the cyan link icon reads
   badgeText: 'SOLO',
@@ -94,7 +94,7 @@ const FUSE_GAME = {
   artKey: 'FuseArt',
   name: 'FUSE',
   description: 'Type a word that contains the piece',
-  unlockLevel: 22, // gated: visible-but-locked until the player reaches LV 22 (raised from 20 — ~5371 letters, ~18 sessions)
+  unlockLevel: 30, // gated: visible-but-locked until LV 30 (raised from 22 per fix/qa-sweep §9 — ~32262 letters at the current curve; was LV22 ≈ 5371. NOTE: ~6× jump — steep.)
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',
