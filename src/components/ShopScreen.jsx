@@ -11,6 +11,9 @@ import { getWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { formatNum } from '../format';
 
+const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const toRoman = (n) => ROMAN[n] || String(n);
+
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
   const [wins, setWins] = useState(() => getWins());
@@ -38,6 +41,17 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const nextMult = rebirthMult(rebirths + 1);
   const rebirthReady = level >= threshold;
 
+  // §3 — the shop always shows a visible NEXT GOAL with a progress bar. KEY POWER's
+  // next tier is always a goal (there's always a next tier); rebirth shows level
+  // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
+  const kpCost = keyTierCost(keyTier);
+  const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
+  const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
+  const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
+    .filter((i) => !owned.has(i.id))
+    .sort((a, b) => a.price - b.price)[0] || null;
+
+  const [reveal, setReveal] = useState(null);
   const refresh = () => {
     setWins(getWins());
     setOwned(new Set(getOwned()));
@@ -45,27 +59,53 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setKeyTier(getKeyTier());
   };
   const onBuy = (id) => {
-    if (buy(id).ok) refresh();
+    if (buy(id).ok) {
+      const item = [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id);
+      // §2 reveal — cosmetics preview in the item's pop colour (a bought STYLE recolours
+      // the pop; here we flash it so you SEE it).
+      setReveal({ kind: 'cosmetic', banner: `${(item ? item.name : 'ITEM').toUpperCase()} UNLOCKED`, colour: '#FF2EC4', previewChar: 'A' });
+      refresh();
+    }
   };
   const onBuyKeyPower = () => {
-    if (buyKeyPower().ok) refresh();
+    const nextTier = keyTier + 1;
+    if (buyKeyPower().ok) {
+      const colour = nextTier >= 5 ? '#FFD54A' : '#2EFFE0';
+      setReveal({ kind: 'keypower', banner: `KEY POWER ${toRoman(nextTier)} UNLOCKED`, colour, previewChar: 'A' });
+      refresh();
+    }
   };
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
   };
   const confirmRebirth = () => {
+    const gained = nextMult;
     doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
     setConfirming(false);
-    onBack();
+    // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.
+    setReveal({ kind: 'rebirth', banner: `×${formatNum(gained)} MULTIPLIER`, colour: '#9A1AFF', previewChar: '↑', onClose: onBack });
   };
+
+  // §2 press-and-hold buy button — defined below the component (HoldBuy). This alias
+  // keeps the Card markup readable.
+  const HoldBuyButton = (props) => <HoldBuy {...props} />;
+
+  // Thin progress bar — transform: scaleX ONLY (never width), no layout read (§2/§3).
+  const ProgressBar = ({ value }) => (
+    <div className="shop-progress" aria-hidden="true">
+      <div className="shop-progress-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, value))})` }} />
+    </div>
+  );
 
   const Card = ({ item, type }) => {
     const isOwnedItem = owned.has(item.id);
     const isEquipped = equipped[type] === item.id;
     const affordable = wins >= item.price;
+    const isNextGoal = !isOwnedItem && cheapestUnowned && item.id === cheapestUnowned.id;
     const cls = isEquipped ? 'equipped' : isOwnedItem ? 'owned' : affordable ? 'buy' : 'locked';
     return (
-      <div className={`shop-card is-${cls}`}>
+      <div className={`shop-card is-${cls}${isNextGoal ? ' is-next' : ''}`}>
+        {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
         <div className="shop-card-name">{item.name}</div>
         <div className="shop-card-blurb">{item.blurb}</div>
         {item.xpMult > 1 && (
@@ -78,15 +118,17 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             EQUIP
           </button>
         ) : affordable ? (
-          <button type="button" className="shop-card-btn" onClick={() => onBuy(item.id)}>
-            <span className="shop-coin" aria-hidden="true" />
-            {formatNum(item.price)}
-          </button>
+          <HoldBuyButton label={formatNum(item.price)} onCommit={() => onBuy(item.id)} />
         ) : (
-          <div className="shop-card-price">
-            <span className="shop-coin" aria-hidden="true" />
-            {formatNum(item.price)}
-          </div>
+          <>
+            <div className="shop-card-price">
+              <span className="shop-coin" aria-hidden="true" />
+              {formatNum(item.price)}
+            </div>
+            {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
+            <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
+            <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
+          </>
         )}
       </div>
     );
@@ -127,17 +169,21 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <div className="shop-kp-rate">
                   YOUR RATE: <b>{formatNum(perWordWins({ mode: 'wordBomb' }))} WINS / WORD</b>
                 </div>
+                {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
+                <div className="shop-goal">
+                  {wins >= kpCost ? 'READY TO UNLOCK' : `UNLOCKS AT ${formatNum(kpCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                </div>
+                <ProgressBar value={kpProgress} />
               </div>
               <div className="shop-kp-actions">
-                <button
-                  type="button"
-                  className="shop-card-btn"
-                  disabled={wins < keyTierCost(keyTier)}
-                  onClick={onBuyKeyPower}
-                >
-                  <span className="shop-coin" aria-hidden="true" />
-                  {formatNum(keyTierCost(keyTier))}
-                </button>
+                {wins >= kpCost ? (
+                  <HoldBuyButton label={formatNum(kpCost)} onCommit={onBuyKeyPower} />
+                ) : (
+                  <button type="button" className="shop-card-btn" disabled>
+                    <span className="shop-coin" aria-hidden="true" />
+                    {formatNum(kpCost)}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -177,6 +223,12 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
             </div>
 
+            {/* §3 — rebirth always shows how far to the next rebirth + progress. */}
+            <div className="shop-goal">
+              {rebirthReady ? 'READY TO REBIRTH' : `${threshold - level} LEVELS TO GO — LV ${level} / ${threshold}`}
+            </div>
+            <ProgressBar value={rbProgress} />
+
             <ul className="shop-confirm-detail">
               <li>
                 <b>LOSE:</b> all XP — back to LEVEL 1.
@@ -215,6 +267,104 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         <button type="button" className="shop-back" onClick={onBack}>
           ← BACK TO MENU
         </button>
+      </div>
+      {reveal && <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />}
+    </div>
+  );
+}
+
+// §2 — press-and-HOLD to buy: the button fills over holdMs; releasing early cancels
+// (the tension beat). The fill is a WAAPI scaleX (never width); commit fires on the
+// animation's finish. No layout reads. Pooled is N/A (one fill per button instance).
+function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' }) {
+  const fillRef = useRef(null);
+  const animRef = useRef(null);
+  const start = () => {
+    const fill = fillRef.current;
+    if (!fill || animRef.current) return;
+    const a = fill.animate(
+      [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
+      { duration: holdMs, easing: 'linear', fill: 'forwards' }
+    );
+    animRef.current = a;
+    a.onfinish = () => {
+      animRef.current = null;
+      fill.style.transform = 'scaleX(0)';
+      onCommit();
+    };
+  };
+  const cancel = () => {
+    const a = animRef.current;
+    if (a) {
+      a.cancel();
+      animRef.current = null;
+    }
+    if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
+  };
+  return (
+    <button
+      type="button"
+      className={`${className} shop-hold`}
+      onPointerDown={(e) => { e.preventDefault(); start(); }}
+      onPointerUp={cancel}
+      onPointerLeave={cancel}
+      onPointerCancel={cancel}
+      aria-label={`Hold to buy for ${label}`}
+    >
+      <span className="shop-hold-fill" ref={fillRef} aria-hidden="true" />
+      <span className="shop-hold-label">
+        <span className="shop-coin" aria-hidden="true" /> {label}
+      </span>
+    </button>
+  );
+}
+
+// §2 — the REVEAL: an SVG badge slams in, a one-line banner names what unlocked, and a
+// live pop preview fires ONCE so you see what you bought. All finite/one-shot WAAPI
+// (transform+opacity only); auto-dismisses. Zero new infinite animations.
+function ShopReveal({ reveal, onDone }) {
+  const badgeRef = useRef(null);
+  const popRef = useRef(null);
+  const dur = reveal.kind === 'rebirth' ? 700 : 220;
+  useEffect(() => {
+    const badge = badgeRef.current;
+    if (badge) {
+      badge.animate(
+        [
+          { transform: 'scale(1.6) rotate(-6deg)', opacity: 0, offset: 0 },
+          { transform: 'scale(0.94) rotate(-6deg)', opacity: 1, offset: 0.55 },
+          { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: 1 },
+        ],
+        { duration: dur, easing: 'cubic-bezier(.2,1.3,.3,1)', fill: 'both' }
+      );
+    }
+    // Live pop preview of what you bought — one shot, tier/style colour.
+    const pop = popRef.current;
+    if (pop) {
+      pop.style.color = reveal.colour || '#2EFFE0';
+      pop.animate(
+        [
+          { transform: 'translateY(10px) scale(0.8)', opacity: 0, offset: 0 },
+          { transform: 'translateY(-6px) scale(1.15)', opacity: 1, offset: 0.35 },
+          { transform: 'translateY(-2px) scale(1)', opacity: 1, offset: 0.7 },
+          { transform: 'translateY(-2px) scale(1)', opacity: 0, offset: 1 },
+        ],
+        { duration: 620, delay: dur - 80, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' }
+      );
+    }
+    const t = setTimeout(() => {
+      onDone();
+      if (reveal.onClose) reveal.onClose();
+    }, dur + 1100);
+    return () => clearTimeout(t);
+  }, [reveal, dur, onDone]);
+  return (
+    <div className="shop-reveal" role="status" aria-live="polite">
+      <div className="shop-reveal-card">
+        {/* Real SVG asset (ART VS MOTION) — CSS only animates it (the slam). */}
+        <img className="shop-reveal-badge" src="/art/star.svg" alt="" ref={badgeRef} aria-hidden="true" />
+        <div className="shop-reveal-banner">{reveal.banner}</div>
+        <span className="shop-reveal-pop" ref={popRef} aria-hidden="true">{reveal.previewChar || 'A'}</span>
       </div>
     </div>
   );
