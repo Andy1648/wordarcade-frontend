@@ -32,6 +32,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { get } from 'node:https';
+// Content-safety (fix/dict-safety): RECALL is a DISPLAY asset (CHAIN top-3k /
+// fragment reveals) so it must contain no slur OR profanity; the ACCEPT increment
+// is acceptance-only so it drops slurs but keeps mild profanity acceptable.
+import { isBlockedForDisplay, isSlur } from '../src/moderation/blockedTerms.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -103,6 +107,7 @@ async function main() {
   const recallSet = new Set();
   for (const w of ranked) {
     if (w.length < RECALL_MIN || w.length > RECALL_MAX) continue;
+    if (isBlockedForDisplay(w)) continue; // no slur/profanity in the displayed supply
     recall.push(w);
     recallSet.add(w);
     if (recall.length >= RECALL_CAP) break;
@@ -115,6 +120,7 @@ async function main() {
   for (const w of ranked) {
     if (w.length < ACCEPT_MIN || w.length > ACCEPT_MAX) continue;
     if (recallSet.has(w)) continue;
+    if (isSlur(w)) continue; // slurs are never accepted/scored (profanity may stay)
     acceptExtra.push(w);
   }
 
