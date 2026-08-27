@@ -14,6 +14,7 @@ import {
   isCreditableKey,
   progressOf,
   xpPerInput,
+  getKeyTier,
 } from './xp';
 import { equippedPopMult, equippedSoundMult } from './shop';
 import { playClack } from './clack';
@@ -50,6 +51,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       popMult: equippedPopMult(),
       soundMult: equippedSoundMult(),
     });
+    // KEY POWER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
+    // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
+    // Stable for this menu session (buying remounts this hook via the shop round-trip).
+    const feelTier = Math.min(5, getKeyTier());
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; a tap credits
     // xp but NOT lifetimeLetters (rawKeys 0) and bumps taw.taps instead; its pop is the
@@ -83,8 +88,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       if (fx) {
         if (res.leveledUp) fx.celebrate(res.level);
         if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], opts.x, opts.y);
-        else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier]);
-        if (crossed && tier > 0) fx.edgePulse(TIER_COLORS[tier]);
+        else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], feelTier);
+        // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
+        // T4's per-accepted-word edge glow lives in-game). Gold at KEY POWER T5+.
+        if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : TIER_COLORS[tier]);
       }
       if (creditRef.current) creditRef.current();
     };

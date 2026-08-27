@@ -191,6 +191,20 @@ const POP_TRIES = 12; // random attempts before accepting the last candidate any
 const EDGE_MS = 260;
 const EDGE_POOL = 2;
 
+// KEY POWER tier feedback (feat/purchase-feel item 1). Per-keystroke escalation the
+// player BUYS: T2+ throws pooled particle shards on each pop. transform/opacity only,
+// finite (<=400ms), pooled — zero new infinite animations.
+const SHARD_MS = 360; // 300-400ms per spec
+const SHARD_PER_POP = 4; // <=6 per spec
+const SHARD_POOL = 32; // SHARD_PER_POP × ~8 concurrent pops
+// Feel-tier colours: T1-T4 teal, T5+ gold. (T0 keeps the streak colour it's given.)
+const TIER_TEAL = '#2EFFE0';
+const TIER_GOLD = '#FFD54A';
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
 const LEVELUP_MS = 1500;
@@ -272,6 +286,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const recentPosRef = useRef([]); // ring buffer of the last few accepted {x,y} (anti-repeat)
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
+  // Pooled particle shards (KEY POWER tier T2+).
+  const shardElsRef = useRef([]);
+  const shardAnimsRef = useRef([]);
+  const shardNextRef = useRef(0);
   const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
   const barBoxRef = useRef(null); // XP bar box (layer-local) — taps must not cover it
 
@@ -332,6 +350,20 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       return a;
     });
 
+    // Pooled particle shards — keyframes are re-set per spawn (direction varies), so
+    // create them idle. transform/opacity only, finite SHARD_MS, fill:both.
+    shardAnimsRef.current = shardElsRef.current.map((el) => {
+      const a = el.animate(
+        [
+          { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0 },
+          { transform: 'translate(0,-20px) scale(0)', opacity: 0, offset: 1 },
+        ],
+        { duration: SHARD_MS, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both' }
+      );
+      a.cancel();
+      return a;
+    });
+
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
@@ -381,8 +413,35 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     return undefined;
   }, []);
 
+  // Throw SHARD_PER_POP pooled shards from (x,y) — KEY POWER tier T2+ (item 1).
+  function spawnShards(x, y, colour) {
+    const anims = shardAnimsRef.current;
+    if (!anims.length) return;
+    for (let k = 0; k < SHARD_PER_POP; k += 1) {
+      const i = shardNextRef.current % SHARD_POOL;
+      shardNextRef.current = (i + 1) % SHARD_POOL;
+      const el = shardElsRef.current[i];
+      const anim = anims[i];
+      if (!el || !anim) continue;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.background = colour;
+      const ang = (k / SHARD_PER_POP) * Math.PI * 2 + Math.random() * 0.8;
+      const dist = 18 + Math.random() * 16;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist - 6; // slight upward bias
+      const rot = Math.random() * 180 - 90;
+      anim.effect.setKeyframes([
+        { transform: `${CENTER}translate(0,0) scale(1) rotate(0deg)`, opacity: 1, offset: 0 },
+        { transform: `${CENTER}translate(${dx}px,${dy}px) scale(0.2) rotate(${rot}deg)`, opacity: 0, offset: 1 },
+      ]);
+      anim.cancel();
+      anim.play();
+    }
+  }
+
   useImperativeHandle(ref, () => ({
-    letterPop(letter, plusText, scale = 1, colour = '#2EFFE0') {
+    letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return; // not measured yet, or no pool
@@ -393,13 +452,19 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       if (!el || !anim) return;
       const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
       el.classList.remove('is-tap'); // reset if this node was last used for a tap
+      // KEY POWER tier (item 1) drives the visible/audible escalation the player BOUGHT:
+      // T1-T4 teal, T5+ gold (overrides the streak colour); T3+ a hard offset shadow;
+      // T2+ particle shards. All finite/pooled; particles skip under reduced motion.
+      const tierColour = feelTier >= 5 ? TIER_GOLD : feelTier >= 1 ? TIER_TEAL : colour;
       // children: [0] = letter (tier colour), [1] = "+N" (always yellow, via CSS)
       el.children[0].textContent = letter;
-      el.children[0].style.color = colour;
+      el.children[0].style.color = tierColour;
+      el.children[0].style.textShadow = feelTier >= 3 ? '2px 2px 0 #000' : '';
       el.children[1].textContent = plusText;
       el.children[1].style.color = ''; // back to CSS yellow
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
+      if (feelTier >= 2 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, tierColour);
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
@@ -521,6 +586,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           className="menu-xp-edge"
           ref={(n) => {
             edgeElsRef.current[i] = n;
+          }}
+        />
+      ))}
+      {Array.from({ length: SHARD_POOL }, (_, i) => (
+        <span
+          key={`s${i}`}
+          className="menu-xp-shard"
+          ref={(n) => {
+            shardElsRef.current[i] = n;
           }}
         />
       ))}
