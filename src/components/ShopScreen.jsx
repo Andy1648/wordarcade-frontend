@@ -21,6 +21,7 @@ import {
 import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { formatNum } from '../format';
+import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
 const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 const toRoman = (n) => ROMAN[n] || String(n);
@@ -81,6 +82,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   };
   const onBuy = (id) => {
     if (buy(id).ok) {
+      sndPurchase();
       const item = [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id);
       // §2 reveal — cosmetics preview in the item's pop colour (a bought STYLE recolours
       // the pop; here we flash it so you SEE it).
@@ -91,6 +93,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const onBuyKeyPower = () => {
     const nextTier = keyTier + 1;
     if (buyKeyPower().ok) {
+      sndPurchase();
       const colour = nextTier >= 5 ? '#FFD54A' : '#2EFFE0';
       setReveal({ kind: 'keypower', banner: `KEY POWER ${toRoman(nextTier)} UNLOCKED`, colour, previewChar: 'A' });
       refresh();
@@ -112,6 +115,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const onBuyTheme = (id) => {
     const r = buyTheme(id, { getWins, saveWins });
     if (r.ok) {
+      sndPurchase();
       const t = themeById(id);
       setReveal({ kind: 'theme', banner: `${t.name} UNLOCKED`, colour: t.vars['--theme-ink'], previewChar: 'A' });
       setOwnedThemes(getOwnedThemes());
@@ -126,6 +130,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const confirmRebirth = () => {
     const gained = nextMult;
     doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
+    sndRebirth(); // Job 11: rebirth swell
     setConfirming(false);
     // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.
     setReveal({ kind: 'rebirth', banner: `×${formatNum(gained)} MULTIPLIER`, colour: '#9A1AFF', previewChar: '↑', onClose: onBack });

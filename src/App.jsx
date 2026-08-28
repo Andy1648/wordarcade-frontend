@@ -15,6 +15,8 @@ import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 import ClackButton from './components/ClackButton';
+import AudioControls from './components/AudioControls';
+import { sndWordAccepted, sndWordRejected, sndRunOver } from './audio/gameSounds';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 // StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
 // views/footer links), so their bodies are imported by StatsScreen, not lazily as top-level views.
@@ -1006,6 +1008,7 @@ function App() {
         // Lifetime WORDS TYPED + Wins: count ONLY the local player's own accepted words.
         // (Daily flows through this same path and counts as word-bomb — fine.)
         if (isMine) {
+          sndWordAccepted(myWbAcceptedRef.current); // Job 11: accept chime, pitch climbs with count
           addWords('word-bomb');
           const prevWb = myWbAcceptedRef.current;
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
@@ -1074,6 +1077,7 @@ function App() {
       } else {
         // Rejections are only sent to the player who submitted, so this is
         // always our own miss.
+        sndWordRejected(); // Job 11: soft reject
         setFeedEvents((prev) => [
           ...prev,
           {
@@ -1151,6 +1155,7 @@ function App() {
           : payload
       ); // reused to drive the feedback toast
       if (payload.accepted) {
+        sndWordAccepted(myBlitzAcceptedRef.current); // Job 11: accept chime
         setMyAnswers((prev) => [...prev, payload.answer]);
         addWords('category-blitz');
         const prevBlitz = myBlitzAcceptedRef.current;
@@ -1214,6 +1219,8 @@ function App() {
 
     if (lastMessage.type === 'game_over') {
       const payload = lastMessage.payload;
+      sndRunOver(); // Job 11: game-over fall (feat/sound)
+      // (No wpmEnd() — fix/three-again §2 removed WPM tracking from the turn-based modes.)
       // Category Blitz carries finalScores; Word Bomb carries just winnerId.
       if (payload.finalScores) {
         setCategoryScores(payload.finalScores);
@@ -2153,6 +2160,9 @@ function App() {
           {/* Keyboard-sound (clack) control — sits beside the music toggle in the same
               corner cluster. Default OFF; enabling creates the AudioContext in-gesture. */}
           <ClackButton accent={SCREEN_ACCENT[view] || '#FFE94A'} />
+          {/* Event-sound toggle (🔊) + master volume — the third of three separate audio toggles
+              (keystroke / event / music), all default OFF (Job 11). */}
+          <AudioControls accent={SCREEN_ACCENT[view] || '#2EFFE0'} />
         </div>
       </div>
       {/* CONNECTION LOST: shown only when the socket drops mid room/game. The

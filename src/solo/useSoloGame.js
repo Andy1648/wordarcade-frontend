@@ -15,6 +15,9 @@ import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord 
 import { tierForClockLeft } from '../share/resultCard.js';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
+// Sound only — XP is NOT credited in this hook any more (unified economy moved per-word XP into the
+// mode components), so feat/sound's xpPerInput/creditXp imports are intentionally dropped here.
+import { sndWordAccepted, sndWordRejected, sndLucky, sndRunOver } from '../audio/gameSounds.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -103,6 +106,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     armedRef.current = false;
     setArmed(false);
     setPhase('over');
+    sndRunOver(); // Job 11: gentle descending run-over fall
     const score = adapter.getScore(engineRef.current);
     setBest(setPB(pbKey, score));
     // Enter-to-restart arms after a delay (longer on run 1 / very short runs) so an
@@ -179,6 +183,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       const left = (budget - (now() - turnStartRef.current)) / budget;
       tierLogRef.current.push(tierForClockLeft(left));
       comboRef.current = comboAccept(comboRef.current); // grow the wins combo
+      sndWordAccepted(comboRef.current.streak); // Job 11: accept chime, pitch climbs with the combo
       // LUCKY check — AFTER acceptance only (never telegraphed). Record THIS word's factor
       // (×5 on a 1/40 hit, else ×1) for the per-word banking fold; on a hit, bank 5× the mode's
       // per-word XP and bump the gold-burst count.
@@ -186,10 +191,12 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       luckyLastMultRef.current = reward.winsWeight;
       if (reward.lucky) {
         luckyCountRef.current += 1;
+        sndLucky(); // Job 11: lucky-word sparkle (feat/sound)
         // XP is no longer credited here (lucky-only). Unified economy (Job 1): EVERY accepted word
         // grants XP in the mode component (ChainGame/FuseGame), where the full per-word weight —
         // rarity × combo × lucky (this word's ×5 factor included via luckyMult) — is summed, so XP
-        // and the wins payout ride the exact same weight.
+        // and the wins payout ride the exact same weight. (feat/sound's creditXp here is dropped —
+        // it would double-count XP against main's economy.)
       }
       setReason('');
       setInput('');
@@ -199,6 +206,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       // Reject: the input is NEVER cleared and there is NO shake — the sill flashes and a
       // named reason prints, so the evidence of the attempt survives.
       comboRef.current = comboBreak(comboRef.current); // a reject resets the wins combo
+      sndWordRejected(); // Job 11: soft downward reject (not a buzzer)
       setReason(rejectMessage(r.reason, adapter.rejectCtx(engineRef.current)));
       setSillKey((k) => k + 1);
     }
