@@ -7,6 +7,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
 import { formatNum } from '../format';
+import { rankTitle } from '../progress/rank';
 
 // The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
 // a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
@@ -170,6 +171,11 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )}
       </span>
+      {/* RANK TITLE (Job 5): the level band's name, sitting in the LV bar next to the level.
+          Full bar only; static — no animation. */}
+      {variant !== 'mini' && (
+        <span className="menu-xp-rank" aria-label={`rank ${rankTitle(level)}`}>{rankTitle(level)}</span>
+      )}
     </div>
   );
 }
