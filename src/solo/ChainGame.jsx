@@ -13,6 +13,7 @@ import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
+import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 
@@ -44,16 +45,24 @@ const CHAIN_MOTIF = (
 
 export default function ChainGame({ onExit }) {
   const [data, setData] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadKey, setLoadKey] = useState(0); // bump to retry the word-data fetch
 
   useEffect(() => {
     let live = true;
-    loadSoloWords().then((d) => {
-      if (live) setData(d);
-    });
+    setLoadError(false);
+    // Edge state (Job 16): a failed word-data chunk fetch no longer strands the player on "…".
+    loadSoloWords()
+      .then((d) => {
+        if (live) setData(d);
+      })
+      .catch(() => {
+        if (live) setLoadError(true);
+      });
     return () => {
       live = false;
     };
-  }, []);
+  }, [loadKey]);
 
   const createEngine = useCallback(
     () => createChainEngine({ accept: data.accept, topCommon: data.topCommon }),
@@ -74,11 +83,14 @@ export default function ChainGame({ onExit }) {
     []
   );
 
-  if (!data) {
+  if (loadError || !data) {
     return (
-      <div className="solo-root" style={{ '--solo-accent': ACCENT }}>
-        <div className="solo-center">…</div>
-      </div>
+      <SoloLoadState
+        accent={ACCENT}
+        error={loadError}
+        onRetry={() => setLoadKey((k) => k + 1)}
+        onExit={onExit}
+      />
     );
   }
   return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
