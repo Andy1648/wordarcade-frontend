@@ -1,38 +1,16 @@
-// TransitionOverlay.jsx
-// A Persona 5-style diagonal bar wipe played over a view change. App mounts this
-// with a fresh `key` each navigation so the whole 500ms animation replays:
-//   - 0-250ms: five skewed palette-coloured bars sweep in from the left
-//     (staggered 30ms each), covering the screen.
-//   - at the peak: a big white Bungee word flashes for ~150ms.
-//   - 250-500ms: the bars continue right and exit.
-// Fixed, full-screen, and pointer-events:none so it never blocks the UI.
+// TransitionOverlay.jsx — the ONE screen-change transition (Job 12). A single directional wipe
+// panel, TRANSFORM + OPACITY only, <=240ms, fired over every view change (the screen has already
+// swapped underneath — this is purely cosmetic, position:fixed, pointer-events:none, so it can
+// never gate which screen is shown). Direction encodes the nav sense:
+//   forward (menu -> deeper: a mode, a dialog, the game) — the panel sweeps in from the RIGHT,
+//   back    (returning to the menu)                       — the panel sweeps in from the LEFT.
+// The small word keeps the app's character but is opacity-only. One enter + one exit, one language.
 import './TransitionOverlay.css';
 
-// Five bars in the graffiti palette, each kicking off 30ms after the previous.
-const BARS = [
-  { color: '#FF2EC4', delay: 0 },
-  { color: '#FFE94A', delay: 30 },
-  { color: '#2EFFE0', delay: 60 },
-  { color: '#FF6B3D', delay: 90 },
-  { color: '#9A1AFF', delay: 120 },
-];
-
-export default function TransitionOverlay({ word }) {
+export default function TransitionOverlay({ word, dir = 'forward' }) {
   return (
-    <div className="transition-overlay" aria-hidden="true">
-      {BARS.map((b, i) => (
-        <span
-          key={i}
-          className="transition-bar"
-          style={{
-            background: b.color,
-            // Tile the bars across the screen so that at mid-sweep they overlap
-            // into full coverage; each then rides the same sweep keyframe.
-            left: `${i * 22 - 20}%`,
-            animationDelay: `${b.delay}ms`,
-          }}
-        />
-      ))}
+    <div className="transition-overlay" data-dir={dir} aria-hidden="true">
+      <div className="transition-panel" />
       {word && <div className="transition-word">{word}</div>}
     </div>
   );

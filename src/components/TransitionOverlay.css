@@ -1,54 +1,61 @@
-/* TransitionOverlay.css - the Persona 5 diagonal bar wipe. */
-
+/* TransitionOverlay.css — the single screen-change wipe (Job 12). Transform + opacity ONLY; one
+   directional panel; <=240ms. Shared timing tokens (see Transitions.css :root) so every transition
+   in the app speaks one language. pointer-events:none + fixed so it never blocks/gates the screen. */
 .transition-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 200;
   pointer-events: none;
   overflow: hidden;
 }
-
-/* Each bar is a tall skewed slab, started off-screen left, that sweeps across to
-   off-screen right over 400ms (staggered start per bar). The 35% width + the
-   tiled left offsets mean the group covers the screen around the mid-point. */
-.transition-bar {
+.transition-panel {
   position: absolute;
-  top: -10%;
-  width: 35%;
-  height: 120%;
-  transform: translateX(-160%) skewX(-20deg);
-  animation: transition-bar-sweep 400ms ease-in-out forwards;
+  inset: 0;
+  background: linear-gradient(120deg, #9A1AFF, #FF2EC4 55%, #FF6B3D);
+  will-change: transform, opacity;
+}
+/* FORWARD (entering deeper): the panel sweeps across left→right (covers, then clears to the right). */
+.transition-overlay[data-dir='forward'] .transition-panel {
+  animation: wipe-forward var(--transition-ms, 240ms) var(--transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+/* BACK (returning): mirror — sweeps right→left. */
+.transition-overlay[data-dir='back'] .transition-panel {
+  animation: wipe-back var(--transition-ms, 240ms) var(--transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+@keyframes wipe-forward {
+  0% { transform: translateX(-100%); opacity: 1; }
+  45% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(100%); opacity: 1; }
+}
+@keyframes wipe-back {
+  0% { transform: translateX(100%); opacity: 1; }
+  45% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 1; }
 }
 
-@keyframes transition-bar-sweep {
-  0% { transform: translateX(-160%) skewX(-20deg); }
-  50% { transform: translateX(0) skewX(-20deg); }
-  100% { transform: translateX(170%) skewX(-20deg); }
-}
-
-/* The word flashed dead-centre while the bars cover the screen. */
+/* The word rides the cover peak — opacity + a small scale only. */
 .transition-word {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Bungee', cursive;
-  font-size: 60px;
+  font-size: clamp(36px, 9vw, 96px);
   color: #fff;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
-  white-space: nowrap;
-  transform: translate(-50%, -50%);
   opacity: 0;
-  animation: transition-word-flash 500ms ease-out forwards;
+  will-change: transform, opacity;
+  animation: transition-word var(--transition-ms, 240ms) ease-out both;
+}
+@keyframes transition-word {
+  0% { opacity: 0; transform: scale(0.9); }
+  45% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
 }
 
-@keyframes transition-word-flash {
-  0%, 35% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-  45% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
-  68% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  80%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
-}
-
-@media (max-width: 600px) {
-  .transition-word { font-size: 40px; }
+@media (prefers-reduced-motion: reduce) {
+  .transition-panel,
+  .transition-word { animation-duration: 1ms; }
 }
