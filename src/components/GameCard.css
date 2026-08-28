@@ -303,7 +303,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   z-index: 3;
   /* Tighter padding so the text sits closer to the card border and fills more of the
      face (density pass). Was 12px 10px 10px. */
-  padding: 8px 8px 7px;
+  padding: 8px 10px 11px; /* +bottom & +left room so the rotated badge box clears the edge >=4px at every viewport, incl. the full-size 2560 badge (§1) */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -354,14 +354,34 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 
 .game-card-badge {
   display: inline-block;
-  /* Density pass: >=18px at >=1366 (1.5vw = 20.5px at 1366), scaling to 12px on phones. */
-  font-size: clamp(12px, 1.5vw, 22px);
+  /* Density pass: >=18px at >=1366 (1.5vw = 20.5px at 1366), scaling to 12px on phones.
+     Cap 18 (was 22) so the rotated box's spill stays within the card's >=4px margin at
+     2560 too (fix/three-things §1). */
+  font-size: clamp(12px, 1.5vw, 18px);
   font-weight: 700;
   padding: 4px 9px;
   border: 2.5px solid rgba(0, 0, 0, 0.35);
   margin-top: auto;
   align-self: flex-start;
-  transform: rotate(-2deg);
+  transform: rotate(-1.5deg); /* less AABB spill than -2deg (fix/three-things §1) */
+}
+
+/* Short-HEIGHT viewports (e.g. 1366x768) constrain the card, so its bottom-pinned
+   badge box overflowed the card's overflow:hidden clip. Shrink the icon/badge/payout
+   there so the badge stays >=4px inside on all sides (§1). The font clamps are
+   vw-based, so they don't shrink for a short-but-wide viewport on their own. */
+@media (max-height: 800px) {
+  .game-card-icon-box { width: clamp(28px, 3vw, 44px); height: clamp(28px, 3vw, 44px); }
+  .game-card-badge { font-size: clamp(10px, 1.2vw, 16px); padding: 3px 7px; }
+  .game-card-payout { font-size: clamp(10px, 1.1vw, 15px); }
+}
+/* Ultra-short landscape (e.g. 1163x501): even shrunk the card can't hold icon +
+   title + payout + badge, so drop the payout line (the badge box is what must stay
+   inside) and shrink the badge/icon further. */
+@media (max-height: 560px) {
+  .game-card-payout { display: none; }
+  .game-card-icon-box { width: 26px; height: 26px; }
+  .game-card-badge { font-size: 12px; padding: 2px 6px; }
 }
 
 /* Payout preview: what a round of this mode pays. Small mono line under the badge so it

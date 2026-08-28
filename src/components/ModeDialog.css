@@ -171,8 +171,11 @@
   border: 2px solid currentColor;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.35);
-  transform: rotate(-3deg);
+  /* -2deg (was -3): the rotated AABB was eating into the 7px top padding, leaving the
+     chip box only 3px inside its parent — under the 4px floor (fix/three-things §1). */
+  transform: rotate(-2deg);
   white-space: nowrap;
+  margin-top: 1px;
 }
 
 /* Everything below the chip is pushed to the bottom of the panel, sitting over
