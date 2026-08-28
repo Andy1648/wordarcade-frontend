@@ -17,6 +17,7 @@ import MusicButton from './components/MusicButton';
 import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 const StatsScreen = lazy(() => import('./components/StatsScreen'));
+const CollectionScreen = lazy(() => import('./components/CollectionScreen'));
 const ShopScreen = lazy(() => import('./components/ShopScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
@@ -67,6 +68,7 @@ import {
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
+import { recordAcceptedWord } from './progress/collection';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
@@ -980,6 +982,7 @@ function App() {
           const wbWeight = cappedWordMult(wbRarity.mult, 1, 1);
           myWbWeightRef.current += wbWeight;
           awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
+          recordAcceptedWord(payload.word, { mode: 'word-bomb', band: wbRarity.band }); // Collection (Job 3)
           wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
           // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
@@ -1119,6 +1122,7 @@ function App() {
         const blitzWeight = cappedWordMult(blitzRarity ? blitzRarity.mult : 1, 1, 1);
         myBlitzWeightRef.current += blitzWeight;
         awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
+        recordAcceptedWord(payload.answer, { mode: 'category-blitz', band: blitzRarity ? blitzRarity.band : 'COMMON' }); // Collection (Job 3)
         wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
         // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
@@ -1539,6 +1543,11 @@ function App() {
     setView('stats');
   }
 
+  function goToCollection() {
+    overlayReturnRef.current = 'collection';
+    setView('collection');
+  }
+
   function goToShop() {
     shopViewRef.current = 'shop';
     overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
@@ -1897,6 +1906,12 @@ function App() {
         <StatsScreen onBack={goHome} />
       </Suspense>
     );
+  } else if (view === 'collection') {
+    screen = (
+      <Suspense fallback={<OverlaySkeleton title="COLLECTION" />}>
+        <CollectionScreen onBack={goHome} />
+      </Suspense>
+    );
   } else if (view === 'shop') {
     screen = (
       <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'SHOP'} />}>
@@ -1932,6 +1947,7 @@ function App() {
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
         onStats={goToStats}
+        onCollection={goToCollection}
         onShop={goToShop}
         onRebirth={goToRebirth}
         restoreFocus={overlayReturnRef.current}

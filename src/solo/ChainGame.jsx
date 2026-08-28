@@ -7,6 +7,7 @@ import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
+import { recordAcceptedWord } from '../progress/collection.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
@@ -131,9 +132,11 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         // sums: each word is worth rarity × the live combo multiplier × the word's lucky factor
         // (×5 on a 1/40 hit, else ×1), so a hot streak and a lucky word both pay more. Capped at
         // ×40 (Job 1). The SAME weight now also grants XP, so every link levels you (unified loop).
-        const wWeight = cappedWordMult(rarityOf(w).mult, g.combo.mult, g.luckyMult);
+        const rw = rarityOf(w);
+        const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
         chainWeightRef.current += wWeight;
         awardWordXp({ mode: 'chain', wordLength: (w || '').length, weight: wWeight });
+        recordAcceptedWord(w, { mode: 'chain', band: rw.band }); // Collection (Job 3)
         wpmAddWord(w); // WPM: count each new link's chars
       }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;

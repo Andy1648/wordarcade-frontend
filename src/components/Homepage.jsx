@@ -93,7 +93,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onCollection, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -531,6 +531,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (onStats) onStats();
   }
 
+  function handleCollection() {
+    if (navigating) return;
+    sound.click();
+    if (onCollection) onCollection();
+  }
+
   function handleShop() {
     if (navigating) return;
     sound.click();
@@ -740,6 +746,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {/* Quiet footer link: CREDITS only. (SHOP + STATS are the loud top-corner icon
             buttons now; the guide/help nav was removed to keep the menu clean.) */}
         <div className="homepage-footer-links">
+          <button
+            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
+            onClick={handleCollection}
+            disabled={navigating}
+          >
+            COLLECTION
+          </button>
           <button
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
             onClick={handleCredits}
