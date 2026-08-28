@@ -6,6 +6,9 @@ import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
+import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
+import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
+import RarityFlash from '../components/RarityFlash.jsx';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
@@ -90,14 +93,34 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3 words.
   const [winsEarned, setWinsEarned] = useState(0);
   const fuseBankedRef = useRef(0);
+  const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
+  useEffect(() => {
+    loadRarityIndex();
+    wpmStart('fuse');
+    return () => wpmEnd();
+  }, []);
   useEffect(() => {
     const solved = s.wordsSolved || 0;
     if (solved < fuseBankedRef.current) {
       fuseBankedRef.current = 0;
+      fuseWeightRef.current = 0;
+      wpmStart('fuse'); // fresh run → fresh WPM session
       setWinsEarned(0);
     }
     if (solved > fuseBankedRef.current) {
-      const banked = bankWordWins({ mode: 'fuse', prevWords: fuseBankedRef.current, nowWords: solved });
+      // RARITY: score the just-solved word (s.lastWord, aligned with wordsSolved). A solve bumps
+      // the count by 1; a rare jump credits the extra words at ×1.
+      const delta = solved - fuseBankedRef.current;
+      const prevWeight = fuseWeightRef.current;
+      fuseWeightRef.current += rarityOf(s.lastWord).mult + Math.max(0, delta - 1);
+      wpmAddWord(s.lastWord); // WPM: count the solved word's chars
+      const banked = bankWordWins({
+        mode: 'fuse',
+        prevWords: fuseBankedRef.current,
+        nowWords: solved,
+        prevWeight,
+        nowWeight: fuseWeightRef.current,
+      });
       fuseBankedRef.current = solved;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }
@@ -145,6 +168,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   );
 
   return (
+    <>
+    <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     <SoloShell
       accent={ACCENT}
       title="Type a word containing the fragment"
@@ -172,5 +197,6 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard, winsEarned }}
       onExit={onExit}
     />
+    </>
   );
 }

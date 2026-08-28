@@ -6,6 +6,7 @@ import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
+import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
@@ -634,6 +635,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
           <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
         )}
+        {/* WPM (§2): the menu is a live typing self-test — this shows your speed as you type a
+            real word, hidden until you start (hideZero). */}
+        <div className="menu-wpm">
+          <LiveWpm hideZero />
+        </div>
 
         <div className="homepage-cards-region">
           <div

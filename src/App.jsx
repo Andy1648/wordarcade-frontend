@@ -66,6 +66,8 @@ import {
 } from './visitHistory';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
+import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
+import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
   loadDailyState,
   saveDailyState,
@@ -395,6 +397,16 @@ function App() {
   // live value. Word Bomb pays at game_over; Category Blitz pays at each round_end.
   const myWbAcceptedRef = useRef(0); // Word Bomb: my accepts this game
   const myBlitzAcceptedRef = useRef(0); // Category Blitz: my accepts this round
+  // RARITY (word-value): the running SUM of each of my accepted words' rarity multipliers, per
+  // mode. bankWordWins pays on the delta of this weight past the 3-word gate (see wins.js), so a
+  // rarer word banks proportionally more. Reset alongside the accept counts on a fresh game/round.
+  const myWbWeightRef = useRef(0);
+  const myBlitzWeightRef = useRef(0);
+  // Preload the rarity rank index once (its own lazy chunk) so word-value scoring is ready by the
+  // time play starts. Idempotent + single-flight; a failed load degrades to all-COMMON (×1).
+  useEffect(() => {
+    loadRarityIndex();
+  }, []);
   // WINS attribution (Word Bomb): the words I've submitted this game whose word_result
   // hasn't come back yet. My accepted words are counted by WORD MATCH against this list,
   // NOT by the live turn pointer (feedCurrentRef) — a turn_update processed just before
@@ -799,6 +811,9 @@ function App() {
         gameEndTime: null,
       });
       myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
+      myWbWeightRef.current = 0; // fresh game → reset the rarity weight ledger
+      // WPM: begin a fresh typing-speed session for this game (Word Bomb or Blitz).
+      wpmStart((lastMessage.payload.gameType || 'word-bomb') === 'category-blitz' ? 'blitz' : 'wordBomb');
       myOutstandingWordsRef.current = []; // fresh game → drop any stale in-flight submits
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
@@ -945,6 +960,9 @@ function App() {
       const playerName = isMine ? myNameRef.current || 'YOU' : submitter.name || 'SOMEONE';
       if (payload.accepted) {
         const now = Date.now();
+        // RARITY (word-value): scored for MY own accepted words only (the pop is my feedback);
+        // hoisted so the feed event below can carry it. Null for other players' words.
+        let wbRarity = null;
         // Lifetime WORDS TYPED + Wins: count ONLY the local player's own accepted words.
         // (Daily flows through this same path and counts as word-bomb — fine.)
         if (isMine) {
@@ -952,13 +970,21 @@ function App() {
           const prevWb = myWbAcceptedRef.current;
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
           setWinsWords(myWbAcceptedRef.current); // drives the pill's pre-gate state
+          // Score THIS word and add its multiplier to the running weight, so a rarer word pays more.
+          wbRarity = rarityOf(payload.word);
+          const prevWbWeight = myWbWeightRef.current;
+          myWbWeightRef.current += wbRarity.mult;
+          wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
-          // immediately, so leaving mid-game keeps what was earned. No end-of-game payout.
+          // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
+          // payout rides the rarity WEIGHT delta (wins.js), gated on the accept COUNT.
           const banked = bankWordWins({
             mode: 'wordBomb',
             difficulty: gameDifficultyRef.current,
             prevWords: prevWb,
             nowWords: myWbAcceptedRef.current,
+            prevWeight: prevWbWeight,
+            nowWeight: myWbWeightRef.current,
           });
           if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
           // Live HUD tally: the wins banked this game so far.
@@ -978,6 +1004,9 @@ function App() {
             playerName,
             word: payload.word,
             timestamp: now,
+            // Rarity tag for MY own accepted words (announce=false for COMMON → the feed shows
+            // nothing extra; UNCOMMON+ carry a label + tier colour for the pop).
+            rarity: wbRarity && wbRarity.announce ? { label: wbRarity.label, color: wbRarity.color, band: wbRarity.band } : null,
           },
         ]);
         // Tally the accepted word for the end-game stats.
@@ -1036,6 +1065,7 @@ function App() {
       setCategoryRerolls(payload.rerollsRemaining ?? null);
       setMyAnswers([]);
       myBlitzAcceptedRef.current = 0; // fresh round → reset my Wins accept count
+      myBlitzWeightRef.current = 0; // fresh round → reset the rarity weight ledger
       setWinsTally(0); // fresh round → reset the live HUD wins tally (Blitz pays per round)
       setWinsWords(0);
       setPlayerProgress({});
@@ -1063,14 +1093,24 @@ function App() {
     if (lastMessage.type === 'answer_result') {
       const payload = lastMessage.payload;
       setCheckingAnswer(null); // result is in - drop the "checking…" state
-      setLastWordResult(payload); // reused to drive the feedback toast
+      // RARITY (word-value): score an accepted answer and carry the verdict on the result so the
+      // feedback toast can pop "RARE ×2.5". answer_result is always about MY own answer.
+      const blitzRarity = payload.accepted ? rarityOf(payload.answer) : null;
+      setLastWordResult(
+        blitzRarity && blitzRarity.announce
+          ? { ...payload, rarity: { label: blitzRarity.label, color: blitzRarity.color, band: blitzRarity.band } }
+          : payload
+      ); // reused to drive the feedback toast
       if (payload.accepted) {
         setMyAnswers((prev) => [...prev, payload.answer]);
-        // answer_result is always about MY answer, so an accept is my own word.
         addWords('category-blitz');
         const prevBlitz = myBlitzAcceptedRef.current;
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
         setWinsWords(myBlitzAcceptedRef.current); // drives the pill's pre-gate state
+        // Add this answer's rarity multiplier to the running weight (payout rides it, wins.js).
+        const prevBlitzWeight = myBlitzWeightRef.current;
+        myBlitzWeightRef.current += blitzRarity ? blitzRarity.mult : 1;
+        wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
         // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
         const banked = bankWordWins({
@@ -1078,6 +1118,8 @@ function App() {
           difficulty: gameDifficultyRef.current,
           prevWords: prevBlitz,
           nowWords: myBlitzAcceptedRef.current,
+          prevWeight: prevBlitzWeight,
+          nowWeight: myBlitzWeightRef.current,
         });
         if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
         // Live HUD tally: the wins banked THIS round so far.
@@ -1118,6 +1160,7 @@ function App() {
 
     if (lastMessage.type === 'game_over') {
       const payload = lastMessage.payload;
+      wpmEnd(); // WPM: flush this game's typing-speed session to the persisted history
       // Category Blitz carries finalScores; Word Bomb carries just winnerId.
       if (payload.finalScores) {
         setCategoryScores(payload.finalScores);

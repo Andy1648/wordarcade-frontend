@@ -1,0 +1,23 @@
+/* LiveWpm — compact HUD typing-speed readout. Flat house style; no idle animation (the number
+   updates on its own 4Hz text write, which is not a CSS animation). */
+.live-wpm {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  line-height: 1;
+  color: #2effe0;
+  white-space: nowrap;
+}
+.live-wpm b {
+  font-family: 'Bungee', cursive;
+  font-size: 1.15em;
+  color: #ffe94a;
+  font-weight: 400;
+}
+.live-wpm-unit {
+  font-size: 0.7em;
+  letter-spacing: 0.08em;
+  color: rgba(240, 234, 217, 0.7);
+}

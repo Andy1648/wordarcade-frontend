@@ -1,0 +1,42 @@
+/* RarityFlash — the solo-mode RARITY pop. Fixed, centred high on the play area so it never
+   shifts layout; colour set inline per tier. Finite one-shot, transform/opacity only. */
+.rarity-flash {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  z-index: 60;
+  pointer-events: none;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(18px, 5vw, 30px);
+  letter-spacing: 0.03em;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  animation: rarity-flash-pop 750ms ease-out forwards;
+}
+
+@keyframes rarity-flash-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6) rotate(-3deg);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1.18) rotate(-3deg);
+    opacity: 1;
+  }
+  68% {
+    transform: translate(-50%, -50%) scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -78%) scale(1) rotate(-3deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rarity-flash {
+    animation: none;
+    opacity: 0;
+  }
+}

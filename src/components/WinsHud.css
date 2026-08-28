@@ -21,6 +21,22 @@
   box-shadow: 4px 4px 0 #000;
   color: #1a0b2e;
 }
+/* WPM (§2) readout — sits just under the wins pill, same top-right column. Fixed +
+   pointer-events:none so it never blocks play; dark chip so the cyan/yellow reads on any mode. */
+.wpm-hud {
+  position: fixed;
+  top: 52px;
+  right: 16px;
+  z-index: 60;
+  pointer-events: none;
+  padding: 4px 10px;
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  font-size: 0.9rem;
+}
+
 /* Pre-gate state ("3 WORDS TO EARN"): muted cream fill so it reads as a target to
    hit, not wins already banked. Flips back to the solid yellow pill at 3 words. */
 .wins-hud--gate {

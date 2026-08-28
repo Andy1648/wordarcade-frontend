@@ -6,11 +6,14 @@ import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
+import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
+import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
+import RarityFlash from '../components/RarityFlash.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -100,14 +103,38 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // bank the delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3.
   const [winsEarned, setWinsEarned] = useState(0);
   const chainBankedRef = useRef(0);
+  const chainWeightRef = useRef(0); // RARITY: running sum of linked words' rarity multipliers
+  useEffect(() => {
+    loadRarityIndex();
+    wpmStart('chain');
+    return () => wpmEnd();
+  }, []);
   useEffect(() => {
     const k = s.k || 0;
     if (k < chainBankedRef.current) {
       chainBankedRef.current = 0;
+      chainWeightRef.current = 0;
+      wpmStart('chain'); // fresh run → fresh WPM session (flushes the previous)
       setWinsEarned(0);
     }
     if (k > chainBankedRef.current) {
-      const banked = bankWordWins({ mode: 'chain', prevWords: chainBankedRef.current, nowWords: k });
+      // RARITY: score the new link(s). s.lastLinks holds the most recent up-to-5 {word} (newest
+      // last); the delta is normally 1. Any words beyond the kept window are credited at ×1.
+      const delta = k - chainBankedRef.current;
+      const newWords = (s.lastLinks || []).slice(-delta).map((l) => l.word);
+      const prevWeight = chainWeightRef.current;
+      for (const w of newWords) {
+        chainWeightRef.current += rarityOf(w).mult;
+        wpmAddWord(w); // WPM: count each new link's chars
+      }
+      if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
+      const banked = bankWordWins({
+        mode: 'chain',
+        prevWords: chainBankedRef.current,
+        nowWords: k,
+        prevWeight,
+        nowWeight: chainWeightRef.current,
+      });
       chainBankedRef.current = k;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }
@@ -226,7 +253,11 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} />
   );
 
+  // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
+  const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
   return (
+    <>
+    <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
     <SoloShell
       accent={ACCENT}
       title="Type a word starting with the letter"
@@ -261,5 +292,6 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       }}
       onExit={onExit}
     />
+    </>
   );
 }

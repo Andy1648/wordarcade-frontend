@@ -18,6 +18,8 @@ import {
 } from './xp';
 import { equippedPopMult, equippedSoundMult } from './shop';
 import { playClack } from './clack';
+import { loadRarityIndex, rarityOf } from './rarityIndex';
+import { wpmStart, wpmAddWord, wpmEnd } from './wpmLive';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -40,8 +42,15 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
   blockedRef.current = isBlocked;
   creditRef.current = onCredit;
 
+  // Menu RARITY self-test: buffer the letters being typed and, when a word finishes (space /
+  // Enter / any non-letter), score it — a rare real word pops "RARE ×2.5" in its tier colour,
+  // turning idle menu typing into a vocabulary self-test. COMMON / non-words stay silent.
+  const wordBufRef = useRef('');
+
   useEffect(() => {
     if (!active) return undefined;
+    loadRarityIndex(); // warm the rank index so the menu self-test can score words
+    wpmStart('menu'); // WPM: menu free-typing is its own self-test session
     const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
@@ -96,8 +105,31 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       if (creditRef.current) creditRef.current();
     };
 
+    // Score the buffered word and, if it's rare enough to announce (UNCOMMON+), pop its tier
+    // label in the tier colour via the existing letter-pop pool (label as the text, no "+N").
+    const MAX_WORD = 24;
+    const finalizeWord = () => {
+      const w = wordBufRef.current;
+      wordBufRef.current = '';
+      if (w.length < 2) return;
+      // WPM: count every word typed toward the menu self-test's typing speed.
+      wpmAddWord(w);
+      const r = rarityOf(w);
+      if (!r.announce) return; // COMMON / non-words stay silent (no pop)
+      const fx = fxRef && fxRef.current;
+      if (fx && fx.letterPop) fx.letterPop(r.label, '', 1.2, r.color, 0);
+    };
+
     const onKey = (e) => {
       if (blockedRef.current && blockedRef.current()) return;
+      // Menu self-test word buffer: accumulate letters, finalize on a word boundary. Runs
+      // regardless of the anti-mash limiter below (which only gates the XP credit).
+      const k = e.key;
+      if (k && k.length === 1 && /^[a-z]$/i.test(k)) {
+        if (wordBufRef.current.length < MAX_WORD) wordBufRef.current += k.toLowerCase();
+      } else if (k === ' ' || k === 'Enter' || k === 'Tab' || k === '.' || k === ',') {
+        finalizeWord();
+      }
       if (!isCreditableKey(e)) return;
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
       if (!limiter.tryConsume(now)) return; // over the anti-mash cap → silently dropped
@@ -143,6 +175,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     window.addEventListener('pointercancel', onCancel, true);
 
     return () => {
+      finalizeWord(); // flush any half-typed word's WPM before the session ends
+      wpmEnd(); // WPM: persist the menu self-test session on leave
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('pointerdown', onDown, true);
       window.removeEventListener('pointermove', onMove, true);

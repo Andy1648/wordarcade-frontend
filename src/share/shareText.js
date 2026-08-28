@@ -119,6 +119,7 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
         won ? 'SURVIVED' : 'ELIMINATED',
         words === 0 ? '0 words. blink and you die' : `${words} word${words === 1 ? '' : 's'}`,
         data.longestWord ? `longest: ${String(data.longestWord).toUpperCase()}` : null,
+        data.wpm ? `${data.wpm} WPM ⌨️` : null,
         data.players ? `${data.players} player${data.players === 1 ? '' : 's'}` : null,
       ])
     );
@@ -135,6 +136,7 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
       statSuffix([
         score === 0 ? '0 PTS. brain fully buffered' : `${score} PTS`,
         outcome.isRecord ? 'NEW RECORD!' : null,
+        data.wpm ? `${data.wpm} WPM ⌨️` : null,
       ])
     );
   } else if (mode === 'category-blitz') {
@@ -148,6 +150,7 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
           ? `${medal ? `${medal} ` : ''}${ordinal(outcome.place)}${outcome.total ? ` OF ${outcome.total}` : ''}`
           : 'PLAYED',
         score === 0 ? '0 PTS. rough one' : `${score} PTS`,
+        data.wpm ? `${data.wpm} WPM ⌨️` : null,
       ])
     );
   } else if (mode === 'sat-rush') {
@@ -163,6 +166,7 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
       statSuffix([
         words === 0 ? '0 words. brutal' : `${words} word${words === 1 ? '' : 's'}`,
         anteStr != null ? `${anteStr}× avg ante` : null,
+        data.wpm ? `${data.wpm} WPM ⌨️` : null,
         data.bestStreak ? `streak ${data.bestStreak}` : null,
       ])
     );
