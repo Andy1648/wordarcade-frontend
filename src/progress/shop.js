@@ -5,6 +5,7 @@
 // only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
+import { getWordSenseTier, saveWordSenseTier, wordSenseCost } from './wordSense.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
@@ -128,6 +129,19 @@ export function buyKeyPower() {
   const nextWins = wins - cost;
   saveWins(nextWins);
   saveKeyTier(tier + 1);
+  return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
+}
+
+// Buy the NEXT WORD SENSE TIER (Job 4): deducts the next tier's cost from wins, bumps taw.wordsense
+// by 1. One at a time, like KEY POWER. Returns { ok, wins, tier, spent }.
+export function buyWordSense() {
+  const tier = getWordSenseTier();
+  const cost = wordSenseCost(tier); // cost to reach tier+1
+  const wins = getWins();
+  if (wins < cost) return { ok: false, wins, tier, spent: 0 };
+  const nextWins = wins - cost;
+  saveWins(nextWins);
+  saveWordSenseTier(tier + 1);
   return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
 }
 

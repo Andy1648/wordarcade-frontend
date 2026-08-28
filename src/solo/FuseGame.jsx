@@ -8,6 +8,7 @@ import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
+import { wordSenseWinsFactor } from '../progress/wordSense.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
@@ -120,7 +121,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       // matching CHAIN. Capped at ×40 (Job 1). The SAME weight also grants XP (unified loop).
       const rw = rarityOf(s.lastWord);
       const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
-      fuseWeightRef.current += wWeight + Math.max(0, delta - 1);
+      fuseWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult) + Math.max(0, delta - 1); // WORD SENSE (Job 4)
       awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight });
       recordAcceptedWord(s.lastWord, { mode: 'fuse', band: rw.band }); // Collection (Job 3)
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars

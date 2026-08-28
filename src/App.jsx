@@ -69,6 +69,7 @@ import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
 import { recordAcceptedWord } from './progress/collection';
+import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
@@ -980,7 +981,9 @@ function App() {
           // wins banking below AND an XP grant, so this accepted word now levels you too. Word Bomb
           // has no combo/lucky, so the weight is rarity alone.
           const wbWeight = cappedWordMult(wbRarity.mult, 1, 1);
-          myWbWeightRef.current += wbWeight;
+          // WINS weight rides WORD SENSE (Job 4) — a separate wins multiplier on the word's rarity,
+          // outside the ×40 cap. XP stays on the unboosted (capped) weight.
+          myWbWeightRef.current += wbWeight * wordSenseWinsFactor(wbRarity.mult);
           awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
           recordAcceptedWord(payload.word, { mode: 'word-bomb', band: wbRarity.band }); // Collection (Job 3)
           wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
@@ -1120,7 +1123,7 @@ function App() {
         // Unified economy (Job 1): the same weight also grants XP, so a Blitz answer now levels you.
         const prevBlitzWeight = myBlitzWeightRef.current;
         const blitzWeight = cappedWordMult(blitzRarity ? blitzRarity.mult : 1, 1, 1);
-        myBlitzWeightRef.current += blitzWeight;
+        myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(blitzRarity ? blitzRarity.mult : 1); // WORD SENSE (Job 4)
         awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
         recordAcceptedWord(payload.answer, { mode: 'category-blitz', band: blitzRarity ? blitzRarity.band : 'COMMON' }); // Collection (Job 3)
         wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
