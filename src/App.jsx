@@ -65,7 +65,7 @@ import {
   markPlayed,
 } from './visitHistory';
 import { addWords } from './wordCount';
-import { recordRound, awardWins } from './progress/wins';
+import { bankWordWins, awardWins } from './progress/wins';
 import {
   loadDailyState,
   saveDailyState,
@@ -949,9 +949,19 @@ function App() {
         // (Daily flows through this same path and counts as word-bomb — fine.)
         if (isMine) {
           addWords('word-bomb');
+          const prevWb = myWbAcceptedRef.current;
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
           setWinsWords(myWbAcceptedRef.current); // drives the pill's pre-gate state
-          // Live HUD tally: the wins this game will pay so far (pending; paid at game_over).
+          // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
+          // immediately, so leaving mid-game keeps what was earned. No end-of-game payout.
+          const banked = bankWordWins({
+            mode: 'wordBomb',
+            difficulty: gameDifficultyRef.current,
+            prevWords: prevWb,
+            nowWords: myWbAcceptedRef.current,
+          });
+          if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+          // Live HUD tally: the wins banked this game so far.
           setWinsTally(
             awardWins({
               wordsAccepted: myWbAcceptedRef.current,
@@ -1058,9 +1068,19 @@ function App() {
         setMyAnswers((prev) => [...prev, payload.answer]);
         // answer_result is always about MY answer, so an accept is my own word.
         addWords('category-blitz');
+        const prevBlitz = myBlitzAcceptedRef.current;
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
         setWinsWords(myBlitzAcceptedRef.current); // drives the pill's pre-gate state
-        // Live HUD tally: the wins THIS round will pay so far (pending; paid at round_end).
+        // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
+        // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
+        const banked = bankWordWins({
+          mode: 'blitz',
+          difficulty: gameDifficultyRef.current,
+          prevWords: prevBlitz,
+          nowWords: myBlitzAcceptedRef.current,
+        });
+        if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+        // Live HUD tally: the wins banked THIS round so far.
         setWinsTally(
           awardWins({
             wordsAccepted: myBlitzAcceptedRef.current,
@@ -1079,13 +1099,8 @@ function App() {
 
     if (lastMessage.type === 'round_end') {
       const payload = lastMessage.payload;
-      // WINS: a Category Blitz round ended — pay out on MY accepted answers this round.
-      const blitzGranted = recordRound({
-        mode: 'blitz',
-        wordsAccepted: myBlitzAcceptedRef.current,
-        difficulty: gameDifficultyRef.current,
-      });
-      setWinsEarnedTotal((prev) => prev + blitzGranted); // accumulate across the game's rounds
+      // WINS: already banked per-answer during the round (bankWordWins in answer_result) — NO
+      // end-of-round payout here (that would double-pay). winsEarnedTotal already accumulated.
       setRoundResults(payload);
       setCategoryRound(null); // round over - timer stops, show results
       setLastWordResult(null);
@@ -1109,13 +1124,8 @@ function App() {
         setCategoryRound(null);
         setRoundResults(null);
       } else {
-        // WINS: a Word Bomb game ended — pay out on MY accepted words this game.
-        const wbGranted = recordRound({
-          mode: 'wordBomb',
-          wordsAccepted: myWbAcceptedRef.current,
-          difficulty: gameDifficultyRef.current,
-        });
-        setWinsEarnedTotal(wbGranted); // one payout per WB game
+        // WINS: already banked per-word during play (bankWordWins in word_result) — NO
+        // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak

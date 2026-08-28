@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } fr
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
-import { recordRound, awardWins } from '../progress/wins.js';
+import { bankWordWins, awardWins } from '../progress/wins.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
@@ -95,23 +95,26 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   });
   const s = g.engine.state;
 
-  // WINS (item 1): CHAIN was never wired to pay out. On run-over, grant wins on the links
-  // completed (the count the game already has) — same recordRound pattern SAT Rush uses. Fire
-  // ONCE per run-end (guard reset when a fresh run starts); store the granted total for the
-  // game-over "WINS EARNED" line. Also lazy-load the acceptance extension here (never on mount).
+  // WINS (§2): BANK per completed link as the run plays so leaving mid-run keeps what was
+  // earned — no end-of-run payout (that would double-pay). `s.k` is the running link count;
+  // bank the delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3.
   const [winsEarned, setWinsEarned] = useState(0);
-  const winRecordedRef = useRef(false);
+  const chainBankedRef = useRef(0);
   useEffect(() => {
-    if (g.phase === 'over') {
-      loadSoloAcceptExt();
-      if (!winRecordedRef.current) {
-        winRecordedRef.current = true;
-        setWinsEarned(recordRound({ mode: 'chain', wordsAccepted: g.engine.state.k }));
-      }
-    } else {
-      winRecordedRef.current = false;
+    const k = s.k || 0;
+    if (k < chainBankedRef.current) {
+      chainBankedRef.current = 0;
       setWinsEarned(0);
     }
+    if (k > chainBankedRef.current) {
+      const banked = bankWordWins({ mode: 'chain', prevWords: chainBankedRef.current, nowWords: k });
+      chainBankedRef.current = k;
+      if (banked > 0) setWinsEarned((prev) => prev + banked);
+    }
+  }, [s.k]);
+  // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
+  useEffect(() => {
+    if (g.phase === 'over') loadSoloAcceptExt();
   }, [g.phase]);
 
   // Live wins tally (item 2): what the run will pay so far, ticking up as links land (0 until

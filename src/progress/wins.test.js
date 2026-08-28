@@ -6,6 +6,7 @@ import {
   awardWins,
   perWordWins,
   recordRound,
+  bankWordWins,
   roundWinsEstimate,
   wordWinsEstimate,
   grantWins,
@@ -170,6 +171,72 @@ test('a round that ends with <3 words does not increment the mode round counter 
     recordRound({ mode: 'wordBomb', wordsAccepted: 4 });
     assert.equal(getRounds().wordBomb, 1);
     assert.equal(getRounds().blitz, 0);
+  });
+});
+
+// ---- bankWordWins: per-word incremental banking (§2 — leaving mid-round keeps earned wins) ----
+test('bankWordWins: words 1-2 bank nothing, word 3 banks 3× retroactively, words 4+ bank 1× each', () => {
+  withStorage(() => {
+    // Word 1 and 2: under the gate, nothing banks.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 0, nowWords: 1 }), 0);
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 1, nowWords: 2 }), 0);
+    assert.equal(getWins(), 0);
+    // Word 3 crosses the gate → banks 3 × 20 = 60 retroactively (the first 3 words at once).
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3 }), 60);
+    assert.equal(getWins(), 60);
+    assert.equal(getWinsLifetime(), 60);
+    // Word 4, 5: each banks one more per-word (20).
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4 }), 20);
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 5 }), 20);
+    assert.equal(getWins(), 100); // == a full 5-word round: matches recordRound(5) exactly
+  });
+});
+
+test('bankWordWins: the incremental sum equals recordRound for the same final count (no drift)', () => {
+  // Walk 0→8 one word at a time; the running total must equal the single-shot recordRound(8).
+  for (const mode of ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse']) {
+    let incremental = 0;
+    withStorage(() => {
+      for (let n = 1; n <= 8; n += 1) incremental += bankWordWins({ mode, prevWords: n - 1, nowWords: n });
+      assert.equal(getWins(), incremental);
+    });
+    const oneShot = withStorage(() => recordRound({ mode, wordsAccepted: 8 }));
+    assert.equal(incremental, oneShot, `mode ${mode}: per-word sum must equal recordRound(8)`);
+  }
+});
+
+test('bankWordWins: mode multipliers + difficulty apply per word (SAT 5×, CHAIN 10×, FUSE 15×, hard 2×)', () => {
+  withStorage(() => assert.equal(bankWordWins({ mode: 'satRush', prevWords: 2, nowWords: 3 }), 3 * 100));
+  withStorage(() => assert.equal(bankWordWins({ mode: 'chain', prevWords: 2, nowWords: 3 }), 3 * 200));
+  withStorage(() => assert.equal(bankWordWins({ mode: 'fuse', prevWords: 2, nowWords: 3 }), 3 * 300));
+  // Word Bomb on HELL (hard) → per-word 40.
+  withStorage(() => assert.equal(bankWordWins({ mode: 'wordBomb', difficulty: 'hard', prevWords: 3, nowWords: 4 }), 40));
+});
+
+test('bankWordWins: bumps the mode round counter ONCE (at the gate crossing), only for counter modes', () => {
+  withStorage(() => {
+    bankWordWins({ mode: 'wordBomb', prevWords: 1, nowWords: 2 }); // pre-gate: no count
+    assert.equal(getRounds().wordBomb, 0);
+    bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3 }); // crosses → count once
+    assert.equal(getRounds().wordBomb, 1);
+    bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4 }); // already counted → still 1
+    bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 5 });
+    assert.equal(getRounds().wordBomb, 1);
+  });
+  // CHAIN / FUSE have no round counter — banking never touches getRounds.
+  withStorage(() => {
+    bankWordWins({ mode: 'chain', prevWords: 2, nowWords: 5 });
+    assert.deepEqual(getRounds(), { wordBomb: 0, blitz: 0, satRush: 0 });
+  });
+});
+
+test('bankWordWins: a run that never reaches 3 words banks NOTHING and counts no round', () => {
+  withStorage(() => {
+    bankWordWins({ mode: 'blitz', prevWords: 0, nowWords: 1 });
+    bankWordWins({ mode: 'blitz', prevWords: 1, nowWords: 2 });
+    assert.equal(getWins(), 0);
+    assert.equal(getWinsLifetime(), 0);
+    assert.deepEqual(getRounds(), { wordBomb: 0, blitz: 0, satRush: 0 });
   });
 });
 

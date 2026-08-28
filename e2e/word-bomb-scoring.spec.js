@@ -54,12 +54,51 @@ test.describe('Word Bomb scoring (item 2)', () => {
       await page.waitForTimeout(40);
     }
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
-    // Poll for the payout instead of a fixed wait: game_over → recordRound → localStorage is an
-    // async React drain, so a fixed sleep occasionally reads the pre-payout value (the flake).
+    // Poll for the payout instead of a fixed wait: each accepted word banks via bankWordWins →
+    // localStorage on the async React drain, so a fixed sleep occasionally reads a pre-bank value.
     await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(60);
     const after = await readWins(page);
     expect(after.lifetime - before.lifetime).toBe(60);
     expect(after.wb - before.wb).toBe(1);
+  });
+
+  // §2: wins must BANK PER ACCEPTED WORD so leaving mid-game never forfeits them, and the
+  // (now removed) end-of-game payout must not double-pay when game_over does arrive.
+  test('LEAVE MID-GAME: 5 words bank per-word without game_over, and game_over does not double-pay', async ({ page }) => {
+    const mock = await installBackendMock(page);
+    await gotoMenu(page);
+    const before = await readWins(page);
+    await startMyTurn(mock, page, { combo: 'at' });
+    for (const w of ['CAT', 'BAT', 'HAT', 'RAT', 'MAT']) {
+      mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: w } });
+      await page.waitForTimeout(40);
+    }
+    // NO game_over — the player just walks away. The 5 words (5 × 20 = 100) are already banked.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(100);
+    expect((await readWins(page)).wb - before.wb).toBe(1);
+    // Now the game ends for real — the removed end payout must add NOTHING (no double-pay).
+    mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
+    await page.waitForTimeout(250);
+    const after = await readWins(page);
+    expect(after.wins - before.wins).toBe(100); // still 100, not 200
+    expect(after.lifetime - before.lifetime).toBe(100);
+    expect(after.wb - before.wb).toBe(1); // still one round counted
+  });
+
+  test('a 2-word Word Bomb run banks NOTHING (under the 3-word gate)', async ({ page }) => {
+    const mock = await installBackendMock(page);
+    await gotoMenu(page);
+    const before = await readWins(page);
+    await startMyTurn(mock, page, { combo: 'at' });
+    for (const w of ['CAT', 'BAT']) {
+      mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: w } });
+      await page.waitForTimeout(40);
+    }
+    await page.waitForTimeout(250);
+    const after = await readWins(page);
+    expect(after.wins - before.wins).toBe(0);
+    expect(after.lifetime - before.lifetime).toBe(0);
+    expect(after.wb - before.wb).toBe(0);
   });
 
   // The race the task flagged: my accepted word_result arrives INTERLEAVED with a

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
-import { recordRound, awardWins } from '../progress/wins.js';
+import { bankWordWins, awardWins } from '../progress/wins.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
@@ -85,23 +85,26 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, onAccept: touchStreak });
   const s = g.engine.state;
 
-  // WINS (item 1): FUSE was never wired to pay out. On run-over, grant wins on the words solved
-  // (the count the game already has) — same recordRound pattern SAT Rush uses. Fire ONCE per
-  // run-end (guard reset on a fresh run); store the granted total for the game-over line. Also
-  // lazy-load the acceptance extension here (never on mount).
+  // WINS (§2): BANK per solved word as the run plays so leaving mid-run keeps what was earned —
+  // no end-of-run payout (that would double-pay). `s.wordsSolved` is the running count; bank the
+  // delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3 words.
   const [winsEarned, setWinsEarned] = useState(0);
-  const winRecordedRef = useRef(false);
+  const fuseBankedRef = useRef(0);
   useEffect(() => {
-    if (g.phase === 'over') {
-      loadSoloAcceptExt();
-      if (!winRecordedRef.current) {
-        winRecordedRef.current = true;
-        setWinsEarned(recordRound({ mode: 'fuse', wordsAccepted: g.engine.state.wordsSolved }));
-      }
-    } else {
-      winRecordedRef.current = false;
+    const solved = s.wordsSolved || 0;
+    if (solved < fuseBankedRef.current) {
+      fuseBankedRef.current = 0;
       setWinsEarned(0);
     }
+    if (solved > fuseBankedRef.current) {
+      const banked = bankWordWins({ mode: 'fuse', prevWords: fuseBankedRef.current, nowWords: solved });
+      fuseBankedRef.current = solved;
+      if (banked > 0) setWinsEarned((prev) => prev + banked);
+    }
+  }, [s.wordsSolved]);
+  // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
+  useEffect(() => {
+    if (g.phase === 'over') loadSoloAcceptExt();
   }, [g.phase]);
 
   // Live wins tally (item 2): what the run will pay so far, ticking up as words solve (0 until
