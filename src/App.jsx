@@ -16,6 +16,8 @@ import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
+// StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
+// views/footer links), so their bodies are imported by StatsScreen, not lazily as top-level views.
 const StatsScreen = lazy(() => import('./components/StatsScreen'));
 const ShopScreen = lazy(() => import('./components/ShopScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
@@ -63,9 +65,16 @@ import {
   stampLastSeen,
   hasPlayedBefore,
   markPlayed,
+  getLastSeen,
 } from './visitHistory';
+import { claimReturnBonus } from './progress/returnBonus';
+import ReturnBonusCard from './components/ReturnBonusCard';
+import { checkAchievements } from './progress/achievements';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
+import { awardWordXp, cappedWordMult } from './progress/xp';
+import { recordAcceptedWord } from './progress/collection';
+import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
@@ -221,6 +230,9 @@ const SKIP_INTRO =
 // Read once at module load, alongside the flags above. The flag is written when
 // the intro finishes on a first visit (handleIntroComplete).
 const SEEN_INTRO = hasSeenIntro();
+// RETURN BONUS (Job 6): capture the last-seen time at MODULE LOAD, before the app re-stamps it in a
+// mount effect — otherwise "how long were you away" would always read ~0.
+const LAST_SEEN_AT_LOAD = getLastSeen();
 
 /**
  * Top-level view state manager + the single shared WebSocket connection
@@ -476,6 +488,24 @@ function App() {
       window.removeEventListener('beforeunload', stamp);
     };
   }, []);
+
+  // RETURN BONUS (Job 6): claim once on mount using the last-seen time captured at module load. The
+  // wins are granted here (they returned after >=6h, at most once/calendar day); the card is shown
+  // only on the home menu (a deep-link into a game doesn't overlay the return card).
+  const [returnCard, setReturnCard] = useState(null);
+  useEffect(() => {
+    const b = claimReturnBonus(LAST_SEEN_AT_LOAD);
+    if (b) setReturnCard(b);
+  }, []);
+
+  // ACHIEVEMENTS (Job 7): re-evaluate whenever we land on the home menu (so anything earned during a
+  // game / run is caught on return). checkAchievements grants wins for newly-earned only (the wins
+  // chip updates as feedback); the full grid is on the ACHIEVEMENTS screen. Idempotent — a repeat
+  // home visit with nothing new grants nothing.
+  useEffect(() => {
+    if (view !== 'home') return;
+    checkAchievements();
+  }, [view]);
 
   const myIdRef = useRef(null);
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
@@ -973,7 +1003,15 @@ function App() {
           // Score THIS word and add its multiplier to the running weight, so a rarer word pays more.
           wbRarity = rarityOf(payload.word);
           const prevWbWeight = myWbWeightRef.current;
-          myWbWeightRef.current += wbRarity.mult;
+          // Unified economy (Job 1): the per-word reward weight (rarity, capped) feeds BOTH the
+          // wins banking below AND an XP grant, so this accepted word now levels you too. Word Bomb
+          // has no combo/lucky, so the weight is rarity alone.
+          const wbWeight = cappedWordMult(wbRarity.mult, 1, 1);
+          // WINS weight rides WORD SENSE (Job 4) — a separate wins multiplier on the word's rarity,
+          // outside the ×40 cap. XP stays on the unboosted (capped) weight.
+          myWbWeightRef.current += wbWeight * wordSenseWinsFactor(wbRarity.mult);
+          awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
+          recordAcceptedWord(payload.word, { mode: 'word-bomb', band: wbRarity.band }); // Collection (Job 3)
           wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
           // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
@@ -1108,8 +1146,12 @@ function App() {
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
         setWinsWords(myBlitzAcceptedRef.current); // drives the pill's pre-gate state
         // Add this answer's rarity multiplier to the running weight (payout rides it, wins.js).
+        // Unified economy (Job 1): the same weight also grants XP, so a Blitz answer now levels you.
         const prevBlitzWeight = myBlitzWeightRef.current;
-        myBlitzWeightRef.current += blitzRarity ? blitzRarity.mult : 1;
+        const blitzWeight = cappedWordMult(blitzRarity ? blitzRarity.mult : 1, 1, 1);
+        myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(blitzRarity ? blitzRarity.mult : 1); // WORD SENSE (Job 4)
+        awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
+        recordAcceptedWord(payload.answer, { mode: 'category-blitz', band: blitzRarity ? blitzRarity.band : 'COMMON' }); // Collection (Job 3)
         wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
         // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
@@ -2039,6 +2081,10 @@ function App() {
           </div>
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} />
+          )}
+          {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
+          {returnCard && view === 'home' && (
+            <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
           )}
           {/* Invite-link arrival: a friend tapped a ?join= link and we're
               connecting + joining in the background. One clear line so the

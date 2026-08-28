@@ -6,7 +6,8 @@
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyWordSense } from '../progress/shop';
+import { getWordSenseTier, wordSenseCost, wordSenseFactor } from '../progress/wordSense';
 import {
   THEMES,
   themeById,
@@ -31,6 +32,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
+  const [wsTier, setWsTier] = useState(() => getWordSenseTier());
   // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
   const [ownedThemes, setOwnedThemes] = useState(() => {
     syncThemeUnlocks(loadProgress().level);
@@ -62,6 +64,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
+  const wsCost = wordSenseCost(wsTier);
+  const wsProgress = wsCost > 0 ? Math.min(1, wins / wsCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
@@ -73,6 +77,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());
+    setWsTier(getWordSenseTier());
   };
   const onBuy = (id) => {
     if (buy(id).ok) {
@@ -88,6 +93,13 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     if (buyKeyPower().ok) {
       const colour = nextTier >= 5 ? '#FFD54A' : '#2EFFE0';
       setReveal({ kind: 'keypower', banner: `KEY POWER ${toRoman(nextTier)} UNLOCKED`, colour, previewChar: 'A' });
+      refresh();
+    }
+  };
+  const onBuyWordSense = () => {
+    const nextTier = wsTier + 1;
+    if (buyWordSense().ok) {
+      setReveal({ kind: 'keypower', banner: `WORD SENSE ${toRoman(nextTier)} UNLOCKED`, colour: '#FFD54A', previewChar: 'A' });
       refresh();
     }
   };
@@ -263,6 +275,39 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
                     {formatNum(kpCost)}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* WORD SENSE (Job 4): the SECOND permanent wins sink, parallel to KEY POWER. Buys the
+                wins multiplier per rarity tier — knowing rare words pays more the more you invest. */}
+            <h3 className="shop-subtitle">WORD SENSE — TIER {wsTier}</h3>
+            <div className="shop-keypower">
+              <div className="shop-kp-info">
+                <div className="shop-kp-current">
+                  <b>×{wordSenseFactor(wsTier).toFixed(wsTier > 3 ? 0 : 2)}</b> ON WORD RARITY (WINS)
+                </div>
+                <div className="shop-kp-next">
+                  NEXT TIER: <b>×{wordSenseFactor(wsTier + 1).toFixed(wsTier + 1 > 3 ? 0 : 2)}</b>
+                  {'  ·  '}
+                  <b><span className="shop-coin" aria-hidden="true" /> {formatNum(wsCost)} WINS</b>
+                </div>
+                <div className="shop-kp-rate">
+                  RARE WORDS PAY MORE — COMMON WORDS UNCHANGED
+                </div>
+                <div className="shop-goal">
+                  {wins >= wsCost ? 'READY TO UNLOCK' : `UNLOCKS AT ${formatNum(wsCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                </div>
+                <ProgressBar value={wsProgress} />
+              </div>
+              <div className="shop-kp-actions">
+                {wins >= wsCost ? (
+                  <HoldBuyButton label={formatNum(wsCost)} onCommit={onBuyWordSense} />
+                ) : (
+                  <button type="button" className="shop-card-btn" disabled>
+                    <span className="shop-coin" aria-hidden="true" />
+                    {formatNum(wsCost)}
                   </button>
                 )}
               </div>

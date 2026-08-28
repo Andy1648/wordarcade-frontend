@@ -4,6 +4,7 @@ import { GAME_ART_COMPONENTS } from './GameArt';
 import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
 import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { masteryState } from '../progress/mastery';
 import { formatNum } from '../format';
 import './GameCard.css';
 
@@ -139,6 +140,11 @@ const magnet = (() => {
 export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   const IconComponent = GAME_ICON_COMPONENTS[game.id];
+  // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
+  // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
+  // state; the menu re-reads on every return from a game.
+  const mastery = masteryState(game.id);
+  const showMastery = game.enabled && !locked && mastery.level >= 2;
 
   // The wrapper element + its magnet state. The card object is shared with the
   // module-level controller; mutating `hovered` here lets the rAF loop add the
@@ -317,6 +323,12 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         )}
 
         {game.limited && <div className="game-card-limited-tag">LIMITED</div>}
+
+        {showMastery && (
+          <div className="game-card-mastery" aria-label={`Mastery level ${mastery.level}`}>
+            M{mastery.level}
+          </div>
+        )}
 
       {ArtComponent && (
         <div className="game-card-art">

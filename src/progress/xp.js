@@ -11,6 +11,7 @@
 // so no import cycle). It only participates in xpPerInput, and only via the live default; every
 // pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
+import { addMasteryWord, masteryXpMult } from './mastery.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -283,6 +284,54 @@ export function creditXp(state, xpGain, rawKeys = 1) {
   }
   const next = { level, intoLevel, lifetimeLetters: lifetimeLetters + rawKeys };
   return { state: next, leveledUp: level > beforeLevel, level };
+}
+
+// ---- Per-word XP for IN-GAME play (unified economy, Job 1) -----------------------------
+// The two loops used to be disjoint: XP came ONLY from menu keystrokes, wins ONLY from games —
+// so playing never levelled you and menu typing never bought anything. Now every accepted word in
+// EVERY mode grants XP too, so the loops compound. The grant reuses the SAME per-word reward weight
+// the wins payout already computes (rarity × combo × lucky, capped — cappedWordMult), so a
+// rarer/hotter/luckier word is worth proportionally more XP exactly as it is worth more wins. The
+// amount is the menu-typing value of the word's letters (keyTierXp × length) × the mode's XP
+// multiplier × that weight (× rebirth × streak) — every mode's XP mult is ≥2, so playing is always
+// clearly faster than the menu, which stays the deliberate slow lane.
+export const PER_WORD_MULT_CAP = 40; // clip the combined rarity×combo×lucky product (clips the p99.9
+// tail — an OBSCURE word typed on a full ×3 combo that also hits the 1/40 lucky roll: 4.5×3×5≈67).
+export function cappedWordMult(rarityMult = 1, comboMult = 1, luckyMult = 1) {
+  const r = Number.isFinite(rarityMult) && rarityMult > 0 ? rarityMult : 1;
+  const c = Number.isFinite(comboMult) && comboMult > 0 ? comboMult : 1;
+  const l = Number.isFinite(luckyMult) && luckyMult > 0 ? luckyMult : 1;
+  return Math.min(PER_WORD_MULT_CAP, r * c * l);
+}
+
+// XP granted for one accepted word. Pure given its factors (mode/keyTier/rebirth/streak default to
+// live). `wordLength` is the menu-equivalent letter count; `weight` is the capped per-word reward
+// mult. Snapped to a round 10 like every other XP grant so the accumulated xpIntoLevel stays clean.
+export function xpPerWord({ mode = 'menu', keyTier, rebirthCount, wordLength = 1, weight = 1, streakMult } = {}) {
+  const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
+  const modeMult = XP_MULTIPLIERS[mode] ?? 1;
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
+  const wt = Number.isFinite(weight) && weight > 0 ? weight : 1;
+  const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
+  return round10(keyTierXp(kt) * len * modeMult * rebirthMult(rc) * wt * stm);
+}
+
+// Credit one accepted word's XP to the persisted level state; returns creditXp's result plus the
+// gain ({ state, leveledUp, level, gain }). rawKeys 0 — a word is not a raw keystroke, so it never
+// inflates lifetimeLetters (that stays a pure keystroke counter). Persistence happens here so
+// returning to the menu reflects the levels earned in play; the caller may use `leveledUp` to fire
+// a celebration.
+export function awardWordXp(opts = {}) {
+  const mode = opts.mode || 'menu';
+  // MASTERY (Job 2): this mode's mastery level multiplies the word's XP (+3%/level above M1). The
+  // multiplier is read BEFORE crediting the word to mastery, so a word never retroactively boosts
+  // itself. round10 keeps the "+N ends in a zero" invariant after the mastery scale.
+  const gain = round10(xpPerWord(opts) * masteryXpMult(mode));
+  const res = creditXp(loadProgress(), gain, 0);
+  saveProgress(res.state);
+  const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
+  return { ...res, gain, mastery };
 }
 
 // Anti-mash rate cap: at most `capacity` credited keystrokes per rolling `windowMs`. Pure

@@ -15,6 +15,10 @@ import {
   saveTaps,
   XP_MULTIPLIERS,
   xpPerInput,
+  xpPerWord,
+  awardWordXp,
+  cappedWordMult,
+  PER_WORD_MULT_CAP,
   rebirthThreshold,
   rebirthMult,
   canRebirth,
@@ -51,6 +55,44 @@ function cumCost(level) {
   for (let k = 1; k < level; k++) acc += need(k);
   return acc;
 }
+
+// ---- Unified economy (Job 1): per-word XP for in-game play ----
+test('cappedWordMult multiplies rarity×combo×lucky and clips at the ×40 cap', () => {
+  assert.equal(cappedWordMult(1, 1, 1), 1); // common word, no combo/lucky
+  assert.equal(cappedWordMult(2.5, 1, 1), 2.5); // rarity alone
+  assert.equal(cappedWordMult(2, 3, 5), 30); // rarity×combo×lucky, under the cap
+  assert.equal(cappedWordMult(4.5, 3, 5), PER_WORD_MULT_CAP); // 67.5 → clipped to 40
+  assert.equal(cappedWordMult(0, -1, NaN), 1); // garbage factors default to ×1 each
+});
+
+test('xpPerWord: menu-value of the letters × mode mult × weight (playing is ≥2× the menu)', () => {
+  // R0/T0: keyTierXp(0)=10. A 5-letter COMMON word.
+  const menuWord = 5 * xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 }); // 5×10 = 50
+  for (const [mode, mult] of Object.entries(XP_MULTIPLIERS)) {
+    if (mode === 'menu') continue;
+    const xp = xpPerWord({ mode, keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
+    assert.equal(xp, round10(10 * 5 * mult)); // 100/100/150/200/250 for the five modes
+    assert.ok(xp >= 2 * menuWord, `${mode} should be ≥2× the menu value of the word`);
+  }
+  // The reward weight scales it linearly (a ×2.5 rare word is worth 2.5× the common grant).
+  const common = xpPerWord({ mode: 'chain', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
+  const rare = xpPerWord({ mode: 'chain', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 2.5 });
+  assert.equal(rare, round10(common * 2.5));
+});
+
+test('awardWordXp persists the grant to the level state (rawKeys 0 — never inflates lifetimeLetters)', () => {
+  withStorage({}, () => {
+    const before = loadProgress();
+    assert.equal(before.level, 1);
+    const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
+    assert.equal(res.gain, 250); // fuse ×5, 5 letters
+    const after = loadProgress();
+    // 250 XP > need(1)=120 → carried to LV2 with 130 into it (250-120).
+    assert.equal(after.level, 2);
+    assert.equal(after.intoLevel, 130);
+    assert.equal(after.lifetimeLetters, 0); // a word is not a keystroke
+  });
+});
 
 // ---- round10: half-to-even snap (reproduces the published tables) ----
 test('round10 snaps to the nearest 10, half-to-even', () => {

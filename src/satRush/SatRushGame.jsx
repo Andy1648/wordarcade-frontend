@@ -22,6 +22,9 @@
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { awardWordXp, cappedWordMult } from '../progress/xp';
+import { recordAcceptedWord } from '../progress/collection';
+import { wordSenseWinsFactor } from '../progress/wordSense';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
@@ -74,7 +77,13 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // A clear normally bumps the count by 1; if it ever jumps, credit the extra words at ×1.
       const delta = cleared - satBankedWordsRef.current;
       const prevWeight = satWeightRef.current;
-      satWeightRef.current += rarityOf(view.lastClearedWord).mult + Math.max(0, delta - 1);
+      // Unified economy (Job 1): the per-word rarity weight (SAT has no combo/lucky) also grants XP,
+      // so a SAT capture now levels you as well as banking wins.
+      const rw = rarityOf(view.lastClearedWord);
+      const wWeight = cappedWordMult(rw.mult, 1, 1);
+      satWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult) + Math.max(0, delta - 1); // WORD SENSE (Job 4)
+      awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
+      recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
       const banked = bankWordWins({
         mode: 'satRush',

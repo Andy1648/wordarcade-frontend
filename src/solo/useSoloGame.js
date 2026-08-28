@@ -15,7 +15,6 @@ import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord 
 import { tierForClockLeft } from '../share/resultCard.js';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
-import { xpPerInput, creditXp, loadProgress, saveProgress } from '../progress/xp.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -187,10 +186,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       luckyLastMultRef.current = reward.winsWeight;
       if (reward.lucky) {
         luckyCountRef.current += 1;
-        if (mode) {
-          const gain = xpPerInput({ mode }) * reward.xpMult;
-          saveProgress(creditXp(loadProgress(), gain, 0).state);
-        }
+        // XP is no longer credited here (lucky-only). Unified economy (Job 1): EVERY accepted word
+        // grants XP in the mode component (ChainGame/FuseGame), where the full per-word weight —
+        // rarity × combo × lucky (this word's ×5 factor included via luckyMult) — is summed, so XP
+        // and the wins payout ride the exact same weight.
       }
       setReason('');
       setInput('');

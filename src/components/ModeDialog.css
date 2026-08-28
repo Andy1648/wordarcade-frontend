@@ -240,6 +240,60 @@
   max-width: 32ch;
 }
 
+/* MASTERY line (Job 2): the per-mode mastery level chip + the current XP perk + words-to-next.
+   MUST stay a SINGLE row — the chip is fixed, the text ellipsises. It used to wrap (flex-wrap +
+   a free-flowing text span), which at 360px ballooned to ~3 lines / 59px and starved the pack
+   picker below it to 0 height (the picker is the dialog's flex-shrink element), making the
+   category-blitz dialog fail the 360×640 layout gate. One line keeps that height budget. */
+.mode-dialog-mastery {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: clamp(8px, 1.4vh, 12px);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(12px, 1.5vw, 14px);
+  color: #cdbdf0;
+  flex-wrap: nowrap;
+}
+.mode-dialog-mastery-lv {
+  flex: 0 0 auto;
+  font-family: 'Bungee', cursive;
+  font-size: clamp(13px, 1.7vw, 16px);
+  line-height: 1;
+  padding: 3px 7px;
+  border: 2.5px solid;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+}
+/* One-line text. overflow:VISIBLE (never hidden/ellipsis) — a hidden+clipped text box would trip
+   the layout gate's "text clipped" check; the fixed-length copy below already fits the row at 360px
+   once the secondary "words-to-next" fragment is dropped on narrow screens (see the media query). */
+.mode-dialog-mastery-txt {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+}
+.mode-dialog-mastery-next {
+  opacity: 0.7;
+}
+/* On phones the "· N/N TO M2" tail is dropped so the primary perk text fits one line without
+   wrapping (a wrapped mastery row starved the pack picker to 0 height at 360×640). */
+@media (max-width: 400px) {
+  .mode-dialog-mastery-next {
+    display: none;
+  }
+}
+/* In the BLITZ dialog specifically, on a short AND narrow phone (e.g. 360×640) the pack picker and
+   the mastery row cannot both fit — the dialog is NOSCROLL, so the mastery row is dropped there to
+   give the picker its height back. Tall phones (e.g. 390×844) and every larger viewport keep it. */
+@media (max-width: 400px) and (max-height: 700px) {
+  .mode-dialog-mastery--picker {
+    display: none;
+  }
+}
+
 .mode-dialog-howlabel {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
