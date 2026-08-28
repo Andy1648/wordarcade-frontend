@@ -123,15 +123,16 @@ export function perWordWins({ mode, difficulty, rebirthCount } = {}) {
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else
-// (combo-weighted or plain) word count × the per-word rate, snapped to a round 10.
-// Difficulty defaults to ×1 (unspecified / no-difficulty modes).
+// (weighted or plain) word count × the per-word rate, snapped to a round 10. Difficulty
+// defaults to ×1 (unspecified / no-difficulty modes).
 //
-// COMBO (Job 2): an optional `weightedWords` — the run's combo-weighted word count
-// (Σ of each accepted word's live multiplier, see progress/combo.js) — REPLACES the raw
-// count in the multiplication when it's a positive number. The <3-word GATE always uses
-// the raw integer count, so a combo can't sneak a sub-3 run past the gate. Omitting
-// weightedWords (every existing caller) leaves the payout exactly as before: since
-// perWordWins is already a multiple of 10, round10(count × rate) == count × rate.
+// `weightedWords` — an optional reward-weighted word count that REPLACES the raw count in the
+// multiplication when positive. The <3-word GATE always uses the raw integer count, so a weight
+// can't sneak a sub-3 run past the gate. Omitting it (every current caller) is unchanged: since
+// perWordWins is already a multiple of 10, round10(count × rate) == count × rate. NOTE: live
+// gameplay no longer feeds this — COMBO (progress/combo.js) and LUCKY (progress/luck.js) fold
+// their per-word multipliers into the per-word banking WEIGHT (bankWordWins) instead; this
+// param is retained for the pure recordRound reference + its unit tests.
 export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords } = {}) {
   const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
   if (w < MIN_WORDS) return 0;

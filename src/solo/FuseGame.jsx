@@ -86,7 +86,7 @@ export default function FuseGame({ onExit }) {
 
 function FuseInner({ data, createEngine, adapter, onExit }) {
   // Each accepted FUSE word counts toward the daily streak (this mode never calls addWords).
-  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, onAccept: touchStreak });
+  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, mode: 'fuse', onAccept: touchStreak });
   const s = g.engine.state;
 
   // WINS (§2): BANK per solved word as the run plays so leaving mid-run keeps what was earned —
@@ -113,9 +113,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       // the count by 1; a rare jump credits the extra words at ×1.
       const delta = solved - fuseBankedRef.current;
       const prevWeight = fuseWeightRef.current;
-      // COMBO (Job 2): the solved word's rarity is scaled by the live combo multiplier; jump
-      // filler stays ×1, matching CHAIN.
-      fuseWeightRef.current += rarityOf(s.lastWord).mult * g.combo.mult + Math.max(0, delta - 1);
+      // COMBO (Job 2) + LUCKY (Job 4): the solved word's rarity is scaled by the live combo
+      // multiplier AND the word's lucky factor (×5 on a hit, else ×1); jump filler stays ×1,
+      // matching CHAIN.
+      fuseWeightRef.current += rarityOf(s.lastWord).mult * g.combo.mult * g.luckyMult + Math.max(0, delta - 1);
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       const banked = bankWordWins({
         mode: 'fuse',
@@ -199,6 +200,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       winsWords={s.wordsSolved}
       comboMult={g.combo.mult}
       comboBreaks={g.combo.breaks}
+      luckyKey={g.luckyKey}
       over={{
         score: s.wordsSolved,
         best: g.best,

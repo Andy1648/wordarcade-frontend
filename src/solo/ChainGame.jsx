@@ -93,6 +93,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     createEngine,
     adapter,
     pbKey: PB_KEYS.CHAIN,
+    mode: 'chain', // lucky-word XP uses the mode's per-word XP multiplier
     onRunStart: () => setRuns(bumpChainRuns()),
     // Each accepted CHAIN word counts toward the daily streak (this mode never calls addWords).
     onAccept: touchStreak,
@@ -125,9 +126,10 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       const newWords = (s.lastLinks || []).slice(-delta).map((l) => l.word);
       const prevWeight = chainWeightRef.current;
       for (const w of newWords) {
-        // COMBO (Job 2) folds into the SAME per-word weight the banking already sums: each
-        // word is worth rarity × the live combo multiplier, so a hot streak pays more.
-        chainWeightRef.current += rarityOf(w).mult * g.combo.mult;
+        // COMBO (Job 2) + LUCKY (Job 4) fold into the SAME per-word weight the banking already
+        // sums: each word is worth rarity × the live combo multiplier × the word's lucky factor
+        // (×5 on a 1/40 hit, else ×1), so a hot streak and a lucky word both pay more.
+        chainWeightRef.current += rarityOf(w).mult * g.combo.mult * g.luckyMult;
         wpmAddWord(w); // WPM: count each new link's chars
       }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
@@ -285,6 +287,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       winsWords={s.k}
       comboMult={g.combo.mult}
       comboBreaks={g.combo.breaks}
+      luckyKey={g.luckyKey}
       over={{
         score: s.score,
         best: g.best,

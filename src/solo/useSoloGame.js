@@ -14,6 +14,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
 import { tierForClockLeft } from '../share/resultCard.js';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
+import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
+import { xpPerInput, creditXp, loadProgress, saveProgress } from '../progress/xp.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -32,7 +34,7 @@ const SOLO_CLOCK_CAP_MS = (() => {
   return null;
 })();
 
-export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept }) {
+export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept, mode }) {
   const engineRef = useRef(null);
   if (engineRef.current === null) engineRef.current = createEngine();
 
@@ -66,6 +68,13 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   // payout; a reject/timeout resets it. Pure state kept in a ref (mutated at the same points
   // that already trigger a re-render), read live by the HUD readout and the round-end payout.
   const comboRef = useRef(freshCombo());
+  // LUCKY WORDS (Job 4): a per-run seeded oracle decides, AFTER each accept, whether the word is
+  // lucky (1/40) — paying 5× wins (folded into the per-word banking WEIGHT via `luckyMult`, see
+  // ChainGame/FuseGame) and 5× XP (credited here). `luckyLastMultRef` holds THIS word's factor
+  // (5 or 1); `luckyCountRef` is the run's lucky-hit count, used as the gold-burst re-key.
+  const luckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
+  const luckyLastMultRef = useRef(1);
+  const luckyCountRef = useRef(0);
   const rafRef = useRef(0);
   const restartTimerRef = useRef(null);
 
@@ -171,6 +180,18 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       const left = (budget - (now() - turnStartRef.current)) / budget;
       tierLogRef.current.push(tierForClockLeft(left));
       comboRef.current = comboAccept(comboRef.current); // grow the wins combo
+      // LUCKY check — AFTER acceptance only (never telegraphed). Record THIS word's factor
+      // (×5 on a 1/40 hit, else ×1) for the per-word banking fold; on a hit, bank 5× the mode's
+      // per-word XP and bump the gold-burst count.
+      const reward = luckyReward(luckyOracleRef.current.next());
+      luckyLastMultRef.current = reward.winsWeight;
+      if (reward.lucky) {
+        luckyCountRef.current += 1;
+        if (mode) {
+          const gain = xpPerInput({ mode }) * reward.xpMult;
+          saveProgress(creditXp(loadProgress(), gain, 0).state);
+        }
+      }
       setReason('');
       setInput('');
       startTurnClock(); // the next turn's budget (new required letter / new fragment)
@@ -191,6 +212,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     runIndexRef.current += 1;
     tierLogRef.current = []; // fresh run → fresh share-card glyph log
     comboRef.current = freshCombo(); // fresh run → fresh wins combo
+    // Fresh run → fresh lucky oracle (new seed), reset per-word factor + hit count.
+    luckyOracleRef.current = makeLuckyOracle(randomSeed());
+    luckyLastMultRef.current = 1;
+    luckyCountRef.current = 0;
     armedRef.current = false;
     turnBudgetRef.current = adapter.budgetMs(engineRef.current);
     setArmed(false);
@@ -240,5 +265,9 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     // WINS combo (live): { streak, mult, weighted, breaks }. `mult` folds into each word's
     // per-word banking weight (see ChainGame/FuseGame); `breaks` re-keys the HUD pill shake.
     combo: comboRef.current,
+    // LUCKY (live): the just-accepted word's factor (×5 on a 1/40 hit, else ×1) folded into the
+    // per-word banking weight, plus `luckyKey` (the run's hit count) that re-fires the gold burst.
+    luckyMult: luckyLastMultRef.current,
+    luckyKey: luckyCountRef.current,
   };
 }
