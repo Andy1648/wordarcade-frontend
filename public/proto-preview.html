@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>PREVIEW CARD — 3 DIRECTIONS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--pink:#FF2EC4;--cyan:#2EFFE0;--yellow:#FFE94A;--orange:#FF6B3D;--purple:#9A1AFF;--bg:#0d0618;--panel:#1a0b2e;--wb:#FF6B3D;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:#fff;font-family:'Space Mono',monospace;}
+  h1{font-family:'Bungee',cursive;color:var(--pink);-webkit-text-stroke:3px #000;font-size:clamp(24px,5vw,44px);margin:20px 24px 2px;}
+  .lead{color:#b9a7d6;margin:0 24px 20px;max-width:80ch;line-height:1.5;font-weight:700;}
+  .triggers{display:flex;gap:18px;flex-wrap:wrap;padding:0 24px 40px;}
+  .trigger{width:260px;background:var(--panel);border:4px solid #000;border-radius:8px;box-shadow:6px 6px 0 #000;cursor:pointer;overflow:hidden;transition:transform .12s;}
+  .trigger:hover{transform:translateY(-4px);}
+  .trigger-head{padding:12px 14px;font-family:'Bungee',cursive;font-size:18px;}
+  .trigger-sub{padding:0 14px 12px;color:#b9a7d6;font-size:13px;line-height:1.45;}
+  .trigger-cta{padding:10px 14px;background:#000;color:var(--cyan);font-family:'Bungee',cursive;font-size:13px;}
+
+  /* scrim + dialog shell — ONE transform+opacity transition, no canvas */
+  .scrim{position:fixed;inset:0;background:rgba(13,6,24,.86);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .scrim.open{display:flex;}
+  .dlg{opacity:0;transform:scale(.96);transition:transform 180ms cubic-bezier(.22,1,.36,1),opacity 180ms cubic-bezier(.22,1,.36,1);will-change:transform,opacity;max-height:calc(100dvh - 40px);max-width:calc(100vw - 40px);overflow:hidden;}
+  .scrim.open .dlg{opacity:1;transform:scale(1);}
+  .close{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:8px;background:#0d0618;color:#fff;border:3px solid #000;box-shadow:3px 3px 0 #000;font-size:15px;cursor:pointer;z-index:3;}
+
+  .field-label{font-size:10px;letter-spacing:.1em;color:#9a8bbd;font-weight:700;}
+  .field-val{font-family:'Bungee',cursive;}
+  .example{font-family:'Bungee',cursive;font-size:clamp(18px,3vw,26px);}
+  .example b{color:var(--cyan);}
+  .mastery-track{height:9px;background:#2a1f3d;border:2px solid #000;border-radius:6px;overflow:hidden;}
+  .mastery-fill{height:100%;background:var(--yellow);}
+  .play{font-family:'Bungee',cursive;color:#0d0618;background:var(--wb);border:4px solid #7a2f16;border-radius:8px;box-shadow:4px 4px 0 #000;padding:14px;cursor:pointer;font-size:18px;}
+
+  /* ---------- A: BOUNTY POSTER (vertical) ---------- */
+  .dlgA{width:360px;background:var(--panel);border:5px solid var(--wb);border-radius:10px;box-shadow:8px 8px 0 #000;position:relative;display:flex;flex-direction:column;}
+  .dlgA .hero{background:radial-gradient(circle at 50% 40%,#3a1710,#1a0b2e);padding:14px 0 6px;display:flex;justify-content:center;}
+  .dlgA .chip{align-self:flex-start;margin:12px 0 0 14px;font-family:'Bungee',cursive;font-size:12px;color:var(--wb);border:2.5px solid var(--wb);border-radius:8px;padding:3px 9px;}
+  .dlgA h2{font-family:'Bungee',cursive;font-size:34px;margin:6px 14px 0;line-height:.95;}
+  .dlgA .body{padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px;}
+  .dlgA .exwrap{background:#0d0618;border:2px dashed #4a3a60;border-radius:8px;padding:10px 12px;}
+  .dlgA .stats{display:flex;justify-content:space-between;gap:10px;}
+  .dlgA .stat{flex:1;}
+
+  /* ---------- B: SPLIT PANEL (horizontal) ---------- */
+  .dlgB{width:640px;max-width:100%;background:var(--panel);border:4px solid #000;border-radius:12px;box-shadow:8px 8px 0 #000;position:relative;display:grid;grid-template-columns:44% 56%;overflow:hidden;}
+  .dlgB .art{background:linear-gradient(150deg,var(--wb),#7a2f16);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .dlgB .info{padding:20px 22px;display:flex;flex-direction:column;gap:14px;}
+  .dlgB h2{font-family:'Bungee',cursive;font-size:32px;margin:0;line-height:1;}
+  .dlgB .liner{color:#cdbdf0;font-weight:700;font-size:14px;}
+  .dlgB .row{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px dashed rgba(255,255,255,.14);padding-bottom:8px;}
+  @media(max-width:660px){.dlgB{grid-template-columns:1fr;width:340px;}.dlgB .art{padding:12px;}}
+
+  /* ---------- C: ARCADE TICKET (stub) ---------- */
+  .dlgC{display:flex;width:600px;max-width:100%;filter:drop-shadow(8px 8px 0 #000);}
+  .dlgC .stub-main{flex:1;background:var(--panel);border:4px solid #000;border-right:none;border-radius:10px 0 0 10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;position:relative;}
+  .dlgC .perf{width:0;border-left:4px dashed var(--wb);}
+  .dlgC .stub-tear{width:120px;background:var(--wb);border:4px solid #000;border-left:none;border-radius:0 10px 10px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:#0d0618;}
+  .dlgC .stub-tear .play-v{font-family:'Bungee',cursive;font-size:22px;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.08em;}
+  .dlgC h2{font-family:'Bungee',cursive;font-size:30px;margin:0;}
+  .dlgC .ticket-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .dlgC .art-c{display:flex;align-items:center;gap:12px;}
+  @media(max-width:640px){.dlgC{width:340px;}.dlgC .stub-tear{width:74px;}}
+</style>
+</head>
+<body>
+  <h1>PREVIEW CARD — 3 DIRECTIONS</h1>
+  <p class="lead">Three redesigns of the mode preview (the screen between wanting to play and playing). Each uses REAL authored SVG art (no CSS-drawn shapes), shows the worked example + per-word wins + round length + mastery, opens in &lt;200ms with one transform+opacity transition (no canvas), has zero scrollbars, and reads as a sibling of the menu cards. Click a card to open its direction. PROTOTYPE — pick one; the live dialogs are untouched.</p>
+  <div class="triggers">
+    <div class="trigger" style="border-color:var(--wb)" onclick="openD('A')">
+      <div class="trigger-head" style="color:var(--wb)">A · BOUNTY POSTER</div>
+      <div class="trigger-sub">Vertical. Hero art up top, big title, the example as a dashed receipt, a stats footer. Bold, poster-like.</div>
+      <div class="trigger-cta">OPEN A →</div>
+    </div>
+    <div class="trigger" style="border-color:var(--cyan)" onclick="openD('B')">
+      <div class="trigger-head" style="color:var(--cyan)">B · SPLIT PANEL</div>
+      <div class="trigger-sub">Horizontal. Art fills the left; the info reads as clean rows on the right. Modern, legible, calm.</div>
+      <div class="trigger-cta">OPEN B →</div>
+    </div>
+    <div class="trigger" style="border-color:var(--yellow)" onclick="openD('C')">
+      <div class="trigger-head" style="color:var(--yellow)">C · ARCADE TICKET</div>
+      <div class="trigger-sub">A ticket stub with a perforated PLAY tear-off. Stats as ticket fields. Playful, tactile.</div>
+      <div class="trigger-cta">OPEN C →</div>
+    </div>
+  </div>
+
+  <!-- shared authored SVG: a Word Bomb (real vector — circle body, fuse, spark). -->
+  <template id="bomb">
+    <svg viewBox="0 0 120 120" width="100%" height="100%" style="max-width:150px" aria-hidden="true">
+      <g stroke="#000" stroke-width="4" stroke-linejoin="round">
+        <path d="M78 34 q10 -14 24 -10 q-8 6 -6 16" fill="none" stroke-linecap="round"/>
+        <circle cx="52" cy="72" r="34" fill="#1a1a1f"/>
+        <rect x="60" y="30" width="14" height="16" rx="3" fill="#3a3a42" transform="rotate(20 67 38)"/>
+        <ellipse cx="42" cy="62" rx="10" ry="7" fill="#3a3a45" stroke="none"/>
+      </g>
+      <g stroke="#000" stroke-width="3" stroke-linecap="round">
+        <path d="M96 20 l8 -8 M104 24 l10 -4 M98 32 l9 2" stroke="#FFE94A"/>
+        <circle cx="99" cy="22" r="5" fill="#FF6B3D"/>
+      </g>
+    </svg>
+  </template>
+
+  <div class="scrim" id="scrim" onclick="if(event.target===this)closeD()">
+    <div id="slot"></div>
+  </div>
+
+<script>
+const bomb = () => document.getElementById('bomb').innerHTML;
+const WINS='20 WINS / WORD', LEN='TURN-BASED · ~10 WORDS', EX='TRA → TRA<b>IN</b>', MASTERY=6, MFRAC=0.34;
+
+const A = `<div class="dlg dlgA" role="dialog" aria-modal="true">
+  <button class="close" onclick="closeD()">✕</button>
+  <div class="chip">SOLO / MULTI</div>
+  <h2>WORD<br>BOMB</h2>
+  <div class="hero">${bomb()}</div>
+  <div class="body">
+    <div class="exwrap"><div class="field-label">EXAMPLE</div><div class="example">${EX}</div></div>
+    <div class="stats">
+      <div class="stat"><div class="field-label">PER WORD</div><div class="field-val" style="color:var(--wb)">20</div><div class="field-label">WINS</div></div>
+      <div class="stat"><div class="field-label">ROUND</div><div class="field-val" style="font-size:15px">~10</div><div class="field-label">WORDS</div></div>
+      <div class="stat"><div class="field-label">MASTERY</div><div class="field-val" style="color:var(--yellow)">M${MASTERY}</div><div class="field-label">+15% XP</div></div>
+    </div>
+    <div><div class="field-label">TO M${MASTERY+1}</div><div class="mastery-track"><div class="mastery-fill" style="width:${MFRAC*100}%"></div></div></div>
+    <button class="play" onclick="closeD()">PLAY</button>
+  </div>
+</div>`;
+
+const B = `<div class="dlg dlgB" role="dialog" aria-modal="true">
+  <button class="close" onclick="closeD()">✕</button>
+  <div class="art">${bomb()}</div>
+  <div class="info">
+    <div><div class="field-label" style="color:var(--wb)">SOLO / MULTI</div><h2>WORD BOMB</h2></div>
+    <div class="liner">Beat the bomb. Combo or choke.</div>
+    <div class="example" style="font-size:22px">${EX}</div>
+    <div class="row"><span class="field-label">PER WORD</span><span class="field-val" style="color:var(--wb)">20 WINS</span></div>
+    <div class="row"><span class="field-label">ROUND</span><span class="field-val" style="font-size:14px">${LEN}</span></div>
+    <div class="row" style="border:none"><span class="field-label">MASTERY M${MASTERY} · +15% XP</span><span class="field-val" style="font-size:13px;color:var(--yellow)">${Math.round(MFRAC*100)}% → M${MASTERY+1}</span></div>
+    <div class="mastery-track"><div class="mastery-fill" style="width:${MFRAC*100}%"></div></div>
+    <button class="play" onclick="closeD()">PLAY</button>
+  </div>
+</div>`;
+
+const C = `<div class="dlg dlgC" role="dialog" aria-modal="true">
+  <div class="stub-main">
+    <button class="close" onclick="closeD()">✕</button>
+    <div class="art-c">${bomb()}<div><div class="field-label" style="color:var(--wb)">ADMIT ONE · SOLO/MULTI</div><h2>WORD BOMB</h2></div></div>
+    <div class="example">${EX}</div>
+    <div class="ticket-fields">
+      <div><div class="field-label">PER WORD</div><div class="field-val" style="color:var(--wb);font-size:20px">20 WINS</div></div>
+      <div><div class="field-label">ROUND</div><div class="field-val" style="font-size:14px">TURN-BASED · ~10</div></div>
+      <div><div class="field-label">MASTERY</div><div class="field-val" style="color:var(--yellow);font-size:18px">M${MASTERY} · +15% XP</div></div>
+      <div><div class="field-label">NEXT</div><div class="mastery-track" style="margin-top:6px"><div class="mastery-fill" style="width:${MFRAC*100}%"></div></div></div>
+    </div>
+  </div>
+  <div class="perf"></div>
+  <div class="stub-tear" onclick="closeD()"><span class="play-v">PLAY ►</span></div>
+</div>`;
+
+const D = { A, B, C };
+function openD(k){ const slot=document.getElementById('slot'); slot.innerHTML=D[k]; const s=document.getElementById('scrim'); s.classList.add('open'); }
+function closeD(){ document.getElementById('scrim').classList.remove('open'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeD(); });
+</script>
+</body>
+</html>
