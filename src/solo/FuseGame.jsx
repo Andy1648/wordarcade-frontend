@@ -16,6 +16,7 @@ import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
+import SoloLoadState from './SoloLoadState.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import poolsRaw from './fragmentPools.json';
 
@@ -47,16 +48,24 @@ const POOLS = {
 
 export default function FuseGame({ onExit }) {
   const [data, setData] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadKey, setLoadKey] = useState(0);
 
   useEffect(() => {
     let live = true;
-    loadSoloWords().then((d) => {
-      if (live) setData(d);
-    });
+    setLoadError(false);
+    // Edge state (Job 16): a failed word-data chunk fetch no longer strands the player on "…".
+    loadSoloWords()
+      .then((d) => {
+        if (live) setData(d);
+      })
+      .catch(() => {
+        if (live) setLoadError(true);
+      });
     return () => {
       live = false;
     };
-  }, []);
+  }, [loadKey]);
 
   const createEngine = useCallback(() => {
     const e = createFuseEngine({ accept: data.accept, pools: POOLS });
@@ -78,11 +87,14 @@ export default function FuseGame({ onExit }) {
     []
   );
 
-  if (!data) {
+  if (loadError || !data) {
     return (
-      <div className="solo-root" style={{ '--solo-accent': ACCENT }}>
-        <div className="solo-center">…</div>
-      </div>
+      <SoloLoadState
+        accent={ACCENT}
+        error={loadError}
+        onRetry={() => setLoadKey((k) => k + 1)}
+        onExit={onExit}
+      />
     );
   }
   return <FuseInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
