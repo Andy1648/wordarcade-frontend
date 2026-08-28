@@ -162,6 +162,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   );
 
   return (
+    <>
+    <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     <SoloShell
       accent={ACCENT}
       title="Type a word containing the fragment"
@@ -189,5 +191,6 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard, winsEarned }}
       onExit={onExit}
     />
+    </>
   );
 }

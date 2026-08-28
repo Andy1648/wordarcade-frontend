@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
+import RarityFlash from '../components/RarityFlash.jsx';
 import { formatNum } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
@@ -113,6 +114,9 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   return (
     // .silver flips the whole page into a negative reprint (CSS var inversion).
     <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
+      {/* RARITY (word-value): a rarer captured word flashes its tier ("RARE ×2.5"). Re-keyed per
+          clear so it replays; COMMON captures stay silent. */}
+      <RarityFlash key={view.clearId} rarity={rarityOf(view.lastClearedWord)} />
       {/* manga focus lines: hidden until the final stage (endgame treatment) */}
       <SpeedLines active={view.hasWord && view.atFinal} />
       {/* miss: a 2-frame page-tear flash, re-keyed per miss so it fires once */}

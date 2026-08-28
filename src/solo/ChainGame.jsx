@@ -12,6 +12,7 @@ import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
+import RarityFlash from '../components/RarityFlash.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -245,7 +246,11 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} />
   );
 
+  // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
+  const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
   return (
+    <>
+    <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
     <SoloShell
       accent={ACCENT}
       title="Type a word starting with the letter"
@@ -280,5 +285,6 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       }}
       onExit={onExit}
     />
+    </>
   );
 }

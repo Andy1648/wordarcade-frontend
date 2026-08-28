@@ -217,6 +217,26 @@ function HypePopup() {
 }
 
 /**
+ * RARITY (word-value) pop: the tier label ("RARE ×2.5") in the tier colour, shown under the
+ * hype word on an accepted answer rare enough to announce (UNCOMMON+). Re-keyed per accept so it
+ * replays; removes itself on animation end. Purely decorative (aria-hidden, pointer-events:none).
+ */
+function RarityPopup({ rarity }) {
+  const [done, setDone] = useState(false);
+  if (done || !rarity) return null;
+  return (
+    <div
+      className="rarity-popup"
+      style={{ color: rarity.color }}
+      onAnimationEnd={() => setDone(true)}
+      aria-hidden="true"
+    >
+      {rarity.label}
+    </div>
+  );
+}
+
+/**
  * A throwaway "+1" that floats up and fades near the input on each accepted
  * answer. Re-keyed by the same hype counter so it replays per accept, and
  * removes itself on animation end. pointer-events:none (in CSS).
@@ -3866,6 +3886,11 @@ function CategoryBlitzScreen({
               note above). */}
           <div style={{ display: 'contents' }}>
             {hypeKey > 0 && <HypePopup key={hypeKey} />}
+            {/* RARITY (word-value): a rarer accepted answer pops its tier label below the hype
+                word, in the tier colour. COMMON answers carry no rarity (silent). */}
+            {hypeKey > 0 && lastWordResult && lastWordResult.rarity && (
+              <RarityPopup key={`r${hypeKey}`} rarity={lastWordResult.rarity} />
+            )}
           </div>
           <div className="game-header">
             <div className="game-title">
