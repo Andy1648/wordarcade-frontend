@@ -227,12 +227,24 @@ const NOSCROLL = new Set([
   'gameover-chain', 'gameover-fuse', 'sat-modeselect',
 ]);
 
+// THEMES (feat/themes): every screen's layout integrity must hold under EVERY menu theme, since a
+// theme only recolors (CSS custom properties) and must never shift geometry. Parameterizing the
+// full matrix over 5 themes = 168 × 5 = 840 cells. The theme is injected into localStorage before
+// the app boots (main.jsx initTheme reads taw.theme), so each cell renders in that palette.
+const THEME_IDS = ['default', 'midnight', 'inferno', 'toxic', 'prism'];
+
+for (const themeId of THEME_IDS) {
 for (const vp of VIEWPORTS) {
-  test.describe(`@ ${vp.name}`, () => {
+  test.describe(`[${themeId}] @ ${vp.name}`, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
     for (const screen of SCREENS) {
       test(`${screen.name}`, async ({ page }) => {
         test.setTimeout(40000);
+        // Apply the theme before any navigation in this test (init scripts run on every load,
+        // before page scripts) so the app boots already in this palette.
+        await page.addInitScript((t) => {
+          try { localStorage.setItem('taw.theme', t); } catch { /* ignore */ }
+        }, themeId);
         let violations;
         try {
           await screen.nav(page);
@@ -247,9 +259,10 @@ for (const vp of VIEWPORTS) {
           violations = ['NAV/EVAL ERROR: ' + String(e).split('\n')[0]];
         }
         // eslint-disable-next-line no-console
-        console.log(`MATRIX | ${vp.name.padEnd(9)} | ${screen.name.padEnd(24)} | ${violations.length ? 'FAIL: ' + violations.join(' ;; ') : 'PASS'}`);
-        expect(violations, `${vp.name} / ${screen.name}`).toEqual([]);
+        console.log(`MATRIX | ${themeId.padEnd(8)} | ${vp.name.padEnd(9)} | ${screen.name.padEnd(24)} | ${violations.length ? 'FAIL: ' + violations.join(' ;; ') : 'PASS'}`);
+        expect(violations, `[${themeId}] ${vp.name} / ${screen.name}`).toEqual([]);
       });
     }
   });
+}
 }

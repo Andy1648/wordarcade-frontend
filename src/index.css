@@ -41,7 +41,9 @@ html.cg-embed textarea {
 }
 
 html, body {
-  background: #0d0618;
+  /* Themed menu background (var → default #0d0618). Game screens overlay their own WallScene
+     backdrop, so the theme colour reads on the menu. */
+  background: var(--theme-bg, #0d0618);
   width: 100%;
   min-height: 100vh;
   /* Prevent a horizontal scrollbar while an incoming view slides in from
@@ -59,7 +61,7 @@ body {
 #root {
   width: 100%;
   min-height: 100vh;
-  background: #0d0618;
+  background: var(--theme-bg, #0d0618);
 }
 
 button {

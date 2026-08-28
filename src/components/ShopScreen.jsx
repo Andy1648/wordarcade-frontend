@@ -7,7 +7,17 @@
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
-import { getWins, perWordWins } from '../progress/wins';
+import {
+  THEMES,
+  themeById,
+  getOwnedThemes,
+  isThemeOwned,
+  syncThemeUnlocks,
+  buyTheme,
+  getEquippedTheme,
+  setEquippedTheme,
+} from '../theme/themes';
+import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { formatNum } from '../format';
 
@@ -21,6 +31,12 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
+  // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
+  const [ownedThemes, setOwnedThemes] = useState(() => {
+    syncThemeUnlocks(loadProgress().level);
+    return getOwnedThemes();
+  });
+  const [equippedTheme, setEquippedThemeState] = useState(() => getEquippedTheme());
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -78,6 +94,23 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
   };
+  // THEMES: buy → reveal ritual → apply live (setEquippedTheme repaints the root immediately, so
+  // the shop + menu behind it recolor the instant the theme lands). Equipping an owned theme is
+  // instant + live too.
+  const onBuyTheme = (id) => {
+    const r = buyTheme(id, { getWins, saveWins });
+    if (r.ok) {
+      const t = themeById(id);
+      setReveal({ kind: 'theme', banner: `${t.name} UNLOCKED`, colour: t.vars['--theme-ink'], previewChar: 'A' });
+      setOwnedThemes(getOwnedThemes());
+      setWins(getWins());
+      setEquippedTheme(id); // apply the just-bought theme live
+      setEquippedThemeState(getEquippedTheme());
+    }
+  };
+  const onEquipTheme = (id) => {
+    if (setEquippedTheme(id)) setEquippedThemeState(getEquippedTheme());
+  };
   const confirmRebirth = () => {
     const gained = nextMult;
     doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
@@ -134,6 +167,47 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     );
   };
 
+  // THEME card: a real PALETTE SWATCH (flat colour strip, not a text label) is the preview, then
+  // the name, a free-at-level note for gated themes, and EQUIPPED / EQUIP / buy / locked+progress
+  // — the same states as the cosmetic cards, so themes read as first-class shop goods.
+  const ThemeCard = ({ theme }) => {
+    const ownedT = isThemeOwned(theme.id, ownedThemes);
+    const isEq = equippedTheme === theme.id;
+    const affordable = wins >= theme.price;
+    const cls = isEq ? 'equipped' : ownedT ? 'owned' : affordable ? 'buy' : 'locked';
+    return (
+      <div className={`shop-card shop-theme-card is-${cls}`}>
+        <div className="shop-theme-swatch" aria-hidden="true">
+          {theme.swatch.map((c, i) => (
+            <span key={i} style={{ background: c }} />
+          ))}
+        </div>
+        <div className="shop-card-name">{theme.name}</div>
+        {theme.unlockLevel > 0 && !ownedT && (
+          <div className="shop-theme-gate">FREE AT LV {theme.unlockLevel}</div>
+        )}
+        {isEq ? (
+          <div className="shop-card-tag">EQUIPPED</div>
+        ) : ownedT ? (
+          <button type="button" className="shop-card-btn" onClick={() => onEquipTheme(theme.id)}>
+            EQUIP
+          </button>
+        ) : affordable ? (
+          <HoldBuyButton label={formatNum(theme.price)} onCommit={() => onBuyTheme(theme.id)} />
+        ) : (
+          <>
+            <div className="shop-card-price">
+              <span className="shop-coin" aria-hidden="true" />
+              {formatNum(theme.price)}
+            </div>
+            <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
+            <ProgressBar value={theme.price > 0 ? wins / theme.price : 1} />
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="shop-overlay" role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
@@ -150,6 +224,13 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
         {view === 'shop' ? (
           <div className="shop-body">
+            {/* THEMES — the headline section, ABOVE key power. Each card previews the real palette. */}
+            <h3 className="shop-subtitle">THEMES — RECOLOR YOUR MENU</h3>
+            <div className="shop-grid shop-theme-grid">
+              {THEMES.map((t) => (
+                <ThemeCard key={t.id} theme={t} />
+              ))}
+            </div>
             <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
