@@ -10,7 +10,6 @@ import { useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import {
   loadProgress,
-  getTaps,
   getRebirths,
   rebirthMult,
   getKeyTier,
@@ -75,7 +74,7 @@ export default function StatsScreen({ onBack }) {
 
   // Economy v5 storage: {level, intoLevel}. There is no cumulative "total XP" any more (that
   // was the number that hit the float64 cliff), so the readout shows XP INTO the current level.
-  const { level, intoLevel, lifetimeLetters } = loadProgress();
+  const { level, intoLevel } = loadProgress();
   const rounds = getRounds();
   const rebirths = getRebirths();
 
@@ -90,8 +89,6 @@ export default function StatsScreen({ onBack }) {
     ['XP INTO LEVEL', intoLevel],
     // ('XP TO NEXT LEVEL' row removed by request — the level + XP-into read is enough.)
     ['REBIRTHS', rebirths],
-    ['LETTERS TYPED', lifetimeLetters],
-    ['TAPS', getTaps()],
     ['WINS BALANCE', getWins()],
     ['WINS EARNED (ALL-TIME)', getWinsLifetime()],
   ];

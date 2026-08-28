@@ -11,8 +11,6 @@ import {
   isCreditableKey,
   loadProgress,
   saveProgress,
-  getTaps,
-  saveTaps,
   XP_MULTIPLIERS,
   xpPerInput,
   xpPerWord,
@@ -80,7 +78,7 @@ test('xpPerWord: menu-value of the letters × mode mult × weight (playing is �
   assert.equal(rare, round10(common * 2.5));
 });
 
-test('awardWordXp persists the grant to the level state (rawKeys 0 — never inflates lifetimeLetters)', () => {
+test('awardWordXp persists the grant to the level state', () => {
   withStorage({}, () => {
     const before = loadProgress();
     assert.equal(before.level, 1);
@@ -90,7 +88,6 @@ test('awardWordXp persists the grant to the level state (rawKeys 0 — never inf
     // 250 XP > need(1)=120 → carried to LV2 with 130 into it (250-120).
     assert.equal(after.level, 2);
     assert.equal(after.intoLevel, 130);
-    assert.equal(after.lifetimeLetters, 0); // a word is not a keystroke
   });
 });
 
@@ -246,17 +243,15 @@ test('rebirth is refused at LV14 and allowed at LV15', () => {
   assert.equal(canRebirth(xp15, 0), true);
 });
 
-test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebirths+1', () => {
+test('doRebirth zeroes xp and preserves wins/owned/equipped/rebirths+1', () => {
   withStorage(
     {
       'taw.xp': String(cumCost(20)),
-      'taw.letters': '1234',
       'taw.wins': '500',
       'taw.winsLifetime': '900',
       'taw.owned': JSON.stringify(['classic', 'thock', 'prism']),
       'taw.equipped': JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }),
       'taw.rebirths': '1',
-      'taw.taps': '42',
       'taw.keytier': '3',
     },
     (map) => {
@@ -265,74 +260,43 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/lifetimeLetters/rebi
       assert.equal(getRebirths(), 2);
       assert.equal(loadProgress().level, 1); // level reset to 1
       assert.equal(loadProgress().intoLevel, 0); // xp-into-level zeroed
-      assert.equal(loadProgress().lifetimeLetters, 1234); // preserved
       // everything else untouched (their own keys)
       assert.equal(map.get('taw.wins'), '500');
       assert.equal(map.get('taw.winsLifetime'), '900');
       assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
-      assert.equal(map.get('taw.taps'), '42');
       assert.equal(map.get('taw.keytier'), '3'); // Key Power tier SURVIVES rebirth
       assert.equal(getKeyTier(), 3);
     }
   );
   // a from-scratch rebirth (empty storage) still works and doesn't throw.
   withStorage({}, () => {
-    assert.doesNotThrow(() => saveProgress({ level: 1, intoLevel: 0, lifetimeLetters: 0 }));
+    assert.doesNotThrow(() => saveProgress({ level: 1, intoLevel: 0 }));
   });
-});
-
-test('a tap credits xp but NOT lifetimeLetters (rawKeys 0)', () => {
-  const r = creditXp({ level: 1, intoLevel: 0, lifetimeLetters: 7 }, 10, 0); // a tap worth +10
-  assert.equal(r.state.intoLevel, 10); // +10 into the level
-  assert.equal(r.state.level, 1); // still level 1 (need(1)=110)
-  assert.equal(r.state.lifetimeLetters, 7); // unchanged — taps never bump lifetimeLetters
-});
-
-test('getTaps defaults to 0 and survives storage failure; saveTaps never throws', () => {
-  const saved = globalThis.localStorage;
-  globalThis.localStorage = {
-    getItem() {
-      throw new Error('blocked');
-    },
-    setItem() {
-      throw new Error('blocked');
-    },
-  };
-  try {
-    assert.equal(getTaps(), 0);
-    assert.doesNotThrow(() => saveTaps(5));
-  } finally {
-    if (saved === undefined) delete globalThis.localStorage;
-    else globalThis.localStorage = saved;
-  }
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {
   // 100 into L1 + 20 = 120 = need(1)=120 → carries to L2 with 0 into it (Economy v6 curve).
-  const a = creditXp({ level: 1, intoLevel: 100, lifetimeLetters: 0 }, 20, 1);
+  const a = creditXp({ level: 1, intoLevel: 100 }, 20);
   assert.equal(a.state.level, 2);
   assert.equal(a.state.intoLevel, 0);
-  assert.equal(a.state.lifetimeLetters, 1); // raw keystroke count, unmultiplied
   assert.equal(a.leveledUp, true);
   // 10 into L2 + 10 = 20, still below need(2)=160 → no level-up.
-  const b = creditXp({ level: 2, intoLevel: 10, lifetimeLetters: 5 }, 10, 1);
+  const b = creditXp({ level: 2, intoLevel: 10 }, 10);
   assert.equal(b.leveledUp, false);
   assert.equal(b.state.level, 2);
   assert.equal(b.state.intoLevel, 20);
-  assert.equal(b.state.lifetimeLetters, 6);
 });
 
 // ---- Economy v5 storage refactor: {level, intoLevel} + migration ----
 test('storage round-trips the {level, intoLevel} shape', () => {
   withStorage({}, (map) => {
-    saveProgress({ level: 7, intoLevel: 100, lifetimeLetters: 42 });
+    saveProgress({ level: 7, intoLevel: 100 });
     // Persisted as the compact bounded shape, never a cumulative total.
     assert.equal(map.get(XP_KEY), JSON.stringify({ lv: 7, into: 100 }));
     const p = loadProgress();
     assert.equal(p.level, 7);
     assert.equal(p.intoLevel, 100);
-    assert.equal(p.lifetimeLetters, 42);
   });
 });
 
@@ -427,7 +391,7 @@ test('localStorage failure does not throw and defaults to 0', () => {
   };
   try {
     const p = loadProgress();
-    assert.deepEqual(p, { level: 1, intoLevel: 0, lifetimeLetters: 0 });
+    assert.deepEqual(p, { level: 1, intoLevel: 0 });
   } finally {
     if (saved === undefined) delete globalThis.localStorage;
     else globalThis.localStorage = saved;

@@ -7,8 +7,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   loadProgress,
   saveProgress,
-  getTaps,
-  saveTaps,
   creditXp,
   createRateLimiter,
   isCreditableKey,
@@ -35,8 +33,6 @@ const TAP_MOVE_TOLERANCE = 10; // px — beyond this the pointerdown was a scrol
 export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {}) {
   const xpRef = useRef(null);
   if (xpRef.current === null) xpRef.current = loadProgress();
-  const tapsRef = useRef(null);
-  if (tapsRef.current === null) tapsRef.current = getTaps();
   const [progress, setProgress] = useState(() => progressOf(xpRef.current));
   const streakRef = useRef({ count: 0, lastTime: 0, tier: 0 });
   const blockedRef = useRef(isBlocked);
@@ -71,9 +67,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // Stable for this menu session (buying remounts this hook via the shop round-trip).
     const feelTier = Math.min(5, getKeyTier());
 
-    // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; a tap credits
-    // xp but NOT lifetimeLetters (rawKeys 0) and bumps taw.taps instead; its pop is the
-    // "+N" alone at the tap coordinates.
+    // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
+    // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
     const credit = (now, opts) => {
       const st = streakRef.current;
       if (now - st.lastTime > 1200) {
@@ -88,14 +83,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      const res = creditXp(xpRef.current, menuGain, isTap ? 0 : 1);
+      const res = creditXp(xpRef.current, menuGain);
       xpRef.current = res.state;
       saveProgress(res.state);
       setProgress(progressOf(res.state));
-      if (isTap) {
-        tapsRef.current += 1;
-        saveTaps(tapsRef.current);
-      }
 
       // Level-ups no longer pay wins (Economy v3): wins come only from finishing rounds.
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.
@@ -145,9 +136,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     window.addEventListener('keydown', onKey);
 
     // ---- Click / tap-to-earn: ANY pointer (desktop mouse included) ----
-    // A click/tap on empty menu space credits exactly like a keystroke — feeding taw.taps
-    // (never lifetimeLetters). All ignore rules stay: an interactive target (button/link/
-    // card/dialog) or a >10px drag credits nothing.
+    // A click/tap on empty menu space credits XP exactly like a keystroke. All ignore rules stay:
+    // an interactive target (button/link/card/dialog) or a >10px drag credits nothing.
     const pending = new Map(); // pointerId → { x, y, moved, ignore }
     const onDown = (e) => {
       const t = e.target;

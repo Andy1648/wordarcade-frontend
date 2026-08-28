@@ -4,8 +4,8 @@
 // curve and the anti-mash cap are unit-testable under node.
 //
 // Currency is XP (not letters). A menu keystroke is worth 1 XP; game modes multiply the
-// per-word/letter award. `lifetimeLetters` counts RAW keystrokes (unmultiplied) and is a
-// SEPARATE running total for a future profile screen — never surfaced on the menu.
+// per-word/letter award. (Two vanity counters that fed nothing — lifetimeLetters and taps —
+// were removed; the model shape is now just { level, intoLevel }.)
 //
 // The one dependency is the daily-streak reward multiplier (streak.js — itself dependency-free,
 // so no import cycle). It only participates in xpPerInput, and only via the live default; every
@@ -84,8 +84,7 @@ export function levelFromXp(xp) {
 // rebirth and the permanent XP MULTIPLIER it grants. Multipliers ramp gently through R10 (×10)
 // then explode (R11 ×100 … R20 ×1e11). Past R20 the pattern continues: +50 levels and ×10 per
 // rebirth. Stored as DATA, not a formula, so the published curve is the source of truth.
-// Everything EXCEPT xp survives a rebirth (wins, winsLifetime, owned, equipped, lifetimeLetters,
-// taps, rounds).
+// Everything EXCEPT xp survives a rebirth (wins, winsLifetime, owned, equipped, rounds).
 export const REBIRTH_KEY = 'taw.rebirths';
 export const REBIRTH_TABLE = [
   { level: 15, mult: 1.5 }, //   R1
@@ -157,11 +156,10 @@ export function consumePendingRebirth() {
   pendingRebirth = 0;
   return n;
 }
-// Perform a rebirth: zero XP (keep lifetimeLetters), bump the rebirth count. Returns the
-// new count. Wins/owned/equipped/taps/rounds live under their own keys — untouched.
+// Perform a rebirth: zero XP, bump the rebirth count. Returns the new count.
+// Wins/owned/equipped/rounds live under their own keys — untouched.
 export function doRebirth() {
-  const prog = loadProgress();
-  saveProgress({ level: 1, intoLevel: 0, lifetimeLetters: prog.lifetimeLetters });
+  saveProgress({ level: 1, intoLevel: 0 });
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   pendingRebirth = rc;
@@ -265,15 +263,14 @@ export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, 
   return round10(keyTierXp(kt) * modeMult * rebirthMult(rc) * pm * sm * stm);
 }
 
-// Apply a credited award. Pure: takes and returns the {level, intoLevel, lifetimeLetters}
-// shape (Economy v5 — level is stored EXACTLY, xpIntoLevel only ever holds progress within
-// the current level so the persisted number never approaches MAX_SAFE_INTEGER). Adds the gain
-// to intoLevel and carries whole levels forward via need(); reports whether a boundary was
-// crossed so the caller can fire the one-shot celebration.
-export function creditXp(state, xpGain, rawKeys = 1) {
+// Apply a credited award. Pure: takes and returns the {level, intoLevel} shape (Economy v5 — level
+// is stored EXACTLY, xpIntoLevel only ever holds progress within the current level so the persisted
+// number never approaches MAX_SAFE_INTEGER). Adds the gain to intoLevel and carries whole levels
+// forward via need(); reports whether a boundary was crossed so the caller can fire the one-shot
+// celebration. (The old rawKeys arg only fed the removed lifetimeLetters counter — it is gone.)
+export function creditXp(state, xpGain) {
   let level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
   let intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
-  const lifetimeLetters = Number.isFinite(state && state.lifetimeLetters) ? state.lifetimeLetters : 0;
   const gain = Number.isFinite(xpGain) && xpGain > 0 ? xpGain : 0;
   const beforeLevel = level;
   intoLevel += gain;
@@ -282,7 +279,7 @@ export function creditXp(state, xpGain, rawKeys = 1) {
     intoLevel -= need(level);
     level += 1;
   }
-  const next = { level, intoLevel, lifetimeLetters: lifetimeLetters + rawKeys };
+  const next = { level, intoLevel };
   return { state: next, leveledUp: level > beforeLevel, level };
 }
 
@@ -318,17 +315,15 @@ export function xpPerWord({ mode = 'menu', keyTier, rebirthCount, wordLength = 1
 }
 
 // Credit one accepted word's XP to the persisted level state; returns creditXp's result plus the
-// gain ({ state, leveledUp, level, gain }). rawKeys 0 — a word is not a raw keystroke, so it never
-// inflates lifetimeLetters (that stays a pure keystroke counter). Persistence happens here so
-// returning to the menu reflects the levels earned in play; the caller may use `leveledUp` to fire
-// a celebration.
+// gain ({ state, leveledUp, level, gain }). Persistence happens here so returning to the menu
+// reflects the levels earned in play; the caller may use `leveledUp` to fire a celebration.
 export function awardWordXp(opts = {}) {
   const mode = opts.mode || 'menu';
   // MASTERY (Job 2): this mode's mastery level multiplies the word's XP (+3%/level above M1). The
   // multiplier is read BEFORE crediting the word to mastery, so a word never retroactively boosts
   // itself. round10 keeps the "+N ends in a zero" invariant after the mastery scale.
   const gain = round10(xpPerWord(opts) * masteryXpMult(mode));
-  const res = creditXp(loadProgress(), gain, 0);
+  const res = creditXp(loadProgress(), gain);
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
   return { ...res, gain, mastery };
@@ -372,24 +367,11 @@ export function isCreditableKey(e) {
 // Economy v5 storage shape: taw.xp holds { lv, into } — the level (an exact integer) and the
 // XP INTO that level (always < need(lv)). The stored number therefore never exceeds one
 // level's cost, so the float64 MAX_SAFE_INTEGER cliff that cumulative XP hit above ~LV600 is
-// gone. loadProgress/saveProgress speak the { level, intoLevel, lifetimeLetters } model shape;
+// gone. loadProgress/saveProgress speak the { level, intoLevel } model shape;
 // an OLD cumulative value (a bare number written by v4 and earlier) is migrated on first read.
 // Every access wrapped: a storage-blocked/absent environment reads back the fresh LV1 state
 // and never throws.
 export const XP_KEY = 'taw.xp';
-export const LETTERS_KEY = 'taw.letters';
-export const TAPS_KEY = 'taw.taps';
-
-function readNum(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw == null) return 0;
-    const n = Number(raw);
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  } catch {
-    return 0;
-  }
-}
 
 // A fresh, valid { level, intoLevel } for any state we can't trust.
 const FRESH = { level: 1, intoLevel: 0 };
@@ -439,18 +421,13 @@ function writeLevelState(level, intoLevel) {
 
 export function loadProgress() {
   const { level, intoLevel } = readLevelState();
-  return { level, intoLevel, lifetimeLetters: readNum(LETTERS_KEY) };
+  return { level, intoLevel };
 }
 
 export function saveProgress(state) {
   const level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
   const intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
   writeLevelState(level, intoLevel);
-  try {
-    localStorage.setItem(LETTERS_KEY, String(Number.isFinite(state && state.lifetimeLetters) ? state.lifetimeLetters : 0));
-  } catch {
-    // storage blocked — progress simply isn't persisted this session.
-  }
 }
 
 // The display-progress object for a { level, intoLevel } state: the level, XP into it, that
@@ -463,22 +440,3 @@ export function progressOf(state) {
   return { level, intoLevel, cost, toNext: cost - intoLevel, frac: cost > 0 ? intoLevel / cost : 0 };
 }
 
-// taw.taps — a SEPARATE all-time counter of credited TAPS (touch), distinct from
-// lifetimeLetters (which counts only raw keystrokes). Same wrapped treatment; defaults 0.
-export function getTaps() {
-  try {
-    const raw = localStorage.getItem(TAPS_KEY);
-    if (raw == null) return 0;
-    const n = Number(raw);
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  } catch {
-    return 0;
-  }
-}
-export function saveTaps(n) {
-  try {
-    localStorage.setItem(TAPS_KEY, String(n));
-  } catch {
-    // storage blocked
-  }
-}
