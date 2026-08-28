@@ -290,3 +290,51 @@ test('localStorage failure defaults to 0 and does not throw', () => {
     { throwOnGet: true, throwOnSet: true }
   );
 });
+
+// ---- bankWordWins: RARITY WEIGHT (word-value) — payout rides a cumulative rarity weight ----
+// The gate stays on the COUNT; the payout is base per-word × the weight delta past the gate.
+// Callers pass prevWeight/nowWeight (cumulative sum of each word's rarity multiplier).
+test('bankWordWins: weight defaults to count → identical to pre-rarity payout when no weight passed', () => {
+  withStorage(() => {
+    // No weight args: word 3 banks 3×20=60, word 4 banks 20 — exactly the count-based behaviour.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3 }), 60);
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4 }), 20);
+  });
+});
+
+test('bankWordWins: the gate crossing releases the first three words RARITY RETROACTIVELY', () => {
+  withStorage(() => {
+    // Words 1,2,3 have mults 1.0, 2.5, 4.0 → cumulative weights 0→1, 1→3.5, 3.5→7.5.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 0, nowWords: 1, prevWeight: 0, nowWeight: 1.0 }), 0); // pre-gate
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 1, nowWords: 2, prevWeight: 1.0, nowWeight: 3.5 }), 0); // pre-gate
+    // Word 3 crosses the gate: releases the WHOLE cumulative weight 7.5 → round10(20×7.5)=150.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3, prevWeight: 3.5, nowWeight: 7.5 }), 150);
+    assert.equal(getWins(), 150);
+  });
+});
+
+test('bankWordWins: words 4+ each release exactly their own rarity weight', () => {
+  withStorage(() => {
+    // Already past the gate (prev count 3). Word 4 is OBSCURE ×4 → round10(20×4)=80.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), 80);
+    // Word 5 is UNCOMMON ×1.5 → round10(20×1.5)=30.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 5, prevWeight: 7, nowWeight: 8.5 }), 30);
+  });
+});
+
+test('bankWordWins: rarity STACKS with the mode multiplier (FUSE ×15 × OBSCURE ×4 per word)', () => {
+  withStorage(() => {
+    // FUSE per-word base = 300; an OBSCURE word (weight 4) past the gate → round10(300×4)=1200.
+    assert.equal(bankWordWins({ mode: 'fuse', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), 1200);
+  });
+});
+
+test('bankWordWins: rarity STACKS with rebirth (CHAIN ×10 × R3 ×2.5 × RARE ×2.5 per word)', () => {
+  withStorage(() => {
+    // CHAIN base at R3 = round10(20×10×2.5)=500; a RARE word (weight 2.5) → round10(500×2.5)=1250.
+    assert.equal(
+      bankWordWins({ mode: 'chain', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 5.5, rebirthCount: 3 }),
+      1250
+    );
+  });
+});

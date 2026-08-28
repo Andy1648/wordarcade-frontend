@@ -187,21 +187,34 @@ export function grantWins(n) {
 // This REPLACES the end-of-round recordRound() payout in every mode — the two must never both
 // run for the same round or wins double-pay. recordRound is kept (tested, pure) but no longer
 // called from gameplay; the per-word ledger is now the single source of the payout.
-export function bankWordWins({ mode, difficulty, prevWords, nowWords, rebirthCount } = {}) {
-  const gate = (x) => {
-    const n = Number.isFinite(x) ? Math.floor(x) : 0;
-    return n >= MIN_WORDS ? n : 0;
-  };
-  const prevPaidWords = gate(prevWords);
-  const nowPaidWords = gate(nowWords);
-  const deltaWords = nowPaidWords - prevPaidWords;
-  if (deltaWords <= 0) return 0;
-  const granted = deltaWords * perWordWins({ mode, difficulty, rebirthCount });
+// RARITY (word-value): the gate is on the COUNT of accepted words (still MIN_WORDS), but the
+// PAYOUT is on a rarity WEIGHT — the running SUM of each word's rarity multiplier (see rarity.js:
+// COMMON ×1 … OBSCURE ×4, + length bonus, capped ×4.5). Callers pass the cumulative weight BEFORE
+// (prevWeight) and AFTER (nowWeight) this word alongside the counts. Because the paid weight is
+// zero until the COUNT clears the gate, the first three words' full rarity is released
+// RETROACTIVELY the instant word 3 lands (paidNow jumps from 0 to the whole cumulative weight),
+// and words 4+ each release exactly their own weight — full per-word fidelity, no caller-side
+// buffer. prevWeight/nowWeight DEFAULT to the counts (every word ×1) when omitted, so any caller
+// that doesn't pass a weight behaves byte-identically to the pre-rarity payout.
+export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight, nowWeight, rebirthCount } = {}) {
+  const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
+  const prevN = iCount(prevWords);
+  const nowN = iCount(nowWords);
+  const prevW = Number.isFinite(prevWeight) ? prevWeight : prevN;
+  const nowW = Number.isFinite(nowWeight) ? nowWeight : nowN;
+  // Paid weight is the cumulative weight, but ZERO until the count clears the gate.
+  const paidPrev = prevN >= MIN_WORDS ? prevW : 0;
+  const paidNow = nowN >= MIN_WORDS ? nowW : 0;
+  const deltaWeight = paidNow - paidPrev;
+  if (deltaWeight <= 0) return 0;
+  // Snap each grant to a round multiple of 10 (the payout invariant — every grant ends in a
+  // zero) after applying the rarity weight to the base per-word rate.
+  const granted = round10(deltaWeight * perWordWins({ mode, difficulty, rebirthCount }));
   saveWins(getWins() + granted);
   saveWinsLifetime(getWinsLifetime() + granted);
   pendingStamp += granted;
   // First time this round crosses the gate → count the round (mode counters only).
-  if (prevPaidWords === 0 && nowPaidWords > 0 && mode && ROUND_MODES.includes(mode)) {
+  if (prevN < MIN_WORDS && nowN >= MIN_WORDS && mode && ROUND_MODES.includes(mode)) {
     const r = getRounds();
     r[mode] += 1;
     saveRounds(r);

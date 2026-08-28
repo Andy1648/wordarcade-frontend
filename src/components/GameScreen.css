@@ -3099,6 +3099,16 @@
   text-transform: uppercase;
 }
 
+/* RARITY (word-value) tag in the kill feed, e.g. "RARE ×2.5". Colour is set inline per tier
+   (UNCOMMON cyan / RARE purple / OBSCURE gold); COMMON words get no tag at all. Bold + compact so
+   it reads as a reward flag next to the word without stealing the row. */
+.kill-feed-rarity {
+  font-family: 'Bungee', cursive;
+  font-size: 0.82em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 .kill-feed-action {
   color: #fff;
   text-transform: uppercase;

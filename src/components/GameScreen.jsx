@@ -986,6 +986,14 @@ function KillFeed({ events, playerColors = {} }) {
                         <span className="kill-feed-word">
                           {(ev.word || '').toUpperCase()}
                         </span>
+                        {/* RARITY (word-value): a rarer word earns a coloured tier tag here
+                            ("RARE ×2.5"). COMMON words carry no tag (ev.rarity is null). */}
+                        {ev.rarity && (
+                          <span className="kill-feed-rarity" style={{ color: ev.rarity.color }}>
+                            {' '}
+                            {ev.rarity.label}
+                          </span>
+                        )}
                       </>
                     )}
                     {ev.type === 'timeout' && (
