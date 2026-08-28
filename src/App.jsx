@@ -18,6 +18,7 @@ import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 const StatsScreen = lazy(() => import('./components/StatsScreen'));
 const CollectionScreen = lazy(() => import('./components/CollectionScreen'));
+const AchievementsScreen = lazy(() => import('./components/AchievementsScreen'));
 const ShopScreen = lazy(() => import('./components/ShopScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
@@ -68,6 +69,7 @@ import {
 } from './visitHistory';
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
+import { checkAchievements } from './progress/achievements';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
@@ -495,6 +497,15 @@ function App() {
     const b = claimReturnBonus(LAST_SEEN_AT_LOAD);
     if (b) setReturnCard(b);
   }, []);
+
+  // ACHIEVEMENTS (Job 7): re-evaluate whenever we land on the home menu (so anything earned during a
+  // game / run is caught on return). checkAchievements grants wins for newly-earned only (the wins
+  // chip updates as feedback); the full grid is on the ACHIEVEMENTS screen. Idempotent — a repeat
+  // home visit with nothing new grants nothing.
+  useEffect(() => {
+    if (view !== 'home') return;
+    checkAchievements();
+  }, [view]);
 
   const myIdRef = useRef(null);
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
@@ -1566,6 +1577,11 @@ function App() {
     setView('collection');
   }
 
+  function goToAchievements() {
+    overlayReturnRef.current = 'achievements';
+    setView('achievements');
+  }
+
   function goToShop() {
     shopViewRef.current = 'shop';
     overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
@@ -1930,6 +1946,12 @@ function App() {
         <CollectionScreen onBack={goHome} />
       </Suspense>
     );
+  } else if (view === 'achievements') {
+    screen = (
+      <Suspense fallback={<OverlaySkeleton title="ACHIEVEMENTS" />}>
+        <AchievementsScreen onBack={goHome} />
+      </Suspense>
+    );
   } else if (view === 'shop') {
     screen = (
       <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'SHOP'} />}>
@@ -1966,6 +1988,7 @@ function App() {
         onCredits={goToCredits}
         onStats={goToStats}
         onCollection={goToCollection}
+        onAchievements={goToAchievements}
         onShop={goToShop}
         onRebirth={goToRebirth}
         restoreFocus={overlayReturnRef.current}
