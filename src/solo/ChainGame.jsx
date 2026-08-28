@@ -125,7 +125,9 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       const newWords = (s.lastLinks || []).slice(-delta).map((l) => l.word);
       const prevWeight = chainWeightRef.current;
       for (const w of newWords) {
-        chainWeightRef.current += rarityOf(w).mult;
+        // COMBO (Job 2) folds into the SAME per-word weight the banking already sums: each
+        // word is worth rarity × the live combo multiplier, so a hot streak pays more.
+        chainWeightRef.current += rarityOf(w).mult * g.combo.mult;
         wpmAddWord(w); // WPM: count each new link's chars
       }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
@@ -281,6 +283,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.k}
+      comboMult={g.combo.mult}
+      comboBreaks={g.combo.breaks}
       over={{
         score: s.score,
         best: g.best,

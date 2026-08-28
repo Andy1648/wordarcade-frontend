@@ -113,7 +113,9 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       // the count by 1; a rare jump credits the extra words at ×1.
       const delta = solved - fuseBankedRef.current;
       const prevWeight = fuseWeightRef.current;
-      fuseWeightRef.current += rarityOf(s.lastWord).mult + Math.max(0, delta - 1);
+      // COMBO (Job 2): the solved word's rarity is scaled by the live combo multiplier; jump
+      // filler stays ×1, matching CHAIN.
+      fuseWeightRef.current += rarityOf(s.lastWord).mult * g.combo.mult + Math.max(0, delta - 1);
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       const banked = bankWordWins({
         mode: 'fuse',
@@ -195,6 +197,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}
+      comboMult={g.combo.mult}
+      comboBreaks={g.combo.breaks}
       over={{
         score: s.wordsSolved,
         best: g.best,

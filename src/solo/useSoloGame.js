@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
 import { tierForClockLeft } from '../share/resultCard.js';
+import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -61,6 +62,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   // 'fast'|'mid'|'slow' per accepted word, from the clock-left fraction at submit.
   // Pure data only — it never affects the run. Reset on every restart.
   const tierLogRef = useRef([]);
+  // WINS COMBO (Job 2): consecutive accepts build a multiplier that boosts the run's wins
+  // payout; a reject/timeout resets it. Pure state kept in a ref (mutated at the same points
+  // that already trigger a re-render), read live by the HUD readout and the round-end payout.
+  const comboRef = useRef(freshCombo());
   const rafRef = useRef(0);
   const restartTimerRef = useRef(null);
 
@@ -120,6 +125,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     const tick = () => {
       const rem = turnBudgetRef.current - (now() - turnStartRef.current);
       if (rem <= 0) {
+        comboRef.current = comboBreak(comboRef.current); // a timeout resets the wins combo
         const { dead } = adapter.onTimeout(engineRef.current);
         if (dead) {
           setRemaining(0);
@@ -164,6 +170,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       const budget = turnBudgetRef.current || 1;
       const left = (budget - (now() - turnStartRef.current)) / budget;
       tierLogRef.current.push(tierForClockLeft(left));
+      comboRef.current = comboAccept(comboRef.current); // grow the wins combo
       setReason('');
       setInput('');
       startTurnClock(); // the next turn's budget (new required letter / new fragment)
@@ -171,6 +178,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     } else {
       // Reject: the input is NEVER cleared and there is NO shake — the sill flashes and a
       // named reason prints, so the evidence of the attempt survives.
+      comboRef.current = comboBreak(comboRef.current); // a reject resets the wins combo
       setReason(rejectMessage(r.reason, adapter.rejectCtx(engineRef.current)));
       setSillKey((k) => k + 1);
     }
@@ -182,6 +190,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     engineRef.current = createEngine();
     runIndexRef.current += 1;
     tierLogRef.current = []; // fresh run → fresh share-card glyph log
+    comboRef.current = freshCombo(); // fresh run → fresh wins combo
     armedRef.current = false;
     turnBudgetRef.current = adapter.budgetMs(engineRef.current);
     setArmed(false);
@@ -228,5 +237,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     best,
     // Per-accepted-word speed tiers for the share card (live array; fully populated by 'over').
     tierLog: tierLogRef.current,
+    // WINS combo (live): { streak, mult, weighted, breaks }. `mult` folds into each word's
+    // per-word banking weight (see ChainGame/FuseGame); `breaks` re-keys the HUD pill shake.
+    combo: comboRef.current,
   };
 }
