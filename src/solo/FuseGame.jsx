@@ -10,8 +10,9 @@ import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { touchStreak } from '../progress/streak.js';
-import { PB_KEYS } from './shared.js';
+import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
+import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import poolsRaw from './fragmentPools.json';
 
@@ -85,8 +86,18 @@ export default function FuseGame({ onExit }) {
 }
 
 function FuseInner({ data, createEngine, adapter, onExit }) {
+  // Persisted all-time FUSE run count (Job 14) — drives the first-run tutorial card, exactly like
+  // CHAIN. onRunStart fires from the hook on the first run + every restart (button OR Enter).
+  const [runs, setRuns] = useState(0);
   // Each accepted FUSE word counts toward the daily streak (this mode never calls addWords).
-  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, mode: 'fuse', onAccept: touchStreak });
+  const g = useSoloGame({
+    createEngine,
+    adapter,
+    pbKey: PB_KEYS.FUSE,
+    mode: 'fuse',
+    onRunStart: () => setRuns(bumpFuseRuns()),
+    onAccept: touchStreak,
+  });
   const s = g.engine.state;
 
   // WINS (§2): BANK per solved word as the run plays so leaving mid-run keeps what was earned —
@@ -161,14 +172,13 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
     </div>
   );
 
-  const overCard = (
-    <>
-      <h2>OUT OF FUSES</h2>
-      <div className="solo-death-killed">the last fragment was “{(s.fragment || '').toUpperCase()}”</div>
-      <div className="solo-death-links">
-        <span>{s.wordsSolved} words defused</span>
-      </div>
-    </>
+  // First-run tutorial card (Job 14): the player's very first FUSE run (runs === 1), OR any run
+  // that ended under 3 words — the runs where a how-to-play card beats a score card. Matches CHAIN.
+  const firstRun = runs === 1 || s.wordsSolved < 3;
+  const overCard = firstRun ? (
+    <FuseFirstRunCard />
+  ) : (
+    <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
   );
 
   return (
@@ -207,6 +217,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         restartArmed: g.restartArmed,
         restart: g.restart,
         card: overCard,
+        bare: firstRun, // tutorial card: no SCORE/BEST line (Job 14)
+        restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
         // FUSE score == word count, so pts is redundant — omit it (points=null).
         share: (

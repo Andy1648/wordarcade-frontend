@@ -119,6 +119,32 @@ export function bumpChainRuns() {
   return next;
 }
 
+// ---- FUSE run counter (Job 14) ---------------------------------------------------
+// Parallel to CHAIN's: drives FUSE's first-run tutorial death card (run 1, or any run that
+// ended under 3 words, gets the how-to-play card instead of the score card). Guarded.
+const FUSE_RUNS_KEY = 'taw.fuse.runs';
+
+export function getFuseRuns() {
+  try {
+    const raw = localStorage.getItem(FUSE_RUNS_KEY);
+    if (raw == null) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function bumpFuseRuns() {
+  const next = getFuseRuns() + 1;
+  try {
+    localStorage.setItem(FUSE_RUNS_KEY, String(next));
+  } catch {
+    /* storage blocked — the return value still lets this run behave correctly */
+  }
+  return next;
+}
+
 // ---- Accepted-word submit (shared by both solo screens) -------------------------
 // Runs the engine's submit and, ONLY on an accepted word, fires the onAccept side-effect exactly
 // once. CHAIN and FUSE both drive their engine through this one path (via useSoloGame), so the
