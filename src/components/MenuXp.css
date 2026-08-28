@@ -403,3 +403,12 @@ button.menu-wins-chip:focus-visible {
   box-shadow: 2px 2px 0 #000;
   white-space: nowrap;
 }
+/* At the narrowest phones (≤380px) the LV bar can't seat the rank chip without squeezing the
+   XP track until the "into / cost" readout clips past it (viewport-integrity, 360×640). The rank
+   is the bar's lowest-priority element and still shows in Stats + on wider screens, so drop it
+   here rather than break the bar's fit. */
+@media (max-width: 380px) {
+  .menu-xp-rank {
+    display: none;
+  }
+}
