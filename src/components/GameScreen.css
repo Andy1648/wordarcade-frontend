@@ -331,7 +331,7 @@
   /* box-shadow transition (not a keyframe animation) so the beat shadow-slam
      below doesn't replace - and stutter - the idle rock/pulse transform anims. */
   transition: transform 0.12s, box-shadow 80ms ease-out;
-  will-change: box-shadow;
+  /* (box-shadow will-change was a non-compositing no-op — removed.) */
 }
 
 /* When a player is knocked out, their card flashes red then tilts and fades
@@ -3515,11 +3515,10 @@ html[data-beat='true'] .game-player-card:not(.eliminating):not(.eliminated) {
 }
 
 /* ---- Category Blitz: category text - shadow slam + scale pop ---- */
-.cb-category-display {
-  will-change: transform, text-shadow;
-}
-
 html[data-beat='true'] .cb-category-display {
+  /* Promote only for the 120ms beat kick; transform composites, the text-shadow slam
+     does not (it was a no-op in the old will-change and is dropped). */
+  will-change: transform;
   animation: cb-category-pop 120ms ease-out, cb-category-shadow-slam 120ms ease-out;
 }
 

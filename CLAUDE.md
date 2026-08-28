@@ -38,7 +38,14 @@ What actually matters — enforce these:
 - **No layout reads in any per-frame or per-keystroke path.** No getBoundingClientRect /
   offsetWidth / getComputedStyle inside a rAF loop, keydown handler, or pop/particle spawn.
   Measure once on mount/resize and cache; spawns are pure writes.
-- **will-change on exactly two elements site-wide** (`.clock-fill` + `.burn`). Do not add more.
+- **will-change may ONLY list `transform` and/or `opacity`**, and must NEVER sit on an idle /
+  pooled / always-present node. Anything else (box-shadow, text-shadow, border-color, filter, a
+  custom property, a layout prop) is a compositor no-op — do not list it. Toggle will-change ON for
+  the life of the animation and OFF at rest: a CSS `:hover` / `html[data-beat]` state, or JS that
+  sets `el.style.willChange` on play and clears it on finish. A build-failing test
+  (`src/perf/willChange.test.js`) asserts no will-change value outside transform/opacity. (The old
+  "exactly two elements site-wide — `.clock-fill` + `.burn`" rule was never true or enforced; this
+  replaces it.)
 
 CONCURRENT COUNT IS NO LONGER A BUDGET. The old "menu: ≤20 concurrent finite animations" was
 written when animations were main-thread work. Measured on a real mid-range Android, **106

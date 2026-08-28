@@ -213,7 +213,11 @@ What replaces it (authoritative list in `CLAUDE.md` → **ANIMATION BUDGET**), a
 3. **pool every repeated element** — never a node per event.
 4. **no layout reads** (getBoundingClientRect/offsetWidth/getComputedStyle) in any per-frame or
    per-keystroke path — measure once on mount/resize, cache, spawns are pure writes.
-5. **will-change on exactly two elements site-wide** (`.clock-fill` + `.burn`).
+5. **will-change: transform/opacity ONLY, never on an idle node** — toggle it per animation (a
+   `:hover` / `html[data-beat]` state, or JS setting `el.style.willChange` on play + clearing on
+   finish). Build-failing test: `src/perf/willChange.test.js` (no will-change value outside
+   transform/opacity). (The old "exactly two elements — `.clock-fill` + `.burn`" claim was never
+   true or enforced.)
 
 Enforcement changed to match: the `≤20` count assertions in `menu-xp.spec.js` and
 `card-beat.spec.js` are now **advisory** (they log the peak/concurrent count, no longer fail the

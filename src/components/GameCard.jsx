@@ -111,10 +111,15 @@ const magnet = (() => {
       cards.add(card);
       if (cards.size === 1) start();
       else if (active) card.rect = card.el.getBoundingClientRect();
+      // Promote the wrapper ONLY when the tilt loop is actually running (fine-pointer +
+      // motion). On touch / reduced-motion `active` is false and the layer is never
+      // promoted — the will-change no longer sits idle on every card.
+      if (active) card.el.style.willChange = 'transform';
     },
     unregister(card) {
       cards.delete(card);
       card.el.style.transform = ''; // hand the rest pose back to CSS
+      card.el.style.willChange = '';
       if (cards.size === 0) stop();
     },
   };

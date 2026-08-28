@@ -509,7 +509,8 @@ html[data-beat='true'] .homepage-logo {
   position: relative;
   z-index: 1;
   border-radius: 8px;
-  will-change: transform;
+  /* will-change toggled in lib/magneticPull.js only while the pull is engaged (same as
+     .game-card-magnet) — never parked idle on the button wrapper. */
 }
 
 /* Discreet link to the standalone credits page. Desktop keeps the original
@@ -568,11 +569,16 @@ html[data-beat='true'] .homepage-logo {
   transform: skewX(-2deg);
   /* Overshoot bezier so hover/release POP rather than ease smoothly. */
   transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
-  will-change: transform, border-color;
+  /* will-change scoped to hover/press below (transform only) — border-color was a
+     non-compositing no-op and is dropped; the button is not promoted at rest. */
 }
 
 /* Punchy zoom on hover (idle bounce yields to it via the :hover animation:none
-   in the idle section below). */
+   in the idle section below). Promote only while the transform is actually animating. */
+.homepage-btn:hover:not(:disabled),
+.homepage-btn:active:not(:disabled) {
+  will-change: transform;
+}
 .homepage-btn:hover:not(:disabled) {
   transform: skewX(-2deg) scale(1.06);
 }
