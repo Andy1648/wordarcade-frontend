@@ -84,3 +84,90 @@ it unblocks several jobs.
 ## NOT A JOB
 There is no JOB 30 (the 2026-08-27 message stream truncated at JOB 29 "This").
 JOB 29 (empty-lobby, REPORT ONLY) was never fully specified — clarify before starting.
+
+---
+
+## 2026-08-28 REFRESH (Job 20) — standing platform backlog + this-run follow-ups
+
+Format: **item** — what it is / why it matters / `target-branch`.
+
+### Platform / infra (from the standing prompt list)
+- [ ] **Client router** — real URL routing (history API) so deep links, back-button, and per-mode
+  pages work instead of the single-view `view` state. Enables SEO + shareable states. `feat/router`
+- [ ] **Versioned save data + export/import** — wrap all `taw.*`/`wa_*` keys in a `{v, ...}` envelope
+  with migrations; add export-to-string / import so a player can move devices. Save loss is the
+  worst churn. `feat/save-versioning`
+- [ ] **Error-boundary granularity** — per-screen React error boundaries (menu/game/shop) so one
+  screen's crash doesn't white-screen the app; report to console/analytics. `fix/error-boundaries`
+- [ ] **Offline service worker** — cache the shell + fonts + word data so the menu and solo modes
+  load offline (school Chromebooks, flaky wifi). `feat/service-worker`
+- [ ] **Analytics funnel instrumentation** — event taxonomy for splash→menu→mode→first-word→
+  rebirth so drop-off is measurable. Currently blind. `feat/analytics-funnel`
+- [ ] **A11y pass** — focus order, roles, live-regions, contrast, keyboard-only nav across every
+  screen; audit with axe. Broadens audience + is the right thing. `chore/a11y-pass`
+- [ ] **App.jsx decomposition** — split the ~2100-line App into `useGameSocket` / `useRoom` /
+  `useOverlays` / `useProgressionEvents`. TIER-1; needs 2-device play-test. `refactor/app-decompose`
+- [ ] **Per-mode SEO pages** — static prerendered landing pages per mode (needs the router) for
+  search traffic. `feat/seo-pages`
+- [ ] **Visual-regression baselines** — Playwright screenshot baselines for menu + each mode so UI
+  drift is caught in CI. `test/visual-regression`
+- [ ] **Reduced-motion sweep** — verify EVERY animation honors `prefers-reduced-motion` (new Job-11
+  sounds, Job-12 wipe, cards); one audit. `chore/reduced-motion-audit`
+- [ ] **Embeddability** — iframe/embed mode (CrazyGames-style) hardening: postMessage, no top-nav
+  assumptions, storage-partition fallback. `feat/embeddable`
+- [ ] **Perf playbook rewrite** — the perf docs predate the composited-animation model; rewrite
+  around the real budget (see CLAUDE.md ANIMATION BUDGET). `docs/perf-playbook`
+
+### Gameplay / backend (from the standing prompt list)
+- [ ] **Optimistic local validation in Word Bomb** — client-side accept for the 3 client-knowable
+  rejects (already done for length/fragment/used per CLAUDE.md; verify + extend feel). TIER-1.
+  `feat/wb-optimistic`
+- [ ] **Bot pacing** — the solo Word Bomb bot's timing/difficulty curve feels robotic; humanize.
+  `feat/bot-pacing`
+- [ ] **Reconnect recovery** — restore a player into their live room/game after a socket drop
+  instead of dumping to menu. TIER-1 + backend. `feat/reconnect-recovery`
+- [ ] **Daily shared seed** — a single date-seeded board all players share (leaderboard-ready).
+  `feat/daily-seed`
+- [ ] **iOS Safari audit** — audio re-suspend, 100vh/dvh, input zoom, safe-area; the audience has
+  iPhones. `chore/ios-safari-audit`
+- [ ] **Intl input** — IME / non-Latin keyboards currently break the letter capture; at least fail
+  gracefully. `fix/intl-input`
+- [ ] **Backend lifecycle audit** — room GC, socket cleanup, memory over long uptime (pairs with the
+  known dictionary-cache leak). Backend. `chore/be-lifecycle-audit`
+- [ ] **Abuse / rate limiting** — per-IP/socket limits on create/join/submit + display-name
+  moderation (see DO-FIRST list above). Backend. `feat/abuse-limits`
+- [ ] **SAT definition accuracy** — sample+verify SAT defs, report error rate (REPORT ONLY; content
+  cannot be invented). `chore/sat-def-audit`
+- [ ] **Judge eval harness** — a fixture set + harness to measure the AI Category-Blitz judge's
+  precision/recall before trusting it. `test/judge-eval`
+- [ ] **CHAIN/FUSE tuning verification** — replay the balance sims against the shipped constants to
+  confirm the difficulty curve still holds. `chore/solo-tuning-verify`
+- [ ] **The empty-lobby problem** — a solo player creating a public room sees an empty list; seed
+  with bots / matchmaking / a "play solo" nudge. `feat/empty-lobby`
+
+### Follow-ups created by THIS run (Jobs 1–19, all on unmerged branches)
+- [ ] **Merge the economy chain** — `feat/unified-xp → mastery → collection → wins-sinks →
+  return-bonus → achievements` into main after a 2-device play-test (TIER-1: touches App.jsx WS
+  handlers). This is the gating step for most of the below. `chore/merge-economy-chain`
+- [ ] **Achievement toast** — Job 7 cut it (element wouldn't stay mounted even in a prod build);
+  wins still credit + grid shows all. Rebuild the toast (likely needs a different mount strategy).
+  `fix/achievement-toast`
+- [ ] **Wire deferred sounds on merge** — Job 11's `sndAchievement` / in-game `sndLevelUp` /
+  `sndStreakExtended` are defined but unwired (their systems live on the feature branches, not main);
+  add one call each once merged. `chore/wire-deferred-sounds`
+- [ ] **Mechanical mastery perks** — Job 2 shipped a safe XP-bonus perk; the spec's +timer/+life/
+  +reroll perks need per-mode balance re-sim (and backend for the server-authoritative WB/Blitz).
+  `feat/mastery-mechanical-perks`
+- [ ] **In-game level-up celebration** — Job 1 persists in-game levels silently (conservative). Add
+  the celebration + `sndLevelUp` in-game. `feat/ingame-levelup-fx`
+- [ ] **Give THEMES an OUT edge** — Job 8's #1 dead-end: themes are a wins sink with no output. Add a
+  small per-theme perk (or reframe as pure cosmetic). `feat/theme-perk`
+- [ ] **Cut or wire vanity counters** — `lifetimeLetters` + `taps` feed nothing (Job 8). Wire to an
+  achievement/perk or drop from the Stats UI. `chore/vanity-counters`
+- [ ] **Pick + wire run modifiers** — Job 5 prototype (`public/proto-modifiers.html`) lists 12; Andy
+  picks survivors, then wire into the solo runs with the ARM/preview UX. `feat/run-modifiers-live`
+- [ ] **Pick + build preview-card redesign** — Job 10 prototype (three directions); Andy picks one,
+  then replace the live ModeDialog with it. `feat/preview-redesign-live`
+- [ ] **Act on the audit reports** — implement fixes from Job 9 (design consistency), Job 13 (input
+  latency), Job 15 (copy/voice), Job 18 (low-end), Job 19 (late-game dead air, esp. the T6→T7 wins
+  cliff + invisible collection). Each its own branch, e.g. `fix/copy-pass`, `perf/lowend-fixes`.
