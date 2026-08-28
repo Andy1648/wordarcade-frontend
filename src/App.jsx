@@ -13,8 +13,6 @@ const GameScreen = lazy(() => import('./components/GameScreen'));
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
-import MusicButton from './components/MusicButton';
-import ClackButton from './components/ClackButton';
 import AudioControls from './components/AudioControls';
 import { sndWordAccepted, sndWordRejected, sndRunOver } from './audio/gameSounds';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
@@ -2152,17 +2150,15 @@ function App() {
               div that briefly flashes a palette colour on each beat (colour set by
               useBeatSync via --flash-color). Click-through, below modals. */}
           <div className="screen-flash" aria-hidden="true" />
-          <MusicButton
-            isMuted={music.isMuted}
-            onToggle={music.toggleMute}
-            accent={SCREEN_ACCENT[view] || '#FF2EC4'}
+          {/* ONE corner sound control (Job 11): a single 🔊 button that opens a popover holding all
+              three toggles — MUSIC / KEYSTROKE / EVENTS — plus volume. Replaces the three separate
+              floating fixed buttons (music ♫ / clack ⌨ / events 🔊) that, side by side, overlapped
+              the menu's CREDITS footer link at 360px. Music state is owned by App's player. */}
+          <AudioControls
+            accent={SCREEN_ACCENT[view] || '#2EFFE0'}
+            musicMuted={music.isMuted}
+            onToggleMusic={music.toggleMute}
           />
-          {/* Keyboard-sound (clack) control — sits beside the music toggle in the same
-              corner cluster. Default OFF; enabling creates the AudioContext in-gesture. */}
-          <ClackButton accent={SCREEN_ACCENT[view] || '#FFE94A'} />
-          {/* Event-sound toggle (🔊) + master volume — the third of three separate audio toggles
-              (keystroke / event / music), all default OFF (Job 11). */}
-          <AudioControls accent={SCREEN_ACCENT[view] || '#2EFFE0'} />
         </div>
       </div>
       {/* CONNECTION LOST: shown only when the socket drops mid room/game. The

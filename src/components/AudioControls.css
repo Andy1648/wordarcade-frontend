@@ -1,16 +1,14 @@
-/* AudioControls.css — event-sound toggle + master volume, in the corner cluster left of the
-   keyboard (clack) toggle. Same house treatment as .clack-btn / .music-btn. */
+/* AudioControls.css — the ONE corner sound control. A single fixed 🔊 button (bottom-right, the same
+   spot the music toggle used to hold) that opens a popover with all three toggles + volume. Same
+   house treatment as before (flat #1a0b2e fill, thick accent ring, hard offset shadow). Because it is
+   now ONE narrow button at right:16px it never reaches the centred CREDITS footer link at 360px. */
 .audio-ctrl {
   position: fixed;
-  right: 120px; /* 16 (music) + 44 + 8 + 44 (clack) + 8 gap */
+  right: 16px;
   bottom: 16px;
-  z-index: 70;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  z-index: 70; /* above game-over / countdown overlays so it's always reachable */
 }
-.audio-btn,
-.audio-vol-toggle {
+.audio-btn {
   width: 44px;
   height: 44px;
   display: flex;
@@ -19,58 +17,106 @@
   font-size: 18px;
   line-height: 1;
   background: #1a0b2e;
-  border: 3px solid #2effe0;
+  border: 3px solid #2effe0; /* accent set inline */
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 3px 3px 0 #000;
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.audio-vol-toggle {
-  width: 30px;
-  height: 30px;
-  font-size: 13px;
-}
-.audio-btn:hover,
-.audio-vol-toggle:hover {
+.audio-btn:hover {
   transform: scale(1.1);
 }
-.audio-btn:active,
-.audio-vol-toggle:active {
+.audio-btn:active {
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 #000;
 }
+/* All sound off/muted: dimmed + struck through, so "all quiet" reads without opening the panel. */
 .audio-btn.off {
   opacity: 0.75;
+  position: relative;
 }
 .audio-btn.off::after {
   content: '';
   position: absolute;
-  width: 30px;
+  top: 50%;
+  left: 50%;
+  width: 28px;
   height: 3px;
   background: currentColor;
-  transform: rotate(-45deg);
+  transform: translate(-50%, -50%) rotate(-45deg);
   border-radius: 2px;
+  pointer-events: none;
 }
-.audio-vol-popover {
+
+/* The popover: opens UP from the button, right-aligned to it. Only present while open, so the
+   layout gate (which never opens it) only ever sees the single 44px button. */
+.audio-panel {
   position: absolute;
   bottom: 52px;
   right: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px;
+  min-width: 168px;
   background: #1a0b2e;
   border: 3px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
 }
-.audio-vol-label {
-  font-family: 'Bungee', cursive;
-  font-size: 10px;
+.audio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.audio-row-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
   letter-spacing: 0.08em;
   color: #b9a7d6;
 }
-.audio-vol-popover input[type='range'] {
-  width: 120px;
+.audio-toggle {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  background: #1a0b2e;
+  border: 2px solid #2effe0; /* accent set inline */
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.audio-toggle:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.audio-toggle.off {
+  opacity: 0.6;
+  position: relative;
+}
+.audio-toggle.off::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-20deg);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.audio-row-vol {
+  margin-top: 2px;
+}
+.audio-row-vol input[type='range'] {
+  width: 96px;
   cursor: pointer;
 }

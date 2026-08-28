@@ -14,15 +14,37 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const DEFAULT_VOLUME = 0.3;
 
+// Music-mute preference persists across reloads (like the keystroke/event toggles), so a player who
+// silenced music stays silenced next visit. Stored as a plain '1' flag; absent/blocked → unmuted.
+// This only records the PREFERENCE — playback is still started solely from a user gesture (the splash
+// dismiss), so a persisted mute never causes anything to play on its own.
+const MUSIC_MUTE_KEY = 'taw.musicMuted';
+function readMusicMuted() {
+  try {
+    return localStorage.getItem(MUSIC_MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function writeMusicMuted(muted) {
+  try {
+    if (muted) localStorage.setItem(MUSIC_MUTE_KEY, '1');
+    else localStorage.removeItem(MUSIC_MUTE_KEY);
+  } catch {
+    /* storage blocked — preference just won't persist this session */
+  }
+}
+
 export function useMusicPlayer() {
   const audioRef = useRef(null);
   // The "intended" (unmuted) volume. setVolume updates this; toggleMute restores
   // from it. In a ref so the callbacks stay stable across volume changes.
   const volumeRef = useRef(DEFAULT_VOLUME);
-  // Mirror of isMuted readable inside the stable callbacks.
-  const mutedRef = useRef(false);
+  // Mirror of isMuted readable inside the stable callbacks. Seeded from the persisted preference so
+  // a returning muted player stays muted (applyVolume honours mutedRef when play() finally runs).
+  const mutedRef = useRef(readMusicMuted());
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(() => readMusicMuted());
 
   // Web Audio analysis pipeline, built lazily on first play. All optional - if
   // Web Audio is unavailable the music still plays (volume falls back to the
@@ -223,6 +245,7 @@ export function useMusicPlayer() {
   const toggleMute = useCallback(() => {
     const nowMuted = !mutedRef.current;
     mutedRef.current = nowMuted;
+    writeMusicMuted(nowMuted); // persist the preference across reloads
     applyVolume();
     setIsMuted(nowMuted);
     const audio = audioRef.current;

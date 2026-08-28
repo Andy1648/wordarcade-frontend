@@ -1,72 +1,96 @@
-// AudioControls.jsx — the EVENT-SOUND toggle (🔊) + a MASTER VOLUME slider (Job 11), in the same
-// bottom-right corner cluster as the keyboard (⌨) and music (♫) toggles. Three separate toggles is
-// deliberate: keystroke sound is its own switch because typing sound is a documented misophonia
-// trigger. All persisted; default OFF (school-lab audience). The slider is revealed by a small ▾ so
-// the corner stays tidy; its value persists live.
+// AudioControls.jsx — the ONE corner sound control (Job 11). A single 🔊 button in the bottom-right
+// corner (the only fixed audio element now) that opens a small popover holding all three sound
+// toggles — MUSIC (♫), KEYSTROKE (⌨), EVENTS (🔊) — plus the master VOLUME slider.
+//
+// Why one button: the three used to be three SEPARATE position:fixed buttons floating side by side,
+// which at 360px reached far enough left to sit on top of the menu's CREDITS footer link (a fixed
+// element with no layout relationship to the page will collide with whatever is under it). Folding
+// them behind one speaker button keeps a single, narrow corner control that never overlaps the
+// footer, and gives one place for every sound switch.
+//
+// Everything is OFF-by-default / persisted, and the AudioContext is only ever created or resumed
+// INSIDE a user gesture (enable*/ensureCtx run from the toggle/slider handlers), so nothing plays
+// before the user asks for it and OFF is genuinely silent.
 import { useState } from 'react';
 import './AudioControls.css';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
+import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 
-export default function AudioControls({ accent = '#2EFFE0' }) {
-  const [on, setOn] = useState(() => isEventSoundsEnabled());
-  const [vol, setVol] = useState(() => getMasterVolume());
+export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, onToggleMusic }) {
   const [open, setOpen] = useState(false);
+  const [events, setEvents] = useState(() => isEventSoundsEnabled());
+  const [clack, setClack] = useState(() => isClackEnabled());
+  const [vol, setVol] = useState(() => getMasterVolume());
 
-  const toggle = () => {
-    if (on) {
-      disableEventSounds();
-      setOn(false);
-    } else {
-      enableEventSounds(); // creates/resumes the shared AudioContext in this gesture
-      setOn(true);
-    }
+  const toggleEvents = () => {
+    if (events) { disableEventSounds(); setEvents(false); }
+    else { enableEventSounds(); setEvents(true); } // creates/resumes the shared AudioContext in-gesture
+  };
+  const toggleClack = () => {
+    if (clack) { disableClack(); setClack(false); }
+    else { enableClack(); setClack(true); } // creates/resumes the AudioContext in-gesture
   };
   const onVol = (e) => {
     const v = Number(e.target.value) / 100;
-    ensureCtx(); // this is a user gesture — safe to warm the context so the slider is audible live
+    ensureCtx(); // user gesture — safe to warm the context so the slider is audible live
     setMasterVolume(v);
     setVol(v);
   };
 
-  return (
-    <div className="audio-ctrl">
+  // The corner glyph reflects the master state: struck-through when EVERY sound is off/muted, so
+  // "all quiet" reads at a glance without opening the panel.
+  const allOff = musicMuted && !events && !clack;
+
+  const Toggle = ({ on, onClick, glyph, label }) => (
+    <div className="audio-row">
+      <span className="audio-row-label">{label}</span>
       <button
         type="button"
-        className={`audio-btn${on ? '' : ' off'}`}
+        className={`audio-toggle${on ? '' : ' off'}`}
         style={{ borderColor: accent, color: accent }}
-        onClick={toggle}
-        title={on ? 'Event sounds: on' : 'Event sounds: off'}
-        aria-label={on ? 'Turn event sounds off' : 'Turn event sounds on'}
+        onClick={onClick}
         aria-pressed={on}
+        aria-label={`${label} sound: ${on ? 'on' : 'off'}`}
+        title={`${label} sound: ${on ? 'on' : 'off'}`}
+      >
+        {glyph}
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="audio-ctrl">
+      {open && (
+        <div className="audio-panel" role="group" aria-label="Sound settings">
+          <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" />
+          <Toggle on={clack} onClick={toggleClack} glyph="⌨" label="KEYSTROKE" />
+          <Toggle on={events} onClick={toggleEvents} glyph="🔊" label="EVENTS" />
+          <div className="audio-row audio-row-vol">
+            <span className="audio-row-label">VOLUME</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round(vol * 100)}
+              onChange={onVol}
+              aria-label="Master volume"
+              style={{ accentColor: accent }}
+            />
+          </div>
+        </div>
+      )}
+      <button
+        type="button"
+        className={`audio-btn${allOff ? ' off' : ''}`}
+        style={{ borderColor: accent, color: accent }}
+        onClick={() => setOpen((o) => !o)}
+        title="Sound settings"
+        aria-label="Sound settings"
+        aria-expanded={open}
       >
         🔊
       </button>
-      <button
-        type="button"
-        className="audio-vol-toggle"
-        style={{ borderColor: accent, color: accent }}
-        onClick={() => setOpen((o) => !o)}
-        title="Master volume"
-        aria-label="Master volume"
-        aria-expanded={open}
-      >
-        ▾
-      </button>
-      {open && (
-        <div className="audio-vol-popover">
-          <label className="audio-vol-label">VOLUME</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round(vol * 100)}
-            onChange={onVol}
-            aria-label="Master volume"
-            style={{ accentColor: accent }}
-          />
-        </div>
-      )}
     </div>
   );
 }
