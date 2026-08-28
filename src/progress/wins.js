@@ -176,9 +176,44 @@ export function grantWins(n) {
   return next;
 }
 
+// Bank wins INCREMENTALLY as accepted words climb, so leaving mid-round never forfeits what
+// was already earned (§2). Called once per accepted word with the round's running accept count
+// BEFORE (prevWords) and AFTER (nowWords) this word. Pays perWordWins for every word past the
+// MIN_WORDS gate: word 3 banks 3×perWord RETROACTIVELY (the round crosses the gate), words 4+
+// bank 1×perWord each, words 1-2 bank nothing (still gated). Grants into balance + lifetime +
+// the menu stamp, and bumps the mode's round counter ONCE (the first crossing). Returns the
+// wins granted THIS call. Pure given rebirthCount (only side effect is localStorage).
+//
+// This REPLACES the end-of-round recordRound() payout in every mode — the two must never both
+// run for the same round or wins double-pay. recordRound is kept (tested, pure) but no longer
+// called from gameplay; the per-word ledger is now the single source of the payout.
+export function bankWordWins({ mode, difficulty, prevWords, nowWords, rebirthCount } = {}) {
+  const gate = (x) => {
+    const n = Number.isFinite(x) ? Math.floor(x) : 0;
+    return n >= MIN_WORDS ? n : 0;
+  };
+  const prevPaidWords = gate(prevWords);
+  const nowPaidWords = gate(nowWords);
+  const deltaWords = nowPaidWords - prevPaidWords;
+  if (deltaWords <= 0) return 0;
+  const granted = deltaWords * perWordWins({ mode, difficulty, rebirthCount });
+  saveWins(getWins() + granted);
+  saveWinsLifetime(getWinsLifetime() + granted);
+  pendingStamp += granted;
+  // First time this round crosses the gate → count the round (mode counters only).
+  if (prevPaidWords === 0 && nowPaidWords > 0 && mode && ROUND_MODES.includes(mode)) {
+    const r = getRounds();
+    r[mode] += 1;
+    saveRounds(r);
+  }
+  return granted;
+}
+
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round
 // counter — but ONLY when wordsAccepted >= MIN_WORDS. Returns the wins granted. `difficulty`
 // (Word Bomb / Category Blitz tier key) scales the payout via DIFFICULTY_MULT.
+// NOTE: superseded by bankWordWins() for live gameplay (kept for its unit tests / as the pure
+// reference for the total a full round pays). Do NOT call this AND bankWordWins for one round.
 export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
   const granted = awardWins({ wordsAccepted, mode, difficulty });
   const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= MIN_WORDS;

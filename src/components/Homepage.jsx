@@ -87,7 +87,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, onDaily, daily, restoreFocus = null, onFocusRestored }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -194,7 +194,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     let raf = 0;
     const compute = () => {
       // Reset to the natural (unscaled) size for a clean, non-compounding measurement.
+      // Also drop any height WE set last pass so clientHeight reads the full 100% stage
+      // (max-height:100% of the wrap) — the shrink below is recomputed from scratch, so the
+      // measurement never feeds back on the previous shrink (no oscillation).
       stage.style.setProperty('--menu-scale', '1');
+      stage.style.height = '';
       // Phones (≤760px) own their layout in CSS: a fixed frame (title + XP + action buttons)
       // with the CARD LIST scrolling in the middle, so all five cards are reachable and the XP
       // bar never scrolls out. The fit-to-one-screen scale is a laptop concept — leave scale at
@@ -238,6 +242,14 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       const raw = (inner - RESERVE - gaps - fixed) / scalable;
       const scale = Math.max(0.42, Math.min(1.35, raw));
       stage.style.setProperty('--menu-scale', scale.toFixed(4));
+      // SHRINK-TO-CONTENT (§3): on a TALL screen the scale hits its 1.35 cap and the content
+      // can't grow to fill `inner` — leaving dead space below the block. Size the stage to HUG
+      // the scaled column (+ RESERVE for the symmetric frame gaps + padding) so the neon border
+      // wraps the content instead. max-height:100% (CSS) keeps it capped on short screens where
+      // the column already fills — there wantH >= the full height and this is a no-op.
+      const columnH = scale * scalable + fixed + gaps;
+      const wantH = Math.round(columnH + RESERVE + padT + padB);
+      stage.style.height = `${wantH}px`;
     };
     const onResize = () => {
       cancelAnimationFrame(raf);
@@ -511,16 +523,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (onCredits) onCredits();
   }
 
-  // Daily Challenge: one tap straight into today's board (App creates a room,
-  // locks Blitz and starts daily:true in one shot). Connect-gated like
-  // CREATE/JOIN so a cold backend shows CONNECTING… instead of a dead tap.
-  function handleDaily(e) {
-    if (navigating) return;
-    pressJuice(e, '#FFE94A'); // yellow accent — the daily's colour
-    sound.click();
-    setNavigating(true);
-    runWhenConnected('daily', () => onDaily && onDaily());
-  }
 
   // A locked (level-gated) card was clicked: open its read-only preview dialog instead of
   // navigating. `gameId` comes from GameCard's locked-click hook.
@@ -686,24 +688,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </div>
         </div>
 
-        {/* DAILY CHALLENGE entry — a quiet text link under JOIN ROOM. Same onDaily
-            handler + day number. (The daily-STREAK feature was removed, so the copy no
-            longer references a streak — just the day #.) */}
-        {daily && (
-          <button
-            className={`homepage-daily-link${navigating ? ' disabled' : ''}${connecting === 'daily' && coldStart ? ' is-waking' : ''}`}
-            onClick={handleDaily}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            aria-label={`Daily challenge number ${daily.dayNumber}`}
-          >
-            {connecting === 'daily' ? (
-              <ConnectingContent cold={coldStart} />
-            ) : (
-              `⚡ DAILY #${daily.dayNumber}`
-            )}
-          </button>
-        )}
+        {/* DAILY button removed (fix/three-things §3). The daily challenge is still
+            reachable via the ?daily=1 deep link (App LAUNCH_INTENT.daily); only the
+            loose menu entry was deleted. */}
 
         {/* Quiet footer link: CREDITS only. (SHOP + STATS are the loud top-corner icon
             buttons now; the guide/help nav was removed to keep the menu clean.) */}

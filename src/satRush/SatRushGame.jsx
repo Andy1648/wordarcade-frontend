@@ -21,7 +21,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { recordRound, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { formatNum } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
@@ -43,22 +43,29 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   const { view } = game;
   const appRef = useRef(null);
 
-  // WINS: when a run ENDS, pay out on the correct answers (engine's cleared count). Fire
-  // once per run-end (reset the guard when a new run starts), reading data the run already
-  // has — no new game logic. recordRound queues the "+N WINS" menu stamp.
-  const satWinRecordedRef = useRef(false);
+  // WINS: BANK per cleared word as the run plays (§2) so leaving mid-run keeps what was
+  // earned — no end-of-run payout (that would double-pay). `view.cleared` is the authoritative
+  // running count; we bank the delta each time it climbs and reset the ledger when a fresh run
+  // drops it back to 0. bankWordWins queues the "+N WINS" menu stamp and gates on 3 words.
+  const satBankedWordsRef = useRef(0);
   const [winsEarned, setWinsEarned] = useState(0);
   useEffect(() => {
-    if (view.phase === 'over') {
-      if (!satWinRecordedRef.current) {
-        satWinRecordedRef.current = true;
-        setWinsEarned(recordRound({ mode: 'satRush', wordsAccepted: (view.results && view.results.cleared) || 0 }));
-      }
-    } else {
-      satWinRecordedRef.current = false;
+    const cleared = view.cleared || 0;
+    if (cleared < satBankedWordsRef.current) {
+      // Fresh run (count reset) → reset our per-run ledger + displayed total.
+      satBankedWordsRef.current = 0;
       setWinsEarned(0);
     }
-  }, [view.phase, view.results]);
+    if (cleared > satBankedWordsRef.current) {
+      const banked = bankWordWins({
+        mode: 'satRush',
+        prevWords: satBankedWordsRef.current,
+        nowWords: cleared,
+      });
+      satBankedWordsRef.current = cleared;
+      if (banked > 0) setWinsEarned((prev) => prev + banked);
+    }
+  }, [view.cleared]);
 
   // Live wins tally (item 2): what the run will pay so far, from the running cleared count
   // (0 until the 3-word payout gate). Recomputed each render — pure.
