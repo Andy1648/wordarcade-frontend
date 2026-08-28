@@ -465,6 +465,27 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card--glitch::before { opacity: 0 !important; }
 }
 
+/* MASTERY chip (Job 2): a compact "M{n}" tab on the card's TOP-LEFT corner (opposite the
+   featured/limited sticker), shown once the player reaches M2 in that mode. Flat, black outline,
+   hard offset shadow — house language. */
+.game-card-mastery {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  z-index: 4;
+  font-family: 'Bungee', cursive;
+  font-size: 11px;
+  line-height: 1;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  padding: 3px 6px;
+  transform: rotate(-4deg);
+  box-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+}
+
 /* Little corner sticker calling out the featured game. */
 .game-card-featured-tag {
   position: absolute;

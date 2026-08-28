@@ -11,6 +11,7 @@
 // so no import cycle). It only participates in xpPerInput, and only via the live default; every
 // pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
+import { addMasteryWord, masteryXpMult } from './mastery.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -322,10 +323,15 @@ export function xpPerWord({ mode = 'menu', keyTier, rebirthCount, wordLength = 1
 // returning to the menu reflects the levels earned in play; the caller may use `leveledUp` to fire
 // a celebration.
 export function awardWordXp(opts = {}) {
-  const gain = xpPerWord(opts);
+  const mode = opts.mode || 'menu';
+  // MASTERY (Job 2): this mode's mastery level multiplies the word's XP (+3%/level above M1). The
+  // multiplier is read BEFORE crediting the word to mastery, so a word never retroactively boosts
+  // itself. round10 keeps the "+N ends in a zero" invariant after the mastery scale.
+  const gain = round10(xpPerWord(opts) * masteryXpMult(mode));
   const res = creditXp(loadProgress(), gain, 0);
   saveProgress(res.state);
-  return { ...res, gain };
+  const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
+  return { ...res, gain, mastery };
 }
 
 // Anti-mash rate cap: at most `capacity` credited keystrokes per rolling `windowMs`. Pure
