@@ -7,6 +7,7 @@ import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
+import { noteWord } from '../progress/records.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { touchStreak } from '../progress/streak.js';
@@ -112,8 +113,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       // the count by 1; a rare jump credits the extra words at ×1.
       const delta = solved - fuseBankedRef.current;
       const prevWeight = fuseWeightRef.current;
-      fuseWeightRef.current += rarityOf(s.lastWord).mult + Math.max(0, delta - 1);
+      const r = rarityOf(s.lastWord);
+      fuseWeightRef.current += r.mult + Math.max(0, delta - 1);
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
+      noteWord(s.lastWord, r); // permanent record: distinct / lucky / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'fuse',
         prevWords: fuseBankedRef.current,

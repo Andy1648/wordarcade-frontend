@@ -67,6 +67,7 @@ import {
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
+import { noteWord, noteSession } from './progress/records';
 import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
   loadDailyState,
@@ -221,6 +222,9 @@ const SKIP_INTRO =
 // Read once at module load, alongside the flags above. The flag is written when
 // the intro finishes on a first visit (handleIntroComplete).
 const SEEN_INTRO = hasSeenIntro();
+// A fresh session (30+ min of absence, so the intro replays) is a new session for the permanent
+// record: count it and stamp firstPlayed once. Guarded internally; runs once per page load.
+if (!SEEN_INTRO) noteSession();
 
 /**
  * Top-level view state manager + the single shared WebSocket connection
@@ -975,6 +979,7 @@ function App() {
           const prevWbWeight = myWbWeightRef.current;
           myWbWeightRef.current += wbRarity.mult;
           wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
+          noteWord(payload.word, wbRarity); // permanent record: distinct / lucky / rarest-ever (guarded)
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
           // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
           // payout rides the rarity WEIGHT delta (wins.js), gated on the accept COUNT.
@@ -1111,6 +1116,7 @@ function App() {
         const prevBlitzWeight = myBlitzWeightRef.current;
         myBlitzWeightRef.current += blitzRarity ? blitzRarity.mult : 1;
         wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
+        noteWord(payload.answer, blitzRarity); // permanent record: distinct / lucky / rarest-ever (guarded)
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
         // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
         const banked = bankWordWins({

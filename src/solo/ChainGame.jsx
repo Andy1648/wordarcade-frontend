@@ -7,6 +7,7 @@ import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
+import { noteWord } from '../progress/records.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
@@ -124,8 +125,10 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       const newWords = (s.lastLinks || []).slice(-delta).map((l) => l.word);
       const prevWeight = chainWeightRef.current;
       for (const w of newWords) {
-        chainWeightRef.current += rarityOf(w).mult;
+        const r = rarityOf(w);
+        chainWeightRef.current += r.mult;
         wpmAddWord(w); // WPM: count each new link's chars
+        noteWord(w, r); // permanent record: distinct / lucky / rarest-ever (guarded)
       }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
       const banked = bankWordWins({

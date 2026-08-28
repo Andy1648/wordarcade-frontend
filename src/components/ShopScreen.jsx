@@ -19,6 +19,7 @@ import {
 } from '../theme/themes';
 import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { noteLevel } from '../progress/records.js';
 import { formatNum } from '../format';
 
 const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -113,6 +114,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   };
   const confirmRebirth = () => {
     const gained = nextMult;
+    noteLevel(loadProgress().level); // permanent record: capture this run's peak level BEFORE rebirth zeroes it
     doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
     setConfirming(false);
     // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.

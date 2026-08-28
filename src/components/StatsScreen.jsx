@@ -12,10 +12,63 @@ import {
   keyTierXp,
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
+import { bestWpm, allTimeAvgWpm } from '../progress/wpm';
+import { getStreak } from '../progress/streak';
+import { readRecords, noteLevel } from '../progress/records';
 import { formatNum } from '../format';
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
 const x = (n) => `×${formatNum(Number.isFinite(n) ? n : 0)}`; // formatNum so ×1e11 stays compact
+
+// The per-mode WPM cells (menu self-test excluded — it isn't a played round). label → wpm.js mode.
+const WPM_RECORD_MODES = [
+  ['WORD BOMB', 'wordBomb'],
+  ['CATEGORY BLITZ', 'blitz'],
+  ['SAT RUSH', 'satRush'],
+  ['CHAIN', 'chain'],
+  ['FUSE', 'fuse'],
+];
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+// Compact, house-style date (e.g. "AUG 27 2026"). Guarded — a bad stamp reads as a dash.
+function fmtDate(ms) {
+  try {
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '—';
+    return `${MONTHS[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
+  } catch {
+    return '—';
+  }
+}
+
+// Build the permanent-record grid cells from the record blob + existing storage. Each cell is
+// EARNED (a value) or LOCKED (a silhouette + the requirement to unlock it) — never an empty slot.
+// `highestLevel` folds the current run's live level into the stored peak so it's always current.
+function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
+  const cells = WPM_RECORD_MODES.map(([label, mode]) => {
+    const v = bestWpm(mode);
+    return { label: `BEST WPM · ${label}`, locked: v <= 0, value: fmt(v), req: `PLAY ${label}` };
+  });
+  const avg = allTimeAvgWpm();
+  cells.push({ label: 'AVG WPM', locked: avg <= 0, value: fmt(avg), req: 'FINISH A ROUND' });
+  cells.push({
+    label: 'RAREST WORD',
+    wide: true,
+    locked: !rec.rarest,
+    value: rec.rarest ? rec.rarest.word.toUpperCase() : '',
+    sub: rec.rarest ? `${rec.rarest.band} ${x(rec.rarest.mult)}` : '',
+    req: 'ACCEPT A WORD',
+  });
+  cells.push({ label: 'LONGEST COMBO', locked: rec.longestCombo <= 0, value: fmt(rec.longestCombo), req: 'CHAIN 2 WORDS' });
+  cells.push({ label: 'LONGEST STREAK', locked: rec.longestStreak <= 0, value: fmt(rec.longestStreak), req: 'PLAY 2 DAYS' });
+  cells.push({ label: 'CURRENT STREAK', locked: streakNow <= 0, value: fmt(streakNow), req: 'PLAY TODAY' });
+  cells.push({ label: 'DISTINCT WORDS', locked: rec.distinct <= 0, value: fmt(rec.distinct), req: 'ACCEPT A WORD' });
+  cells.push({ label: 'LUCKY WORDS', locked: rec.obscure <= 0, value: fmt(rec.obscure), req: 'FIND AN OBSCURE WORD' });
+  cells.push({ label: 'HIGHEST LEVEL', locked: highestLevel <= 1, value: `LV ${fmt(highestLevel)}`, req: 'REACH LV 2' });
+  cells.push({ label: 'TOTAL REBIRTHS', locked: rebirths <= 0, value: fmt(rebirths), req: 'REBIRTH ONCE' });
+  cells.push({ label: 'FIRST PLAYED', locked: rec.firstPlayed <= 0, value: fmtDate(rec.firstPlayed), req: 'PLAY A ROUND' });
+  cells.push({ label: 'TOTAL SESSIONS', locked: rec.sessions <= 0, value: fmt(rec.sessions), req: 'PLAY A ROUND' });
+  return cells;
+}
 
 // RESET ALL PROGRESS: wipe every taw.* key (xp, level, wins, purchases, rebirths, lifetime
 // stats — all live under the taw. namespace) and hard-reload so every screen re-reads zeros.
@@ -47,6 +100,9 @@ export default function StatsScreen({ onBack }) {
   const [confirmingReset, setConfirmingReset] = useState(false);
   // A11y: move focus into the dialog on open; Escape closes it (once on mount).
   useEffect(() => {
+    // Persist the current level into the all-time peak (survives a later rebirth's reset). Read
+    // fresh inside the effect so it stays a one-shot with no render-scope dependency.
+    noteLevel(loadProgress().level);
     overlayRef.current?.focus();
     const onKey = (e) => {
       if (e.key === 'Escape') onBackRef.current();
@@ -60,6 +116,12 @@ export default function StatsScreen({ onBack }) {
   const { level, intoLevel, lifetimeLetters } = loadProgress();
   const rounds = getRounds();
   const rebirths = getRebirths();
+
+  // Permanent-record grid: the record blob + the live level folded into the stored peak, so
+  // HIGHEST LEVEL reads true even before a rebirth captures it (the mount effect persists it).
+  const records = readRecords();
+  const highestLevel = Math.max(records.maxLevel, level);
+  const recordCells = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
 
   const rbMult = rebirthMult(rebirths);
   const keyTier = getKeyTier();
@@ -100,6 +162,33 @@ export default function StatsScreen({ onBack }) {
         </div>
 
         <div className="stats-body">
+          {/* PERSONAL RECORDS — the headline grid. Every cell is EARNED (a value) or LOCKED (a
+              silhouette + how to unlock it), never an empty slot. Static, zero animation. */}
+          <h3 className="stats-subtitle stats-subtitle--first">PERSONAL RECORDS</h3>
+          <div className="rec-grid">
+            {recordCells.map((c) => (
+              <div
+                className={`rec-cell${c.locked ? ' rec-cell--locked' : ''}${c.wide ? ' rec-cell--wide' : ''}`}
+                key={c.label}
+                aria-label={c.locked ? `${c.label}: locked — ${c.req}` : `${c.label}: ${c.value}${c.sub ? ` ${c.sub}` : ''}`}
+              >
+                <span className="rec-label">{c.label}</span>
+                {c.locked ? (
+                  <>
+                    <span className="rec-silhouette" aria-hidden="true" />
+                    <span className="rec-req">{c.req}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="rec-value">{c.value}</span>
+                    {c.sub ? <span className="rec-sub">{c.sub}</span> : null}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <h3 className="stats-subtitle">PROGRESSION</h3>
           <dl className="stats-list">
             {progression.map(([k, v]) => (
               <div className="stats-row" key={k}>

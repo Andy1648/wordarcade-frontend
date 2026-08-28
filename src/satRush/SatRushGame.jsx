@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
+import { noteWord } from '../progress/records.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { formatNum } from '../format';
@@ -74,8 +75,10 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // A clear normally bumps the count by 1; if it ever jumps, credit the extra words at ×1.
       const delta = cleared - satBankedWordsRef.current;
       const prevWeight = satWeightRef.current;
-      satWeightRef.current += rarityOf(view.lastClearedWord).mult + Math.max(0, delta - 1);
+      const r = rarityOf(view.lastClearedWord);
+      satWeightRef.current += r.mult + Math.max(0, delta - 1);
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
+      noteWord(view.lastClearedWord, r); // permanent record: distinct / lucky / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'satRush',
         prevWords: satBankedWordsRef.current,
