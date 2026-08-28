@@ -22,6 +22,7 @@
 - All SVG art should have personality: drips, overspray, asymmetry
 - Sound effects use Web Audio API synthesis, no external audio files
 - Mobile: all touch targets 44px minimum, font-size 16px minimum on inputs
+- NO ORPHAN FIXED UI. Any new persistent control must JOIN an existing cluster — the corner nav (SHOP/STATS/REBIRTH/audio) or the footer. Never mount a new `position:fixed` element with its own coordinates. Two regressions came from this: the audio controls colliding with CREDITS, and the footer growing to three links that overflowed at 360px. A fixed element with no layout relationship to the page will eventually collide with whatever ends up beneath it.
 - Categories must be niche and unexpected — no generic "things that are green" style
 - Always verify build passes after changes: npx vite build --logLevel error
 
