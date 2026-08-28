@@ -18,6 +18,7 @@ import {
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
+import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
@@ -1836,6 +1837,24 @@ export default function GameScreen({
       }
     }
   }, [isMyTurn, gameOver]);
+
+  // DANGER-ZONE audio (Job 11): a quiet low pulse whose tempo/pitch rise as MY turn's clock runs
+  // out; silent otherwise and stopped instantly when danger passes / turn ends / unmount.
+  useEffect(() => {
+    const maxTimer = (gameState && gameState.timerSeconds) || 1;
+    if (!isMyTurn || gameOver || showCountdown || typeof timerSeconds !== 'number') {
+      stopDanger();
+      return undefined;
+    }
+    const frac = timerSeconds / maxTimer; // 1 full → 0 empty
+    if (frac > 0.4) {
+      stopDanger();
+    } else {
+      setDanger(Math.max(0, Math.min(1, (0.4 - frac) / 0.4)));
+    }
+    return undefined;
+  }, [isMyTurn, timerSeconds, gameOver, showCountdown]);
+  useEffect(() => () => stopDanger(), []); // belt-and-braces: stop the pulse on unmount
 
   // Never let the chip's clear-timer fire onto an unmounted component.
   useEffect(() => () => {

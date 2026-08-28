@@ -21,6 +21,7 @@ import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from './wpmLive';
 import { equippedPopColors } from '../theme/themes';
+import { sndLevelUp } from '../audio/gameSounds';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -100,7 +101,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.
       const fx = fxRef && fxRef.current;
       if (fx) {
-        if (res.leveledUp) fx.celebrate(res.level);
+        if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); } // Job 11: level-up chime
         if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
         else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
