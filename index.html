@@ -47,10 +47,22 @@
          Bungee Shade is dropped from the Google link below since we host it now;
          Bungee + Space Mono still load from Google via display=swap. -->
     <link rel="preload" href="/fonts/bungee-shade-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Google Fonts CSS loaded NON-render-blocking (perf/assets, Job 17): media="print" +
+         onload swap so the stylesheet parse never blocks first paint. Every family is
+         display=swap, so text paints in the fallback immediately regardless; <noscript>
+         keeps it working with JS off. -->
     <link
       href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Dela+Gothic+One&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Dela+Gothic+One&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="c1e456ac-c322-43f5-9098-2cafce036b67"></script>
     <!-- Structured data: the site plus its games (each game's own VideoGame
          schema lives on its static landing page in public/). -->
