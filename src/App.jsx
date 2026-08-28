@@ -74,6 +74,7 @@ import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
 import { recordAcceptedWord } from './progress/collection';
+import { noteWord, noteSession } from './progress/records';
 import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
 import {
@@ -240,6 +241,9 @@ const SKIP_INTRO =
 // Read once at module load, alongside the flags above. The flag is written when
 // the intro finishes on a first visit (handleIntroComplete).
 const SEEN_INTRO = hasSeenIntro();
+// A fresh session (30+ min of absence, so the intro replays) is a new session for the permanent
+// record: count it and stamp firstPlayed once. Guarded internally; runs once per page load.
+if (!SEEN_INTRO) noteSession();
 // RETURN BONUS (Job 6): capture the last-seen time at MODULE LOAD, before the app re-stamps it in a
 // mount effect — otherwise "how long were you away" would always read ~0.
 const LAST_SEEN_AT_LOAD = getLastSeen();
@@ -1023,6 +1027,7 @@ function App() {
           myWbWeightRef.current += wbWeight * wordSenseWinsFactor(wbRarity.mult);
           awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
           recordAcceptedWord(payload.word, { mode: 'word-bomb', band: wbRarity.band }); // Collection (Job 3)
+          noteWord(payload.word, wbRarity); // permanent record: distinct / obscure / rarest-ever (guarded)
           // (WPM no longer counted here — fix/three-again §2 drops typing-speed tracking from the
           //  turn-based Word Bomb; the wpmLive import + wpmStart/End were removed with it.)
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
@@ -1166,6 +1171,7 @@ function App() {
         myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(blitzRarity ? blitzRarity.mult : 1); // WORD SENSE (Job 4)
         awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
         recordAcceptedWord(payload.answer, { mode: 'category-blitz', band: blitzRarity ? blitzRarity.band : 'COMMON' }); // Collection (Job 3)
+        noteWord(payload.answer, blitzRarity); // permanent record: distinct / obscure / rarest-ever (guarded)
         // (WPM no longer counted here — fix/three-again §2 drops typing-speed tracking from the
         //  turn-based Category Blitz.)
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks

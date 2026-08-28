@@ -16,6 +16,8 @@
 // storage wrappers (`recordStreakActivity`, `getStreak`, `getStreakMult`) sit on top and read the
 // local clock only there.
 
+import { noteStreak } from './records.js';
+
 export const STREAK_KEY = 'taw.streak';
 
 // The reward ladder: consecutive-day count → XP multiplier, capped at ×1.25. Pure.
@@ -128,7 +130,9 @@ export function recordStreakActivity(now) {
 // have its own copy of the day logic drift out of sync.
 export function touchStreak(now) {
   try {
-    return recordStreakActivity(now);
+    const next = recordStreakActivity(now);
+    noteStreak(next.count); // permanent record: bump the all-time longest streak (guarded, no-op unless new max)
+    return next;
   } catch {
     return null;
   }

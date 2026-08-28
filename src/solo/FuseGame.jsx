@@ -8,6 +8,7 @@ import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
+import { noteWord } from '../progress/records.js';
 import { wordSenseWinsFactor } from '../progress/wordSense.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
@@ -148,6 +149,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight });
       recordAcceptedWord(s.lastWord, { mode: 'fuse', band: rw.band }); // Collection (Job 3)
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
+      noteWord(s.lastWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'fuse',
         prevWords: fuseBankedRef.current,
