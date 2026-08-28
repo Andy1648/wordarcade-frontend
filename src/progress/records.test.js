@@ -11,6 +11,7 @@ import {
   noteStreak,
   noteLevel,
   noteSession,
+  noteLucky,
   __resetSeenForTest,
 } from './records.js';
 
@@ -46,6 +47,7 @@ test('fresh read is the zeroed shape with distinct derived at 0', () => {
   assert.equal(r.longestStreak, 0);
   assert.equal(r.rarest, null);
   assert.equal(r.obscure, 0);
+  assert.equal(r.lucky, 0);
   assert.equal(r.maxLevel, 1);
   assert.equal(r.firstPlayed, 0);
   assert.equal(r.sessions, 0);
@@ -104,6 +106,16 @@ test('noteCombo / noteStreak / noteLevel keep the MAX and never decrease', () =>
   assert.equal(r.longestCombo, 9);
   assert.equal(r.longestStreak, 7);
   assert.equal(r.maxLevel, 40);
+});
+
+test('noteLucky counts real lucky hits, separate from OBSCURE finds', () => {
+  install(memStorage());
+  noteWord('zyzzyva', OBSCURE); // an OBSCURE find, but NOT a lucky hit
+  noteLucky(); // a real 1/40 lucky hit (independent of the word's rarity)
+  noteLucky();
+  const r = readRecords();
+  assert.equal(r.obscure, 1); // vocabulary record
+  assert.equal(r.lucky, 2); // chance record — the two never conflate
 });
 
 test('noteSession increments the count and stamps firstPlayed exactly once', () => {

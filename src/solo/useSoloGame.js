@@ -16,6 +16,7 @@ import { tierForClockLeft } from '../share/resultCard.js';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
 import { xpPerInput, creditXp, loadProgress, saveProgress } from '../progress/xp.js';
+import { noteLucky } from '../progress/records.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -187,6 +188,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       luckyLastMultRef.current = reward.winsWeight;
       if (reward.lucky) {
         luckyCountRef.current += 1;
+        noteLucky(); // permanent record: a real LUCKY-WORD hit (CHANCE record, guarded)
         if (mode) {
           const gain = xpPerInput({ mode }) * reward.xpMult;
           saveProgress(creditXp(loadProgress(), gain, 0).state);

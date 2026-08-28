@@ -27,7 +27,8 @@ function freshRecords() {
     longestCombo: 0, // best in-game answer combo (GameScreen useCombo peak)
     longestStreak: 0, // best daily-streak count ever held
     rarest: null, // { word, band, mult } — the highest-multiplier word ever accepted
-    obscure: 0, // OBSCURE-band accepts ("lucky words hit"), every occurrence counted
+    obscure: 0, // OBSCURE-band accepts ("OBSCURE FINDS" — a vocabulary record), every one counted
+    lucky: 0, // real LUCKY-WORD hits (the 1/40 RNG windfall from luck.js — a chance record)
     maxLevel: 1, // highest LEVEL ever reached (survives rebirth, which zeroes the live level)
     firstPlayed: 0, // epoch ms of the first session (0 = unknown)
     sessions: 0, // total sessions started
@@ -41,6 +42,7 @@ function normalize(raw) {
   if (Number.isFinite(raw.longestCombo) && raw.longestCombo >= 0) base.longestCombo = Math.floor(raw.longestCombo);
   if (Number.isFinite(raw.longestStreak) && raw.longestStreak >= 0) base.longestStreak = Math.floor(raw.longestStreak);
   if (Number.isFinite(raw.obscure) && raw.obscure >= 0) base.obscure = Math.floor(raw.obscure);
+  if (Number.isFinite(raw.lucky) && raw.lucky >= 0) base.lucky = Math.floor(raw.lucky);
   if (Number.isFinite(raw.maxLevel) && raw.maxLevel >= 1) base.maxLevel = Math.floor(raw.maxLevel);
   if (Number.isFinite(raw.firstPlayed) && raw.firstPlayed >= 0) base.firstPlayed = Math.floor(raw.firstPlayed);
   if (Number.isFinite(raw.sessions) && raw.sessions >= 0) base.sessions = Math.floor(raw.sessions);
@@ -114,7 +116,9 @@ export function noteWord(word, rarity) {
     }
     const rec = readRaw();
     let changed = false;
-    // "Lucky words hit" → every OBSCURE-band accept (repeats counted as separate hits).
+    // "OBSCURE FINDS" → every OBSCURE-band accept (repeats counted). This is the VOCABULARY
+    // record (words in the rarest frequency band). It is distinct from LUCKY WORDS (the 1/40 RNG
+    // windfall), which is a CHANCE record tracked separately via noteLucky().
     if (r && r.band === 'OBSCURE') {
       rec.obscure += 1;
       changed = true;
@@ -128,6 +132,18 @@ export function noteWord(word, rarity) {
     if (changed) write(rec);
   } catch {
     /* a records failure must never break the accept path */
+  }
+}
+
+// Record one real LUCKY-WORD hit (the 1/40 RNG windfall from luck.js). Separate from OBSCURE
+// FINDS: this is a CHANCE record, that is a VOCABULARY record. Guarded — safe on the accept path.
+export function noteLucky() {
+  try {
+    const rec = readRaw();
+    rec.lucky += 1;
+    write(rec);
+  } catch {
+    /* guarded */
   }
 }
 

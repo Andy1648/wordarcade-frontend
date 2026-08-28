@@ -63,7 +63,10 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
   cells.push({ label: 'LONGEST STREAK', locked: rec.longestStreak <= 0, value: fmt(rec.longestStreak), req: 'PLAY 2 DAYS' });
   cells.push({ label: 'CURRENT STREAK', locked: streakNow <= 0, value: fmt(streakNow), req: 'PLAY TODAY' });
   cells.push({ label: 'DISTINCT WORDS', locked: rec.distinct <= 0, value: fmt(rec.distinct), req: 'ACCEPT A WORD' });
-  cells.push({ label: 'LUCKY WORDS', locked: rec.obscure <= 0, value: fmt(rec.obscure), req: 'FIND AN OBSCURE WORD' });
+  // Two DISTINCT achievements: OBSCURE FINDS is a VOCABULARY record (words in the rarest
+  // frequency band); LUCKY WORDS is a CHANCE record (the 1/40 RNG windfall from luck.js).
+  cells.push({ label: 'OBSCURE FINDS', locked: rec.obscure <= 0, value: fmt(rec.obscure), req: 'FIND AN OBSCURE WORD' });
+  cells.push({ label: 'LUCKY WORDS', locked: rec.lucky <= 0, value: fmt(rec.lucky), req: 'HIT A LUCKY WORD' });
   cells.push({ label: 'HIGHEST LEVEL', locked: highestLevel <= 1, value: `LV ${fmt(highestLevel)}`, req: 'REACH LV 2' });
   cells.push({ label: 'TOTAL REBIRTHS', locked: rebirths <= 0, value: fmt(rebirths), req: 'REBIRTH ONCE' });
   cells.push({ label: 'FIRST PLAYED', locked: rec.firstPlayed <= 0, value: fmtDate(rec.firstPlayed), req: 'PLAY A ROUND' });
