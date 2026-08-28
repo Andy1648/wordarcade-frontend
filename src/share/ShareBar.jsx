@@ -10,8 +10,10 @@ import { prepareCard, shareFile, downloadPng, copySummary } from './shareCard';
 import { lastSessionWpm } from '../progress/wpm';
 import './ShareBar.css';
 
-// Share mode label → the WPM history's mode key.
-const WPM_MODE_KEY = { 'word-bomb': 'wordBomb', 'category-blitz': 'blitz', 'sat-rush': 'satRush' };
+// Share mode label → the WPM history's mode key. Only the continuous-typing modes carry a
+// meaningful typing speed (§2); Word Bomb / Category Blitz are turn-based and no longer measured,
+// so their share cards omit the WPM line (no key → wpmKey undefined → nothing folded in).
+const WPM_MODE_KEY = { 'sat-rush': 'satRush' };
 
 export default function ShareBar({ mode, outcome, data, neon, daily = null, link = null }) {
   const preparedRef = useRef(null);

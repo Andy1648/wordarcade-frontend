@@ -7,6 +7,7 @@ import {
   recordSession,
   loadWpm,
   allTimeAvgWpm,
+  recentAvgWpm,
   bestWpm,
   bestWpmOverall,
   RECENT_CAP,
@@ -60,11 +61,35 @@ test('recordSession: bumps best, folds all-time average, appends to recent', () 
 
 test('recordSession: per-mode bests are independent; overall = max across modes', () => {
   withStorage(() => {
-    recordSession({ mode: 'wordBomb', chars: 200, ms: 60000 }); // 40
+    recordSession({ mode: 'satRush', chars: 200, ms: 60000 }); // 40
     recordSession({ mode: 'fuse', chars: 350, ms: 60000 }); // 70
-    assert.equal(bestWpm('wordBomb'), 40);
+    assert.equal(bestWpm('satRush'), 40);
     assert.equal(bestWpm('fuse'), 70);
     assert.equal(bestWpmOverall(), 70);
+  });
+});
+
+test('turn-based modes are NOT tracked (Word Bomb / Blitz dropped from WPM_MODES, §2)', () => {
+  withStorage(() => {
+    recordSession({ mode: 'wordBomb', chars: 300, ms: 60000 }); // meaningless in a turn-based mode
+    recordSession({ mode: 'blitz', chars: 300, ms: 60000 });
+    assert.equal(bestWpm('wordBomb'), 0); // not a tracked mode → never recorded
+    assert.equal(bestWpm('blitz'), 0);
+    assert.equal(loadWpm().recent.length, 0);
+  });
+});
+
+test('recentAvgWpm averages ONLY tracked-mode sessions in the recent ring (§2d)', () => {
+  withStorage(() => {
+    recordSession({ mode: 'satRush', chars: 200, ms: 60000 }); // 40
+    recordSession({ mode: 'chain', chars: 300, ms: 60000 }); // 60
+    assert.equal(recentAvgWpm(), 50); // (40+60)/2
+    // A stale wordBomb entry left in storage from before the mode was dropped is filtered on load,
+    // so it can never contaminate the average.
+    const data = loadWpm();
+    data.recent.push({ m: 'wordBomb', w: 999 });
+    localStorage.setItem('taw.wpm', JSON.stringify(data));
+    assert.equal(recentAvgWpm(), 50); // wordBomb entry dropped by loadWpm's mode filter
   });
 });
 
@@ -122,4 +147,4 @@ test('MEASURE: localStorage bytes for a FULL history (30 recent + all bests)', (
   });
 });
 
-const WPM_MODES_SAMPLE = ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse', 'menu'];
+const WPM_MODES_SAMPLE = ['satRush', 'chain', 'fuse', 'menu'];

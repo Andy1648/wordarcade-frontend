@@ -8,8 +8,13 @@
 // this at most ~4×/sec (see useWpmTracker) so the number never jitters.
 
 export const WPM_KEY = 'taw.wpm';
-// The modes we track a best for. 'menu' is the free-typing self-test.
-export const WPM_MODES = ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse', 'menu'];
+// The modes we track a best for — ONLY the continuous-typing modes where wall-clock-free WPM is
+// meaningful (§2). Word Bomb and Category Blitz are turn-based (you spend most of the round
+// WAITING for your turn), so a typing-speed number there is noise — they no longer record a
+// session, and any stored best for them is dropped on the next load (loadWpm reads only these
+// modes). 'menu' is the free-typing self-test. Human-readable labels drive the Stats readout.
+export const WPM_MODES = ['satRush', 'chain', 'fuse', 'menu'];
+export const WPM_MODE_LABELS = { satRush: 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE', menu: 'MENU' };
 // Keep at most this many recent sessions (oldest evicted first).
 export const RECENT_CAP = 30;
 // A session shorter than this (ms) or with fewer chars is ignored — too little signal, and it
@@ -87,10 +92,23 @@ export function recordSession({ mode, chars, ms } = {}) {
   return data;
 }
 
-// The all-time average WPM across every recorded session (0 with no sessions).
+// The all-time average WPM across every recorded session (0 with no sessions). NOTE: sum/n is a
+// running aggregate that may still carry historical Word Bomb / Blitz sessions recorded before
+// those modes were dropped (§2) — it can't self-clean. For a display that must reflect ONLY the
+// currently-tracked modes, use recentAvgWpm() below (the recent ring self-cleans on load).
 export function allTimeAvgWpm() {
   const { sum, n } = loadWpm();
   return n > 0 ? Math.round(sum / n) : 0;
+}
+
+// The average WPM across the recent-session ring. loadWpm() filters `recent` down to WPM_MODES on
+// every read, so once Word Bomb / Blitz left that set their old entries are dropped here — this
+// average reflects ONLY the modes we still measure (§2d). 0 with no recent sessions.
+export function recentAvgWpm() {
+  const { recent } = loadWpm();
+  if (!recent.length) return 0;
+  const sum = recent.reduce((a, s) => a + (s.w || 0), 0);
+  return Math.round(sum / recent.length);
 }
 
 // The best WPM for a mode (0 if none yet).

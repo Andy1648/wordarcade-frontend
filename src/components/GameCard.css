@@ -69,6 +69,10 @@
      three-card row shrinks on short laptops and the menu still fits one screen
      without the bottom buttons spilling past the card. */
   height: clamp(160px, min(21vw, 30vh), 280px);
+  /* Size container (§1): lets the content shed its least-critical line when the CARD itself is
+     too short to hold everything, via the @container rule below. Keys relief off real card
+     height, not viewport — the exact case the per-viewport clamps kept missing. */
+  container-type: size;
   /* The card face composes THREE independent scale factors + a tilt into ONE transform,
      each driven by a CSS variable so they never fight over `transform`:
        --cs         featured resting scale (unchanged)
@@ -341,14 +345,31 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 
 .game-card-name {
   font-family: 'Bungee', cursive;
-  /* Density pass: titles read big on a laptop — >=34px at >=1366px (2.6vw hits 35.5px at
-     1366, caps at 46px on ultrawide), scaling down to 14px on phones. Static clamp() —
-     never animated. */
+  /* Base title size (fallback). Per-mode overrides below FIT the size to each card's longest
+     word so no title dominates its card (§3) — CATEGORY (8 letters, 2-line + the AI JUDGED
+     pill) is scaled DOWN so it stops filling the whole card and overflowing the bottom badge,
+     while the short names (WORD/BOMB, SAT/RUSH, FUSE, CHAIN) keep their big impact. Static
+     clamp() — never animated. */
   font-size: clamp(14px, 2.6vw, 46px);
   line-height: 1.03;
   margin-bottom: 4px;
   white-space: pre-line;
 }
+
+/* ---- Per-mode title treatments (§3): fit-to-longest-word size + distinct tracking, so the
+   five cards don't read as one template. Sizes are tuned so each card's content stack clears
+   its bottom-pinned badge with room to spare at every viewport (verified 390→2560; §1). ---- */
+/* WORD BOMB — flagship, 4-letter words: full impact, tight tracking. */
+[data-game='word-bomb'] .game-card-name { font-size: clamp(15px, 2.72vw, 48px); letter-spacing: -0.01em; }
+/* CATEGORY BLITZ — the long name (8 letters) + AI JUDGED pill: scaled DOWN and tightened so it
+   reads as a tidy two-liner instead of swallowing the card (fixes the clipped SOLO/MULTI box). */
+[data-game='category-blitz'] .game-card-name { font-size: clamp(12px, 1.82vw, 33px); line-height: 1.0; letter-spacing: -0.02em; }
+/* SAT RUSH — manga ink: airy tracking so it reads like a cover title, not the neon house face. */
+[data-game='sat-rush'] .game-card-name { font-size: clamp(15px, 2.6vw, 46px); letter-spacing: 0.03em; }
+/* CHAIN — 5-letter word: big, a touch of tracking. */
+[data-game='chain'] .game-card-name { font-size: clamp(15px, 2.72vw, 47px); letter-spacing: 0.05em; }
+/* FUSE — shortest name: widest tracking so a 4-letter word still commands its card. */
+[data-game='fuse'] .game-card-name { font-size: clamp(15px, 2.8vw, 48px); letter-spacing: 0.09em; }
 
 /* Compact "AI JUDGED" pill on the AI-judged card (Category Blitz), sitting just
    above the big title so the card reads as "AI Category Blitz" without changing
@@ -398,6 +419,21 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card-payout { display: none; }
   .game-card-icon-box { width: 26px; height: 26px; }
   .game-card-badge { font-size: 12px; padding: 2px 6px; }
+}
+
+/* Genuinely short cards — the 3-col tablet-portrait band (cardH ≲161px), never the ≥170px
+   phone cards nor the ≥230px desktop cards — can't hold every line, so shed the least-critical
+   vertical budget (the payout preview) and tighten the AI JUDGED pill so the bottom-pinned
+   SOLO/MULTI badge always clears. Keyed on the CARD's real height, so it fires on card size, not
+   viewport (§1). */
+/* Scoped to the multi-column regime (>=601px) only — phones are one-per-row and fit on their
+   own, so they keep the payout line even on a short device. */
+@media (min-width: 601px) {
+  @container (max-height: 168px) {
+    .game-card-payout { display: none; }
+    .game-card-ai-badge { font-size: clamp(9px, 3cqw, 12px); padding: 2px 6px; margin-bottom: 3px; }
+    .game-card-icon-box { margin-bottom: 4px; }
+  }
 }
 
 /* Payout preview: what a round of this mode pays. Small mono line under the badge so it

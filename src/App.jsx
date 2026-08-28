@@ -76,7 +76,6 @@ import { awardWordXp, cappedWordMult } from './progress/xp';
 import { recordAcceptedWord } from './progress/collection';
 import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
-import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
   loadDailyState,
   saveDailyState,
@@ -853,8 +852,8 @@ function App() {
       });
       myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
       myWbWeightRef.current = 0; // fresh game → reset the rarity weight ledger
-      // WPM: begin a fresh typing-speed session for this game (Word Bomb or Blitz).
-      wpmStart((lastMessage.payload.gameType || 'word-bomb') === 'category-blitz' ? 'blitz' : 'wordBomb');
+      // WPM is no longer tracked in Word Bomb / Category Blitz — they're turn-based, so typing
+      // speed there is meaningless (§2). Only the continuous modes + menu record it.
       myOutstandingWordsRef.current = []; // fresh game → drop any stale in-flight submits
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
@@ -1023,7 +1022,8 @@ function App() {
           myWbWeightRef.current += wbWeight * wordSenseWinsFactor(wbRarity.mult);
           awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
           recordAcceptedWord(payload.word, { mode: 'word-bomb', band: wbRarity.band }); // Collection (Job 3)
-          wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
+          // (WPM no longer counted here — fix/three-again §2 drops typing-speed tracking from the
+          //  turn-based Word Bomb; the wpmLive import + wpmStart/End were removed with it.)
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
           // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
           // payout rides the rarity WEIGHT delta (wins.js), gated on the accept COUNT.
@@ -1163,7 +1163,8 @@ function App() {
         myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(blitzRarity ? blitzRarity.mult : 1); // WORD SENSE (Job 4)
         awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
         recordAcceptedWord(payload.answer, { mode: 'category-blitz', band: blitzRarity ? blitzRarity.band : 'COMMON' }); // Collection (Job 3)
-        wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
+        // (WPM no longer counted here — fix/three-again §2 drops typing-speed tracking from the
+        //  turn-based Category Blitz.)
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
         // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
         const banked = bankWordWins({
@@ -1213,7 +1214,6 @@ function App() {
 
     if (lastMessage.type === 'game_over') {
       const payload = lastMessage.payload;
-      wpmEnd(); // WPM: flush this game's typing-speed session to the persisted history
       // Category Blitz carries finalScores; Word Bomb carries just winnerId.
       if (payload.finalScores) {
         setCategoryScores(payload.finalScores);
