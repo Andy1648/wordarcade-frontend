@@ -20,6 +20,7 @@ import { equippedPopMult, equippedSoundMult } from './shop';
 import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from './wpmLive';
+import { equippedPopColors } from '../theme/themes';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -51,6 +52,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     if (!active) return undefined;
     loadRarityIndex(); // warm the rank index so the menu self-test can score words
     wpmStart('menu'); // WPM: menu free-typing is its own self-test session
+    // THEME: the per-keystroke pop colours follow the equipped theme. Read once here (stable for
+    // the menu session — equipping a theme remounts this hook via the shop round-trip, like
+    // rebirth/key-power do), falling back to the built-in tiers if the catalog is unavailable.
+    const popColors = equippedPopColors() || TIER_COLORS;
     const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
@@ -96,11 +101,11 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const fx = fxRef && fxRef.current;
       if (fx) {
         if (res.leveledUp) fx.celebrate(res.level);
-        if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], opts.x, opts.y);
-        else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], TIER_COLORS[tier], feelTier);
+        if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
+        else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
         // T4's per-accepted-word edge glow lives in-game). Gold at KEY POWER T5+.
-        if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : TIER_COLORS[tier]);
+        if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : popColors[tier]);
       }
       if (creditRef.current) creditRef.current();
     };

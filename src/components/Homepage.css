@@ -286,7 +286,7 @@
      container-driven --menu-scale trims it further to clear the XP bar / fit. */
   font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * var(--menu-scale, 1));
   line-height: 1;
-  color: #FF2EC4;
+  color: var(--theme-ink, #FF2EC4); /* THEME: wordmark fill */
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
   display: inline-block;

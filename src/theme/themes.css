@@ -1,0 +1,17 @@
+/* themes.css — the MENU THEME custom properties. These :root values are the DEFAULT theme and act
+   as the fallback before applyTheme() (themes.js) writes the equipped theme's values inline on the
+   root. Every themeable menu colour reads var(--theme-*); a hardcoded menu colour is a bug (it
+   won't recolor). The per-theme VALUES live in themes.js (single source) and are stamped inline;
+   this file only guarantees a sane default palette with no JS. */
+:root {
+  --theme-bg: #0d0618; /* menu background */
+  --theme-panel: #1a0b2e; /* chips / track / panels */
+  --theme-ink: #ff2ec4; /* wordmark fill + primary menu accent */
+  --theme-xp-fill: #2effe0; /* XP bar fill */
+  --theme-accent: #ffe94a; /* secondary accent */
+  --theme-card-accent: #ff2ec4; /* menu card chrome accent */
+  --theme-pop-1: #2effe0;
+  --theme-pop-2: #ffe94a;
+  --theme-pop-3: #ff6b3d;
+  --theme-pop-4: #ff2ec4;
+}

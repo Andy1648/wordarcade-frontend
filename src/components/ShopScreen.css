@@ -181,6 +181,32 @@
 .shop-card.is-locked {
   opacity: 0.5; /* visible but dimmed — locked content stays visible */
 }
+
+/* THEME cards: the palette preview is a flat 4-colour swatch strip (a real preview, not a text
+   label), thick black outline + hard offset to match the house sticker look. */
+.shop-theme-swatch {
+  display: flex;
+  width: 100%;
+  max-width: 160px;
+  height: 36px;
+  border: 3px solid #000;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 3px 3px 0 #000;
+}
+.shop-theme-swatch span {
+  flex: 1;
+  display: block;
+}
+/* Free-at-level note on a still-gated theme. */
+.shop-theme-gate {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffe94a;
+  text-transform: uppercase;
+}
 .shop-card-name {
   font-family: 'Bungee', cursive;
   font-size: clamp(16px, 3vw, 24px);

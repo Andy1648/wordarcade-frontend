@@ -12,6 +12,7 @@ import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, mar
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { canAffordAny } from '../progress/shop';
+import { syncThemeUnlocks } from '../theme/themes';
 import ModeDialog from './ModeDialog';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import ConnectingContent from './ConnectingContent';
@@ -382,6 +383,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   const shopLinkRef = useRef(null);
   const statsLinkRef = useRef(null);
   const rebirthLinkRef = useRef(null);
+  // THEMES: grant any level-unlocked theme (LV10 MIDNIGHT, LV30 TOXIC) as progression reaches it,
+  // so the free path works even if the player never opens the shop. Idempotent + persisted.
+  useEffect(() => {
+    syncThemeUnlocks(xpProgress.level);
+  }, [xpProgress.level]);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
   useEffect(() => {

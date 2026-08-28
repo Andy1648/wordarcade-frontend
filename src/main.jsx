@@ -2,7 +2,13 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import './theme/themes.css'
+import { initTheme } from './theme/themes'
 import { initAnalytics, initSentry, Sentry } from './lib/analytics'
+
+// Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
+// player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
+try { initTheme() } catch { /* never block startup */ }
 
 // Monitoring (Sentry) stands up BEFORE mount so an early render crash is still caught +
 // reported. Product analytics (PostHog, a ~207KB chunk) is DEFERRED to idle after first paint
