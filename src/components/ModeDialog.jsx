@@ -12,11 +12,14 @@ import { masteryState, masteryNeed, MASTERY_MAX, MASTERY_XP_STEP } from '../prog
 
 // MASTERY (Job 2): a compact per-mode mastery readout — level, the current XP perk, and words to
 // the next level. Reads client state directly (cheap); shown in every mode dialog.
-function MasteryLine({ mode, accent }) {
+function MasteryLine({ mode, accent, inPicker = false }) {
   const st = masteryState(mode);
   const pct = Math.round(MASTERY_XP_STEP * (st.level - 1) * 100);
   return (
-    <div className="mode-dialog-mastery" aria-label={`Mastery level ${st.level} of ${MASTERY_MAX}`}>
+    // `--picker`: this is the pack-picker (blitz) dialog, the only one where the picker fights the
+    // mastery row for space. It is hidden on short-and-narrow phones (see ModeDialog.css) so the
+    // picker keeps a visible height; every other dialog / viewport keeps the mastery readout.
+    <div className={`mode-dialog-mastery${inPicker ? ' mode-dialog-mastery--picker' : ''}`} aria-label={`Mastery level ${st.level} of ${MASTERY_MAX}`}>
       <span className="mode-dialog-mastery-lv" style={{ color: accent, borderColor: accent }}>
         M{st.level}
       </span>
@@ -190,7 +193,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            <MasteryLine mode={game.id} accent={accent} />
+            <MasteryLine mode={game.id} accent={accent} inPicker={modeKey === 'blitz'} />
             {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
                 rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
             <ModeExample mode={game.id} accent={accent} />

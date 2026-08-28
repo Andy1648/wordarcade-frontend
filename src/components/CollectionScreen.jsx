@@ -1,8 +1,11 @@
-// CollectionScreen.jsx — the WORD COLLECTION (Job 3). A read-only overlay (same register as
-// StatsScreen: flat #1a0b2e panel, thick black border, hard offset shadow, ZERO animation, scrolls
-// internally). Shows total distinct words, a per-TIER breakdown, milestone progress, and your rarest
-// finds listed with the ACTUAL words — never a word you haven't personally typed.
-import { useEffect, useRef } from 'react';
+// CollectionScreen.jsx — the WORD COLLECTION (Job 3). Read-only content, ZERO animation. Shows
+// total distinct words, a per-TIER breakdown, milestone progress, and your rarest finds listed with
+// the ACTUAL words — never a word you haven't personally typed.
+//
+// NOTE: this is no longer a standalone overlay. COLLECTION was consolidated INTO the Stats overlay
+// as a tab (it is the same kind of thing as records/progression), so this file exports only the BODY
+// content (`CollectionBody`) which StatsScreen renders inside its shared panel. The old menu footer
+// link + `collection` view were removed — see StatsScreen.jsx.
 import './CollectionScreen.css';
 import { collectionSummary, TIERS, TIER_COLORS } from '../progress/collection';
 import { formatNum } from '../format';
@@ -17,19 +20,8 @@ function dayLabel(day) {
   }
 }
 
-export default function CollectionScreen({ onBack }) {
-  const overlayRef = useRef(null);
-  const onBackRef = useRef(onBack);
-  onBackRef.current = onBack;
-  useEffect(() => {
-    overlayRef.current?.focus();
-    const onKey = (e) => {
-      if (e.key === 'Escape') onBackRef.current();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
+// The COLLECTION tab body — rendered inside the Stats overlay's shared scroll region.
+export function CollectionBody() {
   const sum = collectionSummary(60);
   const next = sum.nextMilestone;
   const prevClaimed = sum.milestones.filter((m) => sum.total >= m.n).map((m) => m.n);
@@ -37,14 +29,7 @@ export default function CollectionScreen({ onBack }) {
   const milestoneFrac = next ? Math.max(0, Math.min(1, (sum.total - lastClaimed) / (next.n - lastClaimed))) : 1;
 
   return (
-    <div className="coll-overlay" role="dialog" aria-modal="true" aria-label="Word Collection" tabIndex={-1} ref={overlayRef}>
-      <div className="coll-panel">
-        <div className="coll-header">
-          <h2 className="coll-title">COLLECTION</h2>
-          <button type="button" className="coll-close" onClick={onBack} aria-label="Back to menu">✕</button>
-        </div>
-
-        <div className="coll-body">
+    <>
           {/* Headline: distinct words + progress to the next milestone. */}
           <div className="coll-total">
             <span className="coll-total-num">{formatNum(sum.total)}</span>
@@ -106,10 +91,6 @@ export default function CollectionScreen({ onBack }) {
               );
             })}
           </dl>
-        </div>
-
-        <button type="button" className="coll-back" onClick={onBack}>← BACK TO MENU</button>
-      </div>
-    </div>
+    </>
   );
 }

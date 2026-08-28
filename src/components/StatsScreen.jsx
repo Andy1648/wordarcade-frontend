@@ -1,6 +1,11 @@
-// StatsScreen.jsx — a read-only, static progression readout (no animation). Reachable from
-// the STATS footer link. Styled like the mode dialog (thick black border, hard offset
-// shadow, #1a0b2e panel). Scrolls internally on a short viewport; never breaks 100dvh.
+// StatsScreen.jsx — a read-only, static progression readout (no animation). Reachable from the STATS
+// corner button. Styled like the mode dialog (thick black border, hard offset shadow, #1a0b2e panel).
+// Scrolls internally on a short viewport; never breaks 100dvh.
+//
+// TABS: this overlay now hosts THREE read-only readouts — STATS, COLLECTION, ACHIEVEMENTS — behind a
+// tab bar. COLLECTION and ACHIEVEMENTS used to be their own menu footer links + views; they were
+// consolidated in here (same kind of thing as records/progression/danger-zone) so the menu footer is
+// CREDITS-only again. The tab bodies live in CollectionScreen.jsx / AchievementsScreen.jsx.
 import { useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import {
@@ -14,6 +19,14 @@ import {
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
 import { formatNum } from '../format';
+import { CollectionBody } from './CollectionScreen';
+import { AchievementsBody } from './AchievementsScreen';
+
+const TABS = [
+  { id: 'stats', label: 'STATS' },
+  { id: 'collection', label: 'COLLECTION' },
+  { id: 'achievements', label: 'ACHIEVEMENTS' },
+];
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
 const x = (n) => `×${formatNum(Number.isFinite(n) ? n : 0)}`; // formatNum so ×1e11 stays compact
@@ -46,6 +59,9 @@ export default function StatsScreen({ onBack }) {
   // Two-step guard for the destructive reset: the button reveals a confirm panel that names
   // exactly what is destroyed; only its second button actually wipes.
   const [confirmingReset, setConfirmingReset] = useState(false);
+  // Active tab: STATS (default — the one the layout gate exercises) | COLLECTION | ACHIEVEMENTS.
+  const [tab, setTab] = useState('stats');
+  const activeLabel = TABS.find((t) => t.id === tab)?.label || 'STATS';
   // A11y: move focus into the dialog on open; Escape closes it (once on mount).
   useEffect(() => {
     overlayRef.current?.focus();
@@ -92,16 +108,35 @@ export default function StatsScreen({ onBack }) {
   ];
 
   return (
-    <div className="stats-overlay" role="dialog" aria-modal="true" aria-label="Stats" tabIndex={-1} ref={overlayRef}>
+    <div className="stats-overlay" role="dialog" aria-modal="true" aria-label={activeLabel} tabIndex={-1} ref={overlayRef}>
       <div className="stats-panel">
         <div className="stats-header">
-          <h2 className="stats-title">STATS</h2>
+          <h2 className="stats-title">{activeLabel}</h2>
           <button type="button" className="stats-close" onClick={onBack} aria-label="Back to menu">
             ✕
           </button>
         </div>
 
+        {/* Tab bar — STATS / COLLECTION / ACHIEVEMENTS. Sized to fit three labels at 360px wide
+            without clipping (Space Mono, responsive font); the layout gate only exercises STATS. */}
+        <div className="stats-tabs" role="tablist" aria-label="Stats sections">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              className={`stats-tab${tab === t.id ? ' is-active' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className="stats-body">
+          {tab === 'stats' && (
+          <>
           <dl className="stats-list">
             {progression.map(([k, v]) => (
               <div className="stats-row" key={k}>
@@ -155,6 +190,10 @@ export default function StatsScreen({ onBack }) {
               </button>
             )}
           </div>
+          </>
+          )}
+          {tab === 'collection' && <CollectionBody />}
+          {tab === 'achievements' && <AchievementsBody />}
         </div>
 
         <button type="button" className="stats-back" onClick={onBack}>

@@ -16,9 +16,9 @@ import LoadingScreen from './components/LoadingScreen';
 import MusicButton from './components/MusicButton';
 import ClackButton from './components/ClackButton';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
+// StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
+// views/footer links), so their bodies are imported by StatsScreen, not lazily as top-level views.
 const StatsScreen = lazy(() => import('./components/StatsScreen'));
-const CollectionScreen = lazy(() => import('./components/CollectionScreen'));
-const AchievementsScreen = lazy(() => import('./components/AchievementsScreen'));
 const ShopScreen = lazy(() => import('./components/ShopScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
@@ -1572,16 +1572,6 @@ function App() {
     setView('stats');
   }
 
-  function goToCollection() {
-    overlayReturnRef.current = 'collection';
-    setView('collection');
-  }
-
-  function goToAchievements() {
-    overlayReturnRef.current = 'achievements';
-    setView('achievements');
-  }
-
   function goToShop() {
     shopViewRef.current = 'shop';
     overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
@@ -1940,18 +1930,6 @@ function App() {
         <StatsScreen onBack={goHome} />
       </Suspense>
     );
-  } else if (view === 'collection') {
-    screen = (
-      <Suspense fallback={<OverlaySkeleton title="COLLECTION" />}>
-        <CollectionScreen onBack={goHome} />
-      </Suspense>
-    );
-  } else if (view === 'achievements') {
-    screen = (
-      <Suspense fallback={<OverlaySkeleton title="ACHIEVEMENTS" />}>
-        <AchievementsScreen onBack={goHome} />
-      </Suspense>
-    );
   } else if (view === 'shop') {
     screen = (
       <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'SHOP'} />}>
@@ -1987,8 +1965,6 @@ function App() {
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
         onStats={goToStats}
-        onCollection={goToCollection}
-        onAchievements={goToAchievements}
         onShop={goToShop}
         onRebirth={goToRebirth}
         restoreFocus={overlayReturnRef.current}

@@ -1,39 +1,26 @@
-// AchievementsScreen.jsx — the achievements grid (Job 7). Read-only overlay (StatsScreen register).
+// AchievementsScreen.jsx — the achievements grid (Job 7). Read-only content, StatsScreen register.
 // Locked entries render as dim silhouettes showing their hint; SECRET entries show only "???" until
-// earned. Grouped by category. Reached from an ACHIEVEMENTS menu footer link.
-import { useEffect, useRef } from 'react';
+// earned. Grouped by category.
+//
+// NOTE: no longer a standalone overlay. ACHIEVEMENTS was consolidated INTO the Stats overlay as a tab
+// (same kind of thing as records/progression), so this file exports only the BODY content
+// (`AchievementsBody`) which StatsScreen renders inside its shared panel. The old menu footer link +
+// `achievements` view were removed — see StatsScreen.jsx.
 import './AchievementsScreen.css';
 import { achievementList, achievementCounts } from '../progress/achievements';
 import { formatNum } from '../format';
 
 const CAT_ORDER = ['VOLUME', 'SPEED', 'VOCABULARY', 'PROGRESSION', 'STREAKS', 'MODES', 'ECONOMY', 'SECRET'];
 
-export default function AchievementsScreen({ onBack }) {
-  const overlayRef = useRef(null);
-  const onBackRef = useRef(onBack);
-  onBackRef.current = onBack;
-  useEffect(() => {
-    overlayRef.current?.focus();
-    const onKey = (e) => {
-      if (e.key === 'Escape') onBackRef.current();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
+// The ACHIEVEMENTS tab body — rendered inside the Stats overlay's shared scroll region.
+export function AchievementsBody() {
   const list = achievementList();
   const counts = achievementCounts();
   const byCat = {};
   for (const a of list) (byCat[a.cat] = byCat[a.cat] || []).push(a);
 
   return (
-    <div className="ach-overlay" role="dialog" aria-modal="true" aria-label="Achievements" tabIndex={-1} ref={overlayRef}>
-      <div className="ach-panel">
-        <div className="ach-header">
-          <h2 className="ach-title">ACHIEVEMENTS</h2>
-          <button type="button" className="ach-close" onClick={onBack} aria-label="Back to menu">✕</button>
-        </div>
-        <div className="ach-body">
+    <>
           <div className="ach-progress">{counts.earned} / {counts.total} EARNED</div>
           {CAT_ORDER.filter((c) => byCat[c]).map((cat) => (
             <div key={cat} className="ach-cat">
@@ -49,9 +36,6 @@ export default function AchievementsScreen({ onBack }) {
               </div>
             </div>
           ))}
-        </div>
-        <button type="button" className="ach-back" onClick={onBack}>← BACK TO MENU</button>
-      </div>
-    </div>
+    </>
   );
 }
