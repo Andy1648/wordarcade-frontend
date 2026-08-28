@@ -70,6 +70,17 @@ export function hasSeenIntro() {
   }
 }
 
+// The raw last-seen timestamp (epoch ms), or 0 if absent/invalid. Read at MODULE LOAD by the
+// return-bonus (Job 6) BEFORE the app re-stamps it, so "how long were you away" survives the load.
+export function getLastSeen() {
+  try {
+    const n = Number(localStorage.getItem(LAST_SEEN_KEY));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
 // The intro just finished (or the session is being (re)stamped): record now.
 export function markIntroSeen() {
   stampLastSeen();

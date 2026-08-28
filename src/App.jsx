@@ -64,7 +64,10 @@ import {
   stampLastSeen,
   hasPlayedBefore,
   markPlayed,
+  getLastSeen,
 } from './visitHistory';
+import { claimReturnBonus } from './progress/returnBonus';
+import ReturnBonusCard from './components/ReturnBonusCard';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
@@ -225,6 +228,9 @@ const SKIP_INTRO =
 // Read once at module load, alongside the flags above. The flag is written when
 // the intro finishes on a first visit (handleIntroComplete).
 const SEEN_INTRO = hasSeenIntro();
+// RETURN BONUS (Job 6): capture the last-seen time at MODULE LOAD, before the app re-stamps it in a
+// mount effect — otherwise "how long were you away" would always read ~0.
+const LAST_SEEN_AT_LOAD = getLastSeen();
 
 /**
  * Top-level view state manager + the single shared WebSocket connection
@@ -479,6 +485,15 @@ function App() {
       window.removeEventListener('pagehide', stamp);
       window.removeEventListener('beforeunload', stamp);
     };
+  }, []);
+
+  // RETURN BONUS (Job 6): claim once on mount using the last-seen time captured at module load. The
+  // wins are granted here (they returned after >=6h, at most once/calendar day); the card is shown
+  // only on the home menu (a deep-link into a game doesn't overlay the return card).
+  const [returnCard, setReturnCard] = useState(null);
+  useEffect(() => {
+    const b = claimReturnBonus(LAST_SEEN_AT_LOAD);
+    if (b) setReturnCard(b);
   }, []);
 
   const myIdRef = useRef(null);
@@ -2067,6 +2082,10 @@ function App() {
           </div>
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} />
+          )}
+          {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
+          {returnCard && view === 'home' && (
+            <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
           )}
           {/* Invite-link arrival: a friend tapped a ?join= link and we're
               connecting + joining in the background. One clear line so the
