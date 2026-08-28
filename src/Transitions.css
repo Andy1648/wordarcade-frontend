@@ -3,6 +3,13 @@
    bar wipe (TransitionOverlay), not CSS slides, so the old slide-in keyframes
    have been removed. */
 
+/* Shared transition tokens (Job 12) — ONE language: every screen change (the wipe) and every modal
+   (ModeDialog / cards) references these, so timing + easing are unified app-wide. <=250ms. */
+:root {
+  --transition-ms: 240ms;
+  --transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .view-transition-root {
   position: relative;
   /* Sit above the persistent WallScene (z-index 0). Screen wraps are

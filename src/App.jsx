@@ -168,6 +168,17 @@ const TRANSITION_WORDS = {
   [FUSE_VIEW]: FUSE_TRANSITION_WORD,
 };
 
+// Nav DEPTH for the transition DIRECTION (Job 12): home is the root (0); menu overlays are 1; a
+// live game/room/lobby is 2. Going to a deeper view = "forward" (enter); returning toward home =
+// "back" (return). Any view not listed defaults to 1.
+const NAV_DEPTH = {
+  home: 0,
+  credits: 1, stats: 1, shop: 1, collection: 1, achievements: 1,
+  browse: 1, lobby: 1,
+  room: 2, game: 2, 'cg-arm': 2,
+  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
+};
+
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
 // for Join Room) or a specific game id picked from a homepage card. These are
 // the real backend game types we can lock the room into and preselect; any
@@ -1271,12 +1282,12 @@ function App() {
   // swapped underneath - so this only lays the bars on top and clears them.
   const transitionClearRef = useRef(null);
   const runTransition = useCallback(
-    (word) => {
+    (word, dir = 'forward') => {
       transitionKeyRef.current += 1;
-      setTransition({ word, key: transitionKeyRef.current });
-      sound.whoosh(); // the diagonal bars sweep in
+      setTransition({ word, key: transitionKeyRef.current, dir });
+      sound.whoosh(); // the wipe sweeps across
       if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-      transitionClearRef.current = setTimeout(() => setTransition(null), 500);
+      transitionClearRef.current = setTimeout(() => setTransition(null), 240); // one language, <=250ms
     },
     [sound]
   );
@@ -1295,8 +1306,12 @@ function App() {
   const lastNavViewRef = useRef(CG_ENTRY ? 'cg-arm' : 'home');
   useEffect(() => {
     if (view === lastNavViewRef.current) return;
+    // Nav DIRECTION (Job 12): compare the new view's depth to the old. home is 0 (the root);
+    // overlays (shop/stats/collection/etc.) are 1; a live game/room/lobby is 2. Going deeper =
+    // "forward" (enter); returning toward the menu = "back" (return). Equal depth defaults forward.
+    const dir = (NAV_DEPTH[view] ?? 1) >= (NAV_DEPTH[lastNavViewRef.current] ?? 1) ? 'forward' : 'back';
     lastNavViewRef.current = view;
-    runTransition(TRANSITION_WORDS[view] || 'GO!');
+    runTransition(TRANSITION_WORDS[view] || 'GO!', dir);
   }, [view, runTransition]);
 
   // game -> results is an in-`game` change: the game-over overlay reveals WITHOUT
@@ -2038,7 +2053,7 @@ function App() {
             </div>
           </div>
           {transition && !prefersReducedMotion && (
-            <TransitionOverlay key={transition.key} word={transition.word} />
+            <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
           )}
           {/* Invite-link arrival: a friend tapped a ?join= link and we're
               connecting + joining in the background. One clear line so the
