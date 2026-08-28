@@ -15,6 +15,7 @@ import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
+import CopyResultButton from '../share/CopyResultButton.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -93,6 +94,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     createEngine,
     adapter,
     pbKey: PB_KEYS.CHAIN,
+    mode: 'chain', // lucky-word XP uses the mode's per-word XP multiplier
     onRunStart: () => setRuns(bumpChainRuns()),
     // Each accepted CHAIN word counts toward the daily streak (this mode never calls addWords).
     onAccept: touchStreak,
@@ -126,7 +128,10 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       const prevWeight = chainWeightRef.current;
       for (const w of newWords) {
         const r = rarityOf(w);
-        chainWeightRef.current += r.mult;
+        // COMBO (Job 2) + LUCKY (Job 4) fold into the SAME per-word weight the banking already
+        // sums: each word is worth rarity × the live combo multiplier × the word's lucky factor
+        // (×5 on a 1/40 hit, else ×1), so a hot streak and a lucky word both pay more.
+        chainWeightRef.current += r.mult * g.combo.mult * g.luckyMult;
         wpmAddWord(w); // WPM: count each new link's chars
         noteWord(w, r); // permanent record: distinct / lucky / rarest-ever (guarded)
       }
@@ -283,6 +288,9 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.k}
+      comboMult={g.combo.mult}
+      comboBreaks={g.combo.breaks}
+      luckyKey={g.luckyKey}
       over={{
         score: s.score,
         best: g.best,
@@ -292,6 +300,16 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
+        share: (
+          <CopyResultButton
+            mode="chain"
+            words={s.k}
+            points={s.score}
+            tiers={g.tierLog}
+            killed
+            className="solo-share-btn"
+          />
+        ),
       }}
       onExit={onExit}
     />

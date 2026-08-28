@@ -15,6 +15,7 @@ import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { bestWpm, allTimeAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
+import { rankTitle } from '../progress/rank';
 import { formatNum } from '../format';
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
@@ -130,6 +131,7 @@ export default function StatsScreen({ onBack }) {
 
   const progression = [
     ['LEVEL', level],
+    ['RANK', rankTitle(level)], // Job 5 — the level band's name (a string; see the render below)
     ['XP INTO LEVEL', intoLevel],
     // ('XP TO NEXT LEVEL' row removed by request — the level + XP-into read is enough.)
     ['REBIRTHS', rebirths],
@@ -193,7 +195,8 @@ export default function StatsScreen({ onBack }) {
             {progression.map(([k, v]) => (
               <div className="stats-row" key={k}>
                 <dt>{k}</dt>
-                <dd>{fmt(v)}</dd>
+                {/* progression rows are numeric except RANK (a string) — pass strings through raw. */}
+                <dd>{typeof v === 'number' ? fmt(v) : v}</dd>
               </div>
             ))}
           </dl>

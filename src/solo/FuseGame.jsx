@@ -13,6 +13,7 @@ import RarityFlash from '../components/RarityFlash.jsx';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
+import CopyResultButton from '../share/CopyResultButton.jsx';
 import poolsRaw from './fragmentPools.json';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
@@ -86,7 +87,7 @@ export default function FuseGame({ onExit }) {
 
 function FuseInner({ data, createEngine, adapter, onExit }) {
   // Each accepted FUSE word counts toward the daily streak (this mode never calls addWords).
-  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, onAccept: touchStreak });
+  const g = useSoloGame({ createEngine, adapter, pbKey: PB_KEYS.FUSE, mode: 'fuse', onAccept: touchStreak });
   const s = g.engine.state;
 
   // WINS (§2): BANK per solved word as the run plays so leaving mid-run keeps what was earned —
@@ -114,7 +115,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       const delta = solved - fuseBankedRef.current;
       const prevWeight = fuseWeightRef.current;
       const r = rarityOf(s.lastWord);
-      fuseWeightRef.current += r.mult + Math.max(0, delta - 1);
+      // COMBO (Job 2) + LUCKY (Job 4): the solved word's rarity is scaled by the live combo
+      // multiplier AND the word's lucky factor (×5 on a hit, else ×1); jump filler stays ×1,
+      // matching CHAIN.
+      fuseWeightRef.current += r.mult * g.combo.mult * g.luckyMult + Math.max(0, delta - 1);
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       noteWord(s.lastWord, r); // permanent record: distinct / lucky / rarest-ever (guarded)
       const banked = bankWordWins({
@@ -197,7 +201,28 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}
-      over={{ score: s.wordsSolved, best: g.best, restartArmed: g.restartArmed, restart: g.restart, card: overCard, winsEarned }}
+      comboMult={g.combo.mult}
+      comboBreaks={g.combo.breaks}
+      luckyKey={g.luckyKey}
+      over={{
+        score: s.wordsSolved,
+        best: g.best,
+        restartArmed: g.restartArmed,
+        restart: g.restart,
+        card: overCard,
+        winsEarned,
+        // FUSE score == word count, so pts is redundant — omit it (points=null).
+        share: (
+          <CopyResultButton
+            mode="fuse"
+            words={s.wordsSolved}
+            points={null}
+            tiers={g.tierLog}
+            killed
+            className="solo-share-btn"
+          />
+        ),
+      }}
       onExit={onExit}
     />
     </>

@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import { ShareBar } from '../share';
+import CopyResultButton from '../share/CopyResultButton.jsx';
 import { satRushLink } from '../share/links.js';
 import { SAT_RUSH_COLOR } from './config';
 
@@ -97,6 +98,15 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
     runLog: results.runLog,
   };
 
+  // Result-card glyph tiers from the ante stage of each CLEARED word (lower stage =
+  // answered earlier = faster; matches the existing satRushGrid semantics). The run
+  // ends on a miss, so ⬛ (killed) shows when the final runLog entry is a miss.
+  const runLog = results.runLog || [];
+  const satTiers = runLog
+    .filter((e) => e.ok)
+    .map((e) => (e.stage == null ? 'mid' : e.stage <= 1 ? 'fast' : e.stage <= 3 ? 'mid' : 'slow'));
+  const satKilled = !!(runLog.length && !runLog[runLog.length - 1].ok);
+
   return (
     <div className="sr-screen sr-results">
       <div className="sr-respage">
@@ -177,6 +187,14 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
               neon={SAT_RUSH_COLOR}
             />
           </div>
+          <CopyResultButton
+            mode="sat-rush"
+            words={results.cleared}
+            points={finalScore}
+            tiers={satTiers}
+            killed={satKilled}
+            className="sr-copy-result"
+          />
           <button type="button" className="sr-btn" onClick={onAgain}>
             Run it back
           </button>

@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+import ComboPill from '../components/ComboPill';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -55,6 +56,9 @@ export default function SoloShell({
   phase,
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
+  comboMult = 1, // live WINS-combo multiplier for the HUD readout
+  comboBreaks = 0, // break counter — re-keys the pill's finite shake on a real reset
+  luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
 }) {
@@ -80,6 +84,8 @@ export default function SoloShell({
       {/* Live "+N WINS" pill — same shared component + position as Word Bomb / Blitz (item 2).
           Hidden once the run is over (the total shows on the death card instead). */}
       {phase === 'playing' && <WinsHudPill amount={winsTally} words={winsWords} />}
+      {/* Live WINS-combo readout, under the wins pill (Job 2). Finite break-shake only. */}
+      {phase === 'playing' && <ComboPill mult={comboMult} breaks={comboBreaks} />}
 
       <div className="solo-hud">{hud}</div>
 
@@ -138,6 +144,9 @@ export default function SoloShell({
                 <span>BEST {over.best}</span>
               </div>
             )}
+            {/* One-tap shareable result receipt (Job 1). Self-suppresses under 3 words and
+                never shows on the first-run tutorial card. */}
+            {over.bare ? null : over.share}
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
@@ -148,6 +157,16 @@ export default function SoloShell({
           </div>
         </div>
       ) : null}
+
+      {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY ×5" stamp, re-keyed per lucky
+          hit so it replays. Absolutely positioned, pointer-events:none, transform/opacity only —
+          no idle/infinite animation. */}
+      {phase === 'playing' && luckyKey > 0 && (
+        <div className="solo-lucky" key={luckyKey} aria-hidden="true">
+          <span className="solo-lucky-ring" />
+          <span className="solo-lucky-label">LUCKY ×5</span>
+        </div>
+      )}
 
       {/* FX overlay (CHAIN OUT→IN travel). Absolutely positioned, pointer-events:none,
           on top of the already-correct screen; it is a SIBLING of the input's chain,

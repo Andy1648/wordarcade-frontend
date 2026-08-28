@@ -1,0 +1,55 @@
+/* ComboPill.css — the WINS-COMBO HUD readout. Sits under the wins pill (which is
+   position:fixed top:12px right:12px). Flat fills, thick black outline, hard offset
+   shadow. NO idle/infinite animation — only a finite 200ms break shake. */
+.combo-pill {
+  position: fixed;
+  top: 56px; /* directly under the wins-hud pill */
+  right: 12px;
+  z-index: 40;
+  pointer-events: none;
+}
+.combo-pill-inner {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 10px;
+  background: #FFE94A;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.combo-pill-inner.is-hot {
+  background: #FF2EC4; /* pink at ×2.0+ */
+  color: #fff;
+}
+.combo-pill-x {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: inherit;
+}
+.combo-pill-inner:not(.is-hot) .combo-pill-x { color: #000; }
+.combo-pill-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: inherit;
+  opacity: 0.85;
+}
+.combo-pill-inner:not(.is-hot) .combo-pill-label { color: #3a2a10; }
+
+/* Finite break shake — one 200ms run, transform-only. Applied only when breaks>0, and the
+   element is re-keyed per break so it replays cleanly. */
+.combo-pill-inner.is-break {
+  animation: combo-pill-break 200ms ease-out 1;
+}
+@keyframes combo-pill-break {
+  0% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-5px) rotate(-4deg); }
+  55% { transform: translateX(5px) rotate(4deg); }
+  80% { transform: translateX(-2px) rotate(-1deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .combo-pill-inner.is-break { animation: none; }
+}
