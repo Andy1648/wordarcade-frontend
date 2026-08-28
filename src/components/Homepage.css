@@ -50,13 +50,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* justify-content:center (NOT space-evenly): the --menu-scale RESERVE (Homepage.jsx)
+     scales the title/xp/cards to fill the stage MINUS a fixed 44px reserve, and center
+     splits that reserve into ~22px SYMMETRIC frame gaps — so the content fills the
+     stage (no dead space) with in-band top/bottom gaps. §8's space-evenly broke that by
+     stretching the gaps unevenly on tall screens; reverted here (fix/three-things §3). */
   height: 100%;
-  /* 16-32px band (was 24-60): the 60px cap let the cards->JOIN/DAILY gap balloon to
-     ~49px on big screens while the bottom block floated in dead space (fix/qa-sweep §8).
-     space-evenly (was center) spreads the leftover height into EQUAL gaps above, between
-     and below every block, so the bottom block no longer floats. */
-  row-gap: clamp(16px, 2.4vh, 32px);
-  justify-content: space-evenly;
+  row-gap: clamp(16px, 2.2vh, 28px);
+  justify-content: center;
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
      continuous surface. This element also carries .wall-surface, so setting these
@@ -67,7 +68,7 @@
   /* Tighter padding so the content sits close to the neon frame (items 2 + 3). Vertical
      padding trimmed further (was clamp 8-14); the 16-40px breathing gap to the content
      column is now owned by the --menu-scale RESERVE (Homepage.jsx), not this padding. */
-  padding: clamp(4px, 0.6vh, 10px) clamp(10px, 1vw, 16px) clamp(4px, 0.6vh, 10px);
+  padding: clamp(6px, 0.8vh, 9px) clamp(10px, 1vw, 16px); /* small: the frame gap = ~22px RESERVE/2 + this padding, kept in the 16-32 band (§3) */
   /* Clips content to one screen. FUTURE (not implemented here): to let the panel
      SCROLL once more mode cards are added, switch this to overflow-y:auto with a
      bounded max-height (the max-height below is what a scroll would attach to). */
@@ -493,7 +494,7 @@ html[data-beat='true'] .homepage-logo {
   /* Extra horizontal inset so the two buttons (with their skew + hard offset
      shadow) always sit comfortably INSIDE the card, never touching/spilling past
      its rounded border. */
-  padding: clamp(10px, 1.6vh, 20px) clamp(16px, 3vw, 44px) clamp(8px, 1.4vh, 16px);
+  padding: clamp(3px, 0.5vh, 6px) clamp(16px, 3vw, 44px); /* small vertical (shadow clearance only) so the JOIN<->CREDITS gap is the row-gap, not padding (§3) */
 }
 
 /* Keep the buttons above the bar's stacking context. */
@@ -519,8 +520,8 @@ html[data-beat='true'] .homepage-logo {
    switches to height:auto and the target is actually tapped by a finger. */
 .homepage-credits-link {
   display: block;
-  margin: 4px auto 0;
-  padding: 0 18px 16px;
+  margin: 0 auto;
+  padding: 0 18px; /* no internal top/bottom pad: the credits box = its text, so the gap to the frame is the stage's padding-bottom, kept in the 16-32 band (§3) */
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
@@ -667,9 +668,10 @@ html[data-beat='true'] .homepage-logo {
   }
   .homepage-stage {
     max-height: 100%;
-    /* Tighter section spacing than the laptop layout (clamp 24-60): the fixed frame's
-       gaps eat into the scrolling card window, so trim them to give the cards more room. */
-    row-gap: clamp(10px, 1.6vh, 16px);
+    /* Section spacing floored at 16px so the block gaps stay in the 16-32 band on the
+       shortest phones (was clamp(10,1.6vh,16) → 10px at 360×640; §3). The card region is
+       flex:1 1 auto scroll, so the extra px come out of the scroll window, not the frame. */
+    row-gap: clamp(16px, 2vh, 22px);
   }
   /* The card region takes the leftover height between the XP bar and the action buttons and
      scrolls internally. min-height:0 lets a flex item shrink below its content so overflow
