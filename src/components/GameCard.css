@@ -12,7 +12,8 @@
 .game-card-wrap {
   position: relative;
   transform: rotate(var(--rest-rot, 0deg));
-  will-change: transform;
+  /* will-change is toggled in JS (GameCard.jsx magnet) only while the cursor-tilt
+     loop is running — fine-pointer + motion. Touch / reduced-motion never promote it. */
 }
 
 /* Magnetic cursor-pull wrapper (its translate/scale + leaning box-shadow are set
@@ -24,7 +25,7 @@
   display: grid;
   perspective: 1000px;
   border-radius: 8px;
-  will-change: transform;
+  /* will-change toggled in lib/magneticPull.js only while the pull is engaged. */
 }
 
 /* Hovering raises the card above its neighbours so a scaled card can never be
@@ -81,7 +82,22 @@
     scale(calc(var(--cs, 1) * var(--card-beat, 1) * var(--card-hover, 1)))
     rotate(var(--card-tilt, 0deg));
   transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
-  will-change: transform, box-shadow;
+  /* will-change is scoped to the states that actually composite a transform (hover/press
+     and the beat kick, below) — never parked on the idle face. box-shadow was a
+     non-compositing no-op and is dropped. */
+}
+
+/* Promote ONLY while a transform/opacity animation is running (never on the idle node):
+   the face composites its transform on hover/press and on each beat kick; the ::after
+   beat-glow composites opacity on a kick. The two magnet wrappers are JS-toggled above. */
+.game-card:hover,
+.game-card:focus-within,
+.game-card:active,
+html[data-beat='true'] .game-card {
+  will-change: transform;
+}
+html[data-beat='true'] .game-card::after {
+  will-change: opacity;
 }
 
 /* BEAT PULSE — the card face consumes the shared beat clock (html[data-beat='true'] for
@@ -185,7 +201,7 @@ html[data-beat='true'] .game-card.featured {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  will-change: opacity;
+  /* will-change scoped to html[data-beat] above — the glow only composites on a kick. */
   /* INSET so the neon blooms INWARD from the edge — an outer glow would be clipped
      by the card's overflow:hidden. The 2px spread keeps the inward rim from reading
      too faint. */

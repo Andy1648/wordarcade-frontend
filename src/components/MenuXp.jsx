@@ -1,6 +1,7 @@
 // MenuXp.jsx — the menu/splash XP UI: a progress bar (MenuXpBar) and the feedback layer
-// (MenuXpFx). All motion is finite, transform/opacity only, nothing animates at rest, and
-// there is NO will-change anywhere. The fx-layer size + XP bar box are measured on
+// (MenuXpFx). All motion is finite, transform/opacity only, nothing animates at rest. The only
+// will-change is set per-shard in spawnShards for its ~360ms flight and cleared on finish (never
+// parked on the idle pool). The fx-layer size + XP bar box are measured on
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
@@ -361,6 +362,11 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         { duration: SHARD_MS, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both' }
       );
       a.cancel();
+      // Drop the compositor hint once the shard lands — will-change lives only for the
+      // airborne window (set in spawnShards), never on the idle pooled node.
+      a.onfinish = () => {
+        el.style.willChange = '';
+      };
       return a;
     });
 
@@ -426,6 +432,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.background = colour;
+      el.style.willChange = 'transform, opacity'; // promote for the airborne window only
       const ang = (k / SHARD_PER_POP) * Math.PI * 2 + Math.random() * 0.8;
       const dist = 18 + Math.random() * 16;
       const dx = Math.cos(ang) * dist;

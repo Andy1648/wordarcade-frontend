@@ -43,7 +43,7 @@
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   margin-bottom: 8px;
-  will-change: text-shadow;
+  /* (text-shadow will-change was a non-compositing no-op — removed.) */
 }
 
 .room-hint {
@@ -92,7 +92,7 @@
   /* box-shadow transition (not a keyframe) so the beat shadow-slam doesn't
      restart the idle chip-rock transform animation. */
   transition: box-shadow 80ms ease-out;
-  will-change: box-shadow;
+  /* (box-shadow will-change was a non-compositing no-op — removed.) */
 }
 
 .room-player-name {

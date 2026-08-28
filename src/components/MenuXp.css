@@ -1,6 +1,7 @@
 /* MenuXp.css — the menu XP bar + feedback layer. House style: flat, thick black outline,
-   Bungee/Space Mono. NO will-change (site budget is exactly .clock-fill + .burn). NO
-   idle/infinite animation — the pop + level-up are one-shot WAAPI, invisible at rest. */
+   Bungee/Space Mono. NO idle will-change (the only one is set per-shard in JS for its flight
+   and cleared on finish). NO idle/infinite animation — the pop + level-up are one-shot WAAPI,
+   invisible at rest. */
 
 /* ---- Persistent progress bar (inside the panel) ---- */
 .menu-xp-bar {
@@ -94,7 +95,7 @@
   transform: scaleX(0); /* driven imperatively via a rAF lerp — scaleX(displayed), never width */
   background: #2effe0; /* R0 teal; rebirth recolours it (below); flashes yellow on level-up */
   /* A 2px lighter inner top highlight (static). NO transition — the glide is the JS rAF
-     lerp in MenuXpBar; NO will-change (site budget is exactly .clock-fill + .burn). */
+     lerp in MenuXpBar; NO will-change on this idle-at-rest fill. */
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.32);
 }
 /* Fill colour keys off the rebirth count — static per state, class/attr swap only. */
@@ -240,7 +241,8 @@
   border-radius: 1px;
   pointer-events: none;
   opacity: 0;
-  will-change: transform, opacity;
+  /* will-change is set in JS (spawnShards) only for the ~360ms a shard is airborne and
+     cleared on the animation's finish — never parked on the 32 idle pooled nodes. */
   transform: translate(-50%, -50%);
 }
 

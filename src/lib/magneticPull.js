@@ -72,9 +72,12 @@ function apply(it) {
   const engaged = !(lift < 0.012 && Math.abs(it.ox) < 0.4 && Math.abs(it.oy) < 0.4);
   if (engaged && !it.shadowOn) {
     it.el.style.boxShadow = `${it.base}px ${it.base}px 0 #000`;
+    // Promote the layer ONLY while engaged; cleared on disengage so it never sits idle.
+    it.el.style.willChange = 'transform';
     it.shadowOn = true;
   } else if (!engaged && it.shadowOn) {
     it.el.style.boxShadow = '';
+    it.el.style.willChange = '';
     it.shadowOn = false;
   }
 }
@@ -146,6 +149,7 @@ export function unregisterMagnet(it) {
   items.delete(it);
   it.el.style.transform = '';
   it.el.style.boxShadow = '';
+  it.el.style.willChange = '';
   if (!items.size) {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
