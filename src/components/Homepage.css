@@ -505,6 +505,15 @@ html[data-beat='true'] .homepage-logo {
 /* Magnetic cursor-pull wrapper for the CTAs. Shrink-wraps the button so the
    flex-row layout (centered, gap) is unchanged; its translate/scale + leaning
    box-shadow are set inline by lib/magneticPull.js. No static style of its own. */
+/* WPM (§2): the menu self-test readout, centred just under the XP bar. Compact + static so it
+   never breaks the one-screen fit; hidden until the player types (LiveWpm hideZero). */
+.menu-wpm {
+  display: flex;
+  justify-content: center;
+  margin-top: 3px;
+  min-height: 1em; /* reserve the line so showing/hiding never shifts layout */
+}
+
 .homepage-btn-magnet {
   display: inline-flex;
   position: relative;

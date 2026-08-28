@@ -7,6 +7,7 @@ import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
+import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
@@ -105,12 +106,15 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   const chainWeightRef = useRef(0); // RARITY: running sum of linked words' rarity multipliers
   useEffect(() => {
     loadRarityIndex();
+    wpmStart('chain');
+    return () => wpmEnd();
   }, []);
   useEffect(() => {
     const k = s.k || 0;
     if (k < chainBankedRef.current) {
       chainBankedRef.current = 0;
       chainWeightRef.current = 0;
+      wpmStart('chain'); // fresh run → fresh WPM session (flushes the previous)
       setWinsEarned(0);
     }
     if (k > chainBankedRef.current) {
@@ -119,7 +123,10 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       const delta = k - chainBankedRef.current;
       const newWords = (s.lastLinks || []).slice(-delta).map((l) => l.word);
       const prevWeight = chainWeightRef.current;
-      for (const w of newWords) chainWeightRef.current += rarityOf(w).mult;
+      for (const w of newWords) {
+        chainWeightRef.current += rarityOf(w).mult;
+        wpmAddWord(w); // WPM: count each new link's chars
+      }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
       const banked = bankWordWins({
         mode: 'chain',

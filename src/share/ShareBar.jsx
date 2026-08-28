@@ -7,7 +7,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { prepareCard, shareFile, downloadPng, copySummary } from './shareCard';
+import { lastSessionWpm } from '../progress/wpm';
 import './ShareBar.css';
+
+// Share mode label → the WPM history's mode key.
+const WPM_MODE_KEY = { 'word-bomb': 'wordBomb', 'category-blitz': 'blitz', 'sat-rush': 'satRush' };
 
 export default function ShareBar({ mode, outcome, data, neon, daily = null, link = null }) {
   const preparedRef = useRef(null);
@@ -15,11 +19,17 @@ export default function ShareBar({ mode, outcome, data, neon, daily = null, link
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // WPM (§2): fold THIS run's typing speed into the share data (wpmEnd() flushed it before the
+  // results screen mounted). data.wpm already set by the caller wins; else read the last session.
+  const wpmKey = WPM_MODE_KEY[mode];
+  const dataWithWpm =
+    data && data.wpm == null && wpmKey ? { ...data, wpm: lastSessionWpm(wpmKey) || undefined } : data;
+
   // Pre-render the card image once on mount (and whenever the result changes).
   useEffect(() => {
     let alive = true;
     setReady(false);
-    prepareCard({ mode, outcome, data, daily, link })
+    prepareCard({ mode, outcome, data: dataWithWpm, daily, link })
       .then((p) => {
         if (!alive) return;
         preparedRef.current = p;

@@ -7,6 +7,8 @@ import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
+import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
+import RarityFlash from '../components/RarityFlash.jsx';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS } from './shared.js';
 import SoloShell from './SoloShell.jsx';
@@ -94,12 +96,15 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
     loadRarityIndex();
+    wpmStart('fuse');
+    return () => wpmEnd();
   }, []);
   useEffect(() => {
     const solved = s.wordsSolved || 0;
     if (solved < fuseBankedRef.current) {
       fuseBankedRef.current = 0;
       fuseWeightRef.current = 0;
+      wpmStart('fuse'); // fresh run → fresh WPM session
       setWinsEarned(0);
     }
     if (solved > fuseBankedRef.current) {
@@ -108,6 +113,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       const delta = solved - fuseBankedRef.current;
       const prevWeight = fuseWeightRef.current;
       fuseWeightRef.current += rarityOf(s.lastWord).mult + Math.max(0, delta - 1);
+      wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       const banked = bankWordWins({
         mode: 'fuse',
         prevWords: fuseBankedRef.current,

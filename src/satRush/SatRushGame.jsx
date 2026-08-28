@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
+import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { formatNum } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
@@ -52,16 +53,20 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   const satBankedWordsRef = useRef(0);
   const satWeightRef = useRef(0); // RARITY: running sum of cleared words' rarity multipliers
   const [winsEarned, setWinsEarned] = useState(0);
-  // Preload the rarity rank index once so a cleared word can be scored the instant it banks.
+  // Preload the rarity rank index + begin a WPM session; flush it on unmount (leave/exit).
   useEffect(() => {
     loadRarityIndex();
+    wpmStart('satRush');
+    return () => wpmEnd();
   }, []);
   useEffect(() => {
     const cleared = view.cleared || 0;
     if (cleared < satBankedWordsRef.current) {
-      // Fresh run (count reset) → reset our per-run ledger + displayed total + rarity weight.
+      // Fresh run (count reset) → reset our per-run ledger + displayed total + rarity weight,
+      // and start a fresh WPM session (flushes the previous run's).
       satBankedWordsRef.current = 0;
       satWeightRef.current = 0;
+      wpmStart('satRush');
       setWinsEarned(0);
     }
     if (cleared > satBankedWordsRef.current) {
@@ -70,6 +75,7 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       const delta = cleared - satBankedWordsRef.current;
       const prevWeight = satWeightRef.current;
       satWeightRef.current += rarityOf(view.lastClearedWord).mult + Math.max(0, delta - 1);
+      wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
       const banked = bankWordWins({
         mode: 'satRush',
         prevWords: satBankedWordsRef.current,
