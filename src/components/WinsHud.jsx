@@ -9,7 +9,11 @@ import './WinsHud.css';
 import { MIN_WORDS } from '../progress/wins';
 import LiveWpm from './LiveWpm';
 
-export function WinsHudPill({ amount = 0, words = 0 }) {
+// showWpm: the live typing-speed readout only rides along in modes where it MEANS something —
+// the continuous-typing modes (SAT Rush, CHAIN, FUSE) + the menu. Word Bomb and Category Blitz are
+// turn-based (you spend the round waiting for your turn), so wall-clock-free WPM there is noise;
+// they pass showWpm={false} and get the wins pill without it (§2).
+export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
   const earning = words >= MIN_WORDS && amount > 0;
   return (
     <>
@@ -29,10 +33,12 @@ export function WinsHudPill({ amount = 0, words = 0 }) {
           <span className="wins-hud-label">WORDS TO EARN</span>
         </div>
       )}
-      {/* WPM (§2): live typing speed, sitting just under the wins pill in every mode. */}
-      <div className="wpm-hud">
-        <LiveWpm />
-      </div>
+      {/* WPM (§2): live typing speed, under the wins pill — only in the continuous-typing modes. */}
+      {showWpm && (
+        <div className="wpm-hud">
+          <LiveWpm />
+        </div>
+      )}
     </>
   );
 }

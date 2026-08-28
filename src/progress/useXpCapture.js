@@ -19,7 +19,7 @@ import {
 import { equippedPopMult, equippedSoundMult } from './shop';
 import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
-import { wpmStart, wpmAddWord, wpmEnd } from './wpmLive';
+import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
 import { equippedPopColors } from '../theme/themes';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
@@ -131,6 +131,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       // regardless of the anti-mash limiter below (which only gates the XP credit).
       const k = e.key;
       if (k && k.length === 1 && /^[a-z]$/i.test(k)) {
+        wpmKeyStroke(); // WPM (§2): a letter keystroke opens this word's active-typing span
         if (wordBufRef.current.length < MAX_WORD) wordBufRef.current += k.toLowerCase();
       } else if (k === ' ' || k === 'Enter' || k === 'Tab' || k === '.' || k === ',') {
         finalizeWord();

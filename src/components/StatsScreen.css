@@ -96,6 +96,16 @@
   color: #2effe0;
 }
 
+/* Small mono caption under a subtitle — names what a section's numbers count (e.g. which modes
+   feed the typing-speed readout) without adding another Bungee heading. */
+.stats-caption {
+  margin: -2px 0 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(11px, 1.5vw, 13px);
+  letter-spacing: 0.04em;
+  color: #8f7fb0;
+}
+
 .stats-list {
   margin: 0;
 }

@@ -14,6 +14,7 @@ import { pickBriefing } from './briefing';
 import { suspectsStanding } from './suspects';
 import WORDS from '../data/satRush/words.json';
 import { track } from '../lib/analytics';
+import { wpmKeyStroke } from '../progress/wpmLive';
 import { addWords } from '../wordCount';
 import {
   SAT_RUSH_STAGE_MS,
@@ -463,6 +464,7 @@ export function useSatRushGame() {
       }
       if (!/^[a-zA-Z]$/.test(e.key)) return;
       e.preventDefault();
+      wpmKeyStroke(); // WPM (§2): a letter keystroke opens this word's active-typing span
 
       const res = input.typeLetter(e.key);
       if (res.accepted) {

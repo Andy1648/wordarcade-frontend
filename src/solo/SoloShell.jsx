@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import ComboPill from '../components/ComboPill';
+import { wpmKeyStroke } from '../progress/wpmLive';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -110,7 +111,10 @@ export default function SoloShell({
             className="solo-input"
             type="text"
             value={input}
-            onChange={(e) => onInput(e.target.value)}
+            onChange={(e) => {
+              wpmKeyStroke(); // WPM (§2): typing activity opens this word's active-typing span
+              onInput(e.target.value);
+            }}
             placeholder={placeholder}
             maxLength={maxLength}
             autoComplete="off"

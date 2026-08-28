@@ -2519,8 +2519,9 @@ export default function GameScreen({
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
-      {/* WINS: live running tally, hidden once the game is over (the total shows there). */}
-      {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} />}
+      {/* WINS: live running tally, hidden once the game is over (the total shows there). No WPM
+          pill — Word Bomb is turn-based, so typing speed there is meaningless (§2). */}
+      {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />}
       {/* JUICE 02 tension skin — composited CSS layers (was a full-viewport canvas
           repaint loop; see tension.js). All fixed, click-through, aria-hidden, and
           driven purely by data-tension on .game-wrap: nothing here writes style per
@@ -3897,8 +3898,9 @@ function CategoryBlitzScreen({
 
     return (
       <div className="game-wrap">
-        {/* WINS: live running tally for this round (Blitz pays per round). */}
-        <WinsHudPill amount={winsTally} words={winsWords} />
+        {/* WINS: live running tally for this round (Blitz pays per round). No WPM pill — Category
+            Blitz is turn-based, so typing speed there is meaningless (§2). */}
+        <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
         {showCountdown && (
           <CountdownOverlay
             onComplete={() => setShowCountdown(false)}

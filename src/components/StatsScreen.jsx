@@ -13,6 +13,7 @@ import {
 } from '../progress/xp';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
+import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { formatNum } from '../format';
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
@@ -90,6 +91,11 @@ export default function StatsScreen({ onBack }) {
     ['CATEGORY BLITZ', rounds.blitz],
     ['SAT RUSH', rounds.satRush],
   ];
+  // TYPING SPEED (§2d): best + recent average, measured as ACTIVE typing time only and ONLY in the
+  // continuous-typing modes (turn-based Word Bomb / Blitz are excluded — the label names the
+  // contributors so it's clear what feeds these numbers).
+  const bestWpm = bestWpmOverall();
+  const avgWpm = recentAvgWpm();
 
   return (
     <div className="stats-overlay" role="dialog" aria-modal="true" aria-label="Stats" tabIndex={-1} ref={overlayRef}>
@@ -130,6 +136,21 @@ export default function StatsScreen({ onBack }) {
                 <dd>{fmt(v)}</dd>
               </div>
             ))}
+          </dl>
+
+          <h3 className="stats-subtitle">TYPING SPEED</h3>
+          {/* The label names the contributing modes so it's clear these count only where typing
+              speed is meaningful — the continuous modes + menu, never the turn-based games (§2d). */}
+          <p className="stats-caption">SAT RUSH · CHAIN · FUSE · MENU — active typing only</p>
+          <dl className="stats-list">
+            <div className="stats-row">
+              <dt>BEST WPM</dt>
+              <dd>{fmt(bestWpm)}</dd>
+            </div>
+            <div className="stats-row">
+              <dt>AVG WPM (RECENT)</dt>
+              <dd>{fmt(avgWpm)}</dd>
+            </div>
           </dl>
 
           {/* DANGER ZONE — hard-separated from everything above so RESET is never a mis-tap. */}
