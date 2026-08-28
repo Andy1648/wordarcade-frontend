@@ -12,6 +12,7 @@
 //   rejectCtx(engine)  → { letter, fragment } to fill a reject message
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
+import { tierForClockLeft } from '../share/resultCard.js';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -56,6 +57,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   const armedRef = useRef(false);
   const turnStartRef = useRef(0);
   const turnBudgetRef = useRef(0);
+  // Per-accepted-word SPEED tier log for the shareable result card (Job 1): one
+  // 'fast'|'mid'|'slow' per accepted word, from the clock-left fraction at submit.
+  // Pure data only — it never affects the run. Reset on every restart.
+  const tierLogRef = useRef([]);
   const rafRef = useRef(0);
   const restartTimerRef = useRef(null);
 
@@ -155,6 +160,10 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     // submitSoloWord fires onAccept (streak touch) exactly once on an accepted word, mid-run.
     const r = submitSoloWord(engineRef.current, word, onAcceptRef.current);
     if (r.ok) {
+      // Record how much of the clock was left when this word landed (share-card glyph).
+      const budget = turnBudgetRef.current || 1;
+      const left = (budget - (now() - turnStartRef.current)) / budget;
+      tierLogRef.current.push(tierForClockLeft(left));
       setReason('');
       setInput('');
       startTurnClock(); // the next turn's budget (new required letter / new fragment)
@@ -172,6 +181,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     stopRaf();
     engineRef.current = createEngine();
     runIndexRef.current += 1;
+    tierLogRef.current = []; // fresh run → fresh share-card glyph log
     armedRef.current = false;
     turnBudgetRef.current = adapter.budgetMs(engineRef.current);
     setArmed(false);
@@ -216,5 +226,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     restart,
     restartArmed,
     best,
+    // Per-accepted-word speed tiers for the share card (live array; fully populated by 'over').
+    tierLog: tierLogRef.current,
   };
 }
