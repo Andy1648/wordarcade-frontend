@@ -10,6 +10,7 @@
     "lint": "eslint src",
     "test": "node --test \"src/**/*.test.js\"",
     "test:e2e": "playwright test",
+    "gate": "npm run lint && npm run test && npm run test:e2e",
     "preview": "vite preview"
   },
   "dependencies": {
