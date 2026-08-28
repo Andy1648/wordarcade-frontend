@@ -24,6 +24,7 @@ import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { awardWordXp, cappedWordMult } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
+import { noteWord } from '../progress/records';
 import { wordSenseWinsFactor } from '../progress/wordSense';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
@@ -85,6 +86,7 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
+      noteWord(view.lastClearedWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'satRush',
         prevWords: satBankedWordsRef.current,

@@ -8,6 +8,7 @@ import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
+import { noteWord } from '../progress/records.js';
 import { wordSenseWinsFactor } from '../progress/wordSense.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
@@ -151,6 +152,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         awardWordXp({ mode: 'chain', wordLength: (w || '').length, weight: wWeight });
         recordAcceptedWord(w, { mode: 'chain', band: rw.band }); // Collection (Job 3)
         wpmAddWord(w); // WPM: count each new link's chars
+        noteWord(w, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
       const banked = bankWordWins({

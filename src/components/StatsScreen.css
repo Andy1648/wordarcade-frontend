@@ -134,6 +134,82 @@
   letter-spacing: 0.08em;
   color: #2effe0;
 }
+/* First subtitle in a tab body sits tight to the top (no big leading gap). */
+.stats-subtitle--first {
+  margin-top: 2px;
+}
+
+/* PERSONAL RECORDS grid (record-surface): two columns of EARNED/LOCKED record cells. Static, flat,
+   zero animation — same register as the rest of the overlay. min-width:0 lets long values wrap
+   rather than overflow the column at 320px. */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.rec-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.rec-cell--wide {
+  grid-column: 1 / -1;
+}
+.rec-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #b9a7d6;
+  text-transform: uppercase;
+}
+.rec-value {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(18px, 2.6vw, 22px);
+  line-height: 1.05;
+  color: #ffe94a;
+  overflow-wrap: anywhere; /* a long rarest word wraps rather than breaking the grid */
+}
+.rec-cell--wide .rec-value {
+  color: #2effe0; /* the rarest-word hero reads in cyan */
+}
+.rec-sub {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #ff2ec4;
+}
+/* LOCKED — a flat silhouette rectangle stands in for the hidden value, plus how to earn it. */
+.rec-cell--locked {
+  border-color: #2a1f3d;
+  box-shadow: 4px 4px 0 #0a0414;
+}
+.rec-cell--locked .rec-label {
+  color: #6f5f8e;
+}
+.rec-silhouette {
+  height: 16px;
+  width: 62%;
+  border-radius: 4px;
+  background: #2a1f3d;
+}
+.rec-cell--wide.rec-cell--locked .rec-silhouette {
+  width: 40%;
+}
+.rec-req {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #7a6a99;
+  text-transform: uppercase;
+}
 
 /* Small mono caption under a subtitle — names what a section's numbers count (e.g. which modes
    feed the typing-speed readout) without adding another Bungee heading. */

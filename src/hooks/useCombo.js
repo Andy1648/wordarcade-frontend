@@ -9,6 +9,7 @@
 // streak is local cosmetic + audio state only; who wins never changes.
 import { useCallback, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
+import { noteCombo } from '../progress/records.js';
 
 export function useCombo() {
   const { sound } = useSound();
@@ -25,6 +26,7 @@ export function useCombo() {
     const n = ref.current + 1;
     ref.current = n;
     setCount(n);
+    noteCombo(n); // permanent record: bump the all-time longest combo (guarded, no-op unless new max)
     sound.combo?.(n);
   }, [sound]);
 

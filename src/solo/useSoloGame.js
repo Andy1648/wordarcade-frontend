@@ -15,6 +15,7 @@ import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord 
 import { tierForClockLeft } from '../share/resultCard.js';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
+import { noteLucky } from '../progress/records.js';
 // Sound only — XP is NOT credited in this hook any more (unified economy moved per-word XP into the
 // mode components), so feat/sound's xpPerInput/creditXp imports are intentionally dropped here.
 import { sndWordAccepted, sndWordRejected, sndLucky, sndRunOver } from '../audio/gameSounds.js';
@@ -191,6 +192,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       luckyLastMultRef.current = reward.winsWeight;
       if (reward.lucky) {
         luckyCountRef.current += 1;
+        noteLucky(); // permanent record: a real LUCKY-WORD hit (CHANCE record, guarded)
         sndLucky(); // Job 11: lucky-word sparkle (feat/sound)
         // XP is no longer credited here (lucky-only). Unified economy (Job 1): EVERY accepted word
         // grants XP in the mode component (ChainGame/FuseGame), where the full per-word weight —
