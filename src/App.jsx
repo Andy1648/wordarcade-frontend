@@ -66,6 +66,7 @@ import {
 } from './visitHistory';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
+import { awardWordXp, cappedWordMult } from './progress/xp';
 import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from './progress/wpmLive';
 import {
@@ -973,7 +974,12 @@ function App() {
           // Score THIS word and add its multiplier to the running weight, so a rarer word pays more.
           wbRarity = rarityOf(payload.word);
           const prevWbWeight = myWbWeightRef.current;
-          myWbWeightRef.current += wbRarity.mult;
+          // Unified economy (Job 1): the per-word reward weight (rarity, capped) feeds BOTH the
+          // wins banking below AND an XP grant, so this accepted word now levels you too. Word Bomb
+          // has no combo/lucky, so the weight is rarity alone.
+          const wbWeight = cappedWordMult(wbRarity.mult, 1, 1);
+          myWbWeightRef.current += wbWeight;
+          awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
           wpmAddWord(payload.word); // WPM: count this accepted word's chars toward typing speed
           // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
           // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
@@ -1108,8 +1114,11 @@ function App() {
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
         setWinsWords(myBlitzAcceptedRef.current); // drives the pill's pre-gate state
         // Add this answer's rarity multiplier to the running weight (payout rides it, wins.js).
+        // Unified economy (Job 1): the same weight also grants XP, so a Blitz answer now levels you.
         const prevBlitzWeight = myBlitzWeightRef.current;
-        myBlitzWeightRef.current += blitzRarity ? blitzRarity.mult : 1;
+        const blitzWeight = cappedWordMult(blitzRarity ? blitzRarity.mult : 1, 1, 1);
+        myBlitzWeightRef.current += blitzWeight;
+        awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
         wpmAddWord(payload.answer); // WPM: count this accepted answer's chars
         // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
         // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.

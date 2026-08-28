@@ -6,6 +6,7 @@ import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
+import { awardWordXp, cappedWordMult } from '../progress/xp.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
@@ -115,8 +116,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       const prevWeight = fuseWeightRef.current;
       // COMBO (Job 2) + LUCKY (Job 4): the solved word's rarity is scaled by the live combo
       // multiplier AND the word's lucky factor (×5 on a hit, else ×1); jump filler stays ×1,
-      // matching CHAIN.
-      fuseWeightRef.current += rarityOf(s.lastWord).mult * g.combo.mult * g.luckyMult + Math.max(0, delta - 1);
+      // matching CHAIN. Capped at ×40 (Job 1). The SAME weight also grants XP (unified loop).
+      const wWeight = cappedWordMult(rarityOf(s.lastWord).mult, g.combo.mult, g.luckyMult);
+      fuseWeightRef.current += wWeight + Math.max(0, delta - 1);
+      awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight });
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       const banked = bankWordWins({
         mode: 'fuse',
