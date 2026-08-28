@@ -22,6 +22,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { formatNum } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
@@ -48,19 +49,32 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   // running count; we bank the delta each time it climbs and reset the ledger when a fresh run
   // drops it back to 0. bankWordWins queues the "+N WINS" menu stamp and gates on 3 words.
   const satBankedWordsRef = useRef(0);
+  const satWeightRef = useRef(0); // RARITY: running sum of cleared words' rarity multipliers
   const [winsEarned, setWinsEarned] = useState(0);
+  // Preload the rarity rank index once so a cleared word can be scored the instant it banks.
+  useEffect(() => {
+    loadRarityIndex();
+  }, []);
   useEffect(() => {
     const cleared = view.cleared || 0;
     if (cleared < satBankedWordsRef.current) {
-      // Fresh run (count reset) → reset our per-run ledger + displayed total.
+      // Fresh run (count reset) → reset our per-run ledger + displayed total + rarity weight.
       satBankedWordsRef.current = 0;
+      satWeightRef.current = 0;
       setWinsEarned(0);
     }
     if (cleared > satBankedWordsRef.current) {
+      // RARITY: score the just-cleared word (view.lastClearedWord is aligned with `cleared`).
+      // A clear normally bumps the count by 1; if it ever jumps, credit the extra words at ×1.
+      const delta = cleared - satBankedWordsRef.current;
+      const prevWeight = satWeightRef.current;
+      satWeightRef.current += rarityOf(view.lastClearedWord).mult + Math.max(0, delta - 1);
       const banked = bankWordWins({
         mode: 'satRush',
         prevWords: satBankedWordsRef.current,
         nowWords: cleared,
+        prevWeight,
+        nowWeight: satWeightRef.current,
       });
       satBankedWordsRef.current = cleared;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
@@ -169,7 +183,7 @@ function ExitLink({ onExit }) {
 // (this is a manga page, not a printed newspaper).
 function StartScreen({ onPlay, onExit }) {
   // Sell the mode the way the other modes' dialogs do: what it pays PER WORD (the SAT
-  // ×5 rate, with the live rebirth boost annotated like the cards), the run framing, and
+  // ×2 rate, with the live rebirth boost annotated like the cards), the run framing, and
   // a worked example of the mechanic — kept in SAT RUSH's own retro-print manga language
   // (paper + ink + red accent), NOT the neon house dialog look.
   const wins = wordWinsEstimate({ mode: 'sat-rush' });

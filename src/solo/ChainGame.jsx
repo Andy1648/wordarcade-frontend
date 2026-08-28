@@ -6,6 +6,7 @@ import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
+import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
@@ -100,14 +101,32 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // bank the delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3.
   const [winsEarned, setWinsEarned] = useState(0);
   const chainBankedRef = useRef(0);
+  const chainWeightRef = useRef(0); // RARITY: running sum of linked words' rarity multipliers
+  useEffect(() => {
+    loadRarityIndex();
+  }, []);
   useEffect(() => {
     const k = s.k || 0;
     if (k < chainBankedRef.current) {
       chainBankedRef.current = 0;
+      chainWeightRef.current = 0;
       setWinsEarned(0);
     }
     if (k > chainBankedRef.current) {
-      const banked = bankWordWins({ mode: 'chain', prevWords: chainBankedRef.current, nowWords: k });
+      // RARITY: score the new link(s). s.lastLinks holds the most recent up-to-5 {word} (newest
+      // last); the delta is normally 1. Any words beyond the kept window are credited at ×1.
+      const delta = k - chainBankedRef.current;
+      const newWords = (s.lastLinks || []).slice(-delta).map((l) => l.word);
+      const prevWeight = chainWeightRef.current;
+      for (const w of newWords) chainWeightRef.current += rarityOf(w).mult;
+      if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
+      const banked = bankWordWins({
+        mode: 'chain',
+        prevWords: chainBankedRef.current,
+        nowWords: k,
+        prevWeight,
+        nowWeight: chainWeightRef.current,
+      });
       chainBankedRef.current = k;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }

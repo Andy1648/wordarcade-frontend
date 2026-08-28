@@ -190,12 +190,21 @@ export function useSatRushGame() {
     force();
   }, [trackRunEnd, trackSR]);
 
+  // RARITY (word-value): the most recently cleared word + a monotonic id, surfaced on the view
+  // so SatRushGame can score/bank it and pop its tier. A ref (not state) — it rides the existing
+  // re-render that state.cleared triggers, adding no render of its own.
+  const lastClearedRef = useRef({ word: '', id: 0 });
+
   const resolveClear = useCallback(
     () => {
       const eng = engineRef.current;
       const cw = eng.getState().current;
       const word = cw ? cw.word : '';
       const wasBriefed = cw ? !!cw.isBriefed : false;
+      // RARITY (word-value): remember the word just cleared + a monotonic id so the banking
+      // effect can score it and the pop can announce its tier. Set BEFORE submitCorrect bumps
+      // state.cleared, so the next render's view carries the matching cleared word.
+      lastClearedRef.current = { word, id: lastClearedRef.current.id + 1 };
       // How many letters were revealed at completion — gates the heat bump in the
       // engine, and tells PostHog whether players ante early or ride the spell-along.
       const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
@@ -728,6 +737,7 @@ export function useSatRushGame() {
     lex: lexRef.current,
     mode: modeRef.current, // the current run's mode (drives the lineup UI / spell block)
     lastMode: lexRef.current.mode, // remembered choice, for the picker's preselect
+    lastCleared: lastClearedRef.current, // {word,id} — RARITY scoring + pop
   });
 
   return {
@@ -787,6 +797,9 @@ function buildView(state, cur, eng, input, extra) {
     briefing: buildBriefingView(extra.briefing, extra.lex),
     mode: extra.mode, // 'briefing' | 'lineup' — the current run's mode
     lastMode: extra.lastMode, // remembered choice, for the picker's preselect
+    // RARITY: the last cleared word + its monotonic id (aligned with `cleared`), for scoring/pop.
+    lastClearedWord: extra.lastCleared ? extra.lastCleared.word : '',
+    clearId: extra.lastCleared ? extra.lastCleared.id : 0,
   };
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 

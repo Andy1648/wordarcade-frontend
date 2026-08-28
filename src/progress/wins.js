@@ -90,10 +90,13 @@ export function saveRounds(rounds) {
   }
 }
 
-// Per-mode wins multiplier on the base payout (Economy v6, exponential): SAT Rush ×5, CHAIN
+// Per-mode wins multiplier on the base payout (Economy v6, exponential): SAT Rush ×2, CHAIN
 // ×10, FUSE ×15 (the solo modes). Word Bomb / Blitz are ×1. (Key matches recordRound's mode:
-// 'satRush'.)
-export const WINS_MULT = { satRush: 5, chain: 10, fuse: 15 };
+// 'satRush'.) SAT Rush dropped ×5→×2 once RARITY scoring landed: rarity rewards vocabulary
+// directly (SAT's forced advanced deck sits ~56% OBSCURE), so a ×5 mode mult double-counted the
+// same skill and let the UNGATED SAT Rush out-earn the LV20-gated CHAIN and LV25-gated FUSE. At
+// ×2 the median-wins ordering matches the unlock ladder again (see claude/rarity-sim.mjs).
+export const WINS_MULT = { satRush: 2, chain: 10, fuse: 15 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
@@ -135,13 +138,14 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
 }
 
 // PER-WORD wins preview shown on the menu cards. Base 20 per word, keyed by game.id (NOT the
-// round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×5 SAT Rush ·
+// round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×2 SAT Rush ·
 // ×10 CHAIN · ×15 FUSE, then × difficulty, snapped to a round multiple of 10 (word-bomb/blitz
-// 20, sat-rush 100, chain 200, fuse 300 at the ×1 difficulty default). This is the R0 BASE
+// 20, sat-rush 40, chain 200, fuse 300 at the ×1 difficulty default). This is the R0 BASE
 // per-word rate; the card/dialog copy shows it and ANNOTATES the active rebirth boost
 // separately via currentRebirthMult() below (e.g. "200 WINS / WORD (×2)"), so the stable base
-// stays readable while the rebirth gain is visible.
-export const WORD_WINS_MULT = { 'sat-rush': 5, chain: 10, fuse: 15 };
+// stays readable while the rebirth gain is visible. (SAT ×5→×2: see WINS_MULT above — rarity now
+// rewards SAT's vocabulary directly, so the mode mult no longer double-counts it.)
+export const WORD_WINS_MULT = { 'sat-rush': 2, chain: 10, fuse: 15 };
 export function wordWinsEstimate({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
   const modeMult = WORD_WINS_MULT[mode] || 1;

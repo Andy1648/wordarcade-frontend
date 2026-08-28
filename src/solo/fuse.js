@@ -90,6 +90,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random } = {}) {
     tier: null,
     fuseMs: 0, // the current fragment's fuse length
     shortPenalty: false, // was THIS fuse docked by a preceding short word?
+    lastWord: '', // the most recently solved word (RARITY scoring + pop)
   };
 
   // The length factor to apply to the NEXT served fuse. 1.0 after a 5+ word / a life loss.
@@ -141,6 +142,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random } = {}) {
     state.used.add(word);
     state.wordsSolved += 1;
     state.score = state.wordsSolved;
+    state.lastWord = word; // RARITY: aligned with wordsSolved for per-word scoring
     const strip = lightLetters(word);
 
     // Dock the NEXT fuse if this word was short.

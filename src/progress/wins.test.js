@@ -45,7 +45,7 @@ function withStorage(fn, opts = {}) {
 test('perWordWins: 20 base × mode × rebirth, snapped to a round 10 (Economy v6)', () => {
   // R0 (rebirthCount 0) base rates.
   assert.equal(perWordWins({ mode: 'word-bomb', rebirthCount: 0 }), 20);
-  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0 }), 100); // ×5
+  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0 }), 40); // ×2 (was ×5 pre-rarity)
   assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0 }), 200); // ×10
   assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0 }), 300); // ×15
   // Difficulty scales the per-word rate, still snapped to 10.
@@ -70,8 +70,8 @@ test('awardWins: <3 words pays 0; else wordsAccepted × per-word (R0: 3 -> 60, 1
   assert.equal(awardWins({ wordsAccepted: 0, rebirthCount: 0 }), 0);
 });
 
-test('awardWins: SAT Rush pays 5×, CHAIN 10×, FUSE 15× per word (R0)', () => {
-  assert.equal(awardWins({ wordsAccepted: 3, mode: 'satRush', rebirthCount: 0 }), 300); // 3 × 100
+test('awardWins: SAT Rush pays 2×, CHAIN 10×, FUSE 15× per word (R0)', () => {
+  assert.equal(awardWins({ wordsAccepted: 3, mode: 'satRush', rebirthCount: 0 }), 120); // 3 × 40 (SAT ×2)
   assert.equal(awardWins({ wordsAccepted: 3, mode: 'chain', rebirthCount: 0 }), 600); // 3 × 200
   assert.equal(awardWins({ wordsAccepted: 3, mode: 'fuse', rebirthCount: 0 }), 900); // 3 × 300
   assert.equal(awardWins({ wordsAccepted: 2, mode: 'fuse', rebirthCount: 0 }), 0); // still gated on <3
@@ -91,11 +91,11 @@ test('awardWins: difficulty scales the per-word rate (chill/easy → 20, medium 
   assert.equal(awardWins({ wordsAccepted: 2, difficulty: 'hard', rebirthCount: 0 }), 0);
 });
 
-test('round/word estimates: card previews (per-word 20/100/200/300; per-round ×10 words)', () => {
+test('round/word estimates: card previews (per-word 20/40/200/300; per-round ×10 words)', () => {
   // wordWinsEstimate is the R0 BASE preview (never rebirth-scaled) shown on game cards.
   assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 20);
   assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 20);
-  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 100);
+  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 40); // ×2 (was 100 at ×5)
   assert.equal(wordWinsEstimate({ mode: 'chain' }), 200);
   assert.equal(wordWinsEstimate({ mode: 'fuse' }), 300);
   // roundWinsEstimate = a typical 10-word round (reads live rebirths → R0 here).
@@ -206,7 +206,7 @@ test('bankWordWins: the incremental sum equals recordRound for the same final co
 });
 
 test('bankWordWins: mode multipliers + difficulty apply per word (SAT 5×, CHAIN 10×, FUSE 15×, hard 2×)', () => {
-  withStorage(() => assert.equal(bankWordWins({ mode: 'satRush', prevWords: 2, nowWords: 3 }), 3 * 100));
+  withStorage(() => assert.equal(bankWordWins({ mode: 'satRush', prevWords: 2, nowWords: 3 }), 3 * 40));
   withStorage(() => assert.equal(bankWordWins({ mode: 'chain', prevWords: 2, nowWords: 3 }), 3 * 200));
   withStorage(() => assert.equal(bankWordWins({ mode: 'fuse', prevWords: 2, nowWords: 3 }), 3 * 300));
   // Word Bomb on HELL (hard) → per-word 40.
