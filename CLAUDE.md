@@ -14,7 +14,7 @@
 - Border-radius: 8px on cards/buttons
 - All animations snappy (200-400ms for actions), never floaty
 - Constant idle animations on all elements — nothing static
-- Colors: #FF2EC4 (pink), #2EFFE0 (cyan), #FFE94A (yellow), #FF6B3D (orange), #9A1AFF (purple), #0d0618 (dark bg), #1a0b2e (panel bg)
+- Colors: #FF4FA3 (pink; #FF2EC4 is now RESERVED for the beat flash only), #2EFFE0 (cyan), #FFE94A (yellow), #FF6B3D (orange), #9A1AFF (purple), #0d0618 (dark bg), #1a0b2e (panel bg)
 
 ## Rules
 - ART VS MOTION. Visual art must come from real vector assets (SVG or PNG in /public), never assembled from CSS shapes, gradients or borders. CSS-drawn art reads as low quality — approximate curves, wrong weights, no craft. CSS is for MOTION (transform/opacity animation) applied to those assets. If a visual needs a shape that isn't a rectangle or a circle, it is an asset, not a CSS trick. This is why the mascot is a PNG component and not code.
@@ -138,7 +138,7 @@ If any step fails → that's the regression, fix before anything else ships.
 - WANTED-POSTER layout: the play screen is ONE bounty poster (`WordCard`) — WANTED header (MOST WANTED on a deep cut) → case id → LAST SEEN / DESCRIPTION / KNOWN ALIASES fields → mugshot slots → the REWARD footer. The MULTIPLIER lives in that REWARD footer (`AnteMeter`, still class `.sr-mult` — juice squashes it), NOT a separate ante row. Revenant = an ESCAPED overprint across the header (not a corner stamp); deep cut = the MOST WANTED header + red overline (not a ribbon). The bounty copy (CAPTURED!! / ESCAPED!! / CASE CLOSED / CAPTURE-not-ANSWER, etc.) is sanctioned in DESIGN.md — keep it.
 
 ## CANONICAL MENU TITLE (.homepage-logo) — do not flatten or alter without explicit request.
-Wordmark: Bungee Shade font, #FF2EC4 fill, 5px #000 stroke, text-shadow: none (depth from the font, NO extrude). Menu-only: resting tilt rotate(-2deg) skewX(-4deg) and title-beat-pop on html[data-beat]. Defined in Homepage.css.
+Wordmark: Bungee Shade font, #FF4FA3 fill, 5px #000 stroke, text-shadow: none (depth from the font, NO extrude). Menu-only: resting tilt rotate(-2deg) skewX(-4deg) and title-beat-pop on html[data-beat]. Defined in Homepage.css.
 - DELIBERATE DIVERGENCE FROM SPLASH (menu-compaction): the menu title DROPS the continuous chromatic split (title-rgb-left/right ghosts are display:none) — it no longer matches the splash, on purpose. Do not "restore" it without explicit request. (Wordmark fill/stroke/pose/beat-pop above are still locked.)
 
 ## MENU MOTION LAW (Homepage) — idle removed, beat kept.

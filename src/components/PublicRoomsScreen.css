@@ -64,7 +64,7 @@
 .browser-title {
   font-family: 'Bungee', cursive;
   font-size: clamp(26px, 4.4vw, 48px);
-  color: #FF2EC4;
+  color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   line-height: 1;
@@ -336,7 +336,7 @@
 }
 
 .browser-loading-dots span:nth-child(2) {
-  color: #FF2EC4;
+  color: #ff4fa3;
   animation-delay: 0.15s;
 }
 

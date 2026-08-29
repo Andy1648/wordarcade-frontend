@@ -14,7 +14,7 @@
 // the two players sharing a hue stay distinguishable.
 
 export const PLAYER_PALETTE = [
-  '#FF2EC4', // pink
+  '#ff4fa3', // pink
   '#2EFFE0', // cyan
   '#FFE94A', // yellow
   '#FF6B3D', // orange

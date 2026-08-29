@@ -32,7 +32,7 @@ import './Homepage.css';
 
 // Palette pairs (fill + a darker shade of the same hue for the sprayed outline -
 // never black, per the project's colored-outline rule).
-const PINK = { fill: '#FF2EC4', line: '#991A75' };
+const PINK = { fill: '#ff4fa3', line: '#991A75' };
 const CYAN = { fill: '#2EFFE0', line: '#1A9985' };
 const YELLOW = { fill: '#FFE94A', line: '#B8A020' };
 const ORANGE = { fill: '#FF6B3D', line: '#B83D15' };

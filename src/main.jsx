@@ -26,7 +26,7 @@ function CrashFallback() {
       style={{
         position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', gap: '20px',
-        background: '#0d0618', color: '#FF2EC4', fontFamily: "'Bungee', cursive",
+        background: '#0d0618', color: '#ff4fa3', fontFamily: "'Bungee', cursive",
         textAlign: 'center', padding: '24px',
       }}
     >

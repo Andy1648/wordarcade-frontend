@@ -75,8 +75,8 @@
 .combo-fire .combo-count { color: #FF5C5C; }
 
 .combo-max { border-color: #991A75; --combo-scale: 1.26; }
-.combo-max .combo-count { color: #FF2EC4; }
-.combo-max .combo-label { color: #FF2EC4; }
+.combo-max .combo-count { color: #ff4fa3; }
+.combo-max .combo-label { color: #ff4fa3; }
 
 /* Idle shake from the "on fire" tier up - tighter (faster) at max. The base
    skew+scale is baked into every frame so it isn't lost while shaking. */
@@ -106,7 +106,7 @@
   animation: combo-spark 720ms ease-out infinite;
 }
 .combo-spark.s0 { top: -7px; left: 14%; --sx: -11px; --sy: -10px; animation-delay: 0ms; background: #FFE94A; }
-.combo-spark.s1 { top: -5px; right: 22%; --sx: 11px; --sy: -13px; animation-delay: 230ms; background: #FF2EC4; }
+.combo-spark.s1 { top: -5px; right: 22%; --sx: 11px; --sy: -13px; animation-delay: 230ms; background: #ff4fa3; }
 .combo-spark.s2 { bottom: -7px; left: 34%; --sx: -8px; --sy: 11px; animation-delay: 460ms; background: #2EFFE0; }
 @keyframes combo-spark {
   0% { transform: translate(0, 0) scale(0.4); opacity: 0; }

@@ -397,3 +397,31 @@ test('localStorage failure does not throw and defaults to 0', () => {
     else globalThis.localStorage = saved;
   }
 });
+
+// JOB A.3 — levels stay EXACT to 600 via the incremental {lv, into} path (never a cumulative
+// total, which is what overflows 2^53). Crediting exactly need(level) must land on level+1 with
+// intoLevel back to 0, every level up to 600, and need() must stay finite the whole way.
+test('creditXp is exact to level 600 (no cumulative overflow)', () => {
+  let s = { level: 1, intoLevel: 0 };
+  for (let lv = 1; lv <= 600; lv += 1) {
+    const cost = need(lv);
+    assert.ok(Number.isFinite(cost) && cost > 0, `need(${lv}) finite & positive`);
+    const r = creditXp(s, cost); // credit exactly this level's cost
+    assert.equal(r.level, lv + 1, `crediting need(${lv}) reaches level ${lv + 1}`);
+    assert.equal(r.state.intoLevel, 0, `intoLevel resets to 0 at level ${lv + 1}`);
+    assert.ok(r.leveledUp, `leveledUp true at ${lv}`);
+    s = r.state;
+  }
+  assert.equal(s.level, 601);
+  // And a partial credit stays strictly inside the level (never a NaN/negative from float drift).
+  const partial = creditXp({ level: 600, intoLevel: 0 }, need(600) / 2);
+  assert.equal(partial.level, 600);
+  assert.ok(partial.state.intoLevel > 0 && partial.state.intoLevel < need(600));
+});
+
+// The migration walker (levelFromXp) must not overflow/spin on an absurd legacy cumulative.
+test('levelFromXp caps instead of overflowing on a huge legacy value', () => {
+  const r = levelFromXp(1e300);
+  assert.ok(Number.isFinite(r.level) && r.level >= 1, 'level finite');
+  assert.ok(Number.isFinite(r.frac) && r.frac >= 0 && r.frac <= 1, 'frac in [0,1]');
+});

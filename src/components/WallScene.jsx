@@ -26,7 +26,7 @@ const GRAFFITI_WORDS = [
   'BOOM', 'POW', 'ZAP', 'WORD', 'FIRE', 'EZ', 'GG', 'WOW',
   'YOLO', 'SICK', 'EPIC', 'NOOB', 'RIP', 'LOL', 'DOPE', 'HYPE',
 ];
-const GRAFFITI_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+const GRAFFITI_COLORS = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 const MAX_LIVE_TAGS = 15;
 
 function makeGraffitiTag(id) {
@@ -44,7 +44,7 @@ function makeGraffitiTag(id) {
 
 // The graffiti palette + a darker shade of each fill used as its colored
 // outline (never black - per the project's colored-outline rule).
-const PINK = { fill: '#FF2EC4', line: '#991A75' };
+const PINK = { fill: '#ff4fa3', line: '#991A75' };
 const CYAN = { fill: '#2EFFE0', line: '#1A9985' };
 const YELLOW = { fill: '#FFE94A', line: '#B8A020' };
 const ORANGE = { fill: '#FF6B3D', line: '#B83D15' };
@@ -83,7 +83,7 @@ const STICKERS = [
 // A few detailed spray-paint splatters flung onto the wall - low opacity so they
 // read as wall grime/tags behind the content, not foreground art.
 const WALL_SPLATTERS = [
-  { comp: PaintSplatter1, color: '#FF2EC4', size: 150, top: 10, left: 60, rot: 14,  op: 0.12 },
+  { comp: PaintSplatter1, color: '#ff4fa3', size: 150, top: 10, left: 60, rot: 14,  op: 0.12 },
   { comp: PaintSplatter3, color: '#FFE94A', size: 130, top: 57, left: 7,  rot: -20, op: 0.11 },
   { comp: PaintSplatter5, color: '#2EFFE0', size: 120, top: 73, left: 70, rot: 8,   op: 0.12 },
   { comp: PaintSplatter2, color: '#9A1AFF', size: 140, top: 30, left: 37, rot: -10, op: 0.10 },

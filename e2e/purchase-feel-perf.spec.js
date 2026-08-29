@@ -76,9 +76,20 @@ test('perf: frame time + animation counts per KEY POWER tier', async ({ page }) 
   // no NEW infinite loops were added by the tier effects).
   const infs = rows.map((r) => r.infinite);
   expect(new Set(infs).size, `infinite-animation count varies by tier: ${infs.join(',')}`).toBe(1);
-  // Frame time: headless rAF is bimodal (~16.7/33.3ms) and does NOT correlate with
-  // tier — the printed medians are the report; here we only guard against a runaway
-  // (a real jank regression would blow well past the rAF cadence). The reliable
-  // signals are the infinite count (above) and peak concurrent anims (printed).
-  for (const r of rows) expect(Number(r.medianMs), `T${r.tier} median ${r.medianMs}ms`).toBeLessThan(50);
+  // Frame-time note (why there is NO median assertion): headless rAF is vsync-bimodal
+  // (~16.7/33.3ms) and does not correlate with tier — a `median < 50ms` check sits ABOVE that
+  // ceiling and can NEVER fail, i.e. it was a vacuous gate (JOB A.4). The medians are printed as
+  // the report; the load-artifact caveat lives in claude/perf-playbook.md. To re-measure real
+  // jank use a throttled CPU profile, not this headless median.
+  //
+  // The MEANINGFUL, CAN-fail gate is POOL INTEGRITY: every per-keystroke effect (pops, shards,
+  // edges) reuses a FIXED pool of WAAPI animations, so the peak concurrent-animation count is
+  // bounded by the pool sizes regardless of how fast you type. If pooling regresses to a node/anim
+  // PER EVENT, typing at 30/sec for 2s would blow the peak far past the pooled ceiling. Observed
+  // pooled peak is ~99–107 (baseline infinite loops + the pools); 200 is a hard ceiling that a
+  // pooling break trips but normal pooled play never approaches.
+  const POOL_PEAK_CEILING = 200;
+  for (const r of rows) {
+    expect(Number(r.peakAnims), `T${r.tier} peak concurrent anims ${r.peakAnims} — pooling regressed?`).toBeLessThan(POOL_PEAK_CEILING);
+  }
 });

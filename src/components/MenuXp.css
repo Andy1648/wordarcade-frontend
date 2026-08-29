@@ -106,7 +106,7 @@
   background: #ff6b3d;
 }
 .menu-xp-fill[data-reb='3'] {
-  background: #ff2ec4;
+  background: #ff4fa3;
 }
 /* Level-up flash: fill turns yellow for 180ms (instant, no colour transition) then reverts. */
 .menu-xp-fill.is-levelflash {

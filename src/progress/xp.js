@@ -59,11 +59,18 @@ export function need(n) {
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
 // 0 XP. Returns the level, XP into the current level, that level's cost, the remainder to
 // the next level, and the 0..1 fill fraction for the bar.
+//
+// MIGRATION-ONLY (Economy v6 stores {lv, into}, never a cumulative — see creditXp). This is the
+// one place that walks a cumulative sum, and a cumulative sum of need() is exactly what overflows
+// 2^53 at absurd levels. A real legacy value never gets near that, but guard it anyway: cap the
+// walk at LEVEL_CAP so a corrupt/huge legacy number can't spin the loop or accumulate a
+// meaningless float — the LIVE path (creditXp) is unaffected and stays exact to level 600+.
+const LEVEL_CAP = 10000;
 export function levelFromXp(xp) {
   const total = Number.isFinite(xp) && xp > 0 ? xp : 0;
   let level = 1;
   let spent = 0; // cumulative cost consumed to REACH `level`
-  while (total - spent >= need(level)) {
+  while (level < LEVEL_CAP && total - spent >= need(level)) {
     spent += need(level);
     level += 1;
   }

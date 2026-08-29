@@ -159,7 +159,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ff2ec4;
+  background: #ff4fa3;
   border: 2px solid #000;
 }
 
@@ -292,7 +292,7 @@
      container-driven --menu-scale trims it further to clear the XP bar / fit. */
   font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * var(--menu-scale, 1));
   line-height: 1;
-  color: var(--theme-ink, #FF2EC4); /* THEME: wordmark fill */
+  color: var(--theme-ink, #ff4fa3); /* THEME: wordmark fill */
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
   display: inline-block;
@@ -631,7 +631,7 @@ html[data-beat='true'] .homepage-logo {
   display: none;
 }
 
-.homepage-btn-create::before { background: #FF2EC4; }
+.homepage-btn-create::before { background: #ff4fa3; }
 .homepage-btn-join::before { background: #2EFFE0; }
 
 .homepage-btn:active {
@@ -656,7 +656,7 @@ html[data-beat='true'] .homepage-logo {
 }
 
 .homepage-btn-create {
-  background: #FF2EC4;
+  background: #ff4fa3;
   border-color: #991A75;
   color: #000;
   flex: 1.2;
@@ -1011,7 +1011,7 @@ html[data-beat='true'] .homepage-beat-glow {
   text-transform: uppercase;
 }
 .menu-next-unlock-at {
-  color: #FF2EC4;
+  color: #ff4fa3;
   font-weight: 700;
 }
 
@@ -1034,6 +1034,6 @@ html[data-beat='true'] .homepage-beat-glow {
   box-shadow: 2px 2px 0 #000, 0 0 0 3px #FFB800;
 }
 .homepage-stage[data-menu-frame^='rebirth'] .menu-xp-lv {
-  border-color: #FF2EC4;
-  box-shadow: 2px 2px 0 #000, 0 0 0 3px #FF2EC4;
+  border-color: #ff4fa3;
+  box-shadow: 2px 2px 0 #000, 0 0 0 3px #ff4fa3;
 }

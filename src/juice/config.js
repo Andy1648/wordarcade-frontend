@@ -170,7 +170,7 @@ export const JUICE = {
     score: {
       tickEvery: 37, // pitched tick every N counted units
       confettiCount: 120, // win-only burst at the reveal
-      confettiColors: ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF', '#FFFFFF'],
+      confettiColors: ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF', '#FFFFFF'],
       confettiSpeed: 540,
       confettiLife: 1.5,
     },

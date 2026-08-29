@@ -52,7 +52,7 @@ function Heart({ filled, shatter }) {
         d={HEART_PATH}
         // While shattering, keep the heart pink (it's bursting, not yet lost);
         // once the animation clears it falls back to the gray "lost" fill.
-        fill={filled || shatter ? '#FF2EC4' : '#555'}
+        fill={filled || shatter ? '#ff4fa3' : '#555'}
         stroke="#000"
         strokeWidth="1.5"
       />
@@ -152,7 +152,7 @@ const HYPE_WORDS = [
   'DEMON TIME', 'ATE NO CRUMBS', 'WORD CRIME', 'SHEESH AGAIN', 'MASSIVE W',
   'HE DIFFERENT', 'BRAIN UNLOCKED', 'TYPED THAT BLINDFOLDED',
 ];
-const HYPE_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+const HYPE_COLORS = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 
 // End-of-game roast/hype blurbs shown on the Word Bomb game-over card (one
 // picked at random per result). ('WORDS WERE SAID. PEOPLE WERE HURT.' excluded.)
@@ -589,7 +589,7 @@ export function CountdownOverlay({ onComplete, onStep }) {
 }
 
 // Paint-splatter confetti colours (the same graffiti palette used everywhere).
-const CONFETTI_COLORS = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+const CONFETTI_COLORS = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 
 /**
  * A burst of 25 throwaway confetti pieces that rain down the full viewport
@@ -649,7 +649,7 @@ function WinBurst() {
         {/* A smaller pink burst on top, rotated, for layered depth. */}
         <polygon
           points={KO_BURST_POINTS}
-          fill="#FF2EC4"
+          fill="#ff4fa3"
           stroke="#000"
           strokeWidth="6"
           transform="scale(0.6) rotate(12)"
@@ -1404,7 +1404,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
             count: 10,
             speed: 200,
             life: 0.45,
-            colors: ['#2EFFE0', '#FFE94A', '#FF2EC4'],
+            colors: ['#2EFFE0', '#FFE94A', '#ff4fa3'],
           });
         }
         if (promptRef && promptRef.current) flash(promptRef.current, '#2EFFE0');

@@ -76,7 +76,7 @@ import { awardWordXp, cappedWordMult } from './progress/xp';
 import { recordAcceptedWord } from './progress/collection';
 import { noteWord, noteSession } from './progress/records';
 import { wordSenseWinsFactor } from './progress/wordSense';
-import { loadRarityIndex, rarityOf } from './progress/rarityIndex';
+import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
 import {
   loadDailyState,
   saveDailyState,
@@ -151,7 +151,7 @@ const KILL_FEED_LINES = [
 
 // The music button's border/glyph colour, matched to each screen's accent.
 const SCREEN_ACCENT = {
-  home: '#FF2EC4',
+  home: '#ff4fa3',
   lobby: '#2EFFE0',
   browse: '#2EFFE0',
   room: '#FFE94A',
@@ -1014,42 +1014,48 @@ function App() {
           addWords('word-bomb');
           const prevWb = myWbAcceptedRef.current;
           myWbAcceptedRef.current += 1; // my accepted words this Word Bomb game (for Wins)
-          setWinsWords(myWbAcceptedRef.current); // drives the pill's pre-gate state
-          // Score THIS word and add its multiplier to the running weight, so a rarer word pays more.
-          wbRarity = rarityOf(payload.word);
-          const prevWbWeight = myWbWeightRef.current;
-          // Unified economy (Job 1): the per-word reward weight (rarity, capped) feeds BOTH the
-          // wins banking below AND an XP grant, so this accepted word now levels you too. Word Bomb
-          // has no combo/lucky, so the weight is rarity alone.
-          const wbWeight = cappedWordMult(wbRarity.mult, 1, 1);
-          // WINS weight rides WORD SENSE (Job 4) — a separate wins multiplier on the word's rarity,
-          // outside the ×40 cap. XP stays on the unboosted (capped) weight.
-          myWbWeightRef.current += wbWeight * wordSenseWinsFactor(wbRarity.mult);
-          awardWordXp({ mode: 'word-bomb', wordLength: (payload.word || '').trim().length, weight: wbWeight });
-          recordAcceptedWord(payload.word, { mode: 'word-bomb', band: wbRarity.band }); // Collection (Job 3)
-          noteWord(payload.word, wbRarity); // permanent record: distinct / obscure / rarest-ever (guarded)
-          // (WPM no longer counted here — fix/three-again §2 drops typing-speed tracking from the
-          //  turn-based Word Bomb; the wpmLive import + wpmStart/End were removed with it.)
-          // BANK wins for this word NOW (§2) — past the 3-word gate every accepted word banks
-          // immediately, so leaving mid-game keeps what was earned. No end-of-game payout. The
-          // payout rides the rarity WEIGHT delta (wins.js), gated on the accept COUNT.
-          const banked = bankWordWins({
-            mode: 'wordBomb',
-            difficulty: gameDifficultyRef.current,
-            prevWords: prevWb,
-            nowWords: myWbAcceptedRef.current,
-            prevWeight: prevWbWeight,
-            nowWeight: myWbWeightRef.current,
-          });
-          if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
-          // Live HUD tally: the wins banked this game so far.
-          setWinsTally(
-            awardWins({
-              wordsAccepted: myWbAcceptedRef.current,
+          const wbNowWords = myWbAcceptedRef.current; // snapshot for this word's banking gate
+          setWinsWords(wbNowWords); // drives the pill's pre-gate state
+          const wbWord = payload.word;
+          // RARITY-DEPENDENT SCORING. Route through whenRarityReady so a word accepted before the
+          // lazy rarity index has loaded (the RACE: rarityOf would return COMMON → underpay) is
+          // scored the instant the index resolves, in word order, instead of being locked at ×1.
+          // When the index is already loaded this runs SYNCHRONOUSLY (this same tick), so wbRarity
+          // is set for the feed event below and nothing changes; the deferral is only the rare
+          // first-~100ms cold path. Instant feedback (chime, count, pill, feed) already fired above.
+          const scoreWbWord = () => {
+            const r = rarityOf(wbWord);
+            const prevWbWeight = myWbWeightRef.current;
+            // Unified economy (Job 1): the per-word reward weight (rarity, capped) feeds BOTH the
+            // wins banking below AND an XP grant. Word Bomb has no combo/lucky, so weight is rarity.
+            const wbWeight = cappedWordMult(r.mult, 1, 1);
+            // WINS weight rides WORD SENSE (Job 4) — a wins multiplier on rarity, outside the ×40 cap.
+            myWbWeightRef.current += wbWeight * wordSenseWinsFactor(r.mult);
+            awardWordXp({ mode: 'word-bomb', wordLength: (wbWord || '').trim().length, weight: wbWeight });
+            recordAcceptedWord(wbWord, { mode: 'word-bomb', band: r.band }); // Collection (Job 3)
+            noteWord(wbWord, r); // permanent record: distinct / obscure / rarest-ever (guarded)
+            // BANK wins for this word (§2): past the 3-word gate every accepted word banks
+            // immediately (leaving mid-game keeps it). Payout rides the rarity WEIGHT delta,
+            // gated on the accept COUNT snapshot taken when the word landed.
+            const banked = bankWordWins({
               mode: 'wordBomb',
               difficulty: gameDifficultyRef.current,
-            })
-          );
+              prevWords: wbNowWords - 1,
+              nowWords: wbNowWords,
+              prevWeight: prevWbWeight,
+              nowWeight: myWbWeightRef.current,
+            });
+            if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+            setWinsTally(
+              awardWins({ wordsAccepted: myWbAcceptedRef.current, mode: 'wordBomb', difficulty: gameDifficultyRef.current })
+            );
+            return r;
+          };
+          if (isRarityIndexLoaded()) {
+            wbRarity = scoreWbWord(); // synchronous — feeds the rarity pop in the feed event below
+          } else {
+            whenRarityReady(scoreWbWord); // defer: score correctly on resolve, in word order
+          }
         }
         setFeedEvents((prev) => [
           ...prev,
@@ -1161,38 +1167,36 @@ function App() {
         sndWordAccepted(myBlitzAcceptedRef.current); // Job 11: accept chime
         setMyAnswers((prev) => [...prev, payload.answer]);
         addWords('category-blitz');
-        const prevBlitz = myBlitzAcceptedRef.current;
         myBlitzAcceptedRef.current += 1; // my accepts this Blitz round (for Wins)
-        setWinsWords(myBlitzAcceptedRef.current); // drives the pill's pre-gate state
-        // Add this answer's rarity multiplier to the running weight (payout rides it, wins.js).
-        // Unified economy (Job 1): the same weight also grants XP, so a Blitz answer now levels you.
-        const prevBlitzWeight = myBlitzWeightRef.current;
-        const blitzWeight = cappedWordMult(blitzRarity ? blitzRarity.mult : 1, 1, 1);
-        myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(blitzRarity ? blitzRarity.mult : 1); // WORD SENSE (Job 4)
-        awardWordXp({ mode: 'category-blitz', wordLength: (payload.answer || '').trim().length, weight: blitzWeight });
-        recordAcceptedWord(payload.answer, { mode: 'category-blitz', band: blitzRarity ? blitzRarity.band : 'COMMON' }); // Collection (Job 3)
-        noteWord(payload.answer, blitzRarity); // permanent record: distinct / obscure / rarest-ever (guarded)
-        // (WPM no longer counted here — fix/three-again §2 drops typing-speed tracking from the
-        //  turn-based Category Blitz.)
-        // BANK wins for this answer NOW (§2) — past the 3-word gate each accept banks
-        // immediately, so leaving mid-round keeps what was earned. No end-of-round payout.
-        const banked = bankWordWins({
-          mode: 'blitz',
-          difficulty: gameDifficultyRef.current,
-          prevWords: prevBlitz,
-          nowWords: myBlitzAcceptedRef.current,
-          prevWeight: prevBlitzWeight,
-          nowWeight: myBlitzWeightRef.current,
-        });
-        if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
-        // Live HUD tally: the wins banked THIS round so far.
-        setWinsTally(
-          awardWins({
-            wordsAccepted: myBlitzAcceptedRef.current,
+        const blitzNowWords = myBlitzAcceptedRef.current; // snapshot for this answer's banking gate
+        setWinsWords(blitzNowWords); // drives the pill's pre-gate state
+        const blitzAnswer = payload.answer;
+        // RARITY-DEPENDENT SCORING — same RACE fix as Word Bomb: route through whenRarityReady so an
+        // answer accepted before the lazy rarity index loads is scored correctly on resolve (in
+        // order), not locked at COMMON ×1. Synchronous when the index is already loaded.
+        const scoreBlitzWord = () => {
+          const r = rarityOf(blitzAnswer);
+          const prevBlitzWeight = myBlitzWeightRef.current;
+          const blitzWeight = cappedWordMult(r.mult, 1, 1);
+          myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(r.mult); // WORD SENSE (Job 4)
+          awardWordXp({ mode: 'category-blitz', wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
+          recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
+          noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
+          const banked = bankWordWins({
             mode: 'blitz',
             difficulty: gameDifficultyRef.current,
-          })
-        );
+            prevWords: blitzNowWords - 1,
+            nowWords: blitzNowWords,
+            prevWeight: prevBlitzWeight,
+            nowWeight: myBlitzWeightRef.current,
+          });
+          if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+          setWinsTally(
+            awardWins({ wordsAccepted: myBlitzAcceptedRef.current, mode: 'blitz', difficulty: gameDifficultyRef.current })
+          );
+        };
+        if (isRarityIndexLoaded()) scoreBlitzWord();
+        else whenRarityReady(scoreBlitzWord);
       }
     }
 

@@ -196,3 +196,8 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
+
+
+## 8-HOUR RUN (2026-08-29)
+Continuous autonomous. Rails: branch+push only, never merge/main/deploy; verify each push.
+- JOB A.5: user REVERSED the JOB 3 pink choice — brand pink is now #FF4FA3 (wordmark), #FF2EC4 reserved for beat flashes only. Applied across 43 files; CLAUDE.md canonical-title + palette lines updated to match.

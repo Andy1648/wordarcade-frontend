@@ -6,7 +6,7 @@
 import { useEffect, useRef } from 'react';
 import './CursorTrail.css';
 
-const PALETTE = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+const PALETTE = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 const MAX_DOTS = 30;
 const THROTTLE_MS = 30; // spawn at most one trail dot per 30ms of movement
 

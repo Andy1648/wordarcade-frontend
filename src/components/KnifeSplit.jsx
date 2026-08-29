@@ -230,7 +230,7 @@ export default function KnifeSplit({ onComplete, onSlash, onOpen }) {
               gradientUnits="userSpaceOnUse"
             >
               <stop offset="0" stopColor="#2EFFE0" />
-              <stop offset="1" stopColor="#FF2EC4" />
+              <stop offset="1" stopColor="#ff4fa3" />
             </linearGradient>
           </defs>
           <path

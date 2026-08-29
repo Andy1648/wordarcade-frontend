@@ -32,7 +32,7 @@ const MAX_DECAY = 0.999;
 
 // The whole-viewport screen flash is pink on every beat (was a random palette
 // pick, which read as a multicolour strobe). [TUNABLE: for slight variety, pick
-// from a pink-biased array each beat, e.g. ['#FF2EC4','#FF2EC4','#FF2EC4','#2EFFE0'].]
+// from a pink-biased array each beat, e.g. ['#ff4fa3','#ff4fa3','#ff4fa3','#2EFFE0'].]
 const FLASH_COLOR = '#FF2EC4';
 
 const NEUTRAL = {

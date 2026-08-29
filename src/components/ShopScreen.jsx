@@ -86,7 +86,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       const item = [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id);
       // §2 reveal — cosmetics preview in the item's pop colour (a bought STYLE recolours
       // the pop; here we flash it so you SEE it).
-      setReveal({ kind: 'cosmetic', banner: `${(item ? item.name : 'ITEM').toUpperCase()} UNLOCKED`, colour: '#FF2EC4', previewChar: 'A' });
+      setReveal({ kind: 'cosmetic', banner: `${(item ? item.name : 'ITEM').toUpperCase()} UNLOCKED`, colour: '#ff4fa3', previewChar: 'A' });
       refresh();
     }
   };
@@ -136,94 +136,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setReveal({ kind: 'rebirth', banner: `×${formatNum(gained)} MULTIPLIER`, colour: '#9A1AFF', previewChar: '↑', onClose: onBack });
   };
 
-  // §2 press-and-hold buy button — defined below the component (HoldBuy). This alias
-  // keeps the Card markup readable.
-  const HoldBuyButton = (props) => <HoldBuy {...props} />;
-
-  // Thin progress bar — transform: scaleX ONLY (never width), no layout read (§2/§3).
-  const ProgressBar = ({ value }) => (
-    <div className="shop-progress" aria-hidden="true">
-      <div className="shop-progress-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, value))})` }} />
-    </div>
-  );
-
-  const Card = ({ item, type }) => {
-    const isOwnedItem = owned.has(item.id);
-    const isEquipped = equipped[type] === item.id;
-    const affordable = wins >= item.price;
-    const isNextGoal = !isOwnedItem && cheapestUnowned && item.id === cheapestUnowned.id;
-    const cls = isEquipped ? 'equipped' : isOwnedItem ? 'owned' : affordable ? 'buy' : 'locked';
-    return (
-      <div className={`shop-card is-${cls}${isNextGoal ? ' is-next' : ''}`}>
-        {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
-        <div className="shop-card-name">{item.name}</div>
-        <div className="shop-card-blurb">{item.blurb}</div>
-        {item.xpMult > 1 && (
-          <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% XP</div>
-        )}
-        {isEquipped ? (
-          <div className="shop-card-tag">EQUIPPED</div>
-        ) : isOwnedItem ? (
-          <button type="button" className="shop-card-btn" onClick={() => onEquip(item.id)}>
-            EQUIP
-          </button>
-        ) : affordable ? (
-          <HoldBuyButton label={formatNum(item.price)} onCommit={() => onBuy(item.id)} />
-        ) : (
-          <>
-            <div className="shop-card-price">
-              <span className="shop-coin" aria-hidden="true" />
-              {formatNum(item.price)}
-            </div>
-            {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
-            <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
-            <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
-          </>
-        )}
-      </div>
-    );
-  };
-
-  // THEME card: a real PALETTE SWATCH (flat colour strip, not a text label) is the preview, then
-  // the name, a free-at-level note for gated themes, and EQUIPPED / EQUIP / buy / locked+progress
-  // — the same states as the cosmetic cards, so themes read as first-class shop goods.
-  const ThemeCard = ({ theme }) => {
-    const ownedT = isThemeOwned(theme.id, ownedThemes);
-    const isEq = equippedTheme === theme.id;
-    const affordable = wins >= theme.price;
-    const cls = isEq ? 'equipped' : ownedT ? 'owned' : affordable ? 'buy' : 'locked';
-    return (
-      <div className={`shop-card shop-theme-card is-${cls}`}>
-        <div className="shop-theme-swatch" aria-hidden="true">
-          {theme.swatch.map((c, i) => (
-            <span key={i} style={{ background: c }} />
-          ))}
-        </div>
-        <div className="shop-card-name">{theme.name}</div>
-        {theme.unlockLevel > 0 && !ownedT && (
-          <div className="shop-theme-gate">FREE AT LV {theme.unlockLevel}</div>
-        )}
-        {isEq ? (
-          <div className="shop-card-tag">EQUIPPED</div>
-        ) : ownedT ? (
-          <button type="button" className="shop-card-btn" onClick={() => onEquipTheme(theme.id)}>
-            EQUIP
-          </button>
-        ) : affordable ? (
-          <HoldBuyButton label={formatNum(theme.price)} onCommit={() => onBuyTheme(theme.id)} />
-        ) : (
-          <>
-            <div className="shop-card-price">
-              <span className="shop-coin" aria-hidden="true" />
-              {formatNum(theme.price)}
-            </div>
-            <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
-            <ProgressBar value={theme.price > 0 ? wins / theme.price : 1} />
-          </>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="shop-overlay" role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
@@ -245,7 +157,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             <h3 className="shop-subtitle">THEMES — RECOLOR YOUR MENU</h3>
             <div className="shop-grid shop-theme-grid">
               {THEMES.map((t) => (
-                <ThemeCard key={t.id} theme={t} />
+                <ThemeCard
+                  key={t.id}
+                  theme={t}
+                  ownedThemes={ownedThemes}
+                  equippedTheme={equippedTheme}
+                  wins={wins}
+                  onEquipTheme={onEquipTheme}
+                  onBuyTheme={onBuyTheme}
+                />
               ))}
             </div>
             <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
@@ -275,7 +195,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
               <div className="shop-kp-actions">
                 {wins >= kpCost ? (
-                  <HoldBuyButton label={formatNum(kpCost)} onCommit={onBuyKeyPower} />
+                  <HoldBuy label={formatNum(kpCost)} onCommit={onBuyKeyPower} />
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
@@ -308,7 +228,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
               <div className="shop-kp-actions">
                 {wins >= wsCost ? (
-                  <HoldBuyButton label={formatNum(wsCost)} onCommit={onBuyWordSense} />
+                  <HoldBuy label={formatNum(wsCost)} onCommit={onBuyWordSense} />
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
@@ -321,14 +241,34 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             <h3 className="shop-subtitle">POP STYLES</h3>
             <div className="shop-grid">
               {POP_STYLES.map((item) => (
-                <Card key={item.id} item={item} type="popStyle" />
+                <Card
+                  key={item.id}
+                  item={item}
+                  type="popStyle"
+                  owned={owned}
+                  equipped={equipped}
+                  wins={wins}
+                  cheapestUnowned={cheapestUnowned}
+                  onBuy={onBuy}
+                  onEquip={onEquip}
+                />
               ))}
             </div>
 
             <h3 className="shop-subtitle">SOUND PACKS</h3>
             <div className="shop-grid">
               {SOUND_PACKS.map((item) => (
-                <Card key={item.id} item={item} type="soundPack" />
+                <Card
+                  key={item.id}
+                  item={item}
+                  type="soundPack"
+                  owned={owned}
+                  equipped={equipped}
+                  wins={wins}
+                  cheapestUnowned={cheapestUnowned}
+                  onBuy={onBuy}
+                  onEquip={onEquip}
+                />
               ))}
             </div>
           </div>
@@ -404,34 +344,148 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   );
 }
 
+// Thin progress bar — transform: scaleX ONLY (never width), no layout read (§2/§3).
+// Module-scoped (stateless) so it never re-creates its identity across ShopScreen renders.
+function ProgressBar({ value }) {
+  return (
+    <div className="shop-progress" aria-hidden="true">
+      <div className="shop-progress-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, value))})` }} />
+    </div>
+  );
+}
+
+// Cosmetic (pop-style / sound-pack) shop card. Module-scoped and fully prop-driven — it MUST
+// live outside ShopScreen's render so React keeps one identity across ShopScreen's frequent
+// re-renders; an inline definition re-mounted this subtree (and the HoldBuy inside it, losing
+// its in-flight hold timer) on every render.
+function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEquip }) {
+  const isOwnedItem = owned.has(item.id);
+  const isEquipped = equipped[type] === item.id;
+  const affordable = wins >= item.price;
+  const isNextGoal = !isOwnedItem && cheapestUnowned && item.id === cheapestUnowned.id;
+  const cls = isEquipped ? 'equipped' : isOwnedItem ? 'owned' : affordable ? 'buy' : 'locked';
+  return (
+    <div className={`shop-card is-${cls}${isNextGoal ? ' is-next' : ''}`}>
+      {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
+      <div className="shop-card-name">{item.name}</div>
+      <div className="shop-card-blurb">{item.blurb}</div>
+      {item.xpMult > 1 && (
+        <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% XP</div>
+      )}
+      {isEquipped ? (
+        <div className="shop-card-tag">EQUIPPED</div>
+      ) : isOwnedItem ? (
+        <button type="button" className="shop-card-btn" onClick={() => onEquip(item.id)}>
+          EQUIP
+        </button>
+      ) : affordable ? (
+        <HoldBuy label={formatNum(item.price)} onCommit={() => onBuy(item.id)} />
+      ) : (
+        <>
+          <div className="shop-card-price">
+            <span className="shop-coin" aria-hidden="true" />
+            {formatNum(item.price)}
+          </div>
+          {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
+          <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
+          <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
+        </>
+      )}
+    </div>
+  );
+}
+
+// THEME card: a real PALETTE SWATCH (flat colour strip, not a text label) is the preview, then
+// the name, a free-at-level note for gated themes, and EQUIPPED / EQUIP / buy / locked+progress
+// — the same states as the cosmetic cards, so themes read as first-class shop goods. Module-scoped
+// + prop-driven for the same re-mount reason as Card above.
+function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBuyTheme }) {
+  const ownedT = isThemeOwned(theme.id, ownedThemes);
+  const isEq = equippedTheme === theme.id;
+  const affordable = wins >= theme.price;
+  const cls = isEq ? 'equipped' : ownedT ? 'owned' : affordable ? 'buy' : 'locked';
+  return (
+    <div className={`shop-card shop-theme-card is-${cls}`}>
+      <div className="shop-theme-swatch" aria-hidden="true">
+        {theme.swatch.map((c, i) => (
+          <span key={i} style={{ background: c }} />
+        ))}
+      </div>
+      <div className="shop-card-name">{theme.name}</div>
+      {theme.unlockLevel > 0 && !ownedT && (
+        <div className="shop-theme-gate">FREE AT LV {theme.unlockLevel}</div>
+      )}
+      {isEq ? (
+        <div className="shop-card-tag">EQUIPPED</div>
+      ) : ownedT ? (
+        <button type="button" className="shop-card-btn" onClick={() => onEquipTheme(theme.id)}>
+          EQUIP
+        </button>
+      ) : affordable ? (
+        <HoldBuy label={formatNum(theme.price)} onCommit={() => onBuyTheme(theme.id)} />
+      ) : (
+        <>
+          <div className="shop-card-price">
+            <span className="shop-coin" aria-hidden="true" />
+            {formatNum(theme.price)}
+          </div>
+          <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
+          <ProgressBar value={theme.price > 0 ? wins / theme.price : 1} />
+        </>
+      )}
+    </div>
+  );
+}
+
 // §2 — press-and-HOLD to buy: the button fills over holdMs; releasing early cancels
-// (the tension beat). The fill is a WAAPI scaleX (never width); commit fires on the
-// animation's finish. No layout reads. Pooled is N/A (one fill per button instance).
+// (the tension beat). The fill is a COSMETIC WAAPI scaleX (never width); no layout reads.
+//
+// COMMIT IS WALL-CLOCK (setTimeout), NOT THE ANIMATION'S FINISH. Gating commit on
+// `animation.onfinish` tied it to the document/animation timeline, which only advances as frames
+// are produced — under main-thread saturation (a low-end/janky device, a loaded machine) frames
+// starve, the fill's currentTime lags real time and can freeze entirely, so onfinish (and thus
+// the buy) needed an unbounded real-time hold: a player on a slow device holding the intended
+// ~400ms could fail to buy. setTimeout fires on real elapsed time regardless of frame rate, so
+// holding holdMs of REAL time always commits; the WAAPI fill stays purely as visual feedback.
+//
+// NOTE: this component must NOT be re-created inside a parent's render (it was, via an inline
+// `const HoldBuyButton = props => <HoldBuy .../>` alias + inline Card/ThemeCard) — a new
+// component identity per render REMOUNTS it mid-press, throwing away the in-flight timer. It is
+// module-scoped and rendered directly so its press state survives the parent's frequent
+// re-renders (ShopScreen re-renders ~1-2x/sec from App churn).
 function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' }) {
   const fillRef = useRef(null);
   const animRef = useRef(null);
+  const timerRef = useRef(0);
   const start = () => {
     const fill = fillRef.current;
-    if (!fill || animRef.current) return;
-    const a = fill.animate(
+    if (!fill || timerRef.current) return;
+    // Cosmetic fill (transform/opacity only, composited). Not the commit signal.
+    animRef.current = fill.animate(
       [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
       { duration: holdMs, easing: 'linear', fill: 'forwards' }
     );
-    animRef.current = a;
-    a.onfinish = () => {
+    // Commit on holdMs of WALL-CLOCK time held (frame-rate independent).
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = 0;
       animRef.current = null;
-      fill.style.transform = 'scaleX(0)';
+      if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
       onCommit();
-    };
+    }, holdMs);
   };
   const cancel = () => {
-    const a = animRef.current;
-    if (a) {
-      a.cancel();
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = 0;
+    }
+    if (animRef.current) {
+      animRef.current.cancel();
       animRef.current = null;
     }
     if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
   };
+  // Clear a pending hold if the button unmounts mid-press (no commit on a gone component).
+  useEffect(() => () => { if (timerRef.current) window.clearTimeout(timerRef.current); }, []);
   return (
     <button
       type="button"

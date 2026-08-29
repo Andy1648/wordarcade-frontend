@@ -35,6 +35,17 @@ export function isRarityIndexLoaded() {
   return index instanceof Map;
 }
 
+// Run `cb` with the rarity index guaranteed ready: SYNCHRONOUSLY (same tick) if it is already
+// loaded, otherwise once the lazy load resolves. This is how a scorer avoids the RACE where a word
+// accepted in the first ~100ms (before the ?raw chunk lands) is scored COMMON and underpaid: the
+// caller does its instant feedback inline and routes the rarity-dependent scoring through here, so
+// that scoring never runs before the index exists but input/feedback latency is untouched. Callers
+// registered before the load resolves fire in registration order (FIFO), preserving word order.
+export function whenRarityReady(cb) {
+  if (index) { cb(); return; }
+  loadRarityIndex().then(cb);
+}
+
 // Synchronous rarity verdict for a word using whatever is loaded. Before the index lands this
 // returns the COMMON/silent default (mult 1, announce false) — never null, never throws.
 export function rarityOf(word) {

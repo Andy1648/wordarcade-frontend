@@ -56,19 +56,19 @@ const BURST_POINTS = Array.from({ length: 32 }, (_, i) => {
 // Modest count (15) and low opacity so the air feels alive without going noisy.
 const EMBERS = [
   { type: 'spark', left: 8,  size: 4,  dur: 19, delay: 0,   color: '#FFE94A', op: 0.5,  drift: 14,  rot: 0 },
-  { type: 'fleck', left: 16, size: 7,  dur: 24, delay: 6,   color: '#FF2EC4', op: 0.32, drift: -18, rot: 140 },
+  { type: 'fleck', left: 16, size: 7,  dur: 24, delay: 6,   color: '#ff4fa3', op: 0.32, drift: -18, rot: 140 },
   { type: 'spark', left: 23, size: 3,  dur: 17, delay: 3,   color: '#FF6B3D', op: 0.5,  drift: 10,  rot: 0 },
   { type: 'tile',  left: 30, size: 20, dur: 30, delay: 10,  color: '#2EFFE0', op: 0.16, drift: 16,  rot: -22, letter: 'T' },
   { type: 'spark', left: 38, size: 5,  dur: 15, delay: 8,   color: '#2EFFE0', op: 0.45, drift: -12, rot: 0 },
   { type: 'fleck', left: 45, size: 6,  dur: 26, delay: 2,   color: '#FFE94A', op: 0.3,  drift: 20,  rot: -120 },
-  { type: 'spark', left: 52, size: 3,  dur: 21, delay: 13,  color: '#FF2EC4', op: 0.5,  drift: -9,  rot: 0 },
+  { type: 'spark', left: 52, size: 3,  dur: 21, delay: 13,  color: '#ff4fa3', op: 0.5,  drift: -9,  rot: 0 },
   { type: 'tile',  left: 59, size: 18, dur: 33, delay: 4,   color: '#FF6B3D', op: 0.15, drift: -16, rot: 18, letter: 'W' },
   { type: 'spark', left: 66, size: 4,  dur: 16, delay: 11,  color: '#FFE94A', op: 0.5,  drift: 12,  rot: 0 },
   { type: 'fleck', left: 73, size: 8,  dur: 23, delay: 7,   color: '#9A1AFF', op: 0.32, drift: 17,  rot: 160 },
   { type: 'spark', left: 80, size: 3,  dur: 18, delay: 1,   color: '#FF6B3D', op: 0.45, drift: -11, rot: 0 },
   { type: 'tile',  left: 86, size: 19, dur: 31, delay: 15,  color: '#FFE94A', op: 0.16, drift: 14,  rot: -14, letter: '!' },
   { type: 'spark', left: 91, size: 5,  dur: 14, delay: 5,   color: '#2EFFE0', op: 0.5,  drift: -13, rot: 0 },
-  { type: 'fleck', left: 96, size: 6,  dur: 27, delay: 9,   color: '#FF2EC4', op: 0.3,  drift: -15, rot: -150 },
+  { type: 'fleck', left: 96, size: 6,  dur: 27, delay: 9,   color: '#ff4fa3', op: 0.3,  drift: -15, rot: -150 },
   { type: 'spark', left: 48, size: 3,  dur: 22, delay: 17,  color: '#FFE94A', op: 0.45, drift: 10,  rot: 0 },
 ];
 

@@ -59,7 +59,7 @@
 .lobby-title {
   font-family: 'Bungee', cursive;
   font-size: clamp(28px, 5vw, 56px);
-  color: #FF2EC4;
+  color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   line-height: 1;
@@ -193,7 +193,7 @@
   font-family: 'Bungee', cursive;
   font-size: clamp(18px, 2.4vw, 22px);
   color: #000;
-  background: #FF2EC4;
+  background: #ff4fa3;
   border: 4px solid #991A75;
   border-radius: 8px;
   padding: 13px 0;
