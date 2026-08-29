@@ -196,8 +196,12 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
-
-
 ## 8-HOUR RUN (2026-08-29)
 Continuous autonomous. Rails: branch+push only, never merge/main/deploy; verify each push.
 - JOB A.5: user REVERSED the JOB 3 pink choice — brand pink is now #FF4FA3 (wordmark), #FF2EC4 reserved for beat flashes only. Applied across 43 files; CLAUDE.md canonical-title + palette lines updated to match.
+- JOB C item 4 (spacing snap): tokens defined on chore/spacing-scale; the off-scale 36->8 SNAP shifts real layout on ~every screen and viewport-integrity only catches clipping (not "looks worse"), so a blind unsupervised snap is declined per the conservative rail. Items 1-3 (wordmark/SHOP collision + a permanent fixed-vs-content gate, close buttons 40->44px, <main> landmark, wins-chip 44px hit area) are done + verified. CLAUDE.md close note still says 40x40 (historical); code is now 44.
+
+## CRITICAL (8h run): npm ci corrupted node_modules
+- `(npm ci && npm run gate)` for JOB C FAILED: `npm ci` wipes node_modules first, hit `EPERM unlink esbuild.exe` (binary locked by concurrent build activity), leaving node_modules PARTIAL (vite deleted). Repaired via `taskkill esbuild.exe` + `npm install`.
+- DECISION: do NOT run `npm ci` while ANY subagent/build is active — it is destructive to the SHARED node_modules. node_modules is already correct from package-lock and I have not changed deps on the code branches, so the gate is run as `npm run gate` (lint+unit+e2e) on the existing install; a standalone `npm ci` only if deps change AND no other node process runs.
+- Worktree subagents that BUILD/TEST need their own `npm ci` first (a fresh worktree has no node_modules). JOB B's subagent thrashed without it and was killed — JOB B (rebalance) is INCOMPLETE, to redo.
