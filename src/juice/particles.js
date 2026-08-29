@@ -9,7 +9,7 @@ import { motionFlag, reduced } from './settings';
 import { isHitStopped } from './motion';
 
 const POOL_CAP = 300; // hard ceiling on simultaneous particles
-const PALETTE = ['#FF2EC4', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
+const PALETTE = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 const GRAVITY = 900; // px/s^2
 const DRAG = 2.5; // velocity damping per second
 

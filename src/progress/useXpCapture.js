@@ -23,7 +23,7 @@ import { sndLevelUp } from '../audio/gameSounds';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
-export const TIER_COLORS = ['#2EFFE0', '#FFE94A', '#FF6B3D', '#FF2EC4'];
+export const TIER_COLORS = ['#2EFFE0', '#FFE94A', '#FF6B3D', '#ff4fa3'];
 
 // A tap is ignored when it lands on (or inside) any of these — they're doing something
 // else. `.game-card` and open dialogs included; matched with closest().

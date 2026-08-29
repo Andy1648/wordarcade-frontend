@@ -210,7 +210,7 @@
 }
 
 .intro-line-type { color: #2EFFE0; } /* cyan */
-.intro-line-die { color: #FF2EC4; } /* pink */
+.intro-line-die { color: #ff4fa3; } /* pink */
 
 /* Each letter is its own box so it can stagger in; hidden until its line is
    active. */
@@ -391,7 +391,7 @@
    - the anime "this hit hard" white frame, not a fade.
    IMPORTANT: this used to use mix-blend-mode:difference, which INVERTED the screen.
    That inversion turned the cyan title red (#2EFFE0 -> ~209,0,31) and the pink
-   title green (#FF2EC4 -> ~0,209,59) for the flash frames - i.e. the "white/invert"
+   title green (#ff4fa3 -> ~0,209,59) for the flash frames - i.e. the "white/invert"
    flash WAS the red/green that kept getting reported. Normal blend = a clean white
    flash with zero colour shift. Do NOT reintroduce mix-blend-mode here. */
 .intro-flash {

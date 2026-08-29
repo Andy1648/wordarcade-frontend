@@ -53,7 +53,7 @@
      (min of vw/vh) so it shrinks on short laptops instead of forcing clipping. */
   font-size: clamp(40px, min(12vw, 13vh), 120px);
   line-height: 1;
-  color: #FF2EC4;
+  color: #ff4fa3;
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
   text-align: center;
@@ -94,7 +94,7 @@
 }
 
 .splash-logo::after {
-  color: #FF2EC4;
+  color: #ff4fa3;
   animation: splash-rgb-right 3s ease-in-out infinite;
 }
 
@@ -205,7 +205,7 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
+  background-image: radial-gradient(circle, #ff4fa3 0.8px, transparent 0.8px);
   background-size: 12px 12px;
   opacity: 0.05;
 }

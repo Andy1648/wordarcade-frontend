@@ -16,7 +16,7 @@ export const SHARE = {
   grid: 'rgba(255,255,255,0.04)',
   graffiti: 'rgba(255,46,196,0.05)',
   ink: '#ffffff',
-  wordmark: '#FF2EC4',
+  wordmark: '#ff4fa3',
   dim: 'rgba(255,255,255,0.62)',
 
   // Per-mode neon (matches gameData.js + the menu cards).

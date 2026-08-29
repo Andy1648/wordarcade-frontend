@@ -11,7 +11,7 @@
 .transition-panel {
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, #9A1AFF, #FF2EC4 55%, #FF6B3D);
+  background: linear-gradient(120deg, #9A1AFF, #ff4fa3 55%, #FF6B3D);
   will-change: transform, opacity;
 }
 /* FORWARD (entering deeper): the panel sweeps across left→right (covers, then clears to the right). */

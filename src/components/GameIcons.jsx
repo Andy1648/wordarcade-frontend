@@ -9,7 +9,7 @@ export function BombIcon() {
     <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
       <path
         d="M11 1.5 L13 6 L17.5 4.5 L16 9 L20.5 11 L16 13 L17.5 17.5 L13 16 L11 20.5 L9 16 L4.5 17.5 L6 13 L1.5 11 L6 9 L4.5 4.5 L9 6 Z"
-        fill="#FF2EC4"
+        fill="#ff4fa3"
         stroke="#B30D85"
         strokeWidth="1.6"
         strokeLinejoin="round"

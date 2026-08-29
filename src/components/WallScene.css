@@ -138,7 +138,7 @@
 .wall-halftone {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, #FF2EC4 0.8px, transparent 0.8px);
+  background-image: radial-gradient(circle, #ff4fa3 0.8px, transparent 0.8px);
   background-size: 12px 12px;
   /* STATIC opacity. Previously this was calc(0.045 + var(--beat-mid) * 0.06),
      which recomputed every frame off the per-frame --beat-mid var and forced a

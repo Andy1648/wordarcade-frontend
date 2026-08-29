@@ -82,7 +82,7 @@
 .connlost-title {
   font-family: 'Bungee', sans-serif;
   font-size: clamp(28px, 7vw, 52px);
-  color: #FF2EC4;
+  color: #ff4fa3;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
   line-height: 1.1;
@@ -146,7 +146,7 @@
 
 /* The destructive choice reads as a warning (pink) vs the cyan default. */
 .daily-leave-danger {
-  background: #FF2EC4;
+  background: #ff4fa3;
   border-color: #991A75;
   color: #fff;
 }

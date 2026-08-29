@@ -19,7 +19,7 @@
   font-family: 'Bungee Shade', 'Bungee', cursive;
   font-size: clamp(30px, 5vw, 50px);
   line-height: 1;
-  color: #FF2EC4;
+  color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   text-align: center;

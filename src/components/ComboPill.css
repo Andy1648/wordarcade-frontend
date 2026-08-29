@@ -19,7 +19,7 @@
   box-shadow: 3px 3px 0 #000;
 }
 .combo-pill-inner.is-hot {
-  background: #FF2EC4; /* pink at ×2.0+ */
+  background: #ff4fa3; /* pink at ×2.0+ */
   color: #fff;
 }
 .combo-pill-x {

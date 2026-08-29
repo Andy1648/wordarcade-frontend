@@ -10,7 +10,7 @@
 //     const el = e.currentTarget;
 //     const r = el.getBoundingClientRect();
 //     squash(el);
-//     flash(el, '#FF2EC4');
+//     flash(el, '#ff4fa3');
 //     burst(r.left + r.width / 2, r.top + r.height / 2, { count: 16 });
 //     sfx('tap');
 //   }

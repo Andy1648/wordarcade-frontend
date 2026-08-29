@@ -14,7 +14,7 @@ function darken(hex, amt = 0.2) {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
-export function PaintSplatter1({ className = '', color = '#FF2EC4' }) {
+export function PaintSplatter1({ className = '', color = '#ff4fa3' }) {
   const edge = darken(color, 0.2);
   const speck = darken(color, 0.12);
   return (
@@ -54,7 +54,7 @@ export function PaintSplatter1({ className = '', color = '#FF2EC4' }) {
   );
 }
 
-export function PaintSplatter2({ className = '', color = '#FF2EC4' }) {
+export function PaintSplatter2({ className = '', color = '#ff4fa3' }) {
   const edge = darken(color, 0.2);
   const speck = darken(color, 0.12);
   return (
@@ -90,7 +90,7 @@ export function PaintSplatter2({ className = '', color = '#FF2EC4' }) {
   );
 }
 
-export function PaintSplatter3({ className = '', color = '#FF2EC4' }) {
+export function PaintSplatter3({ className = '', color = '#ff4fa3' }) {
   const edge = darken(color, 0.2);
   const speck = darken(color, 0.12);
   return (
@@ -128,7 +128,7 @@ export function PaintSplatter3({ className = '', color = '#FF2EC4' }) {
   );
 }
 
-export function PaintSplatter4({ className = '', color = '#FF2EC4' }) {
+export function PaintSplatter4({ className = '', color = '#ff4fa3' }) {
   const edge = darken(color, 0.2);
   const speck = darken(color, 0.12);
   return (
@@ -165,7 +165,7 @@ export function PaintSplatter4({ className = '', color = '#FF2EC4' }) {
   );
 }
 
-export function PaintSplatter5({ className = '', color = '#FF2EC4' }) {
+export function PaintSplatter5({ className = '', color = '#ff4fa3' }) {
   const edge = darken(color, 0.2);
   const speck = darken(color, 0.12);
   return (

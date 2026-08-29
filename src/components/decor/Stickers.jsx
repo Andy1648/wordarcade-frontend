@@ -153,7 +153,7 @@ function Crown({ fill, line }) {
       </g>
 
       {/* jewels at each point tip — different colours */}
-      <circle cx={-44} cy={-22} r={4.5} fill="#FF2EC4" stroke={line} strokeWidth={1.6} />
+      <circle cx={-44} cy={-22} r={4.5} fill="#ff4fa3" stroke={line} strokeWidth={1.6} />
       <circle cx={0} cy={-36} r={5} fill="#2EFFE0" stroke={line} strokeWidth={1.6} />
       <circle cx={44} cy={-18} r={4.5} fill="#FFE94A" stroke={line} strokeWidth={1.6} />
     </g>

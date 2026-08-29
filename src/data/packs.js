@@ -9,7 +9,7 @@
 // matching ids so the look is unchanged. `geography` is the new 2-category pack —
 // a neutral colour for now (we'll decide later whether to surface such a tiny pack).
 const packs = [
-  { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#FF2EC4', rot: -3,   sticker: 'star', count: 31 },
+  { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#ff4fa3', rot: -3,   sticker: 'star', count: 31 },
   { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 60 },
   { id: 'food',       label: 'FOOD',       emoji: '🍔', color: '#FF6B3D', rot: -1.5, sticker: 'drip', count: 61 },
   { id: 'animals',    label: 'ANIMALS',    emoji: '🐾', color: '#FFE94A', rot: 3,    sticker: null,   count: 48 },

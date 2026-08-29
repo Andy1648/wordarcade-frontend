@@ -27,7 +27,7 @@
   background: #FFE94A; /* flat yellow confirm — no glow, no loop */
 }
 .copy-result-btn:focus-visible {
-  outline: 3px solid #FF2EC4;
+  outline: 3px solid #ff4fa3;
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {

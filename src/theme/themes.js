@@ -41,8 +41,8 @@ function mk(id, name, price, unlockLevel, p) {
 // The five shipped themes — all inside the Newgrounds/Y2K language (bold, flat, thick outlines).
 export const THEMES = [
   mk('default', 'DEFAULT', 0, 0, {
-    bg: '#0d0618', panel: '#1a0b2e', ink: '#FF2EC4', xp: '#2EFFE0', accent: '#FFE94A',
-    pops: ['#2EFFE0', '#FFE94A', '#FF6B3D', '#FF2EC4'],
+    bg: '#0d0618', panel: '#1a0b2e', ink: '#ff4fa3', xp: '#2EFFE0', accent: '#FFE94A',
+    pops: ['#2EFFE0', '#FFE94A', '#FF6B3D', '#ff4fa3'],
   }),
   mk('midnight', 'MIDNIGHT', 600, 10, {
     bg: '#050a1a', panel: '#0c1730', ink: '#2ED0FF', xp: '#4CE0FF', accent: '#8FB8FF',
@@ -57,12 +57,12 @@ export const THEMES = [
   mk('toxic', 'TOXIC', 8000, 30, {
     bg: '#0a1405', panel: '#16260c', ink: '#9EFF2E', xp: '#C8FF3D', accent: '#B44CFF',
     cardAccent: '#9A1AFF',
-    pops: ['#C8FF3D', '#9EFF2E', '#B44CFF', '#FF2EC4'],
+    pops: ['#C8FF3D', '#9EFF2E', '#B44CFF', '#ff4fa3'],
   }),
   mk('prism', 'PRISM', 25000, 0, {
-    bg: '#120a24', panel: '#231240', ink: '#FF2EC4', xp: '#00FFB3', accent: '#FFE94A',
+    bg: '#120a24', panel: '#231240', ink: '#ff4fa3', xp: '#00FFB3', accent: '#FFE94A',
     cardAccent: '#8A2EFF',
-    pops: ['#FF2EC4', '#00E0FF', '#FFE94A', '#8A2EFF'],
+    pops: ['#ff4fa3', '#00E0FF', '#FFE94A', '#8A2EFF'],
   }),
 ];
 
