@@ -24,8 +24,13 @@ import './SatRush.css';
 import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { awardWordXp, cappedWordMult } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
-import { noteWord } from '../progress/records';
+import { noteWord, noteLucky } from '../progress/records';
 import { wordSenseWinsFactor } from '../progress/wordSense';
+// COMBO + LUCKY parity (feat/parity-sat): the SAME pure modules CHAIN/FUSE/WB/Blitz use, reused
+// verbatim (no forked logic) so SAT Rush scores identically — combo builds per cleared word, breaks
+// on a life-loss miss, resets per run; both fold into the per-word reward WEIGHT.
+import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
+import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
@@ -56,6 +61,11 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   // drops it back to 0. bankWordWins queues the "+N WINS" menu stamp and gates on 3 words.
   const satBankedWordsRef = useRef(0);
   const satWeightRef = useRef(0); // RARITY: running sum of cleared words' rarity multipliers
+  // COMBO + LUCKY (parity): the payout combo + lucky oracle for this run. Advanced per cleared word
+  // below, broken on a life-loss miss (the effect after this one), reset on a fresh run.
+  const satComboRef = useRef(freshCombo());
+  const satLuckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
+  const satPrevLivesRef = useRef(null);
   const [winsEarned, setWinsEarned] = useState(0);
   // Preload the rarity rank index + begin a WPM session; flush it on unmount (leave/exit).
   useEffect(() => {
@@ -70,18 +80,25 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // and start a fresh WPM session (flushes the previous run's).
       satBankedWordsRef.current = 0;
       satWeightRef.current = 0;
+      satComboRef.current = freshCombo(); // fresh run → reset the payout combo + lucky stream
+      satLuckyOracleRef.current = makeLuckyOracle(randomSeed());
+      satPrevLivesRef.current = view.lives; // re-baseline miss detection for the new run
       wpmStart('satRush');
       setWinsEarned(0);
     }
     if (cleared > satBankedWordsRef.current) {
-      // RARITY: score the just-cleared word (view.lastClearedWord is aligned with `cleared`).
-      // A clear normally bumps the count by 1; if it ever jumps, credit the extra words at ×1.
+      // RARITY × COMBO × LUCKY: score the just-cleared word (view.lastClearedWord is aligned with
+      // `cleared`). A clear normally bumps the count by 1; if it ever jumps, credit the extras at ×1.
       const delta = cleared - satBankedWordsRef.current;
       const prevWeight = satWeightRef.current;
-      // Unified economy (Job 1): the per-word rarity weight (SAT has no combo/lucky) also grants XP,
-      // so a SAT capture now levels you as well as banking wins.
+      // COMBO + LUCKY (parity): advance the combo for this clear and draw the lucky oracle, then fold
+      // both into the per-word weight — the SAME cappedWordMult product CHAIN/FUSE/WB/Blitz bank.
+      satComboRef.current = comboAccept(satComboRef.current);
+      const comboMult = satComboRef.current.mult;
+      const lucky = luckyReward(satLuckyOracleRef.current.next());
+      if (lucky.lucky) noteLucky(); // permanent CHANCE record (guarded)
       const rw = rarityOf(view.lastClearedWord);
-      const wWeight = cappedWordMult(rw.mult, 1, 1);
+      const wWeight = cappedWordMult(rw.mult, comboMult, lucky.winsWeight);
       satWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult) + Math.max(0, delta - 1); // WORD SENSE (Job 4)
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
@@ -98,6 +115,18 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }
   }, [view.cleared]);
+
+  // COMBO (parity): a life-loss is a miss → break the payout combo, mirroring the solo modes'
+  // comboBreak on a miss. The banking effect above is keyed on `cleared` (which a miss never changes),
+  // so the break needs its own watcher on `lives`. The fresh-run reset re-baselines satPrevLivesRef.
+  useEffect(() => {
+    const lives = view.lives;
+    if (satPrevLivesRef.current != null && typeof lives === 'number' && lives < satPrevLivesRef.current) {
+      satComboRef.current = comboBreak(satComboRef.current);
+    }
+    if (typeof lives === 'number') satPrevLivesRef.current = lives;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.lives]);
 
   // Live wins tally (item 2): what the run will pay so far, from the running cleared count
   // (0 until the 3-word payout gate). Recomputed each render — pure.
