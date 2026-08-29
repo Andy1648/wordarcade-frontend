@@ -90,13 +90,14 @@ export function saveRounds(rounds) {
   }
 }
 
-// Per-mode wins multiplier on the base payout (Economy v6, exponential): SAT Rush ×2, CHAIN
-// ×10, FUSE ×15 (the solo modes). Word Bomb / Blitz are ×1. (Key matches recordRound's mode:
-// 'satRush'.) SAT Rush dropped ×5→×2 once RARITY scoring landed: rarity rewards vocabulary
-// directly (SAT's forced advanced deck sits ~56% OBSCURE), so a ×5 mode mult double-counted the
-// same skill and let the UNGATED SAT Rush out-earn the LV20-gated CHAIN and LV25-gated FUSE. At
-// ×2 the median-wins ordering matches the unlock ladder again (see claude/rarity-sim.mjs).
-export const WINS_MULT = { satRush: 2, chain: 10, fuse: 15 };
+// Per-mode wins multiplier on the per-word base (Economy v6). REBALANCED (sim/rebalance-2) to
+// EQUALIZE wins/min ACROSS modes so mode choice stops being a grind-efficiency decision. Each
+// mult offsets that mode's intrinsic throughput × rarity: at equal difficulty / R0 the modes land
+// WB 393 · Blitz 344 · Chain 360 · SAT 422 · Fuse 493 wins/min — SPREAD 1.43× (was 37.7×), with
+// SAT (the vocabulary mode, ~55% OBSCURE deck) landing ABOVE Word Bomb as intended. Keys match the
+// ROUND mode passed to bankWordWins/perWordWins ('wordBomb','blitz','satRush','chain','fuse'); a
+// missing key → ×1. Derivation: claude/winsmin-sim.mjs + claude/econ-rebalance-2-report.md.
+export const WINS_MULT = { wordBomb: 2, blitz: 1, satRush: 0.5, chain: 1.5, fuse: 1 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
@@ -106,14 +107,14 @@ export const WINS_MULT = { satRush: 2, chain: 10, fuse: 15 };
 export const DIFFICULTY_MULT = { chill: 1.0, easy: 1.25, medium: 1.5, hard: 2.0 };
 
 // A representative round used ONLY to preview a mode's payout on its menu card. Ten accepted
-// words at the ×1 base reads "~200 WINS / ROUND" (SAT ~1000, CHAIN ~2000, FUSE ~3000).
+// words at R0 / ×1 difficulty (post-rebalance: WB ~400, Blitz ~200, SAT ~100, CHAIN ~300, FUSE ~200).
 export const TYPICAL_ROUND_WORDS = 10;
 
-// Economy v6: wins are paid PER WORD and go EXPONENTIAL. The per-word rate is
+// Economy v6: wins are paid PER WORD. The per-word rate is
 //   20 base × mode mult × difficulty × REBIRTH mult, snapped to a round multiple of 10.
-// At R0 that reads word-bomb/blitz 20, SAT 100 (×5), CHAIN 200 (×10), FUSE 300 (×15). Rebirth
-// multiplies wins on the SAME ladder as XP (×1.5, ×2, ×2.5 …), read live from taw.rebirths
-// unless a `rebirthCount` is passed (keeps the function pure/testable).
+// At R0 (post-rebalance) that reads word-bomb 40 (×2), blitz 20 (×1), SAT 10 (×0.5), CHAIN 30
+// (×1.5), FUSE 20 (×1). Rebirth multiplies wins on the SAME ladder as XP (×1.5, ×2, ×2.5 …), read
+// live from taw.rebirths unless a `rebirthCount` is passed (keeps the function pure/testable).
 export const WORD_WINS_BASE = 20;
 export function perWordWins({ mode, difficulty, rebirthCount } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
@@ -147,14 +148,13 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
 }
 
 // PER-WORD wins preview shown on the menu cards. Base 20 per word, keyed by game.id (NOT the
-// round-mode key used by perWordWins/recordRound — GameCard passes game.id), ×2 SAT Rush ·
-// ×10 CHAIN · ×15 FUSE, then × difficulty, snapped to a round multiple of 10 (word-bomb/blitz
-// 20, sat-rush 40, chain 200, fuse 300 at the ×1 difficulty default). This is the R0 BASE
-// per-word rate; the card/dialog copy shows it and ANNOTATES the active rebirth boost
-// separately via currentRebirthMult() below (e.g. "200 WINS / WORD (×2)"), so the stable base
-// stays readable while the rebirth gain is visible. (SAT ×5→×2: see WINS_MULT above — rarity now
-// rewards SAT's vocabulary directly, so the mode mult no longer double-counts it.)
-export const WORD_WINS_MULT = { 'sat-rush': 2, chain: 10, fuse: 15 };
+// round-mode key used by perWordWins/recordRound — GameCard passes game.id). REBALANCED
+// (sim/rebalance-2) to the SAME per-mode factors as WINS_MULT: WB ×2 · Blitz ×1 · SAT ×0.5 ·
+// CHAIN ×1.5 · FUSE ×1, then × difficulty, snapped to a round 10 (R0 per-word: word-bomb 40,
+// category-blitz 20, sat-rush 10, chain 30, fuse 20 at the ×1 difficulty default). This is the R0
+// BASE per-word rate; the card/dialog copy shows it and ANNOTATES the active rebirth boost
+// separately via currentRebirthMult() below, so the stable base stays readable.
+export const WORD_WINS_MULT = { 'word-bomb': 2, 'sat-rush': 0.5, chain: 1.5, fuse: 1 };
 export function wordWinsEstimate({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
   const modeMult = WORD_WINS_MULT[mode] || 1;

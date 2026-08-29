@@ -180,27 +180,31 @@ export function doRebirth() {
 // free start, so its cost is 0). Every cost is a round multiple of 10; effect values are the
 // published figures and need NOT end in a zero (375, 5875, 14690). SURVIVES rebirth (its own
 // key, untouched by doRebirth).
+// COST REBALANCE (sim/rebalance-2): every tier cost was scaled ×0.16 (500→80) to hold
+// time-to-first-upgrade flat after the WINS_MULT flatten cut mean earn 2406→402 wins/min. The
+// ×6 ladder and the XP effect values are UNCHANGED — only the wins prices dropped, one uniform
+// factor across all tiers (and therefore WORD SENSE, which reads keyTierCostAt).
 //   T0   10 XP/letter    free (start)
-//   T1   25              500 wins
-//   T2   60              3,000
-//   T3   150             18,000
-//   T4   375             108,000
-//   T5   940             648,000
-//   T6   2,350           3,888,000
-//   T7   5,875           23,328,000
-//   T8   14,690          139,968,000
+//   T1   25              80 wins
+//   T2   60              480
+//   T3   150             2,880
+//   T4   375             17,280
+//   T5   940             103,680
+//   T6   2,350           622,080
+//   T7   5,875           3,732,480
+//   T8   14,690          22,394,880
 // Past T8 the pattern continues: effect ×2.5, cost ×6, each round10 (half-to-even).
 export const KEYTIER_KEY = 'taw.keytier';
 export const KEY_TIERS = [
   { xp: 10, cost: 0 }, //          T0
-  { xp: 25, cost: 500 }, //        T1
-  { xp: 60, cost: 3000 }, //       T2
-  { xp: 150, cost: 18000 }, //     T3
-  { xp: 375, cost: 108000 }, //    T4
-  { xp: 940, cost: 648000 }, //    T5
-  { xp: 2350, cost: 3888000 }, //  T6
-  { xp: 5875, cost: 23328000 }, // T7
-  { xp: 14690, cost: 139968000 }, //T8
+  { xp: 25, cost: 80 }, //         T1
+  { xp: 60, cost: 480 }, //        T2
+  { xp: 150, cost: 2880 }, //      T3
+  { xp: 375, cost: 17280 }, //     T4
+  { xp: 940, cost: 103680 }, //    T5
+  { xp: 2350, cost: 622080 }, //   T6
+  { xp: 5875, cost: 3732480 }, //  T7
+  { xp: 14690, cost: 22394880 }, //T8
 ];
 const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
 const TIER_COST_STEP = 6; // cost multiplier per tier past T8

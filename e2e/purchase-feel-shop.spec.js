@@ -22,22 +22,22 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 }
 
 test('§3 the shop always shows a next goal + progress bar', async ({ page }) => {
-  await openShop(page, { wins: 300, keytier: 0 }); // < 500 (T1 cost) → shows the gap
+  await openShop(page, { wins: 50, keytier: 0 }); // < 80 (T1 cost, post-rebalance) → shows the gap
   // KEY POWER goal + bar always present. WORD SENSE (Job 4) reuses .shop-keypower/.shop-goal, so
   // scope to the FIRST .shop-keypower (KEY POWER, above WORD SENSE) — a bare .shop-goal.first()
-  // would now match WORD SENSE's goal instead. At 300 wins vs the unchanged T1 cost 500 → "UNLOCKS AT".
+  // would now match WORD SENSE's goal instead. At 50 wins vs the T1 cost 80 → "UNLOCKS AT".
   const kp = page.locator('.shop-keypower').first();
   await expect(kp.locator('.shop-goal')).toBeVisible();
   await expect(kp.locator('.shop-progress')).toBeVisible();
   await expect(kp.locator('.shop-goal')).toContainText('UNLOCKS AT');
-  await expect(kp.locator('.shop-goal')).toContainText('YOU HAVE 300');
+  await expect(kp.locator('.shop-goal')).toContainText('YOU HAVE 50');
   // The cheapest unowned cosmetic is flagged NEXT with its gap.
   await expect(page.locator('.shop-card-next').first()).toBeVisible();
   await expect(page.locator('.shop-card-gap').first()).toBeVisible();
 });
 
 test('§2 hold-to-buy commits after the hold and reveals; releasing early cancels', async ({ page }) => {
-  await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (500)
+  await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (80)
   // WORD SENSE (Job 4) added a SECOND upgrade track that reuses .shop-keypower / .shop-kp-actions,
   // so scope to the FIRST .shop-keypower — KEY POWER, which renders above WORD SENSE. (The reveal
   // banner assertion below double-checks we bought KEY POWER, not WORD SENSE.)

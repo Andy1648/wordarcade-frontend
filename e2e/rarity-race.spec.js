@@ -16,11 +16,11 @@ async function startMyTurn(mock, page) {
   await page.waitForTimeout(40);
 }
 
-// CAT COMMON ×1 + BAT UNCOMMON ×1.5 + HAT COMMON ×1 = 3.5 weight × 20 = 70 (correct).
-// If BAT is scored COMMON (the race), it's 3.0 × 20 = 60 — a 10-win underpay.
+// CAT COMMON ×1 + BAT UNCOMMON ×1.5 + HAT COMMON ×1 = 3.5 weight × 40 = 140 (correct; WB ×2 post-rebalance).
+// If BAT is scored COMMON (the race), it's 3.0 × 40 = 120 — a 20-win underpay.
 const WORDS = ['CAT', 'BAT', 'HAT'];
-const CORRECT = 70;
-const RACED_COMMON = 60;
+const CORRECT = 140;
+const RACED_COMMON = 120;
 
 test('rarity race: a word accepted before the index loads still pays its true rarity', async ({ page }) => {
   const mock = await installBackendMock(page);

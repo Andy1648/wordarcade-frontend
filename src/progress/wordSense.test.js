@@ -52,18 +52,18 @@ test('cost ladder matches KEY POWER (×6, same shape)', () => {
 });
 
 test('buyWordSense deducts wins and bumps the tier; refuses when unaffordable', () => {
-  withStorage({ 'taw.wins': '400' }, () => {
-    // 400 < 500 → refused.
+  withStorage({ 'taw.wins': '50' }, () => {
+    // 50 < 80 (T1 cost, post-rebalance) → refused.
     let r = buyWordSense();
     assert.equal(r.ok, false);
     assert.equal(getWordSenseTier(), 0);
   });
-  withStorage({ 'taw.wins': '600' }, () => {
+  withStorage({ 'taw.wins': '100' }, () => {
     const r = buyWordSense();
     assert.equal(r.ok, true);
     assert.equal(r.tier, 1);
-    assert.equal(r.spent, 500);
-    assert.equal(r.wins, 100); // 600 - 500
+    assert.equal(r.spent, 80);
+    assert.equal(r.wins, 20); // 100 - 80
     assert.equal(getWordSenseTier(), 1);
   });
 });
