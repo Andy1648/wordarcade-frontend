@@ -7,8 +7,11 @@
 // so word gaps are preserved without an animated empty span.
 export default function WaveText({ text, className = '', step = 0.12 }) {
   const str = text == null ? '' : String(text);
+  // role="img" so the aria-label is PERMITTED (a11y: aria-label on a bare <span> with no role is a
+  // prohibited-attr violation) and the whole stylized string is announced ONCE, while the per-letter
+  // animation spans below stay aria-hidden.
   return (
-    <span className={className} aria-label={str}>
+    <span className={className} role="img" aria-label={str}>
       {str.split('').map((ch, i) => (
         <span
           key={i}

@@ -1,0 +1,15 @@
+{
+  "byScreen": {
+    "room": [
+      {
+        "id": "region",
+        "impact": "moderate",
+        "n": 12,
+        "help": "All page content should be contained by landmarks"
+      }
+    ]
+  },
+  "contrastByScreen": {
+    "room": 1
+  }
+}

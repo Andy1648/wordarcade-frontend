@@ -196,3 +196,6 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
+
+## JOB 15 (fix/a11y-deep) decision
+- axe-core added as devDep; audited 8 key screens. FIXED the one SERIOUS issue (WaveText aria-label on a bare span -> role=img). REPORTED not fixed: region/landmark (needs a considered single-<main> structure across the transition/overlay tree — conservative, not risked blind late-session) and colour contrast (locked palette, per brief). No focus traps / positive tabindex found.
