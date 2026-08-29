@@ -332,6 +332,12 @@
   color: #6b5a86;
   text-transform: none;
   letter-spacing: normal;
+  /* The placeholder is a full instruction ("type a word with "ME" in it" / "start with "D" — min 3
+     letters"), longer than the input is wide on a phone. At the input's own 20px it HARD-CLIPS at the
+     right edge on ~390px screens (reads as a bug; see claude/playthrough-report.md #2). Give the
+     placeholder its own smaller, viewport-scaled size so the whole hint fits at phone width and grows
+     back to the input size on desktop — the typed VALUE keeps the full 20–28px. */
+  font-size: clamp(13px, 3.6vw, 20px);
 }
 
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
