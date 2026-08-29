@@ -16,13 +16,17 @@ async function startMyTurn(mock, page) {
   await page.waitForTimeout(40);
 }
 
-// CAT COMMON ×1 + BAT UNCOMMON ×1.5 + HAT COMMON ×1 = 3.5 weight × 40 = 140 (correct; WB ×2 post-rebalance).
-// If BAT is scored COMMON (the race), it's 3.0 × 40 = 120 — a 20-win underpay.
+// Combo is captured at ACCEPT time, so it's unaffected by the rarity-index race (lucky forced off in
+// each test below). CAT 1×combo1.1 + BAT 1.5×1.2 + HAT 1×1.3 = 1.1+1.8+1.3 = 4.2 × 40 = 170 (correct).
+// If BAT is scored COMMON (the race), it's 1.1+1.2+1.3 = 3.6 × 40 = round10(144) = 140 — a 30-win underpay.
 const WORDS = ['CAT', 'BAT', 'HAT'];
-const CORRECT = 140;
-const RACED_COMMON = 120;
+const CORRECT = 170;
+const RACED_COMMON = 140;
 
 test('rarity race: a word accepted before the index loads still pays its true rarity', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TAW_LUCKY = 'off'; // deterministic payout (combo on, lucky off)
+  });
   const mock = await installBackendMock(page);
   // Hold the rarity chunk ~1.5s so the words below land DURING the race window.
   let chunkDelayed = false;
@@ -54,6 +58,9 @@ test('rarity race: a word accepted before the index loads still pays its true ra
 // Control: with the index loaded first (no race), the same words pay the same correct total —
 // so the fix does not change the non-raced payout.
 test('control: no race, same words pay the same correct total', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__TAW_LUCKY = 'off';
+  });
   const mock = await installBackendMock(page);
   await gotoMenu(page);
   await page.waitForFunction(() => true); // index loads promptly with no delay

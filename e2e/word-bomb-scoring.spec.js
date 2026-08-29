@@ -44,7 +44,16 @@ async function startMyTurn(mock, page, { combo = 'at', usedWords = [] } = {}) {
 }
 
 test.describe('Word Bomb scoring (item 2)', () => {
-  test('3 accepted words pay out at game_over (140 @ R0)', async ({ page }) => {
+  // Force the 1/40 lucky draw OFF so these exact-payout assertions stay deterministic. The combo
+  // multiplier (parity: +0.1 per consecutive accept) IS live here, so payouts are the rarity ×
+  // combo product — higher than the pre-parity rarity-only values, but still fully deterministic.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__TAW_LUCKY = 'off';
+    });
+  });
+
+  test('3 accepted words pay out at game_over (170 @ R0, combo-boosted)', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
@@ -54,16 +63,15 @@ test.describe('Word Bomb scoring (item 2)', () => {
       await page.waitForTimeout(40);
     }
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
-    // Rarity-weighted payout (unified economy, Job 1 — a rarer word pays more). Wins ride the rarity
-    // WEIGHT, not a flat per-word count:
-    //   CAT COMMON ×1.0 + BAT UNCOMMON ×1.5 + HAT COMMON ×1.0 = 3.5 weight
-    //   × 40 perWordWins (base 20 × WB 2 × chill 1 × R0 1 × wordSense T0 1) = round10(140) = 140
-    // (Was 70 pre-rebalance at WB ×1; sim/rebalance-2 raised Word Bomb to ×2. BAT is genuinely UNCOMMON.)
+    // Rarity × COMBO payout (parity: +0.1 combo per consecutive accept; lucky forced off above):
+    //   CAT COMMON ×1.0 × combo1.1 + BAT UNCOMMON ×1.5 × combo1.2 + HAT COMMON ×1.0 × combo1.3
+    //   = 1.1 + 1.8 + 1.3 = 4.2 weight × 40 perWordWins = round10(168) = 170
+    // (Was 140 pre-parity at rarity-only; feat/parity-wb-blitz folds combo into the weight.)
     // Poll for the payout instead of a fixed wait: each accepted word banks via bankWordWins →
     // localStorage on the async React drain, so a fixed sleep occasionally reads a pre-bank value.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(140);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(170);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(140);
+    expect(after.lifetime - before.lifetime).toBe(170);
     expect(after.wb - before.wb).toBe(1);
   });
 
@@ -80,17 +88,17 @@ test.describe('Word Bomb scoring (item 2)', () => {
     }
     // NO game_over — the player just walks away. The 5 words are already banked, rarity-weighted
     // (unified economy, Job 1 — not a flat 5 × 20):
-    //   CAT ×1.0 + BAT UNCOMMON ×1.5 + HAT ×1.0 + RAT UNCOMMON ×1.5 + MAT UNCOMMON ×1.5 = 6.5 weight
-    //   × 40 perWordWins (base 20 × WB 2 × chill 1 × R0 1 × wordSense T0 1) = round10(260) = 260
-    // (Was 130 pre-rebalance at WB ×1; three of these five 3-letter words are UNCOMMON in the recall corpus.)
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(260);
+    //   combo 1.1..1.5 over the 5 accepts: CAT 1×1.1 + BAT 1.5×1.2 + HAT 1×1.3 + RAT 1.5×1.4 +
+    //   MAT 1.5×1.5 = 1.1+1.8+1.3+2.1+2.25 = 8.55 weight × 40 = round10(342) = 340 (lucky forced off).
+    // (Was 260 pre-parity at rarity-only; feat/parity-wb-blitz folds combo into the weight.)
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(340);
     expect((await readWins(page)).wb - before.wb).toBe(1);
     // Now the game ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(260); // still 260, not 520
-    expect(after.lifetime - before.lifetime).toBe(260);
+    expect(after.wins - before.wins).toBe(340); // still 340, not 680
+    expect(after.lifetime - before.lifetime).toBe(340);
     expect(after.wb - before.wb).toBe(1); // still one round counted
   });
 
@@ -156,12 +164,12 @@ test.describe('Word Bomb scoring (item 2)', () => {
     mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'HAT' } });
     await page.waitForTimeout(40);
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
-    // Same three words as the happy path, so the same rarity-weighted total:
-    //   CAT COMMON ×1.0 + BAT UNCOMMON ×1.5 + HAT COMMON ×1.0 = 3.5 weight × 40 = round10(140) = 140.
+    // Same three words as the happy path, so the same rarity × combo total (combo is captured at
+    // ACCEPT time, so it's unaffected by the rarity-index race): 1.1+1.8+1.3 = 4.2 × 40 = 170.
     // The point of THIS test is attribution under the turn_update race — all 3 must still score.
     // Poll for the payout (see the happy-path test): the fixed-wait read of the async game_over
     // payout was the intermittent-flake source, not the race logic itself.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(140);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(170);
   });
 
   test('a server already_used rejection shows a visible, specific message', async ({ page }) => {
