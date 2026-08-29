@@ -150,16 +150,17 @@ test('keyTierXp: the hardcoded XP-per-letter table, ×2.5 past T8', () => {
 });
 
 test('keyTierCostAt: the published cost-to-reach table (T0 free), ×6 past T8', () => {
-  const costs = [0, 500, 3000, 18000, 108000, 648000, 3888000, 23328000, 139968000];
+  // Post-rebalance (sim/rebalance-2): every cost ×0.18 of the old table, still exactly ×6 per tier.
+  const costs = [0, 90, 540, 3240, 19440, 116640, 699840, 4199040, 25194240];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t), c, `T${t} cost`));
-  // Past T8 the cost keeps going ×6, round10: 139968000×6 = 839,808,000.
-  assert.equal(keyTierCostAt(9), round10(139968000 * 6));
+  // Past T8 the cost keeps going ×6, round10: 25194240×6 = 151,165,440.
+  assert.equal(keyTierCostAt(9), round10(25194240 * 6));
 });
 
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
-  assert.equal(keyTierCost(0), 500); // standing at T0, buying T1 costs 500
-  assert.equal(keyTierCost(3), 108000); // at T3, T4 costs 108,000
-  assert.equal(keyTierCost(7), 139968000); // at T7, T8 costs 139,968,000
+  assert.equal(keyTierCost(0), 90); // standing at T0, buying T1 costs 90
+  assert.equal(keyTierCost(3), 19440); // at T3, T4 costs 19,440
+  assert.equal(keyTierCost(7), 25194240); // at T7, T8 costs 25,194,240
 });
 
 test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {

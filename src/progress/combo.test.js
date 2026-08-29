@@ -68,14 +68,14 @@ test('combo multiplies the payout via wins.js weightedWords (stacks on the per-w
   for (let i = 0; i < 5; i++) c = comboAccept(c);
   assert.ok(Math.abs(c.weighted - 6.5) < 1e-9);
 
-  const rate = perWordWins({ mode: 'fuse', rebirthCount: 0 }); // 300 at R0
+  const rate = perWordWins({ mode: 'fuse', rebirthCount: 0 }); // 20 at R0 (fuse ×1 post-rebalance)
   const plain = awardWins({ mode: 'fuse', wordsAccepted: 5, rebirthCount: 0 });
   const boosted = awardWins({ mode: 'fuse', wordsAccepted: 5, weightedWords: c.weighted, rebirthCount: 0 });
 
   assert.equal(plain, 5 * rate); // no combo -> exactly count × rate
   assert.ok(boosted > plain); // combo pays more
-  // round10(6.5 × 300) = round10(1950) = 1950
-  assert.equal(boosted, 1950);
+  // round10(6.5 × 20) = round10(130) = 130
+  assert.equal(boosted, 130);
 });
 
 test('weightedWords never lowers a payout below the plain count, and the <3 gate still applies', () => {

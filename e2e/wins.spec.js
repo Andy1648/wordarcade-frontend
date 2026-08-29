@@ -33,9 +33,11 @@ test.describe('wins wiring', () => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
-    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 accepted → awardWins(3) = 3×20 = 60 (Economy v6 per-word, R0)
+    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 accepted → awardWins(3) = 3×20 = 60 (blitz ×1, R0)
+    // Poll for the banked wins: bankWordWins writes to localStorage on the async React drain, so a
+    // synchronous read here occasionally races the bank under full-suite load (an intermittent 0).
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(60);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(60);
     expect(after.lifetime - before.lifetime).toBe(60);
     expect(after.blitz - before.blitz).toBe(1);
   });

@@ -61,15 +61,15 @@ test('cannot buy an unaffordable item; wins unchanged', () => {
 });
 
 test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', () => {
-  withStorage({ 'taw.wins': '600', 'taw.keytier': '0' }, (map) => {
-    const r = buyKeyPower(); // T0→T1 costs 500
+  withStorage({ 'taw.wins': '100', 'taw.keytier': '0' }, (map) => {
+    const r = buyKeyPower(); // T0→T1 costs 90 (post-rebalance)
     assert.equal(r.ok, true);
     assert.equal(r.tier, 1);
-    assert.equal(r.spent, 500);
-    assert.equal(r.wins, 100);
+    assert.equal(r.spent, 90);
+    assert.equal(r.wins, 10);
     assert.equal(map.get('taw.keytier'), '1');
-    assert.equal(map.get('taw.wins'), '100');
-    // Can't afford T2 (costs 3,000) with 100 left.
+    assert.equal(map.get('taw.wins'), '10');
+    // Can't afford T2 (costs 540) with 10 left.
     const again = buyKeyPower();
     assert.equal(again.ok, false);
     assert.equal(again.spent, 0);
