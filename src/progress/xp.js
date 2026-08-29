@@ -196,7 +196,12 @@ export const KEY_TIERS = [
   { xp: 14690, cost: 139968000 }, //T8
 ];
 const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
-const TIER_COST_STEP = 6; // cost multiplier per tier past T8
+// Cost multiplier per tier PAST T8. Lowered 6→5 (JOB B) to cheapen the deep endgame (T9+). NOTE
+// (measured, claude/archetype200h-sim.mjs): this is a NO-OP for realistic play — no archetype
+// reaches past T8 inside 200 h (a Fuse grinder tops out at T7), so the T0–T8 table prices, not this
+// step, set every observed dead stretch. The real pacing lever is the T7/T8 table costs (23M/140M
+// ≈ 100+h per tier). Kept at 5 as the requested deep-endgame easing; see claude/econ-rebalance-report.md.
+const TIER_COST_STEP = 5;
 
 export function getKeyTier() {
   try {

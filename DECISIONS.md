@@ -196,3 +196,9 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
+
+## JOB B — mode-mult flatten deferred (2026-08-29)
+- winsmin-sim: mode wins/min spread is 37.7x (Fuse 7400 vs WB 196/min). Degenerate-play check already passes (short-common spam = 1.14x honest, rarity handles it).
+- The mult set that hits <=2x ({wordBomb:2,blitz:1,satRush:0.5,chain:1.5,fuse:1}, verified in-sim = 1.43x spread) CUTS absolute solo earn 4-15x. The whole cost economy (shop/level/Key ladder/200h pacing) is calibrated to current earn; archetype200h-sim already shows 130-160h dead stretches TODAY, which the flatten would multiply to 500-2000h.
+- DECISION (most conservative, Tier-1 economy = supervised): do NOT blind-ship the flatten. Delivered diagnosis + exact mult spec + reusable sims for supervised application WITH the required cost re-tune. See claude/econ-rebalance-report.md.
+- TIER_COST_STEP 6->5 APPLIED (requested). Measured no-op for realistic play (nobody passes T8 in 200h; step only affects T9+). Longest dead stretch 162.3h (Blitz->T6), identical for 6 and 5.

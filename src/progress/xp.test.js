@@ -149,11 +149,11 @@ test('keyTierXp: the hardcoded XP-per-letter table, ×2.5 past T8', () => {
   assert.equal(keyTierXp(10), round10(round10(14690 * 2.5) * 2.5));
 });
 
-test('keyTierCostAt: the published cost-to-reach table (T0 free), ×6 past T8', () => {
+test('keyTierCostAt: the published cost-to-reach table (T0 free), ×5 past T8', () => {
   const costs = [0, 500, 3000, 18000, 108000, 648000, 3888000, 23328000, 139968000];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t), c, `T${t} cost`));
-  // Past T8 the cost keeps going ×6, round10: 139968000×6 = 839,808,000.
-  assert.equal(keyTierCostAt(9), round10(139968000 * 6));
+  // Past T8 the cost keeps going ×5 (JOB B lowered it 6→5), round10: 139968000×5 = 699,840,000.
+  assert.equal(keyTierCostAt(9), round10(139968000 * 5));
 });
 
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
