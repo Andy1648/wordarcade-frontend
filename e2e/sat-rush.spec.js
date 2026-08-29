@@ -69,16 +69,26 @@ test.describe('SAT Rush', () => {
     for (let i = 0; i < 72; i++) await page.keyboard.press('q');
     await expect(scoreCell).not.toHaveText('000000'); // a clear banked points
 
-    // Let the between-word pause settle onto a fresh, idle word.
-    await page.waitForTimeout(1200);
-
-    // Out of lives: give up three words (Escape). Each miss now shows the re-encode
-    // teaching beat; a keypress skips it, so press Escape then a key to advance,
-    // waiting out each pause so the next Escape isn't swallowed.
-    for (let i = 0; i < 3; i++) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(1900);
-    }
+    // Out of lives: give up words (Escape) until the results PAGE appears. STATE-DRIVEN, not fixed
+    // waits — the engine owns REAL-TIME pauses (the between-word + re-encode-beat timers), so under
+    // full-suite parallel load those run in wall-clock while the page is starved, and a fixed delay
+    // can land an Escape mid-pause where it's swallowed (the old `waitForTimeout(1900)×3` flake,
+    // diagnosed on fix/flake-pair — test timing, not a component bug). So we retry Escape + a
+    // beat-skip keypress against the observable end state, exactly as a real player responds to what
+    // they see rather than a clock.
+    await expect
+      .poll(
+        async () => {
+          if (await page.locator('.sr-respage').isVisible()) return true;
+          await page.keyboard.press('Escape'); // give up the current word → costs a life
+          await page.waitForTimeout(250);
+          await page.keyboard.press('x'); // a keypress skips the re-encode teaching beat
+          await page.waitForTimeout(250);
+          return page.locator('.sr-respage').isVisible();
+        },
+        { timeout: 25000, intervals: [400] }
+      )
+      .toBe(true);
 
     // Results: the retro-print PAGE, the DEAD stamp, the AVG ANTE hero, the words
     // mastered line, the share bar, and the paper actions.
