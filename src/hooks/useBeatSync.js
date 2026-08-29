@@ -18,7 +18,7 @@
 // The loop only runs while `active` (music playing + unmuted); when it stops
 // everything resets to neutral.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 // Onset tuning.
 const HISTORY_FRAMES = 43; // ~0.7s local window for the adaptive threshold
@@ -44,15 +44,25 @@ function applyNeutral(root) {
   root.removeAttribute('data-beat');
 }
 
-export function useBeatSync(getFrequencyData, active) {
-  const [isAnalysing, setIsAnalysing] = useState(false);
-  const [beatCount, setBeatCount] = useState(0);
-
+// `onBeat` is fired (at most once per detected beat) INSTEAD of bumping React state.
+// The hook holds NO state, so it NEVER re-renders its host: the beat's visual reaction is
+// entirely the DOM writes below (data-beat / --beat-intensity on <html>, which the menu title
+// pop + frame glow and the in-game pulses key off), and any React-side reaction (e.g. the
+// in-game screen shake) is the host's business, done in its onBeat handler. This is deliberate:
+// the previous version bumped a `beatCount` state ~1-2x/sec while music played, re-rendering the
+// WHOLE App (and every child) on every drum hit even on the menu/shop where nothing consumed it —
+// churn that remounted/repeated child work and caused shipped bugs. onBeat is read through a ref
+// so passing a fresh closure each render never re-subscribes the analysis loop.
+export function useBeatSync(getFrequencyData, active, onBeat) {
   const rafRef = useRef(null);
   const fluxHistRef = useRef([]); // recent flux readings (max HISTORY_FRAMES)
   const lastBeatRef = useRef(0); // perf timestamp of the last accepted beat
   const maxFluxRef = useRef(MIN_FLUX); // observed peak flux, for intensity
   const holdTimerRef = useRef(null); // pending data-beat removal
+  // Latest onBeat, so the rAF loop calls the current handler without the effect depending on
+  // (and thus re-subscribing to) a new callback identity each render.
+  const onBeatRef = useRef(onBeat);
+  onBeatRef.current = onBeat;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -60,11 +70,8 @@ export function useBeatSync(getFrequencyData, active) {
     if (!active || typeof getFrequencyData !== 'function') {
       fluxHistRef.current = [];
       applyNeutral(root);
-      setIsAnalysing(false);
       return undefined;
     }
-
-    setIsAnalysing(true);
 
     const loop = () => {
       const data = getFrequencyData();
@@ -102,7 +109,8 @@ export function useBeatSync(getFrequencyData, active) {
           holdTimerRef.current = null;
         }, BEAT_HOLD_MS);
 
-        setBeatCount((c) => c + 1);
+        // Fire the host's per-beat reaction (e.g. in-game shake). No React state here.
+        if (typeof onBeatRef.current === 'function') onBeatRef.current();
       }
 
       // Push current flux into the running-average window.
@@ -124,6 +132,4 @@ export function useBeatSync(getFrequencyData, active) {
       applyNeutral(root);
     };
   }, [getFrequencyData, active]);
-
-  return { beatCount, isAnalysing };
 }

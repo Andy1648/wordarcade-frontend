@@ -17,6 +17,27 @@ import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../
 import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 
+// One labelled sound toggle row. Module-scoped (not defined inside AudioControls' render) so it
+// keeps a stable component identity and never remounts when the parent re-renders.
+function Toggle({ on, onClick, glyph, label, accent }) {
+  return (
+    <div className="audio-row">
+      <span className="audio-row-label">{label}</span>
+      <button
+        type="button"
+        className={`audio-toggle${on ? '' : ' off'}`}
+        style={{ borderColor: accent, color: accent }}
+        onClick={onClick}
+        aria-pressed={on}
+        aria-label={`${label} sound: ${on ? 'on' : 'off'}`}
+        title={`${label} sound: ${on ? 'on' : 'off'}`}
+      >
+        {glyph}
+      </button>
+    </div>
+  );
+}
+
 export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, onToggleMusic }) {
   const [open, setOpen] = useState(false);
   const [events, setEvents] = useState(() => isEventSoundsEnabled());
@@ -42,30 +63,13 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
   // "all quiet" reads at a glance without opening the panel.
   const allOff = musicMuted && !events && !clack;
 
-  const Toggle = ({ on, onClick, glyph, label }) => (
-    <div className="audio-row">
-      <span className="audio-row-label">{label}</span>
-      <button
-        type="button"
-        className={`audio-toggle${on ? '' : ' off'}`}
-        style={{ borderColor: accent, color: accent }}
-        onClick={onClick}
-        aria-pressed={on}
-        aria-label={`${label} sound: ${on ? 'on' : 'off'}`}
-        title={`${label} sound: ${on ? 'on' : 'off'}`}
-      >
-        {glyph}
-      </button>
-    </div>
-  );
-
   return (
     <div className="audio-ctrl">
       {open && (
         <div className="audio-panel" role="group" aria-label="Sound settings">
-          <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" />
-          <Toggle on={clack} onClick={toggleClack} glyph="⌨" label="KEYSTROKE" />
-          <Toggle on={events} onClick={toggleEvents} glyph="🔊" label="EVENTS" />
+          <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" accent={accent} />
+          <Toggle on={clack} onClick={toggleClack} glyph="⌨" label="KEYSTROKE" accent={accent} />
+          <Toggle on={events} onClick={toggleEvents} glyph="🔊" label="EVENTS" accent={accent} />
           <div className="audio-row audio-row-vol">
             <span className="audio-row-label">VOLUME</span>
             <input

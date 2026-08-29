@@ -44,6 +44,15 @@ export default [
       'react/jsx-uses-vars': 'error',
       'react/jsx-uses-react': 'error',
 
+      // BUILD-FAILING (error, not warn): a component defined INSIDE another
+      // component's render gets a fresh identity every render, so React unmounts +
+      // remounts its whole subtree each time the parent re-renders — throwing away
+      // any child state, refs, timers or in-flight animations. App re-renders
+      // 1-2x/sec (music beat sync), and this pattern in ShopScreen caused two
+      // shipped bugs (the rebirth reveal timer that never fired; HoldBuy remounting
+      // mid-press). This rule fails the build on the pattern so it can't come back.
+      'react/no-unstable-nested-components': ['error', { allowAsProps: false }],
+
       // Rules the EXISTING code already trips: kept ON as a signal but at `warn`
       // so the baseline stays green (0 errors) and a genuine new-code error is
       // never buried. Not a license to write new violations — the src/satRush

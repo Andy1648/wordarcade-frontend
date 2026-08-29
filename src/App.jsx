@@ -629,13 +629,24 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Live mirror of `view` so callbacks that fire outside React's render cycle (e.g. the
+  // beat handler below, driven by a rAF audio-analysis loop) read the current view without a
+  // stale closure and without being re-created on every view change.
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
-  // pulse with the track. beatCount increments per detected beat, which we use
-  // to fire a light app-wide shake.
-  const { beatCount } = useBeatSync(
+  // pulse with the track. The per-beat reaction is delivered as a CALLBACK (onBeat)
+  // rather than a state bump, so detecting a beat no longer re-renders App on every
+  // drum hit (~1-2x/sec) — the light in-game shake is fired directly from onBeat,
+  // reading the live view via viewRef. On the menu/shop, onBeat is a no-op, so those
+  // views stay render-quiet while the music plays. (triggerShake is a hoisted function
+  // declaration below, so calling it here is fine.)
+  useBeatSync(
     music.getFrequencyData,
-    music.isPlaying && !music.isMuted
+    music.isPlaying && !music.isMuted,
+    () => { if (viewRef.current === 'game') triggerShake('light'); }
   );
 
   // App-wide screen shake at three intensities (light=beat, medium=accept,
@@ -652,20 +663,9 @@ function App() {
       SHAKE_MS[level] || 150
     );
   }
-  // Light shake on every detected beat — IN-GAME ONLY. The ambient whole-screen
-  // beat-shake made the menu/lobby feel busy and laggy (it transforms the entire
-  // app tree on every drum hit), so it's now gated to the game view; the menu
-  // stays calm. `view` is in the deps so the guard reads the live view, not a
-  // stale closure (a view change alone never has a new beat, so it won't shake).
-  const prevBeatRef = useRef(0);
-  useEffect(() => {
-    if (beatCount > prevBeatRef.current) {
-      prevBeatRef.current = beatCount;
-      if (view === 'game') triggerShake('light');
-    }
-    // triggerShake is stable enough; we react to beatCount (and read live view).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beatCount, view]);
+  // Light shake on every detected beat is fired directly from useBeatSync's onBeat (above),
+  // IN-GAME ONLY — the onBeat handler reads viewRef so the whole-app shake never fires on the
+  // menu/lobby (which stays calm), and detecting a beat no longer re-renders App.
 
   // The connection dropped WHILE in an active room/game. The seat is gone
   // server-side (no resume), so we don't auto-reconnect or reload - we show a
