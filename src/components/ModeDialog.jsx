@@ -171,7 +171,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
             {mode.chip}
           </div>
 
-          <div className="mode-dialog-lower">
+          <div className={`mode-dialog-lower${modeKey === 'blitz' ? ' mode-dialog-lower--blitz' : ''}`}>
             {modeKey === 'blitz' && (
               <div className="mode-dialog-ai-badge">
                 <span className="mode-dialog-ai-badge-ai">AI</span>

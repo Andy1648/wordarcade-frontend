@@ -392,3 +392,20 @@
   .mode-dialog-title { font-size: clamp(26px, 4.5vw, 38px); }
   .mode-dialog-lower { gap: 8px; }
 }
+
+/* BLITZ DIALOG — drop the worked example UNCONDITIONALLY (every viewport, not a height
+   band). Root cause of the "pack picker collapse" collision: the shell is capped at
+   max-height:min(94vh,760px), and the Blitz body (title + mastery + 140px worked-example
+   strip + pack picker + CTAs) never fits inside 760px at ANY height — so the picker (the
+   flex-shrink sink) gets squeezed while .ppp-window-scroll's min-height floor refuses to
+   shrink, overflowing its collapsed parent and spilling over the CTA row, which then
+   intercepts the pills' clicks. Dropping the example is the one block that frees enough
+   height for a usable picker at the 760px cap (measured: pickerH 165→217px, pills
+   clickable via the picker's own internal scroll, at 1280×720 / 1366×768 / 1440×900 /
+   1920×1080). Keyed to the Blitz dialog itself, NOT a viewport range, so it is gapless by
+   construction — there is no height at which both can fit, so there is no band to miss.
+   The pack grid is Blitz's real worked example, so the static EXAMPLE strip is redundant
+   here. Every other mode keeps its example. */
+.mode-dialog-lower--blitz .mode-ex {
+  display: none;
+}
