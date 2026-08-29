@@ -7,6 +7,9 @@ import { installBackendMock } from './support/backendMock.js';
 
 async function openVia(page, seed, selector) {
   await installBackendMock(page);
+  // Opt out of the on-load achievement grant so a seeded wins/level state isn't inflated by
+  // checkAchievements crediting achievement wins on mount (would corrupt the exact-wins assertions).
+  await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   await page.addInitScript((s) => {
     try {
       for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
@@ -32,14 +35,24 @@ test.describe('shop', () => {
     await expect(page.locator('.shop-title')).toHaveText('SHOP');
 
     // All catalog cards render; unaffordable ones are visible-but-dimmed (not hidden).
-    await expect(page.locator('.shop-card')).toHaveCount(11);
+    // 16 cards = 5 POP STYLES + 6 SOUND PACKS (the original 11 cosmetics) + 5 THEMES
+    // (default/midnight/inferno/toxic/prism — themes render as .shop-card too via .shop-theme-card;
+    // feat/themes added them). KEY POWER + WORD SENSE are upgrade TRACKS, not .shop-card, so not counted.
+    await expect(page.locator('.shop-card')).toHaveCount(16);
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });
-    await chrome.locator('.shop-card-btn').click(); // BUY (150)
+    // BUY (150) — feat/purchase-feel made buying an affordable item a HOLD-to-buy (HoldBuyButton,
+    // .shop-hold): it commits when the ~400ms fill animation finishes, not on a plain click. Hold
+    // past the fill, then release.
+    const buy = chrome.locator('.shop-hold');
+    await buy.hover();
+    await page.mouse.down();
+    await page.waitForTimeout(520);
+    await page.mouse.up();
     await expect(page.evaluate(() => Number(localStorage.getItem('taw.wins')))).resolves.toBe(350);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsLifetime')))).toBe(900); // untouched
-    await chrome.locator('.shop-card-btn').click(); // now EQUIP
+    await chrome.locator('.shop-card-btn').click(); // now EQUIP (owned → a plain click button again)
     await expect(chrome.locator('.shop-card-tag')).toHaveText('EQUIPPED');
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
   });

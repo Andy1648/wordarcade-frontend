@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
 async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
+  // Opt out of the on-load achievement grant: this seeds lv40 + a wins balance, and checkAchievements
+  // would otherwise credit level/progression achievement wins on mount, inflating the seeded balance.
+  await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   await page.addInitScript((s) => {
     try {
       localStorage.setItem('taw.wins', String(s.wins));
@@ -20,11 +23,14 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 
 test('§3 the shop always shows a next goal + progress bar', async ({ page }) => {
   await openShop(page, { wins: 300, keytier: 0 }); // < 500 (T1 cost) → shows the gap
-  // KEY POWER goal + bar always present.
-  await expect(page.locator('.shop-goal').first()).toBeVisible();
-  await expect(page.locator('.shop-progress').first()).toBeVisible();
-  await expect(page.locator('.shop-goal').first()).toContainText('UNLOCKS AT');
-  await expect(page.locator('.shop-goal').first()).toContainText('YOU HAVE 300');
+  // KEY POWER goal + bar always present. WORD SENSE (Job 4) reuses .shop-keypower/.shop-goal, so
+  // scope to the FIRST .shop-keypower (KEY POWER, above WORD SENSE) — a bare .shop-goal.first()
+  // would now match WORD SENSE's goal instead. At 300 wins vs the unchanged T1 cost 500 → "UNLOCKS AT".
+  const kp = page.locator('.shop-keypower').first();
+  await expect(kp.locator('.shop-goal')).toBeVisible();
+  await expect(kp.locator('.shop-progress')).toBeVisible();
+  await expect(kp.locator('.shop-goal')).toContainText('UNLOCKS AT');
+  await expect(kp.locator('.shop-goal')).toContainText('YOU HAVE 300');
   // The cheapest unowned cosmetic is flagged NEXT with its gap.
   await expect(page.locator('.shop-card-next').first()).toBeVisible();
   await expect(page.locator('.shop-card-gap').first()).toBeVisible();
@@ -32,7 +38,10 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
 
 test('§2 hold-to-buy commits after the hold and reveals; releasing early cancels', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (500)
-  const holdBtn = page.locator('.shop-kp-actions .shop-hold');
+  // WORD SENSE (Job 4) added a SECOND upgrade track that reuses .shop-keypower / .shop-kp-actions,
+  // so scope to the FIRST .shop-keypower — KEY POWER, which renders above WORD SENSE. (The reveal
+  // banner assertion below double-checks we bought KEY POWER, not WORD SENSE.)
+  const holdBtn = page.locator('.shop-keypower').first().locator('.shop-hold');
   await expect(holdBtn).toBeVisible();
 
   // Release early (well under the 400ms fill, deterministic even under load) → NO
@@ -43,7 +52,9 @@ test('§2 hold-to-buy commits after the hold and reveals; releasing early cancel
   await page.mouse.up();
   await page.waitForTimeout(250);
   await expect(page.locator('.shop-reveal')).toHaveCount(0);
-  await expect(page.locator('.shop-subtitle').first()).toContainText('TIER 0'); // unchanged
+  // KEY POWER tier unchanged after the early release. The THEMES section now renders above KEY POWER,
+  // so .shop-subtitle.first() is "THEMES …" — scope to the KEY POWER heading specifically.
+  await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 0');
   // Settle the pointer well clear of the button before the next sequence.
   await page.mouse.move(5, 5);
   await page.waitForTimeout(100);

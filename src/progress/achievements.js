@@ -112,6 +112,17 @@ export function isEarned(id) {
 // newly satisfied one and persist. Returns the newly-earned achievement objects (with the granted
 // wins) for a toast. Runs the completionist check LAST so it can see the others earned this pass.
 export function checkAchievements() {
+  // TEST-ONLY suppression of the on-load / on-home grant. Specs that seed progression (a high
+  // level, lifetime wins, …) would otherwise get surprise achievement wins credited the moment the
+  // menu mounts, corrupting a seeded wins balance. A spec opts out by setting the global BEFORE the
+  // app boots (page.addInitScript). Guarded + window-only, so it is inert in production (no such
+  // global is ever set) and in the Node unit tests (no `window`), which call this directly. It skips
+  // this GRANT pass only — it never writes the earned set, so nothing is falsely marked earned.
+  try {
+    if (typeof window !== 'undefined' && window.__TAW_NO_ACHIEVEMENT_GRANT) return [];
+  } catch {
+    /* ignore — fall through to normal evaluation */
+  }
   const snap = achievementSnapshot();
   const earned = new Set(loadEarned());
   const mult = rebirthMult(snap.rebirths);
