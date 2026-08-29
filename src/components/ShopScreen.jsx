@@ -456,6 +456,16 @@ function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' })
 function ShopReveal({ reveal, onDone }) {
   const badgeRef = useRef(null);
   const popRef = useRef(null);
+  // Mirror the dismiss callback through a ref so the auto-dismiss effect does NOT depend on
+  // its identity. `onDone` is an inline arrow from the parent (recreated every ShopScreen
+  // render), and ShopScreen re-renders whenever App does (App churns child props ~1-2×/sec via
+  // an unmemoized onBack). If the effect below listed `onDone` as a dep, each of those
+  // re-renders would clear + reschedule the completion setTimeout — resetting it faster than it
+  // could ever fire, so the reveal (and, on a rebirth, the whole shop overlay via reveal.onClose)
+  // NEVER auto-dismissed and the player was stranded on the reveal after every rebirth. Reading
+  // it from a ref keeps the timer armed once and immune to parent re-renders.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   const dur = reveal.kind === 'rebirth' ? 700 : 220;
   useEffect(() => {
     const badge = badgeRef.current;
@@ -484,11 +494,14 @@ function ShopReveal({ reveal, onDone }) {
       );
     }
     const t = setTimeout(() => {
-      onDone();
+      onDoneRef.current();
       if (reveal.onClose) reveal.onClose();
     }, dur + 1100);
     return () => clearTimeout(t);
-  }, [reveal, dur, onDone]);
+    // `reveal` and `dur` are stable for the life of one reveal (reveal is ShopScreen state, set
+    // once until dismissed); onDone is read via onDoneRef so it is intentionally not a dep — that
+    // is what stops parent re-renders from resetting the timer above.
+  }, [reveal, dur]);
   return (
     <div className="shop-reveal" role="status" aria-live="polite">
       <div className="shop-reveal-card">
