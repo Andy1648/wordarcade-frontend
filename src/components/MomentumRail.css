@@ -14,6 +14,15 @@
   overflow: visible;
 }
 
+/* Faint outline cells: the not-yet-earned slots of the current stage's board, so the group structure
+   (and the next milestone) is visible even at n=1 — no fill, thin dim stroke. */
+.mr-empty {
+  fill: none;
+  stroke: #ff6b3d;
+  stroke-width: 0.5;
+  stroke-linejoin: miter;
+  opacity: 0.22;
+}
 /* Hard black offset shadow behind every stud (the "hard offset box-shadow in black" house look). */
 .mr-shadow {
   fill: #000;
@@ -22,7 +31,7 @@
 .mr-stud {
   fill: #ff6b3d;
   stroke: #c43e18;
-  stroke-width: 0.7;
+  stroke-width: 0.5;
   stroke-linejoin: miter;
 }
 /* The newest stud pops ONCE when you return to the menu after a buy — finite, transform-only. */
