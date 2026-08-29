@@ -56,7 +56,13 @@
      stage (no dead space) with in-band top/bottom gaps. §8's space-evenly broke that by
      stretching the gaps unevenly on tall screens; reverted here (fix/three-things §3). */
   height: 100%;
-  row-gap: clamp(16px, 2.2vh, 28px);
+  /* row-gap sets the title↔XP clearance (item 1). The title carries a rotate(-2deg)
+     skewX(-4deg) pose, so its AABB overhangs the wrap's flex box by ~0.14×font-size and
+     EATS into this gap — the measured title↔XP gap is row-gap MINUS that overhang, which
+     grows with the title size. Raised (was clamp(16,2.2vh,28)) so the residual gap stays
+     ≥12px at every menu-fit viewport (worst case was 1280×720 at 9.4px). Fully counted in
+     the fit math (gaps = row-gap × (kids−1)), so the fit-to-one-screen scale compensates. */
+  row-gap: clamp(20px, 2.8vh, 30px);
   justify-content: center;
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
