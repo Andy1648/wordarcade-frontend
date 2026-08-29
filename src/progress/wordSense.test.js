@@ -46,14 +46,14 @@ test('wordSenseWinsFactor boosts rarity EXCESS; COMMON is never boosted', () => 
 });
 
 test('cost ladder matches KEY POWER (×6, same shape)', () => {
-  assert.equal(wordSenseCost(0), keyTierCostAt(1)); // 500
-  assert.equal(wordSenseCost(1), keyTierCostAt(2)); // 3000
+  assert.equal(wordSenseCost(0), keyTierCostAt(1)); // 90 (post-rebalance)
+  assert.equal(wordSenseCost(1), keyTierCostAt(2)); // 540
   assert.equal(wordSenseCost(5), keyTierCostAt(6));
 });
 
 test('buyWordSense deducts wins and bumps the tier; refuses when unaffordable', () => {
   withStorage({ 'taw.wins': '50' }, () => {
-    // 50 < 80 (T1 cost, post-rebalance) → refused.
+    // 50 < 90 (T1 cost, post-rebalance) → refused.
     let r = buyWordSense();
     assert.equal(r.ok, false);
     assert.equal(getWordSenseTier(), 0);
@@ -62,8 +62,8 @@ test('buyWordSense deducts wins and bumps the tier; refuses when unaffordable', 
     const r = buyWordSense();
     assert.equal(r.ok, true);
     assert.equal(r.tier, 1);
-    assert.equal(r.spent, 80);
-    assert.equal(r.wins, 20); // 100 - 80
+    assert.equal(r.spent, 90);
+    assert.equal(r.wins, 10); // 100 - 90
     assert.equal(getWordSenseTier(), 1);
   });
 });

@@ -22,10 +22,10 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 }
 
 test('§3 the shop always shows a next goal + progress bar', async ({ page }) => {
-  await openShop(page, { wins: 50, keytier: 0 }); // < 80 (T1 cost, post-rebalance) → shows the gap
+  await openShop(page, { wins: 50, keytier: 0 }); // < 90 (T1 cost, post-rebalance) → shows the gap
   // KEY POWER goal + bar always present. WORD SENSE (Job 4) reuses .shop-keypower/.shop-goal, so
   // scope to the FIRST .shop-keypower (KEY POWER, above WORD SENSE) — a bare .shop-goal.first()
-  // would now match WORD SENSE's goal instead. At 50 wins vs the T1 cost 80 → "UNLOCKS AT".
+  // would now match WORD SENSE's goal instead. At 50 wins vs the T1 cost 90 → "UNLOCKS AT".
   const kp = page.locator('.shop-keypower').first();
   await expect(kp.locator('.shop-goal')).toBeVisible();
   await expect(kp.locator('.shop-progress')).toBeVisible();
@@ -37,7 +37,7 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
 });
 
 test('§2 hold-to-buy commits after the hold and reveals; releasing early cancels', async ({ page }) => {
-  await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (80)
+  await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (90)
   // WORD SENSE (Job 4) added a SECOND upgrade track that reuses .shop-keypower / .shop-kp-actions,
   // so scope to the FIRST .shop-keypower — KEY POWER, which renders above WORD SENSE. (The reveal
   // banner assertion below double-checks we bought KEY POWER, not WORD SENSE.)
