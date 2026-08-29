@@ -1825,7 +1825,22 @@ function App() {
   // Warm the deferred screen chunks on idle after first paint, so navigating into
   // a lobby/room/game is instant (the Suspense fallback above never actually shows).
   // Scheduled at idle and never blocks the menu's first paint.
+  //
+  // SLOW-CONNECTION GUARD (JOB D perf/js-split): this warm eagerly pulls ~6 route chunks
+  // (GameScreen/Room/Lobby/Public/Stats/Shop) + their CSS. On a fast link that's free idle
+  // bandwidth, but on a SLOW link it floods a tiny pipe DURING the menu load and measurably
+  // delays time-to-interactive (measured: the whole route graph downloads before the menu's
+  // corner-nav even paints, because requestIdleCallback's 2500ms timeout fires mid-load). So
+  // when the browser reports a slow/metered connection (Save-Data, or effectiveType 2g/3g) we
+  // SKIP the warm entirely — navigation then lazy-loads on demand (the screen-wipe + null
+  // Suspense fallback already cover the brief fetch). Fast/unknown connections are unchanged.
   useEffect(() => {
+    const conn =
+      typeof navigator !== 'undefined' &&
+      (navigator.connection || navigator.mozConnection || navigator.webkitConnection);
+    if (conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || ''))) {
+      return; // slow/metered: don't steal the menu's bandwidth — load screens on navigation
+    }
     const warm = () => {
       import('./components/GameScreen');
       import('./components/RoomScreen');
