@@ -130,7 +130,7 @@ export function death() {
 }
 
 // --- results-screen celebration primitives (reused from the shared layer) ---
-export { scoreTick, sfx as resultSfx, burst as resultBurst, screenFlash as resultFlash };
+export { scoreTick };
 export function resultsStamp() {
   sfx('ko'); // heavy slam for the DEAD stamp
   screenFlash({ alpha: 0.5, color: PAPER, life: 0.3 });
