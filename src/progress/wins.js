@@ -7,6 +7,7 @@
 // MIN_WORDS accepted — a sub-3 round is treated as not-really-played.
 
 import { rebirthMult, getRebirths, round10 } from './xp.js';
+import { momentumMult, getMomentum } from './momentum.js';
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -117,11 +118,15 @@ export const TYPICAL_ROUND_WORDS = 10;
 // (×1.9), FUSE 20 (×1). Rebirth multiplies wins on the SAME ladder as XP (×1.5, ×2, ×2.5 …), read
 // live from taw.rebirths unless a `rebirthCount` is passed (keeps the function pure/testable).
 export const WORD_WINS_BASE = 20;
-export function perWordWins({ mode, difficulty, rebirthCount } = {}) {
+export function perWordWins({ mode, difficulty, rebirthCount, momentumCount } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
   const modeMult = WINS_MULT[mode] || 1;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  return round10(WORD_WINS_BASE * modeMult * diffMult * rebirthMult(rc));
+  // MOMENTUM (repeatable sink): a global +1%/buy wins multiplier, live-read like rebirth (defaults
+  // to ×1 at 0 buys, so every existing payout is unchanged until the player buys in). Applied to the
+  // per-word rate so it scales EVERY mode's wins uniformly.
+  const mm = momentumMult(Number.isFinite(momentumCount) ? momentumCount : getMomentum());
+  return round10(WORD_WINS_BASE * modeMult * diffMult * rebirthMult(rc) * mm);
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else

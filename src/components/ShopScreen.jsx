@@ -6,8 +6,9 @@
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyWordSense } from '../progress/shop';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyWordSense, buyMomentum } from '../progress/shop';
 import { getWordSenseTier, wordSenseCost, wordSenseFactor } from '../progress/wordSense';
+import { getMomentum, momentumCost, momentumMult, momentumMaxed, MOMENTUM_MAX } from '../progress/momentum';
 import {
   THEMES,
   themeById,
@@ -34,6 +35,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
   const [wsTier, setWsTier] = useState(() => getWordSenseTier());
+  const [momentum, setMomentum] = useState(() => getMomentum());
   // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
   const [ownedThemes, setOwnedThemes] = useState(() => {
     syncThemeUnlocks(loadProgress().level);
@@ -67,6 +69,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const wsCost = wordSenseCost(wsTier);
   const wsProgress = wsCost > 0 ? Math.min(1, wins / wsCost) : 1;
+  const mMaxed = momentumMaxed(momentum);
+  const mCost = momentumCost(momentum); // Infinity when maxed
+  const mProgress = mMaxed ? 1 : mCost > 0 ? Math.min(1, wins / mCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
@@ -79,6 +84,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());
     setWsTier(getWordSenseTier());
+    setMomentum(getMomentum());
   };
   const onBuy = (id) => {
     if (buy(id).ok) {
@@ -103,6 +109,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     const nextTier = wsTier + 1;
     if (buyWordSense().ok) {
       setReveal({ kind: 'keypower', banner: `WORD SENSE ${toRoman(nextTier)} UNLOCKED`, colour: '#FFD54A', previewChar: 'A' });
+      refresh();
+    }
+  };
+  const onBuyMomentum = () => {
+    const r = buyMomentum();
+    if (r.ok) {
+      sndPurchase();
+      // The permanent mark lands on the menu rail (see MomentumRail); here we flash the running total.
+      setReveal({ kind: 'keypower', banner: `MOMENTUM — ${r.count} MARKS · +${r.count}% WINS`, colour: '#FF6B3D', previewChar: '◆' });
       refresh();
     }
   };
@@ -233,6 +248,50 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
                     {formatNum(wsCost)}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* MOMENTUM (repeatable sink): the ONE upgrade you buy forever — cheap, gently-rising
+                cost, +1% wins each, and every buy drops a permanent MARK on the menu rail. Fixes the
+                end-game "nothing to buy" dead stretch (claude/dead-stretch-report.md). */}
+            <h3 className="shop-subtitle">MOMENTUM — {momentum} / {MOMENTUM_MAX} MARKS</h3>
+            <div className="shop-keypower">
+              <div className="shop-kp-info">
+                <div className="shop-kp-current">
+                  <b>×{momentumMult(momentum).toFixed(2)}</b> WINS · <b>{momentum}</b> MARKS ON YOUR MENU
+                </div>
+                {mMaxed ? (
+                  <div className="shop-kp-next">ALL {MOMENTUM_MAX} MARKS EARNED — MAXED</div>
+                ) : (
+                  <div className="shop-kp-next">
+                    NEXT: <b>+1% (×{momentumMult(momentum + 1).toFixed(2)})</b>
+                    {'  ·  '}
+                    <b><span className="shop-coin" aria-hidden="true" /> {formatNum(mCost)} WINS</b>
+                  </div>
+                )}
+                <div className="shop-kp-rate">BUY AGAIN, FOREVER — EACH BUY LEAVES A MARK</div>
+                <div className="shop-goal">
+                  {mMaxed
+                    ? 'MOMENTUM MAXED'
+                    : wins >= mCost
+                    ? 'READY TO UNLOCK'
+                    : `UNLOCKS AT ${formatNum(mCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                </div>
+                <ProgressBar value={mProgress} />
+              </div>
+              <div className="shop-kp-actions">
+                {mMaxed ? (
+                  <button type="button" className="shop-card-btn" disabled>
+                    MAXED
+                  </button>
+                ) : wins >= mCost ? (
+                  <HoldBuy label={formatNum(mCost)} onCommit={onBuyMomentum} />
+                ) : (
+                  <button type="button" className="shop-card-btn" disabled>
+                    <span className="shop-coin" aria-hidden="true" />
+                    {formatNum(mCost)}
                   </button>
                 )}
               </div>

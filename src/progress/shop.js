@@ -6,6 +6,7 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { getWordSenseTier, saveWordSenseTier, wordSenseCost } from './wordSense.js';
+import { getMomentum, saveMomentum, momentumCost, markMomentumPop, MOMENTUM_MAX } from './momentum.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
@@ -143,6 +144,21 @@ export function buyWordSense() {
   saveWins(nextWins);
   saveWordSenseTier(tier + 1);
   return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
+}
+
+// MOMENTUM (repeatable sink): buy ONE more unit — deduct the (rising) cost, bump the count. Refuses
+// when unaffordable or already at the cap. `count` in the result is the new total buys.
+export function buyMomentum() {
+  const count = getMomentum();
+  if (count >= MOMENTUM_MAX) return { ok: false, wins: getWins(), count, spent: 0, maxed: true };
+  const cost = momentumCost(count); // cost to buy the next unit
+  const wins = getWins();
+  if (wins < cost) return { ok: false, wins, count, spent: 0 };
+  const nextWins = wins - cost;
+  saveWins(nextWins);
+  saveMomentum(count + 1);
+  markMomentumPop(); // queue the newest-stud pop for the menu rail
+  return { ok: true, wins: nextWins, count: count + 1, spent: cost };
 }
 
 // True when the player can afford at least one item they don't already own — drives the
