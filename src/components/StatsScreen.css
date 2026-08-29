@@ -110,9 +110,9 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  /* Themed scrollbar (dialog-quality item 3): thin, #2a1f3d track, #FF4FA3 thumb. */
+  /* Themed scrollbar (dialog-quality item 3): thin, #2a1f3d track, #ff2ec4 thumb. */
   scrollbar-width: thin;
-  scrollbar-color: #ff4fa3 #2a1f3d;
+  scrollbar-color: #ff2ec4 #2a1f3d;
   padding: 14px 18px 4px;
 }
 .stats-body::-webkit-scrollbar {
@@ -123,7 +123,7 @@
   border-radius: 8px;
 }
 .stats-body::-webkit-scrollbar-thumb {
-  background: #ff4fa3;
+  background: #ff2ec4;
   border-radius: 8px;
 }
 
@@ -277,7 +277,7 @@
 .stats-danger {
   margin-top: 28px;
   padding-top: 20px;
-  border-top: 3px dashed #ff3b3b;
+  border-top: 3px dashed #ff4b4b;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -288,9 +288,9 @@
   padding: 12px 20px;
   font-family: 'Bungee', cursive;
   font-size: 1rem;
-  color: #ff3b3b;
+  color: #ff4b4b;
   background: #1a0b2e;
-  border: 3px solid #ff3b3b;
+  border: 3px solid #ff4b4b;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
   cursor: pointer;
@@ -305,7 +305,7 @@
   box-shadow: 2px 2px 0 #000;
 }
 .stats-danger-confirm {
-  border: 3px solid #ff3b3b;
+  border: 3px solid #ff4b4b;
   border-radius: 8px;
   background: rgba(255, 59, 59, 0.08);
   padding: 14px;
@@ -319,7 +319,7 @@
   color: #ffd7d7;
 }
 .stats-danger-warn b {
-  color: #ff3b3b;
+  color: #ff4b4b;
 }
 .stats-danger-actions {
   display: flex;
@@ -332,7 +332,7 @@
   font-family: 'Bungee', cursive;
   font-size: 1rem;
   color: #fff;
-  background: #ff3b3b;
+  background: #ff4b4b;
   border: 3px solid #a11414;
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;

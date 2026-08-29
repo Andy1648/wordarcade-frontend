@@ -146,7 +146,7 @@
      over the top, the title ~4px over the sides). */
   padding: 7px 8px 8px;
   scrollbar-width: thin;
-  scrollbar-color: #ff4fa3 #2a1f3d;
+  scrollbar-color: #ff2ec4 #2a1f3d;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -160,7 +160,7 @@
   border-radius: 8px;
 }
 .mode-dialog-content::-webkit-scrollbar-thumb {
-  background: #ff4fa3;
+  background: #ff2ec4;
   border-radius: 8px;
 }
 

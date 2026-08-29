@@ -84,9 +84,9 @@
   /* Item 2: scroll is VERTICAL only — the card grid (fr columns) must never force a
      horizontal scrollbar. Clip any stray overflow instead of letting it push width. */
   overflow-x: hidden;
-  /* Themed scrollbar (dialog-quality item 3): thin, #2a1f3d track, #FF4FA3 thumb. */
+  /* Themed scrollbar (dialog-quality item 3): thin, #2a1f3d track, #ff2ec4 thumb. */
   scrollbar-width: thin;
-  scrollbar-color: #ff4fa3 #2a1f3d;
+  scrollbar-color: #ff2ec4 #2a1f3d;
   padding: 14px 18px 6px;
 }
 .shop-body::-webkit-scrollbar {
@@ -97,7 +97,7 @@
   border-radius: 8px;
 }
 .shop-body::-webkit-scrollbar-thumb {
-  background: #ff4fa3;
+  background: #ff2ec4;
   border-radius: 8px;
 }
 
@@ -333,9 +333,11 @@
   font-size: clamp(18px, 2.6vw, 20px);
   color: #0d0618;
   background: #ffe94a;
-  border: 3px solid #000;
-  border-radius: 6px;
-  box-shadow: 2px 2px 0 #000;
+  /* House primary-button weight (visual-pass: was the lone 3px/6px/2px outlier;
+     every other primary CTA is 4px border / 8px radius / 4px offset shadow). */
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
   cursor: pointer;
 }
 .shop-card-btn:hover {

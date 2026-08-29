@@ -36,16 +36,31 @@
 }
 .lp-close {
   position: absolute;
-  top: 10px;
+  top: 12px;
   right: 12px;
+  /* Canonical close ✕ (visual-pass): matches StatsScreen/ShopScreen/ModeDialog —
+     40×40, dark #0d0618 fill, white glyph, 3px black outline, 8px radius, 3px offset
+     shadow. Was border:none/background:none — the one close control with no outline. */
   width: 40px;
   height: 40px;
-  background: none;
-  border: none;
-  color: #f0ead9;
-  font-size: 22px;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
   line-height: 1;
   cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.lp-close:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+.lp-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
 }
 .lp-close:hover { color: #ff2ec4; }
 

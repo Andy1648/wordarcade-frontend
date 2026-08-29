@@ -196,3 +196,10 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
+
+## JOB 3 (fix/visual-pass) decisions
+- PINK CONFLICT: CLAUDE.md locks #FF2EC4 (wordmark) as canonical pink; JOB 2 prompt palette says #FF4FA3. CLAUDE.md overrides + protects the locked wordmark, so DECISION: converge the 12 minority #ff4fa3 (newer overlays) -> #ff2ec4 (documented, dominant 86x, smallest diff, wordmark untouched). If #ff4fa3 is actually wanted as the brand, that is a deliberate wordmark change the owner must authorize.
+- PANEL: #160f28 (1 use) -> #1a0b2e (72x, CLAUDE.md-documented panel bg).
+- DANGER RED: overlay/stats reds converged to #ff4b4b (Solo+Shop danger red); Stats #ff3b3b -> #ff4b4b. Left #ff5c5c (JSX game hearts/lives, different semantic) alone.
+- shop-card-btn weight 3px/6px/2px -> house 4px/8px/4px. lp-close border:none -> canonical close (dark chip, 3px border, 8px radius, 3px shadow).
+- DEFERRED as POLISH/needs-owner: primary-button font-size variance (homepage/dialog smaller to fit tight bars; unifying risks overflow), 8+ muted-lavender text shades (subtle; belongs in a color-token pass), exit-affordance mix (x vs BACK vs EXIT; UX decision).

@@ -51,7 +51,7 @@
   /* ---- tunable dials (confident loud default; turn DOWN in one line) ---- */
   /* Flat dark panel base (the concrete gradient stack + noise textures were
      removed). Still firmly in the dark palette family. */
-  --wall-base: #160f28;
+  --wall-base: #1a0b2e;
   --wall-tint: rgba(154, 26, 255, 0.07);
   --wall-texture-opacity: 0.85;
   --wall-grime: 0.62;

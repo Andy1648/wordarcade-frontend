@@ -25,12 +25,12 @@
 
 .ach-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  scrollbar-width: thin; scrollbar-color: #ff4fa3 #2a1f3d;
+  scrollbar-width: thin; scrollbar-color: #ff2ec4 #2a1f3d;
   padding: 14px 18px 8px;
 }
 .ach-body::-webkit-scrollbar { width: 8px; }
 .ach-body::-webkit-scrollbar-track { background: #2a1f3d; border-radius: 8px; }
-.ach-body::-webkit-scrollbar-thumb { background: #ff4fa3; border-radius: 8px; }
+.ach-body::-webkit-scrollbar-thumb { background: #ff2ec4; border-radius: 8px; }
 
 .ach-progress { text-align: center; font-family: 'Bungee', cursive; font-size: clamp(16px, 2.4vw, 20px); color: #2EFFE0; padding: 4px 0 8px; }
 .ach-cat-title { margin: 14px 0 8px; font-family: 'Bungee', cursive; font-size: clamp(14px, 2vw, 17px); letter-spacing: 0.08em; color: #9a8bbd; }
