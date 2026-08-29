@@ -48,25 +48,28 @@ test.describe('item 2 — worked examples', () => {
 });
 
 test.describe('item 4 — raised gates', () => {
-  test('CHAIN gate is LV15: locked at 14, unlocked at 15', async ({ page }) => {
-    await menu(page, 14);
+  // Gates were raised again after this spec was written: gameData.js has CHAIN unlockLevel 20
+  // (fix/qa-sweep §9, was 15) and FUSE unlockLevel 25 (fix/qa-sweep §10, was 22). Source of truth
+  // is gameData.js — update these to match it, not the reverse.
+  test('CHAIN gate is LV20: locked at 19, unlocked at 20', async ({ page }) => {
+    await menu(page, 19);
     await expect(card(page, 'chain')).toHaveClass(/locked/);
-    await expect(card(page, 'chain')).toContainText('UNLOCKS AT LV 15');
+    await expect(card(page, 'chain')).toContainText('UNLOCKS AT LV 20');
   });
 
-  test('CHAIN unlocked at LV15', async ({ page }) => {
-    await menu(page, 15);
+  test('CHAIN unlocked at LV20', async ({ page }) => {
+    await menu(page, 20);
     await expect(card(page, 'chain')).not.toHaveClass(/locked/);
   });
 
-  test('FUSE gate is LV22: locked at 21 with updated copy, unlocked at 22', async ({ page }) => {
-    await menu(page, 21);
+  test('FUSE gate is LV25: locked at 24 with updated copy, unlocked at 25', async ({ page }) => {
+    await menu(page, 24);
     await expect(card(page, 'fuse')).toHaveClass(/locked/);
-    await expect(card(page, 'fuse')).toContainText('UNLOCKS AT LV 22');
+    await expect(card(page, 'fuse')).toContainText('UNLOCKS AT LV 25');
   });
 
-  test('FUSE unlocked at LV22', async ({ page }) => {
-    await menu(page, 22);
+  test('FUSE unlocked at LV25', async ({ page }) => {
+    await menu(page, 25);
     await expect(card(page, 'fuse')).not.toHaveClass(/locked/);
   });
 });
