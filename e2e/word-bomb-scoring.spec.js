@@ -44,7 +44,7 @@ async function startMyTurn(mock, page, { combo = 'at', usedWords = [] } = {}) {
 }
 
 test.describe('Word Bomb scoring (item 2)', () => {
-  test('3 accepted words pay out at game_over (60 @ R0)', async ({ page }) => {
+  test('3 accepted words pay out at game_over (70 @ R0)', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
@@ -54,11 +54,16 @@ test.describe('Word Bomb scoring (item 2)', () => {
       await page.waitForTimeout(40);
     }
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
+    // Rarity-weighted payout (unified economy, Job 1 — a rarer word pays more). Wins ride the rarity
+    // WEIGHT, not a flat per-word count:
+    //   CAT COMMON ×1.0 + BAT UNCOMMON ×1.5 + HAT COMMON ×1.0 = 3.5 weight
+    //   × 20 perWordWins (base 20 × WB 1 × chill 1 × R0 1 × wordSense T0 1) = round10(70) = 70
+    // (Was 60 pre-Job-1, when WB wins were a flat 20/word with no rarity. BAT is genuinely UNCOMMON.)
     // Poll for the payout instead of a fixed wait: each accepted word banks via bankWordWins →
     // localStorage on the async React drain, so a fixed sleep occasionally reads a pre-bank value.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(60);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(70);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(60);
+    expect(after.lifetime - before.lifetime).toBe(70);
     expect(after.wb - before.wb).toBe(1);
   });
 
@@ -73,15 +78,19 @@ test.describe('Word Bomb scoring (item 2)', () => {
       mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: w } });
       await page.waitForTimeout(40);
     }
-    // NO game_over — the player just walks away. The 5 words (5 × 20 = 100) are already banked.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(100);
+    // NO game_over — the player just walks away. The 5 words are already banked, rarity-weighted
+    // (unified economy, Job 1 — not a flat 5 × 20):
+    //   CAT ×1.0 + BAT UNCOMMON ×1.5 + HAT ×1.0 + RAT UNCOMMON ×1.5 + MAT UNCOMMON ×1.5 = 6.5 weight
+    //   × 20 perWordWins (base 20 × WB 1 × chill 1 × R0 1 × wordSense T0 1) = round10(130) = 130
+    // (Was 100 pre-Job-1 flat; three of these five 3-letter words are UNCOMMON in the recall corpus.)
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(130);
     expect((await readWins(page)).wb - before.wb).toBe(1);
     // Now the game ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(100); // still 100, not 200
-    expect(after.lifetime - before.lifetime).toBe(100);
+    expect(after.wins - before.wins).toBe(130); // still 130, not 260
+    expect(after.lifetime - before.lifetime).toBe(130);
     expect(after.wb - before.wb).toBe(1); // still one round counted
   });
 
@@ -147,9 +156,12 @@ test.describe('Word Bomb scoring (item 2)', () => {
     mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'HAT' } });
     await page.waitForTimeout(40);
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
+    // Same three words as the happy path, so the same rarity-weighted total:
+    //   CAT COMMON ×1.0 + BAT UNCOMMON ×1.5 + HAT COMMON ×1.0 = 3.5 weight × 20 = round10(70) = 70.
+    // The point of THIS test is attribution under the turn_update race — all 3 must still score.
     // Poll for the payout (see the happy-path test): the fixed-wait read of the async game_over
     // payout was the intermittent-flake source, not the race logic itself.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(60);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(70);
   });
 
   test('a server already_used rejection shows a visible, specific message', async ({ page }) => {

@@ -58,11 +58,16 @@ test.describe('wins wiring', () => {
     const before = await readWins(page);
     mock.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 60, category: 'X', categoryId: 'x', rerollsRemaining: 1 } });
     await page.waitForTimeout(40);
-    for (const a of ['A', 'B', 'C', 'D', 'E']) {
+    // Real COMMON words (not single letters — those fall OUTSIDE the recall corpus and read OBSCURE
+    // ×4 under the unified economy, which is nonsense data for a scoring test). All five are COMMON
+    // (recall rank ≤ 3000), so each carries rarity weight 1.0:
+    //   WATER + TABLE + CHAIR + APPLE + HOUSE = 5 × COMMON ×1.0 = 5.0 weight
+    //   × 20 perWordWins (base 20 × blitz 1 × chill 1 × R0 1 × wordSense T0 1) = round10(100) = 100
+    for (const a of ['WATER', 'TABLE', 'CHAIR', 'APPLE', 'HOUSE']) {
       mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } });
       await page.waitForTimeout(40);
     }
-    // NO round_end — the player leaves. The 5 answers (5 × 20 = 100) are already banked.
+    // NO round_end — the player leaves. The 5 answers (5 × COMMON = 100) are already banked.
     await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(100);
     expect((await readWins(page)).blitz - before.blitz).toBe(1);
     // The round ends for real — the removed end payout must add NOTHING (no double-pay).
