@@ -1,6 +1,7 @@
 // useWebSocket.js
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { BACKEND_WS_URL } from '../config';
+import { reportError } from '../lib/analytics';
 
 /**
  * Opens and manages a single WebSocket connection to the Chain Reaction
@@ -131,7 +132,14 @@ export function useWebSocket(canReconnectRef) {
         if (unmountedRef.current) return;
         // Only surface 'error' when we won't immediately retry; when reconnect is
         // allowed we go straight to 'connecting' (no error flash during boot).
-        if (!reconnectAllowed()) setStatus('error');
+        if (!reconnectAllowed()) {
+          setStatus('error');
+          // Terminal drop DURING an active room/game (reconnect is blocked because the seat is
+          // gone server-side): the player is now stuck on the disconnect overlay. Routine
+          // cold-start retries never reach here, so this reports the real failures only —
+          // once per session, no payload (JOB 19). The WS URL/frames are never sent.
+          reportError('ws-terminal', event && event.error);
+        }
         scheduleReconnect();
       };
 

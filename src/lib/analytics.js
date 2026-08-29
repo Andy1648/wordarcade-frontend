@@ -47,6 +47,31 @@ export function initSentry() {
   }
 }
 
+// Report an otherwise-SWALLOWED degradation (a storage-quota failure, an audio-context
+// failure, a terminal WS give-up) to Sentry — the paths that are try/caught for graceful
+// degradation and would otherwise be invisible. Guarantees:
+//  - PII-SAFE: never sends the original error message (it can carry user text / typed words);
+//    only a static `swallowed:<tag>` label + the error CLASS/code as tags.
+//  - Deduped once per tag per session so a repeating failure can't flood Sentry.
+//  - No-op when Sentry is dormant (no DSN) and never throws into the app.
+const _reportedTags = new Set();
+export function reportError(tag, err) {
+  try {
+    if (_reportedTags.has(tag)) return;
+    _reportedTags.add(tag);
+    Sentry.captureMessage(`swallowed:${tag}`, {
+      level: 'warning',
+      tags: {
+        swallowed: tag,
+        errName: (err && err.name) || 'Error',
+        errCode: String((err && (err.code ?? err.name)) || '').slice(0, 40),
+      },
+    });
+  } catch {
+    // reporting a swallowed error must itself never affect the app
+  }
+}
+
 // Fire-and-forget a named product event. No-op until posthog is initialized,
 // never awaits, never throws. Callers pass enums/counts only (no PII).
 export function track(event, props = {}) {

@@ -415,7 +415,10 @@ function writeLevelState(level, intoLevel) {
   try {
     localStorage.setItem(XP_KEY, JSON.stringify({ lv: Math.max(1, Math.floor(level)), into: Math.max(0, intoLevel) }));
   } catch {
-    /* storage blocked */
+    // storage blocked / quota. NOTE (JOB 19): a QuotaExceededError here means progress can no
+    // longer be saved — worth reporting — but this module is deliberately pure/framework-free
+    // (unit-tested under node, no Sentry import), so it can't call reportError directly. A
+    // non-pure `safeStorage` wrapper is the right home for that capture (see claude/error-reporting.md).
   }
 }
 

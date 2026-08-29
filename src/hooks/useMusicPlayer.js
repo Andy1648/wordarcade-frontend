@@ -11,6 +11,7 @@
 // quiet (0.3) or ducked in-game (0.15). That's what makes the beat sync punchy.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { reportError } from '../lib/analytics';
 
 const DEFAULT_VOLUME = 0.3;
 
@@ -140,8 +141,11 @@ export function useMusicPlayer() {
         gainRef.current = gain;
         freqRef.current = new Uint8Array(analyser.frequencyBinCount);
       }
-    } catch {
-      // Analysis is optional - never let it break playback.
+    } catch (e) {
+      // Analysis is optional - never let it break playback. But a failure here means the whole
+      // beat-sync/analyser graph is dead for the session (silent degradation), so report it ONCE
+      // (PII-safe, deduped) so it isn't invisible. (JOB 19.)
+      reportError('audioctx-analyser', e);
     }
   }, []);
 
