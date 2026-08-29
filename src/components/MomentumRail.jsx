@@ -3,13 +3,14 @@
 // real vector art (flat diamond STUDS with a thick colored outline + a hard offset shadow, per the ART
 // VS MOTION rule).
 //
-// STAGED BOARD: a single 50×4 board sized for the endgame would leave the first ~20 buys as a speck in
-// a 98%-empty rail. Instead the board GROWS in stages, so the studs stay large early and the rail is
-// always visually full at every count. The studs shrink as the board grows; the rail's fixed height
-// never changes. Faint OUTLINE cells fill the current stage's remaining capacity so the group
-// structure (and the next milestone) is visible even at n=1 — a single mark reads as a deliberate,
-// large, left-aligned stud, not a glitch. Grouped every 10 columns so it stays countable at every
-// stage. No idle/infinite animation: static at rest; a purchase pops ONLY the newest stud once.
+// STAGED BOARD, no empty rows. A fixed 50×4 board leaves early counts as a speck in a 98%-empty rail;
+// worse, a wide board only two rows full reads as broken. So (a) the board WIDTH grows in stages, and
+// (b) we only ever render the rows actually IN USE — ceil(count / cols) rows — with faint outline cells
+// filling just the remainder of the CURRENT partial row. The result at every count is a COMPLETE
+// rectangle of full rows plus one filling row, never a full-width grid with empty rows sitting under
+// it. Studs shrink as rows are added and as the board widens; the rail's fixed 22px height never
+// changes. Grouped every 10 columns so it stays countable. No idle/infinite animation: static at rest;
+// a purchase pops ONLY the newest stud once.
 import { memo, useState } from 'react';
 import './MomentumRail.css';
 import { MOMENTUM_MAX, consumeMomentumPop } from '../progress/momentum';
@@ -22,24 +23,26 @@ const GROUP = 10; // a wider gap every 10 columns → countable blocks
 const GAPF = 0.6; // group gap as a fraction of a cell
 const STUDF = 0.42; // stud radius as a fraction of the cell
 
-// The board CAPACITY grid for a given buy count — grows in stages (studs shrink, rail stays full).
-function boardFor(n) {
-  if (n <= 10) return { cols: 10, rows: 1 }; //   1–10:  one big row of 10
-  if (n <= 40) return { cols: 20, rows: 2 }; //  11–40:  two rows of 20
-  if (n <= 100) return { cols: 25, rows: 4 }; // 41–100: four rows of 25
-  return { cols: 50, rows: 4 }; //              101–200: four rows of 50 (the full board)
+// Board WIDTH (and row cap) grows in stages. Within a stage only the rows in use are drawn (see below),
+// so a row is always full or filling — never an empty row under the fill.
+const STAGES = [
+  { max: 10, cols: 10, rows: 1 }, //    1–10
+  { max: 30, cols: 15, rows: 2 }, //   11–30
+  { max: 60, cols: 20, rows: 3 }, //   31–60
+  { max: 120, cols: 30, rows: 4 }, //  61–120
+  { max: 200, cols: 50, rows: 4 }, // 121–200
+];
+function stageFor(n) {
+  for (const s of STAGES) if (n <= s.max) return s;
+  return STAGES[STAGES.length - 1];
 }
-// Cell + stud dimensions that FILL the fixed viewBox for this stage's grid.
+// Cell + stud dimensions that FILL the fixed viewBox for `cols` × `rows` (rows = the rows IN USE).
 function layoutOf(cols, rows) {
   const gaps = Math.ceil(cols / GROUP) - 1;
   const availW = VW - 2 * MX;
   const cellW = availW / (cols + GAPF * gaps);
-  return {
-    cellW,
-    gap: GAPF * cellW,
-    cellH: (VH - 2 * MY) / rows,
-    r: STUDF * Math.min(cellW, (VH - 2 * MY) / rows),
-  };
+  const cellH = (VH - 2 * MY) / rows;
+  return { cellW, gap: GAPF * cellW, cellH, r: STUDF * Math.min(cellW, cellH) };
 }
 function centerOf(idx, cols, L) {
   const row = Math.floor(idx / cols);
@@ -68,9 +71,11 @@ function MomentumRailImpl({ count = 0 }) {
   const n = Math.max(0, Math.min(MOMENTUM_MAX, Math.floor(count)));
   if (n <= 0) return null; // fresh account: no board until the first mark is earned
 
-  const { cols, rows } = boardFor(n);
-  const cap = cols * rows;
-  const L = layoutOf(cols, rows);
+  const stage = stageFor(n);
+  const cols = stage.cols;
+  const visibleRows = Math.min(stage.rows, Math.ceil(n / cols)); // rows actually in use — no empties below
+  const shown = visibleRows * cols; // full rows + the current partial row (faint remainder)
+  const L = layoutOf(cols, visibleRows);
   const h = L.r;
   const OFF = Math.max(0.6, h * 0.35); // hard offset shadow, scaled to the stud size
 
@@ -78,13 +83,13 @@ function MomentumRailImpl({ count = 0 }) {
   let empty = '';
   let shadow = '';
   let body = '';
-  for (let i = 0; i < cap; i += 1) {
+  for (let i = 0; i < shown; i += 1) {
     const { cx, cy } = centerOf(i, cols, L);
     if (i < filledN) {
       shadow += diamond(cx + OFF, cy + OFF, h);
       body += diamond(cx, cy, h);
     } else if (i >= n) {
-      empty += diamond(cx, cy, h); // faint outline for not-yet-earned cells → structure stays visible
+      empty += diamond(cx, cy, h); // faint outline for the current row's unfilled cells
     }
   }
   const last = centerOf(n - 1, cols, L);
