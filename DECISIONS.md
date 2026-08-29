@@ -196,3 +196,9 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
+
+## JOB 5 (fix/app-handlers) decisions
+- Wrapped the 8 PURE-dispatch nav handlers (goToStats/Shop/Rebirth/Credits/SatRush/Chain/Fuse + goHome) in useCallback([]) — all-stable bodies (setters+refs+consts), zero stale-closure risk. goHome matters most: it is the onBack the ShopReveal timer keys on.
+- DELIBERATELY did NOT memoize state-closing handlers (goToLobby, handleStartDaily, handleOpenBrowser, etc.) — App.jsx is Tier 1; a useCallback with wrong deps there is the exact stale-closure class the setView traps warn about. Marginal render benefit is not worth that risk.
+- Did NOT React.memo Homepage/GameScreen (large Tier-1 change; they re-render on any App render regardless). The concrete remount harm (inline components in ShopScreen/AudioControls) is fixed on fix/app-churn, not here.
+- Verification: build+lint clean; targeted nav-path e2e regression (full matrix skipped to conserve the 20-job budget; changed handlers are pure identity refactors with no behavior change).

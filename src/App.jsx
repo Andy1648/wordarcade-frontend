@@ -1593,46 +1593,54 @@ function App() {
     goToLobby('solo', true);
   }
 
-  function goToStats() {
+  // fix/app-handlers: the pure-dispatch nav handlers are wrapped in useCallback([]) so their
+  // identity is stable across App's frequent re-renders. They close over ONLY stable values
+  // (useState setters + refs + module constants), so empty deps carry zero stale-closure risk —
+  // unlike goToLobby/handleStartDaily below, which read live state and are deliberately NOT
+  // memoised (that would reintroduce the exact stale-closure class the setView traps warn about).
+  const goToStats = useCallback(() => {
     overlayReturnRef.current = 'stats'; // restore focus here when Stats closes
     setView('stats');
-  }
+  }, []);
 
-  function goToShop() {
+  const goToShop = useCallback(() => {
     shopViewRef.current = 'shop';
     overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
     setView('shop');
-  }
+  }, []);
 
   // REBIRTH is its own top-corner icon now (separate from SHOP): it opens the same overlay
   // straight into the rebirth view. Focus returns to the rebirth icon on close.
-  function goToRebirth() {
+  const goToRebirth = useCallback(() => {
     shopViewRef.current = 'rebirth';
     overlayReturnRef.current = 'rebirth';
     setView('shop');
-  }
+  }, []);
 
-  function goToCredits() {
+  const goToCredits = useCallback(() => {
     setView('credits');
-  }
+  }, []);
 
   // SAT RUSH is a solo mode — no room/WebSocket — so selecting its menu card
   // navigates straight to the mode view (the wipe fires automatically on the
   // view change, like every other navigation).
-  function goToSatRush() {
+  const goToSatRush = useCallback(() => {
     setView(SAT_RUSH_VIEW);
-  }
+  }, []);
 
   // CHAIN / FUSE are solo (no room/WebSocket) — navigate straight to the mode view.
-  function goToChain() {
+  const goToChain = useCallback(() => {
     setView(CHAIN_VIEW);
-  }
+  }, []);
 
-  function goToFuse() {
+  const goToFuse = useCallback(() => {
     setView(FUSE_VIEW);
-  }
+  }, []);
 
-  function goHome() {
+  // Stable identity so `onBack={goHome}` doesn't churn every render — this is the prop the
+  // ShopReveal auto-dismiss timer keys on (an unstable onBack was the rebirth-reveal freeze).
+  // All-stable body (setters + refs + EMPTY_STATS), so empty deps are safe.
+  const goHome = useCallback(() => {
     setLobbyMode(null);
     setLobbyPublicDefault(false);
     setRoom(null);
@@ -1663,7 +1671,7 @@ function App() {
     setReactions([]);
     setDailyResult(null);
     setView('home');
-  }
+  }, []);
 
   // Daily Challenge: ONE tap from the menu into today's board. Uses the
   // remembered/generated name (no name prompt), creates a private room, locks
