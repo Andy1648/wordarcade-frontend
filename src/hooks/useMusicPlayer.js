@@ -64,7 +64,12 @@ export function useMusicPlayer() {
     const audio = new Audio('/firecracker.mp3');
     audio.loop = true;
     audio.volume = DEFAULT_VOLUME; // used until the gain node takes over
-    audio.preload = 'auto';
+    // preload:'none' (was 'auto') — the ~4.1 MB track was being downloaded on cold start, before
+    // any user gesture and before sound is even enabled, dominating the first-load bytes (96% of
+    // the cold-start payload on a throttled device). Music never plays until the first gesture
+    // (startMusicOnGesture → play()), and play() triggers the load itself, so deferring costs
+    // nothing at the point of use while cutting 4.1 MB off the critical path (JOB 17).
+    audio.preload = 'none';
     audioRef.current = audio;
   }
 
