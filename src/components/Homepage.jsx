@@ -8,6 +8,8 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
+import { MomentumRail } from './MomentumRail';
+import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
@@ -370,6 +372,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // streak drives the menu chip (shown only at >= 2 days).
   const [winsLifetime] = useState(() => getWinsLifetime());
   const [streak] = useState(() => getStreak().count);
+  // MOMENTUM buys — snapshotted on mount (bought only in the shop, which remounts this screen on
+  // return). Drives the MomentumRail trophy under the XP bar (each buy = one permanent mark).
+  const [momentum] = useState(() => getMomentum());
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
@@ -665,6 +670,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
           <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
         )}
+        {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
+            nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
+            fixed UI). */}
+        <MomentumRail count={momentum} />
         {/* WPM (§2): the menu is a live typing self-test — this shows your speed as you type a
             real word, hidden until you start (hideZero). */}
         <div className="menu-wpm">
