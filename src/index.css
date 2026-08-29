@@ -1,6 +1,24 @@
 /* index.css - global reset and base page styles only.
    Component-specific styles live alongside their components, not here. */
 
+/* SPACING SCALE (JOB 4). The single source of truth for gaps/padding/margins so the
+   layout has a system instead of 36 ad-hoc pixel values. Steps are 4/8/12/16/24/32/48/64.
+   USE THESE for new spacing (e.g. `gap: var(--space-2)`), and snap existing off-scale
+   values (6/10/14/18/20/22/26/28/40 …) to the NEAREST step as each component is touched +
+   visually reviewed. 287 of the app's spacing declarations are already exactly on this scale;
+   the remainder need a supervised snap (a blind repo-wide substitution shifts layout on nearly
+   every screen — see claude/spacing-scale.md for the before/after counts and the mapping). */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+}
+
 /* Self-hosted Bungee Shade (latin subset) for the menu wordmark. Hosted on our
    own origin so index.html can preload the woff2 with a STABLE url (Google's
    hashed/versioned gstatic URL is unsafe to hardcode - a version bump would make

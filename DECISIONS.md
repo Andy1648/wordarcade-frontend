@@ -196,3 +196,6 @@ wordCount.addWords). Fixed WITHOUT duplicating the streak logic:
 - Tests (solo/streakOnAccept.test.js): a real CHAIN engine and a real FUSE engine each accept one
   word through submitSoloWord+touchStreak and the streak day bumps 0→1; a rejected word bumps
   nothing. 277 unit + 134 e2e green.
+
+## JOB 4 (chore/spacing-scale) decision
+- Defined the 8-step scale (4/8/12/16/24/32/48/64) as CSS custom properties in index.css + a mapping doc. DID NOT blind-migrate the ~640 off-scale occurrences: snapping 6/10/14/18 to the nearest step shifts real layout on nearly every screen and needs per-screen visual review (viewport-integrity only catches clipping) — declined unsupervised per the conservative rail. Before distinct values=36; after a supervised snap would be ~8. Migration plan in claude/spacing-scale.md.
