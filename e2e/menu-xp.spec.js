@@ -243,7 +243,7 @@ test.describe('splash XP', () => {
 test.describe('tap XP (coarse pointer)', () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 1024, height: 768 } });
 
-  test('tap on empty space credits +10 (not lifetimeLetters); tap on a card credits 0', async ({ page }) => {
+  test('tap on empty space credits +10; tap on a card credits 0', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?portal=1');
     await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
@@ -265,8 +265,6 @@ test.describe('tap XP (coarse pointer)', () => {
         return {
           lv: Number(prog.lv) || 1,
           into: Number(prog.into) || 0,
-          letters: Number(localStorage.getItem('taw.letters')) || 0,
-          taps: Number(localStorage.getItem('taw.taps')) || 0,
         };
       });
 
@@ -286,8 +284,8 @@ test.describe('tap XP (coarse pointer)', () => {
     const afterEmpty = await read();
     expect(afterEmpty.into - b2.into).toBe(10); // +10 into the level (no boundary crossed on a fresh menu)
     expect(afterEmpty.lv).toBe(b2.lv);
-    expect(afterEmpty.letters).toBe(b2.letters); // taps NEVER bump lifetimeLetters
-    expect(afterEmpty.taps - b2.taps).toBe(1); // the taw.taps counter did bump
+    // (The taw.taps + taw.letters counter assertions were removed — STEP 5 deleted both vanity
+    //  counters entirely. A tap still credits +10 XP, verified above; nothing else to assert.)
   });
 
   test('a tap that scrolls (>10px move) credits nothing', async ({ page }) => {
@@ -310,7 +308,7 @@ test.describe('tap XP (coarse pointer)', () => {
 });
 
 test.describe('desktop clicks count (fine pointer)', () => {
-  test('a click on empty menu space credits (via taps, not letters); a click on a game card credits 0', async ({ page }) => {
+  test('a click on empty menu space credits +10; a click on a game card credits 0', async ({ page }) => {
     await gotoMenuLive(page);
     expect(await page.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
     // Let useXpCapture's effect attach its window pointer listeners before the first click
@@ -325,21 +323,18 @@ test.describe('desktop clicks count (fine pointer)', () => {
         return {
           lv: Number(prog.lv) || 1,
           into: Number(prog.into) || 0,
-          taps: Number(localStorage.getItem('taw.taps')) || 0,
-          letters: Number(localStorage.getItem('taw.letters')) || 0,
         };
       });
 
     // (a) click on empty backdrop (top-left; the SHOP button is top-right) → credits like a
-    // keystroke, into taw.taps only (never lifetimeLetters).
+    // keystroke (+10 XP). (STEP 5 removed the taw.taps + taw.letters vanity counters, so there is
+    // nothing to assert beyond the XP credit.)
     const b1 = await read();
     await page.mouse.click(8, 8);
     await page.waitForTimeout(60);
     const a1 = await read();
     expect(a1.into - b1.into).toBe(10); // desktop click credits +10 into the level
     expect(a1.lv).toBe(b1.lv); // (no boundary crossed on a fresh menu)
-    expect(a1.taps - b1.taps).toBe(1); // via the taps counter
-    expect(a1.letters).toBe(b1.letters); // NOT lifetimeLetters
 
     // (b) click on a game card → credits nothing (interactive target is ignored)
     const card = await page.locator('.game-card').first().boundingBox();
