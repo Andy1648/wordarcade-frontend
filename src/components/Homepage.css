@@ -744,6 +744,16 @@ html[data-beat='true'] .homepage-logo {
 
   .homepage-logo {
     -webkit-text-stroke: 4px #000;
+    /* MOBILE: the corner nav (SHOP/STATS/REBIRTH) is a fixed top-right stack. A centered wordmark
+       at the desktop size runs its right end UNDER that stack (JOB 9: "TYPE A WO" with SHOP over
+       "RD"). Shrink the font and cap the width so the title wraps to TWO lines (TYPE A / WORD) that
+       both clear the nav column. max-width reserves ~the nav gutter on each side of the centred
+       title; the nbsp in "TYPE A" keeps that line intact so it only ever breaks before WORD. */
+    font-size: calc(clamp(20px, 5vw, 40px) * var(--menu-scale, 1));
+    /* px cap (not vw) so it is ALWAYS below the single-line width → the title reliably breaks to
+       TYPE A / WORD; the resulting ~90px block, centred, clears the (also-tightened) nav column. */
+    max-width: 140px;
+    line-height: 0.9;
   }
 
   .homepage-bottom-bar {
@@ -752,6 +762,12 @@ html[data-beat='true'] .homepage-logo {
 
   .homepage-btn {
     min-height: 44px;
+  }
+  /* Tighten the corner-nav stack on phones so it reserves less of the top row for the wrapped
+     title to clear. Keeps the 44px touch height (JOB 14) — only the width/text shrinks. */
+  .homepage-nav-btn {
+    padding: 0 10px;
+    font-size: 12px;
   }
 }
 

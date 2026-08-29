@@ -20,7 +20,7 @@
   padding: 16px 18px 10px; border-bottom: 3px solid #000;
 }
 .ach-title { margin: 0; font-family: 'Bungee', cursive; font-size: clamp(24px, 4.5vw, 34px); color: #ffe94a; letter-spacing: 0.04em; }
-.ach-close { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 8px; background: #0d0618; color: #fff; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-size: 16px; cursor: pointer; }
+.ach-close { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 8px; background: #0d0618; color: #fff; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-size: 16px; cursor: pointer; }
 .ach-close:active { transform: translate(3px, 3px); box-shadow: none; }
 
 .ach-body {

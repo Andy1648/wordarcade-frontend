@@ -2098,12 +2098,16 @@ function App() {
           <WallScene intensity={bgIntensity} resetKey={view} />
           <ParticleField />
           <div className="view-transition-root">
-            <div key={view} className="view-screen">
+            {/* a11y (JOB C): the current screen is a <main> LANDMARK so page content is contained
+                in a landmark (axe `region`). There is only ever ONE view-screen at a time (keyed on
+                `view`, remounted on change; the wipe is a separate cosmetic overlay), so this yields
+                exactly one <main>, never two. */}
+            <main key={view} className="view-screen">
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). Fallback is null: chunks are idle-prefetched after
                   paint, and the screen-wipe overlay already covers the swap. */}
               <Suspense fallback={null}>{screen}</Suspense>
-            </div>
+            </main>
           </div>
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
