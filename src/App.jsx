@@ -73,8 +73,13 @@ import { checkAchievements } from './progress/achievements';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
+// COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
+// verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
+// combo multiplier and a 1/40 lucky ×5, both folded into the per-word reward weight.
+import { freshCombo, comboAccept, comboBreak } from './progress/combo';
+import { makeLuckyOracle, luckyReward, randomSeed } from './progress/luck';
 import { recordAcceptedWord } from './progress/collection';
-import { noteWord, noteSession } from './progress/records';
+import { noteWord, noteSession, noteLucky } from './progress/records';
 import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
 import {
@@ -247,6 +252,20 @@ if (!SEEN_INTRO) noteSession();
 // RETURN BONUS (Job 6): capture the last-seen time at MODULE LOAD, before the app re-stamps it in a
 // mount effect — otherwise "how long were you away" would always read ~0.
 const LAST_SEEN_AT_LOAD = getLastSeen();
+
+// Draw the 1/40 lucky verdict for one accepted word. Normally the seeded luck.js oracle; a test seam
+// (mirrors window.__TAW_NO_ACHIEVEMENT_GRANT) lets e2e force it off/always so the combo-boosted
+// payout-precision specs stay deterministic. Undefined in production → the real random oracle.
+function drawLucky(oracle) {
+  try {
+    const h = typeof window !== 'undefined' ? window.__TAW_LUCKY : undefined;
+    if (h === 'off') return false;
+    if (h === 'always') return true;
+  } catch {
+    /* no window / blocked → fall through to the real oracle */
+  }
+  return oracle.next();
+}
 
 /**
  * Top-level view state manager + the single shared WebSocket connection
@@ -428,6 +447,16 @@ function App() {
   // rarer word banks proportionally more. Reset alongside the accept counts on a fresh game/round.
   const myWbWeightRef = useRef(0);
   const myBlitzWeightRef = useRef(0);
+  // COMBO + LUCKY payout parity (feat/parity-wb-blitz). The visible streak meter (GameScreen's
+  // cosmetic useCombo) already existed but never touched scoring; these fold the SAME combo.js
+  // multiplier + luck.js 1/40 ×5 into the per-word reward WEIGHT, exactly as CHAIN/FUSE do. Advanced
+  // on the identical authoritative events the WS handler already sees (accept / reject / life-loss /
+  // fresh game|round), so the payout combo stays in lockstep with the visible meter. Refs (not state)
+  // so the message handler reads a live value; the oracle is re-seeded per game/round.
+  const wbComboRef = useRef(freshCombo());
+  const wbLuckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
+  const blitzComboRef = useRef(freshCombo());
+  const blitzLuckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
   // Preload the rarity rank index once (its own lazy chunk) so word-value scoring is ready by the
   // time play starts. Idempotent + single-flight; a failed load degrades to all-COMMON (×1).
   useEffect(() => {
@@ -856,6 +885,8 @@ function App() {
       });
       myWbAcceptedRef.current = 0; // fresh game → reset my Wins accept count
       myWbWeightRef.current = 0; // fresh game → reset the rarity weight ledger
+      wbComboRef.current = freshCombo(); // fresh game → reset the payout combo
+      wbLuckyOracleRef.current = makeLuckyOracle(randomSeed()); // + a fresh lucky stream
       // WPM is no longer tracked in Word Bomb / Category Blitz — they're turn-based, so typing
       // speed there is meaningless (§2). Only the continuous modes + menu record it.
       myOutstandingWordsRef.current = []; // fresh game → drop any stale in-flight submits
@@ -933,6 +964,11 @@ function App() {
         players.map((p) => [p.id, p.lives])
       );
       feedReasonRef.current = null;
+      // COMBO (parity): if I just lost a life (my turn timed out / was skipped), that's a miss —
+      // break my payout combo, mirroring the cosmetic streak's miss() on the same life-loss.
+      if (lostPlayers.some((p) => p.id === myIdRef.current)) {
+        wbComboRef.current = comboBreak(wbComboRef.current);
+      }
       if (lostPlayers.length) {
         const now = Date.now();
         setFeedEvents((prev) => {
@@ -1017,6 +1053,13 @@ function App() {
           const wbNowWords = myWbAcceptedRef.current; // snapshot for this word's banking gate
           setWinsWords(wbNowWords); // drives the pill's pre-gate state
           const wbWord = payload.word;
+          // COMBO + LUCKY (parity): advance the payout combo and draw the lucky oracle NOW, at accept
+          // time, and CAPTURE this word's multipliers — so even if scoring defers past the rarity
+          // race, the word is weighted by the combo/lucky it had when it landed (order-safe).
+          wbComboRef.current = comboAccept(wbComboRef.current);
+          const wbComboMult = wbComboRef.current.mult;
+          const wbLucky = luckyReward(drawLucky(wbLuckyOracleRef.current));
+          if (wbLucky.lucky) noteLucky(); // permanent CHANCE record (guarded)
           // RARITY-DEPENDENT SCORING. Route through whenRarityReady so a word accepted before the
           // lazy rarity index has loaded (the RACE: rarityOf would return COMMON → underpay) is
           // scored the instant the index resolves, in word order, instead of being locked at ×1.
@@ -1026,9 +1069,9 @@ function App() {
           const scoreWbWord = () => {
             const r = rarityOf(wbWord);
             const prevWbWeight = myWbWeightRef.current;
-            // Unified economy (Job 1): the per-word reward weight (rarity, capped) feeds BOTH the
-            // wins banking below AND an XP grant. Word Bomb has no combo/lucky, so weight is rarity.
-            const wbWeight = cappedWordMult(r.mult, 1, 1);
+            // Unified economy (Job 1): the per-word reward weight (rarity × combo × lucky, capped at
+            // ×40) feeds BOTH the wins banking below AND an XP grant — parity with CHAIN/FUSE.
+            const wbWeight = cappedWordMult(r.mult, wbComboMult, wbLucky.winsWeight);
             // WINS weight rides WORD SENSE (Job 4) — a wins multiplier on rarity, outside the ×40 cap.
             myWbWeightRef.current += wbWeight * wordSenseWinsFactor(r.mult);
             awardWordXp({ mode: 'word-bomb', wordLength: (wbWord || '').trim().length, weight: wbWeight });
@@ -1086,6 +1129,7 @@ function App() {
       } else {
         // Rejections are only sent to the player who submitted, so this is
         // always our own miss.
+        wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
         sndWordRejected(); // Job 11: soft reject
         setFeedEvents((prev) => [
           ...prev,
@@ -1128,6 +1172,8 @@ function App() {
       setMyAnswers([]);
       myBlitzAcceptedRef.current = 0; // fresh round → reset my Wins accept count
       myBlitzWeightRef.current = 0; // fresh round → reset the rarity weight ledger
+      blitzComboRef.current = freshCombo(); // fresh round → reset the payout combo (Blitz pays per round)
+      blitzLuckyOracleRef.current = makeLuckyOracle(randomSeed()); // + a fresh lucky stream
       setWinsTally(0); // fresh round → reset the live HUD wins tally (Blitz pays per round)
       setWinsWords(0);
       setPlayerProgress({});
@@ -1171,13 +1217,19 @@ function App() {
         const blitzNowWords = myBlitzAcceptedRef.current; // snapshot for this answer's banking gate
         setWinsWords(blitzNowWords); // drives the pill's pre-gate state
         const blitzAnswer = payload.answer;
+        // COMBO + LUCKY (parity): advance at accept time and capture this answer's multipliers, so a
+        // deferred (rarity-race) score still weights the answer by the combo/lucky it had on accept.
+        blitzComboRef.current = comboAccept(blitzComboRef.current);
+        const blitzComboMult = blitzComboRef.current.mult;
+        const blitzLucky = luckyReward(drawLucky(blitzLuckyOracleRef.current));
+        if (blitzLucky.lucky) noteLucky(); // permanent CHANCE record (guarded)
         // RARITY-DEPENDENT SCORING — same RACE fix as Word Bomb: route through whenRarityReady so an
         // answer accepted before the lazy rarity index loads is scored correctly on resolve (in
         // order), not locked at COMMON ×1. Synchronous when the index is already loaded.
         const scoreBlitzWord = () => {
           const r = rarityOf(blitzAnswer);
           const prevBlitzWeight = myBlitzWeightRef.current;
-          const blitzWeight = cappedWordMult(r.mult, 1, 1);
+          const blitzWeight = cappedWordMult(r.mult, blitzComboMult, blitzLucky.winsWeight);
           myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(r.mult); // WORD SENSE (Job 4)
           awardWordXp({ mode: 'category-blitz', wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
           recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
@@ -1197,6 +1249,10 @@ function App() {
         };
         if (isRarityIndexLoaded()) scoreBlitzWord();
         else whenRarityReady(scoreBlitzWord);
+      } else {
+        // A rejected answer is a miss → break the payout combo, mirroring the cosmetic streak's
+        // miss() on the same rejected answer_result.
+        blitzComboRef.current = comboBreak(blitzComboRef.current);
       }
     }
 
