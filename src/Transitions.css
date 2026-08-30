@@ -51,12 +51,15 @@
      normal case); set explicitly so the flex item never collapses to its
      content width. */
   width: 100%;
-  /* Single app-wide responsive scale anchor (factor set on :root by main.jsx).
-     The whole active screen scales up proportionally on large monitors so its
-     content fills the device instead of sitting tiny inside a fixed-width card.
-     Defaults to 1 (no-op) on phones / screens <=1400px. zoom (not transform) so
-     scaled-taller screens reflow and scroll normally rather than overflowing a
-     fixed box, and so it doesn't become a containing block for fixed children. */
+}
+/* fix/shop-click: the app-wide --app-scale zoom is applied ONLY to the views that opt in via the
+   `app-scaled` class (App.jsx adds it to every view EXCEPT the fit-to-screen ones: home / shop /
+   stats). It scales GAME content up on large monitors. It is NOT on the base .view-screen, so the
+   menu/shop/stats carry no `zoom` property at all — nothing to override or misbehave under recent
+   Chrome's standardized `zoom` (which was rendering the menu at --app-scale while hit-testing at
+   true scale, so corner-button clicks missed). zoom (not transform) so scaled-taller game screens
+   reflow and scroll normally and it doesn't become a containing block for fixed children. */
+.view-screen.app-scaled {
   zoom: var(--app-scale, 1);
 }
 
