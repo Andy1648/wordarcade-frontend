@@ -23,6 +23,7 @@
 - Sound effects use Web Audio API synthesis, no external audio files
 - Mobile: all touch targets 44px minimum, font-size 16px minimum on inputs
 - NO ORPHAN FIXED UI. Any new persistent control must JOIN an existing cluster — the corner nav (SHOP/STATS/REBIRTH/audio) or the footer. Never mount a new `position:fixed` element with its own coordinates. Two regressions came from this: the audio controls colliding with CREDITS, and the footer growing to three links that overflowed at 360px. A fixed element with no layout relationship to the page will eventually collide with whatever ends up beneath it.
+- PREVIEW DEPLOYMENTS INJECT VERCEL UI. *.vercel.app previews include `<vercel-live-feedback>` (a right-edge floating pill) and may include the Vercel Toolbar. These are siblings of `#root`, not app markup, and never appear on typeaword.com. When judging chrome-level visuals, verify against production or ignore any element outside `#root`.
 - Categories must be niche and unexpected — no generic "things that are green" style
 - Always verify build passes after changes: npx vite build --logLevel error
 
