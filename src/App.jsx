@@ -2185,7 +2185,19 @@ function App() {
                 in a landmark (axe `region`). There is only ever ONE view-screen at a time (keyed on
                 `view`, remounted on change; the wipe is a separate cosmetic overlay), so this yields
                 exactly one <main>, never two. */}
-            <main key={view} className="view-screen">
+            <main
+              key={view}
+              className="view-screen"
+              // fix/visual-real item 2 (production regression): the home MENU must NOT be scaled by
+              // --app-scale. It used to inherit .view-screen's `zoom: var(--app-scale)` and cancel it
+              // with a reciprocal `zoom: calc(1/var(--app-scale))` on .homepage-wrap — but recent
+              // Chrome's standardized `zoom` does not compound that reciprocal, so the menu rendered
+              // at --app-scale (e.g. 64% at 1568x675) on real browsers while headless still cancelled
+              // and the gate stayed green. Forcing zoom:1 here for the home view removes the nested
+              // zoom entirely, so the menu renders at true scale on every browser. Other views keep
+              // the CSS `zoom: var(--app-scale)` that scales game content up on large monitors.
+              style={isHomeMenu ? { zoom: 1 } : undefined}
+            >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). Fallback is null: chunks are idle-prefetched after
                   paint, and the screen-wipe overlay already covers the swap. */}

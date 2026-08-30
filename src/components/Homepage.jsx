@@ -250,7 +250,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // width — at 56 the 2560/1920 frame gaps ran 35-36px (just over 32). Smaller reserve =
       // the content column grows to fill the extra room. Clamp [0.42, 1.35] unchanged so
       // content can still fill a tall 2560 screen and shrink on a short 1163×501 one.
-      const RESERVE = 44;
+      // fix/visual-real item 2: trimmed 44→40. Removing the app-scale zoom from the home view (so
+      // the fit math now runs in true, un-zoomed layout space) nudged the 2560×1440 frame gap to
+      // 32.2px, a hair over the 16-32 band; a slightly smaller reserve lets the column grow to fill
+      // that back under 32 while staying ≥16 on short screens.
+      const RESERVE = 40;
       const raw = (inner - RESERVE - gaps - fixed) / scalable;
       const scale = Math.max(0.42, Math.min(1.35, raw));
       stage.style.setProperty('--menu-scale', scale.toFixed(4));
