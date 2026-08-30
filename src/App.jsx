@@ -2187,18 +2187,18 @@ function App() {
                 exactly one <main>, never two. */}
             <main
               key={view}
-              className="view-screen"
-              // fix/visual-real + fix/overlay-zoom (production regression): the full-viewport
-              // FIT-TO-SCREEN views — the home MENU and the SHOP / STATS (incl. its Collection &
-              // Achievements tabs) overlays — must NOT be scaled by --app-scale. They used to inherit
-              // .view-screen's `zoom: var(--app-scale)` and cancel it with a reciprocal
-              // `zoom: calc(1/var(--app-scale))` on their own root — but recent Chrome's standardized
-              // `zoom` does not compound that reciprocal, so they rendered at --app-scale (e.g. 64% at
-              // 1568x675) on real browsers while headless still cancelled and the gate stayed green.
-              // Forcing zoom:1 here removes the nested zoom entirely, so these render at true scale on
-              // every browser. GAME views (game/lobby/room/browse/credits/solo/satRush) keep the CSS
-              // `zoom: var(--app-scale)` that scales their content up on large monitors.
-              style={isHomeMenu || view === 'shop' || view === 'stats' ? { zoom: 1 } : undefined}
+              // fix/shop-click (production regression): --app-scale is applied ONLY to the views that
+              // want it — via the `app-scaled` class below — NOT to the shared .view-screen base. The
+              // full-viewport FIT-TO-SCREEN views (home MENU, SHOP / STATS incl. Collection &
+              // Achievements tabs) get NO `zoom` at all. An earlier fix left the CSS
+              // `.view-screen { zoom: var(--app-scale) }` in place and overrode it with inline zoom:1,
+              // which reports computed:1 but on recent Chrome's standardized `zoom` still applied the
+              // CSS zoom VISUALLY — so the menu rendered at --app-scale while hit-testing at true
+              // scale, and a real click on a corner button (SHOP/STATS/REBIRTH) landed on the visual
+              // gap, credited XP, and never reached the button. Removing the zoom property entirely
+              // (rather than overriding it) leaves no zoom to misbehave: visual == hit-test on every
+              // browser. GAME views keep the zoom via `.view-screen.app-scaled`.
+              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). Fallback is null: chunks are idle-prefetched after
