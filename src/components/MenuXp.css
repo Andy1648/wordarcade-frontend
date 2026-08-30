@@ -56,7 +56,10 @@
 .menu-xp-bar:not(.is-mini) .menu-xp-lv {
   position: relative;
   z-index: 3;
-  margin-right: -14px; /* overlap the track's left cap */
+  /* fix/visual-real item 5: the LV chip is now SEPARATE from the track (was margin-right:-14px,
+     which slid it on top of the track's left edge). The bar's flex gap now shows a clean 10px
+     between the chip and the track. */
+  margin-right: 0;
   padding: 4px 9px;
   background: #1a0b2e;
   border: 2px solid #000;
@@ -150,11 +153,11 @@
 .menu-xp-caption {
   width: 100%;
   max-width: 760px;
-  margin: 4px auto 0;
+  margin: 0 auto;
   text-align: center;
-  /* Shrinks in step with the title/bar/cards on short screens (matches the other one-screen-fit
-     elements) so its extra line never breaks the symmetric top/bottom frame gap. */
-  zoom: var(--menu-scale, 1);
+  /* fix/visual-real item 6: the --menu-scale zoom now lives on the parent .menu-xp-cluster (the
+     caption is inside it), so it must NOT also zoom here or it would scale twice. Its top margin is
+     dropped too — the cluster's gap owns the spacing now. */
   font-family: 'Space Mono', monospace;
   font-size: clamp(10px, 1.8vw, 13px);
   font-weight: 700;

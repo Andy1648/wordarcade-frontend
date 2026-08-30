@@ -21,6 +21,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import LockedPreviewDialog from './LockedPreviewDialog';
+import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
 import {
@@ -95,7 +96,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -228,7 +229,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // Only the TITLE, XP BAR and CARD REGION key off --menu-scale; the bottom bar /
       // daily link / footer stay fixed. Split the two so the fit math is exact: solve
       // scale·scalable + fixed + gaps = inner.
-      const SCALES = ['homepage-logo-wrap', 'menu-xp-bar', 'homepage-cards-region', 'menu-xp-caption', 'menu-next-unlock'];
+      // fix/visual-real item 6: the XP bar, caption, momentum, WPM and NEXT-unlock rows are now
+      // wrapped in ONE .menu-xp-cluster (which carries the --menu-scale zoom), so the fit loop keys
+      // off that single child instead of the individual rows.
+      const SCALES = ['homepage-logo-wrap', 'menu-xp-cluster', 'homepage-cards-region'];
       let scalable = 0;
       let fixed = 0;
       for (const el of kids) {
@@ -255,6 +259,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // the scaled column (+ RESERVE for the symmetric frame gaps + padding) so the neon border
       // wraps the content instead. max-height:100% (CSS) keeps it capped on short screens where
       // the column already fills — there wantH >= the full height and this is a no-op.
+      // fix/visual-real item 2 is a WIDTH-only fix (the max-width cap + wrap gutter, see Homepage.css)
+      // — this height hug is KEPT: at every acceptance viewport (1366→2560) it already sizes the app
+      // shell to ~96-97% of viewport height (verified) while keeping the top/bottom frame gaps tight
+      // (menu-vgap). Removing it made the stage fill height but float the content with 75px gaps.
       const columnH = scale * scalable + fixed + gaps;
       const wantH = Math.round(columnH + RESERVE + padT + padB);
       stage.style.height = `${wantH}px`;
@@ -625,6 +633,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           >
             STATS
           </button>
+          {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /
+              STATS / audio) on the menu instead of floating as an orphan fixed button bottom-right —
+              exactly the grouping CLAUDE.md's NO ORPHAN FIXED UI rule prescribes. The global fixed
+              AudioControls is suppressed on the home view (App.jsx) so there's only one here. */}
+          <AudioControls
+            variant="inline"
+            accent="#2EFFE0"
+            musicMuted={musicMuted}
+            onToggleMusic={onToggleMusic}
+          />
         </nav>
 
         {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
@@ -650,43 +668,49 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
 
 
-        {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
-            odometer used to occupy (that chip was removed). LV chip + fill + an "XP-into /
-            XP-needed" readout, fed by global keystroke capture (see the effect above). */}
-        <MenuXpBar
-          level={xpProgress.level}
-          toNext={xpProgress.toNext}
-          frac={xpProgress.frac}
-          intoLevel={xpProgress.intoLevel}
-          cost={xpProgress.cost}
-          rebirths={rebirths}
-          wins={wins}
-          onWinsClick={handleShop}
-          streak={streak}
-        />
-        {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
-            only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
-            rebirthed player back at LV1 never sees it), then never again once they reach LV2. */}
-        {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
-          <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
-        )}
-        {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
-            nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
-            fixed UI). */}
-        <MomentumRail count={momentum} />
-        {/* WPM (§2): the menu is a live typing self-test — this shows your speed as you type a
-            real word, hidden until you start (hideZero). */}
-        <div className="menu-wpm">
-          <LiveWpm hideZero />
-        </div>
-        {/* NEXT UNLOCK (Job 3): always-visible teaser of the next FREE cosmetic (a FRAME) on the
-            ladder. Static at rest (menu-motion-law safe) — no idle animation. */}
-        <div className="menu-next-unlock" aria-live="polite">
-          <span className="menu-next-unlock-tag">NEXT</span>
-          <span className="menu-next-unlock-name">
-            {nextUnlockItem.name} {nextUnlockItem.kindLabel}
-          </span>
-          <span className="menu-next-unlock-at">{nextUnlockItem.at}</span>
+        {/* fix/visual-real item 6: the XP bar + its small meta rows are grouped in ONE cluster with a
+            tight internal gap, so the NEXT-unlock line sits right under the XP row it belongs to
+            instead of floating alone in the dead space between the bar and the cards. The cluster is
+            the single fit-math child that carries --menu-scale (see SCALES + .menu-xp-cluster CSS). */}
+        <div className="menu-xp-cluster">
+          {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
+              odometer used to occupy (that chip was removed). LV chip + fill + an "XP-into /
+              XP-needed" readout, fed by global keystroke capture (see the effect above). */}
+          <MenuXpBar
+            level={xpProgress.level}
+            toNext={xpProgress.toNext}
+            frac={xpProgress.frac}
+            intoLevel={xpProgress.intoLevel}
+            cost={xpProgress.cost}
+            rebirths={rebirths}
+            wins={wins}
+            onWinsClick={handleShop}
+            streak={streak}
+          />
+          {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
+              only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
+              rebirthed player back at LV1 never sees it), then never again once they reach LV2. */}
+          {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
+            <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
+          )}
+          {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
+              nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
+              fixed UI). */}
+          <MomentumRail count={momentum} />
+          {/* WPM (§2): the menu is a live typing self-test — this shows your speed as you type a
+              real word, hidden until you start (hideZero). */}
+          <div className="menu-wpm">
+            <LiveWpm hideZero />
+          </div>
+          {/* NEXT UNLOCK (Job 3): always-visible teaser of the next FREE cosmetic (a FRAME) on the
+              ladder. Static at rest (menu-motion-law safe) — no idle animation. */}
+          <div className="menu-next-unlock" aria-live="polite">
+            <span className="menu-next-unlock-tag">NEXT</span>
+            <span className="menu-next-unlock-name">
+              {nextUnlockItem.name} {nextUnlockItem.kindLabel}
+            </span>
+            <span className="menu-next-unlock-at">{nextUnlockItem.at}</span>
+          </div>
         </div>
 
         <div className="homepage-cards-region">

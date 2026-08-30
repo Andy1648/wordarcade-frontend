@@ -42,9 +42,13 @@
    (.game-card-wrap is the magnet's only child, so a :nth-child() on the wrap itself
    would always match slot 1.) --rest-rot is set on the magnet and inherits down to the
    wrap, which keeps `transform: rotate(var(--rest-rot,0deg))`. */
-.game-card-magnet:nth-child(3n + 1) { --rest-rot: -2deg; margin-top: 10px; }
-.game-card-magnet:nth-child(3n + 2) { --rest-rot: 2deg; margin-top: -4px; }
-.game-card-magnet:nth-child(3n + 3) { --rest-rot: -1deg; margin-top: 18px; }
+/* fix/visual-real item 3: all five cards share ONE clean grid — no vertical stagger and no
+   resting tilt — so the columns align to <1px and every card is the same height. The
+   cursor-magnetic lean (GameCard.jsx) still composes on a rest of 0deg, so cards react on hover;
+   they just sit square at rest instead of staggered + tilted. */
+.game-card-magnet:nth-child(3n + 1),
+.game-card-magnet:nth-child(3n + 2),
+.game-card-magnet:nth-child(3n + 3) { --rest-rot: 0deg; margin-top: 0; }
 
 .game-card {
   /* Animation-speed multiplier inherited by the constantly-animated card art
@@ -470,7 +474,10 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* The flagship card is the featured game: slightly bigger (1.05 - prominent but
    small enough that it never overlaps its neighbour) with a heavier shadow. */
 .game-card.featured {
-  --cs: 1.05;
+  /* fix/visual-real item 3: the flagship no longer upscales (was --cs:1.05) — an enlarged card
+     broke the "all five identical height / columns aligned <1px" grid. It stays emphasised by its
+     HEAVIER hard-offset shadow only, which doesn't change the card's layout box. */
+  --cs: 1;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 7px 7px 0 #000;
 }
 
@@ -574,9 +581,14 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* ---- Level gate (CHAIN/FUSE locked until a level) ---------------------------------- */
 /* The card stays fully visible; a scrim + padlock mark it locked. The scrim is
    click-through so a tap still reaches the card (which shakes once). */
-.game-card.locked .game-card-art,
 .game-card.locked .game-card-content {
   opacity: 0.55;
+}
+/* fix/visual-real item 1: push the letter-tile art further back on a locked card (was 0.55) so it
+   reads as a faint backdrop, not something the unlock copy fights with. The copy itself sits on an
+   opaque plaque below regardless, so legibility no longer depends on this. */
+.game-card.locked .game-card-art {
+  opacity: 0.3;
 }
 .game-card-lock {
   position: absolute;
@@ -614,6 +626,16 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  /* fix/visual-real item 1: sit the unlock copy on its OWN opaque plaque so every character is
+     legible over the letter-tile art behind a locked card (before, the small "YOU'RE LV n" sub-line
+     mushed straight into the tiles). Flat void fill + black outline + hard offset shadow — house
+     language; max-width keeps it clear of the card edges. */
+  background: #0d0618;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 7px 12px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  max-width: 86%;
 }
 /* The "YOU'RE LV n · N TO GO" path line — smaller, Space Mono, cream — under the gate. Shows
    the unlock is reachable rather than a bare wall. */

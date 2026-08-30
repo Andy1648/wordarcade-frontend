@@ -21,8 +21,12 @@
   align-items: center;
   justify-content: center;
   /* Vertical padding is small + vh-based so it never eats the height budget on
-     short laptops; horizontal keeps the roomy side breathing room. */
-  padding: clamp(8px, 1.6vh, 20px) clamp(14px, 4vw, 72px);
+     short laptops; horizontal keeps a side breathing gap to the neon frame.
+     fix/visual-real item 2: the horizontal gutter was clamp(14px, 4vw, 72px) — up to 72px per side,
+     which (with the stage's own cap) held the app shell under 90% width on mid-desktops like
+     1366/1422. Tightened to clamp(10px, 2vw, 44px) so the frame reaches ≥90% of the width while
+     still leaving a clear gutter to the viewport edge. */
+  padding: clamp(8px, 1.6vh, 20px) clamp(10px, 2vw, 44px);
   /* Cancel the app-wide --app-scale zoom (applied on .view-screen). The landing
      is deliberately locked to exactly one screen height (height:100dvh +
      overflow:hidden) and is already fluid via vh units, so zooming it would
@@ -82,9 +86,13 @@
   width: 100%;
   /* Never exceed the wrap's height, so the card fits one screen. */
   max-height: 100%;
-  /* Narrower so the frame hugs the content (item 2): the card grid then fills most of the
-     width, leaving only a 16-32px gutter to the inner edge instead of ~200px of dead space. */
-  max-width: min(94vw, 1180px);
+  /* fix/visual-real item 2: the old cap min(94vw, 1180px) pinned the whole menu to 1180px on any
+     monitor wider than ~1255px, so it filled only ~62% of a 1920 window (1180/1920) and ~46% of a
+     2560 one — the "broken embed" look. The homepage cancels --app-scale (zoom nets to 1), so THIS
+     max-width is the sole width cap on the app shell. Raised to fill the viewport: 96vw fills wide
+     screens ≥90%, and the 2400px ceiling still stops an ultrawide from stretching the 3-card row
+     infinitely. Predicted stage fill: 1422→~92%, 1920→~92.5%, 2560→~93.75%. */
+  max-width: min(96vw, 2400px);
   /* A neon edge to DEFINE the panel (Blitz blue #3DA8FF @ ~45% - reads over the
      busy wall where the faint white edge didn't). Background stays transparent (the
      WallScene shows through) - no fill/glow/vignette/box-shadow, just border + radius. */
@@ -395,10 +403,18 @@ html[data-beat='true'] .homepage-logo {
   .homepage-graffiti { width: 110px; top: 4%; left: -16px; }
 }
 
-/* The XP bar keys off the same --menu-scale (item 1) so it shrinks in step with the
-   title/cards on short screens. zoom (not transform) so its box footprint shrinks too,
-   keeping the fit math honest. */
-.homepage-stage .menu-xp-bar {
+/* fix/visual-real item 6: the XP bar + its small meta rows (wins caption, MOMENTUM rail, live WPM,
+   and the NEXT-unlock teaser) are grouped in ONE cluster with a tight internal gap, so the NEXT
+   line sits right under the XP row it belongs to instead of floating alone in the dead space
+   between the bar and the cards. The cluster (not each row) now carries the --menu-scale zoom, so
+   the whole block still shrinks in step with the title/cards on short screens and the fit math
+   stays honest (the fit loop keys off .menu-xp-cluster now — see Homepage.jsx SCALES). */
+.menu-xp-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
   zoom: var(--menu-scale, 1);
 }
 
@@ -516,7 +532,7 @@ html[data-beat='true'] .homepage-logo {
 .menu-wpm {
   display: flex;
   justify-content: center;
-  margin-top: 3px;
+  /* fix/visual-real item 6: spacing is owned by the .menu-xp-cluster gap now (was margin-top:3px). */
   min-height: 1em; /* reserve the line so showing/hiding never shifts layout */
 }
 
@@ -1005,7 +1021,9 @@ html[data-beat='true'] .homepage-beat-glow {
   justify-content: center;
   width: 100%;
   max-width: 760px;
-  margin: 6px auto 0;
+  /* fix/visual-real item 6: no own top margin — the .menu-xp-cluster gap owns the spacing, keeping
+     this line tight under the XP row instead of floating in the gap above the cards. */
+  margin: 0 auto;
   font-family: 'Space Mono', monospace;
   font-size: clamp(10px, 1.7vw, 13px);
   line-height: 1;

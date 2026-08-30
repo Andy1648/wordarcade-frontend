@@ -17,7 +17,10 @@ import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../
 import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 
-export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, onToggleMusic }) {
+// `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
+// fixed positioning so it can sit INSIDE the menu's corner-nav cluster (fix/visual-real item 4),
+// with its popover opening DOWNWARD from the button instead of up.
+export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, onToggleMusic, variant = 'fixed' }) {
   const [open, setOpen] = useState(false);
   const [events, setEvents] = useState(() => isEventSoundsEnabled());
   const [clack, setClack] = useState(() => isClackEnabled());
@@ -60,7 +63,7 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
   );
 
   return (
-    <div className="audio-ctrl">
+    <div className={`audio-ctrl${variant === 'inline' ? ' audio-ctrl--inline' : ''}`}>
       {open && (
         <div className="audio-panel" role="group" aria-label="Sound settings">
           <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" />

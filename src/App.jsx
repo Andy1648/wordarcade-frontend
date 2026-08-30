@@ -2075,6 +2075,8 @@ function App() {
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}
+        musicMuted={music.isMuted}
+        onToggleMusic={music.toggleMute}
         onDaily={handleStartDaily}
         daily={{
           dayNumber: currentDayNumber(),
@@ -2238,12 +2240,17 @@ function App() {
           {/* ONE corner sound control (Job 11): a single 🔊 button that opens a popover holding all
               three toggles — MUSIC / KEYSTROKE / EVENTS — plus volume. Replaces the three separate
               floating fixed buttons (music ♫ / clack ⌨ / events 🔊) that, side by side, overlapped
-              the menu's CREDITS footer link at 360px. Music state is owned by App's player. */}
-          <AudioControls
-            accent={SCREEN_ACCENT[view] || '#2EFFE0'}
-            musicMuted={music.isMuted}
-            onToggleMusic={music.toggleMute}
-          />
+              the menu's CREDITS footer link at 360px. Music state is owned by App's player.
+              fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
+              menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
+              UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
+          {view !== 'home' && (
+            <AudioControls
+              accent={SCREEN_ACCENT[view] || '#2EFFE0'}
+              musicMuted={music.isMuted}
+              onToggleMusic={music.toggleMute}
+            />
+          )}
         </div>
       </div>
       {/* CONNECTION LOST: shown only when the socket drops mid room/game. The

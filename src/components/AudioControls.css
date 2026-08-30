@@ -8,6 +8,21 @@
   bottom: 16px;
   z-index: 70; /* above game-over / countdown overlays so it's always reachable */
 }
+/* fix/visual-real item 4: INLINE variant — the control sits inside the menu's corner-nav cluster
+   (a normal flex item, not a fixed orphan). position:relative so its absolutely-positioned popover
+   still anchors to THIS button (not the nav), and the popover opens DOWNWARD (see below) because the
+   button now lives near the top of the screen. */
+.audio-ctrl--inline {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  z-index: 6;
+}
+/* Open the popover DOWN from the inline button (it sits at the top of the screen), right-aligned. */
+.audio-ctrl--inline .audio-panel {
+  bottom: auto;
+  top: 52px;
+}
 .audio-btn {
   width: 44px;
   height: 44px;

@@ -57,17 +57,23 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // One rAF writing one transform (plus the marker, riding the same displayed value). Reads
   // and writes only refs, so a stale instance left over from a re-render behaves identically.
   function writeFrame(v) {
+    let w = trackWRef.current;
+    if (!w && trackRef.current) {
+      w = trackRef.current.clientWidth;
+      trackWRef.current = w;
+    }
+    // fix/visual-real item 5: floor the VISUAL fill (and its leading marker) to ~4px so ANY
+    // nonzero progress is visible — at 143/6,940 a bare scaleX(0.02) rounded to under a pixel and
+    // the bar read as empty for most of a level. The readout number below still counts off the
+    // TRUE value, so only the pixel WIDTH is floored, never the reported XP.
+    const minFrac = w > 0 ? 4 / w : 0;
+    const vis = v > 0 ? Math.max(v, minFrac) : 0;
     const fill = fillRef.current;
-    if (fill) fill.style.transform = `scaleX(${v})`;
+    if (fill) fill.style.transform = `scaleX(${vis})`;
     const marker = markerRef.current;
     if (marker) {
-      let w = trackWRef.current;
-      if (!w && trackRef.current) {
-        w = trackRef.current.clientWidth;
-        trackWRef.current = w;
-      }
-      marker.style.transform = `translateX(${v * w - 2}px)`;
-      marker.style.opacity = v > 0.004 ? '1' : '0';
+      marker.style.transform = `translateX(${vis * w - 2}px)`;
+      marker.style.opacity = v > 0 ? '1' : '0';
     }
     // Count the readout's left number up smoothly off `displayed` (not the stepped
     // prop). Absent on the mini variant → guarded.
