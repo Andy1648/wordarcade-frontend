@@ -9,9 +9,10 @@
   position: fixed;
   inset: 0;
   z-index: 120;
-  /* Cancel the ancestor .view-screen --app-scale zoom (see ShopScreen.css) so this fixed
-     overlay is sized to the REAL viewport and always centres/fits, not app-scale × 88dvh. */
-  zoom: calc(1 / var(--app-scale, 1));
+  /* fix/overlay-zoom: no --app-scale zoom to cancel — the STATS view (and its Collection/
+     Achievements tabs) is rendered with .view-screen zoom forced to 1 (App.jsx), so this fixed
+     inset:0 overlay is sized to the REAL viewport. The old reciprocal cancelled only in headless;
+     recent real Chrome left it at --app-scale. See ShopScreen.css. */
   background: rgba(13, 6, 24, 0.86);
   display: flex;
   align-items: center;

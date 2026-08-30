@@ -5,7 +5,9 @@
   position: fixed;
   inset: 0;
   z-index: 120;
-  zoom: calc(1 / var(--app-scale, 1));
+  /* fix/overlay-zoom: reciprocal --app-scale zoom removed (rendered inside the STATS view whose
+     .view-screen zoom is forced to 1). It cancelled only in headless; recent real Chrome left it at
+     --app-scale. See ShopScreen.css. */
   background: rgba(13, 6, 24, 0.86);
   display: flex;
   align-items: center;

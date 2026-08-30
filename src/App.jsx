@@ -2188,15 +2188,17 @@ function App() {
             <main
               key={view}
               className="view-screen"
-              // fix/visual-real item 2 (production regression): the home MENU must NOT be scaled by
-              // --app-scale. It used to inherit .view-screen's `zoom: var(--app-scale)` and cancel it
-              // with a reciprocal `zoom: calc(1/var(--app-scale))` on .homepage-wrap — but recent
-              // Chrome's standardized `zoom` does not compound that reciprocal, so the menu rendered
-              // at --app-scale (e.g. 64% at 1568x675) on real browsers while headless still cancelled
-              // and the gate stayed green. Forcing zoom:1 here for the home view removes the nested
-              // zoom entirely, so the menu renders at true scale on every browser. Other views keep
-              // the CSS `zoom: var(--app-scale)` that scales game content up on large monitors.
-              style={isHomeMenu ? { zoom: 1 } : undefined}
+              // fix/visual-real + fix/overlay-zoom (production regression): the full-viewport
+              // FIT-TO-SCREEN views — the home MENU and the SHOP / STATS (incl. its Collection &
+              // Achievements tabs) overlays — must NOT be scaled by --app-scale. They used to inherit
+              // .view-screen's `zoom: var(--app-scale)` and cancel it with a reciprocal
+              // `zoom: calc(1/var(--app-scale))` on their own root — but recent Chrome's standardized
+              // `zoom` does not compound that reciprocal, so they rendered at --app-scale (e.g. 64% at
+              // 1568x675) on real browsers while headless still cancelled and the gate stayed green.
+              // Forcing zoom:1 here removes the nested zoom entirely, so these render at true scale on
+              // every browser. GAME views (game/lobby/room/browse/credits/solo/satRush) keep the CSS
+              // `zoom: var(--app-scale)` that scales their content up on large monitors.
+              style={isHomeMenu || view === 'shop' || view === 'stats' ? { zoom: 1 } : undefined}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). Fallback is null: chunks are idle-prefetched after

@@ -5,9 +5,9 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  /* Match the real overlays: cancel the ancestor --app-scale zoom so the loading chrome
-     is sized to the real viewport (see ShopScreen.css). */
-  zoom: calc(1 / var(--app-scale, 1));
+  /* fix/overlay-zoom: reciprocal --app-scale zoom removed. This skeleton is the Suspense fallback
+     for the SHOP/STATS views, whose .view-screen zoom is forced to 1 (App.jsx), so it is already
+     sized to the real viewport — matching the real overlays. See ShopScreen.css. */
   display: flex;
   align-items: center;
   justify-content: center;
