@@ -145,3 +145,28 @@ Wordmark: Bungee Shade font, #FF4FA3 fill, 5px #000 stroke, text-shadow: none (d
 ## MENU MOTION LAW (Homepage) — idle removed, beat kept.
 The menu has NO idle/ambient loops (the old tagline sway, section-label breathe, button idle bounce, and splatter parallax were removed to stop visual "jumping"). Every element keeps its STATIC resting pose (matching its reduced-motion state). Motion is concentrated into two beat-driven moments only: (1) title-beat-pop on .homepage-logo, (2) the .homepage-beat-glow soft pink frame glow. Hover/press feedback stays. The button beat-pop was removed (beat = title + frame glow only). Do not reintroduce idle loops here.
 - DOCUMENTED FLAT-RULE EXCEPTION: .homepage-beat-glow is a pink radial-gradient pulse — an intentional, menu-frame-scoped exception to the "flat colors only, no gradients" rule. Opacity-only, beat-driven, reduced-motion-off.
+
+## WORKING RULES — "For Claude Code" (mirror of WORKING-RULES.md; keep in sync)
+
+### Match ceremony to blast radius (risk tiers)
+- **Tier 1 — live logic** (WebSocket handlers, game state, view/state lifecycle, room lifecycle, validators): one task at a time, never batched; diagnose before fixing (no speculative fixes); 2-device live play-test after shipping.
+- **Tier 2 — UI / components** (rendering, layout, structure): may batch closely-related changes; review by PLAYING the preview. If a "UI" change touches a WS handler or game-state read, it's Tier 1 — escalate.
+- **Tier 3 — static / cosmetic** (CSS, copy, meta, assets, dead code, log gating): batch freely; trust the build (`npx vite build --logLevel error`, exit 0).
+- When unsure which tier, pick the **higher** one.
+
+### Verify before you claim done
+- Run the full gate before any merge: `npm run gate` (lint + unit + **all** Playwright). Read `test-results/.last-run.json` for the authoritative pass/fail + failed-test list; never gate on a viewport-narrowed subset.
+- **A green build is not a green app.** Runtime-only bugs pass every static check — screenshot/inspect the real thing.
+- **Never fabricate evidence.** If a viewport or environment can't be reproduced (screen-size cap, blocked asset, headless-only), say so and report what you actually measured.
+- **Load-flake vs regression:** re-run a failing Playwright test serially (`--workers=1`) before calling it either way.
+
+### Chrome-level visual verification
+- Verify chrome-level visuals against **production**, or ignore any element outside `#root`.
+- `*.vercel.app` preview deployments inject Vercel UI — `<vercel-live-feedback>` (a right-edge floating pill) and sometimes the Vercel Toolbar. These are **siblings of `#root`, not app markup**, and never appear on typeaword.com. Don't mistake them for an app orphan.
+- **No orphan fixed UI:** a new persistent control JOINS an existing cluster (corner nav / footer), never a lone `position:fixed` with its own coordinates.
+
+### Workflow
+- Branch off `main`; never do feature/fix work directly on `main`. Do **not** merge until every acceptance passes.
+- After a change: commit the relevant files, push to the branch, report the Vercel preview URL. Never leave work uncommitted; never ask "want me to commit/push?" — just do it.
+- **Never commit** (unless told): `LoadingScreen.jsx`, `.md` audit reports, `generated_content_review.js`.
+- Keep reports short; end with what's committed + the preview URL.
