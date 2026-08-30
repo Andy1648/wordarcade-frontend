@@ -86,7 +86,7 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
       <button
         type="button"
         className={`audio-btn${allOff ? ' off' : ''}`}
-        style={{ borderColor: accent, color: accent }}
+        style={variant === 'inline' ? undefined : { borderColor: accent, color: accent }}
         onClick={() => setOpen((o) => !o)}
         title="Sound settings"
         aria-label="Sound settings"

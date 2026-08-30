@@ -1924,6 +1924,11 @@ function App() {
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
   let screen;
+  // fix/visual-real item 4/2: true when the home MENU is the rendered screen (the else branch
+  // below). The menu hosts the sound control inside its own corner-nav cluster, so the global
+  // fixed control must be suppressed here — keyed on which screen actually renders, not on `view`
+  // alone, so a menu shown under any non-'home' fallback value can never double up the control.
+  let isHomeMenu = false;
   if (view === 'game') {
     screen = (
       <GameScreen
@@ -2054,6 +2059,7 @@ function App() {
       <CgArmScreen wsStatus={wsStatus} coarse={cgCoarse} onArm={handleCgArm} />
     );
   } else {
+    isHomeMenu = true;
     screen = (
       <Homepage
         wsStatus={wsStatus}
@@ -2244,7 +2250,7 @@ function App() {
               fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
               menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
               UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
-          {view !== 'home' && (
+          {!isHomeMenu && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}
               musicMuted={music.isMuted}
