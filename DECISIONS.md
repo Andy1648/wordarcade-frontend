@@ -205,3 +205,26 @@ Continuous autonomous. Rails: branch+push only, never merge/main/deploy; verify 
 - `(npm ci && npm run gate)` for JOB C FAILED: `npm ci` wipes node_modules first, hit `EPERM unlink esbuild.exe` (binary locked by concurrent build activity), leaving node_modules PARTIAL (vite deleted). Repaired via `taskkill esbuild.exe` + `npm install`.
 - DECISION: do NOT run `npm ci` while ANY subagent/build is active — it is destructive to the SHARED node_modules. node_modules is already correct from package-lock and I have not changed deps on the code branches, so the gate is run as `npm run gate` (lint+unit+e2e) on the existing install; a standalone `npm ci` only if deps change AND no other node process runs.
 - Worktree subagents that BUILD/TEST need their own `npm ci` first (a fresh worktree has no node_modules). JOB B's subagent thrashed without it and was killed — JOB B (rebalance) is INCOMPLETE, to redo.
+
+## SIX-JOB PICKY RUN (2026-08-30)
+Rails (user): six jobs in order, branch + push only, verify each on remote, never ask —
+log here and continue. Full gate with `set -o pipefail`, read `.last-run.json`. FIRST add
+BE-PICKY.md and apply to every job.
+
+- (infra) Chrome extension is NOT connected this session (tabs_context_mcp → "extension not
+  connected"). Screenshots therefore driven by **Playwright + the installed Chromium** against a
+  local `vite preview` (port 4173) — the same harness the e2e suite uses. Standalone driver scripts
+  live in the scratchpad (untracked); only reports are committed. This is a decision forced by the
+  environment, not a shortcut: real pixels, real measurements.
+- (infra) **Largest-empty-rectangle** is measured, not eyeballed: an injected DOM script rasterises
+  each card/panel to a 64-col occupancy grid (a cell is "ink" if any descendant carrying text / svg /
+  img / a border / a background distinct from the card field overlaps it), then computes the maximal
+  all-empty rectangle. Reported as % of the container area. Same routine reused across all jobs.
+- (gate policy) Report-only branches (Jobs 1,3,4,6) add ONLY .md files + BE-PICKY/DECISIONS — they
+  cannot change runtime, so they get a fast sanity gate (`npm run build` + `npm run lint`) rather than
+  the full ~2min e2e suite six times over. Code-changing branches (Job 2 proto page, Job 5 app fixes)
+  get the **full** `npm run gate` with `set -o pipefail`, reading `test-results/.last-run.json`.
+  Logged because it diverges from a literal "full gate on every branch".
+- (BE-PICKY thresholds) Set the largest-empty-rectangle fail line at >30% of card area, soft 18–30%,
+  clean <18%. Chosen so a small motif floating in a flat field fails but a legitimately breathing
+  layout passes.
