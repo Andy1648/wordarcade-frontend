@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TYPE A WORD — Mode Card Directions (proto/cards-2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d0618; --panel:#1a0b2e;
+    --pink:#FF4FA3; --cyan:#2EFFE0; --yellow:#FFE94A; --orange:#FF6B3D; --purple:#9A1AFF;
+    --ink:#000;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{
+    background:
+      radial-gradient(1200px 600px at 20% -10%, #21103b 0%, transparent 60%),
+      var(--bg);
+    color:#fff; font-family:'Space Mono',monospace;
+    -webkit-font-smoothing:antialiased; padding:0 0 80px;
+  }
+  a{ color:var(--cyan); }
+
+  /* ---- page chrome ---- */
+  .page-head{
+    padding:34px clamp(16px,4vw,64px) 10px; max-width:1760px; margin:0 auto;
+  }
+  .page-head h1{
+    font-family:'Bungee Shade',sans-serif; font-weight:400;
+    color:var(--pink); -webkit-text-stroke:3px #000; text-stroke:3px #000;
+    font-size:clamp(26px,4.4vw,52px); margin:0 0 6px; letter-spacing:1px;
+    transform:rotate(-2deg) skewX(-4deg); transform-origin:left;
+  }
+  .page-head p{ margin:10px 0 0; max-width:760px; color:#c9b8e6; font-size:14px; line-height:1.55; }
+  .page-head .tag{ display:inline-block; margin-top:6px; background:#000; color:var(--yellow);
+    border:2px solid var(--yellow); border-radius:6px; padding:3px 9px; font-size:11px; font-weight:700; letter-spacing:1px;}
+
+  .toc{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .toc a{ text-decoration:none; background:var(--panel); border:2px solid #3a2359;
+    border-radius:8px; padding:6px 11px; font-size:11px; font-weight:700; letter-spacing:.5px; color:#fff;
+    box-shadow:3px 3px 0 #000; transition:transform .12s ease-out; }
+  .toc a:hover{ transform:translate(-1px,-1px); }
+
+  /* ---- direction section ---- */
+  .dir{ max-width:1760px; margin:0 auto; padding:44px clamp(16px,4vw,64px) 0; }
+  .dir-head{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:22px;
+    border-bottom:3px solid #33204f; padding-bottom:14px; }
+  .dir-num{ font-family:'Bungee',sans-serif; font-size:clamp(30px,4vw,46px);
+    color:var(--panel); -webkit-text-stroke:2px var(--cyan); text-stroke:2px var(--cyan); line-height:.9; }
+  .dir-name{ font-family:'Bungee',sans-serif; font-size:clamp(18px,2.4vw,30px); color:#fff; letter-spacing:1px; }
+  .dir-desc{ color:#b6a3d6; font-size:13px; max-width:640px; line-height:1.5; }
+
+  .row{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:20px; align-items:stretch;
+  }
+  @media(max-width:1500px){ .row{ grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:980px){ .row{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:560px){ .row{ grid-template-columns:1fr; gap:16px; } }
+
+  /* generic card resets */
+  .card{ position:relative; border-radius:10px; overflow:hidden; cursor:pointer;
+    transition:transform .13s ease-out; }
+  .card:hover{ transform:translateY(-6px); z-index:5; }
+  .card:active{ transform:translateY(-2px) scale(.99); }
+  .card.locked{ cursor:not-allowed; }
+  .card.locked .lockwrap{ display:flex; }
+  .card svg{ display:block; }
+
+  /* shared lock overlay */
+  .lockwrap{ display:none; position:absolute; inset:0; z-index:12;
+    background:rgba(8,3,18,.62); align-items:center; justify-content:center; flex-direction:column;
+    gap:10px; backdrop-filter:saturate(.4); text-align:center; padding:16px; }
+  .lockwrap svg{ width:54px; height:54px; filter:drop-shadow(3px 3px 0 #000); }
+  .lock-lv{ font-family:'Bungee',sans-serif; font-size:15px; color:var(--yellow);
+    -webkit-text-stroke:1px #000; letter-spacing:1px; }
+  .lock-sub{ font-size:10px; color:#cdbdea; letter-spacing:.5px; }
+
+  /* =======================================================================
+     DIRECTION 1 — ART-LED  (the artwork IS the card, text overlaid)
+     ======================================================================= */
+  .art-led{ aspect-ratio:3/4; border:4px solid rgba(0,0,0,.5); box-shadow:6px 6px 0 #000; }
+  .art-led .al-art{ position:absolute; inset:0; }
+  .art-led .al-art svg{ width:100%; height:100%; }
+  .art-led .al-over{ position:absolute; left:0; right:0; bottom:0; padding:16px 14px 14px;
+    display:flex; flex-direction:column; gap:5px;
+    background:linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.78) 55%, transparent 100%); }
+  .art-led .al-badge{ align-self:flex-start; font-family:'Space Mono'; font-weight:700; font-size:10px;
+    letter-spacing:1px; padding:3px 8px; border-radius:5px; border:2px solid #000; }
+  .art-led .al-title{ margin:0; font-family:'Bungee',sans-serif; line-height:.92; color:#fff;
+    -webkit-text-stroke:2px #000; text-stroke:2px #000; font-size:clamp(22px,2vw,30px); }
+  .art-led .al-tag{ margin:0; font-size:11px; color:#e7d9ff; font-weight:700; letter-spacing:.3px; }
+  .art-led .al-corner{ position:absolute; top:10px; right:10px; z-index:6; font-family:'Space Mono';
+    font-weight:700; font-size:9px; letter-spacing:1px; padding:3px 7px; border-radius:5px;
+    background:#000; color:var(--yellow); border:2px solid var(--yellow); box-shadow:2px 2px 0 rgba(0,0,0,.6); }
+
+  /* =======================================================================
+     DIRECTION 2 — POSTER  (heavy type fills the card, art as accent)
+     ======================================================================= */
+  .poster{ aspect-ratio:3/4; border:4px solid #000; box-shadow:6px 6px 0 #000;
+    display:flex; flex-direction:column; padding:14px 14px 12px; }
+  .poster .po-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .poster .po-badge{ font-family:'Space Mono'; font-weight:700; font-size:10px; letter-spacing:1px;
+    padding:3px 8px; border-radius:5px; border:2px solid #000; background:#000; }
+  .poster .po-num{ font-family:'Bungee',sans-serif; font-size:26px; line-height:.8; opacity:.85;
+    -webkit-text-stroke:1.5px #000; }
+  .poster .po-title{ font-family:'Bungee',sans-serif; line-height:.82; margin:auto 0;
+    font-size:clamp(34px,3.4vw,54px); word-break:break-word;
+    -webkit-text-stroke:2.5px #000; text-stroke:2.5px #000; }
+  .poster .po-bottom{ display:flex; align-items:flex-end; justify-content:space-between; gap:8px; }
+  .poster .po-tag{ font-size:11px; font-weight:700; line-height:1.25; max-width:60%;
+    background:#000; color:#fff; padding:6px 8px; border-radius:6px; }
+  .poster .po-art{ width:38%; max-width:120px; aspect-ratio:1/1; border:3px solid #000; border-radius:8px;
+    overflow:hidden; flex:none; box-shadow:3px 3px 0 rgba(0,0,0,.5); transform:rotate(3deg); }
+  .poster .po-art svg{ width:100%; height:100%; }
+
+  /* =======================================================================
+     DIRECTION 3 — ARCADE CABINET  (framed screen showing the mode)
+     ======================================================================= */
+  .cab{ background:#17092b; border:4px solid #000; border-radius:14px 14px 10px 10px;
+    box-shadow:6px 6px 0 #000, inset 0 0 0 3px #3a2359; padding:10px 12px 12px;
+    display:flex; flex-direction:column; gap:9px; }
+  .cab .cab-marquee{ text-align:center; font-family:'Bungee',sans-serif; letter-spacing:1px;
+    font-size:clamp(15px,1.5vw,20px); line-height:1; padding:9px 6px; border-radius:8px;
+    border:3px solid #000; -webkit-text-stroke:1.5px #000; text-stroke:1.5px #000; color:#fff;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.25); }
+  .cab .cab-screen{ position:relative; border:4px solid #000; border-radius:8px; overflow:hidden;
+    aspect-ratio:1/1; background:#000; box-shadow:inset 0 0 0 3px #241141; }
+  .cab .cab-screen svg{ width:100%; height:100%; }
+  .cab .cab-scan{ position:absolute; inset:0; pointer-events:none; z-index:3;
+    background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 3px, rgba(0,0,0,.16) 3px 4px);
+    mix-blend-mode:multiply; }
+  .cab .cab-glare{ position:absolute; top:0; left:0; right:0; height:38%; z-index:4; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(255,255,255,.14), transparent); }
+  .cab .cab-panel{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#241141; border:3px solid #000; border-radius:8px; padding:8px 10px; }
+  .cab .cab-panel svg{ flex:none; }
+  .cab .cab-badge{ font-family:'Space Mono'; font-weight:700; font-size:10px; letter-spacing:1px;
+    padding:4px 9px; border-radius:6px; border:2px solid #000; }
+  .cab .cab-1cred{ font-size:9px; color:#a98fd6; letter-spacing:1px; font-weight:700; }
+  .cab.locked{ filter:grayscale(.5); }
+
+  /* =======================================================================
+     DIRECTION 4 — DATA-FORWARD  (the card shows YOUR stats for the mode)
+     ======================================================================= */
+  .data{ background:var(--panel); border:4px solid #000; border-radius:10px; box-shadow:6px 6px 0 #000;
+    display:flex; flex-direction:column; overflow:hidden; }
+  .data .dc-head{ display:flex; align-items:stretch; gap:0; border-bottom:3px solid #000; }
+  .data .dc-art{ width:82px; flex:none; overflow:hidden; border-right:3px solid #000; }
+  .data .dc-art svg{ width:100%; height:100%; }
+  .data .dc-title{ display:flex; flex-direction:column; justify-content:center; gap:4px; padding:10px 12px; }
+  .data .dc-name{ font-family:'Bungee',sans-serif; font-size:19px; line-height:.9; letter-spacing:.5px; color:#fff; }
+  .data .dc-badge{ align-self:flex-start; font-family:'Space Mono'; font-weight:700; font-size:9px;
+    letter-spacing:1px; padding:2px 7px; border-radius:5px; border:2px solid #000; }
+  .data .dc-stats{ display:grid; grid-template-columns:1fr 1fr; }
+  .data .stat{ padding:12px 12px; border-bottom:2px solid #2b1a45; }
+  .data .stat:nth-child(odd){ border-right:2px solid #2b1a45; }
+  .data .stat b{ display:block; font-family:'Bungee',sans-serif; font-size:23px; line-height:1;
+    color:var(--cyan); }
+  .data .stat.hot b{ color:var(--yellow); }
+  .data .stat span{ display:block; font-size:9px; color:#b09ad3; letter-spacing:1px; margin-top:5px; font-weight:700; }
+  .data .dc-mastery{ padding:11px 12px 13px; }
+  .data .dc-mlabel{ display:flex; justify-content:space-between; font-size:9px; color:#b09ad3;
+    letter-spacing:1px; font-weight:700; margin-bottom:6px; }
+  .data .dc-bar{ height:12px; border:2px solid #000; border-radius:7px; background:#0d0618; overflow:hidden; }
+  .data .dc-fill{ height:100%; border-right:2px solid #000; }
+  .data.locked{ position:relative; }
+  .data.locked .dc-stats,.data.locked .dc-mastery{ filter:blur(3px); opacity:.5; }
+
+  .foot{ max-width:1760px; margin:56px auto 0; padding:20px clamp(16px,4vw,64px) 0;
+    border-top:2px dashed #3a2359; color:#8f7bb5; font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <h1>MODE CARD DIRECTIONS</h1>
+    <div><span class="tag">PROTOTYPE · proto/cards-2</span></div>
+    <p>Four genuinely different ideas about what a mode card is — not four skins of the current layout.
+       All five modes rendered in each so they read as a set. Hover to feel the lift; locked states
+       (CHAIN / FUSE) stay legible. Real authored SVG per mode.</p>
+    <div class="toc">
+      <a href="#d1">1 · ART-LED</a>
+      <a href="#d2">2 · POSTER</a>
+      <a href="#d3">3 · ARCADE CABINET</a>
+      <a href="#d4">4 · DATA-FORWARD</a>
+    </div>
+  </div>
+
+  <section class="dir" id="d1">
+    <div class="dir-head">
+      <div class="dir-num">01</div>
+      <div>
+        <div class="dir-name">ART-LED</div>
+        <div class="dir-desc">The artwork is the whole card, full-bleed. Title, tag and badge sit on an ink scrim at the foot. The scene does the selling; type just names it.</div>
+      </div>
+    </div>
+    <div class="row" id="row-artled"></div>
+  </section>
+
+  <section class="dir" id="d2">
+    <div class="dir-head">
+      <div class="dir-num">02</div>
+      <div>
+        <div class="dir-name">POSTER</div>
+        <div class="dir-desc">Heavy blocky type fills the card, gig-poster style. The mode name is the hero; the art is a tilted accent chip in the corner. Loud from across the room.</div>
+      </div>
+    </div>
+    <div class="row" id="row-poster"></div>
+  </section>
+
+  <section class="dir" id="d3">
+    <div class="dir-head">
+      <div class="dir-num">03</div>
+      <div>
+        <div class="dir-name">ARCADE CABINET</div>
+        <div class="dir-desc">Each mode is its own machine — lit marquee up top, a scan-lined screen playing the mode, a control panel with the badge below. The grid reads as a row of cabinets.</div>
+      </div>
+    </div>
+    <div class="row" id="row-cab"></div>
+  </section>
+
+  <section class="dir" id="d4">
+    <div class="dir-head">
+      <div class="dir-num">04</div>
+      <div>
+        <div class="dir-name">DATA-FORWARD</div>
+        <div class="dir-desc">The card is your record in that mode — best, mastery, wins/word, games played — so it changes as you play. Locked modes blur the numbers behind the gate.</div>
+      </div>
+    </div>
+    <div class="row" id="row-data"></div>
+  </section>
+
+  <div class="foot">All art is authored inline SVG (flat fills, thick outlines, hard offset shadows). Motion is transform/opacity only — hover lift + press, no idle loops. Sample stats in Direction 4 are illustrative.</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   AUTHORED SVG ART — one self-contained scene per mode. Each includes its own
+   coloured field rect so it can be dropped full-bleed OR into a framed inset.
+   viewBox 0 0 140 168 throughout; preserveAspectRatio set per direction.
+   Adapted from the live GameArt.jsx scenes.
+--------------------------------------------------------------------------- */
+const PAR = { cover:'xMidYMid slice', meet:'xMidYMid meet' };
+
+function wrap(inner, par){
+  return `<svg viewBox="0 0 140 168" preserveAspectRatio="${par}" aria-hidden="true">${inner}</svg>`;
+}
+
+const ART = {
+  'word-bomb': (par=PAR.cover)=>wrap(`
+    <rect x="0" y="0" width="140" height="168" fill="#FF6B3D"/>
+    <g opacity=".5" stroke="#B23C00" stroke-width="3" fill="none">
+      <circle cx="20" cy="30" r="10"/><circle cx="120" cy="24" r="7"/><circle cx="126" cy="120" r="9"/>
+    </g>
+    ${[[44,50,'B'],[100,48,'O'],[36,120,'W'],[110,126,'D'],[22,86,'A']].map(([x,y,l],i)=>`
+      <g transform="translate(${x} ${y}) rotate(${(i%2?1:-1)*8})">
+        <rect x="-11" y="-11" width="22" height="22" rx="3" fill="#F3E2BE" stroke="#9A7A3A" stroke-width="3"/>
+        <text x="0" y="6" font-size="15" font-weight="bold" fill="#3A2A10" text-anchor="middle" font-family="Bungee">${l}</text>
+      </g>`).join('')}
+    <path d="M70 66 Q94 48 100 30" fill="none" stroke="#3A2A10" stroke-width="5" stroke-linecap="round"/>
+    <polygon points="100,16 110,32 100,27 92,34 96,23" fill="#FFB347" stroke="#B23C00" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="100" cy="18" r="4" fill="#FFE94A"/>
+    <rect x="59" y="64" width="22" height="11" rx="2" fill="#5A4A2A" stroke="#2A2010" stroke-width="3"/>
+    <circle cx="70" cy="112" r="38" fill="#2E1432" stroke="#150818" stroke-width="6"/>
+    <ellipse cx="56" cy="96" rx="11" ry="7" fill="#5A2A60"/>
+  `, par),
+
+  'category-blitz': (par=PAR.cover)=>wrap(`
+    <rect x="0" y="0" width="140" height="168" fill="#3DA8FF"/>
+    ${[[30,'?'],[110,'?'],[66,'?'],[96,'?']].map(([x],i)=>`
+      <text x="${x}" y="${40+i*4}" font-size="${13+i*2}" font-weight="bold" fill="${i%2?'#fff':'#0B5FA0'}"
+        stroke="#0B5FA0" stroke-width="1" text-anchor="middle" font-family="Bungee" opacity=".8">?</text>`).join('')}
+    <g>
+      <path d="M70 62 q24 -2 26 20 q13 6 4 22 q4 15 -13 17 q-6 11 -17 4 q-11 6 -17 -4 q-17 -2 -13 -17 q-9 -16 4 -22 q2 -22 26 -20 z"
+        fill="#FF6FB5" stroke="#B02F6E" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M70 62 Q66 86 72 106 Q66 122 70 132" fill="none" stroke="#B02F6E" stroke-width="3" stroke-linecap="round"/>
+      <path d="M52 78 Q59 85 52 92" fill="none" stroke="#B02F6E" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M90 78 Q83 85 90 92" fill="none" stroke="#B02F6E" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    ${[[24,92],[116,98],[46,52],[100,140],[122,50]].map(([x,y])=>`
+      <g transform="translate(${x} ${y})"><polygon points="4,-12 -4,1 1,1 -3,12 9,-3 2,-3"
+        fill="#FFE94A" stroke="#B8A020" stroke-width="2.5" stroke-linejoin="round"/></g>`).join('')}
+  `, par),
+
+  'sat-rush': (par=PAR.cover)=>wrap(`
+    <defs><pattern id="srt" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.5" fill="#111"/></pattern></defs>
+    <rect x="0" y="0" width="140" height="168" fill="#F2EFE7"/>
+    <g stroke="#111" stroke-linecap="round">
+      ${Array.from({length:22},(_,i)=>{const a=i/22*Math.PI*2+0.11;const inr=18+(i%3)*4;const out=200;
+        return `<line x1="${(70+Math.cos(a)*inr).toFixed(1)}" y1="${(104+Math.sin(a)*inr).toFixed(1)}" x2="${(70+Math.cos(a)*out).toFixed(1)}" y2="${(104+Math.sin(a)*out).toFixed(1)}" stroke-width="${1.5+(i%2)*1.1}"/>`;}).join('')}
+    </g>
+    <path d="M0 0 H52 L0 52 Z" fill="url(#srt)" opacity=".9"/>
+    <path d="M140 168 H92 L140 116 Z" fill="url(#srt)" opacity=".9"/>
+    <text x="70" y="46" font-size="30" font-weight="bold" fill="#A855F7" stroke="#111" stroke-width="1.4" text-anchor="middle" font-family="Bungee">5×</text>
+    ${[['S',44],['A',70],['T',96]].map(([l,x])=>`
+      <rect x="${x-12}" y="115" width="24" height="32" rx="2" fill="none" stroke="#111" stroke-width="3.4"/>
+      <g transform="translate(${x} 131)"><path d="M-11,-14 L10,-15 L12,13 L-10,15 Z" fill="#F2EFE7" stroke="#111" stroke-width="3.2" stroke-linejoin="round"/>
+      <text x="0" y="7" font-size="16" font-weight="bold" fill="#111" text-anchor="middle" font-family="Bungee">${l}</text></g>`).join('')}
+  `, par),
+
+  'chain': (par=PAR.cover)=>wrap(`
+    <rect x="0" y="0" width="140" height="168" fill="#2EFFE0"/>
+    <g fill="none" stroke="#0A3B34" stroke-width="5">
+      <rect x="10" y="92" width="56" height="32" rx="16"/>
+      <rect x="55" y="76" width="32" height="56" rx="16"/>
+      <rect x="76" y="92" width="56" height="32" rx="16"/>
+    </g>
+    <g><path d="M40 60 Q70 36 100 60" fill="none" stroke="#0A3B34" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M100 60 L89 57 M100 60 L94 49" fill="none" stroke="#0A3B34" stroke-width="4.5" stroke-linecap="round"/></g>
+    <g transform="rotate(-9 40 108)"><rect x="26" y="94" width="28" height="28" rx="5" fill="#0D2B28" stroke="#000" stroke-width="4"/>
+      <text x="40" y="114" font-size="17" font-weight="bold" fill="#F3E2BE" text-anchor="middle" font-family="Bungee">E</text></g>
+    <g transform="rotate(9 100 108)"><rect x="86" y="94" width="28" height="28" rx="5" fill="#F3E2BE" stroke="#000" stroke-width="4"/>
+      <text x="100" y="114" font-size="17" font-weight="bold" fill="#0D2B28" text-anchor="middle" font-family="Bungee">R</text></g>
+  `, par),
+
+  'fuse': (par=PAR.cover)=>wrap(`
+    <rect x="0" y="0" width="140" height="168" fill="#FFE94A"/>
+    <path d="M-8 108 C 20 86, 36 124, 52 104" fill="none" stroke="#2A1A0E" stroke-width="8" stroke-linecap="round"/>
+    <path d="M90 104 C 108 86, 120 122, 134 100" fill="none" stroke="#2A1A0E" stroke-width="8" stroke-linecap="round"/>
+    <g transform="rotate(-4 70 104)"><rect x="46" y="86" width="48" height="34" rx="5" fill="#F3E2BE" stroke="#000" stroke-width="4"/>
+      <text x="70" y="109" font-size="17" font-weight="bold" fill="#2A1A0E" text-anchor="middle" letter-spacing="1.5" font-family="Bungee">AIN</text></g>
+    <g transform="translate(130 96)"><path d="M0 14 C -10 4, -6 -8, 0 -16 C 6 -8, 10 4, 0 14 Z" fill="#FF6B3D" stroke="#000" stroke-width="4" stroke-linejoin="round"/></g>
+    <circle cx="120" cy="86" r="3.4" fill="#FF4B4B"/><circle cx="134" cy="102" r="2.6" fill="#FFB347"/>
+  `, par),
+};
+
+const LOCK = `<svg viewBox="0 0 48 48"><path d="M14 22 v-5 a10 10 0 0 1 20 0 v5" fill="none" stroke="#000" stroke-width="4.5"/>
+  <rect x="9" y="21" width="30" height="22" rx="4" fill="#FFE94A" stroke="#000" stroke-width="4"/>
+  <circle cx="24" cy="30" r="3.4" fill="#000"/><rect x="22.3" y="30" width="3.4" height="8" fill="#000"/></svg>`;
+
+const JOYSTICK = `<svg width="46" height="34" viewBox="0 0 46 34" aria-hidden="true">
+  <line x1="13" y1="26" x2="13" y2="10" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="13" cy="8" r="6" fill="#FF4FA3" stroke="#000" stroke-width="3"/>
+  <ellipse cx="13" cy="28" rx="10" ry="4" fill="#0d0618" stroke="#000" stroke-width="2.5"/>
+  <circle cx="30" cy="20" r="6" fill="#2EFFE0" stroke="#000" stroke-width="3"/>
+  <circle cx="41" cy="14" r="6" fill="#FFE94A" stroke="#000" stroke-width="3"/>
+</svg>`;
+
+/* ---- mode metadata ---- */
+const MODES = [
+  { id:'word-bomb', name:['WORD','BOMB'], flat:'WORD BOMB', field:'#FF6B3D', dark:'#B23C00',
+    tag:'USE THE COMBO BEFORE TIME RUNS OUT.', badge:'SOLO / MULTI', corner:'FEATURED',
+    badgeBg:'#000', badgeFg:'#FF6B3D', text:'#000',
+    stats:[['47','BEST CHAIN'],['M4','MASTERY',true],['3.2','WINS / WORD'],['128','GAMES']], mastery:['M4',66,'#FF6B3D'] },
+  { id:'category-blitz', name:['CATEGORY','BLITZ'], flat:'CATEGORY BLITZ', field:'#3DA8FF', dark:'#0B5FA0',
+    tag:'AI JUDGES YOUR ANSWERS — GET CREATIVE.', badge:'SOLO / MULTI', corner:'AI JUDGED',
+    badgeBg:'#000', badgeFg:'#3DA8FF', text:'#000',
+    stats:[['31','BEST STREAK'],['M3','MASTERY',true],['4.1','WINS / WORD'],['86','GAMES']], mastery:['M3',44,'#3DA8FF'] },
+  { id:'sat-rush', name:['SAT','RUSH'], flat:'SAT RUSH', field:'#F2EFE7', dark:'#111', paper:true,
+    tag:'SAT VOCAB, ARCADE SPEED. SOLO.', badge:'SOLO', corner:'LIMITED',
+    badgeBg:'#111', badgeFg:'#F2EFE7', text:'#111',
+    stats:[['1,240','BEST SCORE'],['×6','HEAT',true],['M5','MASTERY'],['214','WORDS']], mastery:['M5',88,'#A855F7'] },
+  { id:'chain', name:['CHAIN'], flat:'CHAIN', field:'#2EFFE0', dark:'#0A3B34',
+    tag:'EACH WORD STARTS WHERE THE LAST ONE ENDED.', badge:'SOLO', corner:null,
+    badgeBg:'#000', badgeFg:'#2EFFE0', text:'#000',
+    locked:20, level:14, stats:[['—','BEST'],['—','MASTERY'],['—','WINS / WORD'],['—','GAMES']], mastery:['LOCKED',0,'#2EFFE0'] },
+  { id:'fuse', name:['FUSE'], flat:'FUSE', field:'#FFE94A', dark:'#B8A020',
+    tag:'TYPE A WORD THAT CONTAINS THE PIECE.', badge:'SOLO', corner:null,
+    badgeBg:'#000', badgeFg:'#FFE94A', text:'#000',
+    locked:25, level:14, stats:[['—','BEST'],['—','MASTERY'],['—','WINS / WORD'],['—','GAMES']], mastery:['LOCKED',0,'#FFE94A'] },
+];
+
+function lockOverlay(m){
+  if(!m.locked) return '';
+  return `<div class="lockwrap">${LOCK}
+    <div class="lock-lv">UNLOCKS AT LV ${m.locked}</div>
+    <div class="lock-sub">YOU'RE LV ${m.level} · ${Math.max(0,m.locked-m.level)} TO GO</div></div>`;
+}
+
+/* ---- Direction 1: ART-LED ---- */
+function artLed(m){
+  const badgeStyle = `background:${m.badgeBg};color:${m.badgeFg};`;
+  return `<div class="card art-led ${m.locked?'locked':''}">
+    <div class="al-art">${ART[m.id](PAR.cover)}</div>
+    ${m.corner?`<div class="al-corner">${m.corner}</div>`:''}
+    <div class="al-over">
+      <span class="al-badge" style="${badgeStyle}">${m.badge}</span>
+      <h3 class="al-title">${m.flat}</h3>
+      <p class="al-tag">${m.tag}</p>
+    </div>
+    ${lockOverlay(m)}
+  </div>`;
+}
+
+/* ---- Direction 2: POSTER ---- */
+function poster(m){
+  const titleColor = m.paper ? '#111' : '#fff';
+  const badgeStyle = `background:${m.badgeBg};color:${m.badgeFg};`;
+  return `<div class="card poster ${m.locked?'locked':''}" style="background:${m.field};color:${titleColor}">
+    <div class="po-top">
+      <span class="po-badge" style="${badgeStyle}">${m.badge}</span>
+      <span class="po-num" style="color:${m.field};-webkit-text-stroke:1.5px ${m.dark};">${m.corner?'★':''}</span>
+    </div>
+    <div class="po-title" style="-webkit-text-stroke:2.5px ${m.dark};text-stroke:2.5px ${m.dark};">${m.name.join('<br>')}</div>
+    <div class="po-bottom">
+      <div class="po-tag">${m.tag}</div>
+      <div class="po-art">${ART[m.id](PAR.cover)}</div>
+    </div>
+    ${lockOverlay(m)}
+  </div>`;
+}
+
+/* ---- Direction 3: ARCADE CABINET ---- */
+function cabinet(m){
+  const marqueeStyle = `background:${m.field};color:${m.paper?'#111':m.text};`;
+  const badgeStyle = `background:${m.badgeBg};color:${m.badgeFg};`;
+  return `<div class="card cab ${m.locked?'locked':''}">
+    <div class="cab-marquee" style="${marqueeStyle}">${m.flat}</div>
+    <div class="cab-screen">
+      ${ART[m.id](PAR.cover)}
+      <div class="cab-glare"></div>
+      <div class="cab-scan"></div>
+    </div>
+    <div class="cab-panel">
+      ${JOYSTICK}
+      <span class="cab-1cred">${m.corner||'1 CREDIT'}</span>
+      <span class="cab-badge" style="${badgeStyle}">${m.badge}</span>
+    </div>
+    ${lockOverlay(m)}
+  </div>`;
+}
+
+/* ---- Direction 4: DATA-FORWARD ---- */
+function dataCard(m){
+  const badgeStyle = `background:${m.badgeBg};color:${m.badgeFg};`;
+  const stats = m.stats.map(([v,l,hot])=>`<div class="stat ${hot?'hot':''}"><b>${v}</b><span>${l}</span></div>`).join('');
+  const [ml,pct,mc] = m.mastery;
+  return `<div class="card data ${m.locked?'locked':''}">
+    <div class="dc-head">
+      <div class="dc-art" style="background:${m.field}">${ART[m.id](PAR.cover)}</div>
+      <div class="dc-title">
+        <div class="dc-name">${m.flat}</div>
+        <span class="dc-badge" style="${badgeStyle}">${m.badge}</span>
+      </div>
+    </div>
+    <div class="dc-stats">${stats}</div>
+    <div class="dc-mastery">
+      <div class="dc-mlabel"><span>MASTERY</span><span>${ml}</span></div>
+      <div class="dc-bar"><div class="dc-fill" style="width:${pct}%;background:${mc}"></div></div>
+    </div>
+    ${lockOverlay(m)}
+  </div>`;
+}
+
+const render = (id, fn)=>{ document.getElementById(id).innerHTML = MODES.map(fn).join(''); };
+render('row-artled', artLed);
+render('row-poster', poster);
+render('row-cab', cabinet);
+render('row-data', dataCard);
+</script>
+</body>
+</html>
