@@ -27,12 +27,12 @@
      1366/1422. Tightened to clamp(10px, 2vw, 44px) so the frame reaches ≥90% of the width while
      still leaving a clear gutter to the viewport edge. */
   padding: clamp(8px, 1.6vh, 20px) clamp(10px, 2vw, 44px);
-  /* Cancel the app-wide --app-scale zoom (applied on .view-screen). The landing
-     is deliberately locked to exactly one screen height (height:100dvh +
-     overflow:hidden) and is already fluid via vh units, so zooming it would
-     overflow that locked height and clip the buttons. Reciprocal zoom nets to
-     1 here, leaving the tuned one-screen layout untouched. */
-  zoom: calc(1 / var(--app-scale, 1));
+  /* fix/visual-real item 2 (production regression): the home view is rendered with .view-screen
+     zoom forced to 1 (see App.jsx isHomeMenu), so --app-scale never scales the menu and there is
+     NO nested zoom to cancel here. The old `zoom: calc(1/var(--app-scale))` reciprocal LOOKED right
+     (and cancelled correctly in headless Chromium), but recent Chrome's standardized `zoom` did not
+     compound it, leaving the menu rendered at --app-scale (~64% at 1568x675) on real browsers. With
+     the zoom removed on both sides, the one-screen menu renders at true scale on every browser. */
 }
 
 /* The content card fills most of the viewport width and only caps (and centres)
