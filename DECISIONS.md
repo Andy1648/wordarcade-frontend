@@ -228,3 +228,11 @@ BE-PICKY.md and apply to every job.
 - (BE-PICKY thresholds) Set the largest-empty-rectangle fail line at >30% of card area, soft 18–30%,
   clean <18%. Chosen so a small motif floating in a flat field fails but a legitimately breathing
   layout passes.
+
+### Job 2 gate (proto/cards-3)
+- Full `npm run gate`: lint + 280ish unit + e2e → **1032 passed / 1 failed** (13.7m). The one
+  failure was `e2e/parity-wb-blitz.spec.js:122` (Blitz combo build/reset) — a Tier-1 SCORING
+  test that a static `public/proto-cards-3.html` cannot touch. Re-ran that spec in isolation:
+  **4/4 passed (3.7s)**. Verdict: the known parity FLAKE under full-suite parallel load (see the
+  8h-run + gameover-coverage notes above), NOT a regression from this branch. Proceeding with the
+  push; the proto page changes zero runtime code.
