@@ -1924,6 +1924,11 @@ function App() {
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
   let screen;
+  // fix/visual-real item 4/2: true when the home MENU is the rendered screen (the else branch
+  // below). The menu hosts the sound control inside its own corner-nav cluster, so the global
+  // fixed control must be suppressed here — keyed on which screen actually renders, not on `view`
+  // alone, so a menu shown under any non-'home' fallback value can never double up the control.
+  let isHomeMenu = false;
   if (view === 'game') {
     screen = (
       <GameScreen
@@ -2054,6 +2059,7 @@ function App() {
       <CgArmScreen wsStatus={wsStatus} coarse={cgCoarse} onArm={handleCgArm} />
     );
   } else {
+    isHomeMenu = true;
     screen = (
       <Homepage
         wsStatus={wsStatus}
@@ -2075,6 +2081,8 @@ function App() {
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}
+        musicMuted={music.isMuted}
+        onToggleMusic={music.toggleMute}
         onDaily={handleStartDaily}
         daily={{
           dayNumber: currentDayNumber(),
@@ -2238,12 +2246,17 @@ function App() {
           {/* ONE corner sound control (Job 11): a single 🔊 button that opens a popover holding all
               three toggles — MUSIC / KEYSTROKE / EVENTS — plus volume. Replaces the three separate
               floating fixed buttons (music ♫ / clack ⌨ / events 🔊) that, side by side, overlapped
-              the menu's CREDITS footer link at 360px. Music state is owned by App's player. */}
-          <AudioControls
-            accent={SCREEN_ACCENT[view] || '#2EFFE0'}
-            musicMuted={music.isMuted}
-            onToggleMusic={music.toggleMute}
-          />
+              the menu's CREDITS footer link at 360px. Music state is owned by App's player.
+              fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
+              menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
+              UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
+          {!isHomeMenu && (
+            <AudioControls
+              accent={SCREEN_ACCENT[view] || '#2EFFE0'}
+              musicMuted={music.isMuted}
+              onToggleMusic={music.toggleMute}
+            />
+          )}
         </div>
       </div>
       {/* CONNECTION LOST: shown only when the socket drops mid room/game. The

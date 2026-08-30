@@ -8,6 +8,43 @@
   bottom: 16px;
   z-index: 70; /* above game-over / countdown overlays so it's always reachable */
 }
+/* fix/visual-real item 4: INLINE variant — the control sits inside the menu's corner-nav cluster
+   (a normal flex item, not a fixed orphan). position:relative so its absolutely-positioned popover
+   still anchors to THIS button (not the nav), and the popover opens DOWNWARD (see below) because the
+   button now lives near the top of the screen. */
+.audio-ctrl--inline {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  z-index: 6;
+}
+/* Open the popover DOWN from the inline button (it sits at the top of the screen), right-aligned. */
+.audio-ctrl--inline .audio-panel {
+  bottom: auto;
+  top: 52px;
+}
+/* fix/visual-real item 4 (round 2): give the inline button the SAME treatment as the SHOP / STATS
+   nav buttons — square-cornered, 3px black border, hard offset shadow, flat fill — so it reads as
+   the 4th chip in the corner-nav column instead of a detached round toggle floating below them.
+   (The bright orange fill is the one house colour not already used by SHOP/STATS/REBIRTH.) */
+.audio-ctrl--inline .audio-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #ff6b3d;
+  border: 3px solid #000;
+  color: #0d0618;
+  box-shadow: 4px 4px 0 #000;
+  font-size: 20px;
+}
+.audio-ctrl--inline .audio-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.audio-ctrl--inline .audio-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
 .audio-btn {
   width: 44px;
   height: 44px;
