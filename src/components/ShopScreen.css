@@ -179,7 +179,10 @@
   border-color: #2effe0;
 }
 .shop-card.is-locked {
-  opacity: 0.5; /* visible but dimmed — locked content stays visible */
+  /* Dimmed but still LEGIBLE — 0.5 read as a dead/disabled card. 0.62 matches the softer
+     locked dim used on the mode cards + achievements, so a level-gated theme reads as
+     "coming later", not broken (fix/picky-pass, Job 5 UNFINISHED #6). */
+  opacity: 0.62;
 }
 
 /* THEME cards: the palette preview is a flat 4-colour swatch strip (a real preview, not a text

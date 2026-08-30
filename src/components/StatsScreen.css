@@ -199,7 +199,11 @@
   height: 16px;
   width: 62%;
   border-radius: 4px;
-  background: #2a1f3d;
+  /* A DASHED HOLLOW "to-earn" track, not a solid grey fill — a solid bar read as a loading
+     skeleton, so a brand-new player's Stats looked half-loaded. The dashed empty slot + the
+     .rec-req hint below now read as "record waiting to be set" (fix/picky-pass, Job 5 #4). */
+  background: transparent;
+  border: 2px dashed #43335f;
 }
 .rec-cell--wide.rec-cell--locked .rec-silhouette {
   width: 40%;

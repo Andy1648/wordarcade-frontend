@@ -424,6 +424,14 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card-icon-box { width: 26px; height: 26px; }
   .game-card-badge { font-size: 12px; padding: 2px 6px; }
 }
+/* Short-DESKTOP band (≤700px height, multi-column, e.g. 1568×675): the card lands at ~200px
+   — too short to hold icon + title + payout + badge, but ABOVE the 168px @container shed — so
+   the bottom-pinned SOLO/MULTI badge clipped off the card edge (fix/picky-pass, Job 5 BROKEN #2).
+   Drop just the payout preview here (the badge is what must stay inside); phones (≤600px) are
+   one-per-row and unaffected. */
+@media (max-height: 700px) and (min-width: 601px) {
+  .game-card-payout { display: none; }
+}
 
 /* Genuinely short cards — the 3-col tablet-portrait band (cardH ≲161px), never the ≥170px
    phone cards nor the ≥230px desktop cards — can't hold every line, so shed the least-critical

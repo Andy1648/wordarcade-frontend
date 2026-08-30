@@ -40,10 +40,14 @@
 .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
 .ach-card {
   display: flex; flex-direction: column; gap: 3px;
-  padding: 10px 12px; border: 3px solid rgba(255, 255, 255, 0.12); border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  /* Locked = dim silhouette. */
-  opacity: 0.5; filter: grayscale(0.6);
+  padding: 10px 12px; border-radius: 8px;
+  /* Locked = a real house-style silhouette (solid dark outline + hard offset shadow +
+     panel fill), dimmed — NOT a flat 12%-white-bordered grey box that reads as an
+     unfinished skeleton (fix/picky-pass, Job 5 UNFINISHED #5). */
+  border: 3px solid #000;
+  background: #1c0d33;
+  box-shadow: 3px 3px 0 #000;
+  opacity: 0.72; filter: grayscale(0.4);
 }
 .ach-card.is-earned {
   opacity: 1; filter: none;

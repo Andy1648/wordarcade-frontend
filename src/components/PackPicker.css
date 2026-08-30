@@ -37,9 +37,11 @@
    long pack-name word blew the 3 columns out to 173/197/197 and the grid overran
    the window's overflow-x:hidden clip (fix/qa-sweep §7). minmax(0,…) forces equal
    columns and lets the ellipsized labels shrink. */
-/* auto-fill + minmax(128px,1fr): 3 columns on wide dialogs, 2 on a phone — so pill
-   labels always have room instead of collapsing to 0 and clipping (fix/qa-sweep §7). */
-.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; width: 100%; }
+/* auto-fill + minmax(200px,1fr): 2 columns on the (capped-width) desktop dialog, 1 on a
+   phone — WIDER pills so a single-word pack name ("MOVIES", "ANIMALS") fits on ONE line
+   instead of breaking mid-word ("MOVIE/S"). The old 128px min left the label ~70px after
+   the emoji + count chip, forcing the mid-word break (fix/picky-pass, Job 5 BROKEN #1). */
+.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; width: 100%; }
 
 /* ============================ MOTION KEYFRAMES ============================ */
 /* ONE select-pop — a ~180ms overshoot on toggle. */
@@ -67,10 +69,10 @@
 
 .ppp-pill-emoji { font-size: 1.2em; line-height: 1; filter: grayscale(0.75) brightness(0.75); }
 .ppp-pill.is-on .ppp-pill-emoji { filter: none; }
-/* No white-space:nowrap — labels WRAP to fit the (now minmax(0,1fr)) column;
-   nowrap would ellipsize readable pack names ("MOVIES"→"MOVI…"). The column can't
-   blow out anymore, so wrapping stays inside the pill (fix/qa-sweep §7). */
-.ppp-pill-label { flex: 1; min-width: 0; font-family: 'Bungee', cursive; font-size: clamp(11px, 1.5vw, 14px); line-height: 1.05; color: #7f9dc9; overflow: hidden; overflow-wrap: anywhere; }
+/* Wider pills (grid above) give single-word pack names room to sit on one line, so we
+   break only at SPACES (overflow-wrap:normal), never inside a word — killing the
+   "MOVIE/S" break. Multi-word packs still wrap cleanly at the space. */
+.ppp-pill-label { flex: 1; min-width: 0; font-family: 'Bungee', cursive; font-size: clamp(11px, 1.5vw, 14px); line-height: 1.05; color: #7f9dc9; overflow: hidden; overflow-wrap: normal; word-break: keep-all; }
 .ppp-pill.is-on .ppp-pill-label { color: #000; }
 
 /* Per-tile category count — small mono chip on the right. Black-on-blue when ON,

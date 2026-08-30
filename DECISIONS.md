@@ -236,3 +236,25 @@ BE-PICKY.md and apply to every job.
   **4/4 passed (3.7s)**. Verdict: the known parity FLAKE under full-suite parallel load (see the
   8h-run + gameover-coverage notes above), NOT a regression from this branch. Proceeding with the
   push; the proto page changes zero runtime code.
+
+### Job 5 (fix/picky-pass) — fixed 6/8, deferred 2 with rationale
+FIXED (safe, contained CSS): BROKEN #1 blitz pack-name mid-word wrap (PackPicker.css: grid
+128→200px min = 2 wide cols on desktop + word-break:keep-all); BROKEN #2 card badge clip at
+≤700px height (GameCard.css: shed payout for short multi-col viewports); BROKEN #3 FUSE PLAY-AGAIN
+dead button (Solo.css: legible unarmed state, light text on purple @0.92 not near-black @0.6);
+UNFINISHED #5 achievements grey wall (solid dark outline + hard shadow + panel fill, dim 0.5→0.72);
+UNFINISHED #6 shop locked dim 0.5→0.62 (note: shop cards ALREADY had outline+shadow — my audit
+over-stated "no house style"; the real defect was the dead-looking 0.5 dim, now corrected);
+UNFINISHED #4 stats skeleton (rec-silhouette solid grey bar → dashed hollow "to-earn" track).
+DEFERRED (conservative, logged): UNFINISHED #7 CHAIN/FUSE death "empty lower half" — `.solo-over`
+is ALREADY flex-centered; the empty space is the dimmed play field above the card (intentional
+context), and restructuring the solo over-screen risks the solo-deathcard e2e flow. UNFINISHED #8
+rooms-browser "scanning" void — a TRANSIENT loading state (fills when public games arrive); the
+browser-wrap sits on the JOIN→WS path (Tier-1 adjacent), so an unsupervised layout change there is
+against the rails. Both are empty/transient STATES rather than broken chrome; flagged for a
+supervised pass.
+
+### Job 5 gate
+- Full gate 1032 passed / 1 failed = `parity-wb-blitz.spec.js:39` (WB combo) — the SAME known parity
+  flake as Job 2 (different line, same file). Re-ran the spec in isolation: 4/4 pass. All Job-5 edits
+  are CSS (PackPicker/GameCard/Solo/Achievements/Shop/Stats); none touch WB/Blitz scoring. Pushing.
