@@ -72,6 +72,10 @@
   .lock svg{ width:42px; height:42px; filter:drop-shadow(2px 2px 0 #000); margin-bottom:1px; }
   .lock .lv{ font-family:'Bungee',sans-serif; font-size:16px; color:var(--yellow); -webkit-text-stroke:1.2px #000; letter-spacing:.5px; line-height:1; }
   .lock .sub{ font-size:10px; color:#e9dcff; letter-spacing:.5px; font-weight:700; }
+  /* FUSE is a fire card — a warm hue turns muddy under CHAIN's cool dim, so gate it
+     warmer & lighter (still locked/plaqued) so it reads HOT, not brown. FUSE only. */
+  .card.fuse-card.locked .scene{ filter:saturate(1) brightness(.82); }
+  .card.fuse-card.locked::after{ background:rgba(58,20,4,.14); }
 
   .foot{ max-width:1760px; margin:48px auto 0; padding:20px clamp(16px,4vw,64px) 0;
     border-top:2px dashed #3a2359; color:#8f7bb5; font-size:12px; }
@@ -225,26 +229,29 @@ function chain(){ return `
 
 function fuse(){ return `
 <svg class="scene" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <rect width="300" height="400" fill="#FFE94A"/>
-  <path d="M0 300 L300 250 L300 400 L0 400 Z" fill="#F2D62F" opacity=".55"/>
-  <!-- heat burst radiating from the flame at the right edge -->
-  ${pinwheel(300,206,340,22,'#F2D62F',.7)}
-  <g opacity=".7">${rays(300,206,20,300,13,'#FF9A3D',5,0.25)}</g>
-  <!-- charred cord sweeping diagonally from the top-left, off both edges = the spine -->
-  <path d="M-24 150 C 40 214, 92 232, 150 232 C 214 232, 264 236, 324 210" fill="none" stroke="#2A1A0E" stroke-width="17" stroke-linecap="round"/>
-  <!-- lit stretch of cord approaching the flame -->
-  <path d="M 208 234 C 258 236, 290 218, 324 210" fill="none" stroke="#FF6B3D" stroke-width="11" stroke-linecap="round"/>
-  <!-- sparks riding the cord -->
-  <circle cx="44" cy="196" r="6" fill="#FF4B4B"/><circle cx="238" cy="232" r="5" fill="#FF6B3D"/><circle cx="284" cy="222" r="6" fill="#FFB347"/>
-  <!-- fragment tile THREADED on the cord (cord passes behind it, entering left / exiting right) -->
-  <g transform="rotate(-4 150 232)"><rect x="86" y="192" width="128" height="82" rx="10" fill="#F3E2BE" stroke="#000" stroke-width="6"/>
-    <text x="150" y="248" font-size="46" font-weight="bold" fill="#2A1A0E" text-anchor="middle" letter-spacing="3" font-family="Bungee">AIN</text></g>
-  <!-- flame burning off the right edge, on top of its heat burst -->
-  <g transform="translate(300 206) scale(2.5)"><path d="M0 14 C -13 4, -8 -11, 0 -19 C 8 -11, 13 4, 0 14 Z" fill="#FF6B3D" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M0 8 C -6 3, -4 -5, 0 -10 C 4 -5, 6 3, 0 8 Z" fill="#FFE94A"/></g>
+  <!-- FIRE: bright hot-amber field (stays hot through the locked dim), ember heat from the flame -->
+  <rect width="300" height="400" fill="#FF7A2A"/>
+  ${pinwheel(300,244,540,22,'#EA5A16',.8)}
+  ${pinwheel(300,244,360,22,'#FFB24D',.6)}
+  <g opacity=".9">${rays(300,244,24,320,15,'#FFD84A',5,0.22)}</g>
+  <!-- cord: char edge under a hot molten core, sweeping top-left -> flame -->
+  <path d="M-24 66 C 40 118, 92 96, 150 96 C 214 96, 270 198, 326 250" fill="none" stroke="#4A1C08" stroke-width="17" stroke-linecap="round"/>
+  <path d="M-24 66 C 40 118, 92 96, 150 96 C 214 96, 270 198, 326 250" fill="none" stroke="#FFAE4D" stroke-width="10" stroke-linecap="round"/>
+  <!-- white-hot lit stretch approaching the flame -->
+  <path d="M 236 152 C 288 208, 308 232, 326 250" fill="none" stroke="#FFE94A" stroke-width="8" stroke-linecap="round"/>
+  <!-- sparks flying off the cord -->
+  <circle cx="58" cy="112" r="6" fill="#FFE94A"/><circle cx="252" cy="172" r="4" fill="#FFF3B0"/><circle cx="290" cy="218" r="6" fill="#FFC24A"/>
+  <!-- fragment tile THREADED on the cord, up top and fully clear of the centre plaque -->
+  <g transform="rotate(-4 150 96)"><rect x="84" y="57" width="132" height="78" rx="10" fill="#F7EAC6" stroke="#2A1206" stroke-width="6"/>
+    <text x="150" y="110" font-size="46" font-weight="bold" fill="#2A1206" text-anchor="middle" letter-spacing="3" font-family="Bungee">AIN</text></g>
+  <!-- bright flame burning off the right edge, white-hot core -->
+  <g transform="translate(308 244) scale(2.7)">
+    <path d="M0 15 C -14 4, -9 -12, 0 -21 C 9 -12, 14 4, 0 15 Z" fill="#FF6B3D" stroke="#7A2A08" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M0 9 C -8 2, -5 -8, 0 -14 C 5 -8, 8 2, 0 9 Z" fill="#FFE94A"/>
+    <path d="M0 4 C -4 0, -3 -5, 0 -8 C 3 -5, 4 0, 0 4 Z" fill="#FFF6C8"/></g>
 </svg>
 <div class="fg">
-  <div class="titlebar"><span class="badge" style="background:#000;color:#FFE94A;">SOLO</span>
+  <div class="titlebar"><span class="badge" style="background:#000;color:#FF8A3D;">SOLO</span>
     <h3>FUSE</h3><p>TYPE A WORD THAT CONTAINS THE PIECE.</p></div>
 </div>`; }
 
@@ -253,14 +260,14 @@ const CARDS = [
   { html:blitz(), locked:false },
   { html:satRush(), locked:false },
   { html:chain(), locked:20, level:14 },
-  { html:fuse(), locked:25, level:14 },
+  { html:fuse(), locked:25, level:14, cls:'fuse-card' },
 ];
 
 document.getElementById('row3').innerHTML = CARDS.map(c=>{
   const lock = c.locked ? `<div class="lock"><div class="plaque">${LOCK}
     <div class="lv">UNLOCKS AT LV ${c.locked}</div>
     <div class="sub">YOU'RE LV ${c.level} · ${c.locked-c.level} TO GO</div></div></div>` : '';
-  return `<div class="card ${c.locked?'locked':''}">${c.html}${lock}</div>`;
+  return `<div class="card ${c.locked?'locked':''} ${c.cls||''}">${c.html}${lock}</div>`;
 }).join('');
 </script>
 </body>
