@@ -226,50 +226,25 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         return p !== 'absolute' && p !== 'fixed' && el.offsetHeight > 0;
       });
       if (!kids.length) return;
-      // Only the TITLE, XP BAR and CARD REGION key off --menu-scale; the bottom bar /
-      // daily link / footer stay fixed. Split the two so the fit math is exact: solve
-      // scale·scalable + fixed + gaps = inner.
-      // fix/visual-real item 6: the XP bar, caption, momentum, WPM and NEXT-unlock rows are now
-      // wrapped in ONE .menu-xp-cluster (which carries the --menu-scale zoom), so the fit loop keys
-      // off that single child instead of the individual rows.
-      const SCALES = ['homepage-logo-wrap', 'menu-xp-cluster', 'homepage-cards-region'];
-      let scalable = 0;
-      let fixed = 0;
+      // HEIGHT-FILL fit (feat/cards-live): the CARD REGION now flex-grows to fill the stage's
+      // leftover height (see Homepage.css), so the cards fill the screen and the frame gaps are
+      // the stage's vertical padding — the stage stays FULL height (no more hug). --menu-scale's
+      // only job now is to SHRINK the title + XP cluster on a short screen so the fixed header +
+      // footer + gaps still leave the cards a minimum row height (they never scale ABOVE 1×, so
+      // the title's skew overhang can't eat the title↔XP gap on a tall screen — menu-fit).
+      const SCALES = ['homepage-logo-wrap', 'menu-xp-cluster'];
+      let header = 0; // the shrinkable title + XP
+      let fixed = 0; // footer / bottom bar (never scaled)
       for (const el of kids) {
-        if (SCALES.some((c) => el.classList.contains(c))) scalable += el.offsetHeight;
+        if (el.classList.contains('homepage-cards-region')) continue; // the flex-fill row
+        if (SCALES.some((c) => el.classList.contains(c))) header += el.offsetHeight;
         else fixed += el.offsetHeight;
       }
       const gaps = rowGap * Math.max(0, kids.length - 1);
-      if (scalable <= 0) return;
-      // Fit the content to inner MINUS a vertical RESERVE, so the centred column keeps a
-      // breathing gap at the stage's inner top AND bottom edge instead of filling flush (or
-      // overflowing on short screens / floating on tall ones). The reserve is split evenly by
-      // justify-content:center, so ~RESERVE/2 lands on each side — the gaps are SYMMETRIC by
-      // construction (top == bottom). Reduced 56→44 so the visible gap to the neon FRAME
-      // (reserve/2 + the stage's own vertical padding) stays inside the 16-32px band at every
-      // width — at 56 the 2560/1920 frame gaps ran 35-36px (just over 32). Smaller reserve =
-      // the content column grows to fill the extra room. Clamp [0.42, 1.35] unchanged so
-      // content can still fill a tall 2560 screen and shrink on a short 1163×501 one.
-      // fix/visual-real item 2: trimmed 44→40. Removing the app-scale zoom from the home view (so
-      // the fit math now runs in true, un-zoomed layout space) nudged the 2560×1440 frame gap to
-      // 32.2px, a hair over the 16-32 band; a slightly smaller reserve lets the column grow to fill
-      // that back under 32 while staying ≥16 on short screens.
-      const RESERVE = 40;
-      const raw = (inner - RESERVE - gaps - fixed) / scalable;
-      const scale = Math.max(0.42, Math.min(1.35, raw));
+      const MINROW = 150; // keep at least this much height for the card row on a short screen
+      if (header <= 0) return;
+      const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
       stage.style.setProperty('--menu-scale', scale.toFixed(4));
-      // SHRINK-TO-CONTENT (§3): on a TALL screen the scale hits its 1.35 cap and the content
-      // can't grow to fill `inner` — leaving dead space below the block. Size the stage to HUG
-      // the scaled column (+ RESERVE for the symmetric frame gaps + padding) so the neon border
-      // wraps the content instead. max-height:100% (CSS) keeps it capped on short screens where
-      // the column already fills — there wantH >= the full height and this is a no-op.
-      // fix/visual-real item 2 is a WIDTH-only fix (the max-width cap + wrap gutter, see Homepage.css)
-      // — this height hug is KEPT: at every acceptance viewport (1366→2560) it already sizes the app
-      // shell to ~96-97% of viewport height (verified) while keeping the top/bottom frame gaps tight
-      // (menu-vgap). Removing it made the stage fill height but float the content with 75px gaps.
-      const columnH = scale * scalable + fixed + gaps;
-      const wantH = Math.round(columnH + RESERVE + padT + padB);
-      stage.style.height = `${wantH}px`;
     };
     const onResize = () => {
       cancelAnimationFrame(raf);

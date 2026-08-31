@@ -1,7 +1,6 @@
 // GameCard.jsx
 import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
-import { GAME_ICON_COMPONENTS } from './GameIcons';
 import { useMagneticPull } from '../lib/magneticPull';
 import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
 import { masteryState } from '../progress/mastery';
@@ -139,7 +138,6 @@ const magnet = (() => {
  */
 export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
-  const IconComponent = GAME_ICON_COMPONENTS[game.id];
   // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
   // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
   // state; the menu re-reads on every return from a game.
@@ -242,6 +240,27 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     }
   }
 
+  // Payout preview (what each accepted WORD pays in this mode). Shown on every
+  // ENABLED, UNLOCKED card — a locked card shows just its mode name in the bar.
+  const payout = game.enabled && !locked && (
+    <>
+      {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
+      {currentRebirthMult() > 1 && (
+        <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
+      )}
+    </>
+  );
+  // The badge carries its data-driven fill (game.badgeBg / badgeColor) so themes and
+  // gameData stay the source of truth; menu.spec asserts its text === game.badgeText.
+  const badge = (
+    <span
+      className="game-card-badge"
+      style={{ background: game.badgeBg, color: game.badgeColor, borderColor: game.badgeBorderColor || '#000' }}
+    >
+      {game.badgeText}
+    </span>
+  );
+
   return (
     // Outermost MAGNETIC wrapper (cursor-pull translate + lift shadow) — a new
     // div whose only job is that transform. It composes OUTSIDE the
@@ -278,106 +297,77 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
             : `${game.name.replace('\n', ' ')} - ${game.badgeText}`
         }
       >
-        {/* Strips of tape pinning the "flyer" to the wall - one at each top corner,
-            angled opposite ways. Purely decorative. */}
-        <span className="game-card-tape game-card-tape-left" aria-hidden="true" />
-        <span className="game-card-tape game-card-tape-right" aria-hidden="true" />
+        {/* FULL-BLEED SCENE — the ART-LED v2 poster (GameArt.jsx), sliced to cover. */}
+        {ArtComponent && (
+          <div className="game-card-art">
+            <ArtComponent />
+          </div>
+        )}
 
-        {/* Level gate: the card dims to 55% and a chain-and-padlock is slung across the top
-            corner; the "UNLOCKS AT LV n" label stays. A locked tap still credits XP (see
-            useXpCapture) so the card never feels dead — it only doesn't navigate. */}
+        {/* Foreground overlay: corner ribbon, mastery, and the bottom title bar (or,
+            for SAT RUSH, the manga masthead + foot). pointer-events:none so the whole
+            card face stays one click target. */}
+        <div className="game-card-fg">
+          {/* Corner ribbon (decorative — the FEATURED / AI status is also in the card's
+              aria-label; the ribbon bleeds off the corner, so aria-hidden keeps it out of
+              the viewport-integrity clip walk). */}
+          {game.featured && <div className="game-card-ribbon is-featured" aria-hidden="true">FEATURED</div>}
+          {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI JUDGED</div>}
+
+          {showMastery && (
+            <div className="game-card-mastery" aria-label={`Mastery level ${mastery.level}`}>
+              M{mastery.level}
+            </div>
+          )}
+
+          {game.id === 'sat-rush' ? (
+            <>
+              <div className="game-card-masthead">
+                <div className="game-card-mh-row">
+                  <div className="game-card-name">{game.name}</div>
+                </div>
+                <div className="game-card-mh-tags">
+                  {badge}
+                  {game.limited && <span className="game-card-limited-tag" aria-hidden="true">LIMITED</span>}
+                </div>
+              </div>
+              <div className="game-card-foot">
+                {payout || game.description}
+              </div>
+            </>
+          ) : (
+            <div className="game-card-titlebar">
+              {badge}
+              <div className="game-card-name">{game.name}</div>
+              {payout && <div className="game-card-payout">{payout}</div>}
+            </div>
+          )}
+        </div>
+
+        {/* Level gate (CHAIN/FUSE): the scene dims but stays visible, and the "UNLOCKS AT
+            LV n" copy sits on a SOLID plaque so it never reads on raw art (BE-PICKY #11).
+            A locked tap still credits XP (useXpCapture) + opens the preview — it just
+            doesn't navigate. */}
         {locked && (
           <div className="game-card-lock">
-            {/* Chain drawn diagonally across the top-right corner, padlock at its middle.
-                Inline SVG, thick black outlines, flat fills — no external asset. */}
-            <svg className="game-card-lock-chain" viewBox="0 0 90 90" aria-hidden="true">
-              <g stroke="#000" strokeWidth="3.4" fill="#c4c4d0">
-                <ellipse cx="34" cy="4" rx="7" ry="4.4" transform="rotate(45 34 4)" />
-                <ellipse cx="44" cy="14" rx="7" ry="4.4" transform="rotate(45 44 14)" />
-                <ellipse cx="76" cy="46" rx="7" ry="4.4" transform="rotate(45 76 46)" />
-                <ellipse cx="86" cy="56" rx="7" ry="4.4" transform="rotate(45 86 56)" />
-              </g>
-              {/* Padlock at the diagonal's midpoint (60,30). */}
-              <path d="M55 27 v-4 a5 5 0 0 1 10 0 v4" fill="none" stroke="#000" strokeWidth="4.2" />
-              <rect x="51" y="26" width="18" height="15" rx="3" fill="#FFE94A" stroke="#000" strokeWidth="3.4" />
-              <circle cx="60" cy="32.5" r="1.9" fill="#000" />
-              <rect x="59.1" y="32.5" width="1.8" height="5" fill="#000" />
-            </svg>
-            {/* Show the PATH, not just the gate (audit #5): the unlock level, the player's
-                current level, and how many levels remain — so "locked" reads as reachable, not a
-                dead end. Levels-to-go (not raw XP) keeps it legible to a newcomer. */}
-            <div className="game-card-lock-label">
-              UNLOCKS AT LV {game.unlockLevel}
-              <span className="game-card-lock-sub">
-                YOU'RE LV {playerLevel} · {Math.max(0, game.unlockLevel - playerLevel)} TO GO
-              </span>
+            <div className="game-card-lock-plaque">
+              <svg className="game-card-lock-icon" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M14 22 v-5 a10 10 0 0 1 20 0 v5" fill="none" stroke="#000" strokeWidth="4.5" />
+                <rect x="9" y="21" width="30" height="22" rx="4" fill="#FFE94A" stroke="#000" strokeWidth="4" />
+                <circle cx="24" cy="30" r="3.4" fill="#000" />
+                <rect x="22.3" y="30" width="3.4" height="8" fill="#000" />
+              </svg>
+              {/* Show the PATH, not just the gate: unlock level + how many to go, so
+                  "locked" reads as reachable rather than a dead end. */}
+              <div className="game-card-lock-label">
+                UNLOCKS AT LV {game.unlockLevel}
+                <span className="game-card-lock-sub">
+                  YOU'RE LV {playerLevel} · {Math.max(0, game.unlockLevel - playerLevel)} TO GO
+                </span>
+              </div>
             </div>
           </div>
         )}
-
-        {game.featured && (
-          <div className="game-card-featured-tag">
-            <img src="/art/star.svg" className="game-card-featured-star" alt="" aria-hidden="true" />
-            FEATURED
-          </div>
-        )}
-
-        {game.limited && <div className="game-card-limited-tag">LIMITED</div>}
-
-        {showMastery && (
-          <div className="game-card-mastery" aria-label={`Mastery level ${mastery.level}`}>
-            M{mastery.level}
-          </div>
-        )}
-
-      {ArtComponent && (
-        <div className="game-card-art">
-          <ArtComponent />
-        </div>
-      )}
-
-      <div className="game-card-content">
-        <div
-          className="game-card-icon-box"
-          style={{
-            background: game.iconBg,
-            borderColor: game.iconBorderColor || '#000',
-          }}
-        >
-          {IconComponent && <IconComponent />}
-        </div>
-
-        {game.aiJudged && (
-          <div className="game-card-ai-badge">AI JUDGED</div>
-        )}
-
-        <div className="game-card-name" style={{ color: game.textColor }}>
-          {game.name}
-        </div>
-
-        {/* Payout preview: what each accepted WORD pays in this mode, at the selected
-            difficulty (else the easy baseline). SAT Rush/CHAIN/FUSE carry their 2×/3×/5×
-            solo multiplier here. Sits under the title so it always shows (badge bottom-pinned). */}
-        {game.enabled && (
-          <div className="game-card-payout">
-            {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
-            {currentRebirthMult() > 1 && (
-              <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
-            )}
-          </div>
-        )}
-
-        <div
-          className="game-card-badge"
-          style={{
-            background: game.badgeBg,
-            color: game.badgeColor,
-            borderColor: game.badgeBorderColor || '#000',
-          }}
-        >
-          {game.badgeText}
-        </div>
-      </div>
       </div>
       </div>
     </div>
