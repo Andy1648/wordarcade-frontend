@@ -11,7 +11,6 @@
    this CSS rest rotate is what shows. */
 .game-card-wrap {
   position: relative;
-  height: 100%; /* fill the magnet / grid cell so the card can height-fill (feat/cards-live) */
   transform: rotate(var(--rest-rot, 0deg));
   /* will-change is toggled in JS (GameCard.jsx magnet) only while the cursor-tilt
      loop is running — fine-pointer + motion. Touch / reduced-motion never promote it. */
@@ -69,15 +68,14 @@
   cursor: pointer;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000;
   overflow: hidden;
-  /* ART-LED v2 (feat/cards-live): a PORTRAIT poster that HEIGHT-FILLS its grid cell. The grid
-     column drives the WIDTH (five equal columns) and the card fills the flex-grown region's
-     height, so one row of five cards fills the screen (menu-fill) and every card is the same
-     height with the columns aligned. The 3:4-authored scene SLICES to cover whatever aspect
-     the fill yields (roughly portrait on desktop; it crops gracefully on off-ratio screens). */
+  /* ART-LED v2 (feat/cards-live): a true PORTRAIT 3:4 poster — the scenes are authored 3:4 and
+     slice-to-cover, so the card MUST stay 3:4 or the composition's edges crop (a wider/taller
+     card cut the sun, the tiles mid-glyph, the bomb…). The grid column drives the WIDTH; the
+     aspect-ratio derives the height. The cards are CENTRED in a flex-fill region (Homepage.css)
+     so the app shell still fills the viewport while every scene renders whole. */
   width: 100%;
-  height: 100%;
-  /* container-type INLINE-SIZE (not `size`): the foreground text sizes off the card WIDTH via
-     cqw units; `size` containment would freeze the height and stop the fill. */
+  aspect-ratio: 3 / 4;
+  /* container-type INLINE-SIZE: the foreground text sizes off the card WIDTH via cqw units. */
   container-type: inline-size;
   /* The card face composes THREE independent scale factors + a tilt into ONE transform,
      each driven by a CSS variable so they never fight over `transform`:
@@ -410,6 +408,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-payout-mult { color: #fff; font-weight: 700; }
 
 /* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
+/* A SOLID cream band across the top so the black "SAT RUSH" ink and the SOLO/LIMITED badges
+   read cleanly (they were crushed against the halftone + speed lines), with a double rule
+   under it — and the band sits ABOVE the 5× hero, so the badges never overlap it. */
 .game-card-masthead {
   position: absolute;
   top: 0;
@@ -420,7 +421,12 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   flex-direction: column;
   align-items: flex-start;
   gap: clamp(4px, 2cqw, 8px);
+  background: #F2EFE7;
+  border-bottom: 3px solid #111;
+  box-shadow: 0 3px 0 #111; /* the off-register second rule = the manga double-rule */
 }
+/* one line ("SAT RUSH") in the band so the masthead stays compact and clears the 5× */
+[data-game='sat-rush'] .game-card-name { white-space: normal; }
 .game-card-mh-row {
   width: 100%;
   border-bottom: 3px solid #111;

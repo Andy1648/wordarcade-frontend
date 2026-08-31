@@ -437,16 +437,13 @@ html[data-beat='true'] .homepage-logo {
      rows); below 760 it collapses to one column (queries below). minmax(0,1fr) lets a
      column shrink below content so nothing forces a horizontal scroll. */
   width: 100%;
-  height: 100%;
-  min-height: 0;
   grid-template-columns: repeat(var(--card-count, 5), minmax(0, 1fr));
-  grid-auto-rows: 100%;
   justify-content: center;
   gap: var(--gap, clamp(10px, 1.4vw, 20px));
   padding: 0;
-  /* STRETCH the cards to the grid row height so they FILL the flex-grown region (height-fill,
-     feat/cards-live) — every card is the same height and the columns align. */
-  align-items: stretch;
+  /* Cards keep their natural 3:4 height (no stretch) so the scenes never crop; they're
+     centred as a group in the flex-fill region below (feat/cards-live). */
+  align-items: start;
 }
 
 /* Peek-scroll region wrapping the cards grid (desktop / >760px). Shows one full row
@@ -458,25 +455,30 @@ html[data-beat='true'] .homepage-logo {
   position: relative;
   z-index: 1;
   width: 100%;
-  /* HEIGHT-FILL (feat/cards-live): the region GROWS to fill the stage's leftover vertical
-     space (after the title/XP/footer), and the portrait cards fill it — so one row of five
-     cards fills a tall screen instead of floating (menu-fill needs ≥90% height, which a
-     fixed-3:4 row could never reach; the scene SLICES to cover whatever height results). The
-     region is no longer `zoom`ed — the title/XP still scale via --menu-scale for short
-     screens, but the cards fill by flex, which keeps the menu free of any ancestor zoom. */
+  /* The region GROWS to fill the stage's leftover vertical space (after title/XP/footer) so the
+     app shell still fills the viewport (menu-fill) and the top/bottom frame gaps stay symmetric
+     (menu-vgap) — but the 3:4 cards keep their aspect and are CENTRED inside it (feat/cards-live),
+     so the scenes render whole. The region carries no `zoom`, so the menu stays free of any
+     ancestor zoom (menu-fill's no-ancestor-zoom guard). --menu-scale still shrinks title/XP on
+     short screens. */
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 .homepage-cards-scroll {
   --gap: clamp(10px, 1.4vw, 20px);
   width: 100%;
   box-sizing: border-box;
-  flex: 1 1 auto;
+  /* Size to the (3:4) card row and centre in the region; on an ultra-short viewport where the
+     row is taller than the region, cap to the region and scroll it internally (the page never
+     grows — menu-fit — and the menu is a content panel, so a vertical scroll is legitimate). */
+  flex: 0 1 auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
   /* Horizontal padding = the 16-32px gutter between the grid and the stage's inner edge. */
   padding: 0 clamp(18px, 1.8vw, 30px);
   /* NO clipping here (fix/ui-pass-4, item 1): the REAL cause of the "still clipped" cards was
