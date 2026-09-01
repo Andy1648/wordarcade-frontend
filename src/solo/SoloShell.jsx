@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
@@ -170,6 +171,9 @@ export default function SoloShell({
               abandoned play stage through a thin scrim. Decorative, static. */}
           {motif ? <div className="solo-over-motif" aria-hidden="true">{motif}</div> : null}
           <div className="solo-deathcard">
+            {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
+                solo death card a face + a first read above the copy. */}
+            <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />
             {over.card}
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
             {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} />}
