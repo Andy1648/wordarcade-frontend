@@ -52,6 +52,7 @@ import {
 import { CG_ENTRY, cgRoomReady, isCoarsePointer } from './cg/cgEntry';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useOverlays } from './hooks/useOverlays';
+import { useRoom } from './hooks/useRoom';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
@@ -256,10 +257,7 @@ function App() {
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
   // the swap and fades out. `transition` (+ its wipe machinery + nav helpers) now lives in
   // hooks/useOverlays.js — refactor/app-split step 1; App composes it below (after `sound`).
-  const [lobbyMode, setLobbyMode] = useState(null);
-  // Whether the create lobby should default to PUBLIC (set when arriving via the
-  // browser's "create public room" button); normal Create Room stays private.
-  const [lobbyPublicDefault, setLobbyPublicDefault] = useState(false);
+  // (lobbyMode + lobbyPublicDefault moved into hooks/useRoom.js — refactor/app-split step 2.)
   const [room, setRoom] = useState(null);
   // Category Blitz pack selection, LIFTED to App so the choice made in the Blitz
   // ModeDialog survives the dialog and is sent as set_packs on the create/host path.
@@ -282,7 +280,7 @@ function App() {
   // Public-room browser: the latest list from `public_rooms`, plus the player
   // name used by the no-prompt flows (Quick Play / tap-to-join). Seeded from the
   // remembered/generated name so those flows never need a name screen.
-  const [publicRooms, setPublicRooms] = useState([]);
+  // (publicRooms moved into hooks/useRoom.js — refactor/app-split step 2.)
   const [playerName, setPlayerNameState] = useState(() => resolvePlayerName());
   // Set the working name AND persist it, so it carries across Quick Play, the
   // browser, and the Create/Join lobby within and across sessions.
@@ -298,12 +296,7 @@ function App() {
     () => buildPlayerColors(room ? room.players : []),
     [room]
   );
-  const [serverError, setServerError] = useState('');
-  // Set when the SERVER closed our room (idle reap, or an internal error the
-  // backend contained to this one room). Drives the blocking ROOM CLOSED
-  // overlay below: the room is already gone server-side, so surfacing it with
-  // a route home is the only alternative to a frozen lobby.
-  const [roomClosedNotice, setRoomClosedNotice] = useState(null);
+  // (serverError + roomClosedNotice moved into hooks/useRoom.js — refactor/app-split step 2.)
   // Monotonic counter bumped on every RESOLVING server frame (see RESOLVING_TYPES).
   // It is the fresh re-enable signal for the one-shot action guards below — a
   // counter, not a string, so an identical repeated error still re-enables them.
@@ -318,11 +311,7 @@ function App() {
   const [botPending, fireBot] = useOneShotAction(serverEventId);
   const [rematchPending, fireRematch] = useOneShotAction(serverEventId);
   const [rerollPending, fireReroll] = useOneShotAction(serverEventId);
-  // The server tells us our own connection id immediately on connect (see
-  // server.js's 'connected' message) - we need this to know things like
-  // "am I the host" (compare to room.hostId) since room broadcasts list
-  // every player's id but never single out which one is ours.
-  const [myId, setMyId] = useState(null);
+  // (myId + myIdRef moved into hooks/useRoom.js — refactor/app-split step 2.)
 
   // Chain Reaction in-game state. gameState holds the latest turn_update
   // payload (whose turn, lives, the word chain, etc.); timerSeconds is the
@@ -518,7 +507,7 @@ function App() {
     checkAchievements();
   }, [view]);
 
-  const myIdRef = useRef(null);
+  // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
   // attribute my own accepted word to me by name even when the turn pointer has raced
   // ahead. Assigned every render — playerName rarely changes mid-game.
@@ -582,6 +571,31 @@ function App() {
     goToChain,
     goToFuse,
   } = useOverlays({ view, setView, sound });
+
+  // Room/lobby concern (refactor/app-split step 2). App keeps `room` (read by playerColors above),
+  // `serverEventId` (feeds the guards above) and `linkJoinPending` (LAUNCH_INTENT-coupled); this hook
+  // owns the rest. The drain below calls these setters and writes myIdRef. goHome is hoisted (App).
+  const {
+    publicRooms,
+    setPublicRooms,
+    lobbyMode,
+    setLobbyMode,
+    lobbyPublicDefault,
+    setLobbyPublicDefault,
+    serverError,
+    setServerError,
+    roomClosedNotice,
+    setRoomClosedNotice,
+    myId,
+    setMyId,
+    myIdRef,
+    goToLobby,
+    handleOpenBrowser,
+    handleRefreshPublicRooms,
+    handleJoinPublicRoom,
+    handleCreatePublicFromBrowser,
+    handleLeaveRoom,
+  } = useRoom({ send, setView, setPlayerName, goHome });
 
   // The bomb-fuse loading screen is the very first thing shown; it holds until
   // the socket connects (then "explodes" and hands off), at which point the
@@ -1359,6 +1373,11 @@ function App() {
     // Keyed on the queue: the effect re-runs whenever new frames land and drains
     // every one. It no longer reads `view` directly (the room_update guard uses a
     // functional setView), so [messages, consumeMessages] is the complete dep list.
+  // The setters/refs it calls (incl. useRoom's setMyId/setPublicRooms/setServerError/
+  // setRoomClosedNotice + myIdRef) are STABLE React identities — safe to omit, and adding
+  // them would defeat the deliberately-trimmed array that guards the documented drain
+  // re-run / stale-closure bugs. ESLint can't tell a custom hook's returns are stable:
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, consumeMessages]);
 
   // Auto-dismiss an accepted toast. Category Blitz answers fly fast, so they
@@ -1563,44 +1582,8 @@ function App() {
     setSlicing(false);
   }
 
-  function goToLobby(mode, publicDefault = false) {
-    setLobbyMode(mode);
-    setLobbyPublicDefault(publicDefault);
-    setServerError('');
-    setView('lobby');
-  }
-
-  // Open the unified JOIN ROOM screen (code entry + public-room list). Clear any
-  // stale list so we don't flash an old snapshot; the screen's mount effect
-  // immediately re-requests a fresh one. This is the menu's "JOIN ROOM" button.
-  // (The backend `quick_play` handler still exists but is no longer called from
-  // the UI - the Quick Play entry point was removed.)
-  function handleOpenBrowser() {
-    setServerError('');
-    setPublicRooms([]);
-    setView('browse');
-  }
-
-  // (Re)request the public-room list. Stable so the browser screen can call it on
-  // mount + on its auto-refresh interval without re-subscribing every render.
-  const handleRefreshPublicRooms = useCallback(() => {
-    send('list_public_rooms', {});
-  }, [send]);
-
-  // Join a specific public room from the browser - the SAME join-by-code path as
-  // the Join Room screen, just with the code taken from the tapped row.
-  function handleJoinPublicRoom(code, name) {
-    setPlayerName(name);
-    setServerError('');
-    send('join_room', { code, name });
-    track('room_joined', { mode: 'join' }); // fire-and-forget; no name/PII
-  }
-
-  // Browser empty-state "create public room": jump to the create lobby with the
-  // visibility toggle pre-set to PUBLIC.
-  function handleCreatePublicFromBrowser() {
-    goToLobby('solo', true);
-  }
+  // (goToLobby/handleOpenBrowser/handleRefreshPublicRooms/handleJoinPublicRoom/
+  // handleCreatePublicFromBrowser moved into hooks/useRoom.js — refactor/app-split step 2.)
 
   // (goToStats/goToShop/goToRebirth/goToCredits/goToSatRush/goToChain/goToFuse moved into
   // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
@@ -1697,10 +1680,7 @@ function App() {
     }
   }
 
-  function handleLeaveRoom() {
-    send('leave_room', {});
-    goHome();
-  }
+  // (handleLeaveRoom moved into hooks/useRoom.js — refactor/app-split step 2.)
 
   // Mid-game LEAVE from the game screen. During a live Daily run, confirm first —
   // leaving forfeits the day's attempt, and a stray tap shouldn't cost it. Any
