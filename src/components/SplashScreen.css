@@ -20,9 +20,9 @@
      content sits, with a stronger vignette toward the edges. */
   background: radial-gradient(
     ellipse at center,
-    rgba(13, 6, 24, 0.34) 0%,
-    rgba(13, 6, 24, 0.58) 62%,
-    rgba(13, 6, 24, 0.74) 100%
+    rgba(13, 6, 24, 0.52) 0%,
+    rgba(13, 6, 24, 0.72) 60%,
+    rgba(13, 6, 24, 0.88) 100%
   );
 }
 
@@ -31,10 +31,12 @@
   position: absolute;
   top: 44%;
   left: 50%;
-  width: min(560px, 90vw);
-  height: min(560px, 90vw);
+  width: min(620px, 94vw);
+  height: min(620px, 94vw);
   transform: translate(-50%, -50%);
-  opacity: 0.12;
+  /* was 0.12 — a huge dim wash read as a murky brown blob. A crisp yellow+black comic
+     burst at real opacity frames the wordmark instead (fix/splash). */
+  opacity: 0.62;
   pointer-events: none;
   animation: splash-burst-spin 30s linear infinite;
 }
