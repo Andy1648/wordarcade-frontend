@@ -811,7 +811,7 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
     <div className={`bomb-vignette ${tension}`}>
       <div className="bomb-scale" style={{ transform: `scale(${BOMB_SCALE[tension]})` }}>
         <div className={`bomb-body-wrap ${tension}`}>
-          <svg className="bomb-svg" viewBox="0 0 160 185" width="150" aria-hidden="true">
+          <svg className="bomb-svg" viewBox="0 0 160 185" width="180" aria-hidden="true">
             {/* The mascot IS the bomb. The default preserveAspectRatio fits +
                 centres it inside the box, so non-square art is never distorted.
                 Re-keyed per pose so each swap reads as a quick fade. */}
@@ -2616,7 +2616,10 @@ export default function GameScreen({
       {impactKey > 0 && <div key={`impact-${impactKey}`} className="impact-flash" aria-hidden="true" />}
       {/* K.O. slam when a player is eliminated (self-removes). */}
       {koKey > 0 && <KOOverlay key={`ko-${koKey}`} />}
-      {showCountdown && (
+      {/* !gameOver: a game_over landing mid-countdown must dismiss the 3-2-1-GO! splash at
+          once. Without this the countdown kept ticking OVER the win panel (a frozen "2"/"GO!"
+          on the results, worst under reduced-motion where nothing else moves). */}
+      {showCountdown && !gameOver && (
         <CountdownOverlay
           onComplete={() => setShowCountdown(false)}
           onStep={(step) => {
@@ -3920,7 +3923,9 @@ function CategoryBlitzScreen({
         {/* WINS: live running tally for this round (Blitz pays per round). No WPM pill — Category
             Blitz is turn-based, so typing speed there is meaningless (§2). */}
         <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
-        {showCountdown && (
+        {/* !gameOver: dismiss the round-start countdown the instant the game ends, so it never
+            co-renders over the Category Blitz results (see the Word Bomb site above). */}
+        {showCountdown && !gameOver && (
           <CountdownOverlay
             onComplete={() => setShowCountdown(false)}
             onStep={(step) => {

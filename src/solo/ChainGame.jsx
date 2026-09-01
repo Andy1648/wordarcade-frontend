@@ -257,6 +257,45 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     </div>
   );
 
+  // LOWER DECK (fill): the chain IS the composition — the recent accepted words run across
+  // the lower half as linked chips, join-letters (the last letter of one = first of the next)
+  // in cyan. Before the first word it shows the start letter as a ghost link + the rule, so
+  // the deck is never a bare void. Static (no idle animation); pure read of engine state.
+  const links = s.lastLinks || [];
+  // Pad the trail to a consistent width with faint ghost slots, so the chain reads as a
+  // full-width scaffold you fill in — never a lone chip in a void. Ghosts shrink as real
+  // links land (5 words + the "next" chip fills it).
+  const ghostCount = Math.max(0, 4 - links.length);
+  const chainDeck = (
+    <div className="solo-chain" aria-hidden="true">
+      <div className="solo-deck-label">YOUR CHAIN</div>
+      <div className="solo-chain-trail">
+        {links.map((l, i) => {
+          const w = (l.word || '').toUpperCase();
+          return (
+            <span className="solo-chain-node" key={`${i}-${w}`}>
+              <b className="cx-join">{w.slice(0, 1)}</b>
+              {w.slice(1, -1)}
+              <b className="cx-join">{w.slice(-1)}</b>
+            </span>
+          );
+        })}
+        <span className="solo-chain-node is-next">
+          <b className="cx-join">{required.toUpperCase()}</b>
+          <span className="solo-chain-blank">···</span>
+        </span>
+        {Array.from({ length: ghostCount }).map((_, i) => (
+          <span className="solo-chain-node is-ghost" key={`ghost-${i}`}>
+            ···
+          </span>
+        ))}
+      </div>
+      <div className="solo-deck-hint">
+        {links.length === 0 ? 'EACH WORD STARTS WHERE THE LAST ONE ENDED' : `${s.k} LINKED`}
+      </div>
+    </div>
+  );
+
   const hud = (
     <>
       <div className="solo-stat">
@@ -294,6 +333,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       supply={<span className={supply.count < 3 ? 'is-dead' : ''}>{supply.label}</span>}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
       outTile={outTile}
+      deck={chainDeck}
       input={g.input}
       onInput={g.onInput}
       onSubmit={g.onSubmit}

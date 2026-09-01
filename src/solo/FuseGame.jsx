@@ -39,6 +39,32 @@ const FUSE_MOTIF = (
     <path d="M-20 82 C 60 62, 150 26, 240 82 S 360 104, 420 70" strokeWidth="7" />
   </svg>
 );
+// One fuse cord = one life (this mode's death card literally reads "OUT OF FUSES"). A LIT
+// cord is a braided yellow line with an orange flame at the tip; a SPENT one is a charred
+// grey stub. Real vector art (SVG), static — the lit/spent flip is a STATE change on a
+// life loss, never an idle loop.
+function FuseCord({ lit }) {
+  return (
+    <svg className={`solo-cord${lit ? ' is-lit' : ''}`} viewBox="0 0 210 40" fill="none" aria-hidden="true">
+      <path
+        className="cord-line"
+        d="M6 20 q 13 -13 26 0 t 26 0 t 26 0 t 26 0 t 26 0 t 26 0"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+      {lit ? (
+        <g className="cord-flame">
+          {/* outer flame (orange) + inner (yellow) — a small cartoon petal at the tip */}
+          <path className="flame-o" d="M188 20 c 9 -9 20 -6 16 6 c 6 -2 6 9 -2 14 c -6 4 -18 3 -20 -6 c -1 -6 1 -9 6 -14 z" />
+          <path className="flame-i" d="M191 22 c 5 -5 12 -3 10 4 c 3 -1 3 6 -2 8 c -4 2 -10 1 -11 -4 c -1 -3 0 -5 3 -8 z" />
+        </g>
+      ) : (
+        <circle className="cord-ash" cx="190" cy="20" r="4" />
+      )}
+    </svg>
+  );
+}
+
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const POOLS = {
   e: poolsRaw.e.split(' '),
@@ -183,13 +209,25 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
     </>
   );
 
-  const strip = (
-    <div className="solo-strip" aria-hidden="true">
-      {ALPHABET.map((ch) => (
-        <span key={ch} className={s.lettersUsed.has(ch) ? 'is-lit' : ''}>
-          {ch}
-        </span>
-      ))}
+  // LOWER DECK (fill): FUSE's own elements at the size they deserve — the three lives drawn
+  // as burning fuse cords (lit = a fuse still going, charred = spent), and the letters-used
+  // strip enlarged into a real band. Fills the lower half instead of two thin strips at top.
+  const usedCount = s.lettersUsed.size;
+  const fuseDeck = (
+    <div className="solo-fusedeck" aria-hidden="true">
+      <div className="solo-cords">
+        {[0, 1, 2].map((i) => (
+          <FuseCord key={i} lit={i < s.lives} />
+        ))}
+      </div>
+      <div className="solo-strip-big">
+        {ALPHABET.map((ch) => (
+          <span key={ch} className={s.lettersUsed.has(ch) ? 'is-lit' : ''}>
+            {ch}
+          </span>
+        ))}
+      </div>
+      <div className="solo-deck-label">{usedCount}/26 LETTERS USED</div>
     </div>
   );
 
@@ -211,13 +249,9 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       hud={hud}
       center={(s.fragment || '').toUpperCase()}
       motif={FUSE_MOTIF}
-      supply={
-        <>
-          {s.shortPenalty ? <div className="is-dead">SHORT WORD — next fuse ×0.8</div> : null}
-          {strip}
-        </>
-      }
+      supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — next fuse ×0.8</span> : null}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
+      deck={fuseDeck}
       input={g.input}
       onInput={g.onInput}
       onSubmit={g.onSubmit}

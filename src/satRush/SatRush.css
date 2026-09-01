@@ -27,9 +27,13 @@
   --paper: #f0ead9; /* cream paper */
   --tile: #f0ead9; /* slot / inset fill = paper; ink linework carries every edge */
   --ink: #111;
-  /* the page sits on a flat ink-black gutter (canonical manga). No spot colour and
-     no drop shadow — the torn edge on the black gutter carries the separation. */
+  /* the page sits on a drawn DESK/BOARD, not raw black: the ink gutter carries a faint
+     paper screentone (two-hue, the manga tone principle — paper dots at a low coverage on
+     ink), which reads as a toned surface AND lets the page's hard offset shadow register
+     (black-on-black was invisible). The poster/cover now sit pinned TO a board. */
   --void: #111;
+  --board-cell: 15px 15px;
+  --board-tone: radial-gradient(circle, rgba(240, 234, 217, 0.055) 11%, transparent 14%);
   /* SCREENTONE — grey is ink at a coverage. Three densities, each a halftone dot
      grid; masks (per use) fade them along a shape so tone reads as DRAWN, not as a
      flat CSS rectangle. light = background wash, mid = form shading, heavy = weight. */
@@ -49,7 +53,10 @@
   overflow: hidden;
   color: var(--ink);
   font-family: 'Space Mono', 'Segoe UI', system-ui, sans-serif;
-  background: var(--void); /* flat void — no radial gradient */
+  /* toned board: paper screentone on the ink void (see --board-tone) */
+  background-color: var(--void);
+  background-image: var(--board-tone);
+  background-size: var(--board-cell);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -703,7 +710,11 @@
 .sr-screen {
   position: fixed;
   inset: 0;
-  background: var(--void);
+  /* same toned board as the play void, so the cover / PICK YOUR BEAT / briefing sit pinned
+     to a surface and their hard offset shadows register instead of vanishing into black. */
+  background-color: var(--void);
+  background-image: var(--board-tone);
+  background-size: var(--board-cell);
   display: flex;
   align-items: center;
   justify-content: center;

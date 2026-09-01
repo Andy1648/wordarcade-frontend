@@ -1875,9 +1875,17 @@
   box-shadow: 1px 1px 0 #000;
 }
 
+/* The cost was 7px black-on-yellow — invisible, so SKIP read as free (it costs a life).
+   A small red badge makes the stake unmistakable. Flat fill, thin dark-red outline. */
 .game-skip-cost {
-  font-size: 7px;
-  letter-spacing: 0.5px;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  color: #fff;
+  background: #e23838;
+  border: 1.5px solid #7d1515;
+  border-radius: 4px;
+  padding: 1px 5px;
+  line-height: 1.25;
 }
 
 /* ---- Feedback toast ---- */

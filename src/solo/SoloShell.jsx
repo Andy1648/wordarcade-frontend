@@ -44,6 +44,7 @@ export default function SoloShell({
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
   outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
+  deck, // optional lower-deck node (per-mode) that fills the lower half of the card
   input,
   onInput,
   onSubmit,
@@ -82,13 +83,20 @@ export default function SoloShell({
         ✕
       </button>
 
-      {/* Live "+N WINS" pill — same shared component + position as Word Bomb / Blitz (item 2).
-          Hidden once the run is over (the total shows on the death card instead). */}
-      {phase === 'playing' && <WinsHudPill amount={winsTally} words={winsWords} />}
-      {/* Live WINS-combo readout, under the wins pill (Job 2). Finite break-shake only. */}
-      {phase === 'playing' && <ComboPill mult={comboMult} breaks={comboBreaks} />}
-
-      <div className="solo-hud">{hud}</div>
+      {/* HUD cluster: the stat row + the live wins/combo/wpm pills. The pills are the
+          SHARED components (Word Bomb / Blitz / SAT), but here they JOIN the in-card HUD
+          cluster instead of floating fixed in the viewport's top-right corner — that
+          corner sits OUTSIDE this bounded card (NO ORPHAN FIXED UI). Positioning is
+          neutralised to static by `.solo-root` scope in Solo.css. */}
+      <div className="solo-hudwrap">
+        <div className="solo-hud">{hud}</div>
+        {phase === 'playing' && (
+          <div className="solo-hud-extra">
+            <WinsHudPill amount={winsTally} words={winsWords} />
+            <ComboPill mult={comboMult} breaks={comboBreaks} />
+          </div>
+        )}
+      </div>
 
       <div className="solo-stage">
         {/* Per-mode static backdrop motif. A SIBLING of the stage content and of the
@@ -135,8 +143,25 @@ export default function SoloShell({
       </div>
       {phase === 'playing' && !clock.armed && armHint ? <div className="solo-armhint">{armHint}</div> : null}
 
+      {/* LOWER DECK — per-mode content that fills the lower half of the card (the chain
+          running across the space for CHAIN; the fuse cords + big letter strip for FUSE).
+          Grows to absorb the slack (flex:1) so the card is one composition, not a cluster
+          floating over a dark void. Static content only (no idle animation). */}
+      {phase === 'playing' && deck ? (
+        <div className="solo-deck">
+          {/* Faint mode motif behind the deck (same node as the stage/over-screen) so the
+              lower band reads as a composed surface, not flat void. */}
+          {motif ? <div className="solo-deck-motif" aria-hidden="true">{motif}</div> : null}
+          {deck}
+        </div>
+      ) : null}
+
       {phase === 'over' ? (
         <div className="solo-over">
+          {/* Composed backdrop: the mode motif behind the dim, so the death screen reads as
+              an intentional page (toward Blitz's game-over), not a small card bleeding the
+              abandoned play stage through a thin scrim. Decorative, static. */}
+          {motif ? <div className="solo-over-motif" aria-hidden="true">{motif}</div> : null}
           <div className="solo-deathcard">
             {over.card}
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}

@@ -48,6 +48,7 @@
   box-shadow: 3px 3px 0 #000;
   font-size: 16px;
   cursor: pointer;
+  z-index: 60; /* stays reachable above the game-over overlay (z-50) */
 }
 .solo-exit:active {
   transform: translate(3px, 3px);
@@ -63,6 +64,9 @@
   justify-content: space-between;
   gap: 12px;
   font-size: 15px;
+  /* Clear the absolute exit ✕ (top-right, 40px + 16px inset) so the right-aligned stat
+     (LINKS·BEST / lives) never runs under it on the narrow card. */
+  padding: 0 48px;
 }
 .solo-hud .solo-stat {
   display: flex;
@@ -378,7 +382,13 @@
 .solo-over {
   position: fixed;
   inset: 0;
-  background: rgba(13, 6, 24, 0.86);
+  /* Above the play stage: the stage's children carry z-index:1, so without this the frozen
+     clock/letter paint OVER the dim. z-50 covers them; the exit ✕ is lifted to z-60 so it
+     stays reachable. */
+  z-index: 50;
+  /* 0.965 (was 0.86): fully mask the abandoned play stage so the death screen reads as a
+     composed page, not a card bleeding the frozen clock/letter through a thin scrim. */
+  background: rgba(13, 6, 24, 0.965);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -471,6 +481,238 @@
   .solo-sill[data-fire='1'] {
     animation: none;
   }
+}
+
+/* ===== HUD cluster: stat row + in-card wins/combo/wpm pills ==========================
+   The pills are the SHARED components (fixed top-right in Word Bomb / Blitz / SAT). In the
+   solo card that corner is OUTSIDE the bounded panel, so we NEUTRALISE their fixed
+   positioning to static and dock them in a second HUD row inside the card (NO ORPHAN
+   FIXED UI). Keeps one component, one look site-wide; only the home changes here. */
+.solo-hudwrap {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.solo-hudwrap .solo-hud {
+  margin-top: 0; /* the wrapper owns the top margin now */
+}
+.solo-hud-extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+/* Re-home the shared pills: static flow, drop the fixed coordinates + pointer-lock. */
+.solo-root .wins-hud,
+.solo-root .wpm-hud,
+.solo-root .combo-pill {
+  position: static;
+  top: auto;
+  right: auto;
+  z-index: auto;
+  pointer-events: auto;
+}
+.solo-root .combo-pill-inner {
+  box-shadow: 3px 3px 0 #000;
+}
+
+/* ===== LOWER DECK — fills the lower half of the card (shared shell) ================== */
+.solo-deck {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  overflow: hidden;
+}
+/* faint mode texture behind the deck content */
+.solo-deck-motif {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.solo-deck-motif .solo-motif {
+  opacity: 0.05;
+}
+.solo-deck > :not(.solo-deck-motif) {
+  position: relative;
+  z-index: 1;
+}
+.solo-deck-label {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #b9a7d6;
+  text-transform: uppercase;
+}
+.solo-deck-hint {
+  font-size: clamp(12px, 1.3vw, 15px);
+  letter-spacing: 0.05em;
+  color: #8a77aa;
+  text-align: center;
+  max-width: 30ch;
+}
+
+/* ----- CHAIN deck: the accepted-word chain, running across the space ----------------- */
+.solo-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.solo-chain-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 18px;
+  max-width: 100%;
+}
+.solo-chain-node {
+  position: relative;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(15px, 1.9vw, 22px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 9px 13px;
+}
+/* faint empty slot — the chain still to build; keeps the trail full-width from word 0 */
+.solo-chain-node.is-ghost {
+  color: #4a3a63;
+  background: transparent;
+  border-style: dashed;
+  border-color: #3a2b52;
+  box-shadow: none;
+  letter-spacing: 0.15em;
+}
+/* the link between chips — a short cyan bar, the chain running left→right */
+.solo-chain-node:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  width: 12px;
+  height: 5px;
+  border-radius: 3px;
+  background: #2effe0;
+  transform: translateY(-50%);
+}
+.solo-chain-node .cx-join {
+  color: #2effe0;
+}
+.solo-chain-node.is-next {
+  background: #1a0b2e;
+  border-style: dashed;
+  border-color: #2effe0;
+  box-shadow: none;
+}
+.solo-chain-blank {
+  color: #6b5a86;
+  margin-left: 3px;
+  letter-spacing: 0.15em;
+}
+
+/* ----- FUSE deck: the three lives as burning fuse cords + the big letters strip ------ */
+.solo-fusedeck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+}
+.solo-cords {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+}
+.solo-cord {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 200px;
+  height: auto;
+}
+.solo-cord .cord-line {
+  stroke: #4a3a63; /* spent = charred purple-grey */
+  stroke-dasharray: 5 9;
+}
+.solo-cord.is-lit .cord-line {
+  stroke: #ffe94a; /* lit = bright fuse */
+  stroke-dasharray: none;
+}
+.solo-cord .flame-o {
+  fill: #ff6b3d;
+}
+.solo-cord .flame-i {
+  fill: #ffe94a;
+}
+.solo-cord .cord-ash {
+  fill: #6b5a86;
+}
+.solo-strip-big {
+  width: 100%;
+  max-width: 520px;
+  display: grid;
+  /* minmax(0,1fr): let the 13 columns shrink below their glyph min-content at 360px so the
+     strip never exceeds (and gets clipped by) the deck. */
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 4px;
+}
+.solo-strip-big span {
+  box-sizing: border-box;
+  min-width: 0;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(13px, 2.2vw, 19px);
+  border-radius: 6px;
+  background: #1a0b2e;
+  color: #6b5a86;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+}
+.solo-strip-big span.is-lit {
+  background: #ffe94a;
+  color: #0d0618;
+}
+
+/* ===== Composed game-over backdrop ================================================== */
+.solo-over-motif {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.solo-over-motif .solo-motif {
+  opacity: 0.09;
+}
+.solo-deathcard {
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== LUCKY WORD burst (Job 4) =====================================================
