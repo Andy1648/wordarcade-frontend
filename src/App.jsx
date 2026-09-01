@@ -38,6 +38,9 @@ import KnifeSplit from './components/KnifeSplit';
 // Eager: the skeleton chrome shown while a lazy overlay (Stats/Shop) chunk downloads, so an
 // open never flashes an empty box. Tiny + static, so eager import costs nothing meaningful.
 import OverlaySkeleton from './components/OverlaySkeleton';
+// Eager + tiny: the DELAYED fallback for the main screen router — renders null for ~450ms
+// (so the warmed fast path is unchanged) then a minimal loader for a genuinely slow chunk fetch.
+import RouteFallback from './components/RouteFallback';
 import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
@@ -2201,9 +2204,12 @@ function App() {
               className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
-                  browse/credits). Fallback is null: chunks are idle-prefetched after
-                  paint, and the screen-wipe overlay already covers the swap. */}
-              <Suspense fallback={null}>{screen}</Suspense>
+                  browse/credits). The fallback is DELAYED (null for ~450ms): chunks are
+                  idle-prefetched after paint and the screen-wipe overlay covers the swap, so
+                  the warmed fast path never sees it — identical to the old fallback={null}.
+                  It shows a minimal loader ONLY when a cold/slow fetch outlasts the wipe,
+                  where the old code left a blank screen. (fix/loading-states) */}
+              <Suspense fallback={<RouteFallback />}>{screen}</Suspense>
             </main>
           </div>
           {transition && !prefersReducedMotion && (
