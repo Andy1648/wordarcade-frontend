@@ -429,21 +429,22 @@ html[data-beat='true'] .homepage-logo {
   /* 3D depth for the cards' cursor-magnetic lean (rotateX/rotateY on each
      .game-card-wrap reads against this parent perspective). Purely visual. */
   perspective: 1000px;
-  /* ART-LED v2 (feat/cards-live): all five PORTRAIT (3:4) cards in ONE row — five
-     equal columns, so the columns align to <1px and every card is the same height
-     (the card's aspect-ratio derives the height from the column width). --card-count
-     drives the column count so a 4-mode build (SAT off) still fills the row. A mid-
-     width band (761–1100) drops to 3 columns (wraps 3+2; the scroll region shows both
-     rows); below 760 it collapses to one column (queries below). minmax(0,1fr) lets a
-     column shrink below content so nothing forces a horizontal scroll. */
+  /* ART-LED v2 (feat/cards-live): the column count (--cards-cols) and the exact 3:4 card size
+     (--card-w / --card-h) are computed in Homepage.jsx from the AVAILABLE HEIGHT, so all five
+     cards fit ONE screen with no scrolling (5-in-one-row, or a 3+2 grid on a very narrow/tall
+     viewport). Cards are centred in their cells; the scenes are 3:4 and never cropped. */
   width: 100%;
-  grid-template-columns: repeat(var(--card-count, 5), minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr));
   justify-content: center;
+  justify-items: center;
+  align-items: center;
   gap: var(--gap, clamp(10px, 1.4vw, 20px));
   padding: 0;
-  /* Cards keep their natural 3:4 height (no stretch) so the scenes never crop; they're
-     centred as a group in the flex-fill region below (feat/cards-live). */
-  align-items: start;
+}
+/* A 2-column grid of five ends 2+2+1 — span the lone last card across both columns so it
+   centres under the pair above instead of hanging off to the left (feat/cards-live). */
+.homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 /* Peek-scroll region wrapping the cards grid (desktop / >760px). Shows one full row
@@ -463,22 +464,22 @@ html[data-beat='true'] .homepage-logo {
      short screens. */
   flex: 1 1 auto;
   min-height: 0;
+  /* align-self:stretch overrides the stage's align-items:center so the region is the FULL stage
+     width (the JS reads it to size the cards); align-items:center then centres the card group. */
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 .homepage-cards-scroll {
   --gap: clamp(10px, 1.4vw, 20px);
   width: 100%;
   box-sizing: border-box;
-  /* Size to the (3:4) card row and centre in the region; on an ultra-short viewport where the
-     row is taller than the region, cap to the region and scroll it internally (the page never
-     grows — menu-fit — and the menu is a content panel, so a vertical scroll is legitimate). */
+  /* Sizes to the fitted card row and is centred in the region (justify-content:center). The cards
+     are sized in JS to fit the region height, so this NEVER needs to scroll — no "N MORE". */
   flex: 0 1 auto;
   min-height: 0;
-  max-height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
   /* Horizontal padding = the 16-32px gutter between the grid and the stage's inner edge. */
   padding: 0 clamp(18px, 1.8vw, 30px);
   /* NO clipping here (fix/ui-pass-4, item 1): the REAL cause of the "still clipped" cards was
@@ -700,30 +701,11 @@ html[data-beat='true'] .homepage-logo {
 
 /* ---- Responsive ---- */
 
-/* Mid widths (901-1100px): five 3:4 columns get too NARROW (~130px cards), where the scene +
-   title bar no longer read — drop to three so the cards stay big enough to show the whole
-   composition (matching the prototype, which also sheds columns as it narrows). */
-@media (min-width: 901px) and (max-width: 1100px) {
-  .homepage-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-/* 761-900px: two columns, so the cards stay large. The extra rows wrap and the region scrolls
-   internally (the page never grows). */
-@media (min-width: 761px) and (max-width: 900px) {
-  .homepage-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-/* Below ~760px the portrait cards no longer fit across, so collapse to a single
-   full-width column (the card region scrolls internally — block below). */
+/* The column count and card size are computed in Homepage.jsx from the available height at ALL
+   widths (phones included), so all five cards fit ONE screen without scrolling — a 3+2 grid on a
+   narrow/tall phone, five-in-a-row on a wide screen. No per-width column breakpoints here. */
 @media (max-width: 760px) {
-  .homepage-cards-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* Single-column = five tall stacked cards, which exceed a phone screen. Rather than
-     grow the page (which let the XP bar scroll out of view) or clip the cards (which made
-     the lower cards unreachable), the menu stays ONE SCREEN and the CARD LIST scrolls inside
-     a fixed frame: title + XP bar + action buttons are pinned, only the cards scroll. So
-     every card is reachable and the XP bar is always visible. */
+  /* One screen, never a page scrollbar. */
   .homepage-wrap {
     height: 100dvh;
     min-height: 100dvh;
@@ -731,20 +713,13 @@ html[data-beat='true'] .homepage-logo {
   }
   .homepage-stage {
     max-height: 100%;
-    /* Section spacing floored at 16px so the block gaps stay in the 16-32 band on the
-       shortest phones (was clamp(10,1.6vh,16) → 10px at 360×640; §3). The card region is
-       flex:1 1 auto scroll, so the extra px come out of the scroll window, not the frame. */
     row-gap: clamp(16px, 2vh, 22px);
   }
-  /* The card region takes the leftover height between the XP bar and the action buttons and
-     scrolls internally. min-height:0 lets a flex item shrink below its content so overflow
-     actually engages; overflow-x:hidden keeps card shadows from promoting a horizontal bar. */
+  /* The card region is still the flex-fill row; the cards are SIZED to fit it, so it never scrolls. */
   .homepage-cards-region {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
   /* Everything that frames the scroll stays put (never compresses). */
   .homepage-logo-wrap,

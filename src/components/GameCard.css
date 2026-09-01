@@ -68,12 +68,12 @@
   cursor: pointer;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000;
   overflow: hidden;
-  /* ART-LED v2 (feat/cards-live): a true PORTRAIT 3:4 poster — the scenes are authored 3:4 and
-     slice-to-cover, so the card MUST stay 3:4 or the composition's edges crop (a wider/taller
-     card cut the sun, the tiles mid-glyph, the bomb…). The grid column drives the WIDTH; the
-     aspect-ratio derives the height. The cards are CENTRED in a flex-fill region (Homepage.css)
-     so the app shell still fills the viewport while every scene renders whole. */
-  width: 100%;
+  /* ART-LED v2 (feat/cards-live): a true PORTRAIT 3:4 poster whose EXACT size is computed in
+     Homepage.jsx from the available height (--card-w / --card-h, always 3:4) so all five fit one
+     screen without scrolling and every 3:4 scene renders whole (the fallback keeps a 3:4 box if
+     the vars are ever unset). Centred in its grid cell. */
+  width: var(--card-w, 100%);
+  height: var(--card-h);
   aspect-ratio: 3 / 4;
   /* container-type INLINE-SIZE: the foreground text sizes off the card WIDTH via cqw units. */
   container-type: inline-size;
@@ -467,6 +467,25 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   background: #F2EFE7;
 }
 .game-card-foot .game-card-payout-mult { color: #111; }
+
+/* TINY CARDS (a 5-in-one-row fit on a short/narrow viewport can shrink the card below ~170px):
+   scale the title-bar chrome down so nothing overflows the card, and drop SAT's second badge so
+   the masthead tag row fits. The scenes stay whole (3:4, never cropped). Keyed on the card's own
+   width (container-type: inline-size), so it fires on real card size, not viewport. */
+@container (max-width: 170px) {
+  .game-card-titlebar { padding: clamp(12px, 9cqw, 20px) clamp(6px, 5cqw, 12px) clamp(6px, 4cqw, 10px); }
+  .game-card-masthead { padding: clamp(5px, 4cqw, 10px); }
+  .game-card-name { font-size: clamp(9px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
+  [data-game='sat-rush'] .game-card-name { font-size: clamp(9px, 11cqw, 20px); }
+  .game-card-badge { font-size: clamp(6px, 4.5cqw, 9px); padding: 2px 5px; letter-spacing: 0.04em; }
+  .game-card-payout { font-size: clamp(6px, 4cqw, 9px); }
+  .game-card-foot { font-size: clamp(6px, 4cqw, 9px); padding: clamp(4px, 3cqw, 8px) clamp(5px, 3cqw, 10px); }
+  .game-card-limited-tag { display: none; } /* keep just the SOLO badge in the masthead */
+  .game-card-ribbon { font-size: clamp(6px, 3cqw, 9px); padding: 4px 40px; }
+  .game-card-lock-label { font-size: clamp(9px, 5.5cqw, 14px); }
+  .game-card-lock-sub { font-size: clamp(6px, 3.4cqw, 9px); }
+  .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(8px, 5cqw, 15px); }
+}
 
 .game-card.disabled {
   cursor: default;

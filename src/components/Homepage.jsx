@@ -208,11 +208,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // measurement never feeds back on the previous shrink (no oscillation).
       stage.style.setProperty('--menu-scale', '1');
       stage.style.height = '';
-      // Phones (≤760px) own their layout in CSS: a fixed frame (title + XP + action buttons)
-      // with the CARD LIST scrolling in the middle, so all five cards are reachable and the XP
-      // bar never scrolls out. The fit-to-one-screen scale is a laptop concept — leave scale at
-      // 1 there so the cards keep full size and the card region's internal scroll takes over.
-      if (window.innerWidth <= 760) return;
       const cs = getComputedStyle(stage);
       const padT = parseFloat(cs.paddingTop) || 0;
       const padB = parseFloat(cs.paddingBottom) || 0;
@@ -226,12 +221,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         return p !== 'absolute' && p !== 'fixed' && el.offsetHeight > 0;
       });
       if (!kids.length) return;
-      // HEIGHT-FILL fit (feat/cards-live): the CARD REGION now flex-grows to fill the stage's
-      // leftover height (see Homepage.css), so the cards fill the screen and the frame gaps are
-      // the stage's vertical padding — the stage stays FULL height (no more hug). --menu-scale's
-      // only job now is to SHRINK the title + XP cluster on a short screen so the fixed header +
-      // footer + gaps still leave the cards a minimum row height (they never scale ABOVE 1×, so
-      // the title's skew overhang can't eat the title↔XP gap on a tall screen — menu-fit).
+      // --menu-scale SHRINKS the title + XP cluster on a short screen so the card region keeps a
+      // usable height (never scales ABOVE 1×, so the title's skew overhang can't eat the title↔XP
+      // gap on a tall screen — menu-fit).
       const SCALES = ['homepage-logo-wrap', 'menu-xp-cluster'];
       let header = 0; // the shrinkable title + XP
       let fixed = 0; // footer / bottom bar (never scaled)
@@ -241,10 +233,57 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         else fixed += el.offsetHeight;
       }
       const gaps = rowGap * Math.max(0, kids.length - 1);
-      const MINROW = 150; // keep at least this much height for the card row on a short screen
-      if (header <= 0) return;
-      const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
-      stage.style.setProperty('--menu-scale', scale.toFixed(4));
+      const MINROW = 120; // keep at least this much height for the card region on a short screen
+      if (header > 0) {
+        const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
+        stage.style.setProperty('--menu-scale', scale.toFixed(4));
+      }
+      // SIZE THE CARDS FROM THE AVAILABLE HEIGHT (feat/cards-live) so ALL FIVE fit ONE SCREEN with
+      // NO scrolling and NO "N MORE" affordance. The card region flex-fills the stage's leftover
+      // height; we size the largest 3:4 card whose ROW(s) fit that height. Prefer 5-in-one-row; if
+      // that makes the card too narrow to read, drop to a 3+2 grid IF two rows give a wider card
+      // (on an ultra-short viewport two rows don't fit, so one row of small cards wins). The scenes
+      // are 3:4 and slice-to-cover, so a whole composition shows at any size — never cropped.
+      const region = stage.querySelector('.homepage-cards-region');
+      const grid = stage.querySelector('.homepage-cards-grid');
+      const scroll = stage.querySelector('.homepage-cards-scroll');
+      if (!region || !grid || !scroll) return;
+      const regionH = region.clientHeight;
+      // Measure the available WIDTH from the REGION (full, stable) minus the scroll's gutter —
+      // NOT from the grid, which is shrink-to-content and would feed its just-sized (small) card
+      // width straight back in (a shrinking feedback loop).
+      const scs = getComputedStyle(scroll);
+      const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
+      const availW = region.clientWidth - gutter;
+      if (regionH <= 0 || availW <= 0) return;
+      const gcs = getComputedStyle(grid);
+      const colGap = parseFloat(gcs.columnGap) || 14;
+      const rGap = parseFloat(gcs.rowGap) || colGap;
+      const count = grid.querySelectorAll('.game-card-magnet').length || 5;
+      // Largest 3:4 card (w:h = 3:4) fitting `cols`×`rows` in availW×regionH.
+      const fit = (cols, rows) => {
+        const colW = (availW - (cols - 1) * colGap) / cols;
+        const rowH = (regionH - (rows - 1) * rGap) / rows;
+        const h = Math.min(rowH, (colW * 4) / 3);
+        return { w: (h * 3) / 4, h, cols };
+      };
+      // Try one row of all five first, then denser grids; pick whichever gives the WIDEST (most
+      // readable) card while all cells fit ONE screen. On a wide screen 5-in-one-row wins; on a
+      // narrow/tall phone a 3+2 or 2-column grid gives bigger cards; on an ultra-short viewport
+      // one small row still wins (extra rows don't fit the height). No scrolling, ever.
+      const LAYOUTS = [[count, 1], [3, 2], [2, 3], [1, count]];
+      let best = null;
+      for (const [cols, rows] of LAYOUTS) {
+        if (cols * rows < count) continue; // must hold all five
+        const f = fit(cols, rows);
+        if (f.w > 4 && (!best || f.w > best.w + 0.5)) best = f;
+      }
+      if (!best) return;
+      grid.style.setProperty('--cards-cols', String(best.cols));
+      grid.style.setProperty('--card-w', `${Math.floor(best.w)}px`);
+      grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
+      // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
+      grid.setAttribute('data-cols', String(best.cols));
     };
     const onResize = () => {
       cancelAnimationFrame(raf);
