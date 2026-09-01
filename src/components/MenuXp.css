@@ -15,6 +15,15 @@
      PRIMARY element in the space the words-typed odometer used to occupy. */
   padding: 2px 2px;
 }
+/* NARROW-DESKTOP band (761-1024px): the centred 760px bar's right end (the rank chip) reached
+   under the top-right corner-nav cluster and the audio button overlapped ROOKIE. Shrink the bar
+   here so it clears the ~124px nav on the right. Scoped ABOVE 760 so the phone layout (which
+   has its own frame) keeps the full-width bar — a global calc() collapsed the track on phones. */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .menu-xp-bar {
+    max-width: calc(100vw - 264px);
+  }
+}
 .menu-xp-lv {
   font-family: 'Bungee', cursive;
   font-size: clamp(12px, 2.4vw, 20px);

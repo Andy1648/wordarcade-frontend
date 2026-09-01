@@ -66,7 +66,7 @@
      grows with the title size. Raised (was clamp(16,2.2vh,28)) so the residual gap stays
      ≥12px at every menu-fit viewport (worst case was 1280×720 at 9.4px). Fully counted in
      the fit math (gaps = row-gap × (kids−1)), so the fit-to-one-screen scale compensates. */
-  row-gap: clamp(20px, 2.8vh, 30px);
+  row-gap: clamp(22px, 3vh, 30px);
   justify-content: center;
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
@@ -78,7 +78,10 @@
   /* Tighter padding so the content sits close to the neon frame (items 2 + 3). Vertical
      padding trimmed further (was clamp 8-14); the 16-40px breathing gap to the content
      column is now owned by the --menu-scale RESERVE (Homepage.jsx), not this padding. */
-  padding: clamp(6px, 0.8vh, 9px) clamp(10px, 1vw, 16px); /* small: the frame gap = ~22px RESERVE/2 + this padding, kept in the 16-32 band (§3) */
+  /* HEIGHT-FILL (feat/cards-live): the content column now fills the stage (flex-grown card
+     region), so the symmetric top/bottom frame gap (menu-vgap: 16-32px) IS this vertical
+     padding — the old RESERVE-based gap is gone with the stage-height hug. */
+  padding: clamp(18px, 2vh, 26px) clamp(10px, 1vw, 16px);
   /* Clips content to one screen. FUTURE (not implemented here): to let the panel
      SCROLL once more mode cards are added, switch this to overflow-y:auto with a
      bounded max-height (the max-height below is what a scroll would attach to). */
@@ -298,7 +301,10 @@
   /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
      desktop but shrinks on short laptops to help the menu fit one screen, then the
      container-driven --menu-scale trims it further to clear the XP bar / fit. */
-  font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * var(--menu-scale, 1));
+  /* The wordmark scales DOWN with --menu-scale on short screens, but is capped at 1× so it
+     never UPSCALES when the fit grows the cards/XP to fill a tall screen — an upscaled title's
+     rotate/skew AABB overhang would eat the title↔XP row-gap below the 12px floor (menu-fit). */
+  font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * min(1, var(--menu-scale, 1)));
   line-height: 1;
   color: var(--theme-ink, #ff4fa3); /* THEME: wordmark fill */
   -webkit-text-stroke: 5px #000;
@@ -423,26 +429,22 @@ html[data-beat='true'] .homepage-logo {
   /* 3D depth for the cards' cursor-magnetic lean (rotateX/rotateY on each
      .game-card-wrap reads against this parent perspective). Purely visual. */
   perspective: 1000px;
-  /* FIXED three columns. Each card grows with the viewport (min 150px, 20vw, capped
-     300px) and the three columns centre as a group. With >3 cards the extra rows wrap
-     and the parent scroll region reveals them one row at a time (peek scroll). The 5-in-
-     one-row 18vw shrink is reverted — at 3 columns that's only 60vw, so the original
-     20vw sizing fits again. --card-count no longer drives the columns (kept only in
-     case other code reads it). Collapses to a single column below 760px (query below). */
-  /* Fill the (padded) scroll region with three EQUAL columns so the grid takes the width
-     reclaimed by the tighter frame (item 2), instead of three fixed 300px cards floating in
-     the middle. minmax(0,1fr) lets a column shrink below content so nothing forces h-scroll. */
+  /* ART-LED v2 (feat/cards-live): the column count (--cards-cols) and the exact 3:4 card size
+     (--card-w / --card-h) are computed in Homepage.jsx from the AVAILABLE HEIGHT, so all five
+     cards fit ONE screen with no scrolling (5-in-one-row, or a 3+2 grid on a very narrow/tall
+     viewport). Cards are centred in their cells; the scenes are 3:4 and never cropped. */
   width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr));
   justify-content: center;
-  /* Roomier gap so the featured card's slight upscale + idle drift never reach
-     into a neighbour. --gap is the single source (the scroll region's max-height calc
-     reads the same variable). */
+  justify-items: center;
+  align-items: center;
   gap: var(--gap, clamp(10px, 1.4vw, 20px));
   padding: 0;
-  /* Don't stretch the staggered (margin-top) wrappers to a common row height -
-     keep each at its card height so the idle sway rotates around the card. */
-  align-items: start;
+}
+/* A 2-column grid of five ends 2+2+1 — span the lone last card across both columns so it
+   centres under the pair above instead of hanging off to the left (feat/cards-live). */
+.homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 /* Peek-scroll region wrapping the cards grid (desktop / >760px). Shows one full row
@@ -453,19 +455,32 @@ html[data-beat='true'] .homepage-logo {
 .homepage-cards-region {
   position: relative;
   z-index: 1;
-  /* Fill the stage width so the grid (and its 16-32px gutter below) span it (item 2). */
   width: 100%;
-  /* Keys off --menu-scale (item 1). zoom scales the WHOLE card subtree — including the
-     cards' fixed min-heights — proportionally, so short screens shrink the region to fit
-     instead of the columns narrowing while the cards stay tall. */
-  zoom: var(--menu-scale, 1);
+  /* The region GROWS to fill the stage's leftover vertical space (after title/XP/footer) so the
+     app shell still fills the viewport (menu-fill) and the top/bottom frame gaps stay symmetric
+     (menu-vgap) — but the 3:4 cards keep their aspect and are CENTRED inside it (feat/cards-live),
+     so the scenes render whole. The region carries no `zoom`, so the menu stays free of any
+     ancestor zoom (menu-fill's no-ancestor-zoom guard). --menu-scale still shrinks title/XP on
+     short screens. */
+  flex: 1 1 auto;
+  min-height: 0;
+  /* align-self:stretch overrides the stage's align-items:center so the region is the FULL stage
+     width (the JS reads it to size the cards); align-items:center then centres the card group. */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 .homepage-cards-scroll {
   --gap: clamp(10px, 1.4vw, 20px);
   width: 100%;
   box-sizing: border-box;
-  /* Horizontal padding is the 16-32px gutter between the grid and the stage's inner edge
-     (item 2). */
+  /* Sizes to the fitted card row and is centred in the region (justify-content:center). The cards
+     are sized in JS to fit the region height, so this NEVER needs to scroll — no "N MORE". */
+  flex: 0 1 auto;
+  min-height: 0;
+  /* Horizontal padding = the 16-32px gutter between the grid and the stage's inner edge. */
   padding: 0 clamp(18px, 1.8vw, 30px);
   /* NO clipping here (fix/ui-pass-4, item 1): the REAL cause of the "still clipped" cards was
      THIS element — its overflow-y:auto (with a 1.46-row max-height) clipped the row-1 card tops
@@ -684,20 +699,29 @@ html[data-beat='true'] .homepage-logo {
   color: #000;
 }
 
+/* ---- SHORT-HEIGHT RECLAIM (feat/cards-live) --------------------------------------------
+   On a short laptop (≤600px tall, e.g. 1163×501) the wordmark + XP cluster + footer ate ~250px
+   of the 501, leaving ~117px cards. Reclaim vertical space for the cards: shrink the wordmark
+   hard, fold away the WPM reserve and the NEXT-unlock teaser (both non-essential on a short
+   screen — they return ≥600px), and tighten the footer + section gaps. Cards then measure
+   ~170px+ wide at 1163×501 (target ≥160). */
+@media (max-height: 600px) {
+  .homepage-stage { row-gap: clamp(18px, 2.4vh, 24px); }
+  .homepage-logo { font-size: clamp(22px, 5.4vh, 34px); }
+  .menu-xp-cluster { gap: 3px; }
+  .menu-wpm { display: none; }
+  .menu-next-unlock { display: none; }
+  .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
+  .homepage-footer-links { margin-top: 0; }
+}
+
 /* ---- Responsive ---- */
 
-/* Below ~760px three clamp-sized cards would no longer fit across without
-   overflowing, so collapse to a single full-width column. */
+/* The column count and card size are computed in Homepage.jsx from the available height at ALL
+   widths (phones included), so all five cards fit ONE screen without scrolling — a 3+2 grid on a
+   narrow/tall phone, five-in-a-row on a wide screen. No per-width column breakpoints here. */
 @media (max-width: 760px) {
-  .homepage-cards-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* Single-column = five tall stacked cards, which exceed a phone screen. Rather than
-     grow the page (which let the XP bar scroll out of view) or clip the cards (which made
-     the lower cards unreachable), the menu stays ONE SCREEN and the CARD LIST scrolls inside
-     a fixed frame: title + XP bar + action buttons are pinned, only the cards scroll. So
-     every card is reachable and the XP bar is always visible. */
+  /* One screen, never a page scrollbar. */
   .homepage-wrap {
     height: 100dvh;
     min-height: 100dvh;
@@ -705,20 +729,13 @@ html[data-beat='true'] .homepage-logo {
   }
   .homepage-stage {
     max-height: 100%;
-    /* Section spacing floored at 16px so the block gaps stay in the 16-32 band on the
-       shortest phones (was clamp(10,1.6vh,16) → 10px at 360×640; §3). The card region is
-       flex:1 1 auto scroll, so the extra px come out of the scroll window, not the frame. */
     row-gap: clamp(16px, 2vh, 22px);
   }
-  /* The card region takes the leftover height between the XP bar and the action buttons and
-     scrolls internally. min-height:0 lets a flex item shrink below its content so overflow
-     actually engages; overflow-x:hidden keeps card shadows from promoting a horizontal bar. */
+  /* The card region is still the flex-fill row; the cards are SIZED to fit it, so it never scrolls. */
   .homepage-cards-region {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
   /* Everything that frames the scroll stays put (never compresses). */
   .homepage-logo-wrap,

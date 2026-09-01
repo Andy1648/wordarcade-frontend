@@ -68,15 +68,15 @@
   cursor: pointer;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000;
   overflow: hidden;
-  /* Grows with the card's width so it stays roughly proportional as cards scale
-     up on big screens, but ALSO capped by viewport height (min of vw/vh) so the
-     three-card row shrinks on short laptops and the menu still fits one screen
-     without the bottom buttons spilling past the card. */
-  height: clamp(160px, min(21vw, 30vh), 280px);
-  /* Size container (§1): lets the content shed its least-critical line when the CARD itself is
-     too short to hold everything, via the @container rule below. Keys relief off real card
-     height, not viewport — the exact case the per-viewport clamps kept missing. */
-  container-type: size;
+  /* ART-LED v2 (feat/cards-live): a true PORTRAIT 3:4 poster whose EXACT size is computed in
+     Homepage.jsx from the available height (--card-w / --card-h, always 3:4) so all five fit one
+     screen without scrolling and every 3:4 scene renders whole (the fallback keeps a 3:4 box if
+     the vars are ever unset). Centred in its grid cell. */
+  width: var(--card-w, 100%);
+  height: var(--card-h);
+  aspect-ratio: 3 / 4;
+  /* container-type INLINE-SIZE: the foreground text sizes off the card WIDTH via cqw units. */
+  container-type: inline-size;
   /* The card face composes THREE independent scale factors + a tilt into ONE transform,
      each driven by a CSS variable so they never fight over `transform`:
        --cs         featured resting scale (unchanged)
@@ -306,157 +306,185 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    behind the text (z-index 2 < the content's 3), at low opacity so the text on
    top stays readable. On hover it brightens (and the motion speeds up via the
    --spd multiplier on the card). */
+/* ART-LED v2: the scene is the whole card FACE — full-bleed, full-opacity, sliced
+   to cover (GameArt.jsx svg uses preserveAspectRatio="…slice"). The bottom title
+   bar scrim keeps the text legible over it, so the art no longer dims to a
+   watermark. */
 .game-card-art {
   position: absolute;
   inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.42;
-  transition: opacity 0.25s ease-out;
+  z-index: 1;
   pointer-events: none;
 }
-
-.game-card:hover .game-card-art {
-  opacity: 0.66;
+.game-card-art .card-art {
+  width: 100%;
+  height: 100%;
 }
 
-.game-card-content {
-  position: relative;
+/* ==== ART-LED v2 FOREGROUND (feat/cards-live) ===================================
+   The scene fills the card; a foreground overlay carries the ribbon, the mastery
+   chip, and the bottom title bar (or, for SAT RUSH, the manga masthead + foot). All
+   sizing is cqw/cqh-based (the card is a `container-type: size`), so text scales
+   with the CARD and never clips its bar at any of the five columns' widths. */
+.game-card-fg {
+  position: absolute;
+  inset: 0;
   z-index: 3;
-  /* Tighter padding so the text sits closer to the card border and fills more of the
-     face (density pass). Was 12px 10px 10px. */
-  padding: 8px 10px 11px; /* +bottom & +left room so the rotated badge box clears the edge >=4px at every viewport, incl. the full-size 2560 badge (§1) */
-  height: 100%;
+  pointer-events: none; /* the whole card face stays ONE click target */
+}
+
+/* Corner ribbon (FEATURED / AI JUDGED) — a diagonal banner cropping the top-left
+   corner (the card's overflow:hidden clips its bleed; it's aria-hidden so the
+   viewport-integrity clip walk skips its intentional off-corner overhang). */
+.game-card-ribbon {
+  position: absolute;
+  top: clamp(10px, 3.6cqw, 16px);
+  left: -42px;
+  transform: rotate(-45deg);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(8px, 2.6cqw, 11px);
+  letter-spacing: 0.12em;
+  padding: 5px 46px;
+  border-top: 2px solid rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+.game-card-ribbon.is-featured { background: var(--theme-accent, #FFE94A); color: #000; }
+.game-card-ribbon.is-ai { background: #3DA8FF; color: #001a33; }
+
+/* Bottom title-bar scrim (WORD BOMB / CATEGORY BLITZ / CHAIN / FUSE): a dark
+   gradient carrying the badge, the two-line mode name (white ink), and the payout. */
+.game-card-titlebar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: clamp(20px, 9cqw, 40px) clamp(10px, 4.5cqw, 18px) clamp(9px, 4cqw, 16px);
   display: flex;
   flex-direction: column;
-}
-
-.game-card-icon-box {
-  width: clamp(36px, 4vw, 60px);
-  height: clamp(36px, 4vw, 60px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 7px;
-  /* Colored-outline default (a per-game iconBorderColor can still override
-     this inline). */
-  border: 3.5px solid rgba(0, 0, 0, 0.35);
-  flex-shrink: 0;
+  gap: clamp(3px, 1.6cqw, 7px);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.8) 46%, transparent 100%);
 }
 
 .game-card-name {
+  margin: 0;
   font-family: 'Bungee', cursive;
-  /* Base title size (fallback). Per-mode overrides below FIT the size to each card's longest
-     word so no title dominates its card (§3) — CATEGORY (8 letters, 2-line + the AI JUDGED
-     pill) is scaled DOWN so it stops filling the whole card and overflowing the bottom badge,
-     while the short names (WORD/BOMB, SAT/RUSH, FUSE, CHAIN) keep their big impact. Static
-     clamp() — never animated. */
-  font-size: clamp(14px, 2.6vw, 46px);
-  line-height: 1.03;
-  margin-bottom: 4px;
+  line-height: 0.9;
   white-space: pre-line;
+  /* Scales with the CARD width (cqw) so a long name never clips its bar (viewport-
+     integrity (b)/(c)); the max keeps big screens from over-scaling the wordmark. */
+  /* min lowered 20→15 so the title stays PROPORTIONAL on a small card instead of hitting a
+     fixed floor that would balloon the title bar over the scene (feat/cards-live). */
+  font-size: clamp(15px, 13cqw, 40px);
+  color: #fff;
+  -webkit-text-stroke: 2.5px #000;
+  paint-order: stroke fill;
 }
-
-/* ---- Per-mode title treatments (§3): fit-to-longest-word size + distinct tracking, so the
-   five cards don't read as one template. Sizes are tuned so each card's content stack clears
-   its bottom-pinned badge with room to spare at every viewport (verified 390→2560; §1). ---- */
-/* WORD BOMB — flagship, 4-letter words: full impact, tight tracking. */
-[data-game='word-bomb'] .game-card-name { font-size: clamp(15px, 2.72vw, 48px); letter-spacing: -0.01em; }
-/* CATEGORY BLITZ — the long name (8 letters) + AI JUDGED pill: scaled DOWN and tightened so it
-   reads as a tidy two-liner instead of swallowing the card (fixes the clipped SOLO/MULTI box). */
-[data-game='category-blitz'] .game-card-name { font-size: clamp(12px, 1.82vw, 33px); line-height: 1.0; letter-spacing: -0.02em; }
-/* SAT RUSH — manga ink: airy tracking so it reads like a cover title, not the neon house face. */
-[data-game='sat-rush'] .game-card-name { font-size: clamp(15px, 2.6vw, 46px); letter-spacing: 0.03em; }
-/* CHAIN — 5-letter word: big, a touch of tracking. */
-[data-game='chain'] .game-card-name { font-size: clamp(15px, 2.72vw, 47px); letter-spacing: 0.05em; }
-/* FUSE — shortest name: widest tracking so a 4-letter word still commands its card. */
-[data-game='fuse'] .game-card-name { font-size: clamp(15px, 2.8vw, 48px); letter-spacing: 0.09em; }
-
-/* Compact "AI JUDGED" pill on the AI-judged card (Category Blitz), sitting just
-   above the big title so the card reads as "AI Category Blitz" without changing
-   its two-line title text. */
-.game-card-ai-badge {
-  align-self: flex-start;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(10px, 1.15vw, 16px);
-  line-height: 1;
-  color: #04201c;
-  background: #2EFFE0;
-  border: 3px solid #000;
-  border-radius: 10px;
-  padding: 4px 8px;
-  margin-bottom: 6px;
-  box-shadow: 3px 3px 0 #000;
-  transform: rotate(-2deg);
-}
+/* CATEGORY is the one long (8-letter) name — scale it down so it never overruns its
+   bar at the narrowest column. */
+[data-game='category-blitz'] .game-card-name { font-size: clamp(15px, 10cqw, 32px); letter-spacing: -0.01em; }
 
 .game-card-badge {
-  display: inline-block;
-  /* Density pass: >=18px at >=1366 (1.5vw = 20.5px at 1366), scaling to 12px on phones.
-     Cap 18 (was 22) so the rotated box's spill stays within the card's >=4px margin at
-     2560 too (fix/three-things §1). */
-  font-size: clamp(12px, 1.5vw, 18px);
-  font-weight: 700;
-  padding: 4px 9px;
-  border: 2.5px solid rgba(0, 0, 0, 0.35);
-  margin-top: auto;
   align-self: flex-start;
-  transform: rotate(-1.5deg); /* less AABB spill than -2deg (fix/three-things §1) */
-}
-
-/* Short-HEIGHT viewports (e.g. 1366x768) constrain the card, so its bottom-pinned
-   badge box overflowed the card's overflow:hidden clip. Shrink the icon/badge/payout
-   there so the badge stays >=4px inside on all sides (§1). The font clamps are
-   vw-based, so they don't shrink for a short-but-wide viewport on their own. */
-@media (max-height: 800px) {
-  .game-card-icon-box { width: clamp(28px, 3vw, 44px); height: clamp(28px, 3vw, 44px); }
-  .game-card-badge { font-size: clamp(10px, 1.2vw, 16px); padding: 3px 7px; }
-  .game-card-payout { font-size: clamp(10px, 1.1vw, 15px); }
-}
-/* Ultra-short landscape (e.g. 1163x501): even shrunk the card can't hold icon +
-   title + payout + badge, so drop the payout line (the badge box is what must stay
-   inside) and shrink the badge/icon further. */
-@media (max-height: 560px) {
-  .game-card-payout { display: none; }
-  .game-card-icon-box { width: 26px; height: 26px; }
-  .game-card-badge { font-size: 12px; padding: 2px 6px; }
-}
-
-/* Genuinely short cards — the 3-col tablet-portrait band (cardH ≲161px), never the ≥170px
-   phone cards nor the ≥230px desktop cards — can't hold every line, so shed the least-critical
-   vertical budget (the payout preview) and tighten the AI JUDGED pill so the bottom-pinned
-   SOLO/MULTI badge always clears. Keyed on the CARD's real height, so it fires on card size, not
-   viewport (§1). */
-/* Scoped to the multi-column regime (>=601px) only — phones are one-per-row and fit on their
-   own, so they keep the payout line even on a short device. */
-@media (min-width: 601px) {
-  @container (max-height: 168px) {
-    .game-card-payout { display: none; }
-    .game-card-ai-badge { font-size: clamp(9px, 3cqw, 12px); padding: 2px 6px; margin-bottom: 3px; }
-    .game-card-icon-box { margin-bottom: 4px; }
-  }
-}
-
-/* Payout preview: what a round of this mode pays. Small mono line under the badge so it
-   reads as at-a-glance info, not chrome. Dark ink on the (bright) card fill. */
-.game-card-payout {
-  align-self: flex-start;
-  margin-top: 5px;
   font-family: 'Space Mono', monospace;
-  /* Density pass: >=18px at >=1366 (1.4vw = 19.1px at 1366), scaling to 12px on phones. */
-  font-size: clamp(12px, 1.4vw, 20px);
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: rgba(0, 0, 0, 0.62);
+  font-size: clamp(8px, 3cqw, 11px);
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  white-space: nowrap;
 }
-/* Live rebirth boost annotation, e.g. "(×2)" — reads as a bonus, so it's darker/bolder
-   than the base rate rather than a separate colour that would fight the flat card fill. */
-.game-card-payout-mult {
-  color: #000;
+
+/* Payout preview (wins/word) — light mono line in the title bar. */
+.game-card-payout {
+  font-family: 'Space Mono', monospace;
   font-weight: 700;
+  font-size: clamp(9px, 3.2cqw, 12px);
+  letter-spacing: 0.02em;
+  color: #ffe9c9;
+  white-space: nowrap;
+}
+.game-card-payout-mult { color: #fff; font-weight: 700; }
+
+/* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
+/* A SOLID cream band across the top so the black "SAT RUSH" ink and the SOLO/LIMITED badges
+   read cleanly (they were crushed against the halftone + speed lines), with a double rule
+   under it — and the band sits ABOVE the 5× hero, so the badges never overlap it. */
+.game-card-masthead {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: clamp(9px, 3.5cqw, 14px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(4px, 2cqw, 8px);
+  background: #F2EFE7;
+  border-bottom: 3px solid #111;
+  box-shadow: 0 3px 0 #111; /* the off-register second rule = the manga double-rule */
+}
+/* one line ("SAT RUSH") in the band so the masthead stays compact and clears the 5× */
+[data-game='sat-rush'] .game-card-name { white-space: normal; }
+.game-card-mh-row {
+  width: 100%;
+  border-bottom: 3px solid #111;
+  padding-bottom: clamp(4px, 1.8cqw, 7px);
+}
+.game-card-mh-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+[data-game='sat-rush'] .game-card-name {
+  color: #111;
+  -webkit-text-stroke: 0;
+  letter-spacing: 0.02em;
+  line-height: 0.86;
+  font-size: clamp(18px, 11cqw, 34px);
+}
+[data-game='sat-rush'] .game-card-badge {
+  background: #111;
+  color: #F2EFE7;
+  border-color: #111;
+}
+.game-card-foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: clamp(7px, 3cqw, 11px) clamp(9px, 3.5cqw, 14px);
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(8px, 3cqw, 11px);
+  letter-spacing: 0.02em;
+  color: #111;
+  border-top: 3px solid #111;
+  background: #F2EFE7;
+}
+.game-card-foot .game-card-payout-mult { color: #111; }
+
+/* TINY CARDS (a 5-in-one-row fit on a short/narrow viewport can shrink the card below ~170px):
+   scale the title-bar chrome down so nothing overflows the card, and drop SAT's second badge so
+   the masthead tag row fits. The scenes stay whole (3:4, never cropped). Keyed on the card's own
+   width (container-type: inline-size), so it fires on real card size, not viewport. */
+@container (max-width: 170px) {
+  .game-card-titlebar { padding: clamp(12px, 9cqw, 20px) clamp(6px, 5cqw, 12px) clamp(6px, 4cqw, 10px); }
+  .game-card-masthead { padding: clamp(5px, 4cqw, 10px); }
+  .game-card-name { font-size: clamp(9px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
+  [data-game='sat-rush'] .game-card-name { font-size: clamp(9px, 11cqw, 20px); }
+  .game-card-badge { font-size: clamp(6px, 4.5cqw, 9px); padding: 2px 5px; letter-spacing: 0.04em; }
+  .game-card-payout { font-size: clamp(6px, 4cqw, 9px); }
+  .game-card-foot { font-size: clamp(6px, 4cqw, 9px); padding: clamp(4px, 3cqw, 8px) clamp(5px, 3cqw, 10px); }
+  .game-card-limited-tag { display: none; } /* keep just the SOLO badge in the masthead */
+  .game-card-ribbon { font-size: clamp(6px, 3cqw, 9px); padding: 4px 40px; }
+  .game-card-lock-label { font-size: clamp(9px, 5.5cqw, 14px); }
+  .game-card-lock-sub { font-size: clamp(6px, 3.4cqw, 9px); }
+  .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(8px, 5cqw, 15px); }
 }
 
 .game-card.disabled {
@@ -485,15 +513,12 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 9px 9px 0 #000;
 }
 
-/* Phones stack the cards one per row, so the vertical stagger and the featured
-   upscale (which could overflow a full-width card) are reset. */
+/* Phones stack the cards one per row; the featured upscale (which could overflow a
+   full-width card) is reset. Portrait cards keep their 3:4 aspect-ratio here — one
+   per row, the region scrolls (see Homepage.css mobile block). */
 @media (max-width: 600px) {
   .game-card.featured { --cs: 1; }
-  /* One card per row on phones (which scroll), so size by width, not the
-     short-laptop height cap. */
-  .game-card { height: clamp(170px, 46vw, 250px); }
-  /* Flat single column: zero the per-magnet stagger margin (now set on the magnet
-     itself via the 3n+k rules above). */
+  /* Flat single column: zero the per-magnet stagger margin. */
   .homepage-cards-grid .game-card-magnet {
     margin-top: 0;
   }
@@ -508,16 +533,16 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card--glitch::before { opacity: 0 !important; }
 }
 
-/* MASTERY chip (Job 2): a compact "M{n}" tab on the card's TOP-LEFT corner (opposite the
-   featured/limited sticker), shown once the player reaches M2 in that mode. Flat, black outline,
-   hard offset shadow — house language. */
+/* MASTERY chip (Job 2): a compact "M{n}" tab on the card's TOP-RIGHT corner (the
+   FEATURED / AI ribbon owns the top-left now), shown once the player reaches M2 in
+   that mode. Flat, black outline, hard offset shadow — house language. */
 .game-card-mastery {
   position: absolute;
-  top: 7px;
-  left: 7px;
+  top: 8px;
+  right: 8px;
   z-index: 4;
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  font-size: clamp(9px, 3cqw, 12px);
   line-height: 1;
   color: #0d0618;
   background: #2EFFE0;
@@ -529,122 +554,91 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   pointer-events: none;
 }
 
-/* Little corner sticker calling out the featured game. */
-.game-card-featured-tag {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: 'Bungee', cursive;
-  font-size: 7px;
-  color: #000;
-  background: var(--theme-accent, #FFE94A); /* THEME: featured card accent */
-  /* Translucent-black edge = a darker shade of WHATEVER themed fill sits under it (house rule),
-     so the tag stays on-language in every theme instead of a fixed yellow-brown border. */
-  border: 2px solid rgba(0, 0, 0, 0.42);
-  padding: 2px 5px;
-  transform: rotate(4deg);
-  box-shadow: 2px 2px 0 #000;
-  pointer-events: none;
-}
-/* The FEATURED badge's star is now a real SVG asset (public/art/star.svg) — a chunky
-   Newgrounds 5-point star with a thick black outline + hard offset shadow — replacing the
-   old "★" glyph. Sized to the cap height; CSS only places it. */
-.game-card-featured-star {
-  width: 11px;
-  height: 11px;
-  display: block;
-}
-
 /* SAT Rush "LIMITED" scarcity stamp — red ink on cream, matching the card's retro-print
-   manga palette (not the neon house yellow). Top-right, tilted, hard offset shadow. */
+   manga palette. Sits INLINE in the masthead tag row (next to the SOLO badge). */
 .game-card-limited-tag {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  z-index: 4;
   font-family: 'Bungee', cursive;
-  font-size: 7px;
+  font-size: clamp(8px, 2.8cqw, 11px);
   letter-spacing: 0.04em;
   color: #C8321E;
   background: #F2EFE7;
   border: 2px solid #C8321E;
-  padding: 2px 5px;
-  transform: rotate(4deg);
-  box-shadow: 2px 2px 0 #000;
-  pointer-events: none;
+  border-radius: 5px;
+  padding: 2px 6px;
+  transform: rotate(-3deg);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* ---- Level gate (CHAIN/FUSE locked until a level) ---------------------------------- */
-/* The card stays fully visible; a scrim + padlock mark it locked. The scrim is
-   click-through so a tap still reaches the card (which shakes once). */
-.game-card.locked .game-card-content {
-  opacity: 0.55;
-}
-/* fix/visual-real item 1: push the letter-tile art further back on a locked card (was 0.55) so it
-   reads as a faint backdrop, not something the unlock copy fights with. The copy itself sits on an
-   opaque plaque below regardless, so legibility no longer depends on this. */
+/* The scene DIMS but stays visible (so a locked card still reads as its mode), and
+   the "UNLOCKS AT LV n" copy sits on a SOLID plaque so it never reads on raw art
+   (BE-PICKY #11). The lock overlay is click-through so a tap still reaches the card
+   (which shakes + opens the preview). */
 .game-card.locked .game-card-art {
-  opacity: 0.3;
+  filter: saturate(0.5) brightness(0.58);
 }
 .game-card-lock {
   position: absolute;
   inset: 0;
   z-index: 6;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(13, 6, 24, 0.4);
+  padding: 14px;
+  background: rgba(13, 6, 24, 0.22); /* slight scrim seats the plaque */
   border-radius: inherit;
   pointer-events: none;
 }
-/* Chain-and-padlock slung across the top-right corner. Positioned (not in the flex flow)
-   so the label stays centered at the bottom. Hard black drop-shadow for the flat cartoon
-   pop. overflow visible so links can sit right on the corner edges. */
-.game-card-lock-chain {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 74px;
-  height: 74px;
-  overflow: visible;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
+/* FUSE is a fire card — a warm hue turns muddy under CHAIN's cool dim, so gate it
+   WARMER & LIGHTER (still locked + plaqued) so it reads HOT, not brown. FUSE only;
+   do NOT "correct" this to match CHAIN's dim (see GameArt.jsx FuseArt note). */
+.game-card-magnet[data-game='fuse'] .game-card.locked .game-card-art {
+  filter: saturate(1) brightness(0.82);
+}
+.game-card-magnet[data-game='fuse'] .game-card.locked .game-card-lock {
+  background: rgba(58, 20, 4, 0.12);
+}
+/* Solid plaque: the gate text on a flat void panel + black outline + hard offset
+   shadow (house language). max-width keeps it clear of the card edges. */
+.game-card-lock-plaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 2cqw, 7px);
+  max-width: 90%;
+  padding: clamp(9px, 4cqw, 15px) clamp(11px, 5cqw, 18px);
+  text-align: center;
+  background: #160a28;
+  border: 3px solid #000;
+  border-radius: 10px;
+  box-shadow: 5px 5px 0 #000;
+}
+.game-card-lock-icon {
+  width: clamp(28px, 11cqw, 42px);
+  height: clamp(28px, 11cqw, 42px);
+  filter: drop-shadow(2px 2px 0 #000);
 }
 .game-card-lock-label {
   font-family: 'Bungee', cursive;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  font-size: clamp(11px, 4.6cqw, 16px);
+  letter-spacing: 0.02em;
+  line-height: 1;
   color: #ffe94a;
-  -webkit-text-stroke: 1.5px #000;
+  -webkit-text-stroke: 1.2px #000;
   paint-order: stroke fill;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  /* fix/visual-real item 1: sit the unlock copy on its OWN opaque plaque so every character is
-     legible over the letter-tile art behind a locked card (before, the small "YOU'RE LV n" sub-line
-     mushed straight into the tiles). Flat void fill + black outline + hard offset shadow — house
-     language; max-width keeps it clear of the card edges. */
-  background: #0d0618;
-  border: 2px solid #000;
-  border-radius: 8px;
-  padding: 7px 12px;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
-  max-width: 86%;
+  gap: 5px;
 }
-/* The "YOU'RE LV n · N TO GO" path line — smaller, Space Mono, cream — under the gate. Shows
-   the unlock is reachable rather than a bare wall. */
+/* The "YOU'RE LV n · N TO GO" path line — smaller, Space Mono — under the gate. */
 .game-card-lock-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 9px;
+  font-size: clamp(8px, 2.8cqw, 10px);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #f0ead9;
+  letter-spacing: 0.04em;
+  color: #e9dcff;
   -webkit-text-stroke: 0;
 }
 
