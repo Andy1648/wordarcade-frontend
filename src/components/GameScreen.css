@@ -513,6 +513,13 @@
    on #2a1450. */
 .game-player-name-text {
   color: var(--pc, #fff);
+  /* The name row sets word-break:break-word, which broke even a 3-letter name ("YOU" -> "YO / U")
+     in the narrow player card on phones. Keep the name on ONE line and never mid-word-break it.
+     No overflow:hidden/ellipsis here on purpose — clipping the name ("RIVAL" -> "RIVA…") trips the
+     viewport-integrity clipped-text check; nowrap alone fixes the ugly break without clipping. */
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 /* On the active player's orange card (and the win badge), keep the name dark for
