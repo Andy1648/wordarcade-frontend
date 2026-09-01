@@ -42,17 +42,16 @@ import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
-import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from './satRush/config';
+import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW } from './satRush/config';
 import {
   CHAIN_VIEW,
-  CHAIN_TRANSITION_WORD,
   FUSE_VIEW,
-  FUSE_TRANSITION_WORD,
   SOLO_LAUNCH,
   SOLO_MODES_ENABLED,
 } from './solo/config';
 import { CG_ENTRY, cgRoomReady, isCoarsePointer } from './cg/cgEntry';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useOverlays } from './hooks/useOverlays';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
@@ -168,30 +167,7 @@ const SCREEN_ACCENT = {
   'sat-rush': '#F0EAD9',
 };
 
-// The word flashed mid-wipe when navigating to each view.
-const TRANSITION_WORDS = {
-  game: "LET'S GO!",
-  'cg-arm': 'GET READY',
-  home: 'PEACE OUT',
-  lobby: 'READY?',
-  browse: 'JOIN ROOM',
-  room: 'SQUAD UP',
-  credits: 'CREDITS',
-  [SAT_RUSH_VIEW]: SAT_RUSH_TRANSITION_WORD,
-  [CHAIN_VIEW]: CHAIN_TRANSITION_WORD,
-  [FUSE_VIEW]: FUSE_TRANSITION_WORD,
-};
-
-// Nav DEPTH for the transition DIRECTION (Job 12): home is the root (0); menu overlays are 1; a
-// live game/room/lobby is 2. Going to a deeper view = "forward" (enter); returning toward home =
-// "back" (return). Any view not listed defaults to 1.
-const NAV_DEPTH = {
-  home: 0,
-  credits: 1, stats: 1, shop: 1, collection: 1, achievements: 1,
-  browse: 1, lobby: 1,
-  room: 2, game: 2, 'cg-arm': 2,
-  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
-};
+// (TRANSITION_WORDS + NAV_DEPTH moved into hooks/useOverlays.js — refactor/app-split step 1.)
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
 // for Join Room) or a specific game id picked from a homepage card. These are
@@ -278,10 +254,8 @@ function App() {
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
-  // the swap and fades out. `transition` is the active overlay ({ word, key }) or
-  // null; the key re-keys the overlay so each wipe replays.
-  const [transition, setTransition] = useState(null);
-  const transitionKeyRef = useRef(0);
+  // the swap and fades out. `transition` (+ its wipe machinery + nav helpers) now lives in
+  // hooks/useOverlays.js — refactor/app-split step 1; App composes it below (after `sound`).
   const [lobbyMode, setLobbyMode] = useState(null);
   // Whether the create lobby should default to PUBLIC (set when arriving via the
   // browser's "create public room" button); normal Create Room stays private.
@@ -480,13 +454,7 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
-  // Which menu control ('shop' | 'stats' | null) opened the overlay we're in, so the
-  // homepage can restore focus to it when the overlay closes (a11y). A ref (not state):
-  // it's read once by the remounting Homepage, never drives a render.
-  const overlayReturnRef = useRef(null);
-  // Which view the shared Shop/Rebirth overlay opens into ('shop' | 'rebirth'), set by the
-  // two menu icons and read by the ShopScreen render below. A ref: it never drives a render.
-  const shopViewRef = useRef('shop');
+  // (overlayReturnRef + shopViewRef moved into hooks/useOverlays.js — refactor/app-split step 1.)
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
   const [categoryScores, setCategoryScores] = useState(null);
@@ -597,6 +565,23 @@ function App() {
     () => ({ sound, muted: sfxMuted, setMuted: setSfxMuted }),
     [sound, sfxMuted]
   );
+
+  // Overlay/navigation concern (refactor/app-split step 1). App keeps the `view` useState (read
+  // above before `sound` exists); this hook owns the cosmetic bar-wipe + shop/stats/rebirth/solo
+  // nav helpers. Placed here because runTransition needs `sound`. goHome stays in App (cross-cutting).
+  const {
+    transition,
+    runTransition,
+    shopViewRef,
+    overlayReturnRef,
+    goToStats,
+    goToShop,
+    goToRebirth,
+    goToCredits,
+    goToSatRush,
+    goToChain,
+    goToFuse,
+  } = useOverlays({ view, setView, sound });
 
   // The bomb-fuse loading screen is the very first thing shown; it holds until
   // the socket connects (then "explodes" and hands off), at which point the
@@ -1387,45 +1372,9 @@ function App() {
     }
   }, [lastWordResult, gameType]);
 
-  // ---- ONE consistent Persona-5 bar wipe for EVERY screen change ----
-  // Every transition in the app is fired through this single helper, so they all
-  // look and sound identical (same five bars, same whoosh, same 500ms): the
-  // initial connect, menu->room, room->game, game->results, and back to menu.
-  // The overlay (TransitionOverlay) is purely cosmetic - the screen has already
-  // swapped underneath - so this only lays the bars on top and clears them.
-  const transitionClearRef = useRef(null);
-  const runTransition = useCallback(
-    (word, dir = 'forward') => {
-      transitionKeyRef.current += 1;
-      setTransition({ word, key: transitionKeyRef.current, dir });
-      sound.whoosh(); // the wipe sweeps across
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-      transitionClearRef.current = setTimeout(() => setTransition(null), 240); // one language, <=250ms
-    },
-    [sound]
-  );
-  useEffect(
-    () => () => {
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-    },
-    []
-  );
-
-  // Fire the wipe on every real view change. The screen has already swapped (it
-  // renders off `view`); this only lays the overlay on top. The early-return
-  // avoids a spurious wipe when `view` didn't actually change (initial mount /
-  // no-op setState) - it can no longer strand the screen, since nothing gates the
-  // screen behind it anymore.
-  const lastNavViewRef = useRef(CG_ENTRY ? 'cg-arm' : 'home');
-  useEffect(() => {
-    if (view === lastNavViewRef.current) return;
-    // Nav DIRECTION (Job 12): compare the new view's depth to the old. home is 0 (the root);
-    // overlays (shop/stats/collection/etc.) are 1; a live game/room/lobby is 2. Going deeper =
-    // "forward" (enter); returning toward the menu = "back" (return). Equal depth defaults forward.
-    const dir = (NAV_DEPTH[view] ?? 1) >= (NAV_DEPTH[lastNavViewRef.current] ?? 1) ? 'forward' : 'back';
-    lastNavViewRef.current = view;
-    runTransition(TRANSITION_WORDS[view] || 'GO!', dir);
-  }, [view, runTransition]);
+  // (The Persona-5 bar-wipe helper + the view-change wipe effect moved into hooks/useOverlays.js —
+  // refactor/app-split step 1. `runTransition` is destructured from useOverlays above; the gameOver
+  // wipe below still fires it from App because it watches `gameOver`, which App owns.)
 
   // game -> results is an in-`game` change: the game-over overlay reveals WITHOUT
   // a view switch, so the view effect above never fires for it. Run the SAME wipe
@@ -1653,44 +1602,8 @@ function App() {
     goToLobby('solo', true);
   }
 
-  function goToStats() {
-    overlayReturnRef.current = 'stats'; // restore focus here when Stats closes
-    setView('stats');
-  }
-
-  function goToShop() {
-    shopViewRef.current = 'shop';
-    overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
-    setView('shop');
-  }
-
-  // REBIRTH is its own top-corner icon now (separate from SHOP): it opens the same overlay
-  // straight into the rebirth view. Focus returns to the rebirth icon on close.
-  function goToRebirth() {
-    shopViewRef.current = 'rebirth';
-    overlayReturnRef.current = 'rebirth';
-    setView('shop');
-  }
-
-  function goToCredits() {
-    setView('credits');
-  }
-
-  // SAT RUSH is a solo mode — no room/WebSocket — so selecting its menu card
-  // navigates straight to the mode view (the wipe fires automatically on the
-  // view change, like every other navigation).
-  function goToSatRush() {
-    setView(SAT_RUSH_VIEW);
-  }
-
-  // CHAIN / FUSE are solo (no room/WebSocket) — navigate straight to the mode view.
-  function goToChain() {
-    setView(CHAIN_VIEW);
-  }
-
-  function goToFuse() {
-    setView(FUSE_VIEW);
-  }
+  // (goToStats/goToShop/goToRebirth/goToCredits/goToSatRush/goToChain/goToFuse moved into
+  // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
     setLobbyMode(null);
