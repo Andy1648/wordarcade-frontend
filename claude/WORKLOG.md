@@ -65,6 +65,7 @@ before). 2 menu corner-click e2e tests are known-flaky (pass on rerun). Preview 
 rebuild while it serves — kill it before `vite build`, or let Playwright's webServer manage its own.
 - 2026-09-01T08:38Z  JOB 10 DONE (fix/splash f6d9015, pushing): gate lint 0 / unit 408 / e2e 1031/1033 (2 flaky economy tests rarity-race+purchase-feel-shop, pass 5/5 isolated, unrelated to splash).
 - 2026-09-01T08:39Z  JOB 12 START (chore/wallscene off main, REPORT ONLY): does the graffiti WallScene help or fight the new cards? Menu with/without, honest report.
+- 2026-09-01  JOB 4 DONE (chore/full-sweep 5bbeada, REPORT ONLY) [REDUCED GATE: none — 0 app code, only claude/_tools dev scripts]: 42-shot contact sheets (desktop+mobile) of all 21 surfaces via mock; ranked. blitz-gameover = gold standard; SAT retro-print = strongest identity. ONE real defect: chain/fuse death-card decorative letter collides with the title ("CHAIN⊂BROKE"). WB-gameover "dim+2" was just its 3-5s entrance animation caught at 500ms (crisp when settled — NOT a bug). Report claude/full-sweep-report.md + claude/full-sweep/.
 - 2026-09-01T08:42Z  JOB 12 DONE (chore/wallscene, REPORT ONLY): WallScene = keep (faint texture, does NOT fight the vivid cards; only whispers into the empty areas). Real finding: ~150px empty band above the cards is the menu weakness, not the backdrop. Report claude/wallscene-report.md + shots.
 
 ## ===== GATE POLICY CHANGE (2026-09-01, user directive — full run per job was eating the night) =====
