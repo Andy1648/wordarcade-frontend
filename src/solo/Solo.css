@@ -13,11 +13,15 @@
   position: relative;
   z-index: 40;
   width: 100%;
-  max-width: min(94vw, 760px);
+  /* FILL THE VIEWPORT like the menu stage (fix/game-fill). Was min(94vw, 760px) — which, under
+     the old --app-scale zoom, rendered a ~36% column at short heights. Solo is now EXEMPT from
+     that ancestor zoom (App.jsx), so the frame sizes straight to the window; the height calc no
+     longer divides by --app-scale (there is no zoom to compensate for). */
+  max-width: min(96vw, 1900px);
   margin: auto;
   box-sizing: border-box;
-  min-height: calc((100dvh - 48px) / var(--app-scale, 1));
-  max-height: calc((100dvh - 20px) / var(--app-scale, 1));
+  min-height: calc(100dvh - 24px);
+  max-height: calc(100dvh - 16px);
   background: #1a0b2e;
   border: 4px solid #000;
   box-shadow: 7px 7px 0 #000;
@@ -27,8 +31,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 20px;
-  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  gap: clamp(10px, 1.8vh, 22px);
+  padding: clamp(14px, 2.2vh, 26px) clamp(16px, 2.4vw, 40px)
+    calc(clamp(14px, 2.2vh, 26px) + env(safe-area-inset-bottom));
   font-family: 'Space Mono', monospace;
   overflow: hidden;
 }
@@ -48,6 +53,7 @@
   box-shadow: 3px 3px 0 #000;
   font-size: 16px;
   cursor: pointer;
+  z-index: 60; /* stays reachable above the game-over overlay (z-50) */
 }
 .solo-exit:active {
   transform: translate(3px, 3px);
@@ -56,13 +62,22 @@
 
 .solo-hud {
   width: 100%;
-  max-width: 560px;
+  max-width: 820px;
   margin-top: 8px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
+  gap: 10px 20px;
   font-size: 15px;
+  /* Clear the absolute exit ✕ (top-right, 40px + 16px inset) so a wrapped chip never runs
+     under it on the narrow card. */
+  padding: 0 52px;
+}
+/* the wins-earned state sits in the same row as the mode stats (one HUD line). */
+.solo-hud-wins {
+  display: flex;
+  align-items: center;
 }
 .solo-hud .solo-stat {
   display: flex;
@@ -184,10 +199,12 @@
   /* The hero token stays far above the 44px floor, but a vh term (min) shrinks it on
      SHORT laptops so the column keeps >=24px slack there. Phones keep 14vw (unchanged).
      Static font-size — the tier escalation stays a transform: scale() elsewhere. */
-  font-size: clamp(44px, min(14vw, 14vh), 76px);
+  /* Breathe: the gated solo hero grows on big screens (was capped at 76px). vw/vh-bounded
+     so it never overflows a short window. */
+  font-size: clamp(56px, min(16vw, 30vh), 240px);
   line-height: 1;
   color: var(--solo-accent);
-  -webkit-text-stroke: 6px #000;
+  -webkit-text-stroke: clamp(6px, 1vmin, 11px) #000;
   paint-order: stroke fill;
   text-transform: uppercase;
   text-align: center;
@@ -307,16 +324,22 @@
 .solo-inputwrap {
   position: relative;
   width: 100%;
-  max-width: 560px;
+  max-width: min(680px, 100%);
 }
 .solo-input {
   width: 100%;
-  height: 56px;
+  /* border-box + side padding: the input is flush with its column, so a content-box border
+     (or edge-to-edge text) clipped the placeholder ("min 3 letter|s"). border-box keeps the
+     border inside width:100%, and the padding gives the text a gutter so it never touches the
+     edge. */
+  box-sizing: border-box;
+  padding: 0 clamp(14px, 1.6vw, 24px);
+  height: clamp(56px, 8vh, 78px);
   font-family: 'Space Mono', monospace;
   /* >=28px input target at >=1366px wide; 20px on phones (min). The fixed 56px height
      means this bump costs no vertical space. Static font-size only — this element keeps
      NO transition/animation/transform/filter/will-change (nor any ancestor up to .solo-root). */
-  font-size: clamp(20px, 2.1vw, 28px);
+  font-size: clamp(20px, 2vw, 34px);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -332,6 +355,8 @@
   color: #6b5a86;
   text-transform: none;
   letter-spacing: normal;
+  /* smaller than the typed text so the (longer) hint always fits inside the padded box */
+  font-size: 0.78em;
 }
 
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
@@ -378,7 +403,13 @@
 .solo-over {
   position: fixed;
   inset: 0;
-  background: rgba(13, 6, 24, 0.86);
+  /* Above the play stage: the stage's children carry z-index:1, so without this the frozen
+     clock/letter paint OVER the dim. z-50 covers them; the exit ✕ is lifted to z-60 so it
+     stays reachable. */
+  z-index: 50;
+  /* 0.965 (was 0.86): fully mask the abandoned play stage so the death screen reads as a
+     composed page, not a card bleeding the frozen clock/letter through a thin scrim. */
+  background: rgba(13, 6, 24, 0.965);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -471,6 +502,282 @@
   .solo-sill[data-fire='1'] {
     animation: none;
   }
+}
+
+/* ===== HUD: one row = mode stats + the wins-earned pill ==============================
+   The wins pill is the SHARED component (fixed top-right in Word Bomb / Blitz / SAT). In the
+   solo card that corner is OUTSIDE the bounded panel, so we NEUTRALISE its fixed positioning
+   to static and dock it into the single HUD row (NO ORPHAN FIXED UI). The WIN-COMBO ×N chip
+   and the WPM chip are no longer rendered here (SoloShell) — one multiplier on the line. */
+.solo-root .wins-hud {
+  position: static;
+  top: auto;
+  right: auto;
+  z-index: auto;
+  pointer-events: auto;
+}
+
+/* ===== BODY layout — column on narrow, two columns (landscape) on wide-aspect =========
+   The two-column split at wide aspect is what lets the card FILL the width and need LESS
+   height, so wide-short viewports (1280x551, 1568x675) fill instead of shrinking to a strip.
+   On phones / portrait it stays a single column (unchanged). */
+.solo-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.8vh, 22px);
+}
+.solo-primary,
+.solo-secondary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+.solo-primary {
+  gap: clamp(10px, 1.4vh, 16px);
+  justify-content: center;
+}
+.solo-secondary {
+  gap: clamp(10px, 1.8vh, 20px);
+  flex: 1 1 auto;
+}
+@media (min-width: 900px) and (min-aspect-ratio: 13/10) {
+  .solo-body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(24px, 3vw, 64px);
+  }
+  .solo-primary,
+  .solo-secondary {
+    flex: 1 1 0;
+    width: auto;
+    height: 100%;
+    justify-content: center;
+  }
+  /* Bound each column so the pair reads as a centred landscape composition on ultra-wide
+     frames (rather than the two halves splaying to the far edges with a void between). */
+  .solo-primary {
+    max-width: 620px;
+  }
+  .solo-secondary {
+    max-width: 860px;
+  }
+}
+
+/* ===== BREATHE — content scales up with the (now viewport-filling) frame ============= */
+/* Clock ring: was a fixed 120px svg; grow it with the viewport (vmin so it tracks the
+   smaller axis and never overflows a short window). */
+.solo-clock {
+  width: clamp(120px, 24vmin, 300px);
+  height: auto;
+}
+.solo-deck {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  overflow: hidden;
+}
+/* faint mode texture behind the deck content */
+.solo-deck-motif {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.solo-deck-motif .solo-motif {
+  opacity: 0.05;
+}
+.solo-deck > :not(.solo-deck-motif) {
+  position: relative;
+  z-index: 1;
+}
+.solo-deck-label {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #b9a7d6;
+  text-transform: uppercase;
+}
+.solo-deck-hint {
+  font-size: clamp(12px, 1.3vw, 15px);
+  letter-spacing: 0.05em;
+  color: #8a77aa;
+  text-align: center;
+  max-width: 30ch;
+}
+
+/* ----- CHAIN deck: the accepted-word chain, running across the space ----------------- */
+.solo-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.solo-chain-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 18px;
+  max-width: 100%;
+}
+.solo-chain-node {
+  position: relative;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(15px, 1.6vw, 28px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 9px 13px;
+}
+/* faint empty slot — the chain still to build; keeps the trail full-width from word 0 */
+.solo-chain-node.is-ghost {
+  color: #4a3a63;
+  background: transparent;
+  border-style: dashed;
+  border-color: #3a2b52;
+  box-shadow: none;
+  letter-spacing: 0.15em;
+}
+/* the link between chips — a short cyan bar, the chain running left→right */
+.solo-chain-node:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  width: 12px;
+  height: 5px;
+  border-radius: 3px;
+  background: #2effe0;
+  transform: translateY(-50%);
+}
+.solo-chain-node .cx-join {
+  color: #2effe0;
+}
+.solo-chain-node.is-next {
+  background: #1a0b2e;
+  border-style: dashed;
+  border-color: #2effe0;
+  box-shadow: none;
+}
+.solo-chain-blank {
+  color: #6b5a86;
+  margin-left: 3px;
+  letter-spacing: 0.15em;
+}
+
+/* ----- FUSE deck: the three lives as burning fuse cords + the big letters strip ------ */
+.solo-fusedeck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+}
+.solo-cords {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+}
+.solo-cord {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 200px;
+  height: auto;
+}
+.solo-cord .cord-line {
+  stroke: #4a3a63; /* spent = charred purple-grey */
+  stroke-dasharray: 5 9;
+}
+.solo-cord.is-lit .cord-line {
+  stroke: #ffe94a; /* lit = bright fuse */
+  stroke-dasharray: none;
+}
+.solo-cord .flame-o {
+  fill: #ff6b3d;
+}
+.solo-cord .flame-i {
+  fill: #ffe94a;
+}
+.solo-cord .cord-ash {
+  fill: #6b5a86;
+}
+.solo-strip-big {
+  width: 100%;
+  max-width: 520px;
+  /* FLEX-WRAP, not grid: a grid keeps its 13 columns even when subpixel rounding pushes them
+     a hair past the box, and the last one gets clipped (m / z vanished at some zooms). Flex-wrap
+     with tiles sized to (100% − 13·gap)/13 fits 13 per row with a full gap of slack, and if a
+     tile ever can't fit it WRAPS to the next row instead of clipping — so all 26 are always
+     laid out and countable, at every viewport / DPR. */
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 4px;
+}
+.solo-strip-big span {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: calc((100% - 13 * 4px) / 13);
+  min-width: 0;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(13px, 2.2vw, 19px);
+  border-radius: 6px;
+  background: #1a0b2e;
+  color: #6b5a86;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+}
+.solo-strip-big span.is-lit {
+  background: #ffe94a;
+  color: #0d0618;
+}
+
+/* ===== Composed game-over backdrop ================================================== */
+.solo-over-motif {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.solo-over-motif .solo-motif {
+  opacity: 0.09;
+}
+.solo-deathcard {
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== LUCKY WORD burst (Job 4) =====================================================

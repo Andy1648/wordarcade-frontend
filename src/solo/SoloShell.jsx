@@ -8,7 +8,6 @@
 import { useEffect, useRef } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
-import ComboPill from '../components/ComboPill';
 import { wpmKeyStroke } from '../progress/wpmLive';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
@@ -44,6 +43,7 @@ export default function SoloShell({
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
   outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
+  deck, // optional lower-deck node (per-mode) that fills the lower half of the card
   input,
   onInput,
   onSubmit,
@@ -57,8 +57,6 @@ export default function SoloShell({
   phase,
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
-  comboMult = 1, // live WINS-combo multiplier for the HUD readout
-  comboBreaks = 0, // break counter — re-keys the pill's finite shake on a real reset
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
@@ -82,14 +80,27 @@ export default function SoloShell({
         ✕
       </button>
 
-      {/* Live "+N WINS" pill — same shared component + position as Word Bomb / Blitz (item 2).
-          Hidden once the run is over (the total shows on the death card instead). */}
-      {phase === 'playing' && <WinsHudPill amount={winsTally} words={winsWords} />}
-      {/* Live WINS-combo readout, under the wins pill (Job 2). Finite break-shake only. */}
-      {phase === 'playing' && <ComboPill mult={comboMult} breaks={comboBreaks} />}
+      {/* ONE HUD row: the mode stats (score/mult/links | words/lives) + the wins-earned state,
+          all in a single readable line inside the card (NO ORPHAN FIXED UI — the shared wins
+          pill is re-homed here from its fixed viewport corner, positioning neutralised to static
+          by `.solo-root` scope in Solo.css). The WIN-COMBO ×N chip and the WPM chip were REMOVED
+          from the solo HUD: a second "×N" eight pixels from the score multiplier read as a
+          duplicate, and the combo's effect already shows in the +N WINS figure (showWpm={false}
+          drops WPM too). Now there is exactly one multiplier on the row. */}
+      <div className="solo-hud">
+        {hud}
+        {phase === 'playing' && (
+          <div className="solo-hud-wins">
+            <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
+          </div>
+        )}
+      </div>
 
-      <div className="solo-hud">{hud}</div>
-
+      {/* BODY — one column on narrow/portrait screens, two columns on wide-aspect ones so
+          the composition fills the width and needs less height (the same move that lets the
+          card fill wide-short viewports instead of sitting in a narrow centred strip). */}
+      <div className="solo-body">
+      <div className="solo-primary">
       <div className="solo-stage">
         {/* Per-mode static backdrop motif. A SIBLING of the stage content and of the
             input's chain (the input lives outside .solo-stage), so it can never touch
@@ -103,7 +114,9 @@ export default function SoloShell({
       {/* OUT tile (CHAIN) — a SIBLING of the input, never an ancestor, so it can update
           on every keystroke without ever animating the input or its container. */}
       {phase === 'playing' && outTile ? outTile : null}
+      </div>{/* .solo-primary */}
 
+      <div className="solo-secondary">
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit}>
           <input
@@ -135,8 +148,27 @@ export default function SoloShell({
       </div>
       {phase === 'playing' && !clock.armed && armHint ? <div className="solo-armhint">{armHint}</div> : null}
 
+      {/* LOWER DECK — per-mode content that fills the lower half of the card (the chain
+          running across the space for CHAIN; the fuse cords + big letter strip for FUSE).
+          Grows to absorb the slack (flex:1) so the card is one composition, not a cluster
+          floating over a dark void. Static content only (no idle animation). */}
+      {phase === 'playing' && deck ? (
+        <div className="solo-deck">
+          {/* Faint mode motif behind the deck (same node as the stage/over-screen) so the
+              lower band reads as a composed surface, not flat void. */}
+          {motif ? <div className="solo-deck-motif" aria-hidden="true">{motif}</div> : null}
+          {deck}
+        </div>
+      ) : null}
+      </div>{/* .solo-secondary */}
+      </div>{/* .solo-body */}
+
       {phase === 'over' ? (
         <div className="solo-over">
+          {/* Composed backdrop: the mode motif behind the dim, so the death screen reads as
+              an intentional page (toward Blitz's game-over), not a small card bleeding the
+              abandoned play stage through a thin scrim. Decorative, static. */}
+          {motif ? <div className="solo-over-motif" aria-hidden="true">{motif}</div> : null}
           <div className="solo-deathcard">
             {over.card}
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
