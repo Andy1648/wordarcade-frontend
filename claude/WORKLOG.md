@@ -31,3 +31,4 @@
 - 2026-09-01T07:35Z  JOB 3 START (fix/gameover-pass off feat/game-fill-2): 5 game-over screens to Blitz standard. Screenshot all 5, BE-PICKY.
 - 2026-09-01T07:40Z  JOB 3 FINDINGS (BE-PICKY, shots claude/gameover-pass/shots/before): BLITZ=model(POLISH). WB=BROKEN (card overflows, REMATCH/LEAVE below fold; play screen bleeds through sides). SAT CASE CLOSED=LOOKS UNFINISHED (title clips top, huge empty lower half of page, buttons below fold). CHAIN/FUSE=composed backdrop from prior task but minimal card vs BLITZ. Fixing WB overflow + SAT fill first (worst).
 - 2026-09-01T07:55Z  JOB 3 DONE (fix/gameover-pass): WB sticky-footer actions (REMATCH always visible), SAT safe-center (CASE CLOSED no longer clipped), CHAIN/FUSE death-card mascot. Shots gameover-pass/shots/. Running gate.
+- 2026-09-01T08:12Z  JOB 3 DONE (fix/gameover-pass c17dddf, pushing): gate GREEN lint 0 / unit 408 / e2e 1064/1064. Pushing.
