@@ -21,3 +21,55 @@
 - 16:16Z  BACKLOG (BE, DO-FIRST) DONE: feat/judge-verdict-cache — AI judge now caches genuine (category,answer) verdicts (judged once across all players), fail-opens NEVER cached, cache hits skip API + rate budget, bounded FIFO 5k. Unit-tested (fetch stub), BE suite 333/333. Pushed 485e1ab3. Per-ROUND cap sub-item deferred (needs round context from categoryBlitzLogic). BE DO-FIRST now: names✓ dictcache✓ roomcode✓ judge-cache✓ (3.5/4).
 - 16:20Z  BACKLOG JOB 25 DONE (BE): test/judge-eval — pure runEval(fixture,judgeFn) → reject-class precision/recall/F1 + false-reject/accept lists; 40-case common-knowledge fixture (accepts mirror the prompt must-accepts, rejects=non-members+gibberish); keyless deterministic unit tests pin the metric math; judgeEval.cli.js runs the real model. BE suite 333/333. Pushed c8511a2f.
 - 16:26Z  BACKLOG JOB 28 DONE (reduced-motion, report-only): VERIFIED COMPLETE — 0 infinite anims under real reduced-motion (emulateMedia); all 32 anim CSS files guarded (0 uncovered); JS juice has central motionAllowed() gate with correct nuance (vestibular=suppressed shake/hitStop/burst, functional-feedback=softened squash/flash per WCAG). Resolves JOB 6 card-loop concern (RM users get them off). Test note: use page.emulateMedia not test.use for RM. Nothing to ship. Report: claude/reduced-motion-audit.md.
+
+- 2026-09-01T06:37Z  JOB 1 START (fix/fuse-strip): FUSE alphabet strip clipped (m,z lost). Fix = flex-wrap tiles + game-fill 26-tile gate. Already implemented in working tree; committing.
+- 2026-09-01T06:38Z  JOB 1 DONE (fix/fuse-strip a704888, pushed+verified): flex-wrap strip, all 26 tiles at 1920/1280x551/390x844 (screenshots claude/ingame-pass/shots/diag/fuse-strip-*.png). Gate: lint 0, full e2e 1048/1049 (1 flaky corner-click, passes 12/12 on rerun, unrelated menu test). game-fill 16/16.
+- 2026-09-01T06:38Z  JOB 2 START (feat/game-fill-2 off fix/fuse-strip): WB/BLITZ/SAT fill to >=90%% width, no overflow, 5 viewports. TIER-1, BRANCH ONLY. Per-screen height-fit like solo landscape.
+- 2026-09-01T06:43Z  JOB 2 SCOPE DECISION: WB/BLITZ/SAT fill needs per-screen height-fit reflow of Tier-1 live-game layouts (removing the zoom overflows 131-145% at 551px). Doing it properly one screen at a time on feat/game-fill-2 (branch-only, will NOT merge). Verifying each with the mock-WS harness. If a screen cannot hit 90% width + fit height safely via CSS reflow, ship the safe subset + document, and continue the run (28 other jobs). BE-PICKY screenshots each.
+- 2026-09-01T07:16Z  JOB 2 IMPL DONE (feat/game-fill-2): WB grid-reflow + BLITZ short-window compress + SAT board-fill. WB/BLITZ 88-91% width no overflow; SAT board 100%. game-fill 31/31, WB/BLITZ viewport-integrity 140/140. Report claude/game-fill-2-report.md. Running full e2e before push.
+- 2026-09-01T07:35Z  JOB 2 DONE (feat/game-fill-2, pushing): WB/BLITZ 88-91% width no overflow, SAT board 100%. Gate: lint 0, unit 408, e2e 1062/1064 (2 flaky corner-click, pass 12/12 rerun). game-fill 31/31. Report: claude/game-fill-2-report.md. Screenshots jf2-after/. TIER-1 branch-only, NOT merged.
+- 2026-09-01T07:35Z  JOB 3 START (fix/gameover-pass off feat/game-fill-2): 5 game-over screens to Blitz standard. Screenshot all 5, BE-PICKY.
+- 2026-09-01T07:40Z  JOB 3 FINDINGS (BE-PICKY, shots claude/gameover-pass/shots/before): BLITZ=model(POLISH). WB=BROKEN (card overflows, REMATCH/LEAVE below fold; play screen bleeds through sides). SAT CASE CLOSED=LOOKS UNFINISHED (title clips top, huge empty lower half of page, buttons below fold). CHAIN/FUSE=composed backdrop from prior task but minimal card vs BLITZ. Fixing WB overflow + SAT fill first (worst).
+- 2026-09-01T07:55Z  JOB 3 DONE (fix/gameover-pass): WB sticky-footer actions (REMATCH always visible), SAT safe-center (CASE CLOSED no longer clipped), CHAIN/FUSE death-card mascot. Shots gameover-pass/shots/. Running gate.
+- 2026-09-01T08:12Z  JOB 3 DONE (fix/gameover-pass c17dddf, pushing): gate GREEN lint 0 / unit 408 / e2e 1064/1064. Pushing.
+
+- 2026-09-01T08:13Z  BRANCH STRATEGY UPDATE: JOBs 1-3 (game-fill/gameover) were interdependent → chained. INDEPENDENT mergeable jobs (splash, save-schema, router, error-boundaries, etc.) now branch off MAIN for clean isolated diffs (chaining would bundle the Tier-1 game-fill-2 into a mergeable branch = footgun). WORKLOG carried forward onto each new branch via `git checkout <prev> -- claude/WORKLOG.md`.
+- 2026-09-01T08:13Z  JOB 10 START (fix/splash off main): redesign the splash — strongest screen in the app. Screenshot before/after, BE-PICKY.
+- 2026-09-01T08:21Z  JOB 10 DONE-impl (fix/splash): restored bomb mascot hero, crisped starburst (0.12->0.62 + black stroke), darkened wall veil. Splash now a comic hero screen. Shots splash/shots/. Running gate.
+
+## ===== RESUME STATE (2026-09-01, long autonomous run) =====
+DONE this session (each gated green lint/unit/e2e, pushed + verified via git ls-remote):
+- JOB 1  fix/fuse-strip      (a704888) — FUSE 26-tile strip, flex-wrap; game-fill strip gate.
+- JOB 2  feat/game-fill-2    (51b89bc) — WB/BLITZ/SAT fill 88-91%% width, no overflow. TIER-1 branch-only.
+- JOB 3  fix/gameover-pass   (45a552d) — WB sticky actions, SAT results fit, CHAIN/FUSE death mascot.
+- JOB 10 fix/splash          (f6d9015, gate running) — mascot hero + crisp burst + darker wall.
+
+BRANCH RULE: JOBs 1-3 chained (interdependent game-fill work). JOB 10+ branch off MAIN (independent,
+mergeable) with WORKLOG carried forward via `git checkout <prev> -- claude/WORKLOG.md`.
+Reports: claude/{game-fill-2,gameover-pass,splash}-report.md + claude/game-fill-2 shots dirs.
+
+NEXT (unstarted, in the queue — pick highest value, one at a time, gate+push+log each):
+  JOB 4 chore/full-sweep (REPORT: contact sheets + rank every screen), JOB 5 fix/full-sweep-pass,
+  JOB 6 chore/sim-gap (REPORT), JOB 7 chore/stranger-2 (REPORT), JOB 8 fix/dialog-cards,
+  JOB 9 chore/wb-blitz-look (REPORT), JOB 11 chore/micro (REPORT), JOB 12 chore/wallscene (REPORT),
+  JOB 13 fix/loading-states, JOB 14 fix/mobile-3, JOB 15 perf/after-art (REPORT), JOB 16 fix/copy,
+  JOB 17 chore/final-eye (REPORT), JOB 18 chore/playthrough-2 (REPORT), JOB 19 chore/one-thing (REPORT),
+  JOB 20 refactor/app-split (TIER-1; plan at claude/app-split-plan.md — do useOverlays first),
+  JOB 21 feat/save-schema, JOB 22 feat/router, JOB 23 fix/error-boundaries, JOB 24 feat/offline,
+  JOB 25 feat/analytics, JOB 26 feat/optimistic-input (TIER-1), JOB 27 feat/reconnect (TIER-1),
+  JOB 28 feat/bot-feel, JOB 29 feat/daily-seed, JOB 30 backend data/accept-lists-5 (other repo).
+  Then claude/BACKLOG.md in value order.
+
+GATE = `npm run lint && npm run test && npx playwright test` (NOT npm ci — it corrupted node_modules
+before). 2 menu corner-click e2e tests are known-flaky (pass on rerun). Preview server crashes if you
+rebuild while it serves — kill it before `vite build`, or let Playwright's webServer manage its own.
+- 2026-09-01T08:38Z  JOB 10 DONE (fix/splash f6d9015, pushing): gate lint 0 / unit 408 / e2e 1031/1033 (2 flaky economy tests rarity-race+purchase-feel-shop, pass 5/5 isolated, unrelated to splash).
+- 2026-09-01T08:39Z  JOB 12 START (chore/wallscene off main, REPORT ONLY): does the graffiti WallScene help or fight the new cards? Menu with/without, honest report.
+- 2026-09-01T08:42Z  JOB 12 DONE (chore/wallscene, REPORT ONLY): WallScene = keep (faint texture, does NOT fight the vivid cards; only whispers into the empty areas). Real finding: ~150px empty band above the cards is the menu weakness, not the backdrop. Report claude/wallscene-report.md + shots.
+
+## ===== GATE POLICY CHANGE (2026-09-01, user directive — full run per job was eating the night) =====
+A full Playwright run per job (14-30 min) is why only 5/30 jobs finished. New gate:
+- REPORT-ONLY jobs: NO e2e at all (they change zero code). Skip lint/unit too unless a report tool file was added.
+- CODE jobs: lint + unit + ONLY the e2e specs relevant to what was touched (name them in the log).
+- FULL Playwright suite runs ONCE at end of session, not per job.
+Each job below tags [REDUCED GATE] + the specs it ran, so an end-of-session full run can verify.
