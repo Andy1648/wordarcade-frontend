@@ -81,6 +81,19 @@ rebuild while it serves — kill it before `vite build`, or let Playwright's web
 - 2026-09-01  JOB 4 DONE (chore/full-sweep 5bbeada, REPORT ONLY) [REDUCED GATE: none — 0 app code, only claude/_tools dev scripts]: 42-shot contact sheets (desktop+mobile) of all 21 surfaces via mock; ranked. blitz-gameover = gold standard; SAT retro-print = strongest identity. ONE real defect: chain/fuse death-card decorative letter collides with the title ("CHAIN⊂BROKE"). WB-gameover "dim+2" was just its 3-5s entrance animation caught at 500ms (crisp when settled — NOT a bug). Report claude/full-sweep-report.md + claude/full-sweep/.
 - 2026-09-01T08:42Z  JOB 12 DONE (chore/wallscene, REPORT ONLY): WallScene = keep (faint texture, does NOT fight the vivid cards; only whispers into the empty areas). Real finding: ~150px empty band above the cards is the menu weakness, not the backdrop. Report claude/wallscene-report.md + shots.
 
+## ===== SESSION-END SUMMARY (2026-09-01, reduced-gate batch) =====
+Worked the NEXT list 4→23 in order under the reduced gate. 15 job-numbers, 13 branches (all pushed +
+git-ls-remote verified). 4 CODE fixes: JOB 5 fix/full-sweep-pass (death-card glyph), JOB 8
+fix/dialog-cards (blitz badge overlap), JOB 13 fix/loading-states (delayed route loader — BRANCH-ONLY,
+needs 2-device play-test), JOB 14 fix/mobile-3 (WB name-wrap). The rest are reports (4,6,7,9,11,15,
+16,17-19,23). SKIPPED 20 (TIER-1 supervised refactor), 21 (live-save blast radius + design), 22
+(router decision) — all need the owner. THE ONE THING (JOB 17-19): name the WINS currency in HUD/shop/
+stats (recommendation, not shipped — minimal-HUD may be deliberate).
+SESSION-END FULL PLAYWRIGHT SUITE (per the gate policy) on fix/loading-states (riskiest = the App.jsx
+Suspense change): 3 foreground shards (background playwright kept getting env-killed) = 345 + 344 + 344
+= **1033 passed / 0 failed**. Green. The CSS-only fixes (5/8/14) also each passed their targeted specs;
+a full run on those (or a merge integration branch) can re-confirm at merge time.
+
 ## ===== GATE POLICY CHANGE (2026-09-01, user directive — full run per job was eating the night) =====
 A full Playwright run per job (14-30 min) is why only 5/30 jobs finished. New gate:
 - REPORT-ONLY jobs: NO e2e at all (they change zero code). Skip lint/unit too unless a report tool file was added.
