@@ -8,6 +8,7 @@ import './SplashScreen.css';
 import { useXpCapture } from '../progress/useXpCapture';
 import { loadProgress } from '../progress/xp';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
+import Mascot from './Mascot';
 
 const TAGLINES = [
   // "TYPE FAST. DIE SLOW." intentionally lives in the post-dismiss intro card,
@@ -155,8 +156,8 @@ export default function SplashScreen({ onStart, onDismiss }) {
       className={`splash-screen${leaving ? ' leaving' : ''}`}
       aria-label={fine ? 'Type or click to start' : 'Tap to start'}
     >
-      <svg className="splash-burst" viewBox="-100 -100 200 200" aria-hidden="true">
-        <polygon points={BURST_POINTS} fill="#FFE94A" />
+      <svg className="splash-burst" viewBox="-108 -108 216 216" aria-hidden="true">
+        <polygon points={BURST_POINTS} fill="#FFE94A" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
       </svg>
 
       {/* Ambient embers/debris drifting slowly up the screen, behind the text
@@ -198,6 +199,10 @@ export default function SplashScreen({ onStart, onDismiss }) {
           {'TYPE A WORD'}
         </div>
       </div>
+
+      {/* The bomb mascot — the splash's hero image (fix/splash). Pose only (no looping emote)
+          so it adds no idle animation; the enter pop is a one-shot. */}
+      <Mascot pose="idle" size={160} className="splash-hero-mascot" />
 
       <div className="splash-taglines">
         {/* re-keyed per index so the fade replays on each swap */}
