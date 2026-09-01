@@ -428,6 +428,10 @@
   gap: 16px;
   text-align: center;
 }
+.solo-death-mascot {
+  display: block;
+  margin: 0 auto -2px;
+}
 .solo-deathcard h2 {
   font-family: 'Bungee', cursive;
   font-size: 28px;

@@ -2164,6 +2164,17 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* fix/gameover-pass: pin the primary actions to the bottom of the scroll-capped card so
+     REMATCH/LEAVE are ALWAYS visible — the Word Bomb stats made the card overflow a 768/900px
+     window and pushed them below the scroll fold (BROKEN). Sticky is a no-op when the card
+     already fits (BLITZ), so this is safe for every game-over. The opaque backdrop + top rule
+     keep them legible over content scrolling underneath. */
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: auto;
+  padding-top: 12px;
+  background: #1a0b2e; /* flat card fill so scrolling content passes cleanly under */
 }
 
 /* REMATCH - the primary "play again" action: cyan, the BIGGEST, loudest button.

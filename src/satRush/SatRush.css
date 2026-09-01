@@ -1086,10 +1086,16 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */ /* the overlay scrolls; the page's own overflow stays visible */
+  /* safe center: centre the page when it fits, but fall back to top-aligned the moment it is
+     TALLER than the viewport — otherwise `margin:auto` centring eats the top (CASE CLOSED) into
+     an unreachable, unscrollable clip. Symmetric block padding gives it breathing room either way.
+     (fix/gameover-pass) */
+  justify-content: safe center;
+  padding-block: clamp(16px, 3vh, 40px);
 }
 .sr-respage {
   position: relative;
-  margin: auto; /* centres when it fits, scrolls (via the overlay) when it doesn't */
+  margin: 0 auto; /* horizontal centre only; vertical handled by the container's safe-center */
   width: min(560px, 94vw);
   display: flex;
   flex-direction: column;
