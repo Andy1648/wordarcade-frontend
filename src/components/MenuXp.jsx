@@ -146,11 +146,13 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(wins)}
+            <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </button>
         ) : (
           <span className="menu-wins-chip" aria-label={`${wins} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(wins)}
+            <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </span>
         )
       )}

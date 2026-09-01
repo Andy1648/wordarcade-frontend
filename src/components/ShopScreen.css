@@ -60,6 +60,21 @@
   font-size: clamp(18px, 2.6vw, 22px);
   color: #ffe94a;
 }
+/* "WINS" unit label after the balance number — subordinate to the value. */
+.shop-wins-label {
+  font-size: 0.6em;
+  letter-spacing: 0.06em;
+  opacity: 0.82;
+}
+/* Slim explainer caption under the header: names the currency + its purpose. */
+.shop-explainer {
+  padding: 8px 18px 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #2effe0;
+}
 .shop-close {
   width: 44px;
   height: 44px;

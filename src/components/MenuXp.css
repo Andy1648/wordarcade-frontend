@@ -7,7 +7,11 @@
 .menu-xp-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  /* 6px (was 10): naming the currency added a "WINS" unit to the wins chip, and at 390px with a
+     6-digit balance that squeezed the flex track below the width its centered readout needs (the
+     readout clipped in viewport-integrity). Tightening the inter-item gap hands those px back to
+     the track. Purely spacing; wider viewports keep ample slack. */
+  gap: 6px;
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
@@ -337,6 +341,14 @@
 }
 /* The chip is a <button> on the menu (opens the shop) — reset UA chrome so it reads
    identically to the old span and adds no height. */
+/* "WINS" unit label after the number — names the currency at the counter (the earn-side cards
+   already say "WINS"; this closes the loop so a newcomer connects the coin to the word). Subordinate
+   to the value: smaller + slightly dimmed, so the number still reads first. */
+.menu-wins-label {
+  font-size: 0.5em;
+  letter-spacing: 0.04em;
+  opacity: 0.82;
+}
 button.menu-wins-chip {
   background: none;
   border: 0;

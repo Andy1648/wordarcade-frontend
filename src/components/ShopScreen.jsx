@@ -160,11 +160,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
           <div className="shop-wins" aria-label={`${wins} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}
+            <span className="shop-wins-label" aria-hidden="true">WINS</span>
           </div>
           <button type="button" className="shop-close" onClick={onBack} aria-label="Back to menu">
             ✕
           </button>
         </div>
+        {/* Names the currency + says what it's for, so a newcomer reads the balance above as
+            spendable. Shop view only (rebirth isn't a wins purchase). */}
+        {view === 'shop' && <div className="shop-explainer">WINS BUY UPGRADES</div>}
 
         {view === 'shop' ? (
           <div className="shop-body">
