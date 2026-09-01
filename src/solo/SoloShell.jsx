@@ -96,8 +96,12 @@ export default function SoloShell({
             either. No animation — house rule: nothing idles here. */}
         {motif}
         <ClockRing {...clock} />
-        <div className="solo-center">{center}</div>
-        {supply ? <div className="solo-supply">{supply}</div> : null}
+        {/* Play-only stage content. The over scrim (.solo-over) is only 86% opaque, so a
+            big bright center letter / supply line left mounted here GHOSTS THROUGH it and
+            collides with the death card's title. Gate both to 'playing' exactly like the
+            input, OUT tile, and HUD pills already are (JOB 5 — full-sweep finding 1). */}
+        {phase === 'playing' ? <div className="solo-center">{center}</div> : null}
+        {phase === 'playing' && supply ? <div className="solo-supply">{supply}</div> : null}
       </div>
 
       {/* OUT tile (CHAIN) — a SIBLING of the input, never an ancestor, so it can update
