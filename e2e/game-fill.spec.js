@@ -80,6 +80,41 @@ async function measure(page) {
   });
 }
 
+// FUSE's core mechanic is lighting every letter for a life, so all 26 alphabet tiles MUST be
+// visible and countable — a grid once clipped the 13th tile in each row (m / z vanished). Checked
+// down to 390x844 (phone portrait), where the strip is a single column of its own.
+test.describe('FUSE alphabet strip shows all 26 tiles', () => {
+  for (const { w, h } of [...VIEWPORTS, { w: 390, h: 844 }]) {
+    test(`fuse ${w}x${h}: strip has 26 visible tiles, none past the container`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await enterSolo(page, 'fuse');
+      await page.locator('.solo-strip-big').waitFor({ state: 'visible', timeout: 8000 });
+      const r = await page.evaluate(() => {
+        const strip = document.querySelector('.solo-strip-big');
+        if (!strip) return { err: 'no .solo-strip-big' };
+        const sb = strip.getBoundingClientRect();
+        const cells = [...strip.querySelectorAll('span')];
+        const visible = cells.filter((c) => {
+          const cs = getComputedStyle(c); const b = c.getBoundingClientRect();
+          return cs.display !== 'none' && cs.visibility !== 'hidden' && b.width >= 1 && b.height >= 1;
+        });
+        const past = cells.filter((c) => {
+          const b = c.getBoundingClientRect();
+          return b.right > sb.right + 0.5 || b.left < sb.left - 0.5 || b.bottom > sb.bottom + 0.5;
+        }).map((c) => c.textContent);
+        const letters = cells.map((c) => c.textContent).join('');
+        return { total: cells.length, visible: visible.length, past, letters };
+      });
+      // eslint-disable-next-line no-console
+      console.log(`[strip] fuse ${w}x${h}  tiles=${r.total} visible=${r.visible} past=${JSON.stringify(r.past)}`);
+      expect(r.err, 'strip present').toBeUndefined();
+      expect(r.letters, 'strip is the full a–z').toBe('abcdefghijklmnopqrstuvwxyz');
+      expect(r.visible, `all 26 tiles visible at ${w}x${h}`).toBe(26);
+      expect(r.past, `no tile spills past the strip container at ${w}x${h}`).toEqual([]);
+    });
+  }
+});
+
 for (const id of ['chain', 'fuse']) {
   test.describe(`${id} fills the viewport`, () => {
     for (const { w, h } of VIEWPORTS) {

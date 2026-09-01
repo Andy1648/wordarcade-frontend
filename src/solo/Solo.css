@@ -730,14 +730,21 @@
 .solo-strip-big {
   width: 100%;
   max-width: 520px;
-  display: grid;
-  /* minmax(0,1fr): let the 13 columns shrink below their glyph min-content at 360px so the
-     strip never exceeds (and gets clipped by) the deck. */
-  grid-template-columns: repeat(13, minmax(0, 1fr));
+  /* FLEX-WRAP, not grid: a grid keeps its 13 columns even when subpixel rounding pushes them
+     a hair past the box, and the last one gets clipped (m / z vanished at some zooms). Flex-wrap
+     with tiles sized to (100% − 13·gap)/13 fits 13 per row with a full gap of slack, and if a
+     tile ever can't fit it WRAPS to the next row instead of clipping — so all 26 are always
+     laid out and countable, at every viewport / DPR. */
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
   gap: 4px;
 }
 .solo-strip-big span {
   box-sizing: border-box;
+  flex: 0 0 auto;
+  width: calc((100% - 13 * 4px) / 13);
   min-width: 0;
   aspect-ratio: 1;
   display: flex;
