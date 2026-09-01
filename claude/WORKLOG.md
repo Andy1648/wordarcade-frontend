@@ -1,5 +1,25 @@
 # WORKLOG — 8-hour autonomous run (start 2026-08-29T06:02Z)
 
+## ===== MERGE TO MAIN (2026-09-01, user-directed) — 7 safe branches, full gate after each =====
+main c630b8b → 84e2954. Each merge full-gated (lint 0 / unit 408 / full playwright ~1049, sharded 2×
+to fit the env cap); held branches EXCLUDED (verified 050a88a game-fill-2 + RouteFallback both absent).
+1. fix/fuse-strip        → merge  1f673b1  (e2e 1049/1049)
+2. fix/gameover-pass     → CHERRY-PICK c17dddf only → 49629b1  (normal merge would've dragged the HELD
+                            Tier-1 game-fill-2 that gameover-pass was chained on; cherry-picked the lone
+                            gameover commit instead. e2e 1049 — 3 known corner-click flakes passed isolated)
+3. fix/splash            → merge  d42f3c5  (e2e 1049/1049)
+4. fix/full-sweep-pass   → merge  ff8f739  (SoloShell auto-merged w/ gameover's; e2e 1049/1049)
+5. fix/dialog-cards      → merge  2638977  (e2e 1049 — 2 transient page.goto timeouts passed isolated)
+6. fix/mobile-3          → CORRECTED then committed 10f9cd6. The branch's nowrap+ellipsis+overflow:hidden
+                            CLIPPED "RIVAL"→"RIVA…" at 360px (viewport-integrity clipped-text FAIL, caught
+                            by the full gate). Root cause of "YOU"→"YO/U" is .game-player-name word-break:
+                            break-word; correct fix = nowrap + word-break:normal, NO overflow:hidden.
+                            Superseded the branch approach. e2e ingame-word-bomb 35/35 + full 1049/1049.
+7. fix/copy              → merge  84e2954  (DOCS ONLY — 0 src/e2e; playwright skipped as pointless, ran
+                            lint/unit/build sanity)
+HELD (Tier-1, need Andy's 2-device play-test, NOT merged): feat/game-fill-2, fix/loading-states.
+Also shipped as a branch (NOT merged, for review): fix/name-the-currency (0d6a14b — "the one thing").
+
 - 06:02Z  JOB A START (fix/adversarial-finds): rarity race, HoldBuy setTimeout, level-304 overflow, vacuous perf gate, pink revert
 - 06:09Z  JOB A.1 done (rarity race: underpay 70->60=10 wins fixed; deferred scoring, test proves 70 after resolve). A.2 applying setTimeout HoldBuy.
 - 06:13Z  JOB A.2 setTimeout HoldBuy; A.3 level-exact-to-600 (+migration cap); A.4 vacuous 50ms gate -> pool-integrity ceiling; A.5 pink revert (#ff2ec4->#ff4fa3 in 43 files, #ff2ec4 kept for beat flash only; CLAUDE.md updated).
