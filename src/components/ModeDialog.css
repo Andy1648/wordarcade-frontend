@@ -213,7 +213,12 @@
   border-radius: 10px;
   padding: 6px 12px;
   box-shadow: 4px 4px 0 #000;
-  transform: skewX(-7deg);
+  /* translateY (not margin): the blitz lower block bottom-packs (justify-content:flex-end) and
+     slightly overflows upward, so the badge's top-left corner tucked ~2px under the SOLO/MULTI
+     chip above it — a visible sticker collision. A transform nudge clears it WITHOUT changing the
+     layout box, so the hard-won pack-picker height fit (see the --blitz notes below) is untouched.
+     Margin would have grown the flex column and risked squeezing the picker. (fix/dialog-cards) */
+  transform: skewX(-7deg) translateY(7px);
 }
 .mode-dialog-ai-badge-ai {
   font-size: 26px;
