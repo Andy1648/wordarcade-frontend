@@ -55,7 +55,28 @@ async function measure(page) {
       }
       el = el.parentElement;
     }
-    return { w: r.width, h: r.height, vw: window.innerWidth, vh: window.innerHeight, zoomed };
+    // OVERFLOW: no in-flow element inside .solo-root may spill past the frame's own box.
+    // (This is the guard for the CHAIN input that sat wider than its column.) Decorative art
+    // (aria-hidden / SVG) and viewport-anchored overlays (fixed / the game-over layer) are
+    // exempt — they are intentionally not bounded by the card.
+    const TOL = 1;
+    const over = [];
+    for (const node of root.querySelectorAll('*')) {
+      if (node === root) continue;
+      if (node.getAttribute && node.getAttribute('aria-hidden') === 'true') continue;
+      if (node.namespaceURI === 'http://www.w3.org/2000/svg') continue;
+      const cs = getComputedStyle(node);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity || '1') < 0.01) continue;
+      if (cs.position === 'fixed') continue;
+      if (node.closest('.solo-over, .solo-fx, .solo-lucky')) continue;
+      const b = node.getBoundingClientRect();
+      if (b.width < 1 && b.height < 1) continue;
+      if (b.right > r.right + TOL || b.left < r.left - TOL || b.bottom > r.bottom + TOL || b.top < r.top - TOL) {
+        const cls = (node.className || node.tagName).toString().split(' ')[0];
+        over.push(`${cls} [${Math.round(b.left)},${Math.round(b.right)}] vs root [${Math.round(r.left)},${Math.round(r.right)}]`);
+      }
+    }
+    return { w: r.width, h: r.height, vw: window.innerWidth, vh: window.innerHeight, zoomed, over };
   });
 }
 
@@ -69,8 +90,9 @@ for (const id of ['chain', 'fuse']) {
         const fillW = m.w / m.vw;
         const fillH = m.h / m.vh;
         // eslint-disable-next-line no-console
-        console.log(`[game-fill] ${id} ${w}x${h}  root=${Math.round(m.w)}x${Math.round(m.h)}  fillW=${(fillW * 100).toFixed(1)}%  fillH=${(fillH * 100).toFixed(1)}%  zoomedAncestors=${JSON.stringify(m.zoomed)}`);
+        console.log(`[game-fill] ${id} ${w}x${h}  root=${Math.round(m.w)}x${Math.round(m.h)}  fillW=${(fillW * 100).toFixed(1)}%  fillH=${(fillH * 100).toFixed(1)}%  overflow=${m.over.length}  zoomedAncestors=${JSON.stringify(m.zoomed)}`);
         expect(m.zoomed, `${id} fill must not depend on ancestor zoom at ${w}x${h}`).toEqual([]);
+        expect(m.over, `${id} no element may exceed .solo-root's bounds at ${w}x${h}`).toEqual([]);
         expect(fillW, `${id} .solo-root width fill at ${w}x${h}`).toBeGreaterThanOrEqual(MIN_FILL);
         expect(fillH, `${id} .solo-root height fill at ${w}x${h}`).toBeGreaterThanOrEqual(MIN_FILL);
       });

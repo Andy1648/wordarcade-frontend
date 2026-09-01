@@ -339,7 +339,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       onSubmit={g.onSubmit}
       sillKey={g.sillKey}
       reason={g.reason}
-      placeholder={`start with "${required.toUpperCase()}" — min 3 letters`}
+      placeholder={`start with "${required.toUpperCase()}" · 3+ letters`}
       maxLength={data.maxAcceptLen}
       armHint={ARM_HINT}
       rootRef={rootRef}

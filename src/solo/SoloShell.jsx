@@ -8,7 +8,6 @@
 import { useEffect, useRef } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
-import ComboPill from '../components/ComboPill';
 import { wpmKeyStroke } from '../progress/wpmLive';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
@@ -58,8 +57,6 @@ export default function SoloShell({
   phase,
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
-  comboMult = 1, // live WINS-combo multiplier for the HUD readout
-  comboBreaks = 0, // break counter — re-keys the pill's finite shake on a real reset
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
@@ -83,17 +80,18 @@ export default function SoloShell({
         ✕
       </button>
 
-      {/* HUD cluster: the stat row + the live wins/combo/wpm pills. The pills are the
-          SHARED components (Word Bomb / Blitz / SAT), but here they JOIN the in-card HUD
-          cluster instead of floating fixed in the viewport's top-right corner — that
-          corner sits OUTSIDE this bounded card (NO ORPHAN FIXED UI). Positioning is
-          neutralised to static by `.solo-root` scope in Solo.css. */}
-      <div className="solo-hudwrap">
-        <div className="solo-hud">{hud}</div>
+      {/* ONE HUD row: the mode stats (score/mult/links | words/lives) + the wins-earned state,
+          all in a single readable line inside the card (NO ORPHAN FIXED UI — the shared wins
+          pill is re-homed here from its fixed viewport corner, positioning neutralised to static
+          by `.solo-root` scope in Solo.css). The WIN-COMBO ×N chip and the WPM chip were REMOVED
+          from the solo HUD: a second "×N" eight pixels from the score multiplier read as a
+          duplicate, and the combo's effect already shows in the +N WINS figure (showWpm={false}
+          drops WPM too). Now there is exactly one multiplier on the row. */}
+      <div className="solo-hud">
+        {hud}
         {phase === 'playing' && (
-          <div className="solo-hud-extra">
-            <WinsHudPill amount={winsTally} words={winsWords} />
-            <ComboPill mult={comboMult} breaks={comboBreaks} />
+          <div className="solo-hud-wins">
+            <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
           </div>
         )}
       </div>

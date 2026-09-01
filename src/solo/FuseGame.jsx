@@ -257,7 +257,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       onSubmit={g.onSubmit}
       sillKey={g.sillKey}
       reason={g.reason}
-      placeholder={`type a word with "${(s.fragment || '').toUpperCase()}" in it`}
+      placeholder={`any word containing "${(s.fragment || '').toUpperCase()}"`}
       maxLength={data.maxAcceptLen}
       armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
       phase={g.phase}
