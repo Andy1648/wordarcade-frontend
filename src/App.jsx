@@ -53,6 +53,7 @@ import { CG_ENTRY, cgRoomReady, isCoarsePointer } from './cg/cgEntry';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useOverlays } from './hooks/useOverlays';
 import { useRoom } from './hooks/useRoom';
+import { useProgressionEvents } from './hooks/useProgressionEvents';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
@@ -83,7 +84,6 @@ import { noteWord, noteSession, noteLucky } from './progress/records';
 import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
 import {
-  loadDailyState,
   saveDailyState,
   recordDailyResult,
   resolveDailyScore,
@@ -331,7 +331,7 @@ function App() {
   // True while the in-progress game is a Daily Challenge run (learned from
   // game_started.daily). Drives the mid-daily LEAVE confirmation so a stray tap
   // can't silently forfeit the day's attempt.
-  const [isDailyGame, setIsDailyGame] = useState(false);
+  // (isDailyGame moved into hooks/useProgressionEvents.js — refactor/app-split step 3.)
   const [confirmLeaveDaily, setConfirmLeaveDaily] = useState(false);
   // Which mode the in-progress game is - 'word-bomb' | 'category-blitz'.
   // Learned authoritatively from the game_started message so GameScreen
@@ -460,18 +460,8 @@ function App() {
   const rerollKeyRef = useRef(0);
 
   // ---- Daily Challenge (solo Category Blitz on the server's date-seeded board) ----
-  // dailyState: the persisted streak history (localStorage). dailyResult: the
-  // just-finished daily's { dayNumber, streak, bestStreak, score } for the
-  // results screen + share text; null while no completed daily is on screen.
-  // dailyStateRef mirrors dailyState for the WS drain effect (keyed only on
-  // [messages], so reading the state there would be stale — same pattern as
-  // playerCountRef below).
-  const [dailyState, setDailyState] = useState(() => loadDailyState());
-  const [dailyResult, setDailyResult] = useState(null);
-  const dailyStateRef = useRef(dailyState);
-  useEffect(() => {
-    dailyStateRef.current = dailyState;
-  }, [dailyState]);
+  // (dailyState + dailyResult + dailyStateRef + the ref-sync effect moved into
+  // hooks/useProgressionEvents.js — refactor/app-split step 3.)
 
   // Session presence: refresh the last-seen stamp on load and again on
   // pagehide/beforeunload, so the intro's 30-minute session boundary measures
@@ -596,6 +586,18 @@ function App() {
     handleCreatePublicFromBrowser,
     handleLeaveRoom,
   } = useRoom({ send, setView, setPlayerName, goHome });
+
+  // Daily-Challenge progression state (refactor/app-split step 3). The drain (App), goHome and
+  // handleLeaveRequest/handleStartDaily call these setters and read dailyStateRef — unchanged.
+  const {
+    isDailyGame,
+    setIsDailyGame,
+    dailyState,
+    setDailyState,
+    dailyResult,
+    setDailyResult,
+    dailyStateRef,
+  } = useProgressionEvents();
 
   // The bomb-fuse loading screen is the very first thing shown; it holds until
   // the socket connects (then "explodes" and hands off), at which point the
