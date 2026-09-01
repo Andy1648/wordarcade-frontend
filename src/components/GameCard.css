@@ -375,7 +375,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   white-space: pre-line;
   /* Scales with the CARD width (cqw) so a long name never clips its bar (viewport-
      integrity (b)/(c)); the max keeps big screens from over-scaling the wordmark. */
-  font-size: clamp(20px, 13cqw, 40px);
+  /* min lowered 20→15 so the title stays PROPORTIONAL on a small card instead of hitting a
+     fixed floor that would balloon the title bar over the scene (feat/cards-live). */
+  font-size: clamp(15px, 13cqw, 40px);
   color: #fff;
   -webkit-text-stroke: 2.5px #000;
   paint-order: stroke fill;

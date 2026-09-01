@@ -700,10 +700,17 @@ html[data-beat='true'] .homepage-logo {
 
 /* ---- Responsive ---- */
 
-/* Five portrait columns stay in ONE row down to 760px. A 3-col mid-band was tried but
-   wrapped to TWO rows, which on a SHORT-height mid-width viewport (e.g. 1024×600) made the
-   content column taller than one screen even at the min fit-scale — one row keeps the menu
-   on one screen. The columns narrow gracefully; below 760 it collapses to one column. */
+/* Mid widths (901-1100px): five 3:4 columns get too NARROW (~130px cards), where the scene +
+   title bar no longer read — drop to three so the cards stay big enough to show the whole
+   composition (matching the prototype, which also sheds columns as it narrows). */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .homepage-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* 761-900px: two columns, so the cards stay large. The extra rows wrap and the region scrolls
+   internally (the page never grows). */
+@media (min-width: 761px) and (max-width: 900px) {
+  .homepage-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* Below ~760px the portrait cards no longer fit across, so collapse to a single
    full-width column (the card region scrolls internally — block below). */
