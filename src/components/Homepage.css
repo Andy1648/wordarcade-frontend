@@ -699,6 +699,22 @@ html[data-beat='true'] .homepage-logo {
   color: #000;
 }
 
+/* ---- SHORT-HEIGHT RECLAIM (feat/cards-live) --------------------------------------------
+   On a short laptop (≤600px tall, e.g. 1163×501) the wordmark + XP cluster + footer ate ~250px
+   of the 501, leaving ~117px cards. Reclaim vertical space for the cards: shrink the wordmark
+   hard, fold away the WPM reserve and the NEXT-unlock teaser (both non-essential on a short
+   screen — they return ≥600px), and tighten the footer + section gaps. Cards then measure
+   ~170px+ wide at 1163×501 (target ≥160). */
+@media (max-height: 600px) {
+  .homepage-stage { row-gap: clamp(18px, 2.4vh, 24px); }
+  .homepage-logo { font-size: clamp(22px, 5.4vh, 34px); }
+  .menu-xp-cluster { gap: 3px; }
+  .menu-wpm { display: none; }
+  .menu-next-unlock { display: none; }
+  .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
+  .homepage-footer-links { margin-top: 0; }
+}
+
 /* ---- Responsive ---- */
 
 /* The column count and card size are computed in Homepage.jsx from the available height at ALL

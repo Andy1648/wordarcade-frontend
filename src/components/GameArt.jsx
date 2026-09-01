@@ -85,13 +85,14 @@ export function WordBombArt() {
       <rect width="300" height="400" fill="#FF6B3D" />
       {pinwheel(238, 74, 580, 22, '#E4531F', 0.6, 'pw')}
       <g opacity="0.8">{rays(238, 74, 26, 560, 16, '#FFB347', 4, 0.2)}</g>
-      {/* bomb cratering the bottom-left, overlapping the blast base */}
-      <circle cx="112" cy="372" r="146" fill="#2E1432" stroke="#150818" strokeWidth="8" />
-      <path d="M112 372 m-146 0 a146 146 0 0 1 136 -145 l0 30 a116 116 0 0 0 -104 115 z" fill="#3E1C46" />
-      <ellipse cx="70" cy="300" rx="34" ry="22" fill="#5A2A60" />
-      <rect x="92" y="238" width="48" height="26" rx="4" fill="#5A4A2A" stroke="#2A2010" strokeWidth="5" />
+      {/* bomb — raised so its dome reads ABOVE the title bar even on a small card (the bar
+         cannot cover it); still craters the bottom-left, overlapping the blast base */}
+      <circle cx="112" cy="318" r="146" fill="#2E1432" stroke="#150818" strokeWidth="8" />
+      <path d="M112 318 m-146 0 a146 146 0 0 1 136 -145 l0 30 a116 116 0 0 0 -104 115 z" fill="#3E1C46" />
+      <ellipse cx="70" cy="246" rx="34" ry="22" fill="#5A2A60" />
+      <rect x="92" y="184" width="48" height="26" rx="4" fill="#5A4A2A" stroke="#2A2010" strokeWidth="5" />
       {/* fuse arcs from the bomb up to the spark */}
-      <path d="M116 238 Q186 150 232 78" fill="none" stroke="#3A2A10" strokeWidth="9" strokeLinecap="round" />
+      <path d="M116 184 Q182 120 232 78" fill="none" stroke="#3A2A10" strokeWidth="9" strokeLinecap="round" />
       {/* W O R D tiles climbing the blast axis */}
       {tiles.map(([x, y, l, r]) => (
         <g key={l} transform={`translate(${x} ${y}) rotate(${r})`}>
@@ -166,7 +167,9 @@ export function SatRushArt() {
       <g stroke="#111" strokeLinecap="round">{speed}</g>
       <path d="M0 0 H120 L0 120 Z" fill="url(#srt3)" />
       <path d="M300 400 H196 L300 296 Z" fill="url(#srt3)" />
-      <text x="150" y="150" fontSize="82" fontWeight="bold" fill="#A855F7" stroke="#111" strokeWidth="3" textAnchor="middle" fontFamily={BUNGEE}>5×</text>
+      {/* the 5× multiplier sits LOW in the scene zone (below the masthead band's divider) so it
+         reads as one hero, never bisected by the rule even on a small card */}
+      <text x="150" y="198" fontSize="78" fontWeight="bold" fill="#A855F7" stroke="#111" strokeWidth="3" textAnchor="middle" fontFamily={BUNGEE}>5×</text>
       {tiles.map(([l, x]) => (
         <g key={l}>
           <rect x={x - 30} y="252" width="60" height="80" rx="3" fill="#F2EFE7" stroke="#111" strokeWidth="6" />
