@@ -509,6 +509,14 @@
    on #2a1450. */
 .game-player-name-text {
   color: var(--pc, #fff);
+  /* In the narrow player card the name shared its flex row with the dot, the YOU badge and
+     the hearts, so a 3-letter name like "YOU" wrapped to two lines ("YO / U") on phones.
+     Shrink + single-line-ellipsis instead of wrapping (min-width:0 lets the flex item shrink
+     below content width so text-overflow can engage). fix/mobile-3. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* On the active player's orange card (and the win badge), keep the name dark for
