@@ -36,3 +36,31 @@
 - 2026-09-01T08:13Z  BRANCH STRATEGY UPDATE: JOBs 1-3 (game-fill/gameover) were interdependent → chained. INDEPENDENT mergeable jobs (splash, save-schema, router, error-boundaries, etc.) now branch off MAIN for clean isolated diffs (chaining would bundle the Tier-1 game-fill-2 into a mergeable branch = footgun). WORKLOG carried forward onto each new branch via `git checkout <prev> -- claude/WORKLOG.md`.
 - 2026-09-01T08:13Z  JOB 10 START (fix/splash off main): redesign the splash — strongest screen in the app. Screenshot before/after, BE-PICKY.
 - 2026-09-01T08:21Z  JOB 10 DONE-impl (fix/splash): restored bomb mascot hero, crisped starburst (0.12->0.62 + black stroke), darkened wall veil. Splash now a comic hero screen. Shots splash/shots/. Running gate.
+
+## ===== RESUME STATE (2026-09-01, long autonomous run) =====
+DONE this session (each gated green lint/unit/e2e, pushed + verified via git ls-remote):
+- JOB 1  fix/fuse-strip      (a704888) — FUSE 26-tile strip, flex-wrap; game-fill strip gate.
+- JOB 2  feat/game-fill-2    (51b89bc) — WB/BLITZ/SAT fill 88-91%% width, no overflow. TIER-1 branch-only.
+- JOB 3  fix/gameover-pass   (45a552d) — WB sticky actions, SAT results fit, CHAIN/FUSE death mascot.
+- JOB 10 fix/splash          (f6d9015, gate running) — mascot hero + crisp burst + darker wall.
+
+BRANCH RULE: JOBs 1-3 chained (interdependent game-fill work). JOB 10+ branch off MAIN (independent,
+mergeable) with WORKLOG carried forward via `git checkout <prev> -- claude/WORKLOG.md`.
+Reports: claude/{game-fill-2,gameover-pass,splash}-report.md + claude/game-fill-2 shots dirs.
+
+NEXT (unstarted, in the queue — pick highest value, one at a time, gate+push+log each):
+  JOB 4 chore/full-sweep (REPORT: contact sheets + rank every screen), JOB 5 fix/full-sweep-pass,
+  JOB 6 chore/sim-gap (REPORT), JOB 7 chore/stranger-2 (REPORT), JOB 8 fix/dialog-cards,
+  JOB 9 chore/wb-blitz-look (REPORT), JOB 11 chore/micro (REPORT), JOB 12 chore/wallscene (REPORT),
+  JOB 13 fix/loading-states, JOB 14 fix/mobile-3, JOB 15 perf/after-art (REPORT), JOB 16 fix/copy,
+  JOB 17 chore/final-eye (REPORT), JOB 18 chore/playthrough-2 (REPORT), JOB 19 chore/one-thing (REPORT),
+  JOB 20 refactor/app-split (TIER-1; plan at claude/app-split-plan.md — do useOverlays first),
+  JOB 21 feat/save-schema, JOB 22 feat/router, JOB 23 fix/error-boundaries, JOB 24 feat/offline,
+  JOB 25 feat/analytics, JOB 26 feat/optimistic-input (TIER-1), JOB 27 feat/reconnect (TIER-1),
+  JOB 28 feat/bot-feel, JOB 29 feat/daily-seed, JOB 30 backend data/accept-lists-5 (other repo).
+  Then claude/BACKLOG.md in value order.
+
+GATE = `npm run lint && npm run test && npx playwright test` (NOT npm ci — it corrupted node_modules
+before). 2 menu corner-click e2e tests are known-flaky (pass on rerun). Preview server crashes if you
+rebuild while it serves — kill it before `vite build`, or let Playwright's webServer manage its own.
+- 2026-09-01T08:38Z  JOB 10 DONE (fix/splash f6d9015, pushing): gate lint 0 / unit 408 / e2e 1031/1033 (2 flaky economy tests rarity-race+purchase-feel-shop, pass 5/5 isolated, unrelated to splash).
