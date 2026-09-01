@@ -23,7 +23,11 @@
   /* Fill exactly ONE viewport regardless of the --app-scale zoom: the zoom on
      .view-screen multiplies heights, so a plain 100vh here renders as 100vh*scale
      and overflows into a vertical scroll on wide monitors. Dividing by the scale
-     makes the rendered fill exactly one screen (matches the menu's one-screen fit). */
+     makes the rendered fill exactly one screen (matches the menu's one-screen fit).
+     (Word Bomb / Blitz KEEP the --app-scale zoom: their tall multi-element stage —
+     player bars + bomb + combo + used-words + input — cannot fit a 551px-high window
+     without it, and they are Tier-1 live multiplayer. Only the solo modes CHAIN/FUSE are
+     exempt from the zoom (App.jsx / fix/game-fill); SAT Rush keeps it too.) */
   min-height: calc(100vh / var(--app-scale, 1));
   display: flex;
   /* Center the stage vertically within the one-screen fill so a stage shorter

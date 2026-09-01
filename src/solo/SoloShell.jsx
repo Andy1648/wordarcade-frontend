@@ -98,6 +98,11 @@ export default function SoloShell({
         )}
       </div>
 
+      {/* BODY — one column on narrow/portrait screens, two columns on wide-aspect ones so
+          the composition fills the width and needs less height (the same move that lets the
+          card fill wide-short viewports instead of sitting in a narrow centred strip). */}
+      <div className="solo-body">
+      <div className="solo-primary">
       <div className="solo-stage">
         {/* Per-mode static backdrop motif. A SIBLING of the stage content and of the
             input's chain (the input lives outside .solo-stage), so it can never touch
@@ -111,7 +116,9 @@ export default function SoloShell({
       {/* OUT tile (CHAIN) — a SIBLING of the input, never an ancestor, so it can update
           on every keystroke without ever animating the input or its container. */}
       {phase === 'playing' && outTile ? outTile : null}
+      </div>{/* .solo-primary */}
 
+      <div className="solo-secondary">
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit}>
           <input
@@ -155,6 +162,8 @@ export default function SoloShell({
           {deck}
         </div>
       ) : null}
+      </div>{/* .solo-secondary */}
+      </div>{/* .solo-body */}
 
       {phase === 'over' ? (
         <div className="solo-over">

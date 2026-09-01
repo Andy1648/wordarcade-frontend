@@ -2198,7 +2198,7 @@ function App() {
               // gap, credited XP, and never reached the button. Removing the zoom property entirely
               // (rather than overriding it) leaves no zoom to misbehave: visual == hit-test on every
               // browser. GAME views keep the zoom via `.view-screen.app-scaled`.
-              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' ? '' : ' app-scaled'}`}
+              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). Fallback is null: chunks are idle-prefetched after

@@ -13,11 +13,15 @@
   position: relative;
   z-index: 40;
   width: 100%;
-  max-width: min(94vw, 760px);
+  /* FILL THE VIEWPORT like the menu stage (fix/game-fill). Was min(94vw, 760px) — which, under
+     the old --app-scale zoom, rendered a ~36% column at short heights. Solo is now EXEMPT from
+     that ancestor zoom (App.jsx), so the frame sizes straight to the window; the height calc no
+     longer divides by --app-scale (there is no zoom to compensate for). */
+  max-width: min(96vw, 1900px);
   margin: auto;
   box-sizing: border-box;
-  min-height: calc((100dvh - 48px) / var(--app-scale, 1));
-  max-height: calc((100dvh - 20px) / var(--app-scale, 1));
+  min-height: calc(100dvh - 24px);
+  max-height: calc(100dvh - 16px);
   background: #1a0b2e;
   border: 4px solid #000;
   box-shadow: 7px 7px 0 #000;
@@ -27,8 +31,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 20px;
-  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  gap: clamp(10px, 1.8vh, 22px);
+  padding: clamp(14px, 2.2vh, 26px) clamp(16px, 2.4vw, 40px)
+    calc(clamp(14px, 2.2vh, 26px) + env(safe-area-inset-bottom));
   font-family: 'Space Mono', monospace;
   overflow: hidden;
 }
@@ -188,10 +193,12 @@
   /* The hero token stays far above the 44px floor, but a vh term (min) shrinks it on
      SHORT laptops so the column keeps >=24px slack there. Phones keep 14vw (unchanged).
      Static font-size — the tier escalation stays a transform: scale() elsewhere. */
-  font-size: clamp(44px, min(14vw, 14vh), 76px);
+  /* Breathe: the gated solo hero grows on big screens (was capped at 76px). vw/vh-bounded
+     so it never overflows a short window. */
+  font-size: clamp(56px, min(16vw, 30vh), 240px);
   line-height: 1;
   color: var(--solo-accent);
-  -webkit-text-stroke: 6px #000;
+  -webkit-text-stroke: clamp(6px, 1vmin, 11px) #000;
   paint-order: stroke fill;
   text-transform: uppercase;
   text-align: center;
@@ -311,16 +318,16 @@
 .solo-inputwrap {
   position: relative;
   width: 100%;
-  max-width: 560px;
+  max-width: min(680px, 100%);
 }
 .solo-input {
   width: 100%;
-  height: 56px;
+  height: clamp(56px, 8vh, 78px);
   font-family: 'Space Mono', monospace;
   /* >=28px input target at >=1366px wide; 20px on phones (min). The fixed 56px height
      means this bump costs no vertical space. Static font-size only — this element keeps
      NO transition/animation/transform/filter/will-change (nor any ancestor up to .solo-root). */
-  font-size: clamp(20px, 2.1vw, 28px);
+  font-size: clamp(20px, 2vw, 34px);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -520,7 +527,68 @@
   box-shadow: 3px 3px 0 #000;
 }
 
-/* ===== LOWER DECK — fills the lower half of the card (shared shell) ================== */
+/* ===== BODY layout — column on narrow, two columns (landscape) on wide-aspect =========
+   The two-column split at wide aspect is what lets the card FILL the width and need LESS
+   height, so wide-short viewports (1280x551, 1568x675) fill instead of shrinking to a strip.
+   On phones / portrait it stays a single column (unchanged). */
+.solo-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.8vh, 22px);
+}
+.solo-primary,
+.solo-secondary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+.solo-primary {
+  gap: clamp(10px, 1.4vh, 16px);
+  justify-content: center;
+}
+.solo-secondary {
+  gap: clamp(10px, 1.8vh, 20px);
+  flex: 1 1 auto;
+}
+@media (min-width: 900px) and (min-aspect-ratio: 13/10) {
+  .solo-body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(24px, 3vw, 64px);
+  }
+  .solo-primary,
+  .solo-secondary {
+    flex: 1 1 0;
+    width: auto;
+    height: 100%;
+    justify-content: center;
+  }
+  /* Bound each column so the pair reads as a centred landscape composition on ultra-wide
+     frames (rather than the two halves splaying to the far edges with a void between). */
+  .solo-primary {
+    max-width: 620px;
+  }
+  .solo-secondary {
+    max-width: 860px;
+  }
+}
+
+/* ===== BREATHE — content scales up with the (now viewport-filling) frame ============= */
+/* Clock ring: was a fixed 120px svg; grow it with the viewport (vmin so it tracks the
+   smaller axis and never overflows a short window). */
+.solo-clock {
+  width: clamp(120px, 24vmin, 300px);
+  height: auto;
+}
 .solo-deck {
   position: relative;
   flex: 1 1 auto;
@@ -584,7 +652,7 @@
   position: relative;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(15px, 1.9vw, 22px);
+  font-size: clamp(15px, 1.6vw, 28px);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
