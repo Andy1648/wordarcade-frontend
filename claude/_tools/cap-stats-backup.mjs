@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+import { installBackendMock } from '../../e2e/support/backendMock.js';
+const b = await chromium.launch();
+const ctx = await b.newContext({ baseURL:'http://localhost:4173', viewport:{width:390,height:844}, deviceScaleFactor:2 });
+const p = await ctx.newPage(); await installBackendMock(p);
+await p.goto('/?portal=1'); await p.getByRole('img',{name:'Type a Word'}).waitFor();
+await p.locator('.homepage-nav-btn.is-stats').click(); await p.locator('.stats-overlay').waitFor(); await p.waitForTimeout(400);
+await p.locator('.stats-backup').scrollIntoViewIfNeeded(); await p.waitForTimeout(200);
+await p.locator('.stats-panel').screenshot({ path:'claude/save-export-shots/stats-backup.png' });
+console.log('copy btn:', await p.locator('.stats-backup-copy').isVisible(), '| restore btn:', await p.locator('.stats-backup-restore').isVisible(), '| input:', await p.locator('.stats-backup-input').isVisible());
+await b.close();
