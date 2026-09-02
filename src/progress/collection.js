@@ -9,7 +9,7 @@
 // The set is capped at 5,000 with LRU eviction (least-recently-SEEN word drops when a new word
 // arrives at the cap). NEVER stores or shows a word the player hasn't personally typed.
 import { grantWins } from './wins.js';
-import { rebirthMult, getRebirths } from './xp.js';
+import { rebirthScaledWins } from './xp.js';
 
 export const COLLECTION_KEY = 'taw.collection';
 export const COLLECTION_CAP = 5000;
@@ -133,7 +133,7 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
   for (const m of COLLECTION_MILESTONES) {
     if (count >= m.n && !data.ms.includes(m.n)) {
       data.ms.push(m.n);
-      const granted = Math.round(m.wins * rebirthMult(getRebirths()));
+      const granted = rebirthScaledWins(m.wins);
       grantWins(granted);
       milestone = { n: m.n, wins: granted };
       break; // one milestone per word (count rose by 1)

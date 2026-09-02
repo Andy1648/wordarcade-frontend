@@ -84,3 +84,41 @@ GATE = `npm run lint && npm run test && npx playwright test` (NOT npm ci — it 
 before). 2 menu corner-click e2e tests are known-flaky (pass on rerun). Preview server crashes if you
 rebuild while it serves — kill it before `vite build`, or let Playwright's webServer manage its own.
 - 2026-09-01T08:38Z  JOB 10 DONE (fix/splash f6d9015, pushing): gate lint 0 / unit 408 / e2e 1031/1033 (2 flaky economy tests rarity-race+purchase-feel-shop, pass 5/5 isolated, unrelated to splash).
+
+## ===== 12-HOUR RUN part 1 of 4 (start 2026-09-02) — JOBS 1-5 =====
+NOTE: parts 2,3,4 of this run arrived as UNFILLED TEMPLATES ("[paste JOBS 6-20...]") with only
+branch-name hints and a false "earlier session finished jobs 1-N" premise (no such session in this
+WORKLOG). Jobs 6-20 have NO specs and are NOT actionable — awaiting the user pasting real specs.
+Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merge main, never deploy.
+- 2026-09-02  JOB 1 START (integration/all-held off origin/main cd7d2a5): merge 9 held branches in
+  order card-polish->logic-and-onboarding->logic-pass->optimistic-input->reconnect->router->offline
+  ->game-fill-2->loading-states, resolving conflicts; lint+unit(+relevant specs) after each; then PLAYTEST.md.
+- 2026-09-02  JOB 1 DONE (integration/all-held): merged 8 of 9 held branches; PLAYTEST.md written.
+  ORDER + GATE (lint 0 err / unit 428 throughout):
+    1-3 card-polish->logic-and-onboarding->logic-pass (linear stack, conflict-free) — lint/unit.
+    4 optimistic-input — auto-merged GameScreen.jsx clean; e2e word-bomb-scoring+cold-submit 6/6.
+    5 reconnect — App.jsx +145 clean; e2e websocket-boundary+server-waking 4/4.
+    6 offline — vite.config PWA + App.jsx clean; build exit0, SW/workbox/manifest generated.
+    7 game-fill-2 — GameScreen/App/CSS auto-merged clean; e2e game-fill+viewport-integrity+parity 663 pass exit0 (16min, slow under audit contention but green).
+    8 loading-states — App.jsx clean; e2e server-waking 1/1.
+  Only conflicts were claude/WORKLOG.md every time (prior per-branch carry-forward) — resolved --ours.
+  TIER-1 App.jsx/WS traps VERIFIED intact post-merge: functional setView room guard (App.jsx:902,
+    superset form `prev==='game'||prev==='cg-arm'`), FIFO queue in useWebSocket.js, WB instant
+    local-reject (GameScreen.jsx:2538-2546 + App.jsx onLocalWordResult). 0 conflict markers in src.
+  EXCLUDED feat/router (BEHAVIOURAL, left out per rails): its OWN e2e router.spec.js is RED in
+    isolation (e12bde0) — 7/11 fail. Clean-URL /sat-rush,/chain,/fuse AND legacy ?satrush=1/?chain=1/
+    ?fuse=1 all render data-view='home' not the mode. Since the legacy query path (no URL bridge) also
+    fails, the bug is in the launch/flag gate, not the router bridge — likely the satRush(capital)
+    dev-flag gate vs LAUNCH_INTENT.satrush(lowercase). NOT a merge conflict (fails on the branch
+    alone). Needs an on-branch fix before it can join; sitemap.xml/vercel.json/share-links ride with it.
+- 2026-09-02  JOB 2 (audits, subagents ≤2 concurrent): economy DONE (claude/audit-economy.md) —
+  1.54x mode spread holds, but HIGH (survived refutation): Word Sense rarity factor
+  wordSenseWinsFactor=1+(rarity-1)(2.5^tier-1) is UNCAPPED + applied OUTSIDE the x40 cap, reopening
+  the spread to 4.4x(W1)->40.8x(W5) favoring SAT Rush; dead stretches <9h/archetype (stale
+  archetype200h-sim claiming 165h is obsolete/pre-parity); Collection hard-caps mono-SAT at 612;
+  Momentum maxes inside 200h. copy + a11y RUNNING; mobile QUEUED (runs after a11y frees its server).
+  CONTENTION LESSON: only ONE server-using audit at a time; light grep audit can overlap.
+- 2026-09-02  JOB 4 docs drafted (untracked, will commit on promo/assets): crazygames-submission.md,
+  itch-submission.md, portal-checklist.md. ?cg=1 path verified INTACT statically (cgEntry.js +
+  App.jsx cg-arm/guarded setView). Cover art DATED (og-image.png Jun24 predates card redesign) —
+  regen needs live render, deferred+documented. Poki/GD SDKs NOT integrated — documented as tasks.

@@ -1,0 +1,18 @@
+/* RouteFallback — minimal centered loader for a slow route-chunk fetch. Static (no idle
+   animation, per the animation budget); fills the screen area on the app's dark ground. */
+.route-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0618;
+}
+.route-fallback-label {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(18px, 4vw, 26px);
+  letter-spacing: 0.08em;
+  color: #2effe0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}

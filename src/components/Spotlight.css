@@ -1,0 +1,106 @@
+/* Spotlight.css — first-run coach mark (fix/logic-and-onboarding).
+   The whole layer is pointer-events:none so it can never block the first input. Static:
+   no idle loop; one gentle pop of the caption on appear (finite, transform/opacity only). */
+.spotlight-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200; /* above menu/game chrome, below nothing it needs to block */
+  pointer-events: none;
+  font-family: 'Bungee', cursive;
+}
+
+/* The bright hole: a transparent box over the target whose huge box-shadow SPREAD dims the
+   rest of the screen. A yellow keyline rings the target. box-shadow is static (no blur beyond
+   the dim wash), transform/opacity only for the appear. */
+.spotlight-hole {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow: 0 0 0 100vmax rgba(6, 3, 12, 0.76);
+  outline: 3px solid #ffe94a;
+  outline-offset: 2px;
+  animation: spotlight-in 220ms ease-out both;
+}
+.spotlight-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 3, 12, 0.76);
+  animation: spotlight-in 220ms ease-out both;
+}
+
+.spotlight-caption {
+  position: fixed;
+  /* left/top are set inline in px (anchored to the ring). The 50% here is only the fallback
+     for the no-target centred variant below; the inline left overrides it when a target exists. */
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  animation: spotlight-pop 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.spotlight-caption.is-centered {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.spotlight-caption-text {
+  font-size: clamp(20px, 4.4vw, 30px);
+  color: #ffe94a;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #000;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  /* Keep the headline on ONE line so the caption is short enough to sit in the gap below the
+     ring (a wrapped 2-line caption was what overran onto the game cards). width:max-content on
+     the wrapper lets it size to this line; max-width:92vw is the only wrap fallback. */
+  white-space: nowrap;
+}
+.spotlight-caption-sub {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(11px, 2.4vw, 14px);
+  letter-spacing: 0.12em;
+  color: #2effe0;
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* COMPACT (short viewports): a laptop under ~600px tall sandwiches the ring between the wordmark
+   and the cards with room for the full (headline + sub) caption on NEITHER side. Drop the sub and
+   shrink the headline to a single short line so the coach mark fits the gap BELOW the ring and
+   never prints across the ring it points at. Height-driven in CSS (not toggled from JS), so the
+   placement pass simply measures whatever size the caption is. */
+@media (max-height: 600px) {
+  .spotlight-caption-sub {
+    display: none;
+  }
+  .spotlight-caption-text {
+    font-size: clamp(15px, 2.4vw, 20px);
+    -webkit-text-stroke-width: 2px;
+    text-shadow: 3px 3px 0 #000;
+  }
+}
+
+@keyframes spotlight-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spotlight-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+/* centred variant keeps its translate on both axes through the pop */
+.spotlight-caption.is-centered { animation-name: spotlight-pop-centered; }
+@keyframes spotlight-pop-centered {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-hole,
+  .spotlight-dim,
+  .spotlight-caption { animation: none; }
+}

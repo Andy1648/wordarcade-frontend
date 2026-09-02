@@ -19,6 +19,7 @@ import {
   PER_WORD_MULT_CAP,
   rebirthThreshold,
   rebirthMult,
+  rebirthScaledWins,
   canRebirth,
   doRebirth,
   getRebirths,
@@ -209,6 +210,23 @@ test('the XP stack (single source): key tier × mode × rebirth', () => {
   assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 270);
   // tier 4 (375 XP/letter) at menu R0, snapped ×10 → 380.
   assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0 }), round10(375));
+});
+
+test('xpPerInput applies pop/sound/streak multipliers (Stats MENU XP / LETTER must match the pop)', () => {
+  // The Stats readout now calls xpPerInput with the equipped cosmetic mults, so cosmetics and
+  // streak MUST feed the number — the old base×rebirth omitted them and under-reported.
+  const base = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, streakMult: 1 }); // 60
+  assert.equal(base, 60);
+  // A PRISM pop (×1.25) must lift it above base, snapped ×10.
+  assert.equal(
+    xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.25, streakMult: 1 }),
+    round10(60 * 1.25),
+  );
+  // pop × sound × streak all stack.
+  assert.equal(
+    xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.1, soundMult: 1.1, streakMult: 1.2 }),
+    round10(60 * 1.1 * 1.1 * 1.2),
+  );
 });
 
 test('rebirth gate table: R1 LV15 … R20 LV600, then +50 levels per rebirth', () => {
@@ -425,4 +443,13 @@ test('levelFromXp caps instead of overflowing on a huge legacy value', () => {
   const r = levelFromXp(1e300);
   assert.ok(Number.isFinite(r.level) && r.level >= 1, 'level finite');
   assert.ok(Number.isFinite(r.frac) && r.frac >= 0 && r.frac <= 1, 'frac in [0,1]');
+});
+
+test('rebirthScaledWins = the amount actually PAID (Collection/Achievement quotes must match)', () => {
+  // R0 pays the base; a rebirthed player is paid (and now shown) base × the rebirth multiplier.
+  assert.equal(rebirthScaledWins(5000, 0), 5000);
+  assert.equal(rebirthScaledWins(5000, 1), Math.round(5000 * rebirthMult(1))); // 7500 at ×1.5
+  assert.equal(rebirthScaledWins(5000, 1), 7500);
+  // Guarded input.
+  assert.equal(rebirthScaledWins(undefined, 0), 0);
 });

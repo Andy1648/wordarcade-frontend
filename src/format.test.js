@@ -2,7 +2,7 @@
 // K/M/B/T abbreviation, never more than 5 chars before the suffix.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatNum } from './format.js';
+import { formatNum, plural } from './format.js';
 
 test('below 10,000 reads in full with grouping', () => {
   assert.equal(formatNum(0), '0');
@@ -35,4 +35,13 @@ test('Economy v4 big tiers: rebirth multipliers and huge XP stay compact (up to 
 test('non-finite input degrades to 0', () => {
   assert.equal(formatNum(NaN), '0');
   assert.equal(formatNum(undefined), '0');
+});
+
+test('plural: singular at exactly 1, plural otherwise (Blitz opponent rail said "1 answers")', () => {
+  assert.equal(plural(1, 'answer'), '1 answer');
+  assert.equal(plural(0, 'answer'), '0 answers');
+  assert.equal(plural(2, 'answer'), '2 answers');
+  assert.equal(plural(1, 'life', 'lives'), '1 life');
+  assert.equal(plural(3, 'life', 'lives'), '3 lives');
+  assert.equal(plural(NaN, 'answer'), '0 answers'); // guarded
 });

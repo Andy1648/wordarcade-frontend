@@ -249,7 +249,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       hud={hud}
       center={(s.fragment || '').toUpperCase()}
       motif={FUSE_MOTIF}
-      supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — next fuse ×0.8</span> : null}
+      supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — fuse ×{s.shortFactor}</span> : null}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
       deck={fuseDeck}
       input={g.input}
@@ -260,6 +260,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       placeholder={`any word containing "${(s.fragment || '').toUpperCase()}"`}
       maxLength={data.maxAcceptLen}
       armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
+      firstRunRule="USE THE FRAGMENT IN A WORD"
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}

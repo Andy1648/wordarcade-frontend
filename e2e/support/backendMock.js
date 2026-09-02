@@ -121,6 +121,20 @@ export async function installBackendMock(page, opts = {}) {
     pushToClient: (frame) => {
       for (const ws of state.routes) ws.send(JSON.stringify(frame));
     },
+    // Simulate a dropped socket (school-wifi blip): close the live route(s). A subsequent
+    // app reconnect re-fires routeWebSocket (a fresh route) and, with autoConnect, re-sends
+    // `connected`, so the whole drop -> reconnect flow is exercisable in a test.
+    dropClient: () => {
+      const live = state.routes.slice();
+      state.routes = [];
+      for (const ws of live) {
+        try {
+          ws.close();
+        } catch {
+          /* already closed */
+        }
+      }
+    },
   };
 }
 

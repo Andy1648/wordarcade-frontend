@@ -20,15 +20,11 @@
      shows through around the stage; dark base comes from body/#root. */
   background: transparent;
   width: 100%;
-  /* Fill exactly ONE viewport regardless of the --app-scale zoom: the zoom on
-     .view-screen multiplies heights, so a plain 100vh here renders as 100vh*scale
-     and overflows into a vertical scroll on wide monitors. Dividing by the scale
-     makes the rendered fill exactly one screen (matches the menu's one-screen fit).
-     (Word Bomb / Blitz KEEP the --app-scale zoom: their tall multi-element stage —
-     player bars + bomb + combo + used-words + input — cannot fit a 551px-high window
-     without it, and they are Tier-1 live multiplayer. Only the solo modes CHAIN/FUSE are
-     exempt from the zoom (App.jsx / fix/game-fill); SAT Rush keeps it too.) */
-  min-height: calc(100vh / var(--app-scale, 1));
+  /* fix/game-fill-2: the game view is now EXEMPT from the .view-screen --app-scale zoom
+     (App.jsx), like the menu and solo — a plain one-screen fill (no /scale to compensate).
+     WB/BLITZ get a wide-aspect two-zone reflow below so the stage fills width AND fits a
+     short window without the zoom that used to compress them. */
+  min-height: 100dvh;
   display: flex;
   /* Center the stage vertically within the one-screen fill so a stage shorter
      than the viewport sits centered instead of leaving dead space below it.
@@ -36,7 +32,8 @@
      so its top never gets cut off / unreachable. */
   align-items: safe center;
   justify-content: center;
-  padding: 24px;
+  /* smaller side padding on phones so the stage fills the narrow width (fix/game-fill-2) */
+  padding: clamp(8px, 1.6vw, 24px);
 }
 
 /* Board + live feed grouped as ONE centered panel (the JSX wraps .game-stage and
@@ -57,7 +54,7 @@
      clamped to its own max-width, leaving the freed space as a dead gap that
      splays the feed to the far right. Capped just past stage(~1150) + gap + feed
      (~320), the stage shrinks below its max-width so there's no clamp, no gap. */
-  max-width: 1500px;
+  max-width: min(96vw, 1860px);
   margin-inline: auto;
 }
 
@@ -72,8 +69,68 @@
   border-radius: 8px;
   padding: clamp(18px, 2.2vw, 36px) clamp(16px, 2vw, 36px) clamp(20px, 2.4vw, 38px);
   width: 100%;
-  /* Fills most of the viewport and only caps + centres on ultrawide screens. */
-  max-width: min(95vw, 1400px);
+  /* Fills the viewport (fix/game-fill-2); only caps + centres on ultrawide. */
+  max-width: min(96vw, 1760px);
+}
+
+/* ===== WORD BOMB wide-aspect reflow (fix/game-fill-2) ================================
+   Without the old --app-scale zoom the WB stack (header + player bar + bomb + combo +
+   used + input) is ~880px tall and overflows a short window. On SHORT viewports we lay
+   it out as a GRID — bomb column beside the combo/used/input column — so it fills the
+   width AND fits the height. Pure CSS on existing children (grid-areas); absolute FX
+   (hype/clutch/fly/shatter) are out of flow and unaffected. Tall windows (h>900) keep
+   the single-column stack, which already fits + fills there. */
+@media (min-width: 900px) and (max-height: 900px) {
+  .game-stage--wb {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    grid-template-areas:
+      'header header'
+      'bar    bar'
+      'bomb   combo'
+      'bomb   used'
+      'bomb   input';
+    align-content: center;
+    column-gap: clamp(16px, 3vw, 56px);
+    row-gap: clamp(4px, 1vh, 12px);
+    padding-top: clamp(10px, 1.6vh, 22px);
+    padding-bottom: clamp(10px, 1.6vh, 22px);
+  }
+  .game-stage--wb .game-header { grid-area: header; }
+  .game-stage--wb .game-player-bar { grid-area: bar; }
+  .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
+  .game-stage--wb .bomb-area { grid-area: bomb; align-self: center; margin: 0; }
+  .game-stage--wb .game-combo-box { grid-area: combo; align-self: center; }
+  .game-stage--wb .game-used { grid-area: used; align-self: center; }
+  .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
+  /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
+  .game-stage--wb .bomb-svg { width: clamp(104px, 22vh, 190px); height: auto; }
+  /* Compress the combo box so the right column fits a short window. */
+  .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
+  .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
+}
+
+/* ===== CATEGORY BLITZ short-window compression (fix/game-fill-2) =====================
+   Blitz already lays out two-zone (main | rail) at >=900px; on a SHORT window the big
+   category hero + stacked main column overflowed. Cap the hero by viewport HEIGHT and
+   tighten the vertical rhythm so it fits without the old zoom. Wide+tall keeps the full
+   fluid hero. */
+@media (min-width: 900px) and (max-height: 900px) {
+  .game-stage--blitz {
+    padding-top: clamp(10px, 1.6vh, 22px);
+    padding-bottom: clamp(10px, 1.6vh, 22px);
+  }
+  .game-stage--blitz .cb-round { align-items: center; }
+  /* .cb-round prefix raises specificity above the base `.cb-round .cb-category-display`
+     (equal-specificity rule later in the file would otherwise win). */
+  .game-stage--blitz .cb-round .cb-category-display {
+    font-size: clamp(28px, 7vh, 60px);
+    padding: clamp(10px, 2.4vh, 30px) clamp(12px, 2vw, 26px);
+    margin-bottom: clamp(6px, 1vh, 12px);
+  }
+  .game-stage--blitz .cb-round .cb-category-label { margin-bottom: clamp(4px, 0.8vh, 10px); }
+  .game-stage--blitz .cb-round .cb-category-example { margin: 0 0 clamp(6px, 1vh, 14px); }
+  .game-stage--blitz .game-header { margin-bottom: clamp(2px, 0.8vh, 10px); }
 }
 
 /* Brief screen shake when an answer is accepted. Toggled on for 200ms by a
@@ -3426,7 +3483,7 @@
 
 /* Tablets and phones. */
 @media (max-width: 600px) {
-  .game-wrap { padding: 16px; }
+  .game-wrap { padding: 8px; } /* fill the narrow width (fix/game-fill-2) */
   .game-stage { padding: 18px 14px 20px; }
 
   /* Player cards drop to two per row instead of one long line. */

@@ -90,6 +90,8 @@ export function createFuseEngine({ accept, pools, rng = Math.random } = {}) {
     tier: null,
     fuseMs: 0, // the current fragment's fuse length
     shortPenalty: false, // was THIS fuse docked by a preceding short word?
+    shortFactor: 1, // the ACTUAL length factor applied to this fuse (0.8 / 0.92 / 1.0) — the UI
+    //                shows this exact number instead of a hardcoded ×0.8 (a 4-letter word is ×0.92).
     lastWord: '', // the most recently solved word (RARITY scoring + pop)
   };
 
@@ -103,9 +105,10 @@ export function createFuseEngine({ accept, pools, rng = Math.random } = {}) {
     state.tier = tier;
     state.fragment = bags[tier].draw();
     state.shortPenalty = lenFactorNext < 1.0;
+    state.shortFactor = lenFactorNext; // the exact factor applied (for a truthful UI readout)
     state.fuseMs = fuseBase(state.wordsSolved) * FUSE_TIER_MULT[tier] * lenFactorNext;
     lenFactorNext = 1.0; // consumed
-    return { fragment: state.fragment, tier, fuseMs: state.fuseMs, shortPenalty: state.shortPenalty };
+    return { fragment: state.fragment, tier, fuseMs: state.fuseMs, shortPenalty: state.shortPenalty, shortFactor: state.shortFactor };
   }
 
   function start() {

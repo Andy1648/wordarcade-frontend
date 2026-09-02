@@ -18,7 +18,7 @@ import { rankTitle } from '../progress/rank';
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, streak = 0 }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0 }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -180,9 +180,22 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         )}
       </span>
       {/* RANK TITLE (Job 5): the level band's name, sitting in the LV bar next to the level.
-          Full bar only; static — no animation. */}
+          Full bar only; static — no animation. fix/card-polish: clickable → the RANK LADDER
+          overlay (all ten ranks, which you hold, which is next). Falls back to a static span
+          when no handler is wired (e.g. tests / splash). */}
       {variant !== 'mini' && (
-        <span className="menu-xp-rank" aria-label={`rank ${rankTitle(level)}`}>{rankTitle(level)}</span>
+        onRankClick ? (
+          <button
+            type="button"
+            className="menu-xp-rank menu-xp-rank--btn"
+            onClick={onRankClick}
+            aria-label={`Rank ${rankTitle(level)}. Open the rank ladder`}
+          >
+            {rankTitle(level)}
+          </button>
+        ) : (
+          <span className="menu-xp-rank" aria-label={`rank ${rankTitle(level)}`}>{rankTitle(level)}</span>
+        )
       )}
     </div>
   );

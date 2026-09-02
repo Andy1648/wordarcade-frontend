@@ -316,7 +316,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   const overCard = firstRun ? (
     <ChainFirstRunCard />
   ) : (
-    <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} />
+    <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
   );
 
   // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
@@ -342,6 +342,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       placeholder={`start with "${required.toUpperCase()}" · 3+ letters`}
       maxLength={data.maxAcceptLen}
       armHint={ARM_HINT}
+      firstRunRule="START WITH THE GIVEN LETTER"
       rootRef={rootRef}
       fx={fxLayer}
       phase={g.phase}

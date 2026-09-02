@@ -240,10 +240,10 @@ export default function PublicRoomsScreen({
               return (
                 <li key={room.code}>
                   <button
-                    className="browser-row"
+                    className={`browser-row${full ? ' is-full' : ''}`}
                     style={{ '--row-accent': gameColor(room.gameType) }}
                     onClick={() => handleJoin(room.code)}
-                    disabled={!!joiningCode}
+                    disabled={!!joiningCode || full}
                   >
                     <span className="browser-row-main">
                       <span className="browser-row-game">{gameLabel(room.gameType)}</span>
@@ -254,7 +254,7 @@ export default function PublicRoomsScreen({
                         {room.playerCount}/{room.maxPlayers}
                       </span>
                       <span className="browser-row-status">
-                        {joining ? 'JOINING…' : 'WAITING'}
+                        {full ? 'FULL' : joining ? 'JOINING…' : 'WAITING'}
                       </span>
                     </span>
                   </button>

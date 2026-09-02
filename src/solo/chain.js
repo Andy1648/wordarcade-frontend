@@ -79,6 +79,7 @@ export function createChainEngine({ accept, topCommon = [], rng = Math.random } 
     endedLetters: new Set(),
     lastLinks: [], // {word, score} — most recent last
     killedLetter: null,
+    killedWasDeadEnd: false, // at timeout: was the killed letter a genuine dead end, or just slow?
     rerouted: false, // set true on the turn a reroute happened (for the UI cue)
   };
 
@@ -173,11 +174,15 @@ export function createChainEngine({ accept, topCommon = [], rng = Math.random } 
     };
   }
 
-  // The clock ran out — the run ends on the letter the player couldn't answer.
+  // The clock ran out — the run ends on the letter the player couldn't answer. Snapshot WHY:
+  // the reroute keeps requiredLetter off genuine dead ends, so this is almost always a plain
+  // timeout ("RAN OUT OF TIME ON X"); killedWasDeadEnd is true only if the letter really had
+  // < DEAD_END_BELOW unused common continuations, so the death card can tell the truth.
   function timeout() {
     if (!state.alive) return;
     state.alive = false;
     state.killedLetter = state.requiredLetter;
+    state.killedWasDeadEnd = supply(state.requiredLetter).count < DEAD_END_BELOW;
   }
 
   return {

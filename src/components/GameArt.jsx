@@ -65,6 +65,44 @@ function bolt(cx, cy, a, len, w, stroke, key) {
   );
 }
 
+// Rounded-rectangle outline as a path string (so we can build ring shapes with
+// evenodd fill — a real forged link has thickness, not just a stroke).
+function rrPath(x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  return (
+    `M${(x + rr).toFixed(1)},${y.toFixed(1)}` +
+    `h${(w - 2 * rr).toFixed(1)}a${rr},${rr} 0 0 1 ${rr},${rr}` +
+    `v${(h - 2 * rr).toFixed(1)}a${rr},${rr} 0 0 1 ${-rr},${rr}` +
+    `h${(-(w - 2 * rr)).toFixed(1)}a${rr},${rr} 0 0 1 ${-rr},${-rr}` +
+    `v${(-(h - 2 * rr)).toFixed(1)}a${rr},${rr} 0 0 1 ${rr},${-rr}z`
+  );
+}
+// One forged chain link centred at (cx,cy). `vertical` swaps its long axis so the
+// run alternates perpendicular. A filled metal RING (outer minus inner, evenodd)
+// gives real thickness; a dark outline reads as the forged edge, an inset light
+// rim is the highlight, and an offset dark copy behind it is the cast shadow onto
+// the link below. Drawn back-to-front by the caller so each threads THROUGH its
+// neighbour. Colours are the card's teal metal.
+function forgedLink(cx, cy, vertical, key) {
+  const LONG = 108;
+  const SHORT = 62;
+  const T = 16; // wall thickness
+  const w = vertical ? SHORT : LONG;
+  const h = vertical ? LONG : SHORT;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+  const rOut = SHORT / 2;
+  const ring = `${rrPath(x, y, w, h, rOut)} ${rrPath(x + T, y + T, w - 2 * T, h - 2 * T, rOut - T)}`;
+  const rim = rrPath(x + 4, y + 4, w - 8, h - 8, rOut - 4);
+  return (
+    <g key={key}>
+      <path d={ring} fillRule="evenodd" fill="#03211C" opacity="0.45" transform="translate(5 6)" />
+      <path d={ring} fillRule="evenodd" fill="#12564C" stroke="#04211C" strokeWidth="4" strokeLinejoin="round" />
+      <path d={rim} fill="none" stroke="#63F7DF" strokeWidth="3.5" strokeLinejoin="round" opacity="0.85" />
+    </g>
+  );
+}
+
 const SCENE_PROPS = {
   className: 'card-art',
   viewBox: '0 0 300 400',
@@ -193,22 +231,20 @@ export function ChainArt() {
         <path d="M-70 20 Q0 -34 70 20" fill="none" stroke="#0A3B34" strokeWidth="7" strokeLinecap="round" />
         <path d="M70 20 L52 14 M70 20 L60 2" fill="none" stroke="#0A3B34" strokeWidth="7" strokeLinecap="round" />
       </g>
-      {/* chain running wall to wall, cropping both edges */}
-      <g fill="none" stroke="#0A3B34" strokeWidth="9">
-        <rect x="-40" y="196" width="120" height="66" rx="33" />
-        <rect x="66" y="168" width="66" height="120" rx="33" />
-        <rect x="118" y="196" width="120" height="66" rx="33" />
-        <rect x="224" y="168" width="66" height="120" rx="33" />
-        <rect x="276" y="196" width="120" height="66" rx="33" />
+      {/* forged chain running wall-to-wall on one axis: alternating perpendicular
+          links that overlap ~35% and are drawn left→right so each threads THROUGH
+          the last (later paint = on top = the weave). */}
+      {[-8, 60, 128, 196, 264, 332].map((cx, i) =>
+        forgedLink(cx, 230, i % 2 === 1, `lk${i}`)
+      )}
+      {/* two big letter tiles threaded on the chain */}
+      <g transform="rotate(-9 66 230)">
+        <rect x="30" y="198" width="72" height="72" rx="10" fill="#0D2B28" stroke="#000" strokeWidth="6" />
+        <text x="66" y="250" fontSize="44" fontWeight="bold" fill="#F3E2BE" textAnchor="middle" fontFamily={BUNGEE}>E</text>
       </g>
-      {/* two big letter tiles */}
-      <g transform="rotate(-9 66 228)">
-        <rect x="30" y="196" width="72" height="72" rx="10" fill="#0D2B28" stroke="#000" strokeWidth="6" />
-        <text x="66" y="248" fontSize="44" fontWeight="bold" fill="#F3E2BE" textAnchor="middle" fontFamily={BUNGEE}>E</text>
-      </g>
-      <g transform="rotate(9 176 228)">
-        <rect x="140" y="196" width="72" height="72" rx="10" fill="#F3E2BE" stroke="#000" strokeWidth="6" />
-        <text x="176" y="248" fontSize="44" fontWeight="bold" fill="#0D2B28" textAnchor="middle" fontFamily={BUNGEE}>R</text>
+      <g transform="rotate(9 176 230)">
+        <rect x="140" y="198" width="72" height="72" rx="10" fill="#F3E2BE" stroke="#000" strokeWidth="6" />
+        <text x="176" y="250" fontSize="44" fontWeight="bold" fill="#0D2B28" textAnchor="middle" fontFamily={BUNGEE}>R</text>
       </g>
     </svg>
   );
@@ -227,11 +263,73 @@ export function FuseArt() {
       {pinwheel(300, 244, 540, 22, '#EA5A16', 0.8, 'pw1')}
       {pinwheel(300, 244, 360, 22, '#FFB24D', 0.6, 'pw2')}
       <g opacity="0.9">{rays(300, 244, 24, 320, 15, '#FFD84A', 5, 0.22)}</g>
-      {/* cord: char edge under a hot molten core, sweeping top-left -> flame */}
-      <path d="M-24 66 C 40 118, 92 96, 150 96 C 214 96, 270 198, 326 250" fill="none" stroke="#4A1C08" strokeWidth="17" strokeLinecap="round" />
-      <path d="M-24 66 C 40 118, 92 96, 150 96 C 214 96, 270 198, 326 250" fill="none" stroke="#FFAE4D" strokeWidth="10" strokeLinecap="round" />
-      {/* white-hot lit stretch approaching the flame */}
-      <path d="M 236 152 C 288 208, 308 232, 326 250" fill="none" stroke="#FFE94A" strokeWidth="8" strokeLinecap="round" />
+      {/* BRAIDED ROPE fuse sweeping top-left → flame. A thick casing, then two
+          interleaved dashed strands (offset half a period) read as the twist, a
+          thin highlight rides the crest, and the burning end frays into strands. */}
+      {(() => {
+        const CORD = 'M-24 66 C 40 118, 92 96, 150 96 C 214 96, 270 198, 326 250';
+        // Two cubic segments of CORD; sample point + tangent to lay DIAGONAL twist
+        // knuckles across the rope so it reads as a braided 2-ply, not a segmented
+        // band. Static art (no animation) — pure geometry.
+        const SEGS = [
+          [[-24, 66], [40, 118], [92, 96], [150, 96]],
+          [[150, 96], [214, 96], [270, 198], [326, 250]],
+        ];
+        const bez = (p, t) => {
+          const u = 1 - t;
+          const b0 = u * u * u, b1 = 3 * u * u * t, b2 = 3 * u * t * t, b3 = t * t * t;
+          return [p[0][0] * b0 + p[1][0] * b1 + p[2][0] * b2 + p[3][0] * b3,
+                  p[0][1] * b0 + p[1][1] * b1 + p[2][1] * b2 + p[3][1] * b3];
+        };
+        const tan = (p, t) => {
+          const u = 1 - t;
+          const c0 = 3 * u * u, c1 = 6 * u * t, c2 = 3 * t * t;
+          return Math.atan2(
+            c0 * (p[1][1] - p[0][1]) + c1 * (p[2][1] - p[1][1]) + c2 * (p[3][1] - p[2][1]),
+            c0 * (p[1][0] - p[0][0]) + c1 * (p[2][0] - p[1][0]) + c2 * (p[3][0] - p[2][0]),
+          );
+        };
+        const knuckles = [];
+        let i = 0;
+        const HALF = 15; // knuckle half-length (crosses the rope width)
+        const SLANT = (58 * Math.PI) / 180; // diagonal lean of the twist
+        for (const seg of SEGS) {
+          for (let t = 0; t <= 1.0001; t += 0.055) {
+            const [x, y] = bez(seg, t);
+            const a = tan(seg, t) + SLANT;
+            const dx = Math.cos(a) * HALF, dy = Math.sin(a) * HALF;
+            knuckles.push(
+              <line key={`k${i}`} x1={(x - dx).toFixed(1)} y1={(y - dy).toFixed(1)}
+                x2={(x + dx).toFixed(1)} y2={(y + dy).toFixed(1)}
+                stroke={i % 2 ? '#B4581C' : '#DD8836'} strokeWidth="12" strokeLinecap="round" />,
+            );
+            i += 1;
+          }
+        }
+        return (
+          <g>
+            {/* dark casing = the rope's outline showing between the knuckles */}
+            <path d={CORD} fill="none" stroke="#2E1204" strokeWidth="30" strokeLinecap="round" />
+            <path d={CORD} fill="none" stroke="#6A2E0E" strokeWidth="24" strokeLinecap="round" />
+            {/* diagonal twist knuckles, alternating two ambers */}
+            {knuckles}
+            {/* lit highlight riding the top crest of the twist */}
+            <path d={CORD} fill="none" stroke="#FFC968" strokeWidth="4" strokeLinecap="round" strokeDasharray="7 15" opacity="0.75" />
+          </g>
+        );
+      })()}
+      {/* white-hot lit stretch approaching the flame (the burning length) */}
+      <path d="M 236 152 C 288 208, 308 232, 326 250" fill="none" stroke="#FFE94A" strokeWidth="9" strokeLinecap="round" strokeDasharray="5 15" opacity="0.9" />
+      {/* frayed, charred strands splaying from the burning end */}
+      <g stroke="#2A1206" strokeWidth="3" strokeLinecap="round" fill="none">
+        <path d="M300 232 q14 -6 26 -3" />
+        <path d="M300 240 q16 0 30 6" />
+        <path d="M300 248 q14 6 24 16" />
+      </g>
+      <g stroke="#FF8A3D" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.9">
+        <path d="M300 236 q14 -4 24 -1" />
+        <path d="M300 244 q15 4 26 12" />
+      </g>
       {/* sparks flying off the cord */}
       <circle cx="58" cy="112" r="6" fill="#FFE94A" />
       <circle cx="252" cy="172" r="4" fill="#FFF3B0" />

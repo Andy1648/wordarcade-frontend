@@ -152,6 +152,13 @@ export function rebirthMult(rebirthCount) {
   const last = REBIRTH_TABLE.length - 1; // R20
   return REBIRTH_TABLE[last].mult * Math.pow(REBIRTH_PAST_MULT_STEP, rc - REBIRTH_TABLE.length);
 }
+// A flat wins reward scaled by the player's CURRENT rebirth multiplier — the ONE place both the
+// grant and its on-screen quote go through, so Collection/Achievement payouts show exactly what
+// they pay (a rebirthed player was quoted the base while being granted base × the multiplier).
+export function rebirthScaledWins(base, rebirthCount = getRebirths()) {
+  const b = Number.isFinite(base) ? base : 0;
+  return Math.round(b * rebirthMult(rebirthCount));
+}
 export function canRebirth(xp, rebirthCount = getRebirths()) {
   return levelFromXp(xp).level >= rebirthThreshold(rebirthCount);
 }

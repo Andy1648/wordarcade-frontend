@@ -14,7 +14,9 @@ import {
   rebirthMult,
   getKeyTier,
   keyTierXp,
+  xpPerInput,
 } from '../progress/xp';
+import { equippedPopMult, equippedSoundMult } from '../progress/shop';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
 import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
@@ -158,7 +160,11 @@ export default function StatsScreen({ onBack }) {
   const rbMult = rebirthMult(rebirths);
   const keyTier = getKeyTier();
   const baseXp = keyTierXp(keyTier); // Key Power TIER's XP per letter
-  const menuXp = Math.round((baseXp * rbMult) / 10) * 10; // per menu keystroke (mode ×1), ×10
+  // MENU XP / LETTER must MATCH the "+N" that pops on every menu keystroke — so compute it the
+  // SAME way the live credit does (useXpCapture → xpPerInput), applying the equipped cosmetic
+  // pop/sound multipliers and the daily-streak multiplier, not just base × rebirth. (The old
+  // base×rebirth understated it whenever a cosmetic was equipped or a streak was active.)
+  const menuXp = xpPerInput({ mode: 'menu', popMult: equippedPopMult(), soundMult: equippedSoundMult() });
 
   const progression = [
     ['LEVEL', level],
@@ -169,7 +175,8 @@ export default function StatsScreen({ onBack }) {
     ['WINS BALANCE', getWins()],
     ['WINS EARNED (ALL-TIME)', getWinsLifetime()],
   ];
-  // XP stack is now Key Power (base) × rebirth. Cosmetics are pure flair — not shown here.
+  // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
+  // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
   const multipliers = [
     ['KEY POWER', `T${keyTier}`],
     ['BASE XP / LETTER', fmt(baseXp)],
