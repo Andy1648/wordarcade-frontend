@@ -2715,7 +2715,7 @@ export default function GameScreen({
           players (its events just duplicate the center-stage action). */}
       <div className="game-panel">
       <div
-        className={`game-stage${shake && !hitlag ? ' game-shake' : ''}${
+        className={`game-stage game-stage--wb${shake && !hitlag ? ' game-shake' : ''}${
           boomShake && !hitlag ? ' boom-shake' : ''
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
@@ -4019,7 +4019,7 @@ function CategoryBlitzScreen({
             }}
           />
         )}
-        <div className={`game-stage${shake ? ' game-shake' : ''}`}>
+        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`}>
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}

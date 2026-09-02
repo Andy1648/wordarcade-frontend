@@ -10,12 +10,61 @@
 //      on ancestor zoom breaks per-browser (recent Chrome does not compound the reciprocal); the
 //      menu regression came from exactly that, so we forbid it here too.
 //
-// NOTE (scope): Word Bomb / Category Blitz / SAT Rush deliberately KEEP the --app-scale zoom — their
-// taller stages cannot fit a 551px-high window without it (removing it clips the live game), so they
-// are not width-fillable without a per-screen height-fit redesign. This gate covers the solo modes,
-// which were the egregious case and are now converted.
+// fix/game-fill-2: all five modes are now exempt from the --app-scale zoom and fill the width.
+// Word Bomb + Category Blitz get a wide-aspect / short-window reflow so the stage fills width AND
+// fits height (no overflow). SAT Rush is a poster on a full-bleed board: the BOARD (.sr-app) is the
+// filling surface (the poster is aspect-locked content on it, like the menu cards on the menu stage),
+// so SAT is gated on .sr-app. This gate covers all five, plus the FUSE 26-tile strip.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+
+const ME = 'e2e-player';
+async function enterMpGame(page, gameType) {
+  const players = gameType === 'word-bomb'
+    ? [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 2 }]
+    : [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
+  const mock = await installBackendMock(page);
+  await page.goto('/?portal=1');
+  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType, hostId: ME, difficultyKey: 'chill', players } });
+  await page.waitForTimeout(60);
+  mock.pushToClient({ type: 'game_started', payload: { gameType } });
+  await page.waitForTimeout(60);
+  if (gameType === 'word-bomb') {
+    mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players, combo: 'str', usedWords: ['MONSTER'], timerSeconds: 22 } });
+  } else {
+    mock.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 45, category: 'CRYPTIDS & FOLKLORE MONSTERS', categoryId: 'cryptids', rerollsRemaining: 1 } });
+  }
+  await page.locator('.game-stage').waitFor({ state: 'visible' });
+  await page.waitForTimeout(4600); // let the 3-2-1-GO! countdown clear
+}
+async function enterSat(page) {
+  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
+  await installBackendMock(page);
+  await page.goto('/?satRush=1&portal=1');
+  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await page.waitForTimeout(300);
+  await page.locator('[data-game="sat-rush"] .game-card').click({ force: true });
+  await page.getByRole('button', { name: 'Play' }).click();
+  await page.getByRole('button', { name: /BRIEFING/ }).click();
+  await page.locator('.sr-brief-page').waitFor({ state: 'visible', timeout: 6000 });
+  await page.getByRole('button', { name: 'Start the run' }).click();
+  await page.locator('.sr-slots').waitFor({ state: 'visible', timeout: 8000 });
+  await page.waitForTimeout(400);
+}
+async function fillOf(page, sel) {
+  return page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return { err: 'no ' + sel };
+    const r = el.getBoundingClientRect();
+    const zoomed = [];
+    let e = el;
+    while (e) { const z = getComputedStyle(e).zoom; if (z && z !== '1' && z !== 'normal') zoomed.push(`${(e.className || e.tagName).toString().split(' ')[0]}=${z}`); e = e.parentElement; }
+    const de = document.documentElement;
+    const pageVScroll = Math.max(de.scrollHeight, document.body.scrollHeight) > de.clientHeight + 2;
+    return { fw: r.width / window.innerWidth, fh: r.height / window.innerHeight, zoomed, pageVScroll };
+  }, sel);
+}
 
 const VIEWPORTS = [
   { w: 1920, h: 1080 },
@@ -134,3 +183,42 @@ for (const id of ['chain', 'fuse']) {
     }
   });
 }
+
+// --- fix/game-fill-2: WB / BLITZ / SAT fill the viewport (no ancestor zoom, no overflow) ---
+const FILL_VPS = [
+  { w: 1920, h: 1080 }, { w: 1568, h: 675 }, { w: 1366, h: 768 }, { w: 1280, h: 551 }, { w: 390, h: 844 },
+];
+for (const gt of ['word-bomb', 'category-blitz']) {
+  test.describe(`${gt} fills the viewport`, () => {
+    for (const { w, h } of FILL_VPS) {
+      test(`${gt} ${w}x${h}: .game-stage fills width, no overflow, no ancestor zoom`, async ({ page }) => {
+        await page.setViewportSize({ width: w, height: h });
+        await enterMpGame(page, gt);
+        const m = await fillOf(page, '.game-stage');
+        // eslint-disable-next-line no-console
+        console.log(`[game-fill] ${gt} ${w}x${h} fillW=${(m.fw * 100).toFixed(1)}% fillH=${(m.fh * 100).toFixed(1)}% vscroll=${m.pageVScroll} zoom=${JSON.stringify(m.zoomed)}`);
+        expect(m.err).toBeUndefined();
+        expect(m.zoomed, `no ancestor zoom @ ${w}x${h}`).toEqual([]);
+        expect(m.pageVScroll, `no page vertical overflow @ ${w}x${h}`).toBe(false);
+        expect(m.fh, `stage within viewport height @ ${w}x${h}`).toBeLessThanOrEqual(1.02);
+        // width: >=0.85 (desktop hits ~0.90; the narrow-phone stage sits a touch lower).
+        expect(m.fw, `.game-stage width fill @ ${w}x${h}`).toBeGreaterThanOrEqual(0.85);
+      });
+    }
+  });
+}
+test.describe('SAT Rush board fills the viewport', () => {
+  for (const { w, h } of FILL_VPS) {
+    test(`sat ${w}x${h}: .sr-app board fills, no ancestor zoom`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await enterSat(page);
+      const m = await fillOf(page, '.sr-app');
+      // eslint-disable-next-line no-console
+      console.log(`[game-fill] sat ${w}x${h} boardW=${(m.fw * 100).toFixed(1)}% boardH=${(m.fh * 100).toFixed(1)}% zoom=${JSON.stringify(m.zoomed)}`);
+      expect(m.err).toBeUndefined();
+      expect(m.zoomed, `no ancestor zoom @ ${w}x${h}`).toEqual([]);
+      expect(m.fw, `.sr-app width fill @ ${w}x${h}`).toBeGreaterThanOrEqual(0.9);
+      expect(m.fh, `.sr-app height fill @ ${w}x${h}`).toBeGreaterThanOrEqual(0.9);
+    });
+  }
+});
