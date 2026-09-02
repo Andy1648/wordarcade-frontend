@@ -1,5 +1,5 @@
 // GameScreen.jsx
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
@@ -70,7 +70,12 @@ const REJECTION_MESSAGES = {
   missing_combo: 'MUST CONTAIN [combo]',
   already_used: 'ALREADY USED — TRY AGAIN',
   already_said: 'ALREADY SAID — TRY ANOTHER',
-  not_a_word: 'NOT A REAL WORD',
+  // used_by_other: an optimistic accept the SERVER overruled because another player took the word in
+  // the round-trip window (a race). Distinct from local already_used ("you used it"). (JOB C Path B.)
+  used_by_other: 'SOMEONE ELSE JUST USED THAT',
+  // not_a_word is emitted ONLY by the server's dictionary check — i.e. the rollback of an optimistic
+  // accept (the client can't know the dictionary). Phrased as the server overruling. (JOB C Path B.)
+  not_a_word: 'NOT IN OUR WORD LIST',
   not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
 };
 
@@ -1350,7 +1355,10 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   // Word Bomb opts into the prototype-tuned values (combo-scaled burst, teal
   // shockwave ring, screen flash, input squash, combo-pitched cue). Category
   // Blitz passes nothing -> wordBomb=false -> its existing feel is untouched.
-  const { wordBomb = false, comboRef = null } = opts;
+  // optimisticWordRef (Word Bomb, JOB C Path B): the lowercased word painted
+  // accepted OPTIMISTICALLY at submit; a later server accept for the same word is
+  // a CONFIRM whose juice already fired, so we suppress the re-fire.
+  const { wordBomb = false, comboRef = null, optimisticWordRef = null } = opts;
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
@@ -1360,72 +1368,92 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   // dev never double-pops the hype/score. Identity-based (not value), so two
   // genuinely separate accepts of the same word still each fire. No prod change.
   const handledResultRef = useRef(null);
+  const shakeTimerRef = useRef(null);
+  const inputShakeTimerRef = useRef(null);
+
+  // The ACCEPT juice, callable imperatively — fired OPTIMISTICALLY from submit() in Word Bomb, and by
+  // the effect below for every non-optimistic accept (Category Blitz, and any broadcast). Pure
+  // transform/opacity + pooled effects; burst/ring/flash self-gate on reduced-motion + mute.
+  const fireAccept = useCallback(() => {
+    setHypeKey((k) => k + 1);
+    setShake(true); // the existing scoped .game-shake stays (one screen shake)
+    const el = inputRef && inputRef.current;
+    const r = el && el.getBoundingClientRect();
+    if (wordBomb) {
+      const combo = (comboRef && comboRef.current) || 0;
+      if (r) {
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        burst(cx, cy, {
+          count: JUICE.VALID.particleBase + combo * JUICE.VALID.particlePerCombo,
+          speed: JUICE.VALID.particleSpeed,
+          life: JUICE.VALID.particleLife,
+          colors: JUICE.VALID.colors,
+        });
+        ring(cx, cy, {
+          radius: JUICE.VALID.ringBase + combo * JUICE.VALID.ringPerCombo,
+          color: JUICE.VALID.ringColor,
+          width: JUICE.VALID.ringWidth,
+          life: JUICE.VALID.ringLife,
+        });
+        squash(el);
+        flash(el, JUICE.VALID.inputFlash);
+      }
+      screenFlash({ alpha: JUICE.VALID.flash, color: JUICE.VALID.flashColor });
+    } else {
+      // Category Blitz: EXACT existing behavior — light spark at the input + a confirm flash.
+      if (r) {
+        burst(r.left + r.width / 2, r.top + r.height / 2, {
+          count: 10,
+          speed: 200,
+          life: 0.45,
+          colors: ['#2EFFE0', '#FFE94A', '#ff4fa3'],
+        });
+      }
+      if (promptRef && promptRef.current) flash(promptRef.current, '#2EFFE0');
+    }
+    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    shakeTimerRef.current = setTimeout(() => setShake(false), 200);
+  }, [wordBomb, inputRef, promptRef, comboRef]);
+
+  // The REJECT feedback (input shake + WB red screen flash). This IS the visible rollback of an
+  // optimistic accept when the server disagrees.
+  const fireReject = useCallback(() => {
+    setInputShake(true);
+    if (wordBomb) screenFlash({ alpha: JUICE.INVALID.flash, color: JUICE.INVALID.flashColor });
+    if (inputShakeTimerRef.current) clearTimeout(inputShakeTimerRef.current);
+    inputShakeTimerRef.current = setTimeout(() => setInputShake(false), 400);
+  }, [wordBomb]);
 
   useEffect(() => {
     if (!lastWordResult) return;
     if (lastWordResult === handledResultRef.current) return;
     handledResultRef.current = lastWordResult;
-
     if (lastWordResult.accepted) {
-      setHypeKey((k) => k + 1);
-      setShake(true); // the existing scoped .game-shake stays (one screen shake)
-      const el = inputRef && inputRef.current;
-      const r = el && el.getBoundingClientRect();
-      if (wordBomb) {
-        // Word Bomb: combo-scaled blocky burst + one teal shockwave ring + a
-        // brief white screen flash + an input squash & teal border flash. The
-        // combo-pitched cue fires at the accept SOUND site (replacing correctDing),
-        // so no sound here. burst/ring/flash self-gate on reduced-motion + mute.
-        const combo = (comboRef && comboRef.current) || 0;
-        if (r) {
-          const cx = r.left + r.width / 2;
-          const cy = r.top + r.height / 2;
-          burst(cx, cy, {
-            count: JUICE.VALID.particleBase + combo * JUICE.VALID.particlePerCombo,
-            speed: JUICE.VALID.particleSpeed,
-            life: JUICE.VALID.particleLife,
-            colors: JUICE.VALID.colors,
-          });
-          ring(cx, cy, {
-            radius: JUICE.VALID.ringBase + combo * JUICE.VALID.ringPerCombo,
-            color: JUICE.VALID.ringColor,
-            width: JUICE.VALID.ringWidth,
-            life: JUICE.VALID.ringLife,
-          });
-          squash(el);
-          flash(el, JUICE.VALID.inputFlash);
-        }
-        screenFlash({ alpha: JUICE.VALID.flash, color: JUICE.VALID.flashColor });
-      } else {
-        // Category Blitz: EXACT existing behavior — light spark at the input +
-        // a confirm flash on the prompt box. Unchanged.
-        if (r) {
-          burst(r.left + r.width / 2, r.top + r.height / 2, {
-            count: 10,
-            speed: 200,
-            life: 0.45,
-            colors: ['#2EFFE0', '#FFE94A', '#ff4fa3'],
-          });
-        }
-        if (promptRef && promptRef.current) flash(promptRef.current, '#2EFFE0');
+      // CONFIRM of an optimistic accept? The juice already fired at submit — suppress + clear.
+      const w = (lastWordResult.word || '').toLowerCase();
+      if (optimisticWordRef && optimisticWordRef.current && optimisticWordRef.current === w) {
+        optimisticWordRef.current = null;
+        return;
       }
-      const timeoutId = setTimeout(() => setShake(false), 200);
-      return () => clearTimeout(timeoutId);
+      fireAccept();
+      return;
     }
+    // Rejected: clear any optimistic marker (this is a rollback) and fire the reject feedback.
+    if (optimisticWordRef) optimisticWordRef.current = null;
+    fireReject();
+  }, [lastWordResult, fireAccept, fireReject, optimisticWordRef]);
 
-    // Rejected: shake the input so the miss is felt, not just read. The existing
-    // input shake + wrongBuzz (+ letter-shatter) stay. For Word Bomb we ADD a
-    // red screen flash (and, since a reject has no existing SCREEN shake, that is
-    // the one place a small screen flash is new — no double-fire).
-    setInputShake(true);
-    if (wordBomb) {
-      screenFlash({ alpha: JUICE.INVALID.flash, color: JUICE.INVALID.flashColor });
-    }
-    const timeoutId = setTimeout(() => setInputShake(false), 400);
-    return () => clearTimeout(timeoutId);
-  }, [lastWordResult]);
+  // Clear pending timers on unmount so a late setState never fires after teardown.
+  useEffect(
+    () => () => {
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      if (inputShakeTimerRef.current) clearTimeout(inputShakeTimerRef.current);
+    },
+    []
+  );
 
-  return { hypeKey, shake, inputShake };
+  return { hypeKey, shake, inputShake, fireAccept };
 }
 
 /**
@@ -1578,13 +1606,18 @@ export default function GameScreen({
   // Latest personal combo, read by useHypeFeedback at accept time to scale the
   // Word Bomb burst/ring/cue. Kept fresh from `streak` (defined below) each render.
   const comboRef = useRef(0);
+  // Word Bomb optimistic accept (JOB C Path B): the lowercased word we painted accepted at submit,
+  // awaiting the server's word_result. Lets useHypeFeedback suppress the confirm's re-fire, and marks
+  // which server result is a rollback of our optimism.
+  const optimisticWordRef = useRef(null);
   // Hype popup + screen shake (accepted) and input shake (rejected). Called
   // before the category early-return so the hooks always run in the same order.
   // Word Bomb opts into the prototype-tuned values; Category Blitz (gameType !==
   // 'word-bomb') passes wordBomb=false and keeps its exact existing feel.
-  const { hypeKey, shake, inputShake } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef, {
+  const { hypeKey, shake, inputShake, fireAccept } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef, {
     wordBomb: gameType === 'word-bomb',
     comboRef,
+    optimisticWordRef,
   });
 
   // ---- Heart-shatter + elimination detection (Word Bomb only) ----
@@ -1809,8 +1842,11 @@ export default function GameScreen({
       if (comboAwaitRef.current) {
         comboAwaitRef.current = false;
         streak.miss();
-        // Resolve the chip to a red reject with the reason.
-        setPending((p) => (p ? { ...p, phase: 'reject', reason: lastWordResult.reason } : p));
+        // ROLLBACK of an optimistic accept (JOB C Path B): the chip was showing ✓; flip it red with
+        // the server's reason. A server `already_used` here can only be a RACE — the client already
+        // caught its own used-words at submit — so name it as another player taking the word.
+        const rollbackReason = lastWordResult.reason === 'already_used' ? 'used_by_other' : lastWordResult.reason;
+        setPending((p) => (p ? { ...p, phase: 'reject', reason: rollbackReason } : p));
         schedulePendingClear(2400);
         // RESTORE the word so it can be fixed — a server not_a_word cleared it at
         // submit, whereas the local-reject path deliberately keeps it. Only restore
@@ -2506,14 +2542,20 @@ export default function GameScreen({
     lastSubmitWordRef.current = word;
     setFlyText(word);
     setFlyKey((k) => k + 1);
-    // Commit the word into the in-flight ACK chip SAME-FRAME (no artificial delay):
-    // instant acknowledgement while the server verdict is in transit. Its verdict
-    // is resolved on the chip by the word_result effect below.
+    // OPTIMISTIC ACCEPT (JOB C Path B): the word passed the three checks the client can run
+    // (contains the fragment, >=3 letters, not already used this run), so paint it ACCEPTED
+    // SAME-FRAME — the chip flips to accept (no combo yet) and the accept juice fires now, not
+    // after the round trip. This is PRESENTATION ONLY: score, turn order, lives and the combo
+    // count all stay server-driven and do NOT advance here — they land when word_result /
+    // turn_update arrive. optimisticWordRef marks this word so the confirming server accept
+    // suppresses a double-juice, and a server REJECT rolls the paint back (see the effects below).
     if (pendingClearRef.current) {
       clearTimeout(pendingClearRef.current);
       pendingClearRef.current = null;
     }
-    setPending({ word, phase: 'flight' });
+    optimisticWordRef.current = word.toLowerCase();
+    setPending({ word, phase: 'accept' }); // no `combo` — the ×N lands on server confirm, not now
+    fireAccept(); // the accept juice, immediately (server stays authoritative for everything else)
     onSubmitWord(word);
     setDraft('');
     // Reset other players' view of our typing now that we've fired the word.
