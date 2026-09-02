@@ -530,6 +530,22 @@ function App() {
     canReconnectRef.current = !inActiveSession;
   }, [inActiveSession]);
 
+  // feat/offline: connectivity, so the multiplayer modes (Word Bomb / Category Blitz — which NEED the
+  // server) show a clear NEEDS INTERNET state instead of a silent spin, while CHAIN / FUSE / SAT RUSH
+  // (fully client-side, precached by the service worker) stay playable. Seeded from navigator.onLine
+  // and kept live via the online/offline events.
+  const [offline, setOffline] = useState(typeof navigator !== 'undefined' && navigator.onLine === false);
+  useEffect(() => {
+    const goOnline = () => setOffline(false);
+    const goOffline = () => setOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
   // Background music. It's started from the splash dismiss (the guaranteed first
   // user gesture), so no autoplay attempt here - just the player + a fade-in.
   const music = useMusicPlayer();
@@ -2134,6 +2150,35 @@ function App() {
               }}
             >
               JOINING ROOM {LAUNCH_INTENT.join}…
+            </div>
+          )}
+          {/* feat/offline: a clear NEEDS INTERNET status on the menu when offline — names which modes
+              still play (the precached solo ones) and which need the server (Word Bomb / Blitz), so
+              those never just fail silently. Same inline status-banner pattern as JOINING ROOM. */}
+          {offline && isHomeMenu && (
+            <div
+              role="status"
+              style={{
+                position: 'fixed',
+                left: '50%',
+                bottom: '28px',
+                transform: 'translateX(-50%)',
+                zIndex: 9000,
+                maxWidth: 'min(92vw, 460px)',
+                textAlign: 'center',
+                fontFamily: "'Space Mono', monospace",
+                fontWeight: 700,
+                fontSize: '13px',
+                letterSpacing: '0.04em',
+                color: '#0d0618',
+                background: '#FF6B3D',
+                border: '2px solid #A63C18',
+                borderRadius: '8px',
+                boxShadow: '3px 3px 0 #000',
+                padding: '10px 16px',
+              }}
+            >
+              OFFLINE — CHAIN, FUSE &amp; SAT RUSH STILL PLAY. WORD BOMB &amp; CATEGORY BLITZ NEED INTERNET.
             </div>
           )}
           {/* The intro -> menu knife-split reveal (cosmetic, pointer-events:none,

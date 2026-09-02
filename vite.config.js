@@ -1,7 +1,38 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+
+// feat/offline — the service worker. Default build only (a portal iframe embed must not register a
+// SW). Precaches the shell + EVERY hashed asset, which includes the solo/SAT word data (they ship as
+// dynamic-import JS chunks), so CHAIN / FUSE / SAT play fully offline from the FIRST visit.
+//
+// NEVER SERVE A STALE BUILD: every precached asset is content-hashed and stored WITH A REVISION, so a
+// new deploy produces a new precache manifest; registerType 'autoUpdate' + skipWaiting + clientsClaim
+// make the new SW take over immediately, and cleanupOutdatedCaches evicts the previous build's cache.
+// The swap is ATOMIC — a client is never left on an old index.html that points at deleted asset
+// hashes; it serves one consistent build until it updates to the next, whole. navigateFallback serves
+// the precached index.html for offline navigations (any route/deep-link), so the SPA boots offline.
+function pwaPlugin() {
+  return VitePWA({
+    registerType: 'autoUpdate',
+    injectRegister: 'auto',
+    manifest: false, // keep the existing hand-authored public/manifest.json
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+      globIgnores: ['**/sitemap.xml', '**/robots.txt'],
+      navigateFallback: '/index.html',
+      navigateFallbackDenylist: [/^\/api\//],
+      cleanupOutdatedCaches: true,
+      clientsClaim: true,
+      skipWaiting: true,
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // fit the ~1.9MB accept-ext word chunk
+    },
+    // Dev: don't enable the SW while running `vite` (it interferes with HMR); build/preview only.
+    devOptions: { enabled: false },
+  })
+}
 
 // The canonical list of indexed pages. `lastmod` is stamped with the BUILD date at
 // generate time (see sitemapPlugin) so it never goes stale — every deploy refreshes
@@ -54,7 +85,7 @@ export default defineConfig(({ mode }) => {
   const isPortal = mode === 'portal'
   const outDir = isPortal ? 'dist-portal' : 'dist'
   return {
-    plugins: [react(), ...(isPortal ? [] : [sitemapPlugin(outDir)])],
+    plugins: [react(), ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin()])],
     base: isPortal ? './' : '/',
     build: {
       outDir,
