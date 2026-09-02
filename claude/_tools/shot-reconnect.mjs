@@ -1,0 +1,18 @@
+import { chromium } from '@playwright/test';
+import { installBackendMock } from '../../e2e/support/backendMock.js';
+const ME='e2e-player'; const wbPlayers=[{id:ME,name:'YOU',lives:3,isHost:true},{id:'p2',name:'RIVAL',lives:2}];
+const b=await chromium.launch();
+const ctx=await b.newContext({baseURL:'http://localhost:4173',viewport:{width:390,height:844},deviceScaleFactor:2});
+const p=await ctx.newPage(); const mock=await installBackendMock(p);
+await p.goto('/?portal=1'); await p.getByRole('img',{name:'Type a Word'}).waitFor();
+mock.pushToClient({type:'room_update',payload:{code:'WXYZ',gameType:'word-bomb',hostId:ME,difficultyKey:'chill',players:wbPlayers}}); await p.waitForTimeout(80);
+mock.pushToClient({type:'game_started',payload:{gameType:'word-bomb'}}); await p.waitForTimeout(80);
+mock.pushToClient({type:'turn_update',payload:{currentPlayerId:ME,players:wbPlayers,combo:'at',usedWords:['CAT'],timerSeconds:22}});
+await p.waitForTimeout(3200);
+mock.dropClient(); await p.locator('.connlost-title',{hasText:'RECONNECT'}).waitFor({timeout:4000}).catch(()=>{});
+await p.waitForTimeout(300); await p.screenshot({path:'claude/reconnect-shots/1-reconnecting.png'});
+await mock.waitForSent('join_room',12000).catch(()=>{});
+mock.pushToClient({type:'error',payload:{message:'game_already_started'}});
+await p.waitForTimeout(1200); await p.screenshot({path:'claude/reconnect-shots/2-lost-wins-safe.png'});
+console.log('captured reconnecting + lost');
+await b.close();
