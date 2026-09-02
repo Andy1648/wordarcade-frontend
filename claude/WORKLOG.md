@@ -111,3 +111,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
     fails, the bug is in the launch/flag gate, not the router bridge — likely the satRush(capital)
     dev-flag gate vs LAUNCH_INTENT.satrush(lowercase). NOT a merge conflict (fails on the branch
     alone). Needs an on-branch fix before it can join; sitemap.xml/vercel.json/share-links ride with it.
+- 2026-09-02  JOB 2 (audits, subagents ≤2 concurrent): economy DONE (claude/audit-economy.md) —
+  1.54x mode spread holds, but HIGH (survived refutation): Word Sense rarity factor
+  wordSenseWinsFactor=1+(rarity-1)(2.5^tier-1) is UNCAPPED + applied OUTSIDE the x40 cap, reopening
+  the spread to 4.4x(W1)->40.8x(W5) favoring SAT Rush; dead stretches <9h/archetype (stale
+  archetype200h-sim claiming 165h is obsolete/pre-parity); Collection hard-caps mono-SAT at 612;
+  Momentum maxes inside 200h. copy + a11y RUNNING; mobile QUEUED (runs after a11y frees its server).
+  CONTENTION LESSON: only ONE server-using audit at a time; light grep audit can overlap.
+- 2026-09-02  JOB 4 docs drafted (untracked, will commit on promo/assets): crazygames-submission.md,
+  itch-submission.md, portal-checklist.md. ?cg=1 path verified INTACT statically (cgEntry.js +
+  App.jsx cg-arm/guarded setView). Cover art DATED (og-image.png Jun24 predates card redesign) —
+  regen needs live render, deferred+documented. Poki/GD SDKs NOT integrated — documented as tasks.
