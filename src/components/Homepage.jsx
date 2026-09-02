@@ -21,6 +21,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import LockedPreviewDialog from './LockedPreviewDialog';
+import RankLadder from './RankLadder';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -171,6 +172,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   }, [connecting, wsStatus]);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
+  const [showRanks, setShowRanks] = useState(false); // rank-ladder overlay (fix/card-polish)
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);
@@ -703,6 +705,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             rebirths={rebirths}
             wins={wins}
             onWinsClick={handleShop}
+            onRankClick={() => setShowRanks(true)}
             streak={streak}
           />
           {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
@@ -830,6 +833,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           level={xpProgress.level}
           onClose={() => setLockedPreview(null)}
         />
+      )}
+
+      {/* RANK LADDER overlay — all ten ranks, which you hold, which is next (fix/card-polish). */}
+      {showRanks && (
+        <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
       )}
     </div>
   );

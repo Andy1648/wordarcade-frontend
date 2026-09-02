@@ -440,6 +440,21 @@ button.menu-wins-chip:focus-visible {
   box-shadow: 2px 2px 0 #000;
   white-space: nowrap;
 }
+/* fix/card-polish: the rank chip is now a BUTTON opening the rank ladder. Reset native button
+   chrome, keep the chip look, add a press cue + pointer. Font/colour inherit from above. */
+.menu-xp-rank--btn {
+  cursor: pointer;
+  line-height: 1.1;
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+.menu-xp-rank--btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000;
+}
+.menu-xp-rank--btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
 /* At the narrowest phones (≤380px) the LV bar can't seat the rank chip without squeezing the
    XP track until the "into / cost" readout clips past it (viewport-integrity, 360×640). The rank
    is the bar's lowest-priority element and still shows in Stats + on wider screens, so drop it
