@@ -187,6 +187,11 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
   // ---- 3. shared-morpheme BONUS ----
   const familyMorpheme = dominantMorpheme(chosen);
   const finalWords = familyMorpheme ? groupByMorpheme(chosen, familyMorpheme) : chosen;
+  // How many of the briefed words actually carry the family morpheme — so the header can say
+  // "THREE SHARE A ROOT" when 3+ do, not a hardcoded "TWO". 0 when there's no family.
+  const familyCount = familyMorpheme
+    ? finalWords.filter((r) => r.root && r.root.morpheme === familyMorpheme).length
+    : 0;
 
-  return { words: finalWords, familyMorpheme, reviewCount, reviewWords };
+  return { words: finalWords, familyMorpheme, familyCount, reviewCount, reviewWords };
 }

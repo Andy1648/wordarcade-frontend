@@ -78,6 +78,7 @@ test('no shared morpheme → familyMorpheme is null (the common case)', () => {
   // Every root-bearing word here has a distinct morpheme, so nothing is shared.
   const b = pickBriefing({ state: freshState(), session: 1, words: mixedPool(), rng: IDENTITY_RNG });
   assert.equal(b.familyMorpheme, null);
+  assert.equal(b.familyCount, 0);
 });
 
 test('a shared morpheme is a grouped BONUS — headed and adjacent', () => {
@@ -97,6 +98,9 @@ test('a shared morpheme is a grouped BONUS — headed and adjacent', () => {
   const idx = words.map((w, i) => ({ w, i })).filter((e) => e.w.startsWith('z')).map((e) => e.i);
   assert.equal(idx.length, 3, 'all three shared-root words are present');
   assert.equal(idx[2] - idx[0], 2, 'the shared-root words are contiguous');
+  // familyCount reflects how many actually share the root, so the header can say "THREE",
+  // not a hardcoded "TWO".
+  assert.equal(b.familyCount, 3, 'three words carry the family morpheme');
 });
 
 test('the one review slot takes the WEAKEST due needs-review word, and it leads', () => {

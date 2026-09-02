@@ -102,6 +102,17 @@ test('multiplier decays 5-3-1 across the three stages and clamps at the last', (
   assert.deepEqual(seen, [5, 3, 1, 1, 1, 1, 1]);
 });
 
+test('at the FINAL stage the multiplier is NOT a flat 1× when silver is lit (the spell-along "1× SCRAPS" bug)', () => {
+  const eng = engine();
+  clearN(eng, 5); // heat 0 → 5 = silver lit
+  assert.equal(eng.getState().heat, DEFAULT_CONFIG.heatCap);
+  eng.nextWord(); // fresh word, silver still lit
+  eng.advanceStage(); // stage 1
+  eng.advanceStage(); // stage 2 = FINAL (base 1×)
+  // The spell-along header must show THIS, not a hardcoded "1×": 1 × silver 2 = 2×.
+  assert.equal(eng.currentMultiplier(), 2);
+});
+
 // --- the 3-stage reveal schedule (types share a stage) ---------------------
 
 test('the reveal schedule groups types: meta+sentence @0, gloss+root @1, first letter @2', () => {

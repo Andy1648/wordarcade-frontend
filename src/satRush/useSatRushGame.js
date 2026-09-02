@@ -783,7 +783,7 @@ function buildBriefingView(briefing, lex) {
         ? row.root.cousins.filter((c) => lexicon.hasSeen(lex, c))
         : [],
   }));
-  return { familyMorpheme: briefing.familyMorpheme, reviewCount: briefing.reviewCount, cards };
+  return { familyMorpheme: briefing.familyMorpheme, familyCount: briefing.familyCount, reviewCount: briefing.reviewCount, cards };
 }
 
 // Pure: assemble everything the components render from the engine/input state.

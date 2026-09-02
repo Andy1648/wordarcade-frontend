@@ -307,6 +307,11 @@
   letter-spacing: 1px;
   color: #FFE94A;
 }
+/* A full room is disabled (dimmed by :disabled) and its status reads FULL in red so it's
+   clearly not joinable, instead of a joinable-looking WAITING that the server would reject. */
+.browser-row.is-full .browser-row-status {
+  color: #FF5C5C;
+}
 
 /* ---- Empty state ---- */
 

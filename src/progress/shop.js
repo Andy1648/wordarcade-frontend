@@ -7,6 +7,7 @@ import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { getWordSenseTier, saveWordSenseTier, wordSenseCost } from './wordSense.js';
 import { getMomentum, saveMomentum, momentumCost, markMomentumPop, MOMENTUM_MAX } from './momentum.js';
+import { THEMES, isThemeOwned } from '../theme/themes.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
@@ -161,12 +162,28 @@ export function buyMomentum() {
   return { ok: true, wins: nextWins, count: count + 1, spent: cost };
 }
 
-// True when the player can afford at least one item they don't already own — drives the
-// menu wins-chip's "something to buy" dot. Pure given wins/owned (defaults read live).
+// True when the player can afford at least one thing they don't already own — drives the
+// menu wins-chip's "something to buy" dot. Counts EVERYTHING purchasable, not just cosmetics:
+// the dot used to go dark forever once a player owned all 11 cosmetics, even though Key Power,
+// Word Sense, Momentum and buyable themes were still affordable. `wins`/`owned` are injectable
+// for the cosmetic layer; the other sinks read their own live stores (guarded, sane defaults).
 export function canAffordAny(wins = getWins(), owned = getOwned()) {
   const ownedSet = new Set(owned);
   const bal = Number.isFinite(wins) ? wins : 0;
-  return ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price);
+  // Cosmetics (pop styles + sound packs).
+  if (ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price)) return true;
+  // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
+  const kCost = keyTierCost(getKeyTier());
+  if (Number.isFinite(kCost) && bal >= kCost) return true;
+  // Word Sense — the same infinite ×6 ladder as Key Power.
+  const wCost = wordSenseCost(getWordSenseTier());
+  if (Number.isFinite(wCost) && bal >= wCost) return true;
+  // Momentum — a repeatable sink until MOMENTUM_MAX (momentumCost returns Infinity when maxed).
+  const mCost = momentumCost(getMomentum());
+  if (Number.isFinite(mCost) && bal >= mCost) return true;
+  // Buyable menu themes (priced, not yet owned or level-granted).
+  if (THEMES.some((t) => t.price > 0 && !isThemeOwned(t.id) && bal >= t.price)) return true;
+  return false;
 }
 
 // Equip an OWNED item (instant + free) into its type's slot. Returns true on success.

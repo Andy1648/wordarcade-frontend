@@ -176,3 +176,29 @@ test('SIM: median FUSE player lands 21-28 words (target 24)', () => {
   const med = _fuseMedian(res);
   assert.ok(med >= 21 && med <= 28, `median words ${med} outside 21-28`);
 });
+
+// shortFactor: the UI must show the ACTUAL length factor applied to the fuse, not a
+// hardcoded ×0.8 — a 4-letter word docks to ×0.92, a 3-letter to ×0.80, 5+ leaves ×1.00.
+test('serve exposes the real shortFactor (0.92 for a 4-letter word, not a flat 0.8)', () => {
+  const pools = { e: ['ab'], m: ['ab'], h: ['ab'], b: ['ab'] };
+  const accept = new Set(['crab', 'lab', 'blabs']); // all contain "ab", lengths 4 / 3 / 5
+  const eng = createFuseEngine({ accept, pools, rng: () => 0 });
+  const first = eng.start();
+  assert.equal(first.shortFactor, 1);
+  assert.equal(first.shortPenalty, false);
+
+  const afterFour = eng.submit('crab'); // 4 letters → next fuse ×0.92
+  assert.equal(afterFour.ok, true);
+  assert.equal(eng.state.shortFactor, 0.92);
+  assert.equal(eng.state.shortPenalty, true);
+
+  const afterThree = eng.submit('lab'); // 3 letters → next fuse ×0.80
+  assert.equal(afterThree.ok, true);
+  assert.equal(eng.state.shortFactor, 0.8);
+  assert.equal(eng.state.shortPenalty, true);
+
+  const afterFive = eng.submit('blabs'); // 5 letters → no dock
+  assert.equal(afterFive.ok, true);
+  assert.equal(eng.state.shortFactor, 1);
+  assert.equal(eng.state.shortPenalty, false);
+});

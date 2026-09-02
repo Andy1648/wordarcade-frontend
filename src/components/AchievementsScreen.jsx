@@ -8,6 +8,7 @@
 // `achievements` view were removed — see StatsScreen.jsx.
 import './AchievementsScreen.css';
 import { achievementList, achievementCounts } from '../progress/achievements';
+import { rebirthScaledWins } from '../progress/xp';
 import { formatNum } from '../format';
 
 const CAT_ORDER = ['VOLUME', 'SPEED', 'VOCABULARY', 'PROGRESSION', 'STREAKS', 'MODES', 'ECONOMY', 'SECRET'];
@@ -30,7 +31,7 @@ export function AchievementsBody() {
                   <div key={a.id} className={`ach-card${a.earned ? ' is-earned' : ''}${a.secret ? ' is-secret' : ''}`}>
                     <div className="ach-card-name">{a.name}</div>
                     <div className="ach-card-hint">{a.hint}</div>
-                    <div className="ach-card-wins">{a.earned ? '✓ ' : ''}+{formatNum(a.base)} WINS</div>
+                    <div className="ach-card-wins">{a.earned ? '✓ ' : ''}+{formatNum(rebirthScaledWins(a.base))} WINS</div>
                   </div>
                 ))}
               </div>

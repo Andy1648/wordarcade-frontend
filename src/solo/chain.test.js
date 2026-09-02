@@ -257,3 +257,20 @@ test('SIM: a memorised s→s bank bot never exceeds 30 links (heat caps it; 86 b
   const worst = Math.max(...runs);
   assert.ok(worst <= 30, `s→s bot reached ${worst} links (> 30 — heat broken?)`);
 });
+
+// The death blame line must BRANCH on the killed letter's real state (fix/logic-pass #7): a
+// plain timeout on a healthy letter is NOT "nothing left starting with X".
+test('timeout snapshots killedWasDeadEnd: false for a healthy letter, true for a genuine dead end', () => {
+  const healthy = synth(); // opener 'a' has 3 common continuations
+  const engH = createChainEngine({ accept: healthy.accept, topCommon: healthy.topCommon, rng: () => 0 });
+  assert.equal(engH.state.requiredLetter, 'a');
+  engH.timeout();
+  assert.equal(engH.state.killedLetter, 'a');
+  assert.equal(engH.state.killedWasDeadEnd, false); // → "RAN OUT OF TIME ON A"
+
+  const dead = synth({ hollow: 'a' }); // 'a' has ZERO common continuations
+  const engD = createChainEngine({ accept: dead.accept, topCommon: dead.topCommon, rng: () => 0 });
+  assert.equal(engD.state.requiredLetter, 'a');
+  engD.timeout();
+  assert.equal(engD.state.killedWasDeadEnd, true); // → "nothing left starting with A"
+});

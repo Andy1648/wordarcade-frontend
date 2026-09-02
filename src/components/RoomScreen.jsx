@@ -7,42 +7,9 @@ import PlayerDot from './PlayerDot';
 import { resolvePlayerColor } from '../playerColors';
 import { inviteLink } from '../share/links.js';
 import { track } from '../lib/analytics';
+import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
 import './RoomScreen.css';
 
-// Each difficulty carries a short blurb (timer · lives) so players know what
-// they're picking. Mirrors the backend DIFFICULTY_PRESETS in gameLogic.js:
-// chill 20s/3 lives, easy(HARD) 15s/2, medium(CRAZY) 10s/2, hard(HELL) 7s/2.
-// Display names are the edgy CHILL / HARD / CRAZY / HELL tiers; the `key` is
-// unchanged so all the underlying timer logic stays put. The `desc` is the Word
-// Bomb per-turn timer + lives (that mode varies both by tier).
-const DIFFICULTIES = [
-  { key: 'chill', label: 'CHILL', desc: '20s · 3 lives' },
-  { key: 'easy', label: 'HARD', desc: '15s · 2 lives' },
-  { key: 'medium', label: 'CRAZY', desc: '10s · 2 lives' },
-  { key: 'hard', label: 'HELL', desc: '7s · 2 lives' },
-];
-
-// Category Blitz reroll allowance per tier (mirrors the backend). In that mode
-// the timer is a fixed 20s, so difficulty controls rerolls instead - which is
-// what the difficulty blurb shows there.
-const CB_REROLLS = { chill: 3, easy: 3, medium: 2, hard: 1 };
-
-function difficultyDesc(diff, gameType) {
-  if (gameType === 'category-blitz') {
-    const n = CB_REROLLS[diff.key] ?? 0;
-    return `20s · ${n} reroll${n === 1 ? '' : 's'}`;
-  }
-  return diff.desc;
-}
-
-// Read-only readout for non-hosts: "CRAZY — 10s timer" (falls back to the bare
-// key if it's somehow unknown).
-function difficultyReadout(key, gameType) {
-  const match = DIFFICULTIES.find((d) => d.key === key);
-  return match
-    ? `${match.label} — ${difficultyDesc(match, gameType)}`
-    : (key || '').toUpperCase();
-}
 // The two playable game modes. `key` is the value the server expects in
 // set_game_type / reports back in room_update's gameType; `label` is the
 // display text.
@@ -362,8 +329,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         )}
 
         {/* DIFFICULTY is a Word Bomb concept (the HARD/CRAZY/HELL timer tiers).
-            Category Blitz has no difficulty control, so render none for it —
-            the desc/readout helpers stay defined, just not used here. */}
+            Category Blitz has no difficulty control, so render none for it. */}
         {room.gameType === 'word-bomb' && (
           <>
             <div className="room-section-label">DIFFICULTY</div>
@@ -380,12 +346,12 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                     }}
                   >
                     <span className="room-difficulty-name">{diff.label}</span>
-                    <span className="room-difficulty-desc">{difficultyDesc(diff, room.gameType)}</span>
+                    <span className="room-difficulty-desc">{difficultyDesc(diff.key)}</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey, room.gameType)}</div>
+              <div className="room-difficulty-readonly">{difficultyReadout(room.difficultyKey)}</div>
             )}
           </>
         )}

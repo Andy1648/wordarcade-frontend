@@ -20,6 +20,8 @@ import CopyResultButton from '../share/CopyResultButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
+import { difficultyLabel } from '../difficulty';
+import { plural } from '../format';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 
@@ -2370,9 +2372,9 @@ export default function GameScreen({
     : combo || '—';
   const usedLabel = isCategory ? 'USED ANSWERS' : 'USED WORDS';
 
-  const difficultyLabel = (gameState.difficultyKey || gameState.difficulty || '')
-    .toString()
-    .toUpperCase();
+  // ONE mapping shared with the lobby (src/difficulty.js) so the in-game chip never
+  // contradicts the tier the host picked — raw-key uppercasing turned CRAZY into MEDIUM.
+  const diffLabel = difficultyLabel(gameState.difficultyKey || gameState.difficulty || '');
 
   // Total hearts to draw per player = the most lives anyone is known to
   // have started with. Pulled defensively from whichever field the server
@@ -2704,8 +2706,8 @@ export default function GameScreen({
               {typeof gameState.round !== 'undefined' && (
                 <span className="game-meta-round">ROUND {gameState.round}</span>
               )}
-              {difficultyLabel && (
-                <span className="game-meta-diff">{difficultyLabel}</span>
+              {diffLabel && (
+                <span className="game-meta-diff">{diffLabel}</span>
               )}
             </div>
             <div className="game-header-actions">
@@ -4205,7 +4207,7 @@ function CategoryBlitzScreen({
                       <span className="cb-progress-name-text">{p.name}</span>
                     </span>
                     <span className="cb-progress-count">
-                      {playerProgress[p.id] || 0} answers
+                      {plural(playerProgress[p.id] || 0, 'answer')}
                     </span>
                   </div>
                   );
