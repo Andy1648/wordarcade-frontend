@@ -24,7 +24,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './Spotlight.css';
 
 const PAD = 8; // breathing room around the target inside the bright hole (matches the ring)
-const GAP = 12; // gap between the ring edge and the caption
+const GAP = 8; // gap between the ring edge and the caption
+const CLEAR = 4; // min clearance the caption keeps from the neighbour it's tucked against
 const EDGE = 10; // min distance the caption keeps from any viewport edge
 
 // Elements the caption must never cover. Generic interactive controls: the menu's game cards
@@ -65,23 +66,10 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
-      // Caption's own size. offsetWidth/offsetHeight (NOT getBoundingClientRect) so the
-      // appear animation's scale transform doesn't shrink the reading mid-flight — a scaled
-      // measurement placed the caption for a smaller box than it settles at, letting its edge
-      // drift back under a neighbouring control once the pop finished.
-      const cap = capRef.current;
-      const capW = cap ? cap.offsetWidth : 0;
-      const capH = cap ? cap.offsetHeight : 0;
-
-      // Horizontal home: centred ON THE RING, clamped so the caption stays fully on screen.
-      const cx = target.left + target.width / 2;
-      const cxLeft = Math.max(EDGE + capW / 2, Math.min(cx, vw - EDGE - capW / 2));
-      const bandL = cxLeft - capW / 2;
-      const bandR = cxLeft + capW / 2;
-
       // The ring edges (the bright hole extends PAD beyond the target on every side).
       const ringTop = target.top - PAD;
       const ringBottom = target.bottom + PAD;
+      const cx = target.left + target.width / 2;
 
       const rects = [];
       for (const e of document.querySelectorAll(INTERACTIVE)) {
@@ -90,27 +78,44 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
         if (b.width > 0 && b.height > 0) rects.push(b);
       }
 
-      // ABOVE vs BELOW: measure room to the nearest interactive element that covers a
-      // SUBSTANTIAL slice of the caption's column — a wide control (the menu's game cards, a
-      // game input) is a real vertical obstacle, but a corner chip that only grazes the column
-      // edge is not (we nudge horizontally around those below). Falls back to the viewport edge.
-      const blockSpan = Math.max(40, capW * 0.35);
-      let belowLimit = vh;
-      let aboveLimit = 0;
-      for (const b of rects) {
-        const overlap = Math.min(bandR, b.right) - Math.max(bandL, b.left);
-        if (overlap < blockSpan) continue;
-        if (b.top >= ringBottom) belowLimit = Math.min(belowLimit, b.top);
-        else if (b.bottom <= ringTop) aboveLimit = Math.max(aboveLimit, b.bottom);
-      }
+      // Room to the nearest interactive element that covers a SUBSTANTIAL slice of the caption's
+      // column — a wide control (the menu's game cards, a game input) is a real vertical
+      // obstacle; a corner chip that only grazes the column edge is not (we nudge horizontally
+      // around those below). Falls back to the viewport edge when the column is otherwise clear.
+      // roomFor() returns how tall a caption may be to fit below / above without covering one.
+      const cap = capRef.current;
+      const roomFor = (capW) => {
+        const cxLeft = Math.max(EDGE + capW / 2, Math.min(cx, vw - EDGE - capW / 2));
+        const bandL = cxLeft - capW / 2;
+        const bandR = cxLeft + capW / 2;
+        const blockSpan = Math.max(40, capW * 0.35);
+        let belowLimit = vh;
+        let aboveLimit = 0;
+        for (const b of rects) {
+          if (Math.min(bandR, b.right) - Math.max(bandL, b.left) < blockSpan) continue;
+          if (b.top >= ringBottom) belowLimit = Math.min(belowLimit, b.top);
+          else if (b.bottom <= ringTop) aboveLimit = Math.max(aboveLimit, b.bottom);
+        }
+        return {
+          cxLeft,
+          bandL,
+          bandR,
+          below: belowLimit - ringBottom - GAP - CLEAR,
+          above: ringTop - aboveLimit - GAP - CLEAR,
+        };
+      };
 
-      const roomBelow = belowLimit - ringBottom - GAP * 2;
-      const roomAbove = ringTop - aboveLimit - GAP * 2;
-      const fitsBelow = capH <= roomBelow;
-      const fitsAbove = capH <= roomAbove;
-      // Prefer below; flip above only when below can't hold it and above can. If neither fits
-      // (a very cramped viewport) take the roomier side and clamp on screen.
-      const below = fitsBelow ? true : fitsAbove ? false : roomBelow >= roomAbove;
+      // Caption size as laid out. offsetWidth/offsetHeight ignore the appear-scale transform (a
+      // scaled reading would mis-place it mid-animation). The caption's compact form on short
+      // viewports (one line, no sub) is chosen by a CSS height media query — NOT toggled from
+      // here — so this reads whatever size it actually is with nothing to fight React over.
+      const capW = cap ? cap.offsetWidth : 0;
+      const capH = cap ? cap.offsetHeight : 0;
+      const room = roomFor(capW);
+      const { cxLeft, bandL, bandR } = room;
+      // Prefer below; flip above ONLY when below can't hold the caption and above can. As a last
+      // resort (nothing fits either side) stay BELOW — never print across the ring/wordmark above.
+      const below = capH <= room.below || capH > room.above;
 
       let top = below ? ringBottom + GAP : ringTop - GAP - capH;
       top = Math.max(EDGE, Math.min(top, vh - capH - EDGE));

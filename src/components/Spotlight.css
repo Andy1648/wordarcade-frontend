@@ -68,6 +68,22 @@
   text-shadow: 2px 2px 0 #000;
 }
 
+/* COMPACT (short viewports): a laptop under ~600px tall sandwiches the ring between the wordmark
+   and the cards with room for the full (headline + sub) caption on NEITHER side. Drop the sub and
+   shrink the headline to a single short line so the coach mark fits the gap BELOW the ring and
+   never prints across the ring it points at. Height-driven in CSS (not toggled from JS), so the
+   placement pass simply measures whatever size the caption is. */
+@media (max-height: 600px) {
+  .spotlight-caption-sub {
+    display: none;
+  }
+  .spotlight-caption-text {
+    font-size: clamp(15px, 2.4vw, 20px);
+    -webkit-text-stroke-width: 2px;
+    text-shadow: 3px 3px 0 #000;
+  }
+}
+
 @keyframes spotlight-in {
   from { opacity: 0; }
   to { opacity: 1; }
