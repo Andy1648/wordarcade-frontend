@@ -93,3 +93,21 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-02  JOB 1 START (integration/all-held off origin/main cd7d2a5): merge 9 held branches in
   order card-polish->logic-and-onboarding->logic-pass->optimistic-input->reconnect->router->offline
   ->game-fill-2->loading-states, resolving conflicts; lint+unit(+relevant specs) after each; then PLAYTEST.md.
+- 2026-09-02  JOB 1 DONE (integration/all-held): merged 8 of 9 held branches; PLAYTEST.md written.
+  ORDER + GATE (lint 0 err / unit 428 throughout):
+    1-3 card-polish->logic-and-onboarding->logic-pass (linear stack, conflict-free) — lint/unit.
+    4 optimistic-input — auto-merged GameScreen.jsx clean; e2e word-bomb-scoring+cold-submit 6/6.
+    5 reconnect — App.jsx +145 clean; e2e websocket-boundary+server-waking 4/4.
+    6 offline — vite.config PWA + App.jsx clean; build exit0, SW/workbox/manifest generated.
+    7 game-fill-2 — GameScreen/App/CSS auto-merged clean; e2e game-fill+viewport-integrity+parity 663 pass exit0 (16min, slow under audit contention but green).
+    8 loading-states — App.jsx clean; e2e server-waking 1/1.
+  Only conflicts were claude/WORKLOG.md every time (prior per-branch carry-forward) — resolved --ours.
+  TIER-1 App.jsx/WS traps VERIFIED intact post-merge: functional setView room guard (App.jsx:902,
+    superset form `prev==='game'||prev==='cg-arm'`), FIFO queue in useWebSocket.js, WB instant
+    local-reject (GameScreen.jsx:2538-2546 + App.jsx onLocalWordResult). 0 conflict markers in src.
+  EXCLUDED feat/router (BEHAVIOURAL, left out per rails): its OWN e2e router.spec.js is RED in
+    isolation (e12bde0) — 7/11 fail. Clean-URL /sat-rush,/chain,/fuse AND legacy ?satrush=1/?chain=1/
+    ?fuse=1 all render data-view='home' not the mode. Since the legacy query path (no URL bridge) also
+    fails, the bug is in the launch/flag gate, not the router bridge — likely the satRush(capital)
+    dev-flag gate vs LAUNCH_INTENT.satrush(lowercase). NOT a merge conflict (fails on the branch
+    alone). Needs an on-branch fix before it can join; sitemap.xml/vercel.json/share-links ride with it.
