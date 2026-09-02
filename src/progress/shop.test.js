@@ -2,8 +2,10 @@
 // owned, unaffordable), and equipping (instant, per-type slot). IDs are stable save keys.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buy, equip, isOwned, getOwned, getEquipped, buyKeyPower } from './shop.js';
+import { buy, equip, isOwned, getOwned, getEquipped, buyKeyPower, canAffordAny, POP_STYLES, SOUND_PACKS } from './shop.js';
 import { getKeyTier } from './xp.js';
+
+const ALL_COSMETICS = [...POP_STYLES, ...SOUND_PACKS].map((i) => i.id);
 
 function withStorage(seed, fn) {
   const saved = globalThis.localStorage;
@@ -90,5 +92,27 @@ test('equip requires ownership and sets the right slot', () => {
     assert.equal(equip('marble'), true);
     assert.equal(getEquipped().soundPack, 'marble');
     assert.equal(getEquipped().popStyle, 'chrome'); // still chrome
+  });
+});
+
+// canAffordAny — the "something to buy" dot. It must count EVERYTHING purchasable, not only
+// cosmetics (the bug: the dot went dark forever once all 11 cosmetics were owned while Key
+// Power / Word Sense / Momentum / themes were still affordable).
+test('canAffordAny stays true when all cosmetics are owned but non-cosmetic sinks are affordable', () => {
+  withStorage({ 'taw.owned': JSON.stringify(ALL_COSMETICS) }, () => {
+    // Fresh stores → Key Power / Word Sense at tier 0, Momentum at 0, no themes owned.
+    assert.equal(canAffordAny(1e12, ALL_COSMETICS), true, 'huge balance, all cosmetics owned → still something to buy');
+  });
+});
+
+test('canAffordAny is false only when literally nothing is affordable', () => {
+  withStorage({ 'taw.owned': JSON.stringify(ALL_COSMETICS) }, () => {
+    assert.equal(canAffordAny(0, ALL_COSMETICS), false, 'zero balance → nothing to buy');
+  });
+});
+
+test('canAffordAny is true for a new player who can afford a cheap cosmetic', () => {
+  withStorage({}, () => {
+    assert.equal(canAffordAny(150, getOwned()), true, '150 wins affords CHROME');
   });
 });

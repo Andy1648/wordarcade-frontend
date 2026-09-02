@@ -214,7 +214,9 @@ export default function WordCard({ view }) {
         <div className="sr-spell">
           <div className="sr-spell-head">
             <span className="sr-spell-label">MUGSHOT PRINTING…</span>
-            <span className="sr-scraps">1× SCRAPS</span>
+            {/* The REAL payout multiplier for finishing now — matches the AnteMeter below (a
+                silver-tongue / revenant word at the final stage pays 2× or 4×, not a flat 1×). */}
+            <span className="sr-scraps">{view.multiplier}× SCRAPS</span>
           </div>
           <div className="sr-spell-bar" aria-hidden="true">
             <div

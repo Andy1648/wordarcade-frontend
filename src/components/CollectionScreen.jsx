@@ -8,6 +8,8 @@
 // link + `collection` view were removed — see StatsScreen.jsx.
 import './CollectionScreen.css';
 import { collectionSummary, TIERS, TIER_COLORS } from '../progress/collection';
+import { readRecords } from '../progress/records';
+import { rebirthScaledWins } from '../progress/xp';
 import { formatNum } from '../format';
 
 const MODE_LABEL = { 'word-bomb': 'WORD BOMB', 'category-blitz': 'BLITZ', 'sat-rush': 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE' };
@@ -23,6 +25,10 @@ function dayLabel(day) {
 // The COLLECTION tab body — rendered inside the Stats overlay's shared scroll region.
 export function CollectionBody() {
   const sum = collectionSummary(60);
+  // DISTINCT WORDS reads the SAME uncapped source as the Stats tab (records.seen) so the two
+  // never disagree — the collection store itself caps at 5,000 (LRU), which used to leave this
+  // headline pinned at 5,000 while Stats kept climbing. Below the cap the two are identical.
+  const distinct = readRecords().distinct;
   const next = sum.nextMilestone;
   const prevClaimed = sum.milestones.filter((m) => sum.total >= m.n).map((m) => m.n);
   const lastClaimed = prevClaimed.length ? prevClaimed[prevClaimed.length - 1] : 0;
@@ -32,7 +38,7 @@ export function CollectionBody() {
     <>
           {/* Headline: distinct words + progress to the next milestone. */}
           <div className="coll-total">
-            <span className="coll-total-num">{formatNum(sum.total)}</span>
+            <span className="coll-total-num">{formatNum(distinct)}</span>
             <span className="coll-total-label">DISTINCT WORDS COLLECTED</span>
           </div>
 
@@ -42,7 +48,7 @@ export function CollectionBody() {
                 <div className="coll-milestone-fill" style={{ width: `${(milestoneFrac * 100).toFixed(1)}%` }} />
               </div>
               <div className="coll-milestone-label">
-                {formatNum(next.n - sum.total)} TO {formatNum(next.n)} · +{formatNum(next.wins)} WINS
+                {formatNum(next.n - sum.total)} TO {formatNum(next.n)} · +{formatNum(rebirthScaledWins(next.wins))} WINS
               </div>
             </div>
           ) : (
@@ -86,7 +92,7 @@ export function CollectionBody() {
               return (
                 <div className={`coll-ms-row${done ? ' is-done' : ''}`} key={m.n}>
                   <dt>{done ? '✓ ' : ''}{formatNum(m.n)} WORDS</dt>
-                  <dd>+{formatNum(m.wins)} WINS</dd>
+                  <dd>+{formatNum(rebirthScaledWins(m.wins))} WINS</dd>
                 </div>
               );
             })}

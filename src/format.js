@@ -6,6 +6,14 @@
 // past-R20 ×1e12+) and the huge late-game XP totals stay compact — 1e11 → 100.0B, 1e15 →
 // 1.0Qa, 1e18 → 1.0Qi. Above 1e21 it stops abbreviating (returns "1000.0Qi"+), which the
 // game never reaches; nothing throws.
+// Pluralize a count-noun: `plural(1, 'answer')` → "1 answer", `plural(3, 'answer')` → "3 answers".
+// Pass an explicit plural form for irregulars: `plural(2, 'life', 'lives')`. The count is formatted
+// with formatNum so big counts stay compact.
+export function plural(n, singular, pluralForm = `${singular}s`) {
+  const count = Number.isFinite(n) ? n : 0;
+  return `${formatNum(count)} ${count === 1 ? singular : pluralForm}`;
+}
+
 export function formatNum(n) {
   const num = Number.isFinite(n) ? n : 0;
   if (Math.abs(num) < 10000) return num.toLocaleString();

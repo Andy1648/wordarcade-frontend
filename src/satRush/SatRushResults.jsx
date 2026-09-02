@@ -102,9 +102,12 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
   // answered earlier = faster; matches the existing satRushGrid semantics). The run
   // ends on a miss, so ⬛ (killed) shows when the final runLog entry is a miss.
   const runLog = results.runLog || [];
+  // Stages are only ever 0..2 (stageMultipliers = [5,3,1]), so a cleared word is FAST (answered
+  // at stage 0-1) or MID (rode to the final stage). There is no 'slow' tier — the old `stage>3`
+  // branch was dead code (engine.js:43).
   const satTiers = runLog
     .filter((e) => e.ok)
-    .map((e) => (e.stage == null ? 'mid' : e.stage <= 1 ? 'fast' : e.stage <= 3 ? 'mid' : 'slow'));
+    .map((e) => (e.stage != null && e.stage <= 1 ? 'fast' : 'mid'));
   const satKilled = !!(runLog.length && !runLog[runLog.length - 1].ok);
 
   return (

@@ -77,7 +77,11 @@ function BriefCard({ card }) {
 
 export default function Briefing({ briefing, onStart, onExit }) {
   if (!briefing) return null;
-  const { familyMorpheme, cards } = briefing;
+  const { familyMorpheme, familyCount, cards } = briefing;
+  // Spell the count so the header matches how many words actually share the root (was a
+  // hardcoded "TWO" even when three-plus shared it). Falls back to the digit past five.
+  const COUNT_WORD = { 2: 'TWO', 3: 'THREE', 4: 'FOUR', 5: 'FIVE' };
+  const familyCountWord = COUNT_WORD[familyCount] || String(familyCount || 0);
 
   return (
     <div className="sr-screen sr-brief-screen">
@@ -95,7 +99,7 @@ export default function Briefing({ briefing, onStart, onExit }) {
           </div>
           {familyMorpheme ? (
             <div className="sr-brief-family">
-              TWO SHARE A ROOT — <b>{familyMorpheme}</b> — grouped below
+              {familyCountWord} SHARE A ROOT — <b>{familyMorpheme}</b> — grouped below
             </div>
           ) : (
             <div className="sr-brief-family">Five words to know before the run</div>

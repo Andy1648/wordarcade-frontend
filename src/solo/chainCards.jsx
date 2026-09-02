@@ -7,13 +7,20 @@
 //                        NO score / BEST / share (SoloShell drops the score line via
 //                        over.bare).
 
-export function ChainNormalCard({ killedLetter, lastLinks }) {
+export function ChainNormalCard({ killedLetter, lastLinks, deadEnd = false }) {
+  // Branch on WHY the run ended (fix/logic-pass #7). The reroute keeps the required letter off
+  // genuine dead ends, so a death is almost always the clock — say so ("RAN OUT OF TIME ON X")
+  // instead of claiming "nothing left starting with X" when there always was. The dead-end line
+  // shows only when the letter truly had no common continuations left.
+  const blame = !killedLetter
+    ? 'time ran out'
+    : deadEnd
+    ? `nothing left starting with "${killedLetter.toUpperCase()}"`
+    : `ran out of time on "${killedLetter.toUpperCase()}"`;
   return (
     <>
       <h2>CHAIN BROKE</h2>
-      <div className="solo-death-killed">
-        {killedLetter ? `nothing left starting with "${killedLetter.toUpperCase()}"` : 'time ran out'}
-      </div>
+      <div className="solo-death-killed">{blame}</div>
       <div className="solo-death-links">
         {lastLinks.map((l, i) => (
           <span key={i}>
