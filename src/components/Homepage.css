@@ -491,36 +491,8 @@ html[data-beat='true'] .homepage-logo {
   overflow: visible;
 }
 
-/* "N MORE" pager — centred on the bottom edge of the scroll region. Same treatment as
-   the other menu buttons: Bungee, yellow fill, thick black border, hard offset shadow. */
-.homepage-cards-more {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translate(-50%, 50%); /* centred ON the bottom edge of the scroll region */
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-family: 'Bungee', cursive;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  color: #0d0618;
-  background: #ffe94a;
-  border: 4px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-}
-.homepage-cards-more:active {
-  transform: translate(-50%, calc(50% + 3px));
-  box-shadow: 1px 1px 0 #000;
-}
-.homepage-cards-more .homepage-cards-more-chev {
-  display: inline-block;
-  line-height: 1;
-}
+/* (fix/logic-and-onboarding) the "N MORE" pager + its `.homepage-cards-more` styles were
+   removed — all five cards are sized to fit one screen, so the pager is vestigial. */
 
 .homepage-bottom-bar {
   position: relative;

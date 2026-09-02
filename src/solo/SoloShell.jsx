@@ -5,11 +5,13 @@
 // DESIGN LAW honored here: the INPUT element is never animated (only the sill and the
 // clock give feedback). The sill "flash" is an OPACITY pulse of an always-red bar (so we
 // stay within transform/opacity-only animation). There is no idle animation anywhere.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
+import Spotlight from '../components/Spotlight';
+import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -53,6 +55,7 @@ export default function SoloShell({
   placeholder,
   maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
   armHint, // per-mode "how to play" line, shown until the clock arms
+  firstRunRule, // per-mode one-line rule for the ONE-TIME first-game input spotlight
   rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
   fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
   phase,
@@ -74,6 +77,16 @@ export default function SoloShell({
     e.preventDefault();
     onSubmit();
   };
+
+  // ONE-TIME first-game spotlight over the input (shared across ALL game surfaces via the
+  // onboarding flag — the first game the player types in shows it, no other). Armed only
+  // once play begins so the target input exists; dismissed by the first key/tap (which the
+  // pointer-events:none overlay lets through, so it still lands in the field).
+  const [gameSpot, setGameSpot] = useState(false);
+  useEffect(() => {
+    if (phase === 'playing' && firstRunRule && !hasSeenGameSpotlight()) setGameSpot(true);
+  }, [phase, firstRunRule]);
+  const dismissGameSpot = () => { markGameSpotlightSeen(); setGameSpot(false); };
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
@@ -216,6 +229,16 @@ export default function SoloShell({
           on top of the already-correct screen; it is a SIBLING of the input's chain,
           never an ancestor, so it can animate without touching the input. */}
       {fx}
+
+      {/* ONE-TIME first-game input spotlight (fix/logic-and-onboarding). */}
+      {gameSpot && phase === 'playing' && (
+        <Spotlight
+          targetSelector=".solo-input"
+          caption={firstRunRule}
+          sub="START TYPING"
+          onDismiss={dismissGameSpot}
+        />
+      )}
     </div>
   );
 }

@@ -136,7 +136,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
     <div className="mode-dialog-overlay" role="presentation">
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
       <div
-        className="mode-dialog-shell"
+        className={`mode-dialog-shell${modeKey === 'blitz' ? ' is-blitz' : ''}`}
         ref={shellRef}
         role="dialog"
         aria-modal="true"

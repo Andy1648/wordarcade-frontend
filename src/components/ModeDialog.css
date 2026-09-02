@@ -68,6 +68,20 @@
   overflow: hidden;
 }
 
+/* BLITZ = the pack-picker dialog. The pack choice is a real decision, not an afterthought
+   tucked into a 226px slot, so its shell becomes a FULL-HEIGHT panel (a fixed height, not
+   shrink-to-content) and a touch wider for the 3-column grid — the flex chain then hands all
+   the leftover height to the picker window (its cap is lifted below). Short viewports still
+   fall back to the shared min(94vh) and the picker scrolls inside. (fix/logic-and-onboarding) */
+.mode-dialog-shell.is-blitz {
+  width: min(94vw, 660px);
+  height: min(94vh, 760px);
+}
+/* Let the pack list fill the tall panel instead of the fixed 226px window. */
+.mode-dialog-shell.is-blitz .ppp-window-scroll {
+  max-height: none;
+}
+
 /* Close (X): a small square chip in the top-right corner. Visible immediately — the shell
    fades in as one unit, so nothing here animates separately. */
 .mode-dialog-close {
