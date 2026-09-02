@@ -84,3 +84,12 @@ GATE = `npm run lint && npm run test && npx playwright test` (NOT npm ci — it 
 before). 2 menu corner-click e2e tests are known-flaky (pass on rerun). Preview server crashes if you
 rebuild while it serves — kill it before `vite build`, or let Playwright's webServer manage its own.
 - 2026-09-01T08:38Z  JOB 10 DONE (fix/splash f6d9015, pushing): gate lint 0 / unit 408 / e2e 1031/1033 (2 flaky economy tests rarity-race+purchase-feel-shop, pass 5/5 isolated, unrelated to splash).
+
+## ===== 12-HOUR RUN part 1 of 4 (start 2026-09-02) — JOBS 1-5 =====
+NOTE: parts 2,3,4 of this run arrived as UNFILLED TEMPLATES ("[paste JOBS 6-20...]") with only
+branch-name hints and a false "earlier session finished jobs 1-N" premise (no such session in this
+WORKLOG). Jobs 6-20 have NO specs and are NOT actionable — awaiting the user pasting real specs.
+Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merge main, never deploy.
+- 2026-09-02  JOB 1 START (integration/all-held off origin/main cd7d2a5): merge 9 held branches in
+  order card-polish->logic-and-onboarding->logic-pass->optimistic-input->reconnect->router->offline
+  ->game-fill-2->loading-states, resolving conflicts; lint+unit(+relevant specs) after each; then PLAYTEST.md.
