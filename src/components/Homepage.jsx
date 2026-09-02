@@ -22,6 +22,8 @@ import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCo
 import ModeDialog from './ModeDialog';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
+import Spotlight from './Spotlight';
+import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -173,6 +175,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
   const [showRanks, setShowRanks] = useState(false); // rank-ladder overlay (fix/card-polish)
+  // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
+  // counts). Init from the persisted flag so it never flashes for a returning player.
+  const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
+  const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);
@@ -300,83 +306,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     };
   }, []);
 
-  const cardsScrollRef = useRef(null);
-  const cardsRowhRef = useRef(0);
-  const [cardsBelow, setCardsBelow] = useState(0); // cards below the fold
-  const [cardsAtEnd, setCardsAtEnd] = useState(false);
-  const [cardsScrollable, setCardsScrollable] = useState(false);
-  const [cardsMobile, setCardsMobile] = useState(false); // <=760px: no region/button
-
-  useEffect(() => {
-    const el = cardsScrollRef.current;
-    if (!el) return undefined;
-    const mq = window.matchMedia('(max-width: 760px)');
-
-    // Measure the tallest row-1 card (incl. its stagger margin-top) → --rowh.
-    const measure = () => {
-      const grid = el.querySelector('.homepage-cards-grid');
-      if (!grid) return;
-      const cards = grid.querySelectorAll('.game-card-magnet');
-      if (!cards.length) return;
-      const gridTop = grid.getBoundingClientRect().top;
-      const rowOne = Math.min(3, cards.length);
-      let rowh = 0;
-      for (let i = 0; i < rowOne; i += 1) {
-        const bottom = cards[i].getBoundingClientRect().bottom - gridTop;
-        if (bottom > rowh) rowh = bottom;
-      }
-      if (rowh > 0) {
-        cardsRowhRef.current = rowh;
-        el.style.setProperty('--rowh', `${rowh}px`);
-      }
-    };
-
-    // Recompute the fold count + fade/end flags (also on every scroll).
-    const updateState = () => {
-      const regionBottom = el.getBoundingClientRect().bottom;
-      let below = 0;
-      el.querySelectorAll('.game-card-magnet').forEach((c) => {
-        if (c.getBoundingClientRect().bottom > regionBottom + 1) below += 1;
-      });
-      setCardsBelow(below);
-      setCardsScrollable(el.scrollHeight > el.clientHeight + 1);
-      setCardsAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 1);
-    };
-
-    const refresh = () => {
-      setCardsMobile(mq.matches);
-      measure();
-      updateState();
-    };
-
-    // Coalesce scroll-driven layout reads into ONE rAF: a burst of scroll events (mobile
-    // momentum can fire ~1/frame) schedules at most one measurement per frame instead of
-    // forcing a full read of every card on every event.
-    let scrollRaf = 0;
-    const onScroll = () => {
-      if (scrollRaf) return;
-      scrollRaf = requestAnimationFrame(() => {
-        scrollRaf = 0;
-        updateState();
-      });
-    };
-
-    refresh();
-    const raf = requestAnimationFrame(refresh); // second pass after layout/fonts settle
-    el.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', refresh);
-    return () => {
-      cancelAnimationFrame(raf);
-      if (scrollRaf) cancelAnimationFrame(scrollRaf);
-      el.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', refresh);
-    };
-  }, []);
-
-  const scrollCardsDown = () => {
-    const el = cardsScrollRef.current;
-    if (el) el.scrollBy({ top: cardsRowhRef.current || 0, behavior: 'smooth' });
-  };
+  // NOTE (fix/logic-and-onboarding): the old peek-scroll + "N MORE" pager machinery was
+  // REMOVED here. The card-sizing effect above sizes all five cards to fit ONE screen and
+  // .homepage-cards-scroll is `overflow:visible` (never scrolls), so the fold-count state
+  // (cardsBelow/cardsAtEnd/cardsScrollable/cardsMobile), the --rowh measurement and
+  // scrollCardsDown only ever fed a pager that couldn't scroll and an `is-atend` class with
+  // no CSS. Worse, on mount/resize the fold count could transiently read 1 before the sizing
+  // pass settled, flashing a phantom "1 MORE" while all five cards were on screen. Gone.
 
   // ---- Menu XP meta-progression (presentational) -------------------------------
   // Typing anywhere on the menu earns XP (no text input here). The capture/credit/streak
@@ -735,10 +671,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
 
         <div className="homepage-cards-region">
-          <div
-            ref={cardsScrollRef}
-            className={`homepage-cards-scroll${cardsScrollable && !cardsAtEnd ? '' : ' is-atend'}`}
-          >
+          <div className="homepage-cards-scroll">
             <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
               {GAMES.map((game) => (
                 <GameCard
@@ -753,22 +686,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
               ))}
             </div>
           </div>
-          {/* "N MORE" pager — desktop only, and only while cards sit below the fold
-              (so it's absent for a single row and once scrolled to the end). */}
-          {!cardsMobile && cardsBelow > 0 && (
-            <button
-              type="button"
-              className="homepage-cards-more"
-              onClick={scrollCardsDown}
-              onMouseEnter={() => sfx('hover')}
-              aria-label={`Show ${cardsBelow} more game${cardsBelow === 1 ? '' : 's'}`}
-            >
-              {cardsBelow} MORE{' '}
-              <span className="homepage-cards-more-chev" aria-hidden="true">
-                ▾
-              </span>
-            </button>
-          )}
         </div>
 
         <div className="homepage-bottom-bar">
@@ -838,6 +755,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       {/* RANK LADDER overlay — all ten ranks, which you hold, which is next (fix/card-polish). */}
       {showRanks && (
         <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+      )}
+
+      {/* FIRST-RUN spotlight (once ever): dim the menu, ring the XP bar, tell the player it
+          responds to typing/clicks. pointer-events:none — the dismissing key/click still counts. */}
+      {showMenuSpot && (
+        <Spotlight
+          targetSelector=".menu-xp-bar"
+          caption="TYPE OR CLICK ANYWHERE"
+          sub="IT FILLS YOUR LEVEL BAR"
+          onDismiss={dismissMenuSpot}
+        />
       )}
     </div>
   );

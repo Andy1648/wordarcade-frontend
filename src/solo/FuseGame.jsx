@@ -260,6 +260,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       placeholder={`any word containing "${(s.fragment || '').toUpperCase()}"`}
       maxLength={data.maxAcceptLen}
       armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
+      firstRunRule="USE THE FRAGMENT IN A WORD"
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}

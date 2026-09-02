@@ -18,6 +18,8 @@ import {
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
+import Spotlight from './Spotlight';
+import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 
@@ -2337,6 +2339,19 @@ export default function GameScreen({
 
   const isCategory = gameType === 'category-blitz';
 
+  // ONE-TIME first-game input spotlight (fix/logic-and-onboarding). Shared across ALL game
+  // surfaces via the onboarding flag; armed on mount, rendered ONLY inside the live input row
+  // below (so it never shows without its target) and dismissed by the first key/tap — which
+  // the pointer-events:none overlay lets through, so it still lands in the field.
+  const [gameSpot, setGameSpot] = useState(false);
+  useEffect(() => {
+    if (!hasSeenGameSpotlight()) setGameSpot(true);
+  }, []);
+  const dismissGameSpot = () => {
+    markGameSpotlightSeen();
+    setGameSpot(false);
+  };
+
   const players = gameState.players || [];
 
   // Mode-specific prompt + history. Word Bomb prompts with a letter combo
@@ -3035,6 +3050,15 @@ export default function GameScreen({
             <div style={{ display: 'contents' }}>
               {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
             </div>
+            {/* ONE-TIME first-game spotlight — only while the field is actually typeable. */}
+            {gameSpot && inputEnabled && (
+              <Spotlight
+                targetSelector=".game-input"
+                caption={isCategory ? 'NAME SOMETHING IN THE CATEGORY' : 'TYPE A WORD WITH THESE LETTERS'}
+                sub="START TYPING"
+                onDismiss={dismissGameSpot}
+              />
+            )}
           </div>
         )}
 
@@ -3529,6 +3553,18 @@ function CategoryBlitzScreen({
   // Countdown replays at the start of every NEW round (and the first one).
   const [showCountdown, setShowCountdown] = useState(false);
   const prevRoundRef = useRef(null);
+
+  // ONE-TIME first-game input spotlight (fix/logic-and-onboarding) — Category Blitz copy.
+  // Shared across all game surfaces via the onboarding flag; rendered only inside the live
+  // input row below, dismissed by the first key/tap (the overlay never blocks it).
+  const [gameSpot, setGameSpot] = useState(false);
+  useEffect(() => {
+    if (!hasSeenGameSpotlight()) setGameSpot(true);
+  }, []);
+  const dismissGameSpot = () => {
+    markGameSpotlightSeen();
+    setGameSpot(false);
+  };
 
   // Personal combo/streak (Category Blitz) - CLIENT-SIDE HYPE ONLY. CB answer
   // results are sent only to the submitter (opponents see counts, not words), so
@@ -4093,6 +4129,15 @@ function CategoryBlitzScreen({
             <div style={{ display: 'contents' }}>
               {hypeKey > 0 && <FloatingScore key={hypeKey} />}
             </div>
+            {/* ONE-TIME first-game spotlight — only once the countdown is done and you can type. */}
+            {gameSpot && !showCountdown && (
+              <Spotlight
+                targetSelector=".game-input"
+                caption="NAME SOMETHING IN THE CATEGORY"
+                sub="START TYPING"
+                onDismiss={dismissGameSpot}
+              />
+            )}
           </div>
 
           {/* While the AI judge is running (list-miss), show a subtle "checking…"
