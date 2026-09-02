@@ -29,9 +29,12 @@
 
 .spotlight-caption {
   position: fixed;
+  /* left/top are set inline in px (anchored to the ring). The 50% here is only the fallback
+     for the no-target centred variant below; the inline left overrides it when a target exists. */
   left: 50%;
   transform: translateX(-50%);
-  max-width: min(88vw, 420px);
+  width: max-content;
+  max-width: 92vw;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -51,6 +54,10 @@
   text-shadow: 4px 4px 0 #000;
   letter-spacing: 0.02em;
   line-height: 1.1;
+  /* Keep the headline on ONE line so the caption is short enough to sit in the gap below the
+     ring (a wrapped 2-line caption was what overran onto the game cards). width:max-content on
+     the wrapper lets it size to this line; max-width:92vw is the only wrap fallback. */
+  white-space: nowrap;
 }
 .spotlight-caption-sub {
   font-family: 'Space Mono', monospace;
