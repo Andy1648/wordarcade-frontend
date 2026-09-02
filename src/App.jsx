@@ -513,22 +513,68 @@ function App() {
   // so a cold backend (30-60s Render spin-up) doesn't read as a dead link.
   const [linkJoinPending, setLinkJoinPending] = useState(!!LAUNCH_INTENT.join);
 
-  // Reconnect gate for useWebSocket. Auto-reconnect is allowed ONLY outside an
-  // active session: the backend treats every connection as a fresh player (new
-  // id, no resume), so a silent reconnect mid room/game would NOT restore the
-  // lost seat - we surface the drop instead (see the CONNECTION LOST overlay).
-  // The hook reads this ref on close/error; we keep it in sync below.
+  // Reconnect gate for useWebSocket. feat/reconnect: auto-reconnect is now ALWAYS allowed — a
+  // mid-session drop (school-wifi blip) should try to come back, not instantly kill the game. The
+  // backend still issues a fresh id with no resume and REJECTS a live-game join (game_already_started),
+  // so a mid-GAME seat cannot truly be restored without a protocol change (see
+  // claude/reconnect-findings.md). But the socket reconnects with backoff, we ATTEMPT rejoin-by-code,
+  // and either land back (a waiting/finished room rejoins cleanly) or fall to a wins-preserved landing
+  // instead of a dead screen. Banked wins are already in localStorage per accepted word, so no drop
+  // ever loses them.
   const canReconnectRef = useRef(true);
   const { status: wsStatus, messages, consumeMessages, send } = useWebSocket(canReconnectRef);
 
-  // An "active session" = the player holds a server-side seat: the waiting room
-  // or a live game (NOT the menu/lobby/public browser, and NOT the post-game
-  // results, where a fresh connection is fine). A socket drop here can't be
-  // silently resumed, so we block reconnect and surface it instead.
+  // An "active session" = the player holds a server-side seat: the waiting room or a live game.
   const inActiveSession = view === 'room' || (view === 'game' && !gameOver);
+
+  // ---- Mid-session reconnect state machine (feat/reconnect) ----
+  // null = healthy | 'trying' = dropped mid-session, RECONNECTING overlay up, BOARD KEPT | 'lost' =
+  // couldn't return, wins-preserved landing. Orchestrated in effects below + resolved in the drain
+  // via rejoinPendingRef (a tiny guarded hook, inert unless a rejoin is in flight).
+  const [reconnect, setReconnect] = useState(null);
+  const reconnectRoomRef = useRef(null); // room code to rejoin
+  const rejoinSentRef = useRef(false); // join_room already sent for this reconnect
+  const rejoinPendingRef = useRef(false); // a rejoin's result is awaited (the drain reads this)
+  const reconnectTimerRef = useRef(null);
+  const reconnectGiveUp = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    rejoinSentRef.current = false;
+    rejoinPendingRef.current = false;
+    setReconnect('lost');
+  }, []);
+
+  // Enter 'trying' the instant the socket drops during a session (the board stays mounted behind the
+  // overlay). Arm a hard deadline so a socket that never returns still lands somewhere sane.
   useEffect(() => {
-    canReconnectRef.current = !inActiveSession;
-  }, [inActiveSession]);
+    // With reconnect always allowed, a drop shows as wsStatus leaving 'open' (the hook goes straight
+    // to 'connecting', not 'closed'). In an active session that can only mean we dropped.
+    if (inActiveSession && wsStatus !== 'open' && reconnect === null) {
+      reconnectRoomRef.current = room && room.code ? room.code : null;
+      rejoinSentRef.current = false;
+      setReconnect('trying');
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = setTimeout(reconnectGiveUp, 12000);
+    }
+  }, [inActiveSession, wsStatus, reconnect, room, reconnectGiveUp]);
+
+  // Socket came back while trying → attempt rejoin-by-code (existing join_room). rejoinPendingRef
+  // tells the drain to resolve the next room_update as success / the next error as failure.
+  useEffect(() => {
+    if (reconnect === 'trying' && wsStatus === 'open' && !rejoinSentRef.current) {
+      rejoinSentRef.current = true;
+      if (reconnectRoomRef.current) {
+        rejoinPendingRef.current = true;
+        send('join_room', { code: reconnectRoomRef.current, name: playerName || resolvePlayerName() });
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = setTimeout(reconnectGiveUp, 6000); // a rejected/absent room resolves fast
+      } else {
+        reconnectGiveUp();
+      }
+    }
+  }, [reconnect, wsStatus, send, playerName, reconnectGiveUp]);
 
   // Background music. It's started from the splash dismiss (the guaranteed first
   // user gesture), so no autoplay attempt here - just the player + a fade-in.
@@ -702,12 +748,13 @@ function App() {
   // blocking overlay (rendered at the bottom) whose only exit is BACK TO MENU.
   // Outside a session a drop reconnects transparently, so no overlay. Computed
   // up here (not at the render site) so the drama effect below can watch it.
-  const connectionLost =
-    inActiveSession && (wsStatus === 'closed' || wsStatus === 'error');
+  // feat/reconnect: the drop is now a two-phase flow (reconnect 'trying' -> 'lost'), not a single
+  // CONNECTION LOST boolean. connectionLost is kept as an alias for the FINAL give-up state so the
+  // roomClosedNotice guard + the defeat sting keep their meaning.
+  const connectionLost = reconnect === 'lost';
 
-  // Losing your seat should FEEL like a knockout, not a dialog: one defeat
-  // sting + a heavy jolt the moment the drop is detected (once per drop; the
-  // overlay's own slam-in animation lands with it).
+  // Losing your seat for good should FEEL like a knockout: one defeat sting + a heavy jolt the moment
+  // we give up (entering 'lost'), NOT while still trying. Fires once per drop.
   const prevConnLostRef = useRef(false);
   useEffect(() => {
     if (connectionLost && !prevConnLostRef.current) {
@@ -829,6 +876,17 @@ function App() {
     }
 
     if (lastMessage.type === 'room_update') {
+      // feat/reconnect: a room_update while a rejoin is in flight = we're back in (a waiting/finished
+      // room accepted us). Clear the reconnect overlay; the normal handling below restores state.
+      if (rejoinPendingRef.current) {
+        rejoinPendingRef.current = false;
+        rejoinSentRef.current = false;
+        if (reconnectTimerRef.current) {
+          clearTimeout(reconnectTimerRef.current);
+          reconnectTimerRef.current = null;
+        }
+        setReconnect(null);
+      }
       setRoom(lastMessage.payload);
       setServerError('');
       setLinkJoinPending(false); // invite-link join answered (we're in)
@@ -1352,6 +1410,20 @@ function App() {
     }
 
     if (lastMessage.type === 'error') {
+      // feat/reconnect: an error while a rejoin is in flight = the room's gone (room_not_found) or the
+      // game moved on (game_already_started) — we can't return to that live seat. Fall to the
+      // wins-preserved landing rather than a dead screen. (Swallow the error toast in this case.)
+      if (rejoinPendingRef.current) {
+        rejoinPendingRef.current = false;
+        rejoinSentRef.current = false;
+        if (reconnectTimerRef.current) {
+          clearTimeout(reconnectTimerRef.current);
+          reconnectTimerRef.current = null;
+        }
+        setReconnect('lost');
+        setLinkJoinPending(false);
+        continue; // don't also surface this as a generic server error toast
+      }
       setServerError(friendlyError(lastMessage.payload.message));
       setLinkJoinPending(false); // if a link join was in flight, it just failed
       // A join that failed while we're still on the HOME screen (an invite
@@ -2173,16 +2245,51 @@ function App() {
           action is BACK TO MENU, which runs the normal leave/reset path (goHome).
           Styled/animated in Transitions.css; the defeat sting + heavy jolt fire
           from the effect that watches connectionLost above. */}
-      {connectionLost && (
+      {/* feat/reconnect — phase 1: RECONNECTING. The board stays mounted behind this; we're
+          re-opening the socket (backoff) and trying to rejoin by code. No BACK-TO-MENU yet — give
+          the blip a moment. Static (no idle spinner) per the animation budget. */}
+      {reconnect === 'trying' && (
+        <div className="connlost-overlay" role="alertdialog" aria-label="Reconnecting">
+          <div className="connlost-mascot">
+            <Mascot pose="panic" emote="flinch" size={110} />
+          </div>
+          <div className="connlost-title">RECONNECTING…</div>
+          <div className="connlost-sub">
+            Lost the connection. Trying to get you back into the game — hang tight.
+          </div>
+          <button
+            className="connlost-btn"
+            onClick={() => {
+              if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+              rejoinSentRef.current = false;
+              rejoinPendingRef.current = false;
+              setReconnect(null);
+              goHome();
+            }}
+          >
+            LEAVE TO MENU
+          </button>
+        </div>
+      )}
+      {/* feat/reconnect — phase 2: couldn't return (the live game moved on / room gone). The seat
+          can't be resumed without a protocol change, but WINS are banked per word in localStorage,
+          so nothing earned is lost. Land on the menu, never a blank screen. */}
+      {reconnect === 'lost' && (
         <div className="connlost-overlay" role="alertdialog" aria-label="Connection lost">
           <div className="connlost-mascot">
             <Mascot pose="panic" emote="flinch" size={110} />
           </div>
           <div className="connlost-title">CONNECTION LOST</div>
           <div className="connlost-sub">
-            You were dropped from the game. Your seat is gone - hop back to the menu to play again.
+            Couldn't get back into that game — it moved on without you. Your wins are safe; jump back to the menu to play again.
           </div>
-          <button className="connlost-btn" onClick={goHome}>
+          <button
+            className="connlost-btn"
+            onClick={() => {
+              setReconnect(null);
+              goHome();
+            }}
+          >
             BACK TO MENU
           </button>
         </div>
