@@ -1,3 +1,7 @@
+// FIRST: translate a clean path (/sat-rush, /room/CODE, …) into the query the entry-param readers
+// expect, BEFORE App and its config modules import (feat/router). Side-effect import — must precede
+// './App.jsx' so LAUNCH_INTENT / solo / cg / satRush configs read the bridged search.
+import './routerBoot'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
