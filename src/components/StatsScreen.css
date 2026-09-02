@@ -275,6 +275,104 @@
    Hard-separated from the stats above by a heavy top rule + generous space, so
    the destructive control is never a mis-tap. Red — deliberately NOT the yellow
    action colour — with the house flat outline + hard offset shadow. */
+/* BACKUP (feat/save-export): copy-save / restore-from-code. House style, cyan (not the danger red). */
+.stats-backup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.stats-backup-copy,
+.stats-backup-restore {
+  align-self: center;
+  padding: 12px 20px;
+  font-family: 'Bungee', cursive;
+  font-size: 1rem;
+  color: #0d0618;
+  background: #2effe0;
+  border: 3px solid #1aa393;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.stats-backup-copy:hover,
+.stats-backup-restore:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.stats-backup-copy:active,
+.stats-backup-restore:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+.stats-backup-restore:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: 3px 3px 0 #000;
+}
+.stats-backup-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 10px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: #f0ead9;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  word-break: break-all;
+}
+.stats-backup-input::placeholder {
+  color: #7a6b93;
+  letter-spacing: 0.06em;
+}
+.stats-backup-msg {
+  margin: 0;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #2effe0;
+}
+.stats-backup-err {
+  margin: 0;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #ff6b3d;
+}
+.stats-backup-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #0d0618;
+  border: 3px solid #2effe0;
+  border-radius: 8px;
+}
+.stats-backup-warn {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #f0ead9;
+}
+.stats-backup-warn b {
+  color: #2effe0;
+}
+.stats-backup-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .stats-danger {
   margin-top: 28px;
   padding-top: 20px;

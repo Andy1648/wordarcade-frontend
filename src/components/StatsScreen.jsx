@@ -23,6 +23,7 @@ import { readRecords, noteLevel } from '../progress/records';
 import { formatNum } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
+import { exportSave, importSave } from '../save/saveBackup';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -102,6 +103,36 @@ export default function StatsScreen({ onBack }) {
   // Two-step guard for the destructive reset: the button reveals a confirm panel that names
   // exactly what is destroyed; only its second button actually wipes.
   const [confirmingReset, setConfirmingReset] = useState(false);
+  // BACKUP (feat/save-export): copy the whole progress save as one code, or restore from a pasted
+  // code. Recovery path only — reads/writes the current loose keys, no schema change. Import is
+  // two-step (a paste never auto-applies) and validates fully before touching anything.
+  const [copyMsg, setCopyMsg] = useState('');
+  const [restoreText, setRestoreText] = useState('');
+  const [restoreMsg, setRestoreMsg] = useState('');
+  const [confirmingRestore, setConfirmingRestore] = useState(false);
+  const handleCopySave = async () => {
+    const code = exportSave();
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopyMsg('COPIED — PASTE IT SOMEWHERE SAFE');
+    } catch {
+      // Clipboard blocked (permissions / insecure context): drop the code into the restore box so
+      // the player can still select + copy it manually. Never lose the code.
+      setRestoreText(code);
+      setCopyMsg('COPY BLOCKED — SELECT THE CODE BELOW');
+    }
+    window.setTimeout(() => setCopyMsg(''), 4000);
+  };
+  const handleRestore = () => {
+    const res = importSave(restoreText);
+    if (res.ok) {
+      // Reload so every module re-reads the restored progress from storage.
+      window.location.reload();
+      return;
+    }
+    setConfirmingRestore(false);
+    setRestoreMsg(res.error); // readable; existing progress untouched
+  };
   // Active tab: STATS (default — the one the layout gate exercises) | COLLECTION | ACHIEVEMENTS.
   const [tab, setTab] = useState('stats');
   const activeLabel = TABS.find((t) => t.id === tab)?.label || 'STATS';
@@ -263,6 +294,59 @@ export default function StatsScreen({ onBack }) {
               <dd>{fmt(avgWpm)}</dd>
             </div>
           </dl>
+
+          {/* BACKUP — copy your whole save as a code, or restore from one. Progress only (no device
+              settings). The recovery path ships before any versioned-save migration. */}
+          <h3 className="stats-subtitle">BACKUP</h3>
+          <p className="stats-caption">COPY YOUR SAVE SOMEWHERE SAFE — OR RESTORE IT ON A NEW DEVICE. PROGRESS ONLY.</p>
+          <div className="stats-backup">
+            <button type="button" className="stats-backup-copy" onClick={handleCopySave}>
+              COPY SAVE
+            </button>
+            {copyMsg && <p className="stats-backup-msg" aria-live="polite">{copyMsg}</p>}
+            <textarea
+              className="stats-backup-input"
+              value={restoreText}
+              onChange={(e) => {
+                setRestoreText(e.target.value);
+                setRestoreMsg('');
+              }}
+              placeholder="PASTE A SAVE CODE TO RESTORE…"
+              spellCheck="false"
+              autoCapitalize="off"
+              autoCorrect="off"
+              rows={2}
+            />
+            {restoreMsg && <p className="stats-backup-err" role="alert">{restoreMsg}</p>}
+            {confirmingRestore ? (
+              <div className="stats-backup-confirm" role="alertdialog" aria-label="Confirm restore">
+                <p className="stats-backup-warn">
+                  Restoring <b>replaces</b> your current progress with the code's. Your device audio
+                  settings are untouched.
+                </p>
+                <div className="stats-backup-actions">
+                  <button type="button" className="stats-reset-confirm" onClick={handleRestore}>
+                    YES, RESTORE
+                  </button>
+                  <button type="button" className="stats-reset-cancel" onClick={() => setConfirmingRestore(false)}>
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="stats-backup-restore"
+                disabled={!restoreText.trim()}
+                onClick={() => {
+                  setRestoreMsg('');
+                  setConfirmingRestore(true);
+                }}
+              >
+                RESTORE FROM CODE
+              </button>
+            )}
+          </div>
 
           {/* DANGER ZONE — hard-separated from everything above so RESET is never a mis-tap. */}
           <div className="stats-danger">
