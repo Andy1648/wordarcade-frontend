@@ -62,11 +62,17 @@
   --art-play: paused;
   /* Colored outline: a translucent-black edge reads as a darker shade of
      whatever per-game fill the card carries (set inline). */
-  border: 4px solid rgba(0, 0, 0, 0.4);
+  /* DOUBLE-RULE FRAME (fix/card-polish): a thicker outer ink rule, a light keyline
+     gap, then a second inner ink rule — a printed-poster frame, not a plain black
+     rect. Built from stacked insets (no markup, no layout prop) + the hard offset. */
+  border: 5px solid rgba(0, 0, 0, 0.55);
   border-radius: 8px;
   position: relative;
   cursor: pointer;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 5px 5px 0 #000;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.62),
+    inset 0 0 0 6px rgba(0, 0, 0, 0.55),
+    6px 6px 0 #000;
   overflow: hidden;
   /* ART-LED v2 (feat/cards-live): a true PORTRAIT 3:4 poster whose EXACT size is computed in
      Homepage.jsx from the available height (--card-w / --card-h, always 3:4) so all five fit one
@@ -159,7 +165,10 @@ html[data-beat='true'] .game-card.featured {
   --spd: 0.6;
   --card-hover: 1.04;
   --card-tilt: -1.6deg;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 3px 3px 0 #000;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.62),
+    inset 0 0 0 6px rgba(0, 0, 0, 0.55),
+    3px 3px 0 #000;
 }
 
 /* Run the paused card-art loops only while the card is actually being used —
@@ -174,7 +183,10 @@ html[data-beat='true'] .game-card.featured {
 .game-card:active {
   --card-hover: 0.97;
   --card-tilt: 0deg;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 1px 1px 0 #000;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.62),
+    inset 0 0 0 6px rgba(0, 0, 0, 0.55),
+    1px 1px 0 #000;
 }
 
 /* Reduced motion: no beat pulse, no hover tilt/scale (the shadow-tighten stays as a static
@@ -240,15 +252,19 @@ html[data-beat='true'] .game-card::after {
 }
 [data-game='sat-rush'] .game-card {
   border-color: #111;
+  /* Same double-rule frame as the set, inked for cream paper: a hairline gap then
+     a second ink rule read as the manga double-border. */
   box-shadow:
-    inset 0 0 0 2px rgba(0, 0, 0, 0.08),
-    5px 5px 0 #111,
+    inset 0 0 0 3px #f3ead0,
+    inset 0 0 0 6px #111,
+    6px 6px 0 #111,
     0 14px 32px -8px rgba(0, 0, 0, 0.75);
 }
 [data-game='sat-rush'] .game-card:hover {
   box-shadow:
-    inset 0 0 0 2px rgba(0, 0, 0, 0.12),
-    6px 6px 0 #111,
+    inset 0 0 0 3px #f3ead0,
+    inset 0 0 0 6px #111,
+    4px 4px 0 #111,
     0 18px 40px -8px rgba(0, 0, 0, 0.85);
 }
 
@@ -338,17 +354,23 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    viewport-integrity clip walk skips its intentional off-corner overhang). */
 .game-card-ribbon {
   position: absolute;
-  top: clamp(10px, 3.6cqw, 16px);
-  left: -42px;
+  top: clamp(14px, 4.4cqw, 22px);
+  left: -46px;
   transform: rotate(-45deg);
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: clamp(8px, 2.6cqw, 11px);
-  letter-spacing: 0.12em;
-  padding: 5px 46px;
-  border-top: 2px solid rgba(0, 0, 0, 0.5);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  /* DISPLAY FACE + STAMP WEIGHT (fix/card-polish): the badge now reads as a bold
+     banner slapped on the card, not a hairline mono strip. Bungee, bigger, thick
+     black rules top+bottom, and a hard offset shadow so it lifts off the corner. */
+  font-family: 'Bungee', sans-serif;
+  font-weight: 400;
+  font-size: clamp(11px, 4.4cqw, 17px);
+  letter-spacing: 0.02em;
+  padding: 8px 52px;
+  border-top: 3px solid #000;
+  border-bottom: 3px solid #000;
+  /* Hard offset shadow (no blur — house rule) so the banner reads as a stamp lifted
+     off the card corner. */
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.6);
+  text-shadow: 1.5px 1.5px 0 rgba(0, 0, 0, 0.22);
   white-space: nowrap;
 }
 .game-card-ribbon.is-featured { background: var(--theme-accent, #FFE94A); color: #000; }
@@ -481,7 +503,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card-payout { font-size: clamp(6px, 4cqw, 9px); }
   .game-card-foot { font-size: clamp(6px, 4cqw, 9px); padding: clamp(4px, 3cqw, 8px) clamp(5px, 3cqw, 10px); }
   .game-card-limited-tag { display: none; } /* keep just the SOLO badge in the masthead */
-  .game-card-ribbon { font-size: clamp(6px, 3cqw, 9px); padding: 4px 40px; }
+  .game-card-ribbon { font-size: clamp(9px, 3.6cqw, 13px); padding: 6px 46px; }
   .game-card-lock-label { font-size: clamp(9px, 5.5cqw, 14px); }
   .game-card-lock-sub { font-size: clamp(6px, 3.4cqw, 9px); }
   .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(8px, 5cqw, 15px); }
