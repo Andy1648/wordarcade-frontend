@@ -42,17 +42,18 @@ import Mascot from './components/Mascot';
 import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
-import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from './satRush/config';
+import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW } from './satRush/config';
 import {
   CHAIN_VIEW,
-  CHAIN_TRANSITION_WORD,
   FUSE_VIEW,
-  FUSE_TRANSITION_WORD,
   SOLO_LAUNCH,
   SOLO_MODES_ENABLED,
 } from './solo/config';
 import { CG_ENTRY, cgRoomReady, isCoarsePointer } from './cg/cgEntry';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useOverlays } from './hooks/useOverlays';
+import { useRoom } from './hooks/useRoom';
+import { useProgressionEvents } from './hooks/useProgressionEvents';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
@@ -83,7 +84,6 @@ import { noteWord, noteSession, noteLucky } from './progress/records';
 import { wordSenseWinsFactor } from './progress/wordSense';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
 import {
-  loadDailyState,
   saveDailyState,
   recordDailyResult,
   resolveDailyScore,
@@ -168,30 +168,7 @@ const SCREEN_ACCENT = {
   'sat-rush': '#F0EAD9',
 };
 
-// The word flashed mid-wipe when navigating to each view.
-const TRANSITION_WORDS = {
-  game: "LET'S GO!",
-  'cg-arm': 'GET READY',
-  home: 'PEACE OUT',
-  lobby: 'READY?',
-  browse: 'JOIN ROOM',
-  room: 'SQUAD UP',
-  credits: 'CREDITS',
-  [SAT_RUSH_VIEW]: SAT_RUSH_TRANSITION_WORD,
-  [CHAIN_VIEW]: CHAIN_TRANSITION_WORD,
-  [FUSE_VIEW]: FUSE_TRANSITION_WORD,
-};
-
-// Nav DEPTH for the transition DIRECTION (Job 12): home is the root (0); menu overlays are 1; a
-// live game/room/lobby is 2. Going to a deeper view = "forward" (enter); returning toward home =
-// "back" (return). Any view not listed defaults to 1.
-const NAV_DEPTH = {
-  home: 0,
-  credits: 1, stats: 1, shop: 1, collection: 1, achievements: 1,
-  browse: 1, lobby: 1,
-  room: 2, game: 2, 'cg-arm': 2,
-  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
-};
+// (TRANSITION_WORDS + NAV_DEPTH moved into hooks/useOverlays.js — refactor/app-split step 1.)
 
 // The lobby "mode" can be a generic entry ('solo' for Create Room, 'join'
 // for Join Room) or a specific game id picked from a homepage card. These are
@@ -278,14 +255,9 @@ function App() {
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
-  // the swap and fades out. `transition` is the active overlay ({ word, key }) or
-  // null; the key re-keys the overlay so each wipe replays.
-  const [transition, setTransition] = useState(null);
-  const transitionKeyRef = useRef(0);
-  const [lobbyMode, setLobbyMode] = useState(null);
-  // Whether the create lobby should default to PUBLIC (set when arriving via the
-  // browser's "create public room" button); normal Create Room stays private.
-  const [lobbyPublicDefault, setLobbyPublicDefault] = useState(false);
+  // the swap and fades out. `transition` (+ its wipe machinery + nav helpers) now lives in
+  // hooks/useOverlays.js — refactor/app-split step 1; App composes it below (after `sound`).
+  // (lobbyMode + lobbyPublicDefault moved into hooks/useRoom.js — refactor/app-split step 2.)
   const [room, setRoom] = useState(null);
   // Category Blitz pack selection, LIFTED to App so the choice made in the Blitz
   // ModeDialog survives the dialog and is sent as set_packs on the create/host path.
@@ -308,7 +280,7 @@ function App() {
   // Public-room browser: the latest list from `public_rooms`, plus the player
   // name used by the no-prompt flows (Quick Play / tap-to-join). Seeded from the
   // remembered/generated name so those flows never need a name screen.
-  const [publicRooms, setPublicRooms] = useState([]);
+  // (publicRooms moved into hooks/useRoom.js — refactor/app-split step 2.)
   const [playerName, setPlayerNameState] = useState(() => resolvePlayerName());
   // Set the working name AND persist it, so it carries across Quick Play, the
   // browser, and the Create/Join lobby within and across sessions.
@@ -324,12 +296,7 @@ function App() {
     () => buildPlayerColors(room ? room.players : []),
     [room]
   );
-  const [serverError, setServerError] = useState('');
-  // Set when the SERVER closed our room (idle reap, or an internal error the
-  // backend contained to this one room). Drives the blocking ROOM CLOSED
-  // overlay below: the room is already gone server-side, so surfacing it with
-  // a route home is the only alternative to a frozen lobby.
-  const [roomClosedNotice, setRoomClosedNotice] = useState(null);
+  // (serverError + roomClosedNotice moved into hooks/useRoom.js — refactor/app-split step 2.)
   // Monotonic counter bumped on every RESOLVING server frame (see RESOLVING_TYPES).
   // It is the fresh re-enable signal for the one-shot action guards below — a
   // counter, not a string, so an identical repeated error still re-enables them.
@@ -344,11 +311,7 @@ function App() {
   const [botPending, fireBot] = useOneShotAction(serverEventId);
   const [rematchPending, fireRematch] = useOneShotAction(serverEventId);
   const [rerollPending, fireReroll] = useOneShotAction(serverEventId);
-  // The server tells us our own connection id immediately on connect (see
-  // server.js's 'connected' message) - we need this to know things like
-  // "am I the host" (compare to room.hostId) since room broadcasts list
-  // every player's id but never single out which one is ours.
-  const [myId, setMyId] = useState(null);
+  // (myId + myIdRef moved into hooks/useRoom.js — refactor/app-split step 2.)
 
   // Chain Reaction in-game state. gameState holds the latest turn_update
   // payload (whose turn, lives, the word chain, etc.); timerSeconds is the
@@ -368,7 +331,7 @@ function App() {
   // True while the in-progress game is a Daily Challenge run (learned from
   // game_started.daily). Drives the mid-daily LEAVE confirmation so a stray tap
   // can't silently forfeit the day's attempt.
-  const [isDailyGame, setIsDailyGame] = useState(false);
+  // (isDailyGame moved into hooks/useProgressionEvents.js — refactor/app-split step 3.)
   const [confirmLeaveDaily, setConfirmLeaveDaily] = useState(false);
   // Which mode the in-progress game is - 'word-bomb' | 'category-blitz'.
   // Learned authoritatively from the game_started message so GameScreen
@@ -480,13 +443,7 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
-  // Which menu control ('shop' | 'stats' | null) opened the overlay we're in, so the
-  // homepage can restore focus to it when the overlay closes (a11y). A ref (not state):
-  // it's read once by the remounting Homepage, never drives a render.
-  const overlayReturnRef = useRef(null);
-  // Which view the shared Shop/Rebirth overlay opens into ('shop' | 'rebirth'), set by the
-  // two menu icons and read by the ShopScreen render below. A ref: it never drives a render.
-  const shopViewRef = useRef('shop');
+  // (overlayReturnRef + shopViewRef moved into hooks/useOverlays.js — refactor/app-split step 1.)
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
   const [categoryScores, setCategoryScores] = useState(null);
@@ -503,18 +460,8 @@ function App() {
   const rerollKeyRef = useRef(0);
 
   // ---- Daily Challenge (solo Category Blitz on the server's date-seeded board) ----
-  // dailyState: the persisted streak history (localStorage). dailyResult: the
-  // just-finished daily's { dayNumber, streak, bestStreak, score } for the
-  // results screen + share text; null while no completed daily is on screen.
-  // dailyStateRef mirrors dailyState for the WS drain effect (keyed only on
-  // [messages], so reading the state there would be stale — same pattern as
-  // playerCountRef below).
-  const [dailyState, setDailyState] = useState(() => loadDailyState());
-  const [dailyResult, setDailyResult] = useState(null);
-  const dailyStateRef = useRef(dailyState);
-  useEffect(() => {
-    dailyStateRef.current = dailyState;
-  }, [dailyState]);
+  // (dailyState + dailyResult + dailyStateRef + the ref-sync effect moved into
+  // hooks/useProgressionEvents.js — refactor/app-split step 3.)
 
   // Session presence: refresh the last-seen stamp on load and again on
   // pagehide/beforeunload, so the intro's 30-minute session boundary measures
@@ -550,7 +497,7 @@ function App() {
     checkAchievements();
   }, [view]);
 
-  const myIdRef = useRef(null);
+  // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
   // attribute my own accepted word to me by name even when the turn pointer has raced
   // ahead. Assigned every render — playerName rarely changes mid-game.
@@ -597,6 +544,60 @@ function App() {
     () => ({ sound, muted: sfxMuted, setMuted: setSfxMuted }),
     [sound, sfxMuted]
   );
+
+  // Overlay/navigation concern (refactor/app-split step 1). App keeps the `view` useState (read
+  // above before `sound` exists); this hook owns the cosmetic bar-wipe + shop/stats/rebirth/solo
+  // nav helpers. Placed here because runTransition needs `sound`. goHome stays in App (cross-cutting).
+  const {
+    transition,
+    runTransition,
+    shopViewRef,
+    overlayReturnRef,
+    goToStats,
+    goToShop,
+    goToRebirth,
+    goToCredits,
+    goToSatRush,
+    goToChain,
+    goToFuse,
+  } = useOverlays({ view, setView, sound });
+
+  // Room/lobby concern (refactor/app-split step 2). App keeps `room` (read by playerColors above),
+  // `serverEventId` (feeds the guards above) and `linkJoinPending` (LAUNCH_INTENT-coupled); this hook
+  // owns the rest. The drain below calls these setters and writes myIdRef. goHome is hoisted (App).
+  const {
+    publicRooms,
+    setPublicRooms,
+    lobbyMode,
+    setLobbyMode,
+    lobbyPublicDefault,
+    setLobbyPublicDefault,
+    serverError,
+    setServerError,
+    roomClosedNotice,
+    setRoomClosedNotice,
+    myId,
+    setMyId,
+    myIdRef,
+    goToLobby,
+    handleOpenBrowser,
+    handleRefreshPublicRooms,
+    handleJoinPublicRoom,
+    handleCreatePublicFromBrowser,
+    handleLeaveRoom,
+  } = useRoom({ send, setView, setPlayerName, goHome });
+
+  // Daily-Challenge progression state (refactor/app-split step 3). The drain (App), goHome and
+  // handleLeaveRequest/handleStartDaily call these setters and read dailyStateRef — unchanged.
+  const {
+    isDailyGame,
+    setIsDailyGame,
+    dailyState,
+    setDailyState,
+    dailyResult,
+    setDailyResult,
+    dailyStateRef,
+  } = useProgressionEvents();
 
   // The bomb-fuse loading screen is the very first thing shown; it holds until
   // the socket connects (then "explodes" and hands off), at which point the
@@ -1374,6 +1375,11 @@ function App() {
     // Keyed on the queue: the effect re-runs whenever new frames land and drains
     // every one. It no longer reads `view` directly (the room_update guard uses a
     // functional setView), so [messages, consumeMessages] is the complete dep list.
+  // The setters/refs it calls (incl. useRoom's setMyId/setPublicRooms/setServerError/
+  // setRoomClosedNotice + myIdRef) are STABLE React identities — safe to omit, and adding
+  // them would defeat the deliberately-trimmed array that guards the documented drain
+  // re-run / stale-closure bugs. ESLint can't tell a custom hook's returns are stable:
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, consumeMessages]);
 
   // Auto-dismiss an accepted toast. Category Blitz answers fly fast, so they
@@ -1387,45 +1393,9 @@ function App() {
     }
   }, [lastWordResult, gameType]);
 
-  // ---- ONE consistent Persona-5 bar wipe for EVERY screen change ----
-  // Every transition in the app is fired through this single helper, so they all
-  // look and sound identical (same five bars, same whoosh, same 500ms): the
-  // initial connect, menu->room, room->game, game->results, and back to menu.
-  // The overlay (TransitionOverlay) is purely cosmetic - the screen has already
-  // swapped underneath - so this only lays the bars on top and clears them.
-  const transitionClearRef = useRef(null);
-  const runTransition = useCallback(
-    (word, dir = 'forward') => {
-      transitionKeyRef.current += 1;
-      setTransition({ word, key: transitionKeyRef.current, dir });
-      sound.whoosh(); // the wipe sweeps across
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-      transitionClearRef.current = setTimeout(() => setTransition(null), 240); // one language, <=250ms
-    },
-    [sound]
-  );
-  useEffect(
-    () => () => {
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-    },
-    []
-  );
-
-  // Fire the wipe on every real view change. The screen has already swapped (it
-  // renders off `view`); this only lays the overlay on top. The early-return
-  // avoids a spurious wipe when `view` didn't actually change (initial mount /
-  // no-op setState) - it can no longer strand the screen, since nothing gates the
-  // screen behind it anymore.
-  const lastNavViewRef = useRef(CG_ENTRY ? 'cg-arm' : 'home');
-  useEffect(() => {
-    if (view === lastNavViewRef.current) return;
-    // Nav DIRECTION (Job 12): compare the new view's depth to the old. home is 0 (the root);
-    // overlays (shop/stats/collection/etc.) are 1; a live game/room/lobby is 2. Going deeper =
-    // "forward" (enter); returning toward the menu = "back" (return). Equal depth defaults forward.
-    const dir = (NAV_DEPTH[view] ?? 1) >= (NAV_DEPTH[lastNavViewRef.current] ?? 1) ? 'forward' : 'back';
-    lastNavViewRef.current = view;
-    runTransition(TRANSITION_WORDS[view] || 'GO!', dir);
-  }, [view, runTransition]);
+  // (The Persona-5 bar-wipe helper + the view-change wipe effect moved into hooks/useOverlays.js —
+  // refactor/app-split step 1. `runTransition` is destructured from useOverlays above; the gameOver
+  // wipe below still fires it from App because it watches `gameOver`, which App owns.)
 
   // game -> results is an in-`game` change: the game-over overlay reveals WITHOUT
   // a view switch, so the view effect above never fires for it. Run the SAME wipe
@@ -1614,83 +1584,11 @@ function App() {
     setSlicing(false);
   }
 
-  function goToLobby(mode, publicDefault = false) {
-    setLobbyMode(mode);
-    setLobbyPublicDefault(publicDefault);
-    setServerError('');
-    setView('lobby');
-  }
+  // (goToLobby/handleOpenBrowser/handleRefreshPublicRooms/handleJoinPublicRoom/
+  // handleCreatePublicFromBrowser moved into hooks/useRoom.js — refactor/app-split step 2.)
 
-  // Open the unified JOIN ROOM screen (code entry + public-room list). Clear any
-  // stale list so we don't flash an old snapshot; the screen's mount effect
-  // immediately re-requests a fresh one. This is the menu's "JOIN ROOM" button.
-  // (The backend `quick_play` handler still exists but is no longer called from
-  // the UI - the Quick Play entry point was removed.)
-  function handleOpenBrowser() {
-    setServerError('');
-    setPublicRooms([]);
-    setView('browse');
-  }
-
-  // (Re)request the public-room list. Stable so the browser screen can call it on
-  // mount + on its auto-refresh interval without re-subscribing every render.
-  const handleRefreshPublicRooms = useCallback(() => {
-    send('list_public_rooms', {});
-  }, [send]);
-
-  // Join a specific public room from the browser - the SAME join-by-code path as
-  // the Join Room screen, just with the code taken from the tapped row.
-  function handleJoinPublicRoom(code, name) {
-    setPlayerName(name);
-    setServerError('');
-    send('join_room', { code, name });
-    track('room_joined', { mode: 'join' }); // fire-and-forget; no name/PII
-  }
-
-  // Browser empty-state "create public room": jump to the create lobby with the
-  // visibility toggle pre-set to PUBLIC.
-  function handleCreatePublicFromBrowser() {
-    goToLobby('solo', true);
-  }
-
-  function goToStats() {
-    overlayReturnRef.current = 'stats'; // restore focus here when Stats closes
-    setView('stats');
-  }
-
-  function goToShop() {
-    shopViewRef.current = 'shop';
-    overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
-    setView('shop');
-  }
-
-  // REBIRTH is its own top-corner icon now (separate from SHOP): it opens the same overlay
-  // straight into the rebirth view. Focus returns to the rebirth icon on close.
-  function goToRebirth() {
-    shopViewRef.current = 'rebirth';
-    overlayReturnRef.current = 'rebirth';
-    setView('shop');
-  }
-
-  function goToCredits() {
-    setView('credits');
-  }
-
-  // SAT RUSH is a solo mode — no room/WebSocket — so selecting its menu card
-  // navigates straight to the mode view (the wipe fires automatically on the
-  // view change, like every other navigation).
-  function goToSatRush() {
-    setView(SAT_RUSH_VIEW);
-  }
-
-  // CHAIN / FUSE are solo (no room/WebSocket) — navigate straight to the mode view.
-  function goToChain() {
-    setView(CHAIN_VIEW);
-  }
-
-  function goToFuse() {
-    setView(FUSE_VIEW);
-  }
+  // (goToStats/goToShop/goToRebirth/goToCredits/goToSatRush/goToChain/goToFuse moved into
+  // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
     setLobbyMode(null);
@@ -1784,10 +1682,7 @@ function App() {
     }
   }
 
-  function handleLeaveRoom() {
-    send('leave_room', {});
-    goHome();
-  }
+  // (handleLeaveRoom moved into hooks/useRoom.js — refactor/app-split step 2.)
 
   // Mid-game LEAVE from the game screen. During a live Daily run, confirm first —
   // leaving forfeits the day's attempt, and a stray tap shouldn't cost it. Any
