@@ -14,6 +14,7 @@ import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpChainRuns } from './shared.js';
+import { createGhostRecorder, loadGhost, ghostWordsAt } from './ghost.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
@@ -105,16 +106,29 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // (mount) and on every restart — button OR Enter — so both restart paths are counted
   // (the Enter path lives inside the hook, which is why the bump must live there too).
   const [runs, setRuns] = useState(0);
+  // feat/ghost — race the ghost of your own best CHAIN run. A fresh recorder + the stored best ghost
+  // are set up on every run start; the live pace (ghostWords) is compared to your link count (s.k).
+  const ghostRecRef = useRef(null);
+  const ghostRunStartRef = useRef(null);
+  const [ghost, setGhost] = useState(null);
+  const [ghostWords, setGhostWords] = useState(0);
   const g = useSoloGame({
     createEngine,
     adapter,
     pbKey: PB_KEYS.CHAIN,
     mode: 'chain', // lucky-word XP uses the mode's per-word XP multiplier
-    onRunStart: () => setRuns(bumpChainRuns()),
+    onRunStart: () => {
+      setRuns(bumpChainRuns());
+      ghostRecRef.current = createGhostRecorder();
+      ghostRunStartRef.current = null;
+      setGhost(loadGhost('chain')); // your previous best — the ghost you race this run
+      setGhostWords(0);
+    },
     // Each accepted CHAIN word counts toward the daily streak (this mode never calls addWords).
     onAccept: touchStreak,
   });
   const s = g.engine.state;
+  const ghostNow = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
 
   // WINS (§2): BANK per completed link as the run plays so leaving mid-run keeps what was
   // earned — no end-of-run payout (that would double-pay). `s.k` is the running link count;
@@ -153,6 +167,9 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         recordAcceptedWord(w, { mode: 'chain', band: rw.band }); // Collection (Job 3)
         wpmAddWord(w); // WPM: count each new link's chars
         noteWord(w, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
+        // feat/ghost — record this accepted word on the replay timeline (t0 = first accepted word).
+        if (ghostRunStartRef.current == null) ghostRunStartRef.current = ghostNow();
+        ghostRecRef.current?.record(w, ghostNow());
       }
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
       const banked = bankWordWins({
@@ -166,6 +183,28 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }
   }, [s.k]);
+
+  // feat/ghost — on run over, offer this run to the ghost store (kept only if it beat your best).
+  const ghostPrevPhaseRef = useRef(g.phase);
+  useEffect(() => {
+    if (ghostPrevPhaseRef.current === 'playing' && g.phase === 'over') {
+      ghostRecRef.current?.finish('chain', s.k, ghostNow());
+    }
+    ghostPrevPhaseRef.current = g.phase;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.phase]);
+
+  // feat/ghost — while playing with a ghost loaded, advance the ghost's live word count off the run
+  // clock (elapsed since your first accepted word). A cheap 200ms tick — runs only during play.
+  useEffect(() => {
+    if (g.phase !== 'playing' || !ghost) return undefined;
+    const id = window.setInterval(() => {
+      const start = ghostRunStartRef.current;
+      if (start != null) setGhostWords(ghostWordsAt(ghost, ghostNow() - start));
+    }, 200);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.phase, ghost]);
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
@@ -305,7 +344,14 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       <div className="solo-mult">x{g.engine.state.multiplier.toFixed(2)}</div>
       <div className="solo-stat" style={{ textAlign: 'right' }}>
         <b>{s.k}</b>
-        <span>LINKS · BEST {g.best}</span>
+        {ghost ? (
+          <span>
+            LINKS · GHOST{' '}
+            <span className={s.k >= ghostWords ? 'solo-ghost-ahead' : 'solo-ghost-behind'}>{ghostWords}</span>
+          </span>
+        ) : (
+          <span>LINKS · BEST {g.best}</span>
+        )}
       </div>
     </>
   );

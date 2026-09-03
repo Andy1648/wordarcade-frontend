@@ -94,6 +94,18 @@
   opacity: 0.7;
   letter-spacing: 0.08em;
 }
+/* feat/ghost — the live self-ghost pace readout: green while you're ahead of your best run, red
+   while you're behind. Overrides the muted stat opacity so the race number stays legible. */
+.solo-ghost-ahead {
+  color: #3be07a;
+  opacity: 1;
+  font-weight: 700;
+}
+.solo-ghost-behind {
+  color: #ff6b6b;
+  opacity: 1;
+  font-weight: 700;
+}
 
 /* The multiplier chip (CHAIN) — squash is an event, not idle. */
 .solo-mult {

@@ -15,6 +15,7 @@ import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpFuseRuns } from './shared.js';
+import { createGhostRecorder, loadGhost, ghostWordsAt } from './ghost.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
@@ -131,13 +132,25 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // Persisted all-time FUSE run count (Job 14) — drives the first-run tutorial card, exactly like
   // CHAIN. onRunStart fires from the hook on the first run + every restart (button OR Enter).
   const [runs, setRuns] = useState(0);
+  // feat/ghost — race the ghost of your own best FUSE run (see ChainGame for the shared pattern).
+  const ghostRecRef = useRef(null);
+  const ghostRunStartRef = useRef(null);
+  const [ghost, setGhost] = useState(null);
+  const [ghostWords, setGhostWords] = useState(0);
+  const ghostNow = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
   // Each accepted FUSE word counts toward the daily streak (this mode never calls addWords).
   const g = useSoloGame({
     createEngine,
     adapter,
     pbKey: PB_KEYS.FUSE,
     mode: 'fuse',
-    onRunStart: () => setRuns(bumpFuseRuns()),
+    onRunStart: () => {
+      setRuns(bumpFuseRuns());
+      ghostRecRef.current = createGhostRecorder();
+      ghostRunStartRef.current = null;
+      setGhost(loadGhost('fuse'));
+      setGhostWords(0);
+    },
     onAccept: touchStreak,
   });
   const s = g.engine.state;
@@ -176,6 +189,9 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       recordAcceptedWord(s.lastWord, { mode: 'fuse', band: rw.band }); // Collection (Job 3)
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       noteWord(s.lastWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
+      // feat/ghost — record this solved word on the replay timeline (t0 = first solved word).
+      if (ghostRunStartRef.current == null) ghostRunStartRef.current = ghostNow();
+      ghostRecRef.current?.record(s.lastWord, ghostNow());
       const banked = bankWordWins({
         mode: 'fuse',
         prevWords: fuseBankedRef.current,
@@ -192,6 +208,26 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
     if (g.phase === 'over') loadSoloAcceptExt();
   }, [g.phase]);
 
+  // feat/ghost — on run over, offer this run to the ghost store (kept only if it beat your best).
+  const ghostPrevPhaseRef = useRef(g.phase);
+  useEffect(() => {
+    if (ghostPrevPhaseRef.current === 'playing' && g.phase === 'over') {
+      ghostRecRef.current?.finish('fuse', s.wordsSolved, ghostNow());
+    }
+    ghostPrevPhaseRef.current = g.phase;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.phase]);
+  // feat/ghost — advance the ghost's live word count off the run clock while playing (200ms tick).
+  useEffect(() => {
+    if (g.phase !== 'playing' || !ghost) return undefined;
+    const id = window.setInterval(() => {
+      const start = ghostRunStartRef.current;
+      if (start != null) setGhostWords(ghostWordsAt(ghost, ghostNow() - start));
+    }, 200);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [g.phase, ghost]);
+
   // Live wins tally (item 2): what the run will pay so far, ticking up as words solve (0 until
   // the 3-word payout gate).
   const winsTally = awardWins({ mode: 'fuse', wordsAccepted: s.wordsSolved });
@@ -200,7 +236,14 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
     <>
       <div className="solo-stat">
         <b>{s.wordsSolved}</b>
-        <span>WORDS · BEST {g.best}</span>
+        {ghost ? (
+          <span>
+            WORDS · GHOST{' '}
+            <span className={s.wordsSolved >= ghostWords ? 'solo-ghost-ahead' : 'solo-ghost-behind'}>{ghostWords}</span>
+          </span>
+        ) : (
+          <span>WORDS · BEST {g.best}</span>
+        )}
       </div>
       <div className="solo-lives" aria-label={`${s.lives} lives`}>
         {'♥'.repeat(s.lives)}
