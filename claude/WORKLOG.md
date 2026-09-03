@@ -249,3 +249,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 16 START (fix/ios-safari): Playwright WebKit walk of every screen/mode; check
   visualViewport keyboard shim, input focus in gestures, dvh, AudioContext resume, SW (offline),
   position:fixed under keyboard, momentum scroll. Fix unambiguous, report real-device items.
+- 2026-09-03  JOB 16 DONE (fix/ios-safari 2df4b9f, pushed+verified). Playwright WebKit 26.5 (iPhone 13)
+  walk: NO h-overflow any screen, root height==innerH, dvh/svh/visualViewport/serviceWorker all ✓,
+  only benign local _vercel/insights 404. audioCore already iOS-correct (webkitAudioContext + !AC
+  guard + suspended-resume + visibilitychange re-resume). FIX: added 100dvh fallback to remaining raw
+  100vh viewport-fit heights (index.css html+#root; Credits/Lobby/PublicRooms/Room calc wrappers) —
+  the one gotcha headless can't repro (URL-bar-inclusive 100vh). Report claude/ios-safari-audit.md +
+  claude/ios/ tooling. REAL-DEVICE items documented: soft-keyboard input occlusion, audio-after-tap,
+  momentum scroll, SW offline. build 0.
+- 2026-09-03  JOB 17 START (backend repo chain-reaction-backend, data/accept-lists-5): expand ~33 broad
+  under-expanded Category Blitz accept-lists in batches of ~20 (real answers, <=3 words, dedupe CI,
+  no inventions, skip finite w/ note); then variant pass (misspellings/accent-strip/alt-names/short).
