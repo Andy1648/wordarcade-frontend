@@ -28,8 +28,8 @@ explicitly said to push to main.
 | 23 fix sweep BROKEN/UNFINISHED | fix/sweep-final | **DONE** — none at that severity; fixed the 1 real collision (PackPicker label/CLEAR) |
 | 24 honest verdict | chore/verdict | **DONE (report)** — good as craft, not yet as a habit; build the run-based WORD JOKERS mode, lead with it; claude/verdict.md |
 
-UNFINISHED / OPEN: JOB 18 (deferred, spec ready); JOBS 7–12 never provided. Full Playwright suite on main
-(66a4e09) run at session end — result appended below once complete.
+UNFINISHED / OPEN: JOB 18 (deferred, spec ready); JOBS 7–12 never provided.
+FULL PLAYWRIGHT SUITE on main (66a4e09), session end: **1087 passed / 0 failed (15.6m)** — GREEN.
 
 
 ## ===== MERGE TO MAIN (2026-09-01, user-directed) — 7 safe branches, full gate after each =====
