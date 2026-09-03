@@ -292,3 +292,7 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   mobile card overlaps XP bar. claude/return-audit.md + claude/return/shots (6).
 - 2026-09-03  JOB 20 START (chore/pitch, REPORT ONLY): claude/pitch.md — 1 sentence/paragraph/page x 3
   audiences (stranger/portal reviewer/admissions); + honest what-nothing-else-does list.
+- 2026-09-03  JOB 20 DONE (chore/pitch 89f30a4, pushed). claude/pitch.md: 1 sentence/para/page x 3
+  audiences + honest USP (synthesis + rarity-priced typing + AI judge + spell-along; no world-first).
+- 2026-09-03  JOB 21 START (chore/inspo, REPORT ONLY): 3 unlooked games (Balatro/Vampire Survivors/
+  Monkeytype) — the single hard-to-put-down mechanic + the TYPE A WORD version + honest non-transfers.
