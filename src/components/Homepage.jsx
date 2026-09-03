@@ -20,6 +20,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
+import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 import Spotlight from './Spotlight';
@@ -740,34 +741,42 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
           and the app zoom never clip it; closes back into the source card. */}
+      {/* fix/error-boundaries — each menu OVERLAY gets its own boundary so a crash inside a dialog
+          shows the inline panel + closes cleanly (GO BACK), never blanking the live menu behind it. */}
       {dialog && (
-        <ModeDialog
-          game={dialog.game}
-          sourceEl={dialog.el}
-          onClose={() => setDialog(null)}
-          onCreate={handleDialogCreate}
-          onJoin={handleDialogJoin}
-          onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
-          connecting={connecting}
-          coldStart={coldStart}
-          blitzPacks={blitzPacks}
-          onToggleBlitzPack={onToggleBlitzPack}
-          onSetAllBlitzPacks={onSetAllBlitzPacks}
-        />
+        <ScreenBoundary name="mode-dialog" onBack={() => setDialog(null)}>
+          <ModeDialog
+            game={dialog.game}
+            sourceEl={dialog.el}
+            onClose={() => setDialog(null)}
+            onCreate={handleDialogCreate}
+            onJoin={handleDialogJoin}
+            onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
+            connecting={connecting}
+            coldStart={coldStart}
+            blitzPacks={blitzPacks}
+            onToggleBlitzPack={onToggleBlitzPack}
+            onSetAllBlitzPacks={onSetAllBlitzPacks}
+          />
+        </ScreenBoundary>
       )}
 
       {/* Locked-mode preview (level-gated CHAIN/FUSE). Read-only teaser — no play button. */}
       {lockedPreview && (
-        <LockedPreviewDialog
-          game={lockedPreview.game}
-          level={xpProgress.level}
-          onClose={() => setLockedPreview(null)}
-        />
+        <ScreenBoundary name="locked-preview" onBack={() => setLockedPreview(null)}>
+          <LockedPreviewDialog
+            game={lockedPreview.game}
+            level={xpProgress.level}
+            onClose={() => setLockedPreview(null)}
+          />
+        </ScreenBoundary>
       )}
 
       {/* RANK LADDER overlay — all ten ranks, which you hold, which is next (fix/card-polish). */}
       {showRanks && (
-        <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+        <ScreenBoundary name="rank-ladder" onBack={() => setShowRanks(false)}>
+          <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+        </ScreenBoundary>
       )}
 
       {/* FIRST-RUN spotlight (once ever): dim the menu, ring the XP bar, tell the player it
