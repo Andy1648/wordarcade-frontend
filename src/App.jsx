@@ -75,6 +75,7 @@ import {
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
 import { checkAchievements } from './progress/achievements';
+import ScreenBoundary from './components/ScreenBoundary';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
@@ -2125,6 +2126,17 @@ function App() {
       />
     );
   }
+
+  // fix/error-boundaries — wrap the ACTIVE screen (menu / any game screen / any overlay-view) in its
+  // OWN boundary, keyed by view so it remounts per screen. A crash inside one screen now shows an
+  // inline "THIS SCREEN BROKE — GO BACK" panel + reports to Sentry, while the shell (nav, transitions,
+  // the global boundary) stays mounted and the OTHER screens are unaffected. GO BACK returns to the
+  // menu (the menu's own boundary reloads, since there's nowhere to go back to from home).
+  screen = (
+    <ScreenBoundary key={`sb-${view}`} name={view} onBack={isHomeMenu ? null : goHome}>
+      {screen}
+    </ScreenBoundary>
+  );
 
   // Ambient backdrop intensity: ramps with the Word Bomb turn timer so the whole
   // screen reacts to the danger level. Resting 'calm' on every other screen.
