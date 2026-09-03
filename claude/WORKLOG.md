@@ -190,3 +190,19 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 5 START (feat/save-schema, DO NOT MERGE): versioned save schema per
   claude/save-migration-plan.md — taw.save={v,data}, pure migrations, detect+migrate+atomic writeback,
   keep reading legacy keys as v0, stop writing them, never delete legacy. Tests per spec.
+- 2026-09-03  JOB 5 DONE (feat/save-schema b401bf7, pushed+verified, NOT merged). Existing branch was
+  stale (plan-only off old main) → rebuilt off current main via --force-with-lease. src/save/schema.js:
+  taw.save={v,data}; buildV0FromLegacy (23 PROGRESS_KEYS verbatim, 5 device keys excluded); pure
+  MIGRATIONS (v0→v1 verbatim wrap, v1→v2 stub — both identity on real data, only touch a __probe
+  scratch); migrate() pure+ordered+throws on invalid/newer; loadSave() detect/rebuild/migrate/atomic
+  writeback, never throws/wipes; versioned export/import (strict allowlist). main.jsx: guarded loadSave()
+  on boot. schema.test.js: 5 required tests GREEN (v0→v1 realistic 28-key; corrupt→defaults no-throw;
+  interrupted write recoverable+legacy intact; export→import round-trip; v2 stub ordered chain).
+  Gate: build 0, lint 0, unit 444/444. DECISION (plan's open Qs → defaults): exclude 5 device keys;
+  whole-blob atomic write; silent migration on load. DEFERRED (genuinely Tier-1, documented): the
+  ~30-writer cutover to STOP writing loose keys — no shared storage chokepoint exists, so it needs a
+  saveStore facade + per-module supervised review; this branch keeps loose keys authoritative +
+  taw.save as versioned mirror/export. Report claude/save-schema-report.md, plan committed.
+- 2026-09-03  JOB 6 START (feat/moments): progression moments — LEVEL UP scale-with-level, REBIRTH
+  ceremony sequence (counter→0, new mult stamps, MOMENTUM survives), CHAIN/FUSE unlock-in-place moment.
+  ≤1200ms, skippable, transform/opacity only, pooled, no new infinite anims.
