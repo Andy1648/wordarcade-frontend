@@ -56,7 +56,7 @@ export function CollectionBody() {
           )}
 
           {/* Per-tier grid. */}
-          <h3 className="coll-subtitle">BY TIER</h3>
+          <h3 className="coll-subtitle">BY RARITY</h3>
           <div className="coll-tiers">
             {TIERS.map((t) => (
               <div className="coll-tier" key={t} style={{ borderColor: TIER_COLORS[t] }}>

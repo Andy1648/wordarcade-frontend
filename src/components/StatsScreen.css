@@ -193,7 +193,7 @@
   box-shadow: 4px 4px 0 #0a0414;
 }
 .rec-cell--locked .rec-label {
-  color: #6f5f8e;
+  color: #8f7eb2; /* a11y MED-2: was #6f5f8e (~3.5:1 on #0d0618) → ~5.5:1, still clearly muted/locked */
 }
 .rec-silhouette {
   height: 16px;
@@ -208,7 +208,7 @@
   font-family: 'Space Mono', monospace;
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: #7a6a99;
+  color: #8f7eb2; /* a11y MED-2: was #7a6a99 (~4.1:1) → ~5.5:1 on the #0d0618 cell */
   text-transform: uppercase;
 }
 

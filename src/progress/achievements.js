@@ -55,15 +55,15 @@ export const ACHIEVEMENTS = [
   { id: 'wpm-70', cat: 'SPEED', name: 'FAST FINGERS', hint: 'Hit 70 WPM.', base: 3000, test: (s) => s.bestWpm >= 70 },
   { id: 'wpm-100', cat: 'SPEED', name: 'BLAZING', hint: 'Hit 100 WPM.', base: 10000, test: (s) => s.bestWpm >= 100 },
   // ---- VOCABULARY ----
-  { id: 'obs-1', cat: 'VOCABULARY', name: 'DEEP CUT', hint: 'Find your first OBSCURE word.', base: 500, test: (s) => s.obscure >= 1 },
+  { id: 'obs-1', cat: 'VOCABULARY', name: 'OBSCURITY', hint: 'Find your first OBSCURE word.', base: 500, test: (s) => s.obscure >= 1 },
   { id: 'obs-50', cat: 'VOCABULARY', name: 'LEXICON', hint: 'Collect 50 OBSCURE words.', base: 10000, test: (s) => s.obscure >= 50 },
   { id: 'dist-500', cat: 'VOCABULARY', name: 'COLLECTOR', hint: 'Collect 500 distinct words.', base: 5000, test: (s) => s.distinct >= 500 },
   { id: 'dist-2500', cat: 'VOCABULARY', name: 'CURATOR', hint: 'Collect 2,500 distinct words.', base: 50000, test: (s) => s.distinct >= 2500 },
   // ---- PROGRESSION ----
   { id: 'lv-15', cat: 'PROGRESSION', name: 'ASCENDANT', hint: 'Reach level 15.', base: 1000, test: (s) => s.level >= 15 },
-  { id: 'reb-1', cat: 'PROGRESSION', name: 'REBORN', hint: 'Rebirth for the first time.', base: 5000, test: (s) => s.rebirths >= 1 },
+  { id: 'reb-1', cat: 'PROGRESSION', name: 'REBIRTH', hint: 'Rebirth for the first time.', base: 5000, test: (s) => s.rebirths >= 1 },
   { id: 'lv-50', cat: 'PROGRESSION', name: 'VETERAN', hint: 'Reach level 50.', base: 20000, test: (s) => s.level >= 50 },
-  { id: 'reb-5', cat: 'PROGRESSION', name: 'PHOENIX', hint: 'Rebirth 5 times.', base: 50000, test: (s) => s.rebirths >= 5 },
+  { id: 'reb-5', cat: 'PROGRESSION', name: 'REBIRTH ×5', hint: 'Rebirth 5 times.', base: 50000, test: (s) => s.rebirths >= 5 },
   // ---- STREAKS ----
   { id: 'streak-3', cat: 'STREAKS', name: 'HABIT', hint: 'Play 3 days in a row.', base: 1000, test: (s) => s.streak >= 3 },
   { id: 'streak-7', cat: 'STREAKS', name: 'DEDICATED', hint: 'Play 7 days in a row.', base: 5000, test: (s) => s.streak >= 7 },

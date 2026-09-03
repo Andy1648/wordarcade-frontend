@@ -131,6 +131,33 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
     return () => window.removeEventListener('keydown', onKey);
   }, [handleClose]);
 
+  // A11y (MED-1): move focus INTO the dialog on open and TRAP Tab inside it, so a keyboard user
+  // can't Tab back out to the still-mounted menu cards behind the modal. Matches the SHOP overlay's
+  // focus-on-open; adds the containment the mode dialog was missing. Escape still closes (above).
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return undefined;
+    shell.focus(); // shell is tabIndex=-1; keyboard user then Tabs through the controls inside
+    const onTab = (e) => {
+      if (e.key !== 'Tab') return;
+      const list = Array.from(
+        shell.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => !el.disabled && el.offsetParent !== null);
+      if (list.length === 0) { e.preventDefault(); shell.focus(); return; }
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || active === shell || !shell.contains(active)) { e.preventDefault(); last.focus(); }
+      } else if (active === last || !shell.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    shell.addEventListener('keydown', onTab);
+    return () => shell.removeEventListener('keydown', onTab);
+  }, []);
+
   const accent = mode.accent;
   const overlay = (
     <div className="mode-dialog-overlay" role="presentation">
@@ -140,6 +167,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
         ref={shellRef}
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-label={`${mode.t1} ${mode.t2} options`}
         style={{ borderColor: game.baseColor }}
         onClick={(e) => e.stopPropagation()}
