@@ -276,3 +276,13 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 18 START (refactor/app-split-4, TIER-1, BRANCH ONLY, DO NOT MERGE): move the 576-line
   WS drain into useGameSocket via the receive-setters pattern, byte-identical; hook owns in-game state
   + 18 refs; every existing test must pass UNMODIFIED. Run mock-WS harness + full suite.
+- 2026-09-03  JOB 18 DEFERRED (refactor/app-split-4 df58d8b, pushed — branch-only, spec not code).
+  TIER-1 safety mandate (App.jsx 3 prod freezes → 2-device play-test required, unavailable this
+  session; harness-only gating on a ~60-dep god-effect move = documented freeze pattern per
+  app-split-plan.md). Delivered an EXECUTION-READY spec: exact dependency bag (34 setters/25 refs/16
+  imports/2 consts), scattered state+ref map w/ line numbers, drain reads NO bare view (stale-closure
+  neutralised), two byte-identical options (effect-only / full-ownership), guardrail suite list.
+  App.jsx unchanged 2459. Report claude/app-split-4-report.md.
+- 2026-09-03  JOB 19 START (chore/return-audit, REPORT ONLY): simulate 1/3/14-day returns at LV12+4d
+  streak, LV30 R1 broken streak, LV8 lost streak; screenshot 1366x768 + 390x844; assess absence
+  acknowledgement, punishment, next-goal clarity, welcome-back fairness. Write claude/return-audit.md.
