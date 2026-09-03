@@ -122,3 +122,12 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   itch-submission.md, portal-checklist.md. ?cg=1 path verified INTACT statically (cgEntry.js +
   App.jsx cg-arm/guarded setView). Cover art DATED (og-image.png Jun24 predates card redesign) —
   regen needs live render, deferred+documented. Poki/GD SDKs NOT integrated — documented as tasks.
+
+- 2026-09-03  START long-run (parts 1-4, JOBS 1-6). Rails: no merge unless job says; no deploy;
+  verify pushes with git ls-remote; NO tail on long commands (stream --reporter=line / redirect to
+  file); commit WORKLOG every 30m; BE-PICKY on visual jobs.
+  JOB 1: reconciled — the four audit branches (combo-naming/shop-keyboard/landscape-nav/wordsense-cap)
+  were ALREADY gated-green + merged + pushed earlier this session (origin/main=be742f1). feat/router
+  merged locally (4d822fb) but UNPUSHED; the in-flight e2e (bdtw6q6x3, workers=2 --reporter=line) is
+  gating it. On green → push main; then re-run 200h sim → claude/econ-post-cap.md. NOT re-merging the
+  four (already ancestors on origin).
