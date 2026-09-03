@@ -7,6 +7,7 @@
   width: 100%;
   /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). */
   min-height: calc(100vh / var(--app-scale, 1));
+  min-height: calc(100dvh / var(--app-scale, 1)); /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
   display: flex;
   align-items: center;
   justify-content: center;
