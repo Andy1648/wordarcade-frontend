@@ -301,3 +301,9 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   restart+PB->SPRINT mode+ghost; build Balatro-steal first; honest non-transfers.
 - 2026-09-03  JOB 22 START (chore/sweep-final, REPORT ONLY, LAST full sweep): screenshot every screen/
   dialog/overlay/state @ 1920/1366/390, rank BROKEN/UNFINISHED/POLISH w/ filenames. Be harsh.
+- 2026-09-03  JOB 22 DONE (chore/sweep-final e69e88e, pushed). 26 shots @ 1366+390 of all statically-
+  reachable screens: NO BROKEN, NO LOOKS-UNFINISHED — all POLISH. Multiplayer in-game/game-over/lobby
+  need live WS harness (covered by proto/wb-look+blitz-look+gameover-pass). claude/sweep-final.md.
+- 2026-09-03  JOB 23 START (fix/sweep-final): sweep found no BROKEN/UNFINISHED; fixing the 2 borderline
+  COLLISION defects (blitz PICK-YOUR-PACK/CLEAR crowding; return-card overlaps XP bar @390) w/
+  before/after; leaving pure-taste POLISH for Andy.
