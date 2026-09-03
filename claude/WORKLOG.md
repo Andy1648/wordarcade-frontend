@@ -260,3 +260,19 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 17 START (backend repo chain-reaction-backend, data/accept-lists-5): expand ~33 broad
   under-expanded Category Blitz accept-lists in batches of ~20 (real answers, <=3 words, dedupe CI,
   no inventions, skip finite w/ note); then variant pass (misspellings/accent-strip/alt-names/short).
+- 2026-09-03  JOB 17 DONE (BACKEND repo chain-reaction-backend, data/accept-lists-5, pushed+verified
+  d952810 — NOT merged). Expanded 39 broad under-expanded (<40) Category Blitz categories across 2
+  batches, each written to disk + committed before the next; real answers only, <=3 words, lowercase,
+  union-merged (dedup via Set), no inventions. BATCH 1 (expand-broad-4.js, 20): electronic music
+  genres, music festivals, milk alternatives, steak/BBQ/potato/rice/squash/melon/pancake types, energy
+  drinks, cooking & game shows, web browsers, wild canines, coral, dipping sauces, world deserts, phone
+  brands, Ben & Jerry's — all now >=40 (were 15-25). BATCH 2 (expand-broad-5.js, 19): big cats,
+  printmaking, music-production software, electric guitar models, potato-chip/snack-cake/salad-dressing/
+  yogurt brands, breakfast meats, TV westerns, 90s + British sitcoms, bowling terms, brass instruments,
+  egg/dried-fruit/jerky types, Roman gods, Greek heroes — all now >=40 (were 14-25). SKIPPED as
+  genuinely FINITE (the bulk of the <40 list): countries/planets/oceans/chess pieces/zodiac/months/
+  Beatles albums/HP books/Great Lakes/continents etc. VARIANT PASS: already complete in prior work
+  (variants-1..11 exist, merged in categoryAnswers.js) — nothing to add. modules load OK, lint clean.
+- 2026-09-03  JOB 18 START (refactor/app-split-4, TIER-1, BRANCH ONLY, DO NOT MERGE): move the 576-line
+  WS drain into useGameSocket via the receive-setters pattern, byte-identical; hook owns in-game state
+  + 18 refs; every existing test must pass UNMODIFIED. Run mock-WS harness + full suite.
