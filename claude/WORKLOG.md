@@ -286,3 +286,9 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 19 START (chore/return-audit, REPORT ONLY): simulate 1/3/14-day returns at LV12+4d
   streak, LV30 R1 broken streak, LV8 lost streak; screenshot 1366x768 + 390x844; assess absence
   acknowledgement, punishment, next-goal clarity, welcome-back fairness. Write claude/return-audit.md.
+- 2026-09-03  JOB 19 DONE (chore/return-audit 81ffaa6, pushed). REPORT: WELCOME BACK card
+  acknowledges absence, non-blocking, never punishing (lost streaks silent, no guilt); bonus fair +
+  scales w/ rebirth (R0 +1200/R1 +1800); GAP: identical for 1/3/14 days (12h cap) = re-engagement miss;
+  mobile card overlaps XP bar. claude/return-audit.md + claude/return/shots (6).
+- 2026-09-03  JOB 20 START (chore/pitch, REPORT ONLY): claude/pitch.md — 1 sentence/paragraph/page x 3
+  audiences (stranger/portal reviewer/admissions); + honest what-nothing-else-does list.
