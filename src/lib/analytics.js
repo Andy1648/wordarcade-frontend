@@ -47,13 +47,42 @@ export function initSentry() {
   }
 }
 
-// Fire-and-forget a named product event. No-op until posthog is initialized,
-// never awaits, never throws. Callers pass enums/counts only (no PII).
+// Fire-and-forget a named product event to BOTH sinks (PostHog + GA4/gtag). No-op until a sink is
+// ready, never awaits, never throws. Callers pass enums/counts only — NEVER PII, never keystroke
+// content (see src/lib/events.js for the canonical event catalog + payload shapes).
 export function track(event, props = {}) {
   try {
-    if (!posthogReady) return;
-    posthog.capture(event, props);
-  } catch {
-    // a failed capture can never bubble into gameplay
-  }
+    if (posthogReady && posthog) posthog.capture(event, props);
+  } catch { /* a failed capture can never bubble into gameplay */ }
+  try {
+    // GA4 (gtag.js is loaded in index.html). Guarded — absent on local/dev or if the tag is blocked.
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('event', event, props);
+    }
+  } catch { /* GA send never affects gameplay */ }
+}
+
+// Fire an event AT MOST ONCE ever (localStorage-gated) — for milestones like first_visit /
+// first_wins_earned. The gate is best-effort: a blocked store just means it may fire again.
+export function trackOnce(event, storageKey, props = {}) {
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(storageKey) === '1') return false;
+    if (typeof localStorage !== 'undefined') localStorage.setItem(storageKey, '1');
+  } catch { /* storage blocked — fall through and fire anyway */ }
+  track(event, props);
+  return true;
+}
+
+// Attach durable SESSION PROPERTIES so every subsequent event segments by progression stage. Sent to
+// PostHog as super-properties (registered on the client) and to GA4 as user/config params. Counts
+// only — no PII. Safe to call repeatedly (e.g. after a level-up / rebirth / streak day).
+export function setSessionProps(props = {}) {
+  try {
+    if (posthogReady && posthog && typeof posthog.register === 'function') posthog.register(props);
+  } catch { /* ignore */ }
+  try {
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('set', 'user_properties', props);
+    }
+  } catch { /* ignore */ }
 }

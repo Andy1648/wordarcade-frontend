@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import './SplashScreen.css';
 import { useXpCapture } from '../progress/useXpCapture';
 import { loadProgress } from '../progress/xp';
+import { splashDismissed as evSplashDismissed } from '../lib/events.js';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import Mascot from './Mascot';
 
@@ -111,6 +112,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
   function dismiss() {
     if (dismissedRef.current) return;
     dismissedRef.current = true;
+    evSplashDismissed(); // analytics: the entry gate cleared (start of the funnel)
     if (startRef.current) startRef.current(); // unlock audio (music) in the gesture
     setLeaving(true);
     setTimeout(() => {

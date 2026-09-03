@@ -9,6 +9,9 @@ import './index.css'
 import './theme/themes.css'
 import { initTheme } from './theme/themes'
 import { initAnalytics, initSentry, Sentry } from './lib/analytics'
+import { firstVisit, refreshSessionProps } from './lib/events'
+import { loadProgress, getRebirths } from './progress/xp'
+import { getStreak } from './progress/streak'
 
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
@@ -20,7 +23,19 @@ try { initTheme() } catch { /* never block startup */ }
 // no-ops without their env keys and internally wrapped; the try/catch here is belt-and-braces.
 try { initSentry() } catch { /* never block startup */ }
 const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
-idle(() => { try { initAnalytics() } catch { /* never block */ } });
+idle(() => {
+  // Init analytics, THEN fire first_visit (once) + attach the progression session props, so the very
+  // first events are already segmented. All guarded — analytics can never block or crash startup.
+  Promise.resolve(initAnalytics())
+    .then(() => {
+      try {
+        firstVisit();
+        const prog = loadProgress();
+        refreshSessionProps({ level: prog.level, rebirths: getRebirths(), streak: getStreak().count });
+      } catch { /* analytics never blocks */ }
+    })
+    .catch(() => {});
+});
 
 // On-brand crash screen shown by the Sentry error boundary if a render throws, so
 // a crash reports to Sentry AND shows this instead of a blank white page.

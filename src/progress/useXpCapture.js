@@ -4,6 +4,7 @@
 // ANY pointer (mouse included), a click/tap on empty space credits too — both go
 // through the SAME limiter and the SAME streak. Mount with the fx layer's ref.
 import { useEffect, useRef, useState } from 'react';
+import { levelUp as evLevelUp, refreshSessionProps } from '../lib/events.js';
 import {
   loadProgress,
   saveProgress,
@@ -92,7 +93,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.
       const fx = fxRef && fxRef.current;
       if (fx) {
-        if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); } // Job 11: level-up chime
+        if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
         if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
         else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
