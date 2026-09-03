@@ -46,6 +46,8 @@ html, body {
   background: var(--theme-bg, #0d0618);
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari: 100vh includes the collapsed URL-bar area (over-tall); dvh is the
+                         real dynamic viewport. dvh wins where supported (WebKit 15.4+), else 100vh. */
   /* Prevent a horizontal scrollbar while an incoming view slides in from
      off-screen during a transition (see Transitions.css). */
   overflow-x: hidden;
@@ -61,6 +63,7 @@ body {
 #root {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari dynamic viewport (see html rule above) */
   background: var(--theme-bg, #0d0618);
 }
 
