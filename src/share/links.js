@@ -15,30 +15,35 @@ function resolveOrigin(origin) {
   return PROD_ORIGIN;
 }
 
-/** Deep link that drops a friend straight into room `code` (see App's ?join= handling). */
+// feat/router: share links now use CLEAN PATHS (the router bridges them back to the query the app
+// reads, and canonicalises the URL after boot). Legacy ?join=/?satrush=/?chain=/?fuse= entries still
+// work (the app never stopped reading them), so old shared links keep resolving.
+
+/** Deep link that drops a friend straight into room `code` -> /room/CODE. */
 export function inviteLink(code, origin) {
   if (!code) return REF_URL;
-  return `${resolveOrigin(origin)}/?join=${encodeURIComponent(code)}&ref=share`;
+  return `${resolveOrigin(origin)}/room/${encodeURIComponent(code)}?ref=share`;
 }
 
-/** Deep link that lands a friend directly in today's Daily Challenge. */
+/** Deep link that lands a friend directly in today's Daily Challenge. (No route path — Daily is a
+ *  Category Blitz variant; keep the query form, which the app still reads.) */
 export function dailyLink(origin) {
   return `${resolveOrigin(origin)}/?daily=1&ref=share`;
 }
 
-/** Deep link that drops a friend straight into SAT Rush (see App's ?satrush= handling). */
+/** Deep link straight into SAT Rush -> /sat-rush. */
 export function satRushLink(origin) {
-  return `${resolveOrigin(origin)}/?satrush=1&ref=share`;
+  return `${resolveOrigin(origin)}/sat-rush?ref=share`;
 }
 
-/** Deep link straight into CHAIN (App's ?chain=1 handling / src/solo/config.js). */
+/** Deep link straight into CHAIN -> /chain. */
 export function chainLink(origin) {
-  return `${resolveOrigin(origin)}/?chain=1&ref=share`;
+  return `${resolveOrigin(origin)}/chain?ref=share`;
 }
 
-/** Deep link straight into FUSE (App's ?fuse=1 handling / src/solo/config.js). */
+/** Deep link straight into FUSE -> /fuse. */
 export function fuseLink(origin) {
-  return `${resolveOrigin(origin)}/?fuse=1&ref=share`;
+  return `${resolveOrigin(origin)}/fuse?ref=share`;
 }
 
 // Result-card deep link per mode id (Job 1). Each lands IN the mode, never the homepage —
@@ -56,6 +61,7 @@ export function modeShareLink(mode, origin) {
     case 'category-blitz':
       return dailyLink(origin);
     case 'word-bomb':
+      return `${resolveOrigin(origin)}/word-bomb?ref=share`;
     default:
       return `${resolveOrigin(origin)}/?ref=share`;
   }
