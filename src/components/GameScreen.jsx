@@ -1746,17 +1746,24 @@ export default function GameScreen({
       pendingClearRef.current = null;
     }, ms);
   }
-  // COLD-WAKE ESCALATION (fix/qa-sweep §5). The flight chip is tuned for the normal
-  // ~120-400ms round-trip; on a COLD Render wake the socket can be silent ~20s and
-  // the plain dots read as "the word was ignored". If a submission is STILL in flight
-  // 400ms after it was sent, escalate the SAME chip to a visible "WAKING SERVER…"
-  // state so any un-answered submit is unmistakably pending. It resolves the instant
-  // the verdict lands (the word_result effect flips phase to accept/reject, which
-  // changes `pending` and tears this timer down).
+  // COLD-WAKE ESCALATION (fix/qa-sweep §5). The chip is tuned for the normal ~120-400ms
+  // round-trip; on a COLD Render wake the socket can be silent ~20s. If a submission is still
+  // UNCONFIRMED 400ms after it was sent, escalate the SAME chip to a visible "WAKING SERVER…"
+  // state so any un-answered submit is unmistakably pending. "Unconfirmed" covers both a plain
+  // in-flight chip AND a Word Bomb OPTIMISTIC accept (JOB C Path B) that painted ✓ same-frame but
+  // has had no word_result yet — without this, an optimistic accept never escalated and a cold
+  // submit read as silently accepted forever. It resolves the instant the verdict lands (the
+  // result effect flips phase to accept/reject and clears `optimistic`, tearing this timer down).
   useEffect(() => {
-    if (!pending || pending.phase !== 'flight') return undefined;
+    const unconfirmed =
+      !!pending && (pending.phase === 'flight' || (pending.phase === 'accept' && pending.optimistic));
+    if (!unconfirmed) return undefined;
     const t = setTimeout(() => {
-      setPending((p) => (p && p.phase === 'flight' ? { ...p, phase: 'waiting' } : p));
+      setPending((p) =>
+        p && (p.phase === 'flight' || (p.phase === 'accept' && p.optimistic))
+          ? { ...p, phase: 'waiting' }
+          : p
+      );
     }, 400);
     return () => clearTimeout(t);
   }, [pending]);
@@ -1810,7 +1817,10 @@ export default function GameScreen({
         // comboRef holds the pre-hit value). It clears shortly, or when the turn
         // passes to the next player. Does NOT gate any of the feedback above/below.
         const combo = (comboRef.current || 0) + 1;
-        setPending((p) => (p ? { ...p, phase: 'accept', combo } : p));
+        // Server confirmed: settle the chip as an accepted readout and drop the optimistic flag so
+        // the cold-wake escalation can't flip a CONFIRMED accept to WAKING (also resolves a chip
+        // that already escalated to 'waiting' during a slow/cold wake).
+        setPending((p) => (p ? { ...p, phase: 'accept', combo, optimistic: false } : p));
         schedulePendingClear(900);
       }
       const t = submitTimerRef.current; // the EXISTING clock value, snapshot at submit
@@ -2325,6 +2335,23 @@ export default function GameScreen({
     [gameOver]
   );
 
+  // ONE-TIME first-game input spotlight (fix/logic-and-onboarding). MUST live with the other
+  // hooks ABOVE the early returns below (the category-blitz branch + the null-gameState
+  // "STARTING GAME" placeholder) — a hook declared AFTER a conditional return trips React #310
+  // ("rendered more hooks than last time") the instant the first turn_update lands and gameState
+  // flips from null to set, white-screening Word Bomb in-game (same trap the endBlurb note above
+  // guards against). Shared across ALL game surfaces via the onboarding flag; rendered ONLY inside
+  // the live input row below, dismissed by the first key/tap (the pointer-events:none overlay lets
+  // it through so the keystroke still lands in the field).
+  const [gameSpot, setGameSpot] = useState(false);
+  useEffect(() => {
+    if (!hasSeenGameSpotlight()) setGameSpot(true);
+  }, []);
+  const dismissGameSpot = () => {
+    markGameSpotlightSeen();
+    setGameSpot(false);
+  };
+
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
   // than threading conditionals through the turn-based Word Bomb layout.
@@ -2376,19 +2403,6 @@ export default function GameScreen({
   }
 
   const isCategory = gameType === 'category-blitz';
-
-  // ONE-TIME first-game input spotlight (fix/logic-and-onboarding). Shared across ALL game
-  // surfaces via the onboarding flag; armed on mount, rendered ONLY inside the live input row
-  // below (so it never shows without its target) and dismissed by the first key/tap — which
-  // the pointer-events:none overlay lets through, so it still lands in the field.
-  const [gameSpot, setGameSpot] = useState(false);
-  useEffect(() => {
-    if (!hasSeenGameSpotlight()) setGameSpot(true);
-  }, []);
-  const dismissGameSpot = () => {
-    markGameSpotlightSeen();
-    setGameSpot(false);
-  };
 
   const players = gameState.players || [];
 
@@ -2571,7 +2585,10 @@ export default function GameScreen({
       pendingClearRef.current = null;
     }
     optimisticWordRef.current = word.toLowerCase();
-    setPending({ word, phase: 'accept' }); // no `combo` — the ×N lands on server confirm, not now
+    // optimistic:true = painted accept but NOT yet server-confirmed. The cold-wake escalation
+    // below flips it to WAKING if no word_result lands within 400ms; the server accept clears
+    // the flag (see the result effect). No `combo` yet — the ×N lands on server confirm.
+    setPending({ word, phase: 'accept', optimistic: true });
     fireAccept(); // the accept juice, immediately (server stays authoritative for everything else)
     onSubmitWord(word);
     setDraft('');
