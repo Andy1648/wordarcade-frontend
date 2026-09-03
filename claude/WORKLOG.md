@@ -240,3 +240,12 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 15 START (fix/error-boundaries): wrap menu + each game screen + each overlay in its
   own boundary; a crash shows inline "THIS SCREEN BROKE — GO BACK" panel w/ working back action +
   Sentry report, rest stays interactive. Test: force a throw in each boundary, assert rest works.
+- 2026-09-03  JOB 15 DONE (fix/error-boundaries b9ca2f8, pushed+verified). ScreenBoundary.jsx/.css
+  (Sentry.ErrorBoundary + inline THIS SCREEN BROKE/GO BACK panel, Sentry-tagged, covers own screen box
+  only). App.jsx wraps active `screen` in a per-view boundary (key=view, onBack=goHome; menu reloads);
+  Homepage wraps each overlay (mode-dialog/locked-preview/rank-ladder). ?boom=<name> test seam. e2e
+  3/3 (game/menu/overlay crash + GO-BACK recovery + isolation). build 0, lint 0, unit 439/439,
+  regression menu/dialog/solo 21/21. Global boundary kept as catch-all. Report+panel shot saved.
+- 2026-09-03  JOB 16 START (fix/ios-safari): Playwright WebKit walk of every screen/mode; check
+  visualViewport keyboard shim, input focus in gestures, dvh, AudioContext resume, SW (offline),
+  position:fixed under keyboard, momentum scroll. Fix unambiguous, report real-device items.
