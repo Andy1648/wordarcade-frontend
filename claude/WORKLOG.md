@@ -296,3 +296,8 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   audiences + honest USP (synthesis + rarity-priced typing + AI judge + spell-along; no world-first).
 - 2026-09-03  JOB 21 START (chore/inspo, REPORT ONLY): 3 unlooked games (Balatro/Vampire Survivors/
   Monkeytype) — the single hard-to-put-down mechanic + the TYPE A WORD version + honest non-transfers.
+- 2026-09-03  JOB 21 DONE (chore/inspo f537214, pushed). claude/inspo.md: Balatro synergy->WORD JOKERS
+  (reuse hidden rarity x combo x lucky mults), VS draft+escalation->survival run, Monkeytype instant-
+  restart+PB->SPRINT mode+ghost; build Balatro-steal first; honest non-transfers.
+- 2026-09-03  JOB 22 START (chore/sweep-final, REPORT ONLY, LAST full sweep): screenshot every screen/
+  dialog/overlay/state @ 1920/1366/390, rank BROKEN/UNFINISHED/POLISH w/ filenames. Be harsh.
