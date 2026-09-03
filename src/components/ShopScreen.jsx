@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyWordSense, buyMomentum } from '../progress/shop';
-import { getWordSenseTier, wordSenseCost, wordSenseFactor } from '../progress/wordSense';
+import { getWordSenseTier, wordSenseCost, wordSenseFactor, WORDSENSE_MAX_TIER } from '../progress/wordSense';
 import { getMomentum, momentumCost, momentumMult, momentumMaxed, MOMENTUM_MAX } from '../progress/momentum';
 import {
   THEMES,
@@ -67,8 +67,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
+  const wsMaxed = wsTier >= WORDSENSE_MAX_TIER; // wordSenseCost returns Infinity here
   const wsCost = wordSenseCost(wsTier);
-  const wsProgress = wsCost > 0 ? Math.min(1, wins / wsCost) : 1;
+  const wsProgress = wsMaxed ? 1 : wsCost > 0 ? Math.min(1, wins / wsCost) : 1;
   const mMaxed = momentumMaxed(momentum);
   const mCost = momentumCost(momentum); // Infinity when maxed
   const mProgress = mMaxed ? 1 : mCost > 0 ? Math.min(1, wins / mCost) : 1;
@@ -226,27 +227,39 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
             {/* WORD SENSE (Job 4): the SECOND permanent wins sink, parallel to KEY POWER. Buys the
                 wins multiplier per rarity tier — knowing rare words pays more the more you invest. */}
-            <h3 className="shop-subtitle">WORD SENSE — TIER {wsTier}</h3>
+            <h3 className="shop-subtitle">WORD SENSE — TIER {wsTier} / {WORDSENSE_MAX_TIER}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 <div className="shop-kp-current">
-                  <b>×{wordSenseFactor(wsTier).toFixed(wsTier > 3 ? 0 : 2)}</b> ON WORD RARITY (WINS)
+                  <b>×{wordSenseFactor(wsTier).toFixed(2)}</b> ON WORD RARITY (WINS)
                 </div>
-                <div className="shop-kp-next">
-                  NEXT TIER: <b>×{wordSenseFactor(wsTier + 1).toFixed(wsTier + 1 > 3 ? 0 : 2)}</b>
-                  {'  ·  '}
-                  <b><span className="shop-coin" aria-hidden="true" /> {formatNum(wsCost)} WINS</b>
-                </div>
+                {wsMaxed ? (
+                  <div className="shop-kp-next">TIER {WORDSENSE_MAX_TIER} — MAXED</div>
+                ) : (
+                  <div className="shop-kp-next">
+                    NEXT TIER: <b>×{wordSenseFactor(wsTier + 1).toFixed(2)}</b>
+                    {'  ·  '}
+                    <b><span className="shop-coin" aria-hidden="true" /> {formatNum(wsCost)} WINS</b>
+                  </div>
+                )}
                 <div className="shop-kp-rate">
                   RARE WORDS PAY MORE — COMMON WORDS UNCHANGED
                 </div>
                 <div className="shop-goal">
-                  {wins >= wsCost ? 'READY TO UNLOCK' : `UNLOCKS AT ${formatNum(wsCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                  {wsMaxed
+                    ? 'WORD SENSE MAXED'
+                    : wins >= wsCost
+                    ? 'READY TO UNLOCK'
+                    : `UNLOCKS AT ${formatNum(wsCost)} WINS — YOU HAVE ${formatNum(wins)}`}
                 </div>
                 <ProgressBar value={wsProgress} />
               </div>
               <div className="shop-kp-actions">
-                {wins >= wsCost ? (
+                {wsMaxed ? (
+                  <button type="button" className="shop-card-btn" disabled>
+                    MAXED
+                  </button>
+                ) : wins >= wsCost ? (
                   <HoldBuy label={formatNum(wsCost)} onCommit={onBuyWordSense} />
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
