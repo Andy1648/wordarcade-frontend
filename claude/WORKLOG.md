@@ -1,5 +1,37 @@
 # WORKLOG — 8-hour autonomous run (start 2026-08-29T06:02Z)
 
+## ========================= SESSION-END SUMMARY (2026-09-03 long run, parts 1/3/4) =========================
+Parts 1,3,4 pasted (JOBS 1–6, 13–24). **Part 2 (JOBS 7–12) was NEVER provided** — not actionable, skipped.
+RAILS honored: no merge to main except where a job explicitly said (JOB 1 router push); no deploy; every
+push verified via `git ls-remote`; long commands redirected to files (no tail); WORKLOG committed each job.
+Every branch below is pushed to origin and UNMERGED (Andy reviews), except JOB 1's router which JOB 1
+explicitly said to push to main.
+
+| JOB | Branch | Status |
+|-----|--------|--------|
+| 1  finish in-flight | main (router 4d822fb) | **DONE** — router e2e green (11/11 + full 1087), pushed main; claude/econ-post-cap.md (worst dead stretch 8.66h, spread 1.55×, momentum never maxes, Key T7 @22–82h) |
+| 2  WB mid-play redesign | proto/wb-look | **DONE** (prototype) — 3 dirs (table/broadcast/fighter), 2 BE-PICKY rounds each |
+| 3  Blitz mid-play redesign | proto/blitz-look | **DONE** (prototype) — 3 dirs (bench/scan-line/rapid-fire), AI-judge dramatized, 2 rounds each |
+| 4  MEDIUM audit fixes | fix/audit-mediums | **DONE** — dialog focus-trap, locked contrast, WaveText aria, rarity 5→2 names, REBIRTH standardise; unit 439, dialog e2e 15/15 |
+| 5  versioned save schema | feat/save-schema | **DONE, DO NOT MERGE** — taw.save={v,data}, pure migrations, 5 tests green; writer-cutover deferred (Tier-1) |
+| 6  progression moments | feat/moments | **DONE** — level-up scales w/ level, real rebirth ceremony, unlock-in-place; 0 new infinite anims, e2e 8/8 |
+| 13 ghost of best run | feat/ghost | **DONE** — self-ghost CHAIN/FUSE, 301B/580B, cap 1/mode, 6 tests |
+| 14 funnel analytics | feat/analytics | **DONE** — 14 events + session props (PostHog+GA4), no PII; claude/analytics-plan.md |
+| 15 error boundaries | fix/error-boundaries | **DONE** — per-screen+overlay ScreenBoundary, inline panel, e2e 3/3 |
+| 16 iOS Safari audit | fix/ios-safari | **DONE** — WebKit walk clean; 100vh→dvh fallbacks; audio already iOS-correct; claude/ios-safari-audit.md |
+| 17 Blitz accept-lists | (backend) data/accept-lists-5 | **DONE, not merged** — 39 broad cats expanded (2 batches, all ≥40); variant pass already done |
+| 18 WS drain extraction | refactor/app-split-4 | **DEFERRED (Tier-1 safety)** — execution-ready spec only; App.jsx 3-freeze history mandates a 2-device play-test unavailable this session |
+| 19 returning-player audit | chore/return-audit | **DONE (report)** — welcoming/fair; gap: identical for 1/3/14 days; claude/return-audit.md |
+| 20 60-second pitch | chore/pitch | **DONE (report)** — claude/pitch.md |
+| 21 steal from new | chore/inspo | **DONE (report)** — Balatro/VS/Monkeytype; claude/inspo.md |
+| 22 final visual sweep | chore/sweep-final | **DONE (report)** — no BROKEN/UNFINISHED reachable; claude/sweep-final.md |
+| 23 fix sweep BROKEN/UNFINISHED | fix/sweep-final | **DONE** — none at that severity; fixed the 1 real collision (PackPicker label/CLEAR) |
+| 24 honest verdict | chore/verdict | **DONE (report)** — good as craft, not yet as a habit; build the run-based WORD JOKERS mode, lead with it; claude/verdict.md |
+
+UNFINISHED / OPEN: JOB 18 (deferred, spec ready); JOBS 7–12 never provided. Full Playwright suite on main
+(66a4e09) run at session end — result appended below once complete.
+
+
 ## ===== MERGE TO MAIN (2026-09-01, user-directed) — 7 safe branches, full gate after each =====
 main c630b8b → 84e2954. Each merge full-gated (lint 0 / unit 408 / full playwright ~1049, sharded 2×
 to fit the env cap); held branches EXCLUDED (verified 050a88a game-fill-2 + RouteFallback both absent).
