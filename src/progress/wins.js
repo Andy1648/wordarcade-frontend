@@ -94,11 +94,15 @@ export function saveRounds(rounds) {
 // Per-mode wins multiplier on the per-word base (Economy v6). REBALANCED (sim/rebalance-2) to
 // EQUALIZE wins/min ACROSS modes so mode choice stops being a grind-efficiency decision. Each
 // mult offsets that mode's intrinsic throughput × rarity: at equal difficulty / R0 the modes land
-// WB 393 · Blitz 344 · Chain 457 · SAT 422 · Fuse 493 wins/min — SPREAD 1.43× (was 37.7×). CHAIN is
-// raised to ×1.9 so the LV20-gated mode out-earns the ungated WB/Blitz (unlock ladder intact), and
-// SAT (the vocabulary mode, ~55% OBSCURE deck) sits above Word Bomb as intended. Keys match the
-// ROUND mode passed to bankWordWins/perWordWins ('wordBomb','blitz','satRush','chain','fuse'); a
-// missing key → ×1. Derivation: claude/winsmin-sim.mjs + claude/econ-rebalance-2-report.md.
+// WB 393 · Blitz 344 · Chain 457 · SAT 422 · Fuse 493 wins/min — ISOLATED-throughput spread 1.43×
+// (was 37.7×), per the winsmin-sim. CHAIN is raised to ×1.9 so the LV20-gated mode out-earns the
+// ungated WB/Blitz (unlock ladder intact), and SAT (the vocabulary mode, ~55% OBSCURE deck) sits
+// above Word Bomb as intended. NOTE: the FULL-ECONOMY cross-mode spread (all reward channels, every
+// per-word multiplier compounded) is wider than this isolated figure — it was ~1.54× before WORD
+// SENSE and blew out to ~29× when WORD SENSE shipped uncapped; the fix/wordsense-cap ceiling (1.5)
+// restores it to ~1.55× (claude/audit-economy.md + claude/_ws-cap-sweep.mjs). Keys match the ROUND
+// mode passed to bankWordWins/perWordWins ('wordBomb','blitz','satRush','chain','fuse'); a missing
+// key → ×1. Derivation: claude/winsmin-sim.mjs + claude/econ-rebalance-2-report.md.
 export const WINS_MULT = { wordBomb: 2, blitz: 1, satRush: 0.5, chain: 1.9, fuse: 1 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
