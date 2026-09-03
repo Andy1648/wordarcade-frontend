@@ -14,7 +14,9 @@
 
 /* ============================ HEADER LABEL ("▓ PICK YOUR PACKS") ============================ */
 /* Flat: yellow Bungee, no tilt, no ink filter. */
-.ppp-subline { font-family: 'Bungee', cursive; font-size: clamp(16px, 2.4vw, 20px); color: #FFE94A; -webkit-text-stroke: 2.5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; margin: 6px 0 12px; text-align: center; letter-spacing: 0.04em; }
+/* padding reserves room for the absolutely-positioned SELECT ALL / CLEAR chip (top-right) so the
+   centered label never runs UNDER it on a narrow dialog (JOB 23 sweep fix — mobile collision). */
+.ppp-subline { font-family: 'Bungee', cursive; font-size: clamp(16px, 2.4vw, 20px); color: #FFE94A; -webkit-text-stroke: 2.5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; margin: 6px 0 12px; padding: 0 64px; text-align: center; letter-spacing: 0.04em; }
 .ppp-subline-glyph { font-family: 'Space Mono', monospace; -webkit-text-stroke: 0; color: #3DA8FF; text-shadow: 2px 2px 0 #000; margin-right: 2px; }
 
 /* ============================ SCROLLING WINDOW ============================ */
