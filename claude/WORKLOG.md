@@ -143,3 +143,18 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   T7 @ 22–82h, T8 unreached. This is the real post-WORD-SENSE-cap baseline.
 - 2026-09-03  JOB 2 START (proto/wb-look, PROTOTYPE ONLY): WORD BOMB mid-play redesign, 3 distinct
   directions as a standalone prototype page. Read claude/wb-blitz-look.md first.
+- 2026-09-03  JOB 2 DONE (proto/wb-look 52adf2e, pushed+verified). NOTE: referenced claude/wb-blitz-
+  look.md does NOT exist (only parity-wb-blitz-report.md); worked from the mode's real elements.
+  Chrome extension not connected (bg session) → screenshotting via Playwright (claude/wb-look/shoot.mjs
+  file://), not claude-in-chrome. Built 3 DISTINCT ideas of what the screen IS (not variations):
+  A · PASS-THE-BOMB TABLE (you are the input dock, opponents ring the table, bomb centre, fragment
+  lights pink inside your typed word); B · ESPORTS BROADCAST (LIVE bar + STANDINGS rail + centre desk
+  + LIVE-FEED ticker + wide input); C · VERSUS FIGHTER (corner HP plates, giant HIT-COMBO counter,
+  bomb as stage hazard, STRIKE input). All: authored SVG bomb, edge-to-edge, thick black outlines,
+  hard offset shadows, flat neon, transform/opacity only, 0 new infinite anims. BE-PICKY: 2 rounds
+  each (A R1 assembled/collisions→R2 table; B R1 no input+void→R2 desk; C R1 strong→R2 polish). Files
+  claude/wb-look/{proto.html,report.md,shoot.mjs} + public/wb-look.html (preview at /wb-look.html?d=a).
+  Shots claude/wb-look/shots/, sent to user. Pick: C readability / A warmth.
+- 2026-09-03  JOB 3 START (proto/blitz-look, PROTOTYPE ONLY): CATEGORY BLITZ mid-play redesign, 3
+  directions. Elements: category prompt, 20s clock, answer list building, opponent rail, AI judge
+  moment (the USP — make the judgement visible + dramatic).
