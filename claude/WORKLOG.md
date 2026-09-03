@@ -158,3 +158,16 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 3 START (proto/blitz-look, PROTOTYPE ONLY): CATEGORY BLITZ mid-play redesign, 3
   directions. Elements: category prompt, 20s clock, answer list building, opponent rail, AI judge
   moment (the USP — make the judgement visible + dramatic).
+- 2026-09-03  JOB 3 DONE (proto/blitz-look 911c4e2, pushed+verified). 3 distinct ideas, each
+  dramatizing the AI judge differently: A · THE JUDGE'S BENCH (courtroom — THE CASE/RECORD/GALLERY,
+  gavel+AI-disc emblem, ✓ APPROVED verdict stamp); B · THE SCAN LINE (conveyor belt → AI SCANNER gate,
+  word under a scan beam, PASS/FAIL, crates exit right); C · RAPID-FIRE ARCADE (authored countdown ring,
+  answer stack w/ instant ✓/✗, opponent race rail, huge "AI JUDGE RULES → CHUPACABRA → ✓ VALID" flash).
+  All house-rule clean (authored SVG, edge-to-edge, thick outlines, hard shadows, flat neon,
+  transform/opacity, 0 new infinite anims; C's clock is an SVG arc not a conic-gradient). BE-PICKY 2
+  rounds each (A: stamp-covered-word+judge-hidden→vertical stack; B: empty gate+hidden word→real
+  scanner+beam separated; C: conic clock→SVG arc). Files claude/blitz-look/{proto.html,report.md,
+  shoot.mjs} + public/blitz-look.html (/blitz-look.html?d=a). Shots sent to user. Pick: C.
+- 2026-09-03  JOB 4 START (fix/audit-mediums): fix MEDIUM audit findings from audit-a11y.md /
+  audit-copy.md / audit-mobile.md — dialog focus trap+move-in, Stats/Shop locked contrast, Lobby
+  aria-prohibited-attr, rarity-axis naming (5 names→2), REBIRTH/PRESTIGE/REBORN/PHOENIX standardise.
