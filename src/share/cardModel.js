@@ -36,7 +36,7 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     win = !!outcome.won;
     hero = win ? 'SURVIVED' : 'ELIMINATED';
     sub = data.words != null ? `${data.words} WORDS` : '';
-    chips = [chip('LONGEST', data.longest), chip('BEST COMBO', data.combo), chip('PLAYERS', data.players)];
+    chips = [chip('LONGEST', data.longest), chip('BEST STREAK', data.combo), chip('PLAYERS', data.players)];
   } else if (mode === 'category-blitz' && outcome.solo) {
     win = true;
     hero = String(data.score ?? 0);

@@ -1139,7 +1139,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
     const gap = wordTimes[i] - wordTimes[i - 1];
     if (gap > 0 && (fastestMs === 0 || gap < fastestMs)) fastestMs = gap;
   }
-  // BEST COMBO: longest run of accepted words uninterrupted by a timeout or skip.
+  // BEST STREAK (bestCombo): longest run of accepted words uninterrupted by a timeout or skip.
   // Merge accepted words (+1) with the life-loss events (a break) on one timeline,
   // ordered by timestamp, and track the longest unbroken accepted streak.
   const timeline = [
@@ -1263,7 +1263,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
           <div className="go-summary-value">
             <CountUp to={bestCombo} duration={500} />
           </div>
-          <div className="go-summary-label">BEST COMBO</div>
+          <div className="go-summary-label">BEST STREAK</div>
         </div>
         <div className="go-summary-item" style={summaryStyle(5)}>
           <div className="go-summary-value">

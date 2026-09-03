@@ -14,7 +14,7 @@ const BASE_GAMES = [
     id: 'word-bomb',
     artKey: 'WordBombArt',
     name: 'WORD\nBOMB',
-    description: 'USE THE COMBO BEFORE TIME RUNS OUT.',
+    description: 'USE THE LETTERS BEFORE TIME RUNS OUT.',
     baseColor: '#FF6B3D',
     iconBg: '#FFE94A',
     badgeText: 'SOLO/MULTI',
