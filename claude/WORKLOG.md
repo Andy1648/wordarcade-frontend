@@ -131,3 +131,15 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   merged locally (4d822fb) but UNPUSHED; the in-flight e2e (bdtw6q6x3, workers=2 --reporter=line) is
   gating it. On green → push main; then re-run 200h sim → claude/econ-post-cap.md. NOT re-merging the
   four (already ancestors on origin).
+- 2026-09-03  JOB 1 DONE. Gating e2e (bdtw6q6x3) finished GREEN — 1087 passed (26.1m), .last-run
+  status=passed. BUT that run did NOT include e2e/router.spec.js (0 refs), so I ran router.spec.js
+  explicitly on current main (27af716): 11/11 PASS (38.6s) — the branch-isolation 7/11 failure the
+  WORKLOG feared was resolved by the merge (router.js bridge sets both `satRush=1&satrush=1`, fixing
+  the capital/lowercase LAUNCH_INTENT gate). Pushed main be742f1..27af716 (router feat + merge +
+  worklog); verified origin/main=27af716 via git ls-remote. Re-ran 200h sim on merged main
+  (econ200h-audit.mjs, +per-Key-tier timing) → claude/econ-post-cap.md (untracked per CLAUDE.md):
+  worst dead stretch 8.66h (WB, @173h deep endgame); mode spread 1.55x (1.72e4→2.67e4 w/min);
+  momentum NEVER maxes in 200h (M155–165, sink stays alive); Key Power T1–T4 free in session 1,
+  T7 @ 22–82h, T8 unreached. This is the real post-WORD-SENSE-cap baseline.
+- 2026-09-03  JOB 2 START (proto/wb-look, PROTOTYPE ONLY): WORD BOMB mid-play redesign, 3 distinct
+  directions as a standalone prototype page. Read claude/wb-blitz-look.md first.
