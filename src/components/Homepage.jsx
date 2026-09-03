@@ -246,6 +246,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
         stage.style.setProperty('--menu-scale', scale.toFixed(4));
       }
+      // LANDSCAPE nav safe-gutter (fix/landscape-nav): the absolute top-right corner nav is a ~200px
+      // tall stacked column. In landscape the five cards pack into ONE full-height row, so without a
+      // reserve the rightmost card (FUSE) packs UNDER the nav and becomes untappable — its centre
+      // hit-tests to a nav button, not the card. Measure the nav's footprint from the RIGHT edge
+      // (button width + its right offset) and expose it as --corner-nav-reserve; the landscape CSS
+      // reserves exactly that much right padding on the card row so no card can ever sit beneath the
+      // nav. MEASURED (not a hardcoded width) so it tracks the real button text at any size.
+      const nav = stage.querySelector('.homepage-corner-nav');
+      if (nav) {
+        const nr = nav.getBoundingClientRect();
+        const reserve = Math.max(0, Math.ceil(window.innerWidth - nr.left) + 12);
+        stage.style.setProperty('--corner-nav-reserve', `${reserve}px`);
+      }
       // SIZE THE CARDS FROM THE AVAILABLE HEIGHT (feat/cards-live) so ALL FIVE fit ONE SCREEN with
       // NO scrolling and NO "N MORE" affordance. The card region flex-fills the stage's leftover
       // height; we size the largest 3:4 card whose ROW(s) fit that height. Prefer 5-in-one-row; if
