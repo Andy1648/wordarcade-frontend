@@ -681,3 +681,46 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @media (prefers-reduced-motion: reduce) {
   .game-card--shake { animation: none; }
 }
+
+/* feat/moments — one-shot UNLOCK-IN-PLACE moment (finite ~900ms, transform/opacity only, NOT infinite).
+   The card pops and an "UNLOCKED!" plaque flashes over it the first time a level-gated mode unlocks. */
+@keyframes game-card-unlock-pop {
+  0% { transform: scale(1); }
+  22% { transform: scale(1.07); }
+  55% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+.game-card--unlocking {
+  animation: game-card-unlock-pop 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.game-card-unlock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 6;
+}
+@keyframes game-card-unlock-flash {
+  0% { transform: scale(1.6) rotate(-6deg); opacity: 0; }
+  18% { transform: scale(1) rotate(-6deg); opacity: 1; }
+  72% { transform: scale(1) rotate(-6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-6deg); opacity: 0; }
+}
+.game-card-unlock-flash {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(20px, 4.4vw, 34px);
+  color: #2effe0;
+  background: #0d0618;
+  border: 4px solid #000;
+  border-radius: 10px;
+  padding: 8px 18px;
+  box-shadow: 6px 6px 0 #000;
+  -webkit-text-stroke: 1px #000;
+  animation: game-card-unlock-flash 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-card--unlocking { animation: none; }
+  .game-card-unlock { display: none; }
+}

@@ -236,6 +236,7 @@ const prefersReducedMotion = () =>
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
 const LEVELUP_MS = 1500;
+const REBIRTH_MS = 1200; // feat/moments — the rebirth ceremony envelope (≤1200ms, skippable)
 const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
 const WINSHINT_MS = 3000; // one-time "WINS BUY UPGRADES IN THE SHOP" explainer — a full 3s read
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
@@ -305,6 +306,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const levelDetailRef = useRef(null);
   const winsStampRef = useRef(null);
   const winsHintRef = useRef(null);
+  // feat/moments — REBIRTH ceremony nodes (a sequenced moment, not a text stamp).
+  const rebirthRef = useRef(null);
+  const mxrLvRef = useRef(null);
+  const mxrMultRef = useRef(null);
+  const mxrMomRef = useRef(null);
+  const rebirthAnimRef = useRef(null);
+  const rebirthTimersRef = useRef([]);
+  const rebirthSkipRef = useRef(null);
   const popAnimsRef = useRef([]);
   const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
@@ -320,6 +329,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   const shardNextRef = useRef(0);
   const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
   const barBoxRef = useRef(null); // XP bar box (layer-local) — taps must not cover it
+
+  // feat/moments — tear down any in-flight rebirth-ceremony timers + the skip listener on unmount.
+  useEffect(() => () => {
+    for (const t of rebirthTimersRef.current) window.clearTimeout(t);
+    rebirthTimersRef.current = [];
+    if (rebirthSkipRef.current) {
+      window.removeEventListener('pointerdown', rebirthSkipRef.current);
+      window.removeEventListener('keydown', rebirthSkipRef.current);
+    }
+  }, []);
 
   // Cache the fx-layer's pixel size and the XP bar's box (layer-local), so per-keystroke
   // pop placement is a pure random pick with no layout reads. On mount + resize only —
@@ -411,6 +430,22 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       );
       a.cancel();
       levelupAnimRef.current = a;
+    }
+
+    // REBIRTH ceremony container — fade + gentle scale in, hold, fade out over REBIRTH_MS (≤1200ms).
+    // The inner beats (level winding to 0, the ×N stamp, MOMENTUM KEPT) are sequenced in JS on top.
+    if (rebirthRef.current) {
+      const a = rebirthRef.current.animate(
+        [
+          { transform: `${CENTER}scale(1.12)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}scale(1)`, opacity: 1, offset: 0.1 }, // 120ms in
+          { transform: `${CENTER}scale(1)`, opacity: 1, offset: 0.86 }, // hold
+          { transform: `${CENTER}scale(1)`, opacity: 0, offset: 1 }, // fade
+        ],
+        { duration: REBIRTH_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+      );
+      a.cancel();
+      rebirthAnimRef.current = a;
     }
 
     // Wins stamp — same pooled-element pattern as the level-up (finite, ≤700ms, one node).
@@ -561,25 +596,111 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
-      if (levelTitleRef.current) levelTitleRef.current.textContent = `LEVEL ${level}`;
+      // feat/moments: a LV2 and a LV50 must NOT feel identical. Scale the moment by a TIER derived
+      // from the level (0..4) plus a milestone flag at 10/25/50/100. The tier drives a static CSS
+      // emphasis (colour + a milestone ring) AND the size of a pooled center shard burst — both
+      // transform/opacity only, both reusing the existing pools (no new nodes, no infinite anims).
+      const lv = Math.max(1, level);
+      const milestone = lv === 10 || lv === 25 || lv === 50 || lv === 100 || (lv > 100 && lv % 50 === 0);
+      const tier = milestone ? 4 : lv >= 100 ? 4 : lv >= 50 ? 3 : lv >= 25 ? 2 : lv >= 10 ? 1 : 0;
+      if (levelupRef.current) {
+        levelupRef.current.dataset.tier = String(tier);
+        levelupRef.current.dataset.milestone = milestone ? '1' : '0';
+      }
+      if (levelTitleRef.current) levelTitleRef.current.textContent = milestone ? `LEVEL ${lv}!` : `LEVEL ${lv}`;
       if (levelSubRef.current) {
-        levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
+        levelSubRef.current.textContent = milestone
+          ? 'MILESTONE'
+          : LEVEL_PHRASES[(lv - 1) % LEVEL_PHRASES.length];
       }
       // Economy v3: level-ups no longer pay wins, so there is no "+N WINS" reward line here.
-      if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
+      if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${lv - 1} → LV ${lv}`;
       a.cancel();
       a.play();
+      // Tier-scaled center burst: 0 shards at tier 0 (a plain early level stays calm), climbing to a
+      // full pooled burst at a milestone. Fired from the layer centre, reusing spawnShards.
+      const bursts = [0, 1, 2, 3, 5][tier] || 0;
+      if (bursts && !prefersReducedMotion()) {
+        const { w, h } = layerSizeRef.current;
+        const cx = w / 2;
+        const cy = h * 0.46; // matches the level-up element's top:46%
+        const colour = ['#ffe94a', '#ffe94a', '#2effe0', '#ff6b3d', '#ff4fa3'][tier] || '#ffe94a';
+        for (let b = 0; b < bursts; b += 1) spawnShards(cx, cy, colour);
+      }
     },
-    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms).
-    rebirthCelebration(n) {
-      const a = levelupAnimRef.current;
-      if (!a) return;
+    // feat/moments — the REBIRTH CEREMONY. Not a text stamp: a sequenced ≤1200ms moment showing the
+    // reset made real — the level counter winds down to ZERO, the new permanent ×N multiplier STAMPS
+    // in, and a MOMENTUM KEPT line proves the momentum rail survives the reset. Skippable (a tap/key
+    // fast-forwards to the end state). transform/opacity only; reuses fixed nodes; no infinite anims.
+    // `fromLevel` = the level you rebirthed at (winds to 0); `mult` = the new permanent multiplier.
+    rebirthCelebration(n, fromLevel = 1, mult = null) {
+      const container = rebirthAnimRef.current;
+      const el = rebirthRef.current;
+      if (!container || !el) return;
       for (const p of popAnimsRef.current) p.cancel();
-      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
-      if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
-      if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
-      a.cancel();
-      a.play();
+      // clear any in-flight ceremony
+      for (const t of rebirthTimersRef.current) window.clearTimeout(t);
+      rebirthTimersRef.current = [];
+      if (rebirthSkipRef.current) { window.removeEventListener('pointerdown', rebirthSkipRef.current); window.removeEventListener('keydown', rebirthSkipRef.current); }
+
+      const reduce = prefersReducedMotion();
+      const start = Math.max(0, Math.floor(fromLevel));
+      const multTxt = mult != null ? `×${(+mult).toFixed(2).replace(/\.00$/, '')} FOREVER` : 'PERMANENT ×';
+      el.querySelector('.mxr-n').textContent = String(n);
+      const lvEl = mxrLvRef.current;
+      const multEl = mxrMultRef.current;
+      const momEl = mxrMomRef.current;
+
+      // reset visual state (opacity via class, not inline animation of forbidden props)
+      if (multEl) multEl.dataset.in = '0';
+      if (momEl) momEl.dataset.in = '0';
+      if (lvEl) lvEl.textContent = `LV ${start}`;
+
+      container.cancel();
+      container.play();
+
+      // Beat 1 — wind the level down to 0 over ~500ms (reduced motion: jump straight to LV 0).
+      const windMs = 520;
+      const settle = () => {
+        if (multEl) { multEl.textContent = multTxt; multEl.dataset.in = '1'; }
+        const t2 = window.setTimeout(() => { if (momEl) { momEl.textContent = 'MOMENTUM KEPT'; momEl.dataset.in = '1'; } }, 180);
+        rebirthTimersRef.current.push(t2);
+      };
+      if (reduce || start <= 1) {
+        if (lvEl) lvEl.textContent = 'LV 0';
+        settle();
+      } else {
+        const steps = Math.min(start, 24); // cap ticks so a LV120 rebirth still winds in ~500ms
+        const per = windMs / steps;
+        for (let s = 1; s <= steps; s += 1) {
+          const val = Math.round(start * (1 - s / steps));
+          const t = window.setTimeout(() => { if (lvEl) lvEl.textContent = `LV ${val}`; }, per * s);
+          rebirthTimersRef.current.push(t);
+        }
+        const tSettle = window.setTimeout(settle, windMs + 20);
+        rebirthTimersRef.current.push(tSettle);
+      }
+
+      // Skippable — a tap or any key fast-forwards to the end state (mult + momentum shown, then fade).
+      const skip = () => {
+        for (const t of rebirthTimersRef.current) window.clearTimeout(t);
+        rebirthTimersRef.current = [];
+        if (lvEl) lvEl.textContent = 'LV 0';
+        if (multEl) { multEl.textContent = multTxt; multEl.dataset.in = '1'; }
+        if (momEl) { momEl.textContent = 'MOMENTUM KEPT'; momEl.dataset.in = '1'; }
+        window.removeEventListener('pointerdown', skip);
+        window.removeEventListener('keydown', skip);
+        rebirthSkipRef.current = null;
+      };
+      rebirthSkipRef.current = skip;
+      window.addEventListener('pointerdown', skip, { once: true });
+      window.addEventListener('keydown', skip, { once: true });
+      const tEnd = window.setTimeout(() => {
+        window.removeEventListener('pointerdown', skip);
+        window.removeEventListener('keydown', skip);
+        rebirthSkipRef.current = null;
+      }, REBIRTH_MS);
+      rebirthTimersRef.current.push(tEnd);
     },
     // One finite "+N WINS" stamp (menu return after a paying round). Same pooled pattern.
     winsStamp(amount) {
@@ -641,6 +762,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       </div>
       <div className="menu-xp-winsstamp" ref={winsStampRef} />
       <div className="menu-xp-winshint" ref={winsHintRef} />
+      <div className="menu-xp-rebirth" ref={rebirthRef}>
+        <span className="mxr-title">REBIRTH <span className="mxr-n" /></span>
+        <span className="mxr-lv" ref={mxrLvRef} />
+        <span className="mxr-mult" ref={mxrMultRef} data-in="0" />
+        <span className="mxr-momentum" ref={mxrMomRef} data-in="0" />
+      </div>
     </div>
   );
 });

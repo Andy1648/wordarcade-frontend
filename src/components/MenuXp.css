@@ -327,6 +327,92 @@
   display: none; /* rebirth reuses this element with no LV→LV line */
 }
 
+/* feat/moments — LEVEL-UP TIER SCALING. A LV2 and a LV50 must not feel identical: the tier (set as a
+   data-attr in celebrate()) drives a hotter title colour and, at a milestone, a larger static title
+   scale. This is STATIC emphasis only (no animated font-size/box-shadow, no glow — flat rule); the
+   extra kinetic intensity is the pooled shard burst fired from JS, scaled by the same tier. */
+.menu-xp-levelup[data-tier='2'] .menu-xp-levelup-title { color: #2effe0; }
+.menu-xp-levelup[data-tier='3'] .menu-xp-levelup-title { color: #ff6b3d; }
+.menu-xp-levelup[data-tier='4'] .menu-xp-levelup-title {
+  color: #ff4fa3;
+  transform: scale(1.14);
+}
+.menu-xp-levelup[data-milestone='1'] .menu-xp-levelup-sub { color: #ffe94a; }
+
+/* feat/moments — REBIRTH CEREMONY. Container fade/scale is a WAAPI one-shot (JS); the ×N multiplier
+   and MOMENTUM-KEPT beats stamp in via transform/opacity TRANSITIONS toggled by a data-in attr (one-
+   shot, not infinite). No glow, no animated font-size/box-shadow. */
+.menu-xp-rebirth {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mxr-title {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(40px, 10vw, 92px);
+  line-height: 1;
+  color: #9a1aff;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.02em;
+}
+.mxr-n { color: #ffe94a; }
+.mxr-lv {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(20px, 5vw, 44px);
+  line-height: 1;
+  color: #f0ead9;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.mxr-mult {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(22px, 5.5vw, 50px);
+  line-height: 1;
+  color: #2effe0;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 180ms ease-out, transform 200ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.mxr-mult[data-in='1'] {
+  opacity: 1;
+  transform: scale(1);
+}
+.mxr-momentum {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: #ffe94a;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+.mxr-momentum[data-in='1'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+.mxr-momentum::before {
+  content: '✓ ';
+}
+/* Reduced motion: the beats appear instantly (no stamp/slide), the container fade is opacity-only. */
+@media (prefers-reduced-motion: reduce) {
+  .mxr-mult,
+  .mxr-momentum {
+    transition: none;
+  }
+}
+
 /* Wins chip — coin glyph + balance, inline with the LV label (no new vertical height). */
 .menu-wins-chip {
   position: relative; /* anchors the affordability dot (no layout height added) */

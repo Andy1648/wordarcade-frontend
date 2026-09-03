@@ -176,6 +176,32 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     shakeTimerRef.current = window.setTimeout(() => setShaking(false), 200);
   }
 
+  // feat/moments — UNLOCK-IN-PLACE. A card you've watched locked for 20 levels should unlock RIGHT
+  // HERE on the menu with a moment, not just quietly appear. When a level-gated card crosses its
+  // unlock level (locked true→false) for the FIRST time (gated once per mode in localStorage), fire a
+  // one-shot pop + an "UNLOCKED!" flash. Finite (~900ms), transform/opacity only, no infinite anim.
+  const [unlocking, setUnlocking] = useState(false);
+  const prevLockedRef = useRef(locked);
+  const unlockTimerRef = useRef(0);
+  useEffect(() => () => window.clearTimeout(unlockTimerRef.current), []);
+  useEffect(() => {
+    const was = prevLockedRef.current;
+    prevLockedRef.current = locked;
+    if (!(was === true && locked === false)) return; // only the locked → unlocked edge
+    const key = `taw.unlockSeen.${game.id}`;
+    try {
+      if (localStorage.getItem(key) === '1') return; // already celebrated this mode's unlock
+      localStorage.setItem(key, '1');
+    } catch { /* storage blocked — just skip the one-shot */ return; }
+    const reduce = typeof window !== 'undefined' && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return; // reduced motion: the card simply appears unlocked
+    setUnlocking(true);
+    window.clearTimeout(unlockTimerRef.current);
+    unlockTimerRef.current = window.setTimeout(() => setUnlocking(false), 900);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locked, game.id]);
+
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return undefined;
@@ -210,6 +236,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     // Level-gated: dimmed with a padlock; click only shakes.
     locked ? 'locked' : '',
     shaking ? 'game-card--shake' : '',
+    unlocking ? 'game-card--unlocking' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -366,6 +393,13 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
                 </span>
               </div>
             </div>
+          </div>
+        )}
+        {/* feat/moments — one-shot UNLOCK flash: shown for ~900ms the first time this mode unlocks
+            in place on the menu. Pure transform/opacity one-shot (see .game-card-unlock-flash). */}
+        {unlocking && (
+          <div className="game-card-unlock" aria-hidden="true">
+            <span className="game-card-unlock-flash">UNLOCKED!</span>
           </div>
         )}
       </div>

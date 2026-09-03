@@ -11,7 +11,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, rebirthMult } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { canAffordAny } from '../progress/shop';
 import { syncThemeUnlocks } from '../theme/themes';
@@ -402,7 +402,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   useEffect(() => {
     const rb = consumePendingRebirth();
     if (rb > 0 && xpFxRef.current) {
-      xpFxRef.current.rebirthCelebration(rb);
+      // feat/moments — feed the ceremony the level you rebirthed AT (winds to 0) and the new permanent
+      // multiplier that stamps in. `rb-1` is the threshold you crossed to earn this rebirth.
+      xpFxRef.current.rebirthCelebration(rb, rebirthThreshold(Math.max(0, rb - 1)), rebirthMult(rb));
     } else {
       const stamp = consumePendingWinsStamp();
       if (stamp > 0 && xpFxRef.current) {
