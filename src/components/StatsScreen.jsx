@@ -62,7 +62,7 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
       sub: rec.rarest ? `${rec.rarest.band} ${x(rec.rarest.mult)}` : '',
       req: 'ACCEPT A WORD',
     },
-    { label: 'LONGEST COMBO', locked: rec.longestCombo <= 0, value: fmt(rec.longestCombo), req: 'CHAIN 2 WORDS' },
+    { label: 'BEST STREAK', locked: rec.longestCombo <= 0, value: fmt(rec.longestCombo), req: 'CHAIN 2 WORDS' },
     { label: 'LONGEST STREAK', locked: rec.longestStreak <= 0, value: fmt(rec.longestStreak), req: 'PLAY 2 DAYS' },
     { label: 'CURRENT STREAK', locked: streakNow <= 0, value: fmt(streakNow), req: 'PLAY TODAY' },
     { label: 'DISTINCT WORDS', locked: rec.distinct <= 0, value: fmt(rec.distinct), req: 'ACCEPT A WORD' },
