@@ -171,3 +171,22 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 4 START (fix/audit-mediums): fix MEDIUM audit findings from audit-a11y.md /
   audit-copy.md / audit-mobile.md — dialog focus trap+move-in, Stats/Shop locked contrast, Lobby
   aria-prohibited-attr, rarity-axis naming (5 names→2), REBIRTH/PRESTIGE/REBORN/PHOENIX standardise.
+- 2026-09-03  JOB 4 DONE (fix/audit-mediums 2983a8e, pushed+verified). (1) ModeDialog.jsx: focus-in
+  on open + Tab-trap (tabIndex=-1 shell + wrap first↔last), Escape still closes [MED-1]. (2) contrast
+  [MED-2]: Stats .rec-cell--locked .rec-label/.rec-req #6f5f8e/#7a6a99→#8f7eb2 (~5.5:1 on #0d0618);
+  Shop .shop-card.is-locked opacity 0.5→0.72 + locked .shop-card-price #e6ddf5 / .shop-card-gap
+  #d8cfe8 (was rgba .6). No locked HUE changed. The 2 single-node clusters (WB dialog orange "40",
+  Join Room title) were out of the job's Stats+Shop scope — left for follow-up. (3) WaveText.jsx
+  [MED-3]: accessible name now a visually-hidden text node, not aria-label on a generic span (fixes
+  lobby title + room code). (4) rarity 5→2 names [A2]: keep RARITY (word tier) + WORD SENSE (upgrade);
+  CollectionScreen "BY TIER"→"BY RARITY", achievement DEEP CUT→OBSCURITY; COMMON/UNCOMMON/RARE/OBSCURE
+  kept as tier VALUES; upgrade "TIER n" (KEY POWER/WORD SENSE level) kept. (5) REBIRTH [A4]: PRESTIGE
+  n→REBIRTH n (unlockLadder), REBORN→REBIRTH, PHOENIX→REBIRTH ×5 (achievements); ETERNAL (secret,
+  not in job's list) left+flagged. All ids/keys unchanged. Gate: lint 0, unit 439/439, dialog e2e
+  15/15 (mode-dialog+dialog-quality+solo-mode-dialog). Report claude/audit-mediums-report.md.
+  ENV NOTE: `npx vitest run` is the WRONG unit cmd here — it globs 13 stale .claude/worktrees/agent-*
+  checkouts and reports 1049 phantom fails. Canonical is `npm run test` = node --test "src/**/*.test.js"
+  (worktree-safe). Stale worktrees are harmless to the real gate (node --test + playwright testDir=e2e).
+- 2026-09-03  JOB 5 START (feat/save-schema, DO NOT MERGE): versioned save schema per
+  claude/save-migration-plan.md — taw.save={v,data}, pure migrations, detect+migrate+atomic writeback,
+  keep reading legacy keys as v0, stop writing them, never delete legacy. Tests per spec.
