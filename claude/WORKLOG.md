@@ -230,3 +230,13 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   — events first_visit/splash_dismissed/mode_opened/round_started/round_completed/level_up/
   first_wins_earned/shop_opened/item_purchased/rebirth/streak_day/share_copied/locked_mode_clicked/
   secret_found; session props level/rebirth/streak; no PII/keystrokes. Write claude/analytics-plan.md.
+- 2026-09-03  JOB 14 DONE (feat/analytics 4ad9960, pushed+verified). Centralized lib/events.js catalog
+  + analytics.js dual-sink (PostHog+GA4 gtag) track/trackOnce/setSessionProps. 14 funnel events wired
+  (first_visit, splash_dismissed, mode_opened, round_started/completed[solo CHAIN/FUSE], level_up,
+  first_wins_earned, shop_opened, item_purchased, rebirth, streak_day, share_copied,
+  locked_mode_clicked, secret_found) + session props level/rebirth_count/streak. No PII/keystrokes,
+  all guarded+additive. SAT+multiplayer round events = documented follow-up (Tier-1 WS handlers).
+  build 0, lint 0, unit 439/439. claude/analytics-plan.md committed.
+- 2026-09-03  JOB 15 START (fix/error-boundaries): wrap menu + each game screen + each overlay in its
+  own boundary; a crash shows inline "THIS SCREEN BROKE — GO BACK" panel w/ working back action +
+  Sentry report, rest stays interactive. Test: force a throw in each boundary, assert rest works.
