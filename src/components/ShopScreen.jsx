@@ -549,6 +549,22 @@ function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' })
   };
   // Clear a pending hold if the button unmounts mid-press (no commit on a gone component).
   useEffect(() => () => { if (timerRef.current) window.clearTimeout(timerRef.current); }, []);
+  // KEYBOARD PARITY (fix/shop-keyboard): the button had pointer handlers only, so Enter/Space did
+  // nothing and the whole shop was un-buyable without a mouse. Enter/Space HELD for the same holdMs
+  // commits; releasing early cancels — NOT an instant-buy shortcut mouse users don't get. We ignore
+  // the auto-repeat keydowns a held key fires (e.repeat) so the hold starts once, and preventDefault
+  // stops Space from scrolling / the native click from racing the hold. keyup + blur cancel.
+  const isBuyKey = (e) => e.key === 'Enter' || e.key === ' ' || e.code === 'Space';
+  const onKeyDown = (e) => {
+    if (!isBuyKey(e)) return;
+    e.preventDefault();
+    if (!e.repeat) start();
+  };
+  const onKeyUp = (e) => {
+    if (!isBuyKey(e)) return;
+    e.preventDefault();
+    cancel();
+  };
   return (
     <button
       type="button"
@@ -557,7 +573,10 @@ function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' })
       onPointerUp={cancel}
       onPointerLeave={cancel}
       onPointerCancel={cancel}
-      aria-label={`Hold to buy for ${label}`}
+      onKeyDown={onKeyDown}
+      onKeyUp={onKeyUp}
+      onBlur={cancel}
+      aria-label={`Hold Enter or Space to buy for ${label}`}
     >
       <span className="shop-hold-fill" ref={fillRef} aria-hidden="true" />
       <span className="shop-hold-label">
