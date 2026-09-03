@@ -206,3 +206,17 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 6 START (feat/moments): progression moments — LEVEL UP scale-with-level, REBIRTH
   ceremony sequence (counter→0, new mult stamps, MOMENTUM survives), CHAIN/FUSE unlock-in-place moment.
   ≤1200ms, skippable, transform/opacity only, pooled, no new infinite anims.
+- 2026-09-03  JOB 6 DONE (feat/moments 158d228, pushed+verified). (1) MenuXp celebrate(level) now
+  derives tier 0-4 (+milestone 10/25/50/100) → hotter/bigger title (data-tier CSS) + tier-scaled pooled
+  shard burst (LV50≠LV2). (2) rebirthCelebration(n,fromLevel,mult) = sequenced ≤1200ms ceremony (level
+  winds to 0 → ×N FOREVER stamps → MOMENTUM KEPT), skippable via tap/key, reduced-motion→end-state;
+  Homepage feeds threshold+rebirthMult. (3) GameCard unlock-in-place: locked→unlocked edge fires a
+  one-shot pop + UNLOCKED! flash, gated once via taw.unlockSeen.<id>, reduced-motion skips. All
+  transform/opacity, 0 new infinite anims. Gate: build 0, lint 0, unit 439/439, e2e menu-xp+card-beat
+  8/8 (budget green), dialog untouched. Peak frames claude/moments/shots (via throwaway spec, removed).
+  Report claude/moments-report.md. Sent shots to user.
+- 2026-09-03  ===== PART 1 (JOBS 1-6) COMPLETE. Part 2 (jobs 7-12) NEVER PROVIDED in the prompt (only
+  parts 1,3,4 pasted) → skipping to PART 3 (jobs 13-18). =====
+- 2026-09-03  JOB 13 START (feat/ghost): ghost of your best run — record compact solo replays
+  (word,ts,accepted) in localStorage; race the ghost of your own best CHAIN/FUSE run on the same
+  timeline w/ pace shown. Report bytes/replay + cap kept.
