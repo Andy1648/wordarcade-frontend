@@ -157,7 +157,14 @@ async function integrity(page, rootSel, overlay, noScroll) {
       // letter-spacing on a Bungee button) renders fully and is NOT clipped.
       const hasText = Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim().length);
       const clipsText = /^(hidden|clip|auto|scroll)$/.test(cs.overflowX) || /^(hidden|clip|auto|scroll)$/.test(cs.overflow);
-      if (hasText && clipsText && el.scrollWidth > el.clientWidth + TOL) {
+      // sr-only / visually-hidden nodes (position:absolute, ~1px box, overflow:hidden, clip) hold the
+      // full accessible-name text in a 1px box ON PURPOSE — scrollWidth >> clientWidth is the technique,
+      // not clipped UI. WaveText (a11y MED-3) renders its accessible name exactly this way. A box that is
+      // <=1px in either axis cannot show readable text to a user, so it can never be "clipping" visible
+      // text; excluding it removes the false positive without weakening real clipped-text detection
+      // (genuinely clipped labels have client boxes tens-to-hundreds of px wide).
+      const srOnly = el.clientWidth <= 1 || el.clientHeight <= 1;
+      if (hasText && clipsText && !srOnly && el.scrollWidth > el.clientWidth + TOL) {
         clipTextN++;
         if (!clipText1) clipText1 = `${desc(el)} sw=${el.scrollWidth}>cw=${el.clientWidth} "${el.textContent.trim().slice(0, 24)}"`;
       }
