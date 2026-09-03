@@ -34,7 +34,7 @@ export const KIND_LABEL = { theme: 'THEME', frame: 'FRAME' };
 // tail. Defined by formula so it's infinite, monotonic, and never collides with a level id.
 export function rebirthUnlock(r) {
   const n = Math.max(1, Math.floor(r));
-  return { rebirth: n, id: `rebirth-${n}`, name: `PRESTIGE ${n}`, kind: 'frame' };
+  return { rebirth: n, id: `rebirth-${n}`, name: `REBIRTH ${n}`, kind: 'frame' };
 }
 
 // The ordered stream of ALL unlocks: the level ladder, then rebirth unlocks 1..∞. Bounded

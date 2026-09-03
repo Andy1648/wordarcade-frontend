@@ -194,7 +194,16 @@
   border-color: #2effe0;
 }
 .shop-card.is-locked {
-  opacity: 0.5; /* visible but dimmed — locked content stays visible */
+  opacity: 0.72; /* a11y MED-2: was 0.5, which dropped the price/gap text below 4.5:1. Still clearly
+                    dimmed (lock state also reads from the lock icon + unaffordable price). */
+}
+/* The price/gap were the failing nodes on locked cards — give them bright, in-palette (near-white
+   lavender/cream) values so they clear 4.5:1 even under the card's remaining dim. */
+.shop-card.is-locked .shop-card-price {
+  color: #e6ddf5;
+}
+.shop-card.is-locked .shop-card-gap {
+  color: #d8cfe8; /* solid (was rgba .6, which compounded with the card opacity) */
 }
 
 /* THEME cards: the palette preview is a flat 4-colour swatch strip (a real preview, not a text
