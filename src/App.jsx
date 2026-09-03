@@ -76,6 +76,7 @@ import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
+import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
 import { bankWordWins, awardWins } from './progress/wins';
 import { awardWordXp, cappedWordMult } from './progress/xp';
@@ -499,7 +500,9 @@ function App() {
   // home visit with nothing new grants nothing.
   useEffect(() => {
     if (view !== 'home') return;
-    checkAchievements();
+    const newly = checkAchievements();
+    // analytics: a hidden/secret achievement was just discovered (additive; never alters the grant).
+    try { if (Array.isArray(newly)) for (const a of newly) if (a && a.secret) evSecretFound(a.id); } catch { /* analytics only */ }
   }, [view]);
 
   // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)

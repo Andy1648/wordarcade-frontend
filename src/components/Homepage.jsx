@@ -13,6 +13,7 @@ import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
+import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny } from '../progress/shop';
 import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
@@ -381,6 +382,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     if (fresh.length || rebirthFresh) setFreeUnlocks(getFreeUnlocks());
   }, [xpProgress.level, rebirths]);
   const nextUnlockItem = nextUnlock(freeUnlocks, rebirths);
+
+  // feat/analytics — attach progression session properties (so every later event segments by stage)
+  // and fire streak_day at most once per active calendar day. Guarded; never blocks the menu.
+  useEffect(() => {
+    try {
+      const st = getStreak();
+      refreshSessionProps({ level: xpProgress.level, rebirths, streak: st.count });
+      if (st.count > 0 && st.lastDay) {
+        const dayKey = `taw.ev.streakDay.${st.lastDay}`;
+        if (typeof localStorage === 'undefined' || localStorage.getItem(dayKey) !== '1') {
+          try { if (typeof localStorage !== 'undefined') localStorage.setItem(dayKey, '1'); } catch { /* blocked */ }
+          evStreakDay(st.count);
+        }
+      }
+    } catch { /* analytics never blocks the menu */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const menuFrame = currentCosmetic(freeUnlocks, 'frame', rebirths) || '';
 
   const shopLinkRef = useRef(null);
@@ -413,6 +431,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         if (!hasSeenWinsHint()) {
           markWinsHintSeen();
           xpFxRef.current.winsHint();
+          evFirstWinsEarned(stamp); // analytics: the first-ever payout (once)
         } else {
           xpFxRef.current.winsStamp(stamp);
         }
@@ -465,6 +484,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     // CHAIN / FUSE are solo, but (unlocked) they now open the SAME mode dialog as
     // Word Bomb / Blitz — a solo variant with one PLAY button — so entering a mode
     // reads consistent across the menu. The PLAY button calls onChain/onFuse.
+    evModeOpened(game.id); // analytics: a mode dialog opened
     setDialog({ game, el });
   }
 
@@ -541,6 +561,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     const game = GAMES.find((g) => g.id === gameId);
     if (!game) return;
     sound.click();
+    evLockedModeClicked(gameId, game.unlockLevel); // analytics: interest in a still-locked mode
     setLockedPreview({ game });
   }
 

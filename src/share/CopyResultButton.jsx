@@ -10,6 +10,7 @@ import { modeShareLink } from './links';
 import { copyToClipboard } from './copyText';
 import { loadProgress } from '../progress/xp';
 import { track } from '../lib/analytics';
+import { shareCopied as evShareCopied } from '../lib/events.js';
 import './CopyResultButton.css';
 
 export default function CopyResultButton({
@@ -33,6 +34,7 @@ export default function CopyResultButton({
   async function onClick() {
     const ok = await copyToClipboard(text);
     try { track('result_copied', { mode, ok }); } catch { /* analytics only */ }
+    if (ok) evShareCopied(`result:${mode}`); // canonical funnel event
     setCopied(true);
     window.clearTimeout(timerRef.current);
     // Finite feedback flip — no infinite animation.

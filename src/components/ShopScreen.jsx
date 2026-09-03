@@ -21,6 +21,7 @@ import {
 } from '../theme/themes';
 import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum } from '../format';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
@@ -49,11 +50,13 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // latest onBack) so re-renders never re-steal focus.
   useEffect(() => {
     overlayRef.current?.focus();
+    if (view !== 'rebirth') evShopOpened(); // analytics: the SHOP opened (the rebirth view is its own act)
     const onKey = (e) => {
       if (e.key === 'Escape') onBackRef.current();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const level = loadProgress().level;
@@ -94,6 +97,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       // §2 reveal — cosmetics preview in the item's pop colour (a bought STYLE recolours
       // the pop; here we flash it so you SEE it).
       setReveal({ kind: 'cosmetic', banner: `${(item ? item.name : 'ITEM').toUpperCase()} UNLOCKED`, colour: '#ff4fa3', previewChar: 'A' });
+      evItemPurchased(item ? item.id : 'cosmetic');
       refresh();
     }
   };
@@ -103,6 +107,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       sndPurchase();
       const colour = nextTier >= 5 ? '#FFD54A' : '#2EFFE0';
       setReveal({ kind: 'keypower', banner: `KEY POWER ${toRoman(nextTier)} UNLOCKED`, colour, previewChar: 'A' });
+      evItemPurchased('key_power', nextTier);
       refresh();
     }
   };
@@ -110,6 +115,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     const nextTier = wsTier + 1;
     if (buyWordSense().ok) {
       setReveal({ kind: 'keypower', banner: `WORD SENSE ${toRoman(nextTier)} UNLOCKED`, colour: '#FFD54A', previewChar: 'A' });
+      evItemPurchased('word_sense', nextTier);
       refresh();
     }
   };
@@ -119,6 +125,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       sndPurchase();
       // The permanent mark lands on the menu rail (see MomentumRail); here we flash the running total.
       setReveal({ kind: 'keypower', banner: `MOMENTUM — ${r.count} MARKS · +${r.count}% WINS`, colour: '#FF6B3D', previewChar: '◆' });
+      evItemPurchased('momentum', r.count);
       refresh();
     }
   };
@@ -134,6 +141,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       sndPurchase();
       const t = themeById(id);
       setReveal({ kind: 'theme', banner: `${t.name} UNLOCKED`, colour: t.vars['--theme-ink'], previewChar: 'A' });
+      evItemPurchased(`theme:${id}`);
       setOwnedThemes(getOwnedThemes());
       setWins(getWins());
       setEquippedTheme(id); // apply the just-bought theme live
@@ -147,6 +155,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     const gained = nextMult;
     doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
     sndRebirth(); // Job 11: rebirth swell
+    { const n = getRebirths(); evRebirth(n); refreshSessionProps({ rebirths: n }); } // analytics
     setConfirming(false);
     // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.
     setReveal({ kind: 'rebirth', banner: `×${formatNum(gained)} MULTIPLIER`, colour: '#9A1AFF', previewChar: '↑', onClose: onBack });

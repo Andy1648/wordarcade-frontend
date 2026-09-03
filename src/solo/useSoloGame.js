@@ -12,6 +12,7 @@
 //   rejectCtx(engine)  → { letter, fragment } to fill a reject message
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
+import { roundStarted as evRoundStarted, roundCompleted as evRoundCompleted } from '../lib/events.js';
 import { tierForClockLeft } from '../share/resultCard.js';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo.js';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck.js';
@@ -56,6 +57,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     if (firstRunFiredRef.current) return undefined;
     firstRunFiredRef.current = true;
     onRunStartRef.current?.();
+    evRoundStarted(mode); // analytics: first solo round of this mount
     return undefined;
   }, []);
 
@@ -110,6 +112,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     sndRunOver(); // Job 11: gentle descending run-over fall
     const score = adapter.getScore(engineRef.current);
     setBest(setPB(pbKey, score));
+    evRoundCompleted(mode, { score, words: adapter.getWords(engineRef.current) }); // analytics
     // Enter-to-restart arms after a delay (longer on run 1 / very short runs) so an
     // Enter-masher can't skip the death card. The button is clickable immediately.
     setRestartArmed(false);
@@ -234,6 +237,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     setRemaining(turnBudgetRef.current);
     setPhase('playing');
     onRunStartRef.current?.(); // count this new run (covers both button and Enter)
+    evRoundStarted(mode); // analytics: a solo restart began a new round
   }, [createEngine, adapter]);
 
   // Enter restarts from the death card, but only once armed (guards the tutorial).
