@@ -11,6 +11,8 @@ import { installBackendMock, freezeAnimations } from './support/backendMock.js';
 const VIEWPORTS = [
   { w: 320, h: 568 }, { w: 360, h: 640 }, { w: 390, h: 844 }, { w: 430, h: 932 },
   { w: 768, h: 1024 }, { w: 1280, h: 720 }, { w: 1920, h: 1080 },
+  // LANDSCAPE phones (fix/landscape-nav) — the short-height orientation this gate did not test.
+  { w: 640, h: 360 }, { w: 844, h: 390 }, { w: 915, h: 412 },
 ];
 
 test.describe('fixed control vs primary text (menu)', () => {

@@ -687,6 +687,18 @@ html[data-beat='true'] .homepage-logo {
   .homepage-footer-links { margin-top: 0; }
 }
 
+/* LANDSCAPE corner-nav safe-gutter (fix/landscape-nav). In landscape the five cards pack into one
+   full-height row; the absolute top-right corner nav (a ~200px-tall stacked column) then overlaps
+   the row's right end, sliding the rightmost card (FUSE, LV25-gated) UNDER the nav so a tap opens
+   STATS instead of launching the mode. Reserve the nav's measured footprint (--corner-nav-reserve,
+   set in Homepage.jsx) as right padding on the card row so no card is ever beneath the nav. Never
+   drops below the normal gutter, and falls back to a safe fixed reserve before the JS measures. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .homepage-cards-scroll {
+    padding-right: max(var(--corner-nav-reserve, 132px), clamp(18px, 1.8vw, 30px));
+  }
+}
+
 /* ---- Responsive ---- */
 
 /* The column count and card size are computed in Homepage.jsx from the available height at ALL
