@@ -220,3 +220,13 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-03  JOB 13 START (feat/ghost): ghost of your best run — record compact solo replays
   (word,ts,accepted) in localStorage; race the ghost of your own best CHAIN/FUSE run on the same
   timeline w/ pace shown. Report bytes/replay + cap kept.
+- 2026-09-03  JOB 13 DONE (feat/ghost da72e43, pushed+verified). src/solo/ghost.js: compact per-mode
+  self-ghost in localStorage — accepted-word timeline (word+ts@100ms), keep ONLY best run/mode, cap
+  MAX_EVENTS=400, guarded. CHAIN+FUSE: record each accept, finish(mode,score) on game-over, live
+  GHOST n HUD readout (green ahead/red behind) racing your best on the run metric; both clocks start
+  at first accept. Bytes: 301B (20-word CHAIN), 580B (40-word FUSE). Tests 6 green; build 0, lint 0,
+  unit 445/445, solo-dict e2e green. Report claude/ghost-report.md. HUD shot claude/ghost/shots.
+- 2026-09-03  JOB 14 START (feat/analytics): instrument progression funnel via installed PostHog/GA4
+  — events first_visit/splash_dismissed/mode_opened/round_started/round_completed/level_up/
+  first_wins_earned/shop_opened/item_purchased/rebirth/streak_day/share_copied/locked_mode_clicked/
+  secret_found; session props level/rebirth/streak; no PII/keystrokes. Write claude/analytics-plan.md.
