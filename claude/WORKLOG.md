@@ -486,3 +486,22 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   POLISH). Doing the TRACTABLE verifiable jobs next: 15 (mp-audit, reasoning over harness/flow), 19 (dict-
   quality, has the word lists), 23 (copy rewrite, has audit-copy.md), 24 (brief). Live-app-heavy jobs (13,
   14, 16, 17, 18, 21, 22) need infrastructure beyond this session — noted for a resumed/live session.
+- 2026-09-04  JOB 19 DONE (chore/dict-quality=072d71d, pushed, REPORT). Full ACCEPT=269,687
+  (recall 31,482 + accept.txt + ext). MISS RATE 0% on 98 common words (fair). Recall bands genuine + ~10%
+  proper-noun/abbrev residue; OBSCURE 238k = ~87% real-but-esoteric, ~8% foreign/slang, ~5% malformed
+  artifacts (petroglyphies/electorially). Verdict: fair; fix = cleanup broken inflections in accept-ext.
+- 2026-09-04  JOB 24 DONE (docs/brief=170482a, pushed, REPORT). claude/brief.md one-pager: game, 5 modes,
+  economy (XP vs Wins chains), locked rules, gate+branches, 4 traps, tiers, current state. Verified v source.
+- 2026-09-04  JOB 15 DONE (chore/mp-audit=14e1a71, pushed, REPORT). 2-player walk. SOLID: host reassign on
+  leave, turn advances on drop, 3 traps guarded. HIGH: can't rejoin live game; disconnect=instant silent
+  elimination. MED: rematch host-only; start-handoff runtime-only fragility; no late-join lobby-return.
+- 2026-09-04  JOBS 13/14/18 AUDIT-ONLY (not built): feat/ghost HAS ghost.js(108)+tests(103)+Chain/Fuse
+  wiring but STALE vs main (rebase before finishing the visible 2nd-lane ghost). feat/moments exists, stale
+  (touches achievements/unlockLadder/useXpCapture) - needs its commit read to enumerate the moments.
+  feat/sound is 0 commits ahead of main -> already folded into main or fully superseded.
+- 2026-09-04  LONG RUN PAUSED (context/room). DONE 14/24: 1-10 built+verified, 11 designed, 15/19/24 reports.
+  NOT done (need live app / 2-device / web / merged branches / large multi-file edits): 12 final-look
+  (moot until merge), 13 ghost-finish, 14 moments-finish, 16 lobby-life, 17 game-onboarding, 18 sound-finish,
+  20 sat-quality (needs authoritative web sources), 21 endgame (needs LV100 live load+shot), 22 perf (needs
+  live profiling), 23 copy-rewrite (30 strings, multi-file + test-risk). All committed work verified via
+  git ls-remote. RESUME from this line.
