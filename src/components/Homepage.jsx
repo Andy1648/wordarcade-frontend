@@ -8,6 +8,7 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
+import { useMenuSecrets } from '../secrets/useMenuSecrets';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
@@ -368,6 +369,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       setWinsAffordable(canAffordAny(w));
     },
   });
+  // MENU SECRETS (Job 9): five undocumented easter eggs on the menu. The hook owns its
+  // own keydown listener (never perturbs XP), grants the flat Wins, and hands back a
+  // transient stamp to flash. When one fires it may bank Wins, so refresh the balance.
+  const { stamp: secretStamp } = useMenuSecrets({ active: true });
+  useEffect(() => {
+    if (!secretStamp) return;
+    const w = getWins();
+    setWins((prev) => (prev !== w ? w : prev));
+    setWinsAffordable(canAffordAny(w));
+  }, [secretStamp]);
   // FREE UNLOCK LADDER (Job 3): grant every level-reached cosmetic (idempotent, its own
   // storage — separate from the shop), then hold the owned set so the "NEXT UNLOCK" line and
   // the applied FRAME stay in sync as XP climbs on the menu. (The ladder's THEME cosmetics were
@@ -576,6 +587,17 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
+        {/* MENU SECRET stamp (Job 9): a one-shot, pointer-events:none reveal. Not
+            hinted anywhere; only appears the instant a secret is discovered. */}
+        {secretStamp && (
+          <div className="secret-stamp" role="status" aria-live="polite">
+            <div className="secret-stamp-inner">
+              <span className="secret-stamp-label">SECRET</span>
+              <b className="secret-stamp-name">{secretStamp.stamp}</b>
+              <span className="secret-stamp-wins">+{secretStamp.wins} WINS</span>
+            </div>
+          </div>
+        )}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
