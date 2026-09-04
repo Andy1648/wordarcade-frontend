@@ -63,6 +63,59 @@
   font-size: 0.9em;
   line-height: 1;
 }
+
+/* DAILY STREAK — the real menu treatment (Job 10). A flat banner in the XP cluster
+   (no orphan fixed UI) whose weight ESCALATES by milestone tier via data-tier, so a
+   30-day streak reads nothing like a 2-day one. Static at rest (menu motion law). */
+.menu-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Bungee', cursive;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 3px solid #000;
+  color: #0d0618;
+  background: #ff9a3d; /* tier-2 base ember */
+  box-shadow: 2px 2px 0 #000;
+}
+.menu-streak-flame { font-size: 1.05em; }
+.menu-streak-count { font-size: clamp(14px, 2.8vw, 22px); }
+.menu-streak-day {
+  font-size: 9px;
+  letter-spacing: 1px;
+  opacity: 0.75;
+  align-self: center;
+}
+.menu-streak-mult {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: #0d0618;
+  color: #ffe94a;
+}
+.menu-streak-freeze {
+  font-size: 12px;
+  color: #2effe0;
+  background: #0d0618;
+  border-radius: 5px;
+  padding: 2px 5px;
+}
+/* milestone tiers — escalating fill + shadow weight */
+.menu-streak[data-tier='3']  { background: #ff6b3d; }
+.menu-streak[data-tier='7']  { background: #ff4fa3; color: #fff; box-shadow: 3px 3px 0 #000; }
+.menu-streak[data-tier='7'] .menu-streak-mult,
+.menu-streak[data-tier='7'] .menu-streak-freeze { color: #ffe94a; }
+.menu-streak[data-tier='14'] { background: #9a1aff; color: #fff; box-shadow: 4px 4px 0 #000; }
+.menu-streak[data-tier='14'] .menu-streak-freeze { color: #2effe0; }
+.menu-streak[data-tier='30'] {
+  background: #ffe94a;
+  color: #0d0618;
+  border-width: 4px;
+  box-shadow: 5px 5px 0 #000, 0 0 0 3px #ff4fa3;
+}
 /* Full bar: the LV label is its own chip sitting on the track's left cap (overlaps it via
    a negative margin; opaque dark fill so it reads over the track). Vertically centred by
    the bar's flex align-items:center. */
