@@ -453,3 +453,12 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   to lives/timeout bands).
 - 2026-09-04  JOB 9 START (feat/secrets): 5 discoverable menu secrets (typed word / rare pop / time-of-day
   / typing-streak / invented), each grants Wins + a one-line stamp, none hinted in UI; write claude/secrets.md.
+- 2026-09-04  JOB 9 DONE (feat/secrets=7c77f75, pushed, not merged). 5 undocumented menu secrets, pure
+  detector src/secrets/menuSecrets.js (+8 tests): 'newgrounds'->O.G.(+150), 1/750 golden pop->MIDAS(+100),
+  local 11:11->WISH(+111), 150-key streak->TYPEWRITER(+200), 5+ palindrome->BOTH WAYS(+250, invented). Each
+  one-time (found-set persisted), grants Wins, none hinted. Wired via useMenuSecrets (own keydown, no XP
+  perturbation) + Homepage one-shot stamp overlay (finite transform/opacity anim). claude/secrets.md lists
+  all 5. build 0, eslint 0, unit 447/447.
+- 2026-09-04  JOB 10 START (feat/streak-2): show streak on menu from 2 days (real treatment not a chip),
+  milestones at 3/7/14/30, VISIBLE freeze token; report measured multiplier per tier vs current stack;
+  confirm it can't compound into the capped WORD SENSE runaway.
