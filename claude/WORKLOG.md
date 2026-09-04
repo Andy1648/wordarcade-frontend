@@ -344,3 +344,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-04  JOB 7 START (fix/dict-artifacts): strip malformed-inflection artifacts from the
+  ACCEPTANCE-ONLY list per claude/dict-quality.md (~5% obscure-tail artifacts). Acceptance list =
+  words.accept-ext.txt (generation = words.recall.txt, untouched). Conservative filter, re-verify 0% miss.
+- 2026-09-04  JOB 7 DONE (fix/dict-artifacts): scripts/clean-accept-artifacts.mjs removed 2633 from
+  words.accept-ext.txt only — 2630 -nesses over-plurals (plural + its -ness singular both in the obscure
+  ext tail; keeps the singular; never touches recall/accept nouns so witnesses/businesses/kindnesses/
+  darknesses survive) + 3 audit-named broken inflections (petroglyphies, electorially, unperverts).
+  milages (attested variant) + submetacentrics (real cytogenetics term) deliberately kept; a general
+  -ies rule was rejected as unsafe (caught congeries/sanies/bloodies). merged accept 269687->267054
+  (>260k floor), ext 181872->179239. MISS RATE still 0% (147 everyday words all accepted incl. the
+  kept -ness singulars). Gate: lint 0 errors, node --test 464/464 pass.
