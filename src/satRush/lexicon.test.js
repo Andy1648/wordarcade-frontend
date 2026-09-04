@@ -15,6 +15,7 @@ import {
   masteredCount,
   isMastered,
   hasSeen,
+  mostMissed,
   INTERVALS,
 } from './lexicon.js';
 
@@ -261,4 +262,52 @@ test('the store is capped: evict drops highest-box-oldest first', () => {
   clear(s, 'keep0');
   assert.equal(Object.keys(s.records).length, 2000, 'capped back to the max');
   assert.ok(!s.records.victim, 'the mastered, oldest record was evicted first');
+});
+
+// ---- mostMissed: the persistent WORDS YOU KEEP MISSING study list ----
+test('mostMissed: empty state → empty list', () => {
+  assert.deepEqual(mostMissed(freshState()), []);
+});
+
+test('mostMissed: a word missed twice is sticky; a cold-cleared word is not', () => {
+  const s = freshState();
+  miss(s, 'ephemeral'); s.session += 1;
+  miss(s, 'ephemeral'); s.session += 1; // missed 2× → sticky
+  clear(s, 'table');                    // cleared cold, never missed → not sticky
+  const list = mostMissed(s);
+  assert.deepEqual(list.map((m) => m.w), ['ephemeral']);
+  assert.equal(list[0].missed, 2);
+});
+
+test('mostMissed: a single recent miss (needsReview) is sticky; a recovered word is not', () => {
+  const s = freshState();
+  miss(s, 'obfuscate');                 // 1 miss, last encounter a miss → sticky via needsReview
+  miss(s, 'sanguine'); s.session += 1;
+  clear(s, 'sanguine', { stage: 0 });   // missed once then cleared COLD → recovered → not sticky
+  const words = mostMissed(s).map((m) => m.w);
+  assert.ok(words.includes('obfuscate'));
+  assert.ok(!words.includes('sanguine'));
+});
+
+test('mostMissed: mastered words are never listed', () => {
+  const s = freshState();
+  miss(s, 'laconic'); s.session += 1;
+  miss(s, 'laconic'); s.session += 1;   // 2 misses → would be sticky…
+  clear(s, 'laconic', { stage: 0 }); s.session += 1;
+  clear(s, 'laconic', { stage: 0 }); s.session += 1;
+  clear(s, 'laconic', { stage: 0 });    // …but 3 clears → box 3 = mastered → excluded
+  assert.ok(isMastered(s, 'laconic'));
+  assert.deepEqual(mostMissed(s), []);
+});
+
+test('mostMissed: ranked by miss count, then rate; honours the limit', () => {
+  const s = freshState();
+  // A: missed 3× over 3 seen (rate 1.0). B: missed 2× over 2 seen. C: missed 2× over 4 seen (rate .5)
+  for (let i = 0; i < 3; i++) { miss(s, 'aaa'); s.session += 1; }
+  for (let i = 0; i < 2; i++) { miss(s, 'bbb'); s.session += 1; }
+  miss(s, 'ccc'); s.session += 1; miss(s, 'ccc'); s.session += 1;
+  clear(s, 'ccc'); s.session += 1; clear(s, 'ccc');
+  const ranked = mostMissed(s).map((m) => m.w);
+  assert.deepEqual(ranked, ['aaa', 'bbb', 'ccc']); // 3 misses > 2; among 2s, rate 1.0 > 0.5
+  assert.equal(mostMissed(s, 2).length, 2);        // limit slices
 });

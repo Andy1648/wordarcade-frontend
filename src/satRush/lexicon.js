@@ -241,6 +241,28 @@ export function masteredCount(state) {
   return n;
 }
 
+/**
+ * WORDS YOU KEEP MISSING — the persistent "study these" list for the results
+ * screen and Stats. A word qualifies when it has escaped at least twice OR its
+ * most recent encounter was a miss/give-away (needsReview) while it has been
+ * missed before — i.e. it is genuinely sticky, not a one-off fumble. Ranked by
+ * miss COUNT, then miss RATE (missed / seen), then alphabetically so the order is
+ * deterministic. Mastered words are never listed (the player has since learned
+ * them). Returns [{ w, missed, seen, cleared, rate }], most-missed first.
+ */
+export function mostMissed(state, limit = 6) {
+  const out = [];
+  for (const w of Object.keys(state.records)) {
+    const rec = state.records[w];
+    if (rec.box >= MASTERY_BOX) continue; // learned since — not a problem word
+    const sticky = rec.missed >= 2 || (rec.missed >= 1 && needsReview(state, w));
+    if (!sticky) continue;
+    out.push({ w, missed: rec.missed, seen: rec.seen, cleared: rec.cleared, rate: rec.seen ? rec.missed / rec.seen : 0 });
+  }
+  out.sort((a, b) => b.missed - a.missed || b.rate - a.rate || (a.w < b.w ? -1 : 1));
+  return limit > 0 ? out.slice(0, limit) : out;
+}
+
 /** Is this specific word mastered? (Used to keep briefing families un-mastered.) */
 export function isMastered(state, word) {
   const rec = state.records[word];
