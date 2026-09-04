@@ -344,3 +344,5 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+
+- 2026-09-04  JOB 1 (feat/run-mode): built RUN as a real mode (runMode/{engine,config,useRunMode,RunMode}); engine ported+calibrated from proto/run-mode-2, reuses progress/{rarity,combo,luck}; menu card headline LV30-gated; wall/round/draft/over screens wired into App+Homepage. BE-PICKY composed (1 round). Shots claude/run-shots/. Running full gate.

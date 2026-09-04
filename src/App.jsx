@@ -26,6 +26,9 @@ const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
 // must never touch the menu's first paint.
 const ChainGame = lazy(() => import('./solo/ChainGame'));
 const FuseGame = lazy(() => import('./solo/FuseGame'));
+// THE RUN — the headline roguelike mode (10-round gauntlet). Lazy like the other
+// off-first-paint screens; its own chunk pulls the run engine + solo word data.
+const RunMode = lazy(() => import('./runMode/RunMode'));
 // CrazyGames zero-click direct entry (?cg=1). Lazy so the default (no-flag)
 // bundle is unchanged — the arm screen only ever loads on a cg session.
 const CgArmScreen = lazy(() => import('./components/CgArmScreen'));
@@ -46,6 +49,7 @@ import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
 import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW } from './satRush/config';
+import { RUN_VIEW, RUN_MODE_ENABLED } from './runMode/config';
 import {
   CHAIN_VIEW,
   FUSE_VIEW,
@@ -630,6 +634,7 @@ function App() {
     goToSatRush,
     goToChain,
     goToFuse,
+    goToRun,
   } = useOverlays({ view, setView, sound });
 
   // Room/lobby concern (refactor/app-split step 2). App keeps `room` (read by playerColors above),
@@ -2090,6 +2095,9 @@ function App() {
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
     screen = <FuseGame onExit={goHome} />;
+  } else if (view === RUN_VIEW && RUN_MODE_ENABLED) {
+    // THE RUN — solo, no room/WebSocket; routes home on exit like the other solo modes.
+    screen = <RunMode onExit={goHome} />;
   } else if (view === 'cg-arm') {
     // CrazyGames arm state: full play layout, timer frozen, start_game held until
     // the player engages. Only reachable on a ?cg=1 session.
@@ -2106,6 +2114,7 @@ function App() {
         onSatRush={goToSatRush}
         onChain={goToChain}
         onFuse={goToFuse}
+        onRun={goToRun}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
@@ -2247,7 +2256,7 @@ function App() {
               // gap, credited XP, and never reached the button. Removing the zoom property entirely
               // (rather than overriding it) leaves no zoom to misbehave: visual == hit-test on every
               // browser. GAME views keep the zoom via `.view-screen.app-scaled`.
-              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' ? '' : ' app-scaled'}`}
+              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === RUN_VIEW || view === SAT_RUSH_VIEW || view === 'game' ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). The fallback is DELAYED (null for ~450ms): chunks are

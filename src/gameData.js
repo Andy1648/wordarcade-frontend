@@ -8,6 +8,29 @@
 // hardcoded SVG inline.
 
 import { SAT_RUSH_ENABLED } from './satRush/config';
+import { RUN_MODE_ENABLED, RUN_UNLOCK_LEVEL } from './runMode/config';
+
+// RUN — the headline mode. A 10-round gauntlet: play CHAIN / FUSE / SAT rounds, draft a
+// stacking modifier between each, clear the escalating ante wall or the run ends. Sits
+// FIRST in the grid (top-left, first read) with the signature pink field so it reads as
+// the marquee, not a sixth option. Level-gated (LV30, from the economy curve) so it lands
+// as an earned reward. Routes straight in (solo, no room) like CHAIN/FUSE/SAT.
+const RUN_GAME = {
+  id: 'run',
+  artKey: 'RunArt',
+  name: 'THE\nRUN',
+  description: '10 ROUNDS. DRAFT. BEAT THE WALL.',
+  unlockLevel: RUN_UNLOCK_LEVEL,
+  baseColor: '#FF4FA3', // signature pink — the marquee
+  iconBg: '#2A0A1C',
+  badgeText: 'ROGUELIKE',
+  badgeBg: '#000',
+  badgeColor: '#FF4FA3',
+  textColor: '#fff',
+  descColor: '#2A0A1C',
+  enabled: true,
+  headline: true, // GameCard can give it the marquee treatment
+};
 
 const BASE_GAMES = [
   {
@@ -108,6 +131,7 @@ const FUSE_GAME = {
 // SAT RUSH (when enabled) keeps slot 3; CHAIN + FUSE are the new slots 4 and 5,
 // so the stagger/rotation rules keyed to those slots land on the new cards.
 export const GAMES = [
+  ...(RUN_MODE_ENABLED ? [RUN_GAME] : []),
   ...BASE_GAMES,
   ...(SAT_RUSH_ENABLED ? [SAT_RUSH_GAME] : []),
   CHAIN_GAME,

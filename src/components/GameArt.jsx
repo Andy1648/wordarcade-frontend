@@ -350,10 +350,47 @@ export function FuseArt() {
 }
 
 // Lookup map so GameCard can resolve `artKey` strings from gameData.js.
+// RUN — a rising 10-step climb (the escalating ante wall) to a flag at the summit,
+// on the signature pink field. Reads as "the gauntlet" / the headline ascent.
+export function RunArt() {
+  const steps = [0, 1, 2, 3, 4, 5, 6, 7];
+  return (
+    <svg {...SCENE_PROPS} className="card-art run-art">
+      <rect width="300" height="400" fill="#FF4FA3" />
+      <path d="M0 300 L300 250 L300 400 L0 400 Z" fill="#E23B8C" />
+      {/* the ascending wall of rounds, left→low to right→high */}
+      {steps.map((i) => {
+        const w = 34, gap = 2;
+        const x = 8 + i * (w + gap);
+        const h = 70 + i * 34;
+        const y = 360 - h;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={w} height={h} rx="6" fill={i >= 6 ? '#FFE94A' : '#2EFFE0'} stroke="#000" strokeWidth="5" />
+            <rect x={x + 6} y={y + 8} width={w - 12} height="8" rx="3" fill="#000" opacity="0.18" />
+          </g>
+        );
+      })}
+      {/* summit flag on the tallest step */}
+      <g transform="translate(268 44)">
+        <rect x="-3" y="0" width="6" height="70" rx="3" fill="#0d0618" />
+        <path d="M3 4 L44 16 L3 30 Z" fill="#9A1AFF" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
+      </g>
+      {/* the wall marker cutting across — "clear it or fall" */}
+      <path d="M0 150 L300 120" fill="none" stroke="#0d0618" strokeWidth="6" strokeDasharray="14 10" strokeLinecap="round" />
+      <g transform="rotate(-6 40 128)">
+        <rect x="8" y="112" width="86" height="34" rx="8" fill="#0d0618" stroke="#000" strokeWidth="4" />
+        <text x="51" y="136" fontSize="20" fill="#FFE94A" textAnchor="middle" fontFamily={BUNGEE}>WALL</text>
+      </g>
+    </svg>
+  );
+}
+
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
   CategoryBlitzArt,
   SatRushArt,
   ChainArt,
   FuseArt,
+  RunArt,
 };
