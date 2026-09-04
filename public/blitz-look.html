@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CATEGORY BLITZ — look prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ===== PROTOTYPE ONLY — not wired to the app =====
+   Three directions for the CATEGORY BLITZ mid-game screen. The AI JUDGE
+   (the mode's USP) is made visible + dramatic in each. Rules: flat neon,
+   thick BLACK outlines, hard offset black shadows, transform/opacity only,
+   NO infinite loops, authored SVG for the judge object. Palette = house. */
+:root{
+  --pink:#FF4FA3; --cyan:#2EFFE0; --yellow:#FFE94A; --orange:#FF6B3D;
+  --purple:#9A1AFF; --bg:#0d0618; --panel:#1a0b2e; --panel2:#241040; --green:#3BE07A; --red:#FF4A4A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:#fff;font-family:"Space Mono",ui-monospace,monospace;overflow:hidden}
+.frame{position:fixed;inset:0;display:none}.frame.on{display:block}
+.chooser{position:fixed;inset:0;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;background:var(--bg)}
+.chooser a{font-family:"Bungee",sans-serif;font-size:24px;color:#000;background:var(--yellow);border:4px solid #000;border-radius:10px;padding:16px 34px;box-shadow:7px 7px 0 #000;text-decoration:none}
+.chooser h1{font-family:"Bungee",sans-serif;color:var(--cyan);-webkit-text-stroke:5px #000;font-size:44px}
+.dirTag{position:fixed;bottom:6px;right:10px;font-family:"Bungee",sans-serif;font-size:11px;color:#6b5a86;z-index:99}
+.bng{font-family:"Bungee",sans-serif}
+
+/* ============================================================= */
+/* DIRECTION A — THE JUDGE'S BENCH (courtroom)                    */
+/* The AI is a JUDGE. Your answers rise to the bench for a verdict*/
+/* stamp. Category = the case. Clock = deliberation timer.        */
+/* ============================================================= */
+#A{background:radial-gradient(120% 90% at 50% 20%, #2a1150 0%, #170a2c 55%, #0b0416 100%)}
+#A .caseHead{position:absolute;top:0;left:0;right:0;height:96px;background:var(--panel);border-bottom:5px solid #000;box-shadow:0 6px 0 rgba(0,0,0,.5);display:flex;align-items:center;justify-content:space-between;padding:0 26px}
+#A .caseHead .case{display:flex;flex-direction:column;gap:2px}
+#A .caseHead .case .lbl{font:700 12px "Space Mono";color:#c9b8e6;letter-spacing:3px}
+#A .caseHead .case .cat{font-family:"Bungee",sans-serif;font-size:34px;color:var(--yellow);-webkit-text-stroke:1.5px #000}
+#A .clock{font-family:"Bungee",sans-serif;font-size:54px;color:#000;background:var(--cyan);border:5px solid #000;border-radius:12px;padding:4px 22px;box-shadow:6px 6px 0 #000}
+#A .clock.low{background:var(--orange)}
+/* the bench = a centred vertical stack: judge on top, answer on trial below */
+#A .bench{position:absolute;top:52%;left:calc(50% + 20px);transform:translate(-50%,-50%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+#A .judgeEmblem{filter:drop-shadow(7px 7px 0 rgba(0,0,0,.5))}
+#A .judgeName{font-family:"Bungee",sans-serif;font-size:15px;color:var(--cyan);letter-spacing:1px;margin-top:2px}
+/* the answer on trial with a corner verdict stamp (never over the word) */
+#A .onTrial{font-family:"Bungee",sans-serif;font-size:46px;color:#000;background:#fff;border:6px solid #000;border-radius:14px;padding:20px 40px 24px;box-shadow:9px 9px 0 #000;position:relative}
+#A .onTrial .trialLbl{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font:700 12px "Space Mono";color:#000;background:var(--yellow);border:3px solid #000;border-radius:6px;padding:2px 12px;box-shadow:3px 3px 0 #000;letter-spacing:2px;white-space:nowrap}
+#A .stamp{position:absolute;bottom:-20px;right:-26px;font-family:"Bungee",sans-serif;font-size:26px;color:#fff;background:var(--green);border:5px solid #000;border-radius:10px;padding:6px 16px;box-shadow:5px 5px 0 #000;transform:rotate(-8deg);-webkit-text-stroke:1.5px #000}
+/* the record of verdicts (your answer list) down the left */
+#A .record{position:absolute;left:26px;top:150px;bottom:26px;width:300px;display:flex;flex-direction:column;gap:9px}
+#A .record h3{font:700 12px "Space Mono";color:#c9b8e6;letter-spacing:2px}
+#A .vrow{display:flex;align-items:center;gap:10px;border:4px solid #000;border-radius:9px;padding:9px 12px;box-shadow:4px 4px 0 #000;background:var(--panel2);font-family:"Bungee",sans-serif;font-size:17px}
+#A .vrow .mk{width:26px;height:26px;border:3px solid #000;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#000}
+#A .vrow.ok .mk{background:var(--green)} #A .vrow.no .mk{background:var(--red)}
+#A .vrow.no{opacity:.72;text-decoration:line-through}
+#A .vrow.pend{background:transparent;border-style:dashed;color:#c9b8e6}
+#A .vrow.pend .mk{background:var(--yellow)}
+/* opponents down the right */
+#A .gallery{position:absolute;right:26px;top:150px;width:260px;display:flex;flex-direction:column;gap:10px}
+#A .gallery h3{font:700 12px "Space Mono";color:#c9b8e6;letter-spacing:2px}
+#A .orow{display:flex;align-items:center;gap:10px;border:4px solid #000;border-radius:9px;padding:9px 12px;box-shadow:4px 4px 0 #000;background:var(--panel2)}
+#A .orow .nm{font-family:"Bungee",sans-serif;font-size:16px}
+#A .orow .ct{margin-left:auto;font-family:"Bungee",sans-serif;font-size:20px;color:var(--cyan)}
+/* your input at the near edge */
+#A .type{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:min(560px,86vw)}
+#A .type .tag{position:absolute;top:-16px;left:20px;font:700 12px "Space Mono";color:#000;background:var(--yellow);border:3px solid #000;border-radius:6px;padding:2px 12px;box-shadow:3px 3px 0 #000;letter-spacing:1px}
+#A .type .field{background:#fff;border:5px solid #000;border-radius:12px;box-shadow:7px 7px 0 #000;padding:13px 18px;font-family:"Bungee",sans-serif;font-size:28px;color:#000;display:flex;align-items:center}
+#A .type .caret{width:5px;height:30px;background:var(--pink);margin-left:3px}
+
+/* ============================================================= */
+/* DIRECTION B — THE SCAN LINE (conveyor + AI scanner gate)       */
+/* Answers you type ride a belt into the AI SCANNER; it lights    */
+/* PASS (green) or FAIL (red) as each passes the gate.            */
+/* ============================================================= */
+#B{background:linear-gradient(180deg,#160a2c 0%,#0b0416 100%)}
+#B .top{position:absolute;top:0;left:0;right:0;height:78px;display:flex;align-items:center;gap:16px;padding:0 24px;background:#000;border-bottom:4px solid var(--cyan)}
+#B .ticket{font-family:"Bungee",sans-serif;font-size:15px;color:#000;background:var(--yellow);border:4px solid #000;border-radius:8px;padding:6px 16px;box-shadow:5px 5px 0 #000;transform:rotate(-1.5deg)}
+#B .ticket b{color:var(--pink);-webkit-text-stroke:1px #000}
+#B .top .cat{font-family:"Bungee",sans-serif;font-size:30px;color:var(--cyan);-webkit-text-stroke:1px #000}
+#B .top .clock{margin-left:auto;font-family:"Bungee",sans-serif;font-size:40px;color:#000;background:var(--orange);border:4px solid #000;border-radius:10px;padding:2px 16px;box-shadow:5px 5px 0 #000}
+/* the belt */
+#B .belt{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);height:150px;background:var(--panel2);border-top:6px solid #000;border-bottom:6px solid #000;box-shadow:inset 0 0 0 4px rgba(0,0,0,.25)}
+#B .belt .seg{position:absolute;top:0;bottom:0;width:38px;border-right:4px solid rgba(0,0,0,.4)}
+/* the scanner gate straddling the belt — the scanned word sits inside, lit by the beam */
+#B .gate{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:340px;height:280px;z-index:5}
+#B .gate .arch{position:absolute;inset:0;border:8px solid #000;border-radius:16px;background:#2a1050;box-shadow:9px 9px 0 rgba(0,0,0,.45)}
+#B .gate .bolt{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--yellow);border:3px solid #000}
+#B .gate .bolt.a{top:12px;left:12px}#B .gate .bolt.b{top:12px;right:12px}#B .gate .bolt.c{bottom:12px;left:12px}#B .gate .bolt.d{bottom:12px;right:12px}
+#B .gate .head{position:absolute;left:50%;top:-26px;transform:translateX(-50%);display:flex;align-items:center;gap:8px}
+#B .gate .verdict{font-family:"Bungee",sans-serif;font-size:26px;color:#000;background:var(--green);border:5px solid #000;border-radius:10px;padding:5px 20px;box-shadow:5px 5px 0 #000}
+/* the word being scanned, centred and readable, with a green beam sweeping it */
+#B .gate .scanWord{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:"Bungee",sans-serif;font-size:30px;color:#fff;-webkit-text-stroke:2px #000;white-space:nowrap}
+#B .gate .beam{position:absolute;left:20px;right:20px;top:62%;height:6px;background:var(--green);transform:translateY(-50%);box-shadow:0 0 0 3px #000}
+#B .gate .lens{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:8px}
+#B .gate .who{font-family:"Bungee",sans-serif;font-size:13px;color:var(--cyan);letter-spacing:1px;white-space:nowrap}
+/* answer crates on the belt */
+#B .crate{position:absolute;top:44%;transform:translateY(-50%);font-family:"Bungee",sans-serif;font-size:22px;color:#000;background:#fff;border:5px solid #000;border-radius:10px;padding:10px 16px;box-shadow:6px 6px 0 #000}
+#B .crate.ok{background:var(--green)} #B .crate.scan{background:var(--yellow)} #B .crate.no{background:var(--red);color:#fff}
+#B .crate .mk{margin-left:8px}
+/* tally of cleared answers, bottom-left */
+#B .tally{position:absolute;left:24px;bottom:96px;border:4px solid #000;border-radius:10px;background:var(--panel);box-shadow:6px 6px 0 #000;padding:12px 16px}
+#B .tally .n{font-family:"Bungee",sans-serif;font-size:44px;color:var(--green);-webkit-text-stroke:2px #000}
+#B .tally .l{font:700 11px "Space Mono";color:#c9b8e6;letter-spacing:2px}
+/* opponent lines, right */
+#B .lines{position:absolute;right:24px;bottom:96px;display:flex;flex-direction:column;gap:8px;width:230px}
+#B .lrow{display:flex;align-items:center;gap:8px;border:4px solid #000;border-radius:9px;padding:8px 11px;box-shadow:4px 4px 0 #000;background:var(--panel2)}
+#B .lrow .nm{font-family:"Bungee",sans-serif;font-size:15px}
+#B .lrow .ct{margin-left:auto;font-family:"Bungee",sans-serif;font-size:18px;color:var(--cyan)}
+/* input dock bottom-centre */
+#B .dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(560px,86vw)}
+#B .dock .field{background:#fff;border:5px solid #000;border-radius:12px;box-shadow:7px 7px 0 #000;padding:12px 18px;font-family:"Bungee",sans-serif;font-size:26px;color:#000;display:flex;align-items:center}
+#B .dock .caret{width:5px;height:28px;background:var(--pink);margin-left:3px}
+
+/* ============================================================= */
+/* DIRECTION C — RAPID-FIRE ARCADE (speed race + verdict flash)   */
+/* Huge hero clock, answers stack in a column with instant ✓/✗    */
+/* judge flashes, live opponent race rail, big VERDICT overlay.   */
+/* ============================================================= */
+#C{background:radial-gradient(90% 80% at 30% 30%, #2c1256 0%, #170a2c 55%, #0a0414 100%)}
+#C .catBar{position:absolute;top:22px;left:26px;right:26px;display:flex;align-items:center;gap:16px}
+#C .catBar .lbl{font:700 12px "Space Mono";color:#c9b8e6;letter-spacing:3px}
+#C .catBar .cat{font-family:"Bungee",sans-serif;font-size:40px;color:var(--yellow);-webkit-text-stroke:2px #000}
+/* hero clock, right — authored flat SVG arc (no gradient) */
+#C .heroClock{position:absolute;top:14px;right:26px;text-align:center;width:160px}
+#C .heroClock .ringWrap{position:relative;width:160px;height:160px;filter:drop-shadow(6px 6px 0 rgba(0,0,0,.5))}
+#C .heroClock .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Bungee",sans-serif;font-size:52px;color:#fff;-webkit-text-stroke:2px #000}
+#C .heroClock .l{font:700 11px "Space Mono";color:#c9b8e6;letter-spacing:2px;margin-top:2px}
+/* your answer stack, centre-left */
+#C .stack{position:absolute;left:26px;top:150px;bottom:110px;width:min(430px,44vw);display:flex;flex-direction:column-reverse;gap:9px;justify-content:flex-start}
+#C .arow{display:flex;align-items:center;gap:12px;border:5px solid #000;border-radius:11px;padding:11px 15px;box-shadow:5px 5px 0 #000;background:#fff;color:#000;font-family:"Bungee",sans-serif;font-size:22px}
+#C .arow .mk{width:30px;height:30px;border:3px solid #000;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#000;margin-left:auto}
+#C .arow.ok .mk{background:var(--green)} #C .arow.no .mk{background:var(--red);color:#fff}
+#C .arow.no{background:#e7d6f5;text-decoration:line-through;opacity:.8}
+/* the big judge VERDICT flash, centre-right */
+#C .verdict{position:absolute;right:8%;top:46%;transform:translate(0,-50%) rotate(-6deg);text-align:center}
+#C .verdict .judge{font:700 13px "Space Mono";color:var(--cyan);letter-spacing:2px;margin-bottom:6px}
+#C .verdict .word{font-family:"Bungee",sans-serif;font-size:34px;color:#fff;-webkit-text-stroke:2px #000;margin-bottom:8px}
+#C .verdict .flash{font-family:"Bungee",sans-serif;font-size:72px;color:#fff;background:var(--green);border:7px solid #000;border-radius:16px;padding:8px 30px;box-shadow:10px 10px 0 #000;-webkit-text-stroke:2.5px #000;display:inline-block}
+/* opponent race rail, bottom */
+#C .race{position:absolute;left:26px;right:26px;bottom:16px;display:flex;gap:12px}
+#C .rcard{flex:1;border:4px solid #000;border-radius:10px;padding:9px 12px;box-shadow:5px 5px 0 #000;background:var(--panel2)}
+#C .rcard.you{background:var(--yellow);color:#000}
+#C .rcard .nm{font-family:"Bungee",sans-serif;font-size:15px;display:flex;justify-content:space-between}
+#C .rcard .bar{height:12px;border:3px solid #000;border-radius:4px;background:#2a1745;margin-top:7px;overflow:hidden}
+#C .rcard .fill{height:100%;background:var(--cyan)}
+#C .rcard.you .fill{background:var(--orange)}
+/* input, above race rail */
+#C .type{position:absolute;left:26px;bottom:96px;width:min(430px,44vw)}
+#C .type .field{background:#fff;border:5px solid #000;border-radius:12px;box-shadow:6px 6px 0 #000;padding:11px 16px;font-family:"Bungee",sans-serif;font-size:24px;color:#000;display:flex;align-items:center}
+#C .type .caret{width:5px;height:26px;background:var(--pink);margin-left:3px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- authored AI-JUDGE emblem: a gavel crossed over a chip/circuit disc -->
+  <g id="judge">
+    <!-- sound block -->
+    <rect x="70" y="150" width="120" height="26" rx="7" fill="#9A1AFF" stroke="#000" stroke-width="7"/>
+    <!-- gavel handle -->
+    <rect x="120" y="40" width="20" height="96" rx="8" fill="#FFE94A" stroke="#000" stroke-width="7" transform="rotate(34 130 90)"/>
+    <!-- gavel head -->
+    <rect x="150" y="34" width="70" height="46" rx="10" fill="#FF6B3D" stroke="#000" stroke-width="7" transform="rotate(34 185 57)"/>
+    <!-- circuit disc behind (the AI) -->
+    <circle cx="86" cy="70" r="40" fill="#2EFFE0" stroke="#000" stroke-width="7"/>
+    <circle cx="86" cy="70" r="15" fill="#0d0618" stroke="#000" stroke-width="6"/>
+    <path d="M86 30 v-14 M86 110 v14 M46 70 h-14 M126 70 h14" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <!-- verdict spark burst -->
+  <g id="burst"><path d="M0 -30 L8 -8 L30 -6 L11 6 L16 30 L0 12 L-16 30 L-11 6 L-30 -6 L-8 -8 Z" fill="#FFE94A" stroke="#000" stroke-width="4" stroke-linejoin="round"/></g>
+</defs></svg>
+
+<div class="chooser" id="chooser">
+  <h1 class="bng">CATEGORY BLITZ — LOOK</h1>
+  <a href="?d=a">A · THE JUDGE'S BENCH</a>
+  <a href="?d=b">B · THE SCAN LINE</a>
+  <a href="?d=c">C · RAPID-FIRE ARCADE</a>
+</div>
+
+<!-- ============ A ============ -->
+<section class="frame" id="A">
+  <div class="caseHead">
+    <div class="case"><span class="lbl">THE CASE · NAME A</span><span class="cat">CRYPTID</span></div>
+    <div class="clock low">12</div>
+  </div>
+  <div class="record">
+    <h3>THE RECORD</h3>
+    <div class="vrow ok"><span class="mk">✓</span>MOTHMAN</div>
+    <div class="vrow ok"><span class="mk">✓</span>BIGFOOT</div>
+    <div class="vrow no"><span class="mk">✕</span>DRAGON</div>
+    <div class="vrow ok"><span class="mk">✓</span>NESSIE</div>
+    <div class="vrow pend"><span class="mk">…</span>CHUPACABRA</div>
+  </div>
+  <div class="bench">
+    <div class="judgeEmblem"><svg width="140" height="120" viewBox="20 10 210 180"><use href="#judge"/></svg></div>
+    <div class="judgeName">JUDGE A.I.</div>
+    <div class="onTrial"><span class="trialLbl">NOW JUDGING</span>CHUPACABRA<span class="stamp">✓ APPROVED</span></div>
+  </div>
+  <div class="gallery">
+    <h3>THE GALLERY</h3>
+    <div class="orow"><span class="nm">MOX</span><span class="ct">7</span></div>
+    <div class="orow"><span class="nm">NOVA</span><span class="ct">5</span></div>
+    <div class="orow"><span class="nm">KIRA</span><span class="ct">4</span></div>
+  </div>
+  <div class="type">
+    <span class="tag">YOU · ZED</span>
+    <div class="field">YETI<span class="caret"></span></div>
+  </div>
+  <div class="dirTag">A · BENCH</div>
+</section>
+
+<!-- ============ B ============ -->
+<section class="frame" id="B">
+  <div class="top">
+    <span class="ticket">ORDER · NAME A <b>CRYPTID</b></span>
+    <span class="cat">CRYPTIDS</span>
+    <span class="clock">12</span>
+  </div>
+  <div class="belt">
+    <div class="seg" style="left:6%"></div><div class="seg" style="left:14%"></div><div class="seg" style="left:22%"></div>
+    <div class="seg" style="left:30%"></div><div class="seg" style="left:70%"></div><div class="seg" style="left:78%"></div>
+    <div class="seg" style="left:86%"></div><div class="seg" style="left:94%"></div>
+  </div>
+  <!-- crates riding in from the left toward the gate -->
+  <div class="crate ok" style="left:4%">MOTHMAN<span class="mk">✓</span></div>
+  <div class="crate ok" style="left:22%">NESSIE<span class="mk">✓</span></div>
+  <!-- the scanner gate — CHUPACABRA is inside, under the beam, being judged -->
+  <div class="gate">
+    <div class="arch"></div>
+    <i class="bolt a"></i><i class="bolt b"></i><i class="bolt c"></i><i class="bolt d"></i>
+    <div class="head"><div class="verdict">PASS</div></div>
+    <div class="scanWord">CHUPACABRA</div>
+    <div class="beam"></div>
+    <div class="lens"><svg width="26" height="26" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="#2EFFE0" stroke="#000" stroke-width="5"/><circle cx="20" cy="20" r="5" fill="#0d0618" stroke="#000" stroke-width="3"/></svg><span class="who">AI SCANNER</span></div>
+  </div>
+  <!-- already-scanned, exiting right -->
+  <div class="crate ok" style="left:70%">BIGFOOT<span class="mk">✓</span></div>
+  <div class="crate no" style="left:88%">DRAGON<span class="mk">✕</span></div>
+  <div class="tally"><div class="n">6</div><div class="l">CLEARED</div></div>
+  <div class="lines">
+    <div class="lrow"><span class="nm">MOX</span><span class="ct">7</span></div>
+    <div class="lrow"><span class="nm">NOVA</span><span class="ct">5</span></div>
+    <div class="lrow"><span class="nm">KIRA</span><span class="ct">4</span></div>
+  </div>
+  <div class="dock"><div class="field">YETI<span class="caret"></span></div></div>
+  <div class="dirTag">B · SCAN LINE</div>
+</section>
+
+<!-- ============ C ============ -->
+<section class="frame" id="C">
+  <div class="catBar"><span class="lbl">NAME A</span><span class="cat">CRYPTID</span></div>
+  <div class="heroClock">
+    <div class="ringWrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="66" fill="#0d0618" stroke="#000" stroke-width="22"/>
+        <circle cx="80" cy="80" r="66" fill="none" stroke="#241040" stroke-width="14"/>
+        <circle cx="80" cy="80" r="66" fill="none" stroke="#FF6B3D" stroke-width="14" stroke-linecap="round"
+                stroke-dasharray="248.8 414.7" transform="rotate(-90 80 80)"/>
+      </svg>
+      <div class="num">12</div>
+    </div>
+    <div class="l">SECONDS</div>
+  </div>
+  <div class="stack">
+    <div class="arow ok">MOTHMAN<span class="mk">✓</span></div>
+    <div class="arow ok">BIGFOOT<span class="mk">✓</span></div>
+    <div class="arow no">DRAGON<span class="mk">✕</span></div>
+    <div class="arow ok">NESSIE<span class="mk">✓</span></div>
+  </div>
+  <div class="verdict">
+    <div class="judge">◆ AI JUDGE RULES ◆</div>
+    <div class="word">CHUPACABRA</div>
+    <div class="flash">✓ VALID</div>
+  </div>
+  <div class="type"><div class="field">YETI<span class="caret"></span></div></div>
+  <div class="race">
+    <div class="rcard you"><div class="nm"><span>YOU · ZED</span><span>6</span></div><div class="bar"><div class="fill" style="width:75%"></div></div></div>
+    <div class="rcard"><div class="nm"><span>MOX</span><span>7</span></div><div class="bar"><div class="fill" style="width:88%"></div></div></div>
+    <div class="rcard"><div class="nm"><span>NOVA</span><span>5</span></div><div class="bar"><div class="fill" style="width:62%"></div></div></div>
+    <div class="rcard"><div class="nm"><span>KIRA</span><span>4</span></div><div class="bar"><div class="fill" style="width:50%"></div></div></div>
+  </div>
+  <div class="dirTag">C · RAPID-FIRE</div>
+</section>
+
+<script>
+  const d = new URLSearchParams(location.search).get('d');
+  if (d){ document.getElementById('chooser').style.display='none'; const el=document.getElementById(d.toUpperCase()); if(el) el.classList.add('on'); }
+</script>
+</body>
+</html>
