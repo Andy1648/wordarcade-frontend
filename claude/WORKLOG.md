@@ -409,3 +409,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   done, etc.).
 - 2026-09-04  JOB 5 START (proto/run-mode, PROTOTYPE ONLY): Balatro-style run mode standalone page +
   15-20 stacking modifiers w/ real numbers + 10-round payout-curve sim; report whether it breaks.
+- 2026-09-04  JOB 5 DONE (proto/run-mode=3705b98, pushed, PROTOTYPE ONLY, deploys+renders). Balatro-style
+  run mode standalone page public/run-mode.html: pick mode -> play round -> draft 1 of 3 stacking
+  modifiers -> repeat 10 rounds, run multiplier + total visible and climbing. 18 modifiers with REAL
+  in-system numbers (reuses rarity x1->x4.5 x combo +0.1/word cap x3 x lucky 1/40 x5, per-word cap x40).
+  Verified full loop in-browser (mode select -> animated round -> draft). BE-PICKY: 1 build round, on-brand,
+  reads as "something". SIM (claude/run-mode/sim.mjs): 10-round payout curve = geometric ~x1.48/round,
+  34x Rd1->Rd10 -> IT BREAKS (Balatro runaway, by design). report.md recommends an escalating ante wall so
+  "break the engine" becomes "beat the wall". URL: /run-mode.html on the proto/run-mode branch preview.
+- 2026-09-04  JOB 6 START (feat/sat-srs): SM-2/Leitner for SAT Rush; selector prioritises due>weak>new;
+  "words you keep missing" list on results+Stats; report repeat-rate change vs current (tuned 13%) across
+  1000 sims; selection logic only, don't touch arcade feel.
