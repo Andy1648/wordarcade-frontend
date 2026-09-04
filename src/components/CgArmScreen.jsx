@@ -142,7 +142,7 @@ export default function CgArmScreen({ wsStatus, coarse, onArm }) {
             TAP TO START
           </button>
         ) : (
-          <div className="cg-arm-hint">first letter starts the round</div>
+          <div className="cg-arm-hint">FIRST LETTER FIRES IT OFF</div>
         )}
       </div>
     </div>

@@ -5,8 +5,8 @@ export const MODES = {
   bomb: {
     accent: '#FF6B3D', bg: ['#3a1206', '#160503'], anim: 'flame',
     chip: 'SOLO/MULTI', t1: 'WORD', t2: 'BOMB',
-    liner: 'Beat the bomb. Combo or choke.',
-    sub: 'Turn-based · 1–8 players · Type a word with the letters before it blows.',
+    liner: 'BEAT THE BOMB. COMBO OR CHOKE.',
+    sub: 'TURN-BASED · 1–8 PLAYERS · TYPE A WORD WITH THE LETTERS BEFORE IT BLOWS.',
     // Primary CTA reads PLAY, not CREATE: it opens a room you can play solo immediately (and
     // share the code to add friends). A newcomer shouldn't have to decode CREATE-vs-JOIN just to
     // start (audit #4). JOIN (with a code) stays as the secondary action in ModeDialog.
@@ -15,8 +15,8 @@ export const MODES = {
   blitz: {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
     chip: 'SOLO/MULTI', t1: 'CATEGORY', t2: 'BLITZ',
-    liner: 'AI judges you. Get creative.',
-    sub: 'Speed round · Name as many as you can before time runs out.',
+    liner: 'AI JUDGES YOU. GET CREATIVE.',
+    sub: 'SPEED ROUND · NAME AS MANY AS YOU CAN BEFORE TIME RUNS OUT.',
     // PLAY (not CREATE) — see the note on bomb above.
     create: 'PLAY',
   },
@@ -25,15 +25,15 @@ export const MODES = {
   chain: {
     accent: '#2EFFE0', bg: ['#052a2a', '#02100f'], anim: 'streaks', solo: true,
     chip: 'SOLO', name: 'CHAIN', t1: 'CHAIN', t2: '',
-    liner: 'Each word starts where the last one ended.',
-    sub: 'Solo · Keep the chain alive — every answer begins with the previous word\'s last letter.',
+    liner: "EACH WORD STARTS ON THE LAST ONE'S LETTER.",
+    sub: "SOLO · KEEP THE CHAIN ALIVE — EVERY WORD STARTS ON THE PREVIOUS WORD'S LAST LETTER.",
     create: 'PLAY',
   },
   fuse: {
     accent: '#FFE94A', bg: ['#3a2a06', '#160f03'], anim: 'flame', solo: true,
     chip: 'SOLO', name: 'FUSE', t1: 'FUSE', t2: '',
-    liner: 'Type a word that contains the piece.',
-    sub: 'Solo · Race the burning fuse — every word must contain the given fragment.',
+    liner: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
+    sub: 'SOLO · RACE THE BURNING FUSE — EVERY WORD MUST CONTAIN THE LETTERS.',
     create: 'PLAY',
   },
 };

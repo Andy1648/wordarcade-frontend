@@ -344,3 +344,11 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+
+- 2026-09-04  JOB 10 START (fix/copy-2, off main): rewrite the top-30 weakest strings from claude/copy-audit.md
+  in-voice (Newgrounds/FNF ALL-CAPS). Tone only, keys unchanged; skipping SCRAPS (triage verified
+  intentional) + the mode-rename/test-pinned-receipt items (product/owner calls).
+- 2026-09-04  JOB 10 DONE (fix/copy-2): rewrote 34 strings across 12 files (gameData, modeDialogConfig,
+  Chain/Fuse/fuseCards, GameScreen placeholders, StatsScreen, ConnectingContent, CgArmScreen, LobbyScreen,
+  CreditsScreen, friendlyError, share cardModel/shareText). Updated 2 e2e specs to new copy. Gate: lint 0
+  errors, unit 464/464, build exit 0, touched e2e 3/3. No game-logic meaning changes; deferred items flagged.

@@ -149,7 +149,7 @@ export function buildShareText({ mode, outcome = {}, data = {}, daily = null, li
         outcome.place
           ? `${medal ? `${medal} ` : ''}${ordinal(outcome.place)}${outcome.total ? ` OF ${outcome.total}` : ''}`
           : 'PLAYED',
-        score === 0 ? '0 PTS. rough one' : `${score} PTS`,
+        score === 0 ? '0 PTS. did you even try?' : `${score} PTS`,
         data.wpm ? `${data.wpm} WPM ⌨️` : null,
       ])
     );

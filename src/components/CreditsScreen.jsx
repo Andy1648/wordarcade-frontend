@@ -15,13 +15,13 @@ export default function CreditsScreen({ onBack }) {
         <div className="credits-title">CREDITS</div>
 
         <div className="credits-section">
-          <div className="credits-section-label">// CREATED BY //</div>
+          <div className="credits-section-label">MADE BY</div>
           <div className="credits-creator">NoBuffCookies</div>
           <div className="credits-creator-name">Andy Wang</div>
         </div>
 
         <div className="credits-section">
-          <div className="credits-section-label">// MUSIC //</div>
+          <div className="credits-section-label">MUSIC</div>
           <a
             className="credits-link"
             href="https://www.youtube.com/watch?v=ulfoU2MziOc"

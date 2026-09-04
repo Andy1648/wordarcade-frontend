@@ -3071,11 +3071,11 @@ export default function GameScreen({
               placeholder={
                 inputEnabled
                   ? isCategory
-                    ? `Name something in "${categoryRaw}"...`
-                    : `Type a word with "${combo}"...`
+                    ? `NAME SOMETHING IN "${categoryRaw}"…`
+                    : `TYPE A WORD WITH "${combo}"…`
                   : gameOver
                   ? 'GAME OVER'
-                  : 'WAIT YOUR TURN...'
+                  : 'WAIT YOUR TURN…'
               }
               maxLength={32}
               autoComplete="off"
@@ -4178,7 +4178,7 @@ function CategoryBlitzScreen({
               onKeyDown={handleKeyDown}
               disabled={showCountdown}
               aria-label="Type an answer for the category"
-              placeholder="Type an answer..."
+              placeholder="NAME ONE…"
               maxLength={32}
               autoComplete="off"
               spellCheck="false"

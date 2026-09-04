@@ -11,7 +11,7 @@ const RULES = [
   { match: /already started|in progress|underway/i, msg: 'TOO LATE — THAT GAME ALREADY KICKED OFF.' },
   { match: /name.*(taken|in use)|(taken|in use).*name|duplicate name/i, msg: 'SOMEONE GRABBED THAT NAME — PICK ANOTHER.' },
   { match: /rate|too many|slow down|cooldown/i, msg: 'WHOA, SLOW DOWN — GIVE IT A SEC AND RETRY.' },
-  { match: /not host|host only|permission|not allowed/i, msg: 'ONLY THE HOST CAN DO THAT.' },
+  { match: /not host|host only|permission|not allowed/i, msg: "HOST ONLY. YOU DON'T CALL THE SHOTS." },
   { match: /connection|disconnect|socket|timed out|timeout/i, msg: 'LOST THE SERVER — TRY AGAIN IN A MOMENT.' },
   { match: /name.*(long|short|invalid)|invalid name/i, msg: "THAT NAME WON'T FLY — TRY A DIFFERENT ONE." },
 ];
