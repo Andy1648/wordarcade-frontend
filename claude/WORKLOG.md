@@ -442,3 +442,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 8 START (feat/bot-feel): report current bot timing model (file:line), replace w/
   lognormal delay (median scales w/ difficulty) + thinking pauses + near-misses; sim 1000 games/difficulty;
   targets chill 75-85 / easy 55-65 / medium 40-50 / hard 20-30; iterate until all in band.
+- 2026-09-04  JOB 8 DONE (BACKEND feat/bot-feel=be0b43b, pushed, not merged — Tier-1). CURRENT MODEL:
+  wordBombBot.js BOT_DIFFICULTY uniform delaySec [min,max] + flat 'miss' (metronome, keyed to bot skill).
+  NEW: keyed to the 4 room difficulties; computeDelayMs = LOGNORMAL (median*exp(sigma*Z), clamped Box-
+  Muller) + thinking pauses (x1.6) + safety-margin clamp (=near-miss clutch); rollMiss uses per-difficulty
+  'choke'. TUNED via _botFeelSim.mjs (1000 games/difficulty, real clocks+lives, fixed lognormal human,
+  choke bisected): chill 80.1 / easy 60.2 / medium 45.0 / hard 25.1 — ALL IN BAND (75-85/55-65/40-50/
+  20-30). wordBombBot.test.js updated to lognormal invariants (11/11); full backend suite 331/331.
+  NOTE: categoryBlitzBot has the same uniform-timing shape (follow-up; its round-race win model doesn't map
+  to lives/timeout bands).
+- 2026-09-04  JOB 9 START (feat/secrets): 5 discoverable menu secrets (typed word / rare pop / time-of-day
+  / typing-streak / invented), each grants Wins + a one-line stamp, none hinted in UI; write claude/secrets.md.
