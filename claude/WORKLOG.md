@@ -380,3 +380,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   16/16 (incl turn_update RACE + already_used reject), vite build 0, eslint 0 err + warning parity (34=34).
 - 2026-09-04  JOB 3 START (fix/wb-310): find EVERY hooks-after-early-return (React #310) instance, fix,
   add react-hooks/rules-of-hooks as build-failing ERROR, verify turn_update renders clean via harness.
+- 2026-09-04  JOB 3 DONE (fix/wb-310=f1a4a94, pushed, not merged). FINDING: 0 remaining hooks-after-
+  early-return (#310) instances in the codebase — verified via eslint's own react-hooks/rules-of-hooks
+  over ALL src (the exact #310 detector). The WB turn_update #310 + the "3 pre-existing RoomScreen" were
+  already fixed in earlier sessions; nothing left to fix. ACTION: promoted rules-of-hooks 'warn'->'error'
+  GLOBALLY in eslint.config.js so the class is build-failing (CI runs eslint src, fails on errors).
+  Proved: a hook injected after an early return now yields a lint error (exit 1). VERIFIED turn_update
+  renders clean: harness word-bomb-scoring 8/8 (incl the turn_update RACE) + websocket-boundary; lint 0
+  errors (33 warns unchanged).
+- 2026-09-04  JOB 4 START (BACKEND repo chain-reaction-backend, branch data/accept-lists-5): ~33 broad
+  under-expanded Category Blitz categories, batches of ~20, real answers <=3 words, dedupe CI, no
+  inventions, skip finite ones; then a variant pass (misspellings/accent-stripped/alt names/short forms).
