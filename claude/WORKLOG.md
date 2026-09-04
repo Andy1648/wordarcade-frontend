@@ -358,3 +358,13 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 1 FIX: re-cut both prototypes off current main (e899545); each ships ONLY its
   public/*.html + a corrected vercel.json (\. -> \., regex intent /((?!.*\.).*) preserved, JSON valid).
   Pushed proto/wb-look=4850d76, proto/blitz-look=1cc9da4 (force-with-lease). Awaiting deploy verify.
+- 2026-09-04  JOB 1 DONE. Both prototypes DEPLOY (Ready) and RENDER, verified in-browser across all 3
+  directions each (BE-PICKY: 0 extra rounds — design was already iterated in the source session; only
+  the deploy blocker was broken). Cause was invalid vercel.json (illegal \. JSON escape), NOT empty-root
+  ancestry (that premise was false on current origin). Live preview URLs:
+    wb-look:    https://wordarcade-frontend-git-proto-wb-look-beenchilling.vercel.app/wb-look.html?d=a  (also ?d=b ?d=c)
+    blitz-look: https://wordarcade-frontend-git-proto-blitz-look-beenchilling.vercel.app/blitz-look.html?d=a  (also ?d=b ?d=c)
+  branches: proto/wb-look=4850d76, proto/blitz-look=1cc9da4 (each = main + its public/*.html + fixed vercel.json).
+  !! CARRY-OVER FLAG for Andy: main's OWN vercel.json is the same invalid file -> every main preview/prod
+     deploy is failing; typeaword.com is serving the last good build from before vercel.json was added.
+     One-char fix (\. -> \.). RAILS say don't touch main, so left for you — but this is worth doing next.
