@@ -116,6 +116,19 @@ When unsure which tier, pick the HIGHER one. A task that "looks like CSS" but ch
 
 If any step fails → that's the regression, fix before anything else ships.
 
+## GREEN TESTS DO NOT MEAN SHIPPED — verify the change is LIVE in production
+After any merge to main, verify the change is actually live in the production bundle — do
+NOT trust a green gate as proof it shipped. Fetch typeaword.com, extract the hashed asset
+names from the HTML (`index-*.js` + any lazy chunk it loads), and grep the bundle for a
+marker UNIQUE to the merge (a string literal survives minification — a localStorage key,
+UI copy, an analytics event name; a numeric const value works too. Variable/const NAMES do
+NOT — they're mangled). If the marker is missing, the deploy did not ship, whatever the
+tests say. The invalid vercel.json (a single unescaped `\.`) broke EVERY production deploy
+for three days while lint, 464 unit tests and 1090 e2e all passed green — Vercel rejects a
+bad config BEFORE building, so the failure is completely invisible to the test suite, and
+production silently served a stale bundle. A deploy failure is a class of regression no
+green suite can catch; the only proof of shipped is a marker grep against the live bundle.
+
 ## Known Bugs — DO NOT REINTRODUCE
 - App.jsx room_update handler MUST use a functional state update to guard the view:
   `setView(prev => prev === 'game' ? prev : 'room')`
