@@ -344,3 +344,9 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-04  JOB 14 DONE (chore/verdict-2, REPORT ONLY): second verdict now run mode exists. Answer:
+  the verdict STANDS with one word changed — the game no longer LACKS its compelling loop, it HIDES it.
+  Run mode is the right thing, built well, but shipped LV30-gated (322,620 XP) = the OPPOSITE of "lead
+  with it". A LV1 stranger's 5 minutes are ~unchanged (they see a LOCKED poster). It's not just surface
+  (a real Balatro-style meta) but functions as surface because new players can't reach it. The one
+  change that flips "is it good?" to yes: MOVE THE GATE to the front (LV3-5 or a LV1 taster). claude/verdict-2.md.
