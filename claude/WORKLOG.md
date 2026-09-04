@@ -368,3 +368,15 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   !! CARRY-OVER FLAG for Andy: main's OWN vercel.json is the same invalid file -> every main preview/prod
      deploy is failing; typeaword.com is serving the last good build from before vercel.json was added.
      One-char fix (\. -> \.). RAILS say don't touch main, so left for you — but this is worth doing next.
+- 2026-09-04  JOB 2 DONE (refactor/app-split-4=23a91de, pushed, NOT merged — Tier-1 needs 2-device test).
+  Extracted the 601-line WS drain useEffect from App.jsx into src/hooks/useGameSocket.js, BYTE-IDENTICAL.
+  Method: eslint no-undef as the closure oracle -> 91 free vars = 62 component-scope (passed via one deps
+  arg: setters+in-game refs+messages/consumeMessages+App-local drawLucky) + 27 drain-only module imports
+  (imported directly in hook) + 2 consts (RESOLVING_TYPES, KILL_FEED_LINES, moved). Spec's claim that the
+  drain closes over room/sound/EMPTY_STATS was WRONG — those appear only in comments/strings (verified).
+  App.jsx 2474->1823 (-651). Shipped Option 1 (effect-only; App still declares state) not Option 2 (hook
+  OWNS the 22 state+refs) — Option 1 is the byte-identical/tests-unmodified-safe form my own spec sequenced
+  first; Option 2 is the play-test-gated follow-up. VERIFIED: unit 439/439 UNMODIFIED, mock-WS harness
+  16/16 (incl turn_update RACE + already_used reject), vite build 0, eslint 0 err + warning parity (34=34).
+- 2026-09-04  JOB 3 START (fix/wb-310): find EVERY hooks-after-early-return (React #310) instance, fix,
+  add react-hooks/rules-of-hooks as build-failing ERROR, verify turn_update renders clean via harness.
