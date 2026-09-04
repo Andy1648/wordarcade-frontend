@@ -462,3 +462,14 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 10 START (feat/streak-2): show streak on menu from 2 days (real treatment not a chip),
   milestones at 3/7/14/30, VISIBLE freeze token; report measured multiplier per tier vs current stack;
   confirm it can't compound into the capped WORD SENSE runaway.
+- 2026-09-04  JOB 10 DONE (feat/streak-2=787b607, pushed, not merged). Real DAILY STREAK menu banner
+  (from 2 days, in the XP cluster, no orphan UI): day count + XP mult + FREEZE tokens (❄, shown before
+  needed); milestone tiers escalate styling via data-tier (ember/pink/purple/gold at 3/7/14/30). MEASURED:
+  2d x1.00, 3d x1.05, 7d x1.10, 14d x1.20, 30d+ x1.25 HARD CAP (+test). NON-COMPOUNDING PROOF: streakMult
+  folds ONLY into xpPerInput/xpPerWord (XP path; grep-confirmed absent from wins.js/wordSense.js); WORD
+  SENSE multiplies the WINS payout — separate chain, never one product; x1.25 cap bounds it regardless.
+  Follow-up: one-shot milestone-crossing moment (needs prev-count + menu-motion-law-safe anim). build 0,
+  eslint 0, unit 440/440. NOTE: streak banner shows only at >=2 days so not live-screenshotted this session.
+- 2026-09-04  JOB 11 START (feat/reconnect-2, BOTH repos, Tier-1, BRANCH ONLY): design+implement minimal
+  rejoin protocol (rejoin_room{code, playerToken}) so a mid-round drop returns to the SAME live game with
+  score/turn/lives intact; verify with harness. Do not merge either side.
