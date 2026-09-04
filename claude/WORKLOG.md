@@ -432,3 +432,13 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 7 START (feat/daily-seed): deterministic date->seed for same CHAIN opener / FUSE
   fragment seq / Blitz categories worldwide; 1 attempt/day/mode; shareable; local personal best; tests
   (same date=identical across machines, changes at local midnight, completed daily can't replay).
+- 2026-09-04  JOB 7 DONE (feat/daily-seed=a2b227a, pushed, not merged). Pure src/daily/dailySeed.js:
+  localDateKey (local Y/M/D, flips at local midnight) -> seedFor/dailyRng (xmur3->mulberry32, mode-salted)
+  -> deterministic CHAIN opener / FUSE fragment bag / Blitz cats worldwide (engines already take injected
+  rng). Per-mode 1-attempt/day + all-time PB (load/save/hasPlayedToday/recordDaily/personalBest). 9 tests
+  (same date=identical across clients; local-midnight flip; no-replay; PB max; storage round-trip) all pass.
+  build 0, eslint 0, unit 448/448. REMAINING: UI wiring (DAILY entry per mode passing dailyRng/dailyBlitz
+  into engines + hasPlayedToday guard + share) is Tier-1/2 live integration — documented, not wired.
+- 2026-09-04  JOB 8 START (feat/bot-feel): report current bot timing model (file:line), replace w/
+  lognormal delay (median scales w/ difficulty) + thinking pauses + near-misses; sim 1000 games/difficulty;
+  targets chill 75-85 / easy 55-65 / medium 40-50 / hard 20-30; iterate until all in band.
