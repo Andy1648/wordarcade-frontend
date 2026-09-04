@@ -344,3 +344,20 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+
+## ===== 14-JOB LONG RUN (2026-09-04, user-directed) =====
+Rails: never merge to main unless the job says so (only JOB 12 = backend); never deploy;
+verify each push with git ls-remote; BE-PICKY every visual job (screenshot/look/iterate, report rounds).
+- 2026-09-04  JOB 12 DONE (backend data/accept-lists-5): already merged to BE main 395700d earlier
+  (gate 331/331 then); /version returns 395700d -> Render redeploy confirmed live. No action needed.
+- 2026-09-04  JOB 1 START (feat/run-mode): promote proto/run-mode-2 to a real mode (menu card, 10-round
+  run, per-round CHAIN/FUSE/SAT with drafted modifiers, draft screen, visible ante wall, level-gated).
+- 2026-09-04  JOB 7 START (fix/dict-artifacts): filter malformed plurals/verb-forms from the ACCEPTANCE
+  list only; report count removed; re-verify 0% miss rate.
+- 2026-09-04  JOB 11 DONE (refactor/app-split-5, branch only, Tier-1): the drain CAN move. Cherry-picked
+  the app-split-4 extraction (WS drain -> src/hooks/useGameSocket.js) onto current main; App.jsx 2474 ->
+  1823 (-651), useGameSocket.js 691. Applied clean (no conflicts), lint 0 / unit 464 / vite build 0.
+  It "stayed at 2459" NOT because it can't move but because merging touches the freeze-prone Tier-1 WS
+  path (functional setView / live-view render / FIFO queue traps) and mandates a 2-device play-test.
+  Question CLOSED: mechanically extractable, proven twice; blocked only by the play-test gate. Full e2e
+  gate queued (port 4173 busy with JOB 1). NOT merged.
