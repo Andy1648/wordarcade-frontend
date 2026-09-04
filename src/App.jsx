@@ -568,14 +568,29 @@ function App() {
     }
   }, [inActiveSession, wsStatus, reconnect, room, reconnectGiveUp]);
 
-  // Socket came back while trying → attempt rejoin-by-code (existing join_room). rejoinPendingRef
-  // tells the drain to resolve the next room_update as success / the next error as failure.
+  // Socket came back while trying → rejoin. rejoinPendingRef tells the drain to resolve the next
+  // room_update as success / the next error as failure.
+  // feat/mp-grace: if we hold a seat token for this room, take the new rejoin_room door — it reclaims
+  // the HELD seat (score/lives/turn intact) even in a LIVE game, which plain join_room can't (it hits
+  // game_already_started). Falling back to join_room preserves the old rejoin-by-code path for a
+  // waiting/finished room, or when no token was stored (e.g. storage blocked).
   useEffect(() => {
     if (reconnect === 'trying' && wsStatus === 'open' && !rejoinSentRef.current) {
       rejoinSentRef.current = true;
-      if (reconnectRoomRef.current) {
+      const code = reconnectRoomRef.current;
+      if (code) {
+        let token = null;
+        try {
+          token = sessionStorage.getItem('wa_seat_' + code);
+        } catch {
+          /* storage blocked — fall back to rejoin-by-code below */
+        }
         rejoinPendingRef.current = true;
-        send('join_room', { code: reconnectRoomRef.current, name: playerName || resolvePlayerName() });
+        if (token) {
+          send('rejoin_room', { code, token });
+        } else {
+          send('join_room', { code, name: playerName || resolvePlayerName() });
+        }
         if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = setTimeout(reconnectGiveUp, 6000); // a rejected/absent room resolves fast
       } else {
@@ -944,6 +959,23 @@ function App() {
     // Public-room browser list refresh (response to list_public_rooms).
     if (lastMessage.type === 'public_rooms') {
       setPublicRooms(lastMessage.payload.rooms || []);
+    }
+
+    // feat/mp-grace: persist this seat's rejoin token. The server issues a
+    // persistent `you.token` on create/join (identity independent of the socket id);
+    // storing it keyed by room code in sessionStorage lets a reconnect reclaim THIS
+    // seat via rejoin_room within the grace window, even across a full page reload.
+    // sessionStorage (not local) so it dies with the tab and never leaks across rooms.
+    if (lastMessage.type === 'room_created' || lastMessage.type === 'room_joined') {
+      const code = lastMessage.payload?.code;
+      const token = lastMessage.payload?.you?.token;
+      if (code && token) {
+        try {
+          sessionStorage.setItem('wa_seat_' + code, token);
+        } catch {
+          /* storage blocked (private mode) — rejoin-by-token just won't be available */
+        }
+      }
     }
 
     if (lastMessage.type === 'room_update') {
