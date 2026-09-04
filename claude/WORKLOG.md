@@ -420,3 +420,15 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 6 START (feat/sat-srs): SM-2/Leitner for SAT Rush; selector prioritises due>weak>new;
   "words you keep missing" list on results+Stats; report repeat-rate change vs current (tuned 13%) across
   1000 sims; selection logic only, don't touch arcade feel.
+- 2026-09-04  JOB 6 DONE (feat/sat-srs=f43ce0f, pushed, not merged). FINDING: SAT Rush already ships a
+  full Leitner SRS (lexicon.js: box/seen/cleared/missed/lastSeen + dueWords/weakWords/needsReview/
+  masteredCount) and a due->weak(last-ante)->new selector (pickBriefing) — the SM-2/Leitner ask was
+  already built. ADDED (selection logic untouched): lexicon.mostMissed() = persistent WORDS YOU KEEP
+  MISSING list (+5 unit tests), surfaced on SAT results (results.keepMissing) + Stats section.
+  SIM (claude/sat-srs/repeat-rate.mjs, 1000 sessions x 20 players on the REAL selector): ~20% =
+  the 1-review-slot-per-briefing ceiling; documented 13% is the same cap under a lighter-miss model;
+  gap is player-model, not selector. Repeat rate UNCHANGED by design (no selection change).
+  Verify: build 0, eslint 0 err, unit 444/444 (439+5).
+- 2026-09-04  JOB 7 START (feat/daily-seed): deterministic date->seed for same CHAIN opener / FUSE
+  fragment seq / Blitz categories worldwide; 1 attempt/day/mode; shareable; local personal best; tests
+  (same date=identical across machines, changes at local midnight, completed daily can't replay).
