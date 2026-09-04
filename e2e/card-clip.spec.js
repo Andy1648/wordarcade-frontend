@@ -5,6 +5,7 @@
 // the card and the viewport clips it tighter than the stage, which clears every card.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { GAMES } from '../src/gameData.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -50,7 +51,7 @@ for (const { w, h } of VIEWPORTS) {
     await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
     await page.waitForTimeout(300);
     const cards = await perCardMargins(page);
-    expect(cards.length).toBe(5);
+    expect(cards.length).toBe(GAMES.length); // all mode cards present (grows as modes are added)
     for (const c of cards) {
       // eslint-disable-next-line no-console
       console.log(`[card-clip ${w}x${h}] ${c.name}: worst=${c.worst}px @${c.worstAnc}`);
