@@ -867,7 +867,13 @@ function buildView(state, cur, eng, input, extra) {
         }
       : null,
     // Results carry the mastered count (box ≥ 3) so the end screen can headline it
-    // as the number that makes the mode legibly a study tool.
-    results: { ...eng.results(), mastered: lexicon.masteredCount(extra.lex) },
+    // as the number that makes the mode legibly a study tool, and the persistent
+    // WORDS YOU KEEP MISSING list (top sticky misses) so the end screen can point
+    // the player straight at what to study next.
+    results: {
+      ...eng.results(),
+      mastered: lexicon.masteredCount(extra.lex),
+      keepMissing: lexicon.mostMissed(extra.lex, 6),
+    },
   };
 }

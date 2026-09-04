@@ -180,6 +180,22 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
           </div>
         )}
 
+        {/* WORDS YOU KEEP MISSING — the persistent study list (across runs), from
+            the lexicon SRS. Only shown once the player has genuinely-sticky misses. */}
+        {Array.isArray(results.keepMissing) && results.keepMissing.length > 0 && (
+          <div className={`sr-panel sr-keepmissing${revealed ? ' in' : ''}`}>
+            <span className="sr-panel-label">words you keep missing</span>
+            <ul className="sr-missing-list">
+              {results.keepMissing.map((m) => (
+                <li key={m.w} className="sr-missing-row">
+                  <b className="sr-missing-word">{m.w}</b>
+                  <span className="sr-missing-tally">missed {m.missed}×</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
           <div className="sr-share">
             <ShareBar

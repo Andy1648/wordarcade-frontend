@@ -22,6 +22,7 @@ import { rankTitle } from '../progress/rank';
 import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
+import * as satLexicon from '../satRush/lexicon';
 import { formatNum } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
@@ -199,6 +200,12 @@ export default function StatsScreen({ onBack }) {
   const records = readRecords();
   const highestLevel = Math.max(records.maxLevel, level);
   const recordCells = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
+  // SAT RUSH spaced-repetition: the persistent WORDS YOU KEEP MISSING list, read
+  // from the SAT lexicon store (lexicon.load is storage-access-safe on its own).
+  const satMissing = satLexicon.mostMissed(
+    satLexicon.load(typeof window !== 'undefined' ? window.localStorage : null),
+    8,
+  );
 
   return (
     <div className="stats-overlay" role="dialog" aria-modal="true" aria-label={activeLabel} tabIndex={-1} ref={overlayRef}>
@@ -301,6 +308,23 @@ export default function StatsScreen({ onBack }) {
               <dd>{fmt(avgWpm)}</dd>
             </div>
           </dl>
+
+          {/* WORDS YOU KEEP MISSING — SAT RUSH spaced-repetition study list, from the
+              lexicon SRS. Only rendered once the player has genuinely-sticky misses. */}
+          {satMissing.length > 0 && (
+            <>
+              <h3 className="stats-subtitle">WORDS YOU KEEP MISSING</h3>
+              <p className="stats-caption">SAT RUSH — THE WORDS THAT KEEP ESCAPING. STUDY THESE.</p>
+              <dl className="stats-list">
+                {satMissing.map((m) => (
+                  <div className="stats-row" key={m.w}>
+                    <dt>{m.w.toUpperCase()}</dt>
+                    <dd>missed {m.missed}× / {m.seen} seen</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          )}
 
           {/* BACKUP — copy your whole save as a code, or restore from one. Progress only (no device
               settings). The recovery path ships before any versioned-save migration. */}
