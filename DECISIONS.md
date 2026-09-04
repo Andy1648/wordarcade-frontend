@@ -205,3 +205,24 @@ Continuous autonomous. Rails: branch+push only, never merge/main/deploy; verify 
 - `(npm ci && npm run gate)` for JOB C FAILED: `npm ci` wipes node_modules first, hit `EPERM unlink esbuild.exe` (binary locked by concurrent build activity), leaving node_modules PARTIAL (vite deleted). Repaired via `taskkill esbuild.exe` + `npm install`.
 - DECISION: do NOT run `npm ci` while ANY subagent/build is active — it is destructive to the SHARED node_modules. node_modules is already correct from package-lock and I have not changed deps on the code branches, so the gate is run as `npm run gate` (lint+unit+e2e) on the existing install; a standalone `npm ci` only if deps change AND no other node process runs.
 - Worktree subagents that BUILD/TEST need their own `npm ci` first (a fresh worktree has no node_modules). JOB B's subagent thrashed without it and was killed — JOB B (rebalance) is INCOMPLETE, to redo.
+
+## data/sat-words — SAT Rush word expansion (JOB 3, autonomous 2026-08-26)
+- STARTING COUNT: 612 words in src/data/satRush/words.json (array of {word,pos,tier,gloss,context,
+  root,alts}; context blanks the word with "___"). No separate source list.
+- Generated in 3 batches by letter range (A-H, I-P, Q-Z), each real SAT-prep-list vocabulary
+  (Barron's/Kaplan/Princeton/Magoosh), student-readable gloss, one-blank context that infers the
+  meaning without leaking the word or repeating the gloss.
+- Batch A-H: 127 generated · Batch I-P: 120 · Batch Q-Z: 122 · TOTAL generated 369.
+- VALIDATED against the wordSchema.test contract + JOB 3 rules (dedupe case-insensitively vs the
+  612; exactly one blank; no 5+ char substring of the word in gloss OR context; gloss not repeated
+  verbatim in context). ADDED 344, REJECTED 25:
+    - 21 rejected because the word is already an `alt` of an EXISTING entry (adding it as a headword
+      would violate the schema's "alt is not a headword" rule — e.g. existing "conceal"→alt "obscure").
+      Conservatively excluded rather than editing curated existing entries.
+    - 4 rejected for a 5+ char word-leak in the gloss/context (credence, intricate, palatable,
+      quintessential — the clue contained a chunk of the answer).
+- RUNNING TOTAL: 612 → 956. Full unit suite (262 tests incl. wordSchema.test) green.
+- HONEST GAP: 956 vs the 1,200 target — ~244 short. The letter-range approach kept batches clean and
+  non-overlapping; a further batch would need to mine the thinner middle-difficulty band and the
+  many alt-collision words (which require deciding whether to demote an existing entry's alt). Left
+  for a follow-up rather than padding with weak/off-level words (quality bar over volume, as asked).
