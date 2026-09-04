@@ -391,3 +391,21 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 4 START (BACKEND repo chain-reaction-backend, branch data/accept-lists-5): ~33 broad
   under-expanded Category Blitz categories, batches of ~20, real answers <=3 words, dedupe CI, no
   inventions, skip finite ones; then a variant pass (misspellings/accent-stripped/alt names/short forms).
+- 2026-09-04  JOB 4 DONE (BACKEND data/accept-lists-5, pushed through c0491cc; NOT merged). Prior sessions
+  had done batches 1-2 (39 broad cats). This session:
+  * batch 3 (expand-broad-6): 19 broad under-40 cats -> all now >40 (social/streaming/music services,
+    apples, sushi, cake, donuts, literary devices, art mediums, tech brands, music awards, battle royale,
+    record labels, breakfast pastries, farm crops, HBO/streaming series, smart-home). 331/331.
+  * batch 4 (expand-broad-7): 10 more (frozen treats, condiments, fossils, TV medical/soap, video-game
+    movies, units, succulents/cacti, clouds, Apple products). Semi-bounded ones (soap operas 30, VG movies
+    38) capped at real answers — NOT padded. 331/331.
+  * variants-12: variant pass for 10 proper-noun cats that lacked one (DBZ/Naruto/One Piece alt
+    romanizations; founding fathers/Greek gods/Caribbean/Oceanian/ME country short forms; SA-country
+    misspellings; tempo abbrevs). EXISTING members only. 331/331.
+  Kept real 4-5-word proper-noun titles (repo norm: 9.4% of 46k entries are 4+ words; matches batches 4-5).
+  Skipped ~250 genuinely FINITE under-40 cats (Continents/Months/Zodiac/Noble gases/Chess pieces...).
+  REMAINDER for a later session: ~333 cats still lack a formal variant pass (mostly large open-ended w/
+  inline variants already — lower value); a few marginal broad cats (mythical birds/horses, apple products
+  done, etc.).
+- 2026-09-04  JOB 5 START (proto/run-mode, PROTOTYPE ONLY): Balatro-style run mode standalone page +
+  15-20 stacking modifiers w/ real numbers + 10-round payout-curve sim; report whether it breaks.
