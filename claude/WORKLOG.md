@@ -344,3 +344,17 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+
+## LONG RUN 2026-09-04 (24 jobs) — worklog on chore/longrun (not merged)
+- 2026-09-04  JOB 1 START (fix broken prototypes proto/wb-look + proto/blitz-look).
+- 2026-09-04  JOB 1 DIAGNOSIS: premise "cut from empty root / whole repo as new files" is FALSE for
+  current origin — 52adf2e adds only 4 files onto real main ancestor 364cb9b (29 commits stale), builds
+  vite exit 0 locally. REAL cause (read off Vercel dashboard, deploy 23yUhGq9, commit 52adf2e):
+  "Build Failed - Invalid vercel.json file provided". vercel.json (identical at main, 364cb9b, 52adf2e)
+  has rewrite source "/((?!.*\.).*)" — the \. is an illegal JSON escape (JSON.parse: Bad escaped
+  character pos 97). Vercel rejects the file BEFORE running vite, which is why local `vite build` passed.
+  NOTE: main's vercel.json is the SAME invalid file -> main previews/prod deploys are ALSO failing
+  (flag for Andy; RAILS = do not touch main).
+- 2026-09-04  JOB 1 FIX: re-cut both prototypes off current main (e899545); each ships ONLY its
+  public/*.html + a corrected vercel.json (\. -> \., regex intent /((?!.*\.).*) preserved, JSON valid).
+  Pushed proto/wb-look=4850d76, proto/blitz-look=1cc9da4 (force-with-lease). Awaiting deploy verify.
