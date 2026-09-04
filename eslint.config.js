@@ -44,11 +44,16 @@ export default [
       'react/jsx-uses-vars': 'error',
       'react/jsx-uses-react': 'error',
 
-      // Rules the EXISTING code already trips: kept ON as a signal but at `warn`
+      // rules-of-hooks is BUILD-FAILING everywhere. The hooks-after-early-return
+      // class (React #310) that white-screened Word Bomb on turn_update is fixed
+      // and the baseline is 0 violations (verified), so this rule can never be
+      // reintroduced without failing the build. Do NOT downgrade this to `warn`.
+      'react-hooks/rules-of-hooks': 'error',
+
+      // Rules the EXISTING code still trips: kept ON as a signal but at `warn`
       // so the baseline stays green (0 errors) and a genuine new-code error is
       // never buried. Not a license to write new violations — the src/satRush
       // override below restores them to `error` for the new mode's code.
-      'react-hooks/rules-of-hooks': 'warn', // 3 pre-existing (RoomScreen)
       'react-hooks/exhaustive-deps': 'warn',
       'no-irregular-whitespace': 'warn', // 2 pre-existing (Homepage, SplashScreen)
       'no-unused-vars': 'warn', // ~11 pre-existing across src
