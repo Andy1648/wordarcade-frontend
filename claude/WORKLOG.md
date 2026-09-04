@@ -344,3 +344,10 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-04  JOB 13 DONE (chore/return-2, REPORT ONLY, code-grounded): return bonus = min(hoursAway,12)
+  x100 x rebirthMult, >=6h, once/calendar-day, dismissable non-blocking card. KEY FINDING: the 12h CAP
+  makes 1d/3d/14d returns IDENTICAL (1,200 wins, "12+ HOURS AWAY") — acknowledges absence but never
+  scales to it. Not punishing (purely additive; streak resets are guilt-free, freezes survive). Only
+  sting: a sub-7-day streak has no freeze yet, so one missed day wipes a 4-day streak 4->1. Recs: tier
+  the welcome COPY by absence (grant can stay capped); grant first freeze at day 3 not 7. Screenshots =
+  residual confirm step. claude/return-2.md.
