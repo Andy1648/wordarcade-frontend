@@ -17,6 +17,7 @@
 // local clock only there.
 
 import { noteStreak } from './records.js';
+import { sndStreakExtended } from '../audio/gameSounds.js'; // guarded no-op when EVENTS sound is off / in Node
 
 export const STREAK_KEY = 'taw.streak';
 
@@ -130,8 +131,17 @@ export function recordStreakActivity(now) {
 // have its own copy of the day logic drift out of sync.
 export function touchStreak(now) {
   try {
+    const prev = getStreak();
     const next = recordStreakActivity(now);
     noteStreak(next.count); // permanent record: bump the all-time longest streak (guarded, no-op unless new max)
+    // feat/sound-2: chime exactly when the daily streak EXTENDS — the first accepted word of a new
+    // day that grows the count (a same-day repeat leaves it unchanged; a broken streak resets to 1,
+    // which is not > prev so it doesn't chime). This is the one place every accept path funnels
+    // through, so the "streak extended" event fires once and only once per real extension.
+    // sndStreakExtended is a guarded no-op when EVENTS sound is off (and Node-safe in tests).
+    if (next && next.count > ((prev && prev.count) || 0)) {
+      try { sndStreakExtended(); } catch { /* audio is best-effort; never disrupt the streak */ }
+    }
     return next;
   } catch {
     return null;
