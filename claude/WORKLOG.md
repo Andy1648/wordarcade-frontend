@@ -473,3 +473,16 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - 2026-09-04  JOB 11 START (feat/reconnect-2, BOTH repos, Tier-1, BRANCH ONLY): design+implement minimal
   rejoin protocol (rejoin_room{code, playerToken}) so a mid-round drop returns to the SAME live game with
   score/turn/lives intact; verify with harness. Do not merge either side.
+- 2026-09-04  JOB 11 DESIGNED (feat/reconnect-2=4adb26f, pushed; NOT implemented). claude/reconnect-2-
+  design.md: execution-ready minimal rejoin protocol. DIAGNOSIS: (1) joinRoom rejects game_already_started,
+  (2) seats keyed by connection.id (no token), (3) WB disconnect hard-eliminates (lives=0) at rmgr:~1075.
+  PROTOCOL: persistent playerToken @ create/join; disconnect->GRACE hold (keep lives ~30s) not eliminate;
+  new rejoin_room{code,token} reclaims seat (re-point conn, update id in roster+game.players, cancel grace)
+  + resync via existing buildTurnUpdatePayload; FE sends rejoin_room on socket reopen. Files+harness test
+  enumerated. DESIGN-ONLY: the core edits the freeze-prone live disconnect/elimination path whose rule
+  mandates a 2-device play-test I can't run; Tier-1 rails (verify-or-stop) take precedence over shipping.
+- 2026-09-04  REMAINING PLAN (budget/context limited): 12 (final look) is largely MOOT — tonight's work is
+  on unmerged branches, so the live app == main, already covered by the recent chore/sweep-final sweep (all
+  POLISH). Doing the TRACTABLE verifiable jobs next: 15 (mp-audit, reasoning over harness/flow), 19 (dict-
+  quality, has the word lists), 23 (copy rewrite, has audit-copy.md), 24 (brief). Live-app-heavy jobs (13,
+  14, 16, 17, 18, 21, 22) need infrastructure beyond this session — noted for a resumed/live session.
