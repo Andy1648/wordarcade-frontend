@@ -8,6 +8,23 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } f
 import './MenuXp.css';
 import { formatNum } from '../format';
 import { rankTitle } from '../progress/rank';
+import { streakMultiplier } from '../progress/streak';
+
+// The milestone tier a day-count belongs to (drives the escalating streak styling):
+// 30+ is the capped apex, then 14 / 7 / 3, and 2 is the "just started showing" tier.
+function streakTier(count) {
+  const c = Number(count) || 0;
+  if (c >= 30) return 30;
+  if (c >= 14) return 14;
+  if (c >= 7) return 7;
+  if (c >= 3) return 3;
+  return 2;
+}
+// "×1.05" style, trimming a trailing .0 so ×1 reads clean.
+function formatMult(m) {
+  const s = (Math.round(m * 100) / 100).toFixed(2).replace(/0$/, '').replace(/\.$/, '');
+  return `×${s}`;
+}
 
 // The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
 // a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
@@ -18,7 +35,7 @@ import { rankTitle } from '../progress/rank';
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0 }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0 }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -156,13 +173,27 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )
       )}
-      {/* Daily-streak chip — only once the streak is worth showing (>= 2 days). Flame emoji
-          as content (house allows emoji-as-content, cf. the ⚡ DAILY link), tiny + inline so
-          it adds no bar height. Announced to AT; the rest of the bar chrome stays decorative. */}
+      {/* DAILY STREAK — a real treatment from 2 days (Job 10), not a bare chip: a flame
+          banner carrying the day count, the XP multiplier it's worth, and any earned
+          FREEZE tokens (❄) shown BEFORE they're needed. The milestone tier (2/3/7/14/30)
+          escalates the styling via data-tier so 30 days looks nothing like 2. */}
       {variant !== 'mini' && Number(streak) >= 2 && (
-        <span className="menu-streak-chip" aria-label={`${streak} day streak`}>
+        <span
+          className="menu-streak"
+          data-tier={streakTier(streak)}
+          aria-label={`${streak} day streak, ${formatMult(streakMultiplier(streak))} XP${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
+        >
           <span className="menu-streak-flame" aria-hidden="true">🔥</span>
-          {formatNum(streak)}
+          <span className="menu-streak-count">{formatNum(streak)}</span>
+          <span className="menu-streak-day" aria-hidden="true">DAY{Number(streak) === 1 ? '' : 'S'}</span>
+          {streakMultiplier(streak) > 1 && (
+            <span className="menu-streak-mult" aria-hidden="true">{formatMult(streakMultiplier(streak))} XP</span>
+          )}
+          {freezes > 0 && (
+            <span className="menu-streak-freeze" aria-hidden="true" title={`${freezes} freeze token${freezes === 1 ? '' : 's'} — a missed day is forgiven`}>
+              ❄{freezes > 1 ? `×${freezes}` : ''}
+            </span>
+          )}
         </span>
       )}
       {/* Static "LEVEL" kicker so a newcomer reads the "LV n · into/cost" chrome as the

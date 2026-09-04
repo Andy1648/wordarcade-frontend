@@ -351,6 +351,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // streak drives the menu chip (shown only at >= 2 days).
   const [winsLifetime] = useState(() => getWinsLifetime());
   const [streak] = useState(() => getStreak().count);
+  // Freeze tokens (earned 1 per 7 days) shown on the menu BEFORE they're needed (Job 10).
+  const [streakFreezes] = useState(() => getStreak().freezes || 0);
   // MOMENTUM buys — snapshotted on mount (bought only in the shop, which remounts this screen on
   // return). Drives the MomentumRail trophy under the XP bar (each buy = one permanent mark).
   const [momentum] = useState(() => getMomentum());
@@ -678,6 +680,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onWinsClick={handleShop}
             onRankClick={() => setShowRanks(true)}
             streak={streak}
+            freezes={streakFreezes}
           />
           {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
               only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a

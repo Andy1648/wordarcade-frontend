@@ -102,3 +102,18 @@ test('localDayIndex is stable within a day and advances across local midnight', 
   assert.equal(localDayIndex(t), localDayIndex(t + 1));
   assert.equal(localDayIndex(t + 86400000) - localDayIndex(t), 1);
 });
+
+// ---- JOB 10: the streak reward ladder is BOUNDED and can't feed the WORD SENSE runaway ----
+test('streakMultiplier: the exact milestone tiers, hard-capped at x1.25', () => {
+  assert.equal(streakMultiplier(0), 1);
+  assert.equal(streakMultiplier(1), 1);
+  assert.equal(streakMultiplier(2), 1);      // shown on the menu from 2, but no bonus yet
+  assert.equal(streakMultiplier(3), 1.05);   // milestone
+  assert.equal(streakMultiplier(6), 1.05);
+  assert.equal(streakMultiplier(7), 1.1);    // milestone
+  assert.equal(streakMultiplier(13), 1.1);
+  assert.equal(streakMultiplier(14), 1.2);   // milestone
+  assert.equal(streakMultiplier(29), 1.2);
+  assert.equal(streakMultiplier(30), 1.25);  // milestone / cap
+  assert.equal(streakMultiplier(30000), 1.25, 'the cap holds no matter how long the streak');
+});
