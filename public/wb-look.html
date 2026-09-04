@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WORD BOMB — look prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============ PROTOTYPE ONLY — not wired to the app ============
+   Three directions for the WORD BOMB mid-game screen.
+   Rules honored: flat neon fills, thick BLACK outlines, hard offset
+   black box-shadows, transform/opacity motion only, NO new infinite
+   loops (every effect is a finite one-shot on load or hover), authored
+   SVG for the bomb. Palette = house tokens. */
+:root{
+  --pink:#FF4FA3; --cyan:#2EFFE0; --yellow:#FFE94A; --orange:#FF6B3D;
+  --purple:#9A1AFF; --bg:#0d0618; --panel:#1a0b2e; --ink:#000;
+  --panel2:#241040;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg); color:#fff;
+  font-family:"Space Mono",ui-monospace,monospace;
+  overflow:hidden;
+}
+.wm{font-family:"Bungee",Impact,system-ui,sans-serif;letter-spacing:.5px}
+.frame{position:fixed;inset:0;display:none}
+.frame.on{display:block}
+.chooser{position:fixed;inset:0;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;background:var(--bg)}
+.chooser a{font-family:"Bungee",sans-serif;font-size:26px;color:#000;background:var(--yellow);border:4px solid #000;border-radius:10px;padding:16px 34px;box-shadow:7px 7px 0 #000;text-decoration:none}
+.chooser h1{font-family:"Bungee",sans-serif;color:var(--pink);-webkit-text-stroke:5px #000;font-size:46px}
+.dirTag{position:fixed;bottom:6px;right:10px;font-family:"Bungee",sans-serif;font-size:11px;color:#6b5a86;z-index:99}
+
+/* ============================================================= */
+/* DIRECTION A — PASS-THE-BOMB TABLE                              */
+/* You ARE the input dock at your edge; the 3 opponents ring the  */
+/* far side of the table; the bomb sits in the middle; words you  */
+/* type fly up at it. Reads like sitting at a party table.        */
+/* ============================================================= */
+#A{background:radial-gradient(120% 80% at 50% 34%, #34155e 0%, #1a0930 52%, #0b0416 100%);}
+#A .fragBanner{position:absolute;top:24px;left:50%;transform:translateX(-50%) rotate(-1.2deg);font-family:"Bungee",sans-serif;font-size:34px;color:#000;background:var(--cyan);border:5px solid #000;border-radius:12px;padding:8px 30px;box-shadow:7px 7px 0 #000;white-space:nowrap}
+#A .fragBanner b{color:var(--pink);-webkit-text-stroke:2px #000;margin:0 4px}
+/* opponent seats across the far side */
+#A .opp{position:absolute;width:230px;transform:translate(-50%,0)}
+#A .opp .card{border:5px solid #000;border-radius:12px;padding:11px 14px;box-shadow:6px 6px 0 #000}
+#A .opp .who{font-family:"Bungee",sans-serif;font-size:19px;color:#000;display:flex;justify-content:space-between;align-items:center}
+#A .opp .lives{display:flex;gap:6px;margin-top:8px}
+#A .opp .pip{width:17px;height:17px;border-radius:50%;border:3px solid #000;background:var(--pink)}
+#A .opp .pip.dead{background:#3a2b52}
+#A .opp.nova .card{background:var(--cyan)} #A .opp.kira .card{background:var(--purple)} #A .opp.kira .who{color:#fff;-webkit-text-stroke:.5px #000}
+#A .opp.mox .card{background:var(--yellow)}
+/* bomb in the middle of the table */
+#A .center{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);text-align:center}
+#A .bombWrap{filter:drop-shadow(9px 9px 0 rgba(0,0,0,.55))}
+#A .timerHuge{font-family:"Bungee",sans-serif;font-size:64px;color:#fff;-webkit-text-stroke:5px #000;position:absolute;left:50%;top:50%;transform:translate(-50%,-42%)}
+/* throw words rising from your dock toward the bomb */
+#A .throwWord{position:absolute;font-family:"Bungee",sans-serif;font-size:16px;color:#000;background:#fff;border:3px solid #000;border-radius:7px;padding:3px 10px;box-shadow:4px 4px 0 #000}
+/* YOUR dock at the near edge — you are the active typist */
+#A .dock{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);width:min(720px,92vw)}
+#A .dock .youtab{position:absolute;top:-18px;left:22px;font-family:"Bungee",sans-serif;font-size:14px;color:#000;background:var(--yellow);border:4px solid #000;border-radius:8px;padding:3px 14px;box-shadow:4px 4px 0 #000}
+#A .dock .combo{position:absolute;top:-20px;right:22px;font-family:"Bungee",sans-serif;font-size:18px;color:#000;background:var(--pink);border:4px solid #000;border-radius:8px;padding:4px 14px;box-shadow:4px 4px 0 #000;transform:rotate(-2deg)}
+#A .dock .field{background:#fff;border:5px solid #000;border-radius:14px;box-shadow:8px 8px 0 #000;padding:16px 22px;font-family:"Bungee",sans-serif;font-size:34px;color:#000;display:flex;align-items:center}
+#A .dock .field .caret{width:5px;height:38px;background:var(--pink);margin-left:3px}
+#A .dock .field .frag{color:var(--pink)}
+
+/* ============================================================= */
+/* DIRECTION B — ESPORTS BROADCAST                               */
+/* ============================================================= */
+#B{background:linear-gradient(180deg,#160a2c 0%, #0b0416 100%);}
+#B .topbar{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;gap:14px;padding:0 18px;background:#000;border-bottom:4px solid var(--pink)}
+#B .live{font-family:"Bungee",sans-serif;font-size:15px;color:#000;background:var(--pink);border:3px solid #000;border-radius:5px;padding:3px 10px;box-shadow:3px 3px 0 #000;display:flex;align-items:center;gap:7px}
+#B .live .dot{width:11px;height:11px;border-radius:50%;background:#000}
+#B .topbar .title{font-family:"Bungee",sans-serif;font-size:18px;color:var(--cyan)}
+#B .topbar .rd{margin-left:auto;font-family:"Bungee",sans-serif;font-size:14px;color:var(--yellow)}
+/* left scoreboard rail */
+#B .rail{position:absolute;left:0;top:56px;bottom:100px;width:276px;background:var(--panel);border-right:5px solid #000;padding:14px 12px;display:flex;flex-direction:column;gap:12px}
+#B .rail h3{font-family:"Bungee",sans-serif;font-size:13px;color:#c9b8e6;letter-spacing:2px;margin-bottom:2px}
+#B .prow{display:flex;align-items:center;gap:10px;border:4px solid #000;border-radius:10px;padding:10px 10px;box-shadow:5px 5px 0 #000;background:var(--panel2)}
+#B .prow.onair{background:var(--yellow);transform:scale(1.04)}
+#B .prow .rank{font-family:"Bungee",sans-serif;font-size:20px;color:#fff;-webkit-text-stroke:.5px #000;width:26px}
+#B .prow.onair .rank{color:#000;-webkit-text-stroke:0}
+#B .prow .nm{font-family:"Bungee",sans-serif;font-size:16px;color:#fff}
+#B .prow.onair .nm{color:#000}
+#B .prow .lv{display:flex;gap:4px;margin-left:auto}
+#B .prow .lp{width:12px;height:12px;border-radius:3px;border:2px solid #000;background:var(--cyan)}
+#B .prow .lp.dead{background:#3a2b52}
+#B .prow .onairtag{font-family:"Bungee",sans-serif;font-size:10px;color:#000;background:var(--pink);border:2px solid #000;border-radius:4px;padding:1px 6px;box-shadow:2px 2px 0 #000}
+/* center stage: a broadcast desk — bomb + combo side by side, wide chyron + wide input */
+#B .stage{position:absolute;left:276px;right:0;top:56px;bottom:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 40px}
+#B .chyron{font-family:"Bungee",sans-serif;font-size:16px;color:#000;background:var(--cyan);border:4px solid #000;border-radius:10px;padding:7px 26px;box-shadow:6px 6px 0 #000;margin-bottom:14px}
+#B .desk{display:flex;align-items:center;gap:46px}
+#B .fragCol{text-align:right}
+#B .fragCol .lbl{font-family:"Bungee",sans-serif;font-size:14px;color:#c9b8e6;letter-spacing:2px}
+#B .fragCol .frag{font-family:"Bungee",sans-serif;font-size:58px;color:var(--pink);-webkit-text-stroke:4px #000;line-height:1}
+#B .bombStage{position:relative;filter:drop-shadow(9px 9px 0 rgba(0,0,0,.5))}
+#B .bTimer{position:absolute;left:50%;top:50%;transform:translate(-50%,-44%);font-family:"Bungee",sans-serif;font-size:56px;color:#fff;-webkit-text-stroke:5px #000}
+#B .upCol{text-align:left}
+#B .upCol .who{font-family:"Bungee",sans-serif;font-size:30px;color:var(--yellow);-webkit-text-stroke:1px #000}
+#B .upCol .comboB{margin-top:8px;font-family:"Bungee",sans-serif;font-size:18px;color:#000;background:var(--orange);border:4px solid #000;border-radius:8px;padding:5px 14px;box-shadow:5px 5px 0 #000;display:inline-block;transform:rotate(-2deg)}
+/* wide input desk under the stage */
+#B .inputDesk{margin-top:22px;width:min(680px,80%);position:relative}
+#B .inputDesk .tag{position:absolute;top:-16px;left:20px;font-family:"Bungee",sans-serif;font-size:13px;color:#000;background:var(--pink);border:3px solid #000;border-radius:6px;padding:2px 12px;box-shadow:3px 3px 0 #000}
+#B .inputDesk .field{background:#fff;border:5px solid #000;border-radius:12px;box-shadow:7px 7px 0 #000;padding:14px 20px;font-family:"Bungee",sans-serif;font-size:30px;color:#000;display:flex;align-items:center}
+#B .inputDesk .field .caret{width:5px;height:34px;background:var(--pink);margin-left:3px}
+/* bottom ticker */
+#B .ticker{position:absolute;left:0;right:0;bottom:0;height:100px;background:#000;border-top:4px solid var(--cyan);padding:12px 16px;display:flex;flex-direction:column;gap:9px}
+#B .ticker .tl{font-family:"Bungee",sans-serif;font-size:11px;color:var(--cyan);letter-spacing:2px}
+#B .ticker .words{display:flex;gap:10px;align-items:center;overflow:hidden}
+#B .tw{font-family:"Bungee",sans-serif;font-size:17px;color:#000;background:#fff;border:3px solid #000;border-radius:6px;padding:4px 12px;box-shadow:3px 3px 0 #000;white-space:nowrap}
+#B .tw.by{background:var(--purple);color:#fff}
+#B .tw .m{font-size:11px;color:var(--pink)}
+
+/* ============================================================= */
+/* DIRECTION C — VERSUS FIGHTER                                  */
+/* ============================================================= */
+#C{background:radial-gradient(80% 70% at 50% 58%, #46135f 0%, #1e0836 52%, #0a0414 100%);}
+#C .hp{position:absolute;width:320px}
+#C .hp .plate{border:5px solid #000;border-radius:10px;box-shadow:6px 6px 0 #000;background:var(--panel2);padding:9px 11px}
+#C .hp .nm{font-family:"Bungee",sans-serif;font-size:16px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+#C .hp .bar{height:18px;border:3px solid #000;border-radius:5px;margin-top:7px;background:#2a1745;overflow:hidden}
+#C .hp .fill{height:100%;background:var(--cyan)}
+#C .hp .lives{display:flex;gap:6px;margin-top:7px}
+#C .hp .pip{width:15px;height:15px;border:3px solid #000;background:var(--pink);transform:rotate(45deg)}
+#C .hp .pip.dead{background:#3a2b52}
+#C .hp.tl{top:22px;left:22px}#C .hp.tr{top:22px;right:22px}
+#C .hp.bl{bottom:130px;left:22px}#C .hp.br{bottom:130px;right:22px}
+#C .hp.tr .nm,#C .hp.br .nm{flex-direction:row-reverse}
+#C .hp.you .plate{background:var(--yellow)}#C .hp.you .nm{color:#000}#C .hp.you .fill{background:var(--orange)}
+#C .hp .yow{font-family:"Bungee",sans-serif;font-size:10px;color:#000;background:var(--cyan);border:2px solid #000;border-radius:4px;padding:1px 6px;box-shadow:2px 2px 0 #000}
+#C .arena{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);text-align:center}
+#C .fragC{font-family:"Bungee",sans-serif;font-size:21px;color:#000;background:var(--cyan);border:4px solid #000;border-radius:8px;padding:5px 18px;box-shadow:5px 5px 0 #000;display:inline-block;margin-bottom:12px}
+#C .fragC b{color:var(--pink);-webkit-text-stroke:2px #000}
+#C .bombC{position:relative;filter:drop-shadow(9px 9px 0 rgba(0,0,0,.55))}
+#C .cTimer{position:absolute;left:50%;top:50%;transform:translate(-50%,-44%);font-family:"Bungee",sans-serif;font-size:56px;color:#fff;-webkit-text-stroke:5px #000}
+/* fighting-game combo counter — clean vertical stack */
+#C .comboC{position:absolute;left:7%;top:46%;text-align:center;transform:rotate(-6deg)}
+#C .comboC .top{display:flex;align-items:baseline;gap:6px;justify-content:center}
+#C .comboC .n{font-family:"Bungee",sans-serif;font-size:88px;color:var(--yellow);-webkit-text-stroke:6px #000;line-height:.85}
+#C .comboC .x{font-family:"Bungee",sans-serif;font-size:30px;color:var(--pink);-webkit-text-stroke:2px #000}
+#C .comboC .h{font-family:"Bungee",sans-serif;font-size:19px;color:#fff;-webkit-text-stroke:1px #000;letter-spacing:3px;margin-top:2px}
+#C .atk{position:absolute;font-family:"Bungee",sans-serif;font-size:19px;color:#000;background:#fff;border:3px solid #000;border-radius:6px;padding:3px 11px;box-shadow:4px 4px 0 #000}
+#C .strike{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:min(660px,92vw)}
+#C .strike .field{background:#fff;border:5px solid #000;border-radius:12px;box-shadow:7px 7px 0 #000;padding:14px 20px;font-family:"Bungee",sans-serif;font-size:30px;color:#000;display:flex;align-items:center}
+#C .strike .field .caret{width:5px;height:32px;background:var(--pink);margin-left:4px}
+#C .strike .banner{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-family:"Bungee",sans-serif;font-size:13px;color:#000;background:var(--pink);border:3px solid #000;border-radius:6px;padding:2px 14px;box-shadow:3px 3px 0 #000;white-space:nowrap}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="bomb">
+    <path d="M150 34 C 168 8, 210 6, 214 36" fill="none" stroke="#000" stroke-width="12" stroke-linecap="round"/>
+    <path d="M150 34 C 168 8, 210 6, 214 36" fill="none" stroke="#FFE94A" stroke-width="5" stroke-linecap="round"/>
+    <g transform="translate(214 34)">
+      <path d="M0 -22 L6 -6 L22 -4 L8 4 L12 22 L0 10 L-12 22 L-8 4 L-22 -4 L-6 -6 Z" fill="#FF6B3D" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M0 -13 L4 -4 L13 -2 L4 3 L7 13 L0 6 L-7 13 L-4 3 L-13 -2 L-4 -4 Z" fill="#FFE94A"/>
+    </g>
+    <circle cx="130" cy="132" r="86" fill="#241a33" stroke="#000" stroke-width="9"/>
+    <rect x="112" y="44" width="36" height="30" rx="6" fill="#241a33" stroke="#000" stroke-width="9"/>
+    <ellipse cx="104" cy="108" rx="26" ry="18" fill="#4a3768" transform="rotate(-24 104 108)"/>
+    <ellipse cx="97" cy="102" rx="11" ry="7" fill="#6b5090" transform="rotate(-24 97 102)"/>
+  </g>
+</defs></svg>
+
+<div class="chooser" id="chooser">
+  <h1 class="wm">WORD BOMB — LOOK</h1>
+  <a href="?d=a">A · PASS-THE-BOMB TABLE</a>
+  <a href="?d=b">B · ESPORTS BROADCAST</a>
+  <a href="?d=c">C · VERSUS FIGHTER</a>
+</div>
+
+<!-- ============ A ============ -->
+<section class="frame" id="A">
+  <div class="fragBanner">MUST CONTAIN <b>ORB</b></div>
+  <!-- 3 opponents across the far side -->
+  <div class="opp nova" style="left:22%;top:120px"><div class="card"><div class="who"><span>NOVA</span></div><div class="lives"><i class="pip"></i><i class="pip"></i><i class="pip dead"></i></div></div></div>
+  <div class="opp mox" style="left:78%;top:120px"><div class="card"><div class="who"><span>MOX</span></div><div class="lives"><i class="pip"></i><i class="pip"></i><i class="pip"></i></div></div></div>
+  <div class="opp kira" style="left:11%;top:50%"><div class="card"><div class="who"><span>KIRA</span></div><div class="lives"><i class="pip"></i><i class="pip dead"></i><i class="pip dead"></i></div></div></div>
+  <!-- bomb centre of the table -->
+  <div class="throwWord" style="left:60%;top:64%;transform:rotate(-9deg)">ORBIT</div>
+  <div class="throwWord" style="left:40%;top:70%;transform:rotate(8deg)">ABSORB</div>
+  <div class="center">
+    <div class="bombWrap"><svg width="290" height="270" viewBox="-10 0 250 230"><use href="#bomb"/></svg></div>
+    <div class="timerHuge">6</div>
+  </div>
+  <!-- you = the near-edge dock -->
+  <div class="dock">
+    <span class="youtab">▶ YOUR TURN · ZED</span>
+    <span class="combo">🔥 COMBO ×2.4</span>
+    <div class="field"><span class="frag">ORB</span><span style="color:#000">ITAL</span><span class="caret"></span></div>
+  </div>
+  <div class="dirTag">A · TABLE</div>
+</section>
+
+<!-- ============ B ============ -->
+<section class="frame" id="B">
+  <div class="topbar">
+    <span class="live"><i class="dot"></i>LIVE</span>
+    <span class="title">WORD BOMB · TABLE 4</span>
+    <span class="rd">SUDDEN DEATH</span>
+  </div>
+  <div class="rail">
+    <h3>STANDINGS</h3>
+    <div class="prow onair"><span class="rank">1</span><span class="nm">ZED</span><span class="onairtag">ON AIR</span><span class="lv"><i class="lp"></i><i class="lp"></i><i class="lp"></i></span></div>
+    <div class="prow"><span class="rank">2</span><span class="nm">MOX</span><span class="lv"><i class="lp"></i><i class="lp"></i><i class="lp"></i></span></div>
+    <div class="prow"><span class="rank">3</span><span class="nm">NOVA</span><span class="lv"><i class="lp"></i><i class="lp"></i><i class="lp dead"></i></span></div>
+    <div class="prow"><span class="rank">4</span><span class="nm">KIRA</span><span class="lv"><i class="lp"></i><i class="lp dead"></i><i class="lp dead"></i></span></div>
+  </div>
+  <div class="stage">
+    <div class="chyron">ROUND 7 · POT 3,400 · FRAGMENT</div>
+    <div class="desk">
+      <div class="fragCol"><div class="lbl">CONTAINS</div><div class="frag">ORB</div></div>
+      <div class="bombStage"><svg width="230" height="215" viewBox="-10 0 250 230"><use href="#bomb"/></svg><div class="bTimer">6</div></div>
+      <div class="upCol"><div class="who">ZED<br>IS UP</div><div class="comboB">COMBO ×2.4 · ON FIRE</div></div>
+    </div>
+    <div class="inputDesk">
+      <span class="tag">ZED TYPES</span>
+      <div class="field"><span style="color:var(--pink)">ORB</span>ITAL<span class="caret"></span></div>
+    </div>
+  </div>
+  <div class="ticker">
+    <div class="tl">LIVE FEED ▸</div>
+    <div class="words">
+      <span class="tw by">ORBIT <span class="m">MOX</span></span>
+      <span class="tw by">ABSORB <span class="m">NOVA</span></span>
+      <span class="tw">FORBID</span>
+      <span class="tw">SORBET</span>
+      <span class="tw">WARBLE</span>
+      <span class="tw">CORBEL</span>
+    </div>
+  </div>
+  <div class="dirTag">B · BROADCAST</div>
+</section>
+
+<!-- ============ C ============ -->
+<section class="frame" id="C">
+  <div class="hp tl"><div class="plate"><div class="nm"><span>NOVA</span></div><div class="bar"><div class="fill" style="width:66%"></div></div><div class="lives"><i class="pip"></i><i class="pip"></i><i class="pip dead"></i></div></div></div>
+  <div class="hp tr"><div class="plate"><div class="nm"><span>MOX</span></div><div class="bar"><div class="fill" style="width:100%"></div></div><div class="lives"><i class="pip"></i><i class="pip"></i><i class="pip"></i></div></div></div>
+  <div class="hp bl"><div class="plate"><div class="nm"><span>KIRA</span></div><div class="bar"><div class="fill" style="width:33%"></div></div><div class="lives"><i class="pip"></i><i class="pip dead"></i><i class="pip dead"></i></div></div></div>
+  <div class="hp br you"><div class="plate"><div class="nm"><span>ZED</span><span class="yow">YOU</span></div><div class="bar"><div class="fill" style="width:100%"></div></div><div class="lives"><i class="pip"></i><i class="pip"></i><i class="pip"></i></div></div></div>
+  <div class="arena">
+    <div class="fragC">CONTAINS <b>ORB</b></div>
+    <div class="bombC"><svg width="250" height="230" viewBox="-10 0 250 230"><use href="#bomb"/></svg><div class="cTimer">6</div></div>
+  </div>
+  <div class="comboC"><div class="top"><span class="n">12</span><span class="x">×2.4</span></div><div class="h">HIT COMBO</div></div>
+  <div class="atk" style="left:63%;top:44%;transform:rotate(-14deg)">ORBIT!</div>
+  <div class="atk" style="left:33%;top:62%;transform:rotate(11deg)">ABSORB!</div>
+  <div class="strike">
+    <div class="field"><span class="banner">ZED · STRIKE WITH A WORD</span><span style="color:var(--pink)">ORB</span>ITAL<span class="caret"></span></div>
+  </div>
+  <div class="dirTag">C · FIGHTER</div>
+</section>
+
+<script>
+  const d = new URLSearchParams(location.search).get('d');
+  if (d) {
+    document.getElementById('chooser').style.display='none';
+    const el = document.getElementById(d.toUpperCase());
+    if (el) el.classList.add('on');
+  }
+</script>
+</body>
+</html>
