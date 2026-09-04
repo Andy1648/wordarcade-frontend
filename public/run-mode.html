@@ -131,7 +131,7 @@
     <!-- BOARD -->
     <div class="panel board" id="board"><!-- rendered by JS --></div>
   </div>
-  <div class="hint">Grounded in the game's real, hidden scoring: rarity (×1 → ×4.5) × combo (+0.1/word, cap ×3) × lucky (1/40, ×5), per-word capped at ×40. Run mode makes it visible and draftable.</div>
+  <div class="hint">Grounded in the game's real, hidden scoring: rarity (×1 → ×4.5) × combo (+0.1/word, cap ×3) × lucky (1/40, ×5), per-word capped at ×40. v2 adds an <b>ante wall</b> each round — miss it and the run ends. The wall curve was derived from a 1,000-run sim (≈35% win rate, deaths peak round 8).</div>
 </div>
 
 <script>
@@ -145,25 +145,32 @@
     RARE:['obsidian','requiem','zephyr','cascade','nocturne','vellum','sable','halcyon'],
     OBSCURE:['zyzzyva','borborygmus','sesquipedalian','floccinaucin','widdershins']};
 
+  // ---- ANTE WALL — DERIVED by claude/run-mode/sim.mjs (1,000-run greedy calibration):
+  //      two-phase convex curve, gentle rounds 1–5 then steep 6–10. 34.5% win rate,
+  //      deaths peak round 8. Keep in sync with sim.mjs WALL. ----
+  const WALL={W0:225,g1:1.3,g2:1.8,KNEE:5};
+  const wallAt=r=>Math.round(WALL.W0*Math.pow(WALL.g1,Math.min(r-1,WALL.KNEE-1))*Math.pow(WALL.g2,Math.max(0,r-WALL.KNEE)));
+
+  // ---- THE 18 MODIFIERS — TWO-SIDED. 15 of 18 carry a real downside so drafts are trades. ----
   const MODIFIERS=[
-    {id:'double-vowels',name:'DOUBLE VOWELS',text:'Words with 3+ vowels pay ×2',tag:'WORD',word:(w,m)=>w.vowels>=3?m*2:m},
-    {id:'short-fuse',name:'SHORT FUSE',text:'Timer −20%, but ALL wins ×1.5',tag:'ROUND',round:p=>p*1.5},
-    {id:'lexicographer',name:'LEXICOGRAPHER',text:'Only RARE+ words score — at ×3',tag:'WORD',word:(w,m)=>(w.rarity==='RARE'||w.rarity==='OBSCURE')?m*3:0},
-    {id:'hot-streak',name:'HOT STREAK',text:'Combo cap ×3.0 → ×5.0',tag:'KNOB',knob:k=>k.comboMax=5.0},
-    {id:'lucky-charm',name:'LUCKY CHARM',text:'Lucky odds 1/40 → 1/20',tag:'KNOB',knob:k=>k.luckyOdds=20},
-    {id:'jackpot',name:'JACKPOT',text:'Lucky payout ×5 → ×8',tag:'KNOB',knob:k=>k.luckyMult=8},
-    {id:'bookworm',name:'BOOKWORM',text:'Every word +0.4× (combo-scaled)',tag:'WORD',word:(w,m)=>m+0.4*w.combo},
-    {id:'long-haul',name:'LONG HAUL',text:'Length bonus doubled (+0.2×/letter >5)',tag:'WORD',word:(w,m)=>m+Math.min(1.0,Math.max(0,w.len-5)*0.1)},
-    {id:'common-folk',name:'COMMON FOLK',text:'COMMON words pay ×1.8 (not ×1.0)',tag:'WORD',word:(w,m)=>w.rarity==='COMMON'?m*1.8:m},
-    {id:'glass-cannon',name:'GLASS CANNON',text:'All payouts ×2.5 — one miss ends the run',tag:'ROUND',round:p=>p*2.5},
-    {id:'snowball',name:'SNOWBALL',text:'Each round: +0.3× that never leaves',tag:'ROUND',roundIdx:(p,c)=>p*(1+0.3*c.owned)},
-    {id:'uncapped',name:'UNCAPPED',text:'Remove the ×40 per-word cap',tag:'KNOB',knob:k=>k.cap=Infinity},
-    {id:'vowel-movement',name:'VOWEL MOVEMENT',text:'+0.3× per vowel in a word',tag:'WORD',word:(w,m)=>m+0.3*w.vowels},
-    {id:'rare-breed',name:'RARE BREED',text:'OBSCURE words pay ×6 (not ×4)',tag:'WORD',word:(w,m)=>w.rarity==='OBSCURE'?m*1.5:m},
-    {id:'combo-king',name:'COMBO KING',text:'Combo builds +0.2×/accept (2× faster)',tag:'KNOB',knob:k=>k.comboStep=0.2},
-    {id:'deep-pockets',name:'DEEP POCKETS',text:'+150 flat wins per round',tag:'ROUND',round:p=>p+150},
-    {id:'scrabble-bag',name:'SCRABBLE BAG',text:'Words with J/Q/X/Z pay ×3',tag:'WORD',word:(w,m)=>w.rare?m*3:m},
-    {id:'momentum',name:'MOMENTUM',text:'Each clean round: +0.5× running mult',tag:'ROUND',roundIdx:(p,c)=>p*(1+0.5*c.clean)}
+    {id:'double-vowels',name:'DOUBLE VOWELS',text:'3+ vowels ×2, but ≤2 vowels ×0.7',word:(w,m)=>w.vowels>=3?m*2:m*0.7},
+    {id:'short-fuse',name:'SHORT FUSE',text:'All wins ×1.5, but 20% fewer words',knob:k=>{k.wprMul*=0.8;},round:p=>p*1.5},
+    {id:'lexicographer',name:'LEXICOGRAPHER',text:'RARE+ words ×3, but COMMON/UNCOMMON score 0',word:(w,m)=>(w.rarity==='RARE'||w.rarity==='OBSCURE')?m*3:0},
+    {id:'hot-streak',name:'HOT STREAK',text:'Combo cap ×5.0, but starts each round at combo ×0.6',knob:k=>{k.comboMax=5.0;k.comboStart=0.6;}},
+    {id:'lucky-charm',name:'LUCKY CHARM',text:'Lucky odds 1/40→1/20, but non-lucky words ×0.9',knob:k=>{k.luckyOdds/=2;},word:(w,m)=>w.lucky?m:m*0.9},
+    {id:'jackpot',name:'JACKPOT',text:'Lucky payout ×8, but lucky odds 1/40→1/60',knob:k=>{k.luckyMult=8;k.luckyOdds*=1.5;}},
+    {id:'bookworm',name:'BOOKWORM',text:'Every word +0.4× (combo-scaled), but lucky never procs',knob:k=>{k.noLucky=true;},word:(w,m)=>m+0.4*w.combo},
+    {id:'long-haul',name:'LONG HAUL',text:'Length bonus doubled, but words ≤5 letters ×0.7',word:(w,m)=>w.len>5?m+Math.min(1.0,(w.len-5)*0.1):m*0.7},
+    {id:'common-folk',name:'COMMON FOLK',text:'COMMON ×1.8, but RARE/OBSCURE ×0.6',word:(w,m)=>w.rarity==='COMMON'?m*1.8:((w.rarity==='RARE'||w.rarity==='OBSCURE')?m*0.6:m)},
+    {id:'glass-cannon',name:'GLASS CANNON',text:'All payouts ×2.5 — but 8%/round the run just ends',round:p=>p*2.5,suddenDeath:0.08},
+    {id:'snowball',name:'SNOWBALL',text:'+0.3× per round forever, but ×0.7 the round you draft it',roundIdx:(p,c)=>p*(0.7+0.3*c.owned)},
+    {id:'uncapped',name:'UNCAPPED',text:'Remove the ×40 word cap, but combo cap ×3→×1.5',knob:k=>{k.cap=Infinity;k.comboMax=Math.min(k.comboMax,1.5);}},
+    {id:'vowel-movement',name:'VOWEL MOVEMENT',text:'+0.3× per vowel, but J/Q/X/Z words ×0.5',word:(w,m)=>(w.rare?m*0.5:m)+0.3*w.vowels},
+    {id:'rare-breed',name:'RARE BREED',text:'OBSCURE words ×6, but COMMON ×0.7',word:(w,m)=>w.rarity==='OBSCURE'?m*1.5:(w.rarity==='COMMON'?m*0.7:m)},
+    {id:'combo-king',name:'COMBO KING',text:'Combo builds +0.2×/accept, but combo cap ×3→×2.4',knob:k=>{k.comboStep=0.2;k.comboMax=Math.min(k.comboMax,2.4);}},
+    {id:'deep-pockets',name:'DEEP POCKETS',text:'+150 flat wins per round (fades late)',round:p=>p+150},
+    {id:'scrabble-bag',name:'SCRABBLE BAG',text:'Words with J/Q/X/Z pay ×3',word:(w,m)=>w.rare?m*3:m},
+    {id:'momentum',name:'MOMENTUM',text:'Each clean round: +0.5× running mult',roundIdx:(p,c)=>p*(1+0.5*c.clean)}
   ];
 
   let S; // state
@@ -175,20 +182,21 @@
   function rollRarity(){let x=rnd(),acc=0;for(const[n,p]of RARITY_MIX){acc+=p;if(x<=acc)return n;}return'COMMON';}
 
   // play a round -> {payout, words[]}
-  function playRound(record){
-    const k={comboStep:COMBO_STEP,comboMax:COMBO_MAX,luckyOdds:LUCKY_ODDS,luckyMult:LUCKY_MULT,cap:PER_WORD_CAP};
+  function playRound(){
+    const k={comboStep:COMBO_STEP,comboMax:COMBO_MAX,comboStart:1.0,luckyOdds:LUCKY_ODDS,luckyMult:LUCKY_MULT,cap:PER_WORD_CAP,wprMul:1.0,noLucky:false};
     for(const m of S.owned) if(m.knob) m.knob(k);
-    let combo=1.0, payout=0, words=[];
-    for(let i=0;i<WPR;i++){
+    const wpr=Math.max(4,Math.round(WPR*k.wprMul));
+    let combo=k.comboStart, payout=0, words=[];
+    for(let i=0;i<wpr;i++){
       const rarity=rollRarity(), text=pick(WORDS[rarity]);
       const len=text.length, vowels=(text.match(/[aeiou]/g)||[]).length;
-      const rare=/[jqxz]/.test(text), lucky=rnd()<(1/k.luckyOdds);
+      const rare=/[jqxz]/.test(text), lucky=!k.noLucky&&rnd()<(1/k.luckyOdds);
       const rMult=Math.min(RARITY_MAX, RARITY[rarity]+Math.min(0.5,Math.max(0,len-5)*0.1));
       const lMult=lucky?k.luckyMult:1;
-      const w={rarity,len,vowels,rare,combo};
+      const w={rarity,len,vowels,rare,lucky,combo};
       let m=Math.min(k.cap, rMult*combo*lMult);
       for(const mod of S.owned) if(mod.word) m=mod.word(w,m);
-      payout+=m*BASE;
+      payout+=Math.max(0,m)*BASE;
       words.push({text,rarity,lucky});
       combo=Math.min(k.comboMax, combo+k.comboStep);
     }
@@ -219,7 +227,7 @@
   function renderMode(){
     chip.textContent='PICK A MODE'; S.phase='mode';
     board.innerHTML=`<h3 style="color:var(--pink)">CHOOSE YOUR ENGINE</h3>
-      <p class="muted">A run is 10 rounds. Play a round, then draft one of three modifiers onto your stack. The modifiers reuse the game's real hidden math — rarity × combo × lucky — and stack multiplicatively. The goal isn't to win a round. It's to see how big the number gets.</p>
+      <p class="muted">A run is 10 rounds. Each round has an <b>ante wall</b> — score at least the required wins or the run ends. Play a round, then draft one of three modifiers onto your stack. Modifiers reuse the game's real hidden math — rarity × combo × lucky — and stack multiplicatively, but most now cost something. Out-scale the wall to round 10.</p>
       <div class="modes" style="margin-top:14px">
         <div class="mode m-chain" data-m="CHAIN"><h2>CHAIN</h2><p>Link words by last letter. Long clean chains feed the combo.</p></div>
         <div class="mode m-fuse" data-m="FUSE"><h2>FUSE</h2><p>Beat the fragment before it burns. Speed → combo.</p></div>
@@ -232,9 +240,11 @@
   function startRun(){ S.round=1; renderPlay(); }
 
   function renderPlay(){
+    const wall=wallAt(S.round);
     chip.textContent='ROUND '+S.round+' / 10 · '+S.mode; S.phase='play';
     board.innerHTML=dots()+`
       <div class="center" style="margin:auto 0">
+        <div class="scoreSub" style="margin-bottom:6px">ANTE WALL — score <b style="color:var(--pink)">${wall.toLocaleString()}</b> to survive</div>
         <div class="scoreBig" id="score">0</div>
         <div class="scoreSub" id="scoreSub">round ${S.round} — press play to run the round</div>
         <div class="feed" id="feed"></div>
@@ -246,7 +256,7 @@
 
   function animateRound(){
     const btn=document.getElementById('playBtn'); btn.disabled=true;
-    const {payout,words}=playRound(true);
+    const {payout,words}=playRound();
     if(S.round===1 && !S.baseline){ S.baseline=payout; } // baseline = round-1 payout
     const feed=document.getElementById('feed'), scoreEl=document.getElementById('score');
     let i=0, shown=0;
@@ -265,55 +275,75 @@
 
   function finishRound(payout){
     S.lastPayout=payout; S.total+=payout;
-    S.history.push({round:S.round,payout});
-    const sub=document.getElementById('scoreSub');
+    const wall=wallAt(S.round);
+    S.history.push({round:S.round,payout,wall});
+    // sudden death (GLASS CANNON), then the wall check
+    let sd=0; for(const m of S.owned) if(m.suddenDeath) sd=1-(1-sd)*(1-m.suddenDeath);
+    const fumble=sd>0 && rnd()<sd;
     document.getElementById('score').classList.add('flash');
-    sub.innerHTML=`round ${S.round}: <b style="color:var(--yellow)">+${payout.toLocaleString()}</b> wins · run mult now <b style="color:var(--pink)">×${runMultiplier().toFixed(1)}</b>`;
     renderRail();
+    if(payout<wall){ return renderGameOver('wall', payout, wall); }
+    if(fumble){ return renderGameOver('fumble', payout, wall); }
+    const sub=document.getElementById('scoreSub');
+    sub.innerHTML=`round ${S.round}: <b style="color:var(--yellow)">+${payout.toLocaleString()}</b> wins · cleared the <b style="color:var(--pink)">${wall.toLocaleString()}</b> wall · run mult <b style="color:var(--pink)">×${runMultiplier().toFixed(1)}</b>`;
     const btn=document.getElementById('playBtn');
-    S.clean++; // optimizing player, no miss in the proto
-    if(S.round>=10){ btn.outerHTML='<button class="btn cyan" id="finBtn">SEE FINAL SCORE →</button>'; document.getElementById('finBtn').onclick=renderFinish; }
+    S.clean++;
+    if(S.round>=10){ btn.outerHTML='<button class="btn cyan" id="finBtn">YOU BEAT THE WALL →</button>'; document.getElementById('finBtn').onclick=renderFinish; }
     else { btn.outerHTML='<button class="btn" id="draftBtn">DRAFT A MODIFIER →</button>'; document.getElementById('draftBtn').onclick=renderDraft; }
   }
 
   function renderDraft(){
     chip.textContent='DRAFT · after round '+S.round; S.phase='draft';
+    const nextWall=wallAt(S.round+1);
     const avail=MODIFIERS.filter(m=>!S.owned.includes(m));
     const offer=[]; const pool=avail.slice();
     for(let k=0;k<3&&pool.length;k++){ offer.push(pool.splice(Math.floor(rnd()*pool.length),1)[0]); }
-    board.innerHTML=dots()+`<h3 style="color:var(--yellow)">DRAFT ONE — it stacks forever</h3>
-      <div class="draft">${offer.map((m,idx)=>`
-        <div class="card" data-i="${idx}">
-          <span class="tag">${m.tag}</span>
+    board.innerHTML=dots()+`<h3 style="color:var(--yellow)">DRAFT ONE — next wall is ${nextWall.toLocaleString()}</h3>
+      <div class="draft">${offer.map((m,idx)=>{
+        const tag=m.word?'WORD':(m.knob?'KNOB':'ROUND');
+        const parts=m.text.split(', but ');
+        const body=parts[1]?`${parts[0]}<span style="color:var(--orange)"> — but ${parts[1]}</span>`:m.text;
+        return `<div class="card" data-i="${idx}">
+          <span class="tag">${tag}${m.suddenDeath?' · RISK':''}</span>
           <div class="cn">${m.name}</div>
-          <div class="ct">${m.text}</div>
+          <div class="ct">${body}</div>
           <div class="cg">adds to your stack →</div>
-        </div>`).join('')}</div>
-      <div class="hint">Every pick is permanent and multiplies with the rest. This is where the engine breaks.</div>`;
+        </div>`;}).join('')}</div>
+      <div class="hint">Every pick is permanent and stacks — but most now cost something. The wall accelerates from round 6, so pick for the ceiling, not just this round.</div>`;
     renderRail();
     board.querySelectorAll('.card').forEach(el=>el.onclick=()=>{
-      const m=offer[+el.dataset.i]; S.owned.push(m); S.ownedAt[m.id]=S.round;
+      const m=offer[+el.dataset.i]; S.owned.push(m); S.ownedAt[m.id]=S.round+1;
       S.round++; renderPlay();
     });
+  }
+
+  function renderGameOver(reason, payout, wall){
+    chip.textContent='RUN OVER'; S.phase='dead';
+    const msg = reason==='wall'
+      ? `The round ${S.round} wall was <b style="color:var(--pink)">${wall.toLocaleString()}</b>. You scored <b style="color:var(--yellow)">${payout.toLocaleString()}</b> — short by ${(wall-payout).toLocaleString()}.`
+      : `GLASS CANNON shattered on round ${S.round}. You cleared the ${wall.toLocaleString()} wall, but the ×2.5 came due.`;
+    board.innerHTML=dots()+`<div class="center" style="margin:auto 0">
+      <div class="scoreBig" style="color:var(--orange)">RUN OVER</div>
+      <div class="scoreSub" style="margin-top:12px">${msg}</div>
+      <div class="scoreSub" style="margin-top:10px">Survived <b style="color:var(--cyan)">${S.round-(reason==='wall'?1:0)}</b> / 10 rounds · banked <b style="color:var(--cyan)">${S.total.toLocaleString()}</b> wins.</div>
+      <div style="margin-top:18px"><button class="btn yellow" id="again">RUN AGAIN</button></div>
+      <div class="hint" style="max-width:560px;margin:16px auto 0">The wall turns every draft into a real decision: not "is this positive?" (most are) but "does this out-scale round ${Math.min(10,S.round+1)}'s wall — and is the downside survivable?" Greedy-but-unlucky lines die here ~65% of the time; that's the tension.</div>
+    </div>`;
+    document.getElementById('again').onclick=()=>{ reset(); renderRail(); renderMode(); };
   }
 
   function renderFinish(){
     chip.textContent='RUN COMPLETE'; S.phase='done';
     const r1=S.history[0].payout, r10=S.history[9].payout;
-    const growth=S.history.slice(1).map((h,i)=>h.payout/S.history[i].payout);
-    const geo=Math.pow(growth.reduce((a,b)=>a*b,1),1/growth.length);
-    const broke=geo>1.35;
     board.innerHTML=dots()+`<div class="center" style="margin:auto 0">
-      <div class="scoreSub">FINAL BANK</div>
+      <div class="scoreSub">YOU BEAT ALL 10 WALLS · FINAL BANK</div>
       <div class="scoreBig" style="color:var(--cyan)">${S.total.toLocaleString()}</div>
       <div class="scoreSub" style="margin-top:12px">Round 1 paid <b>${r1.toLocaleString()}</b> · Round 10 paid <b style="color:var(--yellow)">${r10.toLocaleString()}</b>
-        — a <b style="color:var(--pink)">${(r10/r1).toFixed(1)}×</b> blow-up over the run.</div>
-      <div class="scoreSub" style="margin-top:8px">geometric growth <b>×${geo.toFixed(2)}/round</b> →
-        <b style="color:${broke?'var(--pink)':'var(--cyan)'}">${broke?'THE ENGINE BREAKS (Balatro-style runaway) ✔':'bounded'}</b></div>
+        — a <b style="color:var(--pink)">${(r10/r1).toFixed(1)}×</b> blow-up, out-scaling a wall that grew to ${wallAt(10).toLocaleString()}.</div>
       <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn yellow" id="again">RUN AGAIN</button>
       </div>
-      <div class="hint" style="max-width:560px;margin:16px auto 0">This is the pitch: the rarity × combo × lucky engine already exists and is invisible. Run mode drafts it into view and lets it compound. It <b>does</b> break — which is the fun — so a shipping version needs an escalating ante wall (Balatro's blinds) so “break the engine” becomes “beat the wall,” not just number-go-up.</div>
+      <div class="hint" style="max-width:560px;margin:16px auto 0">Only ~35% of greedy runs get here. The engine still breaks (the fun) — but now it has to break <b>faster than the wall</b>. Beating it is a stack that compounds: MOMENTUM/SNOWBALL to out-scale round 6+, guarded against a downside that would sink an unlucky round.</div>
     </div>`;
     document.getElementById('again').onclick=()=>{ reset(); renderRail(); renderMode(); };
   }
