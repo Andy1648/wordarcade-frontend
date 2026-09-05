@@ -31,14 +31,51 @@ function gameColor(type) {
   return GAME_INFO[type]?.color || '#2EFFE0';
 }
 
+// Compact, all-caps relative time for "LAST GAME · X AGO". Returns null for a
+// missing/null timestamp so the caller can simply omit the line (the backend
+// sends lastGameStartedAt as epoch ms, or null when it has never seen a game).
+function relativeTime(ts) {
+  if (!ts) return null;
+  const diff = Date.now() - ts;
+  if (diff < 45 * 1000) return 'JUST NOW';
+  const min = Math.floor(diff / 60000);
+  if (min < 60) return `${min} MIN AGO`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} HR AGO`;
+  const day = Math.floor(hr / 24);
+  return `${day} DAY${day === 1 ? '' : 'S'} AGO`;
+}
+
+// DEV-ONLY mock for BE-PICKY screenshots (the live Render backend sends neither
+// `stats` nor, offline, any rooms). `?lobbymock=1` → life-signs only (empty list);
+// `?lobbymock=rooms` → life-signs + a sample list. Never runs in production
+// (guarded by import.meta.env.DEV), so the shipped code path is byte-identical.
+function devMock() {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return null;
+  const v = new URLSearchParams(window.location.search).get('lobbymock');
+  if (!v) return null;
+  const stats = { online: 47, inGame: 12, gamesInProgress: 5, lastGameStartedAt: Date.now() - 3 * 60 * 1000 };
+  const rooms =
+    v === 'rooms'
+      ? [
+          { code: 'FROG9', gameType: 'word-bomb', playerCount: 1, maxPlayers: 8 },
+          { code: 'ZAP42', gameType: 'category-blitz', playerCount: 3, maxPlayers: 8 },
+          { code: 'MOTH7', gameType: 'word-bomb', playerCount: 8, maxPlayers: 8 },
+        ]
+      : [];
+  return { stats, rooms };
+}
+
 export default function PublicRoomsScreen({
   rooms,
+  stats,
   serverError,
   name,
   onNameChange,
   onJoin,
   onRefresh,
   onCreatePublic,
+  onStartVsBot,
   onBack,
 }) {
   const { sound } = useSound();
@@ -132,8 +169,39 @@ export default function PublicRoomsScreen({
     refreshRef.current();
   }
 
+  // START VS BOT: create a PUBLIC room + bot and start solo, room stays joinable.
+  // Same name-required guard as a join; App owns the create_room/add_bot frames.
+  function handleStartVsBot() {
+    if (joiningCode) return;
+    const trimmed = (name || '').trim();
+    if (!trimmed) {
+      setLocalError('DROP A NAME FIRST.');
+      return;
+    }
+    setLocalError('');
+    sound.click();
+    if (onStartVsBot) onStartVsBot(trimmed);
+  }
+
   const error = localError || serverError;
-  const isEmpty = !rooms || rooms.length === 0;
+
+  // Life-signs from the enriched `public_rooms` frame (read DEFENSIVELY — an
+  // undeployed backend omits it, leaving `stats` null and this UI hidden). The
+  // dev mock only fills in under ?lobbymock in dev builds (screenshots).
+  const mock = devMock();
+  const liveRooms = mock && mock.rooms.length ? mock.rooms : rooms;
+  const liveStats = stats || (mock ? mock.stats : null);
+  const lastGameAgo = liveStats ? relativeTime(liveStats.lastGameStartedAt) : null;
+  const isEmpty = !liveRooms || liveRooms.length === 0;
+  // The mock resolves the first-fetch pulse so screenshots show the real states.
+  const showLoading = loading && !mock;
+
+  // The bot CTA — reused in the empty state and as a footer under a populated list.
+  const startVsBotBtn = (
+    <button className="browser-btn browser-btn-bot" onClick={handleStartVsBot}>
+      🤖 START VS BOT
+    </button>
+  );
 
   return (
     <div className="browser-wrap">
@@ -155,6 +223,24 @@ export default function PublicRoomsScreen({
 
         <div className="browser-title">JOIN ROOM</div>
         <div className="browser-subtitle">ENTER A CODE OR PICK A PUBLIC GAME</div>
+
+        {/* Life-signs — makes an empty list feel populated, not dead. Rendered
+            only when the backend sends the `stats` block (or the dev mock is on);
+            an undeployed backend omits it and this whole strip disappears. */}
+        {liveStats && (
+          <div className="browser-lifesigns" role="status">
+            <span className="browser-life-primary">
+              <span className="browser-life-pip" aria-hidden="true" />
+              <span className="browser-life-count">{liveStats.online} ONLINE</span>
+              {liveStats.inGame > 0 && (
+                <span className="browser-life-ingame">{liveStats.inGame} IN GAME</span>
+              )}
+            </span>
+            {lastGameAgo && (
+              <span className="browser-life-last">LAST GAME · {lastGameAgo}</span>
+            )}
+          </div>
+        )}
 
         <label className="browser-field-label" htmlFor="browser-name-input">
           YOUR NAME
@@ -205,7 +291,7 @@ export default function PublicRoomsScreen({
           <span>OR PICK A PUBLIC GAME</span>
         </div>
 
-        {loading && isEmpty ? (
+        {showLoading && isEmpty ? (
           // Still waiting on the first list - a calm pulse, never the empty state
           // (which would wrongly read as "no games" before we've heard back).
           <div className="browser-loading" role="status">
@@ -219,8 +305,11 @@ export default function PublicRoomsScreen({
           // two ways to start a game right now.
           <div className="browser-empty">
             <div className="browser-empty-title">NO PUBLIC GAMES RIGHT NOW</div>
-            <div className="browser-empty-sub">BE THE ONE WHO STARTS THE PARTY.</div>
+            <div className="browser-empty-sub">
+              START VS A BOT — A REAL PLAYER CAN DROP IN THE SECOND THEY ARRIVE.
+            </div>
             <div className="browser-empty-actions">
+              {startVsBotBtn}
               <button
                 className="browser-btn browser-btn-create"
                 onClick={() => {
@@ -234,7 +323,7 @@ export default function PublicRoomsScreen({
           </div>
         ) : (
           <ul className="browser-list">
-            {rooms.map((room) => {
+            {liveRooms.map((room) => {
               const joining = joiningCode === room.code;
               const full = room.playerCount >= room.maxPlayers;
               return (
@@ -262,6 +351,14 @@ export default function PublicRoomsScreen({
               );
             })}
           </ul>
+        )}
+
+        {/* Always-reachable escape hatch: don't want to wait on the list? Start
+            solo vs a bot right now — the room stays public so a human can join
+            before you start. (The empty state shows this too; here it sits under
+            a populated list so it's never buried.) */}
+        {!isEmpty && (
+          <div className="browser-footer-action">{startVsBotBtn}</div>
         )}
       </div>
     </div>

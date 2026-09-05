@@ -344,3 +344,16 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-05  JOB C START (feat/lobby-life-fe, BRANCH ONLY): lobby life-signs (N ONLINE + last-game-ago
+  from list_public_rooms.stats, read DEFENSIVELY so it degrades cleanly when the BE branch is undeployed),
+  START-VS-BOT public flow (create public + add bot -> RoomScreen, stays joinable), invite link surfaced
+  before any join. BE-PICKY the browse surface @390 + desktop.
+- 2026-09-05  JOB C DONE (feat/lobby-life-fe, BRANCH ONLY, NOT merged). PublicRoomsScreen life-signs bar
+  (green pip + N ONLINE + M IN GAME + LAST GAME . rel-time), START VS BOT (empty-state + footer) wired to
+  new useRoom.handleStartPublicVsBot (create_room public + set_game_type word-bomb + add_bot medium ->
+  RoomScreen, which already surfaces the invite link before any join). stats read DEFENSIVELY in App drain
+  (payload.stats || null) so it degrades to today's UI on the undeployed backend; dev-only ?lobbymock gate
+  for screenshots. Gate: lint 0 err, 464/464 tests, vite build exit 0. BE-PICKY 1 round: largest-empty-rect
+  populated 7.4% / empty 8.5% (both << 18%); life-signs wraps clean at 330px, no overflow. NOTE: this box's
+  Chrome automation clamps viewport to 1280 so true-390 screenshots weren't possible; card renders full-
+  width vertical stack (scale-invariant ratio) + narrow-width bar wrap verified via constrained measure.

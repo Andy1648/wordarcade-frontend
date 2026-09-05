@@ -638,6 +638,8 @@ function App() {
   const {
     publicRooms,
     setPublicRooms,
+    publicRoomsStats,
+    setPublicRoomsStats,
     lobbyMode,
     setLobbyMode,
     lobbyPublicDefault,
@@ -654,6 +656,7 @@ function App() {
     handleRefreshPublicRooms,
     handleJoinPublicRoom,
     handleCreatePublicFromBrowser,
+    handleStartPublicVsBot,
     handleLeaveRoom,
   } = useRoom({ send, setView, setPlayerName, goHome });
 
@@ -944,6 +947,11 @@ function App() {
     // Public-room browser list refresh (response to list_public_rooms).
     if (lastMessage.type === 'public_rooms') {
       setPublicRooms(lastMessage.payload.rooms || []);
+      // feat/lobby-life: the enriched backend also sends a `stats` block
+      // ({ online, inGame, gamesInProgress, lastGameStartedAt }). Read it
+      // DEFENSIVELY — the live Render backend does NOT have this yet, so a
+      // missing `stats` becomes null and the life-signs UI simply hides.
+      setPublicRoomsStats(lastMessage.payload.stats || null);
     }
 
     if (lastMessage.type === 'room_update') {
@@ -1738,6 +1746,7 @@ function App() {
     setLobbyPublicDefault(false);
     setRoom(null);
     setPublicRooms([]);
+    setPublicRoomsStats(null);
     setServerError('');
     setGameState(null);
     setTimerSeconds(0);
@@ -2055,12 +2064,14 @@ function App() {
     screen = (
       <PublicRoomsScreen
         rooms={publicRooms}
+        stats={publicRoomsStats}
         serverError={serverError}
         name={playerName}
         onNameChange={setPlayerName}
         onJoin={handleJoinPublicRoom}
         onRefresh={handleRefreshPublicRooms}
         onCreatePublic={handleCreatePublicFromBrowser}
+        onStartVsBot={handleStartPublicVsBot}
         onBack={goHome}
       />
     );
