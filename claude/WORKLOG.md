@@ -344,3 +344,6 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+
+## JOB E — START 2026-09-05T06:00Z
+Part 1 (LV100 endgame, branch chore/endgame) + Part 2 (perf, branch perf/final). Report-only.
