@@ -344,3 +344,21 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-05  JOB B START (feat/ingame-look, BRANCH ONLY, presentation): redesign WB + Blitz mid-play
+  from proto/wb-look + proto/blitz-look (3 dirs each). Judge all vs BE-PICKY, pick strongest, implement
+  in live GameScreen (presentation only, preserve turn/combo/wins/input/kill-feed), iterate to clear
+  BE-PICKY. No merge/deploy.
+- 2026-09-05  JOB B DONE (feat/ingame-look). PICKED: WB = dir B (ESPORTS BROADCAST) — maps 1:1 to real
+  data (standings rail=players+lives+turn, chyron=fragment, desk=bomb+combo+input, ticker=kill feed),
+  scales to WB's variable player count (A floats in a void; C's 4 corner plates cap at 4), fills edges
+  best. BLITZ = dir A (JUDGE'S BENCH) — dramatizes the AI-judge USP (authored gavel+chip emblem +
+  verdict stamp), frames both edges (RECORD + GALLERY), adapts to a mobile stack (B's belt is
+  horizontal-only, C's race rail won't fit 390). Implemented mostly in CSS (WB broadcast grid reused
+  the existing grid-areas — no WB JSX layout change; the only WB behaviour-adjacent code untouched) +
+  small Blitz JSX (JudgeEmblem SVG, THE BENCH in the side rail, THE CASE/THE RECORD/THE GALLERY relabel,
+  ✓ on captured answers). BE-PICKY largest-empty-rect (measured, algo = BE-PICKY's): WB 11.4%/10.7%/6.4%
+  (1920/1366/390) — was ~40%+ central void on desktop; BLITZ 11.3%/7.1%/5.5% (was 17.3% @1920). All
+  <18% (composed). ~2 iteration rounds. gate: lint 0 err, 464/464 unit (incl perf/willChange +
+  infinite-animation asserts), vite build exit 0. e2e game-fill WB+CB pass (no overflow/zoom all
+  widths); SAT-Rush e2e fails are a dev-server DevTuner artifact (not this branch). NEEDS Andy's
+  2-device play-test before merge (Tier-1).

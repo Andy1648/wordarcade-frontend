@@ -45,9 +45,13 @@
    rendered, so the stage centers on its own. */
 .game-panel {
   display: flex;
-  align-items: flex-start;
+  /* Broadcast: the stage and the LIVE FEED ticker stack, ticker spanning the
+     bottom edge (feat/ingame-look). Column at every width now — the feed reads as
+     a full-width ticker under the stage rather than a detached right column. */
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 18px;
   width: 100%;
   /* Cap the group so the stage + feed sit adjacent and center TOGETHER. Without
      this the panel spans the full viewport and the stage's width:100% basis gets
@@ -73,40 +77,75 @@
   max-width: min(96vw, 1760px);
 }
 
-/* ===== WORD BOMB wide-aspect reflow (fix/game-fill-2) ================================
-   Without the old --app-scale zoom the WB stack (header + player bar + bomb + combo +
-   used + input) is ~880px tall and overflows a short window. On SHORT viewports we lay
-   it out as a GRID — bomb column beside the combo/used/input column — so it fills the
-   width AND fits the height. Pure CSS on existing children (grid-areas); absolute FX
-   (hype/clutch/fly/shatter) are out of flow and unaffected. Tall windows (h>900) keep
-   the single-column stack, which already fits + fills there. */
-@media (min-width: 900px) and (max-height: 900px) {
+/* ===== WORD BOMB — ESPORTS BROADCAST layout (feat/ingame-look) =======================
+   Wide screens lay the stage out as a broadcast desk: a left STANDINGS rail (the players
+   stacked as leaderboard rows) beside a center stage (fragment chyron → hero bomb → used
+   → input), with the LIVE FEED ticker spanning the bottom (styled in the RESPONSIVE block
+   below). This kills the huge central void the old single-column stack left on wide
+   viewports. Pure CSS over the existing children via grid-areas — absolute FX
+   (hype/clutch/fly/shatter/flight) are out of flow and unaffected. Phones (<820px) keep
+   the vertical stack. */
+@media (min-width: 820px) {
   .game-stage--wb {
     display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 0.5fr) minmax(0, 1fr);
     grid-template-areas:
       'header header'
-      'bar    bar'
-      'bomb   combo'
-      'bomb   used'
-      'bomb   input';
-    align-content: center;
-    column-gap: clamp(16px, 3vw, 56px);
-    row-gap: clamp(4px, 1vh, 12px);
-    padding-top: clamp(10px, 1.6vh, 22px);
-    padding-bottom: clamp(10px, 1.6vh, 22px);
+      'bar    combo'
+      'bar    bomb'
+      'bar    used'
+      'bar    input';
+    align-content: stretch;
+    column-gap: clamp(20px, 3vw, 52px);
+    row-gap: clamp(8px, 1.4vh, 18px);
   }
   .game-stage--wb .game-header { grid-area: header; }
-  .game-stage--wb .game-player-bar { grid-area: bar; }
+  /* Standings rail: cards stack and flex to fill the rail's full height, so the
+     column reads as a broadcast leaderboard with no bottom void. */
+  .game-stage--wb .game-player-bar {
+    grid-area: bar;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-self: stretch;
+    gap: clamp(8px, 1.2vh, 14px);
+    margin-bottom: 0;
+  }
+  .game-stage--wb .game-player-slot {
+    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
+  }
+  .game-stage--wb .game-player-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
   .game-stage--wb .bomb-area { grid-area: bomb; align-self: center; margin: 0; }
-  .game-stage--wb .game-combo-box { grid-area: combo; align-self: center; }
-  .game-stage--wb .game-used { grid-area: used; align-self: center; }
-  .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
-  /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
-  .game-stage--wb .bomb-svg { width: clamp(104px, 22vh, 190px); height: auto; }
-  /* Compress the combo box so the right column fits a short window. */
-  .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
+  .game-stage--wb .game-combo-box {
+    grid-area: combo;
+    align-self: end;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .game-stage--wb .game-used { grid-area: used; align-self: center; width: 100%; margin: 0; }
+  .game-stage--wb .game-input-row { grid-area: input; align-self: start; width: 100%; margin: 0 auto; }
+  /* Bigger hero bomb now that it owns a dedicated column. */
+  .game-stage--wb .bomb-svg { width: clamp(150px, 26vh, 240px); height: auto; }
+}
+
+/* Short wide windows: compress vertical rhythm + bomb so the broadcast grid still fits
+   one screen without the old zoom. */
+@media (min-width: 820px) and (max-height: 840px) {
+  .game-stage--wb {
+    row-gap: clamp(4px, 1vh, 10px);
+    padding-top: clamp(10px, 1.6vh, 20px);
+    padding-bottom: clamp(10px, 1.6vh, 20px);
+  }
+  .game-stage--wb .bomb-svg { width: clamp(104px, 20vh, 180px); }
+  .game-stage--wb .game-combo { font-size: clamp(30px, 6.2vh, 54px); }
   .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
 }
 
@@ -2699,6 +2738,81 @@
   padding: 4px 9px;
 }
 
+/* ===== CATEGORY BLITZ — THE JUDGE'S BENCH (feat/ingame-look) ==========================
+   The AI judge (the mode's USP, previously invisible) presides at the top of the side
+   rail, over THE RECORD (your captured answers, each ticked) and THE GALLERY (opponents).
+   The verdict on a submission slams in as a stamp (the accept/reject toast, restyled).
+   Authored gavel+chip emblem = real vector art. Presentational; data flow unchanged. */
+.cb-bench {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0d0618;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  padding: 10px 14px;
+  margin-bottom: clamp(14px, 2vw, 22px);
+  transform: rotate(-1deg);
+}
+.cb-judge-emblem {
+  flex-shrink: 0;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+}
+/* Deliberating: the AI disc heats to amber while a verdict is being decided. A static
+   colour swap — NO animation (keeps the zero-new-infinite-loops budget). */
+.cb-judge-emblem.deliberating .cb-judge-disc { fill: #FF6B3D; }
+.cb-bench-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.cb-bench-name {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(15px, 1.6vw, 20px);
+  color: #2EFFE0;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+}
+.cb-bench-status {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #C9B8E8;
+}
+
+/* "THE CASE" placard tag prefixing the category label. */
+.cb-case-tag {
+  display: inline-block;
+  font-family: 'Bungee', cursive;
+  font-size: 0.9em;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 1px 7px;
+  margin-right: 6px;
+  transform: skewX(-4deg);
+}
+
+/* Captured answers are ticked — the record of the judge's approvals. Scoped to the
+   live round (.cb-round) so the between-rounds results chips are untouched. */
+.cb-round .cb-answer-chip::before {
+  content: '\2713 ';
+  color: #06231f;
+  font-weight: 700;
+}
+
+/* The verdict: the accept/reject toast reads as a courtroom stamp under the bench
+   (bolder border + a harder tilt so a ruling lands as an event). CB-scoped. */
+.game-stage--blitz .game-toast {
+  font-size: 14px;
+  border-width: 4px;
+  transform: rotate(-2deg);
+}
+
 .cb-category-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -3155,6 +3269,44 @@
   paint-order: stroke fill;
   margin-bottom: 10px;
   transform: skewX(-3deg);
+}
+
+/* ===== Broadcast LIVE FEED ticker (feat/ingame-look) — wide screens =================
+   Below the broadcast stage the feed becomes a full-width horizontal ticker (a row of
+   event chips scrolling off the right under a fade), so it anchors the bottom edge of
+   the composition like a sports lower-third. Phones keep the vertical trimmed list. */
+@media (min-width: 820px) {
+  .kill-feed {
+    width: 100%;
+    max-width: min(96vw, 1760px);
+    align-self: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+  }
+  .kill-feed-title {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .kill-feed-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+    scrollbar-width: none;
+  }
+  .kill-feed-list::-webkit-scrollbar { display: none; }
+  .kill-feed-row {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    align-items: center;
+  }
+  .kill-feed-text { white-space: nowrap; }
 }
 
 .kill-feed-list {

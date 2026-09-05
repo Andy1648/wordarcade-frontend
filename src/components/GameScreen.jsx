@@ -3567,6 +3567,36 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
 }
 
 /**
+ * AI JUDGE emblem (feat/ingame-look — Category Blitz "Judge's Bench" look). An
+ * authored flat-vector gavel crossed over a circuit disc: the mode's USP (the AI
+ * judge) made visible as real art, in house colours with thick black outlines.
+ * Presentational only. `active` swaps the disc to a hot amber while a verdict is
+ * being decided (the "deliberating" beat); reduced-motion is unaffected (static).
+ */
+function JudgeEmblem({ size = 108, active = false }) {
+  return (
+    <svg
+      className={`cb-judge-emblem${active ? ' deliberating' : ''}`}
+      width={size}
+      height={(size * 172) / 210}
+      viewBox="20 6 210 172"
+      aria-hidden="true"
+    >
+      {/* sound block */}
+      <rect x="70" y="150" width="120" height="26" rx="7" fill="#9A1AFF" stroke="#000" strokeWidth="7" />
+      {/* gavel handle */}
+      <rect x="120" y="40" width="20" height="96" rx="8" fill="#FFE94A" stroke="#000" strokeWidth="7" transform="rotate(34 130 90)" />
+      {/* gavel head */}
+      <rect x="150" y="34" width="70" height="46" rx="10" fill="#FF6B3D" stroke="#000" strokeWidth="7" transform="rotate(34 185 57)" />
+      {/* circuit disc = the AI */}
+      <circle className="cb-judge-disc" cx="86" cy="70" r="40" fill="#2EFFE0" stroke="#000" strokeWidth="7" />
+      <circle cx="86" cy="70" r="15" fill="#0d0618" stroke="#000" strokeWidth="6" />
+      <path d="M86 30 v-14 M86 110 v14 M46 70 h-14 M126 70 h14" stroke="#000" strokeWidth="6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/**
  * The Category Blitz play screen - a simultaneous, round-based mode with a
  * layout entirely separate from Word Bomb. It has three faces, chosen by the
  * incoming server state:
@@ -4086,7 +4116,9 @@ function CategoryBlitzScreen({
           <div className="cb-round">
             <div className="cb-round-main">
 
-          <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
+          <div className="cb-category-label">
+            <span className="cb-case-tag">THE CASE</span> NAME AS MANY AS YOU CAN
+          </div>
           <div className="cb-category-display">
             {/* Sprays the category name on each new round/reroll (re-keyed by the
                 category text so the reveal replays). The box itself appears
@@ -4228,11 +4260,25 @@ function CategoryBlitzScreen({
           )}
 
             </div>
-            {/* ---- Side rail: live state (your answers + opponents) ---- */}
+            {/* ---- Side rail: THE BENCH (the AI judge) presiding over THE RECORD
+                 (your captured answers) + THE GALLERY (opponents). Judge's-Bench
+                 look — feat/ingame-look. Presentational; same data as before. ---- */}
             <div className="cb-round-side">
 
+          {/* The presiding AI JUDGE — the mode's USP made visible. The emblem goes
+              "deliberating" (hot) while an answer is being ruled on. */}
+          <div className="cb-bench">
+            <JudgeEmblem size={92} active={checkingAnswer} />
+            <div className="cb-bench-text">
+              <div className="cb-bench-name">JUDGE A.I.</div>
+              <div className="cb-bench-status">
+                {checkingAnswer ? 'DELIBERATING…' : 'PRESIDING'}
+              </div>
+            </div>
+          </div>
+
           <div className="cb-my-answers">
-            <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
+            <div className="cb-section-label">THE RECORD ({myAnswers.length})</div>
             <div className="cb-answers-list">
               {myAnswers.length === 0 ? (
                 <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
@@ -4249,7 +4295,7 @@ function CategoryBlitzScreen({
           {/* Opponents' live progress - hidden in solo (there are none). */}
           {!isSolo && (
             <div className="cb-progress">
-              <div className="cb-section-label">OTHER PLAYERS</div>
+              <div className="cb-section-label">THE GALLERY</div>
               {others.length === 0 ? (
                 <span className="game-used-empty">NO OTHER PLAYERS</span>
               ) : (
