@@ -177,9 +177,14 @@ export function dealOffers(ownedIds, rnd = Math.random) {
 
 // Wins paid for a completed/ended run, scaled to the round reached. A full 10-round
 // clear pays the cleared cumulative; a wall-out pays what was banked up to the miss.
-// Kept deliberately conservative vs. solo per-word wins so a run is rewarding, not
-// economy-breaking (see the econ note in config.js).
+// PAYOUT TUNE (JOB A, run-econ-sim.mjs): the original /100 divisor made a run earn only
+// ~60–95 wins/min against a shipped 5-mode band of 625–963 (winsmin-sim), i.e. ~10× too
+// STINGY — moving the unlock to LV8 would have handed new players a headline mode that
+// pays a tenth of everything else, blowing the wins/min spread from 1.54× to ~13×. /10
+// lands a run at ~590–940 wins/min (mid-pack, below FUSE/CHAIN), holding the spread at
+// ~1.5–1.6×. So the tune is UP to sit IN the band — not a nerf, a correction. It still
+// never dominates (the exploding SCORE governs the WALL/survival, not the wins).
 export function runWinsPayout(cumulativeScore, roundReached) {
   const progress = Math.min(1, roundReached / RUN_ROUNDS);
-  return Math.round((cumulativeScore / 100) * progress);
+  return Math.round((cumulativeScore / 10) * progress);
 }

@@ -346,3 +346,12 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   stranger-after-5min + biggest blocker + one argued change + what to cut.
 
 - 2026-09-04  JOB 1 (feat/run-mode): built RUN as a real mode (runMode/{engine,config,useRunMode,RunMode}); engine ported+calibrated from proto/run-mode-2, reuses progress/{rarity,combo,luck}; menu card headline LV30-gated; wall/round/draft/over screens wired into App+Homepage. BE-PICKY composed (1 round). Shots claude/run-shots/. Running full gate.
+- 2026-09-05  JOB A DONE (feat/run-mode): moved RUN unlock LV30->LV8 (RUN_UNLOCK_LEVEL) — LV30 was
+  ~32,262 letters (~108 sessions), burying the game's most compelling loop; LV8 ~189 letters (<1 session)
+  so a new player meets it first sitting. CHAIN LV20 / FUSE LV25 unchanged. ECON (claude/run-econ-sim.mjs
+  vs winsmin-sim's live 5-mode band 625-963/1.54x): at /100 a run earned only ~60-95 wins/min = ~10x too
+  STINGY, which would blow the spread to ~13x on the LOW end (run does NOT dominate — the opposite).
+  FIX per rails ("tune payout, don't move the gate back"): runWinsPayout /100 -> /10. Post-tune run =
+  594-938 wins/min across the 12-20 wpm band, spread holds 1.54-1.62x (<2x). unit 473, lint 0, build 0.
+  NOTE: my greedy sim clears 53% vs JOB1's 34.5% (drafter differs) — irrelevant to the linear payout tune.
+  BRANCH ONLY, e2e deferred to Andy's play-test.
