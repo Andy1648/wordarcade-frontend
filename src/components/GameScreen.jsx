@@ -2340,15 +2340,15 @@ export default function GameScreen({
   // "STARTING GAME" placeholder) — a hook declared AFTER a conditional return trips React #310
   // ("rendered more hooks than last time") the instant the first turn_update lands and gameState
   // flips from null to set, white-screening Word Bomb in-game (same trap the endBlurb note above
-  // guards against). Shared across ALL game surfaces via the onboarding flag; rendered ONLY inside
-  // the live input row below, dismissed by the first key/tap (the pointer-events:none overlay lets
-  // it through so the keystroke still lands in the field).
+  // guards against). Shown ONCE PER MODE (keyed on gameType via the onboarding set); rendered ONLY
+  // inside the live input row below, dismissed by the first key/tap (the pointer-events:none overlay
+  // lets it through so the keystroke still lands in the field — never blocked, never delayed).
   const [gameSpot, setGameSpot] = useState(false);
   useEffect(() => {
-    if (!hasSeenGameSpotlight()) setGameSpot(true);
-  }, []);
+    if (!hasSeenGameSpotlight(gameType)) setGameSpot(true);
+  }, [gameType]);
   const dismissGameSpot = () => {
-    markGameSpotlightSeen();
+    markGameSpotlightSeen(gameType);
     setGameSpot(false);
   };
 
@@ -3115,8 +3115,8 @@ export default function GameScreen({
             {gameSpot && inputEnabled && (
               <Spotlight
                 targetSelector=".game-input"
-                caption={isCategory ? 'NAME SOMETHING IN THE CATEGORY' : 'TYPE A WORD WITH THESE LETTERS'}
-                sub="START TYPING"
+                caption={isCategory ? 'NAME THINGS IN THE CATEGORY' : 'TYPE A WORD WITH THE LETTERS'}
+                sub={isCategory ? 'AI JUDGES — GET CREATIVE' : 'BEFORE THE BOMB BLOWS'}
                 onDismiss={dismissGameSpot}
               />
             )}
@@ -3615,15 +3615,15 @@ function CategoryBlitzScreen({
   const [showCountdown, setShowCountdown] = useState(false);
   const prevRoundRef = useRef(null);
 
-  // ONE-TIME first-game input spotlight (fix/logic-and-onboarding) — Category Blitz copy.
-  // Shared across all game surfaces via the onboarding flag; rendered only inside the live
-  // input row below, dismissed by the first key/tap (the overlay never blocks it).
+  // FIRST-ENTRY input spotlight — Category Blitz copy. Shown ONCE PER MODE (keyed on
+  // 'category-blitz' via the onboarding set); rendered only inside the live input row below,
+  // dismissed by the first key/tap (the overlay never blocks or delays it).
   const [gameSpot, setGameSpot] = useState(false);
   useEffect(() => {
-    if (!hasSeenGameSpotlight()) setGameSpot(true);
+    if (!hasSeenGameSpotlight('category-blitz')) setGameSpot(true);
   }, []);
   const dismissGameSpot = () => {
-    markGameSpotlightSeen();
+    markGameSpotlightSeen('category-blitz');
     setGameSpot(false);
   };
 
@@ -4194,8 +4194,8 @@ function CategoryBlitzScreen({
             {gameSpot && !showCountdown && (
               <Spotlight
                 targetSelector=".game-input"
-                caption="NAME SOMETHING IN THE CATEGORY"
-                sub="START TYPING"
+                caption="NAME THINGS IN THE CATEGORY"
+                sub="AI JUDGES — GET CREATIVE"
                 onDismiss={dismissGameSpot}
               />
             )}

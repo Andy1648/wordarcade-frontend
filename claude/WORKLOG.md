@@ -344,3 +344,15 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-05  JOB D START (feat/game-onboarding, BRANCH ONLY): per-mode first-entry input
+  spotlight for CHAIN/FUSE/WORD BOMB/CATEGORY BLITZ/SAT RUSH. Repurpose taw.seenGameSpotlight
+  from single shared flag to a per-mode set; add SAT RUSH spotlight (had none); never block first key.
+- 2026-09-05  JOB D FINISH (feat/game-onboarding): per-mode first-entry spotlight shipped.
+  onboarding.js taw.seenGameSpotlight repurposed single-flag -> JSON array of seen mode ids
+  (legacy "1" discarded; storage-blocked degrades to in-memory show-once/session). Wired
+  chain/fuse (SoloShell spotlightMode + firstRunSub), word-bomb (gameType key), category-blitz,
+  and NEW sat-rush spotlight over .sr-slots. Proved live: first key dismisses AND lands
+  (chain "s" -> input, overlay gone, seen ["chain"]); per-mode isolation (fuse shows after
+  chain seen); sat-rush + word-bomb captions confirmed. BE-PICKY 2 rounds: r1 captions
+  overflowed 92vw@390 (chain 450px clipped), r2 all shortened to fit (<=356px). Gate: lint 0
+  errors, 464/464 unit tests, vite build exit 0.

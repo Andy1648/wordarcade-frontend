@@ -29,6 +29,8 @@ import { wordSenseWinsFactor } from '../progress/wordSense';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
+import Spotlight from '../components/Spotlight';
+import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { formatNum } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
@@ -103,6 +105,22 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   // (0 until the 3-word payout gate). Recomputed each render — pure.
   const winsTally = awardWins({ mode: 'satRush', wordsAccepted: view.cleared || 0 });
 
+  // FIRST-ENTRY spotlight over the answer slots (SAT RUSH has no <input> — it's keydown-driven,
+  // so the slots ARE the input surface). Shown ONCE PER MODE (keyed on 'sat-rush' via the
+  // onboarding set); armed only once a word is on screen and playing, so .sr-slots exists to
+  // measure. Dismissed by the first key/tap — the pointer-events:none overlay + passive capture
+  // listeners let that keystroke through to the engine, so it both dismisses AND types (never
+  // blocked, never delayed).
+  const [gameSpot, setGameSpot] = useState(false);
+  useEffect(() => {
+    if (view.phase === 'playing' && view.hasWord && !hasSeenGameSpotlight('sat-rush'))
+      setGameSpot(true);
+  }, [view.phase, view.hasWord]);
+  const dismissGameSpot = () => {
+    markGameSpotlightSeen('sat-rush');
+    setGameSpot(false);
+  };
+
   // HUD ✕ mid-run: clean abandon (stops the clock, fires run_abandoned, no results)
   // then go home. The hook's phase drop + unmount restore the music duck (see the
   // effect below) exactly like the results-screen exit does.
@@ -162,6 +180,15 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
                   the multiplier lives in its REWARD footer. */}
               <WordCard view={view} />
             </div>
+            {/* FIRST-ENTRY spotlight over the answer slots — only while a word is live. */}
+            {gameSpot && (
+              <Spotlight
+                targetSelector=".sr-slots"
+                caption="NAME THE WORD FROM ITS CLUE"
+                sub="BEFORE IT FILLS IN"
+                onDismiss={dismissGameSpot}
+              />
+            )}
           </>
         )}
       </div>

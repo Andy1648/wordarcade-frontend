@@ -55,7 +55,9 @@ export default function SoloShell({
   placeholder,
   maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
   armHint, // per-mode "how to play" line, shown until the clock arms
-  firstRunRule, // per-mode one-line rule for the ONE-TIME first-game input spotlight
+  firstRunRule, // per-mode one-line rule for the FIRST-ENTRY input spotlight
+  firstRunSub = 'START TYPING', // optional smaller line under the rule
+  spotlightMode, // per-mode id ('chain' | 'fuse') the spotlight persistence is keyed on
   rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
   fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
   phase,
@@ -78,15 +80,16 @@ export default function SoloShell({
     onSubmit();
   };
 
-  // ONE-TIME first-game spotlight over the input (shared across ALL game surfaces via the
-  // onboarding flag — the first game the player types in shows it, no other). Armed only
-  // once play begins so the target input exists; dismissed by the first key/tap (which the
-  // pointer-events:none overlay lets through, so it still lands in the field).
+  // FIRST-ENTRY spotlight over the input, shown ONCE PER MODE (keyed on spotlightMode via the
+  // onboarding set). Armed only once play begins so the target input exists; dismissed by the
+  // first key/tap (which the pointer-events:none overlay lets through, so it still lands in the
+  // field — the overlay never blocks or delays the first keystroke).
   const [gameSpot, setGameSpot] = useState(false);
   useEffect(() => {
-    if (phase === 'playing' && firstRunRule && !hasSeenGameSpotlight()) setGameSpot(true);
-  }, [phase, firstRunRule]);
-  const dismissGameSpot = () => { markGameSpotlightSeen(); setGameSpot(false); };
+    if (phase === 'playing' && firstRunRule && spotlightMode && !hasSeenGameSpotlight(spotlightMode))
+      setGameSpot(true);
+  }, [phase, firstRunRule, spotlightMode]);
+  const dismissGameSpot = () => { markGameSpotlightSeen(spotlightMode); setGameSpot(false); };
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
@@ -235,7 +238,7 @@ export default function SoloShell({
         <Spotlight
           targetSelector=".solo-input"
           caption={firstRunRule}
-          sub="START TYPING"
+          sub={firstRunSub}
           onDismiss={dismissGameSpot}
         />
       )}
