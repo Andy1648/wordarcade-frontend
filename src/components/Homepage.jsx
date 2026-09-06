@@ -30,6 +30,7 @@ import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboard
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
+import DailyCard from '../daily/DailyCard.jsx';
 import {
   PaintSplatter1,
   PaintSplatter2,
@@ -102,7 +103,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onSoloDaily, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -731,6 +732,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         </div>
 
         <div className="homepage-cards-region">
+          {/* DAILY CHALLENGE — first-class menu feature. In-flow child of the cards region
+              (joins the card cluster, NOT position:fixed → no orphan fixed UI). Launches the
+              date-seeded CHAIN daily; flips to a locked receipt once today's attempt is done. */}
+          {onSoloDaily && <DailyCard onPlay={onSoloDaily} />}
           <div className="homepage-cards-scroll">
             <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
               {GAMES.map((game) => (

@@ -38,7 +38,7 @@ const SOLO_CLOCK_CAP_MS = (() => {
   return null;
 })();
 
-export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept, mode }) {
+export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept, mode, enterRestart = true }) {
   const engineRef = useRef(null);
   if (engineRef.current === null) engineRef.current = createEngine();
 
@@ -241,14 +241,16 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   }, [createEngine, adapter]);
 
   // Enter restarts from the death card, but only once armed (guards the tutorial).
+  // enterRestart=false disables this entirely — the DAILY is one attempt/day, so its
+  // over card's Enter must NOT re-create the seeded board (the button goes to the menu).
   useEffect(() => {
-    if (phase !== 'over') return undefined;
+    if (phase !== 'over' || !enterRestart) return undefined;
     const onKey = (e) => {
       if (e.key === 'Enter' && restartArmed) restart();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, restartArmed, restart]);
+  }, [phase, restartArmed, restart, enterRestart]);
 
   useEffect(
     () => () => {

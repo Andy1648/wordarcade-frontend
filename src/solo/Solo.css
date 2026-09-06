@@ -857,3 +857,30 @@
   font-size: 14px;
   color: #cdbdf0;
 }
+
+/* DAILY over-card banner (CHAIN daily) — a header strip above the score card telling the
+   player this was today's daily and when the next resets. Flat, static (no idle animation). */
+.chain-daily-over {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.chain-daily-over-tag {
+  font-family: 'Bungee', cursive;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #ffe94a;
+}
+.chain-daily-over-next {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #cdbdf0;
+}
+.chain-daily-over-next .daily-countdown {
+  font-family: 'Bungee', cursive;
+  color: #2effe0;
+  letter-spacing: 0.04em;
+}

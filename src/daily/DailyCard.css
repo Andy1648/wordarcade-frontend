@@ -1,0 +1,153 @@
+/* DailyCard.css — menu house style: flat colour, thick COLOURED outline (a darker shade of
+   the fill, never black), hard BLACK offset box-shadow, 8px radius, Bungee display.
+   NO idle animation (menu motion law). Hover/press feedback is transform-only. */
+
+.daily-card {
+  /* In-flow block inside the menu panel — NOT position:fixed (no orphan fixed UI). */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 14px;
+  padding: 14px 16px 16px;
+  background: #1a0b2e; /* panel bg */
+  border: 4px solid #ffe94a; /* yellow — the daily's accent */
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000; /* hard offset shadow, black */
+  color: #fff;
+  text-align: center;
+}
+
+.daily-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.daily-card-kicker {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  color: #ffe94a;
+}
+
+.daily-card-mode {
+  font-family: 'Bungee', cursive;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #2effe0; /* cyan — CHAIN's colour */
+  border: 3px solid #1a9985;
+  color: #06251f;
+}
+
+.daily-card-tagline {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: #cbb8e8;
+  margin: 8px 0 12px;
+}
+
+/* PLAY button — pink fill, darker-pink outline, hard black offset shadow. 44px+ touch. */
+.daily-card-play {
+  font-family: 'Bungee', cursive;
+  font-size: 18px;
+  min-height: 48px;
+  width: 100%;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #fff;
+  background: #ff4fa3;
+  border: 4px solid #991a75;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 140ms ease;
+}
+.daily-card-play:hover {
+  transform: translate(-1px, -1px);
+}
+.daily-card-play:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.daily-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: #9a86bd;
+}
+.daily-card-best {
+  color: #ffe94a;
+  font-weight: 700;
+}
+.daily-card-sep {
+  opacity: 0.5;
+}
+
+/* LOCKED / DONE state */
+.daily-card.is-done {
+  border-color: #2effe0; /* cleared → cyan */
+}
+.daily-card-scores {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  margin: 6px 0 12px;
+}
+.daily-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.daily-score b {
+  font-family: 'Bungee', cursive;
+  font-size: 26px;
+  line-height: 1;
+  color: #2effe0;
+}
+.daily-score span {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #9a86bd;
+  margin-top: 4px;
+}
+.daily-card-share {
+  margin: 4px 0 12px;
+}
+/* Ensure the reused share button reads on the card + meets the 44px target. */
+.daily-card-share .daily-share-btn {
+  min-height: 44px;
+}
+.daily-card-locked,
+.daily-card-next {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #9a86bd;
+}
+.daily-card-clock {
+  font-family: 'Bungee', cursive;
+  color: #ffe94a;
+  letter-spacing: 0.04em;
+}
+.daily-card.is-done .daily-card-clock {
+  color: #2effe0;
+}
+
+@media (max-width: 400px) {
+  .daily-card {
+    padding: 12px 12px 14px;
+  }
+  .daily-card-kicker {
+    font-size: 16px;
+  }
+}

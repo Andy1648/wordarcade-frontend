@@ -15,6 +15,7 @@ import {
   hasPlayedToday,
   recordDaily,
   personalBest,
+  todayRecord,
   DAILY_MODES,
 } from './dailySeed.js';
 
@@ -113,4 +114,44 @@ test('state round-trips through injected storage; corrupt/absent → empty', () 
 
 test('DAILY_MODES is the three shared-seed modes', () => {
   assert.deepEqual([...DAILY_MODES].sort(), ['blitz', 'chain', 'fuse']);
+});
+
+// ---- share receipt meta (words/tiers) for the menu locked-state card ----
+test('recordDaily stores words/tiers meta and todayRecord reads it back', () => {
+  const s = emptyState();
+  const day = '2026-09-04';
+  assert.equal(todayRecord(s, 'chain', day), null, 'nothing before playing');
+  recordDaily(s, 'chain', 1200, day, { words: 9, tiers: ['fast', 'mid', 'slow'] });
+  const rec = todayRecord(s, 'chain', day);
+  assert.ok(rec, 'record present after playing today');
+  assert.equal(rec.words, 9);
+  assert.deepEqual(rec.tiers, ['fast', 'mid', 'slow']);
+  assert.equal(rec.score, 1200);
+  // A DIFFERENT day → today's record is gone (a new puzzle, playable again).
+  assert.equal(todayRecord(s, 'chain', '2026-09-05'), null);
+});
+
+test('same-day replay keeps the BETTER run receipt; a worse replay keeps the old one', () => {
+  const s = emptyState();
+  const day = '2026-09-04';
+  recordDaily(s, 'chain', 500, day, { words: 5, tiers: ['fast'] });
+  recordDaily(s, 'chain', 300, day, { words: 3, tiers: ['slow'] }); // worse → keep 500's receipt
+  let rec = todayRecord(s, 'chain', day);
+  assert.equal(rec.words, 5);
+  assert.deepEqual(rec.tiers, ['fast']);
+  recordDaily(s, 'chain', 900, day, { words: 8, tiers: ['fast', 'fast'] }); // better → adopt it
+  rec = todayRecord(s, 'chain', day);
+  assert.equal(rec.words, 8);
+  assert.equal(rec.score, 900);
+});
+
+test('words/tiers survive a storage round-trip', () => {
+  const st = memStorage();
+  const s = emptyState();
+  recordDaily(s, 'chain', 700, '2026-09-04', { words: 6, tiers: ['mid', 'mid'] });
+  save(st, s);
+  const back = load(st);
+  const rec = todayRecord(back, 'chain', '2026-09-04');
+  assert.equal(rec.words, 6);
+  assert.deepEqual(rec.tiers, ['mid', 'mid']);
 });

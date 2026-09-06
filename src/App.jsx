@@ -339,6 +339,10 @@ function App() {
   // can't silently forfeit the day's attempt.
   // (isDailyGame moved into hooks/useProgressionEvents.js — refactor/app-split step 3.)
   const [confirmLeaveDaily, setConfirmLeaveDaily] = useState(false);
+  // True while the CHAIN view is running today's date-seeded DAILY (client solo daily).
+  // Set by the menu's Daily card, cleared when CHAIN is entered normally; only read while
+  // view === CHAIN_VIEW, so it never affects any other screen.
+  const [chainDaily, setChainDaily] = useState(false);
   // Which mode the in-progress game is - 'word-bomb' | 'category-blitz'.
   // Learned authoritatively from the game_started message so GameScreen
   // knows which prompt/fields to render.
@@ -2088,8 +2092,8 @@ function App() {
     // mode is reachable only with the flag on (?satRush=1) during dev.
     screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} />;
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
-    // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
-    screen = <ChainGame onExit={goHome} />;
+    // Reachable via ?chain=1 (free play) or the menu's DAILY card (date-seeded one attempt).
+    screen = <ChainGame onExit={goHome} daily={chainDaily} />;
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
     screen = <FuseGame onExit={goHome} />;
@@ -2107,7 +2111,14 @@ function App() {
         serverEventId={serverEventId}
         onSelectGame={(gameId) => goToLobby(gameId)}
         onSatRush={goToSatRush}
-        onChain={goToChain}
+        onChain={() => {
+          setChainDaily(false); // normal free-play CHAIN
+          goToChain();
+        }}
+        onSoloDaily={() => {
+          setChainDaily(true); // today's date-seeded CHAIN daily (one attempt)
+          goToChain();
+        }}
         onFuse={goToFuse}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}

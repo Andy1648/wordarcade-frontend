@@ -96,7 +96,15 @@ export function load(storage) {
     for (const m of DAILY_MODES) {
       const r = blob.byMode[m];
       if (r && typeof r === 'object' && typeof r.day === 'string') {
-        s.byMode[m] = { day: r.day, score: Number(r.score) || 0, best: Number(r.best) || 0, bestDay: r.bestDay || null };
+        s.byMode[m] = {
+          day: r.day,
+          score: Number(r.score) || 0,
+          best: Number(r.best) || 0,
+          bestDay: r.bestDay || null,
+          // Extra fields carried for the shareable result card (see recordDaily meta).
+          words: Number(r.words) || 0,
+          tiers: Array.isArray(r.tiers) ? r.tiers : [],
+        };
       }
     }
     return s;
@@ -122,14 +130,22 @@ export function hasPlayedToday(state, mode, dateKey = localDateKey()) {
 /** Record a completed daily. Sets today as played for the mode and updates the
  *  all-time personal best. A SECOND call for the same day is a no-op on `day`
  *  (already played) but still lifts the personal best if the score is higher.
+ *  `meta` (optional) carries the shareable-receipt data: { words, tiers } — stored
+ *  for the same day (best-of on words) so the menu can render the existing share card.
  *  Returns the mutated state. */
-export function recordDaily(state, mode, score, dateKey = localDateKey()) {
+export function recordDaily(state, mode, score, dateKey = localDateKey(), meta = {}) {
   if (!DAILY_MODES.includes(mode)) return state;
   const s = Number(score) || 0;
   const prev = state.byMode[mode];
   const best = Math.max(prev ? prev.best : 0, s);
   const bestDay = prev && prev.best >= s ? (prev.bestDay || null) : dateKey;
-  state.byMode[mode] = { day: dateKey, score: s, best, bestDay };
+  // Keep the best-of words/tiers for the CURRENT day (a same-day replay that scores
+  // higher also carries the better receipt); a new day starts fresh from this run.
+  const sameDay = prev && prev.day === dateKey;
+  const keepPrevReceipt = sameDay && prev.score >= s;
+  const words = keepPrevReceipt ? prev.words || 0 : Number(meta.words) || 0;
+  const tiers = keepPrevReceipt ? prev.tiers || [] : Array.isArray(meta.tiers) ? meta.tiers : [];
+  state.byMode[mode] = { day: dateKey, score: s, best, bestDay, words, tiers };
   return state;
 }
 
@@ -137,4 +153,11 @@ export function recordDaily(state, mode, score, dateKey = localDateKey()) {
 export function personalBest(state, mode) {
   const r = state && state.byMode ? state.byMode[mode] : null;
   return r ? r.best : 0;
+}
+
+/** Today's completed record for a mode ({ day, score, best, words, tiers }), or null
+ *  if today's daily hasn't been played yet. Used by the menu's locked-state card. */
+export function todayRecord(state, mode, dateKey = localDateKey()) {
+  const r = state && state.byMode ? state.byMode[mode] : null;
+  return r && r.day === dateKey ? r : null;
 }

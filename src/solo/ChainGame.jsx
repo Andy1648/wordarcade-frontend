@@ -20,6 +20,8 @@ import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
+import DailyCountdown from '../daily/DailyCountdown.jsx';
+import { dailyRng, localDateKey, load as loadDailySeed, save as saveDailySeed, recordDaily } from '../daily/dailySeed.js';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -47,7 +49,7 @@ const CHAIN_MOTIF = (
   </svg>
 );
 
-export default function ChainGame({ onExit }) {
+export default function ChainGame({ onExit, daily = false }) {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0); // bump to retry the word-data fetch
@@ -69,8 +71,16 @@ export default function ChainGame({ onExit }) {
   }, [loadKey]);
 
   const createEngine = useCallback(
-    () => createChainEngine({ accept: data.accept, topCommon: data.topCommon }),
-    [data]
+    () =>
+      createChainEngine({
+        accept: data.accept,
+        topCommon: data.topCommon,
+        // DAILY: seed the opener + reroutes from the date so everyone worldwide gets the
+        // SAME board today. A fresh rng is built per createEngine call; in daily mode there
+        // is no in-run replay (the over card returns to the menu), so the seed is stable.
+        rng: daily ? dailyRng(localDateKey(), 'chain') : undefined,
+      }),
+    [data, daily]
   );
 
   const adapter = useMemo(
@@ -97,10 +107,12 @@ export default function ChainGame({ onExit }) {
       />
     );
   }
-  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return (
+    <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} daily={daily} />
+  );
 }
 
-function ChainInner({ data, createEngine, adapter, onExit }) {
+function ChainInner({ data, createEngine, adapter, onExit, daily = false }) {
   // Persisted all-time CHAIN run count. onRunStart fires from the hook on the FIRST run
   // (mount) and on every restart — button OR Enter — so both restart paths are counted
   // (the Enter path lives inside the hook, which is why the bump must live there too).
@@ -113,6 +125,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     onRunStart: () => setRuns(bumpChainRuns()),
     // Each accepted CHAIN word counts toward the daily streak (this mode never calls addWords).
     onAccept: touchStreak,
+    // DAILY is one attempt/day — disable Enter-to-restart so the seeded board can't be replayed.
+    enterRestart: !daily,
   });
   const s = g.engine.state;
 
@@ -170,6 +184,24 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
   }, [g.phase]);
+
+  // DAILY: record THIS run as today's one attempt, the first time this mount hits 'over'.
+  // Guarded to fire once (a daily has no in-run replay), and recordDaily is itself best-of
+  // for the day, so nothing is corrupted even if it somehow ran twice. Persists the score,
+  // the all-time best, and the receipt data (words + speed tiers) for the menu share card.
+  const dailyRecordedRef = useRef(false);
+  useEffect(() => {
+    if (!daily || g.phase !== 'over' || dailyRecordedRef.current) return;
+    dailyRecordedRef.current = true;
+    try {
+      const store = typeof window !== 'undefined' ? window.localStorage : null;
+      const st = loadDailySeed(store);
+      recordDaily(st, 'chain', s.score, localDateKey(), { words: s.k, tiers: g.tierLog });
+      saveDailySeed(store, st);
+    } catch {
+      /* storage unavailable — the run still shows its result, just isn't persisted */
+    }
+  }, [daily, g.phase, s.score, s.k, g.tierLog]);
 
   // Live wins tally (item 2): what the run will pay so far, ticking up as links land (0 until
   // the 3-word payout gate). Pure recompute each render from the link count.
@@ -312,11 +344,28 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
 
   // First-run tutorial card: the player's very first CHAIN run (runs === 1), OR any run
   // that ended under 3 words — the runs where a how-to-play card beats a score card.
-  const firstRun = runs === 1 || s.k < 3;
-  const overCard = firstRun ? (
+  // The DAILY always shows the real score card (never the tutorial), so its result reads
+  // as an official attempt with SCORE/BEST + the share receipt.
+  const firstRun = !daily && (runs === 1 || s.k < 3);
+  const scoreCard = firstRun ? (
     <ChainFirstRunCard />
   ) : (
     <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
+  );
+  // DAILY over card: a header banner ("TODAY'S DAILY") + the score card + the countdown to
+  // tomorrow. The restart button becomes BACK TO MENU (one attempt/day — no in-run replay).
+  const overCard = daily ? (
+    <>
+      <div className="chain-daily-over">
+        <span className="chain-daily-over-tag">TODAY&apos;S DAILY · CHAIN</span>
+        <span className="chain-daily-over-next">
+          NEXT DAILY IN <DailyCountdown />
+        </span>
+      </div>
+      {scoreCard}
+    </>
+  ) : (
+    scoreCard
   );
 
   // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
@@ -354,11 +403,13 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       over={{
         score: s.score,
         best: g.best,
-        restartArmed: g.restartArmed,
-        restart: g.restart,
+        // DAILY is one attempt/day: the button always returns to the menu (armed at once),
+        // never restarts the seeded board. Non-daily keeps the normal restart flow.
+        restartArmed: daily ? true : g.restartArmed,
+        restart: daily ? onExit : g.restart,
         card: overCard,
         bare: firstRun, // tutorial card: no SCORE/BEST line
-        restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
+        restartLabel: daily ? 'BACK TO MENU' : firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
         share: (
           <CopyResultButton
