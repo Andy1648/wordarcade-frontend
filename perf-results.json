@@ -1,0 +1,151 @@
+{
+  "cpu1x": {
+    "menu": {
+      "infiniteAtRest": 0,
+      "idle": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 360,
+        "long50": 0
+      },
+      "beatSim": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0
+      },
+      "keyBurst": {
+        "median": 16.7,
+        "p95": 33.4,
+        "long50": 0
+      }
+    },
+    "sat": {
+      "infiniteAtRest": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      },
+      "pressure": {
+        "median": 16.7,
+        "p95": 16.8,
+        "max": 16.8,
+        "frames": 360,
+        "long50": 0
+      }
+    },
+    "chain": {
+      "infiniteAtRest": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      },
+      "pressure": {
+        "median": 16.7,
+        "p95": 16.8,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      }
+    },
+    "fuse": {
+      "infiniteAtRest": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      },
+      "pressure": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      }
+    }
+  },
+  "cpu4x": {
+    "menu": {
+      "infiniteAtRest": 0,
+      "idle": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 360,
+        "long50": 0
+      },
+      "beatSim": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0
+      },
+      "keyBurst": {
+        "median": 33.3,
+        "p95": 66.7,
+        "long50": 27
+      }
+    },
+    "sat": {
+      "infiniteAtRest": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      },
+      "pressure": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      }
+    },
+    "chain": {
+      "infiniteAtRest": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 360,
+        "long50": 0
+      },
+      "pressure": {
+        "median": 16.7,
+        "p95": 16.8,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      }
+    },
+    "fuse": {
+      "infiniteAtRest": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.8,
+        "max": 16.8,
+        "frames": 360,
+        "long50": 0
+      },
+      "pressure": {
+        "median": 16.7,
+        "p95": 16.7,
+        "max": 16.8,
+        "frames": 361,
+        "long50": 0
+      }
+    }
+  },
+  "tti3g": {
+    "error": "Error: page.waitForFunction: TypeError: Cannot read properties of null (reading 'innerText')\n    at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:34)\n    at predicate (eval at evaluate (:311:30), <anonymous>:7:27)\n    at next (eval at evaluate (:311:30), <anonymous>:29:33)\n    "
+  }
+}

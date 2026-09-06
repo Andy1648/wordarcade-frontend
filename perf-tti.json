@@ -1,0 +1,14 @@
+{
+  "menuInteractiveMs": 9179,
+  "dictReadyMs": 9192,
+  "nav": {
+    "domInteractive": 2901,
+    "domContentLoaded": 6544,
+    "loadEvent": 0
+  },
+  "transfer": {
+    "totalKB": 220,
+    "jsKB": 148,
+    "reqCount": 17
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "cpu1x": {
+    "satPlay": {
+      "infiniteRunning": 1,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0,
+        "frames": 300
+      },
+      "pressure_typing": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0,
+        "frames": 299
+      }
+    },
+    "chainPlay": {
+      "infiniteRunning": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0,
+        "frames": 301
+      },
+      "pressure_typing": {
+        "median": 16.7,
+        "p95": 16.7,
+        "long50": 0,
+        "frames": 300
+      }
+    },
+    "fusePlay": {
+      "infiniteRunning": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "long50": 0,
+        "frames": 301
+      },
+      "pressure_typing": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0,
+        "frames": 300
+      }
+    },
+    "wordBomb": {
+      "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+      "reachedText": "WORD\nBOOM\nPOW\nZAP\nFIRE\nGG\nEZ\nWOW\nEPIC\nRIP\nYOLO\nNOOB\n!!!\nWOW\nEPIC\nPICK YOUR BEAT\nBRIEFING\nstudy five words, then hunt the"
+    },
+    "blitz": {
+      "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+      "reachedText": "WORD\nBOOM\nPOW\nZAP\nFIRE\nGG\nEZ\nWOW\nEPIC\nRIP\nYOLO\nNOOB\n!!!\nWORD\nRIP\nPICK YOUR BEAT\nBRIEFING\nstudy five words, then hunt the"
+    }
+  },
+  "cpu4x": {
+    "satPlay": {
+      "infiniteRunning": 1,
+      "calm": {
+        "median": 16.7,
+        "p95": 33.3,
+        "long50": 0,
+        "frames": 286
+      },
+      "pressure_typing": {
+        "median": 16.7,
+        "p95": 66.7,
+        "long50": 13,
+        "frames": 198
+      }
+    },
+    "chainPlay": {
+      "infiniteRunning": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "long50": 0,
+        "frames": 300
+      },
+      "pressure_typing": {
+        "median": 16.7,
+        "p95": 16.7,
+        "long50": 0,
+        "frames": 300
+      }
+    },
+    "fusePlay": {
+      "infiniteRunning": 0,
+      "calm": {
+        "median": 16.7,
+        "p95": 16.7,
+        "long50": 0,
+        "frames": 301
+      },
+      "pressure_typing": {
+        "median": 16.7,
+        "p95": 16.8,
+        "long50": 0,
+        "frames": 299
+      }
+    }
+  }
+}
