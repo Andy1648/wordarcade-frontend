@@ -425,3 +425,30 @@ LONG HAUL & SNOWBALL text mismatches. Boring (flat, no cost): DEEP POCKETS, SCRA
 Best-designed: GLASS CANNON. Proposed 3 replacements (REDLINE/HIGH ROLLER/AVALANCHE) w/ numbers.
 NOTE: origin/feat/endgame does NOT contain src/runMode/ (branches are independent, not stacked) —
 run stack lives on feat/run-mode. Integration branch combines all correctly regardless.
+
+## JOBS 2-6 DONE (all REPORT/feature branches pushed & verified, NONE merged)
+- JOB 2 (chore/run-sim-deep, 945f4ae): 200-run draft sim. Win rates GREEDY 22% / BALANCED 4% /
+  RISK-AVERSE 0% / RANDOM 0%. Most runs die round 2; wall explodes ~1.8x/round. DOMINANT PAIR:
+  glass-cannon+momentum in 98.7% of wins. Drafting is SOLVED (greedy strictly wins). Fixes: cap
+  MOMENTUM / two-side it, drop GLASS CANNON to x2 or add a safe multiplier, lower WALL.g2 1.8->1.5.
+  Confirmed 3 live-knob bugs: ctx.owned=0 (SNOWBALL dead), wprMul never read (SHORT FUSE downside
+  dead), luckyOdds ignored (LUCKY CHARM/JACKPOT).
+- JOB 3 (chore/run-modifiers, f3b0b40): 18-modifier audit. DEAD: HOT STREAK, UNCAPPED, RARE BREED
+  (dominated). BROKEN/TEXT-MISMATCH: SNOWBALL (flat x0.7 forever), RARE BREED (text x6 code x1.5),
+  LONG HAUL. BORING: DEEP POCKETS, SCRABBLE BAG, MOMENTUM. Best: GLASS CANNON. 3 replacements
+  proposed (REDLINE/HIGH ROLLER/AVALANCHE) w/ numbers. Note: engine.test.js:33 pins 15 down:true.
+- JOB 4 (feat/run-gameover, 10f9577): run-over screen redesign. Stats row (round/banked/wins),
+  frozen red wall-miss meter, the drafted stack as a FANNED HAND of card art + legible colour-coded
+  legend, big RUN AGAIN (remount-by-key fresh run) + LEAVE. Fits 5- and 9-card hands; safe-center.
+  BE-PICKY 3 rounds (overflow->fit, name-clip->legend, arc/legend clearance). Gate green (487 tests).
+- JOB 5 (feat/sat-srs-2, 77a69bd): SAT Rush Leitner SRS. Was already built by this session; audited
+  + re-gated (472 tests) + re-simmed. Repeat rate current ~19.5% -> new ~34.4% (100% appropriate,
+  mean sessions-to-review 183.6->120.8). "Words you keep missing" on results + Stats.
+- JOB 6 (feat/daily-2, pushed): daily made first-class. feat/daily-seed was already in main (empty
+  diff); seed layer existed but unwired. Wired: deterministic per-date CHAIN seed (proof given),
+  1-attempt/day lock, live countdown to local midnight, personal best, reuses existing share card,
+  DAILY card on menu joining the card cluster (not fixed). Gate green (475 tests on main base).
+
+## JOB 1 e2e gate: first run polluted (its 4173 preview died under memory pressure from parallel
+## dev/preview servers -> ERR_CONNECTION_REFUSED cascade). Killed competing servers, re-running
+## clean at --workers=2 --retries=2. Integration branch NOT pushed until a clean e2e result.
