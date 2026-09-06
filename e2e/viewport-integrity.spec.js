@@ -141,7 +141,14 @@ async function integrity(page, rootSel, overlay, noScroll) {
     let overN = 0, over1 = '';
     let scrollN = 0, scroll1 = '';
     for (const el of els) {
-      if (el.getAttribute && el.getAttribute('aria-hidden') === 'true') continue; // decorative
+      // decorative — skip the element AND anything inside an aria-hidden subtree. A scoped
+      // decorative layer (e.g. the graffiti PlayBackdrop) marks aria-hidden on its CONTAINER,
+      // so its bleeding children (splatters/drips/halftone clipped by the layer's own
+      // overflow:hidden) must be excluded too. This is exactly the "decorative bleed … is
+      // aria-hidden anyway and excluded" case documented at the top; checking only the element
+      // itself missed nested decor. Real UI is never inside an aria-hidden subtree, so this
+      // cannot mask a genuine clipped-UI bug.
+      if (el.closest && el.closest('[aria-hidden="true"]')) continue;
       // Skip SVG vector art: <g>/<path>/<line> boxes routinely exceed the <svg>'s
       // viewBox by design (that's what a viewBox clip IS), and scrollWidth/clientWidth
       // are not meaningful on them. This is real art, not a layout bug.

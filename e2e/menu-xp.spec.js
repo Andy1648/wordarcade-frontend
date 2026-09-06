@@ -268,8 +268,10 @@ test.describe('tap XP (coarse pointer)', () => {
         };
       });
 
-    // (a) tap on a game card → credits nothing (interactive target)
-    const card = await page.locator('.game-card').first().boundingBox();
+    // (a) tap on a game card → credits nothing (interactive target). Must be an UNLOCKED card:
+    // the first card is now THE RUN, which is level-gated, and a LOCKED card intentionally
+    // credits +10 like empty space ("being locked must not feel dead" — see useXpCapture.js).
+    const card = await page.locator('.game-card:not(.locked)').first().boundingBox();
     const b1 = await read();
     await tap(Math.round(card.x + card.width / 2), Math.round(card.y + card.height / 2));
     await page.waitForTimeout(60);
@@ -336,8 +338,10 @@ test.describe('desktop clicks count (fine pointer)', () => {
     expect(a1.into - b1.into).toBe(10); // desktop click credits +10 into the level
     expect(a1.lv).toBe(b1.lv); // (no boundary crossed on a fresh menu)
 
-    // (b) click on a game card → credits nothing (interactive target is ignored)
-    const card = await page.locator('.game-card').first().boundingBox();
+    // (b) click on a game card → credits nothing (interactive target is ignored). Must be an
+    // UNLOCKED card — the first card (THE RUN) is level-gated, and a LOCKED card intentionally
+    // credits +10 like empty space (see useXpCapture.js).
+    const card = await page.locator('.game-card:not(.locked)').first().boundingBox();
     const b2 = await read();
     await page.mouse.click(Math.round(card.x + card.width / 2), Math.round(card.y + card.height / 2));
     await page.waitForTimeout(60);

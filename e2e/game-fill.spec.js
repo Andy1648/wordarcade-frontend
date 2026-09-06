@@ -112,7 +112,11 @@ async function measure(page) {
     const over = [];
     for (const node of root.querySelectorAll('*')) {
       if (node === root) continue;
-      if (node.getAttribute && node.getAttribute('aria-hidden') === 'true') continue;
+      // Decorative art is exempt — and a scoped decorative layer (the graffiti PlayBackdrop)
+      // marks aria-hidden on its CONTAINER, so its children (splatters/drips whose pre-clip
+      // layout box spills past the frame but are visually cropped by the layer's own
+      // overflow:hidden) must be exempt too. Check the whole aria-hidden subtree, not just self.
+      if (node.closest && node.closest('[aria-hidden="true"]')) continue;
       if (node.namespaceURI === 'http://www.w3.org/2000/svg') continue;
       const cs = getComputedStyle(node);
       if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity || '1') < 0.01) continue;

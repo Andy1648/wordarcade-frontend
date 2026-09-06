@@ -452,3 +452,19 @@ run stack lives on feat/run-mode. Integration branch combines all correctly rega
 ## JOB 1 e2e gate: first run polluted (its 4173 preview died under memory pressure from parallel
 ## dev/preview servers -> ERR_CONNECTION_REFUSED cascade). Killed competing servers, re-running
 ## clean at --workers=2 --retries=2. Integration branch NOT pushed until a clean e2e result.
+
+## JOB 1 e2e — diagnosed & fixed 65 failures (all in 4 e2e specs), verified via subset (881 pass, 0 fail)
+Full clean gate (workers=2) found 65 real failures (not infra). Root causes, all from the merged branches:
+1. viewport-integrity (~60) + game-fill (2): the fix/play-backdrop graffiti layer marks aria-hidden on
+   its CONTAINER, but both specs' clip/overflow checks skipped aria-hidden per-ELEMENT only, so the
+   backdrop's decorative children (splatters/drips whose pre-clip layout box spills past the layer's
+   own overflow:hidden) were flagged. Fixed both to skip the whole aria-hidden subtree via
+   closest('[aria-hidden="true"]') — this is exactly the "decorative bleed ... aria-hidden anyway and
+   excluded" case each spec's own header comment documents. Cannot mask real UI (real UI is never
+   aria-hidden).
+2. menu-xp (2) + error-boundaries (1): feat/run-mode made THE RUN the FIRST menu card, and it's
+   level-gated (locked at LV8) for a fresh account. The specs clicked/tapped .game-card:first (now the
+   locked RUN card). A locked card INTENTIONALLY credits +10 XP ("being locked must not feel dead" —
+   useXpCapture.js) and can't be clicked (aria-disabled). Updated the 3 specs to target
+   .game-card:not(.locked):first (an unlocked, dialog-opening card). App behavior is correct; tests
+   were stale. Subset re-run of all 4 specs: 881 passed, 0 failed.
