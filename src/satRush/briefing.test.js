@@ -123,6 +123,71 @@ test('the one review slot takes the WEAKEST due needs-review word, and it leads'
   assert.equal(new Set(b.words.map((r) => r.word)).size, 5);
 });
 
+// --- DUE → WEAK → NEW priority (reviewCap + includeWeak) --------------------
+// Build a state with ONE due-needs-review word and ONE weak-but-not-yet-due word,
+// then check each selector config surfaces the right review tiers.
+function dueAndWeakState() {
+  const s = freshState();
+  s.session = 1;
+  // 'bravo' — missed once at s1 (box 0). At s5 its interval (1) has elapsed → DUE,
+  // and its last encounter was a miss → needsReview. seen 1, so NOT weak-by-rate.
+  recordResult(s, 'bravo', { cleared: false, stage: 2, revealedCount: 5 });
+  // 'alpha' — missed at s1, then a give-away clear at s3 (box 1, ante 1). box-1
+  // interval is 3, lastSeen 3, so at s5 it is NOT due (5-3 < 3); but correct-rate is
+  // 1/2 = .5 and its last encounter was a give-away → it IS weak-by-rate + needsReview.
+  recordResult(s, 'alpha', { cleared: false, stage: 2, revealedCount: 5 });
+  s.session = 3;
+  recordResult(s, 'alpha', { cleared: true, stage: 2, revealedCount: 4 });
+  return s;
+}
+
+test('default selector (reviewCap 1, includeWeak off) surfaces only the DUE word', () => {
+  const s = dueAndWeakState();
+  const b = pickBriefing({ state: s, session: 5, words: mixedPool(), rng: IDENTITY_RNG });
+  assert.equal(b.reviewCount, 1, 'one review slot by default');
+  assert.ok(b.reviewWords.has('bravo'), 'the DUE word is reviewed');
+  assert.ok(!b.reviewWords.has('alpha'), 'the WEAK-not-due word is NOT reached without includeWeak');
+});
+
+test('reviewCap 2 alone still needs includeWeak to reach the WEAK tier', () => {
+  const s = dueAndWeakState();
+  const b = pickBriefing({ state: s, session: 5, words: mixedPool(), rng: IDENTITY_RNG, reviewCap: 2 });
+  assert.equal(b.reviewCount, 1, 'only the DUE word — WEAK tier is gated behind includeWeak');
+  assert.ok(b.reviewWords.has('bravo'));
+  assert.ok(!b.reviewWords.has('alpha'));
+});
+
+test('DUE → WEAK → NEW: reviewCap 2 + includeWeak surfaces DUE then WEAK, DUE first', () => {
+  const s = dueAndWeakState();
+  const b = pickBriefing({
+    state: s, session: 5, words: mixedPool(), rng: IDENTITY_RNG, reviewCap: 2, includeWeak: true,
+  });
+  assert.equal(b.reviewCount, 2, 'both review slots filled: DUE + WEAK');
+  assert.ok(b.reviewWords.has('bravo') && b.reviewWords.has('alpha'));
+  // DUE leads WEAK in the deck order.
+  const words = b.words.map((r) => r.word);
+  assert.ok(words.indexOf('bravo') < words.indexOf('alpha'), 'the DUE word precedes the WEAK one');
+  assert.equal(b.words.length, 5);
+  assert.equal(new Set(words).size, 5, 'no duplicates');
+});
+
+test('over-repeat guard holds under reviewCap 2 + includeWeak: cold player gets ZERO reviews', () => {
+  const pool = bigPool(120);
+  const s = freshState();
+  const rng = mulberry32(0xc01d2);
+  for (let run = 1; run <= 12; run++) {
+    s.session = run;
+    const b = pickBriefing({
+      state: s, session: run, words: pool, rng,
+      exclude: (s.lastBriefed || []).flat(), reviewCap: 2, includeWeak: true,
+    });
+    assert.equal(b.reviewCount, 0, `run ${run}: no review when everything is cleared cold`);
+    const deck = b.words.map((r) => r.word);
+    s.lastBriefed = [...(s.lastBriefed || []), deck].slice(-3);
+    for (const w of deck) recordResult(s, w, { cleared: true, stage: 0, revealedCount: 0 });
+  }
+});
+
 test('a cold-cleared due word is NOT reviewed — deck is all fresh', () => {
   const s = freshState();
   s.session = 1;

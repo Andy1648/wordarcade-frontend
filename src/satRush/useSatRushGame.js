@@ -585,6 +585,12 @@ export function useSatRushGame() {
         words: WORDS,
         rng: Math.random,
         exclude: recentDecks.flat(),
+        // Spaced-repetition priority DUE → WEAK → NEW: up to 2 review slots so the
+        // WEAK (low correct-rate, not-yet-due) tier is reachable, not just DUE. Still
+        // a hard cap and never backfilled — a cold player gets 0 reviews (see
+        // briefing.js). The repeat-rate sim confirms this stays bounded (~sub-40%).
+        reviewCap: 2,
+        includeWeak: true,
       });
       const dealtDeck = briefingRef.current.words.map((r) => r.word);
       lex.lastBriefed = [...recentDecks, dealtDeck].slice(-3);

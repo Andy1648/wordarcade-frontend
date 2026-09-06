@@ -216,6 +216,38 @@ export function weakWords(state) {
   return out;
 }
 
+/** Lifetime correct-rate for a word: cleared / seen (0 for a never-seen word). The
+ *  "how reliably do they get it" score that drives the WEAK selector tier. */
+export function correctRate(rec) {
+  return rec && rec.seen > 0 ? rec.cleared / rec.seen : 0;
+}
+
+/**
+ * WEAK-by-correct-rate words: cleared unreliably over their history — seen enough
+ * to judge (>= minSeen), not yet mastered, and captured less than `maxRate` of the
+ * time. This is the CORRECTNESS-driven review tier (distinct from dueWords, which is
+ * SCHEDULE-driven): it surfaces a chronically shaky word EVEN BEFORE its Leitner
+ * interval elapses, so a word the player keeps fumbling doesn't have to wait out the
+ * box gap. Ranked worst-first: lowest correct-rate, then most-missed, then name (so
+ * the order is deterministic). `exclude` skips words handled elsewhere (e.g. already
+ * chosen as DUE). Returns a plain word-string array.
+ */
+export function weakByRate(state, { minSeen = 2, maxRate = 0.6, exclude } = {}) {
+  const ex = exclude instanceof Set ? exclude : new Set(exclude || []);
+  const out = [];
+  for (const w of Object.keys(state.records)) {
+    if (ex.has(w)) continue;
+    const rec = state.records[w];
+    if (rec.box >= MASTERY_BOX) continue; // learned since — not weak any more
+    if (rec.seen < minSeen) continue; // too little evidence to call it weak
+    const rate = correctRate(rec);
+    if (rate >= maxRate) continue; // captures it reliably enough
+    out.push({ w, rate, missed: rec.missed });
+  }
+  out.sort((a, b) => a.rate - b.rate || b.missed - a.missed || (a.w < b.w ? -1 : 1));
+  return out.map((e) => e.w);
+}
+
 /**
  * Does this word genuinely need re-studying? TRUE only when the player's LAST
  * encounter with it was a miss (ante 0) or a give-away clear (ante 1) — i.e. they

@@ -9,14 +9,20 @@
 // cousins — so the family lesson belongs on EVERY card (the screen teaches each
 // word's own morpheme + meaning + cousins), and it fires on ~100% of briefed cards.
 //
-// Selection is therefore simple:
-//   1. REVIEW — AT MOST 1 word, and only when one genuinely needs re-studying
-//      (needsReview(): last encounter a miss or a give-away clear) AND its Leitner
-//      interval has elapsed. Weakest (lowest last ante) leads. If nothing qualifies
-//      the whole deck is fresh — a review slot is never backfilled just to fill it,
-//      so a strong player is not fed repeats.
-//   2. THE REST FRESH — UNSEEN words first (that's what keeps coverage wide across
-//      the pool), root-bearing a weak tiebreak so a card can still teach a family.
+// Selection follows a strict spaced-repetition PRIORITY — DUE, then WEAK, then NEW:
+//   1a. DUE (schedule-driven) — words whose Leitner interval has elapsed AND that
+//       genuinely need re-studying (needsReview(): last encounter a miss or a
+//       give-away clear). Weakest (lowest last ante) leads.
+//   1b. WEAK (correctness-driven) — chronically low correct-rate words (weakByRate)
+//       whose last encounter was NOT cold, pulled FORWARD even before their interval
+//       elapses so a word the player keeps fumbling isn't left waiting out the box
+//       gap. Worst correct-rate leads. Only consulted after DUE and only when
+//       `includeWeak` is on.
+//   Review is capped at `reviewCap` slots total and a slot is NEVER backfilled just
+//   to fill it: a player who knows everything cold gets ZERO reviews and no repeats.
+//   2. NEW / THE REST FRESH — UNSEEN words first (that's what keeps coverage wide
+//      across the pool), root-bearing a weak tiebreak so a card can still teach a
+//      family.
 //   3. SHARED MORPHEME = BONUS, not a gate — if 2+ of the chosen words happen to
 //      share a morpheme, they're grouped adjacently and the screen is headed with
 //      it. Otherwise familyMorpheme is null (the common case) and the screen simply
@@ -25,7 +31,7 @@
 // Returns { words:[≤count rows], familyMorpheme, reviewCount, reviewWords:Set }.
 // `words` are the raw pool rows (never mutated); `reviewWords` lets the screen mark
 // the ones the player has faced before.
-import { dueWords, isMastered, hasSeen, needsReview } from './lexicon.js';
+import { dueWords, isMastered, hasSeen, needsReview, weakByRate } from './lexicon.js';
 
 // Fisher-Yates with an injected RNG — same idiom as engine.js, so a seeded RNG
 // makes every draw reproducible.
@@ -92,8 +98,23 @@ function groupByMorpheme(chosen, morpheme) {
  *   so a briefing never re-deals the same set. SOFT: if the exclusion leaves the
  *   pool short of `count`, non-mastered excluded words are backfilled so a full
  *   deck always ships.
+ * @param {number}   [opts.reviewCap]  max review (repeat) slots per deck. Default 1
+ *   reproduces the original single-slot selector exactly; the live mode passes 2 so
+ *   the WEAK tier is reachable. A hard ceiling — the fresh fill never becomes review.
+ * @param {boolean}  [opts.includeWeak]  when true, DUE is topped up from the WEAK
+ *   (low correct-rate, not-yet-due) tier up to reviewCap. Default false = DUE only
+ *   (the original behavior). Requires reviewCap >= 2 to have any effect.
  */
-export function pickBriefing({ state, session, words = [], rng = Math.random, count = 5, exclude = [] } = {}) {
+export function pickBriefing({
+  state,
+  session,
+  words = [],
+  rng = Math.random,
+  count = 5,
+  exclude = [],
+  reviewCap = 1,
+  includeWeak = false,
+} = {}) {
   const byWord = new Map(words.map((r) => [r.word, r]));
   const excludeSet = new Set(Array.from(exclude, (w) => String(w)));
   const chosen = [];
@@ -126,17 +147,18 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
     return true;
   };
 
-  // ---- 1. review (AT MOST 1 slot) ----
+  // ---- 1. review slots (up to reviewCap), priority DUE → WEAK ----
   // A review slot is warranted ONLY for a word that genuinely needs re-studying —
-  // needsReview() (last encounter a miss or a give-away) — AND whose Leitner
-  // interval has actually elapsed (it's in dueWords). A word cleared cold does NOT
-  // come back. Among the qualifiers, take the WEAKEST (lowest last ante) so the
-  // shakiest word leads. If NOTHING qualifies we deal 5 fresh — we never backfill a
-  // review slot just to fill it. (This is the fix for the "33% repeats regardless
-  // of skill" bug: dueWords used to treat everything seen as due, and the old step
-  // force-filled 2 review slots whenever anything was due.)
+  // never backfilled just to fill it, so a player who knows everything cold gets
+  // zero reviews and no repeats. (This is the fix for the old "33% repeats
+  // regardless of skill" bug: dueWords used to treat everything seen as due, and the
+  // old step force-filled review slots whenever anything was due.)
+  //
+  // 1a. DUE (schedule-driven): the Leitner interval has elapsed (in dueWords) AND
+  //     the word needs review (last encounter a miss / give-away). A word cleared
+  //     cold does NOT come back. Weakest (lowest last ante) leads.
   const dueSet = new Set(dueWords(state, session));
-  const reviewCandidates = [];
+  const dueCandidates = [];
   for (const w of Object.keys(state.records)) {
     if (!dueSet.has(w)) continue; // Leitner interval not elapsed yet
     if (!needsReview(state, w)) continue; // knows it cold — nothing to re-study
@@ -144,13 +166,30 @@ export function pickBriefing({ state, session, words = [], rng = Math.random, co
     const row = byWord.get(w); // ignore memory for words no longer in the pool
     if (!row) continue;
     const antes = state.records[w].antes;
-    reviewCandidates.push({ w, row, lastAnte: antes[antes.length - 1] });
+    dueCandidates.push({ w, row, lastAnte: antes[antes.length - 1] });
   }
   // Weakest-first: lowest last ante (misses before give-aways); word name breaks ties.
-  reviewCandidates.sort((a, b) => a.lastAnte - b.lastAnte || (a.w < b.w ? -1 : 1));
-  if (reviewCandidates.length) {
-    const c = reviewCandidates[0];
+  dueCandidates.sort((a, b) => a.lastAnte - b.lastAnte || (a.w < b.w ? -1 : 1));
+  for (const c of dueCandidates) {
+    if (reviewWords.size >= reviewCap) break;
     if (take(c.row)) reviewWords.add(c.w);
+  }
+
+  // 1b. WEAK (correctness-driven): only when includeWeak and slots remain. Pulls
+  //     chronically low-correct-rate words FORWARD even before their interval
+  //     elapses — but never one already chosen as DUE, never one known cold on its
+  //     last encounter (needsReview gates that), and never an excluded/out-of-pool
+  //     word. Worst correct-rate leads (weakByRate's order).
+  if (includeWeak && reviewWords.size < reviewCap) {
+    const weakOrder = weakByRate(state, { exclude: reviewWords });
+    for (const w of weakOrder) {
+      if (reviewWords.size >= reviewCap) break;
+      if (excludeSet.has(w)) continue;
+      if (!needsReview(state, w)) continue; // last encounter must be shaky, not cold
+      const row = byWord.get(w);
+      if (!row) continue;
+      if (take(row)) reviewWords.add(w);
+    }
   }
   const reviewCount = chosen.length;
 

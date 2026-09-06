@@ -16,6 +16,8 @@ import {
   isMastered,
   hasSeen,
   mostMissed,
+  correctRate,
+  weakByRate,
   INTERVALS,
 } from './lexicon.js';
 
@@ -310,4 +312,46 @@ test('mostMissed: ranked by miss count, then rate; honours the limit', () => {
   const ranked = mostMissed(s).map((m) => m.w);
   assert.deepEqual(ranked, ['aaa', 'bbb', 'ccc']); // 3 misses > 2; among 2s, rate 1.0 > 0.5
   assert.equal(mostMissed(s, 2).length, 2);        // limit slices
+});
+
+// ---- correctRate / weakByRate: the WEAK (correctness-driven) review tier ----
+test('correctRate: cleared / seen, and 0 for a never-seen word', () => {
+  const s = freshState();
+  clear(s, 'w');        // 1/1
+  miss(s, 'w');         // 1/2
+  assert.equal(correctRate(s.records.w), 0.5);
+  assert.equal(correctRate(undefined), 0, 'no record → 0, never a divide-by-zero');
+  assert.equal(correctRate({ seen: 0, cleared: 0 }), 0);
+});
+
+test('weakByRate: only shaky, seen-enough, un-mastered words, worst rate first', () => {
+  const s = freshState();
+  // shaky: cleared 1 of 3 (rate .33) — clearly weak.
+  clear(s, 'shaky', { stage: 2, revealedCount: 4 }); miss(s, 'shaky'); miss(s, 'shaky');
+  // wobbly: cleared 1 of 2 (rate .5) — weak but less so than shaky.
+  clear(s, 'wobbly', { stage: 2, revealedCount: 4 }); miss(s, 'wobbly');
+  // solid: cleared 2 of 2 (rate 1.0) — NOT weak.
+  clear(s, 'solid'); clear(s, 'solid');
+  // once: seen only once — below minSeen, excluded regardless of outcome.
+  miss(s, 'once');
+  const weak = weakByRate(s);
+  assert.deepEqual(weak, ['shaky', 'wobbly'], 'worst correct-rate leads; solid & single-seen excluded');
+});
+
+test('weakByRate: a mastered word is never weak, and exclude is honoured', () => {
+  const s = freshState();
+  // 'lax' is shaky by rate but has since been mastered (box ≥ 3) → excluded.
+  miss(s, 'lax'); clear(s, 'lax'); clear(s, 'lax'); clear(s, 'lax'); // 3/4 but box 3 = mastered
+  assert.ok(isMastered(s, 'lax'));
+  assert.deepEqual(weakByRate(s), [], 'mastered words drop out of the weak tier');
+
+  // Two genuinely weak words; exclude one via a Set (the shape briefing passes).
+  const s2 = freshState();
+  clear(s2, 'aaa', { stage: 2, revealedCount: 4 }); miss(s2, 'aaa'); miss(s2, 'aaa');
+  clear(s2, 'bbb', { stage: 2, revealedCount: 4 }); miss(s2, 'bbb'); miss(s2, 'bbb');
+  assert.deepEqual(weakByRate(s2, { exclude: new Set(['aaa']) }), ['bbb']);
+});
+
+test('weakByRate: empty state → empty (perturbs nothing)', () => {
+  assert.deepEqual(weakByRate(freshState()), []);
 });

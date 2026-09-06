@@ -344,3 +344,23 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-06  JOB 9 START (feat/sat-srs-2, BRANCH ONLY off feat/sat-srs). SAT Rush spaced repetition.
+  Audit: feat/sat-srs (f43ce0f) is an ANCESTOR of main — its SRS work is ALREADY merged. lexicon.js
+  ships a complete, tested Leitner store (box/seen/cleared/missed/lastSeen/antes, dueWords, weakWords,
+  needsReview, mostMissed) + a due->new selector (briefing.pickBriefing, 1 review slot) + WORDS-YOU-KEEP-
+  MISSING on results & Stats + a sim (~20%). GAP: the selector does not implement the required
+  DUE->WEAK->NEW priority (weakWords exists but is unused by selection), and the sim measures only one
+  selector. Plan: keep Leitner (justify vs SM-2), add weakByRate + a DUE->WEAK->NEW capped selector
+  (default path preserved), extend the sim to compare NEW vs CURRENT over 1,000 sessions, add
+  scheduler+selector tests. Gate: lint 0 / node --test / vite build.
+- 2026-09-06  JOB 9 DONE (feat/sat-srs-2, pushed, NOT merged). Kept LEITNER (session-counter clock →
+  integer boxes; SAT Rush only yields miss/give-away/cold, not SM-2's 0–5 recall grade). Added
+  lexicon.correctRate + weakByRate (the WEAK, correctness-driven tier) and rebuilt briefing.pickBriefing
+  as a DUE→WEAK→NEW capped selector (reviewCap + includeWeak; DEFAULTS reproduce the old single-slot path
+  byte-for-byte so all prior tests pass). Hook now passes {reviewCap:2, includeWeak:true}. Schedule fields
+  unchanged: box 0–4 / seen / cleared / missed / lastSeen / bestStage / antes; INTERVALS [1,3,8,20,40].
+  WORDS-YOU-KEEP-MISSING already surfaces on results + Stats (kept). Extended the sim to compare NEW vs
+  CURRENT over 1,000 sessions × 20 players: repeat 19.6% → 33.8% (< 40% cap), appropriate-repeat 100%
+  (no cold re-serves), mean sessions-to-review 117.6 → 75.6, shaky backlog lower at every mid-run horizon;
+  cold-player still gets 0 repeats. Gate: eslint 0 errors, node --test 452/452, vite build exit 0. +8 unit
+  tests (weakByRate/correctRate + DUE→WEAK→NEW priority + over-repeat guard). DO NOT MERGE.
