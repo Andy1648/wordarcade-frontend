@@ -59,6 +59,8 @@ import { useProgressionEvents } from './hooks/useProgressionEvents';
 import { useGameSocket } from './hooks/useGameSocket';
 import { useConnectivity } from './hooks/useConnectivity';
 import { useSessionPresence } from './hooks/useSessionPresence';
+import { useReturnBonus } from './hooks/useReturnBonus';
+import { useScreenShake } from './hooks/useScreenShake';
 import { canonicalPathForView, MENU_PATHS, hasStickyQuery, viewIntentFromPath } from './router';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -72,7 +74,6 @@ import {
   hasPlayedBefore,
   getLastSeen,
 } from './visitHistory';
-import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
@@ -409,14 +410,10 @@ function App() {
   // refactor/app-split-6.
   useSessionPresence();
 
-  // RETURN BONUS (Job 6): claim once on mount using the last-seen time captured at module load. The
-  // wins are granted here (they returned after >=6h, at most once/calendar day); the card is shown
-  // only on the home menu (a deep-link into a game doesn't overlay the return card).
-  const [returnCard, setReturnCard] = useState(null);
-  useEffect(() => {
-    const b = claimReturnBonus(LAST_SEEN_AT_LOAD);
-    if (b) setReturnCard(b);
-  }, []);
+  // RETURN BONUS (Job 6): claim once on mount using the last-seen time captured at module load.
+  // Extracted verbatim to hooks/useReturnBonus.js — refactor/app-split-6; the card is shown only on
+  // the home menu (a deep-link into a game doesn't overlay the return card).
+  const { returnCard, setReturnCard } = useReturnBonus(LAST_SEEN_AT_LOAD);
 
   // ACHIEVEMENTS (Job 7): re-evaluate whenever we land on the home menu (so anything earned during a
   // game / run is caught on return). checkAchievements grants wins for newly-earned only (the wins
@@ -650,34 +647,9 @@ function App() {
     music.isPlaying && !music.isMuted
   );
 
-  // App-wide screen shake at three intensities (light=beat, medium=accept,
-  // heavy=explosion/game over). A class on the top-level wrapper; cleared after
-  // the shake duration so it can replay.
-  const [shake, setShake] = useState(null);
-  const shakeTimerRef = useRef(null);
-  const SHAKE_MS = { light: 100, medium: 200, heavy: 300 };
-  function triggerShake(level) {
-    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-    setShake(level);
-    shakeTimerRef.current = setTimeout(
-      () => setShake(null),
-      SHAKE_MS[level] || 150
-    );
-  }
-  // Light shake on every detected beat — IN-GAME ONLY. The ambient whole-screen
-  // beat-shake made the menu/lobby feel busy and laggy (it transforms the entire
-  // app tree on every drum hit), so it's now gated to the game view; the menu
-  // stays calm. `view` is in the deps so the guard reads the live view, not a
-  // stale closure (a view change alone never has a new beat, so it won't shake).
-  const prevBeatRef = useRef(0);
-  useEffect(() => {
-    if (beatCount > prevBeatRef.current) {
-      prevBeatRef.current = beatCount;
-      if (view === 'game') triggerShake('light');
-    }
-    // triggerShake is stable enough; we react to beatCount (and read live view).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beatCount, view]);
+  // App-wide screen shake (light=beat, medium=accept, heavy=explosion/game over) + the in-game
+  // beat-driven light shake. Extracted verbatim to hooks/useScreenShake.js — refactor/app-split-6.
+  const { shake, triggerShake } = useScreenShake({ view, beatCount });
 
   // The connection dropped WHILE in an active room/game. The seat is gone
   // server-side (no resume), so we don't auto-reconnect or reload - we show a
