@@ -76,11 +76,25 @@ function WallScreen({ run }) {
 function RoundScreen({ run }) {
   const { play } = run;
   const [val, setVal] = useState('');
+  const [cleared, setCleared] = useState(false); // persistent "over the wall" state
+  const [burst, setBurst] = useState(false);      // one-shot CLEAR flash (pooled node)
   const inputRef = useRef(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
-  if (!play) return null;
-  const projected = play.score;
+
+  // THE meter reads the round-ADJUSTED projection (run.projected), the same number the
+  // wall is compared against at round end — not the raw typed total.
+  const projected = run.projected;
   const met = projected >= run.wall;
+  const rawTyped = Math.round(run.rawRoundScore);
+  const boosted = rawTyped > 0 && projected !== rawTyped;
+
+  // CLEAR moment: fires once, the frame the true projection first crosses the wall. The
+  // projection only ever climbs within a round, so this is a single one-shot.
+  useEffect(() => {
+    if (met && !cleared) { setCleared(true); setBurst(true); }
+  }, [met, cleared]);
+
+  if (!play) return null;
 
   function onSubmit(e) {
     e.preventDefault();
@@ -97,12 +111,22 @@ function RoundScreen({ run }) {
       </div>
       <div className="run-score-row">
         <div className={`run-score${met ? ' met' : ''}`}>
-          <span className="run-score-num">{projected.toLocaleString()}</span>
+          <span className={`run-score-num${burst ? ' pop' : ''}`}>{projected.toLocaleString()}</span>
           <span className="run-score-need">/ {run.wall.toLocaleString()} TO CLEAR</span>
         </div>
         <div className="run-combo">×{play.combo.toFixed(1)}</div>
       </div>
-      <div className="run-progress-track"><div className="run-progress-fill" style={{ transform: `scaleX(${Math.min(1, projected / run.wall)})` }} /></div>
+      <div className={`run-progress-track${met ? ' cleared' : ''}`}>
+        <div className="run-progress-fill" style={{ transform: `scaleX(${Math.min(1, projected / run.wall)})` }} />
+        <span className="run-progress-wall" aria-hidden="true">WALL {run.wall.toLocaleString()}</span>
+        <div className={`run-clear-burst${burst ? ' playing' : ''}`} aria-hidden={!burst}
+          onAnimationEnd={() => setBurst(false)}>CLEARED!</div>
+      </div>
+      <div className="run-meter-note">
+        {boosted
+          ? <>TYPED <b>{rawTyped.toLocaleString()}</b> · MODIFIERS → <b>{projected.toLocaleString()}</b></>
+          : (met ? 'WALL CLEARED — KEEP PADDING YOUR LEAD' : 'ROUND-ADJUSTED SCORE vs WALL')}
+      </div>
       {play.toast && <div className="run-toast">{play.toast}</div>}
       {run.roundMode.key === 'fuse' && play.constraint && (
         <div className="run-frag">CONTAINS <b>{play.constraint.toUpperCase()}</b></div>
@@ -144,14 +168,28 @@ function DraftScreen({ run }) {
 
 function OverScreen({ run, onExit }) {
   const won = run.reason === 'cleared';
+  const walled = run.reason === 'wall'; // ended below the wall (the miss the meter warned of)
+  // The MISS moment: the panel slams + shakes in, the stamp drops. The CLEAR-run moment:
+  // a gentler triumphant pop. Both are mount-time one-shots on single (pooled) nodes.
   return (
-    <div className={`run-panel run-over${won ? ' won' : ''}`}>
-      <div className="run-over-stamp">{won ? 'RUN CLEARED' : 'RUN OVER'}</div>
+    <div className={`run-panel run-over${won ? ' won' : ' miss'}`}>
+      <div className={`run-over-stamp${won ? ' pop' : ' slam'}`}>{won ? 'RUN CLEARED' : 'RUN OVER'}</div>
       <div className="run-over-sub">
         {won ? `ALL ${run.totalRounds} ROUNDS BEATEN` :
           run.reason === 'fumble' ? `GLASS CANNON FUMBLED ON ROUND ${run.round}` :
-            `ROUND ${run.round}: ${run.lastRoundScore.toLocaleString()} < ${run.lastWall.toLocaleString()}`}
+            `ROUND ${run.round}: SHORT OF THE WALL`}
       </div>
+      {walled && (
+        <div className="run-over-gap">
+          <div className="run-progress-track missed">
+            <div className="run-progress-fill" style={{ transform: `scaleX(${Math.min(1, run.lastRoundScore / (run.lastWall || 1))})` }} />
+            <span className="run-progress-wall" aria-hidden="true">WALL {run.lastWall.toLocaleString()}</span>
+          </div>
+          <div className="run-over-gap-nums">
+            <b>{run.lastRoundScore.toLocaleString()}</b> / {run.lastWall.toLocaleString()} NEEDED
+          </div>
+        </div>
+      )}
       <div className="run-over-score"><span>BANKED</span><b>{run.cumulative.toLocaleString()}</b></div>
       <div className="run-over-wins">+{run.winsEarned.toLocaleString()} WINS</div>
       <StackStrip stack={run.stack} />

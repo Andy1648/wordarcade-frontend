@@ -369,3 +369,30 @@ FINISH 2026-09-06T05:51Z — RunArt fan refined so all three VALUES read at 1920
   4 BE-PICKY rounds (r1 symmetric-wide -> r2 raised -> r3 asymmetric-clear tested -> r4 gentle-asymmetry final). Verified via measured SVG <text> rects at all 4 viewports (no neighbour clip; +4 as high as the 118px phone strip allows). Desktop 1920/1568/1366 all three fully clear; 390 +4 reads (badge over its lower edge only — physical limit of the strip) + x3/x5 fully clear.
   Gate: lint 0 errors (34 pre-existing warnings), npm test 473/473 pass incl. will-change assert, vite build exit 0.
   beside-the-five: claude/run-shots/final/beside-five-1920.png + beside-five-390.png
+
+## JOB 4 — the WALL moment (feat/run-wall) — START 2026-09-06
+Meter now shows the TRUE round-adjusted projection (engine applyRoundMods) vs wallAt(round),
+not the raw per-word total (fixes the run-playthrough finding: 504 raw read as failing when the
+round actually cleared at 2,051). CLEAR one-shot + MISS slam/shake added, both finite / pooled
+single-node / transform+opacity only / reduced-motion-safe. Iterating vs BE-PICKY at 1920 + 390.
+
+## JOB 4 — the WALL moment — FINISH 2026-09-06
+Shipped on feat/run-wall:
+- FINDING FIX: in-round meter (RunMode.jsx RoundScreen) now reads run.projected =
+  applyRoundMods(rawTyped, stack, {owned:0, clean}) — the exact number endRound compares to the
+  wall — so the bar + big number show the TRUE round-adjusted standing, not the raw per-word sum.
+  A sub-note reads "TYPED n · MODIFIERS → N" so the boost is legible; the wall target is labelled
+  on the track ("WALL n"). Hook exposes projected + rawRoundScore.
+- BONUS BUG (found while wiring the meter): submitWord read rarityOf().name (undefined) so live
+  rounds silently scored every word as COMMON — contradicting the sim/wall calibration — and the
+  toast printed "undefined!". Fixed to rarityOf().band; rarity now applies + toast reads e.g.
+  "UNCOMMON!".
+- CLEAR moment: one pooled overlay ("CLEARED!") + score pop, fires the frame projection crosses
+  the wall; bar locks to a gold cleared state. MISS moment: over panel slams + shakes in, red
+  RUN OVER stamp, plus a frozen red gap meter (score / wall NEEDED) reinforcing how short you fell.
+  Both finite (iteration 1), transform/opacity only, reduced-motion-safe (@media reduce → no
+  animation, end-state kept). No new will-change, no new infinite animations.
+- Dev-only params (inert in normal play): ?seed / ?round / ?stack for reproducible QA/screenshots.
+BE-PICKY: 2 rounds (r1 meter+moments; r2 fixed undefined-toast + typed-decimal + burst capture).
+Shots: claude/run-shots/wall/{mid,clear,clear-after,miss,miss-after}-{1920,390}.png
+Gate: lint 0 errors, node --test 474/474 pass (incl. new meter-contract test + willChange), vite build exit 0.
