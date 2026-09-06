@@ -1,0 +1,38 @@
+[
+  {
+    "name": "run-round",
+    "tag": "desktop",
+    "pct": 35.6,
+    "status": "OK"
+  },
+  {
+    "name": "run-round",
+    "tag": "mobile",
+    "pct": 24.8,
+    "status": "OK"
+  },
+  {
+    "name": "run-clear",
+    "tag": "desktop",
+    "pct": 35.6,
+    "status": "OK"
+  },
+  {
+    "name": "run-clear",
+    "tag": "mobile",
+    "pct": 23.1,
+    "status": "OK"
+  },
+  {
+    "name": "run-miss",
+    "tag": "desktop",
+    "pct": 35.6,
+    "status": "OK"
+  },
+  {
+    "name": "run-miss",
+    "tag": "mobile",
+    "pct": 21.6,
+    "status": "OK"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "wb-ingame",
+    "tag": "desktop",
+    "pct": 26.9,
+    "status": "OK"
+  },
+  {
+    "name": "wb-ingame",
+    "tag": "mobile",
+    "pct": 12.2,
+    "status": "OK"
+  },
+  {
+    "name": "blitz-ingame",
+    "tag": "desktop",
+    "pct": 29,
+    "status": "OK"
+  },
+  {
+    "name": "blitz-ingame",
+    "tag": "mobile",
+    "pct": 13.8,
+    "status": "OK"
+  }
+]

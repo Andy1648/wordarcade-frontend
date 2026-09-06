@@ -1,0 +1,14 @@
+[
+  {
+    "name": "sat-play",
+    "tag": "desktop",
+    "pct": 26.3,
+    "status": "OK"
+  },
+  {
+    "name": "sat-play",
+    "tag": "mobile",
+    "pct": 3.2,
+    "status": "OK"
+  }
+]

@@ -387,3 +387,13 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   #6 Blitz solo-leaver -> verify round/scoreboard resolves for the lone survivor (recommend a live check);
   #7 not_a_word latency -> the only reject that round-trips; recommend an optimistic client buzz on the
   dictionary reject too (mirror the 3 local rejects) IF/when the client caches recent verdicts.
+
+## ========================= JOB 10 — SWEEP 6 (last visual sweep) =========================
+START 2026-09-06 08:20 — chore/sweep-6 off main; isolated worktree; npm ci.
+FINISH 2026-09-06 08:57 — Report-only visual sweep. Captured every screen at 1920x1080 + 390x844
+  from its real source branch (main + feat/run-mode, run-draft-look, run-wall, ingame-look), built+
+  previewed each on :4173 in turn. Measured largest-empty-rect per screen, ranked BROKEN/UNFINISHED/
+  POLISH, wrote claude/sweep-6.md + claude/sweep-6-shots/. Verdict: ONE product in vocabulary, but a
+  strong menu-family attached to a weaker in-game/solo/RUN tier that sits on flat black (SAT excepted).
+  Weakest: the RUN in-round wall-meter screen (35.6% desktop void). No BROKEN surfaces. NOT merged,
+  NOT deployed; port 4173 freed. Rails honored.

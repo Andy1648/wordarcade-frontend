@@ -1,0 +1,14 @@
+[
+  {
+    "name": "run-draft",
+    "tag": "desktop",
+    "pct": 28.8,
+    "status": "OK"
+  },
+  {
+    "name": "run-draft",
+    "tag": "mobile",
+    "pct": 14.7,
+    "status": "OK"
+  }
+]
