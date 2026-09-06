@@ -5,7 +5,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRunMode } from './useRunMode.js';
 import { wallSchedule } from './engine.js';
+import ModifierArt from './ModifierArt.jsx';
 import './RunMode.css';
+
+// Split a modifier's "upside, but downside" text into its two halves so the trade-off
+// reads instantly (green upside over a red cost). Upside-only mods return {down:null}.
+function splitEffect(text) {
+  const m = text.match(/^(.*?)(?:,|\s*—)?\s+but\s+(.*)$/i);
+  return m ? { up: m[1].trim(), down: m[2].trim() } : { up: text, down: null };
+}
 
 export default function RunMode({ onExit }) {
   const run = useRunMode();
@@ -120,24 +128,65 @@ function RoundScreen({ run }) {
 }
 
 function DraftScreen({ run }) {
+  // The COMMIT moment: on pick, the chosen card pops + stamps DRAFTED while the others
+  // fall back, THEN the phase advances. Purely cosmetic (finite, transform/opacity only),
+  // and skipped under reduced-motion so the draft is never gated by an animation.
+  const [picked, setPicked] = useState(null);
+  const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function choose(id) {
+    if (picked) return;
+    if (reduce) { run.pick(id); return; }
+    setPicked(id);
+    setTimeout(() => run.pick(id), 470);
+  }
   return (
     <div className="run-panel run-draft">
       <RunRail round={run.round} total={run.totalRounds} />
-      <div className="run-kicker">ROUND {run.round} CLEARED — <b>{run.lastRoundScore.toLocaleString()}</b> vs {run.lastWall.toLocaleString()}</div>
-      <h2 className="run-draft-title">DRAFT A MODIFIER</h2>
+      <div className="run-draft-head">
+        <div className="run-kicker">ROUND {run.round} CLEARED — <b>{run.lastRoundScore.toLocaleString()}</b> vs {run.lastWall.toLocaleString()}</div>
+        <h2 className="run-draft-title">DRAFT A MODIFIER</h2>
+        <div className="run-draft-hint">PICK ONE — IT STACKS FOR THE REST OF THE RUN</div>
+      </div>
       <div className="run-offers">
-        {run.offers.map((m) => (
-          <button key={m.id} className={`run-offer${m.down ? '' : ' upside'}`} onClick={() => run.pick(m.id)}>
-            <span className="run-offer-name">{m.name}</span>
-            <span className="run-offer-text">{m.text}</span>
-            <span className="run-offer-tag">{m.down ? 'TRADE-OFF' : 'PURE UPSIDE'}</span>
-          </button>
-        ))}
+        {run.offers.map((m) => {
+          const eff = splitEffect(m.text);
+          const state = picked === m.id ? ' chosen' : (picked ? ' dropped' : '');
+          return (
+            <button key={m.id} className={`run-card${m.down ? ' tradeoff' : ' upside'}${state}`} onClick={() => choose(m.id)} disabled={!!picked}>
+              <span className="run-card-tag">{m.down ? 'TRADE-OFF' : 'PURE UPSIDE'}</span>
+              <span className="run-card-art"><ModifierArt id={m.id} /></span>
+              <span className="run-card-body">
+                <span className="run-card-name">{m.name}</span>
+                <span className="run-card-fx">
+                  <span className="run-fx-up">{eff.up}</span>
+                  {eff.down && <span className="run-fx-down">{eff.down}</span>}
+                </span>
+              </span>
+              <span className="run-card-stamp" aria-hidden="true">DRAFTED</span>
+            </button>
+          );
+        })}
       </div>
       <div className="run-draft-stack">
-        <span className="run-draft-stack-label">YOUR STACK</span>
-        <StackStrip stack={run.stack} />
+        <span className="run-draft-stack-label">YOUR STACK <span className="run-stack-count">{run.stack.length}</span></span>
+        <StackDeck stack={run.stack} />
       </div>
+    </div>
+  );
+}
+
+// The growing DECK you've drafted — a real row of mini modifier cards (icon + name), so
+// the choice visibly builds something. Empty until the first pick.
+function StackDeck({ stack }) {
+  if (!stack.length) return <div className="run-stack-empty">EMPTY — YOUR FIRST MODIFIER GOES HERE</div>;
+  return (
+    <div className="run-stack-deck">
+      {stack.map((m) => (
+        <span key={m.id} className={`run-mini${m.down ? ' tradeoff' : ' upside'}`} title={m.text}>
+          <span className="run-mini-art"><ModifierArt id={m.id} className="run-mini-svg" /></span>
+          <span className="run-mini-name">{m.name}</span>
+        </span>
+      ))}
     </div>
   );
 }

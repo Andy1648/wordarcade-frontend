@@ -369,3 +369,12 @@ FINISH 2026-09-06T05:51Z — RunArt fan refined so all three VALUES read at 1920
   4 BE-PICKY rounds (r1 symmetric-wide -> r2 raised -> r3 asymmetric-clear tested -> r4 gentle-asymmetry final). Verified via measured SVG <text> rects at all 4 viewports (no neighbour clip; +4 as high as the 118px phone strip allows). Desktop 1920/1568/1366 all three fully clear; 390 +4 reads (badge over its lower edge only — physical limit of the strip) + x3/x5 fully clear.
   Gate: lint 0 errors (34 pre-existing warnings), npm test 473/473 pass incl. will-change assert, vite build exit 0.
   beside-the-five: claude/run-shots/final/beside-five-1920.png + beside-five-390.png
+
+START 2026-09-06 — JOB 3: the DRAFT screen (feat/run-draft-look off feat/run-mode). Make the draft RUN MODE's signature moment: authored-SVG modifier cards, a visible growing stack, a consequential pick.
+FINISH 2026-09-06 — Draft redesigned to the house authored-SVG card idiom.
+  ART: new src/runMode/ModifierArt.jsx — one bespoke black-outlined, flat-neon SVG motif per ALL 18 modifiers (bomb/flame/clover/slot-777/gem/crown/coin-sack/tile-bag/cannon/snowball/chevrons/etc.), each on a faint pinwheel field (GameArt.jsx language). DraftScreen now renders 3 collectible cards (art banner + name + split up/down effect), TRADE-OFF (orange) vs PURE UPSIDE (cyan) visually distinct via border+badge. Desktop 3-up hand; <=560px stacks to art-left list rows.
+  STACK: the drafted deck is a real row of mini modifier cards (icon+name) with a count badge — the choice visibly builds something (was plain yellow chips).
+  PICK MOMENT: on choose, chosen card pops + a DRAFTED stamp slams in while the other two dim to .28, THEN phase advances (470ms). Finite, transform/opacity only, class-toggle (no per-event nodes), reduced-motion-safe. No new infinite animations; will-change (transform/opacity) only on .chosen/.dropped during the commit.
+  BE-PICKY: 4 rounds. Largest-empty-rect (DOM grid scan, flat fills counted as void): AFTER 8.6% strict / 7.4% block (<18% = composed). Reconstructed BEFORE ~9.7% by the same method — confirming the before's real failure was BE-PICKY #3 (no art) + #4 (hue-swapped template tiles), not a void; the redesign fixes those.
+  Shots: claude/_tools/shots-draft/{before,after}-{1920,390}.jpg + after-commit-1920.jpg
+  Gate: lint 0 errors (34 pre-existing warnings, none mine), node --test 473/473 incl will-change assert, vite build exit 0.
