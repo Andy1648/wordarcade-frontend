@@ -61,6 +61,8 @@ import { useConnectivity } from './hooks/useConnectivity';
 import { useSessionPresence } from './hooks/useSessionPresence';
 import { useReturnBonus } from './hooks/useReturnBonus';
 import { useScreenShake } from './hooks/useScreenShake';
+import { useGlobalButtonFeedback } from './hooks/useGlobalButtonFeedback';
+import { useFirstGestureMusic } from './hooks/useFirstGestureMusic';
 import { canonicalPathForView, MENU_PATHS, hasStickyQuery, viewIntentFromPath } from './router';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -91,7 +93,7 @@ import {
 } from './daily/streak.js';
 import { useOneShotAction } from './hooks/useOneShotAction';
 import { track } from './lib/analytics';
-import { squash, sfx, setMuted as setJuiceMuted } from './juice';
+import { setMuted as setJuiceMuted } from './juice';
 
 import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
@@ -599,44 +601,9 @@ function App() {
   const [slicing, setSlicing] = useState(false);
   const sliceTimerRef = useRef(null);
 
-  // Music starts on the FIRST user gesture anywhere on the site — a click, key,
-  // or touch on ANY element (the splash cover, the menu, a landing page). Browsers
-  // block autoplay until a gesture, so this is the earliest legal moment; the
-  // listener is document-level, one-shot, and covers every entry path (cold splash,
-  // SEEN_INTRO repeat visitor with no splash, ?satrush=1 / ?join= / ?daily= deep
-  // links, and landing-page → home). pointerdown+keydown+touchstart so a mouse, a
-  // key, or a bare touch all unlock it.
-  //
-  // Volume choreography differs by path and is preserved here: during the splash /
-  // fight-card intro the music must stay SILENT until the menu wipe (handleIntro-
-  // Complete fades it up), so on a splash session we start at 0 and DON'T fade;
-  // every other path fades up to 0.3 immediately. splashWillShowRef is captured at
-  // first render so the branch is stable.
-  const splashWillShowRef = useRef(showSplash);
-  const firstGestureMusicRef = useRef(false);
-  useEffect(() => {
-    const startMusicOnGesture = () => {
-      if (firstGestureMusicRef.current) return;
-      firstGestureMusicRef.current = true;
-      sound.unlock();
-      music.setVolume(0);
-      music.play();
-      // Splash sessions hold the track silent until the menu wipe fades it up.
-      if (!splashWillShowRef.current) music.fadeTo(0.3, 500);
-      document.removeEventListener('pointerdown', startMusicOnGesture);
-      document.removeEventListener('keydown', startMusicOnGesture);
-      document.removeEventListener('touchstart', startMusicOnGesture);
-    };
-    document.addEventListener('pointerdown', startMusicOnGesture);
-    document.addEventListener('keydown', startMusicOnGesture);
-    document.addEventListener('touchstart', startMusicOnGesture);
-    return () => {
-      document.removeEventListener('pointerdown', startMusicOnGesture);
-      document.removeEventListener('keydown', startMusicOnGesture);
-      document.removeEventListener('touchstart', startMusicOnGesture);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Music starts on the FIRST user gesture anywhere on the site (splash-session volume choreography
+  // preserved). Extracted verbatim to hooks/useFirstGestureMusic.js — refactor/app-split-6.
+  useFirstGestureMusic({ sound, music, showSplash });
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
@@ -731,37 +698,9 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Subtle hover blip on any real <button>, app-wide (Lobby / Room / game UI),
-  // via one delegated listener so we don't touch every button. The Homepage game
-  // cards are <div role="button">, so they're NOT matched here and keep their own
-  // per-card hover. De-duped per element (no re-fire while moving within a button)
-  // and time-debounced so sweeping the pointer across a row doesn't machine-gun.
-  useEffect(() => {
-    let lastBtn = null;
-    let lastAt = 0;
-    const onOver = (e) => {
-      const btn = e.target.closest ? e.target.closest('button') : null;
-      if (!btn || btn === lastBtn || btn.disabled) return;
-      lastBtn = btn;
-      const t = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (t - lastAt < 70) return; // debounce
-      lastAt = t;
-      sound.menuHover();
-    };
-    const onOut = (e) => {
-      // Only re-arm once the pointer truly LEAVES the button (not when it crosses
-      // between the button's own children), so a child boundary can't re-trigger.
-      if (lastBtn && !(e.relatedTarget && lastBtn.contains(e.relatedTarget))) {
-        lastBtn = null;
-      }
-    };
-    document.addEventListener('pointerover', onOver);
-    document.addEventListener('pointerout', onOut);
-    return () => {
-      document.removeEventListener('pointerover', onOver);
-      document.removeEventListener('pointerout', onOut);
-    };
-  }, [sound]);
+  // App-wide, document-delegated button feedback (hover blip + press squash/tick). Extracted
+  // verbatim to hooks/useGlobalButtonFeedback.js — refactor/app-split-6.
+  useGlobalButtonFeedback(sound);
 
   // ---- Analytics bookkeeping (fire-and-forget; never affects gameplay) ----
   // The WS drain effect below is keyed only on [messages], so reading `room` /
@@ -787,25 +726,6 @@ function App() {
   useEffect(() => {
     setJuiceMuted(sfxMuted);
   }, [sfxMuted]);
-
-  // ONE shared press-feedback handler for EVERY <button> in the app (menu, lobby,
-  // game, results): a light squash + tick on press, matching the CREATE/JOIN proof.
-  // Delegated at the document in the CAPTURE phase so it covers every screen with
-  // zero per-button wiring and fires even if a handler stops propagation. Buttons
-  // that run their own bespoke juice (CREATE/JOIN) opt out via [data-juice-self] so
-  // they never double-fire. squash() + sfx() self-gate on reduced-motion + mute
-  // inside the toolkit and neither blocks nor awaits, so the type loop is untouched.
-  useEffect(() => {
-    function onPointerDown(e) {
-      const btn = e.target?.closest?.('button');
-      if (!btn || btn.disabled) return;
-      if (btn.hasAttribute('data-juice-self')) return; // owns its own juice
-      squash(btn);
-      sfx('tap');
-    }
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, []);
 
   // WS drain extracted to useGameSocket (refactor/app-split-4 step 4). The hook runs the
   // FIFO-queue drain effect verbatim; it receives every component-scope setter/ref/value it
