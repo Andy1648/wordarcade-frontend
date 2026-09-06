@@ -210,6 +210,21 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )}
       </span>
+      {/* REBIRTH BADGE (Job 7 endgame): the rebirth count, badged on the menu HUD so an R5
+          player is legible at a glance instead of only inside the REBIRTH dialog. Joins the HUD
+          cluster (no orphan fixed element). Shown ONLY when rebirths > 0. A ★ prefix marks the
+          PRESTIGE tier (R10+, when the exclusive frame unlocks) so the terminal reward reads on
+          the badge itself. Full bar only; static — no animation. aria-labelled for screen readers. */}
+      {variant !== 'mini' && Number(rebirths) > 0 && (
+        <span
+          className="menu-xp-rebirth"
+          data-prestige={Number(rebirths) >= 10 ? 'true' : undefined}
+          aria-label={`Rebirth ${Math.floor(rebirths)}${Number(rebirths) >= 10 ? ', prestige tier' : ''}`}
+        >
+          {Number(rebirths) >= 10 && <span className="menu-xp-rebirth-star" aria-hidden="true">★</span>}
+          R{Math.floor(rebirths)}
+        </span>
+      )}
       {/* RANK TITLE (Job 5): the level band's name, sitting in the LV bar next to the level.
           Full bar only; static — no animation. fix/card-polish: clickable → the RANK LADDER
           overlay (all ten ranks, which you hold, which is next). Falls back to a static span

@@ -23,6 +23,7 @@ import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum } from '../format';
+import { PRESTIGE_REBIRTH } from '../progress/unlockLadder';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
 const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -297,7 +298,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                     <b><span className="shop-coin" aria-hidden="true" /> {formatNum(mCost)} WINS</b>
                   </div>
                 )}
-                <div className="shop-kp-rate">BUY AGAIN, FOREVER — EACH BUY LEAVES A MARK</div>
+                <div className="shop-kp-rate">
+                  {mMaxed
+                    ? `ALL ${MOMENTUM_MAX} MARKS EARNED — ×3.00 WINS LOCKED IN`
+                    : `EACH BUY LEAVES A MARK — ${MOMENTUM_MAX} IN ALL`}
+                </div>
                 <div className="shop-goal">
                   {mMaxed
                     ? 'MOMENTUM MAXED'
@@ -377,6 +382,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <span>NEXT MULTIPLIER</span>
                 <b>×{formatNum(nextMult)}</b>
               </div>
+            </div>
+
+            {/* PRESTIGE goal (Job 7 endgame) — the one real reward gated behind a high rebirth
+                tier, surfaced so the infinite track has a named payoff to climb toward. */}
+            <div className="shop-goal shop-goal--prestige">
+              {rebirths >= PRESTIGE_REBIRTH
+                ? `★ PRESTIGE UNLOCKED — EXCLUSIVE GOLD LV FRAME (REBIRTH ${PRESTIGE_REBIRTH}+)`
+                : `★ REBIRTH ${PRESTIGE_REBIRTH} UNLOCKS THE PRESTIGE GOLD FRAME — ${PRESTIGE_REBIRTH - rebirths} REBIRTH${PRESTIGE_REBIRTH - rebirths === 1 ? '' : 'S'} TO GO`}
             </div>
 
             {/* §3 — rebirth always shows how far to the next rebirth + progress. */}

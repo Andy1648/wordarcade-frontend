@@ -20,7 +20,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
-import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
+import { grantUnlocks, grantRebirthUnlock, grantPrestigeUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -352,6 +352,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     // which remounts this one, so a mount-time sweep is enough — no ShopScreen coupling).
     let rebirthFresh = false;
     for (let r = 1; r <= rebirths; r++) if (grantRebirthUnlock(r)) rebirthFresh = true;
+    // Job 7 endgame: the PRESTIGE frame is the one real reward gated behind a high rebirth tier.
+    if (grantPrestigeUnlock(rebirths)) rebirthFresh = true;
     if (fresh.length || rebirthFresh) setFreeUnlocks(getFreeUnlocks());
   }, [xpProgress.level, rebirths]);
   const nextUnlockItem = nextUnlock(freeUnlocks, rebirths);

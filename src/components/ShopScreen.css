@@ -498,6 +498,15 @@
   margin-top: 8px;
   text-transform: uppercase;
 }
+/* PRESTIGE goal line (Job 7 endgame) — gold, to read as the exclusive high-rebirth reward. */
+.shop-goal--prestige {
+  color: #ffd54a;
+  border: 2px solid #b8860b;
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-top: 10px;
+  line-height: 1.35;
+}
 /* Cosmetic card gap line (unaffordable card). */
 .shop-card-gap {
   font-family: 'Space Mono', monospace;
