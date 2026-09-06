@@ -7,9 +7,17 @@
 // this. The reward is a gentle XP multiplier that folds into the existing xpPerInput stack.
 //
 // FREEZE TOKENS: the player earns one freeze per 7 days held (at count 7, 14, 21 …). A SINGLE
-// missed day (a one-day gap) spends a token instead of resetting the streak. A larger gap, or a
-// one-day gap with no token, resets the count to 1 (today). Freezes are kept across a reset —
-// they're earned, not forfeited.
+// missed day (a one-day gap) spends a token instead of resetting the streak. A larger gap resets
+// the count to 1 (today). Freezes are kept across a reset — they're earned, not forfeited.
+//
+// YOUNG-STREAK GRACE: the first freeze isn't earned until day 7, so without help a brand-new
+// habit is most fragile exactly when it's youngest — a 2- or 4-day streak used to be wiped by a
+// single day off, which stings far more than losing a 20-day streak (that one at least had a
+// token). So a YOUNG streak (count < YOUNG_STREAK_GRACE, i.e. before the first earned freeze) that
+// has NO token survives one missed day for FREE — no token consumed, no reset. It's a soft landing
+// for the early days only; once you've climbed to the 7-day milestone you have a real freeze to
+// spend, and beyond that a missed day without a token resets as before. Guilt-free by design:
+// nothing anywhere pressures you not to miss — this only makes an early miss forgiving.
 //
 // PURITY: the day-math core (`advanceStreak`) and the reward curve (`streakMultiplier`) are pure
 // functions — they take their inputs and return a value, so they're directly unit-testable. The
@@ -20,6 +28,10 @@ import { noteStreak } from './records.js';
 import { sndStreakExtended } from '../audio/gameSounds.js'; // guarded no-op when EVENTS sound is off / in Node
 
 export const STREAK_KEY = 'taw.streak';
+
+// Below this count a tokenless streak survives one missed day for free (young-streak grace). Set to
+// the first freeze milestone (7) so grace covers exactly the window before you've earned a token.
+export const YOUNG_STREAK_GRACE = 7;
 
 // The reward ladder: consecutive-day count → XP multiplier, capped at ×1.25. Pure.
 //   < 3 days → ×1 (no bonus yet) · 3 → ×1.05 · 7 → ×1.10 · 14 → ×1.20 · 30+ → ×1.25 (cap)
@@ -58,7 +70,9 @@ export function normalizeStreak(raw) {
 //   • same day (or a backwards clock) → unchanged (already counted today)
 //   • the very next day (gap 1) → count + 1
 //   • exactly one missed day (gap 2) WITH a token → count + 1, spend one token
-//   • one missed day with NO token, or any larger gap → reset to count 1 (today)
+//   • exactly one missed day (gap 2), NO token, but a YOUNG streak (count < YOUNG_STREAK_GRACE)
+//       → count + 1 for FREE (young-streak grace; no token spent)
+//   • one missed day with no token on an older streak, or any larger gap → reset to count 1 (today)
 export function advanceStreak(prev, todayDay) {
   const p = normalizeStreak(prev);
   if (!Number.isFinite(todayDay)) return p;
@@ -75,9 +89,16 @@ export function advanceStreak(prev, todayDay) {
   if (gap === 1) {
     return grantFreezeIfMilestone({ count: p.count + 1, lastDay: day, freezes: p.freezes });
   }
-  if (gap === 2 && p.freezes > 0) {
-    // One missed day, absorbed by a freeze token — the streak survives.
-    return grantFreezeIfMilestone({ count: p.count + 1, lastDay: day, freezes: p.freezes - 1 });
+  if (gap === 2) {
+    if (p.freezes > 0) {
+      // One missed day, absorbed by a freeze token — the streak survives.
+      return grantFreezeIfMilestone({ count: p.count + 1, lastDay: day, freezes: p.freezes - 1 });
+    }
+    if (p.count < YOUNG_STREAK_GRACE) {
+      // Young streak, no token yet — a free soft landing so an early habit isn't wiped by one
+      // day off. No token consumed; freezes carry unchanged.
+      return grantFreezeIfMilestone({ count: p.count + 1, lastDay: day, freezes: p.freezes });
+    }
   }
   // A miss we can't cover → reset to today. Keep earned freezes (never forfeited).
   return { count: 1, lastDay: day, freezes: p.freezes };

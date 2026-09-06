@@ -51,6 +51,44 @@ test('a freeze token absorbs a single missed day and keeps the streak going', ()
   assert.equal(next.lastDay, 102);
 });
 
+// ---- young-streak grace: an early, tokenless streak survives one missed day for free ------
+test('a YOUNG tokenless streak survives one missed day for free (no token spent)', () => {
+  // A 4-day streak (no freeze earned yet — first is at day 7) skips a day. It advances anyway,
+  // and no token is consumed (there was none). This is the "don't wipe a young habit" grace.
+  const next = advanceStreak({ count: 4, lastDay: 100, freezes: 0 }, 102); // skipped day 101
+  assert.equal(next.count, 5);
+  assert.equal(next.freezes, 0);
+  assert.equal(next.lastDay, 102);
+});
+
+test('young-streak grace also saves a 2-day streak from a single day off', () => {
+  const next = advanceStreak({ count: 2, lastDay: 50, freezes: 0 }, 52);
+  assert.equal(next.count, 3);
+  assert.equal(next.freezes, 0);
+});
+
+test('young-streak grace is a single-miss soft landing, NOT a larger-gap pass', () => {
+  // Two missed days (gap 3) still resets even for a young streak — grace covers one day only.
+  const next = advanceStreak({ count: 4, lastDay: 100, freezes: 0 }, 103);
+  assert.equal(next.count, 1);
+  assert.equal(next.lastDay, 103);
+});
+
+test('grace does not apply once the streak is old enough to have earned a freeze', () => {
+  // count 7 has reached the first freeze milestone; a tokenless miss here still resets (the
+  // player was expected to have a token — grace is for the pre-token window only).
+  const next = advanceStreak({ count: 7, lastDay: 100, freezes: 0 }, 102);
+  assert.equal(next.count, 1);
+});
+
+test('a banked token is spent even inside the young window (token path unchanged by grace)', () => {
+  // A young streak WITH a token spends it (the existing token behaviour is preserved) rather than
+  // taking free grace — grace is only the fallback when there is no token.
+  const next = advanceStreak({ count: 4, lastDay: 100, freezes: 1 }, 102);
+  assert.equal(next.count, 5);
+  assert.equal(next.freezes, 0); // token spent, not free grace
+});
+
 // ---- freeze tokens are granted one per 7 days held ---------------------------------------
 test('reaching a multiple of 7 grants a freeze token', () => {
   const at6 = { count: 6, lastDay: 200, freezes: 0 };
