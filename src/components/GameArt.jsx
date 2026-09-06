@@ -349,39 +349,70 @@ export function FuseArt() {
   );
 }
 
-// Lookup map so GameCard can resolve `artKey` strings from gameData.js.
-// RUN — a rising 10-step climb (the escalating ante wall) to a flag at the summit,
-// on the signature pink field. Reads as "the gauntlet" / the headline ascent.
-export function RunArt() {
-  const steps = [0, 1, 2, 3, 4, 5, 6, 7];
+// One drafted modifier card for THE RUN's hand. A hard black offset shadow, a
+// thick black outline over a flat neon fill, a big black glyph (the stacking
+// modifier) and a small corner index — reads as a real card, not a rectangle.
+function draftCard(cx, cy, rot, w, h, fill, glyph, gsize, key) {
   return (
-    <svg {...SCENE_PROPS} preserveAspectRatio="xMidYMax slice" className="card-art run-art">
+    <g key={key} transform={`translate(${cx} ${cy}) rotate(${rot})`}>
+      {/* hard black offset shadow */}
+      <rect x={-w / 2 + 6} y={-h / 2 + 9} width={w} height={h} rx="11" fill="#0d0618" />
+      {/* card body */}
+      <rect x={-w / 2} y={-h / 2} width={w} height={h} rx="11" fill={fill} stroke="#000" strokeWidth="6" />
+      {/* flat tonal wedge in the top corner (depth without a gradient) */}
+      <path d={`M${-w / 2 + 3} ${-h / 2 + 3} h${w * 0.5} l${-w * 0.5} ${h * 0.5} z`} fill="#000" opacity="0.09" />
+      {/* small top-left index */}
+      <text x={-w / 2 + 13} y={-h / 2 + 26} fontSize="19" fontWeight="bold" fill="#000" fontFamily={BUNGEE}>{glyph}</text>
+      {/* hero glyph */}
+      <text x="0" y={gsize * 0.34} fontSize={gsize} fontWeight="bold" fill="#000" textAnchor="middle" fontFamily={BUNGEE}>{glyph}</text>
+    </g>
+  );
+}
+
+// ---- THE RUN: a rising BRICK WALL structure runs edge-to-edge behind (the
+//      escalating ante you climb), a radial burst blooms from the draft point,
+//      and a fanned HAND of neon modifier cards is the hero object overlapping
+//      both — "draft stacking modifiers against a rising wall". ----
+export function RunArt() {
+  // Rising staircase wall silhouette (low left → high right), edge-to-edge.
+  const wallTop = 'M0 300 H52 V266 H108 V232 H164 V198 H220 V164 H276 V132 H300 V400 H0 Z';
+  // Brick courses, clipped to the wall — horizontal mortar + staggered verticals.
+  const brickH = 34, brickW = 52;
+  const bricks = [];
+  let row = 0;
+  for (let y = 132; y < 400; y += brickH) {
+    bricks.push(<line key={`h${y}`} x1="0" y1={y} x2="300" y2={y} stroke="#0d0618" strokeWidth="3" />);
+    const off = (row % 2) * (brickW / 2) - brickW / 2;
+    for (let x = off; x < 300; x += brickW) {
+      bricks.push(<line key={`v${y}-${x}`} x1={x.toFixed(0)} y1={y} x2={x.toFixed(0)} y2={y + brickH} stroke="#0d0618" strokeWidth="3" />);
+    }
+    row += 1;
+  }
+  return (
+    <svg {...SCENE_PROPS} className="card-art run-art">
+      <defs>
+        <clipPath id="run-wall-clip"><path d={wallTop} /></clipPath>
+      </defs>
       <rect width="300" height="400" fill="#FF4FA3" />
-      <path d="M0 300 L300 250 L300 400 L0 400 Z" fill="#E23B8C" />
-      {/* the ascending wall of rounds, left→low to right→high */}
-      {steps.map((i) => {
-        const w = 34, gap = 2;
-        const x = 8 + i * (w + gap);
-        const h = 70 + i * 34;
-        const y = 360 - h;
-        return (
-          <g key={i}>
-            <rect x={x} y={y} width={w} height={h} rx="6" fill={i >= 6 ? '#FFE94A' : '#2EFFE0'} stroke="#000" strokeWidth="5" />
-            <rect x={x + 6} y={y + 8} width={w - 12} height="8" rx="3" fill="#000" opacity="0.18" />
-          </g>
-        );
-      })}
-      {/* summit flag on the tallest step */}
-      <g transform="translate(268 44)">
-        <rect x="-3" y="0" width="6" height="70" rx="3" fill="#0d0618" />
-        <path d="M3 4 L44 16 L3 30 Z" fill="#9A1AFF" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      </g>
-      {/* the wall marker cutting across — "clear it or fall" */}
-      <path d="M0 150 L300 120" fill="none" stroke="#0d0618" strokeWidth="6" strokeDasharray="14 10" strokeLinecap="round" />
-      <g transform="rotate(-6 40 128)">
-        <rect x="8" y="112" width="86" height="34" rx="8" fill="#0d0618" stroke="#000" strokeWidth="4" />
-        <text x="51" y="136" fontSize="20" fill="#FFE94A" textAnchor="middle" fontFamily={BUNGEE}>WALL</text>
-      </g>
+      {/* draft-burst structure blooming from behind the hand, filling the field
+          (centre raised so the burst still fills the thin top strip that shows on the
+          wide mobile banner — the marquee is landscape there, mostly title bar).
+          Two ray tones (a dark magenta base under a light pink crest) read as a real
+          inked manga burst rather than a faint tint, so the upper field isn't a void. */}
+      {pinwheel(150, 186, 540, 22, '#E23B8C', 0.7, 'pw1')}
+      {pinwheel(150, 186, 360, 22, '#D22F7E', 0.5, 'pw2')}
+      <g opacity="0.9">{rays(150, 186, 26, 520, 15, '#9E1E5C', 7, 0.1)}</g>
+      <g opacity="0.85">{rays(150, 186, 30, 520, 15, '#FF6FB8', 3.5, 0.1 + Math.PI / 15)}</g>
+      {/* the rising wall (the ante you climb) — darker pink slab, black-mortared bricks */}
+      <path d={wallTop} fill="#C42E75" stroke="#0d0618" strokeWidth="7" strokeLinejoin="round" />
+      <g clipPath="url(#run-wall-clip)">{bricks}</g>
+      {/* thin battlement highlight along the rising top edge */}
+      <path d="M0 300 H52 V266 H108 V232 H164 V198 H220 V164 H276 V132 H300" fill="none" stroke="#FF6FB8" strokeWidth="3" opacity="0.7" />
+      {/* the drafted HAND — hero fan; raised so the glyphs read above the title-bar
+          scrim on every crop. Back cards first, hero last on top. */}
+      {draftCard(88, 202, -24, 84, 116, '#2EFFE0', '+4', 48, 'c-left')}
+      {draftCard(212, 202, 24, 84, 116, '#FF6B3D', '×5', 48, 'c-right')}
+      {draftCard(150, 184, -4, 100, 138, '#FFE94A', '×3', 64, 'c-hero')}
     </svg>
   );
 }

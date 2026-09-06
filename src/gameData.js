@@ -30,6 +30,10 @@ const RUN_GAME = {
   descColor: '#2A0A1C',
   enabled: true,
   headline: true, // GameCard can give it the marquee treatment
+  // A run is NOT scored per word — it's a 10-round draft against an ante wall.
+  // statLabel overrides the shared "N WINS / WORD" payout line on the card face
+  // (GameCard.jsx) so the marquee mode never implies per-word scoring.
+  statLabel: '10 ROUNDS · DRAFT · BEAT THE WALL',
 };
 
 const BASE_GAMES = [

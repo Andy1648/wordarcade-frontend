@@ -355,3 +355,9 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   594-938 wins/min across the 12-20 wpm band, spread holds 1.54-1.62x (<2x). unit 473, lint 0, build 0.
   NOTE: my greedy sim clears 53% vs JOB1's 34.5% (drafter differs) — irrelevant to the linear payout tune.
   BRANCH ONLY, e2e deferred to Andy's play-test.
+
+## RUN card art + stat label (feat/run-mode) — START 2026-09-06T05:02Z
+- Redraw RunArt (bar-chart climb) as composed scene: rising brick WALL structure + fan of drafted modifier cards (hero), house language.
+- Fix stat label "N WINS / WORD" (implies per-word scoring) -> RUN-true label.
+- FINISH 2026-09-06 — RunArt redrawn: rising brick WALL (edge-to-edge) + fanned draft-hand of neon modifier cards (+4 / x3 hero / x5) over a two-tone manga burst; hero raised so it clears the title-bar scrim on both the wide mobile banner and the tall desktop card. 3 BE-PICKY rounds. Largest empty rectangle: 1366 = 2.9%, 390 = 1.2% (old bar-chart had a ~24% top-left void). Stat label "N WINS / WORD" -> "10 ROUNDS . DRAFT . BEAT THE WALL" (statLabel on RUN_GAME + GameCard override; no per-word implication; fits 390 with no clip). Gate: lint 0 errors, unit tests 473/473, vite build exit 0.
+  before: claude/run-shots/before/grid-1366.png   after (beside-the-five): claude/run-shots/r3/grid-1366.png
