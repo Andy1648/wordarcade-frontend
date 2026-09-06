@@ -1,0 +1,112 @@
+=== THE RUN — full playthrough ===
+viewport 390x844 mobile | cadence 1600ms | real 30s clock
+  [console.error] Failed to load resource: the server responded with a status of 404 (Not Found)
+  [shot] 00-menu.png
+
+========== ROUND 1 — WALL 225 — MODE FUSE ==========
+    Every word must contain the fragment. | banked 0 | stack: [EMPTY]
+  [shot] r01-a-wall.png
+  [shot] r01-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 424.1 / 225 TO CLEAR combo ×2.8
+
+--- DRAFT after round 1: ROUND 1 CLEARED — 458 vs 225
+    [0] LUCKY CHARM (TRADE-OFF) — Lucky odds 1/40→1/20, but non-lucky words ×0.9
+    [1] SHORT FUSE (TRADE-OFF) — All wins ×1.5, but 20% fewer words
+    [2] HOT STREAK (TRADE-OFF) — Combo cap ×5.0, but each round starts at combo ×0.6
+  [shot] r01-c-draft.png
+    -> picked [0] LUCKY CHARM
+  [shot] r01-d-stack-after.png
+
+========== ROUND 2 — WALL 293 — MODE CHAIN ==========
+    Each word starts where the last ended. | banked 458 | stack: [LUCKY CHARM]
+  [shot] r02-a-wall.png
+  [shot] r02-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 361.08 / 293 TO CLEAR combo ×2.8
+
+--- DRAFT after round 2: ROUND 2 CLEARED — 389 vs 293
+    [0] RARE BREED (TRADE-OFF) — OBSCURE ×6, but COMMON ×0.7
+    [1] SCRABBLE BAG (PURE UPSIDE) — Words with J/Q/X/Z pay ×3
+    [2] VOWEL MOVEMENT (TRADE-OFF) — +0.3× per vowel, but J/Q/X/Z words ×0.5
+  [shot] r02-c-draft.png
+    -> picked [1] SCRABBLE BAG
+  [shot] r02-d-stack-after.png
+
+========== ROUND 3 — WALL 380 — MODE SAT RUSH ==========
+    Define the word before it fills in. | banked 847 | stack: [LUCKY CHARM, SCRABBLE BAG]
+  [shot] r03-a-wall.png
+  [shot] r03-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 460.92 / 380 TO CLEAR combo ×2.8
+
+--- DRAFT after round 3: ROUND 3 CLEARED — 494 vs 380
+    [0] LEXICOGRAPHER (TRADE-OFF) — RARE+ ×3, but COMMON/UNCOMMON score 0
+    [1] MOMENTUM (PURE UPSIDE) — Each clean round: +0.5× running mult
+    [2] LONG HAUL (TRADE-OFF) — Length bonus doubled, but words ≤5 letters ×0.7
+  [shot] r03-c-draft.png
+    -> picked [1] MOMENTUM
+  [shot] r03-d-stack-after.png
+
+========== ROUND 4 — WALL 494 — MODE SAT RUSH ==========
+    Define the word before it fills in. | banked 1,341 | stack: [LUCKY CHARM, SCRABBLE BAG, MOMENTUM]
+  [shot] r04-a-wall.png
+  [shot] r04-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 451.8 / 494 TO CLEAR combo ×2.8
+
+--- DRAFT after round 4: ROUND 4 CLEARED — 1,199 vs 494
+    [0] DEEP POCKETS (PURE UPSIDE) — +150 flat wins per round
+    [1] DOUBLE VOWELS (TRADE-OFF) — 3+ vowels ×2, but ≤2 vowels ×0.7
+    [2] LEXICOGRAPHER (TRADE-OFF) — RARE+ ×3, but COMMON/UNCOMMON score 0
+  [shot] r04-c-draft.png
+    -> picked [0] DEEP POCKETS
+  [shot] r04-d-stack-after.png
+
+========== ROUND 5 — WALL 643 — MODE CHAIN ==========
+    Each word starts where the last ended. | banked 2,540 | stack: [LUCKY CHARM, SCRABBLE BAG, MOMENTUM, DEEP POCKETS]
+  [shot] r05-a-wall.png
+  [shot] r05-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 466.11 / 643 TO CLEAR combo ×2.8
+
+--- DRAFT after round 5: ROUND 5 CLEARED — 1,639 vs 643
+    [0] BOOKWORM (TRADE-OFF) — Every word +0.4× (combo-scaled), but lucky never procs
+    [1] SHORT FUSE (TRADE-OFF) — All wins ×1.5, but 20% fewer words
+    [2] HOT STREAK (TRADE-OFF) — Combo cap ×5.0, but each round starts at combo ×0.6
+  [shot] r05-c-draft.png
+    -> picked [0] BOOKWORM
+  [shot] r05-d-stack-after.png
+
+========== ROUND 6 — WALL 1,157 — MODE FUSE ==========
+    Every word must contain the fragment. | banked 4,179 | stack: [LUCKY CHARM, SCRABBLE BAG, MOMENTUM, DEEP POCKETS, BOOKWORM]
+  [shot] r06-a-wall.png
+  [shot] r06-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 504.18 / 1,157 TO CLEAR combo ×2.8
+
+--- DRAFT after round 6: ROUND 6 CLEARED — 2,051 vs 1,157
+    [0] DOUBLE VOWELS (TRADE-OFF) — 3+ vowels ×2, but ≤2 vowels ×0.7
+    [1] LONG HAUL (TRADE-OFF) — Length bonus doubled, but words ≤5 letters ×0.7
+    [2] SNOWBALL (TRADE-OFF) — +0.3× per round forever, but ×0.7 the round you draft it
+  [shot] r06-c-draft.png
+    -> picked [0] DOUBLE VOWELS
+  [shot] r06-d-stack-after.png
+
+========== ROUND 7 — WALL 2,082 — MODE SAT RUSH ==========
+    Define the word before it fills in. | banked 6,230 | stack: [LUCKY CHARM, SCRABBLE BAG, MOMENTUM, DEEP POCKETS, BOOKWORM, DOUBLE VOWELS]
+  [shot] r07-a-wall.png
+  [shot] r07-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 1,040.356 / 2,082 TO CLEAR combo ×2.8
+
+--- DRAFT after round 7: ROUND 7 CLEARED — 4,576 vs 2,082
+    [0] LEXICOGRAPHER (TRADE-OFF) — RARE+ ×3, but COMMON/UNCOMMON score 0
+    [1] GLASS CANNON (TRADE-OFF) — All payouts ×2.5 — but 8%/round the run just ends
+    [2] SNOWBALL (TRADE-OFF) — +0.3× per round forever, but ×0.7 the round you draft it
+  [shot] r07-c-draft.png
+    -> picked [0] LEXICOGRAPHER
+  [shot] r07-d-stack-after.png
+
+========== ROUND 8 — WALL 3,748 — MODE SAT RUSH ==========
+    Define the word before it fills in. | banked 10,806 | stack: [LUCKY CHARM, SCRABBLE BAG, MOMENTUM, DEEP POCKETS, BOOKWORM, DOUBLE VOWELS, LEXICOGRAPHER]
+  [shot] r08-a-wall.png
+  [shot] r08-b-midround.png
+    typed 19 (accepted 19, rejected 0) | last seen: 0 / 3,748 TO CLEAR combo ×2.8
+
+>>> RUN OVER: RUN OVER — ROUND 8: 150 < 3,748
+    banked 10,956 | +876 WINS | final stack: [LUCKY CHARM, SCRABBLE BAG, MOMENTUM, DEEP POCKETS, BOOKWORM, DOUBLE VOWELS, LEXICOGRAPHER]
+  [shot] zz-over.png

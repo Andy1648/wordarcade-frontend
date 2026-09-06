@@ -1,0 +1,187 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "wall": "225",
+      "mode": "FUSE",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [],
+      "lastScore": "424.1",
+      "lastNeed": "/ 225 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 2,
+      "wall": "293",
+      "mode": "CHAIN",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM"
+      ],
+      "lastScore": "361.08",
+      "lastNeed": "/ 293 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 3,
+      "wall": "380",
+      "mode": "SAT RUSH",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM",
+        "SCRABBLE BAG"
+      ],
+      "lastScore": "460.92",
+      "lastNeed": "/ 380 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 4,
+      "wall": "494",
+      "mode": "SAT RUSH",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM",
+        "SCRABBLE BAG",
+        "MOMENTUM"
+      ],
+      "lastScore": "451.8",
+      "lastNeed": "/ 494 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 5,
+      "wall": "643",
+      "mode": "CHAIN",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM",
+        "SCRABBLE BAG",
+        "MOMENTUM",
+        "DEEP POCKETS"
+      ],
+      "lastScore": "466.11",
+      "lastNeed": "/ 643 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 6,
+      "wall": "1,157",
+      "mode": "FUSE",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM",
+        "SCRABBLE BAG",
+        "MOMENTUM",
+        "DEEP POCKETS",
+        "BOOKWORM"
+      ],
+      "lastScore": "504.18",
+      "lastNeed": "/ 1,157 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 7,
+      "wall": "2,082",
+      "mode": "SAT RUSH",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM",
+        "SCRABBLE BAG",
+        "MOMENTUM",
+        "DEEP POCKETS",
+        "BOOKWORM",
+        "DOUBLE VOWELS"
+      ],
+      "lastScore": "1,040.356",
+      "lastNeed": "/ 2,082 TO CLEAR",
+      "lastCombo": "×2.8"
+    },
+    {
+      "round": 8,
+      "wall": "3,748",
+      "mode": "SAT RUSH",
+      "typed": 19,
+      "accepted": 19,
+      "rejected": 0,
+      "stack": [
+        "LUCKY CHARM",
+        "SCRABBLE BAG",
+        "MOMENTUM",
+        "DEEP POCKETS",
+        "BOOKWORM",
+        "DOUBLE VOWELS",
+        "LEXICOGRAPHER"
+      ],
+      "lastScore": "0",
+      "lastNeed": "/ 3,748 TO CLEAR",
+      "lastCombo": "×2.8"
+    }
+  ],
+  "draftPicks": [
+    {
+      "round": 1,
+      "picked": "LUCKY CHARM",
+      "tag": "TRADE-OFF"
+    },
+    {
+      "round": 2,
+      "picked": "SCRABBLE BAG",
+      "tag": "PURE UPSIDE"
+    },
+    {
+      "round": 3,
+      "picked": "MOMENTUM",
+      "tag": "PURE UPSIDE"
+    },
+    {
+      "round": 4,
+      "picked": "DEEP POCKETS",
+      "tag": "PURE UPSIDE"
+    },
+    {
+      "round": 5,
+      "picked": "BOOKWORM",
+      "tag": "TRADE-OFF"
+    },
+    {
+      "round": 6,
+      "picked": "DOUBLE VOWELS",
+      "tag": "TRADE-OFF"
+    },
+    {
+      "round": 7,
+      "picked": "LEXICOGRAPHER",
+      "tag": "TRADE-OFF"
+    }
+  ],
+  "over": {
+    "stamp": "RUN OVER",
+    "sub": "ROUND 8: 150 < 3,748",
+    "banked": "10,956",
+    "wins": "+876 WINS",
+    "stack": [
+      "LUCKY CHARM",
+      "SCRABBLE BAG",
+      "MOMENTUM",
+      "DEEP POCKETS",
+      "BOOKWORM",
+      "DOUBLE VOWELS",
+      "LEXICOGRAPHER"
+    ]
+  }
+}

@@ -369,3 +369,7 @@ FINISH 2026-09-06T05:51Z — RunArt fan refined so all three VALUES read at 1920
   4 BE-PICKY rounds (r1 symmetric-wide -> r2 raised -> r3 asymmetric-clear tested -> r4 gentle-asymmetry final). Verified via measured SVG <text> rects at all 4 viewports (no neighbour clip; +4 as high as the 118px phone strip allows). Desktop 1920/1568/1366 all three fully clear; 390 +4 reads (badge over its lower edge only — physical limit of the strip) + x3/x5 fully clear.
   Gate: lint 0 errors (34 pre-existing warnings), npm test 473/473 pass incl. will-change assert, vite build exit 0.
   beside-the-five: claude/run-shots/final/beside-five-1920.png + beside-five-390.png
+
+---
+JOB 2 START 2026-09-06T11:32:57Z — chore/run-playthrough: headless full playthrough of THE RUN (feat/run-mode), narrative report + screenshots.
+JOB 2 FINISH 2026-09-06T11:48:32Z — full run played end-to-end via real UI. Bot DIED round 8/10 (SAT RUSH, 150 vs 3748) on a self-inflicted LEXICOGRAPHER draft. 32 shots + narrative in claude/run-playthrough(.md). Verdict: compelling loop; draft is a real decision; wall stakes blunted by round-UI hiding round-level multipliers; SAT RUSH rounds add no mechanic.
