@@ -1,0 +1,20 @@
+/* PlayBackdrop.css — the scoped, static graffiti-wall layer behind a play surface.
+   Pinned to its play root and dropped BEHIND the play content (z-index:-1) so it never
+   intercepts pointer events or covers the UI. STATIC only: no idle/infinite animation, no
+   will-change, no per-frame work — it is painted once and composited.
+
+   z-index:-1 sits ABOVE the root's own background fill but BELOW all in-flow content, so the
+   host must be a stacking context (the solo shell and RUN stage already are via their z-index;
+   the game stage gets `isolation:isolate` in GameScreen.css). */
+.play-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  /* Follow the framed card's rounded corners so decor never pokes past the border. */
+  border-radius: inherit;
+}
+
+/* Reduced-motion / static: everything here is already static, so nothing to silence. The
+   decor sub-components (GraffitiTag / stickers / splatters) render no motion of their own. */
