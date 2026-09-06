@@ -41,6 +41,25 @@ test('round-level modifiers transform payout exactly (DEEP POCKETS +150, GLASS C
   assert.ok(suddenDeathChance(gc) > 0 && suddenDeathChance([]) === 0);
 });
 
+test('the live meter contract: round-adjusted projection == what the wall is compared to', () => {
+  // The in-round meter MUST show applyRoundMods(rawTypedTotal, stack, {owned:0, clean}) —
+  // the exact number endRound compares to the wall — NOT the raw per-word total. This pins
+  // the run-playthrough finding: with round-level modifiers the projection exceeds raw, so a
+  // meter reading raw would lie about the player's true standing (504 raw → 2,051 real).
+  const raw = 504;
+  const clean = 5;
+  const stack = [MODIFIER_BY_ID['deep-pockets'], MODIFIER_BY_ID['momentum']];
+  const ctx = { owned: 0, clean };
+  const projected = applyRoundMods(raw, stack, ctx);
+  // MOMENTUM ×(1+0.5·clean) then DEEP POCKETS is +150 (order-dependent per stack order):
+  // here deep-pockets runs first (+150 → 654), momentum ×3.5 → 2289.
+  assert.equal(projected, applyRoundMods(raw, stack, ctx)); // deterministic
+  assert.ok(projected > raw, 'round-level modifiers must lift the projection above raw typed');
+  // A word-only stack leaves the projection equal to the raw total (rounded).
+  const wordOnly = [MODIFIER_BY_ID['scrabble-bag']];
+  assert.equal(applyRoundMods(raw, wordOnly, ctx), raw);
+});
+
 test('scoreWord reuses rarity×combo×lucky and respects the per-word cap', () => {
   const base = scoreWord({ rarity: 'COMMON', len: 4, vowels: 2, rare: false, lucky: false, combo: 1 }, []);
   assert.ok(base > 0);

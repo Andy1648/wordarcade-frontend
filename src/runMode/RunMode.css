@@ -73,12 +73,29 @@
 .run-clock { font-family: 'Bungee', sans-serif; font-size: 30px; color: #2EFFE0; -webkit-text-stroke: 2px #000; }
 .run-clock.low { color: #FF3B3B; }
 .run-score-row { display: flex; justify-content: space-between; align-items: flex-end; }
-.run-score-num { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FFE94A; -webkit-text-stroke: 2px #000; display: block; }
+.run-score-num { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FFE94A; -webkit-text-stroke: 2px #000; display: inline-block; transform-origin: left center; }
 .run-score.met .run-score-num { color: #2EFFE0; }
+.run-score-num.pop { animation: runScorePop .5s ease-out 1; }
 .run-score-need { font-size: 12px; color: #9a86c4; }
 .run-combo { font-family: 'Bungee', sans-serif; font-size: 26px; color: #FF6B3D; -webkit-text-stroke: 2px #000; }
-.run-progress-track { height: 16px; background: #0d0618; border: 3px solid #000; border-radius: 8px; overflow: hidden; }
-.run-progress-fill { height: 100%; background: #2EFFE0; transform-origin: left; transition: transform .2s; }
+.run-progress-track { position: relative; height: 22px; background: #0d0618; border: 3px solid #000; border-radius: 8px; overflow: hidden; }
+.run-progress-fill { height: 100%; background: #2EFFE0; transform-origin: left; transition: transform .2s ease-out; }
+.run-progress-track.cleared .run-progress-fill { background: #FFE94A; }
+/* the labelled wall target — the finish line lives at the right edge (fill=100% == wall) */
+.run-progress-wall {
+  position: absolute; top: 0; right: 6px; height: 100%; display: flex; align-items: center;
+  font-family: 'Bungee', sans-serif; font-size: 10px; letter-spacing: .5px; color: #fff;
+  -webkit-text-stroke: 2px #000; paint-order: stroke fill; pointer-events: none;
+}
+/* CLEAR moment — one pooled overlay node, a single finite transform/opacity pop */
+.run-clear-burst {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: 'Bungee', sans-serif; font-size: 14px; color: #0d0618; letter-spacing: 1px;
+  background: #FFE94A; opacity: 0; pointer-events: none;
+}
+.run-clear-burst.playing { animation: runClearBurst .6s cubic-bezier(.2,1.4,.4,1) 1; }
+.run-meter-note { font-size: 11px; color: #9a86c4; text-align: center; letter-spacing: .5px; min-height: 14px; }
+.run-meter-note b { color: #FFE94A; }
 .run-toast { font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A; text-align: center; }
 .run-frag { font-size: 14px; color: #cbbce8; text-align: center; }
 .run-frag b { color: var(--accent, #2EFFE0); font-family: 'Bungee', sans-serif; }
@@ -174,9 +191,19 @@
 /* ---- over ---- */
 .run-over { text-align: center; align-items: center; border-color: #FF3B3B; }
 .run-over.won { border-color: #2EFFE0; }
-.run-over-stamp { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FF3B3B; -webkit-text-stroke: 2px #000; }
+/* MISS moment: the panel jolts once on mount, like hitting the wall. */
+.run-over.miss { animation: runMissShake .5s ease-out 1; }
+.run-over-stamp { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FF3B3B; -webkit-text-stroke: 2px #000; transform-origin: center; }
 .run-over.won .run-over-stamp { color: #2EFFE0; }
+.run-over-stamp.slam { animation: runStampSlam .55s cubic-bezier(.2,1.2,.3,1) 1; }
+.run-over-stamp.pop { animation: runStampPop .5s cubic-bezier(.2,1.4,.4,1) 1; }
 .run-over-sub { font-size: 13px; color: #cbbce8; }
+/* the final gap the wall you missed — the same meter, frozen at what killed you */
+.run-over-gap { width: 100%; display: flex; flex-direction: column; gap: 5px; }
+.run-progress-track.missed { height: 22px; }
+.run-progress-track.missed .run-progress-fill { background: #FF3B3B; }
+.run-over-gap-nums { font-size: 12px; color: #9a86c4; }
+.run-over-gap-nums b { font-family: 'Bungee', sans-serif; color: #FF3B3B; font-size: 15px; }
 .run-over-score { display: flex; flex-direction: column; }
 .run-over-score span { font-size: 12px; color: #9a86c4; font-family: 'Bungee', sans-serif; }
 .run-over-score b { font-family: 'Bungee', sans-serif; font-size: 44px; color: #FFE94A; -webkit-text-stroke: 2px #000; }
@@ -195,10 +222,53 @@
   .run-card-stamp { font-size: 22px; }
 }
 
+/* ---- wall MOMENTS — all finite one-shots, transform/opacity ONLY, single reused nodes ---- */
+@keyframes runClearBurst {
+  0%   { transform: scale(.7); opacity: 0; }
+  22%  { transform: scale(1.04); opacity: 1; }
+  68%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.02); opacity: 0; }
+}
+@keyframes runScorePop {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+@keyframes runStampSlam {
+  0%   { transform: scale(2.3) rotate(-9deg); opacity: 0; }
+  50%  { transform: scale(.9) rotate(3deg); opacity: 1; }
+  74%  { transform: scale(1.06) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes runStampPop {
+  0%   { transform: scale(.4); opacity: 0; }
+  55%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes runMissShake {
+  0%, 100% { transform: translateX(0); }
+  16% { transform: translateX(-8px); }
+  33% { transform: translateX(8px); }
+  50% { transform: translateX(-5px); }
+  67% { transform: translateX(5px); }
+  84% { transform: translateX(-2px); }
+}
+
 @media (max-width: 420px) {
   .run-wall-num { font-size: 44px; }
   .run-panel { padding: 16px; }
   .run-ladder-step { font-size: 8px; }
   .run-draft-title { font-size: 23px; }
   .run-card-art { width: 88px; }
+}
+
+/* Reduced motion: drop every wall-moment animation but KEEP the informational end-state
+   (cleared bar colour, the stamp, the frozen gap meter are all plain DOM, not motion). */
+@media (prefers-reduced-motion: reduce) {
+  .run-clear-burst.playing,
+  .run-score-num.pop,
+  .run-over.miss,
+  .run-over-stamp.slam,
+  .run-over-stamp.pop { animation: none; }
+  .run-clear-burst.playing { opacity: 0; }
 }

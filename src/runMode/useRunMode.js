@@ -26,21 +26,42 @@ const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
 const RARE_LETTERS = /[jqxz]/;
 const countVowels = (w) => [...w].filter((c) => VOWELS.has(c)).length;
 
+// Dev-only screenshot/QA overrides (mirrors ?rs=): ?stack=id,id preloads a modifier
+// stack, ?round=N starts partway up the wall (clean=N-1 so MOMENTUM etc. show), and
+// ?seed=N makes the whole run (rolled modes, luck) reproducible. Inert in normal play.
+function devOverrides() {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const raw = q.get('stack');
+    const stackIds = raw
+      ? raw.split(',').map((s) => s.trim()).filter((id) => MODIFIER_BY_ID[id])
+      : [];
+    const n = parseInt(q.get('round'), 10);
+    const round = Number.isFinite(n) && n >= 1 && n <= RUN_ROUNDS ? n : 1;
+    const sd = parseInt(q.get('seed'), 10);
+    const seed = Number.isFinite(sd) ? (sd >>> 0) : null;
+    return { stackIds, round, clean: round - 1, seed };
+  } catch { return { stackIds: [], round: 1, clean: 0, seed: null }; }
+}
+
 // A run's whole state lives in one reducer so the phase transitions are explicit and
 // the effects below never race a stale closure.
-const initial = (seed) => ({
-  phase: 'loading', // loading | wall | round | draft | over
-  seed,
-  round: 1,
-  stackIds: [],
-  cumulative: 0,
-  clean: 0, // clean (survived) rounds — feeds MOMENTUM
-  lastRoundScore: 0,
-  lastWall: 0,
-  reason: null, // 'wall' | 'fumble' | 'cleared' (win)
-  offers: [], // modifier ids offered this draft
-  words: null, // { accept:Set }
-});
+const initial = (seed) => {
+  const dev = devOverrides();
+  return {
+    phase: 'loading', // loading | wall | round | draft | over
+    seed: dev.seed ?? seed,
+    round: dev.round,
+    stackIds: dev.stackIds,
+    cumulative: 0,
+    clean: dev.clean, // clean (survived) rounds — feeds MOMENTUM
+    lastRoundScore: 0,
+    lastWall: 0,
+    reason: null, // 'wall' | 'fumble' | 'cleared' (win)
+    offers: [], // modifier ids offered this draft
+    words: null, // { accept:Set }
+  };
+};
 
 function reducer(s, a) {
   switch (a.type) {
@@ -139,9 +160,12 @@ export function useRunMode() {
     if (roundMode.key === 'chain' && p.lastLetter && word[0] !== p.lastLetter) return fail(p, `START WITH "${p.lastLetter.toUpperCase()}"`, force);
     if (roundMode.key === 'fuse' && p.constraint && !word.includes(p.constraint)) return fail(p, `NEEDS "${p.constraint.toUpperCase()}"`, force);
 
-    const band = rarityOf(word);
+    // rarityOf returns { band, mult, announce, … } — the band NAME is `.band`. (Reading
+    // `.name` left rarity undefined, so live rounds silently scored every word as COMMON,
+    // contradicting the sim/wall calibration, and the toast printed "undefined!".)
+    const r = rarityOf(word);
     const w = {
-      rarity: band.name, len: word.length, vowels: countVowels(word),
+      rarity: r.band, len: word.length, vowels: countVowels(word),
       rare: RARE_LETTERS.test(word), lucky: !knobs.noLucky && p.lucky.next(), combo: p.combo,
     };
     p.score += scoreWord(w, stack, knobs);
@@ -150,9 +174,9 @@ export function useRunMode() {
     p.used.add(word);
     p.lastLetter = word[word.length - 1];
     if (roundMode.key === 'fuse') p.constraint = pickFragment(p.lucky.next() ? mulberry32(p.words * 7919) : mulberry32(p.words * 104729));
-    p.toast = w.lucky ? 'LUCKY ×5!' : (band.announce ? `${band.name}!` : null);
+    p.toast = w.lucky ? 'LUCKY ×5!' : (r.announce ? `${r.band}!` : null);
     force();
-    return { ok: true, lucky: w.lucky, band: band.name };
+    return { ok: true, lucky: w.lucky, band: r.band };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, state.words, roundMode.key, knobs]);
 
@@ -162,11 +186,23 @@ export function useRunMode() {
     ? runWinsPayout(state.cumulative, state.reason === 'cleared' ? RUN_ROUNDS : state.round)
     : 0;
 
+  // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's flat
+  // +150, MOMENTUM's ×N, SHORT FUSE ×1.5, GLASS CANNON ×2.5…) are applied to the raw
+  // per-word sum at round end — so the meter MUST show the same round-adjusted number the
+  // wall is actually compared against, not the raw typed total. The ctx here is byte-for-
+  // byte the one endRound uses ({ owned: 0, clean }), so the displayed gap is the real gap.
+  const rawRoundScore = state.phase === 'round' && playRef.current ? playRef.current.score : 0;
+  const projected = state.phase === 'round' && playRef.current
+    ? applyRoundMods(playRef.current.score, stack, { owned: 0, clean: state.clean })
+    : 0;
+
   return {
     phase: state.phase,
     round: state.round,
     totalRounds: RUN_ROUNDS,
     wall: wallAt(state.round),
+    projected,      // round-adjusted live score — compare THIS to the wall
+    rawRoundScore,  // the raw typed total (before round-level modifiers)
     roundMode,
     stack,
     offers: state.offers.map((id) => MODIFIER_BY_ID[id]),
