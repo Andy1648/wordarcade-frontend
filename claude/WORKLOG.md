@@ -369,3 +369,29 @@ verify each push with git ls-remote; BE-PICKY every visual job (screenshot/look/
   exit 0, drain-ordering harness (websocket-boundary/coverage/feed-attribution/word-bomb-scoring/
   parity-wb-blitz/router) 40 passed. Gate after each extraction: lint + unit + harness; revert any
   extraction that fails or needs a test change.
+- 2026-09-06  JOB 6 (app-split-6) FINISH (refactor/app-split-6, BRANCH ONLY, NOT MERGED). App.jsx
+  1823 -> 1485 (-338). 11 PURE verbatim extractions, each gated (lint 0 / unit 464 / vite build 0 /
+  drain-ordering harness green) before the next; ZERO test/spec files changed. New files:
+  hooks/useConnectivity.js (offline state), hooks/useSessionPresence.js (last-seen stamps),
+  hooks/useReturnBonus.js (return-bonus claim; module-load last-seen passed in to preserve timing),
+  hooks/useScreenShake.js (shake state + beat-driven light shake; takes view+beatCount),
+  hooks/useGlobalButtonFeedback.js (delegated hover-blip + press squash/tick),
+  hooks/useFirstGestureMusic.js (first-gesture audio unlock + splash volume choreography),
+  hooks/useUrlSync.js (data-view attr + clean-URL history sync + popstate),
+  hooks/useCgEntry.js (CrazyGames zero-click provision/arm/embed/coarse; inert unless CG_ENTRY),
+  hooks/useIntroSequence.js (loading/splash/fight-card/knife-split lifecycle + handlers),
+  hooks/useAchievementsOnHome.js (home-menu achievements re-eval), src/appConfig.js (pure
+  SCREEN_ACCENT / isPreselectableGame / drawLucky). Harness verified per-step: websocket-boundary,
+  coverage, feed-attribution, word-bomb-scoring, parity-wb-blitz, router (+ intro, repeat-visitor-
+  music, menu-xp, gameover-coverage, cold-submit, rarity-race, game-fill in the final sweep = 74
+  passed). The 3 documented traps are UNTOUCHED (functional setView guard + FIFO drain live in
+  useGameSocket; live-`view` render unchanged in App). NOT MOVED (genuine boundary): (1) the in-game
+  state god-set (~20 useState + refs) — the render reads them and the drain writes them via setters
+  passed to useGameSocket; moving them is the plan's step-4 "full-ownership" inversion of the Tier-1
+  drain hook, a freeze-class rewiring the harness can't fully prove; (2) the reconnect state machine
+  (reconnect + shared rejoin refs + trying/lost effects + defeat sting) — Tier-1 mid-game WS
+  lifecycle, shares refs with the drain, ZERO e2e coverage; (3) the ?join=/?daily= deep-link
+  auto-fire — Tier-1 WS-on-open sends, ZERO e2e coverage; (4) goHome / handleLobbyContinue / the
+  game-action senders — cross-cutting handlers that reach across every hook's setters. (2)(3) each
+  require the mandated 2-device play-test (unavailable this session), so they stay. Pushed
+  refactor/app-split-6, verified via git ls-remote. DO NOT MERGE.
