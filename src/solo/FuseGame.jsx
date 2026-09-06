@@ -259,8 +259,9 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       reason={g.reason}
       placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
-      armHint="SNEAK THOSE LETTERS INTO A WORD"
-      firstRunRule="SNEAK THE LETTERS INTO A WORD"
+      armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
+      firstRunRule="SNEAK THE LETTERS IN A WORD"
+      spotlightMode="fuse"
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}

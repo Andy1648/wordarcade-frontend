@@ -342,7 +342,9 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       placeholder={`START WITH "${required.toUpperCase()}" · 3+ LETTERS`}
       maxLength={data.maxAcceptLen}
       armHint={ARM_HINT}
-      firstRunRule="START WITH THE GIVEN LETTER"
+      firstRunRule="START ON THE LAST LETTER"
+      firstRunSub="OF THE PREVIOUS WORD"
+      spotlightMode="chain"
       rootRef={rootRef}
       fx={fxLayer}
       phase={g.phase}
