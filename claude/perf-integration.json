@@ -1,0 +1,301 @@
+{
+  "results": [
+    {
+      "name": "a. menu idle",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000273,
+        "n": 239
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000728,
+        "n": 239
+      }
+    },
+    {
+      "name": "b. menu keyburst ~30/s",
+      "x1": {
+        "median": 33.30000000000018,
+        "p95": 50,
+        "n": 113
+      },
+      "x4": {
+        "median": 33.30000000000018,
+        "p95": 100,
+        "n": 99
+      }
+    },
+    {
+      "name": "c. WORD BOMB calm",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.800000000000182,
+        "n": 240
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 16.800000000000182,
+        "n": 239
+      }
+    },
+    {
+      "name": "c. WORD BOMB max (low timer + type)",
+      "x1": {
+        "median": 33.30000000000018,
+        "p95": 50,
+        "n": 136
+      },
+      "x4": {
+        "median": 66.60000000000036,
+        "p95": 100,
+        "n": 62
+      }
+    },
+    {
+      "name": "c. CATEGORY BLITZ calm",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000728,
+        "n": 240
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000728,
+        "n": 240
+      }
+    },
+    {
+      "name": "c. CATEGORY BLITZ max (low timer + type)",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 33.30000000000018,
+        "n": 219
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 49.899999999999636,
+        "n": 176
+      }
+    },
+    {
+      "name": "c. CHAIN calm",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.800000000000182,
+        "n": 237
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.29999999999973,
+        "n": 221
+      }
+    },
+    {
+      "name": "c. CHAIN max (mid-combo typing)",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999272,
+        "n": 240
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.40000000000009,
+        "n": 191
+      }
+    },
+    {
+      "name": "c. FUSE calm",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999955,
+        "n": 237
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.30000000000018,
+        "n": 216
+      }
+    },
+    {
+      "name": "c. FUSE max (mid-combo typing)",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000728,
+        "n": 239
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.40000000000009,
+        "n": 190
+      }
+    },
+    {
+      "name": "c. SAT RUSH calm",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000728,
+        "n": 240
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.40000000000009,
+        "n": 202
+      }
+    },
+    {
+      "name": "c. SAT RUSH max (endgame speed-lines)",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999272,
+        "n": 240
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.399999999999636,
+        "n": 207
+      }
+    },
+    {
+      "name": "d. RUN draft screen",
+      "x1": {
+        "median": 16.69999999999891,
+        "p95": 16.700000000000728,
+        "n": 240
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999272,
+        "n": 238
+      }
+    },
+    {
+      "name": "e. RUN round (typing)",
+      "x1": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000273,
+        "n": 241
+      },
+      "x4": {
+        "median": 16.699999999999818,
+        "p95": 33.40000000000009,
+        "n": 199
+      }
+    }
+  ],
+  "audits": {
+    "a. menu idle": {
+      "total": 2,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "b. menu keyburst ~30/s": {
+      "total": 2,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "c. WORD BOMB calm": {
+      "total": 11,
+      "infinite": 8,
+      "infNames": {
+        "wb-danger-breathe": 1,
+        "player-active-pulse": 1,
+        "player-rock": 1,
+        "bomb-danger-rattle": 1,
+        "bomb-idle": 1,
+        "flame-flicker": 1,
+        "label-pulse": 1,
+        "prompt-throb": 1
+      },
+      "badWillChange": []
+    },
+    "c. WORD BOMB max (low timer + type)": {
+      "total": 18,
+      "infinite": 8,
+      "infNames": {
+        "wb-danger-breathe": 1,
+        "player-active-pulse": 1,
+        "player-rock": 1,
+        "bomb-danger-rattle": 1,
+        "bomb-idle": 1,
+        "flame-flicker": 1,
+        "label-pulse": 1,
+        "prompt-throb": 1
+      },
+      "badWillChange": []
+    },
+    "c. CATEGORY BLITZ calm": {
+      "total": 5,
+      "infinite": 1,
+      "infNames": {
+        "mascot-breathe": 1
+      },
+      "badWillChange": []
+    },
+    "c. CATEGORY BLITZ max (low timer + type)": {
+      "total": 6,
+      "infinite": 2,
+      "infNames": {
+        "mascot-breathe": 1,
+        "timer-pulse": 1
+      },
+      "badWillChange": []
+    },
+    "c. CHAIN calm": {
+      "total": 13,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "c. CHAIN max (mid-combo typing)": {
+      "total": 16,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "c. FUSE calm": {
+      "total": 12,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "c. FUSE max (mid-combo typing)": {
+      "total": 14,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "c. SAT RUSH calm": {
+      "total": 35,
+      "infinite": 1,
+      "infNames": {
+        "sr-caret": 1
+      },
+      "badWillChange": []
+    },
+    "c. SAT RUSH max (endgame speed-lines)": {
+      "total": 9,
+      "infinite": 1,
+      "infNames": {
+        "sr-caret": 1
+      },
+      "badWillChange": []
+    },
+    "d. RUN draft screen": {
+      "total": 0,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    },
+    "e. RUN round (typing)": {
+      "total": 24,
+      "infinite": 0,
+      "infNames": {},
+      "badWillChange": []
+    }
+  },
+  "menuBaselineInf": 0,
+  "SAMPLE_MS": 4000
+}
