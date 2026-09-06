@@ -66,6 +66,7 @@ import { useFirstGestureMusic } from './hooks/useFirstGestureMusic';
 import { useUrlSync } from './hooks/useUrlSync';
 import { useCgEntry } from './hooks/useCgEntry';
 import { useIntroSequence } from './hooks/useIntroSequence';
+import { useAchievementsOnHome } from './hooks/useAchievementsOnHome';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
@@ -78,9 +79,7 @@ import {
   getLastSeen,
 } from './visitHistory';
 import ReturnBonusCard from './components/ReturnBonusCard';
-import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
-import { secretFound as evSecretFound } from './lib/events.js';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
 // combo multiplier and a 1/40 lucky ×5, both folded into the per-word reward weight.
@@ -384,16 +383,9 @@ function App() {
   // the home menu (a deep-link into a game doesn't overlay the return card).
   const { returnCard, setReturnCard } = useReturnBonus(LAST_SEEN_AT_LOAD);
 
-  // ACHIEVEMENTS (Job 7): re-evaluate whenever we land on the home menu (so anything earned during a
-  // game / run is caught on return). checkAchievements grants wins for newly-earned only (the wins
-  // chip updates as feedback); the full grid is on the ACHIEVEMENTS screen. Idempotent — a repeat
-  // home visit with nothing new grants nothing.
-  useEffect(() => {
-    if (view !== 'home') return;
-    const newly = checkAchievements();
-    // analytics: a hidden/secret achievement was just discovered (additive; never alters the grant).
-    try { if (Array.isArray(newly)) for (const a of newly) if (a && a.secret) evSecretFound(a.id); } catch { /* analytics only */ }
-  }, [view]);
+  // ACHIEVEMENTS (Job 7): re-evaluate on landing on the home menu. Extracted verbatim to
+  // hooks/useAchievementsOnHome.js — refactor/app-split-6.
+  useAchievementsOnHome(view);
 
   // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
