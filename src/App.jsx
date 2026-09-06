@@ -57,6 +57,8 @@ import { useOverlays } from './hooks/useOverlays';
 import { useRoom } from './hooks/useRoom';
 import { useProgressionEvents } from './hooks/useProgressionEvents';
 import { useGameSocket } from './hooks/useGameSocket';
+import { useConnectivity } from './hooks/useConnectivity';
+import { useSessionPresence } from './hooks/useSessionPresence';
 import { canonicalPathForView, MENU_PATHS, hasStickyQuery, viewIntentFromPath } from './router';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
@@ -67,7 +69,6 @@ import { resolvePlayerName, rememberName } from './playerName';
 import {
   hasSeenIntro,
   markIntroSeen,
-  stampLastSeen,
   hasPlayedBefore,
   getLastSeen,
 } from './visitHistory';
@@ -403,21 +404,10 @@ function App() {
   // (dailyState + dailyResult + dailyStateRef + the ref-sync effect moved into
   // hooks/useProgressionEvents.js — refactor/app-split step 3.)
 
-  // Session presence: refresh the last-seen stamp on load and again on
-  // pagehide/beforeunload, so the intro's 30-minute session boundary measures
-  // absence from the SITE, not time since the intro (a refresh after a long play
-  // session must not replay it). This runs AFTER SEEN_INTRO was read at module
-  // load, so stamping now never suppresses this load's own intro.
-  useEffect(() => {
-    stampLastSeen();
-    const stamp = () => stampLastSeen();
-    window.addEventListener('pagehide', stamp);
-    window.addEventListener('beforeunload', stamp);
-    return () => {
-      window.removeEventListener('pagehide', stamp);
-      window.removeEventListener('beforeunload', stamp);
-    };
-  }, []);
+  // Session presence: last-seen stamps on load + pagehide/beforeunload, so the intro's session
+  // boundary measures absence from the SITE. Extracted verbatim to hooks/useSessionPresence.js —
+  // refactor/app-split-6.
+  useSessionPresence();
 
   // RETURN BONUS (Job 6): claim once on mount using the last-seen time captured at module load. The
   // wins are granted here (they returned after >=6h, at most once/calendar day); the card is shown
@@ -518,21 +508,9 @@ function App() {
     }
   }, [reconnect, wsStatus, send, playerName, reconnectGiveUp]);
 
-  // feat/offline: connectivity, so the multiplayer modes (Word Bomb / Category Blitz — which NEED the
-  // server) show a clear NEEDS INTERNET state instead of a silent spin, while CHAIN / FUSE / SAT RUSH
-  // (fully client-side, precached by the service worker) stay playable. Seeded from navigator.onLine
-  // and kept live via the online/offline events.
-  const [offline, setOffline] = useState(typeof navigator !== 'undefined' && navigator.onLine === false);
-  useEffect(() => {
-    const goOnline = () => setOffline(false);
-    const goOffline = () => setOffline(true);
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
-    return () => {
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
-    };
-  }, []);
+  // feat/offline: connectivity (Word Bomb / Category Blitz need the server; CHAIN / FUSE / SAT RUSH
+  // stay playable offline). Extracted verbatim to hooks/useConnectivity.js — refactor/app-split-6.
+  const offline = useConnectivity();
 
   // Background music. It's started from the splash dismiss (the guaranteed first
   // user gesture), so no autoplay attempt here - just the player + a fade-in.

@@ -361,3 +361,11 @@ verify each push with git ls-remote; BE-PICKY every visual job (screenshot/look/
   path (functional setView / live-view render / FIFO queue traps) and mandates a 2-device play-test.
   Question CLOSED: mechanically extractable, proven twice; blocked only by the play-test gate. Full e2e
   gate queued (port 4173 busy with JOB 1). NOT merged.
+- 2026-09-06  JOB 6 (app-split-6) START (refactor/app-split-6 OFF refactor/app-split-5, TIER-1,
+  BRANCH ONLY, DO NOT MERGE): continue the App.jsx extraction from 1823 lines. app-split-5 already
+  moved the WS drain to useGameSocket.js. Extract remaining self-contained hooks/helpers that move
+  with NO behaviour change, never touching the 3 documented traps (functional setView guard,
+  live-view render, FIFO drain order). Baseline verified: lint 0 errors, unit 464 pass, vite build
+  exit 0, drain-ordering harness (websocket-boundary/coverage/feed-attribution/word-bomb-scoring/
+  parity-wb-blitz/router) 40 passed. Gate after each extraction: lint + unit + harness; revert any
+  extraction that fails or needs a test change.
