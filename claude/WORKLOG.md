@@ -361,3 +361,11 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
 - Fix stat label "N WINS / WORD" (implies per-word scoring) -> RUN-true label.
 - FINISH 2026-09-06 — RunArt redrawn: rising brick WALL (edge-to-edge) + fanned draft-hand of neon modifier cards (+4 / x3 hero / x5) over a two-tone manga burst; hero raised so it clears the title-bar scrim on both the wide mobile banner and the tall desktop card. 3 BE-PICKY rounds. Largest empty rectangle: 1366 = 2.9%, 390 = 1.2% (old bar-chart had a ~24% top-left void). Stat label "N WINS / WORD" -> "10 ROUNDS . DRAFT . BEAT THE WALL" (statLabel on RUN_GAME + GameCard override; no per-word implication; fits 390 with no clip). Gate: lint 0 errors, unit tests 473/473, vite build exit 0.
   before: claude/run-shots/before/grid-1366.png   after (beside-the-five): claude/run-shots/r3/grid-1366.png
+
+## 2026-09-06T05:34Z START — RunArt card-fan legibility refinement (feat/run-mode)
+Fan +4/x3/x5 wider+more-angled so all three values fully legible at 1920/1568x675/1366x768/390. x3 stays hero.
+FINISH 2026-09-06T05:51Z — RunArt fan refined so all three VALUES read at 1920/1568x675/1366/390.
+  Geometry: side cards fanned WIDE cx 66/234 (was 88/212) + angled +/-26 deg (was +/-24) so each big number sits fully outside the hero footprint (x~98-202) — no card clips a neighbour (>=7px gap even on the 144px phone). Gentle vertical sweep +4 cy172 / x3 cy168 (peak) / x5 cy184 lifts the LEFT card clear of the ROGUELIKE badge + title scrim that eat the phone banner lower-left. x3 stays hero: centred, largest (w104/glyph64), peaks, drawn last (on top). Wall+burst+house language untouched.
+  4 BE-PICKY rounds (r1 symmetric-wide -> r2 raised -> r3 asymmetric-clear tested -> r4 gentle-asymmetry final). Verified via measured SVG <text> rects at all 4 viewports (no neighbour clip; +4 as high as the 118px phone strip allows). Desktop 1920/1568/1366 all three fully clear; 390 +4 reads (badge over its lower edge only — physical limit of the strip) + x3/x5 fully clear.
+  Gate: lint 0 errors (34 pre-existing warnings), npm test 473/473 pass incl. will-change assert, vite build exit 0.
+  beside-the-five: claude/run-shots/final/beside-five-1920.png + beside-five-390.png

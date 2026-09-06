@@ -409,10 +409,21 @@ export function RunArt() {
       {/* thin battlement highlight along the rising top edge */}
       <path d="M0 300 H52 V266 H108 V232 H164 V198 H220 V164 H276 V132 H300" fill="none" stroke="#FF6FB8" strokeWidth="3" opacity="0.7" />
       {/* the drafted HAND — hero fan; raised so the glyphs read above the title-bar
-          scrim on every crop. Back cards first, hero last on top. */}
-      {draftCard(88, 202, -24, 84, 116, '#2EFFE0', '+4', 48, 'c-left')}
-      {draftCard(212, 202, 24, 84, 116, '#FF6B3D', '×5', 48, 'c-right')}
-      {draftCard(150, 184, -4, 100, 138, '#FFE94A', '×3', 64, 'c-hero')}
+          scrim on every crop. Back cards first, hero last on top.
+          LEGIBILITY GEOMETRY (all three VALUES must read at 1920 / 1568 / 1366 / 390):
+          - the side cards are fanned WIDE (cx 66 / 234) and angled ±26° so each big
+            number sits fully OUTSIDE the hero's footprint (x≈98–202) — none is clipped
+            by a neighbour at any size (verified: ≥7px gap even on the 144px phone banner).
+          - a gentle vertical sweep (+4 172 · ×3 168 · ×5 184) lifts the LEFT card so its
+            number clears the ROGUELIKE badge + title scrim that eat the lower-left of the
+            wide phone banner, while ×3 still PEAKS (lowest cy) — on the phone crop the
+            visible strip is only ~118px tall, so this is as high as +4 can sit before its
+            top would crop.
+          The ×3 stays the hero: centred, largest (w104 / glyph64), peaks highest and is
+          drawn last (on top), so it reads first and most forward. */}
+      {draftCard(66, 172, -26, 86, 118, '#2EFFE0', '+4', 48, 'c-left')}
+      {draftCard(234, 184, 26, 86, 118, '#FF6B3D', '×5', 48, 'c-right')}
+      {draftCard(150, 168, -3, 104, 142, '#FFE94A', '×3', 64, 'c-hero')}
     </svg>
   );
 }
