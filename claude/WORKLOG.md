@@ -468,3 +468,5 @@ Full clean gate (workers=2) found 65 real failures (not infra). Root causes, all
    useXpCapture.js) and can't be clicked (aria-disabled). Updated the 3 specs to target
    .game-card:not(.locked):first (an unlocked, dialog-opening card). App behavior is correct; tests
    were stale. Subset re-run of all 4 specs: 881 passed, 0 failed.
+
+## JOB 1 DONE — integration/run-stack: full gate GREEN (lint 0 err, 487 unit, 1092 e2e pass), pushing.
