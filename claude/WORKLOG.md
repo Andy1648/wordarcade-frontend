@@ -406,3 +406,22 @@ Empty-rect @1920 (all <18%): CHAIN 22.2->7.5, FUSE 22.2->7.5, WB 16->6.9, BLITZ 
 ---
 ## JOB 1 — integration/run-stack START 2026-09-06T (long-run)
 Merging 9 branches in dependency order off origin/main (d4c40c3), fast-gate (lint+unit+build) after each, full e2e gate at end. Order: run-mode, run-draft-look, run-wall, play-backdrop, ingame-look, game-onboarding, lobby-life-fe, return-bonus, endgame.
+
+## JOB 1 progress 2026-09-06 — all 9 merged into integration/run-stack
+Merged in order: run-mode, run-draft-look, run-wall, play-backdrop, ingame-look, game-onboarding,
+lobby-life-fe, return-bonus, endgame. Conflicts were all additive & resolved keeping both sides:
+RunMode.css (560px media + wall keyframes), RunMode.jsx (ModifierArt + PlayBackdrop imports),
+FuseGame.jsx (took onboarding copy + spotlightMode). No BEHAVIOUR conflicts — no branch left out.
+Tier-1 App.jsx invariants verified intact: functional setView guard (line ~989, hardened to also
+guard 'cg-arm'), FIFO message queue in useWebSocket, live-view render (no renderedView). Fast gate
+after each merge: lint 0 err, unit 487 pass, vite build exit 0. Full e2e gate + push pending.
+claude/PLAYTEST-RUN.md written (single-sitting ordered checklist, each step exercises max branches).
+
+## JOB 3 DONE (chore/run-modifiers, REPORT ONLY) — pushed f3b0b40, verified, NOT merged
+18 modifiers audited (defined in src/runMode/engine.js). Real bugs found: SNOWBALL = flat x0.7
+penalty forever (owned hardcoded 0); HOT STREAK & UNCAPPED dominated/dead (combo never reaches
+their raised cap in a 16-word round); RARE BREED net-negative + text says x6 code does x1.5;
+LONG HAUL & SNOWBALL text mismatches. Boring (flat, no cost): DEEP POCKETS, SCRABBLE BAG, MOMENTUM.
+Best-designed: GLASS CANNON. Proposed 3 replacements (REDLINE/HIGH ROLLER/AVALANCHE) w/ numbers.
+NOTE: origin/feat/endgame does NOT contain src/runMode/ (branches are independent, not stacked) —
+run stack lives on feat/run-mode. Integration branch combines all correctly regardless.
