@@ -387,3 +387,9 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   #6 Blitz solo-leaver -> verify round/scoreboard resolves for the lone survivor (recommend a live check);
   #7 not_a_word latency -> the only reject that round-trips; recommend an optimistic client buzz on the
   dictionary reject too (mirror the 3 local rejects) IF/when the client caches recent verdicts.
+- 2026-09-06  JOB 11 DONE (chore/verdict-3, REPORT ONLY, LAST): third verdict. The verdict NO LONGER
+  STANDS — the run mode is now reachable (LV8), tuned (in-band payout), polished (art/draft/wall) and a
+  headless playthrough PROVED it compels (bot died R8 on a drafted modifier = the roguelike fantasy
+  working). Core-loop problem SOLVED IN CODE. Caveats: it's on 8 UNMERGED branches so production is
+  unchanged (ship it after the play-test); SAT-in-run rounds add no mechanic (4/8 filler); multiplayer
+  is still the empty-lobby flagship. Answer: good solo game the MOMENT it merges. claude/verdict-3.md.
