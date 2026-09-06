@@ -14,7 +14,7 @@ import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import AudioControls from './components/AudioControls';
-import { sndWordAccepted, sndWordRejected, sndRunOver } from './audio/gameSounds';
+import { sndWordAccepted, sndWordRejected, sndRunOver, sndAchievement } from './audio/gameSounds';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 // StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
 // views/footer links), so their bodies are imported by StatsScreen, not lazily as top-level views.
@@ -501,6 +501,9 @@ function App() {
   useEffect(() => {
     if (view !== 'home') return;
     const newly = checkAchievements();
+    // feat/sound-2: the achievement chime (root+fifth+octave) — one strike when at least one
+    // achievement was newly earned this return-home. Guarded/no-op when EVENTS sound is off.
+    try { if (Array.isArray(newly) && newly.length > 0) sndAchievement(); } catch { /* audio best-effort */ }
     // analytics: a hidden/secret achievement was just discovered (additive; never alters the grant).
     try { if (Array.isArray(newly)) for (const a of newly) if (a && a.secret) evSecretFound(a.id); } catch { /* analytics only */ }
   }, [view]);

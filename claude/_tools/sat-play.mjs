@@ -1,0 +1,16 @@
+import { chromium } from '@playwright/test';
+import { installBackendMock } from '../../e2e/support/backendMock.js';
+const b = await chromium.launch();
+const ctx = await b.newContext({ baseURL:'http://localhost:4173', viewport:{width:1440,height:900} });
+const p = await ctx.newPage(); await installBackendMock(p);
+await p.goto('/?satRush=1&portal=1'); await p.getByRole('img',{name:'Type a Word'}).waitFor(); await p.waitForTimeout(300);
+await p.locator('[data-game="sat-rush"] .game-card').click(); await p.waitForTimeout(500);
+await p.getByRole('button',{name:'Play'}).click(); await p.waitForTimeout(500);
+await p.getByRole('button',{name:/BRIEFING/}).click(); await p.waitForTimeout(700);
+await p.locator('.sr-brief-page').waitFor({timeout:5000});
+await p.screenshot({ path:'claude/_tools/shots-j6/sat-brief-desktop.png' });
+await p.getByRole('button',{name:'Start the run'}).click();
+await p.locator('.sr-slots').waitFor({timeout:6000}); await p.waitForTimeout(1500);
+await p.screenshot({ path:'claude/_tools/shots-j6/sat-play-desktop.png' });
+console.log('SAT briefing + play captured');
+await b.close();

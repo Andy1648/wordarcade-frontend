@@ -363,3 +363,18 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   Chain/Fuse/fuseCards, GameScreen placeholders, StatsScreen, ConnectingContent, CgArmScreen, LobbyScreen,
   CreditsScreen, friendlyError, share cardModel/shareText). Updated 2 e2e specs to new copy. Gate: lint 0
   errors, unit 464/464, build exit 0, touched e2e 3/3. No game-logic meaning changes; deferred items flagged.
+- 2026-09-04  JOB 6 DONE (feat/sound-2, branch only): audited feat/sound (shipped to main) vs
+  sound-report.md. Engine present + correct: C-minor-pentatonic (audioCore), keystroke round-robin
+  w/ cutoff timbre variation (clack), 3 separate toggles (MUSIC/KEYSTROKE/EVENTS), OFF by default.
+  Full event set defined; only TWO gaps were unwired -> FIXED: sndAchievement (App.jsx, fires when
+  checkAchievements returns newly-earned on return-home) and sndStreakExtended (streak.touchStreak,
+  the single accept chokepoint, fires once when the daily count actually grows). sndLevelUp was
+  already wired via useXpCapture.leveledUp. node 464/464, lint 0, build 0. NOT merged.
+  LATENCY: every sound schedules at ctx.currentTime with a 2-5ms attack (no added delay) -> perceived
+  latency = AudioContext output latency only (~10ms desktop, ~20-40ms mobile). Envelopes: accept 120ms,
+  reject 100ms, purchase 140ms, streak 120ms, achievement 200ms, runOver 300ms, levelUp ~350ms,
+  rebirth <=600ms, lucky 3x40ms, keystroke ~110-160ms tail.
+  VOICE PEAK @30 keys/s: each keystroke ~4 nodes over ~160ms; ~5 keystrokes overlap -> ~15-20 raw
+  voices, but audioCore hard-caps at VOICE_CAP=14 (oldest culled w/ a quick fade; voicePeak tracked
+  via getVoiceStats()). So sustained peak sits at the 14 cap by design; +3 nodes per accepted word if
+  EVENTS on (accepts are far rarer than keystrokes). No uncapped growth.

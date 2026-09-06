@@ -1,0 +1,67 @@
+[
+  {
+    "name": "menu",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "layout": {
+      "scrollW": 390,
+      "clientW": 390,
+      "hOverflow": false,
+      "rootH": 664,
+      "innerH": 664
+    },
+    "cap": {
+      "dvh": true,
+      "svh": true,
+      "visualViewport": true,
+      "audioContext": false,
+      "serviceWorker": true,
+      "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari/604.1",
+      "innerH": 664,
+      "vvH": 664
+    }
+  },
+  {
+    "name": "chain",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "layout": {
+      "scrollW": 390,
+      "clientW": 390,
+      "hOverflow": false,
+      "rootH": 664,
+      "innerH": 664
+    },
+    "cap": null
+  },
+  {
+    "name": "fuse",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "layout": {
+      "scrollW": 390,
+      "clientW": 390,
+      "hOverflow": false,
+      "rootH": 664,
+      "innerH": 664
+    },
+    "cap": null
+  },
+  {
+    "name": "sat",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "layout": {
+      "scrollW": 390,
+      "clientW": 390,
+      "hOverflow": false,
+      "rootH": 664,
+      "innerH": 664
+    },
+    "cap": null
+  }
+]
