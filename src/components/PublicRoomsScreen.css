@@ -81,6 +81,66 @@
   margin-bottom: 22px;
 }
 
+/* ---- Life-signs (N ONLINE / last game) ---- */
+
+.browser-lifesigns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  background: #0d0618;
+  border: 3px solid #2a1745;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  padding: 10px 14px;
+  margin: 0 0 20px;
+}
+
+.browser-life-primary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Flat green "live" dot — a solid pip with a darker ring + hard shadow (no glow,
+   no loop; the ZERO-new-infinite-animation rule stands). */
+.browser-life-pip {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #39FF6A;
+  border: 2px solid #1A7A34;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.browser-life-count {
+  font-family: 'Bungee', cursive;
+  font-size: clamp(14px, 1.9vw, 18px);
+  color: #39FF6A;
+  white-space: nowrap;
+}
+
+.browser-life-ingame {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #2EFFE0;
+  white-space: nowrap;
+}
+
+.browser-life-last {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #C9B8E8;
+  white-space: nowrap;
+}
+
 .browser-field-label {
   font-family: 'Bungee', cursive;
   font-size: 11px;
@@ -414,6 +474,25 @@
 .browser-btn-create {
   background: #2EFFE0;
   border-color: #1A9985;
+}
+
+/* START VS BOT — the primary "play now, stay open" action. Pink hero fill so it
+   reads first in the empty state; darker-pink coloured outline per the house style. */
+.browser-btn-bot {
+  background: #FF4FA3;
+  border-color: #A82766;
+  color: #fff;
+  width: 100%;
+}
+
+/* Footer vs-bot under a populated list — a divider gap so it doesn't crowd rows. */
+.browser-footer-action {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 3px solid #2a1745;
+}
+.browser-footer-action .browser-btn-bot {
+  width: 100%;
 }
 
 /* ---- Responsive ---- */

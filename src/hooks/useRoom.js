@@ -10,6 +10,11 @@ import { track } from '../lib/analytics';
 export function useRoom({ send, setView, setPlayerName, goHome }) {
   // Public-room browser list (from `public_rooms`).
   const [publicRooms, setPublicRooms] = useState([]);
+  // Lobby life-signs block from the same `public_rooms` frame
+  // ({ online, inGame, gamesInProgress, lastGameStartedAt }). null until the
+  // server sends it — the FE reads it DEFENSIVELY (an older/undeployed backend
+  // omits `stats`, so this stays null and the life-signs UI simply hides).
+  const [publicRoomsStats, setPublicRoomsStats] = useState(null);
   // Lobby entry mode ('solo' | 'join' | a preselected game id) + whether Create defaults to PUBLIC.
   const [lobbyMode, setLobbyMode] = useState(null);
   const [lobbyPublicDefault, setLobbyPublicDefault] = useState(false);
@@ -55,6 +60,28 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
     goToLobby('solo', true);
   }
 
+  // "START VS BOT" from the browser: the frictionless single-player-but-open loop.
+  // Creates a PUBLIC Word Bomb room + seats a medium bot, then lands the host in
+  // RoomScreen (via the room_update -> 'room' transition) with the bot already in
+  // and START ready — while the room stays PUBLIC/joinable, so a real human can
+  // drop in from the browser BEFORE the host starts. Reuses only existing server
+  // frames (create_room / set_game_type / add_bot), processed in order on this
+  // socket, exactly like the CrazyGames provision path. No new server messages.
+  // KNOWN LIMITATION: a human can only join BEFORE start; joining mid-game is the
+  // late-join case owned by feat/mp-grace (JOB 3 #5), not this flow.
+  function handleStartPublicVsBot(name) {
+    setPlayerName(name);
+    setServerError('');
+    // Lock the room into Word Bomb so RoomScreen treats it as a preselected game
+    // (hides the mode picker) — the same lobbyMode contract the homepage uses.
+    setLobbyMode('word-bomb');
+    setLobbyPublicDefault(true);
+    send('create_room', { name, isPublic: true });
+    send('set_game_type', { gameType: 'word-bomb' });
+    send('add_bot', { difficulty: 'medium' });
+    track('room_created', { mode: 'public-vs-bot' });
+  }
+
   function handleLeaveRoom() {
     send('leave_room', {});
     goHome();
@@ -63,6 +90,8 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
   return {
     publicRooms,
     setPublicRooms,
+    publicRoomsStats,
+    setPublicRoomsStats,
     lobbyMode,
     setLobbyMode,
     lobbyPublicDefault,
@@ -79,6 +108,7 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
     handleRefreshPublicRooms,
     handleJoinPublicRoom,
     handleCreatePublicFromBrowser,
+    handleStartPublicVsBot,
     handleLeaveRoom,
   };
 }
