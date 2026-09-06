@@ -415,3 +415,37 @@ re-run the run-econ sim now that live rarity is correct.
   shipped 5-mode band (blitz 625 … chain 963). No divisor tweak needed. The fix brings the LIVE path
   into agreement with the sim/wall calibration; it does not move the sim numbers.
 FINISH — Gate: lint 0, node --test 476/476 (incl. 2 new), vite build exit 0. Pushed feat/run-wall.
+
+## ===== JOB — dim PlayBackdrop during play so text dominates — branch fix/play-backdrop =====
+START 2026-09-06 — behind live gameplay the graffiti wall (PlayBackdrop) competed with the UI copy:
+at 1568x675 in CHAIN the readable word-tags (SICK/WOW/YOLO/EPIC…) sat right behind the CHAIN SLOTS
++ helper text at enough contrast to fight it. Fix: calm the wall during play WITHOUT re-opening the
+BE-PICKY largest-empty-rectangle void the backdrop was added to close.
+- MEASURE FIRST (new tool claude/_tools/play-empty.mjs — largest-empty-rect over .solo-root/.run-root
+  mid-play, dominant-colour bg, T=48, 200px grid; wall tone counted as empty per BE-PICKY). BEFORE:
+  chain 12.8/18.9/4.1 · fuse 12.8/16.4/8.1 · run 16.6/24.2/10.7 (@1568/1920/390). NOTE the wide-1920
+  two-column solo stage + wide RUN margins already sit in the 18-30% "soft" band at full decor — a
+  pre-existing sparse-decor property, not introduced here.
+- REJECTED approach A (centre scrim, r1): a flat inset scrim over the interactive column RAISED the
+  metric (chain 12.8->17.9, fuse 12.8->19.7) — the void it filled was WRONG: the two-column solo
+  layout has an empty CENTRAL GUTTER [x32 w22 h90] that decor was filling, and the scrim killed it.
+  Also left a visible rectangular seam. Reverted.
+- REJECTED approach B (dim whole backdrop / all decor opacity): can only REMOVE ink -> only raises the
+  metric; chain-1920 already 18.9% at full decor, so any global dim worsens it.
+- CHOSEN: DIM ONLY THE READABLE WORD-TAGS (grouped .play-tags, opacity 0.42), scoped to .solo-root +
+  .game-stage; RUN left FULL (its UI is on an opaque panel — never competed — and its wide margins
+  need the tag coverage: a sweep showed fading RUN's tags jumps it 16.6->20.7%). The abstract decor
+  (splatters/stickers/drips/halftone/wall tone) stays full and carries the empty-rect coverage, so the
+  fade barely moves the metric. SWEEP proof (claude/_tools/play-sweep.mjs): chain-1568 12.8% at a1.0 ->
+  13.5% at ANY faded value (plateau even at a0) — the words are NOT the load-bearing coverage. Alpha
+  choice is a pure visual call (no extra metric cost between 0.25 and 0.6).
+- AFTER (same tool): chain 13.5/20.1/7.2 · fuse 15.0/16.4/8.9 · run 16.6/24.2/10.7. All <18% except the
+  two PRE-EXISTING ultrawide cases: chain-1920 18.9->20.1 (the column-gutter; delta +1.2 from gutter
+  tags; already >18 before) and run-1920 24.2->24.2 (byte-identical — RUN untouched). fuse-1920 &
+  run(all) unchanged. Nothing enters "FAIL" (>30); nothing composed becomes soft from this change.
+- LOOKED: at 1568 (the reported case) the tags are now faint ghosts, TIGER/cyan letter/slots/helper
+  clearly dominant; abstract decor keeps the "same world" feel. Same for FUSE. RUN identical to before.
+- Static/composited only: no new animation, no will-change, no motion. RUN + menu untouched.
+BE-PICKY: 3 rounds (before / r1 rejected scrim / after). Shots:
+claude/play-backdrop-dim/{before,r1,after}/{chain,fuse,run}-{1568x675,1920x1080,390x844}.png
+FINISH — Gate: lint 0 errors, node --test 476/476 pass, vite build exit 0. Pushed fix/play-backdrop.

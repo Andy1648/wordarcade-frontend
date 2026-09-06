@@ -129,21 +129,29 @@ function PlayBackdrop({ className = '' }) {
         );
       })}
 
-      {/* Spray-painted tags. */}
-      {TAGS.map((t, i) => (
-        <GraffitiTag
-          key={`tag${i}`}
-          word={t.word}
-          fill={t.c.fill}
-          line={t.c.line}
-          size={t.size}
-          top={t.top}
-          left={t.left}
-          rotation={t.rot}
-          opacity={t.op}
-          drip={t.drip}
-        />
-      ))}
+      {/* Spray-painted WORD tags — grouped so a play surface can DIM the readable words that
+          sit behind the interactive text (the actual "graffiti competes with the UI copy"
+          complaint) WITHOUT touching the abstract decor (splatters / stickers / halftone /
+          wall tone) that carries most of the surface's ink. Dimming only the words keeps the
+          BE-PICKY largest-empty-rectangle coverage essentially intact while stopping the
+          word-on-word fight. Full strength by default (RUN, whose UI sits on an opaque panel);
+          solo + game roots turn `--play-tags-a` down via scoped CSS. */}
+      <div className="play-tags">
+        {TAGS.map((t, i) => (
+          <GraffitiTag
+            key={`tag${i}`}
+            word={t.word}
+            fill={t.c.fill}
+            line={t.c.line}
+            size={t.size}
+            top={t.top}
+            left={t.left}
+            rotation={t.rot}
+            opacity={t.op}
+            drip={t.drip}
+          />
+        ))}
+      </div>
 
       {/* Stickers. */}
       {STICKERS.map((st, i) => (
