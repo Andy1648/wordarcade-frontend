@@ -424,27 +424,78 @@ html[data-beat='true'] .homepage-logo {
   zoom: var(--menu-scale, 1);
 }
 
+/* FIRST-RUN SPOTLIGHT (feat/run-mode, Issue #3): while the one-time menu coach mark is up, the
+   only things sitting in the gap under the XP bar are the non-interactive NEXT-unlock teaser + the
+   WPM line — which the Spotlight caption ("TYPE OR CLICK ANYWHERE") cannot detect as obstacles, so
+   it printed on top of them. Momentarily hide those teaser rows (visibility → the box keeps its
+   space, so NOTHING shifts when the coach mark dismisses on the first key/tap) so the caption sits
+   in a clean band right under the bar. They reappear the instant the spotlight is dismissed. This
+   also focuses a brand-new player on the bar, which is the whole point of the coach mark. */
+.homepage-stage.spot-active .menu-next-unlock,
+.homepage-stage.spot-active .menu-wpm {
+  visibility: hidden;
+}
+
+/* SIX-CARD BENTO (feat/run-mode). THE RUN is the marquee HEADLINE, not one of six equal tiles:
+   it takes a full-width FEATURED banner across the top row; the other five mode cards sit in a
+   grid beneath it. The grid is `height:100%` with fr rows and fills the flex card-region, so the
+   whole bento ALWAYS fits one screen with no scrolling (the fit is guaranteed by construction —
+   the old per-card 3:4 JS sizing pass is gone). Cards STRETCH to fill their cells; the scenes are
+   slice-to-cover so a whole composition still shows at any cell aspect. */
 .homepage-cards-grid {
   display: grid;
   /* 3D depth for the cards' cursor-magnetic lean (rotateX/rotateY on each
      .game-card-wrap reads against this parent perspective). Purely visual. */
   perspective: 1000px;
-  /* ART-LED v2 (feat/cards-live): the column count (--cards-cols) and the exact 3:4 card size
-     (--card-w / --card-h) are computed in Homepage.jsx from the AVAILABLE HEIGHT, so all five
-     cards fit ONE screen with no scrolling (5-in-one-row, or a 3+2 grid on a very narrow/tall
-     viewport). Cards are centred in their cells; the scenes are 3:4 and never cropped. */
   width: 100%;
-  grid-template-columns: repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr));
-  justify-content: center;
-  justify-items: center;
-  align-items: center;
+  height: 100%;
+  min-height: 0;
+  /* LANDSCAPE (wide desktop / short laptop): THE RUN is a tall hero on the LEFT filling the whole
+     region height (a big ~3:4-ish poster — the aspect RunArt is drawn for), with the five mode
+     cards in ONE full-height row to its right. One row band → both hero and cards use the FULL
+     region height, so nothing is squeezed short even on a 675px-tall screen. */
+  grid-template-columns: minmax(0, var(--hero-fr, 2fr)) repeat(5, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  justify-items: stretch;
+  align-items: stretch;
   gap: var(--gap, clamp(10px, 1.4vw, 20px));
   padding: 0;
 }
-/* A 2-column grid of five ends 2+2+1 — span the lone last card across both columns so it
-   centres under the pair above instead of hanging off to the left (feat/cards-live). */
-.homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
+/* THE RUN — the marquee hero, first column, full height. The other five auto-flow into
+   columns 2-6 of the single row. */
+.homepage-cards-grid .game-card-magnet.is-hero {
+  grid-column: 1;
+  grid-row: 1;
+}
+/* Every card fills its bento cell (the grid track owns the size now, not a 3:4 JS var). The magnet
+   is a 1-cell grid, the wrap is its only child, and the card face fills the wrap — so a card is
+   exactly its cell. aspect-ratio is dropped: cells are sized by the tracks and the art covers. */
+.homepage-cards-grid .game-card-magnet,
+.homepage-cards-grid .game-card-wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.homepage-cards-grid .game-card {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+/* PORTRAIT / narrow (phones): hero banner on top, then the five in a 2-col grid that ends 2+2+1
+   with the lone last card (FUSE) centred across both columns. Four rows total; the fr tracks keep
+   it on one screen. */
+@media (orientation: portrait), (max-width: 760px) {
+  .homepage-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, var(--hero-fr-portrait, 1.25fr)) repeat(3, minmax(0, 1fr));
+  }
+  .homepage-cards-grid .game-card-magnet.is-hero {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .homepage-cards-grid .game-card-magnet:not(.is-hero):last-child {
+    grid-column: 1 / -1; /* centre the odd 5th card under the 2+2 above */
+  }
 }
 
 /* Peek-scroll region wrapping the cards grid (desktop / >760px). Shows one full row
@@ -476,10 +527,12 @@ html[data-beat='true'] .homepage-logo {
   --gap: clamp(10px, 1.4vw, 20px);
   width: 100%;
   box-sizing: border-box;
-  /* Sizes to the fitted card row and is centred in the region (justify-content:center). The cards
-     are sized in JS to fit the region height, so this NEVER needs to scroll — no "N MORE". */
-  flex: 0 1 auto;
+  /* FILLS the flex card-region height so the inner `height:100%` bento grid has a real height to
+     resolve against (feat/run-mode). It never scrolls — the fr-row grid fits by construction. */
+  flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   /* Horizontal padding = the 16-32px gutter between the grid and the stage's inner edge. */
   padding: 0 clamp(18px, 1.8vw, 30px);
   /* NO clipping here (fix/ui-pass-4, item 1): the REAL cause of the "still clipped" cards was

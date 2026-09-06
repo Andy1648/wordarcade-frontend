@@ -243,12 +243,18 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // Payout preview (what each accepted WORD pays in this mode). Shown on every
   // ENABLED, UNLOCKED card — a locked card shows just its mode name in the bar.
   const payout = game.enabled && !locked && (
-    <>
-      {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
-      {currentRebirthMult() > 1 && (
-        <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
-      )}
-    </>
+    game.statLabel ? (
+      // Modes not scored per word (THE RUN) carry their own true stat line — no
+      // "WINS / WORD", no rebirth multiplier (that's a per-word payout concept).
+      <>{game.statLabel}</>
+    ) : (
+      <>
+        {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
+        {currentRebirthMult() > 1 && (
+          <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
+        )}
+      </>
+    )
   );
   // The badge carries its data-driven fill (game.badgeBg / badgeColor) so themes and
   // gameData stay the source of truth; menu.spec asserts its text === game.badgeText.
@@ -266,7 +272,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     // div whose only job is that transform. It composes OUTSIDE the
     // existing tilt/lift (which stays on .game-card-wrap) and re-provides the
     // grid's perspective for the inner 3D tilt. See .game-card-magnet in the CSS.
-    <div ref={magnetRef} className="game-card-magnet" data-game={game.id}>
+    <div ref={magnetRef} className={`game-card-magnet${game.headline ? ' is-hero' : ''}`} data-game={game.id}>
       {/* The grid item: static resting rotate + cursor-tilt via its own shared
           controller, left fully intact — the magnet only wraps it. */}
       <div

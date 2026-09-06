@@ -349,11 +349,90 @@ export function FuseArt() {
   );
 }
 
-// Lookup map so GameCard can resolve `artKey` strings from gameData.js.
+// One drafted modifier card for THE RUN's hand. A hard black offset shadow, a
+// thick black outline over a flat neon fill, a big black glyph (the stacking
+// modifier) and a small corner index — reads as a real card, not a rectangle.
+function draftCard(cx, cy, rot, w, h, fill, glyph, gsize, key) {
+  return (
+    <g key={key} transform={`translate(${cx} ${cy}) rotate(${rot})`}>
+      {/* hard black offset shadow */}
+      <rect x={-w / 2 + 6} y={-h / 2 + 9} width={w} height={h} rx="11" fill="#0d0618" />
+      {/* card body */}
+      <rect x={-w / 2} y={-h / 2} width={w} height={h} rx="11" fill={fill} stroke="#000" strokeWidth="6" />
+      {/* flat tonal wedge in the top corner (depth without a gradient) */}
+      <path d={`M${-w / 2 + 3} ${-h / 2 + 3} h${w * 0.5} l${-w * 0.5} ${h * 0.5} z`} fill="#000" opacity="0.09" />
+      {/* small top-left index */}
+      <text x={-w / 2 + 13} y={-h / 2 + 26} fontSize="19" fontWeight="bold" fill="#000" fontFamily={BUNGEE}>{glyph}</text>
+      {/* hero glyph */}
+      <text x="0" y={gsize * 0.34} fontSize={gsize} fontWeight="bold" fill="#000" textAnchor="middle" fontFamily={BUNGEE}>{glyph}</text>
+    </g>
+  );
+}
+
+// ---- THE RUN: a rising BRICK WALL structure runs edge-to-edge behind (the
+//      escalating ante you climb), a radial burst blooms from the draft point,
+//      and a fanned HAND of neon modifier cards is the hero object overlapping
+//      both — "draft stacking modifiers against a rising wall". ----
+export function RunArt() {
+  // Rising staircase wall silhouette (low left → high right), edge-to-edge.
+  const wallTop = 'M0 300 H52 V266 H108 V232 H164 V198 H220 V164 H276 V132 H300 V400 H0 Z';
+  // Brick courses, clipped to the wall — horizontal mortar + staggered verticals.
+  const brickH = 34, brickW = 52;
+  const bricks = [];
+  let row = 0;
+  for (let y = 132; y < 400; y += brickH) {
+    bricks.push(<line key={`h${y}`} x1="0" y1={y} x2="300" y2={y} stroke="#0d0618" strokeWidth="3" />);
+    const off = (row % 2) * (brickW / 2) - brickW / 2;
+    for (let x = off; x < 300; x += brickW) {
+      bricks.push(<line key={`v${y}-${x}`} x1={x.toFixed(0)} y1={y} x2={x.toFixed(0)} y2={y + brickH} stroke="#0d0618" strokeWidth="3" />);
+    }
+    row += 1;
+  }
+  return (
+    <svg {...SCENE_PROPS} className="card-art run-art">
+      <defs>
+        <clipPath id="run-wall-clip"><path d={wallTop} /></clipPath>
+      </defs>
+      <rect width="300" height="400" fill="#FF4FA3" />
+      {/* draft-burst structure blooming from behind the hand, filling the field
+          (centre raised so the burst still fills the thin top strip that shows on the
+          wide mobile banner — the marquee is landscape there, mostly title bar).
+          Two ray tones (a dark magenta base under a light pink crest) read as a real
+          inked manga burst rather than a faint tint, so the upper field isn't a void. */}
+      {pinwheel(150, 186, 540, 22, '#E23B8C', 0.7, 'pw1')}
+      {pinwheel(150, 186, 360, 22, '#D22F7E', 0.5, 'pw2')}
+      <g opacity="0.9">{rays(150, 186, 26, 520, 15, '#9E1E5C', 7, 0.1)}</g>
+      <g opacity="0.85">{rays(150, 186, 30, 520, 15, '#FF6FB8', 3.5, 0.1 + Math.PI / 15)}</g>
+      {/* the rising wall (the ante you climb) — darker pink slab, black-mortared bricks */}
+      <path d={wallTop} fill="#C42E75" stroke="#0d0618" strokeWidth="7" strokeLinejoin="round" />
+      <g clipPath="url(#run-wall-clip)">{bricks}</g>
+      {/* thin battlement highlight along the rising top edge */}
+      <path d="M0 300 H52 V266 H108 V232 H164 V198 H220 V164 H276 V132 H300" fill="none" stroke="#FF6FB8" strokeWidth="3" opacity="0.7" />
+      {/* the drafted HAND — hero fan; raised so the glyphs read above the title-bar
+          scrim on every crop. Back cards first, hero last on top.
+          LEGIBILITY GEOMETRY (all three VALUES must read at 1920 / 1568 / 1366 / 390):
+          - the side cards are fanned WIDE (cx 66 / 234) and angled ±26° so each big
+            number sits fully OUTSIDE the hero's footprint (x≈98–202) — none is clipped
+            by a neighbour at any size (verified: ≥7px gap even on the 144px phone banner).
+          - a gentle vertical sweep (+4 172 · ×3 168 · ×5 184) lifts the LEFT card so its
+            number clears the ROGUELIKE badge + title scrim that eat the lower-left of the
+            wide phone banner, while ×3 still PEAKS (lowest cy) — on the phone crop the
+            visible strip is only ~118px tall, so this is as high as +4 can sit before its
+            top would crop.
+          The ×3 stays the hero: centred, largest (w104 / glyph64), peaks highest and is
+          drawn last (on top), so it reads first and most forward. */}
+      {draftCard(66, 172, -26, 86, 118, '#2EFFE0', '+4', 48, 'c-left')}
+      {draftCard(234, 184, 26, 86, 118, '#FF6B3D', '×5', 48, 'c-right')}
+      {draftCard(150, 168, -3, 104, 142, '#FFE94A', '×3', 64, 'c-hero')}
+    </svg>
+  );
+}
+
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
   CategoryBlitzArt,
   SatRushArt,
   ChainArt,
   FuseArt,
+  RunArt,
 };

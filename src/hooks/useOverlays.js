@@ -7,6 +7,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from '../satRush/config';
 import { CHAIN_VIEW, CHAIN_TRANSITION_WORD, FUSE_VIEW, FUSE_TRANSITION_WORD } from '../solo/config';
+import { RUN_VIEW } from '../runMode/config';
 import { CG_ENTRY } from '../cg/cgEntry';
 
 // The word flashed mid-wipe when navigating to each view. (Moved verbatim from App.jsx.)
@@ -100,6 +101,7 @@ export function useOverlays({ view, setView, sound }) {
   const goToSatRush = () => setView(SAT_RUSH_VIEW);
   const goToChain = () => setView(CHAIN_VIEW);
   const goToFuse = () => setView(FUSE_VIEW);
+  const goToRun = () => setView(RUN_VIEW);
 
   return {
     transition,
@@ -113,5 +115,6 @@ export function useOverlays({ view, setView, sound }) {
     goToSatRush,
     goToChain,
     goToFuse,
+    goToRun,
   };
 }
