@@ -387,3 +387,22 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   #6 Blitz solo-leaver -> verify round/scoreboard resolves for the lone survivor (recommend a live check);
   #7 not_a_word latency -> the only reject that round-trips; recommend an optimistic client buzz on the
   dictionary reject too (mirror the 3 local rejects) IF/when the client caches recent verdicts.
+- 2026-09-06  JOB 11 DONE (chore/verdict-3, REPORT ONLY, LAST): third verdict. The verdict NO LONGER
+  STANDS — the run mode is now reachable (LV8), tuned (in-band payout), polished (art/draft/wall) and a
+  headless playthrough PROVED it compels (bot died R8 on a drafted modifier = the roguelike fantasy
+  working). Core-loop problem SOLVED IN CODE. Caveats: it's on 8 UNMERGED branches so production is
+  unchanged (ship it after the play-test); SAT-in-run rounds add no mechanic (4/8 filler); multiplayer
+  is still the empty-lobby flagship. Answer: good solo game the MOMENT it merges. claude/verdict-3.md.
+
+---
+## JOB A — play-backdrop (fix/play-backdrop) START 2026-09-06T16:27Z
+Branch off origin/feat/run-wall. Goal: apply the WallScene graffiti backdrop behind CHAIN/FUSE (SoloShell), WORD BOMB/CATEGORY BLITZ (GameScreen), RUN (RunMode) so play screens stop reading as flat-black holes. Target largest-empty-rect <18% at 1920, no 4x frame-time regression.
+
+## JOB A FINISH 2026-09-06T16:42Z — PUSHED bd3db98
+Added scoped static PlayBackdrop (memo, z-index:-1, no timers/parallax/beat) inside .solo-root / .game-stage (x3) / .run-root; .game-stage got isolation:isolate.
+Empty-rect @1920 (all <18%): CHAIN 22.2->7.5, FUSE 22.2->7.5, WB 16->6.9, BLITZ 23.7->5.5, RUN wall/round 35.3->7.8.
+4x median frame time unchanged 16.7ms on RUN/CHAIN/FUSE/WB (before==after). Gate: lint 0 err, 476 tests pass, vite build exit 0. Branch pushed, NOT merged.
+
+---
+## JOB 1 — integration/run-stack START 2026-09-06T (long-run)
+Merging 9 branches in dependency order off origin/main (d4c40c3), fast-gate (lint+unit+build) after each, full e2e gate at end. Order: run-mode, run-draft-look, run-wall, play-backdrop, ingame-look, game-onboarding, lobby-life-fe, return-bonus, endgame.
