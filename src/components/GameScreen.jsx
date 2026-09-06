@@ -3234,21 +3234,16 @@ export default function GameScreen({
               );
             })()}
             <div className="game-over-actions">
-              {isHost ? (
-                <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
-                  {rematchPending ? 'REMATCHING...' : 'REMATCH'}
-                </button>
-              ) : (
-                /* Non-hosts can't trigger the rematch (host-only), so instead of a
-                   bare LEAVE they get a clear animated "waiting" cue - they keep the
-                   same room and drop straight into the next game when the host hits
-                   REMATCH. Purely presentational; no new server message. */
-                <div className="game-over-waiting" role="status">
-                  WAITING FOR HOST<span className="go-waiting-dots" aria-hidden="true" />
-                </div>
-              )}
+              {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
+                  over ANY remaining player can restart it (the server accepts a post-game
+                  rematch from any seat), so a non-host is never stranded at game-over with
+                  no way to play again — the dead "WAITING FOR HOST" cue is gone. Both
+                  players hitting REMATCH is safe (the second reset is a no-op). */}
+              <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                {rematchPending ? 'REMATCHING...' : 'REMATCH'}
+              </button>
               <button
-                className={`game-over-leave${isHost ? ' secondary' : ''}`}
+                className="game-over-leave secondary"
                 onClick={onLeave}
               >
                 LEAVE
@@ -3967,21 +3962,16 @@ function CategoryBlitzScreen({
               className="game-over-copy-result"
             />
             <div className="game-over-actions">
-              {isHost ? (
-                <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
-                  {rematchPending ? 'REMATCHING...' : 'REMATCH'}
-                </button>
-              ) : (
-                /* Non-hosts can't trigger the rematch (host-only), so instead of a
-                   bare LEAVE they get a clear animated "waiting" cue - they keep the
-                   same room and drop straight into the next game when the host hits
-                   REMATCH. Purely presentational; no new server message. */
-                <div className="game-over-waiting" role="status">
-                  WAITING FOR HOST<span className="go-waiting-dots" aria-hidden="true" />
-                </div>
-              )}
+              {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
+                  over ANY remaining player can restart it (the server accepts a post-game
+                  rematch from any seat), so a non-host is never stranded at game-over with
+                  no way to play again — the dead "WAITING FOR HOST" cue is gone. Both
+                  players hitting REMATCH is safe (the second reset is a no-op). */}
+              <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                {rematchPending ? 'REMATCHING...' : 'REMATCH'}
+              </button>
               <button
-                className={`game-over-leave${isHost ? ' secondary' : ''}`}
+                className="game-over-leave secondary"
                 onClick={onLeave}
               >
                 LEAVE

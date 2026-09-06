@@ -378,3 +378,12 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   voices, but audioCore hard-caps at VOICE_CAP=14 (oldest culled w/ a quick fade; voicePeak tracked
   via getVoiceStats()). So sustained peak sits at the 14 cap by design; +3 nodes per accepted word if
   EVENTS on (accepts are far rarer than keystrokes). No uncapped growth.
+- 2026-09-04  JOB 3 (fix/mp-mediums, branch only): mp-audit MEDIUMs. #3 rematch-host-only FIXED both
+  repos — BE (57a79cc): any seat may rematch once game is finished (host-only mid-game); FE: game-over
+  gives every player the REMATCH button (dead "WAITING FOR HOST" cue removed), reuses existing button
+  styling so no new BE-PICKY rounds. #5 late-join: friendlyError already gives a readable message + keeps
+  the player on the join screen to retry; the full wait/spectate + bot-fill flow is JOB 4 (feat/lobby-life).
+  #4 = a standing PROCESS rule (2-device regression on any App.jsx/WS change), not a code change. LOWs:
+  #6 Blitz solo-leaver -> verify round/scoreboard resolves for the lone survivor (recommend a live check);
+  #7 not_a_word latency -> the only reject that round-trips; recommend an optimistic client buzz on the
+  dictionary reject too (mirror the 3 local rejects) IF/when the client caches recent verdicts.
