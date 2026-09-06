@@ -262,52 +262,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         const reserve = Math.max(0, Math.ceil(window.innerWidth - nr.left) + 12);
         stage.style.setProperty('--corner-nav-reserve', `${reserve}px`);
       }
-      // SIZE THE CARDS FROM THE AVAILABLE HEIGHT (feat/cards-live) so ALL FIVE fit ONE SCREEN with
-      // NO scrolling and NO "N MORE" affordance. The card region flex-fills the stage's leftover
-      // height; we size the largest 3:4 card whose ROW(s) fit that height. Prefer 5-in-one-row; if
-      // that makes the card too narrow to read, drop to a 3+2 grid IF two rows give a wider card
-      // (on an ultra-short viewport two rows don't fit, so one row of small cards wins). The scenes
-      // are 3:4 and slice-to-cover, so a whole composition shows at any size — never cropped.
-      const region = stage.querySelector('.homepage-cards-region');
-      const grid = stage.querySelector('.homepage-cards-grid');
-      const scroll = stage.querySelector('.homepage-cards-scroll');
-      if (!region || !grid || !scroll) return;
-      const regionH = region.clientHeight;
-      // Measure the available WIDTH from the REGION (full, stable) minus the scroll's gutter —
-      // NOT from the grid, which is shrink-to-content and would feed its just-sized (small) card
-      // width straight back in (a shrinking feedback loop).
-      const scs = getComputedStyle(scroll);
-      const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
-      const availW = region.clientWidth - gutter;
-      if (regionH <= 0 || availW <= 0) return;
-      const gcs = getComputedStyle(grid);
-      const colGap = parseFloat(gcs.columnGap) || 14;
-      const rGap = parseFloat(gcs.rowGap) || colGap;
-      const count = grid.querySelectorAll('.game-card-magnet').length || 5;
-      // Largest 3:4 card (w:h = 3:4) fitting `cols`×`rows` in availW×regionH.
-      const fit = (cols, rows) => {
-        const colW = (availW - (cols - 1) * colGap) / cols;
-        const rowH = (regionH - (rows - 1) * rGap) / rows;
-        const h = Math.min(rowH, (colW * 4) / 3);
-        return { w: (h * 3) / 4, h, cols };
-      };
-      // Try one row of all five first, then denser grids; pick whichever gives the WIDEST (most
-      // readable) card while all cells fit ONE screen. On a wide screen 5-in-one-row wins; on a
-      // narrow/tall phone a 3+2 or 2-column grid gives bigger cards; on an ultra-short viewport
-      // one small row still wins (extra rows don't fit the height). No scrolling, ever.
-      const LAYOUTS = [[count, 1], [3, 2], [2, 3], [1, count]];
-      let best = null;
-      for (const [cols, rows] of LAYOUTS) {
-        if (cols * rows < count) continue; // must hold all five
-        const f = fit(cols, rows);
-        if (f.w > 4 && (!best || f.w > best.w + 0.5)) best = f;
-      }
-      if (!best) return;
-      grid.style.setProperty('--cards-cols', String(best.cols));
-      grid.style.setProperty('--card-w', `${Math.floor(best.w)}px`);
-      grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
-      // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
-      grid.setAttribute('data-cols', String(best.cols));
+      // CARD LAYOUT IS NOW PURE CSS (feat/run-mode 6-card relayout). The card region flex-fills the
+      // stage's leftover height and .homepage-cards-grid is `height:100%` with fr rows, so THE RUN
+      // hero banner + the five mode cards always fit ONE screen with no scrolling — the fit is
+      // guaranteed by construction, not by a per-card 3:4 sizing pass (which was tuned for five
+      // equal tiles and made THE RUN, the marquee, the narrowest card). See .homepage-cards-grid /
+      // .game-card-magnet.is-hero in Homepage.css. Nothing to measure here anymore.
     };
     const onResize = () => {
       cancelAnimationFrame(raf);
@@ -588,7 +548,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     <div className="homepage-wrap">
       <div
         ref={stageRef}
-        className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}
+        className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}${showMenuSpot ? ' spot-active' : ''}`}
         data-menu-frame={menuFrame || undefined}
       >
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the

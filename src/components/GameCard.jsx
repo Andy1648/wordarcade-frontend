@@ -266,7 +266,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     // div whose only job is that transform. It composes OUTSIDE the
     // existing tilt/lift (which stays on .game-card-wrap) and re-provides the
     // grid's perspective for the inner 3D tilt. See .game-card-magnet in the CSS.
-    <div ref={magnetRef} className="game-card-magnet" data-game={game.id}>
+    <div ref={magnetRef} className={`game-card-magnet${game.headline ? ' is-hero' : ''}`} data-game={game.id}>
       {/* The grid item: static resting rotate + cursor-tilt via its own shared
           controller, left fully intact — the magnet only wraps it. */}
       <div

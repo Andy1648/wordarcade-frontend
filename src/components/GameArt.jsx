@@ -355,7 +355,7 @@ export function FuseArt() {
 export function RunArt() {
   const steps = [0, 1, 2, 3, 4, 5, 6, 7];
   return (
-    <svg {...SCENE_PROPS} className="card-art run-art">
+    <svg {...SCENE_PROPS} preserveAspectRatio="xMidYMax slice" className="card-art run-art">
       <rect width="300" height="400" fill="#FF4FA3" />
       <path d="M0 300 L300 250 L300 400 L0 400 Z" fill="#E23B8C" />
       {/* the ascending wall of rounds, left→low to right→high */}
