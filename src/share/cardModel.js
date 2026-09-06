@@ -66,7 +66,7 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     sub = 'AVG ANTE';
     chips = [chip('CLEARED', data.cleared), chip('STREAK', data.bestStreak), chip('SCORE', data.score)];
   } else {
-    hero = 'NICE RUN';
+    hero = 'NOT BAD';
   }
 
   return {

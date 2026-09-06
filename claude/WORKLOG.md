@@ -355,3 +355,11 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   -ies rule was rejected as unsafe (caught congeries/sanies/bloodies). merged accept 269687->267054
   (>260k floor), ext 181872->179239. MISS RATE still 0% (147 everyday words all accepted incl. the
   kept -ness singulars). Gate: lint 0 errors, node --test 464/464 pass.
+
+- 2026-09-04  JOB 10 START (fix/copy-2, off main): rewrite the top-30 weakest strings from claude/copy-audit.md
+  in-voice (Newgrounds/FNF ALL-CAPS). Tone only, keys unchanged; skipping SCRAPS (triage verified
+  intentional) + the mode-rename/test-pinned-receipt items (product/owner calls).
+- 2026-09-04  JOB 10 DONE (fix/copy-2): rewrote 34 strings across 12 files (gameData, modeDialogConfig,
+  Chain/Fuse/fuseCards, GameScreen placeholders, StatsScreen, ConnectingContent, CgArmScreen, LobbyScreen,
+  CreditsScreen, friendlyError, share cardModel/shareText). Updated 2 e2e specs to new copy. Gate: lint 0
+  errors, unit 464/464, build exit 0, touched e2e 3/3. No game-logic meaning changes; deferred items flagged.

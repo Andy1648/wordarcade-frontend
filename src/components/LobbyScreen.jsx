@@ -51,7 +51,7 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
 
   function getSubtitle() {
     if (mode === 'join') return 'ENTER A ROOM CODE TO JOIN A FRIEND';
-    return 'ENTER YOUR NAME TO GET STARTED';
+    return 'DROP A NAME. LET\'S GO.';
   }
 
   function handleNameChange(event) {
@@ -119,9 +119,9 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     name.trim().length > 0 && (!isJoinMode || roomCode.length === ROOM_CODE_LENGTH);
 
   const connectionLabel =
-    wsStatus === 'connecting' ? 'CONNECTING TO SERVER...'
-    : wsStatus === 'error' ? 'CONNECTION ERROR - TRY REFRESHING'
-    : wsStatus === 'closed' ? 'DISCONNECTED'
+    wsStatus === 'connecting' ? 'HOOKING YOU UP…'
+    : wsStatus === 'error' ? 'SERVER GHOSTED YOU — HIT REFRESH.'
+    : wsStatus === 'closed' ? 'CONNECTION DROPPED.'
     : null;
 
   return (
@@ -204,8 +204,8 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
             </div>
             <div className="lobby-toggle-hint">
               {isPublic
-                ? 'Anyone can find this room in the public browser.'
-                : 'Only people with the code can join.'}
+                ? 'ANYONE CAN FIND THIS ROOM AND JOIN.'
+                : 'CODE-ONLY. INVITE WHO YOU WANT.'}
             </div>
           </div>
         )}

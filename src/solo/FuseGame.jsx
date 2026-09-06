@@ -257,10 +257,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       onSubmit={g.onSubmit}
       sillKey={g.sillKey}
       reason={g.reason}
-      placeholder={`any word containing "${(s.fragment || '').toUpperCase()}"`}
+      placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
-      armHint="TYPE ANY WORD THAT CONTAINS THE PIECE"
-      firstRunRule="USE THE FRAGMENT IN A WORD"
+      armHint="SNEAK THOSE LETTERS INTO A WORD"
+      firstRunRule="SNEAK THE LETTERS INTO A WORD"
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}

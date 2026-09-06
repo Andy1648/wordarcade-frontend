@@ -13,8 +13,8 @@ async function gotoUnlockedMenu(page) {
 }
 
 for (const mode of [
-  { id: 'chain', name: 'CHAIN', rule: 'starts where the last one ended' },
-  { id: 'fuse', name: 'FUSE', rule: 'contains the piece' },
+  { id: 'chain', name: 'CHAIN', rule: "starts on the last one's letter" },
+  { id: 'fuse', name: 'FUSE', rule: 'sneak the letters into a word' },
 ]) {
   test(`${mode.name}: unlocked card opens a PLAY mode dialog (name, rule, per-word wins)`, async ({ page }) => {
     await gotoUnlockedMenu(page);

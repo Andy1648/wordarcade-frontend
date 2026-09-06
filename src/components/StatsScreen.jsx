@@ -274,7 +274,7 @@ export default function StatsScreen({ onBack }) {
             ))}
           </dl>
 
-          <h3 className="stats-subtitle">XP STACK</h3>
+          <h3 className="stats-subtitle">WHERE YOUR XP COMES FROM</h3>
           <dl className="stats-list">
             {multipliers.map(([k, v]) => (
               <div className="stats-row" key={k}>
@@ -384,8 +384,8 @@ export default function StatsScreen({ onBack }) {
             {confirmingReset ? (
               <div className="stats-danger-confirm" role="alertdialog" aria-label="Confirm reset">
                 <p className="stats-danger-warn">
-                  This <b>permanently destroys</b> your XP, level, wins, all purchases,
-                  rebirths, and every lifetime stat. It cannot be undone.
+                  THIS <b>NUKES EVERYTHING</b> — XP, LEVEL, WINS, EVERY PURCHASE,
+                  EVERY REBIRTH, EVERY LIFETIME STAT. GONE FOR GOOD. NO TAKEBACKS.
                 </p>
                 <div className="stats-danger-actions">
                   <button type="button" className="stats-reset-confirm" onClick={resetAllProgress}>

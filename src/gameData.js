@@ -78,7 +78,7 @@ const CHAIN_GAME = {
   id: 'chain',
   artKey: 'ChainArt',
   name: 'CHAIN',
-  description: 'Each word starts where the last one ended',
+  description: "EACH WORD STARTS ON THE LAST ONE'S LETTER.",
   unlockLevel: 20, // gated: visible-but-locked until LV 20 (raised from 15 per fix/qa-sweep §9 — ~3420 letters at the current curve; was LV15 ≈ 1088)
   baseColor: '#2EFFE0', // teal field (the mode's accent)
   iconBg: '#0D2B28', // dark teal so the cyan link icon reads
@@ -93,7 +93,7 @@ const FUSE_GAME = {
   id: 'fuse',
   artKey: 'FuseArt',
   name: 'FUSE',
-  description: 'Type a word that contains the piece',
+  description: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
   unlockLevel: 25, // gated: visible-but-locked until LV 25 (fix/qa-sweep §10 — ~10538 letters; LV30's ~32262 was ~100 sessions, too steep for an existing mode). Was LV22 ≈ 5371.
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
