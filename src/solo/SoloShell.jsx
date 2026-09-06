@@ -11,6 +11,7 @@ import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import Spotlight from '../components/Spotlight';
+import PlayBackdrop from '../components/PlayBackdrop';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
@@ -90,6 +91,9 @@ export default function SoloShell({
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
+      {/* The dressed graffiti-wall backdrop (same as the menu), scoped + static, behind the
+          play content so the shell reads as one composed surface, not a flat-black hole. */}
+      <PlayBackdrop />
       <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
         ✕
       </button>

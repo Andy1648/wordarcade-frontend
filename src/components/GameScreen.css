@@ -60,6 +60,10 @@
 
 .game-stage {
   position: relative; /* positioning context for the centered hype popup */
+  /* Own stacking context so the scoped PlayBackdrop (z-index:-1) paints ABOVE the card fill
+     but BELOW the board content. (.solo-root / .run-root already are stacking contexts via
+     their z-index; .game-stage carries no z-index, so isolate it explicitly.) */
+  isolation: isolate;
   /* Card fill + a comic halftone dot texture to match the rest of the app. */
   background-color: #1a0b2e;
   background-image: radial-gradient(circle, rgba(255, 46, 196, 0.05) 0.8px, transparent 0.8px);

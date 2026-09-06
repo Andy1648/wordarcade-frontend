@@ -19,6 +19,7 @@ import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
+import PlayBackdrop from './PlayBackdrop';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
 import { plural } from '../format';
@@ -2739,6 +2740,9 @@ export default function GameScreen({
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
         style={{ '--drain-sat': drainSat }}
       >
+        {/* Dressed graffiti-wall backdrop (same as the menu), scoped + static, behind the
+            board so the stage reads as one composed surface, not a flat-black hole. */}
+        <PlayBackdrop />
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
@@ -4027,6 +4031,9 @@ function CategoryBlitzScreen({
           />
         )}
         <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`}>
+          {/* Dressed graffiti-wall backdrop (same as the menu), scoped + static, behind the
+              board so the stage reads as one composed surface, not a flat-black hole. */}
+          <PlayBackdrop />
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}
@@ -4278,6 +4285,8 @@ function CategoryBlitzScreen({
       <div className="game-wrap">
         <Mascot pose={cbMascotPose} size={110} className="game-mascot" />
         <div className="game-stage">
+          {/* Dressed graffiti-wall backdrop (same as the menu), scoped + static. */}
+          <PlayBackdrop />
           <div className="game-header">
             <div className="game-title">
               <SprayReveal>AI CATEGORY BLITZ</SprayReveal>

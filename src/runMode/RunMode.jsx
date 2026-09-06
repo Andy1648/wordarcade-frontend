@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRunMode } from './useRunMode.js';
 import { wallSchedule } from './engine.js';
 import ModifierArt from './ModifierArt.jsx';
+import PlayBackdrop from '../components/PlayBackdrop';
 import './RunMode.css';
 
 // Split a modifier's "upside, but downside" text into its two halves so the trade-off
@@ -20,6 +21,9 @@ export default function RunMode({ onExit }) {
 
   return (
     <div className="run-root">
+      {/* Dressed graffiti-wall backdrop (same as the menu), scoped + static, behind every RUN
+          phase so the wide stage around the panel reads as a wall, not a flat-black void. */}
+      <PlayBackdrop />
       <button className="run-exit" onClick={onExit} aria-label="Leave run">✕</button>
       {run.phase === 'loading' && <RunLoading />}
       {run.phase === 'wall' && <WallScreen run={run} />}

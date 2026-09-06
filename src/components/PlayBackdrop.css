@@ -1,0 +1,45 @@
+/* PlayBackdrop.css — the scoped, static graffiti-wall layer behind a play surface.
+   Pinned to its play root and dropped BEHIND the play content (z-index:-1) so it never
+   intercepts pointer events or covers the UI. STATIC only: no idle/infinite animation, no
+   will-change, no per-frame work — it is painted once and composited.
+
+   z-index:-1 sits ABOVE the root's own background fill but BELOW all in-flow content, so the
+   host must be a stacking context (the solo shell and RUN stage already are via their z-index;
+   the game stage gets `isolation:isolate` in GameScreen.css). */
+.play-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  /* Follow the framed card's rounded corners so decor never pokes past the border. */
+  border-radius: inherit;
+}
+
+/* WORD-TAG GROUP — the readable spray-painted words (WORD / SICK / WOW / …). Wrapped so a
+   play surface can DIM the words that sit behind the interactive UI copy, WITHOUT dimming the
+   abstract decor (splatters / stickers / drips / halftone / wall tone) that carries most of
+   the surface's ink. This is why the fix does not inflate the BE-PICKY largest-empty-rectangle
+   metric: the coverage that fills the voids (esp. the central gutter between the two solo
+   columns) is untouched — only the readable words fade. The wrapper must re-establish the
+   backdrop's coordinate space so each tag's absolute top/left % still resolves against the
+   whole surface. */
+.play-tags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--play-tags-a, 1); /* RUN + any unscoped host: full-strength words */
+}
+
+/* On the transparent-ground play surfaces (solo CHAIN/FUSE + the multiplayer game stage) the
+   input / slots / board / big centre letter sit directly over the wall, so the readable words
+   compete with that copy. Fade the words hard here so the UI text is clearly dominant; the
+   abstract decor stays full so the wall still reads as the same world. RUN keeps them full
+   (its UI is on an opaque panel — no competition — and its wide margins need the coverage). */
+.solo-root .play-tags,
+.game-stage .play-tags {
+  opacity: var(--play-tags-a, 0.42);
+}
+
+/* Reduced-motion / static: everything here is already static, so nothing to silence. The
+   decor sub-components (GraffitiTag / stickers / splatters) render no motion of their own. */
