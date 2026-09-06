@@ -396,3 +396,22 @@ Shipped on feat/run-wall:
 BE-PICKY: 2 rounds (r1 meter+moments; r2 fixed undefined-toast + typed-decimal + burst capture).
 Shots: claude/run-shots/wall/{mid,clear,clear-after,miss,miss-after}-{1920,390}.png
 Gate: lint 0 errors, node --test 474/474 pass (incl. new meter-contract test + willChange), vite build exit 0.
+
+## ===== JOB B — run-mode rarity fix (finish) — branch feat/run-wall =====
+START 2026-09-06 — confirm the `.name`→`.band` rarity fix is complete, add a regression test,
+re-run the run-econ sim now that live rarity is correct.
+- CONFIRM: grep of ALL src/runMode/* for rarityOf/wordRarity result reads — the ONLY consumer is
+  useRunMode.js submitWord (r=rarityOf(word); reads r.band + r.announce, both correct). RunMode.jsx
+  `m.name` and engine.js `b.name`/test `m.name` are MODIFIER/BAND objects, not the rarity verdict —
+  no other misread exists. Fix is complete; nothing else to change.
+- TEST: src/runMode/rarity.test.js (2 tests) drives the exact submit composition
+  rarityOf(word).band -> scoreWord: a KNOWN RARE 5-letter word scores 2.5x COMMON (rarity LIVE), and
+  the `.name` read (undefined on the verdict) is pinned to collapse to COMMON x1 — the bug this catches.
+- SIM RECONCILE: run-econ-sim.mjs models rarity INDEPENDENTLY via RARITY_MIX inside
+  simulateRoundPayout (builds band-name strings, passes them straight to scoreWord). It NEVER touched
+  the buggy rarityOf(...).name path, so the sim was ALWAYS modeling rarity correctly. The `.name` bug
+  affected ONLY the live in-browser round; the sim's 594–938 wins/min figure is UNCHANGED by the fix.
+  Re-ran on fixed branch: 594 / 727 / 938 wins/min @12/15/20 wpm, spread <=1.62x (<=2x) -> still IN the
+  shipped 5-mode band (blitz 625 … chain 963). No divisor tweak needed. The fix brings the LIVE path
+  into agreement with the sim/wall calibration; it does not move the sim numbers.
+FINISH — Gate: lint 0, node --test 476/476 (incl. 2 new), vite build exit 0. Pushed feat/run-wall.
