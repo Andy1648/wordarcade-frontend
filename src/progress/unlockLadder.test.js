@@ -11,6 +11,8 @@ import {
   nextUnlock,
   levelUnlockIds,
   currentCosmetic,
+  PRESTIGE_REBIRTH,
+  prestigeUnlock,
 } from './unlockLadder.js';
 
 test('the ladder levels are strictly increasing (monotonic)', () => {
@@ -88,4 +90,27 @@ test('currentCosmetic picks the highest-order owned FRAME', () => {
   assert.equal(currentCosmetic([], 'frame', 0), null);
   // A rebirth frame outranks every level frame.
   assert.equal(currentCosmetic([...levelUnlockIds(MAX_LADDER_LEVEL), 'rebirth-1'], 'frame', 1), 'rebirth-1');
+});
+
+// ---- PRESTIGE (Job 7 endgame) ---------------------------------------------------------
+test('PRESTIGE is gated at a HIGH rebirth tier with a distinct, non-colliding id', () => {
+  assert.ok(PRESTIGE_REBIRTH >= 10, 'prestige should sit at a high rebirth tier');
+  const p = prestigeUnlock();
+  assert.equal(p.kind, 'frame');
+  assert.equal(p.id, 'rebirth-prestige');
+  // Its id never collides with a numbered rebirth frame.
+  for (let r = 1; r <= 60; r++) assert.notEqual(rebirthUnlock(r).id, p.id);
+});
+
+test('PRESTIGE frame outranks every plain rebirth frame at R10+ and stays applied past it', () => {
+  const base = levelUnlockIds(MAX_LADDER_LEVEL);
+  // Below the tier: no prestige owned, highest owned rebirth frame wins (still pink).
+  const r9Owned = [...base, ...Array.from({ length: 9 }, (_, i) => `rebirth-${i + 1}`)];
+  assert.equal(currentCosmetic(r9Owned, 'frame', 9), 'rebirth-9');
+  // At R10 with prestige owned: prestige wins.
+  const r10Owned = [...base, ...Array.from({ length: 10 }, (_, i) => `rebirth-${i + 1}`), 'rebirth-prestige'];
+  assert.equal(currentCosmetic(r10Owned, 'frame', 10), 'rebirth-prestige');
+  // At R12 (past the tier) prestige STILL wins — it never regresses to a numbered frame.
+  const r12Owned = [...base, ...Array.from({ length: 12 }, (_, i) => `rebirth-${i + 1}`), 'rebirth-prestige'];
+  assert.equal(currentCosmetic(r12Owned, 'frame', 12), 'rebirth-prestige');
 });

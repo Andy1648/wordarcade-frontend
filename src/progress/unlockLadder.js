@@ -37,11 +37,26 @@ export function rebirthUnlock(r) {
   return { rebirth: n, id: `rebirth-${n}`, name: `REBIRTH ${n}`, kind: 'frame' };
 }
 
-// The ordered stream of ALL unlocks: the level ladder, then rebirth unlocks 1..∞. Bounded
-// scans below only ever look a little past what a player owns, so this is never realized fully.
+// PRESTIGE (Job 7 endgame): the FIRST reward gated behind a HIGH rebirth tier, so the otherwise
+// pure-number-inflation rebirth track pays out something genuinely new at least once. Every
+// per-rebirth frame (rebirth-1..∞) renders identically (the house pink LV-badge frame), so before
+// this a passer-by could not tell R1 from R10 by their frame. PRESTIGE is a DISTINCT gold LV-badge
+// frame + ★ HUD badge, unlocked once at REBIRTH 10 and applied for R10+ (it outranks the plain
+// rebirth frames in the stream, so it never regresses back to pink at R11+). Its id is a string,
+// not `rebirth-<number>`, so it never collides with a rebirthUnlock id.
+export const PRESTIGE_REBIRTH = 10;
+export function prestigeUnlock() {
+  return { rebirth: PRESTIGE_REBIRTH, id: 'rebirth-prestige', name: 'PRESTIGE', kind: 'frame' };
+}
+
+// The ordered stream of ALL unlocks: the level ladder, then rebirth unlocks 1..∞, then — once the
+// player is at/past the PRESTIGE tier — the prestige frame LAST (so it wins currentCosmetic and
+// stays applied for every rebirth past 10). Bounded scans below only ever look a little past what a
+// player owns, so this is never realized fully.
 function* unlockStream(maxRebirth) {
   for (const e of LADDER) yield e;
   for (let r = 1; r <= maxRebirth; r++) yield rebirthUnlock(r);
+  if (maxRebirth >= PRESTIGE_REBIRTH) yield prestigeUnlock();
 }
 
 // The NEXT unlock the player has not yet earned, given what they already OWN (a Set/array of
@@ -118,6 +133,18 @@ export function grantUnlocks(level) {
 // Grant the cosmetic for a just-performed rebirth (r = the new rebirth count). Idempotent.
 export function grantRebirthUnlock(r) {
   const id = rebirthUnlock(r).id;
+  const have = new Set(getFreeUnlocks());
+  if (have.has(id)) return null;
+  saveFreeUnlocks([...have, id]);
+  return id;
+}
+
+// Grant the PRESTIGE frame once the player is at/past the prestige rebirth tier (Job 7).
+// Idempotent; returns the id when freshly granted, else null. Called with the CURRENT rebirth
+// count (not a specific r) so it back-fills for a player who was already past the tier.
+export function grantPrestigeUnlock(rebirthCount = 0) {
+  if (Math.floor(rebirthCount) < PRESTIGE_REBIRTH) return null;
+  const id = prestigeUnlock().id;
   const have = new Set(getFreeUnlocks());
   if (have.has(id)) return null;
   saveFreeUnlocks([...have, id]);

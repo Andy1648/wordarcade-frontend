@@ -517,3 +517,37 @@ button.menu-wins-chip:focus-visible {
     display: none;
   }
 }
+
+/* REBIRTH BADGE (Job 7 endgame) — a compact status chip carrying the rebirth count, sitting in
+   the HUD cluster just before the rank chip. Pink (the house rebirth colour) so it never reads as
+   the cyan LV chip or the yellow rank chip. Static, no idle motion (menu motion law). */
+.menu-xp-rebirth {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(10px, 1.5vw, 13px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: #FF4FA3;
+  border: 2px solid #b01e69; /* darker shade of the fill — house colored-outline rule */
+  border-radius: 6px;
+  padding: 3px 7px;
+  box-shadow: 2px 2px 0 #000;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 #000;
+}
+/* PRESTIGE tier (R10+) — the exclusive reward tier flips the badge to gold with a ★, so the
+   terminal accomplishment is unmistakable at a glance. */
+.menu-xp-rebirth[data-prestige='true'] {
+  color: #0d0618;
+  background: #FFD54A;
+  border-color: #b8860b;
+  text-shadow: none;
+}
+.menu-xp-rebirth-star {
+  font-size: 0.9em;
+  line-height: 1;
+}

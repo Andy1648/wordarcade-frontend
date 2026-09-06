@@ -344,3 +344,15 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   e2e 13/13. Left pure-taste polish for Andy.
 - 2026-09-03  JOB 24 START (chore/verdict, REPORT ONLY, LAST JOB): is this game good? harsh verdict +
   stranger-after-5min + biggest blocker + one argued change + what to cut.
+- 2026-09-06  JOB 7 START (feat/endgame): the endgame problem — 3 cheap fixes (badge R-count on menu
+  HUD; gate one REAL reward behind high rebirths; fix MOMENTUM "forever" copy that caps at 200) + a
+  costed 1-idea endgame proposal (claude/endgame-proposal.md, PROPOSE only).
+- 2026-09-06  JOB 7 DONE (feat/endgame): (1) REBIRTH BADGE — MenuXpBar now renders a pink "R{n}" chip
+  in the HUD cluster when rebirths>0 (BE-PICKY'd live @ R5 pink and R10 gold; screenshots
+  claude/endgame-hud-r5.jpg + endgame-hud-r10-prestige.jpg). (2) PRESTIGE reward gated at REBIRTH 10:
+  a distinct GOLD double-ring LV frame + gold ★ badge (unlockLadder.js prestigeUnlock/grantPrestige,
+  stream-preferred so it never regresses at R11+; CSS in Homepage.css/MenuXp.css), surfaced as a goal
+  in the REBIRTH dialog. (3) MOMENTUM copy: dropped "BUY AGAIN, FOREVER" → "EACH BUY LEAVES A MARK —
+  200 IN ALL" (and "ALL 200 MARKS EARNED — ×3.00 WINS LOCKED IN" when maxed). Gate: lint 0 errors,
+  466/466 unit tests, vite build exit 0. Proposal: DAILY CASE FILE (seeded once-a-day SAT RUSH,
+  medal+streak+season, zero currency/multiplier reward — bounded per day, infinite in calendar time).

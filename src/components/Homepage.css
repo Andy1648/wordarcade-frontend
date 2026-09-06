@@ -1072,6 +1072,14 @@ html[data-beat='true'] .homepage-beat-glow {
   border-color: #ff4fa3;
   box-shadow: 2px 2px 0 #000, 0 0 0 3px #ff4fa3;
 }
+/* PRESTIGE frame (Job 7 endgame) — the exclusive R10+ reward. A DISTINCT gold double-ring LV
+   badge, unmistakably different from the plain pink per-rebirth frame. More specific than the
+   generic rebirth rule above AND placed after it, so it wins for data-menu-frame='rebirth-prestige'. */
+.homepage-stage[data-menu-frame='rebirth-prestige'] .menu-xp-lv {
+  color: #FFD54A;
+  border-color: #FFD54A;
+  box-shadow: 2px 2px 0 #000, 0 0 0 3px #FFD54A, 0 0 0 5px #b8860b;
+}
 
 /* MENU SECRET stamp (Job 9) — a one-shot reveal when a secret is discovered.
    Fixed + pointer-events:none so it never joins the layout or blocks input; a
