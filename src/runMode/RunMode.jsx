@@ -57,12 +57,20 @@ function RunRail({ round, total }) {
   );
 }
 
+// The wall/round stack strip. Carries the same "YOUR STACK N" count label as the draft and
+// the over screen, so a RUN AGAIN restart visibly resets to 0 on the very first wall.
 function StackStrip({ stack }) {
-  if (!stack.length) return <div className="run-stack run-stack-empty">NO MODIFIERS YET — DRAFT ONE AFTER ROUND 1</div>;
   return (
-    <div className="run-stack">
-      {stack.map((m) => <span key={m.id} className="run-chip" title={m.text}>{m.name}</span>)}
-    </div>
+    <>
+      <div className="run-draft-stack-label">YOUR STACK <span className="run-stack-count">{stack.length}</span></div>
+      {stack.length ? (
+        <div className="run-stack">
+          {stack.map((m) => <span key={m.id} className="run-chip" title={m.text}>{m.name}</span>)}
+        </div>
+      ) : (
+        <div className="run-stack run-stack-empty">NO MODIFIERS YET — DRAFT ONE AFTER ROUND 1</div>
+      )}
+    </>
   );
 }
 
