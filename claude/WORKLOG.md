@@ -470,3 +470,18 @@ Full clean gate (workers=2) found 65 real failures (not infra). Root causes, all
    were stale. Subset re-run of all 4 specs: 881 passed, 0 failed.
 
 ## JOB 1 DONE — integration/run-stack: full gate GREEN (lint 0 err, 487 unit, 1092 e2e pass), pushing.
+
+## JOB 10 DONE (chore/verdict-4, REPORT ONLY, LAST) — the fourth verdict
+Whole run stack INTEGRATED (integration/run-stack, gate green 1092 e2e) + 5 fresh probes. Verdict:
+good SOLO game, now assembled not scattered. Harsh updates to v3: (1) drafting is SOLVED not a
+decision — greedy wins 22% vs balanced 4% / risk-averse 0%, MOMENTUM in 100% & GLASS CANNON 98.7%
+of wins (JOB 2); (2) ~1/3 of the modifier deck dead/broken (JOB 3); (3) the STRANGER never reaches
+the run — locked at LV8 (grey padlock hero) + flagship funnels solo players to an empty "need 2+
+players" lobby (JOB 7). Perf ship-safe (JOB 9), mobile sound after 1 landscape fix (JOB 8). Ready to
+show people? NO — one blocker: the new-player first-60s on-ramp (one-tap solo start + unhide the run).
+Fix that → ready. Submit the SOLO experience first, never the empty party. claude/verdict-4.md.
+
+## LONG RUN COMPLETE — all 10 jobs done. Branches pushed & verified, NONE merged to main:
+integration/run-stack (JOB1, gate green), chore/run-sim-deep (2), chore/run-modifiers (3),
+feat/run-gameover (4), feat/sat-srs-2 (5), feat/daily-2 (6), chore/stranger-3 (7), fix/mobile-4 (8),
+perf/integration (9), chore/verdict-4 (10).
