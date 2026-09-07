@@ -21,6 +21,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, grantPrestigeUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
+import { isRunLocked } from '../runMode/runGate';
 import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -102,7 +103,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, onRun, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onSoloPlay, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, onRun, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -480,6 +481,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
   }
 
+  // Dialog PLAY (Word Bomb / Category Blitz): the on-ramp fix — start a live SOLO
+  // game instantly (vs a bot for Word Bomb; scored-solo for Blitz), no lobby/code.
+  // Needs the socket, so it waits for connect exactly like create/join, showing the
+  // same CONNECTING… / WAKING THE SERVER… feedback. App.handleSoloPlay does the
+  // create→(bot)→start provision and drops us straight into the game.
+  function handleDialogSoloPlay() {
+    if (navigating || !dialog) return;
+    sound.click();
+    setNavigating(true);
+    const gameId = dialog.game.id;
+    runWhenConnected('play', () => onSoloPlay && onSoloPlay(gameId));
+  }
+
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
   // (App's onJoinRoom => handleOpenBrowser). Same flow as the bottom-bar JOIN.
   function handleDialogJoin() {
@@ -708,7 +722,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   onSelect={handleOpenDialog}
                   onLockedSelect={handleLockedSelect}
                   onHover={handleHover}
-                  locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
+                  locked={
+                    game.id === 'run'
+                      // THE RUN: free first run — locked only once the freebie is spent (fix/onramp).
+                      ? isRunLocked(xpProgress.level, game.unlockLevel)
+                      : game.unlockLevel != null && xpProgress.level < game.unlockLevel
+                  }
                   playerLevel={xpProgress.level}
                 />
               ))}
@@ -765,6 +784,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onClose={() => setDialog(null)}
             onCreate={handleDialogCreate}
             onJoin={handleDialogJoin}
+            onSoloPlay={handleDialogSoloPlay}
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
             connecting={connecting}
             coldStart={coldStart}

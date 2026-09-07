@@ -984,9 +984,15 @@ function App() {
       // 'cg-arm' is guarded the SAME way: the cg provisioning add_bot broadcasts a
       // room_update while the player is still on the arm screen — it must NOT pull
       // them into the waiting room; they leave cg-arm only via game_started.
+      // SOLO INSTANT PLAY (fix/onramp): the same guard for the one-tap solo-vs-bot
+      // launch — create_room + add_bot each broadcast a room_update while we're still
+      // provisioning; without this the player would flash the waiting lobby before
+      // game_started lands. soloLaunchRef is a ref (always current), so reading it in
+      // this functional updater is safe. It's cleared by game_started / goHome / the
+      // safety timeout below.
       // Functional update so we read the LIVE view, not the stale `view` captured
       // in this effect's closure (the effect is keyed only on [lastMessage]).
-      setView((prev) => (prev === 'game' || prev === 'cg-arm' ? prev : 'room'));
+      setView((prev) => (prev === 'game' || prev === 'cg-arm' || soloLaunchRef.current ? prev : 'room'));
     }
 
     if (lastMessage.type === 'game_reset') {
@@ -1039,6 +1045,10 @@ function App() {
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
       setWinsEarnedTotal(0);
+      // Solo instant play (fix/onramp): the launch reached the live game — drop the
+      // room_update guard and cancel its safety timeout.
+      soloLaunchRef.current = false;
+      if (soloLaunchTimerRef.current) { clearTimeout(soloLaunchTimerRef.current); soloLaunchTimerRef.current = null; }
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -1750,6 +1760,8 @@ function App() {
   // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
+    soloLaunchRef.current = false;
+    if (soloLaunchTimerRef.current) { clearTimeout(soloLaunchTimerRef.current); soloLaunchTimerRef.current = null; }
     setLobbyMode(null);
     setLobbyPublicDefault(false);
     setRoom(null);
@@ -1781,6 +1793,54 @@ function App() {
     setReactions([]);
     setDailyResult(null);
     setView('home');
+  }
+
+  // SOLO INSTANT PLAY (fix/onramp — the on-ramp blocker). One tap on a social
+  // mode's PLAY starts a live game IMMEDIATELY: no room code, no waiting lobby, no
+  // "NEED 2+ PLAYERS". A lone newcomer used to land on "SHARE THIS CODE WITH FRIENDS"
+  // and bounce; now PLAY = play. Multiplayer (invite / join) is the deliberate
+  // secondary choice, not the default path.
+  //
+  // Mechanism = the proven CrazyGames zero-click provision, minus the arm hold: fire
+  // create_room → set_game_type → (set_difficulty / set_packs) → (add_bot for Word
+  // Bomb) → start_game, all in order on the one socket (the server processes them
+  // FIFO, exactly like handleStartDaily + the lobby create). Word Bomb is turn-based
+  // so it needs the bot as the 2nd player; Category Blitz is scored solo (no bot,
+  // like the daily). soloLaunchRef guards the room_update handler from flashing the
+  // lobby while the create_room / add_bot broadcasts arrive; game_started clears it.
+  const soloLaunchRef = useRef(false);
+  const soloLaunchTimerRef = useRef(null);
+  function handleSoloPlay(gameType) {
+    const gt = gameType === 'category-blitz' ? 'category-blitz' : 'word-bomb';
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode(gt);
+    soloLaunchRef.current = true;
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: gt });
+    if (gt === 'word-bomb') {
+      // First-timers get the gentler CHILL tier (20s / 3 lives); returning players
+      // keep the server default (CRAZY). Same rule as the lobby + cg paths.
+      if (!hasPlayedBefore()) send('set_difficulty', { difficultyKey: 'chill' });
+      send('add_bot', { difficulty: 'medium' });
+    } else {
+      // Category Blitz respects the menu's pack selection (never sent for Word Bomb).
+      send('set_packs', { packs: blitzPacks });
+    }
+    send('start_game', {});
+    track('solo_play', { mode: gt });
+    // Safety net: if game_started never lands (server hiccup during the provision
+    // burst), don't strand the player on a frozen menu — drop the guard so the next
+    // room_update falls through to the room they can act in.
+    if (soloLaunchTimerRef.current) clearTimeout(soloLaunchTimerRef.current);
+    soloLaunchTimerRef.current = setTimeout(() => {
+      if (soloLaunchRef.current) {
+        soloLaunchRef.current = false;
+        setView((prev) => (prev === 'game' ? prev : 'room'));
+      }
+      soloLaunchTimerRef.current = null;
+    }, 7000);
   }
 
   // Daily Challenge: ONE tap from the menu into today's board. Uses the
@@ -2125,6 +2185,7 @@ function App() {
         wsStatus={wsStatus}
         serverEventId={serverEventId}
         onSelectGame={(gameId) => goToLobby(gameId)}
+        onSoloPlay={handleSoloPlay}
         onSatRush={goToSatRush}
         onChain={goToChain}
         onFuse={goToFuse}
