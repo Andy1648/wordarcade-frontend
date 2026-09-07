@@ -12,7 +12,7 @@
 
 export const MASTERY_KEY = 'taw.mastery';
 // Menu/XP-style mode ids (the ones passed to awardWordXp) — one mastery track per playable mode.
-export const MASTERY_MODES = ['word-bomb', 'category-blitz', 'sat-rush', 'chain', 'fuse'];
+export const MASTERY_MODES = ['word-bomb', 'category-blitz', 'sat-rush', 'chain', 'fuse', 'run'];
 export const MASTERY_MAX = 20;
 export const MASTERY_BASE = 50;
 export const MASTERY_GROWTH = 1.4;
@@ -113,5 +113,5 @@ export function masteryPerkLabel(mode) {
 }
 
 function modeShortName(mode) {
-  return { 'word-bomb': 'WORD BOMB', 'category-blitz': 'BLITZ', 'sat-rush': 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE' }[mode] || mode;
+  return { 'word-bomb': 'WORD BOMB', 'category-blitz': 'BLITZ', 'sat-rush': 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE', run: 'THE RUN' }[mode] || mode;
 }

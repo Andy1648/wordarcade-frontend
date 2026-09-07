@@ -74,7 +74,7 @@ test('achievementList masks unearned secrets as "???" and reveals earned ones', 
 test('completionist secret only fires once every other achievement is earned', () => {
   // Craft a save that satisfies EVERYTHING except by using extreme values.
   const wc = JSON.stringify({ v: 1, total: 100000, byMode: {} });
-  const mastery = JSON.stringify({ 'word-bomb': 200000, 'category-blitz': 200000, 'sat-rush': 200000, chain: 200000, fuse: 200000 });
+  const mastery = JSON.stringify({ 'word-bomb': 200000, 'category-blitz': 200000, 'sat-rush': 200000, chain: 200000, fuse: 200000, run: 200000 });
   const coll = JSON.stringify({ v: 1, seq: 1, w: {}, ms: [] });
   withStorage({
     'wa_words': wc,

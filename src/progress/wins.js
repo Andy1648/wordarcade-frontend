@@ -199,6 +199,19 @@ export function grantWins(n) {
   return next;
 }
 
+// THE RUN's end-of-run payout (fix/run-payout). A run is scored by its own engine (runMode/engine
+// runWinsPayout) and pays ONCE, at the transition into 'over' — not per word like bankWordWins.
+// Grants into balance + lifetime (grantWins) AND queues the menu "+N WINS" stamp, exactly what the
+// per-word ledger does for the other modes. Returns the new balance. The caller guards the
+// once-per-run invariant; this function is a plain grant.
+export function bankRunWins(n) {
+  const amt = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  if (amt <= 0) return getWins();
+  const next = grantWins(amt);
+  pendingStamp += amt;
+  return next;
+}
+
 // Bank wins INCREMENTALLY as accepted words climb, so leaving mid-round never forfeits what
 // was already earned (§2). Called once per accepted word with the round's running accept count
 // BEFORE (prevWords) and AFTER (nowWords) this word. Pays perWordWins for every word past the
