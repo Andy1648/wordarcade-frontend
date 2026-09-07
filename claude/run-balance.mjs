@@ -115,12 +115,21 @@ function playRound(rng, stack, knobs, ctx, mode) {
 //             scaler — a costed aggressive bet, NOT the safe floor it used to be.
 //   snowball  5→3: now ×0.6 base (−40% floor) before it ramps — high early risk.
 //   lexicographer 1→3: no longer zeroes COMMON/UNCOMMON (×0.55 now), so less of a trap.
+// fix/run-deck-2: DEEP POCKETS and SCRABBLE BAG are no longer pure-upside "safe" cards, so
+// their old ratings (deep-pockets safety 10 as the safest floor; scrabble-bag a free economy
+// pick) described cards that no longer exist. Re-rated to the shipped two-sided versions:
+//   deep-pockets 10→8: still a defensive floor-raiser — +120 flat lifts low (survival-
+//             critical) rounds the most, ×0.85 only trims the already-safe high rounds — but no
+//             longer the risk-free auto-best floor, since the ceiling now carries a cost.
+//   scrabble-bag economy/6 → offense/4: now a rare-letter build-around (×4 on J/Q/X/Z) with a
+//             real ×0.9 cost on the other ~92% — a conditional bet that can lower a floor, not
+//             a free economy pick.
 const META = {
-  'deep-pockets':   { cat: 'defense', safety: 10 },
+  'deep-pockets':   { cat: 'defense', safety: 8 },
   'combo-king':     { cat: 'defense', safety: 8 },
   'common-folk':    { cat: 'defense', safety: 8 },
   'bookworm':       { cat: 'defense', safety: 7 },
-  'scrabble-bag':   { cat: 'economy', safety: 6 },
+  'scrabble-bag':   { cat: 'offense', safety: 4 },
   'jackpot':        { cat: 'economy', safety: 5 },
   'lucky-charm':    { cat: 'economy', safety: 4 },
   'hot-streak':     { cat: 'offense', safety: 4 },

@@ -110,13 +110,16 @@ test('GLASS CANNON: payouts ×1.55 and 8% sudden-death', () => {
   assert.ok(near(suddenDeathChance([id('glass-cannon')]), 0.08));
 });
 
-// 11. SNOWBALL — "×0.65 payout, but +0.16× per round survived (cap ×1.25)"
+// 11. SNOWBALL — "×0.62 payout, but +0.14× per round survived (cap ×1.15)"
 // Drives off `clean` (the live-tracked survived-rounds count); capped so it can't run away.
-test('SNOWBALL: ×0.65 base, +0.16× per clean round, cap ×1.25', () => {
+// fix/run-deck-2: shaved from ×0.65/+0.16/cap1.25 — two-siding the last two free-upside cards
+// (DEEP POCKETS / SCRABBLE BAG) removed the winner-dilution they provided, pushing this
+// survivor-biased scaler just over the 60%-of-winners target; the small trim restores margin.
+test('SNOWBALL: ×0.62 base, +0.14× per clean round, cap ×1.15', () => {
   const sb = [id('snowball')];
-  assert.equal(applyRoundMods(1000, sb, { clean: 0 }), 650);  // ×0.65 with nothing survived
-  assert.equal(applyRoundMods(1000, sb, { clean: 2 }), 970);  // ×(0.65+0.32)
-  assert.equal(applyRoundMods(1000, sb, { clean: 9 }), 1250); // capped at ×1.25
+  assert.equal(applyRoundMods(1000, sb, { clean: 0 }), 620);  // ×0.62 with nothing survived
+  assert.equal(applyRoundMods(1000, sb, { clean: 2 }), 900);  // ×(0.62+0.28)
+  assert.equal(applyRoundMods(1000, sb, { clean: 9 }), 1150); // capped at ×1.15
 });
 
 // 12. UNCAPPED — "No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer"
@@ -163,15 +166,22 @@ test('COMBO KING: comboStep 0.2, comboMax 2.4 (and the cap is reachable)', () =>
   assert.ok(k.comboStart + k.comboStep * (WORDS_PER_ROUND - 1) >= k.comboMax);
 });
 
-// 16. DEEP POCKETS — "+60 flat wins per round"
-test('DEEP POCKETS: +60 flat per round', () => {
-  assert.equal(applyRoundMods(1000, [id('deep-pockets')]), 1060);
+// 16. DEEP POCKETS — "+120 flat wins per round, but every word ×0.85"
+// fix/run-deck-2: was a boring flat +60 with NO downside. Now two-sided — a floor-raiser that
+// caps the ceiling: the +120 flat lifts low rounds the most, the ×0.85 per word trims the
+// high rounds (break-even ~800 raw). Real upside AND real cost.
+test('DEEP POCKETS: +120 flat per round and a ×0.85 per-word ceiling cost', () => {
+  assert.equal(applyRoundMods(1000, [id('deep-pockets')]), 1120); // +120 round-level
+  assert.ok(near(wordRatio(id('deep-pockets'), W()), 0.85));      // ×0.85 every word
 });
 
-// 17. SCRABBLE BAG — "Words with J/Q/X/Z pay ×2.6"
-test('SCRABBLE BAG: J/Q/X/Z words ×2.6, others unchanged', () => {
-  assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: true })), 2.6));
-  assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: false })), 1));
+// 17. SCRABBLE BAG — "J/Q/X/Z words ×4, but every other word ×0.9"
+// fix/run-deck-2: was a boring free ×2.6 on J/Q/X/Z with NO downside. Now two-sided — a
+// rare-letter build-around: ×4 on the ~8% J/Q/X/Z words, ×0.9 on the other ~92% (a real cost,
+// anti-synergy with VOWEL MOVEMENT which also touches rare letters).
+test('SCRABBLE BAG: J/Q/X/Z words ×4, every other word ×0.9', () => {
+  assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: true })), 4));
+  assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: false })), 0.9));
 });
 
 // 18. MOMENTUM — "Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9"

@@ -1,6 +1,6 @@
 // engine.js — RUN MODE (feat/run-mode). Pure, timer-free rules ported from the
 // calibrated proto/run-mode-2 sim (Job A): a two-phase ANTE WALL, a LOSS condition,
-// and 18 stacking modifiers (15 of them two-sided). The scoring REUSES the shipped
+// and 18 stacking modifiers (all two-sided). The scoring REUSES the shipped
 // progression constants (src/progress/{rarity,combo,luck}) — it does NOT fork them.
 //
 // The React layer (useRunMode) owns state/timers; this file is data + math only, so
@@ -28,7 +28,13 @@ export const PER_WORD_CAP = 40; // xp.js cappedWordMult
 // Rarity mix used for the engine's own EV maths + the sim (matches the sim's mix).
 const RARITY_MIX = [['COMMON', 0.68], ['UNCOMMON', 0.22], ['RARE', 0.08], ['OBSCURE', 0.02]];
 
-// ---- THE 18 MODIFIERS — two-sided. `down:true` = carries a real cost. ----
+// ---- THE 18 MODIFIERS — all two-sided (`down:true`), each carries a real cost. ----
+// fix/run-deck-2: DEEP POCKETS (was flat +60, no cost) and SCRABBLE BAG (was free ×2.6 on
+// J/Q/X/Z) — the last two boring pure-upside cards flagged by the audit — were given genuine
+// trade-offs: DEEP POCKETS is now a floor-raiser that caps the ceiling (+120 flat, but ×0.85
+// every word → break-even ~800 raw), SCRABBLE BAG a rare-letter build-around (×4 on J/Q/X/Z
+// but ×0.9 on the other ~92%, anti-synergy with VOWEL MOVEMENT). MOMENTUM was already two-
+// sided on fix/run-balance. All 18 cards now down:true.
 // word(w,m): per-word mult transform.  knob(k): mutate round knobs.
 // round(p): per-round payout transform.  roundIdx(p,ctx): indexed round transform.
 // suddenDeath: per-round probability the run ends regardless of score.
@@ -53,8 +59,8 @@ export const MODIFIERS = [
     word: (w, m) => (w.rarity === 'COMMON' ? m * 1.5 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.5 : m)) },
   { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×1.55 — but 8%/round the run just ends', down: true,
     round: (p) => p * 1.55, suddenDeath: 0.08 },
-  { id: 'snowball', name: 'SNOWBALL', text: '×0.65 payout, but +0.16× per round survived (cap ×1.25)', down: true,
-    roundIdx: (p, c) => p * Math.min(1.25, 0.65 + 0.16 * c.clean) },
+  { id: 'snowball', name: 'SNOWBALL', text: '×0.62 payout, but +0.14× per round survived (cap ×1.15)', down: true,
+    roundIdx: (p, c) => p * Math.min(1.15, 0.62 + 0.14 * c.clean) },
   { id: 'uncapped', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer', down: true,
     knob: (k) => { k.cap = Infinity; k.luckyMult = 18; k.luckyOdds *= 1.3; } },
   { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.4× per vowel, but J/Q/X/Z words ×0.5', down: true,
@@ -63,10 +69,10 @@ export const MODIFIERS = [
     word: (w, m) => (w.rarity === 'OBSCURE' ? m * 8 : (w.rarity === 'RARE' ? m * 3 : (w.rarity === 'COMMON' ? m * 0.85 : m))) },
   { id: 'combo-king', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
     knob: (k) => { k.comboStep = 0.2; k.comboMax = Math.min(k.comboMax, 2.4); } },
-  { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+60 flat wins per round', down: false,
-    round: (p) => p + 60 },
-  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'Words with J/Q/X/Z pay ×2.6', down: false,
-    word: (w, m) => (w.rare ? m * 2.6 : m) },
+  { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+120 flat wins per round, but every word ×0.85', down: true,
+    word: (w, m) => m * 0.85, round: (p) => p + 120 },
+  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'J/Q/X/Z words ×4, but every other word ×0.9', down: true,
+    word: (w, m) => (w.rare ? m * 4 : m * 0.9) },
   { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9', down: true,
     word: (w, m) => m * 0.9, roundIdx: (p, c) => p * Math.min(1.35, 1 + 0.18 * c.clean) },
 ];
