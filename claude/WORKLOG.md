@@ -470,3 +470,9 @@ Full clean gate (workers=2) found 65 real failures (not infra). Root causes, all
    were stale. Subset re-run of all 4 specs: 881 passed, 0 failed.
 
 ## JOB 1 DONE — integration/run-stack: full gate GREEN (lint 0 err, 487 unit, 1092 e2e pass), pushing.
+
+---
+## JOB A — fix/onramp (Tier 1) START — the on-ramp blocker
+Goal: (1) PLAY starts a solo vs-bot game instantly (no room code/lobby/"need 2+ players"); multiplayer
+becomes a deliberate INVITE/JOIN choice. (2) First RUN is free (gate applies from 2nd run). Then re-run
+stranger walk. DIAGNOSE first (Tier 1). Parallel: JOB B (fix/run-deck) delegated.
