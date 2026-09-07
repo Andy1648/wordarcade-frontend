@@ -2,13 +2,18 @@
    hard black offset shadow, Bungee display / Space Mono body, 8px radius. No idle loops. */
 .run-root {
   position: fixed; inset: 0; z-index: 20;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; justify-content: center;
   background: #0d0618;
   padding: 16px; box-sizing: border-box;
   font-family: 'Space Mono', monospace;
   color: #fff;
   overflow-y: auto;
 }
+/* margin:auto (NOT align-items:center) centers the panel both axes when it fits AND keeps the
+   TOP reachable by scroll when the panel is taller than the viewport — the flexbox
+   "align-items:center clips + strands the top" trap that hid the RUN OVER title / wall rail in
+   short landscape (640×360). Auto margins also disable the default cross-axis stretch. */
+.run-panel { margin: auto; }
 .run-exit {
   position: absolute; top: 14px; right: 14px; z-index: 3;
   width: 44px; height: 44px; border-radius: 8px;
@@ -260,6 +265,25 @@
   .run-ladder-step { font-size: 8px; }
   .run-draft-title { font-size: 23px; }
   .run-card-art { width: 88px; }
+}
+
+/* SHORT LANDSCAPE (phones on their side): the wall / over panels carry a lot of stacked
+   vertical content (rail → big number → mode tag → button → ladder). At ~360px tall they
+   overflow; the margin:auto fix above keeps every edge scroll-reachable, and this pass
+   compacts the vertical rhythm + display sizes so the whole panel fits with little/no scroll.
+   Compaction is vertical only — no width change, no horizontal scroll risk. */
+@media (max-height: 430px) and (orientation: landscape) {
+  .run-panel { gap: 8px; padding: 12px 18px; }
+  .run-wall-num { font-size: 40px; }
+  .run-wall-need { padding: 4px 0; }
+  .run-wall-label { font-size: 11px; }
+  .run-mode-tag { padding: 8px 12px; }
+  .run-mode-tag b { font-size: 18px; }
+  .run-btn { padding: 10px; font-size: 16px; }
+  .run-over-stamp { font-size: 30px; }
+  .run-over-score b { font-size: 34px; }
+  .run-over-wins { font-size: 18px; }
+  .run-draft-title { font-size: 22px; }
 }
 
 /* Reduced motion: drop every wall-moment animation but KEEP the informational end-state
