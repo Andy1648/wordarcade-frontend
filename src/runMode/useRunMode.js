@@ -9,6 +9,7 @@ import {
   applyRoundMods, suddenDeathChance, dealOffers, runWinsPayout,
 } from './engine.js';
 import { ROUND_MODES } from './config.js';
+import { markFreeRunUsed } from './runGate.js';
 import { loadSoloWords, loadSoloAcceptExt } from '../solo/words.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { makeLuckyOracle, randomSeed, mulberry32 } from '../progress/luck.js';
@@ -125,6 +126,9 @@ export function useRunMode() {
       lastLetter: null,
       toast: null,
     };
+    // fix/onramp: starting a round means the player actually PLAYED a run, so the free
+    // first run is now spent — the LV8 gate engages from here on (idempotent write).
+    markFreeRunUsed();
     dispatch({ type: 'startRound' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.seed, state.round, roundMode.key, knobs.comboStart]);

@@ -72,7 +72,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin. Behind the
  * content sits a STATIC per-mode background (ModeDialogBackground — no canvas, no rAF).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, onSoloPlay, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -248,27 +248,41 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                 </button>
               </div>
             ) : (
-              /* CREATE/JOIN show the shared CONNECTING… / WAKING THE SERVER…
-                 feedback IN PLACE of their label while their action is pending —
-                 inside the dialog, above ModeDialog's own scrim (the Homepage
-                 bottom-bar indicator would be hidden behind that scrim). Both are
-                 disabled while EITHER is pending so a second tap can't double-fire. */
+              /* ON-RAMP (fix/onramp): PLAY starts a live SOLO game instantly (vs a
+                 bot for Word Bomb; scored-solo for Blitz) — a lone newcomer never
+                 hits a "SHARE THIS CODE / NEED 2+ PLAYERS" lobby. Multiplayer is the
+                 deliberate secondary row: INVITE FRIENDS (create a room to share) and
+                 JOIN WITH CODE. Each button shows the shared CONNECTING… / WAKING THE
+                 SERVER… feedback in place of its own label; all are disabled while any
+                 is pending so a second tap can't double-fire. */
               <div className="mode-dialog-actions">
                 <button
-                  className="mode-dialog-btn mode-dialog-btn-create"
+                  className="mode-dialog-btn mode-dialog-btn-play"
                   style={{ background: accent, borderColor: darken(accent, 0.45) }}
-                  onClick={onCreate}
+                  onClick={onSoloPlay}
                   disabled={!!connecting}
                 >
-                  {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : mode.create}
+                  {connecting === 'play' ? <ConnectingContent cold={coldStart} /> : mode.create}
                 </button>
-                <button
-                  className="mode-dialog-btn mode-dialog-btn-join"
-                  onClick={onJoin}
-                  disabled={!!connecting}
-                >
-                  {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN WITH CODE'}
-                </button>
+                {/* Multiplayer = deliberate secondary row. INVITE FRIENDS keeps the
+                    .mode-dialog-btn-create hook (create-room → lobby) so the existing
+                    lobby/create flow + its tests are unchanged. */}
+                <div className="mode-dialog-mp-row">
+                  <button
+                    className="mode-dialog-btn mode-dialog-btn-create"
+                    onClick={onCreate}
+                    disabled={!!connecting}
+                  >
+                    {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : 'INVITE FRIENDS'}
+                  </button>
+                  <button
+                    className="mode-dialog-btn mode-dialog-btn-join"
+                    onClick={onJoin}
+                    disabled={!!connecting}
+                  >
+                    {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN WITH CODE'}
+                  </button>
+                </div>
               </div>
             )}
           </div>

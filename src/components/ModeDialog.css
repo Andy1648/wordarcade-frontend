@@ -355,9 +355,29 @@
 
 .mode-dialog-actions {
   display: flex;
+  flex-direction: column; /* PLAY leads full-width; the multiplayer row sits under it */
+  width: 100%;
+  gap: clamp(8px, 1.4vh, 12px);
+  margin-top: clamp(8px, 1.6vh, 16px);
+}
+/* Multiplayer is the deliberate secondary choice: two equal muted buttons under PLAY. */
+.mode-dialog-mp-row {
+  display: flex;
   width: 100%;
   gap: clamp(10px, 1.6vw, 16px);
-  margin-top: clamp(8px, 1.6vh, 16px);
+}
+/* In the mp row, INVITE (create) + JOIN are equal, muted, smaller — scoped so the base
+   .mode-dialog-btn-create (the primary PLAY for solo CHAIN/FUSE) keeps its own styling. */
+.mode-dialog-mp-row .mode-dialog-btn {
+  flex: 1;
+  background: #fff;
+  border-color: #000;
+  font-size: clamp(13px, 1.5vw, 15px);
+}
+/* PLAY — the primary full-width CTA for Word Bomb / Category Blitz (accent set inline). */
+.mode-dialog-btn-play {
+  width: 100%;
+  font-size: clamp(18px, 2.3vw, 22px);
 }
 
 /* CTAs mirror the menu's bottom-bar buttons (Bungee, skew, hard offset shadow)
@@ -385,7 +405,7 @@
   box-shadow: 2px 2px 0 #000;
 }
 .mode-dialog-btn-create {
-  flex: 1.7;
+  flex: 1.7; /* primary sizing for the solo CHAIN/FUSE PLAY (its only remaining use as a primary) */
 }
 .mode-dialog-btn-join {
   flex: 1;
