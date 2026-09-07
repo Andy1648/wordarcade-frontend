@@ -476,3 +476,25 @@ Full clean gate (workers=2) found 65 real failures (not infra). Root causes, all
 Goal: (1) PLAY starts a solo vs-bot game instantly (no room code/lobby/"need 2+ players"); multiplayer
 becomes a deliberate INVITE/JOIN choice. (2) First RUN is free (gate applies from 2nd run). Then re-run
 stranger walk. DIAGNOSE first (Tier 1). Parallel: JOB B (fix/run-deck) delegated.
+
+## JOB B DONE (fix/run-deck, 5e25d33, pushed, NOT merged) — modifier correctness
+All 5 bugs fixed: SNOWBALL uses `clean` (×0.7→×2.2 ramp); wprMul read (round 20% shorter); luckyOdds
+read (oracle); RARE BREED ×6 (was ×1.5); HOT STREAK/UNCAPPED/RARE BREED dominated caps made reachable.
++LONG HAUL text fix. Per-modifier test (18) asserts text==effect. Was silently one-sided before:
+SNOWBALL/LUCKY CHARM/HOT STREAK/UNCAPPED/RARE BREED (downside-only), SHORT FUSE/JACKPOT (upside-only).
+Gate: 505 tests, lint 0, build 0.
+
+## JOB C DONE (fix/run-balance, c180f90, based on fix/run-deck, pushed, NOT merged) — draft UNSOLVED
+Root cause: exponential wall (g2 1.8) forced compounding mults + 9/18 cards drafted concentrated winners.
+Fixes: wall g2 1.8→1.08; cap+two-side MOMENTUM (×0.9/word, ≤1.35) / SNOWBALL (≤1.25) / GLASS CANNON
+(2.5→1.55); lift 5 dead cards into a ~1.0-1.4 band (~16/18 viable). FINAL N=2000 (all 3 targets PASS):
+RANDOM 27.5 / BALANCED 26.6 / GREEDY 25.8 / RISK-AVERSE 19.6; best 27.4%≤35; top modifier 58.2%≤60
+(was 98.6); BALANCED&GREEDY 0.8pts apart. Greedy no longer dominates. Gate: 505 tests, lint 0, build 0.
+
+## JOB A (fix/onramp) — code done (e1aac56 + eb-fix), validating
+Solo-instant PLAY (handleSoloPlay: create_room→set_game_type→[difficulty/packs]→[add_bot]→start_game,
+soloLaunchRef guards the lobby flash) + INVITE FRIENDS/JOIN secondary; free first RUN (runGate.js,
+markFreeRunUsed on startRound; isRunLocked). New e2e: PLAY→solo-provision→in-game (no lobby) PASSES.
+Flow specs green (49 pass); menu-xp+error-boundaries green (10 pass) after retargeting to WORD BOMB.
+Full vp+game-fill re-running CLEAN (first attempt was polluted by concurrent JOB C → stopped). Then
+stranger re-walk + push. NOTE: Tier-1 (App.jsx WS/game-start) — 2-device live play-test REQUIRED before merge.
