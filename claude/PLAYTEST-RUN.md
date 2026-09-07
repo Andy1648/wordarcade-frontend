@@ -15,7 +15,7 @@ Branches under test (what each owns):
 - **fix/return-bonus** — the "welcome back" reward card + streak.
 - **feat/endgame** — unlock ladder, menu XP bar, shop endgame items.
 
-Preview URL: _(fill in the integration/run-stack Vercel preview)_
+Preview URL: https://wordarcade-frontend-4edt5ni4b-beenchilling.vercel.app  _(fix/onramp-2 @ 73cfb6f — includes the on-ramp: solo-instant PLAY + free first run)_
 
 Console warps you'll use (open DevTools console on the preview, paste, reload):
 - **Warp to LV8 (unlocks RUN):** `localStorage.setItem('taw.xp', JSON.stringify({lv:8,into:0})); location.reload()`
@@ -23,6 +23,20 @@ Console warps you'll use (open DevTools console on the preview, paste, reload):
 - **Full reset (fresh stranger):** `localStorage.clear(); location.reload()`
 
 ---
+
+## 0. THE ON-RAMP — free first run, then it locks
+**Branch: fix/onramp-2 (the on-ramp fix — this is what makes the game showable)**
+Do: run the **Full reset** warp (fresh storage, LV1). On the menu, THE RUN is the big first
+card and is PLAYABLE — no padlock. Open it and play round 1 (type a few words, clear or miss
+the wall). Return to the menu.
+Should: on the FRESH menu the RUN hero has no lock plaque and enters the wall preview directly
+(not a locked read-only preview). After playing round 1 and returning, the RUN card is now
+LOCKED — "UNLOCKS AT LV 8 · YOU'RE LV 1" — because the free first run is spent.
+Broken if: the RUN card is a padlock on the very first fresh load, OR it stays unlocked after
+you've played a run (the free run should be one-and-done until LV8).
+Also confirm here: from the menu, tapping WORD BOMB → **PLAY** drops you straight into a live
+game vs a bot (bomb ticking, YOUR TURN) — NO room code, NO "SHARE THIS CODE", NO "NEED 2+
+PLAYERS". INVITE FRIENDS / JOIN WITH CODE sit as the smaller secondary row.
 
 ## 1. COLD FIRST LOAD — onboarding + menu endgame chrome
 **Branches: game-onboarding, endgame**
