@@ -25,25 +25,30 @@ const luckyRate = (odds) => {
   let c = 0; for (let i = 0; i < 40000; i++) if (o.next()) c++; return c;
 };
 
-// 1. DOUBLE VOWELS — "3+ vowels ×2, but ≤2 vowels ×0.7"
-test('DOUBLE VOWELS: 3+ vowels ×2, ≤2 vowels ×0.7', () => {
-  assert.ok(near(wordRatio(id('double-vowels'), W({ len: 6, vowels: 3 })), 2));
-  assert.ok(near(wordRatio(id('double-vowels'), W({ vowels: 2 })), 0.7));
+// NOTE: fix/run-balance re-tuned nearly every card to flatten the power curve (see
+// claude/run-balance.md). Each pinned number below tracks the card's CURRENT text.
+
+// 1. DOUBLE VOWELS — "3+ vowels ×1.8, but ≤2 vowels ×0.72"
+test('DOUBLE VOWELS: 3+ vowels ×1.8, ≤2 vowels ×0.72', () => {
+  assert.ok(near(wordRatio(id('double-vowels'), W({ len: 6, vowels: 3 })), 1.8));
+  assert.ok(near(wordRatio(id('double-vowels'), W({ vowels: 2 })), 0.72));
 });
 
-// 2. SHORT FUSE — "All wins ×1.5, but the round is 20% shorter"
-// round ×1.5 (applyRoundMods) + wprMul 0.8 (read live in useRunMode as 20% less time).
-test('SHORT FUSE: wins ×1.5 and a 20%-shorter round (wprMul 0.8 read live)', () => {
-  assert.equal(applyRoundMods(1000, [id('short-fuse')]), 1500);
+// 2. SHORT FUSE — "All wins ×1.7, but the round is 20% shorter"
+// round ×1.7 (applyRoundMods) + wprMul 0.8 (read live in useRunMode as 20% less time).
+test('SHORT FUSE: wins ×1.7 and a 20%-shorter round (wprMul 0.8 read live)', () => {
+  assert.equal(applyRoundMods(1000, [id('short-fuse')]), 1700);
   assert.equal(roundKnobs([id('short-fuse')]).wprMul, 0.8);
 });
 
-// 3. LEXICOGRAPHER — "RARE+ ×3, but COMMON/UNCOMMON score 0"
-test('LEXICOGRAPHER: RARE/OBSCURE ×3, COMMON/UNCOMMON score 0', () => {
-  assert.ok(near(wordRatio(id('lexicographer'), W({ rarity: 'RARE' })), 3));
-  assert.ok(near(wordRatio(id('lexicographer'), W({ rarity: 'OBSCURE' })), 3));
-  assert.equal(scoreWord(W({ rarity: 'COMMON' }), [id('lexicographer')]), 0);
-  assert.equal(scoreWord(W({ rarity: 'UNCOMMON' }), [id('lexicographer')]), 0);
+// 3. LEXICOGRAPHER — "RARE+ ×4.5, but COMMON/UNCOMMON ×0.72"
+// fix/run-balance: no longer ZEROES common/uncommon (was a trap card at 18% pick rate); the
+// ×0.72 floor makes it a viable high-variance pick instead of dead weight.
+test('LEXICOGRAPHER: RARE/OBSCURE ×4.5, COMMON/UNCOMMON ×0.72', () => {
+  assert.ok(near(wordRatio(id('lexicographer'), W({ rarity: 'RARE' })), 4.5));
+  assert.ok(near(wordRatio(id('lexicographer'), W({ rarity: 'OBSCURE' })), 4.5));
+  assert.ok(near(wordRatio(id('lexicographer'), W({ rarity: 'COMMON' })), 0.72));
+  assert.ok(near(wordRatio(id('lexicographer'), W({ rarity: 'UNCOMMON' })), 0.72));
 });
 
 // 4. HOT STREAK — "Combo builds +0.25×/word to a ×4 cap, but starts cold at ×0.6"
@@ -57,91 +62,95 @@ test('HOT STREAK: comboStart 0.6, comboStep 0.25, comboMax 4.0 — and the cap i
   assert.ok(k.comboStart + k.comboStep * (WORDS_PER_ROUND - 1) >= k.comboMax);
 });
 
-// 5. LUCKY CHARM — "Lucky odds 1/40→1/20, but non-lucky words ×0.9"
-test('LUCKY CHARM: lucky odds 1/40→1/20 (read live) and non-lucky words ×0.9', () => {
-  assert.equal(roundKnobs([id('lucky-charm')]).luckyOdds, 20);
-  assert.ok(near(wordRatio(id('lucky-charm'), W({ lucky: false })), 0.9));
-  assert.ok(near(wordRatio(id('lucky-charm'), W({ lucky: true })), 1)); // lucky words untouched
-  assert.ok(luckyRate(20) > luckyRate(LUCKY_ODDS)); // the oracle honours the halved odds
+// 5. LUCKY CHARM — "Lucky odds 1/40→1/13 & lucky pays ×7, but non-lucky ×0.97"
+test('LUCKY CHARM: lucky odds 1/40→1/13, lucky ×7, non-lucky words ×0.97', () => {
+  assert.equal(roundKnobs([id('lucky-charm')]).luckyOdds, LUCKY_ODDS / 3); // 40/3 ≈ 13.3
+  assert.equal(roundKnobs([id('lucky-charm')]).luckyMult, 7);
+  assert.ok(near(wordRatio(id('lucky-charm'), W({ lucky: false })), 0.97));
+  assert.ok(near(wordRatio(id('lucky-charm'), W({ lucky: true })), 7 / 5)); // lucky pays ×7 (base 5)
+  assert.ok(luckyRate(LUCKY_ODDS / 3) > luckyRate(LUCKY_ODDS)); // oracle honours the boosted odds
 });
 
-// 6. JACKPOT — "Lucky payout ×8, but lucky odds 1/40→1/60"
-test('JACKPOT: lucky payout ×8 (5→8 = ×1.6 on a lucky word) and odds 1/40→1/60', () => {
-  assert.equal(roundKnobs([id('jackpot')]).luckyMult, 8);
-  assert.equal(roundKnobs([id('jackpot')]).luckyOdds, 60);
-  assert.ok(near(wordRatio(id('jackpot'), W({ lucky: true })), 8 / 5));
-  assert.ok(luckyRate(60) < luckyRate(LUCKY_ODDS)); // rarer than baseline
+// 6. JACKPOT — "Lucky payout ×16, but lucky odds 1/40→1/48"
+test('JACKPOT: lucky payout ×16 and odds 1/40→1/48', () => {
+  assert.equal(roundKnobs([id('jackpot')]).luckyMult, 16);
+  assert.equal(roundKnobs([id('jackpot')]).luckyOdds, 48); // 40 × 1.2
+  assert.ok(near(wordRatio(id('jackpot'), W({ lucky: true })), 16 / 5));
+  assert.ok(luckyRate(48) < luckyRate(LUCKY_ODDS)); // rarer than baseline
 });
 
-// 7. BOOKWORM — "Every word +0.4× (combo-scaled), but lucky never procs"
-test('BOOKWORM: +0.4×·combo per word, lucky disabled (noLucky)', () => {
+// 7. BOOKWORM — "Every word +0.55× (combo-scaled), but lucky never procs"
+test('BOOKWORM: +0.55×·combo per word, lucky disabled (noLucky)', () => {
   assert.equal(roundKnobs([id('bookworm')]).noLucky, true);
   const combo = 2;
   const diff = scoreWord(W({ combo }), [id('bookworm')]) - scoreWord(W({ combo }), []);
-  assert.ok(near(diff, 0.4 * combo * BASE_WIN_PER_WORD)); // +0.4×combo on the multiplier
+  assert.ok(near(diff, 0.55 * combo * BASE_WIN_PER_WORD)); // +0.55×combo on the multiplier
 });
 
-// 8. LONG HAUL — "+0.1× per letter over 5 (max +1×), but words ≤5 letters ×0.7"
-test('LONG HAUL: +0.1× per letter over 5 (cap +1×), words ≤5 ×0.7', () => {
+// 8. LONG HAUL — "+0.28× per letter over 5 (max +1.75×), but words ≤5 letters ×0.9"
+test('LONG HAUL: +0.28× per letter over 5 (cap +1.75×), words ≤5 ×0.9', () => {
   const diff8 = scoreWord(W({ len: 8 }), [id('long-haul')]) - scoreWord(W({ len: 8 }), []);
-  assert.ok(near(diff8, (8 - 5) * 0.1 * BASE_WIN_PER_WORD)); // +0.3× at len 8
+  assert.ok(near(diff8, (8 - 5) * 0.28 * BASE_WIN_PER_WORD)); // +0.84× at len 8
   const diff20 = scoreWord(W({ len: 20 }), [id('long-haul')]) - scoreWord(W({ len: 20 }), []);
-  assert.ok(near(diff20, 1.0 * BASE_WIN_PER_WORD)); // capped at +1×
-  assert.ok(near(wordRatio(id('long-haul'), W({ len: 4 })), 0.7)); // short penalty
+  assert.ok(near(diff20, 1.75 * BASE_WIN_PER_WORD)); // capped at +1.75×
+  assert.ok(near(wordRatio(id('long-haul'), W({ len: 4 })), 0.9)); // short penalty
 });
 
-// 9. COMMON FOLK — "COMMON ×1.8, but RARE/OBSCURE ×0.6"
-test('COMMON FOLK: COMMON ×1.8, RARE/OBSCURE ×0.6, UNCOMMON unchanged', () => {
-  assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'COMMON' })), 1.8));
-  assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'RARE' })), 0.6));
-  assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'OBSCURE' })), 0.6));
+// 9. COMMON FOLK — "COMMON ×1.5, but RARE/OBSCURE ×0.5"
+test('COMMON FOLK: COMMON ×1.5, RARE/OBSCURE ×0.5, UNCOMMON unchanged', () => {
+  assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'COMMON' })), 1.5));
+  assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'RARE' })), 0.5));
+  assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'OBSCURE' })), 0.5));
   assert.ok(near(wordRatio(id('common-folk'), W({ rarity: 'UNCOMMON' })), 1));
 });
 
-// 10. GLASS CANNON — "All payouts ×2.5 — but 8%/round the run just ends"
-test('GLASS CANNON: payouts ×2.5 and 8% sudden-death', () => {
-  assert.equal(applyRoundMods(1000, [id('glass-cannon')]), 2500);
+// 10. GLASS CANNON — "All payouts ×1.55 — but 8%/round the run just ends"
+test('GLASS CANNON: payouts ×1.55 and 8% sudden-death', () => {
+  assert.equal(applyRoundMods(1000, [id('glass-cannon')]), 1550);
   assert.ok(near(suddenDeathChance([id('glass-cannon')]), 0.08));
 });
 
-// 11. SNOWBALL — "×0.7 payout, but +0.3× for every round already survived"
-// (Fixed: drives off `clean` — the live-tracked survived-rounds count — not the dead `owned`.)
-test('SNOWBALL: ×0.7 base, +0.3× per clean round (no longer a permanent ×0.7)', () => {
+// 11. SNOWBALL — "×0.65 payout, but +0.16× per round survived (cap ×1.25)"
+// Drives off `clean` (the live-tracked survived-rounds count); capped so it can't run away.
+test('SNOWBALL: ×0.65 base, +0.16× per clean round, cap ×1.25', () => {
   const sb = [id('snowball')];
-  assert.equal(applyRoundMods(1000, sb, { clean: 0 }), 700);  // ×0.7 with nothing survived
-  assert.equal(applyRoundMods(1000, sb, { clean: 1 }), 1000); // +0.3× → neutral
-  assert.equal(applyRoundMods(1000, sb, { clean: 5 }), 2200); // ×(0.7+1.5)
+  assert.equal(applyRoundMods(1000, sb, { clean: 0 }), 650);  // ×0.65 with nothing survived
+  assert.equal(applyRoundMods(1000, sb, { clean: 2 }), 970);  // ×(0.65+0.32)
+  assert.equal(applyRoundMods(1000, sb, { clean: 9 }), 1250); // capped at ×1.25
 });
 
-// 12. UNCAPPED — "No ×40 word cap & lucky pays ×10, but lucky half as common"
+// 12. UNCAPPED — "No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer"
 // The cap removal must be LOAD-BEARING (a lucky word blows past the old 40 cap).
-test('UNCAPPED: cap removed (load-bearing), lucky ×10, odds halved to 1/80', () => {
+test('UNCAPPED: cap removed (load-bearing), lucky ×18, odds 1/40→1/52', () => {
   const k = roundKnobs([id('uncapped')]);
   assert.equal(k.cap, Infinity);
-  assert.equal(k.luckyMult, 10);
-  assert.equal(k.luckyOdds, 80);
+  assert.equal(k.luckyMult, 18);
+  assert.equal(k.luckyOdds, 52); // 40 × 1.3
   const bigWord = W({ rarity: 'OBSCURE', len: 9, combo: 2.5, lucky: true });
   // Removing the cap lets this word exceed what the ×40 per-word cap would ever allow.
   assert.ok(scoreWord(bigWord, [id('uncapped')]) > PER_WORD_CAP * BASE_WIN_PER_WORD);
-  assert.ok(luckyRate(80) < luckyRate(LUCKY_ODDS)); // half as common
+  assert.ok(luckyRate(52) < luckyRate(LUCKY_ODDS)); // thinner than baseline
 });
 
-// 13. VOWEL MOVEMENT — "+0.3× per vowel, but J/Q/X/Z words ×0.5"
-test('VOWEL MOVEMENT: +0.3×·vowels, J/Q/X/Z words ×0.5', () => {
+// 13. VOWEL MOVEMENT — "+0.4× per vowel, but J/Q/X/Z words ×0.5"
+test('VOWEL MOVEMENT: +0.4×·vowels, J/Q/X/Z words ×0.5', () => {
   const w = W({ len: 6, vowels: 3 });
   const diff = scoreWord(w, [id('vowel-movement')]) - scoreWord(w, []);
-  assert.ok(near(diff, 0.3 * 3 * BASE_WIN_PER_WORD)); // +0.3× per vowel
-  // Rare-letter word: base multiplier halved, then +0.3×vowels added.
+  assert.ok(near(diff, 0.4 * 3 * BASE_WIN_PER_WORD)); // +0.4× per vowel
+  // Rare-letter word: base multiplier halved, then +0.4×vowels added.
   const rw = W({ rare: true, len: 4, vowels: 2 });
   const baseMult = scoreWord(rw, []) / BASE_WIN_PER_WORD;
-  const expected = (baseMult * 0.5 + 0.3 * 2) * BASE_WIN_PER_WORD;
+  const expected = (baseMult * 0.5 + 0.4 * 2) * BASE_WIN_PER_WORD;
   assert.ok(near(scoreWord(rw, [id('vowel-movement')]), expected));
 });
 
-// 14. RARE BREED — "OBSCURE ×6, but COMMON ×0.7" (was ×1.5 in code — a text lie; now ×6)
-test('RARE BREED: OBSCURE ×6 (matches text), COMMON ×0.7', () => {
-  assert.ok(near(wordRatio(id('rare-breed'), W({ rarity: 'OBSCURE' })), 6));
-  assert.ok(near(wordRatio(id('rare-breed'), W({ rarity: 'COMMON' })), 0.7));
+// 14. RARE BREED — "RARE ×3 & OBSCURE ×8, but COMMON ×0.85"
+// fix/run-balance: now also boosts RARE (not just the 2%-rare OBSCURE) and eases the COMMON
+// penalty, so it climbs out of dead-weight (was 19% pick rate) into the viable band.
+test('RARE BREED: RARE ×3, OBSCURE ×8, COMMON ×0.85', () => {
+  assert.ok(near(wordRatio(id('rare-breed'), W({ rarity: 'RARE' })), 3));
+  assert.ok(near(wordRatio(id('rare-breed'), W({ rarity: 'OBSCURE' })), 8));
+  assert.ok(near(wordRatio(id('rare-breed'), W({ rarity: 'COMMON' })), 0.85));
   // Per-word this beats an empty pick on an OBSCURE word → not strictly dominated.
   assert.ok(scoreWord(W({ rarity: 'OBSCURE' }), [id('rare-breed')]) > scoreWord(W({ rarity: 'OBSCURE' }), []));
 });
@@ -154,20 +163,24 @@ test('COMBO KING: comboStep 0.2, comboMax 2.4 (and the cap is reachable)', () =>
   assert.ok(k.comboStart + k.comboStep * (WORDS_PER_ROUND - 1) >= k.comboMax);
 });
 
-// 16. DEEP POCKETS — "+150 flat wins per round"
-test('DEEP POCKETS: +150 flat per round', () => {
-  assert.equal(applyRoundMods(1000, [id('deep-pockets')]), 1150);
+// 16. DEEP POCKETS — "+60 flat wins per round"
+test('DEEP POCKETS: +60 flat per round', () => {
+  assert.equal(applyRoundMods(1000, [id('deep-pockets')]), 1060);
 });
 
-// 17. SCRABBLE BAG — "Words with J/Q/X/Z pay ×3"
-test('SCRABBLE BAG: J/Q/X/Z words ×3, others unchanged', () => {
-  assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: true })), 3));
+// 17. SCRABBLE BAG — "Words with J/Q/X/Z pay ×2.6"
+test('SCRABBLE BAG: J/Q/X/Z words ×2.6, others unchanged', () => {
+  assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: true })), 2.6));
   assert.ok(near(wordRatio(id('scrabble-bag'), W({ rare: false })), 1));
 });
 
-// 18. MOMENTUM — "Each clean round: +0.5× running mult"
-test('MOMENTUM: ×(1 + 0.5·clean)', () => {
+// 18. MOMENTUM — "Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9"
+// fix/run-balance: was a NO-DOWNSIDE ×(1+0.5·clean) auto-include in ~100% of winners. Now
+// two-sided (×0.9 every word) and capped ×1.35, so it sits in the flat viable band.
+test('MOMENTUM: ×0.9 per word, round ×min(1.35, 1 + 0.18·clean)', () => {
   const mo = [id('momentum')];
-  assert.equal(applyRoundMods(1000, mo, { clean: 0 }), 1000);
-  assert.equal(applyRoundMods(1000, mo, { clean: 3 }), 2500);
+  assert.ok(near(wordRatio(mo[0], W()), 0.9)); // guaranteed per-word cost
+  assert.equal(applyRoundMods(1000, mo, { clean: 0 }), 1000); // ×1
+  assert.equal(applyRoundMods(1000, mo, { clean: 1 }), 1180); // ×1.18
+  assert.equal(applyRoundMods(1000, mo, { clean: 9 }), 1350); // capped at ×1.35
 });

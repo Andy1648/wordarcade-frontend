@@ -33,50 +33,58 @@ const RARITY_MIX = [['COMMON', 0.68], ['UNCOMMON', 0.22], ['RARE', 0.08], ['OBSC
 // round(p): per-round payout transform.  roundIdx(p,ctx): indexed round transform.
 // suddenDeath: per-round probability the run ends regardless of score.
 export const MODIFIERS = [
-  { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×2, but ≤2 vowels ×0.7', down: true,
-    word: (w, m) => (w.vowels >= 3 ? m * 2 : m * 0.7) },
-  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.5, but the round is 20% shorter', down: true,
-    knob: (k) => { k.wprMul *= 0.8; }, round: (p) => p * 1.5 },
-  { id: 'lexicographer', name: 'LEXICOGRAPHER', text: 'RARE+ ×3, but COMMON/UNCOMMON score 0', down: true,
-    word: (w, m) => (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 3 : 0) },
+  { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×1.8, but ≤2 vowels ×0.72', down: true,
+    word: (w, m) => (w.vowels >= 3 ? m * 1.8 : m * 0.72) },
+  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.7, but the round is 20% shorter', down: true,
+    knob: (k) => { k.wprMul *= 0.8; }, round: (p) => p * 1.7 },
+  { id: 'lexicographer', name: 'LEXICOGRAPHER', text: 'RARE+ ×4.5, but COMMON/UNCOMMON ×0.72', down: true,
+    word: (w, m) => (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 4.5 : m * 0.72) },
   { id: 'hot-streak', name: 'HOT STREAK', text: 'Combo builds +0.25×/word to a ×4 cap, but starts cold at ×0.6', down: true,
     knob: (k) => { k.comboStart = 0.6; k.comboStep = 0.25; k.comboMax = 4.0; } },
-  { id: 'lucky-charm', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/20, but non-lucky words ×0.9', down: true,
-    knob: (k) => { k.luckyOdds /= 2; }, word: (w, m) => (w.lucky ? m : m * 0.9) },
-  { id: 'jackpot', name: 'JACKPOT', text: 'Lucky payout ×8, but lucky odds 1/40→1/60', down: true,
-    knob: (k) => { k.luckyMult = 8; k.luckyOdds *= 1.5; } },
-  { id: 'bookworm', name: 'BOOKWORM', text: 'Every word +0.4× (combo-scaled), but lucky never procs', down: true,
-    knob: (k) => { k.noLucky = true; }, word: (w, m) => m + 0.4 * w.combo },
-  { id: 'long-haul', name: 'LONG HAUL', text: '+0.1× per letter over 5 (max +1×), but words ≤5 letters ×0.7', down: true,
-    word: (w, m) => (w.len > 5 ? m + Math.min(1.0, (w.len - 5) * 0.1) : m * 0.7) },
-  { id: 'common-folk', name: 'COMMON FOLK', text: 'COMMON ×1.8, but RARE/OBSCURE ×0.6', down: true,
-    word: (w, m) => (w.rarity === 'COMMON' ? m * 1.8 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.6 : m)) },
-  { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×2.5 — but 8%/round the run just ends', down: true,
-    round: (p) => p * 2.5, suddenDeath: 0.08 },
-  { id: 'snowball', name: 'SNOWBALL', text: '×0.7 payout, but +0.3× for every round already survived', down: true,
-    roundIdx: (p, c) => p * (0.7 + 0.3 * c.clean) },
-  { id: 'uncapped', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×10, but lucky half as common', down: true,
-    knob: (k) => { k.cap = Infinity; k.luckyMult = 10; k.luckyOdds *= 2; } },
-  { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.3× per vowel, but J/Q/X/Z words ×0.5', down: true,
-    word: (w, m) => (w.rare ? m * 0.5 : m) + 0.3 * w.vowels },
-  { id: 'rare-breed', name: 'RARE BREED', text: 'OBSCURE ×6, but COMMON ×0.7', down: true,
-    word: (w, m) => (w.rarity === 'OBSCURE' ? m * 6 : (w.rarity === 'COMMON' ? m * 0.7 : m)) },
+  { id: 'lucky-charm', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/13 & lucky pays ×7, but non-lucky ×0.97', down: true,
+    knob: (k) => { k.luckyOdds /= 3; k.luckyMult = 7; }, word: (w, m) => (w.lucky ? m : m * 0.97) },
+  { id: 'jackpot', name: 'JACKPOT', text: 'Lucky payout ×16, but lucky odds 1/40→1/48', down: true,
+    knob: (k) => { k.luckyMult = 16; k.luckyOdds *= 1.2; } },
+  { id: 'bookworm', name: 'BOOKWORM', text: 'Every word +0.55× (combo-scaled), but lucky never procs', down: true,
+    knob: (k) => { k.noLucky = true; }, word: (w, m) => m + 0.55 * w.combo },
+  { id: 'long-haul', name: 'LONG HAUL', text: '+0.28× per letter over 5 (max +1.75×), but words ≤5 letters ×0.9', down: true,
+    word: (w, m) => (w.len > 5 ? m + Math.min(1.75, (w.len - 5) * 0.28) : m * 0.9) },
+  { id: 'common-folk', name: 'COMMON FOLK', text: 'COMMON ×1.5, but RARE/OBSCURE ×0.5', down: true,
+    word: (w, m) => (w.rarity === 'COMMON' ? m * 1.5 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.5 : m)) },
+  { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×1.55 — but 8%/round the run just ends', down: true,
+    round: (p) => p * 1.55, suddenDeath: 0.08 },
+  { id: 'snowball', name: 'SNOWBALL', text: '×0.65 payout, but +0.16× per round survived (cap ×1.25)', down: true,
+    roundIdx: (p, c) => p * Math.min(1.25, 0.65 + 0.16 * c.clean) },
+  { id: 'uncapped', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer', down: true,
+    knob: (k) => { k.cap = Infinity; k.luckyMult = 18; k.luckyOdds *= 1.3; } },
+  { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.4× per vowel, but J/Q/X/Z words ×0.5', down: true,
+    word: (w, m) => (w.rare ? m * 0.5 : m) + 0.4 * w.vowels },
+  { id: 'rare-breed', name: 'RARE BREED', text: 'RARE ×3 & OBSCURE ×8, but COMMON ×0.85', down: true,
+    word: (w, m) => (w.rarity === 'OBSCURE' ? m * 8 : (w.rarity === 'RARE' ? m * 3 : (w.rarity === 'COMMON' ? m * 0.85 : m))) },
   { id: 'combo-king', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
     knob: (k) => { k.comboStep = 0.2; k.comboMax = Math.min(k.comboMax, 2.4); } },
-  { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+150 flat wins per round', down: false,
-    round: (p) => p + 150 },
-  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'Words with J/Q/X/Z pay ×3', down: false,
-    word: (w, m) => (w.rare ? m * 3 : m) },
-  { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round: +0.5× running mult', down: false,
-    roundIdx: (p, c) => p * (1 + 0.5 * c.clean) },
+  { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+60 flat wins per round', down: false,
+    round: (p) => p + 60 },
+  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'Words with J/Q/X/Z pay ×2.6', down: false,
+    word: (w, m) => (w.rare ? m * 2.6 : m) },
+  { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9', down: true,
+    word: (w, m) => m * 0.9, roundIdx: (p, c) => p * Math.min(1.35, 1 + 0.18 * c.clean) },
 ];
 
 export const MODIFIER_BY_ID = MODIFIERS.reduce((m, x) => ((m[x.id] = x), m), {});
 
-// ---- the ANTE WALL — DERIVED in the proto sweep, not guessed ----
-// wall(r)=W0·g1^min(r-1,KNEE-1)·g2^max(0,r-KNEE): gentle early, steep from the knee.
-// Sweep fit against 1000 greedy runs: 34.5% win rate, deaths peak round 8.
-export const WALL = { W0: 225, g1: 1.3, g2: 1.8, KNEE: 5 };
+// ---- the ANTE WALL — REBALANCED on fix/run-balance (claude/run-balance.mjs) ----
+// wall(r)=W0·g1^min(r-1,KNEE-1)·g2^max(0,r-KNEE).
+// The old curve (g1=1.3, g2=1.8) was a ~1.8×/round exponential (12143 by round 10) that
+// ONLY compounding round-multipliers (MOMENTUM/GLASS CANNON) could keep pace with — so the
+// draft collapsed to "grab the compounders" and one strategy strictly won. This curve FLATTENS
+// the late game (g2=1.08): rounds 1-5 ramp at 1.2× (the real filter — mid-game deaths peak at
+// round 5), then the wall nearly plateaus (467→686 over rounds 6-10) so per-word / flat /
+// defensive stacks can clear the endgame too. W0 is pinned ~225 by the round-1 EMPTY-stack
+// round (raising it mass-kills round 1). Verified at N=2000×4 seeds: no strategy >35%, no
+// modifier in >60% of winners, GREEDY/BALANCED within ~1pt. Schedule:
+// 225, 270, 324, 389, 467, 504, 544, 588, 635, 686.
+export const WALL = { W0: 225, g1: 1.2, g2: 1.08, KNEE: 5 };
 export function wallAt(round, cfg = WALL) {
   const a = Math.min(round - 1, cfg.KNEE - 1);
   const b = Math.max(0, round - cfg.KNEE);
