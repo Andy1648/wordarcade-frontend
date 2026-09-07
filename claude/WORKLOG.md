@@ -498,3 +498,18 @@ markFreeRunUsed on startRound; isRunLocked). New e2e: PLAY→solo-provision→in
 Flow specs green (49 pass); menu-xp+error-boundaries green (10 pass) after retargeting to WORD BOMB.
 Full vp+game-fill re-running CLEAN (first attempt was polluted by concurrent JOB C → stopped). Then
 stranger re-walk + push. NOTE: Tier-1 (App.jsx WS/game-start) — 2-device live play-test REQUIRED before merge.
+
+## JOB A FINISH (fix/onramp) — stranger re-walk confirms both blockers GONE
+Stranger-4 (chore/stranger-4, 543890a, pushed): (a) PLAY → live solo game, no lobby/"need 2+ players";
+(b) THE RUN hero playable (free first run), not a padlock. New first-60s: "here's a game I can just
+play" — inversion of stranger-3's "needs friends + locked". New watch-item: the free-run→then-locked
+flip on return could feel like a small bait-and-switch — recommend a "that was your free run" note
+(NOT implemented; out of scope). Pre-existing (not this branch): wins economy unexplained, in-game
+coach heading overlaps input.
+Validation: flow specs 49 pass; menu-xp+error-boundaries 10 pass; viewport-integrity+game-fill 871
+pass CLEAN; lint 0, unit 487, build 0; new mode-dialog PLAY→solo→in-game test passes.
+STILL REQUIRED BEFORE MERGE: Tier-1 2-device live play-test (App.jsx WS/game-start path changed).
+
+## JOBS A/B/C COMPLETE — pushed, verified, NONE merged (main d4c40c3):
+fix/onramp (A, 3f113bd), fix/run-deck (B, 5e25d33), fix/run-balance (C, c180f90, based on B),
+chore/stranger-4 (A's re-walk report, 543890a).
