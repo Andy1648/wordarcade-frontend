@@ -42,14 +42,14 @@ test('round-level modifiers transform payout exactly (DEEP POCKETS +150, GLASS C
 });
 
 test('the live meter contract: round-adjusted projection == what the wall is compared to', () => {
-  // The in-round meter MUST show applyRoundMods(rawTypedTotal, stack, {owned:0, clean}) —
+  // The in-round meter MUST show applyRoundMods(rawTypedTotal, stack, { clean }) —
   // the exact number endRound compares to the wall — NOT the raw per-word total. This pins
   // the run-playthrough finding: with round-level modifiers the projection exceeds raw, so a
   // meter reading raw would lie about the player's true standing (504 raw → 2,051 real).
   const raw = 504;
   const clean = 5;
   const stack = [MODIFIER_BY_ID['deep-pockets'], MODIFIER_BY_ID['momentum']];
-  const ctx = { owned: 0, clean };
+  const ctx = { clean };
   const projected = applyRoundMods(raw, stack, ctx);
   // MOMENTUM ×(1+0.5·clean) then DEEP POCKETS is +150 (order-dependent per stack order):
   // here deep-pockets runs first (+150 → 654), momentum ×3.5 → 2289.
@@ -70,7 +70,7 @@ test('scoreWord reuses rarity×combo×lucky and respects the per-word cap', () =
 
 test('modifierFactor: an all-upside stack scales a round above 1×', () => {
   const upside = [MODIFIER_BY_ID['deep-pockets'], MODIFIER_BY_ID['momentum']];
-  assert.ok(modifierFactor(upside, { owned: 0, clean: 3 }) > 1);
+  assert.ok(modifierFactor(upside, { clean: 3 }) > 1);
 });
 
 test('dealOffers returns three distinct, not-yet-owned modifiers', () => {
@@ -88,8 +88,13 @@ test('runWinsPayout scales with the round reached', () => {
   assert.equal(runWinsPayout(0, 10), 0);
 });
 
-test('roundKnobs applies knob modifiers (UNCAPPED removes the cap, tightens combo)', () => {
+test('roundKnobs applies knob modifiers (UNCAPPED removes the cap, boosts lucky, halves odds)', () => {
+  // UNCAPPED was redesigned (fix/run-deck): its downside used to be `comboMax → 1.5`, which
+  // made the cap-removal inert (a low-combo word never reached the 40 cap) — a strictly
+  // dominated card. It now removes the cap, sets lucky ×10, and halves lucky odds, so the
+  // uncapping is load-bearing (a lucky word blows past 40) and the downside is real.
   const k = roundKnobs([MODIFIER_BY_ID['uncapped']]);
   assert.equal(k.cap, Infinity);
-  assert.ok(k.comboMax <= 1.5);
+  assert.equal(k.luckyMult, 10);
+  assert.equal(k.luckyOdds, 80); // 40 × 2 — half as common
 });

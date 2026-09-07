@@ -115,19 +115,23 @@ export function useRunMode() {
   const startRound = useCallback(() => {
     const seed = (state.seed ^ (state.round * 0x9e3779b1)) >>> 0;
     playRef.current = {
-      timeLeft: resolveRoundSeconds(),
+      // SHORT FUSE's wprMul shortens the round (fewer words) — the live round is timed,
+      // so a "20% fewer words" knob is applied as 20% less time. Floor of 4s.
+      timeLeft: Math.max(4, Math.round(resolveRoundSeconds() * knobs.wprMul)),
       combo: knobs.comboStart,
       score: 0,
       words: 0,
       used: new Set(),
-      lucky: makeLuckyOracle(seed),
+      // The lucky oracle honours the drafted odds knob (LUCKY CHARM 1/20, JACKPOT 1/60,
+      // UNCAPPED 1/80) — a fixed 1/40 here made those upsides/downsides dead.
+      lucky: makeLuckyOracle(seed, knobs.luckyOdds),
       constraint: roundMode.key === 'fuse' ? pickFragment(mulberry32(seed)) : null,
       lastLetter: null,
       toast: null,
     };
     dispatch({ type: 'startRound' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.seed, state.round, roundMode.key, knobs.comboStart]);
+  }, [state.seed, state.round, roundMode.key, knobs.comboStart, knobs.wprMul, knobs.luckyOdds]);
 
   // Round timer.
   useEffect(() => {
@@ -138,7 +142,7 @@ export function useRunMode() {
       p.timeLeft -= 1;
       if (p.timeLeft <= 0) {
         clearInterval(id);
-        const ctx = { owned: 0, clean: state.clean };
+        const ctx = { clean: state.clean };
         let score = applyRoundMods(p.score, stack, ctx);
         const fumbled = suddenDeathChance(stack) > 0 && p.lucky.next() && Math.random() < suddenDeathChance(stack);
         dispatch({ type: 'endRound', score, fumbled });
@@ -190,10 +194,10 @@ export function useRunMode() {
   // +150, MOMENTUM's ×N, SHORT FUSE ×1.5, GLASS CANNON ×2.5…) are applied to the raw
   // per-word sum at round end — so the meter MUST show the same round-adjusted number the
   // wall is actually compared against, not the raw typed total. The ctx here is byte-for-
-  // byte the one endRound uses ({ owned: 0, clean }), so the displayed gap is the real gap.
+  // byte the one endRound uses ({ clean }), so the displayed gap is the real gap.
   const rawRoundScore = state.phase === 'round' && playRef.current ? playRef.current.score : 0;
   const projected = state.phase === 'round' && playRef.current
-    ? applyRoundMods(playRef.current.score, stack, { owned: 0, clean: state.clean })
+    ? applyRoundMods(playRef.current.score, stack, { clean: state.clean })
     : 0;
 
   return {

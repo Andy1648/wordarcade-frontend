@@ -35,32 +35,32 @@ const RARITY_MIX = [['COMMON', 0.68], ['UNCOMMON', 0.22], ['RARE', 0.08], ['OBSC
 export const MODIFIERS = [
   { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×2, but ≤2 vowels ×0.7', down: true,
     word: (w, m) => (w.vowels >= 3 ? m * 2 : m * 0.7) },
-  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.5, but 20% fewer words', down: true,
+  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.5, but the round is 20% shorter', down: true,
     knob: (k) => { k.wprMul *= 0.8; }, round: (p) => p * 1.5 },
   { id: 'lexicographer', name: 'LEXICOGRAPHER', text: 'RARE+ ×3, but COMMON/UNCOMMON score 0', down: true,
     word: (w, m) => (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 3 : 0) },
-  { id: 'hot-streak', name: 'HOT STREAK', text: 'Combo cap ×5.0, but each round starts at combo ×0.6', down: true,
-    knob: (k) => { k.comboMax = 5.0; k.comboStart = 0.6; } },
+  { id: 'hot-streak', name: 'HOT STREAK', text: 'Combo builds +0.25×/word to a ×4 cap, but starts cold at ×0.6', down: true,
+    knob: (k) => { k.comboStart = 0.6; k.comboStep = 0.25; k.comboMax = 4.0; } },
   { id: 'lucky-charm', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/20, but non-lucky words ×0.9', down: true,
     knob: (k) => { k.luckyOdds /= 2; }, word: (w, m) => (w.lucky ? m : m * 0.9) },
   { id: 'jackpot', name: 'JACKPOT', text: 'Lucky payout ×8, but lucky odds 1/40→1/60', down: true,
     knob: (k) => { k.luckyMult = 8; k.luckyOdds *= 1.5; } },
   { id: 'bookworm', name: 'BOOKWORM', text: 'Every word +0.4× (combo-scaled), but lucky never procs', down: true,
     knob: (k) => { k.noLucky = true; }, word: (w, m) => m + 0.4 * w.combo },
-  { id: 'long-haul', name: 'LONG HAUL', text: 'Length bonus doubled, but words ≤5 letters ×0.7', down: true,
+  { id: 'long-haul', name: 'LONG HAUL', text: '+0.1× per letter over 5 (max +1×), but words ≤5 letters ×0.7', down: true,
     word: (w, m) => (w.len > 5 ? m + Math.min(1.0, (w.len - 5) * 0.1) : m * 0.7) },
   { id: 'common-folk', name: 'COMMON FOLK', text: 'COMMON ×1.8, but RARE/OBSCURE ×0.6', down: true,
     word: (w, m) => (w.rarity === 'COMMON' ? m * 1.8 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.6 : m)) },
   { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×2.5 — but 8%/round the run just ends', down: true,
     round: (p) => p * 2.5, suddenDeath: 0.08 },
-  { id: 'snowball', name: 'SNOWBALL', text: '+0.3× per round forever, but ×0.7 the round you draft it', down: true,
-    roundIdx: (p, c) => p * (0.7 + 0.3 * c.owned) },
-  { id: 'uncapped', name: 'UNCAPPED', text: 'Remove the ×40 word cap, but combo cap ×3→×1.5', down: true,
-    knob: (k) => { k.cap = Infinity; k.comboMax = Math.min(k.comboMax, 1.5); } },
+  { id: 'snowball', name: 'SNOWBALL', text: '×0.7 payout, but +0.3× for every round already survived', down: true,
+    roundIdx: (p, c) => p * (0.7 + 0.3 * c.clean) },
+  { id: 'uncapped', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×10, but lucky half as common', down: true,
+    knob: (k) => { k.cap = Infinity; k.luckyMult = 10; k.luckyOdds *= 2; } },
   { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.3× per vowel, but J/Q/X/Z words ×0.5', down: true,
     word: (w, m) => (w.rare ? m * 0.5 : m) + 0.3 * w.vowels },
   { id: 'rare-breed', name: 'RARE BREED', text: 'OBSCURE ×6, but COMMON ×0.7', down: true,
-    word: (w, m) => (w.rarity === 'OBSCURE' ? m * 1.5 : (w.rarity === 'COMMON' ? m * 0.7 : m)) },
+    word: (w, m) => (w.rarity === 'OBSCURE' ? m * 6 : (w.rarity === 'COMMON' ? m * 0.7 : m)) },
   { id: 'combo-king', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
     knob: (k) => { k.comboStep = 0.2; k.comboMax = Math.min(k.comboMax, 2.4); } },
   { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+150 flat wins per round', down: false,
@@ -112,8 +112,8 @@ export function scoreWord(word, stack, knobs = roundKnobs(stack)) {
 }
 
 // Apply the stack's ROUND-level mods to a round's raw payout. ctx carries
-// { owned: rounds since SNOWBALL drafted, clean: clean rounds so far }.
-export function applyRoundMods(payout, stack, ctx = { owned: 0, clean: 0 }) {
+// { clean: clean (survived) rounds so far } — drives SNOWBALL and MOMENTUM.
+export function applyRoundMods(payout, stack, ctx = { clean: 0 }) {
   let p = payout;
   for (const mod of stack) {
     if (mod.round) p = mod.round(p);
@@ -131,7 +131,7 @@ export function suddenDeathChance(stack) {
 
 // A fully-simulated round payout (used by the sim AND as the EV factor that scales a
 // real solo round's native score by the drafted modifiers — see useRunMode).
-export function simulateRoundPayout(rnd, stack, ctx = { owned: 0, clean: 0 }, knobs = roundKnobs(stack)) {
+export function simulateRoundPayout(rnd, stack, ctx = { clean: 0 }, knobs = roundKnobs(stack)) {
   const wpr = Math.max(4, Math.round(WORDS_PER_ROUND * knobs.wprMul));
   let combo = knobs.comboStart, payout = 0;
   for (let i = 0; i < wpr; i++) {
@@ -150,7 +150,7 @@ export function simulateRoundPayout(rnd, stack, ctx = { owned: 0, clean: 0 }, kn
 
 // Expected round payout for a stack (deterministic internal seed) — the greedy
 // drafter's ranking signal AND the modifier EV factor applied to real rounds.
-export function expectedRoundPayout(stack, ctx = { owned: 0, clean: 0 }) {
+export function expectedRoundPayout(stack, ctx = { clean: 0 }) {
   let s = 0; const N = 60; const r = mulberry32(4242);
   for (let i = 0; i < N; i++) s += simulateRoundPayout(r, stack, ctx);
   return s / N;
@@ -159,7 +159,7 @@ export function expectedRoundPayout(stack, ctx = { owned: 0, clean: 0 }) {
 // The modifier EV FACTOR: how a stack scales a round's score vs. an empty stack.
 // Lets a REAL solo round (played on the shipped scoring) inherit the drafted
 // modifiers as a single, sim-consistent multiplier on its native score.
-export function modifierFactor(stack, ctx = { owned: 0, clean: 0 }) {
+export function modifierFactor(stack, ctx = { clean: 0 }) {
   const base = expectedRoundPayout([], ctx);
   if (base <= 0) return 1;
   return expectedRoundPayout(stack, ctx) / base;
