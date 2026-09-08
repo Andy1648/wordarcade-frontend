@@ -146,6 +146,9 @@ function RoundScreen({ run }) {
       {run.roundMode.key === 'chain' && play.lastLetter && (
         <div className="run-frag">START WITH <b>{play.lastLetter.toUpperCase()}</b></div>
       )}
+      {run.roundMode.key === 'long' && (
+        <div className="run-frag"><b>6+</b> LETTERS</div>
+      )}
       <form onSubmit={onSubmit} className="run-input-wrap">
         <input ref={inputRef} className="run-input" value={val} onChange={(e) => setVal(e.target.value)}
           placeholder="TYPE A WORD" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck="false" />

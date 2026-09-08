@@ -12,6 +12,7 @@ import { ROUND_MODES } from './config.js';
 import { loadSoloWords, loadSoloAcceptExt } from '../solo/words.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { makeLuckyOracle, randomSeed, mulberry32 } from '../progress/luck.js';
+import { makeFragmentStream } from './fragments.js';
 
 export const ROUND_SECONDS = 30;
 // Dev-only: ?rs=N shortens the round clock for screenshots / manual play. Clamped 2–60;
@@ -114,7 +115,11 @@ export function useRunMode() {
 
   const startRound = useCallback(() => {
     const seed = (state.seed ^ (state.round * 0x9e3779b1)) >>> 0;
+    // fix/run-round-modes: ONE fragment stream per round, seeded from the run (see fragments.js).
+    // The old draw reseeded from p.words × a constant, so every run dealt the same fragments.
+    const frag = makeFragmentStream(seed);
     playRef.current = {
+      frag,
       // SHORT FUSE's wprMul shortens the round (fewer words) — the live round is timed,
       // so a "20% fewer words" knob is applied as 20% less time. Floor of 4s.
       timeLeft: Math.max(4, Math.round(resolveRoundSeconds() * knobs.wprMul)),
@@ -125,7 +130,7 @@ export function useRunMode() {
       // The lucky oracle honours the drafted odds knob (LUCKY CHARM 1/20, JACKPOT 1/60,
       // UNCAPPED 1/80) — a fixed 1/40 here made those upsides/downsides dead.
       lucky: makeLuckyOracle(seed, knobs.luckyOdds),
-      constraint: roundMode.key === 'fuse' ? pickFragment(mulberry32(seed)) : null,
+      constraint: roundMode.key === 'fuse' ? frag.next() : null,
       lastLetter: null,
       toast: null,
     };
@@ -163,6 +168,7 @@ export function useRunMode() {
     if (!state.words?.accept.has(word)) return fail(p, 'NOT A WORD', force);
     if (roundMode.key === 'chain' && p.lastLetter && word[0] !== p.lastLetter) return fail(p, `START WITH "${p.lastLetter.toUpperCase()}"`, force);
     if (roundMode.key === 'fuse' && p.constraint && !word.includes(p.constraint)) return fail(p, `NEEDS "${p.constraint.toUpperCase()}"`, force);
+    if (roundMode.key === 'long' && word.length < 6) return fail(p, '6 LETTERS OR MORE', force);
 
     // rarityOf returns { band, mult, announce, … } — the band NAME is `.band`. (Reading
     // `.name` left rarity undefined, so live rounds silently scored every word as COMMON,
@@ -177,7 +183,7 @@ export function useRunMode() {
     p.words += 1;
     p.used.add(word);
     p.lastLetter = word[word.length - 1];
-    if (roundMode.key === 'fuse') p.constraint = pickFragment(p.lucky.next() ? mulberry32(p.words * 7919) : mulberry32(p.words * 104729));
+    if (roundMode.key === 'fuse') p.constraint = p.frag.next(); // next fragment from THIS round's stream
     p.toast = w.lucky ? 'LUCKY ×5!' : (r.announce ? `${r.band}!` : null);
     force();
     return { ok: true, lucky: w.lucky, band: r.band };
@@ -224,7 +230,3 @@ export function useRunMode() {
 }
 
 function fail(p, toast, force) { p.toast = toast; p.combo = 1; force(); return { ok: false, reason: toast }; }
-function pickFragment(rnd) {
-  const frags = ['er', 'in', 'at', 'ing', 'ent', 'ar', 'st', 'ck', 're', 'on', 'an', ' or', 'te'].map((f) => f.trim());
-  return frags[Math.floor(rnd() * frags.length)];
-}

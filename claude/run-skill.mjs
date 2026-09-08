@@ -35,10 +35,19 @@ export const STRATEGY_NAMES = ['GREEDY', 'BALANCED', 'RISK-AVERSE', 'RANDOM'];
 
 // The three solo modes a round can roll (config.js ROUND_MODES). Constraint modes are
 // harder → the player lands fewer / lower-accuracy words. Same for all strategies.
-const ROUND_MODES = [
+// fix/run-round-modes: SAT (a label-only flavour) became LONG (6+ letters, enforced) —
+// modelled as 0.85 / 0.90: a real constraint, but one every player can plan for.
+// FUSE re-rated 0.80/0.82 → 0.90/0.86 (= CHAIN) on vocabulary evidence, not by hand: in the
+// shipped top-3,000 recall vocabulary a CHAIN constraint (start with the previous word's last
+// letter, re-rolled every word) covers 5.4% of words on average; the widened 40-fragment FUSE pool
+// (src/runMode/fragments.js, also re-rolled every word) covers 5.4% too, with a 2.7% floor — the
+// old 13-pool had a 1.3% floor ('ck') and dealt the SAME sequence every run, which is what the old
+// hand constants were rating. With the old constants FUSE cleared round 2 at 40.1% vs CHAIN 58.5%
+// (spread 19.6 pts); the data gives no reason for FUSE to be harder than CHAIN.
+export const ROUND_MODES = [
   { key: 'chain', attemptsMul: 0.90, accuracy: 0.86 },
-  { key: 'fuse',  attemptsMul: 0.80, accuracy: 0.82 },
-  { key: 'sat',   attemptsMul: 0.88, accuracy: 0.88 },
+  { key: 'fuse',  attemptsMul: 0.90, accuracy: 0.86 },
+  { key: 'long',  attemptsMul: 0.85, accuracy: 0.90 },
 ];
 
 // ---------------- PLAYER-SKILL MODEL (identical across strategies at a sweep point) ----------------
@@ -264,6 +273,33 @@ export function draft1Audit({ attempts = 8.6, accuracy = DEFAULT_ACCURACY, N = 4
   return { attempts, accuracy, N, seed, wall: wallSchedule(), empty, rows, byId };
 }
 
+// ---------------- ROUND-MODE SPREAD (fix/run-round-modes) ----------------
+// The three flavours must be comparably hard, or the run's difficulty is a dice roll on the
+// rolled mode. Empty stack, round 2 (the first post-draft filter; ctx {clean:1}), each flavour
+// FORCED for every run: P(clear) per flavour and the max−min spread in points.
+export function roundModeSpread({ attempts = 8.6, accuracy = DEFAULT_ACCURACY, N = 6000, seed = DEFAULT_SEED, round = 2 } = {}) {
+  const skill = makeSkill(attempts, accuracy);
+  const knobs = roundKnobs([]);
+  const rows = ROUND_MODES.map((mode) => {
+    let clears = 0;
+    for (let i = 0; i < N; i++) {
+      const rng = mulberry32((seed + i) >>> 0);
+      if (playRound(rng, [], knobs, { owned: 0, clean: round - 1 }, mode, skill) >= wallAt(round)) clears++;
+    }
+    return { key: mode.key, attemptsMul: mode.attemptsMul, accuracy: mode.accuracy, clearPct: 100 * clears / N };
+  });
+  const pcts = rows.map((r) => r.clearPct);
+  return { attempts, accuracy, N, seed, round, wall: wallAt(round), rows, spread: Math.max(...pcts) - Math.min(...pcts) };
+}
+
+function printRoundModeSpread(s) {
+  console.log(`\n=== ROUND-MODE SPREAD (fix/run-round-modes) ===`);
+  console.log(`empty stack, round ${s.round} @ wall ${s.wall}, attempts=${s.attempts} accuracy=${s.accuracy} N=${s.N} seed=${s.seed}\n`);
+  console.log(`  flavour   attemptsMul  accuracy   P(clear R${s.round})`);
+  for (const r of s.rows) console.log(`  ${r.key.padEnd(8)}  ${r.attemptsMul.toFixed(2).padStart(11)}  ${r.accuracy.toFixed(2).padStart(8)}   ${r.clearPct.toFixed(1).padStart(6)}%`);
+  console.log(`\n  max−min ${s.spread.toFixed(1)} pts <= 12  -> ${s.spread <= 12 ? 'PASS' : 'FAIL'}\n`);
+}
+
 function printDraft1Audit(a) {
   const f = (x) => x.toFixed(1).padStart(6);
   const d = (x) => ((x >= 0 ? '+' : '') + x.toFixed(1)).padStart(6);
@@ -289,7 +325,14 @@ function printDraft1Audit(a) {
 // ---------------- CLI ----------------
 //   node claude/run-skill.mjs [N] [seed]          — the skill sweep
 //   node claude/run-skill.mjs audit [N] [seed]    — the draft-1 audit (defaults 4000 / 777, 8.6 attempts)
+//   node claude/run-skill.mjs modes [N] [seed]    — the round-mode spread (defaults 6000, 8.6 attempts)
 function main() {
+  if (process.argv[2] === 'modes') {
+    const N = parseInt(process.argv[3], 10) || 6000;
+    const seed = parseInt(process.argv[4], 10) || DEFAULT_SEED;
+    printRoundModeSpread(roundModeSpread({ attempts: 8.6, N, seed }));
+    return;
+  }
   if (process.argv[2] === 'audit') {
     const N = parseInt(process.argv[3], 10) || 4000;
     const seed = parseInt(process.argv[4], 10) || 777;
