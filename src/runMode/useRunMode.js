@@ -67,6 +67,37 @@ const initial = (seed) => {
   };
 };
 
+// The per-round seed every deterministic stream (fragments, lucky, fumble) derives from.
+export function roundSeed(runSeed, round) {
+  return (runSeed ^ (round * 0x9e3779b1)) >>> 0;
+}
+
+// fix/run-short-height: the GLASS CANNON fumble roll is seeded from the RUN (its own stream,
+// decorrelated from the lucky oracle), not Math.random() — so a given seed's fate is fixed at
+// deal time and ?seed= reproduces it. It also no longer hides behind a lucky-oracle hit: the
+// old roll was `lucky.next() && Math.random() < 0.08`, which made the card's promised 8%/round
+// an effective ~0.2% (1/40 × 8%) AND burned a lucky roll every round end.
+export function fumbleRng(runSeed, round) {
+  return mulberry32((roundSeed(runSeed, round) ^ 0x5bd1e995) >>> 0);
+}
+export function rollFumble(stack, rnd) {
+  const sd = suddenDeathChance(stack);
+  return sd > 0 && rnd() < sd;
+}
+
+// fix/run-short-height: the round clock is anchored to a wall-clock DEADLINE, not a counter
+// decremented once per interval tick. Phones pause timers when the app is backgrounded, so a
+// counter let a player park a round mid-way; a deadline can't be paused — the next tick after
+// foregrounding sees the elapsed time and ends the round. secondsLeft ceils, so a 25s round
+// shows 0:25 on its first frame and 0:01 through its last second.
+export function makeRoundClock(seconds, now = Date.now()) {
+  const endsAt = now + seconds * 1000;
+  return {
+    endsAt,
+    secondsLeft: (t = Date.now()) => Math.max(0, Math.ceil((endsAt - t) / 1000)),
+  };
+}
+
 // Exported for the unit tests (runPayout.test.js) — the hook is the only live caller.
 export function runReducer(s, a) {
   switch (a.type) {
@@ -126,7 +157,7 @@ export function useRunMode() {
   const [, force] = useReducer((x) => x + 1, 0);
 
   const startRound = useCallback(() => {
-    const seed = (state.seed ^ (state.round * 0x9e3779b1)) >>> 0;
+    const seed = roundSeed(state.seed, state.round);
     // fix/run-round-modes: ONE fragment stream per round, seeded from the run (see fragments.js).
     // The old draw reseeded from p.words × a constant, so every run dealt the same fragments.
     const frag = makeFragmentStream(seed);
@@ -134,7 +165,10 @@ export function useRunMode() {
       frag,
       // SHORT FUSE's wprMul shortens the round (fewer words) — the live round is timed,
       // so a "20% fewer words" knob is applied as 20% less time. Floor of 4s.
-      timeLeft: Math.max(4, Math.round(resolveRoundSeconds() * knobs.wprMul)),
+      clock: makeRoundClock(Math.max(4, Math.round(resolveRoundSeconds() * knobs.wprMul))),
+      get timeLeft() { return this.clock.secondsLeft(); }, // derived — never stored, never pausable
+      ended: false,
+      fumble: fumbleRng(state.seed, state.round),
       combo: knobs.comboStart,
       score: 0,
       words: 0,
@@ -157,23 +191,30 @@ export function useRunMode() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.seed, state.round, roundMode.key, knobs.comboStart, knobs.wprMul, knobs.luckyOdds]);
 
-  // Round timer.
+  // Round timer: polls the deadline (see makeRoundClock) and re-renders only when the shown
+  // second changes; a visibilitychange tick catches up immediately after the app is foregrounded.
   useEffect(() => {
     if (state.phase !== 'round') return undefined;
-    const id = setInterval(() => {
+    let shown = -1;
+    const tick = () => {
       const p = playRef.current;
-      if (!p) return;
-      p.timeLeft -= 1;
-      if (p.timeLeft <= 0) {
+      if (!p || p.ended) return;
+      const left = p.timeLeft;
+      if (left <= 0) {
+        p.ended = true;
         clearInterval(id);
         const ctx = { clean: state.clean };
-        let score = applyRoundMods(p.score, stack, ctx);
-        const fumbled = suddenDeathChance(stack) > 0 && p.lucky.next() && Math.random() < suddenDeathChance(stack);
+        const score = applyRoundMods(p.score, stack, ctx);
+        const fumbled = rollFumble(stack, p.fumble);
         dispatch({ type: 'endRound', score, fumbled });
+      } else if (left !== shown) {
+        shown = left;
+        force();
       }
-      force();
-    }, 1000);
-    return () => clearInterval(id);
+    };
+    const id = setInterval(tick, 200);
+    document.addEventListener('visibilitychange', tick);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', tick); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
