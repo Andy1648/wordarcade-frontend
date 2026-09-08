@@ -1,8 +1,18 @@
-# PLAYTEST — the run stack (integration/run-stack)
+# PLAYTEST — the run stack (integration/run-stack-2)
 
-ONE sitting. Nine branches merged into `integration/run-stack`, each held for this
-single test. Ordered so every step exercises the most branches at once. Work top to
-bottom; don't skip — later steps assume the earlier setup.
+ONE sitting. Fourteen branches merged into `integration/run-stack-2` (the nine of
+`integration/run-stack` + five more), each held for this single test. Ordered so every step
+exercises the most branches at once. Work top to bottom; don't skip — later steps assume the
+earlier setup.
+
+New in run-stack-2 (merged in this order, on top of run-stack):
+- **fix/onramp-2** — free first RUN + PLAY starts solo-vs-bot instantly.
+- **fix/wb-rail-two-players** — WB standings cards capped for ≤2 players.
+- **fix/run-payout** — THE RUN pays: XP per accepted word (×3), wins banked once at run end.
+- **feat/run-gameover-2** — RUN AGAIN / LEAVE on the over screen, fanned hand, stack count on the wall.
+- **fix/run-round-screen** (carries deck-2 → wall-2 → deep-pockets → round-modes) — wall 80…1504,
+  DEEP POCKETS 30%-of-wall ≤60, run-seeded FUSE fragments, LONG replaces SAT, m:ss clock, fixed
+  message slot, hero constraint, WORD +N toasts.
 
 Branches under test (what each owns):
 - **feat/run-mode** — the RUN roguelike: rounds → wall → draft loop, LV8 unlock.
@@ -15,7 +25,7 @@ Branches under test (what each owns):
 - **fix/return-bonus** — the "welcome back" reward card + streak.
 - **feat/endgame** — unlock ladder, menu XP bar, shop endgame items.
 
-Preview URL: https://wordarcade-frontend-4edt5ni4b-beenchilling.vercel.app  _(fix/onramp-2 @ 73cfb6f — includes the on-ramp: solo-instant PLAY + free first run)_
+Preview URL: PENDING-DEPLOY  _(integration/run-stack-2 — filled in after the push)_
 
 Console warps you'll use (open DevTools console on the preview, paste, reload):
 - **Warp to LV8 (unlocks RUN):** `localStorage.setItem('taw.xp', JSON.stringify({lv:8,into:0})); location.reload()`
@@ -32,11 +42,33 @@ the wall). Return to the menu.
 Should: on the FRESH menu the RUN hero has no lock plaque and enters the wall preview directly
 (not a locked read-only preview). After playing round 1 and returning, the RUN card is now
 LOCKED — "UNLOCKS AT LV 8 · YOU'RE LV 1" — because the free first run is spent.
-Broken if: the RUN card is a padlock on the very first fresh load, OR it stays unlocked after
-you've played a run (the free run should be one-and-done until LV8).
+Broken if: the RUN card is a padlock on the very first fresh load, OR it stays locked after a
+real free run — a real run (10+ six-letter words) now pays enough XP to reach LV8, so the card
+should be UNLOCKED again on return (fix/run-payout). Only a token run (a couple of words) locks it.
 Also confirm here: from the menu, tapping WORD BOMB → **PLAY** drops you straight into a live
 game vs a bot (bomb ticking, YOUR TURN) — NO room code, NO "SHARE THIS CODE", NO "NEED 2+
 PLAYERS". INVITE FRIENDS / JOIN WITH CODE sit as the smaller secondary row.
+
+## 0b. THE FREE RUN, CLOSE UP — four new checks (run-stack-2)
+**Branches: fix/run-payout, feat/run-gameover-2, fix/run-round-screen (+ wall-2 / round-modes)**
+Do: still on the fresh account, open THE RUN and play round 1 properly (wall is **80**; type 10+
+words of 6+ letters if the round rolled LONG, otherwise obey the CONTAINS / START WITH hero).
+1. **0:28 clock readable** — the round clock reads `0:28` (m:ss, Space Mono), not "28S"; it turns
+   red under 6 s with no flashing. Broken if: it reads "28S"/"5S", or the S/5 are confusable.
+2. **WORD +N on every accept** — each accepted word flashes `WORD +N` in the message line under
+   the hero constraint (RARE! / LUCKY ×5! prefix when it applies); rejects flash red there; the
+   INPUT NEVER JUMPS. Broken if: an accept is silent, or the input box shifts when a message
+   appears/disappears.
+3. **Draft seen on the free run** — clearing wall 80 lands on the DRAFT (three cards). This is
+   the point: a stranger sees the draft on their very first run. Broken if: round 1 kills a
+   normal player before any draft (wall too high), or the draft doesn't appear after a clear.
+4. **RUN AGAIN** — die on round 2 (type nothing). The over screen shows ROUNDS / BANKED /
+   +N WINS and the hand you built; **RUN AGAIN** starts a fresh run in place (START ROUND 1,
+   YOUR STACK 0) without touching the menu, even though you're below LV8 with the freebie spent.
+   Then ✕ / LEAVE → menu: the wins chip equals the "+N WINS" you saw, and you're LV8+ so THE RUN
+   card is unlocked. Broken if: RUN AGAIN bounces to a locked menu, wins show 0 on the menu, or
+   the level didn't move.
+_(e2e/run-stranger.spec.js walks exactly this path on fresh storage.)_
 
 ## 1. COLD FIRST LOAD — onboarding + menu endgame chrome
 **Branches: game-onboarding, endgame**
@@ -95,8 +127,8 @@ you missed by (a frozen red gap meter), wins earned, and the built modifier stac
 to RUN AGAIN.
 Broken if: dying drops you to a black screen or the menu with no summary, the gap meter is
 missing, or RUN AGAIN doesn't restart a run.
-_(Note: the dedicated game-over polish is JOB 4 / feat/run-gameover — not in this stack. Judge
-only that the run ENDS cleanly and shows the basics here.)_
+_(run-stack-2: the game-over polish IS in this stack now (feat/run-gameover-2) — expect the
+three-stat header, the fanned hand, and RUN AGAIN / LEAVE. See 0b.4.)_
 
 ## 8. MULTIPLAYER LOBBY — public rooms have life
 **Branches: lobby-life-fe**

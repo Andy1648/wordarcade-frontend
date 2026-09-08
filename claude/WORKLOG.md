@@ -488,3 +488,34 @@ padlock). New first-60s reads "here's a game I can just play" (inversion of stra
 free-run→then-locked flip on return could feel like a small bait-and-switch (recommend a "that was your
 free run" note; not implemented). Pre-existing (not this branch): wins economy unexplained, coach-heading
 overlap. REQUIRED BEFORE MERGE: Tier-1 2-device live play-test (App.jsx WS/game-start path changed).
+
+---
+## integration/run-stack-2 (2026-09-07) — five more branches on top of run-stack. Pushed, NOT merged to main.
+Off integration/run-stack (7f3d8dc). Merged in order, each `--no-ff`:
+1. origin/fix/onramp-2 (2d81d58) → 53650f6   2. origin/fix/wb-rail-two-players (71acb0d) → c915333
+3. origin/fix/run-payout (dfe1969) → 80e8402   4. origin/feat/run-gameover-2 (f1038db) → 0a4c70d
+5. origin/fix/run-round-screen (dd1f27b; carries deck-2 → wall-2 → deep-pockets → round-modes) → e5f723d
+The 5th conflicted ONLY in src/runMode/useRunMode.js (imports + the submitWord tail), both sides
+additive: kept payout's awardWordXp / bankRunWins / once-per-run bankedRef AND round-modes' per-round
+fragment stream (p.frag), the LONG 6+ check, and the toast metadata (toast/toastKind/toastId; the old
+pickFragment is gone). No engine edits. Merge tree: lint 0 err · unit 522/522 · vite build 0.
+FULL E2E GATE (4 workers, 2 retries): **1095 passed / 0 failed / 4 flaky** (18.1m; last-run status
+"passed"). The 4 flaky are the known viewport-integrity [prism] @1163x501 group (dialog-fuse,
+locked-chain, locked-fuse, credits) — memory-pressure flakes, all green on retry #1, unrelated to the
+run stack. Run specs from BOTH chains pass unchanged: run-payout, run-again, run-round-screen (3),
+run-mode, plus the unit pins fragments / draft1 / wallSkill / roundModes / runPayout / telemetry-free.
+NEW e2e/run-stranger.spec.js — the whole stranger path once on FRESH storage: real splash → THE RUN
+(free, unlocked at LV1) → round 1 on wall 80 (16 six-letter words, each toasting WORD +N) → the DRAFT
+→ pick → die on round 2 → RUN AGAIN (START ROUND 1, stack 0, no menu) → ✕ → menu: wins chip == the
+over-screen "+N" (also == taw.wins), LV ≥ 8 from the run's own XP, RUN card NOT locked with the free
+run spent. 2/2 repeats green, and green inside the full gate.
+FINDING (dev-only, not fixed): the clean-URL router strips every non-sticky query at boot (only
+?portal / ?cg / SAT dev flags are sticky), so on the real splash path the run's ?rs / ?seed dev
+overrides are gone before the run mounts (random mode, 30s rounds). The stranger spec re-applies them
+via history.replaceState at the menu (the run view is transient, so the query survives into the run).
+If ?rs/?seed should work on the plain path, add them to router.js hasStickyQuery — out of scope here.
+DOCS: claude/PLAYTEST-RUN.md → run-stack-2 (five new branches listed, step 0 updated for the payout,
+new step 0b with the four new checks: 0:28 clock readable · WORD +N on every accept · draft seen on
+the free run · RUN AGAIN; step 7 note updated), preview URL = this branch's deployment hash.
+STILL REQUIRED BEFORE ANY MERGE TO MAIN: Andy's single play-test (PLAYTEST-RUN.md) + the Tier-1
+2-device live test (fix/onramp-2 touched App.jsx's WS/game-start path).
