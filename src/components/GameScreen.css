@@ -125,6 +125,21 @@
     flex-direction: column;
     justify-content: center;
   }
+  /* ≤2 PLAYERS (the solo-vs-bot default since fix/onramp-2): don't stretch one-line
+     cards to fill the rail — two ~200px slabs for one line of text each read wrong. Cap
+     the cards and top-align them; 3+ players keep the full-height broadcast-leaderboard
+     fill above. Detected purely in CSS: "no 3rd slot" via :has(). Browsers without :has()
+     drop the rule and simply keep the stretched look (graceful, not broken). */
+  .game-stage--wb .game-player-bar:not(:has(> .game-player-slot:nth-child(3))) {
+    align-self: start;
+  }
+  .game-stage--wb .game-player-bar:not(:has(> .game-player-slot:nth-child(3))) .game-player-slot {
+    flex: 0 0 auto;
+  }
+  .game-stage--wb .game-player-bar:not(:has(> .game-player-slot:nth-child(3))) .game-player-card {
+    height: auto;
+    justify-content: flex-start;
+  }
   .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
   .game-stage--wb .bomb-area { grid-area: bomb; align-self: center; margin: 0; }
   .game-stage--wb .game-combo-box {
