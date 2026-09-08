@@ -20,10 +20,11 @@ test('a crashed MENU is caught inline (the app is not blanked)', async ({ page }
 
 test('a crashed OVERLAY (mode dialog) shows the panel while the menu stays mounted behind it', async ({ page }) => {
   await page.goto('/?portal=1&boom=mode-dialog');
-  // Target an UNLOCKED card: the first card is now THE RUN (level-gated, aria-disabled), which
-  // can't be clicked and is solo (never opens a mode dialog). WORD BOMB / CATEGORY BLITZ are the
-  // unlocked cards that open the mode dialog whose boundary catches the boom.
-  const openable = page.locator('.game-card:not(.locked)').first();
+  // Target WORD BOMB specifically — it opens a mode dialog (whose boundary catches the
+  // boom). Not .first() (that's THE RUN, which is solo + now free-first-run UNLOCKED, so it
+  // routes straight into the run and never opens a dialog) and not a locked card (a locked
+  // card opens a read-only preview, not the mode dialog).
+  const openable = page.getByRole('button', { name: /WORD BOMB/i });
   await expect(openable).toBeVisible({ timeout: 15000 });
   await openable.click(); // open a mode dialog → its boundary catches the throw
   await expect(page.getByText('THIS SCREEN BROKE')).toBeVisible({ timeout: 10000 });

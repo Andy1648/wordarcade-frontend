@@ -470,3 +470,21 @@ Full clean gate (workers=2) found 65 real failures (not infra). Root causes, all
    were stale. Subset re-run of all 4 specs: 881 passed, 0 failed.
 
 ## JOB 1 DONE — integration/run-stack: full gate GREEN (lint 0 err, 487 unit, 1092 e2e pass), pushing.
+
+---
+## JOB A (fix/onramp-2, b7f97f7) — the first 60 seconds. DONE, pushed, NOT merged.
+Off integration/run-stack. Delivers the on-ramp (code byte-identical to the already-validated fix/onramp):
+1. THE RUN playable immediately — free first run; LV8 gate engages only after the first round starts
+   (src/runMode/runGate.js markFreeRunUsed; isRunLocked). Hero card is playable, not a padlock.
+2. Flagship starts instantly solo — Word Bomb/Blitz PLAY = one-tap live game vs a bot
+   (App.handleSoloPlay: create_room→set_game_type→[difficulty/packs]→[add_bot]→start_game; soloLaunchRef
+   guards the lobby flash). INVITE FRIENDS / JOIN WITH CODE are the deliberate secondary row. Never
+   leads with "NEED 2+ PLAYERS".
+Validation (identical code): flow specs 49 pass; menu-xp+error-boundaries 10 pass; viewport-integrity+
+game-fill 871 pass CLEAN; lint 0, unit 487, build 0; mode-dialog PLAY→solo→in-game (no lobby) test.
+STRANGER RE-WALK: chore/stranger-4 (543890a) walked byte-identical code at 390x844 + 1366x768, cleared
+storage — BOTH blockers GONE: PLAY → live solo game (no "need 2+"), THE RUN hero playable (not a
+padlock). New first-60s reads "here's a game I can just play" (inversion of stranger-3). Watch-item:
+free-run→then-locked flip on return could feel like a small bait-and-switch (recommend a "that was your
+free run" note; not implemented). Pre-existing (not this branch): wins economy unexplained, coach-heading
+overlap. REQUIRED BEFORE MERGE: Tier-1 2-device live play-test (App.jsx WS/game-start path changed).
