@@ -9,8 +9,9 @@
 // app root can wrap itself in Sentry.ErrorBoundary (the boundary helper in the
 // installed @sentry/react v10 API).
 // posthog is loaded LAZILY inside initAnalytics (deferred to idle after first paint by
-// main.jsx) so its ~207KB chunk never blocks interactivity. Sentry stays EAGER — its
-// ErrorBoundary must be present at mount to catch a render crash — and is exported below.
+// main.jsx) so its ~207KB chunk never blocks interactivity. Sentry's MODULE stays eager — its
+// ErrorBoundary must be present at mount to catch a render crash — and is exported below; its
+// init (and gtag.js) now run from the same post-load idle callback (perf/first-load).
 import * as Sentry from '@sentry/react';
 
 export { Sentry };
@@ -55,7 +56,8 @@ export function track(event, props = {}) {
     if (posthogReady && posthog) posthog.capture(event, props);
   } catch { /* a failed capture can never bubble into gameplay */ }
   try {
-    // GA4 (gtag.js is loaded in index.html). Guarded — absent on local/dev or if the tag is blocked.
+    // GA4 (gtag.js is injected by main.jsx after load; a stub queues calls before then). Guarded —
+    // absent if the tag is blocked or the stub was never installed.
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('event', event, props);
     }

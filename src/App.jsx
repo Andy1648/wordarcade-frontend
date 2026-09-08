@@ -13,6 +13,7 @@ const GameScreen = lazy(() => import('./components/GameScreen'));
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
+import { markAppReady } from './lib/bootReady.js';
 import AudioControls from './components/AudioControls';
 import { sndWordAccepted, sndWordRejected, sndRunOver, sndAchievement } from './audio/gameSounds';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
@@ -679,6 +680,9 @@ function App() {
   // to the menu, so the loading screen is pre-completed (the socket still
   // connects in the background via useWebSocket).
   const [loadingDone, setLoadingDone] = useState(SKIP_INTRO);
+  // perf/first-load: tell the boot screen the App module has resolved + mounted. bootReady()
+  // (lib/bootReady.js) gates the fuse hand-off on this AND document.fonts.ready.
+  useEffect(() => { markAppReady(); }, []);
 
   // The splash/attract screen is shown after loading, once per session
   // (dismissing it never re-arms it). Portal embeds and deep links skip it, and

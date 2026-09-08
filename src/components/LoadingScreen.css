@@ -166,12 +166,17 @@
   /* transform (translateY(-50%) + scale) is set inline so it grows with progress. */
 }
 
+/* `.loading-mascot` is the shared Mascot component's container here (perf/first-load:
+   WebP via <picture>). The size lives on its <img>; the idle breathe loop is OFF on the
+   boot screen so it adds no infinite animation (the shake below is the only motion). */
 .loading-mascot {
   display: block;
+}
+.loading-mascot .mascot-img {
   height: clamp(70px, 14vw, 100px);
-  width: auto;
-  image-rendering: -webkit-optimize-contrast;
-  filter: drop-shadow(0 0 0 transparent);
+}
+.loading-mascot .mascot-bounce {
+  animation: none;
 }
 
 .loading-mascot.shaking {
