@@ -43,7 +43,7 @@ test('free run: wins banked == "+N WINS" shown, and THE RUN card stays unlocked'
   }
 
   // The over screen's "+N WINS".
-  const winsText = await page.locator('.run-over-wins').textContent();
+  const winsText = await page.locator('.run-over-stat-wins b').textContent();
   const shown = parseInt(winsText.replace(/[^0-9]/g, ''), 10);
   expect(Number.isFinite(shown)).toBe(true);
   expect(shown).toBeGreaterThan(0);
@@ -53,7 +53,7 @@ test('free run: wins banked == "+N WINS" shown, and THE RUN card stays unlocked'
   expect(stored).toBe(shown);
 
   // Back to the menu: the wins chip shows exactly the run's payout …
-  await page.locator('.run-over .run-btn-go').click();
+  await page.locator('.run-over .run-btn-leave').click();
   const chip = page.locator('.menu-wins-chip');
   await expect(chip).toBeVisible({ timeout: 15000 });
   await expect(chip).toHaveAttribute('aria-label', new RegExp(`^${shown} wins`));

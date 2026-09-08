@@ -17,6 +17,14 @@ function splitEffect(text) {
 }
 
 export default function RunMode({ onExit }) {
+  // RUN AGAIN restarts the whole run by remounting the inner run with a fresh key —
+  // a new key throws away the old useRunMode reducer and deals a brand-new run (new
+  // seed, empty stack). Cleaner than a reducer 'restart' action and guaranteed fresh.
+  const [runKey, setRunKey] = useState(0);
+  return <RunInner key={runKey} onExit={onExit} onAgain={() => setRunKey((k) => k + 1)} />;
+}
+
+function RunInner({ onExit, onAgain }) {
   const run = useRunMode();
 
   return (
@@ -29,7 +37,7 @@ export default function RunMode({ onExit }) {
       {run.phase === 'wall' && <WallScreen run={run} />}
       {run.phase === 'round' && <RoundScreen run={run} />}
       {run.phase === 'draft' && <DraftScreen run={run} />}
-      {run.phase === 'over' && <OverScreen run={run} onExit={onExit} />}
+      {run.phase === 'over' && <OverScreen run={run} onExit={onExit} onAgain={onAgain} />}
     </div>
   );
 }
@@ -49,12 +57,20 @@ function RunRail({ round, total }) {
   );
 }
 
+// The wall/round stack strip. Carries the same "YOUR STACK N" count label as the draft and
+// the over screen, so a RUN AGAIN restart visibly resets to 0 on the very first wall.
 function StackStrip({ stack }) {
-  if (!stack.length) return <div className="run-stack run-stack-empty">NO MODIFIERS YET — DRAFT ONE AFTER ROUND 1</div>;
   return (
-    <div className="run-stack">
-      {stack.map((m) => <span key={m.id} className="run-chip" title={m.text}>{m.name}</span>)}
-    </div>
+    <>
+      <div className="run-draft-stack-label">YOUR STACK <span className="run-stack-count">{stack.length}</span></div>
+      {stack.length ? (
+        <div className="run-stack">
+          {stack.map((m) => <span key={m.id} className="run-chip" title={m.text}>{m.name}</span>)}
+        </div>
+      ) : (
+        <div className="run-stack run-stack-empty">NO MODIFIERS YET — DRAFT ONE AFTER ROUND 1</div>
+      )}
+    </>
   );
 }
 
@@ -219,9 +235,57 @@ function StackDeck({ stack }) {
   );
 }
 
-function OverScreen({ run, onExit }) {
+// The modifier stack shown as a FANNED HAND of cards — the story of the run made
+// physical. Each card overlaps the last and tilts across an arc (transform-only:
+// rotate + translate), so a long run reads as a fat winning hand and a short one as
+// a thin bust. A one-shot deal-in stagger plays on mount; nothing loops at rest.
+function FannedHand({ stack }) {
+  const n = stack.length;
+  if (!n) {
+    return <div className="run-hand run-hand-empty">NO MODIFIERS DRAFTED — YOU MISSED THE FIRST WALL</div>;
+  }
+  // Spread the fan wider the fewer cards there are (a 2-card hand shouldn't look flat);
+  // clamp the per-card angle so a big stack doesn't wrap past a natural hand.
+  const spread = Math.min(14, 40 / Math.max(1, n - 1)); // degrees between cards
+  const mid = (n - 1) / 2;
+  return (
+    <>
+      {/* the fan is pure ART — the recognisable hand you built; names read cleanly in the
+          legend below so nothing gets clipped by the overlap, at any hand size. */}
+      <div className="run-hand" style={{ '--hand-n': n }}>
+        {stack.map((m, i) => {
+          const off = i - mid;                 // -mid … +mid
+          const angle = off * spread;          // fan rotation about the bottom pivot
+          const lift = -Math.abs(off) * 4;     // outer cards ride slightly HIGHER (a held-hand arc)
+          return (
+            <span
+              key={m.id}
+              className={`run-hand-card${m.down ? ' tradeoff' : ' upside'}`}
+              style={{
+                '--i': i,
+                transform: `rotate(${angle.toFixed(2)}deg) translateY(${lift.toFixed(0)}px)`,
+                zIndex: n - Math.abs(off),
+              }}
+              title={m.text}
+            >
+              <span className="run-hand-art"><ModifierArt id={m.id} className="run-hand-svg" /></span>
+            </span>
+          );
+        })}
+      </div>
+      <div className="run-hand-legend">
+        {stack.map((m) => (
+          <span key={m.id} className={`run-legend-chip${m.down ? ' tradeoff' : ' upside'}`} title={m.text}>{m.name}</span>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function OverScreen({ run, onExit, onAgain }) {
   const won = run.reason === 'cleared';
   const walled = run.reason === 'wall'; // ended below the wall (the miss the meter warned of)
+  const reached = won ? run.totalRounds : run.round;
   // The MISS moment: the panel slams + shakes in, the stamp drops. The CLEAR-run moment:
   // a gentler triumphant pop. Both are mount-time one-shots on single (pooled) nodes.
   return (
@@ -230,23 +294,46 @@ function OverScreen({ run, onExit }) {
       <div className="run-over-sub">
         {won ? `ALL ${run.totalRounds} ROUNDS BEATEN` :
           run.reason === 'fumble' ? `GLASS CANNON FUMBLED ON ROUND ${run.round}` :
-            `ROUND ${run.round}: SHORT OF THE WALL`}
+            `SHORT OF THE WALL`}
       </div>
+
+      {/* The three numbers that define the run: how far, what you banked, what you earned. */}
+      <div className="run-over-stats">
+        <div className="run-over-stat">
+          <b>{reached}<i>/{run.totalRounds}</i></b><span>ROUNDS</span>
+        </div>
+        <div className="run-over-stat">
+          <b>{run.cumulative.toLocaleString()}</b><span>BANKED</span>
+        </div>
+        <div className="run-over-stat run-over-stat-wins">
+          <b>+{run.winsEarned.toLocaleString()}</b><span>WINS</span>
+        </div>
+      </div>
+
       {walled && (
         <div className="run-over-gap">
+          <div className="run-over-gap-label">THE WALL YOU MISSED BY</div>
           <div className="run-progress-track missed">
             <div className="run-progress-fill" style={{ transform: `scaleX(${Math.min(1, run.lastRoundScore / (run.lastWall || 1))})` }} />
             <span className="run-progress-wall" aria-hidden="true">WALL {run.lastWall.toLocaleString()}</span>
           </div>
           <div className="run-over-gap-nums">
             <b>{run.lastRoundScore.toLocaleString()}</b> / {run.lastWall.toLocaleString()} NEEDED
+            <em> — {(run.lastWall - run.lastRoundScore).toLocaleString()} SHORT</em>
           </div>
         </div>
       )}
-      <div className="run-over-score"><span>BANKED</span><b>{run.cumulative.toLocaleString()}</b></div>
-      <div className="run-over-wins">+{run.winsEarned.toLocaleString()} WINS</div>
-      <StackStrip stack={run.stack} />
-      <button className="run-btn run-btn-go" onClick={onExit}>DONE</button>
+
+      {/* The stack as the story of the run — the fanned hand you built. */}
+      <div className="run-over-hand-wrap">
+        <div className="run-over-hand-label">THE HAND YOU BUILT <span className="run-stack-count">{run.stack.length}</span></div>
+        <FannedHand stack={run.stack} />
+      </div>
+
+      <div className="run-over-actions">
+        <button className="run-btn run-btn-again" onClick={onAgain}>RUN AGAIN</button>
+        <button className="run-btn run-btn-leave" onClick={onExit}>LEAVE</button>
+      </div>
     </div>
   );
 }
