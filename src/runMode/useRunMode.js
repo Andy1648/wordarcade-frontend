@@ -12,6 +12,9 @@ import { ROUND_MODES } from './config.js';
 import { loadSoloWords, loadSoloAcceptExt } from '../solo/words.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { makeLuckyOracle, randomSeed, mulberry32 } from '../progress/luck.js';
+import { loadProgress } from '../progress/xp.js';
+import { track } from '../lib/analytics.js';
+import { emitRunRound, emitRunOver } from './telemetry.js';
 
 export const ROUND_SECONDS = 30;
 // Dev-only: ?rs=N shortens the round clock for screenshots / manual play. Clamped 2–60;
@@ -121,6 +124,7 @@ export function useRunMode() {
       combo: knobs.comboStart,
       score: 0,
       words: 0,
+      attempts: 0, // every non-empty submission (accepted or rejected) — telemetry only
       used: new Set(),
       // The lucky oracle honours the drafted odds knob (LUCKY CHARM 1/20, JACKPOT 1/60,
       // UNCAPPED 1/80) — a fixed 1/40 here made those upsides/downsides dead.
@@ -145,6 +149,15 @@ export function useRunMode() {
         const ctx = { clean: state.clean };
         let score = applyRoundMods(p.score, stack, ctx);
         const fumbled = suddenDeathChance(stack) > 0 && p.lucky.next() && Math.random() < suddenDeathChance(stack);
+        // feat/run-telemetry: one `run_round` per round end, mirroring exactly what endRound judges
+        // (the round-adjusted score vs this round's wall). The closure is this round's state — the
+        // effect re-runs on every entry into 'round'. Fire-and-forget; can't throw into the round.
+        const wall = wallAt(state.round);
+        emitRunRound({
+          round: state.round, mode: roundMode.key, seed: state.seed, wall,
+          accepted: p.words, attempts: p.attempts, rawScore: p.score, adjustedScore: score,
+          cleared: !fumbled && score >= wall, stackIds: state.stackIds, secondsLeft: p.timeLeft,
+        }, track);
         dispatch({ type: 'endRound', score, fumbled });
       }
       force();
@@ -158,6 +171,7 @@ export function useRunMode() {
     const p = playRef.current;
     if (!p || state.phase !== 'round') return { ok: false };
     const word = String(raw || '').trim().toLowerCase();
+    if (word.length) p.attempts += 1; // counted before validation: rejects are attempts too
     if (word.length < 3) return fail(p, 'TOO SHORT', force);
     if (p.used.has(word)) return fail(p, 'ALREADY USED', force);
     if (!state.words?.accept.has(word)) return fail(p, 'NOT A WORD', force);
@@ -189,6 +203,19 @@ export function useRunMode() {
   const winsEarned = state.phase === 'over'
     ? runWinsPayout(state.cumulative, state.reason === 'cleared' ? RUN_ROUNDS : state.round)
     : 0;
+
+  // feat/run-telemetry: one `run_over` per run, on the transition into 'over'. A ref (not state)
+  // guards the once-only so a re-render / StrictMode double-effect can't double-fire; the phase
+  // never leaves 'over' (a new run remounts the hook). `level` is the player's menu level.
+  const overTrackedRef = useRef(false);
+  useEffect(() => {
+    if (state.phase !== 'over' || overTrackedRef.current) return;
+    overTrackedRef.current = true;
+    emitRunOver({
+      roundReached: state.reason === 'cleared' ? RUN_ROUNDS : state.round,
+      reason: state.reason, cumulative: state.cumulative, winsEarned, level: loadProgress().level,
+    }, track);
+  }, [state.phase, state.reason, state.round, state.cumulative, winsEarned]);
 
   // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's flat
   // +150, MOMENTUM's ×N, SHORT FUSE ×1.5, GLASS CANNON ×2.5…) are applied to the raw
