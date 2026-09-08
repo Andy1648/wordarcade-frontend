@@ -1,7 +1,7 @@
 # PLAYTEST — the run stack (integration/run-stack-2)
 
-ONE sitting. Fourteen branches merged into `integration/run-stack-2` (the nine of
-`integration/run-stack` + five more), each held for this single test. Ordered so every step
+ONE sitting. Sixteen branches merged into `integration/run-stack-2` (the nine of
+`integration/run-stack` + seven more), each held for this single test. Ordered so every step
 exercises the most branches at once. Work top to bottom; don't skip — later steps assume the
 earlier setup.
 
@@ -13,6 +13,10 @@ New in run-stack-2 (merged in this order, on top of run-stack):
 - **fix/run-round-screen** (carries deck-2 → wall-2 → deep-pockets → round-modes) — wall 80…1504,
   DEEP POCKETS 30%-of-wall ≤60, run-seeded FUSE fragments, LONG replaces SAT, m:ss clock, fixed
   message slot, hero constraint, WORD +N toasts.
+- **fix/run-short-height** — phone-landscape (≤520px tall) top-align on every run screen; the
+  GLASS CANNON fumble rolls from the run seed (honest 8%/round); the round clock is a Date.now
+  deadline, so app-switching can't pause a round.
+- **feat/run-telemetry** — PostHog `run_round` per round end + `run_over` per run.
 
 Branches under test (what each owns):
 - **feat/run-mode** — the RUN roguelike: rounds → wall → draft loop, LV8 unlock.
@@ -25,7 +29,7 @@ Branches under test (what each owns):
 - **fix/return-bonus** — the "welcome back" reward card + streak.
 - **feat/endgame** — unlock ladder, menu XP bar, shop endgame items.
 
-Preview URL: https://wordarcade-frontend-bs4a0n8bw-beenchilling.vercel.app  _(integration/run-stack-2 @ d47748f — the full 14-branch stack; full gate 1095 e2e pass)_
+Preview URL: https://wordarcade-frontend-5xbfmgls0-beenchilling.vercel.app  _(integration/run-stack-2 @ 1962a20 — the full 16-branch stack; full gate 1103 e2e pass, 533 unit)_
 
 Console warps you'll use (open DevTools console on the preview, paste, reload):
 - **Warp to LV8 (unlocks RUN):** `localStorage.setItem('taw.xp', JSON.stringify({lv:8,into:0})); location.reload()`
