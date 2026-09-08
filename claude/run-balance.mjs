@@ -23,16 +23,20 @@
 // Deterministic + seedable: one mulberry32 stream per (run index), shared across strategies
 // (common random numbers) so cross-strategy differences are drafting, not luck.
 //
-// Run:  node claude/run-sim-deep.mjs            (50/strategy, LIVE, seed 20260906)
-//       node claude/run-sim-deep.mjs 2000       (2000/strategy — stable secondary stats)
-//       node claude/run-sim-deep.mjs 50 designed (DESIGNED round model)
-//       node claude/run-sim-deep.mjs 50 live 123 (custom seed)
+// Run:  node claude/run-balance.mjs            (50/strategy, LIVE, seed 20260906)
+//       node claude/run-balance.mjs 2000       (2000/strategy — stable secondary stats)
+//       node claude/run-balance.mjs 50 designed (DESIGNED round model)
+//       node claude/run-balance.mjs 50 live 123 (custom seed)
+// PLAYER MODEL: the per-flavour constants come from claude/run-skill.mjs (MODE_SKILL) over the
+// shipped src/runMode/config.js ROUND_MODES — both harnesses share one human (chore/sim-align).
 
 import {
   MODIFIERS, MODIFIER_BY_ID, RUN_ROUNDS, wallAt, wallSchedule, roundKnobs,
   scoreWord, applyRoundMods, suddenDeathChance, dealOffers, expectedRoundPayout,
 } from '../src/runMode/engine.js';
 import { mulberry32, LUCKY_ODDS } from '../src/progress/luck.js';
+import { ROUND_MODES as CONFIG_ROUND_MODES } from '../src/runMode/config.js';
+import { MODE_SKILL, modelRoundModes } from './run-skill.mjs';
 
 // ---------------- CLI ----------------
 const N = parseInt(process.argv[2], 10) || 50;               // runs per strategy
@@ -40,13 +44,11 @@ const MODE = (process.argv[3] || 'live').toLowerCase();      // 'live' | 'design
 const SEED0 = parseInt(process.argv[4], 10) || 20260906;     // base seed
 const LIVE = MODE !== 'designed';
 
-// The three solo modes a round can roll (config.js ROUND_MODES). Constraint modes are
-// harder → the player lands fewer / lower-accuracy words. Same for all strategies.
-const ROUND_MODES = [
-  { key: 'chain', attemptsMul: 0.90, accuracy: 0.86 },
-  { key: 'fuse',  attemptsMul: 0.80, accuracy: 0.82 },
-  { key: 'sat',   attemptsMul: 0.88, accuracy: 0.88 },
-];
+// The solo modes a round can roll — the SHIPPED config.js ROUND_MODES (chain / fuse / long), each
+// with the per-flavour human constants from run-skill.mjs MODE_SKILL. chore/sim-align: this file
+// used to carry its own stale copy (SAT 0.88/0.88 — a flavour that no longer exists — and FUSE at
+// the pre-fragments 0.80/0.82), so the two harnesses modelled different players. ONE model now.
+const ROUND_MODES = modelRoundModes(CONFIG_ROUND_MODES, MODE_SKILL);
 
 // ---------------- PLAYER-SKILL MODEL (identical across strategies) ----------------
 // A competent-but-human player. The engine baseline is 16 landed words/round; a real 30s

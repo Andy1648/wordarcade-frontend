@@ -26,6 +26,7 @@ import {
   scoreWord, applyRoundMods, suddenDeathChance, dealOffers, expectedRoundPayout,
 } from '../src/runMode/engine.js';
 import { mulberry32 } from '../src/progress/luck.js';
+import { ROUND_MODES as CONFIG_ROUND_MODES } from '../src/runMode/config.js';
 
 export const DEFAULT_SEED = 20260906;
 export const DEFAULT_N = 1000;
@@ -46,11 +47,24 @@ export const STRATEGY_NAMES = ['GREEDY', 'BALANCED', 'RISK-AVERSE', 'RANDOM'];
 // scanning for a substring is slower than recalling a first letter. With the old constants FUSE
 // cleared round 2 at 40.1% vs CHAIN 58.5% (spread 19.6 pts); at 0.85/0.86 it clears 53.0%
 // (spread 6.6, within the ≤12 pin); at full CHAIN parity 0.90/0.86 it would be 58.5% (1.2).
-export const ROUND_MODES = [
-  { key: 'chain', attemptsMul: 0.90, accuracy: 0.86 },
-  { key: 'fuse',  attemptsMul: 0.85, accuracy: 0.86 },
-  { key: 'long',  attemptsMul: 0.85, accuracy: 0.90 },
-];
+//
+// chore/sim-align: THIS is the one player model for both harnesses. MODE_SKILL holds the per-flavour
+// human constants keyed by the SHIPPED config.js ROUND_MODES key; run-balance.mjs imports it (and
+// config's ROUND_MODES) instead of carrying its own copy, so a flavour added/renamed in config.js
+// fails loudly here rather than silently diverging between the two sims.
+export const MODE_SKILL = {
+  chain: { attemptsMul: 0.90, accuracy: 0.86 },
+  fuse:  { attemptsMul: 0.85, accuracy: 0.86 },
+  long:  { attemptsMul: 0.85, accuracy: 0.90 },
+};
+/** The config's ROUND_MODES (same order — the rolled index must match the live hook) with the model attached. */
+export function modelRoundModes(configModes = CONFIG_ROUND_MODES, skill = MODE_SKILL) {
+  return configModes.map((m) => {
+    if (!skill[m.key]) throw new Error(`run-skill.mjs MODE_SKILL has no player model for round mode "${m.key}" (config.js ROUND_MODES)`);
+    return { key: m.key, ...skill[m.key] };
+  });
+}
+export const ROUND_MODES = modelRoundModes();
 
 // ---------------- PLAYER-SKILL MODEL (identical across strategies at a sweep point) ----------------
 // meanAttempts / baseAccuracy are the sweep axes; the rest is fixed exactly as in run-balance.mjs.

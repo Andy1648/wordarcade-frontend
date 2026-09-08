@@ -112,3 +112,46 @@ or worktree in the repo, so the reasoning above is reconstructed from the number
 
 lint 0 errors · `npm test` green (incl. the new `wallSkill.test.js`, ~9s) · `vite build` exit 0.
 Not merged.
+
+## post-LONG — TARGETS block on the shared player model (chore/sim-align, 2026-09-08)
+
+`node claude/run-balance.mjs 2000` (N=2000/strategy, seed 20260906, 20 attempts, LIVE model) on
+`integration/run-stack-2`. **Both harnesses now share ONE player model:** `run-balance.mjs` imports
+`ROUND_MODES` from `src/runMode/config.js` (chain / fuse / long) and the per-flavour human
+constants from `run-skill.mjs` `MODE_SKILL` (chain 0.90/0.86 · fuse 0.85/0.86 · long 0.85/0.90).
+Until this run, run-balance still carried its own stale copy — SAT 0.88/0.88 (a flavour that no
+longer exists; LONG replaced it on fix/run-round-modes) and FUSE at the pre-fragments 0.80/0.82 —
+so §3 above and the skill sweep in §2 were modelling two different players. Numbers are
+commit-independent: the harness is a pure function of the shipped engine + this model.
+
+```
+--- 1. WIN RATE (out of 2000) ---
+  GREEDY       519/2000  (25.9%)   mean round reached 7.75   mean cumulative 15836
+  BALANCED     279/2000  (14.0%)   mean round reached 7.58   mean cumulative 7969
+  RISK-AVERSE   46/2000  (2.3%)    mean round reached 7.18   mean cumulative 4745
+  RANDOM       285/2000  (14.2%)   mean round reached 7.74   mean cumulative 7408
+
+--- 4. DOMINANCE IN WINNING RUNS (winRate / allRate / lift) ---
+  winning runs: 1129
+    glass-cannon     77.2% /  40.9%  lift 1.89x
+    rare-breed       70.5% /  45.8%  lift 1.54x
+    double-vowels    65.0% /  34.2%  lift 1.90x
+    short-fuse       64.8% /  33.4%  lift 1.94x
+    snowball         59.4% /  31.4%  lift 1.89x
+    lexicographer    58.5% /  40.5%  lift 1.44x
+
+--- 5. TARGETS (fix/run-balance) ---
+  T1 best strategy <=35%: GREEDY 25.9%  -> PASS
+  T2 top modifier <=60% of winners: glass-cannon 77.2%  -> FAIL   over60: double-vowels 65.0%, short-fuse 64.8%, glass-cannon 77.2%, rare-breed 70.5%
+  T3 two strategies within 10pts: RANDOM(14.3) & BALANCED(13.9) = 0.3pts  -> PASS
+  SANITY best in 15-45%: 25.9%  -> PASS
+  ==> ALL THREE FAIL
+```
+
+Same shape as §3 (T1/T3/SANITY pass, T2 fails on GLASS CANNON), a little easier: the stale
+SAT/FUSE hand rated the flavours harsher than the shipped LONG/FUSE, so the strong player now
+wins 25.9% (GREEDY) vs 21.1% under the old constants on the same commit, and every drafter gains
+~2–3 pts. The last old-model run on this commit, for the record: GREEDY 21.1 · BALANCED 10.3 ·
+RISK-AVERSE 1.2 · RANDOM 11.1; top modifier glass-cannon 78.4%. The skill sweep (§2 acceptance,
+`wallSkill.test.js`) and the round-mode spread (chain 58.8 / fuse 53.6 / long 60.5, spread 6.9
+≤ 12) are byte-identical to before — `run-skill.mjs` only exports what it already used.
