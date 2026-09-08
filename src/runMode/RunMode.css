@@ -323,6 +323,40 @@
   84% { transform: translateX(-2px); }
 }
 
+/* SHORT VIEWPORTS (phone landscape: 844×390, 932×430). The top-align phones get via .is-round
+   must hold here too, on EVERY run screen: a centred flex child that can overflow strands its
+   top edge above the viewport (the round's clock row scrolled off; the wall's START button sat
+   below the fold). A column root that starts at the top + `margin: auto 0` on the panel centres
+   it only when it fits and top-aligns it (scrollable) when it doesn't. flex:none keeps the
+   column from squashing the panel to the viewport height. Spacing is tightened so the round's
+   input and the wall's START button land inside the viewport without scrolling. */
+@media (max-height: 520px) {
+  .run-root { flex-direction: column; justify-content: flex-start; align-items: center; padding: 8px; }
+  .run-root.is-round { align-items: center; padding-top: 8px; }
+  .run-panel { margin: auto 0; flex: none; padding: 10px 14px; gap: 6px; }
+  .run-panel .run-rail { margin-bottom: 2px; }
+  /* wall: use the width — the number and the mode tag sit side by side */
+  .run-wall { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; align-items: center; }
+  .run-wall > * { grid-column: 1 / -1; }
+  .run-wall .run-wall-need { grid-column: 1; padding: 0; }
+  .run-wall .run-mode-tag { grid-column: 2; padding: 6px; }
+  .run-wall-num { font-size: 40px; }
+  .run-wall .run-draft-stack-label { grid-column: 1; text-align: left; }
+  .run-wall .run-stack { grid-column: 1; }
+  .run-wall .run-stack-empty { padding: 6px; font-size: 11px; }
+  .run-wall .run-banked { grid-column: 2; grid-row: 4; }
+  .run-wall .run-btn-go { grid-column: 2; grid-row: 5; padding: 10px; }
+  /* round: shrink the display sizes so clock → input fits in ~390px */
+  .run-round-mode b { font-size: 16px; }
+  .run-clock { font-size: 22px; }
+  .run-score-num { font-size: 28px; }
+  .run-combo { font-size: 20px; }
+  .run-meter-note { min-height: 12px; font-size: 10px; }
+  .run-frag { min-height: 32px; }
+  .run-frag b { font-size: 28px; }
+  .run-input { font-size: 18px; padding: 9px; }
+}
+
 @media (max-width: 420px) {
   .run-wall-num { font-size: 44px; }
   .run-panel { padding: 16px; }
