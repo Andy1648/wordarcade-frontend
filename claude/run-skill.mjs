@@ -37,16 +37,18 @@ export const STRATEGY_NAMES = ['GREEDY', 'BALANCED', 'RISK-AVERSE', 'RANDOM'];
 // harder → the player lands fewer / lower-accuracy words. Same for all strategies.
 // fix/run-round-modes: SAT (a label-only flavour) became LONG (6+ letters, enforced) —
 // modelled as 0.85 / 0.90: a real constraint, but one every player can plan for.
-// FUSE re-rated 0.80/0.82 → 0.90/0.86 (= CHAIN) on vocabulary evidence, not by hand: in the
-// shipped top-3,000 recall vocabulary a CHAIN constraint (start with the previous word's last
-// letter, re-rolled every word) covers 5.4% of words on average; the widened 40-fragment FUSE pool
-// (src/runMode/fragments.js, also re-rolled every word) covers 5.4% too, with a 2.7% floor — the
-// old 13-pool had a 1.3% floor ('ck') and dealt the SAME sequence every run, which is what the old
-// hand constants were rating. With the old constants FUSE cleared round 2 at 40.1% vs CHAIN 58.5%
-// (spread 19.6 pts); the data gives no reason for FUSE to be harder than CHAIN.
+// FUSE re-rated 0.80/0.82 → 0.85/0.86 on vocabulary evidence: in the shipped top-3,000 recall
+// vocabulary a CHAIN constraint (start with the previous word's last letter, re-rolled every word)
+// covers 5.4% of words on average; the widened 40-fragment FUSE pool (src/runMode/fragments.js,
+// also re-rolled every word) covers 5.4% too, with a 2.7% floor — the old 13-pool had a 1.3% floor
+// ('ck') and dealt the SAME sequence every run, which is what the old hand constants were rating.
+// Accuracy therefore matches CHAIN (0.86); attemptsMul keeps a small penalty (0.85 vs 0.90) because
+// scanning for a substring is slower than recalling a first letter. With the old constants FUSE
+// cleared round 2 at 40.1% vs CHAIN 58.5% (spread 19.6 pts); at 0.85/0.86 it clears 53.0%
+// (spread 6.6, within the ≤12 pin); at full CHAIN parity 0.90/0.86 it would be 58.5% (1.2).
 export const ROUND_MODES = [
   { key: 'chain', attemptsMul: 0.90, accuracy: 0.86 },
-  { key: 'fuse',  attemptsMul: 0.90, accuracy: 0.86 },
+  { key: 'fuse',  attemptsMul: 0.85, accuracy: 0.86 },
   { key: 'long',  attemptsMul: 0.85, accuracy: 0.90 },
 ];
 
