@@ -15,7 +15,9 @@ import './ShareBar.css';
 // so their share cards omit the WPM line (no key → wpmKey undefined → nothing folded in).
 const WPM_MODE_KEY = { 'sat-rush': 'satRush' };
 
-export default function ShareBar({ mode, outcome, data, neon, daily = null, link = null }) {
+// `copy={false}` hides the ⧉ COPY button — for screens that already mount a CopyResultButton for
+// the same text (THE RUN's over screen, feat/run-share), so the receipt isn't offered twice.
+export default function ShareBar({ mode, outcome, data, neon, daily = null, link = null, copy = true }) {
   const preparedRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -70,9 +72,11 @@ export default function ShareBar({ mode, outcome, data, neon, daily = null, link
       <button className="share-btn" onClick={onDownload} disabled={!ready}>
         ⬇ IMAGE
       </button>
-      <button className="share-btn" onClick={onCopy} disabled={!ready}>
-        {copied ? '✓ COPIED' : '⧉ COPY'}
-      </button>
+      {copy && (
+        <button className="share-btn" onClick={onCopy} disabled={!ready}>
+          {copied ? '✓ COPIED' : '⧉ COPY'}
+        </button>
+      )}
     </div>
   );
 }

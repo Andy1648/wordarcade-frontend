@@ -9,6 +9,7 @@
 
 import { SHARE } from './shareConfig';
 import { buildShareText } from './shareText.js';
+import { buildRunResultText, HAND_MAX } from './runResult.js';
 
 function modeTokens(mode) {
   return SHARE.modes[mode] || SHARE.defaultMode;
@@ -30,6 +31,7 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
   let hero = '';
   let sub = '';
   let chips = [];
+  let icons = [];
   let win = true;
 
   if (mode === 'word-bomb') {
@@ -65,6 +67,15 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     hero = ante;
     sub = 'AVG ANTE';
     chips = [chip('CLEARED', data.cleared), chip('STREAK', data.bestStreak), chip('SCORE', data.score)];
+  } else if (mode === 'run') {
+    // THE RUN (feat/run-share): how far + what you banked; the drafted HAND rides as up to four
+    // modifier ICONS (data.handIcons, pre-rasterised by the caller) instead of stat chips.
+    win = outcome.reason === 'cleared';
+    const reached = data.roundReached ?? 0;
+    hero = `ROUND ${reached}/${data.totalRounds ?? 10}`;
+    sub = `${Number(data.banked || 0).toLocaleString('en-US')} BANKED`;
+    chips = [];
+    icons = (Array.isArray(data.handIcons) ? data.handIcons : []).filter(Boolean).slice(0, HAND_MAX);
   } else {
     hero = 'NOT BAD';
   }
@@ -76,7 +87,10 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     hero,
     sub,
     chips: chips.filter(Boolean).slice(0, 3),
-    copy: buildShareText({ mode, outcome, data, daily, link }),
+    icons, // [] for every mode but THE RUN
+    copy: mode === 'run'
+      ? buildRunResultText({ history: data.history, totalRounds: data.totalRounds, banked: data.banked, hand: data.hand, link })
+      : buildShareText({ mode, outcome, data, daily, link }),
     link,
   };
 }

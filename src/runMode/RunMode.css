@@ -285,6 +285,11 @@
   100% { opacity: 1; }
 }
 
+/* Share row (feat/run-share): the text receipt button + the image share bar, one cluster. */
+.run-share { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.run-share .run-share-btn { width: 100%; }
+.run-share .share-bar { justify-content: center; }
+
 .run-over-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 4px; }
 .run-btn-again { background: #FFE94A; color: #201233; font-size: 22px; padding: 16px; }
 .run-btn-leave { background: #2b1747; color: #cbbce8; font-size: 15px; padding: 11px; box-shadow: 3px 3px 0 #000; }

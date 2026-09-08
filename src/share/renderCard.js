@@ -131,6 +131,33 @@ export async function renderCard(canvas, model) {
     });
   }
 
+  // --- THE RUN's hand: up to four modifier icons in the chip row (feat/run-share) ---
+  if (model.icons && model.icons.length) {
+    const size = 128;
+    const gap = 26;
+    const n = Math.min(4, model.icons.length);
+    const totalW = n * size + (n - 1) * gap;
+    let ix = W / 2 - totalW / 2;
+    const imgs = await Promise.all(model.icons.slice(0, n).map(loadImage));
+    for (const img of imgs) {
+      ctx.fillStyle = S.panel;
+      roundRect(ctx, ix, S.chipsY - size / 2, size, size, 16);
+      ctx.fill();
+      if (img) {
+        ctx.save();
+        roundRect(ctx, ix, S.chipsY - size / 2, size, size, 16);
+        ctx.clip();
+        ctx.drawImage(img, ix, S.chipsY - size / 2, size, size);
+        ctx.restore();
+      }
+      ctx.strokeStyle = model.neon;
+      ctx.lineWidth = 4;
+      roundRect(ctx, ix, S.chipsY - size / 2, size, size, 16);
+      ctx.stroke();
+      ix += size + gap;
+    }
+  }
+
   // --- hook ---
   ctx.fillStyle = model.neon;
   ctx.font = `700 52px ${S.fonts.display}`;

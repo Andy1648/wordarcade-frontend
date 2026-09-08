@@ -22,6 +22,7 @@ test.describe('clean routes render the right view', () => {
     ['/sat-rush', 'sat-rush'],
     ['/chain', 'chain'],
     ['/fuse', 'fuse'],
+    ['/run', 'run'], // feat/run-share: fresh storage → the free first run → straight in
   ]) {
     test(`${path} -> ${view}`, async ({ page }) => {
       await land(page, path);
@@ -36,6 +37,7 @@ test.describe('legacy query params still work AND canonicalise to the path', () 
     ['/?satrush=1', 'sat-rush', '/sat-rush'],
     ['/?chain=1', 'chain', '/chain'],
     ['/?fuse=1', 'fuse', '/fuse'],
+    ['/?run=1', 'run', '/run'],
   ]) {
     test(`${url} -> ${view} @ ${canon}`, async ({ page }) => {
       await land(page, url);
@@ -57,4 +59,20 @@ test('/room/:code deep-joins (sends join_room, keeps the room URL)', async ({ pa
   await mock.waitForSent('join_room');
   const joined = mock.sentFrames().find((f) => f && f.type === 'join_room');
   expect(joined.payload.code).toBe('WXYZ');
+});
+
+// feat/run-share: /run while THE RUN is LOCKED (below LV8 with the free first run spent) lands on the
+// MENU with the RUN card focused — the link still points at the thing it advertised.
+test('/run when THE RUN is locked -> the menu with the RUN card focused', async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('taw.xp', JSON.stringify({ lv: 1, into: 0 }));
+      localStorage.setItem('taw.runFreeUsed', '1');
+    } catch { /* ignore */ }
+  });
+  await land(page, '/run');
+  expect(await dv(page)).toBe('home');
+  await expect(page.locator('.game-card-magnet[data-game="run"] .game-card')).toHaveClass(/locked/);
+  const focusedRun = await page.evaluate(() => !!document.activeElement?.closest('.game-card-magnet[data-game="run"]'));
+  expect(focusedRun).toBe(true);
 });

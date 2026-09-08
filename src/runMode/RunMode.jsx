@@ -7,6 +7,11 @@ import { useRunMode } from './useRunMode.js';
 import { wallSchedule } from './engine.js';
 import ModifierArt from './ModifierArt.jsx';
 import PlayBackdrop from '../components/PlayBackdrop';
+import CopyResultButton from '../share/CopyResultButton.jsx';
+import ShareBar from '../share/ShareBar.jsx';
+import { buildRunResultText, HAND_MAX } from '../share/runResult.js';
+import { modeShareLink } from '../share/links.js';
+import { modifierIconDataUrl } from './modifierIcon.js';
 import './RunMode.css';
 
 // Split a modifier's "upside, but downside" text into its two halves so the trade-off
@@ -337,6 +342,30 @@ function FannedHand({ stack }) {
   );
 }
 
+// The run's share receipt + image card. Text: runResult.js (exact shape, glyph per round). Image:
+// the shared renderCard with the hand as up to four modifier icons. Nothing renders when the text
+// builder suppresses (no round cleared).
+function RunShare({ run, reached }) {
+  const link = modeShareLink('run');
+  const hand = run.stack.map((m) => m.name);
+  const text = buildRunResultText({ history: run.history, totalRounds: run.totalRounds, banked: run.cumulative, hand, link });
+  if (!text) return null;
+  const data = {
+    history: run.history,
+    totalRounds: run.totalRounds,
+    roundReached: reached,
+    banked: run.cumulative,
+    hand,
+    handIcons: run.stack.slice(0, HAND_MAX).map((m) => modifierIconDataUrl(m.id)),
+  };
+  return (
+    <div className="run-share">
+      <CopyResultButton mode="run" text={text} className="run-share-btn" />
+      <ShareBar mode="run" outcome={{ reason: run.reason }} data={data} neon="#FF4FA3" link={link} copy={false} />
+    </div>
+  );
+}
+
 function OverScreen({ run, onExit, onAgain }) {
   const won = run.reason === 'cleared';
   const walled = run.reason === 'wall'; // ended below the wall (the miss the meter warned of)
@@ -384,6 +413,10 @@ function OverScreen({ run, onExit, onAgain }) {
         <div className="run-over-hand-label">THE HAND YOU BUILT <span className="run-stack-count">{run.stack.length}</span></div>
         <FannedHand stack={run.stack} />
       </div>
+
+      {/* SHARE (feat/run-share): the text receipt (COPY RESULT) + the image card (SHARE / IMAGE).
+          Both suppressed on a 0-round run — dying on round 1 is an anti-ad. */}
+      <RunShare run={run} reached={reached} />
 
       <div className="run-over-actions">
         <button className="run-btn run-btn-again" onClick={onAgain}>RUN AGAIN</button>

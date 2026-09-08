@@ -103,7 +103,18 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onSoloPlay, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, onRun, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onSoloPlay, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, onRun, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, focusGame = null, onFocusGameDone }) {
+  // A deep link to a LOCKED mode (/run below LV8 with the freebie spent, feat/run-share) lands here
+  // with `focusGame` = that card's id: move keyboard focus onto the card so the link still points at
+  // the thing it advertised (the locked card opens its read-only preview on Enter/click). One-shot.
+  useEffect(() => {
+    if (!focusGame) return;
+    try {
+      const el = document.querySelector(`.game-card-magnet[data-game="${focusGame}"] .game-card`);
+      if (el) el.focus({ preventScroll: false });
+    } catch { /* focus is best-effort */ }
+    if (onFocusGameDone) onFocusGameDone();
+  }, [focusGame, onFocusGameDone]);
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
