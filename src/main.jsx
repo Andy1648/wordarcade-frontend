@@ -8,7 +8,8 @@ import App from './App.jsx'
 import './index.css'
 import './theme/themes.css'
 import { initTheme } from './theme/themes'
-import { initAnalytics, initSentry, Sentry } from './lib/analytics'
+import { initAnalytics, initSentry, captureException } from './lib/analytics'
+import ErrorBoundary from './components/ErrorBoundary.js'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
 import { getStreak } from './progress/streak'
@@ -24,8 +25,9 @@ try { initTheme() } catch { /* never block startup */ }
 //    real tag processes them on arrival — the standard GA snippet pattern, just later;
 //  - a tiny error shim records uncaught errors / unhandled rejections so the gap between boot
 //    and Sentry.init loses nothing — they are replayed into Sentry once it is up.
-// The Sentry.ErrorBoundary below still wraps the tree from the first render (its module is part
-// of the bundle; only init is deferred), so a render crash still shows the on-brand fallback.
+// @sentry/react itself is NOT in the boot bundle: the root boundary below is a plain React class
+// (components/ErrorBoundary.js) that reports through captureException(), which queues until the
+// lazily-loaded Sentry is initialised. A render crash still shows the on-brand fallback.
 const GA_ID = 'G-BZ7DLWLDMR';
 window.dataLayer = window.dataLayer || [];
 if (typeof window.gtag !== 'function') {
@@ -39,12 +41,12 @@ window.addEventListener('error', shimError);
 window.addEventListener('unhandledrejection', shimRejection);
 
 function bootSentry() {
-  initSentry();
   window.removeEventListener('error', shimError);
   window.removeEventListener('unhandledrejection', shimRejection);
-  for (const err of earlyErrors.splice(0)) {
-    try { Sentry.captureException(err instanceof Error ? err : new Error(String(err))) } catch { /* never throw */ }
-  }
+  // Queue the early errors first (captureException buffers until Sentry is up), THEN init —
+  // initSentry() lazy-loads @sentry/react and flushes the queue once initialised.
+  for (const err of earlyErrors.splice(0)) captureException(err);
+  initSentry();
 }
 
 // Inject gtag.js and fire the ONE page_view per visit ourselves (send_page_view:false stops the
@@ -85,8 +87,8 @@ afterLoad(() => idle(() => {
     .catch(() => {});
 }));
 
-// On-brand crash screen shown by the Sentry error boundary if a render throws, so
-// a crash reports to Sentry AND shows this instead of a blank white page.
+// On-brand crash screen shown by the root ErrorBoundary if a render throws, so a crash
+// reports to Sentry (once it is up) AND shows this instead of a blank white page.
 function CrashFallback() {
   return (
     <div
@@ -153,8 +155,8 @@ window.addEventListener('resize', applyAppScale);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+    <ErrorBoundary fallback={<CrashFallback />}>
       <App />
-    </Sentry.ErrorBoundary>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

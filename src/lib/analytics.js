@@ -5,16 +5,12 @@
 //    and posthog's send is non-blocking (never awaited).
 //  - With no env key, every function is a silent no-op, so the app behaves
 //    identically with or without analytics configured.
-// Exports initAnalytics / initSentry / track, plus the Sentry namespace so the
-// app root can wrap itself in Sentry.ErrorBoundary (the boundary helper in the
-// installed @sentry/react v10 API).
-// posthog is loaded LAZILY inside initAnalytics (deferred to idle after first paint by
-// main.jsx) so its ~207KB chunk never blocks interactivity. Sentry's MODULE stays eager — its
-// ErrorBoundary must be present at mount to catch a render crash — and is exported below; its
-// init (and gtag.js) now run from the same post-load idle callback (perf/first-load).
-import * as Sentry from '@sentry/react';
-
-export { Sentry };
+// Exports initAnalytics / initSentry / captureException / track.
+// BOTH third parties load LAZILY (perf/first-load): posthog inside initAnalytics, and
+// @sentry/react inside initSentry — neither chunk is on the boot path. main.jsx calls both from
+// one idle callback after window 'load'. Error boundaries are a plain React class
+// (components/ErrorBoundary.js) that forwards through captureException(), which QUEUES until
+// Sentry is up and then flushes — so a render crash before init is still reported.
 
 let posthog = null;
 let posthogReady = false;
@@ -38,14 +34,75 @@ export async function initAnalytics() {
   }
 }
 
-export function initSentry() {
+// ---- Sentry (lazy) ----
+let sentry = null; // the loaded @sentry/react module once initSentry has run with a DSN
+const pending = []; // errors captured before Sentry was up — flushed on init, bounded
+const PENDING_MAX = 20;
+let testLoader = null; // node unit tests inject a fake module loader here (see the seam below)
+
+function envDsn() {
   try {
-    const dsn = import.meta.env.VITE_SENTRY_DSN;
-    if (!dsn) return; // no DSN -> dormant; ErrorBoundary still renders its fallback
-    Sentry.init({ dsn });
+    return import.meta.env && import.meta.env.VITE_SENTRY_DSN;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Load + init Sentry (idle-deferred by main.jsx). `opts.dsn` overrides the env DSN (tests).
+ * Without a DSN Sentry stays dormant and the pending queue is dropped (there is nothing to
+ * send it to). Resolves when Sentry is up (or immediately when dormant); never rejects.
+ */
+export async function initSentry(opts = {}) {
+  try {
+    const dsn = opts.dsn !== undefined ? opts.dsn : envDsn();
+    if (!dsn) {
+      pending.length = 0;
+      return;
+    }
+    // Lazy-load through ./sentryLazy.js, a two-export bridge, so @sentry/react is tree-shaken to
+    // init + captureException (~90 KB raw) rather than the whole namespace (~490 KB), and still
+    // lands in its own lazy chunk off the boot path.
+    const { init, captureException: cap } = await (testLoader ? testLoader() : import('./sentryLazy.js'));
+    init({ dsn });
+    sentry = { captureException: cap };
+    for (const e of pending.splice(0)) {
+      try {
+        cap(e);
+      } catch {
+        /* a failed replay never throws */
+      }
+    }
   } catch {
     // monitoring init must never affect the app
   }
+}
+
+/**
+ * Report an error to Sentry. Forwards immediately once Sentry is initialised; before that it
+ * QUEUES (bounded) so a crash between boot and init is not lost. `context` is Sentry's
+ * CaptureContext (e.g. { tags: { screen } }). Never throws.
+ */
+export function captureException(err, context) {
+  try {
+    const e = err instanceof Error ? err : new Error(String(err));
+    if (sentry) sentry.captureException(e, context);
+    else if (pending.length < PENDING_MAX) pending.push(e);
+  } catch {
+    /* never throw into render / gameplay */
+  }
+}
+
+/** Whether Sentry is loaded + initialised (read-only; for tests + diagnostics). */
+export function sentryReady() {
+  return sentry !== null;
+}
+
+// TEST SEAM (node unit tests only): inject a fake @sentry/react loader and reset state.
+export function __setSentryLoaderForTests(fn) {
+  testLoader = fn || null;
+  sentry = null;
+  pending.length = 0;
 }
 
 // Fire-and-forget a named product event to BOTH sinks (PostHog + GA4/gtag). No-op until a sink is
