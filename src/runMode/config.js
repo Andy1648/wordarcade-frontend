@@ -24,5 +24,7 @@ export const RUN_VIEW = 'run';
 export const ROUND_MODES = [
   { key: 'chain', label: 'CHAIN', rule: 'Each word starts where the last ended.', accent: '#2EFFE0' },
   { key: 'fuse', label: 'FUSE', rule: 'Every word must contain the fragment.', accent: '#FFE94A' },
-  { key: 'sat', label: 'SAT RUSH', rule: 'Define the word before it fills in.', accent: '#9A1AFF' },
+  // fix/run-round-modes: the SAT flavour was a label only (a run round can't play SAT RUSH's
+  // define-the-word mechanic — it typed plain words). LONG is a real, enforced rule.
+  { key: 'long', label: 'LONG', rule: 'Only words of 6+ letters count.', accent: '#9A1AFF' },
 ];

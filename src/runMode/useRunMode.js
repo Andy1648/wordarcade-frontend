@@ -15,6 +15,7 @@ import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { makeLuckyOracle, randomSeed, mulberry32 } from '../progress/luck.js';
 import { awardWordXp } from '../progress/xp.js';
 import { bankRunWins } from '../progress/wins.js';
+import { makeFragmentStream } from './fragments.js';
 
 export const ROUND_SECONDS = 30;
 // Dev-only: ?rs=N shortens the round clock for screenshots / manual play. Clamped 2–60;
@@ -126,23 +127,35 @@ export function useRunMode() {
 
   const startRound = useCallback(() => {
     const seed = (state.seed ^ (state.round * 0x9e3779b1)) >>> 0;
+    // fix/run-round-modes: ONE fragment stream per round, seeded from the run (see fragments.js).
+    // The old draw reseeded from p.words × a constant, so every run dealt the same fragments.
+    const frag = makeFragmentStream(seed);
     playRef.current = {
-      timeLeft: resolveRoundSeconds(),
+      frag,
+      // SHORT FUSE's wprMul shortens the round (fewer words) — the live round is timed,
+      // so a "20% fewer words" knob is applied as 20% less time. Floor of 4s.
+      timeLeft: Math.max(4, Math.round(resolveRoundSeconds() * knobs.wprMul)),
       combo: knobs.comboStart,
       score: 0,
       words: 0,
       used: new Set(),
-      lucky: makeLuckyOracle(seed),
-      constraint: roundMode.key === 'fuse' ? pickFragment(mulberry32(seed)) : null,
+      // The lucky oracle honours the drafted odds knob (LUCKY CHARM 1/20, JACKPOT 1/60,
+      // UNCAPPED 1/80) — a fixed 1/40 here made those upsides/downsides dead.
+      lucky: makeLuckyOracle(seed, knobs.luckyOdds),
+      constraint: roundMode.key === 'fuse' ? frag.next() : null,
       lastLetter: null,
+      // The message slot (fix/run-round-screen): text + kind + a monotonically increasing id so
+      // the round screen can re-trigger its fixed-length flash even when the text repeats.
       toast: null,
+      toastKind: null, // 'accept' | 'reject'
+      toastId: 0,
     };
     // fix/onramp: starting a round means the player actually PLAYED a run, so the free
     // first run is now spent — the LV8 gate engages from here on (idempotent write).
     markFreeRunUsed();
     dispatch({ type: 'startRound' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.seed, state.round, roundMode.key, knobs.comboStart]);
+  }, [state.seed, state.round, roundMode.key, knobs.comboStart, knobs.wprMul, knobs.luckyOdds]);
 
   // Round timer.
   useEffect(() => {
@@ -153,7 +166,7 @@ export function useRunMode() {
       p.timeLeft -= 1;
       if (p.timeLeft <= 0) {
         clearInterval(id);
-        const ctx = { owned: 0, clean: state.clean };
+        const ctx = { clean: state.clean };
         let score = applyRoundMods(p.score, stack, ctx);
         const fumbled = suddenDeathChance(stack) > 0 && p.lucky.next() && Math.random() < suddenDeathChance(stack);
         dispatch({ type: 'endRound', score, fumbled });
@@ -174,6 +187,7 @@ export function useRunMode() {
     if (!state.words?.accept.has(word)) return fail(p, 'NOT A WORD', force);
     if (roundMode.key === 'chain' && p.lastLetter && word[0] !== p.lastLetter) return fail(p, `START WITH "${p.lastLetter.toUpperCase()}"`, force);
     if (roundMode.key === 'fuse' && p.constraint && !word.includes(p.constraint)) return fail(p, `NEEDS "${p.constraint.toUpperCase()}"`, force);
+    if (roundMode.key === 'long' && word.length < 6) return fail(p, '6 LETTERS OR MORE', force);
 
     // rarityOf returns { band, mult, announce, … } — the band NAME is `.band`. (Reading
     // `.name` left rarity undefined, so live rounds silently scored every word as COMMON,
@@ -183,13 +197,19 @@ export function useRunMode() {
       rarity: r.band, len: word.length, vowels: countVowels(word),
       rare: RARE_LETTERS.test(word), lucky: !knobs.noLucky && p.lucky.next(), combo: p.combo,
     };
-    p.score += scoreWord(w, stack, knobs);
+    const gained = scoreWord(w, stack, knobs);
+    p.score += gained;
     p.combo = Math.min(knobs.comboMax, p.combo + knobs.comboStep);
     p.words += 1;
     p.used.add(word);
     p.lastLetter = word[word.length - 1];
-    if (roundMode.key === 'fuse') p.constraint = pickFragment(p.lucky.next() ? mulberry32(p.words * 7919) : mulberry32(p.words * 104729));
-    p.toast = w.lucky ? 'LUCKY ×5!' : (r.announce ? `${r.band}!` : null);
+    if (roundMode.key === 'fuse') p.constraint = p.frag.next(); // next fragment from THIS round's stream
+    // Every accepted word toasts "WORD +N" (N = this word's scoreWord result), prefixed by the
+    // LUCKY / RARE call-out when one applies. Shown for 600ms in the round screen's fixed slot.
+    const prefix = w.lucky ? 'LUCKY ×5! ' : (r.announce ? `${r.band}! ` : '');
+    p.toast = `${prefix}${word.toUpperCase()} +${Math.round(gained)}`;
+    p.toastKind = 'accept';
+    p.toastId += 1;
     // fix/run-payout: every accepted word levels you, like every other mode (XP_MULTIPLIERS.run).
     // The run's wins are settled once at run end (see the 'over' effect), so no weight here.
     awardWordXp({ mode: 'run', wordLength: word.length });
@@ -213,14 +233,14 @@ export function useRunMode() {
     bankRunWins(winsEarned);
   }, [state.phase, winsEarned]);
 
-  // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's flat
-  // +150, MOMENTUM's ×N, SHORT FUSE ×1.5, GLASS CANNON ×2.5…) are applied to the raw
+  // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's 30% of the
+  // wall (≤60), MOMENTUM's ×N, SHORT FUSE ×1.7, GLASS CANNON ×1.55…) are applied to the raw
   // per-word sum at round end — so the meter MUST show the same round-adjusted number the
   // wall is actually compared against, not the raw typed total. The ctx here is byte-for-
-  // byte the one endRound uses ({ owned: 0, clean }), so the displayed gap is the real gap.
+  // byte the one endRound uses ({ clean }), so the displayed gap is the real gap.
   const rawRoundScore = state.phase === 'round' && playRef.current ? playRef.current.score : 0;
   const projected = state.phase === 'round' && playRef.current
-    ? applyRoundMods(playRef.current.score, stack, { owned: 0, clean: state.clean })
+    ? applyRoundMods(playRef.current.score, stack, { clean: state.clean })
     : 0;
 
   return {
@@ -246,8 +266,8 @@ export function useRunMode() {
   };
 }
 
-function fail(p, toast, force) { p.toast = toast; p.combo = 1; force(); return { ok: false, reason: toast }; }
-function pickFragment(rnd) {
-  const frags = ['er', 'in', 'at', 'ing', 'ent', 'ar', 'st', 'ck', 're', 'on', 'an', ' or', 'te'].map((f) => f.trim());
-  return frags[Math.floor(rnd() * frags.length)];
+function fail(p, toast, force) {
+  p.toast = toast; p.toastKind = 'reject'; p.toastId += 1;
+  p.combo = 1; force();
+  return { ok: false, reason: toast };
 }

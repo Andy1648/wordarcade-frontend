@@ -72,8 +72,9 @@
 .run-round-top { display: flex; justify-content: space-between; align-items: center; }
 .run-round-mode b { font-family: 'Bungee', sans-serif; font-size: 20px; color: var(--accent, #2EFFE0); display: block; }
 .run-round-mode span { font-size: 12px; color: #cbbce8; }
-.run-clock { font-family: 'Bungee', sans-serif; font-size: 30px; color: #2EFFE0; -webkit-text-stroke: 2px #000; }
-.run-clock.low { color: #FF3B3B; }
+/* m:ss in Space Mono (tabular digits so the width never jitters); a plain colour swap under 6s */
+.run-clock { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 28px; line-height: 1; color: #2EFFE0; font-variant-numeric: tabular-nums; text-shadow: 2px 2px 0 #000; }
+.run-clock.low { color: #FF4B4B; }
 .run-score-row { display: flex; justify-content: space-between; align-items: flex-end; }
 .run-score-num { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FFE94A; -webkit-text-stroke: 2px #000; display: inline-block; transform-origin: left center; }
 .run-score.met .run-score-num { color: #2EFFE0; }
@@ -98,9 +99,19 @@
 .run-clear-burst.playing { animation: runClearBurst .6s cubic-bezier(.2,1.4,.4,1) 1; }
 .run-meter-note { font-size: 11px; color: #9a86c4; text-align: center; letter-spacing: .5px; min-height: 14px; }
 .run-meter-note b { color: #FFE94A; }
-.run-toast { font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A; text-align: center; }
-.run-frag { font-size: 14px; color: #cbbce8; text-align: center; }
-.run-frag b { color: var(--accent, #2EFFE0); font-family: 'Bungee', sans-serif; }
+/* THE MESSAGE SLOT — a fixed 22px line that always exists (empty when silent), so no toast
+   ever moves the input. Box-sized: height + line-height pinned, overflow clipped. */
+.run-toast {
+  box-sizing: border-box; height: 22px; line-height: 22px; overflow: hidden; white-space: nowrap;
+  font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A; text-align: center;
+}
+.run-toast.reject { color: #FF4B4B; }
+/* THE CONSTRAINT IS THE HERO — the fragment / letter itself is big yellow Bungee */
+.run-frag {
+  min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: 'Bungee', sans-serif; font-size: 14px; letter-spacing: 1px; color: #cbbce8; text-align: center;
+}
+.run-frag b { color: #FFE94A; font-family: 'Bungee', sans-serif; font-size: 36px; line-height: 1; -webkit-text-stroke: 2px #000; paint-order: stroke fill; }
 .run-input {
   width: 100%; box-sizing: border-box; font-size: 22px; font-family: 'Space Mono', monospace;
   padding: 14px; border-radius: 8px; border: 3px solid #2EFFE0; background: #0d0618; color: #fff;
@@ -265,6 +276,11 @@
 /* narrow: the three cards become a stacked list — art on the left, effect on the
    right — so name + trade-off stay fully legible instead of squeezing to 3 columns. */
 @media (max-width: 560px) {
+  /* PHONE ROUND SCREEN: top-align instead of vertically centring. Centred, the panel started
+     ~200px down an 844px screen and the input's bottom edge sat at ~574px — under a raised
+     keyboard (visual viewport ≈ 510px). Top-aligned (clear of the 44px exit button) the input
+     ends ≈ 450px, so typing never needs a scroll. Other run screens keep the centred layout. */
+  .run-root.is-round { align-items: flex-start; padding-top: 68px; }
   .run-offers { grid-template-columns: 1fr; gap: 10px; }
   .run-card { flex-direction: row; align-items: stretch; }
   .run-card-art { width: 104px; aspect-ratio: auto; min-height: 100%; flex: none; border-bottom: none; border-right: 4px solid #000; }

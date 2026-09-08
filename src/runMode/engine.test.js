@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   MODIFIERS, MODIFIER_BY_ID, RARITY, wallAt, wallSchedule, WALL,
   roundKnobs, scoreWord, applyRoundMods, suddenDeathChance, dealOffers,
-  modifierFactor, runWinsPayout, RUN_ROUNDS,
+  modifierFactor, runWinsPayout, RUN_ROUNDS, deepPocketsBonus,
 } from './engine.js';
 
 test('reuses the shipped rarity bands (COMMON 1.0 … OBSCURE 4.0)', () => {
@@ -13,46 +13,66 @@ test('reuses the shipped rarity bands (COMMON 1.0 … OBSCURE 4.0)', () => {
   assert.equal(RARITY.OBSCURE, 4.0);
 });
 
-test('the wall is strictly increasing and matches the calibrated two-phase curve', () => {
+test('the wall starts LOW, ramps steeply through the draft rounds, eases after the knee (fix/run-wall-2)', () => {
   const s = wallSchedule();
   assert.equal(s.length, RUN_ROUNDS);
   for (let i = 1; i < s.length; i++) assert.ok(s[i] > s[i - 1], `wall must climb at round ${i + 1}`);
   assert.equal(s[0], WALL.W0); // round 1 == W0
-  assert.equal(wallAt(1), 225);
-  // knee at round 5 → the g2 slope (1.8) kicks in after it, so the R5→R6 jump is
-  // bigger than R4→R5.
-  assert.ok((wallAt(6) / wallAt(5)) > (wallAt(5) / wallAt(4)));
+  // fix/run-wall-2: W0 80 — a casual (~8-9 word) EMPTY-stack round 1 clears it, so players reach a
+  // draft before they can die. (fix/run-balance's 225 was calibrated to 16 perfect words.)
+  assert.equal(wallAt(1), 80);
+  // The ramp is steepest through the draft rounds (g1=1.5) and eases after the knee (g2=1.3 < g1):
+  // the R5→R6 jump is SMALLER than R4→R5, but the endgame still climbs to 1504 — no free clears.
+  assert.ok((wallAt(6) / wallAt(5)) < (wallAt(5) / wallAt(4)));
+  assert.deepEqual(s, [80, 120, 180, 270, 405, 527, 684, 890, 1157, 1504]);
 });
 
-test('all 18 modifiers are well-formed and 15 carry a downside', () => {
+test('all 18 modifiers are well-formed and every one carries a downside', () => {
   assert.equal(MODIFIERS.length, 18);
   for (const m of MODIFIERS) {
     assert.ok(m.id && m.name && m.text, `modifier ${m.id} needs id/name/text`);
     assert.equal(MODIFIER_BY_ID[m.id], m);
   }
-  assert.equal(MODIFIERS.filter((m) => m.down).length, 15);
+  // fix/run-deck-2: the last two pure-upside cards were two-sided — DEEP POCKETS gained a
+  // ×0.85 per-word ceiling cost, SCRABBLE BAG a ×0.9 cost on non-J/Q/X/Z words (MOMENTUM was
+  // already two-sided on fix/run-balance). So ALL 18 cards are now down:true, none pure-upside.
+  assert.equal(MODIFIERS.filter((m) => m.down).length, 18);
+  assert.equal(MODIFIERS.filter((m) => !m.down).length, 0);
 });
 
-test('round-level modifiers transform payout exactly (DEEP POCKETS +150, GLASS CANNON ×2.5)', () => {
+test('round-level modifiers transform payout exactly (DEEP POCKETS 30% of the wall ≤60, GLASS CANNON ×1.55)', () => {
   const dp = [MODIFIER_BY_ID['deep-pockets']];
-  assert.equal(applyRoundMods(1000, dp), 1150);
+  // fix/run-deep-pockets: the flat +120 (tuned for the old 225 wall) cleared round 2 (wall 120) by
+  // itself on the fix/run-wall-2 curve. Now +min(60, round(0.3 · wallAt(clean+1))) — a fraction of
+  // the CURRENT wall (read through the ctx applyRoundMods passes into round()), capped so it fades
+  // against the endgame walls. (The ×0.85 word cost is a word mod.)
+  assert.equal(deepPocketsBonus(1), 24);
+  assert.equal(deepPocketsBonus(2), 36);
+  assert.equal(deepPocketsBonus(3), 54);
+  assert.equal(deepPocketsBonus(4), 60); // 0.3·270=81 → capped
+  assert.equal(deepPocketsBonus(10), 60);
+  assert.equal(applyRoundMods(1000, dp), 1024);               // default ctx → round 1
+  assert.equal(applyRoundMods(1000, dp, { clean: 1 }), 1036); // round 2
+  assert.equal(applyRoundMods(1000, dp, { clean: 4 }), 1060); // round 5 (capped)
+  assert.ok(applyRoundMods(0, dp, { clean: 1 }) < wallAt(2), 'DEEP POCKETS alone must not clear round 2');
   const gc = [MODIFIER_BY_ID['glass-cannon']];
-  assert.equal(applyRoundMods(1000, gc), 2500);
+  assert.equal(applyRoundMods(1000, gc), 1550); // fix/run-balance: ×2.5 → ×1.55
   assert.ok(suddenDeathChance(gc) > 0 && suddenDeathChance([]) === 0);
 });
 
 test('the live meter contract: round-adjusted projection == what the wall is compared to', () => {
-  // The in-round meter MUST show applyRoundMods(rawTypedTotal, stack, {owned:0, clean}) —
+  // The in-round meter MUST show applyRoundMods(rawTypedTotal, stack, { clean }) —
   // the exact number endRound compares to the wall — NOT the raw per-word total. This pins
   // the run-playthrough finding: with round-level modifiers the projection exceeds raw, so a
   // meter reading raw would lie about the player's true standing (504 raw → 2,051 real).
   const raw = 504;
   const clean = 5;
   const stack = [MODIFIER_BY_ID['deep-pockets'], MODIFIER_BY_ID['momentum']];
-  const ctx = { owned: 0, clean };
+  const ctx = { clean };
   const projected = applyRoundMods(raw, stack, ctx);
-  // MOMENTUM ×(1+0.5·clean) then DEEP POCKETS is +150 (order-dependent per stack order):
-  // here deep-pockets runs first (+150 → 654), momentum ×3.5 → 2289.
+  // Order-dependent per stack order: deep-pockets runs first (+min(60, 0.3·wallAt(6)) = +60 →
+  // 564), then MOMENTUM ×min(1.35, 1+0.18·clean) = ×1.35 → 761. (The ×0.85 / ×0.9 word costs
+  // are per-word mods, so they never touch this round-level projection.)
   assert.equal(projected, applyRoundMods(raw, stack, ctx)); // deterministic
   assert.ok(projected > raw, 'round-level modifiers must lift the projection above raw typed');
   // A word-only stack leaves the projection equal to the raw total (rounded).
@@ -70,7 +90,7 @@ test('scoreWord reuses rarity×combo×lucky and respects the per-word cap', () =
 
 test('modifierFactor: an all-upside stack scales a round above 1×', () => {
   const upside = [MODIFIER_BY_ID['deep-pockets'], MODIFIER_BY_ID['momentum']];
-  assert.ok(modifierFactor(upside, { owned: 0, clean: 3 }) > 1);
+  assert.ok(modifierFactor(upside, { clean: 3 }) > 1);
 });
 
 test('dealOffers returns three distinct, not-yet-owned modifiers', () => {
@@ -88,8 +108,12 @@ test('runWinsPayout scales with the round reached', () => {
   assert.equal(runWinsPayout(0, 10), 0);
 });
 
-test('roundKnobs applies knob modifiers (UNCAPPED removes the cap, tightens combo)', () => {
+test('roundKnobs applies knob modifiers (UNCAPPED removes the cap, boosts lucky, thins odds)', () => {
+  // UNCAPPED removes the per-word cap (load-bearing — a lucky word blows past 40) and pays big
+  // on lucky. fix/run-balance retuned it into the flat viable band: lucky ×18, odds ×1.3 (was
+  // ×10 / ×2), so the lucky trio (lucky-charm/jackpot/uncapped) is no longer dead weight.
   const k = roundKnobs([MODIFIER_BY_ID['uncapped']]);
   assert.equal(k.cap, Infinity);
-  assert.ok(k.comboMax <= 1.5);
+  assert.equal(k.luckyMult, 18);
+  assert.equal(k.luckyOdds, 52); // 40 × 1.3 — thinner than baseline
 });

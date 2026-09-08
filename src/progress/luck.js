@@ -24,11 +24,12 @@ export function mulberry32(seed) {
 // draw off the seeded stream, taken once per ACCEPTED word. Same seed → identical sequence,
 // so a run replays exactly in a test; the draw depends only on the seeded stream position,
 // never on game state, so it can't be predicted or gamed from prior words.
-export function makeLuckyOracle(seed) {
+export function makeLuckyOracle(seed, odds = LUCKY_ODDS) {
   const rand = mulberry32((seed >>> 0) || 1);
+  const rate = 1 / (Number.isFinite(odds) && odds > 0 ? odds : LUCKY_ODDS);
   return {
     next() {
-      return rand() < 1 / LUCKY_ODDS;
+      return rand() < rate;
     },
   };
 }

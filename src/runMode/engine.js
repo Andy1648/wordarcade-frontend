@@ -1,6 +1,6 @@
 // engine.js — RUN MODE (feat/run-mode). Pure, timer-free rules ported from the
 // calibrated proto/run-mode-2 sim (Job A): a two-phase ANTE WALL, a LOSS condition,
-// and 18 stacking modifiers (15 of them two-sided). The scoring REUSES the shipped
+// and 18 stacking modifiers (all two-sided). The scoring REUSES the shipped
 // progression constants (src/progress/{rarity,combo,luck}) — it does NOT fork them.
 //
 // The React layer (useRunMode) owns state/timers; this file is data + math only, so
@@ -28,55 +28,90 @@ export const PER_WORD_CAP = 40; // xp.js cappedWordMult
 // Rarity mix used for the engine's own EV maths + the sim (matches the sim's mix).
 const RARITY_MIX = [['COMMON', 0.68], ['UNCOMMON', 0.22], ['RARE', 0.08], ['OBSCURE', 0.02]];
 
-// ---- THE 18 MODIFIERS — two-sided. `down:true` = carries a real cost. ----
+// ---- THE 18 MODIFIERS — all two-sided (`down:true`), each carries a real cost. ----
+// fix/run-deck-2: DEEP POCKETS (was flat +60, no cost) and SCRABBLE BAG (was free ×2.6 on
+// J/Q/X/Z) — the last two boring pure-upside cards flagged by the audit — were given genuine
+// trade-offs: DEEP POCKETS is now a floor-raiser that caps the ceiling (free wins worth 60% of
+// the current wall, but ×0.85 every word), SCRABBLE BAG a rare-letter build-around (×4 on
+// J/Q/X/Z but ×0.9 on the other ~92%, anti-synergy with VOWEL MOVEMENT). MOMENTUM was already
+// two-sided on fix/run-balance. All 18 cards now down:true.
+// fix/run-deep-pockets: DEEP POCKETS's flat "+120" was tuned for the old 225 wall — on the
+// fix/run-wall-2 curve (80, 120, 180 …) it cleared round 2 BY ITSELF. It now scales with the
+// wall, CAPPED: +min(60, round(0.3 · wallAt(clean+1))) — 24 / 36 / 54 through the draft-1
+// rounds, then 60 flat. The cap is load-bearing: an UNCAPPED fraction of the wall is a permanent
+// discount on every wall, and the draft-1 audit + skill sweep (claude/run-skill.mjs) showed no
+// fraction satisfies both acceptance sets — ≥0.25 puts DEEP POCKETS in the casual [+8,+25]
+// reach-R4 band but erodes GREEDY−RANDOM at 20 attempts below 5 pts (0.6 → Δ+65, in 82-100% of
+// winners, RANDOM 35%); ≤0.20 keeps the draft gap but the card stops mattering (Δ+3.5). Capped,
+// it's a real early floor (Δ+14) that fades to noise against the 890-1504 endgame walls.
 // word(w,m): per-word mult transform.  knob(k): mutate round knobs.
-// round(p): per-round payout transform.  roundIdx(p,ctx): indexed round transform.
+// round(p,ctx): per-round payout transform (ctx = { clean }).  roundIdx(p,ctx): indexed round transform.
 // suddenDeath: per-round probability the run ends regardless of score.
 export const MODIFIERS = [
-  { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×2, but ≤2 vowels ×0.7', down: true,
-    word: (w, m) => (w.vowels >= 3 ? m * 2 : m * 0.7) },
-  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.5, but 20% fewer words', down: true,
-    knob: (k) => { k.wprMul *= 0.8; }, round: (p) => p * 1.5 },
-  { id: 'lexicographer', name: 'LEXICOGRAPHER', text: 'RARE+ ×3, but COMMON/UNCOMMON score 0', down: true,
-    word: (w, m) => (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 3 : 0) },
-  { id: 'hot-streak', name: 'HOT STREAK', text: 'Combo cap ×5.0, but each round starts at combo ×0.6', down: true,
-    knob: (k) => { k.comboMax = 5.0; k.comboStart = 0.6; } },
-  { id: 'lucky-charm', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/20, but non-lucky words ×0.9', down: true,
-    knob: (k) => { k.luckyOdds /= 2; }, word: (w, m) => (w.lucky ? m : m * 0.9) },
-  { id: 'jackpot', name: 'JACKPOT', text: 'Lucky payout ×8, but lucky odds 1/40→1/60', down: true,
-    knob: (k) => { k.luckyMult = 8; k.luckyOdds *= 1.5; } },
-  { id: 'bookworm', name: 'BOOKWORM', text: 'Every word +0.4× (combo-scaled), but lucky never procs', down: true,
-    knob: (k) => { k.noLucky = true; }, word: (w, m) => m + 0.4 * w.combo },
-  { id: 'long-haul', name: 'LONG HAUL', text: 'Length bonus doubled, but words ≤5 letters ×0.7', down: true,
-    word: (w, m) => (w.len > 5 ? m + Math.min(1.0, (w.len - 5) * 0.1) : m * 0.7) },
-  { id: 'common-folk', name: 'COMMON FOLK', text: 'COMMON ×1.8, but RARE/OBSCURE ×0.6', down: true,
-    word: (w, m) => (w.rarity === 'COMMON' ? m * 1.8 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.6 : m)) },
-  { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×2.5 — but 8%/round the run just ends', down: true,
-    round: (p) => p * 2.5, suddenDeath: 0.08 },
-  { id: 'snowball', name: 'SNOWBALL', text: '+0.3× per round forever, but ×0.7 the round you draft it', down: true,
-    roundIdx: (p, c) => p * (0.7 + 0.3 * c.owned) },
-  { id: 'uncapped', name: 'UNCAPPED', text: 'Remove the ×40 word cap, but combo cap ×3→×1.5', down: true,
-    knob: (k) => { k.cap = Infinity; k.comboMax = Math.min(k.comboMax, 1.5); } },
-  { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.3× per vowel, but J/Q/X/Z words ×0.5', down: true,
-    word: (w, m) => (w.rare ? m * 0.5 : m) + 0.3 * w.vowels },
-  { id: 'rare-breed', name: 'RARE BREED', text: 'OBSCURE ×6, but COMMON ×0.7', down: true,
-    word: (w, m) => (w.rarity === 'OBSCURE' ? m * 1.5 : (w.rarity === 'COMMON' ? m * 0.7 : m)) },
+  { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×1.8, but ≤2 vowels ×0.72', down: true,
+    word: (w, m) => (w.vowels >= 3 ? m * 1.8 : m * 0.72) },
+  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.7, but the round is 20% shorter', down: true,
+    knob: (k) => { k.wprMul *= 0.8; }, round: (p) => p * 1.7 },
+  { id: 'lexicographer', name: 'LEXICOGRAPHER', text: 'RARE+ ×4.5, but COMMON/UNCOMMON ×0.72', down: true,
+    word: (w, m) => (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 4.5 : m * 0.72) },
+  { id: 'hot-streak', name: 'HOT STREAK', text: 'Combo builds +0.25×/word to a ×4 cap, but starts cold at ×0.6', down: true,
+    knob: (k) => { k.comboStart = 0.6; k.comboStep = 0.25; k.comboMax = 4.0; } },
+  { id: 'lucky-charm', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/13 & lucky pays ×7, but non-lucky ×0.97', down: true,
+    knob: (k) => { k.luckyOdds /= 3; k.luckyMult = 7; }, word: (w, m) => (w.lucky ? m : m * 0.97) },
+  { id: 'jackpot', name: 'JACKPOT', text: 'Lucky payout ×16, but lucky odds 1/40→1/48', down: true,
+    knob: (k) => { k.luckyMult = 16; k.luckyOdds *= 1.2; } },
+  { id: 'bookworm', name: 'BOOKWORM', text: 'Every word +0.55× (combo-scaled), but lucky never procs', down: true,
+    knob: (k) => { k.noLucky = true; }, word: (w, m) => m + 0.55 * w.combo },
+  { id: 'long-haul', name: 'LONG HAUL', text: '+0.28× per letter over 5 (max +1.75×), but words ≤5 letters ×0.9', down: true,
+    word: (w, m) => (w.len > 5 ? m + Math.min(1.75, (w.len - 5) * 0.28) : m * 0.9) },
+  { id: 'common-folk', name: 'COMMON FOLK', text: 'COMMON ×1.5, but RARE/OBSCURE ×0.5', down: true,
+    word: (w, m) => (w.rarity === 'COMMON' ? m * 1.5 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.5 : m)) },
+  { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×1.55 — but 8%/round the run just ends', down: true,
+    round: (p) => p * 1.55, suddenDeath: 0.08 },
+  { id: 'snowball', name: 'SNOWBALL', text: '×0.62 payout, but +0.14× per round survived (cap ×1.15)', down: true,
+    roundIdx: (p, c) => p * Math.min(1.15, 0.62 + 0.14 * c.clean) },
+  { id: 'uncapped', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer', down: true,
+    knob: (k) => { k.cap = Infinity; k.luckyMult = 18; k.luckyOdds *= 1.3; } },
+  { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.4× per vowel, but J/Q/X/Z words ×0.5', down: true,
+    word: (w, m) => (w.rare ? m * 0.5 : m) + 0.4 * w.vowels },
+  { id: 'rare-breed', name: 'RARE BREED', text: 'RARE ×3 & OBSCURE ×8, but COMMON ×0.85', down: true,
+    word: (w, m) => (w.rarity === 'OBSCURE' ? m * 8 : (w.rarity === 'RARE' ? m * 3 : (w.rarity === 'COMMON' ? m * 0.85 : m))) },
   { id: 'combo-king', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
     knob: (k) => { k.comboStep = 0.2; k.comboMax = Math.min(k.comboMax, 2.4); } },
-  { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+150 flat wins per round', down: false,
-    round: (p) => p + 150 },
-  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'Words with J/Q/X/Z pay ×3', down: false,
-    word: (w, m) => (w.rare ? m * 3 : m) },
-  { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round: +0.5× running mult', down: false,
-    roundIdx: (p, c) => p * (1 + 0.5 * c.clean) },
+  { id: 'deep-pockets', name: 'DEEP POCKETS', text: 'Free wins worth 30% of the wall (max 60) every round, but every word ×0.85', down: true,
+    // wallAt is a hoisted function declaration below; round() only runs at play time.
+    word: (w, m) => m * 0.85, round: (p, c) => p + deepPocketsBonus((c?.clean || 0) + 1) },
+  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'J/Q/X/Z words ×4, but every other word ×0.9', down: true,
+    word: (w, m) => (w.rare ? m * 4 : m * 0.9) },
+  { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9', down: true,
+    word: (w, m) => m * 0.9, roundIdx: (p, c) => p * Math.min(1.35, 1 + 0.18 * c.clean) },
 ];
 
 export const MODIFIER_BY_ID = MODIFIERS.reduce((m, x) => ((m[x.id] = x), m), {});
 
-// ---- the ANTE WALL — DERIVED in the proto sweep, not guessed ----
-// wall(r)=W0·g1^min(r-1,KNEE-1)·g2^max(0,r-KNEE): gentle early, steep from the knee.
-// Sweep fit against 1000 greedy runs: 34.5% win rate, deaths peak round 8.
-export const WALL = { W0: 225, g1: 1.3, g2: 1.8, KNEE: 5 };
+// DEEP POCKETS's free wins for a given round: 30% of that round's wall, capped at 60 (see the
+// deck comment above for why the cap exists). Exported so the tests pin the same numbers.
+export const DEEP_POCKETS_FRAC = 0.3;
+export const DEEP_POCKETS_CAP = 60;
+export function deepPocketsBonus(round) {
+  return Math.min(DEEP_POCKETS_CAP, Math.round(DEEP_POCKETS_FRAC * wallAt(round)));
+}
+
+// ---- the ANTE WALL — RETUNED FOR REAL SKILL on fix/run-wall-2 (claude/run-skill.mjs) ----
+// wall(r)=W0·g1^min(r-1,KNEE-1)·g2^max(0,r-KNEE).
+// History: the original (g1=1.3, g2=1.8) was a ~1.8×/round exponential only compounding
+// multipliers could clear (the draft was solved). fix/run-balance flattened the late game
+// (225 → 686) and met the three balance targets — but calibrated W0=225 to 16 PERFECT words a
+// round. A real 30s human lands ~8-9 words, so casual players died on the EMPTY-stack round 1
+// before ever seeing a draft. This curve starts LOW (W0=80: a casual round clears it), ramps
+// STEEPLY through the draft rounds (g1=1.5: rounds 1-5 = 80→405, so the cards you pick have to
+// carry you by mid-run), and keeps climbing in the endgame (g2=1.3: 1504 by round 10, so a strong
+// player still needs a real stack — no free clears). Calibrated by the skill sweep in
+// claude/run-skill.mjs (attempts 5.4 / 8.6 / 14 / 20 at 93% accuracy) and pinned by
+// src/runMode/wallSkill.test.js: at 8.6 attempts round-1 death ≤25% + mean round ≥2.5; at 20
+// attempts RANDOM wins 10-30% and GREEDY beats RANDOM by ≥5 pts (choice matters). Schedule:
+// 80, 120, 180, 270, 405, 527, 684, 890, 1157, 1504.
+export const WALL = { W0: 80, g1: 1.5, g2: 1.3, KNEE: 5 };
 export function wallAt(round, cfg = WALL) {
   const a = Math.min(round - 1, cfg.KNEE - 1);
   const b = Math.max(0, round - cfg.KNEE);
@@ -112,11 +147,14 @@ export function scoreWord(word, stack, knobs = roundKnobs(stack)) {
 }
 
 // Apply the stack's ROUND-level mods to a round's raw payout. ctx carries
-// { owned: rounds since SNOWBALL drafted, clean: clean rounds so far }.
-export function applyRoundMods(payout, stack, ctx = { owned: 0, clean: 0 }) {
+// { clean: clean (survived) rounds so far } — drives SNOWBALL and MOMENTUM, and (fix/run-deep-
+// pockets) DEEP POCKETS's wall-relative floor: round() receives ctx too, so a round mod can read
+// which round it's standing in (clean+1). Every caller — the hook's endRound + live meter, the
+// sims, expectedRoundPayout/modifierFactor — passes the same { clean } ctx.
+export function applyRoundMods(payout, stack, ctx = { clean: 0 }) {
   let p = payout;
   for (const mod of stack) {
-    if (mod.round) p = mod.round(p);
+    if (mod.round) p = mod.round(p, ctx);
     if (mod.roundIdx) p = mod.roundIdx(p, ctx);
   }
   return Math.round(p);
@@ -131,7 +169,7 @@ export function suddenDeathChance(stack) {
 
 // A fully-simulated round payout (used by the sim AND as the EV factor that scales a
 // real solo round's native score by the drafted modifiers — see useRunMode).
-export function simulateRoundPayout(rnd, stack, ctx = { owned: 0, clean: 0 }, knobs = roundKnobs(stack)) {
+export function simulateRoundPayout(rnd, stack, ctx = { clean: 0 }, knobs = roundKnobs(stack)) {
   const wpr = Math.max(4, Math.round(WORDS_PER_ROUND * knobs.wprMul));
   let combo = knobs.comboStart, payout = 0;
   for (let i = 0; i < wpr; i++) {
@@ -150,7 +188,7 @@ export function simulateRoundPayout(rnd, stack, ctx = { owned: 0, clean: 0 }, kn
 
 // Expected round payout for a stack (deterministic internal seed) — the greedy
 // drafter's ranking signal AND the modifier EV factor applied to real rounds.
-export function expectedRoundPayout(stack, ctx = { owned: 0, clean: 0 }) {
+export function expectedRoundPayout(stack, ctx = { clean: 0 }) {
   let s = 0; const N = 60; const r = mulberry32(4242);
   for (let i = 0; i < N; i++) s += simulateRoundPayout(r, stack, ctx);
   return s / N;
@@ -159,7 +197,7 @@ export function expectedRoundPayout(stack, ctx = { owned: 0, clean: 0 }) {
 // The modifier EV FACTOR: how a stack scales a round's score vs. an empty stack.
 // Lets a REAL solo round (played on the shipped scoring) inherit the drafted
 // modifiers as a single, sim-consistent multiplier on its native score.
-export function modifierFactor(stack, ctx = { owned: 0, clean: 0 }) {
+export function modifierFactor(stack, ctx = { clean: 0 }) {
   const base = expectedRoundPayout([], ctx);
   if (base <= 0) return 1;
   return expectedRoundPayout(stack, ctx) / base;
