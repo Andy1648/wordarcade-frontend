@@ -25,7 +25,7 @@ Branches under test (what each owns):
 - **fix/return-bonus** — the "welcome back" reward card + streak.
 - **feat/endgame** — unlock ladder, menu XP bar, shop endgame items.
 
-Preview URL: PENDING-DEPLOY  _(integration/run-stack-2 — filled in after the push)_
+Preview URL: https://wordarcade-frontend-bs4a0n8bw-beenchilling.vercel.app  _(integration/run-stack-2 @ d47748f — the full 14-branch stack; full gate 1095 e2e pass)_
 
 Console warps you'll use (open DevTools console on the preview, paste, reload):
 - **Warp to LV8 (unlocks RUN):** `localStorage.setItem('taw.xp', JSON.stringify({lv:8,into:0})); location.reload()`
