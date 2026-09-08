@@ -132,7 +132,11 @@ export function useRunMode() {
       lucky: makeLuckyOracle(seed, knobs.luckyOdds),
       constraint: roundMode.key === 'fuse' ? frag.next() : null,
       lastLetter: null,
+      // The message slot (fix/run-round-screen): text + kind + a monotonically increasing id so
+      // the round screen can re-trigger its fixed-length flash even when the text repeats.
       toast: null,
+      toastKind: null, // 'accept' | 'reject'
+      toastId: 0,
     };
     dispatch({ type: 'startRound' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,13 +182,19 @@ export function useRunMode() {
       rarity: r.band, len: word.length, vowels: countVowels(word),
       rare: RARE_LETTERS.test(word), lucky: !knobs.noLucky && p.lucky.next(), combo: p.combo,
     };
-    p.score += scoreWord(w, stack, knobs);
+    const gained = scoreWord(w, stack, knobs);
+    p.score += gained;
     p.combo = Math.min(knobs.comboMax, p.combo + knobs.comboStep);
     p.words += 1;
     p.used.add(word);
     p.lastLetter = word[word.length - 1];
     if (roundMode.key === 'fuse') p.constraint = p.frag.next(); // next fragment from THIS round's stream
-    p.toast = w.lucky ? 'LUCKY ×5!' : (r.announce ? `${r.band}!` : null);
+    // Every accepted word toasts "WORD +N" (N = this word's scoreWord result), prefixed by the
+    // LUCKY / RARE call-out when one applies. Shown for 600ms in the round screen's fixed slot.
+    const prefix = w.lucky ? 'LUCKY ×5! ' : (r.announce ? `${r.band}! ` : '');
+    p.toast = `${prefix}${word.toUpperCase()} +${Math.round(gained)}`;
+    p.toastKind = 'accept';
+    p.toastId += 1;
     force();
     return { ok: true, lucky: w.lucky, band: r.band };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,4 +239,8 @@ export function useRunMode() {
   };
 }
 
-function fail(p, toast, force) { p.toast = toast; p.combo = 1; force(); return { ok: false, reason: toast }; }
+function fail(p, toast, force) {
+  p.toast = toast; p.toastKind = 'reject'; p.toastId += 1;
+  p.combo = 1; force();
+  return { ok: false, reason: toast };
+}

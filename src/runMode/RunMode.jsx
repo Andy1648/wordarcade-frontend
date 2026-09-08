@@ -20,7 +20,8 @@ export default function RunMode({ onExit }) {
   const run = useRunMode();
 
   return (
-    <div className="run-root">
+    // `is-round` lets the phone layout top-align the live round (see RunMode.css @560px).
+    <div className={`run-root${run.phase === 'round' ? ' is-round' : ''}`}>
       {/* Dressed graffiti-wall backdrop (same as the menu), scoped + static, behind every RUN
           phase so the wide stage around the panel reads as a wall, not a flat-black void. */}
       <PlayBackdrop />
@@ -93,6 +94,24 @@ function RoundScreen({ run }) {
   const inputRef = useRef(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
 
+  // THE MESSAGE SLOT (fix/run-round-screen): one fixed-height line that always exists, so a
+  // reject / "WORD +N" / RARE! toast never shifts the input. Each new toastId flashes the text
+  // for a fixed beat (600ms accepts, 900ms rejects — a rule reads slower than a score) then
+  // empties the slot; the slot's height never changes.
+  const toastId = play ? play.toastId : 0;
+  const [toast, setToast] = useState(null);
+  useEffect(() => {
+    if (!toastId || !play) return undefined;
+    setToast(play.toast);
+    const t = setTimeout(() => setToast(null), play.toastKind === 'reject' ? 900 : 600);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toastId]);
+
+  // m:ss clock (Space Mono, tabular) — "0:28", never "28S": S and 5 are confusable in Bungee.
+  const secs = play ? Math.max(0, play.timeLeft) : 0;
+  const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+
   // THE meter reads the round-ADJUSTED projection (run.projected), the same number the
   // wall is compared against at round end — not the raw typed total.
   const projected = run.projected;
@@ -119,7 +138,7 @@ function RoundScreen({ run }) {
       <RunRail round={run.round} total={run.totalRounds} />
       <div className="run-round-top">
         <div className="run-round-mode"><b>{run.roundMode.label}</b><span>{run.roundMode.rule}</span></div>
-        <div className={`run-clock${play.timeLeft <= 5 ? ' low' : ''}`}>{play.timeLeft}s</div>
+        <div className={`run-clock${play.timeLeft < 6 ? ' low' : ''}`} aria-label={`${secs} seconds left`}>{clock}</div>
       </div>
       <div className="run-score-row">
         <div className={`run-score${met ? ' met' : ''}`}>
@@ -134,21 +153,24 @@ function RoundScreen({ run }) {
         <div className={`run-clear-burst${burst ? ' playing' : ''}`} aria-hidden={!burst}
           onAnimationEnd={() => setBurst(false)}>CLEARED!</div>
       </div>
+      {/* The note only speaks when it has something the bar doesn't already say (the bar's WALL
+          label covers "score vs wall"). Fixed min-height keeps it a stable slot either way. */}
       <div className="run-meter-note">
         {boosted
           ? <>TYPED <b>{rawTyped.toLocaleString()}</b> · MODIFIERS → <b>{projected.toLocaleString()}</b></>
-          : (met ? 'WALL CLEARED — KEEP PADDING YOUR LEAD' : 'ROUND-ADJUSTED SCORE vs WALL')}
+          : (met ? 'WALL CLEARED — KEEP PADDING YOUR LEAD' : '')}
       </div>
-      {play.toast && <div className="run-toast">{play.toast}</div>}
-      {run.roundMode.key === 'fuse' && play.constraint && (
-        <div className="run-frag">CONTAINS <b>{play.constraint.toUpperCase()}</b></div>
-      )}
-      {run.roundMode.key === 'chain' && play.lastLetter && (
-        <div className="run-frag">START WITH <b>{play.lastLetter.toUpperCase()}</b></div>
-      )}
-      {run.roundMode.key === 'long' && (
-        <div className="run-frag"><b>6+</b> LETTERS</div>
-      )}
+      {/* THE CONSTRAINT IS THE HERO: the fragment / letter / length rule in big yellow Bungee.
+          CHAIN before the first word has no letter yet — the slot still renders (stable layout). */}
+      <div className="run-frag" aria-live="polite">
+        {run.roundMode.key === 'fuse' && play.constraint && <>CONTAINS <b>{play.constraint.toUpperCase()}</b></>}
+        {run.roundMode.key === 'chain' && (play.lastLetter
+          ? <>START WITH <b>{play.lastLetter.toUpperCase()}</b></>
+          : <>START WITH <b>ANY</b></>)}
+        {run.roundMode.key === 'long' && <><b>6+</b> LETTERS</>}
+      </div>
+      {/* The fixed message slot — always present, empty when silent (see the effect above). */}
+      <div className={`run-toast${toast ? (play.toastKind === 'reject' ? ' reject' : ' accept') : ''}`} aria-live="assertive">{toast || ''}</div>
       <form onSubmit={onSubmit} className="run-input-wrap">
         <input ref={inputRef} className="run-input" value={val} onChange={(e) => setVal(e.target.value)}
           placeholder="TYPE A WORD" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck="false" />
