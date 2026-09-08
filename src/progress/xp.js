@@ -22,6 +22,7 @@ export const XP_MULTIPLIERS = {
   'sat-rush': 3,
   chain: 4,
   fuse: 5,
+  run: 3, // THE RUN (fix/run-payout): ×3 so one free run of ~12 six-letter words lands LV8 (its own gate)
 };
 
 // round10 — snap to the nearest multiple of 10, HALF-TO-EVEN. Half-to-even (not JS's

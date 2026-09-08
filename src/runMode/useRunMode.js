@@ -13,6 +13,8 @@ import { markFreeRunUsed } from './runGate.js';
 import { loadSoloWords, loadSoloAcceptExt } from '../solo/words.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { makeLuckyOracle, randomSeed, mulberry32 } from '../progress/luck.js';
+import { awardWordXp } from '../progress/xp.js';
+import { bankRunWins } from '../progress/wins.js';
 
 export const ROUND_SECONDS = 30;
 // Dev-only: ?rs=N shortens the round clock for screenshots / manual play. Clamped 2–60;
@@ -64,7 +66,8 @@ const initial = (seed) => {
   };
 };
 
-function reducer(s, a) {
+// Exported for the unit tests (runPayout.test.js) — the hook is the only live caller.
+export function runReducer(s, a) {
   switch (a.type) {
     case 'ready': return { ...s, phase: 'wall', words: a.words };
     case 'startRound': return { ...s, phase: 'round' };
@@ -89,8 +92,16 @@ function reducer(s, a) {
   }
 }
 
+// The wins a finished run pays — ONE pure function shared by the render (the "+N WINS" line)
+// and the bank (bankRunWins), so the number banked is by construction the number shown.
+// 0 until the run is over.
+export function runWinsEarned(s) {
+  if (!s || s.phase !== 'over') return 0;
+  return runWinsPayout(s.cumulative, s.reason === 'cleared' ? RUN_ROUNDS : s.round);
+}
+
 export function useRunMode() {
-  const [state, dispatch] = useReducer(reducer, undefined, () => initial(randomSeed()));
+  const [state, dispatch] = useReducer(runReducer, undefined, () => initial(randomSeed()));
   const stack = state.stackIds.map((id) => MODIFIER_BY_ID[id]);
 
   // Load word + rarity data once (both are cached module-side).
@@ -179,6 +190,9 @@ export function useRunMode() {
     p.lastLetter = word[word.length - 1];
     if (roundMode.key === 'fuse') p.constraint = pickFragment(p.lucky.next() ? mulberry32(p.words * 7919) : mulberry32(p.words * 104729));
     p.toast = w.lucky ? 'LUCKY ×5!' : (r.announce ? `${r.band}!` : null);
+    // fix/run-payout: every accepted word levels you, like every other mode (XP_MULTIPLIERS.run).
+    // The run's wins are settled once at run end (see the 'over' effect), so no weight here.
+    awardWordXp({ mode: 'run', wordLength: word.length });
     force();
     return { ok: true, lucky: w.lucky, band: r.band };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,9 +200,18 @@ export function useRunMode() {
 
   const pick = useCallback((id) => dispatch({ type: 'pick', id }), []);
 
-  const winsEarned = state.phase === 'over'
-    ? runWinsPayout(state.cumulative, state.reason === 'cleared' ? RUN_ROUNDS : state.round)
-    : 0;
+  const winsEarned = runWinsEarned(state);
+
+  // fix/run-payout: BANK the run's wins exactly once, on the transition into 'over'. The
+  // over screen used to render "+N WINS" that no one ever credited — the menu stayed at 0.
+  // A ref (not state) guards the once-per-run invariant so a re-render / StrictMode
+  // double-effect can't double-pay; the phase never leaves 'over' (a new run remounts).
+  const bankedRef = useRef(false);
+  useEffect(() => {
+    if (state.phase !== 'over' || bankedRef.current) return;
+    bankedRef.current = true;
+    bankRunWins(winsEarned);
+  }, [state.phase, winsEarned]);
 
   // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's flat
   // +150, MOMENTUM's ×N, SHORT FUSE ×1.5, GLASS CANNON ×2.5…) are applied to the raw
