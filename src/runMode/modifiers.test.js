@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MODIFIER_BY_ID, roundKnobs, scoreWord, applyRoundMods, suddenDeathChance,
-  PER_WORD_CAP, BASE_WIN_PER_WORD, WORDS_PER_ROUND,
+  PER_WORD_CAP, BASE_WIN_PER_WORD, WORDS_PER_ROUND, wallAt,
 } from './engine.js';
 import { makeLuckyOracle, LUCKY_ODDS } from '../progress/luck.js';
 
@@ -166,13 +166,23 @@ test('COMBO KING: comboStep 0.2, comboMax 2.4 (and the cap is reachable)', () =>
   assert.ok(k.comboStart + k.comboStep * (WORDS_PER_ROUND - 1) >= k.comboMax);
 });
 
-// 16. DEEP POCKETS — "+120 flat wins per round, but every word ×0.85"
-// fix/run-deck-2: was a boring flat +60 with NO downside. Now two-sided — a floor-raiser that
-// caps the ceiling: the +120 flat lifts low rounds the most, the ×0.85 per word trims the
-// high rounds (break-even ~800 raw). Real upside AND real cost.
-test('DEEP POCKETS: +120 flat per round and a ×0.85 per-word ceiling cost', () => {
-  assert.equal(applyRoundMods(1000, [id('deep-pockets')]), 1120); // +120 round-level
-  assert.ok(near(wordRatio(id('deep-pockets'), W()), 0.85));      // ×0.85 every word
+// 16. DEEP POCKETS — "Free wins worth 30% of the wall (max 60) every round, but every word ×0.85"
+// fix/run-deck-2: was a boring flat +60 with NO downside. Two-sided since: a floor-raiser that
+// caps the ceiling. fix/run-deep-pockets: the flat +120 (tuned for the old 225 wall) cleared
+// round 2 (wall 120) BY ITSELF on the fix/run-wall-2 curve — the free wins now scale with the
+// wall of the round you're in (30% of wallAt(clean+1), read via the ctx applyRoundMods passes
+// into round()), capped at 60 so the floor fades against the endgame walls (an uncapped fraction
+// erased the GREEDY−RANDOM draft gap — see engine.js). Real upside AND real cost, early.
+test('DEEP POCKETS: free wins = 30% of the current wall capped at 60, and a ×0.85 per-word cost', () => {
+  const dp = id('deep-pockets');
+  assert.equal(dp.text, 'Free wins worth 30% of the wall (max 60) every round, but every word ×0.85');
+  assert.equal(applyRoundMods(1000, [dp], { clean: 0 }), 1000 + Math.round(0.3 * wallAt(1))); // round 1: +24
+  assert.equal(applyRoundMods(1000, [dp], { clean: 1 }), 1000 + Math.round(0.3 * wallAt(2))); // round 2: +36
+  assert.equal(applyRoundMods(1000, [dp], { clean: 2 }), 1000 + Math.round(0.3 * wallAt(3))); // round 3: +54
+  assert.equal(applyRoundMods(1000, [dp], { clean: 3 }), 1060);  // round 4: 0.3·270=81 → max 60
+  assert.equal(applyRoundMods(1000, [dp], { clean: 9 }), 1060);  // round 10: still 60
+  assert.ok(applyRoundMods(0, [dp], { clean: 1 }) < wallAt(2), 'never clears a wall on its own');
+  assert.ok(near(wordRatio(dp, W()), 0.85)); // ×0.85 every word
 });
 
 // 17. SCRABBLE BAG — "J/Q/X/Z words ×4, but every other word ×0.9"

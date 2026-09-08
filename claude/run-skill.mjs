@@ -223,8 +223,79 @@ export function sweep({ attemptsList = DEFAULT_SWEEP, accuracy = DEFAULT_ACCURAC
   return attemptsList.map((attempts) => ({ attempts, ...simulate({ attempts, accuracy, N, seed }) }));
 }
 
+// ---------------- DRAFT-1 AUDIT (fix/run-deep-pockets) ----------------
+// The first draft happens after round 1; the card you take is the ONLY modifier through rounds
+// 2 and 3. So: for each card ALONE (plus the empty stack), play round 2 at the wall with
+// ctx {clean:1}, and if it clears, round 3 with ctx {clean:2} — honouring sudden death — and
+// report P(clear R2) and P(reach R4) plus each card's delta vs the empty stack. This is the
+// lens that caught DEEP POCKETS's flat +120 clearing round 2 (wall 120) by itself, and it pins
+// that no single card is an auto-clear (Δ ≤ +45) or a trap (Δ ≥ −10). Seeds are paired across
+// cards (run i uses seed+i for every card).
+export const DRAFT1_ROUNDS = [{ round: 2, clean: 1 }, { round: 3, clean: 2 }];
+
+function playRoundAtWall(rng, stack, round, clean, skill) {
+  const knobs = roundKnobs(stack);
+  const mode = ROUND_MODES[Math.floor(rng() * ROUND_MODES.length)];
+  const score = playRound(rng, stack, knobs, { owned: 0, clean }, mode, skill);
+  const sd = suddenDeathChance(stack);
+  const fumbled = sd > 0 && rng() < sd;
+  return !fumbled && score >= wallAt(round);
+}
+
+export function draft1Audit({ attempts = 8.6, accuracy = DEFAULT_ACCURACY, N = 4000, seed = 777 } = {}) {
+  const skill = makeSkill(attempts, accuracy);
+  const cards = [{ id: '(empty)', stack: [] }, ...MODIFIERS.map((m) => ({ id: m.id, stack: [m] }))];
+  const rows = cards.map(({ id, stack }) => {
+    let r2 = 0, r4 = 0;
+    for (let i = 0; i < N; i++) {
+      const rng = mulberry32((seed + i) >>> 0);
+      if (!playRoundAtWall(rng, stack, DRAFT1_ROUNDS[0].round, DRAFT1_ROUNDS[0].clean, skill)) continue;
+      r2++;
+      if (playRoundAtWall(rng, stack, DRAFT1_ROUNDS[1].round, DRAFT1_ROUNDS[1].clean, skill)) r4++;
+    }
+    return { id, clearR2: 100 * r2 / N, reachR4: 100 * r4 / N };
+  });
+  const empty = rows[0];
+  for (const r of rows) {
+    r.dClearR2 = r.clearR2 - empty.clearR2;
+    r.dReachR4 = r.reachR4 - empty.reachR4;
+  }
+  const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
+  return { attempts, accuracy, N, seed, wall: wallSchedule(), empty, rows, byId };
+}
+
+function printDraft1Audit(a) {
+  const f = (x) => x.toFixed(1).padStart(6);
+  const d = (x) => ((x >= 0 ? '+' : '') + x.toFixed(1)).padStart(6);
+  console.log(`\n=== DRAFT-1 AUDIT (fix/run-deep-pockets) ===`);
+  console.log(`each card ALONE after the first draft: round 2 @ wall ${wallAt(2)} (clean 1) → round 3 @ wall ${wallAt(3)} (clean 2)`);
+  console.log(`attempts=${a.attempts} accuracy=${a.accuracy} N=${a.N} seed=${a.seed}\n`);
+  console.log(`  card             P(clear R2)   Δ      P(reach R4)   Δ`);
+  const sorted = [a.empty, ...a.rows.slice(1).sort((x, y) => y.dReachR4 - x.dReachR4)];
+  for (const r of sorted) {
+    console.log(`  ${r.id.padEnd(15)} ${f(r.clearR2)}%  ${r.id === '(empty)' ? '      ' : d(r.dClearR2)}   ${f(r.reachR4)}%  ${r.id === '(empty)' ? '      ' : d(r.dReachR4)}`);
+  }
+  const dp = a.byId['deep-pockets'];
+  const others = a.rows.slice(1);
+  const max = others.reduce((m, r) => (r.dReachR4 > m.dReachR4 ? r : m), others[0]);
+  const min = others.reduce((m, r) => (r.dReachR4 < m.dReachR4 ? r : m), others[0]);
+  console.log(`\n  acceptance (src/runMode/draft1.test.js @ 8.6 / N=4000 / seed 777):`);
+  console.log(`    deep-pockets Δ(reach R4) ${dp.dReachR4.toFixed(1)} in [+8, +25]  -> ${dp.dReachR4 >= 8 && dp.dReachR4 <= 25 ? 'PASS' : 'FAIL'}`);
+  console.log(`    max Δ ${max.id} ${max.dReachR4.toFixed(1)} <= +45          -> ${max.dReachR4 <= 45 ? 'PASS' : 'FAIL'}`);
+  console.log(`    min Δ ${min.id} ${min.dReachR4.toFixed(1)} >= -10          -> ${min.dReachR4 >= -10 ? 'PASS' : 'FAIL'}`);
+  console.log('');
+}
+
 // ---------------- CLI ----------------
+//   node claude/run-skill.mjs [N] [seed]          — the skill sweep
+//   node claude/run-skill.mjs audit [N] [seed]    — the draft-1 audit (defaults 4000 / 777, 8.6 attempts)
 function main() {
+  if (process.argv[2] === 'audit') {
+    const N = parseInt(process.argv[3], 10) || 4000;
+    const seed = parseInt(process.argv[4], 10) || 777;
+    printDraft1Audit(draft1Audit({ attempts: 8.6, N, seed }));
+    return;
+  }
   const N = parseInt(process.argv[2], 10) || DEFAULT_N;
   const seed = parseInt(process.argv[3], 10) || DEFAULT_SEED;
   const pct = (x) => x.toFixed(1).padStart(5) + '%';

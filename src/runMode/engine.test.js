@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   MODIFIERS, MODIFIER_BY_ID, RARITY, wallAt, wallSchedule, WALL,
   roundKnobs, scoreWord, applyRoundMods, suddenDeathChance, dealOffers,
-  modifierFactor, runWinsPayout, RUN_ROUNDS,
+  modifierFactor, runWinsPayout, RUN_ROUNDS, deepPocketsBonus,
 } from './engine.js';
 
 test('reuses the shipped rarity bands (COMMON 1.0 … OBSCURE 4.0)', () => {
@@ -40,9 +40,21 @@ test('all 18 modifiers are well-formed and every one carries a downside', () => 
   assert.equal(MODIFIERS.filter((m) => !m.down).length, 0);
 });
 
-test('round-level modifiers transform payout exactly (DEEP POCKETS +120, GLASS CANNON ×1.55)', () => {
+test('round-level modifiers transform payout exactly (DEEP POCKETS 30% of the wall ≤60, GLASS CANNON ×1.55)', () => {
   const dp = [MODIFIER_BY_ID['deep-pockets']];
-  assert.equal(applyRoundMods(1000, dp), 1120); // fix/run-deck-2: +60 → +120 (+ a ×0.85 word cost, not a round mod)
+  // fix/run-deep-pockets: the flat +120 (tuned for the old 225 wall) cleared round 2 (wall 120) by
+  // itself on the fix/run-wall-2 curve. Now +min(60, round(0.3 · wallAt(clean+1))) — a fraction of
+  // the CURRENT wall (read through the ctx applyRoundMods passes into round()), capped so it fades
+  // against the endgame walls. (The ×0.85 word cost is a word mod.)
+  assert.equal(deepPocketsBonus(1), 24);
+  assert.equal(deepPocketsBonus(2), 36);
+  assert.equal(deepPocketsBonus(3), 54);
+  assert.equal(deepPocketsBonus(4), 60); // 0.3·270=81 → capped
+  assert.equal(deepPocketsBonus(10), 60);
+  assert.equal(applyRoundMods(1000, dp), 1024);               // default ctx → round 1
+  assert.equal(applyRoundMods(1000, dp, { clean: 1 }), 1036); // round 2
+  assert.equal(applyRoundMods(1000, dp, { clean: 4 }), 1060); // round 5 (capped)
+  assert.ok(applyRoundMods(0, dp, { clean: 1 }) < wallAt(2), 'DEEP POCKETS alone must not clear round 2');
   const gc = [MODIFIER_BY_ID['glass-cannon']];
   assert.equal(applyRoundMods(1000, gc), 1550); // fix/run-balance: ×2.5 → ×1.55
   assert.ok(suddenDeathChance(gc) > 0 && suddenDeathChance([]) === 0);
@@ -58,9 +70,9 @@ test('the live meter contract: round-adjusted projection == what the wall is com
   const stack = [MODIFIER_BY_ID['deep-pockets'], MODIFIER_BY_ID['momentum']];
   const ctx = { clean };
   const projected = applyRoundMods(raw, stack, ctx);
-  // Order-dependent per stack order: deep-pockets runs first (+120 → 624), then MOMENTUM
-  // ×min(1.35, 1+0.18·clean) = ×1.35 → 842 (fix/run-deck-2 values). (The ×0.85 / ×0.9 word
-  // costs are per-word mods, so they never touch this round-level projection.)
+  // Order-dependent per stack order: deep-pockets runs first (+min(60, 0.3·wallAt(6)) = +60 →
+  // 564), then MOMENTUM ×min(1.35, 1+0.18·clean) = ×1.35 → 761. (The ×0.85 / ×0.9 word costs
+  // are per-word mods, so they never touch this round-level projection.)
   assert.equal(projected, applyRoundMods(raw, stack, ctx)); // deterministic
   assert.ok(projected > raw, 'round-level modifiers must lift the projection above raw typed');
   // A word-only stack leaves the projection equal to the raw total (rounded).

@@ -190,8 +190,8 @@ export function useRunMode() {
     ? runWinsPayout(state.cumulative, state.reason === 'cleared' ? RUN_ROUNDS : state.round)
     : 0;
 
-  // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's flat
-  // +150, MOMENTUM's ×N, SHORT FUSE ×1.5, GLASS CANNON ×2.5…) are applied to the raw
+  // THE TRUE LIVE STANDING vs the wall. The round-level modifiers (DEEP POCKETS's 30% of the
+  // wall (≤60), MOMENTUM's ×N, SHORT FUSE ×1.7, GLASS CANNON ×1.55…) are applied to the raw
   // per-word sum at round end — so the meter MUST show the same round-adjusted number the
   // wall is actually compared against, not the raw typed total. The ctx here is byte-for-
   // byte the one endRound uses ({ clean }), so the displayed gap is the real gap.

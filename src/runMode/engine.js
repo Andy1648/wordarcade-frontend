@@ -31,12 +31,21 @@ const RARITY_MIX = [['COMMON', 0.68], ['UNCOMMON', 0.22], ['RARE', 0.08], ['OBSC
 // ---- THE 18 MODIFIERS — all two-sided (`down:true`), each carries a real cost. ----
 // fix/run-deck-2: DEEP POCKETS (was flat +60, no cost) and SCRABBLE BAG (was free ×2.6 on
 // J/Q/X/Z) — the last two boring pure-upside cards flagged by the audit — were given genuine
-// trade-offs: DEEP POCKETS is now a floor-raiser that caps the ceiling (+120 flat, but ×0.85
-// every word → break-even ~800 raw), SCRABBLE BAG a rare-letter build-around (×4 on J/Q/X/Z
-// but ×0.9 on the other ~92%, anti-synergy with VOWEL MOVEMENT). MOMENTUM was already two-
-// sided on fix/run-balance. All 18 cards now down:true.
+// trade-offs: DEEP POCKETS is now a floor-raiser that caps the ceiling (free wins worth 60% of
+// the current wall, but ×0.85 every word), SCRABBLE BAG a rare-letter build-around (×4 on
+// J/Q/X/Z but ×0.9 on the other ~92%, anti-synergy with VOWEL MOVEMENT). MOMENTUM was already
+// two-sided on fix/run-balance. All 18 cards now down:true.
+// fix/run-deep-pockets: DEEP POCKETS's flat "+120" was tuned for the old 225 wall — on the
+// fix/run-wall-2 curve (80, 120, 180 …) it cleared round 2 BY ITSELF. It now scales with the
+// wall, CAPPED: +min(60, round(0.3 · wallAt(clean+1))) — 24 / 36 / 54 through the draft-1
+// rounds, then 60 flat. The cap is load-bearing: an UNCAPPED fraction of the wall is a permanent
+// discount on every wall, and the draft-1 audit + skill sweep (claude/run-skill.mjs) showed no
+// fraction satisfies both acceptance sets — ≥0.25 puts DEEP POCKETS in the casual [+8,+25]
+// reach-R4 band but erodes GREEDY−RANDOM at 20 attempts below 5 pts (0.6 → Δ+65, in 82-100% of
+// winners, RANDOM 35%); ≤0.20 keeps the draft gap but the card stops mattering (Δ+3.5). Capped,
+// it's a real early floor (Δ+14) that fades to noise against the 890-1504 endgame walls.
 // word(w,m): per-word mult transform.  knob(k): mutate round knobs.
-// round(p): per-round payout transform.  roundIdx(p,ctx): indexed round transform.
+// round(p,ctx): per-round payout transform (ctx = { clean }).  roundIdx(p,ctx): indexed round transform.
 // suddenDeath: per-round probability the run ends regardless of score.
 export const MODIFIERS = [
   { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×1.8, but ≤2 vowels ×0.72', down: true,
@@ -69,8 +78,9 @@ export const MODIFIERS = [
     word: (w, m) => (w.rarity === 'OBSCURE' ? m * 8 : (w.rarity === 'RARE' ? m * 3 : (w.rarity === 'COMMON' ? m * 0.85 : m))) },
   { id: 'combo-king', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
     knob: (k) => { k.comboStep = 0.2; k.comboMax = Math.min(k.comboMax, 2.4); } },
-  { id: 'deep-pockets', name: 'DEEP POCKETS', text: '+120 flat wins per round, but every word ×0.85', down: true,
-    word: (w, m) => m * 0.85, round: (p) => p + 120 },
+  { id: 'deep-pockets', name: 'DEEP POCKETS', text: 'Free wins worth 30% of the wall (max 60) every round, but every word ×0.85', down: true,
+    // wallAt is a hoisted function declaration below; round() only runs at play time.
+    word: (w, m) => m * 0.85, round: (p, c) => p + deepPocketsBonus((c?.clean || 0) + 1) },
   { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'J/Q/X/Z words ×4, but every other word ×0.9', down: true,
     word: (w, m) => (w.rare ? m * 4 : m * 0.9) },
   { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9', down: true,
@@ -78,6 +88,14 @@ export const MODIFIERS = [
 ];
 
 export const MODIFIER_BY_ID = MODIFIERS.reduce((m, x) => ((m[x.id] = x), m), {});
+
+// DEEP POCKETS's free wins for a given round: 30% of that round's wall, capped at 60 (see the
+// deck comment above for why the cap exists). Exported so the tests pin the same numbers.
+export const DEEP_POCKETS_FRAC = 0.3;
+export const DEEP_POCKETS_CAP = 60;
+export function deepPocketsBonus(round) {
+  return Math.min(DEEP_POCKETS_CAP, Math.round(DEEP_POCKETS_FRAC * wallAt(round)));
+}
 
 // ---- the ANTE WALL — RETUNED FOR REAL SKILL on fix/run-wall-2 (claude/run-skill.mjs) ----
 // wall(r)=W0·g1^min(r-1,KNEE-1)·g2^max(0,r-KNEE).
@@ -129,11 +147,14 @@ export function scoreWord(word, stack, knobs = roundKnobs(stack)) {
 }
 
 // Apply the stack's ROUND-level mods to a round's raw payout. ctx carries
-// { clean: clean (survived) rounds so far } — drives SNOWBALL and MOMENTUM.
+// { clean: clean (survived) rounds so far } — drives SNOWBALL and MOMENTUM, and (fix/run-deep-
+// pockets) DEEP POCKETS's wall-relative floor: round() receives ctx too, so a round mod can read
+// which round it's standing in (clean+1). Every caller — the hook's endRound + live meter, the
+// sims, expectedRoundPayout/modifierFactor — passes the same { clean } ctx.
 export function applyRoundMods(payout, stack, ctx = { clean: 0 }) {
   let p = payout;
   for (const mod of stack) {
-    if (mod.round) p = mod.round(p);
+    if (mod.round) p = mod.round(p, ctx);
     if (mod.roundIdx) p = mod.roundIdx(p, ctx);
   }
   return Math.round(p);
