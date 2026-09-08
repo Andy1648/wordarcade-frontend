@@ -79,18 +79,21 @@ export const MODIFIERS = [
 
 export const MODIFIER_BY_ID = MODIFIERS.reduce((m, x) => ((m[x.id] = x), m), {});
 
-// ---- the ANTE WALL — REBALANCED on fix/run-balance (claude/run-balance.mjs) ----
+// ---- the ANTE WALL — RETUNED FOR REAL SKILL on fix/run-wall-2 (claude/run-skill.mjs) ----
 // wall(r)=W0·g1^min(r-1,KNEE-1)·g2^max(0,r-KNEE).
-// The old curve (g1=1.3, g2=1.8) was a ~1.8×/round exponential (12143 by round 10) that
-// ONLY compounding round-multipliers (MOMENTUM/GLASS CANNON) could keep pace with — so the
-// draft collapsed to "grab the compounders" and one strategy strictly won. This curve FLATTENS
-// the late game (g2=1.08): rounds 1-5 ramp at 1.2× (the real filter — mid-game deaths peak at
-// round 5), then the wall nearly plateaus (467→686 over rounds 6-10) so per-word / flat /
-// defensive stacks can clear the endgame too. W0 is pinned ~225 by the round-1 EMPTY-stack
-// round (raising it mass-kills round 1). Verified at N=2000×4 seeds: no strategy >35%, no
-// modifier in >60% of winners, GREEDY/BALANCED within ~1pt. Schedule:
-// 225, 270, 324, 389, 467, 504, 544, 588, 635, 686.
-export const WALL = { W0: 225, g1: 1.2, g2: 1.08, KNEE: 5 };
+// History: the original (g1=1.3, g2=1.8) was a ~1.8×/round exponential only compounding
+// multipliers could clear (the draft was solved). fix/run-balance flattened the late game
+// (225 → 686) and met the three balance targets — but calibrated W0=225 to 16 PERFECT words a
+// round. A real 30s human lands ~8-9 words, so casual players died on the EMPTY-stack round 1
+// before ever seeing a draft. This curve starts LOW (W0=80: a casual round clears it), ramps
+// STEEPLY through the draft rounds (g1=1.5: rounds 1-5 = 80→405, so the cards you pick have to
+// carry you by mid-run), and keeps climbing in the endgame (g2=1.3: 1504 by round 10, so a strong
+// player still needs a real stack — no free clears). Calibrated by the skill sweep in
+// claude/run-skill.mjs (attempts 5.4 / 8.6 / 14 / 20 at 93% accuracy) and pinned by
+// src/runMode/wallSkill.test.js: at 8.6 attempts round-1 death ≤25% + mean round ≥2.5; at 20
+// attempts RANDOM wins 10-30% and GREEDY beats RANDOM by ≥5 pts (choice matters). Schedule:
+// 80, 120, 180, 270, 405, 527, 684, 890, 1157, 1504.
+export const WALL = { W0: 80, g1: 1.5, g2: 1.3, KNEE: 5 };
 export function wallAt(round, cfg = WALL) {
   const a = Math.min(round - 1, cfg.KNEE - 1);
   const b = Math.max(0, round - cfg.KNEE);

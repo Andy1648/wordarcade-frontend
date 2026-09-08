@@ -13,18 +13,18 @@ test('reuses the shipped rarity bands (COMMON 1.0 … OBSCURE 4.0)', () => {
   assert.equal(RARITY.OBSCURE, 4.0);
 });
 
-test('the wall is strictly increasing and its late growth is FLATTENED (fix/run-balance)', () => {
+test('the wall starts LOW, ramps steeply through the draft rounds, eases after the knee (fix/run-wall-2)', () => {
   const s = wallSchedule();
   assert.equal(s.length, RUN_ROUNDS);
   for (let i = 1; i < s.length; i++) assert.ok(s[i] > s[i - 1], `wall must climb at round ${i + 1}`);
   assert.equal(s[0], WALL.W0); // round 1 == W0
-  assert.equal(wallAt(1), 225);
-  // REBALANCE (fix/run-balance): the OLD curve accelerated at the knee (g2=1.8 > g1=1.3), an
-  // exponential only compounding multipliers could clear → the draft was solved. The new curve
-  // FLATTENS the late game (g2=1.08 < g1=1.2), so the R5→R6 jump is now SMALLER than R4→R5 and
-  // per-word / flat / defensive stacks can clear the endgame. Full schedule pinned below.
+  // fix/run-wall-2: W0 80 — a casual (~8-9 word) EMPTY-stack round 1 clears it, so players reach a
+  // draft before they can die. (fix/run-balance's 225 was calibrated to 16 perfect words.)
+  assert.equal(wallAt(1), 80);
+  // The ramp is steepest through the draft rounds (g1=1.5) and eases after the knee (g2=1.3 < g1):
+  // the R5→R6 jump is SMALLER than R4→R5, but the endgame still climbs to 1504 — no free clears.
   assert.ok((wallAt(6) / wallAt(5)) < (wallAt(5) / wallAt(4)));
-  assert.deepEqual(s, [225, 270, 324, 389, 467, 504, 544, 588, 635, 686]);
+  assert.deepEqual(s, [80, 120, 180, 270, 405, 527, 684, 890, 1157, 1504]);
 });
 
 test('all 18 modifiers are well-formed and every one carries a downside', () => {
