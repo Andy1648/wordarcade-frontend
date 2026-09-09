@@ -36,7 +36,7 @@ test('a short Enter tap does NOT buy (respects the hold)', async ({ page }) => {
   await page.waitForTimeout(60);
   await page.keyboard.up('Enter');
   await page.waitForTimeout(300);
-  await expect(page.locator('.shop-reveal')).toHaveCount(0);
+  await expect(page.locator('.sticker')).toHaveCount(0);
   await expect(keyPowerHeading(page)).toContainText('TIER 0');
 });
 
@@ -48,8 +48,8 @@ test('Enter HELD for the hold duration buys KEY POWER — keyboard only, no mous
   // Hold Enter past the 400ms hold → commit → reveal banner names the KEY POWER unlock.
   await page.keyboard.down('Enter');
   await page.waitForTimeout(560);
-  await expect(page.locator('.shop-reveal')).toBeVisible();
-  await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER I UNLOCKED');
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
   await page.keyboard.up('Enter');
   // The purchase actually landed: KEY POWER advanced to TIER 1.
   await expect(keyPowerHeading(page)).toContainText('TIER 1');
@@ -62,8 +62,8 @@ test('Space HELD also buys via the keyboard', async ({ page }) => {
   await btn.focus();
   await page.keyboard.down('Space');
   await page.waitForTimeout(560);
-  await expect(page.locator('.shop-reveal')).toBeVisible();
-  await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER II UNLOCKED');
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER II');
   await page.keyboard.up('Space');
   await expect(keyPowerHeading(page)).toContainText('TIER 2');
 });

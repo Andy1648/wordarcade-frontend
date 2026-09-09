@@ -51,7 +51,7 @@ test('§2 hold-to-buy commits after the hold and reveals; releasing early cancel
   await page.waitForTimeout(40);
   await page.mouse.up();
   await page.waitForTimeout(250);
-  await expect(page.locator('.shop-reveal')).toHaveCount(0);
+  await expect(page.locator('.sticker')).toHaveCount(0);
   // KEY POWER tier unchanged after the early release. The THEMES section now renders above KEY POWER,
   // so .shop-subtitle.first() is "THEMES …" — scope to the KEY POWER heading specifically.
   await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 0');
@@ -63,8 +63,11 @@ test('§2 hold-to-buy commits after the hold and reveals; releasing early cancel
   await holdBtn.hover();
   await page.mouse.down();
   await page.waitForTimeout(520);
-  await expect(page.locator('.shop-reveal')).toBeVisible();
-  await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER I UNLOCKED');
+  // feat/shop-reveal-sticker: the reveal is the shared sticker — ribbon "★ UNLOCKED ★" plus the
+  // item's own name, in place of the old one-line banner.
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
+  await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
   await page.mouse.up();
 });
 

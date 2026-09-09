@@ -52,6 +52,10 @@ test.describe('shop', () => {
     await page.mouse.up();
     await expect(page.evaluate(() => Number(localStorage.getItem('taw.wins')))).resolves.toBe(350);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsLifetime')))).toBe(900); // untouched
+    // feat/shop-reveal-sticker: the purchase reveal is a MODAL sticker (its backdrop swallows
+    // clicks), so dismiss it before touching the card underneath.
+    await page.locator('.sticker').click();
+    await expect(page.locator('.sticker')).toHaveCount(0);
     await chrome.locator('.shop-card-btn').click(); // now EQUIP (owned → a plain click button again)
     await expect(chrome.locator('.shop-card-tag')).toHaveText('EQUIPPED');
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
