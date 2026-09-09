@@ -10,9 +10,12 @@ function memStorage() {
 // A clock at a fixed non-11:11 time (2026-09-04 10:05 local) unless overridden.
 function fixedNow(ms) { return () => ms; }
 const T_NORMAL = new Date(2026, 8, 4, 10, 5, 0).getTime();
-function typeWord(det, word, startMs = T_NORMAL) {
+// Types the letters, then signals a typing PAUSE (onIdle) — the word boundary the
+// palindrome secret is judged at. Returns the first hit seen, if any.
+function typeWord(det, word) {
   let hit = null;
   for (const c of word) hit = det.onKey(c) || hit;
+  hit = det.onIdle() || hit;
   return hit;
 }
 
@@ -78,6 +81,39 @@ test('5. PALINDROME (invented) fires BOTH WAYS on a real 5+ palindrome, not on "
   assert.equal(typeWord(det2, 'aaaaa'), null, 'a repeated letter is not a word');
   const det3 = createSecretDetector({ now: fixedNow(T_NORMAL), storage: memStorage() });
   assert.equal(typeWord(det3, 'level').id, 'palindrome');
+});
+
+test('5b. PALINDROME is judged at the WORD BOUNDARY and carries the matched word as detail', () => {
+  // The hit reports the word (uppercased) plus the running found / total.
+  const det = createSecretDetector({ now: fixedNow(T_NORMAL), storage: memStorage() });
+  const hit = typeWord(det, 'racecar');
+  assert.equal(hit.id, 'palindrome');
+  assert.equal(hit.detail, 'RACECAR');
+  assert.equal(hit.found, 1);
+  assert.equal(hit.total, Object.keys(SECRETS).length);
+
+  // Mid-word it must NOT fire: "aceca" inside "racecar" is a palindrome run, but the
+  // word isn't closed yet (no boundary key, no idle) — the old bug.
+  const det2 = createSecretDetector({ now: fixedNow(T_NORMAL), storage: memStorage() });
+  let early = null;
+  for (const c of 'raceca') early = det2.onKey(c) || early;
+  assert.equal(early, null, 'no hit halfway through the word');
+  assert.equal(det2.onKey('r'), null, 'still no hit on the last letter itself');
+  const closed = det2.onKey(' '); // a non-letter key closes the word
+  assert.equal(closed && closed.id, 'palindrome');
+  assert.equal(closed.detail, 'RACECAR');
+
+  // A modifier key mid-word does NOT close it (capitalised "Racecar" is one word).
+  const det3 = createSecretDetector({ now: fixedNow(T_NORMAL), storage: memStorage() });
+  det3.onKey('Shift');
+  for (const c of 'race') det3.onKey(c);
+  assert.equal(det3.onKey('Shift'), null);
+  for (const c of 'car') det3.onKey(c);
+  assert.equal(det3.onIdle().detail, 'RACECAR');
+
+  // newgrounds carries the magic word as detail too.
+  const det4 = createSecretDetector({ now: fixedNow(T_NORMAL), storage: memStorage() });
+  assert.equal(typeWord(det4, 'newgrounds').detail, 'NEWGROUNDS');
 });
 
 test('found-set persists across detectors (a secret stays found)', () => {
