@@ -222,41 +222,88 @@
   font-weight: 700;
 }
 
-/* OUT tile (CHAIN only) — the last letter of the word being typed. A SIBLING of the
-   input (never an ancestor), so it updates every keystroke without touching the input.
-   NO transition/keyframe: the letter, the dashed state, and the heat bar reflect the
-   engine's current numbers statically (house rule: no idle animation). */
-.solo-out {
+/* ===== SLAB ROW (feat/solo-slabs) ====================================================
+   The hero tiles borrow RUN's draft-card grammar (.run-card): a cream #F0EAD9 face, 4px #000
+   outline, 6px 6px 0 #000 hard shadow, and a slight STATIC tilt. The tilt lives on the
+   WRAPPER (.solo-slab) so any event keyframe on the FACE composes with it instead of
+   overwriting it. Nothing here animates at rest (house rule). The row NEVER wraps: the two
+   CHAIN slabs are sized to share ONE row inside a 320px phone (root inner ≈ 280px).
+   The slabs are SIBLINGS of the input's chain, never ancestors (input purity). */
+.solo-slabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end; /* faces of different heights sit on one baseline, like cards on a table */
+  justify-content: center;
+  gap: 14px;
+  max-width: 100%;
+  padding: 2px 8px 8px; /* room for the tilt + the hard shadow */
+}
+.solo-slab {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex: 0 0 auto;
+  width: min-content; /* the face sets the width; the caption wraps underneath it */
 }
-.solo-out-face {
+.solo-slab-in,
+.solo-slab-frag {
+  transform: rotate(-2deg);
+}
+.solo-slab-out {
+  transform: rotate(2deg);
+}
+.solo-slab-cap {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.1em;
+  color: #b9a7d6;
+  text-align: center;
+}
+.solo-slab-face {
   position: relative;
-  width: 64px;
-  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a0b2e;
+  box-sizing: border-box;
+  background: #f0ead9;
   border: 4px solid #000;
   border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
+  box-shadow: 6px 6px 0 #000;
+}
+/* STARTS WITH — cream slab, Bungee 112px (Bungee keeps I and l distinct). */
+.solo-in-face {
+  font-family: 'Bungee', cursive;
+  font-size: 112px;
+  line-height: 1;
+  min-width: 1.15em;
+  padding: 0.06em 0.14em;
+  color: #0d0618;
+  text-transform: uppercase;
+}
+/* NEXT STARTS WITH — dark face, cream border, Bungee 56px. Its border goes dashed yellow
+   at FEW LEFT (< 35 unused commons) and dashed red at DEAD END (< 3) — both states come
+   from chain.js supply(), the single source of truth. */
+.solo-out-face {
+  min-width: 96px;
+  height: 84px;
+  background: #1a0b2e;
+  border-color: #f0ead9;
   overflow: hidden; /* clips the heat bar to the rounded corners */
 }
-/* FEW LEFT (<35 unused commons) → dashed yellow; DEAD END (<3) → dashed red. */
-.solo-out.is-thin .solo-out-face {
+.solo-slab-out.is-thin .solo-out-face {
   border-style: dashed;
   border-color: #ffe94a;
 }
-.solo-out.is-dead .solo-out-face {
+.solo-slab-out.is-dead .solo-out-face {
   border-style: dashed;
   border-color: #ff4b4b;
 }
 .solo-out-letter {
   font-family: 'Bungee', cursive;
-  font-size: 34px;
+  font-size: 56px;
   line-height: 1;
   color: #fff;
   text-transform: uppercase;
@@ -264,10 +311,10 @@
 .solo-out-letter.is-empty {
   color: #4a3a63;
 }
-.solo-out.is-dead .solo-out-letter:not(.is-empty) {
+.solo-slab-out.is-dead .solo-out-letter:not(.is-empty) {
   color: #ff4b4b;
 }
-/* Heat bar — 4px along the bottom of the tile face. scaleX(0..1) from the left is set
+/* Heat bar — 4px along the bottom of the OUT face. scaleX(0..1) from the left is set
    inline from endCount; #FF6B3D, flipping to #FF4B4B once heat >= 0.36. */
 .solo-out-heat {
   position: absolute;
@@ -282,18 +329,41 @@
 .solo-out-heat.is-hot {
   background: #ff4b4b;
 }
-.solo-out-cap {
+/* Badge line under a face: FEW LEFT / DEAD END on the OUT slab; reserved (empty) on the IN
+   slab so both slabs keep the same footer height and their faces stay level. */
+.solo-slab-badge {
+  font-family: 'Bungee', cursive;
   font-size: 11px;
-  font-weight: 700;
   letter-spacing: 0.08em;
-  min-height: 14px;
+  min-height: 16px;
+  line-height: 16px;
   color: #b9a7d6;
+  white-space: nowrap;
 }
-.solo-out.is-thin .solo-out-cap {
+.solo-slab-out.is-thin .solo-slab-badge {
   color: #ffe94a;
 }
-.solo-out.is-dead .solo-out-cap {
+.solo-slab-out.is-dead .solo-slab-badge {
   color: #ff4b4b;
+}
+/* FUSE — the fragment on a yellow tile inside the cream slab. */
+.solo-frag-face {
+  padding: 12px 14px;
+}
+.solo-frag-tile {
+  display: inline-block;
+  font-family: 'Bungee', cursive;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  color: #0d0618;
+  background: #ffe94a;
+  border: 4px solid #b39b00; /* thick COLORED outline — darker shade of the fill */
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* OUT→IN travel FX layer (CHAIN). Absolutely positioned over the root, non-interactive.
@@ -357,6 +427,35 @@
   letter-spacing: normal;
   /* smaller than the typed text so the (longer) hint always fits inside the padded box */
   font-size: 0.78em;
+}
+/* LAST-LETTER MIRROR (CHAIN) — a SIBLING of the input laid exactly over it (same box,
+   padding, font, size, spacing, transform), typed in TRANSPARENT ink so the real input text
+   shows through; only the last letter's underline paints. pointer-events:none, so every tap
+   and key still lands in the input. The input and its ancestors are untouched. Static. */
+.solo-mirror {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 clamp(14px, 1.6vw, 24px);
+  border: 4px solid transparent;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(20px, 2vw, 34px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: transparent;
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.solo-mirror-last {
+  display: inline-block;
+  line-height: 1;
+  padding-bottom: 1px;
+  border-bottom: 4px solid #2effe0;
 }
 
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
@@ -634,62 +733,83 @@
   gap: 12px;
   width: 100%;
 }
-.solo-chain-trail {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 14px 18px;
-  max-width: 100%;
-}
-.solo-chain-node {
+/* RIBBON (feat/solo-slabs): accepted words as chips joined by 22×6px teal link bars, newest
+   on the RIGHT. The list is row-reverse with newest-first DOM order, so the OLDEST end is
+   the one that overflows (to the left) and gets clipped by the wrap; an empty ribbon renders
+   empty. Static — chips appear on accept, nothing idles. */
+.solo-ribbon-wrap {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+.solo-ribbon {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start; /* = the RIGHT edge in row-reverse */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px 8px 4px; /* slack for the chips' hard shadow */
+}
+.solo-ribbon-seg {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.solo-ribbon-chip {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(15px, 1.6vw, 28px);
+  font-size: clamp(15px, 1.6vw, 24px);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: #fff;
   background: #0d0618;
   border: 3px solid #000;
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
-  padding: 9px 13px;
+  padding: 8px 12px;
 }
-/* faint empty slot — the chain still to build; keeps the trail full-width from word 0 */
-.solo-chain-node.is-ghost {
-  color: #4a3a63;
-  background: transparent;
-  border-style: dashed;
-  border-color: #3a2b52;
-  box-shadow: none;
-  letter-spacing: 0.15em;
-}
-/* the link between chips — a short cyan bar, the chain running left→right */
-.solo-chain-node:not(:first-child)::before {
-  content: '';
-  position: absolute;
-  left: -12px;
-  top: 50%;
-  width: 12px;
-  height: 5px;
-  border-radius: 3px;
-  background: #2effe0;
-  transform: translateY(-50%);
-}
-.solo-chain-node .cx-join {
+.solo-ribbon-chip .cx-last {
   color: #2effe0;
 }
-.solo-chain-node.is-next {
-  background: #1a0b2e;
-  border-style: dashed;
-  border-color: #2effe0;
-  box-shadow: none;
+.solo-ribbon-link {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: #2effe0;
 }
-.solo-chain-blank {
-  color: #6b5a86;
-  margin-left: 3px;
-  letter-spacing: 0.15em;
+/* Left-edge fade — a SIBLING overlay (not a mask, not a gradient): three flat #1a0b2e
+   bands stepping down in opacity (.85 → .5 → .25 effective) over the oldest, clipped end. */
+.solo-ribbon-fade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  background: #1a0b2e;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.solo-ribbon-fade::before,
+.solo-ribbon-fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  background: #1a0b2e;
+}
+.solo-ribbon-fade::before {
+  left: 100%;
+  opacity: 0.6;
+}
+.solo-ribbon-fade::after {
+  left: 200%;
+  opacity: 0.3;
 }
 
 /* ----- FUSE deck: the three lives as burning fuse cords + the big letters strip ------ */

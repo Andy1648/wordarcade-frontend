@@ -196,6 +196,20 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // the 3-word payout gate).
   const winsTally = awardWins({ mode: 'fuse', wordsAccepted: s.wordsSolved });
 
+  // FRAGMENT SLAB (feat/solo-slabs): the same draft-card grammar as CHAIN's STARTS WITH slab —
+  // a cream slab (static tilt on the wrapper) holding the fragment on a yellow tile, in Bungee
+  // so I / l never read alike. Static; the cords + letter strip below are unchanged.
+  const fragSlab = (
+    <div className="solo-slabs">
+      <div className="solo-slab solo-slab-frag">
+        <div className="solo-slab-cap">CONTAINS</div>
+        <div className="solo-slab-face solo-frag-face">
+          <span className="solo-frag-tile">{(s.fragment || '').toUpperCase()}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   const hud = (
     <>
       <div className="solo-stat">
@@ -251,6 +265,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       motif={FUSE_MOTIF}
       supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — fuse ×{s.shortFactor}</span> : null}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
+      slabs={fragSlab}
       deck={fuseDeck}
       input={g.input}
       onInput={g.onInput}

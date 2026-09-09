@@ -224,10 +224,11 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   const required = s.requiredLetter;
   const supply = g.engine.supply(required);
 
-  // OUT tile — the last letter of the word being typed RIGHT NOW (recomputed every
+  // OUT slab — the last letter of the word being typed RIGHT NOW (recomputed every
   // keystroke, since onInput bumps `input` and re-renders this component). Purely a
-  // read of state chain.js already tracks: supply() for the FEW LEFT / DEAD END states
-  // and endCountOf() for the heat bar. No engine mutation, no input animation.
+  // read of state chain.js already tracks: supply() (the ONE source of truth for the
+  // FEW LEFT / DEAD END thresholds — never recount here) and endCountOf() for the heat
+  // bar. No engine mutation, no input animation.
   const typed = g.input.trim().toLowerCase();
   const outLetter = typed.length ? typed[typed.length - 1] : '';
   const outSupply = outLetter ? g.engine.supply(outLetter) : null;
@@ -240,55 +241,67 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     : '';
   // Heat as a 0..1 fill: endCount * 0.06 / 0.95 (the heatMul ramp, normalised to its cap).
   const outHeat = outLetter ? Math.min(1, (g.engine.endCountOf(outLetter) * 0.06) / 0.95) : 0;
-  const outTile = (
-    <div className={`solo-out${outState ? ` is-${outState}` : ''}`} aria-hidden="true">
-      <div className="solo-out-face">
-        <span className={`solo-out-letter${outLetter ? '' : ' is-empty'}`}>
-          {outLetter ? outLetter.toUpperCase() : '·'}
-        </span>
-        <div
-          className={`solo-out-heat${outHeat >= 0.36 ? ' is-hot' : ''}`}
-          style={{ transform: `scaleX(${outHeat})`, opacity: outHeat > 0 ? 1 : 0 }}
-        />
+
+  // SLAB ROW: two draft-card slabs on ONE row (nowrap, sized to hold at 320px wide).
+  // Each slab = a WRAPPER carrying the static tilt (rotate ∓2deg) + a FACE (where any
+  // event keyframe would live, so a pop never fights the tilt) + a caption. The IN slab
+  // is cream (Bungee 112px — I vs l stay distinct); the OUT slab is dark with a cream
+  // border that turns dashed yellow / red on the supply states above.
+  const slabs = (
+    <div className="solo-slabs">
+      <div className="solo-slab solo-slab-in">
+        <div className="solo-slab-cap">STARTS WITH</div>
+        <div className="solo-slab-face solo-in-face">{required.toUpperCase()}</div>
+        <div className="solo-slab-badge" />
       </div>
-      <div className="solo-out-cap">
-        {outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : ''}
+      <div className={`solo-slab solo-slab-out${outState ? ` is-${outState}` : ''}`} aria-hidden="true">
+        <div className="solo-slab-cap">NEXT STARTS WITH</div>
+        <div className="solo-slab-face solo-out-face">
+          <span className={`solo-out-letter${outLetter ? '' : ' is-empty'}`}>
+            {outLetter ? outLetter.toUpperCase() : '·'}
+          </span>
+          <div
+            className={`solo-out-heat${outHeat >= 0.36 ? ' is-hot' : ''}`}
+            style={{ transform: `scaleX(${outHeat})`, opacity: outHeat > 0 ? 1 : 0 }}
+          />
+        </div>
+        <div className="solo-slab-badge">
+          {outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : ''}
+        </div>
       </div>
     </div>
   );
 
   // LOWER DECK (fill): the chain IS the composition — the recent accepted words run across
-  // the lower half as linked chips, join-letters (the last letter of one = first of the next)
-  // in cyan. Before the first word it shows the start letter as a ghost link + the rule, so
-  // the deck is never a bare void. Static (no idle animation); pure read of engine state.
+  // the lower half as a RIBBON of chips (last letter in cyan) joined by teal link bars,
+  // newest on the RIGHT. DOM order is newest-first inside a row-reverse flex, so when the
+  // ribbon outgrows its box the OLDEST end overflows (to the left) and is clipped under the
+  // left-edge fade — a sibling overlay of flat stepped bands, not a mask. An empty ribbon
+  // renders empty (no placeholder slots). Static; pure read of engine state.
   const links = s.lastLinks || [];
-  // Pad the trail to a consistent width with faint ghost slots, so the chain reads as a
-  // full-width scaffold you fill in — never a lone chip in a void. Ghosts shrink as real
-  // links land (5 words + the "next" chip fills it).
-  const ghostCount = Math.max(0, 4 - links.length);
+  const newestFirst = links.slice().reverse();
   const chainDeck = (
     <div className="solo-chain" aria-hidden="true">
       <div className="solo-deck-label">YOUR CHAIN</div>
-      <div className="solo-chain-trail">
-        {links.map((l, i) => {
-          const w = (l.word || '').toUpperCase();
-          return (
-            <span className="solo-chain-node" key={`${i}-${w}`}>
-              <b className="cx-join">{w.slice(0, 1)}</b>
-              {w.slice(1, -1)}
-              <b className="cx-join">{w.slice(-1)}</b>
-            </span>
-          );
-        })}
-        <span className="solo-chain-node is-next">
-          <b className="cx-join">{required.toUpperCase()}</b>
-          <span className="solo-chain-blank">···</span>
-        </span>
-        {Array.from({ length: ghostCount }).map((_, i) => (
-          <span className="solo-chain-node is-ghost" key={`ghost-${i}`}>
-            ···
-          </span>
-        ))}
+      <div className="solo-ribbon-wrap">
+        <div className="solo-ribbon">
+          {newestFirst.map((l, i) => {
+            const w = (l.word || '').toUpperCase();
+            const n = links.length - 1 - i; // stable id: index in oldest→newest order
+            return (
+              <span className="solo-ribbon-seg" key={`${n}-${w}`}>
+                <span className="solo-ribbon-chip">
+                  {w.slice(0, -1)}
+                  <b className="cx-last">{w.slice(-1)}</b>
+                </span>
+                {/* the link bar sits to the RIGHT of every chip but the newest, joining it
+                    to the next-newer chip (segments are laid out row-reverse). */}
+                {i > 0 ? <span className="solo-ribbon-link" /> : null}
+              </span>
+            );
+          })}
+        </div>
+        {links.length ? <div className="solo-ribbon-fade" /> : null}
       </div>
       <div className="solo-deck-hint">
         {links.length === 0 ? 'EACH WORD STARTS WHERE THE LAST ONE ENDED' : `${s.k} LINKED`}
@@ -332,7 +345,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       motif={CHAIN_MOTIF}
       supply={<span className={supply.count < 3 ? 'is-dead' : ''}>{supply.label}</span>}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
-      outTile={outTile}
+      slabs={slabs}
+      mirrorLast
       deck={chainDeck}
       input={g.input}
       onInput={g.onInput}

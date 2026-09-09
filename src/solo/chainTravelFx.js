@@ -42,8 +42,9 @@ export function createTravelFx({ root, traveler, fader }) {
   // Measure tile centres relative to the root. Called on mount + resize ONLY.
   function measure() {
     if (!root) return;
+    // The two slab faces (feat/solo-slabs): OUT = "NEXT STARTS WITH", IN = "STARTS WITH".
     const face = root.querySelector('.solo-out-face');
-    const center = root.querySelector('.solo-center');
+    const center = root.querySelector('.solo-in-face');
     if (!face || !center) return;
     const rr = root.getBoundingClientRect();
     const f = face.getBoundingClientRect();

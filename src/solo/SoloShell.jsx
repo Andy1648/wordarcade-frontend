@@ -45,7 +45,8 @@ export default function SoloShell({
   motif, // optional static SVG backdrop behind the stage (per-mode; never animated)
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
-  outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
+  slabs, // optional slab row (the draft-card style hero tiles). When given it REPLACES `center`.
+  mirrorLast = false, // CHAIN: underline the typed word's LAST letter via a sibling mirror
   deck, // optional lower-deck node (per-mode) that fills the lower half of the card
   input,
   onInput,
@@ -125,13 +126,12 @@ export default function SoloShell({
             big bright center letter / supply line left mounted here GHOSTS THROUGH it and
             collides with the death card's title. Gate both to 'playing' exactly like the
             input, OUT tile, and HUD pills already are (JOB 5 — full-sweep finding 1). */}
-        {phase === 'playing' ? <div className="solo-center">{center}</div> : null}
+        {/* SLAB ROW (feat/solo-slabs): the hero is a row of draft-card slabs (CHAIN: STARTS
+            WITH + NEXT STARTS WITH; FUSE: the fragment slab). The OUT slab reads the input
+            every keystroke but is a SIBLING of the input's chain, never an ancestor. */}
+        {phase === 'playing' ? (slabs ? slabs : <div className="solo-center">{center}</div>) : null}
         {phase === 'playing' && supply ? <div className="solo-supply">{supply}</div> : null}
       </div>
-
-      {/* OUT tile (CHAIN) — a SIBLING of the input, never an ancestor, so it can update
-          on every keystroke without ever animating the input or its container. */}
-      {phase === 'playing' && outTile ? outTile : null}
       </div>{/* .solo-primary */}
 
       <div className="solo-secondary">
@@ -154,6 +154,16 @@ export default function SoloShell({
             spellCheck="false"
             aria-label={title}
           />
+          {/* LAST-LETTER MIRROR (CHAIN): a SIBLING of the input laid over it, pointer-events
+              none, repeating the typed text in transparent ink with the same font metrics so
+              only its last-letter underline shows through. The input itself and its ancestors
+              are never styled or transformed for this (input ancestor purity). */}
+          {mirrorLast && input ? (
+            <div className="solo-mirror" aria-hidden="true">
+              <span className="solo-mirror-head">{input.slice(0, -1)}</span>
+              <span className="solo-mirror-last">{input.slice(-1)}</span>
+            </div>
+          ) : null}
           {/* The reject sill: an always-red bar whose OPACITY pulses on each reject
               (keyed remount re-fires the 140ms opacity animation). */}
           <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />
