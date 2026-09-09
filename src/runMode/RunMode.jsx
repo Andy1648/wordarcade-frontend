@@ -4,7 +4,7 @@
 // feedback only — no idle loops (menu motion law).
 import { useEffect, useRef, useState } from 'react';
 import { useRunMode } from './useRunMode.js';
-import { wallSchedule } from './engine.js';
+import { wallSchedule, MODIFIER_KINDS } from './engine.js';
 import ModifierArt from './ModifierArt.jsx';
 import PlayBackdrop from '../components/PlayBackdrop';
 import CopyResultButton from '../share/CopyResultButton.jsx';
@@ -298,7 +298,8 @@ function DraftScreen({ run }) {
           const state = picked === m.id ? ' chosen' : (picked ? ' dropped' : '');
           return (
             <button key={m.id} className={`run-card${m.down ? ' tradeoff' : ' upside'}${state}`} onClick={() => choose(m.id)} disabled={!!picked}>
-              <span className="run-card-tag">{m.down ? 'TRADE-OFF' : 'PURE UPSIDE'}</span>
+              {/* feat/draft-badges: the tag names the card's KIND (its trade-off shape), colour-coded. */}
+              <span className={`run-card-tag kind-${m.kind}`}>{(MODIFIER_KINDS[m.kind] || MODIFIER_KINDS.steady).label}</span>
               <span className="run-card-art"><ModifierArt id={m.id} /></span>
               <span className="run-card-body">
                 <span className="run-card-name">{m.name}</span>

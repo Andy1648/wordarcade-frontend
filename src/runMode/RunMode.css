@@ -213,12 +213,16 @@
 .run-card-art { display: block; position: relative; width: 100%; aspect-ratio: 3 / 2; border-bottom: 4px solid #000; }
 .run-card-art-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
+/* The KIND tag (feat/draft-badges): GAMBLE pink / SLOW BURN purple / WORD TAX yellow / STEADY cyan. */
 .run-card-tag {
   position: absolute; top: 8px; left: 8px; z-index: 2;
   font-size: 9px; font-family: 'Bungee', sans-serif; letter-spacing: .5px;
-  padding: 3px 6px; border-radius: 6px; background: #FF6B3D; color: #000; border: 2px solid #000;
+  padding: 3px 6px; border-radius: 6px; background: #2EFFE0; color: #000; border: 2px solid #000;
 }
-.run-card.upside .run-card-tag { background: #2EFFE0; }
+.run-card-tag.kind-gamble { background: #FF4FA3; }
+.run-card-tag.kind-slow { background: #9A28FF; color: #fff; }
+.run-card-tag.kind-tax { background: #FFE94A; }
+.run-card-tag.kind-steady { background: #2EFFE0; }
 
 .run-card-body { display: flex; flex-direction: column; justify-content: center; gap: 7px; padding: 10px 11px 12px; flex: 1; }
 .run-card-name { font-family: 'Bungee', sans-serif; font-size: 15px; line-height: 1.05; color: #FFE94A; -webkit-text-stroke: .5px #000; }

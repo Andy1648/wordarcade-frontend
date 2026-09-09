@@ -48,46 +48,62 @@ const RARITY_MIX = [['COMMON', 0.68], ['UNCOMMON', 0.22], ['RARE', 0.08], ['OBSC
 // round(p,ctx): per-round payout transform (ctx = { clean }).  roundIdx(p,ctx): indexed round transform.
 // suddenDeath: per-round probability the run ends regardless of score.
 export const MODIFIERS = [
-  { id: 'double-vowels', name: 'DOUBLE VOWELS', text: '3+ vowels ×1.8, but ≤2 vowels ×0.72', down: true,
+  { id: 'double-vowels', kind: 'tax', name: 'DOUBLE VOWELS', text: '3+ vowels ×1.8, but ≤2 vowels ×0.72', down: true,
     word: (w, m) => (w.vowels >= 3 ? m * 1.8 : m * 0.72) },
-  { id: 'short-fuse', name: 'SHORT FUSE', text: 'All wins ×1.7, but the round is 20% shorter', down: true,
+  { id: 'short-fuse', kind: 'steady', name: 'SHORT FUSE', text: 'All wins ×1.7, but the round is 20% shorter', down: true,
     knob: (k) => { k.wprMul *= 0.8; }, round: (p) => p * 1.7 },
-  { id: 'lexicographer', name: 'LEXICOGRAPHER', text: 'RARE+ ×4.5, but COMMON/UNCOMMON ×0.72', down: true,
+  { id: 'lexicographer', kind: 'tax', name: 'LEXICOGRAPHER', text: 'RARE+ ×4.5, but COMMON/UNCOMMON ×0.72', down: true,
     word: (w, m) => (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 4.5 : m * 0.72) },
-  { id: 'hot-streak', name: 'HOT STREAK', text: 'Combo builds +0.25×/word to a ×4 cap, but starts cold at ×0.6', down: true,
+  { id: 'hot-streak', kind: 'slow', name: 'HOT STREAK', text: 'Combo builds +0.25×/word to a ×4 cap, but starts cold at ×0.6', down: true,
     knob: (k) => { k.comboStart = 0.6; k.comboStep = 0.25; k.comboMax = 4.0; } },
-  { id: 'lucky-charm', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/13 & lucky pays ×7, but non-lucky ×0.97', down: true,
+  { id: 'lucky-charm', kind: 'gamble', name: 'LUCKY CHARM', text: 'Lucky odds 1/40→1/13 & lucky pays ×7, but non-lucky ×0.97', down: true,
     knob: (k) => { k.luckyOdds /= 3; k.luckyMult = 7; }, word: (w, m) => (w.lucky ? m : m * 0.97) },
-  { id: 'jackpot', name: 'JACKPOT', text: 'Lucky payout ×16, but lucky odds 1/40→1/48', down: true,
+  { id: 'jackpot', kind: 'gamble', name: 'JACKPOT', text: 'Lucky payout ×16, but lucky odds 1/40→1/48', down: true,
     knob: (k) => { k.luckyMult = 16; k.luckyOdds *= 1.2; } },
-  { id: 'bookworm', name: 'BOOKWORM', text: 'Every word +0.55× (combo-scaled), but lucky never procs', down: true,
+  { id: 'bookworm', kind: 'steady', name: 'BOOKWORM', text: 'Every word +0.55× (combo-scaled), but lucky never procs', down: true,
     knob: (k) => { k.noLucky = true; }, word: (w, m) => m + 0.55 * w.combo },
-  { id: 'long-haul', name: 'LONG HAUL', text: '+0.28× per letter over 5 (max +1.75×), but words ≤5 letters ×0.9', down: true,
+  { id: 'long-haul', kind: 'tax', name: 'LONG HAUL', text: '+0.28× per letter over 5 (max +1.75×), but words ≤5 letters ×0.9', down: true,
     word: (w, m) => (w.len > 5 ? m + Math.min(1.75, (w.len - 5) * 0.28) : m * 0.9) },
-  { id: 'common-folk', name: 'COMMON FOLK', text: 'COMMON ×1.5, but RARE/OBSCURE ×0.5', down: true,
+  { id: 'common-folk', kind: 'tax', name: 'COMMON FOLK', text: 'COMMON ×1.5, but RARE/OBSCURE ×0.5', down: true,
     word: (w, m) => (w.rarity === 'COMMON' ? m * 1.5 : (w.rarity === 'RARE' || w.rarity === 'OBSCURE' ? m * 0.5 : m)) },
-  { id: 'glass-cannon', name: 'GLASS CANNON', text: 'All payouts ×1.55 — but 8%/round the run just ends', down: true,
+  { id: 'glass-cannon', kind: 'gamble', name: 'GLASS CANNON', text: 'All payouts ×1.55 — but 8%/round the run just ends', down: true,
     round: (p) => p * 1.55, suddenDeath: 0.08 },
-  { id: 'snowball', name: 'SNOWBALL', text: '×0.62 payout, but +0.14× per round survived (cap ×1.15)', down: true,
+  { id: 'snowball', kind: 'slow', name: 'SNOWBALL', text: '×0.62 payout, but +0.14× per round survived (cap ×1.15)', down: true,
     roundIdx: (p, c) => p * Math.min(1.15, 0.62 + 0.14 * c.clean) },
-  { id: 'uncapped', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer', down: true,
+  { id: 'uncapped', kind: 'gamble', name: 'UNCAPPED', text: 'No ×40 word cap & lucky pays ×18, but lucky 1.3× rarer', down: true,
     knob: (k) => { k.cap = Infinity; k.luckyMult = 18; k.luckyOdds *= 1.3; } },
-  { id: 'vowel-movement', name: 'VOWEL MOVEMENT', text: '+0.4× per vowel, but J/Q/X/Z words ×0.5', down: true,
+  { id: 'vowel-movement', kind: 'tax', name: 'VOWEL MOVEMENT', text: '+0.4× per vowel, but J/Q/X/Z words ×0.5', down: true,
     word: (w, m) => (w.rare ? m * 0.5 : m) + 0.4 * w.vowels },
-  { id: 'rare-breed', name: 'RARE BREED', text: 'RARE ×3 & OBSCURE ×8, but COMMON ×0.85', down: true,
+  { id: 'rare-breed', kind: 'tax', name: 'RARE BREED', text: 'RARE ×3 & OBSCURE ×8, but COMMON ×0.85', down: true,
     word: (w, m) => (w.rarity === 'OBSCURE' ? m * 8 : (w.rarity === 'RARE' ? m * 3 : (w.rarity === 'COMMON' ? m * 0.85 : m))) },
-  { id: 'combo-king', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
+  { id: 'combo-king', kind: 'slow', name: 'COMBO KING', text: 'Combo builds +0.2×/accept, but combo cap ×3→×2.4', down: true,
     knob: (k) => { k.comboStep = 0.2; k.comboMax = Math.min(k.comboMax, 2.4); } },
-  { id: 'deep-pockets', name: 'DEEP POCKETS', text: 'Free wins worth 30% of the wall (max 60) every round, but every word ×0.85', down: true,
+  { id: 'deep-pockets', kind: 'steady', name: 'DEEP POCKETS', text: 'Free wins worth 30% of the wall (max 60) every round, but every word ×0.85', down: true,
     // wallAt is a hoisted function declaration below; round() only runs at play time.
     word: (w, m) => m * 0.85, round: (p, c) => p + deepPocketsBonus((c?.clean || 0) + 1) },
-  { id: 'scrabble-bag', name: 'SCRABBLE BAG', text: 'J/Q/X/Z words ×4, but every other word ×0.9', down: true,
+  { id: 'scrabble-bag', kind: 'tax', name: 'SCRABBLE BAG', text: 'J/Q/X/Z words ×4, but every other word ×0.9', down: true,
     word: (w, m) => (w.rare ? m * 4 : m * 0.9) },
-  { id: 'momentum', name: 'MOMENTUM', text: 'Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9', down: true,
+  { id: 'momentum', kind: 'slow', name: 'MOMENTUM', text: 'Each clean round +0.18× running mult (cap ×1.35), but every word ×0.9', down: true,
     word: (w, m) => m * 0.9, roundIdx: (p, c) => p * Math.min(1.35, 1 + 0.18 * c.clean) },
 ];
 
 export const MODIFIER_BY_ID = MODIFIERS.reduce((m, x) => ((m[x.id] = x), m), {});
+
+// feat/draft-badges: every modifier carries a KIND — the shape of its trade-off, not its numbers —
+// so the draft's corner tag says what a card IS (GAMBLE / SLOW BURN / WORD TAX / STEADY) instead of
+// the meaningless TRADE-OFF (all 18 are two-sided). Pure labels: nothing in scoring reads `kind`.
+//   gamble — variance: lucky odds / payout, the fumble (LUCKY CHARM, JACKPOT, UNCAPPED, GLASS CANNON)
+//   slow   — pays later than it costs (SNOWBALL, MOMENTUM, HOT STREAK, COMBO KING)
+//   tax    — reprices word classes: pay on some words, earn on others (DOUBLE VOWELS, LEXICOGRAPHER,
+//            LONG HAUL, COMMON FOLK, VOWEL MOVEMENT, RARE BREED, SCRABBLE BAG)
+//   steady — a flat, predictable edge for a flat cost (DEEP POCKETS, SHORT FUSE, BOOKWORM)
+export const MODIFIER_KINDS = Object.freeze({
+  gamble: { label: 'GAMBLE' },
+  slow: { label: 'SLOW BURN' },
+  tax: { label: 'WORD TAX' },
+  steady: { label: 'STEADY' },
+});
+export const KIND_IDS = Object.freeze(Object.keys(MODIFIER_KINDS));
 
 // DEEP POCKETS's free wins for a given round: 30% of that round's wall, capped at 60 (see the
 // deck comment above for why the cap exists). Exported so the tests pin the same numbers.
