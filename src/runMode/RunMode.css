@@ -34,61 +34,111 @@
 .run-pip.done { background: #2EFFE0; }
 .run-pip.now { background: #FFE94A; }
 
-/* stack chips */
-.run-stack { display: flex; flex-wrap: wrap; gap: 6px; }
+/* ---- THE SLAB GRAMMAR (feat/run-screen-slabs) — the draft card's language (see .run-card)
+   applied to the round + wall screens: cream face, 4px black outline, 6px hard black shadow,
+   a ±1.5° STATIC tilt on the .slot wrapper only (keyframes stay on the face; the tilt never
+   sits on an input's ancestor). ---- */
+.slot { display: block; }
+.slot.tilt-l { transform: rotate(-1.5deg); }
+.slot.tilt-r { transform: rotate(1.5deg); }
+.run-slab {
+  box-sizing: border-box; border-radius: 8px;
+  background: #F0EAD9; color: #0d0618; border: 4px solid #000; box-shadow: 6px 6px 0 #000;
+}
+.run-slab-dark { background: #0d0618; color: #fff; }
+
+/* stack chips — mini tilted draft cards */
+.run-stack { display: flex; flex-wrap: wrap; gap: 8px 10px; padding: 2px 4px 4px 0; }
 .run-stack-empty { font-size: 12px; color: #9a86c4; border: 2px dashed #3a2a5a; border-radius: 8px; padding: 10px; text-align: center; }
 .run-chip {
-  font-family: 'Bungee', sans-serif; font-size: 11px; padding: 5px 9px; border-radius: 8px;
-  background: #FFE94A; color: #000; border: 2px solid #b39b00; box-shadow: 2px 2px 0 #000;
+  font-family: 'Bungee', sans-serif; font-size: 11px; line-height: 1; padding: 6px 9px 5px; border-radius: 6px;
+  background: #F0EAD9; color: #0d0618; border: 2px solid #000; box-shadow: 2px 2px 0 #000;
+  border-bottom-width: 4px; border-bottom-color: #2EFFE0;
 }
+.run-chip.tradeoff { border-bottom-color: #FF6B3D; }
+.run-chip:nth-child(odd) { transform: rotate(-2deg); }
+.run-chip:nth-child(even) { transform: rotate(2deg); }
 
 /* ---- WALL / pre-round ---- */
 .run-wall { text-align: center; }
-.run-wall-need { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0; }
-.run-wall-label { font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF6B3D; letter-spacing: 2px; }
-.run-wall-num { font-family: 'Bungee', sans-serif; font-size: 56px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 3px #000; }
-.run-mode-tag {
-  display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 12px;
-  border: 3px solid var(--accent, #2EFFE0); border-radius: 8px; background: #0d0618; box-shadow: 4px 4px 0 #000;
+.run-wall-slabs { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px 18px; align-items: stretch; padding: 4px 6px 6px 0; }
+/* the WALL as a brick slab: pink bricks tile the face (public/art/run-bricks.svg); each caption
+   sits on a solid strip so a mortar line never crosses the text; the number rides the bricks
+   with its own stroke. */
+.run-brick {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 10px 12px; height: 100%;
+  background: #FF4FA3 url('/art/run-bricks.svg') 0 0 / 64px 32px repeat;
 }
-.run-mode-tag b { font-family: 'Bungee', sans-serif; font-size: 22px; color: var(--accent, #2EFFE0); }
-.run-mode-tag span { font-size: 13px; color: #cbbce8; }
+.run-wall-label {
+  font-family: 'Bungee', sans-serif; font-size: 12px; letter-spacing: 2px; line-height: 1;
+  color: #FFE94A; background: #0d0618; border: 2px solid #000; border-radius: 4px; padding: 5px 8px 4px;
+}
+.run-wall-num { font-family: 'Bungee', sans-serif; font-size: 84px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000; }
+/* the MODE slab: cream face, Bungee name over a rule, the accent as a top band */
+.run-mode-tag {
+  display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; padding: 14px 12px; height: 100%;
+  border-top: 10px solid var(--accent, #2EFFE0);
+}
+.run-mode-tag b { font-family: 'Bungee', sans-serif; font-size: 22px; line-height: 1; color: #0d0618; padding-bottom: 6px; border-bottom: 3px solid #0d0618; }
+.run-mode-tag span { font-size: 12px; line-height: 1.3; color: #3b2a5a; }
 .run-banked { font-size: 13px; color: #9a86c4; }
 .run-banked b { color: #2EFFE0; font-size: 16px; }
-.run-ladder { display: flex; gap: 3px; justify-content: space-between; }
-.run-ladder-step { flex: 1; font-size: 10px; padding: 4px 0; border-radius: 5px; background: #241539; border: 2px solid #000; color: #7d6ba8; }
-.run-ladder-step.done { background: #123f3a; color: #2EFFE0; }
-.run-ladder-step.now { background: #FFE94A; color: #000; font-weight: bold; }
+/* the brick LADDER: 10 pips (one per wall) — done pips laid, the current one raised, and only
+   the NEXT wall's value is labelled (the current one is the big number above). */
+.run-ladder { display: flex; gap: 4px; align-items: flex-end; padding-top: 16px; }
+.run-ladder-step {
+  position: relative; flex: 1; height: 14px; border-radius: 3px;
+  background: #4a1f3c; border: 2px solid #000; box-shadow: 2px 2px 0 #000;
+}
+.run-ladder-step.done { background: #2EFFE0; }
+.run-ladder-step.now { background: #FFE94A; transform: translateY(-4px); box-shadow: 3px 5px 0 #000; }
+.run-ladder-step.next { background: #FF4FA3; }
+.run-ladder-val {
+  position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%);
+  font-style: normal; font-family: 'Bungee', sans-serif; font-size: 9px; line-height: 1; color: #FF4FA3; white-space: nowrap;
+}
 
 /* ---- buttons ---- */
 .run-btn {
   font-family: 'Bungee', sans-serif; font-size: 18px; padding: 14px; border-radius: 8px;
   border: 3px solid #000; cursor: pointer; box-shadow: 5px 5px 0 #000; transition: transform .12s, box-shadow .12s;
 }
-.run-btn-go { background: #FF4FA3; color: #fff; }
+.run-btn-go { background: #FF4FA3; color: #fff; width: 100%; border-width: 4px; box-shadow: 6px 6px 0 #000; }
 .run-btn:active { transform: translate(5px, 5px); box-shadow: none; }
 
 /* ---- round ---- */
-.run-round-top { display: flex; justify-content: space-between; align-items: center; }
-.run-round-mode b { font-family: 'Bungee', sans-serif; font-size: 20px; color: var(--accent, #2EFFE0); display: block; }
-.run-round-mode span { font-size: 12px; color: #cbbce8; }
-/* m:ss in Space Mono (tabular digits so the width never jitters); a plain colour swap under 6s */
+.run-round-top { display: grid; grid-template-columns: 1fr auto; gap: 12px 18px; align-items: stretch; padding: 2px 6px 4px 0; }
+.run-round-mode { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px 11px; height: 100%; justify-content: center; border-left: 10px solid var(--accent, #2EFFE0); }
+.run-round-mode b { font-family: 'Bungee', sans-serif; font-size: 22px; line-height: 1; color: #0d0618; display: block; padding-bottom: 5px; border-bottom: 3px solid #0d0618; }
+.run-round-mode span { font-size: 11px; line-height: 1.3; color: #3b2a5a; }
+/* the CLOCK slab: dark face, accent border, m:ss in Space Mono (tabular digits so the width
+   never jitters); a plain colour swap under 6s */
+.run-clock-slab { display: flex; align-items: center; justify-content: center; min-width: 112px; padding: 8px 14px; height: 100%; border-color: var(--accent, #2EFFE0); }
 .run-clock { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 28px; line-height: 1; color: #2EFFE0; font-variant-numeric: tabular-nums; text-shadow: 2px 2px 0 #000; }
 .run-clock.low { color: #FF4B4B; }
 .run-score-row { display: flex; justify-content: space-between; align-items: flex-end; }
-.run-score-num { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FFE94A; -webkit-text-stroke: 2px #000; display: inline-block; transform-origin: left center; }
+.run-score-num { font-family: 'Bungee', sans-serif; font-size: 48px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 2px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000; display: inline-block; transform-origin: left center; }
 .run-score.met .run-score-num { color: #2EFFE0; }
-.run-score-num.pop { animation: runScorePop .5s ease-out 1; }
 .run-score-need { font-size: 12px; color: #9a86c4; }
 .run-combo { font-family: 'Bungee', sans-serif; font-size: 26px; color: #FF6B3D; -webkit-text-stroke: 2px #000; }
-.run-progress-track { position: relative; height: 22px; background: #0d0618; border: 3px solid #000; border-radius: 8px; overflow: hidden; }
-.run-progress-fill { height: 100%; background: #2EFFE0; transform-origin: left; transition: transform .2s ease-out; }
-.run-progress-track.cleared .run-progress-fill { background: #FFE94A; }
+/* THE WALL METER: hatched fill (hard-stop stripes — flat, no fades), the black flag planted at
+   100% (the wall), stripes turn yellow once you're over. */
+.run-progress-track { position: relative; height: 24px; background: #0d0618; border: 3px solid #000; border-radius: 8px; overflow: hidden; }
+.run-progress-fill {
+  height: 100%; transform-origin: left; transition: transform .2s ease-out;
+  background: repeating-linear-gradient(-45deg, #2EFFE0 0 7px, #14b39c 7px 14px);
+}
+.run-progress-track.cleared .run-progress-fill { background: repeating-linear-gradient(-45deg, #FFE94A 0 7px, #d4bd12 7px 14px); }
 /* the labelled wall target — the finish line lives at the right edge (fill=100% == wall) */
 .run-progress-wall {
-  position: absolute; top: 0; right: 6px; height: 100%; display: flex; align-items: center;
+  position: absolute; top: 0; right: 22px; height: 100%; display: flex; align-items: center;
   font-family: 'Bungee', sans-serif; font-size: 10px; letter-spacing: .5px; color: #fff;
   -webkit-text-stroke: 2px #000; paint-order: stroke fill; pointer-events: none;
+}
+.run-progress-flag {
+  position: absolute; top: 0; right: 2px; width: 16px; height: 18px; pointer-events: none;
+  background: url('/art/run-flag.svg') center / 16px 18px no-repeat;
 }
 /* CLEAR moment — one pooled overlay node, a single finite transform/opacity pop */
 .run-clear-burst {
@@ -106,12 +156,17 @@
   font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A; text-align: center;
 }
 .run-toast.reject { color: #FF4B4B; }
-/* THE CONSTRAINT IS THE HERO — the fragment / letter itself is big yellow Bungee */
+/* THE CONSTRAINT IS THE HERO — a cream slab; the fragment / letter itself sits on a yellow TILE
+   in big Bungee (44px). The slot wrapper carries the tilt; the slab face carries nothing animated. */
+.run-frag-slot { align-self: center; width: min(100%, 420px); }
 .run-frag {
-  min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-family: 'Bungee', sans-serif; font-size: 14px; letter-spacing: 1px; color: #cbbce8; text-align: center;
+  min-height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 14px;
+  font-family: 'Bungee', sans-serif; font-size: 14px; letter-spacing: 1px; color: #0d0618; text-align: center;
 }
-.run-frag b { color: #FFE94A; font-family: 'Bungee', sans-serif; font-size: 36px; line-height: 1; -webkit-text-stroke: 2px #000; paint-order: stroke fill; }
+.run-frag b {
+  font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1; letter-spacing: 2px; color: #0d0618;
+  display: inline-block; padding: 6px 10px 4px; border-radius: 6px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000;
+}
 .run-input {
   width: 100%; box-sizing: border-box; font-size: 22px; font-family: 'Space Mono', monospace;
   padding: 14px; border-radius: 8px; border: 3px solid #2EFFE0; background: #0d0618; color: #fff;
@@ -281,6 +336,22 @@
      keyboard (visual viewport ≈ 510px). Top-aligned (clear of the 44px exit button) the input
      ends ≈ 450px, so typing never needs a scroll. Other run screens keep the centred layout. */
   .run-root.is-round { align-items: flex-start; padding-top: 68px; }
+  /* PHONE SLABS: the wall's two slabs stack; tilt eases to ±1°; the hero tile drops to 34px.
+     The round's mode + clock slabs stay side by side — stacking them would push the input
+     below the keyboard-up visual viewport (the ≤510px pin in run-round-screen.spec). */
+  .slot.tilt-l { transform: rotate(-1deg); }
+  .slot.tilt-r { transform: rotate(1deg); }
+  .run-wall-slabs { grid-template-columns: 1fr; gap: 16px; padding-right: 6px; }
+  .run-wall-num { font-size: 64px; }
+  .run-round { gap: 11px; }
+  .run-round-top { gap: 10px; }
+  .run-round-mode { padding: 8px 10px 9px; border-left-width: 8px; }
+  .run-round-mode b { font-size: 18px; }
+  .run-clock-slab { min-width: 92px; padding: 6px 10px; }
+  .run-clock { font-size: 24px; }
+  .run-score-num { font-size: 40px; }
+  .run-frag { min-height: 54px; padding: 6px 12px; gap: 10px; font-size: 12px; }
+  .run-frag b { font-size: 34px; padding: 5px 8px 3px; }
   .run-offers { grid-template-columns: 1fr; gap: 10px; }
   .run-card { flex-direction: row; align-items: stretch; }
   .run-card-art { width: 104px; aspect-ratio: auto; min-height: 100%; flex: none; border-bottom: none; border-right: 4px solid #000; }
@@ -297,11 +368,6 @@
   22%  { transform: scale(1.04); opacity: 1; }
   68%  { transform: scale(1); opacity: 1; }
   100% { transform: scale(1.02); opacity: 0; }
-}
-@keyframes runScorePop {
-  0%   { transform: scale(1); }
-  38%  { transform: scale(1.28); }
-  100% { transform: scale(1); }
 }
 @keyframes runStampSlam {
   0%   { transform: scale(2.3) rotate(-9deg); opacity: 0; }
@@ -335,32 +401,42 @@
   .run-root.is-round { align-items: center; padding-top: 8px; }
   .run-panel { margin: auto 0; flex: none; padding: 10px 14px; gap: 6px; }
   .run-panel .run-rail { margin-bottom: 2px; }
-  /* wall: use the width — the number and the mode tag sit side by side */
+  /* wall: use the width — the brick slab and the mode slab sit side by side (the desktop
+     grid), with the stack / banked / START button in a second column beside them. */
   .run-wall { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; align-items: center; }
   .run-wall > * { grid-column: 1 / -1; }
-  .run-wall .run-wall-need { grid-column: 1; padding: 0; }
-  .run-wall .run-mode-tag { grid-column: 2; padding: 6px; }
+  .run-wall .run-wall-slabs { grid-column: 1; grid-row: 3 / span 4; grid-template-columns: 1fr; gap: 10px; padding: 4px 6px 4px 0; }
+  .run-brick { padding: 6px 8px 8px; gap: 3px; }
+  .run-wall-label { font-size: 9px; letter-spacing: 1px; padding: 3px 6px 2px; }
   .run-wall-num { font-size: 40px; }
-  .run-wall .run-draft-stack-label { grid-column: 1; text-align: left; }
-  .run-wall .run-stack { grid-column: 1; }
-  .run-wall .run-stack-empty { padding: 6px; font-size: 11px; }
-  .run-wall .run-banked { grid-column: 2; grid-row: 4; }
-  .run-wall .run-btn-go { grid-column: 2; grid-row: 5; padding: 10px; }
+  .run-mode-tag { padding: 6px 8px; gap: 3px; border-top-width: 6px; }
+  .run-mode-tag b { font-size: 16px; padding-bottom: 3px; }
+  .run-mode-tag span { font-size: 10px; }
+  .run-wall .run-draft-stack-label { grid-column: 2; grid-row: 3; text-align: left; }
+  .run-wall .run-stack { grid-column: 2; grid-row: 4; padding: 0; gap: 6px 8px; }
+  .run-wall .run-stack-empty { grid-column: 2; grid-row: 4; padding: 6px; font-size: 11px; }
+  .run-wall .run-banked { grid-column: 2; grid-row: 5; }
+  .run-wall .run-btn-go { grid-column: 2; grid-row: 6; padding: 10px; }
+  .run-wall .run-ladder { grid-row: 7; padding-top: 12px; }
   /* round: shrink the display sizes so clock → input fits in ~390px */
-  .run-round-mode b { font-size: 16px; }
+  .run-round-top { padding: 2px 6px 2px 0; gap: 8px 14px; }
+  .run-round-mode { padding: 5px 10px 6px; gap: 2px; border-left-width: 8px; }
+  .run-round-mode b { font-size: 16px; padding-bottom: 3px; }
+  .run-round-mode span { font-size: 10px; }
+  .run-clock-slab { min-width: 92px; padding: 4px 10px; }
   .run-clock { font-size: 22px; }
-  .run-score-num { font-size: 28px; }
+  .run-score-num { font-size: 30px; }
   .run-combo { font-size: 20px; }
   .run-meter-note { min-height: 12px; font-size: 10px; }
-  .run-frag { min-height: 32px; }
-  .run-frag b { font-size: 28px; }
+  .run-frag { min-height: 40px; padding: 4px 10px; font-size: 12px; }
+  .run-frag b { font-size: 28px; padding: 3px 7px 2px; }
   .run-input { font-size: 18px; padding: 9px; }
 }
 
 @media (max-width: 420px) {
-  .run-wall-num { font-size: 44px; }
+  .run-wall-num { font-size: 56px; }
   .run-panel { padding: 16px; }
-  .run-ladder-step { font-size: 8px; }
+  .run-ladder-val { font-size: 8px; }
   .run-draft-title { font-size: 23px; }
   .run-card-art { width: 88px; }
   /* shrink the fanned hand + tighten overlap so it fits a 360px phone */
@@ -375,7 +451,6 @@
    (cleared bar colour, the stamp, the frozen gap meter are all plain DOM, not motion). */
 @media (prefers-reduced-motion: reduce) {
   .run-clear-burst.playing,
-  .run-score-num.pop,
   .run-over.miss,
   .run-over-stamp.slam,
   .run-over-stamp.pop,

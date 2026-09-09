@@ -60,13 +60,14 @@ function RunRail({ round, total }) {
 
 // The wall/round stack strip. Carries the same "YOUR STACK N" count label as the draft and
 // the over screen, so a RUN AGAIN restart visibly resets to 0 on the very first wall.
+// Chips are mini draft cards (cream face, outline, hard shadow) tilted alternately.
 function StackStrip({ stack }) {
   return (
     <>
       <div className="run-draft-stack-label">YOUR STACK <span className="run-stack-count">{stack.length}</span></div>
       {stack.length ? (
         <div className="run-stack">
-          {stack.map((m) => <span key={m.id} className="run-chip" title={m.text}>{m.name}</span>)}
+          {stack.map((m) => <span key={m.id} className={`run-chip${m.down ? ' tradeoff' : ' upside'}`} title={m.text}>{m.name}</span>)}
         </div>
       ) : (
         <div className="run-stack run-stack-empty">NO MODIFIERS YET — DRAFT ONE AFTER ROUND 1</div>
@@ -75,28 +76,43 @@ function StackStrip({ stack }) {
   );
 }
 
-// The pre-round screen: the WALL you must clear, the rolled mode, your stack.
+const fmtWall = (w) => (w >= 1000 ? `${Math.round(w / 1000)}k` : String(w));
+
+// The pre-round screen: the WALL you must clear (a brick slab), the rolled mode slab, your
+// stack, and the 10-pip brick ladder (the current pip raised, the NEXT wall's value labelled).
 function WallScreen({ run }) {
   const schedule = wallSchedule();
   return (
     <div className="run-panel run-wall">
       <RunRail round={run.round} total={run.totalRounds} />
       <div className="run-kicker">ROUND {run.round} / {run.totalRounds}</div>
-      <div className="run-wall-need">
-        <span className="run-wall-label">CLEAR</span>
-        <span className="run-wall-num">{run.wall.toLocaleString()}</span>
-        <span className="run-wall-label">OR THE RUN ENDS</span>
-      </div>
-      <div className="run-mode-tag" style={{ '--accent': run.roundMode.accent }}>
-        <b>{run.roundMode.label}</b><span>{run.roundMode.rule}</span>
+      <div className="run-wall-slabs">
+        <div className="slot tilt-l">
+          <div className="run-slab run-brick run-wall-need">
+            <span className="run-wall-label">CLEAR</span>
+            <span className="run-wall-num">{run.wall.toLocaleString()}</span>
+            <span className="run-wall-label">OR THE RUN ENDS</span>
+          </div>
+        </div>
+        <div className="slot tilt-r">
+          <div className="run-slab run-mode-tag" style={{ '--accent': run.roundMode.accent }}>
+            <b>{run.roundMode.label}</b><span>{run.roundMode.rule}</span>
+          </div>
+        </div>
       </div>
       <StackStrip stack={run.stack} />
       <div className="run-banked">BANKED <b>{run.cumulative.toLocaleString()}</b></div>
       <button className="run-btn run-btn-go" onClick={run.startRound}>START ROUND {run.round}</button>
       <div className="run-ladder" aria-hidden="true">
-        {schedule.map((w, i) => (
-          <span key={i} className={`run-ladder-step${i + 1 === run.round ? ' now' : ''}${i + 1 < run.round ? ' done' : ''}`}>{w >= 1000 ? `${Math.round(w / 1000)}k` : w}</span>
-        ))}
+        {schedule.map((w, i) => {
+          const n = i + 1;
+          const cls = n < run.round ? ' done' : n === run.round ? ' now' : n === run.round + 1 ? ' next' : '';
+          return (
+            <span key={i} className={`run-ladder-step${cls}`}>
+              {n === run.round + 1 && <i className="run-ladder-val">{fmtWall(w)}</i>}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -121,6 +137,18 @@ function RoundScreen({ run }) {
     setToast(play.toast);
     const t = setTimeout(() => setToast(null), play.toastKind === 'reject' ? 900 : 600);
     return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toastId]);
+
+  // SCORE BUMP on accept: one pooled WAAPI animation on the score node (scale 1.14, 120ms,
+  // transform only). Re-fires per accept, never stacks, skipped under reduced motion.
+  const scoreRef = useRef(null);
+  useEffect(() => {
+    if (!toastId || !play || play.toastKind !== 'accept') return;
+    const el = scoreRef.current;
+    if (!el || typeof el.animate !== 'function') return;
+    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.14)', offset: .4 }, { transform: 'scale(1)' }], { duration: 120, easing: 'ease-out' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toastId]);
 
@@ -152,20 +180,31 @@ function RoundScreen({ run }) {
   return (
     <div className="run-panel run-round" style={{ '--accent': run.roundMode.accent }}>
       <RunRail round={run.round} total={run.totalRounds} />
+      {/* Two slabs: the MODE (cream, name + rule) and the CLOCK (dark face, accent border). The
+          static tilt lives on the .slot wrapper; any keyframes stay on the face. */}
       <div className="run-round-top">
-        <div className="run-round-mode"><b>{run.roundMode.label}</b><span>{run.roundMode.rule}</span></div>
-        <div className={`run-clock${play.timeLeft < 6 ? ' low' : ''}`} aria-label={`${secs} seconds left`}>{clock}</div>
+        <div className="slot tilt-l">
+          <div className="run-slab run-round-mode"><b>{run.roundMode.label}</b><span>{run.roundMode.rule}</span></div>
+        </div>
+        <div className="slot tilt-r">
+          <div className="run-slab run-slab-dark run-clock-slab">
+            <span className={`run-clock${play.timeLeft < 6 ? ' low' : ''}`} aria-label={`${secs} seconds left`}>{clock}</span>
+          </div>
+        </div>
       </div>
       <div className="run-score-row">
         <div className={`run-score${met ? ' met' : ''}`}>
-          <span className={`run-score-num${burst ? ' pop' : ''}`}>{projected.toLocaleString()}</span>
+          <span ref={scoreRef} className="run-score-num">{projected.toLocaleString()}</span>
           <span className="run-score-need">/ {run.wall.toLocaleString()} TO CLEAR</span>
         </div>
         <div className="run-combo">×{play.combo.toFixed(1)}</div>
       </div>
+      {/* THE WALL METER: a hatched bar, the black flag planted at 100% (= the wall); the hatching
+          turns yellow once you're over. */}
       <div className={`run-progress-track${met ? ' cleared' : ''}`}>
         <div className="run-progress-fill" style={{ transform: `scaleX(${Math.min(1, projected / run.wall)})` }} />
         <span className="run-progress-wall" aria-hidden="true">WALL {run.wall.toLocaleString()}</span>
+        <span className="run-progress-flag" aria-hidden="true" />
         <div className={`run-clear-burst${burst ? ' playing' : ''}`} aria-hidden={!burst}
           onAnimationEnd={() => setBurst(false)}>CLEARED!</div>
       </div>
@@ -176,14 +215,17 @@ function RoundScreen({ run }) {
           ? <>TYPED <b>{rawTyped.toLocaleString()}</b> · MODIFIERS → <b>{projected.toLocaleString()}</b></>
           : (met ? 'WALL CLEARED — KEEP PADDING YOUR LEAD' : '')}
       </div>
-      {/* THE CONSTRAINT IS THE HERO: the fragment / letter / length rule in big yellow Bungee.
-          CHAIN before the first word has no letter yet — the slot still renders (stable layout). */}
-      <div className="run-frag" aria-live="polite">
-        {run.roundMode.key === 'fuse' && play.constraint && <>CONTAINS <b>{play.constraint.toUpperCase()}</b></>}
-        {run.roundMode.key === 'chain' && (play.lastLetter
-          ? <>START WITH <b>{play.lastLetter.toUpperCase()}</b></>
-          : <>START WITH <b>ANY</b></>)}
-        {run.roundMode.key === 'long' && <><b>6+</b> LETTERS</>}
+      {/* THE CONSTRAINT IS THE HERO: a cream slab with the fragment / letter / length rule on a
+          yellow tile in big Bungee. CHAIN before the first word has no letter yet — the slab
+          still renders (stable layout). */}
+      <div className="slot tilt-l run-frag-slot">
+        <div className="run-slab run-frag" aria-live="polite">
+          {run.roundMode.key === 'fuse' && play.constraint && <>CONTAINS <b>{play.constraint.toUpperCase()}</b></>}
+          {run.roundMode.key === 'chain' && (play.lastLetter
+            ? <>START WITH <b>{play.lastLetter.toUpperCase()}</b></>
+            : <>START WITH <b>ANY</b></>)}
+          {run.roundMode.key === 'long' && <><b>6+</b> LETTERS</>}
+        </div>
       </div>
       {/* The fixed message slot — always present, empty when silent (see the effect above). */}
       <div className={`run-toast${toast ? (play.toastKind === 'reject' ? ' reject' : ' accept') : ''}`} aria-live="assertive">{toast || ''}</div>

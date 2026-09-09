@@ -58,18 +58,31 @@ test.describe('run round screen @ 1366×768', () => {
     // 5. the filler line is gone.
     await expect(page.locator('.run-round')).not.toContainText('ROUND-ADJUSTED');
 
-    // 3. the constraint is the hero (LONG: "6+ LETTERS").
+    // 3. the constraint is the hero (LONG: "6+ LETTERS") — a yellow Bungee TILE on the cream slab
+    //    (feat/run-screen-slabs: the yellow moved from the glyph to the tile behind it).
     const frag = page.locator('.run-frag');
     await expect(frag).toContainText('LETTERS');
     const fragBox = await frag.boundingBox();
     expect(fragBox.height).toBeGreaterThanOrEqual(28);
     const heroStyle = await page.locator('.run-frag b').evaluate((el) => {
       const cs = getComputedStyle(el);
-      return { size: parseFloat(cs.fontSize), color: cs.color, font: cs.fontFamily };
+      return { size: parseFloat(cs.fontSize), bg: cs.backgroundColor, font: cs.fontFamily };
     });
-    expect(heroStyle.size).toBeGreaterThanOrEqual(36);
-    expect(heroStyle.color).toBe('rgb(255, 233, 74)'); // #FFE94A
+    expect(heroStyle.size).toBeGreaterThanOrEqual(44);
+    expect(heroStyle.bg).toBe('rgb(255, 233, 74)'); // #FFE94A tile
     expect(heroStyle.font).toMatch(/Bungee/);
+
+    // Slab grammar: the tilt lives on .slot wrappers only — no ancestor of the input carries a
+    // transform or a running animation (the input must never be in a transformed subtree).
+    const inputAncestors = await input.evaluate((el) => {
+      const out = [];
+      for (let a = el.parentElement; a; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        if (cs.transform !== 'none' || cs.animationName !== 'none') out.push(`${a.className}: ${cs.transform} / ${cs.animationName}`);
+      }
+      return out;
+    });
+    expect(inputAncestors).toEqual([]);
 
     // 2. the slot exists while silent, and the input never moves.
     await expect(toast).toHaveCount(1);
@@ -95,11 +108,15 @@ test.describe('run round screen @ 1366×768', () => {
     expect(await inputTop(page)).toBe(top0);
 
     // 4. three common words → three "WORD +N" toasts (no prefix), each in the same slot.
+    //    On each accept: ≤3 concurrent FINITE animations on the panel, and none infinite.
     let seen = 0;
     for (const w of COMMON) {
       await input.fill(w);
       await input.press('Enter');
       await expect(toast).toHaveText(new RegExp(`^${w.toUpperCase()} \\+\\d+$`));
+      const anims = await page.locator('.run-round').evaluate((el) => el.getAnimations({ subtree: true }).map((a) => a.effect.getTiming().iterations));
+      expect(anims.length).toBeLessThanOrEqual(3);
+      expect(anims.filter((n) => n === Infinity)).toEqual([]);
       seen++;
       expect(await inputTop(page)).toBe(top0);
     }
@@ -144,8 +161,8 @@ test.describe('run round screen @ 390×844 (phone)', () => {
     // The input (and everything above it: clock, meter, hero constraint, message slot) must
     // sit inside that, so typing never needs a scroll.
     expect(box.y + box.height).toBeLessThanOrEqual(510);
-    // The hero constraint is still ≥36px on the phone.
+    // The hero tile is ≥34px on the phone (feat/run-screen-slabs: 34px at ≤560).
     const size = await page.locator('.run-frag b').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(size).toBeGreaterThanOrEqual(36);
+    expect(size).toBeGreaterThanOrEqual(34);
   });
 });
