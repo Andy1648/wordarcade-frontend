@@ -66,6 +66,9 @@ const initial = (seed) => {
     reason: null, // 'wall' | 'fumble' | 'cleared' (win)
     offers: [], // modifier ids offered this draft
     words: null, // { accept:Set }
+    // feat/run-share: one record per round PLAYED, in order — { round, score, wall, passed,
+    // fumbled } — the share receipt's glyph row (🟩 cleared / 🟨 squeak / ⬛ ended it).
+    history: [],
   };
 };
 
@@ -109,15 +112,17 @@ export function runReducer(s, a) {
       const wall = wallAt(s.round);
       const passed = a.score >= wall && !a.fumbled;
       const cumulative = s.cumulative + a.score;
+      // (s.history may be absent on hand-built states in older tests — treat as empty.)
+      const history = [...(s.history || []), { round: s.round, score: a.score, wall, passed, fumbled: !!a.fumbled }];
       if (!passed) {
-        return { ...s, phase: 'over', cumulative, lastRoundScore: a.score, lastWall: wall, reason: a.fumbled ? 'fumble' : 'wall' };
+        return { ...s, phase: 'over', cumulative, history, lastRoundScore: a.score, lastWall: wall, reason: a.fumbled ? 'fumble' : 'wall' };
       }
       if (s.round >= RUN_ROUNDS) {
-        return { ...s, phase: 'over', cumulative, lastRoundScore: a.score, lastWall: wall, reason: 'cleared', clean: s.clean + 1 };
+        return { ...s, phase: 'over', cumulative, history, lastRoundScore: a.score, lastWall: wall, reason: 'cleared', clean: s.clean + 1 };
       }
       const rnd = mulberry32((s.seed ^ (s.round * 2654435761)) >>> 0);
       const offers = dealOffers(s.stackIds, rnd).map((m) => m.id);
-      return { ...s, phase: 'draft', cumulative, lastRoundScore: a.score, lastWall: wall, clean: s.clean + 1, offers };
+      return { ...s, phase: 'draft', cumulative, history, lastRoundScore: a.score, lastWall: wall, clean: s.clean + 1, offers };
     }
     case 'pick': {
       return { ...s, phase: 'wall', round: s.round + 1, stackIds: [...s.stackIds, a.id], offers: [] };
@@ -327,6 +332,7 @@ export function useRunMode() {
     lastRoundScore: state.lastRoundScore,
     lastWall: state.lastWall,
     reason: state.reason,
+    history: state.history, // per-round records (feat/run-share)
     winsEarned,
     play: playRef.current,
     startRound,

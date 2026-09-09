@@ -6,6 +6,7 @@
 //   /sat-rush       -> SAT Rush
 //   /chain          -> CHAIN
 //   /fuse           -> FUSE
+//   /run            -> THE RUN (locked → the menu with the RUN card focused)
 //   /room/:code     -> join that room
 //
 // THE BRIDGE (why this is low-churn): the app's four entry-param readers (LAUNCH_INTENT,
@@ -21,6 +22,7 @@ const PATH_TO_QUERY = {
   '/sat-rush': 'satRush=1&satrush=1', // satRush/config reads satRush; LAUNCH_INTENT reads satrush
   '/chain': 'chain=1',
   '/fuse': 'fuse=1',
+  '/run': 'run=1', // THE RUN (feat/run-share): LAUNCH_INTENT.run; locked → menu with the RUN card focused
 };
 
 // Paths that render the MENU (home view). The view->path sync must NOT rewrite any of these to '/':
@@ -28,7 +30,7 @@ const PATH_TO_QUERY = {
 export const MENU_PATHS = new Set(['/', '/word-bomb', '/category-blitz']);
 
 // The full set of clean route paths (for tests / the sitemap).
-export const ROUTE_PATHS = ['/', '/word-bomb', '/category-blitz', '/sat-rush', '/chain', '/fuse'];
+export const ROUTE_PATHS = ['/', '/word-bomb', '/category-blitz', '/sat-rush', '/chain', '/fuse', '/run'];
 
 // A view id (or a menu+dialog intent) -> the canonical clean path. Only these views own a URL;
 // everything else (lobby/room-waiting/game/shop/stats/browse/credits/cg-arm) stays under the menu's
@@ -38,6 +40,7 @@ const VIEW_TO_PATH = {
   'sat-rush': '/sat-rush',
   chain: '/chain',
   fuse: '/fuse',
+  run: '/run',
 };
 
 // SAT/CHAIN/FUSE view ids come from their config modules; keep this in sync via the constants the
@@ -93,8 +96,9 @@ export function canonicalPathForView(view) {
 }
 
 // True if the current URL carries a legacy/embed/dev query we must NOT strip when canonicalising
-// (CrazyGames ?cg=1, ?portal=1, and the SAT dev flags). Deep-link shares (?join/?daily/?satrush/etc.)
-// ARE safe to canonicalise to a path.
+// (CrazyGames ?cg=1, ?portal=1, the SAT dev flags, and THE RUN's ?rs= / ?seed= dev knobs — dev-only,
+// harmless in prod, and the run reads them at mount so they must survive the splash → menu → run
+// walk). Deep-link shares (?join/?daily/?satrush/etc.) ARE safe to canonicalise to a path.
 export function hasStickyQuery(search = window.location.search) {
   try {
     const p = new URLSearchParams(search || '');
@@ -106,7 +110,9 @@ export function hasStickyQuery(search = window.location.search) {
       p.has('tune') ||
       p.has('scene') ||
       p.has('freeze') ||
-      p.has('lock')
+      p.has('lock') ||
+      p.has('rs') ||
+      p.has('seed')
     );
   } catch {
     return false;
@@ -121,5 +127,6 @@ export function viewIntentFromPath(pathname = window.location.pathname) {
   if (pathname === '/sat-rush') return 'sat-rush';
   if (pathname === '/chain') return 'chain';
   if (pathname === '/fuse') return 'fuse';
+  if (pathname === '/run') return 'run';
   return null; // /room/* and anything else: leave the app as-is
 }

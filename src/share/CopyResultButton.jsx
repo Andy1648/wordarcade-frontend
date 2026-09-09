@@ -13,6 +13,8 @@ import { track } from '../lib/analytics';
 import { shareCopied as evShareCopied } from '../lib/events.js';
 import './CopyResultButton.css';
 
+// `text` (feat/run-share): a PRE-BUILT receipt (THE RUN builds its own shape in runResult.js). When
+// given, it is copied verbatim and the per-word builder below is skipped; null/'' still suppresses.
 export default function CopyResultButton({
   mode,
   words,
@@ -21,6 +23,7 @@ export default function CopyResultButton({
   tiers = [],
   killed = false,
   className = '',
+  text: presetText,
 }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef(0);
@@ -28,7 +31,9 @@ export default function CopyResultButton({
 
   // Level is read live from the XP store at game-over (it isn't otherwise on these screens).
   const lvl = Number.isFinite(level) ? level : loadProgress().level;
-  const text = buildResultCard({ mode, words, points, level: lvl, tiers, killed, link: modeShareLink(mode) });
+  const text = presetText !== undefined
+    ? presetText
+    : buildResultCard({ mode, words, points, level: lvl, tiers, killed, link: modeShareLink(mode) });
   if (!text) return null; // suppression rule — an anti-ad
 
   async function onClick() {

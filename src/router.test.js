@@ -16,6 +16,7 @@ test('canonicalPathForView maps only the four deep-linkable views', () => {
   assert.equal(canonicalPathForView('sat-rush'), '/sat-rush');
   assert.equal(canonicalPathForView('chain'), '/chain');
   assert.equal(canonicalPathForView('fuse'), '/fuse');
+  assert.equal(canonicalPathForView('run'), '/run');
   assert.equal(canonicalPathForView('room'), null); // transient — no URL of its own
   assert.equal(canonicalPathForView('game'), null);
   assert.equal(canonicalPathForView('lobby'), null);
@@ -28,6 +29,7 @@ test('viewIntentFromPath (popstate): menu paths -> home, solo paths -> their vie
   assert.equal(viewIntentFromPath('/sat-rush'), 'sat-rush');
   assert.equal(viewIntentFromPath('/chain'), 'chain');
   assert.equal(viewIntentFromPath('/fuse'), 'fuse');
+  assert.equal(viewIntentFromPath('/run'), 'run');
   assert.equal(viewIntentFromPath('/room/WXYZ'), null); // never re-drive the room from Back
   assert.equal(viewIntentFromPath('/nonsense'), null);
 });
@@ -45,13 +47,15 @@ test('hasStickyQuery guards embed/dev entries, not shareable deep links', () => 
   assert.equal(hasStickyQuery('?portal=1'), true);
   assert.equal(hasStickyQuery('?stage=5'), true);
   assert.equal(hasStickyQuery('?tune=1'), true);
+  assert.equal(hasStickyQuery('?rs=5&seed=1'), true); // THE RUN dev knobs are sticky
+  assert.equal(hasStickyQuery('?seed=7'), true);
   assert.equal(hasStickyQuery('?satrush=1'), false);
   assert.equal(hasStickyQuery('?ref=share'), false);
   assert.equal(hasStickyQuery(''), false);
 });
 
-test('ROUTE_PATHS lists all six clean routes', () => {
-  assert.deepEqual(ROUTE_PATHS, ['/', '/word-bomb', '/category-blitz', '/sat-rush', '/chain', '/fuse']);
+test('ROUTE_PATHS lists all seven clean routes', () => {
+  assert.deepEqual(ROUTE_PATHS, ['/', '/word-bomb', '/category-blitz', '/sat-rush', '/chain', '/fuse', '/run']);
 });
 
 // bridgePathToSearch runs against window; stub a minimal one and capture the rewrite.

@@ -49,7 +49,9 @@ import ParticleField from './components/ParticleField';
 import CursorTrail from './components/CursorTrail';
 import PACKS from './data/packs';
 import { SAT_RUSH_ENABLED, SAT_RUSH_VIEW } from './satRush/config';
-import { RUN_VIEW, RUN_MODE_ENABLED } from './runMode/config';
+import { RUN_VIEW, RUN_MODE_ENABLED, RUN_UNLOCK_LEVEL } from './runMode/config';
+import { isRunLocked } from './runMode/runGate';
+import { loadProgress as loadXpProgress } from './progress/xp';
 import {
   CHAIN_VIEW,
   FUSE_VIEW,
@@ -207,13 +209,14 @@ const PORTAL_SKIP_INTRO =
 // group-chat link should land IN the game, not on a splash.
 // Read once at module load (same pattern as PORTAL_SKIP_INTRO).
 const LAUNCH_INTENT = (() => {
-  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false };
+  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false, run: false };
   const params = new URLSearchParams(window.location.search);
   const join = (params.get('join') || '').trim().toUpperCase();
   return {
     join: join || null,
     daily: params.get('daily') === '1',
     satrush: params.get('satrush') === '1',
+    run: params.get('run') === '1', // /run (feat/run-share): THE RUN, or the menu with its card focused when locked
   };
 })();
 
@@ -224,6 +227,7 @@ const SKIP_INTRO =
   !!LAUNCH_INTENT.join ||
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
+  LAUNCH_INTENT.run ||
   SOLO_LAUNCH.chain ||
   SOLO_LAUNCH.fuse ||
   CG_ENTRY; // CrazyGames wants gameplay immediately — no splash/intro chain.
@@ -687,6 +691,8 @@ function App() {
   // to the menu, so the loading screen is pre-completed (the socket still
   // connects in the background via useWebSocket).
   const [loadingDone, setLoadingDone] = useState(SKIP_INTRO);
+  // /run while THE RUN is locked (feat/run-share): the menu opens with the RUN card focused.
+  const [focusGame, setFocusGame] = useState(null);
 
   // The splash/attract screen is shown after loading, once per session
   // (dismissing it never re-arms it). Portal embeds and deep links skip it, and
@@ -850,6 +856,7 @@ function App() {
       else if (intent === 'sat-rush') goToSatRush();
       else if (intent === 'chain') goToChain();
       else if (intent === 'fuse') goToFuse();
+      else if (intent === 'run') goToRun();
       // null intent (/room/*, etc.): leave the app as-is.
     };
     window.addEventListener('popstate', onPop);
@@ -1595,6 +1602,15 @@ function App() {
       goToSatRush();
       return;
     }
+    // THE RUN is solo too (/run, feat/run-share). Unlocked (or the free first run still unspent) →
+    // straight in; locked → stay on the menu with the RUN card focused so the link still lands on
+    // the thing it advertised.
+    if (LAUNCH_INTENT.run) {
+      launchFiredRef.current = true;
+      if (isRunLocked(loadXpProgress().level, RUN_UNLOCK_LEVEL)) setFocusGame('run');
+      else goToRun();
+      return;
+    }
     // CHAIN / FUSE are solo too — open directly on mount, no socket wait.
     if (SOLO_LAUNCH.chain) {
       launchFiredRef.current = true;
@@ -2190,6 +2206,8 @@ function App() {
         onChain={goToChain}
         onFuse={goToFuse}
         onRun={goToRun}
+        focusGame={focusGame}
+        onFocusGameDone={() => setFocusGame(null)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}

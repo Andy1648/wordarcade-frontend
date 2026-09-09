@@ -24,6 +24,8 @@ export const SHARE = {
     'word-bomb': { badge: 'WORD BOMB', neon: '#2EFFE0', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-panic.png' },
     'category-blitz': { badge: 'CATEGORY BLITZ', neon: '#FF6B3D', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-idle.png' },
     'sat-rush': { badge: 'SAT RUSH', neon: '#A855F7', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-idle.png' },
+    // THE RUN (feat/run-share): the marquee pink (gameData RUN_GAME.baseColor).
+    run: { badge: 'THE RUN', neon: '#FF4FA3', mascot: '/mascot-celebrate.png', mascotLoss: '/mascot-panic.png' },
   },
   defaultMode: { badge: 'TYPE A WORD', neon: '#FFE94A', mascot: '/mascot-idle.png', mascotLoss: '/mascot-idle.png' },
 

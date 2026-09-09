@@ -7,6 +7,11 @@ import { useRunMode } from './useRunMode.js';
 import { wallSchedule } from './engine.js';
 import ModifierArt from './ModifierArt.jsx';
 import PlayBackdrop from '../components/PlayBackdrop';
+import CopyResultButton from '../share/CopyResultButton.jsx';
+import ShareBar from '../share/ShareBar.jsx';
+import { buildRunResultText, HAND_MAX } from '../share/runResult.js';
+import { modeShareLink } from '../share/links.js';
+import { modifierIconDataUrl } from './modifierIcon.js';
 import './RunMode.css';
 
 // Split a modifier's "upside, but downside" text into its two halves so the trade-off
@@ -27,13 +32,43 @@ export default function RunMode({ onExit }) {
 function RunInner({ onExit, onAgain }) {
   const run = useRunMode();
 
+  // fix/run-leave-confirm: leaving MID-RUN (a live round or the draft) with something BANKED
+  // forfeits that bank — the wins are only settled on the over screen. So the ✕ asks first,
+  // once, inline. The wall before round 1 (bank 0) and the over screen leave directly. Nothing
+  // pauses: the round clock keeps running under the confirm — that IS the pressure.
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const guarded = (run.phase === 'round' || run.phase === 'draft') && run.cumulative > 0;
+  function requestExit() {
+    if (!guarded) { onExit(); return; }
+    setConfirmLeave((open) => !open); // first ✕ asks; a second ✕ = keep playing
+  }
+  // Escape = keep playing. Leaving the guarded phases (round ended → over / wall) closes it.
+  useEffect(() => { if (!guarded) setConfirmLeave(false); }, [guarded]);
+  useEffect(() => {
+    if (!confirmLeave) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setConfirmLeave(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [confirmLeave]);
+
   return (
     // `is-round` lets the phone layout top-align the live round (see RunMode.css @560px).
     <div className={`run-root${run.phase === 'round' ? ' is-round' : ''}`}>
       {/* Dressed graffiti-wall backdrop (same as the menu), scoped + static, behind every RUN
           phase so the wide stage around the panel reads as a wall, not a flat-black void. */}
       <PlayBackdrop />
-      <button className="run-exit" onClick={onExit} aria-label="Leave run">✕</button>
+      <button className="run-exit" onClick={requestExit} aria-label="Leave run" aria-expanded={guarded ? confirmLeave : undefined}>✕</button>
+      {confirmLeave && (
+        // Hangs off the ✕ (same corner cluster — not a new fixed element). No autofocus: the
+        // round input keeps focus so KEEP PLAYING costs nothing; Escape dismisses.
+        <div className="run-leave-confirm" role="alertdialog" aria-label="Leave the run?">
+          <div className="run-leave-text">LEAVE? YOUR BANK <b>({run.cumulative.toLocaleString()})</b> IS FORFEIT</div>
+          <div className="run-leave-actions">
+            <button className="run-btn run-leave-keep" onClick={() => setConfirmLeave(false)}>KEEP PLAYING</button>
+            <button className="run-btn run-leave-go" onClick={onExit}>LEAVE</button>
+          </div>
+        </div>
+      )}
       {run.phase === 'loading' && <RunLoading />}
       {run.phase === 'wall' && <WallScreen run={run} />}
       {run.phase === 'round' && <RoundScreen run={run} />}
@@ -349,6 +384,30 @@ function FannedHand({ stack }) {
   );
 }
 
+// The run's share receipt + image card. Text: runResult.js (exact shape, glyph per round). Image:
+// the shared renderCard with the hand as up to four modifier icons. Nothing renders when the text
+// builder suppresses (no round cleared).
+function RunShare({ run, reached }) {
+  const link = modeShareLink('run');
+  const hand = run.stack.map((m) => m.name);
+  const text = buildRunResultText({ history: run.history, totalRounds: run.totalRounds, banked: run.cumulative, hand, link });
+  if (!text) return null;
+  const data = {
+    history: run.history,
+    totalRounds: run.totalRounds,
+    roundReached: reached,
+    banked: run.cumulative,
+    hand,
+    handIcons: run.stack.slice(0, HAND_MAX).map((m) => modifierIconDataUrl(m.id)),
+  };
+  return (
+    <div className="run-share">
+      <CopyResultButton mode="run" text={text} className="run-share-btn" />
+      <ShareBar mode="run" outcome={{ reason: run.reason }} data={data} neon="#FF4FA3" link={link} copy={false} />
+    </div>
+  );
+}
+
 function OverScreen({ run, onExit, onAgain }) {
   const won = run.reason === 'cleared';
   const walled = run.reason === 'wall'; // ended below the wall (the miss the meter warned of)
@@ -396,6 +455,10 @@ function OverScreen({ run, onExit, onAgain }) {
         <div className="run-over-hand-label">THE HAND YOU BUILT <span className="run-stack-count">{run.stack.length}</span></div>
         <FannedHand stack={run.stack} />
       </div>
+
+      {/* SHARE (feat/run-share): the text receipt (COPY RESULT) + the image card (SHARE / IMAGE).
+          Both suppressed on a 0-round run — dying on round 1 is an anti-ad. */}
+      <RunShare run={run} reached={reached} />
 
       <div className="run-over-actions">
         <button className="run-btn run-btn-again" onClick={onAgain}>RUN AGAIN</button>

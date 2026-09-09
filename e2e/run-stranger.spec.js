@@ -26,11 +26,9 @@ test('stranger path: splash → free RUN → wall 80 → draft → die → RUN A
   await expect(splash).toBeVisible({ timeout: 15000 });
   await splash.click();
   await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible', timeout: 20000 });
-  // The clean-URL router strips every non-sticky query at boot (only ?portal / ?cg / the SAT dev
-  // flags survive), so on the REAL splash path the run's ?rs / ?seed dev overrides are gone by
-  // the time the run mounts (random mode, 30s rounds). Re-apply them here: the run view is
-  // transient (no canonical path), so a query set at the menu survives into the run.
-  await page.evaluate((q) => window.history.replaceState(window.history.state, '', q), URL);
+  // ?rs / ?seed are STICKY (router hasStickyQuery, feat/run-share): the boot canonicalisation leaves
+  // them in place, so the run reads them at mount on the real splash path — no re-apply needed.
+  expect(await page.evaluate(() => location.search)).toContain('seed=1');
 
   // THE RUN is the hero card and is PLAYABLE at LV1 (free first run).
   const runCard = page.locator('.game-card-magnet[data-game="run"] .game-card');

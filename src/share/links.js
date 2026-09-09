@@ -46,6 +46,12 @@ export function fuseLink(origin) {
   return `${resolveOrigin(origin)}/fuse?ref=share`;
 }
 
+/** Deep link straight into THE RUN -> /run (feat/run-share). Locked players land on the menu with
+ *  the RUN card focused (App handles the gate); the ?ref=share attribution is kept like every share. */
+export function runLink(origin) {
+  return `${resolveOrigin(origin)}/run?ref=share`;
+}
+
 // Result-card deep link per mode id (Job 1). Each lands IN the mode, never the homepage —
 // EXCEPT word-bomb, which has no solo deep-link param (adding one is Tier-1 App.jsx work),
 // so it falls back to the mode-select homepage. category-blitz points at the Daily Challenge
@@ -54,6 +60,8 @@ export function modeShareLink(mode, origin) {
   switch (mode) {
     case 'fuse':
       return fuseLink(origin);
+    case 'run':
+      return runLink(origin);
     case 'chain':
       return chainLink(origin);
     case 'sat-rush':
