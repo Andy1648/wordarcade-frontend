@@ -36,7 +36,10 @@ function RunInner({ onExit, onAgain }) {
   // once, inline. The wall before round 1 (bank 0) and the over screen leave directly. Nothing
   // pauses: the round clock keeps running under the confirm — that IS the pressure.
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const guarded = (run.phase === 'round' || run.phase === 'draft') && run.cumulative > 0;
+  // fix/visual-batch-1: the between-rounds WALL screen is guarded too once something is banked —
+  // leaving there forfeits the bank exactly like leaving mid-round. The round-1 wall (bank 0)
+  // still leaves directly.
+  const guarded = (run.phase === 'round' || run.phase === 'draft' || run.phase === 'wall') && run.cumulative > 0;
   function requestExit() {
     if (!guarded) { onExit(); return; }
     setConfirmLeave((open) => !open); // first ✕ asks; a second ✕ = keep playing
@@ -61,7 +64,7 @@ function RunInner({ onExit, onAgain }) {
         // Hangs off the ✕ (same corner cluster — not a new fixed element). No autofocus: the
         // round input keeps focus so KEEP PLAYING costs nothing; Escape dismisses.
         <div className="run-leave-confirm" role="alertdialog" aria-label="Leave the run?">
-          <div className="run-leave-text">LEAVE? YOUR BANK <b>({run.cumulative.toLocaleString()})</b> IS FORFEIT</div>
+          <div className="run-leave-text">LEAVE? YOU FORFEIT <b>{run.cumulative.toLocaleString()}</b></div>
           <div className="run-leave-actions">
             <button className="run-btn run-leave-keep" onClick={() => setConfirmLeave(false)}>KEEP PLAYING</button>
             <button className="run-btn run-leave-go" onClick={onExit}>LEAVE</button>

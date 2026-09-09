@@ -13,7 +13,8 @@ const WORDS = [
   'planet', 'garden', 'window', 'silver', 'orange', 'bottle', 'candle', 'jacket',
   'pencil', 'rabbit', 'forest', 'island', 'castle', 'bridge', 'monkey', 'yellow',
 ];
-const CONFIRM_RE = /^LEAVE\? YOUR BANK \((\d[\d,]*)\) IS FORFEIT$/;
+// fix/visual-batch-1: "LEAVE? YOU FORFEIT 1,525" — one line at 390px.
+const CONFIRM_RE = /^LEAVE\? YOU FORFEIT (\d[\d,]*)$/;
 
 async function openWall(page) {
   await installBackendMock(page);
@@ -70,6 +71,23 @@ test('✕ mid-run asks first; KEEP PLAYING / Escape keep the bank; LEAVE forfeit
   await page.locator('.run-offers .run-card').first().click();
   await expect(page.locator('.run-wall')).toBeVisible();
   await expect(page.locator('.run-banked b')).toHaveText(bank);
+
+  // WALL between rounds (bank > 0) is guarded too (fix/visual-batch-1): ✕ → the same confirm;
+  // KEEP PLAYING → still on the wall. And the copy fits ONE line at 390px.
+  await page.locator('.run-exit').click();
+  await expect(confirm).toBeVisible();
+  await expect(page.locator('.run-leave-text')).toHaveText(CONFIRM_RE);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const line = await page.locator('.run-leave-text').evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { h: el.getBoundingClientRect().height, lh: parseFloat(cs.lineHeight), sw: el.scrollWidth, cw: el.clientWidth };
+  });
+  expect(line.h).toBeLessThan(line.lh * 1.5); // one line
+  expect(line.sw).toBeLessThanOrEqual(line.cw); // and nothing clipped
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.locator('.run-leave-keep').click();
+  await expect(confirm).toHaveCount(0);
+  await expect(page.locator('.run-wall')).toBeVisible();
 
   // ROUND 2 (mid-round): ✕ → confirm; the round is still live and the clock keeps running.
   await page.locator('.run-btn-go').click();

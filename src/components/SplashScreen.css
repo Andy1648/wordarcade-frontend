@@ -26,16 +26,29 @@
   );
 }
 
-/* Big slowly-rotating starburst behind the wordmark. */
+/* The comic starburst (fix/visual-batch-1): PINNED to the lower-right corner, spin only — it no
+   longer sits behind the wordmark. Its centre is the viewport corner, so a quarter of it shows,
+   and its rotated bounding box (√2 × the side) never reaches the title at any viewport
+   (splash-burst.spec pins zero overlap with .splash-logo across 5s). Sized in vmin so a short
+   landscape phone keeps it out of the title's row as well. */
 .splash-burst {
   position: absolute;
-  top: 44%;
-  left: 50%;
-  width: min(620px, 94vw);
-  height: min(620px, 94vw);
-  transform: translate(-50%, -50%);
+  top: auto;
+  left: auto;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 48vmin);
+  height: min(360px, 48vmin);
+  /* THE DRIFT PATH, killed. The spin is the animated `rotate` PROPERTY, and the old offset was
+     the `transform` property (translate(-50%,-50%)). Individual transform properties compose
+     OUTSIDE `transform` (translate → rotate → scale → transform), so that offset vector was
+     rotated too: the burst ORBITED a point 255px away on a 30s circle instead of spinning in
+     place. The offset now lives in the `translate` property, which is applied after the spin,
+     so the centre never moves (splash-burst.spec pins it). */
+  translate: 50% 50%;
+  transform-origin: 50% 50%;
   /* was 0.12 — a huge dim wash read as a murky brown blob. A crisp yellow+black comic
-     burst at real opacity frames the wordmark instead (fix/splash). */
+     burst at real opacity (fix/splash). */
   opacity: 0.62;
   pointer-events: none;
   animation: splash-burst-spin 30s linear infinite;
