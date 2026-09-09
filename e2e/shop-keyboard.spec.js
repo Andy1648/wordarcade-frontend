@@ -1,7 +1,7 @@
-// e2e/shop-keyboard.spec.js (fix/shop-keyboard) — the shop's HoldBuy had pointer handlers ONLY, so
-// no upgrade/cosmetic/theme could be bought without a mouse. These tests buy an item using ONLY the
-// keyboard: Enter (and Space) HELD for the hold duration commits; a short tap does NOT (parity with
-// the mouse hold — keyboard is not an instant-buy shortcut mouse users don't get).
+// e2e/shop-keyboard.spec.js — the shop's buy button must be usable with the keyboard ONLY (it once
+// had pointer handlers only, so nothing could be bought without a mouse). Buying is a plain
+// activation: a single Enter or Space press commits (fix/shop-click-buy removed the hold gate),
+// and the purchase reveals the shared sticker (feat/shop-reveal-sticker).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
@@ -22,48 +22,39 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
 
-// The KEY POWER hold-to-buy button (first .shop-keypower — it renders above WORD SENSE / MOMENTUM).
-const keyPowerHold = (page) => page.locator('.shop-keypower').first().locator('.shop-hold');
+// The KEY POWER buy button (first .shop-keypower — it renders above WORD SENSE / MOMENTUM).
+const keyPowerBuy = (page) => page.locator('.shop-keypower').first().locator('.shop-buy');
 const keyPowerHeading = (page) => page.locator('.shop-subtitle', { hasText: 'KEY POWER' });
 
-test('a short Enter tap does NOT buy (respects the hold)', async ({ page }) => {
+test('an Enter tap buys KEY POWER once — keyboard only, no mouse', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 });
-  const btn = keyPowerHold(page);
+  const btn = keyPowerBuy(page);
   await expect(btn).toBeVisible();
   await btn.focus();
-  // Tap: keydown then keyup well under the 400ms hold → no commit, no reveal, tier unchanged.
-  await page.keyboard.down('Enter');
-  await page.waitForTimeout(60);
-  await page.keyboard.up('Enter');
-  await page.waitForTimeout(300);
-  await expect(page.locator('.sticker')).toHaveCount(0);
-  await expect(keyPowerHeading(page)).toContainText('TIER 0');
-});
-
-test('Enter HELD for the hold duration buys KEY POWER — keyboard only, no mouse', async ({ page }) => {
-  await openShop(page, { wins: 999999, keytier: 0 });
-  const btn = keyPowerHold(page);
-  await expect(btn).toBeVisible();
-  await btn.focus();
-  // Hold Enter past the 400ms hold → commit → reveal banner names the KEY POWER unlock.
-  await page.keyboard.down('Enter');
-  await page.waitForTimeout(560);
-  await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
-  await page.keyboard.up('Enter');
-  // The purchase actually landed: KEY POWER advanced to TIER 1.
+  await page.keyboard.press('Enter');
+  // The purchase landed exactly once: KEY POWER advanced to TIER 1 (not 2).
   await expect(keyPowerHeading(page)).toContainText('TIER 1');
 });
 
-test('Space HELD also buys via the keyboard', async ({ page }) => {
-  await openShop(page, { wins: 999999, keytier: 1 }); // already T1 → this buy reaches T2
-  const btn = keyPowerHold(page);
+test('Enter buys KEY POWER and reveals the unlock sticker', async ({ page }) => {
+  await openShop(page, { wins: 999999, keytier: 0 });
+  const btn = keyPowerBuy(page);
   await expect(btn).toBeVisible();
   await btn.focus();
-  await page.keyboard.down('Space');
-  await page.waitForTimeout(560);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
+  await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
+  await expect(keyPowerHeading(page)).toContainText('TIER 1');
+});
+
+test('Space also buys via the keyboard', async ({ page }) => {
+  await openShop(page, { wins: 999999, keytier: 1 }); // already T1 → this buy reaches T2
+  const btn = keyPowerBuy(page);
+  await expect(btn).toBeVisible();
+  await btn.focus();
+  await page.keyboard.press('Space');
   await expect(page.locator('.sticker')).toBeVisible();
   await expect(page.locator('.sticker-name')).toContainText('KEY POWER II');
-  await page.keyboard.up('Space');
   await expect(keyPowerHeading(page)).toContainText('TIER 2');
 });

@@ -42,14 +42,8 @@ test.describe('shop', () => {
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });
-    // BUY (150) — feat/purchase-feel made buying an affordable item a HOLD-to-buy (HoldBuyButton,
-    // .shop-hold): it commits when the ~400ms fill animation finishes, not on a plain click. Hold
-    // past the fill, then release.
-    const buy = chrome.locator('.shop-hold');
-    await buy.hover();
-    await page.mouse.down();
-    await page.waitForTimeout(520);
-    await page.mouse.up();
+    // BUY (150) — a plain click (fix/shop-click-buy replaced the unlabelled hold-to-buy gate).
+    await chrome.locator('.shop-buy').click();
     await expect(page.evaluate(() => Number(localStorage.getItem('taw.wins')))).resolves.toBe(350);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsLifetime')))).toBe(900); // untouched
     // feat/shop-reveal-sticker: the purchase reveal is a MODAL sticker (its backdrop swallows

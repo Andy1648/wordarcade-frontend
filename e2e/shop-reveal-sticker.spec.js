@@ -24,20 +24,13 @@ async function openShop(page, { wins = 999999 } = {}) {
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
 
-// The buy control is still the press-and-HOLD button on this branch (fix/shop-click-buy, which
-// makes it a plain click, is a separate unmerged branch): hold past the ~400ms fill, then release.
-async function holdBuy(locator, page) {
-  await locator.hover();
-  await page.mouse.down();
-  await page.waitForTimeout(520);
-  await page.mouse.up();
-}
+// Buying is a plain click (fix/shop-click-buy removed the unlabelled 400ms hold gate).
 
 test('buying INFERNO reveals a sticker naming the theme and its price', async ({ page }) => {
   await openShop(page);
   const inferno = page.locator('.shop-card', { hasText: 'INFERNO' }).first();
   await expect(inferno).toBeVisible();
-  await holdBuy(inferno.locator('.shop-hold'), page);
+  await inferno.locator('.shop-buy').click();
 
   const sticker = page.locator('.sticker');
   await expect(sticker).toBeVisible();
@@ -55,7 +48,7 @@ test('buying INFERNO reveals a sticker naming the theme and its price', async ({
 test('clicking the sticker dismisses it and the shop stays open', async ({ page }) => {
   await openShop(page);
   const inferno = page.locator('.shop-card', { hasText: 'INFERNO' }).first();
-  await holdBuy(inferno.locator('.shop-hold'), page);
+  await inferno.locator('.shop-buy').click();
   await expect(page.locator('.sticker')).toBeVisible();
 
   // Click the viewport centre — the sticker itself. The click must be swallowed: it dismisses the
@@ -71,7 +64,7 @@ test('clicking the sticker dismisses it and the shop stays open', async ({ page 
 test('the backdrop also dismisses, and the sticker auto-dismisses on its own', async ({ page }) => {
   await openShop(page);
   const inferno = page.locator('.shop-card', { hasText: 'INFERNO' }).first();
-  await holdBuy(inferno.locator('.shop-hold'), page);
+  await inferno.locator('.shop-buy').click();
   await expect(page.locator('.sticker')).toBeVisible();
   // A click on the scrim (top-left corner, clear of the card) dismisses too.
   await page.mouse.click(8, 8);
@@ -80,7 +73,7 @@ test('the backdrop also dismisses, and the sticker auto-dismisses on its own', a
 
   // Auto-dismiss: buy another item and wait out the 4.2s lifetime without touching anything.
   const chrome = page.locator('.shop-card', { hasText: 'CHROME' }).first();
-  await holdBuy(chrome.locator('.shop-hold'), page);
+  await chrome.locator('.shop-buy').click();
   await expect(page.locator('.sticker')).toBeVisible();
   await expect(page.locator('.sticker')).toHaveCount(0, { timeout: 7000 });
   await expect(page.locator('.shop-panel')).toBeVisible();
@@ -88,7 +81,7 @@ test('the backdrop also dismisses, and the sticker auto-dismisses on its own', a
 
 test('a key power buy shows the tier and what it pays, and adds no infinite animation', async ({ page }) => {
   await openShop(page);
-  await holdBuy(page.locator('.shop-keypower').first().locator('.shop-hold'), page);
+  await page.locator('.shop-keypower').first().locator('.shop-buy').click();
   const sticker = page.locator('.sticker');
   await expect(sticker).toContainText('KEY POWER I');
   await expect(sticker).toContainText('XP');
