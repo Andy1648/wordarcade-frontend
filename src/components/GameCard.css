@@ -563,6 +563,31 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   letter-spacing: 0.01em;
 }
 
+/* THE PRIMARY-ACTION BAND (fix/hierarchy): a solid yellow strip along the card's bottom edge —
+   "▶ PLAY — FREE RUN" / "▶ PLAY". Bungee 14px, 3px black rule on top. The title bar lifts by
+   the band's height so nothing overlaps; a locked card never renders it. */
+.game-card-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 7px 10px 6px;
+  background: #FFE94A;
+  color: #0d0618;
+  border-top: 3px solid #000;
+  font-family: 'Bungee', cursive;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.game-card.has-band .game-card-titlebar {
+  bottom: 30px; /* = the band's box height (14 + 7 + 6 + 3) */
+}
+
 /* Phones stack the cards one per row; the featured upscale (which could overflow a
    full-width card) is reset. Portrait cards keep their 3:4 aspect-ratio here — one
    per row, the region scrolls (see Homepage.css mobile block). */

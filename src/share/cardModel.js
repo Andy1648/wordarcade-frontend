@@ -9,7 +9,7 @@
 
 import { SHARE } from './shareConfig';
 import { buildShareText } from './shareText.js';
-import { buildRunResultText, HAND_MAX } from './runResult.js';
+import { buildRunResultText, runGlyph, RUN_GLYPH, HAND_MAX } from './runResult.js';
 
 function modeTokens(mode) {
   return SHARE.modes[mode] || SHARE.defaultMode;
@@ -33,6 +33,11 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
   let chips = [];
   let icons = [];
   let win = true;
+  // THE RUN's extras (fix/hierarchy): the BANKED number is the hero (yellow), one glyph per
+  // round, and the hand as a text line. Empty / '' for every other mode.
+  let heroStyle = 'default';
+  let glyphs = [];
+  let handLine = '';
 
   if (mode === 'word-bomb') {
     win = !!outcome.won;
@@ -68,14 +73,19 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     sub = 'AVG ANTE';
     chips = [chip('CLEARED', data.cleared), chip('STREAK', data.bestStreak), chip('SCORE', data.score)];
   } else if (mode === 'run') {
-    // THE RUN (feat/run-share): how far + what you banked; the drafted HAND rides as up to four
-    // modifier ICONS (data.handIcons, pre-rasterised by the caller) instead of stat chips.
+    // THE RUN (fix/hierarchy): lead with BANKED (the yellow hero number), "BANKED · ROUND n OF 10"
+    // under it, the glyph row, then "HAND · A · B". No chips, no icons.
     win = outcome.reason === 'cleared';
     const reached = data.roundReached ?? 0;
-    hero = `ROUND ${reached}/${data.totalRounds ?? 10}`;
-    sub = `${Number(data.banked || 0).toLocaleString('en-US')} BANKED`;
+    hero = Number(data.banked || 0).toLocaleString('en-US');
+    heroStyle = 'banked';
+    sub = `BANKED · ROUND ${reached} OF ${data.totalRounds ?? 10}`;
     chips = [];
-    icons = (Array.isArray(data.handIcons) ? data.handIcons : []).filter(Boolean).slice(0, HAND_MAX);
+    icons = [];
+    const kind = (g) => (g === RUN_GLYPH.clear ? 'clear' : g === RUN_GLYPH.squeak ? 'squeak' : 'dead');
+    glyphs = (Array.isArray(data.history) ? data.history : []).map((r) => kind(runGlyph(r)));
+    const names = (Array.isArray(data.hand) ? data.hand : []).filter(Boolean).slice(0, HAND_MAX).map((n) => String(n).toUpperCase());
+    handLine = names.length ? `HAND · ${names.join(' · ')}` : '';
   } else {
     hero = 'NOT BAD';
   }
@@ -87,7 +97,10 @@ export function buildCardModel({ mode, outcome = {}, data = {}, daily = null, li
     hero,
     sub,
     chips: chips.filter(Boolean).slice(0, 3),
-    icons, // [] for every mode but THE RUN
+    icons,
+    heroStyle, // 'banked' → yellow outlined hero (THE RUN); 'default' → white with the neon glow
+    glyphs,    // THE RUN: 'clear' | 'squeak' | 'dead' per round, else []
+    handLine,  // THE RUN: "HAND · A · B", else ''
     copy: mode === 'run'
       ? buildRunResultText({ history: data.history, totalRounds: data.totalRounds, banked: data.banked, hand: data.hand, link })
       : buildShareText({ mode, outcome, data, daily, link }),

@@ -3,7 +3,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
-import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
@@ -21,7 +20,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, grantPrestigeUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
-import { isRunLocked } from '../runMode/runGate';
+import { isRunLocked, hasUsedFreeRun } from '../runMode/runGate';
 import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -201,12 +200,6 @@ export default function Homepage({ onSelectGame, onSoloPlay, onCreateRoom, onJoi
   // a level-gated CHAIN/FUSE card; closes on scrim/Escape/✕. No play button.
   const [lockedPreview, setLockedPreview] = useState(null);
   const { sound, muted } = useSound();
-
-  // Magnetic cursor-pull on the JOIN CTA (wrapper div, so the button's own
-  // :hover/:active transforms compose underneath). Gated to fine-pointer + motion
-  // (see useMagneticPull).
-  const joinMagnetRef = useRef(null);
-  useMagneticPull(joinMagnetRef, { max: 8, base: 6 });
 
   // ---- Cards peek-scroll region (presentational) -------------------------------
   // The 3-column grid can wrap to >1 row; the region shows one full row + a peek of
@@ -740,25 +733,19 @@ export default function Homepage({ onSelectGame, onSoloPlay, onCreateRoom, onJoi
                       : game.unlockLevel != null && xpProgress.level < game.unlockLevel
                   }
                   playerLevel={xpProgress.level}
+                  // fix/hierarchy: THE RUN card carries the menu's one primary action as a bottom
+                  // band — "▶ PLAY — FREE RUN" while the free first run is still on the table
+                  // (below the gate, freebie unspent), "▶ PLAY" otherwise. Locked renders no band.
+                  band={
+                    game.id === 'run'
+                      ? (game.unlockLevel != null && xpProgress.level < game.unlockLevel && !hasUsedFreeRun()
+                        ? '▶ PLAY — FREE RUN'
+                        : '▶ PLAY')
+                      : null
+                  }
                 />
               ))}
             </div>
-          </div>
-        </div>
-
-        <div className="homepage-bottom-bar">
-          {/* CREATE is per-game (each card's dialog has its own CREATE), so the
-              menu only needs JOIN here. Magnetic wrapper carries the cursor-pull. */}
-          <div ref={joinMagnetRef} className="homepage-btn-magnet">
-            <button
-              className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}${connecting === 'join' && coldStart ? ' is-waking' : ''}`}
-              onClick={handleJoinRoom}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              data-juice-self
-            >
-              {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN ROOM'}
-            </button>
           </div>
         </div>
 
@@ -766,9 +753,19 @@ export default function Homepage({ onSelectGame, onSoloPlay, onCreateRoom, onJoi
             reachable via the ?daily=1 deep link (App LAUNCH_INTENT.daily); only the
             loose menu entry was deleted. */}
 
-        {/* Quiet footer link: CREDITS only. (SHOP + STATS are the loud top-corner icon
-            buttons now; the guide/help nav was removed to keep the menu clean.) */}
+        {/* Quiet footer links (fix/hierarchy): the JOIN ROOM slab is gone — the menu's one
+            primary action is THE RUN card's band; joining by code is a text link beside CREDITS.
+            It keeps the connect-gated queue + the WAKING copy (server-waking.spec). */}
         <div className="homepage-footer-links">
+          <button
+            className={`homepage-join-link${navigating ? ' disabled' : ''}${connecting === 'join' && coldStart ? ' is-waking' : ''}`}
+            onClick={handleJoinRoom}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            data-juice-self
+          >
+            {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'HAVE A CODE? JOIN ROOM'}
+          </button>
           <button
             className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
             onClick={handleCredits}

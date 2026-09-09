@@ -136,7 +136,10 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0, band = null }) {
+  // fix/hierarchy: an optional bottom BAND (the menu's one primary action, THE RUN's "▶ PLAY").
+  // Never shown on a locked card — the lock plaque is the whole story there.
+  const showBand = !!band && !locked && game.enabled;
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
   // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
@@ -210,6 +213,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     // Level-gated: dimmed with a padlock; click only shakes.
     locked ? 'locked' : '',
     shaking ? 'game-card--shake' : '',
+    showBand ? 'has-band' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -348,6 +352,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               {payout && <div className="game-card-payout">{payout}</div>}
             </div>
           )}
+          {/* The primary-action band (fix/hierarchy): a solid yellow strip under the title bar. */}
+          {showBand && <div className="game-card-band">{band}</div>}
         </div>
 
         {/* Level gate (CHAIN/FUSE): the scene dims but stays visible, and the "UNLOCKS AT

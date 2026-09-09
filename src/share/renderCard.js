@@ -85,17 +85,45 @@ export async function renderCard(canvas, model) {
   ctx.fillStyle = S.bg;
   ctx.fillText(model.badge, W / 2, S.badgeY);
 
-  // --- hero (1-2 lines), glow in the mode neon ---
+  // THE RUN layout (fix/hierarchy) is BANKED-led and keeps every text line clear of the mascot's
+  // fixed bottom-left box: lines that share its rows are centred in the band between that box
+  // and the QR. Spec sizes are design px at half scale; the 1080 canvas draws them ×2.
+  const isRun = model.heroStyle === 'banked';
+  const mascotBox = isRun ? S.runMascot : S.mascot;
+  const bandL = mascotBox.x + mascotBox.size + 24;
+  const bandR = S.qr.x - 24;
+  const bandC = (bandL + bandR) / 2;
+  const bandW = bandR - bandL;
+  // Shrink a font size until `text` fits `maxW` (never below `min`).
+  const fit = (text, size, maxW, min = 18) => {
+    let s = size;
+    ctx.font = `700 ${s}px ${S.fonts.display}`;
+    while (s > min && ctx.measureText(text).width > maxW) { s -= 2; ctx.font = `700 ${s}px ${S.fonts.display}`; }
+    return s;
+  };
+
+  // --- hero (1-2 lines), glow in the mode neon — or THE RUN's yellow outlined BANKED number ---
   ctx.save();
-  ctx.fillStyle = S.ink;
-  ctx.shadowColor = model.neon;
-  ctx.shadowBlur = 28;
-  const heroLines = String(model.hero).split('\n');
-  const heroSize = heroLines.length > 1 || model.hero.length > 9 ? 120 : 168;
-  ctx.font = `700 ${heroSize}px ${S.fonts.display}`;
-  heroLines.forEach((ln, i) => {
-    ctx.fillText(ln, W / 2, S.heroY + i * (heroSize + 6) - (heroLines.length - 1) * (heroSize / 2));
-  });
+  if (isRun) {
+    const size = fit(String(model.hero), 112, W - 2 * S.pad, 64);
+    ctx.font = `700 ${size}px ${S.fonts.display}`;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 12;
+    ctx.strokeText(String(model.hero), W / 2, S.heroY);
+    ctx.fillStyle = '#FFE94A';
+    ctx.fillText(String(model.hero), W / 2, S.heroY);
+  } else {
+    ctx.fillStyle = S.ink;
+    ctx.shadowColor = model.neon;
+    ctx.shadowBlur = 28;
+    const heroLines = String(model.hero).split('\n');
+    const heroSize = heroLines.length > 1 || model.hero.length > 9 ? 120 : 168;
+    ctx.font = `700 ${heroSize}px ${S.fonts.display}`;
+    heroLines.forEach((ln, i) => {
+      ctx.fillText(ln, W / 2, S.heroY + i * (heroSize + 6) - (heroLines.length - 1) * (heroSize / 2));
+    });
+  }
   ctx.restore();
 
   // --- sub line ---
@@ -158,20 +186,63 @@ export async function renderCard(canvas, model) {
     }
   }
 
-  // --- hook ---
+  // --- THE RUN's glyph row: one flat square per round (🟩 clear / 🟨 squeak / ⬛ dead), drawn as
+  //     shapes (never font emoji — a PNG can't depend on the viewer's emoji font) ---
+  if (model.glyphs && model.glyphs.length) {
+    const n = model.glyphs.length;
+    const size = n > 10 ? 56 : 64;
+    const gap = 14;
+    const totalW = n * size + (n - 1) * gap;
+    let gx = W / 2 - totalW / 2;
+    const top = S.runGlyphY - size / 2;
+    const fillOf = { clear: '#3DDC84', squeak: '#FFE94A', dead: '#0d0618' };
+    for (const g of model.glyphs) {
+      ctx.fillStyle = fillOf[g] || fillOf.dead;
+      roundRect(ctx, gx, top, size, size, 10);
+      ctx.fill();
+      ctx.strokeStyle = g === 'dead' ? '#5a4a7a' : '#000';
+      ctx.lineWidth = 4;
+      roundRect(ctx, gx, top, size, size, 10);
+      ctx.stroke();
+      gx += size + gap;
+    }
+  }
+
+  // --- THE RUN's hand line: "HAND · A · B" (above the mascot box) ---
+  if (model.handLine) {
+    ctx.fillStyle = S.dim;
+    const size = fit(model.handLine, 36, W - 2 * S.pad, 22);
+    ctx.font = `700 ${size}px ${S.fonts.display}`;
+    ctx.fillText(model.handLine, W / 2, S.runHandY);
+  }
+
+  // --- hook (THE RUN: centred in the band between the mascot box and the QR) ---
   ctx.fillStyle = model.neon;
-  ctx.font = `700 52px ${S.fonts.display}`;
-  ctx.fillText(S.hook, W / 2, S.hookY);
+  if (isRun) {
+    const size = fit(S.hook, 52, bandW, 24);
+    ctx.font = `700 ${size}px ${S.fonts.display}`;
+    ctx.fillText(S.hook, bandC, S.hookY);
+  } else {
+    ctx.font = `700 52px ${S.fonts.display}`;
+    ctx.fillText(S.hook, W / 2, S.hookY);
+  }
 
   // --- url ---
   ctx.fillStyle = S.dim;
   ctx.font = `700 30px ${S.fonts.body}`;
   ctx.textAlign = 'left';
-  ctx.fillText(S.url, S.mascot.x + S.mascot.size + 24, W - 96);
+  ctx.fillText(S.url, bandL, W - 96);
 
-  // --- mascot (bottom-left) ---
+  // --- mascot (bottom-left, contained in its fixed box) ---
   const mascot = await loadImage(model.mascotSrc);
-  if (mascot) ctx.drawImage(mascot, S.mascot.x, S.mascot.y, S.mascot.size, S.mascot.size);
+  if (mascot) {
+    const iw = mascot.naturalWidth || mascotBox.size;
+    const ih = mascot.naturalHeight || mascotBox.size;
+    const k = Math.min(mascotBox.size / iw, mascotBox.size / ih);
+    const dw = iw * k;
+    const dh = ih * k;
+    ctx.drawImage(mascot, mascotBox.x + (mascotBox.size - dw) / 2, mascotBox.y + (mascotBox.size - dh), dw, dh);
+  }
 
   // --- scannable QR (bottom-right) to the ?ref=share URL ---
   await drawQR(ctx, REF_URL, S.qr.x, S.qr.y, S.qr.size, { dark: S.bg, light: '#ffffff' });

@@ -39,6 +39,11 @@ export const SHARE = {
   hookY: 880,
   qr: { size: 150, x: 1080 - 72 - 150, y: 1080 - 72 - 150 },
   mascot: { size: 230, x: 60, y: 1080 - 60 - 230 },
+  // THE RUN card (fix/hierarchy): the glyph row + hand line sit between the sub line and the
+  // mascot's FIXED bottom-left box (120 design px = 240 card px), which no text line enters.
+  runGlyphY: 680,
+  runHandY: 766,
+  runMascot: { size: 240, x: 60, y: 1080 - 60 - 240 },
 
   hook: 'CAN YOU BEAT THIS?',
   url: 'typeaword.com',

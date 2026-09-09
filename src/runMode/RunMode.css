@@ -340,14 +340,42 @@
   100% { opacity: 1; }
 }
 
-/* Share row (feat/run-share): the text receipt button + the image share bar, one cluster. */
-.run-share { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
-.run-share .run-share-btn { width: 100%; }
-.run-share .share-bar { justify-content: center; }
+/* ROUND GLYPHS (fix/hierarchy): the receipt's 🟩🟨⬛ row, the key, and (walled) the miss line. */
+.run-glyphs { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.run-glyph-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; font-size: 22px; line-height: 1; }
+.run-glyph { display: inline-block; }
+.run-glyph-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; font-family: 'Bungee', sans-serif; font-size: 9px; letter-spacing: .08em; color: #9a86c4; }
+.run-glyph-gap { font-size: 12px; color: #9a86c4; }
+.run-glyph-gap b { font-family: 'Bungee', sans-serif; color: #FF3B3B; font-size: 15px; }
+.run-glyph-gap em { font-style: normal; color: #FF6B3D; font-family: 'Bungee', sans-serif; font-size: 11px; }
 
-.run-over-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 4px; }
-.run-btn-again { background: #FFE94A; color: #201233; font-size: 22px; padding: 16px; }
-.run-btn-leave { background: #2b1747; color: #cbbce8; font-size: 15px; padding: 11px; box-shadow: 3px 3px 0 #000; }
+/* THE ONE PRIMARY (fix/hierarchy): RUN AGAIN — yellow, 22px, full width. Five buttons became one. */
+.run-btn-again { width: 100%; background: #FFE94A; color: #201233; font-size: 22px; padding: 16px; border-width: 4px; box-shadow: 6px 6px 0 #000; margin-top: 4px; }
+
+/* The GHOST share row: [COPY RESULT] [SHARE] [↓ IMAGE] in one quiet line — transparent faces,
+   thin dim outline, no shadow; the copied/ready states only tint the outline. ShareBar's own
+   wrapper is flattened (display: contents) so its two buttons join the row. */
+.run-share-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 8px; width: 100%; }
+.run-share-row .share-bar { display: contents; }
+.run-share-row .copy-result-btn,
+.run-share-row .share-btn,
+.run-share-row .share-btn.share-primary {
+  background: transparent; color: #b9a9dc; border: 2px solid #4a3670; border-radius: 8px; box-shadow: none;
+  font-size: 12px; letter-spacing: .04em; padding: 0 12px; min-height: 44px; margin: 0; flex: 1 1 auto;
+}
+.run-share-row .copy-result-btn:hover,
+.run-share-row .share-btn:hover:not(:disabled) { transform: none; box-shadow: none; border-color: #9a86c4; color: #f0e7ff; }
+.run-share-row .copy-result-btn:active,
+.run-share-row .share-btn:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: none; }
+.run-share-row .copy-result-btn.is-copied { background: transparent; border-color: #FFE94A; color: #FFE94A; }
+
+/* "leave to menu": a text link, not a button — 44px tall for touch, no slab. */
+.run-btn-leave.run-leave-link {
+  background: none; border: none; box-shadow: none; cursor: pointer; min-height: 44px; padding: 8px 16px;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 1px;
+  color: #9c90b4; text-decoration: underline; text-underline-offset: 3px;
+}
+.run-btn-leave.run-leave-link:hover { color: #C9B8E8; }
 
 /* narrow: the three cards become a stacked list — art on the left, effect on the
    right — so name + trade-off stay fully legible instead of squeezing to 3 columns. */

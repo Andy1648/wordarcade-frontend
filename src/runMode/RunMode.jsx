@@ -9,9 +9,8 @@ import ModifierArt from './ModifierArt.jsx';
 import PlayBackdrop from '../components/PlayBackdrop';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import ShareBar from '../share/ShareBar.jsx';
-import { buildRunResultText, HAND_MAX } from '../share/runResult.js';
+import { buildRunResultText, runGlyph, RUN_GLYPH } from '../share/runResult.js';
 import { modeShareLink } from '../share/links.js';
-import { modifierIconDataUrl } from './modifierIcon.js';
 import './RunMode.css';
 
 // Split a modifier's "upside, but downside" text into its two halves so the trade-off
@@ -384,9 +383,10 @@ function FannedHand({ stack }) {
   );
 }
 
-// The run's share receipt + image card. Text: runResult.js (exact shape, glyph per round). Image:
-// the shared renderCard with the hand as up to four modifier icons. Nothing renders when the text
-// builder suppresses (no round cleared).
+// The run's share cluster (feat/run-share), now ONE ghost row (fix/hierarchy): [COPY RESULT]
+// [SHARE] [↓ IMAGE] under the single primary RUN AGAIN. Text: runResult.js (exact shape, glyph
+// per round). Image: the shared renderCard's BANKED-led run layout. Nothing renders when the
+// text builder suppresses (no round cleared).
 function RunShare({ run, reached }) {
   const link = modeShareLink('run');
   const hand = run.stack.map((m) => m.name);
@@ -398,12 +398,38 @@ function RunShare({ run, reached }) {
     roundReached: reached,
     banked: run.cumulative,
     hand,
-    handIcons: run.stack.slice(0, HAND_MAX).map((m) => modifierIconDataUrl(m.id)),
   };
   return (
-    <div className="run-share">
+    <div className="run-share run-share-row">
       <CopyResultButton mode="run" text={text} className="run-share-btn" />
       <ShareBar mode="run" outcome={{ reason: run.reason }} data={data} neon="#FF4FA3" link={link} copy={false} />
+    </div>
+  );
+}
+
+// ROUND GLYPHS (fix/hierarchy): one glyph per round played — the same 🟩🟨⬛ the receipt copies —
+// with the key underneath. On a walled run the miss is folded in as one caption line (this
+// replaced the separate "THE WALL YOU MISSED BY" meter block).
+function RunGlyphs({ run, walled }) {
+  const rows = Array.isArray(run.history) ? run.history : [];
+  if (!rows.length) return null;
+  const cls = (g) => (g === RUN_GLYPH.clear ? 'clear' : g === RUN_GLYPH.squeak ? 'squeak' : 'dead');
+  return (
+    <div className="run-glyphs">
+      <div className="run-glyph-row" aria-label={`Rounds: ${rows.map(runGlyph).join('')}`}>
+        {rows.map((r, i) => { const g = runGlyph(r); return <span key={i} className={`run-glyph ${cls(g)}`}>{g}</span>; })}
+      </div>
+      <div className="run-glyph-key" aria-hidden="true">
+        <span>{RUN_GLYPH.clear} CLEARED</span>
+        <span>{RUN_GLYPH.squeak} CLEARED BY &lt;15%</span>
+        <span>{RUN_GLYPH.dead} THE WALL</span>
+      </div>
+      {walled && (
+        <div className="run-glyph-gap">
+          <b>{run.lastRoundScore.toLocaleString()}</b> / {run.lastWall.toLocaleString()} NEEDED
+          <em> — {(run.lastWall - run.lastRoundScore).toLocaleString()} SHORT</em>
+        </div>
+      )}
     </div>
   );
 }
@@ -414,6 +440,8 @@ function OverScreen({ run, onExit, onAgain }) {
   const reached = won ? run.totalRounds : run.round;
   // The MISS moment: the panel slams + shakes in, the stamp drops. The CLEAR-run moment:
   // a gentler triumphant pop. Both are mount-time one-shots on single (pooled) nodes.
+  // ORDER (fix/hierarchy): tiles → round glyphs → hand → RUN AGAIN (the one primary) →
+  // one ghost share row → a "leave to menu" text link.
   return (
     <div className={`run-panel run-over${won ? ' won' : ' miss'}`}>
       <div className={`run-over-stamp${won ? ' pop' : ' slam'}`}>{won ? 'RUN CLEARED' : 'RUN OVER'}</div>
@@ -436,19 +464,7 @@ function OverScreen({ run, onExit, onAgain }) {
         </div>
       </div>
 
-      {walled && (
-        <div className="run-over-gap">
-          <div className="run-over-gap-label">THE WALL YOU MISSED BY</div>
-          <div className="run-progress-track missed">
-            <div className="run-progress-fill" style={{ transform: `scaleX(${Math.min(1, run.lastRoundScore / (run.lastWall || 1))})` }} />
-            <span className="run-progress-wall" aria-hidden="true">WALL {run.lastWall.toLocaleString()}</span>
-          </div>
-          <div className="run-over-gap-nums">
-            <b>{run.lastRoundScore.toLocaleString()}</b> / {run.lastWall.toLocaleString()} NEEDED
-            <em> — {(run.lastWall - run.lastRoundScore).toLocaleString()} SHORT</em>
-          </div>
-        </div>
-      )}
+      <RunGlyphs run={run} walled={walled} />
 
       {/* The stack as the story of the run — the fanned hand you built. */}
       <div className="run-over-hand-wrap">
@@ -456,14 +472,12 @@ function OverScreen({ run, onExit, onAgain }) {
         <FannedHand stack={run.stack} />
       </div>
 
-      {/* SHARE (feat/run-share): the text receipt (COPY RESULT) + the image card (SHARE / IMAGE).
-          Both suppressed on a 0-round run — dying on round 1 is an anti-ad. */}
+      <button className="run-btn run-btn-again" onClick={onAgain}>RUN AGAIN</button>
+
+      {/* SHARE: the ghost row. Suppressed on a 0-round run — dying on round 1 is an anti-ad. */}
       <RunShare run={run} reached={reached} />
 
-      <div className="run-over-actions">
-        <button className="run-btn run-btn-again" onClick={onAgain}>RUN AGAIN</button>
-        <button className="run-btn run-btn-leave" onClick={onExit}>LEAVE</button>
-      </div>
+      <button className="run-btn-leave run-leave-link" onClick={onExit}>LEAVE TO MENU</button>
     </div>
   );
 }

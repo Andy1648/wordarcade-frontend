@@ -23,7 +23,7 @@ test.describe('server-waking cold-start copy', () => {
     await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
     await freezeAnimations(page);
 
-    const join = page.locator('.homepage-btn-join');
+    const join = page.locator('.homepage-join-link');
 
     // Socket isn't open yet, so JOIN queues the connect-gated action instead of
     // firing. (It shows CONNECTING… first, then WAKING once the threshold passes.)

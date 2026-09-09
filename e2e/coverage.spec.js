@@ -121,7 +121,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('PUBLIC ROOMS browser (JOIN)', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 30);
-    await page.locator('.homepage-btn-join').click(); // JOIN ROOM → browser
+    await page.locator('.homepage-join-link').click(); // JOIN ROOM → browser
     await expect(page.locator('.browser-wrap')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);

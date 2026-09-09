@@ -547,26 +547,10 @@ html[data-beat='true'] .homepage-logo {
 /* (fix/logic-and-onboarding) the "N MORE" pager + its `.homepage-cards-more` styles were
    removed — all five cards are sized to fit one screen, so the pager is vestigial. */
 
-.homepage-bottom-bar {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  gap: clamp(8px, 1.2vw, 16px);
-  /* Extra horizontal inset so the two buttons (with their skew + hard offset
-     shadow) always sit comfortably INSIDE the card, never touching/spilling past
-     its rounded border. */
-  padding: clamp(3px, 0.5vh, 6px) clamp(16px, 3vw, 44px); /* small vertical (shadow clearance only) so the JOIN<->CREDITS gap is the row-gap, not padding (§3) */
-}
+/* (fix/hierarchy) The JOIN ROOM slab + its .homepage-bottom-bar are gone: the menu's one primary
+   action is THE RUN card's band; joining by code is the .homepage-join-link text link in the
+   footer beside CREDITS. */
 
-/* Keep the buttons above the bar's stacking context. */
-.homepage-bottom-bar .homepage-btn {
-  z-index: 1;
-}
-
-/* Magnetic cursor-pull wrapper for the CTAs. Shrink-wraps the button so the
-   flex-row layout (centered, gap) is unchanged; its translate/scale + leaning
-   box-shadow are set inline by lib/magneticPull.js. No static style of its own. */
 /* WPM (§2): the menu self-test readout, centred just under the XP bar. Compact + static so it
    never breaks the one-screen fit; hidden until the player types (LiveWpm hideZero). */
 .menu-wpm {
@@ -590,7 +574,8 @@ html[data-beat='true'] .homepage-logo {
    so extra height here risks clipping the bottom nav on short laptops. The
    44px tap floor is applied in the <=760px block below, where the homepage
    switches to height:auto and the target is actually tapped by a finger. */
-.homepage-credits-link {
+.homepage-credits-link,
+.homepage-join-link {
   display: block;
   margin: 0 auto;
   padding: 0 18px; /* no internal top/bottom pad: the credits box = its text, so the gap to the frame is the stage's padding-bottom, kept in the 16-32 band (§3) */
@@ -609,15 +594,27 @@ html[data-beat='true'] .homepage-logo {
   text-shadow: 0 1px 3px rgba(13, 6, 24, 0.95), 0 0 3px rgba(13, 6, 24, 0.95);
 }
 
-.homepage-credits-link:hover {
+.homepage-credits-link:hover,
+.homepage-join-link:hover {
   color: #C9B8E8;
   text-decoration: underline;
 }
 
-.homepage-credits-link.disabled {
+.homepage-credits-link.disabled,
+.homepage-join-link.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
+
+/* The join link reads as the actionable one of the pair: cyan, with the "▸" affordance. Its
+   WAKING variant brightens to yellow (like the old daily link), spinner sized to the type. */
+.homepage-join-link { color: #2EFFE0; }
+.homepage-join-link:hover { color: #9dfff2; }
+.homepage-join-link.is-waking { color: #FFE94A; }
+.homepage-join-link .connecting-spinner,
+.homepage-join-link .connecting-spinner-rm { width: 11px; height: 11px; font-size: 11px; }
+.homepage-join-link .connecting-spinner { border-width: 2px; }
+.homepage-join-link .connecting-sub { font-size: 9px; }
 
 
 /* Subtle credit footer - centered, quiet, doesn't compete with the cards. */
@@ -783,9 +780,10 @@ html[data-beat='true'] .homepage-logo {
     flex-shrink: 0;
   }
 
-  /* 44px tap floor for the credits link, phone-only: the wrap is height:auto
+  /* 44px tap floor for the footer links, phone-only: the wrap is height:auto
      here so the taller box can never clip the one-screen desktop layout. */
-  .homepage-credits-link {
+  .homepage-credits-link,
+  .homepage-join-link {
     padding: 14px 18px 16px;
     min-height: 44px;
   }
@@ -1053,14 +1051,16 @@ html[data-beat='true'] .homepage-beat-glow {
   }
 }
 
-/* STATS + CREDITS quiet footer links, side by side. */
+/* JOIN ROOM + CREDITS quiet footer links, side by side (wrapping at 360px rather than overflowing). */
 .homepage-footer-links {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: baseline;
-  gap: 22px;
+  gap: 4px 22px;
 }
-.homepage-footer-links .homepage-credits-link {
+.homepage-footer-links .homepage-credits-link,
+.homepage-footer-links .homepage-join-link {
   margin: 4px 0 0;
 }
 
