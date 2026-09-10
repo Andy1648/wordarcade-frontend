@@ -983,3 +983,82 @@
   font-size: 14px;
   color: #cdbdf0;
 }
+
+
+/* NOTE ON PLACEMENT: this block lives at the END of the file on purpose. Media-query rules
+   carry no extra specificity, so an earlier @media `padding-right` is overridden by a later
+   plain `.solo-ribbon { padding: ... }` shorthand. Putting the phone rules last is what makes
+   the ribbon's right inset actually hold. */
+/* ===== PHONE LAYOUT (fix/solo-phone-overlap) =========================================
+   Three collisions were measured on a real CHAIN run on a phone: the wins badge on top of
+   the timer ring, the ribbon's newest chip under the fixed sound toggle, and the supply
+   hint sitting on the input's own text.
+
+   TWO of the three had ONE cause. At 320x640 the card's content is ~686px tall inside a
+   624px card, and .solo-body / .solo-primary centre their children — and a CENTRED flex
+   column that overflows spills equally out of BOTH ends. So the stage escaped UPWARD onto
+   the HUD (ring over the wins badge) and its last child escaped DOWNWARD onto the input
+   (supply hint over the typed text). Measured before the fix at 320x640:
+     winsBadge x timerRing = 108x39px      input x supplyHint = 230x18px
+   `safe center` is the exact tool: it centres while the content fits and packs to the START
+   edge the moment it would overflow, so nothing can ever paint above the HUD. The plain
+   `center` above it is the fallback for engines that do not parse the safe keyword. */
+@media (max-width: 560px) {
+  .solo-body,
+  .solo-primary {
+    justify-content: center;
+    justify-content: safe center;
+  }
+
+  /* The supply hint is its own reserved line BELOW the input, never sharing one with it.
+     The height is fixed so the line does not appear/disappear as the text changes and
+     shove the ribbon around mid-run. */
+  .solo-inputwrap { order: 1; }
+  .solo-supply {
+    order: 2;
+    height: 20px;
+    min-height: 20px;
+    line-height: 20px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .solo-reason { order: 3; }
+  .solo-armhint { order: 4; }
+  .solo-deck { order: 5; }
+
+  /* The ribbon's newest chip must clear the fixed sound toggle, which is .audio-btn — 44px
+     wide, pinned right:16px bottom:16px (AudioControls.css). Reserve the button's width
+     plus 12px = 56px on the ribbon's right edge.
+     The inset is on the WRAP, not on the inner row's padding. Padding on .solo-ribbon moves
+     the chips but leaves the container's border box full-width, so the ribbon BOX still
+     overlapped the button (measured 25x38.7px at 320x640) even with the chips clear. Taking
+     the width off the wrap moves the box edge itself, so both the container and the chips
+     clear the button. The wrap is transparent (no background, no border — it only clips), so
+     nothing visible changes versus the padding approach. */
+  .solo-ribbon-wrap {
+    width: calc(100% - 56px);
+    margin-right: 56px;
+  }
+
+  /* Keep the HUD to as few wrapped rows as it can manage so the card has less to overflow.
+     The right inset still clears the absolute exit X (40px + 16px); only the left side,
+     which has nothing to clear, is reclaimed. */
+  .solo-hud {
+    padding: 0 52px 0 12px;
+    gap: 8px 14px;
+  }
+}
+
+/* Narrow phones: the same rules with the ribbon held further off the button, because the
+   card's own side margin is smaller here and the chip sits closer to the viewport edge. */
+@media (max-width: 400px) {
+  .solo-hud {
+    padding: 0 50px 0 8px;
+    gap: 6px 10px;
+    font-size: 14px;
+  }
+  .solo-ribbon-wrap {
+    width: calc(100% - 60px);
+    margin-right: 60px;
+  }
+}

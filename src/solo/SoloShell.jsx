@@ -130,11 +130,19 @@ export default function SoloShell({
             WITH + NEXT STARTS WITH; FUSE: the fragment slab). The OUT slab reads the input
             every keystroke but is a SIBLING of the input's chain, never an ancestor. */}
         {phase === 'playing' ? (slabs ? slabs : <div className="solo-center">{center}</div>) : null}
-        {phase === 'playing' && supply ? <div className="solo-supply">{supply}</div> : null}
       </div>
       </div>{/* .solo-primary */}
 
       <div className="solo-secondary">
+      {/* SUPPLY HINT (fix/solo-phone-overlap): re-homed out of .solo-stage and into
+          .solo-secondary. The visual ORDER is unchanged at every width — the stage's last
+          child was the supply line and the secondary's first child is now that same line,
+          so desktop reads identically. What changes is the CONTAINER: the stage is the box
+          that overflows on a phone, and a supply line living inside it spilled downward onto
+          the input's own text. In .solo-secondary it is a normal flow sibling of the input,
+          and the phone breakpoints below re-order it to sit BELOW the input with a reserved
+          fixed height so the two can never share a line. */}
+      {phase === 'playing' && supply ? <div className="solo-supply">{supply}</div> : null}
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit}>
           <input
