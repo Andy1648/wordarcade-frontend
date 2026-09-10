@@ -104,20 +104,25 @@ test('stageMs is inside [2200, 9000] for all 956 cards', () => {
   );
 });
 
-test("the x5 window vs each card's own cost — 4 of 956 fall under 60%", () => {
+test("the x5 window vs each card's own cost — the recorded minimum is 0.565", () => {
   const ratios = CARDS.map((c) => ({ word: c.word, r: stageMs(c) / c.costMs }));
-  const under = ratios.filter((x) => x.r < 0.6).sort((a, b) => a.r - b.r);
+  const capped = ratios.filter((x) => x.r < 0.6).sort((a, b) => a.r - b.r);
   const min = Math.min(...ratios.map((x) => x.r));
-  console.log(`[ante] beat / own cost — min ${min.toFixed(3)} · under 60%: ${under.map((x) => `${x.word} ${x.r.toFixed(3)}`).join(', ') || '(none)'}`);
-  // HONEST BOUND. The ask was that no card's x5 window falls under 60% of its own read+type cost.
-  // Four of the longest cards do, because the 9000ms CEILING bites before the 0.85 factor does:
-  // "incontrovertible" costs 15936ms and gets the 9000ms cap, i.e. 0.565. Raising the ceiling to
-  // 9562+ removes all four — but it also pushes the median player from 74.6% to 82% at x5, outside
-  // the 55-80 band this tuning was chosen for. That is the trade; these numbers are asserted so it
-  // stays visible.
-  assert.ok(min > 0.55, `no card drops below 55% of its own cost (min ${min.toFixed(3)})`);
-  assert.equal(under.length, 4, 'exactly the four longest cards sit under 60%');
-  for (const u of under) assert.ok(stageMs(CARDS.find((c) => c.word === u.word)) === STAGE_MS_MAX, `"${u.word}" is capped by the ceiling, not the factor`);
+  console.log(`[ante] beat / own cost — min ${min.toFixed(3)} · under 60%: ${capped.map((x) => `${x.word} ${x.r.toFixed(3)}`).join(', ') || '(none)'}`);
+
+  // NOT A 60% GATE — A RECORDED MINIMUM. The original ask was that no card's x5 window fall under
+  // 60% of its own read+type cost. Four of the longest cards do (0.565 / 0.578 / 0.593 / 0.594),
+  // all of them capped by the 9000ms CEILING rather than the 0.85 factor. That is a DECISION, not
+  // an open defect: a ceiling of 9562+ un-caps those four but pushes the median player from 74.6%
+  // to 82% at x5, outside the 55-80 band — raising the ceiling to fix 4 cards costs the other 952.
+  // So this asserts what the shipped tuning ACTUALLY produces, tightly, so any drift is visible.
+  assert.ok(Math.abs(min - 0.565) < 0.002, `the corpus minimum is the recorded 0.565 (got ${min.toFixed(3)})`);
+  assert.deepEqual(
+    capped.map((x) => x.word),
+    ['incontrovertible', 'misanthropic', 'flibbertigibbet', 'tautological'],
+    'exactly the four known long cards sit under 60%, in the recorded order'
+  );
+  for (const u of capped) assert.equal(stageMs(CARDS.find((c) => c.word === u.word)), STAGE_MS_MAX, `"${u.word}" is capped by the ceiling, not the factor`);
 });
 
 test('stageMs tracks cost inside the clamp, and falls back for a card with no costMs', () => {
@@ -176,7 +181,9 @@ test('the slow and fast bands cannot both be met — the distributions do not ov
   // ceiling can satisfy "slow > 25%" and "fast < 95%" at once on this corpus.
   assert.ok(fastP95 < slowP25, 'the fast p95 sits BELOW the slow p25 — there is no beat between them');
 
-  // And a direct search agrees: nothing in a wide grid meets all three bands at once.
+  // AND A DIRECT SEARCH AGREES. This search is NOT looking for a pair to adopt — it exists to PIN
+  // the impossibility. It sweeps factor x ceiling wide and asserts the feasible set is EMPTY, so if
+  // a future corpus or cost model ever makes all three bands reachable, this test fails and says so.
   let feasible = 0;
   for (let f = 0.6; f <= 2.0; f += 0.05) {
     for (const hi of [7000, 9000, 11000, 13000, 99999]) {
@@ -188,7 +195,7 @@ test('the slow and fast bands cannot both be met — the distributions do not ov
     }
   }
   console.log(`[ante] grid search over factor x ceiling: ${feasible} parameter pairs meet all three bands`);
-  assert.equal(feasible, 0, 'no (factor, ceiling) pair satisfies slow>25 AND median 55-80 AND fast<95');
+  assert.equal(feasible, 0, 'PINNED: no (factor, ceiling) pair satisfies slow>25 AND median 55-80 AND fast<95');
 });
 
 test('ante distribution by tier, flat beat vs per-card beat (median player)', () => {

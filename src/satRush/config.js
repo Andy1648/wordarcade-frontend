@@ -48,28 +48,33 @@ export const DEFAULT_STAGE_MS = 2800;
 //
 // Three beats and the 5/3/1 multipliers are UNCHANGED, so the scoring model and the meaning of
 // AVG ANTE are exactly as before — only the length of a beat moves.
+//
+// THE CONSTANTS ARE SETTLED — 0.85 / 9000, tuned for the MEDIAN player (200wpm read, 35wpm type),
+// who clears 74.6% of cards at x5. The first pass shipped 0.42 / 5200, which put that same player
+// at 0%: the beat was a fraction of the card's own cost, so nobody could finish inside one beat.
+//
+// TUNING FOR THE MEDIAN IS THE DECISION, not a compromise we still owe a fix for. One beat per card
+// is ONE number for all players, and the slow/fast bands we originally wanted (slow >25% at x5,
+// fast <95%) are PROVABLY mutually exclusive on this corpus: slow players' p25 stage-0 cost is
+// 8250ms while fast players' p95 is 7628ms, so the two distributions do not overlap at all — the
+// window between them is -622ms. Any beat generous enough to give slow players a quarter of the x5s
+// hands fast players essentially all of them. A grid search over factor x ceiling finds ZERO pairs
+// meeting all three bands, and that search runs as a test (anteFairness.test.js) asserting it finds
+// none — the impossibility is pinned, so a future retune cannot silently re-chase it. Do not move
+// these constants hunting for a slow/fast fix; there isn't one at this shape.
 export const STAGE_COST_FACTOR = 0.85;
 export const STAGE_MS_MIN = 2200;
+// The ceiling STAYS at 9000 even though it caps four of the longest cards (incontrovertible 0.565,
+// misanthropic 0.578, flibbertigibbet 0.593, tautological 0.594 of their own read+type cost). A
+// ceiling of 9562+ un-caps those four, but it also pushes the median player from 74.6% to 82% at
+// x5, outside the 55-80 band this is tuned for: raising the ceiling to fix 4 cards costs the other
+// 952. The four are accepted, and the test records 0.565 as the observed minimum.
 export const STAGE_MS_MAX = 9000;
 
 /**
  * The base stage length for one card. `card.costMs` is the build-time read+type estimate; a card
  * with no costMs (a test fixture, or data built before this field existed) falls back to the flat
- * default, so nothing can crash on missing data.
- *
- * THE CONSTANTS, and what they cost. 0.85 / 9000 is tuned for the MEDIAN player (200wpm read,
- * 35wpm type): they clear 74.6% of cards at x5. The first pass shipped 0.42 / 5200, which put
- * that same player at 0% — the beat was a fraction of the card's own cost, so nobody could finish
- * inside one beat.
- *
- * Two things this tuning canNOT do, both measured in src/satRush/anteFairness.test.js:
- *   - A SLOW player (160wpm/25wpm) still clears only 0.5% at x5, and a FAST one (260wpm/55wpm)
- *     clears 99.8%. No factor/ceiling pair fixes both: slow players' p25 stage-0 cost (8250ms) is
- *     ABOVE fast players' p95 (7628ms), so the two distributions do not overlap. Any beat generous
- *     enough to give slow players a quarter of the x5s hands fast players essentially all of them.
- *   - Four of the longest cards get a beat under 60% of their own cost, because the 9000ms ceiling
- *     bites before the factor does. A ceiling of 9562+ removes that, at the cost of pushing the
- *     median player to 82% (outside the intended band).
+ * default, so nothing can crash on missing data. See the constants above for why 0.85 / 9000.
  */
 export function stageMs(card) {
   const cost = card && Number.isFinite(card.costMs) ? card.costMs : null;
