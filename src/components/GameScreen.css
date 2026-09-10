@@ -692,6 +692,43 @@
   100% { opacity: 1; }
 }
 
+/* ---- Opponent status line + bot word reveal (feat/wb-bot-turn) ---- */
+/* "THINKING…" / "TYPING…" / "THEIR TURN" under the current opponent's name row. */
+.player-status {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: #FFE94A;
+  margin: 3px 0 1px;
+}
+/* The active card is orange: keep the status dark for contrast (as the name is). */
+.game-player-card.current .player-status {
+  color: #000;
+}
+/* The ellipsis: three dots, one more lit every 400ms (opacity swap from JS — not a keyframe). */
+.player-status-dots {
+  display: inline-block;
+  margin-left: 1px;
+  letter-spacing: 0;
+}
+.player-status-dots .dot {
+  display: inline-block;
+  opacity: 0.2;
+}
+.player-status-dots .dot.is-on {
+  opacity: 1;
+}
+/* The bot's revealed word's chip waits (opacity only) until the last letter has landed on the
+   card, then the class drops and chip-slide-in runs from the start (animation: none -> name). */
+.game-used-chip.is-pending {
+  animation: none;
+  opacity: 0;
+}
+
 .game-player-hearts {
   display: flex;
   justify-content: center;
