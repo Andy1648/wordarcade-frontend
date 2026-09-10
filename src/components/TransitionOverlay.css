@@ -12,7 +12,6 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(120deg, #9A1AFF, #ff4fa3 55%, #FF6B3D);
-  will-change: transform, opacity;
 }
 /* FORWARD (entering deeper): the panel sweeps across left→right (covers, then clears to the right). */
 .transition-overlay[data-dir='forward'] .transition-panel {
@@ -46,7 +45,6 @@
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   opacity: 0;
-  will-change: transform, opacity;
   animation: transition-word var(--transition-ms, 240ms) ease-out both;
 }
 @keyframes transition-word {

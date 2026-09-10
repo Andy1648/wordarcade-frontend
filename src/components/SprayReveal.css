@@ -65,7 +65,6 @@
     -webkit-mask-image: none;
     mask-image: none;
     animation: spray-reveal-fade 300ms ease-out both;
-    will-change: opacity;
   }
   @keyframes spray-reveal-fade {
     from { opacity: 0; }

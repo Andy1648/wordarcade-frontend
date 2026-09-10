@@ -321,7 +321,6 @@
      vars, so that would otherwise leak a flat black 3-layer drop). Both the bold-clean
      single drop and the old 6-layer magenta extrude are intentionally gone. */
   text-shadow: none;
-  will-change: transform;
 }
 
 /* The paint drips stay OFF (the JSX element is still in the markup; hide it) - the
@@ -813,7 +812,6 @@ html[data-beat='true'] .homepage-logo {
   pointer-events: none;
   opacity: 0;
   z-index: 0;
-  will-change: opacity;
   /* Concentrated on the OUTER frame band (transparent core out to 62%) so the
      glow rings the stage edge - which IS the visible menu frame - and the inner
      content stays clear. Redder pink (#FF7EC0). Kept inside .homepage-stage: the

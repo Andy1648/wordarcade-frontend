@@ -64,7 +64,6 @@
   /* opacity/transform are driven imperatively from JS for the single open/close transition.
      Centre origin so the 0.96→1 scale pops from the middle, not the corner. */
   transform-origin: center;
-  will-change: transform, opacity;
   overflow: hidden;
 }
 

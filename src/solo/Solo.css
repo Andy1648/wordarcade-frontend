@@ -317,7 +317,6 @@
   color: #2effe0;
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
-  will-change: transform, opacity;
 }
 
 /* Input — NEVER animated. 16px min font (no iOS zoom), 44px min target. */

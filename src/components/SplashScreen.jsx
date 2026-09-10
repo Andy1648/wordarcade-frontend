@@ -108,6 +108,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
   startRef.current = onStart;
   dismissRef.current = onDismiss;
   const fxRef = useRef(null);
+  const rootRef = useRef(null);
 
   function dismiss() {
     if (dismissedRef.current) return;
@@ -145,6 +146,20 @@ export default function SplashScreen({ onStart, onDismiss }) {
     return () => clearInterval(id);
   }, []);
 
+  // WILL-CHANGE (fix/willchange-gate): the fuse sparks and the ambient embers loop for as long
+  // as the splash is up, so the compositor hint is genuinely wanted — but it used to be a static
+  // CSS declaration, and CLAUDE.md's budget forbids a promotion that outlives its animation.
+  // Applying it from JS buys something a static rule cannot: the layers are dropped the instant
+  // dismissal starts, ~300ms before the component unmounts, so the exit animation and the first
+  // frame of the menu underneath are not competing with a few dozen live compositor layers.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return undefined;
+    const nodes = [...root.querySelectorAll('.splash-spark, .splash-ember')];
+    for (const el of nodes) el.style.willChange = leaving ? '' : 'transform, opacity';
+    return () => { for (const el of nodes) el.style.willChange = ''; };
+  }, [leaving]);
+
   // Click/tap dismisses (and unlocks audio) on EVERY device.
   useEffect(() => {
     const onClick = () => dismiss();
@@ -155,6 +170,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
 
   return (
     <div
+      ref={rootRef}
       className={`splash-screen${leaving ? ' leaving' : ''}`}
       aria-label={fine ? 'Type or click to start' : 'Tap to start'}
     >
