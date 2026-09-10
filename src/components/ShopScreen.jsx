@@ -522,88 +522,23 @@ function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBu
   );
 }
 
-// §2 — press-and-HOLD to buy: the button fills over holdMs; releasing early cancels
-// (the tension beat). The fill is a COSMETIC WAAPI scaleX (never width); no layout reads.
-//
-// COMMIT IS WALL-CLOCK (setTimeout), NOT THE ANIMATION'S FINISH. Gating commit on
-// `animation.onfinish` tied it to the document/animation timeline, which only advances as frames
-// are produced — under main-thread saturation (a low-end/janky device, a loaded machine) frames
-// starve, the fill's currentTime lags real time and can freeze entirely, so onfinish (and thus
-// the buy) needed an unbounded real-time hold: a player on a slow device holding the intended
-// ~400ms could fail to buy. setTimeout fires on real elapsed time regardless of frame rate, so
-// holding holdMs of REAL time always commits; the WAAPI fill stays purely as visual feedback.
+// §2 — the BUY button: a plain click commits. It was a press-and-HOLD gate (400ms fill,
+// wall-clock timer, pointerup cancelled) with nothing on screen saying "hold", so every upgrade
+// button read as broken — a normal click did nothing. Plain click now; REBIRTH keeps its own
+// confirm. The component name is kept so call sites don't churn.
 //
 // NOTE: this component must NOT be re-created inside a parent's render (it was, via an inline
 // `const HoldBuyButton = props => <HoldBuy .../>` alias + inline Card/ThemeCard) — a new
-// component identity per render REMOUNTS it mid-press, throwing away the in-flight timer. It is
-// module-scoped and rendered directly so its press state survives the parent's frequent
-// re-renders (ShopScreen re-renders ~1-2x/sec from App churn).
-function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' }) {
-  const fillRef = useRef(null);
-  const animRef = useRef(null);
-  const timerRef = useRef(0);
-  const start = () => {
-    const fill = fillRef.current;
-    if (!fill || timerRef.current) return;
-    // Cosmetic fill (transform/opacity only, composited). Not the commit signal.
-    animRef.current = fill.animate(
-      [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
-      { duration: holdMs, easing: 'linear', fill: 'forwards' }
-    );
-    // Commit on holdMs of WALL-CLOCK time held (frame-rate independent).
-    timerRef.current = window.setTimeout(() => {
-      timerRef.current = 0;
-      animRef.current = null;
-      if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
-      onCommit();
-    }, holdMs);
-  };
-  const cancel = () => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = 0;
-    }
-    if (animRef.current) {
-      animRef.current.cancel();
-      animRef.current = null;
-    }
-    if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
-  };
-  // Clear a pending hold if the button unmounts mid-press (no commit on a gone component).
-  useEffect(() => () => { if (timerRef.current) window.clearTimeout(timerRef.current); }, []);
-  // KEYBOARD PARITY (fix/shop-keyboard): the button had pointer handlers only, so Enter/Space did
-  // nothing and the whole shop was un-buyable without a mouse. Enter/Space HELD for the same holdMs
-  // commits; releasing early cancels — NOT an instant-buy shortcut mouse users don't get. We ignore
-  // the auto-repeat keydowns a held key fires (e.repeat) so the hold starts once, and preventDefault
-  // stops Space from scrolling / the native click from racing the hold. keyup + blur cancel.
-  const isBuyKey = (e) => e.key === 'Enter' || e.key === ' ' || e.code === 'Space';
-  const onKeyDown = (e) => {
-    if (!isBuyKey(e)) return;
-    e.preventDefault();
-    if (!e.repeat) start();
-  };
-  const onKeyUp = (e) => {
-    if (!isBuyKey(e)) return;
-    e.preventDefault();
-    cancel();
-  };
+// component identity per render REMOUNTS it. It is module-scoped and rendered directly.
+function HoldBuy({ label, onCommit, className = 'shop-card-btn' }) {
   return (
     <button
       type="button"
-      className={`${className} shop-hold`}
-      onPointerDown={(e) => { e.preventDefault(); start(); }}
-      onPointerUp={cancel}
-      onPointerLeave={cancel}
-      onPointerCancel={cancel}
-      onKeyDown={onKeyDown}
-      onKeyUp={onKeyUp}
-      onBlur={cancel}
-      aria-label={`Hold Enter or Space to buy for ${label}`}
+      className={`${className} shop-buy`}
+      onClick={onCommit}
+      aria-label={`Buy for ${label}`}
     >
-      <span className="shop-hold-fill" ref={fillRef} aria-hidden="true" />
-      <span className="shop-hold-label">
-        <span className="shop-coin" aria-hidden="true" /> {label}
-      </span>
+      <span className="shop-coin" aria-hidden="true" /> {label}
     </button>
   );
 }

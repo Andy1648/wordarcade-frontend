@@ -36,36 +36,21 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
   await expect(page.locator('.shop-card-gap').first()).toBeVisible();
 });
 
-test('§2 hold-to-buy commits after the hold and reveals; releasing early cancels', async ({ page }) => {
+test('§2 buy is a plain click that commits and reveals', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (90)
   // WORD SENSE (Job 4) added a SECOND upgrade track that reuses .shop-keypower / .shop-kp-actions,
   // so scope to the FIRST .shop-keypower — KEY POWER, which renders above WORD SENSE. (The reveal
   // banner assertion below double-checks we bought KEY POWER, not WORD SENSE.)
-  const holdBtn = page.locator('.shop-keypower').first().locator('.shop-hold');
-  await expect(holdBtn).toBeVisible();
-
-  // Release early (well under the 400ms fill, deterministic even under load) → NO
-  // commit, NO reveal.
-  await holdBtn.hover();
-  await page.mouse.down();
-  await page.waitForTimeout(40);
-  await page.mouse.up();
-  await page.waitForTimeout(250);
-  await expect(page.locator('.shop-reveal')).toHaveCount(0);
-  // KEY POWER tier unchanged after the early release. The THEMES section now renders above KEY POWER,
-  // so .shop-subtitle.first() is "THEMES …" — scope to the KEY POWER heading specifically.
+  const buyBtn = page.locator('.shop-keypower').first().locator('.shop-buy');
+  await expect(buyBtn).toBeVisible();
+  // The THEMES section renders above KEY POWER, so scope to the KEY POWER heading specifically.
   await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 0');
-  // Settle the pointer well clear of the button before the next sequence.
-  await page.mouse.move(5, 5);
-  await page.waitForTimeout(100);
 
-  // Full hold (> 400ms) → commit fires on the fill's finish → reveal appears.
-  await holdBtn.hover();
-  await page.mouse.down();
-  await page.waitForTimeout(520);
+  // One click → commit → reveal appears (fix/shop-click-buy: no more hold gate).
+  await buyBtn.click();
   await expect(page.locator('.shop-reveal')).toBeVisible();
   await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER I UNLOCKED');
-  await page.mouse.up();
+  await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 1');
 });
 
 test('§2/§3 add zero new infinite animations in the shop', async ({ page }) => {
