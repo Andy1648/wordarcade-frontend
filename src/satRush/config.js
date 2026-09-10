@@ -48,20 +48,28 @@ export const DEFAULT_STAGE_MS = 2800;
 //
 // Three beats and the 5/3/1 multipliers are UNCHANGED, so the scoring model and the meaning of
 // AVG ANTE are exactly as before — only the length of a beat moves.
-export const STAGE_COST_FACTOR = 0.42;
+export const STAGE_COST_FACTOR = 0.85;
 export const STAGE_MS_MIN = 2200;
-export const STAGE_MS_MAX = 5200;
+export const STAGE_MS_MAX = 9000;
 
 /**
  * The base stage length for one card. `card.costMs` is the build-time read+type estimate; a card
  * with no costMs (a test fixture, or data built before this field existed) falls back to the flat
  * default, so nothing can crash on missing data.
  *
- * NOTE on the constants: at STAGE_COST_FACTOR 0.42 with a 5200ms ceiling, a player reading at
- * 200wpm and typing at 35wpm clears 0% of cards at x5 — the beat is shorter than the card's own
- * read+type cost by construction. Reaching the intended 55-75% needs roughly factor 0.8 with the
- * ceiling near 11000. Both numbers are measured in src/satRush/anteFairness.test.js so neither
- * can drift unnoticed; these three constants are the only thing to change.
+ * THE CONSTANTS, and what they cost. 0.85 / 9000 is tuned for the MEDIAN player (200wpm read,
+ * 35wpm type): they clear 74.6% of cards at x5. The first pass shipped 0.42 / 5200, which put
+ * that same player at 0% — the beat was a fraction of the card's own cost, so nobody could finish
+ * inside one beat.
+ *
+ * Two things this tuning canNOT do, both measured in src/satRush/anteFairness.test.js:
+ *   - A SLOW player (160wpm/25wpm) still clears only 0.5% at x5, and a FAST one (260wpm/55wpm)
+ *     clears 99.8%. No factor/ceiling pair fixes both: slow players' p25 stage-0 cost (8250ms) is
+ *     ABOVE fast players' p95 (7628ms), so the two distributions do not overlap. Any beat generous
+ *     enough to give slow players a quarter of the x5s hands fast players essentially all of them.
+ *   - Four of the longest cards get a beat under 60% of their own cost, because the 9000ms ceiling
+ *     bites before the factor does. A ceiling of 9562+ removes that, at the cost of pushing the
+ *     median player to 82% (outside the intended band).
  */
 export function stageMs(card) {
   const cost = card && Number.isFinite(card.costMs) ? card.costMs : null;

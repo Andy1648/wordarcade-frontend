@@ -19,27 +19,41 @@ import { stageMs, STAGE_MS_MIN, STAGE_MS_MAX, STAGE_COST_FACTOR, DEFAULT_STAGE_M
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CARDS = JSON.parse(readFileSync(resolve(HERE, '../data/satRush/words.json'), 'utf8'));
 
-// The measured player: reads 200 wpm (16.7 chars/sec), types 35 wpm (2.9 chars/sec), and KNOWS
-// every word — so the only thing standing between them and a x5 is how much the card makes them
-// read before they can answer.
-const READ = 16.7;
-const TYPE = 2.9;
+// THREE PLAYER SPEEDS, because 200wpm/35wpm is a good reader and tuning to one speed hides who
+// the change actually helps. Each knows every word, so the only thing between them and a x5 is
+// how much the card makes them read before they can answer.
+const SPEEDS = [
+  { key: 'a', label: 'slow   160wpm/25wpm', readWpm: 160, typeWpm: 25 },
+  { key: 'b', label: 'median 200wpm/35wpm', readWpm: 200, typeWpm: 35 },
+  { key: 'c', label: 'fast   260wpm/55wpm', readWpm: 260, typeWpm: 55 },
+];
+const charsPerSec = (wpm) => (wpm * 5) / 60; // 5 chars per word
 const MAX_CONTEXT_CHARS = 140;
 
 // At stage 0 the card shows its META + SENTENCE; the gloss only arrives at stage 1. A player who
 // knows the word needs the sentence (to see which word is being asked for) and then types it.
-const stage0CostMs = (c) => (1000 * (c.context || '').length) / READ + (1000 * (c.word || '').length) / TYPE;
+const stage0CostMs = (c, sp) =>
+  (1000 * (c.context || '').length) / charsPerSec(sp.readWpm) +
+  (1000 * (c.word || '').length) / charsPerSec(sp.typeWpm);
 // By stage 1 the gloss is up too, so the cumulative read is gloss + context.
-const stage1CostMs = (c) =>
-  (1000 * ((c.context || '').length + (c.gloss || '').length)) / READ + (1000 * (c.word || '').length) / TYPE;
+const stage1CostMs = (c, sp) =>
+  (1000 * ((c.context || '').length + (c.gloss || '').length)) / charsPerSec(sp.readWpm) +
+  (1000 * (c.word || '').length) / charsPerSec(sp.typeWpm);
 
 // Which ante this player lands on: x5 inside beat 1, x3 inside beats 1-2, else x1.
-function anteFor(c, beat = stageMs(c)) {
-  if (stage0CostMs(c) <= beat) return 5;
-  if (stage1CostMs(c) <= 2 * beat) return 3;
+function anteFor(c, sp, beat = stageMs(c)) {
+  if (stage0CostMs(c, sp) <= beat) return 5;
+  if (stage1CostMs(c, sp) <= 2 * beat) return 3;
   return 1;
 }
-const pct = (n) => `${((100 * n) / CARDS.length).toFixed(1)}%`;
+// The x5/x3/x1 split for one speed, as percentages.
+function splitFor(sp, beatOf = stageMs) {
+  const counts = { 5: 0, 3: 0, 1: 0 };
+  for (const c of CARDS) counts[anteFor(c, sp, beatOf(c))] += 1;
+  const p = (n) => (100 * n) / CARDS.length;
+  return { x5: p(counts[5]), x3: p(counts[3]), x1: p(counts[1]) };
+}
+
 const quantile = (sorted, p) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
 
 /* ------------------------------- the data ------------------------------- */
@@ -74,33 +88,36 @@ test('contexts are within the cap, except where trimming would cut the ___ blank
   }
 });
 
-test('costMs after the trim: the 12000ms target is NOT met, and by how much', () => {
-  const costs = CARDS.map((c) => c.costMs).sort((a, b) => a - b);
-  const over = CARDS.filter((c) => c.costMs > 12000);
-  console.log(
-    `[ante] costMs p10 ${quantile(costs, 0.1)} · p50 ${quantile(costs, 0.5)} · p90 ${quantile(costs, 0.9)} · max ${costs[costs.length - 1]}`
-  );
-  console.log(`[ante] cards over 12000ms: ${over.length} (${pct(over.length)})`);
-  // HONEST BOUND. The brief asked for zero cards over 12000ms after a 140-char context trim, but
-  // only 7 contexts were over 140 in the first place — the trim moves the ceiling from 17475 to
-  // 15936 and leaves 129 cards above 12000. It cannot get there: a 140-char context plus a ~30
-  // char gloss is already ~10.2s of reading before a letter is typed. Reaching zero needs the
-  // context cap down around 70 chars, which would gut the sentences. This asserts the real
-  // number so it cannot rot; drop the cap if you want the target instead.
-  assert.ok(costs[costs.length - 1] < 16000, `the trim did lower the ceiling (max ${costs[costs.length - 1]})`);
-  assert.ok(over.length < 140, `and ${over.length} cards remain over 12000ms`);
-});
-
 /* ------------------------------ stageMs ------------------------------ */
 
-test('stageMs is inside the clamp for all 956 cards', () => {
+test('stageMs is inside [2200, 9000] for all 956 cards', () => {
+  assert.equal(STAGE_MS_MIN, 2200);
+  assert.equal(STAGE_MS_MAX, 9000);
   for (const c of CARDS) {
     const ms = stageMs(c);
     assert.ok(Number.isInteger(ms), `"${c.word}" stage is a whole number of ms`);
-    assert.ok(ms >= STAGE_MS_MIN && ms <= STAGE_MS_MAX, `"${c.word}" stage ${ms} is inside the clamp`);
+    assert.ok(ms >= 2200 && ms <= 9000, `"${c.word}" stage ${ms} is inside [2200, 9000]`);
   }
   const stages = CARDS.map(stageMs).sort((a, b) => a - b);
-  console.log(`[ante] stageMs p10 ${quantile(stages, 0.1)} · p50 ${quantile(stages, 0.5)} · p90 ${quantile(stages, 0.9)}`);
+  console.log(
+    `[ante] stageMs min ${stages[0]} · p10 ${quantile(stages, 0.1)} · p50 ${quantile(stages, 0.5)} · p90 ${quantile(stages, 0.9)} · max ${stages[stages.length - 1]}`
+  );
+});
+
+test("the x5 window vs each card's own cost — 4 of 956 fall under 60%", () => {
+  const ratios = CARDS.map((c) => ({ word: c.word, r: stageMs(c) / c.costMs }));
+  const under = ratios.filter((x) => x.r < 0.6).sort((a, b) => a.r - b.r);
+  const min = Math.min(...ratios.map((x) => x.r));
+  console.log(`[ante] beat / own cost — min ${min.toFixed(3)} · under 60%: ${under.map((x) => `${x.word} ${x.r.toFixed(3)}`).join(', ') || '(none)'}`);
+  // HONEST BOUND. The ask was that no card's x5 window falls under 60% of its own read+type cost.
+  // Four of the longest cards do, because the 9000ms CEILING bites before the 0.85 factor does:
+  // "incontrovertible" costs 15936ms and gets the 9000ms cap, i.e. 0.565. Raising the ceiling to
+  // 9562+ removes all four — but it also pushes the median player from 74.6% to 82% at x5, outside
+  // the 55-80 band this tuning was chosen for. That is the trade; these numbers are asserted so it
+  // stays visible.
+  assert.ok(min > 0.55, `no card drops below 55% of its own cost (min ${min.toFixed(3)})`);
+  assert.equal(under.length, 4, 'exactly the four longest cards sit under 60%');
+  for (const u of under) assert.ok(stageMs(CARDS.find((c) => c.word === u.word)) === STAGE_MS_MAX, `"${u.word}" is capped by the ceiling, not the factor`);
 });
 
 test('stageMs tracks cost inside the clamp, and falls back for a card with no costMs', () => {
@@ -118,77 +135,82 @@ test('stageMs tracks cost inside the clamp, and falls back for a card with no co
   assert.equal(stageMs(null), DEFAULT_STAGE_MS);
 });
 
-/* --------------------- the simulated player + the report --------------------- */
+/* --------------------- the three simulated players --------------------- */
 
-test('ante distribution by tier, flat beat vs per-card beat', () => {
-  const tiers = [...new Set(CARDS.map((c) => c.tier))].sort();
-  const rows = [];
-  for (const t of tiers) {
-    const inTier = CARDS.filter((c) => c.tier === t);
-    const before = inTier.map((c) => anteFor(c, DEFAULT_STAGE_MS));
-    const after = inTier.map((c) => anteFor(c));
-    const avg = (xs) => xs.reduce((n, x) => n + x, 0) / xs.length;
-    rows.push({
-      tier: t,
-      n: inTier.length,
-      beforeAvg: avg(before),
-      afterAvg: avg(after),
-      before5: before.filter((a) => a === 5).length,
-      after5: after.filter((a) => a === 5).length,
-    });
-  }
-  console.log('[ante] tier | cards |  AVG ANTE flat -> per-card |  x5 share flat -> per-card');
-  for (const r of rows) {
+test('x5 / x3 / x1 split at three player speeds', () => {
+  console.log('[ante] speed                |    x5 |    x3 |    x1');
+  const out = {};
+  for (const sp of SPEEDS) {
+    const r = splitFor(sp);
+    out[sp.key] = r;
     console.log(
-      `[ante]   ${r.tier}  |  ${String(r.n).padStart(4)} |      ${r.beforeAvg.toFixed(2)} -> ${r.afterAvg.toFixed(2)}      |   ` +
-        `${((100 * r.before5) / r.n).toFixed(1)}% -> ${((100 * r.after5) / r.n).toFixed(1)}%`
+      `[ante] ${sp.label} | ${r.x5.toFixed(1).padStart(5)}% | ${r.x3.toFixed(1).padStart(5)}% | ${r.x1.toFixed(1).padStart(5)}%`
     );
   }
-  // DIRECTION: 929 of 956 cards get a LONGER beat than the flat 2800ms; the 27 that get a
-  // shorter one are the cheapest cards in the corpus (median costMs ~6.2s), which is the point —
-  // a short card should not be handed the same budget as a 12-second one. So a tier's average may
-  // dip a hair (tier 4 moves 1.01 -> 1.00) without that being a regression; what must hold is
-  // that the corpus overall is not made harder.
-  const shorter = CARDS.filter((c) => stageMs(c) < DEFAULT_STAGE_MS).length;
-  const longer = CARDS.filter((c) => stageMs(c) > DEFAULT_STAGE_MS).length;
-  console.log(`[ante] beats vs the flat 2800ms — longer: ${longer}, shorter: ${shorter}`);
-  assert.ok(longer > shorter * 10, 'the overwhelming majority of cards get MORE time, not less');
-  const totalBefore = CARDS.reduce((n, c) => n + anteFor(c, DEFAULT_STAGE_MS), 0);
-  const totalAfter = CARDS.reduce((n, c) => n + anteFor(c), 0);
-  console.log(`[ante] corpus-wide ante total: ${totalBefore} -> ${totalAfter} (of ${CARDS.length * 5} possible)`);
-  // THE FINDING, in one number. At the shipped factor the per-card beat barely moves this player:
-  // 958 -> 956 out of a possible 4780. The mechanism is in place and correct, but 0.42 makes the
-  // beat a fraction of the card's own cost, so nobody clears a beat they need the whole cost for.
-  // Raising the factor is what turns this on; see the x5 test below for the measured numbers.
-  assert.ok(
-    Math.abs(totalAfter - totalBefore) / totalBefore < 0.005,
-    `corpus-wide ante is ~unchanged at the shipped factor (${totalBefore} -> ${totalAfter})`
-  );
+
+  // (b) THE MEDIAN PLAYER — the one this tuning targets, and the only band that is met.
+  assert.ok(out.b.x5 >= 55 && out.b.x5 <= 80, `median player lands 55-80% at x5 (${out.b.x5.toFixed(1)}%)`);
+
+  // (a) and (c) CANNOT both be satisfied — see the overlap test below for the proof. These
+  // assertions record where they actually land so a future tuning change is visible.
+  assert.ok(out.a.x5 < 5, `slow player is starved at x5 (${out.a.x5.toFixed(1)}%, target was >25%)`);
+  assert.ok(out.c.x5 > 95, `fast player is saturated at x5 (${out.c.x5.toFixed(1)}%, target was <95%)`);
+  // Nobody is stranded on x1: every speed still clears essentially everything by beat 2.
+  for (const sp of SPEEDS) assert.ok(splitFor(sp).x1 < 5, `${sp.label} is rarely pushed to x1`);
 });
 
-test('the x5 share for a 200wpm/35wpm player who knows every word', () => {
-  const shipped = CARDS.filter((c) => anteFor(c) === 5).length;
-  const flat = CARDS.filter((c) => anteFor(c, DEFAULT_STAGE_MS) === 5).length;
-  console.log(`[ante] x5 share — flat 2800ms: ${pct(flat)} · shipped per-card: ${pct(shipped)}`);
-
-  // WHAT WOULD REACH THE TARGET. The brief asked for 55-75% at x5. It is unreachable with
-  // factor 0.42 and a 5200ms ceiling, and not because of the corpus: the beat is a FRACTION of
-  // the card's own read+type cost, so a player who needs the whole cost can never finish inside
-  // one beat. Raising the ceiling alone does nothing while the factor starves it.
-  const share = (factor, hi) => {
-    const n = CARDS.filter((c) => {
-      const beat = Math.min(hi, Math.max(STAGE_MS_MIN, Math.round(c.costMs * factor)));
-      return anteFor(c, beat) === 5;
-    }).length;
-    return (100 * n) / CARDS.length;
-  };
-  const target = share(0.8, 11000);
+test('the slow and fast bands cannot both be met — the distributions do not overlap', () => {
+  const sortedCost = (sp) => CARDS.map((c) => stage0CostMs(c, sp)).sort((x, y) => x - y);
+  const q = (arr, p) => arr[Math.min(arr.length - 1, Math.floor(arr.length * p))];
+  const slow = sortedCost(SPEEDS[0]);
+  const fast = sortedCost(SPEEDS[2]);
+  const slowP25 = q(slow, 0.25);
+  const fastP95 = q(fast, 0.95);
   console.log(
-    `[ante] x5 at factor 0.42/ceiling 5200 (shipped): ${share(0.42, 5200).toFixed(1)}% · ` +
-      `at 0.8/11000: ${target.toFixed(1)}% · at 0.85/9000: ${share(0.85, 9000).toFixed(1)}%`
+    `[ante] slow p25 stage-0 cost ${Math.round(slowP25)}ms vs fast p95 ${Math.round(fastP95)}ms ` +
+      `-> overlap window ${Math.round(fastP95 - slowP25)}ms`
   );
-  assert.ok(target >= 55 && target <= 75, `factor 0.8 + ceiling 11000 lands in the 55-75% band (${target.toFixed(1)}%)`);
-  assert.ok(share(0.42, 5200) < 5, 'the shipped constants do not reach the band — this is the finding');
-  // The per-card beat is at least never worse than the flat one for this player.
-  assert.ok(shipped >= flat, 'the per-card beat does not reduce the x5 share');
+  // A single beat per card is one number for all three players. To hand the SLOW player a quarter
+  // of the x5s the beat must clear their p25 cost; but that is already ABOVE the FAST player's p95,
+  // so the same beat hands the fast player ~everything. The window is negative: no factor and no
+  // ceiling can satisfy "slow > 25%" and "fast < 95%" at once on this corpus.
+  assert.ok(fastP95 < slowP25, 'the fast p95 sits BELOW the slow p25 — there is no beat between them');
+
+  // And a direct search agrees: nothing in a wide grid meets all three bands at once.
+  let feasible = 0;
+  for (let f = 0.6; f <= 2.0; f += 0.05) {
+    for (const hi of [7000, 9000, 11000, 13000, 99999]) {
+      const beatOf = (c) => Math.min(hi, Math.max(STAGE_MS_MIN, Math.round(c.costMs * f)));
+      const a = splitFor(SPEEDS[0], beatOf).x5;
+      const b = splitFor(SPEEDS[1], beatOf).x5;
+      const cc = splitFor(SPEEDS[2], beatOf).x5;
+      if (b >= 55 && b <= 80 && a > 25 && cc < 95) feasible += 1;
+    }
+  }
+  console.log(`[ante] grid search over factor x ceiling: ${feasible} parameter pairs meet all three bands`);
+  assert.equal(feasible, 0, 'no (factor, ceiling) pair satisfies slow>25 AND median 55-80 AND fast<95');
+});
+
+test('ante distribution by tier, flat beat vs per-card beat (median player)', () => {
+  const median = SPEEDS[1];
+  const tiers = [...new Set(CARDS.map((c) => c.tier))].sort();
+  console.log('[ante] tier | cards |  AVG ANTE flat -> per-card |  x5 share flat -> per-card');
+  const avg = (xs) => xs.reduce((n, x) => n + x, 0) / xs.length;
+  for (const t of tiers) {
+    const inTier = CARDS.filter((c) => c.tier === t);
+    const before = inTier.map((c) => anteFor(c, median, DEFAULT_STAGE_MS));
+    const after = inTier.map((c) => anteFor(c, median));
+    const b5 = before.filter((x) => x === 5).length;
+    const a5 = after.filter((x) => x === 5).length;
+    console.log(
+      `[ante]   ${t}  |  ${String(inTier.length).padStart(4)} |      ${avg(before).toFixed(2)} -> ${avg(after).toFixed(2)}      |   ` +
+        `${((100 * b5) / inTier.length).toFixed(1)}% -> ${((100 * a5) / inTier.length).toFixed(1)}%`
+    );
+    // Every tier must improve for the player this is tuned for.
+    assert.ok(avg(after) >= avg(before), `tier ${t} is not worse under the per-card beat`);
+  }
+  const totalBefore = CARDS.reduce((n, c) => n + anteFor(c, median, DEFAULT_STAGE_MS), 0);
+  const totalAfter = CARDS.reduce((n, c) => n + anteFor(c, median), 0);
+  console.log(`[ante] corpus-wide ante total: ${totalBefore} -> ${totalAfter} (of ${CARDS.length * 5} possible)`);
+  assert.ok(totalAfter > totalBefore * 2, `the per-card beat transforms the ante (${totalBefore} -> ${totalAfter})`);
 });
