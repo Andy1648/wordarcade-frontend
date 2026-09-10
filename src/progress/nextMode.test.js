@@ -11,6 +11,7 @@ const GAMES = [
   { id: 'sat-rush', name: 'SAT\nRUSH', enabled: true },
   { id: 'chain', name: 'CHAIN', unlockLevel: 20, enabled: true },
   { id: 'fuse', name: 'FUSE', unlockLevel: 25, enabled: true },
+  { id: 'run', name: 'THE\nRUN', unlockLevel: 8, enabled: true },
 ];
 
 test('the fixture matches the modes mastery actually tracks', () => {
@@ -36,7 +37,7 @@ test('picks the LEAST-played unlocked mode that is not the one just played', () 
   const pick = pickTryMode({
     current: 'chain',
     level: 30, // everything unlocked
-    counts: { 'word-bomb': 500, 'category-blitz': 400, 'sat-rush': 10, chain: 900, fuse: 300 },
+    counts: { 'word-bomb': 500, 'category-blitz': 400, 'sat-rush': 10, chain: 900, fuse: 300, run: 700 },
     games: GAMES,
   });
   assert.equal(pick.id, 'sat-rush');

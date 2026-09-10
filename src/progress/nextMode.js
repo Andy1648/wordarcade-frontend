@@ -28,6 +28,10 @@ export const MODE_PATH = {
   'sat-rush': '/sat-rush',
   chain: '/chain',
   fuse: '/fuse',
+  // THE RUN (run stack). gameData now offers 'run' as a chooser candidate, and
+  // router.js viewIntentFromPath already routes '/run' — without this entry
+  // pickTryMode fell back to '/' and the TRY THE RUN row landed on the menu.
+  run: '/run',
 };
 
 /** A mode's menu name as one line ("WORD\nBOMB" -> "WORD BOMB"). */
