@@ -10,6 +10,7 @@ import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 import { satRushLink } from '../share/links.js';
 import { SAT_RUSH_COLOR } from './config';
 
@@ -220,6 +221,10 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
           <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
             Menu
           </button>
+          {/* SECOND ROW (feat/solo-endgame): a DIFFERENT unlocked mode — the one played least —
+              so the run ends on a fork, not only "run it back". Nothing renders when every other
+              mode is still locked. */}
+          <TryModeRow current="sat-rush" />
         </div>
       </div>
     </div>

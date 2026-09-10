@@ -19,6 +19,7 @@ import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 import poolsRaw from './fragmentPools.json';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
@@ -276,7 +277,9 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line (Job 14)
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
-        // FUSE score == word count, so pts is redundant — omit it (points=null).
+        // FUSE's score IS its word count, so a PTS fragment would just repeat the number on the
+        // same line — omit it (points=null). The alphabet strip rides the glyph row instead:
+        // "LETTERS n/26", the live count of distinct letters lit this cycle.
         share: (
           <CopyResultButton
             mode="fuse"
@@ -284,9 +287,11 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
             points={null}
             tiers={g.tierLog}
             killed
+            suffix={`LETTERS ${s.lettersUsed.size}/26`}
             className="solo-share-btn"
           />
         ),
+        tryRow: <TryModeRow current="fuse" />,
       }}
       onExit={onExit}
     />
