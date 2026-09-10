@@ -114,6 +114,13 @@
   /* Compress the combo box so the right column fits a short window. */
   .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
   .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
+  /* fix/wb-short-layout: wider gap so cards never touch, and stretch so the slots share
+     a row height and each card fills its slot (equal-height cards). SCOPED here on
+     purpose - applying these globally re-wraps the phone player bar to 3 rows and
+     overflows the stage. See the .game-player-bar note below. */
+  .game-stage--wb .game-player-bar { gap: max(20px, 2.4%); align-items: stretch; }
+  .game-stage--wb .game-player-slot { display: flex; flex-direction: column; }
+  .game-stage--wb .game-player-card { flex: 1 1 auto; }
 }
 
 /* ===== CATEGORY BLITZ short-window compression (fix/game-fill-2) =====================
@@ -402,17 +409,18 @@
 .game-player-bar {
   display: flex;
   flex-wrap: wrap;
-  /* fix/wb-short-layout: wider gap so cards never touch; stretch so the slots share a
-     row height and each card fills its slot (equal-height cards). */
-  gap: max(20px, 2.4%);
-  align-items: stretch;
+  /* 10px is LOAD-BEARING on narrow phones: the bar is 308px at 390vw and two 149px
+     slots + a 10px gap fit that row EXACTLY. Widening this to 20px pushed the pair to
+     318px, so only one card fit per row, the bar went 2 rows -> 3 (168px -> 261px) and
+     the WB stage overflowed the viewport (game-fill 390x844 fillH 94.2% -> 104.0%).
+     The wider gap / equal-height rules fix/wb-short-layout wanted are scoped to the
+     wide-and-short desktop block above, which is the only place they were needed. */
+  gap: 10px;
   margin-bottom: 20px;
 }
 
 .game-player-slot {
   position: relative;
-  display: flex;
-  flex-direction: column;
   flex: 1 1 0;
   /* Player cards grow with the viewport so they're substantial on big screens. */
   min-width: clamp(100px, 15vw, 200px);
@@ -437,7 +445,6 @@
 
 .game-player-card {
   position: relative; /* anchors the red elimination flash overlay */
-  flex: 1 1 auto; /* fill the stretched slot so sibling cards match height */
   background: #2a1450;
   border: 3px solid #000;
   border-radius: 8px;
