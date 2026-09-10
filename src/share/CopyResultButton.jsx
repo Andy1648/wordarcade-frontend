@@ -22,6 +22,7 @@ export default function CopyResultButton({
   level = null,
   tiers = [],
   killed = false,
+  suffix = null, // optional stat rendered on the glyph row (FUSE: "LETTERS 22/26")
   className = '',
   text: presetText,
 }) {
@@ -33,7 +34,7 @@ export default function CopyResultButton({
   const lvl = Number.isFinite(level) ? level : loadProgress().level;
   const text = presetText !== undefined
     ? presetText
-    : buildResultCard({ mode, words, points, level: lvl, tiers, killed, link: modeShareLink(mode) });
+    : buildResultCard({ mode, words, points, level: lvl, tiers, killed, suffix, link: modeShareLink(mode) });
   if (!text) return null; // suppression rule — an anti-ad
 
   async function onClick() {

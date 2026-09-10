@@ -536,24 +536,9 @@
   box-shadow: 2px 2px 0 #000;
 }
 
-/* ===================== §2 HOLD-TO-BUY + REVEAL ===================== */
-/* Press-and-hold: the fill sweeps left→right over the hold window (WAAPI scaleX). */
-.shop-hold {
-  position: relative;
-  overflow: hidden;
-  touch-action: none; /* keep pointerdown→up from being stolen by scroll */
-}
-.shop-hold-fill {
-  position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  transform: scaleX(0);
-  background: rgba(255, 255, 255, 0.35);
-  pointer-events: none;
-}
-.shop-hold-label {
-  position: relative;
-  z-index: 1;
+/* ===================== §2 BUY + REVEAL ===================== */
+/* .shop-buy is the plain-click buy button (was a press-and-hold fill). */
+.shop-buy {
   display: inline-flex;
   align-items: center;
   gap: 4px;

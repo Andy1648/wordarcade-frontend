@@ -8,7 +8,8 @@ import App from './App.jsx'
 import './index.css'
 import './theme/themes.css'
 import { initTheme } from './theme/themes'
-import { initAnalytics, initSentry, Sentry } from './lib/analytics'
+import { initAnalytics, initSentry, captureException } from './lib/analytics'
+import ErrorBoundary from './components/ErrorBoundary.js'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
 import { getStreak } from './progress/streak'
@@ -17,13 +18,62 @@ import { getStreak } from './progress/streak'
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
 try { initTheme() } catch { /* never block startup */ }
 
-// Monitoring (Sentry) stands up BEFORE mount so an early render crash is still caught +
-// reported. Product analytics (PostHog, a ~207KB chunk) is DEFERRED to idle after first paint
-// — it must never block interactivity — and dynamic-imports posthog itself. Both are graceful
-// no-ops without their env keys and internally wrapped; the try/catch here is belt-and-braces.
-try { initSentry() } catch { /* never block startup */ }
+// ---- Third-party boot (perf/first-load): NOTHING third-party runs on the critical path. ----
+// gtag (GA4), Sentry's init and PostHog all start from ONE idle callback scheduled after the
+// window 'load' event. Before that:
+//  - a dataLayer/gtag stub queues any early gtag() calls (analytics.track fires them), so the
+//    real tag processes them on arrival — the standard GA snippet pattern, just later;
+//  - a tiny error shim records uncaught errors / unhandled rejections so the gap between boot
+//    and Sentry.init loses nothing — they are replayed into Sentry once it is up.
+// @sentry/react itself is NOT in the boot bundle: the root boundary below is a plain React class
+// (components/ErrorBoundary.js) that reports through captureException(), which queues until the
+// lazily-loaded Sentry is initialised. A render crash still shows the on-brand fallback.
+const GA_ID = 'G-BZ7DLWLDMR';
+window.dataLayer = window.dataLayer || [];
+if (typeof window.gtag !== 'function') {
+  window.gtag = function gtag() { window.dataLayer.push(arguments); };
+}
+
+const earlyErrors = [];
+const shimError = (e) => { earlyErrors.push(e && (e.error || e.message) ? (e.error || e.message) : e); };
+const shimRejection = (e) => { earlyErrors.push(e && e.reason !== undefined ? e.reason : e); };
+window.addEventListener('error', shimError);
+window.addEventListener('unhandledrejection', shimRejection);
+
+function bootSentry() {
+  window.removeEventListener('error', shimError);
+  window.removeEventListener('unhandledrejection', shimRejection);
+  // Queue the early errors first (captureException buffers until Sentry is up), THEN init —
+  // initSentry() lazy-loads @sentry/react and flushes the queue once initialised.
+  for (const err of earlyErrors.splice(0)) captureException(err);
+  initSentry();
+}
+
+// Inject gtag.js and fire the ONE page_view per visit ourselves (send_page_view:false stops the
+// config call from double-counting it). Queue order: js → config → page_view, then the script.
+function bootGtag() {
+  if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
+  window.gtag('js', new Date());
+  window.gtag('config', GA_ID, { send_page_view: false });
+  window.gtag('event', 'page_view', {
+    page_location: window.location.href,
+    page_path: window.location.pathname + window.location.search,
+    page_title: document.title,
+  });
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(s);
+}
+
 const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
-idle(() => {
+const afterLoad = (fn) => {
+  if (document.readyState === 'complete') fn();
+  else window.addEventListener('load', fn, { once: true });
+};
+afterLoad(() => idle(() => {
+  try { bootSentry() } catch { /* never block startup */ }
+  try { bootGtag() } catch { /* never block startup */ }
   // Init analytics, THEN fire first_visit (once) + attach the progression session props, so the very
   // first events are already segmented. All guarded — analytics can never block or crash startup.
   Promise.resolve(initAnalytics())
@@ -35,10 +85,10 @@ idle(() => {
       } catch { /* analytics never blocks */ }
     })
     .catch(() => {});
-});
+}));
 
-// On-brand crash screen shown by the Sentry error boundary if a render throws, so
-// a crash reports to Sentry AND shows this instead of a blank white page.
+// On-brand crash screen shown by the root ErrorBoundary if a render throws, so a crash
+// reports to Sentry (once it is up) AND shows this instead of a blank white page.
 function CrashFallback() {
   return (
     <div
@@ -105,8 +155,8 @@ window.addEventListener('resize', applyAppScale);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+    <ErrorBoundary fallback={<CrashFallback />}>
       <App />
-    </Sentry.ErrorBoundary>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

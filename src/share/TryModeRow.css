@@ -1,0 +1,48 @@
+/* TryModeRow.css — the "TRY <MODE>" second row on every end screen.
+   GHOST treatment on purpose: it must read as the quieter of the two options, so the primary
+   action (REMATCH / RESTART / PLAY AGAIN) keeps the weight. House rules still apply — flat colour,
+   thick outline, hard black offset shadow, Bungee, 44px touch target. Press/hover feedback only;
+   no idle animation, transform/opacity only. */
+.try-mode-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.try-mode-btn {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: #FFE94A;
+  background: transparent; /* the ghost: outline only, no fill */
+  border: 3px solid #FFE94A;
+  border-radius: 8px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.try-mode-btn:hover {
+  /* Fills on hover — the ghost "solidifies" rather than glowing (no gradients, no glow). */
+  background: #FFE94A;
+  color: #000;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.try-mode-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.try-mode-btn:focus-visible {
+  outline: 3px solid #FF4FA3;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .try-mode-btn { transition: none; }
+}

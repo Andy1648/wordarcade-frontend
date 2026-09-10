@@ -97,9 +97,17 @@ export default defineConfig(({ mode }) => {
           // deploys, and lets the browser fetch them in parallel with the entry (HTTP/2), so no
           // route gets slower to interactive. Behaviour is unchanged — only the chunk layout.
           manualChunks(id) {
+            // Sentry is only reached through the lazy import of src/lib/sentryLazy.js (perf/
+            // first-load). The two-export bridge rides IN the sentry chunk so the dynamic import
+            // targets that chunk directly — left to Rollup, the tiny bridge was hoisted into the
+            // entry and made @sentry a static boot dependency again.
+            if (id.includes('sentryLazy')) return 'sentry'
             if (!id.includes('node_modules')) return undefined
-            if (id.includes('react-dom') || id.includes('/react/') || id.includes('/scheduler/')) return 'react-vendor'
+            // @sentry FIRST: '@sentry/react/...' also matches the '/react/' test below, which used
+            // to drop parts of Sentry into react-vendor (a BOOT chunk) and drag the rest of the
+            // sentry chunk in as its static dependency.
             if (id.includes('@sentry')) return 'sentry'
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('/scheduler/')) return 'react-vendor'
             // posthog is dynamically imported (deferred to idle) so it already lands in its own
             // lazy chunk — no manual rule needed.
             return undefined

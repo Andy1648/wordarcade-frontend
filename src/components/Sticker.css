@@ -1,0 +1,103 @@
+/* Sticker.css — the shared reveal-sticker shell (feat/shop-reveal-sticker; the styles began
+   life as SecretSticker.css). A cream sticker on a modal scrim. The scrim is the ONE sanctioned
+   fixed overlay here: a full-screen backdrop that swallows the dismiss click, never an orphan
+   control. Motion is a single finite punch-in — transform/opacity only, off under reduced motion. */
+.sticker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(13, 6, 24, 0.55); /* flat #0d0618 scrim */
+  cursor: pointer;
+}
+.sticker {
+  width: min(330px, 88vw);
+  background: #F0EAD9;
+  color: #0d0618;
+  border: 4px solid #000;
+  border-radius: 14px;
+  box-shadow: 8px 8px 0 #000;
+  overflow: hidden;
+  transform: rotate(-3deg);
+  animation: sticker-punch 380ms cubic-bezier(0.2, 1.4, 0.5, 1) both;
+  text-align: center;
+  user-select: none;
+}
+.sticker-ribbon {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  line-height: 1;
+  padding: 9px 8px 8px;
+  background: #FF4FA3;
+  color: #fff;
+  border-bottom: 4px solid #000;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+}
+/* GLYPH BAND — a yellow sunburst behind the icon. The repeating-conic is a two-tone
+   hard-edged STRIPE (no blend), a documented flat-rule exception for this one sticker,
+   same as the beat glow on the menu. */
+.sticker-band {
+  height: 112px;
+  display: grid;
+  place-items: center;
+  background: repeating-conic-gradient(#FFE94A 0 6deg, #ffd400 6deg 12deg);
+  border-bottom: 4px solid #000;
+}
+.sticker-glyph {
+  width: 84px;
+  height: 84px;
+  display: block;
+}
+.sticker-name {
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: clamp(26px, 6vw, 34px);
+  line-height: 1;
+  padding: 14px 12px 4px;
+  color: #9A1AFF;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  /* A long item name must never blow the sticker out sideways. */
+  overflow-wrap: anywhere;
+}
+.sticker-blurb {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 4px 18px 12px;
+}
+.sticker-blurb b {
+  font-weight: 700;
+  color: #9A1AFF;
+}
+.sticker-coin {
+  display: inline-block;
+  font-family: 'Bungee', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1;
+  padding: 8px 14px;
+  margin: 0 0 16px;
+  background: #000;
+  color: #FFE94A;
+  border-radius: 999px;
+}
+/* SPENT, not earned: the shop's price pill reads red so a debit never looks like a payout. */
+.sticker-coin.is-debit {
+  color: #FF6B3D;
+}
+@keyframes sticker-punch {
+  0% { transform: rotate(-3deg) scale(0.4); opacity: 0; }
+  60% { transform: rotate(-3deg) scale(1.1); opacity: 1; }
+  100% { transform: rotate(-3deg) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sticker { animation: none; }
+}
+
+/* SHOP skin: the sticker renders INSIDE .shop-overlay (position:fixed, z-index 120), so its
+   own backdrop forms in that stacking context and z-index 60 already sits above the panel and
+   the old reveal layer (z-index 20). No extra rule needed. */

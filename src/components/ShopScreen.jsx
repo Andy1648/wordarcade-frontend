@@ -24,6 +24,7 @@ import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, ge
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum } from '../format';
 import { PRESTIGE_REBIRTH } from '../progress/unlockLadder';
+import ShopSticker from './ShopSticker';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
 const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -95,9 +96,18 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     if (buy(id).ok) {
       sndPurchase();
       const item = [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id);
-      // §2 reveal — cosmetics preview in the item's pop colour (a bought STYLE recolours
-      // the pop; here we flash it so you SEE it).
-      setReveal({ kind: 'cosmetic', banner: `${(item ? item.name : 'ITEM').toUpperCase()} UNLOCKED`, colour: '#ff4fa3', previewChar: 'A' });
+      // §2 reveal — the sticker shows the pop itself in the style you just bought.
+      const isSound = SOUND_PACKS.some((i) => i.id === id);
+      setReveal({
+        kind: 'cosmetic',
+        name: (item ? item.name : 'ITEM').toUpperCase(),
+        blurb: isSound
+          ? `Every keystroke now sounds ${(item ? item.name : 'new').toUpperCase()}.`
+          : `Your letter pops are now ${(item ? item.name : 'new').toUpperCase()}.`,
+        coin: `−${formatNum(item ? item.price : 0)} WINS`,
+        itemId: id,
+        previewChar: 'A',
+      });
       evItemPurchased(item ? item.id : 'cosmetic');
       refresh();
     }
@@ -107,7 +117,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     if (buyKeyPower().ok) {
       sndPurchase();
       const colour = nextTier >= 5 ? '#FFD54A' : '#2EFFE0';
-      setReveal({ kind: 'keypower', banner: `KEY POWER ${toRoman(nextTier)} UNLOCKED`, colour, previewChar: 'A' });
+      setReveal({
+        kind: 'keypower',
+        name: `KEY POWER ${toRoman(nextTier)}`,
+        blurb: `Every letter now pays ${formatNum(keyTierXp(nextTier))} XP.`,
+        coin: `−${formatNum(kpCost)} WINS`,
+        colour,
+        tier: nextTier,
+      });
       evItemPurchased('key_power', nextTier);
       refresh();
     }
@@ -115,7 +132,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const onBuyWordSense = () => {
     const nextTier = wsTier + 1;
     if (buyWordSense().ok) {
-      setReveal({ kind: 'keypower', banner: `WORD SENSE ${toRoman(nextTier)} UNLOCKED`, colour: '#FFD54A', previewChar: 'A' });
+      setReveal({
+        kind: 'wordsense',
+        name: `WORD SENSE ${toRoman(nextTier)}`,
+        blurb: `Rare words now pay ×${wordSenseFactor(nextTier).toFixed(2)} on their rarity.`,
+        coin: `−${formatNum(wsCost)} WINS`,
+        colour: '#FFD54A',
+        tier: nextTier,
+      });
       evItemPurchased('word_sense', nextTier);
       refresh();
     }
@@ -124,8 +148,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     const r = buyMomentum();
     if (r.ok) {
       sndPurchase();
-      // The permanent mark lands on the menu rail (see MomentumRail); here we flash the running total.
-      setReveal({ kind: 'keypower', banner: `MOMENTUM — ${r.count} MARKS · +${r.count}% WINS`, colour: '#FF6B3D', previewChar: '◆' });
+      // The permanent mark lands on the menu rail (see MomentumRail); the sticker names the total.
+      setReveal({
+        kind: 'momentum',
+        name: `MOMENTUM ${r.count}`,
+        blurb: `${r.count} mark${r.count === 1 ? '' : 's'} — every win now pays +${r.count}%.`,
+        coin: `−${formatNum(mCost)} WINS`,
+        colour: '#FF6B3D',
+        tier: r.count,
+      });
       evItemPurchased('momentum', r.count);
       refresh();
     }
@@ -141,7 +172,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     if (r.ok) {
       sndPurchase();
       const t = themeById(id);
-      setReveal({ kind: 'theme', banner: `${t.name} UNLOCKED`, colour: t.vars['--theme-ink'], previewChar: 'A' });
+      setReveal({
+        kind: 'theme',
+        name: t.name,
+        blurb: `Your menu is now ${t.name}.`,
+        coin: `−${formatNum(t.price)} WINS`,
+        colour: t.vars['--theme-ink'],
+        swatch: t.swatch,
+      });
       evItemPurchased(`theme:${id}`);
       setOwnedThemes(getOwnedThemes());
       setWins(getWins());
@@ -159,7 +197,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     { const n = getRebirths(); evRebirth(n); refreshSessionProps({ rebirths: n }); } // analytics
     setConfirming(false);
     // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.
-    setReveal({ kind: 'rebirth', banner: `×${formatNum(gained)} MULTIPLIER`, colour: '#9A1AFF', previewChar: '↑', onClose: onBack });
+    setReveal({
+      kind: 'rebirth',
+      name: `×${formatNum(gained)}`,
+      blurb: `Everything you earn from here is multiplied by ${formatNum(gained)}.`,
+      coin: null, // a rebirth spends LEVELS, not wins — no price pill
+      colour: '#9A1AFF',
+      onClose: onBack,
+    });
   };
 
 
@@ -535,152 +580,59 @@ function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBu
   );
 }
 
-// §2 — press-and-HOLD to buy: the button fills over holdMs; releasing early cancels
-// (the tension beat). The fill is a COSMETIC WAAPI scaleX (never width); no layout reads.
-//
-// COMMIT IS WALL-CLOCK (setTimeout), NOT THE ANIMATION'S FINISH. Gating commit on
-// `animation.onfinish` tied it to the document/animation timeline, which only advances as frames
-// are produced — under main-thread saturation (a low-end/janky device, a loaded machine) frames
-// starve, the fill's currentTime lags real time and can freeze entirely, so onfinish (and thus
-// the buy) needed an unbounded real-time hold: a player on a slow device holding the intended
-// ~400ms could fail to buy. setTimeout fires on real elapsed time regardless of frame rate, so
-// holding holdMs of REAL time always commits; the WAAPI fill stays purely as visual feedback.
+// §2 — the BUY button: a plain click commits. It was a press-and-HOLD gate (400ms fill,
+// wall-clock timer, pointerup cancelled) with nothing on screen saying "hold", so every upgrade
+// button read as broken — a normal click did nothing. Plain click now; REBIRTH keeps its own
+// confirm. The component name is kept so call sites don't churn.
 //
 // NOTE: this component must NOT be re-created inside a parent's render (it was, via an inline
 // `const HoldBuyButton = props => <HoldBuy .../>` alias + inline Card/ThemeCard) — a new
-// component identity per render REMOUNTS it mid-press, throwing away the in-flight timer. It is
-// module-scoped and rendered directly so its press state survives the parent's frequent
-// re-renders (ShopScreen re-renders ~1-2x/sec from App churn).
-function HoldBuy({ label, onCommit, holdMs = 400, className = 'shop-card-btn' }) {
-  const fillRef = useRef(null);
-  const animRef = useRef(null);
-  const timerRef = useRef(0);
-  const start = () => {
-    const fill = fillRef.current;
-    if (!fill || timerRef.current) return;
-    // Cosmetic fill (transform/opacity only, composited). Not the commit signal.
-    animRef.current = fill.animate(
-      [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
-      { duration: holdMs, easing: 'linear', fill: 'forwards' }
-    );
-    // Commit on holdMs of WALL-CLOCK time held (frame-rate independent).
-    timerRef.current = window.setTimeout(() => {
-      timerRef.current = 0;
-      animRef.current = null;
-      if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
-      onCommit();
-    }, holdMs);
-  };
-  const cancel = () => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = 0;
-    }
-    if (animRef.current) {
-      animRef.current.cancel();
-      animRef.current = null;
-    }
-    if (fillRef.current) fillRef.current.style.transform = 'scaleX(0)';
-  };
-  // Clear a pending hold if the button unmounts mid-press (no commit on a gone component).
-  useEffect(() => () => { if (timerRef.current) window.clearTimeout(timerRef.current); }, []);
-  // KEYBOARD PARITY (fix/shop-keyboard): the button had pointer handlers only, so Enter/Space did
-  // nothing and the whole shop was un-buyable without a mouse. Enter/Space HELD for the same holdMs
-  // commits; releasing early cancels — NOT an instant-buy shortcut mouse users don't get. We ignore
-  // the auto-repeat keydowns a held key fires (e.repeat) so the hold starts once, and preventDefault
-  // stops Space from scrolling / the native click from racing the hold. keyup + blur cancel.
-  const isBuyKey = (e) => e.key === 'Enter' || e.key === ' ' || e.code === 'Space';
-  const onKeyDown = (e) => {
-    if (!isBuyKey(e)) return;
-    e.preventDefault();
-    if (!e.repeat) start();
-  };
-  const onKeyUp = (e) => {
-    if (!isBuyKey(e)) return;
-    e.preventDefault();
-    cancel();
-  };
+// component identity per render REMOUNTS it. It is module-scoped and rendered directly.
+function HoldBuy({ label, onCommit, className = 'shop-card-btn' }) {
   return (
     <button
       type="button"
-      className={`${className} shop-hold`}
-      onPointerDown={(e) => { e.preventDefault(); start(); }}
-      onPointerUp={cancel}
-      onPointerLeave={cancel}
-      onPointerCancel={cancel}
-      onKeyDown={onKeyDown}
-      onKeyUp={onKeyUp}
-      onBlur={cancel}
-      aria-label={`Hold Enter or Space to buy for ${label}`}
+      className={`${className} shop-buy`}
+      onClick={onCommit}
+      aria-label={`Buy for ${label}`}
     >
-      <span className="shop-hold-fill" ref={fillRef} aria-hidden="true" />
-      <span className="shop-hold-label">
-        <span className="shop-coin" aria-hidden="true" /> {label}
-      </span>
+      <span className="shop-coin" aria-hidden="true" /> {label}
     </button>
   );
 }
 
-// §2 — the REVEAL: an SVG badge slams in, a one-line banner names what unlocked, and a
-// live pop preview fires ONCE so you see what you bought. All finite/one-shot WAAPI
-// (transform+opacity only); auto-dismisses. Zero new infinite animations.
+// §2 — the REVEAL: the shared reveal STICKER (see ShopSticker.jsx / Sticker.jsx), showing the
+// item's own art, its name, one line of what it does and the price as a red debit. It replaced a
+// black box with a generic star + a one-line banner, which was doing no work on a moment that can
+// cost 2,500 wins. Click (sticker or backdrop) dismisses; it also auto-dismisses after 4.2s.
+//
+// THE TIMER STAYS HERE, keyed off a ref. `onDone` is an inline arrow from the parent (recreated
+// every ShopScreen render), and ShopScreen re-renders whenever App does (App churns child props
+// ~1-2×/sec via an unmemoized onBack). If the effect below listed `onDone` as a dep, each of those
+// re-renders would clear + reschedule the setTimeout — resetting it faster than it could ever fire,
+// so the reveal (and, on a rebirth, the whole shop overlay via reveal.onClose) NEVER auto-dismissed
+// and the player was stranded on the reveal after every rebirth. Reading it from a ref keeps the
+// timer armed once and immune to parent re-renders.
+const REVEAL_MS = 4200;
 function ShopReveal({ reveal, onDone }) {
-  const badgeRef = useRef(null);
-  const popRef = useRef(null);
-  // Mirror the dismiss callback through a ref so the auto-dismiss effect does NOT depend on
-  // its identity. `onDone` is an inline arrow from the parent (recreated every ShopScreen
-  // render), and ShopScreen re-renders whenever App does (App churns child props ~1-2×/sec via
-  // an unmemoized onBack). If the effect below listed `onDone` as a dep, each of those
-  // re-renders would clear + reschedule the completion setTimeout — resetting it faster than it
-  // could ever fire, so the reveal (and, on a rebirth, the whole shop overlay via reveal.onClose)
-  // NEVER auto-dismissed and the player was stranded on the reveal after every rebirth. Reading
-  // it from a ref keeps the timer armed once and immune to parent re-renders.
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
-  const dur = reveal.kind === 'rebirth' ? 700 : 220;
+  const doneRef = useRef(false);
+  // One dismiss path for both the timer and the click, so a click can't fire onClose twice
+  // (a rebirth's onClose closes the whole shop).
+  const finish = useRef(() => {});
+  finish.current = () => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    onDoneRef.current();
+    if (reveal.onClose) reveal.onClose();
+  };
   useEffect(() => {
-    const badge = badgeRef.current;
-    if (badge) {
-      badge.animate(
-        [
-          { transform: 'scale(1.6) rotate(-6deg)', opacity: 0, offset: 0 },
-          { transform: 'scale(0.94) rotate(-6deg)', opacity: 1, offset: 0.55 },
-          { transform: 'scale(1) rotate(-6deg)', opacity: 1, offset: 1 },
-        ],
-        { duration: dur, easing: 'cubic-bezier(.2,1.3,.3,1)', fill: 'both' }
-      );
-    }
-    // Live pop preview of what you bought — one shot, tier/style colour.
-    const pop = popRef.current;
-    if (pop) {
-      pop.style.color = reveal.colour || '#2EFFE0';
-      pop.animate(
-        [
-          { transform: 'translateY(10px) scale(0.8)', opacity: 0, offset: 0 },
-          { transform: 'translateY(-6px) scale(1.15)', opacity: 1, offset: 0.35 },
-          { transform: 'translateY(-2px) scale(1)', opacity: 1, offset: 0.7 },
-          { transform: 'translateY(-2px) scale(1)', opacity: 0, offset: 1 },
-        ],
-        { duration: 620, delay: dur - 80, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' }
-      );
-    }
-    const t = setTimeout(() => {
-      onDoneRef.current();
-      if (reveal.onClose) reveal.onClose();
-    }, dur + 1100);
+    const t = setTimeout(() => finish.current(), REVEAL_MS);
     return () => clearTimeout(t);
-    // `reveal` and `dur` are stable for the life of one reveal (reveal is ShopScreen state, set
-    // once until dismissed); onDone is read via onDoneRef so it is intentionally not a dep — that
-    // is what stops parent re-renders from resetting the timer above.
-  }, [reveal, dur]);
-  return (
-    <div className="shop-reveal" role="status" aria-live="polite">
-      <div className="shop-reveal-card">
-        {/* Real SVG asset (ART VS MOTION) — CSS only animates it (the slam). */}
-        <img className="shop-reveal-badge" src="/art/star.svg" alt="" ref={badgeRef} aria-hidden="true" />
-        <div className="shop-reveal-banner">{reveal.banner}</div>
-        <span className="shop-reveal-pop" ref={popRef} aria-hidden="true">{reveal.previewChar || 'A'}</span>
-      </div>
-    </div>
-  );
+    // `reveal` is stable for the life of one reveal (ShopScreen state, set once until dismissed);
+    // onDone is read via onDoneRef so it is intentionally not a dep — that is what stops parent
+    // re-renders from resetting the timer above.
+  }, [reveal]);
+  return <ShopSticker reveal={reveal} onDismiss={() => finish.current()} />;
 }

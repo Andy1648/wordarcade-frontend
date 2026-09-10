@@ -4,9 +4,10 @@
 // the broken screen shows an inline "THIS SCREEN BROKE — GO BACK" panel (with a working back action)
 // and reports to Sentry, while the rest of the app stays mounted and interactive.
 //
-// Built on Sentry.ErrorBoundary (a real React error boundary — it catches + renders the fallback even
-// when Sentry has no DSN; the DSN only decides whether the report is actually SENT).
-import { Sentry } from '../lib/analytics';
+// Built on the plain ErrorBoundary (perf/first-load — Sentry is no longer a boot import). It catches
+// + renders the fallback regardless of Sentry; the report goes through captureException, which
+// queues until Sentry is lazily initialised (the DSN only decides whether it is actually SENT).
+import ErrorBoundary from './ErrorBoundary.js';
 import './ScreenBoundary.css';
 
 // TEST SEAM (same family as ?soloms= / ?coldstart= / window.__TAW_*): `?boom=<name>` makes the
@@ -27,9 +28,9 @@ function Boom({ name }) {
 
 export default function ScreenBoundary({ name = 'screen', onBack = null, children }) {
   return (
-    <Sentry.ErrorBoundary
+    <ErrorBoundary
       // Tag the report with which screen broke, so Sentry groups per-screen.
-      beforeCapture={(scope) => { try { scope.setTag('screen', name); } catch { /* noop */ } }}
+      captureContext={{ tags: { screen: name } }}
       fallback={({ resetError }) => (
         <div className="screen-boundary" role="alert" aria-live="assertive">
           <div className="sb-panel">
@@ -49,6 +50,6 @@ export default function ScreenBoundary({ name = 'screen', onBack = null, childre
     >
       {boomActive(name) ? <Boom name={name} /> : null}
       {children}
-    </Sentry.ErrorBoundary>
+    </ErrorBoundary>
   );
 }

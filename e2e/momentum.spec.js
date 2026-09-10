@@ -43,15 +43,12 @@ test.describe('momentum repeatable sink', () => {
     await page.waitForTimeout(400);
     await page.locator('.homepage-nav-btn.is-shop').click();
     await page.locator('.shop-panel').waitFor({ state: 'visible' });
-    // The MOMENTUM track renders (subtitle + its own hold-to-buy).
+    // The MOMENTUM track renders (subtitle + its own buy button).
     await expect(page.locator('.shop-subtitle', { hasText: 'MOMENTUM' })).toBeVisible();
     // KEY POWER, WORD SENSE, MOMENTUM are the three .shop-keypower blocks — MOMENTUM is the third.
-    const hold = page.locator('.shop-keypower').nth(2).locator('.shop-hold');
-    await expect(hold).toBeVisible();
-    await hold.hover();
-    await page.mouse.down();
-    await page.waitForTimeout(520); // past the ~400ms fill → commit
-    await page.mouse.up();
+    const buy = page.locator('.shop-keypower').nth(2).locator('.shop-buy');
+    await expect(buy).toBeVisible();
+    await buy.click();
     // One mark bought: count 0→1, wins 6000 − 5000 = 1000.
     await expect
       .poll(() => page.evaluate(() => Number(localStorage.getItem('taw.momentum'))), { timeout: 4000 })
