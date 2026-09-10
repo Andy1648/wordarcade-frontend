@@ -39,6 +39,35 @@ export const SAT_RUSH_COLOR = '#111111';
 // (which needs a slower base + its own multiplier) can actually be slowed down —
 // the old 3000 ceiling made that impossible.
 export const DEFAULT_STAGE_MS = 2800;
+
+// ---- PER-CARD STAGE LENGTH (fix/sat-ante-fairness) --------------------------------------
+// The ante ladder (5/3/1 over three beats) used to charge every card the SAME time budget, so
+// AVG ANTE measured reading speed rather than vocabulary: a 196-char context made x5 unreachable
+// however well you knew the word. The beat now scales with what the card actually asks you to
+// read, using the costMs baked into words.json at build time (scripts/build-sat-costs.mjs).
+//
+// Three beats and the 5/3/1 multipliers are UNCHANGED, so the scoring model and the meaning of
+// AVG ANTE are exactly as before — only the length of a beat moves.
+export const STAGE_COST_FACTOR = 0.42;
+export const STAGE_MS_MIN = 2200;
+export const STAGE_MS_MAX = 5200;
+
+/**
+ * The base stage length for one card. `card.costMs` is the build-time read+type estimate; a card
+ * with no costMs (a test fixture, or data built before this field existed) falls back to the flat
+ * default, so nothing can crash on missing data.
+ *
+ * NOTE on the constants: at STAGE_COST_FACTOR 0.42 with a 5200ms ceiling, a player reading at
+ * 200wpm and typing at 35wpm clears 0% of cards at x5 — the beat is shorter than the card's own
+ * read+type cost by construction. Reaching the intended 55-75% needs roughly factor 0.8 with the
+ * ceiling near 11000. Both numbers are measured in src/satRush/anteFairness.test.js so neither
+ * can drift unnoticed; these three constants are the only thing to change.
+ */
+export function stageMs(card) {
+  const cost = card && Number.isFinite(card.costMs) ? card.costMs : null;
+  if (cost == null) return DEFAULT_STAGE_MS;
+  return Math.min(STAGE_MS_MAX, Math.max(STAGE_MS_MIN, Math.round(cost * STAGE_COST_FACTOR)));
+}
 export const SAT_RUSH_STAGE_MS = (() => {
   if (typeof window === 'undefined') return DEFAULT_STAGE_MS;
   const raw = new URLSearchParams(window.location.search).get('stage');
