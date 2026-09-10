@@ -18,6 +18,7 @@ import { wpmKeyStroke } from '../progress/wpmLive';
 import { addWords } from '../wordCount';
 import {
   SAT_RUSH_STAGE_MS,
+  stageMs as stageMsForCard,
   SAT_RUSH_LINEUP_SCALE,
   SAT_RUSH_SCENE,
   SAT_RUSH_DEV_TUNER,
@@ -339,8 +340,14 @@ export function useSatRushGame() {
     // Effective stage delay: deep-cut and LINEUP scales stack multiplicatively on
     // the base. lineupScale is read LIVE from cfgRef (dev-tunable), so it overrides
     // the value baked into eng.config at engine creation.
+    // PER-CARD BASE (fix/sat-ante-fairness): the beat scales with this card's build-time
+    // read+type cost, so the x5 window is proportional to what the card asks of you instead of
+    // flat across a 5s..12s spread. The dev/live ?stage= override still wins when it has been
+    // moved off the shipped default — otherwise tuning the slider would do nothing.
+    const tuned = cfgRef.current.stageMs;
+    const base = tuned !== SAT_RUSH_STAGE_MS ? tuned : stageMsForCard(c);
     const interval = effectiveStageIntervalMs(
-      cfgRef.current.stageMs,
+      base,
       { isDeepCut: c.isDeepCut, mode: modeRef.current },
       { ...eng.config, lineupStageScale: cfgRef.current.lineupScale }
     );
