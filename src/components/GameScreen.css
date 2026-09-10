@@ -140,6 +140,43 @@
     height: auto;
     justify-content: flex-start;
   }
+  /* ===== <=2 PLAYERS: USED WORDS MOVE INTO THE RAIL (fix/wb-rail-used-words) ==========
+     With one opponent the rail holds two short cards and stops, leaving a tall void under
+     them, while the right column carries FOUR stacked rows (combo / bomb / used / input) and
+     squeezes the hero bomb. So on the <=2-player board the used-words list is re-homed as the
+     rail's THIRD item and the right column drops its `used` row entirely — the bomb inherits
+     that height. 3+ players keep the 5-row broadcast template above, untouched.
+
+     Detected in CSS only, via the same :has() test the rail sizing already uses ("no 3rd
+     slot"). Browsers without :has() keep the 5-row template and simply see no change. */
+  .game-stage--wb:not(:has(.game-player-bar > .game-player-slot:nth-child(3))) {
+    grid-template-areas:
+      'header header'
+      'bar    combo'
+      'bar    bomb'
+      'used   input';
+  }
+  /* The dashed container reads as a slot that FILLS as the match goes: it starts as an empty
+     dashed box under the two cards and grows with the word list, scrolling inside its cap
+     rather than pushing the rail taller without bound. */
+  .game-stage--wb:not(:has(.game-player-bar > .game-player-slot:nth-child(3))) .game-used {
+    grid-area: used;
+    align-self: start;
+    width: 100%;
+    margin: 0;
+    border: 2px dashed #FF6B3D;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: rgba(255, 107, 61, 0.06);
+  }
+  .game-stage--wb:not(:has(.game-player-bar > .game-player-slot:nth-child(3))) .game-used-list {
+    max-height: clamp(92px, 26vh, 300px);
+  }
+  /* The point of the move: the bomb takes the freed height. Sized off the cell's own axis
+     rather than the old flat 26vh so it actually uses what it just gained. */
+  .game-stage--wb:not(:has(.game-player-bar > .game-player-slot:nth-child(3))) .bomb-svg {
+    width: clamp(190px, 34vh, 320px);
+  }
   .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
   .game-stage--wb .bomb-area { grid-area: bomb; align-self: center; margin: 0; }
   .game-stage--wb .game-combo-box {
