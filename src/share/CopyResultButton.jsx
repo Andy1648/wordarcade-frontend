@@ -20,6 +20,7 @@ export default function CopyResultButton({
   level = null,
   tiers = [],
   killed = false,
+  suffix = null, // optional stat rendered on the glyph row (FUSE: "LETTERS 22/26")
   className = '',
 }) {
   const [copied, setCopied] = useState(false);
@@ -28,7 +29,7 @@ export default function CopyResultButton({
 
   // Level is read live from the XP store at game-over (it isn't otherwise on these screens).
   const lvl = Number.isFinite(level) ? level : loadProgress().level;
-  const text = buildResultCard({ mode, words, points, level: lvl, tiers, killed, link: modeShareLink(mode) });
+  const text = buildResultCard({ mode, words, points, level: lvl, tiers, killed, suffix, link: modeShareLink(mode) });
   if (!text) return null; // suppression rule — an anti-ad
 
   async function onClick() {

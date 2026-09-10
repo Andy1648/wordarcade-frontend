@@ -59,14 +59,20 @@ export function useMusicPlayer() {
   // Active volume-fade interval (so a new fade cancels the old).
   const fadeRef = useRef(null);
 
-  // Create the audio element once.
+  // Create the audio element once. perf/first-load: preload='none' is set BEFORE src so the
+  // 1.7 MB track is not fetched at mount (it was the bulk of the homepage's 5.4 MB wire).
+  // The first fetch is audio.load() inside play() — the same user gesture that resumes the
+  // AudioContext — or the unmute that calls play(). Never at mount.
   if (audioRef.current === null && typeof Audio !== 'undefined') {
-    const audio = new Audio('/firecracker.mp3');
+    const audio = new Audio();
+    audio.preload = 'none';
+    audio.src = '/firecracker.mp3';
     audio.loop = true;
     audio.volume = DEFAULT_VOLUME; // used until the gain node takes over
-    audio.preload = 'auto';
     audioRef.current = audio;
   }
+  // Whether audio.load() has been issued (once, on the first play/unmute gesture).
+  const loadedRef = useRef(false);
 
   // Push the current intended/muted volume to wherever loudness is controlled:
   // the gain node once the graph exists, otherwise the bare element.
@@ -204,6 +210,15 @@ export function useMusicPlayer() {
   const play = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
+    // First gesture: start fetching the track now (preload='none' deferred it from mount).
+    if (!loadedRef.current) {
+      loadedRef.current = true;
+      try {
+        audio.load();
+      } catch {
+        /* no-op — play() below still triggers the fetch */
+      }
+    }
     // Wire up the analyser graph on first play (within the gesture that allows
     // audio), then push volume to whichever node now owns it.
     ensureAnalyser();

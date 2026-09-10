@@ -17,6 +17,7 @@ import {
 } from '../juice';
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
@@ -379,7 +380,7 @@ function SubmitLetters({ text, mode }) {
  * trails the text. This is a READOUT only - it is never the field the user types
  * into, so we never animate the user's own keystrokes mid-entry.
  */
-function LiveTypeText({ text }) {
+function LiveTypeText({ text, caret = true }) {
   const up = (text || '').toUpperCase();
   const len = up.length;
   const prevLenRef = useRef(0);
@@ -401,10 +402,64 @@ function LiveTypeText({ text }) {
           </span>
         );
       })}
-      <span className="typing-cursor">|</span>
+      {caret && <span className="typing-cursor">|</span>}
     </span>
   );
 }
+
+/**
+ * Opponent status line (feat/wb-bot-turn). While it was another player's turn their card sat
+ * silent (a dimmed "..."), so the bot's 2.3-4.3s think read as a stall. Now the current
+ * opponent's card always says what is happening:
+ *   bot   -> "THINKING" + a 3-dot Bungee ellipsis that advances one dot per 400ms. The dots are
+ *            an OPACITY SWAP on three spans driven by ONE setInterval (cleared on unmount, i.e.
+ *            turn end) — no keyframes on the card, no infinite animation. Reduced motion: static.
+ *   human -> "TYPING…" while a typing_update is live, else "THEIR TURN".
+ * Never silent.
+ */
+const DOTS_STEP_MS = 400;
+function ThinkingDots() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const reduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setStep(2);
+      return undefined;
+    }
+    const id = window.setInterval(() => setStep((v) => (v + 1) % 3), DOTS_STEP_MS);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <span className="player-status-dots" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={i <= step ? 'dot is-on' : 'dot'}>
+          .
+        </span>
+      ))}
+    </span>
+  );
+}
+function OpponentStatus({ kind }) {
+  if (kind === 'thinking') {
+    return (
+      <div className="player-status is-thinking" aria-label="Thinking">
+        THINKING
+        <ThinkingDots />
+      </div>
+    );
+  }
+  if (kind === 'typing') return <div className="player-status is-typing">TYPING…</div>;
+  return <div className="player-status">THEIR TURN</div>;
+}
+
+// Bot word reveal pacing: letters land at REVEAL_MS_PER_CHAR, the whole word within
+// REVEAL_MAX_MS, then the typed word holds REVEAL_HOLD_MS before the line clears.
+const REVEAL_MS_PER_CHAR = 45;
+const REVEAL_MAX_MS = 500;
+const REVEAL_HOLD_MS = 450;
 
 /**
  * The "CLUTCH!" slam shown instead of the normal hype word when a correct answer
@@ -1643,6 +1698,13 @@ export default function GameScreen({
   // turn hands off, cleared when that 300ms animation ends.
   const [passDir, setPassDir] = useState(null);
   const prevCurrentRef = useRef(null);
+  // ---- Bot word reveal (feat/wb-bot-turn) ----
+  // { playerId, word, shown }: the bot's landed word being typed into its card, `shown` chars
+  // visible so far. null when no reveal is in flight.
+  const [botReveal, setBotReveal] = useState(null);
+  const revealPrevRef = useRef({ currentPlayerId: null, used: [] });
+  const revealIntervalRef = useRef(0);
+  const revealHoldRef = useRef(0);
   // ---- Bomb hand-off FLIGHT (Word Bomb) ----
   // The centrepiece bomb stays put; on a turn change we whip a small bomb GHOST
   // from the PREVIOUS active player's card to the NEW one so the pass is
@@ -2108,6 +2170,70 @@ export default function GameScreen({
     // sound is stable (apiRef); react to turn changes only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, gameType]);
+
+  // ---- Bot word reveal (feat/wb-bot-turn) ----
+  // The bot's accepted word_result and the following turn_update arrive in the SAME drain
+  // (App processes the whole queue in one effect run), so lastWordResult is null again by the
+  // time this screen renders — the bot's word is never seen through that path. It IS in the
+  // turn_update: the one new entry in usedWords. When the turn moves OFF a bot and exactly one
+  // word appeared, type that word into the bot's card at REVEAL_MS_PER_CHAR (whole word within
+  // REVEAL_MAX_MS) and keep its used-words chip hidden (.is-pending, opacity only) until the last
+  // letter lands, so the 3s reads as "it was typing" and the reveal is the word appearing, not a
+  // chip materialising. Game state is never delayed: the turn, timer and chip node are all live;
+  // only the chip's opacity and the card's readout are cosmetic.
+  useEffect(() => {
+    if (!gameState || gameType !== 'word-bomb') return;
+    const prev = revealPrevRef.current;
+    const used = gameState.usedWords || [];
+    const cur = gameState.currentPlayerId;
+    revealPrevRef.current = { currentPlayerId: cur, used };
+    if (gameOver || prev.currentPlayerId == null || prev.currentPlayerId === cur) return;
+    const prevPlayer = (roomPlayers || []).find((p) => p.id === prev.currentPlayerId);
+    if (!prevPlayer || !prevPlayer.isBot) return;
+    const before = new Set(prev.used.map((w) => String(w).toLowerCase()));
+    const fresh = used.filter((w) => !before.has(String(w).toLowerCase()));
+    if (fresh.length !== 1) return;
+    const word = String(fresh[0]).toUpperCase();
+    const len = word.length;
+    if (revealIntervalRef.current) window.clearInterval(revealIntervalRef.current);
+    if (revealHoldRef.current) window.clearTimeout(revealHoldRef.current);
+    revealIntervalRef.current = 0;
+    const finish = () => {
+      revealHoldRef.current = window.setTimeout(() => {
+        revealHoldRef.current = 0;
+        setBotReveal(null);
+      }, REVEAL_HOLD_MS);
+    };
+    const reduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || len === 0) {
+      setBotReveal({ playerId: prevPlayer.id, word, shown: len });
+      finish();
+      return;
+    }
+    const stepMs = Math.min(REVEAL_MS_PER_CHAR, Math.floor(REVEAL_MAX_MS / len));
+    let shown = 0;
+    setBotReveal({ playerId: prevPlayer.id, word, shown });
+    revealIntervalRef.current = window.setInterval(() => {
+      shown += 1;
+      setBotReveal({ playerId: prevPlayer.id, word, shown });
+      if (shown >= len) {
+        window.clearInterval(revealIntervalRef.current);
+        revealIntervalRef.current = 0;
+        finish();
+      }
+    }, stepMs);
+  }, [gameState, gameType, gameOver, roomPlayers]);
+  // No reveal may outlive the screen (timer context — never set state on a gone component).
+  useEffect(
+    () => () => {
+      if (revealIntervalRef.current) window.clearInterval(revealIntervalRef.current);
+      if (revealHoldRef.current) window.clearTimeout(revealHoldRef.current);
+    },
+    []
+  );
 
   // ---- Sound effects (Word Bomb only) ----
 
@@ -2855,19 +2981,45 @@ export default function GameScreen({
                       player's card. For us it mirrors our own draft (the server
                       doesn't echo our keystrokes back); for others it's the
                       relayed typing_update text. Empty -> a dimmed "..." so the
-                      card keeps a stable height instead of jumping. */}
-                  {isCurrent && !eliminated && !gameOver && (
-                    <div className="player-typing">
-                      {(() => {
-                        const typed = isMe ? draft : typingText[player.id] || '';
-                        return typed ? (
-                          <LiveTypeText text={typed} />
-                        ) : (
-                          <span className="player-typing-empty">...</span>
-                        );
-                      })()}
-                    </div>
-                  )}
+                      card keeps a stable height instead of jumping.
+                      feat/wb-bot-turn: an OPPONENT's card also carries a status
+                      line (THINKING… / TYPING… / THEIR TURN) and, once the bot's
+                      word lands, keeps its line for the letter-by-letter reveal
+                      even though the turn has already moved on. */}
+                  {(() => {
+                    const live = isCurrent && !eliminated && !gameOver;
+                    const revealing =
+                      !!botReveal && botReveal.playerId === player.id && !eliminated && !gameOver;
+                    if (!live && !revealing) return null;
+                    if (isMe) {
+                      return (
+                        <div className="player-typing">
+                          {draft ? (
+                            <LiveTypeText text={draft} />
+                          ) : (
+                            <span className="player-typing-empty">...</span>
+                          )}
+                        </div>
+                      );
+                    }
+                    const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot);
+                    const typed = typingText[player.id] || '';
+                    const status = revealing ? 'typing' : isBot ? 'thinking' : typed ? 'typing' : 'turn';
+                    return (
+                      <>
+                        <OpponentStatus kind={status} />
+                        <div className="player-typing">
+                          {revealing ? (
+                            <LiveTypeText text={botReveal.word.slice(0, botReveal.shown)} caret={false} />
+                          ) : typed ? (
+                            <LiveTypeText text={typed} />
+                          ) : isBot ? null : (
+                            <span className="player-typing-empty">...</span>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -2960,11 +3112,19 @@ export default function GameScreen({
               // keystroke, but CSS only ever shows ~2 rows (max-height 92px). Render
               // just the most recent 24 (words are unique, so key by the word) — the
               // count label above still shows the true total.
-              usedItems.slice(-24).map((item) => (
-                <span key={item} className="game-used-chip">
-                  {item.toUpperCase()}
-                </span>
-              ))
+              usedItems.slice(-24).map((item) => {
+                // feat/wb-bot-turn: the bot's word being revealed on its card stays hidden
+                // (opacity only) until the last letter lands, then slides in as normal.
+                const pending =
+                  !!botReveal &&
+                  botReveal.shown < botReveal.word.length &&
+                  String(item).toUpperCase() === botReveal.word;
+                return (
+                  <span key={item} className={pending ? 'game-used-chip is-pending' : 'game-used-chip'}>
+                    {item.toUpperCase()}
+                  </span>
+                );
+              })
             )}
           </div>
         </div>
@@ -3249,6 +3409,10 @@ export default function GameScreen({
                 LEAVE
               </button>
             </div>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+                mode — the one played least — so game-over is a fork, not a loop back into the same
+                mode. Renders nothing when everything else is still locked. */}
+            <TryModeRow current="word-bomb" />
           </div>
         </div>
       )}
@@ -3555,6 +3719,10 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               LEAVE
             </button>
           </div>
+          {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+              mode — the one played least — so game-over is a fork, not a loop back into the same
+              mode. Renders nothing when everything else is still locked. */}
+          <TryModeRow current="category-blitz" />
         </div>
       </div>
     </div>
@@ -3977,6 +4145,10 @@ function CategoryBlitzScreen({
                 LEAVE
               </button>
             </div>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+                mode — the one played least — so game-over is a fork, not a loop back into the same
+                mode. Renders nothing when everything else is still locked. */}
+            <TryModeRow current="category-blitz" />
           </div>
         </div>
       </div>

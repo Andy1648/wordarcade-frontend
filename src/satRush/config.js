@@ -39,6 +39,48 @@ export const SAT_RUSH_COLOR = '#111111';
 // (which needs a slower base + its own multiplier) can actually be slowed down —
 // the old 3000 ceiling made that impossible.
 export const DEFAULT_STAGE_MS = 2800;
+
+// ---- PER-CARD STAGE LENGTH (fix/sat-ante-fairness) --------------------------------------
+// The ante ladder (5/3/1 over three beats) used to charge every card the SAME time budget, so
+// AVG ANTE measured reading speed rather than vocabulary: a 196-char context made x5 unreachable
+// however well you knew the word. The beat now scales with what the card actually asks you to
+// read, using the costMs baked into words.json at build time (scripts/build-sat-costs.mjs).
+//
+// Three beats and the 5/3/1 multipliers are UNCHANGED, so the scoring model and the meaning of
+// AVG ANTE are exactly as before — only the length of a beat moves.
+//
+// THE CONSTANTS ARE SETTLED — 0.85 / 9000, tuned for the MEDIAN player (200wpm read, 35wpm type),
+// who clears 74.6% of cards at x5. The first pass shipped 0.42 / 5200, which put that same player
+// at 0%: the beat was a fraction of the card's own cost, so nobody could finish inside one beat.
+//
+// TUNING FOR THE MEDIAN IS THE DECISION, not a compromise we still owe a fix for. One beat per card
+// is ONE number for all players, and the slow/fast bands we originally wanted (slow >25% at x5,
+// fast <95%) are PROVABLY mutually exclusive on this corpus: slow players' p25 stage-0 cost is
+// 8250ms while fast players' p95 is 7628ms, so the two distributions do not overlap at all — the
+// window between them is -622ms. Any beat generous enough to give slow players a quarter of the x5s
+// hands fast players essentially all of them. A grid search over factor x ceiling finds ZERO pairs
+// meeting all three bands, and that search runs as a test (anteFairness.test.js) asserting it finds
+// none — the impossibility is pinned, so a future retune cannot silently re-chase it. Do not move
+// these constants hunting for a slow/fast fix; there isn't one at this shape.
+export const STAGE_COST_FACTOR = 0.85;
+export const STAGE_MS_MIN = 2200;
+// The ceiling STAYS at 9000 even though it caps four of the longest cards (incontrovertible 0.565,
+// misanthropic 0.578, flibbertigibbet 0.593, tautological 0.594 of their own read+type cost). A
+// ceiling of 9562+ un-caps those four, but it also pushes the median player from 74.6% to 82% at
+// x5, outside the 55-80 band this is tuned for: raising the ceiling to fix 4 cards costs the other
+// 952. The four are accepted, and the test records 0.565 as the observed minimum.
+export const STAGE_MS_MAX = 9000;
+
+/**
+ * The base stage length for one card. `card.costMs` is the build-time read+type estimate; a card
+ * with no costMs (a test fixture, or data built before this field existed) falls back to the flat
+ * default, so nothing can crash on missing data. See the constants above for why 0.85 / 9000.
+ */
+export function stageMs(card) {
+  const cost = card && Number.isFinite(card.costMs) ? card.costMs : null;
+  if (cost == null) return DEFAULT_STAGE_MS;
+  return Math.min(STAGE_MS_MAX, Math.max(STAGE_MS_MIN, Math.round(cost * STAGE_COST_FACTOR)));
+}
 export const SAT_RUSH_STAGE_MS = (() => {
   if (typeof window === 'undefined') return DEFAULT_STAGE_MS;
   const raw = new URLSearchParams(window.location.search).get('stage');

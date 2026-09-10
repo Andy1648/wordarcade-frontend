@@ -9,6 +9,7 @@ import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
 import { useMenuSecrets } from '../secrets/useMenuSecrets';
+import SecretSticker from './SecretSticker';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
@@ -373,8 +374,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   });
   // MENU SECRETS (Job 9): five undocumented easter eggs on the menu. The hook owns its
   // own keydown listener (never perturbs XP), grants the flat Wins, and hands back a
-  // transient stamp to flash. When one fires it may bank Wins, so refresh the balance.
-  const { stamp: secretStamp } = useMenuSecrets({ active: true });
+  // transient sticker hit to show. When one fires it may bank Wins, so refresh the balance.
+  const { stamp: secretStamp, dismiss: dismissSecret } = useMenuSecrets({ active: true });
   useEffect(() => {
     if (!secretStamp) return;
     const w = getWins();
@@ -589,17 +590,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
-        {/* MENU SECRET stamp (Job 9): a one-shot, pointer-events:none reveal. Not
-            hinted anywhere; only appears the instant a secret is discovered. */}
-        {secretStamp && (
-          <div className="secret-stamp" role="status" aria-live="polite">
-            <div className="secret-stamp-inner">
-              <span className="secret-stamp-label">SECRET</span>
-              <b className="secret-stamp-name">{secretStamp.stamp}</b>
-              <span className="secret-stamp-wins">+{secretStamp.wins} WINS</span>
-            </div>
-          </div>
-        )}
+        {/* MENU SECRET sticker (Job 9): a one-shot reveal that tells the story of the
+            secret. Not hinted anywhere; only appears the instant one is discovered. It is
+            a modal — its backdrop SWALLOWS the dismiss click (the old pointer-events:none
+            stamp let that click fall through and open the card underneath). */}
+        {secretStamp && <SecretSticker hit={secretStamp} onDismiss={dismissSecret} />}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />

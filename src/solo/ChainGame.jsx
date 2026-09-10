@@ -20,6 +20,7 @@ import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -389,6 +390,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
             className="solo-share-btn"
           />
         ),
+        tryRow: <TryModeRow current="chain" />,
       }}
       onExit={onExit}
     />

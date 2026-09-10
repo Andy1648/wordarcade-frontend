@@ -83,7 +83,7 @@
 @media (min-width: 900px) and (max-height: 900px) {
   .game-stage--wb {
     display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
     grid-template-areas:
       'header header'
       'bar    bar'
@@ -104,10 +104,23 @@
   .game-stage--wb .game-used { grid-area: used; align-self: center; }
   .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
   /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
-  .game-stage--wb .bomb-svg { width: clamp(104px, 22vh, 190px); height: auto; }
+  .game-stage--wb .bomb-svg { width: clamp(150px, 30vh, 250px); height: auto; }
+  /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of sitting
+     centred at their stacked max-width, so the prompt box spans the full input row. */
+  .game-stage--wb .game-combo-box,
+  .game-stage--wb .game-used,
+  .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
+  .game-stage--wb .game-input { max-width: none; }
   /* Compress the combo box so the right column fits a short window. */
   .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
   .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
+  /* fix/wb-short-layout: wider gap so cards never touch, and stretch so the slots share
+     a row height and each card fills its slot (equal-height cards). SCOPED here on
+     purpose - applying these globally re-wraps the phone player bar to 3 rows and
+     overflows the stage. See the .game-player-bar note below. */
+  .game-stage--wb .game-player-bar { gap: max(20px, 2.4%); align-items: stretch; }
+  .game-stage--wb .game-player-slot { display: flex; flex-direction: column; }
+  .game-stage--wb .game-player-card { flex: 1 1 auto; }
 }
 
 /* ===== CATEGORY BLITZ short-window compression (fix/game-fill-2) =====================
@@ -396,6 +409,12 @@
 .game-player-bar {
   display: flex;
   flex-wrap: wrap;
+  /* 10px is LOAD-BEARING on narrow phones: the bar is 308px at 390vw and two 149px
+     slots + a 10px gap fit that row EXACTLY. Widening this to 20px pushed the pair to
+     318px, so only one card fit per row, the bar went 2 rows -> 3 (168px -> 261px) and
+     the WB stage overflowed the viewport (game-fill 390x844 fillH 94.2% -> 104.0%).
+     The wider gap / equal-height rules fix/wb-short-layout wanted are scoped to the
+     wide-and-short desktop block above, which is the only place they were needed. */
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -678,6 +697,43 @@
   0% { opacity: 1; }
   50% { opacity: 0; }
   100% { opacity: 1; }
+}
+
+/* ---- Opponent status line + bot word reveal (feat/wb-bot-turn) ---- */
+/* "THINKING…" / "TYPING…" / "THEIR TURN" under the current opponent's name row. */
+.player-status {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: #FFE94A;
+  margin: 3px 0 1px;
+}
+/* The active card is orange: keep the status dark for contrast (as the name is). */
+.game-player-card.current .player-status {
+  color: #000;
+}
+/* The ellipsis: three dots, one more lit every 400ms (opacity swap from JS — not a keyframe). */
+.player-status-dots {
+  display: inline-block;
+  margin-left: 1px;
+  letter-spacing: 0;
+}
+.player-status-dots .dot {
+  display: inline-block;
+  opacity: 0.2;
+}
+.player-status-dots .dot.is-on {
+  opacity: 1;
+}
+/* The bot's revealed word's chip waits (opacity only) until the last letter has landed on the
+   card, then the class drops and chip-slide-in runs from the start (animation: none -> name). */
+.game-used-chip.is-pending {
+  animation: none;
+  opacity: 0;
 }
 
 .game-player-hearts {

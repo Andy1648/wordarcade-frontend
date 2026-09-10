@@ -124,8 +124,14 @@ html[data-beat='true'] .mascot-container {
   100% { transform: translateY(0) scale(1, 1); }
 }
 
+/* The <picture> wrapper is layout-inert: block, no line box of its own. */
+.mascot-picture {
+  display: block;
+  line-height: 0;
+}
+
 /* Per-pose enter: a SNAPPY pop up from small with a rotate overshoot. The
-   <img> is re-keyed per pose so this replays on every swap. */
+   <picture> is re-keyed per pose so this replays on every swap. */
 .mascot-img {
   display: block;
   height: var(--mascot-size, 120px);
