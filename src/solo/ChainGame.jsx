@@ -279,7 +279,12 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // left-edge fade — a sibling overlay of flat stepped bands, not a mask. An empty ribbon
   // renders empty (no placeholder slots). Static; pure read of engine state.
   const links = s.lastLinks || [];
-  const newestFirst = links.slice().reverse();
+  // VISIBLE CAP: only the newest RIBBON_MAX chips are rendered. Measured at 320px, about five
+  // chips fit, and the row is overflow:hidden — so anything older is invisible under the left
+  // fade anyway. Capping keeps the DOM flat instead of growing a node per link for a run that
+  // can reach hundreds, and the clip + fade already make the boundary read as "there is more".
+  const RIBBON_MAX = 5;
+  const newestFirst = links.slice(-RIBBON_MAX).reverse();
   const chainDeck = (
     <div className="solo-chain" aria-hidden="true">
       <div className="solo-deck-label">YOUR CHAIN</div>

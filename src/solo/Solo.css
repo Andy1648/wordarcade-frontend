@@ -455,7 +455,13 @@
   display: inline-block;
   line-height: 1;
   padding-bottom: 1px;
-  border-bottom: 4px solid #2effe0;
+  /* A real text-decoration underline, not a border: it tracks the glyph rather than the inline
+     box. text-decoration-color MUST be set explicitly — the mirror paints its text in
+     `transparent` so the default currentColor would make the underline invisible too. */
+  text-decoration: underline;
+  text-decoration-color: #2effe0;
+  text-decoration-thickness: 4px;
+  text-underline-offset: 2px;
 }
 
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
