@@ -1,6 +1,7 @@
 // e2e/shop-keyboard.spec.js — the shop's buy button must be usable with the keyboard ONLY (it once
 // had pointer handlers only, so nothing could be bought without a mouse). Buying is a plain
-// activation: a single Enter or Space press commits (fix/shop-click-buy removed the hold gate).
+// activation: a single Enter or Space press commits (fix/shop-click-buy removed the hold gate),
+// and the purchase reveals the shared sticker (feat/shop-reveal-sticker).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
@@ -35,14 +36,15 @@ test('an Enter tap buys KEY POWER once — keyboard only, no mouse', async ({ pa
   await expect(keyPowerHeading(page)).toContainText('TIER 1');
 });
 
-test('Enter buys KEY POWER and reveals the unlock', async ({ page }) => {
+test('Enter buys KEY POWER and reveals the unlock sticker', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 });
   const btn = keyPowerBuy(page);
   await expect(btn).toBeVisible();
   await btn.focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.shop-reveal')).toBeVisible();
-  await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER I UNLOCKED');
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
+  await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
   await expect(keyPowerHeading(page)).toContainText('TIER 1');
 });
 
@@ -52,7 +54,7 @@ test('Space also buys via the keyboard', async ({ page }) => {
   await expect(btn).toBeVisible();
   await btn.focus();
   await page.keyboard.press('Space');
-  await expect(page.locator('.shop-reveal')).toBeVisible();
-  await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER II UNLOCKED');
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER II');
   await expect(keyPowerHeading(page)).toContainText('TIER 2');
 });

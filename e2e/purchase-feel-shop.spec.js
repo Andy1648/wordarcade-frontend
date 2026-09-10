@@ -36,20 +36,25 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
   await expect(page.locator('.shop-card-gap').first()).toBeVisible();
 });
 
-test('§2 buy is a plain click that commits and reveals', async ({ page }) => {
+test('§2 buy is a plain click that commits and reveals the sticker', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (90)
   // WORD SENSE (Job 4) added a SECOND upgrade track that reuses .shop-keypower / .shop-kp-actions,
   // so scope to the FIRST .shop-keypower — KEY POWER, which renders above WORD SENSE. (The reveal
   // banner assertion below double-checks we bought KEY POWER, not WORD SENSE.)
+  // fix/shop-click-buy: buying is a plain CLICK (the unlabelled 400ms hold gate is gone), and
+  // feat/shop-reveal-sticker: the reveal is the shared sticker — ribbon "★ UNLOCKED ★" plus the
+  // item's own name, in place of the old one-line banner.
   const buyBtn = page.locator('.shop-keypower').first().locator('.shop-buy');
   await expect(buyBtn).toBeVisible();
   // The THEMES section renders above KEY POWER, so scope to the KEY POWER heading specifically.
   await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 0');
+  await expect(page.locator('.sticker')).toHaveCount(0);
 
-  // One click → commit → reveal appears (fix/shop-click-buy: no more hold gate).
+  // One click → commit → the sticker appears and the tier advances.
   await buyBtn.click();
-  await expect(page.locator('.shop-reveal')).toBeVisible();
-  await expect(page.locator('.shop-reveal-banner')).toContainText('KEY POWER I UNLOCKED');
+  await expect(page.locator('.sticker')).toBeVisible();
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
+  await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
   await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 1');
 });
 
