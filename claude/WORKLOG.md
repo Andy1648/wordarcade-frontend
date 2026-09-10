@@ -387,3 +387,16 @@ Executing the fully-specified Jobs 1-5 only. Rails: branch+push only, never merg
   #6 Blitz solo-leaver -> verify round/scoreboard resolves for the lone survivor (recommend a live check);
   #7 not_a_word latency -> the only reject that round-trips; recommend an optimistic client buzz on the
   dictionary reject too (mirror the 3 local rejects) IF/when the client caches recent verdicts.
+- 2026-09-08  perf/first-load (branch only, NOT merged): homepage first-load. (1) music Audio
+  preload='none' + load() on the first gesture; firecracker.mp3 96 kbps (4.29 -> 1.67 MB); 5 mascot
+  WebPs via <picture>; splash 21 -> 3 infinite loops (embers static). (2) LoadingScreen readiness-driven:
+  finishes on document.fonts.ready AND App mounted (lib/bootReady.js), 700 ms floor / 5000 ms cap /
+  600 ms handoff; fuse burn = fuseProgress(elapsed); mascot via the Mascot component. gtag <script>
+  removed from index.html; main.jsx injects gtag + initSentry() + PostHog from ONE idle callback after
+  window 'load' (dataLayer stub queues early calls; page_view fired manually; early errors shimmed
+  and replayed into Sentry). GameScreen.jsx + shareConfig.js keep direct PNG refs (not first-load).
+  **PLAYWRIGHT NOTE: the suite-wide `use.reducedMotion: 'reduce'` in playwright.config.js is INERT
+  in this environment** — `matchMedia('(prefers-reduced-motion: reduce)').matches` reads false on the
+  splash AND the menu under it (verified 2026-09-08). `page.emulateMedia({ reducedMotion: 'reduce' })`
+  per page DOES flip it (e2e/splash-loops.spec.js uses that form). The other specs that assume the
+  config-level emulation were deliberately NOT changed in this branch.

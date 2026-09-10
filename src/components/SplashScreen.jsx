@@ -49,29 +49,30 @@ const BURST_POINTS = Array.from({ length: 32 }, (_, i) => {
   return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
 }).join(' ');
 
-// ---- Ambient embers/debris drifting slowly UP the screen ----
+// ---- Ambient embers/debris: ONE STATIC LAYER (perf/first-load) ----
 // Three kinds of mote: tiny round 'spark's, small square paint 'fleck's, and a
 // few small letter 'tile's. STATIC module config (no per-render randomness, like
 // ParticleField/WallScene) so re-renders never reshuffle the layout. Each carries
-// its column (left %), size, rise duration/delay, palette colour, a horizontal
-// drift and a final rotation - the CSS turns those into a slow, floaty climb.
-// Modest count (15) and low opacity so the air feels alive without going noisy.
+// its column (left %) and height (top %), size, palette colour, opacity and a
+// rotation. They used to each run a 15–33s infinite rise (15 looping animations on
+// the LCP screen); they are now painted once, frozen mid-drift — the splash keeps
+// its scattered-debris look at rest with zero animation cost.
 const EMBERS = [
-  { type: 'spark', left: 8,  size: 4,  dur: 19, delay: 0,   color: '#FFE94A', op: 0.5,  drift: 14,  rot: 0 },
-  { type: 'fleck', left: 16, size: 7,  dur: 24, delay: 6,   color: '#ff4fa3', op: 0.32, drift: -18, rot: 140 },
-  { type: 'spark', left: 23, size: 3,  dur: 17, delay: 3,   color: '#FF6B3D', op: 0.5,  drift: 10,  rot: 0 },
-  { type: 'tile',  left: 30, size: 20, dur: 30, delay: 10,  color: '#2EFFE0', op: 0.16, drift: 16,  rot: -22, letter: 'T' },
-  { type: 'spark', left: 38, size: 5,  dur: 15, delay: 8,   color: '#2EFFE0', op: 0.45, drift: -12, rot: 0 },
-  { type: 'fleck', left: 45, size: 6,  dur: 26, delay: 2,   color: '#FFE94A', op: 0.3,  drift: 20,  rot: -120 },
-  { type: 'spark', left: 52, size: 3,  dur: 21, delay: 13,  color: '#ff4fa3', op: 0.5,  drift: -9,  rot: 0 },
-  { type: 'tile',  left: 59, size: 18, dur: 33, delay: 4,   color: '#FF6B3D', op: 0.15, drift: -16, rot: 18, letter: 'W' },
-  { type: 'spark', left: 66, size: 4,  dur: 16, delay: 11,  color: '#FFE94A', op: 0.5,  drift: 12,  rot: 0 },
-  { type: 'fleck', left: 73, size: 8,  dur: 23, delay: 7,   color: '#9A1AFF', op: 0.32, drift: 17,  rot: 160 },
-  { type: 'spark', left: 80, size: 3,  dur: 18, delay: 1,   color: '#FF6B3D', op: 0.45, drift: -11, rot: 0 },
-  { type: 'tile',  left: 86, size: 19, dur: 31, delay: 15,  color: '#FFE94A', op: 0.16, drift: 14,  rot: -14, letter: '!' },
-  { type: 'spark', left: 91, size: 5,  dur: 14, delay: 5,   color: '#2EFFE0', op: 0.5,  drift: -13, rot: 0 },
-  { type: 'fleck', left: 96, size: 6,  dur: 27, delay: 9,   color: '#ff4fa3', op: 0.3,  drift: -15, rot: -150 },
-  { type: 'spark', left: 48, size: 3,  dur: 22, delay: 17,  color: '#FFE94A', op: 0.45, drift: 10,  rot: 0 },
+  { type: 'spark', left: 8,  top: 62, size: 4,  color: '#FFE94A', op: 0.5,  rot: 0 },
+  { type: 'fleck', left: 16, top: 24, size: 7,  color: '#ff4fa3', op: 0.32, rot: 70 },
+  { type: 'spark', left: 23, top: 81, size: 3,  color: '#FF6B3D', op: 0.5,  rot: 0 },
+  { type: 'tile',  left: 30, top: 14, size: 20, color: '#2EFFE0', op: 0.16, rot: -11, letter: 'T' },
+  { type: 'spark', left: 38, top: 47, size: 5,  color: '#2EFFE0', op: 0.45, rot: 0 },
+  { type: 'fleck', left: 45, top: 88, size: 6,  color: '#FFE94A', op: 0.3,  rot: -60 },
+  { type: 'spark', left: 52, top: 9,  size: 3,  color: '#ff4fa3', op: 0.5,  rot: 0 },
+  { type: 'tile',  left: 59, top: 71, size: 18, color: '#FF6B3D', op: 0.15, rot: 9, letter: 'W' },
+  { type: 'spark', left: 66, top: 33, size: 4,  color: '#FFE94A', op: 0.5,  rot: 0 },
+  { type: 'fleck', left: 73, top: 56, size: 8,  color: '#9A1AFF', op: 0.32, rot: 80 },
+  { type: 'spark', left: 80, top: 18, size: 3,  color: '#FF6B3D', op: 0.45, rot: 0 },
+  { type: 'tile',  left: 86, top: 84, size: 19, color: '#FFE94A', op: 0.16, rot: -7, letter: '!' },
+  { type: 'spark', left: 91, top: 40, size: 5,  color: '#2EFFE0', op: 0.5,  rot: 0 },
+  { type: 'fleck', left: 96, top: 66, size: 6,  color: '#ff4fa3', op: 0.3,  rot: -75 },
+  { type: 'spark', left: 48, top: 93, size: 3,  color: '#FFE94A', op: 0.45, rot: 0 },
 ];
 
 // Sparks crackling off the bomb's fuse tip (top-right of the mascot PNG). Fixed
@@ -162,8 +163,8 @@ export default function SplashScreen({ onStart, onDismiss }) {
         <polygon points={BURST_POINTS} fill="#FFE94A" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
       </svg>
 
-      {/* Ambient embers/debris drifting slowly up the screen, behind the text
-          (z below the wordmark) so the air feels alive without stealing focus. */}
+      {/* Ambient embers/debris — a single STATIC layer behind the text (z below the
+          wordmark). Painted once; no animation (see EMBERS). */}
       <div className="splash-embers" aria-hidden="true">
         {EMBERS.map((e, i) => (
           <span
@@ -171,15 +172,13 @@ export default function SplashScreen({ onStart, onDismiss }) {
             className={`splash-ember ${e.type}`}
             style={{
               left: `${e.left}%`,
+              top: `${e.top}%`,
               width: e.type === 'tile' ? undefined : `${e.size}px`,
               height: e.type === 'tile' ? undefined : `${e.size}px`,
               fontSize: e.type === 'tile' ? `${e.size}px` : undefined,
               background: e.color,
-              '--e-op': e.op,
-              '--e-dur': `${e.dur}s`,
-              '--e-delay': `${e.delay}s`,
-              '--e-drift': `${e.drift}px`,
-              '--e-rot': `${e.rot}deg`,
+              opacity: e.op,
+              transform: `rotate(${e.rot}deg)`,
             }}
           >
             {e.type === 'tile' ? e.letter : null}
@@ -202,8 +201,9 @@ export default function SplashScreen({ onStart, onDismiss }) {
         </div>
       </div>
 
-      {/* The bomb mascot — the splash's hero image (fix/splash). Pose only (no looping emote)
-          so it adds no idle animation; the enter pop is a one-shot. */}
+      {/* The bomb mascot — the splash's hero image (fix/splash). Pose only (no looping emote);
+          the idle breathe loop is also switched off here (SplashScreen.css) so the LCP screen
+          runs at most 3 loops: blink + logo bounce + burst. The enter pop is a one-shot. */}
       <Mascot pose="idle" size={160} className="splash-hero-mascot" />
 
       <div className="splash-taglines">

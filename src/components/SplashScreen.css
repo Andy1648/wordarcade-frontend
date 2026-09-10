@@ -71,8 +71,11 @@
   100% { transform: scale(1.06, 0.94) translateY(4px) rotate(-1deg); }
 }
 
-/* RGB / chromatic split clones drifting continuously (cyan left, pink right),
-   screen-blended so the black stroke drops out and only the colour ghosts show. */
+/* RGB / chromatic split clones (cyan left, pink right), screen-blended so the black
+   stroke drops out and only the colour ghosts show. perf/first-load: the ghosts are
+   STATIC at their former rest keyframe (translateX(0), opacity .45) — the two 3s
+   infinite drifts were two of 21 loops on the LCP screen. The logo keeps ONE loop
+   (splash-bounce), which carries the ghosts along with it. */
 .splash-logo::before,
 .splash-logo::after {
   content: attr(data-text);
@@ -88,26 +91,17 @@
   text-align: center;
   pointer-events: none;
   mix-blend-mode: screen;
+  opacity: 0.45;
 }
 
 .splash-logo::before {
   color: #2EFFE0;
-  animation: splash-rgb-left 3s ease-in-out infinite;
+  transform: translateX(-1px);
 }
 
 .splash-logo::after {
   color: #ff4fa3;
-  animation: splash-rgb-right 3s ease-in-out infinite;
-}
-
-@keyframes splash-rgb-left {
-  0%, 100% { transform: translateX(0); opacity: 0.45; }
-  50% { transform: translateX(-2px); opacity: 0.75; }
-}
-
-@keyframes splash-rgb-right {
-  0%, 100% { transform: translateX(0); opacity: 0.45; }
-  50% { transform: translateX(2px); opacity: 0.75; }
+  transform: translateX(1px);
 }
 
 /* ---- Cycling taglines ---- */
@@ -161,6 +155,13 @@
   height: clamp(96px, 20vh, 184px);
 }
 
+/* perf/first-load: the mascot's idle breathe loop (Mascot.css) is OFF on the splash — the
+   LCP screen keeps at most 3 infinite animations (blink + logo bounce + burst). The bomb
+   rests at the breathe's 0% pose, which is its natural stance. */
+.splash-hero-mascot .mascot-bounce {
+  animation: none;
+}
+
 /* ---- "CLICK ANYWHERE TO START" - classic INSERT COIN pulse ---- */
 .splash-start {
   position: relative;
@@ -171,12 +172,15 @@
   color: #FFE94A;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
+  /* perf/first-load: letter-spacing (a layout property) is no longer animated — it made
+     this loop non-composited. Fixed at the old mid value; the pulse is transform+opacity. */
+  letter-spacing: 4px;
   animation: splash-blink 1.4s ease-in-out infinite;
 }
 
 @keyframes splash-blink {
-  0%, 100% { opacity: 0.55; transform: scale(0.95); letter-spacing: 3px; }
-  50% { opacity: 1; transform: scale(1.05); letter-spacing: 5px; }
+  0%, 100% { opacity: 0.55; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 /* Keystroke-gate pips: 10px squares (content-box, so the 3px border sits OUTSIDE the
@@ -262,7 +266,9 @@
   100% { transform: translate(var(--s-dx), var(--s-dy)) scale(0.1); opacity: 0; }
 }
 
-/* ---- Ambient embers: motes drifting slowly UP behind the text. ---- */
+/* ---- Ambient embers: ONE STATIC layer of motes behind the text (perf/first-load).
+   Position/opacity/rotation are inline per mote (SplashScreen.jsx EMBERS); nothing
+   animates, nothing is promoted (no will-change) — one paint, then free. ---- */
 .splash-embers {
   position: absolute;
   inset: 0;
@@ -273,12 +279,6 @@
 
 .splash-ember {
   position: absolute;
-  bottom: -6%;
-  opacity: 0;
-  will-change: transform, opacity;
-  /* Steady (linear) vertical climb; the sideways drift in the keyframe gives it
-     a gentle, floaty S-curve. */
-  animation: splash-ember-rise var(--e-dur, 20s) linear var(--e-delay, 0s) infinite;
 }
 
 .splash-ember.spark {
@@ -303,14 +303,6 @@
   color: #0d0618;
   border: 2px solid rgba(0, 0, 0, 0.6);
   border-radius: 4px;
-}
-
-@keyframes splash-ember-rise {
-  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-  12%  { opacity: var(--e-op, 0.3); }
-  50%  { transform: translateY(-55vh) translateX(var(--e-drift, 0px)) rotate(calc(var(--e-rot, 0deg) * 0.5)); }
-  88%  { opacity: var(--e-op, 0.3); }
-  100% { transform: translateY(-112vh) translateX(0) rotate(var(--e-rot, 0deg)); opacity: 0; }
 }
 
 /* ---- Dismiss: the content fades out + shrinks while the screen darkens to
@@ -359,9 +351,10 @@
   .splash-start { font-size: 12px; }
 }
 
-/* Reduced motion: keep the title static, no looping/scale animations. The
-   ambient ember + fuse-spark layers are removed entirely (they only exist to
-   move), and the mascot's idle sway is stopped so it rests still. */
+/* Reduced motion: keep the title static, no looping/scale animations — the three
+   remaining loops (burst spin, logo bounce, start blink) all stop. The ember layer
+   stays hidden as before (it was motion-only; keeping its reduced-motion look
+   unchanged), the fuse-spark layer too, and the mascot's idle sway is stopped. */
 @media (prefers-reduced-motion: reduce) {
   .splash-burst,
   .splash-logo,

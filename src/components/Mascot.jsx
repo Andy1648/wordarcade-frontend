@@ -17,6 +17,8 @@
 // pointer-events:none). All are gated under prefers-reduced-motion in the CSS.
 import './Mascot.css';
 
+// perf/first-load: each pose ships as WebP (q82, 500×500, ~26–39 KB) with the original PNG
+// (~190–224 KB) as the <picture> fallback. Same pixels; the browser picks the format.
 const POSE_SRC = {
   idle: '/mascot-idle.png',
   panic: '/mascot-panic.png',
@@ -24,6 +26,7 @@ const POSE_SRC = {
   run: '/mascot-run.png',
   taunt: '/mascot-taunt.png',
 };
+const webpOf = (png) => png.replace(/\.png$/, '.webp');
 
 // Recognised emote names -> their CSS class. Anything else (or null) = no emote.
 //   bored     : lobby/waiting - occasional impatient fidget (loops)
@@ -58,7 +61,11 @@ export default function Mascot({ pose = 'idle', emote = null, size = 120, classN
           the room join-pop), so the class is removed and re-added. */}
       <div className={`mascot-emote${emoteClass}`}>
         <div className="mascot-bounce">
-          <img key={pose} className="mascot-img" src={src} alt="" draggable="false" />
+          {/* Re-keyed per pose so the enter pop replays; WebP first, PNG fallback. */}
+          <picture key={pose} className="mascot-picture">
+            <source srcSet={webpOf(src)} type="image/webp" />
+            <img className="mascot-img" src={src} alt="" draggable="false" />
+          </picture>
         </div>
       </div>
     </div>
