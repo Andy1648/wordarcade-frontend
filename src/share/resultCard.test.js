@@ -33,25 +33,26 @@ test('tierForClockLeft maps the CHAIN/FUSE thresholds (>=65 / 45-65 / <45)', () 
 
 // ---- per-mode FORMAT assertions -------------------------------------------
 
-test('FUSE: exact 4-line shape, no redundant pts (score == words), killer glyph', () => {
+test('FUSE: the spec shape — em dash, UPPERCASE unit, no LV, LETTERS on the glyph row', () => {
   const txt = buildResultCard({
     mode: 'fuse',
     words: 5,
-    // FUSE omits points (score == word count) — adapter passes points: null.
-    level: 12,
+    // FUSE omits points (its score IS the word count) — the adapter passes points: null.
+    level: 12, // supplied, and deliberately NOT rendered: the solo receipt is about the run.
     tiers: ['fast', 'fast', 'mid', 'slow', 'fast'],
     killed: true,
-    link: 'https://typeaword.com/?fuse=1&ref=share',
+    suffix: 'LETTERS 22/26',
+    link: 'https://typeaword.com/fuse?ref=share',
   });
   const l = lines(txt);
-  assert.equal(l[0], 'TYPE A WORD - FUSE');
-  assert.equal(l[1], '5 words - LV 12');
-  assert.equal(l[2], '🟩🟩🟨🟥🟩⬛');
-  assert.equal(l[3], 'https://typeaword.com/?fuse=1&ref=share');
+  assert.equal(l[0], 'TYPE A WORD — FUSE');
+  assert.equal(l[1], '5 WORDS');
+  assert.equal(l[2], '🟩🟩🟨🟥🟩⬛ · LETTERS 22/26');
+  assert.equal(l[3], 'https://typeaword.com/fuse?ref=share');
   assert.equal(l.length, 4);
 });
 
-test('CHAIN: pts included (distinct score), thresholds + killer', () => {
+test('CHAIN: the spec shape — LINKS · PTS, thresholds + killer', () => {
   const txt = buildResultCard({
     mode: 'chain',
     words: 4,
@@ -62,10 +63,11 @@ test('CHAIN: pts included (distinct score), thresholds + killer', () => {
     link: 'https://typeaword.com/?chain=1&ref=share',
   });
   const l = lines(txt);
-  assert.equal(l[0], 'TYPE A WORD - CHAIN');
-  assert.equal(l[1], '4 words - 1,860 pts - LV 8');
+  assert.equal(l[0], 'TYPE A WORD — CHAIN');
+  assert.equal(l[1], '4 LINKS · 1,860 PTS'); // CHAIN counts LINKS, not words
   assert.equal(l[2], '🟩🟨🟥🟩⬛');
   assert.equal(l[3], 'https://typeaword.com/?chain=1&ref=share');
+  assert.equal(l.length, 4);
 });
 
 test('SAT RUSH: pts included, ante-derived tiers, no killer glyph', () => {
@@ -152,4 +154,37 @@ test('glyphRow caps at MAX_GLYPHS, keeping every ceil(n/30)th above that', () =>
 test('glyphRow appends the killer ⬛ and counts it toward the cap', () => {
   const row = glyphRow(['fast', 'mid'], { killed: true });
   assert.equal(row, `${GLYPH.fast}${GLYPH.mid}${GLYPH.dead}`);
+});
+
+// ---- CHAIN/FUSE glyph thresholds, end to end (feat/solo-endgame) -----------
+
+test('a clock fraction maps to the right GLYPH, at and around every boundary', () => {
+  const glyphFor = (frac) => glyphRow([tierForClockLeft(frac)]);
+  // >= 65% left is 🟩, 45-65% is 🟨, < 45% is 🟥 — the boundaries belong to the FASTER tier.
+  assert.equal(glyphFor(1.0), GLYPH.fast);
+  assert.equal(glyphFor(0.65), GLYPH.fast, '65% exactly is fast, not mid');
+  assert.equal(glyphFor(0.6499), GLYPH.mid);
+  assert.equal(glyphFor(0.5), GLYPH.mid);
+  assert.equal(glyphFor(0.45), GLYPH.mid, '45% exactly is mid, not slow');
+  assert.equal(glyphFor(0.4499), GLYPH.slow);
+  assert.equal(glyphFor(0), GLYPH.slow);
+  // Garbage in (a missing/NaN measurement) must not throw or produce an empty glyph.
+  assert.equal(glyphFor(NaN), GLYPH.slow);
+  assert.equal(glyphFor(undefined), GLYPH.slow);
+  // A whole run's worth, in order, with the killer square last.
+  assert.equal(
+    glyphRow([0.9, 0.5, 0.2].map(tierForClockLeft), { killed: true }),
+    `${GLYPH.fast}${GLYPH.mid}${GLYPH.slow}${GLYPH.dead}`
+  );
+});
+
+test('suppression holds for CHAIN too, and is counted in ACCEPTED words not glyphs', () => {
+  // A 2-link run is suppressed even though the killer glyph would make the row look like 3.
+  assert.equal(
+    buildResultCard({ mode: 'chain', words: 2, points: 300, tiers: ['fast', 'fast'], killed: true, link: 'x' }),
+    null
+  );
+  const ok = buildResultCard({ mode: 'chain', words: 3, points: 300, tiers: ['fast', 'fast', 'mid'], killed: true, link: 'x' });
+  assert.ok(ok, 'exactly 3 links is shareable');
+  assert.equal(lines(ok)[1], '3 LINKS · 300 PTS');
 });

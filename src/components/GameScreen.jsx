@@ -17,6 +17,7 @@ import {
 } from '../juice';
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
@@ -3249,6 +3250,10 @@ export default function GameScreen({
                 LEAVE
               </button>
             </div>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+                mode — the one played least — so game-over is a fork, not a loop back into the same
+                mode. Renders nothing when everything else is still locked. */}
+            <TryModeRow current="word-bomb" />
           </div>
         </div>
       )}
@@ -3555,6 +3560,10 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               LEAVE
             </button>
           </div>
+          {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+              mode — the one played least — so game-over is a fork, not a loop back into the same
+              mode. Renders nothing when everything else is still locked. */}
+          <TryModeRow current="category-blitz" />
         </div>
       </div>
     </div>
@@ -3977,6 +3986,10 @@ function CategoryBlitzScreen({
                 LEAVE
               </button>
             </div>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+                mode — the one played least — so game-over is a fork, not a loop back into the same
+                mode. Renders nothing when everything else is still locked. */}
+            <TryModeRow current="category-blitz" />
           </div>
         </div>
       </div>

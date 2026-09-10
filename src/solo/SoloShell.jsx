@@ -62,7 +62,7 @@ export default function SoloShell({
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
-  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
+  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, share?, tryRow? }
   onExit,
 }) {
   const inputRef = useRef(null);
@@ -211,6 +211,11 @@ export default function SoloShell({
             >
               {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
             </button>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button naming a DIFFERENT unlocked mode.
+                CHAIN and FUSE are the two score-attack modes AND the only level-gated ones, so
+                dead-ending them on a lone RESTART was the worst case in the game. Hidden on the
+                first-run tutorial card (over.bare), which is already a guided next step. */}
+            {over.bare ? null : over.tryRow}
           </div>
         </div>
       ) : null}
