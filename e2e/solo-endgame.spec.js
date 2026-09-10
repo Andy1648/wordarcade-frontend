@@ -37,9 +37,15 @@ async function seedProfile(page, extra = {}) {
   }, extra);
 }
 
-/** The letter CHAIN is currently demanding, lowercased. */
+/** The letter CHAIN is currently demanding, lowercased.
+ *  feat/solo-slabs moved the required letter out of the generic `.solo-center` box and
+ *  into the IN slab's face (`.solo-in-face`) — SoloShell renders `slabs` INSTEAD of
+ *  `.solo-center` when a mode supplies them. Prefer the slab face and fall back to
+ *  `.solo-center` so this helper works for slab and non-slab modes alike. */
 async function requiredLetter(page) {
-  const raw = (await page.locator('.solo-center').first().innerText()).trim();
+  const slab = page.locator('.solo-in-face').first();
+  const target = (await slab.count()) ? slab : page.locator('.solo-center').first();
+  const raw = (await target.innerText()).trim();
   return raw.toLowerCase().slice(0, 1);
 }
 
