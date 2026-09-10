@@ -1,7 +1,8 @@
 # TYPE A WORD — Handoff / Block State
 
-**Refreshed:** 2026-08-26 (branch `docs/block-state-2` off `main`). Every number below was
-re-verified against source at this checkout, not copied forward. **§12 (Recent changes) is the
+**Refreshed:** 2026-09-10 (branch `docs/block-state-3` off `main` @ `d4c40c3`). Numbers in
+sections 2, 9 and 10 were re-measured against origin/main at this checkout; the rest is carried
+forward from the 2026-08-26 pass and NOT re-verified this time (see the note at the end of §10). **§12 (Recent changes) is the
 part a returning reader should read first** — it covers the mobile scroll fix, the word-attribution
 race fix, the card-feel pass, the ART VS MOTION rule, the CSS-art audit, and the current test
 counts, none of which the previous handoff knew about. File references are `path:line`.
@@ -21,8 +22,8 @@ Five modes on the homepage grid:
 | WORD BOMB | `word-bomb` | Solo/Multi (WS rooms) | none — always available (flagship, `featured`) |
 | CATEGORY BLITZ | `category-blitz` | Solo/Multi (WS rooms, AI-judged) | none — always available |
 | SAT RUSH | `sat-rush` | Solo | behind build flag `SAT_RUSH_ENABLED` only |
-| CHAIN | `chain` | Solo (no WS) | **unlockLevel 15** (`gameData.js:79`) |
-| FUSE | `fuse` | Solo (no WS) | **unlockLevel 22** (`gameData.js:94`) |
+| CHAIN | `chain` | Solo (no WS) | **unlockLevel 20** (`gameData.js:82`) |
+| FUSE | `fuse` | Solo (no WS) | **unlockLevel 25** (`gameData.js:97`) |
 
 Locked-but-visible cards render a read-only `LockedPreviewDialog.jsx` ("UNLOCKS AT LV N").
 CHAIN/FUSE route straight into the mode like SAT RUSH (no room/WebSocket).
@@ -127,8 +128,13 @@ engine source as ground truth if they diverge.) Engine is PURE (no timers); the 
 `useSatRushGame.js` owns the clock.
 
 ## 9. Tests & build
-- **Unit:** `npm test` → `node --test "src/**/*.test.js"` → **262 pass / 0 fail**.
-- **E2E:** `npm run test:e2e` → Playwright → **133 tests in 30 spec files**.
+- **Unit:** `npm test` → `node --test "src/**/*.test.js"` → **464 pass / 0 fail**
+  (re-measured 2026-09-10 on `main` @ `d4c40c3`; the doc previously said 262).
+- **E2E:** `npm run test:e2e` → Playwright → **1090 tests in 48 spec files**
+  (re-measured 2026-09-10 via `npx playwright test --list`; the doc previously said 133 in 30).
+  A full run takes ~20 min at `--workers=4`. NOTE: on this 2 vCPU box a gate run must NOT
+  overlap with agent fan-out — starved runs produce 30s `locator.waitFor` timeouts that look
+  like regressions. Re-verify any failure in isolation before believing it.
 - Build gate: `npx vite build --logLevel error` (exit 0). Portal build: `npm run build:portal`
   → `dist-portal/`.
 
@@ -142,7 +148,14 @@ engine source as ground truth if they diverge.) Engine is PURE (no timers); the 
   decorative arrows and "← BACK" screen buttons. Document the preview, not a button that isn't there.
 - **No named level→tier ladder** (no Bronze/Silver-style level grouping). "Tier" progression =
   the **Key Power tiers** (§4). Mode gating is per-card `unlockLevel` only (§2).
-- CHAIN unlocks **LV15** (raised from 10), FUSE **LV22** (raised from 20).
+- CHAIN unlocks **LV20**, FUSE **LV25** — both raised again after the 2026-08-26 pass
+  (`fix/qa-sweep` §9/§10; the code comments record the old LV15 / LV22 values). The previous
+  version of THIS line said LV15 / LV22 and was itself stale by 2026-09-10.
+
+**Verification scope of the 2026-09-10 refresh:** only §2 (unlock levels), §9 (test/build
+counts) and this line were re-measured against origin/main. §§3-8 and §§11-12 were NOT
+re-checked and may have drifted the same way §9 did — its unit count was off by 202 and its
+e2e count by 957, so treat any unverified number here as a lead, not a fact.
 - Solo dictionary is large now (§7): ~88k accept + ~182k ext; not a small starter list.
 
 ## 11. Live-logic traps (see CLAUDE.md for the authoritative list)
