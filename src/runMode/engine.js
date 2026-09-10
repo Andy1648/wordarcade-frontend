@@ -231,14 +231,35 @@ export function dealOffers(ownedIds, rnd = Math.random) {
 
 // Wins paid for a completed/ended run, scaled to the round reached. A full 10-round
 // clear pays the cleared cumulative; a wall-out pays what was banked up to the miss.
-// PAYOUT TUNE (JOB A, run-econ-sim.mjs): the original /100 divisor made a run earn only
-// ~60–95 wins/min against a shipped 5-mode band of 625–963 (winsmin-sim), i.e. ~10× too
-// STINGY — moving the unlock to LV8 would have handed new players a headline mode that
-// pays a tenth of everything else, blowing the wins/min spread from 1.54× to ~13×. /10
-// lands a run at ~590–940 wins/min (mid-pack, below FUSE/CHAIN), holding the spread at
-// ~1.5–1.6×. So the tune is UP to sit IN the band — not a nerf, a correction. It still
-// never dominates (the exploding SCORE governs the WALL/survival, not the wins).
+//
+// THE FORMULA IS: round(cumulativeScore / RUN_WINS_DIVISOR * roundReached/RUN_ROUNDS).
+// (run-econ-sim.mjs used to PRINT this as "cumulative/100 x roundReached/10" — that label
+// was left behind when JOB A moved the divisor off 100 and was wrong for two tunes running.
+// It now prints RUN_WINS_DIVISOR directly so the two can never disagree again.)
+//
+// PAYOUT TUNE HISTORY, all measured with claude/run-econ-sim.mjs against the shipped 5-mode
+// band (blitz 625 lo … chain 963 hi, spread 1.54x):
+//   /100 (original) — ~60–95 wins/min, ~10x too stingy.
+//   /10  (JOB A)    — 594/727/938 wins/min at 12/15/20 wpm. PASSED when it was fitted.
+//   /10  (today)    — 155/189/245. It did not drift; `c180f90` (the deck rebalance) changed
+//                     what a round SCORES without re-fitting the divisor that prices it, so
+//                     the same divisor now pays 0.16–0.39x of the band and blows the spread
+//                     to 3.9–6.2x. Nothing about the payout code changed.
+//   /2.5 (this fix) — 618/758/978 wins/min, spreads 1.56x/1.54x/1.56x. @15 wpm lands 758
+//                     against a band centre of 794.
+//
+// WHY 2.5 AND NOT 3 OR 2: a divisor sweep (10 → 1.5) has five candidates that put @15 wpm
+// inside the band with every spread <= 2x — 3, 2.75, 2.5, 2.25 and 2. NO divisor puts all
+// THREE rates inside the band, and that is structural rather than a tuning failure: 12→20
+// wpm spans 1.58x while the band itself spans only 1.54x, so RUN cannot fit inside it at
+// every throughput no matter how it is priced. 2.5 is the choice that minimises the miss at
+// both ends (618 vs 625 lo = -1.1%; 978 vs 963 hi = +1.6%) and has the flattest spread of
+// any candidate. The deck and the wall are deliberately untouched — the divisor is the only
+// knob turned here, because it is the only one that prices a run without changing how one
+// plays.
+export const RUN_WINS_DIVISOR = 2.5;
+
 export function runWinsPayout(cumulativeScore, roundReached) {
   const progress = Math.min(1, roundReached / RUN_ROUNDS);
-  return Math.round((cumulativeScore / 10) * progress);
+  return Math.round((cumulativeScore / RUN_WINS_DIVISOR) * progress);
 }

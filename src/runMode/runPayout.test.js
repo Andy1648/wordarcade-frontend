@@ -8,7 +8,7 @@ import { getWins, getWinsLifetime, bankRunWins, consumePendingWinsStamp } from '
 import { masteryWords, MASTERY_MODES } from '../progress/mastery.js';
 import { runReducer, runWinsEarned } from './useRunMode.js';
 import { RUN_UNLOCK_LEVEL } from './config.js';
-import { wallAt, RUN_ROUNDS } from './engine.js';
+import { wallAt, RUN_ROUNDS, RUN_WINS_DIVISOR } from './engine.js';
 
 function withStorage(seed, fn) {
   const saved = globalThis.localStorage;
@@ -85,7 +85,11 @@ test('(b) a cleared run pays full progress; wins add to an existing balance', ()
     assert.equal(s.phase, 'over');
     assert.equal(s.reason, 'cleared');
     const earned = runWinsEarned(s);
-    assert.equal(earned, Math.round(s.cumulative / 10));
+    // Full progress means NO round-scaling — the payout is the whole cumulative priced by the
+    // divisor. Derived from RUN_WINS_DIVISOR rather than hard-coded: this assertion is about
+    // progress being 1, not about what the divisor happens to be, and hard-coding /10 made a
+    // pure re-tune look like a behaviour regression.
+    assert.equal(earned, Math.round(s.cumulative / RUN_WINS_DIVISOR));
     bankRunWins(earned);
     assert.equal(getWins(), 500 + earned);
     assert.equal(getWinsLifetime(), 900 + earned);
