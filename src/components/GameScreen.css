@@ -83,7 +83,7 @@
 @media (min-width: 900px) and (max-height: 900px) {
   .game-stage--wb {
     display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
     grid-template-areas:
       'header header'
       'bar    bar'
@@ -104,7 +104,13 @@
   .game-stage--wb .game-used { grid-area: used; align-self: center; }
   .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
   /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
-  .game-stage--wb .bomb-svg { width: clamp(104px, 22vh, 190px); height: auto; }
+  .game-stage--wb .bomb-svg { width: clamp(150px, 30vh, 250px); height: auto; }
+  /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of sitting
+     centred at their stacked max-width, so the prompt box spans the full input row. */
+  .game-stage--wb .game-combo-box,
+  .game-stage--wb .game-used,
+  .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
+  .game-stage--wb .game-input { max-width: none; }
   /* Compress the combo box so the right column fits a short window. */
   .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
   .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
@@ -396,12 +402,17 @@
 .game-player-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  /* fix/wb-short-layout: wider gap so cards never touch; stretch so the slots share a
+     row height and each card fills its slot (equal-height cards). */
+  gap: max(20px, 2.4%);
+  align-items: stretch;
   margin-bottom: 20px;
 }
 
 .game-player-slot {
   position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 0;
   /* Player cards grow with the viewport so they're substantial on big screens. */
   min-width: clamp(100px, 15vw, 200px);
@@ -426,6 +437,7 @@
 
 .game-player-card {
   position: relative; /* anchors the red elimination flash overlay */
+  flex: 1 1 auto; /* fill the stretched slot so sibling cards match height */
   background: #2a1450;
   border: 3px solid #000;
   border-radius: 8px;
