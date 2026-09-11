@@ -26,6 +26,23 @@
   white-space: pre;
 }
 
+/* -webkit-text-stroke IS AN INHERITED PROPERTY. .homepage-logo sets 5px #000 on the
+   wordmark, and every layer span inherited it - so all four layers painted as a 5px
+   black outline and the lockup came out almost solid black, with the pink and the
+   yellow buried under their own keylines. Zeroing it on the PARENT is not enough:
+   inheritance hands the computed value down from whichever rule wins there, so each
+   layer has to clear it for itself. This cost a full screenshot round to spot, because
+   "it went black" looks like a colour mistake and is actually an inheritance one. */
+.x7b-logo .x7b-layer,
+.x7b-logo .x7b-flow {
+  -webkit-text-stroke: 0;
+  /* -webkit-text-fill-color is inherited too, and .homepage-logo sets it. Left alone,
+     every layer paints the wordmark's pink fill instead of its own colour. Each layer
+     has to point its fill back at its own `color`. */
+  -webkit-text-fill-color: currentColor;
+  opacity: 1;
+}
+
 /* Layers 1-3 are pinned to the in-flow top layer, so the lockup measures exactly as a
    single line of text and the menu's fit maths is untouched. */
 .x7b-logo .x7b-layer {
@@ -34,10 +51,14 @@
   pointer-events: none;
 }
 
-/* 1. the 3D body */
-.x7b-shade {
-  font-family: 'Bungee Shade', 'Bungee', cursive;
-  color: #6b12b8;
+/* 1. the depth. Bungee Shade cannot be used for this - measured at 96px it is 105.59px
+      (15.9%) wider than Bungee and gains that width steadily per character, so its
+      letters walk away from every other layer and no single transform brings them back.
+      A hard offset copy of the solid face is the house idiom for depth anyway. */
+.x7b-depth {
+  font-family: 'Bungee', cursive;
+  color: #14060f;
+  transform: translate(7px, 7px);
 }
 
 /* 2. the solid letter face, in the canonical wordmark pink */
@@ -60,16 +81,27 @@
   position: relative;
   font-family: 'Bungee Outline', 'Bungee', cursive;
   color: #000;
+  /* The Outline face is a hairline against a 96px letter; without a stroke the black
+     edge disappears at menu size and the lockup reads as mush. A text-shadow ring would
+     be a paint-time blur, so the edge is thickened with the same -webkit-text-stroke the
+     canonical wordmark already uses. */
+  paint-order: stroke fill;
 }
 
-/* The Outline face is a hairline against a 96px letter. Without this the black edge
-   disappears at menu size and the lockup reads as mush. A text-shadow ring is the
-   wrong tool (it is a paint-time blur budget item elsewhere in this app), so the edge
-   is thickened with the same -webkit-text-stroke the canonical wordmark already uses,
-   at a weight tuned to Outline's own stem. */
-.x7b-flow {
-  -webkit-text-stroke: 2px #000;
-  paint-order: stroke fill;
+/* The Outline face is a hairline against a 73-96px letter, so it gets a deliberate
+   stroke back - but a SMALL one, and only here. */
+.x7b-logo .x7b-flow {
+  -webkit-text-stroke: 1.5px #000;
+}
+
+/* Until BOTH layer faces have loaded, every extra layer is hidden and the in-flow layer
+   falls back to plain Bungee in the canonical pink. A half-swapped lockup is visibly
+   doubled, because a fallback face has different metrics from the real one. */
+.x7b-logo:not(.is-ready) .x7b-layer { display: none; }
+.x7b-logo:not(.is-ready) .x7b-flow {
+  font-family: 'Bungee', cursive;
+  color: #ff4fa3;
+  -webkit-text-stroke: 5px #000;
 }
 
 /* =====================================================================
