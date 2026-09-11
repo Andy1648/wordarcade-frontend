@@ -76,7 +76,7 @@ rendering and `App.jsx`-adjacent surfaces. Per CLAUDE.md that is a Tier 1/2 gate
 ## BRANCHES
 
 The six phase branches are a STACK, each off the last, so **`feat/shell-screens` is the single tip
-that carries all six.** `feat/experiments` sits on top of it and must never merge.
+that carries all six.** `feat/experiments` sits on top of it and is not for merging wholesale — every prototype on it is URL-flag-gated and inert by default, and the one piece worth taking on its own is the new e2e spec (§6d).
 
 | branch | HEAD | what | state |
 |---|---|---|---|
@@ -87,7 +87,7 @@ that carries all six.** `feat/experiments` sits on top of it and must never merg
 | `feat/mode-screens` | `1689427` | P5 Blitz, SAT Rush, Chain, Fuse | pushed |
 | **`feat/shell-screens`** | **`f6bcf49`** | **P6 menu/dialogs/shop/stats/end + the WB fixes. THE TIP.** | pushed |
 | `feat/wb-gameplay-look` | `241398a` | the reported glyph defect, fixed on the branch it was reported on | pushed |
-| `feat/experiments` | `67dff18` | P7 prototypes + the measuring tools. **NEVER MERGE.** | pushed |
+| `feat/experiments` | `d4e6707` | P7 prototypes + the measuring tools. **Do not merge wholesale** — but `e2e/end-screen-loops.spec.js` on it is cherry-pickable on its own. | pushed |
 
 Every push verified against `git ls-remote`, not assumed.
 
