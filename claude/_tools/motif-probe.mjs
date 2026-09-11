@@ -1,3 +1,9 @@
+// motif-probe.mjs - does the 7c background motif actually PAINT?
+// Written because two rounds of side-by-side screenshots showed no difference and I could
+// not tell whether the element was missing, occluded, or simply too faint. It reports the
+// element's computed geometry and mask, then samples the same pixel block with the motif
+// shown and hidden. The answer was 'too faint': a mean delta of 1/255 at the brief's 8%.
+// Usage: node motif-probe.mjs   (needs vite preview on :4173)
 import { chromium } from '@playwright/test';
 import { installBackendMock } from '../../e2e/support/backendMock.js';
 const b = await chromium.launch();
