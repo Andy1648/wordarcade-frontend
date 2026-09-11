@@ -32,8 +32,21 @@
      so its top never gets cut off / unreachable. */
   align-items: safe center;
   justify-content: center;
-  /* smaller side padding on phones so the stage fills the narrow width (fix/game-fill-2) */
-  padding: clamp(8px, 1.6vw, 24px);
+  /* Padding as NAMED custom properties, because the Word Bomb stage's height is
+     `100dvh - 2 * var(--wrap-pad-y)` (see .game-stage--wb) and that sum has to be
+     exact - a hardcoded shorthand here would silently desync it and put the board
+     back over the fold. Smaller side padding on phones so the stage fills the
+     narrow width (fix/game-fill-2). */
+  --wrap-pad-y: clamp(8px, 1.6vw, 24px);
+  --wrap-pad-x: clamp(8px, 1.6vw, 24px);
+  padding: var(--wrap-pad-y) var(--wrap-pad-x);
+}
+
+/* WORD BOMB only: the stage is a full-height board, so the wrap keeps a thin,
+   height-derived frame instead of the wide vw-derived one. Every pixel spent here
+   comes straight off the ring's diameter. */
+.game-wrap--wb {
+  --wrap-pad-y: clamp(8px, 1.5vh, 20px);
 }
 
 /* Board + live feed grouped as ONE centered panel (the JSX wraps .game-stage and
@@ -73,47 +86,163 @@
   max-width: min(96vw, 1760px);
 }
 
-/* ===== WORD BOMB wide-aspect reflow (fix/game-fill-2) ================================
-   Without the old --app-scale zoom the WB stack (header + player bar + bomb + combo +
-   used + input) is ~880px tall and overflows a short window. On SHORT viewports we lay
-   it out as a GRID — bomb column beside the combo/used/input column — so it fills the
-   width AND fits the height. Pure CSS on existing children (grid-areas); absolute FX
-   (hype/clutch/fly/shatter) are out of flow and unaffected. Tall windows (h>900) keep
-   the single-column stack, which already fits + fills there. */
-/* feat/wb-ring: the ring is ONE square block that already contains the seats, the
-   bomb and the prompt, so the short-window grid no longer needs separate bar/bomb/
-   combo areas - it just puts the ring in the left column and the quiet stuff
-   (used list + input) in the right one. */
-@media (min-width: 900px) and (max-height: 900px) {
-  .game-stage--wb {
-    display: grid;
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
-    grid-template-areas:
-      'header header'
-      'prompt used'
-      'ring   input';
-    align-content: center;
-    column-gap: clamp(16px, 3vw, 56px);
-    row-gap: clamp(4px, 1vh, 12px);
-    padding-top: clamp(10px, 1.6vh, 22px);
-    padding-bottom: clamp(10px, 1.6vh, 22px);
+/* ===== WORD BOMB - THE BOARD (feat/wb-ring, rebuilt) ================================
+   WHAT WENT WRONG THE FIRST TIME. The ring was placed by a two-column reflow that put
+   it in a shrink-to-fit LEFT column and sized it off the viewport (min(46vw,62vh) etc.).
+   Measured on the preview, that produced a 476px circle at y=325 in a 768px window (the
+   bottom of the ring off the board), a 346px circle jammed at x=96 in a 1148px stage
+   (every avatar in the left third), and two thirds of the board dead.
+
+   THE BOARD IS NOW ONE CENTRED COMPOSITION:
+
+       +----------------------------------------------+
+       |  header + FRAGMENT           (full width)     |   <- 1fr track
+       +----------+----------------------+------------+
+       | kill     |        RING          |  used      |   <- auto track
+       | feed     |   (bomb at centre)   |  words     |
+       +----------+----------------------+------------+
+       |  input row                   (full width)     |   <- 1fr track
+       +----------------------------------------------+
+
+   Both side tracks are `1fr` and both outer rows are `1fr`, so the ring's centre lands
+   on the STAGE's centre by construction - there is no measurement that can drift and no
+   breakpoint where it slides into a corner. The diameter is computed from the stage box
+   in wbRingSize.js (never from vw/vh), which is only possible because the stage's height
+   is PINNED here rather than grown by its contents. */
+.game-stage--wb {
+  /* The pinned box. `100dvh` (not vh) so a phone's collapsing URL bar moves it. */
+  height: calc(100dvh - 2 * var(--wrap-pad-y));
+  max-height: calc(100dvh - 2 * var(--wrap-pad-y));
+  /* Vertical padding is height taken from the ring, so the board spends less of it
+     than the generic stage does. The top value is overridden below <900px, where the
+     header sits in flow and has to clear the fixed WINS pill. */
+  padding-block: clamp(10px, 1.6vh, 22px);
+  display: grid;
+  grid-template-columns: minmax(var(--wb-rail), 1fr) minmax(0, auto) minmax(var(--wb-rail), 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  grid-template-areas:
+    'top  top  top'
+    'feed ring used'
+    'bot  bot  bot';
+  column-gap: clamp(10px, 1.4vw, 22px);
+  /* Not a hairline: the active seat's YOUR TURN flag floats ~26px ABOVE the ring box,
+     so anything less and the flag sits on the prompt bar. */
+  row-gap: clamp(20px, 3vh, 30px);
+  justify-items: center;
+  /* Width of ONE side rail. Read back by wbRingSize.js, which subtracts two of them
+     before it hands the rest to the ring - so the rails can never be squeezed away. */
+  --wb-rail: clamp(104px, 16vw, 260px);
+  /* The one thing CSS tells JS: which of the two layouts is live. */
+  --wb-layout: rails;
+  /* Pre-paint fallback only. useLayoutEffect overwrites this with the measured value
+     before the first paint; it exists so a JS-less/SSR frame is not a 0px ring. */
+  --wb-size: clamp(220px, min(66vw, 42vh), 520px);
+}
+
+.game-stage--wb .wb-top {
+  grid-area: top;
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+/* WIDE BOARDS: the header RIDES the prompt bar instead of sitting above it.
+   Two problems, one answer. (a) The bar is the full board width with a 3-letter
+   fragment in the middle of it - ~450px of empty bar at each end. (b) Every pixel of
+   the top stack is reserved TWICE (once above the ring and once below, which is what
+   keeps the ring centred), so a 45px header row cost the ring 90px. Riding the bar
+   costs zero height and fills the two dead ends, and it drops the header clear of the
+   fixed WINS pill (top:12px, ~50px tall) into the bar's vertical middle. */
+@media (min-width: 900px) {
+  .game-stage--wb .game-header {
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    z-index: 2;
+    /* The bar underneath is not interactive; only the controls are. */
+    pointer-events: none;
   }
-  .game-stage--wb .game-header { grid-area: header; }
-  .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
-  .game-stage--wb .wb-ring { grid-area: ring; align-self: start; justify-self: center; margin-bottom: 0; }
-  /* The fragment needs its OWN area or it auto-places into a new row below the ring and
-     falls off the bottom of a short window (it did exactly that before this line). It
-     sits in the left column, directly above the ring - i.e. centred over the bomb. */
-  .game-stage--wb .game-combo-box { grid-area: prompt; align-self: end; justify-self: center; margin: 0; }
-  .game-stage--wb .game-used { grid-area: used; align-self: end; }
-  .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
-  /* The ring is bounded by the SHORT axis here, so it can never outgrow the window. */
-  .game-stage--wb .wb-ring { --wb-size: min(46vw, 62vh); }
-  /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of
-     sitting centred at their stacked max-width. */
+  .game-stage--wb .game-title,
+  .game-stage--wb .game-header-right {
+    pointer-events: auto;
+  }
+}
+
+/* NARROW BOARDS: the header stays in flow (a title over a 3-letter fragment would
+   collide at this width), so the board pads its top edge enough to clear the pill. */
+@media (max-width: 899px) {
+  .game-wrap--wb .game-stage--wb {
+    padding-top: 44px;
+  }
+}
+.game-stage--wb .wb-ring {
+  grid-area: ring;
+  align-self: center;
+  justify-self: center;
+  /* The active seat's YOUR TURN flag floats ABOVE the seat, i.e. just above the ring
+     box and right under the prompt bar - and the bar is `transform: rotate(-1deg)`,
+     which lifts it into the positioned paint layer and put it over the flag. The ring
+     outranks it explicitly. */
+  z-index: 1;
+}
+.game-stage--wb .wb-rail--left {
+  grid-area: feed;
+  justify-self: start;
+  align-self: center;
+}
+/* `display:contents` so USED and the input BAR are placed independently by the stage
+   grid. The wrapper becomes a real flex column in the phone layout below, which is the
+   whole reason they share a parent. */
+.game-stage--wb .wb-bottom {
+  display: contents;
+}
+.game-stage--wb .game-used {
+  grid-area: used;
+  justify-self: end;
+  align-self: center;
+}
+.game-stage--wb .wb-bottombar {
+  grid-area: bot;
+  align-self: end;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* PHONES: one column. The rails have nowhere to go, so the used-word list drops under
+   the input (its wrapper stops being `display:contents` and becomes that stack) and the
+   kill feed - which is a duplicate of what the ring already shows - is dropped. The
+   ring still renders, still centred, still sized by the same formula. */
+@media (max-width: 700px) {
+  .game-stage--wb {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'top'
+      'ring'
+      'bot';
+    --wb-layout: stack;
+  }
+  .game-stage--wb .wb-rail--left { display: none; }
+  .game-stage--wb .wb-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    grid-area: bot;
+    align-self: end;
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+  }
   .game-stage--wb .game-used,
-  .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
-  .game-stage--wb .game-input { max-width: none; }
+  .game-stage--wb .wb-bottombar {
+    grid-area: auto;
+    justify-self: auto;
+    align-self: auto;
+    width: 100%;
+    max-width: none;
+  }
 }
 
 /* ===== CATEGORY BLITZ short-window compression (fix/game-fill-2) =====================
@@ -3682,13 +3811,18 @@
 /* Bigger screens get a touch more side breathing room (percentage-based). */
 @media (min-width: 1200px) {
   .game-wrap {
-    padding: clamp(28px, 3vw, 48px) clamp(32px, 4vw, 72px);
+    --wrap-pad-y: clamp(28px, 3vw, 48px);
+    --wrap-pad-x: clamp(32px, 4vw, 72px);
+  }
+  /* ...but not the WB board, which owes that height to the ring. */
+  .game-wrap--wb {
+    --wrap-pad-y: clamp(8px, 1.5vh, 20px);
   }
 }
 
 /* Tablets and phones. */
 @media (max-width: 600px) {
-  .game-wrap { padding: 8px; } /* fill the narrow width (fix/game-fill-2) */
+  .game-wrap { --wrap-pad-x: 8px; --wrap-pad-y: 8px; } /* fill the narrow width (fix/game-fill-2) */
   .game-stage { padding: 18px 14px 20px; }
 
   /* Player cards drop to two per row instead of one long line. */
@@ -4675,10 +4809,10 @@ html[data-beat='true'] .cb-answer-chip {
    Nothing here measures anything at runtime - no layout reads, no JS positioning. */
 
 .wb-ring {
-  /* An explicit square. The seat radius is derived from this, and a percentage
-     radius could not work: a percentage inside translate() resolves against the
-     TRANSFORMED element (the seat), not against the ring. */
-  --wb-size: clamp(260px, 44vh, 520px);
+  /* An explicit square, its side handed down as --wb-size by wbRingSize.js (the
+     fallback lives on .game-stage--wb). A percentage could not work: a percentage
+     inside translate() resolves against the TRANSFORMED element (the seat), not
+     against the ring. */
   /* SEAT SIZE. A seat is a SQUARE avatar - colour dot + hearts - and nothing else; the
      name floats below it (see .wb-seat .game-player-name-text). That is what makes the
      numbers close: the bomb can only be >=55% of the ring if the seats leave it, and
@@ -4694,14 +4828,15 @@ html[data-beat='true'] .cb-answer-chip {
      o'clock are bounded by their height. */
   --wb-seat-h: var(--wb-seat-w);
   --wb-r: calc(var(--wb-size) / 2 - var(--wb-seat-w) * 0.65 - 2px);
-  /* The bomb gets the whole free middle: the radius, less the half-diagonal of a
-     SCALED seat box (the nearest point of a seat sitting at 45deg), less a hairline.
-     Derived, not guessed - which is why it holds at 2, 3, 8 and 16 seats alike. */
-  --wb-bomb-w: calc(2 * (var(--wb-r) - var(--wb-seat-w) * 0.8) - 4px);
+  /* THE BOMB IS 0.42d. A fixed share of the ring, not a leftover: the bomb art is
+     taller than it is wide (~1.155:1), so 0.42d puts its vertical radius at 0.243d
+     while the nearest seat edge sits at 0.276d - a gap that scales with the ring
+     instead of collapsing at one particular size. */
+  --wb-bomb-w: calc(var(--wb-size) * 0.42);
   position: relative;
   width: var(--wb-size);
   height: var(--wb-size);
-  margin: 0 auto 14px;
+  margin: 0;
   flex: none;
 }
 
@@ -4795,9 +4930,12 @@ html[data-beat='true'] .cb-answer-chip {
   transform: rotate(0deg) scale(1.3);
   z-index: 3;
 }
+/* The name and status FLOAT BELOW the seat, on the dark board - not on the card's
+   accent fill - so the active seat keeps INK here. `--v-field` (the rule this replaces)
+   is the board's own colour: it made the live player's own name invisible. */
 .wb-seat .game-player-card.current .game-player-name-text,
 .wb-seat .game-player-card.current .player-status {
-  color: var(--v-field);
+  color: var(--v-ink);
 }
 
 .wb-seat .game-player-card.eliminated {
@@ -4805,9 +4943,13 @@ html[data-beat='true'] .cb-answer-chip {
   opacity: 0.45;
 }
 
-/* YOUR TURN flag floats above the seat instead of reserving a row of height. */
+/* YOUR TURN floats above the seat instead of reserving a row of height. The active
+   card is scaled 1.3, so it overhangs its own seat box by ~10px at the top: at -14px
+   the flag's lower half was painted over by the avatar and read as a clipped stub.
+   -26px clears the overhang, and the z-index puts it over the card either way. */
 .wb-seat .game-your-turn {
-  top: -14px;
+  top: -26px;
+  z-index: 4;
 }
 
 /* The live-typing line and the opponent status only exist for the ACTIVE player. In a
@@ -4836,7 +4978,13 @@ html[data-beat='true'] .cb-answer-chip {
   top: 50%;
   width: 0;
   height: 0;
-  z-index: 2;
+  /* BEHIND the seats and their floated labels. The active seat's name and live-typing
+     line hang radially INWARD when that seat is near 12 o'clock, i.e. straight through
+     the only band the arm can occupy; under them the arm reads as a beam the label sits
+     on, over them it read as a stray mark struck through the name. Negative, not 0: the
+     seats are painted LATER in the DOM, so 0 would still have put the beam on top. It is
+     contained by .wb-ring's own stacking context, so it cannot fall behind the board. */
+  z-index: -1;
   pointer-events: none;
   transform: rotate(calc(var(--turn) / var(--n) * 360deg));
   /* A snappy settle, not a float. This is a discrete move per turn, not an idle. */
@@ -4845,20 +4993,27 @@ html[data-beat='true'] .cb-answer-chip {
 
 .wb-pointer-arm {
   position: absolute;
-  left: -7px;
-  /* Starts clear of the bomb art and stops short of the seat. */
-  bottom: calc(var(--wb-size) * 0.19);
-  width: 14px;
-  height: calc(var(--wb-r) - var(--wb-size) * 0.19 - var(--wb-seat-w) * 0.42);
+  left: -6px;
+  /* A BEAM FROM THE BOMB TO THE LIVE SEAT. It starts just clear of the bomb art
+     (vertical radius 0.243d, the worst case - the art is taller than it is wide) and
+     runs to the seat's centre, where the avatar covers its head. Thin, because the
+     band between the bomb and the seats is only ~7% of the ring once the bomb owns
+     0.42d of it. */
+  bottom: calc(var(--wb-size) * 0.252);
+  width: 12px;
+  height: calc(var(--wb-r) - var(--wb-size) * 0.252);
   /* The arm is INK, not the accent. The accent is spent once on the screen - on the
      seat this arm points at - so the pointer and the lit seat read as one signal
      rather than two competing hot elements. */
-  background: var(--v-ink);
+  /* MID-VALUE, not accent and not full ink. The screen spends its accent on exactly one
+     element - the live seat - and at full ink this thin bar read as a stray white mark
+     struck across the board rather than as a connector to that seat. */
+  background: var(--v-ink-dim);
   border: 3px solid #000;
-  border-radius: 3px;
-  /* The head: a hard chevron, drawn with a clipped box rather than a border
-     triangle so it keeps the flat cartoon edge. */
-  clip-path: polygon(50% 0, 100% 26%, 100% 100%, 0 100%, 0 26%);
+  border-radius: 2px;
+  /* A hard chevron head, drawn with a clipped box rather than a border triangle so it
+     keeps the flat cartoon edge. */
+  clip-path: polygon(50% 0, 100% 14%, 100% 100%, 0 100%, 0 14%);
 }
 
 /* ---- THE CORE: the fragment prompt directly above the bomb, both centred in
@@ -4884,15 +5039,45 @@ html[data-beat='true'] .cb-answer-chip {
   margin: 0;
 }
 
-/* THE FRAGMENT is the brightest text on the screen and the largest: the hero
-   step, capped against viewport height so it cannot push the ring off a short
-   window. */
+/* THE PROMPT spans the whole board width, directly above the ring and centred on
+   it. Its height is the one thing that trades against the ring's diameter (the top
+   stack is reserved on BOTH sides of the ring row to keep the ring centred), so the
+   box is tight: a small label, the fragment, and nothing else. */
+.game-stage--wb .game-combo-box {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(5px, 0.8vh, 10px) 12px;
+}
+.game-stage--wb .game-combo-label {
+  margin-bottom: 2px;
+}
+
+/* THE FRAGMENT is the brightest text on the screen and the largest: the hero step,
+   capped at 76px because the top stack's height is reserved on BOTH sides of the ring
+   row and so costs the ring twice over.
+   Written through the token rather than as a bare clamp(56px, 7vw, 76px) - which is
+   what it evaluates to at every width, since --fs-hero only drops under 76px below an
+   800px viewport, where the 56px floor has already taken over. */
 .game-stage--wb .game-combo {
-  font-size: min(var(--fs-hero), 13vh);
+  font-size: max(56px, min(var(--fs-hero), 76px, 7vw));
+  line-height: 1;
   /* BRIGHTEST TEXT ON THE SCREEN, by VALUE rather than by hue: white is 19.88:1 on
      the field, brighter than any accent (yellow 16.10, cyan 15.62). That keeps the
      screen's one accent free for turn ownership. */
   color: var(--v-ink);
+}
+/* ---- THE HEADER runs as ONE row on the board. Stacked (title over meta over
+   buttons) it was ~60px of height, and every pixel of the top stack is reserved
+   twice - once above the ring and once below it - so it cost the ring 120px. ---- */
+.game-stage--wb .game-header {
+  align-items: center;
+  margin-bottom: 0;
+}
+.game-stage--wb .game-header-right {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 
 /* The bomb fills its cell: >=55% of the ring, so the clock is never a detail in the
@@ -4904,30 +5089,71 @@ html[data-beat='true'] .cb-answer-chip {
   height: auto;
 }
 
-/* ---- USED WORDS, DEMOTED HARD. It was a wrapping grid of bordered chips
-   competing with the prompt; it is now one quiet column of mid-value Space Mono,
-   newest at the bottom and the only bright one. ---- */
+/* ---- THE SIDE RAILS. Both are capped to --wb-rail (the width wbRingSize.js has
+   already reserved) and to --wb-size, so neither can ever grow the row it shares
+   with the ring - that cap is what keeps the ring's diameter a pure function of
+   its inputs, with no feedback path back into the layout. ---- */
+.wb-rail {
+  width: 100%;
+  max-width: var(--wb-rail);
+  min-width: 0;
+  max-height: var(--wb-size);
+  overflow: hidden;
+}
+
+/* The kill feed is a rail of the board now, not a card floating beside the stage. */
+.game-stage--wb .wb-rail .kill-feed {
+  width: 100%;
+  max-width: none;
+  max-height: var(--wb-size);
+  overflow: hidden;
+  align-self: auto;
+}
+
+/* ---- USED WORDS: a QUIET COLUMN OF REAL CHIPS in the right rail. The first pass
+   stripped the chip's border, fill and padding to "demote" it, which just left
+   loose text spanning the board. It is demoted by PLACEMENT (a narrow rail, off the
+   centre line) and by SIZE, not by taking the object away. Newest first: the list
+   is rendered oldest-to-newest in the DOM and reversed here, so it is the OLDEST
+   that gets clipped off the bottom when the rail fills. ---- */
+.game-stage--wb .game-used {
+  width: 100%;
+  max-width: var(--wb-rail);
+  min-width: 0;
+  max-height: var(--wb-size);
+  overflow: hidden;
+  margin: 0;
+}
 .game-stage--wb .game-used-list {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  max-height: clamp(56px, 12vh, 104px);
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 0;
+  max-height: calc(var(--wb-size) - 26px);
+  overflow: hidden;
 }
 .game-stage--wb .game-used-chip {
-  background: none;
-  border: 0;
-  box-shadow: none;
-  padding: 0;
-  transform: none;
-  font-size: var(--fs-label);
-  color: var(--v-ink-faint);
+  font-size: var(--fs-micro);
+  padding: 2px 6px;
+  text-align: center;
+  /* The chips are small and stacked; the base +-1.5deg jitter reads as sloppy at
+     this size, so the rail keeps a single quiet tilt. */
+  transform: rotate(-1deg);
+  animation: none;
 }
-/* Newest word = last in the list = the only one at full ink. */
+.game-stage--wb .game-used-list .game-used-chip:nth-child(even) {
+  transform: rotate(1deg);
+}
+/* Newest word = last in the DOM = first in the reversed column = the bright one. */
 .game-stage--wb .game-used-list .game-used-chip:last-child {
-  color: var(--v-ink);
+  background: #FFE94A;
+  border-color: #B8A020;
 }
 .game-stage--wb .game-used-label {
-  color: var(--v-ink-faint);
+  text-align: center;
+  margin-bottom: 6px;
 }
 
 /* ---- INPUT + SEND READ AS DEAD WHEN IT IS NOT YOUR TURN ---- */
@@ -4961,27 +5187,13 @@ html[data-beat='true'] .cb-answer-chip {
   }
 }
 
-/* SHORT WINDOWS (laptop landscape: 1568x675, 1280x551, and 1280x720 which came in at 102.1%
-   of the viewport with the 62vh ring). The stage still owes height to the header, the hero
-   prompt, the used list and the input row; 48vh leaves that budget intact. The cut-off is 740
-   so a 720-tall window is included and a 768-tall one - which measures 100.7% and fits - is
-   not. */
-@media (min-width: 900px) and (max-height: 740px) {
-  .game-stage--wb .wb-ring { --wb-size: min(42vw, 48vh); }
-  /* The prompt is the other big height consumer - cap it harder here too. */
-  .game-stage--wb .game-combo { font-size: min(var(--fs-h1), 9vh); }
-  .game-stage--wb .game-combo-box { padding: 6px 14px; }
-  .game-stage--wb .game-used-list { max-height: clamp(40px, 8vh, 64px); }
-}
-
-/* Phones: the ring shrinks and the seats shrink with it. */
-@media (max-width: 620px) {
-  .wb-ring {
-    /* Not 92vw: the floated NAME under the 3-o'clock seat sticks out past the ring's
-       own edge, so the ring has to leave a gutter for it or the name clips on the
-       stage edge. 84vw + a 72px name keeps the widest seat label inside. */
-    --wb-size: min(84vw, 44vh);
-  }
+/* SHORT / NARROW WINDOWS no longer re-guess the diameter - wbRingSize.js already
+   sees the real box. What IS left here is what the ring cannot know: how wide a
+   floated seat name may be before it runs off the board, and how much height the
+   input row is allowed to take (every pixel of the bottom stack is reserved twice,
+   once under the ring and once above it, so a stacked SEND/SKIP column costs the
+   ring ~250px and it was what pushed the phone board off the screen). */
+@media (max-width: 700px) {
   .wb-seat .game-player-name-text {
     max-width: 72px;
   }
@@ -4991,6 +5203,48 @@ html[data-beat='true'] .cb-answer-chip {
   }
   .wb-seat .game-player-card {
     padding: 5px 4px;
+  }
+  /* The used rail becomes a short WRAPPING strip under the input, not a column. */
+  .game-stage--wb .game-used {
+    max-width: none;
+    max-height: none;
+  }
+  .game-stage--wb .game-used-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    max-height: none;
+    gap: 5px;
+  }
+  .game-stage--wb .game-used-label {
+    margin-bottom: 3px;
+  }
+}
+
+/* Very narrow phones keep SEND/SKIP BESIDE the field on this board (the generic
+   <=420px rule stacks them into a ~190px column). 44px touch targets are kept by
+   min-height/min-width, not by the column. */
+@media (max-width: 420px) {
+  .game-stage--wb .game-input-row {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .game-stage--wb .game-input-row .game-input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+  .game-stage--wb .game-input-row .game-send-btn,
+  .game-stage--wb .game-input-row .game-skip-btn {
+    width: auto;
+    min-width: 52px;
+    min-height: 44px;
+    padding: 6px 8px;
+    /* --fs-body, not a smaller step: a tappable control never renders text below 16px. */
+    font-size: var(--fs-body);
+  }
+  .game-stage--wb .game-skip-cost {
+    display: none;
   }
 }
 

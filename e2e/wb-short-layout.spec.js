@@ -11,9 +11,12 @@
 // be evenly laid out — so each assertion is re-pointed at the ring-era DOM.
 //
 // Per viewport (one Word Bomb turn via the backend mock) this asserts:
-//   1) BOMB    — the bomb svg is >= 50% of the ring cell it sits in.
-//   2) ROW     — the input row spans >= 90% of its grid cell, and the text field takes >= 90%
-//                of the row width left after the SEND/SKIP buttons.
+//   1) BOMB    — the ring is >= 45% of the board's shorter side and the bomb is 0.42 of the
+//                ring (the rebuilt board fixes that share; see wb-ring.spec.js), so the clock
+//                is never a small object lost in a big empty circle.
+//   2) ROW     — the input row is CENTRED on the board (it is the full-width bottom row now,
+//                not a right-hand column), and the text field takes >= 90% of the row width
+//                left after the SEND/SKIP buttons.
 //   3) HOLDER  — the placeholder text fits inside the field with 0px clipped.
 //   4) SEATS   — all three seats are the same size and none overlap another.
 //   5) FIT     — the stage does not overflow the viewport height.
@@ -64,18 +67,20 @@ function measure() {
   const stage = q('.game-stage--wb');
   if (!ring || !bombSvg || !combo || !row || !input || !send || !stage) return { err: 'missing node' };
 
-  // (1) The bomb's cell is the ring: the square the seats are laid out around.
+  // (1) The bomb's cell is the ring: the square the seats are laid out around. The ring
+  // in turn is measured against the BOARD, which is the check the first ring shipped
+  // without - a ring can be self-consistent and still be the wrong size for its stage.
   const rG = rect(ring), bS = rect(bombSvg);
+  const stageR0 = rect(stage);
   const bombW = bS.width / rG.width;
+  const ringOfStage = rG.width / Math.min(stageR0.width, stageR0.height);
 
-  // (2) The input row vs its grid cell. The row is `justify-self: stretch` into the right
-  // column, so its cell width is the column width — measured off the grid track via the row's
-  // parent content box minus the ring column.
+  // (2) The input row is the full-width BOTTOM row of the board now, capped at its own
+  // max-width and centred - so what matters is that it is centred on the board, not that
+  // it fills a column.
   const rR = rect(row);
-  const stageCs = getComputedStyle(stage);
-  const cols = stageCs.gridTemplateColumns.split(' ').map(parseFloat).filter((n) => !Number.isNaN(n));
-  const rowCellW = cols.length >= 2 ? cols[cols.length - 1] : rR.width;
-  const rowFill = rR.width / rowCellW;
+  const rowOffCentrePct =
+    (Math.abs((rR.left + rR.width / 2) - (stageR0.left + stageR0.width / 2)) / stageR0.width) * 100;
 
   const iR = rect(input), sR = rect(send), kR = skip ? rect(skip) : { width: 0 };
   const gap = parseFloat(getComputedStyle(row).gap) || 0;
@@ -115,8 +120,9 @@ function measure() {
 
   return {
     bombW: r1(bombW * 100), bombPx: `${r1(bS.width)} in ring ${r1(rG.width)}`,
-    rowFill: r1(rowFill * 100), fieldFill: r1(fieldFill * 100),
-    rowPx: `${r1(rR.width)} of ${r1(rowCellW)}`, fieldPx: `${r1(iR.width)} of ${r1(fieldAvail)}`,
+    ringOfStage: r1(ringOfStage * 100),
+    rowOffCentrePct: r1(rowOffCentrePct), fieldFill: r1(fieldFill * 100),
+    rowPx: `${r1(rR.width)} wide`, fieldPx: `${r1(iR.width)} of ${r1(fieldAvail)}`,
     promptW: r1(rect(combo).width),
     placeholder: ph, phTextW: r1(textW), phContentW: r1(contentW), clipped: r1(clipped),
     seats: seats.length, seatWidths: widths, seatSpread: spread, seatOverlap: r1(seatOverlap),
@@ -125,20 +131,21 @@ function measure() {
 }
 
 for (const { w, h } of VIEWPORTS) {
-  test(`WB short layout @ ${w}x${h}: bomb >=50% ring, row >=90% cell, placeholder unclipped, seats even`, async ({ page }) => {
+  test(`WB short layout @ ${w}x${h}: ring >=45% of the board, row centred, placeholder unclipped, seats even`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await enterWordBombTurn(page);
     const m = await page.evaluate(measure);
     // eslint-disable-next-line no-console
     console.log(`[wb-short-layout ${w}x${h}] ${JSON.stringify(m)}`);
     expect(m.err).toBeUndefined();
-    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeGreaterThanOrEqual(50);
-    expect(m.rowFill, `input row % of its cell (${m.rowPx})`).toBeGreaterThanOrEqual(90);
+    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeGreaterThanOrEqual(39);
+    expect(m.ringOfStage, 'ring % of the board short side').toBeGreaterThanOrEqual(45);
+    expect(m.rowOffCentrePct, `input row off the board centre (${m.rowPx})`).toBeLessThanOrEqual(2);
     expect(m.fieldFill, `field % of row width after buttons (${m.fieldPx})`).toBeGreaterThanOrEqual(90);
     expect(m.clipped, `placeholder px clipped ("${m.placeholder}" ${m.phTextW}px in ${m.phContentW}px)`).toBe(0);
     expect(m.seats, 'one seat per player').toBe(3);
     expect(m.seatSpread, `seat size spread (${m.seatWidths.join(',')})`).toBeLessThanOrEqual(1);
     expect(m.seatOverlap, 'seat-to-seat overlap px').toBeLessThanOrEqual(0);
-    expect(m.fitH, 'stage height as % of the viewport').toBeLessThanOrEqual(102);
+    expect(m.fitH, 'stage height as % of the viewport').toBeLessThanOrEqual(100);
   });
 }

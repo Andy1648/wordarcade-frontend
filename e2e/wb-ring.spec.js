@@ -1,28 +1,43 @@
-// e2e/wb-ring.spec.js — feat/wb-ring acceptance.
+// e2e/wb-ring.spec.js — the Word Bomb BOARD gate.
 //
-// THE FAILURE THIS PINS: the old Word Bomb layout was a horizontal row of player cards
-// with `flex: 1 1 0`. A row cannot space both ends of the player count — at 2 players each
-// card stretched to half the stage (wide, mostly-empty boxes), at 8 it wrapped to three
-// rows and pushed the stage past the viewport. The ring divides 360deg by the seat count,
-// so the SAME fixed-size seat works at 2 and at 16.
+// WHY THIS FILE WAS REWRITTEN. The first version measured the ring against ITSELF —
+// seats even, seats inside the ring box, bomb >= 55% of the ring — and every one of
+// those assertions passed on a board that was visibly broken: at 1366x768 the ring was
+// a 476px circle at y=325 whose bottom ran off the board, at 1280x720 it was jammed at
+// x=96 with two thirds of the stage dead, and the used-word list was loose text spanning
+// the width. A ring can be perfectly round, perfectly even and perfectly self-consistent
+// while sitting in the wrong place at the wrong size.
 //
-// Measured here, at 1366x768 / 1280x720 / 390x844:
-//   1) every seat is the SAME width (no stretched-empty element) at 2, 3 and 8 players
-//   2) no seat escapes the ring box, and the page never scrolls (no overflow at 8)
-//   3) no two of prompt / bomb / seats / input / used-list / sound button overlap by >4px
-//      (ancestor<->descendant pairs are skipped: the prompt and bomb LIVE inside the ring)
-//   4) the bomb+fuse is >=55% of the ring cell — the clock is not a detail in a big circle
-//   5) the fuse length strictly DECREASES across 5 samples of a scripted turn
+// So the gates here are all RELATIVE TO THE STAGE, plus screenshots — because a pass/fail
+// number cannot see a bad composition, and that is exactly how the broken board shipped:
+//
+//   1) CLIP     every avatar (and its floated name) is fully inside the stage — 0px out.
+//   2) BOX      the ring's bounding box is inside the stage on BOTH axes.
+//   3) CENTRE   the ring's centre is within 5% of the stage's centre on both axes.
+//   4) QUADRANT no quadrant of the stage is empty: each holds >=1 element covering >900px^2.
+//   5) SIZE     the ring is 45-75% of the stage's SHORTER dimension.
+//   +           the page never scrolls, and nothing overlaps anything it shouldn't.
+//
+// Run at 1366x768 / 1280x720 / 1536x864 / 390x844 / 320x640, at 2 / 3 / 4 / 8 players,
+// with a PNG of every combination written to claude/wb-ring-shots/.
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
 import { installBackendMock } from './support/backendMock.js';
 
 const ME = 'e2e-player';
+const SHOTS = path.join('claude', 'wb-ring-shots');
 const VIEWPORTS = [
   { name: '1366x768', w: 1366, h: 768 },
   { name: '1280x720', w: 1280, h: 720 },
+  { name: '1536x864', w: 1536, h: 864 },
   { name: '390x844', w: 390, h: 844 },
+  { name: '320x640', w: 320, h: 640 },
 ];
+const COUNTS = [2, 3, 4, 8];
 const OVERLAP_TOLERANCE_PX = 4;
+
+fs.mkdirSync(SHOTS, { recursive: true });
 
 const mkPlayers = (n) =>
   Array.from({ length: n }, (_, i) => ({
@@ -34,6 +49,11 @@ const mkPlayers = (n) =>
 
 async function enterGame(page, players, currentPlayerId) {
   const mock = await installBackendMock(page);
+  // The one-time first-game spotlight dims the whole screen behind its caption, which
+  // would hide the very composition these screenshots exist to show. Mark it seen.
+  await page.addInitScript(() => {
+    try { localStorage.setItem('taw.seenGameSpotlight', '1'); } catch { /* blocked */ }
+  });
   await page.goto('/?portal=1');
   await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
   mock.pushToClient({
@@ -45,47 +65,120 @@ async function enterGame(page, players, currentPlayerId) {
   await page.waitForTimeout(60);
   mock.pushToClient({
     type: 'turn_update',
-    payload: { currentPlayerId, players, combo: 'str', usedWords: ['MONSTER', 'STRIKE'], timerSeconds: 20, maxLives: 3 },
+    payload: {
+      currentPlayerId,
+      players,
+      combo: 'str',
+      usedWords: ['MONSTER', 'STRIKE', 'ASTRAY', 'BISTRO'],
+      timerSeconds: 20,
+      maxLives: 3,
+    },
   });
   // Let the 3-2-1-GO! intro overlay clear before measuring anything.
   await page.waitForTimeout(4700);
   return mock;
 }
 
-// Geometry of the ring, its seats and the other stage blocks, in one page evaluate.
+// Everything the board gates need, in one page evaluate.
 async function measure(page) {
   return page.evaluate((tol) => {
     const r = (el) => {
       const b = el.getBoundingClientRect();
       return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height };
     };
+    const stage = document.querySelector('.game-stage--wb');
     const ring = document.querySelector('.wb-ring');
+    const S = r(stage);
+    const R = r(ring);
     const seats = [...document.querySelectorAll('.wb-seat')];
-    const ringBox = ring ? r(ring) : null;
-    const seatBoxes = seats.map(r);
 
-    // Named blocks that must not collide.
+    // (1) CLIP — a seat's floated NAME hangs outside the seat's own box, so the avatar
+    // AND its label both have to sit inside the stage or the 3-o'clock player's name
+    // runs off the edge.
+    let clipped = 0;
+    let clippedWhat = '';
+    for (const el of [...seats, ...document.querySelectorAll('.wb-seat .game-player-name-text')]) {
+      const b = r(el);
+      if (b.w < 1) continue;
+      const out = Math.max(S.l - b.l, b.r - S.r, S.t - b.t, b.b - S.b);
+      if (out > clipped) {
+        clipped = out;
+        clippedWhat = el.className;
+      }
+    }
+
+    // (2) BOX — the ring's own box inside the stage, both axes.
+    const ringOut = Math.max(S.l - R.l, R.r - S.r, S.t - R.t, R.b - S.b);
+
+    // (3) CENTRE — ring centre vs stage centre, as a % of the stage on each axis.
+    const dx = (R.l + R.w / 2) - (S.l + S.w / 2);
+    const dy = (R.t + R.h / 2) - (S.t + S.h / 2);
+
+    // (4) QUADRANT — split the stage in four and require each to hold a real object.
+    // Measured as INTERSECTION area so a big element that straddles the centre counts
+    // for every quadrant it actually covers, which is what "not empty" means visually.
+    const cx = S.l + S.w / 2;
+    const cy = S.t + S.h / 2;
+    const quads = [
+      { name: 'TL', l: S.l, r: cx, t: S.t, b: cy },
+      { name: 'TR', l: cx, r: S.r, t: S.t, b: cy },
+      { name: 'BL', l: S.l, r: cx, t: cy, b: S.b },
+      { name: 'BR', l: cx, r: S.r, t: cy, b: S.b },
+    ];
+    const CONTENT = [
+      '.wb-seat', '.bomb-svg', '.game-combo-box', '.game-input', '.game-send-btn',
+      '.game-skip-btn', '.game-used', '.game-used-chip', '.kill-feed', '.game-title',
+      '.game-leave-btn', '.wb-pointer-arm', '.spectator-react-btn',
+    ];
+    const content = [];
+    for (const sel of CONTENT) {
+      for (const el of document.querySelectorAll('.game-stage--wb ' + sel)) {
+        const b = r(el);
+        if (b.w > 0 && b.h > 0) content.push({ sel, b });
+      }
+    }
+    const quadrants = quads.map((q) => {
+      let best = 0;
+      let bestSel = '-';
+      for (const item of content) {
+        const b = item.b;
+        const ox = Math.max(0, Math.min(q.r, b.r) - Math.max(q.l, b.l));
+        const oy = Math.max(0, Math.min(q.b, b.b) - Math.max(q.t, b.t));
+        const area = ox * oy;
+        if (area > best) { best = area; bestSel = item.sel; }
+      }
+      return { name: q.name, area: Math.round(best), sel: bestSel };
+    });
+
+    // (5) SIZE — the ring against the stage's shorter side.
+    const shorter = Math.min(S.w, S.h);
+    const sizeFrac = R.w / shorter;
+
+    // The bomb is a fixed share of the ring by construction (0.42d).
+    const bombEl = document.querySelector('.bomb-svg');
+    const bombFrac = bombEl ? r(bombEl).w / R.w : 0;
+
+    // Block collisions: ancestor<->descendant pairs skipped (the bomb LIVES inside the
+    // ring), bomb<->seat measured radially rather than by axis-aligned boxes.
     const named = [
       ['prompt', '.game-combo'],
       ['bomb', '.bomb-svg'],
       ['input', '.game-input-row'],
       ['used', '.game-used'],
+      ['feed', '.kill-feed'],
       ['sound', '.game-mute-btn'],
     ];
     const nodes = [];
-    for (const [name, sel] of named) {
-      const el = document.querySelector(sel);
-      if (el && el.getBoundingClientRect().width > 0) nodes.push({ name, el });
+    for (const pair of named) {
+      const el = document.querySelector('.game-stage--wb ' + pair[1]);
+      if (el && el.getBoundingClientRect().width > 0) nodes.push({ name: pair[0], el });
     }
-    seats.forEach((el, i) => nodes.push({ name: `seat${i}`, el }));
-
+    seats.forEach((el, i) => nodes.push({ name: 'seat' + i, el }));
     let worst = { px: 0, pair: '' };
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const a = nodes[i], b = nodes[j];
-        // A block INSIDE another (the bomb lives inside the ring) is not a collision.
         if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
-        // BOMB x SEAT is measured RADIALLY, not by axis-aligned boxes (see below).
         const pairNames = a.name + b.name;
         if (pairNames.includes('bomb') && pairNames.includes('seat')) continue;
         const A = r(a.el), B = r(b.el);
@@ -93,71 +186,43 @@ async function measure(page) {
         const oy = Math.min(A.b, B.b) - Math.max(A.t, B.t);
         if (ox > 0 && oy > 0) {
           const px = Math.min(ox, oy);
-          if (px > worst.px) worst = { px: Math.round(px * 10) / 10, pair: `${a.name} x ${b.name}` };
+          if (px > worst.px) worst = { px: Math.round(px * 10) / 10, pair: a.name + ' x ' + b.name };
         }
       }
     }
 
-    const bombEl = document.querySelector('.bomb-svg');
-    const bombFrac = bombEl && ringBox ? r(bombEl).w / ringBox.w : 0;
-
-    // How far any seat escapes the ring box (0 = all seats contained).
-    let escape = 0;
-    if (ringBox) {
-      for (const s of seatBoxes) {
-        escape = Math.max(
-          escape,
-          ringBox.l - s.l, s.r - ringBox.r, ringBox.t - s.t, s.b - ringBox.b
-        );
-      }
-    }
-
-    // RADIAL clearance: the true bomb<->seat criterion. The bomb art is a round mascot
-    // with a fuse arc, and a seat at 45deg only clips the CORNER of its transparent
-    // bounding box - an axis-aligned overlap there is not a visual collision. What
-    // actually matters is that every seat's inner edge stays outside the bomb's radius.
+    // Radial bomb<->seat clearance (the true criterion for a round bomb).
     let minRadialGap = Infinity;
-    if (ringBox && bombEl) {
-      const cx = ringBox.l + ringBox.w / 2;
-      const cy = ringBox.t + ringBox.h / 2;
-      const bombR = r(bombEl).w / 2;
-      for (const s of seatBoxes) {
-        const sx = s.l + s.w / 2;
-        const sy = s.t + s.h / 2;
-        const dist = Math.hypot(sx - cx, sy - cy);
-        const seatInnerEdge = dist - Math.hypot(s.w, s.h) / 2;
-        minRadialGap = Math.min(minRadialGap, seatInnerEdge - bombR);
+    if (bombEl) {
+      const bcx = R.l + R.w / 2;
+      const bcy = R.t + R.h / 2;
+      const bombR = r(bombEl).h / 2; // the art is TALLER than wide — use the worst case
+      for (const el of seats) {
+        const s = r(el);
+        const dist = Math.hypot(s.l + s.w / 2 - bcx, s.t + s.h / 2 - bcy);
+        minRadialGap = Math.min(minRadialGap, dist - Math.hypot(s.w, s.h) / 2 - bombR);
       }
     }
 
-    // CLIPPING: a seat's floated NAME hangs outside the ring's own box, so "inside the
-    // ring" is not enough - every seat AND its label must sit inside the STAGE, or the
-    // 3-o'clock player's name runs off the edge (it did, at 390px).
-    const stage = document.querySelector('.game-stage');
-    let outsideStage = 0;
-    if (stage) {
-      const S = r(stage);
-      const labels = [...document.querySelectorAll('.wb-seat, .wb-seat .game-player-name-text')];
-      for (const el of labels) {
-        const b = r(el);
-        if (b.w < 1) continue;
-        outsideStage = Math.max(outsideStage, S.l - b.l, b.r - S.r, S.t - b.t, b.b - S.b);
-      }
-    }
-
-    const widths = seatBoxes.map((s) => Math.round(s.w * 10) / 10);
+    const widths = seats.map((el) => Math.round(r(el).w * 10) / 10);
+    const round1 = (n) => Math.round(n * 10) / 10;
     return {
       seatCount: seats.length,
       seatWidths: widths,
-      seatWidthSpread: widths.length ? Math.round((Math.max(...widths) - Math.min(...widths)) * 10) / 10 : 0,
-      ringW: ringBox ? Math.round(ringBox.w) : 0,
-      bombW: bombEl ? Math.round(r(bombEl).w) : 0,
+      seatWidthSpread: widths.length ? round1(Math.max(...widths) - Math.min(...widths)) : 0,
+      stage: { w: Math.round(S.w), h: Math.round(S.h) },
+      ringW: Math.round(R.w),
+      clippedPx: round1(clipped),
+      clippedWhat,
+      ringOutsideStagePx: round1(ringOut),
+      centreOffPctX: round1((Math.abs(dx) / S.w) * 100),
+      centreOffPctY: round1((Math.abs(dy) / S.h) * 100),
+      quadrants,
+      sizePct: round1(sizeFrac * 100),
       bombFrac: Math.round(bombFrac * 1000) / 1000,
-      seatEscapePx: Math.round(escape * 10) / 10,
       worstOverlapPx: worst.px,
       worstOverlapPair: worst.pair,
-      minRadialGapPx: Number.isFinite(minRadialGap) ? Math.round(minRadialGap * 10) / 10 : null,
-      outsideStagePx: Math.round(outsideStage * 10) / 10,
+      minRadialGapPx: Number.isFinite(minRadialGap) ? round1(minRadialGap) : null,
       pageVScroll: document.documentElement.scrollHeight - document.documentElement.clientHeight,
       pageHScroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       tol,
@@ -166,46 +231,95 @@ async function measure(page) {
 }
 
 for (const vp of VIEWPORTS) {
-  for (const n of [2, 3, 8]) {
-    test(`ring @ ${vp.name} / ${n} players: even seats, contained, no collisions`, async ({ page }) => {
+  for (const n of COUNTS) {
+    test('board @ ' + vp.name + ' / ' + n + 'p: centred, unclipped, no dead quadrant', async ({ page }) => {
       await page.setViewportSize({ width: vp.w, height: vp.h });
-      const players = mkPlayers(n);
-      await enterGame(page, players, ME);
-      const m = await measure(page);
+      await enterGame(page, mkPlayers(n), ME);
 
+      // SHOT FIRST, so the evidence exists even when an assertion below fails.
+      await page.screenshot({ path: path.join(SHOTS, vp.name + '-' + n + 'p.png') });
+
+      const m = await measure(page);
       // eslint-disable-next-line no-console
       console.log(
-        `RING | ${vp.name} | ${n}p | seats=${m.seatCount} w=[${m.seatWidths.join(',')}] spread=${m.seatWidthSpread}px ` +
-        `| ring=${m.ringW}px bomb=${m.bombW}px (${(m.bombFrac * 100).toFixed(1)}% of cell) ` +
-        `| seatEscape=${m.seatEscapePx}px | worstOverlap=${m.worstOverlapPx}px ${m.worstOverlapPair} ` +
-        `| bombSeatRadialGap=${m.minRadialGapPx}px | outsideStage=${m.outsideStagePx}px ` +
-        `| scrollY=${m.pageVScroll} scrollX=${m.pageHScroll}`
+        'BOARD | ' + vp.name + ' | ' + n + 'p | stage=' + m.stage.w + 'x' + m.stage.h +
+        ' ring=' + m.ringW + 'px (' + m.sizePct + '% of the short side) bomb=' +
+        (m.bombFrac * 100).toFixed(1) + '% of ring | centreOff=' + m.centreOffPctX + '%/' +
+        m.centreOffPctY + '% | clipped=' + m.clippedPx + 'px | ringOutside=' +
+        m.ringOutsideStagePx + 'px | quads=' +
+        m.quadrants.map((q) => q.name + ':' + q.area + '(' + q.sel + ')').join(' ') +
+        ' | worstOverlap=' + m.worstOverlapPx + 'px ' + m.worstOverlapPair +
+        ' | radialGap=' + m.minRadialGapPx + 'px | scroll=' + m.pageVScroll + '/' + m.pageHScroll
       );
 
       expect(m.seatCount, 'one seat per player').toBe(n);
-      // (1) NO STRETCHED-EMPTY ELEMENT: every seat is the same fixed width, whatever the count.
-      expect(m.seatWidthSpread, `seat width spread @ ${vp.name}/${n}p`).toBeLessThanOrEqual(1);
-      // (2) contained + no overflow
-      expect(m.seatEscapePx, `seat escaping the ring @ ${vp.name}/${n}p`).toBeLessThanOrEqual(1);
-      expect(m.pageVScroll, `page v-scroll @ ${vp.name}/${n}p`).toBeLessThanOrEqual(0);
-      expect(m.pageHScroll, `page h-scroll @ ${vp.name}/${n}p`).toBeLessThanOrEqual(0);
-      // (3) no block collides with another by more than 4px
-      expect(m.worstOverlapPx, `worst overlap (${m.worstOverlapPair}) @ ${vp.name}/${n}p`)
-        .toBeLessThanOrEqual(OVERLAP_TOLERANCE_PX);
-      // (4) the bomb owns its cell
-      expect(m.bombFrac, `bomb share of the ring cell @ ${vp.name}/${n}p`).toBeGreaterThanOrEqual(0.55);
-      // (5) and it never actually touches a seat, measured radially
-      expect(m.minRadialGapPx, `bomb<->seat radial gap @ ${vp.name}/${n}p`).toBeGreaterThan(0);
-      // (6) nothing on the ring - seat or floated name - is clipped by the stage edge
-      expect(m.outsideStagePx, `seat/name outside the stage @ ${vp.name}/${n}p`).toBeLessThanOrEqual(0);
+      expect(m.seatWidthSpread, 'seat width spread (' + m.seatWidths.join(',') + ')').toBeLessThanOrEqual(1);
+
+      // (1) every avatar fully inside the stage
+      expect(m.clippedPx, 'avatar/name clipped by the stage (' + m.clippedWhat + ')').toBeLessThanOrEqual(0);
+      // (2) the ring's box inside the stage on both axes
+      expect(m.ringOutsideStagePx, 'ring box outside the stage').toBeLessThanOrEqual(0);
+      // (3) the ring is centred on the stage
+      expect(m.centreOffPctX, 'ring centre X off the stage centre (%)').toBeLessThanOrEqual(5);
+      expect(m.centreOffPctY, 'ring centre Y off the stage centre (%)').toBeLessThanOrEqual(5);
+      // (4) no dead quadrant
+      for (const q of m.quadrants) {
+        expect(q.area, 'quadrant ' + q.name + ' is empty (biggest object ' + q.sel + ' = ' + q.area + 'px^2)')
+          .toBeGreaterThan(900);
+      }
+      // (5) the ring owns 45-75% of the stage's shorter side
+      expect(m.sizePct, 'ring as % of the stage short side').toBeGreaterThanOrEqual(45);
+      expect(m.sizePct, 'ring as % of the stage short side').toBeLessThanOrEqual(75);
+
+      // and the things the first gate DID get right, kept:
+      expect(m.pageVScroll, 'page v-scroll').toBeLessThanOrEqual(0);
+      expect(m.pageHScroll, 'page h-scroll').toBeLessThanOrEqual(0);
+      expect(m.worstOverlapPx, 'worst overlap (' + m.worstOverlapPair + ')').toBeLessThanOrEqual(OVERLAP_TOLERANCE_PX);
+      expect(m.minRadialGapPx, 'bomb<->seat radial gap').toBeGreaterThan(0);
+      expect(m.bombFrac, 'bomb as a share of the ring (0.42d by construction)').toBeGreaterThanOrEqual(0.39);
+      expect(m.bombFrac, 'bomb as a share of the ring (0.42d by construction)').toBeLessThanOrEqual(0.45);
     });
   }
 }
 
+test('seats are on a CIRCLE at the specified angles, never a row or a column', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  for (const n of [2, 3, 4, 8]) {
+    await enterGame(page, mkPlayers(n), ME);
+    const seats = await page.evaluate(() => {
+      const ring = document.querySelector('.wb-ring').getBoundingClientRect();
+      const cx = ring.left + ring.width / 2;
+      const cy = ring.top + ring.height / 2;
+      return [...document.querySelectorAll('.wb-seat')].map((el) => {
+        const b = el.getBoundingClientRect();
+        const x = b.left + b.width / 2 - cx;
+        const y = b.top + b.height / 2 - cy;
+        return { radius: Math.hypot(x, y), deg: (Math.round((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360 };
+      });
+    });
+    // Every seat at the SAME radius = a circle (a row or a column would not be).
+    const radii = seats.map((s) => s.radius);
+    const spread = Math.max(...radii) - Math.min(...radii);
+    // Angles: player i at -90deg + i * (360/n), normalised to [0,360).
+    const expected = seats.map((_, i) => ((-90 + (i * 360) / n) + 360) % 360);
+    // eslint-disable-next-line no-console
+    console.log(
+      'CIRCLE | ' + n + 'p | r=' + radii.map((v) => v.toFixed(1)).join(',') +
+      ' spread=' + spread.toFixed(1) + 'px | deg=' + seats.map((s) => s.deg).join(',') +
+      ' expected=' + expected.map((d) => Math.round(d)).join(',')
+    );
+    expect(spread, 'seat radius spread @ ' + n + 'p (a circle has one radius)').toBeLessThanOrEqual(1);
+    seats.forEach((s, i) => {
+      const diff = Math.min(Math.abs(s.deg - expected[i]), 360 - Math.abs(s.deg - expected[i]));
+      expect(diff, 'seat ' + i + '/' + n + ' angle').toBeLessThanOrEqual(2);
+    });
+    await page.goto('about:blank');
+  }
+});
+
 test('the fuse is the clock: length strictly decreases across a scripted turn', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  const players = mkPlayers(3);
-  const mock = await enterGame(page, players, ME);
+  const mock = await enterGame(page, mkPlayers(3), ME);
 
   // Visible fuse length = pathLength(100) - strokeDashoffset. Sampled off the rendered
   // attribute, so this measures what the player actually sees burning down.
@@ -213,8 +327,7 @@ test('the fuse is the clock: length strictly decreases across a scripted turn', 
     page.evaluate(() => {
       const el = document.querySelector('.bomb-fuse');
       if (!el) return null;
-      const off = parseFloat(el.getAttribute('stroke-dashoffset'));
-      return Math.round((100 - off) * 100) / 100;
+      return Math.round((100 - parseFloat(el.getAttribute('stroke-dashoffset'))) * 100) / 100;
     });
 
   const samples = [];
@@ -224,12 +337,12 @@ test('the fuse is the clock: length strictly decreases across a scripted turn', 
     samples.push({ secs, len: await fuseLen() });
   }
   // eslint-disable-next-line no-console
-  console.log('FUSE | ' + samples.map((s) => `${s.secs}s->${s.len}`).join('  '));
+  console.log('FUSE | ' + samples.map((s) => s.secs + 's->' + s.len).join('  '));
 
   for (let i = 1; i < samples.length; i++) {
     expect(
       samples[i].len,
-      `fuse length must strictly decrease: sample ${i} (${samples[i].secs}s) vs ${samples[i - 1].secs}s`
+      'fuse length must strictly decrease: sample ' + i + ' (' + samples[i].secs + 's) vs ' + samples[i - 1].secs + 's'
     ).toBeLessThan(samples[i - 1].len);
   }
 });
@@ -263,12 +376,11 @@ test('the numeric readout appears only under 5s, and the turn pointer aims at th
       const el = document.querySelector('.wb-pointer');
       if (!el) return null;
       const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
-      // rotation angle out of the 2D matrix, normalised to [0,360)
       return (Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI) + 360) % 360;
     });
     const expected = Math.round((idx / players.length) * 360) % 360;
     // eslint-disable-next-line no-console
-    console.log(`POINTER | seat ${idx}/${players.length} -> ${deg}deg (expected ${expected})`);
-    expect(Math.abs(deg - expected), `pointer angle for seat ${idx}`).toBeLessThanOrEqual(2);
+    console.log('POINTER | seat ' + idx + '/' + players.length + ' -> ' + deg + 'deg (expected ' + expected + ')');
+    expect(Math.abs(deg - expected), 'pointer angle for seat ' + idx).toBeLessThanOrEqual(2);
   }
 });

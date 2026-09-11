@@ -1,5 +1,5 @@
 // GameScreen.jsx
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
@@ -15,6 +15,7 @@ import {
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
+import { applyRingSize } from './wbRingSize';
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -1709,6 +1710,45 @@ export default function GameScreen({
   // The word-prompt box, flashed on accept (the "word" — NOT the text input, which
   // DESIGN.md says never to animate). Burst is anchored at the input via inputRef.
   const comboBoxRef = useRef(null);
+
+  // ---- THE RING IS SIZED BY ITS CONTAINER, NOT BY THE VIEWPORT ----
+  // See wbRingSize.js for why this is measured rather than guessed in a media query.
+  // These four refs are the whole input: the stage box, the top stack (header +
+  // prompt), and whichever element occupies the bottom row for the current layout.
+  // The stage is held in STATE via a callback ref, not in a plain ref: GameScreen
+  // mounts before the board does (it renders the pre-turn screen first), so a
+  // `useLayoutEffect(..., [])` reading a plain ref found null and the ring was left
+  // on its CSS fallback forever - which is precisely the viewport guess this exists
+  // to replace. A callback ref re-runs the effect the moment the node attaches, and
+  // again if it is ever remounted.
+  const [wbStage, setWbStage] = useState(null);
+  const wbTopRef = useRef(null);
+  const wbBottomRef = useRef(null);
+  const wbBarRef = useRef(null);
+  useLayoutEffect(() => {
+    const stage = wbStage;
+    if (!stage || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () =>
+      applyRingSize(stage, {
+        top: wbTopRef.current,
+        bottomBar: wbBarRef.current,
+        bottom: wbBottomRef.current,
+      });
+    measure();
+    // Observe ONLY boxes that cannot be moved by --wb-size (the stage is a pinned
+    // dvh box; the stacks are full-width rows). Writing --wb-size therefore never
+    // re-triggers this observer - no resize loop.
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    if (wbTopRef.current) ro.observe(wbTopRef.current);
+    if (wbBarRef.current) ro.observe(wbBarRef.current);
+    if (wbBottomRef.current) ro.observe(wbBottomRef.current);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', measure);
+    };
+  }, [wbStage]);
   // Latest personal combo, read by useHypeFeedback at accept time to scale the
   // Word Bomb burst/ring/cue. Kept fresh from `streak` (defined below) each render.
   const comboRef = useRef(0);
@@ -2786,7 +2826,7 @@ export default function GameScreen({
     // block audio until a user gesture). Capture phase so it fires no matter
     // what inner control is touched.
     <div
-      className="game-wrap"
+      className="game-wrap game-wrap--wb"
       data-tension={tensionTier}
       style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
@@ -2910,6 +2950,7 @@ export default function GameScreen({
           players (its events just duplicate the center-stage action). */}
       <div className="game-panel">
       <div
+        ref={setWbStage}
         className={`game-stage game-stage--wb${shake && !hitlag ? ' game-shake' : ''}${
           boomShake && !hitlag ? ' boom-shake' : ''
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
@@ -2934,6 +2975,10 @@ export default function GameScreen({
           {hypeKey > 0 && !hitlag &&
             (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
         </div>
+        {/* ===== TOP STACK: header + the fragment prompt. It is ONE grid area so
+            the ring row below it can be a track with an EQUAL 1fr above and below,
+            which is what puts the ring's centre on the stage's centre. ===== */}
+        <div className="wb-top" ref={wbTopRef}>
         <div className="game-header">
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
@@ -2991,6 +3036,8 @@ export default function GameScreen({
             </div>
           </div>
         </div>
+        </div>
+        {/* ===== /TOP STACK ===== */}
 
         {/* ==================== THE RING (feat/wb-ring) ====================
             Players sit on a CIRCLE around the bomb (the jklm/BombParty layout)
@@ -3188,12 +3235,21 @@ export default function GameScreen({
           </div>
         </div>
 
-        {spectatorCount > 0 && (
-          <div className="game-spectator-count">
-            👁 {spectatorCount} SPECTATING
+        {/* LEFT RAIL. The kill feed used to be a SIBLING of the stage (a second
+            card floated beside or under it), which is what left the stage's own
+            side space dead and pushed the page past the viewport whenever the
+            panel stacked. It is a rail of the board now: the stage owns its whole
+            composition and nothing outside it can grow the page. */}
+        {players.length > 2 && (
+          <div className="wb-rail wb-rail--left">
+            <KillFeed events={feedEvents} playerColors={playerColors} />
           </div>
         )}
 
+        {/* ===== BOTTOM STACK. `display:contents` on the rails layout, so USED
+            lands in the right rail and the bar lands in the full-width bottom row;
+            a real flex column on phones, where both stack under the ring. ===== */}
+        <div className="wb-bottom" ref={wbBottomRef}>
         <div className="game-used">
           <div className="game-used-label">
             {usedLabel} ({usedItems.length})
@@ -3222,6 +3278,13 @@ export default function GameScreen({
             )}
           </div>
         </div>
+
+        <div className="wb-bottombar" ref={wbBarRef}>
+        {spectatorCount > 0 && (
+          <div className="game-spectator-count">
+            👁 {spectatorCount} SPECTATING
+          </div>
+        )}
 
         {isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
@@ -3393,10 +3456,10 @@ export default function GameScreen({
               : rejectionMessage(lastWordResult.reason, { combo, isCategory })}
           </div>
         )}
+        </div>
+        </div>
+        {/* ===== /BOTTOM STACK ===== */}
       </div>
-      {players.length > 2 && (
-        <KillFeed events={feedEvents} playerColors={playerColors} />
-      )}
       </div>
 
       {gameOver && (
