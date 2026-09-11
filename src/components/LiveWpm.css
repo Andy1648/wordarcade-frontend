@@ -12,12 +12,14 @@
 }
 .live-wpm b {
   font-family: 'Bungee', cursive;
-  font-size: 1.15em;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ffe94a;
   font-weight: 400;
 }
 .live-wpm-unit {
-  font-size: 0.7em;
+  font-size: var(--fs-label);
   letter-spacing: 0.08em;
   color: rgba(240, 234, 217, 0.7);
 }

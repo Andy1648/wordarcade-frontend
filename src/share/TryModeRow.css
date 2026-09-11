@@ -11,7 +11,9 @@
 
 .try-mode-btn {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.5px;
   color: #FFE94A;
   background: transparent; /* the ghost: outline only, no fill */

@@ -181,10 +181,12 @@
 .intro-line {
   position: relative; /* anchors the speed-lines pseudo */
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
   /* HERO scale: dominates the busy background. Fluid on both axes (min of vw/vh)
      so it fills a laptop without clipping or forcing scroll. Heavier stroke to
      punch through the speed lines + accents behind it. */
-  font-size: clamp(56px, min(13vw, 15vh), 150px);
+  font-size: min(var(--fs-hero), 15vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(56px, min(13vw, 15vh), 150px)) */;
   line-height: 1;
   /* CHUNKY vinyl-cut outline so the words read as bold sticker/poster graphics,
      not styled web text. paint-order:stroke-fill paints the solid colour fill OVER
@@ -449,7 +451,7 @@
   .intro-line {
     /* Still a big hero on phones, but capped so "DIE SLOW." never clips the
        edges; chunky-but-lighter stroke at small sizes. */
-    font-size: clamp(44px, 13vw, 84px);
+    font-size: var(--fs-hero);
     -webkit-text-stroke-width: 10px; /* ~5px visible vinyl edge at phone sizes */
     text-shadow:
       2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,

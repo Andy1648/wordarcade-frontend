@@ -1,0 +1,138 @@
+/* type.css — THE MODULAR TYPE SCALE + VALUE GROUPING (single source of truth).
+   ============================================================================
+   WHY THIS FILE EXISTS
+   Before this, src/**.css held 528 hand-written font-sizes spanning ~180 distinct
+   values. The largest display type was only ~2x the smallest label, so every screen
+   read as a stack of equal-weight boxes with no focal point. This file replaces all
+   of that with SEVEN steps on a ratio-1.5 modular scale.
+
+   THE SCALE (desktop maxima, ratio ~1.5 per step)
+     --fs-hero   96   the single loudest thing on a screen (outcome word, hero numeral)
+     --fs-h1     64   screen title / mode name
+     --fs-h2     42   section heading, big in-card numeral
+     --fs-panel  28   panel heading, card title, the smallest Bungee is allowed to go
+     --fs-body   18   running text, inputs, buttons
+     --fs-label  13   Space Mono field labels / captions (HARD FLOOR - never smaller)
+     --fs-micro  11   non-label decoration only (counters, superscripts, tick marks)
+   hero:label = 96:13 = 7.4:1. That ratio IS the hierarchy.
+
+   CLAMPING
+   Every step above --fs-label is clamp()ed so it shrinks on a phone. The FLOORS form
+   their own ladder that compresses toward the bottom (42/30/24/20/16) rather than
+   scaling the desktop ratio linearly - a linear floor would put --fs-label at 6px and
+   break the accessibility floors below. Display type compresses more than body type
+   on a small screen; that is correct, not a compromise.
+
+   HARD FLOORS (enforced by src/perf/typeScale.test.js - BUILD FAILING)
+     - no label text below 13px            -> --fs-label is the smallest text token
+     - no tappable text below 16px         -> buttons/inputs use --fs-body or larger
+     - no touch target below 44x44 + 8px   -> --tap-min / --tap-gap
+   The test also forbids NEW raw px font-sizes anywhere under src/, so the scale can
+   only be extended here, never quietly bypassed in a component file.
+
+   BUNGEE RULES (also enforced)
+     ALL-CAPS only - never below --fs-panel (28px) - letter-spacing -0.02em at >=48px
+     - line-height 0.98 - never for strings over 3 words. Use the .t-display helper.
+   SPACE MONO LABELS
+     caps + 0.08em tracking. Use the .t-label helper.
+   ============================================================================ */
+
+:root {
+  /* ---- the scale ---- */
+  --fs-hero: clamp(42px, 9.5vw, 96px);
+  --fs-h1: clamp(30px, 6.4vw, 64px);
+  --fs-h2: clamp(24px, 4.2vw, 42px);
+  --fs-panel: clamp(20px, 2.8vw, 28px);
+  --fs-body: clamp(16px, 1.8vw, 18px);
+  --fs-label: 13px;
+  --fs-micro: 11px;
+
+  /* ---- accessibility floors (referenced by component CSS, asserted by the test) ---- */
+  --tap-min: 44px;   /* minimum touch target on both axes */
+  --tap-gap: 8px;    /* minimum spacing between two touch targets */
+
+  /* ---- VALUE GROUPING ----------------------------------------------------
+     Three values, and only three, decide how loud any surface is:
+       --v-field   the deepest ground the screen sits on (recedes)
+       --v-panel   one desaturated step up - cards, chips, tracks (neutral)
+       --v-accent  the screen's ONE hot colour (advances)
+     RULE: on any given screen exactly ONE element may carry --v-accent. Every
+     other coloured thing steps down to --v-panel / --v-ink-dim. Screens override
+     --v-accent on their own root (see each screen's CSS); the default is pink.
+     ------------------------------------------------------------------------ */
+  --v-field: #0d0618;
+  --v-panel: #160f28;      /* one desaturated step up from the field */
+  --v-panel-hi: #221640;   /* panel, raised (hover / active chip) */
+  --v-accent: #ff4fa3;
+
+  /* Ink values that pair with the above. --v-ink is the only text colour that may
+     sit on --v-field for body copy; --v-ink-dim is for demoted / secondary text and
+     is held at 4.5:1 against --v-field (see the contrast notes below). */
+  --v-ink: #ffffff;
+  --v-ink-dim: #b9aecd;    /* 9.47:1 on #0d0618 - safe for body */
+  --v-ink-faint: #8d82a3;  /* 5.54:1 on #0d0618 - the dimmest text allowed */
+  --v-rule: #2a1b45;       /* hairlines / borders, never text */
+
+  /* ---- CONTRAST-SAFE TEXT ALIASES ---------------------------------------
+     MEASURED on #0d0618: #9A28FF = 3.90:1, #9A1AFF = 3.75:1. Both CLEAR the 3:1
+     large-text/UI bar but FAIL the 4.5:1 body bar - so purple may never be body
+     text on the dark field. It is a FILL colour: put WHITE on it (5.10:1), NOT
+     cream (4.24:1 - fails). Where a purple accent must read as small text, use
+     --c-purple-text (#c79bff, 9.05:1).
+     ---------------------------------------------------------------------- */
+  --c-purple: #9a28ff;        /* FILL ONLY (3.90:1) - put WHITE on it, never cream */
+  --c-purple-text: #c79bff;   /* 9.05:1 on #0d0618 - the readable purple */
+  --c-pink: #ff4fa3;          /* 6.53:1 on #0d0618 */
+  --c-cyan: #2effe0;          /* 15.62:1 */
+  --c-yellow: #ffe94a;        /* 16.10:1 */
+  --c-orange: #ff6b3d;        /* 7.03:1 */
+  --c-red: #ff4b4b;           /* 6.02:1 */
+  --c-cream: #f0ead9;         /* 16.54:1 */
+  --c-ink-paper: #1a1410;     /* near-black for the SAT cream paper - 15.18:1 on #F0EAD9 */
+}
+
+/* ============================================================================
+   TYPE HELPERS - the only sanctioned way to set Bungee or a Space Mono label.
+   ============================================================================ */
+
+/* Bungee display type. ALL-CAPS, tight tracking, 0.98 line-height. Never apply to
+   a string longer than 3 words and never below --fs-panel. */
+.t-display {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+/* -0.02em tracking kicks in at >=48px, where Bungee's default spacing reads loose. */
+.t-display.t-hero,
+.t-display.t-h1 {
+  letter-spacing: -0.02em;
+}
+.t-hero { font-size: var(--fs-hero); }
+.t-h1 { font-size: var(--fs-h1); }
+.t-h2 { font-size: var(--fs-h2); }
+.t-panel { font-size: var(--fs-panel); }
+.t-body { font-size: var(--fs-body); }
+
+/* Space Mono label. Caps + 0.08em tracking, held at the 13px floor. */
+.t-label {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  color: var(--v-ink-dim);
+}
+.t-micro {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+/* Any tappable thing: the 44x44 / 16px floors in one place. */
+.t-tappable {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  font-size: var(--fs-body);
+}

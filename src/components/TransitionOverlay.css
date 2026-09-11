@@ -41,7 +41,10 @@
   align-items: center;
   justify-content: center;
   font-family: 'Bungee', cursive;
-  font-size: clamp(36px, 9vw, 96px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-hero);
   color: #fff;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;

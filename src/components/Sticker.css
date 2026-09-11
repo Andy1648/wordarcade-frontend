@@ -26,13 +26,16 @@
   user-select: none;
 }
 .sticker-ribbon {
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 11px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   letter-spacing: 3px;
   line-height: 1;
   padding: 9px 8px 8px;
   background: #FF4FA3;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.04 -> 6.53 on #FF4FA3 */;
   border-bottom: 4px solid #000;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -54,10 +57,11 @@
 }
 .sticker-name {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(26px, 6vw, 34px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1;
   padding: 14px 12px 4px;
-  color: #9A1AFF;
+  color: var(--c-purple-text) /* contrast: #9A1AFF text on dark = 3.75 -> 9.05 */;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
   /* A long item name must never blow the sticker out sideways. */
@@ -65,19 +69,25 @@
 }
 .sticker-blurb {
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1.4;
   margin: 0;
   padding: 4px 18px 12px;
 }
 .sticker-blurb b {
   font-weight: 700;
-  color: #9A1AFF;
+  color: var(--c-purple-text) /* contrast: #9A1AFF text on dark = 3.75 -> 9.05 */;
 }
 .sticker-coin {
   display: inline-block;
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 14px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1;
   padding: 8px 14px;
   margin: 0 0 16px;

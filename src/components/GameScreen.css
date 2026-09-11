@@ -112,7 +112,7 @@
   .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
   .game-stage--wb .game-input { max-width: none; }
   /* Compress the combo box so the right column fits a short window. */
-  .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
+  .game-stage--wb .game-combo { font-size: min(var(--fs-h1), 6.4vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(30px, 6.4vh, 52px)) */; }
   .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
   /* fix/wb-short-layout: wider gap so cards never touch, and stretch so the slots share
      a row height and each card fills its slot (equal-height cards). SCOPED here on
@@ -137,7 +137,7 @@
   /* .cb-round prefix raises specificity above the base `.cb-round .cb-category-display`
      (equal-specificity rule later in the file would otherwise win). */
   .game-stage--blitz .cb-round .cb-category-display {
-    font-size: clamp(28px, 7vh, 60px);
+    font-size: min(var(--fs-h1), 7vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(28px, 7vh, 60px)) */;
     padding: clamp(10px, 2.4vh, 30px) clamp(12px, 2vw, 26px);
     margin-bottom: clamp(6px, 1vh, 12px);
   }
@@ -198,9 +198,10 @@
   z-index: 20;
   pointer-events: none;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   /* Scales down on small screens; the longer curated hype phrases wrap within a
      capped width instead of overflowing (they used to be single words). */
-  font-size: clamp(28px, 8vw, 48px);
+  font-size: var(--fs-h2);
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   max-width: 86vw;
@@ -234,7 +235,9 @@
   z-index: 20;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 4vw, 26px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.02em;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -276,7 +279,9 @@
   z-index: 15;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -295,8 +300,11 @@
 }
 
 .game-loading {
-  font-family: 'Bungee', cursive;
-  font-size: 18px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2EFFE0;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -315,7 +323,8 @@
 
 .game-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(24px, 4vw, 48px);
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #ff4fa3;
   -webkit-text-stroke: 3px #000;
@@ -338,8 +347,12 @@
 
 .game-meta-round,
 .game-meta-diff {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #000;
   border: 3px solid #000;
   padding: 4px 7px;
@@ -359,7 +372,9 @@
 
 .game-leave-btn {
   font-family: 'Bungee', cursive;
-  font-size: 9px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #fff;
   background: #FF5C5C;
   border: 3px solid #B83A3A;
@@ -386,7 +401,7 @@
 /* Small, understated speaker toggle - matches the cel style but stays quiet
    next to the louder LEAVE so it doesn't compete with the game UI. */
 .game-mute-btn {
-  font-size: 13px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   line-height: 1;
   color: #fff;
   background: #2a1450;
@@ -433,8 +448,12 @@
   top: 0;
   left: 50%;
   transform: translateX(-50%) rotate(-3deg);
-  font-family: 'Bungee', cursive;
-  font-size: 8px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #FFE94A;
   background: #000;
   border: 2.5px solid #FFE94A;
@@ -531,12 +550,15 @@
   right: -7px;
   z-index: 5;
   background: #FF2E2E;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.70 -> 5.38 on #FF2E2E */;
   border: 2px solid #000;
   border-radius: 6px;
   box-shadow: 2px 2px 0 #000;
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   line-height: 1;
   letter-spacing: 0.4px;
   padding: 3px 5px;
@@ -572,10 +594,13 @@
 }
 
 .game-player-name {
-  font-family: 'Bungee', cursive;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   /* Was a tiny fixed 10px — scaled up to the >=16px HUD floor at >=1366px wide,
      holding 10px on phones (min). Static clamp(). */
-  font-size: clamp(10px, 1.2vw, 17px);
+  font-size: var(--fs-body);
   color: #fff;
   margin-bottom: 7px;
   display: flex;
@@ -606,7 +631,7 @@
 }
 
 .game-player-you {
-  font-size: 7px;
+  font-size: var(--fs-micro);
   background: #ff4fa3;
   color: #000;
   border: 1.5px solid #991A75;
@@ -633,7 +658,7 @@
 .player-typing-text {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 20px;
+  font-size: var(--fs-body);
   line-height: 1.2;
   /* The live typing reads in the typer's session colour (the card sets --pc);
      falls back to the old yellow when no colour is assigned. A thin black cel
@@ -678,8 +703,9 @@
 /* Dimmed placeholder before the active player has typed anything. */
 .player-typing-empty {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #FFE94A;
   opacity: 0.4;
   letter-spacing: 2px;
@@ -705,8 +731,11 @@
   display: flex;
   justify-content: center;
   align-items: baseline;
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   line-height: 1;
   letter-spacing: 2px;
   color: #FFE94A;
@@ -802,7 +831,9 @@
 
 .game-timer-num {
   font-family: 'Bungee', cursive;
-  font-size: 16px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #fff;
   min-width: 40px;
   text-align: right;
@@ -921,8 +952,11 @@
   z-index: 18;
   pointer-events: none;
   display: inline-flex; /* a row of per-letter spans */
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -958,8 +992,11 @@
   z-index: 18;
   pointer-events: none;
   display: flex;
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FF5C5C;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -987,8 +1024,11 @@
   z-index: 18;
   pointer-events: none;
   display: inline-flex;
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   line-height: 1;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -1062,7 +1102,10 @@
   z-index: 22;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: 72px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-h1);
   color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
@@ -1094,18 +1137,19 @@
   gap: 1px;
   line-height: 0.92;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   white-space: nowrap;
   transform-origin: center bottom;
   animation: clutch-callout-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .clutch-callout-time {
-  font-size: 30px;
+  font-size: var(--fs-panel);
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
 }
 .clutch-callout-label {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -1114,7 +1158,7 @@
 .clutch-callout.clutch-close .clutch-callout-time { color: #FF6B3D; }
 .clutch-callout.clutch-close .clutch-callout-label { color: #FFE94A; }
 
-.clutch-callout.clutch-clutch .clutch-callout-time { color: #ff4fa3; font-size: 40px; }
+.clutch-callout.clutch-clutch .clutch-callout-time { color: #ff4fa3; font-size: var(--fs-h2); }
 .clutch-callout.clutch-clutch .clutch-callout-label { color: #ff4fa3; }
 
 /* Calm pop (close tier): up from small with an overshoot, then drift up + fade. */
@@ -1397,8 +1441,10 @@
 .wb-tension-getout {
   display: none;
   font-family: 'Bungee', system-ui, sans-serif;
+  text-transform: uppercase;
+  line-height: 0.98;
   font-weight: 700;
-  font-size: 34px;
+  font-size: var(--fs-panel);
   color: #FFE94A;
   -webkit-text-stroke: 3px rgba(0, 0, 0, 0.9);
   paint-order: stroke fill;
@@ -1409,7 +1455,7 @@
 [data-tension='crit'] .wb-tension-getout {
   display: inline-block;
   color: #FF2E2E;
-  font-size: 39px;
+  font-size: var(--fs-h2);
 }
 @keyframes wb-tension-pulse {
   from { transform: scale(1); opacity: 0.9; }
@@ -1480,7 +1526,7 @@
 
 .bomb-flight-icon {
   display: block;
-  font-size: 30px;
+  font-size: var(--fs-panel);
   line-height: 1;
   transform-origin: 50% 50%;
   animation: bomb-flight-arc 340ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
@@ -1766,8 +1812,9 @@
 
 .game-combo-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   color: #FF6B3D;
   margin-bottom: 8px;
@@ -1791,11 +1838,12 @@
 
 .game-combo {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   /* Hero combo. Floors at 44px, but the vw term is capped by a vh term (min) so it
      shrinks on SHORT laptops (e.g. 1163x501) to keep the stage within one screen —
      the slack constraint. Static clamp(); the idle throb below animates transform,
      never font-size. */
-  font-size: clamp(44px, min(6.2vw, 10vh), 70px);
+  font-size: min(var(--fs-h1), 10vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(44px, min(6.2vw, 10vh), 70px)) */;
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
@@ -1809,7 +1857,7 @@
    a smaller size, a thinner stroke, and room to wrap - unlike the 2-3 char
    Word Bomb combo. Same yellow + skew so it still reads as the same prompt. */
 .game-combo.category {
-  font-size: clamp(22px, 3.5vw, 44px);
+  font-size: var(--fs-h2);
   line-height: 1.15;
   letter-spacing: 1px;
   -webkit-text-stroke: 3px #000;
@@ -1823,8 +1871,12 @@
 }
 
 .game-used-label {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #FF6B3D;
   margin-bottom: 8px;
 }
@@ -1840,8 +1892,10 @@
 
 .game-used-chip {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #1a0b2e;
   background: #E8B98A;
   border: 2.5px solid #B0824E;
@@ -1857,8 +1911,10 @@
 
 .game-used-empty {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   color: #C9B8E8;
 }
 
@@ -1890,7 +1946,7 @@
   font-weight: 700;
   /* Answer field (Word Bomb + Category Blitz). Scaled to the >=28px input target at
      >=1366px wide, 16px on phones (min). Static clamp() — never animated. */
-  font-size: clamp(16px, 2.1vw, 30px);
+  font-size: var(--fs-panel);
   color: #1a0b2e;
   background: #fff;
   border: 4px solid #AAAAAA;
@@ -1908,7 +1964,7 @@
 
 .game-input:disabled {
   background: #3a2a55;
-  color: #9a8bbf;
+  color: #b9aecd /* contrast: 4.15 -> 6.09 on #3a2a55 */;
   box-shadow: 2px 2px 0 #000;
   cursor: not-allowed;
 }
@@ -1929,7 +1985,9 @@
 
 .game-send-btn {
   font-family: 'Bungee', cursive;
-  font-size: 15px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #2EFFE0;
   border: 4px solid #1A9985;
@@ -1972,7 +2030,9 @@
   justify-content: center;
   gap: 2px;
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A020;
@@ -2002,9 +2062,9 @@
 /* The cost was 7px black-on-yellow — invisible, so SKIP read as free (it costs a life).
    A small red badge makes the stake unmistakable. Flat fill, thin dark-red outline. */
 .game-skip-cost {
-  font-size: 9px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.4px;
-  color: #fff;
+  color: #0d0618 /* contrast: 4.32 -> 4.60 on #e23838 */;
   background: #e23838;
   border: 1.5px solid #7d1515;
   border-radius: 4px;
@@ -2015,8 +2075,12 @@
 /* ---- Feedback toast ---- */
 
 .game-toast {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   text-align: center;
   border: 3px solid #000;
   border-radius: 8px;
@@ -2034,7 +2098,7 @@
 .game-toast.rejected {
   background: #FF5C5C;
   border-color: #B83A3A;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.03 -> 6.57 on #FF5C5C */;
 }
 
 /* Category Blitz: a calm "checking…" chip shown while the AI judge runs on a
@@ -2109,8 +2173,12 @@
   gap: 8px;
   max-width: 92%;
   white-space: nowrap;
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1;
   padding: 8px 12px;
   border: 3px solid #000;
@@ -2128,7 +2196,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.wb-pending-tag { font-size: 11px; }
+.wb-pending-tag { font-size: var(--fs-micro); }
 
 /* flight: a neutral "sending…" panel with a three-dot heartbeat. */
 .wb-pending-flight {
@@ -2145,7 +2213,7 @@
   color: #FFE94A;
 }
 .wb-pending-waking {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.06em;
   color: #FFB020;
 }
@@ -2176,7 +2244,7 @@
 .wb-pending-reject {
   background: #FF5C5C;
   border-color: #B83A3A;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.03 -> 6.57 on #FF5C5C */;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2228,7 +2296,8 @@
 
 .game-over-title {
   font-family: 'Bungee', cursive;
-  font-size: 40px;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #FF5C5C;
   -webkit-text-stroke: 3px #000;
@@ -2239,12 +2308,14 @@
 
 .game-over-title.win {
   color: #FFE94A;
-  font-size: 52px;
+  font-size: var(--fs-h1);
 }
 
 .game-over-winner {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 22px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   margin-bottom: 16px;
 }
@@ -2253,16 +2324,19 @@
 .game-over-blurb {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2.2vw, 18px);
+  font-size: var(--fs-body);
   letter-spacing: 0.5px;
   color: #FFE94A;
   margin: -2px 0 16px;
 }
 
 .game-over-leave {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 20px);
-  color: #fff;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */;
   background: #ff4fa3;
   border: 4px solid #991A75;
   border-radius: 8px;
@@ -2302,7 +2376,9 @@
    it after the result lands. */
 .game-over-rematch {
   font-family: 'Bungee', cursive;
-  font-size: 22px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 1px;
   color: #000;
   background: #2EFFE0;
@@ -2336,8 +2412,10 @@
    non-hosts know the game can continue in this same room. Animated ellipsis +
    a gentle breathe so it never reads as frozen/broken. */
 .game-over-waiting {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   letter-spacing: 0.5px;
   color: #2EFFE0;
   background: #160a2b;
@@ -2376,7 +2454,7 @@
 
 /* Alongside REMATCH, LEAVE steps down to a smaller secondary action. */
 .game-over-leave.secondary {
-  font-size: clamp(16px, 2.2vw, 18px);
+  font-size: var(--fs-body);
   padding: 9px 0;
   box-shadow: 3px 3px 0 #000;
 }
@@ -2465,7 +2543,7 @@
 /* ---- LOSS: "ELIMINATED" slam-in (overshoot punch, like the intro) ---- */
 .game-over-title.eliminated {
   color: #FF5C5C;
-  font-size: 44px;
+  font-size: var(--fs-h2);
   letter-spacing: 1px;
   animation: go-eliminated-slam 380ms cubic-bezier(0.2, 1.5, 0.3, 1) both;
 }
@@ -2691,12 +2769,12 @@
 
 /* ---- Hero: the category is the dominant element, fluid up to large ---- */
 .cb-round .cb-category-label {
-  font-size: clamp(11px, 1.2vw, 14px);
+  font-size: var(--fs-label);
   margin-bottom: clamp(8px, 1vw, 14px);
 }
 
 .cb-round .cb-category-display {
-  font-size: clamp(26px, 5.2vw, 64px);
+  font-size: var(--fs-h1);
   line-height: 1.05;
   padding: clamp(18px, 2.4vw, 40px) clamp(14px, 2vw, 28px);
   margin-bottom: clamp(8px, 1vw, 14px);
@@ -2704,7 +2782,7 @@
 
 /* The format hint gets a clear home directly under the hero (subtle, not crammed). */
 .cb-round .cb-category-example {
-  font-size: clamp(12px, 1.3vw, 15px);
+  font-size: var(--fs-label);
   margin: 0 0 clamp(14px, 1.6vw, 22px);
 }
 
@@ -2745,20 +2823,21 @@
   }
 }
 .cb-round-side .cb-section-label {
-  font-size: 11px; /* a touch more presence so the rail has its own hierarchy */
+  font-size: var(--fs-micro); /* a touch more presence so the rail has its own hierarchy */
 }
 /* Accepted-answer chips read larger so the running list is legible at a glance
    (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
    screen's chips are unchanged. Padding grows a touch to match. */
 .cb-round .cb-answer-chip {
-  font-size: clamp(13px, 1vw, 15px);
+  font-size: var(--fs-label);
   padding: 4px 9px;
 }
 
 .cb-category-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   color: #C9B8E8;
   text-align: center;
@@ -2768,7 +2847,8 @@
 .cb-category-display {
   position: relative; /* anchors the mascot perched on the box edge */
   font-family: 'Bungee', cursive;
-  font-size: 30px;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1.1;
   color: #FFE94A;
   background: #0d0618;
@@ -2801,8 +2881,10 @@
    reads as a helper, not a real answer in the list. */
 .cb-category-example {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-style: italic;
   color: #8B7AA8;
   text-align: center;
@@ -2812,8 +2894,11 @@
 /* ---- Shared section labels for the CB sub-sections ---- */
 
 .cb-section-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff4fa3;
   margin-bottom: 8px;
 }
@@ -2835,8 +2920,10 @@
 
 .cb-answer-chip {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #000;
   background: #2EFFE0;
   border: 2.5px solid #1A9985;
@@ -2874,8 +2961,12 @@
 }
 
 .cb-progress-name {
-  font-family: 'Bungee', cursive;
-  font-size: 11px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2889,8 +2980,10 @@
 
 .cb-progress-count {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -2903,7 +2996,9 @@
 
 .cb-results-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(20px, 3.4vw, 28px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ff4fa3;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -2913,8 +3008,11 @@
 }
 
 .cb-results-category {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   text-align: center;
   margin-bottom: 16px;
@@ -2945,8 +3043,11 @@
 }
 
 .cb-result-name {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2962,8 +3063,11 @@
 }
 
 .cb-result-round {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: per-round score badge, small end <16 so the head row never overflows at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body); /* slack-wins: per-round score badge, small end <16 so the head row never overflows at 320px */
   color: #000;
   background: #2EFFE0;
   border: 2px solid #1A9985;
@@ -2972,8 +3076,10 @@
 
 .cb-result-total {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(12px, 1.4vw, 14px); /* slack-wins: running-total sub-figure kept <16 so it never crowds the score badge at 320px */
+  font-size: var(--fs-label); /* slack-wins: running-total sub-figure kept <16 so it never crowds the score badge at 320px */
   color: #C9B8E8;
 }
 
@@ -2994,8 +3100,11 @@
 }
 
 .cb-missed-title {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #C9B8E8;
   text-align: center;
   margin-bottom: 8px;
@@ -3013,8 +3122,10 @@
 
 .cb-missed-chip {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(13px, 1.5vw, 15px); /* slack-wins: ghost "missed answers" chips in a 84px-clipped box — kept <16 so fewer rows clip */
+  font-size: var(--fs-label); /* slack-wins: ghost "missed answers" chips in a 84px-clipped box — kept <16 so fewer rows clip */
   color: rgba(255, 255, 255, 0.75);
   background: rgba(0, 0, 0, 0.35);
   border: 1.5px solid rgba(201, 184, 232, 0.45);
@@ -3040,7 +3151,9 @@
 
 .cb-next-round {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   text-align: center;
   transform: skewX(-2deg);
@@ -3088,7 +3201,9 @@
 
 .cb-score-rank {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ff4fa3;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -3102,8 +3217,11 @@
 }
 
 .cb-score-name {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #fff;
   display: flex;
   align-items: center;
@@ -3118,7 +3236,9 @@
 
 .cb-score-pts {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 22px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -3144,7 +3264,9 @@
 
 .countdown-text {
   font-family: 'Bungee', cursive;
-  font-size: 120px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-hero);
   line-height: 1;
   color: #FFE94A; /* numbers in yellow */
   -webkit-text-stroke: 5px #000;
@@ -3204,8 +3326,12 @@
 }
 
 .kill-feed-title {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #FF6B3D;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -3225,8 +3351,10 @@
 
 .kill-feed-empty {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   color: #6b5a8a;
 }
 
@@ -3268,8 +3396,10 @@
 
 .kill-feed-text {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   line-height: 1.35;
   color: #C9B8E8;
   word-break: break-word;
@@ -3290,9 +3420,13 @@
    (UNCOMMON cyan / RARE purple / OBSCURE gold); COMMON words get no tag at all. Bold + compact so
    it reads as a reward flag next to the word without stealing the row. */
 .kill-feed-rarity {
-  font-family: 'Bungee', cursive;
-  font-size: 0.82em;
-  letter-spacing: 0.02em;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
   white-space: nowrap;
 }
 
@@ -3345,8 +3479,11 @@
 }
 
 .go-section-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff4fa3;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -3383,14 +3520,18 @@
 .go-summary-value {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(18px, 2.4vw, 22px);
+  font-size: var(--fs-body);
   color: #2EFFE0;
   line-height: 1;
 }
 
 .go-summary-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(11px, 1.5vw, 13px); /* slack-wins: 3-up stat-tile label kept <16 so the tiles never overflow at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label); /* slack-wins: 3-up stat-tile label kept <16 so the tiles never overflow at 320px */
   color: #C9B8E8;
   margin-top: 5px;
 }
@@ -3420,23 +3561,29 @@
 }
 
 .go-award-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 1.5vw, 14px); /* slack-wins: award-pill label kept <16 so the pill row wraps tidily at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label); /* slack-wins: award-pill label kept <16 so the pill row wraps tidily at 320px */
   color: #000;
 }
 
 .go-award-name {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #000;
   word-break: break-word;
 }
 
 .go-award-detail {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(12px, 1.4vw, 13px); /* slack-wins: award-pill sub-detail kept <16 to keep the pill compact at 320px */
+  font-size: var(--fs-label); /* slack-wins: award-pill sub-detail kept <16 to keep the pill compact at 320px */
   color: #1a0b2e;
   opacity: 0.85;
 }
@@ -3465,8 +3612,11 @@
 }
 
 .go-player-name {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   margin-bottom: 7px;
   display: flex;
@@ -3496,15 +3646,18 @@
 .go-pstat-val {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: 4-up per-player stat value, small end <16 so the grid never overflows at 320px */
+  font-size: var(--fs-body); /* slack-wins: 4-up per-player stat value, small end <16 so the grid never overflows at 320px */
   color: #fff;
   line-height: 1.1;
   word-break: break-word;
 }
 
 .go-pstat-key {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(10px, 1.3vw, 12px); /* slack-wins: 4-up per-player stat label kept <16 so four columns fit at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label); /* slack-wins: 4-up per-player stat label kept <16 so four columns fit at 320px */
   color: #9a8bbf;
   letter-spacing: 0.3px;
 }
@@ -3546,18 +3699,18 @@
   .game-player-slot { min-width: calc(50% - 5px); }
 
   /* Big Bungee type scales down ~80%. */
-  .game-title { font-size: 21px; }
-  .game-combo { font-size: 46px; letter-spacing: 2px; }
-  .game-combo.category { font-size: 22px; }
-  .cb-category-display { font-size: 24px; padding: 14px 12px; }
-  .cb-results-title { font-size: 16px; }
-  .game-over-title { font-size: 28px; }
-  .game-over-title.win { font-size: 34px; }
+  .game-title { font-size: var(--fs-body); }
+  .game-combo { font-size: var(--fs-h2); letter-spacing: 2px; }
+  .game-combo.category { font-size: var(--fs-body); }
+  .cb-category-display { font-size: var(--fs-panel); padding: 14px 12px; }
+  .cb-results-title { font-size: var(--fs-body); }
+  .game-over-title { font-size: var(--fs-panel); }
+  .game-over-title.win { font-size: var(--fs-panel); }
   /* .eliminated has its own 44px rule (higher specificity than the base above), so
      it must be shrunk explicitly or "ELIMINATED" overflows the card at 360px
      (fix/qa-sweep §2/§4). */
-  .game-over-title.eliminated { font-size: 30px; }
-  .countdown-text { font-size: 84px; }
+  .game-over-title.eliminated { font-size: var(--fs-panel); }
+  .countdown-text { font-size: var(--fs-hero); }
 
   /* Smaller bomb so it fits comfortably on a phone. */
   .bomb-svg { width: 120px; }
@@ -3578,7 +3731,7 @@
 
   /* Per-player stats drop to a 2-column grid so values stay legible. */
   .go-player-grid { grid-template-columns: repeat(2, 1fr); gap: 8px 6px; }
-  .go-summary-value { font-size: 18px; }
+  .go-summary-value { font-size: var(--fs-body); }
 
   /* On phones the feed sits below the stage with little room, so trim it to the
      3 most recent events. Rows render newest-first, so the first 3 children are
@@ -3604,7 +3757,7 @@
     padding-top: 11px;
     padding-bottom: 11px;
   }
-  .countdown-text { font-size: 64px; }
+  .countdown-text { font-size: var(--fs-h1); }
 }
 
 /* ============================================================= */
@@ -3773,8 +3926,12 @@ html[data-beat='true'] .cb-answer-chip {
   left: 0;
   right: 0;
   z-index: 30;
-  font-family: 'Bungee', cursive;
-  font-size: 14px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #fff;
   text-align: center;
   padding: 8px 12px;
@@ -3793,8 +3950,11 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* "Audience" indicator below the player bar so active players see they're watched. */
 .game-spectator-count {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   color: #C9B8E8;
   text-align: center;
   letter-spacing: 0.5px;
@@ -3815,7 +3975,7 @@ html[data-beat='true'] .cb-answer-chip {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: var(--fs-body);
   line-height: 1;
   /* Flat fill + a thick COLOURED outline (per-button below), not black. */
   background: #1a0b2e;
@@ -3871,14 +4031,16 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .floating-reaction-emoji {
-  font-size: 36px;
+  font-size: var(--fs-h2);
   line-height: 1;
 }
 
 .floating-reaction-name {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 8px;
+  font-size: var(--fs-micro);
   color: #fff;
   margin-top: 2px;
   white-space: nowrap;
@@ -4023,7 +4185,9 @@ html[data-beat='true'] .cb-answer-chip {
 .ko-text {
   position: relative;
   font-family: 'Bungee', cursive;
-  font-size: 80px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-hero);
   line-height: 1;
   color: #FF5C5C;
   -webkit-text-stroke: 5px #000;
@@ -4047,7 +4211,7 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 @media (max-width: 600px) {
-  .ko-text { font-size: 56px; }
+  .ko-text { font-size: var(--fs-h1); }
   .ko-burst { width: 280px; height: 280px; }
 }
 
@@ -4165,8 +4329,11 @@ html[data-beat='true'] .cb-answer-chip {
 /* The personal-best target shown above the game area during a solo round:
    small Bungee, graffiti yellow, an immediate number to beat. */
 .solo-best-banner {
-  font-family: 'Bungee', cursive;
-  font-size: 13px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
   color: #FFE94A;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -4185,7 +4352,8 @@ html[data-beat='true'] .cb-answer-chip {
    bouncing in and holding (it stays on the results screen). */
 .solo-new-record {
   font-family: 'Bungee', cursive;
-  font-size: 36px;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 3px #000;
@@ -4203,8 +4371,10 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .solo-score-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   letter-spacing: 2px;
   color: #C9B8E8;
   margin-bottom: 2px;
@@ -4213,7 +4383,9 @@ html[data-beat='true'] .cb-answer-chip {
 /* The headline score, counting up. */
 .solo-score-value {
   font-family: 'Bungee', cursive;
-  font-size: 72px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-h1);
   line-height: 1;
   color: #2EFFE0;
   -webkit-text-stroke: 4px #000;
@@ -4223,8 +4395,11 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .solo-category {
-  font-family: 'Bungee', cursive;
-  font-size: 16px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff4fa3;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -4233,8 +4408,11 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .solo-pb-line {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   margin-bottom: 4px;
 }
@@ -4242,7 +4420,7 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-away {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #C9B8E8;
   margin-bottom: 10px;
 }
@@ -4256,7 +4434,9 @@ html[data-beat='true'] .cb-answer-chip {
    game-over REMATCH it stands in for). */
 .solo-play-again-btn {
   font-family: 'Bungee', cursive;
-  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #2EFFE0;
   border: 4px solid #1A9985;
@@ -4276,7 +4456,9 @@ html[data-beat='true'] .cb-answer-chip {
 /* CHANGE CATEGORY - secondary: yellow, a step down from PLAY AGAIN. */
 .solo-change-cat-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.4vw, 20px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A800;
@@ -4294,9 +4476,9 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 @media (max-width: 480px) {
-  .solo-score-value { font-size: 56px; }
-  .solo-new-record { font-size: 28px; }
-  .solo-play-again-btn { font-size: 18px; }
+  .solo-score-value { font-size: var(--fs-h1); }
+  .solo-new-record { font-size: var(--fs-panel); }
+  .solo-play-again-btn { font-size: var(--fs-body); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4327,7 +4509,7 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-round-cat {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #C9B8E8;
   text-align: left;
   word-break: break-word;
@@ -4335,7 +4517,9 @@ html[data-beat='true'] .cb-answer-chip {
 
 .solo-round-score {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -4359,7 +4543,9 @@ html[data-beat='true'] .cb-answer-chip {
   justify-content: center;
   min-height: 44px;
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.5px;
   color: #fff;
   background: #9A1AFF;
@@ -4380,7 +4566,7 @@ html[data-beat='true'] .cb-answer-chip {
    outline, dimmed text, no shadow. */
 .cb-reroll-btn:disabled {
   background: #1a0b2e;
-  color: #7a6b9c;
+  color: #9a8bbf /* contrast: 3.90 -> 6.03 on #1a0b2e */;
   border: 3px dashed #5A0EAA;
   box-shadow: none;
   cursor: default;
@@ -4388,8 +4574,11 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* Brief banner shown to non-host players when the host rerolls the category. */
 .cb-reroll-notice {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   text-align: center;
   background: #1a0b2e;

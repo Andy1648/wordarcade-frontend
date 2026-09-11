@@ -84,7 +84,9 @@
 
 .connlost-title {
   font-family: 'Bungee', sans-serif;
-  font-size: clamp(28px, 7vw, 52px);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-h1);
   color: #ff4fa3;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -115,14 +117,18 @@
 
 .connlost-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #FFE94A;
   max-width: 420px;
 }
 
 .connlost-btn {
   font-family: 'Bungee', sans-serif;
-  font-size: 18px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #0d0618;
   background: #2EFFE0;
   border: 3px solid #1A9985;
@@ -151,7 +157,7 @@
 .daily-leave-danger {
   background: #ff4fa3;
   border-color: #991A75;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */;
 }
 
 @media (prefers-reduced-motion: reduce) {

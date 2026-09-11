@@ -2,7 +2,9 @@
    flat neon fill. Press feedback only; NO idle/infinite animation (menu-motion-law safe). */
 .copy-result-btn {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 15px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.5px;
   color: #000;
   background: #2EFFE0;

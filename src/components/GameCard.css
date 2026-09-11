@@ -364,6 +364,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      banner slapped on the card, not a hairline mono strip. Bungee, bigger, thick
      black rules top+bottom, and a hard offset shadow so it lifts off the corner. */
   font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  line-height: 0.98;
   font-weight: 400;
   font-size: clamp(11px, 4.4cqw, 17px);
   letter-spacing: 0.02em;
@@ -396,6 +398,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-name {
   margin: 0;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   line-height: 0.9;
   white-space: pre-line;
   /* Scales with the CARD width (cqw) so a long name never clips its bar (viewport-
@@ -500,14 +503,14 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @container (max-width: 170px) {
   .game-card-titlebar { padding: clamp(12px, 9cqw, 20px) clamp(6px, 5cqw, 12px) clamp(6px, 4cqw, 10px); }
   .game-card-masthead { padding: clamp(5px, 4cqw, 10px); }
-  .game-card-name { font-size: clamp(9px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
-  [data-game='sat-rush'] .game-card-name { font-size: clamp(9px, 11cqw, 20px); }
+  .game-card-name { font-size: clamp(13px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
+  [data-game='sat-rush'] .game-card-name { font-size: clamp(13px, 11cqw, 20px); }
   .game-card-badge { font-size: clamp(6px, 4.5cqw, 9px); padding: 2px 5px; letter-spacing: 0.04em; }
   .game-card-payout { font-size: clamp(6px, 4cqw, 9px); }
   .game-card-foot { font-size: clamp(6px, 4cqw, 9px); padding: clamp(4px, 3cqw, 8px) clamp(5px, 3cqw, 10px); }
   .game-card-limited-tag { display: none; } /* keep just the SOLO badge in the masthead */
-  .game-card-ribbon { font-size: clamp(9px, 3.6cqw, 13px); padding: 6px 46px; }
-  .game-card-lock-label { font-size: clamp(9px, 5.5cqw, 14px); }
+  .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 13px); padding: 6px 46px; }
+  .game-card-lock-label { font-size: clamp(13px, 5.5cqw, 14px); }
   .game-card-lock-sub { font-size: clamp(6px, 3.4cqw, 9px); }
   .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(8px, 5cqw, 15px); }
 }
@@ -567,6 +570,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   right: 8px;
   z-index: 4;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-size: clamp(9px, 3cqw, 12px);
   line-height: 1;
   color: #0d0618;
@@ -583,6 +587,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    manga palette. Sits INLINE in the masthead tag row (next to the SOLO badge). */
 .game-card-limited-tag {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
   font-size: clamp(8px, 2.8cqw, 11px);
   letter-spacing: 0.04em;
   color: #C8321E;
@@ -645,6 +651,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 .game-card-lock-label {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-size: clamp(11px, 4.6cqw, 16px);
   letter-spacing: 0.02em;
   line-height: 1;
