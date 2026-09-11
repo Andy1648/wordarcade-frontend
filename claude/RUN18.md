@@ -383,8 +383,14 @@ So the fair statement is two-part:
 The good news is measured too: **the menu really is at zero, on arrival and at rest.** The menu
 motion law is not just documented, it holds.
 
-`loop-audit.mjs` is left in `claude/_tools/`. It is three screens today and would be worth
-promoting into the e2e suite, because this gap is the kind a green suite hides indefinitely.
+**I promoted it into the suite rather than leaving it as a note.** `e2e/end-screen-loops.spec.js`
+(on `feat/experiments`) asserts the menu is a hard **zero** on arrival and at rest, and puts a
+RATCHET on the two end screens at their measured counts — 5 and 1. The ceiling exists so the number
+can only go down; raising one has to show up in a diff. Each test logs exactly what is still
+running, so a failure names the offender instead of just moving a number. **3 passed.**
+
+That spec is the one thing on `feat/experiments` that is mergeable on its own: it is a test, it
+touches no product code, and it closes a gap that a green suite would otherwise hide indefinitely.
 
 ---
 
