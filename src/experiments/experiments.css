@@ -19,6 +19,12 @@
 
 .x7b-logo .x7b-layer,
 .x7b-logo .x7b-flow {
+  /* ALL-CAPS is not decoration here, it is the house rule for Bungee, and Phase 1's own
+     build-failing test (typeScale.test.js, "Bungee stays display type") caught these five
+     rules for setting the face without it. The lockup's text is already uppercase, so this
+     changes nothing on screen - but the rule exists so that stays true by construction, and
+     an experiment is not a reason to punch a hole in it. */
+  text-transform: uppercase;
   display: block;
   font-size: inherit;
   line-height: inherit;
@@ -57,6 +63,7 @@
       A hard offset copy of the solid face is the house idiom for depth anyway. */
 .x7b-depth {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase; /* the gate checks each RULE, not the cascade */
   color: #14060f;
   transform: translate(7px, 7px);
 }
@@ -64,6 +71,7 @@
 /* 2. the solid letter face, in the canonical wordmark pink */
 .x7b-solid {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase; /* the gate checks each RULE, not the cascade */
   color: #ff4fa3;
 }
 
@@ -71,6 +79,7 @@
       is where the second colour inside one letter comes from */
 .x7b-inline {
   font-family: 'Bungee Inline', 'Bungee', cursive;
+  text-transform: uppercase; /* the gate checks each RULE, not the cascade */
   color: #ffe94a;
 }
 
@@ -80,6 +89,7 @@
 .x7b-flow {
   position: relative;
   font-family: 'Bungee Outline', 'Bungee', cursive;
+  text-transform: uppercase; /* the gate checks each RULE, not the cascade */
   color: #000;
   /* The Outline face is a hairline against a 96px letter; without a stroke the black
      edge disappears at menu size and the lockup reads as mush. A text-shadow ring would
@@ -100,6 +110,8 @@
 .x7b-logo:not(.is-ready) .x7b-layer { display: none; }
 .x7b-logo:not(.is-ready) .x7b-flow {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase; /* the gate checks each RULE, not the cascade */
+  text-transform: uppercase;
   color: #ff4fa3;
   -webkit-text-stroke: 5px #000;
 }
