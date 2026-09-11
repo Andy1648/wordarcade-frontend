@@ -5,7 +5,7 @@ touched.** Branches, prototypes and reports only. Concurrency stayed at or below
 
 ---
 
-## THE SIX THINGS THAT NEED YOU
+## THE SEVEN THINGS THAT NEED YOU
 
 **1. Two Word Bomb layout defects, measured, with both fixes built and neither chosen. §2**
 At 1366x768 a seat's NAME is cut off by 31px at 2 players, and at 3+ players the KILL FEED sits
@@ -32,11 +32,18 @@ Its loudest element reaches L\* 0.430 after a 12px blur, where every other non-s
 This is a consequence of the canonical title spec, which CLAUDE.md locks — so it is your call,
 not a bug I should fix.
 
-**5. THE RUN has no screen on this stack, and Phase 5 could not build one.** §5
+**5. Phase 3's per-mode colour scripts are declared and then never used. §3**
+Seven scripts are defined in `texture.css`. `--mode-lead` and `--mode-second` are consumed by
+**nothing in the repo** — `grep` finds two uses of any `var(--mode-*)`, both of `--mode-shade`, both
+with a fallback. The item that was meant to replace "all nine colours everywhere" so the six modes
+read apart by hue exists as tokens and stopped there. This is also, independently, why CHAIN and
+FUSE score worst on the squint test.
+
+**6. THE RUN has no screen on this stack, and Phase 5 could not build one.** §5
 `release/prod-1` has five modes. The Run lives on `integration/run-stack-3`, unmerged. Phase 5
 delivered four of its five named screens; the fifth was not reachable from this base.
 
-**6. Nothing here has had a 2-device play-test.** The phase stack touches `GameScreen.jsx`
+**7. Nothing here has had a 2-device play-test.** The phase stack touches `GameScreen.jsx`
 rendering and `App.jsx`-adjacent surfaces. Per CLAUDE.md that is a Tier 1/2 gate I cannot clear.
 
 ---
@@ -354,6 +361,83 @@ Three things worth acting on:
 
 ---
 
+## 1b. PHASE 1 — THE CONTRAST WORK HOLDS. THE ACCENT RULE HAS A HOLE.
+
+`claude/_tools/contrast-audit.mjs`, full output in `claude/contrast-audit.txt`. The brief asked
+Phase 1 to "print every pair you fixed and every screen's accent element"; no such report was
+written, so this produces it and checks it at the same time. Pure arithmetic, no browser.
+
+**Every claimed ratio re-derives correctly.** All sixteen, including the purple ones the comments
+are most careful about: `#9A28FF` is 3.90:1 on the field (clears the 3:1 large-text/UI bar, fails
+the 4.5:1 body bar), white on it is 5.10:1 and cream is 4.24:1 — so the "put WHITE on it, never
+cream" note in `type.css` is correct. Phase 1's contrast work survives an independent check.
+
+*(The audit's own first run reported two false mismatches, which is exactly the failure it exists
+to catch, so the parser was fixed rather than tolerated: `--c-purple`'s "never cream" describes what
+may sit ON the purple, not the ground it is measured against, and the block comment trailing
+`--v-accent` actually belongs to `--v-ink-dim`.)*
+
+**The real gap: three screens declare a hot colour that nothing spends.**
+
+| screen root | accent declared | element that spends it |
+|---|---|---|
+| `.homepage-wrap` | pink | `.game-card-magnet.is-spotlit .game-card` |
+| `.room-wrap` | cyan | `.room-start-btn` |
+| `.lobby-wrap` | pink | `.lobby-continue-btn` |
+| `.browser-wrap` | cyan | `.browser-btn-create` |
+| `.game-wrap` | yellow | `.wb-seat .game-player-card.current` / `.cb-category-display` |
+| **`.shop-panel`** | **yellow** | **nothing** |
+| **`.credits-wrap`** | **pink** | **nothing** |
+| **`.sr-screen`** | **paper ink** | **nothing** |
+
+And the `.v-accent` helper class in `values.css` is applied by **no JSX in the repo at all** — it is
+dead. Six selectors in the entire codebase spend an accent.
+
+**Why the build-failing test does not catch it: it enforces a ceiling and not a floor.**
+`src/perf/typeScale.test.js` flags a scope only when `sels.size > 1`. A screen with ZERO accent
+elements passes silently, while the rule it guards reads "exactly ONE". A one-line change — assert
+`sels.size === 1` for every scope in the SCOPES list — would close it, and would currently fail on
+those three screens, which is the point.
+
+---
+
+## 3. PHASE 3 — THE SCRIPTS ARE DECLARED AND NEVER USED
+
+The brief: "Per-mode scripts, 2-3 hues each, replacing 'all nine colours everywhere' ... Each menu
+card takes its mode's script so the six read apart by hue."
+
+`src/theme/texture.css` defines all seven scripts correctly, including THE RUN's, with a comment
+noting the mode is not in this branch. The hues match the brief exactly. Then:
+
+```
+definitions of --mode-lead:                            7
+uses of var(--mode-lead)   anywhere in src:            0
+uses of var(--mode-second) anywhere in src:            0
+uses of var(--mode-shade)  anywhere in src:            2   (both with a fallback)
+```
+
+The two `--mode-shade` uses are the cel facet (`.tx-cel` in `texture.css` and the same rule in
+`GameCard.css`), which is real and does work — the menu cards genuinely do read apart by hue,
+because `GameCard.jsx` sets `data-game` and the facet picks up the shade. But the LEAD and SECOND
+of every script are dead tokens.
+
+**Worse for two modes: CHAIN and FUSE never receive a script at all on their gameplay screens.**
+Word Bomb, Blitz and SAT Rush each have a class fallback next to their attribute selector
+(`.game-stage--wb`, `.game-stage--blitz`, `.sr-screen`). Chain and Fuse have only
+`[data-game='chain']` / `[data-game='fuse']`, and `data-game` is set in exactly one place in the
+repo — `GameCard.jsx`, the MENU CARD. `.solo-root` matches no script selector, so the Chain and
+Fuse play screens get no `--mode-*` values whatsoever.
+
+That is a second, independent measurement landing on the same two screens the squint test singles
+out: chain-play and fuse-play have the lowest peak of any screen in the game (L\* 0.278 and 0.291,
+where every other gameplay screen is 0.74+) and are BUSY at both viewports. Two different methods,
+same answer.
+
+Phase 3's other items DO hold, and have build-failing tests: the grain is an inline data-URI, never
+on an animated element, held in the 6-10% band, and the halftone stays off text-bearing panels.
+
+---
+
 ## 5. PHASE 5 — FOUR OF FIVE SCREENS
 
 Blitz, SAT Rush, Chain and Fuse shipped (`1689427`). **THE RUN did not**, and could not: this stack
@@ -370,7 +454,11 @@ first or rebasing a Phase 5b onto it — your call which.
 2. **The kill feed below the fold at 3+ players**, §2(ii). Neither WB fit option clears it.
 3. **The fuse-strictly-decreasing check**, §2. Not expressible against the backend mock, and left
    absent rather than written as an assertion that would always pass.
-4. **This box's e2e flakiness is real and it is not the code.** Re-running the three specs that
+4. **`--mode-lead` / `--mode-second` are dead**, §3, and CHAIN/FUSE get no script on their play
+   screens. Wiring them up is a real design pass, not a one-liner, so it is reported rather than
+   half-done at 3am.
+5. **Three screens carry no accent element**, §1b, and the test that guards the rule cannot see it.
+6. **This box's e2e flakiness is real and it is not the code.** Re-running the three specs that
    carried the previous gate's failures gave **843 passed / 0 failed / 4 flaky** — and the four
    flakes were *different tests* from the previous run's four. All five of the earlier run's
    problem tests now pass, including `wb-short-layout @ 1280x720`. Treat any single flaky list as
@@ -389,6 +477,7 @@ first or rebasing a Phase 5b onto it — your call which.
 | `x7b-zoom.mjs` | tight wordmark shots plus a per-layer breakdown |
 | `bungee-metrics.mjs` | measures whether font layers register before you try to stack them |
 | `gen-motifs.mjs` | authors the five motif SVGs |
+| `contrast-audit.mjs` | re-derives every claimed contrast ratio and prints the accent map |
 
 Two of these carry a lesson in their comments that cost real time to learn: `x7b-zoom.mjs` uses
 `page.screenshot({clip})` rather than `el.screenshot()`, because an element screenshot came back
