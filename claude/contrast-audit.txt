@@ -1,0 +1,77 @@
+PHASE 1 CONTRAST AUDIT
+==============================================================================
+
+1. EVERY CLAIMED RATIO, RE-DERIVED FROM THE HEX
+
+token / pair                       colour    ground    claimed  actual   verdict
+v-ink-dim                          #b9aecd   #0d0618      9.47    9.47   ok
+v-ink-faint                        #8d82a3   #0d0618      5.54    5.54   ok
+c-purple                           #9a28ff   #0d0618       3.9     3.9   ok
+c-purple-text                      #c79bff   #0d0618      9.05    9.05   ok
+c-pink                             #ff4fa3   #0d0618      6.53    6.53   ok
+c-cyan                             #2effe0   #0d0618     15.62   15.62   ok
+c-yellow                           #ffe94a   #0d0618      16.1    16.1   ok
+c-orange                           #ff6b3d   #0d0618      7.03    7.03   ok
+c-red                              #ff4b4b   #0d0618      6.02    6.02   ok
+c-cream                            #f0ead9   #0d0618     16.54   16.54   ok
+c-ink-paper                        #1a1410   #f0ead9     15.18   15.18   ok
+#9A28FF on the field               #9a28ff   #0d0618       3.9     3.9   ok
+#9A1AFF on the field               #9a1aff   #0d0618      3.75    3.75   ok
+white on #9A28FF                   #ffffff   #9a28ff       5.1     5.1   ok
+cream on #9A28FF                   #f0ead9   #9a28ff      4.24    4.24   ok
+
+2. EVERY PALETTE COLOUR AGAINST THE TWO FLOORS ON THE DARK FIELD
+
+  body text needs >= 4.5:1   large text / UI needs >= 3:1
+
+colour              hex        on field  body>=4.5  large>=3   allowed as
+c-purple            #9a28ff         3.9  FAIL       pass       LARGE text / UI only
+c-purple-text       #c79bff        9.05  pass       pass       any text
+c-pink              #ff4fa3        6.53  pass       pass       any text
+c-cyan              #2effe0       15.62  pass       pass       any text
+c-yellow            #ffe94a        16.1  pass       pass       any text
+c-orange            #ff6b3d        7.03  pass       pass       any text
+c-red               #ff4b4b        6.02  pass       pass       any text
+c-cream             #f0ead9       16.54  pass       pass       any text
+c-ink-paper         #1a1410        1.09  FAIL       FAIL       FILL ONLY
+
+  ink values on the field:
+    --v-ink            #ffffff   19.88:1  body-safe
+    --v-ink-dim        #b9aecd    9.47:1  body-safe
+    --v-ink-faint      #8d82a3    5.54:1  body-safe
+    --v-rule           #2a1b45    1.27:1  borders only, never text
+
+  field ink ON each accent fill (the .v-accent rule puts --v-field on --v-accent):
+    c-purple         #9a28ff     3.9:1  FAILS - needs white ink instead
+    c-pink           #ff4fa3    6.53:1  ok
+    c-cyan           #2effe0   15.62:1  ok
+    c-yellow         #ffe94a    16.1:1  ok
+    c-orange         #ff6b3d    7.03:1  ok
+    c-red            #ff4b4b    6.02:1  ok
+    c-cream          #f0ead9   16.54:1  ok
+
+3. THE ACCENT MAP — one hot element per screen
+
+screen root            accent hue        spent by
+.homepage-wrap         c-pink       #ff4fa3   .homepage-cards-grid .game-card-magnet.is-spotlit .game-card   // CREATE ROOM
+.room-wrap             c-cyan       #2effe0   .browser-btn-create + .room-start-btn   // START
+.lobby-wrap            c-pink       #ff4fa3   .lobby-continue-btn   // CONTINUE
+.browser-wrap          c-cyan       #2effe0   (no element in this screen spends it)   // row JOIN
+.shop-panel            c-yellow     #ffe94a   (no element in this screen spends it)
+.credits-wrap          c-pink       #ff4fa3   (no element in this screen spends it)
+.game-wrap             c-yellow     #ffe94a   .wb-seat .game-player-card.current + .game-stage--blitz .cb-category-display
+.sr-screen             c-ink-paper  #1a1410   (no element in this screen spends it)   // ---- demotion helpers -------------------------------------------------------
+   A "demoted" surface is the panel value with dimmed ink and a rule-coloured border.
+   This is what a secondary button / chip / nav target looks like after the audit.
+
+  every selector anywhere that paints with var(--v-accent):
+    components\GameScreen.css          .wb-seat .game-player-card.current
+    components\GameScreen.css          .game-stage--blitz .cb-category-display
+    components\Homepage.css            .homepage-cards-grid .game-card-magnet.is-spotlit .game-card
+    components\LobbyScreen.css         .lobby-continue-btn
+    components\PublicRoomsScreen.css   .browser-btn-create
+    components\RoomScreen.css          .room-start-btn
+    theme\values.css                   .v-accent
+
+==============================================================================
+All claimed ratios re-derive correctly.
