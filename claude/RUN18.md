@@ -338,6 +338,40 @@ to work.
 
 ---
 
+## 6e. PHASE 6's MENU, MEASURED — THREE OF FOUR NUMBERS HOLD
+
+The MENU item's requirements are mostly numbers, so `claude/_tools/menu-spec-check.mjs` checks them
+instead of admiring them, at three viewports:
+
+| claim | 1920x1080 | 1366x768 | 390x844 | |
+|---|---|---|---|---|
+| JOIN ROOM >= 48px | 59px | 53px | 48px | **PASS** |
+| spotlit card 1.5x | 1.50x | 1.50x | 1.00x | **PASS** |
+| corner nav >= 44x44 | 0 under | 0 under | 0 under | **PASS** |
+| level numeral 3-4x the XP label | 1.18x | 1.18x | 1.18x | **FAIL** |
+
+The spotlit card measures **exactly 1.50x** on the single-row layouts, and 1.00x on the phone —
+which is deliberate and documented in the code: a 1.5x card in the 3+2 phone grid swamps the row
+and pushes the others below the readable floor, so those layouts stay even. That is the right call
+and the measurement confirms the implementation matches it.
+
+**The level numeral is 13px against an 11px label — 1.18x, where the brief asks for 3-4x.** And the
+cause is traceable, which makes it a decision rather than an oversight: Phase 1's own follow-up fix
+(`e357e45`) deliberately turned the XP cluster into a DATA STRIP — "LV / streak / wins are Space
+Mono readouts instead of Bungee" — to win back track width on a 360-390px menu, where the widened
+chips had squeezed the XP bar to 28px and cropped the readout. The level numeral took `--fs-label`
+(13px) and the surrounding text `--fs-micro` (11px).
+
+So **Phase 1 and Phase 6 want opposite things from the same element**, Phase 1 landed first, and
+Phase 6 did not revisit it. This is also the third independent route to the same observation: §7d
+finds the menu's entry point is `.menu-xp-rank`, because the whole XP strip is uniformly tiny and
+the rank chip's fill is the only thing in it with any weight.
+
+Worth resolving deliberately — the phone constraint that drove Phase 1's change is real, so
+"just make it 3-4x" would reintroduce the clipping it fixed.
+
+---
+
 ## 6d. THE END SCREENS STILL LOOP. NOTHING IN THE SUITE WAS CHECKING.
 
 Phase 6's brief for the end screens ends: "Entry juice one-shot, **nothing loops after**". The
@@ -754,6 +788,7 @@ hard way.
 | `gen-motifs.mjs` | authors the five motif SVGs |
 | `contrast-audit.mjs` | re-derives every claimed contrast ratio and prints the accent map |
 | `loop-audit.mjs` | counts infinite animations still running once a screen has settled |
+| `menu-spec-check.mjs` | measures the numeric parts of the menu brief at three viewports |
 | `motif-probe.mjs` | whether a background motif actually paints, in pixels |
 
 Two of these carry a lesson in their comments that cost real time to learn: `x7b-zoom.mjs` uses
