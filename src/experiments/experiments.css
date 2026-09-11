@@ -370,3 +370,14 @@
 [data-lobbycta='quiet'] .lobby-code-input:focus {
   border-color: var(--c-cyan);
 }
+
+/* MEASURED: at the 8% the brief specifies, the motif is INVISIBLE on these boards. Sampling
+   the same 240x200 block of the Word Bomb stage with the motif shown and hidden gives a mean
+   pixel delta of 1/255 in R and G. It is mounted, masked and positioned correctly - it simply
+   does not register against #1a0b2e. So a second strength exists purely so the IDEA can be
+   judged: ?x7c=2 is 18%, which is outside the brief's 6-10% band and is meant to answer
+   "is this worth having at all", not "ship this number". */
+.x7c-motif[data-strength='2'] { opacity: 0.18; }
+@media (max-width: 560px) {
+  .x7c-motif[data-strength='2'] { opacity: 0.15; }
+}

@@ -2983,10 +2983,11 @@ export default function GameScreen({
             opaque #1a0b2e background, so a motif mounted outside it is painted over
             completely and the first run of this experiment showed literally no
             difference. This mirrors what CHAIN and FUSE already do with .solo-motif. */}
-        {xFlag('x7c') && (
+        {xParam('x7c') && (
           <div
             className="x7c-motif"
             data-motif={gameType === 'category-blitz' ? 'gavel' : 'blast'}
+            data-strength={xParam('x7c')}
             aria-hidden="true"
           />
         )}
