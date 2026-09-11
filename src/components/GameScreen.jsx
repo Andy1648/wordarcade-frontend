@@ -2852,15 +2852,6 @@ export default function GameScreen({
       {/* PHASE 7a PROTOTYPE (?x7a=1): the board's own darkening wash. Fixed, click-through,
           opacity-only, and mounted before everything else so it sits behind the stage. */}
       {xFlag('x7a') && <div className="x7a-dim" aria-hidden="true" />}
-      {/* PHASE 7c PROTOTYPE (?x7c=1): one huge low-contrast silhouette in the corner,
-          bled off two edges, masked so the mode script supplies the colour. */}
-      {xFlag('x7c') && (
-        <div
-          className="x7c-motif"
-          data-motif={gameType === 'category-blitz' ? 'gavel' : 'blast'}
-          aria-hidden="true"
-        />
-      )}
       {/* WINS: live running tally, hidden once the game is over (the total shows there). No WPM
           pill — Word Bomb is turn-based, so typing speed there is meaningless (§2). */}
       {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />}
@@ -2986,6 +2977,19 @@ export default function GameScreen({
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
         style={{ '--drain-sat': drainSat }}
       >
+        {/* PHASE 7c PROTOTYPE (?x7c=1): one huge low-contrast silhouette, bled off two
+            edges, masked so the mode script supplies the colour. It must be the FIRST
+            child of .game-stage, not a sibling of the panel: .game-stage carries an
+            opaque #1a0b2e background, so a motif mounted outside it is painted over
+            completely and the first run of this experiment showed literally no
+            difference. This mirrors what CHAIN and FUSE already do with .solo-motif. */}
+        {xFlag('x7c') && (
+          <div
+            className="x7c-motif"
+            data-motif={gameType === 'category-blitz' ? 'gavel' : 'blast'}
+            aria-hidden="true"
+          />
+        )}
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.

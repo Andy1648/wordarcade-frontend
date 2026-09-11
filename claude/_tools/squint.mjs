@@ -426,16 +426,30 @@ for (const [w, h, tag] of VIEWPORTS) {
 }
 await browser.close();
 
+// DOMINANCE. A raw region COUNT over-reports, and the wide run showed how badly: the Word
+// Bomb game-over screen scored 4 regions at 2560x1440 - but they were 175, 60, 9 and 7
+// cells. One region 17-25x the size of the specks beside it is not a screen with four
+// entry points; it is a screen with one entry point and some chips. What actually
+// separates "one thing to look at" from "several things competing" is the ratio of the
+// largest region to the next largest. Below 4x, the eye genuinely has to choose.
+const DOMINANCE = 4;
+const dominance = (r) => {
+  const a = (r.regions || []).map((x) => x.area).sort((x, y) => y - x);
+  if (a.length < 2) return Infinity;
+  return a[0] / a[1];
+};
+
 const verdict = (r) => {
   if (r.status !== 'OK' || !r.regions) return 'SKIP';
   // In ABS mode a low peak is the POINT of the comparison, not a disqualifier.
   if (r.flatPage && ABS == null) return 'FLAT'; // nothing pops at all - no entry point either
   if (r.regions.length === 1) return 'PASS';
   if (r.regions.length === 0) return 'FLAT';
-  return 'BUSY';
+  // One region far larger than everything else still gives the eye a single entry point.
+  return dominance(r) >= DOMINANCE ? 'DOMIN' : 'BUSY';
 };
 console.log(`\nSQUINT | blur ${BLUR}px, cell ${CELL}px, ${ABS != null ? `ABSOLUTE cut at L* deviation ${ABS}` : `hot = within ${((1 - RATIO) * 100).toFixed(0)}% of the screen's own peak`}, min region ${MIN_AREA} cells\n`);
-console.log('surface              view     ground  peak   cut    hot%   regions verdict  top areas');
+console.log('surface              view     ground  peak   cut    hot%   regions dom    verdict  top areas');
 for (const r of rows) {
   const areas = (r.regions || [])
     .slice(0, 5)
@@ -443,10 +457,10 @@ for (const r of rows) {
     .join(', ');
   const pct = ((r.hotFraction ?? 0) * 100).toFixed(1).padStart(4);
   console.log(
-    `${r.surface.padEnd(20)} ${r.tag.padEnd(8)} ${(r.ground ?? 0).toFixed(3)}   ${(r.peak ?? 0).toFixed(3)}  ${(r.cut ?? 0).toFixed(3)}  ${pct}%  ${String((r.regions || []).length).padStart(5)}   ${verdict(r).padEnd(7)}  ${areas}${r.status !== 'OK' ? '  ' + r.status : ''}`
+    `${r.surface.padEnd(20)} ${r.tag.padEnd(8)} ${(r.ground ?? 0).toFixed(3)}   ${(r.peak ?? 0).toFixed(3)}  ${(r.cut ?? 0).toFixed(3)}  ${pct}%  ${String((r.regions || []).length).padStart(5)}   ${(Number.isFinite(dominance(r)) ? dominance(r).toFixed(2) : '-').padStart(5)}  ${verdict(r).padEnd(7)}  ${areas}${r.status !== 'OK' ? '  ' + r.status : ''}`
   );
 }
 fs.writeFileSync(path.join(OUT, 'squint.json'), JSON.stringify({ blur: BLUR, cell: CELL, ratio: RATIO, minArea: MIN_AREA, minPeak: MIN_PEAK, rows }, null, 2));
 const n = (v) => rows.filter((r) => verdict(r) === v).length;
-console.log(`\n${n('PASS')} pass / ${n('BUSY')} busy / ${n('FLAT')} flat / ${n('SKIP')} unreached`);
+console.log(`\n${n('PASS')} single-region / ${n('DOMIN')} one dominant (>=${DOMINANCE}x) / ${n('BUSY')} contested / ${n('FLAT')} flat / ${n('SKIP')} unreached`);
 console.log('->', OUT);

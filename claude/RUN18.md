@@ -26,11 +26,12 @@ CTA on both MULTIPLAYER dialogs (Word Bomb and Category Blitz — the solo modes
 and are unaffected), where the brief says "START the only hot element". One-line fix built as
 `?dlgcta=demote`; screenshots in `claude/x7/`.
 
-**3. Five screens have no single entry point at ANY viewport. §7d**
-The value-grouping gate, made real, run over 8 viewports x 15 screens. `wb-dialog`, `blitz-dialog`,
-`lobby`, `chain-play` and `fuse-play` fail at **every size tested** — these are composition
-problems, not responsive ones, and no breakpoint work will touch them. Six screens pass 8/8, which
-is the other half of the result: the system works where it is applied.
+**3. Three screens are genuinely contested at EVERY viewport. §7d**
+The value-grouping gate, made real, run over 8 viewports x 15 screens, then re-scored on region
+DOMINANCE after a raw region count over-reported (I withdrew a claim about CHAIN/FUSE doing this).
+The two mode dialogs and the lobby have no dominant element at any size — and the dialogs' two
+loudest regions are *exactly the same size* (ratio 1.00 and 1.02): PLAY and JOIN WITH CODE, tied.
+Six screens pass 8/8, which is the other half: the system works where it is applied.
 
 **4. Three look experiments are built and shot side by side. Nothing is merged. §7**
 7a danger escalation — works, reads clearly, and is the one I'd argue for.
@@ -489,44 +490,64 @@ still pull away from the page's own ground. One region means the eye has an entr
 
 **Run across EIGHT viewports** — 2560x1440, 1920x1080, 1440x900, 1366x768, 1280x720, 1163x501,
 390x844, 360x640 — because value grouping is a composition property and composition changes with
-the shape of the box. 120 screen/viewport pairs: **56 pass / 64 busy.**
+the shape of the box. 120 screen/viewport pairs.
 
-The per-screen view is the one that matters, and it says something much stronger than a raw count:
+### I overstated this first, and then refuted myself
 
-| screen | passes | busy at (region count) |
-|---|---|---|
-| shop | **8/8** | — |
-| stats | **8/8** | — |
-| collection | **8/8** | — |
-| wb-play | **8/8** | — |
-| blitz-play | **8/8** | — |
-| sat-play | **8/8** | — |
-| chain-death | 3/8 | worse as the screen GROWS: 5 regions @2560, 2 @1366 |
-| menu | 2/8 | 2-3 regions everywhere except the two largest sizes |
-| rooms-browser | 2/8 | 2 regions at six of eight |
-| wb-gameover | 1/8 | worse as the screen GROWS: 4 @2560-1440, 3 below |
-| **wb-dialog** | **0/8** | 2-3 regions at every single size |
-| **blitz-dialog** | **0/8** | 3 everywhere on desktop, **6 at 390x844**, 5 at 360x640 |
-| **lobby** | **0/8** | 4 regions at five of eight sizes |
-| **chain-play** | **0/8** | 3 regions at every single size |
-| **fuse-play** | **0/8** | 3 regions at seven of eight |
+My first pass reported "five screens fail at every size" off a raw region COUNT. That count
+over-reports, and the wide data shows exactly how badly. Word Bomb's game-over screen scores 4
+regions at 2560x1440 — but they are **175, 60, 9 and 7** cells. One region seventeen to
+twenty-five times the size of the specks beside it is not a screen with four entry points; it is a
+screen with one entry point and some chips.
 
-**The headline is that the failures are not responsive, they are structural.** Five screens fail at
-every size tested. No amount of breakpoint work will fix a screen that has three entry points at
-360px and three at 2560px — the composition has three entry points.
+So the measure that actually matters is **DOMINANCE**: the ratio of the largest hot region to the
+next largest. Above ~4x the eye still has one place to land. Below it, the eye genuinely has to
+choose. Re-scored that way:
 
-Six screens are clean at every size, which is the other half of the result and worth saying: the
-value system demonstrably works where it is applied. Shop, stats, collection and all three play
-screens hold one entry point from a phone to a 4K monitor.
+| screen | single region | one dominant (>=4x) | genuinely contested | worst ratio |
+|---|---|---|---|---|
+| shop | 8/8 | — | 0 | — |
+| stats | 8/8 | — | 0 | — |
+| collection | 8/8 | — | 0 | — |
+| wb-play | 8/8 | — | 0 | — |
+| blitz-play | 8/8 | — | 0 | — |
+| sat-play | 8/8 | — | 0 | — |
+| chain-death | 3 | 3 | 2 | 3.74 |
+| fuse-play | 0 | 6 | 2 | 3.50 |
+| chain-play | 0 | 6 | 2 | 2.95 |
+| wb-gameover | 1 | 5 | 2 | 2.92 |
+| menu | 2 | 1 | 5 | 1.46 |
+| rooms-browser | 2 | 0 | 6 | 1.30 |
+| **lobby** | 0 | 0 | **8/8** | **1.84** |
+| **wb-dialog** | 0 | 0 | **8/8** | **1.02** |
+| **blitz-dialog** | 0 | 0 | **8/8** | **1.00** |
+
+**The corrected headline: three screens are genuinely contested at every viewport — the two mode
+dialogs and the lobby.** CHAIN and FUSE, which I had called structural failures, have a dominant
+region at six of eight sizes; they are far less bad than the raw count made them look, and I am
+withdrawing that claim.
+
+**And the dialogs are the worst thing measured in this run, by a distance.** A dominance ratio of
+**1.00 and 1.02** means the two loudest regions on those screens are *exactly the same size*. With
+the region-identity check turned on (§6c), the tool names them:
+
+```
+blitz-dialog desktop   134 .mode-dialog-btn ,  132 .mode-dialog-btn ,  28 .mode-dialog-ai-badge-ai
+wb-dialog    desktop   127 .mode-dialog-btn ,   77 .mode-dialog-btn
+```
+
+PLAY and JOIN WITH CODE, tied. That is the same defect §6a found from the contrast side and §6b
+explained structurally, arrived at from a third direction entirely.
 
 Two further things worth acting on:
-1. **The two game-over screens get WORSE as the display grows** (chain-death 2 regions at 1366x768,
-   5 at 2560x1440; wb-gameover 3 and 4). At small sizes the summary elements merge under the blur
-   into one mass; as the screen grows they separate and start competing. A max-width on the summary
-   grid would hold the small-screen composition at every size.
+1. **Both game-over screens degrade as the display grows** (chain-death 1 region at 360x640 and
+   390x844, 5 at 2560x1440; wb-gameover similar). At small sizes the summary merges under the blur
+   into one mass; as the screen grows the pieces separate. A max-width on the summary grid would
+   hold the small-screen composition at every size.
 2. **`sat-play` passes on a technicality.** One region, but it is 1209 cells — 16.7% of the screen
    at 1366x768 and 34.3% at 390x844. That is one enormous hot area, not a focal point. The test
-   counts regions, not their share; a share cap is the obvious next iteration.
+   counts regions and now weighs their relative size; it still does not cap a region's SHARE of the
+   screen, which is the obvious next iteration.
 
 ---
 
