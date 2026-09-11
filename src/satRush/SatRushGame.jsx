@@ -44,6 +44,8 @@ import SatRushResults from './SatRushResults';
 import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
+import { xFlag } from '../experiments/flags';
+import '../experiments/experiments.css';
 
 export default function SatRushGame({ onExit, musicSetVolume }) {
   const game = useSatRushGame();
@@ -211,6 +213,10 @@ function StartScreen({ onPlay, onExit }) {
   const mult = currentRebirthMult();
   return (
     <div className="sr-screen">
+      {/* PHASE 7c PROTOTYPE (?x7c=1): the brain motif, in ink rather than a mode neon -
+          SAT Rush's script is cream + one near-black ink and a coloured silhouette would
+          break the duotone the whole mode is built on. */}
+      {xFlag('x7c') && <div className="x7c-motif" data-motif="brain" aria-hidden="true" />}
       <div className="sr-cover">
         <div className="sr-title sr-print" data-v={'SAT RUSH'}>
           SAT&nbsp;RUSH
