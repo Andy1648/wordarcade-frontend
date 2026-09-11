@@ -1,0 +1,413 @@
+[
+  {
+    "n": 2,
+    "vtag": "1366x768",
+    "status": "OK",
+    "vw": 1366,
+    "vh": 768,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 2,
+    "seatW": [
+      62,
+      62
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 244,
+    "ringW": 430,
+    "ringH": 430,
+    "bombPctOfCell": 56.7,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 463,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 0,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": -14,
+    "clippedEl": "game-player-name-text"
+  },
+  {
+    "n": 3,
+    "vtag": "1366x768",
+    "status": "OK",
+    "vw": 1366,
+    "vh": 768,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 3,
+    "seatW": [
+      62,
+      62,
+      62
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 244,
+    "ringW": 430,
+    "ringH": 430,
+    "bombPctOfCell": 56.7,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 463,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 104,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 82,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 4,
+    "vtag": "1366x768",
+    "status": "OK",
+    "vw": 1366,
+    "vh": 768,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 4,
+    "seatW": [
+      62,
+      62,
+      62,
+      62
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 244,
+    "ringW": 430,
+    "ringH": 430,
+    "bombPctOfCell": 56.7,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 463,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 104,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 82,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 8,
+    "vtag": "1366x768",
+    "status": "OK",
+    "vw": 1366,
+    "vh": 768,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 8,
+    "seatW": [
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 244,
+    "ringW": 430,
+    "ringH": 430,
+    "bombPctOfCell": 56.7,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 463,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 104,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 82,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 2,
+    "vtag": "1280x720",
+    "status": "OK",
+    "vw": 1280,
+    "vh": 720,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 2,
+    "seatW": [
+      58,
+      58
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 228,
+    "ringW": 403,
+    "ringH": 403,
+    "bombPctOfCell": 56.5,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 417,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": -48,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": -61,
+    "clippedEl": "game-player-name-text"
+  },
+  {
+    "n": 3,
+    "vtag": "1280x720",
+    "status": "OK",
+    "vw": 1280,
+    "vh": 720,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 3,
+    "seatW": [
+      58,
+      58,
+      58
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 228,
+    "ringW": 403,
+    "ringH": 403,
+    "bombPctOfCell": 56.5,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 417,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 45,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 23,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 4,
+    "vtag": "1280x720",
+    "status": "OK",
+    "vw": 1280,
+    "vh": 720,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 4,
+    "seatW": [
+      58,
+      58,
+      58,
+      58
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 228,
+    "ringW": 403,
+    "ringH": 403,
+    "bombPctOfCell": 56.5,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 417,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 45,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 23,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 8,
+    "vtag": "1280x720",
+    "status": "OK",
+    "vw": 1280,
+    "vh": 720,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 8,
+    "seatW": [
+      58,
+      58,
+      58,
+      58,
+      58,
+      58,
+      58,
+      58
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 228,
+    "ringW": 403,
+    "ringH": 403,
+    "bombPctOfCell": 56.5,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 417,
+        "h": 79
+      }
+    ],
+    "overflowRight": -31,
+    "overflowBottom": 45,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 23,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 2,
+    "vtag": "390x844",
+    "status": "OK",
+    "vw": 390,
+    "vh": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 2,
+    "seatW": [
+      45,
+      45
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 175,
+    "ringW": 312,
+    "ringH": 312,
+    "bombPctOfCell": 56,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 324,
+        "h": 69
+      }
+    ],
+    "overflowRight": -1,
+    "overflowBottom": 21,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": -17,
+    "clippedEl": "game-skip-btn"
+  },
+  {
+    "n": 3,
+    "vtag": "390x844",
+    "status": "OK",
+    "vw": 390,
+    "vh": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 3,
+    "seatW": [
+      45,
+      45,
+      45
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 175,
+    "ringW": 312,
+    "ringH": 312,
+    "bombPctOfCell": 56,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 324,
+        "h": 69
+      }
+    ],
+    "overflowRight": -1,
+    "overflowBottom": 125,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 103,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 4,
+    "vtag": "390x844",
+    "status": "OK",
+    "vw": 390,
+    "vh": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 4,
+    "seatW": [
+      45,
+      45,
+      45,
+      45
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 175,
+    "ringW": 312,
+    "ringH": 312,
+    "bombPctOfCell": 56,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 324,
+        "h": 69
+      }
+    ],
+    "overflowRight": -1,
+    "overflowBottom": 125,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 103,
+    "clippedEl": "kill-feed-empty"
+  },
+  {
+    "n": 8,
+    "vtag": "390x844",
+    "status": "OK",
+    "vw": 390,
+    "vh": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "seats": 8,
+    "seatW": [
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45
+    ],
+    "worstOverlap": 0,
+    "overlapPair": null,
+    "bombW": 175,
+    "ringW": 312,
+    "ringH": 312,
+    "bombPctOfCell": 56,
+    "stretched": [
+      {
+        "cls": "spotlight-hole",
+        "w": 324,
+        "h": 69
+      }
+    ],
+    "overflowRight": -1,
+    "overflowBottom": 125,
+    "worstBottomEl": "game-panel",
+    "clippedBottom": 103,
+    "clippedEl": "kill-feed-empty"
+  }
+]

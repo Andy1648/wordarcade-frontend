@@ -1,0 +1,892 @@
+{
+  "blur": 12,
+  "cell": 12,
+  "dev": 0.45,
+  "minArea": 6,
+  "rows": [
+    {
+      "surface": "menu",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0125,
+      "cols": 113,
+      "rows": 64,
+      "total": 0,
+      "regions": [],
+      "hotFraction": 0
+    },
+    {
+      "surface": "shop",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 2,
+      "regions": [
+        {
+          "area": 282,
+          "peak": 0.837,
+          "box": [
+            264,
+            636,
+            840,
+            60
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.485,
+          "box": [
+            336,
+            288,
+            48,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.04
+    },
+    {
+      "surface": "stats",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 134,
+          "peak": 0.825,
+          "box": [
+            480,
+            672,
+            408,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0185
+    },
+    {
+      "surface": "collection",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 134,
+          "peak": 0.825,
+          "box": [
+            480,
+            672,
+            408,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0185
+    },
+    {
+      "surface": "wb-dialog",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 6,
+      "regions": [
+        {
+          "area": 173,
+          "peak": 0.597,
+          "box": [
+            444,
+            516,
+            264,
+            96
+          ]
+        },
+        {
+          "area": 139,
+          "peak": 0.954,
+          "box": [
+            744,
+            516,
+            192,
+            108
+          ]
+        },
+        {
+          "area": 6,
+          "peak": 0.505,
+          "box": [
+            756,
+            204,
+            36,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0447
+    },
+    {
+      "surface": "blitz-dialog",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 11,
+      "regions": [
+        {
+          "area": 206,
+          "peak": 0.629,
+          "box": [
+            408,
+            588,
+            312,
+            96
+          ]
+        },
+        {
+          "area": 165,
+          "peak": 0.962,
+          "box": [
+            744,
+            576,
+            216,
+            120
+          ]
+        },
+        {
+          "area": 35,
+          "peak": 0.757,
+          "box": [
+            408,
+            120,
+            108,
+            48
+          ]
+        },
+        {
+          "area": 28,
+          "peak": 0.57,
+          "box": [
+            792,
+            420,
+            132,
+            36
+          ]
+        },
+        {
+          "area": 22,
+          "peak": 0.534,
+          "box": [
+            432,
+            420,
+            132,
+            24
+          ]
+        },
+        {
+          "area": 21,
+          "peak": 0.527,
+          "box": [
+            612,
+            420,
+            132,
+            24
+          ]
+        },
+        {
+          "area": 19,
+          "peak": 0.517,
+          "box": [
+            612,
+            480,
+            120,
+            24
+          ]
+        },
+        {
+          "area": 17,
+          "peak": 0.511,
+          "box": [
+            444,
+            480,
+            108,
+            24
+          ]
+        },
+        {
+          "area": 17,
+          "peak": 0.536,
+          "box": [
+            792,
+            480,
+            108,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0737
+    },
+    {
+      "surface": "lobby",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 4,
+      "regions": [
+        {
+          "area": 117,
+          "peak": 0.843,
+          "box": [
+            492,
+            360,
+            384,
+            48
+          ]
+        },
+        {
+          "area": 46,
+          "peak": 0.759,
+          "box": [
+            492,
+            444,
+            192,
+            36
+          ]
+        },
+        {
+          "area": 21,
+          "peak": 0.527,
+          "box": [
+            504,
+            528,
+            144,
+            24
+          ]
+        },
+        {
+          "area": 21,
+          "peak": 0.521,
+          "box": [
+            732,
+            528,
+            132,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0283
+    },
+    {
+      "surface": "rooms-browser",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 236,
+          "peak": 0.84,
+          "box": [
+            468,
+            348,
+            432,
+            96
+          ]
+        }
+      ],
+      "hotFraction": 0.0326
+    },
+    {
+      "surface": "wb-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 31,
+          "peak": 0.766,
+          "box": [
+            1212,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0043
+    },
+    {
+      "surface": "blitz-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 31,
+          "peak": 0.766,
+          "box": [
+            1212,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0043
+    },
+    {
+      "surface": "chain-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0125,
+      "cols": 113,
+      "rows": 64,
+      "total": 0,
+      "regions": [],
+      "hotFraction": 0
+    },
+    {
+      "surface": "fuse-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0125,
+      "cols": 113,
+      "rows": 64,
+      "total": 0,
+      "regions": [],
+      "hotFraction": 0
+    },
+    {
+      "surface": "sat-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0625,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 1247,
+          "peak": 0.861,
+          "box": [
+            432,
+            204,
+            504,
+            360
+          ]
+        }
+      ],
+      "hotFraction": 0.1724
+    },
+    {
+      "surface": "wb-gameover",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 2,
+      "regions": [
+        {
+          "area": 182,
+          "peak": 0.864,
+          "box": [
+            504,
+            576,
+            372,
+            72
+          ]
+        },
+        {
+          "area": 40,
+          "peak": 0.56,
+          "box": [
+            528,
+            384,
+            144,
+            60
+          ]
+        }
+      ],
+      "hotFraction": 0.0307
+    },
+    {
+      "surface": "chain-death",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 113,
+      "rows": 64,
+      "total": 6,
+      "regions": [
+        {
+          "area": 91,
+          "peak": 0.82,
+          "box": [
+            504,
+            540,
+            360,
+            48
+          ]
+        },
+        {
+          "area": 15,
+          "peak": 0.553,
+          "box": [
+            588,
+            372,
+            72,
+            36
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.56,
+          "box": [
+            708,
+            372,
+            36,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0166
+    },
+    {
+      "surface": "menu",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0125,
+      "cols": 32,
+      "rows": 70,
+      "total": 0,
+      "regions": [],
+      "hotFraction": 0
+    },
+    {
+      "surface": "shop",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 97,
+          "peak": 0.789,
+          "box": [
+            48,
+            720,
+            300,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0451
+    },
+    {
+      "surface": "stats",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 82,
+          "peak": 0.808,
+          "box": [
+            48,
+            756,
+            300,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0366
+    },
+    {
+      "surface": "collection",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 74,
+          "peak": 0.783,
+          "box": [
+            48,
+            756,
+            300,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.033
+    },
+    {
+      "surface": "wb-dialog",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 63,
+          "peak": 0.585,
+          "box": [
+            72,
+            576,
+            132,
+            72
+          ]
+        },
+        {
+          "area": 59,
+          "peak": 0.8,
+          "box": [
+            216,
+            564,
+            108,
+            96
+          ]
+        }
+      ],
+      "hotFraction": 0.0545
+    },
+    {
+      "surface": "blitz-dialog",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 6,
+      "regions": [
+        {
+          "area": 66,
+          "peak": 0.623,
+          "box": [
+            72,
+            672,
+            132,
+            72
+          ]
+        },
+        {
+          "area": 61,
+          "peak": 0.821,
+          "box": [
+            228,
+            660,
+            108,
+            96
+          ]
+        },
+        {
+          "area": 46,
+          "peak": 0.59,
+          "box": [
+            84,
+            528,
+            204,
+            36
+          ]
+        },
+        {
+          "area": 39,
+          "peak": 0.59,
+          "box": [
+            96,
+            468,
+            192,
+            36
+          ]
+        },
+        {
+          "area": 38,
+          "peak": 0.581,
+          "box": [
+            96,
+            408,
+            192,
+            36
+          ]
+        },
+        {
+          "area": 30,
+          "peak": 0.736,
+          "box": [
+            60,
+            132,
+            108,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.125
+    },
+    {
+      "surface": "lobby",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "cols": 32,
+      "rows": 70,
+      "total": 5,
+      "regions": [
+        {
+          "area": 113,
+          "peak": 0.897,
+          "box": [
+            48,
+            372,
+            288,
+            60
+          ]
+        },
+        {
+          "area": 61,
+          "peak": 0.787,
+          "box": [
+            60,
+            468,
+            132,
+            72
+          ]
+        },
+        {
+          "area": 17,
+          "peak": 0.53,
+          "box": [
+            228,
+            600,
+            96,
+            36
+          ]
+        },
+        {
+          "area": 15,
+          "peak": 0.525,
+          "box": [
+            72,
+            612,
+            96,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0929
+    },
+    {
+      "surface": "rooms-browser",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 96,
+          "peak": 0.893,
+          "box": [
+            48,
+            360,
+            288,
+            60
+          ]
+        },
+        {
+          "area": 58,
+          "peak": 0.876,
+          "box": [
+            48,
+            444,
+            180,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0688
+    },
+    {
+      "surface": "wb-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 30,
+          "peak": 0.742,
+          "box": [
+            240,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0134
+    },
+    {
+      "surface": "blitz-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 30,
+          "peak": 0.742,
+          "box": [
+            240,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0134
+    },
+    {
+      "surface": "chain-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0125,
+      "cols": 32,
+      "rows": 70,
+      "total": 0,
+      "regions": [],
+      "hotFraction": 0
+    },
+    {
+      "surface": "fuse-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0125,
+      "cols": 32,
+      "rows": 70,
+      "total": 0,
+      "regions": [],
+      "hotFraction": 0
+    },
+    {
+      "surface": "sat-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 804,
+          "peak": 0.861,
+          "box": [
+            24,
+            252,
+            348,
+            348
+          ]
+        }
+      ],
+      "hotFraction": 0.3589
+    },
+    {
+      "surface": "wb-gameover",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 3,
+      "regions": [
+        {
+          "area": 123,
+          "peak": 0.859,
+          "box": [
+            60,
+            672,
+            288,
+            72
+          ]
+        },
+        {
+          "area": 38,
+          "peak": 0.557,
+          "box": [
+            72,
+            288,
+            144,
+            48
+          ]
+        },
+        {
+          "area": 9,
+          "peak": 0.494,
+          "box": [
+            84,
+            804,
+            108,
+            12
+          ]
+        }
+      ],
+      "hotFraction": 0.0759
+    },
+    {
+      "surface": "chain-death",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 93,
+          "peak": 0.799,
+          "box": [
+            48,
+            516,
+            288,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.042
+    }
+  ]
+}
