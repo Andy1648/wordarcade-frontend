@@ -6,7 +6,7 @@ import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
-import { xFlag } from '../experiments/flags';
+import { xFlag, xParam } from '../experiments/flags';
 import '../experiments/experiments.css';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
@@ -2841,6 +2841,9 @@ export default function GameScreen({
     // what inner control is touched.
     <div
       className={`game-wrap${xFlag('x7a') ? ' x7a' : ''}`}
+      /* PROTOTYPE (?wbfit=ring | ?wbfit=prompt): two ways out of the short-window
+         clipping, built side by side rather than one chosen quietly. Absent = today. */
+      data-wbfit={xParam('wbfit')}
       data-tension={tensionTier}
       style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}

@@ -23,3 +23,15 @@ export function xFlag(name) {
     return false; // a malformed query string is just "no experiment"
   }
 }
+
+// Some prototypes have more than two states, so they read a VALUE rather than a boolean.
+// Returns undefined when absent, so it can be spread straight onto a data-* attribute
+// without painting an empty one.
+export function xParam(name) {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    return new URLSearchParams(window.location.search).get(name) || undefined;
+  } catch {
+    return undefined;
+  }
+}

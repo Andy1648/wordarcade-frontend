@@ -30,17 +30,56 @@ const reachMenu = (q) => async (p) => {
   await p.waitForTimeout(700); // let the wordmark's webfont land before judging the paint
 };
 
-const reachWb = (q, seconds) => async (p, mock) => {
+const reachWb = (q, danger, tension) => async (p, mock) => {
+  // --danger IS PINNED, NOT RACED. Two earlier attempts at photographing this off the
+  // real clock both failed, and the reasons are worth keeping:
+  //   1. maxTimer is read from the SAME turn_update as timerSeconds (GameScreen:
+  //      `maxTimer = gameState.timerSeconds`), so a frame saying "4 seconds" also makes
+  //      the turn 4 seconds long - ratio 1, full ring, --danger 0. The escalation got
+  //      photographed at the one value where it does nothing.
+  //   2. Starting a real 30s turn and waiting for the client's own countdown does not
+  //      work either: against the mock the local tick does not advance, so the ring sat
+  //      full through a 36s wait.
+  // Pinning the eased value is also simply a better experiment - it photographs the
+  // board at a KNOWN point on the curve instead of wherever a racing clock happened to
+  // be, so the three shots are a controlled series. The shots are labelled with the
+  // --danger value rather than a number of seconds, because that is what they show.
   await p.goto(`/?portal=1${q}`);
   await waitImg(p);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players: wbPlayers } });
   await p.waitForTimeout(80);
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
   await p.waitForTimeout(80);
-  mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbPlayers, combo: 'str', usedWords: ['MONSTER', 'STRAP', 'STRIKE'], timerSeconds: seconds } });
-  // Long enough for the turn-start splash to clear AND for --danger to ease to its
-  // resting value for this many seconds; short enough that the clock has not moved on.
-  await p.waitForTimeout(1800);
+  mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbPlayers, combo: 'str', usedWords: ['MONSTER', 'STRAP', 'STRIKE'], timerSeconds: 30 } });
+  // Wait for the 3-2-1 to APPEAR before waiting for it to go. Waiting only for
+  // `detached` resolves instantly, because at that moment the overlay has not mounted
+  // yet - which put the camera back inside the countdown, where the board still reads
+  // WAIT YOUR TURN and the bomb shows the intro numeral instead of the turn.
+  await p.locator('.countdown-overlay').waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});
+  await p.locator('.countdown-overlay').waitFor({ state: 'detached', timeout: 20000 }).catch(() => {});
+  // And wait for the board to actually be playable, which is the real signal that the
+  // intro is over: the field stops saying WAIT YOUR TURN once the turn is ours.
+  await p
+    .waitForFunction(
+      () => {
+        const i = document.querySelector('.game-wrap input');
+        return !!i && !/WAIT YOUR TURN/i.test(i.placeholder || '');
+      },
+      undefined,
+      { timeout: 12000, polling: 200 }
+    )
+    .catch(() => {});
+  await p.waitForTimeout(300);
+  await p.evaluate(
+    ({ d, t }) => {
+      const el = document.querySelector('.game-wrap');
+      if (!el) return;
+      el.style.setProperty('--danger', String(d));
+      el.setAttribute('data-tension', t);
+    },
+    { d: danger, t: tension }
+  );
+  await p.waitForTimeout(500);
 };
 
 const reachBlitz = (q) => async (p, mock) => {
@@ -59,15 +98,15 @@ const reachBlitz = (q) => async (p, mock) => {
 
 // name, [leftLabel, leftReach], [rightLabel, rightReach], viewport
 const PAIRS = [
-  ['7a-wb-22s', ['TODAY (22s left)', reachWb('', 22)], ['x7a ESCALATION (22s left)', reachWb('&x7a=1', 22)], [1366, 768]],
-  ['7a-wb-10s', ['TODAY (10s left)', reachWb('', 10)], ['x7a ESCALATION (10s left)', reachWb('&x7a=1', 10)], [1366, 768]],
-  ['7a-wb-4s', ['TODAY (4s left)', reachWb('', 4)], ['x7a ESCALATION (4s left)', reachWb('&x7a=1', 4)], [1366, 768]],
-  ['7a-wb-4s-phone', ['TODAY (4s left)', reachWb('', 4)], ['x7a ESCALATION (4s left)', reachWb('&x7a=1', 4)], [390, 844]],
+  ['7a-wb-d00', ['TODAY (danger 0.0, calm)', reachWb('', 0, 'calm')], ['x7a ESCALATION (danger 0.0)', reachWb('&x7a=1', 0, 'calm')], [1366, 768]],
+  ['7a-wb-d50', ['TODAY (danger 0.5, warn)', reachWb('', 0.5, 'warn')], ['x7a ESCALATION (danger 0.5)', reachWb('&x7a=1', 0.5, 'warn')], [1366, 768]],
+  ['7a-wb-d100', ['TODAY (danger 1.0, crit)', reachWb('', 1, 'crit')], ['x7a ESCALATION (danger 1.0)', reachWb('&x7a=1', 1, 'crit')], [1366, 768]],
+  ['7a-wb-d100-phone', ['TODAY (danger 1.0, crit)', reachWb('', 1, 'crit')], ['x7a ESCALATION (danger 1.0)', reachWb('&x7a=1', 1, 'crit')], [390, 844]],
   ['7b-menu', ['TODAY (flat pink)', reachMenu('')], ['x7b CHROMATIC LOCKUP', reachMenu('&x7b=1')], [1366, 768]],
   ['7b-menu-phone', ['TODAY (flat pink)', reachMenu('')], ['x7b CHROMATIC LOCKUP', reachMenu('&x7b=1')], [390, 844]],
-  ['7c-wb', ['TODAY (no motif)', reachWb('', 22)], ['x7c BLAST MOTIF', reachWb('&x7c=1', 22)], [1366, 768]],
+  ['7c-wb', ['TODAY (no motif)', reachWb('', 0, 'calm')], ['x7c BLAST MOTIF', reachWb('&x7c=1', 0, 'calm')], [1366, 768]],
   ['7c-blitz', ['TODAY (no motif)', reachBlitz('')], ['x7c GAVEL MOTIF', reachBlitz('&x7c=1')], [1366, 768]],
-  ['7c-wb-phone', ['TODAY (no motif)', reachWb('', 22)], ['x7c BLAST MOTIF', reachWb('&x7c=1', 22)], [390, 844]],
+  ['7c-wb-phone', ['TODAY (no motif)', reachWb('', 0, 'calm')], ['x7c BLAST MOTIF', reachWb('&x7c=1', 0, 'calm')], [390, 844]],
 ];
 
 // Stitch two PNGs into one labelled strip, in the browser so there is no image library.

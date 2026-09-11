@@ -239,3 +239,60 @@
   -webkit-mask-size: contain;
   mask-size: contain;
 }
+
+/* =====================================================================
+   WB SHORT-WINDOW FIT  (?wbfit=ring | ?wbfit=prompt)
+   =====================================================================
+   MEASURED at 1366x768 with 4 players, on the shipped feat/wb-ring layout:
+
+     viewport height          768
+     stage padding + header    69.4   (grid row 1)
+     fragment card            179.6   (grid row 2)
+     row gaps + padding        ~73
+     ring                     476.2   (grid row 3, = min(46vw, 62vh))
+     ------------------------------
+     ring bottom at            798     -> 31px of the 6 o'clock seat is CLIPPED
+     .game-panel bottom at     918
+
+   The ring is capped against the RAW viewport (62vh) rather than against the space
+   actually left after the header and the fragment, so on a 768-tall window it asks for
+   more room than the grid has. It fits at 1280x720 and 1440x900 and fails at 1366x768
+   and 390x844, which is why a spec that samples other sizes stays green.
+
+   The two constraints in the brief cannot both hold at this height:
+     "bomb + fuse >= 55% of its cell"  wants the ring big
+     "fragment 72-96px Bungee"         wants the fragment card tall
+   Something has to give, and which one is a taste call, so both are built here rather
+   than one being chosen quietly.
+
+   A: ?wbfit=ring    - the ring yields. Capped at the space actually left, so nothing is
+                       clipped; the bomb gets absolutely smaller but keeps its >=55% of
+                       the (now smaller) cell, because every length in the ring is
+                       derived from --wb-size.
+   B: ?wbfit=prompt  - the fragment yields. The ring keeps 62vh and the fragment card
+                       gives back the ~46px the ring is over by, which at this size means
+                       the fragment drops out of the 72-96px band the brief asks for. */
+
+@media (min-width: 900px) and (max-height: 900px) {
+  [data-wbfit='ring'] .game-stage--wb .wb-ring {
+    /* 56vh is not a guess: the ring's top edge sits at 322px on a 768 window, and the
+       stage's bottom padding needs ~12, so the ring has 434px = 56.5vh. Rounded down. */
+    --wb-size: min(46vw, 56vh);
+  }
+  [data-wbfit='prompt'] .game-stage--wb .game-combo-box {
+    /* Give back the 46px the stage overflows by, out of the fragment's 179.6. */
+    --fragment-shrink: 1;
+  }
+  [data-wbfit='prompt'] .game-stage--wb .game-combo-box .game-combo {
+    font-size: min(var(--fs-h1), 7.4vh);
+  }
+  [data-wbfit='prompt'] .game-stage--wb .game-combo-box {
+    padding-top: clamp(6px, 1.2vh, 14px);
+    padding-bottom: clamp(6px, 1.2vh, 14px);
+  }
+}
+
+@media (max-width: 899px) {
+  [data-wbfit='ring'] .wb-ring { --wb-size: min(80vw, 40vh); }
+  [data-wbfit='prompt'] .game-combo-box .game-combo { font-size: min(var(--fs-h1), 7.4vh); }
+}
