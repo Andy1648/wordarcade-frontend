@@ -222,6 +222,47 @@ server or a clock-controlled harness.
 
 ---
 
+## 6b. THE STRUCTURAL CAUSE BEHIND MOST OF THE SQUINT FAILURES
+
+The dialog inversion is not a one-off. It is an instance of something the value system does not
+account for:
+
+**The value ladder has a tier above `--v-accent` that it does not name: plain white.**
+
+```
+#ffffff                    19.88:1 on #0d0618      <- not in the system, used everywhere
+--c-cream    #f0ead9       16.54:1
+--c-yellow   #ffe94a       16.10:1
+--c-cyan     #2effe0       15.62:1
+--c-orange   #ff6b3d        7.03:1
+--c-pink     #ff4fa3        6.53:1                 <- the DEFAULT accent
+--c-red      #ff4b4b        6.02:1
+--c-purple   #9a28ff        3.90:1
+--v-panel    #160f28        ~1.2:1
+--v-field    #0d0618         1.00
+```
+
+Twenty selectors across the component CSS paint `background: #fff` — inputs, secondary buttons,
+chips. An accent element **cannot** be the loudest thing on a screen it shares with a white
+surface: pink at 6.53:1 loses to white at 19.88:1 by a factor of three. The rule "exactly ONE
+element carries `--v-accent`" is satisfied while the eye still lands somewhere else entirely.
+
+This one fact explains three of the squint failures at once, and I checked each by eye against its
+own screenshot rather than inferring them:
+
+* **lobby** (4 regions, the worst on desktop) — the white NAME INPUT is the brightest thing on the
+  panel; the pink CONTINUE button, which is the actual CTA, is third behind it and the mint
+  PRIVATE toggle.
+* **wb-dialog** (3 regions) — white JOIN WITH CODE beats orange PLAY.
+* **blitz-dialog** (6 regions on a phone) — white JOIN WITH CODE, plus three selected pack rows in
+  the same blue as PLAY.
+
+So the actionable version of §7d is not "16 screens are busy". It is: **the accent tier is not the
+top of the ladder, and until white is either brought into the system or taken off these surfaces,
+no amount of accent discipline will make the CTA win.**
+
+---
+
 ## 6a. THE DIALOG CTA IS INVERTED — AND THE SQUINT TEST AND THE CONTRAST AUDIT AGREE
 
 Two independent methods land on the same rule, which is the strongest kind of finding this run
