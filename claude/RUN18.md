@@ -45,6 +45,12 @@ only so the idea can be judged at all.
 Not the wordmark, not the spotlit card — `.menu-xp-rank` at every desktop size, and `.menu-xp-bar`
 on a phone. The whole XP strip is the loudest thing on the menu.
 
+Measuring Phase 6's own menu numbers (§6e) found the reason: **the level numeral is 13px against
+an 11px label — 1.18x, where the brief asks for 3-4x** — because Phase 1's follow-up deliberately
+turned the XP cluster into a Space Mono data strip to stop the bar clipping on a phone. Two phases
+want opposite things from that element. The other three menu numbers (JOIN ROOM >=48px, the
+spotlit card at exactly 1.50x, the 44px nav floor) all pass.
+
 The menu is also the dimmest of the shell screens by a distance: its peak reaches L\* **0.471**,
 against 0.82–0.96 for every other shell screen, and only **0.227** at 360x640. (It is not the
 dimmest screen in the game — CHAIN and FUSE play are lower still, at 0.28 and 0.30. I claimed the
@@ -87,7 +93,7 @@ that carries all six.** `feat/experiments` sits on top of it and is not for merg
 | `feat/mode-screens` | `1689427` | P5 Blitz, SAT Rush, Chain, Fuse | pushed |
 | **`feat/shell-screens`** | **`f6bcf49`** | **P6 menu/dialogs/shop/stats/end + the WB fixes. THE TIP.** | pushed |
 | `feat/wb-gameplay-look` | `241398a` | the reported glyph defect, fixed on the branch it was reported on | pushed |
-| `feat/experiments` | `d4e6707` | P7 prototypes + the measuring tools. **Do not merge wholesale** — but `e2e/end-screen-loops.spec.js` on it is cherry-pickable on its own. | pushed |
+| `feat/experiments` | `47f3ff8` | P7 prototypes + the measuring tools. **Do not merge wholesale** — but `e2e/end-screen-loops.spec.js` on it is cherry-pickable on its own. | pushed |
 
 Every push verified against `git ls-remote`, not assumed.
 
