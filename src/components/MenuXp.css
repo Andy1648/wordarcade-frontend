@@ -29,9 +29,15 @@
   }
 }
 .menu-xp-lv {
-  font-family: 'Bungee', cursive;
+  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
+     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
+     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
+     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
+     legible and gives the track its width back. */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-label);
   line-height: 1;
   color: var(--theme-xp-fill, #2effe0); /* THEME: matches the XP fill */
   letter-spacing: 0.02em;
@@ -51,12 +57,18 @@
 }
 /* Daily-streak chip — flame + count, inline with the LV/wins chrome (no added bar height). */
 .menu-streak-chip {
+  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
+     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
+     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
+     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
+     legible and gives the track its width back. */
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-family: 'Bungee', cursive;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-body);
   line-height: 1;
   color: #ff6b3d; /* ember orange — reads as a streak/heat without a new asset */
   white-space: nowrap;
@@ -158,7 +170,16 @@
     #1a0b2e;
   border: 2px solid #000;
   border-radius: 8px;
+  /* NOT overflow:hidden - see .menu-xp-clip. The readout is centred over this track and
+     is wider than it on a tight row; clipping here cropped the numbers. */
+}
+/* Clips the scaleX fill + the marker, and nothing else. */
+.menu-xp-clip {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
+  border-radius: 6px;
+  pointer-events: none;
 }
 .menu-xp-fill {
   position: absolute;
@@ -211,7 +232,7 @@
   z-index: 2;
   font-family: 'Space Mono', monospace; font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-body);
+  font-size: var(--fs-label);
   line-height: 1;
   color: #f0ead9;
   -webkit-text-stroke: 2px #000;
@@ -398,13 +419,19 @@
 
 /* Wins chip — coin glyph + balance, inline with the LV label (no new vertical height). */
 .menu-wins-chip {
+  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
+     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
+     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
+     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
+     legible and gives the track its width back. */
   position: relative; /* anchors the affordability dot (no layout height added) */
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Bungee', cursive;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-body);
   line-height: 1;
   color: #ffe94a;
   white-space: nowrap;
