@@ -340,10 +340,28 @@ const analyser = await (await browser.newContext()).newPage();
 await analyser.goto('about:blank');
 const rows = [];
 
-for (const [w, h, tag] of [
-  [1366, 768, 'desktop'],
-  [390, 844, 'phone'],
-]) {
+// SQUINT_VIEWPORTS=all widens from the two gate sizes to the full ladder the rest of the
+// suite uses. Value grouping is a composition property, and composition changes with the
+// shape of the box - a screen can have one entry point at 1366x768 and three at 2560x1440
+// where the same elements stop merging under the blur.
+const WIDE = process.env.SQUINT_VIEWPORTS === 'all';
+const VIEWPORTS = WIDE
+  ? [
+      [2560, 1440, '2560x1440'],
+      [1920, 1080, '1920x1080'],
+      [1440, 900, '1440x900'],
+      [1366, 768, '1366x768'],
+      [1280, 720, '1280x720'],
+      [1163, 501, '1163x501'],
+      [390, 844, '390x844'],
+      [360, 640, '360x640'],
+    ]
+  : [
+      [1366, 768, 'desktop'],
+      [390, 844, 'phone'],
+    ];
+
+for (const [w, h, tag] of VIEWPORTS) {
   for (const s of S) {
     const ctx = await browser.newContext({
       baseURL: BASE,

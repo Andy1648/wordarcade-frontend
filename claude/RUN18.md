@@ -21,10 +21,11 @@ CTA on both MULTIPLAYER dialogs (Word Bomb and Category Blitz — the solo modes
 and are unaffected), where the brief says "START the only hot element". One-line fix built as
 `?dlgcta=demote`; screenshots in `claude/x7/`.
 
-**3. The squint test says 16 of 30 screens have no single entry point. §7d**
-The value-grouping gate, made real and run. Worst: the mode dialogs (3 regions on desktop, 6 on
-a phone for Blitz), the lobby (4), and CHAIN/FUSE, whose loudest element barely pulls away from
-the page at all. Full table in §7d.
+**3. Five screens have no single entry point at ANY viewport. §7d**
+The value-grouping gate, made real, run over 8 viewports x 15 screens. `wb-dialog`, `blitz-dialog`,
+`lobby`, `chain-play` and `fuse-play` fail at **every size tested** — these are composition
+problems, not responsive ones, and no breakpoint work will touch them. Six screens pass 8/8, which
+is the other half of the result: the system works where it is applied.
 
 **4. Three look experiments are built and shot side by side. Nothing is merged. §7**
 7a danger escalation — works, reads clearly, and is the one I'd argue for.
@@ -434,115 +435,46 @@ still pull away from the page's own ground. One region means the eye has an entr
   present. That asks the right question — "is there ONE winner, or several things equally loud?" —
   and asks it identically on cream and on black.
 
-**Result: 14 pass / 16 busy.**
+**Run across EIGHT viewports** — 2560x1440, 1920x1080, 1440x900, 1366x768, 1280x720, 1163x501,
+390x844, 360x640 — because value grouping is a composition property and composition changes with
+the shape of the box. 120 screen/viewport pairs: **56 pass / 64 busy.**
 
-| screen | desktop 1366x768 | phone 390x844 | peak L\* | note |
-|---|---|---|---|---|
-| menu | **BUSY** (2) | PASS (1) | **0.430** | the dimmest screen measured |
-| shop | PASS | PASS | 0.84 | |
-| stats | PASS | PASS | 0.83 | |
-| collection | PASS | PASS | 0.83 | |
-| wb-dialog | **BUSY** (3) | **BUSY** (2) | 0.95 | |
-| blitz-dialog | **BUSY** (3) | **BUSY (6)** | 0.96 | worst on the phone |
-| lobby | **BUSY (4)** | **BUSY** (2) | 0.84 | worst on desktop |
-| rooms-browser | **BUSY** (2) | **BUSY** (2) | 0.84 | |
-| wb-play | PASS | PASS | 0.77 | |
-| blitz-play | PASS | PASS | 0.77 | |
-| chain-play | **BUSY** (3) | **BUSY** (3) | **0.278** | no entry point at all |
-| fuse-play | **BUSY** (3) | **BUSY** (3) | **0.291** | no entry point at all |
-| sat-play | PASS | PASS | 0.86 | see caveat |
-| wb-gameover | **BUSY** (3) | **BUSY** (3) | 0.86 | |
-| chain-death | **BUSY** (2) | PASS | 0.82 | |
+The per-screen view is the one that matters, and it says something much stronger than a raw count:
 
-Three things worth acting on:
-1. **The dialogs are the worst offenders.** Blitz's dialog has six competing regions on a phone.
-   Phase 6 rewrote the dialogs and they still fail this.
-2. **CHAIN and FUSE have no focal point at all** — peak 0.28 and 0.29, where every other gameplay
-   screen is 0.74+. Their loudest element barely separates from the page.
-3. **`sat-play` passes on a technicality.** One region, but it is 1209 cells — 16.7% of the screen
-   on desktop and 34.3% on a phone. That is one enormous hot area, not a focal point. The test as
-   written counts regions, not their share; a share cap would be the obvious next iteration.
-
----
-
-## 1b. PHASE 1 — THE CONTRAST WORK HOLDS. THE ACCENT RULE HAS A HOLE.
-
-`claude/_tools/contrast-audit.mjs`, full output in `claude/contrast-audit.txt`. The brief asked
-Phase 1 to "print every pair you fixed and every screen's accent element"; no such report was
-written, so this produces it and checks it at the same time. Pure arithmetic, no browser.
-
-**Every claimed ratio re-derives correctly.** All sixteen, including the purple ones the comments
-are most careful about: `#9A28FF` is 3.90:1 on the field (clears the 3:1 large-text/UI bar, fails
-the 4.5:1 body bar), white on it is 5.10:1 and cream is 4.24:1 — so the "put WHITE on it, never
-cream" note in `type.css` is correct. Phase 1's contrast work survives an independent check.
-
-*(The audit's own first run reported two false mismatches, which is exactly the failure it exists
-to catch, so the parser was fixed rather than tolerated: `--c-purple`'s "never cream" describes what
-may sit ON the purple, not the ground it is measured against, and the block comment trailing
-`--v-accent` actually belongs to `--v-ink-dim`.)*
-
-**The real gap: three screens declare a hot colour that nothing spends.**
-
-| screen root | accent declared | element that spends it |
+| screen | passes | busy at (region count) |
 |---|---|---|
-| `.homepage-wrap` | pink | `.game-card-magnet.is-spotlit .game-card` |
-| `.room-wrap` | cyan | `.room-start-btn` |
-| `.lobby-wrap` | pink | `.lobby-continue-btn` |
-| `.browser-wrap` | cyan | `.browser-btn-create` |
-| `.game-wrap` | yellow | `.wb-seat .game-player-card.current` / `.cb-category-display` |
-| **`.shop-panel`** | **yellow** | **nothing** |
-| **`.credits-wrap`** | **pink** | **nothing** |
-| **`.sr-screen`** | **paper ink** | **nothing** |
+| shop | **8/8** | — |
+| stats | **8/8** | — |
+| collection | **8/8** | — |
+| wb-play | **8/8** | — |
+| blitz-play | **8/8** | — |
+| sat-play | **8/8** | — |
+| chain-death | 3/8 | worse as the screen GROWS: 5 regions @2560, 2 @1366 |
+| menu | 2/8 | 2-3 regions everywhere except the two largest sizes |
+| rooms-browser | 2/8 | 2 regions at six of eight |
+| wb-gameover | 1/8 | worse as the screen GROWS: 4 @2560-1440, 3 below |
+| **wb-dialog** | **0/8** | 2-3 regions at every single size |
+| **blitz-dialog** | **0/8** | 3 everywhere on desktop, **6 at 390x844**, 5 at 360x640 |
+| **lobby** | **0/8** | 4 regions at five of eight sizes |
+| **chain-play** | **0/8** | 3 regions at every single size |
+| **fuse-play** | **0/8** | 3 regions at seven of eight |
 
-And the `.v-accent` helper class in `values.css` is applied by **no JSX in the repo at all** — it is
-dead. Six selectors in the entire codebase spend an accent.
+**The headline is that the failures are not responsive, they are structural.** Five screens fail at
+every size tested. No amount of breakpoint work will fix a screen that has three entry points at
+360px and three at 2560px — the composition has three entry points.
 
-**Why the build-failing test does not catch it: it enforces a ceiling and not a floor.**
-`src/perf/typeScale.test.js` flags a scope only when `sels.size > 1`. A screen with ZERO accent
-elements passes silently, while the rule it guards reads "exactly ONE". A one-line change — assert
-`sels.size === 1` for every scope in the SCOPES list — would close it, and would currently fail on
-those three screens, which is the point.
+Six screens are clean at every size, which is the other half of the result and worth saying: the
+value system demonstrably works where it is applied. Shop, stats, collection and all three play
+screens hold one entry point from a phone to a 4K monitor.
 
----
-
-## 3. PHASE 3 — THE SCRIPTS ARE DECLARED, AND THEN REACHED BY HAND INSTEAD
-
-The brief: "Per-mode scripts, 2-3 hues each, replacing 'all nine colours everywhere' ... Each menu
-card takes its mode's script so the six read apart by hue."
-
-`src/theme/texture.css` defines all seven scripts correctly, including THE RUN's, with a comment
-noting the mode is not in this branch. The hues match the brief exactly. Then:
-
-```
-definitions of --mode-lead:                            7
-uses of var(--mode-lead)   anywhere in src:            0
-uses of var(--mode-second) anywhere in src:            0
-uses of var(--mode-shade)  anywhere in src:            2   (both with a fallback)
-```
-
-**I nearly filed this as "CHAIN and FUSE never get their script", and that would have been wrong.**
-Chain and Fuse have no class fallback beside their attribute selector (Word Bomb, Blitz and SAT
-Rush each have one — `.game-stage--wb`, `.game-stage--blitz`, `.sr-screen`), and `data-game` is set
-in exactly one place in the repo: `GameCard.jsx`, the menu card. So `.solo-root` genuinely matches
-no script selector. But the e2e re-run measured Chain's seam letter as `rgb(255, 107, 61)` —
-`#FF6B3D`, exactly Chain's `--mode-second`. The screens look right.
-
-They look right because the hues are **hardcoded a second time** in each mode's own CSS:
-
-```css
-/* Solo.css:896 */   --seam: #ff6b3d;                                    /* Chain's --mode-second, by hand */
-/* Solo.css:936 */   .solo-chain-trail .cx-join { color: var(--c-cyan); } /* its --mode-lead, by hand */
-```
-
-So the accurate finding is narrower than it first looked, and worth stating precisely: **the
-scripts are correct and the screens are correct, but they are two independent copies of the same
-decision.** `--mode-lead` and `--mode-second` are dead tokens; `--mode-shade` feeding the cel facet
-is the only part of the system actually wired up. Nothing looks wrong today. What is missing is the
-single source of truth the phase existed to create — change a script and no screen moves.
-
-Phase 3's other items DO hold, and have build-failing tests: the grain is an inline data-URI, never
-painted on an animated element, held in the 6-10% band, and the halftone stays off text-bearing
-panels.
+Two further things worth acting on:
+1. **The two game-over screens get WORSE as the display grows** (chain-death 2 regions at 1366x768,
+   5 at 2560x1440; wb-gameover 3 and 4). At small sizes the summary elements merge under the blur
+   into one mass; as the screen grows they separate and start competing. A max-width on the summary
+   grid would hold the small-screen composition at every size.
+2. **`sat-play` passes on a technicality.** One region, but it is 1209 cells — 16.7% of the screen
+   at 1366x768 and 34.3% at 390x844. That is one enormous hot area, not a focal point. The test
+   counts regions, not their share; a share cap is the obvious next iteration.
 
 ---
 
