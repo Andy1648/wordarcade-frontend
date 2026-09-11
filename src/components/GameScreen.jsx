@@ -831,6 +831,24 @@ function fusePointAt(t) {
   return [x, y];
 }
 
+// RING GEOMETRY. The ring is the fuse's second read, so it needs the same burning
+// HEAD - a bare rounded stroke cap reads as a flat arc that happens to be short,
+// not as something being consumed. The <circle> path starts at 3 o'clock and is
+// rotated -90deg to start at 12. With strokeDasharray=100 and dashoffset=100*(1-r)
+// the pattern is shifted back by (1-r), so the VISIBLE arc is arc-length [0, r) -
+// it starts at 12 o'clock and the burn head is its trailing end at fraction r,
+// retreating anticlockwise back toward the top as the clock runs down. (Verified
+// against the dash phase numerically, not eyeballed: this is the same convention
+// the fuse uses, which is why the fuse flame is also at fusePointAt(ratio).)
+const RING_CX = 80;
+const RING_CY = 105;
+const RING_R = 62;
+
+function ringPointAt(ratio) {
+  const theta = (-90 + 360 * ratio) * (Math.PI / 180);
+  return [RING_CX + RING_R * Math.cos(theta), RING_CY + RING_R * Math.sin(theta)];
+}
+
 // The mascot pose PNGs - the mascot IS the bomb now (idle until the timer gets
 // dire, then panic; brief celebrate/taunt flashes are driven by the parent).
 const BOMB_MASCOT_SRC = {
@@ -861,6 +879,7 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   // the flame sits at the matching point along the curve.
   const fuseDashoffset = 100 * (1 - ratio);
   const [flameX, flameY] = fusePointAt(ratio);
+  const [ringX, ringY] = ringPointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
   // FUSE COLOUR ESCALATION (feat/wb-ring): the rope itself carries the tension, so the
@@ -945,6 +964,23 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
               transform="rotate(-90 80 105)"
               style={{ transition: 'stroke 400ms linear' }}
             />
+            {/* ---- The ring's own burn head. The fuse has a flame at its tip; the
+                 ring had a bare stroke cap, which is why it read as a flat circle
+                 ORBITING the bomb rather than something being consumed by it. This
+                 spark rides the ring's leading edge in the mode script's colour, so
+                 both encodings of the timer are visibly the same fire. Eased over
+                 the tick like the flame, so it sweeps instead of stepping. Hidden
+                 while nothing has burnt yet (ratio 1), so it never sits parked at
+                 12 o'clock through the 3-2-1 intro. ---- */}
+            {ratio < 0.999 && (
+              <g
+                className="bomb-ring-spark"
+                style={{ transform: `translate(${ringX.toFixed(1)}px, ${ringY.toFixed(1)}px)` }}
+              >
+                <circle r="7" fill="#000" />
+                <circle className="bomb-ring-spark-core" r="4.5" fill={fuseColor} />
+              </g>
+            )}
 
             {/* (The mascot <image> above is the bomb body now - no SVG body/face.) */}
 
