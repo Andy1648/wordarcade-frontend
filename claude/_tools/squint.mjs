@@ -184,26 +184,31 @@ const solo = (id) => async (p) => {
 add('chain-play', solo('chain'));
 add('fuse-play', solo('fuse'));
 add('sat-play', async (p) => {
+  // SAT gates play behind a cover, then a MODE PICKER, then a BRIEFING. The first version
+  // of this reach clicked `.sr-modeselect .sr-mode`, a selector that does not exist - the
+  // real classes are .sr-modecards / .sr-modecard - so it never got past the picker and
+  // quietly measured it instead, scoring a clean 8/8 for the wrong screen. Advance until
+  // the actual play surface is up, and give up loudly rather than photographing a gate.
   await p.goto(`/?satRush=1&portal=1${Q}`);
   await waitImg(p);
   await p.waitForTimeout(300);
   await p.locator('[data-game="sat-rush"]').click({ force: true });
   await p.waitForTimeout(500);
-  const dlg = p.locator('.mode-dialog-btn-create');
-  if (await dlg.count()) { await dlg.first().click().catch(() => {}); await p.waitForTimeout(400); }
-  const ms = p.locator('.sr-modeselect .sr-mode, .sr-modeselect button');
-  if (await ms.count()) { await ms.first().click().catch(() => {}); await p.waitForTimeout(400); }
-  const go = p.getByRole('button', { name: /START|BEGIN|GO|PLAY|READY/i });
-  if (await go.count()) { await go.first().click().catch(() => {}); }
-  // SAT gates behind a mode picker and then a briefing; keep advancing until the play
-  // surface (the word card) is actually up, rather than photographing the picker.
-  for (let i = 0; i < 3; i++) {
-    if (await p.locator('.sr-wordcard, .sr-card, .sr-slots').count()) break;
-    const next = p.getByRole('button', { name: /START|BEGIN|GO|PLAY|READY|CONTINUE/i });
-    if (await next.count()) { await next.first().click().catch(() => {}); }
-    await p.waitForTimeout(900);
+  const playing = () => p.locator('.sr-card, .sr-slots').count();
+  for (let i = 0; i < 8; i++) {
+    if (await playing()) break;
+    const dlg = p.locator('.mode-dialog-btn-create');
+    if (await dlg.count()) { await dlg.first().click().catch(() => {}); await p.waitForTimeout(400); continue; }
+    const card = p.locator('.sr-modecard');
+    if (await card.count()) { await card.first().click().catch(() => {}); await p.waitForTimeout(500); continue; }
+    const start = p.locator('.sr-btn');
+    if (await start.count()) { await start.first().click().catch(() => {}); await p.waitForTimeout(600); continue; }
+    const any = p.getByRole('button', { name: /START|BEGIN|GO|PLAY|READY|CONTINUE/i });
+    if (await any.count()) { await any.first().click().catch(() => {}); await p.waitForTimeout(500); continue; }
+    await p.waitForTimeout(400);
   }
-  await p.waitForTimeout(1200);
+  if (!(await playing())) throw new Error('SAT play surface never reached');
+  await p.waitForTimeout(900);
 });
 add('wb-gameover', async (p, mock) => {
   const dead = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 0 }];

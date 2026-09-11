@@ -575,11 +575,30 @@ Good news worth stating: **shop, stats, collection, wb-gameover and chain-death 
 single dominant element, and on the two end screens it is the right one** — `.game-over-rematch`
 and `.solo-restart`, the primary CTAs. Those screens work.
 
-### One surface I could not reach, and am not reporting a number for
-`sat-play` still measures `.sr-modecards`. SAT gates play behind a mode picker and then a briefing,
-and my advance loop does not get through both reliably. **The SAT play screen was never measured**,
-so it has no row above. I would rather say that than publish a figure for the mode picker labelled
-as the play screen, which is exactly what the first two runs did.
+### The SAT play screen, finally reached
+
+`sat-play` scored a clean 8/8 for two runs on `.sr-modecards` — the MODE PICKER. The reach was
+clicking `.sr-modeselect .sr-mode`, a selector that does not exist; the real classes are
+`.sr-modecards` / `.sr-modecard`, so it never got past the gate and quietly measured the gate. The
+reach now advances cover -> picker -> briefing -> play and **throws** if the play surface never
+appears, rather than photographing whatever is on screen.
+
+What the actual SAT play screen measures:
+
+| view | ground | regions | dominance | the region |
+|---|---|---|---|---|
+| 1366x768 | 0.063 (dark) | 2 | **147x** | **4117 cells — `.sr-fieldbody`, 57.3% of the screen** |
+| 390x844 | 0.912 (cream) | 1 | — | 449 cells — `.sr-fields`, 20.3% |
+
+It passes on dominance, overwhelmingly — but the "entry point" is 57% of the display. That is not a
+focal point, it is a page. It also shows the duotone doing exactly what it should: on a phone the
+paper fills the viewport so the page's own GROUND is cream (0.912) and the ink reads against it; on
+desktop the card sits on a dark board, the ground is dark (0.063), and the whole card becomes one
+hot region.
+
+This is the clearest argument for the next iteration of the harness: **cap a region's SHARE of the
+screen**, not just count regions. One region covering more than roughly a third of the display
+should not score as "the eye has one place to land".
 
 ---
 
