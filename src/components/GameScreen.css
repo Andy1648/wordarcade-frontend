@@ -111,9 +111,16 @@
   .game-stage--wb .game-used,
   .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
   .game-stage--wb .game-input { max-width: none; }
-  /* Compress the combo box so the right column fits a short window. */
-  .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
+  /* Compress the combo box so the right column fits a short window - but never
+     below the 56px fragment floor, which is the whole point of the bigger prompt.
+     The vh term is what actually binds here (66px at 768 tall, 62px at 720). */
+  .game-stage--wb .game-combo { font-size: clamp(56px, 8.6vh, 76px); }
+  .game-stage--wb .game-combo.category { font-size: clamp(22px, 4.4vh, 44px); }
   .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
+  /* Two columns: the bomb is beside the prompt, not above it, so the combo pill can
+     hang off the prompt box's top-right corner like a slapped-on sticker without
+     anything to collide with. (The stacked default keeps it inside the corner.) */
+  .game-stage--wb .game-combo-box .combo-meter { top: -13px; right: -6px; }
   /* fix/wb-short-layout: wider gap so cards never touch, and stretch so the slots share
      a row height and each card fills its slot (equal-height cards). SCOPED here on
      purpose - applying these globally re-wraps the phone player bar to 3 rows and
@@ -490,11 +497,16 @@
   100% { opacity: 0; }
 }
 
-/* Active player runs warm (orange) now that the bomb theme owns Word Bomb -
-   the danger is "in their hands". */
+/* The active player's card FILLS with that player's own session colour (it used to
+   be a fixed orange for everyone, which said "someone is up" but never who). The
+   colour is the same one on their dot, their name, their typing line and the WB
+   panel border, so the whole board points at one person.
+   --pc-ink is computed per colour from relative luminance (playerColors.inkOn), so
+   the four bright hues take black text and purple takes white - no hue is left
+   with unreadable labels on its own card. */
 .game-player-card.current {
-  background: #FF6B3D;
-  border-color: #B83D15;
+  background: var(--pc, #FF6B3D);
+  border-color: var(--pc-dark, #B83D15);
   transform: rotate(0deg) scale(1.08);
 }
 
@@ -602,7 +614,7 @@
    contrast - the dot + top strip already carry the identity colour there. */
 .game-player-card.current .game-player-name,
 .game-player-card.current .game-player-name-text {
-  color: #000;
+  color: var(--pc-ink, #000);
 }
 
 .game-player-you {
@@ -830,7 +842,10 @@
   position: relative; /* anchors the flying / shattering word overlays */
   display: flex;
   justify-content: center;
-  margin-bottom: 18px;
+  /* The bomb and the prompt are one unit - the bomb holds the clock, the prompt
+     holds the ask - so the gap between them is tight (was 18px). The SVG carries
+     its own transparent margin around the ring, so this reads tighter still. */
+  margin-bottom: 6px;
 }
 
 /* ---- Submit interaction: word thrown at the bomb, bomb reacts ---- */
@@ -1554,6 +1569,15 @@
   box-shadow: 0 0 0 5px rgba(255, 92, 92, 0.35);
 }
 
+/* DANGER (<= 6s): the "halo" asked for, drawn the house way. A blurred glow is
+   forbidden by the flat-colour rule, so this is a hard-edged, spread-only double
+   ring in DANGER_RED - it still reads as the bomb being haloed, with no blur and
+   no gradient. It is a CLASS SWAP with a box-shadow transition, not a keyframe
+   loop: one paint on entry, then static. Wins over .critical by source order. */
+.bomb-vignette.danger {
+  box-shadow: 0 0 0 6px rgba(255, 75, 75, 0.85), 0 0 0 12px rgba(255, 75, 75, 0.28);
+}
+
 /* Smooth size step between tension tiers (scale lives here, on its own element,
    so the per-tier rotation/shake animation below never overrides it). */
 .bomb-scale {
@@ -1626,9 +1650,17 @@
   transition: stroke-dashoffset 1.15s linear;
 }
 
+/* The ring is the SECOND read of the fuse's value, so it glides on exactly the
+   same 1.15s linear ease - the two drain in lockstep. The colour swap at <=6s is
+   a separate, shorter cross-fade so the red arrives as a snap, not a drift. */
+.bomb-ring {
+  transition: stroke-dashoffset 1.15s linear, stroke 200ms linear;
+}
+
 /* Flame position rides the burning tip; its translate eases over the same
    1.15s as the fuse so the two stay locked together. (view-box so the px
-   translate is in SVG user units from the viewBox origin.) */
+   translate is in SVG user units from the viewBox origin.) The burn-point spark
+   is a child of this group, so it inherits the same eased travel for free. */
 .bomb-flame-pos {
   transform-box: view-box;
   transform-origin: 0 0;
@@ -1751,6 +1783,9 @@
    contain. Warm dark box with an orange outline so it reads as "danger" -
    yellow combo text glows against it. */
 .game-combo-box {
+  /* Positioning context for the combo pill, which is pinned to this box's
+     top-right corner instead of floating over the input row. */
+  position: relative;
   background: #1a1008;
   border: 4px solid #FF6B3D;
   border-radius: 8px;
@@ -1760,6 +1795,8 @@
   /* Centred and width-capped so the prompt stays readable even when the stage
      is very wide. */
   max-width: 900px;
+  /* No top margin: the bomb hands straight off to the prompt, and the gap between
+     them is owned solely by .bomb-area's (now 6px) margin-bottom. */
   margin: 0 auto 16px;
   transform: rotate(-1deg);
 }
@@ -1791,15 +1828,19 @@
 
 .game-combo {
   font-family: 'Bungee', cursive;
-  /* Hero combo. Floors at 44px, but the vw term is capped by a vh term (min) so it
+  /* Hero combo. Floors at 56px, but the vw term is capped by a vh term (min) so it
      shrinks on SHORT laptops (e.g. 1163x501) to keep the stage within one screen —
      the slack constraint. Static clamp(); the idle throb below animates transform,
      never font-size. */
-  font-size: clamp(44px, min(6.2vw, 10vh), 70px);
+  font-size: clamp(56px, min(7vw, 10.5vh), 76px);
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
+  /* Hard offset shadow in black, the same device the cards and buttons use, so the
+     fragment sits off the panel instead of lying flat on it. Static - the idle
+     throb below animates transform only, never this. */
+  text-shadow: 5px 5px 0 #000;
   letter-spacing: 4px;
   display: inline-block;
   transform: skewX(-3deg);
@@ -1813,6 +1854,9 @@
   line-height: 1.15;
   letter-spacing: 1px;
   -webkit-text-stroke: 3px #000;
+  /* A whole phrase wraps, so the fragment's fat 5px shadow would smear across two
+     or three lines - category prompts keep a tighter one. */
+  text-shadow: 3px 3px 0 #000;
   white-space: normal;
 }
 
@@ -3510,6 +3554,144 @@
 }
 
 /* ============================================================= */
+/* ==========  WORD BOMB - TURN OWNERSHIP + RAIL STATS  ========= */
+/* ============================================================= */
+
+/* The active player's colour is published on .game-stage--wb as --turn-c /
+   --turn-dark / --turn-ink (GameScreen.jsx), and everything below paints from
+   those three values. One source, so the panel edge, the header flag and the live
+   input can never disagree about whose turn it is. All of it is a CLASS SWAP on
+   turn change - static properties, no keyframes, nothing per-frame. */
+
+/* Panel: the board edge takes the active player's dark outline and gains a 3px
+   inset ring in their fill colour. The hard 7px black offset shadow is kept
+   alongside the inset ring in the same (static) box-shadow. */
+.game-stage--wb.is-my-turn,
+.game-stage--wb.is-their-turn {
+  border-color: var(--turn-dark, #000);
+  box-shadow: inset 0 0 0 3px var(--turn-c, transparent), 7px 7px 0 #000;
+}
+
+/* Header flag: says it in words. Joins the existing .game-meta chip row (round /
+   difficulty) rather than mounting a positioned element of its own. */
+.wb-turn-flag {
+  font-family: 'Bungee', cursive;
+  font-size: 9px;
+  color: var(--turn-ink, #000);
+  background: var(--turn-c, #FFE94A);
+  border: 3px solid var(--turn-dark, #000);
+  padding: 4px 7px;
+  transform: skewX(-4deg);
+  white-space: nowrap;
+}
+
+/* YOUR turn reads louder than theirs: the black keyline that the other chips in
+   this row carry, so it sits forward of them. */
+.wb-turn-flag.mine {
+  border-color: #000;
+  box-shadow: 3px 3px 0 #000;
+}
+
+/* Input + SEND are ALIVE on your turn (the field's border picks up the turn
+   colour) and visibly DEAD on anyone else's. The dead state is driven by the
+   existing :disabled - inputEnabled is already false off-turn - so there is no
+   second source of truth for "can I type". */
+.game-stage--wb.is-my-turn .game-input:not(:disabled) {
+  border-color: var(--turn-c, #AAAAAA);
+}
+
+.game-stage--wb .game-input:disabled {
+  border-color: #55496b;
+  border-style: dashed;
+  color: #7a6d94;
+  box-shadow: 2px 2px 0 #000;
+  opacity: 0.72;
+}
+
+.game-stage--wb .game-input:disabled::placeholder {
+  color: #7a6d94;
+}
+
+.game-stage--wb .game-send-btn:disabled {
+  opacity: 0.55;
+}
+
+/* ---- Rail card stats: WORDS / BEST COMBO ----
+   TIME SAVED is deliberately NOT here. Seconds-remaining-at-submit is not in the
+   turn_update payload and is not accumulated per word anywhere on the client, so
+   for any player other than yourself there is no honest number to print. The two
+   that ARE derivable from gameStats are shown instead. */
+.game-player-stats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.gp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.gp-stat-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  color: #9a8bbf;
+  white-space: nowrap;
+}
+
+.gp-stat-value {
+  font-family: 'Bungee', cursive;
+  font-size: 15px;
+  line-height: 1;
+  color: #fff;
+}
+
+/* On the active card the labels/values sit on the player's own fill, so they take
+   the same computed ink as the name. */
+.game-player-card.current .gp-stat-label {
+  color: var(--pc-ink, #000);
+  opacity: 0.7;
+}
+
+.game-player-card.current .gp-stat-value {
+  color: var(--pc-ink, #000);
+}
+
+/* ---- Combo pill, pinned to the prompt box ----
+   It was floating above the input row with nothing under it. Slapped on the
+   prompt box's top-right corner it reads as a sticker on the thing it counts.
+   Still absolutely positioned + pointer-events:none, so it contributes no layout
+   and cannot reflow the prompt. The rotation lives HERE, on the container, because
+   .combo-badge's own transform (skew + scale) is owned by its idle shake. */
+.game-combo-box .combo-meter {
+  /* DEFAULT (stacked layout): tucked INSIDE the box's top-right corner. The bomb
+     sits directly above the prompt when the stage is a single column and the gap
+     between them is deliberately tight (6px), so a pill that overhung the top edge
+     would land on the bomb. Inside the corner it clears both the bomb above and the
+     centred fragment beside it. */
+  top: 0;
+  right: 4px;
+  transform: rotate(6deg);
+  /* Rotating about the top-RIGHT corner swings the badge's lower-left down by
+     width x sin(6deg) (~9px at the widest tier), so the pill is pinned flush to
+     the box's inner top edge to keep that swing clear of the fragment below. */
+  transform-origin: 100% 0;
+  z-index: 3;
+}
+
+/* The break shatter drops from the same corner. */
+.game-combo-box .combo-shatter {
+  right: 0;
+}
+
+/* ============================================================= */
 /* ========================  RESPONSIVE  ======================= */
 /* ============================================================= */
 
@@ -3547,7 +3729,9 @@
 
   /* Big Bungee type scales down ~80%. */
   .game-title { font-size: 21px; }
-  .game-combo { font-size: 46px; letter-spacing: 2px; }
+  /* Phone keeps the 56px fragment floor (the clamp's own minimum) but drops the
+     letter-spacing, which is what actually costs width at 360-390px. */
+  .game-combo { font-size: 56px; letter-spacing: 2px; }
   .game-combo.category { font-size: 22px; }
   .cb-category-display { font-size: 24px; padding: 14px 12px; }
   .cb-results-title { font-size: 16px; }

@@ -65,3 +65,22 @@ export function fallbackColor(id) {
 export function resolvePlayerColor(map, id) {
   return (map && map[id]) || fallbackColor(id);
 }
+
+// Readable ink for text sitting ON a palette colour. The five hues are all bright,
+// but purple (#9A1AFF) is dark enough that black text on it drops under 4:1 while
+// white clears 5:1 - so the choice is made from relative luminance rather than
+// hardcoded per hue. Pure function, no state; used by the Word Bomb active player
+// card, which fills with the player's own colour.
+export function inkOn(hex) {
+  const h = String(hex || '').replace('#', '');
+  if (h.length !== 6) return '#000';
+  const lin = (c) => {
+    const v = parseInt(c, 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const L =
+    0.2126 * lin(h.slice(0, 2)) + 0.7152 * lin(h.slice(2, 4)) + 0.0722 * lin(h.slice(4, 6));
+  // Contrast against black is (L + 0.05) / 0.05; against white it's 1.05 / (L + 0.05).
+  // Take whichever is higher.
+  return (L + 0.05) / 0.05 >= 1.05 / (L + 0.05) ? '#000' : '#fff';
+}

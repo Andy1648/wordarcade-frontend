@@ -5,7 +5,7 @@ import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
-import { resolvePlayerColor } from '../playerColors';
+import { resolvePlayerColor, inkOn } from '../playerColors';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
@@ -811,7 +811,66 @@ export function WobbleText({ text }) {
   );
 }
 
+/**
+ * Per-player WORDS + BEST COMBO for the Word Bomb rail cards.
+ *
+ * Derived, read-only, from the SAME `gameStats` object the end-game stats screen
+ * already consumes (accumulated in App.jsx from word_result / life-loss frames).
+ * It reads game state; it never writes any, and nothing here touches the socket,
+ * the turn order or scoring.
+ *
+ * WORDS      = accepted words that player has landed this game.
+ * BEST COMBO = their longest run of accepted words uninterrupted by their OWN
+ *              timeout or skip - the same "streak" definition GameOverStats uses,
+ *              narrowed from the whole table to one player.
+ *
+ * TIME SAVED is deliberately absent: seconds-left-at-submit is not in turn_update
+ * and is not accumulated per word anywhere on the client, so there is no honest
+ * value to show for an opponent. See the note in GameScreen.css.
+ *
+ * One pass over wordsPlayed + timeouts + skips (a few hundred entries in a long
+ * game), so it is cheap enough to run per render without a memo.
+ */
+function wbRailStats(gameStats) {
+  const byPlayer = new Map();
+  const bump = (id) => {
+    let e = byPlayer.get(id);
+    if (!e) {
+      e = { words: 0, best: 0, run: 0 };
+      byPlayer.set(id, e);
+    }
+    return e;
+  };
+  const events = [];
+  for (const w of gameStats.wordsPlayed || []) events.push({ t: w.timestamp || 0, id: w.playerId, ok: true });
+  for (const m of gameStats.timeouts || []) events.push({ t: m.timestamp || 0, id: m.playerId, ok: false });
+  for (const m of gameStats.skips || []) events.push({ t: m.timestamp || 0, id: m.playerId, ok: false });
+  events.sort((a, b) => a.t - b.t);
+  for (const ev of events) {
+    if (ev.id == null) continue;
+    const e = bump(ev.id);
+    if (ev.ok) {
+      e.words += 1;
+      e.run += 1;
+      if (e.run > e.best) e.best = e.run;
+    } else {
+      e.run = 0;
+    }
+  }
+  return byPlayer;
+}
+
 // ---- Bomb tension lookups (keyed by tier) ----
+// The bomb IS the clock, and its danger state is read in ABSOLUTE seconds (not a
+// fraction of the turn) so "under six" means the same thing on every difficulty.
+const DANGER_SECONDS = 6;
+const DANGER_RED = '#FF4B4B';
+// Ring geometry, in the bomb SVG's own 160x185 user space. Centred on the mascot
+// image box (x 10..150, y 35..175) and sized to sit just under the fuse cap at
+// y=40, so the ring never crosses the burning fuse.
+const RING_CX = 80;
+const RING_CY = 108;
+const RING_R = 66;
 const BOMB_SCALE = { calm: 1.0, warning: 1.05, critical: 1.1 };
 const FLAME_SCALE = { calm: 1.0, warning: 1.35, critical: 1.7 };
 
@@ -857,25 +916,68 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   const critical = tension === 'critical';
 
+  // DANGER is an ABSOLUTE read (<= 6 seconds left), not a fraction of the turn -
+  // six seconds is six seconds whether the tier granted 15 or 30. It is a pure
+  // class/attribute swap (no keyframes): the ring + the seconds go #FF4B4B and the
+  // bomb picks up the flat red halo ring in CSS.
+  const danger =
+    !showCountdown && typeof timerSeconds === 'number' && timerSeconds <= DANGER_SECONDS;
+
   // Fuse uses pathLength="100", so the offset is just the burnt-away percent;
   // the flame sits at the matching point along the curve.
   const fuseDashoffset = 100 * (1 - ratio);
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
-  const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
-  const numStroke = critical ? '#FF5C5C' : '#000';
+  // Timer number: white -> red -> white-with-red-stroke, growing each tier. Inside
+  // the last six seconds DANGER_RED wins outright, so the number and the ring read
+  // as one colour instead of two near-reds.
+  const numFill = danger ? DANGER_RED : tension === 'warning' ? '#FF5C5C' : '#fff';
+  const numStroke = danger ? '#000' : critical ? '#FF5C5C' : '#000';
   const numStrokeWidth = critical ? 4 : 3;
   const numSize = tension === 'calm' ? 26 : tension === 'warning' ? 30 : 34;
+
+  // SECOND READ of the same value: a ring around the mascot, driven by the SAME
+  // `ratio` as the fuse via stroke-dashoffset (pathLength=100, so the offset is
+  // just the burnt-away percent). Drawn BEHIND the mascot <image> so the character
+  // stays the hero; rotated -90deg about its own centre so it unwinds from 12
+  // o'clock. One attribute write per timer tick - no keyframes, no layout.
+  const ringDashoffset = 100 * (1 - ratio);
+  const ringColor = danger ? DANGER_RED : '#FFE94A';
 
   const src = BOMB_MASCOT_SRC[pose] || BOMB_MASCOT_SRC.idle;
 
   return (
-    <div className={`bomb-vignette ${tension}`}>
+    <div className={`bomb-vignette ${tension}${danger ? ' danger' : ''}`}>
       <div className="bomb-scale" style={{ transform: `scale(${BOMB_SCALE[tension]})` }}>
         <div className={`bomb-body-wrap ${tension}`}>
           <svg className="bomb-svg" viewBox="0 0 160 185" width="180" aria-hidden="true">
+            {/* ---- Timer ring: the same value the fuse shows, read a second way.
+                 Black track under a coloured arc, both drawn BEFORE the mascot so
+                 the character sits on top of them. ---- */}
+            <g transform={`rotate(-90 ${RING_CX} ${RING_CY})`}>
+              <circle
+                cx={RING_CX}
+                cy={RING_CY}
+                r={RING_R}
+                fill="none"
+                stroke="#000"
+                strokeWidth="11"
+              />
+              <circle
+                className="bomb-ring"
+                cx={RING_CX}
+                cy={RING_CY}
+                r={RING_R}
+                fill="none"
+                stroke={ringColor}
+                strokeWidth="6"
+                strokeLinecap="round"
+                pathLength="100"
+                strokeDasharray="100"
+                strokeDashoffset={ringDashoffset}
+              />
+            </g>
             {/* The mascot IS the bomb. The default preserveAspectRatio fits +
                 centres it inside the box, so non-square art is never distorted.
                 Re-keyed per pose so each swap reads as a quick fade. */}
@@ -940,6 +1042,11 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
                   <ellipse cx="0" cy="-16" rx="2.5" ry="7" fill="#FFF6C8" />
                 </g>
               </g>
+              {/* The burn point itself: a hard little outlined spark sitting exactly
+                  where the lit fuse ends, so the eye has a single thing to track as
+                  the rope shortens. Unscaled by tension - the flame above grows, the
+                  burn point stays a fixed landmark. */}
+              <circle className="bomb-burn-dot" cx="0" cy="0" r="4.5" fill="#FFF6C8" stroke="#000" strokeWidth="2.5" />
 
             </g>
           </svg>
@@ -2659,6 +2766,18 @@ export default function GameScreen({
   // Panic sweat on your own card while time is critical and it's your turn.
   const panicking = isMyTurn && !showCountdown && !gameOver && timeRatio < 0.3;
 
+  // ---- TURN OWNERSHIP ----
+  // The active player's session colour is published to the whole WB stage as CSS
+  // vars, so the panel border + inset ring, the header flag and the live input all
+  // paint from ONE value instead of each picking their own accent. Presentational
+  // only: nothing here feeds game state, scoring or the socket.
+  const turnPc = resolvePlayerColor(playerColors, gameState.currentPlayerId);
+  // Whose-turn-is-it is only meaningful while a turn is actually running.
+  const turnLive = !gameOver && !showCountdown && !isSpectating;
+  // Per-player WORDS / BEST COMBO for the rail cards, derived from the same
+  // gameStats the end-game screen already reads (read-only, one pass).
+  const railStats = wbRailStats(gameStats);
+
   function submit() {
     const word = draft.trim();
     if (!word || !inputEnabled) return;
@@ -2862,8 +2981,15 @@ export default function GameScreen({
           boomShake && !hitlag ? ' boom-shake' : ''
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
-        }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
-        style={{ '--drain-sat': drainSat }}
+        }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}${
+          turnLive ? (isMyTurn ? ' is-my-turn' : ' is-their-turn') : ''
+        }`}
+        style={{
+          '--drain-sat': drainSat,
+          '--turn-c': turnPc.color,
+          '--turn-dark': turnPc.dark,
+          '--turn-ink': inkOn(turnPc.color),
+        }}
       >
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
@@ -2888,6 +3014,15 @@ export default function GameScreen({
           </div>
           <div className="game-header-right">
             <div className="game-meta">
+              {/* Whose turn it is, stated in words and painted in the active
+                  player's colour - the one unambiguous read when the board's
+                  colour cues are peripheral. Joins the existing meta row rather
+                  than mounting its own positioned element. */}
+              {turnLive && (
+                <span className={`wb-turn-flag${isMyTurn ? ' mine' : ''}`}>
+                  {isMyTurn ? 'YOUR TURN' : 'THEIR TURN'}
+                </span>
+              )}
               {typeof gameState.round !== 'undefined' && (
                 <span className="game-meta-round">ROUND {gameState.round}</span>
               )}
@@ -2950,7 +3085,7 @@ export default function GameScreen({
                     else m.delete(player.id);
                   }}
                   className={cardClass}
-                  style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+                  style={{ '--pc': pc.color, '--pc-dark': pc.dark, '--pc-ink': inkOn(pc.color) }}
                 >
                   {isEliminating && <div className="game-player-flash" />}
                   {/* Final-life warning: a red badge pinned to the card (the red
@@ -2977,6 +3112,26 @@ export default function GameScreen({
                       ))}
                     </div>
                   </div>
+                  {/* WORDS / BEST COMBO for this player, read off gameStats.
+                      10px Space Mono labels over Bungee values, so the numbers
+                      read at a glance without competing with the name. TIME SAVED
+                      is not shown - the data does not exist client-side (see
+                      wbRailStats). */}
+                  {(() => {
+                    const st = railStats.get(player.id);
+                    return (
+                      <div className="game-player-stats">
+                        <div className="gp-stat">
+                          <span className="gp-stat-label">WORDS</span>
+                          <span className="gp-stat-value">{st ? st.words : 0}</span>
+                        </div>
+                        <div className="gp-stat">
+                          <span className="gp-stat-label">BEST COMBO</span>
+                          <span className="gp-stat-value">{st ? st.best : 0}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {/* Live typing (BombParty style): only under the active
                       player's card. For us it mirrors our own draft (the server
                       doesn't echo our keystrokes back); for others it's the
@@ -3087,6 +3242,11 @@ export default function GameScreen({
             layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
             keyed .combo-pop at ComboMeter.jsx:50). */}
         <div className="game-combo-box" ref={comboBoxRef}>
+          {/* Personal hype streak. It used to float above the input row, detached
+              from anything; pinned to the prompt box's top-right corner it reads as
+              a sticker slapped on the thing it is counting. Still absolutely
+              positioned + pointer-events:none, so it adds no layout. */}
+          <ComboMeter count={streak.count} brk={streak.brk} />
           {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
               Scoped to this inner node, so the surrounding box stays mounted. */}
           <div
@@ -3145,8 +3305,6 @@ export default function GameScreen({
           </div>
         ) : (
           <div className="game-input-row drain-exempt">
-            {/* Personal hype streak, floats above the input (pointer-events:none). */}
-            <ComboMeter count={streak.count} brk={streak.brk} />
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout
