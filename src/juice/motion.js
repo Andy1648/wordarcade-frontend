@@ -68,26 +68,133 @@ export function flash(el, color) {
 }
 
 // --- shake -----------------------------------------------------------------
-// Screenshake: translate the root container by a decaying random offset each
-// frame. Transform only. No-op under reduced-motion or a disabled motion flag.
-export function shake(amount = 8, dur = 320) {
-  if (!motionAllowed()) return;
-  const el = getShakeRoot();
-  if (!el) return;
-  const start = performance.now();
-  function frame(now) {
-    const t = (now - start) / dur;
-    if (t >= 1) {
-      el.style.transform = '';
-      return;
-    }
-    const decay = 1 - t;
-    const dx = (Math.random() * 2 - 1) * amount * decay;
-    const dy = (Math.random() * 2 - 1) * amount * decay;
-    el.style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px)`;
-    requestAnimationFrame(frame);
+// --- THE SHARED JUICE STACK: screen shake -----------------------------------
+// TIERED, and the tiers matter. Screen shake is a documented motion-sickness
+// trigger, so the loud tier is rationed rather than spent on every accept:
+//   routine  2px / 0.2deg  - a word landed. Fires constantly, so it must be felt
+//                            more than seen.
+//   heavy    4px / 0.4deg  - reserved for rare high-tension beats (a wall broken,
+//                            a game won). This is the ceiling; nothing shakes harder.
+// ROTATION is the point. A pure translate of a few px reads as a rendering glitch;
+// a few TENTHS of a degree of rotation is what makes the same displacement read as
+// force. That is why every tier carries both.
+export const SHAKE_TIERS = {
+  routine: { px: 2, deg: 0.2, ms: 160 },
+  heavy: { px: 4, deg: 0.4, ms: 260 },
+};
+const SHAKE_MAX_PX = 4;
+const SHAKE_MAX_DEG = 0.4;
+
+function resolveTier(tier) {
+  if (typeof tier === 'string') return SHAKE_TIERS[tier] || SHAKE_TIERS.routine;
+  // Back-compat: older call sites pass shake(amountPx, durMs). Map onto the tiers
+  // and CLAMP - the caps are the contract, so a legacy shake(8) cannot exceed 4px.
+  if (typeof tier === 'number') {
+    const base = tier >= SHAKE_MAX_PX ? SHAKE_TIERS.heavy : SHAKE_TIERS.routine;
+    return { ...base, px: Math.min(tier, SHAKE_MAX_PX) };
   }
-  requestAnimationFrame(frame);
+  return SHAKE_TIERS.routine;
+}
+
+function shakeFrames(px, deg) {
+  const p = Math.min(px, SHAKE_MAX_PX);
+  const d = Math.min(deg, SHAKE_MAX_DEG);
+  return [
+    { transform: 'translate(0px, 0px) rotate(0deg)' },
+    { transform: `translate(${-p}px, ${(p * 0.6).toFixed(2)}px) rotate(${-d}deg)` },
+    { transform: `translate(${p}px, ${(-p * 0.6).toFixed(2)}px) rotate(${d}deg)` },
+    { transform: `translate(${(-p * 0.5).toFixed(2)}px, ${(-p * 0.4).toFixed(2)}px) rotate(${(-d * 0.5).toFixed(2)}deg)` },
+    { transform: 'translate(0px, 0px) rotate(0deg)' },
+  ];
+}
+
+// One live shake at a time. A re-fire CANCELS and re-plays the same one-shot -
+// never `void el.offsetWidth`, which forces a synchronous layout on what is by
+// definition a hot path (it fires on every accepted word).
+let shakeAnim = null;
+export function shake(tier = 'routine', durOverride) {
+  if (!motionAllowed()) return; // OS reduced-motion OR the user's Settings toggle
+  const el = getShakeRoot();
+  if (!el || typeof el.animate !== 'function') return;
+  const t = resolveTier(tier);
+  if (shakeAnim) shakeAnim.cancel();
+  // will-change carries ONLY transform, and only for the life of the animation.
+  el.style.willChange = 'transform';
+  shakeAnim = el.animate(shakeFrames(t.px, t.deg), {
+    duration: durOverride || t.ms,
+    easing: 'ease-out',
+  });
+  const clear = () => {
+    el.style.willChange = '';
+    el.style.transform = '';
+  };
+  shakeAnim.onfinish = clear;
+  shakeAnim.oncancel = clear;
+}
+
+// --- THE SHARED JUICE STACK: the PNG pop -------------------------------------
+// scale 1.0 -> 1.12 -> 1.0 over 140ms. The mascot/word-chip/card "thump" that
+// makes a discrete event feel like it hit something.
+// NEVER call this on an ancestor of the text input: scaling a container that holds
+// a focused <input> moves the caret and can pull the field out from under a
+// mid-word typist. Pop the word chip, the bomb, or the card instead. The guard
+// below refuses (and says so) rather than doing it quietly.
+const popAnims = new WeakMap();
+export function pop(el, { scale = 1.12, ms = 140 } = {}) {
+  if (!el || typeof el.animate !== 'function') return;
+  if (!motionFlag()) return; // hard off switch
+  if (typeof el.querySelector === 'function' && el.querySelector('input, textarea')) {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('[juice] pop() refused: the element contains a text input. Pop the chip/bomb/card instead.');
+    }
+    return;
+  }
+  // Reduced motion keeps the beat but shallows it, exactly like squash().
+  const peak = reduced() ? 1 + (scale - 1) * 0.35 : scale;
+  const prev = popAnims.get(el);
+  if (prev) prev.cancel(); // restart via cancel + play, never a forced reflow
+  el.style.willChange = 'transform';
+  const anim = el.animate(
+    [{ transform: 'scale(1)' }, { transform: `scale(${peak})`, offset: 0.45 }, { transform: 'scale(1)' }],
+    { duration: ms, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }
+  );
+  popAnims.set(el, anim);
+  const clear = () => {
+    el.style.willChange = '';
+    if (popAnims.get(el) === anim) popAnims.delete(el);
+  };
+  anim.onfinish = clear;
+  anim.oncancel = clear;
+}
+
+// --- THE SHARED JUICE STACK: number count-up ---------------------------------
+// Counts a numeric readout from -> to over ms, calling onTick each time the
+// DISPLAYED integer changes (that is the hook the tick sound hangs off, so the
+// audio lands on the digit change rather than on a fixed timer).
+// Writes textContent only - no layout reads anywhere in the loop.
+export function countUp(el, from, to, { ms = 420, onTick, format } = {}) {
+  if (!el) return () => {};
+  const fmt = format || ((n) => String(n));
+  if (!motionAllowed() || from === to) {
+    el.textContent = fmt(to);
+    return () => {};
+  }
+  let raf = 0;
+  let last = null;
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / ms);
+    // ease-out so it sprints then settles, like a mechanical counter
+    const v = Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+    if (v !== last) {
+      el.textContent = fmt(v);
+      last = v;
+      if (onTick) onTick(v);
+    }
+    if (t < 1) raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  return () => { if (raf) cancelAnimationFrame(raf); };
 }
 
 // --- hitStop ---------------------------------------------------------------

@@ -15,13 +15,15 @@
 //     sfx('tap');
 //   }
 
-export { squash, flash, shake, hitStop, isHitStopped, setShakeRoot } from './motion';
+export { squash, flash, shake, pop, countUp, hitStop, isHitStopped, setShakeRoot, SHAKE_TIERS } from './motion';
 export { burst, mark, clearMarks, ring, screenFlash, floater, setOverlay } from './particles';
 export { sfx, validCue, unlockAudio, stampThud, scoreTick, fanfare, defeatTone, sparkle } from './audio';
 export { tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio } from './tension';
 export { JUICE } from './config';
 export {
   setMotion,
+  isMotionEnabled,
+  initMotion,
   setSound,
   setMuted,
   getSettings,

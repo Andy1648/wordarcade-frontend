@@ -11,7 +11,7 @@ import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import {
-  burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
+  burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, pop,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
@@ -1464,7 +1464,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   // optimisticWordRef (Word Bomb, JOB C Path B): the lowercased word painted
   // accepted OPTIMISTICALLY at submit; a later server accept for the same word is
   // a CONFIRM whose juice already fired, so we suppress the re-fire.
-  const { wordBomb = false, comboRef = null, optimisticWordRef = null } = opts;
+  const { wordBomb = false, comboRef = null, optimisticWordRef = null, bombRef = null } = opts;
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
@@ -1502,8 +1502,12 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
           width: JUICE.VALID.ringWidth,
           life: JUICE.VALID.ringLife,
         });
-        squash(el);
-        flash(el, JUICE.VALID.inputFlash);
+        // THE POP GOES ON THE BOMB, NEVER ON THE INPUT. This used to squash() and
+        // flash() the <input> itself: squash is a transform on the focused field, which
+        // shifts the caret under a mid-word typist, and flash animates `filter`, which
+        // is not a compositor property. The word is thrown AT the bomb, so the bomb is
+        // what should take the hit - and it is already the screen's focal point.
+        pop(bombRef && bombRef.current);
       }
       screenFlash({ alpha: JUICE.VALID.flash, color: JUICE.VALID.flashColor });
     } else {
@@ -1520,7 +1524,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
     }
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
     shakeTimerRef.current = setTimeout(() => setShake(false), 200);
-  }, [wordBomb, inputRef, promptRef, comboRef]);
+  }, [wordBomb, inputRef, promptRef, comboRef, bombRef]);
 
   // The REJECT feedback (input shake + WB red screen flash). This IS the visible rollback of an
   // optimistic accept when the server disagrees.
@@ -1720,10 +1724,16 @@ export default function GameScreen({
   // before the category early-return so the hooks always run in the same order.
   // Word Bomb opts into the prototype-tuned values; Category Blitz (gameType !==
   // 'word-bomb') passes wordBomb=false and keeps its exact existing feel.
+  // The bomb wrapper: the dust-puff origin on detonation AND the target of the
+  // accept POP. Declared before useHypeFeedback because the hook takes it as an
+  // option - a `const` declared after this call would still be in its temporal dead
+  // zone when the options object is built.
+  const bombReactorRef = useRef(null);
   const { hypeKey, shake, inputShake, fireAccept } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef, {
     wordBomb: gameType === 'word-bomb',
     comboRef,
     optimisticWordRef,
+    bombRef: bombReactorRef,
   });
 
   // ---- Heart-shatter + elimination detection (Word Bomb only) ----
@@ -1796,7 +1806,7 @@ export default function GameScreen({
     }, 470); // a touch past the 450ms animation so it fully settles
   }
   // The bomb wrapper, measured for the dust-puff origin on detonation.
-  const bombReactorRef = useRef(null);
+  // (Declared above useHypeFeedback - it is passed in as the ACCEPT POP target.)
 
   // JUICE 03-parity celebration for the Word Bomb game-over card: a stamp-slam on
   // the outcome title + a stat-stagger on the summary, mirroring the solo results
@@ -1837,7 +1847,6 @@ export default function GameScreen({
   // it so the pop replays).
   const [clutchSlow, setClutchSlow] = useState(false);
   const clutchSlowTimerRef = useRef(null);
-  const [comboPunch, setComboPunch] = useState(0);
   // INSTANT-ACK CHIP (Word Bomb's answer to Category Blitz's cb-checking): on
   // submit the word locks into an "in flight" chip near the input so the ~120-400ms
   // of Render-socket silence isn't dead air; the server verdict then resolves ON
@@ -1912,10 +1921,16 @@ export default function GameScreen({
     if (!lastWordResult || lastWordResult === interactionResultRef.current) return;
     interactionResultRef.current = lastWordResult;
     if (lastWordResult.accepted) {
-      setBombReaction('recoil');
+      // ONE readable thump. The accept used to fire eleven concurrent animations -
+      // a CSS bomb-recoil, a bomb-reactor recoil, four spark spans, a prompt punch,
+      // a hype popup, a mascot cross-fade, the camera shake and the score float, all
+      // at once. That is not weight, it is noise. The routine accept is now exactly
+      // three: the camera shake, the bomb's PNG pop (fireAccept -> pop()), and the
+      // +N float. The canvas particle burst still fires and costs no DOM animation.
+      // setBombReaction('recoil') is gone - pop() IS the recoil now - but reject
+      // still uses the reaction, so the state itself stays.
       freeze(50); // hitlag: 50ms freeze so the success lands with weight
       flashBombPose('celebrate', 300); // the bomb mascot celebrates the word
-      setComboPunch((k) => k + 1); // scale-punch the prompt on every correct word
       // Was this OUR submission? (gates both the streak and the near-miss callout
       // so a broadcast accept from another player never fires our feedback.)
       const mine = comboAwaitRef.current;
@@ -2931,7 +2946,10 @@ export default function GameScreen({
             (display:contents, zero layout effect) gives it a fixed reconciliation
             slot so it mounts exactly once per accept. */}
         <div style={{ display: 'contents' }}>
-          {hypeKey > 0 && !hitlag &&
+          {/* RATIONED: the hype popup is a milestone beat, not an every-word one.
+              Firing it on a combo-0 accept made it meaningless AND pushed the accept
+              frame over its 3-animation budget. */}
+          {hypeKey > 0 && !hitlag && (comboRef.current || 0) >= 3 &&
             (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
         </div>
         <div className="game-header">
@@ -2981,10 +2999,10 @@ export default function GameScreen({
         <div className="game-combo-box" ref={comboBoxRef}>
           {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
               Scoped to this inner node, so the surrounding box stays mounted. */}
-          <div
-            key={comboPunch}
-            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
-          >
+          {/* The scale-punch that used to re-key here is gone: it was one of the
+              eleven animations an accept fired at once. The prompt is acknowledged by
+              the camera shake and the bomb pop instead. */}
+          <div className="game-combo-punch">
             <div className="game-combo-label">{promptLabel}</div>
             <div className={`game-combo${isCategory ? ' category' : ''}`}>
               {promptValue}
@@ -3368,7 +3386,10 @@ export default function GameScreen({
                 re-mounting on every re-render amid the conditional siblings here
                 (same fix as the hype popup above). */}
             <div style={{ display: 'contents' }}>
-              {hypeKey > 0 && !hitlag && <FloatingScore key={hypeKey} />}
+              {/* RATIONED: the hype popup is a milestone beat, not an every-word one.
+              Firing it on a combo-0 accept made it meaningless AND pushed the accept
+              frame over its 3-animation budget. */}
+          {hypeKey > 0 && !hitlag && (comboRef.current || 0) >= 3 && <FloatingScore key={hypeKey} />}
             </div>
             {/* ONE-TIME first-game spotlight — only while the field is actually typeable. */}
             {gameSpot && inputEnabled && (

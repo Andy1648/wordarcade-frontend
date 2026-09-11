@@ -95,7 +95,7 @@ export function silverBreak() {
   const { x, y } = centerOf('.sr-card');
   screenFlash({ alpha: 0.4, color: PAPER, life: 0.26 });
   burst(x, y, { count: 40, colors: [INK, PAPER], speed: 380, life: 0.9 });
-  shake(9, 380);
+  shake('heavy'); // silver break - a rare, high-tension beat
   defeatTone();
 }
 
@@ -115,7 +115,7 @@ export function revenantEnter() {
 // (CSS) carry it; the KO thud + a shake stay (shake is kept for miss + death).
 export function miss() {
   sfx('ko');
-  shake(6, 340);
+  shake('routine'); // a miss happens constantly: felt, not seen
 }
 
 // --- PRIORITY 5: death ------------------------------------------------------
@@ -126,7 +126,7 @@ export function death() {
   sfx('ko');
   defeatTone();
   screenFlash({ alpha: 0.7, color: PAPER, life: 0.4 });
-  shake(11, 460);
+  shake('heavy'); // death - the loudest beat the run has
 }
 
 // --- results-screen celebration primitives (reused from the shared layer) ---
@@ -134,7 +134,7 @@ export { scoreTick, sfx as resultSfx, burst as resultBurst, screenFlash as resul
 export function resultsStamp() {
   sfx('ko'); // heavy slam for the DEAD stamp
   screenFlash({ alpha: 0.5, color: PAPER, life: 0.3 });
-  shake(6, 320);
+  shake('routine'); // results stamp
 }
 export function resultsSting() {
   defeatTone();

@@ -157,8 +157,12 @@ export const JUICE = {
     statStagger: 110, // ms between stat lines
 
     stamp: {
-      shakeWin: 5, // scoped card shake amplitude
-      shakeLoss: 7,
+      // Shake TIER names, not amplitudes (src/juice/motion.js SHAKE_TIERS). A game
+      // ending is exactly the rare, high-tension beat the loud tier is rationed for;
+      // both outcomes earn it. Numeric amplitudes are still accepted and clamped,
+      // but naming the tier is what keeps the ration honest.
+      shakeWin: 'heavy',
+      shakeLoss: 'heavy',
       flashWin: 0.4, // screen flash alpha
       flashLoss: 0.7,
       flashWinColor: '#FFE94A',

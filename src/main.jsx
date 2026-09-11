@@ -11,6 +11,7 @@ import './theme/values.css'
 import './theme/texture.css'
 import './theme/themes.css'
 import { initTheme } from './theme/themes'
+import { initMotion } from './juice'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
 import { firstVisit, refreshSessionProps } from './lib/events'
@@ -20,6 +21,9 @@ import { getStreak } from './progress/streak'
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
 try { initTheme() } catch { /* never block startup */ }
+// Honour a persisted MOTION=off before the first paint, so a user who turned screen
+// shake off never sees it once more on reload.
+try { initMotion() } catch { /* never block startup */ }
 
 // ---- Third-party boot (perf/first-load): NOTHING third-party runs on the critical path. ----
 // gtag (GA4), Sentry's init and PostHog all start from ONE idle callback scheduled after the

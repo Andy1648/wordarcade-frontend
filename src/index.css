@@ -165,30 +165,47 @@ html[data-view='game'] .screen-flash {
 .app-shake.shake-medium { animation: shake-medium 200ms ease-in-out; }
 .app-shake.shake-heavy { animation: shake-heavy 300ms ease-in-out; }
 
+/* THE TWO SHAKE TIERS (mirrors SHAKE_TIERS in src/juice/motion.js).
+   Every tier carries ROTATION as well as translation: a few tenths of a degree is
+   what makes a small displacement read as FORCE instead of as a rendering glitch.
+   light/medium are the ROUTINE tier (2px / 0.2deg) - they fire constantly.
+   heavy is the CEILING (4px / 0.4deg) and is rationed for rare high-tension beats
+   (a wall broken, a game won). Nothing in the app shakes harder than heavy. */
 @keyframes shake-light {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-0.5px, 0.5px); }
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-1px, 1px) rotate(-0.1deg); }
 }
 
 @keyframes shake-medium {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(-1.5px, 1px); }
-  50% { transform: translate(1.5px, -1px); }
-  75% { transform: translate(-1px, -1px); }
-  100% { transform: translate(0, 0); }
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-2px, 1.2px) rotate(-0.2deg); }
+  50% { transform: translate(2px, -1.2px) rotate(0.2deg); }
+  75% { transform: translate(-1px, -1px) rotate(-0.1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
 
 @keyframes shake-heavy {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-1px, 0.5px) rotate(-0.13deg); }
-  40% { transform: translate(1px, -0.5px) rotate(0.13deg); }
-  60% { transform: translate(-0.7px, -0.5px) rotate(-0.07deg); }
-  80% { transform: translate(0.7px, 0.5px) rotate(0.07deg); }
-  100% { transform: translate(0, 0); }
+  0% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-4px, 2.4px) rotate(-0.4deg); }
+  40% { transform: translate(4px, -2.4px) rotate(0.4deg); }
+  60% { transform: translate(-2.4px, -1.6px) rotate(-0.2deg); }
+  80% { transform: translate(2px, 1.2px) rotate(0.2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .app-shake { animation: none !important; }
+}
+
+/* THE SETTINGS TOGGLE, applied to the CSS-driven shakes. The JS effects read the
+   flag directly (src/juice/settings.js); these keyframes cannot, so the toggle
+   stamps data-motion on <html> and every camera-level animation is switched off
+   here. Without this the toggle would silence the JS juice and leave the screen
+   still shaking, which is the half-fix that makes a motion-sickness switch useless. */
+html[data-motion='off'] .app-shake,
+html[data-motion='off'] .game-stage.game-shake,
+html[data-motion='off'] .game-stage.wb-boom-shake {
+  animation: none !important;
 }
 
 /* ============================================================= */

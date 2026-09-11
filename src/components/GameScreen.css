@@ -146,12 +146,17 @@
   animation: game-shake 200ms ease-in-out;
 }
 
+/* ROUTINE tier: 2px / 0.2deg. The ROTATION is what makes a 2px displacement read as
+   FORCE rather than as a rendering glitch - a pure translate of a couple of pixels
+   just looks like a repaint bug. This fires on every accepted word, so it is tuned to
+   be felt more than seen. (The 4px / 0.4deg tier is rationed for rare high-tension
+   beats - see SHAKE_TIERS in src/juice/motion.js.) */
 @keyframes game-shake {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(-1px, 0.7px); }
-  50% { transform: translate(1px, -0.7px); }
-  75% { transform: translate(-0.7px, -0.3px); }
-  100% { transform: translate(0, 0); }
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-2px, 1.2px) rotate(-0.2deg); }
+  50% { transform: translate(2px, -1.2px) rotate(0.2deg); }
+  75% { transform: translate(-1px, -0.8px) rotate(-0.1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
 
 /* BOMB-FAIL SHAKE (LIGHT): a decaying, ASYMMETRIC jolt of the play-area wrapper
@@ -262,6 +267,19 @@
   .rarity-popup {
     animation: none;
     opacity: 0;
+  }
+}
+
+/* CAMERA-LEVEL MOTION IS A HARD GATE. .app-shake was already covered in index.css but
+   the in-game stage shakes were NOT: .game-shake and the detonation jolt both kept
+   moving the whole play area for a user who had explicitly asked for reduced motion.
+   Screen shake is a documented motion-sickness trigger, so this is a bug fix, not a
+   softening - under `reduce` the camera does not move at all. */
+@media (prefers-reduced-motion: reduce) {
+  .game-stage.game-shake,
+  .game-stage.wb-boom-shake {
+    animation: none !important;
+    transform: none !important;
   }
 }
 
@@ -1208,12 +1226,9 @@
    quick fade whenever the pose swaps (it's re-keyed per pose). */
 .bomb-mascot-image {
   image-rendering: -webkit-optimize-contrast;
-  animation: bomb-mascot-fade 200ms ease-out;
-}
-
-@keyframes bomb-mascot-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  /* HARD CUT, not a cross-fade. The pose swap used to run a 200ms opacity fade on
+     every accept, which cost an animation on the accept frame for something a flat
+     cartoon should do instantly anyway - expressions in this style snap. */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1823,16 +1838,6 @@
    per accept WITHOUT remounting the surrounding .game-combo-box frame. The box's
    resting rotate(-1deg) tilt stays on the outer box, so the punch is scale-only
    here (no rotate) to avoid fighting that tilt. */
-.game-combo-punch.punch {
-  animation: combo-box-punch 280ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes combo-box-punch {
-  0%   { transform: scale(1); }
-  35%  { transform: scale(1.07); }
-  100% { transform: scale(1); }
-}
-
 .game-combo {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
@@ -4294,7 +4299,6 @@ html[data-beat='true'] .cb-answer-chip {
      under reduced motion (no flashes / violent slams). */
   .clutch-flash { animation: none; opacity: 0; }
   .kill-feed-row.eliminated { animation: none; }
-  .game-combo-punch.punch { animation: none; }
   .impact-flash,
   .ko-impact-flash,
   .ko-burst,

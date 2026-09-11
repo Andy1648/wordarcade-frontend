@@ -7,8 +7,41 @@
 
 const settings = { motion: true, sound: true };
 
+// --- SCREEN-SHAKE / MOTION TOGGLE, persisted -------------------------------
+// Screen shake is a documented motion-sickness trigger, so a user-facing OFF
+// switch is not optional and it has to SURVIVE a reload - a toggle you have to
+// find again every session is not a real accommodation. Lives in the sound
+// settings popover (the app's one settings cluster) as MOTION.
+// Read LAZILY on first access: this module stays side-effect-free at import,
+// so importing it never touches storage.
+const MOTION_KEY = 'taw.motion';
+let motionLoaded = false;
+function loadMotion() {
+  if (motionLoaded) return;
+  motionLoaded = true;
+  try {
+    const raw = window.localStorage.getItem(MOTION_KEY);
+    if (raw !== null) settings.motion = raw !== '0';
+  } catch { /* private mode / no storage - keep the default ON */ }
+}
+function persistMotion() {
+  try { window.localStorage.setItem(MOTION_KEY, settings.motion ? '1' : '0'); } catch { /* ignore */ }
+  reflectMotion();
+}
+// Mirror the flag onto <html> so the CSS-driven camera shakes (.app-shake,
+// .game-shake - keyframes cannot read a JS variable) obey the same switch. Without
+// this the toggle would silence the JS juice and leave the screen still shaking.
+function reflectMotion() {
+  try { document.documentElement.dataset.motion = settings.motion ? 'on' : 'off'; } catch { /* ignore */ }
+}
+// Called once at app start so a persisted OFF is honoured on the very first paint.
+export function initMotion() { loadMotion(); reflectMotion(); }
+// Is the user's motion switch on? (Ignores the OS preference - use motionAllowed
+// for the "should this effect actually run" question.)
+export function isMotionEnabled() { loadMotion(); return settings.motion; }
+
 // --- public setters (wire these to an existing settings/mute UI) ---
-export function setMotion(on) { settings.motion = !!on; }
+export function setMotion(on) { loadMotion(); settings.motion = !!on; persistMotion(); }
 export function setSound(on) { settings.sound = !!on; }
 // Alias so a caller holding a `muted` boolean reads naturally.
 export function setMuted(muted) { settings.sound = !muted; }
@@ -27,8 +60,8 @@ export function prefersReducedMotion() {
 
 // --- predicates the effects gate on ---
 // The user-facing motion flag alone (a hard off switch).
-export const motionFlag = () => settings.motion;
+export const motionFlag = () => { loadMotion(); return settings.motion; };
 // Motion that is also allowed by the OS (off if the flag is off OR reduce is on).
-export const motionAllowed = () => settings.motion && !prefersReducedMotion();
+export const motionAllowed = () => { loadMotion(); return settings.motion && !prefersReducedMotion(); };
 export const soundAllowed = () => settings.sound;
 export const reduced = () => prefersReducedMotion();

@@ -16,6 +16,7 @@ import './AudioControls.css';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
 import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
+import { setMotion, isMotionEnabled } from '../juice';
 
 // `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
 // fixed positioning so it can sit INSIDE the menu's corner-nav cluster (fix/visual-real item 4),
@@ -25,6 +26,12 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
   const [events, setEvents] = useState(() => isEventSoundsEnabled());
   const [clack, setClack] = useState(() => isClackEnabled());
   const [vol, setVol] = useState(() => getMasterVolume());
+  // MOTION (screen shake + pops). Screen shake is a documented motion-sickness
+  // trigger, so this switch is required, persisted, and lives with the other
+  // settings rather than in a new fixed control of its own (CLAUDE.md: no orphan
+  // fixed UI). It is independent of the OS reduced-motion preference: either one
+  // being off turns the effects off.
+  const [motion, setMotionOn] = useState(() => isMotionEnabled());
 
   const toggleEvents = () => {
     if (events) { disableEventSounds(); setEvents(false); }
@@ -33,6 +40,11 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
   const toggleClack = () => {
     if (clack) { disableClack(); setClack(false); }
     else { enableClack(); setClack(true); } // creates/resumes the AudioContext in-gesture
+  };
+  const toggleMotion = () => {
+    const next = !motion;
+    setMotion(next);
+    setMotionOn(next);
   };
   const onVol = (e) => {
     const v = Number(e.target.value) / 100;
@@ -45,7 +57,7 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
   // "all quiet" reads at a glance without opening the panel.
   const allOff = musicMuted && !events && !clack;
 
-  const Toggle = ({ on, onClick, glyph, label }) => (
+  const Toggle = ({ on, onClick, glyph, label, kind = 'sound' }) => (
     <div className="audio-row">
       <span className="audio-row-label">{label}</span>
       <button
@@ -54,8 +66,8 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
         style={{ borderColor: accent, color: accent }}
         onClick={onClick}
         aria-pressed={on}
-        aria-label={`${label} sound: ${on ? 'on' : 'off'}`}
-        title={`${label} sound: ${on ? 'on' : 'off'}`}
+        aria-label={`${label} ${kind}: ${on ? 'on' : 'off'}`}
+        title={`${label} ${kind}: ${on ? 'on' : 'off'}`}
       >
         {glyph}
       </button>
@@ -65,10 +77,11 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
   return (
     <div className={`audio-ctrl${variant === 'inline' ? ' audio-ctrl--inline' : ''}`}>
       {open && (
-        <div className="audio-panel" role="group" aria-label="Sound settings">
+        <div className="audio-panel" role="group" aria-label="Sound and motion settings">
           <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" />
           <Toggle on={clack} onClick={toggleClack} glyph="⌨" label="KEYSTROKE" />
           <Toggle on={events} onClick={toggleEvents} glyph="🔊" label="EVENTS" />
+          <Toggle on={motion} onClick={toggleMotion} glyph="💥" label="MOTION" kind="effects" />
           <div className="audio-row audio-row-vol">
             <span className="audio-row-label">VOLUME</span>
             <input
