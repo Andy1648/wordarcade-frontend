@@ -59,6 +59,28 @@ const BLUR = 12; // px, per the brief
 const BASE = 'http://localhost:4173';
 const ME = 'e2e-player';
 const waitImg = (p) => p.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+// REACHING A PLAY SCREEN IS NOT A TIMEOUT. The region-identity check caught this: with a
+// fixed 1800ms wait, wb-play and blitz-play were both scoring a clean 8/8 - on
+// `.countdown-overlay`. They were measuring the 3-2-1 intro, not the board. sat-play was
+// measuring `.sr-modecards`, the mode picker. Three of six "clean" screens were the wrong
+// screen. Wait for the intro to mount AND clear, then for the board to actually be
+// playable, which is the only honest signal that the screen under test is up.
+const waitPlayable = async (p) => {
+  await p.locator('.countdown-overlay').waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});
+  await p.locator('.countdown-overlay').waitFor({ state: 'detached', timeout: 20000 }).catch(() => {});
+  await p
+    .waitForFunction(
+      () => {
+        const i = document.querySelector('.game-wrap input, .solo-root input, .sr-screen input');
+        return !!i && !/WAIT YOUR TURN/i.test(i.placeholder || '');
+      },
+      undefined,
+      { timeout: 12000, polling: 200 }
+    )
+    .catch(() => {});
+  await p.waitForTimeout(500);
+};
+
 const wbPlayers = [
   { id: ME, name: 'YOU', lives: 3, isHost: true },
   { id: 'p2', name: 'RIVAL', lives: 2 },
@@ -128,7 +150,7 @@ add('wb-play', async (p, mock) => {
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
   await p.waitForTimeout(80);
   mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbPlayers, combo: 'str', usedWords: ['MONSTER', 'STRAP'], timerSeconds: 22 } });
-  await p.waitForTimeout(1800);
+  await waitPlayable(p);
 });
 add('blitz-play', async (p, mock) => {
   const players = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
@@ -141,7 +163,7 @@ add('blitz-play', async (p, mock) => {
   mock.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 45, category: 'CRYPTIDS & FOLKLORE MONSTERS', categoryId: 'cryptids', rerollsRemaining: 1 } });
   await p.waitForTimeout(300);
   mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: 'MOTHMAN' } });
-  await p.waitForTimeout(1500);
+  await waitPlayable(p);
 });
 const solo = (id) => async (p) => {
   await p.addInitScript(() => {
@@ -173,7 +195,15 @@ add('sat-play', async (p) => {
   if (await ms.count()) { await ms.first().click().catch(() => {}); await p.waitForTimeout(400); }
   const go = p.getByRole('button', { name: /START|BEGIN|GO|PLAY|READY/i });
   if (await go.count()) { await go.first().click().catch(() => {}); }
-  await p.waitForTimeout(1600);
+  // SAT gates behind a mode picker and then a briefing; keep advancing until the play
+  // surface (the word card) is actually up, rather than photographing the picker.
+  for (let i = 0; i < 3; i++) {
+    if (await p.locator('.sr-wordcard, .sr-card, .sr-slots').count()) break;
+    const next = p.getByRole('button', { name: /START|BEGIN|GO|PLAY|READY|CONTINUE/i });
+    if (await next.count()) { await next.first().click().catch(() => {}); }
+    await p.waitForTimeout(900);
+  }
+  await p.waitForTimeout(1200);
 });
 add('wb-gameover', async (p, mock) => {
   const dead = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 0 }];

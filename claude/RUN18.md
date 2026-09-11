@@ -492,62 +492,98 @@ still pull away from the page's own ground. One region means the eye has an entr
 390x844, 360x640 — because value grouping is a composition property and composition changes with
 the shape of the box. 120 screen/viewport pairs.
 
-### I overstated this first, and then refuted myself
+### The harness was wrong twice, and catching it is most of the value
 
-My first pass reported "five screens fail at every size" off a raw region COUNT. That count
-over-reports, and the wide data shows exactly how badly. Word Bomb's game-over screen scores 4
-regions at 2560x1440 — but they are **175, 60, 9 and 7** cells. One region seventeen to
-twenty-five times the size of the specks beside it is not a screen with four entry points; it is a
-screen with one entry point and some chips.
+**First correction — a raw region COUNT over-reports.** Word Bomb's game-over screen scored 4
+regions at 2560x1440, but they were **175, 60, 9 and 7** cells. One region seventeen to twenty-five
+times the size of the specks beside it is not four entry points; it is one entry point and some
+chips. So the score is now **DOMINANCE**: the ratio of the largest hot region to the next largest.
+Above ~4x the eye still has one place to land.
 
-So the measure that actually matters is **DOMINANCE**: the ratio of the largest hot region to the
-next largest. Above ~4x the eye still has one place to land. Below it, the eye genuinely has to
-choose. Re-scored that way:
+**Second correction — three screens were not the screens I thought.** Making the harness name the
+element under each region immediately showed that `wb-play` and `blitz-play` were scoring a clean
+8/8 on `.countdown-overlay` — they were measuring the 3-2-1 intro, not the board — and `sat-play`
+was measuring `.sr-modecards`, the mode picker. Three of six "clean" screens were the wrong screen.
+The reaches now wait for the intro to mount AND clear and for the board to be genuinely playable.
 
-| screen | single region | one dominant (>=4x) | genuinely contested | worst ratio |
-|---|---|---|---|---|
-| shop | 8/8 | — | 0 | — |
-| stats | 8/8 | — | 0 | — |
-| collection | 8/8 | — | 0 | — |
-| wb-play | 8/8 | — | 0 | — |
-| blitz-play | 8/8 | — | 0 | — |
-| sat-play | 8/8 | — | 0 | — |
-| chain-death | 3 | 3 | 2 | 3.74 |
-| fuse-play | 0 | 6 | 2 | 3.50 |
-| chain-play | 0 | 6 | 2 | 2.95 |
-| wb-gameover | 1 | 5 | 2 | 2.92 |
-| menu | 2 | 1 | 5 | 1.46 |
-| rooms-browser | 2 | 0 | 6 | 1.30 |
-| **lobby** | 0 | 0 | **8/8** | **1.84** |
-| **wb-dialog** | 0 | 0 | **8/8** | **1.02** |
-| **blitz-dialog** | 0 | 0 | **8/8** | **1.00** |
+### The result, after both corrections
 
-**The corrected headline: three screens are genuinely contested at every viewport — the two mode
-dialogs and the lobby.** CHAIN and FUSE, which I had called structural failures, have a dominant
-region at six of eight sizes; they are far less bad than the raw count made them look, and I am
-withdrawing that claim.
+| screen | single | dominant | contested | what the eye actually lands on | worst pair |
+|---|---|---|---|---|---|
+| shop | 8 | — | 0 | `.shop-back` | — |
+| stats | 8 | — | 0 | `.stats-back` | — |
+| collection | 8 | — | 0 | `.stats-back` | — |
+| wb-play | — | — | — | **`.game-input`** | — |
+| blitz-play | — | — | — | **`.game-input`** | — |
+| chain-play | 0 | 6 | 2 | `.solo-input` | `.solo-input` vs `.wins-hud-label` (2.95) |
+| fuse-play | 0 | 6 | 2 | `.solo-sill` | `.solo-input` vs `.wins-hud-label` (3.50) |
+| chain-death | 3 | 3 | 2 | `.solo-restart` | `.solo-restart` vs `.solo-deathcard` (3.74) |
+| wb-gameover | 1 | 5 | 2 | `.game-over-rematch` | `.game-over-rematch` vs `.share-btn` (2.92) |
+| menu | 2 | 1 | 5 | **`.menu-xp-rank`** | `.menu-xp-rank` vs `.menu-xp-cluster` (1.46) |
+| rooms-browser | 2 | 0 | 6 | `.browser-name-input` | `.browser-name-input` vs `.browser-code-input` (1.30) |
+| **lobby** | 0 | 0 | **8/8** | `.lobby-input` | `.lobby-input` vs `.lobby-toggle-btn` (1.84) |
+| **wb-dialog** | 0 | 0 | **8/8** | `.mode-dialog-btn` | `.mode-dialog-btn` vs `.mode-dialog-btn` (**1.02**) |
+| **blitz-dialog** | 0 | 0 | **8/8** | `.mode-dialog-btn` | `.mode-dialog-btn` vs `.mode-dialog-btn` (**1.00**) |
 
-**And the dialogs are the worst thing measured in this run, by a distance.** A dominance ratio of
-**1.00 and 1.02** means the two loudest regions on those screens are *exactly the same size*. With
-the region-identity check turned on (§6c), the tool names them:
+Four things fall out of it.
+
+**1. The dialogs are the worst thing measured in this run, by a distance.** Dominance **1.00 and
+1.02** means the two loudest regions are *exactly the same size*, and the tool names them both as
+`.mode-dialog-btn`: PLAY and JOIN WITH CODE, tied. That is the same defect §6a found from the
+contrast side and §6b explained structurally, reached from a third direction.
+
+**2. On every play screen the eye lands on the TEXT INPUT.** `wb-play` and `blitz-play` resolve to
+one region and it is `.game-input`; chain and fuse the same. This is a direct, measured miss against
+Phase 2's own spec, which says the fragment is "the brightest text on screen". As a colour claim
+that is true — the fragment is `#FFE94A`, 16.10:1. As a COMPOSITION claim it is false: the fragment
+carries a 4px black stroke that eats most of each glyph, while `.game-input` is a large solid white
+block at 19.88:1. Stroked yellow text loses to a solid white rectangle under a blur, and to the eye.
+
+**3. The white-surface problem of §6b is now measured on SIX screens**, not three: lobby,
+rooms-browser, chain-play, fuse-play, wb-play and blitz-play all resolve to a white input as their
+hottest element.
+
+**4. The menu's entry point is the ROOKIE rank chip** (`.menu-xp-rank`), not the wordmark and not
+the spotlit card. Combined with the menu having the lowest peak in the game (§5 in the summary),
+that is the clearest statement of why the menu reads flat.
+
+Good news worth stating: **shop, stats, collection, wb-gameover and chain-death all resolve to a
+single dominant element, and on the two end screens it is the right one** — `.game-over-rematch`
+and `.solo-restart`, the primary CTAs. Those screens work.
+
+### One surface I could not reach, and am not reporting a number for
+`sat-play` still measures `.sr-modecards`. SAT gates play behind a mode picker and then a briefing,
+and my advance loop does not get through both reliably. **The SAT play screen was never measured**,
+so it has no row above. I would rather say that than publish a figure for the mode picker labelled
+as the play screen, which is exactly what the first two runs did.
+
+---
+
+## 5b. PHASE 5 — SAT RUSH'S DUOTONE HOLDS, WITH ONE 0.05 MISS
+
+Phase 5's SAT item: "full duotone — cream + ONE near-black ink ... Definition text must hit 4.5:1
+on cream (near-black, not mid-grey)."
+
+Verified by measurement, not by reading the CSS:
 
 ```
-blitz-dialog desktop   134 .mode-dialog-btn ,  132 .mode-dialog-btn ,  28 .mode-dialog-ai-badge-ai
-wb-dialog    desktop   127 .mode-dialog-btn ,   77 .mode-dialog-btn
+--ink    #111     on --paper #f0ead9   15.71:1    the definition text. Passes, comfortably.
+--paper  #f0ead9  on --ink   #111      15.71:1    the negative reprint. Passes.
+--redink #C8321E  on --paper #f0ead9    4.45:1    <- 0.05 BELOW the 4.5 body floor
 ```
 
-PLAY and JOIN WITH CODE, tied. That is the same defect §6a found from the contrast side and §6b
-explained structurally, arrived at from a third direction entirely.
+There are no mid-greys used as text anywhere in `SatRush.css` — the mode really is a duotone, and
+the definition text really is near-black. That item is done.
 
-Two further things worth acting on:
-1. **Both game-over screens degrade as the display grows** (chain-death 1 region at 360x640 and
-   390x844, 5 at 2560x1440; wb-gameover similar). At small sizes the summary merges under the blur
-   into one mass; as the screen grows the pieces separate. A max-width on the summary grid would
-   hold the small-screen composition at every size.
-2. **`sat-play` passes on a technicality.** One region, but it is 1209 cells — 16.7% of the screen
-   at 1366x768 and 34.3% at 390x844. That is one enormous hot area, not a focal point. The test
-   counts regions and now weighs their relative size; it still does not cap a region's SHARE of the
-   screen, which is the obvious next iteration.
+The `--redink` miss is small and specific. It is used in two places: `.sr-cover-ex-answer` at
+`--fs-panel` (20-28px), which counts as LARGE text and only needs 3:1 — fine — and `.sr-cover-pay b`
+at `--fs-body`, which clamps at **18px**. WCAG's large-text threshold for bold is 18.66px, so that
+one is body text and needs 4.5:1. It has 4.446:1.
+
+**The fix is two characters: `#C8321E` -> `#C6321E` gives 4.509:1** and is visually
+indistinguishable (a 1% darken at the same hue). I have NOT applied it — `--redink #C8321E` is
+sanctioned by name in DESIGN.md's SAT sub-style, so changing it is a design-doc decision, not a
+bug fix.
 
 ---
 
