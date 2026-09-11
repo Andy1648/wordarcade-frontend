@@ -83,3 +83,18 @@ test('the ring row is reserved on BOTH sides, which is what centres it', () => {
   const b = ringDiameter({ ...LAPTOP, topH: 60, botH: 150, contentH: 900, stageH: 940 });
   assert.equal(a, b);
 });
+
+// THE HEADER ROW is taken off the top of the board ONCE. Every other band above the ring
+// (the prompt) is reserved on both sides of the ring row to keep the ring centred; the
+// header is not, because the ring is centred in the PLAY AREA below it. This is the whole
+// reason the header is a grid row of its own rather than part of the top stack - inside
+// the top stack its 32px would have cost the ring 64.
+test('the header row costs the ring its own height plus one gap, not double', () => {
+  const without = ringDiameter({ ...LAPTOP, headH: 0 });
+  const with32 = ringDiameter({ ...LAPTOP, headH: 32 });
+  assert.equal(without - with32, 32 + LAPTOP.rowGap);
+});
+
+test('a headH of 0 is exactly the old behaviour (the default is not a silent cost)', () => {
+  assert.equal(ringDiameter(LAPTOP), ringDiameter({ ...LAPTOP, headH: 0 }));
+});

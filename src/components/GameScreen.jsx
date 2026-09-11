@@ -1722,6 +1722,7 @@ export default function GameScreen({
   // to replace. A callback ref re-runs the effect the moment the node attaches, and
   // again if it is ever remounted.
   const [wbStage, setWbStage] = useState(null);
+  const wbHeadRef = useRef(null);
   const wbTopRef = useRef(null);
   const wbBottomRef = useRef(null);
   const wbBarRef = useRef(null);
@@ -1730,6 +1731,7 @@ export default function GameScreen({
     if (!stage || typeof ResizeObserver === 'undefined') return undefined;
     const measure = () =>
       applyRingSize(stage, {
+        head: wbHeadRef.current,
         top: wbTopRef.current,
         bottomBar: wbBarRef.current,
         bottom: wbBottomRef.current,
@@ -1740,6 +1742,7 @@ export default function GameScreen({
     // re-triggers this observer - no resize loop.
     const ro = new ResizeObserver(measure);
     ro.observe(stage);
+    if (wbHeadRef.current) ro.observe(wbHeadRef.current);
     if (wbTopRef.current) ro.observe(wbTopRef.current);
     if (wbBarRef.current) ro.observe(wbBarRef.current);
     if (wbBottomRef.current) ro.observe(wbBottomRef.current);
@@ -2648,14 +2651,12 @@ export default function GameScreen({
     1
   );
 
-  // Which SEAT on the ring is taking its turn. Purely a presentation index into the
-  // same `players` array the seats render from, so the pointer can never disagree
-  // with which seat is lit. -1 (nobody active) simply hides the pointer.
-  const turnSeatIndex = players.findIndex((p) => p.id === gameState.currentPlayerId);
-
   // The per-turn starting seconds, used by the bomb to compute its fuse ratio.
   // (Word Bomb has no timer bar - the bomb's fuse is the timer.)
   const maxTimer = gameState.timerSeconds || 1;
+
+  // Whose turn it is, as a player record - read by the <=2p right-rail readout.
+  const turnPlayer = players.find((p) => p.id === gameState.currentPlayerId) || null;
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
@@ -2951,7 +2952,9 @@ export default function GameScreen({
       <div className="game-panel">
       <div
         ref={setWbStage}
-        className={`game-stage game-stage--wb${shake && !hitlag ? ' game-shake' : ''}${
+        className={`game-stage game-stage--wb${players.length <= 2 ? ' wb-duo' : ''}${
+          shake && !hitlag ? ' game-shake' : ''
+        }${
           boomShake && !hitlag ? ' boom-shake' : ''
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
@@ -2975,15 +2978,23 @@ export default function GameScreen({
           {hypeKey > 0 && !hitlag &&
             (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
         </div>
-        {/* ===== TOP STACK: header + the fragment prompt. It is ONE grid area so
-            the ring row below it can be a track with an EQUAL 1fr above and below,
-            which is what puts the ring's centre on the stage's centre. ===== */}
-        <div className="wb-top" ref={wbTopRef}>
-        <div className="game-header">
+        {/* ===== THE HEADER IS ITS OWN GRID ROW, above the prompt. =====
+            It used to be `position:absolute; inset:0` over the prompt bar at >=900px
+            ("the header RIDES the bar"), which measured on the preview as the title,
+            LEAVE and the sound button all rendering INSIDE the 1166x135 prompt box -
+            three controls sharing a band with the hero fragment. A header is chrome;
+            it gets a row. Cost is real (every pixel between the prompt and the ring
+            is reserved twice to keep the ring centred), which is why the row is as
+            short as it can be: one line, no meta badges at <=2 players. ===== */}
+        <div className="game-header" ref={wbHeadRef}>
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
           </div>
           <div className="game-header-right">
+            {/* Always rendered. At <=2 players ON A RAILS BOARD the CSS hides it,
+                because the MATCH readout in the right rail carries ROUND and MODE
+                there (and is the weight that stops that rail being empty). The
+                phone board has no rails, so it keeps the badges here. */}
             <div className="game-meta">
               {typeof gameState.round !== 'undefined' && (
                 <span className="game-meta-round">ROUND {gameState.round}</span>
@@ -3011,6 +3022,10 @@ export default function GameScreen({
           </div>
         </div>
 
+        {/* ===== TOP STACK: the fragment prompt. Its own grid area, with an EQUAL
+            1fr track above and below the ring row, which is what centres the ring
+            in the board below the header. ===== */}
+        <div className="wb-top" ref={wbTopRef}>
         {/* THE FRAGMENT sits directly ABOVE the ring, horizontally centred on the
             bomb at the ring's centre. It is NOT overlaid on the bomb: the ring's free
             centre is only as wide as the circle leaves after the seats, and a 96px
@@ -3165,19 +3180,14 @@ export default function GameScreen({
           })}
           </div>
 
-          {/* TURN POINTER: a single arm rooted at the bomb, rotated to the active
-              seat. It is the second, unmissable read of whose turn it is (the first
-              is the seat itself going full-accent at 1.3x). Rotation only - one
-              transform, no layout - and it simply hides when nobody is active. */}
-          {turnSeatIndex >= 0 && !gameOver && (
-            <div
-              className="wb-pointer"
-              style={{ '--turn': turnSeatIndex, '--n': players.length }}
-              aria-hidden="true"
-            >
-              <span className="wb-pointer-arm" />
-            </div>
-          )}
+          {/* NO TURN POINTER. A beam from the bomb to the live seat cannot exist on
+              this ring: the seats sit flush with the ring box, the bomb owns 0.42d,
+              and the band between them is ~6% of the diameter - which the floated
+              name and the live-typing line already occupy. The arm therefore ran
+              UNDER the 12-o'clock seat's name and painted as a stray vertical mark
+              struck through it (reported on the preview as "a stray glyph through
+              ANDY"). The active seat is already the ONLY full-accent object on the
+              board at 1.3x, with YOUR TURN flagged above it - that is the read. */}
 
           {/* THE CORE: the bomb, dead centre of the ring. The fragment sits above the
               ring (see the note there); this cell is the bomb's alone so it can own a
@@ -3243,6 +3253,46 @@ export default function GameScreen({
         {players.length > 2 && (
           <div className="wb-rail wb-rail--left">
             <KillFeed events={feedEvents} playerColors={playerColors} />
+          </div>
+        )}
+
+        {/* RIGHT RAIL AT <=2 PLAYERS. A head-to-head has no kill feed (its events
+            just narrate the two seats you are already looking at), which left the
+            LEFT rail empty and the board lopsided - the same dead-space failure in
+            a new shape. The answer is BALANCE, not filler: the used-word list moves
+            to the LEFT rail (CSS, .wb-duo below) and this readout - ROUND, whose
+            turn it is, the live streak, the mode - takes the RIGHT. Both rails then
+            carry a card of the same size. At 3+ the feed takes the left as before
+            and this panel is not rendered. */}
+        {players.length <= 2 && (
+          <div className="wb-rail wb-rail--right">
+            <div className="wb-status">
+              <div className="wb-status-title">MATCH</div>
+              <div className="wb-status-rows">
+                <div className="wb-status-row">
+                  <span className="wb-status-k">ROUND</span>
+                  <span className="wb-status-v">
+                    {typeof gameState.round === 'undefined' ? '1' : gameState.round}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">TURN</span>
+                  <span className="wb-status-v">
+                    {turnPlayer ? turnPlayer.name : '--'}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">STREAK</span>
+                  <span className={`wb-status-v${streak.count >= 2 ? ' is-hot' : ''}`}>
+                    ×{streak.count}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">MODE</span>
+                  <span className="wb-status-v">{diffLabel || 'CHILL'}</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

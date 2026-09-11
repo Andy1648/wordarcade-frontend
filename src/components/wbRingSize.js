@@ -42,18 +42,25 @@ export function ringDiameter({
   stageH,
   contentW,
   contentH,
+  headH = 0,
   topH,
   botH,
   railW = 0,
   rowGap = 0,
   colGap = 0,
 }) {
+  // THE HEADER ROW is chrome: it is taken off the TOP of the content box once, and
+  // the ring is then centred in what is left (the PLAY AREA). It is the one band
+  // that is NOT reserved twice — which is exactly why the header is a row of its
+  // own instead of sitting inside the top stack, where its height would have cost
+  // the ring double.
+  const playH = contentH - (headH ? headH + rowGap : 0);
   // The ring row sits between two EQUAL 1fr tracks (that equality is what centres
-  // it on the stage), so each track gets whatever is left over halved — meaning the
-  // ring may only take the height that remains after the TALLER of the two stacks
-  // has been reserved on BOTH sides.
+  // it in the play area), so each track gets whatever is left over halved — meaning
+  // the ring may only take the height that remains after the TALLER of the two
+  // stacks has been reserved on BOTH sides.
   const reserved = Math.max(topH, botH) + rowGap;
-  const freeHeight = contentH - 2 * reserved;
+  const freeHeight = playH - 2 * reserved;
   // Same argument horizontally: the rails are equal 1fr tracks either side.
   const freeWidth = contentW - 2 * (railW + colGap);
   const shorterSide = Math.min(stageW, stageH);
@@ -72,7 +79,7 @@ const px = (v) => {
  * Measure the stage once and write the result to `--wb-size` on it.
  * Returns the diameter it wrote (or null if the stage isn't laid out yet).
  */
-export function applyRingSize(stage, { top, bottomBar, bottom } = {}) {
+export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
   if (!stage) return null;
   const box = stage.getBoundingClientRect();
   if (!box.width || !box.height) return null;
@@ -91,6 +98,7 @@ export function applyRingSize(stage, { top, bottomBar, bottom } = {}) {
     stageH: box.height,
     contentW,
     contentH,
+    headH: head ? head.offsetHeight : 0,
     topH: top ? top.offsetHeight : 0,
     botH: (stack ? bottom : bottomBar)?.offsetHeight || 0,
     railW,

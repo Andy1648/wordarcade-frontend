@@ -13,9 +13,20 @@
 //
 //   1) CLIP     every avatar (and its floated name) is fully inside the stage — 0px out.
 //   2) BOX      the ring's bounding box is inside the stage on BOTH axes.
-//   3) CENTRE   the ring's centre is within 5% of the stage's centre on both axes.
+//   3) CENTRE   the ring's centre is within 2% of the PLAY AREA's centre on both axes
+//               (the play area is the board below the header row), and within 8% of the
+//               whole stage's centre as a backstop against the old corner failure.
 //   4) QUADRANT no quadrant of the stage is empty: each holds >=1 element covering >900px^2.
 //   5) SIZE     the ring is 45-75% of the stage's SHORTER dimension.
+//   6) HEADER   the prompt box does not intersect the title, LEAVE or the sound button by
+//               even 1px. The header used to be absolutely positioned ON the prompt bar,
+//               which every number above passed and one screenshot showed instantly.
+//   7) RAILS    wherever the rails layout is live, NEITHER rail is empty and the two rail
+//               cards are within 35% of each other in area. An empty left rail at 2
+//               players is the same dead-space failure the ring was built to fix.
+//   8) NAME     nothing on the board is drawn across a seat's name label. A turn-pointer
+//               beam used to run under the 12-o'clock seat's name and read as a stray
+//               glyph struck through it.
 //   +           the page never scrolls, and nothing overlaps anything it shouldn't.
 //
 // Run at 1366x768 / 1280x720 / 1536x864 / 390x844 / 320x640, at 2 / 3 / 4 / 8 players,
@@ -42,7 +53,7 @@ fs.mkdirSync(SHOTS, { recursive: true });
 const mkPlayers = (n) =>
   Array.from({ length: n }, (_, i) => ({
     id: i === 0 ? ME : `p${i}`,
-    name: i === 0 ? 'YOU' : `PLAYER${i}`,
+    name: i === 0 ? 'ANDY' : `PLAYER${i}`,
     lives: 3,
     isHost: i === 0,
   }));
@@ -91,6 +102,18 @@ async function measure(page) {
     const S = r(stage);
     const R = r(ring);
     const seats = [...document.querySelectorAll('.wb-seat')];
+    const scs = getComputedStyle(stage);
+    const layout = scs.getPropertyValue('--wb-layout').trim();
+    const rowGap = parseFloat(scs.rowGap) || 0;
+    // The PLAY AREA: the stage's content box minus the header row. The header is
+    // chrome and is NOT mirrored below the ring, so the ring is centred in what is
+    // left, not on the stage's own middle.
+    const headerEl = document.querySelector('.game-stage--wb .game-header');
+    const H = headerEl ? r(headerEl) : null;
+    const playT = H ? H.b + rowGap : S.t + (parseFloat(scs.paddingTop) || 0);
+    const playB = S.b - (parseFloat(scs.paddingBottom) || 0);
+    const playL = S.l + (parseFloat(scs.paddingLeft) || 0);
+    const playR = S.r - (parseFloat(scs.paddingRight) || 0);
 
     // (1) CLIP — a seat's floated NAME hangs outside the seat's own box, so the avatar
     // AND its label both have to sit inside the stage or the 3-o'clock player's name
@@ -113,6 +136,8 @@ async function measure(page) {
     // (3) CENTRE — ring centre vs stage centre, as a % of the stage on each axis.
     const dx = (R.l + R.w / 2) - (S.l + S.w / 2);
     const dy = (R.t + R.h / 2) - (S.t + S.h / 2);
+    const pdx = (R.l + R.w / 2) - (playL + playR) / 2;
+    const pdy = (R.t + R.h / 2) - (playT + playB) / 2;
 
     // (4) QUADRANT — split the stage in four and require each to hold a real object.
     // Measured as INTERSECTION area so a big element that straddles the centre counts
@@ -128,7 +153,7 @@ async function measure(page) {
     const CONTENT = [
       '.wb-seat', '.bomb-svg', '.game-combo-box', '.game-input', '.game-send-btn',
       '.game-skip-btn', '.game-used', '.game-used-chip', '.kill-feed', '.game-title',
-      '.game-leave-btn', '.wb-pointer-arm', '.spectator-react-btn',
+      '.game-leave-btn', '.wb-status', '.spectator-react-btn',
     ];
     const content = [];
     for (const sel of CONTENT) {
@@ -204,6 +229,112 @@ async function measure(page) {
       }
     }
 
+    // (6) HEADER vs PROMPT. The prompt box's rect must not touch the title or either
+    // header control. This is the gate the "header rides the bar" layout failed while
+    // passing every geometric number in this file.
+    const promptEl = document.querySelector('.game-stage--wb .game-combo-box');
+    const P = promptEl ? r(promptEl) : null;
+    let headerHit = { px: 0, what: '-' };
+    if (P) {
+      for (const sel of ['.game-title', '.game-leave-btn', '.game-mute-btn']) {
+        const el = document.querySelector('.game-stage--wb ' + sel);
+        if (!el) continue;
+        const b = r(el);
+        if (b.w < 1 || b.h < 1) continue;
+        const ox = Math.min(P.r, b.r) - Math.max(P.l, b.l);
+        const oy = Math.min(P.b, b.b) - Math.max(P.t, b.t);
+        const px = Math.min(ox, oy);
+        if (ox > 0 && oy > 0 && px > headerHit.px) headerHit = { px: Math.round(px * 10) / 10, what: sel };
+      }
+    }
+    // The gap between the header's bottom edge and the top of the prompt box.
+    const headToPrompt = P && H ? Math.round((P.t - H.b) * 10) / 10 : null;
+
+    // ...and the OTHER thing the header has to miss: the fixed WINS pill, which is a
+    // sibling of the board (position:fixed, top-right of the VIEWPORT) and so is not
+    // caught by any stage-relative measurement. The board's top padding exists purely
+    // to clear it; without a gate on it that padding is a number nobody can check.
+    const pill = document.querySelector('.wins-hud');
+    let pillHit = { px: 0, what: '-' };
+    if (pill) {
+      const pb = r(pill);
+      // The pill carries a 4px hard offset shadow that the rect does not include.
+      const PB = { l: pb.l, t: pb.t, r: pb.r + 4, b: pb.b + 4 };
+      for (const sel of ['.game-title', '.game-leave-btn', '.game-mute-btn', '.game-combo-box']) {
+        const el = document.querySelector('.game-stage--wb ' + sel);
+        if (!el) continue;
+        const b = r(el);
+        if (b.w < 1 || b.h < 1) continue;
+        const ox = Math.min(PB.r, b.r) - Math.max(PB.l, b.l);
+        const oy = Math.min(PB.b, b.b) - Math.max(PB.t, b.t);
+        const px = Math.min(ox, oy);
+        if (ox > 0 && oy > 0 && px > pillHit.px) pillHit = { px: Math.round(px * 10) / 10, what: sel };
+      }
+    }
+
+    // (7) RAILS. Whichever card occupies each side track, measured by area. Only
+    // meaningful in the rails layout - the phone board stacks and has no rails.
+    const cardOf = (side) => {
+      const sel = side === 'left'
+        ? ['.wb-rail--left .kill-feed', '.game-stage--wb.wb-duo .game-used', '.wb-rail--left > *']
+        : ['.wb-rail--right .wb-status', '.game-stage--wb:not(.wb-duo) .game-used', '.wb-rail--right > *'];
+      for (const q of sel) {
+        const el = document.querySelector(q);
+        if (el) {
+          const b = r(el);
+          if (b.w > 0 && b.h > 0) return { sel: q, area: Math.round(b.w * b.h), b };
+        }
+      }
+      return { sel: '-', area: 0, b: null };
+    };
+    const leftCard = layout === 'rails' ? cardOf('left') : { sel: 'n/a', area: 0 };
+    const rightCard = layout === 'rails' ? cardOf('right') : { sel: 'n/a', area: 0 };
+    const railSkew = layout === 'rails' && Math.max(leftCard.area, rightCard.area) > 0
+      ? Math.round((Math.abs(leftCard.area - rightCard.area) / Math.max(leftCard.area, rightCard.area)) * 1000) / 10
+      : 0;
+    // Which side of the stage's centre line each card actually sits on - a rail that
+    // is "present" but placed on the wrong side would still read as a dead half.
+    const sideOf = (c) => (c.b ? (c.b.l + c.b.r) / 2 < (S.l + S.r) / 2 ? 'L' : 'R' : '-');
+
+    // (8) NAME. Nothing that PAINTS A SOLID BOX on the board may cross a seat's name
+    // label. Two deliberate narrowings, both learned from a first pass that cried wolf:
+    //   - board objects only (the ring's own subtree + the prompt). The app's full-bleed
+    //     effect layers - .game-warmth, .screen-flash, the cursor-trail canvas - intersect
+    //     every rect on the page and are not what this is looking for.
+    //   - PAINTED boxes only: a fill or a visible border. The bomb's wrapper chain
+    //     (.bomb-area/.bomb-rattle/.bomb-passer/.bomb-reactor) and the svg's own box are
+    //     transparent and large; their RECTS overlap a nearby name while nothing is drawn
+    //     there. Bomb-vs-seat clearance is gated radially instead (minRadialGapPx).
+    // What this DOES catch is the class of bug it was written for: the turn-pointer arm,
+    // a 12px filled bar that ran under the 12-o'clock seat and read as a glyph struck
+    // through the name.
+    const paints = (el) => {
+      const cs = getComputedStyle(el);
+      const bg = cs.backgroundColor || '';
+      const m = bg.match(/rgba?\(([^)]+)\)/);
+      const alpha = m ? parseFloat(m[1].split(',')[3] ?? '1') : 0;
+      if (alpha > 0.02) return true;
+      if (cs.backgroundImage && cs.backgroundImage !== 'none') return true;
+      const bs = cs.borderStyle;
+      return bs && bs !== 'none' && parseFloat(cs.borderTopWidth || '0') > 0;
+    };
+    const nameStrike = [];
+    for (const nameEl of document.querySelectorAll('.wb-seat .game-player-name-text')) {
+      const b = r(nameEl);
+      if (b.w < 1) continue;
+      for (const el of document.querySelectorAll('.wb-ring *, .game-combo-box, .game-combo-box *')) {
+        if (el === nameEl || el.contains(nameEl) || nameEl.contains(el)) continue;
+        const c = r(el);
+        if (c.w < 1 || c.h < 1) continue;
+        const ox = Math.min(b.r, c.r) - Math.max(b.l, c.l);
+        const oy = Math.min(b.b, c.b) - Math.max(b.t, c.t);
+        if (ox > 0.5 && oy > 0.5 && paints(el)) {
+          nameStrike.push((el.className && el.className.baseVal !== undefined
+            ? el.className.baseVal : String(el.className)).split(' ')[0] || el.tagName);
+        }
+      }
+    }
+
     const widths = seats.map((el) => Math.round(r(el).w * 10) / 10);
     const round1 = (n) => Math.round(n * 10) / 10;
     return {
@@ -217,6 +348,23 @@ async function measure(page) {
       ringOutsideStagePx: round1(ringOut),
       centreOffPctX: round1((Math.abs(dx) / S.w) * 100),
       centreOffPctY: round1((Math.abs(dy) / S.h) * 100),
+      playCentreOffPctX: round1((Math.abs(pdx) / (playR - playL)) * 100),
+      playCentreOffPctY: round1((Math.abs(pdy) / (playB - playT)) * 100),
+      layout,
+      rowH: {
+        head: H ? Math.round(H.h) : 0,
+        top: Math.round((document.querySelector('.wb-top') || { offsetHeight: 0 }).offsetHeight),
+        bot: Math.round((document.querySelector('.wb-bottombar') || { offsetHeight: 0 }).offsetHeight),
+      },
+      headerHitPx: headerHit.px,
+      headerHitWhat: headerHit.what,
+      headToPrompt,
+      pillHitPx: pillHit.px,
+      pillHitWhat: pillHit.what,
+      leftCard: { sel: leftCard.sel, area: leftCard.area, side: sideOf(leftCard) },
+      rightCard: { sel: rightCard.sel, area: rightCard.area, side: sideOf(rightCard) },
+      railSkewPct: railSkew,
+      nameStrike: [...new Set(nameStrike)],
       quadrants,
       sizePct: round1(sizeFrac * 100),
       bombFrac: Math.round(bombFrac * 1000) / 1000,
@@ -249,7 +397,14 @@ for (const vp of VIEWPORTS) {
         m.ringOutsideStagePx + 'px | quads=' +
         m.quadrants.map((q) => q.name + ':' + q.area + '(' + q.sel + ')').join(' ') +
         ' | worstOverlap=' + m.worstOverlapPx + 'px ' + m.worstOverlapPair +
-        ' | radialGap=' + m.minRadialGapPx + 'px | scroll=' + m.pageVScroll + '/' + m.pageHScroll
+        ' | radialGap=' + m.minRadialGapPx + 'px | scroll=' + m.pageVScroll + '/' + m.pageHScroll +
+        ' | play-centreOff=' + m.playCentreOffPctX + '%/' + m.playCentreOffPctY + '%' +
+        ' | headerHit=' + m.headerHitPx + 'px(' + m.headerHitWhat + ') head->prompt=' + m.headToPrompt + 'px' +
+        ' | pillHit=' + m.pillHitPx + 'px(' + m.pillHitWhat + ')' +
+        ' | rails[' + m.layout + ']=' + m.leftCard.side + ':' + m.leftCard.area + '(' + m.leftCard.sel + ') ' +
+        m.rightCard.side + ':' + m.rightCard.area + '(' + m.rightCard.sel + ') skew=' + m.railSkewPct + '%' +
+        ' | nameStrike=' + (m.nameStrike.length ? m.nameStrike.join(',') : 'none') +
+        ' | rows head/top/bot=' + m.rowH.head + '/' + m.rowH.top + '/' + m.rowH.bot
       );
 
       expect(m.seatCount, 'one seat per player').toBe(n);
@@ -259,9 +414,20 @@ for (const vp of VIEWPORTS) {
       expect(m.clippedPx, 'avatar/name clipped by the stage (' + m.clippedWhat + ')').toBeLessThanOrEqual(0);
       // (2) the ring's box inside the stage on both axes
       expect(m.ringOutsideStagePx, 'ring box outside the stage').toBeLessThanOrEqual(0);
-      // (3) the ring is centred on the stage
-      expect(m.centreOffPctX, 'ring centre X off the stage centre (%)').toBeLessThanOrEqual(5);
-      expect(m.centreOffPctY, 'ring centre Y off the stage centre (%)').toBeLessThanOrEqual(5);
+      // (3) the ring is centred on the PLAY AREA (the board below the header row),
+      // with the whole-stage offset kept as a loose backstop against the old failure
+      // where the ring slid into a corner.
+      expect(m.playCentreOffPctX, 'ring centre X off the PLAY AREA centre (%)').toBeLessThanOrEqual(2);
+      expect(m.playCentreOffPctY, 'ring centre Y off the PLAY AREA centre (%)').toBeLessThanOrEqual(2);
+      // 10%, not the old 5%, and the reason is structural rather than a loosened bar:
+      // the board owes its top edge a ~52px band for the fixed WINS pill and its bottom
+      // edge nothing, and it owes a header row at the top with no mirror below. On a
+      // 624px-tall board those two alone are 8% before anything has drifted. The claim
+      // that actually matters - the ring sits in the middle of the PLAY AREA - is gated
+      // at 2% above; this is only a backstop against the original corner failure, where
+      // the ring was a third of the board out of place.
+      expect(m.centreOffPctX, 'ring centre X off the stage centre (%)').toBeLessThanOrEqual(10);
+      expect(m.centreOffPctY, 'ring centre Y off the stage centre (%)').toBeLessThanOrEqual(10);
       // (4) no dead quadrant
       for (const q of m.quadrants) {
         expect(q.area, 'quadrant ' + q.name + ' is empty (biggest object ' + q.sel + ' = ' + q.area + 'px^2)')
@@ -270,6 +436,27 @@ for (const vp of VIEWPORTS) {
       // (5) the ring owns 45-75% of the stage's shorter side
       expect(m.sizePct, 'ring as % of the stage short side').toBeGreaterThanOrEqual(45);
       expect(m.sizePct, 'ring as % of the stage short side').toBeLessThanOrEqual(75);
+
+      // (6) THE HEADER IS NOT ON THE PROMPT. Zero intersection, and a real gap.
+      expect(m.headerHitPx, 'header control (' + m.headerHitWhat + ') intersects the prompt box')
+        .toBeLessThanOrEqual(0);
+      expect(m.headToPrompt, 'gap between the header bottom and the prompt top').toBeGreaterThanOrEqual(12);
+      expect(m.pillHitPx, 'the fixed WINS pill covers ' + m.pillHitWhat).toBeLessThanOrEqual(0);
+
+      // (7) BOTH RAILS CARRY WEIGHT (rails layout only - the phone board has no rails).
+      if (m.layout === 'rails') {
+        expect(m.leftCard.area, 'LEFT rail is empty (' + m.leftCard.sel + ')').toBeGreaterThan(2000);
+        expect(m.rightCard.area, 'RIGHT rail is empty (' + m.rightCard.sel + ')').toBeGreaterThan(2000);
+        expect(m.leftCard.side, 'the left rail card is not on the left').toBe('L');
+        expect(m.rightCard.side, 'the right rail card is not on the right').toBe('R');
+        expect(
+          m.railSkewPct,
+          'rail areas differ by ' + m.railSkewPct + '% (' + m.leftCard.area + ' vs ' + m.rightCard.area + ')'
+        ).toBeLessThanOrEqual(35);
+      }
+
+      // (8) NOTHING IS DRAWN THROUGH A SEAT'S NAME.
+      expect(m.nameStrike, 'board objects painted across a seat name').toEqual([]);
 
       // and the things the first gate DID get right, kept:
       expect(m.pageVScroll, 'page v-scroll').toBeLessThanOrEqual(0);
@@ -347,7 +534,7 @@ test('the fuse is the clock: length strictly decreases across a scripted turn', 
   }
 });
 
-test('the numeric readout appears only under 5s, and the turn pointer aims at the live seat', async ({ page }) => {
+test('the numeric readout appears only under 5s, and exactly one seat is lit for the turn', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   const players = mkPlayers(4);
   const mock = await enterGame(page, players, ME);
@@ -361,8 +548,11 @@ test('the numeric readout appears only under 5s, and the turn pointer aims at th
   await page.waitForTimeout(120);
   await expect(num, 'seconds readout appears under 5s').toHaveCount(1);
 
-  // The pointer's rotation must match the active seat's index: seat 0 is straight up and
-  // the pointer uses the same convention, so angle = index / count * 360.
+  // TURN OWNERSHIP IS THE LIT SEAT, and nothing else. There was a rotating pointer arm
+  // rooted at the bomb; it had to go (see the .wb-pointer note in GameScreen.css - the
+  // band it needed is occupied by the 12-o'clock seat's own name, and it painted as a
+  // mark struck through that name). So the assertion is the one that survives: exactly
+  // ONE seat carries .current, and it is the seat whose turn it is.
   for (const idx of [0, 1, 2, 3]) {
     mock.pushToClient({
       type: 'turn_update',
@@ -372,15 +562,15 @@ test('the numeric readout appears only under 5s, and the turn pointer aims at th
       },
     });
     await page.waitForTimeout(340);
-    const deg = await page.evaluate(() => {
-      const el = document.querySelector('.wb-pointer');
-      if (!el) return null;
-      const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
-      return (Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI) + 360) % 360;
-    });
-    const expected = Math.round((idx / players.length) * 360) % 360;
+    const lit = await page.evaluate(() =>
+      [...document.querySelectorAll('.wb-seat')]
+        .map((el, i) => (el.querySelector('.game-player-card.current') ? i : -1))
+        .filter((i) => i >= 0)
+    );
     // eslint-disable-next-line no-console
-    console.log('POINTER | seat ' + idx + '/' + players.length + ' -> ' + deg + 'deg (expected ' + expected + ')');
-    expect(Math.abs(deg - expected), 'pointer angle for seat ' + idx).toBeLessThanOrEqual(2);
+    console.log('TURN | seat ' + idx + '/' + players.length + ' -> lit=' + JSON.stringify(lit));
+    expect(lit, 'exactly the live seat is lit for turn ' + idx).toEqual([idx]);
   }
+  // And the pointer really is gone - not merely hidden behind something.
+  await expect(page.locator('.wb-pointer'), 'the turn-pointer arm is removed').toHaveCount(0);
 });
