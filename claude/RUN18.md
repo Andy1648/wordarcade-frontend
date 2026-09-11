@@ -81,7 +81,7 @@ that carries all six.** `feat/experiments` sits on top of it and must never merg
 | `feat/mode-screens` | `1689427` | P5 Blitz, SAT Rush, Chain, Fuse | pushed |
 | **`feat/shell-screens`** | **`f6bcf49`** | **P6 menu/dialogs/shop/stats/end + the WB fixes. THE TIP.** | pushed |
 | `feat/wb-gameplay-look` | `241398a` | the reported glyph defect, fixed on the branch it was reported on | pushed |
-| `feat/experiments` | `d067dbc` | P7 prototypes + the measuring tools. **NEVER MERGE.** | pushed |
+| `feat/experiments` | `67dff18` | P7 prototypes + the measuring tools. **NEVER MERGE.** | pushed |
 
 Every push verified against `git ls-remote`, not assumed.
 
