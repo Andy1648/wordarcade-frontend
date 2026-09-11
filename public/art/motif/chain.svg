@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Chain">
+  <title>Chain</title>
+  <rect x="26" y="127" width="60" height="34" rx="17" transform="rotate(-38 56 144)" fill="none" stroke="#000" stroke-width="13"/>
+  <rect x="70" y="83" width="60" height="34" rx="17" transform="rotate(-38 100 100)" fill="none" stroke="#000" stroke-width="13"/>
+  <rect x="114" y="39" width="60" height="34" rx="17" transform="rotate(-38 144 56)" fill="none" stroke="#000" stroke-width="13"/>
+</svg>

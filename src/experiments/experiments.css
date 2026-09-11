@@ -1,0 +1,209 @@
+/* experiments.css — PHASE 7 prototypes. Every rule here is behind a URL flag and none
+   of it is reachable in a default build. NOT SHIPPED. */
+
+/* =====================================================================
+   7b — CHROMATIC BUNGEE LOCKUP  (?x7b=1)
+   ===================================================================== */
+
+/* The lockup keeps .homepage-logo's box, pose, size and beat behaviour - only the
+   PAINT changes. That is deliberate: if the variant also changed the scale or the tilt,
+   the comparison would be measuring three things at once. */
+.x7b-logo {
+  position: relative;
+  display: inline-block;
+  /* The per-layer colour replaces the single fill + stroke, so the base element must
+     stop painting its own. */
+  color: transparent;
+  -webkit-text-stroke: 0;
+}
+
+.x7b-logo .x7b-layer,
+.x7b-logo .x7b-flow {
+  display: block;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  white-space: pre;
+}
+
+/* Layers 1-3 are pinned to the in-flow top layer, so the lockup measures exactly as a
+   single line of text and the menu's fit maths is untouched. */
+.x7b-logo .x7b-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 1. the 3D body */
+.x7b-shade {
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  color: #6b12b8;
+}
+
+/* 2. the solid letter face, in the canonical wordmark pink */
+.x7b-solid {
+  font-family: 'Bungee', cursive;
+  color: #ff4fa3;
+}
+
+/* 3. the inset line knocked out of the letter - the pink below shows through it, which
+      is where the second colour inside one letter comes from */
+.x7b-inline {
+  font-family: 'Bungee Inline', 'Bungee', cursive;
+  color: #ffe94a;
+}
+
+/* 4. the outline alone, on top, so the lockup still sits on the hard black edge the
+      rest of the menu is drawn with. This is the layer left IN FLOW: it is the one that
+      must never be missing, so it is the one that owns the box. */
+.x7b-flow {
+  position: relative;
+  font-family: 'Bungee Outline', 'Bungee', cursive;
+  color: #000;
+}
+
+/* The Outline face is a hairline against a 96px letter. Without this the black edge
+   disappears at menu size and the lockup reads as mush. A text-shadow ring is the
+   wrong tool (it is a paint-time blur budget item elsewhere in this app), so the edge
+   is thickened with the same -webkit-text-stroke the canonical wordmark already uses,
+   at a weight tuned to Outline's own stem. */
+.x7b-flow {
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+
+/* =====================================================================
+   7c — PER-MODE BACKGROUND MOTIF  (?x7c=1)
+   ===================================================================== */
+
+/* ONE huge low-contrast silhouette behind a gameplay screen. Rules it has to obey to be
+   worth looking at at all:
+     - it is a real vector asset in /public, never a CSS shape (CLAUDE.md, ART VS MOTION);
+     - it is behind everything and hit-tests to nothing;
+     - it NEVER sits behind body text - it is anchored to a corner and bled off the edge,
+       so the text column runs over flat ground;
+     - it is static. A motif that drifts is an idle loop, and the menu motion law and the
+       animation budget both forbid adding those. */
+.x7c-motif {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  /* Bled off two edges so it reads as a fragment of something much larger than the
+     screen, rather than a sticker centred in the dead space. */
+  right: -12%;
+  bottom: -14%;
+  width: min(70vw, 62vh);
+  aspect-ratio: 1;
+  max-width: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.08;
+}
+
+@media (max-width: 560px) {
+  /* On a phone the text column occupies nearly the whole width, so there is no corner
+     left to bleed into. Shrink it and push it further out rather than letting it run
+     under the words. */
+  .x7c-motif {
+    width: min(86vw, 42vh);
+    right: -22%;
+    bottom: -8%;
+    opacity: 0.06;
+  }
+}
+
+/* =====================================================================
+   7a - WORD BOMB DANGER ESCALATION  (?x7a=1)
+   =====================================================================
+   The question: does the SCREEN feel the timer, or only the bomb? Today the clock is
+   encoded on the bomb (fuse length, ring length, flame, spark, and under 5s a numeral)
+   and the board around it never changes. This variant makes the board itself run down.
+
+   It rides --danger, the eased 0..1 the timer already publishes on .game-wrap, and
+   data-tension, the tier already on the same element. No new JS, no new timer, no new
+   state - which is the point: if the effect is not worth it, there is nothing to unwind.
+
+   THE BUDGET. Value-band shifts are a paint, and the animation budget says animate
+   transform and opacity only. That rule is about PER-FRAME work; --danger is written
+   once per React tick (about once a second), not per frame, so this repaints about as
+   often as the numeral already does. The two things that WOULD be per-frame - a filter
+   and a box-shadow - are deliberately not used here. Stated plainly rather than
+   quietly assumed, because it is the one rule this prototype leans on. */
+
+/* 1. THE VALUE BAND DARKENS. Field and panel both creep toward black, so the whole
+      board loses its ground and the lit things start to float in the dark. */
+.game-wrap.x7a {
+  --v-field: rgb(
+    calc(13 - 9 * var(--danger, 0)) calc(6 - 4 * var(--danger, 0)) calc(24 - 16 * var(--danger, 0))
+  );
+  --v-panel: rgb(
+    calc(22 - 14 * var(--danger, 0)) calc(15 - 10 * var(--danger, 0)) calc(40 - 26 * var(--danger, 0))
+  );
+  --v-panel-hi: rgb(
+    calc(34 - 20 * var(--danger, 0)) calc(22 - 14 * var(--danger, 0)) calc(64 - 40 * var(--danger, 0))
+  );
+  /* 2. THE ACCENT CREEPS. #FFE94A (255,233,74) -> #FF4B4B (255,75,75), per channel on
+        the same eased value, so the board's one hot element turns red in step with the
+        fuse rather than snapping at a tier boundary. Both ends clear 4.5:1 on the
+        field (yellow 16.10, red 6.02), so the creep never crosses the contrast floor. */
+  --v-accent: rgb(255 calc(233 - 158 * var(--danger, 0)) calc(74 + var(--danger, 0)));
+}
+
+/* 3. The dim is a single flat layer whose OPACITY rides --danger - the compositor-safe
+      half of the effect, and the part that does the heavy lifting at the edges. It sits
+      under the centre stage so the bomb and the fragment stay at full value while
+      everything around them sinks: the screen feeling the timer must not cost the
+      player the two things they are actually reading. */
+.x7a-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: #05020c;
+  opacity: calc(var(--danger, 0) * 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The wash is not motion, so it stays - but it is held at a constant low value
+     rather than tracking the clock, since a screen that steadily darkens IS a form of
+     animation for anyone who asked not to have one. */
+  .x7a-dim { opacity: 0.12; }
+}
+
+/* ---- 7c motif assets + per-mode hue -------------------------------------------
+   The silhouettes are MASKS, not images, so one asset serves every hue and the motif
+   is painted in the mode's own script colour instead of an inert grey. Mask-image is
+   the only non-transform/opacity property here and it is static - set once, never
+   animated - so it costs one paint at mount and nothing after. */
+.x7c-motif[data-motif='blast'] {
+  --x7c-src: url('/art/motif/blast.svg');
+  background-color: #ff4b4b; /* Word Bomb script */
+}
+.x7c-motif[data-motif='gavel'] {
+  --x7c-src: url('/art/motif/gavel.svg');
+  background-color: #2effe0; /* Blitz script */
+}
+.x7c-motif[data-motif='brain'] {
+  --x7c-src: url('/art/motif/brain.svg');
+  background-color: #1b1410; /* SAT Rush: ink on cream */
+}
+.x7c-motif[data-motif='chain'] {
+  --x7c-src: url('/art/motif/chain.svg');
+  background-color: #2effe0; /* Chain script */
+}
+.x7c-motif[data-motif='fuse'] {
+  --x7c-src: url('/art/motif/fuse.svg');
+  background-color: #ff6b3d; /* Fuse script */
+}
+.x7c-motif {
+  background-image: none;
+  -webkit-mask-image: var(--x7c-src);
+  mask-image: var(--x7c-src);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}

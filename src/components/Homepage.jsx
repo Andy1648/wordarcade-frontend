@@ -6,6 +6,9 @@ import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
 import { recordLastMode, loadLastMode } from '../progress/lastMode';
+import { xFlag } from '../experiments/flags';
+import ChromaticLogo from '../experiments/ChromaticLogo';
+import '../experiments/experiments.css';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
@@ -708,14 +711,21 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           {/* "TYPE A WORD": the non-breaking space keeps "TYPE A" together
               so the title only ever wraps before "WORD" on narrow screens. The
               data-text must match exactly so the RGB-split clones line up. */}
-          <div
-            className="homepage-logo wall-handstyle"
-            data-text={'TYPE A WORD'}
-            role="img"
-            aria-label="Type a Word"
-          >
-            {'TYPE A WORD'}
-          </div>
+          {/* PHASE 7b PROTOTYPE (?x7b=1), never on by default. The canonical wordmark
+              is locked by CLAUDE.md; this swaps only the PAINT, keeping the same box,
+              size, pose and beat behaviour, so the two are actually comparable. */}
+          {xFlag('x7b') ? (
+            <ChromaticLogo text={'TYPE A WORD'} className="wall-handstyle" />
+          ) : (
+            <div
+              className="homepage-logo wall-handstyle"
+              data-text={'TYPE A WORD'}
+              role="img"
+              aria-label="Type a Word"
+            >
+              {'TYPE A WORD'}
+            </div>
+          )}
           {/* Paint running off the wordmark. */}
           <div className="homepage-logo-drip" aria-hidden="true">
             <span style={{ left: '17%', '--len': '20px' }} />

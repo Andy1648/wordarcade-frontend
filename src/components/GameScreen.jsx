@@ -6,6 +6,8 @@ import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
+import { xFlag } from '../experiments/flags';
+import '../experiments/experiments.css';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
@@ -811,6 +813,7 @@ export function WobbleText({ text }) {
   );
 }
 
+// PHASE 7 prototypes, all inert unless their URL flag is present. See experiments/flags.js.
 // ---- Bomb tension lookups (keyed by tier) ----
 const BOMB_SCALE = { calm: 1.0, warning: 1.05, critical: 1.1 };
 const FLAME_SCALE = { calm: 1.0, warning: 1.35, critical: 1.7 };
@@ -2837,12 +2840,24 @@ export default function GameScreen({
     // block audio until a user gesture). Capture phase so it fires no matter
     // what inner control is touched.
     <div
-      className="game-wrap"
+      className={`game-wrap${xFlag('x7a') ? ' x7a' : ''}`}
       data-tension={tensionTier}
       style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
       onKeyDownCapture={sound.unlock}
     >
+      {/* PHASE 7a PROTOTYPE (?x7a=1): the board's own darkening wash. Fixed, click-through,
+          opacity-only, and mounted before everything else so it sits behind the stage. */}
+      {xFlag('x7a') && <div className="x7a-dim" aria-hidden="true" />}
+      {/* PHASE 7c PROTOTYPE (?x7c=1): one huge low-contrast silhouette in the corner,
+          bled off two edges, masked so the mode script supplies the colour. */}
+      {xFlag('x7c') && (
+        <div
+          className="x7c-motif"
+          data-motif={gameType === 'category-blitz' ? 'gavel' : 'blast'}
+          aria-hidden="true"
+        />
+      )}
       {/* WINS: live running tally, hidden once the game is over (the total shows there). No WPM
           pill — Word Bomb is turn-based, so typing speed there is meaningless (§2). */}
       {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />}
