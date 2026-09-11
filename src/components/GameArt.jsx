@@ -120,9 +120,9 @@ export function WordBombArt() {
   });
   return (
     <svg {...SCENE_PROPS} className="card-art wb-art">
-      <rect width="300" height="400" fill="#FF6B3D" />
-      {pinwheel(238, 74, 580, 22, '#E4531F', 0.6, 'pw')}
-      <g opacity="0.8">{rays(238, 74, 26, 560, 16, '#FFB347', 4, 0.2)}</g>
+      <rect width="300" height="400" fill="#FF4B4B" />
+      {pinwheel(238, 74, 580, 22, '#D22F2F', 0.6, 'pw')}
+      <g opacity="0.8">{rays(238, 74, 26, 560, 16, '#FFE94A', 4, 0.2)}</g>
       {/* bomb — raised so its dome reads ABOVE the title bar even on a small card (the bar
          cannot cover it); still craters the bottom-left, overlapping the blast base */}
       <circle cx="112" cy="318" r="146" fill="#2E1432" stroke="#150818" strokeWidth="8" />
@@ -153,22 +153,22 @@ export function CategoryBlitzArt() {
   const chips = [[74, 270, '?', -9], [150, 286, '?', 5], [226, 270, '?', 10]];
   return (
     <svg {...SCENE_PROPS} className="card-art cb-art">
-      <rect width="300" height="400" fill="#3DA8FF" />
-      {pinwheel(150, 176, 560, 20, '#2E90E6', 0.5, 'pw')}
-      <g opacity="0.9">{Array.from({ length: 11 }, (_, i) => bolt(150, 176, (i / 11) * Math.PI * 2 + 0.3, 320, 7, '#0B5FA0', `b${i}`))}</g>
-      <g>{Array.from({ length: 11 }, (_, i) => bolt(150, 176, (i / 11) * Math.PI * 2 + 0.3, 320, 3.2, '#FFE94A', `y${i}`))}</g>
+      <rect width="300" height="400" fill="#2EFFE0" />
+      {pinwheel(150, 176, 560, 20, '#1FD9C0', 0.5, 'pw')}
+      <g opacity="0.9">{Array.from({ length: 11 }, (_, i) => bolt(150, 176, (i / 11) * Math.PI * 2 + 0.3, 320, 7, '#0A6F62', `b${i}`))}</g>
+      <g>{Array.from({ length: 11 }, (_, i) => bolt(150, 176, (i / 11) * Math.PI * 2 + 0.3, 320, 3.2, '#9A28FF', `y${i}`))}</g>
       {/* brain hero overlapping the burst core */}
       <g transform="translate(150 182) scale(2.5)">
-        <path d="M0 -40 q24 -2 26 20 q13 6 4 22 q4 15 -13 17 q-6 11 -17 4 q-11 6 -17 -4 q-17 -2 -13 -17 q-9 -16 4 -22 q2 -22 26 -20 z" fill="#FF6FB5" stroke="#B02F6E" strokeWidth="4" strokeLinejoin="round" />
-        <path d="M0 -40 Q-4 -16 2 4 Q-4 20 0 30" fill="none" stroke="#B02F6E" strokeWidth="3" strokeLinecap="round" />
-        <path d="M-18 -24 Q-11 -17 -18 -10" fill="none" stroke="#B02F6E" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M20 -24 Q13 -17 20 -10" fill="none" stroke="#B02F6E" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M0 -40 q24 -2 26 20 q13 6 4 22 q4 15 -13 17 q-6 11 -17 4 q-11 6 -17 -4 q-17 -2 -13 -17 q-9 -16 4 -22 q2 -22 26 -20 z" fill="#9A28FF" stroke="#5E1799" strokeWidth="4" strokeLinejoin="round" />
+        <path d="M0 -40 Q-4 -16 2 4 Q-4 20 0 30" fill="none" stroke="#5E1799" strokeWidth="3" strokeLinecap="round" />
+        <path d="M-18 -24 Q-11 -17 -18 -10" fill="none" stroke="#5E1799" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M20 -24 Q13 -17 20 -10" fill="none" stroke="#5E1799" strokeWidth="2.5" strokeLinecap="round" />
       </g>
       {/* prompt chips hanging off the brain, overlapping the lower bolts */}
       {chips.map(([x, y, l, r], i) => (
         <g key={i} transform={`translate(${x} ${y}) rotate(${r})`}>
-          <rect x="-25" y="-23" width="50" height="46" rx="8" fill="#0A3A63" stroke="#FFE94A" strokeWidth="3.5" />
-          <text x="0" y="12" fontSize="30" fontWeight="bold" fill="#FFE94A" textAnchor="middle" fontFamily={BUNGEE}>{l}</text>
+          <rect x="-25" y="-23" width="50" height="46" rx="8" fill="#10322E" stroke="#9A28FF" strokeWidth="3.5" />
+          <text x="0" y="12" fontSize="30" fontWeight="bold" fill="#F3E2BE" textAnchor="middle" fontFamily={BUNGEE}>{l}</text>
         </g>
       ))}
     </svg>
@@ -207,7 +207,7 @@ export function SatRushArt() {
       <path d="M300 400 H196 L300 296 Z" fill="url(#srt3)" />
       {/* the 5× multiplier sits LOW in the scene zone (below the masthead band's divider) so it
          reads as one hero, never bisected by the rule even on a small card */}
-      <text x="150" y="198" fontSize="78" fontWeight="bold" fill="#A855F7" stroke="#111" strokeWidth="3" textAnchor="middle" fontFamily={BUNGEE}>5×</text>
+      <text x="150" y="198" fontSize="78" fontWeight="bold" fill="#1A1410" stroke="#111" strokeWidth="3" textAnchor="middle" fontFamily={BUNGEE}>5×</text>
       {tiles.map(([l, x]) => (
         <g key={l}>
           <rect x={x - 30} y="252" width="60" height="80" rx="3" fill="#F2EFE7" stroke="#111" strokeWidth="6" />

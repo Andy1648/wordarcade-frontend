@@ -104,16 +104,20 @@
     6px 6px 0 var(--ink);
   overflow: hidden;
 }
-/* pulp grain (5%) */
+/* PULP GRAIN (6%). SAT Rush needs its OWN grain layer: .sr-screen is z-index 50 and the
+   app-wide grain (body::after, theme/texture.css) sits at 45, so the global layer never
+   reaches the cream page. Same feTurbulence texture as the rest of the app - real grain
+   rather than the dot-gradient this used to be - which is what makes paper read as paper.
+   Static: rendered once, never animated, never repainted per frame. */
 .sr-stage::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
-  background-size: 3px 3px;
-  opacity: 0.05;
+  background-image: var(--tx-grain);
+  background-repeat: repeat;
+  opacity: 0.06;
 }
 /* ONE halftone corner accent, bottom-right, clipped to a triangle */
 .sr-stage::after {

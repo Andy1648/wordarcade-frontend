@@ -9,15 +9,18 @@ import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
 // layer in GameCard.css. Falls back to the card's fill for any other game.
+// The SECOND hue of each mode's colour script (theme/texture.css). The lead hue is
+// the card's fill (game.baseColor); this is the accent that plays against it, so the
+// beat glow reinforces the mode's identity instead of adding a tenth colour.
 const CARD_NEON = {
-  'word-bomb': '#FF6B3D',
-  'category-blitz': '#3DA8FF',
+  'word-bomb': '#FFE94A',
+  'category-blitz': '#9A28FF',
   // SAT RUSH is a manga (cream) card: the neon glow does nothing on paper, so its
   // beat/select FX are ink (see [data-game='sat-rush'] in GameCard.css). This
   // keeps the click glitch-pop monochrome ink rather than a coloured flash.
   'sat-rush': '#111111',
-  chain: '#2EFFE0',
-  fuse: '#FFE94A',
+  chain: '#FF6B3D',
+  fuse: '#FF2EC4',
 };
 
 // ---- CURSOR-MAGNETIC TILT (shared controller) ----------------------------
@@ -285,7 +288,13 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         // --card-glow: the card's mode accent from CARD_NEON, consumed by the
         // beat-glow ::after layer in GameCard.css. Opacity-only pulse — never
         // touches this card's transform.
-        style={{ background: game.baseColor, '--card-glow': CARD_NEON[game.id] || game.baseColor }}
+        style={{
+          // backgroundColor, NOT the `background` shorthand: the shorthand resets
+          // background-image, and an inline style outranks the stylesheet - which would
+          // silently kill the .tx-halftone dot screen the card carries (theme/texture.css).
+          backgroundColor: game.baseColor,
+          '--card-glow': CARD_NEON[game.id] || game.baseColor,
+        }}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         role="button"

@@ -1,0 +1,132 @@
+/* texture.css — GRAIN, HALFTONE, PER-MODE COLOUR SCRIPTS and the CEL-SHADOW FACET.
+   ============================================================================
+   WHY
+   Every screen painted in all nine palette colours at once, on perfectly flat
+   fills. Two problems: the six modes did not read apart (a card's identity came
+   from its art, not its colour), and large flat areas looked like untextured
+   vector fills rather than print. This file adds the print surface and gives each
+   mode a 2-3 hue SCRIPT it paints from.
+   ============================================================================ */
+
+:root {
+  /* ---- GRAIN -------------------------------------------------------------
+     An inline feTurbulence + feColorMatrix(saturate 0) SVG as a data-URI: 347
+     bytes, ZERO network requests, single-hue (greyscale) so it grains a dark
+     panel and the SAT cream page equally - it speckles both lighter and darker,
+     which is what film grain does.
+     It is rendered ONCE, to one fixed layer (body::after below). It is never
+     inside an animation, never repainted per frame, and never attached to a
+     moving element - src/perf/texture.test.js asserts exactly that.
+     ------------------------------------------------------------------------ */
+  --tx-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)' opacity='.55'/%3E%3C/svg%3E");
+  --tx-grain-opacity: 0.07; /* the 6-10% band */
+
+  /* ---- HALFTONE ----------------------------------------------------------
+     A Ben-Day dot screen for LARGE FLAT HERO SHAPES ONLY. It is deliberately
+     NOT applied to any text-bearing panel: a dot screen under body copy eats
+     the contrast the type scale just bought. Use the .tx-halftone class. */
+  --tx-halftone-dot: 7px;
+  --tx-halftone-ink: rgba(0, 0, 0, 0.16); /* ~16%, inside the 10-20% band */
+}
+
+/* ============================================================================
+   GRAIN LAYER - one fixed element for the whole app.
+   body::after (not a React node) so this is pure CSS: nothing to mount, nothing
+   to re-render, and it cannot end up inside a component that animates. Sits above
+   content but below the beat flash (z 50), the music button (70) and the
+   transition wipe (100).
+   ============================================================================ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background-image: var(--tx-grain);
+  background-repeat: repeat;
+  opacity: var(--tx-grain-opacity);
+}
+
+/* Reduced motion has nothing to do with grain (it does not move), but a user who
+   asks for less visual noise on a photosensitive setting gets it toned down. */
+@media (prefers-reduced-motion: reduce) {
+  body::after { opacity: 0.04; }
+}
+
+/* ============================================================================
+   HALFTONE - hero shapes only.
+   ============================================================================ */
+.tx-halftone {
+  background-image: radial-gradient(circle, var(--tx-halftone-ink) 30%, transparent 34%);
+  background-size: var(--tx-halftone-dot) var(--tx-halftone-dot);
+}
+
+/* ============================================================================
+   PER-MODE COLOUR SCRIPTS
+   Two or three hues per mode, so the six read apart at a glance instead of every
+   card painting from the same nine. --mode-lead is the mode's identity colour,
+   --mode-second its only supporting hue, --mode-shade the darker-fill value the
+   cel facet uses.
+
+   NOTE (flagged, not silently changed): Category Blitz and Chain are both
+   specified to LEAD with #2EFFE0. They are therefore the one pair on the menu
+   that does NOT read apart by hue - they separate only on their second colour
+   (purple vs orange). Implemented as specified; if the six should truly read
+   apart, the smallest change is to lead Blitz with its purple.
+   ============================================================================ */
+[data-game='word-bomb'],
+.game-stage--wb {
+  --mode-lead: #ff4b4b;
+  --mode-second: #ffe94a;
+  --mode-shade: #a32e2e;
+}
+[data-game='category-blitz'],
+.game-stage--blitz {
+  --mode-lead: #2effe0;
+  --mode-second: #9a28ff;
+  --mode-shade: #1a9985;
+}
+[data-game='sat-rush'],
+.sr-screen {
+  --mode-lead: #f0ead9; /* cream paper */
+  --mode-second: #1a1410; /* one near-black ink */
+  --mode-shade: #c9bfa5;
+}
+[data-game='chain'] {
+  --mode-lead: #2effe0;
+  --mode-second: #ff6b3d;
+  --mode-shade: #1a9985;
+}
+[data-game='fuse'] {
+  --mode-lead: #ff6b3d;
+  --mode-second: #ff2ec4;
+  --mode-shade: #b83d15;
+}
+/* THE RUN is not in this branch yet (no src/run, no entry in gameData.js). Its
+   script is defined so the mode lands with its colours already decided. */
+[data-game='the-run'],
+.run-root {
+  --mode-lead: #9a28ff;
+  --mode-second: #ff4b4b;
+  --mode-shade: #5e1799;
+}
+/* Menu + shop stay pink-led. */
+.homepage-wrap,
+.shop-panel {
+  --mode-lead: #ff4fa3;
+  --mode-second: #ffe94a;
+  --mode-shade: #991a75;
+}
+
+/* ============================================================================
+   CEL-SHADOW FACET - hero elements only.
+   Posterised light, not a soft gradient: a second HARD-edged shadow in a darker
+   shade of the element's own fill, offset ~3px, sitting UNDER the existing 6px
+   black offset. Two flat steps read as a lit facet; a blur would read as a glow
+   and break the flat rule.
+   ============================================================================ */
+.tx-cel {
+  box-shadow:
+    3px 3px 0 var(--mode-shade, rgba(0, 0, 0, 0.45)),
+    6px 6px 0 #000;
+}

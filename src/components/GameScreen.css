@@ -60,10 +60,11 @@
 
 .game-stage {
   position: relative; /* positioning context for the centered hype popup */
-  /* Card fill + a comic halftone dot texture to match the rest of the app. */
+  /* Flat card fill. The halftone dot screen that used to sit here was under every
+     line of body copy on the stage; a dot screen under text eats the contrast the
+     type scale bought, so the halftone is now hero-shapes-only (.tx-halftone in
+     theme/texture.css) and the page grain is the one surface texture. */
   background-color: #1a0b2e;
-  background-image: radial-gradient(circle, rgba(255, 46, 196, 0.05) 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
   border: 4px solid #000;
   box-shadow: 7px 7px 0 #000;
   border-radius: 8px;
@@ -3309,12 +3310,12 @@
   width: clamp(200px, 18vw, 320px);
   flex-shrink: 0;
   align-self: flex-start;
-  /* Card matching the stage (same dark backdrop, halftone dots, chunky border
-     and offset shadow) so the feed reads as part of the composition instead of
-     bare text floating on the background. Spacing to the stage is the panel gap. */
+  /* Card matching the stage (same dark backdrop, chunky border and offset shadow)
+     so the feed reads as part of the composition instead of bare text floating on
+     the background. Spacing to the stage is the panel gap. The halftone dots are
+     gone: this panel carries the kill-feed text, and the dot screen is now
+     hero-shapes-only (see theme/texture.css). */
   background-color: #1a0b2e;
-  background-image: radial-gradient(circle, rgba(255, 46, 196, 0.05) 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
   border: 4px solid #000;
   box-shadow: 7px 7px 0 #000;
   border-radius: 8px;

@@ -15,7 +15,7 @@ const BASE_GAMES = [
     artKey: 'WordBombArt',
     name: 'WORD\nBOMB',
     description: 'USE THE LETTERS BEFORE TIME RUNS OUT.',
-    baseColor: '#FF6B3D',
+    baseColor: '#FF4B4B',
     iconBg: '#FFE94A',
     badgeText: 'SOLO/MULTI',
     badgeBg: '#000',
@@ -32,7 +32,7 @@ const BASE_GAMES = [
     artKey: 'CategoryBlitzArt',
     name: 'CATEGORY\nBLITZ',
     description: 'AI JUDGES YOUR ANSWERS — GET CREATIVE.',
-    baseColor: '#3DA8FF',
+    baseColor: '#2EFFE0',
     iconBg: '#fff',
     badgeText: 'SOLO/MULTI', // no spaces — matches Word Bomb's badge and fits the pill (fix/qa-sweep §3)
     badgeBg: '#000',
@@ -95,7 +95,7 @@ const FUSE_GAME = {
   name: 'FUSE',
   description: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
   unlockLevel: 25, // gated: visible-but-locked until LV 25 (fix/qa-sweep §10 — ~10538 letters; LV30's ~32262 was ~100 sessions, too steep for an existing mode). Was LV22 ≈ 5371.
-  baseColor: '#FFE94A', // yellow field (the mode's accent)
+  baseColor: '#FF6B3D', // orange field (the mode's colour-script lead)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',
   badgeBg: '#000',
