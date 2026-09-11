@@ -41,10 +41,9 @@ not a bug I should fix.
 
 **6. Phase 3's per-mode colour scripts are declared and then never used. §3**
 Seven scripts are defined in `texture.css`. `--mode-lead` and `--mode-second` are consumed by
-**nothing in the repo** — `grep` finds two uses of any `var(--mode-*)`, both of `--mode-shade`, both
-with a fallback. The item that was meant to replace "all nine colours everywhere" so the six modes
-read apart by hue exists as tokens and stopped there. This is also, independently, why CHAIN and
-FUSE score worst on the squint test.
+**nothing in the repo**. The screens still LOOK right, because each mode's CSS hardcodes the same
+hues by hand — so the cost is not a wrong colour today, it is that there is no single source of
+truth and nothing stops the two copies drifting. Low severity; the item is not actually done.
 
 **7. THE RUN has no screen on this stack, and Phase 5 could not build one.** §5
 `release/prod-1` has five modes. The Run lives on `integration/run-stack-3`, unmerged. Phase 5
@@ -484,7 +483,7 @@ those three screens, which is the point.
 
 ---
 
-## 3. PHASE 3 — THE SCRIPTS ARE DECLARED AND NEVER USED
+## 3. PHASE 3 — THE SCRIPTS ARE DECLARED, AND THEN REACHED BY HAND INSTEAD
 
 The brief: "Per-mode scripts, 2-3 hues each, replacing 'all nine colours everywhere' ... Each menu
 card takes its mode's script so the six read apart by hue."
@@ -499,25 +498,29 @@ uses of var(--mode-second) anywhere in src:            0
 uses of var(--mode-shade)  anywhere in src:            2   (both with a fallback)
 ```
 
-The two `--mode-shade` uses are the cel facet (`.tx-cel` in `texture.css` and the same rule in
-`GameCard.css`), which is real and does work — the menu cards genuinely do read apart by hue,
-because `GameCard.jsx` sets `data-game` and the facet picks up the shade. But the LEAD and SECOND
-of every script are dead tokens.
+**I nearly filed this as "CHAIN and FUSE never get their script", and that would have been wrong.**
+Chain and Fuse have no class fallback beside their attribute selector (Word Bomb, Blitz and SAT
+Rush each have one — `.game-stage--wb`, `.game-stage--blitz`, `.sr-screen`), and `data-game` is set
+in exactly one place in the repo: `GameCard.jsx`, the menu card. So `.solo-root` genuinely matches
+no script selector. But the e2e re-run measured Chain's seam letter as `rgb(255, 107, 61)` —
+`#FF6B3D`, exactly Chain's `--mode-second`. The screens look right.
 
-**Worse for two modes: CHAIN and FUSE never receive a script at all on their gameplay screens.**
-Word Bomb, Blitz and SAT Rush each have a class fallback next to their attribute selector
-(`.game-stage--wb`, `.game-stage--blitz`, `.sr-screen`). Chain and Fuse have only
-`[data-game='chain']` / `[data-game='fuse']`, and `data-game` is set in exactly one place in the
-repo — `GameCard.jsx`, the MENU CARD. `.solo-root` matches no script selector, so the Chain and
-Fuse play screens get no `--mode-*` values whatsoever.
+They look right because the hues are **hardcoded a second time** in each mode's own CSS:
 
-That is a second, independent measurement landing on the same two screens the squint test singles
-out: chain-play and fuse-play have the lowest peak of any screen in the game (L\* 0.278 and 0.291,
-where every other gameplay screen is 0.74+) and are BUSY at both viewports. Two different methods,
-same answer.
+```css
+/* Solo.css:896 */   --seam: #ff6b3d;                                    /* Chain's --mode-second, by hand */
+/* Solo.css:936 */   .solo-chain-trail .cx-join { color: var(--c-cyan); } /* its --mode-lead, by hand */
+```
+
+So the accurate finding is narrower than it first looked, and worth stating precisely: **the
+scripts are correct and the screens are correct, but they are two independent copies of the same
+decision.** `--mode-lead` and `--mode-second` are dead tokens; `--mode-shade` feeding the cel facet
+is the only part of the system actually wired up. Nothing looks wrong today. What is missing is the
+single source of truth the phase existed to create — change a script and no screen moves.
 
 Phase 3's other items DO hold, and have build-failing tests: the grain is an inline data-URI, never
-on an animated element, held in the 6-10% band, and the halftone stays off text-bearing panels.
+painted on an animated element, held in the 6-10% band, and the halftone stays off text-bearing
+panels.
 
 ---
 
@@ -537,9 +540,9 @@ first or rebasing a Phase 5b onto it — your call which.
 2. **The kill feed below the fold at 3+ players**, §2(ii). Neither WB fit option clears it.
 3. **The fuse-strictly-decreasing check**, §2. Not expressible against the backend mock, and left
    absent rather than written as an assertion that would always pass.
-4. **`--mode-lead` / `--mode-second` are dead**, §3, and CHAIN/FUSE get no script on their play
-   screens. Wiring them up is a real design pass, not a one-liner, so it is reported rather than
-   half-done at 3am.
+4. **`--mode-lead` / `--mode-second` are dead tokens**, §3. Wiring every screen to consume them
+   instead of its hardcoded copy is a pass across six modes' CSS, not a one-liner, and nothing
+   looks wrong today — so it is reported rather than half-done.
 5. **Three screens carry no accent element**, §1b, and the test that guards the rule cannot see it.
 6. **This box's e2e flakiness is real and it is not the code.** Re-running the three specs that
    carried the previous gate's failures gave **843 passed / 0 failed / 4 flaky** — and the four
@@ -574,7 +577,34 @@ identical, the exact opposite of the true answer.
 
 ## GATE
 
-Full `npm run gate` on `feat/shell-screens` (the tip): **PENDING — see the line below, written when
-it lands.**
+**`npm run gate` on `feat/shell-screens` (the tip): lint 0 errors, 517/517 unit, e2e 1117 passed /
+10 failed.** All ten failures re-ran clean: `24 passed (47.8s)` on the four affected spec files
+with `--retries=2` on an otherwise idle machine.
 
-_Gate result: (pending)_
+The ten were:
+
+```
+corner-click       REBIRTH @1280x640, SHOP @1568x675, STATS @1568x675
+intro              a first visit loads through the full intro to the menu
+mode-screens       CHAIN @390x844, FUSE @1366x768, FUSE @390x844
+parity-wb-blitz    WB combo builds/resets, WB combo resets on life lost, Blitz combo builds/resets
+```
+
+**I caused most of that contention and will not pretend otherwise.** `npm run gate` runs two
+workers on a 2-vCPU box, and I ran the contrast audit, several greps and a branch switch while it
+was in flight. That is exactly the condition the memory note about this machine describes.
+
+Two of the ten are worth a second look anyway, because their failure mode was *specific* rather
+than a timeout — and chasing them is what produced the Phase 3 correction in §3:
+
+* `CHAIN @390x844` failed with `seam = null`, not a wrong colour — the element was absent at the
+  moment of measurement. On the clean run it read `rgb(255, 107, 61)`.
+* Both FUSE tests logged `cord undefinedpx below the input`, i.e. `.fuse-line` was missing when the
+  geometry was read. It is rendered by `SoloShell.jsx:51`, and on the clean run measured 14px and
+  15px below the input, burning `0.976 -> 0.832`. The read happens BEFORE the keystroke that arms
+  the clock, so if that element only mounts once armed, this test is timing-sensitive by
+  construction. Worth hardening (wait for `.fuse-line` before measuring) rather than re-running.
+
+**The honest summary: the tip is green, on a quiet machine, and this box cannot give a trustworthy
+single-run verdict.** Treat any one flaky list as noise; treat a test that fails on two independent
+runs as real. Nothing failed twice.
