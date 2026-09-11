@@ -41,11 +41,16 @@ still renders wrong in place (§7b, honestly unresolved).
 are INVISIBLE on the dark multiplayer boards: measured pixel delta 1/255. `?x7c=2` at 18% exists
 only so the idea can be judged at all.
 
-**5. The menu is the dimmest screen in the game, by measurement. §7d**
-Its loudest element reaches L\* 0.430 after a 12px blur, where every other non-solo screen is
-0.74–0.96. The wordmark is Bungee Shade under a 5px black stroke, which eats most of the letter.
-This is a consequence of the canonical title spec, which CLAUDE.md locks — so it is your call,
-not a bug I should fix.
+**5. The menu's entry point is the ROOKIE rank chip. §7d**
+Not the wordmark, not the spotlit card — `.menu-xp-rank` at every desktop size, and `.menu-xp-bar`
+on a phone. The whole XP strip is the loudest thing on the menu.
+
+The menu is also the dimmest of the shell screens by a distance: its peak reaches L\* **0.471**,
+against 0.82–0.96 for every other shell screen, and only **0.227** at 360x640. (It is not the
+dimmest screen in the game — CHAIN and FUSE play are lower still, at 0.28 and 0.30. I claimed the
+menu was the dimmest earlier in this run and that was wrong.) The wordmark is Bungee Shade under a
+5px black stroke, which eats most of each letter; that is the canonical title spec and CLAUDE.md
+locks it, so it is your call, not a bug I should fix.
 
 **6. Phase 3's per-mode colour scripts are declared and then never used. §3**
 Seven scripts are defined in `texture.css`. `--mode-lead` and `--mode-second` are consumed by
@@ -560,9 +565,11 @@ block at 19.88:1. Stroked yellow text loses to a solid white rectangle under a b
 rooms-browser, chain-play, fuse-play, wb-play and blitz-play all resolve to a white input as their
 hottest element.
 
-**4. The menu's entry point is the ROOKIE rank chip** (`.menu-xp-rank`), not the wordmark and not
-the spotlit card. Combined with the menu having the lowest peak in the game (§5 in the summary),
-that is the clearest statement of why the menu reads flat.
+**4. The menu's entry point is the ROOKIE rank chip** (`.menu-xp-rank`) at every desktop size, and
+`.menu-xp-bar` on a phone — never the wordmark and never the spotlit card. With the menu's peak at
+L\* 0.471 against 0.82-0.96 for the other shell screens (and 0.227 at 360x640), that is the
+clearest available statement of why the menu reads flat: the loudest thing on it is a progress
+chip, and even that is dim.
 
 Good news worth stating: **shop, stats, collection, wb-gameover and chain-death all resolve to a
 single dominant element, and on the two end screens it is the right one** — `.game-over-rematch`
