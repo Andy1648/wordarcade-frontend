@@ -631,9 +631,21 @@
   color: var(--ink);
   text-transform: uppercase;
 }
-/* typed/committed letter: solid ink glyph on clean paper */
+/* typed/committed letter: solid ink glyph on clean paper.
+   STAMP-FILL, ONE FRAME. steps(1, end) means the tile jumps from the oversized
+   state to its resting size in a single discrete frame - a rubber stamp hitting
+   paper, not a scale that eases. A smooth tween here would read as a soft UI
+   transition and fight the whole retro-print language. */
 .sr-slot.typed {
   color: var(--ink);
+  animation: sr-slot-stamp 90ms steps(1, end) 1;
+}
+@keyframes sr-slot-stamp {
+  0% { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-slot.typed { animation: none; }
 }
 /* revealed/auto-printed letter: the machine printed it, so the tile wears a MID
    screentone under an ink glyph — distinct from a typed tile by TONE, not colour. */
@@ -1391,7 +1403,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   display: inline-block;
 }
 .sr-tuner .hint {
-  opacity: 0.34;
+  opacity: 0.6 /* contrast: 2.2:1 -> 4.64:1 on cream - ink at low opacity IS mid-grey */;
   font-size: var(--fs-micro);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1751,7 +1763,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-size: var(--fs-micro);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  opacity: 0.45;
+  opacity: 0.7 /* contrast: 2.94:1 -> 6.49:1 on cream - ink at low opacity IS mid-grey */;
 }
 @keyframes sr-reencode-in {
   from {

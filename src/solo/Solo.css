@@ -884,3 +884,138 @@
   font-size: var(--fs-label);
   color: #cdbdf0;
 }
+
+/* ============================================================================ */
+/* ==============  CHAIN - LITERAL LINKS + THE SEAM (feat/mode-screens)  ====== */
+/* ============================================================================ */
+
+/* CHAIN's colour script is #2EFFE0 lead + #FF6B3D second. The SEAM - the single
+   letter where one word hands over to the next - is the whole mechanic, so it gets
+   the second hue and nothing else does. */
+.solo-chain-trail {
+  --seam: #ff6b3d;
+}
+
+/* LITERAL LINKS. Hard-edged capsules with a black rule and a hard offset, joined by
+   a short connector bar - a chain you can see, not a row of word chips. */
+.solo-chain-trail .solo-chain-node {
+  position: relative;
+  background: var(--v-panel-hi);
+  border: 3px solid #000;
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 3px 12px;
+}
+/* the connector: a stubby black bar bridging one link to the next */
+.solo-chain-trail .solo-chain-node + .solo-chain-node::before {
+  content: '';
+  position: absolute;
+  left: -11px;
+  top: 50%;
+  width: 11px;
+  height: 5px;
+  margin-top: -2.5px;
+  background: #000;
+}
+.solo-chain-trail .solo-chain-node.is-ghost {
+  background: none;
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.5;
+}
+
+/* THE SEAM, both halves of it: the TAIL letter of the most recent word and the HEAD
+   letter of the prompt are the same letter, so they are lit identically. Seeing the
+   two ends light up as one colour is what teaches the rule without a sentence of
+   copy. (:has() picks the node immediately before the prompt node.) */
+.solo-chain-trail .solo-chain-node:has(+ .solo-chain-node.is-next) .cx-join:last-child,
+.solo-chain-trail .solo-chain-node.is-next .cx-join {
+  color: var(--seam);
+}
+/* every other join letter stays the mode's lead hue */
+.solo-chain-trail .cx-join {
+  color: var(--c-cyan);
+}
+
+/* A NEW LINK SNAPS IN with a magnetic settle - it overshoots toward the chain and
+   locks. One-shot on mount (the nodes are keyed by word, so a new word mounts a new
+   node); nothing loops. */
+.solo-chain-trail .solo-chain-node:not(.is-ghost):not(.is-next) {
+  animation: chain-settle 220ms cubic-bezier(0.2, 1.5, 0.5, 1) 1;
+}
+@keyframes chain-settle {
+  0% { transform: translateX(-10px) scale(0.86); opacity: 0; }
+  60% { transform: translateX(2px) scale(1.06); opacity: 1; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .solo-chain-trail .solo-chain-node { animation: none; }
+}
+
+/* ============================================================================ */
+/* ==================  FUSE - THE BURNING LINE (feat/mode-screens)  ========== */
+/* ============================================================================ */
+
+/* FUSE's script is #FF6B3D lead + #FF2EC4 second. The MATCHED FRAGMENT inside a
+   submitted word is the thing the mode is about, so it takes the second hue while
+   the rest of the word stays cream - the match reads instantly without a legend. */
+.fuse-solved {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
+}
+.fuse-line-num {
+  position: absolute;
+  right: 0;
+  top: -22px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: var(--c-red);
+}
+.solo-root .fuse-frag-hit {
+  color: #ff2ec4;
+  font-weight: 700;
+}
+.solo-root .fuse-frag-rest {
+  color: var(--c-cream);
+}
+
+/* THE FUSE LINE: a horizontal cord under the input that burns TOWARD the fragment,
+   so the timer runs along the axis the player is already reading. The burnt portion
+   is scaled with transform only (never width), and the spark rides the burn point.
+   This is the mode's ONE continuous element and, like Word Bomb's, it is justified
+   because it IS the clock. */
+.fuse-line {
+  position: relative;
+  height: 10px;
+  border: 3px solid #000;
+  border-radius: 999px;
+  background: var(--v-panel);
+  overflow: visible;
+}
+.fuse-line-burn {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  border-radius: 999px;
+  /* Escalates exactly like the Word Bomb fuse: yellow -> orange -> red. */
+  background: var(--fuse-color, #ffe94a);
+  transition: transform 0.9s linear, background 400ms linear;
+}
+.fuse-line-spark {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: var(--fuse-color, #ffe94a);
+  border: 3px solid #000;
+  transition: left 0.9s linear, background 400ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fuse-line-burn,
+  .fuse-line-spark { transition: none; }
+}

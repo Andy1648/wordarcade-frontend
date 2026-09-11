@@ -37,6 +37,26 @@ function ClockRing({ remaining, tMax, redZone, armed }) {
   );
 }
 
+// FUSE's clock is a horizontal BURNING CORD under the input rather than a ring in
+// the stage: the fuse runs along the same axis the player is already reading, toward
+// the fragment above it, so the time left is in peripheral vision while typing
+// instead of off to one side. Same data as ClockRing, different read.
+// The burn is transform-only (scaleX) and the spark is a left offset - no width
+// animation anywhere. Colour escalates exactly like Word Bomb's fuse.
+function FuseClock({ remaining, tMax, redZone, armed }) {
+  const frac = armed ? Math.max(0, Math.min(1, remaining / tMax)) : 1;
+  const secs = Math.max(0, remaining / 1000);
+  const color = frac > 0.6 ? '#FFE94A' : frac > 0.3 ? '#FF6B3D' : '#FF4B4B';
+  return (
+    <div className={`fuse-line${redZone ? ' is-red' : ''}`} style={{ '--fuse-color': color }} aria-hidden="true">
+      <div className="fuse-line-burn" style={{ transform: `scaleX(${frac})` }} />
+      <div className="fuse-line-spark" style={{ left: `${(frac * 100).toFixed(2)}%` }} />
+      {/* numeric only in the last seconds - the cord carries the proportion */}
+      {armed && secs <= 5 ? <span className="fuse-line-num">{secs.toFixed(1)}</span> : null}
+    </div>
+  );
+}
+
 export default function SoloShell({
   accent,
   title,
@@ -45,6 +65,7 @@ export default function SoloShell({
   motif, // optional static SVG backdrop behind the stage (per-mode; never animated)
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
+  clockVariant = 'ring', // 'ring' (CHAIN) | 'fuse' (a horizontal burning cord under the input)
   outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
   deck, // optional lower-deck node (per-mode) that fills the lower half of the card
   input,
@@ -120,7 +141,7 @@ export default function SoloShell({
             input's chain (the input lives outside .solo-stage), so it can never touch
             either. No animation — house rule: nothing idles here. */}
         {motif}
-        <ClockRing {...clock} />
+        {clockVariant === 'ring' ? <ClockRing {...clock} /> : null}
         {/* Play-only stage content. The over scrim (.solo-over) is only 86% opaque, so a
             big bright center letter / supply line left mounted here GHOSTS THROUGH it and
             collides with the death card's title. Gate both to 'playing' exactly like the
@@ -159,6 +180,11 @@ export default function SoloShell({
           <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />
         </form>
       ) : null}
+
+      {/* FUSE's clock lives HERE - directly under the input, burning toward the
+          fragment above it. A SIBLING of the form, never an ancestor, so the burning
+          cord can update every frame without ever animating the input's chain. */}
+      {phase === 'playing' && clockVariant === 'fuse' ? <FuseClock {...clock} /> : null}
 
       {/* Reason line (reject) or the arm hint before the clock starts. */}
       <div className="solo-reason" aria-live="polite">

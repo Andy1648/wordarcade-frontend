@@ -213,6 +213,35 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // LOWER DECK (fill): FUSE's own elements at the size they deserve — the three lives drawn
   // as burning fuse cords (lit = a fuse still going, charred = spent), and the letters-used
   // strip enlarged into a real band. Fills the lower half instead of two thin strips at top.
+  // THE SOLVED WORD, with the fragment you sneaked into it lit up. The word is
+  // matched against the fragment it was solved AGAINST, not the current one: by the
+  // time a solve lands the engine has already rolled the next fragment, so matching
+  // s.lastWord against s.fragment would highlight the wrong letters (or none).
+  const prevFragRef = useRef(s.fragment);
+  const [solved, setSolved] = useState(null);
+  useEffect(() => {
+    if (s.lastWord) setSolved({ word: s.lastWord, frag: prevFragRef.current });
+    prevFragRef.current = s.fragment;
+    // Keyed on the solve COUNT: that is the one value that changes exactly once per
+    // accepted word.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.wordsSolved]);
+
+  const solvedNode = (() => {
+    if (!solved || !solved.word) return null;
+    const w = solved.word.toUpperCase();
+    const f = (solved.frag || '').toUpperCase();
+    const at = f ? w.indexOf(f) : -1;
+    if (at < 0) return <span className="fuse-solved"><span className="fuse-frag-rest">{w}</span></span>;
+    return (
+      <span className="fuse-solved">
+        <span className="fuse-frag-rest">{w.slice(0, at)}</span>
+        <span className="fuse-frag-hit">{w.slice(at, at + f.length)}</span>
+        <span className="fuse-frag-rest">{w.slice(at + f.length)}</span>
+      </span>
+    );
+  })();
+
   const usedCount = s.lettersUsed.size;
   const fuseDeck = (
     <div className="solo-fusedeck" aria-hidden="true">
@@ -249,8 +278,13 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       title="Type a word containing the fragment"
       hud={hud}
       center={(s.fragment || '').toUpperCase()}
+      clockVariant="fuse"
       motif={FUSE_MOTIF}
-      supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — fuse ×{s.shortFactor}</span> : null}
+      supply={
+        s.shortPenalty
+          ? <span className="is-dead">SHORT WORD — fuse ×{s.shortFactor}</span>
+          : solvedNode
+      }
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
       deck={fuseDeck}
       input={g.input}

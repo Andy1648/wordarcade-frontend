@@ -4015,6 +4015,9 @@ function CategoryBlitzScreen({
   // Accepted answer -> celebrate 1s, rejected -> panic 1s; between rounds / at
   // game over it celebrates if you're leading/won, panics otherwise; else idle.
   const [cbTransient, setCbTransient] = useState(null);
+  // Bumped per answer so the JUDGE's verdict flash replays even when two answers in
+  // a row get the same verdict (the pose alone would not re-key).
+  const [cbVerdictKey, setCbVerdictKey] = useState(0);
   const cbTimerRef = useRef(null);
   const cbPrevResultRef = useRef(null);
   useEffect(() => {
@@ -4022,6 +4025,7 @@ function CategoryBlitzScreen({
     cbPrevResultRef.current = lastWordResult;
     if (cbTimerRef.current) clearTimeout(cbTimerRef.current);
     setCbTransient(lastWordResult.accepted ? 'celebrate' : 'panic');
+    setCbVerdictKey((k) => k + 1);
     cbTimerRef.current = setTimeout(() => setCbTransient(null), 1000);
     // Audio parity with Word Bomb: per-answer accept ding / reject buzz.
     if (lastWordResult.accepted) sound.correctDing();
@@ -4281,8 +4285,11 @@ function CategoryBlitzScreen({
     const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
     // Full bar while the countdown is up (timer hasn't started ticking yet).
     const displayRatio = showCountdown ? 1 : ratio;
+    // The block changes VALUE at 50% and 20% - two hard steps, so the bar reads as
+    // three states at a glance rather than as a continuous gradient.
     const timerColor =
-      displayRatio > 0.6 ? '#2EFFE0' : displayRatio >= 0.3 ? '#FFE94A' : '#FF5C5C';
+      displayRatio > 0.5 ? '#2EFFE0' : displayRatio >= 0.2 ? '#FFE94A' : '#FF5C5C';
+    const timerStep = displayRatio > 0.5 ? 'full' : displayRatio >= 0.2 ? 'half' : 'low';
     const lowTime = !showCountdown && timerSeconds <= 5;
     const veryLowTime = !showCountdown && timerSeconds < 3;
     const others = roomPlayers.filter((p) => p.id !== myId);
@@ -4376,9 +4383,22 @@ function CategoryBlitzScreen({
             <SprayReveal key={categoryRound.category} duration={780}>
               {(categoryRound.category || '').toUpperCase()}
             </SprayReveal>
-            {/* Mascot sitting on the box's edge, legs dangling over the border. */}
+            {/* THE JUDGE. One PNG mascot whose EXPRESSION is the verdict - no second
+                character, no text ruling. The verdict itself is a one-shot flash in
+                the mode's two hues (teal accept / red reject) plus a hard tick or
+                cross; both are keyed on cbVerdictKey so two identical verdicts in a
+                row still replay. */}
             <div className="cb-cat-mascot">
               <Mascot pose={cbMascotPose} emote={cbEmote} size={50} />
+              {cbTransient && (
+                <span
+                  key={cbVerdictKey}
+                  className={`cb-verdict ${cbTransient === 'celebrate' ? 'is-yes' : 'is-no'}`}
+                  aria-hidden="true"
+                >
+                  {cbTransient === 'celebrate' ? '✓' : '✕'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -4413,16 +4433,21 @@ function CategoryBlitzScreen({
             </div>
           )}
 
-          <div className="game-timer-row">
+          <div className="game-timer-row" data-step={timerStep}>
             <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
               <div
                 className="game-timer-fill"
                 style={{ transform: `scaleX(${displayRatio})`, background: timerColor }}
               />
             </div>
-            <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
-              {timerSeconds}s
-            </div>
+            {/* NUMERIC ONLY IN THE LAST SECONDS. The block carries the proportion for
+                the whole round; a number on screen the entire time is a second clock
+                competing with the category headline for the same glance. */}
+            {lowTime && (
+              <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
+                {timerSeconds}s
+              </div>
+            )}
           </div>
 
           <div className="game-input-row">

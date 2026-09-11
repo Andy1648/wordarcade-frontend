@@ -188,19 +188,30 @@ test('Bungee stays display type: ALL-CAPS, never below --fs-panel', () => {
 });
 
 test('exactly one --v-accent element per screen', () => {
+  // SCOPE, not file: GameScreen.css serves several screens (Word Bomb, Category
+  // Blitz, the game-over card), so "one accent per FILE" would be wrong - each
+  // SCREEN gets one. The scope is the screen-root class the selector is written
+  // under; anything unscoped shares one bucket per file.
+  const SCOPES = /\.game-stage--[a-z]+|\.homepage-wrap|\.room-wrap|\.lobby-wrap|\.browser-wrap|\.sr-screen|\.solo-root|\.shop-panel|\.credits-wrap|\.wb-ring/;
   const offenders = [];
   for (const file of cssFiles(SRC)) {
-    if (norm(file).startsWith('src/theme/') || norm(file).includes('/theme/')) continue;
+    if (norm(file).includes('/theme/')) continue;
     const css = strip(readFileSync(file, 'utf8'));
-    const accented = new Set();
+    const byScope = new Map();
     for (const r of rules(css)) {
       if (/@|%/.test(r.sel)) continue;
       if (!/var\(--v-accent\)/.test(r.body)) continue;
+      const m = r.sel.match(SCOPES);
+      const scope = m ? m[0] : `(unscoped in ${norm(file)})`;
       // :hover / :active / :focus of the SAME element is still that one element.
-      accented.add(r.sel.replace(/:{1,2}[a-z-]+(\([^)]*\))?/gi, '').trim());
+      const base = r.sel.replace(/:{1,2}[a-z-]+(\([^)]*\))?/gi, '').trim();
+      if (!byScope.has(scope)) byScope.set(scope, new Set());
+      byScope.get(scope).add(base);
     }
-    if (accented.size > 1) {
-      offenders.push(`${norm(file)} paints ${accented.size} accent elements: ${[...accented].join(' | ')}`);
+    for (const [scope, sels] of byScope) {
+      if (sels.size > 1) {
+        offenders.push(`${norm(file)} ${scope} paints ${sels.size} accent elements: ${[...sels].join(' | ')}`);
+      }
     }
   }
   assert.equal(
