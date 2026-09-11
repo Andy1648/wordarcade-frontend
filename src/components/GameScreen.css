@@ -5173,3 +5173,44 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--blitz .cb-answers-list .cb-answer-chip:nth-child(even) {
   transform: none;
 }
+
+/* ============================================================================ */
+/* ============  END SCREENS: ONE HERO, ONE CTA (feat/shell-screens)  ========= */
+/* ============================================================================ */
+
+/* THE OUTCOME WORD IS THE HERO. It was --fs-panel (28px) - the same size as a button
+   label - so the single most important word on the screen carried no more weight than
+   the chrome around it. */
+.game-over-winner {
+  font-size: var(--fs-hero);
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+/* THE SUMMARY GRID IS BUILT TO BE SCREENSHOTTED: compact, hard-edged, everything on
+   one readable block with no soft edges to blur when it is cropped and pasted. */
+.go-summary-item {
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  background: var(--v-panel);
+  padding: 8px 10px;
+}
+.go-summary-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+/* STATS RECEDE. They are the record of what happened, not the next action. */
+.go-summary-label,
+.go-pstat-key {
+  color: var(--v-ink-faint);
+}
+
+/* THE PRIMARY CTA IS THE ONLY HOT ELEMENT. The end screen used to offer REMATCH and
+   LEAVE at the same visual weight, which makes the decision harder, not fairer. */
+.game-over-leave,
+.go-secondary {
+  background: var(--v-panel-hi);
+  color: var(--v-ink);
+  border-color: var(--v-rule);
+}

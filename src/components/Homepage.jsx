@@ -1,10 +1,11 @@
 // Homepage.jsx
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
 import GameCard from './GameCard';
+import { recordLastMode, loadLastMode } from '../progress/lastMode';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
@@ -286,11 +287,29 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       const rGap = parseFloat(gcs.rowGap) || colGap;
       const count = grid.querySelectorAll('.game-card-magnet').length || 5;
       // Largest 3:4 card (w:h = 3:4) fitting `cols`×`rows` in availW×regionH.
+      // THE SPOTLIT CARD IS 1.5x FOR REAL - it gets a wider grid slot rather than a
+      // transform on top of an equal one. A transform would overlap its neighbours and
+      // bust card-clip's "inside every clipping ancestor with >=8px" margin; reserving
+      // the width keeps the row honest and keeps all five on one screen.
+      // Only in the SINGLE-ROW layout: in the 3+2 / 2-col phone grids a 1.5x card would
+      // swamp the row and force the others below the readable floor, so those stay even.
+      const SPOT = 1.5;
       const fit = (cols, rows) => {
-        const colW = (availW - (cols - 1) * colGap) / cols;
+        const single = rows === 1 && cols === count;
+        // width units: (n-1) normal cards + one at 1.5, or all-equal off the single row
+        const units = single ? cols - 1 + SPOT : cols;
+        const colW = (availW - (cols - 1) * colGap) / units;
         const rowH = (regionH - (rows - 1) * rGap) / rows;
-        const h = Math.min(rowH, (colW * 4) / 3);
-        return { w: (h * 3) / 4, h, cols };
+        // The SPOTLIT card is the tallest thing in the row, so the row height budget is
+        // ITS height - the base card is that divided by 1.5.
+        // HEADROOM. The old uniform fit was width-bound on a big screen, so it left
+        // vertical slack by accident; the 1.5x card is HEIGHT-bound and filled the row
+        // exactly, putting it flush against .homepage-stage (card-clip measured -34px at
+        // 2560x1440). Reserve the 8px-a-side margin card-clip requires, explicitly.
+        const SPOT_HEADROOM = 20;
+        const hSpot = single ? Math.min(rowH - SPOT_HEADROOM, (colW * SPOT * 4) / 3) : 0;
+        const h = single ? hSpot / SPOT : Math.min(rowH, (colW * 4) / 3);
+        return { w: (h * 3) / 4, h, cols, single };
       };
       // Try one row of all five first, then denser grids; pick whichever gives the WIDEST (most
       // readable) card while all cells fit ONE screen. On a wide screen 5-in-one-row wins; on a
@@ -307,6 +326,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       grid.style.setProperty('--cards-cols', String(best.cols));
       grid.style.setProperty('--card-w', `${Math.floor(best.w)}px`);
       grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
+      // The spotlit card's own box. Equal to the base card when the layout is not a
+      // single row, so the phone grids stay even.
+      const spot = best.single ? SPOT : 1;
+      grid.style.setProperty('--card-w-spot', `${Math.floor(best.w * spot)}px`);
+      grid.style.setProperty('--card-h-spot', `${Math.floor(best.h * spot)}px`);
+      // THE GRID TEMPLATE HAS TO MATCH THE MATHS. Reserving 1.5 width UNITS in the fit
+      // while the CSS still said `repeat(n, 1fr)` meant the spotlit card was laid into
+      // an EQUAL column and simply hung out of it - menu-frame measured its left edge
+      // 5.1px outside the grid at 1920. Give its column the 1.5fr it was promised.
+      if (best.single) {
+        const kids = [...grid.querySelectorAll('.game-card-magnet')];
+        const at = kids.findIndex((el) => el.classList.contains('is-spotlit'));
+        const cols = kids.map((_, i) => (i === at ? `${SPOT}fr` : '1fr')).join(' ');
+        grid.style.setProperty('--cards-template', cols);
+      } else {
+        grid.style.removeProperty('--cards-template');
+      }
       // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
       grid.setAttribute('data-cols', String(best.cols));
     };
@@ -335,6 +371,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // Typing anywhere on the menu earns XP (no text input here). The capture/credit/streak
   // logic is the SHARED hook (also used by the splash) so the two can't drift; it only
   // ever surfaces as the pops + the bar. No-ops while a mode dialog is open.
+  // Read ONCE on mount: the menu must not reshuffle its spotlight under the player
+  // mid-session just because storage changed in another tab.
+  const [lastMode] = useState(() => loadLastMode());
+  const spotlitId = useMemo(() => {
+    if (lastMode && GAMES.some((g) => g.id === lastMode)) return lastMode;
+    const fallback = GAMES.find((g) => g.featured);
+    return fallback ? fallback.id : (GAMES[0] && GAMES[0].id);
+  }, [lastMode]);
+
   const xpFxRef = useRef(null);
   const dialogOpenRef = useRef(false);
   useEffect(() => {
@@ -510,6 +555,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     sound.click();
     setNavigating(true);
     const gameId = dialog.game.id;
+    recordLastMode(gameId); // the menu FEATURES whatever you played last
     runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
   }
 
@@ -530,6 +576,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     sound.click();
     setNavigating(true);
     const id = dialog.game.id;
+    recordLastMode(id); // the menu FEATURES whatever you played last
     if (id === 'chain' && onChain) onChain();
     else if (id === 'fuse' && onFuse) onFuse();
   }
@@ -725,6 +772,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           </div>
         </div>
 
+        {/* THE MENU'S ONE FEATURED CARD. Five equal-weight cards gave the eye no entry
+            point; the card you actually play is spotlit at 1.5x and the rest step back to
+            mid-value. Falls back to the statically-featured mode on a first visit. */}
         <div className="homepage-cards-region">
           <div className="homepage-cards-scroll">
             <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
@@ -732,6 +782,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                 <GameCard
                   key={game.id}
                   game={game}
+                  spotlit={game.id === spotlitId}
                   onSelect={handleOpenDialog}
                   onLockedSelect={handleLockedSelect}
                   onHover={handleHover}

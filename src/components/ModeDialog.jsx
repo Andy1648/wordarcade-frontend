@@ -164,6 +164,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
       <div
         className={`mode-dialog-shell${modeKey === 'blitz' ? ' is-blitz' : ''}`}
+        // FULL-BLEED MODE COLOUR: the dialog IS the mode's colour edge to edge, so you
+        // know which mode you opened before reading a word of it.
+        style={{ '--dlg-accent': accent }}
         ref={shellRef}
         role="dialog"
         aria-modal="true"
@@ -208,15 +211,11 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
             )}
             <div className="mode-dialog-title">
               {isSolo ? (
-                <span className="mode-dialog-title-w2" style={{ color: accent }}>
-                  {mode.name}
-                </span>
+                <span className="mode-dialog-title-w2">{mode.name}</span>
               ) : (
                 <>
                   <span className="mode-dialog-title-w1">{mode.t1}</span>{' '}
-                  <span className="mode-dialog-title-w2" style={{ color: accent }}>
-                    {mode.t2}
-                  </span>
+                  <span className="mode-dialog-title-w2">{mode.t2}</span>
                 </>
               )}
             </div>

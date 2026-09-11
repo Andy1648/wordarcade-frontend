@@ -25,6 +25,8 @@ import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
 import { formatNum } from '../format';
 import { CollectionBody } from './CollectionScreen';
+import { loadCollection } from '../progress/collection';
+import { achievementList } from '../progress/achievements';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
 
@@ -198,6 +200,17 @@ export default function StatsScreen({ onBack }) {
   // PERSONAL RECORDS (record-surface): personal bests + lifetime firsts. `highestLevel` folds the
   // live level into the stored peak so it's always current; streak/rebirths read from their stores.
   const records = readRecords();
+  // The headline number for each tab's hero.
+  const collectionCount = (() => {
+    try {
+      const c = loadCollection();
+      // the store keys words under `w` (see fresh() in progress/collection.js)
+      return c && c.w ? Object.keys(c.w).length : 0;
+    } catch { return 0; }
+  })();
+  const achievementsEarned = (() => {
+    try { return achievementList().filter((a) => a.earned).length; } catch { return 0; }
+  })();
   const highestLevel = Math.max(records.maxLevel, level);
   const recordCells = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
   // SAT RUSH spaced-repetition: the persistent WORDS YOU KEEP MISSING list, read
@@ -235,6 +248,18 @@ export default function StatsScreen({ onBack }) {
         </div>
 
         <div className="stats-body">
+          {/* ONE HERO NUMERAL PER TAB. Every tab used to open as an undifferentiated
+              wall of equal-weight rows; each now leads with the single number that tab
+              is actually about, at the hero step, with its caption underneath. */}
+          <div className="stats-hero">
+            <div className="stats-hero-num">
+              {tab === 'stats' ? fmt(level) : tab === 'collection' ? fmt(collectionCount) : fmt(achievementsEarned)}
+            </div>
+            <div className="stats-hero-cap">
+              {tab === 'stats' ? 'LEVEL' : tab === 'collection' ? 'WORDS COLLECTED' : 'ACHIEVEMENTS EARNED'}
+            </div>
+          </div>
+
           {tab === 'stats' && (
           <>
           {/* PERSONAL RECORDS — the headline grid (record-surface). Every cell is EARNED (a value)

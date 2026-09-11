@@ -492,3 +492,65 @@
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 #000;
 }
+
+/* ============================================================================ */
+/* ===============  STATS: ONE HERO, CHIP TABS, TABULAR ROWS  ================ */
+/* ============================================================================ */
+
+/* ONE HERO NUMERAL PER TAB. Every tab opened as a wall of equal-weight rows with no
+   entry point; each now leads with the single number it is about. */
+.stats-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 2px 0 14px;
+}
+.stats-hero-num {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: var(--v-ink);
+}
+.stats-hero-cap {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v-ink-faint);
+}
+
+/* TABS AS HARD-EDGED CHIPS: the active one is lit and RAISED (it sits proud on its
+   offset shadow), the rest are flat and recessed. Shape carries the state, not just
+   a colour change. */
+.stats-tab {
+  border: 3px solid #000;
+  border-radius: 6px;
+  background: var(--v-panel);
+  color: var(--v-ink-dim);
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+.stats-tab.is-active {
+  background: var(--v-panel-hi);
+  color: var(--v-ink);
+  box-shadow: 3px 3px 0 #000;
+  transform: translate(0, 0);
+}
+
+/* RECORDS: labels left, numbers right and TABULAR so the digits line up in a column
+   you can actually compare down. */
+.stats-row dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* LOCKED TILES sit at mid-value rather than shouting alongside earned ones. */
+.ach-card.is-locked,
+.coll-card.is-locked,
+.rec-cell.is-locked {
+  filter: saturate(0.35) brightness(0.78);
+}

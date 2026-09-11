@@ -139,7 +139,7 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0, spotlit = false }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
   // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
   // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
@@ -205,6 +205,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     game.dashedBorder ? 'dashed-border' : '',
     !game.enabled ? 'disabled' : '',
     game.featured ? 'featured' : '',
+    spotlit ? 'is-spotlit' : '',
     // A mascot sits on this card's top edge - drop the top tape so it doesn't
     // poke through where the character is perched.
     topper ? 'has-topper' : '',
@@ -269,7 +270,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     // div whose only job is that transform. It composes OUTSIDE the
     // existing tilt/lift (which stays on .game-card-wrap) and re-provides the
     // grid's perspective for the inner 3D tilt. See .game-card-magnet in the CSS.
-    <div ref={magnetRef} className="game-card-magnet" data-game={game.id}>
+    <div ref={magnetRef} className={`game-card-magnet${spotlit ? ' is-spotlit' : ''}`} data-game={game.id}>
       {/* The grid item: static resting rotate + cursor-tilt via its own shared
           controller, left fully intact — the magnet only wraps it. */}
       <div

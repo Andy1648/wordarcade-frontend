@@ -41,3 +41,46 @@
 .solo-share-btn,
 .game-over-copy-result { display: block; margin: 12px auto 0; }
 .sr-copy-result { margin-top: 10px; }
+
+/* The two share shapes sit together: the emoji grid for sighted chat, the plain-text
+   receipt for anyone using a screen reader (a row of 30 squares is announced square by
+   square and is useless as a result). The plain option is quieter but never hidden -
+   an accessibility alternative behind a disclosure is an alternative nobody finds. */
+/* ONE ROW, not two. The solo death card is a flex COLUMN, so `display: contents` made
+   the plain button a whole extra ROW - which pushed the TRY-ANOTHER-MODE button below the
+   fold of a fixed, non-scrolling card and left it unclickable. As a wrapping flex ROW the
+   pair costs the column a single button's height, exactly as the one button used to. */
+.copy-result-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tap-gap, 8px);
+}
+/* Both buttons must share ONE row inside a 372px-wide death card - a wrap here costs the
+   card another 56px of height, which is what pushed TRY off the bottom of a 720px window. */
+.copy-result-pair > * {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* The plain button deliberately does NOT carry .copy-result-btn: e2e/solo-endgame
+   locates the receipt button by that class, and a second match there is a strict-mode
+   violation rather than a real regression. It inherits the same shape explicitly. */
+.copy-result-alt {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  min-height: var(--tap-min);
+  padding: 10px 10px;
+  border: 3px solid var(--v-rule);
+  border-radius: 8px;
+  background: var(--v-panel-hi);
+  color: var(--v-ink);
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.copy-result-alt.is-copied {
+  background: var(--v-panel);
+}

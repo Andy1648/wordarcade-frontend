@@ -1,15 +1,13 @@
 // resultCard.test.js — the shareable result card (Job 1). Pure, node --test.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  buildResultCard,
+import {buildResultCard,
   glyphRow,
   tierForClockLeft,
   groupThousands,
   MIN_WORDS,
   MAX_GLYPHS,
-  GLYPH,
-} from './resultCard.js';
+  GLYPH, buildResultCardPlain, describeGlyphRow} from './resultCard.js';
 
 // ---- helpers ---------------------------------------------------------------
 const lines = (s) => s.split('\n');
@@ -187,4 +185,43 @@ test('suppression holds for CHAIN too, and is counted in ACCEPTED words not glyp
   const ok = buildResultCard({ mode: 'chain', words: 3, points: 300, tiers: ['fast', 'fast', 'mid'], killed: true, link: 'x' });
   assert.ok(ok, 'exactly 3 links is shareable');
   assert.equal(lines(ok)[1], '3 LINKS · 300 PTS');
+});
+
+// --- PLAIN-TEXT ALTERNATIVE (feat/shell-screens) ---------------------------
+// An emoji grid is a known screen-reader failure, so every share must also exist as
+// words. These pin that the two forms stay interchangeable.
+test('the plain-text receipt carries no emoji but the same facts', () => {
+  const args = {
+    mode: 'word-bomb', words: 12, points: 1860, level: 12,
+    tiers: ['fast', 'fast', 'mid', 'slow', 'fast'], killed: true,
+    link: 'https://typeaword.com/word-bomb',
+  };
+  const grid = buildResultCard(args);
+  const plain = buildResultCardPlain(args);
+  assert.ok(grid.includes('🟩'), 'the grid form should still use glyphs');
+  for (const g of ['🟩', '🟨', '🟥', '⬛']) {
+    assert.ok(!plain.includes(g), `the plain form must not contain ${g}`);
+  }
+  // Same brand line, same stat line, same deep link - only the middle row differs.
+  const g = grid.split('\n');
+  const p = plain.split('\n');
+  assert.equal(p[0], g[0]);
+  assert.equal(p[1], g[1]);
+  assert.equal(p[p.length - 1], g[g.length - 1]);
+  assert.match(plain, /3 fast/);
+  assert.match(plain, /1 steady/);
+  assert.match(plain, /1 slow/);
+  assert.match(plain, /ran out of time/);
+});
+
+test('the plain form honours the same suppression rule', () => {
+  const args = { mode: 'word-bomb', words: 2, tiers: ['fast', 'fast'], link: 'x' };
+  assert.equal(buildResultCard(args), null);
+  assert.equal(buildResultCardPlain(args), null, 'a 2-word share is an anti-ad in both forms');
+});
+
+test('describeGlyphRow is usable as alt text for the grid', () => {
+  assert.equal(describeGlyphRow([], { killed: false }), '');
+  assert.match(describeGlyphRow(['fast', 'fast'], { killed: false }), /^Word pace: 2 fast\.$/);
+  assert.match(describeGlyphRow([], { killed: true }), /ran out of time/);
 });

@@ -447,7 +447,10 @@ html[data-beat='true'] .homepage-logo {
      cards fit ONE screen with no scrolling (5-in-one-row, or a 3+2 grid on a very narrow/tall
      viewport). Cards are centred in their cells; the scenes are 3:4 and never cropped. */
   width: 100%;
-  grid-template-columns: repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr));
+  /* --cards-template is set by the sizing effect when one card is spotlit: it gives
+     that card's column 1.5fr and the rest 1fr, matching the reserved width units in the
+     fit maths. Without it the 1.5x card is laid into an equal column and overhangs. */
+  grid-template-columns: var(--cards-template, repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr)));
   justify-content: center;
   justify-items: center;
   align-items: center;
@@ -458,6 +461,28 @@ html[data-beat='true'] .homepage-logo {
    centres under the pair above instead of hanging off to the left (feat/cards-live). */
 .homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) {
   grid-column: 1 / -1;
+}
+
+/* ---- THE FEATURED CARD ---------------------------------------------------
+   The menu's five cards were all the same size and the same weight, so the eye had
+   nowhere to land. The card you played LAST is spotlit: 1.5x (a real, reserved grid
+   slot - see the fit maths in Homepage.jsx, NOT a transform, which would overlap its
+   neighbours), a hard accent rim, and full colour. */
+.homepage-cards-grid .game-card-magnet.is-spotlit .game-card {
+  width: var(--card-w-spot, var(--card-w, 100%));
+  height: var(--card-h-spot, var(--card-h));
+}
+.homepage-cards-grid .game-card-magnet.is-spotlit .game-card {
+  border-color: var(--v-accent);
+}
+/* EVERYONE ELSE STEPS BACK. Not hidden - just quieter, so the featured card is the
+   only one at full strength. Desaturation only; no blur (flat rule). */
+.homepage-cards-grid .game-card-magnet:not(.is-spotlit) .game-card {
+  filter: saturate(0.62) brightness(0.82);
+}
+.homepage-cards-grid .game-card-magnet:not(.is-spotlit):hover .game-card,
+.homepage-cards-grid .game-card-magnet:not(.is-spotlit):focus-within .game-card {
+  filter: none; /* hovering a demoted card brings it back to full */
 }
 
 /* Peek-scroll region wrapping the cards grid (desktop / >760px). Shows one full row
@@ -682,12 +707,12 @@ html[data-beat='true'] .homepage-logo {
 }
 
 .homepage-btn-join {
-  /* value-group: THE accent element of the menu. JOIN ROOM is the only CTA the menu
-     actually renders (.homepage-btn-create has no matching class in Homepage.jsx), so
-     the screen's one hot colour is spent here. */
-  background: var(--v-accent);
-  border-color: #991A75;
-  color: var(--v-field);
+  /* DEMOTED (feat/shell-screens). The menu's one accent now belongs to the FEATURED
+     card - that is the thing the screen is for. JOIN ROOM is the secondary path in and
+     reads as a solid, obvious control without being the hottest thing on the page. */
+  background: var(--v-panel-hi);
+  border-color: var(--v-rule);
+  color: var(--v-ink);
 }
 
 /* ---- SHORT-HEIGHT RECLAIM (feat/cards-live) --------------------------------------------
@@ -1103,3 +1128,26 @@ html[data-beat='true'] .homepage-beat-glow {
 
 /* MENU SECRET sticker (Job 9) lives in SecretSticker.css (the old .secret-stamp was
    pointer-events:none, so its dismiss click fell through and opened the card beneath). */
+
+/* ---- PHONE: THE CORNER NAV STOPS SITTING ON THE XP BAR -------------------
+   The nav is position:absolute over the stage. On a wide screen it sits harmlessly in
+   the corner; at 390px it landed ON TOP of the XP bar - a measured 34px of overlap, and
+   exactly the "fixed element with no layout relationship to the page" failure CLAUDE.md
+   warns about (same class as the old audio/CREDITS collision).
+   It STAYS absolute: pulling it into the flow cost 46px of a 640px-tall screen, which
+   shrank the cards until a card badge overflowed its own card. Instead the XP cluster
+   RESERVES the nav's width, so the two can never occupy the same pixels. */
+@media (max-width: 760px) {
+  .menu-xp-cluster,
+  .menu-xp {
+    padding-right: 104px;
+  }
+  .homepage-nav-btn {
+    padding: 0 8px;
+    max-width: 100%;
+  }
+  /* The menu's JOIN target is a PRIMARY action: 48px, not the 44px bare minimum. */
+  .homepage-btn-join {
+    min-height: 48px;
+  }
+}

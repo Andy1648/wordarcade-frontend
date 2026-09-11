@@ -442,3 +442,55 @@
 .mode-dialog-lower--blitz .mode-ex {
   display: none;
 }
+
+/* ============================================================================ */
+/* =========  MODE DIALOG: FULL-BLEED COLOUR, ONE HOT ELEMENT  =============== */
+/* ============================================================================ */
+
+/* FULL-BLEED MODE COLOUR. The dialog used a flat #1a0b2e panel for every mode, so
+   all six opened identically and the only clue which one you had was the title text.
+   The shell is now the mode's own colour edge to edge. */
+.mode-dialog-shell {
+  background: var(--dlg-accent, #1a0b2e);
+}
+
+/* The content sits on a dark inner field so the copy keeps its contrast against a
+   saturated bleed - cream on raw teal or yellow would fail outright. The mode colour
+   still frames every edge, which is what carries the identity. */
+.mode-dialog-content {
+  background: rgba(13, 6, 24, 0.88);
+  border-radius: 6px;
+  /* Responsive: a flat 16px of side padding took 32px out of a 360px-wide dialog and
+     pushed the mastery row past the content box (measured 322 vs 312, plus an H
+     scrollbar). The inner field still reads at 8px on a phone. */
+  padding: clamp(8px, 2.4vw, 16px);
+}
+
+/* THE RULES ARE ONE LEFT-ALIGNED MONO COLUMN, not centred caps. Left-aligned is
+   already set on .mode-dialog-content; this is the measure - ~50ch is the readable
+   line length, and 32ch was forcing a short blurb into a ragged stack. */
+.mode-dialog-liner {
+  max-width: 50ch;
+  text-transform: none;
+  line-height: 1.5;
+}
+
+/* THE TITLE is white on the bleed - the colour identity comes from the field now, so
+   the second word no longer needs to carry it (that made two hot things). */
+.mode-dialog-title-w2 {
+  color: #fff;
+}
+
+/* The mastery row is a chip plus a sentence; on a 360px dialog it has to be allowed to
+   wrap rather than force its parent to scroll sideways. */
+.mode-dialog-mastery {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* START IS THE ONLY HOT ELEMENT. The mastery chip used the mode accent as its text
+   and border, which put a second saturated thing next to the CTA. */
+.mode-dialog-mastery-lv {
+  color: var(--v-ink-dim) !important;
+  border-color: var(--v-rule) !important;
+}

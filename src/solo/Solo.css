@@ -1019,3 +1019,33 @@
   .fuse-line-burn,
   .fuse-line-spark { transition: none; }
 }
+
+/* ============================================================================ */
+/* =========  SOLO END CARD: ONE HERO OUTCOME WORD (feat/shell-screens)  ====== */
+/* ============================================================================ */
+
+/* The outcome word carries the whole screen, so it is the hero step - with a vh guard,
+   because at a flat 96px the death card ran off a 1163x501 window (measured top=-31,
+   bottom=532 of a 501 viewport; at 12vh the card was still 886px tall in a 720px window
+   and pushed the TRY-ANOTHER-MODE button off screen entirely). */
+.solo-deathcard h2 {
+  font-size: min(var(--fs-hero), 9vh);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+/* The run's numbers recede behind it - a record, not the next action. */
+.solo-deathcard .solo-over-stat-label,
+.solo-deathcard .solo-deck-label {
+  color: var(--v-ink-faint);
+}
+
+/* COMPACT END CARD. The death card was already ~806px tall in a 720px window - the
+   TRY-ANOTHER-MODE button sat at y=663 with 3px to spare - so raising the outcome word
+   to a real hero step pushed it off the bottom. The end screen is meant to be compact
+   and screenshottable anyway, so the card tightens to pay for its own hero: the gaps and
+   the padding come down and the whole thing gets SHORTER than it was before. */
+.solo-deathcard {
+  gap: 10px;
+  padding: 16px 18px;
+}

@@ -536,10 +536,19 @@ function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBu
   const cls = isEq ? 'equipped' : ownedT ? 'owned' : affordable ? 'buy' : 'locked';
   return (
     <div className={`shop-card shop-theme-card is-${cls}`}>
-      <div className="shop-theme-swatch" aria-hidden="true">
-        {theme.swatch.map((c, i) => (
-          <span key={i} style={{ background: c }} />
-        ))}
+      {/* A MINI RENDER, not four colour bars and certainly not a text name: a tiny
+          menu drawn in the theme's own values - its background, its wordmark ink, its
+          XP track and fill, its card pops. You can see what you are buying. */}
+      <div className="shop-theme-swatch" aria-hidden="true" style={{ background: theme.swatch[0] }}>
+        <span className="sts-title" style={{ background: theme.swatch[1] }} />
+        <span className="sts-track">
+          <span className="sts-fill" style={{ background: theme.swatch[2] }} />
+        </span>
+        <span className="sts-cards">
+          {(theme.pops && theme.pops.length ? theme.pops : theme.swatch).slice(0, 4).map((c, i) => (
+            <i key={i} style={{ background: c }} />
+          ))}
+        </span>
       </div>
       <div className="shop-card-name">{theme.name}</div>
       {theme.unlockLevel > 0 && !ownedT && (

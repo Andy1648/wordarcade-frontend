@@ -123,3 +123,61 @@ export function buildResultCard({ mode, words, points, level, tiers = [], killed
   if (link) lines.push(link);
   return lines.join('\n');
 }
+
+// ---------------------------------------------------------------------------
+// PLAIN-TEXT RESULT (feat/shell-screens)
+// ---------------------------------------------------------------------------
+// An emoji grid is a KNOWN SCREEN-READER FAILURE: a row of 30 squares is read out
+// as "green square green square yellow square …" thirty times, which is unusable as
+// a result and hostile when pasted into a thread someone else is listening to. So
+// every share offers BOTH shapes - the grid for sighted chat, and this plain-text
+// receipt which says the same thing in words.
+//
+// `describeGlyphRow` is also the ALT TEXT for the grid wherever the grid is shown
+// visually, so the emoji row is never the only description of itself.
+
+// Human-readable summary of what the glyph row encodes.
+export function describeGlyphRow(tiers = [], { killed = false } = {}) {
+  const list = Array.isArray(tiers) ? tiers : [];
+  const n = { fast: 0, mid: 0, slow: 0 };
+  for (const t of list) n[t === 'fast' || t === 'mid' ? t : 'slow']++;
+  if (!list.length && !killed) return '';
+  const parts = [];
+  if (n.fast) parts.push(`${n.fast} fast`);
+  if (n.mid) parts.push(`${n.mid} steady`);
+  if (n.slow) parts.push(`${n.slow} slow`);
+  let out = parts.length ? `Word pace: ${parts.join(', ')}.` : '';
+  if (killed) out = out ? `${out} The last word ran out of time.` : 'The last word ran out of time.';
+  return out;
+}
+
+/**
+ * The same receipt as buildResultCard, with the emoji row replaced by a sentence.
+ * Same suppression rule, same deep link, so the two are interchangeable.
+ */
+export function buildResultCardPlain({ mode, words, points, level, tiers = [], killed = false, link, suffix = null } = {}) {
+  const w = Math.max(0, Math.floor(Number.isFinite(words) ? words : 0));
+  if (w < MIN_WORDS) return null; // same anti-ad suppression as the grid form
+
+  const label = MODE_LABEL[mode] || 'TYPE A WORD';
+  const spec = SPEC_FORM_MODES.has(mode);
+  const lines = [`TYPE A WORD ${spec ? '—' : '-'} ${label}`];
+
+  if (spec) {
+    const stat = [`${w} ${UNIT_LABEL[mode] || DEFAULT_UNIT}`];
+    if (points != null && Number.isFinite(points)) stat.push(`${groupThousands(points)} PTS`);
+    lines.push(stat.join(' · '));
+  } else {
+    const stat = [`${w} words`];
+    if (points != null && Number.isFinite(points)) stat.push(`${groupThousands(points)} pts`);
+    if (level != null && Number.isFinite(level)) stat.push(`LV ${Math.max(1, Math.floor(level))}`);
+    lines.push(stat.join(' - '));
+  }
+
+  const described = describeGlyphRow(tiers, { killed });
+  if (described) lines.push(suffix ? `${described} ${suffix}` : described);
+  else if (suffix) lines.push(String(suffix));
+
+  if (link) lines.push(link);
+  return lines.join('\n');
+}
