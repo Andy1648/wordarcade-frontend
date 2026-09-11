@@ -292,8 +292,30 @@ that use the same blue as the PLAY button, PLAY itself, and the white JOIN WITH 
 like after the audit", and no JSX in the repo applies it. `?dlgcta=demote` does exactly that to
 JOIN WITH CODE. That single change also closes part of §1b's dead-helper finding.
 
+**Measured, not eyeballed — and measuring it exposed a flaw in my own metric first.**
+Scoring the variant in the squint test's default RELATIVE mode made it look WORSE (3 regions to 5),
+which is an artifact: removing the loudest element drops the screen's peak from 0.954 to 0.597, and
+because the cut is a fraction of the peak, the bar drops with it and dimmer things start to
+qualify. Region counts are not comparable across variants when the peak moves. So the tool grew an
+ABSOLUTE mode (`abs:0.572`) that pins both variants to the same bar:
+
+| screen | today | `?dlgcta=demote` | what left |
+|---|---|---|---|
+| wb-dialog desktop | 2 regions (127, 77) | **1 region (77)** — PASS | the 127-cell region |
+| wb-dialog phone | 3 regions (42, 9, 6) | 2 regions (9, 6) | the 42-cell region |
+| blitz-dialog desktop | 3 regions (134, 132, 28) | 2 regions (132, 28) | the 134-cell region |
+| blitz-dialog phone | 4 regions (47, 33, 16, 7) | 3 regions (33, 16, 7) | the 47-cell region |
+| **lobby (control)** | 2 regions (93, 43) | **2 regions (93, 43)** | nothing — untouched |
+
+In every dialog the demote removes exactly one hot region and it is the largest one, and the lobby
+— which the change does not touch — is bit-for-bit identical, which is the control that says the
+measurement is responding to the change rather than to noise. Across all 30 screen/viewport pairs:
+16 pass / 8 busy before, 17 pass / 7 busy after. One screen improved, nothing regressed.
+
 I built it rather than shipped it because it changes the look of both multiplayer dialogs, which is
-yours. It is the smallest high-value change in this entire run.
+yours. It is the smallest high-value change in this entire run: one CSS rule, a measured single-
+region result on the dialog it most affects, and it puts the repo's own unused `.v-demote` helper
+to work.
 
 ---
 
@@ -549,6 +571,27 @@ first or rebasing a Phase 5b onto it — your call which.
    flakes were *different tests* from the previous run's four. All five of the earlier run's
    problem tests now pass, including `wb-short-layout @ 1280x720`. Treat any single flaky list as
    noise; treat a test that fails twice on different runs as real.
+
+---
+
+## BLOCK STATE — CHECKED AGAINST ORIGIN, NO REWRITE NEEDED
+
+`typeaword-block-state.md` lives on `docs/block-state-4` (`a902149`). It states it was refreshed on
+2026-09-10 against `main @ d4c40c3`.
+
+Checked rather than assumed:
+
+* `git fetch origin` then `git rev-parse origin/main` -> **`d4c40c3`**. `git rev-list --count
+  d4c40c3..origin/main` -> **0**. Main has not moved since the doc was written.
+* Its most drift-prone number still holds: it claims "1090 tests in 48 spec files", and
+  `git ls-tree -r origin/main e2e` counts **48** spec files today.
+
+So the doc is current against origin and a rewrite would have been churn. What a returning reader
+needs ON TOP of it is this file, and specifically: §2 (the WB ring's measured state), §1b and §6b
+(the accent tier is not the top of the value ladder), §3 (the colour scripts are declared twice,
+not consumed), and the gate note — which independently confirms the doc's own warning that a gate
+run on this 2-vCPU box must not overlap with anything else. It was right, and I proved it the
+hard way.
 
 ---
 

@@ -1,0 +1,1119 @@
+{
+  "blur": 12,
+  "cell": 12,
+  "ratio": 0.6,
+  "minArea": 6,
+  "minPeak": 0.15,
+  "rows": [
+    {
+      "surface": "menu",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0125,
+      "peak": 0.43,
+      "cut": 0.258,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 5,
+      "regions": [
+        {
+          "area": 19,
+          "peak": 0.43,
+          "box": [
+            996,
+            120,
+            72,
+            48
+          ]
+        },
+        {
+          "area": 13,
+          "peak": 0.309,
+          "box": [
+            720,
+            180,
+            144,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0054
+    },
+    {
+      "surface": "shop",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.837,
+      "cut": 0.502,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 279,
+          "peak": 0.837,
+          "box": [
+            264,
+            648,
+            840,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0386
+    },
+    {
+      "surface": "stats",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.825,
+      "cut": 0.495,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 132,
+          "peak": 0.825,
+          "box": [
+            480,
+            672,
+            408,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0183
+    },
+    {
+      "surface": "collection",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.825,
+      "cut": 0.495,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 132,
+          "peak": 0.825,
+          "box": [
+            480,
+            672,
+            408,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0183
+    },
+    {
+      "surface": "wb-dialog",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.597,
+      "cut": 0.358,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 5,
+      "regions": [
+        {
+          "area": 207,
+          "peak": 0.597,
+          "box": [
+            432,
+            516,
+            288,
+            108
+          ]
+        },
+        {
+          "area": 16,
+          "peak": 0.505,
+          "box": [
+            744,
+            192,
+            84,
+            36
+          ]
+        },
+        {
+          "area": 13,
+          "peak": 0.47,
+          "box": [
+            540,
+            192,
+            60,
+            36
+          ]
+        },
+        {
+          "area": 9,
+          "peak": 0.47,
+          "box": [
+            444,
+            192,
+            48,
+            36
+          ]
+        },
+        {
+          "area": 6,
+          "peak": 0.453,
+          "box": [
+            660,
+            204,
+            36,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0347
+    },
+    {
+      "surface": "blitz-dialog",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.757,
+      "cut": 0.454,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 11,
+      "regions": [
+        {
+          "area": 205,
+          "peak": 0.629,
+          "box": [
+            408,
+            588,
+            312,
+            96
+          ]
+        },
+        {
+          "area": 35,
+          "peak": 0.757,
+          "box": [
+            408,
+            120,
+            108,
+            48
+          ]
+        },
+        {
+          "area": 26,
+          "peak": 0.57,
+          "box": [
+            792,
+            420,
+            120,
+            36
+          ]
+        },
+        {
+          "area": 22,
+          "peak": 0.534,
+          "box": [
+            432,
+            420,
+            132,
+            24
+          ]
+        },
+        {
+          "area": 21,
+          "peak": 0.527,
+          "box": [
+            612,
+            420,
+            132,
+            24
+          ]
+        },
+        {
+          "area": 18,
+          "peak": 0.517,
+          "box": [
+            612,
+            480,
+            120,
+            24
+          ]
+        },
+        {
+          "area": 17,
+          "peak": 0.536,
+          "box": [
+            792,
+            480,
+            108,
+            24
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.511,
+          "box": [
+            444,
+            480,
+            48,
+            24
+          ]
+        },
+        {
+          "area": 6,
+          "peak": 0.477,
+          "box": [
+            516,
+            480,
+            36,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0496
+    },
+    {
+      "surface": "lobby",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.843,
+      "cut": 0.506,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 4,
+      "regions": [
+        {
+          "area": 97,
+          "peak": 0.843,
+          "box": [
+            492,
+            360,
+            384,
+            48
+          ]
+        },
+        {
+          "area": 44,
+          "peak": 0.759,
+          "box": [
+            492,
+            444,
+            180,
+            36
+          ]
+        },
+        {
+          "area": 9,
+          "peak": 0.527,
+          "box": [
+            516,
+            540,
+            108,
+            12
+          ]
+        },
+        {
+          "area": 8,
+          "peak": 0.521,
+          "box": [
+            756,
+            540,
+            96,
+            12
+          ]
+        }
+      ],
+      "hotFraction": 0.0218
+    },
+    {
+      "surface": "rooms-browser",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.84,
+      "cut": 0.504,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 2,
+      "regions": [
+        {
+          "area": 103,
+          "peak": 0.838,
+          "box": [
+            480,
+            348,
+            408,
+            48
+          ]
+        },
+        {
+          "area": 79,
+          "peak": 0.84,
+          "box": [
+            468,
+            408,
+            324,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0252
+    },
+    {
+      "surface": "wb-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.766,
+      "cut": 0.46,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 31,
+          "peak": 0.766,
+          "box": [
+            1212,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0043
+    },
+    {
+      "surface": "blitz-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.766,
+      "cut": 0.46,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 31,
+          "peak": 0.766,
+          "box": [
+            1212,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0043
+    },
+    {
+      "surface": "chain-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0125,
+      "peak": 0.28,
+      "cut": 0.168,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 3,
+      "regions": [
+        {
+          "area": 115,
+          "peak": 0.28,
+          "box": [
+            756,
+            372,
+            492,
+            48
+          ]
+        },
+        {
+          "area": 17,
+          "peak": 0.199,
+          "box": [
+            780,
+            48,
+            108,
+            24
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.246,
+          "box": [
+            1308,
+            708,
+            36,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0192
+    },
+    {
+      "surface": "fuse-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0125,
+      "peak": 0.291,
+      "cut": 0.175,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 3,
+      "regions": [
+        {
+          "area": 117,
+          "peak": 0.291,
+          "box": [
+            744,
+            300,
+            516,
+            60
+          ]
+        },
+        {
+          "area": 17,
+          "peak": 0.198,
+          "box": [
+            720,
+            48,
+            108,
+            24
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.246,
+          "box": [
+            1308,
+            708,
+            36,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0195
+    },
+    {
+      "surface": "sat-play",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0625,
+      "peak": 0.861,
+      "cut": 0.517,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 1,
+      "regions": [
+        {
+          "area": 1209,
+          "peak": 0.861,
+          "box": [
+            432,
+            204,
+            504,
+            360
+          ]
+        }
+      ],
+      "hotFraction": 0.1672
+    },
+    {
+      "surface": "wb-gameover",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.864,
+      "cut": 0.518,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 3,
+      "regions": [
+        {
+          "area": 169,
+          "peak": 0.864,
+          "box": [
+            504,
+            576,
+            372,
+            72
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.56,
+          "box": [
+            540,
+            396,
+            36,
+            36
+          ]
+        },
+        {
+          "area": 6,
+          "peak": 0.552,
+          "box": [
+            624,
+            396,
+            36,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0252
+    },
+    {
+      "surface": "chain-death",
+      "tag": "desktop",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.82,
+      "cut": 0.492,
+      "flatPage": false,
+      "cols": 113,
+      "rows": 64,
+      "total": 4,
+      "regions": [
+        {
+          "area": 90,
+          "peak": 0.82,
+          "box": [
+            504,
+            552,
+            360,
+            36
+          ]
+        },
+        {
+          "area": 9,
+          "peak": 0.553,
+          "box": [
+            588,
+            372,
+            60,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0144
+    },
+    {
+      "surface": "menu",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0125,
+      "peak": 0.352,
+      "cut": 0.211,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 47,
+          "peak": 0.352,
+          "box": [
+            36,
+            84,
+            228,
+            84
+          ]
+        }
+      ],
+      "hotFraction": 0.0219
+    },
+    {
+      "surface": "shop",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.789,
+      "cut": 0.474,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 97,
+          "peak": 0.789,
+          "box": [
+            48,
+            720,
+            300,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0446
+    },
+    {
+      "surface": "stats",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.808,
+      "cut": 0.485,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 73,
+          "peak": 0.808,
+          "box": [
+            48,
+            756,
+            300,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0326
+    },
+    {
+      "surface": "collection",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "peak": 0.783,
+      "cut": 0.47,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 73,
+          "peak": 0.783,
+          "box": [
+            48,
+            756,
+            300,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0326
+    },
+    {
+      "surface": "wb-dialog",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.585,
+      "cut": 0.351,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 74,
+          "peak": 0.585,
+          "box": [
+            72,
+            564,
+            132,
+            84
+          ]
+        }
+      ],
+      "hotFraction": 0.033
+    },
+    {
+      "surface": "blitz-dialog",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.736,
+      "cut": 0.441,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 5,
+      "regions": [
+        {
+          "area": 66,
+          "peak": 0.623,
+          "box": [
+            72,
+            672,
+            132,
+            72
+          ]
+        },
+        {
+          "area": 46,
+          "peak": 0.59,
+          "box": [
+            84,
+            528,
+            204,
+            36
+          ]
+        },
+        {
+          "area": 43,
+          "peak": 0.581,
+          "box": [
+            84,
+            408,
+            204,
+            36
+          ]
+        },
+        {
+          "area": 39,
+          "peak": 0.59,
+          "box": [
+            96,
+            468,
+            192,
+            36
+          ]
+        },
+        {
+          "area": 30,
+          "peak": 0.736,
+          "box": [
+            60,
+            132,
+            108,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.1
+    },
+    {
+      "surface": "lobby",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "peak": 0.897,
+      "cut": 0.538,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 90,
+          "peak": 0.897,
+          "box": [
+            60,
+            372,
+            276,
+            48
+          ]
+        },
+        {
+          "area": 49,
+          "peak": 0.787,
+          "box": [
+            60,
+            480,
+            120,
+            60
+          ]
+        }
+      ],
+      "hotFraction": 0.0621
+    },
+    {
+      "surface": "rooms-browser",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "peak": 0.893,
+      "cut": 0.536,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 2,
+      "regions": [
+        {
+          "area": 90,
+          "peak": 0.893,
+          "box": [
+            60,
+            360,
+            276,
+            48
+          ]
+        },
+        {
+          "area": 54,
+          "peak": 0.876,
+          "box": [
+            60,
+            444,
+            168,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0643
+    },
+    {
+      "surface": "wb-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.742,
+      "cut": 0.445,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 30,
+          "peak": 0.742,
+          "box": [
+            240,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0134
+    },
+    {
+      "surface": "blitz-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.742,
+      "cut": 0.445,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 30,
+          "peak": 0.742,
+          "box": [
+            240,
+            12,
+            132,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0134
+    },
+    {
+      "surface": "chain-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0125,
+      "peak": 0.238,
+      "cut": 0.143,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 3,
+      "regions": [
+        {
+          "area": 84,
+          "peak": 0.238,
+          "box": [
+            24,
+            564,
+            336,
+            48
+          ]
+        },
+        {
+          "area": 19,
+          "peak": 0.19,
+          "box": [
+            132,
+            132,
+            120,
+            24
+          ]
+        },
+        {
+          "area": 9,
+          "peak": 0.218,
+          "box": [
+            336,
+            780,
+            36,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.05
+    },
+    {
+      "surface": "fuse-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0125,
+      "peak": 0.249,
+      "cut": 0.149,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 3,
+      "regions": [
+        {
+          "area": 81,
+          "peak": 0.249,
+          "box": [
+            12,
+            264,
+            360,
+            48
+          ]
+        },
+        {
+          "area": 19,
+          "peak": 0.194,
+          "box": [
+            132,
+            84,
+            120,
+            24
+          ]
+        },
+        {
+          "area": 7,
+          "peak": 0.218,
+          "box": [
+            336,
+            792,
+            36,
+            36
+          ]
+        }
+      ],
+      "hotFraction": 0.0478
+    },
+    {
+      "surface": "sat-play",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0625,
+      "peak": 0.861,
+      "cut": 0.517,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 769,
+          "peak": 0.861,
+          "box": [
+            24,
+            252,
+            336,
+            348
+          ]
+        }
+      ],
+      "hotFraction": 0.3433
+    },
+    {
+      "surface": "wb-gameover",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.859,
+      "cut": 0.516,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 3,
+      "regions": [
+        {
+          "area": 117,
+          "peak": 0.859,
+          "box": [
+            60,
+            672,
+            288,
+            60
+          ]
+        },
+        {
+          "area": 8,
+          "peak": 0.557,
+          "box": [
+            84,
+            300,
+            48,
+            24
+          ]
+        },
+        {
+          "area": 6,
+          "peak": 0.554,
+          "box": [
+            168,
+            288,
+            48,
+            24
+          ]
+        }
+      ],
+      "hotFraction": 0.0585
+    },
+    {
+      "surface": "chain-death",
+      "tag": "phone",
+      "status": "OK",
+      "ground": 0.0375,
+      "peak": 0.799,
+      "cut": 0.48,
+      "flatPage": false,
+      "cols": 32,
+      "rows": 70,
+      "total": 1,
+      "regions": [
+        {
+          "area": 92,
+          "peak": 0.799,
+          "box": [
+            48,
+            516,
+            288,
+            48
+          ]
+        }
+      ],
+      "hotFraction": 0.0411
+    }
+  ]
+}

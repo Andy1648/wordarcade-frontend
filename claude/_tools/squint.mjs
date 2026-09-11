@@ -39,11 +39,21 @@ import { installBackendMock } from '../../e2e/support/backendMock.js';
 
 const OUT = process.argv[2];
 fs.mkdirSync(OUT, { recursive: true });
-const RATIO = Number(process.argv[3] || 0.6); // hot = within (1-RATIO) of the screen's peak
+// RATIO mode ("0.6") measures each screen against its OWN peak, which is the right question
+// for "does THIS screen have one entry point". It is the WRONG question for comparing two
+// variants of the same screen, and that bit me: demoting the dialog's white JOIN button
+// dropped wb-dialog's peak from 0.954 to 0.597, which dropped the relative cut with it,
+// which let dimmer things qualify as hot - so the region COUNT went up while the screen
+// plainly got calmer. ABS mode ("abs:0.572") pins the cut to a fixed L* deviation so two
+// variants are scored on the same bar and the numbers actually compare.
+const ARG3 = String(process.argv[3] || '0.6');
+const ABS = ARG3.startsWith('abs:') ? Number(ARG3.slice(4)) : null;
+const RATIO = ABS == null ? Number(ARG3) : 0; // hot = within (1-RATIO) of the screen's peak
 const MIN_AREA = Number(process.argv[4] || 6); // cells; smaller blobs are specks, not regions
 // A screen whose loudest thing barely pulls away from its own ground has no entry point
 // at all. That is its own failure and must not be reported as a clean pass.
 const MIN_PEAK = 0.15;
+const Q = process.argv[5] || ''; // extra query string, e.g. '&dlgcta=demote'
 const CELL = 12;
 const BLUR = 12; // px, per the brief
 const BASE = 'http://localhost:4173';
@@ -59,23 +69,23 @@ const S = [];
 const add = (name, reach) => S.push({ name, reach });
 
 add('menu', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
 });
 add('shop', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.homepage-nav-btn.is-shop').click();
   await p.locator('.shop-panel').waitFor();
 });
 add('stats', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.homepage-nav-btn.is-stats').click();
   await p.locator('.stats-panel').waitFor();
 });
 add('collection', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.homepage-nav-btn.is-stats').click();
   await p.locator('.stats-overlay').waitFor();
@@ -83,20 +93,20 @@ add('collection', async (p) => {
   await p.waitForTimeout(300);
 });
 add('wb-dialog', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.game-card-magnet[data-game="word-bomb"] .game-card').click({ force: true });
   await p.locator('.mode-dialog-shell').waitFor();
 });
 add('blitz-dialog', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.game-card-magnet[data-game="category-blitz"] .game-card').click({ force: true });
   await p.locator('.mode-dialog-shell').waitFor();
   await p.waitForTimeout(300);
 });
 add('lobby', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.game-card-magnet[data-game="word-bomb"] .game-card').click({ force: true });
   await p.locator('.mode-dialog-shell').waitFor();
@@ -104,14 +114,14 @@ add('lobby', async (p) => {
   await p.locator('.lobby-wrap').waitFor();
 });
 add('rooms-browser', async (p) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   await p.locator('.homepage-btn-join').click();
   await p.locator('.browser-wrap').waitFor();
 });
 
 add('wb-play', async (p, mock) => {
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players: wbPlayers } });
   await p.waitForTimeout(80);
@@ -122,7 +132,7 @@ add('wb-play', async (p, mock) => {
 });
 add('blitz-play', async (p, mock) => {
   const players = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'category-blitz', hostId: ME, difficultyKey: 'chill', players } });
   await p.waitForTimeout(80);
@@ -137,7 +147,7 @@ const solo = (id) => async (p) => {
   await p.addInitScript(() => {
     try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, into: 0 })); } catch { /* private mode */ }
   });
-  await p.goto('/?portal=1&soloms=20000');
+  await p.goto(`/?portal=1&soloms=20000${Q}`);
   await waitImg(p);
   await p.waitForTimeout(300);
   await p.locator(`.game-card-magnet[data-game="${id}"] .game-card`).click({ force: true });
@@ -152,7 +162,7 @@ const solo = (id) => async (p) => {
 add('chain-play', solo('chain'));
 add('fuse-play', solo('fuse'));
 add('sat-play', async (p) => {
-  await p.goto('/?satRush=1&portal=1');
+  await p.goto(`/?satRush=1&portal=1${Q}`);
   await waitImg(p);
   await p.waitForTimeout(300);
   await p.locator('[data-game="sat-rush"]').click({ force: true });
@@ -167,7 +177,7 @@ add('sat-play', async (p) => {
 });
 add('wb-gameover', async (p, mock) => {
   const dead = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 0 }];
-  await p.goto('/?portal=1');
+  await p.goto(`/?portal=1${Q}`);
   await waitImg(p);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players: dead } });
   await p.waitForTimeout(80);
@@ -183,7 +193,7 @@ add('chain-death', async (p) => {
   await p.addInitScript(() => {
     try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, into: 0 })); } catch { /* private mode */ }
   });
-  await p.goto('/?portal=1&soloms=350');
+  await p.goto(`/?portal=1&soloms=350${Q}`);
   await waitImg(p);
   await p.waitForTimeout(300);
   await p.locator('.game-card-magnet[data-game="chain"] .game-card').click({ force: true });
@@ -200,7 +210,7 @@ add('chain-death', async (p) => {
 // ---------------------------------------------------------------- analysis
 // Runs inside a scratch page: no image library, no native deps, and the blur is the
 // browser's own, so it matches the thing a player's eye is being simulated against.
-const ANALYSE = ({ b64, cell, blur, ratio, minArea, minPeak }) =>
+const ANALYSE = ({ b64, cell, blur, ratio, minArea, minPeak, absCut }) =>
   new Promise((resolve, reject) => {
     const img = new Image();
     img.onerror = () => reject(new Error('decode'));
@@ -261,7 +271,7 @@ const ANALYSE = ({ b64, cell, blur, ratio, minArea, minPeak }) =>
         const dv = Math.abs(L[i] - ground);
         if (dv > peak) peak = dv;
       }
-      const cut = peak * ratio;
+      const cut = absCut != null ? absCut : peak * ratio;
       const hot = new Uint8Array(cols * rows);
       for (let i = 0; i < L.length; i++) hot[i] = Math.abs(L[i] - ground) >= cut ? 1 : 0;
 
@@ -361,6 +371,7 @@ for (const [w, h, tag] of [
         ratio: RATIO,
         minArea: MIN_AREA,
         minPeak: MIN_PEAK,
+        absCut: ABS,
       });
       fs.writeFileSync(path.join(OUT, `${s.name}-${tag}-blur.png`), Buffer.from(res.blurred.split(',')[1], 'base64'));
       delete res.blurred;
@@ -375,12 +386,13 @@ await browser.close();
 
 const verdict = (r) => {
   if (r.status !== 'OK' || !r.regions) return 'SKIP';
-  if (r.flatPage) return 'FLAT'; // nothing pops at all - so there is no entry point either
+  // In ABS mode a low peak is the POINT of the comparison, not a disqualifier.
+  if (r.flatPage && ABS == null) return 'FLAT'; // nothing pops at all - no entry point either
   if (r.regions.length === 1) return 'PASS';
   if (r.regions.length === 0) return 'FLAT';
   return 'BUSY';
 };
-console.log(`\nSQUINT — blur ${BLUR}px, cell ${CELL}px, hot = within ${((1 - RATIO) * 100).toFixed(0)}% of the screen's own peak, min region ${MIN_AREA} cells\n`);
+console.log(`\nSQUINT | blur ${BLUR}px, cell ${CELL}px, ${ABS != null ? `ABSOLUTE cut at L* deviation ${ABS}` : `hot = within ${((1 - RATIO) * 100).toFixed(0)}% of the screen's own peak`}, min region ${MIN_AREA} cells\n`);
 console.log('surface              view     ground  peak   cut    hot%   regions verdict  top areas');
 for (const r of rows) {
   const areas = (r.regions || []).slice(0, 5).map((x) => x.area).join(',');

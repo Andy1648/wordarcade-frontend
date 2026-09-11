@@ -82,6 +82,15 @@ const reachWb = (q, danger, tension) => async (p, mock) => {
   await p.waitForTimeout(500);
 };
 
+// Reaching a mode dialog: click the card, wait for the shell. Used for the CTA variant.
+const reachDialog = (q, mode) => async (p) => {
+  await p.goto(`/?portal=1${q}`);
+  await waitImg(p);
+  await p.locator(`.game-card-magnet[data-game="${mode}"] .game-card`).click({ force: true });
+  await p.locator('.mode-dialog-shell').waitFor();
+  await p.waitForTimeout(450);
+};
+
 const reachBlitz = (q) => async (p, mock) => {
   const players = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
   await p.goto(`/?portal=1${q}`);
@@ -106,6 +115,9 @@ const PAIRS = [
   ['7b-menu-phone', ['TODAY (flat pink)', reachMenu('')], ['x7b CHROMATIC LOCKUP', reachMenu('&x7b=1')], [390, 844]],
   ['7c-wb', ['TODAY (no motif)', reachWb('', 0, 'calm')], ['x7c BLAST MOTIF', reachWb('&x7c=1', 0, 'calm')], [1366, 768]],
   ['7c-blitz', ['TODAY (no motif)', reachBlitz('')], ['x7c GAVEL MOTIF', reachBlitz('&x7c=1')], [1366, 768]],
+  ['cta-wb', ['TODAY (white JOIN)', reachDialog('', 'word-bomb')], ['?dlgcta=demote', reachDialog('&dlgcta=demote', 'word-bomb')], [1366, 768]],
+  ['cta-wb-phone', ['TODAY (white JOIN)', reachDialog('', 'word-bomb')], ['?dlgcta=demote', reachDialog('&dlgcta=demote', 'word-bomb')], [390, 844]],
+  ['cta-blitz-phone', ['TODAY (white JOIN)', reachDialog('', 'category-blitz')], ['?dlgcta=demote', reachDialog('&dlgcta=demote', 'category-blitz')], [390, 844]],
   ['7c-wb-phone', ['TODAY (no motif)', reachWb('', 0, 'calm')], ['x7c BLAST MOTIF', reachWb('&x7c=1', 0, 'calm')], [390, 844]],
 ];
 
