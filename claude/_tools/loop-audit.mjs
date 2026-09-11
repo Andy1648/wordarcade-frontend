@@ -26,7 +26,8 @@ const COUNT = () => {
     const el = a.effect && a.effect.target;
     let name = '(unknown)';
     if (el) {
-      const cls = String(el.className || '').trim().split(/\s+/)[0];
+      // SVG exposes className as an SVGAnimatedString; getAttribute works for both.
+      const cls = (el.getAttribute('class') || '').trim().split(/\s+/)[0];
       name = cls ? `.${cls}` : el.tagName.toLowerCase();
     }
     out.push(`${name} :: ${a.animationName || '(waapi)'}`);
