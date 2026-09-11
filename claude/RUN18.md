@@ -5,7 +5,7 @@ touched.** Branches, prototypes and reports only. Concurrency stayed at or below
 
 ---
 
-## THE NINE THINGS THAT NEED YOU
+## THE TEN THINGS THAT NEED YOU
 
 **0. The squint harness names the element under every hot region — and that changes answers. §6c**
 A lobby variant scored a clean "1 region, PASS" while the entry point was the NAME FIELD and the
@@ -62,7 +62,13 @@ truth and nothing stops the two copies drifting. Low severity; the item is not a
 `release/prod-1` has five modes. The Run lives on `integration/run-stack-3`, unmerged. Phase 5
 delivered four of its five named screens; the fifth was not reachable from this base.
 
-**8. Nothing here has had a 2-device play-test.** The phase stack touches `GameScreen.jsx`
+**8. Five animations loop forever on the Word Bomb game-over screen, and nothing was checking. §6d**
+Phase 6's brief says "entry juice one-shot, nothing loops after". Measured four seconds after
+arrival: **5 infinite animations still running**, one of them on the REMATCH button. They are all
+pre-existing on `release/prod-1`, so Phase 6 added none — it just did not deliver that item. No
+spec in the suite covers the end screens. The menu, for contrast, measures a true zero.
+
+**9. Nothing here has had a 2-device play-test.** The phase stack touches `GameScreen.jsx`
 rendering and `App.jsx`-adjacent surfaces. Per CLAUDE.md that is a Tier 1/2 gate I cannot clear.
 
 ---
@@ -329,6 +335,56 @@ I built it rather than shipped it because it changes the look of both multiplaye
 yours. It is the smallest high-value change in this entire run: one CSS rule, a measured single-
 region result on the dialog it most affects, and it puts the repo's own unused `.v-demote` helper
 to work.
+
+---
+
+## 6d. THE END SCREENS STILL LOOP. NOTHING IN THE SUITE WAS CHECKING.
+
+Phase 6's brief for the end screens ends: "Entry juice one-shot, **nothing loops after**". The
+animation budget's first rule is the same thing more strongly — "ZERO new infinite animations …
+nothing loops at rest".
+
+There is a spec asserting the infinite count on the menu, and one asserting an accept adds none.
+**Nothing in the 48 spec files checks the END SCREENS**, which is exactly where a celebratory loop
+is most tempting to write. So I measured it (`claude/_tools/loop-audit.mjs`): reach the screen, wait
+four seconds past every entry one-shot, and count animations still running with `iterations:
+Infinity` via `getAnimations()` — which catches WAAPI loops as well as CSS keyframes.
+
+```
+menu (baseline)      on arrival 0    +4s  0     <- the menu motion law holds, measured
+wb-gameover          on arrival 5    +4s  5
+                         1 x go-burst-spin
+                         1 x .go-mascot-wrap    go-mascot-hop
+                         1 x .mascot-emote      mascot-celebrate
+                         1 x .mascot-bounce     mascot-breathe
+                         1 x .game-over-rematch rematch-pulse
+chain-death          on arrival 1    +4s  1
+                         1 x .mascot-bounce     mascot-breathe
+```
+
+**Attribution matters here and I checked it rather than assuming.** All five keyframes exist on
+`release/prod-1` as well as on the tip:
+
+```
+go-burst-spin     base yes   tip yes
+go-mascot-hop     base yes   tip yes
+rematch-pulse     base yes   tip yes
+mascot-breathe    base yes   tip yes
+mascot-celebrate  base yes   tip yes
+```
+
+So the fair statement is two-part:
+* **Phase 6 introduced no new loops.** The budget's "zero NEW infinite animations" holds.
+* **Phase 6 did not deliver its own "nothing loops after" item.** Five animations run forever on
+  the Word Bomb game-over screen, one of them on the REMATCH button — the primary CTA, which §7d
+  independently identifies as that screen's single entry point. The thing the eye lands on is also
+  the thing that never stops moving.
+
+The good news is measured too: **the menu really is at zero, on arrival and at rest.** The menu
+motion law is not just documented, it holds.
+
+`loop-audit.mjs` is left in `claude/_tools/`. It is three screens today and would be worth
+promoting into the e2e suite, because this gap is the kind a green suite hides indefinitely.
 
 ---
 
@@ -691,6 +747,8 @@ hard way.
 | `bungee-metrics.mjs` | measures whether font layers register before you try to stack them |
 | `gen-motifs.mjs` | authors the five motif SVGs |
 | `contrast-audit.mjs` | re-derives every claimed contrast ratio and prints the accent map |
+| `loop-audit.mjs` | counts infinite animations still running once a screen has settled |
+| `motif-probe.mjs` | whether a background motif actually paints, in pixels |
 
 Two of these carry a lesson in their comments that cost real time to learn: `x7b-zoom.mjs` uses
 `page.screenshot({clip})` rather than `el.screenshot()`, because an element screenshot came back
