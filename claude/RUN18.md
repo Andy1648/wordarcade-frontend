@@ -5,7 +5,12 @@ touched.** Branches, prototypes and reports only. Concurrency stayed at or below
 
 ---
 
-## THE EIGHT THINGS THAT NEED YOU
+## THE NINE THINGS THAT NEED YOU
+
+**0. The squint harness names the element under every hot region — and that changes answers. §6c**
+A lobby variant scored a clean "1 region, PASS" while the entry point was the NAME FIELD and the
+CONTINUE button never reached the bar at all. A screen can pass a region count and still fail the
+rule. Everything below was re-checked with that turned on.
 
 **1. Two Word Bomb layout defects, measured, with both fixes built and neither chosen. §2**
 At 1366x768 a seat's NAME is cut off by 31px at 2 players, and at 3+ players the KILL FEED sits
@@ -317,6 +322,53 @@ I built it rather than shipped it because it changes the look of both multiplaye
 yours. It is the smallest high-value change in this entire run: one CSS rule, a measured single-
 region result on the dialog it most affects, and it puts the repo's own unused `.v-demote` helper
 to work.
+
+---
+
+## 6c. THE LOBBY — I BUILT TWO FIXES AND NEITHER ONE WORKS
+
+The lobby fails at all eight viewports. Measured on `#0d0618`, its four loud elements are:
+
+```
+.lobby-input              #fff        19.88:1     the name field
+.lobby-toggle-btn.active  #2EFFE0     15.62:1     PRIVATE / PUBLIC
+.lobby-back-btn           #2EFFE0     15.62:1     the back arrow
+.lobby-continue-btn       --v-accent   6.53:1     <- THE CTA, and the DIMMEST of the four
+```
+
+Two variants, both behind flags, both measured on the same fixed bar:
+
+| | desktop | phone |
+|---|---|---|
+| today | 2 regions | 2 regions |
+| `?lobbycta=quiet` (demote the field too) | **0 regions — FLAT** | **0 — FLAT** |
+| `?lobbycta=keepfield` (field stays white) | **1 region — PASS** | **1 — PASS** |
+
+`keepfield` looks like a clean win. **It is not, and finding out why produced the single most
+useful change to the harness.**
+
+I made the squint test hit-test each region back in the live page and name the element it actually
+covers. The answer:
+
+```
+lobby today       2 regions:  93 .lobby-input  +  43 .lobby-toggle-btn
+lobby keepfield   1 region:   93 .lobby-input
+```
+
+**The surviving entry point is the NAME FIELD.** `.lobby-continue-btn` never reaches the bar in any
+variant — pink at 6.53:1 is not close to the 0.572 L\* cut. `keepfield` passes a region COUNT while
+the eye still lands on a text input. And `quiet` goes FLAT for the same underlying reason: once the
+white field steps down there is nothing bright left, because the CTA was never bright.
+
+So the honest result is negative, and it is more useful than a pass would have been:
+
+* **Neither variant fixes the lobby**, and I am not proposing either.
+* **A screen can pass a region count and still fail the design rule.** The tool now prints the
+  element under every region, so this can never be mistaken again. Re-run against the dialogs, it
+  confirms their two regions are literally `.mode-dialog-btn` and `.mode-dialog-btn` — PLAY and JOIN
+  at 134 and 132 cells on Blitz desktop, two buttons of near-identical weight.
+* **The real lobby fix is the §6b problem**: the CTA has to become genuinely loud, and a pink accent
+  cannot out-value a white field. That is a palette decision, not a CSS tweak, so it stops here.
 
 ---
 

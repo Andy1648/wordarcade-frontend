@@ -5,6 +5,8 @@ import { getStoredName, rememberName } from '../playerName';
 import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import './LobbyScreen.css';
+import { xParam } from '../experiments/flags';
+import '../experiments/experiments.css';
 
 const MAX_NAME_LENGTH = 20;
 const ROOM_CODE_LENGTH = 5;
@@ -125,7 +127,8 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     : null;
 
   return (
-    <div className="lobby-wrap">
+    <div className="lobby-wrap"
+      data-lobbycta={xParam('lobbycta')}>
       <div className="lobby-box">
         <button
           className="lobby-back-btn"

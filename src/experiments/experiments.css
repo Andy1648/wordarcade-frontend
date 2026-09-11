@@ -318,3 +318,55 @@
   color: var(--v-ink-dim);
   border-color: var(--v-rule);
 }
+
+/* =====================================================================
+   LOBBY VALUE ORDER  (?lobbycta=quiet | ?lobbycta=keepfield)
+   =====================================================================
+   The lobby fails the squint test at every one of the eight viewports, with four
+   competing regions on desktop. Measured on #0d0618, its four loud elements are:
+
+     .lobby-input              #fff        19.88:1     the name field
+     .lobby-toggle-btn.active  #2EFFE0     15.62:1     PRIVATE / PUBLIC
+     .lobby-back-btn           #2EFFE0     15.62:1     back arrow
+     .lobby-continue-btn       --v-accent   6.53:1     <- THE CTA, and the DIMMEST of them
+
+   The element the whole screen exists to get pressed is the quietest thing on it. This
+   is the same inversion as the dialog CTA (6a), and the same structural cause (6b): an
+   accent hue cannot out-value a white surface, so "exactly one --v-accent element" is
+   satisfied while the eye lands on a text field.
+
+   A: ?lobbycta=quiet      everything that is not the CTA steps down, including the field.
+                           Gets the screen to one entry point - at the cost of the white
+                           box that says "type here".
+   B: ?lobbycta=keepfield  the field stays white because that IS its affordance; only the
+                           toggle and BACK step down. Two entry points instead of four,
+                           and the input still looks like an input.
+
+   Which trade is right is a taste call, so both exist and neither is merged. */
+
+/* --- shared: the two things that are decoration in both variants --- */
+[data-lobbycta] .lobby-toggle-btn.active {
+  color: var(--v-ink);
+  background: var(--v-panel-hi);
+  border-color: var(--c-cyan);
+}
+[data-lobbycta] .lobby-back-btn {
+  color: var(--v-ink-dim);
+  border-color: var(--v-rule);
+}
+
+/* --- A only: the field steps down too. Focus keeps the cyan ring, so the affordance
+       moves from "it is white" to "it is outlined, and lights up when you are in it". --- */
+[data-lobbycta='quiet'] .lobby-input,
+[data-lobbycta='quiet'] .lobby-code-input {
+  color: var(--v-ink);
+  background: var(--v-panel);
+  border-color: var(--v-rule);
+}
+[data-lobbycta='quiet'] .lobby-input::placeholder {
+  color: var(--v-ink-faint);
+}
+[data-lobbycta='quiet'] .lobby-input:focus,
+[data-lobbycta='quiet'] .lobby-code-input:focus {
+  border-color: var(--c-cyan);
+}

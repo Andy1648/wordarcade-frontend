@@ -393,6 +393,30 @@ for (const [w, h, tag] of VIEWPORTS) {
       });
       fs.writeFileSync(path.join(OUT, `${s.name}-${tag}-blur.png`), Buffer.from(res.blurred.split(',')[1], 'base64'));
       delete res.blurred;
+      // WHICH ELEMENT IS EACH REGION? Counting regions is not enough, and finding that
+      // out was the most useful thing this harness did. The lobby scored a clean
+      // "1 region, PASS" on one variant - and the region was the white NAME FIELD, while
+      // the CONTINUE button it exists to get pressed never reached the bar in ANY
+      // variant. A screen with one entry point on the wrong element passes a region count
+      // and fails the actual design rule. So each region is hit-tested back in the LIVE
+      // page at its centre, and the report names what is actually there.
+      res.regions = await page.evaluate((boxes) => {
+        return boxes.map((b) => {
+          const cx = b.box[0] + b.box[2] / 2;
+          const cy = b.box[1] + b.box[3] / 2;
+          const el = document.elementFromPoint(cx, cy);
+          let name = '(nothing)';
+          if (el) {
+            // Walk up to the nearest element with a class, so the answer is a component
+            // rather than an anonymous span or text wrapper.
+            let n = el;
+            while (n && !String(n.className || '').trim() && n.parentElement) n = n.parentElement;
+            const cls = String(n.className || '').trim().split(/\s+/)[0];
+            name = cls ? `.${cls}` : n.tagName.toLowerCase();
+          }
+          return { ...b, at: name };
+        });
+      }, res.regions);
     } catch (e) {
       if (status === 'OK') status = 'SHOT_FAIL ' + String(e).split('\n')[0].slice(0, 60);
     }
@@ -413,7 +437,10 @@ const verdict = (r) => {
 console.log(`\nSQUINT | blur ${BLUR}px, cell ${CELL}px, ${ABS != null ? `ABSOLUTE cut at L* deviation ${ABS}` : `hot = within ${((1 - RATIO) * 100).toFixed(0)}% of the screen's own peak`}, min region ${MIN_AREA} cells\n`);
 console.log('surface              view     ground  peak   cut    hot%   regions verdict  top areas');
 for (const r of rows) {
-  const areas = (r.regions || []).slice(0, 5).map((x) => x.area).join(',');
+  const areas = (r.regions || [])
+    .slice(0, 5)
+    .map((x) => `${x.area}${x.at ? ' ' + x.at : ''}`)
+    .join(', ');
   const pct = ((r.hotFraction ?? 0) * 100).toFixed(1).padStart(4);
   console.log(
     `${r.surface.padEnd(20)} ${r.tag.padEnd(8)} ${(r.ground ?? 0).toFixed(3)}   ${(r.peak ?? 0).toFixed(3)}  ${(r.cut ?? 0).toFixed(3)}  ${pct}%  ${String((r.regions || []).length).padStart(5)}   ${verdict(r).padEnd(7)}  ${areas}${r.status !== 'OK' ? '  ' + r.status : ''}`
