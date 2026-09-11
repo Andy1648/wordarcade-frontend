@@ -9,16 +9,20 @@
 //      is still hidden.
 //   3) 2-human rooms: the current opponent's card reads THEIR TURN, then TYPING… once a
 //      typing_update arrives. Never silent.
-//   4) No new infinite animations: the stage's infinite-animation count during a bot turn stays
-//      at the pre-feature baseline (8 — bomb idle/flame/rattle, danger vignette, card pulse/rock,
-//      combo label/throb) and none of them targets the status / typing / chip nodes.
+//   4) No infinite animations: the stage's infinite-animation count during a bot turn is ZERO
+//      (feat/wb-ring stilled the eight idle loops; the fuse is a transition, not a loop) and
+//      none of the new status / typing / chip nodes introduces one.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
 const ME = 'e2e-player';
 const BOT = 'bot-1';
-// Pre-feature stage baseline (measured on main d4c40c3 during a bot turn, same harness).
-const INFINITE_BASELINE = 8;
+// feat/wb-ring stilled the Word Bomb stage: the eight idle loops this baseline used to
+// record (bomb idle/flame/rattle, danger + tension vignettes, active-card pulse, resting-
+// card rock, prompt throb, label pulse) are gone, and the fuse - a stroke-dashoffset
+// TRANSITION off the turn clock, not a keyframe loop - is the only continuous motion
+// left. So the correct baseline is now ZERO looping animations during a bot turn.
+const INFINITE_BASELINE = 0;
 
 async function enterGame(page, players) {
   const mock = await installBackendMock(page);

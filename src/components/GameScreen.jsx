@@ -863,7 +863,16 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
+  // FUSE COLOUR ESCALATION (feat/wb-ring): the rope itself carries the tension, so the
+  // clock reads from across the room without looking at a number - yellow while there is
+  // time, orange as it tightens, red when it is nearly out.
+  const fuseColor = tension === 'calm' ? '#FFE94A' : tension === 'warning' ? '#FF6B3D' : '#FF4B4B';
+
+  // NUMERIC READOUT: only in the last 5 seconds. The fuse already carries the proportion
+  // for the whole turn, so a number on screen the entire time is noise that competes with
+  // the fragment. 5s is the natural threshold - the server resets to a 5s minimum turn
+  // after a valid word, so under 5s is exactly "this could end now".
+  const showSeconds = !showCountdown && timerSeconds <= 5;
   const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
   const numStroke = critical ? '#FF5C5C' : '#000';
   const numStrokeWidth = critical ? 4 : 3;
@@ -897,19 +906,56 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
               className="bomb-fuse"
               d={FUSE_PATH}
               fill="none"
-              stroke="#8B6914"
+              stroke={fuseColor}
               strokeWidth="3"
               strokeLinecap="round"
               pathLength="100"
               strokeDasharray="100"
               strokeDashoffset={fuseDashoffset}
+              style={{ transition: 'stroke 400ms linear' }}
+            />
+
+            {/* ---- SECOND READ OF THE SAME VALUE: a ring around the mascot that
+                 empties exactly like the fuse. Two independent encodings of one
+                 number (arc length + fuse length) means the clock still reads if
+                 the fuse tip is behind the flame or off the edge of a small card.
+                 Same pathLength trick, same ratio, same escalating colour. ---- */}
+            <circle
+              className="bomb-ring-track"
+              cx="80"
+              cy="105"
+              r="62"
+              fill="none"
+              stroke="#000"
+              strokeWidth="7"
+              opacity="0.35"
+            />
+            <circle
+              className="bomb-ring-fill"
+              cx="80"
+              cy="105"
+              r="62"
+              fill="none"
+              stroke={fuseColor}
+              strokeWidth="5"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="100"
+              strokeDashoffset={fuseDashoffset}
+              transform="rotate(-90 80 105)"
+              style={{ transition: 'stroke 400ms linear' }}
             />
 
             {/* (The mascot <image> above is the bomb body now - no SVG body/face.) */}
 
-            {/* ---- Live seconds, sitting over the mascot's belly. ---- */}
+            {/* ---- Live seconds, sitting over the mascot's belly. Only present in the
+                 final 5 seconds (see showSeconds). Re-keyed on the second so the CSS
+                 one-shot hard pulse (a discrete scale STEP, never a smooth throb)
+                 replays on each tick. ---- */}
+            {showSeconds && (
             <text
-              className={critical ? 'bomb-num-pulse' : undefined}
+              key={timerSeconds}
+              className="bomb-num-tick"
               x="80"
               y="116"
               textAnchor="middle"
@@ -924,6 +970,7 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
             >
               {timerSeconds}
             </text>
+            )}
 
             {/* ---- Flame + sparks, glued to the burning tip. The position group
                  eases its translate over 1s so it tracks the smooth fuse. ---- */}
@@ -2561,6 +2608,11 @@ export default function GameScreen({
     1
   );
 
+  // Which SEAT on the ring is taking its turn. Purely a presentation index into the
+  // same `players` array the seats render from, so the pointer can never disagree
+  // with which seat is lit. -1 (nobody active) simply hides the pointer.
+  const turnSeatIndex = players.findIndex((p) => p.id === gameState.currentPlayerId);
+
   // The per-turn starting seconds, used by the bomb to compute its fuse ratio.
   // (Word Bomb has no timer bar - the bomb's fuse is the timer.)
   const maxTimer = gameState.timerSeconds || 1;
@@ -2914,8 +2966,44 @@ export default function GameScreen({
           </div>
         </div>
 
-        <div className="game-player-bar">
-          {players.map((player) => {
+        {/* THE FRAGMENT sits directly ABOVE the ring, horizontally centred on the
+            bomb at the ring's centre. It is NOT overlaid on the bomb: the ring's free
+            centre is only as wide as the circle leaves after the seats, and a 96px
+            Bungee fragment does not fit there without colliding with the seats or
+            shrinking the bomb below its share of the cell. Above-and-centred keeps the
+            fragment at the full hero step AND keeps every block collision-free.
+
+            Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
+            carries the changing key, so the prompt box never unmounts/remounts
+            mid-game - the readable letters underneath stay put. Only the inner punch
+            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
+            keyed .combo-pop at ComboMeter.jsx:50). */}
+        <div className="game-combo-box" ref={comboBoxRef}>
+          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
+              Scoped to this inner node, so the surrounding box stays mounted. */}
+          <div
+            key={comboPunch}
+            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
+          >
+            <div className="game-combo-label">{promptLabel}</div>
+            <div className={`game-combo${isCategory ? ' category' : ''}`}>
+              {promptValue}
+            </div>
+          </div>
+        </div>
+
+        {/* ==================== THE RING (feat/wb-ring) ====================
+            Players sit on a CIRCLE around the bomb (the jklm/BombParty layout)
+            instead of in a horizontal row of cards. A row cannot space 2 players
+            and 16 players both well - at 2 it stretched each card to half the
+            stage (the empty-bar failure), at 8 it wrapped to three rows and
+            overflowed. A ring divides 360deg by the player count, so every count
+            from 2 to 16 is evenly spaced and the bomb stays dead centre.
+            Seat geometry is pure CSS from --i (seat index) and --n (seat count);
+            see .wb-seat in GameScreen.css. */}
+        <div className="wb-ring" style={{ '--n': players.length }}>
+          <div className="wb-ring-seats">
+          {players.map((player, seatIndex) => {
             const eliminated = player.eliminated || player.lives <= 0;
             const isCurrent = player.id === gameState.currentPlayerId;
             const isMe = player.id === myId;
@@ -2939,7 +3027,11 @@ export default function GameScreen({
               .join(' ');
 
             return (
-              <div key={player.id} className="game-player-slot">
+              <div
+                key={player.id}
+                className="wb-seat game-player-slot"
+                style={{ '--i': seatIndex, '--n': players.length }}
+              >
                 {isCurrent && isMe && !gameOver && (
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
@@ -3024,14 +3116,26 @@ export default function GameScreen({
               </div>
             );
           })}
-        </div>
-
-        {spectatorCount > 0 && (
-          <div className="game-spectator-count">
-            👁 {spectatorCount} SPECTATING
           </div>
-        )}
 
+          {/* TURN POINTER: a single arm rooted at the bomb, rotated to the active
+              seat. It is the second, unmissable read of whose turn it is (the first
+              is the seat itself going full-accent at 1.3x). Rotation only - one
+              transform, no layout - and it simply hides when nobody is active. */}
+          {turnSeatIndex >= 0 && !gameOver && (
+            <div
+              className="wb-pointer"
+              style={{ '--turn': turnSeatIndex, '--n': players.length }}
+              aria-hidden="true"
+            >
+              <span className="wb-pointer-arm" />
+            </div>
+          )}
+
+          {/* THE CORE: the bomb, dead centre of the ring. The fragment sits above the
+              ring (see the note there); this cell is the bomb's alone so it can own a
+              majority of the circle's free middle. */}
+          <div className="wb-core">
         <div className="bomb-area drain-exempt">
           {/* Continuous danger rattle: the bomb physically vibrates harder as
               --danger climbs (amplitude scales from 0 at calm), on its OWN wrapper
@@ -3081,24 +3185,14 @@ export default function GameScreen({
           {shatterKey > 0 && <ShatterWord key={`shatter-${shatterKey}`} text={shatterText} />}
         </div>
 
-        {/* Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
-            carries the changing key, so the prompt box never unmounts/remounts
-            mid-game - the readable letters underneath stay put. Only the inner punch
-            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
-            keyed .combo-pop at ComboMeter.jsx:50). */}
-        <div className="game-combo-box" ref={comboBoxRef}>
-          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
-              Scoped to this inner node, so the surrounding box stays mounted. */}
-          <div
-            key={comboPunch}
-            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
-          >
-            <div className="game-combo-label">{promptLabel}</div>
-            <div className={`game-combo${isCategory ? ' category' : ''}`}>
-              {promptValue}
-            </div>
           </div>
         </div>
+
+        {spectatorCount > 0 && (
+          <div className="game-spectator-count">
+            👁 {spectatorCount} SPECTATING
+          </div>
+        )}
 
         <div className="game-used">
           <div className="game-used-label">
@@ -3232,7 +3326,12 @@ export default function GameScreen({
                 inputEnabled
                   ? isCategory
                     ? `NAME SOMETHING IN "${categoryRaw}"…`
-                    : `TYPE A WORD WITH "${combo}"…`
+                    /* Not `TYPE A WORD WITH "${combo}"…`: the fragment is already the hero
+                       text directly above the bomb, so repeating it here duplicated the one
+                       thing the screen shouts AND overflowed the field at the input's 28px
+                       (354px of placeholder in a 326px box at 1280x720). The aria-label above
+                       still names the fragment, so nothing is lost for a screen reader. */
+                    : 'TYPE A WORD…'
                   : gameOver
                   ? 'GAME OVER'
                   : 'WAIT YOUR TURN…'

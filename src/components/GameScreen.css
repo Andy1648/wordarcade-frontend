@@ -80,16 +80,18 @@
    width AND fits the height. Pure CSS on existing children (grid-areas); absolute FX
    (hype/clutch/fly/shatter) are out of flow and unaffected. Tall windows (h>900) keep
    the single-column stack, which already fits + fills there. */
+/* feat/wb-ring: the ring is ONE square block that already contains the seats, the
+   bomb and the prompt, so the short-window grid no longer needs separate bar/bomb/
+   combo areas - it just puts the ring in the left column and the quiet stuff
+   (used list + input) in the right one. */
 @media (min-width: 900px) and (max-height: 900px) {
   .game-stage--wb {
     display: grid;
-    grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
     grid-template-areas:
       'header header'
-      'bar    bar'
-      'bomb   combo'
-      'bomb   used'
-      'bomb   input';
+      'prompt used'
+      'ring   input';
     align-content: center;
     column-gap: clamp(16px, 3vw, 56px);
     row-gap: clamp(4px, 1vh, 12px);
@@ -97,30 +99,21 @@
     padding-bottom: clamp(10px, 1.6vh, 22px);
   }
   .game-stage--wb .game-header { grid-area: header; }
-  .game-stage--wb .game-player-bar { grid-area: bar; }
   .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
-  .game-stage--wb .bomb-area { grid-area: bomb; align-self: center; margin: 0; }
-  .game-stage--wb .game-combo-box { grid-area: combo; align-self: center; }
-  .game-stage--wb .game-used { grid-area: used; align-self: center; }
+  .game-stage--wb .wb-ring { grid-area: ring; align-self: start; justify-self: center; margin-bottom: 0; }
+  /* The fragment needs its OWN area or it auto-places into a new row below the ring and
+     falls off the bottom of a short window (it did exactly that before this line). It
+     sits in the left column, directly above the ring - i.e. centred over the bomb. */
+  .game-stage--wb .game-combo-box { grid-area: prompt; align-self: end; justify-self: center; margin: 0; }
+  .game-stage--wb .game-used { grid-area: used; align-self: end; }
   .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
-  /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
-  .game-stage--wb .bomb-svg { width: clamp(150px, 30vh, 250px); height: auto; }
-  /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of sitting
-     centred at their stacked max-width, so the prompt box spans the full input row. */
-  .game-stage--wb .game-combo-box,
+  /* The ring is bounded by the SHORT axis here, so it can never outgrow the window. */
+  .game-stage--wb .wb-ring { --wb-size: min(46vw, 62vh); }
+  /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of
+     sitting centred at their stacked max-width. */
   .game-stage--wb .game-used,
   .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
   .game-stage--wb .game-input { max-width: none; }
-  /* Compress the combo box so the right column fits a short window. */
-  .game-stage--wb .game-combo { font-size: min(var(--fs-h1), 6.4vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(30px, 6.4vh, 52px)) */; }
-  .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
-  /* fix/wb-short-layout: wider gap so cards never touch, and stretch so the slots share
-     a row height and each card fills its slot (equal-height cards). SCOPED here on
-     purpose - applying these globally re-wraps the phone player bar to 3 rows and
-     overflows the stage. See the .game-player-bar note below. */
-  .game-stage--wb .game-player-bar { gap: max(20px, 2.4%); align-items: stretch; }
-  .game-stage--wb .game-player-slot { display: flex; flex-direction: column; }
-  .game-stage--wb .game-player-card { flex: 1 1 auto; }
 }
 
 /* ===== CATEGORY BLITZ short-window compression (fix/game-fill-2) =====================
@@ -1708,16 +1701,19 @@
   100% { opacity: 0; transform: translateY(-12px) scale(0.3); }
 }
 
-/* Critical timer-number pulse. */
-.bomb-num-pulse {
+/* FINAL-5-SECONDS READOUT. One-shot HARD pulse per tick - a discrete scale STEP
+   that snaps back, not a smooth throb - re-keyed on the second in the JSX so it
+   replays each time the number changes. This replaced an `infinite` 400ms pulse:
+   the ring's one continuous animation is the fuse, and only the fuse. */
+.bomb-num-tick {
   transform-box: fill-box;
   transform-origin: center;
-  animation: bomb-num-pulse 400ms ease-in-out infinite;
+  animation: bomb-num-tick 160ms steps(2, end) 1;
 }
 
-@keyframes bomb-num-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+@keyframes bomb-num-tick {
+  0% { transform: scale(1.28); }
+  100% { transform: scale(1); }
 }
 
 /* ============================================================= */
@@ -4661,3 +4657,400 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* WINS visibility (Economy v3): the live "+N WINS" pill + the game-over "WINS EARNED" total
    moved to the shared WinsHud.css (used by every mode now). */
+
+/* ============================================================================ */
+/* =====================  WORD BOMB - THE RING (feat/wb-ring)  ================ */
+/* ============================================================================ */
+
+/* WHY A RING AND NOT A ROW
+   The old layout was a horizontal .game-player-bar of cards with `flex: 1 1 0`.
+   A row cannot space both ends of the player count: at 2 players each card
+   stretched to half the stage (wide, mostly-empty boxes - the stretched-empty-bar
+   failure), and at 8 it wrapped to three rows and pushed the stage past the
+   viewport. A RING divides 360deg by the seat count, so 2 seats and 16 seats are
+   both evenly spaced, every seat is the same fixed size, and the bomb owns the
+   centre. Seat geometry is pure CSS from two custom properties set in the JSX:
+     --i  this seat's index
+     --n  the total seat count
+   Nothing here measures anything at runtime - no layout reads, no JS positioning. */
+
+.wb-ring {
+  /* An explicit square. The seat radius is derived from this, and a percentage
+     radius could not work: a percentage inside translate() resolves against the
+     TRANSFORMED element (the seat), not against the ring. */
+  --wb-size: clamp(260px, 44vh, 520px);
+  /* SEAT SIZE. A seat is a SQUARE avatar - colour dot + hearts - and nothing else; the
+     name floats below it (see .wb-seat .game-player-name-text). That is what makes the
+     numbers close: the bomb can only be >=55% of the ring if the seats leave it, and
+     with a box of side s the bomb is about S - 1.3*(s + s*sqrt(2)), so s must be near
+     0.143*S. A name INSIDE the box forced s past 90px and capped the bomb at ~40%.
+     The second term keeps a very full table (17+) from wrapping seats into each other. */
+  --wb-seat-w: min(calc(var(--wb-size) * 0.143), calc(var(--wb-size) * 2.5 / var(--n, 4)));
+  /* Seats sit on this radius: half the box minus half a seat, so NO seat can hang
+     outside the square. That is what guarantees "no overflow at 8 players". */
+  /* The ACTIVE seat renders at 1.3x, so the radius is derived from the SCALED box,
+     not the resting one - otherwise the lit seat is the one that escapes the ring and
+     collides with the bomb. Height matters as much as width: the seats at 12 and 6
+     o'clock are bounded by their height. */
+  --wb-seat-h: var(--wb-seat-w);
+  --wb-r: calc(var(--wb-size) / 2 - var(--wb-seat-w) * 0.65 - 2px);
+  /* The bomb gets the whole free middle: the radius, less the half-diagonal of a
+     SCALED seat box (the nearest point of a seat sitting at 45deg), less a hairline.
+     Derived, not guessed - which is why it holds at 2, 3, 8 and 16 seats alike. */
+  --wb-bomb-w: calc(2 * (var(--wb-r) - var(--wb-seat-w) * 0.8) - 4px);
+  position: relative;
+  width: var(--wb-size);
+  height: var(--wb-size);
+  margin: 0 auto 14px;
+  flex: none;
+}
+
+.wb-ring-seats {
+  position: absolute;
+  inset: 0;
+}
+
+/* One seat. translate(-50%,-50%) puts its centre on the ring's centre; the
+   rotate -> translateY -> counter-rotate trio swings it out to the radius while
+   keeping the avatar upright. Seat 0 is straight up, and the turn pointer uses
+   the same 0deg = up convention, so the two can never disagree. */
+.wb-seat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--wb-seat-w);
+  /* The row layout gave every slot `min-width: clamp(100px, 15vw, 200px)`; on the ring
+     that would beat --wb-seat-w and blow the geometry (seats measured 200px wide and
+     collided with the centre). A seat is exactly --wb-seat-w, nothing else. */
+  min-width: 0;
+  flex: none;
+  /* the old row reserved 16px of padding for the YOUR TURN flag; the ring floats
+     that flag instead (see .wb-seat .game-your-turn below). */
+  padding-top: 0;
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--i) / var(--n) * 360deg))
+    translateY(calc(var(--wb-r) * -1))
+    rotate(calc(var(--i) / var(--n) * -360deg));
+}
+
+/* The card inside a seat becomes a compact AVATAR: no stretch, no flex-grow,
+   just the dot + name + hearts stacked. Fixed width AND height = every seat is the
+   same box at 2 players or 16, and the ring's radius maths stays true. */
+.wb-seat .game-player-card {
+  width: 100%;
+  height: var(--wb-seat-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 50%;
+  transform: rotate(-1deg);
+  /* MID-VALUE at rest: every seat that is not taking its turn steps back so the
+     active one is the only thing advancing. */
+  background: var(--v-panel-hi);
+  border-color: #000;
+  color: var(--v-ink-dim);
+}
+
+.wb-seat .game-player-name {
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* The NAME lives BELOW the avatar, not inside it. Inside, it set the seat's width and
+   the geometry could never leave the bomb its 55%. Outside, it costs the ring nothing:
+   it is out of flow, centred under the dot, and clipped to a sane width. */
+.wb-seat .game-player-name-text {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-label);
+  color: var(--v-ink-dim);
+  pointer-events: none;
+}
+.wb-seat .game-player-you {
+  display: none; /* the ring already lights YOUR seat; the YOU tag is noise here */
+}
+.wb-seat .game-player-card.current .game-player-name-text {
+  color: var(--v-ink);
+}
+/* The avatar stacks the colour dot over the hearts and nothing else. */
+.wb-seat .game-player-hearts {
+  gap: 1px;
+}
+
+/* ---- TURN OWNERSHIP: the active seat is the only full-accent thing on the ring,
+   and it is 1.3x. Scale lives on the CARD, not the seat, so it composes with the
+   seat's positioning transform instead of fighting it. ---- */
+.wb-seat .game-player-card.current {
+  background: var(--v-accent);
+  border-color: #000;
+  color: var(--v-field);
+  transform: rotate(0deg) scale(1.3);
+  z-index: 3;
+}
+.wb-seat .game-player-card.current .game-player-name-text,
+.wb-seat .game-player-card.current .player-status {
+  color: var(--v-field);
+}
+
+.wb-seat .game-player-card.eliminated {
+  background: var(--v-panel);
+  opacity: 0.45;
+}
+
+/* YOUR TURN flag floats above the seat instead of reserving a row of height. */
+.wb-seat .game-your-turn {
+  top: -14px;
+}
+
+/* The live-typing line and the opponent status only exist for the ACTIVE player. In a
+   row they simply made one card taller; on a ring they made the ACTIVE seat (already
+   1.3x) taller than every other, which broke the radius maths and drove it into the
+   bomb. Floating them below the seat keeps every seat box identical.
+   They stack BELOW the floated name (which owns top:100%+1px), not on top of it. */
+.wb-seat .player-typing,
+.wb-seat .player-status {
+  position: absolute;
+  top: calc(100% + 26px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 150px;
+  margin: 0;
+  pointer-events: none;
+}
+
+/* ---- THE POINTER: one arm rooted at the bomb, rotated to the active seat.
+   Same 0deg = up convention as the seats. Rotation only - one composited
+   transform, no layout - and the whole element unmounts when nobody is up. ---- */
+.wb-pointer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: rotate(calc(var(--turn) / var(--n) * 360deg));
+  /* A snappy settle, not a float. This is a discrete move per turn, not an idle. */
+  transition: transform 260ms cubic-bezier(0.34, 1.28, 0.64, 1);
+}
+
+.wb-pointer-arm {
+  position: absolute;
+  left: -7px;
+  /* Starts clear of the bomb art and stops short of the seat. */
+  bottom: calc(var(--wb-size) * 0.19);
+  width: 14px;
+  height: calc(var(--wb-r) - var(--wb-size) * 0.19 - var(--wb-seat-w) * 0.42);
+  /* The arm is INK, not the accent. The accent is spent once on the screen - on the
+     seat this arm points at - so the pointer and the lit seat read as one signal
+     rather than two competing hot elements. */
+  background: var(--v-ink);
+  border: 3px solid #000;
+  border-radius: 3px;
+  /* The head: a hard chevron, drawn with a clipped box rather than a border
+     triangle so it keeps the flat cartoon edge. */
+  clip-path: polygon(50% 0, 100% 26%, 100% 100%, 0 100%, 0 26%);
+}
+
+/* ---- THE CORE: the fragment prompt directly above the bomb, both centred in
+   the ring. `order: -1` lifts the prompt above the bomb without moving either in
+   the DOM, so the bomb keeps its existing overlay anchors (flying word, shatter,
+   spark burst) exactly where they were. ---- */
+.wb-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* The free middle the seats leave: the ring minus a seat on each side. The bomb
+     fills it, which is how "bomb >= 55% of its cell" is met without the seats and the
+     bomb ever touching. */
+  width: var(--wb-bomb-w);
+  z-index: 1;
+}
+.wb-core .bomb-area {
+  margin: 0;
+}
+
+/* THE FRAGMENT is the brightest text on the screen and the largest: the hero
+   step, capped against viewport height so it cannot push the ring off a short
+   window. */
+.game-stage--wb .game-combo {
+  font-size: min(var(--fs-hero), 13vh);
+  /* BRIGHTEST TEXT ON THE SCREEN, by VALUE rather than by hue: white is 19.88:1 on
+     the field, brighter than any accent (yellow 16.10, cyan 15.62). That keeps the
+     screen's one accent free for turn ownership. */
+  color: var(--v-ink);
+}
+
+/* The bomb fills its cell: >=55% of the ring, so the clock is never a detail in the
+   middle of a big empty circle. An explicit length, not a percentage - the bomb's
+   wrapper chain (.bomb-rattle/.bomb-passer/.bomb-reactor/.bomb-scale) is shrink-to-fit,
+   so `100%` resolved against nothing and the svg fell back to its 180px attribute. */
+.game-stage--wb .wb-core .bomb-svg {
+  width: var(--wb-bomb-w);
+  height: auto;
+}
+
+/* ---- USED WORDS, DEMOTED HARD. It was a wrapping grid of bordered chips
+   competing with the prompt; it is now one quiet column of mid-value Space Mono,
+   newest at the bottom and the only bright one. ---- */
+.game-stage--wb .game-used-list {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-height: clamp(56px, 12vh, 104px);
+}
+.game-stage--wb .game-used-chip {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  transform: none;
+  font-size: var(--fs-label);
+  color: var(--v-ink-faint);
+}
+/* Newest word = last in the list = the only one at full ink. */
+.game-stage--wb .game-used-list .game-used-chip:last-child {
+  color: var(--v-ink);
+}
+.game-stage--wb .game-used-label {
+  color: var(--v-ink-faint);
+}
+
+/* ---- INPUT + SEND READ AS DEAD WHEN IT IS NOT YOUR TURN ---- */
+.game-input:disabled {
+  border-color: #4a4459;
+  box-shadow: 2px 2px 0 #000;
+  opacity: 0.6;
+}
+.game-send-btn:disabled,
+.game-skip-btn:disabled {
+  border-color: #4a4459;
+  box-shadow: 2px 2px 0 #000;
+  opacity: 0.6;
+}
+
+/* ---- THE ONE CONTINUOUS ANIMATION ON THE SCREEN IS THE FUSE, and it is
+   justified because it IS the timer. Reduced motion drops the smoothing so the
+   fuse and its ring step per tick instead of sweeping, and the flame stops
+   tracking - the clock still reads, nothing sweeps. ---- */
+@media (prefers-reduced-motion: reduce) {
+  .bomb-fuse,
+  .bomb-ring-fill,
+  .bomb-flame-pos {
+    transition: none !important;
+  }
+  .wb-pointer {
+    transition: none !important;
+  }
+  .bomb-num-tick {
+    animation: none !important;
+  }
+}
+
+/* SHORT WINDOWS (laptop landscape: 1568x675, 1280x551, and 1280x720 which came in at 102.1%
+   of the viewport with the 62vh ring). The stage still owes height to the header, the hero
+   prompt, the used list and the input row; 48vh leaves that budget intact. The cut-off is 740
+   so a 720-tall window is included and a 768-tall one - which measures 100.7% and fits - is
+   not. */
+@media (min-width: 900px) and (max-height: 740px) {
+  .game-stage--wb .wb-ring { --wb-size: min(42vw, 48vh); }
+  /* The prompt is the other big height consumer - cap it harder here too. */
+  .game-stage--wb .game-combo { font-size: min(var(--fs-h1), 9vh); }
+  .game-stage--wb .game-combo-box { padding: 6px 14px; }
+  .game-stage--wb .game-used-list { max-height: clamp(40px, 8vh, 64px); }
+}
+
+/* Phones: the ring shrinks and the seats shrink with it. */
+@media (max-width: 620px) {
+  .wb-ring {
+    /* Not 92vw: the floated NAME under the 3-o'clock seat sticks out past the ring's
+       own edge, so the ring has to leave a gutter for it or the name clips on the
+       stage edge. 84vw + a 72px name keeps the widest seat label inside. */
+    --wb-size: min(84vw, 44vh);
+  }
+  .wb-seat .game-player-name-text {
+    max-width: 72px;
+  }
+  .wb-seat .player-typing,
+  .wb-seat .player-status {
+    max-width: 96px;
+  }
+  .wb-seat .game-player-card {
+    padding: 5px 4px;
+  }
+}
+
+/* ============================================================================ */
+/* ==========  WORD BOMB MOTION LAW: THE FUSE IS THE ONLY LOOP  ============== */
+/* ============================================================================ */
+
+/* The Word Bomb stage ran EIGHT looping animations at rest - the bomb idle wobble,
+   the flame flicker, the danger rattle, the danger/tension vignettes and scrolling
+   tension lines, the active-card pulse, the resting-card rock, the prompt throb and
+   the label pulse. Nothing on the screen was ever still, which is exactly why the
+   one thing that SHOULD move - the clock - did not read as motion at all.
+   Everything below keeps its STATIC resting pose (identical to its reduced-motion
+   state). The bomb's fuse, its matching ring and the flame that rides the burning
+   tip are the only continuous motion left, and they are justified because they ARE
+   the timer: a stroke-dashoffset transition driven straight off the turn clock.
+   Event animations (word thrown, reject shake, heart shatter, elimination, pass
+   throw, the under-5s number tick) are UNTOUCHED - those are one-shots, not idles.
+   This is the same treatment the menu got (CLAUDE.md MENU MOTION LAW). */
+.game-stage--wb .bomb-body-wrap.calm,
+.game-stage--wb .bomb-body-wrap.warning,
+.game-stage--wb .bomb-body-wrap.critical,
+.game-stage--wb .bomb-rattle,
+.game-stage--wb .bomb-flame-core,
+.game-stage--wb .wb-tension-vignette,
+.game-stage--wb .wb-tension-line,
+.game-stage--wb .wb-tension-getout,
+.game-stage--wb .wb-tension-throb,
+.game-stage--wb[data-tension='crit'] .wb-tension-throb,
+.game-stage--wb .wb-lastlife-vignette,
+.game-stage--wb .game-combo,
+.game-stage--wb .game-combo-label,
+.game-stage--wb .game-player-card.current,
+.game-stage--wb .game-player-card:not(.current):not(.eliminated):not(.eliminating),
+.game-stage--wb .game-player-card.last-life::after,
+.game-stage--wb .game-player-lastlife,
+.game-stage--wb .typing-cursor {
+  animation: none;
+}
+
+/* The danger vignette is position:fixed OUTSIDE the stage, so the scoped list above
+   cannot reach it. Its opacity is already driven by the --danger custom property (a
+   transition, not a loop); the breathe keyframe on top of that was pure idle. */
+.wb-danger-vignette {
+  animation: none;
+}
+
+/* LAST LIFE still has to SHOUT - it just shouts statically now. The ring was a
+   pulsing opacity; it is a hard, always-on red ring instead, which is louder at rest
+   than a pulse that spends half its cycle faded out. */
+.game-stage--wb .game-player-card.last-life::after {
+  opacity: 1;
+}
+.game-stage--wb .game-player-lastlife {
+  opacity: 1;
+  transform: none;
+}
+
+/* The flame keeps its shape but stops flickering; it still TRACKS the burning tip,
+   which is the part that carries information. */
+.game-stage--wb .bomb-flame-core {
+  opacity: 1;
+}
