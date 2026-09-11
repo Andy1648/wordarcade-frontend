@@ -5,7 +5,7 @@ touched.** Branches, prototypes and reports only. Concurrency stayed at or below
 
 ---
 
-## THE SEVEN THINGS THAT NEED YOU
+## THE EIGHT THINGS THAT NEED YOU
 
 **1. Two Word Bomb layout defects, measured, with both fixes built and neither chosen. §2**
 At 1366x768 a seat's NAME is cut off by 31px at 2 players, and at 3+ players the KILL FEED sits
@@ -14,36 +14,43 @@ constraints cannot both hold at 768px tall, so which one yields is yours:
 `?wbfit=ring` (the ring shrinks) vs `?wbfit=prompt` (the fragment shrinks). Screenshots for both,
 at every player count and viewport, in `claude/wb-ring/`.
 
-**2. The squint test says 16 of 30 screens have no single entry point. §7d**
+**2. On every mode dialog the SECONDARY button is the loudest thing on screen. §6a**
+`.mode-dialog-btn-join { background: #fff }`. White is **19.88:1** on the dark field; PLAY takes
+the mode's own colour, **7.03:1** for Word Bomb. JOIN WITH CODE is 2.8x the contrast of the primary
+CTA on both MULTIPLAYER dialogs (Word Bomb and Category Blitz — the solo modes render a single PLAY
+and are unaffected), where the brief says "START the only hot element". One-line fix built as
+`?dlgcta=demote`; screenshots in `claude/x7/`.
+
+**3. The squint test says 16 of 30 screens have no single entry point. §7d**
 The value-grouping gate, made real and run. Worst: the mode dialogs (3 regions on desktop, 6 on
 a phone for Blitz), the lobby (4), and CHAIN/FUSE, whose loudest element barely pulls away from
 the page at all. Full table in §7d.
 
-**3. Three look experiments are built and shot side by side. Nothing is merged. §7**
+**4. Three look experiments are built and shot side by side. Nothing is merged. §7**
 7a danger escalation — works, reads clearly, and is the one I'd argue for.
 7b chromatic Bungee lockup — buildable, but only after throwing Bungee Shade out of it, and it
 still renders wrong in place (§7b, honestly unresolved).
 7c per-mode motifs — built for all five modes; CHAIN and FUSE already shipped this idea at 7%
 before the run started, which is the strongest evidence for it.
 
-**4. The menu is the dimmest screen in the game, by measurement. §7d**
+**5. The menu is the dimmest screen in the game, by measurement. §7d**
 Its loudest element reaches L\* 0.430 after a 12px blur, where every other non-solo screen is
 0.74–0.96. The wordmark is Bungee Shade under a 5px black stroke, which eats most of the letter.
 This is a consequence of the canonical title spec, which CLAUDE.md locks — so it is your call,
 not a bug I should fix.
 
-**5. Phase 3's per-mode colour scripts are declared and then never used. §3**
+**6. Phase 3's per-mode colour scripts are declared and then never used. §3**
 Seven scripts are defined in `texture.css`. `--mode-lead` and `--mode-second` are consumed by
 **nothing in the repo** — `grep` finds two uses of any `var(--mode-*)`, both of `--mode-shade`, both
 with a fallback. The item that was meant to replace "all nine colours everywhere" so the six modes
 read apart by hue exists as tokens and stopped there. This is also, independently, why CHAIN and
 FUSE score worst on the squint test.
 
-**6. THE RUN has no screen on this stack, and Phase 5 could not build one.** §5
+**7. THE RUN has no screen on this stack, and Phase 5 could not build one.** §5
 `release/prod-1` has five modes. The Run lives on `integration/run-stack-3`, unmerged. Phase 5
 delivered four of its five named screens; the fifth was not reachable from this base.
 
-**7. Nothing here has had a 2-device play-test.** The phase stack touches `GameScreen.jsx`
+**8. Nothing here has had a 2-device play-test.** The phase stack touches `GameScreen.jsx`
 rendering and `App.jsx`-adjacent surfaces. Per CLAUDE.md that is a Tier 1/2 gate I cannot clear.
 
 ---
@@ -212,6 +219,41 @@ The brief asks for "fuse strictly decreasing over 5 samples". That check is **no
 is not faked with a passing assertion: against the backend mock the client's local turn clock does
 not advance, so sampling the fuse five times measures the mock, not the fuse. It needs a real
 server or a clock-controlled harness.
+
+---
+
+## 6a. THE DIALOG CTA IS INVERTED — AND THE SQUINT TEST AND THE CONTRAST AUDIT AGREE
+
+Two independent methods land on the same rule, which is the strongest kind of finding this run
+produced.
+
+**From the contrast side:** `src/components/ModeDialog.css:404`
+
+```css
+.mode-dialog-btn-join {
+  flex: 1;
+  background: #fff;     /* <- white: 19.88:1 on #0d0618, the loudest value in the palette */
+  border-color: #000;
+}
+```
+
+PLAY takes the mode's own colour. For Word Bomb that is `#FF6B3D` at 7.03:1. So the SECONDARY
+action carries 2.8x the contrast of the PRIMARY one. It affects the two MULTIPLAYER dialogs only:
+`ModeDialog.jsx` renders JOIN WITH CODE in the create/join branch, so SAT Rush, Chain and Fuse get
+a single PLAY button and are not affected. Word Bomb and Category Blitz are.
+
+**From the squint side:** `wb-dialog` resolves into three regions of comparable weight — the mode
+name, PLAY, and JOIN WITH CODE — where Phase 6's own spec says "START the only hot element".
+`blitz-dialog` resolves into **six** on a phone: the AI JUDGED badge, three selected pack rows
+that use the same blue as the PLAY button, PLAY itself, and the white JOIN WITH CODE.
+
+**The fix is one rule, and the helper for it already exists and is unused.** `values.css` defines
+`.v-demote` — panel ground, dimmed ink, rule-coloured border — as "what a secondary button looks
+like after the audit", and no JSX in the repo applies it. `?dlgcta=demote` does exactly that to
+JOIN WITH CODE. That single change also closes part of §1b's dead-helper finding.
+
+I built it rather than shipped it because it changes the look of both multiplayer dialogs, which is
+yours. It is the smallest high-value change in this entire run.
 
 ---
 

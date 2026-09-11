@@ -296,3 +296,25 @@
   [data-wbfit='ring'] .wb-ring { --wb-size: min(80vw, 40vh); }
   [data-wbfit='prompt'] .game-combo-box .game-combo { font-size: min(var(--fs-h1), 7.4vh); }
 }
+
+/* =====================================================================
+   DIALOG CTA INVERSION  (?dlgcta=demote)
+   =====================================================================
+   MEASURED. `.mode-dialog-btn-join { background: #fff }` makes JOIN WITH CODE the
+   loudest element on every mode dialog: white is 19.88:1 on the dark field, while
+   PLAY takes the mode's own colour - 7.03:1 for Word Bomb's orange. The SECONDARY
+   action is 2.8x the contrast of the PRIMARY one, on all six dialogs.
+
+   The squint test sees the same thing from the other direction: wb-dialog resolves
+   into three regions of comparable weight (the mode name, PLAY, and JOIN WITH CODE)
+   where the brief asks for START to be the only hot element, and blitz-dialog resolves
+   into six on a phone.
+
+   This variant demotes JOIN to exactly what values.css's `.v-demote` helper already
+   describes - panel ground, dimmed ink, rule-coloured border. That helper is currently
+   applied by no JSX in the repo, so this is also the first thing to actually use it. */
+[data-dlgcta='demote'] .mode-dialog-btn-join {
+  background: var(--v-panel);
+  color: var(--v-ink-dim);
+  border-color: var(--v-rule);
+}

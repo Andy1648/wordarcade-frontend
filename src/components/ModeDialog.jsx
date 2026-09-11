@@ -9,6 +9,8 @@ import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
 import { masteryState, masteryNeed, MASTERY_MAX, MASTERY_XP_STEP } from '../progress/mastery';
+import { xParam } from '../experiments/flags';
+import '../experiments/experiments.css';
 
 // MASTERY (Job 2): a compact per-mode mastery readout — level, the current XP perk, and words to
 // the next level. Reads client state directly (cheap); shown in every mode dialog.
@@ -164,6 +166,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
       <div
         className={`mode-dialog-shell${modeKey === 'blitz' ? ' is-blitz' : ''}`}
+        /* PROTOTYPE (?dlgcta=demote): demote JOIN WITH CODE so PLAY is the loudest
+           thing on the dialog. Absent = today. */
+        data-dlgcta={xParam('dlgcta')}
         // FULL-BLEED MODE COLOUR: the dialog IS the mode's colour edge to edge, so you
         // know which mode you opened before reading a word of it.
         style={{ '--dlg-accent': accent }}
