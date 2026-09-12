@@ -68,7 +68,7 @@ export default defineConfig({
   // Build a fresh production bundle and serve it via `vite preview`. Locally we
   // reuse an already-running preview (fast iteration); CI always starts clean.
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
+    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: BASE_URL,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
