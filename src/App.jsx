@@ -2474,6 +2474,12 @@ function App() {
               fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
               menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
               UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
+          {/* The game view hosts the control ITSELF (App hands GameScreen an `audioSlot`), so the
+              fixed one is suppressed there — the board's bottom-right corner is where SEND and
+              SKIP live. Every game screen mounts the slot: the board and the Blitz round screens
+              in their header clusters, and the three header-less ones (the "STARTING GAME..."
+              placeholder, the multiplayer scoreboard, the solo results card) in a dock anchored to
+              the board wrapper. e2e/sound-control.spec.js counts them — never zero, never two. */}
           {!isHomeMenu && view !== 'game' && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}

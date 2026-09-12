@@ -1582,8 +1582,10 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // so far, ticking up as answers are accepted (fixed, pointer-events:none so it never blocks
 // play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
 // total on the game-over card, large. Both are purely presentational.
-// The height the word-landing reaction needs above the field on a stacked board, including the
-// stamp that perches above the chip. Used to decide whether it can clear the used-words strip.
+// The height the word-landing reaction needs above the field on a STACKED board, plus a little
+// air. On this layout the stamp does NOT perch above the chip — under 700px WordLanding.css puts
+// it inline at `order: -1` — so the tallest tier here is the OBSCURE chip at --fs-h2, measured at
+// ~42px; 54 is that plus the slot's own breathing room.
 const REACT_H = 54;
 
 export default function GameScreen({
@@ -1817,7 +1819,18 @@ export default function GameScreen({
           // lifted chip covered a PLAYER CARD by 16px. Covering a seat is worse than covering the
           // used-words list (which is the least urgent thing on the board and the list this very
           // word is about to join), so when the gap does not fit, the reaction stays put.
-          const gap = u.top - ringEl.getBoundingClientRect().bottom;
+          // THE RING'S BOX IS NOT THE RING'S BOTTOM. Each seat's name label is
+          // `position: absolute; top: calc(100% + 1px)` on its seat — out of flow, hanging BELOW
+          // the ring's own rect by a line of text. Measuring the gap against the rect alone
+          // therefore judges a band "clear" that a name is already sitting in, which is the exact
+          // out-of-flow blind spot that let eight seat names draw through each other. Take the
+          // lowest of the ring and every visible name.
+          let ringBottom = ringEl.getBoundingClientRect().bottom;
+          for (const nm of stage.querySelectorAll('.wb-seat .game-player-name-text')) {
+            if (nm.offsetParent === null) continue; // display:none on a crowded tiny board
+            ringBottom = Math.max(ringBottom, nm.getBoundingClientRect().bottom);
+          }
+          const gap = u.top - ringBottom;
           if (gap >= REACT_H) lift = Math.round(u.height);
         }
         stage.style.setProperty('--wb-usedh', `${lift}px`);
@@ -2728,6 +2741,10 @@ export default function GameScreen({
   if (!gameState) {
     return (
       <div className="game-wrap">
+        {/* This screen has no header to put it in, and the app-wide fixed control is suppressed
+            for the whole game view — without this dock the player waiting here has no way to
+            reach the sound settings at all. Anchored to the board wrapper, not the viewport. */}
+        {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
         <div className="game-loading">STARTING GAME...</div>
       </div>
     );
@@ -3953,7 +3970,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -4003,6 +4020,9 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
     // Tapping anywhere fast-forwards the celebration; the action buttons below
     // keep their own onClick and stay interactive throughout (never gated).
     <div className="game-wrap" onClick={celeb.fastForward}>
+      {/* Same dock as the other two header-less game screens. Outside the card so a tap on it is
+          not swallowed by the card's fast-forward handler. */}
+      {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
       {pb.isNewRecord && <ConfettiEffect />}
       <div className="game-over-overlay">
         <div ref={cardRef} className={`game-over-card solo-results-card${stageClass}`}>
@@ -4417,6 +4437,7 @@ function CategoryBlitzScreen({
 
     return (
       <SoloResultsScreen
+        audioSlot={audioSlot}
         score={total}
         rounds={rounds}
         daily={dailyResult}
@@ -4441,6 +4462,8 @@ function CategoryBlitzScreen({
 
     return (
       <div className="game-wrap">
+        {/* No header on this card either — see the note on the placeholder above. */}
+        {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
           <div className="game-over-card">
