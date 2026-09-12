@@ -1,7 +1,7 @@
 // menuSecrets.test.js — the five menu secrets fire once, on the right trigger.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSecretDetector, SECRETS } from './menuSecrets.js';
+import { createSecretDetector, SECRETS } from './secrets.js';
 
 function memStorage() {
   const map = new Map();

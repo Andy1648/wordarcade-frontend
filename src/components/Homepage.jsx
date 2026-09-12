@@ -8,8 +8,6 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
-import { useMenuSecrets } from '../secrets/useMenuSecrets';
-import SecretSticker from './SecretSticker';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
@@ -386,16 +384,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       setWinsAffordable(canAffordAny(w));
     },
   });
-  // MENU SECRETS (Job 9): five undocumented easter eggs on the menu. The hook owns its
-  // own keydown listener (never perturbs XP), grants the flat Wins, and hands back a
-  // transient sticker hit to show. When one fires it may bank Wins, so refresh the balance.
-  const { stamp: secretStamp, dismiss: dismissSecret } = useMenuSecrets({ active: true });
-  useEffect(() => {
-    if (!secretStamp) return;
-    const w = getWins();
-    setWins((prev) => (prev !== w ? w : prev));
-    setWinsAffordable(canAffordAny(w));
-  }, [secretStamp]);
+  // THE FIVE SECRETS ARE NOT A MENU FEATURE ANY MORE (feat/cut-secrets-rarity). They used to
+  // fire here and announce themselves as a centre-screen sticker over a modal backdrop — a
+  // one-off popup, mid-aim, that you clicked away and that could swallow the click meant for the
+  // card behind it. The detections are unchanged (secrets/secrets.js); they now fire while you
+  // PLAY, pay into that round, and surface at the word you typed (secrets/useWordSecrets +
+  // components/WordLanding). What is left of them on the menu is nothing, which is the point.
   // FREE UNLOCK LADDER (Job 3): grant every level-reached cosmetic (idempotent, its own
   // storage — separate from the shop), then hold the owned set so the "NEXT UNLOCK" line and
   // the applied FRAME stay in sync as XP climbs on the menu. (The ladder's THEME cosmetics were
@@ -604,11 +598,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
-        {/* MENU SECRET sticker (Job 9): a one-shot reveal that tells the story of the
-            secret. Not hinted anywhere; only appears the instant one is discovered. It is
-            a modal — its backdrop SWALLOWS the dismiss click (the old pointer-events:none
-            stamp let that click fall through and open the card underneath). */}
-        {secretStamp && <SecretSticker hit={secretStamp} onDismiss={dismissSecret} />}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />

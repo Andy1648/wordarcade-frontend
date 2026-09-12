@@ -6,18 +6,7 @@
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyWordSense, buyMomentum } from '../progress/shop';
-import {
-  getWordSenseTier, wordSenseCost, wordSenseFactor, wordSenseWinsFactor, WORDSENSE_MAX_TIER,
-} from '../progress/wordSense';
-import { RARITY_BANDS, OBSCURE_BAND } from '../progress/rarity';
-
-// The bands the WORD SENSE table prints, with the multiplier a TYPICAL word of that band carries
-// (the band's own mult — the length bonus rides on top in play, and quoting a length-boosted
-// figure here would be a number the player cannot reproduce). OBSCURE is included because it is
-// the band the upgrade is really FOR, and it lives outside RARITY_BANDS (it is the "not in the
-// ranked corpus" case).
-const WS_BANDS = [...RARITY_BANDS, OBSCURE_BAND].map((b) => ({ name: b.name, mult: b.mult, color: b.color }));
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyMomentum } from '../progress/shop';
 import { getMomentum, momentumCost, momentumMult, momentumMaxed, MOMENTUM_MAX } from '../progress/momentum';
 import {
   THEMES,
@@ -46,7 +35,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
-  const [wsTier, setWsTier] = useState(() => getWordSenseTier());
   const [momentum, setMomentum] = useState(() => getMomentum());
   // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
   const [ownedThemes, setOwnedThemes] = useState(() => {
@@ -81,9 +69,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
-  const wsMaxed = wsTier >= WORDSENSE_MAX_TIER; // wordSenseCost returns Infinity here
-  const wsCost = wordSenseCost(wsTier);
-  const wsProgress = wsMaxed ? 1 : wsCost > 0 ? Math.min(1, wins / wsCost) : 1;
   const mMaxed = momentumMaxed(momentum);
   const mCost = momentumCost(momentum); // Infinity when maxed
   const mProgress = mMaxed ? 1 : mCost > 0 ? Math.min(1, wins / mCost) : 1;
@@ -98,7 +83,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());
-    setWsTier(getWordSenseTier());
     setMomentum(getMomentum());
   };
   const onBuy = (id) => {
@@ -135,21 +119,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         tier: nextTier,
       });
       evItemPurchased('key_power', nextTier);
-      refresh();
-    }
-  };
-  const onBuyWordSense = () => {
-    const nextTier = wsTier + 1;
-    if (buyWordSense().ok) {
-      setReveal({
-        kind: 'wordsense',
-        name: `WORD SENSE ${toRoman(nextTier)}`,
-        blurb: `Rare words now pay ×${wordSenseFactor(nextTier).toFixed(2)} on their rarity.`,
-        coin: `−${formatNum(wsCost)} WINS`,
-        colour: '#FFD54A',
-        tier: nextTier,
-      });
-      evItemPurchased('word_sense', nextTier);
       refresh();
     }
   };
@@ -284,82 +253,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
                     {formatNum(kpCost)}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* WORD SENSE — the SECOND permanent wins sink, parallel to KEY POWER.
-                REWRITTEN (feat/progression-clarity). The old card said "×1.20 ON WORD RARITY
-                (WINS)" and, in small grey type, "RARE WORDS PAY MORE — COMMON WORDS UNCHANGED".
-                Neither told you the thing that decides whether to buy it: the factor scales a
-                word's rarity EXCESS (mult − 1), so on a COMMON word — which is MOST words — it
-                does literally nothing, and its ×1.20 is not a ×1.20 on anything you can point at.
-                The card now states that outright and prints the ACTUAL per-rarity multiplier at
-                this tier and the next, so the purchase is a comparison instead of a guess. */}
-            <h3 className="shop-subtitle">WORD SENSE — TIER {wsTier} / {WORDSENSE_MAX_TIER}</h3>
-            <div className="shop-keypower">
-              <div className="shop-kp-info">
-                <div className="shop-kp-current">
-                  <b>×{wordSenseFactor(wsTier).toFixed(2)}</b> ON A WORD&apos;S RARITY EXCESS
-                </div>
-                <div className="shop-ws-warn">
-                  BOOSTS UNCOMMON+ WORDS ONLY — COMMON WORDS ARE UNAFFECTED.
-                </div>
-                {wsMaxed ? (
-                  <div className="shop-kp-next">TIER {WORDSENSE_MAX_TIER} — MAXED</div>
-                ) : (
-                  <div className="shop-kp-next">
-                    NEXT TIER: <b>×{wordSenseFactor(wsTier + 1).toFixed(2)}</b>
-                    {'  ·  '}
-                    <b><span className="shop-coin" aria-hidden="true" /> {formatNum(wsCost)} WINS</b>
-                  </div>
-                )}
-                {/* THE TABLE IS THE CARD. What each rarity band is actually multiplied by, now and
-                    after the next tier — the only numbers that answer "is this worth it". */}
-                <table className="shop-ws-table">
-                  <thead>
-                    <tr>
-                      <th>WORD</th>
-                      <th>NOW</th>
-                      {!wsMaxed && <th>NEXT</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {WS_BANDS.map((b) => {
-                      const now = wordSenseWinsFactor(b.mult, wsTier);
-                      const next = wordSenseWinsFactor(b.mult, wsTier + 1);
-                      const dead = now === 1 && (wsMaxed || next === 1);
-                      return (
-                        <tr key={b.name} className={dead ? 'is-dead' : ''}>
-                          <th scope="row" style={{ color: b.color }}>{b.name}</th>
-                          <td>×{now.toFixed(2)}</td>
-                          {!wsMaxed && <td>×{next.toFixed(2)}</td>}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                <div className="shop-goal">
-                  {wsMaxed
-                    ? 'WORD SENSE MAXED'
-                    : wins >= wsCost
-                    ? 'READY TO UNLOCK'
-                    : `UNLOCKS AT ${formatNum(wsCost)} WINS — YOU HAVE ${formatNum(wins)}`}
-                </div>
-                <ProgressBar value={wsProgress} />
-              </div>
-              <div className="shop-kp-actions">
-                {wsMaxed ? (
-                  <button type="button" className="shop-card-btn" disabled>
-                    MAXED
-                  </button>
-                ) : wins >= wsCost ? (
-                  <HoldBuy label={formatNum(wsCost)} onCommit={onBuyWordSense} />
-                ) : (
-                  <button type="button" className="shop-card-btn" disabled>
-                    <span className="shop-coin" aria-hidden="true" />
-                    {formatNum(wsCost)}
                   </button>
                 )}
               </div>

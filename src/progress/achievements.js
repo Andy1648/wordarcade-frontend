@@ -12,7 +12,6 @@ import { collectionSummary } from './collection.js';
 import { masteryState, MASTERY_MODES } from './mastery.js';
 import { getStreak } from './streak.js';
 import { bestWpmOverall } from './wpm.js';
-import { getWordSenseTier } from './wordSense.js';
 
 export const ACHIEVEMENTS_KEY = 'taw.achievements';
 
@@ -34,7 +33,6 @@ export function achievementSnapshot() {
     streak: getStreak().count || 0,
     bestWpm: bestWpmOverall(),
     keyTier: getKeyTier(),
-    wsTier: getWordSenseTier(),
     rounds: getRounds(),
     mastery,
     minMastery,
@@ -77,7 +75,11 @@ export const ACHIEVEMENTS = [
   { id: 'm-all-3', cat: 'MODES', name: 'JACK OF ALL', hint: 'Reach Mastery 3 in every mode.', base: 10000, test: (s) => s.minMastery >= 3 },
   // ---- ECONOMY ----
   { id: 'kp-5', cat: 'ECONOMY', name: 'POWER USER', hint: 'Buy KEY POWER tier 5.', base: 10000, test: (s) => s.keyTier >= 5 },
-  { id: 'ws-3', cat: 'ECONOMY', name: 'SIXTH SENSE', hint: 'Buy WORD SENSE tier 3.', base: 10000, test: (s) => s.wsTier >= 3 },
+  // 'ws-3' (BUY WORD SENSE TIER 3) was retired with the upgrade itself. The id stays OUT of the
+  // catalog rather than being repointed: anyone who already earned it keeps it in their earned set
+  // harmlessly, and repointing a published id at a different requirement would silently change
+  // what someone's badge means.
+  { id: 'kp-8', cat: 'ECONOMY', name: 'SIXTH SENSE', hint: 'Buy KEY POWER tier 8.', base: 10000, test: (s) => s.keyTier >= 8 },
   // ---- SECRETS (hidden until earned) ----
   // SECRETS — RESCALED (feat/progression-clarity). These are the five rarest things in the game
   // and they were paying less than a minute of play by the time anyone could trigger them: a flat
@@ -168,7 +170,6 @@ export function checkAchievements() {
   }
   const snap = achievementSnapshot();
   const earned = new Set(loadEarned());
-  const mult = rebirthMult(snap.rebirths);
   const newly = [];
   // Two passes so 'completionist' (which depends on the others) settles correctly.
   for (let pass = 0; pass < 2; pass++) {

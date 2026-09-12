@@ -2,8 +2,8 @@
 //
 // THE BUG THIS EXISTS TO FIX, in Andy's words: "I got 40k and couldn't tell where it came from."
 // A word's payout is a product of up to nine factors — mode, difficulty, level, rebirth, momentum,
-// rarity (which carries a length bonus), combo, WORD SENSE and the lucky roll — and NONE of them
-// were ever named on screen. The number arrived; the reasons did not. A multiplier the player
+// the equipped mark, rarity (which carries a length bonus), combo and the lucky roll — and NONE of
+// them were ever named on screen. The number arrived; the reasons did not. A multiplier the player
 // cannot see is not a reward, it is a rumour: it cannot be aimed at, it cannot be compared against
 // an upgrade's price, and a shop item that boosts it reads as a shot in the dark.
 //
@@ -19,7 +19,7 @@ import { round10 } from './xp.js';
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
 // words is harder to read than no list at all.
-//   PERMANENT   what you have built: mode, difficulty, level, rebirth, momentum, word sense
+//   PERMANENT   what you have built: mode, difficulty, level, rebirth, momentum, the mark you wear
 //   THIS WORD   what you just did:   rarity, length, combo, lucky
 export const PAYOUT_FACTORS = [
   { key: 'mode', label: 'MODE', kind: 'permanent' },
@@ -27,7 +27,6 @@ export const PAYOUT_FACTORS = [
   { key: 'level', label: 'LEVEL', kind: 'permanent' },
   { key: 'rebirth', label: 'REBIRTH', kind: 'permanent' },
   { key: 'momentum', label: 'MOMENTUM', kind: 'permanent' },
-  { key: 'wordSense', label: 'WORD SENSE', kind: 'permanent' },
   // The equipped MARK (progress/marks.js). A mark is a permanent bonus you chose to wear, so it
   // gets a named row exactly like the ones you bought — a standing multiplier nobody can see is
   // the defect this module exists to fix, and a new invisible one would be absurd.
@@ -51,7 +50,7 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  *
  * @param {object} arg
  * @param {number} arg.base    the flat per-word base before any multiplier (WORD_WINS_BASE)
- * @param {object} arg.factors { mode, difficulty, level, rebirth, momentum, wordSense, rarity,
+ * @param {object} arg.factors { mode, difficulty, level, rebirth, momentum, mark, rarity,
  *                               length, combo, lucky } — each a multiplier, missing/1 = inactive
  * @param {number} [arg.total] the amount ACTUALLY granted. When given it is reported verbatim
  *                             instead of recomputed, so the breakdown can never disagree with the
@@ -84,8 +83,8 @@ export function buildPayout({ base = 0, factors = {}, total, band } = {}) {
 
 /**
  * The factors that are switched OFF for this word, with the reason — the other half of legibility.
- * "COMBO ×1" is noise; "WORD SENSE — COMMON words are never boosted" is the answer to a question
- * the player is actually asking when the number looks small.
+ * "COMBO ×1" is noise; "COMBO — streak under 2" is the answer to a question the player is
+ * actually asking when the number looks small.
  */
 export function inactivePayoutFactors(factors = {}, { band } = {}) {
   const out = [];
@@ -93,9 +92,6 @@ export function inactivePayoutFactors(factors = {}, { band } = {}) {
     const f = FACTOR_BY_KEY.get(key);
     if (f) out.push({ ...f, why });
   };
-  if (num(factors.wordSense) === 1) {
-    off('wordSense', band && band !== 'COMMON' ? 'not bought yet' : 'COMMON words are never boosted');
-  }
   if (num(factors.combo) === 1) off('combo', 'streak under 2');
   if (num(factors.rarity) === 1) off('rarity', 'COMMON word');
   if (num(factors.lucky) === 1) off('lucky', 'no lucky roll');

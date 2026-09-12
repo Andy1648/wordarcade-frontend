@@ -1,0 +1,188 @@
+/* WordLanding.css — the word reacting where the player is looking.
+
+   ANCHORED, NOT FIXED. This sits inside `.game-input-row` (which is `position: relative` and
+   already hosts the combo meter and the payout receipt), NOT at its own viewport coordinates —
+   CLAUDE.md's no-orphan-fixed-UI rule, and the direct opposite of the centre-screen secret modal
+   this replaced. `pointer-events: none` throughout: there is nothing here to click away, and
+   nothing that can be clicked THROUGH onto the card behind it.
+
+   EVERY ANIMATION IS A FINITE ONE-SHOT ON transform/opacity. Nothing loops; the element unmounts
+   when its word is replaced. The hard offset shadows are STATIC and toggled by tier, never
+   animated (the animation budget forbids animating box-shadow). */
+
+.wl {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  will-change: transform, opacity;
+  animation: wl-land 1500ms cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+}
+
+.wl-chip {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 3px solid #000;
+  color: #1a0b2e;
+}
+
+/* ---- THE LADDER. Each tier is louder than the one under it: a bigger step of colour, a harder
+   shadow, a steeper tilt. The escalation has to be visible at a glance mid-round, which is why it
+   is carried by FILL and WEIGHT rather than by anything subtle. ---- */
+
+/* UNCOMMON — yellow, and a harder shadow than a normal chip. The quietest rung: it should read as
+   "that one was worth something" without taking the eye off the field. */
+.wl--uncommon .wl-chip {
+  font-size: var(--fs-body);
+  background: #FFE94A;
+  border-color: #B8A020;
+  box-shadow: 4px 4px 0 #000;
+  transform: rotate(-2deg);
+}
+
+/* RARE — orange, bigger, tilted further, and it gets a stamp. */
+.wl--rare .wl-chip {
+  font-size: var(--fs-panel);
+  background: #FF6B3D;
+  border-color: #B8431F;
+  box-shadow: 6px 6px 0 #000;
+  transform: rotate(-3deg);
+  color: #fff;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+
+/* OBSCURE — FLASH PINK. A DOCUMENTED EXCEPTION: #FF2EC4 is reserved for the beat flash
+   (CLAUDE.md), and it is spent here on purpose and nowhere else. The rarest word in the game is
+   the one moment that deserves the loudest colour the palette owns, and a tier ladder whose top
+   rung looks like its second rung is not a ladder. */
+.wl--obscure .wl-chip {
+  font-size: var(--fs-h2);
+  background: #FF2EC4;
+  border-color: #9A1075;
+  box-shadow: 8px 8px 0 #000;
+  transform: rotate(-4deg);
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+
+/* SECRET — cyan, the one tier that is not about rarity at all, so it does not sit on the pink/
+   orange/yellow ramp. */
+.wl--secret .wl-chip {
+  font-size: var(--fs-panel);
+  background: #2EFFE0;
+  border-color: #14B8A6;
+  box-shadow: 6px 6px 0 #000;
+  transform: rotate(-3deg);
+}
+
+/* The stamp: slapped over the chip's top-LEFT corner, rotated the other way so it reads as
+   applied ON the word rather than as another chip beside it. LEFT, not right: the payout sits to
+   the chip's right, and a stamp overhanging that way is drawn straight over the number — the two
+   loudest things on the screen on top of each other. The left side is empty by construction (the
+   row is centred), so that is where the overhang goes. */
+.wl-stamp {
+  position: absolute;
+  /* PERCHED ON the chip's top-left corner, overlapping it by a few px — not laid ACROSS it. The
+     word is the thing that is reacting; a stamp that covers it has eaten the event it is there to
+     announce (at -13px the label sat squarely over "ZYMURGY"). */
+  bottom: calc(100% - 7px);
+  left: -12px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  padding: 3px 7px;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 3px solid #000;
+  border-radius: 3px;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-9deg);
+  will-change: transform, opacity;
+  animation: wl-stamp-slam 260ms cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+.wl--obscure .wl-stamp {
+  background: #FF2EC4;
+  color: #fff;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+}
+.wl--secret .wl-stamp {
+  background: #2EFFE0;
+}
+
+/* The payout, beside the word that earned it. */
+.wl-wins {
+  font-family: 'Bungee', cursive;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  transform: rotate(-2deg);
+}
+
+/* ---- MOTION. One entrance, one hold, one exit — then the node is gone. ---- */
+@keyframes wl-land {
+  0% { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.82); }
+  14% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.06); }
+  22% { transform: translateX(-50%) translateY(0) scale(1); }
+  78% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.96); }
+}
+@keyframes wl-stamp-slam {
+  0% { opacity: 0; transform: rotate(-9deg) scale(2.1); }
+  60% { opacity: 1; transform: rotate(-9deg) scale(0.94); }
+  100% { opacity: 1; transform: rotate(-9deg) scale(1); }
+}
+
+/* The chip is the anchor for the stamp's absolute position. */
+.wl-chip {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The tiers still READ — colour, size, weight and the stamp are all static form and survive.
+     Only the movement goes: a plain fade in and out, no slam, no scale. */
+  .wl {
+    animation: wl-land-reduce 1500ms linear forwards;
+  }
+  .wl-stamp {
+    animation: none;
+  }
+  @keyframes wl-land-reduce {
+    0% { opacity: 0; }
+    8%, 88% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
+/* PHONES: the biggest tier would otherwise run off a 320px board. */
+@media (max-width: 700px) {
+  .wl {
+    gap: 6px;
+    max-width: 96vw;
+  }
+  .wl--obscure .wl-chip {
+    font-size: var(--fs-panel);
+  }
+  .wl--rare .wl-chip,
+  .wl--secret .wl-chip {
+    font-size: var(--fs-body);
+  }
+  .wl-wins {
+    font-size: var(--fs-body);
+  }
+}

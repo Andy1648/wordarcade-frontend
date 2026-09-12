@@ -83,6 +83,9 @@ import { bankWordWins, awardWins, perWordFactors, WORD_WINS_BASE } from './progr
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
 } from './progress/payout';
+import { rarityCue } from './juice/audio';
+import { useWordSecrets } from './secrets/useWordSecrets';
+import { refundWordSense } from './progress/wordSenseRefund';
 import { awardWordXp, cappedWordMult } from './progress/xp';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
@@ -91,7 +94,6 @@ import { freshCombo, comboAccept, comboBreak } from './progress/combo';
 import { makeLuckyOracle, luckyReward, randomSeed } from './progress/luck';
 import { recordAcceptedWord } from './progress/collection';
 import { noteWord, noteSession, noteLucky } from './progress/records';
-import { wordSenseWinsFactor } from './progress/wordSense';
 import { markComboKeep, markRarityStep } from './progress/marks';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
 import { bumpRarity } from './progress/rarity';
@@ -436,6 +438,10 @@ function App() {
   // time play starts. Idempotent + single-flight; a failed load degrades to all-COMMON (×1).
   useEffect(() => {
     loadRarityIndex();
+    // WORD SENSE was deleted (feat/cut-secrets-rarity). Anyone who bought tiers gets the full
+    // purchase price back on this boot, once, silently — see progress/wordSenseRefund.js for why
+    // it is silent and why it is safe to call on every load.
+    refundWordSense();
   }, []);
   // WINS attribution (Word Bomb): the words I've submitted this game whose word_result
   // hasn't come back yet. My accepted words are counted by WORD MATCH against this list,
@@ -455,6 +461,12 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
+  // The five secrets, moved off the menu and into play. `notePop` is the 1-in-750 golden-word
+  // roll, called once per accepted word; the hook grants the (rebirth+level scaled) wins and hands
+  // back the find for the word landing to show. Only listens while a game is live.
+  const wordSecrets = useWordSecrets({ active: view === 'game' });
+  const wbSecretsRef = useRef(null);
+  wbSecretsRef.current = wordSecrets.notePop;
   // THE PAYOUT RECEIPT (Economy v7). `lastPayout` is the breakdown of the most recently accepted
   // word — every multiplier that contributed, named — shown on the accept toast. `payoutLedger` is
   // the same thing accumulated across the round and read at game over. Both are pure readouts of
@@ -462,6 +474,12 @@ function App() {
   // player did not get. This is the answer to "I got 40k and couldn't tell where it came from".
   const [lastPayout, setLastPayout] = useState(null);
   const [payoutLedger, setPayoutLedger] = useState(null);
+  // THE WORD LANDING (feat/cut-secrets-rarity). The most recently accepted word, its RARITY BAND,
+  // what it paid, and any SECRET it turned up — handed to GameScreen to play out at the word
+  // itself. This is what replaced both the silent rarity multiplier and the centre-screen secret
+  // modal: rarity is only a reward if you can see it happen, and a secret is only a discovery if
+  // it does not arrive as a popup over the button you were aiming at.
+  const [lastLanding, setLastLanding] = useState(null);
   // (overlayReturnRef + shopViewRef moved into hooks/useOverlays.js — refactor/app-split step 1.)
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
@@ -1044,6 +1062,7 @@ function App() {
       setWinsEarnedTotal(0);
       setLastPayout(null);
       setPayoutLedger(null);
+      setLastLanding(null);
       beginPayoutLedger(lastMessage.payload.gameType || 'word-bomb');
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
@@ -1231,8 +1250,9 @@ function App() {
             // Unified economy (Job 1): the per-word reward weight (rarity × combo × lucky, capped at
             // ×40) feeds BOTH the wins banking below AND an XP grant — parity with CHAIN/FUSE.
             const wbWeight = cappedWordMult(r.mult, wbComboMult, wbLucky.winsWeight);
-            // WINS weight rides WORD SENSE (Job 4) — a wins multiplier on rarity, outside the ×40 cap.
-            myWbWeightRef.current += wbWeight * wordSenseWinsFactor(r.mult);
+            // The weight IS rarity × combo × lucky, capped. WORD SENSE used to multiply the
+            // rarity part again on top of this, invisibly; it is gone (feat/cut-secrets-rarity).
+            myWbWeightRef.current += wbWeight;
             awardWordXp({ mode: 'word-bomb', wordLength: (wbWord || '').trim().length, weight: wbWeight });
             recordAcceptedWord(wbWord, { mode: 'word-bomb', band: r.band }); // Collection (Job 3)
             noteWord(wbWord, r); // permanent record: distinct / obscure / rarest-ever (guarded)
@@ -1255,11 +1275,9 @@ function App() {
             // broken. `total` is the amount BANKED, so the receipt can never disagree with the
             // ledger even when rounding or the 3-word gate is in play.
             {
-              const wsFactor = wordSenseWinsFactor(r.mult);
               const uncapped = r.mult * wbComboMult * wbLucky.winsWeight;
               const factors = {
                 ...perWordFactors({ mode: 'wordBomb', difficulty: gameDifficultyRef.current }),
-                wordSense: wsFactor,
                 rarity: r.bandMult ?? r.mult,
                 length: r.lengthMult ?? 1,
                 combo: wbComboMult,
@@ -1274,6 +1292,23 @@ function App() {
                 payout,
                 inactive: inactivePayoutFactors(factors, { band: r.band }),
               });
+              // THE WORD REACTS. The band, what it paid, and any secret this word turned up, sent
+              // to the field the player is already looking at (components/WordLanding). The
+              // 1-in-750 golden-word roll happens HERE, once per accepted word - it used to be
+              // once per menu keystroke pop.
+              const secret = wbSecretsRef.current ? wbSecretsRef.current() : null;
+              setLastLanding({
+                key: `${wbNowWords}-${wbWord}`,
+                word: wbWord,
+                band: r.band,
+                wins: banked,
+                secret: secret ? { stamp: secret.stamp, wins: secret.wins } : null,
+              });
+              if (secret) setWinsEarnedTotal((prev) => prev + secret.wins);
+              // A rare word has to SOUND different too — an event with no sound is half an event.
+              // COMMON is silent by design (rarityCue ignores it), so the normal accept cue stays
+              // the whole audio story for an ordinary word.
+              rarityCue(secret ? 'SECRET' : r.band);
             }
             setWinsTally(
               awardWins({ wordsAccepted: myWbAcceptedRef.current, mode: 'wordBomb', difficulty: gameDifficultyRef.current })
@@ -1418,7 +1453,7 @@ function App() {
           const r = rarityOf(blitzAnswer);
           const prevBlitzWeight = myBlitzWeightRef.current;
           const blitzWeight = cappedWordMult(r.mult, blitzComboMult, blitzLucky.winsWeight);
-          myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(r.mult); // WORD SENSE (Job 4)
+          myBlitzWeightRef.current += blitzWeight;
           awardWordXp({ mode: 'category-blitz', wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
           recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
           noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
@@ -1431,6 +1466,19 @@ function App() {
             nowWeight: myBlitzWeightRef.current,
           });
           if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+          // THE ANSWER REACTS, same rule as Word Bomb: rarity is an EVENT at the moment the word
+          // lands, not a multiplier discovered later on a pill. Blitz's field is the same shape,
+          // so the landing goes to the same place.
+          const bSecret = wbSecretsRef.current ? wbSecretsRef.current() : null;
+          setLastLanding({
+            key: `b${blitzNowWords}-${blitzAnswer}`,
+            word: blitzAnswer,
+            band: r.band,
+            wins: banked,
+            secret: bSecret ? { stamp: bSecret.stamp, wins: bSecret.wins } : null,
+          });
+          if (bSecret) setWinsEarnedTotal((prev) => prev + bSecret.wins);
+          rarityCue(bSecret ? 'SECRET' : r.band);
           setWinsTally(
             awardWins({ wordsAccepted: myBlitzAcceptedRef.current, mode: 'blitz', difficulty: gameDifficultyRef.current })
           );
@@ -2081,6 +2129,7 @@ function App() {
         winsEarnedTotal={winsEarnedTotal}
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
+        lastLanding={lastLanding}
       />
     );
   } else if (view === 'room' && room) {

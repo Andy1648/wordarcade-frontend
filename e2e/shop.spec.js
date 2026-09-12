@@ -41,7 +41,7 @@ test.describe('shop', () => {
     // All catalog cards render; unaffordable ones are visible-but-dimmed (not hidden).
     // 16 cards = 5 POP STYLES + 6 SOUND PACKS (the original 11 cosmetics) + 5 THEMES
     // (default/midnight/inferno/toxic/prism — themes render as .shop-card too via .shop-theme-card;
-    // feat/themes added them). KEY POWER + WORD SENSE are upgrade TRACKS, not .shop-card, so not counted.
+    // feat/themes added them). KEY POWER + MOMENTUM are upgrade TRACKS, not .shop-card, so not counted.
     await expect(page.locator('.shop-card')).toHaveCount(16);
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 

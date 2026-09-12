@@ -5,7 +5,6 @@
 // only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
-import { getWordSenseTier, saveWordSenseTier, wordSenseCost } from './wordSense.js';
 import { getMomentum, saveMomentum, momentumCost, markMomentumPop, MOMENTUM_MAX } from './momentum.js';
 import { THEMES, isThemeOwned } from '../theme/themes.js';
 
@@ -146,19 +145,6 @@ export function buyKeyPower() {
   return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
 }
 
-// Buy the NEXT WORD SENSE TIER (Job 4): deducts the next tier's cost from wins, bumps taw.wordsense
-// by 1. One at a time, like KEY POWER. Returns { ok, wins, tier, spent }.
-export function buyWordSense() {
-  const tier = getWordSenseTier();
-  const cost = wordSenseCost(tier); // cost to reach tier+1
-  const wins = getWins();
-  if (wins < cost) return { ok: false, wins, tier, spent: 0 };
-  const nextWins = wins - cost;
-  saveWins(nextWins);
-  saveWordSenseTier(tier + 1);
-  return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
-}
-
 // MOMENTUM (repeatable sink): buy ONE more unit — deduct the (rising) cost, bump the count. Refuses
 // when unaffordable or already at the cap. `count` in the result is the new total buys.
 export function buyMomentum() {
@@ -177,7 +163,7 @@ export function buyMomentum() {
 // True when the player can afford at least one thing they don't already own — drives the
 // menu wins-chip's "something to buy" dot. Counts EVERYTHING purchasable, not just cosmetics:
 // the dot used to go dark forever once a player owned all 11 cosmetics, even though Key Power,
-// Word Sense, Momentum and buyable themes were still affordable. `wins`/`owned` are injectable
+// Momentum and buyable themes were still affordable. `wins`/`owned` are injectable
 // for the cosmetic layer; the other sinks read their own live stores (guarded, sane defaults).
 export function canAffordAny(wins = getWins(), owned = getOwned()) {
   const ownedSet = new Set(owned);
@@ -187,9 +173,6 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
-  // Word Sense — the same infinite ×6 ladder as Key Power.
-  const wCost = wordSenseCost(getWordSenseTier());
-  if (Number.isFinite(wCost) && bal >= wCost) return true;
   // Momentum — a repeatable sink until MOMENTUM_MAX (momentumCost returns Infinity when maxed).
   const mCost = momentumCost(getMomentum());
   if (Number.isFinite(mCost) && bal >= mCost) return true;

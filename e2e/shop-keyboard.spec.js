@@ -22,7 +22,7 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
 
-// The KEY POWER buy button (first .shop-keypower — it renders above WORD SENSE / MOMENTUM).
+// The KEY POWER buy button (first .shop-keypower — it renders above MOMENTUM).
 const keyPowerBuy = (page) => page.locator('.shop-keypower').first().locator('.shop-buy');
 const keyPowerHeading = (page) => page.locator('.shop-subtitle', { hasText: 'KEY POWER' });
 

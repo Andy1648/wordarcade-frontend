@@ -54,16 +54,20 @@ test('every factor is labelled and classed as permanent (built) or word (just di
   }
 });
 
+// UPDATED (feat/cut-secrets-rarity). This used to be about WORD SENSE — the upgrade that scaled a
+// word's rarity EXCESS and therefore did nothing at all on a COMMON word while the shop card never
+// said so. The upgrade is deleted (rarity is now something you SEE when the word lands, not a
+// hidden multiplier to buy a hidden multiplier on), so the case moves to the factors that are
+// still switchable: COMBO, RARITY and the LUCKY roll.
 test('inactive factors carry the REASON — the answer when the number looks small', () => {
-  // WORD SENSE is the one that most needs this: it scales rarity EXCESS, so on a COMMON word an
-  // owned, paid-for upgrade does precisely nothing and the shop never said so.
-  const off = inactivePayoutFactors({ wordSense: 1, combo: 1, rarity: 1 }, { band: 'COMMON' });
-  const ws = off.find((f) => f.key === 'wordSense');
-  assert.ok(ws && /COMMON/.test(ws.why), ws && ws.why);
-  const rare = inactivePayoutFactors({ wordSense: 1 }, { band: 'RARE' }).find((f) => f.key === 'wordSense');
-  assert.ok(rare && /not bought/.test(rare.why), rare && rare.why);
+  const off = inactivePayoutFactors({ combo: 1, rarity: 1, lucky: 1 }, { band: 'COMMON' });
+  assert.ok(off.find((f) => f.key === 'combo' && /streak/.test(f.why)));
+  assert.ok(off.find((f) => f.key === 'rarity' && /COMMON/.test(f.why)));
+  assert.ok(off.find((f) => f.key === 'lucky'));
   // An ACTIVE factor is never listed as inactive.
   assert.equal(inactivePayoutFactors({ combo: 2 }).some((f) => f.key === 'combo'), false);
+  // ...and WORD SENSE is not a factor at all any more.
+  assert.equal(inactivePayoutFactors({}).some((f) => f.key === 'wordSense'), false);
 });
 
 // ---- the round ledger ------------------------------------------------------------------------

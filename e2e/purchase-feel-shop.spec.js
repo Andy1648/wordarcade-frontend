@@ -23,9 +23,9 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 
 test('§3 the shop always shows a next goal + progress bar', async ({ page }) => {
   await openShop(page, { wins: 50, keytier: 0 }); // < 90 (T1 cost, post-rebalance) → shows the gap
-  // KEY POWER goal + bar always present. WORD SENSE (Job 4) reuses .shop-keypower/.shop-goal, so
-  // scope to the FIRST .shop-keypower (KEY POWER, above WORD SENSE) — a bare .shop-goal.first()
-  // would now match WORD SENSE's goal instead. At 50 wins vs the T1 cost 90 → "UNLOCKS AT".
+  // KEY POWER goal + bar always present. MOMENTUM reuses .shop-keypower/.shop-goal, so scope to
+  // the FIRST .shop-keypower (KEY POWER, which renders above it). At 50 wins vs the T1 cost 90 →
+  // "UNLOCKS AT".
   const kp = page.locator('.shop-keypower').first();
   await expect(kp.locator('.shop-goal')).toBeVisible();
   await expect(kp.locator('.shop-progress')).toBeVisible();
@@ -38,9 +38,9 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
 
 test('§2 buy is a plain click that commits and reveals the sticker', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (90)
-  // WORD SENSE (Job 4) added a SECOND upgrade track that reuses .shop-keypower / .shop-kp-actions,
-  // so scope to the FIRST .shop-keypower — KEY POWER, which renders above WORD SENSE. (The reveal
-  // banner assertion below double-checks we bought KEY POWER, not WORD SENSE.)
+  // MOMENTUM is a second upgrade track that reuses .shop-keypower / .shop-kp-actions, so scope to
+  // the FIRST .shop-keypower — KEY POWER, which renders above it. (The reveal banner assertion
+  // below double-checks which one was bought.)
   // fix/shop-click-buy: buying is a plain CLICK (the unlabelled 400ms hold gate is gone), and
   // feat/shop-reveal-sticker: the reveal is the shared sticker — ribbon "★ UNLOCKED ★" plus the
   // item's own name, in place of the old one-line banner.

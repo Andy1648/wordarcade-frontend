@@ -1,6 +1,13 @@
-// menuSecrets.js — FIVE discoverable MENU SECRETS (Job 9). The simulators all hide
-// things; this gives the menu the same. NONE are hinted in the UI. Each fires ONCE,
-// grants Wins, and returns a STICKER hit the caller shows (see SecretSticker.jsx).
+// secrets.js — FIVE discoverable SECRETS. The simulators all hide things; this gives the
+// game the same. NONE are hinted in the UI. Each fires ONCE and grants Wins.
+//
+// RENAMED FROM menuSecrets.js (feat/cut-secrets-rarity). Nothing in this file changed — same five,
+// same thresholds, same storage key, same tests. What changed is WHERE it is fed from and WHAT the
+// caller does with a hit: these used to fire on the MENU and be announced by a centre-screen
+// sticker over a backdrop, a one-off popup mid-aim that could swallow the click meant for the card
+// behind it. They now fire while you PLAY and surface at the word you just typed
+// (components/WordLanding, via secrets/useWordSecrets). The file's name was the only thing left
+// claiming it was about the menu.
 //
 // Pure + deterministic: the clock, RNG and storage are INJECTED, so every secret is
 // unit-testable and a storage-blocked browser just re-arms them (no crash). The menu
@@ -11,8 +18,8 @@
 // {d} placeholder is the detail. Blurbs are the player-facing copy — keep them one line.
 //
 // THE FIVE (see claude/secrets.md for the player-facing list):
-//   1. TYPED WORD    — type "newgrounds" on the menu            → stamp "O.G."
-//   2. RARE POP      — a 1-in-750 golden keystroke pop          → stamp "MIDAS TOUCH"
+//   1. TYPED WORD    — type "newgrounds" while playing          → stamp "O.G."
+//   2. RARE POP      — a 1-in-750 golden ACCEPTED WORD           → stamp "MIDAS TOUCH"
 //   3. TIME OF DAY   — type anything at local 11:11 (am or pm)  → stamp "MAKE A WISH"
 //   4. TYPING STREAK — 150 keystrokes, no gap > 1500ms          → stamp "TYPEWRITER"
 //   5. PALINDROME    — type a 5+ letter palindrome (invented)   → stamp "BOTH WAYS"
@@ -44,6 +51,27 @@ const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'A
 
 // A small curated palindrome set so "both ways" needs a REAL word, not "aaaaa".
 const PALINDROMES = new Set(['level', 'rotor', 'kayak', 'radar', 'civic', 'refer', 'madam', 'tenet', 'stats', 'rotator', 'racecar', 'redder', 'reviver', 'deified', 'repaper', 'deed', 'noon', 'sagas']);
+
+/**
+ * The five as a COLLECTION, for the Stats board — which is the only place they appear now that the
+ * centre-screen sticker is gone. An unfound secret is a silhouette: its name is masked, because a
+ * secret you have been told about is not one. What IS shown is that it exists and that you are
+ * missing it, which is the whole reason a collection reads differently from a random popup.
+ */
+export function secretsCollection(storage = (typeof window !== 'undefined' ? window.localStorage : null)) {
+  const found = loadFound(storage);
+  const ids = Object.keys(SECRETS);
+  return {
+    found: ids.filter((id) => found.has(id)).length,
+    total: ids.length,
+    items: ids.map((id) => ({
+      id,
+      earned: found.has(id),
+      name: found.has(id) ? SECRETS[id].stamp : '???',
+      blurb: found.has(id) ? SECRETS[id].blurb.replace('{d}', 'it') : 'UNDISCOVERED',
+    })),
+  };
+}
 
 function loadFound(storage) {
   try {
@@ -144,7 +172,7 @@ export function createSecretDetector({ now = () => Date.now(), rng = Math.random
     return null;
   }
 
-  // ---- 2. RARE POP — call once per menu keystroke pop; 1-in-750 is golden ----
+  // ---- 2. RARE POP — call once per ACCEPTED WORD; 1-in-750 is golden ----
   function onPop() {
     if (rng() < 1 / RARE_POP_ODDS) return fire('midas');
     return null;

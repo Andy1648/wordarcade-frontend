@@ -11,6 +11,7 @@ import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import { WordPayout, RoundPayout } from './PayoutBreakdown';
+import WordLanding, { hasLanding } from './WordLanding';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
@@ -1583,6 +1584,7 @@ export default function GameScreen({
   winsEarnedTotal = 0,
   lastPayout = null,
   payoutLedger = null,
+  lastLanding = null,
 }) {
   const [draft, setDraft] = useState('');
   // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
@@ -2520,6 +2522,7 @@ export default function GameScreen({
         winsEarnedTotal={winsEarnedTotal}
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
+        lastLanding={lastLanding}
       />
     );
   }
@@ -3162,6 +3165,21 @@ export default function GameScreen({
                 <WordPayout payout={lastPayout.payout} compact />
               </div>
             )}
+            {/* THE WORD ITSELF REACTS. Rarity used to be a silent multiplier folded into a total;
+                it lands here now, on the field the player just typed into, coloured and stamped by
+                band — and a SECRET rides the same surface instead of a centre-screen modal. Keyed
+                per word so each one is a fresh one-shot; COMMON words render nothing (the normal
+                accept pop is already their event). */}
+            {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+              <WordLanding
+                key={lastLanding.key}
+                word={lastLanding.word}
+                band={lastLanding.band}
+                wins={lastLanding.wins}
+                secret={lastLanding.secret}
+                reduced={goReduce}
+              />
+            )}
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout
@@ -3790,8 +3808,14 @@ function CategoryBlitzScreen({
   winsEarnedTotal = 0,
   lastPayout = null,
   payoutLedger = null,
+  lastLanding = null,
 }) {
   const { sound } = useSound();
+  // Reduced motion for the word landing below — read once, same test the Word Bomb screen uses.
+  const goReduce =
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
   // Countdown replays at the start of every NEW round (and the first one).
@@ -4328,6 +4352,19 @@ function CategoryBlitzScreen({
           <div className="game-input-row">
             {/* Personal hype streak, floats above the input (pointer-events:none). */}
             <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
+                relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
+                feature. */}
+            {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+              <WordLanding
+                key={lastLanding.key}
+                word={lastLanding.word}
+                band={lastLanding.band}
+                wins={lastLanding.wins}
+                secret={lastLanding.secret}
+                reduced={goReduce}
+              />
+            )}
             {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout

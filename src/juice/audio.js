@@ -328,3 +328,32 @@ export function getJuiceMaster() {
 export function unlockAudio() {
   getCtx();
 }
+
+// --- RARITY CUES (feat/cut-secrets-rarity) ---------------------------------
+// A rare word has to SOUND different, not just look different: the whole point of the rebuild is
+// that rarity is an event at the moment it happens, and an event with no sound is half an event.
+// Three cues that escalate the same way the colours do — UNCOMMON is a single bright blip that
+// sits under the normal accept, RARE is a two-note rise, OBSCURE is a three-note chime with the
+// top note ringing. A SECRET gets its own shape (a falling pair) so it is never mistaken for a
+// rarity tier. Synthesis only, no files, and every one is silent when muted.
+const RARITY_CUES = {
+  UNCOMMON: [[880, 0, 0.1]],
+  RARE: [[784, 0, 0.11], [1175, 0.07, 0.16]],
+  OBSCURE: [[988, 0, 0.1], [1319, 0.07, 0.12], [1976, 0.15, 0.36]],
+  SECRET: [[1319, 0, 0.13], [880, 0.1, 0.26]],
+};
+export function rarityCue(band) {
+  if (!soundAllowed()) return;
+  const notes = RARITY_CUES[band];
+  if (!notes) return; // COMMON and anything unknown are silent by design
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    for (const [freq, at, dur] of notes) {
+      tone(c, { freq, type: 'triangle', start: now + at, dur, peak: JUICE.MIX.accept });
+    }
+  } catch {
+    /* never let audio throw */
+  }
+}

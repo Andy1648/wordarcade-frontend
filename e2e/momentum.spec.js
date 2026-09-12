@@ -45,8 +45,9 @@ test.describe('momentum repeatable sink', () => {
     await page.locator('.shop-panel').waitFor({ state: 'visible' });
     // The MOMENTUM track renders (subtitle + its own buy button).
     await expect(page.locator('.shop-subtitle', { hasText: 'MOMENTUM' })).toBeVisible();
-    // KEY POWER, WORD SENSE, MOMENTUM are the three .shop-keypower blocks — MOMENTUM is the third.
-    const buy = page.locator('.shop-keypower').nth(2).locator('.shop-buy');
+    // KEY POWER and MOMENTUM are the two .shop-keypower blocks now — MOMENTUM is the second.
+    // (WORD SENSE was the middle one; it was deleted with feat/cut-secrets-rarity.)
+    const buy = page.locator('.shop-keypower').nth(1).locator('.shop-buy');
     await expect(buy).toBeVisible();
     await buy.click();
     // One mark bought: count 0→1, wins 6000 − 5000 = 1000.
