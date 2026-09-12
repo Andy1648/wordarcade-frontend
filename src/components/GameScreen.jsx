@@ -843,7 +843,6 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
     : Math.max(0, Math.min(1, timerSeconds / (maxTimer || 1)));
 
   const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
-  const critical = tension === 'critical';
 
   // Fuse uses pathLength="100", so the offset is just the burnt-away percent;
   // the flame sits at the matching point along the curve.
@@ -856,15 +855,35 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   // time, orange as it tightens, red when it is nearly out.
   const fuseColor = tension === 'calm' ? '#FFE94A' : tension === 'warning' ? '#FF6B3D' : '#FF4B4B';
 
-  // NUMERIC READOUT: only in the last 5 seconds. The fuse already carries the proportion
-  // for the whole turn, so a number on screen the entire time is noise that competes with
-  // the fragment. 5s is the natural threshold - the server resets to a 5s minimum turn
-  // after a valid word, so under 5s is exactly "this could end now".
-  const showSeconds = !showCountdown && timerSeconds <= 5;
-  const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
-  const numStroke = critical ? '#FF5C5C' : '#000';
-  const numStrokeWidth = critical ? 4 : 3;
-  const numSize = tension === 'calm' ? 26 : tension === 'warning' ? 30 : 34;
+  // NUMERIC READOUT - present for the WHOLE turn, loud only at the end.
+  // The ring rebuild gated this to `timerSeconds <= 5`, on the argument that the fuse
+  // already carries the proportion. It does - but a proportion is not a clock: on a 30s
+  // turn there was no number on the board for 25 of its 30 seconds, and "how long have I
+  // got" had no answer you could read. The fix is not to make it loud all turn (that WAS
+  // the noise the ring branch was right about); it is a QUIET numeral that escalates.
+  //
+  // The escalation is keyed to SECONDS, not to the ratio, and that is the substantive
+  // change. The old ramp read `tension`, which is ratio-based - so the red fill only ever
+  // painted between 60% and 30% of the turn, a band the 5s gate meant the numeral was
+  // never rendered in. The red branch was unreachable at every turn length above ~16s;
+  // the number was white for its entire visible life. Seconds are what the player is
+  // actually racing, and 6 is the threshold: the server resets to a 5s minimum turn after
+  // a valid word, so "under six" is exactly "this could end on the next one".
+  const numUrgent = typeof timerSeconds === 'number' && timerSeconds < 6;
+  const numMid = typeof timerSeconds === 'number' && timerSeconds <= 10 && !numUrgent;
+  const showSeconds =
+    !showCountdown && typeof timerSeconds === 'number' && timerSeconds > 0;
+  const numFill = numUrgent ? '#FF4B4B' : '#fff';
+  const numStroke = '#000';
+  const numStrokeWidth = numUrgent ? 5 : 3.5;
+  // SIZES ARE VIEWBOX UNITS, NOT CSS PIXELS, and that is why the old ramp read as a
+  // smudge. The SVG is a 160-wide viewBox drawn at ~104px on a 1280x720 board, so
+  // fontSize 34 - which looks like a headline in the source - lands at roughly 22 CSS
+  // px on a dark mascot belly. Multiply by ~1.55 to get the size the source implies.
+  const numSize = numUrgent ? 52 : numMid ? 40 : 30;
+  // Quiet while there is time: the fragment is the hero of the board until the clock is
+  // the emergency. Full opacity from 10s down.
+  const numOpacity = numUrgent || numMid ? 1 : 0.85;
 
   const src = BOMB_MASCOT_SRC[pose] || BOMB_MASCOT_SRC.idle;
 
@@ -942,8 +961,13 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
                  replays on each tick. ---- */}
             {showSeconds && (
             <text
-              key={timerSeconds}
-              className="bomb-num-tick"
+              // Re-keyed per second ONLY inside the urgent band, so the one-shot tick pulse
+              // replays on each of the last five ticks and the numeral is dead still above
+              // them. A constant key above 6s means no remount and no animation at all -
+              // thirty pulses a turn is the throb the ring branch removed, arriving by the
+              // back door.
+              key={numUrgent ? timerSeconds : 'calm'}
+              className={numUrgent ? 'bomb-num bomb-num-tick' : 'bomb-num'}
               x="80"
               y="116"
               textAnchor="middle"
@@ -951,10 +975,13 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
               fontFamily="'Bungee', cursive"
               fontSize={numSize}
               fill={numFill}
+              opacity={numOpacity}
               stroke={numStroke}
               strokeWidth={numStrokeWidth}
               paintOrder="stroke"
-              style={{ transition: 'font-size 0.4s ease, fill 0.4s linear, stroke 0.4s linear' }}
+              // No font-size transition: size is a layout/paint property and the budget
+              // says transform + opacity only. The three sizes are discrete steps.
+              style={{ transition: 'fill 0.4s linear, opacity 0.4s linear' }}
             >
               {timerSeconds}
             </text>
@@ -3015,12 +3042,16 @@ export default function GameScreen({
               <span key={i} className="wb-tension-line" style={{ '--i': i }} />
             ))}
           </div>
-          {/* Centre-top prompt: HURRY! (warn) → GET OUT! (crit), pulsing via a
-              transform+opacity keyframe. Two stacked labels, shown per tier. */}
-          <div className="wb-tension-prompt">
-            <span className="wb-tension-hurry">HURRY!</span>
-            <span className="wb-tension-getout">GET OUT!</span>
-          </div>
+          {/* The HURRY! / GET OUT! prompt used to live HERE, as a stage-centred label at
+              `top: min(16vh, 120px)`. On the ring board that is the fragment slab's box:
+              measured at 1280x720 the slab spans y=123..222 and GET OUT! painted across
+              y≈115..157, straight through "TYPE A WORD CONTAINING" and the top of the
+              letters themselves. Same defect class as Batch 1's hype banner — a
+              decorative element in STAGE coordinates over the one box the player must
+              read — and there is no free band above the slab on this board to move it to.
+              So it is anchored to the thing it is about instead: the slab's caption line
+              now escalates in place (see promptCaption below). No new box, no collision
+              possible, and the words arrive where the eye already is. */}
           {/* Final-moment throb: a soft red full-screen opacity breath at crit. */}
           <div className="wb-tension-throb" />
         </div>
@@ -3207,7 +3238,21 @@ export default function GameScreen({
             key={comboPunch}
             className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
           >
-            <div className="game-combo-label">{promptLabel}</div>
+            {/* The caption IS the tension prompt now (see the note in the tension layer
+                above). Word Bomb only: Category Blitz has its own clock and its own
+                header, and re-using its caption would be a change to a mode this pass is
+                not touching. */}
+            <div
+              className={`game-combo-label${
+                !isCategory && tensionTier === 'warn' ? ' is-hurry' : ''
+              }${!isCategory && tensionTier === 'crit' ? ' is-getout' : ''}`}
+            >
+              {!isCategory && tensionTier === 'crit'
+                ? 'GET OUT!'
+                : !isCategory && tensionTier === 'warn'
+                  ? 'HURRY!'
+                  : promptLabel}
+            </div>
             <div className={`game-combo${isCategory ? ' category' : ''}`}>
               {promptValue}
             </div>

@@ -1723,39 +1723,13 @@
   to { transform: translateY(150vh); }
 }
 
-/* --- centre-top prompt: HURRY! (warn) -> GET OUT! (crit), pulsing via a
-   transform+opacity keyframe. --- */
-.wb-tension-prompt {
-  position: absolute;
-  top: min(16vh, 120px);
-  left: 0;
-  right: 0;
-  text-align: center;
-}
-.wb-tension-hurry,
-.wb-tension-getout {
-  display: none;
-  font-family: 'Bungee', system-ui, sans-serif;
-  text-transform: uppercase;
-  line-height: 0.98;
-  font-weight: 700;
-  font-size: var(--fs-panel);
-  color: #FFE94A;
-  -webkit-text-stroke: 3px rgba(0, 0, 0, 0.9);
-  paint-order: stroke fill;
-  animation: wb-tension-pulse 0.33s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-[data-tension='warn'] .wb-tension-hurry { display: inline-block; }
-[data-tension='crit'] .wb-tension-getout {
-  display: inline-block;
-  color: #FF2E2E;
-  font-size: var(--fs-h2);
-}
-@keyframes wb-tension-pulse {
-  from { transform: scale(1); opacity: 0.9; }
-  to { transform: scale(1.12); opacity: 1; }
-}
+/* The centre-top HURRY! / GET OUT! prompt is GONE — it is the fragment slab's own
+   caption now (.game-combo-label.is-hurry / .is-getout above). It was
+   `position: absolute; top: min(16vh, 120px)` in stage coordinates, which on the ring
+   board is the slab's box, and it painted through the fragment at every desktop
+   viewport. Its `wb-tension-pulse` keyframe went with it: that was one of the seven
+   loops running in the panic band, and one of the four the stiller list below thought
+   it had already turned off. */
 
 /* --- final-moment throb: a soft red full-screen opacity breath at crit only. --- */
 .wb-tension-throb {
@@ -1801,7 +1775,6 @@
   [data-tension='warn'] .wb-tension-vignette { opacity: 0.09; }
   [data-tension='crit'] .wb-tension-vignette { opacity: 0.12; }
   .wb-tension-lines,
-  .wb-tension-prompt,
   .wb-tension-throb { display: none !important; }
 }
 
@@ -2003,10 +1976,18 @@
   100% { opacity: 0; transform: translateY(-12px) scale(0.3); }
 }
 
-/* FINAL-5-SECONDS READOUT. One-shot HARD pulse per tick - a discrete scale STEP
-   that snaps back, not a smooth throb - re-keyed on the second in the JSX so it
-   replays each time the number changes. This replaced an `infinite` 400ms pulse:
-   the ring's one continuous animation is the fuse, and only the fuse. */
+/* THE SECONDS READOUT. Present for the whole turn (quiet, 22px, 0.72 opacity) and
+   escalating to a red 34px under six seconds - see BombVisual's numUrgent/numMid.
+   .bomb-num is the resting numeral and carries NO animation; .bomb-num-tick is added
+   only inside the urgent band, where the JSX re-keys per second so this one-shot HARD
+   pulse - a discrete scale STEP that snaps back, not a smooth throb - replays on each
+   of the last five ticks. This replaced an `infinite` 400ms pulse: the ring's one
+   continuous animation is the fuse, and only the fuse. */
+.bomb-num {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 .bomb-num-tick {
   transform-box: fill-box;
   transform-origin: center;
@@ -2116,6 +2097,18 @@
   letter-spacing: 1px;
   color: #FF6B3D;
   margin-bottom: 8px;
+  /* The caption swaps its own text for HURRY! / GET OUT! in the last two tension tiers
+     (see GameScreen.jsx). It must not change the slab's height when it does, or the
+     whole centre column shifts on the tier change and wbRingSize takes the difference
+     out of the ring. A fixed line-box is what makes an in-place swap free. */
+  min-height: 1.2em;
+}
+.game-combo-label.is-hurry {
+  color: #FFE94A;
+}
+.game-combo-label.is-getout {
+  color: #FF4B4B;
+  letter-spacing: 2px;
 }
 
 /* Quick scale-punch each time a word is accepted - the small satisfying "pop" of a
@@ -5704,11 +5697,18 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .bomb-body-wrap.critical,
 .game-stage--wb .bomb-rattle,
 .game-stage--wb .bomb-flame-core,
-.game-stage--wb .wb-tension-vignette,
-.game-stage--wb .wb-tension-line,
-.game-stage--wb .wb-tension-getout,
-.game-stage--wb .wb-tension-throb,
-.game-stage--wb[data-tension='crit'] .wb-tension-throb,
+/* THESE FOUR WERE SCOPED TO THE WRONG ANCESTOR AND MATCHED NOTHING. The tension layer
+   (.wb-tension) is a child of .game-wrap--wb, NOT of .game-stage--wb — the stage is a
+   sibling inside .game-panel. So `.game-stage--wb .wb-tension-line` and its three
+   neighbours selected zero elements, silently, and every loop this list was written to
+   kill kept running: measured at 3s on a 30s turn, wb-tension-breathe + 3x
+   wb-tension-line-scroll + wb-tension-pulse were live. Re-scoped to .game-wrap--wb,
+   which is where the layer actually is. (wb-tension-pulse is gone with the prompt; the
+   selector is kept so a future re-add lands stilled.) */
+.game-wrap--wb .wb-tension-vignette,
+.game-wrap--wb .wb-tension-getout,
+.game-wrap--wb .wb-tension-throb,
+.game-wrap--wb[data-tension='crit'] .wb-tension-throb,
 .game-stage--wb .wb-lastlife-vignette,
 .game-stage--wb .game-combo,
 .game-stage--wb .game-combo-label,
@@ -5718,6 +5718,18 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .game-player-lastlife,
 .game-stage--wb .typing-cursor {
   animation: none;
+}
+
+/* SPEED LINES ARE REMOVED, NOT STILLED. The list above asked for `animation: none` on
+   .wb-tension-line, and once the selector actually matched, that turned out to be the
+   wrong verb: a speed line is nothing but its motion. Measured at 1280x720 with the
+   animation off, the three lines sit at their start offset — boxes at y=-216 with
+   245/331px of height — so all that remains on screen is a 5px static bar stubbing out
+   of the top-left and top-right corners of the board. The layer goes instead. Its job
+   (the clock is running out) is carried by the fuse, the edge grade, the caption and,
+   as of this pass, a red numeral on the bomb that you can actually read. */
+.game-wrap--wb .wb-tension-lines {
+  display: none;
 }
 
 /* The danger vignette is position:fixed OUTSIDE the stage, so the scoped list above
