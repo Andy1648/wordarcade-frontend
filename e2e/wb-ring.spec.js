@@ -27,6 +27,12 @@
 //   8) NAME     nothing on the board is drawn across a seat's name label. A turn-pointer
 //               beam used to run under the 12-o'clock seat's name and read as a stray
 //               glyph struck through it.
+//   9) NOCLIP   no rail card clips its own content: scrollHeight <= clientHeight, and
+//               every text-bearing box inside it sits fully within the card. The rails
+//               shared a height that was a FRACTION OF THE RING (0.44d) rather than
+//               anything to do with their contents, so USED WORDS (5) drew a chip sliced
+//               through the middle and MATCH cut MODE off the bottom - at a perfect 0%
+//               area skew, because two equally-wrong boxes are still equal.
 //   +           the page never scrolls, and nothing overlaps anything it shouldn't.
 //
 // Run at 1366x768 / 1280x720 / 1536x864 / 390x844 / 320x640, at 2 / 3 / 4 / 8 players,
@@ -80,7 +86,10 @@ async function enterGame(page, players, currentPlayerId) {
       currentPlayerId,
       players,
       combo: 'str',
-      usedWords: ['MONSTER', 'STRIKE', 'ASTRAY', 'BISTRO'],
+      // SEVEN, not four. The rails clipped at FIVE on the preview, and the old fixture
+      // could not reach that state - the shot that was reviewed showed a column with room
+      // to spare. A fixture that cannot produce the failure is not a gate.
+      usedWords: ['MONSTER', 'STRIKE', 'ASTRAY', 'BISTRO', 'MINSTREL', 'ROSTRUM', 'STRIDE'],
       timerSeconds: 20,
       maxLives: 3,
     },
@@ -96,6 +105,10 @@ async function measure(page) {
     const r = (el) => {
       const b = el.getBoundingClientRect();
       return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height };
+    };
+    const px = (v) => {
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
     };
     const stage = document.querySelector('.game-stage--wb');
     const ring = document.querySelector('.wb-ring');
@@ -335,6 +348,57 @@ async function measure(page) {
       }
     }
 
+    // (9) NOCLIP. Two questions per rail card, because they fail differently: does the
+    // card overflow its own box (a trimmed list, a squeezed row), and does any single
+    // box inside it stick out (one chip half-drawn at the bottom edge)? The first is
+    // scrollHeight; the second is the rects, which is what actually catches a sliced
+    // chip when the list has been shrunk to fit rather than overflowing.
+    const railClip = [];
+    for (const sel of ['.game-used', '.kill-feed', '.wb-status']) {
+      for (const card of document.querySelectorAll('.game-stage--wb ' + sel)) {
+        const cb = r(card);
+        if (cb.w < 1 || cb.h < 1) continue;
+        const over = card.scrollHeight - card.clientHeight;
+        if (over > 1) railClip.push(sel + ' overflows by ' + Math.round(over) + 'px');
+        const ccs = getComputedStyle(card);
+        const inner = {
+          t: cb.t + px(ccs.borderTopWidth) + px(ccs.paddingTop),
+          b: cb.b - px(ccs.borderBottomWidth) - px(ccs.paddingBottom),
+          l: cb.l + px(ccs.borderLeftWidth) + px(ccs.paddingLeft),
+          rr: cb.r - px(ccs.borderRightWidth) - px(ccs.paddingRight),
+        };
+        for (const kid of card.querySelectorAll(
+          '.game-used-chip, .game-used-label, .game-used-empty, .kill-feed-row,' +
+          ' .kill-feed-title, .kill-feed-empty, .wb-status-row, .wb-status-title'
+        )) {
+          const kb = r(kid);
+          if (kb.w < 1 || kb.h < 1) continue;
+          const out = Math.max(inner.t - kb.t, kb.b - inner.b, inner.l - kb.l, kb.r - inner.rr);
+          if (out > 1) {
+            railClip.push(
+              sel + ' cuts ' + (kid.className.split(' ')[0]) +
+              ' ("' + (kid.textContent || '').trim().slice(0, 14) + '") by ' + Math.round(out) + 'px'
+            );
+          }
+        }
+      }
+    }
+
+    // How much board is left between each rail card and the ring. Centred rails put ~100px
+    // of dead gutter on both sides of every card; the board is meant to read as one row.
+    const gutter = (() => {
+      if (layout !== 'rails') return null;
+      const l = document.querySelector('.game-stage--wb.wb-duo .game-used')
+        || document.querySelector('.wb-rail--left .kill-feed');
+      const rt = document.querySelector('.wb-rail--right .wb-status')
+        || document.querySelector('.game-stage--wb:not(.wb-duo) .game-used');
+      if (!l || !rt) return null;
+      return {
+        left: Math.round(R.l - r(l).r),
+        right: Math.round(r(rt).l - R.r),
+      };
+    })();
+
     const widths = seats.map((el) => Math.round(r(el).w * 10) / 10);
     const round1 = (n) => Math.round(n * 10) / 10;
     return {
@@ -364,6 +428,17 @@ async function measure(page) {
       leftCard: { sel: leftCard.sel, area: leftCard.area, side: sideOf(leftCard) },
       rightCard: { sel: rightCard.sel, area: rightCard.area, side: sideOf(rightCard) },
       railSkewPct: railSkew,
+      railClip,
+      gutter,
+      railDbg: (() => {
+        const u = document.querySelector('.game-stage--wb .game-used');
+        const st = document.querySelector('.game-stage--wb .wb-status');
+        const f = document.querySelector('.game-stage--wb .kill-feed');
+        const d = (el) => (el ? el.clientHeight + '/' + el.scrollHeight : '-');
+        return 'railh=' + getComputedStyle(stage).getPropertyValue('--wb-railh').trim() +
+          ' used=' + d(u) + '(' + document.querySelectorAll('.game-used-chip').length + 'chips)' +
+          ' status=' + d(st) + ' feed=' + d(f);
+      })(),
       nameStrike: [...new Set(nameStrike)],
       quadrants,
       sizePct: round1(sizeFrac * 100),
@@ -403,6 +478,9 @@ for (const vp of VIEWPORTS) {
         ' | pillHit=' + m.pillHitPx + 'px(' + m.pillHitWhat + ')' +
         ' | rails[' + m.layout + ']=' + m.leftCard.side + ':' + m.leftCard.area + '(' + m.leftCard.sel + ') ' +
         m.rightCard.side + ':' + m.rightCard.area + '(' + m.rightCard.sel + ') skew=' + m.railSkewPct + '%' +
+        ' | railClip=' + (m.railClip.length ? m.railClip.join(' ; ') : 'none') +
+        ' | ' + m.railDbg +
+        ' | gutter=' + (m.gutter ? m.gutter.left + '/' + m.gutter.right : 'n/a') +
         ' | nameStrike=' + (m.nameStrike.length ? m.nameStrike.join(',') : 'none') +
         ' | rows head/top/bot=' + m.rowH.head + '/' + m.rowH.top + '/' + m.rowH.bot
       );
@@ -453,10 +531,19 @@ for (const vp of VIEWPORTS) {
           m.railSkewPct,
           'rail areas differ by ' + m.railSkewPct + '% (' + m.leftCard.area + ' vs ' + m.rightCard.area + ')'
         ).toBeLessThanOrEqual(35);
+
+        // ...and the rails sit AGAINST the ring, not marooned at the board's edges.
+        expect(m.gutter.left, 'gutter between the left rail and the ring').toBeLessThanOrEqual(40);
+        expect(m.gutter.right, 'gutter between the ring and the right rail').toBeLessThanOrEqual(40);
       }
 
       // (8) NOTHING IS DRAWN THROUGH A SEAT'S NAME.
       expect(m.nameStrike, 'board objects painted across a seat name').toEqual([]);
+
+      // (9) NOTHING CLIPS ITS OWN CONTENT - in BOTH layouts. The phone stack's used-word
+      // strip is a wrapping row rather than a rail card, and it failed the same way:
+      // `nowrap` sliced the last chip through the middle of the word.
+      expect(m.railClip, 'a card clips its own content').toEqual([]);
 
       // and the things the first gate DID get right, kept:
       expect(m.pageVScroll, 'page v-scroll').toBeLessThanOrEqual(0);

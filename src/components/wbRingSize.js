@@ -67,7 +67,13 @@ export function ringDiameter({
   const design = shorterSide * WB_RING_OF_STAGE;
   const d = Math.min(design, freeHeight, freeWidth);
   const floored = Math.max(WB_RING_MIN, Math.min(WB_RING_MAX, Math.floor(d)));
-  return Math.floor(Math.min(floored, shorterSide * WB_RING_OF_STAGE_MAX));
+  // THE FLOOR IS A PREFERENCE; THE SPACE IS A CONSTRAINT. `floored` can raise the ring
+  // back up to 220px on a small board, and on a 320x640 phone that put a ring 27px
+  // TALLER than the rows actually left - the 6-o'clock seat and its floated name landed
+  // on the used-word strip. Clamping by freeHeight here costs nothing on every board
+  // where the rows do leave 220px (this term simply isn't the smallest), and is the
+  // difference between a slightly small ring and two overlapping captions.
+  return Math.floor(Math.min(floored, shorterSide * WB_RING_OF_STAGE_MAX, Math.max(freeHeight, 0)));
 }
 
 const px = (v) => {

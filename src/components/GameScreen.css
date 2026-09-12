@@ -143,11 +143,13 @@
   /* Width of ONE side rail. Read back by wbRingSize.js, which subtracts two of them
      before it hands the rest to the ring - so the rails can never be squeezed away. */
   --wb-rail: clamp(104px, 16vw, 260px);
-  /* ONE height for BOTH rail cards. The rails are a matched pair flanking the ring;
-     letting each size to its own content is what made the board read lopsided (a full
-     used-word column against an empty feed, or against nothing at all at 2 players).
-     Equal boxes, equal weight - and the cards clip their own overflow, so this can
-     never feed back into the ring's diameter. */
+  /* ONE height for BOTH rail cards, so the pair flanking the ring reads as a pair.
+     PRE-PAINT FALLBACK ONLY: GameScreen writes the real value as an inline style from
+     wbRailFit - the TALLER of the two cards' natural content heights, capped at the
+     ring's diameter. This used to BE the rule (0.44 of the ring), which is a number
+     with no relationship to what is inside either card: at five used words it sliced
+     the fourth chip through the middle and cut MODE off the MATCH readout, while the
+     area-skew gate read a perfect 0% because two equally-wrong boxes are still equal. */
   --wb-railh: clamp(104px, calc(var(--wb-size) * 0.44), 196px);
   /* The one thing CSS tells JS: which of the two layouts is live. */
   --wb-layout: rails;
@@ -197,19 +199,21 @@
      outranks it explicitly. */
   z-index: 1;
 }
-/* CENTRED IN THEIR TRACK, not pinned to the board's outer edges. The side tracks are
-   1fr and a rail is capped at --wb-rail, so `start`/`end` put every spare pixel in ONE
-   gap - between the rail and the ring - and read as two cards shoved into the corners
-   of an empty board. Centred, the slack splits either side of each card and the three
-   objects read as one row. */
+/* PULLED IN AGAINST THE RING. The side tracks are 1fr and a rail is capped at
+   --wb-rail, so there is always slack in them; where that slack goes is the whole
+   question. Centred, it split into a ~100px gutter on EACH side of every card, and the
+   three objects read as three islands - worst at 2 players, where the ring itself is
+   only two seats and a bomb. Against the ring, the only gap between a rail and the
+   board is the grid's own column gap (<=22px) and all the slack is outboard, where
+   there is nothing to separate. */
 .game-stage--wb .wb-rail--left {
   grid-area: feed;
-  justify-self: center;
+  justify-self: end;
   align-self: center;
 }
 .game-stage--wb .wb-rail--right {
   grid-area: used;
-  justify-self: center;
+  justify-self: start;
   align-self: center;
 }
 /* HEAD-TO-HEAD (<=2 players). There is no kill feed at two players, so the LEFT rail
@@ -219,7 +223,7 @@
    the right, so both rails carry a card of the same size. */
 .game-stage--wb.wb-duo .game-used {
   grid-area: feed;
-  justify-self: center;
+  justify-self: end;
 }
 /* ...and the header drops its ROUND/MODE badges at <=2p, because the MATCH card now
    carries them. Scoped to the rails layout: the phone board has no right rail, so
@@ -235,7 +239,7 @@
 }
 .game-stage--wb .game-used {
   grid-area: used;
-  justify-self: center;
+  justify-self: start;
   align-self: center;
 }
 .game-stage--wb .wb-bottombar {
@@ -3520,6 +3524,26 @@
   mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
 }
 
+/* IN THE RAIL, A FEED ROW IS EXACTLY ONE LINE. Two reasons, one rule. It makes the row
+   height a CONSTANT, which is what lets wbRailFit work out how many rows fit without
+   measuring each one on every event (no layout read in an event path). And it stops a
+   long word + rarity tag wrapping to two lines in a 218px rail, which would push the
+   last row half out of the card - the defect this whole pass is about. The mask above
+   still tapers the oldest row; it now tapers a row that is fully drawn. */
+.game-stage--wb .wb-rail .kill-feed-row {
+  flex: none;
+  align-items: center;
+}
+.game-stage--wb .wb-rail .kill-feed-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.game-stage--wb .wb-rail .kill-feed-dot {
+  margin-top: 0;
+}
+
 .kill-feed-empty {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
@@ -5164,6 +5188,7 @@ html[data-beat='true'] .cb-answer-chip {
   box-shadow: 4px 4px 0 #000;
 }
 .wb-status-title {
+  flex: none;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -5171,14 +5196,19 @@ html[data-beat='true'] .cb-answer-chip {
   text-align: center;
   color: var(--v-ink-dim);
 }
+/* Same rule as the used-word chips, and here it is stricter: the MATCH card may be
+   PADDED to the other rail's height but never trimmed to it, because dropping "MODE" is
+   not a taper, it is a missing fact. `flex: none` on the rows box and every row keeps
+   all four at full height; wbRailFit then guarantees the card is at least that tall. */
 .wb-status-rows {
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-height: 0;
-  overflow: hidden;
 }
 .wb-status-row {
+  flex: none;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -5254,7 +5284,12 @@ html[data-beat='true'] .cb-answer-chip {
   max-height: none;
   overflow: hidden;
 }
+/* `flex: none` is load-bearing, not tidiness: these are items in a fixed-height column,
+   so by default they SHRINK, and a shrunk chip is exactly the "sliced through the
+   middle" defect. At their natural height the card either fits them or drops whole ones
+   (wbRailFit decides how many) - there is no third state where one is half-drawn. */
 .game-stage--wb .game-used-chip {
+  flex: none;
   font-size: var(--fs-micro);
   padding: 2px 6px;
   text-align: center;
@@ -5331,9 +5366,14 @@ html[data-beat='true'] .cb-answer-chip {
     border: 0;
     box-shadow: none;
   }
+  /* WRAPS, and does not scroll or clip. `nowrap` cut the last chip through the middle
+     of the word at seven used words ("ROSTRU") and pushed the two after it off the
+     board entirely - the same defect as the rails, in a row instead of a column. The
+     strip lives inside .wb-bottom, whose height wbRingSize already measures, so a
+     second line costs the ring its height honestly instead of overflowing. */
   .game-stage--wb .game-used-list {
     flex-direction: row;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: center;
     max-height: none;
     gap: 5px;

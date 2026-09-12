@@ -16,6 +16,7 @@ import {
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
 import { applyRingSize } from './wbRingSize';
+import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -1068,6 +1069,14 @@ function ExplosionEffect() {
 // How many feed rows are visible at once; older events stay in the array (full
 // history) but scroll out of the rendered window under a fade mask.
 const FEED_MAX_VISIBLE = 8;
+// The used-word list grows unbounded all game and is reconciled on every keystroke; this
+// is the ceiling on how many chips we would ever build nodes for. How many are actually
+// SHOWN is the rail fit's call (wbRailFit), and it is always a whole number of chips.
+const USED_MAX_VISIBLE = 24;
+// ...and the ceiling in the phone stack, where the strip is a wrapping ROW under the
+// input rather than a column in a rail: enough to read as a list, few enough to stay
+// within two lines of a 320px board.
+const USED_STACK_VISIBLE = 6;
 
 /**
  * Word Bomb's live kill feed: a scrolling log of game events shown to the side
@@ -1081,10 +1090,14 @@ const FEED_MAX_VISIBLE = 8;
  * pushes it down - only the freshly-added row mounts and replays the slide-in,
  * and the one scrolling off the end unmounts.
  */
-function KillFeed({ events, playerColors = {} }) {
+function KillFeed({ events, playerColors = {}, maxRows }) {
   const list = events || [];
+  // The rail decides how many rows FIT (see wbRailFit); FEED_MAX_VISIBLE is only the
+  // ceiling on how many we would ever want to draw. Whole rows either way - a feed that
+  // ends in half an event reads as a rendering fault, not as a taper.
+  const budget = Math.max(0, Math.min(FEED_MAX_VISIBLE, maxRows ?? FEED_MAX_VISIBLE));
   const visible = [];
-  for (let i = list.length - 1; i >= 0 && visible.length < FEED_MAX_VISIBLE; i--) {
+  for (let i = list.length - 1; i >= 0 && visible.length < budget; i--) {
     visible.push({ ev: list[i], idx: i });
   }
 
@@ -1722,6 +1735,53 @@ export default function GameScreen({
   // to replace. A callback ref re-runs the effect the moment the node attaches, and
   // again if it is ever remounted.
   const [wbStage, setWbStage] = useState(null);
+  // The primitives wbRailFit needs: the chrome around each rail card's list and the
+  // height of one of its rows. Measured on mount/resize ONLY (and once more the first
+  // time a card actually has a row to sample), so the per-word fit below is arithmetic
+  // on cached numbers - no layout read in an accept path. See ANIMATION BUDGET.
+  const [railMetrics, setRailMetrics] = useState(null);
+  // Re-measure triggers for the rail metrics below. NOT data: `railSample` is a 0..3 flag
+  // for "a used chip / a feed row now exists to measure", and `railPair` is which pair of
+  // cards is mounted (2 players = used + MATCH, 3+ = feed + used). chrome/step cannot be
+  // read off an empty card, so the measurement is retaken once when the first row of each
+  // kind appears and once when the pair changes - never per word.
+  // `gameState` is null until a game exists - this hook block runs on every render of
+  // GameScreen, including the pre-game screens, so it cannot be dereferenced bare.
+  const gs = gameState || {};
+  const railSample =
+    (((gs.usedWords || []).length + (gs.usedAnswers || []).length) > 0 ? 1 : 0) +
+    ((feedEvents || []).length > 0 ? 2 : 0);
+  const railPair = (gs.players || []).length <= 2 ? 'duo' : 'many';
+
+  // ===== THE RAIL FIT =====================================================
+  // The two rail cards share ONE height: the taller of their NATURAL content heights,
+  // capped at the ring's diameter (which is by construction no taller than the row has
+  // room for). Whichever card still doesn't fit drops whole ROWS - never half of one.
+  // This replaces `--wb-railh: clamp(104px, --wb-size * 0.44, 196px)`, a fraction of the
+  // ring that knew nothing about either card: at five used words it sliced the fourth
+  // chip through the middle and cut MODE off the MATCH readout, while the area-skew gate
+  // read a perfect 0% - two equally-wrong boxes are still equal.
+  // Pure arithmetic on the cached metrics, so an accepted word costs no layout read.
+  const railUsedCount = Math.min(
+    (gs.usedWords || []).length + (gs.usedAnswers || []).length,
+    USED_MAX_VISIBLE
+  );
+  const railFeedCount = Math.min((feedEvents || []).length, FEED_MAX_VISIBLE);
+  const railFitted = useMemo(() => {
+    if (!railMetrics) return null;
+    const lists = [];
+    if (railMetrics.used) lists.push({ key: 'used', ...railMetrics.used, count: railUsedCount });
+    if (railPair !== 'duo' && railMetrics.feed) {
+      lists.push({ key: 'feed', ...railMetrics.feed, count: railFeedCount });
+    }
+    if (!lists.length) return null;
+    return railFit({
+      lists,
+      fixed: railPair === 'duo' && railMetrics.status ? [railMetrics.status] : [],
+      cap: railMetrics.cap,
+    });
+  }, [railMetrics, railUsedCount, railFeedCount, railPair]);
+
   const wbHeadRef = useRef(null);
   const wbTopRef = useRef(null);
   const wbBottomRef = useRef(null);
@@ -1730,12 +1790,39 @@ export default function GameScreen({
     const stage = wbStage;
     if (!stage || typeof ResizeObserver === 'undefined') return undefined;
     const measure = () =>
-      applyRingSize(stage, {
-        head: wbHeadRef.current,
-        top: wbTopRef.current,
-        bottomBar: wbBarRef.current,
-        bottom: wbBottomRef.current,
-      });
+      {
+        const d = applyRingSize(stage, {
+          head: wbHeadRef.current,
+          top: wbTopRef.current,
+          bottomBar: wbBarRef.current,
+          bottom: wbBottomRef.current,
+        });
+        // The rails only exist in the two-rail layout; in the phone stack the used-word
+        // strip sizes to its own content and there is nothing to match it to.
+        const rails =
+          getComputedStyle(stage).getPropertyValue('--wb-layout').trim() === 'rails';
+        setRailMetrics(
+          rails
+            ? {
+                cap: d || 0,
+                used: measureRailCard(
+                  stage.querySelector('.game-used'),
+                  stage.querySelector('.game-used-list'),
+                  stage.querySelector('.game-used-chip'),
+                  stage.querySelector('.game-used-label')
+                ),
+                feed: measureRailCard(
+                  stage.querySelector('.kill-feed'),
+                  stage.querySelector('.kill-feed-list'),
+                  stage.querySelector('.kill-feed-row'),
+                  stage.querySelector('.kill-feed-title'),
+                  30
+                ),
+                status: measureStatusCard(stage.querySelector('.wb-status')),
+              }
+            : null
+        );
+      }
     measure();
     // Observe ONLY boxes that cannot be moved by --wb-size (the stage is a pinned
     // dvh box; the stacks are full-width rows). Writing --wb-size therefore never
@@ -1751,7 +1838,11 @@ export default function GameScreen({
       ro.disconnect();
       window.removeEventListener('orientationchange', measure);
     };
-  }, [wbStage]);
+    // `railSample` is not data - it is a 0/1/2 flag for "a chip / a feed row now exists
+    // to measure". The chrome+step numbers cannot be read off an empty card, so the
+    // measurement is retaken exactly once when the first row of each kind appears, and
+    // never again. Everything after that is arithmetic (see the fit below).
+  }, [wbStage, railSample, railPair]);
   // Latest personal combo, read by useHypeFeedback at accept time to scale the
   // Word Bomb burst/ring/cue. Kept fresh from `streak` (defined below) each render.
   const comboRef = useRef(0);
@@ -2658,6 +2749,12 @@ export default function GameScreen({
   // Whose turn it is, as a player record - read by the <=2p right-rail readout.
   const turnPlayer = players.find((p) => p.id === gameState.currentPlayerId) || null;
 
+  // No rail fit = the phone stack (or the frame before the first measure). There the
+  // strip WRAPS rather than sharing a height with anything, so the only cap it needs is
+  // one that keeps it to a line or two of a 320px board.
+  const usedVisible = railFitted ? railFitted.visible.used : USED_STACK_VISIBLE;
+  const feedVisible = railFitted ? railFitted.visible.feed : undefined;
+
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
   // Reduced-motion gate for the game-over stamp/stagger entrance (mirrors the
@@ -2959,7 +3056,11 @@ export default function GameScreen({
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
-        style={{ '--drain-sat': drainSat }}
+        style={
+          railFitted
+            ? { '--drain-sat': drainSat, '--wb-railh': `${railFitted.height}px` }
+            : { '--drain-sat': drainSat }
+        }
       >
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
@@ -3252,7 +3353,7 @@ export default function GameScreen({
             composition and nothing outside it can grow the page. */}
         {players.length > 2 && (
           <div className="wb-rail wb-rail--left">
-            <KillFeed events={feedEvents} playerColors={playerColors} />
+            <KillFeed events={feedEvents} playerColors={playerColors} maxRows={feedVisible} />
           </div>
         )}
 
@@ -3308,11 +3409,11 @@ export default function GameScreen({
             {usedItems.length === 0 ? (
               <span className="game-used-empty">NONE YET — BE THE FIRST</span>
             ) : (
-              // The list grows unbounded all game and is reconciled on every
-              // keystroke, but CSS only ever shows ~2 rows (max-height 92px). Render
-              // just the most recent 24 (words are unique, so key by the word) — the
-              // count label above still shows the true total.
-              usedItems.slice(-24).map((item) => {
+              // NEWEST-FIRST, AND ONLY AS MANY AS FIT. `usedVisible` comes from the
+              // rail fit above: whole chips only, so the column can never end in one
+              // sliced through the middle. The label above still shows the TRUE total,
+              // which is what makes a trimmed column honest rather than lossy.
+              usedItems.slice(-usedVisible).map((item) => {
                 // feat/wb-bot-turn: the bot's word being revealed on its card stays hidden
                 // (opacity only) until the last letter lands, then slides in as normal.
                 const pending =

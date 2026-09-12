@@ -47,11 +47,24 @@ test('the ring never exceeds its 520px cap on a big monitor', () => {
   assert.equal(d, WB_RING_MAX);
 });
 
-test('the 220px floor holds when the rows leave a little too little', () => {
-  // freeHeight = 600 - 2*(180+8) = 224 — just over the floor, so the floor is not the binding
-  // constraint; drop it to 210 of free height and the floor takes over.
+// UPDATED (rail-fit pass). This used to assert `=== WB_RING_MIN`: that the 220px floor
+// RAISED the ring back up when the rows left slightly less than 220. That is the behaviour
+// that put a ring 16px taller than its own budget on the board, and on a 320x640 phone the
+// 6-o'clock seat's floated name came down on top of the used-word strip. The floor is a
+// preference for small boards; the height the rows leave is a constraint. It now loses.
+test('the 220px floor does NOT invent height the rows did not leave', () => {
+  // freeHeight = 580 - 2*(180+8) = 204 — 16px under the floor.
   const tight = { ...LAPTOP, contentH: 580, topH: 180, botH: 77 };
-  assert.equal(ringDiameter(tight), WB_RING_MIN);
+  const freeHeight = 580 - 2 * (180 + 8);
+  assert.equal(ringDiameter(tight), freeHeight);
+  assert.ok(freeHeight < WB_RING_MIN, 'and this case is genuinely below the floor');
+});
+
+test('the floor still raises a ring that the rows CAN afford', () => {
+  // Same board with 224px of free height: over the floor, so nothing is clamped and the
+  // floor is simply not the binding constraint. The floor is not being deleted.
+  const ok = { ...LAPTOP, contentH: 600, topH: 180, botH: 77 };
+  assert.equal(ringDiameter(ok), 600 - 2 * (180 + 8));
 });
 
 test('a 320px phone board: the board ceiling overrules the 220px floor', () => {
@@ -97,4 +110,19 @@ test('the header row costs the ring its own height plus one gap, not double', ()
 
 test('a headH of 0 is exactly the old behaviour (the default is not a silent cost)', () => {
   assert.equal(ringDiameter(LAPTOP), ringDiameter({ ...LAPTOP, headH: 0 }));
+});
+
+// THE 220px FLOOR MAY NOT OVERRULE THE ROWS. On a 320x640 board the floor pushed the
+// ring back up to the board ceiling even though the rows had left it 27px less, and the
+// 6-o'clock seat's floated name came down on the used-word strip. The floor raises a
+// SMALL ring; it may not create height that isn't there.
+test('the design floor never returns a ring taller than the rows left', () => {
+  const tight = {
+    stageW: 274, stageH: 624, contentW: 250, contentH: 562,
+    headH: 44, topH: 89, botH: 150, railW: 0, rowGap: 20, colGap: 0,
+  };
+  const d = ringDiameter(tight);
+  const freeHeight = (562 - 44 - 20) - 2 * (150 + 20);
+  assert.ok(d <= freeHeight, `ring ${d} must fit the ${freeHeight}px the rows left`);
+  assert.ok(d < WB_RING_MIN, 'and this board genuinely cannot give it the 220px floor');
 });
