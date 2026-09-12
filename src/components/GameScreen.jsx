@@ -27,9 +27,11 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural } from '../format';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
+// Blitz's own colour script + composition. AFTER GameScreen.css so it wins on ties, and a
+// separate file because the one-accent-per-screen gate counts --v-accent per FILE.
+import './CategoryBlitz.css';
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
 // missing Vibration API can never throw.
@@ -93,6 +95,38 @@ const REJECTION_MESSAGES = {
 // TOTAL_ROUNDS); the round_start payload reports the current round but not
 // the total, so the total lives here.
 const TOTAL_CATEGORY_ROUNDS = 3;
+
+// ---- Category Blitz craft constants (feat/blitz-craft) ----
+// How many answer lines the upward stack keeps on screen. The stack is bottom-anchored
+// and clips at the top, so this is a render budget, not a scroll region: past six lines
+// the oldest simply leave. The count above the stack is always the true total.
+const CB_STACK_MAX = 5;
+// How much dimmer each line above the newest is. The value is applied as a resolved NUMBER
+// in the inline style, not as `opacity: calc(1 - var(--age) * N)` in the stylesheet: with the
+// calc form Chromium left the just-displaced line at its OLD opacity for a frame or two
+// after the swap (measured: --age was already "1" in the style attribute while
+// getComputedStyle still reported opacity 1), so the ramp was wrong at exactly the moment an
+// answer lands — the moment the player is looking at it.
+const CB_STACK_FADE = 0.19;
+// THE HERO'S FIT INPUTS. The CSS sizes the category to its box (see .cb-hero-word), but two
+// things about the string are invisible to CSS: how many characters it has to lay out, and
+// how long its LONGEST WORD is. The second is the one that actually bit — a size chosen from
+// the total length alone put "SANDWICHES" at 195px into a 174px column at 320px, and the
+// browser's only way out was to break it as "SANDWICHE / S". Both are pure arithmetic on the
+// category string; nothing here reads layout.
+function heroFit(category) {
+  const text = (category || '').trim();
+  const longest = text
+    ? text.split(/\s+/).reduce((n, w) => Math.max(n, w.length), 0)
+    : 0;
+  return {
+    '--cb-chars': Math.max(10, text.length),
+    '--cb-maxword': Math.max(5, longest),
+  };
+}
+// The judge PNG's box. One number, because the judge is ONE asset at ONE size — the CSS
+// scales the whole .cb-judge down on a phone with a transform, not by re-rasterising.
+const CB_JUDGE_SIZE = 132;
 
 // ---- Solo Category Blitz personal bests (localStorage) ----
 // One record per category, so a player always has a concrete target to beat.
@@ -4493,11 +4527,9 @@ function CategoryBlitzScreen({
   else if (roundResults) cbMascotPose = cbLeading ? 'celebrate' : 'panic';
   else cbMascotPose = 'idle';
 
-  // Transient reaction emote for the in-round mascot: a happy bob on an accepted
-  // answer, a flinch on a rejected one. cbTransient is set per answer result and
-  // already cycles back to null after 1s, so the one-shot replays each time.
-  const cbEmote =
-    cbTransient === 'celebrate' ? 'bob' : cbTransient === 'panic' ? 'flinch' : null;
+  // (No `emote` on the Blitz judge. cbTransient swaps the POSE PNG once per verdict and
+  // that swap IS the reaction — layering a bob/flinch emote on top of it turned one
+  // verdict into an animation sequence, which is the thing feat/blitz-craft removed.)
 
   // ---- SOLO: personal-best results (at game over, after all 3 rounds) ----
   // Between-rounds in solo falls through to the normal round-results view below;
@@ -4671,10 +4703,13 @@ function CategoryBlitzScreen({
     const ratio = Math.max(0, Math.min(1, timerSeconds / maxTimer));
     // Full bar while the countdown is up (timer hasn't started ticking yet).
     const displayRatio = showCountdown ? 1 : ratio;
-    const timerColor =
-      displayRatio > 0.6 ? '#2EFFE0' : displayRatio >= 0.3 ? '#FFE94A' : '#FF5C5C';
-    const lowTime = !showCountdown && timerSeconds <= 5;
-    const veryLowTime = !showCountdown && timerSeconds < 3;
+    // THE CLOCK STEPS ITS VALUE, NOT ITS HUE (feat/blitz-craft). Blitz spends its ONE
+    // accent on the category hero, so the clock cannot also be a colour event — it is a
+    // solid block that steps up the VALUE ladder (dim panel -> dim ink -> full ink) at
+    // exactly 50% and 20% remaining. Three discrete states, no gradient, no ramp: the
+    // block gets brighter as it gets shorter, which is legible in peripheral vision in a
+    // way a slow hue crossfade is not. `data-step` also drives the numeral's own step.
+    const clockStep = displayRatio > 0.5 ? 'full' : displayRatio > 0.2 ? 'half' : 'final';
     const others = roomPlayers.filter((p) => p.id !== myId);
     // Solo: the overall best total to beat (across a full 3-round game), shown
     // up top as a live target.
@@ -4686,6 +4721,12 @@ function CategoryBlitzScreen({
     // after the first ~5s the button locks for the rest of the round. The server
     // is authoritative - this just mirrors it so the button looks right.
     const withinRerollWindow = !showCountdown && timerSeconds > maxTimer - 5;
+    // ANSWERS BUILD UPWARD, NEWEST BRIGHTEST. Newest-first in the DOM + a
+    // column-reverse stack puts the newest line at the BOTTOM (right where you just
+    // typed it) and pushes older ones up out of the top. `--age` is the index from
+    // the newest, and the only thing it drives is opacity — a static inline value,
+    // never an animation.
+    const answerStack = myAnswers.slice(-CB_STACK_MAX).reverse();
 
     return (
       <div className="game-wrap">
@@ -4709,28 +4750,23 @@ function CategoryBlitzScreen({
           />
         )}
         <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`}>
-          {/* Stable wrapper so the keyed hype popup mounts once per accept, not
-              on every re-render amid the conditional siblings (see the Word Bomb
-              note above). */}
-          {/* The per-word HYPE moved to the FIELD (see the input row below) — as a stage-centred
+          {/* The per-word HYPE lives on the FIELD (see the input row below) — as a stage-centred
               banner it was measured lying across the title, the prompt and a player card at once.
               The rarity tier pop that used to sit under it is gone too: the word landing shows the
               band ON the answer now, and a second announcement in the middle of the screen is the
               same event told twice, further from the thing it is about. */}
-          <div className="game-header">
-            <div className="game-title">
-              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
+          <div className="game-header cb-header">
+            {/* DEMOTED TITLE. The category is the hero here; a 42px Bungee mode name directly
+                above it was a second display element competing with the first. It is a mono
+                eyebrow now — the mode is named once, quietly, and the hero owns the screen. */}
+            <div className="cb-eyebrow">
+              <span className="cb-eyebrow--full">AI CATEGORY BLITZ</span>
+              <span className="cb-eyebrow--short">BLITZ</span>
             </div>
+            {/* NO ROUND PILL HERE. Measured at 320px: eyebrow + ROUND + audio + LEAVE needed
+                282px of a 238px header and LEAVE was clipped off the stage. The round moves
+                onto the kicker line, where it costs nothing. */}
             <div className="game-header-right">
-              <div className="game-meta">
-                {isSolo ? (
-                  <span className="game-meta-round">SOLO</span>
-                ) : (
-                  <span className="game-meta-round">
-                    ROUND {categoryRound.round}/{TOTAL_CATEGORY_ROUNDS}
-                  </span>
-                )}
-              </div>
               {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
@@ -4750,222 +4786,243 @@ function CategoryBlitzScreen({
             <div className="cb-reroll-notice">HOST REROLLED — NEW CATEGORY</div>
           )}
 
-          {/* Two-zone responsive layout: hero + action (main) | live state (rail).
-              Collapses to a single stack on phones/tablets via the .cb-round grid.
-              CB-only wrapper, so Word Bomb layouts are untouched. */}
+          {/* ONE COMPOSITION, EIGHT SLOTS. Every block below is a direct grid child of
+              .cb-round so the two layouts are pure grid-template-areas: a single column
+              on phones, hero+clock+input on the left with the live state railed right at
+              >=900px. No nested main/side wrappers means the answer stack can sit ABOVE
+              the input on a phone and BESIDE it on a desktop with no DOM reorder. */}
           <div className="cb-round">
-            <div className="cb-round-main">
 
-          <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
-          <div className="cb-category-display">
-            {/* Sprays the category name on each new round/reroll (re-keyed by the
-                category text so the reveal replays). The box itself appears
-                normally - only the paint sweeps on. */}
-            <SprayReveal key={categoryRound.category} duration={780}>
-              {(categoryRound.category || '').toUpperCase()}
-            </SprayReveal>
-            {/* Mascot sitting on the box's edge, legs dangling over the border. */}
-            <div className="cb-cat-mascot">
-              <Mascot pose={cbMascotPose} emote={cbEmote} size={50} />
-            </div>
-          </div>
+            {/* ---- 1. THE HERO. The category is the biggest thing on the screen and the
+                    ONLY element that spends Blitz's accent. The judge sits beside it. ---- */}
+            <div className="cb-hero">
+              <div className="cb-hero-text">
+                <div className="cb-hero-kicker">
+                  <span className="cb-hero-round">
+                    {isSolo ? 'SOLO' : `R${categoryRound.round}/${TOTAL_CATEGORY_ROUNDS}`}
+                  </span>
+                  <span>NAME AS MANY AS YOU CAN</span>
+                  {/* Reroll rides the kicker line instead of owning a row of its own —
+                      it is a utility, and a row for it pushed the hero down a step. */}
+                  {canReroll && (
+                    <button
+                      className="cb-reroll-btn"
+                      onClick={() => { sound.whoosh(); onRerollCategory(); }}
+                      disabled={rerollsLeft <= 0 || !withinRerollWindow || rerollPending}
+                      title={
+                        rerollsLeft <= 0
+                          ? 'No rerolls left this game'
+                          : !withinRerollWindow
+                          ? 'Rerolls are only allowed at the start of a round'
+                          : 'Swap the current category for a different one'
+                      }
+                    >
+                      NEW ({rerollsLeft})
+                    </button>
+                  )}
+                </div>
+                {/* Sprays the category name on each new round/reroll (re-keyed by the
+                    category text so the reveal replays). */}
+                {/* --cb-chars is the fit input for the hero's size (see CategoryBlitz.css):
+                    a long category has to survive the same slot a short one fills, and the
+                    only thing the CSS cannot know on its own is how many characters it is
+                    about to lay out. Pure arithmetic on a prop — no layout read. */}
+                <div className="cb-hero-word" style={heroFit(categoryRound.category)}>
+                  <SprayReveal key={categoryRound.category} duration={780}>
+                    {(categoryRound.category || '').toUpperCase()}
+                  </SprayReveal>
+                </div>
+                {/* Format hint: one sample answer so players see the EXPECTED SHAPE
+                    (word / phrase / fragment) of a valid answer. DISPLAY-ONLY - it is
+                    never submitted, validated, scored, or pre-filled into the input. */}
+                {exampleFor(categoryRound.category) && (
+                  <div className="cb-hero-example">
+                    e.g. {exampleFor(categoryRound.category)}
+                  </div>
+                )}
+              </div>
 
-          {/* Format hint: one sample answer so players see the EXPECTED SHAPE
-              (word / phrase / fragment) of a valid answer. DISPLAY-ONLY - it is
-              never submitted, validated, scored, or pre-filled into the input. */}
-          {exampleFor(categoryRound.category) && (
-            <div className="cb-category-example">
-              e.g. {exampleFor(categoryRound.category)}
+              {/* ---- THE JUDGE. ONE PNG (the mascot art in /public), whose EXPRESSION
+                      swaps exactly once per verdict: idle -> celebrate on an accept,
+                      idle -> panic on a reject, back to idle ~1s later. Deliberately no
+                      `emote` prop: an emote would layer an animation SEQUENCE on top of
+                      the swap, and the swap is meant to be the whole reaction. ---- */}
+              <div className="cb-judge" data-verdict={cbTransient || 'idle'}>
+                <Mascot pose={cbMascotPose} size={CB_JUDGE_SIZE} className="cb-judge-art" />
+                <div className="cb-judge-label">THE JUDGE</div>
+              </div>
             </div>
-          )}
 
-          {/* Reroll: swap this category for another of the same tier. Host-only
-              in multiplayer; free (within the per-game limit) in solo. Disabled
-              when none remain (dashed-outline disabled style) or mid-countdown. */}
-          {canReroll && (
-            <div className="cb-reroll-row">
-              <button
-                className="cb-reroll-btn"
-                onClick={() => { sound.whoosh(); onRerollCategory(); }}
-                disabled={rerollsLeft <= 0 || !withinRerollWindow || rerollPending}
-                title={
-                  rerollsLeft <= 0
-                    ? 'No rerolls left this game'
-                    : !withinRerollWindow
-                    ? 'Rerolls are only allowed at the start of a round'
-                    : 'Swap the current category for a different one'
-                }
-              >
-                NEW CATEGORY ({rerollsLeft})
-              </button>
-            </div>
-          )}
-
-          <div className="game-timer-row">
-            <div className={`game-timer-track${lowTime ? ' urgent' : ''}`}>
-              <div
-                className="game-timer-fill"
-                style={{ transform: `scaleX(${displayRatio})`, background: timerColor }}
-              />
-            </div>
-            <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
-              {timerSeconds}s
-            </div>
-          </div>
-
-          <div className="game-input-row">
-            {/* Personal hype streak, floats above the input (pointer-events:none). */}
-            <ComboMeter count={streak.count} brk={streak.brk} />
-            {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
-                relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
-                feature. */}
-            {/* ONE REACTION SLOT — see the Word Bomb note. */}
-            <div className="wb-react" aria-hidden="true">
-              {/* ONE reaction per word — see the Word Bomb note. */}
-              {hypeKey > 0 && !gameOver
-                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
-                && <HypePopup key={hypeKey} />}
-              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
-                <WordLanding
-                  key={lastLanding.key}
-                  word={lastLanding.word}
-                  band={lastLanding.band}
-                  wins={lastLanding.wins}
-                  secret={lastLanding.secret}
-                  reduced={goReduce}
+            {/* ---- 2. THE CLOCK. A chunky, hard-edged solid block that shrinks by
+                    transform (scaleX from a left origin — never an animated width) and
+                    steps its VALUE at 50% and 20% remaining. ---- */}
+            <div className="cb-clock" data-step={clockStep}>
+              <div className="cb-clock-track">
+                <div
+                  className="cb-clock-block"
+                  style={{ transform: `scaleX(${displayRatio})` }}
                 />
-              )}
+              </div>
+              <div className="cb-clock-num">{timerSeconds}</div>
             </div>
-            {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
-            {clutchCall && (
-              <ClutchCallout
-                key={clutchCall.key}
-                seconds={clutchCall.seconds}
-                tier={clutchCall.tier}
-              />
-            )}
-            {/* Per-letter submit physics (accept pop / reject scatter). The reject
-                scatter REPLACES the input-shake, so the input below no longer
-                applies it - one coherent miss reaction. pointer-events:none. */}
-            {cbSubmitLetters && (
-              <SubmitLetters
-                key={cbSubmitLetters.key}
-                text={cbSubmitLetters.text}
-                mode={cbSubmitLetters.mode}
-              />
-            )}
-            <input
-              ref={inputRef}
-              className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
-              type="text"
-              value={draft}
-              onChange={(event) => {
-                const value = event.target.value;
-                // Soft key tick on actual character entry (parity with Word Bomb).
-                if (value.length > draft.length) sound.keystroke();
-                setDraft(value);
-              }}
-              onKeyDown={handleKeyDown}
-              disabled={showCountdown}
-              aria-label="Type an answer for the category"
-              placeholder="NAME ONE…"
-              maxLength={32}
-              autoComplete="off"
-              spellCheck="false"
-            />
-            <button className="game-send-btn" onClick={submit}>
-              SEND
-            </button>
-            {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
-            <div style={{ display: 'contents' }}>
-              {hypeKey > 0 && <FloatingScore key={hypeKey} />}
-            </div>
-            {/* ONE-TIME first-game spotlight — only once the countdown is done and you can type. */}
-            {gameSpot && !showCountdown && (
-              <Spotlight
-                targetSelector=".game-input"
-                caption="NAME SOMETHING IN THE CATEGORY"
-                sub="START TYPING"
-                onDismiss={dismissGameSpot}
-              />
-            )}
-          </div>
 
-          {/* While the AI judge is running (list-miss), show a subtle "checking…"
-              chip instead of the previous result toast; it clears the instant the
-              answer_result lands and the normal accept/reject toast plays. */}
-          {checkingAnswer ? (
-            <div className="game-toast cb-checking-toast" aria-live="polite">
-              checking
-              <span className="cb-checking-dots" aria-hidden="true">
-                <i>.</i>
-                <i>.</i>
-                <i>.</i>
+            {/* ---- 3. The tally line: the answer count, and the combo readout in a slot
+                    of its own. The combo used to float 48px above the input row, which in
+                    Blitz is exactly where the clock numeral lives — measured overlapping
+                    it at every viewport. It gets a real box here. ---- */}
+            <div className="cb-tally">
+              <span className="cb-tally-label">ANSWERS</span>
+              <span className="cb-tally-count">{myAnswers.length}</span>
+              <span className="cb-combo-slot">
+                <ComboMeter count={streak.count} brk={streak.brk} />
               </span>
             </div>
-          ) : (
-            lastWordResult && (
-              <div
-                className={`game-toast ${
-                  lastWordResult.accepted ? 'accepted' : 'rejected'
-                }`}
-              >
-                {lastWordResult.accepted
-                  ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
-                  : rejectionMessage(lastWordResult.reason, { isCategory: true })}
-              </div>
-            )
-          )}
 
-            </div>
-            {/* ---- Side rail: live state (your answers + opponents) ---- */}
-            <div className="cb-round-side">
-
-          <div className="cb-my-answers">
-            <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
-            <div className="cb-answers-list">
-              {myAnswers.length === 0 ? (
-                <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
+            {/* ---- 4. THE ANSWER STACK. Grows UPWARD from the input; newest line at the
+                    bottom at full ink, older ones stepping down in opacity until they
+                    clip out of the top. ---- */}
+            <div className="cb-answer-stack">
+              {answerStack.length === 0 ? (
+                <span className="cb-answer-empty">GO! TYPE ANYTHING THAT FITS</span>
               ) : (
-                myAnswers.map((answer, i) => (
-                  <span key={`${answer}-${i}`} className="cb-answer-chip">
+                answerStack.map((answer, i) => (
+                  <span
+                    key={`${answer}-${myAnswers.length - i}`}
+                    className="cb-answer-line"
+                    style={{ '--age': i, opacity: 1 - i * CB_STACK_FADE }}
+                  >
                     {answer.toUpperCase()}
                   </span>
                 ))
               )}
             </div>
-          </div>
 
-          {/* Opponents' live progress - hidden in solo (there are none). */}
-          {!isSolo && (
-            <div className="cb-progress">
-              <div className="cb-section-label">OTHER PLAYERS</div>
-              {others.length === 0 ? (
-                <span className="game-used-empty">NO OTHER PLAYERS</span>
-              ) : (
-                others.map((p) => {
-                  const pc = resolvePlayerColor(playerColors, p.id);
-                  return (
-                  <div
-                    key={p.id}
-                    className="cb-progress-row"
-                    style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
-                  >
-                    <span className="cb-progress-name">
-                      <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                      <span className="cb-progress-name-text">{p.name}</span>
-                    </span>
-                    <span className="cb-progress-count">
-                      {plural(playerProgress[p.id] || 0, 'answer')}
-                    </span>
-                  </div>
-                  );
-                })
+            {/* ---- 5. The field. ---- */}
+            <div className="game-input-row cb-input-row">
+              {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
+                  relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
+                  feature. ONE REACTION SLOT — see the Word Bomb note. */}
+              <div className="wb-react" aria-hidden="true">
+                {hypeKey > 0 && !gameOver
+                  && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
+                  && <HypePopup key={hypeKey} />}
+                {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+                  <WordLanding
+                    key={lastLanding.key}
+                    word={lastLanding.word}
+                    band={lastLanding.band}
+                    wins={lastLanding.wins}
+                    secret={lastLanding.secret}
+                    reduced={goReduce}
+                  />
+                )}
+              </div>
+              {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
+              {clutchCall && (
+                <ClutchCallout
+                  key={clutchCall.key}
+                  seconds={clutchCall.seconds}
+                  tier={clutchCall.tier}
+                />
+              )}
+              {/* Per-letter submit physics (accept pop / reject scatter). The reject
+                  scatter REPLACES the input-shake, so the input below no longer
+                  applies it - one coherent miss reaction. pointer-events:none. */}
+              {cbSubmitLetters && (
+                <SubmitLetters
+                  key={cbSubmitLetters.key}
+                  text={cbSubmitLetters.text}
+                  mode={cbSubmitLetters.mode}
+                />
+              )}
+              <input
+                ref={inputRef}
+                className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
+                type="text"
+                value={draft}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  // Soft key tick on actual character entry (parity with Word Bomb).
+                  if (value.length > draft.length) sound.keystroke();
+                  setDraft(value);
+                }}
+                onKeyDown={handleKeyDown}
+                disabled={showCountdown}
+                aria-label="Type an answer for the category"
+                placeholder="NAME ONE…"
+                maxLength={32}
+                autoComplete="off"
+                spellCheck="false"
+              />
+              <button className="game-send-btn" onClick={submit}>
+                SEND
+              </button>
+              {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
+              <div style={{ display: 'contents' }}>
+                {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+              </div>
+              {/* ONE-TIME first-game spotlight — only once the countdown is done and you can type. */}
+              {gameSpot && !showCountdown && (
+                <Spotlight
+                  targetSelector=".game-input"
+                  caption="NAME SOMETHING IN THE CATEGORY"
+                  sub="START TYPING"
+                  onDismiss={dismissGameSpot}
+                />
               )}
             </div>
-          )}
 
+            {/* ---- 6. The verdict line. Reserved height so an arriving toast never
+                    reflows the composition under the player's hands. ---- */}
+            <div className="cb-verdict-slot">
+              {checkingAnswer ? (
+                <div className="game-toast cb-checking-toast" aria-live="polite">
+                  checking
+                  <span className="cb-checking-dots" aria-hidden="true">
+                    <i>.</i>
+                    <i>.</i>
+                    <i>.</i>
+                  </span>
+                </div>
+              ) : (
+                lastWordResult && (
+                  <div
+                    className={`game-toast ${
+                      lastWordResult.accepted ? 'accepted' : 'rejected'
+                    }`}
+                  >
+                    {lastWordResult.accepted
+                      ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
+                      : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+                  </div>
+                )
+              )}
             </div>
+
+            {/* ---- 7. Opponents: counts only, one compact strip. Hidden in solo. ---- */}
+            {!isSolo && (
+              <div className="cb-rivals">
+                <span className="cb-rivals-label">RIVALS</span>
+                {others.length === 0 ? (
+                  <span className="cb-rivals-empty">NONE</span>
+                ) : (
+                  others.map((p) => {
+                    const pc = resolvePlayerColor(playerColors, p.id);
+                    return (
+                      <span
+                        key={p.id}
+                        className="cb-rival"
+                        style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+                      >
+                        <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                        <span className="cb-rival-name">{p.name}</span>
+                        <b className="cb-rival-count">{playerProgress[p.id] || 0}</b>
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -4974,15 +5031,22 @@ function CategoryBlitzScreen({
 
   // ---- BETWEEN ROUNDS: results + countdown ----
   if (roundResults) {
+    // The results screen keeps the SAME composition language as the round: the
+    // category is still the hero (it is what everyone was just answering), the judge
+    // is still one PNG at the top right, and the accent is still spent only on the
+    // hero. Scores are the panel value, not a second accent.
+    const board = [...(roundResults.playerResults || [])].sort(
+      (a, b) => b.roundScore - a.roundScore
+    );
     return (
       <div className="game-wrap">
-        <Mascot pose={cbMascotPose} size={110} className="game-mascot" />
-        <div className="game-stage">
-          <div className="game-header">
-            <div className="game-title">
-              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
+        <div className="game-stage game-stage--blitz cb-results-stage">
+          <div className="game-header cb-header">
+            <div className="cb-eyebrow">
+              <span className="cb-eyebrow--full">AI CATEGORY BLITZ</span>
+              <span className="cb-eyebrow--short">BLITZ</span>
             </div>
-            <div className="game-header-actions">
+            <div className="game-header-right">
               {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
@@ -4991,52 +5055,64 @@ function CategoryBlitzScreen({
           </div>
 
           <div className="cb-round-results">
-            <div className="cb-results-title">
-              <SprayReveal key={roundResults.round}>
-                ROUND {roundResults.round} RESULTS
-              </SprayReveal>
-            </div>
-            <div className="cb-results-category">
-              <SprayReveal key={roundResults.round} delay={140}>
-                {(roundResults.category || '').toUpperCase()}
-              </SprayReveal>
-            </div>
-
-            {(roundResults.playerResults || []).map((pr) => {
-              const pc = resolvePlayerColor(playerColors, pr.id);
-              return (
-              <div
-                key={pr.id}
-                className="cb-result-player"
-                style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
-              >
-                <div className="cb-result-head">
-                  <span className="cb-result-name">
-                    <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-result-name-text">{pr.name}</span>
-                    {pr.id === myId && <span className="game-player-you">YOU</span>}
-                  </span>
-                  <span className="cb-result-scores">
-                    <span className="cb-result-round">+{pr.roundScore}</span>
-                    <span className="cb-result-total">
-                      {categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore} TOTAL
-                    </span>
-                  </span>
+            {/* Same hero slot, same accent, so the round and its result read as one
+                screen rather than two unrelated layouts. */}
+            <div className="cb-hero cb-hero--results">
+              <div className="cb-hero-text">
+                <div className="cb-hero-kicker">
+                  <span>ROUND {roundResults.round} — TIME</span>
                 </div>
-                <div className="cb-result-answers">
-                  {pr.answers.length === 0 ? (
-                    <span className="game-used-empty">NO ANSWERS</span>
-                  ) : (
-                    pr.answers.map((answer, i) => (
-                      <span key={`${answer}-${i}`} className="cb-answer-chip">
-                        {answer.toUpperCase()}
-                      </span>
-                    ))
-                  )}
+                <div className="cb-hero-word" style={heroFit(roundResults.category)}>
+                  <SprayReveal key={roundResults.round} duration={620}>
+                    {(roundResults.category || '').toUpperCase()}
+                  </SprayReveal>
                 </div>
               </div>
-              );
-            })}
+              {/* The same ONE judge PNG, holding the verdict on the whole round:
+                  celebrating if you are leading, panicking if you are not. */}
+              <div className="cb-judge" data-verdict={cbLeading ? 'celebrate' : 'panic'}>
+                <Mascot pose={cbMascotPose} size={CB_JUDGE_SIZE} className="cb-judge-art" />
+                <div className="cb-judge-label">THE JUDGE</div>
+              </div>
+            </div>
+
+            <div className="cb-results-board">
+              {board.map((pr) => {
+                const pc = resolvePlayerColor(playerColors, pr.id);
+                return (
+                <div
+                  key={pr.id}
+                  className={`cb-result-player${pr.id === myId ? ' is-me' : ''}`}
+                  style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
+                >
+                  <div className="cb-result-head">
+                    <span className="cb-result-name">
+                      <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                      <span className="cb-result-name-text">{pr.name}</span>
+                      {pr.id === myId && <span className="game-player-you">YOU</span>}
+                    </span>
+                    <span className="cb-result-scores">
+                      <span className="cb-result-round">+{pr.roundScore}</span>
+                      <span className="cb-result-total">
+                        {categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore} TOTAL
+                      </span>
+                    </span>
+                  </div>
+                  <div className="cb-result-answers">
+                    {pr.answers.length === 0 ? (
+                      <span className="game-used-empty">NO ANSWERS</span>
+                    ) : (
+                      pr.answers.map((answer, i) => (
+                        <span key={`${answer}-${i}`} className="cb-answer-chip">
+                          {answer.toUpperCase()}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+                );
+              })}
+            </div>
 
             {(roundResults.sampleAnswers || []).length > 0 && (
               <MissedAnswers key={roundResults.round} answers={roundResults.sampleAnswers} />

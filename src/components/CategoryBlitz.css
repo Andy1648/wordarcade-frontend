@@ -1,0 +1,769 @@
+/* CategoryBlitz.css — the Category Blitz colour script + composition (feat/blitz-craft).
+   ============================================================================
+   WHY THIS IS ITS OWN FILE, NOT MORE OF GameScreen.css
+   The one-accent rule (src/perf/typeScale.test.js) counts `var(--v-accent)` selectors PER
+   FILE, and GameScreen.css already spends its single accent on the Word Bomb active seat.
+   Blitz is a different screen with a different colour script, so it gets a file and spends
+   its own one accent here. Imported AFTER GameScreen.css so these win on equal specificity.
+
+   BLITZ'S COLOUR SCRIPT — ORANGE ON A DEAD-QUIET FIELD.
+   CHAIN is cyan, Word Bomb is pink, SAT Rush is ink-on-cream. Blitz is #FF6B3D, which it
+   already uses as its share-card colour, so the mode's identity was half-decided already.
+   Everything that is NOT the category hero steps down to the neutral value ladder
+   (--v-panel / --v-ink-dim / --v-ink-faint). The screen used to carry cyan chips, a cyan
+   SEND, a cyan toast, a cyan timer, a yellow category, a pink title and a red LEAVE all at
+   once — seven hot colours and therefore no focal point at all.
+
+   THE ONE ACCENT: .cb-hero-word — the category itself. It is the biggest thing on the
+   screen (up to 80px), it is the only accent-coloured thing on the screen, and it is the
+   only thing the player is actually being asked about. Nothing else may take --v-accent.
+
+   MOTION BUDGET: nothing here loops. The clock is a transform (scaleX) with a linear
+   transition; the clock's VALUE steps are discrete class/attribute swaps, not animations;
+   the answer stack's brightness is a static inline opacity. No will-change at rest.
+   ============================================================================ */
+
+.game-stage--blitz {
+  /* Blitz's own accent, scoped to the Blitz stage so no other screen inherits it. */
+  --v-accent: #ff6b3d;
+  --cb-accent-dark: #a83a17;
+  /* The value ladder the clock steps through (see .cb-clock-block). Three stops, not a
+     ramp — a discrete step is readable out of the corner of your eye; a crossfade is not. */
+  --cb-clock-full: #3a2a5c;
+  --cb-clock-half: #b9aecd;
+  --cb-clock-final: #ffffff;
+  /* One quiet ground. The shared .game-stage halftone is pink; Blitz keeps the flat field. */
+  background-image: none;
+  background-color: #150c26;
+  display: flex;
+  flex-direction: column;
+  /* PINNED, like the Word Bomb board. Without a pinned height the grid's minmax(0,1fr)
+     answers row has nothing to shrink against, the stage grows to fit its content and the
+     input row lands below the fold — measured at 1366x768 before this line existed. The
+     sum matches .game-wrap's own padding var exactly (see the note there). */
+  height: calc(100dvh - 2 * var(--wrap-pad-y));
+  max-height: calc(100dvh - 2 * var(--wrap-pad-y));
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* The shared header stacks ROUND / audio / LEAVE in a column, ~110px of chrome in the
+   corner the hero has to live next to. In Blitz they sit on one line. */
+.cb-header .game-header-right {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Chrome: the mode name is an eyebrow, not a second display element ---- */
+.cb-header {
+  align-items: center;
+  margin-bottom: clamp(10px, 1.4vw, 18px);
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+.cb-eyebrow {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.18em;
+  color: var(--v-ink-faint);
+  white-space: nowrap;
+  /* Do NOT let this shrink: with min-width:0 the header's space-between squeezed it to
+     zero width at 320px and the mode name vanished from the screen entirely. */
+  flex: 0 0 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Two spellings of the mode name; the short one is all a 320px header can spend on
+   identity once ROUND / audio / LEAVE have taken their 210px. */
+.cb-eyebrow--short { display: inline; }
+.cb-eyebrow--full { display: none; }
+@media (min-width: 560px) {
+  .cb-eyebrow--short { display: none; }
+  .cb-eyebrow--full { display: inline; }
+}
+/* THE FIXED WINS PILL SITS AT top:12 right:16 OF THE VIEWPORT, not of the stage. On a
+   phone the stage's own top padding puts this header at y=30, straight underneath it —
+   measured overlapping ROUND 1/3 by 16px, and pushing LEAVE off the stage entirely. The
+   header starts below the pill instead. Desktop stages already clear it. */
+@media (max-width: 899px) {
+  .cb-header { margin-top: 20px; }
+}
+
+/* ============================================================================
+   THE COMPOSITION. Eight direct grid children, two layouts, zero DOM reorder.
+   ============================================================================ */
+.game-stage--blitz .cb-round {
+  display: grid;
+  /* minmax(0, 1fr), never a bare 1fr: `1fr` floors at the items' MIN-CONTENT, and the
+     hero's min-content is one very large word — the single column grew past the stage
+     and clipped the header, the reroll button and the rivals strip at 320px. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'hero'
+    'clock'
+    'tally'
+    'answers'
+    'input'
+    'verdict'
+    'rivals';
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
+  gap: clamp(8px, 1.2vw, 16px);
+  align-items: start;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.cb-verdict-slot { align-self: start; }
+.cb-hero { grid-area: hero; }
+.cb-clock { grid-area: clock; }
+.cb-tally { grid-area: tally; }
+.cb-answer-stack { grid-area: answers; }
+.game-stage--blitz .cb-input-row { grid-area: input; }
+.cb-verdict-slot { grid-area: verdict; }
+.cb-rivals { grid-area: rivals; }
+
+@media (min-width: 900px) {
+  .game-stage--blitz .cb-round {
+    grid-template-columns: minmax(0, 1.85fr) minmax(250px, 1fr);
+    /* THE HERO SPANS BOTH COLUMNS. Boxed into the left column it measured 68px at 1366
+       and 63px at 1280 on a 44-character category — under the 64-80px the hero is
+       specified at. Across the full stage its slot is 1007px instead of 577px, so it
+       reaches the 80px ceiling AND drops from four lines to three. The rail keeps the
+       live state; the hero keeps the width. */
+    grid-template-areas:
+      'hero    hero'
+      'clock   tally'
+      'input   answers'
+      'verdict answers'
+      '.       rivals';
+    /* Only the answers row flexes; everything else is content-sized, so the stack is the
+       one thing that absorbs (or gives up) the slack in a short window. */
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    column-gap: clamp(24px, 3vw, 48px);
+    row-gap: clamp(10px, 1.4vw, 20px);
+  }
+}
+
+/* ============================================================================
+   1. THE HERO — the category, and the judge beside it.
+   ============================================================================ */
+.cb-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(8px, 1.5vw, 24px);
+  width: 100%;
+  min-width: 0;
+}
+.cb-hero-text {
+  /* BASIS 0, NOT auto. With `flex-basis: auto` this box's width comes from its content,
+     and its content's font-size comes from `cqw` of this box — a circular definition the
+     browser resolves by blowing the hero up to max-content and pushing the judge off the
+     stage (measured at 320px: the hero ran 40px past the right border and the judge was
+     gone). A zero basis makes the width pure leftover space, so the cqw is stable. */
+  flex: 1 1 0;
+  min-width: 0;
+  /* The container query below measures THIS column, not .cb-hero — the judge takes a
+     slice of the hero row, and sizing off the whole row over-estimated the slot by the
+     width of the judge, which is what chopped "SANDWICHES" into "SANDWICHE / S". */
+  container-type: inline-size;
+}
+
+.cb-hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.14em;
+  color: var(--v-ink-faint);
+  margin-bottom: clamp(4px, 0.8vw, 10px);
+  min-height: var(--tap-min); /* the reroll button lives on this line */
+}
+.cb-hero-kicker > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The round indicator, evicted from the header (see the JSX note) — it rides here now. */
+.cb-hero-round {
+  flex: 0 0 auto;
+  color: var(--v-ink-dim);
+  border: 2px solid var(--v-rule);
+  border-radius: 8px;
+  padding: 2px 7px;
+}
+
+/* THE ONE ACCENT ELEMENT ON THIS SCREEN. */
+.cb-hero-word {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  /* FIT-TO-SLOT (the sanctioned typeScale exception): a 45-character category has to land
+     in the same slot at 320px that a 13-character one fills at 1366px, so the hero is
+     sized to its BOX, not to the document scale.
+       80px   the ceiling Andy set (and what a short category gets on a desktop)
+       13vh   keeps a long one off the fold in a 551px-tall window
+       13vh   keeps a long one off the fold in a 551px-tall window
+       558cqw / chars    holds it to ~4.3 LINES. Bungee's average advance is 0.77em
+              (measured on the shipped face, not assumed: 44 chars set at 59.9px filled
+              4 lines of a 507px column), so lines ~= 0.77 * size * chars / width and
+              4.3 lines gives size <= 5.58 * width / chars.
+       130cqw / maxword  holds the LONGEST WORD to one line. This is the term that
+              matters: sizing on total length alone put "SANDWICHES" at 195px into a
+              174px column and the browser broke it as "SANDWICHE / S".
+     Both --cb-* come from heroFit() in GameScreen.jsx. */
+  font-size: min(
+    80px,
+    13vh,
+    calc(558cqw / var(--cb-chars, 20)),
+    calc(130cqw / var(--cb-maxword, 8))
+  );
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+  color: var(--v-accent);
+  min-width: 0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  /* Long categories wrap between WORDS. `break-word` used to chop "SANDWICHES" into
+     "SANDWICHE / S" at 320px; the fit-to-slot size means it no longer has to. */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+.cb-hero-word .spray-reveal { display: block; }
+
+.cb-hero-example {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  font-style: italic;
+  color: var(--v-ink-faint);
+  margin-top: clamp(2px, 0.6vw, 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Reroll: a demoted ghost control on the kicker line. */
+.game-stage--blitz .cb-reroll-btn {
+  flex: 0 0 auto;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: var(--v-ink-dim);
+  background: transparent;
+  border: 2px solid var(--v-rule);
+  border-radius: 8px;
+  padding: 4px 10px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  cursor: pointer;
+  transition: transform 160ms ease-out, color 160ms linear;
+}
+.game-stage--blitz .cb-reroll-btn:hover:not(:disabled) {
+  color: var(--v-ink);
+  transform: translateY(-1px);
+}
+.game-stage--blitz .cb-reroll-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ============================================================================
+   THE JUDGE — one PNG, one expression swap per verdict.
+   ============================================================================ */
+.cb-judge {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /* ONE asset, sized through the Mascot component's own --mascot-size var so the PNG
+     keeps a real layout box. (A transform: scale() here looked right and was not: the
+     unscaled 132px box stayed in flow, so the "THE JUDGE" caption printed across the
+     art's legs at every width below 900px.) */
+  --cb-judge-size: 56px;
+  /* auto, not the size var: the "THE JUDGE" caption is wider than the art on a phone, and a
+     fixed box let the caption hang 20px outside it. */
+  width: auto;
+}
+/* !important because Mascot.jsx writes --mascot-size as an INLINE style from its `size`
+   prop, and an inline custom property beats a stylesheet one. Without it the art stayed at
+   the JS constant (132px) at every breakpoint and ran 28px past the stage's right edge at
+   320px — measured, not guessed. */
+.cb-judge .mascot-container {
+  --mascot-size: var(--cb-judge-size) !important;
+}
+/* Mascot.css shrinks every mascot to 0.7x below 600px "to save space". The Blitz judge
+   already IS its phone size (56-76px vs the 132px desktop one), so the second reduction
+   just made it a 39px smudge. The size var is the single knob here. */
+@media (max-width: 600px) {
+  .cb-judge .mascot-img { height: var(--cb-judge-size); }
+}
+.cb-judge-label {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  color: var(--v-ink-faint);
+  white-space: nowrap;
+}
+@media (min-width: 380px) {
+  .cb-judge { --cb-judge-size: 76px; }
+}
+@media (min-width: 560px) {
+  .cb-judge { --cb-judge-size: 96px; }
+}
+@media (min-width: 900px) {
+  .cb-judge { --cb-judge-size: 132px; }
+}
+/* Capped at 132: every pixel the judge takes is a pixel off the hero's slot, and the hero
+   is the accent. 172px cost the hero 8px of type at 1366. */
+/* A short window has no height to spend on the judge, whatever the width. */
+@media (max-height: 620px) {
+  .cb-judge { --cb-judge-size: 64px; }
+}
+
+/* ============================================================================
+   2. THE CLOCK — a chunky hard-edged block that shrinks by transform and steps
+   its VALUE at 50% and 20% remaining.
+   ============================================================================ */
+.cb-clock {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+.cb-clock-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: clamp(18px, 2.4vh, 28px);
+  background: #0a0513;
+  border: 3px solid #000;
+  border-radius: 8px; /* the house radius, and the only softness on it */
+  overflow: hidden;
+}
+.cb-clock-block {
+  height: 100%;
+  width: 100%;
+  border-radius: 0; /* hard edges: the block itself is square inside the track */
+  background: var(--cb-clock-full);
+  transform-origin: left center;
+  /* The drain is scaleX ONLY (composited); the 1s linear transition matches the 1s
+     server tick so it reads as a smooth drain rather than a stutter. No width, ever. */
+  transition: transform 1s linear;
+}
+.cb-clock[data-step='half'] .cb-clock-block { background: var(--cb-clock-half); }
+.cb-clock[data-step='final'] .cb-clock-block { background: var(--cb-clock-final); }
+
+.cb-clock-num {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1;
+  font-size: var(--fs-panel);
+  color: var(--v-ink-faint);
+  min-width: 2.4ch;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+/* The numeral steps on the SAME two thresholds, so the step is legible whether you are
+   reading the block or the number. */
+.cb-clock[data-step='half'] .cb-clock-num { color: var(--cb-clock-half); }
+.cb-clock[data-step='final'] .cb-clock-num { color: var(--cb-clock-final); }
+
+/* ============================================================================
+   3. THE TALLY LINE — count + the combo readout in a real box.
+   ============================================================================ */
+.cb-tally {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+}
+.cb-tally-label {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.14em;
+  color: var(--v-ink-faint);
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cb-tally-count {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1;
+  font-size: var(--fs-panel);
+  color: var(--v-ink);
+}
+/* The combo meter is absolutely positioned by default (top:-48px of the input row),
+   which in this composition is exactly where the clock numeral sits — measured
+   overlapping it at all four viewports. Here it is a real, statically-placed box. */
+.cb-combo-slot {
+  margin-left: 14px;
+  /* The combo badge is skewX(-4deg) scale(up to 1.35) with a RIGHT-BOTTOM origin, so it
+     paints well outside its own layout box, to the LEFT. Measured over the answer count
+     at 320px. This is the room that overhang needs. */
+  padding-left: 18px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+.cb-combo-slot .combo-meter {
+  position: static;
+  top: auto;
+  right: auto;
+}
+
+/* ============================================================================
+   4. THE ANSWER STACK — builds UPWARD, newest brightest.
+   ============================================================================ */
+.cb-answer-stack {
+  display: flex;
+  /* column-reverse puts the FIRST DOM child (the newest answer — the JSX reverses the
+     list) at the BOTTOM, right above the field, and packs the rest upward. Older lines
+     run off the TOP and are clipped, which is the whole visual idea: the stack grows up
+     and the past fades out of it. */
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  /* .cb-round is align-items:start, so without this the stack is a content-height box
+     pinned to the TOP of its row and the "grows upward from the field" reading is lost —
+     measured 300px of dead space between the newest answer and the input at 390x844. */
+  align-self: stretch;
+}
+.cb-answer-line {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  color: var(--v-ink);
+  /* NEWEST BRIGHTEST. --age is the index from the newest (0 = newest); a static inline
+     value, computed in the JSX, never animated. */
+  /* NEWEST BRIGHTEST. The ramp itself is a resolved number in the inline style (see
+     CB_STACK_FADE in GameScreen.jsx — a var()+calc() opacity resolved a frame late). It is
+     steep on purpose: the stack clips at the top, so the oldest visible line has to be
+     faint enough that a half-clipped one reads as receding, not as a cut-off bug. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.cb-answer-empty {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.1em;
+  color: var(--v-ink-faint);
+}
+
+
+/* ============================================================================
+   5. THE FIELD — demoted to panel values; the hero keeps the only hot colour.
+   ============================================================================ */
+.game-stage--blitz .cb-input-row {
+  position: relative;
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-wrap: nowrap; /* SEND stays beside the field; wrapped, it cost 60px of a 640px screen */
+  gap: 8px;
+  align-items: stretch;
+}
+.game-stage--blitz .cb-input-row .game-input {
+  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #fff;
+  border-color: #000;
+}
+.game-stage--blitz .cb-input-row .game-send-btn {
+  flex: 0 0 auto;
+  background: var(--v-panel-hi);
+  border-color: #000;
+  color: var(--v-ink);
+}
+/* A DARKER SHADE of the accent, never the accent itself — the hero is the only thing on
+   this screen allowed the full-strength colour (and the gate in typeScale.test.js enforces
+   exactly that: it went red on this rule and on the accepted-toast border below). */
+.game-stage--blitz .cb-input-row .game-send-btn:hover {
+  background: var(--cb-accent-dark);
+  color: var(--v-ink);
+}
+
+/* ============================================================================
+   6. THE VERDICT LINE — reserved height, so an arriving toast never reflows the
+   composition under the player's hands.
+   ============================================================================ */
+.cb-verdict-slot {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+.game-stage--blitz .cb-verdict-slot .game-toast {
+  margin: 0;
+  width: 100%;
+  font-size: var(--fs-label);
+  padding: 8px 12px;
+}
+/* Accept / reject read as VALUE + a hairline, not as two more saturated fills. */
+.game-stage--blitz .cb-verdict-slot .game-toast.accepted {
+  background: var(--v-panel-hi);
+  border-color: var(--cb-accent-dark);
+  color: var(--v-ink);
+}
+.game-stage--blitz .cb-verdict-slot .game-toast.rejected {
+  background: var(--v-panel);
+  border-color: var(--v-rule);
+  color: var(--v-ink-dim);
+}
+
+/* ============================================================================
+   7. RIVALS — one compact strip of counts. Was three full-width cards.
+   ============================================================================ */
+.cb-rivals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  width: 100%;
+}
+.cb-rivals-label,
+.cb-rivals-empty {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  color: var(--v-ink-faint);
+}
+.cb-rival {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: var(--v-ink-dim);
+  background: var(--v-panel);
+  border: 2px solid var(--v-rule);
+  border-radius: 8px;
+  padding: 3px 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+.cb-rival-name {
+  max-width: 11ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cb-rival-count {
+  color: var(--v-ink);
+  font-weight: 700;
+}
+@media (min-width: 900px) {
+  .cb-rivals { align-content: flex-start; }
+}
+
+/* ---- CHROME DEMOTED TO PANEL. Two shared components ship in colours that read as a
+   second and third accent on this screen: the audio button's fill is #FF6B3D (the same
+   orange Blitz spends on the hero) and the combo readout's top tiers are orange too. ---- */
+.game-stage--blitz .audio-ctrl--inline .audio-btn {
+  background: var(--v-panel-hi);
+  border-color: #000;
+  color: var(--v-ink);
+}
+.game-stage--blitz .combo-count,
+.game-stage--blitz .combo-flame,
+.game-stage--blitz .combo-label {
+  color: var(--v-ink);
+}
+
+/* ============================================================================
+   BETWEEN ROUNDS — the same composition language, so the two screens read as one.
+   ============================================================================ */
+.cb-results-stage .cb-round-results {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 0.9vw, 12px);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+/* THE RESULTS HERO IS CONTEXT, NOT THE QUESTION. At the round's 80px it took 280px of a
+   548px stage and the 3rd and 4th players' rows were clipped off the bottom of the board
+   (measured at 1366x768, 4 players). It keeps the same slot and the same accent at a
+   third of the size. */
+.cb-hero--results {
+  margin-bottom: clamp(2px, 0.8vw, 8px);
+  flex: 0 0 auto;
+}
+.cb-hero--results .cb-hero-word {
+  /* 34px, not 42: at 42 the fourth player's row was clipped off the bottom of the board
+     at 1280x720. The board is the point of this screen; the hero is the caption. */
+  font-size: min(
+    34px,
+    calc(320cqw / var(--cb-chars, 20)),
+    calc(90cqw / var(--cb-maxword, 8))
+  );
+}
+.cb-hero--results .cb-judge { --cb-judge-size: 76px; }
+@media (max-width: 559px) {
+  .cb-hero--results .cb-judge { --cb-judge-size: 48px; }
+}
+.cb-results-stage .cb-results-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.cb-results-stage .cb-result-player {
+  background: var(--v-panel);
+  border: 2px solid var(--v-rule);
+  border-left: 5px solid var(--pc, var(--v-rule));
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 6px 10px;
+  margin: 0;
+  /* The shared row is rotate(-0.5deg). On a 1160px-wide row that tilt adds 10px to the
+     box's vertical extent at each end, which pushed the first and last rows outside the
+     clipping board — the gate caught it before the eye did. */
+  transform: none;
+}
+.cb-results-stage .cb-result-player.is-me {
+  border-color: var(--cb-accent-dark);
+  border-left-color: var(--pc, var(--cb-accent-dark));
+}
+/* The per-player colour stays on the DOT and the left rule, where it identifies a seat.
+   As name TEXT it put four saturated colours on a screen whose accent is the hero. */
+.cb-results-stage .cb-result-name-text {
+  color: var(--v-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cb-results-stage .cb-result-name { min-width: 0; }
+/* The shared YOU chip is solid house pink — a second hot colour on a screen whose accent is
+   the hero. It only has to say "this row is mine", which the ink and the row's own outline
+   already do; it stays as a quiet outline. */
+.cb-results-stage .game-player-you {
+  background: transparent;
+  border: 2px solid var(--v-rule);
+  color: var(--v-ink-dim);
+}
+.cb-results-stage .cb-result-round {
+  background: var(--v-panel-hi);
+  border-color: var(--v-rule);
+  color: var(--v-ink);
+}
+.cb-results-stage .cb-result-total {
+  color: var(--v-ink-faint);
+}
+.cb-results-stage .cb-answer-chip {
+  background: var(--v-panel-hi);
+  border-color: var(--v-rule);
+  color: var(--v-ink-dim);
+  transform: none;
+  animation: none;
+}
+.cb-results-stage .cb-missed-chip {
+  background: transparent;
+  border-color: var(--v-rule);
+  color: var(--v-ink-faint);
+}
+.cb-results-stage .cb-next-round {
+  flex: 0 0 auto;
+  color: var(--v-ink-faint);
+  margin: 0;
+  padding-top: 6px;
+}
+
+/* ============================================================================
+   NARROW PHONES — the two shared rules that cost Blitz the most height.
+   ============================================================================ */
+@media (max-width: 420px) {
+  /* The shared rule stacks SEND under the field below 420px. That is 60px of a 640px
+     screen for a button that fits beside a 190px field, and Blitz has an answer stack
+     that wants those 60px. Scoped to Blitz; Word Bomb keeps the shared behaviour. */
+  .game-stage--blitz .cb-input-row { flex-direction: row; }
+  .game-stage--blitz .cb-input-row .game-input { flex: 1 1 auto; width: auto; }
+  .game-stage--blitz .cb-input-row .game-send-btn { width: auto; }
+}
+@media (max-width: 559px) {
+  /* RESULTS ON A PHONE: only YOUR answer chips. With everyone's chips shown, a 4-player
+     board ran 180px past the bottom of a 320x640 stage and the 3rd and 4th players were
+     clipped — their SCORES are the part a phone reader actually needs, and those stay. */
+  .cb-results-stage .cb-result-player:not(.is-me) .cb-result-answers { display: none; }
+  .cb-results-stage .cb-result-head { margin-bottom: 0; }
+  .cb-results-stage .cb-result-player.is-me .cb-result-head { margin-bottom: 6px; }
+  .cb-results-stage .cb-next-round { font-size: var(--fs-body); padding-top: 2px; }
+  .cb-results-stage .cb-result-player { padding: 4px 8px; }
+  .cb-results-stage .cb-results-board { gap: 4px; }
+  /* Two rows of missed answers is a taste; the fourth player's SCORE is not. */
+  .cb-results-stage .cb-missed-answers { max-height: 52px; overflow: hidden; }
+  .cb-results-stage .cb-missed { margin-top: 2px; }
+  .cb-rival { font-size: var(--fs-micro); padding: 2px 6px; }
+  .cb-rival-name { max-width: 8ch; }
+  /* "NAME AS MANY AS YOU CAN" ellipsised to a single "N" next to the round chip at 320px.
+     The field's own "NAME ONE…" placeholder says the same thing and always fits. */
+  .cb-hero-kicker > span:not(.cb-hero-round) { display: none; }
+  /* On a phone the art is the caption. */
+  .cb-judge-label { display: none; }
+}
+/* A SHORT WINDOW (the 1280x551 / 1163x501 cells the fill + integrity gates walk) has ~175px
+   of vertical room for the hero once the kicker, clock, field and verdict have taken theirs.
+   64px x four lines is 240px, so on those windows the hero gives up size rather than the
+   screen giving up the field — a hero below the fold is not a hero. */
+@media (max-height: 620px) {
+  .cb-hero-word {
+    font-size: min(
+      46px,
+      calc(480cqw / var(--cb-chars, 20)),
+      calc(120cqw / var(--cb-maxword, 8))
+    );
+  }
+  .cb-hero-kicker { min-height: 38px; }
+}
+
+/* ---- Reduced motion: the clock stops interpolating and simply steps. ---- */
+@media (prefers-reduced-motion: reduce) {
+  .cb-clock-block { transition: none; }
+  .game-stage--blitz .cb-reroll-btn { transition: none; }
+}
