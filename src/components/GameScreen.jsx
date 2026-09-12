@@ -1582,6 +1582,10 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // so far, ticking up as answers are accepted (fixed, pointer-events:none so it never blocks
 // play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
 // total on the game-over card, large. Both are purely presentational.
+// The height the word-landing reaction needs above the field on a stacked board, including the
+// stamp that perches above the chip. Used to decide whether it can clear the used-words strip.
+const REACT_H = 54;
+
 export default function GameScreen({
   // The app's sound control, handed down as an element so this screen can host it in its header
   // cluster without knowing anything about music or the SFX engine. See App.jsx.
@@ -1798,6 +1802,25 @@ export default function GameScreen({
         const rails =
           getComputedStyle(stage).getPropertyValue('--wb-layout').trim() === 'rails';
         setTinyBoard(!rails && stage.clientWidth < 300);
+        // The stacked board's used-words strip sits between the field and the ring, and the
+        // reaction slot has to clear it (see .wb-react in GameScreen.css). Its height is written
+        // as a custom property from this same pass; the slot is absolutely positioned, so writing
+        // it can never change what it measures.
+        const usedEl = stage.querySelector('.game-used');
+        const ringEl = stage.querySelector('.wb-ring');
+        let lift = 0;
+        if (!rails && usedEl && ringEl) {
+          const u = usedEl.getBoundingClientRect();
+          // ...but ONLY IF THE BAND ABOVE THE STRIP IS ACTUALLY EMPTY. Lifting is a choice between
+          // two overlaps, not a free win: above the strip is the ring, and on a 320x640 board the
+          // gap between the bottom seat and the strip is smaller than the chip — measured, the
+          // lifted chip covered a PLAYER CARD by 16px. Covering a seat is worse than covering the
+          // used-words list (which is the least urgent thing on the board and the list this very
+          // word is about to join), so when the gap does not fit, the reaction stays put.
+          const gap = u.top - ringEl.getBoundingClientRect().bottom;
+          if (gap >= REACT_H) lift = Math.round(u.height);
+        }
+        stage.style.setProperty('--wb-usedh', `${lift}px`);
         setRailMetrics(
           rails
             ? {

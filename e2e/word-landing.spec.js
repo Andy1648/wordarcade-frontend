@@ -25,7 +25,7 @@ const mkPlayers = (n) =>
     isHost: i === 0,
   }));
 
-async function enterGame(page) {
+async function enterGame(page, playerCount = 2) {
   const mock = await installBackendMock(page);
   await page.addInitScript(() => {
     try {
@@ -36,7 +36,7 @@ async function enterGame(page) {
   });
   await page.goto('/?portal=1');
   await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
-  const players = mkPlayers(2);
+  const players = mkPlayers(playerCount);
   mock.pushToClient({
     type: 'room_update',
     payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'hard', players },
@@ -208,9 +208,34 @@ for (const vp of FRAME_VIEWPORTS) {
     // exposed this is not otherwise reproducible.
     await page.addInitScript(() => { Math.random = () => 0.99; });
     const mock = await enterGame(page);
+    // THE BOARD BEFORE THE WORD. A transient must not RESIZE the board — the check below is the
+    // one that would have caught integration/board-v2's real defect instead of its symptom:
+    // chain A's payout receipt matched no grid area on the ring board, fell into the implicit grid
+    // as a full-width row, and the first accepted word added 158px of board height. wbRingSize
+    // gave the height back the only way it can, and the ring went from 322px to 58px at 1280x720.
+    // Everything downstream of that read as a 27px overlap. The board gate never sees it because
+    // the board gate never accepts a word.
+    const ringBefore = await page.evaluate(() => {
+      const el = document.querySelector('.wb-ring');
+      return el ? Math.round(el.getBoundingClientRect().width) : 0;
+    });
     await accept(page, mock, 'minstrel');
     await page.waitForTimeout(120);
     await page.screenshot({ path: `claude/wb-frame-shots/${vp.name}.png` });
+    const ringAfter = await page.evaluate(() => {
+      const el = document.querySelector('.wb-ring');
+      return el ? Math.round(el.getBoundingClientRect().width) : 0;
+    });
+    expect(ringBefore, 'the ring must exist before the word').toBeGreaterThan(100);
+    // 2% or 4px, whichever is larger. Not zero, and the reason is worth stating: on the STACKED
+    // phone board the used-words strip gains a real chip when the word is accepted, which is
+    // content changing, not a transient taking space — measured, that is a 3px adjustment on a
+    // 247px ring (1.2%). The failure this guards against was -82%.
+    const ringTol = Math.max(4, ringBefore * 0.02);
+    expect(
+      Math.abs(ringAfter - ringBefore),
+      `an accepted word resized the ring: ${ringBefore}px -> ${ringAfter}px (tol ${ringTol.toFixed(1)}px)`
+    ).toBeLessThanOrEqual(ringTol);
 
     const m = await frameCheck(page);
     // eslint-disable-next-line no-console
@@ -241,6 +266,44 @@ for (const vp of FRAME_VIEWPORTS) {
     // (5) NO DUPLICATE OF THE LANDED WORD. The accept toast said the same word again, bottom-left,
     // at the same moment the landing was showing it at the field with its band and its payout.
     expect(m.acceptToasts, 'the accept toast duplicates the word landing').toBe(0);
+  });
+}
+
+// THE STACKED BOARD AT A FULL TABLE. Every frame test above enters at TWO players, and two
+// players is the one seat count where the phone board has room to spare: the ring is small and the
+// band above the used-words strip is empty. At eight the ring fills that band, and the reaction —
+// which lifts itself over the strip when it can — has to decide between covering the strip and
+// covering a SEAT. It must never pick the seat. (Measured before the fix: 16px of chip over a
+// player card at 320x640, at four AND eight players.)
+for (const vp of [{ name: '390x844', w: 390, h: 844 }, { name: '320x640', w: 320, h: 640 }]) {
+  test(`stacked board @ ${vp.name} / 8p: the landing never covers a seat`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await page.addInitScript(() => { Math.random = () => 0.99; });
+    const mock = await enterGame(page, 8);
+    await accept(page, mock, 'zymurgy');
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: `claude/wb-frame-shots/stacked-${vp.name}-8p.png` });
+    const hits = await page.evaluate(() => {
+      const R = (e) => e.getBoundingClientRect();
+      const px = (a, b) => {
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        return ox > 1 && oy > 1 ? Math.round(Math.min(ox, oy)) : 0;
+      };
+      const out = [];
+      for (const t of document.querySelectorAll('.wl, .wl-stamp, .wl-wins, .hype-popup')) {
+        for (const sel of ['.game-player-card', '.game-player-name-text', '.game-input-row', '.game-combo-box']) {
+          for (const p of document.querySelectorAll(sel)) {
+            const n = px(R(t), R(p));
+            if (n) out.push(`${t.className.split(' ')[0]} over ${sel} ${n}px`);
+          }
+        }
+      }
+      return [...new Set(out)];
+    });
+    // eslint-disable-next-line no-console
+    console.log(`STACKED | ${vp.name} | 8p | ${hits.length ? hits.join(' ; ') : 'clear'}`);
+    expect(hits, 'the landing covers a seat or a control on the stacked board').toEqual([]);
   });
 }
 

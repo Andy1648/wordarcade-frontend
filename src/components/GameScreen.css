@@ -118,6 +118,9 @@
    (never from vw/vh), which is only possible because the stage's height is PINNED here
    rather than grown by its contents. */
 .game-stage--wb {
+  /* Positioning context for the docked payout receipt (see .wb-receipt-rail far below), which is
+     absolute against THIS box so it can never take height from the ring. */
+  position: relative;
   /* The pinned box. `100dvh` (not vh) so a phone's collapsing URL bar moves it. */
   height: calc(100dvh - 2 * var(--wrap-pad-y));
   max-height: calc(100dvh - 2 * var(--wrap-pad-y));
@@ -398,6 +401,39 @@
   width: max-content;
   max-width: 100%;
   pointer-events: none;
+}
+
+/* ON THE RING BOARD THE REACTION HUGS THE LEFT OF THE FIELD, not its centre.
+   Centred, it sits directly under the ring's 6 o'clock seat: the slot is ~76px tall when it holds
+   a landing and the bottom seat reaches into that band, so the chip and an avatar shared 4px of
+   box at 1280x720 and 1px at 1366x768. Left-aligned it starts at the field's own left edge and the
+   centred seat is nowhere near it — and the reaction still happens where the word was typed, which
+   is the only thing this slot owes anybody. The width cap keeps a long HYPE phrase out of the
+   centre column too (it ellipsises, as it already does at every width). */
+@media (min-width: 900px) {
+  .game-stage--wb .wb-react {
+    left: 0;
+    right: auto;
+    transform: none;
+    justify-content: flex-start;
+    max-width: calc(50% - 96px);
+  }
+}
+
+/* THE STACKED BOARD LIFTS THE REACTION OVER THE USED-WORDS STRIP.
+   There is no gutter beside the field on a phone, so the left-hug above does not apply — and
+   directly above the field is the used-words strip, so the chip landed on "USED WORDS (0) / NONE
+   YET — BE THE FIRST" with the RARE stamp across the count. On the wide board that overlap was
+   judged acceptable (a solid chip, 1.5s, over the least urgent thing on the board — see the note
+   in e2e/word-landing.spec.js); on the phone it reads as clutter, because the strip's text shows
+   around the chip instead of behind it.
+   `--wb-usedh` is the measured height of that strip, written by the same ResizeObserver pass that
+   sizes the ring — an exact offset rather than a guessed one, and writing it cannot change the
+   strip's height, so there is no feedback loop. */
+@media (max-width: 899px) {
+  .game-stage--wb .wb-react {
+    bottom: calc(100% + var(--wb-usedh, 0px) + 10px);
+  }
 }
 
 .hype-popup {
@@ -4932,6 +4968,28 @@ html[data-beat='true'] .cb-answer-chip {
   min-height: 1px;
   pointer-events: none;
 }
+/* ON THE RING BOARD IT IS DOCKED TO THE BOARD'S BOTTOM-RIGHT CORNER, and this is the single most
+   important line in this block.
+   WHAT THE MERGE DID: chain A built this slot as a THIRD GRID COLUMN of chain A's board. The ring
+   board replaced that grid wholesale (head / top / feed-ring-used / bot), so `.wb-receipt-rail`
+   matched no area, fell into the implicit grid as a FULL-WIDTH ROW, and the first accepted word
+   added 158px of board height out of nowhere. `wbRingSize` then did exactly what it is supposed to
+   and gave the height back by shrinking the ring — measured at 1280x720: **322px before the word,
+   58px after it**. A 58px ring. Every board gate passed, because the board gate never accepts a
+   word; the word-landing gate caught it as a 27px overlap, which was the symptom, not the disease.
+   Absolute against the STAGE (which is a real element of the board, not the viewport — this is not
+   the orphan-fixed-UI shape), so it occupies no track and can never take a pixel of height from
+   the ring again. It sits in the gutter to the RIGHT of the input row, which is width-capped at
+   760px and centred, so on a board wide enough to have that gutter the two cannot meet. */
+.game-stage--wb .wb-receipt-rail {
+  position: absolute;
+  right: clamp(14px, 2vw, 28px);
+  bottom: clamp(10px, 1.6vh, 22px);
+  display: flex;
+  justify-content: flex-end;
+  width: 152px;
+  z-index: 5;
+}
 .wb-receipt {
   pointer-events: none;
   will-change: transform, opacity;
@@ -4959,7 +5017,11 @@ html[data-beat='true'] .cb-answer-chip {
    screen as the round breakdown, which is where it is actually readable — and the LANDING, which
    is the part that has to be at the word, still shows the band and the payout at the field. */
 @media (max-width: 899px) {
-  .wb-receipt-rail {
+  /* `.game-stage--wb` prefix, matching the dock rule above: that rule is (0,2,0) and this one was
+     (0,1,0), so on a phone the dock won the cascade and a 152x171 receipt landed on the input row.
+     Specificity, not order — the same trap that put the WINS pill on top of LEAVE. */
+  .wb-receipt-rail,
+  .game-stage--wb .wb-receipt-rail {
     display: none;
   }
 }
