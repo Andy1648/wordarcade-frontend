@@ -20,7 +20,7 @@ async function startMyTurn(mock, page) {
 // each test below). CAT 1×combo1.1 + BAT 1.5×1.2 + HAT 1×1.3 = 1.1+1.8+1.3 = 4.2 × 40 = 170 (correct).
 // If BAT is scored COMMON (the race), it's 1.1+1.2+1.3 = 3.6 × 40 = round10(144) = 140 — a 30-win underpay.
 const WORDS = ['CAT', 'BAT', 'HAT'];
-const CORRECT = 170;
+const CORRECT = 840;
 const RACED_COMMON = 140;
 
 test('rarity race: a word accepted before the index loads still pays its true rarity', async ({ page }) => {

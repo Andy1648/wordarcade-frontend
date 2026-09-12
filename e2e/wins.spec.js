@@ -37,16 +37,19 @@ test.describe('wins wiring', () => {
     });
   });
 
-  test('a Blitz round_end with 3 accepted answers pays 70 and counts the round', async ({ page }) => {
+  // ECONOMY v7: the per-word wins base went 20 -> 100, so every figure below is ~5x what it was.
+  // The BANKING arithmetic each test is about - the 3-answer gate, the retroactive release, the
+  // no-double-pay rule - is unchanged; only the rate it multiplies.
+  test('a Blitz round_end with 3 accepted answers pays 360 and counts the round', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
     await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON, combo 1.1/1.2/1.3 → 3.6 × 20 = round10(72) = 70
     // Poll for the banked wins: bankWordWins writes to localStorage on the async React drain, so a
     // synchronous read here occasionally races the bank under full-suite load (an intermittent 0).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(70);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(360);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(70);
+    expect(after.lifetime - before.lifetime).toBe(360);
     expect(after.blitz - before.blitz).toBe(1);
   });
 
@@ -78,14 +81,14 @@ test.describe('wins wiring', () => {
       await page.waitForTimeout(40);
     }
     // NO round_end — the player leaves. The 5 answers (combo-weighted 6.5 = 130) are already banked.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(130);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(650);
     expect((await readWins(page)).blitz - before.blitz).toBe(1);
     // The round ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'round_end', payload: { playerResults: [] } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(130); // still 130, not 260
-    expect(after.lifetime - before.lifetime).toBe(130);
+    expect(after.wins - before.wins).toBe(650); // still 130, not 260
+    expect(after.lifetime - before.lifetime).toBe(650);
     expect(after.blitz - before.blitz).toBe(1);
   });
 });
