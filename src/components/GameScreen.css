@@ -571,26 +571,58 @@
   gap: 8px;
 }
 
-/* Small, understated speaker toggle - matches the cel style but stays quiet
-   next to the louder LEAVE so it doesn't compete with the game UI. */
-.game-mute-btn {
+/* THE SOUND CONTROL IN THE HEADER CLUSTER (App hands it down as `audioSlot`).
+   Two things used to be wrong here: a `.game-mute-btn` speaker that muted only the SFX engine sat
+   beside a SECOND, app-wide speaker button pinned position:fixed at right:16/bottom:16 -- which at
+   390x844 and 320x640 measured 20px on top of SEND/SKIP. One control now, in the cluster, styled
+   like the cluster: the menu's orange nav-chip treatment is overridden because on a board #FF6B3D
+   is the RARE word band and a permanent orange square beside LEAVE reads as a rarity cue. Quiet
+   panel fill, same skew and hard shadow as its neighbours. */
+.game-header-actions .audio-ctrl--inline .audio-btn {
+  /* SIZED TO THE CLUSTER, NOT TO 44px. The header row is CHROME: wbRingSize subtracts its height
+     from the play area once, so every pixel this button adds to the row is a pixel off the ring's
+     diameter. At 44px it took the row 32px -> 44px and the ring at 1280x720 fell from 324px to
+     312px — 44.7% of the short side, under the board gate's 45% floor. So the button matches
+     LEAVE's compact box and carries its 44x44 TOUCH TARGET in an ::after that is out of flow and
+     therefore costs the row nothing. Hit area and layout box are different things; only one of
+     them has to be 44px. */
+  position: relative;
+  width: auto;
+  height: auto;
+  padding: 5px 7px;
   font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
-  line-height: 1;
-  color: #fff;
   background: #2a1450;
   border: 3px solid #000;
   border-radius: 3px;
-  padding: 5px 7px;
-  cursor: pointer;
+  color: #fff;
   box-shadow: 3px 3px 0 #000;
   transform: skewX(-4deg);
   transition: transform 0.1s, box-shadow 0.1s;
 }
-
-.game-mute-btn:active {
+.game-header-actions .audio-ctrl--inline .audio-btn:hover {
+  transform: skewX(-4deg) translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+.game-header-actions .audio-ctrl--inline .audio-btn:active {
   transform: skewX(-4deg) translate(2px, 2px);
   box-shadow: 1px 1px 0 #000;
 }
+/* The 44x44 hit target, out of flow so it adds nothing to the header row's height. Centred on the
+   button, and narrower than the 8px cluster gap either side, so it never steals a click from
+   LEAVE. */
+.game-header-actions .audio-ctrl--inline .audio-btn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  transform: translate(-50%, -50%);
+}
+/* The popover opens DOWN from a button at the top of the board, right-aligned to it, and has to
+   clear the stage's own stacking (the ring, the prompt, the vignette). */
+.game-header-actions .audio-ctrl--inline { z-index: 40; }
+.game-header-actions .audio-ctrl--inline .audio-panel { z-index: 41; }
 
 /* ---- Player bar ---- */
 
@@ -2136,6 +2168,20 @@
 .game-input::placeholder {
   color: #9a8bbf;
   text-transform: uppercase;
+}
+/* THE PLACEHOLDER DOES NOT GET THE FIELD'S TYPE SIZE ON A NARROW BOARD.
+   The field is set at --fs-panel because the TYPED WORD is the hero of the input — but a typed
+   Word Bomb word is 3-10 characters and a placeholder is a sentence. Measured at 320x640:
+   "WAIT YOUR TURN…" is 165px of 20px Space Mono in a 147px inner box, so the screenshot showed
+   "TYPE A WO" with the next glyph sliced in half. (The same class of bug is already documented at
+   the placeholder's own definition in GameScreen.jsx — this is the CSS half of it.) Under 430px the
+   placeholder drops to --fs-body, which is 16px there: 132px of text in 147px. The typed value is
+   untouched at every width.
+   The ellipsis is the belt: Blitz's placeholder interpolates a CATEGORY NAME and so has no bounded
+   length at all, and an overflow that reads as "…" is a truncation rather than a defect. */
+.game-input { text-overflow: ellipsis; }
+@media (max-width: 430px) {
+  .game-input::placeholder { font-size: var(--fs-body); }
 }
 
 .game-input:disabled {
@@ -5026,7 +5072,15 @@ html[data-beat='true'] .cb-answer-chip {
   top: calc(100% + 1px);
   left: 50%;
   transform: translateX(-50%);
-  max-width: 130px;
+  /* THE NAME IS CLAMPED TO THE ARC ITS SEAT OWNS, not to a flat 130px.
+     A flat cap is a cap on nothing: the space a seat actually has is the CHORD to its neighbour,
+     2r*sin(pi/n), which at 8 players on a 320px board is about 50px of horizontal separation --
+     so three 55px labels (PLAYER7 / ANDY / PLAYER1) were drawn straight through each other and
+     through ANDY's avatar. Every box gate passed it, because the labels are out of flow and the
+     SEATS they hang off are perfectly placed; it took one screenshot. The small-angle form
+     (ring * 2.6 / n) is within a few percent of the real chord for n >= 5 and is generous below
+     that, where there is room to spare anyway. */
+  max-width: min(130px, calc(var(--wb-size, 320px) * 2.6 / var(--n, 4)));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5036,6 +5090,15 @@ html[data-beat='true'] .cb-answer-chip {
 }
 .wb-seat .game-player-you {
   display: none; /* the ring already lights YOUR seat; the YOU tag is noise here */
+}
+/* A CROWDED TINY BOARD NAMES ONE SEAT: the one whose turn it is. Clamping to the arc stops the
+   overlap, but at 8 players on a 320px screen the arc is ~50px and every label ellipsises to
+   "PLAYE…" -- eight identical truncations are not information. The avatars still carry colour,
+   lives and the turn light; the name that matters is the one on the clock. */
+@media (max-width: 360px) {
+  .wb-ring-crowd .wb-seat .game-player-card:not(.current) .game-player-name-text {
+    display: none;
+  }
 }
 .wb-seat .game-player-card.current .game-player-name-text {
   color: var(--v-ink);
@@ -5450,9 +5513,22 @@ html[data-beat='true'] .cb-answer-chip {
     flex: 1 1 auto;
     width: auto;
     min-width: 0;
+    /* 9px, not 12: at 320x640 "WAIT YOUR TURN…" measured 132px of placeholder in a 131px inner
+       box — one pixel, and a screenshot shows one pixel. Six pixels of padding is the cheapest
+       place to find it; the typed value is 3-10 characters and never came close. */
+    padding-left: 9px;
+    padding-right: 9px;
   }
   .game-stage--wb .game-input-row .game-send-btn,
   .game-stage--wb .game-input-row .game-skip-btn {
+    /* flex: none — THE BUTTONS DO NOT SHRINK. They declared no flex, so they took the default
+       `0 1 auto` and the row squeezed them below their own labels: measured at 390x844, SEND held
+       45px of text in a 40px inner box (53px of scrollWidth in a 45px client box at 320), and the
+       screenshot showed the D sliced off. `min-width` could not save them — min-width sets the
+       floor for the flex BASIS, and the shrink was happening to the content box on top of it. The
+       field is the only thing in this row that should absorb a narrow screen, and it already says
+       so with `flex: 1 1 auto; min-width: 0`. */
+    flex: none;
     width: auto;
     min-width: 52px;
     min-height: 44px;

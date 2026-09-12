@@ -267,21 +267,128 @@ async function measure(page) {
     // sibling of the board (position:fixed, top-right of the VIEWPORT) and so is not
     // caught by any stage-relative measurement. The board's top padding exists purely
     // to clear it; without a gate on it that padding is a number nobody can check.
-    const pill = document.querySelector('.wins-hud');
+    //
+    // GENERALISED FROM THE WINS PILL TO EVERY ORPHAN. The first version of this gate named
+    // `.wins-hud` and nothing else, so it passed at 390x844 and 320x640 on a board where a
+    // DIFFERENT fixed element - the 44x44 bottom-right sound control - sat 20px on top of the SKIP
+    // button, which costs a life. Naming one orphan cannot catch the next one; CLAUDE.md's rule is
+    // that a fixed element with no layout relationship to the page will eventually collide with
+    // whatever ends up beneath it, so the gate now enumerates EVERY position:fixed element and
+    // checks all of them. Full-screen layers (vignette, flash, particle field) are excluded by
+    // area - they are meant to cover the board and are pointer-events:none.
     let pillHit = { px: 0, what: '-' };
-    if (pill) {
-      const pb = r(pill);
-      // The pill carries a 4px hard offset shadow that the rect does not include.
-      const PB = { l: pb.l, t: pb.t, r: pb.r + 4, b: pb.b + 4 };
-      for (const sel of ['.game-title', '.game-leave-btn', '.game-mute-btn', '.game-combo-box']) {
-        const el = document.querySelector('.game-stage--wb ' + sel);
-        if (!el) continue;
-        const b = r(el);
-        if (b.w < 1 || b.h < 1) continue;
-        const ox = Math.min(PB.r, b.r) - Math.max(PB.l, b.l);
-        const oy = Math.min(PB.b, b.b) - Math.max(PB.t, b.t);
-        const px = Math.min(ox, oy);
-        if (ox > 0 && oy > 0 && px > pillHit.px) pillHit = { px: Math.round(px * 10) / 10, what: sel };
+    const TARGETS = [
+      '.game-title', '.game-leave-btn', '.game-combo-box', '.game-used',
+      '.game-input', '.game-send-btn', '.game-skip-btn', '.wb-status', '.kill-feed',
+      '.audio-ctrl--inline',
+    ];
+    const vpArea = window.innerWidth * window.innerHeight;
+    const orphans = [...document.querySelectorAll('body *')].filter((e) => {
+      if (getComputedStyle(e).position !== 'fixed') return false;
+      const b = e.getBoundingClientRect();
+      return b.width > 0 && b.height > 0 && b.width * b.height < vpArea * 0.4;
+    });
+    for (const o of orphans) {
+      const ob = r(o);
+      // Hard offset shadows are not in the rect; every one of these carries up to 4px.
+      const OB = { l: ob.l, t: ob.t, r: ob.r + 4, b: ob.b + 4 };
+      const oname = (typeof o.className === 'string' && o.className.trim())
+        ? '.' + o.className.trim().split(/\s+/)[0] : o.tagName.toLowerCase();
+      for (const sel of TARGETS) {
+        for (const el of document.querySelectorAll('.game-stage ' + sel)) {
+          if (o === el || o.contains(el) || el.contains(o)) continue;
+          const b = r(el);
+          if (b.w < 1 || b.h < 1) continue;
+          const ox = Math.min(OB.r, b.r) - Math.max(OB.l, b.l);
+          const oy = Math.min(OB.b, b.b) - Math.max(OB.t, b.t);
+          const px = Math.min(ox, oy);
+          if (ox > 0 && oy > 0 && px > pillHit.px) {
+            pillHit = { px: Math.round(px * 10) / 10, what: oname + ' on ' + sel };
+          }
+        }
+      }
+    }
+
+    // (10) LABEL FIT. Every text box on the board holds its own text.
+    // WHY THIS EXISTS: three separate label overflows shipped past a full board gate this week --
+    // SEND rendered 45px of text in a 40px inner box (the D sliced off) because the buttons took
+    // flex's default `0 1 auto` and the row squeezed them; the input's placeholder read "TYPE A
+    // WORI" at 320x640; the prompt once did the same. Every one of them was invisible to the
+    // geometry gates above, because a clipped label does not move, overlap or resize anything --
+    // the box is exactly where it should be and the TEXT is what does not fit. scrollWidth catches
+    // it for real content; a placeholder is not content, so it is measured on a canvas at its own
+    // computed ::placeholder size.
+    const labelFit = [];
+    for (const sel of ['.game-send-btn', '.game-skip-btn', '.game-leave-btn', '.game-used-chip',
+                       '.game-used-label', '.wb-status-row', '.kill-feed-title', '.game-meta-round',
+                       '.game-meta-diff', '.game-combo-label', '.seat-name']) {
+      for (const el of document.querySelectorAll('.game-stage--wb ' + sel)) {
+        if (getComputedStyle(el).overflow !== 'visible') continue; // an intentional scroller
+        const over = el.scrollWidth - el.clientWidth;
+        if (over > 1) labelFit.push(sel + ' +' + over + 'px');
+      }
+    }
+    {
+      const inp = document.querySelector('.game-stage--wb .game-input');
+      if (inp) {
+        const cs = getComputedStyle(inp);
+        const ps = getComputedStyle(inp, '::placeholder');
+        const c = document.createElement('canvas').getContext('2d');
+        c.font = ps.fontWeight + ' ' + ps.fontSize + ' ' + ps.fontFamily;
+        const inner = inp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        // BOTH strings, not just the live one: the field swaps between them every turn and the
+        // shot only ever catches one. The longest wins.
+        // THE LIVE STRING, in the live box.
+        const live = inp.getAttribute('placeholder') || '';
+        const liveOver = Math.round(c.measureText(live).width - inner);
+        if (liveOver > 0) labelFit.push('placeholder "' + live + '" +' + liveOver + 'px');
+        // ...AND THE OTHER SIDE OF THE TURN, which no shot on this board can catch because every
+        // board test enters on ME's turn. When the turn passes, SKIP leaves the row and the field
+        // takes back exactly its width plus the row gap — so the waiting box is computable, not a
+        // guess, and "WAIT YOUR TURN…" is checked against it.
+        const skipEl = document.querySelector('.game-stage--wb .game-skip-btn');
+        if (skipEl) {
+          const row = inp.parentElement;
+          const gap = row ? (parseFloat(getComputedStyle(row).columnGap) || 0) : 0;
+          const waitInner = inner + skipEl.getBoundingClientRect().width + gap;
+          const over = Math.round(c.measureText('WAIT YOUR TURN…').width - waitInner);
+          if (over > 0) labelFit.push('placeholder "WAIT YOUR TURN…" (off-turn box) +' + over + 'px');
+        }
+      }
+    }
+
+    // (11) NAMES DO NOT COLLIDE. Every seat's name label against every OTHER seat's name and
+    // avatar. The existing clip/overlap gates work on `.wb-seat` boxes and on the pairs listed in
+    // the overlap matrix, and the name is an out-of-flow child hanging BELOW its seat -- so eight
+    // labels drawn on top of each other and through the 12 o'clock avatar at 320x640 scored a
+    // perfect 0px everywhere. Screenshot found it; this finds it next time.
+    const nameHits = [];
+    {
+      const labels = [...document.querySelectorAll('.wb-seat .game-player-name-text')]
+        .filter((el) => el.offsetParent !== null)
+        .map((el) => ({ el, seat: el.closest('.wb-seat'), b: r(el), t: (el.textContent || '').trim() }))
+        .filter((x) => x.b.w > 0 && x.b.h > 0);
+      // NAMES GET A GAP, NOT A TOLERANCE. The board's general overlap tolerance is 4px, which is
+      // right for decorative boxes that sit near each other -- and wrong here: the pre-fix 320x640
+      // board had ANDY's label crossing PLAYER1's by exactly 2px of BOX and reading, on screen, as
+      // one word drawn through another, because stroked 13px Bungee-adjacent type fills its box to
+      // the edge and then some. Two labels must be 2px APART, not merely not-overlapping.
+      const NAME_GAP = 2;
+      const hit = (a, b) => {
+        const ox = Math.min(a.r, b.r) - Math.max(a.l, b.l);
+        const oy = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+        return ox > -NAME_GAP && oy > -NAME_GAP ? Math.round(Math.min(ox, oy)) : 0;
+      };
+      for (let i = 0; i < labels.length; i += 1) {
+        for (let j = i + 1; j < labels.length; j += 1) {
+          const px = hit(labels[i].b, labels[j].b);
+          if (px) nameHits.push(labels[i].t + '/' + labels[j].t + ' ' + px + 'px');
+        }
+        for (const card of document.querySelectorAll('.wb-seat .game-player-card')) {
+          if (labels[i].seat && labels[i].seat.contains(card)) continue;
+          const px = hit(labels[i].b, r(card));
+          if (px) nameHits.push(labels[i].t + '/avatar ' + px + 'px');
+        }
       }
     }
 
@@ -423,6 +530,8 @@ async function measure(page) {
       headerHitPx: headerHit.px,
       headerHitWhat: headerHit.what,
       headToPrompt,
+      labelFit,
+      nameHits: [...new Set(nameHits)],
       pillHitPx: pillHit.px,
       pillHitWhat: pillHit.what,
       leftCard: { sel: leftCard.sel, area: leftCard.area, side: sideOf(leftCard) },
@@ -475,7 +584,9 @@ for (const vp of VIEWPORTS) {
         ' | radialGap=' + m.minRadialGapPx + 'px | scroll=' + m.pageVScroll + '/' + m.pageHScroll +
         ' | play-centreOff=' + m.playCentreOffPctX + '%/' + m.playCentreOffPctY + '%' +
         ' | headerHit=' + m.headerHitPx + 'px(' + m.headerHitWhat + ') head->prompt=' + m.headToPrompt + 'px' +
-        ' | pillHit=' + m.pillHitPx + 'px(' + m.pillHitWhat + ')' +
+        ' | nameHits=' + (m.nameHits.length ? m.nameHits.join(',') : 'none') +
+        ' | labelFit=' + (m.labelFit.length ? m.labelFit.join(',') : 'none') +
+        ' | orphanHit=' + m.pillHitPx + 'px(' + m.pillHitWhat + ')' +
         ' | rails[' + m.layout + ']=' + m.leftCard.side + ':' + m.leftCard.area + '(' + m.leftCard.sel + ') ' +
         m.rightCard.side + ':' + m.rightCard.area + '(' + m.rightCard.sel + ') skew=' + m.railSkewPct + '%' +
         ' | railClip=' + (m.railClip.length ? m.railClip.join(' ; ') : 'none') +
@@ -519,7 +630,11 @@ for (const vp of VIEWPORTS) {
       expect(m.headerHitPx, 'header control (' + m.headerHitWhat + ') intersects the prompt box')
         .toBeLessThanOrEqual(0);
       expect(m.headToPrompt, 'gap between the header bottom and the prompt top').toBeGreaterThanOrEqual(12);
-      expect(m.pillHitPx, 'the fixed WINS pill covers ' + m.pillHitWhat).toBeLessThanOrEqual(0);
+      // (11) no seat name is drawn through another seat's name or avatar
+      expect(m.nameHits, 'seat name labels collide').toEqual([]);
+      // (10) nothing on the board clips its own label
+      expect(m.labelFit, 'a label does not fit its own box').toEqual([]);
+      expect(m.pillHitPx, 'a fixed/orphan element covers a board control: ' + m.pillHitWhat).toBeLessThanOrEqual(0);
 
       // (7) BOTH RAILS CARRY WEIGHT (rails layout only - the phone board has no rails).
       if (m.layout === 'rails') {

@@ -1583,6 +1583,9 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
 // total on the game-over card, large. Both are purely presentational.
 export default function GameScreen({
+  // The app's sound control, handed down as an element so this screen can host it in its header
+  // cluster without knowing anything about music or the SFX engine. See App.jsx.
+  audioSlot = null,
   gameState,
   gameType,
   gameNonce,
@@ -1667,8 +1670,9 @@ export default function GameScreen({
 
   // App-wide synthesized sound effects + the global SFX mute (shared via
   // SoundContext, so the header mute toggle here persists on every other screen).
-  // While muted every method is a no-op. The header speaker button flips `muted`.
-  const { sound, muted, setMuted } = useSound();
+  // While muted every method is a no-op. The mute itself is flipped from the GAME SFX row of the
+  // header's sound panel now (App owns the state via SoundContext); this screen only reads it.
+  const { sound, muted } = useSound();
 
   // onShake is recreated each App render; hold it in a ref so the sound/feedback
   // effects below can call it without listing it as a dep (which would re-fire
@@ -1728,6 +1732,10 @@ export default function GameScreen({
   // time a card actually has a row to sample), so the per-word fit below is arithmetic
   // on cached numbers - no layout read in an accept path. See ANIMATION BUDGET.
   const [railMetrics, setRailMetrics] = useState(null);
+  // TRUE only on a board too narrow for the input's full placeholder — see the placeholder below.
+  // Set from the ResizeObserver pass that already sizes the ring, so it costs no listener and no
+  // layout read in a render or a keystroke path.
+  const [tinyBoard, setTinyBoard] = useState(false);
   // Re-measure triggers for the rail metrics below. NOT data: `railSample` is a 0..3 flag
   // for "a used chip / a feed row now exists to measure", and `railPair` is which pair of
   // cards is mounted (2 players = used + MATCH, 3+ = feed + used). chrome/step cannot be
@@ -1789,6 +1797,7 @@ export default function GameScreen({
         // strip sizes to its own content and there is nothing to match it to.
         const rails =
           getComputedStyle(stage).getPropertyValue('--wb-layout').trim() === 'rails';
+        setTinyBoard(!rails && stage.clientWidth < 300);
         setRailMetrics(
           rails
             ? {
@@ -2656,6 +2665,7 @@ export default function GameScreen({
         // Remount per game so the solo PLAY AGAIN loop starts clean and replays
         // its countdown (the round number stays 1 across solo games).
         key={`cb-${gameNonce}`}
+        audioSlot={audioSlot}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -3100,17 +3110,12 @@ export default function GameScreen({
               )}
             </div>
             <div className="game-header-actions">
-              <button
-                className="game-mute-btn"
-                onClick={() => {
-                  sound.unlock();
-                  setMuted((m) => !m);
-                }}
-                title={muted ? 'Unmute sound' : 'Mute sound'}
-                aria-label={muted ? 'Unmute sound' : 'Mute sound'}
-              >
-                {muted ? '🔇' : '🔊'}
-              </button>
+              {/* The app's ONE sound control, inline in this cluster (App hands it down as
+                  `audioSlot`). It replaces a second speaker button that lived here and muted only
+                  the SFX engine -- that toggle is now a row inside this panel, so one control owns
+                  music, keystrokes, events, game SFX and volume. It is inline rather than fixed
+                  because the fixed corner version sat on top of SKIP at phone widths. */}
+              {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -3159,7 +3164,10 @@ export default function GameScreen({
             from 2 to 16 is evenly spaced and the bomb stays dead centre.
             Seat geometry is pure CSS from --i (seat index) and --n (seat count);
             see .wb-seat in GameScreen.css. */}
-        <div className="wb-ring" style={{ '--n': players.length }}>
+        <div
+          className={`wb-ring${players.length >= 5 ? ' wb-ring-crowd' : ''}`}
+          style={{ '--n': players.length }}
+        >
           <div className="wb-ring-seats">
           {players.map((player, seatIndex) => {
             const eliminated = player.eliminated || player.lives <= 0;
@@ -3574,7 +3582,14 @@ export default function GameScreen({
                        thing the screen shouts AND overflowed the field at the input's 28px
                        (354px of placeholder in a 326px box at 1280x720). The aria-label above
                        still names the fragment, so nothing is lost for a screen reader. */
-                    : 'TYPE A WORD…'
+                    /* ON A 320px BOARD, ONE WORD. The field shares its row with SEND and SKIP and
+                       is left 69px of inner box there; "TYPE A WORD…" is 106px of 16px Space Mono,
+                       so the screenshot read "TYPE A WORI" with the D sliced in half. Nothing is
+                       lost by the trim — the prompt box directly above says TYPE A WORD CONTAINING
+                       in full, and the aria-label still carries the whole sentence. Only this
+                       branch needs it: in the waiting state there is no SKIP button, and "WAIT
+                       YOUR TURN…" fits the wider field that leaves. */
+                    : tinyBoard ? 'WORD…' : 'TYPE A WORD…'
                   : gameOver
                   ? 'GAME OVER'
                   : 'WAIT YOUR TURN…'
@@ -4102,6 +4117,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
  *     revealed with per-round and cumulative scores, plus a 5s countdown note.
  */
 function CategoryBlitzScreen({
+  audioSlot = null, // the header's sound control — see GameScreen's own prop note
   myId,
   isHost,
   timerSeconds,
@@ -4589,6 +4605,7 @@ function CategoryBlitzScreen({
                   </span>
                 )}
               </div>
+              {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -4839,9 +4856,12 @@ function CategoryBlitzScreen({
             <div className="game-title">
               <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
             </div>
-            <button className="game-leave-btn" onClick={onLeave}>
-              LEAVE
-            </button>
+            <div className="game-header-actions">
+              {audioSlot}
+              <button className="game-leave-btn" onClick={onLeave}>
+                LEAVE
+              </button>
+            </div>
           </div>
 
           <div className="cb-round-results">

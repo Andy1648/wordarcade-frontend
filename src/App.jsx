@@ -2078,6 +2078,24 @@ function App() {
   if (view === 'game') {
     screen = (
       <GameScreen
+        /* THE SOUND CONTROL, AS A SLOT. The app-wide fixed bottom-right control is suppressed on
+           this view (see the AudioControls render below) and handed to the board instead, which
+           drops it into its header cluster beside LEAVE. Reason: a 44x44 position:fixed button at
+           right:16/bottom:16 lands exactly on the input row at phone widths -- measured overlapping
+           SEND/SKIP by 20px at both 390x844 and 320x640, i.e. a decorative control sitting on the
+           button that COSTS A LIFE. That is the NO ORPHAN FIXED UI rule verbatim, and the menu
+           already solved it the same way (variant="inline" inside its corner-nav cluster). Passing
+           the element rather than the props keeps GameScreen ignorant of music/SFX wiring. */
+        audioSlot={(
+          <AudioControls
+            variant="inline"
+            accent={SCREEN_ACCENT.game || '#2EFFE0'}
+            musicMuted={music.isMuted}
+            onToggleMusic={music.toggleMute}
+            sfxMuted={sfxMuted}
+            onToggleSfx={() => setSfxMuted((m) => !m)}
+          />
+        )}
         gameState={gameState}
         gameType={gameType}
         gameNonce={gameNonce}
@@ -2456,7 +2474,7 @@ function App() {
               fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
               menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
               UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
-          {!isHomeMenu && (
+          {!isHomeMenu && view !== 'game' && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}
               musicMuted={music.isMuted}
