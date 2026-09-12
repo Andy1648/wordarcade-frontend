@@ -450,6 +450,15 @@ function App() {
   // score" (see e2e/word-bomb-scoring RACE). Reset each game_started; entries are consumed
   // on match, and the server always answers a submit so the list self-drains.
   const myOutstandingWordsRef = useRef([]);
+  // EVERY WORD I HAVE ALREADY SCORED THIS GAME. A duplicated `word_result` — a socket retry,
+  // a server re-broadcast, a reconnect replay — was banked a second time: measured 500 extra
+  // wins from one repeated frame (e2e/wb-adversarial.spec.js). The only thing that had been
+  // preventing it was the TURN POINTER having already moved off me, so the frame attributed
+  // to somebody else — which is a race, not a guard, and does not hold in a solo/bot game or
+  // when the duplicate lands before the next turn_update. Word Bomb forbids repeating a word
+  // inside a game (the client enforces `already_used` locally, see CLAUDE.md's INSTANT
+  // LOCAL-REJECT note), so "I have scored this word this game" can never be a false positive.
+  const myScoredWordsRef = useRef(new Set());
   // WINS visibility (Economy v3): a LIVE running estimate of the wins this round/game will
   // pay, shown in the in-game HUD and ticking up as MY answers are accepted; and the total
   // actually EARNED this run, shown large on the game-over screen. `winsTally` is the pending
@@ -1056,6 +1065,7 @@ function App() {
       // WPM is no longer tracked in Word Bomb / Category Blitz — they're turn-based, so typing
       // speed there is meaningless (§2). Only the continuous modes + menu record it.
       myOutstandingWordsRef.current = []; // fresh game → drop any stale in-flight submits
+      myScoredWordsRef.current = new Set(); // fresh game → nothing has been scored yet
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
       setWinsEarnedTotal(0);
@@ -1217,7 +1227,14 @@ function App() {
         let wbRarity = null;
         // Lifetime WORDS TYPED + Wins: count ONLY the local player's own accepted words.
         // (Daily flows through this same path and counts as word-bomb — fine.)
-        if (isMine) {
+        // IDEMPOTENCY, before anything is counted or paid. A repeat of a word this player has
+        // already scored in this game is a duplicated frame by definition, and it must change
+        // nothing: not the till, not the XP, not the accept count, not the combo. It still
+        // falls through to the feed/`lastWordResult` below, which are display state and
+        // already idempotent.
+        const alreadyScored = isMine && resultWord && myScoredWordsRef.current.has(resultWord);
+        if (isMine && resultWord) myScoredWordsRef.current.add(resultWord);
+        if (isMine && !alreadyScored) {
           sndWordAccepted(myWbAcceptedRef.current); // Job 11: accept chime, pitch climbs with count
           addWords('word-bomb');
           const prevWb = myWbAcceptedRef.current;
@@ -1574,7 +1591,18 @@ function App() {
       }
       // Stamp the end time so the overlay can show the game's duration.
       setGameStats((prev) => ({ ...prev, gameEndTime: Date.now() }));
-      setView('game');
+      // A LATE game_over MUST NOT DRAG A PLAYER WHO ALREADY LEFT BACK IN. This was an
+      // unconditional setView('game'): press LEAVE, land on the menu, and the server's
+      // game_over — which was already in flight and does not know you left — put a
+      // game-over screen for that game in front of you on the home screen. Reproduced in
+      // e2e/wb-adversarial.spec.js.
+      // FUNCTIONAL FORM IS MANDATORY HERE, not stylistic: this effect is keyed only on
+      // [lastMessage] and deliberately excludes `view`, so `view` read directly in this
+      // handler is STALE — the exact trap CLAUDE.md documents for room_update. Reading the
+      // live value through the updater is the only correct way to ask "where is the player
+      // right now". The guard is deliberately narrow: only HOME is refused, so every other
+      // transition into the game-over screen behaves exactly as before.
+      setView((prev) => (prev === 'home' ? prev : 'game'));
       // Analytics: counts/enums only (no PII). mode + duration come from refs
       // stamped at game_started; player_count from the room-synced ref — all live,
       // never stale. duration omitted if we somehow never saw a start.
