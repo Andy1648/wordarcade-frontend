@@ -68,3 +68,109 @@ re-run — recorded as flake, not a finding.
 **Gate:** `e2e/word-landing.spec.js` — 4 viewports x {no transient over prompt / input / player
 card / title, nothing off the board, no page scroll, title intact, PAID == rounded product of the
 listed rows, zero accept toasts}. Shots in `claude/wb-frame-shots/`.
+
+---
+
+## BATCH 2 — `integration/board-v2`: the two chains merged
+
+Branch: `integration/board-v2`, cut from `feat/cut-secrets-rarity` (c3b0c1b), with `feat/wb-ring`
+merged in. The two chains had been building on opposite sides of a fork for a week:
+
+- **chain A** (`econ-curve` -> `progression-clarity` -> `cut-secrets-rarity`): the payout receipt,
+  the tiered word landing, Economy v7, marks, the shared number formatter.
+- **the ring branch** (`feat/wb-ring`): the Word Bomb board itself — the ring, the rails, the
+  header, and `feat/type`'s build-failing type scale, which it carried along with it.
+
+### The merge
+
+Conflicts in exactly one file, `GameScreen.css`, four hunks, resolved by rule rather than by
+taste: the BOARD LAYOUT hunk goes to the ring (it is the ring's whole subject), the two
+`.hype-popup` hunks go to chain A (Batch 1 had just rebuilt the hype as a small in-flow reaction at
+the field; the ring's copy was the old stage-centred banner), the last hunk keeps both.
+
+One rename was forced: chain A's payout rail was `.wb-rail`, and the ring board already owns
+`.wb-rail--left` / `.wb-rail--right` off a shared `.wb-rail` base. Chain A's is now
+`.wb-receipt-rail` in both the CSS and the JSX.
+
+### The type scale, which the merge made load-bearing
+
+`src/perf/typeScale.test.js` came across with the ring branch and is build-failing. Chain A's
+newer components were written on the other side of the fork and had never had to satisfy it —
+twelve offenders across three rules. Worth recording what the fixes actually were, because two of
+them are judgment calls a future reader should not have to re-derive:
+
+- Raw font-sizes to tokens: `.hype-popup`'s `clamp(14px,1.7vw,19px)` -> `--fs-panel`,
+  `.mark-icon` 26px and `.menu-mark-icon` 1.15em -> tokens.
+- `Num.css`'s unit suffix KEEPS its `0.45em`. It labels the NUMERAL and has to shrink with it
+  wherever the number is set — the same figure appears at `--fs-panel` in a receipt and `--fs-h2`
+  on a card. The test says to justify an exception in-file rather than widen its matcher, so the
+  ratio moved into `theme/type.css` as `--fs-unit` and the scale still owns it in one place.
+- Three Bungee labels moved to **Space Mono 700** rather than being made bigger: `.marks-close`,
+  `.mark-name`, `.stats-secret-name` sit at `--fs-body`/`--fs-label` where Bungee's counters close
+  up, and `.mark-name`'s 2px stroke was filling them in completely. The rule the test states is
+  "small UI text belongs in Space Mono", and that is the fix it is asking for.
+
+### The board gate after the merge
+
+23/23 at **2 / 3 / 4 / 8 players x 1366x768, 1280x720, 1536x864, 390x844, 320x640**. Ring at
+46.1% / 48.7% / 52.4% / 71.8% / 64.6% of the stage's short side; rails equal-height with zero skew
+and `railClip=none`; gutter 18-22px at two players; no page scroll anywhere; `nameStrike=none`.
+All 20 shots re-shot into `claude/wb-ring-shots/` and reviewed one by one.
+
+### What the SCREENSHOTS caught that the gates did not
+
+**Four, and the board gate was 23/23 green on all of them.** Each fix ships with a gate that was
+first checked to FAIL on the defect it describes — a gate that has never been seen red is a guess.
+
+1. **The app-wide sound button sat on top of SKIP.** A 44x44 `position:fixed` control at
+   `right:16/bottom:16`, measured 20px into SEND/SKIP at 390x844 and 320x640. A decorative control
+   over the button that costs a life. This is CLAUDE.md's NO ORPHAN FIXED UI rule word for word,
+   and the board gate had a check for exactly this shape of failure — pointed at `.wins-hud` **by
+   name**, so it saw nothing. Naming one orphan cannot catch the next one. The gate now enumerates
+   every `position:fixed` element under 40% of the viewport and checks all of them against every
+   board control.
+   The fix follows the precedent the menu already set: on the game view the fixed control is
+   suppressed and the same component goes INLINE into the header cluster. That turned up a second
+   thing worth knowing — the Word Bomb header already had its own speaker button, muting only the
+   SFX engine, so the board carried two speaker glyphs controlling two different sound systems.
+   Folded: the SFX mute is now a GAME SFX row of the one panel. Blitz's two headers had no sound
+   control at all and now host the same slot.
+   COST, and the reason this is not free: the header is CHROME, subtracted from the play area once
+   by `wbRingSize`, so at a 44px button the ring at 1280x720 fell to **44.7%** of the short side —
+   under the gate's own 45% floor. The button is sized to the cluster and carries its 44x44 touch
+   target in an out-of-flow `::after`. Hit area and layout box are different things; only one of
+   them has to be 44px.
+2. **SEND and SKIP clipped their own labels.** 45px of "SEND" in a 40px inner box at 390x844; 53px
+   of scrollWidth in a 45px client box at 320x640 — the D sliced in half. The buttons declared no
+   `flex`, so they took the default `0 1 auto` and the row squeezed them below their own text.
+   `min-width: 52px` could not save them: min-width floors the flex BASIS, and the shrink was
+   happening to the content box on top of it. This is invisible to every geometry gate on the
+   board, because a clipped label does not move, overlap or resize anything — the box is exactly
+   where it should be and the TEXT is what does not fit.
+3. **The input's placeholder was sliced mid-glyph** — "TYPE A WORI" at 320x640. The field is set at
+   `--fs-panel` because the typed word is the hero of the input, but a typed Word Bomb word is 3-10
+   characters and a placeholder is a sentence. Under 430px the placeholder drops to `--fs-body`;
+   under a 300px board, where the field shares its row with SEND and SKIP and is left 69px of inner
+   box, it trims to "WORD…" (the prompt directly above still says TYPE A WORD CONTAINING in full,
+   and the aria-label is untouched). 12px -> 9px of field padding buys the last pixel: "WAIT YOUR
+   TURN…" measured 132px in a 131px box.
+4. **Eight seat names drawn through each other and through the 12 o'clock avatar** at 320x640. The
+   name hangs out of flow under its seat with a flat 130px cap — a cap on nothing, because the space
+   a seat actually owns is the chord to its neighbour, about 50px there. Now clamped to that arc at
+   every size and count; and under 360px with 5+ players only the seat on the clock is named,
+   because eight labels ellipsised to "PLAYE…" is not information.
+   The gate's tolerance is the interesting part. The board's general overlap tolerance is 4px and
+   the pre-fix collision measured **2px of box** — it passed, while on screen it read as one word
+   drawn through another, because stroked 13px type fills its box and then some. Name labels get a
+   required 2px GAP, not a 4px tolerance.
+
+### Observations, not defects — for Andy to rule on
+
+- **A rail card whose content is one line still takes the taller card's height.** That is the rule
+  agreed in round 2 (height = max of the two naturals, clamped to the play area) and it is doing
+  exactly what it was asked to. The visible cost, at the START of a game: LIVE FEED holds "WAITING
+  FOR ACTION…" in a 216px box, and at two players MATCH holds four rows in the same 216px. Both
+  read as half-empty panels for the first few words, then fill. Equal heights or tight heights —
+  the shots show both costs and it is a taste call, so it is stopped here rather than changed.
+- `USED WORDS (7)` showing six chips on a phone is the cap behaving as specified (count in the
+  header, newest first).
