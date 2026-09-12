@@ -12,12 +12,12 @@ import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
-import { PB_KEYS, bumpChainRuns } from './shared.js';
+import { PB_KEYS, bumpChainRuns, SOLO_REDUCED } from './shared.js';
 import { ChainNormalCard, ChainFirstRunCard } from './chainCards.jsx';
 import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
-import RarityFlash from '../components/RarityFlash.jsx';
+import WordLanding, { hasLanding } from '../components/WordLanding.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 
@@ -120,6 +120,8 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // earned — no end-of-run payout (that would double-pay). `s.k` is the running link count;
   // bank the delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3.
   const [winsEarned, setWinsEarned] = useState(0);
+  // The word that just landed, for the reaction above the field: { key, word, band, wins }.
+  const [landing, setLanding] = useState(null);
   const chainBankedRef = useRef(0);
   const chainWeightRef = useRef(0); // RARITY: running sum of linked words' rarity multipliers
   useEffect(() => {
@@ -164,8 +166,20 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       });
       chainBankedRef.current = k;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
+      // THE REACTION, at the field. The newest link is the one that just landed; its band and what
+      // it paid are both already computed above, so this costs one setState and no extra work.
+      const last = newWords[newWords.length - 1];
+      if (last) {
+        const rw = rarityOf(last);
+        if (hasLanding(rw.band, null)) setLanding({ key: k, word: last, band: rw.band, wins: banked });
+      }
     }
   }, [s.k]);
+  // Clear the reaction when a run ends, so it never hangs over the death card.
+  useEffect(() => {
+    if (g.phase !== 'playing') setLanding(null);
+  }, [g.phase]);
+
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
@@ -319,12 +333,18 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
   );
 
-  // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
-  const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
   return (
     <>
-    <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
     <SoloShell
+      reaction={landing && (
+        <WordLanding
+          key={landing.key}
+          word={landing.word}
+          band={landing.band}
+          wins={landing.wins}
+          reduced={SOLO_REDUCED}
+        />
+      )}
       accent={ACCENT}
       title="Type a word starting with the letter"
       hud={hud}

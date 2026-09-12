@@ -50,6 +50,11 @@ export default function SoloShell({
   input,
   onInput,
   onSubmit,
+  // THE WORD'S REACTION, anchored above the field. A node, not data: the shell does not know what
+  // rarity is, it knows where the player is looking. Replaces RarityFlash, which was a
+  // `position:fixed` label at top:30%/left:50% of the VIEWPORT — a centre-screen announcement in
+  // the middle of a timed typing mode, i.e. exactly the shape Word Bomb just finished cutting.
+  reaction,
   sillKey,
   reason,
   placeholder,
@@ -137,6 +142,9 @@ export default function SoloShell({
       <div className="solo-secondary">
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit}>
+          {/* Above the field, in the field's own positioning context, pointer-events:none. It
+              cannot take a click, cannot be dismissed, and cannot move the input. */}
+          {reaction ? <div className="solo-react" aria-hidden="true">{reaction}</div> : null}
           <input
             ref={inputRef}
             className="solo-input"

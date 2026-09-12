@@ -171,3 +171,10 @@ export function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+// Reduced motion, read once. The solo modes hand this to components that need to drop a count-up
+// or an entrance (the word landing). Matching chainTravelFx's existing approach: a module-level
+// read, not a listener — nobody toggles the OS setting mid-run, and a listener in a per-keystroke
+// mode is a cost for nothing.
+export const SOLO_REDUCED =
+  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;

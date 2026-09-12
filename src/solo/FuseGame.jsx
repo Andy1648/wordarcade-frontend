@@ -11,9 +11,9 @@ import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
-import RarityFlash from '../components/RarityFlash.jsx';
+import WordLanding, { hasLanding } from '../components/WordLanding.jsx';
 import { touchStreak } from '../progress/streak.js';
-import { PB_KEYS, bumpFuseRuns } from './shared.js';
+import { PB_KEYS, bumpFuseRuns, SOLO_REDUCED } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
@@ -146,6 +146,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // no end-of-run payout (that would double-pay). `s.wordsSolved` is the running count; bank the
   // delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3 words.
   const [winsEarned, setWinsEarned] = useState(0);
+  // The word that just landed, for the reaction above the field: { key, word, band, wins }.
+  const [landing, setLanding] = useState(null);
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -185,8 +187,17 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       });
       fuseBankedRef.current = solved;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
+      // THE REACTION, at the field — the same ladder Word Bomb lands, on the word just solved.
+      if (s.lastWord && hasLanding(rw.band, null)) {
+        setLanding({ key: solved, word: s.lastWord, band: rw.band, wins: banked });
+      }
     }
   }, [s.wordsSolved]);
+  // Clear the reaction when a run ends, so it never hangs over the death card.
+  useEffect(() => {
+    if (g.phase !== 'playing') setLanding(null);
+  }, [g.phase]);
+
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
@@ -242,8 +253,16 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
 
   return (
     <>
-    <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     <SoloShell
+      reaction={landing && (
+        <WordLanding
+          key={landing.key}
+          word={landing.word}
+          band={landing.band}
+          wins={landing.wins}
+          reduced={SOLO_REDUCED}
+        />
+      )}
       accent={ACCENT}
       title="Type a word containing the fragment"
       hud={hud}

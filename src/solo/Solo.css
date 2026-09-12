@@ -335,6 +335,29 @@
   width: 100%;
   max-width: min(680px, 100%);
 }
+/* THE REACTION SLOT — the solo shell's answer to Word Bomb's `.wb-react`.
+   Anchored to the input wrapper (which is already position:relative), sitting just above the
+   field, one line tall, incapable of taking a pointer. The thing it replaced, RarityFlash, was
+   `position:fixed; top:30%; left:50%` on the VIEWPORT: a centre-screen label, in a mode where the
+   player's eyes are on a field at the bottom, drawn over whatever happened to be at 30% height.
+   Left-aligned rather than centred for the same reason the Word Bomb board's is: the centre of
+   these screens is the CENTER letter/fragment and the clock, and a chip under them reads as being
+   about them. */
+.solo-react {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Room for the stamp, which perches above the chip and is out of flow. */
+  padding-top: 16px;
+  width: max-content;
+  max-width: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
 .solo-input {
   width: 100%;
   /* border-box + side padding: the input is flush with its column, so a content-box border

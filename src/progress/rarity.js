@@ -14,13 +14,23 @@
 // Band boundaries are the tunable knobs (see claude/rarity-sim.mjs for the measured
 // distribution these were fit to). `max` is EXCLUSIVE: a rank r is in the first band whose
 // max it is below. A word absent from recall has no rank → OBSCURE.
+//
+// ONE COLOUR LANGUAGE FOR THE LADDER. These colours used to be cyan / purple / gold, set here and
+// used by the kill feed and the solo modes, while components/WordLanding.css had a SECOND ladder
+// in yellow / orange / flash pink. The same word therefore landed as an orange RARE chip at the
+// field and was called purple by the kill feed two inches away — and cyan meant UNCOMMON in one
+// place and SECRET in the other. A rarity ladder the player has to learn twice is not a ladder.
+// The landing's ramp wins (it is the moment; the feed is the footnote) and it now lives HERE, so
+// every surface that reads `band.color` agrees by construction.
 export const RARITY_BANDS = [
   { name: 'COMMON', maxRank: 3000, mult: 1.0, color: '#F0EAD9', announce: false },
-  { name: 'UNCOMMON', maxRank: 15000, mult: 1.5, color: '#2EFFE0', announce: true },
-  { name: 'RARE', maxRank: Infinity, mult: 2.5, color: '#9A1AFF', announce: true },
+  { name: 'UNCOMMON', maxRank: 15000, mult: 1.5, color: '#FFE94A', announce: true },
+  { name: 'RARE', maxRank: Infinity, mult: 2.5, color: '#FF6B3D', announce: true },
 ];
 // OBSCURE is the "not in the ranked corpus" band (rarer than every recall word).
-export const OBSCURE_BAND = { name: 'OBSCURE', mult: 4.0, color: '#FFD54A', announce: true };
+// #FF2EC4 is the documented beat-flash exception, spent on the top rung and nowhere else — see
+// the note on .wl--obscure in components/WordLanding.css.
+export const OBSCURE_BAND = { name: 'OBSCURE', mult: 4.0, color: '#FF2EC4', announce: true };
 
 // Length bonus: +0.1× per letter ABOVE 5, capped at +0.5× (a 10-letter word maxes it).
 export const LENGTH_BONUS_PER_LETTER = 0.1;

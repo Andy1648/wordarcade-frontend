@@ -3694,9 +3694,11 @@
   text-transform: uppercase;
 }
 
-/* RARITY (word-value) tag in the kill feed, e.g. "RARE ×2.5". Colour is set inline per tier
-   (UNCOMMON cyan / RARE purple / OBSCURE gold); COMMON words get no tag at all. Bold + compact so
-   it reads as a reward flag next to the word without stealing the row. */
+/* RARITY (word-value) tag in the kill feed, e.g. "RARE ×2.5". Colour is set inline per tier from
+   the ONE ladder in progress/rarity.js (UNCOMMON yellow / RARE orange / OBSCURE flash pink — the
+   same ramp the word landing uses at the field, which it did not used to be); COMMON words get no
+   tag at all. Bold + compact so it reads as a reward flag next to the word without stealing the
+   row. */
 .kill-feed-rarity {
   /* was Bungee, below the 28px display floor: small UI text is a mono label */
   font-family: 'Space Mono', monospace;
