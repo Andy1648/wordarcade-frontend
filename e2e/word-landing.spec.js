@@ -274,6 +274,87 @@ for (const vp of FRAME_VIEWPORTS) {
   });
 }
 
+// THE BAND BETWEEN THE PHONE AND THE DESKTOP. The receipt is hidden below 900px and every frame
+// test above runs at 1280 or wider, so the whole 900-1279px range — every small laptop, every
+// tablet in landscape — went untested, and the docked receipt sat on the SKIP button through all
+// of it: measured 59px at 900, 63px at 1024, 42px at 1100, 24px at 1200, clear only from 1260.
+// "The input row is capped at 760px and centred, so they cannot meet" was a claim about a gutter
+// nobody had measured. The board now MAKES that gutter (the input row gives up width until the
+// receipt's column fits beside it) and this is what holds it.
+for (const w of [900, 1024, 1100, 1200]) {
+  test(`the receipt clears the input row @ ${w}px`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: 800 });
+    const mock = await enterGame(page);
+    await accept(page, mock, 'zymurgy');
+    await page.waitForTimeout(150);
+    // SHOT, not just numbers — this whole band shipped broken precisely because nobody had
+    // looked at it.
+    await page.screenshot({ path: `claude/wb-frame-shots/band-${w}.png` });
+    const m = await page.evaluate(() => {
+      const R = (sel) => {
+        const e = document.querySelector(sel);
+        return e ? e.getBoundingClientRect() : null;
+      };
+      const px = (a, b) => {
+        if (!a || !b) return 0;
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        return ox > 0 && oy > 0 ? Math.round(Math.min(ox, oy)) : 0;
+      };
+      const rec = R('.wb-receipt');
+      const row = R('.game-input-row');
+      const inp = document.querySelector('.game-input');
+      let phOver = 0;
+      if (inp) {
+        const cs = getComputedStyle(inp);
+        const ps = getComputedStyle(inp, '::placeholder');
+        const c = document.createElement('canvas').getContext('2d');
+        c.font = `${ps.fontWeight} ${ps.fontSize} ${ps.fontFamily}`;
+        const inner = inp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        phOver = Math.round(Math.max(
+          c.measureText('TYPE A WORD…').width,
+          c.measureText('WAIT YOUR TURN…').width
+        ) - inner);
+      }
+      // ...and the LANDING, which shares this band, must not be drawn through a seat. At 900px the
+      // OBSCURE chip overflowed its "max-width" and covered the 6 o'clock avatar and its name.
+      const wl = R('.wl');
+      let seat = 0;
+      for (const sel of ['.game-player-card', '.game-player-name-text']) {
+        for (const e of document.querySelectorAll(sel)) {
+          seat = Math.max(seat, px(wl, e.getBoundingClientRect()));
+        }
+      }
+      return {
+        seat,
+        wlRight: wl ? Math.round(wl.right) : 0,
+        present: !!rec,
+        skip: px(rec, R('.game-skip-btn')),
+        send: px(rec, R('.game-send-btn')),
+        row: px(rec, row),
+        used: px(rec, R('.game-stage--wb .game-used')),
+        status: px(rec, R('.wb-status')),
+        // the row must not overflow its own cap either — that is how SKIP escaped it the first time
+        rowOverflow: row ? Math.round(R('.game-skip-btn').right - row.right) : 0,
+        phOver,
+      };
+    });
+    // eslint-disable-next-line no-console
+    console.log(`RECEIPT | ${w}px | present=${m.present} skip=${m.skip} send=${m.send} row=${m.row}` +
+      ` used=${m.used} status=${m.status} rowOverflow=${m.rowOverflow} placeholderOver=${m.phOver} seat=${m.seat}`);
+    expect(m.seat, 'the word landing is drawn through a seat').toBe(0);
+    expect(m.present, 'the receipt should be shown at this width').toBe(true);
+    expect(m.skip, 'the receipt covers SKIP').toBe(0);
+    expect(m.send, 'the receipt covers SEND').toBe(0);
+    expect(m.row, 'the receipt covers the input row').toBe(0);
+    expect(m.used, 'the receipt covers the used-words card').toBe(0);
+    expect(m.status, 'the receipt covers the MATCH readout').toBe(0);
+    // 1px of tolerance: the row's width is fractional and both edges are rounded independently.
+    expect(m.rowOverflow, 'SKIP hangs outside the input row').toBeLessThanOrEqual(1);
+    expect(m.phOver, 'the placeholder does not fit the narrowed field').toBeLessThanOrEqual(0);
+  });
+}
+
 // THE STACKED BOARD AT A FULL TABLE. Every frame test above enters at TWO players, and two
 // players is the one seat count where the phone board has room to spare: the ring is small and the
 // band above the used-words strip is empty. At eight the ring fills that band, and the reaction —

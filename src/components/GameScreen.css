@@ -416,8 +416,25 @@
     right: auto;
     transform: none;
     justify-content: flex-start;
-    max-width: calc(50% - 96px);
+    /* A REAL COLUMN, NOT A max-width. `max-width` on a `width: max-content` box that also says
+       `white-space: nowrap` is decoration: the chip simply overflows it. Measured at 900px, the
+       OBSCURE chip ran 200px past its "cap" and was drawn straight through the 6 o'clock seat —
+       the avatar covered, the name reading "YER1". The slot is now a fixed column of the space
+       left of the ring, and the chip is sized to FIT that column (below), so the overflow it used
+       to rely on cannot happen at any width.
+       100px of clearance from centre: the widest seat is ~66px plus its name. */
+    width: calc(50% - 100px);
+    max-width: none;
+    container-type: inline-size;
   }
+  /* FIT-TO-SLOT type: `cqw` of the reaction column, which is the type scale's sanctioned exception
+     (src/perf/typeScale.test.js FIT_TO_SLOT) for exactly this — a thing whose size is set by the
+     box it must fit rather than by the document's scale. Bungee's advance is ~0.67em, so at 8cqw a
+     word of up to ~18 letters fits its column at EVERY board width, which is longer than any word
+     the dictionary accepts here. The clamp floor keeps it legible on the narrowest board and the
+     ceiling keeps the OBSCURE tier from getting bigger than it was. */
+  .game-stage--wb .wb-react .wl-chip { font-size: clamp(13px, 8cqw, 34px); }
+  .game-stage--wb .wb-react .wl-wins { font-size: clamp(13px, 7cqw, 28px); }
 }
 
 /* THE STACKED BOARD LIFTS THE REACTION OVER THE USED-WORDS STRIP.
@@ -659,6 +676,18 @@
    clear the stage's own stacking (the ring, the prompt, the vignette). */
 .game-header-actions .audio-ctrl--inline { z-index: 40; }
 .game-header-actions .audio-ctrl--inline .audio-panel { z-index: 41; }
+
+/* THE DOCK for the sound control on the three game screens that have no header cluster to put it
+   in (the "STARTING GAME..." placeholder, the multiplayer game-over scoreboard, the solo results
+   card). Absolute against `.game-wrap`, which is `position: relative` — a real element of the
+   screen, not viewport coordinates. It sits above the card's own overlay so it stays reachable,
+   and nothing on these screens is in the top-right corner. */
+.game-audio-dock {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 40;
+}
 
 /* ---- Player bar ---- */
 
@@ -2216,7 +2245,12 @@
    The ellipsis is the belt: Blitz's placeholder interpolates a CATEGORY NAME and so has no bounded
    length at all, and an overflow that reads as "…" is a truncation rather than a defect. */
 .game-input { text-overflow: ellipsis; }
-@media (max-width: 430px) {
+/* 1024, not 430. The original breakpoint assumed the field only ever gets tight on a phone; then
+   the board started giving width back to the receipt's gutter and the field at a 900px viewport
+   came out 155px of inner box — against 165px of "WAIT YOUR TURN…" at --fs-panel. At 1024 the same
+   placeholder has 227px and would fit either way, so moving the switch up costs nothing and
+   removes the cliff between "phone" and "small laptop", which is exactly the band nobody tests. */
+@media (max-width: 1024px) {
   .game-input::placeholder { font-size: var(--fs-body); }
 }
 
@@ -4004,10 +4038,7 @@
   .game-skip-btn,
   .game-over-rematch,
   .game-over-leave { min-height: 44px; }
-  .game-leave-btn,
-  .game-mute-btn { min-height: 44px; }
-  /* The icon-only mute toggle also needs a 44px-wide hit area, not just height. */
-  .game-mute-btn { min-width: 44px; }
+  .game-leave-btn { min-height: 44px; }
 
   /* Game-over card eases its padding to fit narrow screens. */
   .game-over-card { padding: 24px 18px; }
@@ -4987,8 +5018,34 @@ html[data-beat='true'] .cb-answer-chip {
   bottom: clamp(10px, 1.6vh, 22px);
   display: flex;
   justify-content: flex-end;
-  width: 152px;
+  width: var(--wb-receipt-w);
   z-index: 5;
+}
+/* ...AND THE GUTTER IS MADE, NOT ASSUMED. "The input row is capped at 760px and centred, so on a
+   board wide enough to have that gutter the two cannot meet" was true — and "wide enough" turned
+   out to mean 1260px, not 900px. Measured, docked against the stage with a 760px input row:
+     900 -> 59px of receipt on SKIP   1024 -> 63px   1100 -> 42px   1200 -> 24px   1260 -> clear
+   Every viewport this was screenshotted at (1280 / 1366 / 1536) sits above the threshold, and the
+   one below it (390) has the rail hidden — so the whole broken band between them went untested.
+   Rather than delete the receipt from every 1024-1259px laptop, the board GIVES it the gutter: the
+   input row gives up width until the receipt's column and its margins fit beside it. A 490px field
+   on a 900px board is still a generous field, and it is the input row's job to be elastic — it is
+   the only full-width thing in the bottom row. */
+.game-stage--wb {
+  --wb-receipt-w: 152px;
+  --wb-receipt-gap: 16px;
+}
+@media (min-width: 900px) {
+  .game-stage--wb .game-input-row {
+    max-width: min(760px, calc(100% - 2 * (var(--wb-receipt-w) + var(--wb-receipt-gap))));
+  }
+  /* ...and the FIELD is what gives the width up. Without `min-width: 0` a flex item cannot shrink
+     below its own min-content, so capping the row did not narrow the field — it made the row
+     OVERFLOW, and SKIP simply hung 99px past the row's right edge, straight back under the
+     receipt. The cap and this line are one fix; either alone does nothing. */
+  .game-stage--wb .game-input-row .game-input {
+    min-width: 0;
+  }
 }
 .wb-receipt {
   pointer-events: none;
@@ -5301,10 +5358,6 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .game-leave-btn {
   font-size: var(--fs-body);
   padding: 4px 10px;
-}
-.game-stage--wb .game-mute-btn {
-  font-size: var(--fs-body);
-  padding: 4px 8px;
 }
 .game-stage--wb .game-header-right {
   flex-direction: row;

@@ -204,7 +204,7 @@ async function measure(page) {
       ['input', '.game-input-row'],
       ['used', '.game-used'],
       ['feed', '.kill-feed'],
-      ['sound', '.game-mute-btn'],
+      ['sound', '.audio-ctrl--inline'],
     ];
     const nodes = [];
     for (const pair of named) {
@@ -249,7 +249,7 @@ async function measure(page) {
     const P = promptEl ? r(promptEl) : null;
     let headerHit = { px: 0, what: '-' };
     if (P) {
-      for (const sel of ['.game-title', '.game-leave-btn', '.game-mute-btn']) {
+      for (const sel of ['.game-title', '.game-leave-btn', '.audio-ctrl--inline']) {
         const el = document.querySelector('.game-stage--wb ' + sel);
         if (!el) continue;
         const b = r(el);
