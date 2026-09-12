@@ -65,6 +65,37 @@ export function lengthBonus(len) {
 //   announce is false for COMMON (it stays silent) and true for UNCOMMON+; label is the pop
 //   text e.g. "RARE ×2.5". A missing/empty word or index → COMMON, silent, ×1 (safe default,
 //   so a not-yet-loaded index never inflates or crashes a payout).
+// THE BANDS IN ORDER, lowest to highest — the ladder MARK LINGUIST steps a word up.
+const BAND_LADDER = [...RARITY_BANDS, OBSCURE_BAND];
+
+/**
+ * One rarity band higher than `r`, or `r` unchanged when it is already OBSCURE.
+ *
+ * Used by the LINGUIST mark (progress/marks.js: "12% chance a word counts one RARITY TIER
+ * higher"). The bumped result keeps the word's LENGTH bonus — the mark promises a better BAND,
+ * not a different word — and is re-capped, so a long OBSCURE word cannot exceed the ceiling any
+ * other word could reach.
+ */
+export function bumpRarity(r) {
+  if (!r) return r;
+  const i = BAND_LADDER.findIndex((b) => b.name === r.band);
+  if (i < 0 || i >= BAND_LADDER.length - 1) return r;
+  const band = BAND_LADDER[i + 1];
+  const lengthMult = Number.isFinite(r.lengthMult) && r.lengthMult > 0 ? r.lengthMult : 1;
+  const mult = Math.min(RARITY_MAX_MULT, Math.round(band.mult * lengthMult * 100) / 100);
+  return {
+    ...r,
+    band: band.name,
+    mult,
+    bandMult: band.mult,
+    lengthMult: band.mult > 0 ? mult / band.mult : 1,
+    color: band.color,
+    announce: band.announce,
+    label: band.announce ? `${band.name} ×${mult}` : '',
+    bumped: true,
+  };
+}
+
 export function wordRarity(word, rankIndex) {
   const w = typeof word === 'string' ? word.trim().toLowerCase() : '';
   if (!w || !(rankIndex instanceof Map)) {

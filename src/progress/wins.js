@@ -8,6 +8,7 @@
 
 import { rebirthMult, getRebirths, round10, loadProgress } from './xp.js';
 import { momentumMult, getMomentum } from './momentum.js';
+import { markWinsFactors } from './marks.js';
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -141,7 +142,7 @@ export function winLevelMult(level) {
  * every multiplier without re-deriving any of them: the breakdown and the payment read the same
  * object, so the receipt cannot quote a number the player was not actually paid.
  */
-export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, level } = {}) {
+export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, level, markId } = {}) {
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const lv = Number.isFinite(level) ? level : loadProgress().level;
   // MOMENTUM (repeatable sink): a global +1%/buy wins multiplier, live-read like rebirth (defaults
@@ -154,11 +155,17 @@ export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, 
     rebirth: rebirthMult(rc),
     momentum: momentumMult(mm),
     level: winLevelMult(lv),
+    // The equipped MARK, if it pays in this mode. Folded in HERE rather than at the call sites so
+    // the payment and the receipt read the same object - a mark cannot boost a payout without
+    // appearing in the breakdown, because there is only one place either could come from.
+    ...markWinsFactors({ markId, mode }),
   };
 }
 export function perWordWins(opts = {}) {
   const f = perWordFactors(opts);
-  return round10(WORD_WINS_BASE * f.mode * f.difficulty * f.rebirth * f.momentum * f.level);
+  return round10(
+    WORD_WINS_BASE * f.mode * f.difficulty * f.rebirth * f.momentum * f.level * (f.mark || 1)
+  );
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else

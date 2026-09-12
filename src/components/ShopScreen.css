@@ -578,3 +578,55 @@
   paint-order: stroke fill;
   opacity: 0; /* the preview animation drives it */
 }
+
+/* ---- WORD SENSE: the warning and the per-rarity table (feat/progression-clarity) ----------
+   The card used to say "×1.20 ON WORD RARITY" and leave the player to discover on their own
+   that the factor scales a word's rarity EXCESS — so on a COMMON word, which is most words,
+   a paid-for upgrade does nothing at all. Both of these exist to say that out loud. */
+.shop-ws-warn {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  color: #FFE94A;
+  background: #3a2a08;
+  border: 2px solid #000;
+  border-radius: 3px;
+  padding: 4px 7px;
+  margin: 5px 0 7px;
+}
+.shop-ws-table {
+  width: 100%;
+  max-width: 320px;
+  border-collapse: collapse;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  margin: 6px 0 8px;
+}
+.shop-ws-table th,
+.shop-ws-table td {
+  text-align: right;
+  padding: 3px 6px;
+  border-bottom: 2px solid #2a1450;
+}
+.shop-ws-table thead th {
+  color: #b9aecd;
+  letter-spacing: 0.08em;
+  border-bottom-width: 3px;
+  border-bottom-color: #000;
+}
+.shop-ws-table tbody th[scope='row'] {
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.shop-ws-table td {
+  color: #fff;
+  font-weight: 700;
+}
+/* A band this upgrade does nothing for, at this tier OR the next one. Dimmed rather than hidden:
+   "COMMON ×1.00" is the fact the card exists to communicate. */
+.shop-ws-table tr.is-dead th[scope='row'],
+.shop-ws-table tr.is-dead td {
+  opacity: 0.45;
+}

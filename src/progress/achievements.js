@@ -6,7 +6,7 @@
 // Pure catalog + guarded store. `checkAchievements()` snapshots the live progress once, grants any
 // newly-satisfied achievement, and returns the newly-earned list for a toast. Never throws.
 import { readWordCount } from '../wordCount.js';
-import { getWinsLifetime, getRounds, grantWins } from './wins.js';
+import { getWinsLifetime, getRounds, grantWins, winLevelMult } from './wins.js';
 import { loadProgress, getRebirths, getKeyTier, rebirthMult } from './xp.js';
 import { collectionSummary } from './collection.js';
 import { masteryState, MASTERY_MODES } from './mastery.js';
@@ -79,11 +79,17 @@ export const ACHIEVEMENTS = [
   { id: 'kp-5', cat: 'ECONOMY', name: 'POWER USER', hint: 'Buy KEY POWER tier 5.', base: 10000, test: (s) => s.keyTier >= 5 },
   { id: 'ws-3', cat: 'ECONOMY', name: 'SIXTH SENSE', hint: 'Buy WORD SENSE tier 3.', base: 10000, test: (s) => s.wsTier >= 3 },
   // ---- SECRETS (hidden until earned) ----
-  { id: 'sec-millionaire', cat: 'SECRET', name: 'PAPER CHASE', hint: 'Earn 1,000,000 wins all-time.', base: 20000, secret: true, test: (s) => s.winsLifetime >= 1000000 },
-  { id: 'sec-dict', cat: 'SECRET', name: 'WALKING DICTIONARY', hint: 'Collect 100 OBSCURE words.', base: 25000, secret: true, test: (s) => s.obscure >= 100 },
-  { id: 'sec-eternal', cat: 'SECRET', name: 'ETERNAL', hint: 'Rebirth 10 times.', base: 100000, secret: true, test: (s) => s.rebirths >= 10 },
-  { id: 'sec-truemaster', cat: 'SECRET', name: 'TRUE MASTER', hint: 'Reach Mastery 10 in every mode.', base: 200000, secret: true, test: (s) => s.minMastery >= 10 },
-  { id: 'sec-completionist', cat: 'SECRET', name: 'COMPLETIONIST', hint: 'Earn every other achievement.', base: 50000, secret: true, test: (s, earnedSet) => ACHIEVEMENTS.filter((a) => a.id !== 'sec-completionist').every((a) => earnedSet.has(a.id)) },
+  // SECRETS — RESCALED (feat/progression-clarity). These are the five rarest things in the game
+  // and they were paying less than a minute of play by the time anyone could trigger them: a flat
+  // 20k-200k against an income that compounds past a million a minute. Two changes. The bases are
+  // an order of magnitude larger, and (see achievementPayout below) a SECRET also scales with your
+  // LEVEL, not just your rebirth count — so it stays a real payout at the point in the game where
+  // it is actually reachable rather than being an amount that was meaningful in some earlier era.
+  { id: 'sec-millionaire', cat: 'SECRET', name: 'PAPER CHASE', hint: 'Earn 1,000,000 wins all-time.', base: 250000, secret: true, test: (s) => s.winsLifetime >= 1000000 },
+  { id: 'sec-dict', cat: 'SECRET', name: 'WALKING DICTIONARY', hint: 'Collect 100 OBSCURE words.', base: 400000, secret: true, test: (s) => s.obscure >= 100 },
+  { id: 'sec-eternal', cat: 'SECRET', name: 'ETERNAL', hint: 'Rebirth 10 times.', base: 1500000, secret: true, test: (s) => s.rebirths >= 10 },
+  { id: 'sec-truemaster', cat: 'SECRET', name: 'TRUE MASTER', hint: 'Reach Mastery 10 in every mode.', base: 3000000, secret: true, test: (s) => s.minMastery >= 10 },
+  { id: 'sec-completionist', cat: 'SECRET', name: 'COMPLETIONIST', hint: 'Earn every other achievement.', base: 1000000, secret: true, test: (s, earnedSet) => ACHIEVEMENTS.filter((a) => a.id !== 'sec-completionist').every((a) => earnedSet.has(a.id)) },
 ];
 
 export function loadEarned() {
@@ -111,6 +117,43 @@ export function isEarned(id) {
 // Evaluate every un-earned achievement against a fresh snapshot; grant wins (× rebirth) for each
 // newly satisfied one and persist. Returns the newly-earned achievement objects (with the granted
 // wins) for a toast. Runs the completionist check LAST so it can see the others earned this pass.
+/**
+ * What an achievement actually pays, given a progress snapshot.
+ *
+ * EVERY achievement scales with the rebirth multiplier (unchanged). A SECRET scales with the
+ * player's LEVEL as well, on the same ×1.015/level ladder as the per-word wins base — because a
+ * secret is only reachable deep into a run, and a flat number set for an earlier economy is worth
+ * nothing by the time you can trigger it. Exported so the Achievements grid can QUOTE the figure
+ * it will actually be paid rather than the catalog base (the same class of mismatch
+ * rebirthScaledWins was added to fix).
+ */
+export function achievementPayout(a, snap = achievementSnapshot()) {
+  if (!a) return 0;
+  const scale = rebirthMult(snap.rebirths) * (a.secret ? winLevelMult(snap.level) : 1);
+  return Math.round(a.base * scale);
+}
+
+/**
+ * The SECRETS collection, for the Stats row: how many of the five are found, and every one of them
+ * with its earned flag. An unearned secret keeps its mask ('???') here exactly as it does in the
+ * grid — the row is a silhouette board, not a spoiler.
+ */
+export function secretsProgress() {
+  const earned = new Set(loadEarned());
+  const secrets = ACHIEVEMENTS.filter((a) => a.secret);
+  return {
+    found: secrets.filter((a) => earned.has(a.id)).length,
+    total: secrets.length,
+    items: secrets.map((a) => ({
+      id: a.id,
+      earned: earned.has(a.id),
+      name: earned.has(a.id) ? a.name : '???',
+      hint: earned.has(a.id) ? a.hint : 'A hidden achievement.',
+      base: a.base,
+    })),
+  };
+}
+
 export function checkAchievements() {
   // TEST-ONLY suppression of the on-load / on-home grant. Specs that seed progression (a high
   // level, lifetime wins, …) would otherwise get surprise achievement wins credited the moment the
@@ -139,7 +182,7 @@ export function checkAchievements() {
       }
       if (ok) {
         earned.add(a.id);
-        const wins = Math.round(a.base * mult);
+        const wins = achievementPayout(a, snap);
         grantWins(wins);
         newly.push({ ...a, wins });
       }

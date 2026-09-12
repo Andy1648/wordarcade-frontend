@@ -28,6 +28,10 @@ export const PAYOUT_FACTORS = [
   { key: 'rebirth', label: 'REBIRTH', kind: 'permanent' },
   { key: 'momentum', label: 'MOMENTUM', kind: 'permanent' },
   { key: 'wordSense', label: 'WORD SENSE', kind: 'permanent' },
+  // The equipped MARK (progress/marks.js). A mark is a permanent bonus you chose to wear, so it
+  // gets a named row exactly like the ones you bought — a standing multiplier nobody can see is
+  // the defect this module exists to fix, and a new invisible one would be absurd.
+  { key: 'mark', label: 'MARK', kind: 'permanent' },
   { key: 'rarity', label: 'RARITY', kind: 'word' },
   { key: 'length', label: 'LENGTH', kind: 'word' },
   { key: 'combo', label: 'COMBO', kind: 'word' },

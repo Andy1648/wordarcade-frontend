@@ -35,7 +35,7 @@ function formatMult(m) {
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0 }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -200,6 +200,30 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           leveling bar it is (the audit flagged it as unexplained). Full bar only. */}
       {variant !== 'mini' && <span className="menu-xp-label" aria-hidden="true">LEVEL</span>}
       <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
+      {/* THE EQUIPPED MARK, beside the level — the one place a permanent, chosen bonus is worth
+          carrying on the menu, because it is the only progression object the player picked rather
+          than accumulated. An empty slot still renders (a dimmed outline) once any mark has been
+          unlocked, so "you have something to equip" is visible rather than a thing you have to go
+          looking for. Nothing here animates. */}
+      {variant !== 'mini' && markSlot && (
+        onMarkClick ? (
+          <button
+            type="button"
+            className={`menu-mark${mark ? '' : ' is-empty'}`}
+            onClick={onMarkClick}
+            aria-label={mark ? `Mark equipped: ${mark.name}. ${mark.blurb}` : 'No mark equipped. Choose one'}
+            title={mark ? `${mark.name} — ${mark.blurb}` : 'No mark equipped'}
+          >
+            <span className="menu-mark-icon" aria-hidden="true">{mark ? mark.icon : '◇'}</span>
+            <span className="menu-mark-name" aria-hidden="true">{mark ? mark.name : 'NO MARK'}</span>
+          </button>
+        ) : (
+          <span className={`menu-mark${mark ? '' : ' is-empty'}`} title={mark ? `${mark.name} — ${mark.blurb}` : 'No mark equipped'}>
+            <span className="menu-mark-icon" aria-hidden="true">{mark ? mark.icon : '◇'}</span>
+            <span className="menu-mark-name" aria-hidden="true">{mark ? mark.name : 'NO MARK'}</span>
+          </span>
+        )
+      )}
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
         <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
         <span className="menu-xp-marker" ref={markerRef} />

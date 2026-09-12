@@ -26,6 +26,13 @@ import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
+import MarksPicker from './MarksPicker';
+import { markById, unlockedMarks, getEquippedMark, equipMark } from '../progress/marks';
+import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
+
+// The achievement each mark comes from, by name — the locked cards say what to go and do rather
+// than showing a silhouette, because a mark you cannot have is only interesting if it is a goal.
+const ACH_NAME = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.secret ? 'A SECRET' : a.name]));
 import Spotlight from './Spotlight';
 import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
@@ -179,6 +186,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
   const [showRanks, setShowRanks] = useState(false); // rank-ladder overlay (fix/card-polish)
+  // MARKS (feat/progression-clarity): the one equipped badge, and its picker. Read once on mount
+  // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
+  // menu anyway.
+  const [showMarks, setShowMarks] = useState(false);
+  const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
+  const earnedAch = loadEarned();
+  const markUnlocked = unlockedMarks(earnedAch);
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
@@ -698,6 +712,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onRankClick={() => setShowRanks(true)}
             streak={streak}
             freezes={streakFreezes}
+            /* The slot is only drawn once there is something to put in it — an empty badge on a
+               brand-new account is a question with no answer yet. */
+            markSlot={markUnlocked.length > 0}
+            mark={markById(equippedMark)}
+            onMarkClick={() => setShowMarks(true)}
           />
           {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
               only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
@@ -809,6 +828,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             game={lockedPreview.game}
             level={xpProgress.level}
             onClose={() => setLockedPreview(null)}
+          />
+        </ScreenBoundary>
+      )}
+
+      {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
+      {showMarks && (
+        <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
+          <MarksPicker
+            unlockedIds={markUnlocked.map((m) => m.id)}
+            equippedId={equippedMark}
+            achievementNames={ACH_NAME}
+            onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
+            onClose={() => setShowMarks(false)}
           />
         </ScreenBoundary>
       )}

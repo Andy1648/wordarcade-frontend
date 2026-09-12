@@ -1,0 +1,149 @@
+/* MarksPicker.css — the one-slot mark chooser. Flat house style, static; the only motion is
+   hover/press feedback on a card. */
+.marks-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(13, 6, 24, 0.88);
+}
+.marks-card {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 16px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #000;
+}
+.marks-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.marks-title {
+  font-family: 'Bungee', cursive;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  margin: 0;
+  color: #2EFFE0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  transform: rotate(-2deg) skewX(-3deg);
+}
+.marks-close {
+  font-family: 'Bungee', cursive;
+  font-size: var(--fs-body);
+  color: #fff;
+  background: #FF5C5C;
+  border: 3px solid #B83A3A;
+  border-radius: 3px;
+  padding: 4px 10px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+}
+.marks-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+.marks-intro {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  color: #b9aecd;
+  margin: 8px 0 12px;
+}
+.marks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mark-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap-min);
+  text-align: left;
+  padding: 9px 11px;
+  background: #2a1450;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.mark-card:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000;
+}
+.mark-card:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+.mark-card.is-on {
+  background: #14B8A6;
+  border-color: #0d7e72;
+}
+.mark-card.is-locked {
+  opacity: 0.55;
+  cursor: default;
+}
+.mark-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex: none;
+}
+.mark-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.mark-name {
+  font-family: 'Bungee', cursive;
+  font-size: var(--fs-body);
+  line-height: 1.05;
+  color: #FFE94A;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+.mark-card.is-on .mark-name {
+  color: #0d0618;
+  -webkit-text-stroke: 0;
+}
+.mark-blurb,
+.mark-lock {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  color: #e7e0f2;
+}
+.mark-card.is-on .mark-blurb {
+  color: #0d0618;
+}
+.mark-lock {
+  color: #FF6B3D;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.mark-on {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 2px solid #000;
+  border-radius: 3px;
+  padding: 2px 6px;
+}

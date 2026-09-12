@@ -12,6 +12,7 @@
 // pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
 import { addMasteryWord, masteryXpMult } from './mastery.js';
+import { markXpMult } from './marks.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -368,7 +369,9 @@ export function awardWordXp(opts = {}) {
   // MASTERY (Job 2): this mode's mastery level multiplies the word's XP (+3%/level above M1). The
   // multiplier is read BEFORE crediting the word to mastery, so a word never retroactively boosts
   // itself. round10 keeps the "+N ends in a zero" invariant after the mastery scale.
-  const gain = round10(xpPerWord(opts) * masteryXpMult(mode));
+  // MARK (feat/progression-clarity): the equipped mark's XP multiplier rides the same layer as
+  // mastery — a flat scale on the word's XP, ×1 when the mark has no XP effect or none is worn.
+  const gain = round10(xpPerWord(opts) * masteryXpMult(mode) * markXpMult(opts.markId));
   const res = creditXp(loadProgress(), gain);
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track

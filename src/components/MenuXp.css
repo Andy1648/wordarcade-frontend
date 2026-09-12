@@ -517,3 +517,67 @@ button.menu-wins-chip:focus-visible {
     display: none;
   }
 }
+
+/* ---- THE EQUIPPED MARK, beside the level (feat/progression-clarity) -----------------------
+   A mark is the one progression object the player CHOSE rather than accumulated, so it rides
+   the level bar rather than living in a menu nobody opens. Static — the menu has no idle
+   loops (see CLAUDE.md MENU MOTION LAW); only hover/press feedback. */
+.menu-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  color: #1a0b2e;
+  background: #2EFFE0;
+  border: 3px solid #14B8A6;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  transform: skewX(-4deg);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+button.menu-mark {
+  cursor: pointer;
+}
+button.menu-mark:hover {
+  transform: skewX(-4deg) translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+button.menu-mark:active {
+  transform: skewX(-4deg) translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+/* An empty slot is drawn, not hidden: "you have a mark to equip" is information. */
+.menu-mark.is-empty {
+  color: #b9aecd;
+  background: #2a1450;
+  border-color: #4a3a6a;
+}
+.menu-mark-icon {
+  font-size: 1.15em;
+  line-height: 1;
+}
+/* NARROW MENUS: the bar is a single nowrap flex row and the track is the only `flex: 1` item in
+   it, so every fixed-width chip is taken straight out of the track. Adding the mark badge at
+   390px collapsed the track to 4px and clipped the XP readout inside it
+   (viewport-integrity). Below 560px the badge drops its NAME and keeps only the icon — the slot
+   is still visible and still tappable at 44px, which is the whole job of it on the menu; the
+   name is one tap away in the picker. */
+@media (max-width: 560px) {
+  .menu-mark-name {
+    display: none;
+  }
+  .menu-mark {
+    padding: 3px 6px;
+  }
+}
+/* ...and on a phone-width menu it goes entirely. There is no width at which a decorative slot
+   is worth clipping the level readout it sits next to. */
+@media (max-width: 430px) {
+  .menu-mark {
+    display: none;
+  }
+}

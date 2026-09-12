@@ -10,12 +10,12 @@
 //
 // Both are read-only readouts of numbers wins.js has already paid. Neither computes a payout, so
 // neither can ever quote a multiplier the player did not actually get.
+import Num from './Num';
 import './PayoutBreakdown.css';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 // ×2 / ×1.5 / ×2.35 — trailing zeros trimmed, because "×2.00" reads like a different number.
 const mult = (m) => `×${Number(m.toFixed(2))}`;
-const wins = (n) => Math.round(n).toLocaleString('en-US');
 
 /**
  * ONE WORD. `payout` is buildPayout()'s result; `inactive` is inactivePayoutFactors()'s, which is
@@ -40,7 +40,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
       <div className="payout-head">
         <span className="payout-head-label">BASE</span>
-        <span className="payout-head-val">{wins(payout.base)}</span>
+        <span className="payout-head-val"><Num value={payout.base} /></span>
       </div>
       <div className="payout-rows">
         {rows.map((r) => (
@@ -58,7 +58,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
       </div>
       <div className="payout-total">
         <span className="payout-k">PAID</span>
-        <span className="payout-total-val">{wins(payout.total)}</span>
+        <Num value={payout.total} className="payout-total-val" />
       </div>
       {inactive.length > 0 && !compact && (
         <div className="payout-off">
@@ -90,7 +90,7 @@ export function RoundPayout({ ledger }) {
       <div className="payout-title">WHERE YOUR WINS CAME FROM</div>
       <div className="payout-head">
         <span className="payout-head-label">{ledger.words} WORDS × BASE</span>
-        <span className="payout-head-val">{wins(ledger.base)}</span>
+        <span className="payout-head-val"><Num value={ledger.base} /></span>
       </div>
       {ledger.rows.length === 0 ? (
         <div className="payout-none">NO MULTIPLIERS THIS ROUND — every word paid the flat base.</div>
@@ -103,14 +103,14 @@ export function RoundPayout({ ledger }) {
                   still a visible bar rather than a sliver that reads as zero. */}
               <span className="payout-bar" style={{ '--w': pct(top > 0 ? r.share / top : 0) }} />
               <span className="payout-avg">{mult(r.mult)}</span>
-              <span className="payout-v">+{wins(r.wins)}</span>
+              <Num value={r.wins} prefix="+" className="payout-v" />
             </div>
           ))}
         </div>
       )}
       <div className="payout-total">
         <span className="payout-k">TOTAL</span>
-        <span className="payout-total-val">{wins(ledger.total)}</span>
+        <Num value={ledger.total} className="payout-total-val" />
       </div>
     </div>
   );

@@ -457,3 +457,57 @@
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 #000;
 }
+
+/* ---- SECRETS AS A COLLECTION (feat/progression-clarity) ----------------------------------
+   Five hidden achievements paid one lump each and then disappeared into the achievements grid.
+   Nothing ever said how many there were, so they read as random popups rather than a set. A
+   silhouette board with a found count turns them into something you can be MISSING. */
+.stats-secret-count {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #FFE94A;
+  margin-left: 8px;
+  -webkit-text-stroke: 0;
+}
+.stats-secrets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stats-secret {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 9px;
+  background: #150a26;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  /* UNDISCOVERED is a silhouette: the shape is there, the content is not. */
+  color: #4a3a6a;
+}
+.stats-secret.is-found {
+  background: #2a1450;
+  color: #e7e0f2;
+}
+.stats-secret-mark {
+  font-size: var(--fs-body);
+  line-height: 1;
+  color: #4a3a6a;
+}
+.stats-secret.is-found .stats-secret-mark {
+  color: #FFE94A;
+}
+.stats-secret-name {
+  font-family: 'Bungee', cursive;
+  font-size: var(--fs-label);
+  line-height: 1.05;
+}
+.stats-secret-hint {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+}

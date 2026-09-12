@@ -56,6 +56,13 @@
   font-weight: 700;
   color: #fff;
 }
+/* The head/row figures sit on mono rows and keep the mono face; only the TOTAL is display type.
+   <Num> sets its numeral in Bungee by default, so the small ones are pulled back here rather than
+   given a second component. */
+.payout-head-val .num-fig,
+.payout-v .num-fig {
+  font-family: 'Space Mono', monospace;
+}
 .payout-total-val {
   font-family: 'Bungee', cursive;
   font-size: var(--fs-panel);

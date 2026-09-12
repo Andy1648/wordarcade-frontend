@@ -92,7 +92,9 @@ import { makeLuckyOracle, luckyReward, randomSeed } from './progress/luck';
 import { recordAcceptedWord } from './progress/collection';
 import { noteWord, noteSession, noteLucky } from './progress/records';
 import { wordSenseWinsFactor } from './progress/wordSense';
+import { markComboKeep, markRarityStep } from './progress/marks';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
+import { bumpRarity } from './progress/rarity';
 import {
   saveDailyState,
   recordDailyResult,
@@ -1117,7 +1119,9 @@ function App() {
       // COMBO (parity): if I just lost a life (my turn timed out / was skipped), that's a miss —
       // break my payout combo, mirroring the cosmetic streak's miss() on the same life-loss.
       if (lostPlayers.some((p) => p.id === myIdRef.current)) {
-        wbComboRef.current = comboBreak(wbComboRef.current);
+        // MARK — METRONOME (feat/progression-clarity): a chance the broken combo SURVIVES. Rolled
+        // here, at the one place a Word Bomb combo breaks, so the mark cannot silently apply twice.
+        if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current);
       }
       if (lostPlayers.length) {
         const now = Date.now();
@@ -1217,7 +1221,12 @@ function App() {
           // is set for the feed event below and nothing changes; the deferral is only the rare
           // first-~100ms cold path. Instant feedback (chime, count, pill, feed) already fired above.
           const scoreWbWord = () => {
-            const r = rarityOf(wbWord);
+            // MARK — LINGUIST: a chance this word counts one RARITY BAND higher. Rolled BEFORE
+            // anything reads the rarity, so the bumped band is what the payout, the collection,
+            // the feed tag and the receipt all see - one truth per word, never a bonus applied to
+            // the wins and not to the label that explains them.
+            let r = rarityOf(wbWord);
+            if (Math.random() < markRarityStep()) r = bumpRarity(r);
             const prevWbWeight = myWbWeightRef.current;
             // Unified economy (Job 1): the per-word reward weight (rarity × combo × lucky, capped at
             // ×40) feeds BOTH the wins banking below AND an XP grant — parity with CHAIN/FUSE.
@@ -1306,7 +1315,9 @@ function App() {
       } else {
         // Rejections are only sent to the player who submitted, so this is
         // always our own miss.
-        wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
+        // MARK — METRONOME (feat/progression-clarity): a chance the broken combo SURVIVES. Rolled
+        // here, at the one place a Word Bomb combo breaks, so the mark cannot silently apply twice.
+        if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
         sndWordRejected(); // Job 11: soft reject
         setFeedEvents((prev) => [
           ...prev,

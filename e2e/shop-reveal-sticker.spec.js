@@ -7,6 +7,7 @@
 // modal whose backdrop swallows the click, so it can never fall through to the shop behind it.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { formatNum } from '../src/format.js';
 
 async function openShop(page, { wins = 999999 } = {}) {
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
@@ -36,10 +37,13 @@ test('buying INFERNO reveals a sticker naming the theme and its price', async ({
   await expect(sticker).toBeVisible();
   await expect(sticker).toContainText('UNLOCKED');
   await expect(sticker).toContainText('INFERNO');
-  await expect(sticker).toContainText('2,500');
+  // The price is formatted by src/format.js, which groups with a THIN SPACE (U+2009) rather than
+  // a comma as of feat/progression-clarity — a comma at four digits reads as a decimal point to
+  // half the world. Asserted through the same formatter so the test cannot drift from the UI.
+  await expect(sticker).toContainText(formatNum(2500));
   // It is the SHOP skin of the shared shell, and the price reads as a debit (spent, not earned).
   await expect(page.locator('.shop-sticker')).toHaveCount(1);
-  await expect(sticker.locator('.sticker-coin.is-debit')).toContainText('2,500');
+  await expect(sticker.locator('.sticker-coin.is-debit')).toContainText(formatNum(2500));
   // The item's OWN art, not a generic star: the theme's swatch strip is an inline SVG.
   await expect(sticker.locator('svg.sticker-glyph')).toHaveCount(1);
   await expect(page.locator('.shop-reveal')).toHaveCount(0); // the old black box is gone

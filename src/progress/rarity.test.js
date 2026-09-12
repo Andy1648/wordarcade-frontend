@@ -9,6 +9,7 @@ import {
   bandForRank,
   lengthBonus,
   RARITY_MAX_MULT,
+  bumpRarity,
 } from './rarity.js';
 
 // A tiny synthetic frequency corpus: rank === index. We place known words at exact ranks so the
@@ -93,4 +94,37 @@ test('safe defaults: empty word / missing index → COMMON, silent, ×1 (never t
 test('case/whitespace-insensitive lookup', () => {
   const idx = idxWith([['ccccc', 20000]]);
   assert.equal(wordRarity('  CCCCC  ', idx).band, 'RARE');
+});
+
+// ---- bumpRarity — the LINGUIST mark's "one rarity tier higher" (feat/progression-clarity) ----
+test('bumpRarity steps a word up ONE band and keeps its length bonus', () => {
+  const idx = buildRarityIndex(['the', 'cat', 'dog']);
+  const common = wordRarity('the', idx);
+  assert.equal(common.band, 'COMMON');
+  const up = bumpRarity(common);
+  assert.equal(up.band, 'UNCOMMON');
+  assert.equal(up.bumped, true);
+  // The promise is a better BAND, not a different word: the length ratio is carried across.
+  assert.ok(Math.abs(up.lengthMult - common.lengthMult) < 1e-9);
+  assert.ok(up.mult > common.mult);
+  // ...and the LABEL moves with it, so the feed tag and the payout agree about what the word was.
+  assert.equal(up.announce, true);
+  assert.ok(up.label.startsWith('UNCOMMON'));
+});
+
+test('bumpRarity stops at OBSCURE and never exceeds the rarity ceiling', () => {
+  const idx = buildRarityIndex(['the']);
+  const obscure = wordRarity('zymurgy', idx); // not in the corpus → OBSCURE
+  assert.equal(obscure.band, 'OBSCURE');
+  const up = bumpRarity(obscure);
+  assert.equal(up.band, 'OBSCURE', 'already the top band — unchanged');
+  assert.ok(up.mult <= RARITY_MAX_MULT);
+  // A long word at the top band is still capped after a bump.
+  const longObscure = wordRarity('sesquipedalian', idx);
+  assert.ok(bumpRarity(longObscure).mult <= RARITY_MAX_MULT);
+});
+
+test('bumpRarity is guarded: no rarity object in, nothing out', () => {
+  assert.equal(bumpRarity(null), null);
+  assert.equal(bumpRarity(undefined), undefined);
 });
