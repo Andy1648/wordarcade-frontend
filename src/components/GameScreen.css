@@ -83,13 +83,20 @@
 @media (min-width: 900px) and (max-height: 900px) {
   .game-stage--wb {
     display: grid;
-    grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
+    /* A THIRD COLUMN for the payout receipt — which is what makes it un-overlappable: it has
+       somewhere to BE. The rail reserves its width permanently (an appearing column would reflow
+       the board on every accepted word), so that width has to come from somewhere, and the BOMB
+       column is where: 0.55fr -> 0.40fr. Taking it from the 1fr middle column instead narrowed the
+       input field until its own placeholder clipped by 6px at 1280x720 — caught by
+       wb-short-layout, which measures exactly that. The bomb has slack around it; the field does
+       not. */
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr) auto;
     grid-template-areas:
-      'header header'
-      'bar    bar'
-      'bomb   combo'
-      'bomb   used'
-      'bomb   input';
+      'header header header'
+      'bar    bar    bar'
+      'bomb   combo  rail'
+      'bomb   used   rail'
+      'bomb   input  rail';
     align-content: center;
     column-gap: clamp(16px, 3vw, 56px);
     row-gap: clamp(4px, 1vh, 12px);
@@ -103,6 +110,7 @@
   .game-stage--wb .game-combo-box { grid-area: combo; align-self: center; }
   .game-stage--wb .game-used { grid-area: used; align-self: center; }
   .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
+  .game-stage--wb .wb-rail { grid-area: rail; align-self: center; justify-self: end; width: 152px; }
   /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
   .game-stage--wb .bomb-svg { width: clamp(150px, 30vh, 250px); height: auto; }
   /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of sitting
@@ -191,80 +199,83 @@
 /* Hype word popup: a throwaway tag that bursts up from small, holds, then
    blows out bigger while fading. Centered over the stage, never blocks
    clicks. Colour + tilt (--hype-rot) come from inline styles per popup. */
-.hype-popup {
+/* THE HYPE WORD — AT THE FIELD, NOT ACROSS THE BOARD.
+   It used to be `position:absolute; top:42%; left:50%` on the stage at up to 48px, scaled to 1.6
+   and rotated up to 15deg. Measured worst case at 1280x720: a 904x371 box lying across the TITLE,
+   the PROMPT and a PLAYER CARD simultaneously — and its stroked letters are what painted over the
+   B in "WORD BOMB". Rotation is what makes it enormous: a 15deg tilt on a 900px-wide line adds
+   ~230px of pure bounding-box height.
+   Now it is anchored to the input row and sits BELOW it, in the one band of the board that holds
+   nothing else. Small, one line, barely tilted, and it can no longer reach anything: the gate in
+   e2e/word-landing.spec.js asserts it never intersects the prompt, the input, a player card or
+   the title, at every viewport. */
+/* THE REACTION SLOT: one anchored column above the field holding the hype word and the word
+   landing. They are the same event in two registers, so they share one box rather than each
+   choosing its own coordinates — which is exactly how the hype became a 904x371 banner lying
+   across the title. Fixed geometry, one thing to gate, and it cannot take a pointer. */
+.wb-react {
   position: absolute;
-  top: 42%;
   left: 50%;
-  z-index: 20;
+  bottom: calc(100% + 14px);
+  z-index: 6;
+  transform: translateX(-50%);
+  /* A ROW, not a column. Stacked, the pair needed ~100px of height above the field and there is
+     only ~60px there at 1280x720 — the hype went straight into the prompt box. Side by side the
+     slot is one line tall and both fit inside the field's own width.
+     `padding-top` is for the landing's STAMP, which is absolutely positioned and perches ~13px
+     ABOVE its chip: without the padding it reaches up out of the slot entirely. That collision is
+     invisible to a box-intersection gate — getBoundingClientRect does not include an out-of-flow
+     descendant that overflows — so the shot caught it and the gate now watches `.wl-stamp` by name. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 16px;
+  width: max-content;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.hype-popup {
+  /* In flow inside .wb-react — NOT positioned. It used to be `position:absolute; top:42%;
+     left:50%` on the stage at up to 48px, scaled to 1.6 and rotated up to 15deg, which measured a
+     904x371 box over the title, the prompt and a player card at once; its stroked letters are what
+     painted over the B in "WORD BOMB". Rotation is what made it enormous — a 15deg tilt on a 900px
+     line adds ~230px of pure bounding-box height. */
+  position: relative;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  /* Scales down on small screens; the longer curated hype phrases wrap within a
-     capped width instead of overflowing (they used to be single words). */
-  font-size: clamp(28px, 8vw, 48px);
-  -webkit-text-stroke: 3px #000;
+  font-size: clamp(14px, 1.7vw, 19px);
+  -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
-  max-width: 86vw;
+  /* One line, clipped rather than wrapped: a second line is what turned this into a block big
+     enough to cover other things. */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: center;
-  line-height: 0.95;
-  animation: hype-pop 400ms ease-out forwards;
+  line-height: 1.05;
+  animation: hype-pop 700ms ease-out forwards;
 }
 
 @keyframes hype-pop {
-  0% {
-    transform: translate(-50%, -50%) scale(0.5) rotate(var(--hype-rot, 0deg));
-    opacity: 1;
-  }
-  30% {
-    transform: translate(-50%, -50%) scale(1.4) rotate(var(--hype-rot, 0deg));
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.6) rotate(var(--hype-rot, 0deg));
-    opacity: 0;
-  }
+  0% { transform: translateY(6px) scale(0.7) rotate(var(--hype-rot, 0deg)); opacity: 0; }
+  18% { transform: translateY(0) scale(1.08) rotate(var(--hype-rot, 0deg)); opacity: 1; }
+  30%, 78% { transform: translateY(0) scale(1) rotate(var(--hype-rot, 0deg)); opacity: 1; }
+  100% { transform: translateY(-8px) scale(0.98) rotate(var(--hype-rot, 0deg)); opacity: 0; }
 }
 
-/* RARITY (word-value) pop: the tier label under the hype word on a rare accept. Colour is set
-   inline per tier. Finite one-shot, transform/opacity only (animation budget). Sits just below
-   the hype popup's centre so the two read as a stack, not an overlap. */
-.rarity-popup {
-  position: absolute;
-  top: 56%;
-  left: 50%;
-  z-index: 20;
-  pointer-events: none;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 4vw, 26px);
-  letter-spacing: 0.02em;
-  -webkit-text-stroke: 2px #000;
-  paint-order: stroke fill;
-  white-space: nowrap;
-  animation: rarity-pop 700ms ease-out forwards;
-}
-
-@keyframes rarity-pop {
-  0% {
-    transform: translate(-50%, -50%) scale(0.6);
-    opacity: 0;
-  }
-  22% {
-    transform: translate(-50%, -50%) scale(1.15);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -60%) scale(1);
-    opacity: 0;
-  }
-}
-
+/* The HYPE word is a one-shot, so reduced motion keeps it and drops only the movement — the word
+   is the content, the pop is the decoration. */
 @media (prefers-reduced-motion: reduce) {
-  .rarity-popup {
-    animation: none;
-    opacity: 0;
+  .hype-popup {
+    animation: hype-fade 700ms linear forwards;
+  }
+  @keyframes hype-fade {
+    0% { opacity: 0; }
+    12%, 82% { opacity: 1; }
+    100% { opacity: 0; }
   }
 }
 
@@ -4473,20 +4484,25 @@ html[data-beat='true'] .cb-answer-chip {
 /* WINS visibility (Economy v3): the live "+N WINS" pill + the game-over "WINS EARNED" total
    moved to the shared WinsHud.css (used by every mode now). */
 
-/* ===== THE PAYOUT RECEIPT (Economy v7) ==============================================
-   The per-word breakdown floats ABOVE the input bar. Two rules it has to respect:
-   - it is anchored to the bar, not to the viewport (CLAUDE.md: no orphan fixed UI — a
-     fixed element with no layout relationship to the page eventually collides with
-     whatever ends up beneath it);
-   - it is OUT OF FLOW, because wbRingSize measures the bar's offsetHeight to budget the
-     ring's diameter, and a receipt that took height would resize the board on every
-     accepted word.
-   One finite transform/opacity one-shot per word, nothing looping. */
+/* ===== THE PAYOUT RECEIPT — A DOCKED RAIL, NOT AN OVERLAY ==========================
+   It floated: `position:absolute` above the input bar, which put a 142x157 panel straight through
+   the prompt box at 1280x720. Nudging a floating panel only moves the collision — a transient
+   thing drawn over a full board will always eventually land on something, and this board has a
+   prompt, an input, a used-word strip and two player cards to land on.
+   So it does not float. `.wb-rail` is a REAL SLOT of the board: at >=900px its own grid column
+   beside the prompt/used/input stack (see the layout block at the top of this file), below that a
+   block under the input. The slot is ALWAYS in the DOM, empty between words, so a word arriving
+   never reflows anything. Nothing inside it is positioned, so there is no geometry to get wrong —
+   which is the only kind of fix that stays fixed.
+   e2e/word-landing.spec.js gates that it never intersects the prompt, the input, a player card or
+   the title, at every viewport. */
+.wb-rail {
+  /* Reserved whether or not there is a receipt in it: a slot that appears and disappears is a
+     layout shift on every accepted word. */
+  min-height: 1px;
+  pointer-events: none;
+}
 .wb-receipt {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 10px);
-  z-index: 5;
   pointer-events: none;
   will-change: transform, opacity;
   animation: wb-receipt-show 2800ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
@@ -4504,13 +4520,16 @@ html[data-beat='true'] .cb-answer-chip {
     100% { opacity: 0; }
   }
 }
-/* PHONES: no room beside the field, so the receipt is centred over it instead of
-   right-aligned. */
-@media (max-width: 700px) {
-  .wb-receipt {
-    right: auto;
-    left: 50%;
-    transform-origin: bottom center;
-    margin-left: -110px;
+/* NARROW BOARDS: THE RAIL IS NOT SHOWN.
+   There is no third column below 900px, so the rail became a block under the input — and the
+   phone board has no spare height for a 157px panel: the shot showed it pushed past the bottom of
+   the viewport, half of it cut off. (The overlap gate could not see that: it measures against the
+   STAGE, and the stage had simply grown taller than the screen.)
+   A per-word receipt is a wide-screen affordance. On a phone the same information is on the end
+   screen as the round breakdown, which is where it is actually readable — and the LANDING, which
+   is the part that has to be at the word, still shows the band and the payout at the field. */
+@media (max-width: 899px) {
+  .wb-rail {
+    display: none;
   }
 }

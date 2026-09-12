@@ -179,3 +179,15 @@
     min-width: 70px;
   }
 }
+
+/* The 3-word gate, stated. The first two words of a round bank nothing; the receipt says what the
+   word is WORTH and this line says why the balance has not moved — instead of the panel printing
+   a PAID of 0 under five multipliers, which is what it used to do. */
+.payout-held {
+  margin-top: 4px;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #FF6B3D;
+  text-align: right;
+}

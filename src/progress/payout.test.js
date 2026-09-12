@@ -22,12 +22,39 @@ test('buildPayout multiplies every factor and reports the same total wins.js wou
   assert.equal(r.total, r.computed, 'with no granted amount passed, total IS the computed figure');
 });
 
-test('the GRANTED amount wins: a breakdown can never contradict the ledger', () => {
-  // The live payout is snapped per grant and can differ from a recomputation by a rounding step.
-  // When the caller knows what was actually banked, that number is what is shown.
-  const r = buildPayout({ base: 100, factors: { mode: 2 }, total: 12345 });
-  assert.equal(r.total, 12345);
-  assert.equal(r.computed, 200, 'the recomputation is still reported, for a test to compare');
+// THE BOTTOM LINE FOLLOWS FROM THE ROWS. This replaces a test that asserted the opposite — that a
+// caller-supplied `total` was what the panel showed. That is how a receipt came to list BASE 100,
+// MODE x2, RARITY x2.5, LENGTH x1.16, COMBO x1.1 and then print PAID 0: the first two words of a
+// round bank nothing (the 3-word gate), the caller passed that 0 through, and the panel printed a
+// total that contradicted every line above it.
+test('PAID is exactly the product of the listed rows, rounded — always', () => {
+  const cases = [
+    { base: 100, factors: { mode: 2, rarity: 2.5, length: 1.16, combo: 1.1 } },
+    { base: 100, factors: { mode: 2, difficulty: 1.5, rarity: 4, length: 1.12, combo: 1.3, rebirth: 3 } },
+    { base: 20, factors: {} },
+    { base: 100, factors: { mode: 2, cap: 0.4 } }, // a factor BELOW 1 still has to multiply out
+  ];
+  for (const c of cases) {
+    const r = buildPayout(c);
+    const fromRows = r.rows.reduce((a, row) => a * row.mult, 1);
+    assert.ok(Math.abs(fromRows - r.product) < 1e-9, 'the listed rows ARE the product');
+    assert.equal(r.paid, round10(c.base * fromRows), `PAID must equal base x rows for ${JSON.stringify(c.factors)}`);
+    assert.equal(r.paid, r.computed);
+  }
+});
+
+test('the 3-WORD GATE shows as HELD, never as a PAID of zero', () => {
+  // total 0 = banked nothing yet. The word is still worth what its rows say, and the panel says
+  // so; `held` is what carries the other fact.
+  const r = buildPayout({ base: 100, factors: { mode: 2, rarity: 2.5 }, total: 0 });
+  assert.equal(r.paid, round10(100 * 2 * 2.5), 'the bottom line is what the word is worth');
+  assert.equal(r.total, 0, 'what was BANKED is still reported, for the ledger');
+  assert.equal(r.held, true);
+  // Past the gate, nothing is held.
+  const paid = buildPayout({ base: 100, factors: { mode: 2, rarity: 2.5 }, total: 500 });
+  assert.equal(paid.held, false);
+  // A word genuinely worth nothing is not "held" either — there is nothing to release.
+  assert.equal(buildPayout({ base: 0, factors: {}, total: 0 }).held, false);
 });
 
 test('a ×1 factor is NOT drawn — the panel lists contributions, not the whole schema', () => {

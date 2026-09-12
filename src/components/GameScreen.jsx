@@ -213,7 +213,9 @@ function HypePopup() {
   const [look] = useState(() => ({
     word: HYPE_WORDS[Math.floor(Math.random() * HYPE_WORDS.length)],
     color: HYPE_COLORS[Math.floor(Math.random() * HYPE_COLORS.length)],
-    rotation: Math.floor(Math.random() * 31) - 15, // -15deg..15deg
+    // +-5deg, not +-15. Rotation is what made the old banner enormous: tilting a wide line adds
+    // bounding-box height in proportion to its width, and this used to be a 900px line.
+    rotation: Math.floor(Math.random() * 11) - 5,
   }));
 
   if (done) return null;
@@ -230,25 +232,6 @@ function HypePopup() {
   );
 }
 
-/**
- * RARITY (word-value) pop: the tier label ("RARE ×2.5") in the tier colour, shown under the
- * hype word on an accepted answer rare enough to announce (UNCOMMON+). Re-keyed per accept so it
- * replays; removes itself on animation end. Purely decorative (aria-hidden, pointer-events:none).
- */
-function RarityPopup({ rarity }) {
-  const [done, setDone] = useState(false);
-  if (done || !rarity) return null;
-  return (
-    <div
-      className="rarity-popup"
-      style={{ color: rarity.color }}
-      onAnimationEnd={() => setDone(true)}
-      aria-hidden="true"
-    >
-      {rarity.label}
-    </div>
-  );
-}
 
 /**
  * A throwaway "+1" that floats up and fades near the input on each accepted
@@ -2886,9 +2869,13 @@ export default function GameScreen({
             that was the "AWESOME! spam while typing". The stable wrapper
             (display:contents, zero layout effect) gives it a fixed reconciliation
             slot so it mounts exactly once per accept. */}
+        {/* The CLUTCH slam still owns the centre of the board — it is a rare, whole-round event
+            (you beat the buzzer), not a per-word one. The per-word HYPE moved to the field; see
+            the input row below. This wrapper stays for the same reconciliation reason it was
+            added: a bare keyed child among the stage's conditional siblings re-mounted on nearly
+            every render and re-rolled its random word ("AWESOME! spam while typing"). */}
         <div style={{ display: 'contents' }}>
-          {hypeKey > 0 && !hitlag &&
-            (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
+          {hypeKey > 0 && !hitlag && clutchFlag && <ClutchPopup key={hypeKey} />}
         </div>
         <div className="game-header">
           <div className="game-title">
@@ -3160,26 +3147,35 @@ export default function GameScreen({
                 positioned + pointer-events:none, exactly like the ComboMeter above it, so it never
                 takes layout height or blocks the field. Keyed by the word index so a new word
                 replays the one-shot. */}
-            {lastPayout && !gameOver && (
-              <div className="wb-receipt" key={lastPayout.key} aria-hidden="true">
-                <WordPayout payout={lastPayout.payout} compact />
-              </div>
-            )}
             {/* THE WORD ITSELF REACTS. Rarity used to be a silent multiplier folded into a total;
                 it lands here now, on the field the player just typed into, coloured and stamped by
                 band — and a SECRET rides the same surface instead of a centre-screen modal. Keyed
                 per word so each one is a fresh one-shot; COMMON words render nothing (the normal
                 accept pop is already their event). */}
-            {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
-              <WordLanding
-                key={lastLanding.key}
-                word={lastLanding.word}
-                band={lastLanding.band}
-                wins={lastLanding.wins}
-                secret={lastLanding.secret}
-                reduced={goReduce}
-              />
-            )}
+            {/* ONE REACTION SLOT, above the field. The hype word and the word landing are the same
+                event told in two registers, so they share one anchored column rather than each
+                picking their own coordinates — which is how the hype ended up a 904x371 banner
+                across the title. Fixed geometry, one box to gate, pointer-events:none. */}
+            <div className="wb-react" aria-hidden="true">
+              {/* ONE reaction per word. The hype word and the landing say the same thing — "that
+                  was good" — and the landing says it better, with the band and the payout on the
+                  word itself. So the hype is the COMMON-word reaction and the landing takes over
+                  from UNCOMMON up. Side by side they needed more room above the field than a
+                  1280x720 board has, and the hype ended up painted through the used-word strip. */}
+              {hypeKey > 0 && !hitlag && !clutchFlag && !gameOver
+                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
+                && <HypePopup key={hypeKey} />}
+              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+                <WordLanding
+                  key={lastLanding.key}
+                  word={lastLanding.word}
+                  band={lastLanding.band}
+                  wins={lastLanding.wins}
+                  secret={lastLanding.secret}
+                  reduced={goReduce}
+                />
+              )}
+            </div>
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout
@@ -3316,15 +3312,30 @@ export default function GameScreen({
           </div>
         )}
 
-        {lastWordResult && lastWordResult !== dismissedResultRef.current && (
-          <div
-            className={`game-toast ${
-              lastWordResult.accepted ? 'accepted' : 'rejected'
-            }`}
-          >
-            {lastWordResult.accepted
-              ? `NICE! "${(lastWordResult.word || '').toUpperCase()}" ACCEPTED`
-              : rejectionMessage(lastWordResult.reason, { combo, isCategory })}
+        {/* REJECTS ONLY. The accept branch used to print NICE! "MINSTREL" ACCEPTED down in the
+            bottom-left — a second copy of the word, far from the word, at the same moment the
+            landing is showing it AT the field with its band and its payout. Two renderings of one
+            event in two places is worse than either alone: the eye has to find the second one to
+            learn it says nothing new. A REJECT still needs this, because a reject carries a REASON
+            ("already used", "doesn't contain STR") that nothing else on screen says. */}
+        {/* THE RECEIPT RAIL — a DOCKED slot of the board, not an overlay.
+            It used to be absolutely positioned above the input row, which put a 142x157 panel
+            straight through the prompt box at 1280x720. A transient panel that floats over the
+            board will always eventually land on something; the fix is not to nudge it but to give
+            it somewhere it cannot be. The slot is ALWAYS rendered, even when empty, so a word
+            arriving never reflows the board — and at >=900px it is its own grid column, beside the
+            prompt/used/input stack rather than on top of it. */}
+        <div className="wb-rail" aria-hidden="true">
+          {lastPayout && !gameOver && (
+            <div className="wb-receipt" key={lastPayout.key}>
+              <WordPayout payout={lastPayout.payout} compact />
+            </div>
+          )}
+        </div>
+
+        {lastWordResult && !lastWordResult.accepted && lastWordResult !== dismissedResultRef.current && (
+          <div className="game-toast rejected">
+            {rejectionMessage(lastWordResult.reason, { combo, isCategory })}
           </div>
         )}
       </div>
@@ -4246,14 +4257,11 @@ function CategoryBlitzScreen({
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}
-          <div style={{ display: 'contents' }}>
-            {hypeKey > 0 && <HypePopup key={hypeKey} />}
-            {/* RARITY (word-value): a rarer accepted answer pops its tier label below the hype
-                word, in the tier colour. COMMON answers carry no rarity (silent). */}
-            {hypeKey > 0 && lastWordResult && lastWordResult.rarity && (
-              <RarityPopup key={`r${hypeKey}`} rarity={lastWordResult.rarity} />
-            )}
-          </div>
+          {/* The per-word HYPE moved to the FIELD (see the input row below) — as a stage-centred
+              banner it was measured lying across the title, the prompt and a player card at once.
+              The rarity tier pop that used to sit under it is gone too: the word landing shows the
+              band ON the answer now, and a second announcement in the middle of the screen is the
+              same event told twice, further from the thing it is about. */}
           <div className="game-header">
             <div className="game-title">
               <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
@@ -4355,16 +4363,23 @@ function CategoryBlitzScreen({
             {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
                 relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
                 feature. */}
-            {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
-              <WordLanding
-                key={lastLanding.key}
-                word={lastLanding.word}
-                band={lastLanding.band}
-                wins={lastLanding.wins}
-                secret={lastLanding.secret}
-                reduced={goReduce}
-              />
-            )}
+            {/* ONE REACTION SLOT — see the Word Bomb note. */}
+            <div className="wb-react" aria-hidden="true">
+              {/* ONE reaction per word — see the Word Bomb note. */}
+              {hypeKey > 0 && !gameOver
+                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
+                && <HypePopup key={hypeKey} />}
+              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+                <WordLanding
+                  key={lastLanding.key}
+                  word={lastLanding.word}
+                  band={lastLanding.band}
+                  wins={lastLanding.wins}
+                  secret={lastLanding.secret}
+                  reduced={goReduce}
+                />
+              )}
+            </div>
             {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout

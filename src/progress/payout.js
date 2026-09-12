@@ -52,11 +52,18 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * @param {number} arg.base    the flat per-word base before any multiplier (WORD_WINS_BASE)
  * @param {object} arg.factors { mode, difficulty, level, rebirth, momentum, mark, rarity,
  *                               length, combo, lucky } — each a multiplier, missing/1 = inactive
- * @param {number} [arg.total] the amount ACTUALLY granted. When given it is reported verbatim
- *                             instead of recomputed, so the breakdown can never disagree with the
- *                             ledger — the computed figure is returned alongside as `computed`.
+ * @param {number} [arg.total] the amount ACTUALLY banked this call, when the caller knows it.
+ *                             NOTE: this is NOT what the receipt prints. See `paid` below.
  * @param {string} [arg.band]  the rarity band name (COMMON/UNCOMMON/RARE/OBSCURE), for the note
- * @returns {{ base, total, computed, product, rows, note }}
+ * @returns {{ base, paid, total, computed, product, rows, band, held }}
+ *
+ * `paid` IS THE PRODUCT OF THE ROWS, always. This is the fix for a receipt that listed BASE 100,
+ * MODE ×2, RARITY ×2.5, LENGTH ×1.16, COMBO ×1.1 and then printed PAID 0. Nothing was wrong with
+ * the arithmetic: the first two words of a round bank NOTHING (the 3-word payout gate), the caller
+ * passed that 0 through as the amount, and the panel dutifully printed a total that contradicted
+ * every line above it. A receipt whose bottom line does not follow from its own rows is worse than
+ * no receipt. So the bottom line is now what the rows say this word is WORTH, and `held` carries
+ * the other fact — that the gate has not released it yet — as a caption instead of as a zero.
  */
 export function buildPayout({ base = 0, factors = {}, total, band } = {}) {
   const b = Number.isFinite(base) && base > 0 ? base : 0;
@@ -71,11 +78,14 @@ export function buildPayout({ base = 0, factors = {}, total, band } = {}) {
     if (Math.abs(m - 1) > 1e-9) rows.push({ ...f, mult: m });
   }
   const computed = round10(b * product);
+  const banked = Number.isFinite(total) ? total : computed;
   return {
     base: b,
     product,
     computed,
-    total: Number.isFinite(total) ? total : computed,
+    paid: computed, // what the rows add up to — the number the panel prints
+    total: banked, // what was actually banked this call (0 before the 3-word gate)
+    held: banked <= 0 && computed > 0,
     rows,
     band: band || null,
   };

@@ -57,9 +57,16 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
         )}
       </div>
       <div className="payout-total">
-        <span className="payout-k">PAID</span>
-        <Num value={payout.total} className="payout-total-val" />
+        <span className="payout-k">{payout.held ? 'WORTH' : 'PAID'}</span>
+        {/* `paid`, not `total`: the bottom line is the product of the rows above it. `total` is
+            what was BANKED, which is 0 for the first two words of a round (the 3-word gate) — and
+            a receipt that lists five multipliers and then prints 0 is a receipt that contradicts
+            itself. The gate is a separate fact and gets its own caption. */}
+        <Num value={payout.paid} className="payout-total-val" />
       </div>
+      {payout.held && (
+        <div className="payout-held">HELD — BANKS AT 3 WORDS</div>
+      )}
       {inactive.length > 0 && !compact && (
         <div className="payout-off">
           {inactive.map((f) => (
