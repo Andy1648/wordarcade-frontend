@@ -225,8 +225,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         )
       )}
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
-        <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
-        <span className="menu-xp-marker" ref={markerRef} />
+        {/* The CLIP wraps only the fill + marker. The track itself must NOT clip: the
+            readout sits centred over the track and is wider than the track whenever the
+            row is tight (a 360px menu leaves the flexible track ~32px), so a clipping
+            track cropped the numbers. Clipping the fill is the only thing overflow was
+            ever for - the scaleX fill and the marker - so it moves in here. */}
+        <span className="menu-xp-clip">
+          <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
+          <span className="menu-xp-marker" ref={markerRef} />
+        </span>
         {variant !== 'mini' && (
           <span className="menu-xp-readout">
             <span ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>

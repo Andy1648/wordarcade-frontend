@@ -10,7 +10,9 @@
 }
 .route-fallback-label {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 4vw, 26px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.08em;
   color: #2effe0;
   -webkit-text-stroke: 3px #000;

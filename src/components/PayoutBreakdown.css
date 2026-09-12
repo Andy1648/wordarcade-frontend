@@ -65,6 +65,7 @@
 }
 .payout-total-val {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-size: var(--fs-panel);
   line-height: 1;
   color: #FFE94A;

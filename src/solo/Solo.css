@@ -51,7 +51,7 @@
   color: #fff;
   border: 3px solid #000;
   box-shadow: 3px 3px 0 #000;
-  font-size: 16px;
+  font-size: var(--fs-body);
   cursor: pointer;
   z-index: 60; /* stays reachable above the game-over overlay (z-50) */
 }
@@ -69,7 +69,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px 20px;
-  font-size: 15px;
+  font-size: var(--fs-label);
   /* Clear the absolute exit ✕ (top-right, 40px + 16px inset) so a wrapped chip never runs
      under it on the narrow card. */
   padding: 0 52px;
@@ -85,12 +85,15 @@
   line-height: 1.1;
 }
 .solo-hud .solo-stat b {
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: var(--solo-accent);
 }
 .solo-hud .solo-stat span {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   opacity: 0.7;
   letter-spacing: 0.08em;
 }
@@ -98,7 +101,9 @@
 /* The multiplier chip (CHAIN) — squash is an event, not idle. */
 .solo-mult {
   font-family: 'Bungee', cursive;
-  font-size: 26px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ffe94a;
   padding: 4px 12px;
   background: #1a0b2e;
@@ -111,7 +116,7 @@
 .solo-lives {
   display: flex;
   gap: 6px;
-  font-size: 22px;
+  font-size: var(--fs-body);
 }
 
 /* Alphabet strip (FUSE) */
@@ -129,10 +134,10 @@
   justify-content: center;
   /* Strip counter to the >=16px floor at >=1366px wide; 12px on phones. aspect-ratio
      fixes the cell height, so this bump costs no vertical space. Static clamp(). */
-  font-size: clamp(12px, 1.2vw, 16px);
+  font-size: var(--fs-body);
   border-radius: 4px;
   background: #1a0b2e;
-  color: #6b5a86;
+  color: #9a8bbf /* contrast: 3.03 -> 6.03 on #1a0b2e */;
   border: 2px solid #000;
 }
 .solo-strip span.is-lit {
@@ -186,7 +191,9 @@
 }
 .solo-clock-num {
   font-family: 'Bungee', cursive;
-  font-size: 26px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   fill: #fff;
 }
 .solo-clock-num.is-red {
@@ -196,12 +203,13 @@
 /* The big center token: the required letter (CHAIN) or the fragment (FUSE). */
 .solo-center {
   font-family: 'Bungee', cursive;
+  letter-spacing: -0.02em;
   /* The hero token stays far above the 44px floor, but a vh term (min) shrinks it on
      SHORT laptops so the column keeps >=24px slack there. Phones keep 14vw (unchanged).
      Static font-size — the tier escalation stays a transform: scale() elsewhere. */
   /* Breathe: the gated solo hero grows on big screens (was capped at 76px). vw/vh-bounded
      so it never overflows a short window. */
-  font-size: clamp(56px, min(16vw, 30vh), 240px);
+  font-size: min(var(--fs-hero), 30vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(56px, min(16vw, 30vh), 240px)) */;
   line-height: 1;
   color: var(--solo-accent);
   -webkit-text-stroke: clamp(6px, 1vmin, 11px) #000;
@@ -210,7 +218,7 @@
   text-align: center;
 }
 .solo-supply {
-  font-size: clamp(13px, 1.3vw, 16px);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #b9a7d6;
   text-align: center;
@@ -256,7 +264,7 @@
 }
 .solo-out-letter {
   font-family: 'Bungee', cursive;
-  font-size: 34px;
+  font-size: var(--fs-panel);
   line-height: 1;
   color: #fff;
   text-transform: uppercase;
@@ -283,7 +291,7 @@
   background: #ff4b4b;
 }
 .solo-out-cap {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   min-height: 14px;
@@ -312,7 +320,8 @@
   top: 0;
   opacity: 0;
   font-family: 'Bungee', cursive;
-  font-size: 48px;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #2effe0;
   -webkit-text-stroke: 5px #000;
@@ -339,7 +348,7 @@
   /* >=28px input target at >=1366px wide; 20px on phones (min). The fixed 56px height
      means this bump costs no vertical space. Static font-size only — this element keeps
      NO transition/animation/transform/filter/will-change (nor any ancestor up to .solo-root). */
-  font-size: clamp(20px, 2vw, 34px);
+  font-size: var(--fs-panel);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -356,7 +365,7 @@
   text-transform: none;
   letter-spacing: normal;
   /* smaller than the typed text so the (longer) hint always fits inside the padded box */
-  font-size: 0.78em;
+  font-size: var(--fs-body);
 }
 
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
@@ -386,14 +395,14 @@
 .solo-reason {
   min-height: 20px;
   /* Message line to the >=16px floor at >=1366px wide; 14px on phones. Static clamp(). */
-  font-size: clamp(14px, 1.3vw, 16px);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #ff4b4b;
   text-align: center;
 }
 .solo-armhint {
-  font-size: clamp(13px, 1.3vw, 16px);
+  font-size: var(--fs-body);
   color: #b9a7d6;
   text-align: center;
   max-width: 320px;
@@ -434,12 +443,14 @@
 }
 .solo-deathcard h2 {
   font-family: 'Bungee', cursive;
-  font-size: 28px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: var(--solo-accent);
   margin: 0;
 }
 .solo-death-killed {
-  font-size: 15px;
+  font-size: var(--fs-label);
   color: #ff4b4b;
   font-weight: 700;
 }
@@ -447,7 +458,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 14px;
+  font-size: var(--fs-label);
   color: #d8c9f0;
 }
 
@@ -455,7 +466,8 @@
    (the join letters) are drawn in the accent cyan; everything else stays white. */
 .solo-chain-example {
   font-family: 'Space Mono', monospace;
-  font-size: 15px;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #fff;
@@ -469,8 +481,10 @@
   color: #6b5a86;
 }
 .solo-firstrun-goal {
-  font-family: 'Bungee', cursive;
-  font-size: 16px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   color: #ffe94a;
   letter-spacing: 0.04em;
 }
@@ -478,14 +492,19 @@
   display: flex;
   justify-content: space-between;
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ffe94a;
 }
 .solo-restart {
   height: 52px;
-  font-family: 'Bungee', cursive;
-  font-size: 18px;
-  color: #0d0618;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  color: #ffffff /* contrast: 1.56 -> 12.75 on #3a2b52 */;
   background: #3a2b52;
   border: 4px solid #000;
   border-radius: 8px;
@@ -612,14 +631,16 @@
   z-index: 1;
 }
 .solo-deck-label {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
   letter-spacing: 0.14em;
   color: #b9a7d6;
   text-transform: uppercase;
 }
 .solo-deck-hint {
-  font-size: clamp(12px, 1.3vw, 15px);
+  font-size: var(--fs-label);
   letter-spacing: 0.05em;
   color: #8a77aa;
   text-align: center;
@@ -646,7 +667,7 @@
   position: relative;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(15px, 1.6vw, 28px);
+  font-size: var(--fs-panel);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
@@ -756,10 +777,10 @@
   justify-content: center;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(13px, 2.2vw, 19px);
+  font-size: var(--fs-body);
   border-radius: 6px;
   background: #1a0b2e;
-  color: #6b5a86;
+  color: #9a8bbf /* contrast: 3.03 -> 6.03 on #1a0b2e */;
   border: 2px solid #000;
   box-shadow: 2px 2px 0 #000;
 }
@@ -810,7 +831,9 @@
 }
 .solo-lucky-label {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 34px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #FFD429;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
@@ -847,13 +870,17 @@
 }
 .solo-loadstate-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(22px, 5vw, 34px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: var(--solo-accent, #2effe0);
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
 }
 .solo-loadstate-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #cdbdf0;
 }

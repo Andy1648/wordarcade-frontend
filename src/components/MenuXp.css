@@ -29,8 +29,15 @@
   }
 }
 .menu-xp-lv {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 2.4vw, 20px);
+  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
+     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
+     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
+     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
+     legible and gives the track its width back. */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
   line-height: 1;
   color: var(--theme-xp-fill, #2effe0); /* THEME: matches the XP fill */
   letter-spacing: 0.02em;
@@ -40,7 +47,7 @@
    readout is the leveling bar. Sits just left of the LV chip; no idle motion. */
 .menu-xp-label {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(8px, 1.5vw, 11px);
+  font-size: var(--fs-micro);
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -50,17 +57,24 @@
 }
 /* Daily-streak chip — flame + count, inline with the LV/wins chrome (no added bar height). */
 .menu-streak-chip {
+  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
+     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
+     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
+     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
+     legible and gives the track its width back. */
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 2.4vw, 20px);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-body);
   line-height: 1;
   color: #ff6b3d; /* ember orange — reads as a streak/heat without a new asset */
   white-space: nowrap;
 }
 .menu-streak-flame {
-  font-size: 0.9em;
+  font-size: var(--fs-body);
   line-height: 1;
 }
 
@@ -72,6 +86,7 @@
   align-items: center;
   gap: 5px;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
   padding: 4px 9px;
@@ -81,23 +96,23 @@
   background: #ff9a3d; /* tier-2 base ember */
   box-shadow: 2px 2px 0 #000;
 }
-.menu-streak-flame { font-size: 1.05em; }
-.menu-streak-count { font-size: clamp(14px, 2.8vw, 22px); }
+.menu-streak-flame { font-size: var(--fs-body); }
+.menu-streak-count { font-size: var(--fs-body); }
 .menu-streak-day {
-  font-size: 9px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   opacity: 0.75;
   align-self: center;
 }
 .menu-streak-mult {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   padding: 2px 5px;
   border-radius: 5px;
   background: #0d0618;
   color: #ffe94a;
 }
 .menu-streak-freeze {
-  font-size: 12px;
+  font-size: var(--fs-label);
   color: #2effe0;
   background: #0d0618;
   border-radius: 5px;
@@ -105,7 +120,7 @@
 }
 /* milestone tiers — escalating fill + shadow weight */
 .menu-streak[data-tier='3']  { background: #ff6b3d; }
-.menu-streak[data-tier='7']  { background: #ff4fa3; color: #fff; box-shadow: 3px 3px 0 #000; }
+.menu-streak[data-tier='7']  { background: #ff4fa3; color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */; box-shadow: 3px 3px 0 #000; }
 .menu-streak[data-tier='7'] .menu-streak-mult,
 .menu-streak[data-tier='7'] .menu-streak-freeze { color: #ffe94a; }
 .menu-streak[data-tier='14'] { background: #9a1aff; color: #fff; box-shadow: 4px 4px 0 #000; }
@@ -155,7 +170,16 @@
     #1a0b2e;
   border: 2px solid #000;
   border-radius: 8px;
+  /* NOT overflow:hidden - see .menu-xp-clip. The readout is centred over this track and
+     is wider than it on a tight row; clipping here cropped the numbers. */
+}
+/* Clips the scaleX fill + the marker, and nothing else. */
+.menu-xp-clip {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
+  border-radius: 6px;
+  pointer-events: none;
 }
 .menu-xp-fill {
   position: absolute;
@@ -198,13 +222,17 @@
 /* Number / number readout, centred over the track — legible over filled + unfilled via the
    2px black stroke. Bungee, cream ink. */
 .menu-xp-readout {
+  /* A numeral inside a fixed-width chip cannot take the 28px Bungee display floor
+     (.menu-xp-readout), and type that cannot take the floor should not be display type.
+     Space Mono data readout instead. */
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 2;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 2.6vw, 22px);
+  font-family: 'Space Mono', monospace; font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
   line-height: 1;
   color: #f0ead9;
   -webkit-text-stroke: 2px #000;
@@ -225,7 +253,7 @@
      caption is inside it), so it must NOT also zoom here or it would scale twice. Its top margin is
      dropped too — the cluster's gap owns the spacing now. */
   font-family: 'Space Mono', monospace;
-  font-size: clamp(10px, 1.8vw, 13px);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -264,16 +292,20 @@
 }
 .menu-xp-pop-letter {
   font-family: 'Bungee', cursive;
-  font-size: clamp(22px, 4vw, 34px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1;
   color: #2effe0; /* tier colour set inline; the +N below stays yellow */
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
 }
 .menu-xp-pop-plus {
-  font-family: 'Bungee', cursive;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   /* 0.5× the letter size, baseline-aligned. */
-  font-size: clamp(11px, 2vw, 17px);
+  font-size: var(--fs-body);
   line-height: 1;
   color: #ffe94a; /* always yellow */
   -webkit-text-stroke: 2px #000;
@@ -286,7 +318,7 @@
   display: none;
 }
 .menu-xp-pop.is-tap .menu-xp-pop-plus {
-  font-size: clamp(22px, 4vw, 34px);
+  font-size: var(--fs-panel);
   -webkit-text-stroke: 3px #000;
 }
 
@@ -332,7 +364,8 @@
 }
 .menu-xp-levelup-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(48px, 12vw, 110px);
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
   line-height: 1;
   color: #ffe94a;
   -webkit-text-stroke: 5px #000;
@@ -340,8 +373,10 @@
   letter-spacing: 0.03em;
 }
 .menu-xp-levelup-sub {
-  font-family: 'Bungee', cursive;
-  font-size: 14px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
   line-height: 1;
   text-transform: uppercase;
   color: #ffe94a;
@@ -353,7 +388,8 @@
    payout reads distinct from the gold title. Hidden when the level-up granted nothing. */
 .menu-xp-levelup-wins {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 4.4vw, 40px);
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #2effe0;
   -webkit-text-stroke: 3px #000;
@@ -368,7 +404,8 @@
 /* Second line under the phrase — "LV n-1 → LV n" at ~0.3× the title size. */
 .menu-xp-levelup-detail {
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 3.6vw, 33px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1;
   color: #f0ead9;
   -webkit-text-stroke: 3px #000;
@@ -382,12 +419,19 @@
 
 /* Wins chip — coin glyph + balance, inline with the LV label (no new vertical height). */
 .menu-wins-chip {
+  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
+     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
+     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
+     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
+     legible and gives the track its width back. */
   position: relative; /* anchors the affordability dot (no layout height added) */
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 2.4vw, 20px);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-body);
   line-height: 1;
   color: #ffe94a;
   white-space: nowrap;
@@ -398,7 +442,7 @@
    already say "WINS"; this closes the loop so a newcomer connects the coin to the word). Subordinate
    to the value: smaller + slightly dimmed, so the number still reads first. */
 .menu-wins-label {
-  font-size: 0.5em;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   opacity: 0.82;
 }
@@ -446,7 +490,8 @@ button.menu-wins-chip:focus-visible {
   transform: translate(-50%, -50%) rotate(-4deg) scale(1);
   opacity: 0;
   font-family: 'Bungee', cursive;
-  font-size: clamp(28px, 7vw, 64px);
+  text-transform: uppercase;
+  font-size: var(--fs-h1);
   line-height: 1;
   color: #ffe94a;
   -webkit-text-stroke: 5px #000;
@@ -469,7 +514,8 @@ button.menu-wins-chip:focus-visible {
   padding: 12px 18px;
   text-align: center;
   font-family: 'Bungee', cursive;
-  font-size: clamp(15px, 3.4vw, 26px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1.15;
   color: #0d0618;
   background: #ffe94a;
@@ -482,8 +528,11 @@ button.menu-wins-chip:focus-visible {
 /* RANK TITLE (Job 5) — the level band's name in the LV bar. Static, on-brand chip. */
 .menu-xp-rank {
   flex: 0 0 auto;
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(9px, 1.4vw, 12px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
   letter-spacing: 0.5px;
   color: #0d0618;
   background: #FFE94A;
@@ -557,7 +606,7 @@ button.menu-mark:active {
   border-color: #4a3a6a;
 }
 .menu-mark-icon {
-  font-size: 1.15em;
+  font-size: var(--fs-body);
   line-height: 1;
 }
 /* NARROW MENUS: the bar is a single nowrap flex row and the track is the only `flex: 1` item in

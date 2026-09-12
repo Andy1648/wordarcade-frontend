@@ -46,7 +46,9 @@
 .stats-title {
   margin: 0;
   font-family: 'Bungee', cursive;
-  font-size: clamp(28px, 5vw, 36px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-h2);
   color: #ffe94a;
   letter-spacing: 0.04em;
 }
@@ -59,7 +61,7 @@
   color: #fff;
   border: 3px solid #000;
   box-shadow: 3px 3px 0 #000;
-  font-size: 16px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .stats-close:active {
@@ -86,8 +88,9 @@
   justify-content: center;
   padding: 6px 4px;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: clamp(9px, 2.1vw, 12px);
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   letter-spacing: 0;
   white-space: nowrap;
   color: #b9a7d6;
@@ -130,8 +133,10 @@
 
 .stats-subtitle {
   margin: 18px 0 8px;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.4vw, 22px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   letter-spacing: 0.08em;
   color: #2effe0;
 }
@@ -166,14 +171,17 @@
 .rec-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.08em;
   color: #b9a7d6;
   text-transform: uppercase;
 }
 .rec-value {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 22px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   line-height: 1.05;
   color: #ffe94a;
   overflow-wrap: anywhere; /* a long rarest word wraps rather than breaking the grid */
@@ -182,8 +190,11 @@
   color: #2effe0; /* the rarest-word hero reads in cyan */
 }
 .rec-sub {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   color: #ff4fa3;
 }
@@ -206,7 +217,7 @@
 }
 .rec-req {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.04em;
   color: #8f7eb2; /* a11y MED-2: was #7a6a99 (~4.1:1) → ~5.5:1 on the #0d0618 cell */
   text-transform: uppercase;
@@ -217,7 +228,8 @@
 .stats-caption {
   margin: -2px 0 8px;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(11px, 1.5vw, 13px);
+  text-transform: uppercase;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   color: #8f7fb0;
 }
@@ -238,15 +250,18 @@
   border-bottom: none;
 }
 .stats-row dt {
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #b9a7d6;
 }
 .stats-row dd {
   margin: 0;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.4vw, 22px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ffe94a;
 }
 
@@ -255,7 +270,9 @@
   margin: 10px 18px 18px;
   padding: 12px;
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 20px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.04em;
   color: #0d0618;
   background: #2effe0;
@@ -287,8 +304,11 @@
 .stats-backup-restore {
   align-self: center;
   padding: 12px 20px;
-  font-family: 'Bungee', cursive;
-  font-size: 1rem;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #0d0618;
   background: #2effe0;
   border: 3px solid #1aa393;
@@ -318,7 +338,9 @@
   resize: vertical;
   padding: 10px 12px;
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   color: #f0ead9;
   background: #0d0618;
   border: 3px solid #000;
@@ -333,8 +355,9 @@
   margin: 0;
   text-align: center;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.08em;
   color: #2effe0;
 }
@@ -342,8 +365,9 @@
   margin: 0;
   text-align: center;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   color: #ff6b3d;
 }
@@ -359,7 +383,9 @@
 .stats-backup-warn {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1.4;
   color: #f0ead9;
 }
@@ -385,8 +411,11 @@
 .stats-reset {
   align-self: center;
   padding: 12px 20px;
-  font-family: 'Bungee', cursive;
-  font-size: 1rem;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff3b3b;
   background: #1a0b2e;
   border: 3px solid #ff3b3b;
@@ -413,7 +442,7 @@
 .stats-danger-warn {
   margin: 0 0 12px;
   font-family: 'Space Mono', monospace;
-  font-size: 1rem;
+  font-size: var(--fs-body);
   line-height: 1.4;
   color: #ffd7d7;
 }
@@ -428,9 +457,12 @@
 .stats-reset-confirm {
   flex: 1 1 auto;
   padding: 12px 14px;
-  font-family: 'Bungee', cursive;
-  font-size: 1rem;
-  color: #fff;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  color: #0d0618 /* contrast: 3.53 -> 5.62 on #ff3b3b */;
   background: #ff3b3b;
   border: 3px solid #a11414;
   border-radius: 8px;
@@ -444,8 +476,11 @@
 .stats-reset-cancel {
   flex: 0 0 auto;
   padding: 12px 14px;
-  font-family: 'Bungee', cursive;
-  font-size: 1rem;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2effe0;
   background: #1a0b2e;
   border: 3px solid #2effe0;
@@ -502,7 +537,12 @@
   color: #FFE94A;
 }
 .stats-secret-name {
-  font-family: 'Bungee', cursive;
+  /* Space Mono, not Bungee: at --fs-label Bungee's counters close up. Same voice via weight and
+     tracking, and it sits a step above its own hint line without shouting. */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   font-size: var(--fs-label);
   line-height: 1.05;
 }

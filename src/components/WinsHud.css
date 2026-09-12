@@ -34,7 +34,7 @@
   border: 3px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
-  font-size: 0.9rem;
+  font-size: var(--fs-label);
 }
 
 /* Pre-gate state ("3 WORDS TO EARN"): muted cream fill so it reads as a target to
@@ -45,14 +45,18 @@
   color: #6b5e1a;
 }
 .wins-hud-plus {
-  font-family: 'Bungee', cursive;
-  font-size: 1.3rem;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   line-height: 1;
 }
 .wins-hud-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: var(--fs-micro);
   letter-spacing: 0.06em;
 }
 
@@ -66,7 +70,8 @@
 }
 .wins-earned-num {
   font-family: 'Bungee', cursive;
-  font-size: 2.6rem;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #ffe94a;
   -webkit-text-stroke: 3px #000;
@@ -74,8 +79,9 @@
 }
 .wins-earned-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: var(--fs-label);
   letter-spacing: 0.1em;
   color: #2effe0;
 }

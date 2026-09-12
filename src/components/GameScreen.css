@@ -32,8 +32,21 @@
      so its top never gets cut off / unreachable. */
   align-items: safe center;
   justify-content: center;
-  /* smaller side padding on phones so the stage fills the narrow width (fix/game-fill-2) */
-  padding: clamp(8px, 1.6vw, 24px);
+  /* Padding as NAMED custom properties, because the Word Bomb stage's height is
+     `100dvh - 2 * var(--wrap-pad-y)` (see .game-stage--wb) and that sum has to be
+     exact - a hardcoded shorthand here would silently desync it and put the board
+     back over the fold. Smaller side padding on phones so the stage fills the
+     narrow width (fix/game-fill-2). */
+  --wrap-pad-y: clamp(8px, 1.6vw, 24px);
+  --wrap-pad-x: clamp(8px, 1.6vw, 24px);
+  padding: var(--wrap-pad-y) var(--wrap-pad-x);
+}
+
+/* WORD BOMB only: the stage is a full-height board, so the wrap keeps a thin,
+   height-derived frame instead of the wide vw-derived one. Every pixel spent here
+   comes straight off the ring's diameter. */
+.game-wrap--wb {
+  --wrap-pad-y: clamp(8px, 1.5vh, 20px);
 }
 
 /* Board + live feed grouped as ONE centered panel (the JSX wraps .game-stage and
@@ -73,62 +86,213 @@
   max-width: min(96vw, 1760px);
 }
 
-/* ===== WORD BOMB wide-aspect reflow (fix/game-fill-2) ================================
-   Without the old --app-scale zoom the WB stack (header + player bar + bomb + combo +
-   used + input) is ~880px tall and overflows a short window. On SHORT viewports we lay
-   it out as a GRID — bomb column beside the combo/used/input column — so it fills the
-   width AND fits the height. Pure CSS on existing children (grid-areas); absolute FX
-   (hype/clutch/fly/shatter) are out of flow and unaffected. Tall windows (h>900) keep
-   the single-column stack, which already fits + fills there. */
-@media (min-width: 900px) and (max-height: 900px) {
+/* ===== WORD BOMB - THE BOARD (feat/wb-ring, rebuilt) ================================
+   WHAT WENT WRONG THE FIRST TIME. The ring was placed by a two-column reflow that put
+   it in a shrink-to-fit LEFT column and sized it off the viewport (min(46vw,62vh) etc.).
+   Measured on the preview, that produced a 476px circle at y=325 in a 768px window (the
+   bottom of the ring off the board), a 346px circle jammed at x=96 in a 1148px stage
+   (every avatar in the left third), and two thirds of the board dead.
+
+   THE BOARD IS NOW ONE CENTRED COMPOSITION:
+
+       +----------------------------------------------+
+       |  title                       sound  LEAVE     |   <- auto track (CHROME)
+       +----------------------------------------------+
+       |  FRAGMENT                    (full width)     |   <- 1fr track
+       +----------+----------------------+------------+
+       | kill     |        RING          |  used      |   <- auto track
+       | feed     |   (bomb at centre)   |  words     |
+       +----------+----------------------+------------+
+       |  input row                   (full width)     |   <- 1fr track
+       +----------------------------------------------+
+
+   THE HEADER HAS ITS OWN ROW. It used to be `position:absolute; inset:0` over the
+   prompt bar at >=900px, to save height - and the saving was real, but what it bought
+   was a 1166x135 prompt box with the title, LEAVE and the sound button rendered INSIDE
+   it, three controls sharing a band with the hero fragment. Chrome gets a row.
+
+   Both side tracks are `1fr` and the two tracks flanking the ring row are `1fr`, so the
+   ring's centre lands on the centre of the PLAY AREA (the board below the header) by
+   construction - there is no measurement that can drift and no breakpoint where it
+   slides into a corner. The diameter is computed from the stage box in wbRingSize.js
+   (never from vw/vh), which is only possible because the stage's height is PINNED here
+   rather than grown by its contents. */
+.game-stage--wb {
+  /* The pinned box. `100dvh` (not vh) so a phone's collapsing URL bar moves it. */
+  height: calc(100dvh - 2 * var(--wrap-pad-y));
+  max-height: calc(100dvh - 2 * var(--wrap-pad-y));
+  /* Vertical padding is height taken from the ring, so the board spends less of it
+     than the generic stage does. The TOP value is not decoration: the header now sits
+     in flow at the top of the board at EVERY width, and the fixed WINS pill (top:12px,
+     ~33px tall, right:16px) overlaps the board's top-right corner. This clears it. */
+  padding-top: clamp(52px, 6.4vh, 58px);
+  padding-bottom: clamp(10px, 1.6vh, 22px);
+  display: grid;
+  grid-template-columns: minmax(var(--wb-rail), 1fr) minmax(0, auto) minmax(var(--wb-rail), 1fr);
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  grid-template-areas:
+    'head head head'
+    'top  top  top'
+    'feed ring used'
+    'bot  bot  bot';
+  column-gap: clamp(10px, 1.4vw, 22px);
+  /* Not a hairline: the active seat's YOUR TURN flag floats ~26px ABOVE the ring box,
+     so anything less and the flag sits on the prompt bar. */
+  row-gap: clamp(20px, 3vh, 30px);
+  justify-items: center;
+  /* Width of ONE side rail. Read back by wbRingSize.js, which subtracts two of them
+     before it hands the rest to the ring - so the rails can never be squeezed away. */
+  --wb-rail: clamp(104px, 16vw, 260px);
+  /* ONE height for BOTH rail cards, so the pair flanking the ring reads as a pair.
+     PRE-PAINT FALLBACK ONLY: GameScreen writes the real value as an inline style from
+     wbRailFit - the TALLER of the two cards' natural content heights, capped at the
+     ring's diameter. This used to BE the rule (0.44 of the ring), which is a number
+     with no relationship to what is inside either card: at five used words it sliced
+     the fourth chip through the middle and cut MODE off the MATCH readout, while the
+     area-skew gate read a perfect 0% because two equally-wrong boxes are still equal. */
+  --wb-railh: clamp(104px, calc(var(--wb-size) * 0.44), 196px);
+  /* The one thing CSS tells JS: which of the two layouts is live. */
+  --wb-layout: rails;
+  /* Pre-paint fallback only. useLayoutEffect overwrites this with the measured value
+     before the first paint; it exists so a JS-less/SSR frame is not a 0px ring. */
+  --wb-size: clamp(220px, min(66vw, 42vh), 520px);
+}
+
+/* The pill clearance again, at a specificity the <=600px `.game-stage { padding: ... }`
+   shorthand cannot beat. That shorthand is later in the file and equal-specificity, so
+   the value above is silently dropped on a phone - which is exactly how the WINS pill
+   came to sit on top of LEAVE at 390px. `.game-wrap--wb` prefix, not !important. */
+.game-wrap--wb .game-stage--wb {
+  padding-top: clamp(52px, 6.4vh, 58px);
+  padding-bottom: clamp(10px, 1.6vh, 22px);
+  padding-inline: clamp(14px, 2vw, 28px);
+}
+
+.game-stage--wb .game-header {
+  grid-area: head;
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+.game-stage--wb .wb-top {
+  grid-area: top;
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  /* The prompt is a PLAQUE over the bomb, not a banner across the board. Full-width
+     it was ~1160px of bar with a three-letter fragment in the middle - the dead ends
+     that the header used to be parked in. Shrink-to-fit and centred on the ring, it
+     is the same object with nothing empty attached to it. */
+  display: flex;
+  justify-content: center;
+}
+.game-stage--wb .wb-ring {
+  grid-area: ring;
+  align-self: center;
+  justify-self: center;
+  /* The active seat's YOUR TURN flag floats ABOVE the seat, i.e. just above the ring
+     box and right under the prompt bar - and the bar is `transform: rotate(-1deg)`,
+     which lifts it into the positioned paint layer and put it over the flag. The ring
+     outranks it explicitly. */
+  z-index: 1;
+}
+/* PULLED IN AGAINST THE RING. The side tracks are 1fr and a rail is capped at
+   --wb-rail, so there is always slack in them; where that slack goes is the whole
+   question. Centred, it split into a ~100px gutter on EACH side of every card, and the
+   three objects read as three islands - worst at 2 players, where the ring itself is
+   only two seats and a bomb. Against the ring, the only gap between a rail and the
+   board is the grid's own column gap (<=22px) and all the slack is outboard, where
+   there is nothing to separate. */
+.game-stage--wb .wb-rail--left {
+  grid-area: feed;
+  justify-self: end;
+  align-self: center;
+}
+.game-stage--wb .wb-rail--right {
+  grid-area: used;
+  justify-self: start;
+  align-self: center;
+}
+/* HEAD-TO-HEAD (<=2 players). There is no kill feed at two players, so the LEFT rail
+   had nothing in it while the right carried the whole used-word column - the board
+   read lopsided, which is the same dead-space failure the ring was built to fix. The
+   used list takes the LEFT rail and the MATCH readout (rendered only at <=2p) takes
+   the right, so both rails carry a card of the same size. */
+.game-stage--wb.wb-duo .game-used {
+  grid-area: feed;
+  justify-self: end;
+}
+/* ...and the header drops its ROUND/MODE badges at <=2p, because the MATCH card now
+   carries them. Scoped to the rails layout: the phone board has no right rail, so
+   the badges stay in its header. */
+@media (min-width: 701px) {
+  .game-stage--wb.wb-duo .game-meta { display: none; }
+}
+/* `display:contents` so USED and the input BAR are placed independently by the stage
+   grid. The wrapper becomes a real flex column in the phone layout below, which is the
+   whole reason they share a parent. */
+.game-stage--wb .wb-bottom {
+  display: contents;
+}
+.game-stage--wb .game-used {
+  grid-area: used;
+  justify-self: start;
+  align-self: center;
+}
+.game-stage--wb .wb-bottombar {
+  grid-area: bot;
+  align-self: end;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* PHONES: one column. The rails have nowhere to go, so the used-word list drops under
+   the input (its wrapper stops being `display:contents` and becomes that stack) and the
+   kill feed - which is a duplicate of what the ring already shows - is dropped. The
+   ring still renders, still centred, still sized by the same formula. */
+@media (max-width: 700px) {
   .game-stage--wb {
-    display: grid;
-    /* A THIRD COLUMN for the payout receipt — which is what makes it un-overlappable: it has
-       somewhere to BE. The rail reserves its width permanently (an appearing column would reflow
-       the board on every accepted word), so that width has to come from somewhere, and the BOMB
-       column is where: 0.55fr -> 0.40fr. Taking it from the 1fr middle column instead narrowed the
-       input field until its own placeholder clipped by 6px at 1280x720 — caught by
-       wb-short-layout, which measures exactly that. The bomb has slack around it; the field does
-       not. */
-    grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      'header header header'
-      'bar    bar    bar'
-      'bomb   combo  rail'
-      'bomb   used   rail'
-      'bomb   input  rail';
-    align-content: center;
-    column-gap: clamp(16px, 3vw, 56px);
-    row-gap: clamp(4px, 1vh, 12px);
-    padding-top: clamp(10px, 1.6vh, 22px);
-    padding-bottom: clamp(10px, 1.6vh, 22px);
+      'head'
+      'top'
+      'ring'
+      'bot';
+    --wb-layout: stack;
+    /* No rails in the stack, so no matched rail-card height: the used-word strip
+       under the input sizes to its own (clipped) content. Overriding the TOKEN, not
+       each `height` that reads it - a per-rule reset here loses the cascade to the
+       rail block 5000 lines further down. */
+    --wb-railh: auto;
   }
-  .game-stage--wb .game-header { grid-area: header; }
-  .game-stage--wb .game-player-bar { grid-area: bar; }
-  .game-stage--wb .game-spectator-count { grid-column: 1 / -1; justify-self: center; }
-  .game-stage--wb .bomb-area { grid-area: bomb; align-self: center; margin: 0; }
-  .game-stage--wb .game-combo-box { grid-area: combo; align-self: center; }
-  .game-stage--wb .game-used { grid-area: used; align-self: center; }
-  .game-stage--wb .game-input-row { grid-area: input; align-self: center; }
-  .game-stage--wb .wb-rail { grid-area: rail; align-self: center; justify-self: end; width: 152px; }
-  /* Shrink the bomb to the shorter cell (was a fixed 180px svg). */
-  .game-stage--wb .bomb-svg { width: clamp(150px, 30vh, 250px); height: auto; }
-  /* fix/wb-short-layout: the right column's boxes fill their grid cell instead of sitting
-     centred at their stacked max-width, so the prompt box spans the full input row. */
-  .game-stage--wb .game-combo-box,
+  .game-stage--wb .wb-rail--left,
+  .game-stage--wb .wb-rail--right { display: none; }
+  .game-stage--wb .wb-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    grid-area: bot;
+    align-self: end;
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+  }
   .game-stage--wb .game-used,
-  .game-stage--wb .game-input-row { width: 100%; max-width: none; margin-inline: 0; justify-self: stretch; }
-  .game-stage--wb .game-input { max-width: none; }
-  /* Compress the combo box so the right column fits a short window. */
-  .game-stage--wb .game-combo { font-size: clamp(30px, 6.4vh, 52px); }
-  .game-stage--wb .game-combo-box { padding: clamp(8px, 1.6vh, 20px) 16px; }
-  /* fix/wb-short-layout: wider gap so cards never touch, and stretch so the slots share
-     a row height and each card fills its slot (equal-height cards). SCOPED here on
-     purpose - applying these globally re-wraps the phone player bar to 3 rows and
-     overflows the stage. See the .game-player-bar note below. */
-  .game-stage--wb .game-player-bar { gap: max(20px, 2.4%); align-items: stretch; }
-  .game-stage--wb .game-player-slot { display: flex; flex-direction: column; }
-  .game-stage--wb .game-player-card { flex: 1 1 auto; }
+  .game-stage--wb.wb-duo .game-used,
+  .game-stage--wb .wb-bottombar {
+    grid-area: auto;
+    justify-self: auto;
+    align-self: auto;
+    width: 100%;
+    max-width: none;
+  }
+  /* The rail-card height is a RAIL rule; in the stack the used list is a wide strip
+     under the input and sizes to its own (clipped) content. */
+  .game-stage--wb .game-used { height: auto; }
 }
 
 /* ===== CATEGORY BLITZ short-window compression (fix/game-fill-2) =====================
@@ -145,7 +309,7 @@
   /* .cb-round prefix raises specificity above the base `.cb-round .cb-category-display`
      (equal-specificity rule later in the file would otherwise win). */
   .game-stage--blitz .cb-round .cb-category-display {
-    font-size: clamp(28px, 7vh, 60px);
+    font-size: min(var(--fs-h1), 7vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(28px, 7vh, 60px)) */;
     padding: clamp(10px, 2.4vh, 30px) clamp(12px, 2vw, 26px);
     margin-bottom: clamp(6px, 1vh, 12px);
   }
@@ -245,7 +409,8 @@
   position: relative;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 1.7vw, 19px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
   /* One line, clipped rather than wrapped: a second line is what turned this into a block big
@@ -287,7 +452,9 @@
   z-index: 15;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -306,8 +473,11 @@
 }
 
 .game-loading {
-  font-family: 'Bungee', cursive;
-  font-size: 18px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2EFFE0;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -326,7 +496,8 @@
 
 .game-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(24px, 4vw, 48px);
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #ff4fa3;
   -webkit-text-stroke: 3px #000;
@@ -349,8 +520,12 @@
 
 .game-meta-round,
 .game-meta-diff {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #000;
   border: 3px solid #000;
   padding: 4px 7px;
@@ -370,7 +545,9 @@
 
 .game-leave-btn {
   font-family: 'Bungee', cursive;
-  font-size: 9px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #fff;
   background: #FF5C5C;
   border: 3px solid #B83A3A;
@@ -397,7 +574,7 @@
 /* Small, understated speaker toggle - matches the cel style but stays quiet
    next to the louder LEAVE so it doesn't compete with the game UI. */
 .game-mute-btn {
-  font-size: 13px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   line-height: 1;
   color: #fff;
   background: #2a1450;
@@ -444,8 +621,12 @@
   top: 0;
   left: 50%;
   transform: translateX(-50%) rotate(-3deg);
-  font-family: 'Bungee', cursive;
-  font-size: 8px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #FFE94A;
   background: #000;
   border: 2.5px solid #FFE94A;
@@ -542,12 +723,15 @@
   right: -7px;
   z-index: 5;
   background: #FF2E2E;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.70 -> 5.38 on #FF2E2E */;
   border: 2px solid #000;
   border-radius: 6px;
   box-shadow: 2px 2px 0 #000;
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   line-height: 1;
   letter-spacing: 0.4px;
   padding: 3px 5px;
@@ -583,10 +767,13 @@
 }
 
 .game-player-name {
-  font-family: 'Bungee', cursive;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   /* Was a tiny fixed 10px — scaled up to the >=16px HUD floor at >=1366px wide,
      holding 10px on phones (min). Static clamp(). */
-  font-size: clamp(10px, 1.2vw, 17px);
+  font-size: var(--fs-body);
   color: #fff;
   margin-bottom: 7px;
   display: flex;
@@ -617,7 +804,7 @@
 }
 
 .game-player-you {
-  font-size: 7px;
+  font-size: var(--fs-micro);
   background: #ff4fa3;
   color: #000;
   border: 1.5px solid #991A75;
@@ -644,7 +831,7 @@
 .player-typing-text {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 20px;
+  font-size: var(--fs-body);
   line-height: 1.2;
   /* The live typing reads in the typer's session colour (the card sets --pc);
      falls back to the old yellow when no colour is assigned. A thin black cel
@@ -689,8 +876,9 @@
 /* Dimmed placeholder before the active player has typed anything. */
 .player-typing-empty {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #FFE94A;
   opacity: 0.4;
   letter-spacing: 2px;
@@ -716,8 +904,11 @@
   display: flex;
   justify-content: center;
   align-items: baseline;
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   line-height: 1;
   letter-spacing: 2px;
   color: #FFE94A;
@@ -813,7 +1004,9 @@
 
 .game-timer-num {
   font-family: 'Bungee', cursive;
-  font-size: 16px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #fff;
   min-width: 40px;
   text-align: right;
@@ -932,8 +1125,11 @@
   z-index: 18;
   pointer-events: none;
   display: inline-flex; /* a row of per-letter spans */
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -969,8 +1165,11 @@
   z-index: 18;
   pointer-events: none;
   display: flex;
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FF5C5C;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -998,8 +1197,11 @@
   z-index: 18;
   pointer-events: none;
   display: inline-flex;
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   line-height: 1;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -1073,7 +1275,10 @@
   z-index: 22;
   pointer-events: none;
   font-family: 'Bungee', cursive;
-  font-size: 72px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-h1);
   color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
@@ -1105,18 +1310,19 @@
   gap: 1px;
   line-height: 0.92;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   white-space: nowrap;
   transform-origin: center bottom;
   animation: clutch-callout-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .clutch-callout-time {
-  font-size: 30px;
+  font-size: var(--fs-panel);
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
 }
 .clutch-callout-label {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -1125,7 +1331,7 @@
 .clutch-callout.clutch-close .clutch-callout-time { color: #FF6B3D; }
 .clutch-callout.clutch-close .clutch-callout-label { color: #FFE94A; }
 
-.clutch-callout.clutch-clutch .clutch-callout-time { color: #ff4fa3; font-size: 40px; }
+.clutch-callout.clutch-clutch .clutch-callout-time { color: #ff4fa3; font-size: var(--fs-h2); }
 .clutch-callout.clutch-clutch .clutch-callout-label { color: #ff4fa3; }
 
 /* Calm pop (close tier): up from small with an overshoot, then drift up + fade. */
@@ -1408,8 +1614,10 @@
 .wb-tension-getout {
   display: none;
   font-family: 'Bungee', system-ui, sans-serif;
+  text-transform: uppercase;
+  line-height: 0.98;
   font-weight: 700;
-  font-size: 34px;
+  font-size: var(--fs-panel);
   color: #FFE94A;
   -webkit-text-stroke: 3px rgba(0, 0, 0, 0.9);
   paint-order: stroke fill;
@@ -1420,7 +1628,7 @@
 [data-tension='crit'] .wb-tension-getout {
   display: inline-block;
   color: #FF2E2E;
-  font-size: 39px;
+  font-size: var(--fs-h2);
 }
 @keyframes wb-tension-pulse {
   from { transform: scale(1); opacity: 0.9; }
@@ -1491,7 +1699,7 @@
 
 .bomb-flight-icon {
   display: block;
-  font-size: 30px;
+  font-size: var(--fs-panel);
   line-height: 1;
   transform-origin: 50% 50%;
   animation: bomb-flight-arc 340ms cubic-bezier(0.45, 0, 0.35, 1) forwards;
@@ -1673,16 +1881,19 @@
   100% { opacity: 0; transform: translateY(-12px) scale(0.3); }
 }
 
-/* Critical timer-number pulse. */
-.bomb-num-pulse {
+/* FINAL-5-SECONDS READOUT. One-shot HARD pulse per tick - a discrete scale STEP
+   that snaps back, not a smooth throb - re-keyed on the second in the JSX so it
+   replays each time the number changes. This replaced an `infinite` 400ms pulse:
+   the ring's one continuous animation is the fuse, and only the fuse. */
+.bomb-num-tick {
   transform-box: fill-box;
   transform-origin: center;
-  animation: bomb-num-pulse 400ms ease-in-out infinite;
+  animation: bomb-num-tick 160ms steps(2, end) 1;
 }
 
-@keyframes bomb-num-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+@keyframes bomb-num-tick {
+  0% { transform: scale(1.28); }
+  100% { transform: scale(1); }
 }
 
 /* ============================================================= */
@@ -1777,8 +1988,9 @@
 
 .game-combo-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   color: #FF6B3D;
   margin-bottom: 8px;
@@ -1802,11 +2014,12 @@
 
 .game-combo {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   /* Hero combo. Floors at 44px, but the vw term is capped by a vh term (min) so it
      shrinks on SHORT laptops (e.g. 1163x501) to keep the stage within one screen —
      the slack constraint. Static clamp(); the idle throb below animates transform,
      never font-size. */
-  font-size: clamp(44px, min(6.2vw, 10vh), 70px);
+  font-size: min(var(--fs-h1), 10vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(44px, min(6.2vw, 10vh), 70px)) */;
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
@@ -1820,7 +2033,7 @@
    a smaller size, a thinner stroke, and room to wrap - unlike the 2-3 char
    Word Bomb combo. Same yellow + skew so it still reads as the same prompt. */
 .game-combo.category {
-  font-size: clamp(22px, 3.5vw, 44px);
+  font-size: var(--fs-h2);
   line-height: 1.15;
   letter-spacing: 1px;
   -webkit-text-stroke: 3px #000;
@@ -1834,8 +2047,12 @@
 }
 
 .game-used-label {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #FF6B3D;
   margin-bottom: 8px;
 }
@@ -1851,8 +2068,10 @@
 
 .game-used-chip {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #1a0b2e;
   background: #E8B98A;
   border: 2.5px solid #B0824E;
@@ -1868,8 +2087,10 @@
 
 .game-used-empty {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   color: #C9B8E8;
 }
 
@@ -1901,7 +2122,7 @@
   font-weight: 700;
   /* Answer field (Word Bomb + Category Blitz). Scaled to the >=28px input target at
      >=1366px wide, 16px on phones (min). Static clamp() — never animated. */
-  font-size: clamp(16px, 2.1vw, 30px);
+  font-size: var(--fs-panel);
   color: #1a0b2e;
   background: #fff;
   border: 4px solid #AAAAAA;
@@ -1919,7 +2140,7 @@
 
 .game-input:disabled {
   background: #3a2a55;
-  color: #9a8bbf;
+  color: #b9aecd /* contrast: 4.15 -> 6.09 on #3a2a55 */;
   box-shadow: 2px 2px 0 #000;
   cursor: not-allowed;
 }
@@ -1940,7 +2161,9 @@
 
 .game-send-btn {
   font-family: 'Bungee', cursive;
-  font-size: 15px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #2EFFE0;
   border: 4px solid #1A9985;
@@ -1983,7 +2206,9 @@
   justify-content: center;
   gap: 2px;
   font-family: 'Bungee', cursive;
-  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A020;
@@ -2013,9 +2238,9 @@
 /* The cost was 7px black-on-yellow — invisible, so SKIP read as free (it costs a life).
    A small red badge makes the stake unmistakable. Flat fill, thin dark-red outline. */
 .game-skip-cost {
-  font-size: 9px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.4px;
-  color: #fff;
+  color: #0d0618 /* contrast: 4.32 -> 4.60 on #e23838 */;
   background: #e23838;
   border: 1.5px solid #7d1515;
   border-radius: 4px;
@@ -2026,8 +2251,12 @@
 /* ---- Feedback toast ---- */
 
 .game-toast {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   text-align: center;
   border: 3px solid #000;
   border-radius: 8px;
@@ -2045,7 +2274,7 @@
 .game-toast.rejected {
   background: #FF5C5C;
   border-color: #B83A3A;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.03 -> 6.57 on #FF5C5C */;
 }
 
 /* Category Blitz: a calm "checking…" chip shown while the AI judge runs on a
@@ -2120,8 +2349,12 @@
   gap: 8px;
   max-width: 92%;
   white-space: nowrap;
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1;
   padding: 8px 12px;
   border: 3px solid #000;
@@ -2139,7 +2372,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.wb-pending-tag { font-size: 11px; }
+.wb-pending-tag { font-size: var(--fs-micro); }
 
 /* flight: a neutral "sending…" panel with a three-dot heartbeat. */
 .wb-pending-flight {
@@ -2156,7 +2389,7 @@
   color: #FFE94A;
 }
 .wb-pending-waking {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.06em;
   color: #FFB020;
 }
@@ -2187,7 +2420,7 @@
 .wb-pending-reject {
   background: #FF5C5C;
   border-color: #B83A3A;
-  color: #fff;
+  color: #0d0618 /* contrast: 3.03 -> 6.57 on #FF5C5C */;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2239,7 +2472,8 @@
 
 .game-over-title {
   font-family: 'Bungee', cursive;
-  font-size: 40px;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #FF5C5C;
   -webkit-text-stroke: 3px #000;
@@ -2250,12 +2484,14 @@
 
 .game-over-title.win {
   color: #FFE94A;
-  font-size: 52px;
+  font-size: var(--fs-h1);
 }
 
 .game-over-winner {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 22px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   margin-bottom: 16px;
 }
@@ -2264,16 +2500,19 @@
 .game-over-blurb {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2.2vw, 18px);
+  font-size: var(--fs-body);
   letter-spacing: 0.5px;
   color: #FFE94A;
   margin: -2px 0 16px;
 }
 
 .game-over-leave {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 20px);
-  color: #fff;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */;
   background: #ff4fa3;
   border: 4px solid #991A75;
   border-radius: 8px;
@@ -2313,7 +2552,9 @@
    it after the result lands. */
 .game-over-rematch {
   font-family: 'Bungee', cursive;
-  font-size: 22px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 1px;
   color: #000;
   background: #2EFFE0;
@@ -2347,8 +2588,10 @@
    non-hosts know the game can continue in this same room. Animated ellipsis +
    a gentle breathe so it never reads as frozen/broken. */
 .game-over-waiting {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   letter-spacing: 0.5px;
   color: #2EFFE0;
   background: #160a2b;
@@ -2387,7 +2630,7 @@
 
 /* Alongside REMATCH, LEAVE steps down to a smaller secondary action. */
 .game-over-leave.secondary {
-  font-size: clamp(16px, 2.2vw, 18px);
+  font-size: var(--fs-body);
   padding: 9px 0;
   box-shadow: 3px 3px 0 #000;
 }
@@ -2476,7 +2719,7 @@
 /* ---- LOSS: "ELIMINATED" slam-in (overshoot punch, like the intro) ---- */
 .game-over-title.eliminated {
   color: #FF5C5C;
-  font-size: 44px;
+  font-size: var(--fs-h2);
   letter-spacing: 1px;
   animation: go-eliminated-slam 380ms cubic-bezier(0.2, 1.5, 0.3, 1) both;
 }
@@ -2702,12 +2945,12 @@
 
 /* ---- Hero: the category is the dominant element, fluid up to large ---- */
 .cb-round .cb-category-label {
-  font-size: clamp(11px, 1.2vw, 14px);
+  font-size: var(--fs-label);
   margin-bottom: clamp(8px, 1vw, 14px);
 }
 
 .cb-round .cb-category-display {
-  font-size: clamp(26px, 5.2vw, 64px);
+  font-size: var(--fs-h1);
   line-height: 1.05;
   padding: clamp(18px, 2.4vw, 40px) clamp(14px, 2vw, 28px);
   margin-bottom: clamp(8px, 1vw, 14px);
@@ -2715,7 +2958,7 @@
 
 /* The format hint gets a clear home directly under the hero (subtle, not crammed). */
 .cb-round .cb-category-example {
-  font-size: clamp(12px, 1.3vw, 15px);
+  font-size: var(--fs-label);
   margin: 0 0 clamp(14px, 1.6vw, 22px);
 }
 
@@ -2756,20 +2999,21 @@
   }
 }
 .cb-round-side .cb-section-label {
-  font-size: 11px; /* a touch more presence so the rail has its own hierarchy */
+  font-size: var(--fs-micro); /* a touch more presence so the rail has its own hierarchy */
 }
 /* Accepted-answer chips read larger so the running list is legible at a glance
    (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
    screen's chips are unchanged. Padding grows a touch to match. */
 .cb-round .cb-answer-chip {
-  font-size: clamp(13px, 1vw, 15px);
+  font-size: var(--fs-label);
   padding: 4px 9px;
 }
 
 .cb-category-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   color: #C9B8E8;
   text-align: center;
@@ -2779,7 +3023,8 @@
 .cb-category-display {
   position: relative; /* anchors the mascot perched on the box edge */
   font-family: 'Bungee', cursive;
-  font-size: 30px;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1.1;
   color: #FFE94A;
   background: #0d0618;
@@ -2812,8 +3057,10 @@
    reads as a helper, not a real answer in the list. */
 .cb-category-example {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-style: italic;
   color: #8B7AA8;
   text-align: center;
@@ -2823,8 +3070,11 @@
 /* ---- Shared section labels for the CB sub-sections ---- */
 
 .cb-section-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff4fa3;
   margin-bottom: 8px;
 }
@@ -2846,8 +3096,10 @@
 
 .cb-answer-chip {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #000;
   background: #2EFFE0;
   border: 2.5px solid #1A9985;
@@ -2885,8 +3137,12 @@
 }
 
 .cb-progress-name {
-  font-family: 'Bungee', cursive;
-  font-size: 11px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2900,8 +3156,10 @@
 
 .cb-progress-count {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -2914,7 +3172,9 @@
 
 .cb-results-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(20px, 3.4vw, 28px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ff4fa3;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -2924,8 +3184,11 @@
 }
 
 .cb-results-category {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   text-align: center;
   margin-bottom: 16px;
@@ -2956,8 +3219,11 @@
 }
 
 .cb-result-name {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2973,8 +3239,11 @@
 }
 
 .cb-result-round {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: per-round score badge, small end <16 so the head row never overflows at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body); /* slack-wins: per-round score badge, small end <16 so the head row never overflows at 320px */
   color: #000;
   background: #2EFFE0;
   border: 2px solid #1A9985;
@@ -2983,8 +3252,10 @@
 
 .cb-result-total {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(12px, 1.4vw, 14px); /* slack-wins: running-total sub-figure kept <16 so it never crowds the score badge at 320px */
+  font-size: var(--fs-label); /* slack-wins: running-total sub-figure kept <16 so it never crowds the score badge at 320px */
   color: #C9B8E8;
 }
 
@@ -3005,8 +3276,11 @@
 }
 
 .cb-missed-title {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #C9B8E8;
   text-align: center;
   margin-bottom: 8px;
@@ -3024,8 +3298,10 @@
 
 .cb-missed-chip {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(13px, 1.5vw, 15px); /* slack-wins: ghost "missed answers" chips in a 84px-clipped box — kept <16 so fewer rows clip */
+  font-size: var(--fs-label); /* slack-wins: ghost "missed answers" chips in a 84px-clipped box — kept <16 so fewer rows clip */
   color: rgba(255, 255, 255, 0.75);
   background: rgba(0, 0, 0, 0.35);
   border: 1.5px solid rgba(201, 184, 232, 0.45);
@@ -3051,7 +3327,9 @@
 
 .cb-next-round {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   text-align: center;
   transform: skewX(-2deg);
@@ -3099,7 +3377,9 @@
 
 .cb-score-rank {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ff4fa3;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -3113,8 +3393,11 @@
 }
 
 .cb-score-name {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #fff;
   display: flex;
   align-items: center;
@@ -3129,7 +3412,9 @@
 
 .cb-score-pts {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.6vw, 22px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -3155,7 +3440,9 @@
 
 .countdown-text {
   font-family: 'Bungee', cursive;
-  font-size: 120px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-hero);
   line-height: 1;
   color: #FFE94A; /* numbers in yellow */
   -webkit-text-stroke: 5px #000;
@@ -3215,8 +3502,12 @@
 }
 
 .kill-feed-title {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #FF6B3D;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -3234,10 +3525,32 @@
   mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
 }
 
+/* IN THE RAIL, A FEED ROW IS EXACTLY ONE LINE. Two reasons, one rule. It makes the row
+   height a CONSTANT, which is what lets wbRailFit work out how many rows fit without
+   measuring each one on every event (no layout read in an event path). And it stops a
+   long word + rarity tag wrapping to two lines in a 218px rail, which would push the
+   last row half out of the card - the defect this whole pass is about. The mask above
+   still tapers the oldest row; it now tapers a row that is fully drawn. */
+.game-stage--wb .wb-rail .kill-feed-row {
+  flex: none;
+  align-items: center;
+}
+.game-stage--wb .wb-rail .kill-feed-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.game-stage--wb .wb-rail .kill-feed-dot {
+  margin-top: 0;
+}
+
 .kill-feed-empty {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   color: #6b5a8a;
 }
 
@@ -3279,8 +3592,10 @@
 
 .kill-feed-text {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   line-height: 1.35;
   color: #C9B8E8;
   word-break: break-word;
@@ -3301,9 +3616,13 @@
    (UNCOMMON cyan / RARE purple / OBSCURE gold); COMMON words get no tag at all. Bold + compact so
    it reads as a reward flag next to the word without stealing the row. */
 .kill-feed-rarity {
-  font-family: 'Bungee', cursive;
-  font-size: 0.82em;
-  letter-spacing: 0.02em;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
   white-space: nowrap;
 }
 
@@ -3356,8 +3675,11 @@
 }
 
 .go-section-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff4fa3;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -3394,14 +3716,18 @@
 .go-summary-value {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(18px, 2.4vw, 22px);
+  font-size: var(--fs-body);
   color: #2EFFE0;
   line-height: 1;
 }
 
 .go-summary-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(11px, 1.5vw, 13px); /* slack-wins: 3-up stat-tile label kept <16 so the tiles never overflow at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label); /* slack-wins: 3-up stat-tile label kept <16 so the tiles never overflow at 320px */
   color: #C9B8E8;
   margin-top: 5px;
 }
@@ -3431,23 +3757,29 @@
 }
 
 .go-award-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 1.5vw, 14px); /* slack-wins: award-pill label kept <16 so the pill row wraps tidily at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label); /* slack-wins: award-pill label kept <16 so the pill row wraps tidily at 320px */
   color: #000;
 }
 
 .go-award-name {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #000;
   word-break: break-word;
 }
 
 .go-award-detail {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(12px, 1.4vw, 13px); /* slack-wins: award-pill sub-detail kept <16 to keep the pill compact at 320px */
+  font-size: var(--fs-label); /* slack-wins: award-pill sub-detail kept <16 to keep the pill compact at 320px */
   color: #1a0b2e;
   opacity: 0.85;
 }
@@ -3476,8 +3808,11 @@
 }
 
 .go-player-name {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   margin-bottom: 7px;
   display: flex;
@@ -3507,15 +3842,18 @@
 .go-pstat-val {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(14px, 1.7vw, 16px); /* slack-wins: 4-up per-player stat value, small end <16 so the grid never overflows at 320px */
+  font-size: var(--fs-body); /* slack-wins: 4-up per-player stat value, small end <16 so the grid never overflows at 320px */
   color: #fff;
   line-height: 1.1;
   word-break: break-word;
 }
 
 .go-pstat-key {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(10px, 1.3vw, 12px); /* slack-wins: 4-up per-player stat label kept <16 so four columns fit at 320px */
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label); /* slack-wins: 4-up per-player stat label kept <16 so four columns fit at 320px */
   color: #9a8bbf;
   letter-spacing: 0.3px;
 }
@@ -3544,31 +3882,36 @@
 /* Bigger screens get a touch more side breathing room (percentage-based). */
 @media (min-width: 1200px) {
   .game-wrap {
-    padding: clamp(28px, 3vw, 48px) clamp(32px, 4vw, 72px);
+    --wrap-pad-y: clamp(28px, 3vw, 48px);
+    --wrap-pad-x: clamp(32px, 4vw, 72px);
+  }
+  /* ...but not the WB board, which owes that height to the ring. */
+  .game-wrap--wb {
+    --wrap-pad-y: clamp(8px, 1.5vh, 20px);
   }
 }
 
 /* Tablets and phones. */
 @media (max-width: 600px) {
-  .game-wrap { padding: 8px; } /* fill the narrow width (fix/game-fill-2) */
+  .game-wrap { --wrap-pad-x: 8px; --wrap-pad-y: 8px; } /* fill the narrow width (fix/game-fill-2) */
   .game-stage { padding: 18px 14px 20px; }
 
   /* Player cards drop to two per row instead of one long line. */
   .game-player-slot { min-width: calc(50% - 5px); }
 
   /* Big Bungee type scales down ~80%. */
-  .game-title { font-size: 21px; }
-  .game-combo { font-size: 46px; letter-spacing: 2px; }
-  .game-combo.category { font-size: 22px; }
-  .cb-category-display { font-size: 24px; padding: 14px 12px; }
-  .cb-results-title { font-size: 16px; }
-  .game-over-title { font-size: 28px; }
-  .game-over-title.win { font-size: 34px; }
+  .game-title { font-size: var(--fs-body); }
+  .game-combo { font-size: var(--fs-h2); letter-spacing: 2px; }
+  .game-combo.category { font-size: var(--fs-body); }
+  .cb-category-display { font-size: var(--fs-panel); padding: 14px 12px; }
+  .cb-results-title { font-size: var(--fs-body); }
+  .game-over-title { font-size: var(--fs-panel); }
+  .game-over-title.win { font-size: var(--fs-panel); }
   /* .eliminated has its own 44px rule (higher specificity than the base above), so
      it must be shrunk explicitly or "ELIMINATED" overflows the card at 360px
      (fix/qa-sweep §2/§4). */
-  .game-over-title.eliminated { font-size: 30px; }
-  .countdown-text { font-size: 84px; }
+  .game-over-title.eliminated { font-size: var(--fs-panel); }
+  .countdown-text { font-size: var(--fs-hero); }
 
   /* Smaller bomb so it fits comfortably on a phone. */
   .bomb-svg { width: 120px; }
@@ -3589,7 +3932,7 @@
 
   /* Per-player stats drop to a 2-column grid so values stay legible. */
   .go-player-grid { grid-template-columns: repeat(2, 1fr); gap: 8px 6px; }
-  .go-summary-value { font-size: 18px; }
+  .go-summary-value { font-size: var(--fs-body); }
 
   /* On phones the feed sits below the stage with little room, so trim it to the
      3 most recent events. Rows render newest-first, so the first 3 children are
@@ -3615,7 +3958,7 @@
     padding-top: 11px;
     padding-bottom: 11px;
   }
-  .countdown-text { font-size: 64px; }
+  .countdown-text { font-size: var(--fs-h1); }
 }
 
 /* ============================================================= */
@@ -3784,8 +4127,12 @@ html[data-beat='true'] .cb-answer-chip {
   left: 0;
   right: 0;
   z-index: 30;
-  font-family: 'Bungee', cursive;
-  font-size: 14px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #fff;
   text-align: center;
   padding: 8px 12px;
@@ -3804,8 +4151,11 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* "Audience" indicator below the player bar so active players see they're watched. */
 .game-spectator-count {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   color: #C9B8E8;
   text-align: center;
   letter-spacing: 0.5px;
@@ -3826,7 +4176,7 @@ html[data-beat='true'] .cb-answer-chip {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: var(--fs-body);
   line-height: 1;
   /* Flat fill + a thick COLOURED outline (per-button below), not black. */
   background: #1a0b2e;
@@ -3882,14 +4232,16 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .floating-reaction-emoji {
-  font-size: 36px;
+  font-size: var(--fs-h2);
   line-height: 1;
 }
 
 .floating-reaction-name {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 8px;
+  font-size: var(--fs-micro);
   color: #fff;
   margin-top: 2px;
   white-space: nowrap;
@@ -4034,7 +4386,9 @@ html[data-beat='true'] .cb-answer-chip {
 .ko-text {
   position: relative;
   font-family: 'Bungee', cursive;
-  font-size: 80px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-hero);
   line-height: 1;
   color: #FF5C5C;
   -webkit-text-stroke: 5px #000;
@@ -4058,7 +4412,7 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 @media (max-width: 600px) {
-  .ko-text { font-size: 56px; }
+  .ko-text { font-size: var(--fs-h1); }
   .ko-burst { width: 280px; height: 280px; }
 }
 
@@ -4176,8 +4530,11 @@ html[data-beat='true'] .cb-answer-chip {
 /* The personal-best target shown above the game area during a solo round:
    small Bungee, graffiti yellow, an immediate number to beat. */
 .solo-best-banner {
-  font-family: 'Bungee', cursive;
-  font-size: 13px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-label);
   color: #FFE94A;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -4196,7 +4553,8 @@ html[data-beat='true'] .cb-answer-chip {
    bouncing in and holding (it stays on the results screen). */
 .solo-new-record {
   font-family: 'Bungee', cursive;
-  font-size: 36px;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 3px #000;
@@ -4214,8 +4572,10 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .solo-score-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   letter-spacing: 2px;
   color: #C9B8E8;
   margin-bottom: 2px;
@@ -4224,7 +4584,9 @@ html[data-beat='true'] .cb-answer-chip {
 /* The headline score, counting up. */
 .solo-score-value {
   font-family: 'Bungee', cursive;
-  font-size: 72px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-h1);
   line-height: 1;
   color: #2EFFE0;
   -webkit-text-stroke: 4px #000;
@@ -4234,8 +4596,11 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .solo-category {
-  font-family: 'Bungee', cursive;
-  font-size: 16px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #ff4fa3;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -4244,8 +4609,11 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 .solo-pb-line {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   margin-bottom: 4px;
 }
@@ -4253,7 +4621,7 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-away {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #C9B8E8;
   margin-bottom: 10px;
 }
@@ -4267,7 +4635,9 @@ html[data-beat='true'] .cb-answer-chip {
    game-over REMATCH it stands in for). */
 .solo-play-again-btn {
   font-family: 'Bungee', cursive;
-  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #2EFFE0;
   border: 4px solid #1A9985;
@@ -4287,7 +4657,9 @@ html[data-beat='true'] .cb-answer-chip {
 /* CHANGE CATEGORY - secondary: yellow, a step down from PLAY AGAIN. */
 .solo-change-cat-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.4vw, 20px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A800;
@@ -4305,9 +4677,9 @@ html[data-beat='true'] .cb-answer-chip {
 }
 
 @media (max-width: 480px) {
-  .solo-score-value { font-size: 56px; }
-  .solo-new-record { font-size: 28px; }
-  .solo-play-again-btn { font-size: 18px; }
+  .solo-score-value { font-size: var(--fs-h1); }
+  .solo-new-record { font-size: var(--fs-panel); }
+  .solo-play-again-btn { font-size: var(--fs-body); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4338,7 +4710,7 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-round-cat {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #C9B8E8;
   text-align: left;
   word-break: break-word;
@@ -4346,7 +4718,9 @@ html[data-beat='true'] .cb-answer-chip {
 
 .solo-round-score {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -4370,7 +4744,9 @@ html[data-beat='true'] .cb-answer-chip {
   justify-content: center;
   min-height: 44px;
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.5px;
   color: #fff;
   background: #9A1AFF;
@@ -4391,7 +4767,7 @@ html[data-beat='true'] .cb-answer-chip {
    outline, dimmed text, no shadow. */
 .cb-reroll-btn:disabled {
   background: #1a0b2e;
-  color: #7a6b9c;
+  color: #9a8bbf /* contrast: 3.90 -> 6.03 on #1a0b2e */;
   border: 3px dashed #5A0EAA;
   box-shadow: none;
   cursor: default;
@@ -4399,8 +4775,11 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* Brief banner shown to non-host players when the host rerolls the category. */
 .cb-reroll-notice {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   text-align: center;
   background: #1a0b2e;
@@ -4484,19 +4863,24 @@ html[data-beat='true'] .cb-answer-chip {
 /* WINS visibility (Economy v3): the live "+N WINS" pill + the game-over "WINS EARNED" total
    moved to the shared WinsHud.css (used by every mode now). */
 
-/* ===== THE PAYOUT RECEIPT — A DOCKED RAIL, NOT AN OVERLAY ==========================
+/* ===== THE PAYOUT RECEIPT — A DOCKED SLOT, NOT AN OVERLAY =========================
+   NAME NOTE (integration/board-v2): this slot is `.wb-receipt-rail`, not `.wb-rail`. The ring
+   board has its OWN rails either side of the ring (.wb-rail--left / .wb-rail--right, which share a
+   `.wb-rail` base), and two different things called the same name is how a merge quietly changes
+   what a selector means.
+
    It floated: `position:absolute` above the input bar, which put a 142x157 panel straight through
    the prompt box at 1280x720. Nudging a floating panel only moves the collision — a transient
    thing drawn over a full board will always eventually land on something, and this board has a
    prompt, an input, a used-word strip and two player cards to land on.
-   So it does not float. `.wb-rail` is a REAL SLOT of the board: at >=900px its own grid column
+   So it does not float. It is a REAL SLOT of the board: at >=900px its own grid column
    beside the prompt/used/input stack (see the layout block at the top of this file), below that a
    block under the input. The slot is ALWAYS in the DOM, empty between words, so a word arriving
    never reflows anything. Nothing inside it is positioned, so there is no geometry to get wrong —
    which is the only kind of fix that stays fixed.
    e2e/word-landing.spec.js gates that it never intersects the prompt, the input, a player card or
    the title, at every viewport. */
-.wb-rail {
+.wb-receipt-rail {
   /* Reserved whether or not there is a receipt in it: a slot that appears and disappears is a
      layout shift on every accepted word. */
   min-height: 1px;
@@ -4529,7 +4913,615 @@ html[data-beat='true'] .cb-answer-chip {
    screen as the round breakdown, which is where it is actually readable — and the LANDING, which
    is the part that has to be at the word, still shows the band and the payout at the field. */
 @media (max-width: 899px) {
-  .wb-rail {
+  .wb-receipt-rail {
     display: none;
   }
+}
+/* ============================================================================ */
+/* =====================  WORD BOMB - THE RING (feat/wb-ring)  ================ */
+/* ============================================================================ */
+
+/* WHY A RING AND NOT A ROW
+   The old layout was a horizontal .game-player-bar of cards with `flex: 1 1 0`.
+   A row cannot space both ends of the player count: at 2 players each card
+   stretched to half the stage (wide, mostly-empty boxes - the stretched-empty-bar
+   failure), and at 8 it wrapped to three rows and pushed the stage past the
+   viewport. A RING divides 360deg by the seat count, so 2 seats and 16 seats are
+   both evenly spaced, every seat is the same fixed size, and the bomb owns the
+   centre. Seat geometry is pure CSS from two custom properties set in the JSX:
+     --i  this seat's index
+     --n  the total seat count
+   Nothing here measures anything at runtime - no layout reads, no JS positioning. */
+
+.wb-ring {
+  /* An explicit square, its side handed down as --wb-size by wbRingSize.js (the
+     fallback lives on .game-stage--wb). A percentage could not work: a percentage
+     inside translate() resolves against the TRANSFORMED element (the seat), not
+     against the ring. */
+  /* SEAT SIZE. A seat is a SQUARE avatar - colour dot + hearts - and nothing else; the
+     name floats below it (see .wb-seat .game-player-name-text). That is what makes the
+     numbers close: the bomb can only be >=55% of the ring if the seats leave it, and
+     with a box of side s the bomb is about S - 1.3*(s + s*sqrt(2)), so s must be near
+     0.143*S. A name INSIDE the box forced s past 90px and capped the bomb at ~40%.
+     The second term keeps a very full table (17+) from wrapping seats into each other. */
+  --wb-seat-w: min(calc(var(--wb-size) * 0.143), calc(var(--wb-size) * 2.5 / var(--n, 4)));
+  /* Seats sit on this radius: half the box minus half a seat, so NO seat can hang
+     outside the square. That is what guarantees "no overflow at 8 players". */
+  /* The ACTIVE seat renders at 1.3x, so the radius is derived from the SCALED box,
+     not the resting one - otherwise the lit seat is the one that escapes the ring and
+     collides with the bomb. Height matters as much as width: the seats at 12 and 6
+     o'clock are bounded by their height. */
+  --wb-seat-h: var(--wb-seat-w);
+  --wb-r: calc(var(--wb-size) / 2 - var(--wb-seat-w) * 0.65 - 2px);
+  /* THE BOMB IS 0.42d. A fixed share of the ring, not a leftover: the bomb art is
+     taller than it is wide (~1.155:1), so 0.42d puts its vertical radius at 0.243d
+     while the nearest seat edge sits at 0.276d - a gap that scales with the ring
+     instead of collapsing at one particular size. */
+  --wb-bomb-w: calc(var(--wb-size) * 0.42);
+  position: relative;
+  width: var(--wb-size);
+  height: var(--wb-size);
+  margin: 0;
+  flex: none;
+}
+
+.wb-ring-seats {
+  position: absolute;
+  inset: 0;
+}
+
+/* One seat. translate(-50%,-50%) puts its centre on the ring's centre; the
+   rotate -> translateY -> counter-rotate trio swings it out to the radius while
+   keeping the avatar upright. Seat 0 is straight up, and the turn pointer uses
+   the same 0deg = up convention, so the two can never disagree. */
+.wb-seat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--wb-seat-w);
+  /* The row layout gave every slot `min-width: clamp(100px, 15vw, 200px)`; on the ring
+     that would beat --wb-seat-w and blow the geometry (seats measured 200px wide and
+     collided with the centre). A seat is exactly --wb-seat-w, nothing else. */
+  min-width: 0;
+  flex: none;
+  /* the old row reserved 16px of padding for the YOUR TURN flag; the ring floats
+     that flag instead (see .wb-seat .game-your-turn below). */
+  padding-top: 0;
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--i) / var(--n) * 360deg))
+    translateY(calc(var(--wb-r) * -1))
+    rotate(calc(var(--i) / var(--n) * -360deg));
+}
+
+/* The card inside a seat becomes a compact AVATAR: no stretch, no flex-grow,
+   just the dot + name + hearts stacked. Fixed width AND height = every seat is the
+   same box at 2 players or 16, and the ring's radius maths stays true. */
+.wb-seat .game-player-card {
+  width: 100%;
+  height: var(--wb-seat-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 50%;
+  transform: rotate(-1deg);
+  /* MID-VALUE at rest: every seat that is not taking its turn steps back so the
+     active one is the only thing advancing. */
+  background: var(--v-panel-hi);
+  border-color: #000;
+  color: var(--v-ink-dim);
+}
+
+.wb-seat .game-player-name {
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* The NAME lives BELOW the avatar, not inside it. Inside, it set the seat's width and
+   the geometry could never leave the bomb its 55%. Outside, it costs the ring nothing:
+   it is out of flow, centred under the dot, and clipped to a sane width. */
+.wb-seat .game-player-name-text {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-label);
+  color: var(--v-ink-dim);
+  pointer-events: none;
+}
+.wb-seat .game-player-you {
+  display: none; /* the ring already lights YOUR seat; the YOU tag is noise here */
+}
+.wb-seat .game-player-card.current .game-player-name-text {
+  color: var(--v-ink);
+}
+/* The avatar stacks the colour dot over the hearts and nothing else. */
+.wb-seat .game-player-hearts {
+  gap: 1px;
+}
+
+/* ---- TURN OWNERSHIP: the active seat is the only full-accent thing on the ring,
+   and it is 1.3x. Scale lives on the CARD, not the seat, so it composes with the
+   seat's positioning transform instead of fighting it. ---- */
+.wb-seat .game-player-card.current {
+  background: var(--v-accent);
+  border-color: #000;
+  color: var(--v-field);
+  transform: rotate(0deg) scale(1.3);
+  z-index: 3;
+}
+/* The name and status FLOAT BELOW the seat, on the dark board - not on the card's
+   accent fill - so the active seat keeps INK here. `--v-field` (the rule this replaces)
+   is the board's own colour: it made the live player's own name invisible. */
+.wb-seat .game-player-card.current .game-player-name-text,
+.wb-seat .game-player-card.current .player-status {
+  color: var(--v-ink);
+}
+
+.wb-seat .game-player-card.eliminated {
+  background: var(--v-panel);
+  opacity: 0.45;
+}
+
+/* YOUR TURN floats above the seat instead of reserving a row of height. The active
+   card is scaled 1.3, so it overhangs its own seat box by ~10px at the top: at -14px
+   the flag's lower half was painted over by the avatar and read as a clipped stub.
+   -26px clears the overhang, and the z-index puts it over the card either way. */
+.wb-seat .game-your-turn {
+  top: -26px;
+  z-index: 4;
+}
+
+/* The live-typing line and the opponent status only exist for the ACTIVE player. In a
+   row they simply made one card taller; on a ring they made the ACTIVE seat (already
+   1.3x) taller than every other, which broke the radius maths and drove it into the
+   bomb. Floating them below the seat keeps every seat box identical.
+   They stack BELOW the floated name (which owns top:100%+1px), not on top of it. */
+.wb-seat .player-typing,
+.wb-seat .player-status {
+  position: absolute;
+  top: calc(100% + 26px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 150px;
+  margin: 0;
+  pointer-events: none;
+}
+
+/* ---- NO TURN POINTER ON THE RING. ----------------------------------------------
+   There was one: a beam rooted at the bomb, rotated to the live seat. It cannot fit.
+   The seats sit flush with the ring box (radius = d/2 - 0.65*seat), the bomb owns
+   0.42d, and the band left between them is ~6% of the diameter - which the seat's
+   floated NAME and its live-typing line already occupy for the 12-o'clock seat, where
+   "below the avatar" means "toward the bomb". So the arm ran straight under that
+   name and painted as a vertical mark struck through it. z-index could not fix it:
+   text has no fill, so a bar behind the glyphs still shows between them.
+   The live seat is already the ONLY full-accent object on the board, at 1.3x, with
+   YOUR TURN flagged above it. That is the read; a second one had nowhere to stand. */
+
+/* ---- THE CORE: the fragment prompt directly above the bomb, both centred in
+   the ring. `order: -1` lifts the prompt above the bomb without moving either in
+   the DOM, so the bomb keeps its existing overlay anchors (flying word, shatter,
+   spark burst) exactly where they were. ---- */
+.wb-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* The free middle the seats leave: the ring minus a seat on each side. The bomb
+     fills it, which is how "bomb >= 55% of its cell" is met without the seats and the
+     bomb ever touching. */
+  width: var(--wb-bomb-w);
+  z-index: 1;
+}
+.wb-core .bomb-area {
+  margin: 0;
+}
+
+/* THE PROMPT is a plaque sized to the fragment, directly above the ring and centred
+   on it. Its height is the one thing that trades against the ring's diameter (the top
+   stack is reserved on BOTH sides of the ring row to keep the ring centred), so the
+   box is tight: a small label, the fragment, and nothing else. Its WIDTH is now tight
+   too - see the .wb-top note. */
+.game-stage--wb .game-combo-box {
+  width: auto;
+  min-width: min(240px, 100%);
+  max-width: 100%;
+  margin: 0;
+  padding: clamp(5px, 0.8vh, 10px) clamp(20px, 4vw, 56px);
+}
+.game-stage--wb .game-combo-label {
+  margin-bottom: 2px;
+}
+
+/* THE FRAGMENT is the brightest text on the screen and the largest: the hero step,
+   capped at 76px because the top stack's height is reserved on BOTH sides of the ring
+   row and so costs the ring twice over.
+   Written through the token rather than as a bare clamp(56px, 7vw, 76px) - which is
+   what it evaluates to at every width, since --fs-hero only drops under 76px below an
+   800px viewport, where the 56px floor has already taken over. */
+/* 68px, not the old 76: the prompt row is reserved on BOTH sides of the ring row, so
+   every pixel of fragment height costs the ring two - and the header now takes a row of
+   its own above it. Eight points of fragment bought the ring sixteen. */
+.game-stage--wb .game-combo {
+  font-size: max(56px, min(var(--fs-hero), 68px, 6.4vw));
+  line-height: 1;
+  /* BRIGHTEST TEXT ON THE SCREEN, by VALUE rather than by hue: white is 19.88:1 on
+     the field, brighter than any accent (yellow 16.10, cyan 15.62). That keeps the
+     screen's one accent free for turn ownership. */
+  color: var(--v-ink);
+}
+/* ---- THE HEADER runs as ONE SHORT row on the board. It is chrome: the title, the
+   sound toggle and LEAVE, on one line, sized down from the app-wide steps. It is taken
+   off the top of the board once (not reserved twice like the prompt below it), but it
+   is still height the ring does not get - so it is kept to ~34px. ---- */
+.game-stage--wb .game-header {
+  align-items: center;
+  margin-bottom: 0;
+}
+.game-stage--wb .game-title {
+  font-size: var(--fs-panel);
+  -webkit-text-stroke: 2px #000;
+}
+.game-stage--wb .game-leave-btn {
+  font-size: var(--fs-body);
+  padding: 4px 10px;
+}
+.game-stage--wb .game-mute-btn {
+  font-size: var(--fs-body);
+  padding: 4px 8px;
+}
+.game-stage--wb .game-header-right {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The bomb fills its cell: >=55% of the ring, so the clock is never a detail in the
+   middle of a big empty circle. An explicit length, not a percentage - the bomb's
+   wrapper chain (.bomb-rattle/.bomb-passer/.bomb-reactor/.bomb-scale) is shrink-to-fit,
+   so `100%` resolved against nothing and the svg fell back to its 180px attribute. */
+.game-stage--wb .wb-core .bomb-svg {
+  width: var(--wb-bomb-w);
+  height: auto;
+}
+
+/* ---- THE SIDE RAILS. Both are capped to --wb-rail (the width wbRingSize.js has
+   already reserved) and to --wb-size, so neither can ever grow the row it shares
+   with the ring - that cap is what keeps the ring's diameter a pure function of
+   its inputs, with no feedback path back into the layout.
+
+   AND BOTH RAIL CARDS ARE THE SAME BOX. --wb-railh is one height for the feed, the
+   used-word column and the MATCH readout alike. Content-sized rails are what made
+   the board read lopsided at every count: an empty feed against a full used column
+   at 3+, and nothing at all against a full used column at 2. Each card clips its own
+   overflow, so a long game can never push a rail past this and back into the ring. */
+.wb-rail {
+  width: 100%;
+  max-width: var(--wb-rail);
+  min-width: 0;
+  max-height: var(--wb-size);
+  overflow: hidden;
+}
+
+/* The kill feed is a rail of the board now, not a card floating beside the stage. */
+.game-stage--wb .wb-rail .kill-feed {
+  width: 100%;
+  max-width: none;
+  height: var(--wb-railh);
+  max-height: var(--wb-size);
+  overflow: hidden;
+  align-self: auto;
+}
+
+/* ---- THE MATCH READOUT: the <=2p right rail. Four key/value rows under a label -
+   the same card shape as the used-word column opposite it, so the two rails weigh
+   the same. It carries the ROUND/mode badges that the header drops at this count,
+   plus the two things a head-to-head actually wants on screen: whose turn it is and
+   how long your streak is. ---- */
+.wb-status {
+  width: 100%;
+  height: var(--wb-railh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--v-panel);
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.wb-status-title {
+  flex: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-size: var(--fs-micro);
+  text-align: center;
+  color: var(--v-ink-dim);
+}
+/* Same rule as the used-word chips, and here it is stricter: the MATCH card may be
+   PADDED to the other rail's height but never trimmed to it, because dropping "MODE" is
+   not a taper, it is a missing fact. `flex: none` on the rows box and every row keeps
+   all four at full height; wbRailFit then guarantees the card is at least that tall. */
+.wb-status-rows {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+.wb-status-row {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 6px;
+  border: 2px solid #000;
+  border-radius: 3px;
+  background: var(--v-panel-hi);
+  transform: rotate(-0.6deg);
+}
+.wb-status-row:nth-child(even) {
+  transform: rotate(0.6deg);
+}
+.wb-status-k {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
+  color: var(--v-ink-dim);
+  flex: none;
+}
+.wb-status-v {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  color: var(--v-ink);
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+/* The streak value is the combo readout; it goes hot on the same threshold the
+   floating combo badge uses (>=2). Colour only - nothing here animates. */
+.wb-status-v.is-hot {
+  color: #FFE94A;
+}
+
+/* ---- USED WORDS: a QUIET COLUMN OF REAL CHIPS in the right rail. The first pass
+   stripped the chip's border, fill and padding to "demote" it, which just left
+   loose text spanning the board. It is demoted by PLACEMENT (a narrow rail, off the
+   centre line) and by SIZE, not by taking the object away. Newest first: the list
+   is rendered oldest-to-newest in the DOM and reversed here, so it is the OLDEST
+   that gets clipped off the bottom when the rail fills. ---- */
+/* A RAIL CARD, framed like the two objects it alternates with (the kill feed on the
+   left at 3+, the MATCH readout on the right at 2). Loose chips under a loose label
+   read as debris beside a bordered panel; the same chips inside the same frame read
+   as the third member of a set. */
+.game-stage--wb .game-used {
+  width: 100%;
+  max-width: var(--wb-rail);
+  min-width: 0;
+  height: var(--wb-railh);
+  max-height: var(--wb-size);
+  overflow: hidden;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  background: var(--v-panel);
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.game-stage--wb .game-used-list {
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 0;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+/* `flex: none` is load-bearing, not tidiness: these are items in a fixed-height column,
+   so by default they SHRINK, and a shrunk chip is exactly the "sliced through the
+   middle" defect. At their natural height the card either fits them or drops whole ones
+   (wbRailFit decides how many) - there is no third state where one is half-drawn. */
+.game-stage--wb .game-used-chip {
+  flex: none;
+  font-size: var(--fs-micro);
+  padding: 2px 6px;
+  text-align: center;
+  /* The chips are small and stacked; the base +-1.5deg jitter reads as sloppy at
+     this size, so the rail keeps a single quiet tilt. */
+  transform: rotate(-1deg);
+  animation: none;
+}
+.game-stage--wb .game-used-list .game-used-chip:nth-child(even) {
+  transform: rotate(1deg);
+}
+/* Newest word = last in the DOM = first in the reversed column = the bright one. */
+.game-stage--wb .game-used-list .game-used-chip:last-child {
+  background: #FFE94A;
+  border-color: #B8A020;
+}
+.game-stage--wb .game-used-label {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+/* ---- INPUT + SEND READ AS DEAD WHEN IT IS NOT YOUR TURN ---- */
+.game-input:disabled {
+  border-color: #4a4459;
+  box-shadow: 2px 2px 0 #000;
+  opacity: 0.6;
+}
+.game-send-btn:disabled,
+.game-skip-btn:disabled {
+  border-color: #4a4459;
+  box-shadow: 2px 2px 0 #000;
+  opacity: 0.6;
+}
+
+/* ---- THE ONE CONTINUOUS ANIMATION ON THE SCREEN IS THE FUSE, and it is
+   justified because it IS the timer. Reduced motion drops the smoothing so the
+   fuse and its ring step per tick instead of sweeping, and the flame stops
+   tracking - the clock still reads, nothing sweeps. ---- */
+@media (prefers-reduced-motion: reduce) {
+  .bomb-fuse,
+  .bomb-ring-fill,
+  .bomb-flame-pos {
+    transition: none !important;
+  }
+  .bomb-num-tick {
+    animation: none !important;
+  }
+}
+
+/* SHORT / NARROW WINDOWS no longer re-guess the diameter - wbRingSize.js already
+   sees the real box. What IS left here is what the ring cannot know: how wide a
+   floated seat name may be before it runs off the board, and how much height the
+   input row is allowed to take (every pixel of the bottom stack is reserved twice,
+   once under the ring and once above it, so a stacked SEND/SKIP column costs the
+   ring ~250px and it was what pushed the phone board off the screen). */
+@media (max-width: 700px) {
+  .wb-seat .game-player-name-text {
+    max-width: 72px;
+  }
+  .wb-seat .player-typing,
+  .wb-seat .player-status {
+    max-width: 96px;
+  }
+  .wb-seat .game-player-card {
+    padding: 5px 4px;
+  }
+  /* The used rail becomes a short WRAPPING strip under the input, not a column - and
+     it drops the rail card's frame with it. */
+  .game-stage--wb .game-used {
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  /* WRAPS, and does not scroll or clip. `nowrap` cut the last chip through the middle
+     of the word at seven used words ("ROSTRU") and pushed the two after it off the
+     board entirely - the same defect as the rails, in a row instead of a column. The
+     strip lives inside .wb-bottom, whose height wbRingSize already measures, so a
+     second line costs the ring its height honestly instead of overflowing. */
+  .game-stage--wb .game-used-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-height: none;
+    gap: 5px;
+  }
+  .game-stage--wb .game-used-label {
+    margin-bottom: 3px;
+  }
+}
+
+/* Very narrow phones keep SEND/SKIP BESIDE the field on this board (the generic
+   <=420px rule stacks them into a ~190px column). 44px touch targets are kept by
+   min-height/min-width, not by the column. */
+@media (max-width: 420px) {
+  .game-stage--wb .game-input-row {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .game-stage--wb .game-input-row .game-input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+  .game-stage--wb .game-input-row .game-send-btn,
+  .game-stage--wb .game-input-row .game-skip-btn {
+    width: auto;
+    min-width: 52px;
+    min-height: 44px;
+    padding: 6px 8px;
+    /* --fs-body, not a smaller step: a tappable control never renders text below 16px. */
+    font-size: var(--fs-body);
+  }
+  .game-stage--wb .game-skip-cost {
+    display: none;
+  }
+}
+
+/* ============================================================================ */
+/* ==========  WORD BOMB MOTION LAW: THE FUSE IS THE ONLY LOOP  ============== */
+/* ============================================================================ */
+
+/* The Word Bomb stage ran EIGHT looping animations at rest - the bomb idle wobble,
+   the flame flicker, the danger rattle, the danger/tension vignettes and scrolling
+   tension lines, the active-card pulse, the resting-card rock, the prompt throb and
+   the label pulse. Nothing on the screen was ever still, which is exactly why the
+   one thing that SHOULD move - the clock - did not read as motion at all.
+   Everything below keeps its STATIC resting pose (identical to its reduced-motion
+   state). The bomb's fuse, its matching ring and the flame that rides the burning
+   tip are the only continuous motion left, and they are justified because they ARE
+   the timer: a stroke-dashoffset transition driven straight off the turn clock.
+   Event animations (word thrown, reject shake, heart shatter, elimination, pass
+   throw, the under-5s number tick) are UNTOUCHED - those are one-shots, not idles.
+   This is the same treatment the menu got (CLAUDE.md MENU MOTION LAW). */
+.game-stage--wb .bomb-body-wrap.calm,
+.game-stage--wb .bomb-body-wrap.warning,
+.game-stage--wb .bomb-body-wrap.critical,
+.game-stage--wb .bomb-rattle,
+.game-stage--wb .bomb-flame-core,
+.game-stage--wb .wb-tension-vignette,
+.game-stage--wb .wb-tension-line,
+.game-stage--wb .wb-tension-getout,
+.game-stage--wb .wb-tension-throb,
+.game-stage--wb[data-tension='crit'] .wb-tension-throb,
+.game-stage--wb .wb-lastlife-vignette,
+.game-stage--wb .game-combo,
+.game-stage--wb .game-combo-label,
+.game-stage--wb .game-player-card.current,
+.game-stage--wb .game-player-card:not(.current):not(.eliminated):not(.eliminating),
+.game-stage--wb .game-player-card.last-life::after,
+.game-stage--wb .game-player-lastlife,
+.game-stage--wb .typing-cursor {
+  animation: none;
+}
+
+/* The danger vignette is position:fixed OUTSIDE the stage, so the scoped list above
+   cannot reach it. Its opacity is already driven by the --danger custom property (a
+   transition, not a loop); the breathe keyframe on top of that was pure idle. */
+.wb-danger-vignette {
+  animation: none;
+}
+
+/* LAST LIFE still has to SHOUT - it just shouts statically now. The ring was a
+   pulsing opacity; it is a hard, always-on red ring instead, which is louder at rest
+   than a pulse that spends half its cycle faded out. */
+.game-stage--wb .game-player-card.last-life::after {
+  opacity: 1;
+}
+.game-stage--wb .game-player-lastlife {
+  opacity: 1;
+  transform: none;
+}
+
+/* The flame keeps its shape but stops flickering; it still TRACKS the burning tip,
+   which is the part that carries information. */
+.game-stage--wb .bomb-flame-core {
+  opacity: 1;
 }

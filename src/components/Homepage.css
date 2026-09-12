@@ -137,7 +137,9 @@
   align-items: center;
   justify-content: center;
   font-family: 'Bungee', cursive;
-  font-size: clamp(13px, 1.4vw, 16px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.04em;
   color: #0d0618;
   border: 3px solid #000;
@@ -146,9 +148,9 @@
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.homepage-nav-btn.is-shop { background: #ffe94a; }
-.homepage-nav-btn.is-rebirth { background: #9a1aff; color: #fff; }
-.homepage-nav-btn.is-stats { background: #2effe0; }
+.homepage-nav-btn.is-shop { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
+.homepage-nav-btn.is-rebirth { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; color: var(--v-ink); }
+.homepage-nav-btn.is-stats { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
 .homepage-nav-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px 0 #000;
@@ -298,13 +300,18 @@
   /* Bungee Shade (with a Bungee fallback) - the built-in shade layer gives the
      wordmark its 3D body, matching the splash title exactly. */
   font-family: 'Bungee Shade', 'Bungee', cursive;
+  text-transform: uppercase;
   /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
      desktop but shrinks on short laptops to help the menu fit one screen, then the
      container-driven --menu-scale trims it further to clear the XP bar / fit. */
   /* The wordmark scales DOWN with --menu-scale on short screens, but is capped at 1× so it
      never UPSCALES when the fit grows the cards/XP to fill a tall screen — an upscaled title's
      rotate/skew AABB overhang would eat the title↔XP row-gap below the 12px floor (menu-fit). */
-  font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * min(1, var(--menu-scale, 1)));
+  /* Token-governed: the wordmark IS the hero step. The 9.5vh cap is the height guard (the
+     pre-existing rule capped at 9vh). Without it the hero token renders 96px on a 768-tall
+     laptop and eats the title<->XP gap below the 12px floor menu-fit asserts; with it the
+     wordmark is a full 96px on a tall screen and 73px at 1366x768 (was 69px). */
+  font-size: calc(min(var(--fs-hero), 9.5vh) * min(1, var(--menu-scale, 1)));
   line-height: 1;
   color: var(--theme-ink, #ff4fa3); /* THEME: wordmark fill */
   -webkit-text-stroke: 5px #000;
@@ -359,8 +366,11 @@ html[data-beat='true'] .homepage-logo {
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
    off-axis, and sitting on a hard offset shadow. */
 .homepage-tagline {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(10px, 2vw, 16px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #0d0618;
   background: #2EFFE0;
   display: block;
@@ -373,8 +383,11 @@ html[data-beat='true'] .homepage-logo {
 }
 
 .homepage-section-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 2.2vw, 20px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2EFFE0;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -544,8 +557,9 @@ html[data-beat='true'] .homepage-logo {
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   letter-spacing: 1px;
   color: #9c90b4;
   cursor: pointer;
@@ -571,9 +585,11 @@ html[data-beat='true'] .homepage-logo {
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
   /* More compact than the hero: smaller type + tighter vertical padding so the
      pair fits inside the card at laptop size. */
-  font-size: clamp(13px, 1.5vw, 18px);
+  font-size: var(--fs-panel);
   /* Each variant sets its own darker-than-fill border colour below. */
   border: 4px solid #000;
   border-radius: 8px;
@@ -666,9 +682,12 @@ html[data-beat='true'] .homepage-logo {
 }
 
 .homepage-btn-join {
-  background: #2EFFE0;
-  border-color: #1A9985;
-  color: #000;
+  /* value-group: THE accent element of the menu. JOIN ROOM is the only CTA the menu
+     actually renders (.homepage-btn-create has no matching class in Homepage.jsx), so
+     the screen's one hot colour is spent here. */
+  background: var(--v-accent);
+  border-color: #991A75;
+  color: var(--v-field);
 }
 
 /* ---- SHORT-HEIGHT RECLAIM (feat/cards-live) --------------------------------------------
@@ -679,7 +698,9 @@ html[data-beat='true'] .homepage-logo {
    ~170px+ wide at 1163×501 (target ≥160). */
 @media (max-height: 600px) {
   .homepage-stage { row-gap: clamp(18px, 2.4vh, 24px); }
-  .homepage-logo { font-size: clamp(22px, 5.4vh, 34px); }
+  /* height guard: was clamp(22px, 5.4vh, 34px) - the vh cap keeps the wordmark off the
+     card region on a short screen, so it stays expressed through the token. */
+  .homepage-logo { font-size: min(var(--fs-panel), 5.4vh); }
   .menu-xp-cluster { gap: 3px; }
   .menu-wpm { display: none; }
   .menu-next-unlock { display: none; }
@@ -766,7 +787,7 @@ html[data-beat='true'] .homepage-logo {
        "RD"). Shrink the font and cap the width so the title wraps to TWO lines (TYPE A / WORD) that
        both clear the nav column. max-width reserves ~the nav gutter on each side of the centred
        title; the nbsp in "TYPE A" keeps that line intact so it only ever breaks before WORD. */
-    font-size: calc(clamp(20px, 5vw, 40px) * var(--menu-scale, 1));
+    font-size: calc(var(--fs-h2) * var(--menu-scale, 1));
     /* px cap (not vw) so it is ALWAYS below the single-line width → the title reliably breaks to
        TYPE A / WORD; the resulting ~90px block, centred, clears the (also-tightened) nav column. */
     max-width: 140px;
@@ -784,7 +805,7 @@ html[data-beat='true'] .homepage-logo {
      title to clear. Keeps the 44px touch height (JOB 14) — only the width/text shrinks. */
   .homepage-nav-btn {
     padding: 0 10px;
-    font-size: 12px;
+    font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   }
 }
 
@@ -888,8 +909,9 @@ html[data-beat='true'] .homepage-beat-glow {
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10.5px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   letter-spacing: 0.12em;
   color: #c9b64a;
   cursor: pointer;
@@ -936,7 +958,7 @@ html[data-beat='true'] .homepage-beat-glow {
 /* Static stand-in for the ring, only shown under reduced motion (see below). */
 .connecting-spinner-rm {
   display: none;
-  font-size: 14px;
+  font-size: var(--fs-label);
   line-height: 1;
 }
 .connecting-text {
@@ -951,7 +973,7 @@ html[data-beat='true'] .homepage-beat-glow {
 .connecting-sub {
   font-family: 'Space Mono', monospace;
   font-weight: 400;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.02em;
   text-transform: none;
   margin-top: 2px;
@@ -982,13 +1004,13 @@ html[data-beat='true'] .homepage-beat-glow {
 .homepage-daily-link .connecting-spinner-rm {
   width: 11px;
   height: 11px;
-  font-size: 11px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
 }
 .homepage-daily-link .connecting-spinner {
   border-width: 2px;
 }
 .homepage-daily-link .connecting-sub {
-  font-size: 9px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1026,12 +1048,18 @@ html[data-beat='true'] .homepage-beat-glow {
      this line tight under the XP row instead of floating in the gap above the cards. */
   margin: 0 auto;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(10px, 1.7vw, 13px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1;
 }
 .menu-next-unlock-tag {
-  font-family: 'Bungee', sans-serif;
-  font-size: 0.92em;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-label);
   color: #0d0618;
   background: var(--menu-accent, #2EFFE0);
   border: 2px solid #000;

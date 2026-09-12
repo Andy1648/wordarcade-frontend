@@ -126,6 +126,7 @@
 /* The payout, beside the word that earned it. */
 .wl-wins {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-size: var(--fs-panel);
   line-height: 1;
   color: #FFE94A;

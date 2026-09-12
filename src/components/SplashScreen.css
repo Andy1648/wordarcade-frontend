@@ -51,9 +51,11 @@
   position: relative;
   z-index: 2;
   font-family: 'Bungee Shade', 'Bungee', cursive;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
   /* MASSIVE on big screens, still fits on phones. Capped by viewport HEIGHT too
      (min of vw/vh) so it shrinks on short laptops instead of forcing clipping. */
-  font-size: clamp(40px, min(12vw, 13vh), 120px);
+  font-size: min(var(--fs-hero), 13vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(40px, min(12vw, 13vh), 120px)) */;
   line-height: 1;
   color: #ff4fa3;
   -webkit-text-stroke: 5px #000;
@@ -116,8 +118,10 @@
 }
 
 .splash-tagline {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(11px, 1.6vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   color: #2EFFE0;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
@@ -167,8 +171,10 @@
   position: relative;
   z-index: 2;
   margin-top: clamp(14px, 3vh, 40px);
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 1.6vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   color: #FFE94A;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -299,6 +305,7 @@
   width: 1.5em;
   height: 1.5em;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   line-height: 1;
   color: #0d0618;
   border: 2px solid rgba(0, 0, 0, 0.6);
@@ -346,9 +353,9 @@
   /* The desktop clamp floors at 55px, which overflows narrow phones (the splash
      clips the title's edges). Shrink it so the title always fits (it can also
      wrap to "TYPE A" / "WORD" thanks to the non-breaking space). */
-  .splash-logo { font-size: clamp(34px, 12vw, 60px); }
-  .splash-tagline { font-size: 11px; }
-  .splash-start { font-size: 12px; }
+  .splash-logo { font-size: var(--fs-h1); }
+  .splash-tagline { font-size: var(--fs-micro); }
+  .splash-start { font-size: var(--fs-label); }
 }
 
 /* Reduced motion: keep the title static, no looping/scale animations — the three

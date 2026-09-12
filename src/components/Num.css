@@ -5,12 +5,15 @@
 }
 .num-fig {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
-/* 0.45x and a hair of letter-spacing: the unit is a label on the number, not part of it. */
+/* 0.45em of the NUMERAL, not a step of the document scale — the unit is a label ON the number and
+   has to shrink with it wherever the number is set, so it is a FIT-TO-SLOT size in the type-scale
+   test's sense. Written as `--fs-unit` so the scale still owns the ratio in one place. */
 .num-unit {
   font-family: 'Space Mono', monospace;
-  font-size: 0.45em;
+  font-size: var(--fs-unit);
   font-weight: 700;
   letter-spacing: 0.06em;
   margin-left: 0.12em;

@@ -1,5 +1,5 @@
 // GameScreen.jsx
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
@@ -17,6 +17,8 @@ import {
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
+import { applyRingSize } from './wbRingSize';
+import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -848,7 +850,16 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
+  // FUSE COLOUR ESCALATION (feat/wb-ring): the rope itself carries the tension, so the
+  // clock reads from across the room without looking at a number - yellow while there is
+  // time, orange as it tightens, red when it is nearly out.
+  const fuseColor = tension === 'calm' ? '#FFE94A' : tension === 'warning' ? '#FF6B3D' : '#FF4B4B';
+
+  // NUMERIC READOUT: only in the last 5 seconds. The fuse already carries the proportion
+  // for the whole turn, so a number on screen the entire time is noise that competes with
+  // the fragment. 5s is the natural threshold - the server resets to a 5s minimum turn
+  // after a valid word, so under 5s is exactly "this could end now".
+  const showSeconds = !showCountdown && timerSeconds <= 5;
   const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
   const numStroke = critical ? '#FF5C5C' : '#000';
   const numStrokeWidth = critical ? 4 : 3;
@@ -882,19 +893,56 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
               className="bomb-fuse"
               d={FUSE_PATH}
               fill="none"
-              stroke="#8B6914"
+              stroke={fuseColor}
               strokeWidth="3"
               strokeLinecap="round"
               pathLength="100"
               strokeDasharray="100"
               strokeDashoffset={fuseDashoffset}
+              style={{ transition: 'stroke 400ms linear' }}
+            />
+
+            {/* ---- SECOND READ OF THE SAME VALUE: a ring around the mascot that
+                 empties exactly like the fuse. Two independent encodings of one
+                 number (arc length + fuse length) means the clock still reads if
+                 the fuse tip is behind the flame or off the edge of a small card.
+                 Same pathLength trick, same ratio, same escalating colour. ---- */}
+            <circle
+              className="bomb-ring-track"
+              cx="80"
+              cy="105"
+              r="62"
+              fill="none"
+              stroke="#000"
+              strokeWidth="7"
+              opacity="0.35"
+            />
+            <circle
+              className="bomb-ring-fill"
+              cx="80"
+              cy="105"
+              r="62"
+              fill="none"
+              stroke={fuseColor}
+              strokeWidth="5"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="100"
+              strokeDashoffset={fuseDashoffset}
+              transform="rotate(-90 80 105)"
+              style={{ transition: 'stroke 400ms linear' }}
             />
 
             {/* (The mascot <image> above is the bomb body now - no SVG body/face.) */}
 
-            {/* ---- Live seconds, sitting over the mascot's belly. ---- */}
+            {/* ---- Live seconds, sitting over the mascot's belly. Only present in the
+                 final 5 seconds (see showSeconds). Re-keyed on the second so the CSS
+                 one-shot hard pulse (a discrete scale STEP, never a smooth throb)
+                 replays on each tick. ---- */}
+            {showSeconds && (
             <text
-              className={critical ? 'bomb-num-pulse' : undefined}
+              key={timerSeconds}
+              className="bomb-num-tick"
               x="80"
               y="116"
               textAnchor="middle"
@@ -909,6 +957,7 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
             >
               {timerSeconds}
             </text>
+            )}
 
             {/* ---- Flame + sparks, glued to the burning tip. The position group
                  eases its translate over 1s so it tracks the smooth fuse. ---- */}
@@ -1005,6 +1054,14 @@ function ExplosionEffect() {
 // How many feed rows are visible at once; older events stay in the array (full
 // history) but scroll out of the rendered window under a fade mask.
 const FEED_MAX_VISIBLE = 8;
+// The used-word list grows unbounded all game and is reconciled on every keystroke; this
+// is the ceiling on how many chips we would ever build nodes for. How many are actually
+// SHOWN is the rail fit's call (wbRailFit), and it is always a whole number of chips.
+const USED_MAX_VISIBLE = 24;
+// ...and the ceiling in the phone stack, where the strip is a wrapping ROW under the
+// input rather than a column in a rail: enough to read as a list, few enough to stay
+// within two lines of a 320px board.
+const USED_STACK_VISIBLE = 6;
 
 /**
  * Word Bomb's live kill feed: a scrolling log of game events shown to the side
@@ -1018,10 +1075,14 @@ const FEED_MAX_VISIBLE = 8;
  * pushes it down - only the freshly-added row mounts and replays the slide-in,
  * and the one scrolling off the end unmounts.
  */
-function KillFeed({ events, playerColors = {} }) {
+function KillFeed({ events, playerColors = {}, maxRows }) {
   const list = events || [];
+  // The rail decides how many rows FIT (see wbRailFit); FEED_MAX_VISIBLE is only the
+  // ceiling on how many we would ever want to draw. Whole rows either way - a feed that
+  // ends in half an event reads as a rendering fault, not as a taper.
+  const budget = Math.max(0, Math.min(FEED_MAX_VISIBLE, maxRows ?? FEED_MAX_VISIBLE));
   const visible = [];
-  for (let i = list.length - 1; i >= 0 && visible.length < FEED_MAX_VISIBLE; i--) {
+  for (let i = list.length - 1; i >= 0 && visible.length < budget; i--) {
     visible.push({ ev: list[i], idx: i });
   }
 
@@ -1650,6 +1711,126 @@ export default function GameScreen({
   // The word-prompt box, flashed on accept (the "word" — NOT the text input, which
   // DESIGN.md says never to animate). Burst is anchored at the input via inputRef.
   const comboBoxRef = useRef(null);
+
+  // ---- THE RING IS SIZED BY ITS CONTAINER, NOT BY THE VIEWPORT ----
+  // See wbRingSize.js for why this is measured rather than guessed in a media query.
+  // These four refs are the whole input: the stage box, the top stack (header +
+  // prompt), and whichever element occupies the bottom row for the current layout.
+  // The stage is held in STATE via a callback ref, not in a plain ref: GameScreen
+  // mounts before the board does (it renders the pre-turn screen first), so a
+  // `useLayoutEffect(..., [])` reading a plain ref found null and the ring was left
+  // on its CSS fallback forever - which is precisely the viewport guess this exists
+  // to replace. A callback ref re-runs the effect the moment the node attaches, and
+  // again if it is ever remounted.
+  const [wbStage, setWbStage] = useState(null);
+  // The primitives wbRailFit needs: the chrome around each rail card's list and the
+  // height of one of its rows. Measured on mount/resize ONLY (and once more the first
+  // time a card actually has a row to sample), so the per-word fit below is arithmetic
+  // on cached numbers - no layout read in an accept path. See ANIMATION BUDGET.
+  const [railMetrics, setRailMetrics] = useState(null);
+  // Re-measure triggers for the rail metrics below. NOT data: `railSample` is a 0..3 flag
+  // for "a used chip / a feed row now exists to measure", and `railPair` is which pair of
+  // cards is mounted (2 players = used + MATCH, 3+ = feed + used). chrome/step cannot be
+  // read off an empty card, so the measurement is retaken once when the first row of each
+  // kind appears and once when the pair changes - never per word.
+  // `gameState` is null until a game exists - this hook block runs on every render of
+  // GameScreen, including the pre-game screens, so it cannot be dereferenced bare.
+  const gs = gameState || {};
+  const railSample =
+    (((gs.usedWords || []).length + (gs.usedAnswers || []).length) > 0 ? 1 : 0) +
+    ((feedEvents || []).length > 0 ? 2 : 0);
+  const railPair = (gs.players || []).length <= 2 ? 'duo' : 'many';
+
+  // ===== THE RAIL FIT =====================================================
+  // The two rail cards share ONE height: the taller of their NATURAL content heights,
+  // capped at the ring's diameter (which is by construction no taller than the row has
+  // room for). Whichever card still doesn't fit drops whole ROWS - never half of one.
+  // This replaces `--wb-railh: clamp(104px, --wb-size * 0.44, 196px)`, a fraction of the
+  // ring that knew nothing about either card: at five used words it sliced the fourth
+  // chip through the middle and cut MODE off the MATCH readout, while the area-skew gate
+  // read a perfect 0% - two equally-wrong boxes are still equal.
+  // Pure arithmetic on the cached metrics, so an accepted word costs no layout read.
+  const railUsedCount = Math.min(
+    (gs.usedWords || []).length + (gs.usedAnswers || []).length,
+    USED_MAX_VISIBLE
+  );
+  const railFeedCount = Math.min((feedEvents || []).length, FEED_MAX_VISIBLE);
+  const railFitted = useMemo(() => {
+    if (!railMetrics) return null;
+    const lists = [];
+    if (railMetrics.used) lists.push({ key: 'used', ...railMetrics.used, count: railUsedCount });
+    if (railPair !== 'duo' && railMetrics.feed) {
+      lists.push({ key: 'feed', ...railMetrics.feed, count: railFeedCount });
+    }
+    if (!lists.length) return null;
+    return railFit({
+      lists,
+      fixed: railPair === 'duo' && railMetrics.status ? [railMetrics.status] : [],
+      cap: railMetrics.cap,
+    });
+  }, [railMetrics, railUsedCount, railFeedCount, railPair]);
+
+  const wbHeadRef = useRef(null);
+  const wbTopRef = useRef(null);
+  const wbBottomRef = useRef(null);
+  const wbBarRef = useRef(null);
+  useLayoutEffect(() => {
+    const stage = wbStage;
+    if (!stage || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () =>
+      {
+        const d = applyRingSize(stage, {
+          head: wbHeadRef.current,
+          top: wbTopRef.current,
+          bottomBar: wbBarRef.current,
+          bottom: wbBottomRef.current,
+        });
+        // The rails only exist in the two-rail layout; in the phone stack the used-word
+        // strip sizes to its own content and there is nothing to match it to.
+        const rails =
+          getComputedStyle(stage).getPropertyValue('--wb-layout').trim() === 'rails';
+        setRailMetrics(
+          rails
+            ? {
+                cap: d || 0,
+                used: measureRailCard(
+                  stage.querySelector('.game-used'),
+                  stage.querySelector('.game-used-list'),
+                  stage.querySelector('.game-used-chip'),
+                  stage.querySelector('.game-used-label')
+                ),
+                feed: measureRailCard(
+                  stage.querySelector('.kill-feed'),
+                  stage.querySelector('.kill-feed-list'),
+                  stage.querySelector('.kill-feed-row'),
+                  stage.querySelector('.kill-feed-title'),
+                  30
+                ),
+                status: measureStatusCard(stage.querySelector('.wb-status')),
+              }
+            : null
+        );
+      }
+    measure();
+    // Observe ONLY boxes that cannot be moved by --wb-size (the stage is a pinned
+    // dvh box; the stacks are full-width rows). Writing --wb-size therefore never
+    // re-triggers this observer - no resize loop.
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    if (wbHeadRef.current) ro.observe(wbHeadRef.current);
+    if (wbTopRef.current) ro.observe(wbTopRef.current);
+    if (wbBarRef.current) ro.observe(wbBarRef.current);
+    if (wbBottomRef.current) ro.observe(wbBottomRef.current);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', measure);
+    };
+    // `railSample` is not data - it is a 0/1/2 flag for "a chip / a feed row now exists
+    // to measure". The chrome+step numbers cannot be read off an empty card, so the
+    // measurement is retaken exactly once when the first row of each kind appears, and
+    // never again. Everything after that is arithmetic (see the fit below).
+  }, [wbStage, railSample, railPair]);
   // Latest personal combo, read by useHypeFeedback at accept time to scale the
   // Word Bomb burst/ring/cue. Kept fresh from `streak` (defined below) each render.
   const comboRef = useRef(0);
@@ -2556,6 +2737,15 @@ export default function GameScreen({
   // (Word Bomb has no timer bar - the bomb's fuse is the timer.)
   const maxTimer = gameState.timerSeconds || 1;
 
+  // Whose turn it is, as a player record - read by the <=2p right-rail readout.
+  const turnPlayer = players.find((p) => p.id === gameState.currentPlayerId) || null;
+
+  // No rail fit = the phone stack (or the frame before the first measure). There the
+  // strip WRAPS rather than sharing a height with anything, so the only cap it needs is
+  // one that keeps it to a line or two of a 320px board.
+  const usedVisible = railFitted ? railFitted.visible.used : USED_STACK_VISIBLE;
+  const feedVisible = railFitted ? railFitted.visible.feed : undefined;
+
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
   // Reduced-motion gate for the game-over stamp/stagger entrance (mirrors the
@@ -2725,7 +2915,7 @@ export default function GameScreen({
     // block audio until a user gesture). Capture phase so it fires no matter
     // what inner control is touched.
     <div
-      className="game-wrap"
+      className="game-wrap game-wrap--wb"
       data-tension={tensionTier}
       style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
@@ -2849,12 +3039,19 @@ export default function GameScreen({
           players (its events just duplicate the center-stage action). */}
       <div className="game-panel">
       <div
-        className={`game-stage game-stage--wb${shake && !hitlag ? ' game-shake' : ''}${
+        ref={setWbStage}
+        className={`game-stage game-stage--wb${players.length <= 2 ? ' wb-duo' : ''}${
+          shake && !hitlag ? ' game-shake' : ''
+        }${
           boomShake && !hitlag ? ' boom-shake' : ''
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
-        style={{ '--drain-sat': drainSat }}
+        style={
+          railFitted
+            ? { '--drain-sat': drainSat, '--wb-railh': `${railFitted.height}px` }
+            : { '--drain-sat': drainSat }
+        }
       >
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
@@ -2877,11 +3074,23 @@ export default function GameScreen({
         <div style={{ display: 'contents' }}>
           {hypeKey > 0 && !hitlag && clutchFlag && <ClutchPopup key={hypeKey} />}
         </div>
-        <div className="game-header">
+        {/* ===== THE HEADER IS ITS OWN GRID ROW, above the prompt. =====
+            It used to be `position:absolute; inset:0` over the prompt bar at >=900px
+            ("the header RIDES the bar"), which measured on the preview as the title,
+            LEAVE and the sound button all rendering INSIDE the 1166x135 prompt box -
+            three controls sharing a band with the hero fragment. A header is chrome;
+            it gets a row. Cost is real (every pixel between the prompt and the ring
+            is reserved twice to keep the ring centred), which is why the row is as
+            short as it can be: one line, no meta badges at <=2 players. ===== */}
+        <div className="game-header" ref={wbHeadRef}>
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
           </div>
           <div className="game-header-right">
+            {/* Always rendered. At <=2 players ON A RAILS BOARD the CSS hides it,
+                because the MATCH readout in the right rail carries ROUND and MODE
+                there (and is the weight that stops that rail being empty). The
+                phone board has no rails, so it keeps the badges here. */}
             <div className="game-meta">
               {typeof gameState.round !== 'undefined' && (
                 <span className="game-meta-round">ROUND {gameState.round}</span>
@@ -2909,8 +3118,50 @@ export default function GameScreen({
           </div>
         </div>
 
-        <div className="game-player-bar">
-          {players.map((player) => {
+        {/* ===== TOP STACK: the fragment prompt. Its own grid area, with an EQUAL
+            1fr track above and below the ring row, which is what centres the ring
+            in the board below the header. ===== */}
+        <div className="wb-top" ref={wbTopRef}>
+        {/* THE FRAGMENT sits directly ABOVE the ring, horizontally centred on the
+            bomb at the ring's centre. It is NOT overlaid on the bomb: the ring's free
+            centre is only as wide as the circle leaves after the seats, and a 96px
+            Bungee fragment does not fit there without colliding with the seats or
+            shrinking the bomb below its share of the cell. Above-and-centred keeps the
+            fragment at the full hero step AND keeps every block collision-free.
+
+            Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
+            carries the changing key, so the prompt box never unmounts/remounts
+            mid-game - the readable letters underneath stay put. Only the inner punch
+            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
+            keyed .combo-pop at ComboMeter.jsx:50). */}
+        <div className="game-combo-box" ref={comboBoxRef}>
+          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
+              Scoped to this inner node, so the surrounding box stays mounted. */}
+          <div
+            key={comboPunch}
+            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
+          >
+            <div className="game-combo-label">{promptLabel}</div>
+            <div className={`game-combo${isCategory ? ' category' : ''}`}>
+              {promptValue}
+            </div>
+          </div>
+        </div>
+        </div>
+        {/* ===== /TOP STACK ===== */}
+
+        {/* ==================== THE RING (feat/wb-ring) ====================
+            Players sit on a CIRCLE around the bomb (the jklm/BombParty layout)
+            instead of in a horizontal row of cards. A row cannot space 2 players
+            and 16 players both well - at 2 it stretched each card to half the
+            stage (the empty-bar failure), at 8 it wrapped to three rows and
+            overflowed. A ring divides 360deg by the player count, so every count
+            from 2 to 16 is evenly spaced and the bomb stays dead centre.
+            Seat geometry is pure CSS from --i (seat index) and --n (seat count);
+            see .wb-seat in GameScreen.css. */}
+        <div className="wb-ring" style={{ '--n': players.length }}>
+          <div className="wb-ring-seats">
+          {players.map((player, seatIndex) => {
             const eliminated = player.eliminated || player.lives <= 0;
             const isCurrent = player.id === gameState.currentPlayerId;
             const isMe = player.id === myId;
@@ -2934,7 +3185,11 @@ export default function GameScreen({
               .join(' ');
 
             return (
-              <div key={player.id} className="game-player-slot">
+              <div
+                key={player.id}
+                className="wb-seat game-player-slot"
+                style={{ '--i': seatIndex, '--n': players.length }}
+              >
                 {isCurrent && isMe && !gameOver && (
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
@@ -3019,14 +3274,21 @@ export default function GameScreen({
               </div>
             );
           })}
-        </div>
-
-        {spectatorCount > 0 && (
-          <div className="game-spectator-count">
-            👁 {spectatorCount} SPECTATING
           </div>
-        )}
 
+          {/* NO TURN POINTER. A beam from the bomb to the live seat cannot exist on
+              this ring: the seats sit flush with the ring box, the bomb owns 0.42d,
+              and the band between them is ~6% of the diameter - which the floated
+              name and the live-typing line already occupy. The arm therefore ran
+              UNDER the 12-o'clock seat's name and painted as a stray vertical mark
+              struck through it (reported on the preview as "a stray glyph through
+              ANDY"). The active seat is already the ONLY full-accent object on the
+              board at 1.3x, with YOUR TURN flagged above it - that is the read. */}
+
+          {/* THE CORE: the bomb, dead centre of the ring. The fragment sits above the
+              ring (see the note there); this cell is the bomb's alone so it can own a
+              majority of the circle's free middle. */}
+          <div className="wb-core">
         <div className="bomb-area drain-exempt">
           {/* Continuous danger rattle: the bomb physically vibrates harder as
               --danger climbs (amplitude scales from 0 at calm), on its OWN wrapper
@@ -3076,25 +3338,64 @@ export default function GameScreen({
           {shatterKey > 0 && <ShatterWord key={`shatter-${shatterKey}`} text={shatterText} />}
         </div>
 
-        {/* Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
-            carries the changing key, so the prompt box never unmounts/remounts
-            mid-game - the readable letters underneath stay put. Only the inner punch
-            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
-            keyed .combo-pop at ComboMeter.jsx:50). */}
-        <div className="game-combo-box" ref={comboBoxRef}>
-          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
-              Scoped to this inner node, so the surrounding box stays mounted. */}
-          <div
-            key={comboPunch}
-            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
-          >
-            <div className="game-combo-label">{promptLabel}</div>
-            <div className={`game-combo${isCategory ? ' category' : ''}`}>
-              {promptValue}
-            </div>
           </div>
         </div>
 
+        {/* LEFT RAIL. The kill feed used to be a SIBLING of the stage (a second
+            card floated beside or under it), which is what left the stage's own
+            side space dead and pushed the page past the viewport whenever the
+            panel stacked. It is a rail of the board now: the stage owns its whole
+            composition and nothing outside it can grow the page. */}
+        {players.length > 2 && (
+          <div className="wb-rail wb-rail--left">
+            <KillFeed events={feedEvents} playerColors={playerColors} maxRows={feedVisible} />
+          </div>
+        )}
+
+        {/* RIGHT RAIL AT <=2 PLAYERS. A head-to-head has no kill feed (its events
+            just narrate the two seats you are already looking at), which left the
+            LEFT rail empty and the board lopsided - the same dead-space failure in
+            a new shape. The answer is BALANCE, not filler: the used-word list moves
+            to the LEFT rail (CSS, .wb-duo below) and this readout - ROUND, whose
+            turn it is, the live streak, the mode - takes the RIGHT. Both rails then
+            carry a card of the same size. At 3+ the feed takes the left as before
+            and this panel is not rendered. */}
+        {players.length <= 2 && (
+          <div className="wb-rail wb-rail--right">
+            <div className="wb-status">
+              <div className="wb-status-title">MATCH</div>
+              <div className="wb-status-rows">
+                <div className="wb-status-row">
+                  <span className="wb-status-k">ROUND</span>
+                  <span className="wb-status-v">
+                    {typeof gameState.round === 'undefined' ? '1' : gameState.round}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">TURN</span>
+                  <span className="wb-status-v">
+                    {turnPlayer ? turnPlayer.name : '--'}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">STREAK</span>
+                  <span className={`wb-status-v${streak.count >= 2 ? ' is-hot' : ''}`}>
+                    ×{streak.count}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">MODE</span>
+                  <span className="wb-status-v">{diffLabel || 'CHILL'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== BOTTOM STACK. `display:contents` on the rails layout, so USED
+            lands in the right rail and the bar lands in the full-width bottom row;
+            a real flex column on phones, where both stack under the ring. ===== */}
+        <div className="wb-bottom" ref={wbBottomRef}>
         <div className="game-used">
           <div className="game-used-label">
             {usedLabel} ({usedItems.length})
@@ -3103,11 +3404,11 @@ export default function GameScreen({
             {usedItems.length === 0 ? (
               <span className="game-used-empty">NONE YET — BE THE FIRST</span>
             ) : (
-              // The list grows unbounded all game and is reconciled on every
-              // keystroke, but CSS only ever shows ~2 rows (max-height 92px). Render
-              // just the most recent 24 (words are unique, so key by the word) — the
-              // count label above still shows the true total.
-              usedItems.slice(-24).map((item) => {
+              // NEWEST-FIRST, AND ONLY AS MANY AS FIT. `usedVisible` comes from the
+              // rail fit above: whole chips only, so the column can never end in one
+              // sliced through the middle. The label above still shows the TRUE total,
+              // which is what makes a trimmed column honest rather than lossy.
+              usedItems.slice(-usedVisible).map((item) => {
                 // feat/wb-bot-turn: the bot's word being revealed on its card stays hidden
                 // (opacity only) until the last letter lands, then slides in as normal.
                 const pending =
@@ -3123,6 +3424,13 @@ export default function GameScreen({
             )}
           </div>
         </div>
+
+        <div className="wb-bottombar" ref={wbBarRef}>
+        {spectatorCount > 0 && (
+          <div className="game-spectator-count">
+            👁 {spectatorCount} SPECTATING
+          </div>
+        )}
 
         {isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
@@ -3261,7 +3569,12 @@ export default function GameScreen({
                 inputEnabled
                   ? isCategory
                     ? `NAME SOMETHING IN "${categoryRaw}"…`
-                    : `TYPE A WORD WITH "${combo}"…`
+                    /* Not `TYPE A WORD WITH "${combo}"…`: the fragment is already the hero
+                       text directly above the bomb, so repeating it here duplicated the one
+                       thing the screen shouts AND overflowed the field at the input's 28px
+                       (354px of placeholder in a 326px box at 1280x720). The aria-label above
+                       still names the fragment, so nothing is lost for a screen reader. */
+                    : 'TYPE A WORD…'
                   : gameOver
                   ? 'GAME OVER'
                   : 'WAIT YOUR TURN…'
@@ -3325,7 +3638,7 @@ export default function GameScreen({
             it somewhere it cannot be. The slot is ALWAYS rendered, even when empty, so a word
             arriving never reflows the board — and at >=900px it is its own grid column, beside the
             prompt/used/input stack rather than on top of it. */}
-        <div className="wb-rail" aria-hidden="true">
+        <div className="wb-receipt-rail" aria-hidden="true">
           {lastPayout && !gameOver && (
             <div className="wb-receipt" key={lastPayout.key}>
               <WordPayout payout={lastPayout.payout} compact />
@@ -3338,10 +3651,10 @@ export default function GameScreen({
             {rejectionMessage(lastWordResult.reason, { combo, isCategory })}
           </div>
         )}
+        </div>
+        </div>
+        {/* ===== /BOTTOM STACK ===== */}
       </div>
-      {players.length > 2 && (
-        <KillFeed events={feedEvents} playerColors={playerColors} />
-      )}
       </div>
 
       {gameOver && (

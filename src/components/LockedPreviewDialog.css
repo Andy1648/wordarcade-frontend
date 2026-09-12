@@ -43,7 +43,7 @@
   background: none;
   border: none;
   color: #f0ead9;
-  font-size: 22px;
+  font-size: var(--fs-body);
   line-height: 1;
   cursor: pointer;
 }
@@ -64,7 +64,8 @@
 
 .lp-name {
   font-family: 'Bungee', cursive;
-  font-size: clamp(30px, 6vw, 44px);
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1.05;
   letter-spacing: 0.02em;
   margin-top: 8px;
@@ -72,21 +73,24 @@
 .lp-rules {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2.4vw, 18px);
+  font-size: var(--fs-body);
   line-height: 1.4;
   color: #d8cdf0;
   margin: 12px auto 0;
   max-width: 34ch;
 }
 .lp-pay {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 3vw, 22px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   line-height: 1;
   color: #f0ead9;
   margin-top: 18px;
 }
 .lp-pay-num {
-  font-size: 1.35em;
+  font-size: var(--fs-panel);
 }
 .lp-gate {
   display: flex;
@@ -96,15 +100,17 @@
   margin-top: 20px;
   padding-top: 16px;
   border-top: 3px dashed #4a3b6b;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 3vw, 22px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   color: #ffe94a;
   letter-spacing: 0.02em;
 }
 .lp-gate-cur {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-body);
   letter-spacing: 1px;
   color: #9c90b4;
 }

@@ -98,8 +98,11 @@
   border-radius: 8px;
   background: #0d0618;
   color: #fff;
-  font-family: 'Bungee', cursive;
-  font-size: 16px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   line-height: 1;
   cursor: pointer;
   box-shadow: 3px 3px 0 #000;
@@ -182,7 +185,7 @@
 .mode-dialog-chip {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   letter-spacing: 0.16em;
   padding: 5px 11px;
   border: 2px solid currentColor;
@@ -221,6 +224,7 @@
   align-items: center;
   line-height: 0.9;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   color: #04201c;
   background: #2EFFE0;
   border: 3px solid #000;
@@ -235,16 +239,17 @@
   transform: skewX(-7deg) translateY(7px);
 }
 .mode-dialog-ai-badge-ai {
-  font-size: 26px;
+  font-size: var(--fs-panel);
 }
 .mode-dialog-ai-badge-judged {
-  font-size: 16px;
+  font-size: var(--fs-body);
   letter-spacing: 2px;
 }
 
 .mode-dialog-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(34px, 7vw, 64px);
+  text-transform: uppercase;
+  font-size: var(--fs-h1);
   line-height: 0.98;
   letter-spacing: -0.01em;
   transform: skewX(-5deg);
@@ -257,7 +262,7 @@
 .mode-dialog-liner {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 19px);
+  font-size: var(--fs-body);
   color: #f3ecff;
   max-width: 32ch;
 }
@@ -273,15 +278,21 @@
   gap: 8px;
   margin-top: clamp(8px, 1.4vh, 12px);
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(12px, 1.5vw, 14px);
+  font-size: var(--fs-label);
   color: #cdbdf0;
   flex-wrap: nowrap;
 }
 .mode-dialog-mastery-lv {
+  /* A numeral inside a fixed-width chip cannot take the 28px Bungee display floor
+     (.mode-dialog-mastery-lv), and type that cannot take the floor should not be display type.
+     Space Mono data readout instead. */
   flex: 0 0 auto;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(13px, 1.7vw, 16px);
+  font-family: 'Space Mono', monospace; font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-body);
   line-height: 1;
   padding: 3px 7px;
   border: 2.5px solid;
@@ -319,7 +330,7 @@
 .mode-dialog-howlabel {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 1.8vw, 18px);
+  font-size: var(--fs-body);
   letter-spacing: 0.22em;
   margin-top: clamp(12px, 2.2vh, 18px);
   opacity: 0.9;
@@ -327,7 +338,7 @@
 
 .mode-dialog-sub {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   color: #c8b8e0;
   line-height: 1.45;
   max-width: 44ch;
@@ -338,7 +349,7 @@
 .mode-dialog-pay {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(15px, 1.8vw, 18px);
+  font-size: var(--fs-body);
   letter-spacing: 0.12em;
   color: #c8b8e0;
   margin-top: clamp(10px, 2vh, 16px);
@@ -348,7 +359,8 @@
 }
 .mode-dialog-pay-num {
   font-family: 'Bungee', cursive;
-  font-size: clamp(22px, 3vw, 30px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1;
   -webkit-text-stroke: 1.5px #000;
 }
@@ -366,7 +378,9 @@
    accent fill + outline are set inline per mode. */
 .mode-dialog-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   border: 4px solid #000;
   border-radius: 8px;
   padding: clamp(12px, 1.5vh, 17px) clamp(14px, 2vw, 24px);
@@ -408,7 +422,7 @@
    the picker stays visible and the dialog fits with no scrollbar (fix/qa-sweep §7). */
 @media (max-height: 560px) {
   .mode-ex { display: none; }
-  .mode-dialog-title { font-size: clamp(26px, 4.5vw, 38px); }
+  .mode-dialog-title { font-size: var(--fs-h2); }
   .mode-dialog-lower { gap: 8px; }
 }
 
