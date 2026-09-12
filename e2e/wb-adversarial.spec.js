@@ -35,6 +35,22 @@ async function myTurn(mock, page, { combo = 'at', usedWords = [] } = {}) {
   await page.waitForTimeout(60);
 }
 
+// WAIT FOR THE INTRO, DO NOT SLEEP THROUGH IT. A flat `waitForTimeout(4800)` for the
+// 3-2-1-GO! overlay passed 13/13 alone and went red at the FIRST sample under load (three
+// checkouts building and gating at once): the overlay was still up, `showCountdown` was
+// still true, and the numeral is deliberately absent while it is. A sleep tuned on an idle
+// machine is a race on a busy one.
+async function introClear(page) {
+  const overlay = page.locator('.countdown-overlay');
+  // ATTACHED FIRST. Waiting only for `detached` resolves INSTANTLY when the element has not
+  // mounted yet — React had not rendered the overlay at the moment of the call — so the wait
+  // returned immediately and every run failed at the first sample, consistently. A wait for a
+  // thing to go away is only a wait once the thing is there.
+  await overlay.waitFor({ state: 'attached', timeout: 4000 }).catch(() => {});
+  await overlay.waitFor({ state: 'detached', timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(150); // one frame past the unmount, so the board has laid out
+}
+
 test.beforeEach(async ({ page }) => {
   // the 1/40 lucky roll off, so every figure below is exact rather than distributional
   await page.addInitScript(() => { window.__TAW_LUCKY = 'off'; });
@@ -78,7 +94,7 @@ test('SEND pressed twice in one frame sends one word', async ({ page }) => {
   const mock = await installBackendMock(page);
   await gotoMenu(page);
   await myTurn(mock, page, { combo: 'str' });
-  await page.waitForTimeout(4800); // clear the 3-2-1-GO! intro so the input is live
+  await introClear(page);
 
   const field = page.locator('.game-input');
   await field.fill('STRAND');
@@ -98,7 +114,7 @@ test('Enter held down (keyboard autorepeat) sends one word', async ({ page }) =>
   const mock = await installBackendMock(page);
   await gotoMenu(page);
   await myTurn(mock, page, { combo: 'str' });
-  await page.waitForTimeout(4800);
+  await introClear(page);
   await page.locator('.game-input').fill('STRAND');
   const before0 = mock.sentTypes().length;
   // autorepeat: several keydowns, one keyup

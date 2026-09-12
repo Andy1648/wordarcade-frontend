@@ -40,8 +40,24 @@ async function enterTurn(page, players, maxTimer = 30) {
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
   await page.waitForTimeout(80);
   mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players, combo: 'str', usedWords: [], timerSeconds: maxTimer, maxLives: 3 } });
-  await page.waitForTimeout(4800); // the 3-2-1-GO! intro owns the board until it clears
+  await introClear(page);
   return mock;
+}
+
+// WAIT FOR THE INTRO, DO NOT SLEEP THROUGH IT. A flat `waitForTimeout(4800)` for the
+// 3-2-1-GO! overlay passed 13/13 alone and went red at the FIRST sample under load (three
+// checkouts building and gating at once): the overlay was still up, `showCountdown` was
+// still true, and the numeral is deliberately absent while it is. A sleep tuned on an idle
+// machine is a race on a busy one.
+async function introClear(page) {
+  const overlay = page.locator('.countdown-overlay');
+  // ATTACHED FIRST. Waiting only for `detached` resolves INSTANTLY when the element has not
+  // mounted yet — React had not rendered the overlay at the moment of the call — so the wait
+  // returned immediately and every run failed at the first sample, consistently. A wait for a
+  // thing to go away is only a wait once the thing is there.
+  await overlay.waitFor({ state: 'attached', timeout: 4000 }).catch(() => {});
+  await overlay.waitFor({ state: 'detached', timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(150); // one frame past the unmount, so the board has laid out
 }
 
 const readClock = (page) =>
@@ -143,9 +159,14 @@ for (const vp of VIEWPORTS) {
       //
       // Re-scoping the list kills the first five. TWO REMAIN and they are deliberate: the
       // stage heartbeat is ON `.game-stage--wb` itself, which a descendant selector cannot
-      // reach, and `sweat-fly` was never in the list at all. Neither is mine to delete
-      // unsupervised — they are flagged for Andy — so they are pinned here instead, and an
-      // EIGHTH loop, or a returning tension loop, fails this gate.
+      // reach, and `sweat-fly` was never in the list at all.
+      // CORRECTION, measured after this comment first claimed otherwise: both ARE properly
+      // reduced-motion gated. Under an explicit page.emulateMedia({reducedMotion:'reduce'})
+      // the panic band runs ZERO loops (e2e/motion-contract.spec.js). They run here because
+      // this suite runs at FULL motion — the config's `use.reducedMotion` is inert in this
+      // project, which is its own finding and is pinned in that file. So these two are the
+      // panic state doing its job for a player who has not asked for less, not an
+      // accessibility hole. A THIRD loop, or a returning tension loop, fails this gate.
       const loops = await page.evaluate(() =>
         document.getAnimations()
           .filter((a) => a.effect && a.effect.getTiming().iterations === Infinity)
