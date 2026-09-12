@@ -7,7 +7,12 @@
 // the "assert the attempt was made" boundary.
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173; // vite preview's default port
+// vite preview's default port. Overridable via PW_PORT so two checkouts (e.g. two
+// agents in separate worktrees) can gate at the same time without fighting over the
+// listener — `strictPort` makes that collision a hard failure, and a REUSED listener is
+// worse: it serves the OTHER checkout's dist, so a run goes green against a build that
+// is not the one under test.
+const PORT = Number(process.env.PW_PORT) || 4173;
 const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
