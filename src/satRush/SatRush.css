@@ -507,18 +507,37 @@
   text-transform: uppercase;
   opacity: 0.85;
 }
-/* the FIELDS region: LAST SEEN / DESCRIPTION / KNOWN ALIASES scroll internally on
-   a small screen while the mugshot slots below stay pinned + visible */
+/* the FIELDS region: LAST SEEN / DESCRIPTION / KNOWN ALIASES.
+   IT CLIPS, IT DOES NOT SCROLL. This was `overflow-y: auto`, which put a SCROLLBAR on the
+   question in a mode where a timer is running and reading fast IS the skill — on a short window,
+   behind a phone keyboard, or simply on a word with a long gloss. A prompt you have to scroll to
+   read is a prompt you cannot answer in time.
+   The type SHRINKS instead: every size in here multiplies through `--sr-fit`, which
+   useFitToBox.js steps down (1 → 0.62) until the content fits. `overflow: hidden` is the
+   BACKSTOP, not the mechanism — if the floor is ever reached on some pathological word, the page
+   still must not grow a scrollbar. */
 .sr-fields {
-  flex: 1 1 auto;
+  --sr-fit: 1;
+  /* `flex: 1 1 auto`, deliberately. A zero basis would make this the element that absorbs the
+     card's leftover height — except the card is CONTENT-sized inside a content-sized stage, so
+     there is no leftover to absorb and a zero basis collapses the prompt to ~13px (measured).
+     With an auto basis the region is its content, the card grows to the stage's cap, and the fit
+     shrinks the type when that cap is reached. The `min-height` floors below are what stop the
+     other blocks squeezing it to nothing on a short window. */
+  /* `flex: 0 0 auto`: the region is exactly its CONTENT, and it neither grows nor shrinks.
+     Both halves matter. No GROW, because the fit measures the page and a region that stretched
+     would hide the overflow it is meant to react to. No SHRINK, because a shrinking region
+     ABSORBS the overflow — flex silently squeezes it and clips the prompt instead of letting the
+     page report that it does not fit, which is precisely how a 190px prompt ended up in an 8px
+     box with the fit still reading 1.0. The type shrinking is the only thing that may give. */
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: clamp(8px, 1.4vh, 14px);
-  padding-block: clamp(8px, 1.6vh, 16px);
+  gap: calc(clamp(8px, 1.4vh, 14px) * var(--sr-fit));
+  padding-block: calc(clamp(8px, 1.6vh, 16px) * var(--sr-fit));
 }
 /* one bounty field: a bordered label chip above its content, left-aligned */
 .sr-field {
@@ -556,8 +575,11 @@
 .sr-sentence {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(20px, 2.4vw, 25px);
-  line-height: 1.55;
+  /* The vh term is the one that matters on a phone with the keyboard up: the box loses half its
+     height and the type has to come with it. --sr-fit then takes up whatever a long gloss still
+     needs (see useFitToBox.js). */
+  font-size: calc(clamp(16px, min(2.4vw, 3.1vh), 25px) * var(--sr-fit));
+  line-height: 1.45;
   color: var(--ink);
 }
 /* the blank: ink glyphs over a solid 3px ink underline */
@@ -569,26 +591,31 @@
   padding-bottom: 1px;
 }
 /* DESCRIPTION — the gloss */
+/* DESCRIPTION — the gloss. Full-strength ink (#111 on #f0ead9 is ~17:1): this is the sentence
+   the mode is ABOUT, and it never gets an opacity knocked off it for texture. */
 .sr-gloss {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 1.9vw, 18px);
-  line-height: 1.5;
+  font-size: calc(clamp(13px, min(1.9vw, 2.4vh), 18px) * var(--sr-fit));
+  line-height: 1.45;
   color: var(--ink);
 }
 /* KNOWN ALIASES — the root line; cousins in muted ink */
 .sr-root {
   font-family: 'Space Mono', monospace;
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: calc(clamp(11px, 1.7vh, 13.5px) * var(--sr-fit));
+  line-height: 1.45;
   color: var(--ink);
 }
 .sr-root b {
   font-weight: 700;
 }
+/* the cousins read as secondary by OPACITY, not by a third hex (the mode is two hues). 0.8 of
+   #111 on #f0ead9 still measures ~11:1 — comfortably past the 4.5:1 floor the definition text is
+   gated on, so "secondary" never becomes "unreadable". */
 .sr-root .cz {
   color: var(--ink);
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
 /* ---------- slots ---------- */
@@ -2201,4 +2228,154 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    ============================================================================ */
 @media (prefers-reduced-motion: reduce) {
   .sr-stamp { animation: sr-stamp-fade 0.25s ease-out both; }
+}
+
+/* ============================================================================
+   SHORT WINDOWS — A PHONE WITH THE KEYBOARD UP (fix/sat-rush-ui)
+   ============================================================================
+   At 390x420 the poster's FIXED blocks (the WANTED header, the case-id band, the
+   mugshot slots, the message line, the REWARD footer) claimed the whole card and
+   left the field region TEN PIXELS of a 136px prompt. No amount of type-shrinking
+   fixes that: --sr-fit can only scale what is inside the box, and the box itself
+   had been squeezed to nothing.
+
+   So on a short window the CHROME gives way, in the order it is least missed:
+     - the case id goes. It is flavour ("CASE #4127"), it carries no mechanic, and
+       it is the one block whose absence changes nothing about how the word plays.
+     - the WANTED header, the slots and the footers compress.
+     - the field region is given a floor it may not be pushed below.
+   The vocabulary word and its clue are the LAST things to give, which is the whole
+   point: everything else on this page exists to frame them.
+   THE BREAKPOINT IS HEIGHT **OR** A VERY NARROW WIDTH. 320x640 is not a "short" window by
+   height, but at 320px every line of the prompt wraps to roughly twice as many lines, so the
+   field region needs the same relief a short window does. Measured, not guessed: the gate had
+   320x640 asking for 181px of prompt in a 116px box.
+   Gated by e2e/sat-rush-fit.spec.js at 320x640, 390x420 and 320x340. */
+@media (max-height: 700px), (max-width: 360px) {
+  .sr-app {
+    padding: 6px 8px;
+  }
+  /* The HUD is the biggest non-prompt block on the page — 58px of a 334px stage at 320x340,
+     measured. It carries five readouts that are each two lines; on a short window they become one
+     line each and the row halves. Nothing is removed: the score, the lives and the exit are all
+     still there, just not stacked. */
+  .sr-hcell {
+    padding: 4px clamp(5px, 1.2vw, 10px);
+    gap: 0;
+  }
+  .sr-body {
+    gap: 6px;
+    padding: 8px 10px 10px;
+  }
+  .sr-cardframe {
+    padding: 8px 12px 6px;
+  }
+  /* THE FLOOR. `flex: 1 1 auto` alone loses to a column of `flex: 0 0 auto` siblings that
+     together want more than the card has; a basis makes the prompt a first-class claimant on the
+     height rather than the residue left over after the decoration. */
+  .sr-fields {
+    gap: calc(6px * var(--sr-fit));
+    padding-block: calc(4px * var(--sr-fit));
+  }
+  .sr-wanted {
+    font-size: clamp(20px, 5vw, 28px);
+  }
+  /* Flavour, not mechanic — the first thing to go when the room runs out. */
+  .sr-caseid {
+    display: none;
+  }
+  /* --slot-MIN too, not just the max: `clamp(min, x, max)` returns the MIN when min > max, so
+     lowering only --slot-max left the slots at their 34px floor. A 10-letter word then wrapped to
+     two rows of 40px-tall tiles — 89px of the card, measured, which was most of the gap between
+     "the prompt fits" and "it does not". */
+  .sr-slots {
+    --slot-min: 24px;
+    --slot-max: 34px;
+    --gap: 5px;
+    margin-top: 8px;
+  }
+  .sr-msg {
+    margin-top: 6px;
+    min-height: 14px;
+    font-size: 11px;
+  }
+  .sr-fieldlabel {
+    font-size: 8.5px;
+    padding: 0 5px;
+  }
+}
+/* Shorter still (a small phone with the keyboard up): the KNOWN ALIASES row is the third
+   reveal and the least load-bearing of the three — the sentence gives the context and the
+   gloss gives the meaning, so the etymology is what a 340px-tall window loses. */
+/* Shorter still (a small phone with the keyboard up) OR simply very narrow — at 320px every
+   line of the prompt wraps to about twice as many, which costs the same height a short window
+   does. Both get the same relief. */
+@media (max-height: 430px), (max-width: 360px) {
+  /* At this height the HUD's LABELS ("SCORE", "LIVES") go and the values stay: the value is the
+     information, the label is a caption for it, and the poster below is what the run is about. */
+  .sr-hud .sr-hlabel {
+    display: none;
+  }
+  .sr-hcell {
+    padding: 2px 5px;
+  }
+  .sr-body {
+    gap: 4px;
+    padding: 5px 8px 7px;
+  }
+  .sr-cardframe {
+    padding: 5px 8px 4px;
+  }
+  .sr-slots {
+    --slot-min: 19px;
+    --slot-max: 28px;
+    --gap: 4px;
+    margin-top: 5px;
+  }
+  /* The WANTED header is the loudest thing on the page and the least load-bearing at this size —
+     the poster reads as a poster from its frame and its type, not from a 28px shout. */
+  .sr-wanted {
+    font-size: clamp(16px, 4vw, 20px);
+  }
+  /* THE FIELD LABELS GO. "LAST SEEN" / "DESCRIPTION" / "KNOWN ALIASES" are ~18px each with their
+     gap — 54px of the ~120px the prompt needs at this size — and they are captions for content
+     that says what it is: a sentence with a blank in it, a quoted definition, a root line. Losing
+     the labels keeps all THREE REVEALS on screen; keeping them would cost a whole reveal, and the
+     reveals are the mechanic. Chrome first, content last. */
+  .sr-fieldlabel {
+    display: none;
+  }
+  .sr-field {
+    gap: 0;
+  }
+  /* THE REWARD FOOTER is 104px here — a third of the card — and most of it is the ante caption
+     stack beside the multiplier. The MULTIPLIER is the mechanic (it is the number the run is
+     played for and the thing juice squashes on a clear); the caption box around it is not. So the
+     footer keeps its number and drops its furniture. */
+  .sr-reward-label,
+  .sr-antebox {
+    display: none;
+  }
+  .sr-mult {
+    font-size: clamp(20px, 6vw, 28px);
+  }
+  .sr-msg {
+    margin-top: 3px;
+    min-height: 0;
+  }
+}
+
+/* THE GLOBAL FIXED PILLS vs SAT RUSH's OWN HUD.
+   The app-wide WINS pill and WPM readout are `position: fixed` at top:12/right:16. SAT Rush is a
+   full-screen takeover with its OWN hud row in exactly that band — score, streak, word, lives,
+   heat — so on a small screen the pills land on top of it and cover the score (seen at 320x340
+   while reviewing the fit shots). The pills are the redundant pair here: SAT's hud already
+   carries the run's state, and the wins total is on its results page. Padding the stage to clear
+   them would cost the prompt the height this whole pass just bought it.
+   `:has` scoped: where it is unsupported the rule is simply ignored and the pills stay put. */
+@media (max-width: 700px), (max-height: 560px) {
+  body:has(.sr-app) .wins-hud,
+  body:has(.sr-app) .wpm-hud {
+    display: none;
+  }
 }

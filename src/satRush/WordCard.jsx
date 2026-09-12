@@ -14,7 +14,9 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+import { useRef } from 'react';
 import Slots from './Slots';
+import useFitToBox from './useFitToBox';
 import AnteMeter from './AnteMeter';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
@@ -142,6 +144,13 @@ export default function WordCard({ view }) {
   // Reveals to render as fields (meta is the case id; firstLetter lives in slots).
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
 
+  // THE PROMPT FITS, IT DOES NOT SCROLL. A timed reading mode cannot put a scrollbar on the thing
+  // you are being timed to read. The field region clips, and the type shrinks to fit it - keyed on
+  // the word (`view.meta` is the case id, unique per word) and on WHICH reveals are showing, since
+  // each reveal adds a paragraph to the same box.
+  const fieldsRef = useRef(null);
+  useFitToBox(fieldsRef, [view.meta, rows.map((r) => `${r.type}${r.visible ? 1 : 0}`).join(), mode]);
+
   return (
     // The OUTER .sr-card is an unclipped positioning shell: the SFX burst is its
     // child so it can break PAST the panel edge (see .sr-stamp), while the visible
@@ -187,7 +196,7 @@ export default function WordCard({ view }) {
 
       {/* Fields scroll inside this region on a small screen; the mugshot slots
           below stay pinned and always visible. */}
-      <div className="sr-fields">
+      <div className="sr-fields" ref={fieldsRef}>
         {rows.map((r) => (
           <FieldRow key={r.type} type={r.type} visible={r.visible} view={view} />
         ))}
