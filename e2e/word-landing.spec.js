@@ -137,6 +137,11 @@ const FRAME_VIEWPORTS = [
 // words already played: the least urgent thing on the board at the moment you accept a word, and
 // the list this very word is about to join. Landing on it is apt rather than wrong. Judged from
 // the shot, not from a rule.
+// UPDATED (integration/board-v2): the board now LIFTS the reaction clear of the strip whenever
+// there is an empty band above it — which is every rails board and the 390x844 phone. It stays
+// only where lifting would put the chip on a SEAT instead, which is 320x640. So this exemption is
+// now the fallback of last resort rather than the normal case, and the 8-player stacked test at
+// the bottom of this file is what holds the line on which of the two overlaps is chosen.
 const PROTECTED = ['.game-combo-box', '.game-input-row', '.game-player-card', '.game-title'];
 // `.wl-stamp` is listed SEPARATELY and on purpose: it is absolutely positioned inside the chip and
 // overhangs it, and getBoundingClientRect on an ancestor does NOT include an out-of-flow descendant

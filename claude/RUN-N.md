@@ -164,6 +164,71 @@ first checked to FAIL on the defect it describes — a gate that has never been 
    drawn through another, because stroked 13px type fills its box and then some. Name labels get a
    required 2px GAP, not a 4px tolerance.
 
+### The defect the FULL SUITE found that the board gate could not
+
+The board gate was 23/23 and the shots were reviewed and clean — and the merge still had a
+serious bug in it, because **the board gate never accepts a word.** Chain A's own frame gate
+(`word-landing.spec.js`) failed at all three desktop viewports, and what it reported was a 14-27px
+overlap. That was the symptom. The disease, found by measuring the board before and after the
+word:
+
+> **At 1280x720 the ring was 322px before the accepted word and 58px after it.**
+
+Chain A built the payout receipt as a THIRD GRID COLUMN of chain A's board. The ring board
+replaced that grid wholesale (`head / top / feed-ring-used / bot`), so `.wb-receipt-rail` matched
+no area at all, fell into the implicit grid as a full-width row, and the first accepted word added
+158px of board height out of nowhere. `wbRingSize` then did exactly what it exists to do and took
+the height back off the only elastic thing on the board. A 58px ring, on every accepted word, on
+every desktop viewport.
+
+This is the merge failure mode worth remembering: **a selector that lost its grid area does not
+error — it lands in the implicit grid**, which is a full-width row, which is the most expensive
+possible default. Nothing in the type system, the linter, the unit tests or the board gate can see
+it, and it only appears in a state (a word has been accepted) that the board gate does not enter.
+
+Fixes, in the order they were found:
+
+1. The receipt docks **absolute against the stage's bottom-right corner**. Against the stage, not
+   the viewport — this is not the orphan-fixed-UI shape — so it occupies no track and can never
+   take a pixel from the ring again. It sits in the gutter to the right of the input row, which is
+   width-capped at 760px and centred, so on a board wide enough to have that gutter they cannot
+   meet.
+2. Its "hidden below 900px" rule was `(0,1,0)` and the new dock rule is `(0,2,0)`, so the dock won
+   the cascade and a 152x171 receipt landed on the input row at 390x844. Specificity, not source
+   order — the same trap that put the WINS pill on top of LEAVE.
+3. The reaction slot **hugs the left of the field** on the rails board. Centred, it sits directly
+   under the ring's 6 o'clock seat and shared 4px of box with an avatar at 1280x720.
+4. On the stacked board it **lifts over the used-words strip** by that strip's measured height
+   (`--wb-usedh`, written by the pass that already sizes the ring) — but only when the band above
+   the strip is empty. That band is the ring, and at 320x640 the gap is smaller than the chip:
+   lifting there put 16px of chip over a PLAYER CARD, at four AND eight players. Covering a seat is
+   worse than covering the used-words list, so when the gap does not fit, it stays put — which is
+   the trade `word-landing.spec.js` already documents and accepts, and which the shot at 320x640
+   confirms reads as a chip on a list rather than as a collision.
+
+NEW GATES:
+
+- **the ring may not change size by more than 2% when a word is accepted.** This is the check that
+  finds the disease instead of the symptom. Not zero, and the reason is worth stating: on the
+  stacked board the used-words strip gains a real chip when the word lands, which is content
+  changing, not a transient taking space — measured, 3px on a 247px ring. The failure it guards
+  against was -82%.
+- **the stacked board at EIGHT players, at both phone sizes, with a word landed.** Every other
+  frame test enters at two players, and two is the one seat count where the phone board has room to
+  spare: the ring is small and the band above the strip is empty. At eight the ring fills it.
+
+### Open, not fixed — evidence for later
+
+- **A thin teal circle, roughly 180px across, is drawn over the input row and past the board's left
+  edge** at phone widths, about 300ms after an accepted word. It is not an element inside the stage
+  and not a pseudo-element of one (both enumerated), so it is a pooled transient painted above the
+  board from outside it. It is cosmetic and pre-dates this merge — it is in the chain A frames too
+  — but it does leave the board. Carried to the Batch 5 overlay audit with this evidence rather
+  than chased now.
+- **The bomb appears missing in any shot taken ~300ms after an accept.** It is not: the element is
+  in the DOM at the ring's centre with a 104x120 box. It is mid-animation and transparent at that
+  instant. Worth knowing before someone files it from a screenshot.
+
 ### Observations, not defects — for Andy to rule on
 
 - **A rail card whose content is one line still takes the taller card's height.** That is the rule
