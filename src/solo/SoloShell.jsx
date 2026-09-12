@@ -39,12 +39,21 @@ function ClockRing({ remaining, tMax, redZone, armed }) {
 
 export default function SoloShell({
   accent,
+  mode, // 'chain' | 'fuse' — stamped on the root as data-mode so a mode can re-cut the
+  //       shared chrome (FUSE demotes the HUD score off the accent) without a new class.
   title,
   hud, // top bar node (score/best/multiplier | lives/strip)
   center, // the required letter / the fragment
   motif, // optional static SVG backdrop behind the stage (per-mode; never animated)
   supply, // optional readout node under the center
   clock, // { remaining, tMax, redZone, armed }
+  // Optional per-mode replacements for the two stage pieces. A mode that has its OWN art for
+  // the clock (FUSE's burning cord) or the hero token (FUSE's fragment slab) passes a render
+  // function taking the same data the default would get; anything that passes neither keeps
+  // the shared ring + `.solo-center` exactly as before (CHAIN is byte-identical).
+  clockArt, // (clock) => node, replaces <ClockRing>
+  centerArt, // (center) => node, replaces <div class="solo-center">
+
   outTile, // optional OUT tile (CHAIN only) — the last letter of the word being typed
   deck, // optional lower-deck node (per-mode) that fills the lower half of the card
   input,
@@ -94,7 +103,7 @@ export default function SoloShell({
   const dismissGameSpot = () => { markGameSpotlightSeen(); setGameSpot(false); };
 
   return (
-    <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
+    <div className="solo-root" data-mode={mode} style={{ '--solo-accent': accent }} ref={rootRef}>
       <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
         ✕
       </button>
@@ -125,12 +134,12 @@ export default function SoloShell({
             input's chain (the input lives outside .solo-stage), so it can never touch
             either. No animation — house rule: nothing idles here. */}
         {motif}
-        <ClockRing {...clock} />
+        {clockArt ? clockArt(clock) : <ClockRing {...clock} />}
         {/* Play-only stage content. The over scrim (.solo-over) is only 86% opaque, so a
             big bright center letter / supply line left mounted here GHOSTS THROUGH it and
             collides with the death card's title. Gate both to 'playing' exactly like the
             input, OUT tile, and HUD pills already are (JOB 5 — full-sweep finding 1). */}
-        {phase === 'playing' ? <div className="solo-center">{center}</div> : null}
+        {phase === 'playing' ? (centerArt ? centerArt(center) : <div className="solo-center">{center}</div>) : null}
         {phase === 'playing' && supply ? <div className="solo-supply">{supply}</div> : null}
       </div>
 

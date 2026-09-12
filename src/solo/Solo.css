@@ -759,44 +759,13 @@
   letter-spacing: 0.15em;
 }
 
-/* ----- FUSE deck: the three lives as burning fuse cords + the big letters strip ------ */
+/* ----- FUSE deck: the defused trail + the big letters strip ------------------------- */
 .solo-fusedeck {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 22px;
+  gap: clamp(8px, 1.4vh, 18px);
   width: 100%;
-}
-.solo-cords {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 560px;
-}
-.solo-cord {
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: 200px;
-  height: auto;
-}
-.solo-cord .cord-line {
-  stroke: #4a3a63; /* spent = charred purple-grey */
-  stroke-dasharray: 5 9;
-}
-.solo-cord.is-lit .cord-line {
-  stroke: #ffe94a; /* lit = bright fuse */
-  stroke-dasharray: none;
-}
-.solo-cord .flame-o {
-  fill: #ff6b3d;
-}
-.solo-cord .flame-i {
-  fill: #ffe94a;
-}
-.solo-cord .cord-ash {
-  fill: #6b5a86;
 }
 .solo-strip-big {
   width: 100%;
@@ -833,6 +802,13 @@
 .solo-strip-big span.is-lit {
   background: #ffe94a;
   color: #0d0618;
+}
+/* FUSE demotes the strip. Twenty-six tiles filling in at full yellow was the loudest thing
+   on the screen — louder than the fragment, which is the thing you have to obey. Filled in
+   the pale rope lilac it still reads as ticked-off at a glance and stays out of the way. */
+.solo-root[data-mode='fuse'] .solo-strip-big span.is-lit {
+  background: #b9a7d6;
+  color: #1a0b2e;
 }
 
 /* ===== Composed game-over backdrop ================================================== */
@@ -929,4 +905,325 @@
   letter-spacing: 0.08em;
   font-size: var(--fs-label);
   color: #cdbdf0;
+}
+
+/* ===================================================================================== */
+/* FUSE — its own colour script and its own art.                                          */
+/*                                                                                        */
+/* THE ACCENT IS THE FRAGMENT. #FF6B3D is spent on exactly one object: the slab, its glyph,*/
+/* and the same letters found again inside a word you defused. Nothing else on this screen */
+/* takes it — not the cord, not the strip, not the HUD, not the backdrop. Everything else  */
+/* is the pale rope lilac (#b9a7d6), the charred plums (#3a2b52 / #4a3a63) and the ember   */
+/* reds/yellows (#FF4B4B / #FFE94A). e2e/fuse-craft.spec.js is the gate on all of that.    */
+/* ===================================================================================== */
+
+/* The shared HUD score number is painted in var(--solo-accent). On FUSE that would be a
+   second orange thing on the same row as the lives — demote it to white here. */
+.solo-root[data-mode='fuse'] .solo-hud .solo-stat b {
+  color: #fff;
+}
+
+/* ----- LIVES = SPARE FUSES (HUD) ----------------------------------------------------- */
+.solo-lives.fuse-lives {
+  gap: 4px;
+}
+.flife {
+  width: clamp(34px, 4.4vw, 54px);
+  height: auto;
+  flex: 0 0 auto;
+}
+.flife .flife-line {
+  stroke: #4a3a63; /* spent = a charred, broken stub */
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 4 7;
+}
+.flife.is-lit .flife-line {
+  stroke: #b9a7d6;
+  stroke-dasharray: none;
+}
+.flife .flife-flame-o {
+  fill: #ff4b4b;
+}
+.flife .flife-flame-i {
+  fill: #ffe94a;
+}
+.flife .flife-ash {
+  fill: #3a2b52;
+}
+
+/* ----- THE BURNING CORD (the clock) --------------------------------------------------- */
+/* A rope on a charge, eaten by an ember that crawls toward the stick. The burn is
+   stroke-dashoffset set from React state every frame (the same mechanism the ring used) —
+   NO keyframe, NO transition, nothing that loops at rest. */
+.fcord-bar {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+}
+.fcord {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* the charge */
+.fcord-stick {
+  fill: #2a1840;
+  stroke: #000;
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+.fcord-seam {
+  stroke: #3a2b52;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.fcord-collar {
+  fill: #3a2b52;
+  stroke: #000;
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.fcord-wax {
+  fill: #4a3a63;
+  stroke: #000;
+  stroke-width: 3;
+}
+/* NOTE: the seams stay charred in the red zone. Turning them red too was tried and the two
+   red bands ran straight through the red seconds numeral sitting on the stick — the clock's
+   last reading, printed over a barcode. The rope and the numeral carry the escalation. */
+/* the rope: ash memory under it, black under-shade, pale cord on top */
+.fcord-ash {
+  /* the burnt run, still legible behind the ember — at #2a1840 it was within a shade of the
+     card and you could not see HOW FAR the cord had gone, only where it was now */
+  stroke: #3a2b52;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 3 10;
+}
+.fcord-shade {
+  stroke: #000;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.fcord-rope {
+  stroke: #b9a7d6;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.fcord-bar.is-red .fcord-rope {
+  stroke: #ff4b4b;
+}
+/* the ember, parked on the burn point */
+.fcord-fray {
+  stroke: #4a3a63;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.fcord-speck {
+  fill: #3a2b52;
+}
+.fcord-flame-o {
+  fill: #ff4b4b;
+  stroke: #000;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+.fcord-flame-i {
+  fill: #ffe94a;
+}
+/* the seconds, sitting on the charge. Positioned in PERCENT of the bar, which is exactly the
+   svg's own box (width:100%, height:auto keeps the 340x128 ratio), so it tracks the stick at
+   every width without a single layout read. */
+.fcord-secs {
+  position: absolute;
+  left: 17.4%;
+  top: 60.5%;
+  transform: translate(-50%, -50%);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.fcord-bar.is-red .fcord-secs {
+  color: #ff4b4b;
+}
+
+/* ----- THE FRAGMENT SLAB (the hero, and FUSE's ONE accent element) -------------------- */
+.fs-slab {
+  box-sizing: border-box;
+  /* A SLAB, not a label: it spans its column the way Word Bomb's combo box spans the board. */
+  width: 100%;
+  max-width: 100%;
+  background: #0d0618;
+  border: 5px solid var(--solo-accent);
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #000;
+  padding: clamp(6px, 1.2vh, 14px) clamp(16px, 2.4vw, 34px) clamp(8px, 1.4vh, 16px);
+  text-align: center;
+  /* a resting tilt, like Word Bomb's combo slab — static, never animated */
+  transform: rotate(-1.5deg);
+}
+.fs-slab-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.22em;
+  color: #8a77aa;
+  margin-bottom: 4px;
+}
+.fs-frag {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  /* the loudest thing on the screen, and the only thing wearing the accent at this size */
+  font-size: min(var(--fs-hero), 26vh);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--solo-accent);
+  -webkit-text-stroke: clamp(5px, 0.9vmin, 10px) #000;
+  paint-order: stroke fill;
+}
+
+/* ----- THE DEFUSED TRAIL (the payoff) ------------------------------------------------- */
+/* Each word you got, with the fragment it matched PICKED OUT of it: the rest of the word
+   drops to the muted lilac, the matched letters take the accent and an accent rule under
+   them. That contrast is the whole read, so it has to survive at 320px — hence the chips
+   wrap and the fourth one is dropped on a phone rather than being allowed to squeeze. */
+.fuse-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  width: 100%;
+  max-width: 100%;
+}
+.fd-chip {
+  box-sizing: border-box;
+  max-width: 100%;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  padding: 6px 11px;
+  overflow-wrap: anywhere;
+}
+.fd-chip.is-ghost {
+  color: #4a3a63;
+  background: transparent;
+  border-style: dashed;
+  border-color: #3a2b52;
+  box-shadow: none;
+  letter-spacing: 0.15em;
+}
+.fd-rest {
+  color: #8a77aa;
+}
+/* A HIGHLIGHTER SWIPE, not a tint. An accent-COLOURED version of the letters next to muted
+   ones was readable but not instant — at trail size the hue shift is a few dozen pixels of
+   ink. A solid accent plate under dark letters is the same read from across the room. */
+.fd-frag {
+  color: #0d0618;
+  background: var(--solo-accent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin: 0 1px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ----- FUSE layout: the cord is wide, so the primary column is wider than CHAIN's ------ */
+.solo-root[data-mode='fuse'] .solo-primary {
+  gap: clamp(10px, 2vh, 22px);
+  width: 100%;
+}
+.solo-root[data-mode='fuse'] .solo-stage {
+  width: 100%;
+  gap: clamp(8px, 1.6vh, 18px);
+}
+.solo-root[data-mode='fuse'] .fcord-bar {
+  max-width: 100%;
+}
+/* the strip caption is one sentence — let it be one line where there is room for it */
+.solo-root[data-mode='fuse'] .solo-deck-hint {
+  max-width: 44ch;
+}
+@media (min-width: 900px) and (min-aspect-ratio: 13/10) {
+  .solo-root[data-mode='fuse'] .solo-primary {
+    max-width: 660px;
+    /* the cord rides high and the slab sits low, so the column's slack goes BETWEEN the two
+       pieces rather than pooling under them */
+    justify-content: space-evenly;
+  }
+}
+/* THE RARITY CHIP AND THE SLAB. The chip lands in a slot anchored above the input, and on a
+   phone the slab is right there — measured at 320x640, the stamp printed 23px into the slab
+   and 9px into the fragment itself, which is the one thing on the screen that may never be
+   covered. TWO changes, both FUSE-only:
+     1. the slot is FULL WIDTH here (its `calc(50% - 40px)` exists to dodge CHAIN's OUT tile,
+        which FUSE does not have), and
+     2. the stamp goes back INLINE on a phone instead of perching above the chip, which is
+        what made the reaction ~70px tall in a gap that is nowhere near that.
+   The reaction then fits inside the reserve below. */
+.solo-root[data-mode='fuse'] .solo-react {
+  width: 100%;
+  padding-top: 0;
+}
+@media (max-width: 700px) {
+  /* Sized to the reserve below. The slot's shared sizing is cut for the Word Bomb board and
+     for CHAIN's OUT tile; on FUSE the constraint is the gap between the slab and the field,
+     which is what these two numbers are measured against. (Inlining the stamp was tried
+     first and is worse: it makes the row 287px wide in a 258px card at 320.) */
+  .solo-root[data-mode='fuse'] .solo-react .wl .wl-chip {
+    font-size: clamp(12px, 6.5cqw, 22px);
+    padding: 4px 9px;
+  }
+  .solo-root[data-mode='fuse'] .solo-react .wl .wl-wins {
+    font-size: clamp(12px, 6cqw, 20px);
+  }
+  .solo-root[data-mode='fuse'] .solo-react {
+    bottom: calc(100% + 6px);
+  }
+  /* the reaction's own height (perched stamp + chip + the standoff), reserved */
+  .solo-root[data-mode='fuse'] .solo-secondary {
+    padding-top: 62px;
+  }
+  /* a fourth chip cannot read at phone widths — three is the trail there */
+  .solo-root[data-mode='fuse'] .fuse-trail > :nth-child(n + 4) {
+    display: none;
+  }
+}
+/* SHORT PHONE (320x640): the deck ran 26px past its own box. The two things that cost the
+   most height there and carry the least are the trail's third slot and the second line of
+   the strip caption — both go, the mechanic and the payoff both stay. */
+@media (max-width: 700px) and (max-height: 700px) {
+  .solo-root[data-mode='fuse'] .fuse-trail > :nth-child(n + 3) {
+    display: none;
+  }
+  .solo-root[data-mode='fuse'] .fd-hint-more,
+  .solo-root[data-mode='fuse'] .solo-fusedeck > .solo-deck-label,
+  /* the arm hint says exactly what the field's own placeholder says ("SNEAK THOSE LETTERS
+     INTO A WORD" / SNEAK "SU" INTO A WORD), and on this screen it was the 12px that pushed
+     the deck out of its own box before the clock had even started */
+  .solo-root[data-mode='fuse'] .solo-armhint {
+    display: none;
+  }
+  .solo-root[data-mode='fuse'] .solo-fusedeck {
+    gap: 6px;
+  }
+  .solo-root[data-mode='fuse'] .fd-chip {
+    font-size: var(--fs-label);
+    padding: 4px 8px;
+  }
 }

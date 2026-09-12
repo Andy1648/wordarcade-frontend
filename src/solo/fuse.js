@@ -93,6 +93,11 @@ export function createFuseEngine({ accept, pools, rng = Math.random } = {}) {
     shortFactor: 1, // the ACTUAL length factor applied to this fuse (0.8 / 0.92 / 1.0) — the UI
     //                shows this exact number instead of a hardcoded ×0.8 (a 4-letter word is ×0.92).
     lastWord: '', // the most recently solved word (RARITY scoring + pop)
+    // The fragment that `lastWord` was solved AGAINST. `fragment` has already advanced to the
+    // next one by the time a consumer sees the accept (submit() serves immediately), so the
+    // payoff read — "here is the fragment, picked out inside the word you found" — has nothing
+    // to point at without this. Set at accept time, before serve().
+    lastFragment: '',
   };
 
   // The length factor to apply to the NEXT served fuse. 1.0 after a 5+ word / a life loss.
@@ -146,6 +151,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random } = {}) {
     state.wordsSolved += 1;
     state.score = state.wordsSolved;
     state.lastWord = word; // RARITY: aligned with wordsSolved for per-word scoring
+    state.lastFragment = state.fragment; // captured BEFORE serve() advances the fragment
     const strip = lightLetters(word);
 
     // Dock the NEXT fuse if this word was short.

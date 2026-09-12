@@ -168,7 +168,9 @@ test('FUSE: the same slot, the same ladder', async ({ page }) => {
   // FUSE shows a fragment and takes any ACCEPT word containing it. The accept list is a repo file,
   // so the test can pick a word that is certain to be taken instead of guessing one.
   const accept = fs.readFileSync('src/solo/words.accept.txt', 'utf8').split(/\s+/);
-  const fragment = (await page.locator('.solo-center').first().innerText()).trim().toLowerCase();
+  // FUSE's hero is its own fragment SLAB (`.fs-frag`), not the shared `.solo-center` token —
+  // see feat/fuse-craft. CHAIN still uses `.solo-center`.
+  const fragment = (await page.locator('.fs-frag').first().innerText()).trim().toLowerCase();
   const word = accept.find((w) => w.length >= 4 && w.includes(fragment));
   expect(word, 'no accepted word contains the fragment ' + fragment).toBeTruthy();
 
@@ -180,7 +182,10 @@ test('FUSE: the same slot, the same ladder', async ({ page }) => {
   await expect(wl).toHaveClass(/wl--obscure/);
   await page.screenshot({ path: 'claude/rarity-shots/fuse-obscure.png' });
 
-  const m = await anchorCheck(page, ['.solo-input', '.solo-clock', '.solo-center', '.solo-hud', '.solo-out']);
+  // FUSE's protected boxes are its own: the burning cord (`.fcord-bar`) in place of the shared
+  // ring, and the fragment slab (`.fs-slab` / `.fs-frag`) in place of `.solo-center`. Naming
+  // the CHAIN selectors here would match nothing and pass silently.
+  const m = await anchorCheck(page, ['.solo-input', '.fcord-bar', '.fs-slab', '.fs-frag', '.solo-hud']);
   // eslint-disable-next-line no-console
   console.log('RARITY | FUSE | fixed=' + (m.fixed.join(',') || 'none') + ' | over=' + (m.over.join(',') || 'none'));
   expect(m.fixed, 'the reaction is pinned to the viewport').toEqual([]);

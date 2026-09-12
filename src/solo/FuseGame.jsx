@@ -16,22 +16,28 @@ import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpFuseRuns, SOLO_REDUCED } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
+import { BurningCord, FragmentSlab, FuseLifeCord, DefusedWord } from './FuseArt.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import poolsRaw from './fragmentPools.json';
 
-const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
+// FUSE'S OWN COLOUR SCRIPT. CHAIN is teal #2EFFE0; FUSE is ORANGE — the fuse-and-fire end of
+// the house palette, and nothing CHAIN uses. It is spent on ONE thing: the FRAGMENT (the slab,
+// its glyph, and the same letters found again inside a word you defused). The cord is a pale
+// rope, the ember is red/yellow, danger is #FF4B4B. See FuseArt.jsx.
+const ACCENT = '#FF6B3D'; // orange
 
-// Static backdrop motif: two curving cord paths, yellow stroke, round caps, NO
-// animation. Purely decorative (opacity .07 via .solo-motif).
+// Static backdrop motif: two curving cord paths, round caps, NO animation. Purely decorative
+// (opacity .07 via .solo-motif). Drawn in the MUTED lilac, never the accent — FUSE spends its
+// accent on the fragment and on nothing else, backdrop included.
 const FUSE_MOTIF = (
   <svg
     className="solo-motif"
     viewBox="0 0 400 120"
     preserveAspectRatio="xMidYMid slice"
     fill="none"
-    stroke={ACCENT}
+    stroke="#b9a7d6"
     strokeLinecap="round"
     aria-hidden="true"
   >
@@ -39,31 +45,10 @@ const FUSE_MOTIF = (
     <path d="M-20 82 C 60 62, 150 26, 240 82 S 360 104, 420 70" strokeWidth="7" />
   </svg>
 );
-// One fuse cord = one life (this mode's death card literally reads "OUT OF FUSES"). A LIT
-// cord is a braided yellow line with an orange flame at the tip; a SPENT one is a charred
-// grey stub. Real vector art (SVG), static — the lit/spent flip is a STATE change on a
-// life loss, never an idle loop.
-function FuseCord({ lit }) {
-  return (
-    <svg className={`solo-cord${lit ? ' is-lit' : ''}`} viewBox="0 0 210 40" fill="none" aria-hidden="true">
-      <path
-        className="cord-line"
-        d="M6 20 q 13 -13 26 0 t 26 0 t 26 0 t 26 0 t 26 0 t 26 0"
-        strokeWidth="7"
-        strokeLinecap="round"
-      />
-      {lit ? (
-        <g className="cord-flame">
-          {/* outer flame (orange) + inner (yellow) — a small cartoon petal at the tip */}
-          <path className="flame-o" d="M188 20 c 9 -9 20 -6 16 6 c 6 -2 6 9 -2 14 c -6 4 -18 3 -20 -6 c -1 -6 1 -9 6 -14 z" />
-          <path className="flame-i" d="M191 22 c 5 -5 12 -3 10 4 c 3 -1 3 6 -2 8 c -4 2 -10 1 -11 -4 c -1 -3 0 -5 3 -8 z" />
-        </g>
-      ) : (
-        <circle className="cord-ash" cx="190" cy="20" r="4" />
-      )}
-    </svg>
-  );
-}
+// Module-scope so their identity is stable across FuseInner renders (the shell re-renders
+// every animation frame while the clock runs).
+const renderCord = (clock) => <BurningCord {...clock} />;
+const renderSlab = (fragment) => <FragmentSlab fragment={fragment} />;
 
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const POOLS = {
@@ -148,6 +133,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   const [winsEarned, setWinsEarned] = useState(0);
   // The word that just landed, for the reaction above the field: { key, word, band, wins }.
   const [landing, setLanding] = useState(null);
+  // THE DEFUSED TRAIL — every word this run, with the fragment it matched. `s.lastFragment` is
+  // the fragment as of the accept (the engine has already served the next one by then), which
+  // is what lets the trail pick those exact letters out of the word.
+  const [defused, setDefused] = useState([]);
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -162,6 +151,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       fuseWeightRef.current = 0;
       wpmStart('fuse'); // fresh run → fresh WPM session
       setWinsEarned(0);
+      setDefused([]); // fresh run → empty trail
     }
     if (solved > fuseBankedRef.current) {
       // RARITY: score the just-solved word (s.lastWord, aligned with wordsSolved). A solve bumps
@@ -187,6 +177,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       });
       fuseBankedRef.current = solved;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
+      // THE PAYOFF, in the deck: the word, with the fragment it matched picked out of it.
+      if (s.lastWord) {
+        setDefused((prev) => [...prev, { key: solved, word: s.lastWord, frag: s.lastFragment }].slice(-6));
+      }
       // THE REACTION, at the field — the same ladder Word Bomb lands, on the word just solved.
       if (s.lastWord && hasLanding(rw.band, null)) {
         setLanding({ key: solved, word: s.lastWord, band: rw.band, wins: banked });
@@ -213,22 +207,35 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         <b>{s.wordsSolved}</b>
         <span>WORDS · BEST {g.best}</span>
       </div>
-      <div className="solo-lives" aria-label={`${s.lives} lives`}>
-        {'♥'.repeat(s.lives)}
-        <span style={{ opacity: 0.3 }}>{'♡'.repeat(Math.max(0, 3 - s.lives))}</span>
+      {/* LIVES = SPARE FUSES. Hearts were both off-metaphor (the death card reads OUT OF
+          FUSES) and a DUPLICATE of the three big cords that used to sit in the deck; the
+          cords move up here, the deck space goes to the defused trail. */}
+      <div className="solo-lives fuse-lives" aria-label={`${s.lives} fuses left`}>
+        {[0, 1, 2].map((i) => (
+          <FuseLifeCord key={i} lit={i < s.lives} />
+        ))}
       </div>
     </>
   );
 
-  // LOWER DECK (fill): FUSE's own elements at the size they deserve — the three lives drawn
-  // as burning fuse cords (lit = a fuse still going, charred = spent), and the letters-used
-  // strip enlarged into a real band. Fills the lower half instead of two thin strips at top.
+  // LOWER DECK (fill): the DEFUSED TRAIL is the composition — each word you got, with the
+  // fragment it matched picked out of it, so the payoff has somewhere to live after the
+  // one-second rarity chip has gone. Under it, the letters-used strip (a real mechanic: a
+  // full a–z grants a spare fuse). The three life cords moved to the HUD; they were a
+  // duplicate of the hearts that used to sit there.
   const usedCount = s.lettersUsed.size;
+  const ghostCount = Math.max(0, 4 - defused.length);
   const fuseDeck = (
     <div className="solo-fusedeck" aria-hidden="true">
-      <div className="solo-cords">
-        {[0, 1, 2].map((i) => (
-          <FuseCord key={i} lit={i < s.lives} />
+      <div className="solo-deck-label">DEFUSED</div>
+      <div className="fuse-trail">
+        {defused.slice(-4).map((d) => (
+          <DefusedWord key={d.key} word={d.word} fragment={d.frag} />
+        ))}
+        {Array.from({ length: ghostCount }).map((_, i) => (
+          <span className="fd-chip is-ghost" key={`ghost-${i}`}>
+            ···
+          </span>
         ))}
       </div>
       <div className="solo-strip-big">
@@ -238,7 +245,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
           </span>
         ))}
       </div>
-      <div className="solo-deck-label">{usedCount}/26 LETTERS USED</div>
+      <div className="solo-deck-hint">
+        {usedCount}/26 LETTERS
+        <span className="fd-hint-more"> · FULL SET = SPARE FUSE</span>
+      </div>
     </div>
   );
 
@@ -264,12 +274,16 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         />
       )}
       accent={ACCENT}
+      mode="fuse"
       title="Type a word containing the fragment"
       hud={hud}
       center={(s.fragment || '').toUpperCase()}
       motif={FUSE_MOTIF}
       supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — fuse ×{s.shortFactor}</span> : null}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
+      // FUSE's own clock + hero art (the shared ring / `.solo-center` stay CHAIN's).
+      clockArt={renderCord}
+      centerArt={renderSlab}
       deck={fuseDeck}
       input={g.input}
       onInput={g.onInput}
@@ -278,7 +292,10 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       reason={g.reason}
       placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
-      armHint="SNEAK THOSE LETTERS INTO A WORD"
+      // NOT "SNEAK THOSE LETTERS INTO A WORD" — that is word-for-word what the field's own
+      // placeholder already says, stacked eight pixels under it. The arm hint's job is the
+      // one thing the placeholder does not say: the cord is not lit yet.
+      armHint="THE CORD LIGHTS ON YOUR FIRST KEYSTROKE"
       firstRunRule="SNEAK THE LETTERS INTO A WORD"
       phase={g.phase}
       winsTally={winsTally}
