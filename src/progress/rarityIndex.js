@@ -12,8 +12,26 @@ import { buildRarityIndex, wordRarity } from './rarity.js';
 let index = null; // Map<word, rank> once loaded
 let loading = null; // in-flight promise (single-flight)
 
+// DEV: `?rarityempty=1` loads an EMPTY corpus, which by this module's own contract makes every
+// accepted word "rarer than the entire ranked corpus" and therefore OBSCURE. It exists so the
+// rarity MOMENT can be reviewed in every mode without hunting for a word each mode happens to
+// accept and the corpus happens not to contain — the same reason `?stage=` and `?lineupx=` exist
+// for SAT RUSH's clock. It changes only this session, and it changes it honestly: the payout
+// really is the OBSCURE payout, because the corpus really is empty.
+const FORCE_EMPTY_CORPUS = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('rarityempty') === '1';
+  } catch {
+    return false;
+  }
+})();
+
 // Kick off the one-time load. Safe to call on every game mount. Resolves to the Map.
 export function loadRarityIndex() {
+  if (FORCE_EMPTY_CORPUS) {
+    index = index || new Map();
+    return Promise.resolve(index);
+  }
   if (index) return Promise.resolve(index);
   if (loading) return loading;
   loading = import('../solo/words.recall.txt?raw')

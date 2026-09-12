@@ -352,10 +352,33 @@
   justify-content: flex-start;
   /* Room for the stamp, which perches above the chip and is out of flow. */
   padding-top: 16px;
-  width: max-content;
-  max-width: 100%;
+  /* A REAL COLUMN, and the chip is sized to FIT it — the same rule the Word Bomb board's slot
+     uses, for the same reason. `width: max-content` let the chip run as wide as its word, and on a
+     390px CHAIN board it ran 32px into the OUT tile, which is the tile showing the letter you are
+     about to be judged on. Half the field minus the tile's own half-width, and `cqw` type so the
+     chip shrinks into whatever that leaves (see src/perf/typeScale.test.js FIT_TO_SLOT). */
+  width: calc(50% - 40px);
+  container-type: inline-size;
   pointer-events: none;
   z-index: 4;
+}
+/* `.solo-react .wl .wl-chip`, not `.solo-react .wl-chip`: the per-tier rules in WordLanding.css
+   are `.wl--obscure .wl-chip` — the SAME specificity — so which one wins comes down to whichever
+   stylesheet the bundler happened to emit last. It emitted the other one, and the chip kept its
+   --fs-h2 and ran 24px into CHAIN's OUT tile on a phone. One more class, no !important. */
+.solo-react .wl .wl-chip { font-size: clamp(12px, 9cqw, 30px); }
+.solo-react .wl .wl-wins { font-size: clamp(12px, 8cqw, 26px); }
+/* THE STAMP KEEPS PERCHING HERE, at every width. WordLanding.css drops it inline (`order: -1`)
+   under 700px because the Word Bomb board has no room above the chip there — this slot does, and
+   reserves it in `padding-top`. Inline it was a 66px badge sitting BESIDE a 69px chip, which took
+   the reaction to 138px in a 120px column and put its right edge 23px into CHAIN's OUT tile. */
+@media (max-width: 700px) {
+  .solo-react .wl .wl-stamp {
+    position: absolute;
+    bottom: calc(100% - 7px);
+    left: -12px;
+    order: 0;
+  }
 }
 
 .solo-input {

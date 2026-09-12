@@ -204,19 +204,24 @@
    getting hotter, and that #FF2EC4 does more work as the beat's alone; the argument for A is that
    the rarest word in the game should get the loudest colour in the box. ---- */
 .wl--obscure-b .wl-chip {
-  background: #0d0618;
-  border-color: #FF6B3D;
+  /* The one rung that goes to PAPER. Every other chip on the ladder is ink on a colour; the top
+     one inverts the relationship — a cream plate with the RARE orange printed on it and a slab of
+     that orange thrown behind it. It is as loud as the pink on a dark board (which a black chip is
+     NOT — the first cut of B was near-black on #1a0b2e and vanished) and it spends nothing the
+     beat flash needs. */
+  background: #F7F1E3;
+  border-color: #B8431F;
   color: #FF6B3D;
-  box-shadow: 8px 8px 0 #FF6B3D;
-  -webkit-text-stroke: 0;
+  box-shadow: 9px 9px 0 #FF6B3D, 9px 9px 0 4px #000;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
 }
 .wl--obscure-b .wl-stamp {
   background: #FF6B3D;
-  color: #0d0618;
-  border-color: #0d0618;
+  color: #F7F1E3;
+  border-color: #000;
   -webkit-text-stroke: 0;
-  box-shadow: 3px 3px 0 #0d0618, 6px 6px 0 #FF6B3D;
 }
 .wl--obscure-b .wl-wins {
-  color: #FF6B3D;
+  color: #F7F1E3;
 }

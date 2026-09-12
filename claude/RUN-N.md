@@ -229,6 +229,82 @@ NEW GATES:
   in the DOM at the ring's centre with a 104x120 box. It is mid-animation and transparent at that
   instant. Worth knowing before someone files it from a screenshot.
 
+### The refutation pass — six claims attacked, four of them broke
+
+Per the run's method, every finding gets a second pass trying to knock it down. A second agent was
+given the two fix commits and told to refute each claim with a file, a line and a failing case.
+Four survived contact; two did not. Nothing was changed until the claim had been reproduced by
+measurement here.
+
+**1. The receipt sat on SKIP from 900px to 1259px — the whole band nobody tests.**
+The fix's own claim was "the input row is capped at 760px and centred, so on a board wide enough
+to have that gutter the two cannot meet." True; "wide enough" turned out to mean 1260px, not 900.
+Measured:
+
+| viewport | receipt over SKIP |
+|---|---|
+| 900 | 59px |
+| 1024 | 63px |
+| 1100 | 42px |
+| 1200 | 24px |
+| 1260 | clear |
+
+Every viewport it was screenshotted at (1280 / 1366 / 1536) is above the threshold; the one below
+it (390) has the rail hidden. The entire broken range fell between the tests — every small laptop
+and every tablet in landscape. Rather than delete the receipt from those machines, the board now
+MAKES the gutter: the input row gives up width until the receipt's column fits beside it, and the
+FIELD takes the cut. That second half is not optional — `min-width: 0` had to go on the field,
+because without it a flex item cannot shrink below its own min-content and capping the row just
+made it overflow, with SKIP hanging 99px past the row's own right edge, straight back under the
+receipt.
+
+**2. The landing was drawn through the 6 o'clock seat at 900px** — avatar covered, name reading
+"YER1". Its `max-width` was decoration: a `width: max-content` box that also says
+`white-space: nowrap` overflows a max-width without complaint. The slot is now a real column of
+the space left of the ring, and the chip is sized to FIT that column in `cqw` — the type scale's
+own sanctioned fit-to-slot exception, for exactly this: a thing whose size is set by the box it
+must fit rather than by the document's scale. At 8cqw a word of up to ~18 letters fits at every
+board width. COST, and it is a real one: the OBSCURE chip on a rails board now tops out around
+22px instead of the 42px `--fs-h2` it was designed at, so the ladder's top rung is quieter on
+desktop than on a phone. It keeps its shadow, its tilt and its stamp. Flagged for Andy rather than
+tuned by guess — the fix that gets both is anchoring the slot to the STAGE instead of the input
+row, which is a bigger change than this pass should make.
+
+**3. Three game screens had no sound control at all.** Suppressing the fixed control for the whole
+of `view === 'game'` covered the "STARTING GAME..." placeholder, the multiplayer game-over
+scoreboard and the solo results card — none of which has a header to host the inline one, and any
+of which a player can sit on indefinitely. A fix for a collision that deletes the control from
+three screens is not a fix. All three now dock it against `.game-wrap`.
+
+**4. Two gates were silently skipping the very control they watch.** `wb-ring.spec.js` still
+queried `.game-mute-btn` in the overlap matrix and in the header-collision loop — a class deleted
+by the same commit that wrote them. `querySelector` returned null, both loops skipped it, no
+error, green. This is the most instructive one in the set: **a gate that names a selector is only
+as good as that selector, and a renamed or deleted class turns it off silently.** Both now name
+`.audio-ctrl--inline`; the dead CSS rules went too.
+
+**5. The used-strip clearance check ignored the seat names.** It measured the gap from `.wb-ring`'s
+own rect, but each seat's name is `position:absolute; top: calc(100% + 1px)` and hangs a line of
+text below it — the same out-of-flow blind spot that let eight names draw through each other two
+fixes ago. It now takes the lowest of the ring and every visible name.
+
+**6. A comment described a code path that cannot run there.** `REACT_H`'s note justified its value
+by "the stamp that perches above the chip", but the only place `REACT_H` is consulted is the
+stacked board, where under 700px the stamp is inline at `order: -1` and does not perch at all. The
+number was still safe; the reasoning was not. Corrected, because a comment that explains a fix
+with the wrong mechanism is how the next person breaks it.
+
+**Refuted, and worth recording as such:** the arc clamp on seat names holds at 2-3 players (the
+flat 130px cap dominates, i.e. no regression) and at 16 (the small-angle form gives ~84.5px against
+a true chord of ~81.8px); and Category Blitz's single SEND button is already protected at ≤420px
+by the generic unscoped rule, so `flex: none` on the Word Bomb pair left nothing exposed there.
+
+**NEW GATES:** the receipt, the landing and the placeholder are now checked at 900 / 1024 / 1100 /
+1200 **with a screenshot at each** — that band shipped broken precisely because nobody had looked
+at it — and `e2e/sound-control.spec.js` counts the sound controls on the menu, the room, the
+board, the placeholder and the scoreboard: never zero, never two. It also opens the panel to check
+the GAME SFX row survived the fold and that the popover lands on screen.
+
 ### Observations, not defects — for Andy to rule on
 
 - **A rail card whose content is one line still takes the taller card's height.** That is the rule
@@ -239,3 +315,102 @@ NEW GATES:
   the shots show both costs and it is a taste call, so it is stopped here rather than changed.
 - `USED WORDS (7)` showing six chips on a phone is the cap behaving as specified (count in the
   header, newest first).
+
+---
+
+## BATCH 3 — the rarity moment, finished
+
+Branch: `feat/rarity-moment`, cut from `integration/board-v2` (and carrying it, so the Batch 2
+fixes are in here too). Shots in `claude/rarity-shots/`, gate in `e2e/rarity-moment.spec.js`.
+
+### What was still wrong after Word Bomb got it right
+
+Two things, and the second one is the reason this batch exists.
+
+**One ladder, two colour languages.** `progress/rarity.js` said UNCOMMON was **cyan**, RARE
+**purple**, OBSCURE **gold**. `components/WordLanding.css` said UNCOMMON **yellow**, RARE
+**orange**, OBSCURE **flash pink**. Both were live at once and both were on the Word Bomb board:
+the word landed as an orange RARE chip at the field while the kill feed, two inches away, called
+the same word purple. Worse, cyan meant UNCOMMON in one place and SECRET in the other. A ladder
+the player has to learn twice is not a ladder. The landing's ramp wins — it is the moment, the
+feed is the footnote — and it now lives in `rarity.js`, so every surface that reads `band.color`
+agrees by construction.
+
+**Three modes still had the popup.** CHAIN, FUSE and SAT RUSH rendered `RarityFlash`:
+`position: fixed; top: 30%; left: 50%` of the VIEWPORT — a centre-screen label, in three TIMED
+TYPING modes, while the player's eyes are on a field at the bottom of the screen. That is the
+exact shape Word Bomb spent this week cutting, still shipping in three places. Deleted.
+
+### What replaced it
+
+- **CHAIN and FUSE** get a `reaction` slot in `SoloShell`, anchored to the input wrapper. The
+  shell takes a NODE, not rarity data — it does not know what rarity is, it knows where the player
+  is looking.
+- **SAT RUSH** reacts at the **mugshot slots**, where the word was just spelled.
+- **The ladder is re-cut in each mode's materials, not re-coloured.** SAT RUSH is one duotone
+  press — cream paper, near-black ink, an off-register plate, `--redink` for danger — and a
+  flash-pink sticker on it is a sticker. Same escalation, this page's inks:
+  UNCOMMON prints on paper with a black rule; RARE slips a red plate behind it; OBSCURE is a
+  **negative reprint**, the same inversion the silver-tongue state does to the whole page. One
+  ladder to learn, two presses to read it in.
+
+### THE RUN — not done, and why
+
+`src/runMode` exists only on `integration/run-stack`, which is nine merged run-mode branches
+awaiting Andy's play-test and is not in main or in this chain. Wiring it here would mean merging a
+second unmerged integration branch into this one, which is a whole integration of its own and is
+not something to start unsupervised at 3am. It is the one part of Batch 3 not delivered; the
+cheapest way to finish it is its own branch off `integration/run-stack` doing exactly what CHAIN
+and FUSE got, since THE RUN uses the same solo shell.
+
+### What the SCREENSHOTS caught that the gates did not
+
+1. **The chip ran 32px into CHAIN's OUT tile at 390px** — the tile showing the letter you are about
+   to be judged on. `width: max-content` again: the slot had a width, the chip ignored it. Fixed
+   the same way the Word Bomb board was, with a real column and `cqw` type.
+2. **...and then it still overlapped by 23px, for a different reason.** `WordLanding.css` drops the
+   stamp INLINE (`order: -1`) under 700px, because the Word Bomb board has no room above the chip
+   there. Inline, the stamp is a 66px badge beside a 69px chip — 138px of reaction in a 120px
+   column. The solo slot reserves that room in `padding-top`, so it keeps the stamp perched at
+   every width.
+3. **A cascade tie decided by the bundler.** `.solo-react .wl-chip` and `.wl--obscure .wl-chip` are
+   both `(0,2,0)`, so which one won came down to which stylesheet the bundler emitted last — and it
+   emitted the other one, so the fit-to-slot type silently did nothing. One more class, no
+   `!important`. Worth remembering: **equal specificity across two files is a coin flip you cannot
+   see in either file.**
+
+### TASTE CALLS — built both ways, stopped
+
+**1. The top rung's colour** (`?obscure=b`). Shots: `wb-obscure-a.png`, `wb-obscure-b.png`.
+
+- **A (default)** spends the reserved beat-flash `#FF2EC4` on OBSCURE. The case: the rarest word in
+  the game is the one moment that deserves the loudest colour the palette owns, and a ladder whose
+  top rung looks like its second rung is not a ladder.
+- **B** spends nothing the beat needs. The top rung is the one that goes to PAPER: a cream plate
+  with the RARE orange printed on it and a slab of that orange thrown behind it.
+- Honest note on B: the FIRST cut of B was a near-black chip with orange ink, and on a `#1a0b2e`
+  board it disappeared — a straw man, not an option. It was rebuilt as the cream plate before the
+  shot was taken. Even so, A is still louder; B is legible and distinct but quieter. If the beat
+  flash matters more than the top rung's volume, B is the one that costs nothing.
+
+**2. The pre-submit rarity hint** (`?rarityhint=1`, OFF by default). Shots: `wb-hint-off.png`,
+`wb-hint-on.png`. It names the band of the word in the field while you are still typing.
+
+- FOR: rarity only pays if you can aim at it. Today the only way to learn which words are rare is
+  to send them and read a receipt afterwards, which teaches you slowly and only about words you
+  already thought of.
+- AGAINST: it turns a vocabulary game into a slot machine you can pull — type, watch the pip,
+  backspace, try again — and the word you end up sending is the one the pip liked rather than the
+  one you thought of. It also spends the landing: a chip you predicted is a receipt, not a
+  surprise.
+- It is a pure Map lookup on the draft, so it costs no DOM read and nothing in the keystroke path.
+  My read: it belongs in a practice mode, not in a timed one. But that is a call about what the
+  game is for, which is not mine to make.
+
+### One piece of scaffolding, on purpose
+
+`?rarityempty=1` loads an EMPTY corpus, which by `rarityIndex`'s own contract makes every accepted
+word OBSCURE. Without it there is no way to test or screenshot the moment in four modes — each
+needs a word it happens to accept that the corpus happens not to contain. It changes only the
+session it is used in, and it changes it honestly: the payout really is the OBSCURE payout, because
+the corpus really is empty. Same family as SAT RUSH's `?stage=` and `?lineupx=`.
