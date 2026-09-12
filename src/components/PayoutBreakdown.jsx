@@ -12,10 +12,15 @@
 // neither can ever quote a multiplier the player did not actually get.
 import Num from './Num';
 import './PayoutBreakdown.css';
+import { formatNum } from '../format';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 // ×2 / ×1.5 / ×2.35 — trailing zeros trimmed, because "×2.00" reads like a different number.
-const mult = (m) => `×${Number(m.toFixed(2))}`;
+// A MULTIPLIER IS A NUMBER THE PLAYER READS, so it obeys format.js like every other. Two
+// decimals is right for the small ones (×1.25, ×4.5) and useless for the big ones: the
+// rebirth row at R10 is 59,049 and printed as "×59049", the one raw integer left on the
+// board. Under 10,000 formatNum is exact, so ×1.25 and ×4.5 are unchanged.
+const mult = (m) => `×${Math.abs(m) < 10000 ? Number(m.toFixed(2)) : formatNum(m)}`;
 
 /**
  * ONE WORD. `payout` is buildPayout()'s result; `inactive` is inactivePayoutFactors()'s, which is

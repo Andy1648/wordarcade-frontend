@@ -108,7 +108,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, returnBonus = null, onReturnBonusSeen, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -698,6 +698,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             rebirths={rebirths}
             wins={wins}
             onWinsClick={handleShop}
+            /* The welcome-back grant reacts AT the counter it changed (see App.jsx). */
+            bonus={returnBonus}
+            onBonusSeen={onReturnBonusSeen}
             onRankClick={() => setShowRanks(true)}
             streak={streak}
             freezes={streakFreezes}

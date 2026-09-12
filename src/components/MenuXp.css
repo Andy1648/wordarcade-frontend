@@ -557,11 +557,17 @@ button.menu-wins-chip:focus-visible {
   transform: translate(2px, 2px);
   box-shadow: none;
 }
-/* At the narrowest phones (≤380px) the LV bar can't seat the rank chip without squeezing the
-   XP track until the "into / cost" readout clips past it (viewport-integrity, 360×640). The rank
-   is the bar's lowest-priority element and still shows in Stats + on wider screens, so drop it
-   here rather than break the bar's fit. */
-@media (max-width: 380px) {
+/* The LV bar can't seat the rank chip without squeezing the XP track until the "into / cost"
+   readout clips past it. The rank is the bar's lowest-priority element and still shows in Stats
+   and on wider screens, so drop it rather than break the bar's fit.
+   THE BREAKPOINT WAS 380px AND THAT WAS ONE STOP TOO TIGHT. It was tuned against
+   viewport-integrity's 360x640, which is BELOW 380 — so the test that motivated the rule never
+   saw the width where it fails. Measured across the whole range with the chip still in:
+     1366:353  1280:353  900:236  768:105  600:113  480:51  430:40  390:4  360:55  320:15
+   The track is a 4px sliver at 390 — the commonest phone width there is, and WORSE than 320,
+   because at 360 the chip finally drops and the track jumps back to 55. The bar actually runs
+   out of room around 480, not 380, so that is where the chip goes. */
+@media (max-width: 480px) {
   .menu-xp-rank {
     display: none;
   }
@@ -629,4 +635,84 @@ button.menu-mark:active {
   .menu-mark {
     display: none;
   }
+}
+
+/* ============================================================= */
+/* ======  WELCOME-BACK GRANT — a chip in the strip  =========== */
+/* ============================================================= */
+
+/* It was a fixed card at top:16/left:50% that landed square on the wordmark (measured
+   309x88 of overlap at 1280x720). Purely informational, so it belongs at the counter it
+   changed: an INLINE flex child of the bar, which means the row reflows around it and it
+   cannot collide with anything by construction. One 200ms enter, no idle loop, no
+   dismiss button — it clears itself after 7s or on the first input. */
+.menu-wins-bonus {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 2px solid #1A9985;
+  border-radius: 8px;
+  background: #2EFFE0;
+  color: #06231f;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  animation: menu-wins-bonus-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.menu-wins-bonus-amt {
+  font-size: var(--fs-body);
+}
+.menu-wins-bonus-why {
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  opacity: 0.78;
+}
+@keyframes menu-wins-bonus-in {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-wins-bonus { animation: none; }
+}
+
+/* THE GRANT BORROWS THE RANK CHIP'S SLOT RATHER THAN ADDING WIDTH. Measured with the
+   chip in and nothing given back, the track went to 4px at 600 and 768 — the same
+   collapse the rank chip was causing at 390, arriving from the other direction. The rank
+   is by its own note the bar's lowest-priority element, and the grant is on screen for
+   seven seconds, so for those seven seconds the rank stands down. Net width with the
+   short form of the chip is about -9px, i.e. the track gets slightly WIDER. */
+.menu-xp-bar.has-grant .menu-xp-rank {
+  display: none;
+}
+/* WELCOME BACK only where there is genuine slack. Below 1100px the amount alone is what
+   fits, and the aria-label carries the sentence at every width regardless. */
+@media (max-width: 1099px) {
+  .menu-wins-bonus-why { display: none; }
+}
+
+/* THE NARROW TREATMENT ADDS NO ELEMENT. Measured at 320x640 the XP track is already
+   down to 15px — the strip and the corner nav are fighting for that row — and the chip
+   took it to 4px. Under 480px the chip goes entirely and the COUNTER reacts instead:
+   same place, same information, zero layout cost. The highlight is a one-shot, and it
+   ends when the grant does (the class comes off with the bonus). */
+@media (max-width: 480px) {
+  .menu-wins-bonus { display: none; }
+}
+.menu-wins-chip.is-granted {
+  color: #2EFFE0;
+}
+@media (min-width: 481px) {
+  /* Above 480 the chip beside it carries the message, so the counter stays its own
+     colour and the two do not both shout. */
+  .menu-wins-chip.is-granted { color: #ffe94a; }
+}
+
+/* At <=360px the bar has 77px of slack for a track after the wins chip, the LEVEL word and
+   the LV pill, and the track came out at 15px on a 320 phone. "LEVEL" is the one label the
+   pill beside it already says ("LV 18"), so it is the cheapest thing in the row to drop. */
+@media (max-width: 360px) {
+  .menu-xp-label { display: none; }
 }

@@ -71,10 +71,49 @@ export const CURVE_BASE = 2000; // need(0); the whole curve scales from here
 export const CURVE_BREAK = 100; // level at which the curve HARDENS (v6 softened at 60)
 export const EARLY_CURVE_EXP = 1.115; // per-level growth at/below the break
 export const TOP_CURVE_EXP = 1.135; // per-level growth ABOVE the break — must exceed EARLY
-export function need(n) {
+
+// ---- THE REBIRTH TERM, and why the curve now has one -----------------------------------
+// Income scales with rebirth (`rebirthMult` = 3^rc; R10 is x59,049) and until now the curve
+// did not, so the two diverged by a factor that eventually swallowed the whole ladder. How
+// many levels does x59,049 cancel? log(59049)/log(1.115) ~ 101 below the break and
+// log(59049)/log(1.135) ~ 87 above it — R10 paid for the first hundred levels outright.
+// Measured (claude/econ-rebirth-sim.mjs, 200h fixed-rebirth climbs, Word Bomb):
+//
+//   base   R0 LV50/100/200        R3 LV50/100/200        R10 LV50/100/200      LV50->200 @R10
+//   1      0.9h / 27.5h / never   0.0h / 1.1h / never    0.0h / 0.0h / 0.4h    0.4h   <- today
+//   2      0.9h / 27.5h / never   0.2h / 3.8h / never    0.0h / 0.0h / 33.0h   33.0h
+//   2.4    0.9h / 27.5h / never   0.2h / 5.5h / never    0.0h / 0.1h / 94.9h   94.9h
+//   3      0.9h / 27.5h / never   0.4h / 7.6h / never    0.0h / 0.3h / never   never
+//
+// A hundred and fifty levels in twenty-four minutes is not a ladder. The two ends of the
+// range are both wrong: base 1 is today, and base 3 cancels rebirth exactly, so pressing it
+// would buy nothing. 2 keeps HALF the multiplier as real speed — net climb rate scales
+// (3/2)^rc, so every rebirth makes you 50% faster per level, permanently and compounding,
+// and LV50->LV200 at R10 becomes 33 hours instead of 24 minutes.
+//
+// THIS IS A LIVE-BALANCE CHANGE AND IT IS NOT FREE. An existing R10 player's next level
+// becomes 2^10 = 1024x more expensive the moment this ships; their LEVEL is untouched (it is
+// stored exactly, see creditXp) but the bar they are part-way up gets much longer. There is
+// no migration that avoids that while still fixing the defect, so it is Andy's call, not a
+// silent one — the constant is here on its own so it can be tuned or set back to 1.
+export const NEED_REBIRTH_BASE = 2;
+
+/** The base curve — level cost with NO rebirth term. This is the shape v7 tuned. */
+export function baseNeed(n) {
   if (n <= CURVE_BREAK) return round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, n));
   const base = round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)); // need(100)
   return round10(base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK));
+}
+
+/**
+ * Cost to advance FROM level n to n+1, for a player with `rebirthCount` rebirths.
+ * The rebirth term is read from storage by default; every caller INSIDE this module reads
+ * it once and passes it down, so a level-carry loop never touches localStorage per level.
+ */
+export function need(n, rebirthCount = getRebirths()) {
+  const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
+  const raw = baseNeed(n);
+  return rc === 0 ? raw : round10(raw * Math.pow(NEED_REBIRTH_BASE, rc));
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -87,15 +126,17 @@ export function need(n) {
 // walk at LEVEL_CAP so a corrupt/huge legacy number can't spin the loop or accumulate a
 // meaningless float — the LIVE path (creditXp) is unaffected and stays exact to level 600+.
 const LEVEL_CAP = 10000;
-export function levelFromXp(xp) {
+export function levelFromXp(xp, rebirthCount = getRebirths()) {
   const total = Number.isFinite(xp) && xp > 0 ? xp : 0;
   let level = 1;
   let spent = 0; // cumulative cost consumed to REACH `level`
-  while (level < LEVEL_CAP && total - spent >= need(level)) {
-    spent += need(level);
+  // rc is read ONCE: the walk below can run to LEVEL_CAP and need()'s default would put a
+  // localStorage read inside that loop.
+  while (level < LEVEL_CAP && total - spent >= need(level, rebirthCount)) {
+    spent += need(level, rebirthCount);
     level += 1;
   }
-  const cost = need(level);
+  const cost = need(level, rebirthCount);
   const intoLevel = total - spent;
   return {
     level,
@@ -315,15 +356,17 @@ export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, 
 // number never approaches MAX_SAFE_INTEGER). Adds the gain to intoLevel and carries whole levels
 // forward via need(); reports whether a boundary was crossed so the caller can fire the one-shot
 // celebration. (The old rawKeys arg only fed the removed lifetimeLetters counter — it is gone.)
-export function creditXp(state, xpGain) {
+export function creditXp(state, xpGain, rebirthCount = getRebirths()) {
   let level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
   let intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
   const gain = Number.isFinite(xpGain) && xpGain > 0 ? xpGain : 0;
   const beforeLevel = level;
   intoLevel += gain;
   // Carry whole levels forward. need(level) is always > 0, so this terminates.
-  while (intoLevel >= need(level)) {
-    intoLevel -= need(level);
+  // rc is passed explicitly so this stays a pure function of (state, gain, rc) and so the
+  // carry loop does not read localStorage once per level crossed.
+  while (intoLevel >= need(level, rebirthCount)) {
+    intoLevel -= need(level, rebirthCount);
     level += 1;
   }
   const next = { level, intoLevel };
@@ -446,7 +489,9 @@ function readLevelState() {
     let level = Math.max(1, Math.floor(parsed.lv));
     let into = Number.isFinite(parsed.into) && parsed.into > 0 ? parsed.into : 0;
     const cost = need(level);
-    if (into >= cost) into = 0; // corrupt/overflowed → clamp into the level
+    if (into >= cost) into = 0; // corrupt/overflowed → clamp into the level (also the
+    // landing for an existing save the moment NEED_REBIRTH_BASE changes: a bar that was
+    // 90% full of the old cost is simply < the new cost, so it keeps its progress)
     return { level, intoLevel: into };
   }
   // Legacy cumulative number → derive {level, into} once and rewrite in the new shape. Floor
@@ -482,10 +527,10 @@ export function saveProgress(state) {
 // The display-progress object for a { level, intoLevel } state: the level, XP into it, that
 // level's cost, the remainder, and the 0..1 fill fraction for the bar. The direct-from-shape
 // analogue of levelFromXp (which still derives the same fields from a cumulative total).
-export function progressOf(state) {
+export function progressOf(state, rebirthCount = getRebirths()) {
   const level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
   const intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
-  const cost = need(level);
+  const cost = need(level, rebirthCount);
   return { level, intoLevel, cost, toNext: cost - intoLevel, frac: cost > 0 ? intoLevel / cost : 0 };
 }
 

@@ -35,7 +35,7 @@ function formatMult(m) {
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, bonus = null, onBonusSeen = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -153,25 +153,70 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
   const reb = Math.min(3, Math.max(0, Math.floor(rebirths) || 0));
 
+  // WELCOME-BACK REACTION. The grant used to be a `position: fixed` card at
+  // top:16/left:50%, which is CLAUDE.md's NO ORPHAN FIXED UI shape and which landed on
+  // the wordmark (measured 309x88 of overlap at 1280x720). It is purely informational —
+  // it makes no choice — so it reads as a chip in this strip, beside the number it
+  // changed, and clears itself. Inline, so it can never collide: the bar reflows.
+  // A ref for the callback keeps this a mount-once timer — App re-renders the menu
+  // roughly once a second with fresh closures, and a dep on the callback would restart
+  // the timeout every render and the chip would never leave.
+  const bonusSeenRef = useRef(onBonusSeen);
+  bonusSeenRef.current = onBonusSeen;
+  const hasBonus = !!(bonus && bonus.wins > 0);
+  useEffect(() => {
+    if (!hasBonus) return undefined;
+    const done = () => bonusSeenRef.current && bonusSeenRef.current();
+    const t = setTimeout(done, 7000);
+    // Any input clears it early, the same gesture that dismissed the old card.
+    window.addEventListener('keydown', done, { capture: true, passive: true });
+    window.addEventListener('pointerdown', done, { capture: true, passive: true });
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('keydown', done, { capture: true });
+      window.removeEventListener('pointerdown', done, { capture: true });
+    };
+  }, [hasBonus]);
+
   // The mini (splash) bar is fully decorative → aria-hidden. The full bar exposes ONLY the
   // wins button (an interactive shop entry) to assistive tech; the LV/fill/readout stay
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
-    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden={variant === 'mini' ? 'true' : undefined}>
+    <div
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}${hasBonus ? ' has-grant' : ''}`}
+      aria-hidden={variant === 'mini' ? 'true' : undefined}
+    >
       {variant !== 'mini' && wins != null && (
         onWinsClick ? (
-          <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
+          <button type="button" className={`menu-wins-chip${hasBonus ? ' is-granted' : ''}`} onClick={onWinsClick} aria-label={hasBonus ? `${wins} wins, including a welcome-back bonus of ${formatNum(bonus.wins)}. Open shop` : `${wins} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(wins)}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </button>
         ) : (
-          <span className="menu-wins-chip" aria-label={`${wins} wins`}>
+          <span className={`menu-wins-chip${hasBonus ? ' is-granted' : ''}`} aria-label={`${wins} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(wins)}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </span>
         )
+      )}
+      {/* The welcome-back grant, at the counter it changed.
+          IT COSTS WIDTH, AND UNDER 480px THERE IS NONE. Measured at 320x640: the XP
+          TRACK is already down to 15px there (the strip is fighting the corner nav for
+          the row), and this chip took it to 4px. So the narrow treatment adds no element
+          at all — .menu-wins-chip.is-granted flashes the counter itself, which is a
+          reaction at exactly the same place for zero layout. The sentence lives in the
+          aria-label at every width, so nothing is lost to a screen reader either. */}
+      {variant !== 'mini' && hasBonus && (
+        <span
+          className="menu-wins-bonus"
+          role="status"
+          aria-label={`Welcome back: ${formatNum(bonus.wins)} wins for being away ${Math.floor(bonus.hoursAway)} hours`}
+        >
+          <span className="menu-wins-bonus-amt">+{formatNum(bonus.wins)}</span>
+          <span className="menu-wins-bonus-why" aria-hidden="true">WELCOME BACK</span>
+        </span>
       )}
       {/* DAILY STREAK — a real treatment from 2 days (Job 10), not a bare chip: a flame
           banner carrying the day count, the XP multiplier it's worth, and any earned
@@ -647,7 +692,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     winsStamp(amount) {
       const a = winsStampAnimRef.current;
       if (!a || !winsStampRef.current) return;
-      winsStampRef.current.textContent = `+${amount} WINS`;
+      winsStampRef.current.textContent = `+${formatNum(amount)} WINS`;
       a.cancel();
       a.play();
     },

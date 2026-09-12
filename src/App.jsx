@@ -74,7 +74,6 @@ import {
   getLastSeen,
 } from './visitHistory';
 import { claimReturnBonus } from './progress/returnBonus';
-import ReturnBonusCard from './components/ReturnBonusCard';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
@@ -2245,6 +2244,8 @@ function App() {
         onFocusRestored={() => {
           overlayReturnRef.current = null;
         }}
+        returnBonus={returnCard}
+        onReturnBonusSeen={() => setReturnCard(null)}
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}
@@ -2390,10 +2391,15 @@ function App() {
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
           )}
-          {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
-          {returnCard && view === 'home' && (
-            <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
-          )}
+          {/* RETURN BONUS (Job 6) NO LONGER RENDERS A CARD HERE.
+              It was a `position: fixed; top: 16px; left: 50%` element with its own
+              coordinates — CLAUDE.md's NO ORPHAN FIXED UI rule word for word — and what
+              ended up beneath it was the wordmark. Measured at 1280x720: the card's box
+              is [485,16,309,97] and .homepage-logo's is [365,21,551,88], so the card
+              covered 309x88 of TYPE A WORD and the game's own name read "TYP…RD" on a
+              returning player's first screen. It is also purely INFORMATIONAL — it makes
+              no choice — so per this batch's rule it becomes a reaction at the thing it
+              is about: the wins counter in the menu strip. See MenuXp's `bonus` prop. */}
           {/* Invite-link arrival: a friend tapped a ?join= link and we're
               connecting + joining in the background. One clear line so the
               wait (cold backend spin-up) never reads as a broken link.

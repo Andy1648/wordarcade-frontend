@@ -244,7 +244,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // ENABLED, UNLOCKED card — a locked card shows just its mode name in the bar.
   const payout = game.enabled && !locked && (
     <>
-      {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
+      {formatNum(wordWinsEstimate({ mode: game.id, difficulty }))} WINS / WORD
       {currentRebirthMult() > 1 && (
         <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
       )}

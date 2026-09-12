@@ -7,6 +7,7 @@
 // running "+N WINS" once the gate is crossed, so a player is never left staring at nothing.
 import './WinsHud.css';
 import { MIN_WORDS } from '../progress/wins';
+import { formatNum } from '../format';
 import LiveWpm from './LiveWpm';
 
 // showWpm: the live typing-speed readout only rides along in modes where it MEANS something —
@@ -19,7 +20,10 @@ export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
     <>
       {earning ? (
         <div className="wins-hud" aria-live="polite" aria-label={`${amount} wins so far`}>
-          <span className="wins-hud-plus">+{amount}</span>
+          {/* format.js's rule, not a raw integer: this pill and the total below are the two
+              most-seen numbers in the game, and both printed the number exactly. At R10 a run's
+              wins are ~1e10, so the game-over card read "+16384927364710 WINS". */}
+          <span className="wins-hud-plus">+{formatNum(amount)}</span>
           <span className="wins-hud-label">WINS</span>
         </div>
       ) : (
@@ -47,7 +51,7 @@ export function WinsEarnedTotal({ amount }) {
   if (!amount || amount <= 0) return null;
   return (
     <div className="wins-earned">
-      <span className="wins-earned-num">+{amount}</span>
+      <span className="wins-earned-num">+{formatNum(amount)}</span>
       <span className="wins-earned-label">WINS EARNED</span>
     </div>
   );

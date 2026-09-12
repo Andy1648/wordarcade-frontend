@@ -11,7 +11,14 @@ import {
 } from '../src/progress/xp.js';
 import { WORD_WINS_BASE, WINS_MULT } from '../src/progress/wins.js';
 import { momentumCost, momentumMult, MOMENTUM_MAX } from '../src/progress/momentum.js';
-import { wordSenseCost, wordSenseFactor } from '../src/progress/wordSense.js';
+// WORD SENSE WAS DELETED (ec8e8db, feat/cut-secrets-rarity) and this file broke with it —
+// `Cannot find module .../wordSense.js`, so the economy's own evidence stopped running and
+// nobody could re-derive the numbers the curve was tuned on. The upgrade bought a multiplier
+// on a word's rarity EXCESS; with it gone that term is identically 1, which is what these
+// stubs are. They are deliberately NOT a re-implementation: they say "this factor no longer
+// exists", and the buy-loop branch that spent wins on it is removed below.
+const wordSenseFactor = () => 1;
+const wordSenseCost = () => Infinity;
 import { masteryNeed, MASTERY_MAX, MASTERY_XP_STEP } from '../src/progress/mastery.js';
 import { COLLECTION_MILESTONES } from '../src/progress/collection.js';
 import { comboMultiplier } from '../src/progress/combo.js';

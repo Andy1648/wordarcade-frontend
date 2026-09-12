@@ -249,7 +249,7 @@ function StartScreen({ onPlay, onExit }) {
         {/* Per-word wins + run framing — the SAT equivalent of the dialogs' meta row. */}
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">
-            <b>{wins}</b> WINS / WORD
+            <b>{formatNum(wins)}</b> WINS / WORD
             {mult > 1 && <span className="sr-cover-mult"> (×{formatNum(mult)})</span>}
           </span>
           <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>

@@ -95,7 +95,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
       {body}
       <div className="mode-ex-meta">
         <span className="mode-ex-pay">
-          <b style={{ color: accent }}>{wins}</b> WINS / WORD
+          <b style={{ color: accent }}>{formatNum(wins)}</b> WINS / WORD
           {currentRebirthMult() > 1 && (
             <span className="mode-ex-mult"> (×{formatNum(currentRebirthMult())})</span>
           )}

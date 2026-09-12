@@ -21,12 +21,20 @@ import { fileURLToPath } from 'node:url';
 import {
   need, keyTierXp, keyTierCostAt, rebirthMult, rebirthThreshold, round10,
   CURVE_BASE, CURVE_BREAK, EARLY_CURVE_EXP, TOP_CURVE_EXP, REBIRTH_MULT_BASE,
+  NEED_REBIRTH_BASE,
 } from '../src/progress/xp.js';
 import {
   WORD_WINS_BASE, WINS_MULT, WIN_LEVEL_STEP, winLevelMult,
 } from '../src/progress/wins.js';
 import { momentumCost, momentumMult, MOMENTUM_MAX } from '../src/progress/momentum.js';
-import { wordSenseCost, wordSenseFactor } from '../src/progress/wordSense.js';
+// WORD SENSE WAS DELETED (ec8e8db, feat/cut-secrets-rarity) and this file broke with it —
+// `Cannot find module .../wordSense.js`, so the economy's own evidence stopped running and
+// nobody could re-derive the numbers the curve was tuned on. The upgrade bought a multiplier
+// on a word's rarity EXCESS; with it gone that term is identically 1, which is what these
+// stubs are. They are deliberately NOT a re-implementation: they say "this factor no longer
+// exists", and the buy-loop branch that spent wins on it is removed below.
+const wordSenseFactor = () => 1;
+const wordSenseCost = () => Infinity;
 import { masteryNeed, MASTERY_MAX, MASTERY_XP_STEP } from '../src/progress/mastery.js';
 import { comboMultiplier } from '../src/progress/combo.js';
 import { buildRarityIndex, wordRarity } from '../src/progress/rarity.js';
@@ -40,7 +48,14 @@ const idx = buildRarityIndex(recall);
 const satDeck = JSON.parse(readFileSync(U('../src/data/satRush/words.json'), 'utf8')).map((x) => x.word);
 
 const PLAY_MIN = 200 * 60;
-const REBIRTH_CAP = process.argv[2] != null && process.argv[2] !== '' ? Number(process.argv[2]) : 10;
+// THE POSITIONAL ARG AND THE FLAGS CLASHED, SILENTLY. This read process.argv[2] directly,
+// so ANY flag run — `--early=1.25`, `--top=1.08`, the v6 comparison this file documents —
+// put "--early=1.25" through Number(), got NaN, and then `rc < NaN` is false, so the
+// prestige loop never fired. Every sweep ever run through this file ran with REBIRTH
+// TURNED OFF and reported it as R 0 in a column nobody was reading. Take the first
+// NON-FLAG argument instead.
+const positional = process.argv.slice(2).find((a) => !a.startsWith('--'));
+const REBIRTH_CAP = positional != null && positional !== '' ? Number(positional) : 10;
 
 // ---- CURVE SWEEP HOOK -------------------------------------------------------------------
 // `--early=` / `--top=` / `--break=` let this file try a curve WITHOUT editing the shipped
@@ -57,13 +72,26 @@ const EARLY = arg('early', EARLY_CURVE_EXP);
 const TOP = arg('top', TOP_CURVE_EXP);
 const BREAK = arg('break', CURVE_BREAK);
 const SWEEPING = BASE !== CURVE_BASE || EARLY !== EARLY_CURVE_EXP || TOP !== TOP_CURVE_EXP || BREAK !== CURVE_BREAK;
-function needOf(n) {
-  if (n <= BREAK) return round10(BASE * Math.pow(EARLY, n));
-  return round10(round10(BASE * Math.pow(EARLY, BREAK)) * Math.pow(TOP, n - BREAK));
+// THE REBIRTH TERM IS PART OF THE CURVE NOW and the sim has to carry it, or this file
+// keeps reporting the pre-fix ladder while claiming to mirror the shipped one. `--needreb=`
+// sweeps it the same way --early/--top sweep the exponents; with no flag it is the shipped
+// constant, and the identity check below runs at rc=0 AND at rc=10 so a divergence in the
+// rebirth term cannot hide behind an rc=0-only assertion (it did, for one run of this file).
+const NEEDREB = arg('needreb', NEED_REBIRTH_BASE);
+const SWEEPING_REB = NEEDREB !== NEED_REBIRTH_BASE;
+function needOf(n, rc = 0) {
+  const raw = n <= BREAK
+    ? round10(BASE * Math.pow(EARLY, n))
+    : round10(round10(BASE * Math.pow(EARLY, BREAK)) * Math.pow(TOP, n - BREAK));
+  return rc > 0 ? round10(raw * Math.pow(NEEDREB, rc)) : raw;
 }
-if (!SWEEPING) {
-  for (const n of [1, 7, 60, 100, 101, 250]) {
-    if (needOf(n) !== need(n)) throw new Error(`sim need(${n})=${needOf(n)} != shipped ${need(n)}`);
+if (!SWEEPING && !SWEEPING_REB) {
+  for (const rc of [0, 3, 10]) {
+    for (const n of [1, 7, 60, 100, 101, 250]) {
+      if (needOf(n, rc) !== need(n, rc)) {
+        throw new Error(`sim need(${n}, R${rc})=${needOf(n, rc)} != shipped ${need(n, rc)}`);
+      }
+    }
   }
 }
 const XP_MULT = { 'word-bomb': 2, 'category-blitz': 2, 'sat-rush': 3, chain: 4, fuse: 5 };
@@ -150,8 +178,8 @@ function simulate(archMode, seed) {
       round10(keyTierXp(kt) * word.length * xpModeMult * rebirthMult(rc) * weight * streakMult) * masteryMult
     );
     into += gainXp;
-    while (into >= needOf(level)) {
-      into -= needOf(level); level += 1;
+    while (into >= needOf(level, rc)) {
+      into -= needOf(level, rc); level += 1;
       deepest = Math.max(deepest, level);
       for (const m of [50, 100, 200, 300]) {
         if (firstTouch[m] == null && level >= m) firstTouch[m] = t;

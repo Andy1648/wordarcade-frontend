@@ -4,6 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   need,
+  baseNeed,
+  NEED_REBIRTH_BASE,
   CURVE_BASE,
   CURVE_BREAK,
   EARLY_CURVE_EXP,
@@ -489,4 +491,59 @@ test('rebirthScaledWins = the amount actually PAID (Collection/Achievement quote
   assert.equal(rebirthScaledWins(5000, 1), 15000);
   // Guarded input.
   assert.equal(rebirthScaledWins(undefined, 0), 0);
+});
+
+// ---------------------------------------------------------------------------------------
+// THE REBIRTH TERM. Until this test there was none, and that is exactly how the defect
+// survived: every case here called need(n) with no rebirths in storage, so the curve was
+// only ever exercised at rc=0, where the missing term is invisible.
+// ---------------------------------------------------------------------------------------
+
+test('need() scales with rebirth, and rc=0 is byte-identical to the base curve', () => {
+  for (const n of [1, 7, 50, 100, 101, 250]) {
+    assert.equal(need(n, 0), baseNeed(n), `rc=0 must not move need(${n})`);
+    for (const rc of [1, 3, 10]) {
+      assert.equal(
+        need(n, rc),
+        round10(baseNeed(n) * Math.pow(NEED_REBIRTH_BASE, rc)),
+        `need(${n}, R${rc})`,
+      );
+    }
+  }
+});
+
+test('THE LADDER SURVIVES A REBIRTH — income may not outrun cost without bound', () => {
+  // The defect: income scales rebirthMult = 3^rc and the curve scaled by nothing, so a
+  // rebirth bought levels outright. log(3^10)/log(1.115) is about 101 levels — R10 paid for
+  // the whole first hundred. What must hold is that the cost term grows too, and by a
+  // factor strictly between 1 (no scaling, the defect) and the income multiplier itself
+  // (which would cancel rebirth entirely and leave no reason to press it).
+  assert.ok(NEED_REBIRTH_BASE > 1, 'a curve that ignores rebirth is the defect');
+  assert.ok(
+    NEED_REBIRTH_BASE < REBIRTH_MULT_BASE,
+    'a curve that matches rebirth exactly makes rebirth worthless',
+  );
+  for (const rc of [1, 3, 10]) {
+    const costFactor = Math.pow(NEED_REBIRTH_BASE, rc);
+    const incomeFactor = rebirthMult(rc);
+    assert.ok(costFactor > 1, `R${rc} must cost more per level than R0`);
+    assert.ok(incomeFactor > costFactor, `R${rc} must still be net faster than R0`);
+  }
+});
+
+test('creditXp is pure in the rebirth count — the same state and gain, two ladders', () => {
+  // creditXp reads rebirths from storage by DEFAULT but takes them as an argument, so the
+  // level-carry loop never touches localStorage per level and the function stays testable.
+  const gain = baseNeed(1) * 4;
+  const at0 = creditXp({ level: 1, intoLevel: 0 }, gain, 0);
+  const at3 = creditXp({ level: 1, intoLevel: 0 }, gain, 3);
+  assert.ok(at0.level > at3.level, 'the same XP must buy fewer levels after three rebirths');
+  assert.equal(creditXp({ level: 1, intoLevel: 0 }, gain, 0).level, at0.level, 'not deterministic');
+});
+
+test('levelFromXp walks the SCALED curve, so a rebirthed save reads the right level', () => {
+  const total = baseNeed(1) + baseNeed(2) + baseNeed(3) + 10;
+  assert.equal(levelFromXp(total, 0).level, 4);
+  // the same cumulative buys strictly less after rebirths
+  assert.ok(levelFromXp(total, 3).level < 4);
 });
