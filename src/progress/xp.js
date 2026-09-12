@@ -41,18 +41,38 @@ export function round10(x) {
   return n * 10;
 }
 
-// Cost to advance FROM level n to n+1 — Economy v6, properly exponential where people play:
-//   n <= 60 : round10(100 · 1.25^n) — the steep early climb. First levels come out
-//             120 / 160 / 200 / 240 / 310 / 380 / 480 — visibly growing, not the old flat 100/110/120.
-//   n  > 60 : need(60) · 1.08^(n-60), round10 — a gentler 1.08 tail so LV600 stays reachable
-//             instead of the cost exploding out of range.
+// Cost to advance FROM level n to n+1 — Economy v7.
+//
+// WHAT WAS WRONG (the reason this was refitted). v6 was 1.25^n up to level 60 and then
+// FLATTENED to a 1.08 tail forever. Two things follow from that and both are bad:
+//   - The late game gets EASIER PER LEVEL. Per-level cost growth fell from +25% to +8%
+//     while income kept compounding (Key Power ×2.5/tier, rebirth, momentum, mastery),
+//     so every level past the break was cheaper in real terms than the one before it.
+//   - The scale effectively STOPS. 1.25^60 is already 6.5e7; the 1.08 tail cannot make
+//     anything past ~80 feel like a step, so 60-80 was the end of the ladder in practice.
+//
+// v7 IS ONE SHAPE THAT ONLY EVER STEEPENS. A gentler early slope so the first 30 levels
+// come quickly and LV100 is a real mid-game milestone rather than an impossible one, then
+// a STEEPER segment above the break so the top of the ladder is the hard part:
+//   n <= 100 : round10(2000 · 1.115^n)         — 2,230 / 30,470 / 462,220 / 1.07e8 at 1/25/50/100
+//   n  > 100 : need(100) · 1.135^(n-100)       — STEEPER, never shallower
+// The break is LEVEL 100 on purpose: it is the milestone, and the milestone is where the
+// curve changes character. TOP_CURVE_EXP > EARLY_CURVE_EXP is an invariant with a test on
+// it (xp.test.js) - the whole defect was a tail that went the other way.
 // Every value is snapped to a round multiple of 10 (round10, half-to-even).
-export const CURVE_BREAK = 60; // level at which the curve eases from 1.25 to the 1.08 tail
-export const EARLY_CURVE_EXP = 1.25; // per-level growth at/below the break
-export const TOP_CURVE_EXP = 1.08; // per-level growth above the break
+// THE BASE MATTERS AS MUCH AS THE EXPONENT. v6 started at 100, and one accepted word is worth
+// hundreds of XP from the very first minute - so levels 1-40 were a formality nobody noticed
+// passing. 2000 puts the first level at ~one minute of play and LV50 at 0.2-1.0h for a player
+// who never rebirths (claude/econ-curve-sim.mjs). Raising the base costs REACH - it shifts the
+// whole cumulative up, so ~36 levels of 200-hour depth per ×50 - which is why it is tuned, not
+// guessed: 2000 is the largest base that still leaves LV300 reachable inside 200h.
+export const CURVE_BASE = 2000; // need(0); the whole curve scales from here
+export const CURVE_BREAK = 100; // level at which the curve HARDENS (v6 softened at 60)
+export const EARLY_CURVE_EXP = 1.115; // per-level growth at/below the break
+export const TOP_CURVE_EXP = 1.135; // per-level growth ABOVE the break — must exceed EARLY
 export function need(n) {
-  if (n <= CURVE_BREAK) return round10(100 * Math.pow(EARLY_CURVE_EXP, n));
-  const base = round10(100 * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)); // need(60)
+  if (n <= CURVE_BREAK) return round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, n));
+  const base = round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)); // need(100)
   return round10(base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK));
 }
 
@@ -86,24 +106,34 @@ export function levelFromXp(xp) {
 }
 
 // ---- Rebirth --------------------------------------------------------------------------
-// Rebirth zeroes XP/level for a permanent multiplier. The ladder is the REAL Keyboard Escape
-// curve, HARDCODED as a table (index 0 = R1): each entry is the LEVEL required to perform that
-// rebirth and the permanent XP MULTIPLIER it grants. Multipliers ramp gently through R10 (×10)
-// then explode (R11 ×100 … R20 ×1e11). Past R20 the pattern continues: +50 levels and ×10 per
-// rebirth. Stored as DATA, not a formula, so the published curve is the source of truth.
+// Rebirth zeroes XP/level for a permanent multiplier.
+//
+// THE MULTIPLIER IS NOW A FORMULA, NOT A TABLE (Economy v7). v6 tabled it, and the table was
+// flat exactly where players live: R1 ×1.5, R2 ×2, R3 ×2.5, R4 ×3 … R10 ×10 — a first rebirth
+// worth HALF a level's income, for wiping the whole level bar. Then it jumped a factor of ten
+// per step from R11 (×100 … R20 ×1e11), a cliff nobody reaches. So the early steps did not pay
+// for the reset and the late ones were meaningless.
+// v7: mult = REBIRTH_MULT_BASE^rc, one clean exponential. R1 ×3 · R3 ×27 · R5 ×243 · R10
+// ×59,049 · R20 ×3.49e9. Every step is the same MEANINGFUL factor, the first one triples your
+// income, and there is no cliff to sit under.
+// The LEVEL THRESHOLDS stay tabled (REBIRTH_TABLE below) - those are the published gates and
+// they are unchanged; only the `mult` column is superseded by the formula.
 // Everything EXCEPT xp survives a rebirth (wins, winsLifetime, owned, equipped, rounds).
+export const REBIRTH_MULT_BASE = 3;
 export const REBIRTH_KEY = 'taw.rebirths';
+// LEVELS ONLY. The `mult` column is retained so the published v6 table stays readable next to
+// what replaced it, but NOTHING reads it any more - rebirthMult() is REBIRTH_MULT_BASE^rc.
 export const REBIRTH_TABLE = [
-  { level: 15, mult: 1.5 }, //   R1
-  { level: 25, mult: 2 }, //     R2
-  { level: 40, mult: 2.5 }, //   R3
-  { level: 60, mult: 3 }, //     R4
-  { level: 75, mult: 3.5 }, //   R5
-  { level: 100, mult: 4 }, //    R6
-  { level: 125, mult: 5 }, //    R7
-  { level: 150, mult: 6 }, //    R8
-  { level: 175, mult: 8 }, //    R9
-  { level: 200, mult: 10 }, //   R10
+  { level: 15, mult: 1.5 }, //   R1   (v7 pays ×3)
+  { level: 25, mult: 2 }, //     R2   (×9)
+  { level: 40, mult: 2.5 }, //   R3   (×27)
+  { level: 60, mult: 3 }, //     R4   (×81)
+  { level: 75, mult: 3.5 }, //   R5   (×243)
+  { level: 100, mult: 4 }, //    R6   (×729)
+  { level: 125, mult: 5 }, //    R7   (×2,187)
+  { level: 150, mult: 6 }, //    R8   (×6,561)
+  { level: 175, mult: 8 }, //    R9   (×19,683)
+  { level: 200, mult: 10 }, //   R10  (×59,049)
   { level: 225, mult: 100 }, //  R11
   { level: 260, mult: 1000 }, // R12
   { level: 300, mult: 10000 }, //R13
@@ -116,7 +146,6 @@ export const REBIRTH_TABLE = [
   { level: 600, mult: 1e11 }, // R20
 ];
 const REBIRTH_PAST_LEVEL_STEP = 50; // +50 levels per rebirth past R20 (R21→650, R22→700 …)
-const REBIRTH_PAST_MULT_STEP = 10; // ×10 multiplier per rebirth past R20 (R21→1e12 …)
 
 export function getRebirths() {
   try {
@@ -143,14 +172,12 @@ export function rebirthThreshold(rebirthCount) {
   const last = REBIRTH_TABLE.length - 1; // R20
   return REBIRTH_TABLE[last].level + REBIRTH_PAST_LEVEL_STEP * (rc - last);
 }
-// The permanent XP multiplier AFTER `rebirthCount` rebirths. rc=0 → ×1 (none done); rc=n≤20 →
-// Rn's tabled multiplier; past R20 → ×10 per rebirth from R20's ×1e11 (R21→1e12 …).
+// The permanent XP+WINS multiplier AFTER `rebirthCount` rebirths: REBIRTH_MULT_BASE^rc, with
+// rc=0 → ×1. One formula, no table lookup and no cliff - R1 ×3, R10 ×59,049, R20 ×3.49e9.
 export function rebirthMult(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
   if (rc === 0) return 1;
-  if (rc <= REBIRTH_TABLE.length) return REBIRTH_TABLE[rc - 1].mult;
-  const last = REBIRTH_TABLE.length - 1; // R20
-  return REBIRTH_TABLE[last].mult * Math.pow(REBIRTH_PAST_MULT_STEP, rc - REBIRTH_TABLE.length);
+  return Math.pow(REBIRTH_MULT_BASE, rc);
 }
 // A flat wins reward scaled by the player's CURRENT rebirth multiplier — the ONE place both the
 // grant and its on-screen quote go through, so Collection/Achievement payouts show exactly what

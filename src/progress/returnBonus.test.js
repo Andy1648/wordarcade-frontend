@@ -12,6 +12,7 @@ import {
   RETURN_CLAIM_KEY,
 } from './returnBonus.js';
 import { getWins } from './wins.js';
+import { rebirthMult } from './xp.js';
 
 function withStorage(seed, fn) {
   const saved = globalThis.localStorage;
@@ -39,7 +40,8 @@ test('returnBonusWins: below 6h pays 0; scales 100/hr; caps at 12h; × rebirth',
     assert.equal(returnBonusWins(48), 12 * PER_HOUR_WINS); // capped at 12h → still 1200
   });
   withStorage({ 'taw.rebirths': '2' }, () => {
-    assert.equal(returnBonusWins(12), 12 * PER_HOUR_WINS * 2); // R2 → ×2 = 2400
+    // v7: rebirthMult is 3^rc → R2 is ×9 (the v6 table said ×2).
+    assert.equal(returnBonusWins(12), 12 * PER_HOUR_WINS * rebirthMult(2));
   });
 });
 

@@ -1,3 +1,8 @@
+// ECONOMY v7 NOTE: the per-word wins base went 20 -> 100 (WORD_WINS_BASE in
+// src/progress/wins.js), because Andy's read was that the base was simply too low to
+// register next to five-figure upgrade prices. Every expected figure in this file moved
+// with it. The WEIGHT arithmetic each test is actually about - the combo build, the
+// lucky roll, the reset, the 3-word gate - is untouched; only the rate it multiplies.
 // e2e/parity-wb-blitz.spec.js — feat/parity-wb-blitz.
 // Word Bomb + Category Blitz now score with the SAME combo (+0.1 per consecutive accept, ×3 cap) and
 // lucky (1/40 ×5) that CHAIN/FUSE use — folded into the per-word reward WEIGHT (reused combo.js /
@@ -54,7 +59,7 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
 
     // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 40) = 60. BUILDS past the ×1.1 base 40.
     acceptWb(mock, C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(60);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(320);
     const after6 = await readWins(page);
 
     // A reject ends the combo.
@@ -64,7 +69,7 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     // Next accept: streak 1 again → combo 1.1 → round10(1.1 × 40) = 40. RESET (would be 70 if it kept
     // climbing to streak 7).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(40);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(220);
   });
 
   test('WB: the combo RESETS when I lose a life (my turn times out)', async ({ page }) => {
@@ -98,7 +103,7 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
 
     // Next accept: combo reset to 1.1 → +40 (not the +70 a continued streak-7 would pay).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(40);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(220);
   });
 
   test('WB: the payout INCLUDES the lucky ×5 when a word is lucky', async ({ page }) => {
@@ -116,7 +121,7 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
       acceptWb(mock, w);
       await page.waitForTimeout(40);
     }
-    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(720);
+    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(3600);
   });
 
   test('Blitz: the payout combo BUILDS and RESETS on a rejected answer', async ({ page }) => {
@@ -138,7 +143,7 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
 
     // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 20) = 30 (Blitz per-word 20). BUILDS past base 20.
     accept(C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(30);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(160);
     const after6 = await readWins(page);
 
     // A rejected answer breaks the combo.
@@ -147,6 +152,6 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
 
     // Next accept: combo reset to 1.1 → round10(1.1 × 20) = 20 (not the 30 a continued streak-7 pays).
     accept('DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(20);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(110);
   });
 });

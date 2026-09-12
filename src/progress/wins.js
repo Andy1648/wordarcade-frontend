@@ -6,7 +6,7 @@
 // A round only "counts" (pays wins + bumps its mode counter) when the player got at least
 // MIN_WORDS accepted — a sub-3 round is treated as not-really-played.
 
-import { rebirthMult, getRebirths, round10 } from './xp.js';
+import { rebirthMult, getRebirths, round10, loadProgress } from './xp.js';
 import { momentumMult, getMomentum } from './momentum.js';
 
 export const WINS_KEY = 'taw.wins';
@@ -116,21 +116,49 @@ export const DIFFICULTY_MULT = { chill: 1.0, easy: 1.25, medium: 1.5, hard: 2.0 
 // words at R0 / ×1 difficulty (post-rebalance: WB ~400, Blitz ~200, SAT ~100, CHAIN ~400, FUSE ~200).
 export const TYPICAL_ROUND_WORDS = 10;
 
-// Economy v6: wins are paid PER WORD. The per-word rate is
-//   20 base × mode mult × difficulty × REBIRTH mult, snapped to a round multiple of 10.
-// At R0 (post-rebalance) that reads word-bomb 40 (×2), blitz 20 (×1), SAT 10 (×0.5), CHAIN 40
-// (×1.9), FUSE 20 (×1). Rebirth multiplies wins on the SAME ladder as XP (×1.5, ×2, ×2.5 …), read
-// live from taw.rebirths unless a `rebirthCount` is passed (keeps the function pure/testable).
-export const WORD_WINS_BASE = 20;
-export function perWordWins({ mode, difficulty, rebirthCount, momentumCount } = {}) {
-  const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
-  const modeMult = WINS_MULT[mode] || 1;
+// Economy v7: wins are paid PER WORD, and the per-word BASE ITSELF GROWS WITH THE PLAYER.
+//
+// WHAT WAS WRONG. v6 paid `20 × mode × difficulty × rebirth × momentum`. The 20 never moved, so
+// the only way a stronger player earned more per MINUTE was by typing faster or rebirthing - a
+// level-80 player and a level-8 player were paid the SAME for the same word. Two changes:
+//   - BASE 20 -> 100. The floor was simply too low to read as a reward next to five-figure
+//     upgrade prices.
+//   - A LEVEL TERM. WIN_LEVEL_STEP^(level-1), so the base compounds as you climb: ×2.1 at LV50,
+//     ×4.4 at LV100, ×19 at LV200, ×82 at LV300. Higher play pays visibly more PER WORD, which is
+//     the thing the player can actually see on the accept toast.
+// The level term resets with the level bar on rebirth, and rebirthMult (now 3^rc) is what pays
+// for that reset - the two are deliberately the same size of lever pointing in opposite
+// directions. Live-read from taw.xp unless `level` is passed (keeps the function pure/testable).
+export const WORD_WINS_BASE = 100;
+export const WIN_LEVEL_STEP = 1.015; // per-level growth of the per-word base
+export function winLevelMult(level) {
+  const lv = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
+  return Math.pow(WIN_LEVEL_STEP, lv - 1);
+}
+/**
+ * The PERMANENT half of a word's payout, as named factors — what the player has BUILT, as opposed
+ * to what this particular word was. Exported so the payout receipt (progress/payout.js) can name
+ * every multiplier without re-deriving any of them: the breakdown and the payment read the same
+ * object, so the receipt cannot quote a number the player was not actually paid.
+ */
+export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, level } = {}) {
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  const lv = Number.isFinite(level) ? level : loadProgress().level;
   // MOMENTUM (repeatable sink): a global +1%/buy wins multiplier, live-read like rebirth (defaults
   // to ×1 at 0 buys, so every existing payout is unchanged until the player buys in). Applied to the
   // per-word rate so it scales EVERY mode's wins uniformly.
-  const mm = momentumMult(Number.isFinite(momentumCount) ? momentumCount : getMomentum());
-  return round10(WORD_WINS_BASE * modeMult * diffMult * rebirthMult(rc) * mm);
+  const mm = Number.isFinite(momentumCount) ? momentumCount : getMomentum();
+  return {
+    mode: WINS_MULT[mode] || 1,
+    difficulty: DIFFICULTY_MULT[difficulty] ?? 1,
+    rebirth: rebirthMult(rc),
+    momentum: momentumMult(mm),
+    level: winLevelMult(lv),
+  };
+}
+export function perWordWins(opts = {}) {
+  const f = perWordFactors(opts);
+  return round10(WORD_WINS_BASE * f.mode * f.difficulty * f.rebirth * f.momentum * f.level);
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else
@@ -144,11 +172,11 @@ export function perWordWins({ mode, difficulty, rebirthCount, momentumCount } = 
 // gameplay no longer feeds this — COMBO (progress/combo.js) and LUCKY (progress/luck.js) fold
 // their per-word multipliers into the per-word banking WEIGHT (bankWordWins) instead; this
 // param is retained for the pure recordRound reference + its unit tests.
-export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords } = {}) {
+export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords, level } = {}) {
   const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
   if (w < MIN_WORDS) return 0;
   const weight = Number.isFinite(weightedWords) && weightedWords > 0 ? weightedWords : w;
-  return round10(weight * perWordWins({ mode, difficulty, rebirthCount }));
+  return round10(weight * perWordWins({ mode, difficulty, rebirthCount, level }));
 }
 
 // The card's per-ROUND payout preview: a typical round's wins for this mode/difficulty
@@ -219,7 +247,7 @@ export function grantWins(n) {
 // and words 4+ each release exactly their own weight — full per-word fidelity, no caller-side
 // buffer. prevWeight/nowWeight DEFAULT to the counts (every word ×1) when omitted, so any caller
 // that doesn't pass a weight behaves byte-identically to the pre-rarity payout.
-export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight, nowWeight, rebirthCount } = {}) {
+export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight, nowWeight, rebirthCount, level } = {}) {
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
@@ -232,7 +260,7 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   if (deltaWeight <= 0) return 0;
   // Snap each grant to a round multiple of 10 (the payout invariant — every grant ends in a
   // zero) after applying the rarity weight to the base per-word rate.
-  const granted = round10(deltaWeight * perWordWins({ mode, difficulty, rebirthCount }));
+  const granted = round10(deltaWeight * perWordWins({ mode, difficulty, rebirthCount, level }));
   saveWins(getWins() + granted);
   saveWinsLifetime(getWinsLifetime() + granted);
   pendingStamp += granted;

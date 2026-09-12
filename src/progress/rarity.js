@@ -78,6 +78,12 @@ export function wordRarity(word, rankIndex) {
   return {
     band: band.name,
     mult,
+    // The two halves of `mult`, so the payout receipt can name them separately — the player is
+    // told RARITY and LENGTH, not one fused number they cannot act on. bandMult is the band's own
+    // multiplier; lengthMult is whatever the length bonus added ON TOP, expressed as a ratio so
+    // bandMult × lengthMult === mult exactly (including when the ×4.5 ceiling clipped the sum).
+    bandMult: band.mult,
+    lengthMult: band.mult > 0 ? mult / band.mult : 1,
     color: band.color,
     announce: band.announce,
     // e.g. "RARE ×2.5" — the multiplier carries the length bonus, so a long uncommon word

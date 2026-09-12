@@ -89,12 +89,17 @@ test('buyMomentum deducts the rising cost, bumps the count; refuses when broke o
 
 test('momentum folds into perWordWins as a global wins factor (every mode scales)', () => {
   // Explicit momentumCount keeps this pure; 0 → unchanged, 100 → ×2, 200 → ×3.
-  const base = perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 0 }); // 40
-  assert.equal(base, 40);
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 100 }), round10(40 * 2)); // 80
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 200 }), round10(40 * 3)); // 120
+  // v7: the per-word base is 100 (v6: 20), so Word Bomb ×2 is 200 at R0/LV1. Momentum is
+  // unchanged - it is still a flat ×1 / ×2 / ×3 on whatever the base rate is.
+  const base = perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 0, level: 1 });
+  assert.equal(base, 200);
+  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 100, level: 1 }), round10(base * 2));
+  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 200, level: 1 }), round10(base * 3));
   // Live-read path: seeding taw.momentum boosts the default (no momentumCount passed).
   withStorage({ 'taw.momentum': '100' }, () => {
-    assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0 }), round10(40 * 2)); // chain 40 × ×2 = 80
+    assert.equal(
+      perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }),
+      round10(perWordWins({ mode: 'chain', rebirthCount: 0, momentumCount: 0, level: 1 }) * 2)
+    );
   });
 });

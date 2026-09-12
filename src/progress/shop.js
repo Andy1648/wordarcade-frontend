@@ -12,20 +12,32 @@ import { THEMES, isThemeOwned } from '../theme/themes.js';
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
 // xpPerInput stack (the free defaults are ×1). Pop style and sound pack stack multiplicatively.
+// COSMETIC PRICES ARE AN EXPONENTIAL LADDER (Economy v7). v6 priced them 150 / 400 / 900 / 2000
+// - roughly linear steps against an income that compounds, so the whole cosmetic sink was cleared
+// inside the first hour and then paid for nothing for the remaining 199. One ×5 ladder per list,
+// from a base that is one good round: every rung costs five of the last one, so the last item in
+// each list stays a genuine goal instead of pocket change.
+export const COSMETIC_PRICE_STEP = 5;
+export const POP_PRICE_BASE = 600; // the first PAID pop style
+export const SOUND_PRICE_BASE = 1000; // the first PAID sound pack (sounds start higher: 3 free)
+/** The i-th PAID rung of a ladder (i = 1 for the first paid item). */
+export function cosmeticPrice(base, i) {
+  return Math.round(base * Math.pow(COSMETIC_PRICE_STEP, Math.max(0, i - 1)));
+}
 export const POP_STYLES = [
   { id: 'classic', name: 'CLASSIC', price: 0, xpMult: 1.0, blurb: 'Cyan pop' },
-  { id: 'chrome', name: 'CHROME', price: 150, xpMult: 1.05, blurb: 'Chrome shine' },
-  { id: 'inferno', name: 'INFERNO', price: 400, xpMult: 1.1, blurb: 'Orange blaze' },
-  { id: 'void', name: 'VOID', price: 900, xpMult: 1.15, blurb: 'Purple void' },
-  { id: 'prism', name: 'PRISM', price: 2000, xpMult: 1.25, blurb: 'Rainbow split' },
+  { id: 'chrome', name: 'CHROME', price: cosmeticPrice(POP_PRICE_BASE, 1), xpMult: 1.05, blurb: 'Chrome shine' },
+  { id: 'inferno', name: 'INFERNO', price: cosmeticPrice(POP_PRICE_BASE, 2), xpMult: 1.1, blurb: 'Orange blaze' },
+  { id: 'void', name: 'VOID', price: cosmeticPrice(POP_PRICE_BASE, 3), xpMult: 1.15, blurb: 'Purple void' },
+  { id: 'prism', name: 'PRISM', price: cosmeticPrice(POP_PRICE_BASE, 4), xpMult: 1.25, blurb: 'Rainbow split' },
 ];
 export const SOUND_PACKS = [
   { id: 'thock', name: 'THOCK', price: 0, xpMult: 1.0, blurb: 'Deep thock' },
   { id: 'clack', name: 'CLACK', price: 0, xpMult: 1.0, blurb: 'Sharp clack' },
   { id: 'cream', name: 'CREAM', price: 0, xpMult: 1.0, blurb: 'Soft cream' },
-  { id: 'marble', name: 'MARBLE', price: 250, xpMult: 1.05, blurb: 'Marble click' },
-  { id: 'typewriter', name: 'TYPEWRITER', price: 600, xpMult: 1.1, blurb: 'Typewriter' },
-  { id: 'silent', name: 'SILENT', price: 1200, xpMult: 1.15, blurb: 'Near silent' },
+  { id: 'marble', name: 'MARBLE', price: cosmeticPrice(SOUND_PRICE_BASE, 1), xpMult: 1.05, blurb: 'Marble click' },
+  { id: 'typewriter', name: 'TYPEWRITER', price: cosmeticPrice(SOUND_PRICE_BASE, 2), xpMult: 1.1, blurb: 'Typewriter' },
+  { id: 'silent', name: 'SILENT', price: cosmeticPrice(SOUND_PRICE_BASE, 3), xpMult: 1.15, blurb: 'Near silent' },
 ];
 
 export const OWNED_KEY = 'taw.owned';

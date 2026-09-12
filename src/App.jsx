@@ -79,7 +79,10 @@ import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, awardWins } from './progress/wins';
+import { bankWordWins, awardWins, perWordFactors, WORD_WINS_BASE } from './progress/wins';
+import {
+  buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
+} from './progress/payout';
 import { awardWordXp, cappedWordMult } from './progress/xp';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
@@ -450,6 +453,13 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
+  // THE PAYOUT RECEIPT (Economy v7). `lastPayout` is the breakdown of the most recently accepted
+  // word — every multiplier that contributed, named — shown on the accept toast. `payoutLedger` is
+  // the same thing accumulated across the round and read at game over. Both are pure readouts of
+  // amounts wins.js has ALREADY paid (progress/payout.js); neither can quote a multiplier the
+  // player did not get. This is the answer to "I got 40k and couldn't tell where it came from".
+  const [lastPayout, setLastPayout] = useState(null);
+  const [payoutLedger, setPayoutLedger] = useState(null);
   // (overlayReturnRef + shopViewRef moved into hooks/useOverlays.js — refactor/app-split step 1.)
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
@@ -1030,6 +1040,9 @@ function App() {
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
       setWinsEarnedTotal(0);
+      setLastPayout(null);
+      setPayoutLedger(null);
+      beginPayoutLedger(lastMessage.payload.gameType || 'word-bomb');
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -1226,6 +1239,33 @@ function App() {
               nowWeight: myWbWeightRef.current,
             });
             if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+            // THE RECEIPT. Same factor values the payout just used - perWordFactors() is the one
+            // place the permanent half is defined, and the per-word half is the very multipliers
+            // fed to cappedWordMult above. `cap` is included when the ×40 ceiling actually bit, so
+            // a word that paid less than its multipliers promised says why instead of looking
+            // broken. `total` is the amount BANKED, so the receipt can never disagree with the
+            // ledger even when rounding or the 3-word gate is in play.
+            {
+              const wsFactor = wordSenseWinsFactor(r.mult);
+              const uncapped = r.mult * wbComboMult * wbLucky.winsWeight;
+              const factors = {
+                ...perWordFactors({ mode: 'wordBomb', difficulty: gameDifficultyRef.current }),
+                wordSense: wsFactor,
+                rarity: r.bandMult ?? r.mult,
+                length: r.lengthMult ?? 1,
+                combo: wbComboMult,
+                lucky: wbLucky.winsWeight,
+                cap: uncapped > 0 ? wbWeight / uncapped : 1,
+              };
+              const payout = buildPayout({ base: WORD_WINS_BASE, factors, total: banked, band: r.band });
+              notePayout({ base: WORD_WINS_BASE, factors, total: banked });
+              setLastPayout({
+                key: wbNowWords,
+                word: wbWord,
+                payout,
+                inactive: inactivePayoutFactors(factors, { band: r.band }),
+              });
+            }
             setWinsTally(
               awardWins({ wordsAccepted: myWbAcceptedRef.current, mode: 'wordBomb', difficulty: gameDifficultyRef.current })
             );
@@ -1430,6 +1470,8 @@ function App() {
       } else {
         // WINS: already banked per-word during play (bankWordWins in word_result) — NO
         // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
+        // The receipt for the whole game, read once and frozen for the end screen.
+        setPayoutLedger(readPayoutLedger());
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak
@@ -2026,6 +2068,8 @@ function App() {
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        lastPayout={lastPayout}
+        payoutLedger={payoutLedger}
       />
     );
   } else if (view === 'room' && room) {

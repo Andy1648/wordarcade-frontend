@@ -10,6 +10,7 @@ import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
+import { WordPayout, RoundPayout } from './PayoutBreakdown';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
@@ -1580,6 +1581,8 @@ export default function GameScreen({
   winsTally = 0,
   winsWords = 0,
   winsEarnedTotal = 0,
+  lastPayout = null,
+  payoutLedger = null,
 }) {
   const [draft, setDraft] = useState('');
   // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
@@ -2515,6 +2518,8 @@ export default function GameScreen({
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        lastPayout={lastPayout}
+        payoutLedger={payoutLedger}
       />
     );
   }
@@ -3147,6 +3152,16 @@ export default function GameScreen({
           <div className="game-input-row drain-exempt">
             {/* Personal hype streak, floats above the input (pointer-events:none). */}
             <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* THE RECEIPT for the word just accepted: base × every live multiplier = what you
+                were paid. It JOINS this cluster (CLAUDE.md: no orphan fixed UI) and is absolutely
+                positioned + pointer-events:none, exactly like the ComboMeter above it, so it never
+                takes layout height or blocks the field. Keyed by the word index so a new word
+                replays the one-shot. */}
+            {lastPayout && !gameOver && (
+              <div className="wb-receipt" key={lastPayout.key} aria-hidden="true">
+                <WordPayout payout={lastPayout.payout} compact />
+              </div>
+            )}
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout
@@ -3336,6 +3351,9 @@ export default function GameScreen({
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
             <WinsEarnedTotal amount={winsEarnedTotal} />
+            {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
+                from." Every multiplier that contributed, ranked by its share of the total. */}
+            <RoundPayout ledger={payoutLedger} />
             <GameOverStats
               gameStats={gameStats}
               players={players}
@@ -3770,6 +3788,8 @@ function CategoryBlitzScreen({
   winsTally = 0,
   winsWords = 0,
   winsEarnedTotal = 0,
+  lastPayout = null,
+  payoutLedger = null,
 }) {
   const { sound } = useSound();
   const [draft, setDraft] = useState('');

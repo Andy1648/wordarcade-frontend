@@ -4472,3 +4472,45 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* WINS visibility (Economy v3): the live "+N WINS" pill + the game-over "WINS EARNED" total
    moved to the shared WinsHud.css (used by every mode now). */
+
+/* ===== THE PAYOUT RECEIPT (Economy v7) ==============================================
+   The per-word breakdown floats ABOVE the input bar. Two rules it has to respect:
+   - it is anchored to the bar, not to the viewport (CLAUDE.md: no orphan fixed UI — a
+     fixed element with no layout relationship to the page eventually collides with
+     whatever ends up beneath it);
+   - it is OUT OF FLOW, because wbRingSize measures the bar's offsetHeight to budget the
+     ring's diameter, and a receipt that took height would resize the board on every
+     accepted word.
+   One finite transform/opacity one-shot per word, nothing looping. */
+.wb-receipt {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 5;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: wb-receipt-show 2800ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+@keyframes wb-receipt-show {
+  0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+  8% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-6px) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wb-receipt { animation: wb-receipt-show-reduce 2800ms linear forwards; }
+  @keyframes wb-receipt-show-reduce {
+    0%, 92% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+/* PHONES: no room beside the field, so the receipt is centred over it instead of
+   right-aligned. */
+@media (max-width: 700px) {
+  .wb-receipt {
+    right: auto;
+    left: 50%;
+    transform-origin: bottom center;
+    margin-left: -110px;
+  }
+}

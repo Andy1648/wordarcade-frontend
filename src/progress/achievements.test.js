@@ -10,6 +10,7 @@ import {
   loadEarned,
 } from './achievements.js';
 import { getWins } from './wins.js';
+import { rebirthMult } from './xp.js';
 
 function withStorage(seed, fn) {
   const saved = globalThis.localStorage;
@@ -53,7 +54,10 @@ test('rebirth scaling: the same achievement pays more at higher rebirth', () => 
   withStorage({ 'wa_words': wc, 'taw.rebirths': '2', 'taw.wins': '0' }, () => {
     const newly = checkAchievements();
     const vol1 = newly.find((a) => a.id === 'vol-1');
-    assert.equal(vol1.wins, Math.round(100 * 2)); // R2 → ×2 = 200
+    // v7: the rebirth multiplier is 3^rc, so R2 is ×9 (the v6 table said ×2). Written through
+    // rebirthMult so the NEXT retune does not need to touch this file - the claim is "the same
+    // achievement pays more at higher rebirth", not "it pays exactly 200".
+    assert.equal(vol1.wins, Math.round(100 * rebirthMult(2)));
   });
 });
 
