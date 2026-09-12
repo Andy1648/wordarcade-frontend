@@ -196,3 +196,27 @@
     font-size: var(--fs-body);
   }
 }
+
+/* ---- OPTION B for the top rung (`?obscure=b`). Both ship; Andy picks from the shots.
+   A spends the reserved beat-flash pink on OBSCURE. B does not spend it at all: the rung above
+   RARE is the SAME orange, inverted — black chip, orange ink, a doubled stamp and the hardest
+   shadow on the ladder. The argument for B is that a ladder reads as a ladder when it is one ramp
+   getting hotter, and that #FF2EC4 does more work as the beat's alone; the argument for A is that
+   the rarest word in the game should get the loudest colour in the box. ---- */
+.wl--obscure-b .wl-chip {
+  background: #0d0618;
+  border-color: #FF6B3D;
+  color: #FF6B3D;
+  box-shadow: 8px 8px 0 #FF6B3D;
+  -webkit-text-stroke: 0;
+}
+.wl--obscure-b .wl-stamp {
+  background: #FF6B3D;
+  color: #0d0618;
+  border-color: #0d0618;
+  -webkit-text-stroke: 0;
+  box-shadow: 3px 3px 0 #0d0618, 6px 6px 0 #FF6B3D;
+}
+.wl--obscure-b .wl-wins {
+  color: #FF6B3D;
+}

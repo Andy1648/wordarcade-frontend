@@ -27,8 +27,13 @@ import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
-import RarityFlash from '../components/RarityFlash.jsx';
+import WordLanding, { hasLanding } from '../components/WordLanding.jsx';
 import { formatNum } from '../format';
+
+// Reduced motion, read once at module load (the same approach chainTravelFx uses): nobody toggles
+// the OS setting mid-run, and a listener in a per-keystroke mode is a cost for nothing.
+const SR_REDUCED =
+  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
 // deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
@@ -56,6 +61,8 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   const satBankedWordsRef = useRef(0);
   const satWeightRef = useRef(0); // RARITY: running sum of cleared words' rarity multipliers
   const [winsEarned, setWinsEarned] = useState(0);
+  // The captured word's reaction, shown AT the mugshot slots: { key, word, band, wins }.
+  const [landing, setLanding] = useState(null);
   // Preload the rarity rank index + begin a WPM session; flush it on unmount (leave/exit).
   useEffect(() => {
     loadRarityIndex();
@@ -95,6 +102,11 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       });
       satBankedWordsRef.current = cleared;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
+      // THE CAPTURE REACTS AT THE SLOTS. Same ladder as every other mode; SAT Rush's own duotone
+      // treatment is in SatRush.css. Replaces RarityFlash, a centre-of-viewport label.
+      if (hasLanding(rw.band, null)) {
+        setLanding({ key: view.clearId || cleared, word: view.lastClearedWord, band: rw.band, wins: banked });
+      }
     }
   }, [view.cleared]);
 
@@ -130,9 +142,6 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   return (
     // .silver flips the whole page into a negative reprint (CSS var inversion).
     <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
-      {/* RARITY (word-value): a rarer captured word flashes its tier ("RARE ×2.5"). Re-keyed per
-          clear so it replays; COMMON captures stay silent. */}
-      <RarityFlash key={view.clearId} rarity={rarityOf(view.lastClearedWord)} />
       {/* manga focus lines: hidden until the final stage (endgame treatment) */}
       <SpeedLines active={view.hasWord && view.atFinal} />
       {/* miss: a 2-frame page-tear flash, re-keyed per miss so it fires once */}
@@ -159,7 +168,18 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
             <div className="sr-body">
               {/* The ante row + word panel are now ONE bounty poster (WordCard);
                   the multiplier lives in its REWARD footer. */}
-              <WordCard view={view} />
+              <WordCard
+                view={view}
+                landing={landing && (
+                  <WordLanding
+                    key={landing.key}
+                    word={landing.word}
+                    band={landing.band}
+                    wins={landing.wins}
+                    reduced={SR_REDUCED}
+                  />
+                )}
+              />
             </div>
           </>
         )}

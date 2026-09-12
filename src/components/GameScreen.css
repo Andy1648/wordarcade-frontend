@@ -689,6 +689,31 @@
   z-index: 40;
 }
 
+/* THE PRE-SUBMIT RARITY HINT (taste call, `?rarityhint=1`, off by default). Top-RIGHT of the input
+   row — the reaction slot hugs the left, so the two occupy opposite ends of the same band and can
+   never meet. Static: it appears and disappears with the draft, it does not animate, and it takes
+   no pointer. */
+.wb-rarity-hint {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 14px);
+  pointer-events: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  color: var(--hint, #FFE94A);
+  background: #1a0b2e;
+  border: 2px solid var(--hint, #FFE94A);
+  border-radius: 3px;
+  z-index: 5;
+}
+/* No room for it above the field on a stacked board — that band is the used-words strip. */
+@media (max-width: 899px) {
+  .wb-rarity-hint { display: none; }
+}
+
 /* ---- Player bar ---- */
 
 .game-player-bar {

@@ -12,6 +12,7 @@ import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import { WordPayout, RoundPayout } from './PayoutBreakdown';
 import WordLanding, { hasLanding } from './WordLanding';
+import { rarityOf } from '../progress/rarityIndex';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
@@ -1582,6 +1583,26 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // so far, ticking up as answers are accepted (fixed, pointer-events:none so it never blocks
 // play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
 // total on the game-over card, large. Both are purely presentational.
+// THE PRE-SUBMIT RARITY HINT — a TASTE CALL, built behind `?rarityhint=1` and OFF by default.
+// It tells you, while you are still typing, that the word in the field is UNCOMMON or better.
+// THE CASE FOR IT: rarity only pays if you can aim at it, and right now the only way to learn
+// which words are rare is to submit them and read a receipt afterwards. A live hint turns the
+// whole ladder into something you play toward instead of something that happens to you.
+// THE CASE AGAINST IT, which is why it is a flag and not a feature: it turns a vocabulary game
+// into a slot machine you can pull — type, watch the pip, backspace, try again — and the word you
+// end up sending is the one the pip liked rather than the one you thought of. It also spends the
+// tension of the landing: if you already knew it was OBSCURE, the chip is a receipt, not a
+// surprise.
+// It is a pure Map lookup on the draft (progress/rarityIndex), so it costs no DOM read and no
+// listener in the keystroke path.
+const RARITY_HINT = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('rarityhint') === '1';
+  } catch {
+    return false;
+  }
+})();
+
 // The height the word-landing reaction needs above the field on a STACKED board, plus a little
 // air. On this layout the stamp does NOT perch above the chip — under 700px WordLanding.css puts
 // it inline at `order: -1` — so the tallest tier here is the OBSCURE chip at --fs-h2, measured at
@@ -3532,6 +3553,20 @@ export default function GameScreen({
                 />
               )}
             </div>
+            {/* THE PRE-SUBMIT HINT (flag: ?rarityhint=1). Opposite corner to the reaction slot, so
+                the two can never meet, and only while a word that would actually be accepted is in
+                the field — a pip that lights for letters you have not finished typing is noise. */}
+            {RARITY_HINT && !isCategory && inputEnabled && !gameOver && (() => {
+              const w = (draft || '').trim().toLowerCase();
+              if (w.length < 3 || (combo && !w.includes(combo.toLowerCase()))) return null;
+              const rw = rarityOf(w);
+              if (!rw.announce) return null;
+              return (
+                <div className="wb-rarity-hint" aria-hidden="true" style={{ '--hint': rw.color }}>
+                  {rw.band}
+                </div>
+              );
+            })()}
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout

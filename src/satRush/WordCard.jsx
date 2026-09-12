@@ -135,7 +135,7 @@ function FieldRow({ type, visible, view }) {
   return null;
 }
 
-export default function WordCard({ view }) {
+export default function WordCard({ view, landing = null }) {
   const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode, mode, suspects } = view;
   const isLineup = mode === 'lineup';
 
@@ -202,6 +202,10 @@ export default function WordCard({ view }) {
           </span>
         ) : null}
         <Slots slots={view.slots} badIndex={fx.badIndex} badKey={fx.badKey} />
+        {/* THE CAPTURE'S REACTION, at the slots the word was just spelled into — not at the middle
+            of the viewport, which is where the label this replaced was pinned. Absolute inside the
+            slot wrap (which already hosts the TCH! tick), pointer-events:none, one-shot. */}
+        {landing ? <div className="sr-react" aria-hidden="true">{landing}</div> : null}
       </div>
 
       {/* LINEUP mode: the suspect lineup, narrowing with the ante. Replaces the

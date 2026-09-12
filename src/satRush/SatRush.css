@@ -2227,3 +2227,83 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 @media (prefers-reduced-motion: reduce) {
   .sr-stamp { animation: sr-stamp-fade 0.25s ease-out both; }
 }
+
+/* ============================================================================
+   THE CAPTURE'S REACTION — the shared word landing, PRINTED.
+   ============================================================================
+   SAT RUSH runs one duotone page: cream paper, one near-black ink, an off-register violet plate
+   and --redink for danger. The shared ladder's neon fills (yellow / orange / flash pink) would
+   put a sticker on a printed page, so the tiers are re-cut in this mode's own materials while
+   keeping the ESCALATION identical — the player learns one ladder, not two:
+
+     UNCOMMON  the word printed on paper with a black rule.
+     RARE      a second plate slips: a red-ink duplicate offset behind it (the page's own
+               off-register move), and the RARE stamp in red.
+     OBSCURE   NEGATIVE REPRINT — the chip inverts to ink-on-black the way `.silver` inverts the
+               whole page, with the red plate slipped further. The loudest thing this page can do
+               without leaving it.
+
+   Anchored above the mugshot slots — the word was just spelled INTO them — and sharing that spot
+   with the TCH! reject tick, which cannot co-occur with a capture. pointer-events:none, one-shot,
+   nothing looping. */
+.sr-react {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* The chip: the page's materials, not the house neon. Bungee is replaced by the poster face so
+   the capture reads as part of the bounty sheet. */
+.sr-app .sr-react .wl-chip {
+  font-family: var(--font-impact);
+  letter-spacing: 0.02em;
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 2px;
+  box-shadow: none;
+  -webkit-text-stroke: 0;
+  padding: 3px 10px;
+}
+.sr-app .sr-react .wl--uncommon .wl-chip {
+  font-size: var(--fs-body);
+  transform: rotate(-1.5deg);
+}
+/* RARE — the red plate slips behind the chip. A flat offset shadow IS the misregistration; it is
+   static and only ever toggled by tier, never animated (the animation budget). */
+.sr-app .sr-react .wl--rare .wl-chip {
+  font-size: var(--fs-panel);
+  box-shadow: 3px 3px 0 var(--redink, #c8321e);
+  transform: rotate(-2deg);
+}
+/* OBSCURE — negative reprint, the same inversion the silver-tongue state does to the whole page. */
+.sr-app .sr-react .wl--obscure .wl-chip {
+  font-size: var(--fs-h2);
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 5px 5px 0 var(--redink, #c8321e);
+  transform: rotate(-2.5deg);
+}
+/* The stamp is the case flag: red ink on paper, squared off, no neon. */
+.sr-app .sr-react .wl-stamp {
+  font-family: 'Space Mono', monospace;
+  background: var(--paper);
+  color: var(--redink, #c8321e);
+  border: 2px solid var(--redink, #c8321e);
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-text-stroke: 0;
+}
+.sr-app .sr-react .wl--obscure .wl-stamp {
+  background: var(--redink, #c8321e);
+  color: var(--paper);
+}
+/* The bounty beside the word, in ink. */
+.sr-app .sr-react .wl-wins {
+  font-family: var(--font-impact);
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+}

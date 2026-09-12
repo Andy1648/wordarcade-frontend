@@ -26,6 +26,24 @@ import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
 import './WordLanding.css';
 
+// THE TOP RUNG'S COLOUR IS AN OPEN QUESTION, so both answers ship behind a flag and Andy picks
+// from the shots. `?obscure=b` selects B; anything else is A.
+//   A (default)  FLASH PINK #FF2EC4. CLAUDE.md reserves that colour for the beat flash; A spends
+//                it here and nowhere else, on the grounds that the rarest word in the game is the
+//                one moment that deserves the loudest colour the palette owns.
+//   B            NO NEW HUE. The top rung escalates by VALUE, not colour: the orange of RARE
+//                inverts into a black chip with orange ink and a doubled stamp. #FF2EC4 stays the
+//                beat's alone, and the ladder reads as one ramp getting hotter rather than as
+//                three unrelated colours.
+// Read once at module load — it is a dev-selection flag, not something to re-read per word.
+const OBSCURE_VARIANT = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('obscure') === 'b' ? 'b' : 'a';
+  } catch {
+    return 'a';
+  }
+})();
+
 // The bands that get a treatment, in escalation order. COMMON is deliberately absent.
 export const LANDING_BANDS = ['UNCOMMON', 'RARE', 'OBSCURE'];
 const STAMPED = new Set(['RARE', 'OBSCURE']);
@@ -76,7 +94,12 @@ export default function WordLanding({ word, band = 'COMMON', wins = 0, secret = 
 
   const tier = secret ? 'SECRET' : band;
   return (
-    <div className={`wl wl--${tier.toLowerCase()}`} aria-hidden="true">
+    <div
+      className={`wl wl--${tier.toLowerCase()}${
+        tier === 'OBSCURE' && OBSCURE_VARIANT === 'b' ? ' wl--obscure-b' : ''
+      }`}
+      aria-hidden="true"
+    >
       <span className="wl-chip">{String(word || '').toUpperCase()}</span>
       {(secret || STAMPED.has(band)) && (
         <span className="wl-stamp">{secret ? secret.stamp : band}</span>
