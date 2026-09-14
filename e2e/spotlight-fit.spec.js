@@ -42,8 +42,8 @@ const VIEWPORTS = [
 
 const SCREENS = [
   ['menu', '/?portal=1', '.menu-xp-bar'],
-  ['chain', '/chain?portal=1', '.solo-root'],
-  ['fuse', '/fuse?portal=1', '.solo-root'],
+  ['chain', '/chain?portal=1', '.solo-hud'],
+  ['fuse', '/fuse?portal=1', '.solo-hud'],
 ];
 
 async function open(page, url, ready) {
@@ -149,6 +149,80 @@ for (const [label, url, ready] of SCREENS) {
       // eslint-disable-next-line no-console
       console.log(`COVERAGE ${label} @ ${vp.name}: ${r.covered}px2 :: ${r.hits.join(' | ') || 'clean'}`);
       expect(r.covered, `coverage ballooned: ${r.covered}px2 — ${r.hits.join(' | ')}`).toBeLessThan(9000);
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// THE RING MUST BE ON ITS TARGET, IN VIEWPORT SPACE — the Word Bomb board
+// ---------------------------------------------------------------------------
+// This is the case the three screens above could not reach, and it was the worst one.
+// `position: fixed` resolves against the nearest ancestor with a transform, not against the
+// viewport — and the Word Bomb coach mark renders inside `.game-stage--wb`, which is
+// transformed the moment the panic band starts. Every fixed coordinate in the component was
+// being read in the STAGE's space. Measured before the fix, on a scripted turn at 3s:
+//     1280x720  the ring 70px right and 16px down from the field it rings
+//     390x844   the ring at y=1471 in an 844-tall viewport — 627px below the screen
+// The component is portalled to <body> now. This holds it there: the ring is centred on its
+// target to within a pixel, in BOTH the calm band and the panic band, and the overlay has no
+// transformed ancestor at all.
+const WB_ME = 'e2e-player';
+
+for (const [vn, w, h] of [['1280x720', 1280, 720], ['390x844', 390, 844]]) {
+  for (const t of [28, 3]) {
+    test(`the ring stays on the field — word bomb @ ${vn}, t=${t}s`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      const players = [
+        { id: WB_ME, name: 'YOU', lives: 3, isHost: true },
+        { id: 'p1', name: 'PLAYER1', lives: 3 },
+      ];
+      const mock = await installBackendMock(page);
+      await page.goto('/?portal=1');
+      await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+      mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: WB_ME, difficultyKey: 'chill', players } });
+      await page.waitForTimeout(80);
+      mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
+      await page.waitForTimeout(80);
+      mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: WB_ME, players, combo: 'str', usedWords: [], timerSeconds: 30, maxLives: 3 } });
+      await page.locator('.countdown-overlay').waitFor({ state: 'attached', timeout: 4000 }).catch(() => {});
+      await page.locator('.countdown-overlay').waitFor({ state: 'detached', timeout: 25000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      mock.pushToClient({ type: 'timer_tick', payload: { secondsRemaining: t } });
+      await page.waitForTimeout(400);
+
+      const r = await page.evaluate(() => {
+        const hole = document.querySelector('.spotlight-hole');
+        const field = document.querySelector('.game-input');
+        const ov = document.querySelector('.spotlight-overlay');
+        if (!hole || !field || !ov) return { missing: true };
+        const hb = hole.getBoundingClientRect();
+        const fb = field.getBoundingClientRect();
+        // any ancestor that makes `fixed` mean something other than the viewport
+        const chain = [];
+        let e = ov;
+        while (e && e !== document.documentElement) {
+          const cs = getComputedStyle(e);
+          if ((cs.transform && cs.transform !== 'none') || (cs.filter && cs.filter !== 'none')
+            || cs.willChange.includes('transform') || cs.perspective !== 'none') {
+            chain.push(`${e.tagName.toLowerCase()}.${String(e.className).trim().split(/\s+/).slice(0, 2).join('.')}`);
+          }
+          e = e.parentElement;
+        }
+        return {
+          dx: Math.round((hb.left + hb.width / 2) - (fb.left + fb.width / 2)),
+          dy: Math.round((hb.top + hb.height / 2) - (fb.top + fb.height / 2)),
+          onScreen: hb.top >= -1 && hb.bottom <= window.innerHeight + 1
+            && hb.left >= -1 && hb.right <= window.innerWidth + 1,
+          hole: [Math.round(hb.x), Math.round(hb.y), Math.round(hb.width), Math.round(hb.height)],
+          chain,
+        };
+      });
+
+      expect(r.missing, 'no coach mark on the board').toBeFalsy();
+      expect(r.chain, `the overlay has a transformed ancestor, so its "fixed" is not the viewport: ${r.chain.join(', ')}`).toEqual([]);
+      expect(Math.abs(r.dx), `the ring is ${r.dx}px off its target horizontally`).toBeLessThanOrEqual(2);
+      expect(Math.abs(r.dy), `the ring is ${r.dy}px off its target vertically`).toBeLessThanOrEqual(2);
+      expect(r.onScreen, `the ring is off screen: ${JSON.stringify(r.hole)} in ${w}x${h}`).toBe(true);
     });
   }
 }

@@ -21,6 +21,7 @@
 //   sub            : optional smaller line under the caption
 //   onDismiss      : called once, on the first key/pointer (caller persists the "seen" flag)
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './Spotlight.css';
 
 const PAD = 8; // breathing room around the target inside the bright hole (matches the ring)
@@ -187,6 +188,57 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
 
     measure();
     raf = requestAnimationFrame(measure);
+    // ONE SETTLE PASS. The coach mark mounts the instant the input goes live, and on the
+    // Word Bomb board that is BEFORE the layout has finished — `wbRingSize` still has a pass
+    // to run, and the ring's final size moves everything above it. The tracker below only
+    // re-places when the TARGET moves, and at 1366x768 the target (the field) does not move
+    // while the slab above it does: the caption was scored against a board that no longer
+    // existed and came to rest 20x31 over the fragment slab, at all three player counts.
+    // One more placement a beat after mount costs a single extra pass per coach-mark
+    // lifetime and catches every post-mount reflow the tracker cannot see.
+    const settle = setTimeout(measure, 350);
+
+    // THE RING HAS TO FOLLOW ITS TARGET, and it did not. `rect` was read once on mount and
+    // the hole is `position: fixed` at those pixels, so anything that moved the target
+    // afterwards left the ring behind. Measured on the Word Bomb board with a scripted
+    // turn, at three seconds:
+    //     1280x720  ring 70px right and 15px down from the field
+    //     390x844   ring at y=1460 in an 844-tall viewport — 616px BELOW the screen
+    // i.e. on a phone, in the panic band, the coach mark teaching you to type is not on the
+    // page at all. Exactly the player it exists for is the one who sits still long enough to
+    // reach that band.
+    //
+    // SPLIT BY COST. Reading ONE rect is nothing; the placement search is 1.5 DOM walks. So
+    // a frame loop reads the target only and moves the hole, and the expensive re-placement
+    // runs just once the target has been STILL for ~120ms — which is never during the shake
+    // and always after a real layout change. The loop dies with the coach mark, which is
+    // dismissed by the first key or tap.
+    let trackRaf = 0;
+    let stillSince = 0;
+    let lastKey = '';
+    let needsReplace = false;
+    const track = (now) => {
+      trackRaf = requestAnimationFrame(track);
+      const el = targetSelector ? document.querySelector(targetSelector) : null;
+      if (!el) return;
+      const b = el.getBoundingClientRect();
+      const key = `${Math.round(b.left)},${Math.round(b.top)},${Math.round(b.width)},${Math.round(b.height)}`;
+      if (key !== lastKey) {
+        lastKey = key;
+        stillSince = now;
+        needsReplace = true;
+        setRect({
+          left: b.left, top: b.top, width: b.width, height: b.height,
+          right: b.right, bottom: b.bottom,
+        });
+        return;
+      }
+      if (needsReplace && now - stillSince > 120) {
+        needsReplace = false;
+        measure();
+      }
+    };
+    trackRaf = requestAnimationFrame(track);
     // THROTTLE THE RESIZE. `measure` got a lot more expensive when the obstacle list grew
     // from an interactive-selector query to every visible text leaf, plus a candidate sweep
     // scored against all of them. Measured as a RATIO against one full walk of `body *`
@@ -208,6 +260,8 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure).catch(() => {});
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(settle);
+      if (trackRaf) cancelAnimationFrame(trackRaf);
       if (resizeRaf) cancelAnimationFrame(resizeRaf);
       window.removeEventListener('resize', onResize);
     };
@@ -244,7 +298,20 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
     ? { top: `${place.top}px`, left: `${place.left}px` }
     : {}; // no target → caption centres via CSS
 
-  return (
+  // PORTALLED TO <body>, AND THIS IS NOT TIDINESS — IT IS THE BUG.
+  // `position: fixed` resolves against the nearest ancestor with a transform (or a filter,
+  // a perspective, or will-change listing one), NOT against the viewport. The Word Bomb
+  // coach mark renders inside the input row, inside `.game-stage--wb`, which is transformed
+  // the moment the panic band starts — so every fixed coordinate in this component was being
+  // read in the STAGE's space. Measured on a scripted turn at three seconds:
+  //     1280x720  the ring 70px right and 16px down from the field it rings
+  //     390x844   the ring at y=1471 in an 844-tall viewport — 627px below the screen
+  // On a phone, in the panic band, the coach mark teaching a first-time player to type was
+  // not on the page. Re-measuring cannot fix it — I built a frame-accurate tracker first and
+  // the numbers moved while the ring stayed put — because the coordinates were never wrong;
+  // the coordinate SYSTEM was. A portal to <body> puts this layer outside every transformed
+  // ancestor, which is the only place `fixed` means what this component assumes.
+  return createPortal(
     <div className="spotlight-overlay" aria-hidden="true">
       {holeStyle ? (
         <div className="spotlight-hole" style={holeStyle} />
@@ -260,6 +327,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
         <span className="spotlight-caption-text">{caption}</span>
         {sub && <span className="spotlight-caption-sub">{sub}</span>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

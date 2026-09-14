@@ -113,7 +113,25 @@ for (const vp of VIEWPORTS) {
       const slab = await page.evaluate(() => {
         const box = document.querySelector('.game-combo-box');
         if (!box) return { ok: false };
-        const r = box.getBoundingClientRect();
+        // MEASURE THE SLAB'S CONTENT, NOT ITS PADDING. This check exists because the
+        // stage-centred GET OUT! banner was painted across the FRAGMENT — the letters and
+        // the caption line above them. `.game-combo-box`'s own rect includes 40-ish px of
+        // empty padding either side of that, and once the first-run coach mark was portalled
+        // into real viewport space (it had been resolving `fixed` against the transformed
+        // stage) its plate came to rest 21x31 into that padding at 1366x768 — touching no
+        // letter, no label, nothing. Measured: caption [27,148,543,31] against letters
+        // [608,148,150,71], overlap null. Failing on empty padding would have made this gate
+        // report a collision that does not exist, so it measures the union of the two things
+        // it is actually about.
+        const parts = [box.querySelector('.game-combo'), box.querySelector('.game-combo-label')].filter(Boolean);
+        if (!parts.length) return { ok: false };
+        const boxes = parts.map((p) => p.getBoundingClientRect());
+        const r = {
+          left: Math.min(...boxes.map((b) => b.left)),
+          top: Math.min(...boxes.map((b) => b.top)),
+          right: Math.max(...boxes.map((b) => b.right)),
+          bottom: Math.max(...boxes.map((b) => b.bottom)),
+        };
         const hits = [];
         for (const el of document.querySelectorAll('body *')) {
           if (el.contains(box) || box.contains(el)) continue;
