@@ -500,9 +500,31 @@ test('rebirthScaledWins = the amount actually PAID (Collection/Achievement quote
 // ---------------------------------------------------------------------------------------
 
 test('need() scales with rebirth, and rc=0 is byte-identical to the base curve', () => {
+  // STRENGTHENED BY THE REFUTATION PASS (chore/refute-run-n). This test used to assert
+  //   need(n, rc) === round10(baseNeed(n) * Math.pow(NEED_REBIRTH_BASE, rc))
+  // which restates the implementation using the very constant under test — set
+  // NEED_REBIRTH_BASE back to 1 and it still passes, so the assertion that NAMES the
+  // scaling was the one assertion in the file that could not see it disappear. (Three
+  // other tests below do catch it; this one did not, and it is the one a reader trusts.)
+  // The factor is pinned as a LITERAL 2 and with literal need() values, so the constant
+  // has to actually be 2 for this to hold.
+  assert.equal(need(1, 0), 2230, 'need(1) at R0');
+  assert.equal(need(1, 1), 4460, 'need(1) at R1 — one rebirth doubles the level cost');
+  assert.equal(need(1, 3), 17840, 'need(1) at R3');
+  assert.equal(need(1, 10), 2283520, 'need(1) at R10');
+  assert.equal(need(7, 1), 8580, 'need(7) at R1');
+  assert.equal(need(50, 3), 3697120, 'need(50) at R3');
   for (const n of [1, 7, 50, 100, 101, 250]) {
     assert.equal(need(n, 0), baseNeed(n), `rc=0 must not move need(${n})`);
     for (const rc of [1, 3, 10]) {
+      // the literal ladder: every rebirth multiplies the cost of a level by exactly two
+      const want = Math.pow(2, rc);
+      const got = need(n, rc) / baseNeed(n);
+      assert.ok(
+        Math.abs(got - want) / want < 1e-9,
+        `need(${n}, R${rc}) is ${got}x the base curve, expected ${want}x`,
+      );
+      // …and it is still the same rounding the rest of the curve uses
       assert.equal(
         need(n, rc),
         round10(baseNeed(n) * Math.pow(NEED_REBIRTH_BASE, rc)),
