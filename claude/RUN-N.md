@@ -13,9 +13,10 @@ the top four sections are what you actually have to act on.
 
 | # | Branch | What it is | Gate | Merged? |
 |---|---|---|---|---|
-| A1 | `feat/rarity-moment` | The main line. Carries `integration/board-v2` + everything I did directly. Eleven commits this run. | see below | **no** |
+| A1 | `feat/rarity-moment` | The main line. Carries `integration/board-v2` + everything I did directly. Sixteen commits this run. | see below | **no** |
 | A2 | `feat/fuse-craft` @ `8bb62d6` | FUSE gets CHAIN-level craft in its own colour script — fragment slab, burning cord, matched fragment picked out inside the accepted word. | `fuse-craft` 4/4, 3 runs | **no** |
 | A3 | `feat/blitz-craft` @ `aa55c5c` | CATEGORY BLITZ craft — category as a 64–80px hero, judge as one PNG with a single verdict swap, chunky stepping timer block, answers building upward newest-brightest. | 24 tests x 2 repeats | **no** |
+| A5 | `chore/refute-run-n` @ `733fa60` | The refutation pass's own report + one strengthened test. Read `claude/refutation-run-n.md` on that branch if you want the full attack log. | — | **no** |
 | A4 | `feat/sat-craft` @ `3c71f39` | SAT RUSH — full duotone, hard black gutters, one-frame letter stamp, and **the scroll-fix answer you asked for** (§B0). | `sat-craft` 28/28 | **no** |
 
 ### What's on `feat/rarity-moment`, in order
@@ -34,6 +35,10 @@ the top four sections are what you actually have to act on.
    the solo close glyph, and an accessibility gate that says what it does *not* assert.
 10. **The solo load state had no sound control at all**, and the coach mark's resize handler
     was unthrottled at 1.5 DOM walks an event.
+11. **The coach mark was resolving `position:fixed` against the transformed game stage** —
+    its ring landed 627px below the bottom of a phone screen in the panic band (§B0b).
+12. **What the refutation pass broke** — a legacy save being eaten, and three guards too
+    narrow (§F).
 
 Every gate in this run was **checked RED on the defect it describes before being trusted.** Where
 I could not make one go red, I say so.
@@ -73,6 +78,28 @@ it is an explicit, commented exemption in the gate. The PLAY screen has no exemp
 
 ---
 
+## B0b. THE COACH MARK WAS IN THE WRONG COORDINATE SYSTEM
+
+Worth its own note because nothing would ever have found it by reading the code. `position:
+fixed` resolves against the nearest ancestor with a transform — not the viewport. The Word
+Bomb coach mark renders inside `.game-stage--wb`, which is transformed the moment the panic
+band starts, so every fixed coordinate in that component was being read in the STAGE's space.
+Measured at three seconds:
+
+| viewport | the ring, relative to the field it rings |
+|---|---|
+| 1280x720 | 70px right, 16px down |
+| 390x844 | **y = 1471 in an 844-tall viewport — 627px below the screen** |
+
+On a phone, in the panic band, the coach mark teaching a first-time player to type was not on
+the page — and the player it exists for is exactly the one who sits still long enough to get
+there. Portalled to `<body>`. I built a frame-accurate tracker first, on the assumption the
+ring had gone stale; the numbers moved and the ring stayed put, because the coordinates were
+never wrong — the coordinate SYSTEM was. The gate now asserts the overlay has NO transformed
+ancestor, which is the assertion that would have caught it on day one.
+
+---
+
 ## B. WHAT NEEDS YOUR PLAY-TEST (blocking — nothing merges until these pass)
 
 | # | What | Why it needs a device, not a diff |
@@ -80,6 +107,7 @@ it is an explicit, commented exemption in the gate. The PLAY screen has no exemp
 | **B1** | **Word Bomb, 2 devices, full REGRESSION CHECKLIST.** | Two TIER-1 changes to `App.jsx`'s WebSocket handlers are in this branch (#5 above). Both are guarded, both have gates that were seen red — and CLAUDE.md's own note says the key-collision freeze passed every code check and still froze. |
 | **B2** | **Specifically: leave a game mid-turn, then let it end.** | The late-`game_over` guard is a functional `setView`. If I got the guard's narrowness wrong you would see a game-over screen appear on the menu, or fail to appear when it should. |
 | **B3** | **Specifically: play a full Word Bomb turn and watch the clock.** | The seconds numeral is now present for the whole turn, not just the last five. It is quiet above 10s and red under 6. Does the quiet state read on a real phone in real light, or is it noise? |
+| **B5** | **Load the game with an OLD save, if you have one.** | The legacy-cumulative migration was re-pricing pre-rebirth totals and writing the result back — a one-way write (§F1). Fixed and unit-pinned at R0/R5/R10, but the only real legacy saves are on your devices. |
 | **B4** | **CHAIN and FUSE on a phone.** | The sound control moved into the exit cluster and stacks under 430px. 44px hit area is asserted; how it *feels* is not. |
 
 ---
@@ -114,6 +142,8 @@ it is an explicit, commented exemption in the gate. The PLAY screen has no exemp
 | **D9** | **SAT Rush still has the orphan sound control.** CHAIN and FUSE moved into the solo shell's corner cluster; SAT was left deliberately because its screen is being reworked on another branch. Named in `App.jsx` beside the suppression list so it is not rediscovered as a surprise. | measured: `.audio-ctrl` is the fixed variant on `/sat-rush` at both phone sizes |
 | **D10** | **Several 320x640 clipping defects on the solo screens, pre-existing and not mine.** "3 WORDS TO EA[RN]" clipped in its pill; `START WITH "W" · 3+ LETTI` clipped in the field; CHAIN's arm hint clipped at both ends. | `claude/solo-audio-shots/chain-320x640.png` |
 | **D12** | **`claude/rarity-shots/sat-obscure.png` is stale** — it shows the pre-craft SAT look. Left alone on purpose: it belongs to commit `36f421f` and re-shooting it would misrepresent what that commit did. | — |
+| **D14** | **The XP track is 4px at 768 and 18px at 390 for any account with a STREAK.** Improved from "4px everywhere" but not solved; a min-width makes the bar overflow instead of wrap. Needs a decision about which chips belong on a phone. | §F6 |
+| **D15** | **`README.md:25,52,60` points contributors at `GameIcons.jsx`**, which this run deleted as dead. One-line fix, left alone because the README is outside anything else I touched. | refutation pass |
 | **D13** | **Blitz's judge is the bomb mascot.** There is no judge art (see D3), so the "single verdict expression swap" is idle -> celebrate/panic on the existing PNG. It reads, but it is a bomb sitting in judgement. | `/public` |
 | **D11** | **A parallel-work hazard, for next time.** The agents' PostToolUse build hook runs `vite build` against the MAIN working tree, not the agent's worktree — so my in-progress edit blocked their tool calls with an error naming *their* file. Worth fixing in the hook before the next multi-agent run. | three notifications naming `agent-*/src/solo/FuseGame.jsx` while the error was in my `src/App.jsx` |
 
@@ -269,3 +299,78 @@ point:
   when the element has not mounted yet, so it failed on every run instead of occasionally.
 - The marks sim's first cut fed SAT Rush the recall list instead of its own deck and reported a
   fake 3.67× spread. Any mode-spread claim is only as good as its word source.
+
+---
+
+## F. THE REFUTATION PASS — four of ten claims broke
+
+A second agent was handed this run's commits and told to knock them down with a file, a line
+and a failing case. It is the most useful thing that happened all night, so it gets its own
+section. **All four are fixed on `feat/rarity-moment`; each fix was checked red first.**
+
+**F1 — THE LEGACY MIGRATION WAS EATING SAVES.** The worst thing found in the whole run, and
+it was mine. `readLevelState` walks a legacy cumulative XP total through `levelFromXp` and
+**writes the result back** — once, permanently. That total was earned under a curve with no
+rebirth term; the number predates it. Walking it against `baseNeed(n) x 2^rc` re-prices a
+history the player already paid for. Measured: a legacy LV50 total with `taw.rebirths = 5`
+migrated to **level 19** and committed; at R10, **level 2**. Fixed (rc = 0 is the only
+correct reading of a pre-rebirth number) and pinned at R0/R5/R10 — including the value
+actually written to storage, because that write is one-way.
+
+**F2 — "EVERY CALLER PASSES THE REBIRTH COUNT" WAS FALSE. None of seven did.** My commit
+message said it. The level-carry loops take it; the callers were all on the
+`= getRebirths()` default, which is a localStorage read — measured **two `taw.rebirths`
+reads per keystroke** on the menu and three per accepted word. Fixed.
+
+**F3 — `canRebirth` took the count and ignored it**, deriving the level from the unscaled
+curve and comparing it to a threshold for the scaled one. It said yes too early. Fixed.
+
+**F4 — THE LATE-`game_over` GUARD WAS TOO NARROW, twice over.** It refused only `home`, but
+`stats`, `credits`, `shop`, `browse` and the three solo views are all real places a player
+can be, and from any of them the late frame still yanked them to the game — onto the
+"STARTING GAME..." placeholder, because the room state had already been torn down. And it
+guarded the VIEW only, so the frame still fired a full RESULTS wipe over the menu and played
+the game-over sting at someone who had left. Both fixed.
+
+**F5 — A TEST OF MINE WAS VACUOUS**, and it was the one a reader would trust: it asserted
+`need(n, rc) === round10(baseNeed(n) * NEED_REBIRTH_BASE**rc)` — the implementation restated
+using the constant under test, so it **still passed with the constant set back to 1**.
+Replaced with the refutation branch's literal-pinned version.
+
+**F6 — THE XP TRACK IS STILL 4px FOR ANY ACCOUNT WITH A STREAK**, and that is the case my
+width ladder missed entirely, because I measured it on an account with none. The streak chip
+is **191px** — wider than anything else in the strip. It now sheds its freeze tokens and the
+word DAYS at 1024 and its multiplier at 700, which takes it to 61px and the track from
+"4px everywhere" to:
+
+    1366:52  1280:52  1100:52  900:124  768:4  600:52  480:61  430:58  390:18  360:32  320:4
+
+Better, and not good. A `min-width` on the track holds it at 110 but makes the bar OVERFLOW
+instead of wrap — the track then leaves the viewport from 280 to 600, which is worse than
+thin. **This one needs you:** it is a decision about which chips belong on a phone at all,
+not a layout bug. Both the measurement and the failed attempt are written into MenuXp.css.
+
+### What SURVIVED the attack, and what it tried
+
+- **The numeral** — 5s and 300s turns, 16 players, mid-explosion, and `timerSeconds` of
+  0 / null / -1 / 7.5 / 0.4. Two holes are real but unreachable: `roomManager.js:367-395`
+  only ever emits integers >= 1.
+- **The re-scoped stillers** — 0 loops at calm/half/warn, exactly `[stage-heartbeat,
+  sweat-fly]` at crit, at 2 and 8 players; 0 under reduced motion both from first paint and
+  toggled mid-game; Blitz shares `.game-wrap--wb` and has no separate layer.
+- **The duplicate-accept guard** — Blitz uses a different message (`answer_result`),
+  `usedWords` is game-scoped, PLAY AGAIN re-fires `game_started`, joining a live game is
+  refused. Two latent holes, both unreachable from the server: an EMPTY `word` bypasses the
+  guard, and a resync with no `game_started` suppresses a legitimate accept.
+- **The contrast fix** — 16.71:1 under all five themes (the tokens live on `:root`; no
+  `data-theme` selector exists in `src/`). Zero unnamed controls across 17 screens.
+- **The dead code** — three for three, both builds and lint clean. (`README.md:25,52,60`
+  still points contributors at the deleted `GameIcons.jsx` — worth a one-line fix.)
+
+### The red-checks it re-ran on my behalf
+
+All three genuinely red, to the digit: the idempotency guard reverted gives
+`Expected 0, Received 500` — the figure I had claimed; the `setView` guard reverted fails
+`wb-adversarial:196`; the `--v-ink` fix reverted gives `STATS 1.19:1`.
+
+---
