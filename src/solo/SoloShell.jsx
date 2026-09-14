@@ -60,6 +60,16 @@ export default function SoloShell({
   placeholder,
   maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
   armHint, // per-mode "how to play" line, shown until the clock arms
+  // THE SOUND CONTROL, as a NODE, joining the exit cluster (NO ORPHAN FIXED UI). Batch 2
+  // moved this control inline for Word Bomb and Blitz because a 44x44 fixed button at
+  // right:16/bottom:16 sat on the buttons that cost you a life — but the suppression was
+  // written as `view !== 'game'`, and CHAIN, FUSE and SAT RUSH are their own views. So the
+  // three solo modes kept the orphan, at the corner where each of them puts its deck.
+  // Measured: `.audio-ctrl` is the plain FIXED variant on /chain, /fuse and /sat-rush at
+  // both phone sizes, 25px into FUSE's and CHAIN's decks at 390x844 and 320x640.
+  // Passing the element, not the props, keeps the shell ignorant of the audio wiring —
+  // same contract as GameScreen's audioSlot and as `reaction` above.
+  audioSlot,
   firstRunRule, // per-mode one-line rule for the ONE-TIME first-game input spotlight
   rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
   fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
@@ -95,9 +105,14 @@ export default function SoloShell({
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
-      <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
-        ✕
-      </button>
+      {/* The corner cluster: EXIT and the sound control, side by side, anchored to
+          `.solo-root` rather than to the viewport. */}
+      <div className="solo-corner">
+        {audioSlot}
+        <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
+          ✕
+        </button>
+      </div>
 
       {/* ONE HUD row: the mode stats (score/mult/links | words/lives) + the wins-earned state,
           all in a single readable line inside the card (NO ORPHAN FIXED UI — the shared wins

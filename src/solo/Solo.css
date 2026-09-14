@@ -930,3 +930,55 @@
   font-size: var(--fs-label);
   color: #cdbdf0;
 }
+
+/* ============================================================= */
+/* ======  CORNER CLUSTER — exit + sound, never an orphan  ===== */
+/* ============================================================= */
+
+/* The sound control used to be `position: fixed; right:16; bottom:16` on these screens —
+   the app-wide orphan Batch 2 removed from Word Bomb and Blitz, still landing on CHAIN's
+   and FUSE's decks (measured 25px in at 390x844 and 320x640). It joins EXIT instead, in a
+   cluster anchored to `.solo-root`, which is the rule: a new persistent control JOINS an
+   existing one, it does not get coordinates of its own. */
+.solo-corner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* .solo-exit keeps its own look; it is a flex item now rather than absolutely placed. */
+.solo-corner .solo-exit {
+  position: static;
+  top: auto;
+  right: auto;
+}
+/* The inline control is sized to the cluster (the 40px EXIT sets the row height). Its 44px
+   touch target is carried in an out-of-flow ::after, exactly as the Word Bomb header does
+   it — hit area and layout box are different things and only one has to be 44px. */
+.solo-corner .audio-ctrl--inline .audio-btn {
+  width: 40px;
+  height: 40px;
+}
+.solo-corner .audio-ctrl--inline .audio-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* AT 320 THE ROW SIDE-BY-SIDE DOES NOT FIT, and the screenshot is what said so — every
+   assertion in solo-sound-control.spec.js was green because it only checked the control
+   against EXIT. Measured at 320x640: the cluster spans 88px, the HUD reserves a 52px column
+   for the ✕ alone, and the pair covered `.solo-mult` ("x1.00") by 32x34.
+   Stacked, the cluster is 40px wide again and fits the column the HUD already reserves.
+   column-reverse keeps ✕ on top, where it has always been. */
+@media (max-width: 430px) {
+  .solo-corner {
+    flex-direction: column-reverse;
+    gap: 6px;
+  }
+}

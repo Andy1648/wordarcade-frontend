@@ -31,8 +31,8 @@
 
 .spotlight-caption {
   position: fixed;
-  /* left/top are set inline in px (anchored to the ring). The 50% here is only the fallback
-     for the no-target centred variant below; the inline left overrides it when a target exists. */
+  /* left/top are set inline in px (anchored to the ring) as a LEFT EDGE. The 50%/-50% pair
+     here is only the fallback for the no-target centred variant below. */
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
@@ -40,26 +40,59 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-align: center;
+  /* A PLATE, NOT FLOATING TEXT. The placement search minimises what the caption covers, but
+     on a solo board there is no clean 390x70 rectangle to be found — the card is full, and
+     every candidate lands on something. Free text over a busy board is unreadable whatever
+     the score says; a flat panel is legible over anything, and it is what every other
+     floating object in this game already is (house language: flat fill, thick black border,
+     hard offset shadow, 8px radius). The search still runs, and still prefers the emptiest
+     spot — it just no longer has to find a perfect one to be readable. */
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  padding: 10px 14px;
   animation: spotlight-pop 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .spotlight-caption.is-centered {
   top: 50%;
   transform: translate(-50%, -50%);
 }
+/* Anchored: `left` is a real left edge, so no centring translate. */
+.spotlight-caption.is-anchored {
+  transform: none;
+}
 .spotlight-caption-text {
   font-size: var(--fs-panel);
   color: #ffe94a;
-  -webkit-text-stroke: 3px #000;
+  /* The 3px stroke + 4px shadow existed to hold the line together over arbitrary content.
+     On a plate they only thicken the letters and cost width, which is width this caption
+     does not have at 320. Dropped. */
+  -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
-  text-shadow: 4px 4px 0 #000;
   letter-spacing: 0.02em;
   line-height: 1.1;
   /* Keep the headline on ONE line so the caption is short enough to sit in the gap below the
      ring (a wrapped 2-line caption was what overran onto the game cards). width:max-content on
-     the wrapper lets it size to this line; max-width:92vw is the only wrap fallback. */
+     the wrapper lets it size to this line. */
   white-space: nowrap;
+}
+
+/* …EXCEPT THAT max-width CANNOT SAVE nowrap TEXT, which is how this ended up hanging off
+   both edges of a 320px screen. `white-space: nowrap` overflows a max-width without
+   complaint — the identical trap the word landing hit two batches ago — so "SNEAK THE
+   LETTERS INTO A WORD" measured wider than the 92vw wrapper and clipped at BOTH sides
+   (the caption is centred, so it overruns symmetrically). Under 480px it wraps.
+   That is safe now for the reason the original comment feared it was not: the placement
+   pass reads the caption's laid-out offsetHeight, so a two-line caption is measured at its
+   real height and roomFor() flips it above or below accordingly. */
+@media (max-width: 480px) {
+  .spotlight-caption-text {
+    white-space: normal;
+    text-wrap: balance;
+  }
 }
 .spotlight-caption-sub {
   font-family: 'Space Mono', monospace;
@@ -91,9 +124,14 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* NO translateX HERE ANY MORE. The placement pass sets the caption's LEFT EDGE in px, and
+   an `animation-fill-mode: both` keyframe's transform BEATS an inline `transform: none` —
+   so the -50% survived the positioning and every anchored caption landed half its own width
+   to the left of where it had been put (measured: left -186 for a 392px caption that had
+   been placed at 10). A keyframe that carries positioning is a keyframe that fights it. */
 @keyframes spotlight-pop {
-  0% { opacity: 0; transform: translateX(-50%) scale(0.9); }
-  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
 }
 /* centred variant keeps its translate on both axes through the pop */
 .spotlight-caption.is-centered { animation-name: spotlight-pop-centered; }

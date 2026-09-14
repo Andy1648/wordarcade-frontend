@@ -47,7 +47,7 @@ const CHAIN_MOTIF = (
   </svg>
 );
 
-export default function ChainGame({ onExit }) {
+export default function ChainGame({ onExit, audioSlot = null }) {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0); // bump to retry the word-data fetch
@@ -97,10 +97,10 @@ export default function ChainGame({ onExit }) {
       />
     );
   }
-  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} audioSlot={audioSlot} />;
 }
 
-function ChainInner({ data, createEngine, adapter, onExit }) {
+function ChainInner({ data, createEngine, adapter, onExit, audioSlot }) {
   // Persisted all-time CHAIN run count. onRunStart fires from the hook on the FIRST run
   // (mount) and on every restart — button OR Enter — so both restart paths are counted
   // (the Enter path lives inside the hook, which is why the bump must live there too).
@@ -336,6 +336,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   return (
     <>
     <SoloShell
+      audioSlot={audioSlot}
       reaction={landing && (
         <WordLanding
           key={landing.key}

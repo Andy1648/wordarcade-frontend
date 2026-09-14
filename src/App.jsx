@@ -2096,6 +2096,20 @@ function App() {
   // Pick the screen for the current view. It's wrapped in a single keyed
   // slide container below so switching views animates, while in-view updates
   // (player joins, turn_updates) re-render the same screen without replaying.
+  // The inline sound control for the SOLO shell's corner cluster. Same element GameScreen
+  // gets through `audioSlot`, same reason (NO ORPHAN FIXED UI); built once here so the two
+  // solo modes cannot drift apart.
+  const soloAudioSlot = (
+    <AudioControls
+      variant="inline"
+      accent={SCREEN_ACCENT[view] || '#2EFFE0'}
+      musicMuted={music.isMuted}
+      onToggleMusic={music.toggleMute}
+      sfxMuted={sfxMuted}
+      onToggleSfx={() => setSfxMuted((m) => !m)}
+    />
+  );
+
   let screen;
   // fix/visual-real item 4/2: true when the home MENU is the rendered screen (the else branch
   // below). The menu hosts the sound control inside its own corner-nav cluster, so the global
@@ -2242,10 +2256,10 @@ function App() {
     screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} />;
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
-    screen = <ChainGame onExit={goHome} />;
+    screen = <ChainGame onExit={goHome} audioSlot={soloAudioSlot} />;
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
-    screen = <FuseGame onExit={goHome} />;
+    screen = <FuseGame onExit={goHome} audioSlot={soloAudioSlot} />;
   } else if (view === 'cg-arm') {
     // CrazyGames arm state: full play layout, timer frozen, start_game held until
     // the player engages. Only reachable on a ?cg=1 session.
@@ -2514,7 +2528,14 @@ function App() {
               in their header clusters, and the three header-less ones (the "STARTING GAME..."
               placeholder, the multiplayer scoreboard, the solo results card) in a dock anchored to
               the board wrapper. e2e/sound-control.spec.js counts them — never zero, never two. */}
-          {!isHomeMenu && view !== 'game' && (
+          {/* …and the same is true of the SOLO views. The suppression above was written as
+              `view !== 'game'`, which covers Word Bomb and Blitz but not CHAIN, FUSE or SAT
+              RUSH — three views with their own bottom-right content and no exemption. CHAIN
+              and FUSE host the control in the solo shell's corner cluster (SoloShell's
+              `audioSlot`). SAT RUSH is NOT in this list yet and still shows the fixed one:
+              its screen is being reworked on another branch and adding a slot from here
+              would collide with it. That is a known gap, not an oversight. */}
+          {!isHomeMenu && view !== 'game' && view !== 'chain' && view !== 'fuse' && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}
               musicMuted={music.isMuted}
