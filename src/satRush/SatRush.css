@@ -27,13 +27,22 @@
   --paper: #f0ead9; /* cream paper */
   --tile: #f0ead9; /* slot / inset fill = paper; ink linework carries every edge */
   --ink: #111;
-  /* the page sits on a drawn DESK/BOARD, not raw black: the ink gutter carries a faint
-     paper screentone (two-hue, the manga tone principle — paper dots at a low coverage on
-     ink), which reads as a toned surface AND lets the page's hard offset shadow register
-     (black-on-black was invisible). The poster/cover now sit pinned TO a board. */
+  /* THE ACCENT. SAT RUSH's one non-duotone ink, and the only one it is allowed: print-red on
+     cream (DESIGN.md's documented divergence from the house neon danger). It is spent on ONE
+     element per screen — the poster's live STATE marker: the ante word in the REWARD footer on a
+     normal word, the deep-cut overline on a MOST WANTED, the ESCAPED overprint on a revenant.
+     Never two at once (see the accent-arbitration block at the foot of this file). Defined as a
+     token so an audit can find every use of it; it used to be a raw hex in four places. */
+  --redink: #c8321e;
+  /* THE GUTTER. Hard black space between panels — a manga page is panels separated by ink, not
+     boxes drawn on paper. One value so every gutter on the poster is the same width. */
+  --gut: clamp(5px, 0.9vh, 9px);
+  /* THE GUTTER GROUND. The page sits on flat near-black ink — the same ink the poster's own
+     gutters are cut in, so the page and the board read as one printed surface rather than a
+     sheet pinned to a different one. It used to carry a faint paper dot grid, which made TWO
+     surface halftones on one screen (with .sr-stage::after) — one over the budget, and, once
+     the poster's own gutters became ink, a texture competing with them. Flat wins. */
   --void: #111;
-  --board-cell: 15px 15px;
-  --board-tone: radial-gradient(circle, rgba(240, 234, 217, 0.055) 11%, transparent 14%);
   /* SCREENTONE — grey is ink at a coverage. Three densities, each a halftone dot
      grid; masks (per use) fade them along a shape so tone reads as DRAWN, not as a
      flat CSS rectangle. light = background wash, mid = form shading, heavy = weight. */
@@ -53,10 +62,8 @@
   overflow: hidden;
   color: var(--ink);
   font-family: 'Space Mono', 'Segoe UI', system-ui, sans-serif;
-  /* toned board: paper screentone on the ink void (see --board-tone) */
+  /* the flat ink ground the gutters are cut in */
   background-color: var(--void);
-  background-image: var(--board-tone);
-  background-size: var(--board-cell);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -346,9 +353,15 @@
 }
 .sr-tickfill {
   height: 100%;
-  width: 0;
-  background: var(--ink);
+  /* WIDTH IS NOT ANIMATABLE ON THE COMPOSITOR. Both drain bars used to run
+     `@keyframes sr-drain { from { width: 0 } to { width: 100% } }` for the whole of every word —
+     a layout+paint animation on a permanently-running element, which the ANIMATION BUDGET
+     forbids outright. Full width, scaled from the left edge instead: identical on screen, and
+     transform-only. */
+  width: 100%;
+  transform: scaleX(0);
   transform-origin: left;
+  background: var(--ink);
 }
 .sr-tickfill.run {
   animation: sr-drain linear forwards;
@@ -358,10 +371,10 @@
 }
 @keyframes sr-drain {
   from {
-    width: 0;
+    transform: scaleX(0);
   }
   to {
-    width: 100%;
+    transform: scaleX(1);
   }
 }
 
@@ -378,6 +391,10 @@
   flex-direction: column;
 }
 .sr-cardframe {
+  /* THE FIT SCALE, for the whole poster. useFitToBox.js steps this down until the card fits the
+     page; everything below that is allowed to give reads it from here. Declared with a default so
+     the poster renders at full size before the first measurement. */
+  --sr-fit: 1;
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
@@ -388,21 +405,13 @@
   box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
   padding: clamp(12px, 2vh, 18px) clamp(16px, 2vw, 24px) clamp(10px, 1.6vh, 16px);
 }
-/* MID screentone form-shading, masked to bloom from the bottom-left corner and fade
-   out — it FOLLOWS the panel corner, so it reads as drawn tone, not a flat block. */
-.sr-cardframe::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: var(--tone-mid);
-  background-size: var(--tone-cell);
-  opacity: 0.4;
-  -webkit-mask-image: radial-gradient(80% 90% at 0% 100%, #111 6%, transparent 60%);
-  mask-image: radial-gradient(80% 90% at 0% 100%, #111 6%, transparent 60%);
-}
-/* keep the panel's own content above its tone */
+/* ONE HALFTONE PER SCREEN. This panel used to carry a SECOND screentone bloom on top of the
+   page's corner wedge (.sr-stage::after) — two halftones on one surface, which the decoration
+   budget does not allow, and which on the new ink gutter ground had nothing to sit on anyway.
+   The page's corner wedge is the one. (The .sr-print off-register type plate and the printed-
+   letter tone on .sr-slot.revealed are not surface halftones: one is the plate, one is a state
+   marker on a glyph.) `atfinal` now reads by its tightening rule alone (.sr-cardframe::after). */
+/* keep the panel's own content above its ground */
 .sr-cardframe > * {
   position: relative;
   z-index: 1;
@@ -423,34 +432,36 @@
 }
 /* DEEP CUT = the SHOUT BALLOON: a jagged starburst frame. */
 .sr-card.deep .sr-cardframe {
+  /* HALF THE AMPLITUDE IT USED TO HAVE. The shape used to bite 5% of the card in from each edge,
+     which was fine when the frame carried 18-24px of paper padding all round. On the ink gutter
+     ground it eats the PANELS instead: 5% of an 880px card is 44px, and the teeth were taking
+     chunks out of the drain bar and the aliases row (seen in the shots, not in a number). At
+     2.5%/2% the tear happens in the gutter, where a torn manga panel tears. */
   clip-path: polygon(
-    0% 5%, 8% 0%, 17% 5%, 25% 0%, 33% 5%, 42% 0%, 50% 5%, 58% 0%, 67% 5%, 75% 0%, 83% 5%, 92% 0%, 100% 5%,
-    95% 13%, 100% 21%, 95% 29%, 100% 38%, 95% 46%, 100% 54%, 95% 63%, 100% 71%, 95% 79%, 100% 88%, 95% 95%,
-    92% 100%, 83% 95%, 75% 100%, 67% 95%, 58% 100%, 50% 95%, 42% 100%, 33% 95%, 25% 100%, 17% 95%, 8% 100%, 0% 95%,
-    5% 88%, 0% 79%, 5% 71%, 0% 63%, 5% 54%, 0% 46%, 5% 38%, 0% 29%, 5% 21%, 0% 13%, 5% 5%
+    0% 2.5%, 8% 0%, 17% 2.5%, 25% 0%, 33% 2.5%, 42% 0%, 50% 2.5%, 58% 0%, 67% 2.5%, 75% 0%, 83% 2.5%, 92% 0%, 100% 2.5%,
+    98% 13%, 100% 21%, 98% 29%, 100% 38%, 98% 46%, 100% 54%, 98% 63%, 100% 71%, 98% 79%, 100% 88%, 98% 95%,
+    92% 100%, 83% 97.5%, 75% 100%, 67% 97.5%, 58% 100%, 50% 97.5%, 42% 100%, 33% 97.5%, 25% 100%, 17% 97.5%, 8% 100%, 0% 97.5%,
+    2% 88%, 0% 79%, 2% 71%, 0% 63%, 2% 54%, 0% 46%, 2% 38%, 0% 29%, 2% 21%, 0% 13%, 2% 5%
   );
   box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 6px var(--ink); /* a thicker shout rule */
 }
 /* REVENANT = it's back and it's WRONG: a wavy, broken, distorted frame (note the
    deep notch bitten out of the right edge). */
 .sr-card.revenant .sr-cardframe {
+  /* Same halving as the deep cut, except the ONE deep notch bitten out of the right edge — that
+     single break is what makes this read as damaged rather than merely wobbly, and it lands in
+     the gutter beside the fields, not in them. */
   clip-path: polygon(
-    0% 3%, 14% 1%, 27% 4%, 41% 0%, 55% 3%, 69% 1%, 82% 4%, 100% 1%,
-    98% 10%, 100% 20%, 97% 30%, 88% 33%, 100% 40%, 97% 52%, 100% 64%, 97% 76%, 100% 86%, 98% 96%,
-    86% 98%, 72% 95%, 60% 99%, 46% 96%, 34% 100%, 20% 96%, 8% 99%, 0% 96%,
-    3% 86%, 0% 74%, 3% 62%, 0% 50%, 3% 40%, 0% 30%, 2% 20%, 0% 10%
+    0% 1.5%, 14% 0.5%, 27% 2%, 41% 0%, 55% 1.5%, 69% 0.5%, 82% 2%, 100% 0.5%,
+    99% 10%, 100% 20%, 98.5% 30%, 94% 33%, 100% 40%, 98.5% 52%, 100% 64%, 98.5% 76%, 100% 86%, 99% 96%,
+    86% 99%, 72% 97.5%, 60% 99.5%, 46% 98%, 34% 100%, 20% 98%, 8% 99.5%, 0% 98%,
+    1.5% 86%, 0% 74%, 1.5% 62%, 0% 50%, 1.5% 40%, 0% 30%, 1% 20%, 0% 10%
   );
   box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 4px var(--ink);
 }
 /* FINAL STAGE (or two suspects standing) = pressure without a colour change: the
    frame TIGHTENS (a second rule closes in via ::after) and the tone DENSITY RISES
    (::before → heavy, fuller mask). Composes with deep/revenant (both clipped). */
-.sr-card.atfinal .sr-cardframe::before {
-  background-image: var(--tone-heavy);
-  opacity: 0.5;
-  -webkit-mask-image: radial-gradient(120% 130% at 0% 100%, #111 20%, transparent 82%);
-  mask-image: radial-gradient(120% 130% at 0% 100%, #111 20%, transparent 82%);
-}
 .sr-card.atfinal .sr-cardframe::after {
   content: '';
   position: absolute;
@@ -505,20 +516,36 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.85;
+  /* NOT `opacity: 0.85`. That was a demotion device for a panel on PAPER; on the ink gutter
+     ground it blends the whole band toward the ink behind it and the case id printed as a GREY
+     BAR — a third value on a two-value page. The micro caps type is quiet enough on its own. */
+  opacity: 1;
 }
-/* the FIELDS region: LAST SEEN / DESCRIPTION / KNOWN ALIASES scroll internally on
-   a small screen while the mugshot slots below stay pinned + visible */
+/* the FIELDS region: LAST SEEN / DESCRIPTION / KNOWN ALIASES.
+   IT CLIPS, IT DOES NOT SCROLL. This was `overflow-y: auto`, which put a SCROLLBAR on the
+   question in a mode where a timer is running and reading fast IS the skill — measured on the
+   LIVE PLAY SCREEN (not the landing route): 202px of prompt in a 90px box at 1280x720 LINEUP,
+   and 296px in a TWENTY-PIXEL box at 320x640 LINEUP, where the sentence was simply not on the
+   page. A prompt you have to scroll to read is a prompt you cannot answer in time.
+   The type SHRINKS instead: every size in here multiplies through `--sr-fit`, which
+   useFitToBox.js steps down (1 → 0.52) until the content fits. `overflow: hidden` is the
+   BACKSTOP, not the mechanism — if the floor is ever reached on some pathological word, the page
+   still must not grow a scrollbar. */
 .sr-fields {
-  flex: 1 1 auto;
+  /* `flex: 0 0 auto`: the region is exactly its CONTENT, and it neither grows nor shrinks.
+     Both halves matter. No GROW, because the fit measures the page and a region that stretched
+     would hide the overflow it is meant to react to. No SHRINK, because a shrinking region
+     ABSORBS the overflow — flex silently squeezes it and clips the prompt instead of letting the
+     page report that it does not fit, which is precisely how a 296px prompt ended up in a 20px
+     box with the fit still reading 1.0. The type shrinking is the only thing that may give. */
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden; /* a rotated/oversized page never promotes an x-scrollbar */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: clamp(8px, 1.4vh, 14px);
-  padding-block: clamp(8px, 1.6vh, 16px);
+  gap: calc(clamp(8px, 1.4vh, 14px) * var(--sr-fit));
+  padding-block: calc(clamp(8px, 1.6vh, 16px) * var(--sr-fit));
 }
 /* one bounty field: a bordered label chip above its content, left-aligned */
 .sr-field {
@@ -556,8 +583,10 @@
 .sr-sentence {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-panel);
-  line-height: 1.55;
+  /* --sr-fit is the fit-to-box scale (useFitToBox.js): it measures the PAGE and steps this
+     down until the prompt fits, so a short window and a long gloss are the same problem. */
+  font-size: calc(var(--fs-panel) * var(--sr-fit));
+  line-height: 1.45;
   color: var(--ink);
 }
 /* the blank: ink glyphs over a solid 3px ink underline */
@@ -569,11 +598,13 @@
   padding-bottom: 1px;
 }
 /* DESCRIPTION — the gloss */
+/* DESCRIPTION — the gloss. Full-strength ink (#111 on #f0ead9 is ~17:1): this is the sentence
+   the mode is ABOUT, and it never gets an opacity knocked off it for texture. */
 .sr-gloss {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-body);
-  line-height: 1.5;
+  font-size: calc(var(--fs-body) * var(--sr-fit));
+  line-height: 1.45;
   color: var(--ink);
 }
 /* KNOWN ALIASES — the root line; cousins in muted ink */
@@ -581,8 +612,8 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
-  line-height: 1.5;
+  font-size: calc(var(--fs-label) * var(--sr-fit));
+  line-height: 1.45;
   color: var(--ink);
 }
 .sr-root b {
@@ -712,11 +743,9 @@
 .sr-screen {
   position: fixed;
   inset: 0;
-  /* same toned board as the play void, so the cover / PICK YOUR BEAT / briefing sit pinned
-     to a surface and their hard offset shadows register instead of vanishing into black. */
+  /* the same flat ink ground as the play void, so the cover / mode select / briefing sit on
+     the surface the gutters are cut in. */
   background-color: var(--void);
-  background-image: var(--board-tone);
-  background-size: var(--board-cell);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -793,7 +822,7 @@
   font-family: var(--font-head);
   font-size: var(--fs-panel);
   letter-spacing: 0.06em;
-  color: #c8321e; /* the documented danger red — the one spot accent SAT Rush allows */
+  color: var(--redink); /* the documented danger red — SAT RUSH's one accent */
 }
 .sr-cover-meta {
   display: flex;
@@ -812,7 +841,7 @@
   font-size: var(--fs-body);
 }
 .sr-cover-mult {
-  color: #c8321e;
+  color: var(--redink);
   font-weight: 700;
 }
 .sr-cover-round {
@@ -972,7 +1001,8 @@
 }
 .sr-spell-fill {
   height: 100%;
-  width: 0;
+  width: 100%;
+  transform: scaleX(0);
   background: var(--ink);
   transform-origin: left;
   animation: sr-drain linear forwards;
@@ -1304,7 +1334,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-missing-tally {
   font-family: var(--font-mono, monospace);
   font-size: var(--fs-label);
-  color: var(--redink, #c8321e);
+  color: var(--redink);
   white-space: nowrap;
 }
 /* actions */
@@ -2276,7 +2306,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    static and only ever toggled by tier, never animated (the animation budget). */
 .sr-app .sr-react .wl--rare .wl-chip {
   font-size: var(--fs-panel);
-  box-shadow: 3px 3px 0 var(--redink, #c8321e);
+  box-shadow: 3px 3px 0 var(--redink);
   transform: rotate(-2deg);
 }
 /* OBSCURE — negative reprint, the same inversion the silver-tongue state does to the whole page. */
@@ -2284,21 +2314,21 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-size: var(--fs-h2);
   background: var(--ink);
   color: var(--paper);
-  box-shadow: 5px 5px 0 var(--redink, #c8321e);
+  box-shadow: 5px 5px 0 var(--redink);
   transform: rotate(-2.5deg);
 }
 /* The stamp is the case flag: red ink on paper, squared off, no neon. */
 .sr-app .sr-react .wl-stamp {
   font-family: 'Space Mono', monospace;
   background: var(--paper);
-  color: var(--redink, #c8321e);
-  border: 2px solid var(--redink, #c8321e);
+  color: var(--redink);
+  border: 2px solid var(--redink);
   border-radius: 0;
   box-shadow: none;
   -webkit-text-stroke: 0;
 }
 .sr-app .sr-react .wl--obscure .wl-stamp {
-  background: var(--redink, #c8321e);
+  background: var(--redink);
   color: var(--paper);
 }
 /* The bounty beside the word, in ink. */
@@ -2306,4 +2336,583 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: var(--font-impact);
   color: var(--ink);
   -webkit-text-stroke: 0;
+}
+
+/* ============================================================================
+   THE CRAFT PASS (feat/sat-craft) — full duotone, hard black gutters, a stamp.
+   ============================================================================
+   Andy's spec, verbatim: "full duotone cream + ONE near-black ink, paper grain +
+   halftone, vocab card as a manga panel with hard black gutters, letter slots
+   stamping in one frame". Everything below serves one of those four, in order.
+   The WANTED-POSTER anatomy and its bounty copy are LOCKED by CLAUDE.md and are
+   untouched: this changes what the panels are made of, never what they say or
+   what order they come in.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   1. HARD BLACK GUTTERS. A manga page is PANELS SEPARATED BY INK, not boxes
+   drawn on a sheet. The poster's ground becomes the near-black ink and every
+   region of the bounty notice — header, case id, the clue fields, the mugshot
+   slots, the lineup, the REWARD footer — becomes its own paper panel floating
+   on it, with one gutter width (--gut) between all of them. The regions already
+   existed as blocks; what they never had was ink between them, so they read as
+   one undivided sheet with hairlines ruled across it.
+   The double-rule inset goes: it was a paper-on-paper device for a paper ground,
+   and on ink it reads as a smudge. The gutter is the rule now.
+   --------------------------------------------------------------------------- */
+.sr-cardframe {
+  background: var(--ink);
+  box-shadow: none;
+  gap: var(--gut);
+  padding: var(--gut);
+}
+.sr-cardframe > * {
+  background: var(--paper);
+}
+/* Each panel now owns the padding the frame used to own for all of them. */
+.sr-wanted-wrap {
+  margin: 0;
+  padding: clamp(6px, 1.1vh, 11px) 10px;
+}
+.sr-caseid {
+  /* the ruled band was how this was set off from the sheet; the gutters do that now */
+  border-top: 0;
+  border-bottom: 0;
+  box-shadow: none;
+  padding: 5px 8px;
+}
+.sr-fields {
+  padding-inline: clamp(10px, 1.6vw, 18px);
+}
+.sr-slotwrap {
+  margin-top: 0;
+  padding: clamp(8px, 1.4vh, 14px) 8px;
+}
+.sr-lineup,
+.sr-spell {
+  margin-top: 0;
+  padding: clamp(7px, 1.2vh, 12px) clamp(8px, 1.4vw, 14px);
+}
+.sr-reward {
+  /* the 5px double rule was the divider between the notice and its bounty; the gutter is */
+  border-top: 0;
+  margin-top: 0;
+  padding: clamp(8px, 1.3vh, 13px) clamp(10px, 1.6vw, 18px);
+}
+.sr-msg {
+  margin-top: 0;
+  padding: 3px 10px;
+}
+/* An empty message line is an empty PANEL now — a paper strip saying nothing.
+   Panels only exist when they hold something. */
+.sr-msg:empty {
+  display: none;
+}
+/* DEEP CUT / REVENANT reshape the frame with a clip-path. On the ink ground the
+   clip now cuts the GUTTER rather than the old generous padding, so the torn
+   edge would bite into the panels themselves. The states get the extra inset the
+   shape needs — the tear happens in ink, which is what a torn manga panel is. */
+.sr-card.deep .sr-cardframe,
+.sr-card.revenant .sr-cardframe {
+  padding: calc(var(--gut) + 14px) calc(var(--gut) + 12px);
+}
+
+/* ---------------------------------------------------------------------------
+   2. LETTER SLOTS STAMP IN ONE FRAME.
+   A letter used to ARRIVE two different ways and neither was a stamp: a TYPED
+   letter simply appeared with no event at all, and an auto-printed one eased in
+   on a 260ms cubic-bezier squash — a soft, floaty reveal in a mode whose whole
+   subject is a printing press hammering a mugshot onto paper.
+   Both are one hard STAMP now: `steps(2, jump-none)` gives exactly two poses and
+   no interpolation between them — the die comes down over-struck, then it is
+   set. Transform only; finite; one shot. Nothing is created per event — every
+   slot node already exists for the whole word and only gains a class, so this is
+   pooled by construction and there is no layout read anywhere in the path (the
+   spell-along fires ~1/s and the stage cadence faster).
+   --------------------------------------------------------------------------- */
+@keyframes sr-slot-stamp {
+  0% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.sr-slot.typed,
+.sr-slot.revealed {
+  animation: sr-slot-stamp 96ms steps(2, jump-none) both;
+}
+/* WRONG KEY. This animated `background` between two ink tints — a paint animation
+   in the per-keystroke path, which the budget forbids. Same read (the slot takes
+   the hit), on transform, in hard steps. */
+.sr-slot.bad {
+  animation: sr-slot-knock 0.18s steps(3, jump-none) both;
+}
+@keyframes sr-slot-knock {
+  0% {
+    transform: translateX(-3px) scale(0.94);
+  }
+  50% {
+    transform: translateX(3px) scale(0.94);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   3. FULL DUOTONE — the page has no colour on it that is not cream, ink or the
+   one red. The app's OWN global chrome is `position: fixed` over this mode and
+   is painted in the house neon: the WINS pill (#FFE94A yellow) and the WPM
+   readout (#9A1AFF purple) sit in exactly the band SAT's hud occupies — at 390px
+   and 320px they were measured ON TOP of the HEAT and SCORE readouts, which is
+   an overlap defect as well as a palette one — and the audio button is a purple
+   disc. Two yellows and a purple on a duotone print page is the single loudest
+   thing wrong with the mode.
+   The pills GO while SAT Rush is open (its own hud already carries score, streak,
+   word, lives and heat, and the wins total is on its results page). The audio
+   button STAYS — it is a real control — but it is re-inked into the page.
+   `:has` scoped: where it is unsupported the rules are ignored and nothing moves.
+   --------------------------------------------------------------------------- */
+body:has(.sr-app) .wins-hud,
+body:has(.sr-app) .wpm-hud {
+  display: none;
+}
+/* The corner sound button is a real control and stays — re-inked into the page. Its ring and
+   glyph colour are set INLINE by AudioControls.jsx (the per-mode accent), so overriding them
+   needs !important; the 🔊 glyph is an emoji and only a static grayscale filter can take the
+   blue out of it (a filter is banned from ANIMATION, not from a resting style). */
+body:has(.sr-app) .audio-ctrl .audio-btn {
+  background: #f0ead9 !important;
+  border-color: #111 !important;
+  color: #111 !important;
+  box-shadow: 3px 3px 0 #111;
+  filter: grayscale(1);
+}
+
+/* ---------------------------------------------------------------------------
+   4. THE ACCENT, AND THERE IS EXACTLY ONE.
+   SAT RUSH's accent is --redink (#C8321E). Before this the play screen spent it
+   on NOTHING — the ante word, the ESCAPED overprint and the deep-cut overline
+   were all plain ink, so the poster had no hottest point and the two states
+   DESIGN.md says are red were not red. Now the accent goes to the poster's live
+   STATE marker, and the arbitration below guarantees it lands on one element:
+     normal word  -> the ante word in the REWARD footer ("ANTE" / "LAST CALL")
+     deep cut     -> the MOST WANTED overline (the ante word drops back to ink)
+     revenant     -> the ESCAPED overprint (ditto; revenant outranks deep cut)
+   A revenant deep cut therefore still shows ONE red element, not two.
+   --------------------------------------------------------------------------- */
+.sr-accent {
+  color: var(--redink);
+}
+.sr-antebox.final .sr-accent {
+  color: var(--redink);
+}
+/* deep cut — the red overline over the MOST WANTED header (DESIGN.md) */
+.sr-card.deep .sr-wanted-wrap {
+  border-top: 4px solid var(--redink);
+}
+/* revenant — the ESCAPED overprint. The manga pass paints this paper-on-INK; red TYPE on that
+   ink measures 2.6:1, so the plate itself goes red and the type stays paper (14.4:1 on #C8321E's
+   luminance is not the claim — the claim is that paper on print-red is the legible half of the
+   pair, and it is the way an overprint is actually struck). */
+.sr-card.revenant .sr-escaped {
+  background: var(--redink);
+  color: var(--paper);
+  box-shadow: 3px 3px 0 var(--redink);
+}
+/* ARBITRATION — one accent element, always. A state marker takes the accent away
+   from the ante word, and a revenant takes it away from the deep-cut overline. */
+.sr-card.deep .sr-accent,
+.sr-card.revenant .sr-accent {
+  color: var(--ink);
+}
+.sr-card.revenant.deep .sr-wanted-wrap {
+  border-top: 0;
+}
+/* SILVER TONGUE reprints the whole poster in negative, and the inversion extends
+   to every element — including the accent, which becomes the cream ink. The
+   negative page IS the accent while it holds; no red survives it. */
+.sr-app.silver {
+  --redink: #f0ead9;
+}
+
+/* ---------------------------------------------------------------------------
+   6. THE WHOLE POSTER SCALES, NOT JUST THE PROMPT.
+   --sr-fit lives on .sr-cardframe and everything that is ALLOWED TO GIVE reads
+   it from there, in the order it is least missed: the chrome (header, case id,
+   panel paddings, the lineup, the REWARD furniture) gives first and by more, and
+   the sentence and its gloss give last and least. That ordering is the whole
+   point — scaling only the prompt makes the one block carrying the meaning pay
+   for the entire poster's overdraft.
+   Measured on LINEUP at 1280x720 before this: the prompt was on its 0.52 floor
+   and the card was STILL 41px too tall, because the 101px WANTED header, the
+   41px case id, the 149px suspect panel and the 129px REWARD footer never gave
+   a pixel between them.
+   --------------------------------------------------------------------------- */
+.sr-cardframe {
+  gap: calc(var(--gut) * var(--sr-fit));
+  padding: calc(var(--gut) * var(--sr-fit));
+}
+/* THE SHOUT IS HEIGHT-AWARE. --fs-h1 is clamped on VIEWPORT WIDTH alone, so a
+   1280x720 laptop got the full 64px header — the single biggest non-content block
+   on the poster — on the shortest window that has to hold it. It now also answers
+   to the height it is printed on. */
+.sr-wanted {
+  font-size: calc(min(var(--fs-h1), 7vh) * var(--sr-fit));
+}
+.sr-wanted-wrap {
+  padding: calc(clamp(6px, 1.1vh, 11px) * var(--sr-fit)) 10px;
+}
+.sr-caseid {
+  padding: calc(5px * var(--sr-fit)) 8px;
+}
+.sr-slotwrap {
+  padding: calc(clamp(8px, 1.4vh, 14px) * var(--sr-fit)) 8px;
+}
+.sr-lineup,
+.sr-spell {
+  padding: calc(clamp(7px, 1.2vh, 12px) * var(--sr-fit)) clamp(8px, 1.4vw, 14px);
+}
+.sr-lineup-head {
+  margin-bottom: calc(6px * var(--sr-fit));
+}
+.sr-suspect {
+  font-size: calc(var(--fs-body) * var(--sr-fit));
+}
+.sr-reward {
+  padding: calc(clamp(8px, 1.3vh, 13px) * var(--sr-fit)) clamp(10px, 1.6vw, 18px);
+}
+.sr-mult {
+  font-size: calc(min(var(--fs-hero), 11vh) * var(--sr-fit));
+}
+.sr-pips,
+.sr-tick {
+  margin-top: calc(10px * var(--sr-fit));
+}
+/* The mugshot slots scale too, but from a floor: a tile you cannot read the letter
+   in is not a mugshot. clamp()'s MIN has to come down with the max or clamp returns
+   the min and the row wraps to two full-height rows instead of shrinking. */
+.sr-slots {
+  --slot-min: calc(34px * max(0.7, var(--sr-fit)));
+  --slot-max: calc(48px * max(0.7, var(--sr-fit)));
+}
+
+/* ---------------------------------------------------------------------------
+   7. THE RESULTS PAGE, ON A WIDE SCREEN, IS TWO COLUMNS.
+   It is 1233px of genuine content — the ante hero, score, wins, the cleared/
+   missed strip, the run film-strip, the hardest clear, the sticky-miss list, the
+   share bar and the actions — printed in ONE 560px column down the middle of a
+   1366px screen. So it ran 465px past the fold with EIGHT HUNDRED pixels of empty
+   width beside it: you scrolled a summary on a desktop monitor that had room for
+   all of it twice over. Two columns on a wide screen and it fits with room.
+   The entry stamp spans, because CASE CLOSED is the headline of both columns.
+   (A phone has no second column to give, and a summary you scroll on a phone is
+   the normal shape of a summary. That one is left scrolling and is called out in
+   the gate rather than pretended away.)
+   --------------------------------------------------------------------------- */
+@media (min-width: 1000px) {
+  .sr-respage {
+    width: min(1000px, 94vw);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: start;
+    column-gap: clamp(16px, 2vw, 26px);
+  }
+  .sr-respage > .sr-dead {
+    grid-column: 1 / -1;
+  }
+  /* the run film-strip is a wide horizontal timeline — it reads across, not down */
+  .sr-respage > .sr-filmstrip,
+  .sr-respage > .sr-results-actions {
+    grid-column: 1 / -1;
+  }
+  /* The actions stack is 402px of a 975px page — a share bar and four buttons in a COLUMN,
+     which is the right shape in a 560px phone column and the wrong one in a 1000px row. */
+  .sr-results-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .sr-results-actions > * {
+    margin: 0;
+  }
+  .sr-share {
+    border-top: 0;
+    padding-top: 0;
+    margin-bottom: 0;
+  }
+  /* and the page's own generous print margins come in: they were sized for one narrow column
+     down the middle of the screen, where the space around it was the point. */
+  .sr-results {
+    padding-block: clamp(8px, 1.2vh, 18px);
+  }
+  .sr-respage {
+    gap: 10px;
+    padding: clamp(12px, 2vh, 26px) clamp(18px, 2.6vw, 30px);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   8. THE CURSOR TRAIL IS SPRAY PAINT, AND THIS IS A PRINTED PAGE.
+   CursorTrail.jsx paints a fixed z-index:9999 layer of neon spray dots over
+   EVERY screen — five house colours, straight across the duotone poster. It is a
+   good effect in the arcade and simply the wrong medium here. It stays (it is
+   the app's cursor, not this mode's decoration) and is re-inked: a trail of ink
+   drops on paper. The fill is written inline per dot, so this needs !important.
+   --------------------------------------------------------------------------- */
+body:has(.sr-app) .cursor-dot {
+  background: #111 !important;
+}
+
+/* THE CORNER SOUND BUTTON vs THE POSTER. `.audio-ctrl` is fixed at bottom-right over every
+   screen in the app. On a desktop window the poster stops ~240px short of that corner and they
+   never meet; once the poster owns the full width it lands ON the REWARD footer — measured 34x31px
+   into it at 390x844, and the multiplier is the number the run is played for. There is no free
+   corner to move it to on a 320px page (the poster is the page), so on a small screen it is not
+   shown: SAT Rush is keyboard-only by design (see SatRushGame.jsx) and ducks its own music, and
+   the control is one tap away again the moment the run ends. */
+@media (max-width: 700px), (max-height: 560px) {
+  body:has(.sr-app) .audio-ctrl {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   9. SHORT / NARROW WINDOWS (last in the file so it wins over the fit scale above).
+   The chrome gives way, in the order it is least
+   missed, so the WORD AND ITS CLUE are the last things to go. Measured on the
+   live play screen, not guessed: at 320x640 LINEUP the field region was TWENTY
+   PIXELS holding a 296px prompt — the sentence was not on the page at all.
+   --------------------------------------------------------------------------- */
+@media (max-height: 700px), (max-width: 420px) {
+  .sr-app {
+    padding: 6px 8px;
+  }
+  .sr-body {
+    gap: 6px;
+    padding: 8px 10px 10px;
+  }
+  .sr-hcell {
+    padding: 4px clamp(4px, 1.2vw, 10px);
+    gap: 0;
+  }
+  /* Flavour, not mechanic — the case id is the first thing to go when room runs out. */
+  .sr-caseid {
+    display: none;
+  }
+  .sr-wanted-wrap {
+    padding: 4px 8px;
+  }
+  .sr-wanted {
+    font-size: calc(min(var(--fs-h2), 7vh) * var(--sr-fit));
+  }
+  /* --slot-MIN comes down with --slot-max: clamp() returns the MIN when min > max, so lowering
+     only the max leaves a 10-letter word wrapping to two full-height rows. */
+  .sr-slots {
+    --slot-min: calc(24px * max(0.7, var(--sr-fit)));
+    --slot-max: calc(34px * max(0.7, var(--sr-fit)));
+    --gap: 5px;
+  }
+  .sr-slotwrap {
+    padding: 6px;
+  }
+  .sr-msg {
+    min-height: 0;
+  }
+}
+@media (max-width: 420px) {
+  /* THE HUD is the biggest non-prompt block on the page and at 320px its five two-line readouts
+     overflowed the page by 30px — every cell clipped, the values printing over each other. The
+     labels go (the value is the information; the caption is not) and the values step down. */
+  .sr-hud .sr-hlabel {
+    display: none;
+  }
+  .sr-hval,
+  .sr-lives {
+    font-size: var(--fs-label);
+  }
+  .sr-heatblock {
+    width: 8px;
+    height: 8px;
+    border-width: 2px;
+  }
+  .sr-heat {
+    gap: 2px;
+  }
+  .sr-lives {
+    gap: 3px;
+  }
+  .sr-hud-exit {
+    min-width: 32px;
+    padding: 0 8px;
+  }
+  /* THE REWARD FOOTER STACKS. Its grid is `auto 1fr` — the multiplier beside the ante caption —
+     and at 320px the caption's minimum width squeezed the multiplier column until the glyph was
+     SLICED by the panel edge (the 5 of "5x" printed as a half 5). One column instead: the number
+     gets the full width and the ante note sits under it. The caption is not dropped, because it
+     carries the page's one accent word and a screen without its accent is a screen without a
+     hottest point. */
+  .sr-reward {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'label'
+      'mult'
+      'right';
+    justify-items: start;
+    row-gap: 4px;
+  }
+  .sr-antebox {
+    letter-spacing: 0.1em;
+  }
+  /* The lineup is a recognition aid read at a glance, so its tiles may compact hard before the
+     prompt gives anything up. They were CLIPPING their own names at 320 (78px of word in a 61px
+     tile, overflow hidden) — the grid drops to two columns and the tile sizes from its text. */
+  /* WordCard.jsx writes --cols INLINE (6 -> 3 columns, 4 -> 2, 2 -> 2), and an inline custom
+     property beats a stylesheet rule — without !important the third column stayed and ran off
+     the right edge of a 320px page with a suspect name half-printed on it. */
+  .sr-lineup-grid {
+    --cols: 2 !important;
+  }
+  .sr-suspect {
+    overflow: visible;
+  }
+  .sr-suspect-word {
+    font-size: var(--fs-label);
+  }
+}
+@media (max-height: 480px) {
+  /* Shorter still (a phone with the keyboard up): the field LABELS go. They are captions for
+     content that says what it is — a sentence with a blank in it, a quoted definition, a root
+     line — and they cost a whole reveal's worth of height. Chrome first, content last. */
+  .sr-fieldlabel {
+    display: none;
+  }
+  .sr-field {
+    gap: 0;
+  }
+  /* The REWARD footer keeps its NUMBER (the mechanic) and drops its furniture. */
+  .sr-reward-label,
+  .sr-antebox {
+    display: none;
+  }
+  .sr-mult {
+    font-size: calc(var(--fs-h2) * var(--sr-fit));
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   10. THE LAST TWO NEON BUTTONS ON THE RESULTS PAGE.
+   The ShareBar was de-neoned into the print language a while back; the two
+   shared buttons that joined it later were not, so the bounty sheet ended on a
+   CYAN "copy result" and a YELLOW "try another mode" — measured rgb(46,255,224)
+   and rgb(255,233,74) on a page whose whole claim is two inks. Same treatment as
+   .sr-share .share-btn: paper, ink linework, hard ink offset, square corners.
+   Scoped to .sr-app, so every other mode's copy/try buttons are untouched.
+   --------------------------------------------------------------------------- */
+.sr-app .copy-result-btn,
+.sr-app .try-mode-btn {
+  font-family: var(--font-head);
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--ink);
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+.sr-app .copy-result-btn:hover,
+.sr-app .try-mode-btn:hover {
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.sr-app .copy-result-btn:active,
+.sr-app .try-mode-btn:active {
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.sr-app .copy-result-btn.is-copied {
+  background: var(--ink);
+  color: var(--paper);
+}
+.sr-app .try-mode-row,
+.sr-app .try-mode-label {
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------------
+   11. THE HUD STRIP AT 320px. Five readouts and an exit in 280px of page: the
+   cells were 5px into each other with their values printing over the rules. The
+   strip is allowed to distribute what it has instead of each cell demanding its
+   content width, and the score — the widest readout, six zero-padded digits —
+   gives its tracking back.
+   --------------------------------------------------------------------------- */
+@media (max-width: 420px) {
+  .sr-hud {
+    justify-content: space-between;
+    /* the strip is a parallelogram (skewX -6deg); on a narrow page its top-left corner swung
+       past the page edge and sliced the leading digit of the score. */
+    padding-left: 7px;
+  }
+  .sr-hcell {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .sr-hval {
+    letter-spacing: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   12. TWO THINGS THE SHOTS FOUND AND THE GATE DID NOT.
+   --------------------------------------------------------------------------- */
+/* (a) THE SHARE BUTTON'S MEGAPHONE IS ORANGE. It is an EMOJI, so no CSS colour property
+   carries it and a computed-style audit cannot see it — it took looking at the results shot.
+   Same static grayscale the corner sound button gets: a filter is banned from ANIMATION, not
+   from a resting style. */
+.sr-app .share-btn,
+.sr-app .copy-result-btn,
+.sr-app .try-mode-btn,
+.sr-app .sr-btn {
+  filter: grayscale(1);
+}
+/* (b) THE RE-ENCODE BEAT DID NOT QUITE COVER THE POSTER. It is `inset: 0` on the card, and with
+   the card's own ink ground now showing between panels, the couple of pixels it left at the foot
+   read as the REWARD footer leaking out from under the teaching card. It covers the gutter too. */
+.sr-reencode {
+  inset: calc(var(--gut) * -1);
+}
+
+/* (c) THE MUGSHOTS WERE COLLIDING. Each suspect card leans independently (DESIGN.md: "tilted
+   independently, static, varied per index, uneven") — but at up to 3 degrees on a 270px-wide
+   card, the lean adds 270 x sin(3deg) = 14px of vertical reach across a 6px grid gap, so the
+   tilted corners of QUAINT and SUPINE ran into each other. Seen in the shot; the overlap gate
+   could not see it, because it measures with the static leans flattened (a lean is not a
+   collision, and the axis-aligned box of a leaning card is not the card).
+   The lean stays — it is the whole character of a board of pinned mugshots — at an amplitude
+   that CLEARS: 1.1deg is 270 x sin(1.1) = 5.2px of reach, 2.6px per side, against a 10px gap. */
+.sr-lineup-grid {
+  gap: 10px;
+}
+.sr-suspect:nth-child(1) { transform: rotate(-1.1deg); }
+.sr-suspect:nth-child(2) { transform: rotate(0.8deg); }
+.sr-suspect:nth-child(3) { transform: rotate(-0.5deg); }
+.sr-suspect:nth-child(4) { transform: rotate(1.1deg); }
+.sr-suspect:nth-child(5) { transform: rotate(-0.9deg); }
+.sr-suspect:nth-child(6) { transform: rotate(0.6deg); }
+
+/* (d) THE POSTER WAS STRETCHING, AND THE STRETCH IS NOW VISIBLE. .sr-card / .sr-cardframe were
+   `flex: 1 1 auto`: the card grew to fill whatever height the page had spare. On a paper ground
+   that was invisible — extra paper under the last block looks like a margin. On the ink gutter
+   ground it is a slab of BLACK under the REWARD footer, measured ~80px at 390x844. A poster is
+   the size of what is printed on it: the card is content-sized and the page centres it.
+   The fit still works, because the stage is what is capped (max-height: 100%) and the fit
+   measures the stage. */
+.sr-card,
+.sr-cardframe {
+  flex: 0 1 auto;
+}
+.sr-body {
+  justify-content: center;
 }

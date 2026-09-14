@@ -126,6 +126,18 @@ export const SAT_RUSH_FREEZE =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('freeze') === '1';
 
+// Dev/QA + LAYOUT GATE: `?satworst=1` serves the deck's LONGEST-PROMPT word every time
+// (longest sentence + gloss + root, by character count).
+//
+// It exists because a layout gate on a randomly-drawn word is not a gate: the same viewport
+// passes or fails depending on which word the shuffle happened to deal, so a green run proves
+// nothing and a red one cannot be reproduced. Forcing the worst case makes "the prompt fits"
+// a question with one answer. NOT gated behind the dev-tuner flag, unlike ?scene= — this one
+// changes only WHICH word is drawn, never the rules, the timing or the scoring.
+export const SAT_RUSH_WORST =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('satworst') === '1';
+
 // Dev/QA: `?lock=N` locks the first N letters of the scene word (mid-word shot).
 export const SAT_RUSH_LOCK = (() => {
   if (typeof window === 'undefined') return 0;

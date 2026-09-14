@@ -13,6 +13,16 @@ import * as lexicon from './lexicon';
 import { pickBriefing } from './briefing';
 import { suspectsStanding } from './suspects';
 import WORDS from '../data/satRush/words.json';
+
+// The deck, reduced to its single longest prompt repeated — the worst case a layout can be asked
+// to hold. `word` must stay unique per row or the engine's used-set serves one word and stops, so
+// the row is cloned under distinct keys while keeping the same (longest) text.
+function worstCaseDeck(rows) {
+  const len = (r) => `${r.sentence || ''}${r.gloss || ''}${r.root || ''}${(r.cousins || []).join('')}`.length;
+  let worst = rows[0];
+  for (const r of rows) if (len(r) > len(worst)) worst = r;
+  return rows.map((r, i) => ({ ...worst, word: i === 0 ? worst.word : `${worst.word}${i}` }));
+}
 import { track } from '../lib/analytics';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import { addWords } from '../wordCount';
@@ -21,6 +31,7 @@ import {
   stageMs as stageMsForCard,
   SAT_RUSH_LINEUP_SCALE,
   SAT_RUSH_SCENE,
+  SAT_RUSH_WORST,
   SAT_RUSH_DEV_TUNER,
   SAT_RUSH_FREEZE,
   SAT_RUSH_LOCK,
@@ -511,7 +522,9 @@ export function useSatRushGame() {
     clearTimers();
     const { stageMs, spellMs, lineupScale, deepEvery, revGap, climb } = cfgRef.current;
     engineRef.current = createSatRushEngine({
-      words: WORDS,
+      // ?satworst=1 (layout gate only): every draw is the deck's longest prompt, so "does it
+      // fit" stops depending on which word the shuffle dealt. See SAT_RUSH_WORST in config.js.
+      words: SAT_RUSH_WORST ? worstCaseDeck(WORDS) : WORDS,
       recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
       briefed, // THE BRIEFING's words, served first this run (briefing mode only)
       config: {

@@ -14,7 +14,9 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+import { useRef } from 'react';
 import Slots from './Slots';
+import useFitToBox from './useFitToBox';
 import AnteMeter from './AnteMeter';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
@@ -142,6 +144,27 @@ export default function WordCard({ view, landing = null }) {
   // Reveals to render as fields (meta is the case id; firstLetter lives in slots).
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
 
+  // THE PROMPT FITS, IT DOES NOT SCROLL. A timed reading mode cannot put a scrollbar on the thing
+  // you are being timed to read. The clue region clips and the POSTER shrinks to fit the page.
+  //
+  // The scale sits on the WHOLE CARD, not on the field region, and that is the difference between
+  // this working and not. Scaling only the prompt asks the one block that carries the meaning to
+  // pay for the whole poster's overdraft: measured on LINEUP at 1280x720, the prompt hit the 0.52
+  // floor and the card was STILL 41px too tall, because the 101px WANTED header, the case id, the
+  // suspect panel and the REWARD footer never gave anything. With --sr-fit on the card every one
+  // of them scales, the chrome gives first and by more, and the prompt barely has to move.
+  // Keyed on the word (`view.meta` is the case id, unique per word), on WHICH reveals are showing
+  // (each adds a paragraph), on the run style (LINEUP's suspect panel is ~150px of the same card)
+  // and on the endgame (the spell-along row appears at the final stage).
+  const cardRef = useRef(null);
+  useFitToBox(cardRef, [
+    view.meta,
+    rows.map((r) => `${r.type}${r.visible ? 1 : 0}`).join(),
+    mode,
+    atFinal,
+    isLineup && suspects ? suspects.count : 0,
+  ]);
+
   return (
     // The OUTER .sr-card is an unclipped positioning shell: the SFX burst is its
     // child so it can break PAST the panel edge (see .sr-stamp), while the visible
@@ -167,7 +190,7 @@ export default function WordCard({ view, landing = null }) {
 
       {/* The visible panel: the manga PANEL whose EDGE reads the state (narrator
           rectangle → deep-cut starburst → revenant wavy break → tightened final). */}
-      <div className="sr-cardframe">
+      <div className="sr-cardframe" ref={cardRef}>
       {/* WANTED header; MOST WANTED on a deep cut. */}
       <div className="sr-wanted-wrap">
         <div className="sr-wanted sr-print" data-v={deepCut ? 'MOST WANTED' : 'WANTED'}>
