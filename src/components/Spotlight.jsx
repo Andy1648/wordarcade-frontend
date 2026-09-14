@@ -187,12 +187,29 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
 
     measure();
     raf = requestAnimationFrame(measure);
-    window.addEventListener('resize', measure);
+    // THROTTLE THE RESIZE. `measure` got a lot more expensive when the obstacle list grew
+    // from an interactive-selector query to every visible text leaf, plus a candidate sweep
+    // scored against all of them. Measured as a RATIO against one full walk of `body *`
+    // with a rect read per node, median of five (absolute ms on a machine running three
+    // builds means nothing): **1.54x on the menu** (100 obstacles / 923 nodes) and **1.36x
+    // on CHAIN** (68 / 480). Once on mount that is fine. Bound straight to `resize` it is
+    // one-and-a-half DOM walks per resize EVENT, and a window drag fires those continuously.
+    // Coalesced to one per frame.
+    let resizeRaf = 0;
+    const onResize = () => {
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        measure();
+      });
+    };
+    window.addEventListener('resize', onResize);
     // Bungee loading resizes the caption; re-place once fonts are ready.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure).catch(() => {});
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', measure);
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
+      window.removeEventListener('resize', onResize);
     };
   }, [targetSelector, caption, sub]);
 

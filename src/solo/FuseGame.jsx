@@ -121,6 +121,7 @@ export default function FuseGame({ onExit, audioSlot = null }) {
         error={loadError}
         onRetry={() => setLoadKey((k) => k + 1)}
         onExit={onExit}
+        audioSlot={audioSlot}
       />
     );
   }

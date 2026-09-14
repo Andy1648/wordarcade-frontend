@@ -94,6 +94,7 @@ export default function ChainGame({ onExit, audioSlot = null }) {
         error={loadError}
         onRetry={() => setLoadKey((k) => k + 1)}
         onExit={onExit}
+        audioSlot={audioSlot}
       />
     );
   }

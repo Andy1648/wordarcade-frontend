@@ -23,8 +23,13 @@ const VIEWPORTS = [
 async function openSolo(page, route) {
   await installBackendMock(page);
   await page.goto(`${route}?portal=1`);
+  // WAIT FOR THE SHELL, NOT THE ROOT. `SoloLoadState` — the screen shown while the lazy word
+  // data is fetched — also renders `.solo-root`, so waiting on that raced the real shell and
+  // the gate intermittently read a screen that has no cluster yet. Waiting on the cluster is
+  // both correct and stricter: the load state has one now too.
   await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
-  await page.waitForTimeout(600);
+  await page.locator('.solo-hud').waitFor({ state: 'visible', timeout: 20000 });
+  await page.waitForTimeout(400);
 }
 
 for (const route of ['/chain', '/fuse']) {
