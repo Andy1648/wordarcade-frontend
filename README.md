@@ -48,17 +48,19 @@ src/
   components/
     Homepage.jsx / .css     - the lobby screen: logo, label, card grid, buttons
     GameCard.jsx / .css     - one card, handles its own hover-reveal animation
-    GameArt.jsx             - the 6 larger hover-reveal SVG illustrations
-    GameIcons.jsx           - the 6 small always-visible icon glyphs
+    GameArt.jsx             - the larger hover-reveal SVG illustrations
   App.jsx                   - currently just renders Homepage
   main.jsx                  - React entry point
   index.css                 - global reset/base styles only
 ```
 
-Adding a 7th game later means: one new entry in `gameData.js`, one new
-exported component in `GameArt.jsx`, one new exported component in
-`GameIcons.jsx`. `GameCard.jsx` itself never needs to change since it
-looks both up dynamically by key.
+Adding a game means: one new entry in `gameData.js` and one new exported
+component in `GameArt.jsx`. `GameCard.jsx` itself never needs to change,
+since it looks the art up dynamically by key.
+
+(There used to be a `GameIcons.jsx` holding a small always-visible glyph
+per card. It stopped being mounted at some point and was removed as dead
+code; the card's art now comes from `GameArt.jsx` alone.)
 
 ## Design notes carried over from the locked visual reference
 

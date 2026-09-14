@@ -2100,8 +2100,16 @@
   /* The caption swaps its own text for HURRY! / GET OUT! in the last two tension tiers
      (see GameScreen.jsx). It must not change the slab's height when it does, or the
      whole centre column shifts on the tier change and wbRingSize takes the difference
-     out of the ring. A fixed line-box is what makes an in-place swap free. */
+     out of the ring.
+     min-height ALONE IS A FLOOR, NOT A CAP, and the refutation pass found the hole: below
+     ~300px the calm caption ("TYPE A WORD CONTAINING") WRAPS to two lines while HURRY! and
+     GET OUT! do not, so the slab breathed 12.81px on every tier change at 280px. One line,
+     always — the caption is three words and an ellipsis is better than a moving board. */
   min-height: 1.2em;
+  max-height: 1.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .game-combo-label.is-hurry {
   color: #FFE94A;
