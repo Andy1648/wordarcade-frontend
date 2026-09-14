@@ -13,10 +13,10 @@ the top four sections are what you actually have to act on.
 
 | # | Branch | What it is | Gate | Merged? |
 |---|---|---|---|---|
-| A1 | `feat/rarity-moment` | The main line. Carries `integration/board-v2` + everything I did directly. Nine commits this run. | see below | **no** |
-| A2 | `feat/fuse-craft` | FUSE gets CHAIN-level craft in its own colour script — fragment slab, burning cord, matched fragment picked out inside the accepted word. | `fuse-craft` 4/4, 3 runs | **no** |
-| A3 | `feat/blitz-craft` | CATEGORY BLITZ craft — category as a 64–80px hero, judge as one PNG with a single verdict swap, chunky stepping timer block, answers building upward newest-brightest. | 24 tests x 2 repeats | **no** |
-| A4 | `feat/sat-craft` | SAT RUSH craft + the scroll-fix verification. **INCOMPLETE** — see §D1. | — | **no** |
+| A1 | `feat/rarity-moment` | The main line. Carries `integration/board-v2` + everything I did directly. Eleven commits this run. | see below | **no** |
+| A2 | `feat/fuse-craft` @ `8bb62d6` | FUSE gets CHAIN-level craft in its own colour script — fragment slab, burning cord, matched fragment picked out inside the accepted word. | `fuse-craft` 4/4, 3 runs | **no** |
+| A3 | `feat/blitz-craft` @ `aa55c5c` | CATEGORY BLITZ craft — category as a 64–80px hero, judge as one PNG with a single verdict swap, chunky stepping timer block, answers building upward newest-brightest. | 24 tests x 2 repeats | **no** |
+| A4 | `feat/sat-craft` @ `3c71f39` | SAT RUSH — full duotone, hard black gutters, one-frame letter stamp, and **the scroll-fix answer you asked for** (§B0). | `sat-craft` 28/28 | **no** |
 
 ### What's on `feat/rarity-moment`, in order
 
@@ -29,9 +29,47 @@ the top four sections are what you actually have to act on.
    already left.
 6. **The motion contract** — the suite is not running the reduced motion it claims to.
 7. **The sound control off three solo screens**, and a coach mark that fits.
+8. **Three dead components removed** (296 lines nothing mounts).
+9. **SHOP and STATS were near-black on near-black** — 1.19:1 — plus a 44px touch target on
+   the solo close glyph, and an accessibility gate that says what it does *not* assert.
+10. **The solo load state had no sound control at all**, and the coach mark's resize handler
+    was unthrottled at 1.5 DOM walks an event.
 
 Every gate in this run was **checked RED on the defect it describes before being trusted.** Where
 I could not make one go red, I say so.
+
+---
+
+## B0. THE SAT RUSH SCROLL QUESTION — answered
+
+> *"verify the scroll fix ON THE GAME, not the /sat-rush marketing page; my probe hit the
+> landing page so the fix is still unverified."*
+
+**The fix was never on this branch.** `724a006 fix(sat): the prompt fits, it never scrolls`
+lives only on the unmerged `fix/sat-rush-ui`. And your probe would have come back clean on
+*any* route, landing page or game: `.sr-app` is `position: fixed; overflow: hidden`, so the
+**document** never scrolls. The scrollbar was on the poster's own field region, `.sr-fields`,
+which is `overflow-y: auto`. A document-level scroll check cannot see it — which is why the
+question stayed open.
+
+Measured on the live run (route in every gate title so it cannot be ambiguous again:
+`/?satRush=1&portal=1&satworst=1&stage=12000&spell=9000` → menu card → Play → run):
+
+| route | viewport | scrollHeight | clientHeight | hidden |
+|---|---|---|---|---|
+| LINEUP play | 1280x720 | 202 | 90 | 112px |
+| LINEUP play | 320x640 | 296 | **20** | **276px — the sentence was not on the page** |
+| BRIEFING play | 320x640 | 265 | 144 | 121px |
+| deep cut | 390x844 | 396 | 324 | 72px |
+
+Fixed on `feat/sat-craft` by fitting the WHOLE CARD rather than the prompt — prompt-only hit
+its 0.52 floor at 1280x720 LINEUP and the card was still 41px too tall. 0px hidden at all
+four viewports in both run styles.
+
+**Still scrolls, could not fix: the RESULTS page below 1000px** (390x844: 1169 in 844;
+320x640: 1142 in 640). Desktop is two columns and fits exactly. On a phone there is no
+second column and the only way to fit is to delete content — that is a content decision, so
+it is an explicit, commented exemption in the gate. The PLAY screen has no exemption.
 
 ---
 
@@ -63,8 +101,10 @@ I could not make one go red, I say so.
 
 | # | Finding | Evidence |
 |---|---|---|
-| **D1** | **SAT RUSH craft is incomplete.** The agent hit the account's weekly rate limit mid-task and stopped; it was resumed and is running again as of this writing. **Andy's specific question — "verify the scroll fix ON THE GAME, not the /sat-rush marketing page" — is therefore still open.** Whatever is on `feat/sat-craft` when it lands is partial; its own report will say which parts are done. | agent stopped: rate_limit, HTTP 429 |
-| **D2** | **THE RUN never got its craft pass.** `src/runMode/` exists only on `integration/run-stack` — nine merged run-mode branches awaiting your play-test. Doing it means merging a second unmerged integration branch into this one, which is an integration of its own. The cheap path is its own branch off `integration/run-stack` doing exactly what CHAIN and FUSE got, since THE RUN uses the same solo shell. | `git ls-tree integration/run-stack src/runMode/` |
+| **D1** | **SAT RUSH's results page still scrolls below 1000px** — 1169px of content in 844, 1142 in 640. Desktop fits exactly (two columns). A phone has no second column and the only way to fit is to delete content, which is your call. Explicit commented exemption in the gate; the play screen has none. | §B0 |
+| **D1b** | **A data defect in `words.json`**: one sentence renders as *"...weighing whether to tell her at all. (also alts: add thoughtful)"* — an authoring note leaking into the player-facing prompt. | `claude/sat-craft-shots/390x844-lineup-real.png` |
+| **D1c** | **DESIGN.md's decoration budget conflicts with its own screentone system.** Getting SAT to ONE halftone meant removing the ink board's dot grid and the card's second tone bloom — and that also removed the reason the page's hard offset shadow was visible against the void. Putting the toned board back is one halftone over budget. | SAT agent |
+| **D2** | **THE RUN's craft pass was still running when this was written**, on `feat/run-craft` cut from `integration/run-stack` — the only branch `src/runMode/` exists on. If that branch is not on origin when you read this, it did not finish, and the cheap way to finish it is exactly what CHAIN and FUSE got, since THE RUN uses the same solo shell. | `git ls-remote origin feat/run-craft` |
 | **D3** | **No judge art exists.** `/public` has `mascot-{idle,panic,celebrate,run,taunt}`. Blitz's "judge" is the bomb mascot swapping expression. A real judge — wig, gavel, bench — has to be drawn. The agent did not fake one in CSS, which is right. | Blitz agent report |
 | **D4** | **At one mark slot, ETERNAL dominates seven of the eight marks.** Every mode wears it; BOMBER, SPRINTER, SAVANT, LINGUIST, METRONOME, STUDENT and MAGPIE are never chosen by anyone who has it. `marks.js` rule 1 says "eight marks and one slot is eight different builds" — measured, it is one build in every mode. Reported, not shipped: this is a design decision. | `claude/marks-slots-sim.mjs` |
 | **D5** | **The sim's own pass condition no longer holds.** "LV300 inside 200h" fails at any rebirth scaling above ~1.15 — and it barely held before (2 of 5 archetypes, at 156h). Either the condition or the top of the curve needs your decision. | `claude/econ-curve-sim.mjs` |
@@ -73,6 +113,8 @@ I could not make one go red, I say so.
 | **D8** | **The e2e suite's reduced-motion emulation is inert.** `use.reducedMotion: 'reduce'` does not flip `matchMedia` in this project (Playwright 1.62). The suite runs at FULL motion, which is the stricter side — but any assertion relying on the config for a reduced-motion state is vacuous while reading as though it tests the accessible path. Pinned rather than papered over. | `e2e/motion-contract.spec.js` |
 | **D9** | **SAT Rush still has the orphan sound control.** CHAIN and FUSE moved into the solo shell's corner cluster; SAT was left deliberately because its screen is being reworked on another branch. Named in `App.jsx` beside the suppression list so it is not rediscovered as a surprise. | measured: `.audio-ctrl` is the fixed variant on `/sat-rush` at both phone sizes |
 | **D10** | **Several 320x640 clipping defects on the solo screens, pre-existing and not mine.** "3 WORDS TO EA[RN]" clipped in its pill; `START WITH "W" · 3+ LETTI` clipped in the field; CHAIN's arm hint clipped at both ends. | `claude/solo-audio-shots/chain-320x640.png` |
+| **D12** | **`claude/rarity-shots/sat-obscure.png` is stale** — it shows the pre-craft SAT look. Left alone on purpose: it belongs to commit `36f421f` and re-shooting it would misrepresent what that commit did. | — |
+| **D13** | **Blitz's judge is the bomb mascot.** There is no judge art (see D3), so the "single verdict expression swap" is idle -> celebrate/panic on the existing PNG. It reads, but it is a bomb sitting in judgement. | `/public` |
 | **D11** | **A parallel-work hazard, for next time.** The agents' PostToolUse build hook runs `vite build` against the MAIN working tree, not the agent's worktree — so my in-progress edit blocked their tool calls with an error naming *their* file. Worth fixing in the hook before the next multi-agent run. | three notifications naming `agent-*/src/solo/FuseGame.jsx` while the error was in my `src/App.jsx` |
 
 ---
