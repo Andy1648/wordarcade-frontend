@@ -1,274 +1,327 @@
-/* RunMode.css — RUN mode screens. House style: flat colour, thick coloured outline,
-   hard black offset shadow, Bungee display / Space Mono body, 8px radius. No idle loops. */
+/* RunMode.css — THE RUN.
+ *
+ * COLOUR SCRIPT (this mode's own — Word Bomb owns pink, CHAIN cyan, Blitz orange, FUSE
+ * orange-on-plum, SAT ink-on-cream): VIOLET ON VIOLET-INK. Everything structural is drawn
+ * in a five-step violet-black ramp with a bone-white ink; there is exactly ONE saturated
+ * colour on the whole mode, --run-accent, and exactly ONE element per screen is filled with
+ * it — the WALL. Urgency (a low clock, a firing modifier) is signalled by flipping VALUE
+ * (dark ink on a bone slab), never by introducing a second hue.
+ *
+ * Motion: finite one-shots, transform/opacity only, no idle loops, no animated box-shadow.
+ */
 .run-root {
+  --run-void: #0d0618;
+  --run-slab: #180a2c;
+  --run-slab-2: #23113f;
+  --run-rule: #43276b;
+  --run-rule-2: #6d41ac; /* the ticks have to read against the EMPTY column, two steps up */
+  --run-ink: #efe6ff;
+  --run-ink-dim: #9e86cc;
+  --run-accent: #9a1aff;
+
   position: fixed; inset: 0; z-index: 20;
   display: flex; align-items: center; justify-content: center;
-  background: #0d0618;
+  background: var(--run-void);
   padding: 16px; box-sizing: border-box;
   font-family: 'Space Mono', monospace;
-  color: #fff;
-  overflow-y: auto;
+  color: var(--run-ink);
+  overflow: hidden; /* THE RUN never scrolls — every phase is sized to the viewport */
 }
+/* The shared house graffiti wall sits behind every play surface; inside THE RUN it is
+   pulled back so the mode's own violet script is what the screen reads as. */
+.run-root .play-backdrop { opacity: .55; }
 .run-exit {
-  position: absolute; top: 14px; right: 14px; z-index: 3;
+  position: absolute; top: 14px; right: 14px; z-index: 8;
   width: 44px; height: 44px; border-radius: 8px;
-  background: #1a0b2e; color: #fff; border: 3px solid #FF4FA3;
-  box-shadow: 3px 3px 0 #000; font-size: 20px; cursor: pointer;
+  background: var(--run-slab); color: var(--run-ink); border: 3px solid var(--run-rule);
+  box-shadow: 3px 3px 0 #000; font-size: 20px; cursor: pointer; line-height: 1;
 }
 .run-exit:active { transform: translate(3px, 3px); box-shadow: none; }
 
+/* ---- the stage: ONE vertical wall + the phase's panel, on every screen ---- */
+.run-stage {
+  --run-barcol: clamp(96px, 18vw, 180px);
+  position: relative; z-index: 2;
+  display: grid;
+  grid-template-columns: var(--run-barcol) minmax(0, 1fr);
+  gap: 18px;
+  width: min(940px, 100%);
+  height: 100%;
+  box-sizing: border-box;
+}
+/* The wall is the hero before you play and after you've been judged; it gives width back
+   to the hand while you are choosing a card. */
+/* A BAR, not a slab. 30vw made the column a 330px violet wall rather than a column of
+   paint; these widths keep it unmistakably vertical at every viewport while still leaving
+   the numeral above it room for five digits. The wall is widest where it is the hero (before
+   you play, and once you have been judged) and gives width back to the hand while drafting. */
+.run-stage-wall, .run-stage-over { --run-barcol: clamp(116px, 26vw, 220px); }
+.run-stage-draft { --run-barcol: clamp(84px, 13vw, 160px); }
+.run-stage-loading { display: flex; align-items: center; justify-content: center; }
+.run-loading { font-family: 'Bungee', sans-serif; color: var(--run-ink-dim); letter-spacing: 2px; }
+
+/* ---- THE WALL — the mode's single accent object ---- */
+.run-wallcol { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.run-wall-head { display: flex; flex-direction: column; gap: 1px; }
+.run-wall-label {
+  font-family: 'Bungee', sans-serif; font-size: 10px; letter-spacing: 1.6px;
+  color: var(--run-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* THE HUGE NUMERAL. Sized off the column so five digits can never overflow it
+   (Bungee's advance is ~0.66em; 5 x 0.66 = 3.3, so /3.5 leaves a margin). */
+.run-wall-num {
+  font-family: 'Bungee', sans-serif;
+  font-size: min(64px, calc(var(--run-barcol) / 3.5));
+  line-height: 1;
+  color: var(--run-ink);
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  display: block;
+  transform-origin: left center;
+  font-variant-numeric: tabular-nums;
+}
+.run-wallcol.over .run-wall-num { color: #fff; }
+
+.run-wall-bar {
+  position: relative; flex: 1 1 auto; min-height: 60px;
+  background: #0a0413;
+  box-shadow: 6px 6px 0 #000;
+  overflow: hidden;
+}
+.run-wall-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.run-wall-art.back { z-index: 1; }
+.run-wall-art.front { z-index: 3; }
+/* THE one accent fill on the whole mode. transform-only; nothing else animates. */
+.run-wall-fill {
+  position: absolute; inset: 0; z-index: 2;
+  background: var(--run-accent);
+  transform-origin: bottom center;
+  transform: scaleY(0);
+  transition: transform .22s ease-out;
+}
+.run-wall-foot { display: flex; justify-content: space-between; gap: 6px; }
+.run-wall-target, .run-wall-round {
+  font-family: 'Bungee', sans-serif; font-size: 9.5px; letter-spacing: 1px;
+  color: var(--run-ink-dim); white-space: nowrap;
+}
+
+/* ---- the panel ---- */
 .run-panel {
-  width: min(560px, 100%); box-sizing: border-box;
-  background: #1a0b2e; border: 4px solid #9A1AFF; border-radius: 8px;
-  box-shadow: 8px 8px 0 #000;
-  padding: 20px; display: flex; flex-direction: column; gap: 14px;
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  min-height: 0; min-width: 0;
 }
-.run-kicker { font-family: 'Bungee', sans-serif; font-size: 14px; letter-spacing: 1px; color: #2EFFE0; }
-.run-kicker b { color: #FFE94A; }
+.run-rail { display: flex; gap: 4px; flex: none; }
+.run-pip { flex: 1; height: 6px; background: var(--run-slab-2); border: 2px solid #000; }
+.run-pip.done { background: var(--run-ink-dim); }
+.run-pip.now { background: var(--run-ink); }
 
-/* progress rail */
-.run-rail { display: flex; gap: 5px; }
-.run-pip { flex: 1; height: 8px; border-radius: 4px; background: #33224d; border: 2px solid #000; }
-.run-pip.done { background: #2EFFE0; }
-.run-pip.now { background: #FFE94A; }
-
-/* stack chips */
-.run-stack { display: flex; flex-wrap: wrap; gap: 6px; }
-.run-stack-empty { font-size: 12px; color: #9a86c4; border: 2px dashed #3a2a5a; border-radius: 8px; padding: 10px; text-align: center; }
-.run-chip {
-  font-family: 'Bungee', sans-serif; font-size: 11px; padding: 5px 9px; border-radius: 8px;
-  background: #FFE94A; color: #000; border: 2px solid #b39b00; box-shadow: 2px 2px 0 #000;
+.run-head { display: flex; flex-direction: column; gap: 2px; flex: none; }
+.run-head-row { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.run-kicker { font-family: 'Bungee', sans-serif; font-size: 10.5px; letter-spacing: 1.6px; color: var(--run-ink-dim); }
+.run-title {
+  font-family: 'Bungee', sans-serif; font-size: clamp(20px, 3.2vw, 34px); line-height: 1;
+  color: var(--run-ink); margin: 0; -webkit-text-stroke: 2px #000; paint-order: stroke fill;
 }
 
-/* ---- WALL / pre-round ---- */
-.run-wall { text-align: center; }
-.run-wall-need { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0; }
-.run-wall-label { font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF6B3D; letter-spacing: 2px; }
-.run-wall-num { font-family: 'Bungee', sans-serif; font-size: 56px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 3px #000; }
-.run-mode-tag {
-  display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 12px;
-  border: 3px solid var(--accent, #2EFFE0); border-radius: 8px; background: #0d0618; box-shadow: 4px 4px 0 #000;
+.run-plate {
+  display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; flex: none;
+  background: var(--run-slab); border: 3px solid var(--run-rule); border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
 }
-.run-mode-tag b { font-family: 'Bungee', sans-serif; font-size: 22px; color: var(--accent, #2EFFE0); }
-.run-mode-tag span { font-size: 13px; color: #cbbce8; }
-.run-banked { font-size: 13px; color: #9a86c4; }
-.run-banked b { color: #2EFFE0; font-size: 16px; }
-.run-ladder { display: flex; gap: 3px; justify-content: space-between; }
-.run-ladder-step { flex: 1; font-size: 10px; padding: 4px 0; border-radius: 5px; background: #241539; border: 2px solid #000; color: #7d6ba8; }
-.run-ladder-step.done { background: #123f3a; color: #2EFFE0; }
-.run-ladder-step.now { background: #FFE94A; color: #000; font-weight: bold; }
+.run-plate-inline { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.run-plate-name { font-family: 'Bungee', sans-serif; font-size: clamp(15px, 1.7vw, 21px); color: var(--run-ink); }
+.run-plate-rule { font-size: 11.5px; line-height: 1.25; color: var(--run-ink-dim); }
 
-/* ---- buttons ---- */
+.run-clock {
+  font-family: 'Bungee', sans-serif; font-size: clamp(20px, 2.4vw, 30px); line-height: 1;
+  color: var(--run-ink); flex: none; padding: 3px 7px; border-radius: 6px;
+}
+.run-clock i { font-style: normal; font-size: .5em; }
+/* Urgency by VALUE, not by a second hue: the clock inverts to a bone slab. */
+.run-clock.low { background: var(--run-ink); color: var(--run-void); }
+
+/* label and value stay TOGETHER — a space-between row across an 840px panel put "COMBO"
+   and "x1.1" 760px apart and they stopped reading as one thing. */
+.run-readout { display: flex; align-items: baseline; justify-content: flex-start; gap: 9px; flex: none; }
+.run-readout span { font-family: 'Bungee', sans-serif; font-size: 10px; letter-spacing: 1.4px; color: var(--run-ink-dim); }
+.run-readout b { font-family: 'Bungee', sans-serif; font-size: clamp(16px, 1.8vw, 22px); color: var(--run-ink); }
+
+.run-cue { font-size: 12px; text-align: center; color: var(--run-ink-dim); letter-spacing: .5px; min-height: 15px; flex: none; }
+.run-cue b { font-family: 'Bungee', sans-serif; color: var(--run-ink); }
+.run-verdict { font-size: 12.5px; line-height: 1.3; color: var(--run-ink-dim); flex: none; }
+
+.run-input-wrap { flex: none; }
+.run-input {
+  width: 100%; box-sizing: border-box; font-size: 18px; font-family: 'Space Mono', monospace;
+  padding: 12px 10px; border-radius: 8px; border: 3px solid var(--run-rule);
+  background: var(--run-void); color: var(--run-ink);
+  text-align: center; text-transform: uppercase; letter-spacing: 1.5px;
+}
+.run-input::placeholder { color: var(--run-ink-dim); }
+.run-input:focus { outline: none; border-color: var(--run-ink); }
+
 .run-btn {
-  font-family: 'Bungee', sans-serif; font-size: 18px; padding: 14px; border-radius: 8px;
-  border: 3px solid #000; cursor: pointer; box-shadow: 5px 5px 0 #000; transition: transform .12s, box-shadow .12s;
+  font-family: 'Bungee', sans-serif; font-size: clamp(14px, 1.5vw, 18px); padding: 13px 10px;
+  border-radius: 8px; border: 3px solid #000; cursor: pointer; flex: none;
+  background: var(--run-ink); color: var(--run-void); box-shadow: 5px 5px 0 #000;
+  transition: transform .12s ease;
 }
-.run-btn-go { background: #FF4FA3; color: #fff; }
 .run-btn:active { transform: translate(5px, 5px); box-shadow: none; }
 
-/* ---- round ---- */
-.run-round-top { display: flex; justify-content: space-between; align-items: center; }
-.run-round-mode b { font-family: 'Bungee', sans-serif; font-size: 20px; color: var(--accent, #2EFFE0); display: block; }
-.run-round-mode span { font-size: 12px; color: #cbbce8; }
-.run-clock { font-family: 'Bungee', sans-serif; font-size: 30px; color: #2EFFE0; -webkit-text-stroke: 2px #000; }
-.run-clock.low { color: #FF3B3B; }
-.run-score-row { display: flex; justify-content: space-between; align-items: flex-end; }
-.run-score-num { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FFE94A; -webkit-text-stroke: 2px #000; display: inline-block; transform-origin: left center; }
-.run-score.met .run-score-num { color: #2EFFE0; }
-.run-score-num.pop { animation: runScorePop .5s ease-out 1; }
-.run-score-need { font-size: 12px; color: #9a86c4; }
-.run-combo { font-family: 'Bungee', sans-serif; font-size: 26px; color: #FF6B3D; -webkit-text-stroke: 2px #000; }
-.run-progress-track { position: relative; height: 22px; background: #0d0618; border: 3px solid #000; border-radius: 8px; overflow: hidden; }
-.run-progress-fill { height: 100%; background: #2EFFE0; transform-origin: left; transition: transform .2s ease-out; }
-.run-progress-track.cleared .run-progress-fill { background: #FFE94A; }
-/* the labelled wall target — the finish line lives at the right edge (fill=100% == wall) */
-.run-progress-wall {
-  position: absolute; top: 0; right: 6px; height: 100%; display: flex; align-items: center;
-  font-family: 'Bungee', sans-serif; font-size: 10px; letter-spacing: .5px; color: #fff;
-  -webkit-text-stroke: 2px #000; paint-order: stroke fill; pointer-events: none;
+/* ---- the MODIFIER STRIP — mid value. Quiet at rest; ONE chip flashes when it fires. ---- */
+.run-strip { display: flex; flex-wrap: wrap; gap: 5px; flex: none; }
+.run-strip-empty {
+  font-size: 10.5px; letter-spacing: .5px; color: var(--run-ink-dim);
+  border: 2px dashed var(--run-rule); border-radius: 8px; padding: 8px; text-align: center;
 }
-/* CLEAR moment — one pooled overlay node, a single finite transform/opacity pop */
-.run-clear-burst {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-family: 'Bungee', sans-serif; font-size: 14px; color: #0d0618; letter-spacing: 1px;
-  background: #FFE94A; opacity: 0; pointer-events: none;
+.run-chip {
+  font-family: 'Bungee', sans-serif; font-size: 9.5px; letter-spacing: .4px;
+  padding: 5px 8px; border-radius: 6px;
+  background: var(--run-slab-2); color: var(--run-ink-dim);
+  border: 2px solid var(--run-rule); box-shadow: 2px 2px 0 #000;
+  transform-origin: center;
 }
-.run-clear-burst.playing { animation: runClearBurst .6s cubic-bezier(.2,1.4,.4,1) 1; }
-.run-meter-note { font-size: 11px; color: #9a86c4; text-align: center; letter-spacing: .5px; min-height: 14px; }
-.run-meter-note b { color: #FFE94A; }
-.run-toast { font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A; text-align: center; }
-.run-frag { font-size: 14px; color: #cbbce8; text-align: center; }
-.run-frag b { color: var(--accent, #2EFFE0); font-family: 'Bungee', sans-serif; }
-.run-input {
-  width: 100%; box-sizing: border-box; font-size: 22px; font-family: 'Space Mono', monospace;
-  padding: 14px; border-radius: 8px; border: 3px solid #2EFFE0; background: #0d0618; color: #fff;
-  text-align: center; text-transform: uppercase; letter-spacing: 2px; box-shadow: inset 0 0 0 2px #000;
-}
-.run-input:focus { outline: none; border-color: #FFE94A; }
+/* Settles at ROUND END, not per word — so it never flashes, and says so. */
+.run-chip.banked { border-style: dashed; opacity: .68; }
+/* THE firing chip: a value flip, held only until the next accepted word. */
+.run-chip.lit { background: var(--run-ink); color: var(--run-void); border-color: #000; }
 
-/* ---- draft — the signature "one choice" screen ---- */
-.run-draft { width: min(820px, 100%); }
-.run-draft-head { text-align: center; display: flex; flex-direction: column; gap: 4px; }
-.run-draft-title { font-family: 'Bungee', sans-serif; font-size: 28px; color: #FF4FA3; text-align: center; margin: 2px 0 0; -webkit-text-stroke: 1px #000; }
-.run-draft-hint { font-size: 11px; letter-spacing: 1px; color: #9a86c4; font-family: 'Bungee', sans-serif; }
-
-/* three collectible modifier cards side-by-side — a real hand to pick from */
-.run-offers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: stretch; }
+/* ---- DRAFT — the hand ---- */
+.run-offers {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  align-items: stretch; min-height: 0; flex: 0 1 auto;
+}
 .run-card {
   position: relative; display: flex; flex-direction: column; text-align: left; cursor: pointer;
-  padding: 0; overflow: hidden; border-radius: 12px; background: #241539;
-  border: 4px solid #FF6B3D; box-shadow: 6px 6px 0 #000;
-  transition: transform .14s ease, box-shadow .14s ease;
+  padding: 0; overflow: hidden; border-radius: 10px; background: var(--run-slab);
+  border: 3px solid var(--run-rule); box-shadow: 5px 5px 0 #000;
+  transition: transform .16s cubic-bezier(.2,.9,.3,1);
+  min-width: 0;
 }
-.run-card.upside { border-color: #2EFFE0; }
-.run-card:hover:not(:disabled) { transform: translate(-2px, -3px); box-shadow: 9px 10px 0 #000; }
-.run-card:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
-.run-card:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
-
-/* the authored-SVG banner — art doing the work, edge to edge */
-.run-card-art { display: block; position: relative; width: 100%; aspect-ratio: 3 / 2; border-bottom: 4px solid #000; }
+.run-card.upside { border-color: var(--run-ink-dim); }
+.run-card-art { display: block; position: relative; width: 100%; aspect-ratio: 3 / 2; border-bottom: 3px solid #000; flex: none; }
 .run-card-art-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.run-card-body { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 8px 9px 10px; flex: 1; min-width: 0; }
+/* The card's lines never shrink: a squeezed row used to flex-shrink the name and the two
+   effect lines into each other (an 8px text-on-text collision at 390). The row grows
+   instead, and the no-scroll gate is what catches it if the panel then runs out of height. */
+.run-card-body > * { flex: none; }
+.run-card-name { font-family: 'Bungee', sans-serif; font-size: clamp(11px, 1.1vw, 14px); line-height: 1.05; color: var(--run-ink); }
+.run-fx-up, .run-fx-down { font-size: 11px; line-height: 1.2; padding-left: 12px; position: relative; }
+.run-fx-up { color: var(--run-ink); }
+.run-fx-down { color: var(--run-ink-dim); }
+.run-fx-up::before, .run-fx-down::before { position: absolute; left: 0; top: 0; font-size: 9px; }
+.run-fx-up::before { content: '▲'; color: var(--run-ink); }
+.run-fx-down::before { content: '▼'; color: var(--run-ink-dim); }
 
-.run-card-tag {
-  position: absolute; top: 8px; left: 8px; z-index: 2;
-  font-size: 9px; font-family: 'Bungee', sans-serif; letter-spacing: .5px;
-  padding: 3px 6px; border-radius: 6px; background: #FF6B3D; color: #000; border: 2px solid #000;
+/* THE RAISE — 1.3x with a ±3° lean, siblings falling back so one card is clearly out of
+   the hand. Pointer-only (a touch screen has no hover, and a 1.3x lift has nowhere to go
+   on a phone). transform ONLY; the hard shadow is static, never transitioned. */
+@media (hover: hover) and (pointer: fine) {
+  .run-offers:hover .run-card:not(:disabled) { transform: scale(.95); }
+  .run-offers .run-card:hover:not(:disabled),
+  .run-offers .run-card:focus-visible:not(:disabled) {
+    transform: scale(1.3) rotate(-3deg); z-index: 5; will-change: transform;
+  }
+  .run-offers .run-card[data-lean='r']:hover:not(:disabled),
+  .run-offers .run-card[data-lean='r']:focus-visible:not(:disabled) {
+    transform: scale(1.3) rotate(3deg);
+  }
 }
-.run-card.upside .run-card-tag { background: #2EFFE0; }
-
-.run-card-body { display: flex; flex-direction: column; justify-content: center; gap: 7px; padding: 10px 11px 12px; flex: 1; }
-.run-card-name { font-family: 'Bungee', sans-serif; font-size: 15px; line-height: 1.05; color: #FFE94A; -webkit-text-stroke: .5px #000; }
-.run-card-fx { display: flex; flex-direction: column; gap: 5px; }
-.run-fx-up, .run-fx-down { font-size: 12px; line-height: 1.25; padding-left: 15px; position: relative; }
-.run-fx-up { color: #bfeee8; }
-.run-fx-down { color: #ffb2a0; }
-.run-fx-up::before, .run-fx-down::before {
-  position: absolute; left: 0; top: 0; font-family: 'Bungee', sans-serif; font-size: 11px;
-}
-.run-fx-up::before { content: '▲'; color: #2EFFE0; }
-.run-fx-down::before { content: '▼'; color: #FF6B3D; }
+.run-card:focus-visible { outline: 3px solid var(--run-ink); outline-offset: 3px; }
+.run-card:active:not(:disabled) { transform: scale(1.06); }
 
 /* DRAFTED stamp — hidden until the card is chosen */
 .run-card-stamp {
   position: absolute; top: 50%; left: 50%; z-index: 3;
   transform: translate(-50%, -50%) rotate(-11deg) scale(.5); opacity: 0;
-  font-family: 'Bungee', sans-serif; font-size: 26px; color: #2EFFE0;
-  padding: 6px 14px; border: 4px solid #2EFFE0; border-radius: 8px; background: rgba(13,6,24,.72);
+  font-family: 'Bungee', sans-serif; font-size: clamp(16px, 1.8vw, 24px); color: var(--run-ink);
+  padding: 5px 12px; border: 4px solid var(--run-ink); border-radius: 8px; background: rgba(13, 6, 24, .82);
   -webkit-text-stroke: 1px #000; pointer-events: none; white-space: nowrap;
 }
 
-/* ---- the COMMIT moment (finite, transform/opacity only, reduced-motion-safe) ---- */
-.run-card.chosen { will-change: transform; animation: run-pick-pop .47s cubic-bezier(.2,1.3,.5,1) forwards; z-index: 4; }
-.run-card.chosen .run-card-stamp { will-change: transform, opacity; animation: run-stamp-slam .47s cubic-bezier(.2,1.4,.5,1) forwards; }
-.run-card.dropped { will-change: transform, opacity; animation: run-pick-drop .47s ease forwards; }
-@keyframes run-pick-pop {
-  0% { transform: scale(1); } 45% { transform: scale(1.08) translateY(-6px); } 100% { transform: scale(1.03) translateY(-4px); }
+/* THE SLAM — the raised card is driven back down through its resting size and settles. */
+.run-card.chosen { animation: run-slam .43s cubic-bezier(.2,1.1,.3,1) forwards; z-index: 6; will-change: transform; }
+.run-card.chosen .run-card-stamp { animation: run-stamp-slam .43s cubic-bezier(.2,1.4,.5,1) forwards; will-change: transform, opacity; }
+.run-card.dropped { animation: run-card-drop .43s ease forwards; will-change: transform, opacity; }
+@keyframes run-slam {
+  0%   { transform: scale(1.3) rotate(-3deg); }
+  34%  { transform: scale(.84) rotate(1.5deg); }
+  58%  { transform: scale(1.07) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 @keyframes run-stamp-slam {
-  0% { transform: translate(-50%, -50%) rotate(-11deg) scale(1.9); opacity: 0; }
-  55% { transform: translate(-50%, -50%) rotate(-11deg) scale(.92); opacity: 1; }
+  0%   { transform: translate(-50%, -50%) rotate(-11deg) scale(2); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) rotate(-11deg) scale(.9); opacity: 1; }
   100% { transform: translate(-50%, -50%) rotate(-11deg) scale(1); opacity: 1; }
 }
-@keyframes run-pick-drop {
-  0% { transform: scale(1); opacity: 1; } 100% { transform: scale(.9) translateY(8px); opacity: .28; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .run-card.chosen, .run-card.chosen .run-card-stamp, .run-card.dropped { animation: none; }
-  .run-card.chosen .run-card-stamp { opacity: 1; transform: translate(-50%, -50%) rotate(-11deg) scale(1); }
+@keyframes run-card-drop {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(.88) translateY(10px); opacity: .22; }
 }
 
-/* ---- the growing STACK / drafted deck ---- */
-.run-draft-stack { display: flex; flex-direction: column; gap: 8px; border-top: 2px dashed #3a2a5a; padding-top: 12px; }
-.run-draft-stack-label { font-size: 11px; color: #9a86c4; font-family: 'Bungee', sans-serif; letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
-.run-stack-count { font-size: 11px; color: #000; background: #FFE94A; border: 2px solid #b39b00; border-radius: 999px; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; }
-.run-stack-deck { display: flex; flex-wrap: wrap; gap: 8px; }
-.run-mini { display: flex; align-items: center; gap: 7px; padding: 4px 9px 4px 4px; border-radius: 8px; background: #0d0618; border: 2px solid #FF6B3D; box-shadow: 2px 2px 0 #000; }
-.run-mini.upside { border-color: #2EFFE0; }
-.run-mini-art { width: 30px; height: 30px; border-radius: 5px; overflow: hidden; border: 2px solid #000; flex: none; }
-.run-mini-svg { width: 100%; height: 100%; display: block; }
-.run-mini-name { font-family: 'Bungee', sans-serif; font-size: 10px; color: #f0e7ff; }
+/* ---- RUN OVER ---- */
+.run-stamp { font-size: clamp(26px, 4.6vw, 52px); }
+.run-stamp.slam { animation: run-over-slam .5s cubic-bezier(.2,1.2,.3,1) 1; will-change: transform, opacity; }
+@keyframes run-over-slam {
+  0%   { transform: scale(2.2) rotate(-7deg); opacity: 0; }
+  46%  { transform: scale(.92) rotate(2.5deg); opacity: 1; }
+  72%  { transform: scale(1.05) rotate(-1.5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
 
-/* ---- over ---- */
-.run-over { text-align: center; align-items: center; border-color: #FF3B3B; }
-.run-over.won { border-color: #2EFFE0; }
-/* MISS moment: the panel jolts once on mount, like hitting the wall. */
-.run-over.miss { animation: runMissShake .5s ease-out 1; }
-.run-over-stamp { font-family: 'Bungee', sans-serif; font-size: 40px; color: #FF3B3B; -webkit-text-stroke: 2px #000; transform-origin: center; }
-.run-over.won .run-over-stamp { color: #2EFFE0; }
-.run-over-stamp.slam { animation: runStampSlam .55s cubic-bezier(.2,1.2,.3,1) 1; }
-.run-over-stamp.pop { animation: runStampPop .5s cubic-bezier(.2,1.4,.4,1) 1; }
-.run-over-sub { font-size: 13px; color: #cbbce8; }
-/* the final gap the wall you missed — the same meter, frozen at what killed you */
-.run-over-gap { width: 100%; display: flex; flex-direction: column; gap: 5px; }
-.run-progress-track.missed { height: 22px; }
-.run-progress-track.missed .run-progress-fill { background: #FF3B3B; }
-.run-over-gap-nums { font-size: 12px; color: #9a86c4; }
-.run-over-gap-nums b { font-family: 'Bungee', sans-serif; color: #FF3B3B; font-size: 15px; }
-.run-over-score { display: flex; flex-direction: column; }
-.run-over-score span { font-size: 12px; color: #9a86c4; font-family: 'Bungee', sans-serif; }
-.run-over-score b { font-family: 'Bungee', sans-serif; font-size: 44px; color: #FFE94A; -webkit-text-stroke: 2px #000; }
-.run-over-wins { font-family: 'Bungee', sans-serif; font-size: 22px; color: #2EFFE0; }
-
-/* narrow: the three cards become a stacked list — art on the left, effect on the
-   right — so name + trade-off stay fully legible instead of squeezing to 3 columns. */
-@media (max-width: 560px) {
-  .run-offers { grid-template-columns: 1fr; gap: 10px; }
+/* ---- narrow: the hand becomes a list, and the fixed corner chrome gets its gutters ---- */
+@media (max-width: 720px) {
+  .run-stage { gap: 10px; }
+  .run-offers { grid-template-columns: 1fr; grid-auto-rows: 1fr; gap: 8px; flex: 0 0 auto; align-content: center; }
   .run-card { flex-direction: row; align-items: stretch; }
-  .run-card-art { width: 104px; aspect-ratio: auto; min-height: 100%; flex: none; border-bottom: none; border-right: 4px solid #000; }
-  .run-card-tag { top: 6px; left: 6px; }
-  .run-card-body { padding: 10px 12px; justify-content: center; gap: 8px; }
-  .run-card-name { font-size: 16px; }
-  .run-fx-up, .run-fx-down { font-size: 12.5px; }
-  .run-card-stamp { font-size: 22px; }
+  .run-card-art { width: 78px; aspect-ratio: auto; min-height: 100%; flex: none; border-bottom: none; border-right: 3px solid #000; }
+  .run-card-body { padding: 8px 10px; gap: 3px; }
+  .run-card-name { font-size: 13px; }
+  .run-fx-up, .run-fx-down { font-size: 11px; }
+  /* NO HOVER RAISE AT PHONE WIDTH — and this is geometry, not taste. At 390 the card row
+     is 282px wide starting at x=100, the wall column ends at x=92 and the viewport at 390:
+     the headroom for a centred scale is 0px on the right. A 1.3x raise puts the card 118px
+     off-screen; even 1.1x puts it 8px off. Phones also have no hover to raise INTO, so the
+     raise is off here and the PRESS carries the affordance — the card lifts and leans by
+     the same 3deg, at the largest scale that actually fits (1.04 -> 293px, x 94.5, right
+     387.5). The SLAM on pick is unchanged. */
+  /* :not(:active) so killing the hover raise does not also out-specify the press lift —
+     `.run-offers .run-card[data-lean]:hover` (0,5,0) beat `.run-card[data-lean]:active`
+     (0,4,0) and silently flattened every press at phone width. */
+  .run-offers .run-card:hover:not(:disabled):not(:active),
+  .run-offers .run-card:focus-visible:not(:disabled):not(:active),
+  .run-offers .run-card[data-lean]:hover:not(:disabled):not(:active),
+  .run-offers .run-card[data-lean]:focus-visible:not(:disabled):not(:active) { transform: none; }
+  .run-offers:hover .run-card:not(:disabled):not(:active) { transform: none; }
+  .run-offers .run-card[data-lean]:active:not(:disabled) { transform: translateY(-4px) scale(1.04) rotate(-3deg); }
+  .run-offers .run-card[data-lean='r']:active:not(:disabled) { transform: translateY(-4px) scale(1.04) rotate(3deg); }
+  @keyframes run-slam {
+    0%   { transform: translateY(-4px) scale(1.04) rotate(-3deg); }
+    34%  { transform: scale(.9) rotate(1.5deg); }
+    58%  { transform: scale(1.04) rotate(-1deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+}
+/* The ✕ (top-right) and the global audio button (bottom-right) are fixed app chrome. Below
+   the width where the stage stops being inset from the viewport edges, the stage reserves
+   their corners so nothing can ever sit under them. */
+@media (max-width: 900px) {
+  .run-root { padding: 8px 8px 66px; }
+  .run-stage { padding-top: 52px; }
+}
+@media (max-width: 400px) {
+  .run-stage { gap: 8px; }
+  .run-stage-round { --run-barcol: 100px; }
+  .run-panel { gap: 9px; }
+  .run-card-art { width: 66px; }
 }
 
-/* ---- wall MOMENTS — all finite one-shots, transform/opacity ONLY, single reused nodes ---- */
-@keyframes runClearBurst {
-  0%   { transform: scale(.7); opacity: 0; }
-  22%  { transform: scale(1.04); opacity: 1; }
-  68%  { transform: scale(1); opacity: 1; }
-  100% { transform: scale(1.02); opacity: 0; }
-}
-@keyframes runScorePop {
-  0%   { transform: scale(1); }
-  38%  { transform: scale(1.28); }
-  100% { transform: scale(1); }
-}
-@keyframes runStampSlam {
-  0%   { transform: scale(2.3) rotate(-9deg); opacity: 0; }
-  50%  { transform: scale(.9) rotate(3deg); opacity: 1; }
-  74%  { transform: scale(1.06) rotate(-2deg); }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
-}
-@keyframes runStampPop {
-  0%   { transform: scale(.4); opacity: 0; }
-  55%  { transform: scale(1.12); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes runMissShake {
-  0%, 100% { transform: translateX(0); }
-  16% { transform: translateX(-8px); }
-  33% { transform: translateX(8px); }
-  50% { transform: translateX(-5px); }
-  67% { transform: translateX(5px); }
-  84% { transform: translateX(-2px); }
-}
-
-@media (max-width: 420px) {
-  .run-wall-num { font-size: 44px; }
-  .run-panel { padding: 16px; }
-  .run-ladder-step { font-size: 8px; }
-  .run-draft-title { font-size: 23px; }
-  .run-card-art { width: 88px; }
-}
-
-/* Reduced motion: drop every wall-moment animation but KEEP the informational end-state
-   (cleared bar colour, the stamp, the frozen gap meter are all plain DOM, not motion). */
+/* Reduced motion: every RUN effect is a one-shot, so dropping them loses nothing
+   informational — the fill height, the stamp and the lit chip are all plain state. */
 @media (prefers-reduced-motion: reduce) {
-  .run-clear-burst.playing,
-  .run-score-num.pop,
-  .run-over.miss,
-  .run-over-stamp.slam,
-  .run-over-stamp.pop { animation: none; }
-  .run-clear-burst.playing { opacity: 0; }
+  .run-wall-fill { transition: none; }
+  .run-card.chosen, .run-card.dropped, .run-card.chosen .run-card-stamp, .run-stamp.slam { animation: none; }
+  .run-card.chosen .run-card-stamp { opacity: 1; transform: translate(-50%, -50%) rotate(-11deg) scale(1); }
+  .run-offers .run-card:hover:not(:disabled), .run-offers:hover .run-card:not(:disabled) { transform: none; }
 }

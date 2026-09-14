@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import {
   MODIFIERS, MODIFIER_BY_ID, RUN_ROUNDS, wallAt, roundKnobs, scoreWord,
-  applyRoundMods, suddenDeathChance, dealOffers, runWinsPayout,
+  applyRoundMods, suddenDeathChance, dealOffers, runWinsPayout, firingModifier,
 } from './engine.js';
 import { ROUND_MODES } from './config.js';
 import { loadSoloWords, loadSoloAcceptExt } from '../solo/words.js';
@@ -124,6 +124,10 @@ export function useRunMode() {
       constraint: roundMode.key === 'fuse' ? pickFragment(mulberry32(seed)) : null,
       lastLetter: null,
       toast: null,
+      // The ONE modifier that fired on the last accepted word + a monotonic tick, so the
+      // strip can replay its flash even when the same chip fires twice in a row.
+      fired: null,
+      firedTick: 0,
     };
     dispatch({ type: 'startRound' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,6 +172,8 @@ export function useRunMode() {
       rarity: r.band, len: word.length, vowels: countVowels(word),
       rare: RARE_LETTERS.test(word), lucky: !knobs.noLucky && p.lucky.next(), combo: p.combo,
     };
+    p.fired = firingModifier(w, stack, knobs);
+    if (p.fired) p.firedTick += 1;
     p.score += scoreWord(w, stack, knobs);
     p.combo = Math.min(knobs.comboMax, p.combo + knobs.comboStep);
     p.words += 1;

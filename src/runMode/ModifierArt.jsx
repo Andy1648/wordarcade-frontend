@@ -200,15 +200,30 @@ const FALLBACK = { field: '#9A1AFF', ink: '#7A12CC', icon: (
   <text x="50" y="64" fontSize="44" fontWeight="bold" fill="#000" textAnchor="middle" fontFamily={BUNGEE}>?</text>
 ) };
 
+// THE RUN's colour script re-keys the card FIELDS. Each motif was authored on its own
+// saturated field (pink / cyan / orange / blue), which read as five different games shuffled
+// into one hand and put four spent mode-palettes on the draft screen. The deck now shares one
+// VIOLET ramp — the fields vary by VALUE, not hue — so the hand reads as one set and the
+// motif ink is what distinguishes a card. The motifs themselves are untouched.
+const FIELDS = ['#3c1268', '#2a0b4a', '#4b1785'];
+const INKS = ['#2c0d4e', '#1c0736', '#380f63'];
+// Stable per-id index (a hash, not array order) so a card keeps its value between deals.
+function ramp(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h % FIELDS.length;
+}
+
 export default function ModifierArt({ id, className = 'run-card-art-svg' }) {
   const m = MOTIF[id] || FALLBACK;
+  const i = ramp(id || '?');
   return (
     <svg className={className} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <rect width="100" height="100" fill={m.field} />
-      {burst(m.ink, 0.55)}
+      <rect width="100" height="100" fill={FIELDS[i]} />
+      {burst(INKS[i], 0.9)}
       {m.icon}
     </svg>
   );
 }
 
-export const MODIFIER_ART_FIELD = Object.fromEntries(Object.entries(MOTIF).map(([k, v]) => [k, v.field]));
+export const MODIFIER_ART_FIELD = Object.fromEntries(Object.keys(MOTIF).map((k) => [k, FIELDS[ramp(k)]]));

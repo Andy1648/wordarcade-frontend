@@ -111,6 +111,41 @@ export function scoreWord(word, stack, knobs = roundKnobs(stack)) {
   return Math.max(0, m) * BASE_WIN_PER_WORD;
 }
 
+// Which ONE modifier actually FIRED on this word — the word-level mod that moved the
+// multiplier furthest (up OR down). Returns its id, or null when the stack holds no
+// word-level mod or none of them changed anything.
+//
+// This exists so the modifier strip can flash exactly ONE chip per accepted word: a strip
+// where every chip lights on every word says nothing. It replays scoreWord's own loop in
+// the same order with the same knobs, so what flashes is what really paid.
+// Round-level mods (DEEP POCKETS, MOMENTUM, SHORT FUSE, GLASS CANNON) have no word() and
+// are never returned — they settle at round end, and the strip marks them as such.
+export function firingModifier(word, stack, knobs = roundKnobs(stack)) {
+  if (!stack || !stack.length) return null;
+  const rarityMult = Math.min(
+    RARITY_MAX_MULT,
+    (RARITY[word.rarity] ?? 1) + Math.min(LENGTH_BONUS_MAX, Math.max(0, word.len - LENGTH_BONUS_FLOOR) * LENGTH_BONUS_PER_LETTER)
+  );
+  const luckyMult = word.lucky ? knobs.luckyMult : 1;
+  let m = Math.min(knobs.cap, rarityMult * word.combo * luckyMult);
+  let best = null;
+  let bestDelta = 1e-9;
+  for (const mod of stack) {
+    if (!mod.word) continue;
+    const next = mod.word(word, m);
+    const d = Math.abs(next - m);
+    if (d > bestDelta) { bestDelta = d; best = mod.id; }
+    m = next;
+  }
+  return best;
+}
+
+// True when a modifier only settles at ROUND END (no per-word effect) — the strip shows
+// these banked rather than firing.
+export function isRoundLevel(mod) {
+  return !!mod && !mod.word && !!(mod.round || mod.roundIdx || mod.suddenDeath);
+}
+
 // Apply the stack's ROUND-level mods to a round's raw payout. ctx carries
 // { owned: rounds since SNOWBALL drafted, clean: clean rounds so far }.
 export function applyRoundMods(payout, stack, ctx = { owned: 0, clean: 0 }) {

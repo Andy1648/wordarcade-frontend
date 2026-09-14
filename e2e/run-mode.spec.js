@@ -39,13 +39,13 @@ test.describe('the run', () => {
     await page.locator('.game-card-magnet[data-game="run"] .game-card').click({ force: true });
 
     // WALL (pre-round) surface.
-    await expect(page.locator('.run-wall')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.run-stage-wall')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.run-wall-num')).toBeVisible();
     await page.screenshot({ path: `${SHOTS}/2-wall.png` });
 
     // ROUND surface — type a few real words; the score climbs toward the wall.
-    await page.locator('.run-btn-go').click();
-    await expect(page.locator('.run-round')).toBeVisible();
+    await page.locator('.run-btn').click();
+    await expect(page.locator('.run-stage-round')).toBeVisible();
     const input = page.locator('.run-input');
     for (const w of ['planet', 'garden', 'window', 'silver', 'orange']) {
       await input.fill(w);
@@ -55,9 +55,11 @@ test.describe('the run', () => {
 
     // DRAFT surface — after the (3s) round clocks out and the wall is cleared OR the
     // run ends. Either the draft or the run-over screen must appear (no hang).
-    await expect(page.locator('.run-draft, .run-over')).toBeVisible({ timeout: 8000 });
-    if (await page.locator('.run-draft').isVisible()) {
-      await expect(page.locator('.run-offer')).toHaveCount(3);
+    await expect(page.locator('.run-stage-draft, .run-stage-over')).toBeVisible({ timeout: 8000 });
+    if (await page.locator('.run-stage-draft').isVisible()) {
+      // NB: this used to name `.run-offer`, which has never existed — the locator matched
+      // nothing and the count assertion was only ever reached on a branch that never ran.
+      await expect(page.locator('.run-card')).toHaveCount(3);
       await page.screenshot({ path: `${SHOTS}/4-draft.png` });
     } else {
       await page.screenshot({ path: `${SHOTS}/4-over.png` });
