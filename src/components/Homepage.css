@@ -148,9 +148,16 @@
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.homepage-nav-btn.is-shop { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
+/* THE INK HAS TO MOVE WITH THE FILL. The base rule sets `color: #0d0618` — near-black,
+   correct against the bright fills these buttons used to have. When they were demoted to the
+   mid-value chrome panel (--v-panel-hi, #221640) only REBIRTH's rule carried a matching
+   colour; SHOP and STATS kept the near-black. Measured: #0d0618 on #221640 is **1.19:1**,
+   against a 3:1 floor for text this size — they were legible only because the eye fills in
+   a shape it expects. REBIRTH being the odd one out is why it read bright and its two
+   neighbours read as smudges in every menu screenshot this run. */
+.homepage-nav-btn.is-shop { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; color: var(--v-ink); }
 .homepage-nav-btn.is-rebirth { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; color: var(--v-ink); }
-.homepage-nav-btn.is-stats { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
+.homepage-nav-btn.is-stats { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; color: var(--v-ink); }
 .homepage-nav-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px 0 #000;

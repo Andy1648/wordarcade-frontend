@@ -59,6 +59,19 @@
   transform: translate(3px, 3px);
   box-shadow: none;
 }
+/* 44px OF TOUCH TARGET on a 40px control. The 40x40 box is deliberate — it is the app's
+   canonical close glyph and matches every other ✕ — but CLAUDE.md's floor for a touch
+   target on mobile is 44px, and 40 is 40. The target rides in an out-of-flow ::after so the
+   button still LOOKS 40 and still sits in a 40px row: hit area and layout box are different
+   things, and only one of them has to be 44. (Same treatment the sound control beside it
+   uses; measured on CHAIN and FUSE at 390x844 and 320x640.) */
+.solo-exit::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  min-width: 44px;
+  min-height: 44px;
+}
 
 .solo-hud {
   width: 100%;
@@ -951,7 +964,8 @@
 }
 /* .solo-exit keeps its own look; it is a flex item now rather than absolutely placed. */
 .solo-corner .solo-exit {
-  position: static;
+  /* relative, not static: the 44px hit-area ::after above anchors to THIS button. */
+  position: relative;
   top: auto;
   right: auto;
 }
