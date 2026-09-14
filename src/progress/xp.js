@@ -229,7 +229,10 @@ export function rebirthScaledWins(base, rebirthCount = getRebirths()) {
   return Math.round(b * rebirthMult(rebirthCount));
 }
 export function canRebirth(xp, rebirthCount = getRebirths()) {
-  return levelFromXp(xp).level >= rebirthThreshold(rebirthCount);
+  // The count has to reach the LEVEL WALK too. This read `levelFromXp(xp)` — the default —
+  // so it compared a level derived from the UNSCALED curve against a threshold for the
+  // scaled one, and said a player could rebirth before they could.
+  return levelFromXp(xp, rebirthCount).level >= rebirthThreshold(rebirthCount);
 }
 // A one-shot "REBIRTH N" celebration queued on confirm, consumed by the homepage on the
 // next menu visit (same pattern as the wins stamp).
@@ -415,7 +418,9 @@ export function awardWordXp(opts = {}) {
   // MARK (feat/progression-clarity): the equipped mark's XP multiplier rides the same layer as
   // mastery — a flat scale on the word's XP, ×1 when the mark has no XP effect or none is worn.
   const gain = round10(xpPerWord(opts) * masteryXpMult(mode) * markXpMult(opts.markId));
-  const res = creditXp(loadProgress(), gain);
+  // ONE storage read for the rebirth count, passed down. `creditXp`'s default would read it
+  // again inside the level-carry loop's condition — three reads per accepted word.
+  const res = creditXp(loadProgress(), gain, getRebirths());
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
   return { ...res, gain, mastery };
@@ -488,7 +493,7 @@ function readLevelState() {
   if (parsed && typeof parsed === 'object' && Number.isFinite(parsed.lv)) {
     let level = Math.max(1, Math.floor(parsed.lv));
     let into = Number.isFinite(parsed.into) && parsed.into > 0 ? parsed.into : 0;
-    const cost = need(level);
+    const cost = need(level, getRebirths());
     if (into >= cost) into = 0; // corrupt/overflowed → clamp into the level (also the
     // landing for an existing save the moment NEED_REBIRTH_BASE changes: a bar that was
     // 90% full of the old cost is simply < the new cost, so it keeps its progress)
@@ -496,8 +501,15 @@ function readLevelState() {
   }
   // Legacy cumulative number → derive {level, into} once and rewrite in the new shape. Floor
   // the carried progress to a round 10 so the very first post-migration readout still ends in 0.
+  //
+  // rc = 0 IS LOAD-BEARING AND THE DEFAULT WOULD HAVE EATEN SAVES. A legacy cumulative is a
+  // total earned under a curve that had NO rebirth term — the number predates it. Walking it
+  // against `baseNeed(n) * 2^rc` therefore charges a player for rebirths they had already
+  // spent, and this branch does not just report the result, it WRITES IT BACK. Measured
+  // before the fix: `taw.rebirths=5` with a legacy LV50 total migrated to `{level:19}` and
+  // committed; at R10 the same total migrated to LV2. One load, permanent.
   if (typeof parsed === 'number' && Number.isFinite(parsed) && parsed > 0) {
-    const d = levelFromXp(parsed);
+    const d = levelFromXp(parsed, 0);
     const migrated = { level: d.level, intoLevel: Math.floor(d.intoLevel / 10) * 10 };
     writeLevelState(migrated.level, migrated.intoLevel);
     return migrated;

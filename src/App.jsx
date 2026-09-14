@@ -265,6 +265,14 @@ function App() {
   // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
   // starts on the home menu, exactly as before.
   const [view, setView] = useState(CG_ENTRY ? 'cg-arm' : 'home');
+  // A LIVE read of `view` for the WebSocket effect, which is keyed only on [lastMessage] and
+  // deliberately excludes `view` — so `view` read directly inside a handler is STALE (the
+  // trap CLAUDE.md documents for room_update). A functional setState solves that for the
+  // VIEW, but a handler also has to decide whether to play a sound or fire a transition, and
+  // there is no functional form for those. Assigned during render, so it is always the last
+  // rendered value by the time any effect runs.
+  const viewRef = useRef(view);
+  viewRef.current = view;
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
@@ -1535,7 +1543,11 @@ function App() {
 
     if (lastMessage.type === 'game_over') {
       const payload = lastMessage.payload;
-      sndRunOver(); // Job 11: game-over fall (feat/sound)
+      // ONLY IF THE PLAYER IS STILL IN THE GAME. A game_over already in flight when they
+      // pressed LEAVE arrives after they are somewhere else, and this used to play the
+      // game-over sting at them on the menu, in Stats, in Credits — wherever they had got to.
+      const stillInGame = viewRef.current === 'game' || viewRef.current === 'room';
+      if (stillInGame) sndRunOver(); // Job 11: game-over fall (feat/sound)
       // (No wpmEnd() — fix/three-again §2 removed WPM tracking from the turn-based modes.)
       // Category Blitz carries finalScores; Word Bomb carries just winnerId.
       if (payload.finalScores) {
@@ -1594,15 +1606,17 @@ function App() {
       // A LATE game_over MUST NOT DRAG A PLAYER WHO ALREADY LEFT BACK IN. This was an
       // unconditional setView('game'): press LEAVE, land on the menu, and the server's
       // game_over — which was already in flight and does not know you left — put a
-      // game-over screen for that game in front of you on the home screen. Reproduced in
+      // game-over screen for that game in front of you. Reproduced in
       // e2e/wb-adversarial.spec.js.
       // FUNCTIONAL FORM IS MANDATORY HERE, not stylistic: this effect is keyed only on
       // [lastMessage] and deliberately excludes `view`, so `view` read directly in this
-      // handler is STALE — the exact trap CLAUDE.md documents for room_update. Reading the
-      // live value through the updater is the only correct way to ask "where is the player
-      // right now". The guard is deliberately narrow: only HOME is refused, so every other
-      // transition into the game-over screen behaves exactly as before.
-      setView((prev) => (prev === 'home' ? prev : 'game'));
+      // handler is STALE — the exact trap CLAUDE.md documents for room_update.
+      // THE FIRST CUT OF THIS GUARD REFUSED ONLY 'home', AND THAT WAS TOO NARROW: `stats`,
+      // `credits`, `shop`, `browse` and the three solo views are all real places a player can
+      // be, and from any of them the late frame still yanked them to the game — onto the
+      // "STARTING GAME..." placeholder, because the room state had already been torn down.
+      // Inverted: the end screen is entered only from the two views that ARE the game.
+      setView((prev) => (prev === 'game' || prev === 'room' ? 'game' : prev));
       // Analytics: counts/enums only (no PII). mode + duration come from refs
       // stamped at game_started; player_count from the room-synced ref — all live,
       // never stale. duration omitted if we somehow never saw a start.
@@ -1683,9 +1697,14 @@ function App() {
   const prevGameOverRef = useRef(false);
   useEffect(() => {
     const now = !!gameOver;
-    if (now && !prevGameOverRef.current) runTransition('RESULTS');
+    // …and not when the player is no longer on the board. A late game_over still SET
+    // gameOver, so this fired a full RESULTS wipe over the menu: `.transition-overlay`
+    // reading RESULTS at roughly t+60ms through t+250ms, for a game the player had left.
+    if (now && !prevGameOverRef.current && (view === 'game' || view === 'room')) {
+      runTransition('RESULTS');
+    }
     prevGameOverRef.current = now;
-  }, [gameOver, runTransition]);
+  }, [gameOver, runTransition, view]);
 
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated

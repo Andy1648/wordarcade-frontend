@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { levelUp as evLevelUp, refreshSessionProps } from '../lib/events.js';
 import {
   loadProgress,
+  getRebirths,
   saveProgress,
   creditXp,
   createRateLimiter,
@@ -34,7 +35,17 @@ const TAP_MOVE_TOLERANCE = 10; // px — beyond this the pointerdown was a scrol
 export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {}) {
   const xpRef = useRef(null);
   if (xpRef.current === null) xpRef.current = loadProgress();
-  const [progress, setProgress] = useState(() => progressOf(xpRef.current));
+  // THE REBIRTH COUNT IS READ ONCE, NOT PER KEYSTROKE. `need()` takes it and defaults to
+  // `getRebirths()`, which is a localStorage read — and `creditXp`'s carry loop evaluates
+  // that default in its LOOP CONDITION. Measured on the default path: two `taw.rebirths`
+  // reads per keystroke on the menu, three per accepted word in a game. Storage I/O in the
+  // keystroke path is the same class of mistake as a layout read in one, and the budget in
+  // CLAUDE.md names that explicitly.
+  // A rebirth reloads the menu's progress anyway (doRebirth zeroes the level), so a value
+  // cached for the life of this hook cannot go stale under the player.
+  const rebirthsRef = useRef(null);
+  if (rebirthsRef.current === null) rebirthsRef.current = getRebirths();
+  const [progress, setProgress] = useState(() => progressOf(xpRef.current, rebirthsRef.current));
   const streakRef = useRef({ count: 0, lastTime: 0, tier: 0 });
   const blockedRef = useRef(isBlocked);
   const creditRef = useRef(onCredit);
@@ -84,10 +95,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      const res = creditXp(xpRef.current, menuGain);
+      const res = creditXp(xpRef.current, menuGain, rebirthsRef.current);
       xpRef.current = res.state;
       saveProgress(res.state);
-      setProgress(progressOf(res.state));
+      setProgress(progressOf(res.state, rebirthsRef.current));
 
       // Level-ups no longer pay wins (Economy v3): wins come only from finishing rounds.
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.

@@ -500,9 +500,31 @@ test('rebirthScaledWins = the amount actually PAID (Collection/Achievement quote
 // ---------------------------------------------------------------------------------------
 
 test('need() scales with rebirth, and rc=0 is byte-identical to the base curve', () => {
+  // STRENGTHENED BY THE REFUTATION PASS (chore/refute-run-n). This test used to assert
+  //   need(n, rc) === round10(baseNeed(n) * Math.pow(NEED_REBIRTH_BASE, rc))
+  // which restates the implementation using the very constant under test — set
+  // NEED_REBIRTH_BASE back to 1 and it still passes, so the assertion that NAMES the
+  // scaling was the one assertion in the file that could not see it disappear. (Three
+  // other tests below do catch it; this one did not, and it is the one a reader trusts.)
+  // The factor is pinned as a LITERAL 2 and with literal need() values, so the constant
+  // has to actually be 2 for this to hold.
+  assert.equal(need(1, 0), 2230, 'need(1) at R0');
+  assert.equal(need(1, 1), 4460, 'need(1) at R1 — one rebirth doubles the level cost');
+  assert.equal(need(1, 3), 17840, 'need(1) at R3');
+  assert.equal(need(1, 10), 2283520, 'need(1) at R10');
+  assert.equal(need(7, 1), 8580, 'need(7) at R1');
+  assert.equal(need(50, 3), 3697120, 'need(50) at R3');
   for (const n of [1, 7, 50, 100, 101, 250]) {
     assert.equal(need(n, 0), baseNeed(n), `rc=0 must not move need(${n})`);
     for (const rc of [1, 3, 10]) {
+      // the literal ladder: every rebirth multiplies the cost of a level by exactly two
+      const want = Math.pow(2, rc);
+      const got = need(n, rc) / baseNeed(n);
+      assert.ok(
+        Math.abs(got - want) / want < 1e-9,
+        `need(${n}, R${rc}) is ${got}x the base curve, expected ${want}x`,
+      );
+      // …and it is still the same rounding the rest of the curve uses
       assert.equal(
         need(n, rc),
         round10(baseNeed(n) * Math.pow(NEED_REBIRTH_BASE, rc)),
@@ -546,4 +568,46 @@ test('levelFromXp walks the SCALED curve, so a rebirthed save reads the right le
   assert.equal(levelFromXp(total, 0).level, 4);
   // the same cumulative buys strictly less after rebirths
   assert.ok(levelFromXp(total, 3).level < 4);
+});
+
+// ---------------------------------------------------------------------------------------
+// THE MIGRATION MUST NOT CHARGE A PLAYER FOR REBIRTHS THEY ALREADY SPENT.
+// Found by the refutation pass. A legacy cumulative total was earned under a curve with NO
+// rebirth term — the number predates it. Walking it against `baseNeed(n) * 2^rc` therefore
+// re-prices a history that was already paid for, and `readLevelState` does not merely report
+// the result: it WRITES IT BACK, once, permanently. Measured before the fix: a legacy LV50
+// total with `taw.rebirths = 5` migrated to level 19 and was committed; at R10 the same
+// total migrated to level 2.
+// ---------------------------------------------------------------------------------------
+test('a legacy cumulative migrates on the UNSCALED curve, whatever the rebirth count', () => {
+  const cumulative = cumCost(50) + 100; // 100 xp into level 50, old bare-number shape
+  for (const rc of [0, 5, 10]) {
+    withStorage({ 'taw.xp': String(cumulative), 'taw.rebirths': String(rc) }, (map) => {
+      const p = loadProgress();
+      assert.equal(p.level, 50, `legacy LV50 must migrate to 50 at R${rc}, not ${p.level}`);
+      // …and the value it COMMITS must be the same, because this write is one-way
+      assert.equal(
+        map.get(XP_KEY),
+        JSON.stringify({ lv: 50, into: 100 }),
+        `the migration wrote a re-priced level back to storage at R${rc}`,
+      );
+    });
+  }
+});
+
+test('canRebirth derives the level on the SAME curve it compares against', () => {
+  // It took `rebirthCount`, used it for the threshold, and then called `levelFromXp(xp)` with
+  // the default — deriving a level from the unscaled curve and comparing it to a gate for the
+  // scaled one, so it said yes too early.
+  const cumulative = cumCost(30);
+  withStorage({ 'taw.rebirths': '3' }, () => {
+    const scaled = levelFromXp(cumulative, 3).level;
+    const unscaled = levelFromXp(cumulative, 0).level;
+    assert.ok(scaled < unscaled, 'the scaled curve must buy fewer levels for the same total');
+    assert.equal(
+      canRebirth(cumulative, 3),
+      scaled >= rebirthThreshold(3),
+      'canRebirth must agree with the level the player actually has',
+    );
+  });
 });

@@ -162,6 +162,12 @@
 .menu-xp-track {
   position: relative;
   flex: 1;
+  /* NO min-width HERE, AND THAT IS A DELIBERATE NEGATIVE RESULT. The track is the only
+     elastic thing in the row, so it absorbs every shortfall — with a streak, a mark and a
+     welcome-back grant it measured 4px at 280/320/768 and 18px at 390. A `min-width: 110px`
+     does hold the track at 110 everywhere, but the bar does NOT then wrap: it OVERFLOWS,
+     and the track leaves the viewport at every width from 280 to 600. A thin track is bad;
+     a track that is off the screen is worse. See the note at the foot of this file. */
   height: 30px;
   /* 10 static notch marks (thin lines every 10%) painted on the track background via a
      repeating gradient — zero extra elements, no animation. Shown under the fill. */
@@ -716,3 +722,41 @@ button.menu-mark:active {
 @media (max-width: 360px) {
   .menu-xp-label { display: none; }
 }
+
+/* ============================================================= */
+/* ===  THE STREAK CHIP YIELDS BEFORE THE TRACK DOES  ========== */
+/* ============================================================= */
+
+/* THE TRACK WAS 4px FROM 280 TO 768, AND OFF-VIEWPORT BELOW 768, for any account with a
+   streak — which is any account that has played two days running. The streak chip is the
+   widest thing in the strip by a distance: measured 191px against the wins chip's 98 and the
+   rank's 64. Every earlier fix in this file shed a DIFFERENT chip (rank at 480, mark at 430,
+   the LEVEL word at 360) and none of them touched the one that was actually eating the row,
+   because the width ladder I measured was taken on an account with no streak.
+
+   Measured with a 7-day streak + a mark + the welcome-back grant, before this:
+     1366:52  1280:52  1100:52  900:43  768:4  600:4  480:4  430:4  390:4  360:4  320:4  280:4
+
+   The XP track is the bar's whole reason for existing; the chips around it are ornaments on
+   it. So the streak sheds in the order it can afford to lose: the freeze tokens and the word
+   DAYS first (the flame and the number already say "streak"), then the XP multiplier, which
+   is also shown in Stats. The flame and the count survive to 280px. */
+@media (max-width: 1024px) {
+  .menu-streak-freeze,
+  .menu-streak-day { display: none; }
+}
+@media (max-width: 700px) {
+  .menu-streak-mult { display: none; }
+}
+
+/* WHAT IS STILL WRONG HERE, MEASURED AND NOT FIXED.
+   With a 7-day streak + a mark + the welcome-back grant, the XP track after the shedding
+   above is:
+     1366:52  1280:52  1100:52  900:124  768:4  600:52  480:61  430:58  390:18  360:32  320:4
+   Better than the 4px-everywhere it was, and no longer off-viewport, but 4px at 768 and 18px
+   at 390 are still not a progress bar. The strip is over-subscribed: wins + grant + streak +
+   LEVEL + LV + mark + rank + the track, in as little as 232px of inner width.
+   Shedding one more chip per breakpoint keeps moving the problem rather than solving it, and
+   a min-width makes the bar overflow instead of wrap. What this needs is a DECISION about
+   which chips belong on a phone at all — which is a design call, not a layout bug, so it is
+   written up rather than guessed at. */
