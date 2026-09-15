@@ -133,3 +133,42 @@ test('no duplicate sentences', () => {
   });
   assert.deepEqual(bad, [], `duplicate sentences:\n${bad.join('\n')}`);
 });
+
+// NO AUTHORING NOTE REACHES THE PLAYER.
+//
+// `pensive` shipped with its context reading "...weighing whether to tell her at all.
+// (also alts: add thoughtful)" — a note to the author, rendered verbatim on the poster as
+// part of the sentence the player is asked to solve. Every other test in this file checks
+// the SHAPE of a row; none checked that the prose is prose.
+//
+// The note was also WRONG, which is the more useful half: it asks for "thoughtful" as an alt
+// of "pensive", and the slot invariant above forbids it (10 letters against 7). So it could
+// never have been actioned as written, and stripping it loses nothing. Leaving it in the data
+// as a reminder cost a player-facing defect for a reminder that was not actionable.
+//
+// The patterns are deliberately the shapes of EDITORIAL asides, not of English. A parenthetical
+// is fine in a sentence — "(also alts: ...)", "TODO", "[note]" are not.
+test('no authoring note leaks into player-facing prose', () => {
+  const NOTE = [
+    /\balts?\s*:/i,          // "alts: add thoughtful"
+    /\bTODO\b|\bFIXME\b|\bXXX\b/,
+    /\bN\.B\./i,
+    /\[\s*(note|check|todo)/i,
+    /\((also\s+alts|add|fix|check|maybe|todo)\b/i,
+  ];
+  const FIELDS = ['context', 'gloss'];
+  const bad = [];
+  WORDS.forEach((r, i) => {
+    for (const f of FIELDS) {
+      const v = r[f];
+      if (typeof v !== 'string') continue;
+      for (const re of NOTE) {
+        if (re.test(v)) bad.push(`${at(i)}: ${f} carries an authoring note ${re} — "${v}"`);
+      }
+    }
+    for (const a of r.alts || []) {
+      if (/[():[\]]/.test(String(a))) bad.push(`${at(i)}: alt "${a}" carries punctuation`);
+    }
+  });
+  assert.deepEqual(bad, [], `authoring notes in player-facing prose:\n${bad.join('\n')}`);
+});
