@@ -9,9 +9,16 @@ import './index.css'
 import './theme/themes.css'
 import { initTheme } from './theme/themes'
 import { initAnalytics, initSentry, Sentry } from './lib/analytics'
+import { installChunkReloadGuard } from './lib/chunkReload'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
 import { getStreak } from './progress/streak'
+
+// STALE CHUNK SELF-HEAL: installed FIRST, before anything can request a lazy route chunk.
+// A tab left open across a deploy still names the previous build's hashed chunks, so the next
+// lazy screen it opens rejects with "Failed to fetch dynamically imported module". One reload
+// picks up the new index and fixes it; the guard inside caps that at one reload per tab.
+try { installChunkReloadGuard() } catch { /* never block startup */ }
 
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.

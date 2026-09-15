@@ -15,6 +15,16 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Browser translate extensions (Edge/Chrome "Translate this page", Google Translate)
+         REPLACE text nodes in place. React still holds references to the originals, so its
+         next reconcile calls removeChild on a node the extension already swapped out — the
+         "NotFoundError: Failed to execute 'removeChild' on 'Node'" the ErrorBoundary catches
+         on /room/:code, where names / the word feed / the timer re-render every second.
+         This opts the page out of Google's auto-translate offer; the page's STATIC copy is
+         still translatable by hand. The VOLATILE nodes carry their own translate="no" (see
+         GameScreen.jsx + RoomScreen.jsx) — do NOT put notranslate on <html>/<body>, that
+         would lock non-English players out of translating the menu and rules. -->
+    <meta name="google" content="notranslate" />
     <!-- Mobile browser chrome + some unfurlers tint to this; matches the app's
          void background (#0d0618) and the manifest theme_color. -->
     <meta name="theme-color" content="#0d0618" />

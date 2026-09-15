@@ -348,7 +348,7 @@ function SubmitLetters({ text, mode }) {
   );
   if (done || letters.length === 0) return null;
   return (
-    <div className={`submit-letters submit-${mode}`} aria-hidden="true">
+    <div className={`submit-letters submit-${mode}`} translate="no" aria-hidden="true">
       {letters.map((l, i) => (
         <span
           key={i}
@@ -389,7 +389,7 @@ function LiveTypeText({ text }) {
     prevLenRef.current = len;
   }, [len]);
   return (
-    <span className="player-typing-text">
+    <span className="player-typing-text" translate="no">
       {up.split('').map((ch, i) => {
         const popping = i === lastIndex && grew;
         return (
@@ -817,7 +817,7 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   const src = BOMB_MASCOT_SRC[pose] || BOMB_MASCOT_SRC.idle;
 
   return (
-    <div className={`bomb-vignette ${tension}`}>
+    <div className={`bomb-vignette ${tension}`} translate="no">
       <div className="bomb-scale" style={{ transform: `scale(${BOMB_SCALE[tension]})` }}>
         <div className={`bomb-body-wrap ${tension}`}>
           <svg className="bomb-svg" viewBox="0 0 160 185" width="180" aria-hidden="true">
@@ -986,7 +986,7 @@ function KillFeed({ events, playerColors = {} }) {
   }
 
   return (
-    <div className="kill-feed" aria-hidden="true">
+    <div className="kill-feed" translate="no" aria-hidden="true">
       <div className="kill-feed-title">LIVE FEED</div>
       <div className="kill-feed-list">
         {visible.length === 0 ? (
@@ -1069,7 +1069,7 @@ function MissedAnswers({ answers }) {
   return (
     <div className="cb-missed">
       <div className="cb-missed-title">ANSWERS YOU MISSED</div>
-      <div className="cb-missed-answers">
+      <div className="cb-missed-answers" translate="no">
         {shown.map((answer, i) => (
           <span key={`${answer}-${i}`} className="cb-missed-chip">
             {answer.toUpperCase()}
@@ -1308,7 +1308,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
           >
             <div className="go-player-name">
               <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-              <span className="go-player-name-text">{p.name}</span>
+              <span className="go-player-name-text" translate="no">{p.name}</span>
             </div>
             <div className="go-player-grid">
               <div className="go-pstat">
@@ -2838,7 +2838,7 @@ export default function GameScreen({
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="game-player-name-text">{player.name}</span>
+                    <span className="game-player-name-text" translate="no">{player.name}</span>
                     {isMe && <span className="game-player-you">YOU</span>}
                     {/* Hearts live INSIDE the card, on the name row (right side). */}
                     <div className="game-player-hearts">
@@ -2942,7 +2942,7 @@ export default function GameScreen({
             className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
           >
             <div className="game-combo-label">{promptLabel}</div>
-            <div className={`game-combo${isCategory ? ' category' : ''}`}>
+            <div className={`game-combo${isCategory ? ' category' : ''}`} translate="no">
               {promptValue}
             </div>
           </div>
@@ -2952,7 +2952,7 @@ export default function GameScreen({
           <div className="game-used-label">
             {usedLabel} ({usedItems.length})
           </div>
-          <div className="game-used-list">
+          <div className="game-used-list" translate="no">
             {usedItems.length === 0 ? (
               <span className="game-used-empty">NONE YET — BE THE FIRST</span>
             ) : (
@@ -3921,7 +3921,7 @@ function CategoryBlitzScreen({
                   <span className="cb-score-rank">{i + 1}</span>
                   <span className="cb-score-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-score-name-text">{s.name}</span>
+                    <span className="cb-score-name-text" translate="no">{s.name}</span>
                     {s.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-score-pts">
@@ -4128,7 +4128,7 @@ function CategoryBlitzScreen({
                 style={{ transform: `scaleX(${displayRatio})`, background: timerColor }}
               />
             </div>
-            <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`}>
+            <div className={`game-timer-num${veryLowTime ? ' shake' : ''}`} translate="no">
               {timerSeconds}s
             </div>
           </div>
@@ -4223,7 +4223,7 @@ function CategoryBlitzScreen({
 
           <div className="cb-my-answers">
             <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
-            <div className="cb-answers-list">
+            <div className="cb-answers-list" translate="no">
               {myAnswers.length === 0 ? (
                 <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
               ) : (
@@ -4253,7 +4253,7 @@ function CategoryBlitzScreen({
                   >
                     <span className="cb-progress-name">
                       <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                      <span className="cb-progress-name-text">{p.name}</span>
+                      <span className="cb-progress-name-text" translate="no">{p.name}</span>
                     </span>
                     <span className="cb-progress-count">
                       {plural(playerProgress[p.id] || 0, 'answer')}
@@ -4310,7 +4310,7 @@ function CategoryBlitzScreen({
                 <div className="cb-result-head">
                   <span className="cb-result-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-result-name-text">{pr.name}</span>
+                    <span className="cb-result-name-text" translate="no">{pr.name}</span>
                     {pr.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-result-scores">
@@ -4320,7 +4320,7 @@ function CategoryBlitzScreen({
                     </span>
                   </span>
                 </div>
-                <div className="cb-result-answers">
+                <div className="cb-result-answers" translate="no">
                   {pr.answers.length === 0 ? (
                     <span className="game-used-empty">NO ANSWERS</span>
                   ) : (
