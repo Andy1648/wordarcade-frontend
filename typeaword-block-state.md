@@ -44,7 +44,9 @@ work; see §10.
 - **Level curve** `need(n)` = XP for level n->n+1. **This is v7 and it is not what the last
   handoff described.** v6 was `100 x 1.25^n` to level 60 and then a 1.08 tail - a tail that made
   the late game CHEAPER per level than the early game. v7 is one shape that only ever steepens:
-  - `n <= 100`: `round10(2000 x 1.115^n)` -> 2,230 / 30,470 / 462,220 / 1.07e8 at 1 / 25 / 50 / 100
+  - `n <= 100`: `round10(2000 x 1.115^n)` -> 2,230 / 30,400 / 462,140 / 106,786,590 at 1 / 25 / 50 / 100
+    (re-read off the shipped module 2026-09-15; the previous line had 30,470 and 462,220, which
+    no constant in `xp.js` produces — the two middle samples were wrong, the outer two right.)
   - `n > 100`: `need(100) x 1.135^(n-100)` - **steeper**, never shallower
   - Constants `CURVE_BASE=2000`, `CURVE_BREAK=100`, `EARLY_CURVE_EXP=1.115`, `TOP_CURVE_EXP=1.135`.
     `TOP > EARLY` is an invariant with a test on it - the whole v6 defect was a tail going the
