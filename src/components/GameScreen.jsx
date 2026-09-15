@@ -86,6 +86,12 @@ const REJECTION_MESSAGES = {
   // not_a_word is emitted ONLY by the server's dictionary check — i.e. the rollback of an optimistic
   // accept (the client can't know the dictionary). Phrased as the server overruling. (JOB C Path B.)
   not_a_word: 'NOT IN OUR WORD LIST',
+  // turn_over: gameLogic.js returns this when the turn moved on WHILE the awaited
+  // dictionary lookup was in flight — you beat the buzzer by less than the lookup took.
+  // It had no entry here, so rejectionMessage()'s fallback printed NOT IN OUR WORD LIST's
+  // neighbour, "INVALID WORD", at a player whose word was perfectly valid and merely late.
+  // That is the single most common clutch moment in the mode, told the wrong thing.
+  turn_over: 'TOO LATE — THE TURN MOVED ON',
   not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
 };
 
@@ -2962,6 +2968,13 @@ export default function GameScreen({
       else if (comboLc && !w.includes(comboLc)) localReason = 'missing_combo';
       else if (usedItems.some((u) => String(u).toLowerCase() === w)) localReason = 'already_used';
       if (localReason) {
+        // THE SHATTER READS THIS REF, AND THIS PATH USED TO RETURN BEFORE SETTING IT.
+        // The reject effect runs `setShatterText(lastSubmitWordRef.current)` for EVERY
+        // reject, local ones included — but the assignment below lives after this early
+        // return, so a local reject shattered whatever word was last SENT to the server
+        // (or nothing at all on the first reject of a game). Type STRAND, get it
+        // accepted, then type AA: the letters that flew apart spelled STRAND.
+        lastSubmitWordRef.current = word;
         onLocalWordResult({ accepted: false, reason: localReason });
         setDraft('');
         if (onTypingUpdate) onTypingUpdate('');
@@ -3522,7 +3535,19 @@ export default function GameScreen({
               // rail fit above: whole chips only, so the column can never end in one
               // sliced through the middle. The label above still shows the TRUE total,
               // which is what makes a trimmed column honest rather than lossy.
-              usedItems.slice(-usedVisible).map((item) => {
+              // SLICE(-0) IS SLICE(0) — THE WHOLE ARRAY, NOT NONE OF IT. railFit clamps
+              // `visible.used` at 0 (wbRailFit.js: Math.max(0, ...)) when the row cannot fit
+              // even one whole chip, and with 3+ players (the pair that puts LIVE FEED in the
+              // lists) every phone-landscape viewport hits that: measured 0 at 736x414,
+              // 812x375, 844x390, 896x414 and 800x360. `slice(-0)` then laid out ALL 24 used
+              // words inside a 22px card. `overflow:hidden` clips most of it, so the visible
+              // symptom is small — at 736x414 the newest chip drew as a sliced yellow stub
+              // under the label, the half-drawn row wbRailFit.js was written to kill — but
+              // the render is wrong by 24 nodes on every one of those sizes.
+              // KillFeed already survives a zero budget (its loop simply never runs); this is
+              // the same rule written out, and the label above still shows the true total,
+              // which is what makes an empty column honest rather than lossy.
+              (usedVisible > 0 ? usedItems.slice(-usedVisible) : []).map((item) => {
                 // feat/wb-bot-turn: the bot's word being revealed on its card stays hidden
                 // (opacity only) until the last letter lands, then slides in as normal.
                 const pending =

@@ -2043,6 +2043,30 @@ function App() {
     fireReroll(() => send('reroll_category', {}));
   }
 
+  // THE THREE LOCAL REJECTS ARE STILL MISSES. GameScreen decides too_short /
+  // missing_combo / already_used from its own state and never sends them, so the
+  // `word_result` rejected branch above — the one place a Word Bomb payout combo
+  // breaks on a bad word — never runs for them. Until this handler existed the fast
+  // path therefore made three of the four reject kinds FREE: type "AA", keep your
+  // ×3.0. Measured on the branch before this fix (e2e/wb-adversarial-2.spec.js): the
+  // word after a local reject banked 780, the same word after a server `not_a_word`
+  // banked 620 — a 25.8% overpay on that word alone, and the preserved streak keeps
+  // paying for the rest of the run. progress/combo.js's own contract is "any
+  // reject/timeout resets it", and the server has no combo to disagree with — this is
+  // the client owing itself consistency between two paths that show the player the
+  // identical buzz/shake/toast.
+  //
+  // Same roll, same helper, same order as the server-reject branch (the MARK —
+  // METRONOME save), so a mark cannot apply twice and cannot apply to one path only.
+  // useCallback because App re-renders ~1-2x/sec; a fresh identity here would churn
+  // every GameScreen memo that sees it.
+  const handleLocalWordResult = useCallback((result) => {
+    if (result && !result.accepted) {
+      if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current);
+    }
+    setLastWordResult(result);
+  }, []);
+
   function handleSubmitWord(word) {
     // Remember my in-flight word so its word_result is attributed to ME by word match,
     // no matter what turn_update lands first (see the word_result handler + myOutstandingWordsRef).
@@ -2169,8 +2193,9 @@ function App() {
         // Instant local Word Bomb reject (proposal a): GameScreen surfaces the three
         // client-determinable rejects through the SAME lastWordResult path a server
         // word_result would, so the feedback (buzz/shake/toast) is identical — just
-        // same-frame instead of after a round-trip.
-        onLocalWordResult={setLastWordResult}
+        // same-frame instead of after a round-trip — and, since this fix, with the same
+        // payout-combo consequence a server reject has (see handleLocalWordResult).
+        onLocalWordResult={handleLocalWordResult}
         checkingAnswer={checkingAnswer}
         gameOver={gameOver}
         roomPlayers={room ? room.players : []}
