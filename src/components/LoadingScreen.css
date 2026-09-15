@@ -166,6 +166,11 @@
   /* transform (translateY(-50%) + scale) is set inline so it grows with progress. */
 }
 
+/* <picture> has no box of its own; block so it cannot introduce an inline baseline
+   gap under the block-level <img> inside the absolutely-positioned wrap. */
+.loading-mascot-pic {
+  display: block;
+}
 .loading-mascot {
   display: block;
   height: clamp(70px, 14vw, 100px);

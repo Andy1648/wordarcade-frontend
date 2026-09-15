@@ -21,11 +21,20 @@ const MESSAGES = [
   'Connecting to the arena...',
 ];
 
-const POSE_SRC = {
-  idle: '/mascot-idle.png',
-  panic: '/mascot-panic.png',
-  celebrate: '/mascot-celebrate.png',
+// The three boot poses. Each ships as AVIF + WebP + PNG of the same 500x500 artwork;
+// the <picture> below lets the browser take the smallest format it understands, and the
+// PNG stays the real fallback. These three were 176,307 bytes of the boot payload as
+// PNG and are 49,311 as AVIF. Same pattern as Mascot.jsx.
+const POSE_BASE = {
+  idle: '/mascot-idle',
+  panic: '/mascot-panic',
+  celebrate: '/mascot-celebrate',
 };
+
+// Intrinsic size of the pose artwork, emitted as width/height so the browser reserves
+// the box before the image arrives. CSS still sizes it by height with width:auto.
+const POSE_W = 500;
+const POSE_H = 500;
 
 // A few spark particles that trail up off the flame (horizontal drift + delay).
 const SPARKS = [
@@ -196,12 +205,18 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
 
         {/* The mascot bomb at the right end of its own fuse. */}
         <div className="loading-mascot-wrap" style={{ transform: `translateY(-50%) scale(${mascotScale.toFixed(3)})` }}>
-          <img
-            className={`loading-mascot${shaking ? ' shaking' : ''}`}
-            src={POSE_SRC[pose]}
-            alt=""
-            draggable="false"
-          />
+          <picture className="loading-mascot-pic">
+            <source srcSet={`${POSE_BASE[pose]}.avif`} type="image/avif" />
+            <source srcSet={`${POSE_BASE[pose]}.webp`} type="image/webp" />
+            <img
+              className={`loading-mascot${shaking ? ' shaking' : ''}`}
+              src={`${POSE_BASE[pose]}.png`}
+              alt=""
+              draggable="false"
+              width={POSE_W}
+              height={POSE_H}
+            />
+          </picture>
         </div>
 
         {/* The explosion when the flame reaches the bomb (and it survives). */}
