@@ -17,13 +17,19 @@
 // pointer-events:none). All are gated under prefers-reduced-motion in the CSS.
 import './Mascot.css';
 
-const POSE_SRC = {
-  idle: '/mascot-idle.png',
-  panic: '/mascot-panic.png',
-  celebrate: '/mascot-celebrate.png',
-  run: '/mascot-run.png',
-  taunt: '/mascot-taunt.png',
-};
+// The five poses. Each ships as AVIF + WebP + PNG of the same 500x500 artwork; the
+// <picture> below lets the browser take the smallest format it understands. The PNG is
+// NOT legacy dead weight — it is the real fallback, and it is also what the consumers
+// that cannot use <picture> still point at (the SVG <image> in GameScreen's bomb, the
+// canvas share card in share/, LoadingScreen).
+const POSES = ['idle', 'panic', 'celebrate', 'run', 'taunt'];
+
+// Intrinsic size of every pose PNG. Emitted as width/height attributes so the browser
+// can reserve the box before the image arrives (PageSpeed flagged their absence — an
+// image with no intrinsic size contributes layout shift). CSS still sizes the rendered
+// image by height with width:auto, so these only supply the aspect ratio.
+const POSE_W = 500;
+const POSE_H = 500;
 
 // Recognised emote names -> their CSS class. Anything else (or null) = no emote.
 //   bored     : lobby/waiting - occasional impatient fidget (loops)
@@ -44,7 +50,7 @@ const EMOTES = new Set([
 ]);
 
 export default function Mascot({ pose = 'idle', emote = null, size = 120, className = '', style }) {
-  const src = POSE_SRC[pose] || POSE_SRC.idle;
+  const name = POSES.includes(pose) ? pose : 'idle';
   const emoteClass = emote && EMOTES.has(emote) ? ` emote-${emote}` : '';
   return (
     <div
@@ -58,7 +64,20 @@ export default function Mascot({ pose = 'idle', emote = null, size = 120, classN
           the room join-pop), so the class is removed and re-added. */}
       <div className={`mascot-emote${emoteClass}`}>
         <div className="mascot-bounce">
-          <img key={pose} className="mascot-img" src={src} alt="" draggable="false" />
+          {/* Re-keyed per pose so the enter-pop replays on every swap — the key sits on
+              <picture> so the whole element (and the <img> inside it) remounts. */}
+          <picture key={name} className="mascot-pic">
+            <source srcSet={`/mascot-${name}.avif`} type="image/avif" />
+            <source srcSet={`/mascot-${name}.webp`} type="image/webp" />
+            <img
+              className="mascot-img"
+              src={`/mascot-${name}.png`}
+              alt=""
+              draggable="false"
+              width={POSE_W}
+              height={POSE_H}
+            />
+          </picture>
         </div>
       </div>
     </div>

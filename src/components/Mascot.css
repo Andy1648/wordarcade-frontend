@@ -126,6 +126,12 @@ html[data-beat='true'] .mascot-container {
 
 /* Per-pose enter: a SNAPPY pop up from small with a rotate overshoot. The
    <img> is re-keyed per pose so this replays on every swap. */
+/* <picture> is a wrapper with no box of its own; make it block so it cannot add an
+   inline-layout baseline gap under the block-level <img> it contains. */
+.mascot-pic {
+  display: block;
+}
+
 .mascot-img {
   display: block;
   height: var(--mascot-size, 120px);
