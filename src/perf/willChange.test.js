@@ -14,6 +14,18 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // transform / opacity are the only two properties the compositor can animate off the main
 // thread. The CSS-wide keywords are inert as values, so they're allowed too.
+//
+// WHAT THIS TEST DOES NOT ASSERT — stated because the project has been burned by gates that
+// read as though they prove more than they do (e2e/motion-contract.spec.js's reduced-motion
+// emulation is inert while looking authoritative). CLAUDE.md's will-change rule has TWO halves:
+//   1. the VALUE may only be transform/opacity      <- this test, statically, over all of src/
+//   2. it must never SIT on an idle / pooled / always-present node; it goes on when the
+//      animation plays and off at rest              <- NOT CHECKED HERE, and not checkable from
+//                                                      CSS text: whether a node is idle is a
+//                                                      runtime fact. A permanent
+//                                                      `will-change: transform` on a resting
+//                                                      pooled element passes this file.
+// So green here means no non-compositor VALUES anywhere in src/. It does not mean the rule is kept.
 const ALLOWED = new Set(['transform', 'opacity', 'auto', 'inherit', 'initial', 'unset', 'revert']);
 
 function cssFiles(dir) {
@@ -32,7 +44,14 @@ test('will-change lists only compositor props (transform / opacity)', () => {
   for (const file of cssFiles(SRC)) {
     // Strip /* … */ comments first so prose that mentions "will-change: …" (e.g. a note
     // explaining a removed no-op) is never mistaken for a live declaration.
-    const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    //
+    // REPLACE EACH COMMENT WITH ITS OWN NEWLINES, don't delete it. Stripping to '' collapsed
+    // every line a comment spanned, and the offender's line below is counted in THIS string —
+    // so the failure message named a line that did not hold the offence. Measured on a probe
+    // file: a will-change on the true line 13, behind a 10-line comment, was reported as line
+    // 3. The CSS in this project is heavily commented, so the real misdirection is far larger.
+    // A gate that points at the wrong line when it fires is a gate you stop trusting.
+    const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ''));
     let m;
     while ((m = re.exec(css)) !== null) {
       const value = m[1].trim();

@@ -29,7 +29,15 @@ function cssFiles(dir) {
   }
   return out;
 }
-const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, (m) => ' '.repeat(m.length));
+// STRIP COMMENTS, KEEPING BOTH THE BYTE OFFSET AND THE LINE COUNT. `' '.repeat(m.length)`
+// preserved the offset — so the regexes below still match in the right place — but it turned
+// every newline INSIDE a comment into a space, and lineOf() counts newlines. So every offender
+// behind a comment block was reported at a line well above its own. Measured: a font-size on
+// the true line 13, behind a 10-line comment, was reported as line 3. Keep the newlines and
+// blank out everything else; offsets and lines are then both faithful.
+// (src/perf/willChange.test.js had the same defect by a different route — it stripped to '',
+// losing the offset as well. Both are fixed the same way.)
+const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
 function rules(css) {
   const out = [];
   const re = /([^{}]+)\{([^{}]*)\}/g;
