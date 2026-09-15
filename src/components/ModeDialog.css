@@ -311,6 +311,18 @@
 .mode-dialog-mastery-next {
   opacity: 0.7;
 }
+/* The mastery line is `white-space: nowrap; overflow: visible`, so below ~380px it does not
+   truncate — it SPILLS, and the shell clips it: at 320x640 it read "MASTERY — PLAY TO LEVI",
+   cut mid-word. Nothing measured that; it was only visible in the screenshot. It fits exactly
+   at 390, so the wrap is scoped to the widths where it does not. */
+@media (max-width: 380px) {
+  .mode-dialog-mastery {
+    align-items: flex-start;
+  }
+  .mode-dialog-mastery-txt {
+    white-space: normal;
+  }
+}
 /* On phones the "· N/N TO M2" tail is dropped so the primary perk text fits one line without
    wrapping (a wrapped mastery row starved the pack picker to 0 height at 360×640). */
 @media (max-width: 400px) {

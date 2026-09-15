@@ -185,6 +185,14 @@
   }
 }
 .shop-card {
+  /* position: relative is LOAD-BEARING for `.shop-card-next` (position:absolute; top:-10;
+     left:8). Without it the badge resolved against the nearest positioned ancestor — the
+     `.shop-overlay` itself — and rendered at the TOP-LEFT CORNER OF THE VIEWPORT, half off
+     screen, at every width measured (320x640 through 1536x864: rect x=8, y=-10). It is meant
+     to flag the cheapest unowned item; instead it was a stray yellow chip in the corner with
+     no relationship to anything, while the card it describes carried only its outline. Every
+     number was green. It is only visible in the screenshot. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

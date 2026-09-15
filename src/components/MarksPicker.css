@@ -10,11 +10,18 @@
   padding: 16px;
   background: rgba(13, 6, 24, 0.88);
 }
+/* The card is a COLUMN, and only the grid scrolls. It used to be one scroller with the
+   header inside it: at 320x640 the list overflows (781px of content into 555px of card), so
+   scrolling down took the ✕ with it — measured at y=-168, i.e. off the top of the viewport,
+   leaving no visible exit at all. Header + intro sit OUTSIDE the scroller now. */
 .marks-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   width: 100%;
   max-width: 560px;
   max-height: 88vh;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 16px;
   background: #1a0b2e;
   border: 4px solid #000;
@@ -22,6 +29,7 @@
   box-shadow: 7px 7px 0 #000;
 }
 .marks-head {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -59,6 +67,7 @@
   box-shadow: 1px 1px 0 #000;
 }
 .marks-intro {
+  flex: none;
   font-family: 'Space Mono', monospace;
   font-size: var(--fs-micro);
   color: #b9aecd;
@@ -68,8 +77,18 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  /* the hard offset shadows on the cards need room inside the scroller */
+  padding: 2px 6px 6px 2px;
+  margin: -2px -6px -6px -2px;
 }
 .mark-card {
+  /* flex: none is LOAD-BEARING. Once .marks-grid became a bounded scroller (a flex column with
+     its own height), the default flex-shrink:1 squashed every card below its content height and
+     the "UNLOCKS WITH ..." line spilled out over the card below it. Invisible to every
+     measurement — it only showed up in the 320x640 screenshot. */
+  flex: none;
   display: flex;
   align-items: flex-start;
   gap: 10px;

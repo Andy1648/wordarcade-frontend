@@ -2,10 +2,11 @@
 // clicked. Same panel styling as the mode dialog (thick colored border, hard offset shadow,
 // #1a0b2e panel) but read-only: mode name, one line of rules, what it pays per word, and the
 // unlock gate against the player's current level. No PLAY button — it's a teaser, not an entry.
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './LockedPreviewDialog.css';
 import ModeExample from './ModeExample';
+import useModalFocus from './useModalFocus';
 
 export default function LockedPreviewDialog({ game, level = 0, onClose }) {
   const panelRef = useRef(null);
@@ -14,15 +15,10 @@ export default function LockedPreviewDialog({ game, level = 0, onClose }) {
 
   const handleClose = useCallback(() => onCloseRef.current && onCloseRef.current(), []);
 
-  // Focus the panel on open; Escape closes.
-  useEffect(() => {
-    panelRef.current?.focus();
-    const onKey = (e) => {
-      if (e.key === 'Escape') handleClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [handleClose]);
+  // Escape + focus in + focus CONTAINED + focus RETURNED (fix/modal-contract). It focused the
+  // panel and handled Escape already, but nothing held the Tab ring: measured 11 of 12 Tabs
+  // walked straight out onto the live menu — the second Tab was already on the page behind.
+  useModalFocus(panelRef, { onEscape: handleClose, restoreFocus: true });
 
   if (!game) return null;
   const name = String(game.name || '').replace('\n', ' ');

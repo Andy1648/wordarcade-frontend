@@ -8,17 +8,45 @@
 // A LOCKED mark shows the achievement that unlocks it rather than a silhouette. A mark you cannot
 // have is only interesting if you can go and get it; hiding which achievement it comes from would
 // make the whole system read as random drops.
+//
+// THE CONTRACT (fix/modal-contract): this is a genuine modal — it asks you to pick — and it was
+// the only one of the six with NO way out but the ✕. Measured on the built bundle: Escape did
+// nothing, the backdrop did nothing, focus never entered (10 of 12 Tabs landed on the live menu
+// behind it), and at 320x640 the ✕ scrolled off the top of the viewport (rect y=-168) once the
+// list was scrolled down, because the whole card was one scroller. All four are fixed here:
+// useModalFocus (Escape + focus in/contained/returned), a backdrop dismiss, and a card that
+// scrolls its GRID with the header pinned outside the scroller.
+import { useCallback, useRef } from 'react';
 import { MARKS } from '../progress/marks';
+import useModalFocus from './useModalFocus';
 import './MarksPicker.css';
 
 export default function MarksPicker({ unlockedIds = [], equippedId = null, achievementNames = {}, onEquip, onClose }) {
   const unlocked = new Set(unlockedIds);
+  const overlayRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const handleClose = useCallback(() => onCloseRef.current && onCloseRef.current(), []);
+  useModalFocus(overlayRef, { onEscape: handleClose, restoreFocus: true });
+
   return (
-    <div className="marks-overlay" role="dialog" aria-modal="true" aria-label="Marks">
+    <div
+      className="marks-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Marks"
+      tabIndex={-1}
+      ref={overlayRef}
+      // Backdrop dismiss. Guarded on the overlay being the literal target so a click that
+      // started inside the card can never close it.
+      onClick={(e) => {
+        if (e.target === overlayRef.current) handleClose();
+      }}
+    >
       <div className="marks-card">
         <div className="marks-head">
           <h2 className="marks-title">MARKS</h2>
-          <button type="button" className="marks-close" onClick={onClose} aria-label="Close">✕</button>
+          <button type="button" className="marks-close" onClick={handleClose} aria-label="Close">✕</button>
         </div>
         <p className="marks-intro">
           Earned from achievements, worn one at a time. The one you wear shows up in your payout

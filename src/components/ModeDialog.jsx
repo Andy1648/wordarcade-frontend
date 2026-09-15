@@ -1,8 +1,9 @@
 // ModeDialog.jsx
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './ModeDialog.css';
 import ModeDialogBackground from './ModeDialogBackground';
+import useModalFocus from './useModalFocus';
 import { MODES } from './modeDialogConfig';
 import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
@@ -122,41 +123,20 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
     window.setTimeout(onClose, OPEN_MS);
   }, [onClose]);
 
-  // Escape closes (matches the scrim click).
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === 'Escape') handleClose();
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [handleClose]);
-
-  // A11y (MED-1): move focus INTO the dialog on open and TRAP Tab inside it, so a keyboard user
-  // can't Tab back out to the still-mounted menu cards behind the modal. Matches the SHOP overlay's
-  // focus-on-open; adds the containment the mode dialog was missing. Escape still closes (above).
-  useEffect(() => {
-    const shell = shellRef.current;
-    if (!shell) return undefined;
-    shell.focus(); // shell is tabIndex=-1; keyboard user then Tabs through the controls inside
-    const onTab = (e) => {
-      if (e.key !== 'Tab') return;
-      const list = Array.from(
-        shell.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
-      ).filter((el) => !el.disabled && el.offsetParent !== null);
-      if (list.length === 0) { e.preventDefault(); shell.focus(); return; }
-      const first = list[0];
-      const last = list[list.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey) {
-        if (active === first || active === shell || !shell.contains(active)) { e.preventDefault(); last.focus(); }
-      } else if (active === last || !shell.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    shell.addEventListener('keydown', onTab);
-    return () => shell.removeEventListener('keydown', onTab);
+  // A COMMITTING action was taken (CREATE / JOIN / PLAY). Those close the dialog by NAVIGATING
+  // AWAY, so returning focus to the card that opened it would yank focus off the screen the
+  // player just entered. Read at close time by useModalFocus.
+  const actedRef = useRef(false);
+  const act = useCallback((fn) => (e) => {
+    actedRef.current = true;
+    if (fn) fn(e);
   }, []);
+
+  // Escape + focus in + focus CONTAINED + focus RETURNED. The first three shipped here already
+  // (this trap is where the shared hook's selector comes from); the RETURN did not — measured,
+  // closing with Escape left focus on BODY, so a keyboard player fell back to the top of the
+  // document instead of to the card they opened.
+  useModalFocus(shellRef, { onEscape: handleClose, restoreFocus: () => !actedRef.current });
 
   const accent = mode.accent;
   const overlay = (
@@ -242,7 +222,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                 <button
                   className="mode-dialog-btn mode-dialog-btn-create"
                   style={{ background: accent, borderColor: darken(accent, 0.45) }}
-                  onClick={onPlay}
+                  onClick={act(onPlay)}
                 >
                   PLAY
                 </button>
@@ -257,14 +237,14 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                 <button
                   className="mode-dialog-btn mode-dialog-btn-create"
                   style={{ background: accent, borderColor: darken(accent, 0.45) }}
-                  onClick={onCreate}
+                  onClick={act(onCreate)}
                   disabled={!!connecting}
                 >
                   {connecting === 'create' ? <ConnectingContent cold={coldStart} /> : mode.create}
                 </button>
                 <button
                   className="mode-dialog-btn mode-dialog-btn-join"
-                  onClick={onJoin}
+                  onClick={act(onJoin)}
                   disabled={!!connecting}
                 >
                   {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN WITH CODE'}

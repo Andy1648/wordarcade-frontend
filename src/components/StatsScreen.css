@@ -100,6 +100,19 @@
   box-shadow: 3px 3px 0 #000;
   cursor: pointer;
 }
+/* Three nowrap labels on one row fit "at 360px wide" — and 320 is not 360. At 320x640 the
+   buttons shrank (flex: 1 1 0; min-width: 0) but the text did not, so COLLECTION and
+   ACHIEVEMENTS overprinted each other and the tab bar read as one smear. Every number was
+   green; it is only visible in the picture. Below 360 the bar wraps instead of overlapping —
+   the 16px tappable-text floor stays. */
+@media (max-width: 360px) {
+  .stats-tabs {
+    flex-wrap: wrap;
+  }
+  .stats-tab {
+    flex: 1 1 auto;
+  }
+}
 .stats-tab.is-active {
   color: #0d0618;
   background: #2effe0;

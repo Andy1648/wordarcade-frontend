@@ -5,6 +5,7 @@
 // next threshold, what's lost/kept, and the action (disabled with the requirement shown when
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
+import useModalFocus from './useModalFocus';
 import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyMomentum } from '../progress/shop';
 import { getMomentum, momentumCost, momentumMult, momentumMaxed, MOMENTUM_MAX } from '../progress/momentum';
@@ -45,18 +46,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
-  // A11y: move focus into the dialog on open; Escape closes it. Once on mount (ref keeps the
-  // latest onBack) so re-renders never re-steal focus.
   useEffect(() => {
-    overlayRef.current?.focus();
     if (view !== 'rebirth') evShopOpened(); // analytics: the SHOP opened (the rebirth view is its own act)
-    const onKey = (e) => {
-      if (e.key === 'Escape') onBackRef.current();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // A11y: focus in, Escape closes, Tab ring CONTAINED (fix/modal-contract — the shop has ~30
+  // controls, so the leak was at the WRAP: the Tab after the last buy button left the overlay).
+  // FOCUS RETURN is App.jsx's job here (Homepage.jsx `restoreFocus`), as for Stats.
+  useModalFocus(overlayRef, { onEscape: () => onBackRef.current() });
 
   const level = loadProgress().level;
   const rebirths = getRebirths();

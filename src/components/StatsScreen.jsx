@@ -7,6 +7,7 @@
 // consolidated in here (same kind of thing as records/progression/danger-zone) so the menu footer is
 // CREDITS-only again. The tab bodies live in CollectionScreen.jsx / AchievementsScreen.jsx.
 import { useEffect, useRef, useState } from 'react';
+import useModalFocus from './useModalFocus';
 import './StatsScreen.css';
 import {
   loadProgress,
@@ -141,18 +142,18 @@ export default function StatsScreen({ onBack }) {
   // Active tab: STATS (default — the one the layout gate exercises) | COLLECTION | ACHIEVEMENTS.
   const [tab, setTab] = useState('stats');
   const activeLabel = TABS.find((t) => t.id === tab)?.label || 'STATS';
-  // A11y: move focus into the dialog on open; Escape closes it (once on mount).
+  // Fold the current run's level into the all-time peak (survives a later rebirth's reset). Read
+  // fresh inside the effect so it stays a one-shot with no render-scope dependency.
   useEffect(() => {
-    // Fold the current run's level into the all-time peak (survives a later rebirth's reset). Read
-    // fresh inside the effect so it stays a one-shot with no render-scope dependency.
     noteLevel(loadProgress().level);
-    overlayRef.current?.focus();
-    const onKey = (e) => {
-      if (e.key === 'Escape') onBackRef.current();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
   }, []);
+  // A11y: focus in, Escape closes, and — new in fix/modal-contract — the Tab ring is CONTAINED.
+  // The menu behind is unmounted while this is open, but the app-level audio button is not: the
+  // 9th Tab landed on `.audio-btn`, outside a thing declaring aria-modal="true".
+  // FOCUS RETURN is deliberately NOT requested here: App.jsx already returns focus to the nav
+  // button it came from via its `restoreFocus` prop (Homepage.jsx:437-440). Two mechanisms
+  // fighting over the same target is worse than one.
+  useModalFocus(overlayRef, { onEscape: () => onBackRef.current() });
 
   // Economy v5 storage: {level, intoLevel}. There is no cumulative "total XP" any more (that
   // was the number that hit the float64 cliff), so the readout shows XP INTO the current level.
