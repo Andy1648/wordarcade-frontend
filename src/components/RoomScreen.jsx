@@ -182,7 +182,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     <div className="room-wrap">
       <div className="room-box">
         <div className="room-label">ROOM CODE</div>
-        <div className="room-code">
+        <div className="room-code" translate="no">
           <WaveText text={room.code} />
         </div>
         <div className="room-hint">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
@@ -220,7 +220,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
                   <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                  <span className="room-player-name">{player.name}</span>
+                  <span className="room-player-name" translate="no">{player.name}</span>
                   {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
                   {player.isBot && (
                     <span className="room-bot-badge">
