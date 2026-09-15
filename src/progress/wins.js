@@ -142,7 +142,7 @@ export function winLevelMult(level) {
  * every multiplier without re-deriving any of them: the breakdown and the payment read the same
  * object, so the receipt cannot quote a number the player was not actually paid.
  */
-export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, level, markId } = {}) {
+export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, level, markId, markIds } = {}) {
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const lv = Number.isFinite(level) ? level : loadProgress().level;
   // MOMENTUM (repeatable sink): a global +1%/buy wins multiplier, live-read like rebirth (defaults
@@ -158,13 +158,20 @@ export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, 
     // The equipped MARK, if it pays in this mode. Folded in HERE rather than at the call sites so
     // the payment and the receipt read the same object - a mark cannot boost a payout without
     // appearing in the breakdown, because there is only one place either could come from.
-    ...markWinsFactors({ markId, mode }),
+    // `markIds` is the multi-slot loadout (flagged variant); `markId` remains the one-slot path.
+    // Both are threaded THROUGH rather than read inside markWinsFactors, so a caller that knows
+    // the loadout (a sim, a test, a replay) is never overruled by live storage.
+    ...markWinsFactors({ markId, markIds, mode }),
   };
 }
 export function perWordWins(opts = {}) {
   const f = perWordFactors(opts);
+  // (f.mark2 / f.mark3) are the extra MARK SLOTS — absent, hence 1, unless the flagged
+  // multi-slot variant is on. They are multiplied HERE and given their own receipt rows in
+  // payout.js, so the amount paid and the amount explained stay the same object's worth.
   return round10(
-    WORD_WINS_BASE * f.mode * f.difficulty * f.rebirth * f.momentum * f.level * (f.mark || 1)
+    WORD_WINS_BASE * f.mode * f.difficulty * f.rebirth * f.momentum * f.level
+    * (f.mark || 1) * (f.mark2 || 1) * (f.mark3 || 1)
   );
 }
 

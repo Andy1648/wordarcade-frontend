@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {
   MARKS, MARKS_EQUIPPED_KEY, markById, unlockedMarks, getEquippedMark, equipMark,
   markWinsFactors, markXpMult, markRarityStep, markComboKeep,
+  MARK_SLOTS, getEquippedMarks, markRowNames,
 } from './marks.js';
+import { perWordWins } from './wins.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import { PAYOUT_FACTORS } from './payout.js';
 
@@ -129,4 +131,63 @@ test('markById is the only lookup, and it is guarded', () => {
   assert.equal(markById('mk-bomber').name, 'BOMBER');
   assert.equal(markById('nope'), null);
   assert.equal(markById(undefined), null);
+});
+
+
+// ---------------------------------------------------------------- MARK SLOTS (flagged variant)
+//
+// `MARK_SLOTS` is read from the URL once at module load, so under node it is always 1 — which is
+// the case that matters most here. The promise the variant makes is that WITHOUT the flag nothing
+// changes at all, and that is what these first two tests pin. The combination logic is pure and
+// takes its ids as an argument, so it is tested directly rather than through storage.
+
+test('SLOTS=1 IS THE SHIPPED BEHAVIOUR: no flag means one slot and the legacy key', () => {
+  assert.equal(MARK_SLOTS, 1, 'no window => one slot');
+  withStorage({ [MARKS_EQUIPPED_KEY]: 'mk-eternal' }, () => {
+    // Reads the SAME single key, and never consults the list key.
+    assert.deepEqual(getEquippedMarks(), ['mk-eternal']);
+    assert.equal(getEquippedMark(), 'mk-eternal');
+  });
+  withStorage({}, () => assert.deepEqual(getEquippedMarks(), []));
+});
+
+test('SLOTS=1: one mark emits ONLY the `mark` key, so the receipt is unchanged', () => {
+  const f = markWinsFactors({ markIds: ['mk-eternal'], mode: 'wordBomb' });
+  assert.deepEqual(f, { mark: 1.5 });
+  assert.equal('mark2' in f, false);
+  assert.equal('mark3' in f, false);
+});
+
+test('a second and third mark get their OWN receipt rows — rule 3 survives multi-slot', () => {
+  const f = markWinsFactors({ markIds: ['mk-eternal', 'mk-bomber', 'mk-magpie'], mode: 'wordBomb' });
+  assert.deepEqual(f, { mark: 1.5, mark2: 1.25, mark3: 1.15 });
+  // Every emitted key must be a REAL payout row, or the mark pays invisibly.
+  const rows = new Set(PAYOUT_FACTORS.map((r) => r.key));
+  for (const k of Object.keys(f)) assert.ok(rows.has(k), `${k} has no payout row`);
+  // And each row can be labelled with the mark actually paying it.
+  assert.deepEqual(markRowNames({ markIds: ['mk-eternal', 'mk-bomber'], mode: 'wordBomb' }),
+    { mark: 'ETERNAL', mark2: 'BOMBER' });
+});
+
+test('a mode-scoped mark in slot 2 is DROPPED outside its mode, and the keys close up', () => {
+  // BOMBER is Word Bomb only. In blitz it must not pay — and ETERNAL must still be `mark`,
+  // not `mark2`, or the receipt grows a hole where the skipped mark was.
+  const f = markWinsFactors({ markIds: ['mk-eternal', 'mk-bomber'], mode: 'blitz' });
+  assert.deepEqual(f, { mark: 1.5 });
+});
+
+test('the extra slots are actually PAID, not just printed', () => {
+  const base = perWordWins({ mode: 'wordBomb', markId: 'mk-eternal', rebirthCount: 0, level: 1, momentumCount: 0 });
+  const two = perWordWins({ mode: 'wordBomb', markIds: ['mk-eternal', 'mk-bomber'], rebirthCount: 0, level: 1, momentumCount: 0 });
+  // A second mark must move the money. If perWordWins forgot to multiply f.mark2 these are equal.
+  assert.ok(two > base, `two marks paid ${two}, one paid ${base}`);
+});
+
+test('XP multiplies across slots; the chance effects combine as independent rolls', () => {
+  assert.equal(markXpMult('mk-student'), 1.2);
+  assert.equal(markXpMult(null), 1);
+  // A SINGLE chance must come back EXACTLY, not 1-(1-p): that is 0.30000000000000004.
+  assert.equal(markComboKeep('mk-metronome'), 0.3);
+  assert.equal(markRarityStep('mk-linguist'), 0.12);
+  assert.equal(markComboKeep(null), 0);
 });

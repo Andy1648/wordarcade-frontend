@@ -171,3 +171,53 @@
   border-radius: 3px;
   padding: 2px 6px;
 }
+
+/* ---------------------------------------------------------------- MARK SLOTS (flagged variant)
+   Only rendered when MARK_SLOTS > 1 (`?markslots=2|3`); at one slot none of this is in the tree.
+   Flat fills, thick coloured outline, hard black offset — house style, no gradients. */
+.marks-slots {
+  display: flex;
+  gap: 8px;
+  padding: 0 4px 10px;
+  flex-wrap: wrap;
+}
+.marks-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 3px dashed #4a3a6b;
+  border-radius: 8px;
+  background: #150a27;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  color: #7a6a9b;
+  letter-spacing: 0.04em;
+}
+.marks-slot.is-filled {
+  border-style: solid;
+  border-color: #c39bff;
+  background: #2a1350;
+  color: #2effe0;
+  box-shadow: 3px 3px 0 #000;
+}
+/* The scale cannot be bypassed (src/perf/typeScale.test.js) — this was 1.15em and the gate
+   failed it, correctly. A token, not a bespoke size. */
+.marks-slot-icon { font-size: var(--fs-label); line-height: 1; }
+
+/* A mark you cannot wear because every slot is taken. Dimmed, not hidden: the rule has to be
+   visible or the picker reads as broken. */
+.mark-card.is-blocked { opacity: 0.45; }
+.mark-full {
+  align-self: center;
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  background: #ff6b3d;
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+}

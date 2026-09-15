@@ -31,6 +31,12 @@ export const PAYOUT_FACTORS = [
   // gets a named row exactly like the ones you bought — a standing multiplier nobody can see is
   // the defect this module exists to fix, and a new invisible one would be absurd.
   { key: 'mark', label: 'MARK', kind: 'permanent' },
+  // SLOTS 2 AND 3 (progress/marks.js MARK_SLOTS, a flagged variant — `?markslots=2|3`). Each
+  // worn mark gets its OWN row. Folding them into one pre-multiplied MARK row would keep the
+  // arithmetic right and make the receipt lie, which is the exact defect this module exists to
+  // fix. At one slot these two keys are never emitted and the receipt is unchanged.
+  { key: 'mark2', label: 'MARK 2', kind: 'permanent' },
+  { key: 'mark3', label: 'MARK 3', kind: 'permanent' },
   { key: 'rarity', label: 'RARITY', kind: 'word' },
   { key: 'length', label: 'LENGTH', kind: 'word' },
   { key: 'combo', label: 'COMBO', kind: 'word' },

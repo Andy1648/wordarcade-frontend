@@ -25,7 +25,7 @@ import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 import MarksPicker from './MarksPicker';
-import { markById, unlockedMarks, getEquippedMark, equipMark } from '../progress/marks';
+import { markById, unlockedMarks, getEquippedMark, equipMark, getEquippedMarks, toggleMarkSlot, MARK_SLOTS } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -189,6 +189,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // menu anyway.
   const [showMarks, setShowMarks] = useState(false);
   const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
+  // MULTI-SLOT VARIANT (`?markslots=2|3`). At one slot this is derived from `equippedMark` and
+  // nothing new is stored or read — the shipped path is untouched.
+  const [equippedMarkIds, setEquippedMarkIds] = useState(() => getEquippedMarks());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
@@ -830,8 +833,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           <MarksPicker
             unlockedIds={markUnlocked.map((m) => m.id)}
             equippedId={equippedMark}
+            equippedIds={MARK_SLOTS > 1 ? equippedMarkIds : null}
             achievementNames={ACH_NAME}
-            onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
+            onEquip={(id) => {
+              if (MARK_SLOTS > 1) {
+                const next = toggleMarkSlot(id, earnedAch);
+                setEquippedMarkIds(next);
+                // Slot 1 stays mirrored to the legacy single key, so the menu's own mark chip and
+                // anything else reading getEquippedMark() keeps agreeing with the loadout.
+                setEquippedMark(next[0] || null);
+              } else {
+                setEquippedMark(equipMark(id, earnedAch));
+              }
+            }}
             onClose={() => setShowMarks(false)}
           />
         </ScreenBoundary>
