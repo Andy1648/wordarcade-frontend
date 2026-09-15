@@ -43,6 +43,8 @@ const SITEMAP_URLS = [
   { loc: 'https://typeaword.com/word-bomb/', changefreq: 'monthly', priority: '0.8' },
   { loc: 'https://typeaword.com/category-blitz/', changefreq: 'monthly', priority: '0.8' },
   { loc: 'https://typeaword.com/sat-rush/', changefreq: 'monthly', priority: '0.8' },
+  { loc: 'https://typeaword.com/chain/', changefreq: 'monthly', priority: '0.8' },
+  { loc: 'https://typeaword.com/fuse/', changefreq: 'monthly', priority: '0.8' },
 ]
 
 function renderSitemap(lastmod) {
