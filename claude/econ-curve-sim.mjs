@@ -254,13 +254,16 @@ console.log('=== ECONOMY v7 — CURVE REFIT, SIMULATED ===\n');
 
 console.log(`CURVE: need(n) = ${BASE} · ${EARLY}^n up to LV${BREAK}, then × ${TOP}^(n-${BREAK}).` + (SWEEPING ? '   [SWEEP — not the shipped constants]' : ''));
 console.log(`       The tail is STEEPER than the head (${TOP_CURVE_EXP} > ${EARLY_CURVE_EXP}). v6 went the other way: 1.25 -> 1.08.\n`);
+const growthRatios = [];
 {
   let cum = 0; const cums = { 1: 0 };
   for (let n = 1; n <= 500; n++) { cum += needOf(n); cums[n + 1] = cum; }
   console.log('  LEVEL        need(n)        cumulative to reach     per-level growth');
   let prev = null;
   for (const n of [1, 25, 50, 100, 150, 200, 300, 500]) {
-    const g = prev == null ? '' : `×${Math.pow(needOf(n) / needOf(prev), 1 / (n - prev)).toFixed(4)}/lvl`;
+    const ratio = prev == null ? null : Math.pow(needOf(n) / needOf(prev), 1 / (n - prev));
+    if (ratio != null) growthRatios.push({ from: prev, to: n, ratio });
+    const g = ratio == null ? '' : `×${ratio.toFixed(4)}/lvl`;
     console.log(`  ${String(n).padStart(5)}  ${fmt(needOf(n)).padStart(14)}  ${fmt(cums[n]).padStart(22)}   ${g}`);
     prev = n;
   }
@@ -309,6 +312,7 @@ for (const m of MODES) {
     .map((L) => (r.winsAtMark[L] == null ? '      -' : fmt(r.winsAtMark[L]).padStart(11))).join('  '));
 }
 
+const spreads = [];
 console.log('\n=== WINS/MIN BY MODE AT ONE FIXED PLAYER STATE (mode choice must not be a grind decision) ===');
 for (const state of [
   { label: 'LV1  R0  mom0 ws0', level: 1, rc: 0, mom: 0, ws: 0 },
@@ -319,8 +323,70 @@ for (const state of [
   const w = winsPerMinAt(state);
   const vals = MODES.map((m) => w[m]);
   const spread = Math.max(...vals) / Math.min(...vals);
+  spreads.push({ label: state.label, spread });
   console.log(`  ${state.label.padEnd(20)} ` + MODES.map((m) => `${m}=${fmt(w[m])}`).join('  ') +
     `   SPREAD ${spread.toFixed(2)}×  ${spread <= 2 ? 'OK' : 'OVER 2× — FAIL'}`);
 }
-console.log('\nPASS CONDITIONS: the per-level growth column never falls; LV300 is reached by at least');
-console.log('one archetype inside 200h but not by hour ~20; no mode spread above 2.00×.');
+// ------------------------------------------------------------------ PASS/FAIL, EVALUATED
+// THIS USED TO BE TWO console.log LINES OF PROSE. The three conditions were stated and never
+// checked, so when one of them started failing — LV300 stopped being reachable the moment
+// need() began scaling with rebirth — the file went on printing its own pass conditions
+// underneath a table that violated them, and nothing said a word. A pass condition a program
+// prints but does not evaluate is decoration, and this one decorated a real regression for a
+// whole run.
+//
+// Non-zero exit on failure, so it cannot go quiet again.
+const results = [];
+{
+  // 1. The curve only ever STEEPENS. v6's defect was a tail that flattened (1.25 -> 1.08): per
+  //    level cost growth fell while income kept compounding, so the late game got easier.
+  // TOLERANCE, and why it is not zero. needOf() is round10-quantized, so the geometric mean
+  // between two sampled levels carries ~1e-5 of rounding noise — at an exact-zero epsilon this
+  // check FAILED on the shipped curve, reporting "LV50->100 fell to x1.1150" against a column
+  // that reads 1.1150 three times running. That is a false alarm on a healthy curve, which is
+  // the one thing a gate must never do. 5e-4 is two orders above the noise and three below any
+  // real flattening (v6's defect was 1.25 -> 1.08, a fall of 0.17), and the v6 constants are
+  // re-run against this check as its red case:
+  //   node claude/econ-curve-sim.mjs 10 --early=1.25 --top=1.08 --break=60
+  const GROWTH_EPS = 5e-4;
+  const falls = growthRatios.filter((g, i) => i > 0 && g.ratio < growthRatios[i - 1].ratio - GROWTH_EPS);
+  results.push({
+    name: 'per-level growth never falls',
+    ok: falls.length === 0,
+    detail: falls.length === 0
+      ? `${growthRatios.length} segments, monotone non-decreasing`
+      : falls.map((g) => `LV${g.from}->${g.to} fell to x${g.ratio.toFixed(4)}`).join(', '),
+  });
+
+  // 2. LV300 is reached by at least one archetype inside the run, and NOT before hour ~20.
+  //    The top of the ladder has to exist, and has to not be free.
+  const reached = MODES.filter((m) => runs[m].marks[300] != null);
+  const earliest = reached.length ? Math.min(...reached.map((m) => runs[m].marks[300])) / 60 : null;
+  results.push({
+    name: 'LV300 reached by >=1 archetype inside 200h, and not before hour 20',
+    ok: reached.length > 0 && earliest >= 20,
+    detail: reached.length === 0
+      ? `NONE of ${MODES.length} archetypes reach LV300 (deepest: ${MODES.map((m) => `${m} ${runs[m].deepest}`).join(', ')})`
+      : `${reached.length}/${MODES.length} reach it, earliest ${earliest.toFixed(1)}h (${reached.join(', ')})`,
+  });
+
+  // 3. Mode choice must not be a grind decision.
+  const over = spreads.filter((x) => x.spread > 2);
+  results.push({
+    name: 'no mode spread above 2.00x',
+    ok: over.length === 0,
+    detail: over.length === 0
+      ? `max ${Math.max(...spreads.map((x) => x.spread)).toFixed(2)}x across ${spreads.length} states`
+      : over.map((x) => `${x.label} ${x.spread.toFixed(2)}x`).join(', '),
+  });
+}
+console.log('\n=== PASS CONDITIONS ===');
+for (const r of results) console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.name}\n        ${r.detail}`);
+const failedConds = results.filter((r) => !r.ok);
+if (failedConds.length) {
+  console.log(`\n${failedConds.length} of ${results.length} FAILED.`);
+  if (SWEEPING || SWEEPING_REB) console.log('(This run is a SWEEP, not the shipped constants.)');
+  process.exitCode = 1;
+} else {
+  console.log(`\nAll ${results.length} pass.`);
+}

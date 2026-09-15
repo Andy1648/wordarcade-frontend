@@ -152,3 +152,61 @@ for (const slots of [1, 2, 3]) {
   console.log(`  ${slots} slot(s): ${idle.length ? idle.join(', ') : '(all eight are worn by someone)'}`);
 }
 console.log('');
+
+// ---------------------------------------------------------------- POWER CREEP, R0 vs R10
+// THE QUESTION A SLOT COUNT ACTUALLY RAISES. The spread block above answers "do slots make
+// mode choice matter more" (they do not — slots NARROW the spread, because the mode-specific
+// marks exist only for the weaker modes). It does not answer "how much stronger does a player
+// get", which is the power-creep question, and it is the one that decides whether a second
+// slot is affordable.
+//
+// It is also the question where the interesting answer is a NEGATIVE: marks are multipliers on
+// the same per-word base that rebirthMult multiplies, so a slot's percentage gain is IDENTICAL
+// at R0 and R10 — slots and rebirth do not interact at all. That is worth printing rather than
+// reasoning about, because the two chance-based marks (LINGUIST's rarity bump, METRONOME's
+// combo save) are state-dependent and a reader cannot assume they factor out. They do; this
+// measures it instead of claiming it.
+//
+// Read it as: "a 2nd slot makes every player +X% richer, at every rebirth count." At R10 that
+// same +X% is +X% of a x59,049 number.
+console.log('=== POWER CREEP — WHAT A SLOT IS WORTH, AT R0 AND AT R10 ===');
+console.log('Gain over ONE slot (the shipped rule), per mode. Identical state, greedy build.\n');
+console.log('  mode        2 slots vs 1        3 slots vs 1');
+console.log('              R0       R10        R0       R10');
+console.log('  ' + '-'.repeat(52));
+const S0 = { rc: 0, level: 1, mom: 0 };
+const S10 = { rc: 10, level: 200, mom: 200 };
+const pct = (a, b) => `${((a / b - 1) * 100).toFixed(1)}%`.padStart(7);
+const creep = { 2: [], 3: [] };
+for (const m of MODES) {
+  const one0 = bestBuild(m, 1, S0).wpm;
+  const one10 = bestBuild(m, 1, S10).wpm;
+  const cells = [];
+  for (const slots of [2, 3]) {
+    const v0 = bestBuild(m, slots, S0).wpm;
+    const v10 = bestBuild(m, slots, S10).wpm;
+    cells.push(pct(v0, one0), pct(v10, one10));
+    // Keep the two rebirth states PAIRED per mode. Flattening them into one list makes the
+    // min/max below report the CROSS-MODE spread (SAT Rush gains most, chain least) while
+    // labelling it "R0 vs R10" — a real number under a false name, which is worse than no
+    // number. The divergence being asked about is within a mode, across rebirth.
+    creep[slots].push({ mode: m, r0: v0 / one0, r10: v10 / one10 });
+  }
+  console.log(`  ${m.padEnd(10)}${cells[0]}  ${cells[1]}   ${cells[2]}  ${cells[3]}`);
+}
+console.log('  ' + '-'.repeat(52));
+for (const slots of [2, 3]) {
+  const all = creep[slots].flatMap((c) => [c.r0, c.r10]);
+  const lo = Math.min(...all);
+  const hi = Math.max(...all);
+  // If a slot is worth MORE to a rebirthed player, this is where it shows: the gap between
+  // the SAME mode's R0 and R10 gain. ~0pp is the claim "slots do not interact with rebirth",
+  // stated as a measurement rather than argued from the algebra. (The residual hundredths are
+  // Monte-Carlo noise from the two chance marks, not an interaction — raise WORDS and it shrinks.)
+  const worst = creep[slots].reduce((a, c) => (Math.abs(c.r10 - c.r0) > Math.abs(a.r10 - a.r0) ? c : a));
+  console.log(
+    `  ${slots} slots: +${((lo - 1) * 100).toFixed(1)}%..+${((hi - 1) * 100).toFixed(1)}% over one slot (that spread is ACROSS MODES); `
+    + `max R0-vs-R10 gap ${(Math.abs(worst.r10 - worst.r0) * 100).toFixed(2)}pp (${worst.mode})`,
+  );
+}
+console.log('');
