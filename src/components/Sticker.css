@@ -99,6 +99,38 @@
 .sticker-coin.is-debit {
   color: #FF6B3D;
 }
+
+/* THE DISMISSAL IS A REAL CONTROL (fix/overlay-inplace). The whole sticker was click-to-dismiss
+   and nothing else, which left the reveal with no keyboard dismissal at all and left focus
+   parked on the .shop-buy button behind it — a second Enter bought a second tier THROUGH the
+   modal. This button takes focus on mount, so Enter/Space can only reach the dismissal.
+   House press feedback: transform + a STATIC shadow swap, never an animated shadow. */
+.sticker-dismiss {
+  display: block;
+  width: calc(100% - 36px);
+  margin: 0 18px 16px;
+  min-height: 44px; /* touch target floor */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-size: var(--fs-label);
+  line-height: 1;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 3px solid #1A9985;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+}
+.sticker-dismiss:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #000;
+}
+.sticker-dismiss:focus-visible {
+  outline: 3px solid #9A1AFF;
+  outline-offset: 3px;
+}
 @keyframes sticker-punch {
   0% { transform: rotate(-3deg) scale(0.4); opacity: 0; }
   60% { transform: rotate(-3deg) scale(1.1); opacity: 1; }

@@ -3568,32 +3568,73 @@
   -webkit-text-stroke: 0;
 }
 
-/* ---- 3-2-1-GO! countdown overlay ---- */
+/* ---- 3-2-1-GO! countdown: AN IN-PLACE REACTION ON THE BOARD, NOT A SHEET OVER IT ----
+
+   It was `position: fixed; inset: 0; z-index: 50` filled with an `rgba(13,6,24,0.85)` scrim,
+   and it had no pointer-events rule. Three things wrong with that, and they compound:
+
+   - IT HID THE BOARD IT WAS COUNTING DOWN TO. The 2.8s of 3-2-1-GO! is the ONLY window the
+     player has to read the fragment, the round and who is up before input goes live, and an
+     0.85 sheet is what was over all of it. The countdown carries no choice — input gating
+     lives in GameScreen, not here — so it is pure information, and information reacts on the
+     surface it concerns.
+   - IT WAS IN THE HIT-TEST PATH. A fixed, opaque, click-eating layer for 2.8s of every round
+     and every Blitz round-start, over LEAVE and the sound control as well as the board.
+   - IT WAS VIEWPORT-LEVEL. `fixed` outranks every screen, including ones it has nothing to do
+     with; `absolute` against `.game-wrap` (which is `position: relative` — the same anchor
+     `.game-audio-dock` uses) makes it a real element of the game screen.
+
+   Same numerals, same 700ms pop, same cadence — they now land ON the board, at the board's
+   scale, and the board reads through. No new animation; nothing here loops. */
 
 .countdown-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 50;
-  background: rgba(13, 6, 24, 0.85);
+  /* NO SCRIM. Deliberate — see above. */
+  background: none;
+  /* Informational: it can never take a tap away from the board underneath. */
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* THE NUMERAL IS A CHIP THAT LANDS ON THE BOARD, not a numeral floating over it. With the
+   scrim gone the bare glyph had nothing to sit on: at 390x844 the "3" came down on the YOUR
+   TURN label and the bomb at once, and at 1536x864 a yellow numeral landed inside a yellow
+   timer ring. Numbers said the board was readable; the picture said the numeral was not.
+   A flat card — house language, and a rectangle, so CSS is allowed to draw it (ART VS MOTION
+   reserves assets for shapes that are not rectangles or circles) — gives it its own ground.
+   It covers the BOMB, which is the one element on the board carrying no information during
+   the countdown; the fragment, the turn, the lives, USED WORDS, MATCH, LEAVE and the input
+   all stay readable, which is the whole point of the change. The shadow is STATIC: only
+   transform and opacity are ever animated here. */
 .countdown-text {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   letter-spacing: -0.02em;
   font-size: var(--fs-hero);
   line-height: 1;
-  color: #FFE94A; /* numbers in yellow */
-  -webkit-text-stroke: 5px #000;
-  paint-order: stroke fill;
+  /* INVERTED, and on purpose. A #1a0b2e plate is the stage's own fill, so the first pass read
+     as an outlined hole punched in the board rather than a card dropped onto it — its black
+     border and black offset shadow both disappeared into the dark stage. The colour moves to
+     the PLATE (yellow for the numbers, cyan for GO!, exactly the old semantics) and the glyph
+     goes dark, which is the same treatment the sticker ribbon uses. */
+  color: #0d0618; /* contrast: dark glyph on the #FFE94A plate */
+  -webkit-text-stroke: 0;
+  background: #FFE94A; /* numbers on yellow */
+  border: 5px solid #000;
+  border-radius: 8px;
+  box-shadow: 9px 9px 0 #000;
+  padding: 0.16em 0.3em 0.22em;
+  min-width: 1.5em;
+  text-align: center;
   animation: countdown-pop 700ms ease-out forwards;
 }
 
 .countdown-text.go {
-  color: #2EFFE0; /* GO! in cyan */
+  background: #2EFFE0; /* GO! on cyan */
 }
 
 @keyframes countdown-pop {
