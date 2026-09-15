@@ -2916,3 +2916,102 @@ body:has(.sr-app) .cursor-dot {
 .sr-body {
   justify-content: center;
 }
+
+/* =====================================================================
+   MODE-SELECT FIELD — TWO TREATMENTS, FLAG-GATED (src/satRush/config.js SAT_FIELD)
+   The panel measures 528x387 in 1366x768: 19.5% of the screen, falling to 15.7%
+   at 1536x864 because a fixed 520px panel sits in a field that keeps growing.
+   Neither block below is active without ?satfield= — the default screen is
+   untouched, so this is a taste call you make by looking, not a shipped change.
+   ===================================================================== */
+
+/* ---- A: THE PANEL GROWS ---------------------------------------------------
+   Every dimension becomes viewport-relative, so the panel tracks the field
+   instead of being stranded by it. Targets 55-70% of the SHORTER viewport
+   dimension in height. Mobile is protected by the clamp MINIMUMS, which are at
+   or above today's values — 390 and 320 do not shrink. */
+.sr-app.field-a .sr-modeselect {
+  width: min(780px, 92vw);
+  gap: clamp(16px, 3vh, 30px);
+  padding: clamp(24px, 5.5vh, 52px) clamp(20px, 5vw, 56px);
+}
+/* One STEP UP the shared scale each, never a bespoke clamp: src/perf/typeScale.test.js
+   gates that every font-size goes through a --fs-* token, and it is right to — a panel
+   that invents its own ramp stops matching the rest of the app. h2 -> h1, panel -> h2,
+   label -> body. */
+.sr-app.field-a .sr-modeselect-head {
+  font-size: var(--fs-h1);
+}
+.sr-app.field-a .sr-modecards {
+  gap: clamp(14px, 2.4vh, 24px);
+}
+.sr-app.field-a .sr-modecard {
+  min-height: clamp(64px, 13.5vh, 128px);
+  justify-content: center;
+  gap: clamp(4px, 0.9vh, 10px);
+  padding: clamp(14px, 2.8vh, 30px) clamp(18px, 2.8vw, 34px);
+}
+.sr-app.field-a .sr-modecard-title {
+  font-size: var(--fs-h2);
+}
+.sr-app.field-a .sr-modecard-line {
+  font-size: var(--fs-body);
+}
+
+/* ---- B: THE FIELD BECOMES A SURFACE ---------------------------------------
+   The panel keeps its size; the VOID stops being a void. The field turns to
+   paper carrying the SAME 5% pulp grain the stage already uses (the budgeted
+   grain, reused — NOT a second halftone, which would put the page one over the
+   decoration budget the way removing the ink board's dot grid was meant to
+   prevent). On a paper field the panel's ink border stops reading as the edge of
+   a card and starts reading as a panel gutter cut into the page — which is the
+   metaphor this stylesheet already claims ("a manga page is panels separated by
+   ink, not boxes drawn on paper"). The panel gets a light screentone plate so it
+   still separates from the paper it now sits on. */
+.sr-app.field-b .sr-screen-mode {
+  /* THE DESK: paper carrying ONE light screentone. This screen spends no halftone
+     today (it has no .sr-stage, so the page's single-halftone budget is unused here)
+     — the budget is per screen, and this is that screen's one. A toned desk also
+     leaves the PANEL as the only clean paper on screen, which is what makes it
+     separate; a toned panel on a paper field read as one flat surface. */
+  background-color: var(--paper);
+  background-image: var(--tone-mid);
+  background-size: var(--tone-cell);
+}
+.sr-app.field-b .sr-screen-mode::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ink) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.05;
+}
+/* A ruled edge so the page has a boundary rather than bleeding off every side. */
+.sr-app.field-b .sr-screen-mode::after {
+  content: '';
+  position: absolute;
+  inset: clamp(10px, 1.8vh, 22px);
+  pointer-events: none;
+  border: 3px solid var(--ink);
+}
+/* On paper the panel needs the opposite contrast: a tone plate, not a bright
+   card. Light screentone fill, same double rule, same hard offset. */
+.sr-app.field-b .sr-modeselect {
+  /* clean paper — the only untoned surface on the screen, so it lifts */
+  background-color: var(--paper);
+  background-image: none;
+  box-shadow:
+    inset 0 0 0 3px var(--paper),
+    inset 0 0 0 8px var(--ink),
+    10px 10px 0 var(--ink);
+}
+/* the panel's own grain would be grain-on-grain against the field's; drop it */
+.sr-app.field-b .sr-modeselect::before {
+  display: none;
+}
+/* the cards sit ON the toned plate, so they go back to clean paper to lift */
+.sr-app.field-b .sr-modecard {
+  background-color: var(--paper);
+  background-image: none;
+}

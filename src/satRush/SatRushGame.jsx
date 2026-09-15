@@ -47,6 +47,7 @@ import WordCard from './WordCard';
 import SatRushResults from './SatRushResults';
 import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
+import { SAT_FIELD } from './config';
 import DevTuner from './DevTuner';
 
 export default function SatRushGame({ onExit, musicSetVolume }) {
@@ -141,7 +142,7 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
 
   return (
     // .silver flips the whole page into a negative reprint (CSS var inversion).
-    <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
+    <div className={`sr-app${view.silver ? ' silver' : ''}${SAT_FIELD ? ` field-${SAT_FIELD}` : ''}`} ref={appRef}>
       {/* manga focus lines: hidden until the final stage (endgame treatment) */}
       <SpeedLines active={view.hasWord && view.atFinal} />
       {/* miss: a 2-frame page-tear flash, re-keyed per miss so it fires once */}

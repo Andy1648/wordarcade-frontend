@@ -24,7 +24,7 @@ export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit }) 
   }, []);
 
   return (
-    <div className="sr-screen">
+    <div className="sr-screen sr-screen-mode">
       <div className="sr-modeselect">
         <div className="sr-modeselect-head sr-print" data-v={'PICK YOUR BEAT'}>
           PICK&nbsp;YOUR&nbsp;BEAT

@@ -32,6 +32,20 @@ export const SAT_RUSH_TRANSITION_WORD = 'SHARPEN UP';
 // route background / share card stay on-palette.
 export const SAT_RUSH_COLOR = '#111111';
 
+// ---- FIELD TREATMENT (taste call, flag-gated, default OFF) -------------------------------
+// The mode-select panel measures 528x387 inside 1366x768 — 19.5% of the screen, and it gets
+// WORSE on a bigger display (15.7% at 1536x864) because the panel is a fixed 520px in a field
+// that keeps growing. Two ways to fix a card floating in a void, built side by side so the
+// call can be made by looking rather than arguing:
+//   ?satfield=a  the PANEL grows to fill 55-70% of the shorter viewport dimension
+//   ?satfield=b  the FIELD becomes a printed surface, so there is no void to float in
+// Neither is the default: with no flag the screen renders exactly as it does today.
+export const SAT_FIELD = (() => {
+  if (typeof window === 'undefined') return null;
+  const v = new URLSearchParams(window.location.search).get('satfield');
+  return v === 'a' || v === 'b' ? v : null;
+})();
+
 // Dev-only stage-interval override. The 3-stage model uses longer beats (2800ms),
 // exposed the SAME way as the flag above — a query-string escape hatch resolved
 // once at module load. `?stage=1200` sets the starting per-stage reveal interval
