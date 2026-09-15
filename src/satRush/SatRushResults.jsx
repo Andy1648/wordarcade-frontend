@@ -13,6 +13,7 @@ import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import { satRushLink } from '../share/links.js';
 import { SAT_RUSH_COLOR } from './config';
+import { formatNum } from '../format';
 
 const C = JUICE.CELEBRATION;
 
@@ -139,7 +140,14 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
         {/* WINS EARNED (item 2) — the run's payout, large, kept in the manga ink register
             rather than the neon pill so the sanctioned SAT Rush treatment stays intact. */}
         <div className="sr-panel sr-winspanel">
-          <div className="sr-score-value">+{winsEarned}</div>
+          {/* THROUGH THE FORMATTER. This read `+{winsEarned}` — the fourth instance of the
+              defect the number-format gate was written for, and the one it could not see,
+              because the gate never reached the results screen. The run payout is
+              rebirth-scaled (bankWordWins in SatRushGame), so at R10 this panel printed
+              `+16384927364710`. Keeping SAT Rush's own manga register (a plain ink div, NOT
+              the neon house `WinsEarnedTotal` component) was always the deliberate part —
+              skipping formatNum along with the component was not. */}
+          <div className="sr-score-value">+{formatNum(winsEarned)}</div>
           <div className="sr-panel-label">wins earned</div>
         </div>
 
