@@ -88,3 +88,29 @@
 @media (prefers-reduced-motion: reduce) {
   .wins-hud { transition: none; }
 }
+
+/* ITEMISED PAYOUT (no-hidden-wins). The end-of-run total is now the sum of named lines — WORDS
+   first, then any bonus that landed during the run (achievement, collection milestone, welcome
+   back). A bonus folded silently into the total is the defect these rows exist to remove. */
+.wins-earned-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 2px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-micro);
+  color: #ffe94a;
+}
+.wins-earned-line-label {
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wins-earned-line-amt {
+  font-weight: 700;
+  color: #2effe0;
+  white-space: nowrap;
+}

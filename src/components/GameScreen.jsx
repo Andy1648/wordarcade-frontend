@@ -1635,6 +1635,7 @@ export default function GameScreen({
   winsTally = 0,
   winsWords = 0,
   winsEarnedTotal = 0,
+  winsBonusLines = [],
   lastPayout = null,
   payoutLedger = null,
   lastLanding = null,
@@ -2730,6 +2731,7 @@ export default function GameScreen({
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        winsBonusLines={winsBonusLines}
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
         lastLanding={lastLanding}
@@ -3747,7 +3749,7 @@ export default function GameScreen({
             )}
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
-            <WinsEarnedTotal amount={winsEarnedTotal} />
+            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
             {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
                 from." Every multiplier that contributed, ranked by its share of the total. */}
             <RoundPayout ledger={payoutLedger} />
@@ -4189,6 +4191,7 @@ function CategoryBlitzScreen({
   winsTally = 0,
   winsWords = 0,
   winsEarnedTotal = 0,
+  winsBonusLines = [],
   lastPayout = null,
   payoutLedger = null,
   lastLanding = null,
@@ -4482,7 +4485,7 @@ function CategoryBlitzScreen({
                 {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
-            <WinsEarnedTotal amount={winsEarnedTotal} />
+            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (

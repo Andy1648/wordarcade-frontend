@@ -223,15 +223,107 @@ export function consumePendingWinsStamp() {
   return s;
 }
 
-// Grant wins directly (no round gating) into BOTH the spendable balance and the never-
-// decremented lifetime total. Used by the menu level-up payout. Returns the new balance.
-export function grantWins(n) {
-  const amt = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
-  if (amt <= 0) return getWins();
-  const next = getWins() + amt;
-  saveWins(next);
+// ================================================================ THE WINS LEDGER
+//
+// ANDY, REPEATEDLY: "I be here getting like 800 but it gives like over 2k — idk where the thing
+// comes from." / "Every single win he earns, no random hidden wins."
+//
+// HE WAS RIGHT, AND HERE IS THE MEASUREMENT. A scripted 20-word Word Bomb run with the collection
+// sitting at 99 words: `taw.wins` moved 10,000 -> 30,010 (delta 20,010) while the game-over card
+// said **+15,010**. Five thousand wins appeared in the balance with nothing on screen accounting
+// for them — the 100-word COLLECTION MILESTONE, granted through `grantWins` from
+// `collection.js:137`, whose return value every single call site discards.
+//
+// THE CAUSE WAS STRUCTURAL, not a missing `<div>`. There were two ways to credit wins:
+//   bankWordWins()  per-word, fed `pendingStamp`, and IS shown (the +N pill / WINS EARNED)
+//   grantWins()     a bare number with NO label, NO stamp, and no obligation to be rendered
+// and three callers on the second path (achievements, collection milestones, the return bonus).
+// Only the return bonus happened to have a card. So the defect was not "somebody forgot a toast";
+// it was that the API made forgetting the default.
+//
+// THE FIX IS THAT THERE IS NOW ONE DOOR. Every win that enters the balance goes through
+// `credit(amount, label)`, and a label is MANDATORY. Each credit becomes a ledger ENTRY that the
+// UI can render and a test can sum. Nothing can be credited anonymously any more, because the
+// only function that writes the balance refuses to do it without a reason.
+//
+// The ledger is in-memory and per-session ON PURPOSE: it is a feed of "what just happened to your
+// balance", not a persisted transaction log. A reload starts a fresh feed; the balance itself is
+// the persisted truth.
+let ledger = [];
+let ledgerSeq = 0;
+const ledgerSubs = new Set();
+
+/** The label used when a caller credits without saying why. It is deliberately loud, and
+ *  `e2e/no-hidden-wins.spec.js` fails on any entry carrying it. */
+export const UNATTRIBUTED = 'UNATTRIBUTED';
+
+/**
+ * THE ONE PLACE WINS ENTER THE BALANCE. Everything else in this file routes through here.
+ *
+ * @param {number} amount  wins to credit (<=0 is a no-op)
+ * @param {string} label   what the player did to earn it, in player-facing words. REQUIRED.
+ * @param {object} [meta]  { kind: 'word'|'bonus', mode, detail } — `kind` decides whether the UI
+ *                         folds it into the per-word total or gives it its own named line.
+ * @returns {number} the amount actually credited
+ */
+function credit(amount, label, meta = {}) {
+  const amt = Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0;
+  if (amt <= 0) return 0;
+  saveWins(getWins() + amt);
   saveWinsLifetime(getWinsLifetime() + amt);
-  return next;
+  pendingStamp += amt;
+  const entry = {
+    id: ++ledgerSeq,
+    amount: amt,
+    label: label || UNATTRIBUTED,
+    kind: meta.kind || 'bonus',
+    mode: meta.mode || null,
+    at: Date.now(),
+  };
+  ledger.push(entry);
+  for (const fn of ledgerSubs) {
+    try { fn(entry); } catch { /* a bad subscriber must never break a payout */ }
+  }
+  return amt;
+}
+
+/** Subscribe to every credit as it happens. Returns an unsubscribe. */
+export function subscribeWins(fn) {
+  if (typeof fn !== 'function') return () => {};
+  ledgerSubs.add(fn);
+  return () => ledgerSubs.delete(fn);
+}
+
+/** Every credit this session, oldest first. */
+export function winsLedger() {
+  return ledger.slice();
+}
+
+/** Credits since a given ledger id (0 = everything) — what one run earned, in named lines. */
+export function winsLedgerSince(id = 0) {
+  return ledger.filter((e) => e.id > id);
+}
+
+/** The newest ledger id, so a caller can mark the start of a run. */
+export function winsLedgerMark() {
+  return ledgerSeq;
+}
+
+/** Test/teardown only. */
+export function resetWinsLedger() {
+  ledger = [];
+  ledgerSeq = 0;
+}
+
+// Grant wins directly (no round gating) into BOTH the spendable balance and the never-
+// decremented lifetime total. Returns the new balance.
+//
+// `label` IS REQUIRED and is what the player will read. Callers that omit it still credit — a
+// missing label must never cost a player money — but the entry is stamped UNATTRIBUTED and the
+// no-hidden-wins gate goes red on it, which is the loudest safe failure.
+export function grantWins(n, label, meta = {}) {
+  credit(n, label, { kind: 'bonus', ...meta });
+  return getWins();
 }
 
 // Bank wins INCREMENTALLY as accepted words climb, so leaving mid-round never forfeits what
@@ -268,9 +360,9 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   // Snap each grant to a round multiple of 10 (the payout invariant — every grant ends in a
   // zero) after applying the rarity weight to the base per-word rate.
   const granted = round10(deltaWeight * perWordWins({ mode, difficulty, rebirthCount, level }));
-  saveWins(getWins() + granted);
-  saveWinsLifetime(getWinsLifetime() + granted);
-  pendingStamp += granted;
+  // Through the ONE door, like every other credit — so the per-word money and the bonus money are
+  // summable by the same test and renderable by the same component.
+  credit(granted, 'WORDS', { kind: 'word', mode });
   // First time this round crosses the gate → count the round (mode counters only).
   if (prevN < MIN_WORDS && nowN >= MIN_WORDS && mode && ROUND_MODES.includes(mode)) {
     const r = getRounds();
@@ -289,14 +381,12 @@ export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
   const granted = awardWins({ wordsAccepted, mode, difficulty });
   const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= MIN_WORDS;
   if (counts) {
-    saveWins(getWins() + granted);
-    saveWinsLifetime(getWinsLifetime() + granted);
+    credit(granted, 'WORDS', { kind: 'word', mode });
     if (mode && ROUND_MODES.includes(mode)) {
       const r = getRounds();
       r[mode] += 1;
       saveRounds(r);
     }
-    pendingStamp += granted;
   }
   return granted;
 }

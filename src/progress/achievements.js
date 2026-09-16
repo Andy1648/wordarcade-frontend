@@ -184,7 +184,10 @@ export function checkAchievements() {
       if (ok) {
         earned.add(a.id);
         const wins = achievementPayout(a, snap);
-        grantWins(wins);
+        // LABELLED. This used to be a bare grantWins(wins): the money landed, a chime played, and
+        // nothing on screen said which achievement paid it or how much. The label is what the
+        // player reads in the ledger line.
+        grantWins(wins, `ACHIEVEMENT — ${a.name}`, { detail: a.id });
         newly.push({ ...a, wins });
       }
     }

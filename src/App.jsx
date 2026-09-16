@@ -75,11 +75,15 @@ import {
 } from './visitHistory';
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
+// EVERY BONUS WIN, ANNOUNCED WHEN IT LANDS. Mounted once at app level rather than per mode, so a
+// credit that fires in CHAIN, SAT Rush or on the menu is as visible as one in Word Bomb — the
+// hidden 5,000 Andy reported was a collection milestone, which can fire in any mode.
+import WinsCreditToast from './components/WinsCreditToast';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, awardWins, perWordFactors, WORD_WINS_BASE } from './progress/wins';
+import { bankWordWins, awardWins, perWordFactors, WORD_WINS_BASE, subscribeWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
 } from './progress/payout';
@@ -461,6 +465,11 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
+  // THE RUN'S BONUS LINES. `winsEarnedTotal` is the per-word money only; a run can also take an
+  // achievement payout or a collection milestone, and those used to land in the balance with
+  // nothing on the card. Collected from the wins ledger so the end card can NAME each one instead
+  // of the total quietly disagreeing with the balance (measured: card +15,010, balance +20,010).
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
   // The five secrets, moved off the menu and into play. `notePop` is the 1-in-750 golden-word
   // roll, called once per accepted word; the hook grants the (rebirth+level scaled) wins and hands
   // back the find for the word landing to show. Only listens while a game is live.
@@ -538,6 +547,12 @@ function App() {
     // analytics: a hidden/secret achievement was just discovered (additive; never alters the grant).
     try { if (Array.isArray(newly)) for (const a of newly) if (a && a.secret) evSecretFound(a.id); } catch { /* analytics only */ }
   }, [view]);
+
+  // Collect every BONUS credit as it lands, for the end-of-run itemisation. The toast announces it
+  // at the moment; this remembers it so the card can list it. One subscription for the whole app.
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
 
   // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
@@ -1060,6 +1075,7 @@ function App() {
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
       setWinsEarnedTotal(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
       setLastPayout(null);
       setPayoutLedger(null);
       setLastLanding(null);
@@ -1408,6 +1424,7 @@ function App() {
         setCategoryTotals({}); // fresh game
         categoryTotalsRef.current = {};
         setWinsEarnedTotal(0); // fresh Blitz game → reset the run's earned-wins total
+        setWinsBonusLines([]); // fresh run → the card itemises THIS run only
       }
       if (payload.reroll) {
         setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
@@ -2145,6 +2162,7 @@ function App() {
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        winsBonusLines={winsBonusLines}
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
         lastLanding={lastLanding}
@@ -2390,6 +2408,9 @@ function App() {
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
           )}
+          {/* Bonus-wins announcements (achievements, collection milestones, the return bonus).
+              Transient, pointer-events:none, docked under the wins pill's column. */}
+          <WinsCreditToast />
           {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
           {returnCard && view === 'home' && (
             <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
