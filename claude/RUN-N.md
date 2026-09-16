@@ -111,7 +111,45 @@ At LV40 the card table reads **CHAIN 1,040 · FUSE 1,120 · WB 810 · BLITZ 460 
 solo modes now lead both multiplayer modes by ~1.29×, and SAT is 83% of Blitz (was 67%, and 40%
 of Word Bomb — your "a third").
 
-### ⚠ This fit sits on the CORNER of the feasible region — needs your call
+### ✅ THE SAT DOUBLE COUNT IS FIXED — headroom 0.1% → 7.3%
+
+`satRarityMult()` (`progress/rarity.js`) now scores a SAT word **relative to its own deck**: the
+deck averages **3.42×** rarity against a real typist's **1.23×**, so SAT was collecting a flat
+**2.79×** nobody chose. A typical SAT word is now ×1; harder-than-typical ones still pay more, so
+the variance survives and only the bias goes. A drift-guard in `rarity.test.js` recomputes the
+constant from the shipped deck, so adding words cannot silently move every SAT payout.
+
+Re-fit: `satRush 1 → 3.9`, `fuse 2.9 → 2.7`. **Word Bomb, Blitz and CHAIN are unchanged**, which
+is why no payout e2e pin had to move again.
+
+| mode | weak/run | median/run | strong/run | wins/min |
+|---|---|---|---|---|
+| wordBomb | 1,414 | 4,377 | 13,369 | 4,661 |
+| blitz | 1,308 | 3,958 | 11,563 | 4,661 |
+| satRush | 2,002 | 5,548 | 12,517 | 4,690 |
+| chain | 2,942 | 12,806 | 42,285 | 8,690 |
+| fuse | 4,223 | 19,419 | 58,500 | 6,955 |
+
+**Spread 1.864× — 7.3% of headroom, up from 0.1%.** Both sims now agree (winsmin 1.83×); they
+disagreed by 4× before, which was the third model-vs-live mismatch (below). All 8 sim conditions
+pass with a non-zero exit.
+
+**One of your asks is now provably impossible, and it flipped direction.** "SAT within 20% of
+Blitz" was written when SAT was too *low*. With the double count gone, SAT is the only mode with
+**no per-word multiplier at all** — no combo, no lucky, and now no free deck rarity — so at an
+equal card rate it earns **0.31× Blitz per minute**. Holding the two cards within 20% forces a
+2.7–4.0× wins/min gap that busts the 2.00× spread by itself. An exhaustive search over card space
+in multiples of 10 found **no** assignment satisfying both. So SAT's card is **390** against
+Blitz's 120 — coherent for a mode of few, slow, hard words with nothing to stack.
+**If you want the cards closer, the lever is giving SAT the combo + lucky every other mode has.**
+That is a gameplay change and I have not made it.
+
+**THIRD MODEL-VS-LIVE MISMATCH, same family as the FUSE throughput.** `winsmin-sim` had
+`HAS_COMBO_LUCKY.satRush = true` — it has been modelling a SAT that gets combo and lucky, while
+`SatRushGame.jsx` has always passed `1, 1`. It was reporting SAT ~2× richer per word than it is.
+Corrected; both sims now use the same live path.
+
+### (historical) The corner this fit used to sit on
 
 SAT's deck is ~4× rarer than a real typist's vocabulary, so at an equal card rate it earns **2.40×
 per word from rarity alone**, while its throughput (12/min) is near Blitz's (14). That makes
@@ -183,7 +221,24 @@ a check that was believed to be running and wasn't.
 **`TryModeRow` survives** — it lives in `src/share/` but is a cross-promo row, not the share
 button. You didn't name it; say the word and it goes.
 
-### 3.2 The 15 that survived refutation — your taste call
+### 3.2 ANDY'S RULING (2026-09-16) — five cut, ten kept
+
+He overruled the defence on five and upheld it on ten. **Cut and shipped:**
+
+| cut | where | why it went |
+|---|---|---|
+| `.wb-tension` | `GameScreen.jsx` | four simultaneous full-viewport layers — vignette, three speed lines, HURRY!/GET OUT!, red throb — on top of the continuous danger vignette, the bomb's fuse, the rattle and the timer. Five ways to say "hurry". `data-tension` stays (it still drives the bomb and the seats); only the overlay left. Took **4 infinite animations** with it. |
+| the two duplicate motifs | `SoloShell.jsx` | `.solo-deck-motif` + `.solo-over-motif` were the *same node* rendered twice more on one screen. One motif per screen now. |
+| the NEXT-unlock line | `Homepage.jsx` | three spans that at R1 read **"NEXT REBIRTH 1 FRAME REBIRTH 1"** — the same word three times, naming a reward the player cannot see, with no affordance. |
+| the NO MARK chip | `MenuXp.jsx` | the empty slot rendered a dimmed outline on the theory that it advertises itself. It is a chip that says nothing, parked next to the level. It now appears only when a mark is actually equipped. |
+
+**Kept (ten), including `.homepage-beat-glow`** — the defence stands as written below.
+
+The defence's own scoreboard is unchanged and worth keeping visible: of 18 proposed cuts, 3
+survived on evidence, and Andy then cut 4 more on taste. That is the right split — the code
+could not prove these four should go, and it did not need to.
+
+### The 15 that survived refutation — the arguments, for the record
 
 Each is listed as: *the case for cutting* → **the case that saved it**. I have applied none of them.
 
@@ -373,3 +428,89 @@ adversarial pass overturned most of it. Starting a whole-app restyle on an unset
 would have produced exactly the kind of change you'd have to unpick. It needs §6.2 answered first.
 
 I'd rather hand you five finished things and one honest omission than eight half-applied ones.
+
+---
+
+## 8. BATCH B — THE ARCANE PASS *(applied; before/after in `claude/shots/`)*
+
+Five primitives, in `src/theme/arcane.css`, applied to surfaces that **already exist**. The pass
+adds exactly ONE element to the whole app — the grain layer — and nothing else: every other
+treatment rides a `::before`/`::after` on a box already in the tree. That is deliberate. Running
+"make it louder" straight after "make it emptier" only works if louder is a property of what
+survived, not a new stack of treatment layers.
+
+| primitive | what it does | where |
+|---|---|---|
+| **grain** | single-hue static overlay — `feTurbulence` + `feColorMatrix` inlined as a **data URI**, so the browser rasterises one 180px tile and then repeats pixels. A live `<filter>` would be re-evaluated on paint; this cannot be, because by the time it reaches the compositor it is a bitmap. 5% opacity, one fixed layer, whole app. | `App.jsx`, beside `CursorTrail` |
+| **facet** | posterised hard cel-shadow: two FLAT bands meeting on a hard stop at 62%. No ramp. | `.game-card`, `.solo-deathcard` |
+| **rim** | one bright 2px inset edge, **rationed to one per screen** — WB card on the menu, the prompt box in-game, the primary action in a dialog. Two rims on a screen means the screen has no subject. | 3 selectors total |
+| **halftone** | hard-stop dot field, on the BACK plate of a surface so "never behind text" is structural rather than a promise | `.game-card-art`, shop body |
+| **value grouping** | the supporting cast steps back to 0.86 so exactly one thing is brightest — dimming the rest is cheaper than brightening one thing, and it composites | corner nav, footer, rails, used-list |
+
+**Nothing here animates.** No keyframes, no transitions, no `will-change`. The infinite-animation
+count cannot move, and the `.wb-tension` cut in Batch A *removed* four.
+
+**SAT Rush is excluded from the rim and the facet** — CLAUDE.md pins it to the retro-print
+sub-style, and it already has halftone and grain natively in its own ink/paper idiom. Applying the
+neon house treatment there is the one change this pass must not make.
+
+### What the screenshots caught that the gates did not
+
+**The facet was applied to the big panels too, and it was wrong.** On a 900px panel a 163° hard
+stop does not read as "lit from one side" — it reads as a **diagonal band slicing across the
+content**. In the shop it cut straight through the PRISM theme card and half-darkened its price
+button, breaking this file's own rule that a facet must never darken text.
+`viewport-integrity` measures *boxes*; it cannot see that a shadow landed on a word, and it passed
+the frame clean. Fixed by restricting facets to things the player reads as one solid object at a
+glance — a card, a death slab. Anything big enough to contain a layout is too big to be lit from
+one side. Compare `claude/shots/B-after/shop-1366x768.png` against the first attempt.
+
+**And a second one, in CHAIN:** the frame shows the mode's single rule stated **three times at
+once** — the pre-clock armhint ("EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE"), the
+deck hint ("EACH WORD STARTS WHERE THE LAST ONE ENDED") and the input placeholder ("START WITH
+'F' · 3+ LETTERS"). The defence argued these were "3, two of them mutually exclusive with normal
+play". The screenshot says otherwise: in the pre-clock state, which is every run's first moment,
+all three are on screen together. That is a Batch C/D cut, and the picture is the evidence.
+
+---
+
+## 9. BATCH C — THE FIRST FIVE MINUTES, MEASURED
+
+Measured by `e2e/_shots.spec.js`, which takes the census from the **same page-load** as the
+screenshot, so the number and the picture can never disagree. Counts only what a player perceives:
+rendered, non-transparent, ≥4px boxes that paint their own ink; hues above 40% saturation; and
+type sizes split into UI vs decoration (the wall graffiti is texture, not type).
+
+| step | elements | hot colours | UI type sizes | moving |
+|---|---|---|---|---|
+| splash | 70 | 5 | **2** | 4 (3 infinite) |
+| menu | 128 | 7 | 10 | **0** |
+| **dialog-word-bomb** | **154** | 7 | **11** | **13** |
+| ingame-word-bomb | 94 | 5 | 5 | **0** |
+| gameover-word-bomb | 123 | 5 | 6 | 3 (3 infinite) |
+
+*(target: <25 elements / ≤4 hot colours / ≤5 type sizes / ≤2 moving)*
+
+**The worst three steps: the mode dialog, the menu, and the game-over card** — in that order. The
+dialog is worst on every axis at once.
+
+### The <25-element target is not reachable, and here is the arithmetic
+
+The menu's job is five mode cards. One card is ~15 painted elements before any chrome — art
+plate, halftone, facet, ribbon, badge, masthead, title, payout, multiplier, lock, and the
+magnet/scale wrappers that give it its box. **Five cards is ~75 elements on their own**, and that
+is the screen's entire purpose. Hitting 25 means shipping a menu that does not show the modes.
+
+The honest reading: **element count is the wrong metric for this app** — it counts a five-card grid
+as five times worse than a one-card grid, when a grid of five is exactly what a player came for.
+The three axes that *are* actionable, and where the crowding complaint actually lives:
+
+1. **UI type sizes — menu 10, dialog 11, against a scale with 7 steps.** Off-scale sizes in use:
+   7, 8, 19, 20, 24, 73px. Two of those (7, 8) are mine, from the card-payout clamp floor. This is
+   the single most fixable axis and the one a player reads as "visually noisy".
+2. **Moving things on the dialog: 13.** On a screen whose job is to answer "what is this mode?"
+3. **Hot colours: 7 on the menu, 9 in the shop**, against a 4-colour target.
+
+I have measured all three and not yet cut them — that is Batch C's remaining work, and it is
+queued behind the gate below rather than guessed at.
+

@@ -72,12 +72,22 @@ async function census(page) {
       }
     }
 
-    // TYPE SIZES: distinct rendered font-sizes on elements that actually show text.
-    const sizes = new Set();
+    // TYPE SIZES, SPLIT INTO UI AND DECORATION — because the raw number is not actionable.
+    // The menu reports ~21 distinct sizes, but most of them are the wall-scene graffiti: SVG
+    // <text> at a dozen inline sizes, sitting at 0.12-0.28 opacity behind everything. That is
+    // texture, and collapsing it onto the type scale would change nothing a player reads.
+    // The number worth acting on is the sizes the UI itself uses, so count those separately:
+    // anything inside an aria-hidden subtree is decoration.
+    const decorative = (el) => !!el.closest('[aria-hidden="true"]');
+    const uiSizes = new Set();
+    const decoSizes = new Set();
     for (const el of els) {
       const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-      if (ownText) sizes.add(Math.round(parseFloat(getComputedStyle(el).fontSize)));
+      if (!ownText) continue;
+      const px = Math.round(parseFloat(getComputedStyle(el).fontSize));
+      (decorative(el) ? decoSizes : uiSizes).add(px);
     }
+    const sizes = uiSizes;
 
     // MOVING THINGS: running animations + transitions, plus anything with a non-none animation
     // name that is not paused. Infinite ones are called out separately — those are the ones that
@@ -91,6 +101,7 @@ async function census(page) {
       elements: paints.length,
       hotColours: hot.size,
       typeSizes: sizes.size,
+      decoTypeSizes: decoSizes.size,
       moving: running.length,
       infinite: infinite.length,
       sizeList: [...sizes].sort((a, b) => a - b),
@@ -104,7 +115,31 @@ for (const vp of SHOT_VIEWPORTS) {
     for (const screen of SCREENS) {
       test(`${screen.name}`, async ({ page }) => {
         test.setTimeout(60000);
+        // STEADY STATE BY DEFAULT, FIRST-RUN ON REQUEST.
+        // Without this every frame is the ONBOARDING state: the first-run Spotlight dims the
+        // whole page, rings one element and floats a caption over the wordmark. That is a real
+        // screen, but it is not the screen a player spends their time in — and photographing the
+        // app through a 60% scrim makes every other judgement in this pass worthless.
+        // (It is also how the layout gate has always run: bootMenu never seeds these keys, so
+        // all 840 viewport-integrity cells measure the dimmed first-run state and the steady
+        // state has never been gated. Noted in claude/RUN-N.md.)
+        if (!process.env.SHOTS_FIRSTRUN) {
+          await page.addInitScript(() => {
+            try {
+              localStorage.setItem('taw.seenMenuSpotlight', '1');
+              localStorage.setItem('taw.seenGameSpotlight', '1');
+            } catch { /* storage blocked — the frame just shows onboarding */ }
+          });
+        }
         await screen.nav(page);
+        // WAIT OUT THE 3-2-1-GO COUNTDOWN on the in-game screens. It dims the whole stage while
+        // it runs, so a frame taken at nav+350ms photographs the app through a scrim and every
+        // colour/contrast judgement made from it is wrong. Wait for the overlay to leave rather
+        // than guessing a duration.
+        const cd = page.locator('.countdown-overlay, [class*="countdown-overlay"]').first();
+        if (await cd.count()) {
+          await cd.waitFor({ state: 'detached', timeout: 12000 }).catch(() => {});
+        }
         await page.waitForTimeout(350);
         const c = await census(page);
         await page.screenshot({ path: `${OUT}/${screen.name}-${vp.name}.png` });
@@ -112,7 +147,8 @@ for (const vp of SHOT_VIEWPORTS) {
         console.log(
           `CENSUS | ${vp.name.padEnd(9)} | ${screen.name.padEnd(24)} | `
           + `el ${String(c.elements).padStart(3)} | hot ${c.hotColours} | type ${c.typeSizes} | `
-          + `moving ${c.moving} (inf ${c.infinite}) | sizes ${c.sizeList.join(',')}`,
+          + `moving ${c.moving} (inf ${c.infinite}) | ui-sizes ${c.sizeList.join(',')} `
+          + `| deco-sizes ${c.decoTypeSizes}`,
         );
       });
     }

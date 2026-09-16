@@ -9,6 +9,10 @@ import './index.css'
 import './theme/type.css'
 import './theme/values.css'
 import './theme/themes.css'
+// THE ARCANE PASS. Imported last so its facet/rim/halftone rules land after the
+// component styles they decorate — this file only ever adds a treatment to a surface
+// that already exists, so it must win the cascade on equal specificity.
+import './theme/arcane.css'
 import { initTheme } from './theme/themes'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'

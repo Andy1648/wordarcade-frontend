@@ -2617,6 +2617,15 @@ function App() {
           through). The menu underneath has already mounted + painted, so the knife
           animates over it with no first-frame mount cost. */}
       {showIntro && <TransitionIntro onComplete={handleIntroComplete} />}
+      {/* THE ARCANE GRAIN — one static, single-hue overlay for the whole app.
+          A tiled data-URI SVG (feTurbulence + feColorMatrix), so the browser
+          rasterises the tile once and then repeats pixels: no live filter, no
+          animation, nothing per frame. It sits outside .app-shake for the same
+          reason the cursor trail does — grain that slides with the screen shake
+          reads as a rendering fault. aria-hidden + pointer-events:none, so it is
+          texture and not UI (it is not an orphan CONTROL: nothing can be clicked
+          or focused here). See src/theme/arcane.css. */}
+      <div className="arcane-grain" aria-hidden="true" />
       {/* Cursor trail sits outside .app-shake so the screen shake never moves
           it, and above everything (z 9999). */}
       <CursorTrail />
