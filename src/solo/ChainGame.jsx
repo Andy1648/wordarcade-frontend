@@ -4,6 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
+import { exampleStartingWith } from '../progress/teachExample.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
@@ -342,7 +343,13 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       placeholder={`START WITH "${required.toUpperCase()}" · 3+ LETTERS`}
       maxLength={data.maxAcceptLen}
       armHint={ARM_HINT}
-      firstRunRule="START WITH THE GIVEN LETTER"
+      /* FIRST-RUN TEACH (per mode). The example is computed from the letter ON SCREEN against the
+         same frequency-ordered list the mode judges with, and skips words already linked — so a
+         player can copy it and be accepted, every time. A canned example would be a word for a
+         DIFFERENT letter, i.e. a suggestion the teach itself rejects. */
+      teachMode="chain"
+      teachRule="IT MUST START WITH THE LETTER SHOWN"
+      teachExample={data ? exampleStartingWith(data.recall, required, (w) => s.used.has(w)) : null}
       rootRef={rootRef}
       fx={fxLayer}
       phase={g.phase}

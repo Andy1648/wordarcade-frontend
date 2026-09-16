@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
+import { exampleContaining } from '../progress/teachExample.js';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
@@ -260,7 +261,11 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
       armHint="SNEAK THOSE LETTERS INTO A WORD"
-      firstRunRule="SNEAK THE LETTERS INTO A WORD"
+      /* FIRST-RUN TEACH (per mode) — a real word containing the fragment that is on screen right
+         now, skipping any already solved, so copying it always works. */
+      teachMode="fuse"
+      teachRule="THE LETTERS SHOWN MUST APPEAR SOMEWHERE IN IT"
+      teachExample={data ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w)) : null}
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}
