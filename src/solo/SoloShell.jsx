@@ -65,7 +65,7 @@ export default function SoloShell({
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
-  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, share?, tryRow? }
+  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, tryRow? }
   onExit,
 }) {
   const inputRef = useRef(null);
@@ -212,9 +212,6 @@ export default function SoloShell({
                 <span>BEST {over.best}</span>
               </div>
             )}
-            {/* One-tap shareable result receipt (Job 1). Self-suppresses under 3 words and
-                never shows on the first-run tutorial card. */}
-            {over.bare ? null : over.share}
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}

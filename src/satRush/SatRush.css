@@ -1315,11 +1315,6 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   gap: 12px;
   margin-top: 4px;
 }
-.sr-share {
-  border-top: 2px solid var(--ink);
-  padding-top: 12px;
-  margin-bottom: 2px;
-}
 .sr-btn-ghost {
   background: transparent;
 }
@@ -2199,26 +2194,6 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-page { transform: rotate(-0.5deg); } /* a whisper of lean, no torn edge */
 .sr-brief-card:nth-child(odd) { transform: rotate(-0.7deg); }
 .sr-brief-card:nth-child(even) { transform: rotate(0.7deg); }
-
-/* ============================================================================
-   ShareBar, as it appears in SAT RUSH only (scoped to .sr-share) — de-neoned to
-   the ink/paper print language: paper buttons, ink linework, a SOLID INK primary
-   (paper type), hard ink offset, no rounded corners. Other modes' ShareBar untouched.
-   ============================================================================ */
-.sr-share .share-btn {
-  font-family: var(--font-head);
-  background: var(--paper);
-  color: var(--ink);
-  border: 3px solid var(--ink);
-  border-radius: 0;
-  box-shadow: 3px 3px 0 var(--ink);
-}
-.sr-share .share-btn.share-primary {
-  background: var(--ink);
-  color: var(--paper);
-}
-.sr-share .share-btn:hover:not(:disabled) { box-shadow: 4px 4px 0 var(--ink); }
-.sr-share .share-btn:active:not(:disabled) { box-shadow: 1px 1px 0 var(--ink); }
 
 /* ============================================================================
    REDUCED MOTION (manga pass) — the tilt, torn edges, screentone, skew, mugshot

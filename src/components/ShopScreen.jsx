@@ -398,10 +398,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             )}
           </div>
         )}
-
-        <button type="button" className="shop-back" onClick={onBack}>
-          ← BACK TO MENU
-        </button>
       </div>
       {reveal && <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />}
     </div>

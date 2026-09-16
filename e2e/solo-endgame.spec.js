@@ -74,50 +74,6 @@ async function playLinks(page, n) {
   return used;
 }
 
-test('CHAIN: a 4-link run yields the spec-shaped share receipt, deep-linked to /chain', async ({ page, context, baseURL }) => {
-  test.setTimeout(90_000); // the run has to die on a real ~10s clock, not a stub
-
-  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: baseURL });
-  await installBackendMock(page);
-  await seedProfile(page);
-  await page.goto('/?chain=1&portal=1');
-
-  await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 20000 });
-  await page.locator('.solo-input').waitFor({ state: 'visible', timeout: 20000 });
-
-  const used = await playLinks(page, 4);
-  expect(used).toHaveLength(4);
-
-  // Stop typing and let the clock run out — the only way a CHAIN run ends.
-  await page.locator('.solo-over').waitFor({ state: 'visible', timeout: 45000 });
-
-  // The receipt exists (4 links clears the 3-word suppression gate).
-  const copyBtn = page.locator('.solo-over .copy-result-btn');
-  await expect(copyBtn).toBeVisible();
-  await copyBtn.click();
-  await expect(copyBtn).toHaveText('COPIED!');
-
-  // The Windows clipboard normalises LF to CRLF on the way out, so split on either — the \r is a
-  // platform artifact of the round-trip, not something buildResultCard emits.
-  const text = await page.evaluate(() => navigator.clipboard.readText());
-  const lines = text.split(/\r?\n/);
-
-  // Line 1: brand + mode, EM DASH.
-  expect(lines[0]).toBe('TYPE A WORD — CHAIN');
-  // Line 2: "<n> LINKS · <n> PTS" — CHAIN counts LINKS, uppercase units, '·' separator, no LV.
-  expect(lines[1]).toMatch(/^4 LINKS · [\d,]+ PTS$/);
-  expect(lines[1]).not.toMatch(/LV/);
-  // Line 3: one glyph per link + the ⬛ that ended it. 4 links + 1 killer = 5, under the 30 cap.
-  expect(lines[2]).toMatch(/^[🟩🟨🟥]{4}⬛$/u);
-  // Line 4: a deep link INTO the mode.
-  expect(lines[3]).toContain('/chain');
-  expect(lines).toHaveLength(4);
-
-  // THE DEEP LINK MUST RESOLVE — a receipt whose last line 404s is worse than no receipt.
-  await page.goto(lines[3]);
-  await expect(page.locator('.solo-root')).toBeVisible({ timeout: 20000 });
-  await expect(page.locator('.solo-input')).toBeVisible({ timeout: 20000 });
-});
 
 test('CHAIN: the second row offers a DIFFERENT, UNLOCKED mode', async ({ page }) => {
   test.setTimeout(90_000);
@@ -148,7 +104,7 @@ test('CHAIN: the second row offers a DIFFERENT, UNLOCKED mode', async ({ page })
   await expect(page.locator('#root')).not.toBeEmpty();
 });
 
-test('the second row is ABSENT when the run is too short to have a card at all', async ({ page }) => {
+test('the TRY-ANOTHER-MODE row is ABSENT when the run is too short to have a card at all', async ({ page }) => {
   // The suppression companion: a sub-3-link run gets CHAIN's tutorial death card (`over.bare`),
   // which deliberately carries neither the share receipt nor the TRY row — the first-run card is
   // already a guided next step, so a second one would be noise.
@@ -167,6 +123,5 @@ test('the second row is ABSENT when the run is too short to have a card at all',
   await playLinks(page, 2); // under the 3-word gate
   await page.locator('.solo-over').waitFor({ state: 'visible', timeout: 45000 });
 
-  await expect(page.locator('.solo-over .copy-result-btn')).toHaveCount(0);
   await expect(page.locator('.solo-over .try-mode-btn')).toHaveCount(0);
 });

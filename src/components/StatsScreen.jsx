@@ -455,10 +455,6 @@ export default function StatsScreen({ onBack }) {
           {tab === 'collection' && <CollectionBody />}
           {tab === 'achievements' && <AchievementsBody />}
         </div>
-
-        <button type="button" className="stats-back" onClick={onBack}>
-          ← BACK TO MENU
-        </button>
       </div>
     </div>
   );

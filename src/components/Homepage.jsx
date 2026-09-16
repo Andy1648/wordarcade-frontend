@@ -35,53 +35,8 @@ import Spotlight from './Spotlight';
 import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
-import GraffitiTag from './decor/GraffitiTag';
-import {
-  PaintSplatter1,
-  PaintSplatter2,
-  PaintSplatter3,
-  PaintSplatter4,
-} from './decor/PaintSplatters';
 import './wall-system.css';
 import './Homepage.css';
-
-// Palette pairs (fill + a darker shade of the same hue for the sprayed outline -
-// never black, per the project's colored-outline rule).
-const PINK = { fill: '#ff4fa3', line: '#991A75' };
-const CYAN = { fill: '#2EFFE0', line: '#1A9985' };
-const YELLOW = { fill: '#FFE94A', line: '#B8A020' };
-const ORANGE = { fill: '#FF6B3D', line: '#B83D15' };
-const PURPLE = { fill: '#9A1AFF', line: '#5A0EAA' };
-
-// ALLEY DEPTH (one-point perspective). Vanishing point sits behind the title,
-// up-centre; the wall recedes toward it. Lines below converge ON it (floor
-// boards + ceiling + side walls) and the tags are SCALE-GRADED to it: tiny &
-// faint near the VP (far away), large & stronger at the lower corners (near /
-// foreground). Together with the streetlight pool this builds real depth - a
-// place you look INTO, not a flat field. Deterministic (no randomness).
-const VANISHING = { x: 50, y: 40 };
-const PERSPECTIVE_ENDS = [
-  // floor boards (the strongest depth cue) running out to the bottom edge
-  [0, 100], [17, 100], [34, 100], [50, 100], [66, 100], [83, 100], [100, 100],
-  // ceiling
-  [0, 0], [100, 0],
-  // side walls meeting the floor
-  [0, 47], [100, 47],
-];
-
-const RECEDING_TAGS = [
-  // deep background - small + faint, clustered near the vanishing point
-  { word: 'RIP',  c: PURPLE, size: 20, top: 31, left: 47, rot: -6,  op: 0.12, drip: 0 },
-  { word: 'POW',  c: CYAN,   size: 24, top: 27, left: 57, rot: 9,   op: 0.13, drip: 0 },
-  { word: 'EZ',   c: YELLOW, size: 22, top: 37, left: 39, rot: -10, op: 0.12, drip: 0 },
-  // mid distance - moderate, out toward the sides
-  { word: 'BOOM', c: ORANGE, size: 38, top: 13, left: 73, rot: 7,   op: 0.18, drip: 0 },
-  { word: 'FIRE', c: PURPLE, size: 44, top: 55, left: 3,  rot: -8,  op: 0.20, drip: 28 },
-  { word: 'ZAP',  c: CYAN,   size: 36, top: 60, left: 87, rot: 12,  op: 0.18, drip: 0 },
-  // foreground - large + stronger in the lower corners, reads IN FRONT
-  { word: 'WORD', c: PINK,   size: 56, top: 71, left: 1,  rot: 6,   op: 0.28, drip: 34 },
-  { word: 'GG',   c: YELLOW, size: 50, top: 75, left: 85, rot: -8,  op: 0.26, drip: 0 },
-];
 
 // How long a queued connect attempt shows the plain CONNECTING… state before we
 // assume a COLD START (the Render free tier sleeps when idle and takes ~30-60s to
@@ -706,6 +661,11 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             markSlot={markUnlocked.length > 0}
             mark={markById(equippedMark)}
             onMarkClick={() => setShowMarks(true)}
+            /* THE RATE LINE FOLLOWS THE CARD IN FOCUS. hoverGame already exists (it drives the
+               mascot's reaction pose), so the bar can print what a word is worth in the mode the
+               player is actually looking at, at their current level. Touch devices never hover,
+               so it falls back to Word Bomb — the same reference rate the shop prints. */
+            rateMode={hoverGame || 'word-bomb'}
           />
           {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
               only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a

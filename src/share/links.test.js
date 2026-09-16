@@ -2,7 +2,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inviteLink, dailyLink, satRushLink, chainLink, fuseLink, modeShareLink } from './links.js';
-import { REF_URL } from './shareConfig.js';
+// shareConfig.js went with the share-card pipeline; REF_URL now lives in links.js as its only
+// remaining consumer. Pinned as a LITERAL here on purpose — restating the implementation's own
+// constant would make this assertion tautological, and the whole point is that the no-code
+// fallback URL did not silently change when the card was deleted.
+const REF_URL = 'https://typeaword.com/?ref=share';
 
 test('inviteLink builds the ?join deep link on the given origin', () => {
   assert.equal(

@@ -3,7 +3,12 @@
 // node --test; browser callers omit `origin` and get window.location.origin,
 // which keeps links correct on localhost, previews and production alike.
 
-import { REF_URL } from './shareConfig.js';
+// INLINED from the deleted shareConfig.js. The share-card pipeline (ShareBar, CopyResultButton,
+// shareCard/cardModel/renderCard/qr) was removed wholesale — Andy: "no one in the history uses
+// that" — and this constant was the only thing left in that module with a live consumer. The URL
+// is carried over VERBATIM, ?ref=share included, so invite-link behaviour and its PostHog
+// attribution are byte-identical to before the removal.
+const REF_URL = 'https://typeaword.com/?ref=share';
 
 const PROD_ORIGIN = 'https://typeaword.com';
 

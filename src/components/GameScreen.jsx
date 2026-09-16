@@ -22,8 +22,6 @@ import {
 } from '../juice';
 import { applyRingSize } from './wbRingSize';
 import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
-import { ShareBar } from '../share';
-import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
@@ -3479,12 +3477,6 @@ export default function GameScreen({
         </div>
 
         <div className="wb-bottombar" ref={wbBarRef}>
-        {spectatorCount > 0 && (
-          <div className="game-spectator-count">
-            👁 {spectatorCount} SPECTATING
-          </div>
-        )}
-
         {isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
           <div className="spectator-reactions">
@@ -3769,55 +3761,6 @@ export default function GameScreen({
               staggerIn={goStaggered}
               reduce={goReduce}
             />
-            {/* Shareable result card — reads existing game-over data only.
-                events/longestWord are MY chronological story (drives the emoji
-                grid in the copy text); the other fields feed the image card. */}
-            <ShareBar
-              mode="word-bomb"
-              neon="#2EFFE0"
-              outcome={{ won: iWon }}
-              link={roomCode ? inviteLink(roomCode) : null}
-              data={(() => {
-                const myWords = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId);
-                const myLosses = [
-                  ...(gameStats.timeouts || []),
-                  ...(gameStats.skips || []),
-                ].filter((l) => l.playerId === myId);
-                const events = [
-                  ...myWords.map((w) => ({ t: 'word', len: (w.word || '').length, ts: w.timestamp })),
-                  ...myLosses.map((l) => ({ t: 'life', ts: l.timestamp })),
-                ]
-                  .sort((a, b) => (a.ts || 0) - (b.ts || 0))
-                  .map(({ t, len }) => ({ t, len }));
-                const longestWord = myWords.reduce(
-                  (best, w) => ((w.word || '').length > best.length ? w.word : best),
-                  ''
-                );
-                return {
-                  words: (gameStats.wordsPlayed || []).length,
-                  // The card's LONGEST chip is MINE (matches the copy text's
-                  // "longest: …"), not the table's longest — the whole result
-                  // is about the sharer, so an opponent's word never headlines it.
-                  longest: longestWord ? longestWord.length : undefined,
-                  players: players.length,
-                  events,
-                  longestWord: longestWord || undefined,
-                };
-              })()}
-            />
-            {/* One-tap shareable result receipt (Job 1) — MY accepted words; ⬛ if eliminated. */}
-            {(() => {
-              const myWbWords = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId).length;
-              return (
-                <CopyResultButton
-                  mode="word-bomb"
-                  words={myWbWords}
-                  tiers={Array(myWbWords).fill('fast')}
-                  killed={!iWon}
-                  className="game-over-copy-result"
-                />
-              );
-            })()}
             <div className="game-over-actions">
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
@@ -4108,34 +4051,6 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
             )}
           </div>
 
-          {/* Shareable result card — reads the existing solo score/record only.
-              roundScores feed the copy text's per-round emoji rows; a daily run
-              brands the text with the day # and deep-links ?daily=1. */}
-          <ShareBar
-            mode="category-blitz"
-            neon={daily ? '#FFE94A' : '#FF6B3D'}
-            outcome={{ solo: true, isRecord: pb.isNewRecord }}
-            daily={daily ? { dayNumber: daily.dayNumber } : null}
-            link={daily ? dailyLink() : null}
-            data={{
-              score,
-              rounds: rounds.length || undefined,
-              bestRound: rounds.length
-                ? rounds.reduce((m, r) => Math.max(m, r.roundScore || 0), 0)
-                : undefined,
-              roundScores: rounds.map((r) => r.roundScore),
-            }}
-          />
-          {/* One-tap shareable result receipt (Job 1). Blitz has no per-word timing; each
-              accepted answer (score point) is a 🟩. pts omitted (== word count). */}
-          <CopyResultButton
-            mode="category-blitz"
-            words={Math.max(0, score)}
-            points={null}
-            tiers={Array(Math.max(0, score)).fill('fast')}
-            killed={false}
-            className="game-over-copy-result"
-          />
           <div className="game-over-actions">
             <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
               {daily ? "REPLAY TODAY'S" : 'PLAY AGAIN'}
@@ -4544,32 +4459,6 @@ function CategoryBlitzScreen({
                 );
               })}
             </div>
-            {/* Shareable result card — reads the existing final scores only.
-                roundScores drive the copy text's emoji rows; the invite link
-                makes the paste a working "rematch me" for the group chat. */}
-            <ShareBar
-              mode="category-blitz"
-              neon="#FF6B3D"
-              outcome={{
-                solo: false,
-                place: (scores.findIndex((s) => s.id === myId) + 1) || undefined,
-                total: scores.length || undefined,
-              }}
-              link={roomCode ? inviteLink(roomCode) : null}
-              data={{
-                score: myScore,
-                roundScores: soloLogRef.current.map((r) => r.roundScore),
-              }}
-            />
-            {/* One-tap shareable result receipt (Job 1) — MY score's worth of 🟩. */}
-            <CopyResultButton
-              mode="category-blitz"
-              words={Math.max(0, myScore)}
-              points={null}
-              tiers={Array(Math.max(0, myScore)).fill('fast')}
-              killed={false}
-              className="game-over-copy-result"
-            />
             <div className="game-over-actions">
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game

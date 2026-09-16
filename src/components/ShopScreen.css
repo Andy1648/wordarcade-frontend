@@ -473,27 +473,6 @@
   flex-wrap: wrap;
 }
 
-.shop-back {
-  flex: 0 0 auto;
-  margin: 10px 18px 18px;
-  padding: 12px;
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  line-height: 0.98;
-  font-size: var(--fs-panel);
-  letter-spacing: 0.04em;
-  color: #0d0618;
-  background: #2effe0;
-  border: 4px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-}
-.shop-back:active {
-  transform: translate(4px, 4px);
-  box-shadow: none;
-}
-
 /* Economy v3: the restored XP multiplier a cosmetic carries, shown on its card. */
 .shop-card-xp {
   font-family: 'Space Mono', monospace;

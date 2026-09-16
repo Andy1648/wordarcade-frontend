@@ -248,10 +248,19 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // number. At R2 / LV40 / momentum 50 the card said "200 WINS / WORD (x9)" for a word that pays
   // 4,830. It now prints THE RESOLVED RATE — what this mode pays for a word right now — and
   // annotates it with everything the player has built, as one multiplier.
+  //
+  // THE UNIT WORD IS GONE ("610 WINS / WORD" -> "610 / WORD"). Two reasons, one forced.
+  // FORCED: the econ round-2 re-fit pushed CHAIN/FUSE into four digits, and at 390px the longer
+  // string pushed .game-card-payout-mult past the card's clip — viewport-integrity caught it at
+  // 390x844 and 360x640. A font-size floor alone cannot fix this class of bug, because rebirth
+  // multiplies the rate without bound, so the string was shortened instead of the type.
+  // CHOSEN: "WINS" was printed five times on one screen, once per card, next to a wins chip and
+  // an XP bar that both name the currency. This is a subtraction pass; the unit survives where
+  // it is stated once, not where it is repeated per card.
   const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
   const payout = rateNow && (
     <>
-      {formatNum(rateNow.rate)} WINS / WORD
+      {formatNum(rateNow.rate)} / WORD
       {rateNow.mult !== 1 && (
         <span className="game-card-payout-mult"> (×{formatNum(rateNow.mult)})</span>
       )}

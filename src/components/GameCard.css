@@ -430,7 +430,10 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-payout {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(9px, 3.2cqw, 12px);
+  /* Floor lowered 9px -> 8px alongside the copy shortening: the rate grows with rebirth and
+     has no upper bound, so the line needs headroom on the narrowest card as well as fewer
+     characters. */
+  font-size: clamp(8px, 3.2cqw, 12px);
   letter-spacing: 0.02em;
   color: #ffe9c9;
   white-space: nowrap;

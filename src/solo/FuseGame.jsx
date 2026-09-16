@@ -17,7 +17,6 @@ import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
-import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import poolsRaw from './fragmentPools.json';
 
@@ -280,17 +279,6 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         // FUSE's score IS its word count, so a PTS fragment would just repeat the number on the
         // same line — omit it (points=null). The alphabet strip rides the glyph row instead:
         // "LETTERS n/26", the live count of distinct letters lit this cycle.
-        share: (
-          <CopyResultButton
-            mode="fuse"
-            words={s.wordsSolved}
-            points={null}
-            tiers={g.tierLog}
-            killed
-            suffix={`LETTERS ${s.lettersUsed.size}/26`}
-            className="solo-share-btn"
-          />
-        ),
         tryRow: <TryModeRow current="fuse" />,
       }}
       onExit={onExit}

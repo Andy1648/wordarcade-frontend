@@ -18,7 +18,6 @@ import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
-import CopyResultButton from '../share/CopyResultButton.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
@@ -361,16 +360,6 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
-        share: (
-          <CopyResultButton
-            mode="chain"
-            words={s.k}
-            points={s.score}
-            tiers={g.tierLog}
-            killed
-            className="solo-share-btn"
-          />
-        ),
         tryRow: <TryModeRow current="chain" />,
       }}
       onExit={onExit}
