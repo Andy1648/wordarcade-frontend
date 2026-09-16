@@ -44,22 +44,23 @@ test('dailyLink deep-links straight into the daily', () => {
 });
 
 test('satRushLink deep-links straight into SAT Rush', () => {
-  assert.equal(satRushLink('https://typeaword.com'), 'https://typeaword.com/sat-rush?ref=share');
-  assert.equal(satRushLink(), 'https://typeaword.com/sat-rush?ref=share');
+  assert.equal(satRushLink('https://typeaword.com'), 'https://typeaword.com/sat-rush/play?ref=share');
+  assert.equal(satRushLink(), 'https://typeaword.com/sat-rush/play?ref=share');
 });
 
 test('chain/fuse links deep-link straight into their mode', () => {
-  assert.equal(chainLink('https://typeaword.com'), 'https://typeaword.com/chain?ref=share');
-  assert.equal(fuseLink('https://typeaword.com'), 'https://typeaword.com/fuse?ref=share');
+  assert.equal(chainLink('https://typeaword.com'), 'https://typeaword.com/chain/play?ref=share');
+  assert.equal(fuseLink('https://typeaword.com'), 'https://typeaword.com/fuse/play?ref=share');
 });
 
 test('modeShareLink routes each mode to a working deep link (word-bomb -> menu)', () => {
   const o = 'https://typeaword.com';
-  assert.equal(modeShareLink('fuse', o), 'https://typeaword.com/fuse?ref=share');
-  assert.equal(modeShareLink('chain', o), 'https://typeaword.com/chain?ref=share');
-  assert.equal(modeShareLink('sat-rush', o), 'https://typeaword.com/sat-rush?ref=share');
+  assert.equal(modeShareLink('fuse', o), 'https://typeaword.com/fuse/play?ref=share');
+  assert.equal(modeShareLink('chain', o), 'https://typeaword.com/chain/play?ref=share');
+  assert.equal(modeShareLink('sat-rush', o), 'https://typeaword.com/sat-rush/play?ref=share');
   assert.equal(modeShareLink('category-blitz', o), 'https://typeaword.com/?daily=1&ref=share');
-  // word-bomb has no solo deep-link param -> mode-select homepage (documented gap).
-  assert.equal(modeShareLink('word-bomb', o), 'https://typeaword.com/word-bomb?ref=share');
+  // word-bomb has no solo deep-link param -> mode-select homepage (documented gap). This used to be
+  // '/word-bomb', which is a static ARTICLE in production, so the recipient never reached the app.
+  assert.equal(modeShareLink('word-bomb', o), 'https://typeaword.com/?ref=share');
   assert.equal(modeShareLink('anything-else', o), 'https://typeaword.com/?ref=share');
 });

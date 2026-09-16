@@ -13,9 +13,11 @@ import {
 
 test('canonicalPathForView maps only the four deep-linkable views', () => {
   assert.equal(canonicalPathForView('home'), '/');
-  assert.equal(canonicalPathForView('sat-rush'), '/sat-rush');
-  assert.equal(canonicalPathForView('chain'), '/chain');
-  assert.equal(canonicalPathForView('fuse'), '/fuse');
+  // The PLAY paths, not the article paths — this is what ends up in the address bar mid-run, so it
+  // is the string a player copies and sends to a friend. It must open the game.
+  assert.equal(canonicalPathForView('sat-rush'), '/sat-rush/play');
+  assert.equal(canonicalPathForView('chain'), '/chain/play');
+  assert.equal(canonicalPathForView('fuse'), '/fuse/play');
   assert.equal(canonicalPathForView('room'), null); // transient — no URL of its own
   assert.equal(canonicalPathForView('game'), null);
   assert.equal(canonicalPathForView('lobby'), null);

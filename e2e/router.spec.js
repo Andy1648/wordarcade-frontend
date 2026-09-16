@@ -14,14 +14,20 @@ async function land(page, url) {
 const dv = (page) => page.evaluate(() => document.documentElement.getAttribute('data-view'));
 const loc = (page) => page.evaluate(() => location.pathname + location.search);
 
+// WHY THE BARE /chain, /fuse, /sat-rush, /word-bomb AND /category-blitz PATHS ARE NOT TESTED HERE:
+// they are static landing pages in public/, and the two environments disagree about them. Vercel
+// serves the static file before the rewrite, so /chain returns the article with no #root at all.
+// `vite preview` (this suite's server) resolves /chain to the SPA fallback and only serves the
+// article at /chain/ WITH a trailing slash. This table used to assert the preview behaviour and
+// passed for months while describing something that was never true in production. Asserting either
+// side here would pin an environment, not the app — the real invariant (no navigable path is
+// shadowed by public/) is a filesystem check in src/build/landingLinks.test.js instead.
 test.describe('clean routes render the right view', () => {
   for (const [path, view] of [
     ['/', 'home'],
-    ['/word-bomb', 'home'],
-    ['/category-blitz', 'home'],
-    ['/sat-rush', 'sat-rush'],
-    ['/chain', 'chain'],
-    ['/fuse', 'fuse'],
+    ['/sat-rush/play', 'sat-rush'],
+    ['/chain/play', 'chain'],
+    ['/fuse/play', 'fuse'],
   ]) {
     test(`${path} -> ${view}`, async ({ page }) => {
       await land(page, path);
@@ -33,9 +39,9 @@ test.describe('clean routes render the right view', () => {
 
 test.describe('legacy query params still work AND canonicalise to the path', () => {
   for (const [url, view, canon] of [
-    ['/?satrush=1', 'sat-rush', '/sat-rush'],
-    ['/?chain=1', 'chain', '/chain'],
-    ['/?fuse=1', 'fuse', '/fuse'],
+    ['/?satrush=1', 'sat-rush', '/sat-rush/play'],
+    ['/?chain=1', 'chain', '/chain/play'],
+    ['/?fuse=1', 'fuse', '/fuse/play'],
   ]) {
     test(`${url} -> ${view} @ ${canon}`, async ({ page }) => {
       await land(page, url);

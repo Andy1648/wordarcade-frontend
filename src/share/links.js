@@ -20,9 +20,14 @@ function resolveOrigin(origin) {
   return PROD_ORIGIN;
 }
 
-// feat/router: share links now use CLEAN PATHS (the router bridges them back to the query the app
+// feat/router: share links use CLEAN PATHS (the router bridges them back to the query the app
 // reads, and canonicalises the URL after boot). Legacy ?join=/?satrush=/?chain=/?fuse= entries still
 // work (the app never stopped reading them), so old shared links keep resolving.
+//
+// ARTICLE/PLAY SPLIT (2026-09-16): the solo links point at /<mode>/play, NOT /<mode>. /chain,
+// /fuse and /sat-rush are static landing pages in public/, and Vercel serves a static file before
+// the SPA rewrite — so the old links landed a recipient on an article with a PLAY button rather
+// than in the game. Verified against production: those paths return HTML with no #root at all.
 
 /** Deep link that drops a friend straight into room `code` -> /room/CODE. */
 export function inviteLink(code, origin) {
@@ -36,25 +41,27 @@ export function dailyLink(origin) {
   return `${resolveOrigin(origin)}/?daily=1&ref=share`;
 }
 
-/** Deep link straight into SAT Rush -> /sat-rush. */
+/** Deep link straight into SAT Rush -> /sat-rush/play. */
 export function satRushLink(origin) {
-  return `${resolveOrigin(origin)}/sat-rush?ref=share`;
+  return `${resolveOrigin(origin)}/sat-rush/play?ref=share`;
 }
 
-/** Deep link straight into CHAIN -> /chain. */
+/** Deep link straight into CHAIN -> /chain/play. */
 export function chainLink(origin) {
-  return `${resolveOrigin(origin)}/chain?ref=share`;
+  return `${resolveOrigin(origin)}/chain/play?ref=share`;
 }
 
-/** Deep link straight into FUSE -> /fuse. */
+/** Deep link straight into FUSE -> /fuse/play. */
 export function fuseLink(origin) {
-  return `${resolveOrigin(origin)}/fuse?ref=share`;
+  return `${resolveOrigin(origin)}/fuse/play?ref=share`;
 }
 
-// Result-card deep link per mode id (Job 1). Each lands IN the mode, never the homepage —
-// EXCEPT word-bomb, which has no solo deep-link param (adding one is Tier-1 App.jsx work),
-// so it falls back to the mode-select homepage. category-blitz points at the Daily Challenge
-// (the solo blitz surface). Keeps the share receipt's last line functional, not cosmetic.
+// Result-card deep link per mode id (Job 1). Each lands IN the mode, never on an article —
+// EXCEPT word-bomb, which has no solo deep-link param (adding one is Tier-1 App.jsx work), so it
+// falls back to the mode-select MENU. That used to be `/word-bomb`, which is a static landing page
+// in production, so the recipient of a Word Bomb result card got an article instead of anywhere
+// playable; '/' is the closest thing to "the game" a mode with no solo entry point has.
+// category-blitz points at the Daily Challenge (the solo blitz surface).
 export function modeShareLink(mode, origin) {
   switch (mode) {
     case 'fuse':
@@ -66,7 +73,7 @@ export function modeShareLink(mode, origin) {
     case 'category-blitz':
       return dailyLink(origin);
     case 'word-bomb':
-      return `${resolveOrigin(origin)}/word-bomb?ref=share`;
+      return `${resolveOrigin(origin)}/?ref=share`;
     default:
       return `${resolveOrigin(origin)}/?ref=share`;
   }

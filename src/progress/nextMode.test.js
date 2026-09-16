@@ -41,7 +41,7 @@ test('picks the LEAST-played unlocked mode that is not the one just played', () 
   });
   assert.equal(pick.id, 'sat-rush');
   assert.equal(pick.name, 'SAT RUSH');
-  assert.equal(pick.path, '/sat-rush');
+  assert.equal(pick.path, '/sat-rush/play');
 });
 
 test('NEVER suggests the mode just played, even when it is the least played', () => {

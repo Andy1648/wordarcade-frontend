@@ -22,12 +22,16 @@ import { MASTERY_MODES } from './mastery.js';
 // Clean route path per mode id. Navigating is a real page load (see TryModeRow) because the app's
 // entry-param readers resolve ONCE at import time — pushState alone would change the URL without
 // opening the mode.
+// ARTICLE/PLAY SPLIT (2026-09-16): these MUST NOT be the bare /<mode> paths. All five are static
+// landing pages in public/, and Vercel serves a static file BEFORE the SPA rewrite — so the old
+// table sent a player who tapped "TRY FUSE" at the end of a run to an ARTICLE, not into Fuse.
+// src/build/landingLinks.test.js pins this: no navigable destination may be shadowed by public/.
 export const MODE_PATH = {
-  'word-bomb': '/word-bomb',
-  'category-blitz': '/category-blitz',
-  'sat-rush': '/sat-rush',
-  chain: '/chain',
-  fuse: '/fuse',
+  'word-bomb': '/', // no solo deep link — the menu is the closest playable surface
+  'category-blitz': '/', // ditto (Daily is a query param, not a route)
+  'sat-rush': '/sat-rush/play',
+  chain: '/chain/play',
+  fuse: '/fuse/play',
 };
 
 /** A mode's menu name as one line ("WORD\nBOMB" -> "WORD BOMB"). */
