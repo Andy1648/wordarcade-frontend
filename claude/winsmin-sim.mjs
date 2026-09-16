@@ -45,12 +45,12 @@ const WEIGHT_CAP = 40; // cappedWordMult's ×40 ceiling (rarity×combo×lucky)
 // Which modes fold combo+lucky into the weight. Post feat/parity-sat: ALL FIVE do (WB/Blitz added on
 // feat/parity-wb-blitz, SAT Rush on feat/parity-sat) — so the mechanic is uniform and the spread
 // returns to the compressed band.
-// CORRECTED 2026-09-16: satRush was `true` here and had been for as long as this file existed,
-// but the LIVE code has never given SAT either — SatRushGame.jsx calls
-// cappedWordMult(rw.mult, 1, 1), combo AND lucky pinned to 1. This file was therefore modelling
-// a mode that does not exist and reporting SAT ~2x richer per word than it is. Third model-vs-live
-// mismatch of the same family as the asserted FUSE throughput; see claude/RUN-N.md.
-const HAS_COMBO_LUCKY = { wordBomb: true, blitz: true, chain: true, fuse: true, satRush: false };
+// satRush: TRUE, and now it is true of the LIVE CODE TOO. This file claimed SAT had combo+lucky
+// for as long as it existed while SatRushGame.jsx passed cappedWordMult(rw.mult, 1, 1) — the
+// third model-vs-live mismatch this run found. Rather than make the model match a SAT with no
+// multipliers, the MODE was brought up to parity (feat/sat-parity), because without it no card
+// assignment satisfies Andy's ordering at all. Model and live now agree because the code changed.
+const HAS_COMBO_LUCKY = { wordBomb: true, blitz: true, chain: true, fuse: true, satRush: true };
 function meanWinsPerWord(runs, modeKey) {
   const mult = WINS_MULT[modeKey] || 1;
   const cl = HAS_COMBO_LUCKY[modeKey];
