@@ -630,3 +630,252 @@ button.menu-mark:active {
     display: none;
   }
 }
+
+/* ============================================================================
+   THE LOUD XP BAR (.is-loud)
+   Andy: "The XP bar is still a hairline — '10 / 52.3K' in the smallest type on
+   the menu. It IS the progression; make it the third-loudest thing on screen."
+   So: >=3x track height, HARD BLACK tick segments, a level numeral ~3.8x its
+   kicker, and the active mode's live wins/word rate printed on the bar.
+
+   THREE SIZES ARE BUILT, not one guessed at — `?xpbar=tall` (default, 3.1x),
+   `?xpbar=xl` (3.9x) and `?xpbar=xxl` (4.7x), plus `?xpbar=off` which restores
+   the old hairline so the three can be A/B'd against what they replace.
+   --xp-track-h is the single knob; everything below is derived from it, so a
+   fourth size is one line.
+
+   MOTION BUDGET: nothing here animates. No new infinite animations, no new
+   will-change, and no animated width/height/box-shadow — the fill is still the
+   existing scaleX transform, which is untouched by this block.
+   ========================================================================== */
+.menu-xp-bar.is-loud {
+  --xp-track-h: 92px; /* 3.1x the old 30px hairline */
+  /* TWO ROWS. Previously every meta chip shared the track's row, which starved the
+     track to ~150px on a 760px bar — the readout and the rate line both overflowed it,
+     and the tick segments (10% of a narrow track) read as fat bars. The chips go on
+     top; the LEVEL block + a full-width track own the row below. */
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 8px;
+  gap: 10px;
+  /* The bar is a SLAB now, not a strip: it owns a panel box of its own so the
+     level numeral and the rate line read as one object. Flat fill, thick black
+     outline, hard offset shadow — the house card treatment. */
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  padding: 10px;
+}
+/* THREE SIZES, so the choice is Andy's and not mine. All three clear the "at least 3x"
+   floor against the old 30px hairline. */
+.menu-xp-bar.is-loud.h-xl {
+  --xp-track-h: 116px; /* 3.9x */
+}
+.menu-xp-bar.is-loud.h-xxl {
+  --xp-track-h: 140px; /* 4.7x */
+}
+
+/* The explicit order that produces the two rows. The break is flex-basis:100%, so
+   everything ordered after it wraps. */
+.menu-xp-bar.is-loud > .menu-wins-chip { order: 1; }
+.menu-xp-bar.is-loud > .menu-streak-chip { order: 2; }
+.menu-xp-bar.is-loud > .menu-mark { order: 3; }
+.menu-xp-bar.is-loud > .menu-xp-rank { order: 4; margin-left: auto; }
+.menu-xp-bar.is-loud > .menu-xp-break {
+  order: 5;
+  flex: 0 0 100%;
+  height: 0;
+}
+.menu-xp-bar.is-loud > .menu-xp-lvblock { order: 6; }
+.menu-xp-bar.is-loud > .menu-xp-track { order: 7; }
+/* The mini bar never renders two rows, so the break must not occupy space there. */
+.menu-xp-bar:not(.is-loud) .menu-xp-break { display: none; }
+
+/* ---- The level block: kicker over numeral, the numeral is the headline ---- */
+.menu-xp-bar.is-loud .menu-xp-lvblock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 14px;
+  min-width: calc(var(--xp-track-h) * 0.86);
+  align-self: stretch;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.menu-xp-bar.is-loud .menu-xp-label {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.18em;
+  color: rgba(240, 234, 217, 0.72);
+}
+/* THE NUMERAL. --fs-h2 (42px) against the --fs-micro (11px) kicker is 3.8x, inside
+   Andy's 3-4x. Bungee is legal here precisely because it is finally big enough:
+   the typeScale guard requires Bungee to be ALL-CAPS and never below --fs-panel,
+   which is exactly why the old 13px Space Mono chip could not be display type. */
+.menu-xp-bar.is-loud .menu-xp-lv {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 0.92;
+  color: var(--theme-xp-fill, #2effe0);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0;
+}
+
+/* ---- The track ---- */
+/* TEXTURE, so the track is a SLAB and not a flat strip (Andy: "built with the same craft as
+   the CHAIN slabs — texture, hard edges, offset shadow"). A halftone dot field sits in the
+   EMPTY part of the track. Every stop is a HARD stop, so these paint flat dots rather than a
+   gradient ramp — the flat-colour rule is about banding and blur, and there is none here.
+   Static: no animation, no will-change, and it is a background on an existing node, so it
+   adds no element to the tree. */
+.menu-xp-bar.is-loud .menu-xp-track {
+  height: var(--xp-track-h);
+  border-width: 3px;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.085) 0 1.5px, transparent 1.5px);
+  background-size: 9px 9px;
+  background-repeat: repeat;
+  /* HARD BLACK TICK SEGMENTS. The old notches were 1.5px of rgba(255,255,255,.16)
+     — invisible at a glance, which is half of why the bar read as a hairline. Ten
+     segments split by 4px of solid #000, hard stops only: no colour ramp anywhere,
+     so this stays inside the flat-colours rule (a repeating-linear-gradient with
+     hard stops paints flat bands, not a gradient). Painted on the TRACK so the
+     fill slides under them and the segments stay legible at any fill level. */
+  background: #0d0618;
+}
+/* The FILLED region carries the same halftone in ink, so the bar reads as two printed
+   plates meeting at the leading edge rather than one flat colour butting against another. */
+.menu-xp-bar.is-loud .menu-xp-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.16) 0 1.5px, transparent 1.5px);
+  background-size: 9px 9px;
+}
+
+/* The ticks sit ABOVE the fill so the segmentation survives a filled bar. Its own
+   layer because the fill must not be clipped by it and vice versa. */
+.menu-xp-bar.is-loud .menu-xp-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 5px;
+  background: repeating-linear-gradient(
+    90deg,
+    #000 0 4px,
+    transparent 4px 10%
+  );
+}
+.menu-xp-bar.is-loud .menu-xp-clip {
+  border-radius: 5px;
+}
+
+/* ---- The readout: the XP numbers, now real type instead of a whisper ---- */
+.menu-xp-bar.is-loud .menu-xp-readout {
+  /* Sits in the UPPER half so the rate line below it has its own air. */
+  top: 34%;
+  z-index: 2;
+  font-size: var(--fs-body);
+  -webkit-text-stroke: 3px #000;
+}
+
+/* ---- The payoff line: what a word is worth right now, in the mode in focus ---- */
+.menu-xp-bar.is-loud .menu-xp-rate {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
+  line-height: 1;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.menu-xp-bar.is-loud .menu-xp-rate-mode {
+  color: var(--theme-xp-fill, #2effe0);
+  letter-spacing: 0.06em;
+}
+.menu-xp-bar.is-loud .menu-xp-rate-num {
+  color: #ffe94a;
+}
+.menu-xp-bar.is-loud .menu-xp-rate-unit {
+  color: rgba(240, 234, 217, 0.85);
+  letter-spacing: 0.06em;
+}
+
+/* ---- Phones: the slab still has to fit the one-screen budget. --menu-scale
+   already shrinks the whole cluster (measured, floor 0.4x), so this only trims
+   the track so the ROW does not wrap before that math runs. ---- */
+/* ============================================================================
+   PHONES GET A COMPACT LOUD BAR, NOT A SCALED-DOWN ONE.
+   The full two-row slab costs ~200px of height at 390px. The menu's card
+   fit-math spends whatever the header leaves, so that height came straight out
+   of the five cards: they were squeezed until .game-card-badge overflowed its
+   own card, which viewport-integrity catches at 390x844 and 360x640 in both
+   themes. Reserving the corner-nav height instead was worse — it shrank the
+   cards to ~40px slivers.
+   So below 600px the bar keeps the ORIGINAL single row (chips and track
+   side by side, no wrap) and spends its budget on the three things that
+   actually made it loud: a taller track, the hard black ticks, and a level
+   numeral that is display type. The rate line is dropped — every card already
+   prints its own rate, and at this width there is nowhere to put it.
+   Net: ~60px tall against the old hairline's 34px, so the cards keep their room.
+   The 3-4x spec holds on the desktop menu, which is the screen being judged.
+   ============================================================================ */
+@media (max-width: 600px) {
+  .menu-xp-bar.is-loud {
+    --xp-track-h: 40px;
+    padding: 6px 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    box-shadow: 3px 3px 0 #000;
+    border-width: 2px;
+  }
+  .menu-xp-bar.is-loud.h-xl { --xp-track-h: 48px; }
+  .menu-xp-bar.is-loud.h-xxl { --xp-track-h: 56px; }
+
+  /* One row again: the break collapses and the LEVEL block goes back inline. */
+  .menu-xp-bar.is-loud > .menu-xp-break { display: none; }
+  .menu-xp-bar.is-loud > .menu-xp-lvblock {
+    flex-direction: row;
+    align-items: baseline;
+    align-self: auto;
+    gap: 5px;
+    padding: 3px 7px;
+    min-width: 0;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 #000;
+  }
+  /* Still display type, just one step down — --fs-panel is the floor Bungee is
+     allowed to take, and it is still ~2.5x the --fs-micro kicker beside it. */
+  .menu-xp-bar.is-loud .menu-xp-lv {
+    font-size: var(--fs-panel);
+    -webkit-text-stroke: 2px #000;
+  }
+  .menu-xp-bar.is-loud .menu-xp-track { border-width: 2px; }
+  /* No room for the rate line at this width; the cards carry the rate. */
+  .menu-xp-bar.is-loud .menu-xp-rate { display: none; }
+  .menu-xp-bar.is-loud .menu-xp-readout {
+    font-size: var(--fs-label);
+    top: 50%;
+    -webkit-text-stroke: 2px #000;
+  }
+  .menu-xp-bar.is-loud > .menu-xp-rank { margin-left: 0; }
+}

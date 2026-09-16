@@ -9,6 +9,27 @@ import './MenuXp.css';
 import { formatNum } from '../format';
 import { rankTitle } from '../progress/rank';
 import { streakMultiplier } from '../progress/streak';
+import { perWordWins, modeKey } from '../progress/wins';
+
+// THE BAR'S HEIGHT IS A CHOICE ANDY MAKES, so both are built rather than one guessed at.
+// 'tall' is 3.1x the old 30px track, 'xl' 3.9x, 'xxl' 4.7x, and 'off' restores the old hairline so the
+// two can be A/B'd against what they replaced. `?xpbar=xl` switches for a session; the same
+// idiom as satRush's ?stage= / ?lineupx=. Anything else falls back to 'tall'.
+export const XP_BAR_HEIGHTS = ['tall', 'xl', 'xxl', 'off'];
+export const XP_BAR_HEIGHT = (() => {
+  if (typeof window === 'undefined') return 'tall';
+  const raw = new URLSearchParams(window.location.search).get('xpbar');
+  return XP_BAR_HEIGHTS.includes(raw) ? raw : 'tall';
+})();
+
+// The label a mode's rate is printed under. Keyed by the gameData id the menu already has.
+const RATE_LABEL = {
+  'word-bomb': 'WORD BOMB',
+  'category-blitz': 'BLITZ',
+  'sat-rush': 'SAT RUSH',
+  chain: 'CHAIN',
+  fuse: 'FUSE',
+};
 
 // The milestone tier a day-count belongs to (drives the escalating streak styling):
 // 30+ is the capped apex, then 14 / 7 / 3, and 2 is the "just started showing" tier.
@@ -35,7 +56,7 @@ function formatMult(m) {
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, rateMode = null, barHeight = XP_BAR_HEIGHT }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -157,7 +178,10 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // wins button (an interactive shop entry) to assistive tech; the LV/fill/readout stay
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
-    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden={variant === 'mini' ? 'true' : undefined}>
+    <div
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : barHeight === 'off' ? '' : ` is-loud h-${barHeight}`}`}
+      aria-hidden={variant === 'mini' ? 'true' : undefined}
+    >
       {variant !== 'mini' && wins != null && (
         onWinsClick ? (
           <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
@@ -198,8 +222,26 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       )}
       {/* Static "LEVEL" kicker so a newcomer reads the "LV n · into/cost" chrome as the
           leveling bar it is (the audit flagged it as unexplained). Full bar only. */}
-      {variant !== 'mini' && <span className="menu-xp-label" aria-hidden="true">LEVEL</span>}
-      <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
+      {/* ROW BREAK (loud variant only). The loud bar is TWO rows: the meta chips
+          (wins / streak / mark / rank) on top, then the LEVEL block + the full-width
+          track beneath. A flex-basis:100% break plus `order` on the siblings is used
+          rather than a grid, because half these children are conditional (no streak, no
+          mark slot, no rank on mini) and fixed grid cells would leave holes. */}
+      {variant !== 'mini' && <span className="menu-xp-break" aria-hidden="true" />}
+      {/* THE LEVEL IS THE HEADLINE. The kicker and the numeral are one stacked chip now, so the
+          numeral can take display type (--fs-h2, ~3.8x the --fs-micro kicker) without the old
+          inline row forcing both to data-strip size. Mini keeps the flat inline form. */}
+      {variant !== 'mini' && barHeight !== 'off' ? (
+        <span className="menu-xp-lvblock" aria-hidden="true">
+          <span className="menu-xp-label">LEVEL</span>
+          <span className="menu-xp-lv">{level}</span>
+        </span>
+      ) : (
+        <>
+          {variant !== 'mini' && <span className="menu-xp-label" aria-hidden="true">LEVEL</span>}
+          <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
+        </>
+      )}
       {/* THE EQUIPPED MARK, beside the level — the one place a permanent, chosen bonus is worth
           carrying on the menu, because it is the only progression object the player picked rather
           than accumulated. An empty slot still renders (a dimmed outline) once any mark has been
@@ -238,6 +280,19 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <span className="menu-xp-readout">
             <span ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>
             {' '}/ {formatNum(Math.max(0, Math.round(cost)))}
+          </span>
+        )}
+        {/* WHAT A WORD IS WORTH RIGHT NOW, in the mode the player is looking at. This is the
+            payoff line for the whole bar: the level numeral above it is abstract until you can
+            see what the next level BUYS. It reads the LIVE rate (perWordWins is level-, rebirth-
+            and mark-scaled), so it visibly climbs as the bar fills — which is the point.
+            rateMode is the hovered card on the menu; it falls back to Word Bomb, which is also
+            the reference rate the shop prints. */}
+        {variant !== 'mini' && barHeight !== 'off' && rateMode && modeKey(rateMode) && (
+          <span className="menu-xp-rate" aria-hidden="true">
+            <b className="menu-xp-rate-mode">{RATE_LABEL[rateMode] || 'RATE'}</b>
+            <span className="menu-xp-rate-num">{formatNum(perWordWins({ mode: rateMode, level }))}</span>
+            <span className="menu-xp-rate-unit">WINS / WORD</span>
           </span>
         )}
       </span>
