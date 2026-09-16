@@ -679,7 +679,7 @@ button.menu-mark:active {
 /* The explicit order that produces the two rows. The break is flex-basis:100%, so
    everything ordered after it wraps. */
 .menu-xp-bar.is-loud > .menu-wins-chip { order: 1; }
-.menu-xp-bar.is-loud > .menu-streak-chip { order: 2; }
+.menu-xp-bar.is-loud > .menu-streak { order: 2; }
 .menu-xp-bar.is-loud > .menu-mark { order: 3; }
 .menu-xp-bar.is-loud > .menu-xp-rank { order: 4; margin-left: auto; }
 .menu-xp-bar.is-loud > .menu-xp-break {
@@ -824,58 +824,69 @@ button.menu-mark:active {
    already shrinks the whole cluster (measured, floor 0.4x), so this only trims
    the track so the ROW does not wrap before that math runs. ---- */
 /* ============================================================================
-   PHONES GET A COMPACT LOUD BAR, NOT A SCALED-DOWN ONE.
-   The full two-row slab costs ~200px of height at 390px. The menu's card
-   fit-math spends whatever the header leaves, so that height came straight out
-   of the five cards: they were squeezed until .game-card-badge overflowed its
-   own card, which viewport-integrity catches at 390x844 and 360x640 in both
-   themes. Reserving the corner-nav height instead was worse — it shrank the
-   cards to ~40px slivers.
-   So below 600px the bar keeps the ORIGINAL single row (chips and track
-   side by side, no wrap) and spends its budget on the three things that
-   actually made it loud: a taller track, the hard black ticks, and a level
-   numeral that is display type. The rate line is dropped — every card already
-   prints its own rate, and at this width there is nowhere to put it.
-   Net: ~60px tall against the old hairline's 34px, so the cards keep their room.
-   The 3-4x spec holds on the desktop menu, which is the screen being judged.
+   PHONES: THE LOUD PART GOES ON THE LEFT, BECAUSE THE RIGHT IS NOT THE APP'S.
+   The corner nav is a ~200px absolutely-positioned COLUMN at top-right
+   (x >= 245 of 390, y 29..229), and the XP cluster is the first flow child —
+   so anything the bar puts on its right-hand side at that height is drawn
+   underneath an opaque nav button. The first cut of this block kept one row
+   with the chips first, which put the LEVEL numeral and the whole track last:
+   both vanished behind REBIRTH and STATS on a 390px phone.
+   There is no vertical escape (the nav reaches further down than the bar does),
+   so the fix is horizontal: whatever must be READ goes at x < 245.
+   Two rows here, and the loud row is the one that matters — LEVEL block hard
+   left, then the track. Only the track's right-hand END falls under the nav,
+   and that end is empty segments. The readout is left-aligned rather than
+   centred for the same reason.
+   Height is the other constraint: the full desktop slab costs ~200px here, and
+   the card fit-math spends whatever the header leaves, so that came straight out
+   of the five cards until .game-card-badge overflowed its own card. This lands
+   near ~120px against the old hairline's 34px.
    ============================================================================ */
 @media (max-width: 600px) {
   .menu-xp-bar.is-loud {
-    --xp-track-h: 40px;
+    --xp-track-h: 44px;
     padding: 6px 8px;
     gap: 6px;
-    flex-wrap: nowrap;
+    row-gap: 6px;
     box-shadow: 3px 3px 0 #000;
     border-width: 2px;
   }
-  .menu-xp-bar.is-loud.h-xl { --xp-track-h: 48px; }
-  .menu-xp-bar.is-loud.h-xxl { --xp-track-h: 56px; }
+  .menu-xp-bar.is-loud.h-xl { --xp-track-h: 54px; }
+  .menu-xp-bar.is-loud.h-xxl { --xp-track-h: 64px; }
 
-  /* One row again: the break collapses and the LEVEL block goes back inline. */
-  .menu-xp-bar.is-loud > .menu-xp-break { display: none; }
+  /* THE LOUD ROW FIRST. Orders are re-assigned wholesale so the break lands
+     between the track and the chips instead of before the level block. */
+  .menu-xp-bar.is-loud > .menu-xp-lvblock { order: 0; }
+  .menu-xp-bar.is-loud > .menu-xp-track { order: 1; }
+  .menu-xp-bar.is-loud > .menu-xp-break { order: 2; }
+  .menu-xp-bar.is-loud > .menu-wins-chip { order: 3; }
+  .menu-xp-bar.is-loud > .menu-streak { order: 4; }
+  .menu-xp-bar.is-loud > .menu-mark { order: 5; }
+  .menu-xp-bar.is-loud > .menu-xp-rank { order: 6; margin-left: 0; }
+
   .menu-xp-bar.is-loud > .menu-xp-lvblock {
-    flex-direction: row;
-    align-items: baseline;
-    align-self: auto;
-    gap: 5px;
-    padding: 3px 7px;
+    gap: 1px;
+    padding: 3px 9px;
     min-width: 0;
     border-width: 2px;
     box-shadow: 2px 2px 0 #000;
   }
-  /* Still display type, just one step down — --fs-panel is the floor Bungee is
-     allowed to take, and it is still ~2.5x the --fs-micro kicker beside it. */
+  /* Still display type, one step down. --fs-panel is the floor Bungee may take,
+     and it is still ~2.5x the --fs-micro kicker above it. */
   .menu-xp-bar.is-loud .menu-xp-lv {
     font-size: var(--fs-panel);
     -webkit-text-stroke: 2px #000;
   }
   .menu-xp-bar.is-loud .menu-xp-track { border-width: 2px; }
-  /* No room for the rate line at this width; the cards carry the rate. */
+  /* No room for the rate line at this width; every card prints its own rate. */
   .menu-xp-bar.is-loud .menu-xp-rate { display: none; }
+  /* LEFT-ALIGNED, not centred: centred put the XP numbers at x~150-270, which
+     runs under the nav column. */
   .menu-xp-bar.is-loud .menu-xp-readout {
-    font-size: var(--fs-label);
+    left: 10px;
+    transform: translateY(-50%);
     top: 50%;
+    font-size: var(--fs-label);
     -webkit-text-stroke: 2px #000;
   }
-  .menu-xp-bar.is-loud > .menu-xp-rank { margin-left: 0; }
 }

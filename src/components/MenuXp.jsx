@@ -9,7 +9,7 @@ import './MenuXp.css';
 import { formatNum } from '../format';
 import { rankTitle } from '../progress/rank';
 import { streakMultiplier } from '../progress/streak';
-import { perWordWins, modeKey } from '../progress/wins';
+import { perWordRateNow, modeKey } from '../progress/wins';
 
 // THE BAR'S HEIGHT IS A CHOICE ANDY MAKES, so both are built rather than one guessed at.
 // 'tall' is 3.1x the old 30px track, 'xl' 3.9x, 'xxl' 4.7x, and 'off' restores the old hairline so the
@@ -291,7 +291,14 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         {variant !== 'mini' && barHeight !== 'off' && rateMode && modeKey(rateMode) && (
           <span className="menu-xp-rate" aria-hidden="true">
             <b className="menu-xp-rate-mode">{RATE_LABEL[rateMode] || 'RATE'}</b>
-            <span className="menu-xp-rate-num">{formatNum(perWordWins({ mode: rateMode, level }))}</span>
+            {/* perWordRateNow, NOT perWordWins — and the difference is a real bug, caught by
+                reading the screenshot. perWordWins looks WINS_MULT up by raw key, so passing a
+                gameData id ('word-bomb') misses the table and silently resolves to x1: the bar
+                printed 290 where the card under the cursor printed 610. perWordRateNow runs the
+                id through modeKey() first, and is the exact function GameCard uses (GameCard.jsx
+                :252), so the two numbers are now identical BY CONSTRUCTION rather than by
+                coincidence. */}
+            <span className="menu-xp-rate-num">{formatNum(perWordRateNow({ mode: rateMode, level }).rate)}</span>
             <span className="menu-xp-rate-unit">WINS / WORD</span>
           </span>
         )}

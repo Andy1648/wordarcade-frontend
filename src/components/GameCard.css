@@ -430,15 +430,30 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-payout {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  /* Floor lowered 9px -> 8px alongside the copy shortening: the rate grows with rebirth and
-     has no upper bound, so the line needs headroom on the narrowest card as well as fewer
-     characters. */
-  font-size: clamp(8px, 3.2cqw, 12px);
-  letter-spacing: 0.02em;
+  /* Floor lowered 9px -> 7px alongside the copy shortening ("610 WINS / WORD" -> "610 / WORD").
+     The rate grows with rebirth and has no upper bound, so this line needs BOTH fewer characters
+     and real headroom on the narrowest card: at 360x640 the five cards are ~65px wide and
+     "610 / WORD (x6)" still overflowed its own card at an 8px floor (viewport-integrity, both
+     themes). The tracking also goes to 0 here — at this size 0.02em is ~1px per character of
+     pure overflow, and the string is the one thing on the card that cannot be allowed to clip. */
+  font-size: clamp(7px, 3.2cqw, 12px);
+  letter-spacing: 0;
   color: #ffe9c9;
   white-space: nowrap;
 }
 .game-card-payout-mult { color: #fff; font-weight: 700; }
+
+/* THE UNIT GOES BEFORE THE NUMBERS DO. At 360x640 the five cards are ~65px wide and
+   "610 / WORD (x6)" overflows its own card even with the type pinned at its 7px floor — the
+   string is simply longer than the card. Type size cannot fix it, so something has to leave,
+   and it must not be either NUMBER: the rate is the point, and the (xN) is the only surface in
+   the app showing the COMBINED level x rebirth x momentum x mark multiplier. "/ WORD" is the
+   one part a player can infer, and the XP bar states the full unit once on the same screen.
+   A CONTAINER query, not a viewport one, so it fires on real card width — the card count and
+   the fit-math both move card size independently of viewport. */
+@container (max-width: 96px) {
+  .game-card-payout-unit { display: none; }
+}
 
 /* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
 /* A SOLID cream band across the top so the black "SAT RUSH" ink and the SOLO/LIMITED badges

@@ -260,7 +260,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
   const payout = rateNow && (
     <>
-      {formatNum(rateNow.rate)} / WORD
+      {formatNum(rateNow.rate)}
+      <span className="game-card-payout-unit"> / WORD</span>
       {rateNow.mult !== 1 && (
         <span className="game-card-payout-mult"> (×{formatNum(rateNow.mult)})</span>
       )}
