@@ -1,0 +1,61 @@
+{
+  "vw": 390,
+  "vh": 509,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.solo-exit \"✕\"",
+      "rect": {
+        "x": 311,
+        "y": 28,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "input",
+      "what": "input.solo-input",
+      "rect": {
+        "x": 35,
+        "y": 274,
+        "w": 320,
+        "h": 56
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 330,
+        "y": 449,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-center \"EE\"",
+      "rect": {
+        "x": 170,
+        "y": 238,
+        "w": 51,
+        "h": 42
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-hud \"0WORDS · BEST 0♥♥♡3WORDS TO \"",
+      "rect": {
+        "x": 35,
+        "y": 34,
+        "w": 320,
+        "h": 70
+      },
+      "flags": []
+    }
+  ]
+}

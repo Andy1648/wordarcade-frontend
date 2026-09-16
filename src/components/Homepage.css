@@ -124,6 +124,18 @@
   flex-direction: column;
   align-items: flex-end; /* right-align the auto-width buttons into a clean stack */
   gap: 8px;
+  /* THE CONTAINER MUST NOT EAT CLICKS IT DOESN'T PAINT (fix/mobile-and-routing, Batch F).
+     The buttons are auto-width and right-aligned, so this box is as wide as the WIDEST of them
+     (REBIRTH) at every row, and the 8px gaps between them are empty. But the box still won the
+     hit test across all of that: measured at 320x640 AT REST, the nav's left edge is x=175 while
+     the XP track sits at x=170..197, and the element answering a tap over the track was
+     `nav.homepage-corner-nav` itself — not a button. Same cause as the card collisions this run
+     found at short viewports. Making the container transparent to pointers and the buttons opaque
+     means the nav can only ever intercept a tap where a real button is drawn. */
+  pointer-events: none;
+}
+.homepage-corner-nav > * {
+  pointer-events: auto;
 }
 .homepage-nav-btn {
   position: relative;
@@ -713,7 +725,20 @@ html[data-beat='true'] .homepage-logo {
    STATS instead of launching the mode. Reserve the nav's measured footprint (--corner-nav-reserve,
    set in Homepage.jsx) as right padding on the card row so no card is ever beneath the nav. Never
    drops below the normal gutter, and falls back to a safe fixed reserve before the JS measures. */
-@media (orientation: landscape) and (max-height: 520px) {
+/* EXTENDED BEYOND LANDSCAPE (fix/mobile-and-routing, Batch F). The rule above was keyed on
+   `orientation: landscape`, but the collision is caused by the viewport being SHORT, not by it
+   being wide — the card region rises into the nav's band either way. Measured with the keyboard
+   raised: at 390x509 (a 390x844 phone with an Android keyboard up) the SAT RUSH card hit-tests to
+   .homepage-corner-nav and cannot be clicked at all, and at 320x380 tapping CHAIN opens STATS —
+   the audit's nav step landed on the Stats screen and censused .stats-backup-* instead of the
+   game. Both viewports are PORTRAIT, so the landscape-only guard never fired. Keying on height
+   alone covers landscape phones and keyboard-shortened portrait with one rule.
+   BUT ONLY WHERE THE WIDTH CAN AFFORD IT (min-width: 560px). Applying this at 320x380 reserved
+   157px of a 320px screen and drove the five cards from 31x41 down to 15x20 — trading an
+   untappable card for an unreadable one. On a narrow-and-short viewport the collision is handled
+   instead by .homepage-corner-nav's pointer-events rule above, which stops the nav's empty box
+   intercepting taps, so the cards stay full-width AND clickable. */
+@media (max-height: 560px) and (min-width: 560px) {
   .homepage-cards-scroll {
     padding-right: max(var(--corner-nav-reserve, 132px), clamp(18px, 1.8vw, 30px));
   }

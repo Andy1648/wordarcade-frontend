@@ -3924,6 +3924,33 @@
   .countdown-text { font-size: var(--fs-h1); }
 }
 
+/* ...BUT NOT WHEN HEIGHT IS THE SCARCE RESOURCE (fix/mobile-and-routing, Batch F).
+   Stacking SEND under the input costs about 63px of column. With the keyboard up on a 320x640
+   Android phone the layout viewport is 380px tall and that pushed Category Blitz's SEND to y=381
+   — one pixel past the bottom edge, so the button a player needs to submit a word was entirely
+   off-screen while they were typing it. (Word Bomb was unaffected: its row stays side-by-side.)
+   Below this height, go back to one row — a narrow SEND beside the input beats no SEND at all. */
+@media (max-width: 420px) and (max-height: 520px) {
+  .game-input-row {
+    flex-direction: row;
+  }
+  .game-input-row .game-input {
+    flex: 1 1 auto;
+    width: auto;
+    /* min-width:0 is load-bearing. A flex item defaults to min-width:auto, so the input refuses to
+       shrink below its own content/placeholder width and pushes SEND out of the row instead —
+       measured at 390x509, SEND landed at x=315..418 against a 390px viewport. */
+    min-width: 0;
+  }
+  .game-input-row .game-send-btn,
+  .game-input-row .game-skip-btn {
+    width: auto;
+    flex: 0 0 auto;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
 /* ============================================================= */
 /* ============  WORD BOMB - IDLE ANIMATIONS  ================= */
 /* ============================================================= */

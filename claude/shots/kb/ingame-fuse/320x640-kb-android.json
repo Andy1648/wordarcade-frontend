@@ -1,0 +1,61 @@
+{
+  "vw": 320,
+  "vh": 380,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.solo-exit \"✕\"",
+      "rect": {
+        "x": 241,
+        "y": 28,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "input",
+      "what": "input.solo-input",
+      "rect": {
+        "x": 35,
+        "y": 201,
+        "w": 250,
+        "h": 56
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 260,
+        "y": 320,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-center \"EVE\"",
+      "rect": {
+        "x": 121,
+        "y": 177,
+        "w": 77,
+        "h": 42
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-hud \"0WORDS · BEST 0♥♥♡3WORDS TO \"",
+      "rect": {
+        "x": 35,
+        "y": 34,
+        "w": 250,
+        "h": 70
+      },
+      "flags": []
+    }
+  ]
+}

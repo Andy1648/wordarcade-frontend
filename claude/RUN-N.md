@@ -591,3 +591,124 @@ And two the *census* caught, which is the same idea pointed at numbers rather th
 6. **The gate was running the camera.** The suite reported 1,249 passed against 1,153 tests,
    because the screenshot run sat in `e2e/`. Now split out behind its own config.
 
+
+---
+
+## 11. BATCH F — MOBILE WITH THE KEYBOARD RAISED, AND THE ROUTING DECISION
+
+Branch `fix/mobile-and-routing`, off `fix/econ-order-and-bar` @`71990f8`.
+
+### 11.1 THE ROUTING BUG — it was four bugs, and the gate asserted the opposite of production
+
+**Decision: the article keeps `/chain`, the game moves to `/chain/play`.**
+
+`/chain`, `/fuse`, `/sat-rush`, `/word-bomb` and `/category-blitz` are static landing pages in
+`public/`, and **Vercel serves a static file BEFORE it applies a rewrite**. Verified against
+production — all five return HTML with **no `#root` on the page at all**, so the SPA never boots
+there, and `router.js`'s `PATH_TO_QUERY` entries for those paths are dead code in production.
+
+The reported symptom was one extra tap. It was actually four separate failures:
+
+| what | was | now |
+|---|---|---|
+| the URL the app writes mid-run (`canonicalPathForView`) | `/chain` | `/chain/play` |
+| every share builder (`chainLink`/`fuseLink`/`satRushLink`, `modeShareLink` x5) | `/chain?ref=share` | `/chain/play?ref=share` |
+| `MODE_PATH`, which `TryModeRow` opens with `location.assign()` | `/chain` | `/chain/play` |
+| SAT Rush's own landing page CTAs | `/` (the menu) | `/sat-rush/play` |
+
+The third is the one worth dwelling on: the end-of-run **"TRY THIS MODE" button navigated players to
+an SEO article** at the exact moment they asked to keep playing. The fourth means SAT's article never
+carried its own mode's deep link at all — even after the extra tap you still had to find SAT.
+
+**Why split rather than auto-advance.** Auto-advancing only returning visitors does nothing for the
+stranger on the receiving end of a shared link, who is by definition new. The version that does help
+everyone serves humans a redirect while serving crawlers 965 words, which is cloaking. The split
+costs nothing: `index.html` hard-codes `canonical=https://typeaword.com/`, so every `/play` URL
+self-canonicalises to the homepage and can never compete with its own article for a search term. The
+sitemap and the landing pages' own `<link rel="canonical">` are untouched.
+
+**THE GATE COULD NOT SEE THIS, AND PASSED WHILE ASSERTING THE OPPOSITE.** `vite preview` resolves
+`/chain` to the SPA fallback and only serves the article at `/chain/` **with a trailing slash**;
+Vercel resolves `/chain` to the article. `e2e/router.spec.js` asserted the preview behaviour and had
+been green for months describing something that was never true in production — the same class of
+failure as the `vercel.json` incident in CLAUDE.md. That spec no longer pins either environment. The
+real invariant is now `src/build/landingLinks.test.js`: **no path the app navigates to may be
+shadowed by a file in `public/`** — a pure filesystem assertion, true in every environment or false
+in every one. Confirmed it bites by reverting one `MODE_PATH` value:
+`MODE_PATH[chain] = /chain is shadowed by public/chain/index.html`.
+
+### 11.2 THE KEYBOARD AUDIT — `e2e-shots/mobile-keyboard.spec.js`
+
+6 screens (menu + all five modes) x 6 viewport states = 36 frames, screenshots plus a per-element
+census. Both platforms, because they differ and both matter: **Android** shrinks the layout viewport
+(390x844 -> 390x509, 320x640 -> 320x380); **iOS** leaves it alone and shrinks only the visual
+viewport, so fixed elements stay pinned under the keyboard. Flags: undersized tap targets, clipping,
+occlusion (hit-tested with `elementFromPoint`, so it finds collisions nobody predicted), and
+behind-keyboard.
+
+**Result: 12/12 at-rest frames clean, 26/36 overall** (4/36 clean when the run started).
+
+#### What it found that no gate did
+
+1. **Tapping CHAIN or SAT RUSH opened STATS.** At 390x509 the SAT card hit-tested to
+   `.homepage-corner-nav` and could not be clicked at all; at 320x380 the audit's own nav step
+   landed on the Stats screen and censused `.stats-backup-*` instead of the game. `Homepage.css`
+   already documented this exact failure — *"a tap opens STATS instead of launching the mode"* — but
+   fixed it only for `orientation: landscape`. Both failing viewports are **portrait**.
+2. **The root cause was the container, not the buttons.** `.homepage-corner-nav` is auto-width and
+   right-aligned, so its box spans the widest button at every row and the 8px gaps between them are
+   empty — yet the box won the hit test across all of it. It is now `pointer-events: none` with the
+   buttons `auto`, so the nav can only intercept a tap where a button is actually drawn.
+3. **The XP bar collision was real at BOTH phone sizes at rest**, not only at 320: `.menu-xp-rank`
+   hit-tested to the REBIRTH button at 390x844.
+4. **`.solo-exit` — the only way out of CHAIN/FUSE — was 40x40.** Its comment said it was "unified
+   with the app's canonical close X"; that control (`.mode-dialog-close`) is 44x44, so it had been
+   unified with something that does not exist.
+5. **Category Blitz's SEND was entirely off-screen** at 320x380 (top=381, viewport height 380).
+   `GameScreen.css` stacks SEND under the input below 420px wide — the right call when width is
+   scarce, the wrong one when *height* is. Now one row below 520px tall. (`min-width: 0` on the
+   input is load-bearing: the first attempt pushed SEND to x=315..418 against a 390px viewport.)
+6. **FUSE drew the fragment on top of the text field** at 320x380. `.solo-hud`'s `padding: 0 52px`
+   clears the exit X, but symmetric padding takes 104px of a 320px card and wrapped the HUD to four
+   rows / 115px. The clock was also a hardcoded `width="120"` SVG attribute — the same 120px on a
+   380px phone as on a 1440p monitor.
+
+#### Two false positives the audit produced, and what they taught
+
+- **The in-game audio button read as UNDERSIZE 44x32.** It is deliberate: `GameScreen.css` keeps the
+  chrome row short and carries a 44x44 hit target in an out-of-flow `::after`, because the ring
+  diameter is measured off that row. Measuring the layout box is simply the wrong test. But probing
+  the 44x44 **corners** still failed, because the house `skewX(-4deg)` shears a box by ~1.5px — it
+  would have reported every skewed control in the app. The probe uses **edge midpoints** now, which
+  is what "44px on both axes" actually means.
+- **The menu's keyboard frames were fiction.** The menu has no text field (`focusable-input false`),
+  so "JOIN ROOM is behind the keyboard" describes a state that cannot occur. Worse, sizing the
+  viewport *before* navigating rendered the menu at 380px tall and measured its cards at 31x41 — a
+  measurement of nothing. The keyboard now rises **after** the screen is open, which is the order it
+  happens in on a phone, and a screen with no input is photographed but not judged.
+
+### 11.3 KNOWN RESIDUALS — reported, not fixed
+
+- **The XP track is only ~54px at 320** (it was 27px; 124px at 390). This is structural: at a 320
+  viewport the menu stage is a framed card just **262px wide**, the corner nav occupies **103px** of
+  it, and only **131px of clear width** remains for the entire bar. A level chip and a legible track
+  do not both fit in that. The real fix is the nav itself — a 103px absolute column is a third of a
+  320px card — but that is a menu-layout decision rather than a bar one, so it is not taken
+  unilaterally here. It is the one open item from this batch that wants your ruling.
+- **Four variants of the bar gutter were measured before one worked**, and the three that failed are
+  recorded in `MenuXp.css` so nobody re-tries them: cluster `padding-right` (track collapsed to 9px
+  and wrapped), a stage-relative inset (34px), and `calc(100vw - --corner-nav-reserve)` — which
+  double-counts the card's margin, because that variable is measured from the *viewport* edge and
+  the menu is not full-bleed. One of those attempts also silently ate a comment's closing `*/`, so
+  `max-width` sat inside a comment and the cap did nothing; that is why it "kept not binding".
+- **CHAIN's HUD still overlaps the clock at 320x380** — one readout, no interactive element
+  affected. CHAIN's HUD carries more chips than FUSE's and still wraps to three rows there.
+- **iOS keyboard, every mode:** the input and SEND sit below the keyboard line because iOS does not
+  resize the layout viewport. Safari scrolls the focused field into view, so this is
+  platform-handled rather than broken — but it is measured rather than assumed, and it is the item
+  here that most wants a real device to confirm.
+- **The docked `.audio-btn` is behind the keyboard** in the solo modes. Accepted: it is not needed
+  while a word is being typed.
+- **The type-scale gate caught one of my own edits** — a raw `clamp()` on the level numeral that
+  bypassed the `--fs-*` tokens. It was also redundant (`--fs-panel` already floors at 20px there).
+  Worth noting because it is the gate doing exactly its job on this batch's own work.

@@ -850,3 +850,76 @@ button.menu-mark:active {
     -webkit-text-stroke: 2px #000;
   }
 }
+
+/* PHONE corner-nav safe-gutter (fix/mobile-and-routing, Batch F).
+   MEASURED, not guessed: at 390x844 and 320x640 AT REST the absolute top-right corner nav is drawn
+   over the bar's right end. The census hit-tested .menu-xp-rank to the REBIRTH button at 390 and
+   .menu-wins-chip + .menu-xp-track to the nav at 320 — i.e. the progress readout, which is the
+   whole point of the bar, sat underneath SHOP/REBIRTH/STATS on both common phone sizes.
+   Same defect as the 761-1024px band above, and as the landscape card-row gutter in Homepage.css.
+   That comment says a global calc() was tried and abandoned because it collapsed the track on
+   phones — correctly, because six chips plus the nav's footprint do not fit 320px. They still
+   don't. So the gutter ships with the bar cut back to what Andy specified it should carry: THE
+   LEVEL AND THE PROGRESS ONLY. The four chips removed are all reachable elsewhere (wins + streak
+   in SHOP, mark and rank in STATS) and all four were sub-44px touch targets here anyway
+   (wins 72x16, rank 56x22).
+   The reserve is a FIXED 104px against the bar's own container, not calc(100vw - the JS-measured
+   --corner-nav-reserve). That variable is measured from the VIEWPORT edge, but the menu is a
+   FRAMED CARD: at a 320px viewport the stage is only 262px wide (x=29..291), so a viewport-based
+   reserve double-counts the card's own margin and gutter. Measured directly: the cluster spans
+   x=44..276 and the nav's left edge is x=175, leaving 131px of genuinely clear width. 104px is
+   that clearance plus the nav's offset, and it holds at every phone width.
+   THE RESIDUAL, recorded rather than hidden: 131px is not much to hold a level chip AND a legible
+   progress track, so at 320 the track is ~70px. The structural fix is the corner nav itself — a
+   103px-wide absolute column is a third of a 320px card — but that is a menu-layout decision,
+   not a bar one, so it is reported rather than taken unilaterally here. 390px, the common size,
+   is comfortable. */
+@media (max-width: 560px) {
+  .menu-xp-bar.is-loud {
+    max-width: calc(100% - 104px);
+    /* LEFT-ALIGNED — the half that actually does the work. .menu-xp-cluster is a flex column with
+       align-items:center, so capping the width alone just centres the narrower bar and walks its
+       right end straight back under the nav. Pinning it to the start puts the bar in the clear.
+       (The rule further up already left-aligns the READOUT inside the track for the same reason —
+       the same insight, applied one level too deep to help.) */
+    align-self: flex-start;
+    margin-right: 0;
+    margin-left: 0;
+  }
+  .menu-xp-bar .menu-wins-chip,
+  .menu-xp-bar .menu-streak,
+  .menu-xp-bar .menu-mark,
+  .menu-xp-bar .menu-xp-rank {
+    display: none;
+  }
+}
+
+/* THE LEVEL SLAB MUST NOT EAT THE TRACK (fix/mobile-and-routing, Batch F).
+   With the corner-nav gutter applied the bar has ~163px at 320px wide, and the level block was
+   taking ~100 of it — the XP track, which is the one thing Andy asked this bar to show, measured
+   27px. The numeral stays the headline (it is still ~2x the kicker and the largest thing in the
+   row) but steps down from --fs-panel so the progress it describes has somewhere to live.
+   Scoped to 400px and below: 390px phones keep the bigger numeral, which fits there. */
+@media (max-width: 400px) {
+  .menu-xp-bar.is-loud > .menu-xp-lvblock {
+    padding: 3px 6px;
+    gap: 0;
+  }
+  .menu-xp-bar.is-loud .menu-xp-label {
+    display: none; /* the "LEVEL" kicker: the numeral in a level chip is self-evident */
+  }
+}
+
+/* Chrome comes off the level chip before it comes off the track (fix/mobile-and-routing, Batch F).
+   At 320 the bar has ~131px of clear width and the level block was taking 62 of it — 16px of that
+   is its own padding and border. The numeral is what carries the meaning; the box around it is
+   decoration, and decoration does not get to outbid the progress bar for width. */
+@media (max-width: 400px) {
+  .menu-xp-bar.is-loud {
+    padding: 6px 4px;
+    gap: 4px;
+  }
+  .menu-xp-bar.is-loud > .menu-xp-lvblock {
+    padding: 2px 4px;
+  }
+}

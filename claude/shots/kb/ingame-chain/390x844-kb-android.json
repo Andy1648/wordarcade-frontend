@@ -1,0 +1,63 @@
+{
+  "vw": 390,
+  "vh": 509,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.solo-exit \"✕\"",
+      "rect": {
+        "x": 311,
+        "y": 28,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "input",
+      "what": "input.solo-input",
+      "rect": {
+        "x": 35,
+        "y": 302,
+        "w": 320,
+        "h": 56
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 330,
+        "y": 449,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-center \"D\"",
+      "rect": {
+        "x": 180,
+        "y": 190,
+        "w": 29,
+        "h": 42
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-hud \"0SCOREx1.000LINKS · BEST 03W\"",
+      "rect": {
+        "x": 35,
+        "y": 34,
+        "w": 320,
+        "h": 74
+      },
+      "flags": [
+        "OCCLUDED by svg \"18\""
+      ]
+    }
+  ]
+}

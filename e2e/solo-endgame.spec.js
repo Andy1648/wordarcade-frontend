@@ -98,10 +98,24 @@ test('CHAIN: the second row offers a DIFFERENT, UNLOCKED mode', async ({ page })
   // It must be one of the three always-open modes.
   expect(['TRY WORD BOMB', 'TRY CATEGORY BLITZ', 'TRY SAT RUSH']).toContain(label);
 
-  // And it goes somewhere real: clicking it lands on that mode's route, not a 404 or the void.
+  // And it goes somewhere real: clicking it lands IN THE APP, not on a 404 or the void.
+  //
+  // This used to wait for /(word-bomb|category-blitz|sat-rush)/ — but those bare paths are the
+  // STATIC LANDING PAGES in public/, and Vercel serves a static file before it applies the SPA
+  // rewrite, so in production they returned an article with no #root at all. The old assertion was
+  // therefore matching the void it was written to guard against; it only ever passed because
+  // `vite preview` resolves those paths to the SPA fallback (see e2e/router.spec.js).
+  //
+  // The contract now: the solo modes navigate to /<mode>/play, and the two multiplayer modes have
+  // no solo deep link, so their closest playable surface is the menu at '/'. What actually matters
+  // is the same thing it always did — the app booted — so assert THAT rather than a path spelling.
   await tryBtn.click();
-  await page.waitForURL(/\/(word-bomb|category-blitz|sat-rush)/, { timeout: 20000 });
+  await page.waitForURL(/^[^?#]*\/(sat-rush|chain|fuse)\/play|^[^?#]*\/(\?|$)/, { timeout: 20000 });
   await expect(page.locator('#root')).not.toBeEmpty();
+  // data-view is only set once the React app has mounted — an article would never set it.
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.getAttribute('data-view')), { timeout: 15000 })
+    .not.toBe(null);
 });
 
 test('the TRY-ANOTHER-MODE row is ABSENT when the run is too short to have a card at all', async ({ page }) => {
