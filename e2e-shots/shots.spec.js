@@ -4,13 +4,18 @@
 // SAME screen map the layout gate uses (e2e/support/screens.js), so a screen cannot be styled,
 // gated and photographed against three different ideas of how to reach it.
 //
-// Usage:  SHOTS=claude/shots/before npx playwright test e2e/_shots.spec.js --workers=2
+// Usage:  SHOTS=claude/shots/before npx playwright test --config=playwright.shots.config.js
+//
+// It lives OUTSIDE e2e/ on purpose. While it sat in e2e/ the main gate discovered it and ran
+// 96 screenshot tests on every full run — 2 minutes and a directory of PNGs nobody asked for,
+// inside the suite whose job is to say yes or no. Its own config keeps it one command away
+// without making it part of the answer.
 //
 // It also PRINTS a per-frame census — element count, hot colours, type sizes, moving things —
 // which is what Batch C measures. Taking the numbers from the same page-load as the picture
 // means the picture and the census can never disagree.
 import { test } from '@playwright/test';
-import { SCREENS, SHOT_VIEWPORTS } from './support/screens.js';
+import { SCREENS, SHOT_VIEWPORTS } from '../e2e/support/screens.js';
 
 const OUT = process.env.SHOTS || 'claude/shots/current';
 
