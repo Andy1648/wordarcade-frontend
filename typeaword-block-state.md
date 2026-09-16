@@ -147,9 +147,21 @@ The engine source is ground truth.) Engine is PURE (no timers); the hook
 `useSatRushGame.js` owns the clock.
 
 ## 9. Tests & build
-- **Unit:** `npm test` -> `node --test "src/**/*.test.js"` -> **555 pass / 0 fail**
-  (the last handoff said 262).
-- **E2E:** `npm run test:e2e` -> Playwright -> **1,214 tests in 64 spec files** (was 133 in 30).
+- **Unit:** `npm test` -> `node --test "src/**/*.test.js"` -> **557 pass / 0 fail** on
+  `feat/rarity-moment` (2026-09-15). Counts move per branch and are NOT a property of the repo:
+  `econ/followthrough` is 558, `feat/mark-slots` 563. Quote the branch with the number or the
+  figure is meaningless.
+- **`npx vitest run` DOES NOT WORK HERE** and has cost three separate passes time. It reports
+  "No test suite found" for all 125 files, because the tests are `node:test`, not vitest. The
+  runner is `npm run test`. There is no vitest in this project's test path.
+- **E2E:** `npm run test:e2e` -> Playwright -> **65 spec files** on `feat/rarity-moment`
+  (1,273 tests measured on `fix/modal-contract`, which adds one spec). The previous "1,214 in 64"
+  was correct when written.
+- **THE DOCUMENTED LINT GATE IS RED ON THE MAIN LINE.** `npx eslint src --max-warnings=0` fails on
+  `feat/rarity-moment` itself: **37 warnings, 0 errors**, and the count is identical with and
+  without any of this run's branches (verified by stashing). The real bar is `npx eslint src`
+  exit 0 plus ZERO ADDED warnings. A report claiming `--max-warnings=0` green is either wrong or
+  is describing a different tree.
 - **Full gate:** `npm run gate` = lint + unit + ALL playwright. Gating on a subset has hidden real
   failures before - see the memory note on viewport-only gating.
 - `PW_PORT` overrides the preview port (added 2026-09-14) so two checkouts can gate at once.
@@ -310,14 +322,32 @@ an opaque plate placed by a scored search rather than free text placed by a heur
    it is stored exactly - but the bar they are part-way up gets much longer. There is no migration
    that avoids that while still fixing the defect. Setting the constant back to 1 restores today's
    behaviour exactly.
-2. **The sim's own pass condition no longer holds.** "LV300 reached inside 200h by at least one
-   archetype" fails at any rebirth scaling above ~1.15 - and it barely held before (2 of 5
-   archetypes, at 156h). Either the condition or the top of the curve needs a decision.
-3. **SAT RUSH still has the orphan sound control.** CHAIN and FUSE were moved into the solo shell's
-   corner cluster; SAT was left alone deliberately because its screen is being reworked on another
-   branch. Named in `App.jsx` beside the suppression list.
+2. **The sim's own pass condition no longer holds, and the two ways to rescue it each break
+   something else.** "LV300 inside 200h by at least one archetype" now fails **0 of 5** - deepest
+   levels 224 / 229 / 242 / 236 / 243. Re-measured 2026-09-15, with both refutations attempted:
+   - The sim's R10 rebirth cap is NOT the cause. The game has no cap (`REBIRTH_TABLE` runs to
+     R20 @ LV600 and `rebirthThreshold` extends +50 forever). Uncapped: still never, and Word Bomb
+     does not even reach R11's LV225 gate.
+   - `TOP_CURVE_EXP` must exceed `EARLY_CURVE_EXP` (1.115) or the v6 defect returns. **1.115 is the
+     most generous legal value and it still fails.** 1.10 reaches LV300 (2 of 5, at ~136h) by
+     violating that invariant.
+   - `NEED_REBIRTH_BASE` 1.25 reaches it while keeping the curve legal, and hands back ~6,340x at
+     R10 - most of the ladder-cancelling that base 2 exists to fix.
+   So the CONDITION is what should move. LV200 is met by all five (59.1h-145.5h, earliest well past
+   hour 20) and is where the ladder actually lives. `claude/econ-curve-sim.mjs` now EVALUATES its
+   three conditions and exits non-zero; it used to print them as prose and check none, which is why
+   this went unnoticed for a full run.
+3. **SAT RUSH still has the orphan sound control - and the reason it was deferred is GONE.** CHAIN
+   and FUSE moved into the solo shell's corner cluster; SAT was left alone because "its screen is
+   being reworked on another branch" (`App.jsx:2550`). That branch is `feat/sat-craft`, which
+   landed at `d0b72bf`. The gap is now actionable rather than blocked.
 4. **At ONE mark slot, ETERNAL dominates seven of the eight marks.** Measured
    (`claude/marks-slots-sim.mjs`): every mode wears ETERNAL and nothing else is ever chosen.
+   A flag-gated 2-/3-slot VARIANT now exists (`?markslots=2|3`, `feat/mark-slots`); neither is
+   default and slots=1 is the shipped path unchanged. Power creep, which that sim now reports:
+   +15..40% for a second slot, +27..61% for a third, and the max R0-vs-R10 gap is **0.09pp** -
+   slots and rebirth do not interact, so a slot is worth the same percentage at every rebirth
+   count (of a x59,049 number at R10).
    `marks.js` rule 1 says "eight marks and one slot is eight different builds"; in practice it is
    one build in every mode. Two and three slots both stay inside the 2.00x mode-spread invariant
    and in fact NARROW it (1.90x -> 1.56x -> 1.49x), so the invariant is not what constrains slot
@@ -328,8 +358,27 @@ an opaque plate placed by a scored search rather than free text placed by a heur
    reject fallback is "INVALID WORD" vs "REJECTED"; and leaving a mode is `LEAVE` (Word
    Bomb/Blitz), an icon labelled "Exit" (CHAIN/FUSE) and `EXIT` (SAT Rush). SAT Rush's results
    buttons are sentence case ("Run it back", "Menu") where every other mode's are caps - and
-   "RUN IT BACK" already exists in caps in Word Bomb.
+   "RUN IT BACK" already exists in caps in Word Bomb. **PARTLY REFUTED 2026-09-15:** SAT Rush's
+   lowercase PANEL LABELS (`score`, `wins earned`) are its sanctioned retro-print sub-style, which
+   DESIGN.md section 196 explicitly protects - they are not a divergence. The real outlier is the
+   `Run it back` BUTTON: DESIGN.md:97 locks TITLES IN CAPS and control labels are caps in every
+   other mode. One line, not the whole screen.
    Per-mode END headings (`CHAIN BROKE`, `OUT OF FUSES`, `CASE CLOSED`) are deliberate flavour and
    are NOT on this list.
 6. **The e2e suite's reduced-motion emulation is inert** (see section 9). Nothing depends on it
    today, but a spec that assumes it would be silently vacuous.
+7. **`src/perf/willChange.test.js` enforces only HALF the will-change rule.** CLAUDE.md's rule has
+   two clauses: the VALUE may only be transform/opacity, and it must never SIT on an idle / pooled
+   / always-present node. Only the first is checked, and the second is not checkable from CSS text
+   because idleness is a runtime fact - a permanent `will-change: transform` on a resting pooled
+   element passes today. Written into the file's own header so a reader cannot mistake green for
+   the whole rule.
+8. **`roomManager.js:327` renames a mid-game leaver to `Unknown`** - on every later `turn_update`
+   seat label and every game-over stat row, permanently, from one LEAVE tap.
+   `room.players.find(...)?.name || 'Unknown'`, where a leaver stays in `game.players` but leaves
+   `room.players`. BACKEND; reported, not fixed.
+9. **Three of the four Word Bomb rejects did not break the payout combo.** The INSTANT LOCAL-REJECT
+   pattern mirrors the server's CHECKS exactly but did not mirror its CONSEQUENCE: the next word
+   banked 780 after a local reject and 620 after a server one. Fixed on
+   `chore/adversarial-board-v2`; TIER 1, so it needs the 2-device REGRESSION CHECKLIST before it
+   merges anywhere.
