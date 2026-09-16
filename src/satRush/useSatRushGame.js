@@ -29,7 +29,17 @@ import * as juice from './juice';
 
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
 const CLEAR_PAUSE_MS = 850;
-const MISS_PAUSE_MS = 1800; // the miss now TEACHES (sentence + def + cousin), so hold a beat longer
+// THE MISS TEACHES, SO IT HAS TO BE READABLE. The re-encode card carries four things — the
+// word, the sentence with the answer filled in, the definition, and a root cousin. 1800ms was
+// never enough time to read that; a player reporting that "the modes move too fast to learn
+// anything" is describing exactly this number. Any key still skips it (see the keydown handler),
+// so nobody fast is held.
+const MISS_PAUSE_MS = 3200;
+// AND THE MISS THAT ENDS THE RUN HOLDS LONGER STILL. This is Andy's ask: when the run ends on a
+// word you failed, stay on that word. It is also the one pause with NO pacing cost — nothing
+// follows it but the results screen, so the only thing a short hold buys is losing the last word
+// you got wrong, which is the one most worth learning. Still dismissible by any key.
+const FINAL_MISS_PAUSE_MS = 6000;
 // A clear that leaned on more than the free first letter didn't really land — it
 // gets the same re-encode beat as a miss, over the (longer) heavy-clear pause.
 const HEAVY_REVEAL_MIN = 2;
@@ -318,7 +328,7 @@ export function useSatRushGame() {
       } else {
         beginWord();
       }
-    }, MISS_PAUSE_MS);
+    }, r.gameOver ? FINAL_MISS_PAUSE_MS : MISS_PAUSE_MS);
   }, [beginWord, trackRunEnd, persistLexicon, trackSR]);
 
   // ---- the stage clock: advance reveals, then run the grace window ----
