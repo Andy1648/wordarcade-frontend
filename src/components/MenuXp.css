@@ -874,3 +874,90 @@ button.menu-mark:active {
     -webkit-text-stroke: 2px #000;
   }
 }
+
+/* ============================================================================
+   THE TWO ANSWERS TO "740x160 HOLDING TWO SHORT LINES".
+   Andy: "it went from too small to under-filled, with a large empty black area on
+   the right. Fill it or shrink it."
+
+   Both are built; the app ships ONE, chosen by XP_BAR_LAYOUT in MenuXp.jsx.
+   ============================================================================ */
+
+/* ---- OPTION A: .is-fill — same height, the width finally USED -------------
+   The track stops being a centred caption on an empty band. Three anchored
+   readings instead: the XP numbers hard LEFT (where a progress bar is read
+   from), the active mode's rate CENTRED over the fill, and the next unlock hard
+   RIGHT. The empty black area was never a height problem — it was a content
+   distribution problem. */
+.menu-xp-bar.is-loud.is-fill .menu-xp-readout {
+  left: 14px;
+  transform: translateY(-50%);
+  top: 50%;
+  font-size: var(--fs-panel);
+  -webkit-text-stroke: 3px #000;
+}
+.menu-xp-bar.is-loud.is-fill .menu-xp-rate {
+  top: 50%;
+}
+.menu-xp-bar.is-loud.is-fill .menu-xp-next {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
+  line-height: 1;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.menu-xp-bar.is-loud.is-fill .menu-xp-next-tag {
+  color: #0d0618;
+  background: var(--theme-xp-fill, #2effe0);
+  border: 2px solid #000;
+  border-radius: 5px;
+  padding: 3px 7px;
+  -webkit-text-stroke: 0;
+}
+.menu-xp-bar.is-loud.is-fill .menu-xp-next-name { color: #ffe94a; }
+.menu-xp-bar.is-loud.is-fill .menu-xp-next-at { color: var(--theme-ink, #ff4fa3); }
+
+/* ---- OPTION B: .is-dense — same content, the height cut until it is packed --
+   The other honest answer: if the band is empty, take the band away. A 56px
+   track (still ~1.9x the old hairline), one row, chips and track side by side,
+   and the next-unlock dropped — at this height there is no room for a third
+   reading and the rate is the one worth keeping. */
+.menu-xp-bar.is-loud.is-dense {
+  --xp-track-h: 56px;
+  row-gap: 6px;
+  padding: 8px;
+}
+.menu-xp-bar.is-loud.is-dense > .menu-xp-break { display: none; }
+.menu-xp-bar.is-loud.is-dense .menu-xp-lvblock {
+  flex-direction: row;
+  align-items: baseline;
+  align-self: auto;
+  gap: 7px;
+  padding: 4px 10px;
+  min-width: 0;
+}
+.menu-xp-bar.is-loud.is-dense .menu-xp-lv { font-size: var(--fs-panel); }
+.menu-xp-bar.is-loud.is-dense .menu-xp-next { display: none; }
+.menu-xp-bar.is-loud.is-dense .menu-xp-readout {
+  left: 12px;
+  transform: translateY(-50%);
+  top: 50%;
+  font-size: var(--fs-label);
+}
+.menu-xp-bar.is-loud.is-dense .menu-xp-rate {
+  left: auto;
+  right: 12px;
+  transform: translateY(-50%);
+  top: 50%;
+}

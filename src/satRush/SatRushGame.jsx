@@ -27,6 +27,8 @@ import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { satRarityMult } from '../progress/rarity';
+import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
+import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { formatNum } from '../format';
@@ -57,7 +59,18 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   // running count; we bank the delta each time it climbs and reset the ledger when a fresh run
   // drops it back to 0. bankWordWins queues the "+N WINS" menu stamp and gates on 3 words.
   const satBankedWordsRef = useRef(0);
-  const satWeightRef = useRef(0); // RARITY: running sum of cleared words' rarity multipliers
+  const satWeightRef = useRef(0); // running sum of cleared words' reward weights
+  // PARITY (feat/sat-parity): SAT was the ONLY mode without a combo or a lucky roll. Every other
+  // mode banks rarity x combo x lucky; SAT banked rarity alone, which is why — once its rarity
+  // DOUBLE COUNT was removed — it could not be seated anywhere near Blitz without blowing the
+  // cross-mode spread. An exhaustive card-space search says so: with rarity alone there is NO
+  // card assignment that satisfies "CHAIN and FUSE lead", "SAT within 20% of Blitz" and
+  // "spread < 2.00x" at once. With parity there is, at 9.4% headroom.
+  // The streak is the mode's own: SAT already tracks one (it drives heat and the results
+  // panel), so the combo is a payout reading of a thing the player can already see.
+  const comboRef = useRef(freshCombo());
+  const luckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
+  const satMissesRef = useRef(0);
   const [winsEarned, setWinsEarned] = useState(0);
   // Preload the rarity rank index + begin a WPM session; flush it on unmount (leave/exit).
   useEffect(() => {
@@ -72,6 +85,8 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // and start a fresh WPM session (flushes the previous run's).
       satBankedWordsRef.current = 0;
       satWeightRef.current = 0;
+      comboRef.current = freshCombo();
+      satMissesRef.current = 0;
       wpmStart('satRush');
       setWinsEarned(0);
     }
@@ -83,12 +98,18 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // Unified economy (Job 1): the per-word rarity weight (SAT has no combo/lucky) also grants XP,
       // so a SAT capture now levels you as well as banking wins.
       const rw = rarityOf(view.lastClearedWord);
-      // RARITY, RELATIVE TO THE SAT DECK. Every word this mode serves is rare by construction,
-      // so the raw rarity multiplier paid SAT a flat ~2.79x that the player never chose — the
-      // per-word rarity bonus is a reward for PICKING an uncommon word, and SAT offers no pick.
-      // satRarityMult() divides by the deck's own mean, so a typical SAT word is x1 and the
-      // harder-than-typical ones still pay more. See progress/rarity.js.
-      const wWeight = cappedWordMult(satRarityMult(rw.mult), 1, 1);
+      // THE SAME THREE FACTORS EVERY OTHER MODE BANKS: rarity x combo x lucky, capped at x40.
+      // RARITY is normalised against the SAT deck (satRarityMult) so the mode collects the same
+      // rarity per word as everyone else rather than a free ~2.79x nobody chose.
+      // COMBO grows with consecutive clears and breaks on a miss (below).
+      // LUCKY is the same 1-in-40 x5 roll CHAIN/FUSE/WB/Blitz get.
+      comboRef.current = comboAccept(comboRef.current);
+      const luck = luckyReward(luckyOracleRef.current.next());
+      const wWeight = cappedWordMult(
+        satRarityMult(rw.mult),
+        comboRef.current.mult,
+        luck.winsWeight,
+      );
       satWeightRef.current += wWeight + Math.max(0, delta - 1);
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
@@ -105,6 +126,16 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }
   }, [view.cleared]);
+
+  // A MISS BREAKS THE COMBO, the same way a reject or a life-loss does in every other mode.
+  // SAT's own signal is the run's miss count climbing; `cleared` does not move on a miss, so this
+  // cannot live in the banking effect above. Nothing is banked here — a miss pays nothing — so
+  // this only resets the multiplier the NEXT clear will be worth.
+  useEffect(() => {
+    const misses = view.missCount || 0;
+    if (misses > satMissesRef.current) comboRef.current = comboBreak(comboRef.current);
+    satMissesRef.current = misses;
+  }, [view.missCount]);
 
   // Live wins tally (item 2): what the run will pay so far, from the running cleared count
   // (0 until the 3-word payout gate). Recomputed each render — pure.

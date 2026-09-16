@@ -62,11 +62,11 @@ test('perWordWins: 100 base × mode × difficulty, snapped to a round 10 (Econom
   // up to meet SAT, which is the only way SAT's card can sit near Blitz with the spread still
   // under 2.00x. See claude/econ-visible-sim.mjs — this fit is on the corner of the feasible
   // region, so these five literals are load-bearing together, not independently tweakable.
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 }), 210);
-  assert.equal(perWordWins({ mode: 'blitz', rebirthCount: 0, level: 1 }), 120);
-  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0, level: 1 }), 390);
-  assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }), 270);
-  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 }), 270);
+  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 }), 200);
+  assert.equal(perWordWins({ mode: 'blitz', rebirthCount: 0, level: 1 }), 140);
+  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0, level: 1 }), 160);
+  assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }), 250);
+  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 }), 250);
   // Difficulty scales the per-word rate (no mode → ×1), still snapped to 10.
   assert.equal(perWordWins({ difficulty: 'medium', rebirthCount: 0, level: 1 }), round10(B * 1.5));
   assert.equal(perWordWins({ difficulty: 'hard', rebirthCount: 0, level: 1 }), round10(B * 2));
@@ -74,14 +74,14 @@ test('perWordWins: 100 base × mode × difficulty, snapped to a round 10 (Econom
 
 test('perWordWins: REBIRTH multiplies wins on the same ladder as XP (now 3^rc)', () => {
   const wb = (rc) => perWordWins({ mode: 'wordBomb', rebirthCount: rc, level: 1 });
-  assert.equal(wb(1), round10(WORD_WINS_BASE * 2.1 * rebirthMult(1))); // ×3
-  assert.equal(wb(2), round10(WORD_WINS_BASE * 2.1 * rebirthMult(2))); // ×9
-  assert.equal(wb(3), round10(WORD_WINS_BASE * 2.1 * rebirthMult(3))); // ×27
-  assert.equal(wb(10), round10(WORD_WINS_BASE * 2.1 * rebirthMult(10)));
+  assert.equal(wb(1), round10(WORD_WINS_BASE * 2 * rebirthMult(1))); // ×3
+  assert.equal(wb(2), round10(WORD_WINS_BASE * 2 * rebirthMult(2))); // ×9
+  assert.equal(wb(3), round10(WORD_WINS_BASE * 2 * rebirthMult(3))); // ×27
+  assert.equal(wb(10), round10(WORD_WINS_BASE * 2 * rebirthMult(10)));
   // This omitted FUSE's own mode multiplier and passed only because it happened to be x1. The
   // item-4 re-fit moved it to x1.35 and the omission became a failure, which is the useful kind;
   // round 2 moves it again, to x2.9.
-  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 5, level: 1 }), round10(WORD_WINS_BASE * 2.7 * rebirthMult(5)));
+  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 5, level: 1 }), round10(WORD_WINS_BASE * 2.5 * rebirthMult(5)));
   // ...and it is strictly increasing, which the v6 table also was - the change is the SIZE of
   // the steps, not the direction.
   for (let rc = 0; rc < 8; rc++) assert.ok(wb(rc + 1) > wb(rc), `R${rc + 1} must pay more than R${rc}`);
@@ -121,26 +121,20 @@ test('awardWins: the SOLO modes now out-pay the multiplayer ones per word (R0)',
   assert.equal(awardWins({ wordsAccepted: 3, mode: 'fuse', rebirthCount: 0, level: 1 }), 3 * per('fuse'));
   assert.equal(awardWins({ wordsAccepted: 2, mode: 'fuse', rebirthCount: 0, level: 1 }), 0); // gated on <3
   assert.equal(awardWins({ wordsAccepted: 3, mode: 'wordBomb', rebirthCount: 0, level: 1 }), 3 * per('wordBomb'));
-  // THE ORDERING IS THE BALANCE CLAIM, AND ROUND 2 DELIBERATELY INVERTS THE OLD ONE. It used to
-  // assert wordBomb > chain > blitz > satRush; both solo modes sitting UNDER Word Bomb is exactly
-  // what Andy called wrong ("CHAIN and FUSE are solo, score-attack — they should be MUCH higher").
-  // The claim now: both solo modes beat both multiplayer modes, by a real margin, and SAT sits
-  // near Blitz rather than at a third of Word Bomb.
+  // THE ORDERING IS THE BALANCE CLAIM. It used to assert wordBomb > chain > blitz > satRush;
+  // both solo modes sitting UNDER Word Bomb is exactly what Andy called wrong ("CHAIN and FUSE
+  // are solo, score-attack — they should be MUCH higher").
+  // ANDY'S ORDERING, and it is only reachable because SAT reached PARITY. With SAT banking
+  // rarity alone there was NO card assignment satisfying all three of these at once (searched
+  // exhaustively in claude/econ-visible-sim.mjs); giving SAT the combo+lucky every other mode
+  // already had is what made the target satisfiable rather than the target being wrong.
   const soloLow = Math.min(per('chain'), per('fuse'));
   const mpHigh = Math.max(per('wordBomb'), per('blitz'));
   assert.ok(soloLow > mpHigh, `solo floor ${soloLow} must beat multiplayer ceiling ${mpHigh}`);
   assert.ok(soloLow / mpHigh >= 1.25, `the solo lead must be real, got ${(soloLow / mpHigh).toFixed(2)}x`);
-  // SAT IS NO LONGER PINNED NEAR BLITZ, and the reason is a proof rather than a preference.
-  // Fixing SAT's rarity DOUBLE COUNT (it was paid once by a deck that is rare by construction
-  // and again by a multiplier meant to reward CHOOSING a rare word) left SAT the only mode with
-  // no per-word multiplier at all — no combo, no lucky, and now no free rarity. At an equal card
-  // rate it earns 0.31x Blitz per MINUTE, so holding the two cards within 20% forces a 2.7-4.0x
-  // wins/min gap that busts the 2.00x cross-mode spread on its own. No card assignment satisfies
-  // both (searched exhaustively in claude/econ-visible-sim.mjs). So SAT's CARD is high instead:
-  // few, slow, hard words, with nothing to stack on top of them.
   assert.ok(
-    per('satRush') > per('wordBomb'),
-    `SAT has no combo/lucky/rarity left to stack, so its CARD must lead; got ${per('satRush')}`,
+    Math.abs(per('satRush') / per('blitz') - 1) <= 0.2,
+    `SAT must sit within 20% of Blitz, got ${Math.round(per('satRush') / per('blitz') * 100)}%`,
   );
 });
 
@@ -172,17 +166,17 @@ test('round/word estimates: card previews are the R0/LV1 BASE rate (v7: 100 base
   // value: it was MISSING from the old kebab-keyed WORD_WINS_MULT table entirely and fell through
   // to x1, which happened to equal its real multiplier — so the card was right by luck. Both
   // tables are now one table behind modeKey().
-  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 210);
-  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 120);
-  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 390);
-  assert.equal(wordWinsEstimate({ mode: 'chain' }), 270);
-  assert.equal(wordWinsEstimate({ mode: 'fuse' }), 270);
+  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 200);
+  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 140);
+  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 160);
+  assert.equal(wordWinsEstimate({ mode: 'chain' }), 250);
+  assert.equal(wordWinsEstimate({ mode: 'fuse' }), 250);
   // roundWinsEstimate = a typical 10-word round. NOTE 'word-bomb' (hyphen) is NOT a WINS_MULT key
   // (the live WB wins key is 'wordBomb'), so it falls to ×1 here; this fn has no live caller and
   // is exercised only as a pure unit.
   assert.equal(roundWinsEstimate({ mode: 'word-bomb' }), 10 * round10(B));
-  assert.equal(roundWinsEstimate({ mode: 'chain' }), 10 * round10(B * 2.7));
-  assert.equal(roundWinsEstimate({ mode: 'fuse' }), 10 * round10(B * 2.7)); // econ round 3
+  assert.equal(roundWinsEstimate({ mode: 'chain' }), 10 * round10(B * 2.5));
+  assert.equal(roundWinsEstimate({ mode: 'fuse' }), 10 * round10(B * 2.5)); // econ round 4
   assert.equal(roundWinsEstimate({ mode: 'word-bomb', difficulty: 'hard' }), 10 * round10(B * 2));
 });
 

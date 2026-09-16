@@ -11,6 +11,17 @@ import { rankTitle } from '../progress/rank';
 import { streakMultiplier } from '../progress/streak';
 import { perWordRateNow, modeKey } from '../progress/wins';
 
+// THE BAR'S LAYOUT — one line to switch, pending Andy's pick.
+// 'fill'  the 92px slab, with its width USED: the XP numbers hard left on the track, the active
+//         mode's rate centred, and the next unlock hard right. The complaint was never that the
+//         bar was big; it was that a 740x160 slab held a level chip and two short centred lines,
+//         leaving the right ~40% empty black.
+// 'dense' the other answer to the same complaint: keep the content, cut the height until it is
+//         packed. One row, a 56px track, no wasted band.
+// Both are built so the choice is made from frames. This is a CONSTANT, not a query param —
+// the app ships exactly one layout, and the loser gets deleted rather than left as dead config.
+export const XP_BAR_LAYOUT = 'fill';
+
 // The label a mode's rate is printed under. Keyed by the gameData id the menu already has.
 const RATE_LABEL = {
   'word-bomb': 'WORD BOMB',
@@ -45,7 +56,7 @@ function formatMult(m) {
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, rateMode = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, rateMode = null, nextUnlock = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -168,7 +179,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
     <div
-      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}`}
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ` is-loud is-${XP_BAR_LAYOUT}`}`}
       aria-hidden={variant === 'mini' ? 'true' : undefined}
     >
       {variant !== 'mini' && wins != null && (
@@ -278,6 +289,24 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             and mark-scaled), so it visibly climbs as the bar fills — which is the point.
             rateMode is the hovered card on the menu; it falls back to Word Bomb, which is also
             the reference rate the shop prints. */}
+        {/* NEXT UNLOCK, hard right on the track. It was cut as its own ROW — three spans floating
+            under the bar saying "NEXT REBIRTH 1 FRAME REBIRTH 1" — and that cut stands: as a row
+            it was noise. Inside the bar it is doing a job, filling the band the track was wasting
+            with the one forward-looking fact the menu has. */}
+        {variant !== 'mini' && nextUnlock && (
+          <span className="menu-xp-next" aria-hidden="true">
+            <b className="menu-xp-next-tag">NEXT</b>
+            {/* NAME, unless the name IS the milestone. nextUnlock's rebirth branch returns
+                name === at ("REBIRTH 1" / "REBIRTH 1"), which is how the old standalone row came
+                to read "NEXT REBIRTH 1 FRAME REBIRTH 1" — the same words three times. When they
+                collide, the KIND is the thing that carries information ("NEXT FRAME · REBIRTH 1");
+                when they don't, the cosmetic's own name does ("NEXT BOLT · LV 3"). */}
+            <span className="menu-xp-next-name">
+              {nextUnlock.name === nextUnlock.at ? nextUnlock.kindLabel : nextUnlock.name}
+            </span>
+            <span className="menu-xp-next-at">{nextUnlock.at}</span>
+          </span>
+        )}
         {variant !== 'mini' && rateMode && modeKey(rateMode) && (
           <span className="menu-xp-rate" aria-hidden="true">
             <b className="menu-xp-rate-mode">{RATE_LABEL[rateMode] || 'RATE'}</b>

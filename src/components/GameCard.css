@@ -451,7 +451,16 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    one part a player can infer, and the XP bar states the full unit once on the same screen.
    A CONTAINER query, not a viewport one, so it fires on real card width — the card count and
    the fit-math both move card size independently of viewport. */
-@container (max-width: 96px) {
+/* STAGED DROP, widest part first. "N WINS / WORD" is the full unit and it stays until the card
+   physically cannot hold it. Below 108px the "/ WORD" half goes (the rate is per word on every
+   card, so it is the inferable half); below 88px "WINS" goes too, leaving the bare number and its
+   multiplier — both of which carry information nothing else on the card carries.
+   A CONTAINER query, not a viewport one: card width is set by the grid's column count and the
+   fit-math, which move independently of the viewport. */
+@container (max-width: 108px) {
+  .game-card-payout-per { display: none; }
+}
+@container (max-width: 88px) {
   .game-card-payout-unit { display: none; }
 }
 

@@ -249,19 +249,20 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // 4,830. It now prints THE RESOLVED RATE — what this mode pays for a word right now — and
   // annotates it with everything the player has built, as one multiplier.
   //
-  // THE UNIT WORD IS GONE ("610 WINS / WORD" -> "610 / WORD"). Two reasons, one forced.
-  // FORCED: the econ round-2 re-fit pushed CHAIN/FUSE into four digits, and at 390px the longer
-  // string pushed .game-card-payout-mult past the card's clip — viewport-integrity caught it at
-  // 390x844 and 360x640. A font-size floor alone cannot fix this class of bug, because rebirth
-  // multiplies the rate without bound, so the string was shortened instead of the type.
-  // CHOSEN: "WINS" was printed five times on one screen, once per card, next to a wins chip and
-  // an XP bar that both name the currency. This is a subtraction pass; the unit survives where
-  // it is stated once, not where it is repeated per card.
+  // THE UNIT READS "N WINS / WORD" AGAIN. I had cut "WINS" during the subtraction pass on the
+  // grounds that it was printed five times on one screen — and Andy filed the result as a defect:
+  // "800 / WORD" does not say what 800 is, and the card is where the player decides which mode to
+  // play. A currency name is not decoration.
+  // The overflow that cut prompted is real and still handled, but with the right lever: the two
+  // halves are separate spans, and the CONTAINER query below drops them in order — " / WORD"
+  // first, then " WINS" — only once the card is genuinely too narrow to hold them. At every width
+  // the player actually sees on a phone or a laptop, the full unit is there.
   const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
   const payout = rateNow && (
     <>
       {formatNum(rateNow.rate)}
-      <span className="game-card-payout-unit"> / WORD</span>
+      <span className="game-card-payout-unit"> WINS</span>
+      <span className="game-card-payout-per"> / WORD</span>
       {rateNow.mult !== 1 && (
         <span className="game-card-payout-mult"> (×{formatNum(rateNow.mult)})</span>
       )}

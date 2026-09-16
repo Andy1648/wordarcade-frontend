@@ -12,6 +12,7 @@ import {
   RARITY_MAX_MULT,
   bumpRarity,
   SAT_DECK_MEAN_RARITY,
+  TYPIST_MEAN_RARITY,
   satRarityMult,
 } from './rarity.js';
 
@@ -155,14 +156,23 @@ test('SAT_DECK_MEAN_RARITY still matches the SHIPPED deck (recomputed, not trust
   );
 });
 
-test('satRarityMult: a typical SAT word is x1, harder pays more, easier pays less', () => {
-  // The POINT of the normalisation: variance survives, the free cross-mode bias does not.
-  assert.equal(satRarityMult(SAT_DECK_MEAN_RARITY), 1);
-  assert.ok(satRarityMult(4.5) > 1, 'the rarest SAT word must still pay above a typical one');
-  assert.ok(satRarityMult(1.5) < 1, 'the most common SAT word must pay below a typical one');
+test('satRarityMult: a typical SAT word is worth a typical TYPIST word, not x1', () => {
+  // THE BASIS MATTERS AND IT CHANGED. Dividing by the deck mean alone pinned a typical SAT word
+  // at 1.00 — but the double count was the EXCESS over what other modes collect, not SAT's whole
+  // rarity contribution. Other modes average TYPIST_MEAN_RARITY per word, so that is the level
+  // SAT must be normalised to; 1.00 was an over-correction in the opposite direction, and it made
+  // the cross-mode fit unsatisfiable.
+  const typical = satRarityMult(SAT_DECK_MEAN_RARITY);
+  assert.ok(
+    Math.abs(typical - TYPIST_MEAN_RARITY) < 1e-9,
+    `a typical SAT word should be worth ${TYPIST_MEAN_RARITY}, got ${typical}`,
+  );
+  // Variance survives: harder pays more, easier pays less.
+  assert.ok(satRarityMult(4.5) > typical, 'the rarest SAT word must pay above a typical one');
+  assert.ok(satRarityMult(1.5) < typical, 'the most common SAT word must pay below a typical one');
   // And it is BOUNDED well under the raw multiplier it replaces — that gap is the double count.
-  assert.ok(satRarityMult(4.5) < 1.5, 'normalised SAT rarity must stay near 1, not near 4.5');
-  // Bad input must not invent a multiplier.
-  assert.equal(satRarityMult(0), 1);
-  assert.equal(satRarityMult(NaN), 1);
+  assert.ok(satRarityMult(4.5) < 2, 'normalised SAT rarity must stay near a typist word, not 4.5');
+  // Bad input falls back to a TYPICAL word, never to an invented multiplier.
+  assert.equal(satRarityMult(0), typical);
+  assert.equal(satRarityMult(NaN), typical);
 });

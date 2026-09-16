@@ -19,7 +19,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
-import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
+import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -665,6 +665,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                player is actually looking at, at their current level. Touch devices never hover,
                so it falls back to Word Bomb — the same reference rate the shop prints. */
             rateMode={hoverGame || 'word-bomb'}
+            /* The next free cosmetic, now rendered INSIDE the bar rather than as its own row
+               under it — see MenuXp.jsx. */
+            nextUnlock={nextUnlock(freeUnlocks, rebirths)}
           />
           {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
               only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a

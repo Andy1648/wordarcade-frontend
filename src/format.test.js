@@ -3,7 +3,8 @@
 // UPDATED (feat/progression-clarity). v6 grouped with commas below 10,000 and abbreviated to a
 // FIXED one decimal above it. Both were changed on purpose:
 //   - a comma at four digits reads as a decimal point to half the world, and adds weight to a
-//     number meant to be skimmed. A thin space groups without shouting.
+//     number meant to be skimmed. RETIRED: on a game card "1 030" read as two numbers, which is
+//     worse than the problem it was avoiding. The separator is a comma.
 //   - one fixed decimal throws away the digit that distinguishes 1.28M from 1.25M ("1.3M" for
 //     both), while a fixed two adds a digit that is not there ("3.10B"). THREE SIGNIFICANT
 //     FIGURES with trailing zeros trimmed gives 10.4K / 1.28M / 3.1B from one rule.
@@ -11,7 +12,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { formatNum, formatNumParts, plural, THIN } from './format.js';
 
-test('below 10,000 reads in full, grouped with a THIN space (not a comma)', () => {
+test('below 10,000 reads in full, grouped with a COMMA', () => {
   assert.equal(formatNum(0), '0');
   assert.equal(formatNum(999), '999');
   assert.equal(formatNum(9999), `9${THIN}999`);

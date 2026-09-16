@@ -3,9 +3,12 @@
 // screen is a bug.
 //
 // THE RULE (feat/progression-clarity):
-//   < 10,000   exact, with a THIN separator every three digits — 9 999, 1 234. A comma at this
-//              size reads as a decimal point to half the world and adds visual weight to a number
-//              that is meant to be read at a glance; a thin space groups without shouting.
+//   < 10,000   exact, grouped every three digits with a COMMA — 9,999 · 1,234.
+//              THIS WAS A THIN SPACE (U+2009) and it was wrong in practice. The reasoning was
+//              that a comma reads as a decimal separator to half the world; the reality on the
+//              game cards was "1 030", which reads as two numbers, and Andy filed it as a broken
+//              formatter twice. A grouping character that makes a four-digit rate look like a
+//              pair of numbers has failed at the only job it has. Comma it is.
 //   >= 10,000  abbreviated to THREE SIGNIFICANT FIGURES with a unit suffix, trailing zeros
 //              trimmed: 10.4K · 1.28M · 3.1B · 47.1K. Three sig figs is the point — a fixed one
 //              decimal turns 1,284,000 into "1.3M" and throws away the digit that distinguishes
@@ -30,7 +33,7 @@ export function plural(n, singular, pluralForm = `${singular}s`) {
 
 const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi'];
 
-/** Group the integer part in threes with a thin space: 1234567 → "1 234 567". */
+/** Group the integer part in threes: 1234567 → "1,234,567". */
 function grouped(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, THIN);
 }

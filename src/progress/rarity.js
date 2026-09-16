@@ -145,9 +145,24 @@ export function wordRarity(word, rankIndex) {
 // so it cannot silently drift when words are added.
 export const SAT_DECK_MEAN_RARITY = 3.42;
 
-/** A SAT word's reward weight: its rarity relative to the SAT deck's mean (1.0 = a typical
- *  SAT word). Falls back to x1 on a bad input rather than inventing a multiplier. */
+// What a REAL TYPIST's word is worth in rarity terms, measured the same way: draw from the
+// frequency-weighted top-12k the way a player under a clock actually types, and average the
+// rarity multiplier. Every non-SAT mode collects roughly this much rarity per word.
+export const TYPIST_MEAN_RARITY = 1.23;
+
+/**
+ * A SAT word's rarity weight, normalised so the mode collects the SAME rarity per word as every
+ * other mode — no more (the double count) and no less.
+ *
+ * THE FIRST VERSION OF THIS DIVIDED BY THE DECK MEAN ALONE, which pinned a typical SAT word at
+ * x1.0 — and that over-corrected. The double count was never SAT's whole rarity contribution; it
+ * was the EXCESS over what other modes get. Other modes average 1.23x from rarity, so pushing SAT
+ * to 1.00 did not remove a bias, it created one in the opposite direction, and the economy then
+ * could not seat SAT anywhere near Blitz without blowing the spread.
+ * Scaling by TYPIST_MEAN / DECK_MEAN puts the average SAT word at 1.23 — level with everyone —
+ * while a harder-than-typical SAT word still pays more and an easier one less.
+ */
 export function satRarityMult(rarityMult) {
   const r = Number.isFinite(rarityMult) && rarityMult > 0 ? rarityMult : SAT_DECK_MEAN_RARITY;
-  return r / SAT_DECK_MEAN_RARITY;
+  return r * (TYPIST_MEAN_RARITY / SAT_DECK_MEAN_RARITY);
 }

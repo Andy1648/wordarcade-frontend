@@ -67,19 +67,19 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await bankSettle(page);
     const after5 = await readWins(page);
 
-    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 210) = 340. BUILDS past the ×1.1 base 230.
+    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 200) = 320. BUILDS past the ×1.1 base 220.
     acceptWb(mock, C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(340);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(320);
     const after6 = await readWins(page);
 
     // A reject ends the combo.
     rejectWb(mock, 'ZZZQ');
     await page.waitForTimeout(80);
 
-    // Next accept: streak 1 again → combo 1.1 → round10(1.1 × 210) = 230. RESET (would be 360 if it
+    // Next accept: streak 1 again → combo 1.1 → round10(1.1 × 200) = 220. RESET (would be 340 if it
     // kept climbing to streak 7).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(230);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(220);
   });
 
   test('WB: the combo RESETS when I lose a life (my turn times out)', async ({ page }) => {
@@ -111,9 +111,9 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     });
     await page.waitForTimeout(80);
 
-    // Next accept: combo reset to 1.1 → +230 (not the +360 a continued streak-7 would pay).
+    // Next accept: combo reset to 1.1 → +220 (not the +340 a continued streak-7 would pay).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(230);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(220);
   });
 
   test('WB: the payout INCLUDES the lucky ×5 when a word is lucky', async ({ page }) => {
@@ -126,12 +126,12 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     const before = await readWins(page);
 
     // 3 COMMON accepts, each ×5 lucky, combo 1.1/1.2/1.3:
-    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 210 = round10(3780) = 3780.
+    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 200 = round10(3600) = 3600.
     for (const w of ['CAT', 'DOG', 'FOX']) {
       acceptWb(mock, w);
       await page.waitForTimeout(40);
     }
-    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(3780);
+    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(3600);
   });
 
   test('Blitz: the payout combo BUILDS and RESETS on a rejected answer', async ({ page }) => {
@@ -151,18 +151,18 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await bankSettle(page);
     const after5 = await readWins(page);
 
-    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 120) = 190 (Blitz per-word 120, x1.2). BUILDS
-    // past the ×1.1 base 130. (Was pinned 160 — the x1 base rate — and had been red for several merges.)
+    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 140) = 220 (Blitz per-word 140, x1.4). BUILDS
+    // past the ×1.1 base 150.
     accept(C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(190);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(220);
     const after6 = await readWins(page);
 
     // A rejected answer breaks the combo.
     mock.pushToClient({ type: 'answer_result', payload: { accepted: false, answer: 'ZZZQ', reason: 'not_in_list' } });
     await page.waitForTimeout(80);
 
-    // Next accept: combo reset to 1.1 → round10(1.1 × 120) = 130 (not the 200 a streak-7 would pay).
+    // Next accept: combo reset to 1.1 → round10(1.1 × 140) = 150 (not the 240 a streak-7 would pay).
     accept('DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(130);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(150);
   });
 });
