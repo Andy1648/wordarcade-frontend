@@ -549,3 +549,45 @@ motion the player asked for.
 is a palette decision across five themes, not a mechanical fix, and it is the one axis where I
 would be substituting my taste for yours.
 
+---
+
+## 10. WHERE THIS RUN GOT TO
+
+Batches are being worked **in order**. A–C are shipped and gated; D–I are not started, and I am
+naming that rather than half-applying them.
+
+| batch | state |
+|---|---|
+| **A** — your three rulings | **DONE.** One XP bar size (xl/xxl/`?xpbar` deleted), five elements cut, SAT's double count fixed and the economy re-fitted to 7.3% headroom. |
+| **B** — the arcane pass | **DONE.** Five primitives, one new element in the whole app. Before/after: `claude/shots/B-before` vs `claude/shots/B-after`. |
+| **C** — first five minutes | **MEASURED + the real defect cut.** Two of the three axes turned out to be measuring the wrong thing (see §9); the third was real and is fixed — lobby 9 → 0 and room 7 → 1 infinite animations at rest. Hot colours reported, not cut. |
+| **D** — the tutorial teaches | not started |
+| **E** — pause-to-learn everywhere | SAT shipped earlier this run; the other four modes are **blocked on a data source**, see §5 — and I found a second reason in §8: CHAIN states its rule three times at once, which is the thing to fix before adding a fourth. |
+| **F** — mobile with the keyboard up | not started |
+| **G** — adversarial, crowding + economy | the crowding half ran (§0.1, §3.2); the economy attack and the perf/a11y/dead-code agents did not |
+| **H** — landing pad | this file, kept current as I go |
+| **I** — the prod release candidate | not started |
+
+### What the screenshots caught that the gates did not — the running tally
+
+This is the rails' question, and the answer is now four things, none of which any assertion saw:
+
+1. **The bar printed a ×1 rate** (290 where the card said 610) — `perWordWins` does not alias mode
+   ids; only `perWordRateNow` does.
+2. **The phone layout drew the LEVEL numeral underneath the corner nav** — the loud row was
+   ordered last, so the two things the bar exists for were behind opaque buttons.
+3. **The facet sliced a diagonal band across the shop panel**, half-darkening the PRISM price
+   button — `viewport-integrity` measures boxes, not whether a shadow landed on a word.
+4. **CHAIN states its one rule three times simultaneously** in the pre-clock state — the armhint,
+   the deck hint and the input placeholder. The adversarial defence had argued these were
+   mutually exclusive; the frame shows all three.
+
+And two the *census* caught, which is the same idea pointed at numbers rather than pixels:
+
+5. **Every layout-gate cell has been measuring the first-run onboarding state.** `bootMenu` never
+   seeded the spotlight-seen keys, so all 840 `viewport-integrity` cells render behind the
+   onboarding scrim — the steady-state app has never been layout-gated. The camera now seeds
+   them; the gate still does not, and that is a real coverage gap worth closing.
+6. **The gate was running the camera.** The suite reported 1,249 passed against 1,153 tests,
+   because the screenshot run sat in `e2e/`. Now split out behind its own config.
+
