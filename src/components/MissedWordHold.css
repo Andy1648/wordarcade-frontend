@@ -1,0 +1,79 @@
+/* MissedWordHold.css — the run-end word, held long enough to read.
+   In the card, not over it. Nothing animates: a panel whose job is to be READ should not move
+   while it is being read, and the motion law has no idle loops left anywhere else either. */
+
+.missed-hold {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  text-align: center;
+}
+
+.missed-hold-tag {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.16em;
+  color: rgba(240, 234, 217, 0.66);
+}
+
+/* THE WORD IS THE POINT — display type, the largest thing in the panel. Bungee is legal here
+   because it is well above the --fs-panel floor the type scale sets for it. */
+.missed-hold-word {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  color: #ffe94a;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.02em;
+  /* A long word must shrink rather than escape the card. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.missed-hold-prompt {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: rgba(240, 234, 217, 0.82);
+}
+.missed-hold-prompt b { color: var(--theme-xp-fill, #2effe0); }
+
+.missed-hold-gloss {
+  margin: 2px 0 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  line-height: 1.25;
+  color: #f0ead9;
+}
+
+/* The no-definition case. Deliberately NOT styled like the gloss: it is a different kind of
+   statement, not a greyed-out version of one we failed to load. */
+.missed-hold-nogloss {
+  margin: 2px 0 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  color: rgba(240, 234, 217, 0.5);
+}
+
+@media (max-width: 600px) {
+  .missed-hold { padding: 10px; }
+  .missed-hold-word { font-size: var(--fs-panel); -webkit-text-stroke: 2px #000; }
+}

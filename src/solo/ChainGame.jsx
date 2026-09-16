@@ -5,6 +5,8 @@ import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } fr
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { exampleStartingWith } from '../progress/teachExample.js';
+import { loadGlossary, glossFor } from '../progress/glossary.js';
+import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
@@ -313,10 +315,36 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // First-run tutorial card: the player's very first CHAIN run (runs === 1), OR any run
   // that ended under 3 words — the runs where a how-to-play card beats a score card.
   const firstRun = runs === 1 || s.k < 3;
-  const overCard = firstRun ? (
-    <ChainFirstRunCard />
-  ) : (
-    <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
+  // PAUSE TO LEARN. CHAIN does not end on a word the player got wrong — it ends on a LETTER it
+  // could not continue. So the word held here is one they COULD have played: derived from that
+  // final letter against the same frequency-ordered list the mode judges with, skipping every
+  // word already linked. Real and checkable, not a canned example.
+  // The gloss table is pulled lazily and only once a run has ENDED, so it never touches play.
+  const missedWord = g.phase === 'over' && data
+    ? exampleStartingWith(data.recall, s.killedLetter, (w) => s.used.has(w))
+    : null;
+  const [glossTick, setGlossTick] = useState(0);
+  useEffect(() => {
+    if (!missedWord) return;
+    loadGlossary().then(() => setGlossTick((n) => n + 1));
+  }, [missedWord]);
+  // THE HOLD IS ON BOTH CARDS. It sits outside the first-run branch on purpose: a run that ends
+  // under three words gets the TUTORIAL card, and that is exactly the player who most needs to be
+  // shown a word that would have worked. Putting the lesson only on the score card would have
+  // hidden it from every beginner — which is the same mistake the old one-flag teach made.
+  const overCard = (
+    <>
+      <MissedWordHold
+        key={glossTick}
+        word={missedWord}
+        gloss={glossFor(missedWord)}
+        prompt={s.killedLetter}
+        promptLabel="A WORD STARTING WITH"
+      />
+      {firstRun ? <ChainFirstRunCard /> : (
+      <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
+      )}
+    </>
   );
 
   // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).

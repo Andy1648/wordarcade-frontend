@@ -10,6 +10,9 @@ import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
+import MissedWordHold from './MissedWordHold.jsx';
+import { loadGlossary, glossFor } from '../progress/glossary.js';
+import { exampleContaining } from '../progress/teachExample.js';
 import { WordPayout, RoundPayout } from './PayoutBreakdown';
 // THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
 // for the first words of every round and said nothing about the multipliers the player had built.
@@ -2677,6 +2680,49 @@ export default function GameScreen({
     [gameOver]
   );
 
+  // PAUSE TO LEARN — the word that WOULD have worked.
+  // Word Bomb and Blitz end on a PROMPT the player could not satisfy, not on an answer they got
+  // wrong, so there is no word to show until we derive one. Word Bomb has no client-side
+  // dictionary (the server judges words), so the SOLO acceptance list is pulled LAZILY and only
+  // once a game is OVER: it never touches the play path, the first paint, or a player who never
+  // reaches a game-over. Blitz does not need it — the server already sends real missed answers.
+  //
+  // These hooks sit up here with the others, ABOVE the early returns, for the same reason the
+  // endBlurb note above gives: a hook after a conditional return trips React #310 and
+  // white-screens the mode the instant gameState flips from null.
+  // NOTE: `isCategory` and `combo` are declared BELOW, after the early returns — reading them
+  // here would hit their temporal dead zone and throw the moment a game ends (a runtime-only
+  // fault: the bundler cannot see it and every test that never reaches a game-over passes). They
+  // are derived from `gameType`/`gameState` directly instead, which is where they come from.
+  const missIsCategory = gameType === 'category-blitz';
+  const missCombo = (gameState && gameState.combo ? String(gameState.combo) : '').toUpperCase();
+  const [missWords, setMissWords] = useState(null);
+  const [, setGlossTick] = useState(0);
+  useEffect(() => {
+    if (!gameOver || missIsCategory) return;
+    let live = true;
+    Promise.all([
+      import('../solo/words.js').then((m) => m.loadSoloWords()),
+      loadGlossary(),
+    ])
+      .then(([d]) => { if (live) { setMissWords(d); setGlossTick((n) => n + 1); } })
+      .catch(() => { /* no list, no hold — never block a game-over */ });
+    return () => { live = false; };
+  }, [gameOver, missIsCategory]);
+
+  // Word Bomb: a real word containing the last fragment, skipping everything already played.
+  // Blitz: the server's own sample of answers nobody got — real answers, no derivation needed.
+  const missedWord = (() => {
+    if (!gameOver) return null;
+    if (missIsCategory) {
+      const sample = (roundResults && roundResults.sampleAnswers) || [];
+      return sample.length ? sample[0] : null;
+    }
+    if (!missWords || !missCombo) return null;
+    const used = new Set(((gameState && gameState.usedWords) || []).map((w) => String(w).toLowerCase()));
+    return exampleContaining(missWords.recall, missCombo, (w) => used.has(w));
+  })();
+
   // ONE-TIME first-game input spotlight (fix/logic-and-onboarding). MUST live with the other
   // hooks ABOVE the early returns below (the category-blitz branch + the null-gameState
   // "STARTING GAME" placeholder) — a hook declared AFTER a conditional return trips React #310
@@ -3724,6 +3770,18 @@ export default function GameScreen({
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
+            {/* PAUSE TO LEARN. Word Bomb ends on a FRAGMENT you could not fill, not on a word
+                you got wrong — so this is a word that WOULD have worked, derived from that last
+                fragment. Word Bomb has no client-side dictionary (the server judges it), so the
+                solo acceptance list is pulled LAZILY and only here, at game over: it never
+                touches the play path or first paint. See the loader effect above. */}
+            <MissedWordHold
+              key={`wb-miss-${missedWord || ''}`}
+              word={missedWord}
+              gloss={glossFor(missedWord)}
+              prompt={missCombo}
+              promptLabel="A WORD CONTAINING"
+            />
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
             <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
@@ -4096,6 +4154,20 @@ function CategoryBlitzScreen({
   payoutLedger = null,
   lastLanding = null,
 }) {
+  // PAUSE TO LEARN (Blitz). This screen is its OWN component — the main GameScreen's missed-word
+  // state is not in scope here, and referencing it compiled fine while being undefined at runtime.
+  // Blitz needs no derivation anyway: the server already sends a sample of answers nobody got,
+  // which IS "a word you could have played", and is real rather than inferred.
+  const cbMissedWord = (() => {
+    const sample = (roundResults && roundResults.sampleAnswers) || [];
+    return sample.length ? sample[0] : null;
+  })();
+  const [, setCbGlossTick] = useState(0);
+  useEffect(() => {
+    if (!cbMissedWord) return;
+    loadGlossary().then(() => setCbGlossTick((n) => n + 1));
+  }, [cbMissedWord]);
+
   const { sound } = useSound();
   // Reduced motion for the word landing below — read once, same test the Word Bomb screen uses.
   const goReduce =
@@ -4385,6 +4457,16 @@ function CategoryBlitzScreen({
                 {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
+            {/* PAUSE TO LEARN. Blitz needs no derivation — the server already sends a sample of
+                answers NOBODY got, which is exactly "a word you could have played" and is real
+                rather than inferred. No definition is invented when we don't have one. */}
+            <MissedWordHold
+              key={`cb-miss-${cbMissedWord || ''}`}
+              word={cbMissedWord}
+              gloss={glossFor(cbMissedWord)}
+              prompt={(roundResults && roundResults.category) || ''}
+              promptLabel="IN"
+            />
             <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
