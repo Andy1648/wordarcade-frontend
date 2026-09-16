@@ -26,6 +26,7 @@ import { need, round10, XP_MULTIPLIERS, keyTierXp, keyTierCostAt, EARLY_CURVE_EX
 import { buildRarityIndex, wordRarity } from '../src/progress/rarity.js';
 import { comboMultiplier } from '../src/progress/combo.js';
 import { mulberry32 } from '../src/solo/shared.js';
+import { deriveFuseWpm } from './fuseThroughput.mjs';
 
 const U = (p) => fileURLToPath(new URL(p, import.meta.url));
 const recall = readFileSync(U('../src/solo/words.recall.txt'), 'utf8').split(' ');
@@ -40,8 +41,23 @@ const satDeck = (() => {
 
 const MODES = ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse'];
 
-// Words/min per mode — the same explicit model winsmin-sim.mjs documents and derives.
-const THROUGHPUT = { wordBomb: 8, blitz: 14, satRush: 12, chain: 11.6, fuse: 20 };
+// Words/min per mode. WORD BOMB / BLITZ / SAT stay the documented APPROX figures from
+// winsmin-sim.mjs (turn-based downtime / 60s sprints / the 2800ms reveal cadence). CHAIN is
+// DERIVED there from its engine's produce-time model.
+//
+// FUSE IS NOW DERIVED HERE TOO, AND THAT IS THE HEADLINE OF THIS RE-FIT. It had been asserted
+// at ~20/min ("continuous solo, short fragments, little downtime") while CHAIN — the same human
+// solving a comparably constrained prompt — was DERIVED at 11.6. Driving the real fuse.js engine
+// with the SAME calibrated human produce-time model chain uses (1600 + U(0,4600) + 300*len, plus
+// scarcity) measures 9.3/min: the median run dies at ~18 words, mean 6.5s per word, because late
+// fuses fall to fuseBase->3500ms while the human still needs ~5.5s, and every expire burns a full
+// fuse for no word. The asserted figure was 2.15x too fast.
+//
+// THIS IS WHY FUSE WAS STUCK AT x1.35. wins/min = throughput x per-word, so a 2.15x overstated
+// throughput made every proposed fuse raise look like it would blow the cross-mode spread. It
+// would not have. Correcting the input is what makes Andy's ask satisfiable instead of impossible.
+const FUSE_WPM = deriveFuseWpm().wordsPerMin;
+const THROUGHPUT = { wordBomb: 8, blitz: 14, satRush: 12, chain: 11.6, fuse: FUSE_WPM };
 
 // WORDS PER RUN, per mode, at three qualities of play. This is the axis item 4 is actually about:
 // "impossible to get more than 10k" is a statement about a RUN, not a minute. Word Bomb / Blitz are
@@ -63,12 +79,40 @@ const WEIGHT_CAP = 40;
 // A frequency-weighted picker — common words are common. SAT Rush draws its OWN deck when present:
 // feeding it the recall list understates its rarity badly (a previous sim did exactly that and
 // reported a fake 3.67x spread).
+// THE TYPIST MODEL IS NOW winsmin-sim.mjs's, NOT THIS FILE'S OWN. It used to draw with
+// `recall[(rng ** 2.2) * recall.length]` over the WHOLE 31k list, which puts the median typed word
+// at rank ~6,845 and produces "cookers / jerseys / starks" — nobody types those with a fuse
+// burning. winsmin-sim's frequency-weighted typist (1/(i+50) over the top 12k) puts the median at
+// rank ~720: "painting / photo / across". That matters because the rarity weight of the non-SAT
+// modes is the denominator of the cross-mode spread: the old picker inflated it, which made every
+// other mode look nearly as rare as SAT RUSH's fixed deck and UNDERSTATED the spread (1.89x here
+// against winsmin's 2.41x on the same table). Two divergent models of one quantity is the same
+// bug class as the asserted-vs-derived FUSE throughput, so this file now uses the better one.
+function freqPick(rng) {
+  const pool = [];
+  const weights = [];
+  let acc = 0;
+  for (let i = 0; i < Math.min(12000, recall.length); i++) {
+    const w = recall[i];
+    if (w.length < 3) continue;
+    acc += 1 / (i + 50);
+    pool.push(w);
+    weights.push(acc);
+  }
+  const total = acc;
+  return () => {
+    const r = rng() * total;
+    let lo = 0, hi = weights.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (weights[mid] < r) lo = mid + 1; else hi = mid; }
+    return pool[lo];
+  };
+}
 function picker(mode, seed) {
   const rng = mulberry32(seed);
   if (mode === 'satRush' && satDeck && satDeck.length) {
     return () => satDeck[Math.floor(rng() * satDeck.length)];
   }
-  return () => recall[Math.min(recall.length - 1, Math.floor((rng() ** 2.2) * recall.length))];
+  return freqPick(rng);
 }
 
 /** Mean reward weight (rarity x combo x lucky, capped) over a run of `words` accepted words. */
@@ -104,13 +148,42 @@ const pad = (s, n) => String(s).padStart(n);
 //     runs are the longest and whose words are the most constrained. CHAIN is already x1.9.
 // The constraint is the 2.00x cross-mode spread on wins/MIN — raising a per-word rate on a
 // high-throughput mode moves wins/min fast, which is why fuse cannot simply be doubled.
-const PROPOSED = { wordBomb: 2, blitz: 1.2, satRush: 0.8, chain: 1.9, fuse: 1.35 };
+// ANDY, THIS ROUND: "CHAIN and FUSE MUCH higher than the multiplayer modes — they're solo,
+// score-attack, and it feels impossible to clear 10k" and "SAT RUSH near Blitz, not a third of
+// Word Bomb". At LV40 the shipped table reads WB 770 / CHAIN 730 / FUSE 520 / BLITZ 460 / SAT 310:
+// the two solo modes SIT BELOW Word Bomb, which is the exact inversion of what the modes are for.
+//
+// The fit is bounded by wins/min = throughput x per-word. Because Word Bomb is turn-based it has
+// the LOWEST throughput (8/min), so it is structurally allowed the highest per-word rate — the
+// ceiling on "how far can CHAIN lead WB per word" with the spread held at 2.00x is 2*w_wb/w_chain
+// = 1.38x, and for FUSE (with throughput derived, not asserted) 1.72x. Those ceilings are what
+// this table is fitted against; it sits just inside them, not on them.
+//
+// SAT IS THE BINDING CONSTRAINT, AND THIS TABLE SITS ON THE CORNER OF THE FEASIBLE REGION.
+// SAT's fixed deck is ~4x rarer than a real typist's vocabulary, so at an equal card rate it earns
+// 2.40x per word from RARITY ALONE, while its throughput (12/min) is close to Blitz's (14). So
+// wm_sat/wm_blitz = 2.40 x (c_sat/c_blitz). The 20% ask forces that card ratio >= 0.80, which puts
+// SAT at >= 1.92x Blitz's wins/min before anything else is chosen; holding the spread at 2.00x then
+// forces the ratio <= 0.835. The whole feasible window is [0.800, 0.835] — about four card points.
+// c_sat=100 / c_blitz=120 (0.833) is the only multiple-of-10 pair inside it, and Word Bomb has to
+// rise 200 -> 210 to lift the FLOOR of the band to meet it. Measured spread 1.996x, and 1.972-1.999
+// across 12 typist seeds: under 2.00x everywhere, but with ~0.1% of headroom.
+// THE ROOT CAUSE IS A DOUBLE COUNT, and fixing it is the real follow-up: SAT is paid for rarity
+// TWICE — once by a deck that is rare by construction, and again by the per-word rarity multiplier
+// that exists to reward players for CHOOSING an uncommon word. In SAT Rush the player has no
+// choice; the deck serves the word. Damping SAT's rarity term would move this off the corner and
+// let its card sit anywhere near Blitz with real margin. That is a scoring change, not a re-fit,
+// so it is deliberately NOT bundled here.
+const PROPOSED = { wordBomb: 2.1, blitz: 1.2, satRush: 1, chain: 2.7, fuse: 2.9 };
 
 // THE BASELINE IS PINNED, NOT READ LIVE. Once the re-fit SHIPPED, WINS_MULT became the proposal —
 // so a sim that read it live compared the new numbers to themselves and reported "no change",
 // which is worse than useless: it is a before/after table that silently stops being one. These are
 // the pre-re-fit constants as literals, so this file keeps showing what actually moved.
-const BEFORE_MULT = { wordBomb: 2, blitz: 1, satRush: 0.5, chain: 1.9, fuse: 1 };
+// THE BASELINE IS THE CURRENTLY SHIPPED TABLE — the LV40 numbers Andy quoted back. (It was the
+// pre-previous-refit constants; that comparison is now two refits stale and hid the fact that the
+// SHIPPED config, measured against the CORRECTED fuse throughput, is itself over the 2.00x spread.)
+const BEFORE_MULT = { wordBomb: 2, blitz: 1.2, satRush: 0.8, chain: 1.9, fuse: 1.35 };
 const BEFORE_CURVE = 1.115;
 const BEFORE_WINSTEP = 1.015;
 
@@ -126,7 +199,7 @@ for (const m of MODES) {
 console.log('\n================ B. WINS PER RUN AND PER MINUTE, BY PLAY QUALITY ================');
 const QUALITIES = ['weak', 'median', 'strong'];
 const results = {};
-for (const [label, mults] of [['BEFORE', BEFORE_MULT], ['AFTER (shipped)', PROPOSED]]) {
+for (const [label, mults] of [['BEFORE (shipped today)', BEFORE_MULT], ['AFTER (proposed)', PROPOSED]]) {
   console.log(`\n--- ${label} ---`);
   console.log('  mode        weak/run   median/run   strong/run    median wins/min');
   results[label] = {};
@@ -159,7 +232,7 @@ console.log('\n  "IT FEELS IMPOSSIBLE TO GET MORE THAN 10K" — a STRONG run, wh
 console.log('  remembers, at LV1. (The level term multiplies all of these as the player climbs.)');
 console.log('  mode         before        after');
 for (const m of MODES) {
-  console.log(`  ${m.padEnd(12)}${pad(fmt(results.BEFORE[m].strong), 8)}${pad(fmt(results['AFTER (shipped)'][m].strong), 13)}`);
+  console.log(`  ${m.padEnd(12)}${pad(fmt(results['BEFORE (shipped today)'][m].strong), 8)}${pad(fmt(results['AFTER (proposed)'][m].strong), 13)}`);
 }
 
 // ---------------------------------------------------------------- C. THE LEVEL LADDER
@@ -255,18 +328,43 @@ console.log(`  per-level stretch: before ${(BEFORE_CURVE / BEFORE_WINSTEP).toFix
 const conds = [];
 conds.push({
   name: 'cross-mode wins/min spread stays under 2.00x after the re-fit',
-  ok: results['AFTER (shipped)'].spread <= 2,
-  detail: `${results['AFTER (shipped)'].spread.toFixed(2)}x (before ${results.BEFORE.spread.toFixed(2)}x)`,
+  ok: results['AFTER (proposed)'].spread <= 2,
+  // THREE DECIMALS ON PURPOSE. This fit sits on the corner of the feasible region (see the SAT
+  // note by PROPOSED), so "2.00x" rounded is the difference between passing and failing.
+  detail: `${results['AFTER (proposed)'].spread.toFixed(3)}x (before ${results['BEFORE (shipped today)'].spread.toFixed(3)}x)`
+    + `  — only ${(((2 / results['AFTER (proposed)'].spread) - 1) * 100).toFixed(1)}% of headroom; SAT's mult is load-bearing`,
+});
+// ANDY'S THREE ASKS THIS ROUND, EVALUATED.
+const cardOf = (t, m) => round10(WORD_WINS_BASE * t[m]);
+const lv40 = (t, m) => Math.round(WORD_WINS_BASE * t[m] * winLevelMult(40));
+const soloLow = Math.min(cardOf(PROPOSED, 'chain'), cardOf(PROPOSED, 'fuse'));
+const mpHigh = Math.max(cardOf(PROPOSED, 'wordBomb'), cardOf(PROPOSED, 'blitz'));
+conds.push({
+  name: 'CHAIN and FUSE both LEAD every multiplayer mode on the per-word rate',
+  ok: soloLow > mpHigh,
+  detail: `LV40: chain ${lv40(PROPOSED, 'chain')}, fuse ${lv40(PROPOSED, 'fuse')} vs wordBomb `
+    + `${lv40(PROPOSED, 'wordBomb')}, blitz ${lv40(PROPOSED, 'blitz')} `
+    + `(was chain ${lv40(BEFORE_MULT, 'chain')}, fuse ${lv40(BEFORE_MULT, 'fuse')} — both BELOW wordBomb `
+    + `${lv40(BEFORE_MULT, 'wordBomb')})`,
 });
 conds.push({
-  name: 'SAT RUSH reaches ~80 wins/word on its card',
-  ok: round10(WORD_WINS_BASE * PROPOSED.satRush) >= 80,
-  detail: `${round10(WORD_WINS_BASE * PROPOSED.satRush)} (was ${round10(WORD_WINS_BASE * BEFORE_MULT.satRush)})`,
+  name: 'the solo lead is a REAL lead, not a rounding win (>= 1.25x the best multiplayer rate)',
+  ok: soloLow / mpHigh >= 1.25,
+  detail: `${(soloLow / mpHigh).toFixed(2)}x  (ceiling with the spread held at 2.00x is 1.38x for chain, `
+    + `1.72x for fuse — this sits inside both)`,
+});
+conds.push({
+  name: 'SAT RUSH lands within 20% of Blitz',
+  ok: Math.abs(cardOf(PROPOSED, 'satRush') / cardOf(PROPOSED, 'blitz') - 1) <= 0.20,
+  detail: `LV40: sat ${lv40(PROPOSED, 'satRush')} vs blitz ${lv40(PROPOSED, 'blitz')} = `
+    + `${Math.round(cardOf(PROPOSED, 'satRush') / cardOf(PROPOSED, 'blitz') * 100)}% `
+    + `(was ${Math.round(cardOf(BEFORE_MULT, 'satRush') / cardOf(BEFORE_MULT, 'blitz') * 100)}%, `
+    + `and ${Math.round(cardOf(BEFORE_MULT, 'satRush') / cardOf(BEFORE_MULT, 'wordBomb') * 100)}% of Word Bomb — Andy's "a third")`,
 });
 conds.push({
   name: 'a STRONG run in CHAIN and FUSE clears 10,000',
-  ok: results['AFTER (shipped)'].chain.strong >= 10000 && results['AFTER (shipped)'].fuse.strong >= 10000,
-  detail: `chain ${fmt(results['AFTER (shipped)'].chain.strong)}, fuse ${fmt(results['AFTER (shipped)'].fuse.strong)}`,
+  ok: results['AFTER (proposed)'].chain.strong >= 10000 && results['AFTER (proposed)'].fuse.strong >= 10000,
+  detail: `chain ${fmt(results['AFTER (proposed)'].chain.strong)}, fuse ${fmt(results['AFTER (proposed)'].fuse.strong)}`,
 });
 // item 5's conditions, measured off the SIMULATED climbs rather than a formula. The first cut used
 // a closed form with a guessed Key Power tier (`tierAt = min(8, lv/12)`) and reported "LV150 takes

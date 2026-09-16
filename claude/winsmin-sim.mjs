@@ -14,12 +14,13 @@
 //   WORD BOMB  ~8/min  — turn-based; one word per turn then waits for other players (high downtime)
 //   BLITZ     ~14/min  — 60s type-fast sprints separated by round/scoring downtime
 //   SAT RUSH  ~12/min  — paced reveal cadence (stageIntervalMs 2800), one answer per ~5s
-//   FUSE      ~20/min  — continuous solo, short fragments, little downtime
+//   FUSE   DERIVED  — was asserted ~20/min; the engine + the calibrated human measure ~9.3/min
 // (CHAIN comes out ~ the same order, derived below.)
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createChainEngine } from '../src/solo/chain.js';
 import { mulberry32 } from '../src/solo/shared.js';
+import { deriveFuseWpm } from './fuseThroughput.mjs';
 import { WORD_WINS_BASE, WINS_MULT } from '../src/progress/wins.js';
 import { buildRarityIndex, wordRarity } from '../src/progress/rarity.js';
 import { comboMultiplier } from '../src/progress/combo.js';
@@ -114,7 +115,11 @@ function freqTypist({ runs = 1000, seed, perRun, topVocab, minLen = 3, maxLen = 
 
 // THROUGHPUT (words/min). CHAIN derived; others documented APPROX (see header).
 const chain = manyChain();
-const THROUGHPUT = { wordBomb: 8, blitz: 14, satRush: 12, chain: chain.wordsPerMin, fuse: 20 };
+const FUSE_WPM = deriveFuseWpm().wordsPerMin;
+// FUSE IS NOW DERIVED, NOT ASSERTED. The ~20/min below was reasoned from the loop ("continuous
+// solo, short fragments, little downtime") and is 2.15x too fast: driving the real engine with
+// the SAME calibrated human this file uses for CHAIN measures ~9.3/min. See fuseThroughput.mjs.
+const THROUGHPUT = { wordBomb: 8, blitz: 14, satRush: 12, chain: chain.wordsPerMin, fuse: FUSE_WPM };
 
 const MODELS = {
   wordBomb: freqTypist({ seed: 11, perRun: 12, topVocab: 12000, minLen: 3 }),

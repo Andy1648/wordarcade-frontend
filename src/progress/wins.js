@@ -114,7 +114,42 @@ export function saveRounds(rounds) {
 // raising a rate on a HIGH-THROUGHPUT mode moves wins/min fast, which is why FUSE goes to 1.35 and
 // not to CHAIN's 1.9. Measured: spread 1.86x -> 1.75x, so the re-fit NARROWS it.
 // A strong FUSE run goes 31k -> 44k and a strong SAT run 15k -> 23k.
-export const WINS_MULT = { wordBomb: 2, blitz: 1.2, satRush: 0.8, chain: 1.9, fuse: 1.35 };
+// RE-FIT (econ-visible round 2). Andy: CHAIN and FUSE must be MUCH higher than the multiplayer
+// modes ("they're solo, score-attack, and it feels impossible to clear 10k"), and SAT RUSH must
+// sit NEAR BLITZ, not a third of Word Bomb. The shipped table read, at LV40:
+//     WB 765 · CHAIN 727 · FUSE 516 · BLITZ 459 · SAT 308
+// — both solo modes BELOW Word Bomb, which inverts what the modes are for.
+//
+// WHAT ACTUALLY UNBLOCKED THIS: fuse's throughput was ASSERTED at ~20 words/min while chain's was
+// DERIVED from its engine at 11.6. Driving the real fuse.js engine with the same calibrated human
+// produce-time model measures 9.3/min — the median run dies at ~18 words, ~6.5s per word, because
+// late fuses fall to 3500ms while the human still needs ~5.5s and every expire burns a full fuse
+// for no word. The asserted number was 2.15x too fast, and since wins/min = throughput x per-word,
+// it made every proposed FUSE raise look like it would blow the cross-mode spread. It would not.
+// That is why fuse had been pinned at x1.35 for two re-fits. See claude/econ-visible-sim.mjs,
+// which now DERIVES the figure instead of asserting it.
+//
+// THE BOUND. Word Bomb is turn-based, so it has the LOWEST throughput (8/min) and is structurally
+// allowed the HIGHEST per-word rate. With the cross-mode wins/min spread held under 2.00x, the
+// ceiling on how far a mode can lead Word Bomb per word is 2*w_wb/w_mode: 1.38x for CHAIN, 1.72x
+// for FUSE. This table sits inside both (chain leads by 1.30x), not on them.
+// SAT IS THE BINDING CONSTRAINT AND THIS TABLE SITS ON THE CORNER OF THE FEASIBLE REGION.
+// SAT's deck is ~4x rarer than a real typist's vocabulary, so at an equal card rate it earns 2.40x
+// per word from RARITY ALONE, and its throughput (12/min) is near Blitz's (14). That makes
+// wm_sat/wm_blitz = 2.40 x (c_sat/c_blitz): "SAT within 20% of Blitz" forces the card ratio >= 0.80
+// (so SAT is already >= 1.92x Blitz per minute), and "spread under 2.00x" forces it <= 0.835. The
+// entire feasible window is ~4 card points wide, and 100/120 is the only multiple-of-10 pair in it
+// — which is also why WORD BOMB rises 200 -> 210, to lift the FLOOR of the band up to meet SAT.
+// Measured spread 1.996x (1.972-1.999 across 12 typist seeds): under 2.00x everywhere, ~0.1% spare.
+//
+// THE ROOT CAUSE IS A DOUBLE COUNT. SAT is paid for rarity twice — once by a deck that is rare by
+// construction, and again by the per-word rarity multiplier, which exists to reward a player for
+// CHOOSING an uncommon word. In SAT Rush there is no choice; the deck serves the word. Damping
+// SAT's rarity term is the fix that moves this off the corner. That is a scoring change rather
+// than a re-fit, so it is NOT bundled here — but until it lands, treat SAT's mult as load-bearing:
+// nudging it up, or making the deck rarer, will push the spread through 2.00x.
+// LV40 after: chain 1040 · fuse 1120 · WB 810 · blitz 460 · sat 390.
+export const WINS_MULT = { wordBomb: 2.1, blitz: 1.2, satRush: 1, chain: 2.7, fuse: 2.9 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
