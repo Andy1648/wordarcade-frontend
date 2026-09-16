@@ -77,3 +77,23 @@
   .missed-hold { padding: 10px; }
   .missed-hold-word { font-size: var(--fs-panel); -webkit-text-stroke: 2px #000; }
 }
+
+/* SHORT SCREENS: the lesson must not push the card off the viewport.
+   Caught by viewport-integrity at 1163x501 — a short laptop — where adding ~90px of panel made
+   the solo death card overflow by ~22px at BOTH edges (top=-22, bottom=523 > 501). Game-over
+   cards are in the NOSCROLL set on purpose: they must FIT, not scroll. So on a short viewport the
+   hold keeps the word (the whole point) and gives up the padding, the tag and the no-gloss line —
+   a real gloss still shows, because that is information the player cannot get anywhere else. */
+@media (max-height: 620px) {
+  .missed-hold {
+    gap: 1px;
+    padding: 6px 10px;
+  }
+  .missed-hold-tag { font-size: 9px; letter-spacing: 0.1em; }
+  .missed-hold-word {
+    font-size: var(--fs-panel);
+    -webkit-text-stroke: 2px #000;
+  }
+  .missed-hold-nogloss { display: none; }
+  .missed-hold-gloss { font-size: var(--fs-micro); }
+}
