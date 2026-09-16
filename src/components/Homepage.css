@@ -703,7 +703,6 @@ html[data-beat='true'] .homepage-logo {
   .homepage-logo { font-size: min(var(--fs-panel), 5.4vh); }
   .menu-xp-cluster { gap: 3px; }
   .menu-wpm { display: none; }
-  .menu-next-unlock { display: none; }
   .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
   .homepage-footer-links { margin-top: 0; }
 }
@@ -1036,47 +1035,7 @@ html[data-beat='true'] .homepage-beat-glow {
 /* ===== FREE UNLOCK LADDER (Job 3) ===================================================
    The always-on "NEXT UNLOCK" teaser + the applied theme (accent recolor) and frame
    (LV-chip border) cosmetics. All STATIC at rest — no idle/infinite animation, so the
-   menu concurrent-animation count is unchanged. */
-.menu-next-unlock {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  width: 100%;
-  max-width: 760px;
-  /* fix/visual-real item 6: no own top margin — the .menu-xp-cluster gap owns the spacing, keeping
-     this line tight under the XP row instead of floating in the gap above the cards. */
-  margin: 0 auto;
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-label);
-  line-height: 1;
-}
-.menu-next-unlock-tag {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  line-height: 0.98;
-  font-size: var(--fs-label);
-  color: #0d0618;
-  background: var(--menu-accent, #2EFFE0);
-  border: 2px solid #000;
-  border-radius: 5px;
-  padding: 3px 7px;
-  box-shadow: 2px 2px 0 #000;
-}
-.menu-next-unlock-name {
-  color: #FFE94A;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.menu-next-unlock-at {
-  color: #ff4fa3;
-  font-weight: 700;
-}
+/* The NEXT-UNLOCK teaser was removed (Andy's cut) - see Homepage.jsx. Its rules go with it. */
 
 /* (The ladder's THEME accent rules were removed on merge — main's themes system, src/theme/
    themes.css, owns menu colour now. Only the FRAME cosmetics below remain from the ladder.) */

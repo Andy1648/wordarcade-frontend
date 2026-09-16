@@ -183,9 +183,6 @@ export default function SoloShell({
           floating over a dark void. Static content only (no idle animation). */}
       {phase === 'playing' && deck ? (
         <div className="solo-deck">
-          {/* Faint mode motif behind the deck (same node as the stage/over-screen) so the
-              lower band reads as a composed surface, not flat void. */}
-          {motif ? <div className="solo-deck-motif" aria-hidden="true">{motif}</div> : null}
           {deck}
         </div>
       ) : null}
@@ -194,10 +191,6 @@ export default function SoloShell({
 
       {phase === 'over' ? (
         <div className="solo-over">
-          {/* Composed backdrop: the mode motif behind the dim, so the death screen reads as
-              an intentional page (toward Blitz's game-over), not a small card bleeding the
-              abandoned play stage through a thin scrim. Decorative, static. */}
-          {motif ? <div className="solo-over-motif" aria-hidden="true">{motif}</div> : null}
           <div className="solo-deathcard">
             {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
                 solo death card a face + a first read above the copy. */}

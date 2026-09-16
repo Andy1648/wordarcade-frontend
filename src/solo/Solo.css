@@ -615,18 +615,9 @@
   gap: 12px;
   overflow: hidden;
 }
-/* faint mode texture behind the deck content */
-.solo-deck-motif {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-.solo-deck-motif .solo-motif {
-  opacity: 0.05;
-}
-.solo-deck > :not(.solo-deck-motif) {
+/* The deck's own motif copy is GONE (Andy's cut) — one motif per screen, not three.
+   The stage still renders one; this band no longer repeats it. */
+.solo-deck > * {
   position: relative;
   z-index: 1;
 }
@@ -790,16 +781,8 @@
 }
 
 /* ===== Composed game-over backdrop ================================================== */
-.solo-over-motif {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-.solo-over-motif .solo-motif {
-  opacity: 0.09;
-}
+/* The death card's motif copy is GONE (Andy's cut) — the third render of one texture on
+   one screen. The card's own scrim + slab carry the composition. */
 .solo-deathcard {
   position: relative;
   z-index: 1;

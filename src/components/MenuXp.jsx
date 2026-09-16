@@ -11,17 +11,6 @@ import { rankTitle } from '../progress/rank';
 import { streakMultiplier } from '../progress/streak';
 import { perWordRateNow, modeKey } from '../progress/wins';
 
-// THE BAR'S HEIGHT IS A CHOICE ANDY MAKES, so both are built rather than one guessed at.
-// 'tall' is 3.1x the old 30px track, 'xl' 3.9x, 'xxl' 4.7x, and 'off' restores the old hairline so the
-// two can be A/B'd against what they replaced. `?xpbar=xl` switches for a session; the same
-// idiom as satRush's ?stage= / ?lineupx=. Anything else falls back to 'tall'.
-export const XP_BAR_HEIGHTS = ['tall', 'xl', 'xxl', 'off'];
-export const XP_BAR_HEIGHT = (() => {
-  if (typeof window === 'undefined') return 'tall';
-  const raw = new URLSearchParams(window.location.search).get('xpbar');
-  return XP_BAR_HEIGHTS.includes(raw) ? raw : 'tall';
-})();
-
 // The label a mode's rate is printed under. Keyed by the gameData id the menu already has.
 const RATE_LABEL = {
   'word-bomb': 'WORD BOMB',
@@ -56,7 +45,7 @@ function formatMult(m) {
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, rateMode = null, barHeight = XP_BAR_HEIGHT }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, rateMode = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -179,7 +168,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
     <div
-      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : barHeight === 'off' ? '' : ` is-loud h-${barHeight}`}`}
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}`}
       aria-hidden={variant === 'mini' ? 'true' : undefined}
     >
       {variant !== 'mini' && wins != null && (
@@ -231,38 +220,39 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       {/* THE LEVEL IS THE HEADLINE. The kicker and the numeral are one stacked chip now, so the
           numeral can take display type (--fs-h2, ~3.8x the --fs-micro kicker) without the old
           inline row forcing both to data-strip size. Mini keeps the flat inline form. */}
-      {variant !== 'mini' && barHeight !== 'off' ? (
+      {variant !== 'mini' ? (
         <span className="menu-xp-lvblock" aria-hidden="true">
           <span className="menu-xp-label">LEVEL</span>
           <span className="menu-xp-lv">{level}</span>
         </span>
       ) : (
-        <>
-          {variant !== 'mini' && <span className="menu-xp-label" aria-hidden="true">LEVEL</span>}
-          <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
-        </>
+        <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
       )}
-      {/* THE EQUIPPED MARK, beside the level — the one place a permanent, chosen bonus is worth
+      {/* THE EQUIPPED MARK, beside the level - the one place a permanent, chosen bonus is worth
           carrying on the menu, because it is the only progression object the player picked rather
-          than accumulated. An empty slot still renders (a dimmed outline) once any mark has been
-          unlocked, so "you have something to equip" is visible rather than a thing you have to go
-          looking for. Nothing here animates. */}
-      {variant !== 'mini' && markSlot && (
+          than accumulated.
+          THE EMPTY SLOT NO LONGER RENDERS (Andy's cut). It used to draw a dimmed "NO MARK" outline
+          once any mark was unlocked, on the theory that an empty slot advertises itself. In
+          practice it is a chip that says nothing, permanently parked next to the level on the
+          screen that already feels crowded - a question with no answer. The slot now appears only
+          when it has something in it; the marks picker is still reachable from Stats.
+          Nothing here animates. */}
+      {variant !== 'mini' && markSlot && mark && (
         onMarkClick ? (
           <button
             type="button"
-            className={`menu-mark${mark ? '' : ' is-empty'}`}
+            className="menu-mark"
             onClick={onMarkClick}
-            aria-label={mark ? `Mark equipped: ${mark.name}. ${mark.blurb}` : 'No mark equipped. Choose one'}
-            title={mark ? `${mark.name} — ${mark.blurb}` : 'No mark equipped'}
+            aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
+            title={`${mark.name} - ${mark.blurb}`}
           >
-            <span className="menu-mark-icon" aria-hidden="true">{mark ? mark.icon : '◇'}</span>
-            <span className="menu-mark-name" aria-hidden="true">{mark ? mark.name : 'NO MARK'}</span>
+            <span className="menu-mark-icon" aria-hidden="true">{mark.icon}</span>
+            <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
           </button>
         ) : (
-          <span className={`menu-mark${mark ? '' : ' is-empty'}`} title={mark ? `${mark.name} — ${mark.blurb}` : 'No mark equipped'}>
-            <span className="menu-mark-icon" aria-hidden="true">{mark ? mark.icon : '◇'}</span>
-            <span className="menu-mark-name" aria-hidden="true">{mark ? mark.name : 'NO MARK'}</span>
+          <span className="menu-mark" title={`${mark.name} - ${mark.blurb}`}>
+            <span className="menu-mark-icon" aria-hidden="true">{mark.icon}</span>
+            <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
           </span>
         )
       )}
@@ -288,7 +278,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             and mark-scaled), so it visibly climbs as the bar fills — which is the point.
             rateMode is the hovered card on the menu; it falls back to Word Bomb, which is also
             the reference rate the shop prints. */}
-        {variant !== 'mini' && barHeight !== 'off' && rateMode && modeKey(rateMode) && (
+        {variant !== 'mini' && rateMode && modeKey(rateMode) && (
           <span className="menu-xp-rate" aria-hidden="true">
             <b className="menu-xp-rate-mode">{RATE_LABEL[rateMode] || 'RATE'}</b>
             {/* perWordRateNow, NOT perWordWins — and the difference is a real bug, caught by

@@ -19,7 +19,7 @@ import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
-import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
+import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -358,7 +358,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     for (let r = 1; r <= rebirths; r++) if (grantRebirthUnlock(r)) rebirthFresh = true;
     if (fresh.length || rebirthFresh) setFreeUnlocks(getFreeUnlocks());
   }, [xpProgress.level, rebirths]);
-  const nextUnlockItem = nextUnlock(freeUnlocks, rebirths);
 
   // feat/analytics — attach progression session properties (so every later event segments by stage)
   // and fire streak_day at most once per active calendar day. Guarded; never blocks the menu.
@@ -682,15 +681,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
           <div className="menu-wpm">
             <LiveWpm hideZero />
           </div>
-          {/* NEXT UNLOCK (Job 3): always-visible teaser of the next FREE cosmetic (a FRAME) on the
-              ladder. Static at rest (menu-motion-law safe) — no idle animation. */}
-          <div className="menu-next-unlock" aria-live="polite">
-            <span className="menu-next-unlock-tag">NEXT</span>
-            <span className="menu-next-unlock-name">
-              {nextUnlockItem.name} {nextUnlockItem.kindLabel}
-            </span>
-            <span className="menu-next-unlock-at">{nextUnlockItem.at}</span>
-          </div>
+          {/* THE NEXT-UNLOCK TEASER IS GONE (Andy's cut). Three spans promising a cosmetic FRAME,
+              which at R1 rendered as "NEXT REBIRTH 1 FRAME REBIRTH 1" — a line that says the same
+              word three times and names a reward the player cannot see. No affordance, nothing
+              clickable, and the ladder it teased is already in the shop. */}
         </div>
 
         <div className="homepage-cards-region">

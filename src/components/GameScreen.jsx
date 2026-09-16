@@ -2977,36 +2977,13 @@ export default function GameScreen({
       {/* WINS: live running tally, hidden once the game is over (the total shows there). No WPM
           pill — Word Bomb is turn-based, so typing speed there is meaningless (§2). */}
       {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />}
-      {/* JUICE 02 tension skin — composited CSS layers (was a full-viewport canvas
-          repaint loop; see tension.js). All fixed, click-through, aria-hidden, and
-          driven purely by data-tension on .game-wrap: nothing here writes style per
-          frame, and every keyframe animates transform/opacity with literal values
-          only. Mounted only while a tier is active so calm has zero live layers. */}
-      {tensionTier !== 'calm' && (
-        <div className="wb-tension" aria-hidden="true">
-          {/* Edge colour-grade vignette: transparent centre → coloured edge, hue
-              stepping teal→orange→red per tier; opacity eases in per tier and the
-              element breathes via a transform-scale keyframe. */}
-          <div className="wb-tension-vignette" />
-          {/* Edge speed lines: fixed streaks hugging the L/R edges, each scrolling
-              via a transform-translateY keyframe (transform only). */}
-          <div className="wb-tension-lines">
-            {/* PERF (perf/wb-tension): 12 -> 3 speed lines. The survivors are made
-                thicker/brighter in CSS to keep the same read without the count. */}
-            {Array.from({ length: 3 }).map((_, i) => (
-              <span key={i} className="wb-tension-line" style={{ '--i': i }} />
-            ))}
-          </div>
-          {/* Centre-top prompt: HURRY! (warn) → GET OUT! (crit), pulsing via a
-              transform+opacity keyframe. Two stacked labels, shown per tier. */}
-          <div className="wb-tension-prompt">
-            <span className="wb-tension-hurry">HURRY!</span>
-            <span className="wb-tension-getout">GET OUT!</span>
-          </div>
-          {/* Final-moment throb: a soft red full-screen opacity breath at crit. */}
-          <div className="wb-tension-throb" />
-        </div>
-      )}
+      {/* THE TENSION SKIN IS GONE (Andy's cut). It was FOUR simultaneous full-viewport layers —
+          an edge vignette, three speed lines, a HURRY!/GET OUT! prompt and a red throb — stacked
+          on top of the continuous DREAD vignette below, the bomb's own fuse, the rattle, the seat
+          pulse and the timer. Five ways to say "hurry" is four too many; the vignette below says
+          it continuously and the bomb says it in the object the player is already looking at.
+          `data-tension` stays on .game-wrap: it still drives the per-tier CSS on elements that
+          remain (the bomb, the seats), and tensionSetTier() still runs. Only this overlay left. */}
       {/* Continuous DREAD vignette: a static red edge-gradient whose OPACITY rides
           --danger (the eased timer) - calm/clear early, panicking red in the final
           seconds, then snapping back to nothing the instant a word resets the clock

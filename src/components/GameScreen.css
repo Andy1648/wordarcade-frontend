@@ -1615,169 +1615,19 @@
   .wb-lastlife-vignette { animation: none !important; opacity: 0.34; }
 }
 
-/* ============================================================= */
-/* ========  JUICE 02 — TENSION SKIN (composited CSS)  ========= */
-/* ============================================================= */
-/* Replaces the old full-viewport CANVAS repaint loop (tension.js) that redrew a
-   gradient + speed lines + HURRY! text every frame for the whole turn. These are
-   plain fixed layers; intensity is a data-tension TIER on .game-wrap (build/warn/
-   crit — the block is unmounted at calm), and every keyframe animates transform/
-   opacity with LITERAL values (no var() in keyframes, so it stays composited). */
-
-.wb-tension {
-  position: fixed;
-  inset: 0;
-  z-index: 7; /* over the stage + the danger vignette; under KO/explosion/countdown */
-  pointer-events: none;
-}
-
-/* --- edge colour-grade vignette: transparent centre (legibility) -> coloured
-   edge. Hue steps teal -> orange -> red per tier; opacity eases in per tier while
-   the element breathes via a transform-scale keyframe. --- */
-.wb-tension-vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at center,
-    rgba(46, 255, 224, 0) 45%, rgba(46, 255, 224, 0.9) 100%);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  animation: wb-tension-breathe 2.4s ease-in-out infinite;
-  will-change: opacity, transform;
-}
-@keyframes wb-tension-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-[data-tension='build'] .wb-tension-vignette { opacity: 0.13; }
-[data-tension='warn'] .wb-tension-vignette {
-  opacity: 0.2;
-  background: radial-gradient(ellipse at center,
-    rgba(255, 107, 61, 0) 45%, rgba(255, 107, 61, 0.9) 100%);
-}
-[data-tension='crit'] .wb-tension-vignette {
-  opacity: 0.28;
-  background: radial-gradient(ellipse at center,
-    rgba(255, 46, 46, 0) 45%, rgba(255, 46, 46, 0.9) 100%);
-}
-
-/* --- edge speed lines: fixed streaks hugging the L/R edges, each scrolling down
-   via a transform-translateY keyframe (transform ONLY). Density/brightness read
-   through the container's per-tier opacity. --- */
-.wb-tension-lines {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-[data-tension='build'] .wb-tension-lines { opacity: 0.45; }
-[data-tension='warn'] .wb-tension-lines { opacity: 0.75; }
-[data-tension='crit'] .wb-tension-lines { opacity: 1; }
-
-.wb-tension-line {
-  position: absolute;
-  top: -30%;
-  /* PERF: 3 lines now, so each is THICKER + BRIGHTER to keep the same read
-     (was 2px / 0.32 alpha across 12 lines). transform-translateY only. */
-  width: 5px;
-  height: 34%;
-  background: rgba(255, 255, 255, 0.7);
-  /* i = 0,1 hug the left edge; i = 2 hugs the right. */
-  left: calc(4px + var(--i) * 16px);
-  animation: wb-tension-line-scroll linear infinite;
-  animation-duration: calc(0.85s + var(--i) * 0.08s);
-  animation-delay: calc(var(--i) * -0.2s);
-}
-.wb-tension-line:nth-child(n + 3) {
-  left: auto;
-  right: 4px;
-}
-.wb-tension-line:nth-child(even) { height: 46%; }
-@keyframes wb-tension-line-scroll {
-  from { transform: translateY(0); }
-  to { transform: translateY(150vh); }
-}
-
-/* --- centre-top prompt: HURRY! (warn) -> GET OUT! (crit), pulsing via a
-   transform+opacity keyframe. --- */
-.wb-tension-prompt {
-  position: absolute;
-  top: min(16vh, 120px);
-  left: 0;
-  right: 0;
-  text-align: center;
-}
-.wb-tension-hurry,
-.wb-tension-getout {
-  display: none;
-  font-family: 'Bungee', system-ui, sans-serif;
-  text-transform: uppercase;
-  line-height: 0.98;
-  font-weight: 700;
-  font-size: var(--fs-panel);
-  color: #FFE94A;
-  -webkit-text-stroke: 3px rgba(0, 0, 0, 0.9);
-  paint-order: stroke fill;
-  animation: wb-tension-pulse 0.33s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-[data-tension='warn'] .wb-tension-hurry { display: inline-block; }
-[data-tension='crit'] .wb-tension-getout {
-  display: inline-block;
-  color: #FF2E2E;
-  font-size: var(--fs-h2);
-}
-@keyframes wb-tension-pulse {
-  from { transform: scale(1); opacity: 0.9; }
-  to { transform: scale(1.12); opacity: 1; }
-}
-
-/* --- final-moment throb: a soft red full-screen opacity breath at crit only. --- */
-.wb-tension-throb {
-  position: absolute;
-  inset: 0;
-  background: #FF2E2E;
-  opacity: 0;
-}
-[data-tension='crit'] .wb-tension-throb {
-  animation: wb-tension-throb-breath 0.34s ease-in-out infinite;
-}
-@keyframes wb-tension-throb-breath {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 0.16; }
-}
-
 /* =====================================================================
-   PERF (perf/wb-tension): trim the critical-tier VFX load. Keep exactly ONE
-   full-viewport wash — the edge vignette (.wb-tension-vignette). The other red
-   washes overlap into the SAME pixels, so at crit they are stopped: the final-
-   moment throb, the timer-dread danger vignette, the bomb halo (also a box-shadow
-   PAINT), and wall-red (WallScene.css). Every survivor animates transform/opacity
-   only — the bomb halo's box-shadow animation is removed here. */
-[data-tension='crit'] .wb-tension-throb { animation: none; opacity: 0; }
+   CRIT-TIER VFX TRIM — what is left of the old tension skin.
+   The skin itself (.wb-tension: an edge vignette, three speed lines, a
+   HURRY!/GET OUT! prompt and a red throb) was CUT — five simultaneous ways to say
+   "hurry" on one screen. These two rules survive because they trim OTHER elements
+   that are still rendered: the continuous danger vignette and the bomb halo both
+   wash the same pixels red at crit, and the halo's box-shadow is a PAINT. */
 [data-tension='crit'] .wb-danger-vignette { animation: none; opacity: 0; }
 [data-tension='crit'] .bomb-vignette.critical { box-shadow: none; }
 
-/* On (pointer:coarse) — phones, least headroom / most players — halve whatever
-   survives at crit again: one speed line (not three), a STATIC edge wash (no
-   breathe), and no sweat. */
+/* On (pointer:coarse) — phones, least headroom / most players — drop the sweat too. */
 @media (pointer: coarse) {
-  [data-tension='crit'] .wb-tension-line:nth-child(n + 2) { display: none; }
-  [data-tension='crit'] .wb-tension-vignette { animation: none; }
   [data-tension='crit'] .sweat-layer { display: none; }
-}
-
-/* Reduced motion: keep ONLY a faint static edge tint (a colour cue, not motion);
-   drop the breathe, the speed lines, the pulsing prompt and the throb entirely —
-   matching the old canvas skin's reduced-motion path (faint colour shift only). */
-@media (prefers-reduced-motion: reduce) {
-  .wb-tension-vignette { animation: none !important; }
-  [data-tension='build'] .wb-tension-vignette { opacity: 0.06; }
-  [data-tension='warn'] .wb-tension-vignette { opacity: 0.09; }
-  [data-tension='crit'] .wb-tension-vignette { opacity: 0.12; }
-  .wb-tension-lines,
-  .wb-tension-prompt,
-  .wb-tension-throb { display: none !important; }
 }
 
 /* ============================================================= */
@@ -5664,11 +5514,6 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .bomb-body-wrap.critical,
 .game-stage--wb .bomb-rattle,
 .game-stage--wb .bomb-flame-core,
-.game-stage--wb .wb-tension-vignette,
-.game-stage--wb .wb-tension-line,
-.game-stage--wb .wb-tension-getout,
-.game-stage--wb .wb-tension-throb,
-.game-stage--wb[data-tension='crit'] .wb-tension-throb,
 .game-stage--wb .wb-lastlife-vignette,
 .game-stage--wb .game-combo,
 .game-stage--wb .game-combo-label,

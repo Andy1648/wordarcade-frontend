@@ -599,12 +599,8 @@ button.menu-mark:active {
   transform: skewX(-4deg) translate(2px, 2px);
   box-shadow: 1px 1px 0 #000;
 }
-/* An empty slot is drawn, not hidden: "you have a mark to equip" is information. */
-.menu-mark.is-empty {
-  color: #b9aecd;
-  background: #2a1450;
-  border-color: #4a3a6a;
-}
+/* The empty-slot styling is gone with the empty slot itself (Andy's cut) - the chip now
+   renders only when a mark is actually equipped. See MenuXp.jsx. */
 .menu-mark-icon {
   font-size: var(--fs-body);
   line-height: 1;
@@ -638,11 +634,10 @@ button.menu-mark:active {
    So: >=3x track height, HARD BLACK tick segments, a level numeral ~3.8x its
    kicker, and the active mode's live wins/word rate printed on the bar.
 
-   THREE SIZES ARE BUILT, not one guessed at — `?xpbar=tall` (default, 3.1x),
-   `?xpbar=xl` (3.9x) and `?xpbar=xxl` (4.7x), plus `?xpbar=off` which restores
-   the old hairline so the three can be A/B'd against what they replace.
-   --xp-track-h is the single knob; everything below is derived from it, so a
-   fourth size is one line.
+   ONE SIZE, SHIPPED. Three were built and screenshotted so the choice could be made
+   from frames rather than from a description; Andy picked `tall`, so the xl and xxl
+   variants and the `?xpbar` override are gone rather than left lying around as dead
+   config. --xp-track-h is still the single knob if it ever has to move again.
 
    MOTION BUDGET: nothing here animates. No new infinite animations, no new
    will-change, and no animated width/height/box-shadow — the fill is still the
@@ -667,15 +662,6 @@ button.menu-mark:active {
   box-shadow: 4px 4px 0 #000;
   padding: 10px;
 }
-/* THREE SIZES, so the choice is Andy's and not mine. All three clear the "at least 3x"
-   floor against the old 30px hairline. */
-.menu-xp-bar.is-loud.h-xl {
-  --xp-track-h: 116px; /* 3.9x */
-}
-.menu-xp-bar.is-loud.h-xxl {
-  --xp-track-h: 140px; /* 4.7x */
-}
-
 /* The explicit order that produces the two rows. The break is flex-basis:100%, so
    everything ordered after it wraps. */
 .menu-xp-bar.is-loud > .menu-wins-chip { order: 1; }
@@ -851,8 +837,6 @@ button.menu-mark:active {
     box-shadow: 3px 3px 0 #000;
     border-width: 2px;
   }
-  .menu-xp-bar.is-loud.h-xl { --xp-track-h: 54px; }
-  .menu-xp-bar.is-loud.h-xxl { --xp-track-h: 64px; }
 
   /* THE LOUD ROW FIRST. Orders are re-assigned wholesale so the break lands
      between the track and the chips instead of before the level block. */
