@@ -18,6 +18,7 @@ const DEFAULT_VOLUME = 0.3;
 // silenced music stays silenced next visit. Stored as a plain '1' flag; absent/blocked → unmuted.
 // This only records the PREFERENCE — playback is still started solely from a user gesture (the splash
 // dismiss), so a persisted mute never causes anything to play on its own.
+const MUSIC_SRC = '/firecracker.mp3';
 const MUSIC_MUTE_KEY = 'taw.musicMuted';
 function readMusicMuted() {
   try {
@@ -59,19 +60,31 @@ export function useMusicPlayer() {
   // Active volume-fade interval (so a new fade cancels the old).
   const fadeRef = useRef(null);
 
-  // Create the audio element once. perf/first-load: preload='none' is set BEFORE src so the
-  // 1.7 MB track is not fetched at mount (it was the bulk of the homepage's 5.4 MB wire).
-  // The first fetch is audio.load() inside play() — the same user gesture that resumes the
-  // AudioContext — or the unmute that calls play(). Never at mount.
-  if (audioRef.current === null && typeof Audio !== 'undefined') {
-    const audio = new Audio();
-    audio.preload = 'none';
-    audio.src = '/firecracker.mp3';
-    audio.loop = true;
-    audio.volume = DEFAULT_VOLUME; // used until the gain node takes over
-    audioRef.current = audio;
-  }
-  // Whether audio.load() has been issued (once, on the first play/unmute gesture).
+  // THE ELEMENT IS CREATED ON THE FIRST GESTURE, NOT DURING RENDER.
+  //
+  // This used to run inline in the hook body with `preload = 'auto'`, which told the
+  // browser to download the whole 4.2MB track the moment App rendered — 78% of the
+  // homepage's initial payload, fetched before the player had done anything, and
+  // unusable until a gesture arrives anyway because autoplay policy forbids playing it.
+  // Now nothing is constructed (and so nothing is fetched) until play() is called, and
+  // every play() call site is already inside a real gesture: the document-level
+  // pointerdown/keydown/touchstart listener in App.jsx, and the splash click handler.
+  // `preload = 'auto'` is kept — at creation time we genuinely do want the bytes.
+  const ensureAudio = useCallback(() => {
+    if (audioRef.current === null && typeof Audio !== 'undefined') {
+      const audio = new Audio(MUSIC_SRC);
+      audio.loop = true;
+      audio.volume = DEFAULT_VOLUME; // used until the gain node takes over
+      audio.preload = 'auto';
+      audioRef.current = audio;
+    }
+    return audioRef.current;
+  }, []);
+
+  // Kept from the deferred-audio work on this branch: play() issues one explicit
+  // audio.load() on the first gesture. With ensureAudio above the element is built
+  // (and its src set) inside that same gesture, so this is belt-and-braces rather
+  // than the thing that starts the fetch — but it stays correct either way.
   const loadedRef = useRef(false);
 
   // Push the current intended/muted volume to wherever loudness is controlled:
@@ -208,7 +221,9 @@ export function useMusicPlayer() {
   // Start playback. Browsers reject play() outside a user gesture, so the
   // promise rejection is swallowed - the caller wires this to a real click.
   const play = useCallback(async () => {
-    const audio = audioRef.current;
+    // Creates the element on the first call — this is the gesture that both allows
+    // playback AND is the first moment the bytes are actually wanted.
+    const audio = ensureAudio();
     if (!audio) return;
     // First gesture: start fetching the track now (preload='none' deferred it from mount).
     if (!loadedRef.current) {
@@ -230,7 +245,7 @@ export function useMusicPlayer() {
       // Autoplay blocked (no gesture yet) - stay silent and try again later.
       setIsPlaying(false);
     }
-  }, [ensureAnalyser, applyVolume]);
+  }, [ensureAudio, ensureAnalyser, applyVolume]);
 
   const pause = useCallback(() => {
     const audio = audioRef.current;
@@ -263,8 +278,12 @@ export function useMusicPlayer() {
     writeMusicMuted(nowMuted); // persist the preference across reloads
     applyVolume();
     setIsMuted(nowMuted);
+    // `!audio` is the lazy case: unmuting BEFORE anything has ever played must still
+    // start the music. The old `audio && audio.paused` test was written when the element
+    // always existed, so it read as "paused" — with lazy creation that same condition
+    // would silently do nothing, and the toggle is itself a gesture, so it may play.
     const audio = audioRef.current;
-    if (!nowMuted && audio && audio.paused) {
+    if (!nowMuted && (!audio || audio.paused)) {
       play();
     }
   }, [applyVolume, play]);

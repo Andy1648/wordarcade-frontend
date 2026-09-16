@@ -1,15 +1,12 @@
 // LoadingScreen.jsx
 // The boot screen: the bomb mascot IS the loading indicator. A long fuse runs
-// left-to-right; a flame travels along it while the app gets READY (fonts +
-// the App module — see lib/bootReady.js), leaving a burned (dark, thinner)
-// trail behind. When ready (≥ 700 ms, ≤ 5000 ms) the flame reaches the mascot
-// and it "explodes" (white flash + blast rings), then it hands off (onComplete)
-// to the splash. On a dropped/failed connection the fuse goes out: the mascot
-// panics and a RELIGHT button reloads the page.
+// left-to-right; a flame travels along it as the (faked) connection progress
+// climbs, leaving a burned (dark, thinner) trail behind. When the socket opens
+// the flame reaches the mascot and it "explodes" (white flash + blast rings),
+// then it hands off (onComplete) to the splash. On a dropped/failed connection
+// the fuse goes out: the mascot panics and a RELIGHT button reloads the page.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './LoadingScreen.css';
-import Mascot from './Mascot';
-import { bootReady, fuseProgress, FLOOR_MS, HARD_CAP_MS, HANDOFF_MS } from '../lib/bootReady.js';
 
 // Gentle wavy fuse (viewBox 0 0 1000 100, stretched to fill). Starts left,
 // ends at ~x900 where the mascot bomb sits.
@@ -23,6 +20,21 @@ const MESSAGES = [
   'Almost there...',
   'Connecting to the arena...',
 ];
+
+// The three boot poses. Each ships as AVIF + WebP + PNG of the same 500x500 artwork;
+// the <picture> below lets the browser take the smallest format it understands, and the
+// PNG stays the real fallback. These three were 176,307 bytes of the boot payload as
+// PNG and are 49,311 as AVIF. Same pattern as Mascot.jsx.
+const POSE_BASE = {
+  idle: '/mascot-idle',
+  panic: '/mascot-panic',
+  celebrate: '/mascot-celebrate',
+};
+
+// Intrinsic size of the pose artwork, emitted as width/height so the browser reserves
+// the box before the image arrives. CSS still sizes it by height with width:auto.
+const POSE_W = 500;
+const POSE_H = 500;
 
 // A few spark particles that trail up off the flame (horizontal drift + delay).
 const SPARKS = [
@@ -65,58 +77,58 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
     }
   }, [progress, pathLen]);
 
-  // READINESS-DRIVEN INTRO (perf/first-load): the boot screen finishes when the app is
-  // actually ready — document.fonts.ready AND the App module resolved + mounted
-  // (lib/bootReady.js) — no earlier than FLOOR_MS (700) and no later than HARD_CAP_MS
-  // (5000). It replaced a fixed 1900 ms burn that sat on the LCP path for every visitor.
-  // `doneRef` lets the cosmetic rAF loop below stop the instant the hand-off fires.
-  const doneRef = useRef(false);
+  // FIXED-DURATION TIMED INTRO: the boot screen no longer waits on the socket -
+  // the flame burns the full fuse on a time-based timeline (the socket connects
+  // in the background, via App), then we hand off (onComplete) to the splash.
+  const INTRO_MS = 1900; // TUNABLE: boot intro length (full fuse burn)
+  // Absolute safety cap: no matter what, never sit on the boot screen past this.
+  const HARD_FALLBACK_MS = 5000;
 
-  // COSMETIC flame timeline (requestAnimationFrame), driven by the same clock the
-  // hand-off uses: fuseProgress(elapsed) burns briskly to 70% across the floor, then
-  // creeps toward 95% up to the cap; finish() snaps it to 100. This ONLY advances the
-  // visual flame. It must NEVER be what decides when we hand off: rAF is suspended in
-  // a backgrounded/hidden tab, which is exactly how the boot screen could hang forever.
+  // COSMETIC flame timeline (requestAnimationFrame). This ONLY advances the
+  // visual flame along the fuse. It must NEVER be what decides when we hand off:
+  // rAF is suspended in a backgrounded/hidden tab, which is exactly how the boot
+  // screen could hang forever (the flavor-text setInterval keeps firing, so the
+  // messages loop while the flame - and the hand-off - are frozen).
   useEffect(() => {
     let raf = 0;
     let start = null;
     const tick = (now) => {
-      if (doneRef.current) return;
       if (start === null) start = now;
-      setProgress(fuseProgress(now - start));
-      raf = requestAnimationFrame(tick);
+      const t = Math.min(1, (now - start) / INTRO_MS);
+      setProgress(t * 100);
+      if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Hand-off is PROMISE/TIMER-driven (both keep firing in a hidden tab, unlike rAF),
-  // so the boot screen can NEVER hang: finish when bootReady() resolves AND the floor
-  // has elapsed, immediately if a backgrounded tab becomes visible, and unconditionally
-  // at the hard cap — whichever comes first. onComplete is read through a ref so App
-  // re-renders (ws messages, timer ticks) can't reset the timers by changing identity.
+  // Hand-off is TIMER-driven (setTimeout keeps firing in a hidden tab, unlike
+  // rAF), so the boot screen can NEVER hang. We complete after the intro's
+  // minimum on-screen time, immediately if a backgrounded tab becomes visible,
+  // and unconditionally by the hard fallback - whichever comes first. onComplete
+  // is read through a ref so App re-renders (ws messages, timer ticks) can't
+  // reset the timers by changing the callback identity.
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
   useEffect(() => {
-    let cancelled = false;
+    let done = false;
     let handoff;
     const finish = () => {
-      if (cancelled || doneRef.current) return;
-      doneRef.current = true;
+      if (done) return;
+      done = true;
       setProgress(100); // snap the flame to the bomb even if rAF was suspended
       setPhase('exploding');
-      // A beat of explosion, then hand off (the same 600 ms handoff as before).
-      handoff = setTimeout(() => onCompleteRef.current && onCompleteRef.current(), HANDOFF_MS);
+      // A beat of explosion, then hand off (mirrors the old snap+pause timing).
+      handoff = setTimeout(() => onCompleteRef.current && onCompleteRef.current(), 600);
     };
-    const floor = new Promise((r) => setTimeout(r, FLOOR_MS));
-    Promise.all([bootReady(), floor]).then(finish, finish);
-    const hardTimer = setTimeout(finish, HARD_CAP_MS);
+    const introTimer = setTimeout(finish, INTRO_MS);
+    const hardTimer = setTimeout(finish, HARD_FALLBACK_MS);
     const onVisible = () => {
       if (document.visibilityState === 'visible') finish();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
-      cancelled = true;
+      clearTimeout(introTimer);
       clearTimeout(hardTimer);
       clearTimeout(handoff);
       document.removeEventListener('visibilitychange', onVisible);
@@ -191,11 +203,20 @@ export default function LoadingScreen({ status, onComplete, onRetry }) {
           </div>
         )}
 
-        {/* The mascot bomb at the right end of its own fuse — the shared Mascot component
-            (WebP via <picture>, PNG fallback). Its idle breathe loop is off here (CSS) so the
-            boot screen adds no infinite animation; the pose swap replays the enter pop. */}
+        {/* The mascot bomb at the right end of its own fuse. */}
         <div className="loading-mascot-wrap" style={{ transform: `translateY(-50%) scale(${mascotScale.toFixed(3)})` }}>
-          <Mascot pose={pose} className={`loading-mascot${shaking ? ' shaking' : ''}`} />
+          <picture className="loading-mascot-pic">
+            <source srcSet={`${POSE_BASE[pose]}.avif`} type="image/avif" />
+            <source srcSet={`${POSE_BASE[pose]}.webp`} type="image/webp" />
+            <img
+              className={`loading-mascot${shaking ? ' shaking' : ''}`}
+              src={`${POSE_BASE[pose]}.png`}
+              alt=""
+              draggable="false"
+              width={POSE_W}
+              height={POSE_H}
+            />
+          </picture>
         </div>
 
         {/* The explosion when the flame reaches the bomb (and it survives). */}

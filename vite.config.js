@@ -20,7 +20,13 @@ function pwaPlugin() {
     injectRegister: 'auto',
     manifest: false, // keep the existing hand-authored public/manifest.json
     workbox: {
-      globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+      // avif/webp ARE the mascot now, so they must precache alongside the png. <picture>
+      // picks a source by declared TYPE, not by availability, and does NOT fall back when
+      // the chosen one fails to fetch — so an offline client that had only the png cached
+      // would ask for the avif, get nothing, and render no mascot at all.
+      // mp3 stays OUT on purpose: precaching would pull the 1.6MB track in the background
+      // with no user gesture, which is exactly what this branch removed.
+      globPatterns: ['**/*.{js,css,html,svg,png,avif,webp,ico,woff2}'],
       globIgnores: ['**/sitemap.xml', '**/robots.txt'],
       navigateFallback: '/index.html',
       navigateFallbackDenylist: [/^\/api\//],
@@ -43,6 +49,8 @@ const SITEMAP_URLS = [
   { loc: 'https://typeaword.com/word-bomb/', changefreq: 'monthly', priority: '0.8' },
   { loc: 'https://typeaword.com/category-blitz/', changefreq: 'monthly', priority: '0.8' },
   { loc: 'https://typeaword.com/sat-rush/', changefreq: 'monthly', priority: '0.8' },
+  { loc: 'https://typeaword.com/chain/', changefreq: 'monthly', priority: '0.8' },
+  { loc: 'https://typeaword.com/fuse/', changefreq: 'monthly', priority: '0.8' },
 ]
 
 function renderSitemap(lastmod) {
