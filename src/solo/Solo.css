@@ -884,3 +884,7 @@
   font-size: var(--fs-label);
   color: #cdbdf0;
 }
+
+/* The docked LiveStack in CHAIN / FUSE (item 3). Sits in the HUD row; LiveStack hides itself
+   below 900px, so this is a wide-screen-only column. */
+.solo-hud-stack { margin-left: auto; }

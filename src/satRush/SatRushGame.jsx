@@ -34,6 +34,8 @@ import { formatNum } from '../format';
 // deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
 // rule). So only WinsHudPill is imported here.
 import { WinsHudPill } from '../components/WinsHud';
+// The standing multiplier readout (item 3) — SAT Rush had no payout receipt at all.
+import LiveStack from '../components/LiveStack';
 import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
 import { setShakeTarget } from './juice';
@@ -142,6 +144,14 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       {/* Live "+N WINS" pill — shared component + position with every other mode (item 2). */}
       {view.hasWord && view.phase === 'playing' && (
         <WinsHudPill amount={winsTally} words={view.cleared || 0} />
+      )}
+      {/* The multiplier stack, standing and live. SAT Rush's own retro-print register owns the
+          PAGE; this is app chrome in the shared house style, like the wins pill beside it, and it
+          hides itself below 900px where there is no column for it. */}
+      {view.hasWord && view.phase === 'playing' && (
+        <div className="sr-stack-dock">
+          <LiveStack mode="sat-rush" compact />
+        </div>
       )}
       <div className="sr-stage">
         {view.hasWord && (

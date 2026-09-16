@@ -325,6 +325,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
     <>
     <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
     <SoloShell
+      mode="chain"
       accent={ACCENT}
       title="Type a word starting with the letter"
       hud={hud}

@@ -104,7 +104,17 @@ export function saveRounds(rounds) {
 // restores it to ~1.55× (claude/audit-economy.md + claude/_ws-cap-sweep.mjs). Keys match the ROUND
 // mode passed to bankWordWins/perWordWins ('wordBomb','blitz','satRush','chain','fuse'); a missing
 // key → ×1. Derivation: claude/winsmin-sim.mjs + claude/econ-rebalance-2-report.md.
-export const WINS_MULT = { wordBomb: 2, blitz: 1, satRush: 0.5, chain: 1.9, fuse: 1 };
+// ANDY (item 4): "SAT RUSH should reach ~80/word (it's far under Blitz today)" and CHAIN + FUSE
+// "MUCH higher - it feels impossible to get more than 10k".
+// He was right about SAT: at x0.5 it paid HALF of Blitz per word, for the mode with the hardest
+// words on screen - its card read 50 against Blitz's 100. FUSE sat at x1.0, the same as Blitz,
+// despite the longest runs and the most constrained words.
+// Re-fitted in claude/econ-visible-sim.mjs, which prints wins/run and wins/min at weak/median/
+// strong play before and after. The binding constraint is the 2.00x cross-mode wins/min spread:
+// raising a rate on a HIGH-THROUGHPUT mode moves wins/min fast, which is why FUSE goes to 1.35 and
+// not to CHAIN's 1.9. Measured: spread 1.86x -> 1.75x, so the re-fit NARROWS it.
+// A strong FUSE run goes 31k -> 44k and a strong SAT run 15k -> 23k.
+export const WINS_MULT = { wordBomb: 2, blitz: 1.2, satRush: 0.8, chain: 1.9, fuse: 1.35 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
@@ -131,7 +141,16 @@ export const TYPICAL_ROUND_WORDS = 10;
 // for that reset - the two are deliberately the same size of lever pointing in opposite
 // directions. Live-read from taw.xp unless `level` is passed (keeps the function pure/testable).
 export const WORD_WINS_BASE = 100;
-export const WIN_LEVEL_STEP = 1.015; // per-level growth of the per-word base
+// ANDY (item 5): "Stuck at lvl 40", more than once.
+// THE STRUCTURAL CAUSE, and it is one ratio. A level costs EARLY_CURVE_EXP more than the last
+// while a word pays WIN_LEVEL_STEP more, so every level takes curve/income longer than the one
+// before it, COMPOUNDING. At 1.115 / 1.015 that is 1.0985 - each level ~9.9% longer, 6.5x over
+// twenty levels, 43x over forty. Which is exactly what LV40 feels like: simulated, LV40 arrives at
+// 16m and then LV40->60 takes 3.9x the previous stretch and LV60->100 takes 17.3x.
+// Raising income growth 1.015 -> 1.035 (and easing the curve to 1.085, see xp.js) takes the
+// per-level stretch to 1.0483 - roughly halving the compounding. Simulated: LV60->100 grows 8.1x
+// instead of 17.3x, and a 200-hour player reaches LV171 instead of LV136.
+export const WIN_LEVEL_STEP = 1.035; // per-level growth of the per-word base
 export function winLevelMult(level) {
   const lv = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
   return Math.pow(WIN_LEVEL_STEP, lv - 1);
@@ -199,11 +218,56 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
 // category-blitz 20, sat-rush 10, chain 40, fuse 20 at the ×1 difficulty default). This is the R0
 // BASE per-word rate; the card/dialog copy shows it and ANNOTATES the active rebirth boost
 // separately via currentRebirthMult() below, so the stable base stays readable.
-export const WORD_WINS_MULT = { 'word-bomb': 2, 'sat-rush': 0.5, chain: 1.9, fuse: 1 };
+// TWO MAPS FOR ONE FACT, IN TWO KEY STYLES, IS HOW THEY DRIFT. `WINS_MULT` (camelCase, what the
+// payout actually uses) and `WORD_WINS_MULT` (kebab, what the menu card used) were separate
+// tables — and the kebab one was already MISSING 'category-blitz' entirely, so Blitz fell through
+// to x1. It happens to equal WINS_MULT.blitz today, so nothing was visibly wrong; the next edit to
+// one of them would have been. There is now ONE table and a key normaliser.
+const MODE_KEY_ALIAS = {
+  'word-bomb': 'wordBomb',
+  'category-blitz': 'blitz',
+  'sat-rush': 'satRush',
+  chain: 'chain',
+  fuse: 'fuse',
+};
+/** Canonical mode key, accepting either the gameData id ('word-bomb') or the payout key. */
+export function modeKey(mode) {
+  if (!mode) return null;
+  return MODE_KEY_ALIAS[mode] || (Object.hasOwn(WINS_MULT, mode) ? mode : null);
+}
+/** @deprecated kept for callers/tests; now derived from the single WINS_MULT table. */
+export const WORD_WINS_MULT = MODE_KEY_ALIAS;
+
+// The BASE per-word rate: mode x difficulty only, no player state. Kept because the mode DIALOG
+// and the sims want the stable number.
 export function wordWinsEstimate({ mode, difficulty } = {}) {
   const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
-  const modeMult = WORD_WINS_MULT[mode] || 1;
+  const modeMult = WINS_MULT[modeKey(mode)] || 1;
   return round10(WORD_WINS_BASE * modeMult * diffMult);
+}
+
+/**
+ * WHAT A WORD IS ACTUALLY WORTH IN THIS MODE, RIGHT NOW.
+ *
+ * ANDY: "Multipliers should SHOW." The menu card used to print the BASE rate and then append the
+ * rebirth multiplier as a separate "(x3)" — leaving the player to do the multiplication, and
+ * silently omitting momentum, level and the equipped mark from BOTH numbers. So the card said
+ * "200 WINS / WORD (x3)" while a word was really paying, say, 763.
+ *
+ * This returns the resolved rate and the factors behind it, so the card can print the number the
+ * player will actually receive and name what got it there. It is the SAME perWordFactors() the
+ * payout uses — the card cannot quote a rate the game will not pay.
+ *
+ * @returns {{ rate:number, base:number, mult:number, factors:object }}
+ *   rate   — wins for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
+ *   base   — WORD_WINS_BASE, the floor everything scales from
+ *   mult   — rate / base, i.e. everything the player has built, as one number
+ */
+export function perWordRateNow({ mode, difficulty, rebirthCount, momentumCount, level, markId } = {}) {
+  const key = modeKey(mode);
+  const factors = perWordFactors({ mode: key, difficulty, rebirthCount, momentumCount, level, markId });
+  const rate = perWordWins({ mode: key, difficulty, rebirthCount, momentumCount, level, markId });
+  return { rate, base: WORD_WINS_BASE, mult: WORD_WINS_BASE > 0 ? rate / WORD_WINS_BASE : 1, factors };
 }
 
 // The player's live rebirth WINS multiplier (same ladder as XP), 1 at R0. Exposed so the menu

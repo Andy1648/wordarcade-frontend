@@ -54,11 +54,15 @@ test('perWordWins: 100 base × mode × difficulty, snapped to a round 10 (Econom
   const B = WORD_WINS_BASE;
   assert.equal(B, 100, 'v7 raised the per-word base from 20');
   // R0 / LV1 base rates — post-rebalance mults (sim/rebalance-2), live round keys.
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 }), round10(B * 2)); // 200
-  assert.equal(perWordWins({ mode: 'blitz', rebirthCount: 0, level: 1 }), round10(B * 1)); // 100
-  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0, level: 1 }), round10(B * 0.5)); // 50
-  assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }), round10(B * 1.9)); // 190
-  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 }), round10(B * 1)); // 100
+  // RE-PINNED for the item-4 re-fit. LITERALS, not `round10(B * WINS_MULT[m])` — restating the
+  // implementation with the constant under test is a test that passes whatever the table says.
+  // SAT Rush 50 -> 80 (it paid HALF of Blitz for the hardest words); FUSE 100 -> 140; Blitz
+  // 100 -> 120. Word Bomb and CHAIN are unchanged. See claude/econ-visible-sim.mjs.
+  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 }), 200);
+  assert.equal(perWordWins({ mode: 'blitz', rebirthCount: 0, level: 1 }), 120);
+  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0, level: 1 }), 80);
+  assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }), 190);
+  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 }), 140);
   // Difficulty scales the per-word rate (no mode → ×1), still snapped to 10.
   assert.equal(perWordWins({ difficulty: 'medium', rebirthCount: 0, level: 1 }), round10(B * 1.5));
   assert.equal(perWordWins({ difficulty: 'hard', rebirthCount: 0, level: 1 }), round10(B * 2));
@@ -70,7 +74,9 @@ test('perWordWins: REBIRTH multiplies wins on the same ladder as XP (now 3^rc)',
   assert.equal(wb(2), round10(WORD_WINS_BASE * 2 * rebirthMult(2))); // ×9  → 1800
   assert.equal(wb(3), round10(WORD_WINS_BASE * 2 * rebirthMult(3))); // ×27 → 5400
   assert.equal(wb(10), round10(WORD_WINS_BASE * 2 * rebirthMult(10)));
-  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 5, level: 1 }), round10(WORD_WINS_BASE * rebirthMult(5)));
+  // This omitted FUSE's own mode multiplier and passed only because it happened to be x1. The
+  // item-4 re-fit moved it to x1.35 and the omission became a failure, which is the useful kind.
+  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 5, level: 1 }), round10(WORD_WINS_BASE * 1.35 * rebirthMult(5)));
   // ...and it is strictly increasing, which the v6 table also was - the change is the SIZE of
   // the steps, not the direction.
   for (let rc = 0; rc < 8; rc++) assert.ok(wb(rc + 1) > wb(rc), `R${rc + 1} must pay more than R${rc}`);
@@ -84,10 +90,12 @@ test('perWordWins: the per-word base COMPOUNDS with level (v7)', () => {
   assert.ok(at(50) > at(1), 'LV50 must out-earn LV1 on the same word');
   assert.ok(at(100) > at(50));
   assert.ok(at(300) > at(200));
-  // ×1.015 a level: ~×2.1 by LV50, ~×4.4 by LV100, ~×86 by LV300.
+  // x1.035 a level after the item-5 re-fit (was x1.015): ~x5.4 by LV50, ~x30 by LV100.
+  // The step was raised because income growing SEVEN TIMES slower than the level curve is what
+  // "stuck at lvl 40" actually is — see WIN_LEVEL_STEP's note in wins.js.
   assert.ok(Math.abs(winLevelMult(50) - Math.pow(WIN_LEVEL_STEP, 49)) < 1e-12);
-  assert.ok(winLevelMult(100) > 4 && winLevelMult(100) < 4.5, winLevelMult(100));
-  assert.ok(winLevelMult(300) > 80 && winLevelMult(300) < 90, winLevelMult(300));
+  assert.ok(winLevelMult(100) > 29 && winLevelMult(100) < 31, winLevelMult(100));
+  assert.ok(winLevelMult(300) > 29000 && winLevelMult(300) < 29700, winLevelMult(300));
   // Guarded: a missing / nonsense level reads as LV1, never NaN.
   assert.equal(winLevelMult(undefined), 1);
   assert.equal(winLevelMult(-5), 1);
@@ -136,17 +144,21 @@ test('round/word estimates: card previews are the R0/LV1 BASE rate (v7: 100 base
   // wordWinsEstimate is the R0 BASE preview (never rebirth- or level-scaled) shown on game cards,
   // keyed by game.id. It deliberately excludes the level term so the card's headline number is
   // stable; the live boost is annotated separately (currentRebirthMult).
-  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), round10(B * 2)); // 200
-  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), round10(B * 1)); // 100
-  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), round10(B * 0.5)); // 50
-  assert.equal(wordWinsEstimate({ mode: 'chain' }), round10(B * 1.9)); // 190
-  assert.equal(wordWinsEstimate({ mode: 'fuse' }), round10(B * 1)); // 100
+  // RE-PINNED (item 4), as literals. `category-blitz` is the one that changed meaning as well as
+  // value: it was MISSING from the old kebab-keyed WORD_WINS_MULT table entirely and fell through
+  // to x1, which happened to equal its real multiplier — so the card was right by luck. Both
+  // tables are now one table behind modeKey().
+  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 200);
+  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 120);
+  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 80);
+  assert.equal(wordWinsEstimate({ mode: 'chain' }), 190);
+  assert.equal(wordWinsEstimate({ mode: 'fuse' }), 140);
   // roundWinsEstimate = a typical 10-word round. NOTE 'word-bomb' (hyphen) is NOT a WINS_MULT key
   // (the live WB wins key is 'wordBomb'), so it falls to ×1 here; this fn has no live caller and
   // is exercised only as a pure unit.
   assert.equal(roundWinsEstimate({ mode: 'word-bomb' }), 10 * round10(B));
   assert.equal(roundWinsEstimate({ mode: 'chain' }), 10 * round10(B * 1.9));
-  assert.equal(roundWinsEstimate({ mode: 'fuse' }), 10 * round10(B));
+  assert.equal(roundWinsEstimate({ mode: 'fuse' }), 10 * round10(B * 1.35)); // item-4 re-fit
   assert.equal(roundWinsEstimate({ mode: 'word-bomb', difficulty: 'hard' }), 10 * round10(B * 2));
 });
 

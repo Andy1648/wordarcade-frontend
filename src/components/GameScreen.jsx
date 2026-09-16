@@ -11,6 +11,9 @@ import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import { WordPayout, RoundPayout } from './PayoutBreakdown';
+// THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
+// for the first words of every round and said nothing about the multipliers the player had built.
+import LiveStack from './LiveStack';
 import WordLanding, { hasLanding } from './WordLanding';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
@@ -3696,11 +3699,16 @@ export default function GameScreen({
             arriving never reflows the board — and at >=900px it is its own grid column, beside the
             prompt/used/input stack rather than on top of it. */}
         <div className="wb-receipt-rail" aria-hidden="true">
-          {lastPayout && !gameOver && (
+          {!gameOver && (lastPayout ? (
             <div className="wb-receipt" key={lastPayout.key}>
               <WordPayout payout={lastPayout.payout} compact />
             </div>
-          )}
+          ) : (
+            // ALWAYS SHOWING SOMETHING. Before the first word of a round there is no receipt yet,
+            // and that used to be an empty column — the moment a player is most likely to be
+            // wondering what a word is worth.
+            <LiveStack mode={isCategory ? 'category-blitz' : 'word-bomb'} difficulty={gameState.difficultyKey || gameState.difficulty || ''} combo={combo > 1 ? combo : 1} compact />
+          ))}
         </div>
 
         {lastWordResult && !lastWordResult.accepted && lastWordResult !== dismissedResultRef.current && (

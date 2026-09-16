@@ -69,7 +69,14 @@ export function round10(x) {
 // guessed: 2000 is the largest base that still leaves LV300 reachable inside 200h.
 export const CURVE_BASE = 2000; // need(0); the whole curve scales from here
 export const CURVE_BREAK = 100; // level at which the curve HARDENS (v6 softened at 60)
-export const EARLY_CURVE_EXP = 1.115; // per-level growth at/below the break
+// 1.085, not 1.115 (item 5, "stuck at lvl 40"). The curve is only half of that complaint - the
+// other half is WIN_LEVEL_STEP in wins.js, and the two only mean anything together. What a player
+// feels is the RATIO: a level costs this much more than the last, while a word pays
+// WIN_LEVEL_STEP more, so the time per level grows by curve/income, compounding. 1.115/1.015 =
+// 1.0985 is ~9.9% per level, which is 43x over forty levels. 1.085/1.035 = 1.0483 halves it.
+// TOP_CURVE_EXP (1.135) still exceeds this, so the invariant that the curve only ever steepens
+// above the break is intact - and the gap is now WIDER, which is the shape v7 wanted.
+export const EARLY_CURVE_EXP = 1.085; // per-level growth at/below the break
 export const TOP_CURVE_EXP = 1.135; // per-level growth ABOVE the break — must exceed EARLY
 export function need(n) {
   if (n <= CURVE_BREAK) return round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, n));

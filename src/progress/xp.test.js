@@ -91,9 +91,10 @@ test('awardWordXp persists the grant to the level state', () => {
     const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
     assert.equal(res.gain, 250); // fuse ×5, 5 letters
     const after = loadProgress();
-    // UPDATED (Economy v7): need(1) is 2230, not 120 — the v6 base of 100 made the first levels
+    // UPDATED (Economy v7): need(1) is 2170, not 120 — the v6 base of 100 made the first levels
     // a formality. One 5-letter FUSE word no longer clears a whole level, which is the point.
-    assert.equal(need(1), 2230);
+    // (2230 -> 2170 with the item-5 re-fit of EARLY_CURVE_EXP, 1.115 -> 1.085.)
+    assert.equal(need(1), 2170);
     assert.equal(after.level, 1);
     assert.equal(after.intoLevel, 250);
   });
@@ -118,11 +119,15 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
 //     from minute one).
 // v7: base 2000, 1.115^n to LV100, then a STEEPER 1.135 tail. Numbers from claude/econ-curve-sim.mjs.
 test('need() matches the published Economy v7 early levels', () => {
-  assert.equal(need(1), round10(2000 * Math.pow(1.115, 1)));
-  assert.equal(need(1), 2230);
-  assert.equal(need(2), 2490);
-  assert.equal(need(3), 2770);
-  assert.equal(need(7), 4290);
+  // RE-PINNED for the item-5 re-fit: the early exponent moved 1.115 -> 1.085 so that levels keep
+  // ARRIVING ("stuck at lvl 40"). The literals below are the new published values, still written
+  // out rather than derived from the constant under test - a test that restates the implementation
+  // passes whatever the implementation says.
+  assert.equal(need(1), round10(2000 * Math.pow(1.085, 1)));
+  assert.equal(need(1), 2170);
+  assert.equal(need(2), 2350);
+  assert.equal(need(3), 2550);
+  assert.equal(need(7), 3540);
   // Every early level costs MORE than the one before it by a visible step.
   for (let n = 1; n < 60; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
 });
@@ -133,7 +138,7 @@ test('THE TAIL IS STEEPER THAN THE HEAD — the v6 defect, pinned so it cannot c
   // compounding income. A curve may harden; it may never soften.
   assert.ok(TOP_CURVE_EXP > EARLY_CURVE_EXP, 'the tail exponent must EXCEED the early one');
   const early = need(30) / need(29);
-  assert.ok(early > 1.11 && early < 1.12, `early ratio ${early}`);
+  assert.ok(early > 1.08 && early < 1.09, `early ratio ${early}`); // 1.085 after the item-5 re-fit
   assert.equal(need(CURVE_BREAK), round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)));
   const tail = need(150) / need(149);
   assert.ok(tail > 1.13 && tail < 1.14, `tail ratio ${tail}`);
@@ -144,7 +149,13 @@ test('THE TAIL IS STEEPER THAN THE HEAD — the v6 defect, pinned so it cannot c
     // 1e-6, not 1e-9: above ~LV150 need(n) is a float well past 2^53 and round10's snap is
     // below the representable step, so consecutive ratios wobble in the 8th decimal. The claim
     // is "the curve never softens", not "float division is exact".
-    assert.ok(g >= prev - 1e-6, `growth fell at LV${n}: ${g} < ${prev}`);
+    // 1e-4, not 1e-6, after the item-5 re-fit. round10 snaps to a multiple of ten, so the RELATIVE
+    // size of that snap grows as need(n) shrinks -- and easing the early exponent 1.115 -> 1.085
+    // made every early value smaller. Measured: LV99 wobbles by 2.3e-5, which tripped a 1e-6 bound
+    // on a perfectly healthy curve. The claim is "the curve never softens", not "float division
+    // is exact"; 1e-4 is two orders above the quantization noise and three below any real easing
+    // (v6's defect was 1.25 -> 1.08, a fall of 0.17).
+    assert.ok(g >= prev - 1e-4, `growth fell at LV${n}: ${g} < ${prev}`);
     prev = g;
   }
   assert.ok(Number.isFinite(need(600)) && need(600) > need(300));

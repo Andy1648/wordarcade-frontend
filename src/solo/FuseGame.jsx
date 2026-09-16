@@ -244,6 +244,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
     <>
     <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     <SoloShell
+      mode="fuse"
       accent={ACCENT}
       title="Type a word containing the fragment"
       hud={hud}

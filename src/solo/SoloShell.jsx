@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+// The standing multiplier readout — CHAIN and FUSE had no payout receipt of any kind before this.
+import LiveStack from '../components/LiveStack';
 import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import Spotlight from '../components/Spotlight';
@@ -40,6 +42,7 @@ function ClockRing({ remaining, tMax, redZone, armed }) {
 export default function SoloShell({
   accent,
   title,
+  mode, // 'chain' | 'fuse' — for the live multiplier stack (LiveStack)
   hud, // top bar node (score/best/multiplier | lives/strip)
   center, // the required letter / the fragment
   motif, // optional static SVG backdrop behind the stage (per-mode; never animated)
@@ -106,6 +109,14 @@ export default function SoloShell({
         {phase === 'playing' && (
           <div className="solo-hud-wins">
             <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
+          </div>
+        )}
+        {/* WHAT A WORD IS WORTH HERE, AND WHY. CHAIN and FUSE previously showed a running +N WINS
+            and nothing at all about the multipliers behind it. LiveStack hides itself below 900px
+            (no room for a standing column beside the card), same rule as Word Bomb's receipt rail. */}
+        {phase === 'playing' && mode && (
+          <div className="solo-hud-stack">
+            <LiveStack mode={mode} compact />
           </div>
         )}
       </div>
