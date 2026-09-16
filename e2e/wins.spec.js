@@ -1,3 +1,8 @@
+// RE-PINNED 2026-09-15. BOTH Blitz figures here were WRONG BEFORE this branch touched anything:
+// 360 and 650 are round10(weight x 100) — Blitz at the BASE rate, x1. Blitz's multiplier has been
+// x1.2 (per-word 120) since the rebalance-2 fit, so the correct figures are 430 and 780. The
+// econ-visible round-2 re-fit did NOT change Blitz; it just ran the full suite, which is the only
+// reason these surfaced. A viewport-only gate never ran them. Recomputed from the live table.
 // e2e/wins.spec.js
 //
 // The WINS wiring (item 2): the app subscribes to round-end events that ALREADY fire and
@@ -40,16 +45,16 @@ test.describe('wins wiring', () => {
   // ECONOMY v7: the per-word wins base went 20 -> 100, so every figure below is ~5x what it was.
   // The BANKING arithmetic each test is about - the 3-answer gate, the retroactive release, the
   // no-double-pay rule - is unchanged; only the rate it multiplies.
-  test('a Blitz round_end with 3 accepted answers pays 360 and counts the round', async ({ page }) => {
+  test('a Blitz round_end with 3 accepted answers pays 430 and counts the round', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
     await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON, combo 1.1/1.2/1.3 → 3.6 × 20 = round10(72) = 70
     // Poll for the banked wins: bankWordWins writes to localStorage on the async React drain, so a
     // synchronous read here occasionally races the bank under full-suite load (an intermittent 0).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(360);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(430);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(360);
+    expect(after.lifetime - before.lifetime).toBe(430);
     expect(after.blitz - before.blitz).toBe(1);
   });
 
@@ -81,14 +86,14 @@ test.describe('wins wiring', () => {
       await page.waitForTimeout(40);
     }
     // NO round_end — the player leaves. The 5 answers (combo-weighted 6.5 = 130) are already banked.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(650);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(780);
     expect((await readWins(page)).blitz - before.blitz).toBe(1);
     // The round ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'round_end', payload: { playerResults: [] } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(650); // still 130, not 260
-    expect(after.lifetime - before.lifetime).toBe(650);
+    expect(after.wins - before.wins).toBe(780); // banked per answer, not re-paid at round_end
+    expect(after.lifetime - before.lifetime).toBe(780);
     expect(after.blitz - before.blitz).toBe(1);
   });
 });

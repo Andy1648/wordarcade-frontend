@@ -3,6 +3,16 @@
 // register next to five-figure upgrade prices. Every expected figure in this file moved
 // with it. The WEIGHT arithmetic each test is actually about - the combo build, the
 // lucky roll, the reset, the 3-word gate - is untouched; only the rate it multiplies.
+//
+// RE-PINNED AGAIN (econ-visible round 2): WORD BOMB's mode multiplier went x2 -> x2.1 to lift
+// the FLOOR of the cross-mode wins/min band, so every WB figure below moved with it.
+//
+// AND ONE OF THESE WAS ALREADY WRONG BEFORE THAT. The two BLITZ figures were pinned at 160/110,
+// which is round10(combo x 100) - i.e. Blitz at the BASE rate, x1. Blitz's multiplier has been
+// x1.2 (per-word 120) since the rebalance-2 fit, so the correct figures were 190/130 and this
+// test was red before this branch touched anything. It is the failure mode the full-suite gate
+// exists to catch: a viewport-only gate never ran these, so the stale pins survived several
+// merges. Recomputed here from the live table rather than adjusted by hand.
 // e2e/parity-wb-blitz.spec.js — feat/parity-wb-blitz.
 // Word Bomb + Category Blitz now score with the SAME combo (+0.1 per consecutive accept, ×3 cap) and
 // lucky (1/40 ×5) that CHAIN/FUSE use — folded into the per-word reward WEIGHT (reused combo.js /
@@ -57,19 +67,19 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await bankSettle(page);
     const after5 = await readWins(page);
 
-    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 40) = 60. BUILDS past the ×1.1 base 40.
+    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 210) = 340. BUILDS past the ×1.1 base 230.
     acceptWb(mock, C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(320);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(340);
     const after6 = await readWins(page);
 
     // A reject ends the combo.
     rejectWb(mock, 'ZZZQ');
     await page.waitForTimeout(80);
 
-    // Next accept: streak 1 again → combo 1.1 → round10(1.1 × 40) = 40. RESET (would be 70 if it kept
-    // climbing to streak 7).
+    // Next accept: streak 1 again → combo 1.1 → round10(1.1 × 210) = 230. RESET (would be 360 if it
+    // kept climbing to streak 7).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(220);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(230);
   });
 
   test('WB: the combo RESETS when I lose a life (my turn times out)', async ({ page }) => {
@@ -101,9 +111,9 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     });
     await page.waitForTimeout(80);
 
-    // Next accept: combo reset to 1.1 → +40 (not the +70 a continued streak-7 would pay).
+    // Next accept: combo reset to 1.1 → +230 (not the +360 a continued streak-7 would pay).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(220);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(230);
   });
 
   test('WB: the payout INCLUDES the lucky ×5 when a word is lucky', async ({ page }) => {
@@ -116,12 +126,12 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     const before = await readWins(page);
 
     // 3 COMMON accepts, each ×5 lucky, combo 1.1/1.2/1.3:
-    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 40 = round10(720) = 720.
+    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 210 = round10(3780) = 3780.
     for (const w of ['CAT', 'DOG', 'FOX']) {
       acceptWb(mock, w);
       await page.waitForTimeout(40);
     }
-    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(3600);
+    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(3780);
   });
 
   test('Blitz: the payout combo BUILDS and RESETS on a rejected answer', async ({ page }) => {
@@ -141,17 +151,18 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await bankSettle(page);
     const after5 = await readWins(page);
 
-    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 20) = 30 (Blitz per-word 20). BUILDS past base 20.
+    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 120) = 190 (Blitz per-word 120, x1.2). BUILDS
+    // past the ×1.1 base 130. (Was pinned 160 — the x1 base rate — and had been red for several merges.)
     accept(C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(160);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(190);
     const after6 = await readWins(page);
 
     // A rejected answer breaks the combo.
     mock.pushToClient({ type: 'answer_result', payload: { accepted: false, answer: 'ZZZQ', reason: 'not_in_list' } });
     await page.waitForTimeout(80);
 
-    // Next accept: combo reset to 1.1 → round10(1.1 × 20) = 20 (not the 30 a continued streak-7 pays).
+    // Next accept: combo reset to 1.1 → round10(1.1 × 120) = 130 (not the 200 a streak-7 would pay).
     accept('DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(110);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(130);
   });
 });
