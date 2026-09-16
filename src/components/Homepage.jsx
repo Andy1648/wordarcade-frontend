@@ -660,10 +660,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             markSlot={markUnlocked.length > 0}
             mark={markById(equippedMark)}
             onMarkClick={() => setShowMarks(true)}
-            /* THE RATE LINE FOLLOWS THE CARD IN FOCUS. hoverGame already exists (it drives the
-               mascot's reaction pose), so the bar can print what a word is worth in the mode the
-               player is actually looking at, at their current level. Touch devices never hover,
-               so it falls back to Word Bomb — the same reference rate the shop prints. */
           />
           {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
               only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
