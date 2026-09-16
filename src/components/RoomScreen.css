@@ -383,8 +383,11 @@
    rather than a synchronized row. The rock lives on the slot (not the chip) so
    it composes with the chip's one-shot slam-in entrance instead of fighting it
    (you can't run two transform animations on one element). */
+/* THE PER-SLOT ROCK IS GONE. One loop per player slot means the room's resting
+   motion GREW with the room — an 8-player lobby ran eight of them. The chip's
+   one-shot slam-in entrance still plays; only the endless rock after it is cut. */
 .room-player-slot {
-  animation: chip-rock 2s ease-in-out infinite;
+  animation: none;
 }
 
 .room-player-slot:nth-child(2n) {
@@ -433,11 +436,14 @@
   }
 }
 
-/* Game-mode + difficulty buttons share the homepage "breathe", offset per
-   button. Hover cancels it so the press feedback (translate) wins. */
+/* THE BUTTON BREATHE IS GONE (menu motion law, applied here at last). The menu
+   dropped its idle button bounce for exactly this reason — every control gently
+   moving at rest is the "visual jumping" a player reads as clutter, and it scales
+   with the number of buttons. Hover/press feedback is untouched; that is motion
+   the player asked for. */
 .room-gametype-btn,
 .room-difficulty-btn {
-  animation: room-btn-breathe 2.1s ease-in-out infinite;
+  animation: none;
 }
 
 .room-gametype-btn:nth-child(2),
@@ -530,9 +536,11 @@ html[data-beat='true'] .room-leave-btn {
 /* The bored sway lives on this wrapper, NOT the Mascot itself, so it composes
    with the mascot's own idle squash-stretch + beat-pop instead of fighting for
    `transform`. Pivot at the feet so it reads as impatient weight-shifting. */
+/* The mascot holds its pose. Its own entrance and emote one-shots still fire;
+   the endless loiter does not. */
 .room-waiting-mascot {
   transform-origin: bottom center;
-  animation: room-mascot-loiter 2.8s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes room-mascot-loiter {

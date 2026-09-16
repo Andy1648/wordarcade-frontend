@@ -511,6 +511,41 @@ The three axes that *are* actionable, and where the crowding complaint actually 
 2. **Moving things on the dialog: 13.** On a screen whose job is to answer "what is this mode?"
 3. **Hot colours: 7 on the menu, 9 in the shop**, against a 4-colour target.
 
-I have measured all three and not yet cut them — that is Batch C's remaining work, and it is
-queued behind the gate below rather than guessed at.
+### Two of those three turned out to be measuring the wrong thing — and the third was real
+
+**Type sizes: not a defect.** The menu's 10 UI sizes are 11 / 13 / 18 / 28 / 73 for the CHROME —
+five, exactly at target, and every one is a `--fs-*` token or a documented height-guarded one
+(the 73px wordmark is `min(--fs-hero, 9.5vh)`, capped on purpose so it does not eat the title↔XP
+gap on a 768-tall laptop). The other five come from inside the five game cards, whose type is
+`cqw`-scaled to card width **by design** — that is how a card keeps its proportions when the grid
+resizes it. Snapping card type to the global scale would break the cards at every width but one.
+
+**"Moving things": mostly entrance, not idle.** The dialog's 13 are its finite one-shot entrance —
+`inf 0`. What matters is what never stops, and the census reports that separately.
+
+**THE REAL FINDING, and nobody had looked:** the menu runs **0** infinite animations at rest — the
+MENU MOTION LAW works. The screens it was never applied to do not:
+
+| screen | infinite animations at rest |
+|---|---|
+| **gameover-category-blitz** | **11** |
+| **lobby** | **9** |
+| **room** | **7** |
+| splash / browser / gameover-word-bomb | 3 each |
+| **menu · ingame-word-bomb · every dialog** | **0** |
+
+The cause is one rule. `.wave-letter` ran `letter-bounce-forever … infinite` — **a loop per
+letter**, for as long as the screen was open. The lobby title is 9 letters; the room code is 4.
+It is the same "constant idle jumping" the menu law was written to stop, and it was never applied
+here because `WaveText` only appears on the lobby and the room, which nobody audited.
+
+**Cut:** `.wave-letter` is now a one-shot entrance ripple that holds its resting pose, and the
+room's three other idle loops go with it — the per-slot `chip-rock` (whose count *grew with the
+room*: an 8-player lobby ran eight), the button `breathe`, and the mascot `loiter`. The waiting
+pulse stays as the single liveness cue. Entrances, hover and press feedback are untouched; that is
+motion the player asked for.
+
+**Still not cut, and reported rather than guessed:** hot colours (menu 7, shop 9, against 4). That
+is a palette decision across five themes, not a mechanical fix, and it is the one axis where I
+would be substituting my taste for yours.
 
