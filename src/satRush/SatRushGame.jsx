@@ -26,6 +26,7 @@ import { awardWordXp, cappedWordMult } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
+import { satRarityMult } from '../progress/rarity';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { formatNum } from '../format';
@@ -82,7 +83,12 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // Unified economy (Job 1): the per-word rarity weight (SAT has no combo/lucky) also grants XP,
       // so a SAT capture now levels you as well as banking wins.
       const rw = rarityOf(view.lastClearedWord);
-      const wWeight = cappedWordMult(rw.mult, 1, 1);
+      // RARITY, RELATIVE TO THE SAT DECK. Every word this mode serves is rare by construction,
+      // so the raw rarity multiplier paid SAT a flat ~2.79x that the player never chose — the
+      // per-word rarity bonus is a reward for PICKING an uncommon word, and SAT offers no pick.
+      // satRarityMult() divides by the deck's own mean, so a typical SAT word is x1 and the
+      // harder-than-typical ones still pay more. See progress/rarity.js.
+      const wWeight = cappedWordMult(satRarityMult(rw.mult), 1, 1);
       satWeightRef.current += wWeight + Math.max(0, delta - 1);
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)

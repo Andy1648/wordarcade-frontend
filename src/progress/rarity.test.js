@@ -3,6 +3,7 @@
 // a boundary or lets a single word blow past the cap breaks the build here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   buildRarityIndex,
   wordRarity,
@@ -10,6 +11,8 @@ import {
   lengthBonus,
   RARITY_MAX_MULT,
   bumpRarity,
+  SAT_DECK_MEAN_RARITY,
+  satRarityMult,
 } from './rarity.js';
 
 // A tiny synthetic frequency corpus: rank === index. We place known words at exact ranks so the
@@ -127,4 +130,39 @@ test('bumpRarity stops at OBSCURE and never exceeds the rarity ceiling', () => {
 test('bumpRarity is guarded: no rarity object in, nothing out', () => {
   assert.equal(bumpRarity(null), null);
   assert.equal(bumpRarity(undefined), undefined);
+});
+
+// ---------------------------------------------------------------------------------------------
+// SAT RUSH rarity normalisation (the double-count fix).
+test('SAT_DECK_MEAN_RARITY still matches the SHIPPED deck (recomputed, not trusted)', () => {
+  // The constant exists so the live game does not have to load + average 956 words at runtime.
+  // That makes it a cached measurement, and a cached measurement drifts the moment somebody adds
+  // words to the deck — silently changing every SAT payout. So recompute it here from the same
+  // files the game ships and fail if the cache has moved more than a rounding step.
+  const recall = readFileSync(
+    new URL('../solo/words.recall.txt', import.meta.url), 'utf8',
+  ).split(' ');
+  const idx = buildRarityIndex(recall);
+  const deck = JSON.parse(
+    readFileSync(new URL('../data/satRush/words.json', import.meta.url), 'utf8'),
+  ).map((x) => x.word);
+  const mean = deck.reduce((a, w) => a + wordRarity(w, idx).mult, 0) / deck.length;
+  assert.ok(
+    Math.abs(mean - SAT_DECK_MEAN_RARITY) < 0.05,
+    `SAT deck mean rarity is now ${mean.toFixed(4)}, but SAT_DECK_MEAN_RARITY is `
+    + `${SAT_DECK_MEAN_RARITY}. The deck changed — update the constant AND re-run `
+    + `claude/econ-visible-sim.mjs, because SAT's whole payout scales off it.`,
+  );
+});
+
+test('satRarityMult: a typical SAT word is x1, harder pays more, easier pays less', () => {
+  // The POINT of the normalisation: variance survives, the free cross-mode bias does not.
+  assert.equal(satRarityMult(SAT_DECK_MEAN_RARITY), 1);
+  assert.ok(satRarityMult(4.5) > 1, 'the rarest SAT word must still pay above a typical one');
+  assert.ok(satRarityMult(1.5) < 1, 'the most common SAT word must pay below a typical one');
+  // And it is BOUNDED well under the raw multiplier it replaces — that gap is the double count.
+  assert.ok(satRarityMult(4.5) < 1.5, 'normalised SAT rarity must stay near 1, not near 4.5');
+  // Bad input must not invent a multiplier.
+  assert.equal(satRarityMult(0), 1);
+  assert.equal(satRarityMult(NaN), 1);
 });

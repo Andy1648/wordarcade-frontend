@@ -22,7 +22,7 @@ import { createChainEngine } from '../src/solo/chain.js';
 import { mulberry32 } from '../src/solo/shared.js';
 import { deriveFuseWpm } from './fuseThroughput.mjs';
 import { WORD_WINS_BASE, WINS_MULT } from '../src/progress/wins.js';
-import { buildRarityIndex, wordRarity } from '../src/progress/rarity.js';
+import { buildRarityIndex, wordRarity, satRarityMult } from '../src/progress/rarity.js';
 import { comboMultiplier } from '../src/progress/combo.js';
 
 const U = (p) => fileURLToPath(new URL(p, import.meta.url));
@@ -45,14 +45,24 @@ const WEIGHT_CAP = 40; // cappedWordMult's ×40 ceiling (rarity×combo×lucky)
 // Which modes fold combo+lucky into the weight. Post feat/parity-sat: ALL FIVE do (WB/Blitz added on
 // feat/parity-wb-blitz, SAT Rush on feat/parity-sat) — so the mechanic is uniform and the spread
 // returns to the compressed band.
-const HAS_COMBO_LUCKY = { wordBomb: true, blitz: true, chain: true, fuse: true, satRush: true };
+// CORRECTED 2026-09-16: satRush was `true` here and had been for as long as this file existed,
+// but the LIVE code has never given SAT either — SatRushGame.jsx calls
+// cappedWordMult(rw.mult, 1, 1), combo AND lucky pinned to 1. This file was therefore modelling
+// a mode that does not exist and reporting SAT ~2x richer per word than it is. Third model-vs-live
+// mismatch of the same family as the asserted FUSE throughput; see claude/RUN-N.md.
+const HAS_COMBO_LUCKY = { wordBomb: true, blitz: true, chain: true, fuse: true, satRush: false };
 function meanWinsPerWord(runs, modeKey) {
   const mult = WINS_MULT[modeKey] || 1;
   const cl = HAS_COMBO_LUCKY[modeKey];
   const per = [];
   for (const words of runs) {
     words.forEach((w, i) => {
-      const rarity = wordRarity(w, idx).mult;
+      // SAT scores rarity RELATIVE TO ITS OWN DECK (the double-count fix, progress/rarity.js):
+      // every word it serves is rare by construction, so the raw multiplier paid it a flat ~2.79x
+      // the player never chose. Mirrors the live SatRushGame.jsx path exactly.
+      const rarity = modeKey === 'satRush'
+        ? satRarityMult(wordRarity(w, idx).mult)
+        : wordRarity(w, idx).mult;
       const weight = cl ? Math.min(WEIGHT_CAP, rarity * comboMultiplier(i + 1) * LUCKY_MEAN) : rarity;
       per.push(WORD_WINS_BASE * mult * weight);
     });

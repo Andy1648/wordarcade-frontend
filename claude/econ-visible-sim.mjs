@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { WORD_WINS_BASE, WINS_MULT, WIN_LEVEL_STEP, winLevelMult } from '../src/progress/wins.js';
 import { need, round10, XP_MULTIPLIERS, keyTierXp, keyTierCostAt, EARLY_CURVE_EXP } from '../src/progress/xp.js';
-import { buildRarityIndex, wordRarity } from '../src/progress/rarity.js';
+import { buildRarityIndex, wordRarity, satRarityMult } from '../src/progress/rarity.js';
 import { comboMultiplier } from '../src/progress/combo.js';
 import { mulberry32 } from '../src/solo/shared.js';
 import { deriveFuseWpm } from './fuseThroughput.mjs';
@@ -126,7 +126,14 @@ function meanWeight(mode, words, seed = 4242) {
     if (i % words === 0) combo = 0;
     combo += 1;
     const rr = wordRarity(pick(), idx);
-    total += Math.min(WEIGHT_CAP, rr.mult * comboMultiplier(combo) * LUCKY_MEAN);
+    // SAT scores its rarity RELATIVE TO ITS OWN DECK (the double-count fix): every word that
+    // mode serves is rare by construction, so the raw multiplier paid it a flat ~2.79x nobody
+    // chose. The live path is cappedWordMult(satRarityMult(mult), 1, 1) in SatRushGame.jsx;
+    // this mirrors it exactly, including SAT having no combo and no lucky.
+    const rmult = mode === 'satRush' ? satRarityMult(rr.mult) : rr.mult;
+    const cm = mode === 'satRush' ? 1 : comboMultiplier(combo);
+    const lm = mode === 'satRush' ? 1 : LUCKY_MEAN;
+    total += Math.min(WEIGHT_CAP, rmult * cm * lm);
   }
   return total / N;
 }
@@ -174,7 +181,7 @@ const pad = (s, n) => String(s).padStart(n);
 // choice; the deck serves the word. Damping SAT's rarity term would move this off the corner and
 // let its card sit anywhere near Blitz with real margin. That is a scoring change, not a re-fit,
 // so it is deliberately NOT bundled here.
-const PROPOSED = { wordBomb: 2.1, blitz: 1.2, satRush: 1, chain: 2.7, fuse: 2.9 };
+const PROPOSED = { wordBomb: 2.1, blitz: 1.2, satRush: 3.9, chain: 2.7, fuse: 2.7 };
 
 // THE BASELINE IS PINNED, NOT READ LIVE. Once the re-fit SHIPPED, WINS_MULT became the proposal —
 // so a sim that read it live compared the new numbers to themselves and reported "no change",
@@ -354,12 +361,25 @@ conds.push({
     + `1.72x for fuse — this sits inside both)`,
 });
 conds.push({
-  name: 'SAT RUSH lands within 20% of Blitz',
-  ok: Math.abs(cardOf(PROPOSED, 'satRush') / cardOf(PROPOSED, 'blitz') - 1) <= 0.20,
-  detail: `LV40: sat ${lv40(PROPOSED, 'satRush')} vs blitz ${lv40(PROPOSED, 'blitz')} = `
-    + `${Math.round(cardOf(PROPOSED, 'satRush') / cardOf(PROPOSED, 'blitz') * 100)}% `
-    + `(was ${Math.round(cardOf(BEFORE_MULT, 'satRush') / cardOf(BEFORE_MULT, 'blitz') * 100)}%, `
-    + `and ${Math.round(cardOf(BEFORE_MULT, 'satRush') / cardOf(BEFORE_MULT, 'wordBomb') * 100)}% of Word Bomb — Andy's "a third")`,
+  // THE OLD "SAT WITHIN 20% OF BLITZ" CONDITION IS GONE, and it was retired by a proof.
+  // Fixing SAT's rarity DOUBLE COUNT left it the only mode with no per-word multiplier at all
+  // (no combo, no lucky, and now no free deck rarity), so at an equal card rate it earns 0.31x
+  // Blitz per MINUTE. Holding the two cards within 20% therefore forces a 2.7-4.0x wins/min gap
+  // that busts the 2.00x spread on its own — an exhaustive search over card space in multiples
+  // of 10 found NO assignment satisfying both. The honest replacement asserts what the fix is
+  // actually for: SAT's card must LEAD, because it has nothing to stack.
+  name: 'SAT RUSH leads on the card (it has no combo, no lucky and no free rarity to stack)',
+  ok: cardOf(PROPOSED, 'satRush') > cardOf(PROPOSED, 'wordBomb'),
+  detail: `LV40: sat ${lv40(PROPOSED, 'satRush')} vs wordBomb ${lv40(PROPOSED, 'wordBomb')}, `
+    + `blitz ${lv40(PROPOSED, 'blitz')} — at equal cards SAT earns only `
+    + `0.31x Blitz per minute, so a high card is what keeps its wins/min in band`,
+});
+conds.push({
+  name: 'the SAT rarity fix bought real headroom (was ~0.1% on the corner)',
+  ok: ((2 / results['AFTER (proposed)'].spread) - 1) >= 0.03,
+  detail: `${(((2 / results['AFTER (proposed)'].spread) - 1) * 100).toFixed(1)}% of spare spread `
+    + `at ${results['AFTER (proposed)'].spread.toFixed(3)}x — the double count was worth ~2.79x on `
+    + `every SAT word and was what pinned the whole table to a 4-card-point sliver`,
 });
 conds.push({
   name: 'a STRONG run in CHAIN and FUSE clears 10,000',

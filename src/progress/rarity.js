@@ -122,3 +122,32 @@ export function wordRarity(word, rankIndex) {
     label: band.announce ? `${band.name} ×${mult}` : '',
   };
 }
+
+// ---------------------------------------------------------------------------------------------
+// SAT RUSH: RARITY, RELATIVE TO THE DECK IT CAME FROM
+//
+// THE DOUBLE COUNT THIS FIXES. The per-word rarity multiplier exists to reward a player for
+// CHOOSING an uncommon word — it is a payment for a decision. In SAT Rush the player never
+// chooses: the deck serves the word. So SAT was being paid twice for the same property, once by
+// a deck that is rare by construction and again by a multiplier meant for a choice that mode
+// does not offer. Measured, the whole deck averages 3.42x rarity against a real typist's 1.23x —
+// a flat 2.79x that no SAT player ever earned. That single free factor is what pinned the whole
+// cross-mode economy: it forced SAT's CARD rate down to keep its wins/MIN in band, which is why
+// "SAT near Blitz" and "spread under 2.00x" only met in a ~4-card-point sliver.
+//
+// THE FIX IS NORMALISATION, NOT DELETION. Scoring every SAT word at a flat x1 would remove the
+// double count but also remove the reason to care which word came up. Dividing by the deck's own
+// mean keeps the variance and removes the bias: the AVERAGE SAT word now scores x1, a
+// harder-than-average one scores above, an easier one below. "How rare is this, for a SAT word?"
+// is the question the mode can actually pose, and it is the one a player can feel.
+//
+// The constant is measured, not guessed, and rarity.test.js recomputes it from the shipped deck
+// so it cannot silently drift when words are added.
+export const SAT_DECK_MEAN_RARITY = 3.42;
+
+/** A SAT word's reward weight: its rarity relative to the SAT deck's mean (1.0 = a typical
+ *  SAT word). Falls back to x1 on a bad input rather than inventing a multiplier. */
+export function satRarityMult(rarityMult) {
+  const r = Number.isFinite(rarityMult) && rarityMult > 0 ? rarityMult : SAT_DECK_MEAN_RARITY;
+  return r / SAT_DECK_MEAN_RARITY;
+}

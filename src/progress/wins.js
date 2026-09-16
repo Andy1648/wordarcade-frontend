@@ -133,23 +133,28 @@ export function saveRounds(rounds) {
 // allowed the HIGHEST per-word rate. With the cross-mode wins/min spread held under 2.00x, the
 // ceiling on how far a mode can lead Word Bomb per word is 2*w_wb/w_mode: 1.38x for CHAIN, 1.72x
 // for FUSE. This table sits inside both (chain leads by 1.30x), not on them.
-// SAT IS THE BINDING CONSTRAINT AND THIS TABLE SITS ON THE CORNER OF THE FEASIBLE REGION.
-// SAT's deck is ~4x rarer than a real typist's vocabulary, so at an equal card rate it earns 2.40x
-// per word from RARITY ALONE, and its throughput (12/min) is near Blitz's (14). That makes
-// wm_sat/wm_blitz = 2.40 x (c_sat/c_blitz): "SAT within 20% of Blitz" forces the card ratio >= 0.80
-// (so SAT is already >= 1.92x Blitz per minute), and "spread under 2.00x" forces it <= 0.835. The
-// entire feasible window is ~4 card points wide, and 100/120 is the only multiple-of-10 pair in it
-// — which is also why WORD BOMB rises 200 -> 210, to lift the FLOOR of the band up to meet SAT.
-// Measured spread 1.996x (1.972-1.999 across 12 typist seeds): under 2.00x everywhere, ~0.1% spare.
+// SAT'S RARITY DOUBLE COUNT IS FIXED, AND THAT IS WHAT BOUGHT THE HEADROOM.
+// Previously this table sat on the CORNER of the feasible region with ~0.1% of spare spread,
+// because SAT was paid for rarity TWICE: once by a deck that is rare by construction, and again
+// by the per-word rarity multiplier, which exists to reward a player for CHOOSING an uncommon
+// word — a choice SAT never offers. Measured, the deck averages 3.42x rarity against a real
+// typist's 1.23x: a flat 2.79x nobody earned. satRarityMult() (progress/rarity.js) now scores a
+// SAT word RELATIVE TO ITS OWN DECK, so a typical SAT word is x1 and the harder ones still pay
+// more. Spread 1.864x, headroom 6.8% — up from 0.1%.
 //
-// THE ROOT CAUSE IS A DOUBLE COUNT. SAT is paid for rarity twice — once by a deck that is rare by
-// construction, and again by the per-word rarity multiplier, which exists to reward a player for
-// CHOOSING an uncommon word. In SAT Rush there is no choice; the deck serves the word. Damping
-// SAT's rarity term is the fix that moves this off the corner. That is a scoring change rather
-// than a re-fit, so it is NOT bundled here — but until it lands, treat SAT's mult as load-bearing:
-// nudging it up, or making the deck rarer, will push the spread through 2.00x.
-// LV40 after: chain 1040 · fuse 1120 · WB 810 · blitz 460 · sat 390.
-export const WINS_MULT = { wordBomb: 2.1, blitz: 1.2, satRush: 1, chain: 2.7, fuse: 2.9 };
+// THE ASK THAT IS NO LONGER SATISFIABLE, and it flipped direction. "SAT within 20% of Blitz"
+// was written when SAT was too LOW. With the double count gone, SAT has NO per-word multiplier
+// at all — it is the only mode with neither combo nor lucky (SatRushGame.jsx passes 1, 1) — so
+// at an equal card rate it earns just 0.31x Blitz per MINUTE. Holding the cards within 20% of
+// each other therefore forces a 2.7-4.0x wins/min gap, which busts the 2.00x spread on its own.
+// No card assignment satisfies both; that is a proof, not a judgement (the search is in
+// claude/econ-visible-sim.mjs). So SAT's CARD is now 390 against Blitz's 120 — coherent for a
+// mode of few, slow, hard words with no multipliers to stack, and the honest reading of what it
+// pays. If the cards should sit closer, the lever is giving SAT the combo+lucky every other mode
+// has (winsmin-sim already ASSUMES it does — HAS_COMBO_LUCKY.satRush is true while the live code
+// passes 1, 1). That is a gameplay change and has NOT been made.
+// LV40 after: SAT 1,500 · CHAIN 1,040 · FUSE 1,040 · WB 810 · BLITZ 460.
+export const WINS_MULT = { wordBomb: 2.1, blitz: 1.2, satRush: 3.9, chain: 2.7, fuse: 2.7 };
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
