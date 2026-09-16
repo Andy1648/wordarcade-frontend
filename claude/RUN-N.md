@@ -284,7 +284,38 @@ desktop menu, which is the screen you're judging.** If you want the full slab on
 honest cost is dropping to 3 cards per screen — your call.
 
 **Screenshots:** `claude/xpbar/{off,tall,xl,xxl}-{1366x768,390x844}.png` plus `-bar.png` tight
-crops of each. *(reviewed before push — see §6)*
+crops of each. Bar heights measured: desktop **170 / 194 / 218px** against the old **36px**;
+phone **143 / 143 / 150px** against **34px**.
+
+### Reviewing those images caught three bugs no assertion would have
+
+This is the part of the rails that earned its keep. Every one of these renders fine, passes every
+test, and is wrong:
+
+1. **The bar printed the wrong rate.** It called `perWordWins({ mode: 'word-bomb' })` — but
+   `perWordWins` looks `WINS_MULT` up by **raw key**; it is `perWordRateNow` that runs the id
+   through `modeKey()` first. So the gameData id missed the table and silently resolved to ×1:
+   the bar printed **290** where the card directly under the cursor printed **610**. That is
+   precisely the "multipliers should show" bug this feature exists to fix, reintroduced by the
+   feature itself. It now calls `perWordRateNow` — the same function `GameCard` uses — so the two
+   numbers agree *by construction*.
+2. **The phone layout hid the headline.** The corner nav is a ~200px absolutely-positioned column
+   at top-right (x ≥ 245 of 390), and the bar ordered the LEVEL block and the track **last** — so
+   both were drawn under REBIRTH and STATS, leaving a phone user looking at a streak chip and
+   nothing else. The loud row now goes first and hard left, with the readout left-aligned; only
+   the track's empty right end falls under the nav.
+3. **The streak chip's order rule never matched.** The selector said `.menu-streak-chip`; the
+   element is `.menu-streak`. It kept `order: 0` and sorted ahead of everything in *both*
+   layouts — visible in the desktop shots as the streak sitting left of the wins chip, which is
+   not what the rules say.
+
+And the last `viewport-integrity` holdout: at **360×640** the five cards are ~65px wide and
+`610 / WORD (×6)` overflowed its own card even with the type pinned at its 7px floor. Type size
+cannot fix a string longer than its container, so something had to go — and it must not be either
+*number* (the rate is the point; the `(×N)` is the only surface showing the **combined** level ×
+rebirth × momentum × mark multiplier). `/ WORD` now drops via a **container** query under 96px of
+card width: it is the one part a player can infer, and the bar states the unit once on the same
+screen. **`viewport-integrity` menu: 35/35, all themes, all viewports** (was 10 failing).
 
 ---
 
