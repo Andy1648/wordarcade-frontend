@@ -8,6 +8,17 @@
 //
 // Exports: VIEWPORTS, SHOT_VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS + the nav primitives.
 import { installBackendMock } from './backendMock.js';
+import { GAMES } from '../../src/gameData.js';
+
+// The level to seed so a gated mode is still LOCKED. Derived from the real gate, never a literal:
+// this map hardcoded 16 for FUSE, written when FUSE unlocked at LV25. fix/unlock-gates lowered it
+// to LV3, so a level-16 visitor now has FUSE UNLOCKED, the locked-preview panel never opens, and
+// every locked-fuse cell of the layout matrix timed out — 35 failures across 5 themes x 7
+// viewports. Neither branch's own gate could see it: one owned the map, the other owned the gate.
+const lockedLevelFor = (id) => {
+  const g = GAMES.find((x) => x.id === id);
+  return Math.max(0, (g && g.unlockLevel != null ? g.unlockLevel : 1) - 1);
+};
 
 export const VIEWPORTS = [
   { name: '2560x1440', width: 2560, height: 1440 },
@@ -78,8 +89,8 @@ export const SCREENS = [
   { name: 'dialog-category-blitz', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'category-blitz').click(); await page.locator('.ppp-picker').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, 1); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, 16); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('chain')); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('fuse')); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'credits', root: '.credits-wrap', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-credits-link').click(); await page.locator('.credits-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'shop', root: '.shop-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-nav-btn.is-shop').click(); await page.locator('.shop-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'stats', root: '.stats-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-nav-btn.is-stats').click(); await page.locator('.stats-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
