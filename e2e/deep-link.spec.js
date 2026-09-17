@@ -24,7 +24,9 @@ const MIN_TOUCH = 44;
 const MODES = [
   { id: 'chain', path: '/chain/play', root: '.solo-root', exit: '.solo-exit', offer: '.solo-offer' },
   { id: 'fuse', path: '/fuse/play', root: '.solo-root', exit: '.solo-exit', offer: '.solo-offer' },
-  { id: 'sat-rush', path: '/sat-rush/play', root: '.sr-screen', exit: '.sr-exit-chip', offer: '.sr-offer' },
+  // SAT RUSH deep-lands straight into a live run now (see the dedicated test below), so its board
+  // root is the run stage and its exit is the HUD's — not the cover's .sr-screen / .sr-exit-chip.
+  { id: 'sat-rush', path: '/sat-rush/play', root: '.sr-app', exit: '.sr-hud-exit', offer: '.sr-offer' },
 ];
 
 const menuWordmark = (page) => page.getByRole('img', { name: 'Type a Word' });
@@ -78,6 +80,64 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // THE FIRST FRAME IS NOT WASHED OUT.
+  //
+  // The first-run coach mark dims the screen with a 100vmax box-shadow at rgba(6,3,12,0.76) — the
+  // whole board down to about a quarter brightness. On the menu that is the point (it picks one bar
+  // out of a grid of cards). On a game board, where the board IS the screen, it meant the very first
+  // thing a deep-link visitor ever saw — score, multiplier, timer ring, the letter — was washed out,
+  // which reads as a broken render, not as teaching. Game surfaces now pass dim={false}.
+  //
+  // NOTE the board's own `opacity` was ALWAYS 1: the wash is an overlay painted on top. A gate that
+  // only checked opacity would have passed the broken screen, so this checks both.
+  // ---------------------------------------------------------------------------
+  for (const mode of MODES) {
+    test(`${mode.path} — the board is at full brightness within 1s, not behind a scrim`, async ({ page }) => {
+      await installBackendMock(page);
+      await page.goto(mode.path);
+      await expect(page.locator(mode.root).first()).toBeVisible();
+
+      await expect
+        .poll(
+          async () =>
+            page.evaluate((sel) => {
+              const el = document.querySelector(sel);
+              if (!el) return 'no-root';
+              // Every ancestor must be fully opaque and unfiltered.
+              for (let n = el; n; n = n.parentElement) {
+                const cs = getComputedStyle(n);
+                if (parseFloat(cs.opacity) < 0.999) return 'dim-ancestor:' + n.className;
+                if (cs.filter && cs.filter !== 'none') return 'filtered-ancestor:' + n.className;
+              }
+              // And nothing may be painting a full-screen wash over it.
+              if (document.querySelector('.spotlight-dim')) return 'spotlight-dim present';
+              const hole = document.querySelector('.spotlight-hole');
+              if (hole && !hole.classList.contains('is-bare')) return 'spotlight scrim not bare';
+              return 'clear';
+            }, mode.root),
+          { timeout: 1000 }
+        )
+        .toBe('clear');
+    });
+  }
+
+  test('/sat-rush/play lands in a PLAYABLE run, not on the cover', async ({ page }) => {
+    test.setTimeout(30000);
+    await installBackendMock(page);
+    await page.goto('/sat-rush/play');
+    // A live board: the letter slots and the suspect lineup, with the HUD's run stats.
+    await expect(page.locator('.sr-slots')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.sr-hud')).toBeVisible();
+    // NOT the cover, NOT the mode picker, NOT the briefing — the four taps that used to stand
+    // between a stranger following a link and a single word appearing.
+    await expect(page.locator('.sr-cover')).toHaveCount(0);
+    await expect(page.locator('.sr-modeselect')).toHaveCount(0);
+    await expect(page.locator('.sr-brief-page')).toHaveCount(0);
+    // And the way out is the labelled one, in the HUD.
+    await assertLabelledTouchTarget(page, page.locator('.sr-hud-exit'), 'sat-rush cold deep link');
+  });
+
   test('a trailing slash is the same link (/chain/play/)', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/chain/play/');
@@ -95,7 +155,7 @@ test.describe('the landing page hands the visitor to the game', () => {
       await installBackendMock(page);
       await page.goto(`/${mode.id}`);
       await page.locator('a.lp-btn', { hasText: 'PLAY' }).first().click();
-      await expect(page.locator(mode.root).first()).toBeVisible();
+      await expect(page.locator(mode.root).first()).toBeVisible({ timeout: 20000 });
       expect(
         await page.evaluate(() => document.documentElement.getAttribute('data-view'))
       ).toBe(mode.id);
@@ -146,13 +206,8 @@ test.describe('the run ends, and the rest of the game is offered', () => {
     test.setTimeout(45000);
     await installBackendMock(page);
     await page.goto('/sat-rush/play');
-    await expect(page.locator('.sr-screen').first()).toBeVisible();
-
-    // Into a run: the cover's PLAY, then the mode picker, then the briefing's start.
-    await page.getByRole('button', { name: /play/i }).first().click();
-    await page.locator('.sr-modecard').first().click();
-    await page.getByRole('button', { name: 'Start the run' }).click();
-    await expect(page.locator('.sr-slots')).toBeVisible();
+    // Already playing — the deep link starts the run itself (no cover, no picker, no briefing).
+    await expect(page.locator('.sr-slots')).toBeVisible({ timeout: 20000 });
 
     // Mid-run, the exit is labelled and big enough.
     await assertLabelledTouchTarget(page, page.locator('.sr-hud-exit'), 'sat-rush mid-run');

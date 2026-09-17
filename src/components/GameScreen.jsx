@@ -3126,6 +3126,10 @@ export default function GameScreen({
                 caption={isCategory ? 'NAME SOMETHING IN THE CATEGORY' : 'TYPE A WORD WITH THESE LETTERS'}
                 sub="START TYPING"
                 onDismiss={dismissGameSpot}
+                // A live board is now a deep link's FIRST FRAME (/word-bomb/play), and the wash
+                // took the whole thing to a quarter brightness. Ring + caption teach; the wash
+                // only made the game look broken. See Spotlight.jsx's `dim` prop.
+                dim={false}
               />
             )}
           </div>
@@ -4227,6 +4231,7 @@ function CategoryBlitzScreen({
                 caption="NAME SOMETHING IN THE CATEGORY"
                 sub="START TYPING"
                 onDismiss={dismissGameSpot}
+                dim={false} // as above — /category-blitz/play lands straight on this board
               />
             )}
           </div>

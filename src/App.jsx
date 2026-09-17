@@ -1626,6 +1626,11 @@ function App() {
   // the session started, and goHome retires it the instant they reach the menu.
   const soloOfferRef = useRef(DEEP_LAND && !SEEN_MENU_AT_BOOT);
 
+  // SAT RUSH deep land: start a run instead of showing the cover (see SatRushGame's autoStart).
+  // A ref, not state, and retired by goHome below — it is a fact about how the SESSION started, so
+  // once the player has actually reached the menu, entering SAT from its card behaves normally.
+  const satAutoStartRef = useRef(!!LAUNCH_INTENT.satrush);
+
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated
   // name (zero prompts: tap link -> in the room), or start today's daily
@@ -1886,6 +1891,7 @@ function App() {
     // They are on their way to the menu: the "you have never seen the menu" pitch is spent,
     // for the rest of this session as well as (via taw.seenMenu) every later one.
     soloOfferRef.current = false;
+    satAutoStartRef.current = false; // they have seen the menu; SAT's cover + mode picker apply again
     setLobbyMode(null);
     setLobbyPublicDefault(false);
     setRoom(null);
@@ -2236,7 +2242,14 @@ function App() {
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
-    screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} offerMenu={soloOfferRef.current} />;
+    screen = (
+      <SatRushGame
+        onExit={goHome}
+        musicSetVolume={music.setVolume}
+        offerMenu={soloOfferRef.current}
+        autoStart={satAutoStartRef.current}
+      />
+    );
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
     screen = <ChainGame onExit={goHome} offerMenu={soloOfferRef.current} />;

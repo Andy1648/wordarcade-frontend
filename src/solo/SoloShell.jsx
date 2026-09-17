@@ -262,6 +262,11 @@ export default function SoloShell({
           caption={firstRunRule}
           sub="START TYPING"
           onDismiss={dismissGameSpot}
+          // No wash on a game board: it dimmed the entire first frame a deep-link visitor sees.
+          dim={false}
+          // The lower deck and the reason line are plain divs, so the placement pass could not see
+          // them and printed the caption straight across the chain row. Name them explicitly.
+          avoidSelector=".solo-deck, .solo-reason, .solo-armhint"
         />
       )}
     </div>

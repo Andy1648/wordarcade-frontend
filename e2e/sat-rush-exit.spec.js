@@ -25,16 +25,10 @@ test.describe('SAT Rush run exit', () => {
     page.on('pageerror', (err) => errors.push(String(err)));
 
     await installBackendMock(page);
-    // The shareable deep link opens SAT Rush directly (skips intro + menu).
+    // The shareable deep link opens a LIVE RUN directly (skips intro, menu and cover), so the HUD
+    // — and its exit — is on screen on the first frame.
     await page.goto('/?satrush=1&ref=share');
-    await expect(page.locator('.sr-cover')).toBeVisible();
-
-    // Play → LINEUP drops straight into a live run (no briefing screen), so the HUD
-    // — and its exit ✕ — is on screen.
-    await page.getByRole('button', { name: 'Play' }).click();
-    await expect(page.locator('.sr-modeselect')).toBeVisible();
-    await page.getByRole('button', { name: /LINEUP/ }).click();
-    await expect(page.locator('.sr-slots')).toBeVisible();
+    await expect(page.locator('.sr-slots')).toBeVisible({ timeout: 20000 });
 
     // The exit is now labelled with its DESTINATION (← MENU) rather than a bare ✕ — see
     // satRush/Hud.jsx. Same control, same behaviour; it just says where it goes now.

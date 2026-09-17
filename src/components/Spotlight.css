@@ -20,6 +20,13 @@
   outline-offset: 2px;
   animation: spotlight-in 220ms ease-out both;
 }
+/* BARE (game surfaces): the keyline without the wash. The wash takes the whole screen to about a
+   quarter brightness, which on a board — where the board IS the screen — reads as a broken render
+   rather than a coach mark. It was the first frame of every deep-link visit. The ring still says
+   "here"; the caption still says what to do. See Spotlight.jsx's `dim` prop. */
+.spotlight-hole.is-bare {
+  box-shadow: none;
+}
 .spotlight-dim {
   position: fixed;
   inset: 0;

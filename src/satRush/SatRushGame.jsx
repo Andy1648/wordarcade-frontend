@@ -45,10 +45,36 @@ import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
 
-export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false }) {
+export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
+
+  // DEEP LINK -> A PLAYABLE RUN, not a cover.
+  //
+  // CHAIN and FUSE hand a /chain/play visitor a live board on the first frame. SAT RUSH handed them
+  // the COVER, and from there a stranger needed four more taps — PLAY, a mode, five briefing cards,
+  // "Start the run" — before a single word appeared. On the one link we point acquisition traffic
+  // at, that is four chances to leave. So a deep-landed session starts a run itself.
+  //
+  // LINEUP, not BRIEFING: it is the mode that "drops straight into the run" (the briefing is a
+  // MANDATORY study screen by design and must not be auto-skipped past — see chooseMode). LINEUP is
+  // also self-explanatory cold: a clue and six candidates, which needs no teaching screen. The mode
+  // picker stays reachable — `autoStart` is retired the moment the player reaches the menu (App's
+  // goHome), so entering SAT from its menu card afterwards shows the cover and the choice as usual.
+  //
+  // startGame() first, so the session counter still bumps exactly once per run start (the lexicon
+  // scheduler reads it); it lands on 'mode' for one synchronous beat before chooseMode leaves it.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartedRef.current) return;
+    if (view.phase !== 'start') return;
+    autoStartedRef.current = true;
+    game.startGame();
+    game.chooseMode('lineup');
+    // game is a stable hook object; this fires once, guarded by the ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, view.phase]);
 
   // WINS: BANK per cleared word as the run plays (§2) so leaving mid-run keeps what was
   // earned — no end-of-run payout (that would double-pay). `view.cleared` is the authoritative
