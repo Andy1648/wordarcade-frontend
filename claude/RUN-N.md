@@ -148,11 +148,19 @@ pipeline, take the branch's feature code* — not 16 separate judgement calls.
 | `refactor/app-split-6` | 1 | `App.jsx` only |
 | `feat/daily-2`, `feat/sat-srs-2`, `fix/willchange-gate`, `fix/parity-wait`, + the report branches | 0 | clean |
 
-### 5.2 `feat/solo-slabs` — your question about the slab look
+### 5.2 `feat/solo-slabs` — DEFERRED TO THE ASSEMBLY (do not rediscover this)
 **It needs the release assembly, not a merge into the cold-path branch.** `feat/solo-slabs` is 27
 ahead / 8 behind main, is not merged, and overlaps this branch on `App.jsx`, `GameScreen.*`,
 `Solo.css`, `SoloShell.jsx`, `SatRushResults.jsx` and `vite.config.js`. Merging 27 commits of visual
 work into a Tier-1 routing branch would make both unreviewable. It is wave 2 of `release/prod-2`.
+
+**Decision, so the next session does not re-derive it:** the slab + forged-ribbon look is NOT in
+`release/prod-2` and is NOT missing by accident. Any branch off the cold-visitor path will show the
+PRE-SLAB CHAIN board (flat teal letter, dotted placeholder boxes) and that is expected. The six
+overlapping files are `src/App.jsx`, `src/components/GameScreen.{jsx,css}`, `src/solo/Solo.css`,
+`src/solo/SoloShell.jsx`, `src/satRush/SatRushResults.jsx` and `vite.config.js` — the same files the
+cold-visitor merge already resolved by hand, so doing it twice on two branches would be the same
+work twice. It goes in with wave 2, under the one media-migration resolution rule.
 
 ### 5.3 What the assembly caught on contact — three defects, none visible on any branch alone
 
