@@ -16,6 +16,7 @@ import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progres
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny } from '../progress/shop';
+import { isModeLocked } from '../progress/modeAccess';
 import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
@@ -740,7 +741,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   onSelect={handleOpenDialog}
                   onLockedSelect={handleLockedSelect}
                   onHover={handleHover}
-                  locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
+                  // Level gate OR an earlier play of the mode (deep links open a gated
+                  // mode with no level check) — see progress/modeAccess.js.
+                  locked={isModeLocked(game, xpProgress.level)}
                   playerLevel={xpProgress.level}
                 />
               ))}

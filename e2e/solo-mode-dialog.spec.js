@@ -4,7 +4,7 @@
 import { test, expect } from '@playwright/test';
 import { gotoMenu } from './support/backendMock.js';
 
-// Seed a high level before first paint so CHAIN (LV10) and FUSE (LV20) are unlocked.
+// Seed a high level before first paint so CHAIN (LV2) and FUSE (LV3) are unlocked.
 async function gotoUnlockedMenu(page) {
   await page.addInitScript(() => {
     try { localStorage.setItem('taw.xp', '5000000'); } catch { /* ignore */ }

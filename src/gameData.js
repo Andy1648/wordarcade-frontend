@@ -79,7 +79,13 @@ const CHAIN_GAME = {
   artKey: 'ChainArt',
   name: 'CHAIN',
   description: "EACH WORD STARTS ON THE LAST ONE'S LETTER.",
-  unlockLevel: 20, // gated: visible-but-locked until LV 20 (raised from 15 per fix/qa-sweep §9 — ~3420 letters at the current curve; was LV15 ≈ 1088)
+  // LOWERED 20 -> 2 (was 15 before 150a885 raised it). The LV15->20 / LV22->25 raise was
+  // pacing set by feel, with no players to pace against; 150a885's own message flagged FUSE's
+  // jump as "a ~6x jump — flagged" and then walked it back from 30 to 25. None of that
+  // reasoning survives contact with an acquisition push: a gate measured in thousands of typed
+  // letters is a wall in front of a first session, not a reward curve. CHAIN and FUSE are now
+  // reachable inside the first couple of games — see FUSE below and progress/modeAccess.js.
+  unlockLevel: 2,
   baseColor: '#2EFFE0', // teal field (the mode's accent)
   iconBg: '#0D2B28', // dark teal so the cyan link icon reads
   badgeText: 'SOLO',
@@ -94,7 +100,7 @@ const FUSE_GAME = {
   artKey: 'FuseArt',
   name: 'FUSE',
   description: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
-  unlockLevel: 25, // gated: visible-but-locked until LV 25 (fix/qa-sweep §10 — ~10538 letters; LV30's ~32262 was ~100 sessions, too steep for an existing mode). Was LV22 ≈ 5371.
+  unlockLevel: 3, // LOWERED 25 -> 3 — same finding as CHAIN above (150a885 set 25 by feel, pre-players).
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',

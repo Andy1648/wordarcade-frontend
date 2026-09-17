@@ -83,7 +83,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
 
   test('CHAIN locked preview', async ({ page }) => {
     const errors = [];
-    await menu(page, errors, 1); // below LV15
+    await menu(page, errors, 1); // below the LV2 gate, unplayed → locked
     await card(page, 'chain').click({ force: true });
     await expect(page.locator('.lp-panel')).toBeVisible();
     await page.waitForTimeout(300);
@@ -92,7 +92,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
 
   test('FUSE locked preview', async ({ page }) => {
     const errors = [];
-    await menu(page, errors, 16); // below LV22
+    await menu(page, errors, 2); // below the LV3 gate, unplayed → locked
     await card(page, 'fuse').click({ force: true });
     await expect(page.locator('.lp-panel')).toBeVisible();
     await page.waitForTimeout(300);

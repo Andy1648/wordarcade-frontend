@@ -1,5 +1,5 @@
 // e2e/mode-preview.spec.js — item 2 (real worked examples in the mode dialogs) and item 4
-// (raised gates: CHAIN LV15, FUSE LV22, with the locked-card copy updated).
+// (the CHAIN / FUSE level gates, plus the play-based bypass).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
@@ -28,7 +28,7 @@ test.describe('item 2 — worked examples', () => {
   });
 
   test('CHAIN dialog shows the E → EAGLE → ELEPHANT → TIGER chain', async ({ page }) => {
-    await menu(page, 20); // past LV15 → unlocked
+    await menu(page, 20); // well past the LV2 gate → unlocked
     await card(page, 'chain').click();
     const ex = page.locator('.mode-dialog-shell .mode-ex');
     await expect(ex).toBeVisible();
@@ -37,7 +37,7 @@ test.describe('item 2 — worked examples', () => {
   });
 
   test('FUSE locked preview shows AIN → RAIN / AGAIN / MOUNTAIN', async ({ page }) => {
-    await menu(page, 16); // below LV22 → FUSE locked → preview dialog
+    await menu(page, 2); // below LV3 → FUSE locked → preview dialog
     await card(page, 'fuse').click({ force: true }); // locked card is aria-disabled but clickable
     const lp = page.locator('.lp-panel');
     await expect(lp).toBeVisible();
@@ -47,29 +47,65 @@ test.describe('item 2 — worked examples', () => {
   });
 });
 
-test.describe('item 4 — raised gates', () => {
-  // Gates were raised again after this spec was written: gameData.js has CHAIN unlockLevel 20
-  // (fix/qa-sweep §9, was 15) and FUSE unlockLevel 25 (fix/qa-sweep §10, was 22). Source of truth
-  // is gameData.js — update these to match it, not the reverse.
-  test('CHAIN gate is LV20: locked at 19, unlocked at 20', async ({ page }) => {
-    await menu(page, 19);
+test.describe('item 4 — the CHAIN / FUSE gates', () => {
+  // Gates were LOWERED (CHAIN 20 -> 2, FUSE 25 -> 3): the raised values were pacing set by
+  // feel with no players to pace against, and a gate measured in thousands of typed letters
+  // is a wall in front of a first session. Source of truth is gameData.js — update these to
+  // match it, not the reverse.
+  test('CHAIN gate is LV2: locked at 1', async ({ page }) => {
+    await menu(page, 1);
     await expect(card(page, 'chain')).toHaveClass(/locked/);
-    await expect(card(page, 'chain')).toContainText('UNLOCKS AT LV 20');
+    await expect(card(page, 'chain')).toContainText('UNLOCKS AT LV 2');
+    await expect(card(page, 'chain')).toContainText('1 TO GO'); // reachable, not "20 TO GO"
   });
 
-  test('CHAIN unlocked at LV20', async ({ page }) => {
-    await menu(page, 20);
+  test('CHAIN unlocked at LV2', async ({ page }) => {
+    await menu(page, 2);
     await expect(card(page, 'chain')).not.toHaveClass(/locked/);
   });
 
-  test('FUSE gate is LV25: locked at 24 with updated copy, unlocked at 25', async ({ page }) => {
-    await menu(page, 24);
+  test('FUSE gate is LV3: locked at 2', async ({ page }) => {
+    await menu(page, 2);
     await expect(card(page, 'fuse')).toHaveClass(/locked/);
-    await expect(card(page, 'fuse')).toContainText('UNLOCKS AT LV 25');
+    await expect(card(page, 'fuse')).toContainText('UNLOCKS AT LV 3');
   });
 
-  test('FUSE unlocked at LV25', async ({ page }) => {
-    await menu(page, 25);
+  test('FUSE unlocked at LV3', async ({ page }) => {
+    await menu(page, 3);
     await expect(card(page, 'fuse')).not.toHaveClass(/locked/);
+  });
+
+  test('at LV0 both gated cards show a reachable TO-GO path', async ({ page }) => {
+    await menu(page, 0);
+    await expect(card(page, 'chain')).toContainText('2 TO GO');
+    await expect(card(page, 'fuse')).toContainText('3 TO GO');
+  });
+});
+
+// The contradiction fix: a deep link (/chain/play, ?chain=1) opens a gated mode with NO level
+// check, so a level-0 visitor can play a full run — the menu must not then call that mode
+// locked. The run counters (taw.chain.runs / taw.fuse.runs, bumped on run start) are the
+// "has played" fact; see src/progress/modeAccess.js.
+test.describe('play-based bypass', () => {
+  for (const [id, key] of [['chain', 'taw.chain.runs'], ['fuse', 'taw.fuse.runs']]) {
+    test(`${id}: a played mode is never locked, even at LV0`, async ({ page }) => {
+      await installBackendMock(page);
+      await page.addInitScript((k) => {
+        try {
+          localStorage.setItem('taw.xp', JSON.stringify({ lv: 0, into: 0 }));
+          localStorage.setItem(k, '1'); // one run started via the deep link
+        } catch { /* ignore */ }
+      }, key);
+      await page.goto('/?portal=1');
+      await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+      await page.waitForTimeout(400);
+      await expect(card(page, id)).not.toHaveClass(/locked/);
+    });
+  }
+
+  test('an unplayed gated mode at LV0 is still locked (the bypass is not a blanket unlock)', async ({ page }) => {
+    await menu(page, 0);
+    await expect(card(page, 'chain')).toHaveClass(/locked/);
+    await expect(card(page, 'fuse')).toHaveClass(/locked/);
   });
 });
