@@ -35,6 +35,16 @@ const menuWordmark = (page) => page.getByRole('img', { name: 'Type a Word' });
 async function assertLabelledTouchTarget(page, locator, where) {
   await expect(locator).toBeVisible();
   await expect(locator).toContainText('MENU'); // names its destination, not a bare glyph
+  // POLL the box rather than measuring once. A single boundingBox() right after the mode mounts can
+  // land mid-layout — the card is still settling and the control measures short — which made this
+  // assertion flake on /chain/play and /fuse/play under parallel load while always passing on
+  // retry. Polling asserts the SETTLED size, which is the thing the rule is actually about.
+  await expect
+    .poll(async () => {
+      const b = await locator.boundingBox();
+      return b ? Math.min(b.width, b.height) : 0;
+    }, { timeout: 5000, intervals: [100] })
+    .toBeGreaterThanOrEqual(MIN_TOUCH);
   const box = await locator.boundingBox();
   expect(box, `no box for the exit (${where})`).not.toBeNull();
   expect(box.width, `exit width (${where})`).toBeGreaterThanOrEqual(MIN_TOUCH);
@@ -335,7 +345,7 @@ test.describe('a cold visitor on a room-mode deep link gets a game, not a lobby'
 
     test(`${mode.path}: the run ends -> the game-over card -> the menu, ${mode.id} unlocked`, async ({ page }) => {
       test.setTimeout(30000);
-      await page.setViewportSize({ width: 1280, height: 720 }); // deterministic: above the 680px gate
+      await page.setViewportSize({ width: 1280, height: 900 }); // deterministic: above the 780px compaction gate
       const mock = await installBackendMock(page);
       await page.goto(mode.path);
       await mock.waitForSent('add_bot');
@@ -375,9 +385,9 @@ test.describe('a cold visitor on a room-mode deep link gets a game, not a lobby'
       const offer = page.locator('.game-over-offer');
       await expect(offer).toBeVisible();
       await expect(offer.getByRole('button', { name: 'SEE ALL MODES' })).toBeVisible();
-      // The explanatory line is height-gated (it is dropped under 680px tall, where the sticky
-      // footer already crowds the card), so assert it only where it is meant to show.
-      if (page.viewportSize().height > 680) {
+      // The explanatory line is height-gated (dropped at/below 780px tall, where it would push the
+      // sticky footer off a card that must FIT), so assert it only where it is meant to show.
+      if (page.viewportSize().height > 780) {
         await expect(offer.locator('.game-over-offer-line')).toContainText('MORE MODES');
       }
       // It is inside the STICKY actions footer, so it is on screen without scrolling.

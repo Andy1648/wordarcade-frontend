@@ -58,6 +58,14 @@ async function assertReachableAndLabelled(page, vp) {
   const btn = exitBtn(page);
   await expect(btn).toBeVisible();
   await expect(btn).toContainText('MENU'); // labelled: names its destination, not a bare glyph
+  // Poll for the SETTLED size — a single measurement right after mount can land mid-layout and
+  // read short (this flaked at 320x640 / 390x844 with a raised keyboard under parallel load).
+  await expect
+    .poll(async () => {
+      const b = await btn.boundingBox();
+      return b ? Math.min(b.width, b.height) : 0;
+    }, { timeout: 5000, intervals: [100] })
+    .toBeGreaterThanOrEqual(MIN_TOUCH);
   const box = await btn.boundingBox();
   expect(box, 'the exit has no box').not.toBeNull();
   expect(box.width, 'exit width at ' + vp.name).toBeGreaterThanOrEqual(MIN_TOUCH);

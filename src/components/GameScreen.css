@@ -5624,11 +5624,14 @@ html[data-beat='true'] .cb-answer-chip {
   box-shadow: none;
 }
 
-/* SHORT VIEWPORTS: this offer lives in the sticky footer, and on a 640px-tall phone that footer
-   (REMATCH + LEAVE + this) already crowds the card's own content out of view. Drop the line and
-   keep the button — 'SEE ALL MODES' carries the whole meaning on its own. Same height-driven
-   compaction the first-run spotlight uses (.spotlight-caption-sub). */
-@media (max-height: 680px) {
+/* SHORT VIEWPORTS: this offer lives in the sticky footer, and the game-over card is in the NOSCROLL
+   set — it must FIT, not scroll. The explanatory line costs about 30px, which is exactly enough to
+   push the whole footer below the fold on the tall Word Bomb card: measured at 1280x720, the offer
+   ended 24.6px past the viewport. So the line is dropped wherever that margin is not there and the
+   button carries the meaning alone — 'SEE ALL MODES' says it on its own.
+   780px, not 680px: 720 and 768 are both real laptop heights and both overflowed. Same
+   height-driven compaction the first-run spotlight uses (.spotlight-caption-sub). */
+@media (max-height: 780px) {
   .game-over-offer-line {
     display: none;
   }

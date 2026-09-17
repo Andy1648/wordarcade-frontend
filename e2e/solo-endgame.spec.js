@@ -80,6 +80,13 @@ test('CHAIN: the second row offers a DIFFERENT, UNLOCKED mode', async ({ page })
 
   await installBackendMock(page);
   await seedProfile(page);
+  // TRY <MODE> is the MENU-PATH second row. A visitor who deep-landed and has never seen the menu
+  // gets the "SEE ALL MODES" offer in its place instead — one control, never two, because both
+  // answer "what now?" and the stranger needs the whole grid rather than one named mode. So seed
+  // taw.seenMenu: this spec is about the row, not about which of the two a given visitor gets.
+  await page.addInitScript(() => {
+    try { localStorage.setItem('taw.seenMenu', '1'); } catch { /* blocked storage */ }
+  });
   await page.goto('/?chain=1&portal=1');
   await page.locator('.solo-input').waitFor({ state: 'visible', timeout: 20000 });
 
@@ -93,7 +100,8 @@ test('CHAIN: the second row offers a DIFFERENT, UNLOCKED mode', async ({ page })
   expect(label).toMatch(/^TRY /);
   // Never the mode just played.
   expect(label).not.toBe('TRY CHAIN');
-  // Never a LEVEL-GATED mode at LV1 — CHAIN (LV20) and FUSE (LV25) are both out of reach here.
+  // Never a LEVEL-GATED mode at LV1. (The gates are now CHAIN LV2 / FUSE LV3 — fix/unlock-gates
+  // lowered them from 20/25 — so both are still out of reach at LV1 and this assertion stands.)
   expect(label).not.toBe('TRY FUSE');
   // It must be one of the three always-open modes.
   expect(['TRY WORD BOMB', 'TRY CATEGORY BLITZ', 'TRY SAT RUSH']).toContain(label);
