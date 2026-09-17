@@ -12,6 +12,12 @@ import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import Spotlight from '../components/Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
+import SoloExit from './SoloExit.jsx';
+import { GAMES } from '../gameData';
+
+// "N MORE MODES" in the run-over offer — derived from the real menu, never a hardcoded number,
+// so adding or flag-gating a mode can't leave the copy lying. (Minus this one.)
+const MORE_MODES = Math.max(1, GAMES.length - 1);
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -64,6 +70,10 @@ export default function SoloShell({
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
   onExit,
+  // True only for a visitor who LANDED here from a shared link and has never seen the menu
+  // (App: SOLO_LAUNCH for this mode && !hasSeenMenu()). Adds the one-line run-over offer
+  // below. Everyone who arrived via the menu gets the card exactly as before.
+  offerMenu = false,
 }) {
   const inputRef = useRef(null);
 
@@ -90,9 +100,8 @@ export default function SoloShell({
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
-      <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
-        ✕
-      </button>
+      {/* THE WAY OUT — labelled, ≥44×44, shared with the load state (SoloExit.jsx). */}
+      <SoloExit onExit={onExit} />
 
       {/* ONE HUD row: the mode stats (score/mult/links | words/lives) + the wins-earned state,
           all in a single readable line inside the card (NO ORPHAN FIXED UI — the shared wins
@@ -211,6 +220,18 @@ export default function SoloShell({
             >
               {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
             </button>
+            {/* THE OFFER (deep-link visitors only). A stranger who followed a link to this one
+                mode has just finished a run and has no idea the other modes exist — this is the
+                only moment they are looking at a stopped screen. One line, one button, IN PLACE:
+                no modal, no share, and RESTART stays the primary action above it. */}
+            {offerMenu ? (
+              <div className="solo-offer">
+                <p className="solo-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                <button type="button" className="solo-offer-btn" onClick={onExit}>
+                  SEE ALL MODES
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

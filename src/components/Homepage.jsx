@@ -27,7 +27,7 @@ import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 import Spotlight from './Spotlight';
-import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboarding';
+import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import GraffitiTag from './decor/GraffitiTag';
@@ -183,6 +183,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
   const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
+  // "This browser has seen the menu" — recorded on MOUNT (not on any interaction), because the
+  // only reader is the solo run-over offer, which exists to pitch the rest of the game to a
+  // stranger who has never been here. Seeing the menu at all disqualifies you from that pitch.
+  useEffect(() => { markMenuSeen(); }, []);
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);

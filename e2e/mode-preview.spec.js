@@ -75,10 +75,12 @@ test.describe('item 4 — the CHAIN / FUSE gates', () => {
     await expect(card(page, 'fuse')).not.toHaveClass(/locked/);
   });
 
-  test('at LV0 both gated cards show a reachable TO-GO path', async ({ page }) => {
-    await menu(page, 0);
-    await expect(card(page, 'chain')).toContainText('2 TO GO');
-    await expect(card(page, 'fuse')).toContainText('3 TO GO');
+  // LV1 is the floor, not 0 (progress/xp.js clamps with Math.max(1, ...)), so this is literally
+  // what a fresh player sees on their first look at the menu.
+  test('a brand-new player sees a one-and-two-level path, not a wall', async ({ page }) => {
+    await menu(page, 0); // clamped to LV1 by the store
+    await expect(card(page, 'chain')).toContainText("YOU'RE LV 1 · 1 TO GO");
+    await expect(card(page, 'fuse')).toContainText("YOU'RE LV 1 · 2 TO GO");
   });
 });
 

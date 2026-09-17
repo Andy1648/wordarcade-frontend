@@ -3,13 +3,14 @@
 // the old code left the player stuck on a bare "…" forever with no message and no exit. This shows a
 // human-readable failure with a RETRY and an always-present EXIT, so the screen is never a dead end.
 import './Solo.css';
+import SoloExit from './SoloExit.jsx';
 
 export default function SoloLoadState({ accent, error = false, onRetry, onExit }) {
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }}>
-      <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
-        ✕
-      </button>
+      {/* The SAME labelled exit as the play shell (SoloExit.jsx) — the loading/failure screen is
+          where a stranger is most likely to bail, so it gets the real control, not a glyph. */}
+      <SoloExit onExit={onExit} />
       {error ? (
         <div className="solo-loadstate" role="alert">
           <div className="solo-loadstate-title">COULDN'T LOAD WORDS</div>

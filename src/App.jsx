@@ -72,6 +72,7 @@ import {
   markPlayed,
   getLastSeen,
 } from './visitHistory';
+import { hasSeenMenu } from './progress/onboarding';
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
 import { checkAchievements } from './progress/achievements';
@@ -223,6 +224,16 @@ const SKIP_INTRO =
   SOLO_LAUNCH.chain ||
   SOLO_LAUNCH.fuse ||
   CG_ENTRY; // CrazyGames wants gameplay immediately — no splash/intro chain.
+
+// SOLO DEEP-LAND: this page load came in on a shared CHAIN/FUSE link (a clean /chain or /fuse
+// path, bridged to ?chain=1 / ?fuse=1) rather than through the menu. Read at module load,
+// alongside the flags above, because it describes how the SESSION started — it must not change
+// under us when the player later navigates.
+const SOLO_DEEP_LAND = SOLO_LAUNCH.chain || SOLO_LAUNCH.fuse;
+
+// Has this browser EVER rendered the menu? Read at module load, BEFORE the app can mount the
+// menu and mark it — so a deep-landing visitor is judged on the state they arrived with.
+const SEEN_MENU_AT_BOOT = hasSeenMenu();
 
 // Repeat visitors have already seen the SQUAD-UP / "TYPE FAST. DIE SLOW." intro,
 // so we skip those two animations for them (the loading screen still plays).
@@ -1555,6 +1566,12 @@ function App() {
     prevGameOverRef.current = now;
   }, [gameOver, runTransition]);
 
+  // THE SOLO RUN-OVER OFFER. True only for a visitor who LANDED in CHAIN/FUSE from a shared link
+  // and has never seen the menu: they have no idea the other modes exist, and the run-over card is
+  // the one moment they are looking at a stopped screen. A ref, not state — it is a fact about how
+  // the session started, and goHome retires it the instant they reach the menu.
+  const soloOfferRef = useRef(SOLO_DEEP_LAND && !SEEN_MENU_AT_BOOT);
+
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated
   // name (zero prompts: tap link -> in the room), or start today's daily
@@ -1737,6 +1754,9 @@ function App() {
   // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
+    // They are on their way to the menu: the "you have never seen the menu" pitch is spent,
+    // for the rest of this session as well as (via taw.seenMenu) every later one.
+    soloOfferRef.current = false;
     setLobbyMode(null);
     setLobbyPublicDefault(false);
     setRoom(null);
@@ -2089,10 +2109,10 @@ function App() {
     screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} />;
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
-    screen = <ChainGame onExit={goHome} />;
+    screen = <ChainGame onExit={goHome} offerMenu={soloOfferRef.current} />;
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
-    screen = <FuseGame onExit={goHome} />;
+    screen = <FuseGame onExit={goHome} offerMenu={soloOfferRef.current} />;
   } else if (view === 'cg-arm') {
     // CrazyGames arm state: full play layout, timer frozen, start_game held until
     // the player engages. Only reachable on a ?cg=1 session.

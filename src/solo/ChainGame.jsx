@@ -47,7 +47,7 @@ const CHAIN_MOTIF = (
   </svg>
 );
 
-export default function ChainGame({ onExit }) {
+export default function ChainGame({ onExit, offerMenu = false }) {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0); // bump to retry the word-data fetch
@@ -97,10 +97,10 @@ export default function ChainGame({ onExit }) {
       />
     );
   }
-  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} offerMenu={offerMenu} />;
 }
 
-function ChainInner({ data, createEngine, adapter, onExit }) {
+function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Persisted all-time CHAIN run count. onRunStart fires from the hook on the FIRST run
   // (mount) and on every restart — button OR Enter — so both restart paths are counted
   // (the Enter path lives inside the hook, which is why the bump must live there too).
@@ -372,6 +372,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         ),
       }}
       onExit={onExit}
+      offerMenu={offerMenu}
     />
     </>
   );
