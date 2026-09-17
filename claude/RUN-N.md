@@ -154,11 +154,21 @@ ahead / 8 behind main, is not merged, and overlaps this branch on `App.jsx`, `Ga
 `Solo.css`, `SoloShell.jsx`, `SatRushResults.jsx` and `vite.config.js`. Merging 27 commits of visual
 work into a Tier-1 routing branch would make both unreviewable. It is wave 2 of `release/prod-2`.
 
-### 5.3 What the assembly caught on contact
-`feat/type-scale`'s build-failing gate fired the moment the branches met: **11 hardcoded font-sizes
-and 4 Bungee rules below the display floor**, from *both* sides — including a 9px tag from
-`feat/pause-to-learn`, four px under the 13px accessibility floor. All fixed. This is the argument
-for merging more often, in one paragraph: the gates only protect what they can see.
+### 5.3 What the assembly caught on contact — three defects, none visible on any branch alone
+
+1. **35 layout-matrix failures**, every `locked-fuse` cell across 5 themes x 7 viewports.
+   `fix/econ-perf-attack`'s shared screen map seeds level **16** for the locked FUSE preview —
+   correct when written, because FUSE unlocked at LV25. `fix/unlock-gates` lowered that to **LV3**.
+   At level 16 FUSE is now unlocked, so the card opens the mode dialog instead of the locked
+   preview and every cell timed out. One branch owned the map, the other owned the gate, and they
+   only met here. The level is now derived from `GAMES[].unlockLevel`.
+2. **11 hardcoded font-sizes and 4 Bungee rules below the display floor**, from *both* sides —
+   including a 9px tag from `feat/pause-to-learn`, four px under the 13px accessibility floor.
+   `feat/type-scale`'s build-failing gate fired the moment the branches met.
+3. **The same routing feature, built twice** (see the top of this document).
+
+This is the argument for merging more often, in three bullets: the gates only protect what they can
+see, and a branch that never lands is a gate that never runs against anyone else's work.
 
 ---
 
