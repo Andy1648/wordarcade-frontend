@@ -14,14 +14,15 @@
 //   WORD BOMB  ~8/min  — turn-based; one word per turn then waits for other players (high downtime)
 //   BLITZ     ~14/min  — 60s type-fast sprints separated by round/scoring downtime
 //   SAT RUSH  ~12/min  — paced reveal cadence (stageIntervalMs 2800), one answer per ~5s
-//   FUSE      ~20/min  — continuous solo, short fragments, little downtime
+//   FUSE   DERIVED  — was asserted ~20/min; the engine + the calibrated human measure ~9.3/min
 // (CHAIN comes out ~ the same order, derived below.)
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createChainEngine } from '../src/solo/chain.js';
 import { mulberry32 } from '../src/solo/shared.js';
+import { deriveFuseWpm } from './fuseThroughput.mjs';
 import { WORD_WINS_BASE, WINS_MULT } from '../src/progress/wins.js';
-import { buildRarityIndex, wordRarity } from '../src/progress/rarity.js';
+import { buildRarityIndex, wordRarity, satRarityMult } from '../src/progress/rarity.js';
 import { comboMultiplier } from '../src/progress/combo.js';
 
 const U = (p) => fileURLToPath(new URL(p, import.meta.url));
@@ -44,6 +45,11 @@ const WEIGHT_CAP = 40; // cappedWordMult's ×40 ceiling (rarity×combo×lucky)
 // Which modes fold combo+lucky into the weight. Post feat/parity-sat: ALL FIVE do (WB/Blitz added on
 // feat/parity-wb-blitz, SAT Rush on feat/parity-sat) — so the mechanic is uniform and the spread
 // returns to the compressed band.
+// satRush: TRUE, and now it is true of the LIVE CODE TOO. This file claimed SAT had combo+lucky
+// for as long as it existed while SatRushGame.jsx passed cappedWordMult(rw.mult, 1, 1) — the
+// third model-vs-live mismatch this run found. Rather than make the model match a SAT with no
+// multipliers, the MODE was brought up to parity (feat/sat-parity), because without it no card
+// assignment satisfies Andy's ordering at all. Model and live now agree because the code changed.
 const HAS_COMBO_LUCKY = { wordBomb: true, blitz: true, chain: true, fuse: true, satRush: true };
 function meanWinsPerWord(runs, modeKey) {
   const mult = WINS_MULT[modeKey] || 1;
@@ -51,7 +57,12 @@ function meanWinsPerWord(runs, modeKey) {
   const per = [];
   for (const words of runs) {
     words.forEach((w, i) => {
-      const rarity = wordRarity(w, idx).mult;
+      // SAT scores rarity RELATIVE TO ITS OWN DECK (the double-count fix, progress/rarity.js):
+      // every word it serves is rare by construction, so the raw multiplier paid it a flat ~2.79x
+      // the player never chose. Mirrors the live SatRushGame.jsx path exactly.
+      const rarity = modeKey === 'satRush'
+        ? satRarityMult(wordRarity(w, idx).mult)
+        : wordRarity(w, idx).mult;
       const weight = cl ? Math.min(WEIGHT_CAP, rarity * comboMultiplier(i + 1) * LUCKY_MEAN) : rarity;
       per.push(WORD_WINS_BASE * mult * weight);
     });
@@ -114,7 +125,11 @@ function freqTypist({ runs = 1000, seed, perRun, topVocab, minLen = 3, maxLen = 
 
 // THROUGHPUT (words/min). CHAIN derived; others documented APPROX (see header).
 const chain = manyChain();
-const THROUGHPUT = { wordBomb: 8, blitz: 14, satRush: 12, chain: chain.wordsPerMin, fuse: 20 };
+const FUSE_WPM = deriveFuseWpm().wordsPerMin;
+// FUSE IS NOW DERIVED, NOT ASSERTED. The ~20/min below was reasoned from the loop ("continuous
+// solo, short fragments, little downtime") and is 2.15x too fast: driving the real engine with
+// the SAME calibrated human this file uses for CHAIN measures ~9.3/min. See fuseThroughput.mjs.
+const THROUGHPUT = { wordBomb: 8, blitz: 14, satRush: 12, chain: chain.wordsPerMin, fuse: FUSE_WPM };
 
 const MODELS = {
   wordBomb: freqTypist({ seed: 11, perRun: 12, topVocab: 12000, minLen: 3 }),

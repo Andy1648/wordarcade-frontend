@@ -42,16 +42,21 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  /* Unified with the app's canonical close ✕ control (Job 9 fix): 40×40, #0d0618 fill, 16px glyph.
-     Was 44×44 on #1a0b2e — a third size/fill for the same escape-hatch role. */
-  width: 40px;
-  height: 40px;
+  /* Unified with the app's canonical close ✕ control: #0d0618 fill, 16px glyph, 3px black outline.
+     Was 44×44 on #1a0b2e — a third size/fill for the same escape-hatch role.
+     SIZE CORRECTED BACK TO 44 (fix/mobile-and-routing, Batch F): this said 40×40 "unified with
+     StatsScreen/ShopScreen", but the control it names — .mode-dialog-close — is 44×44, so 40 was
+     unifying with something that does not exist and left the only way out of CHAIN/FUSE below the
+     44px floor CLAUDE.md sets. The fill and glyph, which are what actually made the three controls
+     look like three controls, are unchanged. Absolutely positioned, so nothing reflows. */
+  width: var(--tap-min);
+  height: var(--tap-min);
   border-radius: 8px;
   background: #0d0618;
   color: #fff;
   border: 3px solid #000;
   box-shadow: 3px 3px 0 #000;
-  font-size: 16px;
+  font-size: var(--fs-body);
   cursor: pointer;
   z-index: 60; /* stays reachable above the game-over overlay (z-50) */
 }
@@ -69,7 +74,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px 20px;
-  font-size: 15px;
+  font-size: var(--fs-label);
   /* Clear the absolute exit ✕ (top-right, 40px + 16px inset) so a wrapped chip never runs
      under it on the narrow card. */
   padding: 0 52px;
@@ -85,12 +90,15 @@
   line-height: 1.1;
 }
 .solo-hud .solo-stat b {
-  font-family: 'Bungee', cursive;
-  font-size: 22px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: var(--solo-accent);
 }
 .solo-hud .solo-stat span {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   opacity: 0.7;
   letter-spacing: 0.08em;
 }
@@ -98,7 +106,9 @@
 /* The multiplier chip (CHAIN) — squash is an event, not idle. */
 .solo-mult {
   font-family: 'Bungee', cursive;
-  font-size: 26px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ffe94a;
   padding: 4px 12px;
   background: #1a0b2e;
@@ -111,7 +121,7 @@
 .solo-lives {
   display: flex;
   gap: 6px;
-  font-size: 22px;
+  font-size: var(--fs-body);
 }
 
 /* Alphabet strip (FUSE) */
@@ -129,10 +139,10 @@
   justify-content: center;
   /* Strip counter to the >=16px floor at >=1366px wide; 12px on phones. aspect-ratio
      fixes the cell height, so this bump costs no vertical space. Static clamp(). */
-  font-size: clamp(12px, 1.2vw, 16px);
+  font-size: var(--fs-body);
   border-radius: 4px;
   background: #1a0b2e;
-  color: #6b5a86;
+  color: #9a8bbf /* contrast: 3.03 -> 6.03 on #1a0b2e */;
   border: 2px solid #000;
 }
 .solo-strip span.is-lit {
@@ -186,7 +196,9 @@
 }
 .solo-clock-num {
   font-family: 'Bungee', cursive;
-  font-size: 26px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   fill: #fff;
 }
 .solo-clock-num.is-red {
@@ -196,12 +208,13 @@
 /* The big center token: the required letter (CHAIN) or the fragment (FUSE). */
 .solo-center {
   font-family: 'Bungee', cursive;
+  letter-spacing: -0.02em;
   /* The hero token stays far above the 44px floor, but a vh term (min) shrinks it on
      SHORT laptops so the column keeps >=24px slack there. Phones keep 14vw (unchanged).
      Static font-size — the tier escalation stays a transform: scale() elsewhere. */
   /* Breathe: the gated solo hero grows on big screens (was capped at 76px). vw/vh-bounded
      so it never overflows a short window. */
-  font-size: clamp(56px, min(16vw, 30vh), 240px);
+  font-size: min(var(--fs-hero), 30vh) /* height guard: was clamped against vh so a SHORT viewport cannot overflow (was clamp(56px, min(16vw, 30vh), 240px)) */;
   line-height: 1;
   color: var(--solo-accent);
   -webkit-text-stroke: clamp(6px, 1vmin, 11px) #000;
@@ -210,7 +223,7 @@
   text-align: center;
 }
 .solo-supply {
-  font-size: clamp(13px, 1.3vw, 16px);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #b9a7d6;
   text-align: center;
@@ -256,7 +269,7 @@
 }
 .solo-out-letter {
   font-family: 'Bungee', cursive;
-  font-size: 34px;
+  font-size: var(--fs-panel);
   line-height: 1;
   color: #fff;
   text-transform: uppercase;
@@ -283,7 +296,7 @@
   background: #ff4b4b;
 }
 .solo-out-cap {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   min-height: 14px;
@@ -312,7 +325,8 @@
   top: 0;
   opacity: 0;
   font-family: 'Bungee', cursive;
-  font-size: 48px;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #2effe0;
   -webkit-text-stroke: 5px #000;
@@ -339,7 +353,7 @@
   /* >=28px input target at >=1366px wide; 20px on phones (min). The fixed 56px height
      means this bump costs no vertical space. Static font-size only — this element keeps
      NO transition/animation/transform/filter/will-change (nor any ancestor up to .solo-root). */
-  font-size: clamp(20px, 2vw, 34px);
+  font-size: var(--fs-panel);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -356,7 +370,7 @@
   text-transform: none;
   letter-spacing: normal;
   /* smaller than the typed text so the (longer) hint always fits inside the padded box */
-  font-size: 0.78em;
+  font-size: var(--fs-body);
 }
 
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
@@ -386,14 +400,14 @@
 .solo-reason {
   min-height: 20px;
   /* Message line to the >=16px floor at >=1366px wide; 14px on phones. Static clamp(). */
-  font-size: clamp(14px, 1.3vw, 16px);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #ff4b4b;
   text-align: center;
 }
 .solo-armhint {
-  font-size: clamp(13px, 1.3vw, 16px);
+  font-size: var(--fs-body);
   color: #b9a7d6;
   text-align: center;
   max-width: 320px;
@@ -434,12 +448,14 @@
 }
 .solo-deathcard h2 {
   font-family: 'Bungee', cursive;
-  font-size: 28px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: var(--solo-accent);
   margin: 0;
 }
 .solo-death-killed {
-  font-size: 15px;
+  font-size: var(--fs-label);
   color: #ff4b4b;
   font-weight: 700;
 }
@@ -447,7 +463,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 14px;
+  font-size: var(--fs-label);
   color: #d8c9f0;
 }
 
@@ -455,7 +471,8 @@
    (the join letters) are drawn in the accent cyan; everything else stays white. */
 .solo-chain-example {
   font-family: 'Space Mono', monospace;
-  font-size: 15px;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #fff;
@@ -469,8 +486,10 @@
   color: #6b5a86;
 }
 .solo-firstrun-goal {
-  font-family: 'Bungee', cursive;
-  font-size: 16px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   color: #ffe94a;
   letter-spacing: 0.04em;
 }
@@ -478,14 +497,19 @@
   display: flex;
   justify-content: space-between;
   font-family: 'Bungee', cursive;
-  font-size: 18px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #ffe94a;
 }
 .solo-restart {
   height: 52px;
-  font-family: 'Bungee', cursive;
-  font-size: 18px;
-  color: #0d0618;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  color: #ffffff /* contrast: 1.56 -> 12.75 on #3a2b52 */;
   background: #3a2b52;
   border: 4px solid #000;
   border-radius: 8px;
@@ -596,30 +620,23 @@
   gap: 12px;
   overflow: hidden;
 }
-/* faint mode texture behind the deck content */
-.solo-deck-motif {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-.solo-deck-motif .solo-motif {
-  opacity: 0.05;
-}
-.solo-deck > :not(.solo-deck-motif) {
+/* The deck's own motif copy is GONE (Andy's cut) — one motif per screen, not three.
+   The stage still renders one; this band no longer repeats it. */
+.solo-deck > * {
   position: relative;
   z-index: 1;
 }
 .solo-deck-label {
-  font-family: 'Bungee', cursive;
-  font-size: 12px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
   letter-spacing: 0.14em;
   color: #b9a7d6;
   text-transform: uppercase;
 }
 .solo-deck-hint {
-  font-size: clamp(12px, 1.3vw, 15px);
+  font-size: var(--fs-label);
   letter-spacing: 0.05em;
   color: #8a77aa;
   text-align: center;
@@ -646,7 +663,7 @@
   position: relative;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(15px, 1.6vw, 28px);
+  font-size: var(--fs-panel);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
@@ -756,10 +773,10 @@
   justify-content: center;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(13px, 2.2vw, 19px);
+  font-size: var(--fs-body);
   border-radius: 6px;
   background: #1a0b2e;
-  color: #6b5a86;
+  color: #9a8bbf /* contrast: 3.03 -> 6.03 on #1a0b2e */;
   border: 2px solid #000;
   box-shadow: 2px 2px 0 #000;
 }
@@ -769,16 +786,8 @@
 }
 
 /* ===== Composed game-over backdrop ================================================== */
-.solo-over-motif {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-.solo-over-motif .solo-motif {
-  opacity: 0.09;
-}
+/* The death card's motif copy is GONE (Andy's cut) — the third render of one texture on
+   one screen. The card's own scrim + slab carry the composition. */
 .solo-deathcard {
   position: relative;
   z-index: 1;
@@ -810,7 +819,9 @@
 }
 .solo-lucky-label {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 34px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #FFD429;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
@@ -847,13 +858,58 @@
 }
 .solo-loadstate-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(22px, 5vw, 34px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: var(--solo-accent, #2effe0);
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
 }
 .solo-loadstate-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #cdbdf0;
+}
+
+/* The docked LiveStack in CHAIN / FUSE (item 3). Sits in the HUD row; LiveStack hides itself
+   below 900px, so this is a wide-screen-only column. */
+.solo-hud-stack { margin-left: auto; }
+
+/* NARROW/SHORT SOLO COLUMN (fix/mobile-and-routing, Batch F).
+   MEASURED at 320x380 — a 320px phone with the keyboard raised, which is the smallest real
+   configuration in the matrix. The HUD, the stage and the input column all overlapped: .solo-hud
+   ran y=34..149, .solo-stage y=111..287 and .solo-input y=244..300, so the FUSE fragment was drawn
+   on top of the text field the player types into.
+   The root cause is the HUD's `padding: 0 52px`, which exists to clear the absolute exit ✕. The ✕
+   only occupies the TOP-RIGHT corner, so the symmetric 52px on the LEFT buys nothing — and on a
+   320px card it takes the HUD's content width down to ~184px, wrapping it to four rows and 115px
+   of height in a 380px viewport. Keeping the clearance only where the ✕ actually is gives the row
+   back ~52px and the column fits. Symmetric padding is kept above this width, where the HUD does
+   not wrap and staying optically centred is worth more. */
+@media (max-width: 560px) {
+  .solo-hud {
+    padding: 0 52px 0 8px;
+    gap: 6px 14px;
+  }
+}
+/* Below this height the column cannot hold the HUD, the stage AND the input, so .solo-stage was
+   shrunk below its content and the hero token spilled out of its box onto the text field.
+   Arithmetic at 320x380 (usable height 364 after the root's max-height and padding):
+     HUD 109 + gap 10 + stage 176 + gap 10 + input 56 + 28 padding = 389. Over by ~25px.
+   The stage's 176 is mostly the clock, which is a hardcoded width/height="120" SVG attribute in
+   SoloShell.jsx and therefore the same 120px on a 380px phone as on a 1440p monitor. It has a
+   viewBox, so CSS can scale it with no loss. 120 -> 84 returns 36px and the column fits.
+   The hero is NOT the culprit and is left alone: --fs-hero already floors at 42px on a 320px
+   screen, so a vh-based cap on it would change nothing here. */
+@media (max-height: 460px) {
+  .solo-clock {
+    width: 84px;
+    height: 84px;
+  }
+  .solo-stage {
+    gap: 8px;
+    margin-top: 0;
+  }
 }

@@ -91,12 +91,14 @@ test.describe('SAT Rush', () => {
       .toBe(true);
 
     // Results: the retro-print PAGE, the DEAD stamp, the AVG ANTE hero, the words
-    // mastered line, the share bar, and the paper actions.
+    // mastered line, and the paper actions.
+    // The SHARE button assertion is GONE with the share pipeline itself — Andy: "no one in the
+    // history uses that". This was the only place in e2e/ that reached it by ROLE rather than by
+    // class, which is why the class-name sweep over the deletion missed it.
     await expect(page.locator('.sr-respage')).toBeVisible();
     await expect(page.locator('.sr-dead')).toBeVisible();
     await expect(page.locator('.sr-ante-value')).toBeVisible();
     await expect(page.locator('.sr-mastered')).toBeVisible();
-    await expect(page.getByRole('button', { name: /SHARE/ })).toBeVisible();
     const runItBack = page.getByRole('button', { name: 'Run it back' });
     await expect(runItBack).toBeVisible();
 

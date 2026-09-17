@@ -1,0 +1,246 @@
+/* ============================================================================
+   ARCANE PASS — EXAGGERATE, DON'T DECORATE
+   Andy: "exaggerated graphic textures, structural shapes, sharpness, so things
+   POP. Fewer elements, each louder."
+
+   This file holds the five primitives, applied to surfaces that already exist.
+   It adds NO elements: every treatment rides a ::before/::after on a box that is
+   already in the tree, or a background on the box itself. That is the whole point
+   of running it AFTER the subtraction pass — louder is a property of what is left,
+   not a reason to add more.
+
+   FIVE PRIMITIVES
+     1. .arc-facet     posterised hard cel-shadow — two FLAT bands, hard stop, no ramp
+     2. .arc-rim       one bright rim, hero elements ONLY (see the rule below)
+     3. the grain      a single-hue static overlay, one fixed layer, app-wide
+     4. .arc-halftone  a dot field inside large flat shapes, never behind text
+     5. .arc-recede    value grouping — everything that is NOT the hero steps back
+
+   RULES THIS FILE KEEPS
+   - MOTION BUDGET: nothing here animates. No keyframes, no transitions, no
+     will-change. The grain is a static tiled background, not a filter re-run per
+     frame — it rasterises once and is then just pixels.
+   - transform/opacity only elsewhere in the app is untouched; this file adds no
+     animation of any kind, so it cannot move the infinite-animation count.
+   - FLAT COLOUR: every gradient here uses HARD STOPS. A hard-stop gradient paints
+     flat bands — it is a way to get two colours out of one box, not a ramp. There
+     is no blur, no glow and no soft shadow anywhere in this file.
+   - SAT RUSH IS EXCLUDED from the rim and the facet. CLAUDE.md pins it to the
+     retro-print sub-style ("Do NOT restyle it back toward the neon-sticker house
+     look"), and it already has halftone + grain natively in its own ink/paper
+     idiom. Applying the neon house treatment there would be the one change this
+     pass must not make.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   3. THE GRAIN — one fixed layer, whole app, single hue.
+   feTurbulence + feColorMatrix, inlined as a data URI so the browser rasterises
+   the tile ONCE and then repeats pixels. An SVG <filter> live in the tree would
+   be re-evaluated on paint; this cannot be, because by the time it reaches the
+   compositor it is a bitmap.
+   The matrix throws away the noise's colour and keeps only its luminance, pushed
+   into ALPHA against one fixed RGB — that is what makes it single-hue rather than
+   the rainbow static feTurbulence produces raw.
+   --------------------------------------------------------------------------- */
+.arcane-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 2; /* above the wall/backdrop, below every panel and control */
+  pointer-events: none;
+  /* 5% is the whole budget. Grain reads as "printed" at this level and as "dirty
+     screen" past ~8%; it is texture, not an effect. */
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.604 0 0 0 0 0.102 0 0 0 0 1 0.2126 0.7152 0.0722 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+/* Reduced motion does not hide texture — it is static. But a player who asked for
+   less visual noise gets less of it. */
+@media (prefers-reduced-motion: reduce) {
+  .arcane-grain { opacity: 0.03; }
+}
+
+/* ---------------------------------------------------------------------------
+   1. FACETS — posterised hard cel-shadow.
+   A soft fill says "a surface". Two flat bands meeting on a hard diagonal say
+   "a solid object lit from one side", which is the cel-shaded read Andy is after.
+   The band is drawn on an ::after so the host box keeps its own background, its
+   border and its hard offset shadow untouched.
+   --------------------------------------------------------------------------- */
+.arc-facet {
+  position: relative;
+}
+.arc-facet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  /* ONE hard stop at 62%: above it nothing, below it a flat shade. No ramp. */
+  background: linear-gradient(
+    163deg,
+    transparent 0 62%,
+    rgba(0, 0, 0, 0.26) 62% 100%
+  );
+}
+/* A facet must never darken text. Where the host box IS the text container, the
+   band goes behind the content instead of over it. */
+.arc-facet--behind::after {
+  z-index: 0;
+}
+.arc-facet--behind > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   2. THE RIM — exactly one per screen.
+   A bright 2px edge on the single element the screen is ABOUT. This is the
+   loudest thing in the file and it is rationed: if two elements on a screen carry
+   .arc-rim, the rule has failed and the screen has no subject.
+   Implemented as an inset box-shadow so it costs no layout and no extra element.
+   It is STATIC — a rim that pulses is a glow, and glow is what this house style
+   does not do.
+   --------------------------------------------------------------------------- */
+.arc-rim {
+  box-shadow:
+    inset 0 0 0 2px var(--arc-rim-colour, #2effe0),
+    4px 4px 0 #000;
+}
+
+/* ---------------------------------------------------------------------------
+   4. HALFTONE — inside large flat shapes only, NEVER behind text.
+   Hard-stop radial dots: flat ink, no ramp. Applied to a ::before that sits UNDER
+   the content, and only ever attached to surfaces chosen by hand — a blanket rule
+   would put dots behind copy, which is the one place halftone must not go.
+   --------------------------------------------------------------------------- */
+.arc-halftone {
+  position: relative;
+}
+.arc-halftone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.07) 0 1.6px,
+    transparent 1.6px
+  );
+  background-size: 10px 10px;
+}
+.arc-halftone > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   5. VALUE GROUPING — everything that is not the hero steps back.
+   "Exactly one thing per screen is brightest" is not achievable by brightening
+   one element; it is achieved by DIMMING the rest, which is also the cheaper
+   operation (one opacity, composited). Applied to secondary clusters.
+   --------------------------------------------------------------------------- */
+.arc-recede {
+  opacity: 0.82;
+}
+
+/* ============================================================================
+   APPLICATION — which surfaces get which primitive.
+   Everything below targets classes that ALREADY EXIST. No component was given a
+   new wrapper for this pass; that is deliberate, because the pass is supposed to
+   make the survivors louder, not re-crowd the screen with treatment layers.
+   ============================================================================ */
+
+/* ---- FACETS on CARD-SIZED OBJECTS ONLY ------------------------------------
+   FIRST ATTEMPT WAS WRONG AND THE SCREENSHOTS CAUGHT IT. The facet was applied to
+   the big panels too — .shop-panel, .stats-panel, .mode-dialog-shell, the XP slab.
+   On a 900px panel a 163deg hard stop does not read as "lit from one side"; it
+   reads as a diagonal band slicing across the content, and in the shop it cut
+   straight through the PRISM theme card and half-darkened its price button. That
+   is the exact thing this file's own rule forbids ("a facet must never darken
+   text"), and no gate can see it — viewport-integrity measures boxes, not whether
+   a shadow landed on a word.
+   The rule that survives: a facet belongs on something the player reads as ONE
+   SOLID OBJECT at a glance — a card, a death slab. Anything big enough to contain
+   a layout is too big to be lit from one side. */
+.game-card,
+.solo-deathcard {
+  position: relative;
+}
+.game-card::after,
+.solo-deathcard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 3; /* over the card's own art, under its copy (which sits at 4) */
+  background: linear-gradient(
+    163deg,
+    transparent 0 62%,
+    rgba(0, 0, 0, 0.26) 62% 100%
+  );
+}
+/* The game card's own copy must stay on top of its facet. */
+.game-card-face,
+.game-card-lock,
+.game-card-ribbon,
+.game-card-badge {
+  position: relative;
+  z-index: 4;
+}
+
+/* ---- HALFTONE inside large flat shapes, never behind text ----------------- */
+/* Applied to the BACK plate of each surface, which is behind the copy by
+   construction — so the "never behind text" rule is structural here, not a
+   promise. */
+.game-card-art::before,
+.shop-panel > .shop-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgba(0, 0, 0, 0.10) 0 1.6px,
+    transparent 1.6px
+  );
+  background-size: 10px 10px;
+}
+.game-card-art { position: relative; }
+
+/* ---- THE RIM: one per screen, and only on the thing the screen is about ----
+   menu            -> the FEATURED card (the mode the menu is selling)
+   a mode dialog   -> its primary action
+   the shop        -> nothing (a shop with a hero item is a shop that picked for you)
+   in-game WB      -> the prompt box: the one thing the whole turn is about
+   solo            -> the input sill, which is where the run actually happens
+   game over       -> the outcome title
+   Two rims on one screen means the screen has no subject. */
+.game-card-magnet[data-game='word-bomb'] .game-card {
+  --arc-rim-colour: #ffe94a;
+  box-shadow: inset 0 0 0 2px var(--arc-rim-colour), 4px 4px 0 #000;
+}
+.game-combo-box {
+  --arc-rim-colour: #2effe0;
+  box-shadow: inset 0 0 0 2px var(--arc-rim-colour), 4px 4px 0 #000;
+}
+.mode-dialog-btn-create {
+  --arc-rim-colour: #fff;
+  box-shadow: inset 0 0 0 2px var(--arc-rim-colour), 4px 4px 0 #000;
+}
+
+/* ---- VALUE GROUPING: the supporting cast steps back ----------------------
+   Exactly one thing per screen is brightest, achieved by dimming everything that
+   is NOT the subject. These are the secondary clusters on each screen — present,
+   readable, and no longer competing with the thing that matters. */
+.homepage-corner-nav,
+.homepage-footer-links,
+.wb-rail,
+.game-used,
+.solo-hud-stack {
+  opacity: 0.86;
+}

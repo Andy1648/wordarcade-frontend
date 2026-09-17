@@ -1,17 +1,19 @@
 # TYPE A WORD — Handoff / Block State
 
-**Refreshed:** 2026-08-26 (branch `docs/block-state-2` off `main`). Every number below was
-re-verified against source at this checkout, not copied forward. **§12 (Recent changes) is the
-part a returning reader should read first** — it covers the mobile scroll fix, the word-attribution
-race fix, the card-feel pass, the ART VS MOTION rule, the CSS-art audit, and the current test
-counts, none of which the previous handoff knew about. File references are `path:line`.
+**Refreshed:** 2026-09-15 (branch `feat/econ-visible`, after merging `origin/main` — 5 PRs: SEO
+landing pages for Chain/Fuse, AVIF mascots, AVIF loading screen, deferred music, a prod crash fix).
+Every number below was re-verified against source at this checkout, not copied forward.
+**§13 (this run) is the part a returning reader should read first** — the economy was re-fitted,
+the share/COPY-RESULT pipeline was deleted wholesale, and a measurement bug in the economy sims is
+documented there. File references are `path:line`.
 
 ---
 
 ## 1. What this is
 `typeaword.com` — a Newgrounds/FNF-styled word-game arcade. React + Vite frontend (this repo),
 Node + Express + `ws` backend (`chain-reaction-backend`, separate repo). Frontend deploys to
-Vercel, backend to Render. The economy layer is internally labeled **Economy v6**.
+Vercel, backend to Render. The economy layer is internally labeled **Economy v7** (the per-word
+base went 20 -> 100; see §6).
 
 ## 2. Game grid & unlocks (`src/gameData.js`)
 Five modes on the homepage grid:
@@ -21,8 +23,8 @@ Five modes on the homepage grid:
 | WORD BOMB | `word-bomb` | Solo/Multi (WS rooms) | none — always available (flagship, `featured`) |
 | CATEGORY BLITZ | `category-blitz` | Solo/Multi (WS rooms, AI-judged) | none — always available |
 | SAT RUSH | `sat-rush` | Solo | behind build flag `SAT_RUSH_ENABLED` only |
-| CHAIN | `chain` | Solo (no WS) | **unlockLevel 15** (`gameData.js:79`) |
-| FUSE | `fuse` | Solo (no WS) | **unlockLevel 22** (`gameData.js:94`) |
+| CHAIN | `chain` | Solo (no WS) | **unlockLevel 20** (`gameData.js:82`) |
+| FUSE | `fuse` | Solo (no WS) | **unlockLevel 25** (`gameData.js:97`) |
 
 Locked-but-visible cards render a read-only `LockedPreviewDialog.jsx` ("UNLOCKS AT LV N").
 CHAIN/FUSE route straight into the mode like SAT RUSH (no room/WebSocket).
@@ -85,20 +87,30 @@ Past R20: +50 levels & ×10 mult per rebirth (`REBIRTH_PAST_LEVEL_STEP=50`,
 `REBIRTH_PAST_MULT_STEP=10`). A rebirth keeps everything except XP: wins, winsLifetime, cosmetics,
 Key Power tier, lifetimeLetters, taps, rounds all survive (`doRebirth`, `xp.js:156-163`).
 
-## 6. WINS economy (`src/progress/wins.js`)
+## 6. WINS economy (`src/progress/wins.js`) — **Economy v7**
 Wins are the spendable currency (Key Power tiers, cosmetics). **Paid per accepted word**; a round
-pays 0 unless ≥ `MIN_WORDS=3` accepted (`wins.js:15`).
-- `perWordWins = round10(WORD_WINS_BASE(20) × modeMult × difficultyMult × rebirthMult)`
-  (`wins.js:93-99`).
-- `WINS_MULT = { satRush:5, chain:10, fuse:15 }`; Word Bomb / Blitz = ×1 (`wins.js:75`).
-- `DIFFICULTY_MULT = { chill:1.0, easy:1.25, medium:1.5, hard:2.0 }` — Word Bomb / Blitz only
-  (`wins.js:82`); solo modes & SAT Rush pass no difficulty → ×1.
-- **R0 per-word rates:** word-bomb/blitz **20**, SAT **100**, **CHAIN 200/link**, **FUSE 300/word**.
-- `awardWins({wordsAccepted, mode, difficulty})` = `wordsAccepted × perWordWins` (`wins.js:104-108`).
-- Where each mode records: WORD BOMB `App.jsx:1082` (per game), BLITZ `App.jsx:1052` (per round),
-  SAT `SatRushGame.jsx:50`, **CHAIN `ChainGame.jsx:106`** (`state.k` links), **FUSE
-  `FuseGame.jsx:97`** (`state.wordsSolved`). Solo modes fire once/run (guarded by `winRecordedRef`)
-  and show a live tally each render.
+pays 0 unless >= `MIN_WORDS=3` accepted (`wins.js:21`).
+- `WORD_WINS_BASE = 100` (`wins.js:178`) — v7 raised it from 20; the old base was unreadable next
+  to five-figure upgrade prices.
+- `perWordWins()` (`wins.js:218`) = `round10(BASE x mode x difficulty x rebirth x momentum x level
+  x mark)`. It is the LIVE rate — level-, rebirth-, momentum- and mark-scaled. `wordWinsEstimate()`
+  (`wins.js:278`) is the stable BASE preview (mode x difficulty only) used by the mode dialog.
+- **`WINS_MULT = { wordBomb: 2.1, blitz: 1.2, satRush: 1, chain: 2.7, fuse: 2.9 }`** (`wins.js`).
+  Re-fitted 2026-09-15 so the two SOLO score-attack modes LEAD the multiplayer ones — see §13.2.
+  A missing key -> x1.
+- `DIFFICULTY_MULT = { chill:1.0, easy:1.25, medium:1.5, hard:2.0 }` (`wins.js:159`) — Word Bomb /
+  Blitz only; solo modes & SAT Rush pass no difficulty -> x1.
+- **R0/LV1 card rates:** word-bomb **210** · blitz **120** · SAT **100** · CHAIN **270** ·
+  FUSE **290**. At LV40: WB 810 · BLITZ 460 · SAT 390 · CHAIN 1,040 · FUSE 1,120.
+- `bankWordWins()` (`wins.js:448`) is the LIVE path — it banks the delta of the cumulative reward
+  WEIGHT (rarity x combo x lucky, capped x40), snapped to a round 10, and credits through the one
+  `credit()` door so every grant is renderable and summable. `awardWins()` is the pure per-round
+  reference, kept for its unit tests; do NOT call both for one round.
+- **THE PAYOUT INVARIANT:** every grant ends in a zero, and `sum(every wins line the UI showed)
+  === delta(taw.wins)`. The second half is enforced end-to-end by `e2e/no-hidden-wins.spec.js`
+  over a scripted 20-word run, seeded so a collection milestone fires mid-run.
+- Where each mode records: WORD BOMB / BLITZ via `App.jsx`, SAT `SatRushGame.jsx`, CHAIN
+  `ChainGame.jsx`, FUSE `FuseGame.jsx`. Solo modes fire once/run (guarded by `winRecordedRef`).
 
 ## 7. Dictionaries
 **Solo (CHAIN/FUSE)** — space-separated text, lazy-loaded (`src/solo/words.js`, raw via
@@ -111,10 +123,15 @@ pays 0 unless ≥ `MIN_WORDS=3` accepted (`wins.js:15`).
   run ends (`loadSoloAcceptExt`, `words.js:53-69`). Fully-loaded acceptance set ≈ **~270k tokens**
   before Set dedup.
 
-**SAT RUSH** — `src/data/satRush/words.json`, **612 entries** on `main` (structured objects w/
-defs + sentences). Separate corpus from the solo lists. (An unmerged branch `data/sat-words`
-expands this to **956** — schema-validated, dedup'd — but it is NOT on `main`; treat 612 as the
-shipped number until that branch lands.)
+**SAT RUSH** — `src/data/satRush/words.json`, **956 entries**, verified by count at this
+checkout (the `data/sat-words` expansion HAS landed; the old "612 shipped / 956 unmerged" note is
+retired). Each entry is `{ word, pos, tier, gloss, context, root{morpheme,meaning,cousins}, alts,
+costMs }`. Separate corpus from the solo lists.
+
+**THIS IS THE ONLY DEFINITION SOURCE IN THE APP**, and the constraint matters for any
+"teach the player the word" feature: 956 glossed words against an ~88k accept set is **1.0%
+coverage** (919 words overlap). CHAIN / FUSE / Word Bomb / Blitz have no gloss data, and no
+offline dictionary to fall back on. See `claude/RUN-N.md` §5.
 
 ## 8. SAT RUSH engine defaults (`src/satRush/engine.js:25-67` `DEFAULT_CONFIG`)
 `stageIntervalMs 2800`, `spellAlongMs 1100`, `stageMultipliers [5,3,1]`, `lineupStageScale 3.0`,
@@ -127,10 +144,17 @@ engine source as ground truth if they diverge.) Engine is PURE (no timers); the 
 `useSatRushGame.js` owns the clock.
 
 ## 9. Tests & build
-- **Unit:** `npm test` → `node --test "src/**/*.test.js"` → **262 pass / 0 fail**.
-- **E2E:** `npm run test:e2e` → Playwright → **133 tests in 30 spec files**.
+- **Unit:** `npm test` -> `node --test "src/**/*.test.js"` -> **548 pass / 0 fail**.
+- **E2E:** `npx playwright test` -> **1,160 tests across 61 spec files**. Gate with
+  `--workers=4 --retries=2`; the suite is not reproducibly green on a loaded box at higher
+  worker counts.
+- **Lint:** `npm run lint` -> `eslint src` -> **0 errors**, ~31 warnings (the warning floor is
+  pre-existing: mostly `react-hooks/exhaustive-deps` on deliberate dep omissions).
 - Build gate: `npx vite build --logLevel error` (exit 0). Portal build: `npm run build:portal`
-  → `dist-portal/`.
+  -> `dist-portal/`.
+- **A green gate is not proof of a deploy.** See CLAUDE.md: an invalid `vercel.json` broke every
+  production deploy for three days while the whole suite passed, because Vercel rejects a bad
+  config BEFORE building. Verify a marker string in the live bundle.
 
 ## 10. Corrections vs the previously-stale doc
 - **"KE" / "Knowledge Energy" currency does NOT exist.** The only currencies are **XP** (meta
@@ -225,3 +249,56 @@ build); both specs KEEP their build-failing infinite-count assertions. The in-ga
 (`GameScreen.jsx:484`, "≤2 concurrent at critical") is likewise ADVISORY — a smell to investigate,
 not a gate. This is what unblocked the KEY POWER tier particle shards (`feat/purchase-feel`), which
 peak at ~106 concurrent pooled finite animations with zero measured frame cost.
+
+---
+
+## 13. THIS RUN (2026-09-15, `feat/econ-visible`) — read first
+
+Full write-up in `claude/RUN-N.md`. The four things a returning reader must not rediscover:
+
+### 13.1 FUSE's throughput was asserted, not measured — and it distorted two economy re-fits
+`winsmin-sim.mjs` DERIVED CHAIN's words/min from its engine (11.6) but ASSERTED FUSE's at ~20 from
+prose. Driving the real `fuse.js` engine with the SAME calibrated human model CHAIN uses measures
+**9.3/min** (median run dies at ~18 words, ~6.5s/word). The asserted figure was **2.15x too fast**,
+and since `wins/min = throughput x per-word` it made every proposed FUSE rate rise look like it
+would blow the cross-mode spread. That is why fuse was pinned at x1.35 for two re-fits.
+It is now derived once, in **`claude/fuseThroughput.mjs`**, imported by BOTH sims.
+**Do not re-introduce a local copy of a throughput number.**
+
+Same bug class, found alongside it: the two sims modelled the TYPIST differently —
+`econ-visible-sim` drew `rng**2.2` over the whole 31k list (median word rank ~6,845), `winsmin-sim`
+used a frequency-weighted top-12k typist (median rank ~720). The loose picker inflated every
+non-SAT mode's rarity weight and UNDERSTATED the spread (1.89x vs 2.41x on the same table). Both
+now use the frequency-weighted typist.
+
+### 13.2 The economy re-fit, and the corner it sits on
+`WINS_MULT` -> `{ wordBomb: 2.1, blitz: 1.2, satRush: 1, chain: 2.7, fuse: 2.9 }` so the two SOLO
+score-attack modes LEAD the multiplayer ones (LV40: CHAIN 1,040 · FUSE 1,120 vs WB 810 · BLITZ 460),
+with SAT at 83% of Blitz. Cross-mode wins/min spread **1.996x**.
+
+**This fit is on the CORNER of the feasible region — ~0.1% of headroom.** SAT's deck is ~4x rarer
+than a real typist's vocabulary, so at an equal card rate it earns 2.40x per word from rarity ALONE
+while its throughput (12/min) is near Blitz's (14). "SAT within 20% of Blitz" forces the card ratio
+>= 0.80; "spread under 2.00x" forces it <= 0.835 — a ~4-card-point window, and 100/120 is the only
+multiple-of-10 pair in it. Word Bomb's 2 -> 2.1 is not a buff; it lifts the FLOOR of the band up to
+meet SAT. **Treat SAT's multiplier as load-bearing:** nudging it up, or making the deck rarer,
+pushes the spread through 2.00x. The real fix is the DOUBLE COUNT — SAT is paid for rarity twice,
+once by a deck that is rare by construction and again by a multiplier meant to reward CHOOSING an
+uncommon word, which a SAT player never does. Damping SAT's rarity term is a scoring change and
+has NOT been made.
+
+### 13.3 The share / COPY RESULT pipeline is GONE
+13 files deleted (`ShareBar`, `CopyResultButton`, `shareCard`, `cardModel`, `renderCard`, `qr`,
+`copyText`, `shareConfig`, `shareText` + test, `index.js`, and their CSS), plus 6 render sites
+across Word Bomb, Category Blitz (solo + multi), SAT Rush results, CHAIN and FUSE. Net -1,087 lines.
+**Survivors in `src/share/`: `links.js` (room invite links — still live), `resultCard.js`
+(`tierForClockLeft`, solo-run logic), `TryModeRow` (cross-promo, not share).** `REF_URL` was
+inlined into `links.js` VERBATIM so invite behaviour and its PostHog `?ref=share` attribution are
+unchanged.
+
+### 13.4 Two e2e specs had been RED for several merges
+`parity-wb-blitz.spec.js` pinned Blitz at 160/110 — `round10(combo x 100)`, i.e. Blitz at the BASE
+rate — but Blitz has been x1.2 (per-word 120) since the rebalance-2 fit, so the correct figures
+were 190/130. A viewport-only gate never ran these. **Gate with the full suite**
+(`npx playwright test --workers=4 --retries=2`), and recompute pinned payout figures from the live
+table rather than nudging them.

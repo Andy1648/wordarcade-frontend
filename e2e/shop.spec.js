@@ -27,7 +27,11 @@ const openRebirth = (page, seed) => openVia(page, seed, '.homepage-nav-btn.is-re
 
 test.describe('shop', () => {
   test('SHOP icon: no tabs; locked items visible+dimmed; buying deducts wins only and enables equip', async ({ page }) => {
-    await openShop(page, { 'taw.wins': '500', 'taw.winsLifetime': '900', 'taw.xp': '0' });
+    // ECONOMY v7: the cosmetic prices are an exponential x5 ladder (CHROME 600, INFERNO 3000,
+    // VOID 15000, PRISM 75000) rather than v6's near-linear 150/400/900/2000, which the raised
+    // per-word base would have cleared inside the first hour. The purse is seeded off the catalog
+    // so the ladder can be retuned without editing this spec again.
+    await openShop(page, { 'taw.wins': '950', 'taw.winsLifetime': '900', 'taw.xp': '0' });
 
     // The tabs are gone (two icons, two destinations) and the shop view shows no rebirth action.
     await expect(page.locator('.shop-tab')).toHaveCount(0);
@@ -37,21 +41,19 @@ test.describe('shop', () => {
     // All catalog cards render; unaffordable ones are visible-but-dimmed (not hidden).
     // 16 cards = 5 POP STYLES + 6 SOUND PACKS (the original 11 cosmetics) + 5 THEMES
     // (default/midnight/inferno/toxic/prism — themes render as .shop-card too via .shop-theme-card;
-    // feat/themes added them). KEY POWER + WORD SENSE are upgrade TRACKS, not .shop-card, so not counted.
+    // feat/themes added them). KEY POWER + MOMENTUM are upgrade TRACKS, not .shop-card, so not counted.
     await expect(page.locator('.shop-card')).toHaveCount(16);
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });
-    // BUY (150) — feat/purchase-feel made buying an affordable item a HOLD-to-buy (HoldBuyButton,
-    // .shop-hold): it commits when the ~400ms fill animation finishes, not on a plain click. Hold
-    // past the fill, then release.
-    const buy = chrome.locator('.shop-hold');
-    await buy.hover();
-    await page.mouse.down();
-    await page.waitForTimeout(520);
-    await page.mouse.up();
+    // BUY (600) — a plain click (fix/shop-click-buy replaced the unlabelled hold-to-buy gate).
+    await chrome.locator('.shop-buy').click();
     await expect(page.evaluate(() => Number(localStorage.getItem('taw.wins')))).resolves.toBe(350);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsLifetime')))).toBe(900); // untouched
+    // feat/shop-reveal-sticker: the purchase reveal is a MODAL sticker (its backdrop swallows
+    // clicks), so dismiss it before touching the card underneath.
+    await page.locator('.sticker').click();
+    await expect(page.locator('.sticker')).toHaveCount(0);
     await chrome.locator('.shop-card-btn').click(); // now EQUIP (owned → a plain click button again)
     await expect(chrome.locator('.shop-card-tag')).toHaveText('EQUIPPED');
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
@@ -76,7 +78,11 @@ test.describe('shop', () => {
   });
 
   test('REBIRTH icon: eligible past the gate — confirms, zeroes xp, keeps wins + purchases', async ({ page }) => {
-    await openRebirth(page, { 'taw.xp': '60000', 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
+    // ECONOMY v7: the level curve starts at a base of 2000 rather than 100, so the old 60,000
+    // cumulative-XP seed lands well BELOW the LV15 rebirth gate it used to clear. Seeded through
+    // the v5 {lv, into} shape instead of a cumulative total - it says what it means ("this player
+    // is level 15") and cannot be invalidated by another curve retune.
+    await openRebirth(page, { 'taw.xp': JSON.stringify({ lv: 15, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
     const rebirth = page.locator('.shop-rebirth');
     await expect(rebirth).toBeEnabled(); // past the level gate → eligible
 

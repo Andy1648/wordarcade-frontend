@@ -364,6 +364,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      banner slapped on the card, not a hairline mono strip. Bungee, bigger, thick
      black rules top+bottom, and a hard offset shadow so it lifts off the corner. */
   font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  line-height: 0.98;
   font-weight: 400;
   font-size: clamp(11px, 4.4cqw, 17px);
   letter-spacing: 0.02em;
@@ -396,6 +398,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-name {
   margin: 0;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   line-height: 0.9;
   white-space: pre-line;
   /* Scales with the CARD width (cqw) so a long name never clips its bar (viewport-
@@ -427,12 +430,39 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-payout {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(9px, 3.2cqw, 12px);
-  letter-spacing: 0.02em;
+  /* Floor lowered 9px -> 7px alongside the copy shortening ("610 WINS / WORD" -> "610 / WORD").
+     The rate grows with rebirth and has no upper bound, so this line needs BOTH fewer characters
+     and real headroom on the narrowest card: at 360x640 the five cards are ~65px wide and
+     "610 / WORD (x6)" still overflowed its own card at an 8px floor (viewport-integrity, both
+     themes). The tracking also goes to 0 here — at this size 0.02em is ~1px per character of
+     pure overflow, and the string is the one thing on the card that cannot be allowed to clip. */
+  font-size: clamp(7px, 3.2cqw, 12px);
+  letter-spacing: 0;
   color: #ffe9c9;
   white-space: nowrap;
 }
 .game-card-payout-mult { color: #fff; font-weight: 700; }
+
+/* THE UNIT GOES BEFORE THE NUMBERS DO. At 360x640 the five cards are ~65px wide and
+   "610 / WORD (x6)" overflows its own card even with the type pinned at its 7px floor — the
+   string is simply longer than the card. Type size cannot fix it, so something has to leave,
+   and it must not be either NUMBER: the rate is the point, and the (xN) is the only surface in
+   the app showing the COMBINED level x rebirth x momentum x mark multiplier. "/ WORD" is the
+   one part a player can infer, and the XP bar states the full unit once on the same screen.
+   A CONTAINER query, not a viewport one, so it fires on real card width — the card count and
+   the fit-math both move card size independently of viewport. */
+/* STAGED DROP, widest part first. "N WINS / WORD" is the full unit and it stays until the card
+   physically cannot hold it. Below 108px the "/ WORD" half goes (the rate is per word on every
+   card, so it is the inferable half); below 88px "WINS" goes too, leaving the bare number and its
+   multiplier — both of which carry information nothing else on the card carries.
+   A CONTAINER query, not a viewport one: card width is set by the grid's column count and the
+   fit-math, which move independently of the viewport. */
+@container (max-width: 108px) {
+  .game-card-payout-per { display: none; }
+}
+@container (max-width: 88px) {
+  .game-card-payout-unit { display: none; }
+}
 
 /* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
 /* A SOLID cream band across the top so the black "SAT RUSH" ink and the SOLO/LIMITED badges
@@ -500,14 +530,14 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @container (max-width: 170px) {
   .game-card-titlebar { padding: clamp(12px, 9cqw, 20px) clamp(6px, 5cqw, 12px) clamp(6px, 4cqw, 10px); }
   .game-card-masthead { padding: clamp(5px, 4cqw, 10px); }
-  .game-card-name { font-size: clamp(9px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
-  [data-game='sat-rush'] .game-card-name { font-size: clamp(9px, 11cqw, 20px); }
+  .game-card-name { font-size: clamp(13px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
+  [data-game='sat-rush'] .game-card-name { font-size: clamp(13px, 11cqw, 20px); }
   .game-card-badge { font-size: clamp(6px, 4.5cqw, 9px); padding: 2px 5px; letter-spacing: 0.04em; }
   .game-card-payout { font-size: clamp(6px, 4cqw, 9px); }
   .game-card-foot { font-size: clamp(6px, 4cqw, 9px); padding: clamp(4px, 3cqw, 8px) clamp(5px, 3cqw, 10px); }
   .game-card-limited-tag { display: none; } /* keep just the SOLO badge in the masthead */
-  .game-card-ribbon { font-size: clamp(9px, 3.6cqw, 13px); padding: 6px 46px; }
-  .game-card-lock-label { font-size: clamp(9px, 5.5cqw, 14px); }
+  .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 13px); padding: 6px 46px; }
+  .game-card-lock-label { font-size: clamp(13px, 5.5cqw, 14px); }
   .game-card-lock-sub { font-size: clamp(6px, 3.4cqw, 9px); }
   .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(8px, 5cqw, 15px); }
 }
@@ -567,6 +597,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   right: 8px;
   z-index: 4;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-size: clamp(9px, 3cqw, 12px);
   line-height: 1;
   color: #0d0618;
@@ -583,6 +614,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    manga palette. Sits INLINE in the masthead tag row (next to the SOLO badge). */
 .game-card-limited-tag {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
   font-size: clamp(8px, 2.8cqw, 11px);
   letter-spacing: 0.04em;
   color: #C8321E;
@@ -645,6 +678,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 .game-card-lock-label {
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
   font-size: clamp(11px, 4.6cqw, 16px);
   letter-spacing: 0.02em;
   line-height: 1;

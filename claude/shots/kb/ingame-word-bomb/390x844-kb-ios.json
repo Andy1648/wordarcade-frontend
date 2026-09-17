@@ -1,0 +1,54 @@
+{
+  "vw": 390,
+  "vh": 844,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 221,
+        "y": 72,
+        "w": 44,
+        "h": 32
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.game-leave-btn \"LEAVE\"",
+      "rect": {
+        "x": 271,
+        "y": 66,
+        "w": 80,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "input",
+      "what": "input.game-input",
+      "rect": {
+        "x": 41,
+        "y": 752,
+        "w": 233,
+        "h": 53
+      },
+      "flags": [
+        "BEHIND-KB top=752 kb=509"
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "button.game-send-btn \"SEND\"",
+      "rect": {
+        "x": 279,
+        "y": 752,
+        "w": 71,
+        "h": 53
+      },
+      "flags": [
+        "BEHIND-KB top=752 kb=509"
+      ]
+    }
+  ]
+}

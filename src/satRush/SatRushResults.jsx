@@ -3,15 +3,11 @@
 // entry: the CASE CLOSED stamp slams, the score + AVG ANTE
 // count up on the shared JUICE.CELEBRATION timings (same staged sequence Category
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
-// the headline. Once landed, nothing loops (quiet-by-default). ShareBar is kept
 // working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
-import { ShareBar } from '../share';
-import CopyResultButton from '../share/CopyResultButton.jsx';
-import { satRushLink } from '../share/links.js';
-import { SAT_RUSH_COLOR } from './config';
+import TryModeRow from '../share/TryModeRow.jsx';
 
 const C = JUICE.CELEBRATION;
 
@@ -89,26 +85,6 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
   const scoreStr = String(score).padStart(6, '0');
   const hardest = results.hardestWord ? results.hardestWord.word.toUpperCase() : null;
 
-  const shareData = {
-    score: finalScore,
-    cleared: results.cleared,
-    bestStreak: results.bestStreak,
-    avgAnte: finalAnte,
-    hardest: results.hardestWord ? results.hardestWord.word : null,
-    runLog: results.runLog,
-  };
-
-  // Result-card glyph tiers from the ante stage of each CLEARED word (lower stage =
-  // answered earlier = faster; matches the existing satRushGrid semantics). The run
-  // ends on a miss, so ⬛ (killed) shows when the final runLog entry is a miss.
-  const runLog = results.runLog || [];
-  // Stages are only ever 0..2 (stageMultipliers = [5,3,1]), so a cleared word is FAST (answered
-  // at stage 0-1) or MID (rode to the final stage). There is no 'slow' tier — the old `stage>3`
-  // branch was dead code (engine.js:43).
-  const satTiers = runLog
-    .filter((e) => e.ok)
-    .map((e) => (e.stage != null && e.stage <= 1 ? 'fast' : 'mid'));
-  const satKilled = !!(runLog.length && !runLog[runLog.length - 1].ok);
 
   return (
     <div className="sr-screen sr-results">
@@ -197,29 +173,16 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
         )}
 
         <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
-          <div className="sr-share">
-            <ShareBar
-              mode="sat-rush"
-              outcome={{ solo: true }}
-              data={shareData}
-              link={satRushLink()}
-              neon={SAT_RUSH_COLOR}
-            />
-          </div>
-          <CopyResultButton
-            mode="sat-rush"
-            words={results.cleared}
-            points={finalScore}
-            tiers={satTiers}
-            killed={satKilled}
-            className="sr-copy-result"
-          />
           <button type="button" className="sr-btn" onClick={onAgain}>
             Run it back
           </button>
           <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
             Menu
           </button>
+          {/* SECOND ROW (feat/solo-endgame): a DIFFERENT unlocked mode — the one played least —
+              so the run ends on a fork, not only "run it back". Nothing renders when every other
+              mode is still locked. */}
+          <TryModeRow current="sat-rush" />
         </div>
       </div>
     </div>

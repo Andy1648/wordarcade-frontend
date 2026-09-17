@@ -10,6 +10,7 @@ import {
   COMBO_STEP,
 } from './combo.js';
 import { awardWins, perWordWins } from './wins.js';
+import { round10 } from './xp.js';
 
 test('comboMultiplier climbs +0.1 per accept and caps at 3.0', () => {
   assert.equal(comboMultiplier(0), 1);
@@ -68,14 +69,14 @@ test('combo multiplies the payout via wins.js weightedWords (stacks on the per-w
   for (let i = 0; i < 5; i++) c = comboAccept(c);
   assert.ok(Math.abs(c.weighted - 6.5) < 1e-9);
 
-  const rate = perWordWins({ mode: 'fuse', rebirthCount: 0 }); // 20 at R0 (fuse ×1 post-rebalance)
-  const plain = awardWins({ mode: 'fuse', wordsAccepted: 5, rebirthCount: 0 });
-  const boosted = awardWins({ mode: 'fuse', wordsAccepted: 5, weightedWords: c.weighted, rebirthCount: 0 });
+  const rate = perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 }); // 100 at R0/LV1 (fuse ×1)
+  const plain = awardWins({ mode: 'fuse', wordsAccepted: 5, rebirthCount: 0, level: 1 });
+  const boosted = awardWins({ mode: 'fuse', wordsAccepted: 5, weightedWords: c.weighted, rebirthCount: 0, level: 1 });
 
   assert.equal(plain, 5 * rate); // no combo -> exactly count × rate
   assert.ok(boosted > plain); // combo pays more
-  // round10(6.5 × 20) = round10(130) = 130
-  assert.equal(boosted, 130);
+  // v7: the per-word rate is 100, so the weighted 6.5 pays round10(6.5 × 100).
+  assert.equal(boosted, round10(c.weighted * rate));
 });
 
 test('weightedWords never lowers a payout below the plain count, and the <3 gate still applies', () => {

@@ -1,0 +1,53 @@
+/* values.css — VALUE GROUPING. One accent per screen, everything else steps back.
+   ============================================================================
+   THE PROBLEM THIS SOLVES
+   Every screen was painting in all nine palette colours at once: the room screen alone
+   had ten saturated fills (#FFE94A start button, #2EFFE0 chips, #ff4fa3 leave, #FF5C5C
+   kick, ...). When everything is hot, nothing is — the eye has no entry point and the
+   screen reads as a grid of equal-weight boxes.
+
+   THE SYSTEM - three values, and only three:
+     --v-field   the ground the screen sits on. Recedes. Never carries text weight.
+     --v-panel   one desaturated step up. Cards, chips, tracks, secondary buttons.
+     --v-accent  the screen's ONE hot colour.
+
+   THE RULE: on any given screen EXACTLY ONE element carries --v-accent. That element is
+   the thing you want pressed. Everything else - including things that used to be a
+   different neon - steps down to --v-panel with --v-ink / --v-ink-dim text.
+
+   ENFORCEMENT: src/perf/typeScale.test.js asserts that each screen's CSS file references
+   `var(--v-accent)` on at most ONE selector. Adding a second hot element fails the build.
+
+   HOW A SCREEN OPTS IN: its root element sets --v-accent to that screen's hot colour
+   (below), and the single hero element paints with var(--v-accent). A screen's accent
+   hue is the same hue its mode already owns, so the accent reinforces identity instead
+   of inventing a new colour.
+   ============================================================================ */
+
+/* ---- per-screen accent assignment -------------------------------------------
+   The value is the hue; WHICH element spends it is declared in that screen's own CSS. */
+.homepage-wrap { --v-accent: var(--c-pink); } /* CREATE ROOM */
+.room-wrap { --v-accent: var(--c-cyan); }   /* START */
+.lobby-wrap { --v-accent: var(--c-pink); }  /* CONTINUE */
+.browser-wrap { --v-accent: var(--c-cyan); } /* row JOIN */
+.shop-panel { --v-accent: var(--c-yellow); }
+.credits-wrap { --v-accent: var(--c-pink); }
+.game-wrap { --v-accent: var(--c-yellow); }
+.sr-screen { --v-accent: var(--c-ink-paper); }
+
+/* ---- demotion helpers -------------------------------------------------------
+   A "demoted" surface is the panel value with dimmed ink and a rule-coloured border.
+   This is what a secondary button / chip / nav target looks like after the audit. */
+.v-demote {
+  background: var(--v-panel);
+  color: var(--v-ink-dim);
+  border-color: var(--v-rule);
+}
+
+/* The single accent element. Text on the accent is the dark field, which clears 4.5:1
+   against every accent hue in the palette (pink 6.53, yellow 16.10, cyan 15.62). The
+   one exception is purple, which needs WHITE - see --c-purple in type.css. */
+.v-accent {
+  background: var(--v-accent);
+  color: var(--v-field);
+}

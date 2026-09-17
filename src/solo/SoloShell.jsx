@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+// The standing multiplier readout — CHAIN and FUSE had no payout receipt of any kind before this.
+import LiveStack from '../components/LiveStack';
 import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import Spotlight from '../components/Spotlight';
@@ -40,6 +42,7 @@ function ClockRing({ remaining, tMax, redZone, armed }) {
 export default function SoloShell({
   accent,
   title,
+  mode, // 'chain' | 'fuse' — for the live multiplier stack (LiveStack)
   hud, // top bar node (score/best/multiplier | lives/strip)
   center, // the required letter / the fragment
   motif, // optional static SVG backdrop behind the stage (per-mode; never animated)
@@ -62,7 +65,7 @@ export default function SoloShell({
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
-  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned? }
+  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, winsBonusLines?, tryRow? }
   onExit,
 }) {
   const inputRef = useRef(null);
@@ -106,6 +109,14 @@ export default function SoloShell({
         {phase === 'playing' && (
           <div className="solo-hud-wins">
             <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
+          </div>
+        )}
+        {/* WHAT A WORD IS WORTH HERE, AND WHY. CHAIN and FUSE previously showed a running +N WINS
+            and nothing at all about the multipliers behind it. LiveStack hides itself below 900px
+            (no room for a standing column beside the card), same rule as Word Bomb's receipt rail. */}
+        {phase === 'playing' && mode && (
+          <div className="solo-hud-stack">
+            <LiveStack mode={mode} compact />
           </div>
         )}
       </div>
@@ -172,9 +183,6 @@ export default function SoloShell({
           floating over a dark void. Static content only (no idle animation). */}
       {phase === 'playing' && deck ? (
         <div className="solo-deck">
-          {/* Faint mode motif behind the deck (same node as the stage/over-screen) so the
-              lower band reads as a composed surface, not flat void. */}
-          {motif ? <div className="solo-deck-motif" aria-hidden="true">{motif}</div> : null}
           {deck}
         </div>
       ) : null}
@@ -183,17 +191,16 @@ export default function SoloShell({
 
       {phase === 'over' ? (
         <div className="solo-over">
-          {/* Composed backdrop: the mode motif behind the dim, so the death screen reads as
-              an intentional page (toward Blitz's game-over), not a small card bleeding the
-              abandoned play stage through a thin scrim. Decorative, static. */}
-          {motif ? <div className="solo-over-motif" aria-hidden="true">{motif}</div> : null}
           <div className="solo-deathcard">
             {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
                 solo death card a face + a first read above the copy. */}
             <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />
             {over.card}
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
-            {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} />}
+            {/* The lines prop (Batch G): bonus credits earned during THIS run — a collection milestone
+                is the reachable one — so the card names them instead of the total quietly
+                disagreeing with the balance. Defaults to [] for any caller that passes none. */}
+            {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />}
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
@@ -201,9 +208,6 @@ export default function SoloShell({
                 <span>BEST {over.best}</span>
               </div>
             )}
-            {/* One-tap shareable result receipt (Job 1). Self-suppresses under 3 words and
-                never shows on the first-run tutorial card. */}
-            {over.bare ? null : over.share}
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
@@ -211,6 +215,11 @@ export default function SoloShell({
             >
               {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
             </button>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button naming a DIFFERENT unlocked mode.
+                CHAIN and FUSE are the two score-attack modes AND the only level-gated ones, so
+                dead-ending them on a lone RESTART was the worst case in the game. Hidden on the
+                first-run tutorial card (over.bare), which is already a guided next step. */}
+            {over.bare ? null : over.tryRow}
           </div>
         </div>
       ) : null}

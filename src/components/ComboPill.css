@@ -20,18 +20,20 @@
 }
 .combo-pill-inner.is-hot {
   background: #ff4fa3; /* pink at ×2.0+ */
-  color: #fff;
+  color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */;
 }
 .combo-pill-x {
   font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 18px;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1;
   color: inherit;
 }
 .combo-pill-inner:not(.is-hot) .combo-pill-x { color: #000; }
 .combo-pill-label {
   font-family: 'Space Mono', monospace;
-  font-size: 9px;
+  text-transform: uppercase;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   color: inherit;
   opacity: 0.85;

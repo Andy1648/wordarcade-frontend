@@ -124,10 +124,15 @@ test.describe('menu XP', () => {
     // XP-credit sanity below.
     // eslint-disable-next-line no-console
     console.log(`[advisory] menu peak concurrent finite animations: ${result.peak} — ${JSON.stringify(result.peakNames)}`);
-    // Sanity: the burst actually credited XP and crossed at least one level. ~120 keys × +10
-    // clears several levels (need(1)=110), so the stored level advances past 1 and the residual
-    // xp-into-level stays a clean multiple of 10 (every v5 credit is snapped to ÷10).
-    expect(result.lv).toBeGreaterThanOrEqual(2);
+    // Sanity: the burst actually CREDITED, and every credit is snapped to a round 10.
+    // UPDATED for Economy v7: this used to assert the burst crossed a level (lv >= 2), which held
+    // when need(1) was 110 — ~120 keystrokes at +10 XP cleared several. need(1) is 2230 now (the
+    // v6 base of 100 made the first forty levels a formality nobody noticed passing), so a burst
+    // of menu typing is a fraction of one level, which is the intended shape: the menu is the slow
+    // lane. The invariant this test is really for - that the keystrokes were credited at all, and
+    // credited in clean multiples of 10 - is unchanged and is what it now asserts.
+    expect(result.lv).toBeGreaterThanOrEqual(1);
+    expect(result.into).toBeGreaterThan(0);
     expect(result.into % 10).toBe(0);
   });
 });

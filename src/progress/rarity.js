@@ -65,6 +65,37 @@ export function lengthBonus(len) {
 //   announce is false for COMMON (it stays silent) and true for UNCOMMON+; label is the pop
 //   text e.g. "RARE ×2.5". A missing/empty word or index → COMMON, silent, ×1 (safe default,
 //   so a not-yet-loaded index never inflates or crashes a payout).
+// THE BANDS IN ORDER, lowest to highest — the ladder MARK LINGUIST steps a word up.
+const BAND_LADDER = [...RARITY_BANDS, OBSCURE_BAND];
+
+/**
+ * One rarity band higher than `r`, or `r` unchanged when it is already OBSCURE.
+ *
+ * Used by the LINGUIST mark (progress/marks.js: "12% chance a word counts one RARITY TIER
+ * higher"). The bumped result keeps the word's LENGTH bonus — the mark promises a better BAND,
+ * not a different word — and is re-capped, so a long OBSCURE word cannot exceed the ceiling any
+ * other word could reach.
+ */
+export function bumpRarity(r) {
+  if (!r) return r;
+  const i = BAND_LADDER.findIndex((b) => b.name === r.band);
+  if (i < 0 || i >= BAND_LADDER.length - 1) return r;
+  const band = BAND_LADDER[i + 1];
+  const lengthMult = Number.isFinite(r.lengthMult) && r.lengthMult > 0 ? r.lengthMult : 1;
+  const mult = Math.min(RARITY_MAX_MULT, Math.round(band.mult * lengthMult * 100) / 100);
+  return {
+    ...r,
+    band: band.name,
+    mult,
+    bandMult: band.mult,
+    lengthMult: band.mult > 0 ? mult / band.mult : 1,
+    color: band.color,
+    announce: band.announce,
+    label: band.announce ? `${band.name} ×${mult}` : '',
+    bumped: true,
+  };
+}
+
 export function wordRarity(word, rankIndex) {
   const w = typeof word === 'string' ? word.trim().toLowerCase() : '';
   if (!w || !(rankIndex instanceof Map)) {
@@ -78,10 +109,60 @@ export function wordRarity(word, rankIndex) {
   return {
     band: band.name,
     mult,
+    // The two halves of `mult`, so the payout receipt can name them separately — the player is
+    // told RARITY and LENGTH, not one fused number they cannot act on. bandMult is the band's own
+    // multiplier; lengthMult is whatever the length bonus added ON TOP, expressed as a ratio so
+    // bandMult × lengthMult === mult exactly (including when the ×4.5 ceiling clipped the sum).
+    bandMult: band.mult,
+    lengthMult: band.mult > 0 ? mult / band.mult : 1,
     color: band.color,
     announce: band.announce,
     // e.g. "RARE ×2.5" — the multiplier carries the length bonus, so a long uncommon word
     // reads e.g. "UNCOMMON ×1.8". COMMON returns announce:false so callers show nothing.
     label: band.announce ? `${band.name} ×${mult}` : '',
   };
+}
+
+// ---------------------------------------------------------------------------------------------
+// SAT RUSH: RARITY, RELATIVE TO THE DECK IT CAME FROM
+//
+// THE DOUBLE COUNT THIS FIXES. The per-word rarity multiplier exists to reward a player for
+// CHOOSING an uncommon word — it is a payment for a decision. In SAT Rush the player never
+// chooses: the deck serves the word. So SAT was being paid twice for the same property, once by
+// a deck that is rare by construction and again by a multiplier meant for a choice that mode
+// does not offer. Measured, the whole deck averages 3.42x rarity against a real typist's 1.23x —
+// a flat 2.79x that no SAT player ever earned. That single free factor is what pinned the whole
+// cross-mode economy: it forced SAT's CARD rate down to keep its wins/MIN in band, which is why
+// "SAT near Blitz" and "spread under 2.00x" only met in a ~4-card-point sliver.
+//
+// THE FIX IS NORMALISATION, NOT DELETION. Scoring every SAT word at a flat x1 would remove the
+// double count but also remove the reason to care which word came up. Dividing by the deck's own
+// mean keeps the variance and removes the bias: the AVERAGE SAT word now scores x1, a
+// harder-than-average one scores above, an easier one below. "How rare is this, for a SAT word?"
+// is the question the mode can actually pose, and it is the one a player can feel.
+//
+// The constant is measured, not guessed, and rarity.test.js recomputes it from the shipped deck
+// so it cannot silently drift when words are added.
+export const SAT_DECK_MEAN_RARITY = 3.42;
+
+// What a REAL TYPIST's word is worth in rarity terms, measured the same way: draw from the
+// frequency-weighted top-12k the way a player under a clock actually types, and average the
+// rarity multiplier. Every non-SAT mode collects roughly this much rarity per word.
+export const TYPIST_MEAN_RARITY = 1.23;
+
+/**
+ * A SAT word's rarity weight, normalised so the mode collects the SAME rarity per word as every
+ * other mode — no more (the double count) and no less.
+ *
+ * THE FIRST VERSION OF THIS DIVIDED BY THE DECK MEAN ALONE, which pinned a typical SAT word at
+ * x1.0 — and that over-corrected. The double count was never SAT's whole rarity contribution; it
+ * was the EXCESS over what other modes get. Other modes average 1.23x from rarity, so pushing SAT
+ * to 1.00 did not remove a bias, it created one in the opposite direction, and the economy then
+ * could not seat SAT anywhere near Blitz without blowing the spread.
+ * Scaling by TYPIST_MEAN / DECK_MEAN puts the average SAT word at 1.23 — level with everyone —
+ * while a harder-than-typical SAT word still pays more and an easier one less.
+ */
+export function satRarityMult(rarityMult) {
+  const r = Number.isFinite(rarityMult) && rarityMult > 0 ? rarityMult : SAT_DECK_MEAN_RARITY;
+  return r * (TYPIST_MEAN_RARITY / SAT_DECK_MEAN_RARITY);
 }

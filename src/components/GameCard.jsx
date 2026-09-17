@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
-import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { perWordRateNow } from '../progress/wins';
 import { masteryState } from '../progress/mastery';
 import { formatNum } from '../format';
 import './GameCard.css';
@@ -242,11 +242,29 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
 
   // Payout preview (what each accepted WORD pays in this mode). Shown on every
   // ENABLED, UNLOCKED card — a locked card shows just its mode name in the bar.
-  const payout = game.enabled && !locked && (
+  // ANDY: "Multipliers should SHOW." This printed the BASE rate and appended the REBIRTH
+  // multiplier as a separate "(x3)", so the player had to do the multiplication themselves — and
+  // even then got the wrong answer, because momentum, level and the equipped mark were in neither
+  // number. At R2 / LV40 / momentum 50 the card said "200 WINS / WORD (x9)" for a word that pays
+  // 4,830. It now prints THE RESOLVED RATE — what this mode pays for a word right now — and
+  // annotates it with everything the player has built, as one multiplier.
+  //
+  // THE UNIT READS "N WINS / WORD" AGAIN. I had cut "WINS" during the subtraction pass on the
+  // grounds that it was printed five times on one screen — and Andy filed the result as a defect:
+  // "800 / WORD" does not say what 800 is, and the card is where the player decides which mode to
+  // play. A currency name is not decoration.
+  // The overflow that cut prompted is real and still handled, but with the right lever: the two
+  // halves are separate spans, and the CONTAINER query below drops them in order — " / WORD"
+  // first, then " WINS" — only once the card is genuinely too narrow to hold them. At every width
+  // the player actually sees on a phone or a laptop, the full unit is there.
+  const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
+  const payout = rateNow && (
     <>
-      {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
-      {currentRebirthMult() > 1 && (
-        <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
+      {formatNum(rateNow.rate)}
+      <span className="game-card-payout-unit"> WINS</span>
+      <span className="game-card-payout-per"> / WORD</span>
+      {rateNow.mult !== 1 && (
+        <span className="game-card-payout-mult"> (×{formatNum(rateNow.mult)})</span>
       )}
     </>
   );

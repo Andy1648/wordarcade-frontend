@@ -37,7 +37,9 @@
 .browser-back-btn,
 .browser-refresh-btn {
   font-family: 'Bungee', cursive;
-  font-size: 11px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   background: none;
   padding: 8px 14px;
   cursor: pointer;
@@ -64,7 +66,8 @@
 
 .browser-title {
   font-family: 'Bungee', cursive;
-  font-size: clamp(26px, 4.4vw, 48px);
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
@@ -74,7 +77,8 @@
 
 .browser-subtitle {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  text-transform: uppercase;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #C9B8E8;
@@ -82,8 +86,12 @@
 }
 
 .browser-field-label {
-  font-family: 'Bungee', cursive;
-  font-size: 11px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   color: #2EFFE0;
   margin-bottom: 8px;
   display: block;
@@ -93,7 +101,7 @@
   width: 100%;
   font-family: 'Space Mono', monospace;
   /* >=16px so iOS Safari doesn't auto-zoom on focus. */
-  font-size: clamp(16px, 1.5vw, 20px);
+  font-size: var(--fs-body);
   font-weight: 700;
   color: #1a0b2e;
   background: #fff;
@@ -117,7 +125,9 @@
 
 .browser-error {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   font-weight: 700;
   color: #FF5C5C;
   margin: 6px 0 4px;
@@ -135,9 +145,11 @@
 .browser-code-input {
   flex: 1 1 auto;
   min-width: 0;
-  font-family: 'Bungee', cursive;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   /* >=16px so iOS Safari doesn't auto-zoom on focus. */
-  font-size: clamp(16px, 1.8vw, 22px);
+  font-size: var(--fs-body);
   letter-spacing: 4px;
   text-align: center;
   color: #1a0b2e;
@@ -163,9 +175,11 @@
 .browser-code-join-btn {
   flex: 0 0 auto;
   font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 1.6vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
-  background: #FFE94A;
+  background: var(--v-panel-hi) /* value-group: demoted, was #FFE94A */;
   border: 4px solid #B5A413;
   border-radius: 8px;
   padding: 0 18px;
@@ -203,8 +217,11 @@
 }
 
 .browser-divider span {
-  font-family: 'Bungee', cursive;
-  font-size: 10px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--fs-micro);
   letter-spacing: 1px;
   color: #8a7bb0;
   white-space: nowrap;
@@ -269,8 +286,11 @@
 }
 
 .browser-row-game {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(13px, 1.7vw, 17px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: var(--row-accent, #2EFFE0);
   white-space: nowrap;
   overflow: hidden;
@@ -278,7 +298,7 @@
 }
 
 .browser-row-code {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 1px;
   color: #8a7bb0;
@@ -293,8 +313,11 @@
 }
 
 .browser-row-count {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 1.9vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2EFFE0;
 }
 
@@ -303,7 +326,7 @@
 }
 
 .browser-row-status {
-  font-size: 9px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 1px;
   color: #FFE94A;
@@ -332,7 +355,7 @@
   display: flex;
   justify-content: center;
   gap: 10px;
-  font-size: 18px;
+  font-size: var(--fs-body);
   line-height: 1;
 }
 
@@ -357,8 +380,12 @@
 }
 
 .browser-loading-text {
-  font-family: 'Bungee', cursive;
-  font-size: 13px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   color: #C9B8E8;
   margin-top: 14px;
 }
@@ -368,8 +395,11 @@
 }
 
 .browser-empty-title {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.4vw, 22px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #FFE94A;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -378,7 +408,9 @@
 
 .browser-empty-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   font-weight: 700;
   color: #C9B8E8;
   margin: 10px 0 22px;
@@ -395,7 +427,9 @@
 
 .browser-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(15px, 1.7vw, 20px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   border-radius: 8px;
   border: 4px solid #000;
@@ -412,7 +446,7 @@
 }
 
 .browser-btn-create {
-  background: #2EFFE0;
+  background: var(--v-accent) /* value-group: THE accent element (browser) */;
   border-color: #1A9985;
 }
 
@@ -421,6 +455,6 @@
 @media (max-width: 600px) {
   .browser-wrap { padding: 16px; }
   .browser-box { padding: 22px 16px; transform: none; }
-  .browser-title { font-size: 30px; }
+  .browser-title { font-size: var(--fs-panel); }
   .browser-list { max-height: 52vh; }
 }

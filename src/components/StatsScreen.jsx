@@ -19,6 +19,8 @@ import {
 import { equippedPopMult, equippedSoundMult } from '../progress/shop';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
+import { secretsProgress } from '../progress/achievements';
+import { secretsCollection } from '../secrets/secrets';
 import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
@@ -167,6 +169,12 @@ export default function StatsScreen({ onBack }) {
   // base×rebirth understated it whenever a cosmetic was equipped or a streak was active.)
   const menuXp = xpPerInput({ mode: 'menu', popMult: equippedPopMult(), soundMult: equippedSoundMult() });
 
+  // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
+  // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
+  // discoverable SECRETS (things you do), which used to announce themselves as a centre-screen
+  // sticker over the menu and now live here and at the word they fire on.
+  const hidden = secretsProgress();
+  const secrets = secretsCollection();
   const progression = [
     ['LEVEL', level],
     ['RANK', rankTitle(level)], // Job 5 — the level band's name (a string; see the render below)
@@ -273,6 +281,46 @@ export default function StatsScreen({ onBack }) {
               </div>
             ))}
           </dl>
+
+          {/* SECRETS — a COLLECTION, not a random popup (feat/progression-clarity). Five hidden
+              achievements paid one lump each and then vanished into the achievements grid; nothing
+              ever told you how many there were or that you were missing any. As a row of
+              silhouettes with a found count they read as a set to complete. The unfound ones stay
+              masked — a silhouette board, not a spoiler. */}
+          <h3 className="stats-subtitle">
+            SECRETS <span className="stats-secret-count">{secrets.found} / {secrets.total} FOUND</span>
+          </h3>
+          <div className="stats-secrets">
+            {secrets.items.map((sec) => (
+              <div
+                key={sec.id}
+                className={`stats-secret${sec.earned ? ' is-found' : ''}`}
+                title={sec.earned ? `${sec.name} — ${sec.blurb}` : 'Undiscovered'}
+              >
+                <span className="stats-secret-mark" aria-hidden="true">{sec.earned ? '★' : '?'}</span>
+                <span className="stats-secret-name">{sec.name}</span>
+                <span className="stats-secret-hint">{sec.blurb}</span>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="stats-subtitle">
+            HIDDEN ACHIEVEMENTS{' '}
+            <span className="stats-secret-count">{hidden.found} / {hidden.total} FOUND</span>
+          </h3>
+          <div className="stats-secrets">
+            {hidden.items.map((sec) => (
+              <div
+                key={sec.id}
+                className={`stats-secret${sec.earned ? ' is-found' : ''}`}
+                title={sec.earned ? `${sec.name} — ${sec.hint}` : 'Undiscovered'}
+              >
+                <span className="stats-secret-mark" aria-hidden="true">{sec.earned ? '★' : '?'}</span>
+                <span className="stats-secret-name">{sec.name}</span>
+                <span className="stats-secret-hint">{sec.earned ? sec.hint : 'UNDISCOVERED'}</span>
+              </div>
+            ))}
+          </div>
 
           <h3 className="stats-subtitle">WHERE YOUR XP COMES FROM</h3>
           <dl className="stats-list">
@@ -407,10 +455,6 @@ export default function StatsScreen({ onBack }) {
           {tab === 'collection' && <CollectionBody />}
           {tab === 'achievements' && <AchievementsBody />}
         </div>
-
-        <button type="button" className="stats-back" onClick={onBack}>
-          ← BACK TO MENU
-        </button>
       </div>
     </div>
   );

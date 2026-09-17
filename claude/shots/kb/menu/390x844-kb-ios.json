@@ -1,0 +1,155 @@
+{
+  "vw": 390,
+  "vh": 844,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-shop \"SHOP\"",
+      "rect": {
+        "x": 275,
+        "y": 29,
+        "w": 73,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-rebirth \"REBIRTH\"",
+      "rect": {
+        "x": 245,
+        "y": 81,
+        "w": 103,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-stats \"STATS\"",
+      "rect": {
+        "x": 263,
+        "y": 133,
+        "w": 85,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 304,
+        "y": 185,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card.featured \"WORDFEATUREDSOLO/MULTIWORD B\"",
+      "rect": {
+        "x": 73,
+        "y": 195,
+        "w": 107,
+        "h": 142
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"???AI JUDGEDSOLO/MULTICATEGO\"",
+      "rect": {
+        "x": 211,
+        "y": 195,
+        "w": 107,
+        "h": 142
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"5×SATSAT RUSHSOLOLIMITED610 \"",
+      "rect": {
+        "x": 73,
+        "y": 347,
+        "w": 107,
+        "h": 142
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"ERSOLOCHAIN960 WINS / WORD (\"",
+      "rect": {
+        "x": 211,
+        "y": 347,
+        "w": 107,
+        "h": 142
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"AINSOLOFUSE960 WINS / WORD (\"",
+      "rect": {
+        "x": 142,
+        "y": 499,
+        "w": 107,
+        "h": 142
+      },
+      "flags": [
+        "KB-CUT bottom=641 kb=509"
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-btn.homepage-btn-join \"JOIN ROOM\"",
+      "rect": {
+        "x": 118,
+        "y": 675,
+        "w": 154,
+        "h": 46
+      },
+      "flags": [
+        "BEHIND-KB top=675 kb=509"
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-credits-link \"CREDITS\"",
+      "rect": {
+        "x": 143,
+        "y": 762,
+        "w": 105,
+        "h": 49
+      },
+      "flags": [
+        "BEHIND-KB top=762 kb=509"
+      ]
+    },
+    {
+      "kind": "readout",
+      "what": "span.menu-xp-lv \"40\"",
+      "rect": {
+        "x": 56,
+        "y": 108,
+        "w": 46,
+        "h": 30
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "span.menu-xp-track \"0 / 52.3K\"",
+      "rect": {
+        "x": 112,
+        "y": 101,
+        "w": 124,
+        "h": 44
+      },
+      "flags": []
+    }
+  ]
+}

@@ -17,7 +17,8 @@
 /* ---- Title (smaller than the splash, no heavy animation) ---- */
 .loading-title {
   font-family: 'Bungee Shade', 'Bungee', cursive;
-  font-size: clamp(30px, 5vw, 50px);
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
@@ -166,8 +167,10 @@
   /* transform (translateY(-50%) + scale) is set inline so it grows with progress. */
 }
 
-/* <picture> has no box of its own; block so it cannot introduce an inline baseline
-   gap under the block-level <img> inside the absolutely-positioned wrap. */
+/* The boot mascot is an inline <picture> (AVIF/WebP/PNG) rather than the shared Mascot
+   component, so the boot screen pulls no component CSS and ships no idle loop — the
+   shake below is its only motion. <picture> has no box of its own; block so it cannot
+   introduce an inline baseline gap under the <img> inside the absolute wrap. */
 .loading-mascot-pic {
   display: block;
 }
@@ -250,8 +253,9 @@
 .loading-msg {
   display: inline-block;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 9px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.5px;
   color: #C9B8E8;
   animation: loading-msg-fade 1.5s ease-in-out;
@@ -271,7 +275,9 @@
 
 .loading-error-text {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 3vw, 26px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #FF5C5C;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -281,7 +287,9 @@
 
 .loading-relight {
   font-family: 'Bungee', cursive;
-  font-size: 16px;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #000;
   background: #FFE94A;
   border: 4px solid #B8A020;

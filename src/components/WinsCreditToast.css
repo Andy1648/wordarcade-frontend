@@ -1,0 +1,71 @@
+/* WinsCreditToast.css — the bonus-credit announcements, docked UNDER the wins pill in the same
+   top-right column (.wins-hud top:12 right:16, .wpm-hud top:52). This joins that cluster rather
+   than picking its own corner (CLAUDE.md NO ORPHAN FIXED UI).
+   Flat fill, thick darker outline, hard black offset — house style, no gradients. */
+.wct {
+  position: fixed;
+  top: 92px;
+  right: 16px;
+  z-index: 60;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  max-width: min(64vw, 320px);
+}
+
+.wct-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #9a1aff;
+  border: 3px solid #5d00b0;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  /* One finite entry. transform/opacity only — never width/height/box-shadow. */
+  animation: wct-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.wct-label {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wct-amt {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: #2effe0;
+  white-space: nowrap;
+}
+
+@keyframes wct-in {
+  from { transform: translateX(14px) scale(0.94); opacity: 0; }
+  to   { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+/* Reduced motion: the toast still appears and still says what it paid — only the movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  .wct-row { animation: none; }
+}
+
+/* Phone: the column narrows and the label is allowed to wrap rather than ellipsise to nothing. */
+@media (max-width: 430px) {
+  /* ON A PHONE THE TOAST TAKES THE WINS PILL'S OWN SLOT rather than opening a new one.
+     Measured at 390x844: .wins-hud is y=12..46 and .game-header (audio + LEAVE) is y=66..110,
+     with the fragment slab immediately under it. There is no free band. top:88 put a purple slab
+     across LEAVE; top:132 put it across the FRAGMENT SLAB — the one box the player must read, and
+     the exact defect class this project has hit before (a transient in stage coordinates over the
+     slab). Both were green on every number and visible only in the screenshot.
+     So: same coordinates as the pill, one z-layer above it. The toast is ABOUT wins, so it
+     replaces the wins readout for its 2.6s instead of competing with the header for space —
+     CLAUDE.md NO ORPHAN FIXED UI, taken as "join a cluster", not "find a gap". */
+  .wct { top: 12px; right: 16px; z-index: 61; max-width: calc(100vw - 32px); }
+  .wct-label { white-space: normal; }
+}

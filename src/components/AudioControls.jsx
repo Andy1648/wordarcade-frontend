@@ -20,7 +20,16 @@ import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore'
 // `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
 // fixed positioning so it can sit INSIDE the menu's corner-nav cluster (fix/visual-real item 4),
 // with its popover opening DOWNWARD from the button instead of up.
-export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, onToggleMusic, variant = 'fixed' }) {
+// `sfxMuted` / `onToggleSfx` — the GAME SFX engine's master mute (SoundContext, owned by App).
+// It used to live in a SEPARATE speaker button in the Word Bomb header, which meant two speaker
+// buttons on one screen controlling two different sound systems, and this panel's own comment
+// claiming to be "the ONE corner sound control" while it wasn't. Folded in here; the header now
+// hosts this control instead of a twin. Omit the handler and the row is not rendered (the menu and
+// every non-game screen have no SFX engine mounted).
+export default function AudioControls({
+  accent = '#2EFFE0', musicMuted = false, onToggleMusic, variant = 'fixed',
+  sfxMuted = false, onToggleSfx = null,
+}) {
   const [open, setOpen] = useState(false);
   const [events, setEvents] = useState(() => isEventSoundsEnabled());
   const [clack, setClack] = useState(() => isClackEnabled());
@@ -43,7 +52,7 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
 
   // The corner glyph reflects the master state: struck-through when EVERY sound is off/muted, so
   // "all quiet" reads at a glance without opening the panel.
-  const allOff = musicMuted && !events && !clack;
+  const allOff = musicMuted && !events && !clack && (!onToggleSfx || sfxMuted);
 
   const Toggle = ({ on, onClick, glyph, label }) => (
     <div className="audio-row">
@@ -67,6 +76,9 @@ export default function AudioControls({ accent = '#2EFFE0', musicMuted = false, 
       {open && (
         <div className="audio-panel" role="group" aria-label="Sound settings">
           <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" />
+          {onToggleSfx && (
+            <Toggle on={!sfxMuted} onClick={onToggleSfx} glyph="💥" label="GAME SFX" />
+          )}
           <Toggle on={clack} onClick={toggleClack} glyph="⌨" label="KEYSTROKE" />
           <Toggle on={events} onClick={toggleEvents} glyph="🔊" label="EVENTS" />
           <div className="audio-row audio-row-vol">

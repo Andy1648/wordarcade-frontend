@@ -15,10 +15,19 @@
 // works unchanged. After boot the app canonicalises the URL back to the clean path (see
 // canonicalPathForView), keeping legacy query entries (?cg=1 / ?portal=1 / dev flags) untouched.
 
-// Clean path -> the query the existing readers understand. /word-bomb & /category-blitz have no
-// query: they land on the menu (distinct, crawlable URLs), so the sync below just keeps the path.
+// THE ARTICLE / PLAY SPLIT (2026-09-16). /chain, /fuse and /sat-rush are STATIC landing pages in
+// public/, and Vercel serves a static file BEFORE it applies the SPA rewrite — so in production
+// those paths return the article and #root is never on the page (verified against typeaword.com).
+// The app therefore plays at /<mode>/play, and the canonicalise effect in App.jsx puts THAT in the
+// address bar, so a URL a player copies mid-run opens the game. The article keeps its own path,
+// its 900+ words and its canonical.
 const PATH_TO_QUERY = {
-  '/sat-rush': 'satRush=1&satrush=1', // satRush/config reads satRush; LAUNCH_INTENT reads satrush
+  '/sat-rush/play': 'satRush=1&satrush=1', // satRush/config reads satRush; LAUNCH_INTENT reads satrush
+  '/chain/play': 'chain=1',
+  '/fuse/play': 'fuse=1',
+  // Pre-split share links. Unreachable in production (the static article wins) but they still
+  // resolve on a client-side nav and on any host without public/<mode>/, so keep them working.
+  '/sat-rush': 'satRush=1&satrush=1',
   '/chain': 'chain=1',
   '/fuse': 'fuse=1',
 };
@@ -27,17 +36,23 @@ const PATH_TO_QUERY = {
 // they are valid, distinct landing URLs for the two multiplayer modes.
 export const MENU_PATHS = new Set(['/', '/word-bomb', '/category-blitz']);
 
-// The full set of clean route paths (for tests / the sitemap).
+// The indexable content routes — what the sitemap lists. The /play paths are deliberately NOT here:
+// index.html hard-codes <link rel="canonical" href="https://typeaword.com/">, so every /play URL
+// self-canonicalises to the homepage and never competes with its own article in search.
 export const ROUTE_PATHS = ['/', '/word-bomb', '/category-blitz', '/sat-rush', '/chain', '/fuse'];
+
+// The paths that OPEN A GAME. One per solo mode; the two multiplayer modes have no solo deep link
+// (you create or join a room), so their destination is the menu and they get no /play path.
+export const PLAY_PATHS = ['/sat-rush/play', '/chain/play', '/fuse/play'];
 
 // A view id (or a menu+dialog intent) -> the canonical clean path. Only these views own a URL;
 // everything else (lobby/room-waiting/game/shop/stats/browse/credits/cg-arm) stays under the menu's
 // '/' or the room path and is not deep-linkable on its own.
 const VIEW_TO_PATH = {
   home: '/',
-  'sat-rush': '/sat-rush',
-  chain: '/chain',
-  fuse: '/fuse',
+  'sat-rush': '/sat-rush/play',
+  chain: '/chain/play',
+  fuse: '/fuse/play',
 };
 
 // SAT/CHAIN/FUSE view ids come from their config modules; keep this in sync via the constants the
@@ -118,8 +133,9 @@ export function hasStickyQuery(search = window.location.search) {
 // the back button, which would fight the WS/room lifecycle).
 export function viewIntentFromPath(pathname = window.location.pathname) {
   if (MENU_PATHS.has(pathname)) return 'home';
-  if (pathname === '/sat-rush') return 'sat-rush';
-  if (pathname === '/chain') return 'chain';
-  if (pathname === '/fuse') return 'fuse';
+  // Both forms: /<mode>/play is what the app writes, /<mode> is what a pre-split link carries.
+  if (pathname === '/sat-rush/play' || pathname === '/sat-rush') return 'sat-rush';
+  if (pathname === '/chain/play' || pathname === '/chain') return 'chain';
+  if (pathname === '/fuse/play' || pathname === '/fuse') return 'fuse';
   return null; // /room/* and anything else: leave the app as-is
 }

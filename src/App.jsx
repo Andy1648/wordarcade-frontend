@@ -13,6 +13,7 @@ const GameScreen = lazy(() => import('./components/GameScreen'));
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
+import { markAppReady } from './lib/bootReady.js';
 import AudioControls from './components/AudioControls';
 import { sndWordAccepted, sndWordRejected, sndRunOver, sndAchievement } from './audio/gameSounds';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
@@ -74,11 +75,21 @@ import {
 } from './visitHistory';
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
+// EVERY BONUS WIN, ANNOUNCED WHEN IT LANDS. Mounted once at app level rather than per mode, so a
+// credit that fires in CHAIN, SAT Rush or on the menu is as visible as one in Word Bomb — the
+// hidden 5,000 Andy reported was a collection milestone, which can fire in any mode.
+import WinsCreditToast from './components/WinsCreditToast';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, awardWins } from './progress/wins';
+import { bankWordWins, awardWins, perWordFactors, WORD_WINS_BASE, subscribeWins } from './progress/wins';
+import {
+  buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
+} from './progress/payout';
+import { rarityCue } from './juice/audio';
+import { useWordSecrets } from './secrets/useWordSecrets';
+import { refundWordSense } from './progress/wordSenseRefund';
 import { awardWordXp, cappedWordMult } from './progress/xp';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
@@ -87,8 +98,9 @@ import { freshCombo, comboAccept, comboBreak } from './progress/combo';
 import { makeLuckyOracle, luckyReward, randomSeed } from './progress/luck';
 import { recordAcceptedWord } from './progress/collection';
 import { noteWord, noteSession, noteLucky } from './progress/records';
-import { wordSenseWinsFactor } from './progress/wordSense';
+import { markComboKeep, markRarityStep } from './progress/marks';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
+import { bumpRarity } from './progress/rarity';
 import {
   saveDailyState,
   recordDailyResult,
@@ -430,6 +442,10 @@ function App() {
   // time play starts. Idempotent + single-flight; a failed load degrades to all-COMMON (×1).
   useEffect(() => {
     loadRarityIndex();
+    // WORD SENSE was deleted (feat/cut-secrets-rarity). Anyone who bought tiers gets the full
+    // purchase price back on this boot, once, silently — see progress/wordSenseRefund.js for why
+    // it is silent and why it is safe to call on every load.
+    refundWordSense();
   }, []);
   // WINS attribution (Word Bomb): the words I've submitted this game whose word_result
   // hasn't come back yet. My accepted words are counted by WORD MATCH against this list,
@@ -449,6 +465,30 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
+  // THE RUN'S BONUS LINES. `winsEarnedTotal` is the per-word money only; a run can also take an
+  // achievement payout or a collection milestone, and those used to land in the balance with
+  // nothing on the card. Collected from the wins ledger so the end card can NAME each one instead
+  // of the total quietly disagreeing with the balance (measured: card +15,010, balance +20,010).
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  // The five secrets, moved off the menu and into play. `notePop` is the 1-in-750 golden-word
+  // roll, called once per accepted word; the hook grants the (rebirth+level scaled) wins and hands
+  // back the find for the word landing to show. Only listens while a game is live.
+  const wordSecrets = useWordSecrets({ active: view === 'game' });
+  const wbSecretsRef = useRef(null);
+  wbSecretsRef.current = wordSecrets.notePop;
+  // THE PAYOUT RECEIPT (Economy v7). `lastPayout` is the breakdown of the most recently accepted
+  // word — every multiplier that contributed, named — shown on the accept toast. `payoutLedger` is
+  // the same thing accumulated across the round and read at game over. Both are pure readouts of
+  // amounts wins.js has ALREADY paid (progress/payout.js); neither can quote a multiplier the
+  // player did not get. This is the answer to "I got 40k and couldn't tell where it came from".
+  const [lastPayout, setLastPayout] = useState(null);
+  const [payoutLedger, setPayoutLedger] = useState(null);
+  // THE WORD LANDING (feat/cut-secrets-rarity). The most recently accepted word, its RARITY BAND,
+  // what it paid, and any SECRET it turned up — handed to GameScreen to play out at the word
+  // itself. This is what replaced both the silent rarity multiplier and the centre-screen secret
+  // modal: rarity is only a reward if you can see it happen, and a secret is only a discovery if
+  // it does not arrive as a popup over the button you were aiming at.
+  const [lastLanding, setLastLanding] = useState(null);
   // (overlayReturnRef + shopViewRef moved into hooks/useOverlays.js — refactor/app-split step 1.)
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
@@ -507,6 +547,12 @@ function App() {
     // analytics: a hidden/secret achievement was just discovered (additive; never alters the grant).
     try { if (Array.isArray(newly)) for (const a of newly) if (a && a.secret) evSecretFound(a.id); } catch { /* analytics only */ }
   }, [view]);
+
+  // Collect every BONUS credit as it lands, for the end-of-run itemisation. The toast announces it
+  // at the moment; this remembers it so the card can list it. One subscription for the whole app.
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
 
   // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
@@ -679,6 +725,9 @@ function App() {
   // to the menu, so the loading screen is pre-completed (the socket still
   // connects in the background via useWebSocket).
   const [loadingDone, setLoadingDone] = useState(SKIP_INTRO);
+  // perf/first-load: tell the boot screen the App module has resolved + mounted. bootReady()
+  // (lib/bootReady.js) gates the fuse hand-off on this AND document.fonts.ready.
+  useEffect(() => { markAppReady(); }, []);
 
   // The splash/attract screen is shown after loading, once per session
   // (dismissing it never re-arms it). Portal embeds and deep links skip it, and
@@ -1026,6 +1075,11 @@ function App() {
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
       setWinsEarnedTotal(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
+      setLastPayout(null);
+      setPayoutLedger(null);
+      setLastLanding(null);
+      beginPayoutLedger(lastMessage.payload.gameType || 'word-bomb');
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -1100,7 +1154,9 @@ function App() {
       // COMBO (parity): if I just lost a life (my turn timed out / was skipped), that's a miss —
       // break my payout combo, mirroring the cosmetic streak's miss() on the same life-loss.
       if (lostPlayers.some((p) => p.id === myIdRef.current)) {
-        wbComboRef.current = comboBreak(wbComboRef.current);
+        // MARK — METRONOME (feat/progression-clarity): a chance the broken combo SURVIVES. Rolled
+        // here, at the one place a Word Bomb combo breaks, so the mark cannot silently apply twice.
+        if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current);
       }
       if (lostPlayers.length) {
         const now = Date.now();
@@ -1200,13 +1256,19 @@ function App() {
           // is set for the feed event below and nothing changes; the deferral is only the rare
           // first-~100ms cold path. Instant feedback (chime, count, pill, feed) already fired above.
           const scoreWbWord = () => {
-            const r = rarityOf(wbWord);
+            // MARK — LINGUIST: a chance this word counts one RARITY BAND higher. Rolled BEFORE
+            // anything reads the rarity, so the bumped band is what the payout, the collection,
+            // the feed tag and the receipt all see - one truth per word, never a bonus applied to
+            // the wins and not to the label that explains them.
+            let r = rarityOf(wbWord);
+            if (Math.random() < markRarityStep()) r = bumpRarity(r);
             const prevWbWeight = myWbWeightRef.current;
             // Unified economy (Job 1): the per-word reward weight (rarity × combo × lucky, capped at
             // ×40) feeds BOTH the wins banking below AND an XP grant — parity with CHAIN/FUSE.
             const wbWeight = cappedWordMult(r.mult, wbComboMult, wbLucky.winsWeight);
-            // WINS weight rides WORD SENSE (Job 4) — a wins multiplier on rarity, outside the ×40 cap.
-            myWbWeightRef.current += wbWeight * wordSenseWinsFactor(r.mult);
+            // The weight IS rarity × combo × lucky, capped. WORD SENSE used to multiply the
+            // rarity part again on top of this, invisibly; it is gone (feat/cut-secrets-rarity).
+            myWbWeightRef.current += wbWeight;
             awardWordXp({ mode: 'word-bomb', wordLength: (wbWord || '').trim().length, weight: wbWeight });
             recordAcceptedWord(wbWord, { mode: 'word-bomb', band: r.band }); // Collection (Job 3)
             noteWord(wbWord, r); // permanent record: distinct / obscure / rarest-ever (guarded)
@@ -1222,6 +1284,51 @@ function App() {
               nowWeight: myWbWeightRef.current,
             });
             if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+            // THE RECEIPT. Same factor values the payout just used - perWordFactors() is the one
+            // place the permanent half is defined, and the per-word half is the very multipliers
+            // fed to cappedWordMult above. `cap` is included when the ×40 ceiling actually bit, so
+            // a word that paid less than its multipliers promised says why instead of looking
+            // broken. `total` is the amount BANKED, so the receipt can never disagree with the
+            // ledger even when rounding or the 3-word gate is in play.
+            {
+              const uncapped = r.mult * wbComboMult * wbLucky.winsWeight;
+              const factors = {
+                ...perWordFactors({ mode: 'wordBomb', difficulty: gameDifficultyRef.current }),
+                rarity: r.bandMult ?? r.mult,
+                length: r.lengthMult ?? 1,
+                combo: wbComboMult,
+                lucky: wbLucky.winsWeight,
+                cap: uncapped > 0 ? wbWeight / uncapped : 1,
+              };
+              const payout = buildPayout({ base: WORD_WINS_BASE, factors, total: banked, band: r.band });
+              notePayout({ base: WORD_WINS_BASE, factors, total: banked });
+              setLastPayout({
+                key: wbNowWords,
+                word: wbWord,
+                payout,
+                inactive: inactivePayoutFactors(factors, { band: r.band }),
+              });
+              // THE WORD REACTS. The band, what it paid, and any secret this word turned up, sent
+              // to the field the player is already looking at (components/WordLanding). The
+              // 1-in-750 golden-word roll happens HERE, once per accepted word - it used to be
+              // once per menu keystroke pop.
+              const secret = wbSecretsRef.current ? wbSecretsRef.current() : null;
+              setLastLanding({
+                key: `${wbNowWords}-${wbWord}`,
+                word: wbWord,
+                band: r.band,
+                wins: banked,
+                secret: secret ? { stamp: secret.stamp, wins: secret.wins } : null,
+              });
+              // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
+              // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
+              // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
+              // count the same money twice and make the card claim more than the balance moved.
+              // A rare word has to SOUND different too — an event with no sound is half an event.
+              // COMMON is silent by design (rarityCue ignores it), so the normal accept cue stays
+              // the whole audio story for an ordinary word.
+              rarityCue(secret ? 'SECRET' : r.band);
+            }
             setWinsTally(
               awardWins({ wordsAccepted: myWbAcceptedRef.current, mode: 'wordBomb', difficulty: gameDifficultyRef.current })
             );
@@ -1262,7 +1369,9 @@ function App() {
       } else {
         // Rejections are only sent to the player who submitted, so this is
         // always our own miss.
-        wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
+        // MARK — METRONOME (feat/progression-clarity): a chance the broken combo SURVIVES. Rolled
+        // here, at the one place a Word Bomb combo breaks, so the mark cannot silently apply twice.
+        if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
         sndWordRejected(); // Job 11: soft reject
         setFeedEvents((prev) => [
           ...prev,
@@ -1318,6 +1427,7 @@ function App() {
         setCategoryTotals({}); // fresh game
         categoryTotalsRef.current = {};
         setWinsEarnedTotal(0); // fresh Blitz game → reset the run's earned-wins total
+        setWinsBonusLines([]); // fresh run → the card itemises THIS run only
       }
       if (payload.reroll) {
         setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
@@ -1363,7 +1473,7 @@ function App() {
           const r = rarityOf(blitzAnswer);
           const prevBlitzWeight = myBlitzWeightRef.current;
           const blitzWeight = cappedWordMult(r.mult, blitzComboMult, blitzLucky.winsWeight);
-          myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(r.mult); // WORD SENSE (Job 4)
+          myBlitzWeightRef.current += blitzWeight;
           awardWordXp({ mode: 'category-blitz', wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
           recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
           noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
@@ -1376,6 +1486,22 @@ function App() {
             nowWeight: myBlitzWeightRef.current,
           });
           if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+          // THE ANSWER REACTS, same rule as Word Bomb: rarity is an EVENT at the moment the word
+          // lands, not a multiplier discovered later on a pill. Blitz's field is the same shape,
+          // so the landing goes to the same place.
+          const bSecret = wbSecretsRef.current ? wbSecretsRef.current() : null;
+          setLastLanding({
+            key: `b${blitzNowWords}-${blitzAnswer}`,
+            word: blitzAnswer,
+            band: r.band,
+            wins: banked,
+            secret: bSecret ? { stamp: bSecret.stamp, wins: bSecret.wins } : null,
+          });
+            // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
+            // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
+            // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
+            // count the same money twice and make the card claim more than the balance moved.
+          rarityCue(bSecret ? 'SECRET' : r.band);
           setWinsTally(
             awardWins({ wordsAccepted: myBlitzAcceptedRef.current, mode: 'blitz', difficulty: gameDifficultyRef.current })
           );
@@ -1426,6 +1552,8 @@ function App() {
       } else {
         // WINS: already banked per-word during play (bankWordWins in word_result) — NO
         // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
+        // The receipt for the whole game, read once and frozen for the end screen.
+        setPayoutLedger(readPayoutLedger());
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak
@@ -1973,6 +2101,24 @@ function App() {
   if (view === 'game') {
     screen = (
       <GameScreen
+        /* THE SOUND CONTROL, AS A SLOT. The app-wide fixed bottom-right control is suppressed on
+           this view (see the AudioControls render below) and handed to the board instead, which
+           drops it into its header cluster beside LEAVE. Reason: a 44x44 position:fixed button at
+           right:16/bottom:16 lands exactly on the input row at phone widths -- measured overlapping
+           SEND/SKIP by 20px at both 390x844 and 320x640, i.e. a decorative control sitting on the
+           button that COSTS A LIFE. That is the NO ORPHAN FIXED UI rule verbatim, and the menu
+           already solved it the same way (variant="inline" inside its corner-nav cluster). Passing
+           the element rather than the props keeps GameScreen ignorant of music/SFX wiring. */
+        audioSlot={(
+          <AudioControls
+            variant="inline"
+            accent={SCREEN_ACCENT.game || '#2EFFE0'}
+            musicMuted={music.isMuted}
+            onToggleMusic={music.toggleMute}
+            sfxMuted={sfxMuted}
+            onToggleSfx={() => setSfxMuted((m) => !m)}
+          />
+        )}
         gameState={gameState}
         gameType={gameType}
         gameNonce={gameNonce}
@@ -2022,6 +2168,10 @@ function App() {
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        winsBonusLines={winsBonusLines}
+        lastPayout={lastPayout}
+        payoutLedger={payoutLedger}
+        lastLanding={lastLanding}
       />
     );
   } else if (view === 'room' && room) {
@@ -2264,6 +2414,9 @@ function App() {
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
           )}
+          {/* Bonus-wins announcements (achievements, collection milestones, the return bonus).
+              Transient, pointer-events:none, docked under the wins pill's column. */}
+          <WinsCreditToast />
           {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
           {returnCard && view === 'home' && (
             <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
@@ -2348,7 +2501,13 @@ function App() {
               fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
               menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
               UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
-          {!isHomeMenu && (
+          {/* The game view hosts the control ITSELF (App hands GameScreen an `audioSlot`), so the
+              fixed one is suppressed there — the board's bottom-right corner is where SEND and
+              SKIP live. Every game screen mounts the slot: the board and the Blitz round screens
+              in their header clusters, and the three header-less ones (the "STARTING GAME..."
+              placeholder, the multiplayer scoreboard, the solo results card) in a dock anchored to
+              the board wrapper. e2e/sound-control.spec.js counts them — never zero, never two. */}
+          {!isHomeMenu && view !== 'game' && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}
               musicMuted={music.isMuted}
@@ -2464,6 +2623,15 @@ function App() {
           through). The menu underneath has already mounted + painted, so the knife
           animates over it with no first-frame mount cost. */}
       {showIntro && <TransitionIntro onComplete={handleIntroComplete} />}
+      {/* THE ARCANE GRAIN — one static, single-hue overlay for the whole app.
+          A tiled data-URI SVG (feTurbulence + feColorMatrix), so the browser
+          rasterises the tile once and then repeats pixels: no live filter, no
+          animation, nothing per frame. It sits outside .app-shake for the same
+          reason the cursor trail does — grain that slides with the screen shake
+          reads as a rendering fault. aria-hidden + pointer-events:none, so it is
+          texture and not UI (it is not an orphan CONTROL: nothing can be clicked
+          or focused here). See src/theme/arcane.css. */}
+      <div className="arcane-grain" aria-hidden="true" />
       {/* Cursor trail sits outside .app-shake so the screen shake never moves
           it, and above everything (z 9999). */}
       <CursorTrail />

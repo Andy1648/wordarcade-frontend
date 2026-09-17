@@ -5,11 +5,10 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins } from '../progress/wins.js';
+import { bankWordWins, awardWins, subscribeWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
-import { wordSenseWinsFactor } from '../progress/wordSense.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
@@ -18,7 +17,7 @@ import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
-import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 import poolsRaw from './fragmentPools.json';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
@@ -146,6 +145,21 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // no end-of-run payout (that would double-pay). `s.wordsSolved` is the running count; bank the
   // delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3 words.
   const [winsEarned, setWinsEarned] = useState(0);
+  // BONUS CREDITS THIS RUN (Batch G). A collection milestone can land mid-run — every solo mode
+  // calls recordAcceptedWord, and collection.js grants the milestone through the wins ledger — and
+  // the end card used to show only the per-word money. The balance then moved by far more than the
+  // card claimed, which is exactly the report that produced no-hidden-wins.spec.js: "I be here
+  // getting like 800 but it gives like over 2k". That fix reached Word Bomb and Category Blitz
+  // (App.jsx collects the same lines for GameScreen) and never reached the solo modes.
+  //
+  // Subscribed per RUN rather than reusing App's winsBonusLines: App resets that array on
+  // game_started / round_start, neither of which fires for a solo run, so reusing it would list a
+  // WELCOME BACK bonus from page load — or a milestone from the previous run — on this run's card.
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
+
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -160,6 +174,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       fuseWeightRef.current = 0;
       wpmStart('fuse'); // fresh run → fresh WPM session
       setWinsEarned(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
     }
     if (solved > fuseBankedRef.current) {
       // RARITY: score the just-solved word (s.lastWord, aligned with wordsSolved). A solve bumps
@@ -171,7 +186,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       // matching CHAIN. Capped at ×40 (Job 1). The SAME weight also grants XP (unified loop).
       const rw = rarityOf(s.lastWord);
       const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
-      fuseWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult) + Math.max(0, delta - 1); // WORD SENSE (Job 4)
+      fuseWeightRef.current += wWeight + Math.max(0, delta - 1);
       awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight });
       recordAcceptedWord(s.lastWord, { mode: 'fuse', band: rw.band }); // Collection (Job 3)
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
@@ -244,6 +259,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
     <>
     <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     <SoloShell
+      mode="fuse"
       accent={ACCENT}
       title="Type a word containing the fragment"
       hud={hud}
@@ -276,17 +292,11 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line (Job 14)
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
-        // FUSE score == word count, so pts is redundant — omit it (points=null).
-        share: (
-          <CopyResultButton
-            mode="fuse"
-            words={s.wordsSolved}
-            points={null}
-            tiers={g.tierLog}
-            killed
-            className="solo-share-btn"
-          />
-        ),
+        winsBonusLines,
+        // FUSE's score IS its word count, so a PTS fragment would just repeat the number on the
+        // same line — omit it (points=null). The alphabet strip rides the glyph row instead:
+        // "LETTERS n/26", the live count of distinct letters lit this cycle.
+        tryRow: <TryModeRow current="fuse" />,
       }}
       onExit={onExit}
     />

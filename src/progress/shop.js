@@ -5,27 +5,38 @@
 // only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
-import { getWordSenseTier, saveWordSenseTier, wordSenseCost } from './wordSense.js';
 import { getMomentum, saveMomentum, momentumCost, markMomentumPop, MOMENTUM_MAX } from './momentum.js';
 import { THEMES, isThemeOwned } from '../theme/themes.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
 // xpPerInput stack (the free defaults are ×1). Pop style and sound pack stack multiplicatively.
+// COSMETIC PRICES ARE AN EXPONENTIAL LADDER (Economy v7). v6 priced them 150 / 400 / 900 / 2000
+// - roughly linear steps against an income that compounds, so the whole cosmetic sink was cleared
+// inside the first hour and then paid for nothing for the remaining 199. One ×5 ladder per list,
+// from a base that is one good round: every rung costs five of the last one, so the last item in
+// each list stays a genuine goal instead of pocket change.
+export const COSMETIC_PRICE_STEP = 5;
+export const POP_PRICE_BASE = 600; // the first PAID pop style
+export const SOUND_PRICE_BASE = 1000; // the first PAID sound pack (sounds start higher: 3 free)
+/** The i-th PAID rung of a ladder (i = 1 for the first paid item). */
+export function cosmeticPrice(base, i) {
+  return Math.round(base * Math.pow(COSMETIC_PRICE_STEP, Math.max(0, i - 1)));
+}
 export const POP_STYLES = [
   { id: 'classic', name: 'CLASSIC', price: 0, xpMult: 1.0, blurb: 'Cyan pop' },
-  { id: 'chrome', name: 'CHROME', price: 150, xpMult: 1.05, blurb: 'Chrome shine' },
-  { id: 'inferno', name: 'INFERNO', price: 400, xpMult: 1.1, blurb: 'Orange blaze' },
-  { id: 'void', name: 'VOID', price: 900, xpMult: 1.15, blurb: 'Purple void' },
-  { id: 'prism', name: 'PRISM', price: 2000, xpMult: 1.25, blurb: 'Rainbow split' },
+  { id: 'chrome', name: 'CHROME', price: cosmeticPrice(POP_PRICE_BASE, 1), xpMult: 1.05, blurb: 'Chrome shine' },
+  { id: 'inferno', name: 'INFERNO', price: cosmeticPrice(POP_PRICE_BASE, 2), xpMult: 1.1, blurb: 'Orange blaze' },
+  { id: 'void', name: 'VOID', price: cosmeticPrice(POP_PRICE_BASE, 3), xpMult: 1.15, blurb: 'Purple void' },
+  { id: 'prism', name: 'PRISM', price: cosmeticPrice(POP_PRICE_BASE, 4), xpMult: 1.25, blurb: 'Rainbow split' },
 ];
 export const SOUND_PACKS = [
   { id: 'thock', name: 'THOCK', price: 0, xpMult: 1.0, blurb: 'Deep thock' },
   { id: 'clack', name: 'CLACK', price: 0, xpMult: 1.0, blurb: 'Sharp clack' },
   { id: 'cream', name: 'CREAM', price: 0, xpMult: 1.0, blurb: 'Soft cream' },
-  { id: 'marble', name: 'MARBLE', price: 250, xpMult: 1.05, blurb: 'Marble click' },
-  { id: 'typewriter', name: 'TYPEWRITER', price: 600, xpMult: 1.1, blurb: 'Typewriter' },
-  { id: 'silent', name: 'SILENT', price: 1200, xpMult: 1.15, blurb: 'Near silent' },
+  { id: 'marble', name: 'MARBLE', price: cosmeticPrice(SOUND_PRICE_BASE, 1), xpMult: 1.05, blurb: 'Marble click' },
+  { id: 'typewriter', name: 'TYPEWRITER', price: cosmeticPrice(SOUND_PRICE_BASE, 2), xpMult: 1.1, blurb: 'Typewriter' },
+  { id: 'silent', name: 'SILENT', price: cosmeticPrice(SOUND_PRICE_BASE, 3), xpMult: 1.15, blurb: 'Near silent' },
 ];
 
 export const OWNED_KEY = 'taw.owned';
@@ -134,19 +145,6 @@ export function buyKeyPower() {
   return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
 }
 
-// Buy the NEXT WORD SENSE TIER (Job 4): deducts the next tier's cost from wins, bumps taw.wordsense
-// by 1. One at a time, like KEY POWER. Returns { ok, wins, tier, spent }.
-export function buyWordSense() {
-  const tier = getWordSenseTier();
-  const cost = wordSenseCost(tier); // cost to reach tier+1
-  const wins = getWins();
-  if (wins < cost) return { ok: false, wins, tier, spent: 0 };
-  const nextWins = wins - cost;
-  saveWins(nextWins);
-  saveWordSenseTier(tier + 1);
-  return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
-}
-
 // MOMENTUM (repeatable sink): buy ONE more unit — deduct the (rising) cost, bump the count. Refuses
 // when unaffordable or already at the cap. `count` in the result is the new total buys.
 export function buyMomentum() {
@@ -165,7 +163,7 @@ export function buyMomentum() {
 // True when the player can afford at least one thing they don't already own — drives the
 // menu wins-chip's "something to buy" dot. Counts EVERYTHING purchasable, not just cosmetics:
 // the dot used to go dark forever once a player owned all 11 cosmetics, even though Key Power,
-// Word Sense, Momentum and buyable themes were still affordable. `wins`/`owned` are injectable
+// Momentum and buyable themes were still affordable. `wins`/`owned` are injectable
 // for the cosmetic layer; the other sinks read their own live stores (guarded, sane defaults).
 export function canAffordAny(wins = getWins(), owned = getOwned()) {
   const ownedSet = new Set(owned);
@@ -175,9 +173,6 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
-  // Word Sense — the same infinite ×6 ladder as Key Power.
-  const wCost = wordSenseCost(getWordSenseTier());
-  if (Number.isFinite(wCost) && bal >= wCost) return true;
   // Momentum — a repeatable sink until MOMENTUM_MAX (momentumCost returns Infinity when maxed).
   const mCost = momentumCost(getMomentum());
   if (Number.isFinite(mCost) && bal >= mCost) return true;

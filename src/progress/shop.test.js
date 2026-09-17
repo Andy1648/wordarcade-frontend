@@ -30,9 +30,16 @@ test('the four defaults are owned from the start', () => {
   });
 });
 
+// ECONOMY v7: the cosmetic prices are an exponential ×5 ladder off a raised base (CHROME 600,
+// INFERNO 3000, VOID 15000, PRISM 75000) instead of v6's near-linear 150/400/900/2000, which the
+// per-word base of 100 would have cleared inside the first hour. These tests are priced off the
+// CATALOG rather than off a literal, so the ladder can be retuned without editing them again.
+const priceOf = (id) => [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id).price;
+
 test('buying deducts wins, adds to owned, and leaves winsLifetime untouched', () => {
-  withStorage({ 'taw.wins': '500', 'taw.winsLifetime': '900' }, (map) => {
-    const r = buy('chrome'); // 150
+  const cost = priceOf('chrome');
+  withStorage({ 'taw.wins': String(cost + 350), 'taw.winsLifetime': '900' }, (map) => {
+    const r = buy('chrome');
     assert.equal(r.ok, true);
     assert.equal(r.wins, 350);
     assert.equal(map.get('taw.wins'), '350');
@@ -42,7 +49,8 @@ test('buying deducts wins, adds to owned, and leaves winsLifetime untouched', ()
 });
 
 test('cannot buy the same item twice; a second attempt does not re-charge', () => {
-  withStorage({ 'taw.wins': '500' }, (map) => {
+  const cost = priceOf('chrome');
+  withStorage({ 'taw.wins': String(cost + 350) }, (map) => {
     assert.equal(buy('chrome').ok, true);
     assert.equal(map.get('taw.wins'), '350');
     const again = buy('chrome');
@@ -81,7 +89,7 @@ test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', (
 });
 
 test('equip requires ownership and sets the right slot', () => {
-  withStorage({ 'taw.wins': '500' }, () => {
+  withStorage({ 'taw.wins': String(priceOf('chrome') + priceOf('marble')) }, () => {
     assert.equal(equip('prism'), false); // not owned yet
     buy('chrome');
     assert.equal(equip('chrome'), true);

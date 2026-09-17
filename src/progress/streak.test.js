@@ -103,7 +103,8 @@ test('localDayIndex is stable within a day and advances across local midnight', 
   assert.equal(localDayIndex(t + 86400000) - localDayIndex(t), 1);
 });
 
-// ---- JOB 10: the streak reward ladder is BOUNDED and can't feed the WORD SENSE runaway ----
+// ---- JOB 10: the streak reward ladder is BOUNDED. (It was written to stop it feeding the
+// WORD SENSE runaway; that upgrade is gone, but a bounded reward ladder is right on its own.) ----
 test('streakMultiplier: the exact milestone tiers, hard-capped at x1.25', () => {
   assert.equal(streakMultiplier(0), 1);
   assert.equal(streakMultiplier(1), 1);

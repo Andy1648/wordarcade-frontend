@@ -7,6 +7,8 @@
   z-index: 200; /* above menu/game chrome, below nothing it needs to block */
   pointer-events: none;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
 }
 
 /* The bright hole: a transparent box over the target whose huge box-shadow SPREAD dims the
@@ -47,7 +49,7 @@
   transform: translate(-50%, -50%);
 }
 .spotlight-caption-text {
-  font-size: clamp(20px, 4.4vw, 30px);
+  font-size: var(--fs-panel);
   color: #ffe94a;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -61,8 +63,9 @@
 }
 .spotlight-caption-sub {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: clamp(11px, 2.4vw, 14px);
+  font-size: var(--fs-label);
   letter-spacing: 0.12em;
   color: #2effe0;
   text-shadow: 2px 2px 0 #000;
@@ -78,7 +81,7 @@
     display: none;
   }
   .spotlight-caption-text {
-    font-size: clamp(15px, 2.4vw, 20px);
+    font-size: var(--fs-body);
     -webkit-text-stroke-width: 2px;
     text-shadow: 3px 3px 0 #000;
   }
