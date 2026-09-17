@@ -12,8 +12,8 @@ import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import LiveStack from '../components/LiveStack';
 import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
-import Spotlight from '../components/Spotlight';
-import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
+import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
+import TeachStrip from '../components/TeachStrip.jsx';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -58,7 +58,9 @@ export default function SoloShell({
   placeholder,
   maxLength, // longest word length in the built ACCEPT union — derived, not hardcoded
   armHint, // per-mode "how to play" line, shown until the clock arms
-  firstRunRule, // per-mode one-line rule for the ONE-TIME first-game input spotlight
+  teachMode, // gameData id ('chain' | 'fuse') — keys the PER-MODE first-run teach strip
+  teachRule, // this mode's rule, in its own words, for the teach strip
+  teachExample, // a VALID answer to the prompt on screen right now (see progress/teachExample.js)
   rootRef, // optional ref to .solo-root (CHAIN uses it to measure tile centres for FX)
   fx, // optional absolutely-positioned FX layer (CHAIN OUT→IN travel), overlaid on root
   phase,
@@ -81,15 +83,27 @@ export default function SoloShell({
     onSubmit();
   };
 
-  // ONE-TIME first-game spotlight over the input (shared across ALL game surfaces via the
-  // onboarding flag — the first game the player types in shows it, no other). Armed only
-  // once play begins so the target input exists; dismissed by the first key/tap (which the
-  // pointer-events:none overlay lets through, so it still lands in the field).
-  const [gameSpot, setGameSpot] = useState(false);
+  // THE OLD FIRST-GAME SPOTLIGHT IS GONE FROM THE SOLO MODES, replaced by the per-mode teach
+  // strip below. Keeping both was actively worse than either: the screenshots show the Spotlight's
+  // scrim and its big yellow caption drawn straight OVER the strip, so a first-timer got two
+  // overlapping explanations and could read neither. The Spotlight also carried the defect this
+  // batch exists to fix — one flag for every game surface, so only the first mode ever taught.
+  // (GameScreen still uses it for Word Bomb / Blitz until they move to the strip too.)
+  //
+  // PER-MODE TEACH. Keyed by `teachMode`, so each mode gets exactly one chance to explain itself
+  // the first time it is played. It sits IN the layout rather than over it, and clears as soon as
+  // the player has banked a word — never on a timer, because someone who has typed nothing for
+  // ten seconds is exactly who still needs it.
+  const [teachOpen, setTeachOpen] = useState(false);
   useEffect(() => {
-    if (phase === 'playing' && firstRunRule && !hasSeenGameSpotlight()) setGameSpot(true);
-  }, [phase, firstRunRule]);
-  const dismissGameSpot = () => { markGameSpotlightSeen(); setGameSpot(false); };
+    if (phase === 'playing' && teachMode && !hasSeenTeach(teachMode)) setTeachOpen(true);
+  }, [phase, teachMode]);
+  const closeTeach = () => { markTeachSeen(teachMode); setTeachOpen(false); };
+  // The first accepted word dismisses it: proof the player has the idea.
+  useEffect(() => {
+    if (teachOpen && winsWords > 0) closeTeach();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [winsWords]);
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
@@ -171,6 +185,11 @@ export default function SoloShell({
         </form>
       ) : null}
 
+      {/* THE FIRST-RUN TEACH, in the layout (not over it) and per mode. */}
+      {teachOpen && phase === 'playing' ? (
+        <TeachStrip rule={teachRule} example={teachExample} onDismiss={closeTeach} />
+      ) : null}
+
       {/* Reason line (reject) or the arm hint before the clock starts. */}
       <div className="solo-reason" aria-live="polite">
         {phase === 'playing' && reason ? reason : ''}
@@ -240,14 +259,6 @@ export default function SoloShell({
       {fx}
 
       {/* ONE-TIME first-game input spotlight (fix/logic-and-onboarding). */}
-      {gameSpot && phase === 'playing' && (
-        <Spotlight
-          targetSelector=".solo-input"
-          caption={firstRunRule}
-          sub="START TYPING"
-          onDismiss={dismissGameSpot}
-        />
-      )}
     </div>
   );
 }

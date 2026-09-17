@@ -1,0 +1,112 @@
+/* TeachStrip.css — the in-place first-run teach.
+   IN THE LAYOUT, not over it: no position:fixed, no scrim, no z-index race. It takes a row next
+   to the input and gives it back once the player has typed a word. A modal would stop the run to
+   explain the run, which is the thing every mode already does badly. */
+
+.teach-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 10px 12px;
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.15;
+  /* NOTHING ANIMATES. A strip that slides or pulses while a first-timer is trying to read it is
+     working against itself, and the motion law says idle loops are gone. */
+}
+
+.teach-strip-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 1. WHAT THE ACT IS. The loudest thing in the strip, because "you type a real word" is the
+   single fact players were not getting. */
+.teach-strip-act {
+  font-size: var(--fs-body);
+  color: var(--theme-xp-fill, #2effe0);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* 2. WHAT THIS MODE WANTS. */
+.teach-strip-rule {
+  font-size: var(--fs-label);
+  color: #f0ead9;
+  letter-spacing: 0.04em;
+}
+
+/* THE WORKED EXAMPLE — a chip, so it reads as a thing you could pick up and use. */
+.teach-strip-eg {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  background: #0d0618;
+  border: 2px solid #000;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 #000;
+}
+.teach-strip-eg-tag {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  color: rgba(240, 234, 217, 0.66);
+}
+.teach-strip-eg-word {
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #ffe94a;
+}
+
+/* 3. WHAT IT IS WORTH. */
+.teach-strip-pay {
+  flex: 0 0 auto;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  color: var(--theme-ink, #ff4fa3);
+}
+
+.teach-strip-close {
+  flex: 0 0 auto;
+  min-height: 44px; /* touch target floor */
+  padding: 0 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #0d0618;
+  background: var(--theme-xp-fill, #2effe0);
+  border: 2px solid #000;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+}
+.teach-strip-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* Phones: the strip stacks rather than squeezing the example off the end. */
+@media (max-width: 600px) {
+  .teach-strip {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .teach-strip-act { font-size: var(--fs-label); }
+  .teach-strip-pay { flex-basis: 100%; }
+}

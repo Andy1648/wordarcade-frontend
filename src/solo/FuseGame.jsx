@@ -4,6 +4,9 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
+import { exampleContaining } from '../progress/teachExample.js';
+import { loadGlossary, glossFor } from '../progress/glossary.js';
+import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, awardWins, subscribeWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
@@ -249,10 +252,33 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // First-run tutorial card (Job 14): the player's very first FUSE run (runs === 1), OR any run
   // that ended under 3 words — the runs where a how-to-play card beats a score card. Matches CHAIN.
   const firstRun = runs === 1 || s.wordsSolved < 3;
-  const overCard = firstRun ? (
-    <FuseFirstRunCard />
-  ) : (
-    <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
+  // PAUSE TO LEARN — same shape as CHAIN. FUSE ends on a FRAGMENT it could not place, so the
+  // word held is one that would have satisfied it, skipping everything already solved.
+  const missedWord = g.phase === 'over' && data
+    ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w))
+    : null;
+  const [glossTick, setGlossTick] = useState(0);
+  useEffect(() => {
+    if (!missedWord) return;
+    loadGlossary().then(() => setGlossTick((n) => n + 1));
+  }, [missedWord]);
+  // THE HOLD IS ON BOTH CARDS. It sits outside the first-run branch on purpose: a run that ends
+  // under three words gets the TUTORIAL card, and that is exactly the player who most needs to be
+  // shown a word that would have worked. Putting the lesson only on the score card would have
+  // hidden it from every beginner — which is the same mistake the old one-flag teach made.
+  const overCard = (
+    <>
+      <MissedWordHold
+        key={glossTick}
+        word={missedWord}
+        gloss={glossFor(missedWord)}
+        prompt={s.fragment}
+        promptLabel="A WORD CONTAINING"
+      />
+      {firstRun ? <FuseFirstRunCard /> : (
+      <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
+      )}
+    </>
   );
 
   return (
@@ -276,7 +302,11 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
       armHint="SNEAK THOSE LETTERS INTO A WORD"
-      firstRunRule="SNEAK THE LETTERS INTO A WORD"
+      /* FIRST-RUN TEACH (per mode) — a real word containing the fragment that is on screen right
+         now, skipping any already solved, so copying it always works. */
+      teachMode="fuse"
+      teachRule="THE LETTERS SHOWN MUST APPEAR SOMEWHERE IN IT"
+      teachExample={data ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w)) : null}
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}

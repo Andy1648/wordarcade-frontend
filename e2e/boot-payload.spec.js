@@ -70,8 +70,15 @@ test('boot payload on an empty cache, before any gesture', async ({ page }) => {
   await page.goto('/', { waitUntil: 'commit' });
 
   // The boot screen must actually be on screen, and taking AVIF.
+  // TIMEOUT RAISED 5s -> 20s, and it is not a papered-over failure. This test races a FIXED
+  // ~1900ms boot timeline on an EMPTY cache: it must catch the loading screen before the app
+  // replaces it. Under parallel workers the first paint slips past 5s on a loaded box often
+  // enough that this was the single most frequent red cell in the suite, and it passed alone
+  // every time. A wait that is too tight for the machine measures the machine, not the payload —
+  // and the assertions that follow (AVIF, intrinsic size, the byte budget) are the real subject.
+  test.slow();
   const img = page.locator('.loading-mascot').first();
-  await expect(img).toBeVisible({ timeout: 5000 });
+  await expect(img).toBeVisible({ timeout: 20000 });
   const chosen = await img.evaluate((el) => el.currentSrc);
   expect(chosen, `loading mascot currentSrc was ${chosen}`).toMatch(/\.avif$/);
   const box = await img.boundingBox();
