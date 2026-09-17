@@ -923,3 +923,25 @@ button.menu-mark:active {
     padding: 2px 4px;
   }
 }
+
+/* NARROWEST PHONES: THE TRACK TAKES THE WHOLE BAR (Andy's ruling, 2026-09-16).
+   At 320 the menu stage is a framed card only 262px wide and the corner nav occupies 103px of it,
+   leaving 131px of clear width. Batch F had trimmed the level block's chrome to buy the track back
+   up to ~54px; the ruling is to stop splitting 131px two ways and give the progress bar all of it.
+   The nav's width is deliberately NOT touched.
+   Scoped to 380px so it catches 320 and 360 (both gate viewports) and leaves 390 alone, where the
+   chip and a 124px track coexist comfortably.
+   WORTH KNOWING: this removes the account level from the menu at these widths entirely. The mode
+   cards carry a per-mode MASTERY chip (M2/M3) and a "YOU'RE LV n" line only while a card is LOCKED
+   — neither is the account level on an unlocked card — so below 380px the level numeral has no
+   other home on this screen. The readout inside the track ("0 / 52.3K") still carries the progress,
+   which is what the bar is for. */
+@media (max-width: 380px) {
+  .menu-xp-bar.is-loud > .menu-xp-lvblock {
+    display: none;
+  }
+  .menu-xp-bar.is-loud {
+    /* Nothing left to sit beside, so the gutter is the only thing holding the track off the nav. */
+    gap: 0;
+  }
+}

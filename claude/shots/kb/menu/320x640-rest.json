@@ -125,22 +125,11 @@
     },
     {
       "kind": "readout",
-      "what": "span.menu-xp-lv \"40\"",
-      "rect": {
-        "x": 56,
-        "y": 107,
-        "w": 46,
-        "h": 30
-      },
-      "flags": []
-    },
-    {
-      "kind": "readout",
       "what": "span.menu-xp-track \"0 / 52.3K\"",
       "rect": {
-        "x": 112,
+        "x": 50,
         "y": 100,
-        "w": 54,
+        "w": 116,
         "h": 44
       },
       "flags": []
