@@ -4035,11 +4035,15 @@ html[data-beat='true'] .game-combo {
 
 /* ---- Word Bomb: the bomb THUMPS with the music (subtle scale kick) ---- */
 .bomb-vignette {
-  will-change: transform;
+  /* will-change MOVED to the beat rule below (Batch G) — same fix as .homepage-logo. It was parked
+     permanently on an always-present node for an 80ms animation that only fires on a detected beat,
+     which CLAUDE.md forbids explicitly: will-change "must NEVER sit on an idle / pooled /
+     always-present node". */
 }
 
 html[data-beat='true'] .bomb-vignette {
   animation: bomb-thump 80ms ease-out;
+  will-change: transform;
 }
 
 @keyframes bomb-thump {

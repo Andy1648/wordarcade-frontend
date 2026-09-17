@@ -6,6 +6,15 @@
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
+// MOTION MUST BE ON FOR THIS FILE (Batch G). playwright.config.js sets reducedMotion: 'reduce'
+// suite-wide — a sound choice for actionability, since this app's idle loops never "settle" — but
+// it also switches off the very thing this spec counts. Without this opt-in the assertion below is
+// 0 === 0 and cannot fail, which is how two live violations (GameScreen.css cb-input-checking on
+// border-color, TransitionIntro.css die-pulse on filter) shipped under a budget CLAUDE.md calls
+// build-failing. e2e/splash-loops.spec.js already opts in the same way.
+test.use({ reducedMotion: 'no-preference' });
+
+
 test('cards pulse on the beat, featured harder, no new loops, within the animation budget', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await installBackendMock(page);

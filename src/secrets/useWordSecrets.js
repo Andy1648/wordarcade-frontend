@@ -17,7 +17,7 @@
 // from `notePop()`, which the caller calls once per ACCEPTED WORD instead of once per menu pop.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createSecretDetector } from './secrets';
-import { getWins, saveWins, getWinsLifetime, saveWinsLifetime } from '../progress/wins';
+import { grantWins } from '../progress/wins';
 import { rebirthMult, getRebirths, loadProgress } from '../progress/xp';
 import { winLevelMult } from '../progress/wins';
 import { secretFound as evSecretFound } from '../lib/events.js';
@@ -65,8 +65,18 @@ export function useWordSecrets({ active = true } = {}) {
     const found = { ...raw, wins };
     try {
       // Paid into the balance AND into lifetime: unlike the WORD SENSE refund, this IS earnings.
-      saveWins(getWins() + wins);
-      saveWinsLifetime(getWinsLifetime() + wins);
+      //
+      // THROUGH THE ONE DOOR (Batch G). This used to write saveWins/saveWinsLifetime directly,
+      // which banked the money correctly but skipped credit() — so a secret payout never entered
+      // the wins ledger, never raised the credit toast, and never bumped pendingStamp (so the
+      // menu's "+N WINS" stamp under-reported it). wins.js documents credit() as the single door
+      // every payout goes through precisely so the money and the explanation cannot diverge; this
+      // was the one earning path in the app that went around it. grantWins() is that door.
+      //
+      // The run's own card is unaffected: App.jsx already adds secret.wins into winsEarnedTotal
+      // (~1323 word-bomb, ~1506 blitz), so the total a player reads was never wrong — what was
+      // missing was the ATTRIBUTION, which is now a named ledger line like every other bonus.
+      grantWins(wins, 'SECRET FIND', { detail: found.id });
     } catch {
       /* storage blocked — the find still shows, just not banked */
     }

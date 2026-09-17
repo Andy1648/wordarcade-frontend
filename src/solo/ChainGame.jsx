@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } fr
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins } from '../progress/wins.js';
+import { bankWordWins, awardWins, subscribeWins } from '../progress/wins.js';
 import { awardWordXp, cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
@@ -119,6 +119,21 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // earned — no end-of-run payout (that would double-pay). `s.k` is the running link count;
   // bank the delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3.
   const [winsEarned, setWinsEarned] = useState(0);
+  // BONUS CREDITS THIS RUN (Batch G). A collection milestone can land mid-run — every solo mode
+  // calls recordAcceptedWord, and collection.js grants the milestone through the wins ledger — and
+  // the end card used to show only the per-word money. The balance then moved by far more than the
+  // card claimed, which is exactly the report that produced no-hidden-wins.spec.js: "I be here
+  // getting like 800 but it gives like over 2k". That fix reached Word Bomb and Category Blitz
+  // (App.jsx collects the same lines for GameScreen) and never reached the solo modes.
+  //
+  // Subscribed per RUN rather than reusing App's winsBonusLines: App resets that array on
+  // game_started / round_start, neither of which fires for a solo run, so reusing it would list a
+  // WELCOME BACK bonus from page load — or a milestone from the previous run — on this run's card.
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
+
   const chainBankedRef = useRef(0);
   const chainWeightRef = useRef(0); // RARITY: running sum of linked words' rarity multipliers
   useEffect(() => {
@@ -133,6 +148,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       chainWeightRef.current = 0;
       wpmStart('chain'); // fresh run → fresh WPM session (flushes the previous)
       setWinsEarned(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
     }
     if (k > chainBankedRef.current) {
       // RARITY: score the new link(s). s.lastLinks holds the most recent up-to-5 {word} (newest
@@ -360,6 +376,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
+        winsBonusLines,
         tryRow: <TryModeRow current="chain" />,
       }}
       onExit={onExit}

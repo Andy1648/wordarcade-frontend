@@ -346,7 +346,14 @@
 }
 .sr-tickfill {
   height: 100%;
-  width: 0;
+  /* COMPOSITED, not laid out (Batch G). This was width: 0 animated to 100%, which is the first
+     name on CLAUDE.md's "never animate" list — it forces layout + paint every frame, and this bar
+     runs CONTINUOUSLY for a whole SAT Rush run (AnteMeter re-keys it every stage, default 2800ms).
+     The conversion is free and was half-done already: transform-origin: left was sitting here
+     doing nothing, which is the fingerprint of an intended scaleX. The fill has no border and no
+     children, so scaleX is pixel-identical to the width animation. */
+  width: 100%;
+  transform: scaleX(0);
   background: var(--ink);
   transform-origin: left;
 }
@@ -358,10 +365,10 @@
 }
 @keyframes sr-drain {
   from {
-    width: 0;
+    transform: scaleX(0);
   }
   to {
-    width: 100%;
+    transform: scaleX(1);
   }
 }
 
@@ -972,7 +979,10 @@
 }
 .sr-spell-fill {
   height: 100%;
-  width: 0;
+  /* Same conversion as .sr-tickfill above — and this one runs CONCURRENTLY with it during the
+     spell-along endgame, so it was a second per-frame layout on the same screen. */
+  width: 100%;
+  transform: scaleX(0);
   background: var(--ink);
   transform-origin: left;
   animation: sr-drain linear forwards;

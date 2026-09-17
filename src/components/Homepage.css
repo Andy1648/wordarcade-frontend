@@ -340,7 +340,13 @@
      vars, so that would otherwise leak a flat black 3-layer drop). Both the bold-clean
      single drop and the old 6-layer magenta extrude are intentionally gone. */
   text-shadow: none;
-  will-change: transform;
+  /* will-change MOVED to the html[data-beat='true'] rule below (Batch G). CLAUDE.md: it "must
+     NEVER sit on an idle / pooled / always-present node ... Toggle it ON for the life of the
+     animation and OFF at rest: a CSS :hover / html[data-beat] state". The wordmark is the
+     always-present headline of the LCP screen and, under the MENU MOTION LAW, does not move at
+     rest at all — so this held a compositor layer for a large Bungee Shade glyph permanently, and
+     for zero motion whenever the music is muted or never started. .homepage-btn:hover 280 lines
+     below already does it the right way. */
 }
 
 /* The paint drips stay OFF (the JSX element is still in the markup; hide it) - the
@@ -359,6 +365,8 @@
    matching the splash; the splash title has no beat-driven shadow slam.) */
 html[data-beat='true'] .homepage-logo {
   animation: title-beat-pop 120ms ease-out;
+  /* ON for the life of the animation, off at rest — data-beat is cleared between hits. */
+  will-change: transform;
 }
 
 @keyframes title-beat-pop {

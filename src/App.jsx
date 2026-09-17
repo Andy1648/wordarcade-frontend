@@ -1320,7 +1320,10 @@ function App() {
                 wins: banked,
                 secret: secret ? { stamp: secret.stamp, wins: secret.wins } : null,
               });
-              if (secret) setWinsEarnedTotal((prev) => prev + secret.wins);
+              // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
+              // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
+              // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
+              // count the same money twice and make the card claim more than the balance moved.
               // A rare word has to SOUND different too — an event with no sound is half an event.
               // COMMON is silent by design (rarityCue ignores it), so the normal accept cue stays
               // the whole audio story for an ordinary word.
@@ -1494,7 +1497,10 @@ function App() {
             wins: banked,
             secret: bSecret ? { stamp: bSecret.stamp, wins: bSecret.wins } : null,
           });
-          if (bSecret) setWinsEarnedTotal((prev) => prev + bSecret.wins);
+            // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
+            // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
+            // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
+            // count the same money twice and make the card claim more than the balance moved.
           rarityCue(bSecret ? 'SECRET' : r.band);
           setWinsTally(
             awardWins({ wordsAccepted: myBlitzAcceptedRef.current, mode: 'blitz', difficulty: gameDifficultyRef.current })

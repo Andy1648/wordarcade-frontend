@@ -65,7 +65,7 @@ export default function SoloShell({
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
-  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, tryRow? }
+  over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, winsBonusLines?, tryRow? }
   onExit,
 }) {
   const inputRef = useRef(null);
@@ -197,7 +197,10 @@ export default function SoloShell({
             <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />
             {over.card}
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
-            {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} />}
+            {/* The lines prop (Batch G): bonus credits earned during THIS run — a collection milestone
+                is the reachable one — so the card names them instead of the total quietly
+                disagreeing with the balance. Defaults to [] for any caller that passes none. */}
+            {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />}
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
