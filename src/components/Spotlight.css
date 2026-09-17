@@ -59,6 +59,22 @@
      the wrapper lets it size to this line; max-width:92vw is the only wrap fallback. */
   white-space: nowrap;
 }
+
+/* …EXCEPT when one line cannot fit. `white-space: nowrap` overrides the wrapper's max-width, so
+   on a narrow phone a long rule ("START WITH THE GIVEN LETTER" at 320px) simply overflowed and was
+   CLIPPED AT BOTH EDGES — the caption is centred, so it lost its first and last words and the
+   first-run teach became unreadable on the exact screen a deep-link visitor lands on. Caught in
+   the 320x640 screenshots; no gate looks at text overflow.
+
+   Below 400px the headline is allowed to wrap instead. Two readable lines beat one clipped one,
+   and the placement pass measures the caption AFTER layout (capH), so a taller caption is placed
+   correctly rather than overrunning — which is what the nowrap above was originally protecting. */
+@media (max-width: 400px) {
+  .spotlight-caption-text {
+    white-space: normal;
+    text-wrap: balance;
+  }
+}
 .spotlight-caption-sub {
   font-family: 'Space Mono', monospace;
   font-weight: 700;

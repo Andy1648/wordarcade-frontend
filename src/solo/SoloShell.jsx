@@ -13,11 +13,7 @@ import { wpmKeyStroke } from '../progress/wpmLive';
 import Spotlight from '../components/Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import SoloExit from './SoloExit.jsx';
-import { GAMES } from '../gameData';
-
-// "N MORE MODES" in the run-over offer — derived from the real menu, never a hardcoded number,
-// so adding or flag-gating a mode can't leave the copy lying. (Minus this one.)
-const MORE_MODES = Math.max(1, GAMES.length - 1);
+import { MORE_MODES } from '../gameData';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -173,7 +169,15 @@ export default function SoloShell({
       <div className="solo-reason" aria-live="polite">
         {phase === 'playing' && reason ? reason : ''}
       </div>
-      {phase === 'playing' && !clock.armed && armHint ? <div className="solo-armhint">{armHint}</div> : null}
+      {/* The arm hint and the first-run SPOTLIGHT teach the same rule in the same window — the
+          spotlight only shows while `playing` and is dismissed by the first keystroke, which is
+          the same keystroke that arms the clock and hides this hint. Rendering both meant the
+          fixed caption printed straight over this line (caught in the 320/390 screenshots of the
+          cold-visitor path, invisible to every gate). The spotlight is the louder, clearer one,
+          so it wins; this hint takes over the moment it is dismissed. */}
+      {phase === 'playing' && !clock.armed && armHint && !gameSpot ? (
+        <div className="solo-armhint">{armHint}</div>
+      ) : null}
 
       {/* LOWER DECK — per-mode content that fills the lower half of the card (the chain
           running across the space for CHAIN; the fuse cords + big letter strip for FUSE).

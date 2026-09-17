@@ -12,6 +12,7 @@ import { ShareBar } from '../share';
 import CopyResultButton from '../share/CopyResultButton.jsx';
 import { satRushLink } from '../share/links.js';
 import { SAT_RUSH_COLOR } from './config';
+import { MORE_MODES } from '../gameData';
 
 const C = JUICE.CELEBRATION;
 
@@ -27,7 +28,7 @@ function frameOf(e) {
   return { glyph, kind, label: parts.join(', ') };
 }
 
-export default function SatRushResults({ results, winsEarned = 0, onAgain, onExit }) {
+export default function SatRushResults({ results, winsEarned = 0, onAgain, onExit, offerMenu = false }) {
   const finalScore = results.score || 0;
   const finalAnte = results.avgAnte ?? 0;
   const [score, setScore] = useState(0);
@@ -217,10 +218,32 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
           <button type="button" className="sr-btn" onClick={onAgain}>
             Run it back
           </button>
-          <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
-            Menu
-          </button>
+          {offerMenu ? null : (
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
+              Menu
+            </button>
+          )}
         </div>
+
+        {/* When the offer is shown its button IS the way out (same onExit), so the plain
+                  MENU/LEAVE button beside it would be two adjacent controls doing one thing. The
+                  offer's label is the better one for this visitor — it says what is through the
+                  door — so it replaces the generic button rather than sitting under it. */}
+        {/* THE REST OF THE GAME — shown ONLY to a visitor who landed here on a /sat-rush/play link
+            and has never seen the menu (App: LAUNCH_INTENT.satrush && !hasSeenMenu()). They have
+            just finished a run with no idea the other modes exist, and this is the one moment they
+            are looking at a stopped screen. One line, one button, IN PLACE: no modal, no share, and
+            "Run it back" stays the primary action above it. Set as a CASE FILE cross-reference so it
+            belongs to this page's language (paper, ink, red rule) rather than the neon house look —
+            the same offer CHAIN and FUSE make, spoken in SAT RUSH's voice. */}
+        {offerMenu ? (
+          <div className={`sr-offer${revealed ? ' in' : ''}`}>
+            <p className="sr-offer-line">{`${MORE_MODES} MORE CASES ON FILE.`}</p>
+            <button type="button" className="sr-btn sr-offer-btn" onClick={onExit}>
+              See all modes
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

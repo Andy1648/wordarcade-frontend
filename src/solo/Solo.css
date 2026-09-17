@@ -368,6 +368,11 @@
   box-shadow: 4px 4px 0 #000;
   outline: none;
   caret-color: var(--solo-accent);
+  /* At 320px the hint is ~3 characters wider than the box and was cut MID-WORD
+     ('START WITH "F" · 3+ LE'), which reads as a broken input on the first screen a deep-link
+     visitor sees. An ellipsis is not the real fix — the copy is too long for 320 and that is a
+     Batch-3 call — but a truncation that announces itself beats one that looks like a bug. */
+  text-overflow: ellipsis;
 }
 .solo-input::placeholder {
   color: #6b5a86;

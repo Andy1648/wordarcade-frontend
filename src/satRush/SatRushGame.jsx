@@ -45,7 +45,7 @@ import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
 
-export default function SatRushGame({ onExit, musicSetVolume }) {
+export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false }) {
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
@@ -172,7 +172,13 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       )}
       {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} onExit={onExit} />}
       {view.phase === 'over' && (
-        <SatRushResults results={view.results} winsEarned={winsEarned} onAgain={game.startGame} onExit={onExit} />
+        <SatRushResults
+          results={view.results}
+          winsEarned={winsEarned}
+          onAgain={game.startGame}
+          onExit={onExit}
+          offerMenu={offerMenu}
+        />
       )}
 
       {SAT_RUSH_DEV_TUNER && !SAT_RUSH_SCENE && (
@@ -189,11 +195,13 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   );
 }
 
+// The way out of the cover / mode-select / briefing screens. Labelled with its destination at
+// >=44x44 (see .sr-exit-chip) — a bare "EXIT" told a deep-link visitor nothing about where it led.
 function ExitLink({ onExit }) {
   if (!onExit) return null;
   return (
-    <button type="button" className="sr-exit-chip" onClick={onExit} aria-label="Exit">
-      EXIT
+    <button type="button" className="sr-exit-chip" onClick={onExit} aria-label="Exit to menu">
+      <span aria-hidden="true">←</span> MENU
     </button>
   );
 }

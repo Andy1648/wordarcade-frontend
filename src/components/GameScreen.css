@@ -4416,3 +4416,53 @@ html[data-beat='true'] .cb-answer-chip {
 
 /* WINS visibility (Economy v3): the live "+N WINS" pill + the game-over "WINS EARNED" total
    moved to the shared WinsHud.css (used by every mode now). */
+
+/* ---------- "the rest of the game" offer (deep-link visitors only) ----------
+   Shown only to someone who landed on /word-bomb/play or /category-blitz/play and has never seen
+   the menu. It lives INSIDE the sticky actions footer so it survives a card that scrolls, and it is
+   an OUTLINE button, never a second solid fill: REMATCH above is the loud cyan primary, and two
+   solid buttons stacked would leave the player no idea which one the screen wants. Matches
+   .solo-offer / .sr-offer so the same offer reads the same way in every mode. */
+.game-over-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 3px solid #000;
+}
+.game-over-offer-line {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #d8c9f0;
+  text-align: center;
+}
+.game-over-offer-btn {
+  min-height: 48px;
+  padding: 0 16px;
+  font-family: 'Bungee', cursive;
+  font-size: 15px;
+  color: #2effe0;
+  background: #241238;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+}
+.game-over-offer-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+/* SHORT VIEWPORTS: this offer lives in the sticky footer, and on a 640px-tall phone that footer
+   (REMATCH + LEAVE + this) already crowds the card's own content out of view. Drop the line and
+   keep the button — 'SEE ALL MODES' carries the whole meaning on its own. Same height-driven
+   compaction the first-run spotlight uses (.spotlight-caption-sub). */
+@media (max-height: 680px) {
+  .game-over-offer-line {
+    display: none;
+  }
+}

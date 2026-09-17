@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 
 test.describe('SAT Rush run exit', () => {
-  test('the HUD ✕ abandons a live run and returns to the menu, no console errors', async ({
+  test('the HUD exit abandons a live run and returns to the menu, no console errors', async ({
     page,
   }) => {
     const errors = [];
@@ -36,7 +36,9 @@ test.describe('SAT Rush run exit', () => {
     await page.getByRole('button', { name: /LINEUP/ }).click();
     await expect(page.locator('.sr-slots')).toBeVisible();
 
-    const exit = page.getByRole('button', { name: 'Exit run' });
+    // The exit is now labelled with its DESTINATION (← MENU) rather than a bare ✕ — see
+    // satRush/Hud.jsx. Same control, same behaviour; it just says where it goes now.
+    const exit = page.getByRole('button', { name: 'Exit to menu' });
     await expect(exit).toBeVisible();
     await exit.click();
 

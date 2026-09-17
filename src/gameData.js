@@ -119,3 +119,8 @@ export const GAMES = [
   CHAIN_GAME,
   FUSE_GAME,
 ];
+
+// "N MORE MODES" in a run-over offer — derived from the real menu, never a hardcoded number, so
+// adding or flag-gating a mode can't leave the copy lying. (Minus the one you just played.)
+// Lives here, not in a screen, so CHAIN/FUSE (SoloShell) and SAT RUSH (SatRushResults) can't drift.
+export const MORE_MODES = Math.max(1, GAMES.length - 1);

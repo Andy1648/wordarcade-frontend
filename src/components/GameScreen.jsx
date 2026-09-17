@@ -6,6 +6,7 @@ import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
+import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
@@ -1486,6 +1487,12 @@ export default function GameScreen({
   gameType,
   gameNonce,
   cgMode = false,
+  // True ONLY for a visitor who landed here from a /word-bomb/play or /category-blitz/play deep
+  // link and has never seen the menu (App: VS_BOT_LAUNCH && !hasSeenMenu()). Adds the one-line
+  // run-over offer below REMATCH/LEAVE — the same offer CHAIN, FUSE and SAT RUSH make, for the
+  // same reason: this is the one moment a stranger is looking at a stopped screen, and they have
+  // no idea the other modes exist. Everyone who arrived via the menu gets the card unchanged.
+  offerMenu = false,
   myId,
   isHost,
   timerSeconds,
@@ -2361,6 +2368,7 @@ export default function GameScreen({
         // Remount per game so the solo PLAY AGAIN loop starts clean and replays
         // its countdown (the round number stays 1 across solo games).
         key={`cb-${gameNonce}`}
+        offerMenu={offerMenu}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -3242,12 +3250,22 @@ export default function GameScreen({
               <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
                 {rematchPending ? 'REMATCHING...' : 'REMATCH'}
               </button>
-              <button
-                className="game-over-leave secondary"
-                onClick={onLeave}
-              >
-                LEAVE
-              </button>
+              {offerMenu ? null : (
+                <button
+                  className="game-over-leave secondary"
+                  onClick={onLeave}
+                >
+                  LEAVE
+                </button>
+              )}
+              {offerMenu ? (
+                <div className="game-over-offer">
+                  <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                  <button type="button" className="game-over-offer-btn" onClick={onLeave}>
+                    SEE ALL MODES
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -3391,7 +3409,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, offerMenu = false }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -3551,9 +3569,19 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
             <button className="solo-change-cat-btn" onClick={onNewGameMode} disabled={actionPending}>
               NEW GAME MODE
             </button>
-            <button className="game-over-leave secondary" onClick={onLeave}>
-              LEAVE
-            </button>
+            {offerMenu ? null : (
+              <button className="game-over-leave secondary" onClick={onLeave}>
+                LEAVE
+              </button>
+            )}
+            {offerMenu ? (
+              <div className="game-over-offer">
+                <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                <button type="button" className="game-over-offer-btn" onClick={onLeave}>
+                  SEE ALL MODES
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -3576,6 +3604,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
 function CategoryBlitzScreen({
   myId,
   isHost,
+  offerMenu = false, // see GameScreen's offerMenu — the deep-link run-over offer, forwarded
   timerSeconds,
   lastWordResult,
   checkingAnswer,
@@ -3842,6 +3871,7 @@ function CategoryBlitzScreen({
 
     return (
       <SoloResultsScreen
+        offerMenu={offerMenu}
         score={total}
         rounds={rounds}
         daily={dailyResult}
@@ -3970,12 +4000,22 @@ function CategoryBlitzScreen({
               <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
                 {rematchPending ? 'REMATCHING...' : 'REMATCH'}
               </button>
-              <button
-                className="game-over-leave secondary"
-                onClick={onLeave}
-              >
-                LEAVE
-              </button>
+              {offerMenu ? null : (
+                <button
+                  className="game-over-leave secondary"
+                  onClick={onLeave}
+                >
+                  LEAVE
+                </button>
+              )}
+              {offerMenu ? (
+                <div className="game-over-offer">
+                  <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                  <button type="button" className="game-over-offer-btn" onClick={onLeave}>
+                    SEE ALL MODES
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
