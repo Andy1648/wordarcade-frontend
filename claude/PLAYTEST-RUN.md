@@ -1,13 +1,19 @@
 # PLAYTEST — `release/prod-2`
 
-**Deployment:** https://wordarcade-frontend-e9nmycxhg-beenchilling.vercel.app
-**Commit:** `761418c` (`release/prod-2`)
+**Deployment:** https://wordarcade-frontend-nhbzbhmb1-beenchilling.vercel.app
+**Commit:** `57c3a67` (`release/prod-2`) — the GATED build
+**Gate:** lint 0 errors · 587 unit · **1214 e2e passed, 0 failed**, 1 known pre-existing flake
+(`menu-xp` pop), 0 worker crashes, 0 connection failures.
 **Contains:** `main` (`a23548b`) + `fix/econ-perf-attack` (68 commits) + `feat/pause-to-learn` (65)
 + `fix/cold-visitor-path` (which itself carries `fix/solo-exit` and `fix/unlock-gates`).
 
 Verified live in this deployment, not just locally: `/chain` serves the article, `/chain/play`,
-`/sat-rush/play` and `/word-bomb/play` serve the app, and `chain/play`, `is-bare`,
-`SEATING YOUR OPPONENT` and `MORE CASES ON FILE` are all present in the shipped bundles.
+`/sat-rush/play` and `/word-bomb/play` serve the app; `chain/play` and `is-bare` are in the entry
+bundle, `SEATING YOUR OPPONENT` is in the DeepLandScreen chunk, and the game-over compaction rule
+(`max-height: 780px`) is in `GameScreen-ZxGRuyFw.css` — whose hash matches the local gated build.
+
+(Any commit after `57c3a67` on this branch is documentation only and does not change the bundle,
+so this deployment remains the build under test.)
 
 ---
 
