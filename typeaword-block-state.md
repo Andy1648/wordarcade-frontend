@@ -1,6 +1,7 @@
 # TYPE A WORD — Handoff / Block State
 
-**Refreshed:** 2026-09-15 (branch `feat/econ-visible`, after merging `origin/main` — 5 PRs: SEO
+**Refreshed:** 2026-09-17 (branch `release/prod-2`; §14 is this run). Previously 2026-09-15 on
+`feat/econ-visible`, after merging `origin/main` — 5 PRs: SEO
 landing pages for Chain/Fuse, AVIF mascots, AVIF loading screen, deferred music, a prod crash fix).
 Every number below was re-verified against source at this checkout, not copied forward.
 **§13 (this run) is the part a returning reader should read first** — the economy was re-fitted,
@@ -302,3 +303,61 @@ rate — but Blitz has been x1.2 (per-word 120) since the rebalance-2 fit, so th
 were 190/130. A viewport-only gate never ran these. **Gate with the full suite**
 (`npx playwright test --workers=4 --retries=2`), and recompute pinned payout figures from the live
 table rather than nudging them.
+
+
+---
+
+## 14. THIS RUN (2026-09-17, `release/prod-2`) — the cold visitor path
+
+### 14.1 Routing: the article/play split is now ONE implementation
+Two branches built this independently a day apart (`fix/econ-perf-attack` on the 16th,
+`fix/cold-visitor-path` on the 17th) because neither was merged. They agreed on the diagnosis —
+Vercel matches the filesystem BEFORE `vercel.json`'s SPA rewrite, so `public/<mode>/index.html`
+serves and the app never receives `/<mode>` — and on the fix. `release/prod-2` resolves to the
+cold-visitor version, which is a superset.
+
+- `/<mode>` = the crawlable landing page. `/<mode>/play` = the SPA deep link that opens the game.
+- `src/router.js`: `PATH_TO_QUERY` bridges all five `/play` paths; `PLAY_PATHS` and `LANDING_MODES`
+  are exported; `viewIntentFromPath` returns `null` for the two room modes (Back must never
+  re-provision a room); `normalizePath` gives trailing-slash tolerance.
+- `vite.config.js` `vercelStaticParity`: dev + preview now resolve extensionless paths the way
+  Vercel does. **This is the load-bearing part** — without it the suite runs against different
+  routing rules than the deploy, which is how the original bug stayed green.
+- `src/routeShadow.test.js` (build-failing): no SPA-owned path may be shadowed by a
+  `public/<path>/index.html`, every landing page has a `/play` link, and every landing page's PLAY
+  button points at it.
+- `src/share/links.js`: all five share links point at `/<mode>/play`. `REF_URL` is inlined here
+  (`shareConfig.js` went with the share-card pipeline).
+- `vite.config.js` pwaPlugin: the five landing paths are in `navigateFallbackDenylist`, anchored so
+  `/chain/play` still gets the app. Without this the service worker served the APP for `/chain` to
+  every repeat visitor and the landing pages were invisible to them.
+
+### 14.2 Deep-land entry points (`src/App.jsx`)
+- `LAUNCH_INTENT.play` (`?play=<mode>`, whitelisted against `PRESELECTABLE_GAMES`) → `VS_BOT_LAUNCH`.
+- `INITIAL_VIEW` boots EVERY deep link straight to its view. Previously the solo paths booted at
+  `'home'`, so `Homepage` mounted for one commit and its mount effect wrote `taw.seenMenu` —
+  suppressing the run-over offer on the visitor's SECOND visit.
+- `'vs-bot'` is a new view (`DeepLandScreen`) and is guarded in the `room_update` handler alongside
+  `'game'` and `'cg-arm'`. **The functional `setView(prev => ...)` form is unchanged.**
+- Provisioning reuses the CrazyGames frames minus the arm gesture. Cancelling the boot screen ends
+  the SESSION (`leave_room` + a navigation to `/`) rather than calling `goHome()`, so no in-flight
+  frame can drag a cancelled visitor into a match. It touches no WS handler.
+- `DEEP_LAND` (solo OR room-mode) drives the run-over "rest of the game" offer; `goHome` retires it.
+
+### 14.3 First-frame corrections
+- `Spotlight` takes `dim` and `avoidSelector`. Game surfaces pass `dim={false}`: the 100vmax
+  `rgba(6,3,12,0.76)` wash took the whole board to a quarter brightness on the first frame of every
+  deep-link visit. On this lineage `SoloShell` uses `TeachStrip` instead (feat/teach-first-run), so
+  `dim={false}` applies to `GameScreen` (Word Bomb / Blitz), which teach-first-run left on Spotlight.
+- SAT Rush auto-starts a LINEUP run on a deep link (`SatRushGame autoStart`); the cover and mode
+  picker stay reachable from the menu card.
+- SAT Rush's in-run exit is a labelled ≥44×44 `← MENU` (`satRush/Hud.jsx`), not a bare ✕.
+
+### 14.4 Type scale
+`feat/type-scale`'s build-failing gate caught 11 hardcoded font-sizes and 4 sub-floor Bungee rules
+when the branches met — from both sides, including a 9px tag from `feat/pause-to-learn` (the floor
+is 13px). All moved onto `--fs-*` tokens; sub-floor Bungee buttons became Space Mono labels, the
+correction `.solo-restart` already carried.
+
+### 14.5 Test counts at this checkout
+lint 0 errors / 31 warnings · `npm test` 587 pass · playwright 1215 specs.
