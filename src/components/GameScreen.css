@@ -4844,8 +4844,7 @@ html[data-beat='true'] .cb-answer-chip {
 /* WINS visibility (Economy v3): the live "+N WINS" pill + the game-over "WINS EARNED" total
    moved to the shared WinsHud.css (used by every mode now). */
 
-/* ===== THE PAYOUT RECEIPT — A DOCKED SLOT, NOT AN OVERLAY =========================
-   NAME NOTE (integration/board-v2): this slot is `.wb-receipt-rail`, not `.wb-rail`. The ring
+/* ===== THE PAYOUT RECEIPT — A DOCKED SLOT, NOT AN OVERLAY ==================   NAME NOTE (integration/board-v2): this slot is `.wb-receipt-rail`, not `.wb-rail`. The ring
    board has its OWN rails either side of the ring (.wb-rail--left / .wb-rail--right, which share a
    `.wb-rail` base), and two different things called the same name is how a merge quietly changes
    what a selector means.
@@ -5578,4 +5577,59 @@ html[data-beat='true'] .cb-answer-chip {
    which is the part that carries information. */
 .game-stage--wb .bomb-flame-core {
   opacity: 1;
+}
+=======
+/* ---------- "the rest of the game" offer (deep-link visitors only) ----------
+   Shown only to someone who landed on /word-bomb/play or /category-blitz/play and has never seen
+   the menu. It lives INSIDE the sticky actions footer so it survives a card that scrolls, and it is
+   an OUTLINE button, never a second solid fill: REMATCH above is the loud cyan primary, and two
+   solid buttons stacked would leave the player no idea which one the screen wants. Matches
+   .solo-offer / .sr-offer so the same offer reads the same way in every mode. */
+.game-over-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 3px solid #000;
+}
+.game-over-offer-line {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  line-height: 1.3;
+  color: #d8c9f0;
+  text-align: center;
+}
+.game-over-offer-btn {
+  min-height: 48px;
+  padding: 0 16px;
+  /* was Bungee, below the --fs-panel display floor: small UI text is a mono label
+     (same correction .solo-restart took). */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-body);
+  color: #2effe0;
+  background: #241238;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  text-transform: uppercase; /* Bungee has no lowercase (src/perf/typeScale.test.js) */
+}
+.game-over-offer-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+/* SHORT VIEWPORTS: this offer lives in the sticky footer, and on a 640px-tall phone that footer
+   (REMATCH + LEAVE + this) already crowds the card's own content out of view. Drop the line and
+   keep the button — 'SEE ALL MODES' carries the whole meaning on its own. Same height-driven
+   compaction the first-run spotlight uses (.spotlight-caption-sub). */
+@media (max-height: 680px) {
+  .game-over-offer-line {
+    display: none;
+  }
 }

@@ -30,6 +30,9 @@ const FuseGame = lazy(() => import('./solo/FuseGame'));
 // CrazyGames zero-click direct entry (?cg=1). Lazy so the default (no-flag)
 // bundle is unchanged — the arm screen only ever loads on a cg session.
 const CgArmScreen = lazy(() => import('./components/CgArmScreen'));
+// The room-mode deep-link boot screen (/word-bomb/play, /category-blitz/play). Lazy like CgArmScreen:
+// it is off the default first-paint path (splash -> menu) and only a deep link ever mounts it.
+const DeepLandScreen = lazy(() => import('./components/DeepLandScreen'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 // Eager (not lazy): KnifeSplit must cover the menu on the FIRST frame after the
@@ -73,6 +76,7 @@ import {
   markPlayed,
   getLastSeen,
 } from './visitHistory';
+import { hasSeenMenu } from './progress/onboarding';
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
 // EVERY BONUS WIN, ANNOUNCED WHEN IT LANDS. Mounted once at app level rather than per mode, so a
@@ -180,6 +184,7 @@ const SCREEN_ACCENT = {
   room: '#FFE94A',
   game: '#FF6B3D',
   'cg-arm': '#FF6B3D', // matches the game accent (cg arm hands straight into it)
+  'vs-bot': '#FF6B3D', // room-mode deep-link boot — hands straight into the game, same accent
   credits: '#9A1AFF',
   // SAT RUSH is a duotone manga surface; the ♫ button floats over the black gutter,
   // so it wears PAPER (reads on the void) instead of the house pink.
@@ -215,15 +220,26 @@ const PORTAL_SKIP_INTRO =
 // group-chat link should land IN the game, not on a splash.
 // Read once at module load (same pattern as PORTAL_SKIP_INTRO).
 const LAUNCH_INTENT = (() => {
-  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false };
+  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false, play: null };
   const params = new URLSearchParams(window.location.search);
   const join = (params.get('join') || '').trim().toUpperCase();
+  // ?play=<mode> — the room-mode deep link (/word-bomb/play, /category-blitz/play bridge to it).
+  // WHITELISTED against the modes we can actually lock a room into: an unknown value reads as no
+  // intent and the session boots on the menu, exactly as it does today. A deep link can never put
+  // the app into a game type the server does not accept.
+  const play = (params.get('play') || '').trim().toLowerCase();
   return {
     join: join || null,
     daily: params.get('daily') === '1',
     satrush: params.get('satrush') === '1',
+    play: PRESELECTABLE_GAMES.includes(play) ? play : null,
   };
 })();
+
+// This page load came in on a room-mode deep link. Read at module load with the flags above,
+// because it describes how the SESSION started. Mutually exclusive with the CrazyGames entry
+// (?cg=1 wins — it is an embed contract, and it holds start_game for its own arm gesture).
+const VS_BOT_LAUNCH = !CG_ENTRY ? LAUNCH_INTENT.play : null;
 
 // Any launch intent (portal embed, invite link, daily link, SAT Rush link) skips
 // the intro.
@@ -232,9 +248,39 @@ const SKIP_INTRO =
   !!LAUNCH_INTENT.join ||
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
+  !!VS_BOT_LAUNCH || // /word-bomb/play, /category-blitz/play
   SOLO_LAUNCH.chain ||
   SOLO_LAUNCH.fuse ||
   CG_ENTRY; // CrazyGames wants gameplay immediately — no splash/intro chain.
+
+// SOLO DEEP-LAND: this page load came in on a shared link to a SOLO mode — a clean /chain/play,
+// /fuse/play or /sat-rush/play path, bridged to ?chain=1 / ?fuse=1 / ?satrush=1 — rather than
+// through the menu. Read at module load, alongside the flags above, because it describes how the
+// SESSION started: it must not change under us when the player later navigates.
+//
+// SAT RUSH is included (it was not before): it has a landing page and a share link exactly like
+// CHAIN and FUSE, so a stranger reaches it the same way and finishes a run just as unaware that
+// five other modes exist. The three solo modes now make the same offer on the same condition.
+const SOLO_DEEP_LAND = SOLO_LAUNCH.chain || SOLO_LAUNCH.fuse || LAUNCH_INTENT.satrush;
+
+// The view this page load starts on. Read at module load with the other launch facts.
+const INITIAL_VIEW = (() => {
+  if (CG_ENTRY) return 'cg-arm';
+  if (VS_BOT_LAUNCH) return 'vs-bot';
+  if (SOLO_LAUNCH.chain) return CHAIN_VIEW;
+  if (SOLO_LAUNCH.fuse) return FUSE_VIEW;
+  if (LAUNCH_INTENT.satrush) return SAT_RUSH_VIEW;
+  return 'home';
+})();
+
+// ANY deep land, solo or room-mode. The "you have never seen the menu" offer is about HOW THE
+// VISITOR ARRIVED, not which mode they picked — a stranger who followed /word-bomb/play is in
+// exactly the position of one who followed /chain/play, so the run-over card makes the same offer.
+const DEEP_LAND = SOLO_DEEP_LAND || !!VS_BOT_LAUNCH;
+
+// Has this browser EVER rendered the menu? Read at module load, BEFORE the app can mount the
+// menu and mark it — so a deep-landing visitor is judged on the state they arrived with.
+const SEEN_MENU_AT_BOOT = hasSeenMenu();
 
 // Repeat visitors have already seen the SQUAD-UP / "TYPE FAST. DIE SLOW." intro,
 // so we skip those two animations for them (the loading screen still plays).
@@ -269,7 +315,17 @@ function drawLucky(oracle) {
 function App() {
   // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
   // starts on the home menu, exactly as before.
-  const [view, setView] = useState(CG_ENTRY ? 'cg-arm' : 'home');
+  // EVERY deep link boots straight to its own view, never to the menu — the menu is the front door
+  // this visitor deliberately walked past.
+  //
+  // THE BUG THIS ALSO FIXES: the three SOLO paths used to boot at 'home' and rely on the launch
+  // effect to move them. Effects run AFTER the first commit, so Homepage mounted for one frame —
+  // and Homepage's mount effect calls markMenuSeen() (Homepage.jsx). A /chain/play visitor was
+  // therefore recorded as having seen the menu on their FIRST visit, so on their SECOND visit
+  // SEEN_MENU_AT_BOOT was true and the run-over "rest of the game" offer never showed, even though
+  // they had still never looked at the menu. Booting to the real view removes both the flash and
+  // the false flag. The launch effect below still runs and is idempotent (goTo* is a bare setView).
+  const [view, setView] = useState(INITIAL_VIEW);
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
@@ -862,7 +918,11 @@ function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (hasStickyQuery()) return; // keep embed/dev entries exactly as launched
-    const path = canonicalPathForView(view);
+    // 'vs-bot' owns a path the same way the solo views do — it is the screen a /word-bomb/play
+    // visitor is looking at — but WHICH path depends on the mode, so it cannot live in the router's
+    // static view->path table. Resolving it here lets the sync below strip the bridged ?play=<mode>
+    // exactly as it strips ?chain=1, leaving the clean deep link in the address bar.
+    const path = view === 'vs-bot' && VS_BOT_LAUNCH ? `/${VS_BOT_LAUNCH}/play` : canonicalPathForView(view);
     if (path === null) return; // transient view — don't touch the URL
     const here = window.location.pathname;
     // For the home view, any menu path (/, /word-bomb, /category-blitz) is already correct — don't
@@ -1020,9 +1080,14 @@ function App() {
       // 'cg-arm' is guarded the SAME way: the cg provisioning add_bot broadcasts a
       // room_update while the player is still on the arm screen — it must NOT pull
       // them into the waiting room; they leave cg-arm only via game_started.
+      // 'vs-bot' (a /word-bomb/play or /category-blitz/play deep link) is guarded for
+      // the IDENTICAL reason: its create_room + add_bot each broadcast a room_update
+      // while the boot screen is still up, and being yanked to the waiting room would
+      // strand a deep-link visitor on the one screen they never asked for. It too is
+      // left only by game_started.
       // Functional update so we read the LIVE view, not the stale `view` captured
       // in this effect's closure (the effect is keyed only on [lastMessage]).
-      setView((prev) => (prev === 'game' || prev === 'cg-arm' ? prev : 'room'));
+      setView((prev) => (prev === 'game' || prev === 'cg-arm' || prev === 'vs-bot' ? prev : 'room'));
     }
 
     if (lastMessage.type === 'game_reset') {
@@ -1683,6 +1748,17 @@ function App() {
     prevGameOverRef.current = now;
   }, [gameOver, runTransition]);
 
+  // THE SOLO RUN-OVER OFFER. True only for a visitor who LANDED in CHAIN/FUSE from a shared link
+  // and has never seen the menu: they have no idea the other modes exist, and the run-over card is
+  // the one moment they are looking at a stopped screen. A ref, not state — it is a fact about how
+  // the session started, and goHome retires it the instant they reach the menu.
+  const soloOfferRef = useRef(DEEP_LAND && !SEEN_MENU_AT_BOOT);
+
+  // SAT RUSH deep land: start a run instead of showing the cover (see SatRushGame's autoStart).
+  // A ref, not state, and retired by goHome below — it is a fact about how the SESSION started, so
+  // once the player has actually reached the menu, entering SAT from its card behaves normally.
+  const satAutoStartRef = useRef(!!LAUNCH_INTENT.satrush);
+
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated
   // name (zero prompts: tap link -> in the room), or start today's daily
@@ -1726,6 +1802,32 @@ function App() {
     // effect only ever fires once (guarded by launchFiredRef).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsStatus, send]);
+
+  // CANCELLING the room-mode boot screen. This is deliberately a FULL NAVIGATION to '/', not
+  // goHome().
+  //
+  // THE BUG: goHome() only clears local state. The provisioning effect above is gated on
+  // wsStatus + a once-ref, NOT on whether the player is still here — so a visitor who tapped
+  // ← MENU at t=3s of a 30-second cold Render start would, at t=30s, have a room and a bot
+  // created under them; the resulting room_update would pull them off whatever screen they were
+  // on into the waiting room, and game_started would then drop them into a live Word Bomb match
+  // they had explicitly cancelled half a minute earlier. The window is the whole cold start, not
+  // a millisecond race.
+  //
+  // Guarding the room_update handler with a ref would work, but room_update is one of the three
+  // documented Tier-1 traps in CLAUDE.md and every guard added there has to be re-reasoned about
+  // forever. Ending the SESSION instead touches no WebSocket handler at all: the socket closes,
+  // so no in-flight frame can arrive, the server sees the disconnect and reaps the room + bot,
+  // VS_BOT_LAUNCH is gone on the next load, and the URL becomes '/' which is where they asked to
+  // be. The cost is one page load from a screen where nothing has happened yet.
+  function handleDeepLandExit() {
+    try {
+      if (room && room.code) send('leave_room', {}); // best effort; the close below is the real signal
+    } catch {
+      /* the navigation below is what actually ends it */
+    }
+    window.location.assign('/');
+  }
 
   // ---- CrazyGames zero-click entry (?cg=1) ----
   // Provision the solo-vs-bot room the moment the socket opens: the same
@@ -1778,6 +1880,55 @@ function App() {
     cgArmPendingRef.current = false;
     send('start_game', {});
     track('cg_direct_entry', {});
+  }, [room, send]);
+
+  // ---- ROOM-MODE DEEP LINK (/word-bomb/play, /category-blitz/play) ----
+  // The two social modes need a room and an opponent before there is anything to land in, so a deep
+  // link provisions BOTH with no clicks: the SAME frames the menu's Quick Play / Daily paths already
+  // send (handleLobbyContinue, handleStartDaily), in the same order, on the same socket. Nothing new
+  // is asked of the server.
+  //
+  // It differs from the CrazyGames entry in exactly one way: there is no arm gesture. CG deliberately
+  // holds start_game until the player engages (an embed contract — the turn clock must not run before
+  // they are looking). A deep-link visitor CHOSE this URL, so the round starts as soon as the roster
+  // is ready. Everything else — provision once, wait for the human + bot to be seated, then a single
+  // start_game — is the proven cg shape, including the room_update view guard above.
+  //
+  // Fires ONCE (guarded by the ref); a later reconnect must never re-provision a second room.
+  const vsBotProvisionedRef = useRef(false);
+  useEffect(() => {
+    if (!VS_BOT_LAUNCH) return;
+    if (wsStatus !== 'open') return;
+    if (vsBotProvisionedRef.current) return;
+    vsBotProvisionedRef.current = true;
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setLobbyMode(VS_BOT_LAUNCH);
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: VS_BOT_LAUNCH });
+    if (VS_BOT_LAUNCH === 'word-bomb') {
+      // A stranger's first game gets the gentler CHILL tier, exactly as the menu's create path does.
+      send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    } else {
+      // Blitz: the host's pack selection, ordered after set_game_type on the same socket.
+      send('set_packs', { packs: blitzPacks });
+    }
+    send('add_bot', { difficulty: 'medium' });
+    // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsStatus, send]);
+
+  // Start the round the instant the roster is ready (human + bot seated). Separate from the
+  // provisioning effect because the roster arrives asynchronously, over one or more room_updates —
+  // the identical split the cg path uses. Guarded so start_game is sent exactly once.
+  const vsBotStartedRef = useRef(false);
+  useEffect(() => {
+    if (!VS_BOT_LAUNCH) return;
+    if (vsBotStartedRef.current || !vsBotProvisionedRef.current) return;
+    if (!cgRoomReady(room)) return; // "human + bot are both seated" — not cg-specific
+    vsBotStartedRef.current = true;
+    send('start_game', {});
+    track('deep_link_started', { mode: VS_BOT_LAUNCH });
   }, [room, send]);
 
   // CrazyGames compliance (cg path only): user-select:none on the body. Scoped by
@@ -1865,6 +2016,10 @@ function App() {
   // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
+    // They are on their way to the menu: the "you have never seen the menu" pitch is spent,
+    // for the rest of this session as well as (via taw.seenMenu) every later one.
+    soloOfferRef.current = false;
+    satAutoStartRef.current = false; // they have seen the menu; SAT's cover + mode picker apply again
     setLobbyMode(null);
     setLobbyPublicDefault(false);
     setRoom(null);
@@ -2125,6 +2280,7 @@ function App() {
         // cg entry skips the 3-2-1 so the server's ~3s pre-timer window becomes
         // free combo-reading time (timer frozen at full, clock not yet moving).
         cgMode={CG_ENTRY}
+        offerMenu={soloOfferRef.current}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -2236,13 +2392,31 @@ function App() {
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
-    screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} />;
+    screen = (
+      <SatRushGame
+        onExit={goHome}
+        musicSetVolume={music.setVolume}
+        offerMenu={soloOfferRef.current}
+        autoStart={satAutoStartRef.current}
+      />
+    );
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
-    screen = <ChainGame onExit={goHome} />;
+    screen = <ChainGame onExit={goHome} offerMenu={soloOfferRef.current} />;
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
-    screen = <FuseGame onExit={goHome} />;
+    screen = <FuseGame onExit={goHome} offerMenu={soloOfferRef.current} />;
+  } else if (view === 'vs-bot') {
+    // Room-mode deep link, waiting on the socket + the room/bot provisioning above. Purely
+    // cosmetic — it holds no WS/game state and is replaced by the live GameScreen on game_started.
+    screen = (
+      <DeepLandScreen
+        mode={VS_BOT_LAUNCH}
+        wsStatus={wsStatus}
+        serverError={serverError}
+        onExit={handleDeepLandExit}
+      />
+    );
   } else if (view === 'cg-arm') {
     // CrazyGames arm state: full play layout, timer frozen, start_game held until
     // the player engages. Only reachable on a ?cg=1 session.
@@ -2400,7 +2574,7 @@ function App() {
               // gap, credited XP, and never reached the button. Removing the zoom property entirely
               // (rather than overriding it) leaves no zoom to misbehave: visual == hit-test on every
               // browser. GAME views keep the zoom via `.view-screen.app-scaled`.
-              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' ? '' : ' app-scaled'}`}
+              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' || view === 'vs-bot' ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). The fallback is DELAYED (null for ~450ms): chunks are

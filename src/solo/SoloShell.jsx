@@ -14,6 +14,8 @@ import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
 import TeachStrip from '../components/TeachStrip.jsx';
+import SoloExit from './SoloExit.jsx';
+import { MORE_MODES } from '../gameData';
 
 // A thin countdown ring. Progress is driven by React state every frame (not a CSS
 // keyframe), so there's no idle animation and no var() inside keyframes.
@@ -69,6 +71,10 @@ export default function SoloShell({
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, winsBonusLines?, tryRow? }
   onExit,
+  // True only for a visitor who LANDED here from a shared link and has never seen the menu
+  // (App: SOLO_LAUNCH for this mode && !hasSeenMenu()). Adds the one-line run-over offer
+  // below. Everyone who arrived via the menu gets the card exactly as before.
+  offerMenu = false,
 }) {
   const inputRef = useRef(null);
 
@@ -107,9 +113,8 @@ export default function SoloShell({
 
   return (
     <div className="solo-root" style={{ '--solo-accent': accent }} ref={rootRef}>
-      <button type="button" className="solo-exit" onClick={onExit} aria-label="Exit">
-        ✕
-      </button>
+      {/* THE WAY OUT — labelled, ≥44×44, shared with the load state (SoloExit.jsx). */}
+      <SoloExit onExit={onExit} />
 
       {/* ONE HUD row: the mode stats (score/mult/links | words/lives) + the wins-earned state,
           all in a single readable line inside the card (NO ORPHAN FIXED UI — the shared wins
@@ -194,7 +199,15 @@ export default function SoloShell({
       <div className="solo-reason" aria-live="polite">
         {phase === 'playing' && reason ? reason : ''}
       </div>
-      {phase === 'playing' && !clock.armed && armHint ? <div className="solo-armhint">{armHint}</div> : null}
+      {/* The arm hint and the first-run teach say the same rule in the same window, and rendering
+          both put two overlapping explanations on the screen (caught in the 320/390 screenshots of
+          the cold-visitor path — invisible to every gate). The teach is the fuller one, so it wins;
+          this hint takes over the moment it clears. (On fix/cold-visitor-path this guarded against
+          the Spotlight; feat/teach-first-run replaced that with TeachStrip on this surface, so the
+          guard follows it.) */}
+      {phase === 'playing' && !clock.armed && armHint && !teachOpen ? (
+        <div className="solo-armhint">{armHint}</div>
+      ) : null}
 
       {/* LOWER DECK — per-mode content that fills the lower half of the card (the chain
           running across the space for CHAIN; the fuse cords + big letter strip for FUSE).
@@ -234,11 +247,25 @@ export default function SoloShell({
             >
               {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
             </button>
-            {/* SECOND ROW (feat/solo-endgame): one ghost button naming a DIFFERENT unlocked mode.
-                CHAIN and FUSE are the two score-attack modes AND the only level-gated ones, so
-                dead-ending them on a lone RESTART was the worst case in the game. Hidden on the
-                first-run tutorial card (over.bare), which is already a guided next step. */}
-            {over.bare ? null : over.tryRow}
+            {/* SECOND ROW — one of two, never both, because they answer the same question
+                ("what now?") for different people.
+                  • A player who came through the menu gets TRY <MODE> (feat/solo-endgame): one
+                    ghost button naming a DIFFERENT unlocked mode, so a score-attack run does not
+                    dead-end on a lone RESTART. Hidden on the first-run tutorial card (over.bare).
+                  • A DEEP-LINK visitor who has never seen the menu gets the OFFER instead. They
+                    have no idea any other mode exists, so naming one is a narrower pitch than
+                    showing them the grid. This is the only moment they are looking at a stopped
+                    screen. RESTART stays the primary action above it either way. */}
+            {offerMenu ? (
+              <div className="solo-offer">
+                <p className="solo-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                <button type="button" className="solo-offer-btn" onClick={onExit}>
+                  SEE ALL MODES
+                </button>
+              </div>
+            ) : over.bare ? null : (
+              over.tryRow
+            )}
           </div>
         </div>
       ) : null}
@@ -259,6 +286,7 @@ export default function SoloShell({
       {fx}
 
       {/* ONE-TIME first-game input spotlight (fix/logic-and-onboarding). */}
+
     </div>
   );
 }

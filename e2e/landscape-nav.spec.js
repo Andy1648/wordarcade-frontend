@@ -17,7 +17,7 @@ test.describe('no game card sits under the corner nav (landscape)', () => {
     test(`${w}x${h}: every card centre hit-tests to the card, not the corner nav`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await installBackendMock(page);
-      // LV40 → FUSE (LV25) fully unlocked/launchable, the exact reported scenario.
+      // LV40 → FUSE (LV3) fully unlocked/launchable, the exact reported scenario.
       await page.addInitScript(() => {
         try {
           localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 }));

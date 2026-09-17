@@ -14,17 +14,16 @@ async function land(page, url) {
 const dv = (page) => page.evaluate(() => document.documentElement.getAttribute('data-view'));
 const loc = (page) => page.evaluate(() => location.pathname + location.search);
 
-// WHY THE BARE /chain, /fuse, /sat-rush, /word-bomb AND /category-blitz PATHS ARE NOT TESTED HERE:
-// they are static landing pages in public/, and the two environments disagree about them. Vercel
-// serves the static file before the rewrite, so /chain returns the article with no #root at all.
-// `vite preview` (this suite's server) resolves /chain to the SPA fallback and only serves the
-// article at /chain/ WITH a trailing slash. This table used to assert the preview behaviour and
-// passed for months while describing something that was never true in production. Asserting either
-// side here would pin an environment, not the app — the real invariant (no navigable path is
-// shadowed by public/) is a filesystem check in src/build/landingLinks.test.js instead.
+// THE PLAY PATHS are the production deep links. The bare /chain is an SEO landing page — a static
+// file, which Vercel serves INSTEAD of the app (the filesystem is matched before `rewrites`). These
+// used to be the same path, which is why /chain "worked" in this suite and not on the deploy; the
+// vercelStaticParity middleware in vite.config.js now makes preview resolve them the way Vercel does.
 test.describe('clean routes render the right view', () => {
   for (const [path, view] of [
     ['/', 'home'],
+    // The two room modes boot on their own provisioning screen, never the menu (App: VS_BOT_LAUNCH).
+    ['/word-bomb/play', 'vs-bot'],
+    ['/category-blitz/play', 'vs-bot'],
     ['/sat-rush/play', 'sat-rush'],
     ['/chain/play', 'chain'],
     ['/fuse/play', 'fuse'],
@@ -32,7 +31,21 @@ test.describe('clean routes render the right view', () => {
     test(`${path} -> ${view}`, async ({ page }) => {
       await land(page, path);
       expect(await dv(page)).toBe(view);
-      expect(await loc(page)).toBe(path); // the clean path is kept in the bar
+      // The clean path is kept in the bar: the solo views canonicalise TO it, and the room modes
+      // open a game view, which owns no canonical path, so the sync leaves the URL alone.
+      expect(await loc(page)).toBe(path);
+    });
+  }
+});
+
+test.describe('the bare mode paths are the LANDING PAGES, not the app', () => {
+  for (const mode of ['word-bomb', 'category-blitz', 'sat-rush', 'chain', 'fuse']) {
+    test(`/${mode} serves the static landing page, and its PLAY button reaches the app`, async ({ page }) => {
+      await page.goto(`/${mode}`);
+      // A landing page, not the SPA: no #root app, and the PLAY button points at the play path.
+      await expect(page.locator('.lp-btn').first()).toBeVisible();
+      const href = await page.locator('a.lp-btn', { hasText: 'PLAY' }).first().getAttribute('href');
+      expect(href).toBe(`/${mode}/play`);
     });
   }
 });

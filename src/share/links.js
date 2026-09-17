@@ -3,11 +3,10 @@
 // node --test; browser callers omit `origin` and get window.location.origin,
 // which keeps links correct on localhost, previews and production alike.
 
-// INLINED from the deleted shareConfig.js. The share-card pipeline (ShareBar, CopyResultButton,
-// shareCard/cardModel/renderCard/qr) was removed wholesale — Andy: "no one in the history uses
-// that" — and this constant was the only thing left in that module with a live consumer. The URL
-// is carried over VERBATIM, ?ref=share included, so invite-link behaviour and its PostHog
-// attribution are byte-identical to before the removal.
+// INLINED from the deleted shareConfig.js (fix/econ-perf-attack removed the share-card pipeline
+// wholesale — "no one in the history uses that" — and this constant was its only live consumer).
+// Carried over VERBATIM, ?ref=share included, so invite-link behaviour and its PostHog attribution
+// are byte-identical.
 const REF_URL = 'https://typeaword.com/?ref=share';
 
 const PROD_ORIGIN = 'https://typeaword.com';
@@ -20,14 +19,15 @@ function resolveOrigin(origin) {
   return PROD_ORIGIN;
 }
 
-// feat/router: share links use CLEAN PATHS (the router bridges them back to the query the app
+// feat/router: share links now use CLEAN PATHS (the router bridges them back to the query the app
 // reads, and canonicalises the URL after boot). Legacy ?join=/?satrush=/?chain=/?fuse= entries still
 // work (the app never stopped reading them), so old shared links keep resolving.
 //
-// ARTICLE/PLAY SPLIT (2026-09-16): the solo links point at /<mode>/play, NOT /<mode>. /chain,
-// /fuse and /sat-rush are static landing pages in public/, and Vercel serves a static file before
-// the SPA rewrite — so the old links landed a recipient on an article with a PLAY button rather
-// than in the game. Verified against production: those paths return HTML with no #root at all.
+// THEY POINT AT `/<mode>/play`, NOT `/<mode>`. The bare path is that mode's SEO LANDING PAGE — a
+// static file in `public/`, which Vercel serves INSTEAD of the app (the filesystem is matched before
+// the SPA rewrite in vercel.json). Every share link built here used to hand a friend the marketing
+// page for a mode their friend had JUST PLAYED, one more click from the thing they were sent to see.
+// `/<mode>/play` is the SPA deep link and lands in the mode. See src/router.js.
 
 /** Deep link that drops a friend straight into room `code` -> /room/CODE. */
 export function inviteLink(code, origin) {
@@ -56,12 +56,13 @@ export function fuseLink(origin) {
   return `${resolveOrigin(origin)}/fuse/play?ref=share`;
 }
 
-// Result-card deep link per mode id (Job 1). Each lands IN the mode, never on an article —
-// EXCEPT word-bomb, which has no solo deep-link param (adding one is Tier-1 App.jsx work), so it
-// falls back to the mode-select MENU. That used to be `/word-bomb`, which is a static landing page
-// in production, so the recipient of a Word Bomb result card got an article instead of anywhere
-// playable; '/' is the closest thing to "the game" a mode with no solo entry point has.
-// category-blitz points at the Daily Challenge (the solo blitz surface).
+// Result-card deep link per mode id (Job 1). Each lands IN the mode it names — all five, now that
+// /word-bomb/play and /category-blitz/play provision a room + bot with no clicks. category-blitz
+// used to point at the Daily (/?daily=1) because it was the only solo Blitz surface; that sent a
+// friend to a DIFFERENT mode from the one on the card they were reacting to, and — because
+// App.jsx's DEEP_LAND does not count a ?daily= launch — denied them the run-over "rest of the
+// game" offer that every other deep-landed stranger gets. dailyLink() is unchanged and still used
+// by the Daily's own share.
 export function modeShareLink(mode, origin) {
   switch (mode) {
     case 'fuse':
@@ -71,9 +72,9 @@ export function modeShareLink(mode, origin) {
     case 'sat-rush':
       return satRushLink(origin);
     case 'category-blitz':
-      return dailyLink(origin);
+      return `${resolveOrigin(origin)}/category-blitz/play?ref=share`;
     case 'word-bomb':
-      return `${resolveOrigin(origin)}/?ref=share`;
+      return `${resolveOrigin(origin)}/word-bomb/play?ref=share`;
     default:
       return `${resolveOrigin(origin)}/?ref=share`;
   }

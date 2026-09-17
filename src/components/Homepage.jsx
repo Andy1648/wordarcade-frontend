@@ -15,6 +15,7 @@ import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progres
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny } from '../progress/shop';
+import { isModeLocked } from '../progress/modeAccess';
 import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
@@ -32,7 +33,7 @@ import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 // than showing a silhouette, because a mark you cannot have is only interesting if it is a goal.
 const ACH_NAME = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.secret ? 'A SECRET' : a.name]));
 import Spotlight from './Spotlight';
-import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboarding';
+import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import './wall-system.css';
@@ -150,6 +151,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
   const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
+  // "This browser has seen the menu" — recorded on MOUNT (not on any interaction), because the
+  // only reader is the solo run-over offer, which exists to pitch the rest of the game to a
+  // stranger who has never been here. Seeing the menu at all disqualifies you from that pitch.
+  useEffect(() => { markMenuSeen(); }, []);
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);
@@ -692,7 +697,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   onSelect={handleOpenDialog}
                   onLockedSelect={handleLockedSelect}
                   onHover={handleHover}
-                  locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
+                  // Level gate OR an earlier play of the mode (deep links open a gated
+                  // mode with no level check) — see progress/modeAccess.js.
+                  locked={isModeLocked(game, xpProgress.level)}
                   playerLevel={xpProgress.level}
                 />
               ))}

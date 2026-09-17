@@ -1,714 +1,194 @@
-# OVERNIGHT RUN — 2026-09-15 · the SUBTRACTION run
+# RUN-N — queued run, 2026-09-17
 
-Branch `feat/econ-visible`. Rails held: **no merge to main, no deploy, no backend push.**
-Two agents max, both used adversarially (one prosecutes, one defends). Every finding below was
-put to a second agent before it was acted on — which is the reason this run cuts far less than
-the brief asked for, and the reason I can tell you exactly why.
-
-**Read §0 first.** The headline of this run is not what was removed. It is that the subtraction
-target could not be met on evidence, and one of the two *sims* the economy is tuned against was
-measuring the wrong thing.
+Rails: no merges to main, no deploys, max 2 agents, deep-and-few, every finding refuted by a
+second agent, one branch per batch, screenshot every variant/viewport and review the images
+before pushing.
 
 ---
 
-## 0. THE TWO THINGS THAT MATTER
+## BATCH 1 — THE COLD VISITOR PATH — **done, pushed, NOT merged**
 
-### 0.1 The 20%-per-screen cut target was NOT met, and I think the target was wrong
+Branch: `fix/cold-visitor-path`
 
-The brief said: every screen drops at least 20% of its element count; removing needs no
-justification. I inventoried every screen (≈326 distinct elements), produced a ranked 15-item
-cut list, then put that list to a second agent whose only job was to refute it.
+### The cause (diagnosed before any fix)
 
-**Of 18 proposed cuts, 3 survived refutation. 15 died.** Not because the app isn't crowded —
-because the specific elements a reader *thinks* are duplicates mostly are not:
+`/chain/play` was never a route. The string existed in exactly one place in the repo — a comment
+in `src/progress/modeAccess.js` — and nowhere in the router. Vercel's SPA rewrite caught the path,
+the app booted with no idea what it meant, no launch intent was bridged, so the full splash → menu
+chain played and the mode was never reached.
 
-- they render at a **different player count** (`.wb-status-row` ROUND/TURN only exist at ≤2
-  players, exactly where the kill feed that would replace them is not rendered),
-- or on a **different screen** (`MomentumRail` vs the shop is a menu vs an `aria-modal` dialog —
-  never co-visible), and removing it breaks three live assertions in `e2e/momentum.spec.js`,
-- or they were **already cut once** and what remains is the deliberate survivor (the reject
-  toast survived the accept-toast cull specifically because a reject carries a *reason* nothing
-  else prints — `GameScreen.jsx:3690`),
-- or CLAUDE.md **names them as law** (`.homepage-beat-glow` is one of only two permitted motion
-  moments *and* a documented flat-colour exception).
+The reason no gate caught it is worse than the bug, and is the reusable finding:
 
-So I cut what survived scrutiny and I am handing you the other 15 as a **taste call**, because
-that is what they are. You and the player are right that it feels crowded; the code simply does
-not contain the redundancy that would let me prove which element to remove. That is your call to
-make, not something I should have guessed at overnight. §3 lists all 15 with both arguments.
+> **`vite preview` and Vercel disagree about `/chain`.**
+> Each mode has an SEO landing page at `public/<mode>/index.html`. On Vercel the FILESYSTEM is
+> matched BEFORE `rewrites`, so `/chain` serves that HTML file and the SPA never receives the path.
+> Vite's preview server does the opposite — extensionless paths go straight to the SPA fallback.
+> So `e2e/router.spec.js` asserted `/chain -> chain view` and passed, for a route that could not
+> work on the deploy. This is the `vercel.json` class of failure from CLAUDE.md again: the suite
+> was not running against the deploy's routing rules, so green meant nothing.
 
-### 0.2 FUSE's throughput was never measured, and it had been distorting the economy for two re-fits
+Verified against live production, not from reading config:
 
-`winsmin-sim.mjs` derived CHAIN's words/min from its real engine (11.6/min) but **asserted**
-FUSE's at ~20/min from prose: *"continuous solo, short fragments, little downtime."*
-
-Driving the real `fuse.js` engine with the *same* calibrated human model CHAIN uses measures
-**9.3/min** — the median run dies at ~18 words at ~6.5s per word, because late fuses fall toward
-`fuseBase → 3500ms` while the human still needs ~5.5s, and every expire burns a full fuse for no
-word at all. **The asserted figure was 2.15× too fast.**
-
-Since `wins/min = throughput × per-word`, that one wrong input made every proposed FUSE rate rise
-look like it would blow the cross-mode spread. It would not have. **That is why fuse sat at ×1.35
-through two re-fits**, and it is why your "CHAIN and FUSE should lead" ask kept coming back
-impossible. It is now derived, in a shared `claude/fuseThroughput.mjs` that both sims import —
-two divergent copies of one quantity is the bug class that caused this.
-
-A second one of the same shape, found while fixing the first: the two sims modelled the *typist*
-differently. `econ-visible-sim` drew words with `rng**2.2` over the whole 31k list (median word
-rank ~6,845 — "cookers", "jerseys", "starks"); `winsmin-sim` used a frequency-weighted top-12k
-typist (median rank ~720 — "painting", "photo", "across"). Nobody types the former with a fuse
-burning. The loose picker inflated every non-SAT mode's rarity weight and so **understated the
-spread** — 1.89× against winsmin's 2.41× on the same table. Both now use the same typist, and the
-config that was live when this run started turns out to have been at **2.06×**, i.e. already over
-the 2.00× limit.
-
----
-
-## 1. BATCH 6 — REBASE THE STACK *(done)*
-
-`origin/main` was 8 commits / 5 PRs ahead; this branch 42 ahead. Merged main in — **not** rebased,
-so the 42 commits keep their history. **13 conflicts, every one of them convergent evolution:**
-both branches had independently attacked the same first-load payload problem.
-
-| conflict | resolution | why |
+| path | typeaword.com (before) | vite preview (before) |
 |---|---|---|
-| `mascot-*.webp` ×5, `firecracker.mp3` | **main's** encodes | both sides re-encoded the same sources; main's are smaller *and* it also ships `.avif`, which this branch never generated |
-| `Mascot.jsx` / `Mascot.css` | **main** | AVIF>WebP>PNG superset + intrinsic `width`/`height`. This branch's `webpOf()`/`POSE_SRC` are gone; the class is `.mascot-pic` now |
-| `useMusicPlayer.js` | **hybrid** | main's `ensureAudio()` (constructs *nothing* at mount, vs this branch's render-body element with `preload='none'`), keeping this branch's `loadedRef` — the auto-merged `play()` body uses both |
-| `main.jsx` | **union, not a pick** | kept this branch's LAZY Sentry boot (plain-class `ErrorBoundary` + queueing `captureException`); the merged `analytics.js` no longer exports `Sentry`, so main's `Sentry.ErrorBoundary` **would not have compiled**. Added main's `installChunkReloadGuard` |
-| `GameScreen.jsx` | **this branch**, + one carry-over | this branch MOVED the combo box into the top stack; main edited it in place, so main's block was a **duplicate** — dropped. Carried main's `translate="no"` (PR #33's crash fix) onto the moved copy, which `notranslate.test.js` would otherwise have failed |
-| `LoadingScreen.css` | **rebuilt as a real union** | taking main wholesale broke two `typeScale` guards that only exist on this branch (main's AVIF commit predates the `--fs-*` tokenisation). Result: this branch's typography + main's `<picture>` mascot block |
-| `LoadingScreen.jsx` | **main** | AVIF boot poses, 176,307 → 49,311 bytes |
-
-Merge commit `ab44070`. Branch is now **0 behind** main.
-
----
-
-## 2. BATCH 5 — THE NUMBERS *(done)*
-
-### The re-fit
-
-`WINS_MULT`: `wordBomb 2 → 2.1` · `satRush 0.8 → 1` · `chain 1.9 → 2.7` · `fuse 1.35 → 2.9`.
-Blitz unchanged at 1.2.
-
-Word Bomb's rise is **not a buff for its own sake** — it lifts the *floor* of the wins/min band up
-to meet SAT, which is the only way SAT's card can sit near Blitz's with the spread under 2.00×.
-
-### Simulated, weak / median / strong (`node claude/econ-visible-sim.mjs`)
-
-| mode | weak/run | median/run | strong/run | wins/min | (was) |
-|---|---|---|---|---|---|
-| wordBomb | 1,414 | 4,377 | 13,369 | 4,661 | 4,439 |
-| blitz | 1,308 | 3,958 | 11,563 | 4,661 | 4,661 |
-| satRush | 2,508 | 9,320 | 29,087 | 9,303 | 7,442 |
-| chain | 2,942 | 12,806 | 42,285 | 8,690 | 6,115 |
-| fuse | 4,535 | 20,857 | 62,834 | 7,470 | 3,606 |
-
-Spread **1.996×** (was 2.06× — over the limit). All 7 sim conditions pass, and the conditions are
-now *your* asks, evaluated with a non-zero exit, not prose.
-
-At LV40 the card table reads **CHAIN 1,040 · FUSE 1,120 · WB 810 · BLITZ 460 · SAT 390** — both
-solo modes now lead both multiplayer modes by ~1.29×, and SAT is 83% of Blitz (was 67%, and 40%
-of Word Bomb — your "a third").
-
-### ✅ THE SAT DOUBLE COUNT IS FIXED — headroom 0.1% → 7.3%
-
-`satRarityMult()` (`progress/rarity.js`) now scores a SAT word **relative to its own deck**: the
-deck averages **3.42×** rarity against a real typist's **1.23×**, so SAT was collecting a flat
-**2.79×** nobody chose. A typical SAT word is now ×1; harder-than-typical ones still pay more, so
-the variance survives and only the bias goes. A drift-guard in `rarity.test.js` recomputes the
-constant from the shipped deck, so adding words cannot silently move every SAT payout.
-
-Re-fit: `satRush 1 → 3.9`, `fuse 2.9 → 2.7`. **Word Bomb, Blitz and CHAIN are unchanged**, which
-is why no payout e2e pin had to move again.
-
-| mode | weak/run | median/run | strong/run | wins/min |
-|---|---|---|---|---|
-| wordBomb | 1,414 | 4,377 | 13,369 | 4,661 |
-| blitz | 1,308 | 3,958 | 11,563 | 4,661 |
-| satRush | 2,002 | 5,548 | 12,517 | 4,690 |
-| chain | 2,942 | 12,806 | 42,285 | 8,690 |
-| fuse | 4,223 | 19,419 | 58,500 | 6,955 |
-
-**Spread 1.864× — 7.3% of headroom, up from 0.1%.** Both sims now agree (winsmin 1.83×); they
-disagreed by 4× before, which was the third model-vs-live mismatch (below). All 8 sim conditions
-pass with a non-zero exit.
-
-**One of your asks is now provably impossible, and it flipped direction.** "SAT within 20% of
-Blitz" was written when SAT was too *low*. With the double count gone, SAT is the only mode with
-**no per-word multiplier at all** — no combo, no lucky, and now no free deck rarity — so at an
-equal card rate it earns **0.31× Blitz per minute**. Holding the two cards within 20% forces a
-2.7–4.0× wins/min gap that busts the 2.00× spread by itself. An exhaustive search over card space
-in multiples of 10 found **no** assignment satisfying both. So SAT's card is **390** against
-Blitz's 120 — coherent for a mode of few, slow, hard words with nothing to stack.
-**If you want the cards closer, the lever is giving SAT the combo + lucky every other mode has.**
-That is a gameplay change and I have not made it.
-
-**THIRD MODEL-VS-LIVE MISMATCH, same family as the FUSE throughput.** `winsmin-sim` had
-`HAS_COMBO_LUCKY.satRush = true` — it has been modelling a SAT that gets combo and lucky, while
-`SatRushGame.jsx` has always passed `1, 1`. It was reporting SAT ~2× richer per word than it is.
-Corrected; both sims now use the same live path.
-
-### (historical) The corner this fit used to sit on
-
-SAT's deck is ~4× rarer than a real typist's vocabulary, so at an equal card rate it earns **2.40×
-per word from rarity alone**, while its throughput (12/min) is near Blitz's (14). That makes
-`wm_sat/wm_blitz = 2.40 × (c_sat/c_blitz)`. Your 20% ask forces the card ratio ≥ 0.80; the 2.00×
-spread forces it ≤ 0.835. **The entire feasible window is ~4 card points wide**, and 100/120 is the
-only multiple-of-10 pair inside it. Measured 1.996×, and 1.972–1.999 across 12 typist seeds:
-under 2.00× everywhere, with ~0.1% of headroom.
-
-**The root cause is a double count.** SAT is paid for rarity twice — once by a deck that is rare
-by construction, and again by the per-word rarity multiplier, which exists to reward a player for
-*choosing* an uncommon word. A SAT player never chooses; the deck serves the word. Damping SAT's
-rarity term is what moves this off the corner. That is a scoring change, not a re-fit, so I did
-**not** bundle it. Until it lands, treat SAT's multiplier as load-bearing: nudging it up, or making
-the deck rarer, pushes the spread through 2.00×.
-
-### End-to-end verification *(already existed; still green)*
-
-`e2e/no-hidden-wins.spec.js` already does exactly what the brief asks — a scripted 20-word run
-asserting `sum(every wins line the UI showed) === delta(taw.wins)`, seeded at 99 collected words so
-the 100-word milestone fires *during* the run (the shape of your "800 on screen, 2k in the
-balance" report). **It passes after the re-fit.**
-
-### Four e2e specs were pinned to the old numbers — and FOUR of those pins were already wrong
-
-`parity-wb-blitz` (4 tests), `rarity-race` (2), `word-bomb-scoring` (3) and `wins` (2) all pin
-exact payouts. Every figure was recomputed from the live table — **never nudged to match** — and
-each change was checked for proportionality before being accepted (Word Bomb moved +4.7% against a
-+5% multiplier change; the residue is `bankWordWins` snapping *each* per-word grant to a round 10
-independently, not one sum).
-
-| spec | was | now | why |
-|---|---|---|---|
-| `word-bomb-scoring` 3-word | 840 | **880** | WB ×2 → ×2.1 |
-| `word-bomb-scoring` 5-word | 1,710 | **1,790** | WB ×2 → ×2.1 |
-| `word-bomb-scoring` race | 840 | **880** | WB ×2 → ×2.1 |
-| `parity-wb-blitz` WB ×3 | 320/220/3,600 | **340/230/3,780** | WB ×2 → ×2.1 |
-| `rarity-race` | 840/140 | **880/760** | WB ×2 → ×2.1 |
-| `parity-wb-blitz` Blitz ×2 | 160/110 | **190/130** | ⚠ **already red** |
-| `wins` Blitz ×2 | 360/650 | **430/780** | ⚠ **already red** |
-
-**Four pins were wrong before this branch touched anything.** 160/110/360/650 are all
-`round10(weight × 100)` — Blitz at the *base* rate, ×1. Blitz has been ×1.2 (per-word 120) since
-the rebalance-2 fit, so the correct figures were 190/130/430/780. Blitz's multiplier was **not
-changed by this run**; these only surfaced because the full suite was run. A viewport-only gate
-never executed them, so they survived several merges — which is the second instance in this run of
-a check that was believed to be running and wasn't.
-
----
-
-## 3. BATCH 1 + 7 — SUBTRACTION, PROSECUTED AND DEFENDED
-
-### 3.1 What was actually removed
-
-| what | where | net |
-|---|---|---|
-| **the entire share / COPY RESULT pipeline** *(you named it)* | `ShareBar`, `CopyResultButton`, `shareCard`, `cardModel`, `renderCard`, `qr`, `copyText`, `shareConfig`, `shareText` + its test, `index.js` — **13 files deleted** | −1,087 lines |
-| its call sites | Word Bomb, Category Blitz (solo + multi), SAT Rush results, CHAIN, FUSE — 4 screens, 6 render sites | |
-| its CSS | `.sr-share` block in `SatRush.css`, the `.solo-share-btn` slot in `SoloShell` | |
-| its e2e | the 44-line share-receipt test in `solo-endgame.spec.js` | |
-| `.game-spectator-count` | `GameScreen.jsx` — a count of cards already visible in the same viewport | |
-| `.shop-back` + `.stats-back` | both are panel-level siblings of the scroller, permanently co-visible with the header ✕, calling the identical `onBack` | |
-| dead decor in `Homepage.jsx` | `GraffitiTag` + `PaintSplatter1-4` imports, `VANISHING`, `PERSPECTIVE_ENDS`, `RECEDING_TAGS` and the palette that only `RECEDING_TAGS` used — all defined, never rendered | −50 lines |
-| `"WINS"` from every game card | `"610 WINS / WORD"` → `"610 / WORD"` | 5 instances |
-
-**Kept, deliberately:** `links.js` (room invite links — still live) and `resultCard.js`
-(`tierForClockLeft` is solo-run logic, not share UI). `REF_URL` was inlined into `links.js`
-**verbatim**, `?ref=share` included, so invite behaviour and its PostHog attribution are unchanged.
-
-**`TryModeRow` survives** — it lives in `src/share/` but is a cross-promo row, not the share
-button. You didn't name it; say the word and it goes.
-
-### 3.2 ANDY'S RULING (2026-09-16) — five cut, ten kept
-
-He overruled the defence on five and upheld it on ten. **Cut and shipped:**
-
-| cut | where | why it went |
-|---|---|---|
-| `.wb-tension` | `GameScreen.jsx` | four simultaneous full-viewport layers — vignette, three speed lines, HURRY!/GET OUT!, red throb — on top of the continuous danger vignette, the bomb's fuse, the rattle and the timer. Five ways to say "hurry". `data-tension` stays (it still drives the bomb and the seats); only the overlay left. Took **4 infinite animations** with it. |
-| the two duplicate motifs | `SoloShell.jsx` | `.solo-deck-motif` + `.solo-over-motif` were the *same node* rendered twice more on one screen. One motif per screen now. |
-| the NEXT-unlock line | `Homepage.jsx` | three spans that at R1 read **"NEXT REBIRTH 1 FRAME REBIRTH 1"** — the same word three times, naming a reward the player cannot see, with no affordance. |
-| the NO MARK chip | `MenuXp.jsx` | the empty slot rendered a dimmed outline on the theory that it advertises itself. It is a chip that says nothing, parked next to the level. It now appears only when a mark is actually equipped. |
-
-**Kept (ten), including `.homepage-beat-glow`** — the defence stands as written below.
-
-The defence's own scoreboard is unchanged and worth keeping visible: of 18 proposed cuts, 3
-survived on evidence, and Andy then cut 4 more on taste. That is the right split — the code
-could not prove these four should go, and it did not need to.
-
-### The 15 that survived refutation — the arguments, for the record
-
-Each is listed as: *the case for cutting* → **the case that saved it**. I have applied none of them.
-
-1. **`.wb-tension`** (vignette + 3 speed lines + HURRY!/GET OUT! + throb) — *four full-viewport
-   layers saying what the danger vignette, fuse and rattle already say* → **different drivers**
-   (discrete `tensionTier` vs a continuous `--danger` ramp), and HURRY!/GET OUT! is the only
-   *text* prompt in the mode. Already cut once (12 → 3 speed lines).
-2. **`MomentumRail`** — *a trophy for a number the shop prints* → **breaks 3 assertions** in
-   `e2e/momentum.spec.js`; the shop is a separate `aria-modal` screen. Already renders nothing
-   until the first buy.
-3. **`.menu-next-unlock`** — *3 nodes, no affordance* → no duplicate exists anywhere; the menu's
-   only forward-looking retention line.
-4. **`.sr-stack-dock` / LiveStack in SAT** — *SAT's weight is hardcoded so the stack can't move* →
-   **the claim was a category error.** LiveStack reads `perWordRateNow`, never `cappedWordMult`,
-   and SAT's per-word `awardWordXp` moves the LEVEL row mid-run. It also self-hides below 900px.
-5. **`.solo-deck-motif` + `.solo-over-motif`** — *the same motif 3×* → the over-motif replaces one
-   buried under an 86% scrim; both are 5–7% opacity `aria-hidden` textures, not UI.
-6. **`.go-awards`** — *restates the summary* → only element that attributes a superlative to a
-   **player**; self-hides when nobody solely owns one.
-7. **CB `.go-stats-summary`** — *the scoreboard below lists all three* → **already gated to
-   `scores.length > 2`** for exactly that reason; the 1v1 cut was made months ago.
-8. **`.solo-armhint`** — *CHAIN states the rule 5×* → it is 3×, two mutually exclusive, and this
-   one renders **only** in the pre-clock window and vanishes the moment you type.
-9. **`.sr-cover-example`** — *the briefing teaches it properly* → rule ≠ worked instance; every
-   other mode ships an example (asserted in 3 specs). Cutting it makes SAT the only mode that
-   hides its mechanic.
-10. **`.sr-filmstrip`** — *the share receipt encodes the same run* → **that argument is now void:
-    I deleted the receipt.** `.sr-resstrip` carries 3 scalars; the filmstrip carries the ordered
-    sequence (where the streak broke, whether misses clustered).
-11. **`.homepage-beat-glow` + `.homepage-logo-drip`** — *ambient noise* → **CLAUDE.md:159-160**
-    names the glow as one of only two permitted motion moments *and* a documented flat-colour
-    exception. Cutting it amputates half the MENU MOTION LAW.
-12. **`.wb-status-row` ROUND/TURN** — *duplicated elsewhere* → render **only at ≤2 players**,
-    exactly where the kill feed is absent and nothing else states whose turn it is.
-13. **`SweatDrops` / `.bomb-spark-burst` / `FloatingScore` / `.game-toast.rejected`** — *four
-    redundant accept/urgency cues* → all transient and self-unmounting; the reject toast carries a
-    **reason** nothing else prints, and is the documented survivor of the accept-toast cull.
-14. **`.solo-chain-node.is-ghost`** — *decorative padding* → removing them makes the deck
-    **reflow on every accepted word**, the exact instability the codebase engineers against.
-15. **`.cb-cat-mascot`** — *sits on the thing you must read* → the only mascot in the CB round
-    view and the mode's live reaction channel.
-
-**If you want a blunter cut anyway, say so and name the screens** — I'll do it on your taste
-rather than argue the code at you. My own pick of the 15, if forced: #1 (`.wb-tension` down to the
-danger vignette + the text prompt only) and #5 (the two duplicate motifs). Those are the two where
-"fewer, louder" genuinely applies.
-
----
-
-## 4. BATCH 3 — THE PROGRESS BAR *(built; needs your pick)*
-
-Three sizes built, not one guessed at. `?xpbar=tall` (default) · `?xpbar=xl` · `?xpbar=xxl`, plus
-**`?xpbar=off`** which restores the old hairline so you can A/B against what it replaced.
-
-| | track height | vs the old 30px hairline |
-|---|---|---|
-| `tall` | 92px | 3.1× |
-| `xl` | 116px | 3.9× |
-| `xxl` | 140px | 4.7× |
-
-Everything you asked for is in all three:
-
-- **a slab, not a strip** — `#1a0b2e` fill, 3px black border, 8px radius, hard `4px 4px 0` offset
-  shadow: the CHAIN chip treatment (`Solo.css:666`), applied at panel scale.
-- **hard black tick segments** — ten segments split by 4px of solid `#000`. The old notches were
-  1.5px of `rgba(255,255,255,.16)`, which is half of why it read as a hairline. The ticks paint
-  **above** the fill so segmentation survives a full bar.
-- **texture** — a halftone dot field in the empty track and the same halftone in ink inside the
-  fill, so the bar reads as two printed plates meeting at the leading edge. Every stop is a hard
-  stop: these paint flat dots, not a gradient ramp.
-- **the level numeral at 3.8× its label** — `--fs-h2` (42px) against the `--fs-micro` (11px)
-  "LEVEL" kicker, in Bungee, in its own inset chip. Bungee is legal here *because* it is finally
-  big enough — the typeScale guard requires Bungee ≥ `--fs-panel`, which is exactly why the old
-  13px Space Mono chip could not be display type.
-- **the active rate printed on it** — the hovered card's live `perWordWins` (level-, rebirth- and
-  mark-scaled), falling back to Word Bomb on touch.
-
-**Layout note:** the bar is two rows now (meta chips on top; LEVEL block + full-width track
-below). Sharing one row starved the track to ~150px of a 760px bar — the readout and the rate line
-both overflowed it, and the ticks read as fat bars.
-
-**The phone could not take it, and I stopped trying to force it.** At 390px the full two-row slab
-costs ~200px of height. The menu's card fit-math spends whatever the header leaves, so that came
-straight out of the five cards — they were squeezed until `.game-card-badge` overflowed its own
-card, which `viewport-integrity` caught at 390×844 and 360×640 in **both** themes. Two attempts
-made it worse before the right answer appeared:
-
-1. **reserve the corner-nav's height and push the flow below it** — shrank the cards to ~40px
-   slivers. Reverted; a nav collision is better than an unusable card row.
-2. **shrink the track** (92 → 64px) — moved the card from 41px to 57px wide. Still overflowing.
-
-So below 600px the bar keeps the **original single row** (chips and track side by side, no wrap)
-and spends its budget on the three things that actually made it loud: a taller track, the hard
-black ticks, and a level numeral that is still display type (`--fs-panel`). The rate line is
-dropped — every card already prints its own rate and there is nowhere to put it at that width.
-~60px against the old hairline's 34px, so the cards keep their room. **The 3–4× spec holds on the
-desktop menu, which is the screen you're judging.** If you want the full slab on phones too, the
-honest cost is dropping to 3 cards per screen — your call.
-
-**Screenshots:** `claude/xpbar/{off,tall,xl,xxl}-{1366x768,390x844}.png` plus `-bar.png` tight
-crops of each. Bar heights measured: desktop **170 / 194 / 218px** against the old **36px**;
-phone **143 / 143 / 150px** against **34px**.
-
-### Reviewing those images caught three bugs no assertion would have
-
-This is the part of the rails that earned its keep. Every one of these renders fine, passes every
-test, and is wrong:
-
-1. **The bar printed the wrong rate.** It called `perWordWins({ mode: 'word-bomb' })` — but
-   `perWordWins` looks `WINS_MULT` up by **raw key**; it is `perWordRateNow` that runs the id
-   through `modeKey()` first. So the gameData id missed the table and silently resolved to ×1:
-   the bar printed **290** where the card directly under the cursor printed **610**. That is
-   precisely the "multipliers should show" bug this feature exists to fix, reintroduced by the
-   feature itself. It now calls `perWordRateNow` — the same function `GameCard` uses — so the two
-   numbers agree *by construction*.
-2. **The phone layout hid the headline.** The corner nav is a ~200px absolutely-positioned column
-   at top-right (x ≥ 245 of 390), and the bar ordered the LEVEL block and the track **last** — so
-   both were drawn under REBIRTH and STATS, leaving a phone user looking at a streak chip and
-   nothing else. The loud row now goes first and hard left, with the readout left-aligned; only
-   the track's empty right end falls under the nav.
-3. **The streak chip's order rule never matched.** The selector said `.menu-streak-chip`; the
-   element is `.menu-streak`. It kept `order: 0` and sorted ahead of everything in *both*
-   layouts — visible in the desktop shots as the streak sitting left of the wins chip, which is
-   not what the rules say.
-
-And the last `viewport-integrity` holdout: at **360×640** the five cards are ~65px wide and
-`610 / WORD (×6)` overflowed its own card even with the type pinned at its 7px floor. Type size
-cannot fix a string longer than its container, so something had to go — and it must not be either
-*number* (the rate is the point; the `(×N)` is the only surface showing the **combined** level ×
-rebirth × momentum × mark multiplier). `/ WORD` now drops via a **container** query under 96px of
-card width: it is the one part a player can infer, and the bar states the unit once on the same
-screen. **`viewport-integrity` menu: 35/35, all themes, all viewports** (was 10 failing).
-
----
-
-## 5. BATCH 2 — PAUSE TO LEARN *(shipped in SAT Rush; blocked elsewhere, and here is why)*
-
-### SAT Rush — shipped
-
-SAT already had the beat: on a miss, a `ReEncode` card shows **IT WAS** → the word large → the
-sentence with the answer filled in and highlighted → the definition → one root cousin, dismissible
-by any key. What it did **not** have was time to read it, and that is precisely the complaint:
-
-- `MISS_PAUSE_MS` **1800 → 3200**. Four things to read in 1.8s was never realistic; a player
-  saying "the modes move too fast to learn anything" is describing this number.
-- **new `FINAL_MISS_PAUSE_MS = 6000`** — the miss that *ends the run* now holds for 6s. This is
-  your specific ask, and it is the one pause with **no pacing cost**: nothing follows it but the
-  results screen, so a short hold only loses you the last word you got wrong — the one most worth
-  learning. Any key still skips it.
-
-### CHAIN, FUSE, Word Bomb, Blitz — reporting, not faking
-
-Two blockers, and the second is the interesting one.
-
-1. **There is no definition source.** The only gloss data in the app is SAT Rush's 956-word deck
-   (`word`, `pos`, `gloss`, `context`, `root.cousins`). The accept set is **87,815 words**.
-   Overlap: **919 words = 1.0% coverage.** There is no offline dictionary to fall back on, and a
-   runtime dictionary API would put a network call in a game loop. Per your instruction I am
-   saying so rather than faking one.
-2. **More fundamentally: those four modes do not end on "a word the player failed."** They end on
-   a **prompt the player couldn't satisfy** — CHAIN dies on a *letter*, FUSE and Word Bomb on a
-   *fragment*, Blitz on running out of category members. There is no answer-word to define. Even
-   with a full dictionary, there would be nothing to look up.
-
-**What would actually work, if you want it:** show *a word you could have played* — the engines
-can supply one (CHAIN knows its valid continuations, FUSE/WB know words containing the fragment).
-That teaches real vocabulary and fakes nothing. It needs a decision from you, because it's
-additive in a subtraction run, and the definition half of it still needs a data source.
-
----
-
-## 6. WHAT NEEDS YOU
-
-| # | thing | why it's yours |
-|---|---|---|
-| 1 | **Pick an XP bar size** — `?xpbar=tall` / `xl` / `xxl`, A/B against `?xpbar=off` | taste; all three meet the spec |
-| 2 | **The 15 defended elements (§3.2)** | the code says keep them; you and a player say the app feels crowded. Taste wins over code archaeology here, but not without you saying so |
-| 3 | **SAT's rarity double-count (§2)** | the econ fit is on a ~0.1% margin until this is fixed. It's a scoring change, so I left it for you |
-| 4 | **Batch 2 for the four non-SAT modes (§5)** | needs your call on "a word you could have played", and a definition data source |
-| 5 | **2-device live play-test** | the merge touched `main.jsx` boot, `useMusicPlayer` and `GameScreen` — all Tier 1. REGRESSION CHECKLIST, please |
-
-## 7. NOT DONE
-
-**Batch 4 (the arcane pass)** — not started. It is the largest and most speculative batch, it
-applies "to every screen that survives Batch 1", and Batch 1 did not settle until late because the
-adversarial pass overturned most of it. Starting a whole-app restyle on an unsettled element list
-would have produced exactly the kind of change you'd have to unpick. It needs §6.2 answered first.
-
-I'd rather hand you five finished things and one honest omission than eight half-applied ones.
-
----
-
-## 8. BATCH B — THE ARCANE PASS *(applied; before/after in `claude/shots/`)*
-
-Five primitives, in `src/theme/arcane.css`, applied to surfaces that **already exist**. The pass
-adds exactly ONE element to the whole app — the grain layer — and nothing else: every other
-treatment rides a `::before`/`::after` on a box already in the tree. That is deliberate. Running
-"make it louder" straight after "make it emptier" only works if louder is a property of what
-survived, not a new stack of treatment layers.
-
-| primitive | what it does | where |
-|---|---|---|
-| **grain** | single-hue static overlay — `feTurbulence` + `feColorMatrix` inlined as a **data URI**, so the browser rasterises one 180px tile and then repeats pixels. A live `<filter>` would be re-evaluated on paint; this cannot be, because by the time it reaches the compositor it is a bitmap. 5% opacity, one fixed layer, whole app. | `App.jsx`, beside `CursorTrail` |
-| **facet** | posterised hard cel-shadow: two FLAT bands meeting on a hard stop at 62%. No ramp. | `.game-card`, `.solo-deathcard` |
-| **rim** | one bright 2px inset edge, **rationed to one per screen** — WB card on the menu, the prompt box in-game, the primary action in a dialog. Two rims on a screen means the screen has no subject. | 3 selectors total |
-| **halftone** | hard-stop dot field, on the BACK plate of a surface so "never behind text" is structural rather than a promise | `.game-card-art`, shop body |
-| **value grouping** | the supporting cast steps back to 0.86 so exactly one thing is brightest — dimming the rest is cheaper than brightening one thing, and it composites | corner nav, footer, rails, used-list |
-
-**Nothing here animates.** No keyframes, no transitions, no `will-change`. The infinite-animation
-count cannot move, and the `.wb-tension` cut in Batch A *removed* four.
-
-**SAT Rush is excluded from the rim and the facet** — CLAUDE.md pins it to the retro-print
-sub-style, and it already has halftone and grain natively in its own ink/paper idiom. Applying the
-neon house treatment there is the one change this pass must not make.
+| `/chain` | landing page | **the app** |
+| `/chain/play` | app, no route → splash → menu | same |
+
+### What shipped
+
+**The split.** `/<mode>` is the crawlable landing page; `/<mode>/play` is the deep link that lands
+in the game. They can no longer shadow each other, and `src/routeShadow.test.js` (new, build-failing)
+asserts that from the two sources of truth — the router's tables and the files on disk — so it
+cannot drift.
+
+**Preview/prod parity.** `vercelStaticParity` in `vite.config.js` makes dev and preview resolve
+extensionless paths the way Vercel does. This is the fix that matters most: it closes the gap that
+let the bug hide. Verified by probe — `/chain`, `/chain/`, `/chain?x=1`, `/word-bomb` → landing;
+`/chain/play`, `/chain/play/`, `/word-bomb/play`, `/room/ABCD` → app. Matches production exactly.
+
+**The splash on a deep link: skipped entirely.** Its job is to introduce someone who arrived at the
+front door with no idea what this is. A player who tapped a link to a specific mode has already been
+introduced — by the landing page, the share card, or whoever sent it — and the mode's own first-run
+teach does the rest. Mechanically this is just `SKIP_INTRO`, which already covered every launch
+intent; the bridged query is the whole mechanism. The one exception is `/word-bomb/play` and
+`/category-blitz/play` — see below.
+
+**All five modes, not three.**
+- CHAIN / FUSE / SAT RUSH are solo: the deep link opens the mode on mount, no socket.
+- WORD BOMB / CATEGORY BLITZ need a room and an opponent, so the deep link provisions both with no
+  clicks — the same `create_room` / `set_game_type` / `set_difficulty`|`set_packs` / `add_bot`
+  frames the menu's Quick Play and Daily paths already send, in the same order, on the same socket.
+  Nothing new is asked of the server. It differs from the CrazyGames entry in one way: no arm
+  gesture (CG holds `start_game` for an embed contract; a deep-link visitor chose this URL).
+  While that round-trip happens they see `DeepLandScreen`, not the menu.
+
+**Things that were broken beside the route, found while fixing it:**
+- **Every share link in the app pointed at the landing page.** `chainLink()` returned
+  `/chain?ref=share` — a player sharing after a run handed a friend the marketing page for the mode
+  the friend was being shown. All five now point at `/<mode>/play`.
+- **The Category Blitz result-card link pointed at the Daily** (`/?daily=1`) — a different mode from
+  the one on the card, and a launch the offer logic does not count as a deep land.
+- **SAT Rush's in-run exit was a bare `✕` at 40px**, the identical defect `fix/solo-exit` had just
+  removed from CHAIN and FUSE. Now `← MENU` at ≥44×44, in SAT RUSH's own paper-and-ink language.
+- **SAT Rush had no "rest of the game" offer** on its results, though it has a landing page and a
+  share link exactly like CHAIN and FUSE. It does now (`CASE FILE` framing, its own voice). Word
+  Bomb and Blitz game-over cards got it too, inside the sticky actions footer so it survives a card
+  that scrolls.
+- **The service worker served the app for `/chain` to every repeat visitor.** Workbox only tries the
+  `<path>/index.html` spelling for URLs ending in `/`, so `/chain` missed the precache, hit the
+  NavigationRoute and got the app — meaning the landing pages were invisible to anyone with the SW
+  installed, and the routing model above was only true on a first visit. The five landing paths are
+  now in `navigateFallbackDenylist` (anchored, so `/chain/play` still gets the app).
+- **`/chain/play` was recording the visitor as having seen the menu.** The solo paths booted at
+  `view='home'` and relied on an effect to move them; effects run after the first commit, so
+  `Homepage` mounted for one frame and its mount effect wrote `taw.seenMenu`. On the visitor's
+  SECOND visit the run-over offer was therefore suppressed although they had still never looked at
+  the menu. Every deep link now boots straight to its own view.
 
 ### What the screenshots caught that the gates did not
 
-**The facet was applied to the big panels too, and it was wrong.** On a 900px panel a 163° hard
-stop does not read as "lit from one side" — it reads as a **diagonal band slicing across the
-content**. In the shop it cut straight through the PRISM theme card and half-darkened its price
-button, breaking this file's own rule that a facet must never darken text.
-`viewport-integrity` measures *boxes*; it cannot see that a shadow landed on a word, and it passed
-the frame clean. Fixed by restricting facets to things the player reads as one solid object at a
-glance — a card, a death slab. Anything big enough to contain a layout is too big to be lit from
-one side. Compare `claude/shots/B-after/shop-1366x768.png` against the first attempt.
+64 shots per pass (5 modes × every step × 1366×768 / 1280×720 / 390×844 / 320×640), reviewed as
+images, three passes.
 
-**And a second one, in CHAIN:** the frame shows the mode's single rule stated **three times at
-once** — the pre-clock armhint ("EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE"), the
-deck hint ("EACH WORD STARTS WHERE THE LAST ONE ENDED") and the input placeholder ("START WITH
-'F' · 3+ LETTERS"). The defence argued these were "3, two of them mutually exclusive with normal
-play". The screenshot says otherwise: in the pre-clock state, which is every run's first moment,
-all three are on screen together. That is a Batch C/D cut, and the picture is the evidence.
+1. **The first-run coach mark was clipped at both viewport edges at 320px.**
+   `.spotlight-caption-text` has `white-space: nowrap`, which overrides the wrapper's `max-width:
+   92vw` — so "START WITH THE GIVEN LETTER" simply overflowed and, being centre-anchored, lost its
+   first and last words. The first-run teach was unreadable on the exact screen this batch delivers.
+   No gate looks at text overflow. Now allowed to wrap below 400px.
+2. **The same teach was printed twice, on top of itself.** CHAIN's `armHint` ("EVERY WORD STARTS
+   WITH THE LAST LETTER OF THE ONE BEFORE") and the spotlight caption say the same thing in the same
+   window — the spotlight is dismissed by the same keystroke that arms the clock and hides the hint.
+   The fixed caption printed straight over the in-flow line. The hint now yields to the spotlight.
+3. **The solo input's placeholder was cut mid-word at 320px** (`START WITH "F" · 3+ LE`), which
+   reads as a broken input. Ellipsis added as a stopgap — the real fix is the copy, which is a
+   Batch 3 call (see below).
+4. **The Word Bomb game-over card is over-stuffed at 320×640** once the offer is present: the
+   sticky footer takes most of the card and the HIGHLIGHTS/PLAYERS content sits behind it. The offer
+   line is now dropped under 680px tall (button only), which recovers a line but does not fix the
+   underlying crowding.
+5. **I had introduced a duplicate control and only the image showed it.** On the SAT Rush results
+   and both game-over cards, the offer's `SEE ALL MODES` sat directly under a `MENU`/`LEAVE` button
+   calling the same handler — two adjacent buttons doing one thing. The offer's label is the better
+   one for this visitor (it says what is through the door), so it now REPLACES the generic button
+   rather than stacking under it. That also un-crowds the 320x640 Word Bomb card in (4): two buttons
+   instead of three, and the HIGHLIGHTS panel is visible again.
+6. **A screenshot artifact worth knowing:** the e2e backend mock blocks all external HTTP, including
+   Google Fonts. Only *Bungee Shade* is self-hosted — Bungee and Space Mono come from Google — so
+   every screenshot taken through the mock renders in fallback type and **cannot be used to judge
+   typography**. Re-shoot with `fonts.googleapis.com`/`fonts.gstatic.com` allowed. This matters for
+   Batches 3 and 5, which are both type judgements.
 
----
+### What the second agent refuted (and what I did about it)
 
-## 9. BATCH C — THE FIRST FIVE MINUTES, MEASURED
+The adversarial pass falsified four of five claims. Fixed in this branch:
 
-Measured by `e2e/_shots.spec.js`, which takes the census from the **same page-load** as the
-screenshot, so the number and the picture can never disagree. Counts only what a player perceives:
-rendered, non-transparent, ≥4px boxes that paint their own ink; hues above 40% saturation; and
-type sizes split into UI vs decoration (the wall graffiti is texture, not type).
+- **Tier 1, the serious one.** Tapping `← MENU` on the boot screen only cleared local state. The
+  provisioning effect is gated on `wsStatus` + a once-ref, not on whether the player is still there
+  — so a visitor who cancelled at t=3s of a 30-second cold Render start would, at t=30s, have a room
+  and a bot created under them, be pulled off whatever screen they were on into the waiting room,
+  and then dropped into a live Word Bomb match they had explicitly cancelled. The window is the
+  whole cold start, not a race. Cancel now ends the SESSION (`leave_room`, then a navigation to
+  `/`): the socket closes, no in-flight frame can arrive, the server reaps the room, and — the
+  reason I chose it over a ref guard — it touches **no WebSocket handler at all**, which is the
+  right trade next to a documented Tier-1 trap.
+- **The boot screen could strand a stranger forever.** A server `error` frame was never surfaced,
+  and a socket drop mid-provision reconnects into no room while the once-ref blocks re-provisioning.
+  It now has a 40s deadline (comfortably past a cold start) and an error state with TRY AGAIN.
+- **`e2e/router.spec.js` contradicted `App.jsx`** — it still asserted the two room paths landed on
+  the menu. The suite as I had it could not go green. Caught by the second agent, not by me, because
+  I never re-ran that spec after adding the vs-bot boot.
+- **`vite.config.js` pointed the parity plugin at the wrong directory in preview** (`command` is
+  `'serve'` for preview too, so the `outDir` branch was unreachable), and its dot-guard matched only
+  a trailing extension where `vercel.json`'s regex rejects a dot anywhere — re-introducing, inside
+  the middleware written to remove it, the same class of divergence. Both fixed; it now takes both
+  roots and mirrors the rewrite's own test.
+- Also fixed from that pass: the Blitz share link, the `SoloResultsScreen` offer gap, a path
+  traversal in the dev middleware, and three stale comments.
 
-| step | elements | hot colours | UI type sizes | moving |
-|---|---|---|---|---|
-| splash | 70 | 5 | **2** | 4 (3 infinite) |
-| menu | 128 | 7 | 10 | **0** |
-| **dialog-word-bomb** | **154** | 7 | **11** | **13** |
-| ingame-word-bomb | 94 | 5 | 5 | **0** |
-| gameover-word-bomb | 123 | 5 | 6 | 3 (3 infinite) |
+**Accepted trade-off (service worker):** denying the five landing paths the navigation fallback
+means an OFFLINE visit to the bare `/chain` no longer boots the app shell (workbox only resolves the
+precached `chain/index.html` for a URL ending in `/`, so `/chain` now falls through to the network).
+Online — every real visitor — it correctly serves the landing page instead of the menu, which it did
+not before. `/chain/` still works offline, and `/chain/play` and every other route keep the fallback,
+so the game itself is unaffected. Correct-online beat offline-for-a-marketing-page.
 
-*(target: <25 elements / ≤4 hot colours / ≤5 type sizes / ≤2 moving)*
+**Accepted, not fixed:** a nonexistent `/assets/nope.js` or `/foo.bar/baz` still returns the SPA
+locally where Vercel 404s. That is vite's own `htmlFallbackMiddleware`, downstream of the parity
+plugin (which correctly passes those through); overriding it would mean replacing vite's fallback.
+Consequence is local-dev only.
 
-**The worst three steps: the mode dialog, the menu, and the game-over card** — in that order. The
-dialog is worst on every axis at once.
+### Gates
 
-### The <25-element target is not reachable, and here is the arithmetic
+- `npm run lint` — 0 errors, 34 warnings (all pre-existing)
+- `npm test` — 491 pass, 0 fail (includes the new `routeShadow.test.js`)
+- `vite build` — exit 0
+- Full playwright suite — **1136 passed, 1 failed, 1 flaky (20.0m)**. The one failure was
+  `error-boundaries.spec.js`, which deep-linked to the bare `/chain` — another spec that only ever
+  passed because preview's routing differed from the deploy's. Fixed and re-run green after the
+  suite had already started, so it is not in that tally; the affected specs were re-run
+  (`error-boundaries`, `boot-payload`, `deep-link`: 25 passed) and the game-over group again after
+  the duplicate-button fix (49 passed).
+- One test, `/chain/play — the way out is labelled`, went flaky twice under load. I could not
+  reproduce it (4 parallel repeats, 3 serial runs, all green) and both flakes coincided with a
+  second preview server I was running for screenshots on the same box. Recorded, not fixed.
 
-The menu's job is five mode cards. One card is ~15 painted elements before any chrome — art
-plate, halftone, facet, ribbon, badge, masthead, title, payout, multiplier, lock, and the
-magnet/scale wrappers that give it its box. **Five cards is ~75 elements on their own**, and that
-is the screen's entire purpose. Hitting 25 means shipping a menu that does not show the modes.
+### Needs Andy
 
-The honest reading: **element count is the wrong metric for this app** — it counts a five-card grid
-as five times worse than a one-card grid, when a grid of five is exactly what a player came for.
-The three axes that *are* actionable, and where the crowding complaint actually lives:
+- **A 2-device play-test before this merges.** `/word-bomb/play` and `/category-blitz/play` are
+  Tier 1: new WebSocket provisioning and a new view in the `room_update` lifecycle. The mocked e2e
+  asserts the exact frame conversation, but a mock is not the Render backend.
+- **`/category-blitz/play` hands a stranger straight to the Blitz bot**, which has a confirmed,
+  unfixed backend blank bug (`overnight-run-2026-09-10`). This deep link makes that bug a first
+  impression. Worth deciding whether Blitz's deep link should ship before the backend fix.
+- **Taste call:** the boot screen (`DeepLandScreen`) is new UI. Screenshots at all four viewports.
 
-1. **UI type sizes — menu 10, dialog 11, against a scale with 7 steps.** Off-scale sizes in use:
-   7, 8, 19, 20, 24, 73px. Two of those (7, 8) are mine, from the card-payout clamp floor. This is
-   the single most fixable axis and the one a player reads as "visually noisy".
-2. **Moving things on the dialog: 13.** On a screen whose job is to answer "what is this mode?"
-3. **Hot colours: 7 on the menu, 9 in the shop**, against a 4-colour target.
+### Carried to later batches
 
-### Two of those three turned out to be measuring the wrong thing — and the third was real
-
-**Type sizes: not a defect.** The menu's 10 UI sizes are 11 / 13 / 18 / 28 / 73 for the CHROME —
-five, exactly at target, and every one is a `--fs-*` token or a documented height-guarded one
-(the 73px wordmark is `min(--fs-hero, 9.5vh)`, capped on purpose so it does not eat the title↔XP
-gap on a 768-tall laptop). The other five come from inside the five game cards, whose type is
-`cqw`-scaled to card width **by design** — that is how a card keeps its proportions when the grid
-resizes it. Snapping card type to the global scale would break the cards at every width but one.
-
-**"Moving things": mostly entrance, not idle.** The dialog's 13 are its finite one-shot entrance —
-`inf 0`. What matters is what never stops, and the census reports that separately.
-
-**THE REAL FINDING, and nobody had looked:** the menu runs **0** infinite animations at rest — the
-MENU MOTION LAW works. The screens it was never applied to do not:
-
-| screen | infinite animations at rest |
-|---|---|
-| **gameover-category-blitz** | **11** |
-| **lobby** | **9** |
-| **room** | **7** |
-| splash / browser / gameover-word-bomb | 3 each |
-| **menu · ingame-word-bomb · every dialog** | **0** |
-
-The cause is one rule. `.wave-letter` ran `letter-bounce-forever … infinite` — **a loop per
-letter**, for as long as the screen was open. The lobby title is 9 letters; the room code is 4.
-It is the same "constant idle jumping" the menu law was written to stop, and it was never applied
-here because `WaveText` only appears on the lobby and the room, which nobody audited.
-
-**Cut:** `.wave-letter` is now a one-shot entrance ripple that holds its resting pose, and the
-room's three other idle loops go with it — the per-slot `chip-rock` (whose count *grew with the
-room*: an 8-player lobby ran eight), the button `breathe`, and the mascot `loiter`. The waiting
-pulse stays as the single liveness cue. Entrances, hover and press feedback are untouched; that is
-motion the player asked for.
-
-**Still not cut, and reported rather than guessed:** hot colours (menu 7, shop 9, against 4). That
-is a palette decision across five themes, not a mechanical fix, and it is the one axis where I
-would be substituting my taste for yours.
-
----
-
-## 10. WHERE THIS RUN GOT TO
-
-Batches are being worked **in order**. A–C are shipped and gated; D–I are not started, and I am
-naming that rather than half-applying them.
-
-| batch | state |
-|---|---|
-| **A** — your three rulings | **DONE.** One XP bar size (xl/xxl/`?xpbar` deleted), five elements cut, SAT's double count fixed and the economy re-fitted to 7.3% headroom. |
-| **B** — the arcane pass | **DONE.** Five primitives, one new element in the whole app. Before/after: `claude/shots/B-before` vs `claude/shots/B-after`. |
-| **C** — first five minutes | **MEASURED + the real defect cut.** Two of the three axes turned out to be measuring the wrong thing (see §9); the third was real and is fixed — lobby 9 → 0 and room 7 → 1 infinite animations at rest. Hot colours reported, not cut. |
-| **D** — the tutorial teaches | not started |
-| **E** — pause-to-learn everywhere | SAT shipped earlier this run; the other four modes are **blocked on a data source**, see §5 — and I found a second reason in §8: CHAIN states its rule three times at once, which is the thing to fix before adding a fourth. |
-| **F** — mobile with the keyboard up | not started |
-| **G** — adversarial, crowding + economy | the crowding half ran (§0.1, §3.2); the economy attack and the perf/a11y/dead-code agents did not |
-| **H** — landing pad | this file, kept current as I go |
-| **I** — the prod release candidate | not started |
-
-### What the screenshots caught that the gates did not — the running tally
-
-This is the rails' question, and the answer is now four things, none of which any assertion saw:
-
-1. **The bar printed a ×1 rate** (290 where the card said 610) — `perWordWins` does not alias mode
-   ids; only `perWordRateNow` does.
-2. **The phone layout drew the LEVEL numeral underneath the corner nav** — the loud row was
-   ordered last, so the two things the bar exists for were behind opaque buttons.
-3. **The facet sliced a diagonal band across the shop panel**, half-darkening the PRISM price
-   button — `viewport-integrity` measures boxes, not whether a shadow landed on a word.
-4. **CHAIN states its one rule three times simultaneously** in the pre-clock state — the armhint,
-   the deck hint and the input placeholder. The adversarial defence had argued these were
-   mutually exclusive; the frame shows all three.
-
-And two the *census* caught, which is the same idea pointed at numbers rather than pixels:
-
-5. **Every layout-gate cell has been measuring the first-run onboarding state.** `bootMenu` never
-   seeded the spotlight-seen keys, so all 840 `viewport-integrity` cells render behind the
-   onboarding scrim — the steady-state app has never been layout-gated. The camera now seeds
-   them; the gate still does not, and that is a real coverage gap worth closing.
-6. **The gate was running the camera.** The suite reported 1,249 passed against 1,153 tests,
-   because the screenshot run sat in `e2e/`. Now split out behind its own config.
-
-
----
-
-## 11. BATCH F — MOBILE WITH THE KEYBOARD RAISED, AND THE ROUTING DECISION
-
-Branch `fix/mobile-and-routing`, off `fix/econ-order-and-bar` @`71990f8`.
-
-### 11.1 THE ROUTING BUG — it was four bugs, and the gate asserted the opposite of production
-
-**Decision: the article keeps `/chain`, the game moves to `/chain/play`.**
-
-`/chain`, `/fuse`, `/sat-rush`, `/word-bomb` and `/category-blitz` are static landing pages in
-`public/`, and **Vercel serves a static file BEFORE it applies a rewrite**. Verified against
-production — all five return HTML with **no `#root` on the page at all**, so the SPA never boots
-there, and `router.js`'s `PATH_TO_QUERY` entries for those paths are dead code in production.
-
-The reported symptom was one extra tap. It was actually four separate failures:
-
-| what | was | now |
-|---|---|---|
-| the URL the app writes mid-run (`canonicalPathForView`) | `/chain` | `/chain/play` |
-| every share builder (`chainLink`/`fuseLink`/`satRushLink`, `modeShareLink` x5) | `/chain?ref=share` | `/chain/play?ref=share` |
-| `MODE_PATH`, which `TryModeRow` opens with `location.assign()` | `/chain` | `/chain/play` |
-| SAT Rush's own landing page CTAs | `/` (the menu) | `/sat-rush/play` |
-
-The third is the one worth dwelling on: the end-of-run **"TRY THIS MODE" button navigated players to
-an SEO article** at the exact moment they asked to keep playing. The fourth means SAT's article never
-carried its own mode's deep link at all — even after the extra tap you still had to find SAT.
-
-**Why split rather than auto-advance.** Auto-advancing only returning visitors does nothing for the
-stranger on the receiving end of a shared link, who is by definition new. The version that does help
-everyone serves humans a redirect while serving crawlers 965 words, which is cloaking. The split
-costs nothing: `index.html` hard-codes `canonical=https://typeaword.com/`, so every `/play` URL
-self-canonicalises to the homepage and can never compete with its own article for a search term. The
-sitemap and the landing pages' own `<link rel="canonical">` are untouched.
-
-**THE GATE COULD NOT SEE THIS, AND PASSED WHILE ASSERTING THE OPPOSITE.** `vite preview` resolves
-`/chain` to the SPA fallback and only serves the article at `/chain/` **with a trailing slash**;
-Vercel resolves `/chain` to the article. `e2e/router.spec.js` asserted the preview behaviour and had
-been green for months describing something that was never true in production — the same class of
-failure as the `vercel.json` incident in CLAUDE.md. That spec no longer pins either environment. The
-real invariant is now `src/build/landingLinks.test.js`: **no path the app navigates to may be
-shadowed by a file in `public/`** — a pure filesystem assertion, true in every environment or false
-in every one. Confirmed it bites by reverting one `MODE_PATH` value:
-`MODE_PATH[chain] = /chain is shadowed by public/chain/index.html`.
-
-### 11.2 THE KEYBOARD AUDIT — `e2e-shots/mobile-keyboard.spec.js`
-
-6 screens (menu + all five modes) x 6 viewport states = 36 frames, screenshots plus a per-element
-census. Both platforms, because they differ and both matter: **Android** shrinks the layout viewport
-(390x844 -> 390x509, 320x640 -> 320x380); **iOS** leaves it alone and shrinks only the visual
-viewport, so fixed elements stay pinned under the keyboard. Flags: undersized tap targets, clipping,
-occlusion (hit-tested with `elementFromPoint`, so it finds collisions nobody predicted), and
-behind-keyboard.
-
-**Result: 12/12 at-rest frames clean, 26/36 overall** (4/36 clean when the run started).
-
-#### What it found that no gate did
-
-1. **Tapping CHAIN or SAT RUSH opened STATS.** At 390x509 the SAT card hit-tested to
-   `.homepage-corner-nav` and could not be clicked at all; at 320x380 the audit's own nav step
-   landed on the Stats screen and censused `.stats-backup-*` instead of the game. `Homepage.css`
-   already documented this exact failure — *"a tap opens STATS instead of launching the mode"* — but
-   fixed it only for `orientation: landscape`. Both failing viewports are **portrait**.
-2. **The root cause was the container, not the buttons.** `.homepage-corner-nav` is auto-width and
-   right-aligned, so its box spans the widest button at every row and the 8px gaps between them are
-   empty — yet the box won the hit test across all of it. It is now `pointer-events: none` with the
-   buttons `auto`, so the nav can only intercept a tap where a button is actually drawn.
-3. **The XP bar collision was real at BOTH phone sizes at rest**, not only at 320: `.menu-xp-rank`
-   hit-tested to the REBIRTH button at 390x844.
-4. **`.solo-exit` — the only way out of CHAIN/FUSE — was 40x40.** Its comment said it was "unified
-   with the app's canonical close X"; that control (`.mode-dialog-close`) is 44x44, so it had been
-   unified with something that does not exist.
-5. **Category Blitz's SEND was entirely off-screen** at 320x380 (top=381, viewport height 380).
-   `GameScreen.css` stacks SEND under the input below 420px wide — the right call when width is
-   scarce, the wrong one when *height* is. Now one row below 520px tall. (`min-width: 0` on the
-   input is load-bearing: the first attempt pushed SEND to x=315..418 against a 390px viewport.)
-6. **FUSE drew the fragment on top of the text field** at 320x380. `.solo-hud`'s `padding: 0 52px`
-   clears the exit X, but symmetric padding takes 104px of a 320px card and wrapped the HUD to four
-   rows / 115px. The clock was also a hardcoded `width="120"` SVG attribute — the same 120px on a
-   380px phone as on a 1440p monitor.
-
-#### Two false positives the audit produced, and what they taught
-
-- **The in-game audio button read as UNDERSIZE 44x32.** It is deliberate: `GameScreen.css` keeps the
-  chrome row short and carries a 44x44 hit target in an out-of-flow `::after`, because the ring
-  diameter is measured off that row. Measuring the layout box is simply the wrong test. But probing
-  the 44x44 **corners** still failed, because the house `skewX(-4deg)` shears a box by ~1.5px — it
-  would have reported every skewed control in the app. The probe uses **edge midpoints** now, which
-  is what "44px on both axes" actually means.
-- **The menu's keyboard frames were fiction.** The menu has no text field (`focusable-input false`),
-  so "JOIN ROOM is behind the keyboard" describes a state that cannot occur. Worse, sizing the
-  viewport *before* navigating rendered the menu at 380px tall and measured its cards at 31x41 — a
-  measurement of nothing. The keyboard now rises **after** the screen is open, which is the order it
-  happens in on a phone, and a screen with no input is photographed but not judged.
-
-### 11.3 KNOWN RESIDUALS — reported, not fixed
-
-- **The XP track is only ~54px at 320** (it was 27px; 124px at 390). This is structural: at a 320
-  viewport the menu stage is a framed card just **262px wide**, the corner nav occupies **103px** of
-  it, and only **131px of clear width** remains for the entire bar. A level chip and a legible track
-  do not both fit in that. The real fix is the nav itself — a 103px absolute column is a third of a
-  320px card — but that is a menu-layout decision rather than a bar one, so it is not taken
-  unilaterally here. It is the one open item from this batch that wants your ruling.
-- **Four variants of the bar gutter were measured before one worked**, and the three that failed are
-  recorded in `MenuXp.css` so nobody re-tries them: cluster `padding-right` (track collapsed to 9px
-  and wrapped), a stage-relative inset (34px), and `calc(100vw - --corner-nav-reserve)` — which
-  double-counts the card's margin, because that variable is measured from the *viewport* edge and
-  the menu is not full-bleed. One of those attempts also silently ate a comment's closing `*/`, so
-  `max-width` sat inside a comment and the cap did nothing; that is why it "kept not binding".
-- **CHAIN's HUD still overlaps the clock at 320x380** — one readout, no interactive element
-  affected. CHAIN's HUD carries more chips than FUSE's and still wraps to three rows there.
-- **iOS keyboard, every mode:** the input and SEND sit below the keyboard line because iOS does not
-  resize the layout viewport. Safari scrolls the focused field into view, so this is
-  platform-handled rather than broken — but it is measured rather than assumed, and it is the item
-  here that most wants a real device to confirm.
-- **The docked `.audio-btn` is behind the keyboard** in the solo modes. Accepted: it is not needed
-  while a word is being typed.
-- **The type-scale gate caught one of my own edits** — a raw `clamp()` on the level numeral that
-  bypassed the `--fs-*` tokens. It was also redundant (`--fs-panel` already floors at 20px there).
-  Worth noting because it is the gate doing exactly its job on this batch's own work.
+- **Batch 3:** the menu at 320×640 — the wordmark is overlapped by the XP row, the card grid breaks,
+  and card text clips (`CATE BLITZ`, `JNLOCKS AT LV 3`). This is the payoff screen of the whole
+  acquisition path.
+- **Batch 3:** the fixed audio button overlaps content on at least four screens (the solo coach
+  mark, the game-over `SEE ALL MODES` button, the menu spotlight line). CLAUDE.md's NO ORPHAN FIXED
+  UI rule, and a documented past regression, recurring.
+- **Batch 3:** the solo input placeholder copy is too long for 320px.
+- **Batch 5:** re-shoot with fonts allowed before judging any type.

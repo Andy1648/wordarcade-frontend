@@ -38,27 +38,49 @@
   overflow: hidden;
 }
 
+/* THE WAY OUT — a LABELLED control, not a bare ✕.
+   Was 40×40 with a ✕ glyph: under the 44px touch minimum, and meaningless to the visitor this
+   screen most needs to keep — someone who arrived on a shared CHAIN/FUSE link, has never seen
+   the menu, and for whom this button is the only door to the other four modes. Now ≥44×44 with
+   the destination written on it. Still absolute at z-60 so it outranks the .solo-over scrim. */
 .solo-exit {
   position: absolute;
   top: 16px;
   right: 16px;
-  /* Unified with the app's canonical close ✕ control: #0d0618 fill, 16px glyph, 3px black outline.
-     Was 44×44 on #1a0b2e — a third size/fill for the same escape-hatch role.
-     SIZE CORRECTED BACK TO 44 (fix/mobile-and-routing, Batch F): this said 40×40 "unified with
-     StatsScreen/ShopScreen", but the control it names — .mode-dialog-close — is 44×44, so 40 was
-     unifying with something that does not exist and left the only way out of CHAIN/FUSE below the
-     44px floor CLAUDE.md sets. The fill and glyph, which are what actually made the three controls
-     look like three controls, are unchanged. Absolutely positioned, so nothing reflows. */
-  width: var(--tap-min);
-  height: var(--tap-min);
+  /* A LABELLED pill, not a bare ✕. Two branches fixed this control independently and each got half
+     of it: fix/mobile-and-routing corrected the SIZE (40 -> 44, the floor CLAUDE.md sets) while
+     leaving it a glyph; fix/solo-exit made it say where it goes, which is what the visitor this
+     screen most needs to keep — someone who arrived on a shared link and has never seen the menu —
+     actually needs. Both survive here: the labelled shape, sized from the --tap-min token so it
+     tracks the floor rather than hard-coding it. Absolutely positioned, so nothing reflows. */
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border-radius: 8px;
   background: #0d0618;
   color: #fff;
   border: 3px solid #000;
   box-shadow: 3px 3px 0 #000;
   font-size: var(--fs-body);
+  line-height: 1;
   cursor: pointer;
   z-index: 60; /* stays reachable above the game-over overlay (z-50) */
+}
+.solo-exit-arrow {
+  font-size: var(--fs-body);
+}
+.solo-exit-label {
+  /* was Bungee, below the --fs-panel display floor: small UI text is a mono label
+     (same correction .solo-restart took). */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .solo-exit:active {
   transform: translate(3px, 3px);
@@ -75,9 +97,10 @@
   justify-content: center;
   gap: 10px 20px;
   font-size: var(--fs-label);
-  /* Clear the absolute exit ✕ (top-right, 40px + 16px inset) so a wrapped chip never runs
-     under it on the narrow card. */
-  padding: 0 52px;
+  /* Clear the absolute exit button (top-right) so a wrapped chip never runs under it on the narrow
+     card. Symmetric so the row still reads centred. 92px, not 52px: the reserve grew with the
+     button when the bare ✕ became the labelled ≥44×44 MENU control. */
+  padding: 0 92px;
 }
 /* the wins-earned state sits in the same row as the mode stats (one HUD line). */
 .solo-hud-wins {
@@ -364,6 +387,11 @@
   box-shadow: 4px 4px 0 #000;
   outline: none;
   caret-color: var(--solo-accent);
+  /* At 320px the hint is ~3 characters wider than the box and was cut MID-WORD
+     ('START WITH "F" · 3+ LE'), which reads as a broken input on the first screen a deep-link
+     visitor sees. An ellipsis is not the real fix — the copy is too long for 320 and that is a
+     Batch-3 call — but a truncation that announces itself beats one that looks like a bug. */
+  text-overflow: ellipsis;
 }
 .solo-input::placeholder {
   color: #6b5a86;
@@ -425,11 +453,17 @@
      composed page, not a card bleeding the frozen clock/letter through a thin scrim. */
   background: rgba(13, 6, 24, 0.965);
   display: flex;
-  align-items: center;
   justify-content: center;
+  /* SCROLL, don't clip. The card is centred by the child's `margin: auto` rather than
+     `align-items: center`, because a flex-centred child that outgrows its container is clipped
+     at BOTH ends and cannot be scrolled back to. That is not hypothetical: the run-over offer
+     added two rows, and at a keyboard-raised 390x464 the last button fell off the bottom edge
+     with no way to reach it. */
+  overflow-y: auto;
   padding: 24px;
 }
 .solo-deathcard {
+  margin: auto; /* centres while short, scrolls cleanly once taller than the screen */
   width: 100%;
   max-width: 420px;
   background: #1a0b2e;
@@ -445,6 +479,18 @@
 .solo-death-mascot {
   display: block;
   margin: 0 auto -2px;
+}
+/* SHORT SCREENS (a landscape phone, or a portrait one with the keyboard still up): tighten the
+   card so it fits without scrolling wherever it can. The scroll above is the guarantee; this is
+   just not making the player use it. */
+@media (max-height: 560px) {
+  .solo-deathcard {
+    padding: 16px;
+    gap: 10px;
+  }
+  .solo-deathcard h2 {
+    font-size: var(--fs-panel);
+  }
 }
 .solo-deathcard h2 {
   font-family: 'Bungee', cursive;
@@ -502,6 +548,49 @@
   font-size: var(--fs-panel);
   color: #ffe94a;
 }
+/* THE RUN-OVER OFFER (deep-link visitors only) — one line + one button, in place at the
+   bottom of the death card. Deliberately QUIETER than RESTART above it: the run they came for
+   is still the primary action; this is the door to the rest of the game, not a takeover. */
+.solo-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 3px solid #000;
+}
+.solo-offer-line {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  line-height: 1.3;
+  color: #d8c9f0;
+}
+/* OUTLINE, not a solid accent fill: RESTART above turns solid --solo-accent once it arms, and two
+   solid accent buttons stacked would leave the player no idea which one the screen wants. The
+   offer reads clearly and stays second. */
+.solo-offer-btn {
+  min-height: 48px;
+  padding: 0 16px;
+  /* was Bungee, below the --fs-panel display floor: small UI text is a mono label
+     (same correction .solo-restart took). */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-body);
+  color: var(--solo-accent);
+  background: #241238;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  text-transform: uppercase; /* Bungee has no lowercase (src/perf/typeScale.test.js) */
+}
+.solo-offer-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
 .solo-restart {
   height: 52px;
   /* was Bungee, below the 28px display floor: small UI text is a mono label */

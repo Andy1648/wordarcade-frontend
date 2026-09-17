@@ -75,7 +75,7 @@ const POOLS = {
   b: poolsRaw.b.split(' '),
 };
 
-export default function FuseGame({ onExit }) {
+export default function FuseGame({ onExit, offerMenu = false }) {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -126,10 +126,10 @@ export default function FuseGame({ onExit }) {
       />
     );
   }
-  return <FuseInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return <FuseInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} offerMenu={offerMenu} />;
 }
 
-function FuseInner({ data, createEngine, adapter, onExit }) {
+function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Persisted all-time FUSE run count (Job 14) — drives the first-run tutorial card, exactly like
   // CHAIN. onRunStart fires from the hook on the first run + every restart (button OR Enter).
   const [runs, setRuns] = useState(0);
@@ -329,6 +329,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         tryRow: <TryModeRow current="fuse" />,
       }}
       onExit={onExit}
+      offerMenu={offerMenu}
     />
     </>
   );

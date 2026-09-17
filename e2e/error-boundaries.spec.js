@@ -5,7 +5,10 @@
 import { test, expect } from '@playwright/test';
 
 test('a crashed GAME SCREEN shows the inline panel and GO BACK recovers to a live menu', async ({ page }) => {
-  await page.goto('/chain?portal=1&boom=chain');
+  // /chain/play, not /chain: the bare path is the SEO LANDING PAGE (a static file, which Vercel
+  // — and now `vite preview`, via vercelStaticParity — serves instead of the app). This spec used
+  // to pass only because preview handed /chain to the SPA and the deploy did not.
+  await page.goto('/chain/play?portal=1&boom=chain');
   await expect(page.getByText('THIS SCREEN BROKE')).toBeVisible({ timeout: 20000 });
   await page.getByRole('button', { name: /GO BACK/ }).click();
   await expect(page.locator('.game-card').first()).toBeVisible({ timeout: 10000 });

@@ -2,10 +2,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inviteLink, dailyLink, satRushLink, chainLink, fuseLink, modeShareLink } from './links.js';
-// shareConfig.js went with the share-card pipeline; REF_URL now lives in links.js as its only
-// remaining consumer. Pinned as a LITERAL here on purpose — restating the implementation's own
-// constant would make this assertion tautological, and the whole point is that the no-code
-// fallback URL did not silently change when the card was deleted.
+// shareConfig.js went with the share-card pipeline (fix/econ-perf-attack); REF_URL now lives in
+// links.js as its only surviving consumer. Mirrored here rather than imported, so this spec still
+// pins the exact string an invite link falls back to.
 const REF_URL = 'https://typeaword.com/?ref=share';
 
 test('inviteLink builds the ?join deep link on the given origin', () => {
@@ -53,14 +52,13 @@ test('chain/fuse links deep-link straight into their mode', () => {
   assert.equal(fuseLink('https://typeaword.com'), 'https://typeaword.com/fuse/play?ref=share');
 });
 
-test('modeShareLink routes each mode to a working deep link (word-bomb -> menu)', () => {
+test('modeShareLink routes every mode to a link that lands IN that mode', () => {
   const o = 'https://typeaword.com';
   assert.equal(modeShareLink('fuse', o), 'https://typeaword.com/fuse/play?ref=share');
   assert.equal(modeShareLink('chain', o), 'https://typeaword.com/chain/play?ref=share');
   assert.equal(modeShareLink('sat-rush', o), 'https://typeaword.com/sat-rush/play?ref=share');
-  assert.equal(modeShareLink('category-blitz', o), 'https://typeaword.com/?daily=1&ref=share');
-  // word-bomb has no solo deep-link param -> mode-select homepage (documented gap). This used to be
-  // '/word-bomb', which is a static ARTICLE in production, so the recipient never reached the app.
-  assert.equal(modeShareLink('word-bomb', o), 'https://typeaword.com/?ref=share');
+  assert.equal(modeShareLink('category-blitz', o), 'https://typeaword.com/category-blitz/play?ref=share');
+  // All five land IN the mode they name. The two room modes provision a room + bot on arrival.
+  assert.equal(modeShareLink('word-bomb', o), 'https://typeaword.com/word-bomb/play?ref=share');
   assert.equal(modeShareLink('anything-else', o), 'https://typeaword.com/?ref=share');
 });

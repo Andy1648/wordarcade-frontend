@@ -19,7 +19,22 @@
 //   targetSelector : CSS selector of the element to spotlight (measured on mount + resize)
 //   caption        : the single line of coach copy (the mode rule, or "TYPE OR CLICK ANYWHERE")
 //   sub            : optional smaller line under the caption
+//   dim            : draw the dark wash over everything but the target (default true)
+//   avoidSelector  : extra, NON-interactive elements the caption must not print over
 //   onDismiss      : called once, on the first key/pointer (caller persists the "seen" flag)
+//
+// WHY `dim` IS OPTIONAL. The wash is a 100vmax box-shadow at rgba(6,3,12,0.76) — it takes the whole
+// screen down to about a quarter brightness. On the MENU that is right: it is picking one bar out of
+// a dense grid of cards. On a GAME BOARD it is wrong, and badly so — the board is the only thing on
+// screen, and dimming it meant the first frame a deep-link visitor ever saw (score, multiplier,
+// timer ring, the letter) was washed out, which reads as a broken render or a transition that never
+// resolved rather than as a coach mark. The keyline round the target and the caption are what teach;
+// the wash only subtracts. Game surfaces pass dim={false}.
+//
+// WHY `avoidSelector` EXISTS. The placement pass treats only INTERACTIVE elements as obstacles, so
+// on the solo board the caption happily printed on top of the chain row and the rule line beneath
+// the input — plain divs, invisible to the old obstacle scan. A surface can now name its own
+// content as something to place around.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './Spotlight.css';
 
@@ -35,7 +50,7 @@ const EDGE = 10; // min distance the caption keeps from any viewport edge
 const INTERACTIVE =
   'a[href], button, input, textarea, select, [role="button"], [tabindex]:not([tabindex="-1"])';
 
-export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
+export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null }) {
   const [rect, setRect] = useState(null); // {left,top,width,height,right,bottom} of the target, or null
   const [place, setPlace] = useState(null); // {top,left} px for the caption (anchored to the ring)
   const capRef = useRef(null);
@@ -72,7 +87,10 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
       const cx = target.left + target.width / 2;
 
       const rects = [];
-      for (const e of document.querySelectorAll(INTERACTIVE)) {
+      const obstacles = avoidSelector
+        ? `${INTERACTIVE}, ${avoidSelector}`
+        : INTERACTIVE;
+      for (const e of document.querySelectorAll(obstacles)) {
         if (e === el || el.contains(e) || e.contains(el)) continue;
         const b = e.getBoundingClientRect();
         if (b.width > 0 && b.height > 0) rects.push(b);
@@ -151,7 +169,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measure);
     };
-  }, [targetSelector, caption, sub]);
+  }, [targetSelector, caption, sub, avoidSelector]);
 
   // Dismiss on the FIRST key/pointer — without ever swallowing it (no preventDefault).
   useEffect(() => {
@@ -183,10 +201,10 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss }) {
   return (
     <div className="spotlight-overlay" aria-hidden="true">
       {holeStyle ? (
-        <div className="spotlight-hole" style={holeStyle} />
-      ) : (
+        <div className={`spotlight-hole${dim ? '' : ' is-bare'}`} style={holeStyle} />
+      ) : dim ? (
         <div className="spotlight-dim" />
-      )}
+      ) : null}
       <div ref={capRef} className={`spotlight-caption${rect ? '' : ' is-centered'}`} style={capStyle}>
         <span className="spotlight-caption-text">{caption}</span>
         {sub && <span className="spotlight-caption-sub">{sub}</span>}

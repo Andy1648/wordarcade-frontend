@@ -158,11 +158,18 @@
 /* EXIT ✕ — the run's escape hatch, fused to the far end of the ruled strip.
    ink-on-paper to match the HUD; a left rule sets it off from HEAT; hover inverts
    to ink-fill / paper-glyph. Min 40px keeps it a real touch target. */
+/* THE WAY OUT, mid-run. Was a 40px bare glyph; now a labelled >=44x44 target that
+   names where it goes — the same correction CHAIN/FUSE got in solo/SoloExit.jsx.
+   Still paper + ink + a ruled edge: SAT RUSH's language, not the neon house chip. */
 .sr-hud-exit {
   margin-left: auto;
   align-self: stretch;
-  min-width: 40px;
-  padding: 0 clamp(9px, 1.6vw, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 clamp(10px, 1.6vw, 16px);
   border: none;
   border-left: 2px solid var(--ink);
   border-radius: 0;
@@ -170,9 +177,16 @@
   color: var(--ink);
   font-family: var(--font-head);
   font-size: var(--fs-label);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
   line-height: 1;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
+}
+.sr-hud-exit-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .sr-hud-exit:hover,
 .sr-hud-exit:focus-visible {
@@ -1352,9 +1366,50 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-resstrip.in,
 .sr-filmstrip.in,
 .sr-hardestpanel.in,
-.sr-results-actions.in {
+.sr-results-actions.in,
+.sr-offer.in {
   opacity: 1;
   transform: none;
+}
+
+/* ---------- the "rest of the game" offer (deep-link visitors only) ----------
+   The CHAIN/FUSE offer, spoken in SAT RUSH's retro-print voice: a CASE FILE
+   cross-reference under a red rule, not a neon sticker. Opacity/transform only,
+   one finite reveal on the shared stagger, nothing loops at rest. */
+.sr-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 2px solid var(--redink, #c8321e);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.34s ease, transform 0.34s ease;
+}
+.sr-offer.in {
+  transition-delay: 0.28s; /* lands just after the actions row */
+}
+.sr-offer-line {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--redink, #c8321e);
+  text-align: center;
+}
+.sr-offer-btn {
+  min-height: 44px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-offer {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* ---------- dev tuner (dev-only) ---------- */
@@ -1887,6 +1942,13 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    understated: small, ink-on-paper, tucked below the primary actions. */
 .sr-exit-chip {
   margin-top: 4px;
+  /* >=44x44, like every other way out of a mode (see .sr-hud-exit). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 6px 16px;
   background: var(--paper);
   color: var(--ink);
@@ -2056,6 +2118,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    parallelogram; the cell CONTENTS counter-skew back to upright (legible). ---- */
 .sr-hud { transform: skewX(-6deg); }
 .sr-hud .sr-hcell > * { transform: skewX(6deg); }
+.sr-hud .sr-hud-exit-inner { transform: skewX(6deg); }
 
 /* ---- WANTED banner: paper-on-ink, slashed at an angle, on a focus-line tone
    burst. The screentone plate is dropped here (the solid black bar IS the

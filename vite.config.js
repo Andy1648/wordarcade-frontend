@@ -1,8 +1,66 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+
+// VERCEL STATIC PARITY (dev + preview). THE DIVERGENCE THIS CLOSES: on Vercel the FILESYSTEM is
+// matched BEFORE `rewrites`, so `/chain` serves `public/chain/index.html` (the SEO landing page) and
+// the SPA never sees that path. Vite's dev/preview servers do the opposite — an extensionless path
+// goes straight to the SPA fallback — so `/chain` rendered the GAME locally and the LANDING PAGE in
+// production. That is not a cosmetic difference: it is why `e2e/router.spec.js` asserted `/chain ->
+// chain view` and stayed green for a route that could not possibly work in production. A green suite
+// proved nothing because the suite was running against different routing rules than the deploy.
+//
+// This middleware makes the local servers match: an extensionless request whose `<path>/index.html`
+// exists on disk is served that file, exactly as Vercel would, and everything else falls through to
+// the SPA fallback untouched. It runs in dev and preview only — it emits nothing into the bundle.
+function vercelStaticParity(rootDirs) {
+  const roots = [].concat(rootDirs)
+  const serveIfPresent = (req, res, next) => {
+    try {
+      const raw = (req.url || '/').split('?')[0].split('#')[0]
+      // Decode before any path work, so an encoded traversal (%2e%2e%2f) is seen for what it is.
+      let pathname
+      try {
+        pathname = decodeURIComponent(raw)
+      } catch {
+        return next() // malformed escape — not ours to serve
+      }
+      if (pathname === '/') return next()
+      // Mirror the vercel.json rewrite's own test EXACTLY: `/((?!.*\.).*)` rejects a dot ANYWHERE
+      // in the path, not just a trailing extension. Matching only a trailing extension meant
+      // /assets/nope.js and /foo.bar/baz fell through to the SPA locally and 404'd on Vercel —
+      // re-introducing, in the middleware written to remove it, the same class of divergence.
+      if (pathname.includes('.')) return next()
+      const clean = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname
+      for (const root of roots) {
+        const base = resolve(root)
+        const file = resolve(base, '.' + clean + '/index.html')
+        // Never serve outside the root, whatever the request said.
+        if (!file.startsWith(base)) continue
+        if (!existsSync(file)) continue
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.end(readFileSync(file))
+        return
+      }
+      next()
+    } catch {
+      next() // never take the dev server down over this
+    }
+  }
+  return {
+    name: 'vercel-static-parity',
+    apply: 'serve',
+    configureServer(server) {
+      // Dev: `public/` is the static root, and this must run BEFORE vite's SPA fallback.
+      server.middlewares.use((req, res, next) => serveIfPresent(req, res, next))
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => serveIfPresent(req, res, next))
+    },
+  }
+}
 
 // feat/offline — the service worker. Default build only (a portal iframe embed must not register a
 // SW). Precaches the shell + EVERY hashed asset, which includes the solo/SAT word data (they ship as
@@ -29,7 +87,17 @@ function pwaPlugin() {
       globPatterns: ['**/*.{js,css,html,svg,png,avif,webp,ico,woff2}'],
       globIgnores: ['**/sitemap.xml', '**/robots.txt'],
       navigateFallback: '/index.html',
-      navigateFallbackDenylist: [/^\/api\//],
+      // The SEO landing pages are real HTML files, and workbox's precache only tries the
+      // `<path>/index.html` spelling for URLs ending in '/'. So a navigation to '/chain' (no
+      // trailing slash) missed the precache, hit this NavigationRoute and got the APP — meaning
+      // every repeat visitor with the service worker installed saw the menu where Vercel serves
+      // the landing page, and '/word-bomb' silently became the menu. Deny the five landing paths
+      // (with or without the trailing slash) so they resolve to their own precached HTML, exactly
+      // as Vercel serves them. Anchored, so '/chain/play' — which MUST get the app — never matches.
+      navigateFallbackDenylist: [
+        /^\/api\//,
+        /^\/(word-bomb|category-blitz|sat-rush|chain|fuse)\/?$/,
+      ],
       cleanupOutdatedCaches: true,
       clientsClaim: true,
       skipWaiting: true,
@@ -93,7 +161,14 @@ export default defineConfig(({ mode }) => {
   const isPortal = mode === 'portal'
   const outDir = isPortal ? 'dist-portal' : 'dist'
   return {
-    plugins: [react(), ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin()])],
+    plugins: [
+      react(),
+      // Dev serves from public/, preview from the build output. `command` is 'serve' for BOTH
+      // (vite preview resolves its config with command==='serve'), so it cannot tell them apart —
+      // the middleware is handed both roots and takes whichever exists, build output first.
+      ...(isPortal ? [] : [vercelStaticParity([outDir, 'public'])]),
+      ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin()]),
+    ],
     base: isPortal ? './' : '/',
     build: {
       outDir,
