@@ -122,19 +122,48 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
     });
   }
 
-  test('/sat-rush/play lands in a PLAYABLE run, not on the cover', async ({ page }) => {
+  // A WHOLE PLAYABLE BOARD WITHIN 2s, not "some element exists".
+  //
+  // The weaker version of this test asserted `.sr-slots` was visible and stopped there, which would
+  // still pass on a board with no clue and nothing to pick — and a hand probe that sampled the page
+  // before the lazy SAT chunk resolved reported exactly that shape. So this names every part a
+  // player needs in order to play, and puts a 2s ceiling on all of them. (Measured against the
+  // deployed build: ~1.0s from navigation commit, the wait being the lazy chunk + word data.)
+  //
+  // NOTE there is deliberately no `<input>` assertion: SAT RUSH has no text input. It is typed at
+  // directly and the letters land in the mugshot slots, which is why its own specs drive it with
+  // page.keyboard. The slots ARE the typing affordance, so they are what gets asserted.
+  test('/sat-rush/play is a WHOLE playable board within 2s of a cold navigation', async ({ page }) => {
     test.setTimeout(30000);
     await installBackendMock(page);
     await page.goto('/sat-rush/play');
-    // A live board: the letter slots and the suspect lineup, with the HUD's run stats.
-    await expect(page.locator('.sr-slots')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('.sr-hud')).toBeVisible();
+
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => ({
+            clue: (document.querySelector('.sr-sentence') || {}).textContent?.trim().length || 0,
+            suspects: document.querySelectorAll('.sr-suspect-word').length,
+            slots: document.querySelectorAll('.sr-slots .sr-slot, .sr-slots > *').length,
+            exit: (document.querySelector('.sr-hud-exit') || {}).textContent?.trim() || '',
+          })),
+        { timeout: 2000, intervals: [100] }
+      )
+      .toMatchObject({ suspects: 6, exit: expect.stringContaining('MENU') });
+
+    const state = await page.evaluate(() => ({
+      clue: (document.querySelector('.sr-sentence') || {}).textContent?.trim() || '',
+      slots: document.querySelectorAll('.sr-slots > *').length,
+    }));
+    expect(state.clue.length, 'the LAST SEEN clue sentence must be on screen').toBeGreaterThan(20);
+    expect(state.slots, 'the mugshot slots are the typing affordance').toBeGreaterThan(2);
+
     // NOT the cover, NOT the mode picker, NOT the briefing — the four taps that used to stand
     // between a stranger following a link and a single word appearing.
     await expect(page.locator('.sr-cover')).toHaveCount(0);
     await expect(page.locator('.sr-modeselect')).toHaveCount(0);
     await expect(page.locator('.sr-brief-page')).toHaveCount(0);
-    // And the way out is the labelled one, in the HUD.
+    // And the way out is labelled and big enough to hit.
     await assertLabelledTouchTarget(page, page.locator('.sr-hud-exit'), 'sat-rush cold deep link');
   });
 
