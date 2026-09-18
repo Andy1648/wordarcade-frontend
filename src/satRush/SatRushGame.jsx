@@ -48,6 +48,7 @@ import SatRushResults from './SatRushResults';
 import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
+import SatKeyInput from './SatKeyInput';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
   const game = useSatRushGame();
@@ -233,6 +234,9 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
               {/* The ante row + word panel are now ONE bounty poster (WordCard);
                   the multiplier lives in its REWARD footer. */}
               <WordCard view={view} />
+              {/* The typing affordance. A phone has no physical keyboard, so without this the
+                  board renders perfectly and cannot be played at all — see SatKeyInput. */}
+              <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
             </div>
           </>
         )}

@@ -2285,3 +2285,41 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   z-index: 60;
   pointer-events: none;
 }
+
+
+/* ---- SAT KEY INPUT — the soft-keyboard bridge (SatKeyInput.jsx) --------------------------- */
+/* The field is never read and never shows text, but it must stay a REAL, focusable, on-screen
+   input: display:none / visibility:hidden / width:0 all make a browser refuse to focus it, and a
+   refused focus is a phone with no keyboard, which is the bug this closes. So it is a 1px box at
+   full transparency, parked in the normal flow under the poster.
+   font-size:16px is not cosmetic — below 16px iOS Safari zooms the whole page on focus. */
+.sr-keyinput {
+  /* Left in NORMAL FLOW, directly under the poster, deliberately: it is then wherever the poster
+     is, i.e. always inside the viewport, which is the condition iOS puts on opening a keyboard.
+     An absolutely/fixed-positioned version could be scrolled out of view or collide with the
+     corner cluster (see the no-orphan-fixed-UI rule); one transparent pixel in flow cannot. */
+  display: block;
+  width: 1px;
+  height: 1px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  font-size: 16px;
+  color: transparent;
+  background: transparent;
+  caret-color: transparent;
+  opacity: 0;
+}
+
+/* The visible half of the contract, on touch devices only: the tap that opens the keyboard. Flat
+   ink on paper, in the mode's own retro-print voice. Static — no idle loop. */
+.sr-keyhint {
+  margin: 10px 0 0;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sr-ink, #111111);
+  opacity: 0.62;
+}

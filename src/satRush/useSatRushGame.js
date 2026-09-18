@@ -446,10 +446,23 @@ export function useSatRushGame() {
   }, [phase, pending, stageForEffect, wordForEffect, doMiss, resolveClear]);
 
   // ---- keyboard ----
+  //
+  // TWO SOURCES, ONE PATH. A physical keyboard arrives as a window `keydown`; a TOUCH device has
+  // no physical keyboard, so SatKeyInput (a focusable off-screen <input>) translates the soft
+  // keyboard's `beforeinput` into the same calls. Both end up in `handleKey` below, so the slot
+  // model — accept only the target's next letter, never advance on a reject — is written once and
+  // cannot drift between the two. `keyHandlerRef` is what the component reaches through.
+  const keyHandlerRef = useRef(null);
   useEffect(() => {
-    if (phase !== 'playing') return undefined;
-    const onKey = (e) => {
-      juice.unlockAudio(); // real keydown is a valid gesture to start the audio context
+    if (phase !== 'playing') {
+      keyHandlerRef.current = null;
+      return undefined;
+    }
+    // `key` is a KeyboardEvent.key value ('a', 'Backspace', 'Escape'); `preventDefault` is the
+    // originating event's, so the soft-keyboard path can suppress the character it would insert.
+    const handleKey = (key, preventDefault) => {
+      const e = { key, preventDefault: preventDefault || (() => {}) };
+      juice.unlockAudio(); // a real key/tap is a valid gesture to start the audio context
       if (pendingRef.current !== 'idle') {
         // A re-encode teaching beat (miss / heavy clear) is showing: any key skips
         // it so fast players aren't held on the second look they don't need.
@@ -506,9 +519,31 @@ export function useSatRushGame() {
         force();
       }
     };
+    keyHandlerRef.current = handleKey;
+    const onKey = (ev) => {
+      // A soft keyboard typing into SatKeyInput ALSO fires keydown here (Android reports the
+      // letter, iOS reports 'Unidentified'), which would double-count every letter. When the event
+      // came from a text field, the beforeinput path owns it — except Escape, which produces no
+      // beforeinput at all and would otherwise be swallowed while the field has focus.
+      const t = ev.target;
+      const isTextEntry =
+        t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (isTextEntry && ev.key !== 'Escape') return;
+      handleKey(ev.key, () => ev.preventDefault());
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      keyHandlerRef.current = null;
+    };
   }, [phase, doMiss, resolveClear, beginWord]);
+
+  // The soft-keyboard bridge's single entry point. Stable across renders (it reads the ref), so
+  // SatKeyInput's listeners never need re-binding.
+  const typeKey = useCallback((key, preventDefault) => {
+    const fn = keyHandlerRef.current;
+    if (fn) fn(key, preventDefault);
+  }, []);
 
   // Persist the learning memory on unmount (a mid-run exit still counts).
   useEffect(() => () => {
@@ -761,6 +796,7 @@ export function useSatRushGame() {
 
   return {
     view,
+    typeKey,
     startGame,
     chooseMode,
     startRun: beginRunFromBriefing,

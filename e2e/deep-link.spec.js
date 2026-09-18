@@ -135,38 +135,79 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
   // A WHOLE PLAYABLE BOARD WITHIN 2s, not "some element exists".
   //
   // The weaker version of this test asserted `.sr-slots` was visible and stopped there, which would
-  // still pass on a board with no clue and nothing to pick — and a hand probe that sampled the page
-  // before the lazy SAT chunk resolved reported exactly that shape. So this names every part a
-  // player needs in order to play, and puts a 2s ceiling on all of them. (Measured against the
-  // deployed build: ~1.0s from navigation commit, the wait being the lazy chunk + word data.)
+  // still pass on a board with no clue and nothing to pick. The version after that asserted the
+  // clue, the suspects and the exit — and still passed a board NOBODY ON A PHONE COULD PLAY,
+  // because it explicitly excused the missing <input>: SAT RUSH was driven by window `keydown`
+  // alone, so a touch visitor got a perfect render of a game with no way to enter a letter. That
+  // is why this deep link read as broken while CHAIN and FUSE (which each own a real input) read
+  // as fine on the very same build.
   //
-  // NOTE there is deliberately no `<input>` assertion: SAT RUSH has no text input. It is typed at
-  // directly and the letters land in the mugshot slots, which is why its own specs drive it with
-  // page.keyboard. The slots ARE the typing affordance, so they are what gets asserted.
+  // So the gate now names all four things a stranger needs in order to actually play — a clue, six
+  // suspects, an input, and a labelled way out — and puts one 2s ceiling on all of them.
+  // (Measured against the deployed build: ~1.0s from navigation commit, the wait being the lazy
+  // SAT chunk + word data.)
   test('/sat-rush/play is a WHOLE playable board within 2s of a cold navigation', async ({ page }) => {
     test.setTimeout(30000);
     await installBackendMock(page);
+
+    // THE CLOCK IS THE PAGE'S OWN. An `expect.poll` measures wall-clock in the RUNNER, so under a
+    // parallel suite it charges this budget for every Playwright round-trip and for the CPU the
+    // other workers are using — the app can be ready in 1.0s and the assertion still spend 2s.
+    // Instead an init script records `performance.now()` (i.e. ms since this navigation started)
+    // at the first frame on which all four things are on screen, and THAT is what gets asserted.
+    // Same 2s requirement, measured on the visitor's clock rather than the test harness's.
+    await page.addInitScript(() => {
+      window.__boardReadyAt = null;
+      const ready = () => {
+        const input = document.querySelector('.sr-app input.sr-keyinput');
+        if (!input) return false;
+        const cs = getComputedStyle(input);
+        const r = input.getBoundingClientRect();
+        if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+        if (r.width < 1 || r.height < 1) return false;
+        if (input.disabled || input.readOnly) return false;
+        if (parseFloat(cs.fontSize) < 16) return false; // below 16px iOS zooms the page on focus
+        if (document.querySelectorAll('.sr-suspect-word').length !== 6) return false;
+        const clue = document.querySelector('.sr-sentence');
+        if (!clue || (clue.textContent || '').trim().length <= 20) return false;
+        const exit = document.querySelector('.sr-hud-exit');
+        if (!exit || !(exit.textContent || '').includes('MENU')) return false;
+        return true;
+      };
+      const step = () => {
+        if (window.__boardReadyAt != null) return;
+        if (ready()) {
+          window.__boardReadyAt = performance.now();
+          return;
+        }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+
     await page.goto('/sat-rush/play');
 
+    // Generous outer wait — the ASSERTION is the recorded timestamp, not how long this waits.
     await expect
-      .poll(
-        async () =>
-          page.evaluate(() => ({
-            clue: (document.querySelector('.sr-sentence') || {}).textContent?.trim().length || 0,
-            suspects: document.querySelectorAll('.sr-suspect-word').length,
-            slots: document.querySelectorAll('.sr-slots .sr-slot, .sr-slots > *').length,
-            exit: (document.querySelector('.sr-hud-exit') || {}).textContent?.trim() || '',
-          })),
-        { timeout: 2000, intervals: [100] }
-      )
-      .toMatchObject({ suspects: 6, exit: expect.stringContaining('MENU') });
+      .poll(async () => page.evaluate(() => window.__boardReadyAt), { timeout: 20000, intervals: [100] })
+      .not.toBeNull();
+    const readyAt = await page.evaluate(() => window.__boardReadyAt);
+    expect(
+      readyAt,
+      'a clue, six suspects, an input and a labelled exit, all within 2s of a cold navigation'
+    ).toBeLessThanOrEqual(2000);
 
+    // And the parts are what they claim to be, now that we know they arrived in time.
     const state = await page.evaluate(() => ({
       clue: (document.querySelector('.sr-sentence') || {}).textContent?.trim() || '',
       slots: document.querySelectorAll('.sr-slots > *').length,
+      suspects: document.querySelectorAll('.sr-suspect-word').length,
+      inputs: document.querySelectorAll('.sr-app input.sr-keyinput').length,
     }));
     expect(state.clue.length, 'the LAST SEEN clue sentence must be on screen').toBeGreaterThan(20);
-    expect(state.slots, 'the mugshot slots are the typing affordance').toBeGreaterThan(2);
+    expect(state.slots, 'the mugshot slots show the letters as they land').toBeGreaterThan(2);
+    expect(state.suspects, 'six suspects').toBe(6);
+    expect(state.inputs, 'exactly one typing field').toBe(1);
 
     // NOT the cover, NOT the mode picker, NOT the briefing — the four taps that used to stand
     // between a stranger following a link and a single word appearing.
@@ -175,6 +216,53 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
     await expect(page.locator('.sr-brief-page')).toHaveCount(0);
     // And the way out is labelled and big enough to hit.
     await assertLabelledTouchTarget(page, page.locator('.sr-hud-exit'), 'sat-rush cold deep link');
+  });
+
+  // THE INPUT IS WIRED, not decoration. A field that exists and does nothing would satisfy the
+  // shape of the gate above and still leave the mode unplayable on a phone, so this drives the
+  // game THROUGH the field — no window keydown at all — and asserts a letter lands in a slot.
+  test('/sat-rush/play — a touch visitor can type: the field drives the slots', async ({ page }) => {
+    test.setTimeout(30000);
+    await installBackendMock(page);
+    await page.goto('/sat-rush/play');
+    const field = page.locator('.sr-app input.sr-keyinput');
+    await expect(field).toHaveCount(1);
+    await expect(page.locator('.sr-suspect-word')).toHaveCount(6);
+
+    // Tapping the board hands focus to the field — that tap is what opens a soft keyboard, so if
+    // it does not take focus, no phone ever gets one.
+    // A real pointer tap on the poster. `force` skips Playwright's actionability check only —
+    // the events dispatched are genuine, which is all the document-level focus handler sees (the
+    // clue's own <span> sits on top of it, and a player's thumb hits that span too).
+    await page.locator('.sr-sentence').click({ force: true });
+    await expect
+      .poll(async () => page.evaluate(() => document.activeElement?.className || ''))
+      .toContain('sr-keyinput');
+
+    // Type the whole alphabet into the FIELD (never the window): whatever the wanted word is, its
+    // first letter is in there, so exactly one keystroke must land in the first slot. Each letter
+    // is dispatched as a real beforeinput, which is what a soft keyboard sends.
+    const landed = await page.evaluate(async () => {
+      const el = document.querySelector('.sr-app input.sr-keyinput');
+      const filled = () =>
+        [...document.querySelectorAll('.sr-slots > *')].filter((n) =>
+          (n.textContent || '').trim()
+        ).length;
+      const before = filled();
+      for (const ch of 'abcdefghijklmnopqrstuvwxyz') {
+        el.dispatchEvent(
+          new InputEvent('beforeinput', { inputType: 'insertText', data: ch, bubbles: true, cancelable: true })
+        );
+        await new Promise((r) => setTimeout(r, 15));
+        if (filled() > before) return true;
+      }
+      return filled() > before;
+    });
+    expect(landed, 'a letter typed into the field must land in a mugshot slot').toBe(true);
+
+    // And the field stays WRITE-ONLY: it must never accumulate text of its own, or the native
+    // buffer and the slot model would disagree about what has been typed.
+    expect(await field.inputValue()).toBe('');
   });
 
   test('a trailing slash is the same link (/chain/play/)', async ({ page }) => {
