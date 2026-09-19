@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
 import { perWordRateNow } from '../progress/wins';
-import { masteryState } from '../progress/mastery';
 import { formatNum } from '../format';
 import './GameCard.css';
 
@@ -141,8 +140,6 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
   // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
   // state; the menu re-reads on every return from a game.
-  const mastery = masteryState(game.id);
-  const showMastery = game.enabled && !locked && mastery.level >= 2;
 
   // The wrapper element + its magnet state. The card object is shared with the
   // module-level controller; mutating `hovered` here lets the rAF loop add the
@@ -322,7 +319,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           </div>
         )}
 
-        {/* Foreground overlay: corner ribbon, mastery, and the bottom title bar (or,
+        {/* Foreground overlay: corner ribbon and the bottom title bar (or,
             for SAT RUSH, the manga masthead + foot). pointer-events:none so the whole
             card face stays one click target. */}
         <div className="game-card-fg">
@@ -332,11 +329,6 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           {game.featured && <div className="game-card-ribbon is-featured" aria-hidden="true">FEATURED</div>}
           {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI JUDGED</div>}
 
-          {showMastery && (
-            <div className="game-card-mastery" aria-label={`Mastery level ${mastery.level}`}>
-              M{mastery.level}
-            </div>
-          )}
 
           {game.id === 'sat-rush' ? (
             <>

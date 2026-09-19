@@ -184,8 +184,14 @@
   );
 }
 /* The game card's own copy must stay on top of its facet. */
+/* .game-card-lock IS NOT IN THIS LIST ANY MORE. It is `position: absolute; inset: 0; z-index: 6`
+   in GameCard.css — already above the facet — and this rule was overriding that `absolute` with
+   `relative`, which dropped the lock out of its overlay position and into the flow BELOW the
+   card. Measured at 390x844: CHAIN's lock box sat at y=493 while its card ended at y=502, so a
+   locked card rendered with its plaque off the bottom and showed no lock at all. This file is
+   imported unconditionally from main.jsx and the selector is unscoped, so it applied in every
+   theme, not just arcane. */
 .game-card-face,
-.game-card-lock,
 .game-card-ribbon,
 .game-card-badge {
   position: relative;
