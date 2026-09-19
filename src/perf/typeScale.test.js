@@ -48,7 +48,12 @@ const lineOf = (css, i) => css.slice(0, i).split('\n').length;
 // choice. The allowlist is deliberately narrow - a NEW raw font-size anywhere else
 // fails. If you need another, justify it here rather than widening the matcher.
 // ---------------------------------------------------------------------------
-const FIT_TO_SLOT = /cqw|var\(--slot-size\)/i;
+// --wb-bomb-w is the Word Bomb ring's BOMB width, itself a share of the ring's own diameter.
+// The fragment chip that sits on the bomb's belly is sized to that object, not to the document
+// scale — a token would be the same pixels on a 247px ring as on a 520px one, and the chip would
+// leave the bomb at one end and swallow it at the other. Same class of exception as --slot-size:
+// text sized to a BOX. The readable prompt above the ring is on the scale as normal.
+const FIT_TO_SLOT = /cqw|var\(--slot-size\)|var\(--wb-bomb-w\)/i;
 
 test('every font-size goes through a --fs-* token (the scale cannot be bypassed)', () => {
   const offenders = [];
