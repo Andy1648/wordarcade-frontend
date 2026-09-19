@@ -2815,6 +2815,10 @@ export default function GameScreen({
   // and tracks used words; Category Blitz prompts with a category and
   // tracks used answers. Everything downstream reads these shared locals.
   const combo = (gameState.combo || '').toUpperCase();
+  // WHICH SEAT THE POINTER FACES. A pure read of the same players[] order the ring seats
+  // from, so the wedge's angle is computed from the identical (i / n) the seat uses. -1 when
+  // nobody is up (between rounds, game over) and the pointer simply is not rendered.
+  const turnSeatIndex = players.findIndex((p) => p.id === gameState.currentPlayerId);
   const categoryRaw = gameState.category || '';
   const usedItems = (isCategory ? gameState.usedAnswers : gameState.usedWords) || [];
 
@@ -3137,6 +3141,15 @@ export default function GameScreen({
             : { '--drain-sat': drainSat }
         }
       >
+        {/* POSTERISED VALUE BAND — the solo vocabulary carried over: an off-axis band across
+            the board, a violet facet above it, an accent rule and the pink brand rule. Four
+            inert divs, no animation, no pointer events, behind everything. */}
+        <div className="wb-structure" aria-hidden="true">
+          <div className="wb-band" />
+          <div className="wb-facet" />
+          <div className="wb-bandrule" />
+          <div className="wb-bandedge" />
+        </div>
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
@@ -3238,10 +3251,35 @@ export default function GameScreen({
             from 2 to 16 is evenly spaced and the bomb stays dead centre.
             Seat geometry is pure CSS from --i (seat index) and --n (seat count);
             see .wb-seat in GameScreen.css. */}
+        {/* SEAT 0'S ANGLE. Seats are placed at start + (i/n)*360deg with 0deg = straight
+            up. At TWO players that puts them at 12 and 6 o'clock — stacked vertically, which
+            is the one arrangement a ring must not produce: it is the tall-and-empty shape the
+            row layout already failed at, and it forces the ring box to reserve its full height
+            for two seats. A quarter turn puts the pair at 3 and 9 o'clock — horizontally
+            opposed, facing each other across the bomb — and lets the box shrink (.wb-ring--pair).
+            Every other count keeps 0deg, so seat 0 stays at the top as before. */}
         <div
-          className={`wb-ring${players.length >= 5 ? ' wb-ring-crowd' : ''}`}
-          style={{ '--n': players.length }}
+          className={[
+            'wb-ring',
+            players.length >= 5 ? 'wb-ring-crowd' : '',
+            players.length === 2 ? 'wb-ring--pair' : '',
+          ].filter(Boolean).join(' ')}
+          style={{ '--n': players.length, '--wb-start': players.length === 2 ? '90deg' : '0deg' }}
         >
+          {/* TURN POINTER — the third signal of turn ownership, and the only one that says
+              WHICH seat rather than merely "someone". A hard-edged wedge pinned at the bomb's
+              centre, rotated to the active seat's own angle by the SAME expression the seat
+              uses, so the two can never disagree. Rotation only (one transform, no layout),
+              decorative, and it simply does not render when nobody is up. */}
+          {turnSeatIndex >= 0 && (
+            <div
+              className="wb-pointer"
+              style={{ '--i': turnSeatIndex, '--n': players.length }}
+              aria-hidden="true"
+            >
+              <span className="wb-pointer-arrow" />
+            </div>
+          )}
           <div className="wb-ring-seats">
           {players.map((player, seatIndex) => {
             const eliminated = player.eliminated || player.lives <= 0;
@@ -3269,7 +3307,20 @@ export default function GameScreen({
             return (
               <div
                 key={player.id}
-                className="wb-seat game-player-slot"
+                className={`wb-seat game-player-slot${
+                  // WHICH SIDE THE NAME HANGS ON. The label used to be unconditionally BELOW its
+                  // avatar, and for every seat in the TOP half "below" means "between the avatar
+                  // and the bomb" — the one band the turn pointer also has to cross. At 8 players
+                  // that drew the arrow straight through the name of the player it was naming.
+                  // Radially OUTWARD instead: cos(angle) >= 0 means the seat is in the top half,
+                  // so its name goes above it. Pure arithmetic on the same angle the seat and the
+                  // pointer use — no measurement, no layout read.
+                  Math.cos(
+                    ((players.length === 2 ? 90 : 0) + (seatIndex / players.length) * 360) * (Math.PI / 180)
+                  ) >= 0
+                    ? ' wb-seat--name-out-up'
+                    : ''
+                }`}
                 style={{ '--i': seatIndex, '--n': players.length }}
               >
                 {isCurrent && isMe && !gameOver && (
@@ -3371,6 +3422,22 @@ export default function GameScreen({
               ring (see the note there); this cell is the bomb's alone so it can own a
               majority of the circle's free middle. */}
           <div className="wb-core">
+        {/* THE FRAGMENT, ON THE BOMB'S BELLY. It used to be a plaque ABOVE the ring, and the
+            note there was right that a 76px hero step cannot fit the circle's free middle — so
+            this is not that glyph moved, it is a chip SIZED TO THE BELLY (--wb-frag, a share of
+            the bomb's own width) sitting on the thing it is about. The four layers are Bungee's
+            real chromatic family stacked in register — Shade, fill, Inline, Outline — not a
+            text-shadow, so the depth comes from the font exactly as the menu wordmark law and
+            the solo hero do. aria-hidden: the prompt bar above still carries the readable text
+            for a screen reader, so this is decoration of a value already announced. */}
+        {!isCategory && promptValue ? (
+          <div className="wb-belly" aria-hidden="true">
+            <span className="wb-belly-l wb-belly-shade">{promptValue}</span>
+            <span className="wb-belly-l wb-belly-fill">{promptValue}</span>
+            <span className="wb-belly-l wb-belly-inline">{promptValue}</span>
+            <span className="wb-belly-l wb-belly-outline">{promptValue}</span>
+          </div>
+        ) : null}
         <div className="bomb-area drain-exempt">
           {/* Continuous danger rattle: the bomb physically vibrates harder as
               --danger climbs (amplitude scales from 0 at calm), on its OWN wrapper
