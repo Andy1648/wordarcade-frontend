@@ -19,6 +19,12 @@
      --mascot-size as an INLINE style (size={172}), which beats any class rule, and Mascot.css
      itself shrinks the image to 0.7x under 600px. So: 172 desktop, 120 phone. */
   --solo-mascot: 172px;
+  /* THE FIXED CONTROL CLUSTER's footprint (AudioControls.css: a 44px button at right/bottom 16).
+     It is viewport-fixed and shared by every screen, so per CLAUDE.md's NO ORPHAN FIXED UI rule
+     the CARD yields to it rather than the button moving to coordinates of its own: the deck gets
+     this much bottom clearance in the single-column layout, where the card's bottom-right corner
+     is exactly where the button sits (at 390x844 it was drawn on top of the FUSE "z" tile). */
+  --solo-cluster: 56px;
 
   /* --- WALL TOKENS ----------------------------------------------------------------
      .solo-root carries .wall-surface — the shared surface vocabulary, used exactly the way
@@ -91,12 +97,15 @@
    height, or 1280x551 would lose a mascot it has room for.) */
 @media (max-width: 899px) {
   .solo-root {
-    padding-bottom: calc(clamp(10px, 1.4vh, 18px) + env(safe-area-inset-bottom));
+    /* …and the deck's bottom clearance for the fixed control cluster is taken here, since in one
+       column the deck IS the last thing in the card (ITEM 4). */
+    padding-bottom: calc(max(clamp(10px, 1.4vh, 18px), var(--solo-cluster)) + env(safe-area-inset-bottom));
     /* …and the hero's 232px floor comes off its own budget here. On a 320x640 phone the column
        is HUD + hero + input + first-run teach + deck, and a hero that cannot go below 232px
        took the difference out of the FUSE alphabet (26 of 26 tiles clipped). Tie it to the
-       window's height instead of a flat floor. */
-    --solo-hero: clamp(150px, 30vh, 232px);
+       window's height instead of a flat floor — and it also funds the cluster clearance above,
+       because at 390x844 the card had 16px of slack and the clearance needs 60. */
+    --solo-hero: clamp(150px, 18vh, 232px);
   }
   .solo-mascot {
     display: none;
@@ -117,7 +126,15 @@
    The poster's geometry: an off-axis band cutting across the card, a violet facet above it,
    and the two rules that pin the cut. Four inert divs — no animation, no pointer events —
    first child, so everything else stacks above it. This is what gives the panel an
-   ARRANGEMENT to hang content on instead of a flat rectangle of void. */
+   ARRANGEMENT to hang content on instead of a flat rectangle of void.
+
+   THE FOUR PIECES SIT AT inset: 0, NOT -3%. The bleed was belt-and-braces and bought nothing:
+   the band and facet are clip-path polygons that already run to their own box edges, and the two
+   rules rotate about `left center` by 1.15deg, which moves their right end horizontally by
+   1262 * (1 - cos 1.15deg) = a quarter of a pixel. What the -3% DID buy was a
+   viewport-integrity failure on every solo screen at every viewport and theme — the gate reads
+   "child exceeds a clipping ancestor" as cropped content and cannot know this crop is the
+   design. Same picture, no overhang. */
 .solo-structure {
   position: absolute;
   inset: 0;
@@ -127,7 +144,7 @@
 }
 .solo-band {
   position: absolute;
-  inset: -3%;
+  inset: 0;
   background-color: #0c0619;
   background-image: radial-gradient(circle, rgba(255, 255, 255, 0.075) 1.4px, transparent 1.4px);
   background-size: 10px 10px;
@@ -135,14 +152,14 @@
 }
 .solo-facet {
   position: absolute;
-  inset: -3%;
+  inset: 0;
   background: rgba(154, 26, 255, 0.1);
   clip-path: polygon(0 26%, 100% 0%, 100% 14%, 0 40%);
 }
 .solo-bandrule {
   position: absolute;
-  left: -3%;
-  right: -3%;
+  left: 0;
+  right: 0;
   top: 26%;
   height: 4px;
   background: #ff4fa3;
@@ -152,8 +169,8 @@
 }
 .solo-bandedge {
   position: absolute;
-  left: -3%;
-  right: -3%;
+  left: 0;
+  right: 0;
   top: 40%;
   height: 7px;
   background: var(--solo-accent);
@@ -372,6 +389,9 @@
   width: var(--solo-hero);
   height: var(--solo-hero);
   flex: 0 0 auto;
+  /* the seconds chip is absolutely positioned across the ring's bottom edge and, at --fs-h2, hangs
+     below the hero's box — reserve that overhang so it can never land on the input below */
+  margin-bottom: calc(var(--fs-h2) * 0.6);
 }
 .solo-clock {
   position: absolute;
@@ -464,18 +484,19 @@
   top: 92.9%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* NOT Bungee: at --fs-body this sits below the --fs-panel display floor, and small UI text
-     is a mono label — the same correction .solo-exit-label took on this base. */
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  line-height: 1;
+  /* THE TIMER IS THE TIMER (ITEM 3). This was --fs-body — 16-18px, the smallest thing on a screen
+     whose entire tension is the countdown. It is now --fs-h2 (24px on a phone, 42px at 1920), which
+     is ABOVE the --fs-panel display floor, so it is allowed to be Bungee again. */
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 0.98;
   color: #fff;
   background: #0d0618;
   border: 4px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
-  padding: 5px 12px;
+  padding: 4px 14px;
   white-space: nowrap;
 }
 .solo-hero-secs.is-red {
@@ -921,7 +942,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* `safe`: centred while it fits, flex-start the moment it does not — a plain `center` spills the
+     overflow out of BOTH ends, which pushed the strip back up over the input. */
+  justify-content: safe center;
   gap: 12px;
 }
 /* The deck's own motif copy is GONE (Andy's cut) — one motif per screen, not three.
@@ -938,19 +961,25 @@
   gap: 12px;
   width: 100%;
 }
+/* ITEM 2: ALL FIVE SLOTS ON ONE ROW. At 1920 the deck is ~469px wide (the two columns split the
+   card and the mascot's gutter comes off this one), and at --fs-panel with 13px side padding and
+   an 18px gap the five chips measured 583px — so the fifth wrapped alone onto a second row, which
+   reads as broken rather than as a chain. The chips are a secondary readout next to the hero, so
+   they take the smaller token and tighter metrics; five now measure ~316px at 390 and ~394px at
+   1920, which also leaves headroom for real words before the trail ever has to wrap. */
 .solo-chain-trail {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 14px 18px;
+  gap: 10px;
   max-width: 100%;
 }
 .solo-chain-node {
   position: relative;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-body);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
@@ -958,24 +987,27 @@
   border: 4px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
-  padding: 9px 13px;
+  padding: 8px 10px;
 }
 /* faint empty slot — the chain still to build; keeps the trail full-width from word 0 */
+/* A ghost is a PLACEHOLDER, so it may be tighter than a chip holding a real word — which is what
+   lets all five fit one row on a 390px phone as well, not just at 1920. */
 .solo-chain-node.is-ghost {
   color: #4a3a63;
   background: transparent;
   border-style: dashed;
   border-color: #3a2b52;
   box-shadow: none;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.06em;
+  padding: 8px 6px;
 }
 /* the link between chips — a short cyan bar, the chain running left→right */
 .solo-chain-node:not(:first-child)::before {
   content: '';
   position: absolute;
-  left: -13px;
+  left: -10px;
   top: 50%;
-  width: 13px;
+  width: 10px;
   height: 5px;
   border-radius: 3px;
   background: #2effe0;
@@ -1160,10 +1192,105 @@
   color: #cdbdf0;
 }
 
-/* (.solo-hud-stack is gone with the LiveStack it docked — see the note in SoloShell where the
-   payout chip used to render. The theme rule in src/theme/arcane.css that also names the class
-   is left alone: it is a shared opacity list covering five selectors, four of which still exist,
-   and a dead entry there costs nothing.) */
+/* ===== ITEM 1: THE LIVE MULTIPLIER STACK, IN THE HUD ROW ============================
+   "Every win and multiplier visible, no hidden credits" is a standing requirement, so LiveStack
+   comes back — but as a CHIP IN THIS ROW, not a second floating box beside the card. Same
+   treatment as .solo-mult and the wins pill: 4px black outline, 4px hard offset, 52px tall,
+   one line. Only the AXIS and the chrome change here; the numbers are still whatever
+   perWordRateNow() resolves, so it can never quote a multiplier the game will not pay. */
+.solo-hud-stack {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.solo-hud .lstack {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 4px 14px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+/* the head loses its underline — on one line the divider would be a rule through the middle */
+.solo-hud .lstack-head {
+  padding-bottom: 0;
+  border-bottom: none;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.solo-hud .lstack-rate {
+  font-size: var(--fs-body);
+}
+/* the factor rows run ALONG the chip, each one a "LABEL ×N" pair */
+.solo-hud .lstack-rows {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.solo-hud .lstack-row {
+  gap: 5px;
+  justify-content: flex-start;
+}
+/* the live COMBO row keeps its colour but drops the horizontal-rule separator */
+.solo-hud .lstack-row--live {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+/* LiveStack hides itself under 900px (it was a standing COLUMN beside the board, and there is no
+   room for one on a phone). As a single-line chip in this row there IS room — it wraps onto the
+   HUD's own second line — and hiding it on mobile is exactly the "hidden credits" this item
+   exists to prevent. So the solo HUD opts back in. */
+@media (max-width: 900px) {
+  .solo-hud .lstack {
+    display: flex;
+    /* on a phone it owns its own HUD line rather than sitting beside the other chips, so it only
+       has to clear the touch floor, not match their 52px */
+    min-height: 44px;
+    padding: 3px 10px;
+    gap: 10px;
+  }
+  .solo-hud .lstack-rows {
+    gap: 10px;
+  }
+  /* THE ALPHABET TILE IS 20px WIDE ON A PHONE, and the house 4px outline is 40% of that: the
+     border alone forced a 32px min-height into a 20px box (aspect-ratio loses to min-content), so
+     the strip stood 69px tall instead of 45 and its second row was clipped. A tile this small
+     carries the 2px weight prod-2 gave it; the 4px outline stays everywhere it fits. */
+  .solo-strip-big {
+    gap: 4px;
+  }
+  /* the deck's internal gaps are desk-sized; on a phone they are the last 18px between a whole
+     alphabet and a clipped one */
+  .solo-deck {
+    gap: 8px;
+  }
+  .solo-fusedeck {
+    gap: 6px;
+  }
+  /* six pixels is the whole margin between five slots on one row and an orphan on a second at
+     390px (5 chips = 286px + 4 gaps); the trail is the one place that can give them up */
+  .solo-chain-trail {
+    gap: 8px;
+  }
+  .solo-chain-node:not(:first-child)::before {
+    left: -8px;
+    width: 8px;
+  }
+  .solo-strip-big span {
+    width: calc((100% - 13 * 4px) / 13);
+    border-width: 2px;
+    box-shadow: 2px 2px 0 #000;
+    font-size: var(--fs-label);
+  }
+}
 
 /* NARROW/SHORT SOLO COLUMN (fix/mobile-and-routing, Batch F).
    MEASURED at 320x380 — a 320px phone with the keyboard raised, which is the smallest real

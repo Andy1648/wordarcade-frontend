@@ -11,6 +11,8 @@ import { useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+// The standing multiplier readout — "every win and multiplier visible, no hidden credits".
+import LiveStack from '../components/LiveStack';
 import Mascot from '../components/Mascot';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
@@ -170,13 +172,16 @@ export default function SoloShell({
             <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />
           </div>
         )}
-        {/* THE PAYOUT BREAKDOWN CHIP (LiveStack: "250 / WORD · BASE · MODE") IS GONE FROM THE
-            SOLO PLAY SCREEN. It is permanent chrome on a screen whose whole job is one word at a
-            time, and it is the single densest block on the card. The running "+N WINS" pill above
-            still says what the run is earning. NOTE FOR REVIEW: LiveStack exists because of
-            "Multipliers should SHOW" / "idk where the thing comes from" — pulling it here answers
-            the layout complaint at the cost of that one, so it is worth an explicit yes/no. Word
-            Bomb, Blitz and SAT Rush are untouched and still show it. */}
+        {/* WHAT A WORD IS WORTH HERE, AND WHY — in THIS row, as one more chip beside the
+            multiplier and the wins pill, not a second floating panel beside the card (which is
+            what made it read as a separate box). Solo.css lays it out along the row and gives it
+            the same 4px outline / 4px hard offset / 52px height as its neighbours; LiveStack's
+            own numbers are untouched, so it still cannot quote a rate the game will not pay. */}
+        {phase === 'playing' && mode && (
+          <div className="solo-hud-stack">
+            <LiveStack mode={mode} compact />
+          </div>
+        )}
       </div>
 
       {/* BODY — one column on narrow/portrait screens, two columns on wide-aspect ones so
