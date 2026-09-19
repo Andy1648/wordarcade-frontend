@@ -4984,12 +4984,23 @@ html[data-beat='true'] .cb-answer-chip {
      collides with the bomb. Height matters as much as width: the seats at 12 and 6
      o'clock are bounded by their height. */
   --wb-seat-h: var(--wb-seat-w);
-  --wb-r: calc(var(--wb-size) / 2 - var(--wb-seat-w) * 0.65 - 2px);
+  --wb-r: calc(var(--wb-size) / 2 - var(--wb-seat-w) * 0.62 - 2px);
   /* THE BOMB IS 0.42d. A fixed share of the ring, not a leftover: the bomb art is
      taller than it is wide (~1.155:1), so 0.42d puts its vertical radius at 0.243d
      while the nearest seat edge sits at 0.276d - a gap that scales with the ring
      instead of collapsing at one particular size. */
-  --wb-bomb-w: calc(var(--wb-size) * 0.42);
+  /* 0.34, down from 0.42. The bomb's BOUNDING BOX is ~1.155x taller than it is wide, so its
+     CORNERS sit at 0.32d while the seats' inner edge sat at 0.314d — the diagonal seats and the
+     bomb's box were touching at every count. The art is not a rectangle, but a gate that
+     measures rectangles is the only kind that can run, and "nearly touching" is not a margin. */
+  --wb-bomb-w: calc(var(--wb-size) * 0.34);
+  /* The band under a seat that belongs to its NAME, and the gap before it starts. The
+     pointer is kept outboard of this, which is what stops the arrow crossing the label. */
+  --wb-name-gap: 6px;
+  --wb-name-h: 20px;
+  /* The Word Bomb mode accent (CLAUDE.md palette), shared by the live seat and the pointer
+     so "lit" and "pointed at" are visibly the same colour. */
+  --wb-accent: #ff6b3d;
   position: relative;
   width: var(--wb-size);
   height: var(--wb-size);
@@ -5021,9 +5032,20 @@ html[data-beat='true'] .cb-answer-chip {
   padding-top: 0;
   transform:
     translate(-50%, -50%)
-    rotate(calc(var(--i) / var(--n) * 360deg))
+    rotate(calc(var(--wb-start, 0deg) + var(--i) / var(--n) * 360deg))
     translateY(calc(var(--wb-r) * -1))
-    rotate(calc(var(--i) / var(--n) * -360deg));
+    rotate(calc((var(--wb-start, 0deg) + var(--i) / var(--n) * 360deg) * -1));
+}
+
+/* ---- TWO PLAYERS: HORIZONTALLY OPPOSED, AND THE BOX SHRINKS TO MATCH ----
+   The JSX hands this variant --wb-start: 90deg, so the pair sits at 3 and 9 o'clock rather
+   than 12 and 6. Stacked vertically they were the row layout's failure in a circle: a tall
+   box holding two seats with the whole of its height spent on nothing. Opposed, the box only
+   has to be as tall as the taller of the bomb and a seat — so the height comes off here
+   instead of being reserved and left empty. The WIDTH is untouched: that is the axis the two
+   seats actually use. */
+.wb-ring--pair {
+  height: max(calc(var(--wb-bomb-w) * 1.2), calc(var(--wb-seat-h) * 1.3 + var(--wb-name-h)));
 }
 
 /* The card inside a seat becomes a compact AVATAR: no stretch, no flex-grow,
@@ -5053,9 +5075,14 @@ html[data-beat='true'] .cb-answer-chip {
 /* The NAME lives BELOW the avatar, not inside it. Inside, it set the seat's width and
    the geometry could never leave the bomb its 55%. Outside, it costs the ring nothing:
    it is out of flow, centred under the dot, and clipped to a sane width. */
+/* THE NAME CLEARS THE POINTER. The label hangs BELOW its avatar, and for seats on the
+   lower arc "below the avatar" is exactly where the wedge arrives — at 8 players the arrow
+   was drawn through the name of the player it was pointing at. --wb-name-h is the band the
+   name owns; the pointer's far end stops short of the seat by more than that, so the two
+   occupy different radii by construction rather than by luck at one player count. */
 .wb-seat .game-player-name-text {
   position: absolute;
-  top: calc(100% + 1px);
+  top: calc(100% + var(--wb-name-gap));
   left: 50%;
   transform: translateX(-50%);
   /* THE NAME IS CLAMPED TO THE ARC ITS SEAT OWNS, not to a flat 130px.
@@ -5066,13 +5093,44 @@ html[data-beat='true'] .cb-answer-chip {
      SEATS they hang off are perfectly placed; it took one screenshot. The small-angle form
      (ring * 2.6 / n) is within a few percent of the real chord for n >= 5 and is generous below
      that, where there is room to spare anyway. */
-  max-width: min(130px, calc(var(--wb-size, 320px) * 2.6 / var(--n, 4)));
+  /* Two caps, and the second is the one that was missing. The ARC cap (ring * 2.2 / n) stops
+     neighbours colliding, but says nothing about the CENTRE: at two players the arc is half the
+     circle, so a 112px label hung under a seat still reached in far enough to sit on the bomb.
+     The RADIAL cap bounds the label by the room between the seat and the bomb's edge, which is
+     the direction it was actually running out of. */
+  /* …with a FLOOR. The radial cap alone squeezed the label to 27px on the short 1163x501
+     board and ellipsised a five-letter name to "RIVA…" — a cap that truncates ordinary names
+     is not solving the overlap, it is hiding the information the overlap was about. 52px holds
+     a short name at --fs-label, and the two caps still bind everywhere they actually matter. */
+  max-width: max(
+    52px,
+    min(
+      112px,
+      calc(var(--wb-size, 320px) * 2.2 / var(--n, 4)),
+      calc((var(--wb-r) - var(--wb-bomb-w) * 0.75) * 2)
+    )
+  );
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--fs-label);
   color: var(--v-ink-dim);
   pointer-events: none;
+}
+/* NAME ON THE OUTSIDE (top-half seats). Flipping the label to the far side of its avatar is
+   what guarantees it can never share a band with the pointer or the bomb: the wedge only ever
+   travels between the bomb and the INNER edge of a seat, and after this the name is not in
+   that corridor for any seat at any count. */
+.wb-seat--name-out-up .game-player-name-text {
+  top: auto;
+  bottom: calc(100% + var(--wb-name-gap));
+}
+/* the live-typing / status lines follow the name to the outside, or they reintroduce the
+   collision the name just left */
+.wb-seat--name-out-up .player-typing,
+.wb-seat--name-out-up .player-status {
+  top: auto;
+  bottom: calc(100% + var(--wb-name-gap) + var(--wb-name-h));
 }
 .wb-seat .game-player-you {
   display: none; /* the ring already lights YOUR seat; the YOU tag is noise here */
@@ -5094,15 +5152,61 @@ html[data-beat='true'] .cb-answer-chip {
   gap: 1px;
 }
 
-/* ---- TURN OWNERSHIP: the active seat is the only full-accent thing on the ring,
-   and it is 1.3x. Scale lives on the CARD, not the seat, so it composes with the
-   seat's positioning transform instead of fighting it. ---- */
+/* ---- TURN OWNERSHIP IS THREE SIGNALS, NOT ONE ----------------------------------
+   Scale alone says "something here is bigger"; colour alone says "something here is hot".
+   Neither says WHICH seat from across a 1760px board, and on a ring the answer is never
+   where your eye already is. So: (a) the active card scales to 1.3x, (b) it takes the mode
+   accent, and (c) a wedge at the bomb POINTS at it. Only the third is a direction.
+   Scale lives on the CARD, not the seat, so it composes with the seat's positioning
+   transform instead of fighting it. ---- */
 .wb-seat .game-player-card.current {
-  background: var(--v-accent);
+  /* #FF6B3D — the Word Bomb mode accent, named rather than taken from --v-accent so the
+     pointer and the seat are demonstrably the same colour. */
+  background: var(--wb-accent);
   border-color: #000;
   color: var(--v-field);
   transform: rotate(0deg) scale(1.3);
   z-index: 3;
+}
+
+/* THE POINTER. A hard-edged wedge (clip-path, no blur, no gradient) pinned at the ring's
+   centre and rotated to the live seat's angle by the SAME expression .wb-seat uses — one
+   source of truth for "where is seat i", so the arrow cannot drift off the seat it names.
+   Rotation ONLY: no width/height animation, nothing that touches layout. */
+.wb-pointer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: rotate(calc(var(--wb-start, 0deg) + var(--i) / var(--n) * 360deg));
+  /* The turn moves between discrete seats, so the swing is a transition on a settled value,
+     not a keyframe loop — finite by construction and it cannot run at rest. */
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.wb-pointer-arrow {
+  position: absolute;
+  left: 50%;
+  /* Starts outside the bomb and stops short of the seat: the gap at the far end is what
+     keeps it off the avatar at every count, and both ends scale with the ring. */
+  /* 0.85 of the bomb's WIDTH, because the art's box is taller than it is wide: measured from
+     the ring centre this clears the bomb's half-HEIGHT, which is the dimension the tail of a
+     vertical arrow actually has to get past. */
+  /* THE WEDGE LIVES BETWEEN TWO CIRCLES and must touch neither. Its tail starts at
+     0.70 x bomb-width = 0.238d from the centre, clear of the bomb's half-HEIGHT (0.196d —
+     the art's box is 1.155x taller than wide, so height is the binding dimension for a
+     vertical arrow). Its tip ends at 0.238d + 0.05d = 0.288d, short of the ACTIVE seat's
+     inner edge at 0.318d (the seat scales to 1.3x, so that is the edge that matters). It
+     points AT the seat; it does not reach it. */
+  bottom: calc(var(--wb-bomb-w) * 0.72);
+  width: clamp(12px, calc(var(--wb-size) * 0.042), 20px);
+  height: clamp(14px, calc(var(--wb-size) * 0.05), 26px);
+  transform: translateX(-50%);
+  background: var(--wb-accent);
+  /* a flat-sided arrowhead — the house has no soft shapes */
+  clip-path: polygon(50% 0, 100% 100%, 50% 74%, 0 100%);
 }
 /* The name and status FLOAT BELOW the seat, on the dark board - not on the card's
    accent fill - so the active seat keeps INK here. `--v-field` (the rule this replaces)
@@ -5124,6 +5228,11 @@ html[data-beat='true'] .cb-answer-chip {
 .wb-seat .game-your-turn {
   top: -26px;
   z-index: 4;
+}
+/* …and when the NAME is on the outside too, the flag has to clear it or the two share a
+   band — the flag was drawn straight over the live player's own label. */
+.wb-seat--name-out-up .game-your-turn {
+  top: calc(-26px - var(--wb-name-gap) - var(--wb-name-h));
 }
 
 /* The live-typing line and the opponent status only exist for the ACTIVE player. In a
@@ -5217,6 +5326,20 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .game-header {
   align-items: center;
   margin-bottom: 0;
+  /* PRE-EXISTING, NOT THE RING'S: measured identical on unmodified release/prod-2, the
+     LEAVE button's box ran to x=384 inside a header ending at x=349 and a board ending at
+     x=367 — 17px of the only way out of a live game hanging off the edge at 390px. The
+     actions cluster was a nowrap flex row with no permission to shrink or wrap. */
+  flex-wrap: wrap;
+  row-gap: 6px;
+  min-width: 0;
+}
+.game-stage--wb .game-header-actions {
+  min-width: 0;
+  flex-shrink: 1;
+}
+.game-stage--wb .game-title {
+  min-width: 0;
 }
 .game-stage--wb .game-title {
   font-size: var(--fs-panel);
@@ -5634,5 +5757,155 @@ html[data-beat='true'] .cb-answer-chip {
 @media (max-height: 780px) {
   .game-over-offer-line {
     display: none;
+  }
+}
+
+
+/* =====================  WORD BOMB - THE FRAGMENT ON THE BELLY  ==============
+   A solid bordered chip over the bomb, set in Bungee's REAL chromatic family stacked in
+   register — Bungee Shade, the accent fill, Bungee Inline, Bungee Outline — never a
+   text-shadow. Depth comes from the font, which is the same law the menu wordmark and the
+   solo hero are held to.
+   IT IS SIZED TO THE BELLY, NOT TO THE HERO STEP. The prompt plaque above the ring keeps the
+   full --fs-hero fragment and the readable copy; this is the same value at the size the
+   bomb's own width allows (a share of --wb-bomb-w), which is the only size that can sit on
+   the bomb without crowding the seats — the objection the plaque's note raised. */
+.wb-belly {
+  position: absolute;
+  left: 50%;
+  /* the BELLY, not the centre: the bomb art's mass sits below its middle */
+  top: 56%;
+  transform: translate(-50%, -50%) rotate(-2deg);
+  z-index: 3;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  max-width: calc(var(--wb-bomb-w) * 0.92);
+  padding: 4px 10px;
+  background: #0d0618;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.wb-belly-l {
+  grid-area: 1 / 1;
+  /* a share of the bomb's width, so it tracks the ring instead of a viewport guess */
+  font-size: clamp(15px, calc(var(--wb-bomb-w) * 0.2), 40px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.wb-belly-shade {
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: #000;
+}
+.wb-belly-fill {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  color: var(--wb-accent);
+}
+.wb-belly-inline {
+  font-family: 'Bungee Inline', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.wb-belly-outline {
+  font-family: 'Bungee Outline', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: #000;
+}
+
+/* =====================  WORD BOMB - POSTERISED VALUE BAND  ==================
+   The solo vocabulary, carried over: one off-axis band cutting the board, a violet facet
+   above it, an accent rule and the pink brand rule. Four inert divs behind everything, no
+   animation, no pointer events — the same construction as .solo-structure, and like it they
+   sit at inset:0 so nothing overhangs a clipping ancestor. */
+.wb-structure {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.wb-band {
+  position: absolute;
+  inset: 0;
+  background-color: #0c0619;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1.4px, transparent 1.4px);
+  background-size: 10px 10px;
+  clip-path: polygon(0 44%, 100% 20%, 100% 100%, 0 100%);
+}
+.wb-facet {
+  position: absolute;
+  inset: 0;
+  background: rgba(154, 26, 255, 0.1);
+  clip-path: polygon(0 30%, 100% 6%, 100% 20%, 0 44%);
+}
+.wb-bandrule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30%;
+  height: 4px;
+  background: #ff4fa3;
+  opacity: 0.6;
+  transform: rotate(-1.15deg);
+  transform-origin: left center;
+}
+.wb-bandedge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  height: 7px;
+  background: var(--wb-accent);
+  transform: rotate(-1.15deg);
+  transform-origin: left center;
+}
+.wb-bandedge::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7px;
+  height: 4px;
+  background: #000;
+}
+/* everything real sits above the band */
+.game-stage--wb > *:not(.wb-structure) {
+  position: relative;
+  z-index: 1;
+}
+
+/* =====================  WORD BOMB - BEAT, ON OBJECTS ONLY  ==================
+   useBeatSync already publishes --beat-intensity and html[data-beat]; these READ it. No JS,
+   no full-frame flash, and every one is a 120ms one-shot that cannot run at rest — so the
+   infinite-animation count is unchanged. */
+html[data-beat='true'] .wb-seat .game-player-card.current {
+  animation: wb-beat-seat 120ms ease-out;
+}
+@keyframes wb-beat-seat {
+  0% { transform: rotate(0deg) scale(1.3); }
+  40% { transform: rotate(0deg) scale(calc(1.3 + 0.07 * var(--beat-intensity, 1))); }
+  100% { transform: rotate(0deg) scale(1.3); }
+}
+html[data-beat='true'] .wb-belly {
+  animation: wb-beat-belly 120ms ease-out;
+}
+@keyframes wb-beat-belly {
+  0% { transform: translate(-50%, -50%) rotate(-2deg) scale(1); }
+  40% { transform: translate(-50%, -50%) rotate(-2deg) scale(calc(1 + 0.06 * var(--beat-intensity, 1))); }
+  100% { transform: translate(-50%, -50%) rotate(-2deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-beat='true'] .wb-seat .game-player-card.current,
+  html[data-beat='true'] .wb-belly {
+    animation: none;
+  }
+  .wb-pointer {
+    transition: none;
   }
 }
