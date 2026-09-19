@@ -484,6 +484,17 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @container (max-width: 132px) {
   .game-card-payout-unit { display: none; }
 }
+/* AND BELOW ~80px THE WHOLE LINE GOES. At 320x640 the fit-math packs three cards across and
+   each is 58x78; even stripped to "200 (x2)" that is ~70px on a 48px content box at the 12px
+   floor. Wrapping it to two lines fixed the width and then pushed the title bar 18.8px past the
+   bottom of the card, because a 78px card has no second line to give. Everything droppable has
+   already been dropped, the floor may not move, and neither number is worth more than the
+   other — so at this one size the line leaves rather than crowds, which is the brief. A 58px
+   card is a thumbnail: the art and the name identify it, and the payout is back at 390px, which
+   is where a real phone actually is. */
+@container (max-width: 80px) {
+  .game-card-payout { display: none; }
+}
 
 /* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
 /* A SOLID cream band across the top so the black "SAT RUSH" ink and the SOLO/LIMITED badges
@@ -572,7 +583,6 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card-limited-tag { display: none; }
   .game-card-payout { font-size: clamp(12px, 18cqw, 20px); }
   .game-card-ribbon { font-size: clamp(12px, 3.6cqw, 13px); padding: 6px 46px; }
-  .game-card-lock-label { font-size: clamp(12px, 5.5cqw, 14px); }
   /* The LABEL stays — "UNLOCKS AT LV 2" is the whole answer, and it is the one thing a locked
      card must say. The SUB ("YOU'RE LV 1 · 1 TO GO") goes: at 12px it wraps to three lines and
      the plaque then covers the card's own name, and the half it adds — your current level — is
@@ -734,4 +744,22 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 @media (prefers-reduced-motion: reduce) {
   .game-card--shake { animation: none; }
+}
+
+
+/* ===== LOCK PLAQUE — SMALL-CARD OVERRIDES, AT THE END ON PURPOSE =====================
+   .game-card-lock-label's base rule is declared BELOW the @container blocks above, and at equal
+   specificity the later rule wins — so the small-card sizing written up there never applied and
+   the label kept rendering at its 13px base (measured: display:flex, 13px, 4.1px past the card).
+   These live at the foot of the file, after every base rule they override. */
+@container (max-width: 170px) {
+  /* --fs-label (13px), not a bare 12: every font-size in the app goes through the scale, and
+     typeScale.test.js is the gate that keeps it that way. */
+  .game-card-lock-label { font-size: var(--fs-label); letter-spacing: 0; }
+}
+@container (max-width: 80px) {
+  /* "UNLOCKS AT LV 2" is 15 characters and its longest WORD is wider than the plaque on a 58px
+     card, so it hangs off the edge even at the 12px floor. The padlock glyph already says
+     locked; the level it names is back at 390px, with the payout. */
+  .game-card-lock-label { display: none; }
 }
