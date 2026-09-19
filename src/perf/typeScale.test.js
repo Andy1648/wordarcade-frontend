@@ -48,13 +48,22 @@ const lineOf = (css, i) => css.slice(0, i).split('\n').length;
 // choice. The allowlist is deliberately narrow - a NEW raw font-size anywhere else
 // fails. If you need another, justify it here rather than widening the matcher.
 // ---------------------------------------------------------------------------
+// TWO FIT-TO-SLOT EXCEPTIONS, one from each side of this file's history — both kept.
+//
 // --solo-hero is the solo HERO's box (Solo.css): the ring, the letter, the seconds chip and the
 // heat bar are ONE object sized off one dial, and the letter is a FRACTION of that box
 // (calc(var(--solo-hero) * var(--solo-hero-letter)) — .578 for CHAIN's single glyph, .323 for
 // FUSE's 2-3 char fragment). It cannot come from the scale: --fs-hero tops out at 96px, and the
-// glyph has to reach 186px to fill the ring and shrink with it on a phone. Same class of
-// exception as --slot-size — sized to a box, not to the document scale.
-const FIT_TO_SLOT = /cqw|var\(--slot-size\)|var\(--solo-hero\)/i;
+// glyph has to reach 186px to fill the ring and shrink with it on a phone.
+//
+// --wb-bomb-w is the Word Bomb ring's BOMB width, itself a share of the ring's own diameter.
+// The fragment chip on the bomb's belly is sized to that object: a token would be the same
+// pixels on a 247px ring as on a 520px one, and the chip would leave the bomb at one end and
+// swallow it at the other. The readable prompt above the ring is on the scale as normal.
+//
+// Both are the same class of exception as --slot-size — text sized to a BOX, not to the
+// document scale.
+const FIT_TO_SLOT = /cqw|var\(--slot-size\)|var\(--solo-hero\)|var\(--wb-bomb-w\)/i;
 
 test('every font-size goes through a --fs-* token (the scale cannot be bypassed)', () => {
   const offenders = [];
