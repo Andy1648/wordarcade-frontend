@@ -41,6 +41,11 @@
   width: min(1270px, 94vw);
   max-width: 100%;
   height: auto;
+  /* max-height STAYS (only min-height was the dead-space culprit — a max only ever clamps).
+     Without it the card can grow taller than the window, the page scrolls, and the exit
+     scrolls off the top with it: at 320x640 with the keyboard raised the way out measured
+     y = -199px, i.e. completely unreachable. The card must stay inside the window. */
+  max-height: calc(100dvh - 16px);
   margin: auto;
   box-sizing: border-box;
   border: 4px solid #000;
@@ -74,6 +79,27 @@
 @media (max-width: 600px) {
   .solo-root {
     --solo-mascot: 120px; /* == 172 * 0.7, the phone size Mascot.css renders */
+  }
+}
+/* A SHORT SINGLE-COLUMN WINDOW HAS NO ROOM FOR A CHARACTER.
+   In the one-column layout the mascot costs its own full-width bottom strip, and on a short
+   phone that strip is taken straight out of the deck: measured at 320x640, FUSE lost 13 of the
+   26 alphabet tiles to the clip (the baseline loses 1). The mascot is decoration; the letters
+   are the mechanic. So below the two-column breakpoint, a window under ~720px drops the
+   character and gets its padding back. (The two-column layout is exempt: there the mascot
+   stands in a SIDE gutter and costs no height at all — which is why this is gated on WIDTH, not
+   height, or 1280x551 would lose a mascot it has room for.) */
+@media (max-width: 899px) {
+  .solo-root {
+    padding-bottom: calc(clamp(10px, 1.4vh, 18px) + env(safe-area-inset-bottom));
+    /* …and the hero's 232px floor comes off its own budget here. On a 320x640 phone the column
+       is HUD + hero + input + first-run teach + deck, and a hero that cannot go below 232px
+       took the difference out of the FUSE alphabet (26 of 26 tiles clipped). Tie it to the
+       window's height instead of a flat floor. */
+    --solo-hero: clamp(150px, 30vh, 232px);
+  }
+  .solo-mascot {
+    display: none;
   }
 }
 .solo-root[data-mode='fuse'] {
@@ -820,7 +846,13 @@
    The two-column split at wide aspect is what lets the card FILL the width and need LESS
    height, so wide-short viewports (1280x551, 1568x675) fill instead of shrinking to a strip.
    On phones / portrait it stays a single column (unchanged). */
+/* `flex: 0 1 auto` + min-height:0, NOT `flex: 1 1 auto`. GROW is what produced the dead space
+   (the body stretched to fill a viewport-tall card); SHRINK is what lets the column fit a short
+   window, and removing both is how the 320x380 card ended up 826px of content in a 364px box
+   with the exit pushed off-screen. Keep the shrink, drop the grow. */
 .solo-body {
+  flex: 0 1 auto;
+  min-height: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -834,6 +866,7 @@
   flex-direction: column;
   align-items: center;
   min-width: 0;
+  min-height: 0; /* so the columns can shrink inside a short card (see .solo-body) */
   width: 100%;
 }
 .solo-primary {
@@ -842,6 +875,7 @@
 }
 .solo-secondary {
   gap: clamp(10px, 1.8vh, 20px);
+  flex: 0 1 auto;
 }
 @media (min-width: 900px) and (min-aspect-ratio: 13/10) {
   /* Two columns: the mascot stands in the SECONDARY column's right gutter, so the card no
@@ -878,6 +912,10 @@
    silently win over it.) */
 .solo-deck {
   position: relative;
+  /* the deck absorbs the squeeze on a short window — again shrink-only, never grow */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
   width: 100%;
   max-width: 560px;
   display: flex;
@@ -1140,8 +1178,11 @@
    not wrap and staying optically centred is worth more. */
 @media (max-width: 560px) {
   .solo-hud {
-    padding: 0 52px 0 8px;
-    gap: 6px 14px;
+    /* The 52px right reserve is GONE with the absolute exit it existed to clear — the button is
+       in this row now, so reserving width for it as well cost the row 52px it did not have. At
+       320px that pushed the wins pill onto a third line (exit 94 + gap 20 + pill 143 = 257 in a
+       258px row) and the extra 40px of HUD came straight out of the FUSE alphabet below. */
+    gap: 8px 10px;
   }
 }
 /* Below this height the column cannot hold the HUD, the stage AND the input, so .solo-stage was
@@ -1155,7 +1196,8 @@
    screen, so a vh-based cap on it would change nothing here. */
 @media (max-height: 460px) {
   /* The ring is no longer a standalone box — it is the hero, so the hero dial is what shrinks.
-     (Same arithmetic as before: the stage's height is mostly the ring.) */
+     (Same arithmetic as before: the stage's height is mostly the ring.) The mascot is already
+     gone at this height via the short-window rule above. */
   .solo-root {
     --solo-hero: 150px;
   }
