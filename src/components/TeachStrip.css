@@ -87,7 +87,10 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  /* --fs-body, not --fs-label: this is a CONTROL, and 13px is under the 16px floor CLAUDE.md
+     sets for anything tappable. The type-scale gate missed it because its TAPPABLE matcher keys
+     on btn/button/input/link/tab in the class name and this one is `-close`. */
+  font-size: var(--fs-body);
   letter-spacing: 0.08em;
   color: #0d0618;
   background: var(--theme-xp-fill, #2effe0);
@@ -109,4 +112,38 @@
   }
   .teach-strip-act { font-size: var(--fs-label); }
   .teach-strip-pay { flex-basis: 100%; }
+}
+
+/* THE SMALLEST REAL PHONE: ONE LINE PLUS THE BUTTON.
+   Stacking four blocks is right at 390px and wrong at 320: measured on a 320x640 card the strip
+   stood 188px tall — THIRTY PERCENT of a 624px panel — and it took that height out of the deck
+   below it, pushing the whole FUSE alphabet past the card's bottom edge. So below 360px the two
+   supporting blocks go and the strip becomes what it is on a small screen: the rule, and the way
+   to dismiss it.
+     - the LIKE <example> chip DROPS. It is the best part of this strip and the first thing I would
+       keep if there were room; at 320px there is not, and a rule the player can read beats an
+       example they cannot see under the fold. It is back at 361px.
+     - the ANSWER SOONER pay line DROPS. It is the least load-bearing of the three.
+   Nothing else changes: the strip is still dismissible, still first-run only, and hasSeenTeach is
+   untouched — this is a layout rule, it does not know or alter when the strip appears. */
+@media (max-width: 360px) {
+  .teach-strip {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+  }
+  .teach-strip-main {
+    gap: 2px 6px;
+  }
+  .teach-strip-eg,
+  .teach-strip-pay {
+    display: none;
+  }
+  .teach-strip-rule {
+    font-size: var(--fs-label);
+  }
+  .teach-strip-close {
+    padding: 0 10px;
+  }
 }

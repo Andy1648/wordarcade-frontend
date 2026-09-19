@@ -1284,11 +1284,48 @@
     left: -8px;
     width: 8px;
   }
+}
+
+/* ===== 320px: THE SMALLEST CARD IN THE MATRIX ======================================
+   A 290px panel at 624px tall has to hold the HUD, the hero, the input, the first-run teach AND
+   the deck. Measured, it was 21px over even after the teach strip collapsed. Three things give:
+     1. the stat row's 20px column gap, which was wrapping SCORE / x1.00 / LINKS onto two lines;
+     2. the last two EMPTY slots — a placeholder is the one thing on this card that can go;
+     3. twenty pixels off the hero's floor.
+   Nothing here touches a font size or a touch target. */
+@media (max-width: 360px) {
+  .solo-hud-stats {
+    gap: 6px 8px;
+  }
+  /* the trail shows three slots instead of five: still a chain, and it fits one row */
+  .solo-chain-node.is-ghost:nth-last-child(-n + 2) {
+    display: none;
+  }
+  /* THE LAST TWELVE PIXELS. The deck was spilling that far into the fixed cluster's clearance and
+     sitting the audio button on the "y" and "z" tiles. Four trims, none of which drops a glyph or
+     a control below its floor: a smaller hero, a tighter stage gap, less of the seconds chip's
+     reserved overhang, and tiles whose line-height stops padding their min-content height (the
+     16px type is untouched — only the leading around it). */
+  .solo-root {
+    --solo-hero: clamp(108px, 18vh, 232px);
+  }
+  .solo-stage {
+    gap: 8px;
+  }
+  .solo-hero {
+    margin-bottom: calc(var(--fs-h2) * 0.4);
+  }
+  .solo-strip-big span {
+    line-height: 1;
+  }
   .solo-strip-big span {
     width: calc((100% - 13 * 4px) / 13);
+    /* The BORDER is what comes down here, never the type: at 20px wide a 4px outline is 40% of the
+       tile and forced a 32px min-height into a 20px box (aspect-ratio loses to min-content). The
+       glyph stays at --fs-body — 16px is the legibility floor and a letter you cannot read is not
+       a letter you can cross off. */
     border-width: 2px;
     box-shadow: 2px 2px 0 #000;
-    font-size: var(--fs-label);
   }
 }
 
@@ -1373,5 +1410,30 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   html[data-beat='true'] .solo-chain-node.is-next,
   html[data-beat='true'] .solo-strip-big span.is-lit {
     animation: none;
+  }
+}
+
+/* ===== SINGLE-COLUMN COLUMN BUDGET (must sit AFTER .solo-deck's own rule to win) =========
+   THE DECK IS NOT THE SHOCK ABSORBER. It was the only shrinkable item in the column, so every
+   pixel the gaps wanted came out of it — and because the deck also CLIPS, that loss was SILENT:
+   the card reported zero overflow while the FUSE alphabet's whole second row sat cut off inside
+   it. (That is how "26/26 tiles" was measured and reported twice while half the strip was not on
+   screen: the tiles were inside .solo-root, just not inside .solo-deck.) The deck now holds its
+   natural height and the GAPS give way instead — and if a column ever genuinely cannot fit, that
+   shows up as overflow, which is measurable, rather than as a missing row nothing reports. */
+@media (max-width: 899px) {
+  .solo-deck {
+    flex: 0 0 auto;
+  }
+  /* the vertical rhythm is vh-based and desk-sized; on a phone these four gaps came to ~66px */
+  .solo-root {
+    gap: 8px;
+  }
+  .solo-body {
+    gap: 10px;
+  }
+  .solo-primary,
+  .solo-secondary {
+    gap: 8px;
   }
 }
