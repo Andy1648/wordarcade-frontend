@@ -229,8 +229,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
 
   // LOWER DECK (fill): FUSE's own elements at the size they deserve — the three lives drawn
   // as burning fuse cords (lit = a fuse still going, charred = spent), and the letters-used
-  // strip enlarged into a real band. Fills the lower half instead of two thin strips at top.
-  const usedCount = s.lettersUsed.size;
+  // strip as a real band. JOB 8: the "N/26 LETTERS USED" label is GONE — the lit tiles ARE
+  // the count, and a caption under a thing that already says it is chrome, not information.
   const fuseDeck = (
     <div className="solo-fusedeck" aria-hidden="true">
       <div className="solo-cords">
@@ -245,7 +245,6 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
           </span>
         ))}
       </div>
-      <div className="solo-deck-label">{usedCount}/26 LETTERS USED</div>
     </div>
   );
 

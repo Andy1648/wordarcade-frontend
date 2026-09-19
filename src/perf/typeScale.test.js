@@ -48,7 +48,13 @@ const lineOf = (css, i) => css.slice(0, i).split('\n').length;
 // choice. The allowlist is deliberately narrow - a NEW raw font-size anywhere else
 // fails. If you need another, justify it here rather than widening the matcher.
 // ---------------------------------------------------------------------------
-const FIT_TO_SLOT = /cqw|var\(--slot-size\)/i;
+// --solo-hero is the solo HERO's box (Solo.css): the ring, the letter, the seconds chip and the
+// heat bar are ONE object sized off one dial, and the letter is a FRACTION of that box
+// (calc(var(--solo-hero) * var(--solo-hero-letter)) — .578 for CHAIN's single glyph, .323 for
+// FUSE's 2-3 char fragment). It cannot come from the scale: --fs-hero tops out at 96px, and the
+// glyph has to reach 186px to fill the ring and shrink with it on a phone. Same class of
+// exception as --slot-size — sized to a box, not to the document scale.
+const FIT_TO_SLOT = /cqw|var\(--slot-size\)|var\(--solo-hero\)/i;
 
 test('every font-size goes through a --fs-* token (the scale cannot be bypassed)', () => {
   const offenders = [];

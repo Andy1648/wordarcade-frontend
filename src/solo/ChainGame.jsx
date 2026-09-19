@@ -242,38 +242,24 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   const required = s.requiredLetter;
   const supply = g.engine.supply(required);
 
-  // OUT tile — the last letter of the word being typed RIGHT NOW (recomputed every
-  // keystroke, since onInput bumps `input` and re-renders this component). Purely a
-  // read of state chain.js already tracks: supply() for the FEW LEFT / DEAD END states
-  // and endCountOf() for the heat bar. No engine mutation, no input animation.
+  // HERO SUPPLY STATE — was a separate OUT tile next to the input; it is now part of the
+  // ONE hero (the ring's dashed rim + the bar along its base). Purely a read of state
+  // chain.js already tracks: supply() for the FEW LEFT / DEAD END states and endCountOf()
+  // for the heat. Recomputed every keystroke (onInput bumps `input` and re-renders), no
+  // engine mutation, no input animation.
   const typed = g.input.trim().toLowerCase();
   const outLetter = typed.length ? typed[typed.length - 1] : '';
   const outSupply = outLetter ? g.engine.supply(outLetter) : null;
   const outState = outSupply
     ? outSupply.count < DEAD_END_BELOW
-      ? 'dead' // < 3 unused common continuations → dead end (dashed red)
+      ? 'dead' // < 3 unused common continuations → dead end
       : outSupply.count < FEW_LEFT_BELOW
-        ? 'thin' // < 35 → few left (dashed yellow)
+        ? 'thin' // < 35 → few left
         : ''
     : '';
+  const outCap = outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : '';
   // Heat as a 0..1 fill: endCount * 0.06 / 0.95 (the heatMul ramp, normalised to its cap).
   const outHeat = outLetter ? Math.min(1, (g.engine.endCountOf(outLetter) * 0.06) / 0.95) : 0;
-  const outTile = (
-    <div className={`solo-out${outState ? ` is-${outState}` : ''}`} aria-hidden="true">
-      <div className="solo-out-face">
-        <span className={`solo-out-letter${outLetter ? '' : ' is-empty'}`}>
-          {outLetter ? outLetter.toUpperCase() : '·'}
-        </span>
-        <div
-          className={`solo-out-heat${outHeat >= 0.36 ? ' is-hot' : ''}`}
-          style={{ transform: `scaleX(${outHeat})`, opacity: outHeat > 0 ? 1 : 0 }}
-        />
-      </div>
-      <div className="solo-out-cap">
-        {outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : ''}
-      </div>
-    </div>
-  );
 
   // LOWER DECK (fill): the chain IS the composition — the recent accepted words run across
   // the lower half as linked chips, join-letters (the last letter of one = first of the next)
@@ -286,7 +272,6 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   const ghostCount = Math.max(0, 4 - links.length);
   const chainDeck = (
     <div className="solo-chain" aria-hidden="true">
-      <div className="solo-deck-label">YOUR CHAIN</div>
       <div className="solo-chain-trail">
         {links.map((l, i) => {
           const w = (l.word || '').toUpperCase();
@@ -307,9 +292,6 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
             ···
           </span>
         ))}
-      </div>
-      <div className="solo-deck-hint">
-        {links.length === 0 ? 'EACH WORD STARTS WHERE THE LAST ONE ENDED' : `${s.k} LINKED`}
       </div>
     </div>
   );
@@ -364,6 +346,9 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   );
 
   // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
+  // JOB 8: the neutral "N common words start with X" subline is GONE — a constant line of noise
+  // that only mattered in its two WARNING states, and those now read off the hero rim. Only the
+  // warning survives, and only when it applies (see `supply` below).
   const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
   return (
     <>
@@ -375,9 +360,15 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       hud={hud}
       center={required.toUpperCase()}
       motif={CHAIN_MOTIF}
-      supply={<span className={supply.count < 3 ? 'is-dead' : ''}>{supply.label}</span>}
+      supply={
+        supply.count < FEW_LEFT_BELOW ? (
+          <span className={supply.count < DEAD_END_BELOW ? 'is-dead' : ''}>{supply.label}</span>
+        ) : null
+      }
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
-      outTile={outTile}
+      outState={outState}
+      outCap={outCap}
+      outHeat={outHeat}
       deck={chainDeck}
       input={g.input}
       onInput={g.onInput}
