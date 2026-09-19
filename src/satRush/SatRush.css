@@ -2304,7 +2304,12 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   margin: 0 auto;
   padding: 0;
   border: 0;
-  font-size: 16px;
+  /* --fs-body, not a bare 16px. The iOS contract is "never BELOW 16px", and --fs-body is
+     clamp(16px, 1.8vw, 18px) — its floor IS 16px, so the rule that keeps Safari from zooming
+     the page on focus holds at every width. The extra 2px it resolves to on a desktop is not a
+     visual change of any kind: this box is 1x1, opacity:0, with transparent text and caret, and
+     it never renders a glyph. */
+  font-size: var(--fs-body);
   color: transparent;
   background: transparent;
   caret-color: transparent;
@@ -2317,7 +2322,12 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   margin: 10px 0 0;
   text-align: center;
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  /* 12px sat between two steps: --fs-micro (11px) and --fs-label (13px), both within the 1px
+     the brief allows. --fs-label wins because of what this text IS — the one line telling a
+     phone player how to open the keyboard, which is a label, not decoration, and --fs-micro is
+     documented as "decoration only". So it goes UP 1px rather than down, which is also the
+     right direction for a line already sitting at 0.62 opacity. */
+  font-size: var(--fs-label);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--sr-ink, #111111);
