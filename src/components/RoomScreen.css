@@ -29,32 +29,56 @@
   transform: rotate(0.5deg);
 }
 
-.room-label {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-body);
-  color: #2EFFE0;
-  margin-bottom: 8px;
-}
+/* (.room-label — the "ROOM CODE" caption — is deleted: the code below it is a five-letter
+   Bungee monogram in the accent colour and does not need to be labelled.) */
 
+
+/* THE CODE IS THE SCREEN. --fs-hero, and four Bungee faces stacked in register rather than a
+   stroke+shadow — the CHAIN/FUSE hero treatment. The grid places all four in one cell so they
+   cannot drift apart, and `min-width: 0` + the paddings below are what keep the Shade layer's
+   extrude from clipping: the face is wider than the glyph box it is set from. */
 .room-code {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* the extrude of the Shade face overhangs the text box; this is its room */
+  padding: 0 0.12em;
+  margin-bottom: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.room-code-face {
+  grid-area: 1 / 1;
+  font-size: var(--fs-hero);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: clamp(2px, 0.8vw, 6px);
+  white-space: nowrap;
+}
+.room-code-shade {
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: #000;
+}
+.room-code-fill {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  line-height: 0.98;
-  font-size: var(--fs-h2);
-  letter-spacing: clamp(4px, 1.2vw, 8px);
-  color: #FFE94A;
-  -webkit-text-stroke: 3px #000;
-  paint-order: stroke fill;
-  margin-bottom: 8px;
-  /* (text-shadow will-change was a non-compositing no-op — removed.) */
+  color: #ffe94a;
+}
+.room-code-inline {
+  font-family: 'Bungee Inline', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+.room-code-outline {
+  font-family: 'Bungee Outline', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: #000;
 }
 
-.room-hint {
+.room-instruction {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-body);
+  font-size: var(--fs-panel); /* >=17px at every width: 20px on a phone, 28px on desk */
   color: #C9B8E8;
   font-weight: 700;
   margin-bottom: 28px;
@@ -178,8 +202,22 @@
 
 .room-difficulty-row {
   display: flex;
+  /* WRAPS. Four difficulty buttons in one nowrap row overflowed .room-box by 26px at 320px
+     (measured: the HELL button and its "7s · 2 lives" sub-line ran past the panel's right edge,
+     pre-existing — 26.6px on release/prod-2). The row was holding its line by pushing content
+     out of the card instead. `min-width: 0` lets each button actually shrink to its share. */
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 24px;
+}
+.room-difficulty-row > .room-difficulty-btn {
+  min-width: 0;
+  flex: 1 1 calc(50% - 8px);
+}
+@media (min-width: 420px) {
+  .room-difficulty-row > .room-difficulty-btn {
+    flex: 1 1 0;
+  }
 }
 
 .room-difficulty-btn {
@@ -364,9 +402,11 @@
     padding: 24px 18px;
   }
 
-  .room-code {
-    font-size: var(--fs-panel);
-    letter-spacing: 5px;
+  /* The code does NOT step down on a phone — it is the one thing this screen is for. Only its
+     tracking tightens, which is what actually costs width. (This block used to set
+     font-size: var(--fs-panel) = 20px, which made a decorative title the biggest text here.) */
+  .room-code-face {
+    letter-spacing: 2px;
   }
 
   .room-start-btn,
@@ -750,4 +790,21 @@ html[data-beat='true'] .room-leave-btn {
 .room-invite-share {
   background: #2EFFE0;
   border-color: #1A9985;
+}
+
+/* THE CORNER CLUSTER (feat/lobby-type). One control, top-left of the box, >=44px — the same
+   place and shape as the solo screens' exit. */
+.room-corner {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.room-corner .room-leave-btn {
+  width: auto;
+  min-width: max(96px, var(--tap-min));
+  min-height: max(48px, var(--tap-min));
+  margin: 0;
+  padding: 0 16px;
+  font-size: var(--fs-body);
 }
