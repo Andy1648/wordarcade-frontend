@@ -261,14 +261,24 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       const fit = (cols, rows) => {
         const colW = (availW - (cols - 1) * colGap) / cols;
         const rowH = (regionH - (rows - 1) * rGap) / rows;
-        const h = Math.min(rowH, (colW * 4) / 3);
+        // `narrow` drops the height term: the rows may run past the region and the region
+        // scrolls, which is the only way a <360px screen gets a legible card.
+        const h = narrow ? (colW * 4) / 3 : Math.min(rowH, (colW * 4) / 3);
         return { w: (h * 3) / 4, h, cols };
       };
       // Try one row of all five first, then denser grids; pick whichever gives the WIDEST (most
       // readable) card while all cells fit ONE screen. On a wide screen 5-in-one-row wins; on a
       // narrow/tall phone a 3+2 or 2-column grid gives bigger cards; on an ultra-short viewport
       // one small row still wins (extra rows don't fit the height). No scrolling, ever.
-      const LAYOUTS = [[count, 1], [3, 2], [2, 3], [1, count]];
+      // NEVER THREE ACROSS ON A <360px SCREEN. The fit-math picks whichever layout yields the
+      // WIDEST card, and on a short 320px viewport that was 3-across — which leaves each card
+      // 58px and each NAME 37px, so all five names pinned to the 12px floor. The floor was
+      // doing its job; the grid was the problem. Two columns is the cap here, trading a little
+      // card area for names that can actually be read.
+      const narrow = window.innerWidth < 360;
+      // exactly TWO columns when narrow — with the height term dropped, one column would win
+      // on width alone and turn the menu into a single 196px stack.
+      const LAYOUTS = narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
       let best = null;
       for (const [cols, rows] of LAYOUTS) {
         if (cols * rows < count) continue; // must hold all five

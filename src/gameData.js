@@ -31,6 +31,13 @@ const BASE_GAMES = [
     id: 'category-blitz',
     artKey: 'CategoryBlitzArt',
     name: 'CATEGORY\nBLITZ',
+    // THE CARD SAYS "BLITZ". `name` stays the full title — it is what the mode dialog shows
+    // and what the card's aria-label reads out, and neither is width-constrained. The CARD is:
+    // at 390x844 its name box is 80px and "CATEGORY" needs 97px at the size every other card's
+    // name gets, so this one card was set 8px smaller than the rest at every width (14.2 vs
+    // 22.3 at 390, 12 vs 16 at 360) purely because its longest word is longer. Shorter word,
+    // same size as its neighbours. Nothing else reads cardName; id/routes/SEO are untouched.
+    cardName: 'BLITZ',
     description: 'AI JUDGES YOUR ANSWERS — GET CREATIVE.',
     baseColor: '#3DA8FF',
     iconBg: '#fff',

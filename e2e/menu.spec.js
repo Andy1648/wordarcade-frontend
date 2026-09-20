@@ -11,7 +11,15 @@ const MENU = { name: 'Type a Word' };
 // The shipped mode cards, derived from the single source of truth (src/gameData.js)
 // so adding a mode never silently breaks this. Names render across two lines
 // ("WORD\nBOMB"); we normalize the newline to a space for the label assertions.
-const CARDS = GAMES.map((g) => ({ name: g.name.replace('\n', ' '), badge: g.badgeText }));
+// `cardName` is the label the CARD shows when it differs from the mode's full title — Category
+// Blitz's card says BLITZ, because "CATEGORY" is eight letters and could not be set at the
+// size every other card's name gets. `name` is still the accessible name (aria-label) and
+// still what the mode dialog shows, so the getByRole lookup below is unchanged.
+const CARDS = GAMES.map((g) => ({
+  name: g.name.replace('\n', ' '),
+  cardName: (g.cardName || g.name).replace('\n', ' '),
+  badge: g.badgeText,
+}));
 
 test.describe('menu', () => {
   test.beforeEach(async ({ page }) => {
@@ -23,14 +31,14 @@ test.describe('menu', () => {
     const cards = page.locator('.game-card');
     await expect(cards).toHaveCount(CARDS.length);
 
-    for (const { name, badge } of CARDS) {
+    for (const { name, cardName, badge } of CARDS) {
       // Each card is a role="button" whose accessible name combines its title and
       // badge, e.g. "WORD BOMB - SOLO · MULTI".
       const card = page.getByRole('button', { name: new RegExp(`${name}\\b`, 'i') });
       await expect(card).toBeVisible();
       // The name renders across two lines ("WORD\nBOMB"); toHaveText normalizes
       // whitespace, so the single-spaced label matches.
-      await expect(card.locator('.game-card-name')).toHaveText(name);
+      await expect(card.locator('.game-card-name')).toHaveText(cardName);
       await expect(card.locator('.game-card-badge')).toHaveText(badge);
     }
   });

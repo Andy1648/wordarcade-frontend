@@ -416,15 +416,10 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 /* CATEGORY is the one long (8-letter) name — scale it down so it never overruns its
    bar at the narrowest column. */
-/* CATEGORY is the one 8-letter name in the set. At 390x844 the card's content box is ~92px and
-   22px of Bungee needs ~120px for "CATEGORY", so the floor that every other card clears would
-   clip this one — and a clipped name is worse than a smaller one. 17px is the largest that sets
-   the whole word on this card; every wider card gets the 20cqw term and runs bigger. */
-/* CATEGORY is the one 8-letter name in the set, and it is the one card where the 22px bar and
-   an uncut word are incompatible: at 390x844 the name box is 80px, and "CATEGORY" needs 97px at
-   18px. 16cqw sets it at ~15px there, which fits the whole word. Reported rather than hidden —
-   the alternative is to call the card "BLITZ", which is a naming decision, not a CSS one. */
-[data-game='category-blitz'] .game-card-name { font-size: clamp(12px, 16cqw, 32px); letter-spacing: -0.03em; }
+/* (The old [data-game='category-blitz'] .game-card-name override is GONE. It existed only
+   because "CATEGORY" is eight letters and could not be set at the size every other card's
+   name gets; the card is called BLITZ now, so it takes the default rule and lands within a
+   pixel of its neighbours.) */
 
 .game-card-badge {
   align-self: flex-start;

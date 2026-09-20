@@ -334,7 +334,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
             <>
               <div className="game-card-masthead">
                 <div className="game-card-mh-row">
-                  <div className="game-card-name">{game.name}</div>
+                  <div className="game-card-name">{game.cardName || game.name}</div>
                 </div>
                 <div className="game-card-mh-tags">
                   {badge}
@@ -348,7 +348,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           ) : (
             <div className="game-card-titlebar">
               {badge}
-              <div className="game-card-name">{game.name}</div>
+              <div className="game-card-name">{game.cardName || game.name}</div>
               {payout && <div className="game-card-payout">{payout}</div>}
             </div>
           )}
