@@ -3,7 +3,7 @@
 // The menu (Homepage): the mode cards render with their labels, and the
 // menu's navigation entries always lead somewhere with a way back (no dead-end).
 import { test, expect } from '@playwright/test';
-import { GAMES } from '../src/gameData.js';
+import { GAMES, FEATURED_GAME } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 
 const MENU = { name: 'Type a Word' };
@@ -72,4 +72,33 @@ test.describe('menu', () => {
     await back.click();
     await expect(page.getByRole('img', MENU)).toBeVisible();
   });
+
+  // THE HINT AND THE CARD MUST QUOTE THE SAME RATE, and this compares the two RENDERED strings
+  // rather than the code behind them — which is the only way the original defect was visible.
+  // The hint divided by the MENU's x1 rate and printed "12 WORDS TO LEVEL 2" directly above a
+  // FEATURED card printing "100 XP / WORD": both numbers correct, the pair incoherent.
+  test('the XP hint quotes the FEATURED card rate, not the menu rate', async ({ page }) => {
+    const m = await page.evaluate(() => {
+      const read = (e) => (e ? e.innerText.replace(/\s+/g, ' ').trim() : null);
+      const ribbon = document.querySelector('.game-card-ribbon.is-featured');
+      const card = ribbon ? ribbon.closest('.game-card') : null;
+      return {
+        hint: read(document.querySelector('.menu-xp-hint-text')),
+        cardName: read(card && card.querySelector('.game-card-name')),
+        cardXp: read(card && card.querySelector('.game-card-xp')),
+        cost: read(document.querySelector('.menu-xp-readout-need')),
+      };
+    });
+    // Exactly one card carries the ribbon, and it is the one gameData marks.
+    expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
+    expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split('\n').join(' '));
+
+    const words = Number((m.hint.match(/(\d[\d,]*)\s+WORDS?/) || [])[1].replace(/,/g, ''));
+    const perWord = Number(m.cardXp.replace(/,/g, '').match(/(\d+)\s*XP/)[1]);
+    const cost = Number(m.cost.replace(/[^0-9]/g, ''));
+    expect(words, `hint "${m.hint}" vs card "${m.cardXp}" over ${cost}`).toBe(Math.ceil(cost / perWord));
+    // And it is NOT the menu's own rate, which is the featured mode's divided by its multiplier.
+    expect(words).toBeLessThan(Math.ceil(cost / (perWord / 2)));
+  });
+
 });

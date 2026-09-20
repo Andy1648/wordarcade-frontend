@@ -7,7 +7,10 @@
 // GameCard looks it up dynamically rather than each game having its own
 // hardcoded SVG inline.
 
-import { SAT_RUSH_ENABLED } from './satRush/config';
+// Extension included ON PURPOSE. Vite resolves either form, node's ESM loader does not — and
+// without it this module (the single source of truth for the menu grid) cannot be loaded by
+// `node --test`, which is the repo's unit runner. See gameData.test.js.
+import { SAT_RUSH_ENABLED } from './satRush/config.js';
 
 const BASE_GAMES = [
   {
@@ -126,6 +129,16 @@ export const GAMES = [
   CHAIN_GAME,
   FUSE_GAME,
 ];
+
+// THE FEATURED MODE, DERIVED — the same flag GameCard reads to draw the ribbon, so the menu
+// cannot point at one card and quote another. The XP-bar hint under the bar ("N WORDS TO LEVEL
+// n") divides by THIS mode's per-word rate: it used to divide by the MENU's, which is x1 and
+// therefore the slowest rate in the game, so the first progression number a new player ever saw
+// was the worst one available — quoted directly under a card advertising twice it.
+// Falls back to the first enabled game if the flag is ever dropped, so the hint degrades to a
+// real mode's rate rather than silently back to the menu's.
+export const FEATURED_GAME =
+  GAMES.find((g) => g.featured && g.enabled) || GAMES.find((g) => g.enabled) || GAMES[0];
 
 // "N MORE MODES" in a run-over offer — derived from the real menu, never a hardcoded number, so
 // adding or flag-gating a mode can't leave the copy lying. (Minus the one you just played.)
