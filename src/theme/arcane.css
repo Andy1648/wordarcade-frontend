@@ -187,7 +187,16 @@
 /* .game-card-lock IS NOT IN THIS LIST ANY MORE. It is `position: absolute; inset: 0; z-index: 6`
    in GameCard.css — already above the facet — and this rule was overriding that `absolute` with
    `relative`, which dropped the lock out of its overlay position and into the flow BELOW the
-   card. Measured at 390x844: CHAIN's lock box sat at y=493 while its card ended at y=502, so a
+   card. REPRODUCED ON UNMODIFIED release/prod-2, DEFAULT THEME, fresh profile (this was
+   queried, so the evidence is recorded here): the lock escapes the bottom of its own card
+   by 126px at 320x640, 127px at 390x844 and 120px at 1920x1080, identically in default,
+   midnight, inferno, toxic and prism. At 390x844 the card is 213,366 102x136 (bottom 502)
+   and the lock is 218,493 92x135 (bottom 628). It is NOT theme-specific, which is why the
+   fix is not scoped to a theme.
+   IT ONLY EXISTS WHEN A CARD IS ACTUALLY LOCKED: at LV40 there are ZERO .game-card-lock
+   elements, so a probe run on an unlocked profile passes vacuously. Measured at 390x844:
+   fresh profile -> 2 lock elements; LV40 -> 0.
+   Measured at 390x844: CHAIN's lock box sat at y=493 while its card ended at y=502, so a
    locked card rendered with its plaque off the bottom and showed no lock at all. This file is
    imported unconditionally from main.jsx and the selector is unscoped, so it applied in every
    theme, not just arcane. */
