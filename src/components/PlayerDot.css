@@ -17,8 +17,12 @@
 /* Secondary marker for reused hues (6+ players): the duplicate's group number,
    drawn in black inside the dot. */
 .player-dot-tier {
-  font-family: 'Bungee', cursive;
-  font-size: 9px;
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-micro);
   line-height: 1;
   color: #000;
 }

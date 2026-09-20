@@ -4,12 +4,14 @@
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
+import { exampleStartingWith } from '../progress/teachExample.js';
+import { loadGlossary, glossFor } from '../progress/glossary.js';
+import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins } from '../progress/wins.js';
-import { awardWordXp, cappedWordMult } from '../progress/xp.js';
+import { bankWordWins, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
+import { cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
-import { wordSenseWinsFactor } from '../progress/wordSense.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import { touchStreak } from '../progress/streak.js';
@@ -19,7 +21,7 @@ import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
-import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -47,7 +49,7 @@ const CHAIN_MOTIF = (
   </svg>
 );
 
-export default function ChainGame({ onExit }) {
+export default function ChainGame({ onExit, offerMenu = false }) {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0); // bump to retry the word-data fetch
@@ -97,10 +99,10 @@ export default function ChainGame({ onExit }) {
       />
     );
   }
-  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return <ChainInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} offerMenu={offerMenu} />;
 }
 
-function ChainInner({ data, createEngine, adapter, onExit }) {
+function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Persisted all-time CHAIN run count. onRunStart fires from the hook on the FIRST run
   // (mount) and on every restart — button OR Enter — so both restart paths are counted
   // (the Enter path lives inside the hook, which is why the bump must live there too).
@@ -120,6 +122,21 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // earned — no end-of-run payout (that would double-pay). `s.k` is the running link count;
   // bank the delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3.
   const [winsEarned, setWinsEarned] = useState(0);
+  // BONUS CREDITS THIS RUN (Batch G). A collection milestone can land mid-run — every solo mode
+  // calls recordAcceptedWord, and collection.js grants the milestone through the wins ledger — and
+  // the end card used to show only the per-word money. The balance then moved by far more than the
+  // card claimed, which is exactly the report that produced no-hidden-wins.spec.js: "I be here
+  // getting like 800 but it gives like over 2k". That fix reached Word Bomb and Category Blitz
+  // (App.jsx collects the same lines for GameScreen) and never reached the solo modes.
+  //
+  // Subscribed per RUN rather than reusing App's winsBonusLines: App resets that array on
+  // game_started / round_start, neither of which fires for a solo run, so reusing it would list a
+  // WELCOME BACK bonus from page load — or a milestone from the previous run — on this run's card.
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
+
   const chainBankedRef = useRef(0);
   const chainWeightRef = useRef(0); // RARITY: running sum of linked words' rarity multipliers
   useEffect(() => {
@@ -134,6 +151,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       chainWeightRef.current = 0;
       wpmStart('chain'); // fresh run → fresh WPM session (flushes the previous)
       setWinsEarned(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
     }
     if (k > chainBankedRef.current) {
       // RARITY: score the new link(s). s.lastLinks holds the most recent up-to-5 {word} (newest
@@ -148,7 +166,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         // ×40 (Job 1). The SAME weight now also grants XP, so every link levels you (unified loop).
         const rw = rarityOf(w);
         const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
-        chainWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult); // WORD SENSE (Job 4) — wins only
+        chainWeightRef.current += wWeight;
         awardWordXp({ mode: 'chain', wordLength: (w || '').length, weight: wWeight });
         recordAcceptedWord(w, { mode: 'chain', band: rw.band }); // Collection (Job 3)
         wpmAddWord(w); // WPM: count each new link's chars
@@ -157,6 +175,7 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       if (newWords.length < delta) chainWeightRef.current += delta - newWords.length;
       const banked = bankWordWins({
         mode: 'chain',
+        wordLength: (newWords[newWords.length - 1] || '').length,
         prevWords: chainBankedRef.current,
         nowWords: k,
         prevWeight,
@@ -224,38 +243,24 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   const required = s.requiredLetter;
   const supply = g.engine.supply(required);
 
-  // OUT tile — the last letter of the word being typed RIGHT NOW (recomputed every
-  // keystroke, since onInput bumps `input` and re-renders this component). Purely a
-  // read of state chain.js already tracks: supply() for the FEW LEFT / DEAD END states
-  // and endCountOf() for the heat bar. No engine mutation, no input animation.
+  // HERO SUPPLY STATE — was a separate OUT tile next to the input; it is now part of the
+  // ONE hero (the ring's dashed rim + the bar along its base). Purely a read of state
+  // chain.js already tracks: supply() for the FEW LEFT / DEAD END states and endCountOf()
+  // for the heat. Recomputed every keystroke (onInput bumps `input` and re-renders), no
+  // engine mutation, no input animation.
   const typed = g.input.trim().toLowerCase();
   const outLetter = typed.length ? typed[typed.length - 1] : '';
   const outSupply = outLetter ? g.engine.supply(outLetter) : null;
   const outState = outSupply
     ? outSupply.count < DEAD_END_BELOW
-      ? 'dead' // < 3 unused common continuations → dead end (dashed red)
+      ? 'dead' // < 3 unused common continuations → dead end
       : outSupply.count < FEW_LEFT_BELOW
-        ? 'thin' // < 35 → few left (dashed yellow)
+        ? 'thin' // < 35 → few left
         : ''
     : '';
+  const outCap = outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : '';
   // Heat as a 0..1 fill: endCount * 0.06 / 0.95 (the heatMul ramp, normalised to its cap).
   const outHeat = outLetter ? Math.min(1, (g.engine.endCountOf(outLetter) * 0.06) / 0.95) : 0;
-  const outTile = (
-    <div className={`solo-out${outState ? ` is-${outState}` : ''}`} aria-hidden="true">
-      <div className="solo-out-face">
-        <span className={`solo-out-letter${outLetter ? '' : ' is-empty'}`}>
-          {outLetter ? outLetter.toUpperCase() : '·'}
-        </span>
-        <div
-          className={`solo-out-heat${outHeat >= 0.36 ? ' is-hot' : ''}`}
-          style={{ transform: `scaleX(${outHeat})`, opacity: outHeat > 0 ? 1 : 0 }}
-        />
-      </div>
-      <div className="solo-out-cap">
-        {outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : ''}
-      </div>
-    </div>
-  );
 
   // LOWER DECK (fill): the chain IS the composition — the recent accepted words run across
   // the lower half as linked chips, join-letters (the last letter of one = first of the next)
@@ -268,7 +273,6 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   const ghostCount = Math.max(0, 4 - links.length);
   const chainDeck = (
     <div className="solo-chain" aria-hidden="true">
-      <div className="solo-deck-label">YOUR CHAIN</div>
       <div className="solo-chain-trail">
         {links.map((l, i) => {
           const w = (l.word || '').toUpperCase();
@@ -290,9 +294,6 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
           </span>
         ))}
       </div>
-      <div className="solo-deck-hint">
-        {links.length === 0 ? 'EACH WORD STARTS WHERE THE LAST ONE ENDED' : `${s.k} LINKED`}
-      </div>
     </div>
   );
 
@@ -313,26 +314,62 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
   // First-run tutorial card: the player's very first CHAIN run (runs === 1), OR any run
   // that ended under 3 words — the runs where a how-to-play card beats a score card.
   const firstRun = runs === 1 || s.k < 3;
-  const overCard = firstRun ? (
-    <ChainFirstRunCard />
-  ) : (
-    <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
+  // PAUSE TO LEARN. CHAIN does not end on a word the player got wrong — it ends on a LETTER it
+  // could not continue. So the word held here is one they COULD have played: derived from that
+  // final letter against the same frequency-ordered list the mode judges with, skipping every
+  // word already linked. Real and checkable, not a canned example.
+  // The gloss table is pulled lazily and only once a run has ENDED, so it never touches play.
+  const missedWord = g.phase === 'over' && data
+    ? exampleStartingWith(data.recall, s.killedLetter, (w) => s.used.has(w))
+    : null;
+  const [glossTick, setGlossTick] = useState(0);
+  useEffect(() => {
+    if (!missedWord) return;
+    loadGlossary().then(() => setGlossTick((n) => n + 1));
+  }, [missedWord]);
+  // THE HOLD IS ON BOTH CARDS. It sits outside the first-run branch on purpose: a run that ends
+  // under three words gets the TUTORIAL card, and that is exactly the player who most needs to be
+  // shown a word that would have worked. Putting the lesson only on the score card would have
+  // hidden it from every beginner — which is the same mistake the old one-flag teach made.
+  const overCard = (
+    <>
+      <MissedWordHold
+        key={glossTick}
+        word={missedWord}
+        gloss={glossFor(missedWord)}
+        prompt={s.killedLetter}
+        promptLabel="A WORD STARTING WITH"
+      />
+      {firstRun ? <ChainFirstRunCard /> : (
+      <ChainNormalCard killedLetter={s.killedLetter} lastLinks={s.lastLinks} deadEnd={s.killedWasDeadEnd} />
+      )}
+    </>
   );
 
   // RARITY (word-value): the most recent link's word, for the tier pop (re-keyed by link count).
+  // JOB 8: the neutral "N common words start with X" subline is GONE — a constant line of noise
+  // that only mattered in its two WARNING states, and those now read off the hero rim. Only the
+  // warning survives, and only when it applies (see `supply` below).
   const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
   return (
     <>
     <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
     <SoloShell
+      mode="chain"
       accent={ACCENT}
       title="Type a word starting with the letter"
       hud={hud}
       center={required.toUpperCase()}
       motif={CHAIN_MOTIF}
-      supply={<span className={supply.count < 3 ? 'is-dead' : ''}>{supply.label}</span>}
+      supply={
+        supply.count < FEW_LEFT_BELOW ? (
+          <span className={supply.count < DEAD_END_BELOW ? 'is-dead' : ''}>{supply.label}</span>
+        ) : null
+      }
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
-      outTile={outTile}
+      outState={outState}
+      outCap={outCap}
+      outHeat={outHeat}
       deck={chainDeck}
       input={g.input}
       onInput={g.onInput}
@@ -342,7 +379,13 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
       placeholder={`START WITH "${required.toUpperCase()}" · 3+ LETTERS`}
       maxLength={data.maxAcceptLen}
       armHint={ARM_HINT}
-      firstRunRule="START WITH THE GIVEN LETTER"
+      /* FIRST-RUN TEACH (per mode). The example is computed from the letter ON SCREEN against the
+         same frequency-ordered list the mode judges with, and skips words already linked — so a
+         player can copy it and be accepted, every time. A canned example would be a word for a
+         DIFFERENT letter, i.e. a suggestion the teach itself rejects. */
+      teachMode="chain"
+      teachRule="IT MUST START WITH THE LETTER SHOWN"
+      teachExample={data ? exampleStartingWith(data.recall, required, (w) => s.used.has(w)) : null}
       rootRef={rootRef}
       fx={fxLayer}
       phase={g.phase}
@@ -360,18 +403,11 @@ function ChainInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
-        share: (
-          <CopyResultButton
-            mode="chain"
-            words={s.k}
-            points={s.score}
-            tiers={g.tierLog}
-            killed
-            className="solo-share-btn"
-          />
-        ),
+        winsBonusLines,
+        tryRow: <TryModeRow current="chain" />,
       }}
       onExit={onExit}
+      offerMenu={offerMenu}
     />
     </>
   );

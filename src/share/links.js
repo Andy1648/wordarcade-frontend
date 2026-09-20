@@ -3,7 +3,11 @@
 // node --test; browser callers omit `origin` and get window.location.origin,
 // which keeps links correct on localhost, previews and production alike.
 
-import { REF_URL } from './shareConfig.js';
+// INLINED from the deleted shareConfig.js (fix/econ-perf-attack removed the share-card pipeline
+// wholesale — "no one in the history uses that" — and this constant was its only live consumer).
+// Carried over VERBATIM, ?ref=share included, so invite-link behaviour and its PostHog attribution
+// are byte-identical.
+const REF_URL = 'https://typeaword.com/?ref=share';
 
 const PROD_ORIGIN = 'https://typeaword.com';
 
@@ -18,6 +22,12 @@ function resolveOrigin(origin) {
 // feat/router: share links now use CLEAN PATHS (the router bridges them back to the query the app
 // reads, and canonicalises the URL after boot). Legacy ?join=/?satrush=/?chain=/?fuse= entries still
 // work (the app never stopped reading them), so old shared links keep resolving.
+//
+// THEY POINT AT `/<mode>/play`, NOT `/<mode>`. The bare path is that mode's SEO LANDING PAGE — a
+// static file in `public/`, which Vercel serves INSTEAD of the app (the filesystem is matched before
+// the SPA rewrite in vercel.json). Every share link built here used to hand a friend the marketing
+// page for a mode their friend had JUST PLAYED, one more click from the thing they were sent to see.
+// `/<mode>/play` is the SPA deep link and lands in the mode. See src/router.js.
 
 /** Deep link that drops a friend straight into room `code` -> /room/CODE. */
 export function inviteLink(code, origin) {
@@ -31,25 +41,28 @@ export function dailyLink(origin) {
   return `${resolveOrigin(origin)}/?daily=1&ref=share`;
 }
 
-/** Deep link straight into SAT Rush -> /sat-rush. */
+/** Deep link straight into SAT Rush -> /sat-rush/play. */
 export function satRushLink(origin) {
-  return `${resolveOrigin(origin)}/sat-rush?ref=share`;
+  return `${resolveOrigin(origin)}/sat-rush/play?ref=share`;
 }
 
-/** Deep link straight into CHAIN -> /chain. */
+/** Deep link straight into CHAIN -> /chain/play. */
 export function chainLink(origin) {
-  return `${resolveOrigin(origin)}/chain?ref=share`;
+  return `${resolveOrigin(origin)}/chain/play?ref=share`;
 }
 
-/** Deep link straight into FUSE -> /fuse. */
+/** Deep link straight into FUSE -> /fuse/play. */
 export function fuseLink(origin) {
-  return `${resolveOrigin(origin)}/fuse?ref=share`;
+  return `${resolveOrigin(origin)}/fuse/play?ref=share`;
 }
 
-// Result-card deep link per mode id (Job 1). Each lands IN the mode, never the homepage —
-// EXCEPT word-bomb, which has no solo deep-link param (adding one is Tier-1 App.jsx work),
-// so it falls back to the mode-select homepage. category-blitz points at the Daily Challenge
-// (the solo blitz surface). Keeps the share receipt's last line functional, not cosmetic.
+// Result-card deep link per mode id (Job 1). Each lands IN the mode it names — all five, now that
+// /word-bomb/play and /category-blitz/play provision a room + bot with no clicks. category-blitz
+// used to point at the Daily (/?daily=1) because it was the only solo Blitz surface; that sent a
+// friend to a DIFFERENT mode from the one on the card they were reacting to, and — because
+// App.jsx's DEEP_LAND does not count a ?daily= launch — denied them the run-over "rest of the
+// game" offer that every other deep-landed stranger gets. dailyLink() is unchanged and still used
+// by the Daily's own share.
 export function modeShareLink(mode, origin) {
   switch (mode) {
     case 'fuse':
@@ -59,9 +72,9 @@ export function modeShareLink(mode, origin) {
     case 'sat-rush':
       return satRushLink(origin);
     case 'category-blitz':
-      return dailyLink(origin);
+      return `${resolveOrigin(origin)}/category-blitz/play?ref=share`;
     case 'word-bomb':
-      return `${resolveOrigin(origin)}/word-bomb?ref=share`;
+      return `${resolveOrigin(origin)}/word-bomb/play?ref=share`;
     default:
       return `${resolveOrigin(origin)}/?ref=share`;
   }

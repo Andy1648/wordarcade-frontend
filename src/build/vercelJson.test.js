@@ -29,7 +29,11 @@ test('vercel.json SPA rewrite serves index.html for extension-less paths only', 
   const re = new RegExp('^' + spa.source + '$');
 
   // Extension-less client routes must rewrite to the SPA shell (no 404 on refresh).
-  for (const p of ['/word-bomb', '/chain', '/', '/stats', '/shop']) {
+  // NOTE: matching this regex is necessary but NOT sufficient for a path to reach the SPA — Vercel
+  // serves a static file BEFORE applying rewrites, so /chain is answered by public/chain/index.html
+  // and never reaches index.html at all. The /play paths have no static file shadowing them, which
+  // is what makes them the real app routes. See src/build/landingLinks.test.js.
+  for (const p of ['/word-bomb', '/chain', '/chain/play', '/fuse/play', '/sat-rush/play', '/', '/stats', '/shop']) {
     assert.ok(re.test(p), `${p} should rewrite to /index.html but did not match`);
   }
   // Anything with a file extension must be served as-is, never rewritten.

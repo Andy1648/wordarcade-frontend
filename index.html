@@ -2,14 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BZ7DLWLDMR"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-BZ7DLWLDMR');
-    </script>
+    <!-- Google tag (gtag.js) is NOT loaded here any more (perf/first-load): main.jsx injects
+         it from the post-load idle callback that also inits PostHog + Sentry, and fires the
+         initial page_view itself. A dataLayer stub queues any earlier gtag() calls. -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -62,14 +57,14 @@
          display=swap, so text paints in the fallback immediately regardless; <noscript>
          keeps it working with JS off. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Dela+Gothic+One&family=Space+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Bungee+Inline&family=Bungee+Outline&family=Dela+Gothic+One&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
       media="print"
       onload="this.media='all'"
     />
     <noscript>
       <link
-        href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Dela+Gothic+One&family=Space+Mono:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Bungee+Inline&family=Bungee+Outline&family=Dela+Gothic+One&family=Space+Mono:wght@400;700&display=swap"
         rel="stylesheet"
       />
     </noscript>

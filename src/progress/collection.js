@@ -134,7 +134,11 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
     if (count >= m.n && !data.ms.includes(m.n)) {
       data.ms.push(m.n);
       const granted = rebirthScaledWins(m.wins);
-      grantWins(granted);
+      // THE 5,000 ANDY COULD NOT ACCOUNT FOR. Measured: a 20-word run moved taw.wins by 20,010
+      // while the card said +15,010, and this milestone was the difference. It is returned to the
+      // caller as `milestone` — and every single call site discarded it — so it now also goes into
+      // the ledger, where the UI reads it rather than having to be told.
+      grantWins(granted, `COLLECTION — ${m.n} WORDS`, { detail: `ms-${m.n}` });
       milestone = { n: m.n, wins: granted };
       break; // one milestone per word (count rose by 1)
     }

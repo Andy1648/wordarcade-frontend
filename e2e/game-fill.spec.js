@@ -1,14 +1,20 @@
-// e2e/game-fill.spec.js — fix/game-fill GATE: the in-game solo stage (.solo-root) must FILL the
-// viewport, the same bar menu-fill.spec.js holds the menu to. This is the guard that was MISSING:
-// the fill gate only covered the menu, so the game screens silently rendered as a narrow centred
-// column (CHAIN at 1280x551 filled ~36% of the width — two-thirds backdrop). CHAIN + FUSE are now
-// exempt from the .view-screen --app-scale zoom (App.jsx) and fill the window like the menu does.
+// e2e/game-fill.spec.js — fix/game-fill GATE: the in-game stages must not render as a narrow
+// centred column with a dead backdrop (CHAIN at 1280x551 once filled ~36% of the width).
 //
-// TWO assertions, mirroring menu-fill (the second is the important one):
-//   1) FILL — .solo-root fills >=90% of BOTH axes at every desktop viewport.
-//   2) NO-ANCESTOR-ZOOM — nothing from .solo-root up to <body> carries a `zoom` != 1. A fill built
+// feat/solo-visual-pass RETARGETS the CHAIN / FUSE half of this gate. The old bar was
+// ".solo-root fills >=90% of BOTH axes of the VIEWPORT", which forced the panel to
+// min-height:calc(100dvh - 24px) — and that is exactly what produced 388–457px (44–52%) of
+// measured DEAD SPACE inside .solo-body: a viewport-sized box with card-sized content in it.
+// The panel now HUGS ITS CONTENT at width:min(1270px, 94vw) and the persistent WallScene shows
+// around it. So the fill question moved one level in:
+//   1) SIZE — .solo-root is its declared width (min(1270px, 94vw)); still never a narrow strip.
+//   2) FILL — the CONTENT fills >=90% of the panel's own inner height. This is the assertion
+//      that actually catches dead space, and the old one could not see it at all.
+//   3) NO-OVERFLOW — no element spills past .solo-root's box.
+//   4) NO-ANCESTOR-ZOOM — nothing from .solo-root up to <body> carries a `zoom` != 1. A fill built
 //      on ancestor zoom breaks per-browser (recent Chrome does not compound the reciprocal); the
 //      menu regression came from exactly that, so we forbid it here too.
+// WB / BLITZ / SAT keep the viewport-fill bar unchanged — their stages still own the window.
 //
 // fix/game-fill-2: all five modes are now exempt from the --app-scale zoom and fill the width.
 // Word Bomb + Category Blitz get a wide-aspect / short-window reflow so the stage fills width AND
@@ -112,12 +118,18 @@ async function measure(page) {
     const over = [];
     for (const node of root.querySelectorAll('*')) {
       if (node === root) continue;
-      if (node.getAttribute && node.getAttribute('aria-hidden') === 'true') continue;
+      // closest(), not the node's own attribute: the exemption is for decorative ART, and art
+      // is a SUBTREE — the mascot's <img> is inside an aria-hidden container, and its 250ms
+      // enter-pop briefly scales past the frame (which overflow:hidden clips anyway).
+      if (node.closest && node.closest('[aria-hidden="true"]')) continue;
       if (node.namespaceURI === 'http://www.w3.org/2000/svg') continue;
       const cs = getComputedStyle(node);
       if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity || '1') < 0.01) continue;
       if (cs.position === 'fixed') continue;
-      if (node.closest('.solo-over, .solo-fx, .solo-lucky')) continue;
+      // .solo-structure is the poster's geometry layer: its four divs are inset:-3% ON PURPOSE
+      // (the band/rules bleed to the card's edges) and are clipped by that layer's own
+      // overflow:hidden, so they can never actually paint outside the frame.
+      if (node.closest('.solo-over, .solo-fx, .solo-lucky, .solo-structure')) continue;
       const b = node.getBoundingClientRect();
       if (b.width < 1 && b.height < 1) continue;
       if (b.right > r.right + TOL || b.left < r.left - TOL || b.bottom > r.bottom + TOL || b.top < r.top - TOL) {
@@ -125,7 +137,19 @@ async function measure(page) {
         over.push(`${cls} [${Math.round(b.left)},${Math.round(b.right)}] vs root [${Math.round(r.left)},${Math.round(r.right)}]`);
       }
     }
-    return { w: r.width, h: r.height, vw: window.innerWidth, vh: window.innerHeight, zoomed, over };
+    // INNER FILL: how much of the panel's own content box the composition actually occupies.
+    // (The HUD row + the body are the whole of it; the mascot stands in the reserved padding.)
+    const cs = getComputedStyle(root);
+    const innerH = r.height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+      - parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth);
+    const parts = [...root.querySelectorAll('.solo-hud, .solo-body')].map((e) => e.getBoundingClientRect());
+    const usedH = parts.length ? Math.max(...parts.map((p) => p.bottom)) - Math.min(...parts.map((p) => p.top)) : 0;
+    const pr = root.parentElement ? root.parentElement.getBoundingClientRect() : r;
+    return {
+      w: r.width, h: r.height, vw: window.innerWidth, vh: window.innerHeight, zoomed, over,
+      parentW: pr.width,
+      innerFill: innerH > 0 ? usedH / innerH : 0,
+    };
   });
 }
 
@@ -164,21 +188,31 @@ test.describe('FUSE alphabet strip shows all 26 tiles', () => {
   }
 });
 
+// The panel's declared width — `width: min(1270px, 94vw)` with `max-width: 100%` in Solo.css,
+// so the used value is also capped by the containing block (a phone's scroll container is a
+// little narrower than 94vw). Asserting the real contract rather than a fraction of the
+// viewport; the STRIP_FLOOR below is what still catches the original 36%-of-width regression.
+const soloPanelWidth = (vw, parentW) => Math.min(1270, vw * 0.94, parentW);
+const STRIP_FLOOR = 0.6;
+
 for (const id of ['chain', 'fuse']) {
-  test.describe(`${id} fills the viewport`, () => {
-    for (const { w, h } of VIEWPORTS) {
-      test(`${id} ${w}x${h}: .solo-root fills >=90% of both axes with no ancestor zoom`, async ({ page }) => {
+  test.describe(`${id} panel is sized right and its content fills it`, () => {
+    for (const { w, h } of [...VIEWPORTS, { w: 390, h: 844 }]) {
+      test(`${id} ${w}x${h}: content fills >=90% of .solo-root, no overflow, no ancestor zoom`, async ({ page }) => {
         await page.setViewportSize({ width: w, height: h });
         await enterSolo(page, id);
+        // .solo-hero only exists in the PLAYING shell — .solo-root is also the word-data
+        // loading state, and measuring that reports a card with nothing in it.
+        await page.locator('.solo-hero').waitFor({ state: 'visible', timeout: 15000 });
         const m = await measure(page);
-        const fillW = m.w / m.vw;
-        const fillH = m.h / m.vh;
+        const want = soloPanelWidth(m.vw, m.parentW);
         // eslint-disable-next-line no-console
-        console.log(`[game-fill] ${id} ${w}x${h}  root=${Math.round(m.w)}x${Math.round(m.h)}  fillW=${(fillW * 100).toFixed(1)}%  fillH=${(fillH * 100).toFixed(1)}%  overflow=${m.over.length}  zoomedAncestors=${JSON.stringify(m.zoomed)}`);
-        expect(m.zoomed, `${id} fill must not depend on ancestor zoom at ${w}x${h}`).toEqual([]);
+        console.log(`[game-fill] ${id} ${w}x${h}  root=${Math.round(m.w)}x${Math.round(m.h)} (want w>=${Math.round(want)})  innerFill=${(m.innerFill * 100).toFixed(1)}%  overflow=${m.over.length} ${JSON.stringify(m.over)}  zoomedAncestors=${JSON.stringify(m.zoomed)}`);
+        expect(m.zoomed, `${id} layout must not depend on ancestor zoom at ${w}x${h}`).toEqual([]);
         expect(m.over, `${id} no element may exceed .solo-root's bounds at ${w}x${h}`).toEqual([]);
-        expect(fillW, `${id} .solo-root width fill at ${w}x${h}`).toBeGreaterThanOrEqual(MIN_FILL);
-        expect(fillH, `${id} .solo-root height fill at ${w}x${h}`).toBeGreaterThanOrEqual(MIN_FILL);
+        expect(m.w, `${id} .solo-root width at ${w}x${h}`).toBeGreaterThanOrEqual(want - 2);
+        expect(m.w / m.vw, `${id} .solo-root is never a narrow strip at ${w}x${h}`).toBeGreaterThanOrEqual(STRIP_FLOOR);
+        expect(m.innerFill, `${id} content fill inside .solo-root at ${w}x${h}`).toBeGreaterThanOrEqual(MIN_FILL);
       });
     }
   });

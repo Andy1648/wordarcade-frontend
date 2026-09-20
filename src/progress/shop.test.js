@@ -30,9 +30,16 @@ test('the four defaults are owned from the start', () => {
   });
 });
 
+// ECONOMY v8: the ×5 cosmetic ladder is unchanged, but every price fell by ten with the currency
+// (CHROME 60, INFERNO 300, VOID 1500, PRISM 7500) — wins are the word's XP ÷ 10 now, so leaving
+// the prices where they were would have made the shop ten times more expensive by accident. These tests are priced off the
+// CATALOG rather than off a literal, so the ladder can be retuned without editing them again.
+const priceOf = (id) => [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id).price;
+
 test('buying deducts wins, adds to owned, and leaves winsLifetime untouched', () => {
-  withStorage({ 'taw.wins': '500', 'taw.winsLifetime': '900' }, (map) => {
-    const r = buy('chrome'); // 150
+  const cost = priceOf('chrome');
+  withStorage({ 'taw.wins': String(cost + 350), 'taw.winsLifetime': '900' }, (map) => {
+    const r = buy('chrome');
     assert.equal(r.ok, true);
     assert.equal(r.wins, 350);
     assert.equal(map.get('taw.wins'), '350');
@@ -42,7 +49,8 @@ test('buying deducts wins, adds to owned, and leaves winsLifetime untouched', ()
 });
 
 test('cannot buy the same item twice; a second attempt does not re-charge', () => {
-  withStorage({ 'taw.wins': '500' }, (map) => {
+  const cost = priceOf('chrome');
+  withStorage({ 'taw.wins': String(cost + 350) }, (map) => {
     assert.equal(buy('chrome').ok, true);
     assert.equal(map.get('taw.wins'), '350');
     const again = buy('chrome');
@@ -64,24 +72,29 @@ test('cannot buy an unaffordable item; wins unchanged', () => {
 
 test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', () => {
   withStorage({ 'taw.wins': '100', 'taw.keytier': '0' }, (map) => {
-    const r = buyKeyPower(); // T0→T1 costs 90 (post-rebalance)
+    const r = buyKeyPower(); // T0→T1 costs 10 (prices /10 in v8)
     assert.equal(r.ok, true);
     assert.equal(r.tier, 1);
-    assert.equal(r.spent, 90);
-    assert.equal(r.wins, 10);
+    assert.equal(r.spent, 10);
+    assert.equal(r.wins, 90);
     assert.equal(map.get('taw.keytier'), '1');
-    assert.equal(map.get('taw.wins'), '10');
-    // Can't afford T2 (costs 540) with 10 left.
+    assert.equal(map.get('taw.wins'), '90');
+    // T2 costs 60, which 90 DOES cover.
+    const second = buyKeyPower();
+    assert.equal(second.ok, true);
+    assert.equal(second.spent, 60);
+    assert.equal(map.get('taw.wins'), '30');
+    // T3 costs 360 — 30 left is not enough, and a refused buy spends nothing.
     const again = buyKeyPower();
     assert.equal(again.ok, false);
     assert.equal(again.spent, 0);
-    assert.equal(map.get('taw.keytier'), '1'); // unchanged
-    assert.equal(getKeyTier(), 1);
+    assert.equal(map.get('taw.keytier'), '2'); // unchanged by the refusal
+    assert.equal(getKeyTier(), 2);
   });
 });
 
 test('equip requires ownership and sets the right slot', () => {
-  withStorage({ 'taw.wins': '500' }, () => {
+  withStorage({ 'taw.wins': String(priceOf('chrome') + priceOf('marble')) }, () => {
     assert.equal(equip('prism'), false); // not owned yet
     buy('chrome');
     assert.equal(equip('chrome'), true);

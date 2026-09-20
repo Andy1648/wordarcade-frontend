@@ -2,9 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
-import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
-import { masteryState } from '../progress/mastery';
-import { formatNum } from '../format';
+import { perWordRateNow } from '../progress/wins';
+import { formatNum, formatMult } from '../format';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -141,8 +140,6 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
   // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
   // state; the menu re-reads on every return from a game.
-  const mastery = masteryState(game.id);
-  const showMastery = game.enabled && !locked && mastery.level >= 2;
 
   // The wrapper element + its magnet state. The card object is shared with the
   // module-level controller; mutating `hovered` here lets the rAF loop add the
@@ -242,12 +239,47 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
 
   // Payout preview (what each accepted WORD pays in this mode). Shown on every
   // ENABLED, UNLOCKED card — a locked card shows just its mode name in the bar.
-  const payout = game.enabled && !locked && (
+  // ANDY: "Multipliers should SHOW." This printed the BASE rate and appended the REBIRTH
+  // multiplier as a separate "(x3)", so the player had to do the multiplication themselves — and
+  // even then got the wrong answer, because momentum, level and the equipped mark were in neither
+  // number. At R2 / LV40 / momentum 50 the card said "200 WINS / WORD (x9)" for a word that pays
+  // 4,830. It now prints THE RESOLVED RATE — what this mode pays for a word right now — and
+  // annotates it with everything the player has built, as one multiplier.
+  //
+  // THE UNIT READS "N WINS / WORD" AGAIN. I had cut "WINS" during the subtraction pass on the
+  // grounds that it was printed five times on one screen — and Andy filed the result as a defect:
+  // "800 / WORD" does not say what 800 is, and the card is where the player decides which mode to
+  // play. A currency name is not decoration.
+  // The overflow that cut prompted is real and still handled, but with the right lever: the two
+  // halves are separate spans, and the CONTAINER query below drops them in order — " / WORD"
+  // first, then " WINS" — only once the card is genuinely too narrow to hold them. At every width
+  // the player actually sees on a phone or a laptop, the full unit is there.
+  //
+  // AND THE CARD SHOWS XP TOO, ABOVE THE WINS. The card was answering "what does this mode pay"
+  // in one currency while the bar directly above it counts the other, and the player had no way
+  // to connect them. Both lines come out of the SAME perWordRateNow() call — wins are the word's
+  // XP ÷ 10, so the two numbers are one number read twice and cannot disagree. The multiplier is
+  // the same product for both, which is the point: one stack, two readouts.
+  const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
+  // The combined multiplier, printed ONCE per line and never on its own — a factor without the
+  // value it produced is the defect this pattern exists to prevent.
+  const multTag = rateNow && rateNow.mult !== 1 && (
+    <span className="game-card-payout-mult"> (×{formatMult(rateNow.mult)})</span>
+  );
+  const xpLine = rateNow && (
     <>
-      {wordWinsEstimate({ mode: game.id, difficulty })} WINS / WORD
-      {currentRebirthMult() > 1 && (
-        <span className="game-card-payout-mult"> (×{formatNum(currentRebirthMult())})</span>
-      )}
+      {formatNum(rateNow.xp)}
+      <span className="game-card-payout-unit"> XP</span>
+      <span className="game-card-payout-per"> / WORD</span>
+      {multTag}
+    </>
+  );
+  const payout = rateNow && (
+    <>
+      {formatNum(rateNow.rate)}
+      <span className="game-card-payout-unit"> WINS</span>
+      <span className="game-card-payout-per"> / WORD</span>
+      {multTag}
     </>
   );
   // The badge carries its data-driven fill (game.badgeBg / badgeColor) so themes and
@@ -304,7 +336,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           </div>
         )}
 
-        {/* Foreground overlay: corner ribbon, mastery, and the bottom title bar (or,
+        {/* Foreground overlay: corner ribbon and the bottom title bar (or,
             for SAT RUSH, the manga masthead + foot). pointer-events:none so the whole
             card face stays one click target. */}
         <div className="game-card-fg">
@@ -314,17 +346,12 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           {game.featured && <div className="game-card-ribbon is-featured" aria-hidden="true">FEATURED</div>}
           {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI JUDGED</div>}
 
-          {showMastery && (
-            <div className="game-card-mastery" aria-label={`Mastery level ${mastery.level}`}>
-              M{mastery.level}
-            </div>
-          )}
 
           {game.id === 'sat-rush' ? (
             <>
               <div className="game-card-masthead">
                 <div className="game-card-mh-row">
-                  <div className="game-card-name">{game.name}</div>
+                  <div className="game-card-name">{game.cardName || game.name}</div>
                 </div>
                 <div className="game-card-mh-tags">
                   {badge}
@@ -332,13 +359,21 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
                 </div>
               </div>
               <div className="game-card-foot">
-                {payout || game.description}
+                {xpLine ? (
+                  <>
+                    <span className="game-card-xp">{xpLine}</span>
+                    <span className="game-card-payout">{payout}</span>
+                  </>
+                ) : (
+                  game.description
+                )}
               </div>
             </>
           ) : (
             <div className="game-card-titlebar">
               {badge}
-              <div className="game-card-name">{game.name}</div>
+              <div className="game-card-name">{game.cardName || game.name}</div>
+              {xpLine && <div className="game-card-xp">{xpLine}</div>}
               {payout && <div className="game-card-payout">{payout}</div>}
             </div>
           )}

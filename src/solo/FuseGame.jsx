@@ -4,12 +4,14 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
+import { exampleContaining } from '../progress/teachExample.js';
+import { loadGlossary, glossFor } from '../progress/glossary.js';
+import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins } from '../progress/wins.js';
-import { awardWordXp, cappedWordMult } from '../progress/xp.js';
+import { bankWordWins, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
+import { cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
-import { wordSenseWinsFactor } from '../progress/wordSense.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
@@ -18,7 +20,7 @@ import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
-import CopyResultButton from '../share/CopyResultButton.jsx';
+import TryModeRow from '../share/TryModeRow.jsx';
 import poolsRaw from './fragmentPools.json';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
@@ -73,7 +75,7 @@ const POOLS = {
   b: poolsRaw.b.split(' '),
 };
 
-export default function FuseGame({ onExit }) {
+export default function FuseGame({ onExit, offerMenu = false }) {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -124,10 +126,10 @@ export default function FuseGame({ onExit }) {
       />
     );
   }
-  return <FuseInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} />;
+  return <FuseInner data={data} createEngine={createEngine} adapter={adapter} onExit={onExit} offerMenu={offerMenu} />;
 }
 
-function FuseInner({ data, createEngine, adapter, onExit }) {
+function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Persisted all-time FUSE run count (Job 14) — drives the first-run tutorial card, exactly like
   // CHAIN. onRunStart fires from the hook on the first run + every restart (button OR Enter).
   const [runs, setRuns] = useState(0);
@@ -146,6 +148,21 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
   // no end-of-run payout (that would double-pay). `s.wordsSolved` is the running count; bank the
   // delta as it climbs, reset the ledger when a fresh run drops it to 0. Gated on 3 words.
   const [winsEarned, setWinsEarned] = useState(0);
+  // BONUS CREDITS THIS RUN (Batch G). A collection milestone can land mid-run — every solo mode
+  // calls recordAcceptedWord, and collection.js grants the milestone through the wins ledger — and
+  // the end card used to show only the per-word money. The balance then moved by far more than the
+  // card claimed, which is exactly the report that produced no-hidden-wins.spec.js: "I be here
+  // getting like 800 but it gives like over 2k". That fix reached Word Bomb and Category Blitz
+  // (App.jsx collects the same lines for GameScreen) and never reached the solo modes.
+  //
+  // Subscribed per RUN rather than reusing App's winsBonusLines: App resets that array on
+  // game_started / round_start, neither of which fires for a solo run, so reusing it would list a
+  // WELCOME BACK bonus from page load — or a milestone from the previous run — on this run's card.
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
+
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -160,6 +177,7 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       fuseWeightRef.current = 0;
       wpmStart('fuse'); // fresh run → fresh WPM session
       setWinsEarned(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
     }
     if (solved > fuseBankedRef.current) {
       // RARITY: score the just-solved word (s.lastWord, aligned with wordsSolved). A solve bumps
@@ -171,13 +189,14 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       // matching CHAIN. Capped at ×40 (Job 1). The SAME weight also grants XP (unified loop).
       const rw = rarityOf(s.lastWord);
       const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
-      fuseWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult) + Math.max(0, delta - 1); // WORD SENSE (Job 4)
+      fuseWeightRef.current += wWeight + Math.max(0, delta - 1);
       awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight });
       recordAcceptedWord(s.lastWord, { mode: 'fuse', band: rw.band }); // Collection (Job 3)
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       noteWord(s.lastWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'fuse',
+        wordLength: (s.lastWord || '').length,
         prevWords: fuseBankedRef.current,
         nowWords: solved,
         prevWeight,
@@ -211,8 +230,8 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
 
   // LOWER DECK (fill): FUSE's own elements at the size they deserve — the three lives drawn
   // as burning fuse cords (lit = a fuse still going, charred = spent), and the letters-used
-  // strip enlarged into a real band. Fills the lower half instead of two thin strips at top.
-  const usedCount = s.lettersUsed.size;
+  // strip as a real band. JOB 8: the "N/26 LETTERS USED" label is GONE — the lit tiles ARE
+  // the count, and a caption under a thing that already says it is chrome, not information.
   const fuseDeck = (
     <div className="solo-fusedeck" aria-hidden="true">
       <div className="solo-cords">
@@ -227,23 +246,46 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
           </span>
         ))}
       </div>
-      <div className="solo-deck-label">{usedCount}/26 LETTERS USED</div>
     </div>
   );
 
   // First-run tutorial card (Job 14): the player's very first FUSE run (runs === 1), OR any run
   // that ended under 3 words — the runs where a how-to-play card beats a score card. Matches CHAIN.
   const firstRun = runs === 1 || s.wordsSolved < 3;
-  const overCard = firstRun ? (
-    <FuseFirstRunCard />
-  ) : (
-    <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
+  // PAUSE TO LEARN — same shape as CHAIN. FUSE ends on a FRAGMENT it could not place, so the
+  // word held is one that would have satisfied it, skipping everything already solved.
+  const missedWord = g.phase === 'over' && data
+    ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w))
+    : null;
+  const [glossTick, setGlossTick] = useState(0);
+  useEffect(() => {
+    if (!missedWord) return;
+    loadGlossary().then(() => setGlossTick((n) => n + 1));
+  }, [missedWord]);
+  // THE HOLD IS ON BOTH CARDS. It sits outside the first-run branch on purpose: a run that ends
+  // under three words gets the TUTORIAL card, and that is exactly the player who most needs to be
+  // shown a word that would have worked. Putting the lesson only on the score card would have
+  // hidden it from every beginner — which is the same mistake the old one-flag teach made.
+  const overCard = (
+    <>
+      <MissedWordHold
+        key={glossTick}
+        word={missedWord}
+        gloss={glossFor(missedWord)}
+        prompt={s.fragment}
+        promptLabel="A WORD CONTAINING"
+      />
+      {firstRun ? <FuseFirstRunCard /> : (
+      <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
+      )}
+    </>
   );
 
   return (
     <>
     <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     <SoloShell
+      mode="fuse"
       accent={ACCENT}
       title="Type a word containing the fragment"
       hud={hud}
@@ -260,7 +302,11 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
       placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
       armHint="SNEAK THOSE LETTERS INTO A WORD"
-      firstRunRule="SNEAK THE LETTERS INTO A WORD"
+      /* FIRST-RUN TEACH (per mode) — a real word containing the fragment that is on screen right
+         now, skipping any already solved, so copying it always works. */
+      teachMode="fuse"
+      teachRule="THE LETTERS SHOWN MUST APPEAR SOMEWHERE IN IT"
+      teachExample={data ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w)) : null}
       phase={g.phase}
       winsTally={winsTally}
       winsWords={s.wordsSolved}
@@ -276,19 +322,14 @@ function FuseInner({ data, createEngine, adapter, onExit }) {
         bare: firstRun, // tutorial card: no SCORE/BEST line (Job 14)
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
-        // FUSE score == word count, so pts is redundant — omit it (points=null).
-        share: (
-          <CopyResultButton
-            mode="fuse"
-            words={s.wordsSolved}
-            points={null}
-            tiers={g.tierLog}
-            killed
-            className="solo-share-btn"
-          />
-        ),
+        winsBonusLines,
+        // FUSE's score IS its word count, so a PTS fragment would just repeat the number on the
+        // same line — omit it (points=null). The alphabet strip rides the glyph row instead:
+        // "LETTERS n/26", the live count of distinct letters lit this cycle.
+        tryRow: <TryModeRow current="fuse" />,
       }}
       onExit={onExit}
+      offerMenu={offerMenu}
     />
     </>
   );

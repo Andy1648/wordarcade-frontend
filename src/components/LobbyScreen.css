@@ -31,7 +31,9 @@
 
 .lobby-back-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #2EFFE0;
   background: none;
   border: 2.5px solid #2EFFE0;
@@ -57,9 +59,11 @@
   transition: transform 0.05s ease-out, box-shadow 0.05s;
 }
 
-.lobby-title {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(28px, 5vw, 56px);
+.lobby-instruction {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: var(--fs-panel); /* >=17px at every width: 20px phone, 28px desk */
   color: #ff4fa3;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
@@ -67,18 +71,15 @@
   margin-bottom: 6px;
 }
 
-.lobby-subtitle {
-  font-family: 'Space Mono', monospace;
-  font-size: clamp(16px, 2vw, 18px);
-  color: #C9B8E8;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 32px;
-}
+/* (.lobby-subtitle is deleted with .lobby-title — one instruction line replaces both.) */
+
 
 .lobby-field-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2.2vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2EFFE0;
   margin-bottom: 8px;
   display: block;
@@ -88,7 +89,7 @@
   width: 100%;
   font-family: 'Space Mono', monospace;
   /* >=16px so iOS Safari doesn't auto-zoom the page when the field is focused. */
-  font-size: clamp(16px, 1.5vw, 20px);
+  font-size: var(--fs-h2); /* the name field: 16 -> 24px. Still well over the 16px iOS no-zoom floor */
   font-weight: 700;
   color: #1a0b2e;
   background: #fff;
@@ -111,37 +112,13 @@
 
 .lobby-error {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   font-weight: 700;
   color: #FF5C5C;
   margin-top: 8px;
 }
 
-.lobby-code-input {
-  width: 100%;
-  font-family: 'Bungee', cursive;
-  font-size: clamp(22px, 3vw, 30px);
-  letter-spacing: 6px;
-  text-align: center;
-  text-transform: uppercase;
-  color: #1a0b2e;
-  background: #fff;
-  border: 4px solid #AAAAAA;
-  border-radius: 8px;
-  padding: 12px 14px;
-  outline: none;
-  box-shadow: 4px 4px 0 #000;
-  transition: box-shadow 0.1s;
-}
-
-.lobby-code-input:focus {
-  box-shadow: 4px 4px 0 #FFE94A;
-}
-
-.lobby-code-input::placeholder {
-  color: #ccc;
-  letter-spacing: 6px;
-}
+/* (.lobby-code-input deleted with the join branch.) */
 
 .lobby-field-group {
   margin-top: 22px;
@@ -158,7 +135,9 @@
 .lobby-toggle-btn {
   flex: 1;
   font-family: 'Bungee', cursive;
-  font-size: clamp(16px, 2vw, 18px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   color: #C9B8E8;
   background: #0d0618;
   border: 4px solid #3a2a55;
@@ -184,7 +163,7 @@
 
 .lobby-toggle-hint {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(16px, 2vw, 18px);
+  font-size: var(--fs-body);
   font-weight: 700;
   color: #8a7bb0;
   margin-top: 8px;
@@ -192,9 +171,11 @@
 
 .lobby-continue-btn {
   font-family: 'Bungee', cursive;
-  font-size: clamp(18px, 2.4vw, 22px);
-  color: #000;
-  background: #ff4fa3;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-h2); /* 20 -> 24px: the only action on the screen */
+  color: var(--v-field);
+  background: var(--v-accent) /* value-group: THE accent element (lobby) */;
   border: 4px solid #991A75;
   border-radius: 8px;
   padding: 13px 0;
@@ -263,7 +244,7 @@
   }
 
   .lobby-title {
-    font-size: 26px;
+    font-size: var(--fs-panel);
   }
 
   .lobby-continue-btn {
@@ -275,4 +256,20 @@
     min-height: 44px;
     padding: 8px 14px;
   }
+}
+/* (THE CODE SLOTS ARE GONE FROM HERE. They were added in feat/lobby-type, and they never
+   rendered: this screen's join branch was gated on `mode === 'join'`, and nothing sets that —
+   goToLobby() only ever gets a game id or 'solo'. The branch is deleted with them and the
+   treatment now lives on PublicRoomsScreen, which is the screen a friend actually types a code
+   into. See the header note in LobbyScreen.jsx.) */
+
+/* THE WAY OUT, IN THE CORNER CLUSTER — top-left of the box, >=44px, same shape as the room's
+   and the solo screens'. */
+.lobby-back-btn {
+  align-self: flex-start;
+  min-width: max(96px, var(--tap-min));
+  min-height: max(48px, var(--tap-min));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

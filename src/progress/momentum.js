@@ -11,7 +11,7 @@
 import { round10 } from './xp.js';
 
 export const MOMENTUM_KEY = 'taw.momentum';
-export const MOMENTUM_BASE = 5000; // wins price of the FIRST buy (count 0 → next)
+export const MOMENTUM_BASE = 500; // wins price of the FIRST buy (was 5000 — prices /10 in v8)
 export const MOMENTUM_RATIO = 1.05; // price ×1.05 per buy — a gentle climb, always something to buy
 export const MOMENTUM_MAX = 200; // buys available; 200 × +1% = ×3.0 wins at the top
 export const MOMENTUM_PCT = 0.01; // wins bonus per buy (+1%), stacking additively

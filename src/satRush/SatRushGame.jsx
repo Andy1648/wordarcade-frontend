@@ -21,20 +21,24 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
-import { awardWordXp, cappedWordMult } from '../progress/xp';
+import { bankWordWins, awardWins, awardWordXp, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { cappedWordMult } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
-import { wordSenseWinsFactor } from '../progress/wordSense';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
+import { satRarityMult } from '../progress/rarity';
+import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
+import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
-import { formatNum } from '../format';
+import { formatMult } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
 // deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
 // rule). So only WinsHudPill is imported here.
 import { WinsHudPill } from '../components/WinsHud';
+// The standing multiplier readout (item 3) — SAT Rush had no payout receipt at all.
+import LiveStack from '../components/LiveStack';
 import { useSatRushGame } from './useSatRushGame';
 import { SAT_RUSH_DEV_TUNER, SAT_RUSH_SCENE } from './config';
 import { setShakeTarget } from './juice';
@@ -44,18 +48,56 @@ import SatRushResults from './SatRushResults';
 import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
+import SatKeyInput from './SatKeyInput';
 
-export default function SatRushGame({ onExit, musicSetVolume }) {
+export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
+
+  // DEEP LINK -> A PLAYABLE RUN, not a cover.
+  //
+  // CHAIN and FUSE hand a /chain/play visitor a live board on the first frame. SAT RUSH handed them
+  // the COVER, and from there a stranger needed four more taps — PLAY, a mode, five briefing cards,
+  // "Start the run" — before a single word appeared. On the one link we point acquisition traffic
+  // at, that is four chances to leave. So a deep-landed session starts a run itself.
+  //
+  // LINEUP, not BRIEFING: it is the mode that "drops straight into the run" (the briefing is a
+  // MANDATORY study screen by design and must not be auto-skipped past — see chooseMode). LINEUP is
+  // also self-explanatory cold: a clue and six candidates, which needs no teaching screen. The mode
+  // picker stays reachable — `autoStart` is retired the moment the player reaches the menu (App's
+  // goHome), so entering SAT from its menu card afterwards shows the cover and the choice as usual.
+  //
+  // startGame() first, so the session counter still bumps exactly once per run start (the lexicon
+  // scheduler reads it); it lands on 'mode' for one synchronous beat before chooseMode leaves it.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartedRef.current) return;
+    if (view.phase !== 'start') return;
+    autoStartedRef.current = true;
+    game.startGame();
+    game.chooseMode('lineup');
+    // game is a stable hook object; this fires once, guarded by the ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, view.phase]);
 
   // WINS: BANK per cleared word as the run plays (§2) so leaving mid-run keeps what was
   // earned — no end-of-run payout (that would double-pay). `view.cleared` is the authoritative
   // running count; we bank the delta each time it climbs and reset the ledger when a fresh run
   // drops it back to 0. bankWordWins queues the "+N WINS" menu stamp and gates on 3 words.
   const satBankedWordsRef = useRef(0);
-  const satWeightRef = useRef(0); // RARITY: running sum of cleared words' rarity multipliers
+  const satWeightRef = useRef(0); // running sum of cleared words' reward weights
+  // PARITY (feat/sat-parity): SAT was the ONLY mode without a combo or a lucky roll. Every other
+  // mode banks rarity x combo x lucky; SAT banked rarity alone, which is why — once its rarity
+  // DOUBLE COUNT was removed — it could not be seated anywhere near Blitz without blowing the
+  // cross-mode spread. An exhaustive card-space search says so: with rarity alone there is NO
+  // card assignment that satisfies "CHAIN and FUSE lead", "SAT within 20% of Blitz" and
+  // "spread < 2.00x" at once. With parity there is, at 9.4% headroom.
+  // The streak is the mode's own: SAT already tracks one (it drives heat and the results
+  // panel), so the combo is a payout reading of a thing the player can already see.
+  const comboRef = useRef(freshCombo());
+  const luckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
+  const satMissesRef = useRef(0);
   const [winsEarned, setWinsEarned] = useState(0);
   // Preload the rarity rank index + begin a WPM session; flush it on unmount (leave/exit).
   useEffect(() => {
@@ -70,6 +112,8 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // and start a fresh WPM session (flushes the previous run's).
       satBankedWordsRef.current = 0;
       satWeightRef.current = 0;
+      comboRef.current = freshCombo();
+      satMissesRef.current = 0;
       wpmStart('satRush');
       setWinsEarned(0);
     }
@@ -81,14 +125,26 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       // Unified economy (Job 1): the per-word rarity weight (SAT has no combo/lucky) also grants XP,
       // so a SAT capture now levels you as well as banking wins.
       const rw = rarityOf(view.lastClearedWord);
-      const wWeight = cappedWordMult(rw.mult, 1, 1);
-      satWeightRef.current += wWeight * wordSenseWinsFactor(rw.mult) + Math.max(0, delta - 1); // WORD SENSE (Job 4)
+      // THE SAME THREE FACTORS EVERY OTHER MODE BANKS: rarity x combo x lucky, capped at x40.
+      // RARITY is normalised against the SAT deck (satRarityMult) so the mode collects the same
+      // rarity per word as everyone else rather than a free ~2.79x nobody chose.
+      // COMBO grows with consecutive clears and breaks on a miss (below).
+      // LUCKY is the same 1-in-40 x5 roll CHAIN/FUSE/WB/Blitz get.
+      comboRef.current = comboAccept(comboRef.current);
+      const luck = luckyReward(luckyOracleRef.current.next());
+      const wWeight = cappedWordMult(
+        satRarityMult(rw.mult),
+        comboRef.current.mult,
+        luck.winsWeight,
+      );
+      satWeightRef.current += wWeight + Math.max(0, delta - 1);
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
       noteWord(view.lastClearedWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'satRush',
+        wordLength: (view.lastClearedWord || '').length,
         prevWords: satBankedWordsRef.current,
         nowWords: cleared,
         prevWeight,
@@ -98,6 +154,16 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       if (banked > 0) setWinsEarned((prev) => prev + banked);
     }
   }, [view.cleared]);
+
+  // A MISS BREAKS THE COMBO, the same way a reject or a life-loss does in every other mode.
+  // SAT's own signal is the run's miss count climbing; `cleared` does not move on a miss, so this
+  // cannot live in the banking effect above. Nothing is banked here — a miss pays nothing — so
+  // this only resets the multiplier the NEXT clear will be worth.
+  useEffect(() => {
+    const misses = view.missCount || 0;
+    if (misses > satMissesRef.current) comboRef.current = comboBreak(comboRef.current);
+    satMissesRef.current = misses;
+  }, [view.missCount]);
 
   // Live wins tally (item 2): what the run will pay so far, from the running cleared count
   // (0 until the 3-word payout gate). Recomputed each render — pure.
@@ -144,6 +210,14 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       {view.hasWord && view.phase === 'playing' && (
         <WinsHudPill amount={winsTally} words={view.cleared || 0} />
       )}
+      {/* The multiplier stack, standing and live. SAT Rush's own retro-print register owns the
+          PAGE; this is app chrome in the shared house style, like the wins pill beside it, and it
+          hides itself below 900px where there is no column for it. */}
+      {view.hasWord && view.phase === 'playing' && (
+        <div className="sr-stack-dock">
+          <LiveStack mode="sat-rush" compact />
+        </div>
+      )}
       <div className="sr-stage">
         {view.hasWord && (
           <>
@@ -161,6 +235,9 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
               {/* The ante row + word panel are now ONE bounty poster (WordCard);
                   the multiplier lives in its REWARD footer. */}
               <WordCard view={view} />
+              {/* The typing affordance. A phone has no physical keyboard, so without this the
+                  board renders perfectly and cannot be played at all — see SatKeyInput. */}
+              <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
             </div>
           </>
         )}
@@ -172,7 +249,13 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
       )}
       {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} onExit={onExit} />}
       {view.phase === 'over' && (
-        <SatRushResults results={view.results} winsEarned={winsEarned} onAgain={game.startGame} onExit={onExit} />
+        <SatRushResults
+          results={view.results}
+          winsEarned={winsEarned}
+          onAgain={game.startGame}
+          onExit={onExit}
+          offerMenu={offerMenu}
+        />
       )}
 
       {SAT_RUSH_DEV_TUNER && !SAT_RUSH_SCENE && (
@@ -189,11 +272,13 @@ export default function SatRushGame({ onExit, musicSetVolume }) {
   );
 }
 
+// The way out of the cover / mode-select / briefing screens. Labelled with its destination at
+// >=44x44 (see .sr-exit-chip) — a bare "EXIT" told a deep-link visitor nothing about where it led.
 function ExitLink({ onExit }) {
   if (!onExit) return null;
   return (
-    <button type="button" className="sr-exit-chip" onClick={onExit} aria-label="Exit">
-      EXIT
+    <button type="button" className="sr-exit-chip" onClick={onExit} aria-label="Exit to menu">
+      <span aria-hidden="true">←</span> MENU
     </button>
   );
 }
@@ -231,7 +316,7 @@ function StartScreen({ onPlay, onExit }) {
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">
             <b>{wins}</b> WINS / WORD
-            {mult > 1 && <span className="sr-cover-mult"> (×{formatNum(mult)})</span>}
+            {mult > 1 && <span className="sr-cover-mult"> (×{formatMult(mult)})</span>}
           </span>
           <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
         </div>

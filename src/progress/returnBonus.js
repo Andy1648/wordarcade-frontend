@@ -60,7 +60,9 @@ export function pendingReturnBonus(lastSeenMs, now = Date.now()) {
 export function claimReturnBonus(lastSeenMs, now = Date.now()) {
   const p = pendingReturnBonus(lastSeenMs, now);
   if (!p.eligible) return null;
-  grantWins(p.wins);
+  // Already had a card (ReturnBonusCard); labelled anyway so the ledger is complete and the
+  // no-hidden-wins sum covers it like everything else.
+  grantWins(p.wins, 'WELCOME BACK', { detail: 'return-bonus' });
   markClaimed(now);
   return { granted: true, wins: p.wins, hoursAway: Math.min(p.hoursAway, CAP_HOURS) };
 }

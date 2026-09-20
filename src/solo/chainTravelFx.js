@@ -1,11 +1,15 @@
-// chainTravelFx.js — the CHAIN "OUT → IN" travel animation, as a pure DOM/WAAPI helper
+// chainTravelFx.js — the CHAIN "INPUT → HERO" travel animation, as a pure DOM/WAAPI helper
 // (no React, no engine). ChainGame wires DOM refs into it.
+//
+// The source point used to be the standalone OUT tile. That tile is gone (the ring and the
+// letter are now ONE hero), so the accepted word's last letter now flies from the INPUT — the
+// place the player just typed it — up to the hero, which is a truer read of what happened.
 //
 // DESIGN CONTRACT (why it's shaped this way):
 //  - TWO POOLED elements are reused for every accept — a `traveler` (the accepted word's
-//    last letter, flying from the OUT tile to the IN letter) and a `fader` (the OLD
-//    required letter, dissolving in place at the IN centre). Never a node per accept.
-//  - Geometry (OUT centre, IN centre) is measured ONLY on mount and on resize and cached.
+//    last letter, flying from the INPUT to the hero letter) and a `fader` (the OLD
+//    required letter, dissolving in place at the hero centre). Never a node per accept.
+//  - Geometry (input centre, hero centre) is measured ONLY on mount and on resize and cached.
 //    The accept path (`play`) does NO getBoundingClientRect and NO forced reflow.
 //  - Restart is `anim.cancel(); anim.play()` on a STORED WAAPI Animation — never a
 //    `void el.offsetWidth` reflow hack.
@@ -24,8 +28,8 @@ export function createTravelFx({ root, traveler, fader }) {
   let animA = null; // traveler Animation (stored, reused)
   let animB = null; // fader Animation (stored, reused)
 
-  // Point() is spelled out per-frame so a translate carries BOTH axes (the OUT tile sits
-  // below the IN letter, so the travel is not purely horizontal) while staying strictly
+  // Point() is spelled out per-frame so a translate carries BOTH axes (the input sits
+  // below the hero, so the travel is not purely horizontal) while staying strictly
   // within `transform`. The leading translate(-50%,-50%) centres the glyph's own box on
   // the target point.
   const at = (x, y) => `translate(-50%,-50%) translate(${x}px, ${y}px)`;
@@ -42,7 +46,7 @@ export function createTravelFx({ root, traveler, fader }) {
   // Measure tile centres relative to the root. Called on mount + resize ONLY.
   function measure() {
     if (!root) return;
-    const face = root.querySelector('.solo-out-face');
+    const face = root.querySelector('.solo-input');
     const center = root.querySelector('.solo-center');
     if (!face || !center) return;
     const rr = root.getBoundingClientRect();
@@ -68,7 +72,7 @@ export function createTravelFx({ root, traveler, fader }) {
   }
 
   // Fire one travel. No measurement, no reflow — just swap text and restart the stored
-  // Animations. `newLetter` flies OUT→IN; `oldLetter` fades out at the IN centre.
+  // Animations. `newLetter` flies INPUT→HERO; `oldLetter` fades out at the hero centre.
   function play(newLetter, oldLetter) {
     if (prefersReduced() || !animA || !geom) return;
     traveler.textContent = (newLetter || '').toUpperCase();

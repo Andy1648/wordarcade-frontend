@@ -1,6 +1,6 @@
 // Homepage.jsx
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { GAMES } from '../gameData';
+import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
@@ -8,74 +8,36 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
-import { useMenuSecrets } from '../secrets/useMenuSecrets';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
-import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
+import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny } from '../progress/shop';
+import { isModeLocked } from '../progress/modeAccess';
 import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
-import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, nextUnlock, currentCosmetic } from '../progress/unlockLadder';
+import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
+import MarksPicker from './MarksPicker';
+import { markById, unlockedMarks, getEquippedMark, equipMark } from '../progress/marks';
+import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
+
+// The achievement each mark comes from, by name — the locked cards say what to go and do rather
+// than showing a silhouette, because a mark you cannot have is only interesting if it is a goal.
+const ACH_NAME = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.secret ? 'A SECRET' : a.name]));
 import Spotlight from './Spotlight';
-import { hasSeenMenuSpotlight, markMenuSpotlightSeen } from '../progress/onboarding';
+import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
-import GraffitiTag from './decor/GraffitiTag';
-import {
-  PaintSplatter1,
-  PaintSplatter2,
-  PaintSplatter3,
-  PaintSplatter4,
-} from './decor/PaintSplatters';
 import './wall-system.css';
 import './Homepage.css';
-
-// Palette pairs (fill + a darker shade of the same hue for the sprayed outline -
-// never black, per the project's colored-outline rule).
-const PINK = { fill: '#ff4fa3', line: '#991A75' };
-const CYAN = { fill: '#2EFFE0', line: '#1A9985' };
-const YELLOW = { fill: '#FFE94A', line: '#B8A020' };
-const ORANGE = { fill: '#FF6B3D', line: '#B83D15' };
-const PURPLE = { fill: '#9A1AFF', line: '#5A0EAA' };
-
-// ALLEY DEPTH (one-point perspective). Vanishing point sits behind the title,
-// up-centre; the wall recedes toward it. Lines below converge ON it (floor
-// boards + ceiling + side walls) and the tags are SCALE-GRADED to it: tiny &
-// faint near the VP (far away), large & stronger at the lower corners (near /
-// foreground). Together with the streetlight pool this builds real depth - a
-// place you look INTO, not a flat field. Deterministic (no randomness).
-const VANISHING = { x: 50, y: 40 };
-const PERSPECTIVE_ENDS = [
-  // floor boards (the strongest depth cue) running out to the bottom edge
-  [0, 100], [17, 100], [34, 100], [50, 100], [66, 100], [83, 100], [100, 100],
-  // ceiling
-  [0, 0], [100, 0],
-  // side walls meeting the floor
-  [0, 47], [100, 47],
-];
-
-const RECEDING_TAGS = [
-  // deep background - small + faint, clustered near the vanishing point
-  { word: 'RIP',  c: PURPLE, size: 20, top: 31, left: 47, rot: -6,  op: 0.12, drip: 0 },
-  { word: 'POW',  c: CYAN,   size: 24, top: 27, left: 57, rot: 9,   op: 0.13, drip: 0 },
-  { word: 'EZ',   c: YELLOW, size: 22, top: 37, left: 39, rot: -10, op: 0.12, drip: 0 },
-  // mid distance - moderate, out toward the sides
-  { word: 'BOOM', c: ORANGE, size: 38, top: 13, left: 73, rot: 7,   op: 0.18, drip: 0 },
-  { word: 'FIRE', c: PURPLE, size: 44, top: 55, left: 3,  rot: -8,  op: 0.20, drip: 28 },
-  { word: 'ZAP',  c: CYAN,   size: 36, top: 60, left: 87, rot: 12,  op: 0.18, drip: 0 },
-  // foreground - large + stronger in the lower corners, reads IN FRONT
-  { word: 'WORD', c: PINK,   size: 56, top: 71, left: 1,  rot: 6,   op: 0.28, drip: 34 },
-  { word: 'GG',   c: YELLOW, size: 50, top: 75, left: 85, rot: -8,  op: 0.26, drip: 0 },
-];
 
 // How long a queued connect attempt shows the plain CONNECTING… state before we
 // assume a COLD START (the Render free tier sleeps when idle and takes ~30-60s to
@@ -178,10 +140,21 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
   const [showRanks, setShowRanks] = useState(false); // rank-ladder overlay (fix/card-polish)
+  // MARKS (feat/progression-clarity): the one equipped badge, and its picker. Read once on mount
+  // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
+  // menu anyway.
+  const [showMarks, setShowMarks] = useState(false);
+  const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
+  const earnedAch = loadEarned();
+  const markUnlocked = unlockedMarks(earnedAch);
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
   const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
+  // "This browser has seen the menu" — recorded on MOUNT (not on any interaction), because the
+  // only reader is the solo run-over offer, which exists to pitch the rest of the game to a
+  // stranger who has never been here. Seeing the menu at all disqualifies you from that pitch.
+  useEffect(() => { markMenuSeen(); }, []);
   // The mode whose expand-dialog is open: { game, el } (el = the clicked card
   // element, measured for the FLIP morph). Null when no dialog is showing.
   const [dialog, setDialog] = useState(null);
@@ -219,6 +192,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // measurement never feeds back on the previous shrink (no oscillation).
       stage.style.setProperty('--menu-scale', '1');
       stage.style.height = '';
+      // Drop the region height WE set last pass for the same reason: the fit below is recomputed
+      // from the flex-grown region, so the measurement never feeds back on the previous shrink.
       const cs = getComputedStyle(stage);
       const padT = parseFloat(cs.paddingTop) || 0;
       const padB = parseFloat(cs.paddingBottom) || 0;
@@ -243,7 +218,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         if (SCALES.some((c) => el.classList.contains(c))) header += el.offsetHeight;
         else fixed += el.offsetHeight;
       }
-      const gaps = rowGap * Math.max(0, kids.length - 1);
+      // The card region opts OUT of the column's row-gap by a negative margin (it sits ~10px
+      // under the XP bar, not a full gap below it — see --cards-lift). Count the real margin, or
+      // the header shrinks to make room for space the layout does not actually use.
+      let marginAdj = 0;
+      for (const el of kids) {
+        const m = parseFloat(getComputedStyle(el).marginTop) || 0;
+        if (m) marginAdj += m;
+      }
+      const gaps = rowGap * Math.max(0, kids.length - 1) + marginAdj;
       const MINROW = 120; // keep at least this much height for the card region on a short screen
       if (header > 0) {
         const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
@@ -288,14 +271,24 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       const fit = (cols, rows) => {
         const colW = (availW - (cols - 1) * colGap) / cols;
         const rowH = (regionH - (rows - 1) * rGap) / rows;
-        const h = Math.min(rowH, (colW * 4) / 3);
+        // `narrow` drops the height term: the rows may run past the region and the region
+        // scrolls, which is the only way a <360px screen gets a legible card.
+        const h = narrow ? (colW * 4) / 3 : Math.min(rowH, (colW * 4) / 3);
         return { w: (h * 3) / 4, h, cols };
       };
       // Try one row of all five first, then denser grids; pick whichever gives the WIDEST (most
       // readable) card while all cells fit ONE screen. On a wide screen 5-in-one-row wins; on a
       // narrow/tall phone a 3+2 or 2-column grid gives bigger cards; on an ultra-short viewport
       // one small row still wins (extra rows don't fit the height). No scrolling, ever.
-      const LAYOUTS = [[count, 1], [3, 2], [2, 3], [1, count]];
+      // NEVER THREE ACROSS ON A <360px SCREEN. The fit-math picks whichever layout yields the
+      // WIDEST card, and on a short 320px viewport that was 3-across — which leaves each card
+      // 58px and each NAME 37px, so all five names pinned to the 12px floor. The floor was
+      // doing its job; the grid was the problem. Two columns is the cap here, trading a little
+      // card area for names that can actually be read.
+      const narrow = window.innerWidth < 360;
+      // exactly TWO columns when narrow — with the height term dropped, one column would win
+      // on width alone and turn the menu into a single 196px stack.
+      const LAYOUTS = narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
       let best = null;
       for (const [cols, rows] of LAYOUTS) {
         if (cols * rows < count) continue; // must hold all five
@@ -308,6 +301,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
       // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
       grid.setAttribute('data-cols', String(best.cols));
+      // WHERE THE LEFTOVER GOES, and why it cannot go where you would want it to. On a wide
+      // screen the cards are WIDTH-bound — five 3:4 cards across a 1850px stage are 328x437, and
+      // the region they sit in is 545px tall — so ~108px is spare and the cards cannot absorb it
+      // (the aspect is locked; the scenes slice-to-cover and a taller box would crop them).
+      // Returning it to the stage was tried and is WRONG: the frame gaps blew past the 16-32px
+      // band and the menu stopped filling the screen (e2e/menu-vgap, e2e/menu-fit, five
+      // viewports). So the region keeps growing and the grid hugs its TOP instead — the space
+      // still exists, it just sits BELOW the cards rather than between the bar and the cards,
+      // which is the one place the brief says it must not be. See .homepage-cards-region.
     };
     const onResize = () => {
       cancelAnimationFrame(raf);
@@ -371,16 +373,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       setWinsAffordable(canAffordAny(w));
     },
   });
-  // MENU SECRETS (Job 9): five undocumented easter eggs on the menu. The hook owns its
-  // own keydown listener (never perturbs XP), grants the flat Wins, and hands back a
-  // transient stamp to flash. When one fires it may bank Wins, so refresh the balance.
-  const { stamp: secretStamp } = useMenuSecrets({ active: true });
-  useEffect(() => {
-    if (!secretStamp) return;
-    const w = getWins();
-    setWins((prev) => (prev !== w ? w : prev));
-    setWinsAffordable(canAffordAny(w));
-  }, [secretStamp]);
+  // THE FIVE SECRETS ARE NOT A MENU FEATURE ANY MORE (feat/cut-secrets-rarity). They used to
+  // fire here and announce themselves as a centre-screen sticker over a modal backdrop — a
+  // one-off popup, mid-aim, that you clicked away and that could swallow the click meant for the
+  // card behind it. The detections are unchanged (secrets/secrets.js); they now fire while you
+  // PLAY, pay into that round, and surface at the word you typed (secrets/useWordSecrets +
+  // components/WordLanding). What is left of them on the menu is nothing, which is the point.
   // FREE UNLOCK LADDER (Job 3): grant every level-reached cosmetic (idempotent, its own
   // storage — separate from the shop), then hold the owned set so the "NEXT UNLOCK" line and
   // the applied FRAME stay in sync as XP climbs on the menu. (The ladder's THEME cosmetics were
@@ -394,7 +392,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     for (let r = 1; r <= rebirths; r++) if (grantRebirthUnlock(r)) rebirthFresh = true;
     if (fresh.length || rebirthFresh) setFreeUnlocks(getFreeUnlocks());
   }, [xpProgress.level, rebirths]);
-  const nextUnlockItem = nextUnlock(freeUnlocks, rebirths);
 
   // feat/analytics — attach progression session properties (so every later event segments by stage)
   // and fire streak_day at most once per active calendar day. Guarded; never blocks the menu.
@@ -589,17 +586,6 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
-        {/* MENU SECRET stamp (Job 9): a one-shot, pointer-events:none reveal. Not
-            hinted anywhere; only appears the instant a secret is discovered. */}
-        {secretStamp && (
-          <div className="secret-stamp" role="status" aria-live="polite">
-            <div className="secret-stamp-inner">
-              <span className="secret-stamp-label">SECRET</span>
-              <b className="secret-stamp-name">{secretStamp.stamp}</b>
-              <span className="secret-stamp-wins">+{secretStamp.wins} WINS</span>
-            </div>
-          </div>
-        )}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
@@ -695,6 +681,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             level={xpProgress.level}
             toNext={xpProgress.toNext}
             frac={xpProgress.frac}
+            /* HOW MANY WORDS, AT THE RATE OF THE CARD THE MENU IS POINTING AT. This divided by
+               perWordRateNow({}) — the MENU's own rate — which is arithmetically right and
+               strategically wrong: menu XP is x1, the slowest rate in the game, so the first
+               progression number a new player ever read was the worst one available, printed
+               directly above a FEATURED card advertising twice it.
+               FEATURED_GAME is derived from the same `featured` flag GameCard reads to draw the
+               ribbon (gameData.js), so the hint cannot point at one card and quote another. The
+               call shape is IDENTICAL to the card's — perWordRateNow({ mode: game.id }) with no
+               difficulty, because the menu has none selected — which is what makes "the hint
+               matches the card" a property of the code rather than a coincidence to re-check.
+               Menu typing is still real and still says so; it is just not the headline number. */
+            wordsToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).xp)))}
+            /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
+               caption line that used to sit under the bar — see below. */
+            firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
+            /* WPM joins the hint row (see .menu-xp-hint) instead of holding a row of its own. */
+            hintRight={<LiveWpm hideZero />}
             intoLevel={xpProgress.intoLevel}
             cost={xpProgress.cost}
             rebirths={rebirths}
@@ -703,31 +706,26 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onRankClick={() => setShowRanks(true)}
             streak={streak}
             freezes={streakFreezes}
+            /* The slot is only drawn once there is something to put in it — an empty badge on a
+               brand-new account is a question with no answer yet. */
+            markSlot={markUnlocked.length > 0}
+            mark={markById(equippedMark)}
+            onMarkClick={() => setShowMarks(true)}
           />
-          {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
-              only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
-              rebirthed player back at LV1 never sees it), then never again once they reach LV2. */}
-          {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
-            <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
-          )}
+          {/* THE FIRST-VISIT CAPTION IS GONE, folded into the bar's own hint line. It said "TYPE
+              ANYWHERE TO EARN XP" on its own row directly under a row that now says "12 WORDS TO
+              LEVEL 2" — two lines of the same small type, saying two halves of one sentence, on
+              the one screen in the app with no vertical room to spare. The hint carries both on a
+              first run ("TYPE ANYWHERE · 12 WORDS TO LEVEL 2") and drops the lead-in afterwards.
+              Its 20px + the cluster's 5px gap are what pay for the hint line at 320x640. */}
           {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
               nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
               fixed UI). */}
           <MomentumRail count={momentum} />
-          {/* WPM (§2): the menu is a live typing self-test — this shows your speed as you type a
-              real word, hidden until you start (hideZero). */}
-          <div className="menu-wpm">
-            <LiveWpm hideZero />
-          </div>
-          {/* NEXT UNLOCK (Job 3): always-visible teaser of the next FREE cosmetic (a FRAME) on the
-              ladder. Static at rest (menu-motion-law safe) — no idle animation. */}
-          <div className="menu-next-unlock" aria-live="polite">
-            <span className="menu-next-unlock-tag">NEXT</span>
-            <span className="menu-next-unlock-name">
-              {nextUnlockItem.name} {nextUnlockItem.kindLabel}
-            </span>
-            <span className="menu-next-unlock-at">{nextUnlockItem.at}</span>
-          </div>
+          {/* THE NEXT-UNLOCK TEASER IS GONE (Andy's cut). Three spans promising a cosmetic FRAME,
+              which at R1 rendered as "NEXT REBIRTH 1 FRAME REBIRTH 1" — a line that says the same
+              word three times and names a reward the player cannot see. No affordance, nothing
+              clickable, and the ladder it teased is already in the shop. */}
         </div>
 
         <div className="homepage-cards-region">
@@ -740,7 +738,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
                   onSelect={handleOpenDialog}
                   onLockedSelect={handleLockedSelect}
                   onHover={handleHover}
-                  locked={game.unlockLevel != null && xpProgress.level < game.unlockLevel}
+                  // Level gate OR an earlier play of the mode (deep links open a gated
+                  // mode with no level check) — see progress/modeAccess.js.
+                  locked={isModeLocked(game, xpProgress.level)}
                   playerLevel={xpProgress.level}
                 />
               ))}
@@ -814,6 +814,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             game={lockedPreview.game}
             level={xpProgress.level}
             onClose={() => setLockedPreview(null)}
+          />
+        </ScreenBoundary>
+      )}
+
+      {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
+      {showMarks && (
+        <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
+          <MarksPicker
+            unlockedIds={markUnlocked.map((m) => m.id)}
+            equippedId={equippedMark}
+            achievementNames={ACH_NAME}
+            onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
+            onClose={() => setShowMarks(false)}
           />
         </ScreenBoundary>
       )}

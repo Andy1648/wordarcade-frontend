@@ -1,0 +1,61 @@
+{
+  "vw": 320,
+  "vh": 640,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.solo-exit \"✕\"",
+      "rect": {
+        "x": 241,
+        "y": 28,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "input",
+      "what": "input.solo-input",
+      "rect": {
+        "x": 35,
+        "y": 367,
+        "w": 250,
+        "h": 56
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 260,
+        "y": 580,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-center \"M\"",
+      "rect": {
+        "x": 142,
+        "y": 231,
+        "w": 36,
+        "h": 42
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "div.solo-hud \"0SCOREx1.000LINKS · BEST 03W\"",
+      "rect": {
+        "x": 35,
+        "y": 34,
+        "w": 250,
+        "h": 109
+      },
+      "flags": []
+    }
+  ]
+}

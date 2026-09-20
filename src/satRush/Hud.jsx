@@ -1,8 +1,15 @@
 // Hud.jsx — top status row: one ruled arcade strip fused to the page's top edge.
 // SCORE (zero-padded to 6) / STREAK / WORD # / LIVES (ink hearts) / HEAT (five
-// flat blocks), and — at the far end — an EXIT ✕ that abandons the run. Pure
-// display: every value reads as text/shape, not colour alone. `onExit` (present
-// only mid-run) wires the ✕ to a clean abandon + go-home.
+// flat blocks), and — at the far end — the WAY OUT. Pure display: every value
+// reads as text/shape, not colour alone. `onExit` (present only mid-run) wires
+// the exit to a clean abandon + go-home.
+//
+// THE EXIT WAS A BARE ✕ AT 40px WIDE — under the 44px touch minimum and naming
+// nothing. That is the identical defect fix/solo-exit removed from CHAIN and FUSE
+// (see solo/SoloExit.jsx), and it matters most here for the same reason: a visitor
+// who arrived on a /sat-rush/play link has never seen the menu, and this control is
+// the only door to the other five modes. It is now labelled with its destination at
+// >=44x44, in SAT RUSH's own paper-and-ink language — NOT the neon house chip.
 export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, heatCap, onExit }) {
   return (
     <div className="sr-hud">
@@ -37,8 +44,11 @@ export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, 
         </div>
       </div>
       {onExit && (
-        <button type="button" className="sr-hud-exit" onClick={onExit} aria-label="Exit run">
-          ✕
+        <button type="button" className="sr-hud-exit" onClick={onExit} aria-label="Exit to menu">
+          {/* Counter-skewed like the .sr-hcell contents — .sr-hud is skewX(-6deg). */}
+          <span className="sr-hud-exit-inner">
+            <span aria-hidden="true">←</span> MENU
+          </span>
         </button>
       )}
     </div>

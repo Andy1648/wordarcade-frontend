@@ -158,21 +158,35 @@
 /* EXIT ✕ — the run's escape hatch, fused to the far end of the ruled strip.
    ink-on-paper to match the HUD; a left rule sets it off from HEAT; hover inverts
    to ink-fill / paper-glyph. Min 40px keeps it a real touch target. */
+/* THE WAY OUT, mid-run. Was a 40px bare glyph; now a labelled >=44x44 target that
+   names where it goes — the same correction CHAIN/FUSE got in solo/SoloExit.jsx.
+   Still paper + ink + a ruled edge: SAT RUSH's language, not the neon house chip. */
 .sr-hud-exit {
   margin-left: auto;
   align-self: stretch;
-  min-width: 40px;
-  padding: 0 clamp(9px, 1.6vw, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 clamp(10px, 1.6vw, 16px);
   border: none;
   border-left: 2px solid var(--ink);
   border-radius: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-head);
-  font-size: 13px;
+  font-size: var(--fs-label);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
   line-height: 1;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
+}
+.sr-hud-exit-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .sr-hud-exit:hover,
 .sr-hud-exit:focus-visible {
@@ -181,13 +195,13 @@
   outline: none;
 }
 .sr-hlabel {
-  font-size: 9px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0.6;
 }
 .sr-hval {
-  font-size: clamp(16px, 2.2vw, 22px);
+  font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -198,7 +212,7 @@
   display: flex;
   gap: 5px;
   align-items: center;
-  font-size: clamp(15px, 2vw, 19px);
+  font-size: var(--fs-body);
   line-height: 1;
 }
 .sr-life {
@@ -259,7 +273,7 @@
   align-self: end;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   opacity: 0.65;
@@ -291,7 +305,7 @@
 .sr-mult {
   grid-area: mult;
   font-family: var(--font-head);
-  font-size: clamp(46px, 8.5vw, 82px);
+  font-size: var(--fs-hero);
   line-height: 0.82;
   letter-spacing: -2px;
 }
@@ -306,7 +320,7 @@
   background: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -346,7 +360,14 @@
 }
 .sr-tickfill {
   height: 100%;
-  width: 0;
+  /* COMPOSITED, not laid out (Batch G). This was width: 0 animated to 100%, which is the first
+     name on CLAUDE.md's "never animate" list — it forces layout + paint every frame, and this bar
+     runs CONTINUOUSLY for a whole SAT Rush run (AnteMeter re-keys it every stage, default 2800ms).
+     The conversion is free and was half-done already: transform-origin: left was sitting here
+     doing nothing, which is the fingerprint of an intended scaleX. The fill has no border and no
+     children, so scaleX is pixel-identical to the width animation. */
+  width: 100%;
+  transform: scaleX(0);
   background: var(--ink);
   transform-origin: left;
 }
@@ -358,10 +379,10 @@
 }
 @keyframes sr-drain {
   from {
-    width: 0;
+    transform: scaleX(0);
   }
   to {
-    width: 100%;
+    transform: scaleX(1);
   }
 }
 
@@ -470,7 +491,7 @@
 }
 .sr-wanted {
   font-family: var(--font-head);
-  font-size: clamp(30px, 6vw, 52px);
+  font-size: var(--fs-h1);
   line-height: 0.9;
   letter-spacing: 0.02em;
   text-align: center;
@@ -486,7 +507,7 @@
   padding: 4px clamp(8px, 1.4vw, 14px) 5px;
   white-space: nowrap;
   font-family: var(--font-head);
-  font-size: clamp(12px, 2vw, 17px);
+  font-size: var(--fs-body);
   letter-spacing: 0.02em;
   color: var(--ink);
   background: var(--paper);
@@ -501,7 +522,7 @@
   border-top: 2px solid var(--ink);
   border-bottom: 2px solid var(--ink);
   box-shadow: inset 0 3px 0 -1px var(--paper), inset 0 -3px 0 -1px var(--paper);
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -533,7 +554,7 @@
   border: 2px solid var(--ink);
   background: var(--paper);
   font-family: 'Space Mono', monospace;
-  font-size: 9.5px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -556,7 +577,7 @@
 .sr-sentence {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(20px, 2.4vw, 25px);
+  font-size: var(--fs-panel);
   line-height: 1.55;
   color: var(--ink);
 }
@@ -572,14 +593,16 @@
 .sr-gloss {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(16px, 1.9vw, 18px);
+  font-size: var(--fs-body);
   line-height: 1.5;
   color: var(--ink);
 }
 /* KNOWN ALIASES — the root line; cousins in muted ink */
 .sr-root {
   font-family: 'Space Mono', monospace;
-  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1.5;
   color: var(--ink);
 }
@@ -690,7 +713,7 @@
 .sr-msg {
   margin-top: 14px;
   min-height: 20px;
-  font-size: 13px;
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--ink);
@@ -748,7 +771,9 @@
 .sr-cover-tag {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1.45;
   max-width: 40ch;
   color: var(--ink);
@@ -768,24 +793,26 @@
 }
 .sr-cover-ex-label {
   font-family: var(--font-head);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.14em;
   opacity: 0.6;
 }
 .sr-cover-ex-clue {
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   font-style: italic;
   text-align: center;
 }
 .sr-cover-ex-arrow {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   line-height: 1;
   opacity: 0.6;
 }
 .sr-cover-ex-answer {
   font-family: var(--font-head);
-  font-size: clamp(18px, 4vw, 24px);
+  font-size: var(--fs-panel);
   letter-spacing: 0.06em;
   color: #c8321e; /* the documented danger red — the one spot accent SAT Rush allows */
 }
@@ -796,14 +823,14 @@
   align-items: baseline;
   gap: 6px 16px;
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink);
 }
 .sr-cover-pay b {
   font-family: var(--font-head);
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 .sr-cover-mult {
   color: #c8321e;
@@ -827,7 +854,7 @@
 }
 .sr-title {
   font-family: var(--font-head);
-  font-size: clamp(44px, 9vw, 78px);
+  font-size: var(--fs-h1);
   line-height: 0.9;
   letter-spacing: 0;
 }
@@ -839,7 +866,7 @@
   border: 3px solid var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
   padding: 14px 40px;
-  font-size: 16px;
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   cursor: pointer;
   text-transform: uppercase;
@@ -904,8 +931,9 @@
   margin-left: -20px;
   z-index: 5;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   color: var(--ink);
   pointer-events: none;
@@ -940,8 +968,9 @@
 }
 .sr-spell-label {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.14em;
   color: var(--ink);
 }
@@ -951,8 +980,9 @@
   border: 2px solid var(--ink);
   color: var(--ink);
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.1em;
 }
 .sr-spell-bar {
@@ -963,7 +993,10 @@
 }
 .sr-spell-fill {
   height: 100%;
-  width: 0;
+  /* Same conversion as .sr-tickfill above — and this one runs CONCURRENTLY with it during the
+     spell-along endgame, so it was a second per-frame layout on the same screen. */
+  width: 100%;
+  transform: scaleX(0);
   background: var(--ink);
   transform-origin: left;
   animation: sr-drain linear forwards;
@@ -1127,7 +1160,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 /* DEAD slams in OVER the page (page overflow is visible, so it isn't clipped) */
 .sr-dead {
   font-family: var(--font-head);
-  font-size: clamp(40px, 9vw, 74px);
+  font-size: var(--fs-h1);
   line-height: 0.92;
   letter-spacing: 0.04em;
   color: var(--ink);
@@ -1160,7 +1193,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-panel-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -1175,7 +1208,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-ante-value {
   font-family: var(--font-head);
-  font-size: clamp(64px, 13vw, 116px);
+  font-size: var(--fs-hero);
   line-height: 0.85;
 }
 /* SCORE — zero-padded Bungee ink */
@@ -1187,7 +1220,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-score-value {
   font-family: var(--font-head);
-  font-size: clamp(30px, 6vw, 46px);
+  font-size: var(--fs-h2);
   line-height: 1;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
@@ -1203,7 +1236,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   padding: 9px 8px;
 }
 .sr-resstrip .sr-hval {
-  font-size: clamp(20px, 4vw, 26px);
+  font-size: var(--fs-panel);
 }
 /* runLog film-strip: one small ruled frame per word (clear=ink, miss=redink;
    deep/rev/silver keep a glyph so it reads by shape + label, not colour alone) */
@@ -1223,7 +1256,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   border: 2px solid var(--ink);
   background: var(--paper);
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1;
 }
 /* captured = a solid ink cel; got-away = a hollow paper cel with an ink ✕. The
@@ -1260,7 +1295,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-hardest-word {
   font-family: var(--font-head);
-  font-size: clamp(22px, 4.5vw, 32px);
+  font-size: var(--fs-panel);
   letter-spacing: 0.02em;
 }
 /* WORDS YOU KEEP MISSING — the persistent SRS study list on the results poster. */
@@ -1287,12 +1322,12 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-missing-word {
   font-family: var(--font-head);
-  font-size: clamp(15px, 3.2vw, 19px);
+  font-size: var(--fs-body);
   letter-spacing: 0.02em;
 }
 .sr-missing-tally {
   font-family: var(--font-mono, monospace);
-  font-size: 12px;
+  font-size: var(--fs-label);
   color: var(--redink, #c8321e);
   white-space: nowrap;
 }
@@ -1303,11 +1338,6 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   align-items: stretch;
   gap: 12px;
   margin-top: 4px;
-}
-.sr-share {
-  border-top: 2px solid var(--ink);
-  padding-top: 12px;
-  margin-bottom: 2px;
 }
 .sr-btn-ghost {
   background: transparent;
@@ -1336,9 +1366,50 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-resstrip.in,
 .sr-filmstrip.in,
 .sr-hardestpanel.in,
-.sr-results-actions.in {
+.sr-results-actions.in,
+.sr-offer.in {
   opacity: 1;
   transform: none;
+}
+
+/* ---------- the "rest of the game" offer (deep-link visitors only) ----------
+   The CHAIN/FUSE offer, spoken in SAT RUSH's retro-print voice: a CASE FILE
+   cross-reference under a red rule, not a neon sticker. Opacity/transform only,
+   one finite reveal on the shared stagger, nothing loops at rest. */
+.sr-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 2px solid var(--redink, #c8321e);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.34s ease, transform 0.34s ease;
+}
+.sr-offer.in {
+  transition-delay: 0.28s; /* lands just after the actions row */
+}
+.sr-offer-line {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--redink, #c8321e);
+  text-align: center;
+}
+.sr-offer-btn {
+  min-height: 44px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-offer {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* ---------- dev tuner (dev-only) ---------- */
@@ -1353,7 +1424,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   display: flex;
   gap: 18px;
   align-items: center;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: var(--paper);
   z-index: 60;
   flex-wrap: wrap;
@@ -1377,7 +1448,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-tuner .hint {
   opacity: 0.34;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1387,7 +1458,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   border: 1px solid rgba(240, 234, 217, 0.4);
   border-radius: 6px;
   padding: 4px 9px;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -1494,7 +1565,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   z-index: 3;
   padding: 5px 11px;
   font-family: var(--font-head);
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   color: var(--ink);
   background: var(--paper);
@@ -1531,19 +1602,19 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-brief-title {
   font-family: var(--font-head);
-  font-size: clamp(30px, 6.5vw, 50px);
+  font-size: var(--fs-h2);
   line-height: 0.95;
 }
 .sr-brief-family {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: var(--fs-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.8;
 }
 .sr-brief-family b {
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--fs-label);
 }
 
 /* the card list */
@@ -1572,7 +1643,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   align-self: flex-start;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--paper);
@@ -1589,13 +1660,13 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-brief-word {
   font-family: var(--font-head);
-  font-size: clamp(22px, 4.5vw, 30px);
+  font-size: var(--fs-panel);
   line-height: 1;
   letter-spacing: 0.01em;
 }
 .sr-brief-meta {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.65;
@@ -1604,7 +1675,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-sentence {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1.6;
   opacity: 0.85; /* the example is now secondary to the definition above it */
 }
@@ -1620,13 +1693,15 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-def {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(14px, 1.9vw, 16px); /* now the PRIMARY line, directly under the word */
+  font-size: var(--fs-body); /* now the PRIMARY line, directly under the word */
   line-height: 1.6;
   font-weight: 700; /* emphasis is BOLD, never italic (manga lettering convention) */
 }
 .sr-brief-root {
   font-family: 'Space Mono', monospace;
-  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   border-top: 1px dashed var(--ink);
   padding-top: 8px;
 }
@@ -1684,7 +1759,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-reencode-tag {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -1695,27 +1770,33 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-reencode-word {
   font-family: var(--font-head);
-  font-size: clamp(28px, 6vw, 42px);
+  font-size: var(--fs-h2);
   line-height: 1;
 }
 .sr-reencode-sentence {
   margin: 4px 0 0;
   max-width: 42ch;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(13px, 1.8vw, 15px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   line-height: 1.6;
 }
 .sr-reencode-def {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
   font-weight: 700; /* emphasis is BOLD, never italic */
   opacity: 0.8;
 }
 .sr-reencode-cousin {
   margin: 0;
   font-family: 'Space Mono', monospace;
-  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
 }
 .sr-reencode-cousin b {
   color: var(--ink);
@@ -1723,7 +1804,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-reencode-hint {
   margin-top: 6px;
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -1743,13 +1824,13 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-mastered {
   margin-top: 8px;
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  font-size: var(--fs-label);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .sr-mastered b {
   font-family: var(--font-head);
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--ink);
 }
 
@@ -1799,7 +1880,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-modeselect-head {
   font-family: var(--font-head);
-  font-size: clamp(26px, 5vw, 40px);
+  font-size: var(--fs-h2);
   line-height: 0.95;
   letter-spacing: 0;
 }
@@ -1844,13 +1925,15 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-modecard-title {
   font-family: var(--font-head);
-  font-size: clamp(20px, 3.4vw, 26px);
+  font-size: var(--fs-panel);
   letter-spacing: 0.02em;
 }
 .sr-modecard-line {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: clamp(12px, 1.6vw, 14px);
+  font-size: var(--fs-label);
   opacity: 0.75;
 }
 /* Quiet-but-visible EXIT chip — a bordered ink chip on paper (replaces the old
@@ -1859,6 +1942,13 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    understated: small, ink-on-paper, tucked below the primary actions. */
 .sr-exit-chip {
   margin-top: 4px;
+  /* >=44x44, like every other way out of a mode (see .sr-hud-exit). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 6px 16px;
   background: var(--paper);
   color: var(--ink);
@@ -1867,7 +1957,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow: none;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   text-transform: uppercase;
   letter-spacing: 0.18em;
   cursor: pointer;
@@ -1904,7 +1994,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-lineup-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -1915,8 +2005,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   border: 2px solid var(--ink);
   color: var(--ink);
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.1em;
 }
 .sr-lineup-grid {
@@ -1941,7 +2032,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-suspect-word {
   font-family: var(--font-head);
-  font-size: clamp(13px, 2.2vw, 17px);
+  font-size: var(--fs-body);
   letter-spacing: 0.01em;
   color: var(--ink);
 }
@@ -1968,8 +2059,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   color: var(--ink);
   background: var(--paper);
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 7.5px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.08em;
 }
 
@@ -2026,6 +2118,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    parallelogram; the cell CONTENTS counter-skew back to upright (legible). ---- */
 .sr-hud { transform: skewX(-6deg); }
 .sr-hud .sr-hcell > * { transform: skewX(6deg); }
+.sr-hud .sr-hud-exit-inner { transform: skewX(6deg); }
 
 /* ---- WANTED banner: paper-on-ink, slashed at an angle, on a focus-line tone
    burst. The screentone plate is dropped here (the solid black bar IS the
@@ -2061,7 +2154,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    held for the whole word. ---- */
 .sr-escaped {
   font-family: var(--font-impact);
-  font-size: clamp(13px, 2.2vw, 19px);
+  font-size: var(--fs-body);
   letter-spacing: 1px;
   color: var(--paper);
   background: var(--ink);
@@ -2106,7 +2199,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   background: var(--ink);
   color: var(--paper);
   font-family: var(--font-impact);
-  font-size: clamp(13px, 2.7vw, 18px);
+  font-size: var(--fs-body);
   letter-spacing: 2px;
   box-shadow: 0 2px 0 var(--ink);
 }
@@ -2122,7 +2215,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   right: -16px;
   padding: 0;
   font-family: var(--font-impact);
-  font-size: clamp(30px, 6.5vw, 56px);
+  font-size: var(--fs-h1);
   line-height: 1;
   letter-spacing: 1px;
   color: var(--paper); /* front fill */
@@ -2176,29 +2269,67 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-brief-card:nth-child(even) { transform: rotate(0.7deg); }
 
 /* ============================================================================
-   ShareBar, as it appears in SAT RUSH only (scoped to .sr-share) — de-neoned to
-   the ink/paper print language: paper buttons, ink linework, a SOLID INK primary
-   (paper type), hard ink offset, no rounded corners. Other modes' ShareBar untouched.
-   ============================================================================ */
-.sr-share .share-btn {
-  font-family: var(--font-head);
-  background: var(--paper);
-  color: var(--ink);
-  border: 3px solid var(--ink);
-  border-radius: 0;
-  box-shadow: 3px 3px 0 var(--ink);
-}
-.sr-share .share-btn.share-primary {
-  background: var(--ink);
-  color: var(--paper);
-}
-.sr-share .share-btn:hover:not(:disabled) { box-shadow: 4px 4px 0 var(--ink); }
-.sr-share .share-btn:active:not(:disabled) { box-shadow: 1px 1px 0 var(--ink); }
-
-/* ============================================================================
    REDUCED MOTION (manga pass) — the tilt, torn edges, screentone, skew, mugshot
    lean and CLEARED slash are all FORM and stay. Only the burst punch is motion.
    ============================================================================ */
 @media (prefers-reduced-motion: reduce) {
   .sr-stamp { animation: sr-stamp-fade 0.25s ease-out both; }
+}
+
+/* The docked LiveStack (item 3). Top-left, opposite the wins pill, clear of the poster. Hidden
+   under 900px by LiveStack's own rule. */
+.sr-stack-dock {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  z-index: 60;
+  pointer-events: none;
+}
+
+
+/* ---- SAT KEY INPUT — the soft-keyboard bridge (SatKeyInput.jsx) --------------------------- */
+/* The field is never read and never shows text, but it must stay a REAL, focusable, on-screen
+   input: display:none / visibility:hidden / width:0 all make a browser refuse to focus it, and a
+   refused focus is a phone with no keyboard, which is the bug this closes. So it is a 1px box at
+   full transparency, parked in the normal flow under the poster.
+   font-size:16px is not cosmetic — below 16px iOS Safari zooms the whole page on focus. */
+.sr-keyinput {
+  /* Left in NORMAL FLOW, directly under the poster, deliberately: it is then wherever the poster
+     is, i.e. always inside the viewport, which is the condition iOS puts on opening a keyboard.
+     An absolutely/fixed-positioned version could be scrolled out of view or collide with the
+     corner cluster (see the no-orphan-fixed-UI rule); one transparent pixel in flow cannot. */
+  display: block;
+  width: 1px;
+  height: 1px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  /* --fs-body, not a bare 16px. The iOS contract is "never BELOW 16px", and --fs-body is
+     clamp(16px, 1.8vw, 18px) — its floor IS 16px, so the rule that keeps Safari from zooming
+     the page on focus holds at every width. The extra 2px it resolves to on a desktop is not a
+     visual change of any kind: this box is 1x1, opacity:0, with transparent text and caret, and
+     it never renders a glyph. */
+  font-size: var(--fs-body);
+  color: transparent;
+  background: transparent;
+  caret-color: transparent;
+  opacity: 0;
+}
+
+/* The visible half of the contract, on touch devices only: the tap that opens the keyboard. Flat
+   ink on paper, in the mode's own retro-print voice. Static — no idle loop. */
+.sr-keyhint {
+  margin: 10px 0 0;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  /* 12px sat between two steps: --fs-micro (11px) and --fs-label (13px), both within the 1px
+     the brief allows. --fs-label wins because of what this text IS — the one line telling a
+     phone player how to open the keyboard, which is a label, not decoration, and --fs-micro is
+     documented as "decoration only". So it goes UP 1px rather than down, which is also the
+     right direction for a line already sitting at 0.62 opacity. */
+  font-size: var(--fs-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sr-ink, #111111);
+  opacity: 0.62;
 }

@@ -54,6 +54,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* The column's row-gap, as a variable, because ONE child needs to opt out of it: the card
+     region sits ~10px under the XP bar rather than a full gap below it (see
+     .homepage-cards-region). Everything else keeps the full gap. */
+  --stage-rowgap: clamp(22px, 3vh, 30px);
+  /* THE CARDS START RIGHT UNDER THE BAR. 10px, not a row-gap: the bar and the cards are the same
+     conversation — "here is your level, here is what each mode pays toward it" — and 30px of
+     nothing between them read as two unrelated regions. Applied as a negative margin so the
+     stage's row-gap still governs every other pair. */
+  --cards-lift: 10px;
   /* justify-content:center (NOT space-evenly): the --menu-scale RESERVE (Homepage.jsx)
      scales the title/xp/cards to fill the stage MINUS a fixed 44px reserve, and center
      splits that reserve into ~22px SYMMETRIC frame gaps — so the content fills the
@@ -66,7 +75,7 @@
      grows with the title size. Raised (was clamp(16,2.2vh,28)) so the residual gap stays
      ≥12px at every menu-fit viewport (worst case was 1280×720 at 9.4px). Fully counted in
      the fit math (gaps = row-gap × (kids−1)), so the fit-to-one-screen scale compensates. */
-  row-gap: clamp(22px, 3vh, 30px);
+  row-gap: var(--stage-rowgap);
   justify-content: center;
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
@@ -124,6 +133,18 @@
   flex-direction: column;
   align-items: flex-end; /* right-align the auto-width buttons into a clean stack */
   gap: 8px;
+  /* THE CONTAINER MUST NOT EAT CLICKS IT DOESN'T PAINT (fix/mobile-and-routing, Batch F).
+     The buttons are auto-width and right-aligned, so this box is as wide as the WIDEST of them
+     (REBIRTH) at every row, and the 8px gaps between them are empty. But the box still won the
+     hit test across all of that: measured at 320x640 AT REST, the nav's left edge is x=175 while
+     the XP track sits at x=170..197, and the element answering a tap over the track was
+     `nav.homepage-corner-nav` itself — not a button. Same cause as the card collisions this run
+     found at short viewports. Making the container transparent to pointers and the buttons opaque
+     means the nav can only ever intercept a tap where a real button is drawn. */
+  pointer-events: none;
+}
+.homepage-corner-nav > * {
+  pointer-events: auto;
 }
 .homepage-nav-btn {
   position: relative;
@@ -137,7 +158,9 @@
   align-items: center;
   justify-content: center;
   font-family: 'Bungee', cursive;
-  font-size: clamp(13px, 1.4vw, 16px);
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: var(--fs-panel);
   letter-spacing: 0.04em;
   color: #0d0618;
   border: 3px solid #000;
@@ -146,9 +169,9 @@
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.homepage-nav-btn.is-shop { background: #ffe94a; }
-.homepage-nav-btn.is-rebirth { background: #9a1aff; color: #fff; }
-.homepage-nav-btn.is-stats { background: #2effe0; }
+.homepage-nav-btn.is-shop { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
+.homepage-nav-btn.is-rebirth { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; color: var(--v-ink); }
+.homepage-nav-btn.is-stats { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
 .homepage-nav-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px 0 #000;
@@ -298,13 +321,18 @@
   /* Bungee Shade (with a Bungee fallback) - the built-in shade layer gives the
      wordmark its 3D body, matching the splash title exactly. */
   font-family: 'Bungee Shade', 'Bungee', cursive;
+  text-transform: uppercase;
   /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
      desktop but shrinks on short laptops to help the menu fit one screen, then the
      container-driven --menu-scale trims it further to clear the XP bar / fit. */
   /* The wordmark scales DOWN with --menu-scale on short screens, but is capped at 1× so it
      never UPSCALES when the fit grows the cards/XP to fill a tall screen — an upscaled title's
      rotate/skew AABB overhang would eat the title↔XP row-gap below the 12px floor (menu-fit). */
-  font-size: calc(clamp(34px, min(7.5vw, 9vh), 88px) * min(1, var(--menu-scale, 1)));
+  /* Token-governed: the wordmark IS the hero step. The 9.5vh cap is the height guard (the
+     pre-existing rule capped at 9vh). Without it the hero token renders 96px on a 768-tall
+     laptop and eats the title<->XP gap below the 12px floor menu-fit asserts; with it the
+     wordmark is a full 96px on a tall screen and 73px at 1366x768 (was 69px). */
+  font-size: calc(min(var(--fs-hero), 9.5vh) * min(1, var(--menu-scale, 1)));
   line-height: 1;
   color: var(--theme-ink, #ff4fa3); /* THEME: wordmark fill */
   -webkit-text-stroke: 5px #000;
@@ -321,7 +349,13 @@
      vars, so that would otherwise leak a flat black 3-layer drop). Both the bold-clean
      single drop and the old 6-layer magenta extrude are intentionally gone. */
   text-shadow: none;
-  will-change: transform;
+  /* will-change MOVED to the html[data-beat='true'] rule below (Batch G). CLAUDE.md: it "must
+     NEVER sit on an idle / pooled / always-present node ... Toggle it ON for the life of the
+     animation and OFF at rest: a CSS :hover / html[data-beat] state". The wordmark is the
+     always-present headline of the LCP screen and, under the MENU MOTION LAW, does not move at
+     rest at all — so this held a compositor layer for a large Bungee Shade glyph permanently, and
+     for zero motion whenever the music is muted or never started. .homepage-btn:hover 280 lines
+     below already does it the right way. */
 }
 
 /* The paint drips stay OFF (the JSX element is still in the markup; hide it) - the
@@ -340,6 +374,8 @@
    matching the splash; the splash title has no beat-driven shadow slam.) */
 html[data-beat='true'] .homepage-logo {
   animation: title-beat-pop 120ms ease-out;
+  /* ON for the life of the animation, off at rest — data-beat is cleared between hits. */
+  will-change: transform;
 }
 
 @keyframes title-beat-pop {
@@ -359,8 +395,11 @@ html[data-beat='true'] .homepage-logo {
 /* Tagline styled like a sticker slapped on at an angle - skewed, rotated
    off-axis, and sitting on a hard offset shadow. */
 .homepage-tagline {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(10px, 2vw, 16px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #0d0618;
   background: #2EFFE0;
   display: block;
@@ -373,8 +412,11 @@ html[data-beat='true'] .homepage-logo {
 }
 
 .homepage-section-label {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(12px, 2.2vw, 20px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
   color: #2EFFE0;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -464,12 +506,21 @@ html[data-beat='true'] .homepage-logo {
      short screens. */
   flex: 1 1 auto;
   min-height: 0;
+  /* THE 10px GAP TO THE BAR. The stage's row-gap is 22-30px and is right for every other pair on
+     the column; this one pair is not a pair of regions, it is a bar and the thing it describes. */
+  margin-top: calc(var(--cards-lift) - var(--stage-rowgap));
   /* align-self:stretch overrides the stage's align-items:center so the region is the FULL stage
      width (the JS reads it to size the cards); align-items:center then centres the card group. */
   align-self: stretch;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* TOP, not centre. The region flex-grows to fill the stage (which is what keeps the menu
+     filling the screen and the frame gaps inside their band), and on a wide viewport the 3:4
+     cards cannot use all of it — centring split the surplus above AND below, which put 54px of
+     nothing between the XP bar and the first card. Hugging the top spends the whole surplus
+     below the cards, where it is the bottom bar's breathing room rather than a gap in the
+     middle of a sentence. */
+  justify-content: flex-start;
   align-items: center;
 }
 .homepage-cards-scroll {
@@ -514,14 +565,10 @@ html[data-beat='true'] .homepage-logo {
 /* Magnetic cursor-pull wrapper for the CTAs. Shrink-wraps the button so the
    flex-row layout (centered, gap) is unchanged; its translate/scale + leaning
    box-shadow are set inline by lib/magneticPull.js. No static style of its own. */
-/* WPM (§2): the menu self-test readout, centred just under the XP bar. Compact + static so it
-   never breaks the one-screen fit; hidden until the player types (LiveWpm hideZero). */
-.menu-wpm {
-  display: flex;
-  justify-content: center;
-  /* fix/visual-real item 6: spacing is owned by the .menu-xp-cluster gap now (was margin-top:3px). */
-  min-height: 1em; /* reserve the line so showing/hiding never shifts layout */
-}
+/* WPM (§2): the menu self-test readout. It used to hold a ROW of its own under the XP bar,
+   reserving 1em of line whether or not the player was typing; it now rides the right end of the
+   bar's hint row (see .menu-xp-hint-right in MenuXp.css), which is a row that already exists and
+   is about the same thing. The wrapper and its reserve are gone with the row. */
 
 .homepage-btn-magnet {
   display: inline-flex;
@@ -544,8 +591,9 @@ html[data-beat='true'] .homepage-logo {
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   letter-spacing: 1px;
   color: #9c90b4;
   cursor: pointer;
@@ -571,9 +619,11 @@ html[data-beat='true'] .homepage-logo {
 .homepage-btn {
   position: relative;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
   /* More compact than the hero: smaller type + tighter vertical padding so the
      pair fits inside the card at laptop size. */
-  font-size: clamp(13px, 1.5vw, 18px);
+  font-size: var(--fs-panel);
   /* Each variant sets its own darker-than-fill border colour below. */
   border: 4px solid #000;
   border-radius: 8px;
@@ -666,9 +716,12 @@ html[data-beat='true'] .homepage-logo {
 }
 
 .homepage-btn-join {
-  background: #2EFFE0;
-  border-color: #1A9985;
-  color: #000;
+  /* value-group: THE accent element of the menu. JOIN ROOM is the only CTA the menu
+     actually renders (.homepage-btn-create has no matching class in Homepage.jsx), so
+     the screen's one hot colour is spent here. */
+  background: var(--v-accent);
+  border-color: #991A75;
+  color: var(--v-field);
 }
 
 /* ---- SHORT-HEIGHT RECLAIM (feat/cards-live) --------------------------------------------
@@ -678,11 +731,13 @@ html[data-beat='true'] .homepage-logo {
    screen — they return ≥600px), and tighten the footer + section gaps. Cards then measure
    ~170px+ wide at 1163×501 (target ≥160). */
 @media (max-height: 600px) {
-  .homepage-stage { row-gap: clamp(18px, 2.4vh, 24px); }
-  .homepage-logo { font-size: clamp(22px, 5.4vh, 34px); }
+  /* Through the VARIABLE, so the card region's opt-out (--cards-lift) stays exact. Setting
+     row-gap directly here left the region subtracting a gap the column was not using. */
+  .homepage-stage { --stage-rowgap: clamp(18px, 2.4vh, 24px); }
+  /* height guard: was clamp(22px, 5.4vh, 34px) - the vh cap keeps the wordmark off the
+     card region on a short screen, so it stays expressed through the token. */
+  .homepage-logo { font-size: min(var(--fs-panel), 5.4vh); }
   .menu-xp-cluster { gap: 3px; }
-  .menu-wpm { display: none; }
-  .menu-next-unlock { display: none; }
   .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
   .homepage-footer-links { margin-top: 0; }
 }
@@ -693,7 +748,20 @@ html[data-beat='true'] .homepage-logo {
    STATS instead of launching the mode. Reserve the nav's measured footprint (--corner-nav-reserve,
    set in Homepage.jsx) as right padding on the card row so no card is ever beneath the nav. Never
    drops below the normal gutter, and falls back to a safe fixed reserve before the JS measures. */
-@media (orientation: landscape) and (max-height: 520px) {
+/* EXTENDED BEYOND LANDSCAPE (fix/mobile-and-routing, Batch F). The rule above was keyed on
+   `orientation: landscape`, but the collision is caused by the viewport being SHORT, not by it
+   being wide — the card region rises into the nav's band either way. Measured with the keyboard
+   raised: at 390x509 (a 390x844 phone with an Android keyboard up) the SAT RUSH card hit-tests to
+   .homepage-corner-nav and cannot be clicked at all, and at 320x380 tapping CHAIN opens STATS —
+   the audit's nav step landed on the Stats screen and censused .stats-backup-* instead of the
+   game. Both viewports are PORTRAIT, so the landscape-only guard never fired. Keying on height
+   alone covers landscape phones and keyboard-shortened portrait with one rule.
+   BUT ONLY WHERE THE WIDTH CAN AFFORD IT (min-width: 560px). Applying this at 320x380 reserved
+   157px of a 320px screen and drove the five cards from 31x41 down to 15x20 — trading an
+   untappable card for an unreadable one. On a narrow-and-short viewport the collision is handled
+   instead by .homepage-corner-nav's pointer-events rule above, which stops the nav's empty box
+   intercepting taps, so the cards stay full-width AND clickable. */
+@media (max-height: 560px) and (min-width: 560px) {
   .homepage-cards-scroll {
     padding-right: max(var(--corner-nav-reserve, 132px), clamp(18px, 1.8vw, 30px));
   }
@@ -713,7 +781,7 @@ html[data-beat='true'] .homepage-logo {
   }
   .homepage-stage {
     max-height: 100%;
-    row-gap: clamp(16px, 2vh, 22px);
+    --stage-rowgap: clamp(16px, 2vh, 22px);
   }
   /* The card region is still the flex-fill row; the cards are SIZED to fit it, so it never scrolls. */
   .homepage-cards-region {
@@ -766,7 +834,7 @@ html[data-beat='true'] .homepage-logo {
        "RD"). Shrink the font and cap the width so the title wraps to TWO lines (TYPE A / WORD) that
        both clear the nav column. max-width reserves ~the nav gutter on each side of the centred
        title; the nbsp in "TYPE A" keeps that line intact so it only ever breaks before WORD. */
-    font-size: calc(clamp(20px, 5vw, 40px) * var(--menu-scale, 1));
+    font-size: calc(var(--fs-h2) * var(--menu-scale, 1));
     /* px cap (not vw) so it is ALWAYS below the single-line width → the title reliably breaks to
        TYPE A / WORD; the resulting ~90px block, centred, clears the (also-tightened) nav column. */
     max-width: 140px;
@@ -784,7 +852,7 @@ html[data-beat='true'] .homepage-logo {
      title to clear. Keeps the 44px touch height (JOB 14) — only the width/text shrinks. */
   .homepage-nav-btn {
     padding: 0 10px;
-    font-size: 12px;
+    font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   }
 }
 
@@ -888,8 +956,9 @@ html[data-beat='true'] .homepage-beat-glow {
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: 10.5px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
   letter-spacing: 0.12em;
   color: #c9b64a;
   cursor: pointer;
@@ -936,7 +1005,7 @@ html[data-beat='true'] .homepage-beat-glow {
 /* Static stand-in for the ring, only shown under reduced motion (see below). */
 .connecting-spinner-rm {
   display: none;
-  font-size: 14px;
+  font-size: var(--fs-label);
   line-height: 1;
 }
 .connecting-text {
@@ -951,7 +1020,7 @@ html[data-beat='true'] .homepage-beat-glow {
 .connecting-sub {
   font-family: 'Space Mono', monospace;
   font-weight: 400;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.02em;
   text-transform: none;
   margin-top: 2px;
@@ -982,13 +1051,13 @@ html[data-beat='true'] .homepage-beat-glow {
 .homepage-daily-link .connecting-spinner-rm {
   width: 11px;
   height: 11px;
-  font-size: 11px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
 }
 .homepage-daily-link .connecting-spinner {
   border-width: 2px;
 }
 .homepage-daily-link .connecting-sub {
-  font-size: 9px;
+  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1014,113 +1083,32 @@ html[data-beat='true'] .homepage-beat-glow {
 /* ===== FREE UNLOCK LADDER (Job 3) ===================================================
    The always-on "NEXT UNLOCK" teaser + the applied theme (accent recolor) and frame
    (LV-chip border) cosmetics. All STATIC at rest — no idle/infinite animation, so the
-   menu concurrent-animation count is unchanged. */
-.menu-next-unlock {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  width: 100%;
-  max-width: 760px;
-  /* fix/visual-real item 6: no own top margin — the .menu-xp-cluster gap owns the spacing, keeping
-     this line tight under the XP row instead of floating in the gap above the cards. */
-  margin: 0 auto;
-  font-family: 'Space Mono', monospace;
-  font-size: clamp(10px, 1.7vw, 13px);
-  line-height: 1;
-}
-.menu-next-unlock-tag {
-  font-family: 'Bungee', sans-serif;
-  font-size: 0.92em;
-  color: #0d0618;
-  background: var(--menu-accent, #2EFFE0);
-  border: 2px solid #000;
-  border-radius: 5px;
-  padding: 3px 7px;
-  box-shadow: 2px 2px 0 #000;
-}
-.menu-next-unlock-name {
-  color: #FFE94A;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.menu-next-unlock-at {
-  color: #ff4fa3;
-  font-weight: 700;
-}
+/* The NEXT-UNLOCK teaser was removed (Andy's cut) - see Homepage.jsx. Its rules go with it. */
 
 /* (The ladder's THEME accent rules were removed on merge — main's themes system, src/theme/
    themes.css, owns menu colour now. Only the FRAME cosmetics below remain from the ladder.) */
 
-/* FRAMES — a distinct border treatment on the LV badge chip. */
-.homepage-stage[data-menu-frame='frame-bolt'] .menu-xp-lv {
+/* FRAMES — a distinct border treatment on the LV badge. It moved from .menu-xp-lv (the bare
+   numeral) to .menu-xp-lvblock (the welded badge) when the badge absorbed the chip: a border on
+   the numeral itself would now draw a box inside the badge rather than around it. */
+.homepage-stage[data-menu-frame='frame-bolt'] .menu-xp-lvblock {
   border-color: #FFE94A;
   box-shadow: 2px 2px 0 #000, 0 0 0 2px #FFE94A;
 }
-.homepage-stage[data-menu-frame='frame-tape'] .menu-xp-lv { border-style: dashed; }
-.homepage-stage[data-menu-frame='frame-chrome'] .menu-xp-lv {
+.homepage-stage[data-menu-frame='frame-tape'] .menu-xp-lvblock { border-style: dashed; }
+.homepage-stage[data-menu-frame='frame-chrome'] .menu-xp-lvblock {
   border-color: #cfd8e3;
   box-shadow: 3px 3px 0 #000;
 }
-.homepage-stage[data-menu-frame='frame-spike'] .menu-xp-lv { border-width: 4px; }
-.homepage-stage[data-menu-frame='frame-gold'] .menu-xp-lv {
+.homepage-stage[data-menu-frame='frame-spike'] .menu-xp-lvblock { border-width: 4px; }
+.homepage-stage[data-menu-frame='frame-gold'] .menu-xp-lvblock {
   border-color: #FFB800;
   box-shadow: 2px 2px 0 #000, 0 0 0 3px #FFB800;
 }
-.homepage-stage[data-menu-frame^='rebirth'] .menu-xp-lv {
+.homepage-stage[data-menu-frame^='rebirth'] .menu-xp-lvblock {
   border-color: #ff4fa3;
   box-shadow: 2px 2px 0 #000, 0 0 0 3px #ff4fa3;
 }
 
-/* MENU SECRET stamp (Job 9) — a one-shot reveal when a secret is discovered.
-   Fixed + pointer-events:none so it never joins the layout or blocks input; a
-   single punch-in (transform/opacity only), then it auto-removes from the DOM. */
-.secret-stamp {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  z-index: 60;
-}
-.secret-stamp-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 18px 30px;
-  background: #FFE94A;
-  color: #0d0618;
-  border: 5px solid #000;
-  border-radius: 12px;
-  box-shadow: 8px 8px 0 #000;
-  transform: rotate(-4deg);
-  animation: secret-stamp-punch 380ms cubic-bezier(0.2, 1.4, 0.5, 1) both;
-}
-.secret-stamp-label {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: #FF4FA3;
-}
-.secret-stamp-name {
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: clamp(26px, 6vw, 40px);
-  line-height: 1;
-  -webkit-text-stroke: 2px #000;
-  paint-order: stroke fill;
-}
-.secret-stamp-wins {
-  font-family: 'Bungee', system-ui, sans-serif;
-  font-size: 13px;
-  color: #9A1AFF;
-}
-@keyframes secret-stamp-punch {
-  0% { transform: rotate(-4deg) scale(0.4); opacity: 0; }
-  60% { transform: rotate(-4deg) scale(1.12); opacity: 1; }
-  100% { transform: rotate(-4deg) scale(1); opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .secret-stamp-inner { animation: none; }
-}
+/* MENU SECRET sticker (Job 9) lives in SecretSticker.css (the old .secret-stamp was
+   pointer-events:none, so its dismiss click fell through and opened the card beneath). */

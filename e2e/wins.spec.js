@@ -1,3 +1,7 @@
+// RE-PINNED. These were 360/650 for a long time — round10(weight x 100), i.e. Blitz at the BASE
+// rate x1 — and had been RED across several merges because a viewport-only gate never ran them.
+// Blitz is x1.4 (per-word 140) after the round-4 re-fit, so the figures are 500 and 910.
+// Recomputed from the live table, never nudged to match.
 // e2e/wins.spec.js
 //
 // The WINS wiring (item 2): the app subscribes to round-end events that ALREADY fire and
@@ -37,16 +41,20 @@ test.describe('wins wiring', () => {
     });
   });
 
-  test('a Blitz round_end with 3 accepted answers pays 70 and counts the round', async ({ page }) => {
+  // ECONOMY v8: wins are the word's XP ÷ 10 and the base is the word's LETTERS at the key tier
+  // (T0 = 10 XP/letter), so a 3-letter Blitz answer pays 10 × 3 × mode2 ÷ 10 = 6 and a 5-letter
+  // one pays 10. The BANKING arithmetic each test is about — the 3-answer gate, the retroactive
+  // release, the no-double-pay rule — is unchanged; only the rate it multiplies.
+  test('a Blitz round_end with 3 accepted answers pays 22 and counts the round', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
-    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON, combo 1.1/1.2/1.3 → 3.6 × 20 = round10(72) = 70
+    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON 3-letter, combo 1.1/1.2/1.3 → 3.6 × 6 = round(21.6) = 22
     // Poll for the banked wins: bankWordWins writes to localStorage on the async React drain, so a
     // synchronous read here occasionally races the bank under full-suite load (an intermittent 0).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(70);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(22);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(70);
+    expect(after.lifetime - before.lifetime).toBe(22);
     expect(after.blitz - before.blitz).toBe(1);
   });
 
@@ -71,21 +79,21 @@ test.describe('wins wiring', () => {
     // Real COMMON words (not single letters — those fall OUTSIDE the recall corpus and read OBSCURE
     // ×4 under the unified economy, which is nonsense data for a scoring test). All five are COMMON
     // (recall rank ≤ 3000), so each carries rarity weight 1.0:
-    //   WATER + TABLE + CHAIR + APPLE + HOUSE = 5 × COMMON ×1.0, combo 1.1..1.5 =
-    //   1.1+1.2+1.3+1.4+1.5 = 6.5 weight × 20 perWordWins = round10(130) = 130 (lucky forced off)
+    //   WATER + TABLE + CHAIR + APPLE + HOUSE = 5 × COMMON ×1.0, combo 1.1..1.5. Five-letter
+    //   answers, so perWordWins is 10: round(3.6×10)=36 at the gate, then 14 and 15 → 65.
     for (const a of ['WATER', 'TABLE', 'CHAIR', 'APPLE', 'HOUSE']) {
       mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } });
       await page.waitForTimeout(40);
     }
-    // NO round_end — the player leaves. The 5 answers (combo-weighted 6.5 = 130) are already banked.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(130);
+    // NO round_end — the player leaves. The 5 answers (combo-weighted 6.5) are already banked.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(65);
     expect((await readWins(page)).blitz - before.blitz).toBe(1);
     // The round ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'round_end', payload: { playerResults: [] } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(130); // still 130, not 260
-    expect(after.lifetime - before.lifetime).toBe(130);
+    expect(after.wins - before.wins).toBe(65); // banked per answer, not re-paid at round_end
+    expect(after.lifetime - before.lifetime).toBe(65);
     expect(after.blitz - before.blitz).toBe(1);
   });
 });

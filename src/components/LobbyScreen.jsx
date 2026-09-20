@@ -1,13 +1,10 @@
 // LobbyScreen.jsx
 import { useState, useEffect } from 'react';
-import { GAMES } from '../gameData';
 import { getStoredName, rememberName } from '../playerName';
 import { useSound } from '../contexts/SoundContext';
-import WaveText from './WaveText';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
-const ROOM_CODE_LENGTH = 5;
 
 /**
  * `wsStatus` and `serverError` are now real, coming from App.jsx's live
@@ -21,7 +18,6 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
   // returning players don't retype it. Falls back to '' on a fresh device / when
   // storage is unavailable. We keep the stored copy in sync as they edit.
   const [name, setName] = useState(() => getStoredName());
-  const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
   // Create-room visibility. Private (default) = code-only, matching the original
   // behavior; public lists the room in the browser / makes it quick-play-able.
@@ -32,8 +28,6 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
   // screen transitions (success) or the server bounces it back (error below).
   const [submitting, setSubmitting] = useState(false);
 
-  const isJoinMode = mode === 'join';
-
   useEffect(() => {
     if (serverError) {
       setError(serverError);
@@ -42,16 +36,10 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     }
   }, [serverError]);
 
-  function getTitle() {
-    if (mode === 'solo') return 'PLAY SOLO';
-    if (mode === 'join') return 'JOIN ROOM';
-    const game = GAMES.find((g) => g.id === mode);
-    return game ? game.name.replace('\n', ' ') : 'PLAY';
-  }
-
-  function getSubtitle() {
-    if (mode === 'join') return 'ENTER A ROOM CODE TO JOIN A FRIEND';
-    return 'DROP A NAME. LET\'S GO.';
+  // ONE LINE, and it is an instruction rather than a name. The mode the player picked is
+  // already what they just tapped; what they do not know is what this screen wants.
+  function getInstruction() {
+    return 'TYPE YOUR NAME TO OPEN THE ROOM';
   }
 
   function handleNameChange(event) {
@@ -61,12 +49,6 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     // sessions. rememberName trims + no-ops on empty, so clearing the field keeps
     // the last good name rather than wiping it.
     rememberName(next);
-    if (error) setError('');
-  }
-
-  function handleRoomCodeChange(event) {
-    const cleaned = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    setRoomCode(cleaned.slice(0, ROOM_CODE_LENGTH));
     if (error) setError('');
   }
 
@@ -83,23 +65,13 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
       return;
     }
 
-    if (isJoinMode && roomCode.length !== ROOM_CODE_LENGTH) {
-      setError(`CODES ARE ${ROOM_CODE_LENGTH} CHARACTERS — CHECK IT.`);
-      return;
-    }
-
     if (wsStatus !== 'open') {
       setError('HOLD UP — STILL CONNECTING. TRY AGAIN IN A SEC.');
       return;
     }
 
     const payload = { name: trimmedName, mode };
-    if (isJoinMode) {
-      payload.roomCode = roomCode;
-    } else {
-      // Create flow: carry the public/private choice through to create_room.
-      payload.isPublic = isPublic;
-    }
+    payload.isPublic = isPublic;
 
     // Validation passed and we're about to send - lock the button and persist the
     // final trimmed name for the no-prompt flows / next visit.
@@ -115,8 +87,7 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     }
   }
 
-  const isFormValid =
-    name.trim().length > 0 && (!isJoinMode || roomCode.length === ROOM_CODE_LENGTH);
+  const isFormValid = name.trim().length > 0;
 
   const connectionLabel =
     wsStatus === 'connecting' ? 'HOOKING YOU UP…'
@@ -137,10 +108,11 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
           ← BACK
         </button>
 
-        <div className="lobby-title">
-          <WaveText text={getTitle()} />
-        </div>
-        <div className="lobby-subtitle">{getSubtitle()}</div>
+        {/* THE HEADLINE IS GONE. A screen with one job does not need a title naming the job:
+            .lobby-title ("JOIN ROOM" / the mode name) and .lobby-subtitle were 20px and 16px of
+            decoration above a 16px field, and on a phone the title was the biggest text here.
+            One instruction line replaces both. */}
+        <div className="lobby-instruction">{getInstruction()}</div>
 
         <label className="lobby-field-label" htmlFor="player-name-input">
           YOUR NAME
@@ -157,58 +129,38 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
           autoFocus
         />
 
-        {isJoinMode && (
-          <div className="lobby-field-group">
-            <label className="lobby-field-label" htmlFor="room-code-input">
-              ROOM CODE
-            </label>
-            <input
-              id="room-code-input"
-              className="lobby-code-input"
-              type="text"
-              placeholder="XXXXX"
-              value={roomCode}
-              onChange={handleRoomCodeChange}
-              onKeyDown={handleKeyDown}
-              maxLength={ROOM_CODE_LENGTH}
-            />
+        <div className="lobby-field-group">
+          <span className="lobby-field-label">ROOM VISIBILITY</span>
+          <div className="lobby-toggle" role="group" aria-label="Room visibility">
+            <button
+              type="button"
+              className={`lobby-toggle-btn${!isPublic ? ' active' : ''}`}
+              aria-pressed={!isPublic}
+              onClick={() => {
+                sound.click();
+                setIsPublic(false);
+              }}
+            >
+              🔒 PRIVATE
+            </button>
+            <button
+              type="button"
+              className={`lobby-toggle-btn${isPublic ? ' active' : ''}`}
+              aria-pressed={isPublic}
+              onClick={() => {
+                sound.click();
+                setIsPublic(true);
+              }}
+            >
+              🌐 PUBLIC
+            </button>
           </div>
-        )}
-
-        {!isJoinMode && (
-          <div className="lobby-field-group">
-            <span className="lobby-field-label">ROOM VISIBILITY</span>
-            <div className="lobby-toggle" role="group" aria-label="Room visibility">
-              <button
-                type="button"
-                className={`lobby-toggle-btn${!isPublic ? ' active' : ''}`}
-                aria-pressed={!isPublic}
-                onClick={() => {
-                  sound.click();
-                  setIsPublic(false);
-                }}
-              >
-                🔒 PRIVATE
-              </button>
-              <button
-                type="button"
-                className={`lobby-toggle-btn${isPublic ? ' active' : ''}`}
-                aria-pressed={isPublic}
-                onClick={() => {
-                  sound.click();
-                  setIsPublic(true);
-                }}
-              >
-                🌐 PUBLIC
-              </button>
-            </div>
-            <div className="lobby-toggle-hint">
-              {isPublic
-                ? 'ANYONE CAN FIND THIS ROOM AND JOIN.'
-                : 'CODE-ONLY. INVITE WHO YOU WANT.'}
-            </div>
+          <div className="lobby-toggle-hint">
+            {isPublic
+              ? 'ANYONE CAN FIND THIS ROOM AND JOIN.'
+              : 'CODE-ONLY. INVITE WHO YOU WANT.'}
           </div>
-        )}
+        </div>
 
         {error && (
           <div className="lobby-error" role="alert">

@@ -1,0 +1,64 @@
+/* LiveStack.css — the always-on multiplier readout. Flat fills, thick darker outline, hard black
+   offset; no gradients, no glow. It shares the docked slot the per-word receipt uses, so it is
+   sized to that column rather than floating at its own coordinates. */
+.lstack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #1a0b2e;
+  border: 3px solid #3d2a5c;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  font-family: 'Space Mono', monospace;
+  min-width: 132px;
+}
+
+.lstack-head {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #3d2a5c;
+}
+.lstack-rate {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: #ffe94a;
+}
+.lstack-per {
+  font-size: var(--fs-micro);
+  color: #7a6a9b;
+}
+
+.lstack-rows { display: flex; flex-direction: column; gap: 3px; }
+
+.lstack-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: var(--fs-micro);
+}
+.lstack-label { color: #9a8ab8; letter-spacing: 0.04em; }
+.lstack-val { color: #2effe0; font-weight: 700; }
+
+.lstack-row--base .lstack-label { color: #7a6a9b; }
+.lstack-row--base .lstack-val { color: #fff; }
+
+/* The live row (COMBO) is the one that moves while you type — separated so the permanent stack
+   above it reads as "what you have built" and this reads as "what you are doing". */
+.lstack-row--live {
+  margin-top: 3px;
+  padding-top: 4px;
+  border-top: 2px dashed #3d2a5c;
+}
+.lstack-row--live .lstack-val { color: #ff4fa3; }
+
+.lstack--compact { padding: 6px 8px; min-width: 116px; }
+
+/* Below 900px there is no room for a standing column beside the board — the same breakpoint the
+   Word Bomb receipt rail uses. The end-of-round breakdown is where a phone reads this. */
+@media (max-width: 900px) {
+  .lstack { display: none; }
+}

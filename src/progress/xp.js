@@ -8,10 +8,9 @@
 // were removed; the model shape is now just { level, intoLevel }.)
 //
 // The one dependency is the daily-streak reward multiplier (streak.js — itself dependency-free,
-// so no import cycle). It only participates in xpPerInput, and only via the live default; every
-// pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
+// so no import cycle). It only participates in xpPerInput/xpPerWord, and only via the live default;
+// every pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
-import { addMasteryWord, masteryXpMult } from './mastery.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -41,18 +40,39 @@ export function round10(x) {
   return n * 10;
 }
 
-// Cost to advance FROM level n to n+1 — Economy v6, properly exponential where people play:
-//   n <= 60 : round10(100 · 1.25^n) — the steep early climb. First levels come out
-//             120 / 160 / 200 / 240 / 310 / 380 / 480 — visibly growing, not the old flat 100/110/120.
-//   n  > 60 : need(60) · 1.08^(n-60), round10 — a gentler 1.08 tail so LV600 stays reachable
-//             instead of the cost exploding out of range.
+// Cost to advance FROM level n to n+1 — Economy v8.
+//
+// WHAT WAS WRONG WITH v7, and it was the BASE, not the shape. v7 opened at 2,000 XP for level 1
+// and grew 1.085 per level. A fresh profile earns 150 XP for a five-letter Word Bomb word on
+// CRAZY, so LEVEL 1 TOOK FOURTEEN WORDS and level 10 took two hundred and forty — with a bar
+// that barely moved per word, because 150 against 2,000 is a seven-percent sliver. The first
+// twenty minutes of the game are where a progression system has to prove it exists, and v7 spent
+// them showing the player a bar that looked stuck.
+//
+// v8 IS THE SAME TWO-SEGMENT SHAPE WITH THE NUMBERS PULLED IN HARD:
+//   n <= 30 : round10(600 · 1.16^(n-1))          — need(1) = 600, i.e. FOUR words
+//   n  > 30 : need(30) · 1.22^(n-30)             — STEEPER, never shallower
+// Base 600 down from 2,000 (a level is now four words, not fourteen) and the exponents up from
+// 1.085/1.135 to 1.16/1.22 — a lower floor buys the room for a much faster climb, so the early
+// levels arrive in words rather than minutes and the curve still reaches a real wall. The break
+// moves 100 -> 30 because with a 1.16 early slope the first thirty levels ARE the early game;
+// waiting until 100 to harden would have left seventy levels of the same easy step.
+//
+// THE EXPONENT IS OFF n-1, NOT n. need(1) is the base itself. v7 indexed off n, so its own
+// "base" was never a cost anyone paid — need(1) was already base × the exponent. Naming a
+// constant after a value the game never uses is how a curve gets retuned by feel instead of by
+// arithmetic.
+//
+// TOP_CURVE_EXP > EARLY_CURVE_EXP is an invariant with a test on it (xp.test.js): the whole v6
+// defect was a tail that went the other way, getting CHEAPER per level while income compounded.
 // Every value is snapped to a round multiple of 10 (round10, half-to-even).
-export const CURVE_BREAK = 60; // level at which the curve eases from 1.25 to the 1.08 tail
-export const EARLY_CURVE_EXP = 1.25; // per-level growth at/below the break
-export const TOP_CURVE_EXP = 1.08; // per-level growth above the break
+export const CURVE_BASE = 600; // need(1) EXACTLY — the whole curve scales from here
+export const CURVE_BREAK = 30; // level at which the curve HARDENS (levels 1..30 are the early game)
+export const EARLY_CURVE_EXP = 1.16; // per-level growth at/below the break
+export const TOP_CURVE_EXP = 1.22; // per-level growth ABOVE the break — must exceed EARLY
 export function need(n) {
-  if (n <= CURVE_BREAK) return round10(100 * Math.pow(EARLY_CURVE_EXP, n));
-  const base = round10(100 * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)); // need(60)
+  if (n <= CURVE_BREAK) return round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, n - 1));
+  const base = round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1)); // need(30)
   return round10(base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK));
 }
 
@@ -86,24 +106,34 @@ export function levelFromXp(xp) {
 }
 
 // ---- Rebirth --------------------------------------------------------------------------
-// Rebirth zeroes XP/level for a permanent multiplier. The ladder is the REAL Keyboard Escape
-// curve, HARDCODED as a table (index 0 = R1): each entry is the LEVEL required to perform that
-// rebirth and the permanent XP MULTIPLIER it grants. Multipliers ramp gently through R10 (×10)
-// then explode (R11 ×100 … R20 ×1e11). Past R20 the pattern continues: +50 levels and ×10 per
-// rebirth. Stored as DATA, not a formula, so the published curve is the source of truth.
+// Rebirth zeroes XP/level for a permanent multiplier.
+//
+// THE MULTIPLIER IS NOW A FORMULA, NOT A TABLE (Economy v7). v6 tabled it, and the table was
+// flat exactly where players live: R1 ×1.5, R2 ×2, R3 ×2.5, R4 ×3 … R10 ×10 — a first rebirth
+// worth HALF a level's income, for wiping the whole level bar. Then it jumped a factor of ten
+// per step from R11 (×100 … R20 ×1e11), a cliff nobody reaches. So the early steps did not pay
+// for the reset and the late ones were meaningless.
+// v7: mult = REBIRTH_MULT_BASE^rc, one clean exponential. R1 ×3 · R3 ×27 · R5 ×243 · R10
+// ×59,049 · R20 ×3.49e9. Every step is the same MEANINGFUL factor, the first one triples your
+// income, and there is no cliff to sit under.
+// The LEVEL THRESHOLDS stay tabled (REBIRTH_TABLE below) - those are the published gates and
+// they are unchanged; only the `mult` column is superseded by the formula.
 // Everything EXCEPT xp survives a rebirth (wins, winsLifetime, owned, equipped, rounds).
+export const REBIRTH_MULT_BASE = 3;
 export const REBIRTH_KEY = 'taw.rebirths';
+// LEVELS ONLY. The `mult` column is retained so the published v6 table stays readable next to
+// what replaced it, but NOTHING reads it any more - rebirthMult() is REBIRTH_MULT_BASE^rc.
 export const REBIRTH_TABLE = [
-  { level: 15, mult: 1.5 }, //   R1
-  { level: 25, mult: 2 }, //     R2
-  { level: 40, mult: 2.5 }, //   R3
-  { level: 60, mult: 3 }, //     R4
-  { level: 75, mult: 3.5 }, //   R5
-  { level: 100, mult: 4 }, //    R6
-  { level: 125, mult: 5 }, //    R7
-  { level: 150, mult: 6 }, //    R8
-  { level: 175, mult: 8 }, //    R9
-  { level: 200, mult: 10 }, //   R10
+  { level: 15, mult: 1.5 }, //   R1   (v7 pays ×3)
+  { level: 25, mult: 2 }, //     R2   (×9)
+  { level: 40, mult: 2.5 }, //   R3   (×27)
+  { level: 60, mult: 3 }, //     R4   (×81)
+  { level: 75, mult: 3.5 }, //   R5   (×243)
+  { level: 100, mult: 4 }, //    R6   (×729)
+  { level: 125, mult: 5 }, //    R7   (×2,187)
+  { level: 150, mult: 6 }, //    R8   (×6,561)
+  { level: 175, mult: 8 }, //    R9   (×19,683)
+  { level: 200, mult: 10 }, //   R10  (×59,049)
   { level: 225, mult: 100 }, //  R11
   { level: 260, mult: 1000 }, // R12
   { level: 300, mult: 10000 }, //R13
@@ -116,7 +146,6 @@ export const REBIRTH_TABLE = [
   { level: 600, mult: 1e11 }, // R20
 ];
 const REBIRTH_PAST_LEVEL_STEP = 50; // +50 levels per rebirth past R20 (R21→650, R22→700 …)
-const REBIRTH_PAST_MULT_STEP = 10; // ×10 multiplier per rebirth past R20 (R21→1e12 …)
 
 export function getRebirths() {
   try {
@@ -143,14 +172,12 @@ export function rebirthThreshold(rebirthCount) {
   const last = REBIRTH_TABLE.length - 1; // R20
   return REBIRTH_TABLE[last].level + REBIRTH_PAST_LEVEL_STEP * (rc - last);
 }
-// The permanent XP multiplier AFTER `rebirthCount` rebirths. rc=0 → ×1 (none done); rc=n≤20 →
-// Rn's tabled multiplier; past R20 → ×10 per rebirth from R20's ×1e11 (R21→1e12 …).
+// The permanent XP+WINS multiplier AFTER `rebirthCount` rebirths: REBIRTH_MULT_BASE^rc, with
+// rc=0 → ×1. One formula, no table lookup and no cliff - R1 ×3, R10 ×59,049, R20 ×3.49e9.
 export function rebirthMult(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
   if (rc === 0) return 1;
-  if (rc <= REBIRTH_TABLE.length) return REBIRTH_TABLE[rc - 1].mult;
-  const last = REBIRTH_TABLE.length - 1; // R20
-  return REBIRTH_TABLE[last].mult * Math.pow(REBIRTH_PAST_MULT_STEP, rc - REBIRTH_TABLE.length);
+  return Math.pow(REBIRTH_MULT_BASE, rc);
 }
 // A flat wins reward scaled by the player's CURRENT rebirth multiplier — the ONE place both the
 // grant and its on-screen quote go through, so Collection/Achievement payouts show exactly what
@@ -187,32 +214,32 @@ export function doRebirth() {
 // free start, so its cost is 0). Every cost is a round multiple of 10; effect values are the
 // published figures and need NOT end in a zero (375, 5875, 14690). SURVIVES rebirth (its own
 // key, untouched by doRebirth).
-// COST REBALANCE (sim/rebalance-2): every tier cost was scaled ×0.18 (500→90) to hold
-// time-to-first-upgrade flat after the WINS_MULT flatten set mean earn to 2406→422 wins/min (CHAIN
-// raised to ×1.9 lifted the mean from 402 to 422). The ×6 ladder and the XP effect values are
-// UNCHANGED — only the wins prices dropped, one uniform factor across all tiers (and therefore WORD
-// SENSE, which reads keyTierCostAt).
+// PRICES /10 (Economy v8). Wins are now the word's XP divided by ten (wins.js), so the whole
+// currency was restated an order of magnitude smaller and every price had to follow or the shop
+// would have become ten times more expensive by accident. The ×6 ladder and the XP effect values
+// are UNCHANGED — only the wins prices moved, and T1 lands on a clean 10 so the ladder is exactly
+// 10 · 6^(t-1) (and therefore so is WORD SENSE, which reads keyTierCostAt).
 //   T0   10 XP/letter    free (start)
-//   T1   25              90 wins
-//   T2   60              540
-//   T3   150             3,240
-//   T4   375             19,440
-//   T5   940             116,640
-//   T6   2,350           699,840
-//   T7   5,875           4,199,040
-//   T8   14,690          25,194,240
+//   T1   25              10 wins      (was 90)
+//   T2   60              60           (540)
+//   T3   150             360          (3,240)
+//   T4   375             2,160        (19,440)
+//   T5   940             12,960       (116,640)
+//   T6   2,350           77,760       (699,840)
+//   T7   5,875           466,560      (4,199,040)
+//   T8   14,690          2,799,360    (25,194,240)
 // Past T8 the pattern continues: effect ×2.5, cost ×6, each round10 (half-to-even).
 export const KEYTIER_KEY = 'taw.keytier';
 export const KEY_TIERS = [
   { xp: 10, cost: 0 }, //          T0
-  { xp: 25, cost: 90 }, //         T1
-  { xp: 60, cost: 540 }, //        T2
-  { xp: 150, cost: 3240 }, //      T3
-  { xp: 375, cost: 19440 }, //     T4
-  { xp: 940, cost: 116640 }, //    T5
-  { xp: 2350, cost: 699840 }, //   T6
-  { xp: 5875, cost: 4199040 }, //  T7
-  { xp: 14690, cost: 25194240 }, //T8
+  { xp: 25, cost: 10 }, //         T1
+  { xp: 60, cost: 60 }, //         T2
+  { xp: 150, cost: 360 }, //       T3
+  { xp: 375, cost: 2160 }, //      T4
+  { xp: 940, cost: 12960 }, //     T5
+  { xp: 2350, cost: 77760 }, //    T6
+  { xp: 5875, cost: 466560 }, //   T7
+  { xp: 14690, cost: 2799360 }, // T8
 ];
 const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
 const TIER_COST_STEP = 6; // cost multiplier per tier past T8
@@ -245,7 +272,7 @@ export function keyTierXp(tier) {
   return xp;
 }
 // The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past
-// T8 it extends ×6 per tier from T8's 139,968,000, each step round10.
+// T8 it extends ×6 per tier from T8's 2,799,360, each step round10.
 export function keyTierCostAt(tier) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t < KEY_TIERS.length) return KEY_TIERS[t].cost;
@@ -320,33 +347,43 @@ export function cappedWordMult(rarityMult = 1, comboMult = 1, luckyMult = 1) {
   return Math.min(PER_WORD_MULT_CAP, r * c * l);
 }
 
-// XP granted for one accepted word. Pure given its factors (mode/keyTier/rebirth/streak default to
-// live). `wordLength` is the menu-equivalent letter count; `weight` is the capped per-word reward
-// mult. Snapped to a round 10 like every other XP grant so the accumulated xpIntoLevel stays clean.
-export function xpPerWord({ mode = 'menu', keyTier, rebirthCount, wordLength = 1, weight = 1, streakMult } = {}) {
+// XP granted for one accepted word — THE ONE PLACE A WORD'S VALUE IS COMPUTED. Pure given its
+// factors (mode/keyTier/rebirth/streak default to live). `wordLength` is the menu-equivalent letter
+// count; `weight` is the capped per-word reward mult. Snapped to a round 10 like every other XP
+// grant, which is also what makes the WINS readout exact: wins are this number ÷ 10 (wins.js), and
+// a multiple of ten divided by ten is an integer with nothing to round away.
+//
+// `difficultyMult` and `bonusMult` are the two pass-throughs the unified stack needs and this
+// module cannot resolve itself: DIFFICULTY (it lives in wins.js, next to the tier keys) and the
+// aggregate BONUS (momentum × mark × mastery — momentum.js imports this file, so importing it back
+// would be a cycle). They arrive as resolved numbers from perWordFactors(), which is the single
+// definition of both. Default ×1, so every pure caller and unit test is unchanged.
+export function xpPerWord({
+  mode = 'menu',
+  keyTier,
+  rebirthCount,
+  wordLength = 1,
+  weight = 1,
+  streakMult,
+  difficultyMult = 1,
+  bonusMult = 1,
+} = {}) {
   const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const modeMult = XP_MULTIPLIERS[mode] ?? 1;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
   const wt = Number.isFinite(weight) && weight > 0 ? weight : 1;
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
-  return round10(keyTierXp(kt) * len * modeMult * rebirthMult(rc) * wt * stm);
+  const dm = Number.isFinite(difficultyMult) && difficultyMult > 0 ? difficultyMult : 1;
+  const bm = Number.isFinite(bonusMult) && bonusMult > 0 ? bonusMult : 1;
+  return round10(keyTierXp(kt) * len * modeMult * dm * rebirthMult(rc) * wt * stm * bm);
 }
 
-// Credit one accepted word's XP to the persisted level state; returns creditXp's result plus the
-// gain ({ state, leveledUp, level, gain }). Persistence happens here so returning to the menu
-// reflects the levels earned in play; the caller may use `leveledUp` to fire a celebration.
-export function awardWordXp(opts = {}) {
-  const mode = opts.mode || 'menu';
-  // MASTERY (Job 2): this mode's mastery level multiplies the word's XP (+3%/level above M1). The
-  // multiplier is read BEFORE crediting the word to mastery, so a word never retroactively boosts
-  // itself. round10 keeps the "+N ends in a zero" invariant after the mastery scale.
-  const gain = round10(xpPerWord(opts) * masteryXpMult(mode));
-  const res = creditXp(loadProgress(), gain);
-  saveProgress(res.state);
-  const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
-  return { ...res, gain, mastery };
-}
+// awardWordXp LIVES IN wins.js NOW (Economy v8). The grant is no longer XP-only: one accepted
+// word is ONE award event with one multiplier stack, read out as XP and as wins (= XP ÷ 10). The
+// function that performs it therefore has to see momentum and the mark's wins effect, and
+// momentum.js imports this file — so the award sits downstream, in wins.js, and this module stays
+// the pure XP model it was written to be.
 
 // Anti-mash rate cap: at most `capacity` credited keystrokes per rolling `windowMs`. Pure
 // given an injected `now` (ms). Over-cap calls return false so the caller drops them

@@ -1,0 +1,28 @@
+{
+  "vw": 390,
+  "vh": 844,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.sr-hud-exit \"✕\"",
+      "rect": {
+        "x": 321,
+        "y": 32,
+        "w": 44,
+        "h": 53
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 330,
+        "y": 784,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    }
+  ]
+}

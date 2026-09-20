@@ -6,9 +6,21 @@
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
-import { formatNum } from '../format';
+import { formatNum, formatMultExact } from '../format';
 import { rankTitle } from '../progress/rank';
 import { streakMultiplier } from '../progress/streak';
+
+// THE BAR IS THE DENSE ONE, and it is the only one. Two layouts were built and screenshotted so
+// the choice could be made from frames; the FILL variant lost on its own preview — at 92px with
+// three readings on one line it ran together as a single stream of text with the tick segments
+// slicing through it ("20 / 52.3K WORD BOMB 770 WINS / WORD NEXT FRAME REBIRTH 1"). Its code is
+// deleted rather than parked behind a constant: a losing variant left in the tree is a second
+// thing to maintain and a second thing to read.
+//
+// AND THE BAR NOW CARRIES THE LEVEL AND THE PROGRESS, NOTHING ELSE. The per-word rate came out
+// with it — all five cards print their own rate directly below, so the bar was repeating the
+// screen's most-repeated number a sixth time. The next-unlock came out for the same reason it was
+// cut as a row: it is not what a progress bar is for.
 
 // The milestone tier a day-count belongs to (drives the escalating streak styling):
 // 30+ is the capped apex, then 14 / 7 / 3, and 2 is the "just started showing" tier.
@@ -20,11 +32,10 @@ function streakTier(count) {
   if (c >= 3) return 3;
   return 2;
 }
-// "×1.05" style, trimming a trailing .0 so ×1 reads clean.
-function formatMult(m) {
-  const s = (Math.round(m * 100) / 100).toFixed(2).replace(/0$/, '').replace(/\.$/, '');
-  return `×${s}`;
-}
+// "×1.05" style. THE SHARED EXACT FORMATTER, not a second local copy of it: the streak ladder is
+// 1.05 / 1.10 / 1.20 / 1.25, so the one-decimal `formatMult` (the cards' combined-product
+// formatter) would print ×1.05 as "×1.1" — a bonus the game does not pay.
+const formatMult = (m) => `×${formatMultExact(m)}`;
 
 // The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
 // a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
@@ -35,7 +46,7 @@ function formatMult(m) {
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0 }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, wordsToNext = null, firstRun = false, hintRight = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -157,7 +168,10 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // wins button (an interactive shop entry) to assistive tech; the LV/fill/readout stay
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
-    <div className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ''}`} aria-hidden={variant === 'mini' ? 'true' : undefined}>
+    <div
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}`}
+      aria-hidden={variant === 'mini' ? 'true' : undefined}
+    >
       {variant !== 'mini' && wins != null && (
         onWinsClick ? (
           <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
@@ -198,18 +212,66 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       )}
       {/* Static "LEVEL" kicker so a newcomer reads the "LV n · into/cost" chrome as the
           leveling bar it is (the audit flagged it as unexplained). Full bar only. */}
-      {variant !== 'mini' && <span className="menu-xp-label" aria-hidden="true">LEVEL</span>}
-      <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>
+      {/* ROW BREAK (loud variant only). The loud bar is TWO rows: the meta chips
+          (wins / streak / mark / rank) on top, then the LEVEL block + the full-width
+          track beneath. A flex-basis:100% break plus `order` on the siblings is used
+          rather than a grid, because half these children are conditional (no streak, no
+          mark slot, no rank on mini) and fixed grid cells would leave holes. */}
+      {variant !== 'mini' && <span className="menu-xp-break" aria-hidden="true" />}
+      {/* THE LEVEL IS THE HEADLINE. The kicker and the numeral are one stacked chip now, so the
+          numeral can take display type (--fs-h2, ~3.8x the --fs-micro kicker) without the old
+          inline row forcing both to data-strip size. Mini keeps the flat inline form. */}
+      {variant === 'mini' && <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>}
+      {/* THE EQUIPPED MARK, beside the level - the one place a permanent, chosen bonus is worth
+          carrying on the menu, because it is the only progression object the player picked rather
+          than accumulated.
+          THE EMPTY SLOT NO LONGER RENDERS (Andy's cut). It used to draw a dimmed "NO MARK" outline
+          once any mark was unlocked, on the theory that an empty slot advertises itself. In
+          practice it is a chip that says nothing, permanently parked next to the level on the
+          screen that already feels crowded - a question with no answer. The slot now appears only
+          when it has something in it; the marks picker is still reachable from Stats.
+          Nothing here animates. */}
+      {variant !== 'mini' && markSlot && mark && (
+        onMarkClick ? (
+          <button
+            type="button"
+            className="menu-mark"
+            onClick={onMarkClick}
+            aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
+            title={`${mark.name} - ${mark.blurb}`}
+          >
+            <span className="menu-mark-icon" aria-hidden="true">{mark.icon}</span>
+            <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
+          </button>
+        ) : (
+          <span className="menu-mark" title={`${mark.name} - ${mark.blurb}`}>
+            <span className="menu-mark-icon" aria-hidden="true">{mark.icon}</span>
+            <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
+          </span>
+        )
+      )}
+      <BarRow loud={variant !== 'mini'} level={level}>
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
-        <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
-        <span className="menu-xp-marker" ref={markerRef} />
+        {/* The CLIP wraps only the fill + marker. The track itself must NOT clip: the
+            readout sits centred over the track and is wider than the track whenever the
+            row is tight (a 360px menu leaves the flexible track ~32px), so a clipping
+            track cropped the numbers. Clipping the fill is the only thing overflow was
+            ever for - the scaleX fill and the marker - so it moves in here. */}
+        <span className="menu-xp-clip">
+          <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
+          <span className="menu-xp-marker" ref={markerRef} />
+        </span>
+        {/* THE NUMERALS SIT ON THE FILL, at its two ends — the XP you have hard left, the XP the
+            level costs hard right. Centred, the pair read as one string ("1,240 / 2,281") that the
+            fill's leading edge cut through at exactly the moment it mattered most. */}
         {variant !== 'mini' && (
           <span className="menu-xp-readout">
-            <span ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>
-            {' '}/ {formatNum(Math.max(0, Math.round(cost)))}
+            <span className="menu-xp-readout-now" ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>
+            <span className="menu-xp-readout-need">/ {formatNum(Math.max(0, Math.round(cost)))}</span>
           </span>
         )}
       </span>
+      </BarRow>
       {/* RANK TITLE (Job 5): the level band's name, sitting in the LV bar next to the level.
           Full bar only; static — no animation. fix/card-polish: clickable → the RANK LADDER
           overlay (all ten ranks, which you hold, which is next). Falls back to a static span
@@ -228,7 +290,51 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <span className="menu-xp-rank" aria-label={`rank ${rankTitle(level)}`}>{rankTitle(level)}</span>
         )
       )}
+      {/* WHAT THE BAR MEANS IN WORDS. "1,240 / 2,281" is a ratio, not a plan; this is the same
+          progress expressed in the only unit the player controls. Derived from the live per-word
+          XP rate (see Homepage), so it moves with KEY POWER, rebirth, mastery and the streak
+          rather than being a constant dressed up as a measurement.
+          On a first run it also carries where XP comes from, which used to be a SEPARATE caption
+          line below the bar — two stacked lines of small type saying related things, on the one
+          screen with no vertical room to spare. */}
+      {variant !== 'mini' && (Number.isFinite(wordsToNext) || hintRight) && (
+        <span className="menu-xp-hint">
+          {Number.isFinite(wordsToNext) && wordsToNext > 0 && (
+            <span className="menu-xp-hint-text" aria-hidden="true">
+              {firstRun && <span className="menu-xp-hint-lead">TYPE ANYWHERE · </span>}
+              {formatNum(wordsToNext)} {wordsToNext === 1 ? 'WORD' : 'WORDS'}
+              {/* "TO LEVEL" spelled out wherever it fits, abbreviated where it does not. At 320
+                  the corner-nav gutter leaves the bar 131px and the full sentence is ~148px, so
+                  it ellipsised to "12 WORDS TO …" — a line that costs its own height and then
+                  withholds the number it exists to show. */}
+              <span className="menu-xp-hint-to"> TO LEVEL </span>
+              <span className="menu-xp-hint-to-short"> · LV </span>
+              {formatNum(level + 1)}
+            </span>
+          )}
+          {/* The live WPM rides the RIGHT end of this row rather than sitting on a line of its
+              own under the bar. It is a readout about typing, the hint is a sentence about
+              typing, and the row it used to occupy was 25px of the menu's tightest budget. */}
+          {hintRight && <span className="menu-xp-hint-right">{hintRight}</span>}
+        </span>
+      )}
     </div>
+  );
+}
+
+/* THE BADGE IS WELDED TO THE TRACK, not parked beside it. One 4px border around the pair, with
+   the badge's right edge as the internal rule — so the level and the progress read as one object
+   instead of a chip that happens to be near a bar. The mini (splash) bar keeps the bare track. */
+function BarRow({ loud, level, children }) {
+  if (!loud) return children;
+  return (
+    <span className="menu-xp-barrow">
+      <span className="menu-xp-lvblock" aria-hidden="true">
+        <span className="menu-xp-label">LEVEL</span>
+        <span className="menu-xp-lv">{level}</span>
+      </span>
+      {children}
+    </span>
   );
 }
 

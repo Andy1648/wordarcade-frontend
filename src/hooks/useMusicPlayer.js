@@ -81,6 +81,12 @@ export function useMusicPlayer() {
     return audioRef.current;
   }, []);
 
+  // Kept from the deferred-audio work on this branch: play() issues one explicit
+  // audio.load() on the first gesture. With ensureAudio above the element is built
+  // (and its src set) inside that same gesture, so this is belt-and-braces rather
+  // than the thing that starts the fetch — but it stays correct either way.
+  const loadedRef = useRef(false);
+
   // Push the current intended/muted volume to wherever loudness is controlled:
   // the gain node once the graph exists, otherwise the bare element.
   const applyVolume = useCallback(() => {
@@ -219,6 +225,15 @@ export function useMusicPlayer() {
     // playback AND is the first moment the bytes are actually wanted.
     const audio = ensureAudio();
     if (!audio) return;
+    // First gesture: start fetching the track now (preload='none' deferred it from mount).
+    if (!loadedRef.current) {
+      loadedRef.current = true;
+      try {
+        audio.load();
+      } catch {
+        /* no-op — play() below still triggers the fetch */
+      }
+    }
     // Wire up the analyser graph on first play (within the gesture that allows
     // audio), then push volume to whichever node now owns it.
     ensureAnalyser();

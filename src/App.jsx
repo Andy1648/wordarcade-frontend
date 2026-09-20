@@ -13,6 +13,7 @@ const GameScreen = lazy(() => import('./components/GameScreen'));
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
+import { markAppReady } from './lib/bootReady.js';
 import AudioControls from './components/AudioControls';
 import { sndWordAccepted, sndWordRejected, sndRunOver, sndAchievement } from './audio/gameSounds';
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
@@ -29,6 +30,9 @@ const FuseGame = lazy(() => import('./solo/FuseGame'));
 // CrazyGames zero-click direct entry (?cg=1). Lazy so the default (no-flag)
 // bundle is unchanged — the arm screen only ever loads on a cg session.
 const CgArmScreen = lazy(() => import('./components/CgArmScreen'));
+// The room-mode deep-link boot screen (/word-bomb/play, /category-blitz/play). Lazy like CgArmScreen:
+// it is off the default first-paint path (splash -> menu) and only a deep link ever mounts it.
+const DeepLandScreen = lazy(() => import('./components/DeepLandScreen'));
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 // Eager (not lazy): KnifeSplit must cover the menu on the FIRST frame after the
@@ -72,14 +76,25 @@ import {
   markPlayed,
   getLastSeen,
 } from './visitHistory';
+import { hasSeenMenu } from './progress/onboarding';
 import { claimReturnBonus } from './progress/returnBonus';
 import ReturnBonusCard from './components/ReturnBonusCard';
+// EVERY BONUS WIN, ANNOUNCED WHEN IT LANDS. Mounted once at app level rather than per mode, so a
+// credit that fires in CHAIN, SAT Rush or on the menu is as visible as one in Word Bomb — the
+// hidden 5,000 Andy reported was a collection milestone, which can fire in any mode.
+import WinsCreditToast from './components/WinsCreditToast';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, awardWins } from './progress/wins';
-import { awardWordXp, cappedWordMult } from './progress/xp';
+import { bankWordWins, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins } from './progress/wins';
+import {
+  buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
+} from './progress/payout';
+import { rarityCue } from './juice/audio';
+import { useWordSecrets } from './secrets/useWordSecrets';
+import { refundWordSense } from './progress/wordSenseRefund';
+import { cappedWordMult, keyTierXp, getKeyTier } from './progress/xp';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
 // combo multiplier and a 1/40 lucky ×5, both folded into the per-word reward weight.
@@ -87,8 +102,9 @@ import { freshCombo, comboAccept, comboBreak } from './progress/combo';
 import { makeLuckyOracle, luckyReward, randomSeed } from './progress/luck';
 import { recordAcceptedWord } from './progress/collection';
 import { noteWord, noteSession, noteLucky } from './progress/records';
-import { wordSenseWinsFactor } from './progress/wordSense';
+import { markComboKeep, markRarityStep } from './progress/marks';
 import { loadRarityIndex, rarityOf, isRarityIndexLoaded, whenRarityReady } from './progress/rarityIndex';
+import { bumpRarity } from './progress/rarity';
 import {
   saveDailyState,
   recordDailyResult,
@@ -168,6 +184,7 @@ const SCREEN_ACCENT = {
   room: '#FFE94A',
   game: '#FF6B3D',
   'cg-arm': '#FF6B3D', // matches the game accent (cg arm hands straight into it)
+  'vs-bot': '#FF6B3D', // room-mode deep-link boot — hands straight into the game, same accent
   credits: '#9A1AFF',
   // SAT RUSH is a duotone manga surface; the ♫ button floats over the black gutter,
   // so it wears PAPER (reads on the void) instead of the house pink.
@@ -203,15 +220,26 @@ const PORTAL_SKIP_INTRO =
 // group-chat link should land IN the game, not on a splash.
 // Read once at module load (same pattern as PORTAL_SKIP_INTRO).
 const LAUNCH_INTENT = (() => {
-  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false };
+  if (typeof window === 'undefined') return { join: null, daily: false, satrush: false, play: null };
   const params = new URLSearchParams(window.location.search);
   const join = (params.get('join') || '').trim().toUpperCase();
+  // ?play=<mode> — the room-mode deep link (/word-bomb/play, /category-blitz/play bridge to it).
+  // WHITELISTED against the modes we can actually lock a room into: an unknown value reads as no
+  // intent and the session boots on the menu, exactly as it does today. A deep link can never put
+  // the app into a game type the server does not accept.
+  const play = (params.get('play') || '').trim().toLowerCase();
   return {
     join: join || null,
     daily: params.get('daily') === '1',
     satrush: params.get('satrush') === '1',
+    play: PRESELECTABLE_GAMES.includes(play) ? play : null,
   };
 })();
+
+// This page load came in on a room-mode deep link. Read at module load with the flags above,
+// because it describes how the SESSION started. Mutually exclusive with the CrazyGames entry
+// (?cg=1 wins — it is an embed contract, and it holds start_game for its own arm gesture).
+const VS_BOT_LAUNCH = !CG_ENTRY ? LAUNCH_INTENT.play : null;
 
 // Any launch intent (portal embed, invite link, daily link, SAT Rush link) skips
 // the intro.
@@ -220,9 +248,39 @@ const SKIP_INTRO =
   !!LAUNCH_INTENT.join ||
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
+  !!VS_BOT_LAUNCH || // /word-bomb/play, /category-blitz/play
   SOLO_LAUNCH.chain ||
   SOLO_LAUNCH.fuse ||
   CG_ENTRY; // CrazyGames wants gameplay immediately — no splash/intro chain.
+
+// SOLO DEEP-LAND: this page load came in on a shared link to a SOLO mode — a clean /chain/play,
+// /fuse/play or /sat-rush/play path, bridged to ?chain=1 / ?fuse=1 / ?satrush=1 — rather than
+// through the menu. Read at module load, alongside the flags above, because it describes how the
+// SESSION started: it must not change under us when the player later navigates.
+//
+// SAT RUSH is included (it was not before): it has a landing page and a share link exactly like
+// CHAIN and FUSE, so a stranger reaches it the same way and finishes a run just as unaware that
+// five other modes exist. The three solo modes now make the same offer on the same condition.
+const SOLO_DEEP_LAND = SOLO_LAUNCH.chain || SOLO_LAUNCH.fuse || LAUNCH_INTENT.satrush;
+
+// The view this page load starts on. Read at module load with the other launch facts.
+const INITIAL_VIEW = (() => {
+  if (CG_ENTRY) return 'cg-arm';
+  if (VS_BOT_LAUNCH) return 'vs-bot';
+  if (SOLO_LAUNCH.chain) return CHAIN_VIEW;
+  if (SOLO_LAUNCH.fuse) return FUSE_VIEW;
+  if (LAUNCH_INTENT.satrush) return SAT_RUSH_VIEW;
+  return 'home';
+})();
+
+// ANY deep land, solo or room-mode. The "you have never seen the menu" offer is about HOW THE
+// VISITOR ARRIVED, not which mode they picked — a stranger who followed /word-bomb/play is in
+// exactly the position of one who followed /chain/play, so the run-over card makes the same offer.
+const DEEP_LAND = SOLO_DEEP_LAND || !!VS_BOT_LAUNCH;
+
+// Has this browser EVER rendered the menu? Read at module load, BEFORE the app can mount the
+// menu and mark it — so a deep-landing visitor is judged on the state they arrived with.
+const SEEN_MENU_AT_BOOT = hasSeenMenu();
 
 // Repeat visitors have already seen the SQUAD-UP / "TYPE FAST. DIE SLOW." intro,
 // so we skip those two animations for them (the loading screen still plays).
@@ -257,7 +315,17 @@ function drawLucky(oracle) {
 function App() {
   // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
   // starts on the home menu, exactly as before.
-  const [view, setView] = useState(CG_ENTRY ? 'cg-arm' : 'home');
+  // EVERY deep link boots straight to its own view, never to the menu — the menu is the front door
+  // this visitor deliberately walked past.
+  //
+  // THE BUG THIS ALSO FIXES: the three SOLO paths used to boot at 'home' and rely on the launch
+  // effect to move them. Effects run AFTER the first commit, so Homepage mounted for one frame —
+  // and Homepage's mount effect calls markMenuSeen() (Homepage.jsx). A /chain/play visitor was
+  // therefore recorded as having seen the menu on their FIRST visit, so on their SECOND visit
+  // SEEN_MENU_AT_BOOT was true and the run-over "rest of the game" offer never showed, even though
+  // they had still never looked at the menu. Booting to the real view removes both the flash and
+  // the false flag. The launch effect below still runs and is idempotent (goTo* is a bare setView).
+  const [view, setView] = useState(INITIAL_VIEW);
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
@@ -430,6 +498,10 @@ function App() {
   // time play starts. Idempotent + single-flight; a failed load degrades to all-COMMON (×1).
   useEffect(() => {
     loadRarityIndex();
+    // WORD SENSE was deleted (feat/cut-secrets-rarity). Anyone who bought tiers gets the full
+    // purchase price back on this boot, once, silently — see progress/wordSenseRefund.js for why
+    // it is silent and why it is safe to call on every load.
+    refundWordSense();
   }, []);
   // WINS attribution (Word Bomb): the words I've submitted this game whose word_result
   // hasn't come back yet. My accepted words are counted by WORD MATCH against this list,
@@ -449,6 +521,30 @@ function App() {
   // EARN" state (winsTally alone can't: it's 0 for both 0 and 2 accepted words).
   const [winsWords, setWinsWords] = useState(0);
   const [winsEarnedTotal, setWinsEarnedTotal] = useState(0);
+  // THE RUN'S BONUS LINES. `winsEarnedTotal` is the per-word money only; a run can also take an
+  // achievement payout or a collection milestone, and those used to land in the balance with
+  // nothing on the card. Collected from the wins ledger so the end card can NAME each one instead
+  // of the total quietly disagreeing with the balance (measured: card +15,010, balance +20,010).
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  // The five secrets, moved off the menu and into play. `notePop` is the 1-in-750 golden-word
+  // roll, called once per accepted word; the hook grants the (rebirth+level scaled) wins and hands
+  // back the find for the word landing to show. Only listens while a game is live.
+  const wordSecrets = useWordSecrets({ active: view === 'game' });
+  const wbSecretsRef = useRef(null);
+  wbSecretsRef.current = wordSecrets.notePop;
+  // THE PAYOUT RECEIPT (Economy v7). `lastPayout` is the breakdown of the most recently accepted
+  // word — every multiplier that contributed, named — shown on the accept toast. `payoutLedger` is
+  // the same thing accumulated across the round and read at game over. Both are pure readouts of
+  // amounts wins.js has ALREADY paid (progress/payout.js); neither can quote a multiplier the
+  // player did not get. This is the answer to "I got 40k and couldn't tell where it came from".
+  const [lastPayout, setLastPayout] = useState(null);
+  const [payoutLedger, setPayoutLedger] = useState(null);
+  // THE WORD LANDING (feat/cut-secrets-rarity). The most recently accepted word, its RARITY BAND,
+  // what it paid, and any SECRET it turned up — handed to GameScreen to play out at the word
+  // itself. This is what replaced both the silent rarity multiplier and the centre-screen secret
+  // modal: rarity is only a reward if you can see it happen, and a secret is only a discovery if
+  // it does not arrive as a popup over the button you were aiming at.
+  const [lastLanding, setLastLanding] = useState(null);
   // (overlayReturnRef + shopViewRef moved into hooks/useOverlays.js — refactor/app-split step 1.)
   const [playerProgress, setPlayerProgress] = useState({});
   const [roundResults, setRoundResults] = useState(null);
@@ -507,6 +603,12 @@ function App() {
     // analytics: a hidden/secret achievement was just discovered (additive; never alters the grant).
     try { if (Array.isArray(newly)) for (const a of newly) if (a && a.secret) evSecretFound(a.id); } catch { /* analytics only */ }
   }, [view]);
+
+  // Collect every BONUS credit as it lands, for the end-of-run itemisation. The toast announces it
+  // at the moment; this remembers it so the card can list it. One subscription for the whole app.
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
 
   // (myIdRef moved into hooks/useRoom.js — refactor/app-split step 2; the drain writes the returned ref.)
   // Live mirror of my display name, so the (deps-trimmed) message-drain effect can
@@ -679,6 +781,9 @@ function App() {
   // to the menu, so the loading screen is pre-completed (the socket still
   // connects in the background via useWebSocket).
   const [loadingDone, setLoadingDone] = useState(SKIP_INTRO);
+  // perf/first-load: tell the boot screen the App module has resolved + mounted. bootReady()
+  // (lib/bootReady.js) gates the fuse hand-off on this AND document.fonts.ready.
+  useEffect(() => { markAppReady(); }, []);
 
   // The splash/attract screen is shown after loading, once per session
   // (dismissing it never re-arms it). Portal embeds and deep links skip it, and
@@ -813,7 +918,11 @@ function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (hasStickyQuery()) return; // keep embed/dev entries exactly as launched
-    const path = canonicalPathForView(view);
+    // 'vs-bot' owns a path the same way the solo views do — it is the screen a /word-bomb/play
+    // visitor is looking at — but WHICH path depends on the mode, so it cannot live in the router's
+    // static view->path table. Resolving it here lets the sync below strip the bridged ?play=<mode>
+    // exactly as it strips ?chain=1, leaving the clean deep link in the address bar.
+    const path = view === 'vs-bot' && VS_BOT_LAUNCH ? `/${VS_BOT_LAUNCH}/play` : canonicalPathForView(view);
     if (path === null) return; // transient view — don't touch the URL
     const here = window.location.pathname;
     // For the home view, any menu path (/, /word-bomb, /category-blitz) is already correct — don't
@@ -971,9 +1080,14 @@ function App() {
       // 'cg-arm' is guarded the SAME way: the cg provisioning add_bot broadcasts a
       // room_update while the player is still on the arm screen — it must NOT pull
       // them into the waiting room; they leave cg-arm only via game_started.
+      // 'vs-bot' (a /word-bomb/play or /category-blitz/play deep link) is guarded for
+      // the IDENTICAL reason: its create_room + add_bot each broadcast a room_update
+      // while the boot screen is still up, and being yanked to the waiting room would
+      // strand a deep-link visitor on the one screen they never asked for. It too is
+      // left only by game_started.
       // Functional update so we read the LIVE view, not the stale `view` captured
       // in this effect's closure (the effect is keyed only on [lastMessage]).
-      setView((prev) => (prev === 'game' || prev === 'cg-arm' ? prev : 'room'));
+      setView((prev) => (prev === 'game' || prev === 'cg-arm' || prev === 'vs-bot' ? prev : 'room'));
     }
 
     if (lastMessage.type === 'game_reset') {
@@ -1026,6 +1140,11 @@ function App() {
       setWinsTally(0); // fresh game → reset the live HUD wins tally + the earned total
       setWinsWords(0);
       setWinsEarnedTotal(0);
+      setWinsBonusLines([]); // fresh run → the card itemises THIS run only
+      setLastPayout(null);
+      setPayoutLedger(null);
+      setLastLanding(null);
+      beginPayoutLedger(lastMessage.payload.gameType || 'word-bomb');
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -1100,7 +1219,9 @@ function App() {
       // COMBO (parity): if I just lost a life (my turn timed out / was skipped), that's a miss —
       // break my payout combo, mirroring the cosmetic streak's miss() on the same life-loss.
       if (lostPlayers.some((p) => p.id === myIdRef.current)) {
-        wbComboRef.current = comboBreak(wbComboRef.current);
+        // MARK — METRONOME (feat/progression-clarity): a chance the broken combo SURVIVES. Rolled
+        // here, at the one place a Word Bomb combo breaks, so the mark cannot silently apply twice.
+        if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current);
       }
       if (lostPlayers.length) {
         const now = Date.now();
@@ -1200,13 +1321,19 @@ function App() {
           // is set for the feed event below and nothing changes; the deferral is only the rare
           // first-~100ms cold path. Instant feedback (chime, count, pill, feed) already fired above.
           const scoreWbWord = () => {
-            const r = rarityOf(wbWord);
+            // MARK — LINGUIST: a chance this word counts one RARITY BAND higher. Rolled BEFORE
+            // anything reads the rarity, so the bumped band is what the payout, the collection,
+            // the feed tag and the receipt all see - one truth per word, never a bonus applied to
+            // the wins and not to the label that explains them.
+            let r = rarityOf(wbWord);
+            if (Math.random() < markRarityStep()) r = bumpRarity(r);
             const prevWbWeight = myWbWeightRef.current;
             // Unified economy (Job 1): the per-word reward weight (rarity × combo × lucky, capped at
             // ×40) feeds BOTH the wins banking below AND an XP grant — parity with CHAIN/FUSE.
             const wbWeight = cappedWordMult(r.mult, wbComboMult, wbLucky.winsWeight);
-            // WINS weight rides WORD SENSE (Job 4) — a wins multiplier on rarity, outside the ×40 cap.
-            myWbWeightRef.current += wbWeight * wordSenseWinsFactor(r.mult);
+            // The weight IS rarity × combo × lucky, capped. WORD SENSE used to multiply the
+            // rarity part again on top of this, invisibly; it is gone (feat/cut-secrets-rarity).
+            myWbWeightRef.current += wbWeight;
             awardWordXp({ mode: 'word-bomb', wordLength: (wbWord || '').trim().length, weight: wbWeight });
             recordAcceptedWord(wbWord, { mode: 'word-bomb', band: r.band }); // Collection (Job 3)
             noteWord(wbWord, r); // permanent record: distinct / obscure / rarest-ever (guarded)
@@ -1215,6 +1342,7 @@ function App() {
             // gated on the accept COUNT snapshot taken when the word landed.
             const banked = bankWordWins({
               mode: 'wordBomb',
+              wordLength: (wbWord || '').trim().length,
               difficulty: gameDifficultyRef.current,
               prevWords: wbNowWords - 1,
               nowWords: wbNowWords,
@@ -1222,6 +1350,60 @@ function App() {
               nowWeight: myWbWeightRef.current,
             });
             if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+            // THE RECEIPT. Same factor values the payout just used - perWordFactors() is the one
+            // place the permanent half is defined, and the per-word half is the very multipliers
+            // fed to cappedWordMult above. `cap` is included when the ×40 ceiling actually bit, so
+            // a word that paid less than its multipliers promised says why instead of looking
+            // broken. `total` is the amount BANKED, so the receipt can never disagree with the
+            // ledger even when rounding or the 3-word gate is in play.
+            {
+              const uncapped = r.mult * wbComboMult * wbLucky.winsWeight;
+              const factors = {
+                ...perWordFactors({ mode: 'wordBomb', difficulty: gameDifficultyRef.current }),
+                rarity: r.bandMult ?? r.mult,
+                length: r.lengthMult ?? 1,
+                combo: wbComboMult,
+                lucky: wbLucky.winsWeight,
+                cap: uncapped > 0 ? wbWeight / uncapped : 1,
+              };
+              // The base is this word's LETTERS at the player's key tier (Economy v8) — the same
+              // base the payout used, so the receipt still cannot disagree with the ledger. The
+              // two TERMS behind it travel with it so the panel can print "5 LETTERS × 10"
+              // instead of an unexplained "BASE 5".
+              const wbLetters = (wbWord || '').trim().length;
+              const wbBase = wordWinsBase({ wordLength: wbLetters });
+              const wbPerLetter = keyTierXp(getKeyTier());
+              const payout = buildPayout({
+                base: wbBase, factors, total: banked, band: r.band, letters: wbLetters, perLetter: wbPerLetter,
+              });
+              notePayout({ base: wbBase, factors, total: banked });
+              setLastPayout({
+                key: wbNowWords,
+                word: wbWord,
+                payout,
+                inactive: inactivePayoutFactors(factors, { band: r.band }),
+              });
+              // THE WORD REACTS. The band, what it paid, and any secret this word turned up, sent
+              // to the field the player is already looking at (components/WordLanding). The
+              // 1-in-750 golden-word roll happens HERE, once per accepted word - it used to be
+              // once per menu keystroke pop.
+              const secret = wbSecretsRef.current ? wbSecretsRef.current() : null;
+              setLastLanding({
+                key: `${wbNowWords}-${wbWord}`,
+                word: wbWord,
+                band: r.band,
+                wins: banked,
+                secret: secret ? { stamp: secret.stamp, wins: secret.wins } : null,
+              });
+              // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
+              // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
+              // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
+              // count the same money twice and make the card claim more than the balance moved.
+              // A rare word has to SOUND different too — an event with no sound is half an event.
+              // COMMON is silent by design (rarityCue ignores it), so the normal accept cue stays
+              // the whole audio story for an ordinary word.
+              rarityCue(secret ? 'SECRET' : r.band);
+            }
             setWinsTally(
               awardWins({ wordsAccepted: myWbAcceptedRef.current, mode: 'wordBomb', difficulty: gameDifficultyRef.current })
             );
@@ -1262,7 +1444,9 @@ function App() {
       } else {
         // Rejections are only sent to the player who submitted, so this is
         // always our own miss.
-        wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
+        // MARK — METRONOME (feat/progression-clarity): a chance the broken combo SURVIVES. Rolled
+        // here, at the one place a Word Bomb combo breaks, so the mark cannot silently apply twice.
+        if (!(Math.random() < markComboKeep())) wbComboRef.current = comboBreak(wbComboRef.current); // a reject ends the payout combo
         sndWordRejected(); // Job 11: soft reject
         setFeedEvents((prev) => [
           ...prev,
@@ -1318,6 +1502,7 @@ function App() {
         setCategoryTotals({}); // fresh game
         categoryTotalsRef.current = {};
         setWinsEarnedTotal(0); // fresh Blitz game → reset the run's earned-wins total
+        setWinsBonusLines([]); // fresh run → the card itemises THIS run only
       }
       if (payload.reroll) {
         setLastReroll({ by: payload.by, byId: payload.byId, key: rerollKeyRef.current++ });
@@ -1363,12 +1548,13 @@ function App() {
           const r = rarityOf(blitzAnswer);
           const prevBlitzWeight = myBlitzWeightRef.current;
           const blitzWeight = cappedWordMult(r.mult, blitzComboMult, blitzLucky.winsWeight);
-          myBlitzWeightRef.current += blitzWeight * wordSenseWinsFactor(r.mult); // WORD SENSE (Job 4)
+          myBlitzWeightRef.current += blitzWeight;
           awardWordXp({ mode: 'category-blitz', wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
           recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
           noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
           const banked = bankWordWins({
             mode: 'blitz',
+            wordLength: (blitzAnswer || '').trim().length,
             difficulty: gameDifficultyRef.current,
             prevWords: blitzNowWords - 1,
             nowWords: blitzNowWords,
@@ -1376,6 +1562,22 @@ function App() {
             nowWeight: myBlitzWeightRef.current,
           });
           if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+          // THE ANSWER REACTS, same rule as Word Bomb: rarity is an EVENT at the moment the word
+          // lands, not a multiplier discovered later on a pill. Blitz's field is the same shape,
+          // so the landing goes to the same place.
+          const bSecret = wbSecretsRef.current ? wbSecretsRef.current() : null;
+          setLastLanding({
+            key: `b${blitzNowWords}-${blitzAnswer}`,
+            word: blitzAnswer,
+            band: r.band,
+            wins: banked,
+            secret: bSecret ? { stamp: bSecret.stamp, wins: bSecret.wins } : null,
+          });
+            // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
+            // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
+            // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
+            // count the same money twice and make the card claim more than the balance moved.
+          rarityCue(bSecret ? 'SECRET' : r.band);
           setWinsTally(
             awardWins({ wordsAccepted: myBlitzAcceptedRef.current, mode: 'blitz', difficulty: gameDifficultyRef.current })
           );
@@ -1426,6 +1628,8 @@ function App() {
       } else {
         // WINS: already banked per-word during play (bankWordWins in word_result) — NO
         // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
+        // The receipt for the whole game, read once and frozen for the end screen.
+        setPayoutLedger(readPayoutLedger());
       }
       setGameOver(payload);
       // Daily Challenge completed: fold the result into the persisted streak
@@ -1555,6 +1759,17 @@ function App() {
     prevGameOverRef.current = now;
   }, [gameOver, runTransition]);
 
+  // THE SOLO RUN-OVER OFFER. True only for a visitor who LANDED in CHAIN/FUSE from a shared link
+  // and has never seen the menu: they have no idea the other modes exist, and the run-over card is
+  // the one moment they are looking at a stopped screen. A ref, not state — it is a fact about how
+  // the session started, and goHome retires it the instant they reach the menu.
+  const soloOfferRef = useRef(DEEP_LAND && !SEEN_MENU_AT_BOOT);
+
+  // SAT RUSH deep land: start a run instead of showing the cover (see SatRushGame's autoStart).
+  // A ref, not state, and retired by goHome below — it is a fact about how the SESSION started, so
+  // once the player has actually reached the menu, entering SAT from its card behaves normally.
+  const satAutoStartRef = useRef(!!LAUNCH_INTENT.satrush);
+
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated
   // name (zero prompts: tap link -> in the room), or start today's daily
@@ -1598,6 +1813,32 @@ function App() {
     // effect only ever fires once (guarded by launchFiredRef).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsStatus, send]);
+
+  // CANCELLING the room-mode boot screen. This is deliberately a FULL NAVIGATION to '/', not
+  // goHome().
+  //
+  // THE BUG: goHome() only clears local state. The provisioning effect above is gated on
+  // wsStatus + a once-ref, NOT on whether the player is still here — so a visitor who tapped
+  // ← MENU at t=3s of a 30-second cold Render start would, at t=30s, have a room and a bot
+  // created under them; the resulting room_update would pull them off whatever screen they were
+  // on into the waiting room, and game_started would then drop them into a live Word Bomb match
+  // they had explicitly cancelled half a minute earlier. The window is the whole cold start, not
+  // a millisecond race.
+  //
+  // Guarding the room_update handler with a ref would work, but room_update is one of the three
+  // documented Tier-1 traps in CLAUDE.md and every guard added there has to be re-reasoned about
+  // forever. Ending the SESSION instead touches no WebSocket handler at all: the socket closes,
+  // so no in-flight frame can arrive, the server sees the disconnect and reaps the room + bot,
+  // VS_BOT_LAUNCH is gone on the next load, and the URL becomes '/' which is where they asked to
+  // be. The cost is one page load from a screen where nothing has happened yet.
+  function handleDeepLandExit() {
+    try {
+      if (room && room.code) send('leave_room', {}); // best effort; the close below is the real signal
+    } catch {
+      /* the navigation below is what actually ends it */
+    }
+    window.location.assign('/');
+  }
 
   // ---- CrazyGames zero-click entry (?cg=1) ----
   // Provision the solo-vs-bot room the moment the socket opens: the same
@@ -1650,6 +1891,55 @@ function App() {
     cgArmPendingRef.current = false;
     send('start_game', {});
     track('cg_direct_entry', {});
+  }, [room, send]);
+
+  // ---- ROOM-MODE DEEP LINK (/word-bomb/play, /category-blitz/play) ----
+  // The two social modes need a room and an opponent before there is anything to land in, so a deep
+  // link provisions BOTH with no clicks: the SAME frames the menu's Quick Play / Daily paths already
+  // send (handleLobbyContinue, handleStartDaily), in the same order, on the same socket. Nothing new
+  // is asked of the server.
+  //
+  // It differs from the CrazyGames entry in exactly one way: there is no arm gesture. CG deliberately
+  // holds start_game until the player engages (an embed contract — the turn clock must not run before
+  // they are looking). A deep-link visitor CHOSE this URL, so the round starts as soon as the roster
+  // is ready. Everything else — provision once, wait for the human + bot to be seated, then a single
+  // start_game — is the proven cg shape, including the room_update view guard above.
+  //
+  // Fires ONCE (guarded by the ref); a later reconnect must never re-provision a second room.
+  const vsBotProvisionedRef = useRef(false);
+  useEffect(() => {
+    if (!VS_BOT_LAUNCH) return;
+    if (wsStatus !== 'open') return;
+    if (vsBotProvisionedRef.current) return;
+    vsBotProvisionedRef.current = true;
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setLobbyMode(VS_BOT_LAUNCH);
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: VS_BOT_LAUNCH });
+    if (VS_BOT_LAUNCH === 'word-bomb') {
+      // A stranger's first game gets the gentler CHILL tier, exactly as the menu's create path does.
+      send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    } else {
+      // Blitz: the host's pack selection, ordered after set_game_type on the same socket.
+      send('set_packs', { packs: blitzPacks });
+    }
+    send('add_bot', { difficulty: 'medium' });
+    // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsStatus, send]);
+
+  // Start the round the instant the roster is ready (human + bot seated). Separate from the
+  // provisioning effect because the roster arrives asynchronously, over one or more room_updates —
+  // the identical split the cg path uses. Guarded so start_game is sent exactly once.
+  const vsBotStartedRef = useRef(false);
+  useEffect(() => {
+    if (!VS_BOT_LAUNCH) return;
+    if (vsBotStartedRef.current || !vsBotProvisionedRef.current) return;
+    if (!cgRoomReady(room)) return; // "human + bot are both seated" — not cg-specific
+    vsBotStartedRef.current = true;
+    send('start_game', {});
+    track('deep_link_started', { mode: VS_BOT_LAUNCH });
   }, [room, send]);
 
   // CrazyGames compliance (cg path only): user-select:none on the body. Scoped by
@@ -1737,6 +2027,10 @@ function App() {
   // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
+    // They are on their way to the menu: the "you have never seen the menu" pitch is spent,
+    // for the rest of this session as well as (via taw.seenMenu) every later one.
+    soloOfferRef.current = false;
+    satAutoStartRef.current = false; // they have seen the menu; SAT's cover + mode picker apply again
     setLobbyMode(null);
     setLobbyPublicDefault(false);
     setRoom(null);
@@ -1973,12 +2267,31 @@ function App() {
   if (view === 'game') {
     screen = (
       <GameScreen
+        /* THE SOUND CONTROL, AS A SLOT. The app-wide fixed bottom-right control is suppressed on
+           this view (see the AudioControls render below) and handed to the board instead, which
+           drops it into its header cluster beside LEAVE. Reason: a 44x44 position:fixed button at
+           right:16/bottom:16 lands exactly on the input row at phone widths -- measured overlapping
+           SEND/SKIP by 20px at both 390x844 and 320x640, i.e. a decorative control sitting on the
+           button that COSTS A LIFE. That is the NO ORPHAN FIXED UI rule verbatim, and the menu
+           already solved it the same way (variant="inline" inside its corner-nav cluster). Passing
+           the element rather than the props keeps GameScreen ignorant of music/SFX wiring. */
+        audioSlot={(
+          <AudioControls
+            variant="inline"
+            accent={SCREEN_ACCENT.game || '#2EFFE0'}
+            musicMuted={music.isMuted}
+            onToggleMusic={music.toggleMute}
+            sfxMuted={sfxMuted}
+            onToggleSfx={() => setSfxMuted((m) => !m)}
+          />
+        )}
         gameState={gameState}
         gameType={gameType}
         gameNonce={gameNonce}
         // cg entry skips the 3-2-1 so the server's ~3s pre-timer window becomes
         // free combo-reading time (timer frozen at full, clock not yet moving).
         cgMode={CG_ENTRY}
+        offerMenu={soloOfferRef.current}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -2022,6 +2335,10 @@ function App() {
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        winsBonusLines={winsBonusLines}
+        lastPayout={lastPayout}
+        payoutLedger={payoutLedger}
+        lastLanding={lastLanding}
       />
     );
   } else if (view === 'room' && room) {
@@ -2086,13 +2403,31 @@ function App() {
   } else if (view === SAT_RUSH_VIEW && SAT_RUSH_ENABLED) {
     // Flag-gated placeholder route. Nothing on the menu points here yet; the
     // mode is reachable only with the flag on (?satRush=1) during dev.
-    screen = <SatRushGame onExit={goHome} musicSetVolume={music.setVolume} />;
+    screen = (
+      <SatRushGame
+        onExit={goHome}
+        musicSetVolume={music.setVolume}
+        offerMenu={soloOfferRef.current}
+        autoStart={satAutoStartRef.current}
+      />
+    );
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
-    screen = <ChainGame onExit={goHome} />;
+    screen = <ChainGame onExit={goHome} offerMenu={soloOfferRef.current} />;
   } else if (view === FUSE_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?fuse=1 (no menu card yet).
-    screen = <FuseGame onExit={goHome} />;
+    screen = <FuseGame onExit={goHome} offerMenu={soloOfferRef.current} />;
+  } else if (view === 'vs-bot') {
+    // Room-mode deep link, waiting on the socket + the room/bot provisioning above. Purely
+    // cosmetic — it holds no WS/game state and is replaced by the live GameScreen on game_started.
+    screen = (
+      <DeepLandScreen
+        mode={VS_BOT_LAUNCH}
+        wsStatus={wsStatus}
+        serverError={serverError}
+        onExit={handleDeepLandExit}
+      />
+    );
   } else if (view === 'cg-arm') {
     // CrazyGames arm state: full play layout, timer frozen, start_game held until
     // the player engages. Only reachable on a ?cg=1 session.
@@ -2250,7 +2585,7 @@ function App() {
               // gap, credited XP, and never reached the button. Removing the zoom property entirely
               // (rather than overriding it) leaves no zoom to misbehave: visual == hit-test on every
               // browser. GAME views keep the zoom via `.view-screen.app-scaled`.
-              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' ? '' : ' app-scaled'}`}
+              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' || view === 'vs-bot' ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). The fallback is DELAYED (null for ~450ms): chunks are
@@ -2264,6 +2599,9 @@ function App() {
           {transition && !prefersReducedMotion && (
             <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
           )}
+          {/* Bonus-wins announcements (achievements, collection milestones, the return bonus).
+              Transient, pointer-events:none, docked under the wins pill's column. */}
+          <WinsCreditToast />
           {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
           {returnCard && view === 'home' && (
             <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
@@ -2348,7 +2686,13 @@ function App() {
               fix/visual-real item 4: on the HOME menu this global fixed control is suppressed — the
               menu renders the same control INSIDE its corner-nav cluster instead (no orphan fixed
               UI). Every other screen (no corner-nav to join) keeps the bottom-right control. */}
-          {!isHomeMenu && (
+          {/* The game view hosts the control ITSELF (App hands GameScreen an `audioSlot`), so the
+              fixed one is suppressed there — the board's bottom-right corner is where SEND and
+              SKIP live. Every game screen mounts the slot: the board and the Blitz round screens
+              in their header clusters, and the three header-less ones (the "STARTING GAME..."
+              placeholder, the multiplayer scoreboard, the solo results card) in a dock anchored to
+              the board wrapper. e2e/sound-control.spec.js counts them — never zero, never two. */}
+          {!isHomeMenu && view !== 'game' && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}
               musicMuted={music.isMuted}
@@ -2464,6 +2808,15 @@ function App() {
           through). The menu underneath has already mounted + painted, so the knife
           animates over it with no first-frame mount cost. */}
       {showIntro && <TransitionIntro onComplete={handleIntroComplete} />}
+      {/* THE ARCANE GRAIN — one static, single-hue overlay for the whole app.
+          A tiled data-URI SVG (feTurbulence + feColorMatrix), so the browser
+          rasterises the tile once and then repeats pixels: no live filter, no
+          animation, nothing per frame. It sits outside .app-shake for the same
+          reason the cursor trail does — grain that slides with the screen shake
+          reads as a rendering fault. aria-hidden + pointer-events:none, so it is
+          texture and not UI (it is not an orphan CONTROL: nothing can be clicked
+          or focused here). See src/theme/arcane.css. */}
+      <div className="arcane-grain" aria-hidden="true" />
       {/* Cursor trail sits outside .app-shake so the screen shake never moves
           it, and above everything (z 9999). */}
       <CursorTrail />

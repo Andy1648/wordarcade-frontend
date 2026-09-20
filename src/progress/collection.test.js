@@ -12,6 +12,7 @@ import {
   COLLECTION_KEY,
 } from './collection.js';
 import { getWins } from './wins.js';
+import { rebirthMult } from './xp.js';
 
 function withStorage(seed, fn) {
   const saved = globalThis.localStorage;
@@ -75,11 +76,12 @@ test('milestones pay wins (× rebirth) once each as the count crosses them', () 
 
 test('milestone wins scale with the live rebirth multiplier', () => {
   withStorage({ 'taw.rebirths': '2' }, () => {
-    // R2 → rebirth mult ×2, so the 100-word milestone pays 10000 not 5000.
+    // v7: rebirthMult is 3^rc, so R2 is ×9 (the v6 table said ×2) and the 100-word milestone
+    // pays 5000 × 9. Written through rebirthMult - the claim is that the milestone SCALES.
     let last;
     for (let i = 0; i < 100; i++) last = recordAcceptedWord(`w${i}`, { mode: 'chain', band: 'COMMON' });
     assert.equal(last.milestone.n, 100);
-    assert.equal(last.milestone.wins, 5000 * 2);
+    assert.equal(last.milestone.wins, Math.round(5000 * rebirthMult(2)));
   });
 });
 

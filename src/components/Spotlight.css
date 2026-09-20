@@ -7,6 +7,8 @@
   z-index: 200; /* above menu/game chrome, below nothing it needs to block */
   pointer-events: none;
   font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
 }
 
 /* The bright hole: a transparent box over the target whose huge box-shadow SPREAD dims the
@@ -19,6 +21,13 @@
   outline: 3px solid #ffe94a;
   outline-offset: 2px;
   animation: spotlight-in 220ms ease-out both;
+}
+/* BARE (game surfaces): the keyline without the wash. The wash takes the whole screen to about a
+   quarter brightness, which on a board — where the board IS the screen — reads as a broken render
+   rather than a coach mark. It was the first frame of every deep-link visit. The ring still says
+   "here"; the caption still says what to do. See Spotlight.jsx's `dim` prop. */
+.spotlight-hole.is-bare {
+  box-shadow: none;
 }
 .spotlight-dim {
   position: fixed;
@@ -47,7 +56,7 @@
   transform: translate(-50%, -50%);
 }
 .spotlight-caption-text {
-  font-size: clamp(20px, 4.4vw, 30px);
+  font-size: var(--fs-panel);
   color: #ffe94a;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -59,10 +68,27 @@
      the wrapper lets it size to this line; max-width:92vw is the only wrap fallback. */
   white-space: nowrap;
 }
+
+/* …EXCEPT when one line cannot fit. `white-space: nowrap` overrides the wrapper's max-width, so
+   on a narrow phone a long rule ("START WITH THE GIVEN LETTER" at 320px) simply overflowed and was
+   CLIPPED AT BOTH EDGES — the caption is centred, so it lost its first and last words and the
+   first-run teach became unreadable on the exact screen a deep-link visitor lands on. Caught in
+   the 320x640 screenshots; no gate looks at text overflow.
+
+   Below 400px the headline is allowed to wrap instead. Two readable lines beat one clipped one,
+   and the placement pass measures the caption AFTER layout (capH), so a taller caption is placed
+   correctly rather than overrunning — which is what the nowrap above was originally protecting. */
+@media (max-width: 400px) {
+  .spotlight-caption-text {
+    white-space: normal;
+    text-wrap: balance;
+  }
+}
 .spotlight-caption-sub {
   font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   font-weight: 700;
-  font-size: clamp(11px, 2.4vw, 14px);
+  font-size: var(--fs-label);
   letter-spacing: 0.12em;
   color: #2effe0;
   text-shadow: 2px 2px 0 #000;
@@ -78,7 +104,7 @@
     display: none;
   }
   .spotlight-caption-text {
-    font-size: clamp(15px, 2.4vw, 20px);
+    font-size: var(--fs-body);
     -webkit-text-stroke-width: 2px;
     text-shadow: 3px 3px 0 #000;
   }

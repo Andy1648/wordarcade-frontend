@@ -36,23 +36,26 @@
   border: none;
   background: transparent;
   color: #06231f;
-  font-size: 13px;
+  font-size: var(--fs-label);
   cursor: pointer;
   opacity: 0.7;
 }
 .return-bonus-title {
-  font-family: 'Bungee', cursive;
-  font-size: clamp(14px, 2.4vw, 18px);
+  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
 }
 .return-bonus-wins {
   font-family: 'Bungee', cursive;
-  font-size: clamp(22px, 5vw, 32px);
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   line-height: 1;
   color: #06231f;
 }
 .return-bonus-sub {
-  font-size: clamp(9px, 1.5vw, 11px);
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.05em;
   opacity: 0.75;

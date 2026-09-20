@@ -24,18 +24,11 @@
 // cell is clean.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, freezeAnimations } from './support/backendMock.js';
-
-const VIEWPORTS = [
-  { name: '2560x1440', width: 2560, height: 1440 },
-  { name: '1920x1080', width: 1920, height: 1080 },
-  { name: '1440x900', width: 1440, height: 900 },
-  { name: '1366x768', width: 1366, height: 768 },
-  { name: '1163x501', width: 1163, height: 501 },
-  { name: '390x844', width: 390, height: 844 },
-  { name: '360x640', width: 360, height: 640 },
-];
-
-const TOL = 2; // sub-pixel / rounding tolerance (px)
+// THE SCREEN MAP LIVES IN ONE PLACE (e2e/support/screens.js). It used to be defined here, which
+// meant every other run that wanted to visit "every screen" had to copy it — and a copied screen
+// map is a map that quietly stops matching the app. The arcane-pass screenshot run and the
+// cold-stranger walk import the same list.
+import { VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS } from './support/screens.js';
 
 // ---- navigation primitives (reused from coverage / gameover specs) ----
 async function bootMenu(page, level = 40, query = '?portal=1') {
@@ -77,33 +70,9 @@ const ME = 'me';
 const wbPlayers = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 0 }];
 const cbPlayers = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
 
-// Each screen: name, root selector, overlay?, and an async nav(page) that lands on it.
-const SCREENS = [
-  { name: 'splash', root: '.splash-screen', overlay: true, nav: async (page) => { await installBackendMock(page); await page.goto('/'); await page.locator('.splash-screen').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'menu', root: '.homepage-wrap', overlay: false, nav: async (page) => bootMenu(page, 40) },
-  { name: 'dialog-word-bomb', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'word-bomb').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-category-blitz', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'category-blitz').click(); await page.locator('.ppp-picker').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, 1); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, 16); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'credits', root: '.credits-wrap', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-credits-link').click(); await page.locator('.credits-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'shop', root: '.shop-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-nav-btn.is-shop').click(); await page.locator('.shop-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'stats', root: '.stats-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-nav-btn.is-stats').click(); await page.locator('.stats-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'lobby', root: '.lobby-wrap', overlay: false, nav: async (page) => { await bootMenu(page, 40); await card(page, 'word-bomb').click(); await page.locator('.mode-dialog-btn-create').click(); await page.locator('.lobby-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'browser', root: '.browser-wrap', overlay: false, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-btn-join').click(); await page.locator('.browser-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'room', root: '.room-wrap', overlay: false, nav: async (page) => { await bootRoom(page, 'word-bomb', wbPlayers); await page.locator('.room-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'ingame-word-bomb', root: '.game-wrap', overlay: false, nav: async (page) => { const m = await bootRoom(page, 'word-bomb', wbPlayers); await page.waitForTimeout(80); m.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } }); await page.waitForTimeout(80); m.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbPlayers, combo: 'at', usedWords: [], timerSeconds: 30 } }); await page.locator('.game-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'ingame-category-blitz', root: '.game-wrap', overlay: false, nav: async (page) => { const m = await bootRoom(page, 'category-blitz', cbPlayers); await page.waitForTimeout(80); m.pushToClient({ type: 'game_started', payload: { gameType: 'category-blitz' } }); await page.waitForTimeout(80); m.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 60, category: 'FRUITS', categoryId: 'fruits', rerollsRemaining: 1 } }); await page.locator('.game-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'gameover-word-bomb', root: '.game-over-overlay', overlay: true, nav: async (page) => { const m = await bootRoom(page, 'word-bomb', wbPlayers); await page.waitForTimeout(80); m.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } }); await page.waitForTimeout(80); m.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbPlayers, combo: 'at', usedWords: [], timerSeconds: 30 } }); await page.waitForTimeout(80); m.pushToClient({ type: 'game_over', payload: { winnerId: ME } }); await page.locator('.game-over-overlay').waitFor({ state: 'visible' }); await page.waitForTimeout(500); } },
-  { name: 'gameover-category-blitz', root: '.game-over-overlay', overlay: true, nav: async (page) => { const m = await bootRoom(page, 'category-blitz', cbPlayers); await page.waitForTimeout(80); m.pushToClient({ type: 'game_started', payload: { gameType: 'category-blitz' } }); await page.waitForTimeout(80); m.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 60, category: 'FRUITS', categoryId: 'fruits', rerollsRemaining: 1 } }); await page.waitForTimeout(60); m.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'YOU', score: 30 }, { id: 'p2', name: 'RIVAL', score: 10 }] } }); await page.locator('.game-over-overlay').waitFor({ state: 'visible' }); await page.waitForTimeout(500); } },
-  { name: 'ingame-chain', root: '.solo-root', overlay: false, nav: async (page) => { await enterSolo(page, 'chain'); await page.waitForTimeout(200); } },
-  { name: 'ingame-fuse', root: '.solo-root', overlay: false, nav: async (page) => { await enterSolo(page, 'fuse'); await page.waitForTimeout(200); } },
-  { name: 'gameover-chain', root: '.solo-deathcard', overlay: true, nav: async (page) => { await enterSolo(page, 'chain'); const input = page.locator('.solo-root input').first(); await input.waitFor({ state: 'visible' }); await input.fill('a'); await page.locator('.solo-deathcard').waitFor({ state: 'visible', timeout: 8000 }); await page.waitForTimeout(300); } },
-  { name: 'gameover-fuse', root: '.solo-deathcard', overlay: true, nav: async (page) => { await enterSolo(page, 'fuse'); const input = page.locator('.solo-root input').first(); await input.waitFor({ state: 'visible' }); await input.fill('a'); await page.locator('.solo-deathcard').waitFor({ state: 'visible', timeout: 8000 }); await page.waitForTimeout(300); } },
-  { name: 'sat-modeselect', root: '.sr-modeselect', overlay: true, nav: async (page) => { await installBackendMock(page); await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } }); await page.goto('/?satRush=1&portal=1'); await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' }); await page.waitForTimeout(400); await page.locator('[data-game="sat-rush"] .game-card').click(); await page.getByRole('button', { name: 'Play' }).click(); await page.locator('.sr-modeselect').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'sat-briefing', root: '.sr-brief-page', overlay: false, nav: async (page) => { await installBackendMock(page); await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } }); await page.goto('/?satRush=1&portal=1'); await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' }); await page.waitForTimeout(400); await page.locator('[data-game="sat-rush"] .game-card').click(); await page.getByRole('button', { name: 'Play' }).click(); await page.getByRole('button', { name: 'briefing' }).click(); await page.locator('.sr-brief-page').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-];
+// SCREENS / NOSCROLL / THEME_IDS come from e2e/support/screens.js (imported above). The inline
+// copy that used to live here was removed in the release merge: it had drifted to 24 screens
+// while the shared map had 40, which is exactly the divergence that extraction prevents.
 
 // The integrity check, run in the page against the live DOM.
 async function integrity(page, rootSel, overlay, noScroll) {
@@ -225,20 +194,6 @@ async function integrity(page, rootSel, overlay, noScroll) {
   }, { rootSel, overlay, noScroll, TOL });
 }
 
-// Dialogs, preview cards and game-over cards must FIT (shrink to content) — a
-// scrollbar on these is a bug (fix/qa-sweep §7). Content panels (menu/shop/stats/
-// browser/ingame) may scroll vertically; horizontal scroll is a bug everywhere.
-const NOSCROLL = new Set([
-  'dialog-word-bomb', 'dialog-category-blitz', 'dialog-chain', 'dialog-fuse',
-  'locked-chain', 'locked-fuse', 'gameover-word-bomb', 'gameover-category-blitz',
-  'gameover-chain', 'gameover-fuse', 'sat-modeselect',
-]);
-
-// THEMES (feat/themes): every screen's layout integrity must hold under EVERY menu theme, since a
-// theme only recolors (CSS custom properties) and must never shift geometry. Parameterizing the
-// full matrix over 5 themes = 168 × 5 = 840 cells. The theme is injected into localStorage before
-// the app boots (main.jsx initTheme reads taw.theme), so each cell renders in that palette.
-const THEME_IDS = ['default', 'midnight', 'inferno', 'toxic', 'prism'];
 
 for (const themeId of THEME_IDS) {
 for (const vp of VIEWPORTS) {

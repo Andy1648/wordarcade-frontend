@@ -1,0 +1,161 @@
+{
+  "vw": 320,
+  "vh": 380,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-shop \"SHOP\"",
+      "rect": {
+        "x": 205,
+        "y": 25,
+        "w": 73,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-rebirth \"REBIRTH\"",
+      "rect": {
+        "x": 175,
+        "y": 77,
+        "w": 103,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-stats \"STATS\"",
+      "rect": {
+        "x": 193,
+        "y": 129,
+        "w": 85,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 234,
+        "y": 181,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card.featured \"WORDFEATUREDSOLO/MULTIWORD B\"",
+      "rect": {
+        "x": 62,
+        "y": 119,
+        "w": 31,
+        "h": 41
+      },
+      "flags": [
+        "UNDERSIZE 31x41 (44x44 probe blocked by div.homepage-cards-scroll \"WORDFEATUREDSOLO/MULTIWORD B\")"
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"???AI JUDGEDSOLO/MULTICATEGO\"",
+      "rect": {
+        "x": 103,
+        "y": 119,
+        "w": 31,
+        "h": 41
+      },
+      "flags": [
+        "UNDERSIZE 31x41 (44x44 probe blocked by div.homepage-cards-grid \"WORDFEATUREDSOLO/MULTIWORD B\")"
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"5×SATSAT RUSHSOLOLIMITED610 \"",
+      "rect": {
+        "x": 144,
+        "y": 119,
+        "w": 31,
+        "h": 41
+      },
+      "flags": [
+        "UNDERSIZE 31x41 (44x44 probe blocked by div.homepage-cards-grid \"WORDFEATUREDSOLO/MULTIWORD B\")"
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"ERSOLOCHAIN960 WINS / WORD (\"",
+      "rect": {
+        "x": 186,
+        "y": 119,
+        "w": 31,
+        "h": 41
+      },
+      "flags": [
+        "UNDERSIZE 31x41 (44x44 probe blocked by div.homepage-cards-grid \"WORDFEATUREDSOLO/MULTIWORD B\")",
+        "OCCLUDED by button.homepage-nav-btn.is-stats \"STATS\""
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"AINSOLOFUSE960 WINS / WORD (\"",
+      "rect": {
+        "x": 227,
+        "y": 119,
+        "w": 31,
+        "h": 41
+      },
+      "flags": [
+        "UNDERSIZE 31x41 (44x44 probe blocked by button.homepage-nav-btn.is-stats \"STATS\")",
+        "OCCLUDED by button.homepage-nav-btn.is-stats \"STATS\""
+      ]
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-btn.homepage-btn-join \"JOIN ROOM\"",
+      "rect": {
+        "x": 83,
+        "y": 212,
+        "w": 154,
+        "h": 46
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-credits-link \"CREDITS\"",
+      "rect": {
+        "x": 108,
+        "y": 298,
+        "w": 105,
+        "h": 49
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "span.menu-xp-lv \"40\"",
+      "rect": {
+        "x": 49,
+        "y": 64,
+        "w": 19,
+        "h": 13
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "span.menu-xp-track \"0 / 52.3K\"",
+      "rect": {
+        "x": 72,
+        "y": 61,
+        "w": 159,
+        "h": 18
+      },
+      "flags": []
+    }
+  ]
+}

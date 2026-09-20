@@ -4,8 +4,8 @@
 // offset shadow, flat fill) lives in ModeExample.css. STATIC — no animation.
 import './ModeExample.css';
 import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
-import { wordWinsEstimate, currentRebirthMult } from '../progress/wins';
-import { formatNum } from '../format';
+import { perWordRateNow } from '../progress/wins';
+import { formatNum, formatMult } from '../format';
 
 // Highlight the first occurrence of `sub` within `word` in `color`.
 function hiSub(word, sub, color) {
@@ -35,7 +35,7 @@ function hiEnds(word, color) {
 export default function ModeExample({ mode, accent = '#2EFFE0' }) {
   const ex = MODE_EXAMPLES[mode];
   if (!ex) return null;
-  const wins = wordWinsEstimate({ mode });
+  const rateNow = perWordRateNow({ mode });
   const round = MODE_ROUND_LENGTH[mode];
 
   let body = null;
@@ -95,9 +95,11 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
       {body}
       <div className="mode-ex-meta">
         <span className="mode-ex-pay">
-          <b style={{ color: accent }}>{wins}</b> WINS / WORD
-          {currentRebirthMult() > 1 && (
-            <span className="mode-ex-mult"> (×{formatNum(currentRebirthMult())})</span>
+          {/* The RESOLVED rate, like the mode card — not the base with a rebirth chip bolted on
+              for the player to multiply out (and momentum/level/mark missing from both). */}
+          <b style={{ color: accent }}>{formatNum(rateNow.rate)}</b> WINS / WORD
+          {rateNow.mult !== 1 && (
+            <span className="mode-ex-mult"> (×{formatMult(rateNow.mult)})</span>
           )}
         </span>
         <span className="mode-ex-round">{round}</span>

@@ -18,6 +18,7 @@ import { wpmKeyStroke } from '../progress/wpmLive';
 import { addWords } from '../wordCount';
 import {
   SAT_RUSH_STAGE_MS,
+  stageMs as stageMsForCard,
   SAT_RUSH_LINEUP_SCALE,
   SAT_RUSH_SCENE,
   SAT_RUSH_DEV_TUNER,
@@ -28,7 +29,17 @@ import * as juice from './juice';
 
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
 const CLEAR_PAUSE_MS = 850;
-const MISS_PAUSE_MS = 1800; // the miss now TEACHES (sentence + def + cousin), so hold a beat longer
+// THE MISS TEACHES, SO IT HAS TO BE READABLE. The re-encode card carries four things — the
+// word, the sentence with the answer filled in, the definition, and a root cousin. 1800ms was
+// never enough time to read that; a player reporting that "the modes move too fast to learn
+// anything" is describing exactly this number. Any key still skips it (see the keydown handler),
+// so nobody fast is held.
+const MISS_PAUSE_MS = 3200;
+// AND THE MISS THAT ENDS THE RUN HOLDS LONGER STILL. This is Andy's ask: when the run ends on a
+// word you failed, stay on that word. It is also the one pause with NO pacing cost — nothing
+// follows it but the results screen, so the only thing a short hold buys is losing the last word
+// you got wrong, which is the one most worth learning. Still dismissible by any key.
+const FINAL_MISS_PAUSE_MS = 6000;
 // A clear that leaned on more than the free first letter didn't really land — it
 // gets the same re-encode beat as a miss, over the (longer) heavy-clear pause.
 const HEAVY_REVEAL_MIN = 2;
@@ -317,7 +328,7 @@ export function useSatRushGame() {
       } else {
         beginWord();
       }
-    }, MISS_PAUSE_MS);
+    }, r.gameOver ? FINAL_MISS_PAUSE_MS : MISS_PAUSE_MS);
   }, [beginWord, trackRunEnd, persistLexicon, trackSR]);
 
   // ---- the stage clock: advance reveals, then run the grace window ----
@@ -339,8 +350,14 @@ export function useSatRushGame() {
     // Effective stage delay: deep-cut and LINEUP scales stack multiplicatively on
     // the base. lineupScale is read LIVE from cfgRef (dev-tunable), so it overrides
     // the value baked into eng.config at engine creation.
+    // PER-CARD BASE (fix/sat-ante-fairness): the beat scales with this card's build-time
+    // read+type cost, so the x5 window is proportional to what the card asks of you instead of
+    // flat across a 5s..12s spread. The dev/live ?stage= override still wins when it has been
+    // moved off the shipped default — otherwise tuning the slider would do nothing.
+    const tuned = cfgRef.current.stageMs;
+    const base = tuned !== SAT_RUSH_STAGE_MS ? tuned : stageMsForCard(c);
     const interval = effectiveStageIntervalMs(
-      cfgRef.current.stageMs,
+      base,
       { isDeepCut: c.isDeepCut, mode: modeRef.current },
       { ...eng.config, lineupStageScale: cfgRef.current.lineupScale }
     );
@@ -429,10 +446,23 @@ export function useSatRushGame() {
   }, [phase, pending, stageForEffect, wordForEffect, doMiss, resolveClear]);
 
   // ---- keyboard ----
+  //
+  // TWO SOURCES, ONE PATH. A physical keyboard arrives as a window `keydown`; a TOUCH device has
+  // no physical keyboard, so SatKeyInput (a focusable off-screen <input>) translates the soft
+  // keyboard's `beforeinput` into the same calls. Both end up in `handleKey` below, so the slot
+  // model — accept only the target's next letter, never advance on a reject — is written once and
+  // cannot drift between the two. `keyHandlerRef` is what the component reaches through.
+  const keyHandlerRef = useRef(null);
   useEffect(() => {
-    if (phase !== 'playing') return undefined;
-    const onKey = (e) => {
-      juice.unlockAudio(); // real keydown is a valid gesture to start the audio context
+    if (phase !== 'playing') {
+      keyHandlerRef.current = null;
+      return undefined;
+    }
+    // `key` is a KeyboardEvent.key value ('a', 'Backspace', 'Escape'); `preventDefault` is the
+    // originating event's, so the soft-keyboard path can suppress the character it would insert.
+    const handleKey = (key, preventDefault) => {
+      const e = { key, preventDefault: preventDefault || (() => {}) };
+      juice.unlockAudio(); // a real key/tap is a valid gesture to start the audio context
       if (pendingRef.current !== 'idle') {
         // A re-encode teaching beat (miss / heavy clear) is showing: any key skips
         // it so fast players aren't held on the second look they don't need.
@@ -489,9 +519,31 @@ export function useSatRushGame() {
         force();
       }
     };
+    keyHandlerRef.current = handleKey;
+    const onKey = (ev) => {
+      // A soft keyboard typing into SatKeyInput ALSO fires keydown here (Android reports the
+      // letter, iOS reports 'Unidentified'), which would double-count every letter. When the event
+      // came from a text field, the beforeinput path owns it — except Escape, which produces no
+      // beforeinput at all and would otherwise be swallowed while the field has focus.
+      const t = ev.target;
+      const isTextEntry =
+        t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (isTextEntry && ev.key !== 'Escape') return;
+      handleKey(ev.key, () => ev.preventDefault());
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      keyHandlerRef.current = null;
+    };
   }, [phase, doMiss, resolveClear, beginWord]);
+
+  // The soft-keyboard bridge's single entry point. Stable across renders (it reads the ref), so
+  // SatKeyInput's listeners never need re-binding.
+  const typeKey = useCallback((key, preventDefault) => {
+    const fn = keyHandlerRef.current;
+    if (fn) fn(key, preventDefault);
+  }, []);
 
   // Persist the learning memory on unmount (a mid-run exit still counts).
   useEffect(() => () => {
@@ -744,6 +796,7 @@ export function useSatRushGame() {
 
   return {
     view,
+    typeKey,
     startGame,
     chooseMode,
     startRun: beginRunFromBriefing,

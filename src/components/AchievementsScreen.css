@@ -21,8 +21,10 @@
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 16px 18px 10px; border-bottom: 3px solid #000;
 }
-.ach-title { margin: 0; font-family: 'Bungee', cursive; font-size: clamp(24px, 4.5vw, 34px); color: #ffe94a; letter-spacing: 0.04em; }
-.ach-close { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 8px; background: #0d0618; color: #fff; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-size: 16px; cursor: pointer; }
+.ach-title { margin: 0; font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98; font-size: var(--fs-panel); color: #ffe94a; letter-spacing: 0.04em; }
+.ach-close { width: 44px; height: 44px; flex: 0 0 auto; border-radius: 8px; background: #0d0618; color: #fff; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-size: var(--fs-body); cursor: pointer; }
 .ach-close:active { transform: translate(3px, 3px); box-shadow: none; }
 
 .ach-body {
@@ -34,8 +36,12 @@
 .ach-body::-webkit-scrollbar-track { background: #2a1f3d; border-radius: 8px; }
 .ach-body::-webkit-scrollbar-thumb { background: #ff4fa3; border-radius: 8px; }
 
-.ach-progress { text-align: center; font-family: 'Bungee', cursive; font-size: clamp(16px, 2.4vw, 20px); color: #2EFFE0; padding: 4px 0 8px; }
-.ach-cat-title { margin: 14px 0 8px; font-family: 'Bungee', cursive; font-size: clamp(14px, 2vw, 17px); letter-spacing: 0.08em; color: #9a8bbd; }
+.ach-progress { text-align: center; font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98; font-size: var(--fs-panel); color: #2EFFE0; padding: 4px 0 8px; }
+.ach-cat-title { margin: 14px 0 8px; /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.08em; color: #9a8bbd; }
 
 .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
 .ach-card {
@@ -51,14 +57,20 @@
   box-shadow: 3px 3px 0 #000;
 }
 .ach-card.is-secret:not(.is-earned) { border-style: dashed; }
-.ach-card-name { font-family: 'Bungee', cursive; font-size: clamp(13px, 1.7vw, 15px); color: #fff; }
+.ach-card-name { /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.08em; font-size: var(--fs-label); color: #fff; }
 .ach-card.is-earned .ach-card-name { color: #2EFFE0; }
-.ach-card-hint { font-size: clamp(10px, 1.3vw, 12px); color: #b9a7d6; line-height: 1.35; }
-.ach-card-wins { margin-top: 2px; font-weight: 700; font-size: clamp(10px, 1.3vw, 12px); color: #ffe94a; letter-spacing: 0.04em; }
+.ach-card-hint { font-size: var(--fs-label); color: #b9a7d6; line-height: 1.35; }
+.ach-card-wins { margin-top: 2px; font-weight: 700; font-size: var(--fs-label); color: #ffe94a; letter-spacing: 0.04em; }
 
 .ach-back {
   flex: 0 0 auto; margin: 10px 18px 18px; padding: 12px;
-  font-family: 'Bungee', cursive; font-size: clamp(18px, 2.6vw, 20px); letter-spacing: 0.04em;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98; font-size: var(--fs-panel); letter-spacing: 0.04em;
   color: #0d0618; background: #2effe0; border: 4px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; cursor: pointer;
 }
 .ach-back:active { transform: translate(4px, 4px); box-shadow: none; }

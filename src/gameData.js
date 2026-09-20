@@ -7,7 +7,10 @@
 // GameCard looks it up dynamically rather than each game having its own
 // hardcoded SVG inline.
 
-import { SAT_RUSH_ENABLED } from './satRush/config';
+// Extension included ON PURPOSE. Vite resolves either form, node's ESM loader does not — and
+// without it this module (the single source of truth for the menu grid) cannot be loaded by
+// `node --test`, which is the repo's unit runner. See gameData.test.js.
+import { SAT_RUSH_ENABLED } from './satRush/config.js';
 
 const BASE_GAMES = [
   {
@@ -31,6 +34,13 @@ const BASE_GAMES = [
     id: 'category-blitz',
     artKey: 'CategoryBlitzArt',
     name: 'CATEGORY\nBLITZ',
+    // THE CARD SAYS "BLITZ". `name` stays the full title — it is what the mode dialog shows
+    // and what the card's aria-label reads out, and neither is width-constrained. The CARD is:
+    // at 390x844 its name box is 80px and "CATEGORY" needs 97px at the size every other card's
+    // name gets, so this one card was set 8px smaller than the rest at every width (14.2 vs
+    // 22.3 at 390, 12 vs 16 at 360) purely because its longest word is longer. Shorter word,
+    // same size as its neighbours. Nothing else reads cardName; id/routes/SEO are untouched.
+    cardName: 'BLITZ',
     description: 'AI JUDGES YOUR ANSWERS — GET CREATIVE.',
     baseColor: '#3DA8FF',
     iconBg: '#fff',
@@ -79,7 +89,13 @@ const CHAIN_GAME = {
   artKey: 'ChainArt',
   name: 'CHAIN',
   description: "EACH WORD STARTS ON THE LAST ONE'S LETTER.",
-  unlockLevel: 20, // gated: visible-but-locked until LV 20 (raised from 15 per fix/qa-sweep §9 — ~3420 letters at the current curve; was LV15 ≈ 1088)
+  // LOWERED 20 -> 2 (was 15 before 150a885 raised it). The LV15->20 / LV22->25 raise was
+  // pacing set by feel, with no players to pace against; 150a885's own message flagged FUSE's
+  // jump as "a ~6x jump — flagged" and then walked it back from 30 to 25. None of that
+  // reasoning survives contact with an acquisition push: a gate measured in thousands of typed
+  // letters is a wall in front of a first session, not a reward curve. CHAIN and FUSE are now
+  // reachable inside the first couple of games — see FUSE below and progress/modeAccess.js.
+  unlockLevel: 2,
   baseColor: '#2EFFE0', // teal field (the mode's accent)
   iconBg: '#0D2B28', // dark teal so the cyan link icon reads
   badgeText: 'SOLO',
@@ -94,7 +110,7 @@ const FUSE_GAME = {
   artKey: 'FuseArt',
   name: 'FUSE',
   description: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
-  unlockLevel: 25, // gated: visible-but-locked until LV 25 (fix/qa-sweep §10 — ~10538 letters; LV30's ~32262 was ~100 sessions, too steep for an existing mode). Was LV22 ≈ 5371.
+  unlockLevel: 3, // LOWERED 25 -> 3 — same finding as CHAIN above (150a885 set 25 by feel, pre-players).
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',
@@ -113,3 +129,18 @@ export const GAMES = [
   CHAIN_GAME,
   FUSE_GAME,
 ];
+
+// THE FEATURED MODE, DERIVED — the same flag GameCard reads to draw the ribbon, so the menu
+// cannot point at one card and quote another. The XP-bar hint under the bar ("N WORDS TO LEVEL
+// n") divides by THIS mode's per-word rate: it used to divide by the MENU's, which is x1 and
+// therefore the slowest rate in the game, so the first progression number a new player ever saw
+// was the worst one available — quoted directly under a card advertising twice it.
+// Falls back to the first enabled game if the flag is ever dropped, so the hint degrades to a
+// real mode's rate rather than silently back to the menu's.
+export const FEATURED_GAME =
+  GAMES.find((g) => g.featured && g.enabled) || GAMES.find((g) => g.enabled) || GAMES[0];
+
+// "N MORE MODES" in a run-over offer — derived from the real menu, never a hardcoded number, so
+// adding or flag-gating a mode can't leave the copy lying. (Minus the one you just played.)
+// Lives here, not in a screen, so CHAIN/FUSE (SoloShell) and SAT RUSH (SatRushResults) can't drift.
+export const MORE_MODES = Math.max(1, GAMES.length - 1);

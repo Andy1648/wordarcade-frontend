@@ -3,12 +3,17 @@
 // a boundary or lets a single word blow past the cap breaks the build here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   buildRarityIndex,
   wordRarity,
   bandForRank,
   lengthBonus,
   RARITY_MAX_MULT,
+  bumpRarity,
+  SAT_DECK_MEAN_RARITY,
+  TYPIST_MEAN_RARITY,
+  satRarityMult,
 } from './rarity.js';
 
 // A tiny synthetic frequency corpus: rank === index. We place known words at exact ranks so the
@@ -93,4 +98,81 @@ test('safe defaults: empty word / missing index → COMMON, silent, ×1 (never t
 test('case/whitespace-insensitive lookup', () => {
   const idx = idxWith([['ccccc', 20000]]);
   assert.equal(wordRarity('  CCCCC  ', idx).band, 'RARE');
+});
+
+// ---- bumpRarity — the LINGUIST mark's "one rarity tier higher" (feat/progression-clarity) ----
+test('bumpRarity steps a word up ONE band and keeps its length bonus', () => {
+  const idx = buildRarityIndex(['the', 'cat', 'dog']);
+  const common = wordRarity('the', idx);
+  assert.equal(common.band, 'COMMON');
+  const up = bumpRarity(common);
+  assert.equal(up.band, 'UNCOMMON');
+  assert.equal(up.bumped, true);
+  // The promise is a better BAND, not a different word: the length ratio is carried across.
+  assert.ok(Math.abs(up.lengthMult - common.lengthMult) < 1e-9);
+  assert.ok(up.mult > common.mult);
+  // ...and the LABEL moves with it, so the feed tag and the payout agree about what the word was.
+  assert.equal(up.announce, true);
+  assert.ok(up.label.startsWith('UNCOMMON'));
+});
+
+test('bumpRarity stops at OBSCURE and never exceeds the rarity ceiling', () => {
+  const idx = buildRarityIndex(['the']);
+  const obscure = wordRarity('zymurgy', idx); // not in the corpus → OBSCURE
+  assert.equal(obscure.band, 'OBSCURE');
+  const up = bumpRarity(obscure);
+  assert.equal(up.band, 'OBSCURE', 'already the top band — unchanged');
+  assert.ok(up.mult <= RARITY_MAX_MULT);
+  // A long word at the top band is still capped after a bump.
+  const longObscure = wordRarity('sesquipedalian', idx);
+  assert.ok(bumpRarity(longObscure).mult <= RARITY_MAX_MULT);
+});
+
+test('bumpRarity is guarded: no rarity object in, nothing out', () => {
+  assert.equal(bumpRarity(null), null);
+  assert.equal(bumpRarity(undefined), undefined);
+});
+
+// ---------------------------------------------------------------------------------------------
+// SAT RUSH rarity normalisation (the double-count fix).
+test('SAT_DECK_MEAN_RARITY still matches the SHIPPED deck (recomputed, not trusted)', () => {
+  // The constant exists so the live game does not have to load + average 956 words at runtime.
+  // That makes it a cached measurement, and a cached measurement drifts the moment somebody adds
+  // words to the deck — silently changing every SAT payout. So recompute it here from the same
+  // files the game ships and fail if the cache has moved more than a rounding step.
+  const recall = readFileSync(
+    new URL('../solo/words.recall.txt', import.meta.url), 'utf8',
+  ).split(' ');
+  const idx = buildRarityIndex(recall);
+  const deck = JSON.parse(
+    readFileSync(new URL('../data/satRush/words.json', import.meta.url), 'utf8'),
+  ).map((x) => x.word);
+  const mean = deck.reduce((a, w) => a + wordRarity(w, idx).mult, 0) / deck.length;
+  assert.ok(
+    Math.abs(mean - SAT_DECK_MEAN_RARITY) < 0.05,
+    `SAT deck mean rarity is now ${mean.toFixed(4)}, but SAT_DECK_MEAN_RARITY is `
+    + `${SAT_DECK_MEAN_RARITY}. The deck changed — update the constant AND re-run `
+    + `claude/econ-visible-sim.mjs, because SAT's whole payout scales off it.`,
+  );
+});
+
+test('satRarityMult: a typical SAT word is worth a typical TYPIST word, not x1', () => {
+  // THE BASIS MATTERS AND IT CHANGED. Dividing by the deck mean alone pinned a typical SAT word
+  // at 1.00 — but the double count was the EXCESS over what other modes collect, not SAT's whole
+  // rarity contribution. Other modes average TYPIST_MEAN_RARITY per word, so that is the level
+  // SAT must be normalised to; 1.00 was an over-correction in the opposite direction, and it made
+  // the cross-mode fit unsatisfiable.
+  const typical = satRarityMult(SAT_DECK_MEAN_RARITY);
+  assert.ok(
+    Math.abs(typical - TYPIST_MEAN_RARITY) < 1e-9,
+    `a typical SAT word should be worth ${TYPIST_MEAN_RARITY}, got ${typical}`,
+  );
+  // Variance survives: harder pays more, easier pays less.
+  assert.ok(satRarityMult(4.5) > typical, 'the rarest SAT word must pay above a typical one');
+  assert.ok(satRarityMult(1.5) < typical, 'the most common SAT word must pay below a typical one');
+  // And it is BOUNDED well under the raw multiplier it replaces — that gap is the double count.
+  assert.ok(satRarityMult(4.5) < 2, 'normalised SAT rarity must stay near a typist word, not 4.5');
+  // Bad input falls back to a TYPICAL word, never to an invented multiplier.
+  assert.equal(satRarityMult(0), typical);
+  assert.equal(satRarityMult(NaN), typical);
 });

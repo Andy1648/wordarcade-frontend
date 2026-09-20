@@ -4,6 +4,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   need,
+  CURVE_BASE,
+  CURVE_BREAK,
+  EARLY_CURVE_EXP,
+  TOP_CURVE_EXP,
+  REBIRTH_MULT_BASE,
   round10,
   levelFromXp,
   creditXp,
@@ -14,7 +19,6 @@ import {
   XP_MULTIPLIERS,
   xpPerInput,
   xpPerWord,
-  awardWordXp,
   cappedWordMult,
   PER_WORD_MULT_CAP,
   rebirthThreshold,
@@ -31,6 +35,10 @@ import {
   progressOf,
   XP_KEY,
 } from './xp.js';
+// awardWordXp MOVED to wins.js in Economy v8: one accepted word is one award event with one
+// multiplier stack, so the function that performs it sits where momentum and the mark's wins
+// effect are visible. It is still tested here, next to the curve it credits into.
+import { awardWordXp } from './wins.js';
 
 // A fresh in-memory localStorage installed as the global for a test body.
 function withStorage(seed, fn) {
@@ -64,6 +72,18 @@ test('cappedWordMult multiplies rarity×combo×lucky and clips at the ×40 cap',
   assert.equal(cappedWordMult(0, -1, NaN), 1); // garbage factors default to ×1 each
 });
 
+test('xpPerWord: difficulty and bonus are pass-through multipliers, ×1 by default', () => {
+  const o = { mode: 'word-bomb', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 };
+  const flat = xpPerWord(o);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 1, bonusMult: 1 }), flat);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 2 }), round10(flat * 2));
+  assert.equal(xpPerWord({ ...o, bonusMult: 1.5 }), round10(flat * 1.5));
+  assert.equal(xpPerWord({ ...o, difficultyMult: 2, bonusMult: 1.5 }), round10(flat * 3));
+  // Garbage is guarded to ×1, never NaN.
+  assert.equal(xpPerWord({ ...o, difficultyMult: 0, bonusMult: -1 }), flat);
+  assert.equal(xpPerWord({ ...o, difficultyMult: undefined, bonusMult: NaN }), flat);
+});
+
 test('xpPerWord: menu-value of the letters × mode mult × weight (playing is ≥2× the menu)', () => {
   // R0/T0: keyTierXp(0)=10. A 5-letter COMMON word.
   const menuWord = 5 * xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 }); // 5×10 = 50
@@ -83,12 +103,15 @@ test('awardWordXp persists the grant to the level state', () => {
   withStorage({}, () => {
     const before = loadProgress();
     assert.equal(before.level, 1);
-    const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
+    const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, masteryMult: 1, wordLength: 5, weight: 1 });
     assert.equal(res.gain, 250); // fuse ×5, 5 letters
     const after = loadProgress();
-    // 250 XP > need(1)=120 → carried to LV2 with 130 into it (250-120).
-    assert.equal(after.level, 2);
-    assert.equal(after.intoLevel, 130);
+    // ECONOMY v8: need(1) is 600. A level is FOUR five-letter Word Bomb words on CRAZY, not the
+    // fourteen v7's 2,000 base asked for — the first twenty minutes are where a progression
+    // system has to prove it exists. One 5-letter FUSE word is still not a whole level.
+    assert.equal(need(1), 600);
+    assert.equal(after.level, 1);
+    assert.equal(after.intoLevel, 250);
   });
 });
 
@@ -102,34 +125,77 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
   for (const v of [0, 25, 125, 156.25, 305.17, 999.99]) assert.equal(round10(v) % 10, 0);
 });
 
-// ---- level cost curve (Economy v6 — properly exponential where people play) ----
-test('need() matches the published early levels 120/160/200/240/310/380/480', () => {
-  // n<=60: round10(100·1.25^n). These are the spec's illustrative first-level costs.
-  assert.equal(need(1), 120);
-  assert.equal(need(2), 160);
-  assert.equal(need(3), 200);
-  assert.equal(need(4), 240);
-  assert.equal(need(5), 310);
-  assert.equal(need(6), 380);
-  assert.equal(need(7), 480);
+// ---- level cost curve (Economy v8 — one shape that only ever STEEPENS) ----
+// The v6 defect is still pinned below (a tail that got CHEAPER per level). What changed in v8 is
+// the scale: base 2,000 -> 600, exponents 1.085/1.135 -> 1.16/1.22, break LV100 -> LV30, and the
+// exponent indexes off n-1 so CURVE_BASE is need(1) exactly instead of a number nobody pays.
+test('need() matches the published Economy v8 early levels', () => {
+  // Literals, not derived from the constants under test — a test that restates the
+  // implementation passes whatever the implementation says.
+  assert.equal(need(1), 600); // FOUR words at a fresh profile
+  assert.equal(need(2), 700);
+  assert.equal(need(3), 810);
+  assert.equal(need(7), 1460);
+  assert.equal(need(10), 2280);
+  assert.equal(need(30), 44410); // the last level before the break
+  // CURVE_BASE IS need(1) ITSELF. v7 indexed off n, so its "base" was never a cost anyone paid.
+  assert.equal(need(1), CURVE_BASE);
+  // Every early level costs MORE than the one before it by a visible step.
+  for (let n = 1; n < 60; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
 });
 
-test('need() eases from 1.25 (early) to a 1.08 tail above LV60, keeping LV600 in range', () => {
-  // Below the break each level grows ~1.25×.
+test('THE TAIL IS STEEPER THAN THE HEAD — the v6 defect, pinned so it cannot come back', () => {
+  // This is the whole point of the refit. v6 eased 1.25 -> 1.08 at LV60, so each level past the
+  // break was cheaper IN REAL TERMS than the one before while Key Power / rebirth / momentum kept
+  // compounding income. A curve may harden; it may never soften.
+  assert.ok(TOP_CURVE_EXP > EARLY_CURVE_EXP, 'the tail exponent must EXCEED the early one');
   const early = need(30) / need(29);
-  assert.ok(early > 1.24 && early < 1.26, `early ratio ${early}`);
-  // need(60) is the break value; the tail is need(60)·1.08^(n-60).
-  assert.equal(need(60), round10(100 * Math.pow(1.25, 60)));
-  const tail = need(100) / need(99);
-  assert.ok(tail > 1.07 && tail < 1.09, `tail ratio ${tail}`);
-  assert.ok(need(61) > need(60));
-  // The gentle tail keeps LV600's cost finite and representable (not the runaway 1.11 top).
+  assert.ok(early > 1.155 && early < 1.165, `early ratio ${early}`); // 1.16
+  assert.equal(need(CURVE_BREAK), round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1)));
+  const tail = need(150) / need(149);
+  assert.ok(tail > 1.215 && tail < 1.225, `tail ratio ${tail}`); // 1.22
+  // Sampled across the whole published range: per-level growth NEVER falls.
+  let prev = 0;
+  for (const n of [10, 25, 29, 31, 50, 99, 150, 200, 300, 500]) {
+    const g = need(n) / need(n - 1);
+    // 1e-6, not 1e-9: above ~LV150 need(n) is a float well past 2^53 and round10's snap is
+    // below the representable step, so consecutive ratios wobble in the 8th decimal. The claim
+    // is "the curve never softens", not "float division is exact".
+    // 1e-4, not 1e-6, after the item-5 re-fit. round10 snaps to a multiple of ten, so the RELATIVE
+    // size of that snap grows as need(n) shrinks -- and easing the early exponent 1.115 -> 1.085
+    // made every early value smaller. Measured: LV99 wobbles by 2.3e-5, which tripped a 1e-6 bound
+    // on a perfectly healthy curve. The claim is "the curve never softens", not "float division
+    // is exact"; 1e-4 is two orders above the quantization noise and three below any real easing
+    // (v6's defect was 1.25 -> 1.08, a fall of 0.17).
+    assert.ok(g >= prev - 1e-4, `growth fell at LV${n}: ${g} < ${prev}`);
+    prev = g;
+  }
   assert.ok(Number.isFinite(need(600)) && need(600) > need(300));
 });
 
 test('every level requirement is divisible by 10 (through the exact-integer range)', () => {
-  // round10 forces %10===0 by construction; verified where need(n) stays below 2^53 (~LV250).
-  for (let n = 1; n <= 250; n++) assert.equal(need(n) % 10, 0, `need(${n})=${need(n)}`);
+  // round10 forces %10===0 by construction; verified where need(n) stays below 2^53. The v8
+  // curve is steeper, so it reaches 2^53 at LV161 (v7 did around LV190) — past that the value is
+  // a float and "%10" is a statement about binary rounding, not about the economy.
+  for (let n = 1; n <= 160; n++) assert.equal(need(n) % 10, 0, `need(${n})=${need(n)}`);
+  assert.ok(need(161) > Number.MAX_SAFE_INTEGER, 'the exact-integer range is checked to its edge');
+});
+
+// THE HEADLINE NUMBER OF THE v8 RETUNE, pinned on its own so a retune has to come here first.
+test('need(1) is 600 — a level is four words at a fresh profile', () => {
+  assert.equal(need(1), 600);
+  // The word that makes it four: 5 letters, Word Bomb (×2), CRAZY (medium ×1.5), T0, R0.
+  const word = xpPerWord({
+    mode: 'word-bomb',
+    keyTier: 0,
+    rebirthCount: 0,
+    streakMult: 1,
+    wordLength: 5,
+    weight: 1,
+    difficultyMult: 1.5,
+  });
+  assert.equal(word, 150);
+  assert.equal(Math.ceil(need(1) / word), 4);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -151,17 +217,18 @@ test('keyTierXp: the hardcoded XP-per-letter table, ×2.5 past T8', () => {
 });
 
 test('keyTierCostAt: the published cost-to-reach table (T0 free), ×6 past T8', () => {
-  // Post-rebalance (sim/rebalance-2): every cost ×0.18 of the old table, still exactly ×6 per tier.
-  const costs = [0, 90, 540, 3240, 19440, 116640, 699840, 4199040, 25194240];
+  // PRICES /10 (Economy v8), landing T1 on a clean 10 so the ladder is exactly 10 · 6^(t-1).
+  const costs = [0, 10, 60, 360, 2160, 12960, 77760, 466560, 2799360];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t), c, `T${t} cost`));
-  // Past T8 the cost keeps going ×6, round10: 25194240×6 = 151,165,440.
-  assert.equal(keyTierCostAt(9), round10(25194240 * 6));
+  for (let t = 1; t < costs.length; t++) assert.equal(costs[t], 10 * Math.pow(6, t - 1), `T${t} is on the ×6 ladder`);
+  // Past T8 the cost keeps going ×6, round10.
+  assert.equal(keyTierCostAt(9), round10(2799360 * 6));
 });
 
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
-  assert.equal(keyTierCost(0), 90); // standing at T0, buying T1 costs 90
-  assert.equal(keyTierCost(3), 19440); // at T3, T4 costs 19,440
-  assert.equal(keyTierCost(7), 25194240); // at T7, T8 costs 25,194,240
+  assert.equal(keyTierCost(0), 10); // standing at T0, buying T1 costs 10
+  assert.equal(keyTierCost(3), 2160); // at T3, T4 costs 2,160
+  assert.equal(keyTierCost(7), 2799360); // at T7, T8 costs 2,799,360
 });
 
 test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
@@ -206,8 +273,9 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
 test('the XP stack (single source): key tier × mode × rebirth', () => {
   // tier 0 (10 XP/letter) + menu (×1) + R0 (×1) = 10.
   assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0 }), 10);
-  // tier 2 (60 XP/letter) + sat-rush (×3) + R1 (×1.5) = 60·3·1.5 = 270.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 270);
+  // tier 2 (60 XP/letter) + sat-rush (×3) + R1. R1 is ×3 in v7 (it was a ×1.5 table entry) →
+  // 60·3·3 = 540. The stack is unchanged; only the rebirth term's VALUE moved.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 540);
   // tier 4 (375 XP/letter) at menu R0, snapped ×10 → 380.
   assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0 }), round10(375));
 });
@@ -240,17 +308,25 @@ test('rebirth gate table: R1 LV15 … R20 LV600, then +50 levels per rebirth', (
   assert.equal(rebirthThreshold(21), 700); // R22
 });
 
-test('rebirth multiplier table: R1 ×1.5 … R20 ×1e11, then ×10 per rebirth', () => {
+// UPDATED FROM v6, which tabled the multiplier: R1 ×1.5, R2 ×2 … R10 ×10, then a cliff to ×100
+// at R11. The first rebirth was worth HALF a level's income in exchange for wiping the level bar,
+// and the steps that were worth having sat behind LV225+. v7 is one exponential, 3^rc, so every
+// step is the same meaningful factor and the first one triples your income.
+test('rebirth multiplier: a clean 3^rebirths exponential, no table and no cliff', () => {
   assert.equal(rebirthMult(0), 1); // no rebirths yet
-  assert.equal(rebirthMult(1), 1.5); // R1
-  assert.equal(rebirthMult(2), 2); // R2
-  assert.equal(rebirthMult(9), 8); // R9
-  assert.equal(rebirthMult(10), 10); // R10
-  assert.equal(rebirthMult(11), 100); // R11
-  assert.equal(rebirthMult(19), 1e10); // R19
-  assert.equal(rebirthMult(20), 1e11); // R20
-  assert.equal(rebirthMult(21), 1e12); // R21 = ×10 past R20
-  assert.equal(rebirthMult(22), 1e13); // R22
+  assert.equal(rebirthMult(1), 3); // R1  — v6 paid ×1.5
+  assert.equal(rebirthMult(2), 9);
+  assert.equal(rebirthMult(3), 27);
+  assert.equal(rebirthMult(5), 243);
+  assert.equal(rebirthMult(10), 59049); // v6 paid ×10 here
+  assert.equal(rebirthMult(20), Math.pow(3, 20));
+  // Every step is the SAME factor — the property v6's table did not have.
+  for (let rc = 1; rc < 25; rc++) {
+    assert.ok(Math.abs(rebirthMult(rc + 1) / rebirthMult(rc) - REBIRTH_MULT_BASE) < 1e-9, `step at R${rc}`);
+  }
+  // Negative / garbage counts read as R0, never NaN.
+  assert.equal(rebirthMult(-3), 1);
+  assert.equal(rebirthMult(undefined), 1);
 });
 
 test('rebirth is refused at LV14 and allowed at LV15', () => {
@@ -295,12 +371,13 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/rebirths+1', () => {
 });
 
 test('creditXp reports a level-up exactly when the boundary is crossed', () => {
-  // 100 into L1 + 20 = 120 = need(1)=120 → carries to L2 with 0 into it (Economy v6 curve).
-  const a = creditXp({ level: 1, intoLevel: 100 }, 20);
+  // Written against need() rather than the literal cost, so the curve can be retuned without
+  // this test having to be edited again (it is about the CARRY, not about the v7 numbers).
+  const a = creditXp({ level: 1, intoLevel: need(1) - 20 }, 20);
   assert.equal(a.state.level, 2);
   assert.equal(a.state.intoLevel, 0);
   assert.equal(a.leveledUp, true);
-  // 10 into L2 + 10 = 20, still below need(2)=160 → no level-up.
+  // Well short of need(2) → no level-up.
   const b = creditXp({ level: 2, intoLevel: 10 }, 10);
   assert.equal(b.leveledUp, false);
   assert.equal(b.state.level, 2);
@@ -448,8 +525,9 @@ test('levelFromXp caps instead of overflowing on a huge legacy value', () => {
 test('rebirthScaledWins = the amount actually PAID (Collection/Achievement quotes must match)', () => {
   // R0 pays the base; a rebirthed player is paid (and now shown) base × the rebirth multiplier.
   assert.equal(rebirthScaledWins(5000, 0), 5000);
-  assert.equal(rebirthScaledWins(5000, 1), Math.round(5000 * rebirthMult(1))); // 7500 at ×1.5
-  assert.equal(rebirthScaledWins(5000, 1), 7500);
+  assert.equal(rebirthScaledWins(5000, 1), Math.round(5000 * rebirthMult(1)));
+  // UPDATED (Economy v7): R1 is ×3, not the old table's ×1.5 — so the same flat reward pays 15000.
+  assert.equal(rebirthScaledWins(5000, 1), 15000);
   // Guarded input.
   assert.equal(rebirthScaledWins(undefined, 0), 0);
 });

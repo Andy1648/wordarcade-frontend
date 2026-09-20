@@ -1,0 +1,138 @@
+{
+  "vw": 320,
+  "vh": 640,
+  "items": [
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-shop \"SHOP\"",
+      "rect": {
+        "x": 205,
+        "y": 25,
+        "w": 73,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-rebirth \"REBIRTH\"",
+      "rect": {
+        "x": 175,
+        "y": 77,
+        "w": 103,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-nav-btn.is-stats \"STATS\"",
+      "rect": {
+        "x": 193,
+        "y": 129,
+        "w": 85,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.audio-btn \"🔊\"",
+      "rect": {
+        "x": 234,
+        "y": 181,
+        "w": 44,
+        "h": 44
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card.featured \"WORDFEATUREDSOLO/MULTIWORD B\"",
+      "rect": {
+        "x": 62,
+        "y": 234,
+        "w": 58,
+        "h": 78
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"???AI JUDGEDSOLO/MULTICATEGO\"",
+      "rect": {
+        "x": 131,
+        "y": 234,
+        "w": 58,
+        "h": 78
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"5×SATSAT RUSHSOLOLIMITED610 \"",
+      "rect": {
+        "x": 200,
+        "y": 234,
+        "w": 58,
+        "h": 78
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"ERSOLOCHAIN960 WINS / WORD (\"",
+      "rect": {
+        "x": 62,
+        "y": 322,
+        "w": 58,
+        "h": 78
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "div.game-card \"AINSOLOFUSE960 WINS / WORD (\"",
+      "rect": {
+        "x": 131,
+        "y": 322,
+        "w": 58,
+        "h": 78
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-btn.homepage-btn-join \"JOIN ROOM\"",
+      "rect": {
+        "x": 83,
+        "y": 472,
+        "w": 154,
+        "h": 46
+      },
+      "flags": []
+    },
+    {
+      "kind": "tap",
+      "what": "button.homepage-credits-link \"CREDITS\"",
+      "rect": {
+        "x": 108,
+        "y": 558,
+        "w": 105,
+        "h": 49
+      },
+      "flags": []
+    },
+    {
+      "kind": "readout",
+      "what": "span.menu-xp-track \"0 / 52.3K\"",
+      "rect": {
+        "x": 50,
+        "y": 100,
+        "w": 116,
+        "h": 44
+      },
+      "flags": []
+    }
+  ]
+}

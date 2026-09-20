@@ -177,17 +177,41 @@ export default function PublicRoomsScreen({
         <label className="browser-field-label" htmlFor="browser-code-input">
           ROOM CODE
         </label>
+        {/* N SLOTS, ONE PER CODE CHARACTER — ported from LobbyScreen, which is where this
+            treatment landed but never rendered (its join branch is gated on mode === 'join'
+            and nothing sets that). This is the screen a friend actually types a code into.
+            It is still ONE input, so paste, autofill and the mobile keyboard all behave: the
+            field is transparent and stretched across the slots, and the slots underneath render
+            the value. Not display:none / width:0 — a browser refuses to focus those, and a
+            refused focus is a phone with no keyboard. Tapping anywhere focuses the real field. */}
         <div className="browser-code-row">
-          <input
-            id="browser-code-input"
-            className="browser-code-input"
-            type="text"
-            placeholder="XXXXX"
-            value={codeInput}
-            onChange={handleCodeChange}
-            onKeyDown={handleCodeKeyDown}
-            maxLength={ROOM_CODE_LENGTH}
-          />
+          <div
+            className="browser-code-slots"
+            onClick={() => document.getElementById('browser-code-input')?.focus()}
+          >
+            {Array.from({ length: ROOM_CODE_LENGTH }).map((_, i) => (
+              <span
+                key={i}
+                className={`browser-code-slot${codeInput.length === i ? ' is-next' : ''}`}
+                aria-hidden="true"
+              >
+                {codeInput[i] || ''}
+              </span>
+            ))}
+            <input
+              id="browser-code-input"
+              className="browser-code-input"
+              type="text"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="one-time-code"
+              aria-label={`Room code, ${ROOM_CODE_LENGTH} characters`}
+              value={codeInput}
+              onChange={handleCodeChange}
+              onKeyDown={handleCodeKeyDown}
+              maxLength={ROOM_CODE_LENGTH}
+            />
+          </div>
           <button
             className="browser-code-join-btn"
             onClick={handleJoinByCode}

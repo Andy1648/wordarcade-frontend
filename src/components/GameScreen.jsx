@@ -1,22 +1,32 @@
 // GameScreen.jsx
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
+import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
+import MissedWordHold from './MissedWordHold.jsx';
+import { loadGlossary, glossFor } from '../progress/glossary.js';
+import { exampleContaining } from '../progress/teachExample.js';
+import { WordPayout, RoundPayout } from './PayoutBreakdown';
+// THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
+// for the first words of every round and said nothing about the multipliers the player had built.
+import LiveStack from './LiveStack';
+import WordLanding, { hasLanding } from './WordLanding';
 import {
   burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
-import { ShareBar } from '../share';
-import CopyResultButton from '../share/CopyResultButton.jsx';
+import { applyRingSize } from './wbRingSize';
+import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
+import TryModeRow from '../share/TryModeRow.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
@@ -210,7 +220,9 @@ function HypePopup() {
   const [look] = useState(() => ({
     word: HYPE_WORDS[Math.floor(Math.random() * HYPE_WORDS.length)],
     color: HYPE_COLORS[Math.floor(Math.random() * HYPE_COLORS.length)],
-    rotation: Math.floor(Math.random() * 31) - 15, // -15deg..15deg
+    // +-5deg, not +-15. Rotation is what made the old banner enormous: tilting a wide line adds
+    // bounding-box height in proportion to its width, and this used to be a 900px line.
+    rotation: Math.floor(Math.random() * 11) - 5,
   }));
 
   if (done) return null;
@@ -227,25 +239,6 @@ function HypePopup() {
   );
 }
 
-/**
- * RARITY (word-value) pop: the tier label ("RARE ×2.5") in the tier colour, shown under the
- * hype word on an accepted answer rare enough to announce (UNCOMMON+). Re-keyed per accept so it
- * replays; removes itself on animation end. Purely decorative (aria-hidden, pointer-events:none).
- */
-function RarityPopup({ rarity }) {
-  const [done, setDone] = useState(false);
-  if (done || !rarity) return null;
-  return (
-    <div
-      className="rarity-popup"
-      style={{ color: rarity.color }}
-      onAnimationEnd={() => setDone(true)}
-      aria-hidden="true"
-    >
-      {rarity.label}
-    </div>
-  );
-}
 
 /**
  * A throwaway "+1" that floats up and fades near the input on each accepted
@@ -379,7 +372,7 @@ function SubmitLetters({ text, mode }) {
  * trails the text. This is a READOUT only - it is never the field the user types
  * into, so we never animate the user's own keystrokes mid-entry.
  */
-function LiveTypeText({ text }) {
+function LiveTypeText({ text, caret = true }) {
   const up = (text || '').toUpperCase();
   const len = up.length;
   const prevLenRef = useRef(0);
@@ -401,10 +394,64 @@ function LiveTypeText({ text }) {
           </span>
         );
       })}
-      <span className="typing-cursor">|</span>
+      {caret && <span className="typing-cursor">|</span>}
     </span>
   );
 }
+
+/**
+ * Opponent status line (feat/wb-bot-turn). While it was another player's turn their card sat
+ * silent (a dimmed "..."), so the bot's 2.3-4.3s think read as a stall. Now the current
+ * opponent's card always says what is happening:
+ *   bot   -> "THINKING" + a 3-dot Bungee ellipsis that advances one dot per 400ms. The dots are
+ *            an OPACITY SWAP on three spans driven by ONE setInterval (cleared on unmount, i.e.
+ *            turn end) — no keyframes on the card, no infinite animation. Reduced motion: static.
+ *   human -> "TYPING…" while a typing_update is live, else "THEIR TURN".
+ * Never silent.
+ */
+const DOTS_STEP_MS = 400;
+function ThinkingDots() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const reduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      setStep(2);
+      return undefined;
+    }
+    const id = window.setInterval(() => setStep((v) => (v + 1) % 3), DOTS_STEP_MS);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <span className="player-status-dots" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={i <= step ? 'dot is-on' : 'dot'}>
+          .
+        </span>
+      ))}
+    </span>
+  );
+}
+function OpponentStatus({ kind }) {
+  if (kind === 'thinking') {
+    return (
+      <div className="player-status is-thinking" aria-label="Thinking">
+        THINKING
+        <ThinkingDots />
+      </div>
+    );
+  }
+  if (kind === 'typing') return <div className="player-status is-typing">TYPING…</div>;
+  return <div className="player-status">THEIR TURN</div>;
+}
+
+// Bot word reveal pacing: letters land at REVEAL_MS_PER_CHAR, the whole word within
+// REVEAL_MAX_MS, then the typed word holds REVEAL_HOLD_MS before the line clears.
+const REVEAL_MS_PER_CHAR = 45;
+const REVEAL_MAX_MS = 500;
+const REVEAL_HOLD_MS = 450;
 
 /**
  * The "CLUTCH!" slam shown instead of the normal hype word when a correct answer
@@ -808,7 +855,16 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   const [flameX, flameY] = fusePointAt(ratio);
   const flameScale = FLAME_SCALE[tension];
 
-  // Timer number: white -> red -> white-with-red-stroke, growing each tier.
+  // FUSE COLOUR ESCALATION (feat/wb-ring): the rope itself carries the tension, so the
+  // clock reads from across the room without looking at a number - yellow while there is
+  // time, orange as it tightens, red when it is nearly out.
+  const fuseColor = tension === 'calm' ? '#FFE94A' : tension === 'warning' ? '#FF6B3D' : '#FF4B4B';
+
+  // NUMERIC READOUT: only in the last 5 seconds. The fuse already carries the proportion
+  // for the whole turn, so a number on screen the entire time is noise that competes with
+  // the fragment. 5s is the natural threshold - the server resets to a 5s minimum turn
+  // after a valid word, so under 5s is exactly "this could end now".
+  const showSeconds = !showCountdown && timerSeconds <= 5;
   const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
   const numStroke = critical ? '#FF5C5C' : '#000';
   const numStrokeWidth = critical ? 4 : 3;
@@ -842,19 +898,56 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
               className="bomb-fuse"
               d={FUSE_PATH}
               fill="none"
-              stroke="#8B6914"
+              stroke={fuseColor}
               strokeWidth="3"
               strokeLinecap="round"
               pathLength="100"
               strokeDasharray="100"
               strokeDashoffset={fuseDashoffset}
+              style={{ transition: 'stroke 400ms linear' }}
+            />
+
+            {/* ---- SECOND READ OF THE SAME VALUE: a ring around the mascot that
+                 empties exactly like the fuse. Two independent encodings of one
+                 number (arc length + fuse length) means the clock still reads if
+                 the fuse tip is behind the flame or off the edge of a small card.
+                 Same pathLength trick, same ratio, same escalating colour. ---- */}
+            <circle
+              className="bomb-ring-track"
+              cx="80"
+              cy="105"
+              r="62"
+              fill="none"
+              stroke="#000"
+              strokeWidth="7"
+              opacity="0.35"
+            />
+            <circle
+              className="bomb-ring-fill"
+              cx="80"
+              cy="105"
+              r="62"
+              fill="none"
+              stroke={fuseColor}
+              strokeWidth="5"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="100"
+              strokeDashoffset={fuseDashoffset}
+              transform="rotate(-90 80 105)"
+              style={{ transition: 'stroke 400ms linear' }}
             />
 
             {/* (The mascot <image> above is the bomb body now - no SVG body/face.) */}
 
-            {/* ---- Live seconds, sitting over the mascot's belly. ---- */}
+            {/* ---- Live seconds, sitting over the mascot's belly. Only present in the
+                 final 5 seconds (see showSeconds). Re-keyed on the second so the CSS
+                 one-shot hard pulse (a discrete scale STEP, never a smooth throb)
+                 replays on each tick. ---- */}
+            {showSeconds && (
             <text
-              className={critical ? 'bomb-num-pulse' : undefined}
+              key={timerSeconds}
+              className="bomb-num-tick"
               x="80"
               y="116"
               textAnchor="middle"
@@ -869,6 +962,7 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
             >
               {timerSeconds}
             </text>
+            )}
 
             {/* ---- Flame + sparks, glued to the burning tip. The position group
                  eases its translate over 1s so it tracks the smooth fuse. ---- */}
@@ -965,6 +1059,14 @@ function ExplosionEffect() {
 // How many feed rows are visible at once; older events stay in the array (full
 // history) but scroll out of the rendered window under a fade mask.
 const FEED_MAX_VISIBLE = 8;
+// The used-word list grows unbounded all game and is reconciled on every keystroke; this
+// is the ceiling on how many chips we would ever build nodes for. How many are actually
+// SHOWN is the rail fit's call (wbRailFit), and it is always a whole number of chips.
+const USED_MAX_VISIBLE = 24;
+// ...and the ceiling in the phone stack, where the strip is a wrapping ROW under the
+// input rather than a column in a rail: enough to read as a list, few enough to stay
+// within two lines of a 320px board.
+const USED_STACK_VISIBLE = 6;
 
 /**
  * Word Bomb's live kill feed: a scrolling log of game events shown to the side
@@ -978,10 +1080,14 @@ const FEED_MAX_VISIBLE = 8;
  * pushes it down - only the freshly-added row mounts and replays the slide-in,
  * and the one scrolling off the end unmounts.
  */
-function KillFeed({ events, playerColors = {} }) {
+function KillFeed({ events, playerColors = {}, maxRows }) {
   const list = events || [];
+  // The rail decides how many rows FIT (see wbRailFit); FEED_MAX_VISIBLE is only the
+  // ceiling on how many we would ever want to draw. Whole rows either way - a feed that
+  // ends in half an event reads as a rendering fault, not as a taper.
+  const budget = Math.max(0, Math.min(FEED_MAX_VISIBLE, maxRows ?? FEED_MAX_VISIBLE));
   const visible = [];
-  for (let i = list.length - 1; i >= 0 && visible.length < FEED_MAX_VISIBLE; i--) {
+  for (let i = list.length - 1; i >= 0 && visible.length < budget; i--) {
     visible.push({ ev: list[i], idx: i });
   }
 
@@ -1481,11 +1587,26 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // so far, ticking up as answers are accepted (fixed, pointer-events:none so it never blocks
 // play; hidden until the payout gate of 3 words is crossed). The earned block shows the run's
 // total on the game-over card, large. Both are purely presentational.
+// The height the word-landing reaction needs above the field on a STACKED board, plus a little
+// air. On this layout the stamp does NOT perch above the chip — under 700px WordLanding.css puts
+// it inline at `order: -1` — so the tallest tier here is the OBSCURE chip at --fs-h2, measured at
+// ~42px; 54 is that plus the slot's own breathing room.
+const REACT_H = 54;
+
 export default function GameScreen({
+  // The app's sound control, handed down as an element so this screen can host it in its header
+  // cluster without knowing anything about music or the SFX engine. See App.jsx.
+  audioSlot = null,
   gameState,
   gameType,
   gameNonce,
   cgMode = false,
+  // True ONLY for a visitor who landed here from a /word-bomb/play or /category-blitz/play deep
+  // link and has never seen the menu (App: VS_BOT_LAUNCH && !hasSeenMenu()). Adds the one-line
+  // run-over offer below REMATCH/LEAVE — the same offer CHAIN, FUSE and SAT RUSH make, for the
+  // same reason: this is the one moment a stranger is looking at a stopped screen, and they have
+  // no idea the other modes exist. Everyone who arrived via the menu gets the card unchanged.
+  offerMenu = false,
   myId,
   isHost,
   timerSeconds,
@@ -1525,6 +1646,10 @@ export default function GameScreen({
   winsTally = 0,
   winsWords = 0,
   winsEarnedTotal = 0,
+  winsBonusLines = [],
+  lastPayout = null,
+  payoutLedger = null,
+  lastLanding = null,
 }) {
   const [draft, setDraft] = useState('');
   // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
@@ -1563,8 +1688,9 @@ export default function GameScreen({
 
   // App-wide synthesized sound effects + the global SFX mute (shared via
   // SoundContext, so the header mute toggle here persists on every other screen).
-  // While muted every method is a no-op. The header speaker button flips `muted`.
-  const { sound, muted, setMuted } = useSound();
+  // While muted every method is a no-op. The mute itself is flipped from the GAME SFX row of the
+  // header's sound panel now (App owns the state via SoundContext); this screen only reads it.
+  const { sound, muted } = useSound();
 
   // onShake is recreated each App render; hold it in a ref so the sound/feedback
   // effects below can call it without listing it as a dep (which would re-fire
@@ -1607,6 +1733,161 @@ export default function GameScreen({
   // The word-prompt box, flashed on accept (the "word" — NOT the text input, which
   // DESIGN.md says never to animate). Burst is anchored at the input via inputRef.
   const comboBoxRef = useRef(null);
+
+  // ---- THE RING IS SIZED BY ITS CONTAINER, NOT BY THE VIEWPORT ----
+  // See wbRingSize.js for why this is measured rather than guessed in a media query.
+  // These four refs are the whole input: the stage box, the top stack (header +
+  // prompt), and whichever element occupies the bottom row for the current layout.
+  // The stage is held in STATE via a callback ref, not in a plain ref: GameScreen
+  // mounts before the board does (it renders the pre-turn screen first), so a
+  // `useLayoutEffect(..., [])` reading a plain ref found null and the ring was left
+  // on its CSS fallback forever - which is precisely the viewport guess this exists
+  // to replace. A callback ref re-runs the effect the moment the node attaches, and
+  // again if it is ever remounted.
+  const [wbStage, setWbStage] = useState(null);
+  // The primitives wbRailFit needs: the chrome around each rail card's list and the
+  // height of one of its rows. Measured on mount/resize ONLY (and once more the first
+  // time a card actually has a row to sample), so the per-word fit below is arithmetic
+  // on cached numbers - no layout read in an accept path. See ANIMATION BUDGET.
+  const [railMetrics, setRailMetrics] = useState(null);
+  // TRUE only on a board too narrow for the input's full placeholder — see the placeholder below.
+  // Set from the ResizeObserver pass that already sizes the ring, so it costs no listener and no
+  // layout read in a render or a keystroke path.
+  const [tinyBoard, setTinyBoard] = useState(false);
+  // Re-measure triggers for the rail metrics below. NOT data: `railSample` is a 0..3 flag
+  // for "a used chip / a feed row now exists to measure", and `railPair` is which pair of
+  // cards is mounted (2 players = used + MATCH, 3+ = feed + used). chrome/step cannot be
+  // read off an empty card, so the measurement is retaken once when the first row of each
+  // kind appears and once when the pair changes - never per word.
+  // `gameState` is null until a game exists - this hook block runs on every render of
+  // GameScreen, including the pre-game screens, so it cannot be dereferenced bare.
+  const gs = gameState || {};
+  const railSample =
+    (((gs.usedWords || []).length + (gs.usedAnswers || []).length) > 0 ? 1 : 0) +
+    ((feedEvents || []).length > 0 ? 2 : 0);
+  const railPair = (gs.players || []).length <= 2 ? 'duo' : 'many';
+
+  // ===== THE RAIL FIT =====================================================
+  // The two rail cards share ONE height: the taller of their NATURAL content heights,
+  // capped at the ring's diameter (which is by construction no taller than the row has
+  // room for). Whichever card still doesn't fit drops whole ROWS - never half of one.
+  // This replaces `--wb-railh: clamp(104px, --wb-size * 0.44, 196px)`, a fraction of the
+  // ring that knew nothing about either card: at five used words it sliced the fourth
+  // chip through the middle and cut MODE off the MATCH readout, while the area-skew gate
+  // read a perfect 0% - two equally-wrong boxes are still equal.
+  // Pure arithmetic on the cached metrics, so an accepted word costs no layout read.
+  const railUsedCount = Math.min(
+    (gs.usedWords || []).length + (gs.usedAnswers || []).length,
+    USED_MAX_VISIBLE
+  );
+  const railFeedCount = Math.min((feedEvents || []).length, FEED_MAX_VISIBLE);
+  const railFitted = useMemo(() => {
+    if (!railMetrics) return null;
+    const lists = [];
+    if (railMetrics.used) lists.push({ key: 'used', ...railMetrics.used, count: railUsedCount });
+    if (railPair !== 'duo' && railMetrics.feed) {
+      lists.push({ key: 'feed', ...railMetrics.feed, count: railFeedCount });
+    }
+    if (!lists.length) return null;
+    return railFit({
+      lists,
+      fixed: railPair === 'duo' && railMetrics.status ? [railMetrics.status] : [],
+      cap: railMetrics.cap,
+    });
+  }, [railMetrics, railUsedCount, railFeedCount, railPair]);
+
+  const wbHeadRef = useRef(null);
+  const wbTopRef = useRef(null);
+  const wbBottomRef = useRef(null);
+  const wbBarRef = useRef(null);
+  useLayoutEffect(() => {
+    const stage = wbStage;
+    if (!stage || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () =>
+      {
+        const d = applyRingSize(stage, {
+          head: wbHeadRef.current,
+          top: wbTopRef.current,
+          bottomBar: wbBarRef.current,
+          bottom: wbBottomRef.current,
+        });
+        // The rails only exist in the two-rail layout; in the phone stack the used-word
+        // strip sizes to its own content and there is nothing to match it to.
+        const rails =
+          getComputedStyle(stage).getPropertyValue('--wb-layout').trim() === 'rails';
+        setTinyBoard(!rails && stage.clientWidth < 300);
+        // The stacked board's used-words strip sits between the field and the ring, and the
+        // reaction slot has to clear it (see .wb-react in GameScreen.css). Its height is written
+        // as a custom property from this same pass; the slot is absolutely positioned, so writing
+        // it can never change what it measures.
+        const usedEl = stage.querySelector('.game-used');
+        const ringEl = stage.querySelector('.wb-ring');
+        let lift = 0;
+        if (!rails && usedEl && ringEl) {
+          const u = usedEl.getBoundingClientRect();
+          // ...but ONLY IF THE BAND ABOVE THE STRIP IS ACTUALLY EMPTY. Lifting is a choice between
+          // two overlaps, not a free win: above the strip is the ring, and on a 320x640 board the
+          // gap between the bottom seat and the strip is smaller than the chip — measured, the
+          // lifted chip covered a PLAYER CARD by 16px. Covering a seat is worse than covering the
+          // used-words list (which is the least urgent thing on the board and the list this very
+          // word is about to join), so when the gap does not fit, the reaction stays put.
+          // THE RING'S BOX IS NOT THE RING'S BOTTOM. Each seat's name label is
+          // `position: absolute; top: calc(100% + 1px)` on its seat — out of flow, hanging BELOW
+          // the ring's own rect by a line of text. Measuring the gap against the rect alone
+          // therefore judges a band "clear" that a name is already sitting in, which is the exact
+          // out-of-flow blind spot that let eight seat names draw through each other. Take the
+          // lowest of the ring and every visible name.
+          let ringBottom = ringEl.getBoundingClientRect().bottom;
+          for (const nm of stage.querySelectorAll('.wb-seat .game-player-name-text')) {
+            if (nm.offsetParent === null) continue; // display:none on a crowded tiny board
+            ringBottom = Math.max(ringBottom, nm.getBoundingClientRect().bottom);
+          }
+          const gap = u.top - ringBottom;
+          if (gap >= REACT_H) lift = Math.round(u.height);
+        }
+        stage.style.setProperty('--wb-usedh', `${lift}px`);
+        setRailMetrics(
+          rails
+            ? {
+                cap: d || 0,
+                used: measureRailCard(
+                  stage.querySelector('.game-used'),
+                  stage.querySelector('.game-used-list'),
+                  stage.querySelector('.game-used-chip'),
+                  stage.querySelector('.game-used-label')
+                ),
+                feed: measureRailCard(
+                  stage.querySelector('.kill-feed'),
+                  stage.querySelector('.kill-feed-list'),
+                  stage.querySelector('.kill-feed-row'),
+                  stage.querySelector('.kill-feed-title'),
+                  30
+                ),
+                status: measureStatusCard(stage.querySelector('.wb-status')),
+              }
+            : null
+        );
+      }
+    measure();
+    // Observe ONLY boxes that cannot be moved by --wb-size (the stage is a pinned
+    // dvh box; the stacks are full-width rows). Writing --wb-size therefore never
+    // re-triggers this observer - no resize loop.
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    if (wbHeadRef.current) ro.observe(wbHeadRef.current);
+    if (wbTopRef.current) ro.observe(wbTopRef.current);
+    if (wbBarRef.current) ro.observe(wbBarRef.current);
+    if (wbBottomRef.current) ro.observe(wbBottomRef.current);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', measure);
+    };
+    // `railSample` is not data - it is a 0/1/2 flag for "a chip / a feed row now exists
+    // to measure". The chrome+step numbers cannot be read off an empty card, so the
+    // measurement is retaken exactly once when the first row of each kind appears, and
+    // never again. Everything after that is arithmetic (see the fit below).
+  }, [wbStage, railSample, railPair]);
   // Latest personal combo, read by useHypeFeedback at accept time to scale the
   // Word Bomb burst/ring/cue. Kept fresh from `streak` (defined below) each render.
   const comboRef = useRef(0);
@@ -1643,6 +1924,13 @@ export default function GameScreen({
   // turn hands off, cleared when that 300ms animation ends.
   const [passDir, setPassDir] = useState(null);
   const prevCurrentRef = useRef(null);
+  // ---- Bot word reveal (feat/wb-bot-turn) ----
+  // { playerId, word, shown }: the bot's landed word being typed into its card, `shown` chars
+  // visible so far. null when no reveal is in flight.
+  const [botReveal, setBotReveal] = useState(null);
+  const revealPrevRef = useRef({ currentPlayerId: null, used: [] });
+  const revealIntervalRef = useRef(0);
+  const revealHoldRef = useRef(0);
   // ---- Bomb hand-off FLIGHT (Word Bomb) ----
   // The centrepiece bomb stays put; on a turn change we whip a small bomb GHOST
   // from the PREVIOUS active player's card to the NEW one so the pass is
@@ -2109,6 +2397,70 @@ export default function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, gameType]);
 
+  // ---- Bot word reveal (feat/wb-bot-turn) ----
+  // The bot's accepted word_result and the following turn_update arrive in the SAME drain
+  // (App processes the whole queue in one effect run), so lastWordResult is null again by the
+  // time this screen renders — the bot's word is never seen through that path. It IS in the
+  // turn_update: the one new entry in usedWords. When the turn moves OFF a bot and exactly one
+  // word appeared, type that word into the bot's card at REVEAL_MS_PER_CHAR (whole word within
+  // REVEAL_MAX_MS) and keep its used-words chip hidden (.is-pending, opacity only) until the last
+  // letter lands, so the 3s reads as "it was typing" and the reveal is the word appearing, not a
+  // chip materialising. Game state is never delayed: the turn, timer and chip node are all live;
+  // only the chip's opacity and the card's readout are cosmetic.
+  useEffect(() => {
+    if (!gameState || gameType !== 'word-bomb') return;
+    const prev = revealPrevRef.current;
+    const used = gameState.usedWords || [];
+    const cur = gameState.currentPlayerId;
+    revealPrevRef.current = { currentPlayerId: cur, used };
+    if (gameOver || prev.currentPlayerId == null || prev.currentPlayerId === cur) return;
+    const prevPlayer = (roomPlayers || []).find((p) => p.id === prev.currentPlayerId);
+    if (!prevPlayer || !prevPlayer.isBot) return;
+    const before = new Set(prev.used.map((w) => String(w).toLowerCase()));
+    const fresh = used.filter((w) => !before.has(String(w).toLowerCase()));
+    if (fresh.length !== 1) return;
+    const word = String(fresh[0]).toUpperCase();
+    const len = word.length;
+    if (revealIntervalRef.current) window.clearInterval(revealIntervalRef.current);
+    if (revealHoldRef.current) window.clearTimeout(revealHoldRef.current);
+    revealIntervalRef.current = 0;
+    const finish = () => {
+      revealHoldRef.current = window.setTimeout(() => {
+        revealHoldRef.current = 0;
+        setBotReveal(null);
+      }, REVEAL_HOLD_MS);
+    };
+    const reduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || len === 0) {
+      setBotReveal({ playerId: prevPlayer.id, word, shown: len });
+      finish();
+      return;
+    }
+    const stepMs = Math.min(REVEAL_MS_PER_CHAR, Math.floor(REVEAL_MAX_MS / len));
+    let shown = 0;
+    setBotReveal({ playerId: prevPlayer.id, word, shown });
+    revealIntervalRef.current = window.setInterval(() => {
+      shown += 1;
+      setBotReveal({ playerId: prevPlayer.id, word, shown });
+      if (shown >= len) {
+        window.clearInterval(revealIntervalRef.current);
+        revealIntervalRef.current = 0;
+        finish();
+      }
+    }, stepMs);
+  }, [gameState, gameType, gameOver, roomPlayers]);
+  // No reveal may outlive the screen (timer context — never set state on a gone component).
+  useEffect(
+    () => () => {
+      if (revealIntervalRef.current) window.clearInterval(revealIntervalRef.current);
+      if (revealHoldRef.current) window.clearTimeout(revealHoldRef.current);
+    },
+    []
+  );
+
   // ---- Sound effects (Word Bomb only) ----
 
   // Per-second tick. Fire only on a real countdown decrement (so the turn-start
@@ -2335,6 +2687,49 @@ export default function GameScreen({
     [gameOver]
   );
 
+  // PAUSE TO LEARN — the word that WOULD have worked.
+  // Word Bomb and Blitz end on a PROMPT the player could not satisfy, not on an answer they got
+  // wrong, so there is no word to show until we derive one. Word Bomb has no client-side
+  // dictionary (the server judges words), so the SOLO acceptance list is pulled LAZILY and only
+  // once a game is OVER: it never touches the play path, the first paint, or a player who never
+  // reaches a game-over. Blitz does not need it — the server already sends real missed answers.
+  //
+  // These hooks sit up here with the others, ABOVE the early returns, for the same reason the
+  // endBlurb note above gives: a hook after a conditional return trips React #310 and
+  // white-screens the mode the instant gameState flips from null.
+  // NOTE: `isCategory` and `combo` are declared BELOW, after the early returns — reading them
+  // here would hit their temporal dead zone and throw the moment a game ends (a runtime-only
+  // fault: the bundler cannot see it and every test that never reaches a game-over passes). They
+  // are derived from `gameType`/`gameState` directly instead, which is where they come from.
+  const missIsCategory = gameType === 'category-blitz';
+  const missCombo = (gameState && gameState.combo ? String(gameState.combo) : '').toUpperCase();
+  const [missWords, setMissWords] = useState(null);
+  const [, setGlossTick] = useState(0);
+  useEffect(() => {
+    if (!gameOver || missIsCategory) return;
+    let live = true;
+    Promise.all([
+      import('../solo/words.js').then((m) => m.loadSoloWords()),
+      loadGlossary(),
+    ])
+      .then(([d]) => { if (live) { setMissWords(d); setGlossTick((n) => n + 1); } })
+      .catch(() => { /* no list, no hold — never block a game-over */ });
+    return () => { live = false; };
+  }, [gameOver, missIsCategory]);
+
+  // Word Bomb: a real word containing the last fragment, skipping everything already played.
+  // Blitz: the server's own sample of answers nobody got — real answers, no derivation needed.
+  const missedWord = (() => {
+    if (!gameOver) return null;
+    if (missIsCategory) {
+      const sample = (roundResults && roundResults.sampleAnswers) || [];
+      return sample.length ? sample[0] : null;
+    }
+    if (!missWords || !missCombo) return null;
+    const used = new Set(((gameState && gameState.usedWords) || []).map((w) => String(w).toLowerCase()));
+    return exampleContaining(missWords.recall, missCombo, (w) => used.has(w));
+  })();
+
   // ONE-TIME first-game input spotlight (fix/logic-and-onboarding). MUST live with the other
   // hooks ABOVE the early returns below (the category-blitz branch + the null-gameState
   // "STARTING GAME" placeholder) — a hook declared AFTER a conditional return trips React #310
@@ -2361,6 +2756,8 @@ export default function GameScreen({
         // Remount per game so the solo PLAY AGAIN loop starts clean and replays
         // its countdown (the round number stays 1 across solo games).
         key={`cb-${gameNonce}`}
+        audioSlot={audioSlot}
+        offerMenu={offerMenu}
         myId={myId}
         isHost={isHost}
         timerSeconds={timerSeconds}
@@ -2389,6 +2786,10 @@ export default function GameScreen({
         winsTally={winsTally}
         winsWords={winsWords}
         winsEarnedTotal={winsEarnedTotal}
+        winsBonusLines={winsBonusLines}
+        lastPayout={lastPayout}
+        payoutLedger={payoutLedger}
+        lastLanding={lastLanding}
       />
     );
   }
@@ -2397,6 +2798,10 @@ export default function GameScreen({
   if (!gameState) {
     return (
       <div className="game-wrap">
+        {/* This screen has no header to put it in, and the app-wide fixed control is suppressed
+            for the whole game view — without this dock the player waiting here has no way to
+            reach the sound settings at all. Anchored to the board wrapper, not the viewport. */}
+        {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
         <div className="game-loading">STARTING GAME...</div>
       </div>
     );
@@ -2410,6 +2815,10 @@ export default function GameScreen({
   // and tracks used words; Category Blitz prompts with a category and
   // tracks used answers. Everything downstream reads these shared locals.
   const combo = (gameState.combo || '').toUpperCase();
+  // WHICH SEAT THE POINTER FACES. A pure read of the same players[] order the ring seats
+  // from, so the wedge's angle is computed from the identical (i / n) the seat uses. -1 when
+  // nobody is up (between rounds, game over) and the pointer simply is not rendered.
+  const turnSeatIndex = players.findIndex((p) => p.id === gameState.currentPlayerId);
   const categoryRaw = gameState.category || '';
   const usedItems = (isCategory ? gameState.usedAnswers : gameState.usedWords) || [];
 
@@ -2438,6 +2847,15 @@ export default function GameScreen({
   // The per-turn starting seconds, used by the bomb to compute its fuse ratio.
   // (Word Bomb has no timer bar - the bomb's fuse is the timer.)
   const maxTimer = gameState.timerSeconds || 1;
+
+  // Whose turn it is, as a player record - read by the <=2p right-rail readout.
+  const turnPlayer = players.find((p) => p.id === gameState.currentPlayerId) || null;
+
+  // No rail fit = the phone stack (or the frame before the first measure). There the
+  // strip WRAPS rather than sharing a height with anything, so the only cap it needs is
+  // one that keeps it to a line or two of a 320px board.
+  const usedVisible = railFitted ? railFitted.visible.used : USED_STACK_VISIBLE;
+  const feedVisible = railFitted ? railFitted.visible.feed : undefined;
 
   const winner = gameOver ? players.find((p) => p.id === gameOver.winnerId) : null;
   const iWon = !!gameOver && gameOver.winnerId === myId;
@@ -2608,7 +3026,7 @@ export default function GameScreen({
     // block audio until a user gesture). Capture phase so it fires no matter
     // what inner control is touched.
     <div
-      className="game-wrap"
+      className="game-wrap game-wrap--wb"
       data-tension={tensionTier}
       style={{ '--danger': danger.toFixed(3) }}
       onPointerDownCapture={sound.unlock}
@@ -2617,36 +3035,13 @@ export default function GameScreen({
       {/* WINS: live running tally, hidden once the game is over (the total shows there). No WPM
           pill — Word Bomb is turn-based, so typing speed there is meaningless (§2). */}
       {!gameOver && <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />}
-      {/* JUICE 02 tension skin — composited CSS layers (was a full-viewport canvas
-          repaint loop; see tension.js). All fixed, click-through, aria-hidden, and
-          driven purely by data-tension on .game-wrap: nothing here writes style per
-          frame, and every keyframe animates transform/opacity with literal values
-          only. Mounted only while a tier is active so calm has zero live layers. */}
-      {tensionTier !== 'calm' && (
-        <div className="wb-tension" aria-hidden="true">
-          {/* Edge colour-grade vignette: transparent centre → coloured edge, hue
-              stepping teal→orange→red per tier; opacity eases in per tier and the
-              element breathes via a transform-scale keyframe. */}
-          <div className="wb-tension-vignette" />
-          {/* Edge speed lines: fixed streaks hugging the L/R edges, each scrolling
-              via a transform-translateY keyframe (transform only). */}
-          <div className="wb-tension-lines">
-            {/* PERF (perf/wb-tension): 12 -> 3 speed lines. The survivors are made
-                thicker/brighter in CSS to keep the same read without the count. */}
-            {Array.from({ length: 3 }).map((_, i) => (
-              <span key={i} className="wb-tension-line" style={{ '--i': i }} />
-            ))}
-          </div>
-          {/* Centre-top prompt: HURRY! (warn) → GET OUT! (crit), pulsing via a
-              transform+opacity keyframe. Two stacked labels, shown per tier. */}
-          <div className="wb-tension-prompt">
-            <span className="wb-tension-hurry">HURRY!</span>
-            <span className="wb-tension-getout">GET OUT!</span>
-          </div>
-          {/* Final-moment throb: a soft red full-screen opacity breath at crit. */}
-          <div className="wb-tension-throb" />
-        </div>
-      )}
+      {/* THE TENSION SKIN IS GONE (Andy's cut). It was FOUR simultaneous full-viewport layers —
+          an edge vignette, three speed lines, a HURRY!/GET OUT! prompt and a red throb — stacked
+          on top of the continuous DREAD vignette below, the bomb's own fuse, the rattle, the seat
+          pulse and the timer. Five ways to say "hurry" is four too many; the vignette below says
+          it continuously and the bomb says it in the object the player is already looking at.
+          `data-tension` stays on .game-wrap: it still drives the per-tier CSS on elements that
+          remain (the bomb, the seats), and tensionSetTier() still runs. Only this overlay left. */}
       {/* Continuous DREAD vignette: a static red edge-gradient whose OPACITY rides
           --danger (the eased timer) - calm/clear early, panicking red in the final
           seconds, then snapping back to nothing the instant a word resets the clock
@@ -2732,13 +3127,29 @@ export default function GameScreen({
           players (its events just duplicate the center-stage action). */}
       <div className="game-panel">
       <div
-        className={`game-stage game-stage--wb${shake && !hitlag ? ' game-shake' : ''}${
+        ref={setWbStage}
+        className={`game-stage game-stage--wb${players.length <= 2 ? ' wb-duo' : ''}${
+          shake && !hitlag ? ' game-shake' : ''
+        }${
           boomShake && !hitlag ? ' boom-shake' : ''
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
-        style={{ '--drain-sat': drainSat }}
+        style={
+          railFitted
+            ? { '--drain-sat': drainSat, '--wb-railh': `${railFitted.height}px` }
+            : { '--drain-sat': drainSat }
+        }
       >
+        {/* POSTERISED VALUE BAND — the solo vocabulary carried over: an off-axis band across
+            the board, a violet facet above it, an accent rule and the pink brand rule. Four
+            inert divs, no animation, no pointer events, behind everything. */}
+        <div className="wb-structure" aria-hidden="true">
+          <div className="wb-band" />
+          <div className="wb-facet" />
+          <div className="wb-bandrule" />
+          <div className="wb-bandedge" />
+        </div>
         {/* Buzzer-beater colour-pop: a success-cyan wash under the CLUTCH! slam. */}
         {clutchSlow && <div className="clutch-flash" aria-hidden="true" />}
         {/* CLUTCH! replaces the normal hype word when the accept beat the buzzer.
@@ -2752,15 +3163,31 @@ export default function GameScreen({
             that was the "AWESOME! spam while typing". The stable wrapper
             (display:contents, zero layout effect) gives it a fixed reconciliation
             slot so it mounts exactly once per accept. */}
+        {/* The CLUTCH slam still owns the centre of the board — it is a rare, whole-round event
+            (you beat the buzzer), not a per-word one. The per-word HYPE moved to the field; see
+            the input row below. This wrapper stays for the same reconciliation reason it was
+            added: a bare keyed child among the stage's conditional siblings re-mounted on nearly
+            every render and re-rolled its random word ("AWESOME! spam while typing"). */}
         <div style={{ display: 'contents' }}>
-          {hypeKey > 0 && !hitlag &&
-            (clutchFlag ? <ClutchPopup key={hypeKey} /> : <HypePopup key={hypeKey} />)}
+          {hypeKey > 0 && !hitlag && clutchFlag && <ClutchPopup key={hypeKey} />}
         </div>
-        <div className="game-header">
+        {/* ===== THE HEADER IS ITS OWN GRID ROW, above the prompt. =====
+            It used to be `position:absolute; inset:0` over the prompt bar at >=900px
+            ("the header RIDES the bar"), which measured on the preview as the title,
+            LEAVE and the sound button all rendering INSIDE the 1166x135 prompt box -
+            three controls sharing a band with the hero fragment. A header is chrome;
+            it gets a row. Cost is real (every pixel between the prompt and the ring
+            is reserved twice to keep the ring centred), which is why the row is as
+            short as it can be: one line, no meta badges at <=2 players. ===== */}
+        <div className="game-header" ref={wbHeadRef}>
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
           </div>
           <div className="game-header-right">
+            {/* Always rendered. At <=2 players ON A RAILS BOARD the CSS hides it,
+                because the MATCH readout in the right rail carries ROUND and MODE
+                there (and is the weight that stops that rail being empty). The
+                phone board has no rails, so it keeps the badges here. */}
             <div className="game-meta">
               {typeof gameState.round !== 'undefined' && (
                 <span className="game-meta-round">ROUND {gameState.round}</span>
@@ -2770,17 +3197,12 @@ export default function GameScreen({
               )}
             </div>
             <div className="game-header-actions">
-              <button
-                className="game-mute-btn"
-                onClick={() => {
-                  sound.unlock();
-                  setMuted((m) => !m);
-                }}
-                title={muted ? 'Unmute sound' : 'Mute sound'}
-                aria-label={muted ? 'Unmute sound' : 'Mute sound'}
-              >
-                {muted ? '🔇' : '🔊'}
-              </button>
+              {/* The app's ONE sound control, inline in this cluster (App hands it down as
+                  `audioSlot`). It replaces a second speaker button that lived here and muted only
+                  the SFX engine -- that toggle is now a row inside this panel, so one control owns
+                  music, keystrokes, events, game SFX and volume. It is inline rather than fixed
+                  because the fixed corner version sat on top of SKIP at phone widths. */}
+              {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -2788,8 +3210,78 @@ export default function GameScreen({
           </div>
         </div>
 
-        <div className="game-player-bar">
-          {players.map((player) => {
+        {/* ===== TOP STACK: the fragment prompt. Its own grid area, with an EQUAL
+            1fr track above and below the ring row, which is what centres the ring
+            in the board below the header. ===== */}
+        <div className="wb-top" ref={wbTopRef}>
+        {/* THE FRAGMENT sits directly ABOVE the ring, horizontally centred on the
+            bomb at the ring's centre. It is NOT overlaid on the bomb: the ring's free
+            centre is only as wide as the circle leaves after the seats, and a 96px
+            Bungee fragment does not fit there without colliding with the seats or
+            shrinking the bomb below its share of the cell. Above-and-centred keeps the
+            fragment at the full hero step AND keeps every block collision-free.
+
+            Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
+            carries the changing key, so the prompt box never unmounts/remounts
+            mid-game - the readable letters underneath stay put. Only the inner punch
+            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
+            keyed .combo-pop at ComboMeter.jsx:50). */}
+        <div className="game-combo-box" ref={comboBoxRef}>
+          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
+              Scoped to this inner node, so the surrounding box stays mounted. */}
+          <div
+            key={comboPunch}
+            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
+          >
+            <div className="game-combo-label">{promptLabel}</div>
+            <div className={`game-combo${isCategory ? ' category' : ''}`} translate="no">
+              {promptValue}
+            </div>
+          </div>
+        </div>
+        </div>
+        {/* ===== /TOP STACK ===== */}
+
+        {/* ==================== THE RING (feat/wb-ring) ====================
+            Players sit on a CIRCLE around the bomb (the jklm/BombParty layout)
+            instead of in a horizontal row of cards. A row cannot space 2 players
+            and 16 players both well - at 2 it stretched each card to half the
+            stage (the empty-bar failure), at 8 it wrapped to three rows and
+            overflowed. A ring divides 360deg by the player count, so every count
+            from 2 to 16 is evenly spaced and the bomb stays dead centre.
+            Seat geometry is pure CSS from --i (seat index) and --n (seat count);
+            see .wb-seat in GameScreen.css. */}
+        {/* SEAT 0'S ANGLE. Seats are placed at start + (i/n)*360deg with 0deg = straight
+            up. At TWO players that puts them at 12 and 6 o'clock — stacked vertically, which
+            is the one arrangement a ring must not produce: it is the tall-and-empty shape the
+            row layout already failed at, and it forces the ring box to reserve its full height
+            for two seats. A quarter turn puts the pair at 3 and 9 o'clock — horizontally
+            opposed, facing each other across the bomb — and lets the box shrink (.wb-ring--pair).
+            Every other count keeps 0deg, so seat 0 stays at the top as before. */}
+        <div
+          className={[
+            'wb-ring',
+            players.length >= 5 ? 'wb-ring-crowd' : '',
+            players.length === 2 ? 'wb-ring--pair' : '',
+          ].filter(Boolean).join(' ')}
+          style={{ '--n': players.length, '--wb-start': players.length === 2 ? '90deg' : '0deg' }}
+        >
+          {/* TURN POINTER — the third signal of turn ownership, and the only one that says
+              WHICH seat rather than merely "someone". A hard-edged wedge pinned at the bomb's
+              centre, rotated to the active seat's own angle by the SAME expression the seat
+              uses, so the two can never disagree. Rotation only (one transform, no layout),
+              decorative, and it simply does not render when nobody is up. */}
+          {turnSeatIndex >= 0 && (
+            <div
+              className="wb-pointer"
+              style={{ '--i': turnSeatIndex, '--n': players.length }}
+              aria-hidden="true"
+            >
+              <span className="wb-pointer-arrow" />
+            </div>
+          )}
+          <div className="wb-ring-seats">
+          {players.map((player, seatIndex) => {
             const eliminated = player.eliminated || player.lives <= 0;
             const isCurrent = player.id === gameState.currentPlayerId;
             const isMe = player.id === myId;
@@ -2813,7 +3305,24 @@ export default function GameScreen({
               .join(' ');
 
             return (
-              <div key={player.id} className="game-player-slot">
+              <div
+                key={player.id}
+                className={`wb-seat game-player-slot${
+                  // WHICH SIDE THE NAME HANGS ON. The label used to be unconditionally BELOW its
+                  // avatar, and for every seat in the TOP half "below" means "between the avatar
+                  // and the bomb" — the one band the turn pointer also has to cross. At 8 players
+                  // that drew the arrow straight through the name of the player it was naming.
+                  // Radially OUTWARD instead: cos(angle) >= 0 means the seat is in the top half,
+                  // so its name goes above it. Pure arithmetic on the same angle the seat and the
+                  // pointer use — no measurement, no layout read.
+                  Math.cos(
+                    ((players.length === 2 ? 90 : 0) + (seatIndex / players.length) * 360) * (Math.PI / 180)
+                  ) >= 0
+                    ? ' wb-seat--name-out-up'
+                    : ''
+                }`}
+                style={{ '--i': seatIndex, '--n': players.length }}
+              >
                 {isCurrent && isMe && !gameOver && (
                   <div className="game-your-turn">YOUR TURN</div>
                 )}
@@ -2855,31 +3364,80 @@ export default function GameScreen({
                       player's card. For us it mirrors our own draft (the server
                       doesn't echo our keystrokes back); for others it's the
                       relayed typing_update text. Empty -> a dimmed "..." so the
-                      card keeps a stable height instead of jumping. */}
-                  {isCurrent && !eliminated && !gameOver && (
-                    <div className="player-typing">
-                      {(() => {
-                        const typed = isMe ? draft : typingText[player.id] || '';
-                        return typed ? (
-                          <LiveTypeText text={typed} />
-                        ) : (
-                          <span className="player-typing-empty">...</span>
-                        );
-                      })()}
-                    </div>
-                  )}
+                      card keeps a stable height instead of jumping.
+                      feat/wb-bot-turn: an OPPONENT's card also carries a status
+                      line (THINKING… / TYPING… / THEIR TURN) and, once the bot's
+                      word lands, keeps its line for the letter-by-letter reveal
+                      even though the turn has already moved on. */}
+                  {(() => {
+                    const live = isCurrent && !eliminated && !gameOver;
+                    const revealing =
+                      !!botReveal && botReveal.playerId === player.id && !eliminated && !gameOver;
+                    if (!live && !revealing) return null;
+                    if (isMe) {
+                      return (
+                        <div className="player-typing">
+                          {draft ? (
+                            <LiveTypeText text={draft} />
+                          ) : (
+                            <span className="player-typing-empty">...</span>
+                          )}
+                        </div>
+                      );
+                    }
+                    const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot);
+                    const typed = typingText[player.id] || '';
+                    const status = revealing ? 'typing' : isBot ? 'thinking' : typed ? 'typing' : 'turn';
+                    return (
+                      <>
+                        <OpponentStatus kind={status} />
+                        <div className="player-typing">
+                          {revealing ? (
+                            <LiveTypeText text={botReveal.word.slice(0, botReveal.shown)} caret={false} />
+                          ) : typed ? (
+                            <LiveTypeText text={typed} />
+                          ) : isBot ? null : (
+                            <span className="player-typing-empty">...</span>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             );
           })}
-        </div>
-
-        {spectatorCount > 0 && (
-          <div className="game-spectator-count">
-            👁 {spectatorCount} SPECTATING
           </div>
-        )}
 
+          {/* NO TURN POINTER. A beam from the bomb to the live seat cannot exist on
+              this ring: the seats sit flush with the ring box, the bomb owns 0.42d,
+              and the band between them is ~6% of the diameter - which the floated
+              name and the live-typing line already occupy. The arm therefore ran
+              UNDER the 12-o'clock seat's name and painted as a stray vertical mark
+              struck through it (reported on the preview as "a stray glyph through
+              ANDY"). The active seat is already the ONLY full-accent object on the
+              board at 1.3x, with YOUR TURN flagged above it - that is the read. */}
+
+          {/* THE CORE: the bomb, dead centre of the ring. The fragment sits above the
+              ring (see the note there); this cell is the bomb's alone so it can own a
+              majority of the circle's free middle. */}
+          <div className="wb-core">
+        {/* THE FRAGMENT, ON THE BOMB'S BELLY. It used to be a plaque ABOVE the ring, and the
+            note there was right that a 76px hero step cannot fit the circle's free middle — so
+            this is not that glyph moved, it is a chip SIZED TO THE BELLY (--wb-frag, a share of
+            the bomb's own width) sitting on the thing it is about. The four layers are Bungee's
+            real chromatic family stacked in register — Shade, fill, Inline, Outline — not a
+            text-shadow, so the depth comes from the font exactly as the menu wordmark law and
+            the solo hero do. aria-hidden: the prompt bar above still carries the readable text
+            for a screen reader, so this is decoration of a value already announced. */}
+        {!isCategory && promptValue ? (
+          <div className="wb-belly" aria-hidden="true">
+            <span className="wb-belly-l wb-belly-shade">{promptValue}</span>
+            <span className="wb-belly-l wb-belly-fill">{promptValue}</span>
+            <span className="wb-belly-l wb-belly-inline">{promptValue}</span>
+            <span className="wb-belly-l wb-belly-outline">{promptValue}</span>
+          </div>
+        ) : null}
         <div className="bomb-area drain-exempt">
           {/* Continuous danger rattle: the bomb physically vibrates harder as
               --danger climbs (amplitude scales from 0 at calm), on its OWN wrapper
@@ -2929,25 +3487,64 @@ export default function GameScreen({
           {shatterKey > 0 && <ShatterWord key={`shatter-${shatterKey}`} text={shatterText} />}
         </div>
 
-        {/* Outer box = STABLE structural frame (border/bg/shadow/tilt). It no longer
-            carries the changing key, so the prompt box never unmounts/remounts
-            mid-game - the readable letters underneath stay put. Only the inner punch
-            layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
-            keyed .combo-pop at ComboMeter.jsx:50). */}
-        <div className="game-combo-box" ref={comboBoxRef}>
-          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
-              Scoped to this inner node, so the surrounding box stays mounted. */}
-          <div
-            key={comboPunch}
-            className={`game-combo-punch${comboPunch > 0 ? ' punch' : ''}`}
-          >
-            <div className="game-combo-label">{promptLabel}</div>
-            <div className={`game-combo${isCategory ? ' category' : ''}`} translate="no">
-              {promptValue}
-            </div>
           </div>
         </div>
 
+        {/* LEFT RAIL. The kill feed used to be a SIBLING of the stage (a second
+            card floated beside or under it), which is what left the stage's own
+            side space dead and pushed the page past the viewport whenever the
+            panel stacked. It is a rail of the board now: the stage owns its whole
+            composition and nothing outside it can grow the page. */}
+        {players.length > 2 && (
+          <div className="wb-rail wb-rail--left">
+            <KillFeed events={feedEvents} playerColors={playerColors} maxRows={feedVisible} />
+          </div>
+        )}
+
+        {/* RIGHT RAIL AT <=2 PLAYERS. A head-to-head has no kill feed (its events
+            just narrate the two seats you are already looking at), which left the
+            LEFT rail empty and the board lopsided - the same dead-space failure in
+            a new shape. The answer is BALANCE, not filler: the used-word list moves
+            to the LEFT rail (CSS, .wb-duo below) and this readout - ROUND, whose
+            turn it is, the live streak, the mode - takes the RIGHT. Both rails then
+            carry a card of the same size. At 3+ the feed takes the left as before
+            and this panel is not rendered. */}
+        {players.length <= 2 && (
+          <div className="wb-rail wb-rail--right">
+            <div className="wb-status">
+              <div className="wb-status-title">MATCH</div>
+              <div className="wb-status-rows">
+                <div className="wb-status-row">
+                  <span className="wb-status-k">ROUND</span>
+                  <span className="wb-status-v">
+                    {typeof gameState.round === 'undefined' ? '1' : gameState.round}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">TURN</span>
+                  <span className="wb-status-v">
+                    {turnPlayer ? turnPlayer.name : '--'}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">STREAK</span>
+                  <span className={`wb-status-v${streak.count >= 2 ? ' is-hot' : ''}`}>
+                    ×{streak.count}
+                  </span>
+                </div>
+                <div className="wb-status-row">
+                  <span className="wb-status-k">MODE</span>
+                  <span className="wb-status-v">{diffLabel || 'CHILL'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== BOTTOM STACK. `display:contents` on the rails layout, so USED
+            lands in the right rail and the bar lands in the full-width bottom row;
+            a real flex column on phones, where both stack under the ring. ===== */}
+        <div className="wb-bottom" ref={wbBottomRef}>
         <div className="game-used">
           <div className="game-used-label">
             {usedLabel} ({usedItems.length})
@@ -2956,19 +3553,28 @@ export default function GameScreen({
             {usedItems.length === 0 ? (
               <span className="game-used-empty">NONE YET — BE THE FIRST</span>
             ) : (
-              // The list grows unbounded all game and is reconciled on every
-              // keystroke, but CSS only ever shows ~2 rows (max-height 92px). Render
-              // just the most recent 24 (words are unique, so key by the word) — the
-              // count label above still shows the true total.
-              usedItems.slice(-24).map((item) => (
-                <span key={item} className="game-used-chip">
-                  {item.toUpperCase()}
-                </span>
-              ))
+              // NEWEST-FIRST, AND ONLY AS MANY AS FIT. `usedVisible` comes from the
+              // rail fit above: whole chips only, so the column can never end in one
+              // sliced through the middle. The label above still shows the TRUE total,
+              // which is what makes a trimmed column honest rather than lossy.
+              usedItems.slice(-usedVisible).map((item) => {
+                // feat/wb-bot-turn: the bot's word being revealed on its card stays hidden
+                // (opacity only) until the last letter lands, then slides in as normal.
+                const pending =
+                  !!botReveal &&
+                  botReveal.shown < botReveal.word.length &&
+                  String(item).toUpperCase() === botReveal.word;
+                return (
+                  <span key={item} className={pending ? 'game-used-chip is-pending' : 'game-used-chip'}>
+                    {item.toUpperCase()}
+                  </span>
+                );
+              })
             )}
           </div>
         </div>
 
+        <div className="wb-bottombar" ref={wbBarRef}>
         {isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
           <div className="spectator-reactions">
@@ -2987,6 +3593,40 @@ export default function GameScreen({
           <div className="game-input-row drain-exempt">
             {/* Personal hype streak, floats above the input (pointer-events:none). */}
             <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* THE RECEIPT for the word just accepted: base × every live multiplier = what you
+                were paid. It JOINS this cluster (CLAUDE.md: no orphan fixed UI) and is absolutely
+                positioned + pointer-events:none, exactly like the ComboMeter above it, so it never
+                takes layout height or blocks the field. Keyed by the word index so a new word
+                replays the one-shot. */}
+            {/* THE WORD ITSELF REACTS. Rarity used to be a silent multiplier folded into a total;
+                it lands here now, on the field the player just typed into, coloured and stamped by
+                band — and a SECRET rides the same surface instead of a centre-screen modal. Keyed
+                per word so each one is a fresh one-shot; COMMON words render nothing (the normal
+                accept pop is already their event). */}
+            {/* ONE REACTION SLOT, above the field. The hype word and the word landing are the same
+                event told in two registers, so they share one anchored column rather than each
+                picking their own coordinates — which is how the hype ended up a 904x371 banner
+                across the title. Fixed geometry, one box to gate, pointer-events:none. */}
+            <div className="wb-react" aria-hidden="true">
+              {/* ONE reaction per word. The hype word and the landing say the same thing — "that
+                  was good" — and the landing says it better, with the band and the payout on the
+                  word itself. So the hype is the COMMON-word reaction and the landing takes over
+                  from UNCOMMON up. Side by side they needed more room above the field than a
+                  1280x720 board has, and the hype ended up painted through the used-word strip. */}
+              {hypeKey > 0 && !hitlag && !clutchFlag && !gameOver
+                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
+                && <HypePopup key={hypeKey} />}
+              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+                <WordLanding
+                  key={lastLanding.key}
+                  word={lastLanding.word}
+                  band={lastLanding.band}
+                  wins={lastLanding.wins}
+                  secret={lastLanding.secret}
+                  reduced={goReduce}
+                />
+              )}
+            </div>
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout
@@ -3072,7 +3712,19 @@ export default function GameScreen({
                 inputEnabled
                   ? isCategory
                     ? `NAME SOMETHING IN "${categoryRaw}"…`
-                    : `TYPE A WORD WITH "${combo}"…`
+                    /* Not `TYPE A WORD WITH "${combo}"…`: the fragment is already the hero
+                       text directly above the bomb, so repeating it here duplicated the one
+                       thing the screen shouts AND overflowed the field at the input's 28px
+                       (354px of placeholder in a 326px box at 1280x720). The aria-label above
+                       still names the fragment, so nothing is lost for a screen reader. */
+                    /* ON A 320px BOARD, ONE WORD. The field shares its row with SEND and SKIP and
+                       is left 69px of inner box there; "TYPE A WORD…" is 106px of 16px Space Mono,
+                       so the screenshot read "TYPE A WORI" with the D sliced in half. Nothing is
+                       lost by the trim — the prompt box directly above says TYPE A WORD CONTAINING
+                       in full, and the aria-label still carries the whole sentence. Only this
+                       branch needs it: in the waiting state there is no SKIP button, and "WAIT
+                       YOUR TURN…" fits the wider field that leaves. */
+                    : tinyBoard ? 'WORD…' : 'TYPE A WORD…'
                   : gameOver
                   ? 'GAME OVER'
                   : 'WAIT YOUR TURN…'
@@ -3118,26 +3770,50 @@ export default function GameScreen({
                 caption={isCategory ? 'NAME SOMETHING IN THE CATEGORY' : 'TYPE A WORD WITH THESE LETTERS'}
                 sub="START TYPING"
                 onDismiss={dismissGameSpot}
+                // A live board is now a deep link's FIRST FRAME (/word-bomb/play), and the wash
+                // took the whole thing to a quarter brightness. Ring + caption teach; the wash
+                // only made the game look broken. See Spotlight.jsx's `dim` prop.
+                dim={false}
               />
             )}
           </div>
         )}
 
-        {lastWordResult && lastWordResult !== dismissedResultRef.current && (
-          <div
-            className={`game-toast ${
-              lastWordResult.accepted ? 'accepted' : 'rejected'
-            }`}
-          >
-            {lastWordResult.accepted
-              ? `NICE! "${(lastWordResult.word || '').toUpperCase()}" ACCEPTED`
-              : rejectionMessage(lastWordResult.reason, { combo, isCategory })}
+        {/* REJECTS ONLY. The accept branch used to print NICE! "MINSTREL" ACCEPTED down in the
+            bottom-left — a second copy of the word, far from the word, at the same moment the
+            landing is showing it AT the field with its band and its payout. Two renderings of one
+            event in two places is worse than either alone: the eye has to find the second one to
+            learn it says nothing new. A REJECT still needs this, because a reject carries a REASON
+            ("already used", "doesn't contain STR") that nothing else on screen says. */}
+        {/* THE RECEIPT RAIL — a DOCKED slot of the board, not an overlay.
+            It used to be absolutely positioned above the input row, which put a 142x157 panel
+            straight through the prompt box at 1280x720. A transient panel that floats over the
+            board will always eventually land on something; the fix is not to nudge it but to give
+            it somewhere it cannot be. The slot is ALWAYS rendered, even when empty, so a word
+            arriving never reflows the board — and at >=900px it is its own grid column, beside the
+            prompt/used/input stack rather than on top of it. */}
+        <div className="wb-receipt-rail" aria-hidden="true">
+          {!gameOver && (lastPayout ? (
+            <div className="wb-receipt" key={lastPayout.key}>
+              <WordPayout payout={lastPayout.payout} compact />
+            </div>
+          ) : (
+            // ALWAYS SHOWING SOMETHING. Before the first word of a round there is no receipt yet,
+            // and that used to be an empty column — the moment a player is most likely to be
+            // wondering what a word is worth.
+            <LiveStack mode={isCategory ? 'category-blitz' : 'word-bomb'} difficulty={gameState.difficultyKey || gameState.difficulty || ''} combo={combo > 1 ? combo : 1} compact />
+          ))}
+        </div>
+
+        {lastWordResult && !lastWordResult.accepted && lastWordResult !== dismissedResultRef.current && (
+          <div className="game-toast rejected">
+            {rejectionMessage(lastWordResult.reason, { combo, isCategory })}
           </div>
         )}
+        </div>
+        </div>
+        {/* ===== /BOTTOM STACK ===== */}
       </div>
-      {players.length > 2 && (
-        <KillFeed events={feedEvents} playerColors={playerColors} />
-      )}
       </div>
 
       {gameOver && (
@@ -3173,9 +3849,24 @@ export default function GameScreen({
                 {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
+            {/* PAUSE TO LEARN. Word Bomb ends on a FRAGMENT you could not fill, not on a word
+                you got wrong — so this is a word that WOULD have worked, derived from that last
+                fragment. Word Bomb has no client-side dictionary (the server judges it), so the
+                solo acceptance list is pulled LAZILY and only here, at game over: it never
+                touches the play path or first paint. See the loader effect above. */}
+            <MissedWordHold
+              key={`wb-miss-${missedWord || ''}`}
+              word={missedWord}
+              gloss={glossFor(missedWord)}
+              prompt={missCombo}
+              promptLabel="A WORD CONTAINING"
+            />
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
-            <WinsEarnedTotal amount={winsEarnedTotal} />
+            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+            {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
+                from." Every multiplier that contributed, ranked by its share of the total. */}
+            <RoundPayout ledger={payoutLedger} />
             <GameOverStats
               gameStats={gameStats}
               players={players}
@@ -3184,55 +3875,6 @@ export default function GameScreen({
               staggerIn={goStaggered}
               reduce={goReduce}
             />
-            {/* Shareable result card — reads existing game-over data only.
-                events/longestWord are MY chronological story (drives the emoji
-                grid in the copy text); the other fields feed the image card. */}
-            <ShareBar
-              mode="word-bomb"
-              neon="#2EFFE0"
-              outcome={{ won: iWon }}
-              link={roomCode ? inviteLink(roomCode) : null}
-              data={(() => {
-                const myWords = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId);
-                const myLosses = [
-                  ...(gameStats.timeouts || []),
-                  ...(gameStats.skips || []),
-                ].filter((l) => l.playerId === myId);
-                const events = [
-                  ...myWords.map((w) => ({ t: 'word', len: (w.word || '').length, ts: w.timestamp })),
-                  ...myLosses.map((l) => ({ t: 'life', ts: l.timestamp })),
-                ]
-                  .sort((a, b) => (a.ts || 0) - (b.ts || 0))
-                  .map(({ t, len }) => ({ t, len }));
-                const longestWord = myWords.reduce(
-                  (best, w) => ((w.word || '').length > best.length ? w.word : best),
-                  ''
-                );
-                return {
-                  words: (gameStats.wordsPlayed || []).length,
-                  // The card's LONGEST chip is MINE (matches the copy text's
-                  // "longest: …"), not the table's longest — the whole result
-                  // is about the sharer, so an opponent's word never headlines it.
-                  longest: longestWord ? longestWord.length : undefined,
-                  players: players.length,
-                  events,
-                  longestWord: longestWord || undefined,
-                };
-              })()}
-            />
-            {/* One-tap shareable result receipt (Job 1) — MY accepted words; ⬛ if eliminated. */}
-            {(() => {
-              const myWbWords = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId).length;
-              return (
-                <CopyResultButton
-                  mode="word-bomb"
-                  words={myWbWords}
-                  tiers={Array(myWbWords).fill('fast')}
-                  killed={!iWon}
-                  className="game-over-copy-result"
-                />
-              );
-            })()}
             <div className="game-over-actions">
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
@@ -3242,13 +3884,27 @@ export default function GameScreen({
               <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
                 {rematchPending ? 'REMATCHING...' : 'REMATCH'}
               </button>
-              <button
-                className="game-over-leave secondary"
-                onClick={onLeave}
-              >
-                LEAVE
-              </button>
+              {offerMenu ? null : (
+                <button
+                  className="game-over-leave secondary"
+                  onClick={onLeave}
+                >
+                  LEAVE
+                </button>
+              )}
+              {offerMenu ? (
+                <div className="game-over-offer">
+                  <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                  <button type="button" className="game-over-offer-btn" onClick={onLeave}>
+                    SEE ALL MODES
+                  </button>
+                </div>
+              ) : null}
             </div>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+                mode — the one played least — so game-over is a fork, not a loop back into the same
+                mode. Renders nothing when everything else is still locked. */}
+            <TryModeRow current="word-bomb" />
           </div>
         </div>
       )}
@@ -3391,7 +4047,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -3441,6 +4097,9 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
     // Tapping anywhere fast-forwards the celebration; the action buttons below
     // keep their own onClick and stay interactive throughout (never gated).
     <div className="game-wrap" onClick={celeb.fastForward}>
+      {/* Same dock as the other two header-less game screens. Outside the card so a tap on it is
+          not swallowed by the card's fast-forward handler. */}
+      {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
       {pb.isNewRecord && <ConfettiEffect />}
       <div className="game-over-overlay">
         <div ref={cardRef} className={`game-over-card solo-results-card${stageClass}`}>
@@ -3516,34 +4175,6 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
             )}
           </div>
 
-          {/* Shareable result card — reads the existing solo score/record only.
-              roundScores feed the copy text's per-round emoji rows; a daily run
-              brands the text with the day # and deep-links ?daily=1. */}
-          <ShareBar
-            mode="category-blitz"
-            neon={daily ? '#FFE94A' : '#FF6B3D'}
-            outcome={{ solo: true, isRecord: pb.isNewRecord }}
-            daily={daily ? { dayNumber: daily.dayNumber } : null}
-            link={daily ? dailyLink() : null}
-            data={{
-              score,
-              rounds: rounds.length || undefined,
-              bestRound: rounds.length
-                ? rounds.reduce((m, r) => Math.max(m, r.roundScore || 0), 0)
-                : undefined,
-              roundScores: rounds.map((r) => r.roundScore),
-            }}
-          />
-          {/* One-tap shareable result receipt (Job 1). Blitz has no per-word timing; each
-              accepted answer (score point) is a 🟩. pts omitted (== word count). */}
-          <CopyResultButton
-            mode="category-blitz"
-            words={Math.max(0, score)}
-            points={null}
-            tiers={Array(Math.max(0, score)).fill('fast')}
-            killed={false}
-            className="game-over-copy-result"
-          />
           <div className="game-over-actions">
             <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
               {daily ? "REPLAY TODAY'S" : 'PLAY AGAIN'}
@@ -3551,10 +4182,24 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
             <button className="solo-change-cat-btn" onClick={onNewGameMode} disabled={actionPending}>
               NEW GAME MODE
             </button>
-            <button className="game-over-leave secondary" onClick={onLeave}>
-              LEAVE
-            </button>
+            {offerMenu ? null : (
+              <button className="game-over-leave secondary" onClick={onLeave}>
+                LEAVE
+              </button>
+            )}
+            {offerMenu ? (
+              <div className="game-over-offer">
+                <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                <button type="button" className="game-over-offer-btn" onClick={onLeave}>
+                  SEE ALL MODES
+                </button>
+              </div>
+            ) : null}
           </div>
+          {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+              mode — the one played least — so game-over is a fork, not a loop back into the same
+              mode. Renders nothing when everything else is still locked. */}
+          <TryModeRow current="category-blitz" />
         </div>
       </div>
     </div>
@@ -3574,8 +4219,10 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
  *     revealed with per-round and cumulative scores, plus a 5s countdown note.
  */
 function CategoryBlitzScreen({
+  audioSlot = null, // the header's sound control — see GameScreen's own prop note
   myId,
   isHost,
+  offerMenu = false, // see GameScreen's offerMenu — the deep-link run-over offer, forwarded
   timerSeconds,
   lastWordResult,
   checkingAnswer,
@@ -3602,8 +4249,31 @@ function CategoryBlitzScreen({
   winsTally = 0,
   winsWords = 0,
   winsEarnedTotal = 0,
+  winsBonusLines = [],
+  lastPayout = null,
+  payoutLedger = null,
+  lastLanding = null,
 }) {
+  // PAUSE TO LEARN (Blitz). This screen is its OWN component — the main GameScreen's missed-word
+  // state is not in scope here, and referencing it compiled fine while being undefined at runtime.
+  // Blitz needs no derivation anyway: the server already sends a sample of answers nobody got,
+  // which IS "a word you could have played", and is real rather than inferred.
+  const cbMissedWord = (() => {
+    const sample = (roundResults && roundResults.sampleAnswers) || [];
+    return sample.length ? sample[0] : null;
+  })();
+  const [, setCbGlossTick] = useState(0);
+  useEffect(() => {
+    if (!cbMissedWord) return;
+    loadGlossary().then(() => setCbGlossTick((n) => n + 1));
+  }, [cbMissedWord]);
+
   const { sound } = useSound();
+  // Reduced motion for the word landing below — read once, same test the Word Bomb screen uses.
+  const goReduce =
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
   // Countdown replays at the start of every NEW round (and the first one).
@@ -3842,6 +4512,8 @@ function CategoryBlitzScreen({
 
     return (
       <SoloResultsScreen
+        audioSlot={audioSlot}
+        offerMenu={offerMenu}
         score={total}
         rounds={rounds}
         daily={dailyResult}
@@ -3866,6 +4538,8 @@ function CategoryBlitzScreen({
 
     return (
       <div className="game-wrap">
+        {/* No header on this card either — see the note on the placeholder above. */}
+        {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
           <div className="game-over-card">
@@ -3884,7 +4558,17 @@ function CategoryBlitzScreen({
                 {winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER'}
               </div>
             )}
-            <WinsEarnedTotal amount={winsEarnedTotal} />
+            {/* PAUSE TO LEARN. Blitz needs no derivation — the server already sends a sample of
+                answers NOBODY got, which is exactly "a word you could have played" and is real
+                rather than inferred. No definition is invented when we don't have one. */}
+            <MissedWordHold
+              key={`cb-miss-${cbMissedWord || ''}`}
+              word={cbMissedWord}
+              gloss={glossFor(cbMissedWord)}
+              prompt={(roundResults && roundResults.category) || ''}
+              promptLabel="IN"
+            />
+            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (
@@ -3935,32 +4619,6 @@ function CategoryBlitzScreen({
                 );
               })}
             </div>
-            {/* Shareable result card — reads the existing final scores only.
-                roundScores drive the copy text's emoji rows; the invite link
-                makes the paste a working "rematch me" for the group chat. */}
-            <ShareBar
-              mode="category-blitz"
-              neon="#FF6B3D"
-              outcome={{
-                solo: false,
-                place: (scores.findIndex((s) => s.id === myId) + 1) || undefined,
-                total: scores.length || undefined,
-              }}
-              link={roomCode ? inviteLink(roomCode) : null}
-              data={{
-                score: myScore,
-                roundScores: soloLogRef.current.map((r) => r.roundScore),
-              }}
-            />
-            {/* One-tap shareable result receipt (Job 1) — MY score's worth of 🟩. */}
-            <CopyResultButton
-              mode="category-blitz"
-              words={Math.max(0, myScore)}
-              points={null}
-              tiers={Array(Math.max(0, myScore)).fill('fast')}
-              killed={false}
-              className="game-over-copy-result"
-            />
             <div className="game-over-actions">
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
@@ -3970,13 +4628,27 @@ function CategoryBlitzScreen({
               <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
                 {rematchPending ? 'REMATCHING...' : 'REMATCH'}
               </button>
-              <button
-                className="game-over-leave secondary"
-                onClick={onLeave}
-              >
-                LEAVE
-              </button>
+              {offerMenu ? null : (
+                <button
+                  className="game-over-leave secondary"
+                  onClick={onLeave}
+                >
+                  LEAVE
+                </button>
+              )}
+              {offerMenu ? (
+                <div className="game-over-offer">
+                  <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                  <button type="button" className="game-over-offer-btn" onClick={onLeave}>
+                    SEE ALL MODES
+                  </button>
+                </div>
+              ) : null}
             </div>
+            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
+                mode — the one played least — so game-over is a fork, not a loop back into the same
+                mode. Renders nothing when everything else is still locked. */}
+            <TryModeRow current="category-blitz" />
           </div>
         </div>
       </div>
@@ -4030,14 +4702,11 @@ function CategoryBlitzScreen({
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}
-          <div style={{ display: 'contents' }}>
-            {hypeKey > 0 && <HypePopup key={hypeKey} />}
-            {/* RARITY (word-value): a rarer accepted answer pops its tier label below the hype
-                word, in the tier colour. COMMON answers carry no rarity (silent). */}
-            {hypeKey > 0 && lastWordResult && lastWordResult.rarity && (
-              <RarityPopup key={`r${hypeKey}`} rarity={lastWordResult.rarity} />
-            )}
-          </div>
+          {/* The per-word HYPE moved to the FIELD (see the input row below) — as a stage-centred
+              banner it was measured lying across the title, the prompt and a player card at once.
+              The rarity tier pop that used to sit under it is gone too: the word landing shows the
+              band ON the answer now, and a second announcement in the middle of the screen is the
+              same event told twice, further from the thing it is about. */}
           <div className="game-header">
             <div className="game-title">
               <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
@@ -4052,6 +4721,7 @@ function CategoryBlitzScreen({
                   </span>
                 )}
               </div>
+              {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -4136,6 +4806,26 @@ function CategoryBlitzScreen({
           <div className="game-input-row">
             {/* Personal hype streak, floats above the input (pointer-events:none). */}
             <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
+                relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
+                feature. */}
+            {/* ONE REACTION SLOT — see the Word Bomb note. */}
+            <div className="wb-react" aria-hidden="true">
+              {/* ONE reaction per word — see the Word Bomb note. */}
+              {hypeKey > 0 && !gameOver
+                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
+                && <HypePopup key={hypeKey} />}
+              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+                <WordLanding
+                  key={lastLanding.key}
+                  word={lastLanding.word}
+                  band={lastLanding.band}
+                  wins={lastLanding.wins}
+                  secret={lastLanding.secret}
+                  reduced={goReduce}
+                />
+              )}
+            </div>
             {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
             {clutchCall && (
               <ClutchCallout
@@ -4187,6 +4877,7 @@ function CategoryBlitzScreen({
                 caption="NAME SOMETHING IN THE CATEGORY"
                 sub="START TYPING"
                 onDismiss={dismissGameSpot}
+                dim={false} // as above — /category-blitz/play lands straight on this board
               />
             )}
           </div>
@@ -4282,9 +4973,12 @@ function CategoryBlitzScreen({
             <div className="game-title">
               <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
             </div>
-            <button className="game-leave-btn" onClick={onLeave}>
-              LEAVE
-            </button>
+            <div className="game-header-actions">
+              {audioSlot}
+              <button className="game-leave-btn" onClick={onLeave}>
+                LEAVE
+              </button>
+            </div>
           </div>
 
           <div className="cb-round-results">

@@ -91,12 +91,14 @@ test.describe('SAT Rush', () => {
       .toBe(true);
 
     // Results: the retro-print PAGE, the DEAD stamp, the AVG ANTE hero, the words
-    // mastered line, the share bar, and the paper actions.
+    // mastered line, and the paper actions.
+    // The SHARE button assertion is GONE with the share pipeline itself — Andy: "no one in the
+    // history uses that". This was the only place in e2e/ that reached it by ROLE rather than by
+    // class, which is why the class-name sweep over the deletion missed it.
     await expect(page.locator('.sr-respage')).toBeVisible();
     await expect(page.locator('.sr-dead')).toBeVisible();
     await expect(page.locator('.sr-ante-value')).toBeVisible();
     await expect(page.locator('.sr-mastered')).toBeVisible();
-    await expect(page.getByRole('button', { name: /SHARE/ })).toBeVisible();
     const runItBack = page.getByRole('button', { name: 'Run it back' });
     await expect(runItBack).toBeVisible();
 
@@ -158,21 +160,35 @@ test.describe('SAT Rush', () => {
     expect(briefedContexts).toContain(served);
   });
 
-  test('?satrush=1 launch link opens SAT Rush directly (skips the intro + menu)', async ({ page }) => {
+  test('?satrush=1 launch link opens a PLAYABLE SAT run (skips the intro, menu AND cover)', async ({ page }) => {
     await installBackendMock(page);
-    // The shareable deep link (satRushLink() -> /?satrush=1&ref=share). No
-    // ?portal= and no menu-card click: the launch intent must skip the intro AND
-    // route straight into the mode on mount.
+    // The shareable deep link (satRushLink() -> /sat-rush/play?ref=share; the legacy ?satrush=1
+    // query still works and is what this asserts). No ?portal= and no menu-card click.
     await page.goto('/?satrush=1&ref=share');
 
-    // Landed on the SAT Rush start cover with its Play button — not the menu.
-    await expect(page.locator('.sr-cover')).toBeVisible();
-    const play = page.getByRole('button', { name: 'Play' });
-    await expect(play).toBeVisible();
+    // It used to land on the COVER, from which a stranger needed four more taps — Play, a mode,
+    // five briefing cards, "Start the run" — before a single word appeared. On the one link
+    // acquisition traffic is pointed at, that was four chances to leave. It now starts the run.
+    await expect(page.locator('.sr-slots')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.sr-cover')).toHaveCount(0);
+    await expect(page.locator('.sr-modeselect')).toHaveCount(0);
     // The mode-menu card grid is NOT what we're looking at.
     await expect(page.locator('[data-game="sat-rush"]')).toHaveCount(0);
+    // A live run: the HUD is up and the way out is the labelled one.
+    await expect(page.locator('.sr-hud')).toBeVisible();
+    await expect(page.locator('.sr-hud-exit')).toContainText('MENU');
+  });
 
-    // And it's really playable from here (through the picker + briefing).
+  test('the COVER and the mode picker are still reachable from the menu card', async ({ page }) => {
+    // The deep link auto-starts, but that must not cost the menu route its mode choice (and with
+    // it the BRIEFING mode). `?satRush=1` enables the mode WITHOUT being a launch intent — the
+    // launch intent is the lowercase `satrush` — so this is the ordinary menu entry.
+    await installBackendMock(page);
+    await page.goto('/?satRush=1&portal=1');
+    const card = page.locator('[data-game="sat-rush"]');
+    await expect(card).toBeVisible();
+    await card.locator('.game-card').click();
+    await expect(page.locator('.sr-cover')).toBeVisible();
     await pickMode(page, 'briefing');
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await page.getByRole('button', { name: 'Start the run' }).click();
