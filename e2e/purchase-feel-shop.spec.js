@@ -31,15 +31,15 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 }
 
 test('§3 the shop always shows a next goal + progress bar', async ({ page }) => {
-  await openShop(page, { wins: 50, keytier: 0 }); // < 90 (T1 cost, post-rebalance) → shows the gap
+  await openShop(page, { wins: 5, keytier: 0 }); // < 10 (T1 cost, prices /10 in v8) → shows the gap
   // KEY POWER goal + bar always present. MOMENTUM reuses .shop-keypower/.shop-goal, so scope to
-  // the FIRST .shop-keypower (KEY POWER, which renders above it). At 50 wins vs the T1 cost 90 →
+  // the FIRST .shop-keypower (KEY POWER, which renders above it). At 5 wins vs the T1 cost 10 →
   // "UNLOCKS AT".
   const kp = page.locator('.shop-keypower').first();
   await expect(kp.locator('.shop-goal')).toBeVisible();
   await expect(kp.locator('.shop-progress')).toBeVisible();
   await expect(kp.locator('.shop-goal')).toContainText('UNLOCKS AT');
-  await expect(kp.locator('.shop-goal')).toContainText('YOU HAVE 50');
+  await expect(kp.locator('.shop-goal')).toContainText('YOU HAVE 5');
   // The cheapest unowned cosmetic is flagged NEXT with its gap.
   await expect(page.locator('.shop-card-next').first()).toBeVisible();
   await expect(page.locator('.shop-card-gap').first()).toBeVisible();

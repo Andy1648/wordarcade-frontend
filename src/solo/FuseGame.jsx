@@ -8,8 +8,8 @@ import { exampleContaining } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins, subscribeWins } from '../progress/wins.js';
-import { awardWordXp, cappedWordMult } from '../progress/xp.js';
+import { bankWordWins, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
+import { cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
@@ -196,6 +196,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       noteWord(s.lastWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'fuse',
+        wordLength: (s.lastWord || '').length,
         prevWords: fuseBankedRef.current,
         nowWords: solved,
         prevWeight,

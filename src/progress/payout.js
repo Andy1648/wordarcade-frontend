@@ -19,18 +19,19 @@ import { round10 } from './xp.js';
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
 // words is harder to read than no list at all.
-//   PERMANENT   what you have built: mode, difficulty, level, rebirth, momentum, the mark you wear
+//   PERMANENT   what you have built: mode, difficulty, rebirth, streak, bonus
 //   THIS WORD   what you just did:   rarity, length, combo, lucky
 export const PAYOUT_FACTORS = [
   { key: 'mode', label: 'MODE', kind: 'permanent' },
   { key: 'difficulty', label: 'DIFFICULTY', kind: 'permanent' },
-  { key: 'level', label: 'LEVEL', kind: 'permanent' },
   { key: 'rebirth', label: 'REBIRTH', kind: 'permanent' },
-  { key: 'momentum', label: 'MOMENTUM', kind: 'permanent' },
-  // The equipped MARK (progress/marks.js). A mark is a permanent bonus you chose to wear, so it
-  // gets a named row exactly like the ones you bought — a standing multiplier nobody can see is
-  // the defect this module exists to fix, and a new invisible one would be absurd.
-  { key: 'mark', label: 'MARK', kind: 'permanent' },
+  // The daily STREAK multiplier. It always rode the XP stack; since Economy v8 folded the two
+  // stacks into one it pays wins too, so it gets named here — a multiplier the player cannot see
+  // is the defect this module exists to fix, and a newly-invisible one would be absurd.
+  { key: 'streak', label: 'STREAK', kind: 'permanent' },
+  // MOMENTUM × the equipped MARK × this mode's MASTERY, as one row. Three separate near-×1 lines
+  // taught nothing and crowded out the rows that move; each is still individually earnable.
+  { key: 'bonus', label: 'BONUS', kind: 'permanent' },
   { key: 'rarity', label: 'RARITY', kind: 'word' },
   { key: 'length', label: 'LENGTH', kind: 'word' },
   { key: 'combo', label: 'COMBO', kind: 'word' },
@@ -49,8 +50,8 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * Explain one word's payout.
  *
  * @param {object} arg
- * @param {number} arg.base    the flat per-word base before any multiplier (WORD_WINS_BASE)
- * @param {object} arg.factors { mode, difficulty, level, rebirth, momentum, mark, rarity,
+ * @param {number} arg.base    the flat per-word base before any multiplier (wordWinsBase())
+ * @param {object} arg.factors { mode, difficulty, rebirth, streak, bonus, rarity,
  *                               length, combo, lucky } — each a multiplier, missing/1 = inactive
  * @param {number} [arg.total] the amount ACTUALLY banked this call, when the caller knows it.
  *                             NOTE: this is NOT what the receipt prints. See `paid` below.
@@ -77,7 +78,11 @@ export function buildPayout({ base = 0, factors = {}, total, band } = {}) {
     // see inactivePayoutFactors(), which is what the shop card needs, not this.
     if (Math.abs(m - 1) > 1e-9) rows.push({ ...f, mult: m });
   }
-  const computed = round10(b * product);
+  // SNAPPED ON THE XP GRID, NOT THE WINS ONE. Wins are the word's XP ÷ 10 and the XP is what
+  // round10 applies to, so a receipt that snapped the WINS total to a multiple of ten would print
+  // 20 for a word that paid 15. Multiply up, snap, divide back: the same arithmetic the payout
+  // itself does, which is the only way the bottom line can match the ledger.
+  const computed = round10(b * product * 10) / 10;
   const banked = Number.isFinite(total) ? total : computed;
   return {
     base: b,
@@ -106,6 +111,8 @@ export function inactivePayoutFactors(factors = {}, { band } = {}) {
   if (num(factors.rarity) === 1) off('rarity', 'COMMON word');
   if (num(factors.lucky) === 1) off('lucky', 'no lucky roll');
   if (num(factors.rebirth) === 1) off('rebirth', 'no rebirths yet');
+  if (num(factors.streak) === 1) off('streak', 'streak under 3 days');
+  if (num(factors.bonus) === 1) off('bonus', 'no momentum, mark or mastery yet');
   return out;
 }
 

@@ -19,7 +19,6 @@ import {
   XP_MULTIPLIERS,
   xpPerInput,
   xpPerWord,
-  awardWordXp,
   cappedWordMult,
   PER_WORD_MULT_CAP,
   rebirthThreshold,
@@ -36,6 +35,10 @@ import {
   progressOf,
   XP_KEY,
 } from './xp.js';
+// awardWordXp MOVED to wins.js in Economy v8: one accepted word is one award event with one
+// multiplier stack, so the function that performs it sits where momentum and the mark's wins
+// effect are visible. It is still tested here, next to the curve it credits into.
+import { awardWordXp } from './wins.js';
 
 // A fresh in-memory localStorage installed as the global for a test body.
 function withStorage(seed, fn) {
@@ -69,6 +72,18 @@ test('cappedWordMult multiplies rarity×combo×lucky and clips at the ×40 cap',
   assert.equal(cappedWordMult(0, -1, NaN), 1); // garbage factors default to ×1 each
 });
 
+test('xpPerWord: difficulty and bonus are pass-through multipliers, ×1 by default', () => {
+  const o = { mode: 'word-bomb', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 };
+  const flat = xpPerWord(o);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 1, bonusMult: 1 }), flat);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 2 }), round10(flat * 2));
+  assert.equal(xpPerWord({ ...o, bonusMult: 1.5 }), round10(flat * 1.5));
+  assert.equal(xpPerWord({ ...o, difficultyMult: 2, bonusMult: 1.5 }), round10(flat * 3));
+  // Garbage is guarded to ×1, never NaN.
+  assert.equal(xpPerWord({ ...o, difficultyMult: 0, bonusMult: -1 }), flat);
+  assert.equal(xpPerWord({ ...o, difficultyMult: undefined, bonusMult: NaN }), flat);
+});
+
 test('xpPerWord: menu-value of the letters × mode mult × weight (playing is ≥2× the menu)', () => {
   // R0/T0: keyTierXp(0)=10. A 5-letter COMMON word.
   const menuWord = 5 * xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 }); // 5×10 = 50
@@ -88,13 +103,13 @@ test('awardWordXp persists the grant to the level state', () => {
   withStorage({}, () => {
     const before = loadProgress();
     assert.equal(before.level, 1);
-    const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
+    const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, masteryMult: 1, wordLength: 5, weight: 1 });
     assert.equal(res.gain, 250); // fuse ×5, 5 letters
     const after = loadProgress();
-    // UPDATED (Economy v7): need(1) is 2170, not 120 — the v6 base of 100 made the first levels
-    // a formality. One 5-letter FUSE word no longer clears a whole level, which is the point.
-    // (2230 -> 2170 with the item-5 re-fit of EARLY_CURVE_EXP, 1.115 -> 1.085.)
-    assert.equal(need(1), 2170);
+    // ECONOMY v8: need(1) is 600. A level is FOUR five-letter Word Bomb words on CRAZY, not the
+    // fourteen v7's 2,000 base asked for — the first twenty minutes are where a progression
+    // system has to prove it exists. One 5-letter FUSE word is still not a whole level.
+    assert.equal(need(1), 600);
     assert.equal(after.level, 1);
     assert.equal(after.intoLevel, 250);
   });
@@ -110,24 +125,21 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
   for (const v of [0, 25, 125, 156.25, 305.17, 999.99]) assert.equal(round10(v) % 10, 0);
 });
 
-// ---- level cost curve (Economy v7 — one shape that only ever STEEPENS) ----
-// UPDATED FROM v6. These tests used to pin need(1..7) = 120/160/200/240/310/380/480 (base 100,
-// 1.25^n) and a tail that EASED to 1.08 above LV60. Both were the defect, not the spec:
-//   - the 1.08 tail made per-level growth FALL while income compounded, so the late game got
-//     cheaper per level and the ladder stopped mattering around LV60-80;
-//   - base 100 made the first ~40 levels a formality (one accepted word is worth hundreds of XP
-//     from minute one).
-// v7: base 2000, 1.115^n to LV100, then a STEEPER 1.135 tail. Numbers from claude/econ-curve-sim.mjs.
-test('need() matches the published Economy v7 early levels', () => {
-  // RE-PINNED for the item-5 re-fit: the early exponent moved 1.115 -> 1.085 so that levels keep
-  // ARRIVING ("stuck at lvl 40"). The literals below are the new published values, still written
-  // out rather than derived from the constant under test - a test that restates the implementation
-  // passes whatever the implementation says.
-  assert.equal(need(1), round10(2000 * Math.pow(1.085, 1)));
-  assert.equal(need(1), 2170);
-  assert.equal(need(2), 2350);
-  assert.equal(need(3), 2550);
-  assert.equal(need(7), 3540);
+// ---- level cost curve (Economy v8 — one shape that only ever STEEPENS) ----
+// The v6 defect is still pinned below (a tail that got CHEAPER per level). What changed in v8 is
+// the scale: base 2,000 -> 600, exponents 1.085/1.135 -> 1.16/1.22, break LV100 -> LV30, and the
+// exponent indexes off n-1 so CURVE_BASE is need(1) exactly instead of a number nobody pays.
+test('need() matches the published Economy v8 early levels', () => {
+  // Literals, not derived from the constants under test — a test that restates the
+  // implementation passes whatever the implementation says.
+  assert.equal(need(1), 600); // FOUR words at a fresh profile
+  assert.equal(need(2), 700);
+  assert.equal(need(3), 810);
+  assert.equal(need(7), 1460);
+  assert.equal(need(10), 2280);
+  assert.equal(need(30), 44410); // the last level before the break
+  // CURVE_BASE IS need(1) ITSELF. v7 indexed off n, so its "base" was never a cost anyone paid.
+  assert.equal(need(1), CURVE_BASE);
   // Every early level costs MORE than the one before it by a visible step.
   for (let n = 1; n < 60; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
 });
@@ -138,13 +150,13 @@ test('THE TAIL IS STEEPER THAN THE HEAD — the v6 defect, pinned so it cannot c
   // compounding income. A curve may harden; it may never soften.
   assert.ok(TOP_CURVE_EXP > EARLY_CURVE_EXP, 'the tail exponent must EXCEED the early one');
   const early = need(30) / need(29);
-  assert.ok(early > 1.08 && early < 1.09, `early ratio ${early}`); // 1.085 after the item-5 re-fit
-  assert.equal(need(CURVE_BREAK), round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK)));
+  assert.ok(early > 1.155 && early < 1.165, `early ratio ${early}`); // 1.16
+  assert.equal(need(CURVE_BREAK), round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1)));
   const tail = need(150) / need(149);
-  assert.ok(tail > 1.13 && tail < 1.14, `tail ratio ${tail}`);
+  assert.ok(tail > 1.215 && tail < 1.225, `tail ratio ${tail}`); // 1.22
   // Sampled across the whole published range: per-level growth NEVER falls.
   let prev = 0;
-  for (const n of [10, 25, 50, 99, 101, 150, 200, 300, 500]) {
+  for (const n of [10, 25, 29, 31, 50, 99, 150, 200, 300, 500]) {
     const g = need(n) / need(n - 1);
     // 1e-6, not 1e-9: above ~LV150 need(n) is a float well past 2^53 and round10's snap is
     // below the representable step, so consecutive ratios wobble in the 8th decimal. The claim
@@ -162,11 +174,28 @@ test('THE TAIL IS STEEPER THAN THE HEAD — the v6 defect, pinned so it cannot c
 });
 
 test('every level requirement is divisible by 10 (through the exact-integer range)', () => {
-  // round10 forces %10===0 by construction; verified where need(n) stays below 2^53. The v7
-  // curve reaches 2^53 around LV190 (v6 did so around LV250), so the exact range is checked to
-  // 180 — past that the value is a float and "%10" is a statement about binary rounding, not
-  // about the economy.
-  for (let n = 1; n <= 180; n++) assert.equal(need(n) % 10, 0, `need(${n})=${need(n)}`);
+  // round10 forces %10===0 by construction; verified where need(n) stays below 2^53. The v8
+  // curve is steeper, so it reaches 2^53 at LV161 (v7 did around LV190) — past that the value is
+  // a float and "%10" is a statement about binary rounding, not about the economy.
+  for (let n = 1; n <= 160; n++) assert.equal(need(n) % 10, 0, `need(${n})=${need(n)}`);
+  assert.ok(need(161) > Number.MAX_SAFE_INTEGER, 'the exact-integer range is checked to its edge');
+});
+
+// THE HEADLINE NUMBER OF THE v8 RETUNE, pinned on its own so a retune has to come here first.
+test('need(1) is 600 — a level is four words at a fresh profile', () => {
+  assert.equal(need(1), 600);
+  // The word that makes it four: 5 letters, Word Bomb (×2), CRAZY (medium ×1.5), T0, R0.
+  const word = xpPerWord({
+    mode: 'word-bomb',
+    keyTier: 0,
+    rebirthCount: 0,
+    streakMult: 1,
+    wordLength: 5,
+    weight: 1,
+    difficultyMult: 1.5,
+  });
+  assert.equal(word, 150);
+  assert.equal(Math.ceil(need(1) / word), 4);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -188,17 +217,18 @@ test('keyTierXp: the hardcoded XP-per-letter table, ×2.5 past T8', () => {
 });
 
 test('keyTierCostAt: the published cost-to-reach table (T0 free), ×6 past T8', () => {
-  // Post-rebalance (sim/rebalance-2): every cost ×0.18 of the old table, still exactly ×6 per tier.
-  const costs = [0, 90, 540, 3240, 19440, 116640, 699840, 4199040, 25194240];
+  // PRICES /10 (Economy v8), landing T1 on a clean 10 so the ladder is exactly 10 · 6^(t-1).
+  const costs = [0, 10, 60, 360, 2160, 12960, 77760, 466560, 2799360];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t), c, `T${t} cost`));
-  // Past T8 the cost keeps going ×6, round10: 25194240×6 = 151,165,440.
-  assert.equal(keyTierCostAt(9), round10(25194240 * 6));
+  for (let t = 1; t < costs.length; t++) assert.equal(costs[t], 10 * Math.pow(6, t - 1), `T${t} is on the ×6 ladder`);
+  // Past T8 the cost keeps going ×6, round10.
+  assert.equal(keyTierCostAt(9), round10(2799360 * 6));
 });
 
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
-  assert.equal(keyTierCost(0), 90); // standing at T0, buying T1 costs 90
-  assert.equal(keyTierCost(3), 19440); // at T3, T4 costs 19,440
-  assert.equal(keyTierCost(7), 25194240); // at T7, T8 costs 25,194,240
+  assert.equal(keyTierCost(0), 10); // standing at T0, buying T1 costs 10
+  assert.equal(keyTierCost(3), 2160); // at T3, T4 costs 2,160
+  assert.equal(keyTierCost(7), 2799360); // at T7, T8 costs 2,799,360
 });
 
 test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {

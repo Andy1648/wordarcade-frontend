@@ -11,14 +11,16 @@ import { THEMES, isThemeOwned } from '../theme/themes.js';
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
 // xpPerInput stack (the free defaults are ×1). Pop style and sound pack stack multiplicatively.
+// PRICES /10 (Economy v8): wins are the word's XP ÷ 10 now, so the whole currency was restated
+// an order of magnitude smaller and every price followed it down. The LADDER is untouched.
 // COSMETIC PRICES ARE AN EXPONENTIAL LADDER (Economy v7). v6 priced them 150 / 400 / 900 / 2000
 // - roughly linear steps against an income that compounds, so the whole cosmetic sink was cleared
 // inside the first hour and then paid for nothing for the remaining 199. One ×5 ladder per list,
 // from a base that is one good round: every rung costs five of the last one, so the last item in
 // each list stays a genuine goal instead of pocket change.
 export const COSMETIC_PRICE_STEP = 5;
-export const POP_PRICE_BASE = 600; // the first PAID pop style
-export const SOUND_PRICE_BASE = 1000; // the first PAID sound pack (sounds start higher: 3 free)
+export const POP_PRICE_BASE = 60; // the first PAID pop style (was 600)
+export const SOUND_PRICE_BASE = 100; // the first PAID sound pack, 3 are free (was 1000)
 /** The i-th PAID rung of a ladder (i = 1 for the first paid item). */
 export function cosmeticPrice(base, i) {
   return Math.round(base * Math.pow(COSMETIC_PRICE_STEP, Math.max(0, i - 1)));

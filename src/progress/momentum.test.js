@@ -31,9 +31,10 @@ function withStorage(seed, fn) {
   }
 }
 
-test('momentumCost rises ×1.05 from 5000, round10; Infinity at the cap', () => {
-  assert.equal(momentumCost(0), 5000); // the first buy
-  assert.equal(momentumCost(1), round10(MOMENTUM_BASE * 1.05)); // 5250
+test('momentumCost rises ×1.05 from 500, round10; Infinity at the cap', () => {
+  // 500, not 5000: every price fell by 10 in v8 with the currency (see shop.js).
+  assert.equal(momentumCost(0), 500); // the first buy
+  assert.equal(momentumCost(1), round10(MOMENTUM_BASE * 1.05)); // 530
   assert.equal(momentumCost(10), round10(MOMENTUM_BASE * Math.pow(1.05, 10)));
   assert.ok(momentumCost(199) > momentumCost(100)); // strictly rising
   assert.equal(momentumCost(MOMENTUM_MAX), Infinity); // nothing left to buy
@@ -67,15 +68,15 @@ test('getMomentum/saveMomentum clamp to 0..MAX and survive garbage', () => {
 });
 
 test('buyMomentum deducts the rising cost, bumps the count; refuses when broke or maxed', () => {
-  withStorage({ 'taw.wins': '4999', 'taw.momentum': '0' }, () => {
-    assert.equal(buyMomentum().ok, false); // 4999 < 5000
+  withStorage({ 'taw.wins': '499', 'taw.momentum': '0' }, () => {
+    assert.equal(buyMomentum().ok, false); // 499 < 500
     assert.equal(getMomentum(), 0);
   });
-  withStorage({ 'taw.wins': '5000', 'taw.momentum': '0' }, (map) => {
+  withStorage({ 'taw.wins': '500', 'taw.momentum': '0' }, (map) => {
     const r = buyMomentum();
     assert.equal(r.ok, true);
     assert.equal(r.count, 1);
-    assert.equal(r.spent, 5000);
+    assert.equal(r.spent, 500);
     assert.equal(r.wins, 0);
     assert.equal(map.get('taw.momentum'), '1');
   });
@@ -89,18 +90,19 @@ test('buyMomentum deducts the rising cost, bumps the count; refuses when broke o
 
 test('momentum folds into perWordWins as a global wins factor (every mode scales)', () => {
   // Explicit momentumCount keeps this pure; 0 → unchanged, 100 → ×2, 200 → ×3.
-  // v7: the per-word base is 100 (v6: 20), so Word Bomb is 200 at R0/LV1 after the econ
-  // round-2 re-fit moved its mult x2 -> x2.1. Momentum is unchanged - it is still a flat
-  // x1 / x2 / x3 on whatever the base rate is.
-  const base = perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 0, level: 1 });
-  assert.equal(base, 200);
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 100, level: 1 }), round10(base * 2));
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 200, level: 1 }), round10(base * 3));
+  // v8: momentum is now one third of the aggregate `bonus` factor and rides the SINGLE stack, so
+  // it scales XP as well as wins. Its own behaviour is unchanged — a flat ×1 / ×2 / ×3 on
+  // whatever the base rate is. Word Bomb at T0/R0 is 10 (10 XP/letter × 5 letters × ×2 ÷ 10).
+  const pure = { mode: 'wordBomb', rebirthCount: 0, keyTier: 0, streakMult: 1, masteryMult: 1 };
+  const base = perWordWins({ ...pure, momentumCount: 0 });
+  assert.equal(base, 10);
+  assert.equal(perWordWins({ ...pure, momentumCount: 100 }), base * 2);
+  assert.equal(perWordWins({ ...pure, momentumCount: 200 }), base * 3);
   // Live-read path: seeding taw.momentum boosts the default (no momentumCount passed).
   withStorage({ 'taw.momentum': '100' }, () => {
     assert.equal(
-      perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }),
-      round10(perWordWins({ mode: 'chain', rebirthCount: 0, momentumCount: 0, level: 1 }) * 2)
+      perWordWins({ mode: 'chain', rebirthCount: 0, keyTier: 0, streakMult: 1, masteryMult: 1 }),
+      perWordWins({ mode: 'chain', rebirthCount: 0, momentumCount: 0, keyTier: 0, streakMult: 1, masteryMult: 1 }) * 2
     );
   });
 });

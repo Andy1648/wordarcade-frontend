@@ -3,11 +3,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  WORD_WINS_BASE,
+  WORD_LEN_REF,
+  wordWinsBase,
   WIN_LEVEL_STEP,
   winLevelMult,
   awardWins,
   perWordWins,
+  perWordXp,
   recordRound,
   bankWordWins,
   roundWinsEstimate,
@@ -20,7 +22,7 @@ import {
   getRounds,
 } from './wins.js';
 import { POP_STYLES, SOUND_PACKS } from './shop.js';
-import { keyTierCostAt, rebirthMult, round10 } from './xp.js';
+import { keyTierCostAt, rebirthMult, keyTierXp, XP_MULTIPLIERS } from './xp.js';
 
 // A fresh in-memory localStorage per test, installed as the global.
 function withStorage(fn, opts = {}) {
@@ -45,59 +47,83 @@ function withStorage(fn, opts = {}) {
   }
 }
 
-// UPDATED FOR ECONOMY v7. Every figure below was the v6 base of 20; the base is 100 now
-// (Andy: "the wins base is too low"), so the R0/LV1 rates are exactly 5× what they were. The
-// SHAPE of the formula is unchanged - mode × difficulty × rebirth × momentum, snapped to 10 -
-// and the assertions are written against WORD_WINS_BASE and rebirthMult rather than against
-// literals wherever the point is the RELATIONSHIP, so the next retune does not rewrite them.
-test('perWordWins: 100 base × mode × difficulty, snapped to a round 10 (Economy v7)', () => {
-  const B = WORD_WINS_BASE;
-  assert.equal(B, 100, 'v7 raised the per-word base from 20');
-  // R0 / LV1 base rates — post-rebalance mults (sim/rebalance-2), live round keys.
-  // RE-PINNED for the econ-visible ROUND-2 re-fit. LITERALS, not `round10(B * WINS_MULT[m])` —
-  // restating the implementation with the constant under test is a test that passes whatever the
-  // table says. CHAIN 190 -> 270 and FUSE 140 -> 290 so the two SOLO modes lead the multiplayer
-  // ones (they were both BELOW Word Bomb); SAT 80 -> 100 puts it at 83% of Blitz instead of 67%.
-  // WORD BOMB 200 -> 210 is not a buff for its own sake: it lifts the FLOOR of the wins/min band
-  // up to meet SAT, which is the only way SAT's card can sit near Blitz with the spread still
-  // under 2.00x. See claude/econ-visible-sim.mjs — this fit is on the corner of the feasible
-  // region, so these five literals are load-bearing together, not independently tweakable.
-  assert.equal(perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 }), 200);
-  assert.equal(perWordWins({ mode: 'blitz', rebirthCount: 0, level: 1 }), 140);
-  assert.equal(perWordWins({ mode: 'satRush', rebirthCount: 0, level: 1 }), 160);
-  assert.equal(perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }), 250);
-  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 }), 250);
-  // Difficulty scales the per-word rate (no mode → ×1), still snapped to 10.
-  assert.equal(perWordWins({ difficulty: 'medium', rebirthCount: 0, level: 1 }), round10(B * 1.5));
-  assert.equal(perWordWins({ difficulty: 'hard', rebirthCount: 0, level: 1 }), round10(B * 2));
+// ECONOMY v8: WINS ARE THE WORD'S XP DIVIDED BY TEN. There is no second stack and no
+// WORD_WINS_BASE any more — the base is the word's LETTERS at the player's key tier, and the
+// per-mode table is XP_MULTIPLIERS (menu 1 · WB 2 · Blitz 2 · SAT 3 · CHAIN 4 · FUSE 5), the only
+// one left. The figures below are therefore an order of magnitude smaller than v7's and the mode
+// ORDERING changed with them; the shop prices moved by the same factor (see shop.test.js).
+test('perWordWins is EXACTLY the word’s XP ÷ 10 — every mode × every difficulty', () => {
+  // THE REGRESSION GUARD FOR THE WHOLE BINDING. If these two ever diverge, a player is being
+  // paid one number and shown another, which is the defect the unified stack exists to remove.
+  for (const mode of ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse']) {
+    for (const difficulty of ['chill', 'easy', 'medium', 'hard']) {
+      for (const wordLength of [3, 5, 9]) {
+        const o = { mode, difficulty, wordLength, rebirthCount: 0, streakMult: 1, masteryMult: 1 };
+        const xp = perWordXp(o);
+        assert.equal(xp % 10, 0, `XP must stay a multiple of 10: ${mode}/${difficulty}/${wordLength}`);
+        assert.equal(
+          perWordWins(o),
+          Math.round(xp / 10),
+          `wins must be XP/10 for ${mode}/${difficulty}/${wordLength} (xp ${xp})`,
+        );
+      }
+    }
+  }
+});
+
+test('perWordWins: key-tier letters × mode × difficulty, on the reference word (Economy v8)', () => {
+  // T0 is 10 XP a letter and the reference word is 5 letters, so the flat base is 5 wins.
+  assert.equal(WORD_LEN_REF, 5);
+  assert.equal(wordWinsBase({ keyTier: 0 }), 5);
+  const o = { rebirthCount: 0, streakMult: 1, masteryMult: 1, keyTier: 0 };
+  // LITERALS, not `keyTierXp(0) * 5 * XP_MULTIPLIERS[m] / 10` — restating the implementation with
+  // the constants under test is a test that passes whatever the tables say.
+  assert.equal(perWordWins({ ...o, mode: 'wordBomb' }), 10);
+  assert.equal(perWordWins({ ...o, mode: 'blitz' }), 10);
+  assert.equal(perWordWins({ ...o, mode: 'satRush' }), 15);
+  assert.equal(perWordWins({ ...o, mode: 'chain' }), 20);
+  assert.equal(perWordWins({ ...o, mode: 'fuse' }), 25);
+  // No mode → the menu rate (×1).
+  assert.equal(perWordWins(o), 5);
+  // KEY POWER now raises WINS too, because the base IS the key tier. This is the point of the
+  // merge: it was the one upgrade that bought income in a currency it could not be spent on.
+  assert.equal(perWordWins({ ...o, keyTier: 2, mode: 'wordBomb' }), (keyTierXp(2) * 5 * 2) / 10);
+  assert.ok(perWordWins({ ...o, keyTier: 3 }) > perWordWins({ ...o, keyTier: 0 }));
+  // DIFFICULTY APPLIES TO BOTH READOUTS NOW. It used to touch wins only, so playing on HELL
+  // levelled you no faster than CHILL.
+  assert.equal(perWordWins({ ...o, difficulty: 'medium' }), 8); // round10(50 × 1.5) = 80 → 8
+  assert.equal(perWordWins({ ...o, difficulty: 'hard' }), 10);
+  assert.ok(perWordXp({ ...o, difficulty: 'hard' }) > perWordXp({ ...o, difficulty: 'chill' }));
 });
 
 test('perWordWins: REBIRTH multiplies wins on the same ladder as XP (now 3^rc)', () => {
-  const wb = (rc) => perWordWins({ mode: 'wordBomb', rebirthCount: rc, level: 1 });
-  assert.equal(wb(1), round10(WORD_WINS_BASE * 2 * rebirthMult(1))); // ×3
-  assert.equal(wb(2), round10(WORD_WINS_BASE * 2 * rebirthMult(2))); // ×9
-  assert.equal(wb(3), round10(WORD_WINS_BASE * 2 * rebirthMult(3))); // ×27
-  assert.equal(wb(10), round10(WORD_WINS_BASE * 2 * rebirthMult(10)));
-  // This omitted FUSE's own mode multiplier and passed only because it happened to be x1. The
-  // item-4 re-fit moved it to x1.35 and the omission became a failure, which is the useful kind;
-  // round 2 moves it again, to x2.9.
-  assert.equal(perWordWins({ mode: 'fuse', rebirthCount: 5, level: 1 }), round10(WORD_WINS_BASE * 2.5 * rebirthMult(5)));
+  const wb = (rc) => perWordWins({ mode: 'wordBomb', rebirthCount: rc, keyTier: 0, streakMult: 1, masteryMult: 1 });
+  assert.equal(wb(1), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(1)) / 10); // ×3
+  assert.equal(wb(2), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(2)) / 10); // ×9
+  assert.equal(wb(3), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(3)) / 10); // ×27
+  assert.equal(wb(10), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(10)) / 10);
+  // FUSE carries its own mode multiplier on top — the omission that used to hide here passed
+  // only because FUSE happened to be ×1 at the time.
+  assert.equal(
+    perWordWins({ mode: 'fuse', rebirthCount: 5, keyTier: 0, streakMult: 1, masteryMult: 1 }),
+    (keyTierXp(0) * WORD_LEN_REF * XP_MULTIPLIERS.fuse * rebirthMult(5)) / 10,
+  );
   // ...and it is strictly increasing, which the v6 table also was - the change is the SIZE of
   // the steps, not the direction.
   for (let rc = 0; rc < 8; rc++) assert.ok(wb(rc + 1) > wb(rc), `R${rc + 1} must pay more than R${rc}`);
 });
 
-// NEW IN v7: the per-word base itself grows with the level. This is the answer to "higher play
-// should pay visibly more PER WORD, not just per minute" - before this, a LV80 player and a LV8
-// player were paid identically for the same word.
-test('perWordWins: the per-word base COMPOUNDS with level (v7)', () => {
-  const at = (lv) => perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 0, level: lv });
-  assert.ok(at(50) > at(1), 'LV50 must out-earn LV1 on the same word');
-  assert.ok(at(100) > at(50));
-  assert.ok(at(300) > at(200));
-  // x1.035 a level after the item-5 re-fit (was x1.015): ~x5.4 by LV50, ~x30 by LV100.
-  // The step was raised because income growing SEVEN TIMES slower than the level curve is what
-  // "stuck at lvl 40" actually is — see WIN_LEVEL_STEP's note in wins.js.
+// REVERSED IN v8, DELIBERATELY. v7 compounded the per-word base with the LEVEL — income
+// chasing the very curve it buys, which is the compounding that produced "stuck at LV40". The
+// per-word award is now FLAT in level; income grows through KEY POWER, rebirth, mastery and
+// momentum, which are levers the player buys rather than ones that accrue and then race the
+// curve. winLevelMult survives for the FLAT one-off grants (secret finds, secret achievements).
+test('perWordWins is FLAT in level (v8); winLevelMult survives for the flat grants', () => {
+  const at = (lv) => perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 0, level: lv, keyTier: 0, streakMult: 1, masteryMult: 1 });
+  assert.equal(at(1), at(50));
+  assert.equal(at(50), at(300), 'a level must not silently multiply a word’s payout any more');
+  // The helper itself is unchanged and still exported — achievements.js and useWordSecrets.js
+  // scale their one-off grants with it, which is what it is good for.
   assert.ok(Math.abs(winLevelMult(50) - Math.pow(WIN_LEVEL_STEP, 49)) < 1e-12);
   assert.ok(winLevelMult(100) > 29 && winLevelMult(100) < 31, winLevelMult(100));
   assert.ok(winLevelMult(300) > 29000 && winLevelMult(300) < 29700, winLevelMult(300));
@@ -132,10 +158,13 @@ test('awardWins: the SOLO modes now out-pay the multiplayer ones per word (R0)',
   const mpHigh = Math.max(per('wordBomb'), per('blitz'));
   assert.ok(soloLow > mpHigh, `solo floor ${soloLow} must beat multiplayer ceiling ${mpHigh}`);
   assert.ok(soloLow / mpHigh >= 1.25, `the solo lead must be real, got ${(soloLow / mpHigh).toFixed(2)}x`);
-  assert.ok(
-    Math.abs(per('satRush') / per('blitz') - 1) <= 0.2,
-    `SAT must sit within 20% of Blitz, got ${Math.round(per('satRush') / per('blitz') * 100)}%`,
-  );
+  // SAT SITS ABOVE BLITZ NOW, NOT LEVEL WITH IT — and that is a v8 consequence worth stating
+  // rather than papering over. The "within 20% of Blitz" target belonged to WINS_MULT, the second
+  // per-mode table the merge deleted; with XP_MULTIPLIERS as the only table SAT is ×3 against
+  // Blitz's ×2. It is the vocabulary mode and it is between Blitz and the solo modes, which is
+  // the ordering the modes are for.
+  assert.ok(per('satRush') > per('blitz'), 'SAT must out-pay Blitz per word');
+  assert.ok(per('satRush') < soloLow, 'SAT must still sit under the solo modes');
 });
 
 test('awardWins: difficulty scales the per-word rate (chill 1.0 / easy 1.25 / medium 1.5 / hard 2.0)', () => {
@@ -157,46 +186,50 @@ test('awardWins: difficulty scales the per-word rate (chill 1.0 / easy 1.25 / me
   assert.equal(awardWins({ wordsAccepted: 2, difficulty: 'hard', rebirthCount: 0, level: 1 }), 0);
 });
 
-test('round/word estimates: card previews are the R0/LV1 BASE rate (v7: 100 base)', () => {
-  const B = WORD_WINS_BASE;
-  // wordWinsEstimate is the R0 BASE preview (never rebirth- or level-scaled) shown on game cards,
-  // keyed by game.id. It deliberately excludes the level term so the card's headline number is
-  // stable; the live boost is annotated separately (currentRebirthMult).
-  // RE-PINNED (item 4), as literals. `category-blitz` is the one that changed meaning as well as
-  // value: it was MISSING from the old kebab-keyed WORD_WINS_MULT table entirely and fell through
-  // to x1, which happened to equal its real multiplier — so the card was right by luck. Both
-  // tables are now one table behind modeKey().
-  assert.equal(wordWinsEstimate({ mode: 'word-bomb' }), 200);
-  assert.equal(wordWinsEstimate({ mode: 'category-blitz' }), 140);
-  assert.equal(wordWinsEstimate({ mode: 'sat-rush' }), 160);
-  assert.equal(wordWinsEstimate({ mode: 'chain' }), 250);
-  assert.equal(wordWinsEstimate({ mode: 'fuse' }), 250);
-  // roundWinsEstimate = a typical 10-word round. NOTE 'word-bomb' (hyphen) is NOT a WINS_MULT key
-  // (the live WB wins key is 'wordBomb'), so it falls to ×1 here; this fn has no live caller and
-  // is exercised only as a pure unit.
-  assert.equal(roundWinsEstimate({ mode: 'word-bomb' }), 10 * round10(B));
-  assert.equal(roundWinsEstimate({ mode: 'chain' }), 10 * round10(B * 2.5));
-  assert.equal(roundWinsEstimate({ mode: 'fuse' }), 10 * round10(B * 2.5)); // econ round 4
-  assert.equal(roundWinsEstimate({ mode: 'word-bomb', difficulty: 'hard' }), 10 * round10(B * 2));
+test('round/word estimates: card previews are the R0 BASE rate (v8: key-tier letters ÷ 10)', () => {
+  // wordWinsEstimate is the R0 BASE preview shown on game cards, keyed by game.id: mode ×
+  // difficulty on the reference word, with NO earned multipliers at all. At T0 that is
+  // 10 XP/letter × 5 letters ÷ 10 = 5, times the mode.
+  assert.equal(wordWinsEstimate({ mode: 'word-bomb', keyTier: 0 }), 10);
+  assert.equal(wordWinsEstimate({ mode: 'category-blitz', keyTier: 0 }), 10);
+  assert.equal(wordWinsEstimate({ mode: 'sat-rush', keyTier: 0 }), 15);
+  assert.equal(wordWinsEstimate({ mode: 'chain', keyTier: 0 }), 20);
+  assert.equal(wordWinsEstimate({ mode: 'fuse', keyTier: 0 }), 25);
+  assert.equal(wordWinsEstimate({ mode: 'word-bomb', difficulty: 'hard', keyTier: 0 }), 20);
+  // BOTH SPELLINGS OF A MODE NOW RESOLVE. 'word-bomb' used not to be a payout key, so the
+  // estimate quietly fell through to ×1; gameKey() normalises it.
+  assert.equal(wordWinsEstimate({ mode: 'word-bomb', keyTier: 0 }), wordWinsEstimate({ mode: 'wordBomb', keyTier: 0 }));
+  // roundWinsEstimate = a typical 10-word round.
+  assert.equal(roundWinsEstimate({ mode: 'chain' }), 10 * perWordWins({ mode: 'chain' }));
+  assert.equal(
+    roundWinsEstimate({ mode: 'word-bomb', difficulty: 'hard' }),
+    10 * perWordWins({ mode: 'word-bomb', difficulty: 'hard' }),
+  );
 });
 
-test('EVERYTHING ENDS IN A ZERO: every catalog price, tier cost and payout is divisible by 10', () => {
+// THE INVARIANT MOVED UP A LEVEL (v8). Wins used to be snapped to a multiple of ten of their
+// own; they are now the word's XP ÷ 10, and it is the XP that is snapped. So the thing that must
+// end in a zero is the XP — wins are simply whole, and "+15 WINS" is now a sentence the game can
+// say. PRICES still end in a zero: they are read, compared and remembered by the player.
+test('PRICES end in a zero; every XP grant is a multiple of 10; every wins payout is a whole number', () => {
   // Shop cosmetics.
   for (const item of [...POP_STYLES, ...SOUND_PACKS]) {
     assert.equal(item.price % 10, 0, `${item.id} price ${item.price}`);
   }
   // Key Power TIER costs across the exact-integer range.
   for (let t = 0; t <= 15; t++) assert.equal(keyTierCostAt(t) % 10, 0, `keyTierCostAt(${t})`);
-  // Every wins payout across modes × difficulties × rebirths × word counts.
   const modes = [undefined, 'word-bomb', 'wordBomb', 'blitz', 'satRush', 'chain', 'fuse'];
   const diffs = [undefined, 'chill', 'easy', 'medium', 'hard', 'zzz'];
   const rebirths = [0, 1, 2, 3, 5, 10, 15];
   for (const mode of modes) {
     for (const difficulty of diffs) {
       for (const rebirthCount of rebirths) {
-        assert.equal(perWordWins({ mode, difficulty, rebirthCount }) % 10, 0, `perWord ${mode}/${difficulty}/R${rebirthCount}`);
+        const o = { mode, difficulty, rebirthCount, keyTier: 0, streakMult: 1, masteryMult: 1 };
+        assert.equal(perWordXp(o) % 10, 0, `XP ${mode}/${difficulty}/R${rebirthCount}`);
+        assert.equal(perWordWins(o), Math.round(perWordXp(o) / 10), `wins==xp/10 ${mode}/${difficulty}/R${rebirthCount}`);
         for (let w = 0; w <= 20; w++) {
-          assert.equal(awardWins({ wordsAccepted: w, mode, difficulty, rebirthCount }) % 10, 0, `award ${mode}/${difficulty}/R${rebirthCount}/${w}`);
+          const paid = awardWins({ wordsAccepted: w, ...o });
+          assert.ok(Number.isInteger(paid), `award ${mode}/${difficulty}/R${rebirthCount}/${w} = ${paid}`);
         }
       }
     }
@@ -332,7 +365,7 @@ test('bankWordWins: a run that never reaches 3 words banks NOTHING and counts no
 // the payout the ChainGame/FuseGame run-over handlers now call via recordRound.
 test('a completed CHAIN run grants links × the per-word rate × rebirthMult; <3 grants 0', () => {
   withStorage(() => {
-    const per = perWordWins({ mode: 'chain', rebirthCount: 0, level: 1 }); // round10(100×1.9)=190
+    const per = perWordWins({ mode: 'chain', rebirthCount: 0 });
     assert.equal(recordRound({ mode: 'chain', wordsAccepted: 7 }), 7 * per);
     assert.equal(getWins(), 7 * per);
   });
@@ -397,7 +430,8 @@ test('bankWordWins: the gate crossing releases the first three words RARITY RETR
     assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 1, nowWords: 2, prevWeight: 1.0, nowWeight: 3.5 }), 0); // pre-gate
     // Word 3 crosses the gate: releases the WHOLE cumulative weight 7.5 × the per-word rate.
     const per = perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 });
-    const expect = round10(7.5 * per);
+    // Math.round, not round10: wins are XP÷10 now and no longer land on a multiple of ten.
+    const expect = Math.round(7.5 * per);
     assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3, prevWeight: 3.5, nowWeight: 7.5 }), expect);
     assert.equal(getWins(), expect);
   });
@@ -407,9 +441,9 @@ test('bankWordWins: words 4+ each release exactly their own rarity weight', () =
   withStorage(() => {
     const per = perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: 1 });
     // Already past the gate (prev count 3). Word 4 is OBSCURE ×4.
-    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), round10(4 * per));
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), Math.round(4 * per));
     // Word 5 is UNCOMMON ×1.5.
-    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 5, prevWeight: 7, nowWeight: 8.5 }), round10(1.5 * per));
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 5, prevWeight: 7, nowWeight: 8.5 }), Math.round(1.5 * per));
   });
 });
 
@@ -417,7 +451,7 @@ test('bankWordWins: rarity STACKS with the mode multiplier (FUSE ×15 × OBSCURE
   withStorage(() => {
     // FUSE per-word base (×1); an OBSCURE word (weight 4) past the gate.
     const per = perWordWins({ mode: 'fuse', rebirthCount: 0, level: 1 });
-    assert.equal(bankWordWins({ mode: 'fuse', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), round10(4 * per));
+    assert.equal(bankWordWins({ mode: 'fuse', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), Math.round(4 * per));
   });
 });
 
@@ -427,7 +461,7 @@ test('bankWordWins: rarity STACKS with rebirth (CHAIN × R3 × a RARE word)', ()
     const per = perWordWins({ mode: 'chain', rebirthCount: 3, level: 1 });
     assert.equal(
       bankWordWins({ mode: 'chain', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 5.5, rebirthCount: 3, level: 1 }),
-      round10(2.5 * per)
+      Math.round(2.5 * per)
     );
   });
 });

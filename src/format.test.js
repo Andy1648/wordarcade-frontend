@@ -10,7 +10,7 @@
 //     FIGURES with trailing zeros trimmed gives 10.4K / 1.28M / 3.1B from one rule.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatNum, formatNumParts, plural, THIN } from './format.js';
+import { formatNum, formatNumParts, plural, THIN, formatMult} from './format.js';
 
 test('below 10,000 reads in full, grouped with a COMMA', () => {
   assert.equal(formatNum(0), '0');
@@ -76,4 +76,39 @@ test('plural: singular at exactly 1, plural otherwise (Blitz opponent rail said 
   assert.equal(plural(1, 'life', 'lives'), '1 life');
   assert.equal(plural(3, 'life', 'lives'), '3 lives');
   assert.equal(plural(NaN, 'answer'), '0 answers'); // guarded
+});
+
+// ---- formatMult — a MULTIPLIER is not a count -------------------------------------------------
+// formatNum rounds to a whole number below 10,000, which is right for wins and wrong for every
+// "×" on the screen: a ×1.6 payout printed as "×2" and a ×1.4 printed as "×1". The second is the
+// worse one — "×1" reads as "this upgrade does nothing".
+test('formatMult: ONE decimal, trailing .0 stripped', () => {
+  assert.equal(formatMult(1.6), '1.6'); // formatNum said "2"
+  assert.equal(formatMult(1.4), '1.4'); // formatNum said "1"
+  assert.equal(formatMult(2.0), '2');
+  assert.equal(formatMult(1), '1');
+  assert.equal(formatMult(1.45), '1.5'); // rounds UP, despite 1.45*10 being 14.4999... in float64
+  assert.equal(formatMult(3), '3');
+  assert.equal(formatMult(12.25), '12.3');
+});
+
+test('formatMult: a real bonus never renders as "×1"', () => {
+  // MOMENTUM is +1% a buy, so one buy in is ×1.01 — at one decimal that is "1" again, which is
+  // the exact defect this function exists to fix, just further down the scale.
+  assert.equal(formatMult(1.01), '1.01');
+  assert.equal(formatMult(1.03), '1.03');
+  assert.equal(formatMult(1.96), '1.96');
+  // ...but an exact whole number is still written plainly.
+  assert.equal(formatMult(1), '1');
+  assert.equal(formatMult(9), '9');
+});
+
+test('formatMult: big multipliers stay compact, and garbage is guarded', () => {
+  // The rebirth ladder is 3^rc, so it reaches 3.49B — a ten-digit number with ".0" on it is not
+  // a readable multiplier. Above 10,000 it hands off to formatNum.
+  assert.equal(formatMult(3486784401), formatNum(3486784401));
+  assert.equal(formatMult(3486784401), '3.49B');
+  assert.equal(formatMult(59049), '59K');
+  assert.equal(formatMult(NaN), '0');
+  assert.equal(formatMult(undefined), '0');
 });

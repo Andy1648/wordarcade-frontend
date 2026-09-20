@@ -1,7 +1,7 @@
 // e2e/shop-reveal-sticker.spec.js — feat/shop-reveal-sticker: the shop's purchase reveal is the
 // shared reveal STICKER, not the old black box with a star and a one-line banner.
 //
-// Buying the INFERNO theme (2,500 wins — the moment that prompted this) must show a sticker that
+// Buying the INFERNO theme (250 wins; 2,500 before the Economy v8 price /10) must show a sticker that
 // says what happened: the UNLOCKED ribbon, the item's name, the price as a debit, and its own art
 // (the theme's swatch strip). Clicking it dismisses it and leaves the SHOP open — the sticker is a
 // modal whose backdrop swallows the click, so it can never fall through to the shop behind it.
@@ -49,10 +49,10 @@ test('buying INFERNO reveals a sticker naming the theme and its price', async ({
   // The price is formatted by src/format.js, which groups with a THIN SPACE (U+2009) rather than
   // a comma as of feat/progression-clarity — a comma at four digits reads as a decimal point to
   // half the world. Asserted through the same formatter so the test cannot drift from the UI.
-  await expect(sticker).toContainText(formatNum(2500));
+  await expect(sticker).toContainText(formatNum(250)); // INFERNO, 2500 before the v8 price /10
   // It is the SHOP skin of the shared shell, and the price reads as a debit (spent, not earned).
   await expect(page.locator('.shop-sticker')).toHaveCount(1);
-  await expect(sticker.locator('.sticker-coin.is-debit')).toContainText(formatNum(2500));
+  await expect(sticker.locator('.sticker-coin.is-debit')).toContainText(formatNum(250));
   // The item's OWN art, not a generic star: the theme's swatch strip is an inline SVG.
   await expect(sticker.locator('svg.sticker-glyph')).toHaveCount(1);
   await expect(page.locator('.shop-reveal')).toHaveCount(0); // the old black box is gone

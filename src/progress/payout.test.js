@@ -18,7 +18,10 @@ test('buildPayout multiplies every factor and reports the same total wins.js wou
     factors: { mode: 2, difficulty: 1.5, rarity: 2.5, combo: 1.6 },
   });
   assert.equal(r.product, 2 * 1.5 * 2.5 * 1.6);
-  assert.equal(r.computed, round10(100 * 2 * 1.5 * 2.5 * 1.6));
+  // Economy v8: wins are the word's XP ÷ 10, and it is the XP that round10 snaps — so the
+  // receipt snaps on the XP grid too (×10, snap, ÷10). Snapping the WINS total to a multiple of
+  // ten would print 20 for a word that paid 15.
+  assert.equal(r.computed, round10(100 * 2 * 1.5 * 2.5 * 1.6 * 10) / 10);
   assert.equal(r.total, r.computed, 'with no granted amount passed, total IS the computed figure');
 });
 
@@ -38,7 +41,7 @@ test('PAID is exactly the product of the listed rows, rounded — always', () =>
     const r = buildPayout(c);
     const fromRows = r.rows.reduce((a, row) => a * row.mult, 1);
     assert.ok(Math.abs(fromRows - r.product) < 1e-9, 'the listed rows ARE the product');
-    assert.equal(r.paid, round10(c.base * fromRows), `PAID must equal base x rows for ${JSON.stringify(c.factors)}`);
+    assert.equal(r.paid, round10(c.base * fromRows * 10) / 10, `PAID must equal base x rows for ${JSON.stringify(c.factors)}`);
     assert.equal(r.paid, r.computed);
   }
 });
@@ -47,7 +50,7 @@ test('the 3-WORD GATE shows as HELD, never as a PAID of zero', () => {
   // total 0 = banked nothing yet. The word is still worth what its rows say, and the panel says
   // so; `held` is what carries the other fact.
   const r = buildPayout({ base: 100, factors: { mode: 2, rarity: 2.5 }, total: 0 });
-  assert.equal(r.paid, round10(100 * 2 * 2.5), 'the bottom line is what the word is worth');
+  assert.equal(r.paid, round10(100 * 2 * 2.5 * 10) / 10, 'the bottom line is what the word is worth');
   assert.equal(r.total, 0, 'what was BANKED is still reported, for the ledger');
   assert.equal(r.held, true);
   // Past the gate, nothing is held.

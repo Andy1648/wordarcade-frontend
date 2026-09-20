@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
 import { perWordRateNow } from '../progress/wins';
-import { formatNum } from '../format';
+import { formatNum, formatMult } from '../format';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -261,7 +261,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
       <span className="game-card-payout-unit"> WINS</span>
       <span className="game-card-payout-per"> / WORD</span>
       {rateNow.mult !== 1 && (
-        <span className="game-card-payout-mult"> (×{formatNum(rateNow.mult)})</span>
+        <span className="game-card-payout-mult"> (×{formatMult(rateNow.mult)})</span>
       )}
     </>
   );

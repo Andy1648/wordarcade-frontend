@@ -478,6 +478,18 @@ test.describe('a cold visitor on a room-mode deep link gets a game, not a lobby'
       if (page.viewportSize().height > 780) {
         await expect(offer.locator('.game-over-offer-line')).toContainText('MORE MODES');
       }
+      // MEASURE AT REST, NOT MID-POP. The card enters with `go-card-win`, which OVERSHOOTS to
+      // scale(1.06) before settling at 1. A card already capped at the viewport (max-height
+      // calc(100vh - 48px), content taller, so it scrolls) is 6% too tall for one frame of that
+      // animation, and a boundingBox() read that lands in the overshoot reports the footer ~15px
+      // below the fold on a 900px-tall window. That is an animation frame, not a layout: measured
+      // once the card's finite animations have finished, it sits at 845 of 900. Waiting on the
+      // element's own animations is exact, where a fixed sleep would just move the flake around.
+      await page.locator('.game-over-card').evaluate((el) => Promise.all(
+        el.getAnimations()
+          .filter((a) => a.playState === 'running' && a.effect.getComputedTiming().iterations !== Infinity)
+          .map((a) => a.finished),
+      ));
       // It is inside the STICKY actions footer, so it is on screen without scrolling.
       const offerBox = await offer.boundingBox();
       expect(offerBox.y + offerBox.height).toBeLessThanOrEqual(page.viewportSize().height + 1);

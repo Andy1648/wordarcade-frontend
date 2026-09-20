@@ -27,11 +27,11 @@ const openRebirth = (page, seed) => openVia(page, seed, '.homepage-nav-btn.is-re
 
 test.describe('shop', () => {
   test('SHOP icon: no tabs; locked items visible+dimmed; buying deducts wins only and enables equip', async ({ page }) => {
-    // ECONOMY v7: the cosmetic prices are an exponential x5 ladder (CHROME 600, INFERNO 3000,
-    // VOID 15000, PRISM 75000) rather than v6's near-linear 150/400/900/2000, which the raised
-    // per-word base would have cleared inside the first hour. The purse is seeded off the catalog
-    // so the ladder can be retuned without editing this spec again.
-    await openShop(page, { 'taw.wins': '950', 'taw.winsLifetime': '900', 'taw.xp': '0' });
+    // ECONOMY v8: the ×5 cosmetic ladder is unchanged but every price fell by ten with the
+    // currency (CHROME 60, INFERNO 300, VOID 1500, PRISM 7500), because wins are now the word's
+    // XP ÷ 10. The purse is seeded off the catalog so the ladder can be retuned without editing
+    // this spec again.
+    await openShop(page, { 'taw.wins': '410', 'taw.winsLifetime': '900', 'taw.xp': '0' });
 
     // The tabs are gone (two icons, two destinations) and the shop view shows no rebirth action.
     await expect(page.locator('.shop-tab')).toHaveCount(0);
@@ -46,7 +46,7 @@ test.describe('shop', () => {
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });
-    // BUY (600) — a plain click (fix/shop-click-buy replaced the unlabelled hold-to-buy gate).
+    // BUY (60) — a plain click (fix/shop-click-buy replaced the unlabelled hold-to-buy gate).
     await chrome.locator('.shop-buy').click();
     await expect(page.evaluate(() => Number(localStorage.getItem('taw.wins')))).resolves.toBe(350);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsLifetime')))).toBe(900); // untouched

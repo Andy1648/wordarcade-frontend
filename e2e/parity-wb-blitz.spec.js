@@ -46,8 +46,20 @@ const rejectWb = (mock, word) => mock.pushToClient({ type: 'word_result', payloa
 // Six real COMMON words (rarity ×1) so the ONLY variable in the payout is the combo multiplier.
 const C = ['WATER', 'TABLE', 'CHAIR', 'APPLE', 'HOUSE', 'CAT'];
 
+// WAIT FOR THE BALANCE TO STOP MOVING, not for 200ms and a hope. The per-word bank happens on
+// React's async drain, and under full-suite load five words can still be in flight when the
+// snapshot is taken — measured once: an after5 read that landed before ANY of them banked, which
+// made the NEXT delta 75 instead of 10 and pointed the blame at the combo. A fixed sleep can only
+// ever be too short on a loaded machine or too slow on an idle one.
 async function bankSettle(page) {
-  await page.waitForTimeout(200);
+  let last = null;
+  let stable = 0;
+  for (let i = 0; i < 50 && stable < 3; i += 1) {
+    await page.waitForTimeout(100);
+    const now = await readWins(page);
+    stable = now === last ? stable + 1 : 0;
+    last = now;
+  }
 }
 
 test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
@@ -67,19 +79,20 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await bankSettle(page);
     const after5 = await readWins(page);
 
-    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 200) = 320. BUILDS past the ×1.1 base 220.
+    // 6th accept: C[5] is CAT, three letters, so perWordWins is 6 (10 XP/letter × 3 × WB ×2 ÷ 10).
+    // Streak 6 → combo 1.6 → round(1.6 × 6) = 10. BUILDS past the ×1.1 base of 7.
     acceptWb(mock, C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(320);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(10);
     const after6 = await readWins(page);
 
     // A reject ends the combo.
     rejectWb(mock, 'ZZZQ');
     await page.waitForTimeout(80);
 
-    // Next accept: streak 1 again → combo 1.1 → round10(1.1 × 200) = 220. RESET (would be 340 if it
-    // kept climbing to streak 7).
+    // Next accept: streak 1 again → combo 1.1 → round(1.1 × 6) = 7. RESET (would be 11 if it kept
+    // climbing to streak 7).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(220);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(7);
   });
 
   test('WB: the combo RESETS when I lose a life (my turn times out)', async ({ page }) => {
@@ -111,9 +124,9 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     });
     await page.waitForTimeout(80);
 
-    // Next accept: combo reset to 1.1 → +220 (not the +340 a continued streak-7 would pay).
+    // Next accept: combo reset to 1.1 → +7 (not the +11 a continued streak-7 would pay).
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(220);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(7);
   });
 
   test('WB: the payout INCLUDES the lucky ×5 when a word is lucky', async ({ page }) => {
@@ -126,12 +139,12 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     const before = await readWins(page);
 
     // 3 COMMON accepts, each ×5 lucky, combo 1.1/1.2/1.3:
-    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 200 = round10(3600) = 3600.
+    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 6 = 108.
     for (const w of ['CAT', 'DOG', 'FOX']) {
       acceptWb(mock, w);
       await page.waitForTimeout(40);
     }
-    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(3600);
+    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(108);
   });
 
   test('Blitz: the payout combo BUILDS and RESETS on a rejected answer', async ({ page }) => {
@@ -151,18 +164,18 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await bankSettle(page);
     const after5 = await readWins(page);
 
-    // 6th accept: streak 6 → combo 1.6 → round10(1.6 × 140) = 220 (Blitz per-word 140, x1.4). BUILDS
-    // past the ×1.1 base 150.
+    // 6th accept: C[5] is CAT (3 letters) and Blitz is ×2 on the one per-mode table now, so
+    // perWordWins is 6. Streak 6 → combo 1.6 → round(1.6 × 6) = 10. BUILDS past the ×1.1 base of 7.
     accept(C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(220);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(10);
     const after6 = await readWins(page);
 
     // A rejected answer breaks the combo.
     mock.pushToClient({ type: 'answer_result', payload: { accepted: false, answer: 'ZZZQ', reason: 'not_in_list' } });
     await page.waitForTimeout(80);
 
-    // Next accept: combo reset to 1.1 → round10(1.1 × 140) = 150 (not the 240 a streak-7 would pay).
+    // Next accept: combo reset to 1.1 → round(1.1 × 6) = 7 (not the 11 a streak-7 would pay).
     accept('DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(150);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(7);
   });
 });

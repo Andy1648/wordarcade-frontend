@@ -18,12 +18,14 @@ async function startMyTurn(mock, page) {
 
 // Combo is captured at ACCEPT time, so it's unaffected by the rarity-index race (lucky forced off in
 // each test below). CAT 1×combo1.1 + BAT 1.5×1.2 + HAT 1×1.3 = 1.1+1.8+1.3 = 4.2 weight.
-// At Word Bomb's per-word 200 (mult x2) that is round10(4.2 × 200) = 840. If BAT is scored
-// COMMON (the race), it is 3.6 × 200 = round10(720) = 720 — a 120-win underpay. Both figures move
-// with WINS_MULT.wordBomb; recompute from the live table, never nudge.
+// ECONOMY v8: the per-word rate is the word's LETTERS at the key tier, ÷10 — three-letter words at
+// T0 in Word Bomb are 10 × 3 × mode2 ÷ 10 = 6. So the correct payout is round(4.2 × 6) = 25, and a
+// BAT scored COMMON (the race) pays round(3.6 × 6) = 22 — a 3-win underpay, the same 14% gap the
+// 840/720 pair described. Both figures move with XP_MULTIPLIERS and the key tier; recompute from
+// the live table, never nudge.
 const WORDS = ['CAT', 'BAT', 'HAT'];
-const CORRECT = 840;
-const RACED_COMMON = 720;
+const CORRECT = 25;
+const RACED_COMMON = 22;
 
 test('rarity race: a word accepted before the index loads still pays its true rarity', async ({ page }) => {
   await page.addInitScript(() => {

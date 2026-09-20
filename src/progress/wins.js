@@ -6,9 +6,22 @@
 // A round only "counts" (pays wins + bumps its mode counter) when the player got at least
 // MIN_WORDS accepted — a sub-3 round is treated as not-really-played.
 
-import { rebirthMult, getRebirths, round10, loadProgress } from './xp.js';
+import {
+  rebirthMult,
+  getRebirths,
+  round10,
+  loadProgress,
+  saveProgress,
+  creditXp,
+  xpPerWord,
+  keyTierXp,
+  getKeyTier,
+  XP_MULTIPLIERS,
+} from './xp.js';
 import { momentumMult, getMomentum } from './momentum.js';
-import { markWinsFactors } from './marks.js';
+import { markWinsFactors, markXpMult } from './marks.js';
+import { addMasteryWord, masteryXpMult } from './mastery.js';
+import { getStreakMult } from './streak.js';
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -92,73 +105,13 @@ export function saveRounds(rounds) {
   }
 }
 
-// Per-mode wins multiplier on the per-word base (Economy v6). REBALANCED (sim/rebalance-2) to
-// EQUALIZE wins/min ACROSS modes so mode choice stops being a grind-efficiency decision. Each
-// mult offsets that mode's intrinsic throughput × rarity: at equal difficulty / R0 the modes land
-// WB 393 · Blitz 344 · Chain 457 · SAT 422 · Fuse 493 wins/min — ISOLATED-throughput spread 1.43×
-// (was 37.7×), per the winsmin-sim. CHAIN is raised to ×1.9 so the LV20-gated mode out-earns the
-// ungated WB/Blitz (unlock ladder intact), and SAT (the vocabulary mode, ~55% OBSCURE deck) sits
-// above Word Bomb as intended. NOTE: the FULL-ECONOMY cross-mode spread (all reward channels, every
-// per-word multiplier compounded) is wider than this isolated figure — it was ~1.54× before WORD
-// SENSE and blew out to ~29× when WORD SENSE shipped uncapped; the fix/wordsense-cap ceiling (1.5)
-// restores it to ~1.55× (claude/audit-economy.md + claude/_ws-cap-sweep.mjs). Keys match the ROUND
-// mode passed to bankWordWins/perWordWins ('wordBomb','blitz','satRush','chain','fuse'); a missing
-// key → ×1. Derivation: claude/winsmin-sim.mjs + claude/econ-rebalance-2-report.md.
-// ANDY (item 4): "SAT RUSH should reach ~80/word (it's far under Blitz today)" and CHAIN + FUSE
-// "MUCH higher - it feels impossible to get more than 10k".
-// He was right about SAT: at x0.5 it paid HALF of Blitz per word, for the mode with the hardest
-// words on screen - its card read 50 against Blitz's 100. FUSE sat at x1.0, the same as Blitz,
-// despite the longest runs and the most constrained words.
-// Re-fitted in claude/econ-visible-sim.mjs, which prints wins/run and wins/min at weak/median/
-// strong play before and after. The binding constraint is the 2.00x cross-mode wins/min spread:
-// raising a rate on a HIGH-THROUGHPUT mode moves wins/min fast, which is why FUSE goes to 1.35 and
-// not to CHAIN's 1.9. Measured: spread 1.86x -> 1.75x, so the re-fit NARROWS it.
-// A strong FUSE run goes 31k -> 44k and a strong SAT run 15k -> 23k.
-// RE-FIT (econ-visible round 2). Andy: CHAIN and FUSE must be MUCH higher than the multiplayer
-// modes ("they're solo, score-attack, and it feels impossible to clear 10k"), and SAT RUSH must
-// sit NEAR BLITZ, not a third of Word Bomb. The shipped table read, at LV40:
-//     WB 765 · CHAIN 727 · FUSE 516 · BLITZ 459 · SAT 308
-// — both solo modes BELOW Word Bomb, which inverts what the modes are for.
-//
-// WHAT ACTUALLY UNBLOCKED THIS: fuse's throughput was ASSERTED at ~20 words/min while chain's was
-// DERIVED from its engine at 11.6. Driving the real fuse.js engine with the same calibrated human
-// produce-time model measures 9.3/min — the median run dies at ~18 words, ~6.5s per word, because
-// late fuses fall to 3500ms while the human still needs ~5.5s and every expire burns a full fuse
-// for no word. The asserted number was 2.15x too fast, and since wins/min = throughput x per-word,
-// it made every proposed FUSE raise look like it would blow the cross-mode spread. It would not.
-// That is why fuse had been pinned at x1.35 for two re-fits. See claude/econ-visible-sim.mjs,
-// which now DERIVES the figure instead of asserting it.
-//
-// THE BOUND. Word Bomb is turn-based, so it has the LOWEST throughput (8/min) and is structurally
-// allowed the HIGHEST per-word rate. With the cross-mode wins/min spread held under 2.00x, the
-// ceiling on how far a mode can lead Word Bomb per word is 2*w_wb/w_mode: 1.38x for CHAIN, 1.72x
-// for FUSE. This table sits inside both (chain leads by 1.30x), not on them.
-// THE ORDER ANDY ASKED FOR, AND THE TWO CHANGES IT TOOK TO MAKE IT REACHABLE.
-// Target: CHAIN and FUSE LEAD, SAT within ~20% of Blitz, cross-mode wins/min spread under 2.00x.
-// At LV40 this table reads CHAIN 960 · FUSE 960 · WB 770 · SAT 620 · BLITZ 540 — spread 1.81x,
-// 10.5% of headroom.
-//
-// 1. SAT'S RARITY IS NORMALISED AGAINST A TYPIST'S WORD, not against its own deck mean.
-//    The deck averages 3.42x rarity against a real typist's 1.23x, so SAT used to collect a flat
-//    ~2.79x nobody chose — the per-word rarity bonus pays you for CHOOSING an uncommon word and
-//    SAT never lets you choose. The first fix divided by the deck mean alone, which pinned a
-//    typical SAT word at 1.00 and OVER-corrected: the double count was the EXCESS over what other
-//    modes get, not SAT's whole rarity contribution. satRarityMult() now scales by
-//    TYPIST_MEAN / DECK_MEAN, so the average SAT word is worth 1.23 — level with everyone.
-// 2. SAT GETS THE COMBO AND THE LUCKY ROLL EVERY OTHER MODE ALREADY HAD.
-//    It was the only mode banking rarity alone. With rarity alone the ordering above is not just
-//    hard, it is IMPOSSIBLE: an exhaustive search over card space in multiples of 10 finds NO
-//    assignment satisfying all three constraints, because at equal card rates SAT earns 0.31x
-//    Blitz per minute and that gap alone exceeds 2.00x. With parity there are many, and the best
-//    keeps the economy's absolute scale (min wins/min 4,439).
-//    This is a GAMEPLAY change, made deliberately and not bundled quietly: SAT already tracks the
-//    streak the combo reads, so it is a payout reading of something the player can already see.
-//
-// Measured, weak / median / strong wins per run and median wins/min:
-//   wordBomb 1,347 / 4,168 / 12,733 · 4,439      blitz  1,525 / 4,618 / 13,490 · 5,438
-//   satRush  1,443 / 5,363 / 16,738 · 5,353      chain  2,724 / 11,857 / 39,153 · 8,046
-//   fuse     3,910 / 17,980 / 54,167 · 6,440     spread 1.81x
-export const WINS_MULT = { wordBomb: 2, blitz: 1.4, satRush: 1.6, chain: 2.5, fuse: 2.5 };
+// THE PER-MODE PAYOUT TABLE IS XP_MULTIPLIERS (xp.js) AND ONLY THAT.
+// `WINS_MULT` used to live here — a SECOND per-mode table (WB 2 · Blitz 1.4 · SAT 1.6 · CHAIN 2.5
+// · FUSE 2.5) that scaled wins while XP_MULTIPLIERS scaled XP, so the same word ranked the modes
+// differently depending on which number you looked at. With one stack there can only be one
+// table, and it is the XP one: menu 1 · WB 2 · Blitz 2 · SAT 3 · CHAIN 4 · FUSE 5.
+/** Every mode that pays, in payout-key spelling. */
+export const PAYOUT_MODES = ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse'];
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
@@ -171,82 +124,146 @@ export const DIFFICULTY_MULT = { chill: 1.0, easy: 1.25, medium: 1.5, hard: 2.0 
 // words at R0 / ×1 difficulty (post-rebalance: WB ~400, Blitz ~200, SAT ~100, CHAIN ~400, FUSE ~200).
 export const TYPICAL_ROUND_WORDS = 10;
 
-// Economy v7: wins are paid PER WORD, and the per-word BASE ITSELF GROWS WITH THE PLAYER.
+// ================================================================ ONE STACK, TWO READOUTS
 //
-// WHAT WAS WRONG. v6 paid `20 × mode × difficulty × rebirth × momentum`. The 20 never moved, so
-// the only way a stronger player earned more per MINUTE was by typing faster or rebirthing - a
-// level-80 player and a level-8 player were paid the SAME for the same word. Two changes:
-//   - BASE 20 -> 100. The floor was simply too low to read as a reward next to five-figure
-//     upgrade prices.
-//   - A LEVEL TERM. WIN_LEVEL_STEP^(level-1), so the base compounds as you climb: ×2.1 at LV50,
-//     ×4.4 at LV100, ×19 at LV200, ×82 at LV300. Higher play pays visibly more PER WORD, which is
-//     the thing the player can actually see on the accept toast.
-// The level term resets with the level bar on rebirth, and rebirthMult (now 3^rc) is what pays
-// for that reset - the two are deliberately the same size of lever pointing in opposite
-// directions. Live-read from taw.xp unless `level` is passed (keeps the function pure/testable).
-export const WORD_WINS_BASE = 100;
+// WINS ARE THE WORD'S XP DIVIDED BY TEN. That is the whole model, and it replaces a second,
+// parallel multiplier stack that wins used to keep for itself.
+//
+// WHAT WAS WRONG. A word paid XP through one product (key tier × letters × XP_MULTIPLIERS ×
+// rebirth × streak × mastery × the mark's xpMult) and wins through a DIFFERENT one
+// (WORD_WINS_BASE 100 × WINS_MULT × difficulty × rebirth × momentum × level × the mark's
+// winsMult). Two tables of per-mode multipliers, two bases, and four factors that appeared in
+// exactly one of them. So the two numbers on screen for the same keystroke could not be reasoned
+// about together, they drifted every time either table was retuned, and a shop item that said
+// "+20% XP" silently did nothing to the currency the shop is priced in.
+//
+// NOW THERE IS ONE PRODUCT. xpPerWord() (xp.js) computes it; wins are that number ÷ 10. Because
+// every XP grant is snapped to a multiple of ten, the division is exact — wins are an integer
+// with nothing to round away, and the two readouts can never disagree by construction rather
+// than by a test that watches them.
+//
+// WHAT MOVED, EXPLICITLY:
+//   - WORD_WINS_BASE (100) is gone. The base is the word's LETTERS at the player's key tier
+//     (keyTierXp × length ÷ 10 — see wordWinsBase), so KEY POWER now raises wins as well as XP.
+//     That is the intended consequence: it was the one upgrade that bought income in a currency
+//     it could not be spent on.
+//   - WINS_MULT is gone as a payout input. XP_MULTIPLIERS is the only per-mode table.
+//   - DIFFICULTY now applies to BOTH. It used to touch wins only, which meant playing on HELL
+//     levelled you no faster than CHILL.
+//   - WIN_LEVEL_STEP is gone FROM THE PER-WORD PAYOUT. A level term inside an award that also
+//     buys levels is income chasing the curve — the exact compounding that produced the "stuck
+//     at LV40" complaint. winLevelMult() itself is KEPT and still scales the flat one-off grants
+//     (secret finds, secret achievements), which is what it is good for.
+//   - MOMENTUM, the MARK and MASTERY are folded into ONE factor called `bonus`. All three are
+//     still individually earnable and each still multiplies; they just stop being three rows of
+//     "×1.03" in a breakdown. A mark's xpMult and winsMult are now the same lever, so both are
+//     applied.
+export const WORD_LEN_REF = 5; // the reference word a RATE is quoted for (cards, dialogs, LiveStack)
+
 // ANDY (item 5): "Stuck at lvl 40", more than once.
 // THE STRUCTURAL CAUSE, and it is one ratio. A level costs EARLY_CURVE_EXP more than the last
 // while a word pays WIN_LEVEL_STEP more, so every level takes curve/income longer than the one
-// before it, COMPOUNDING. At 1.115 / 1.015 that is 1.0985 - each level ~9.9% longer, 6.5x over
-// twenty levels, 43x over forty. Which is exactly what LV40 feels like: simulated, LV40 arrives at
-// 16m and then LV40->60 takes 3.9x the previous stretch and LV60->100 takes 17.3x.
-// Raising income growth 1.015 -> 1.035 (and easing the curve to 1.085, see xp.js) takes the
-// per-level stretch to 1.0483 - roughly halving the compounding. Simulated: LV60->100 grows 8.1x
-// instead of 17.3x, and a 200-hour player reaches LV171 instead of LV136.
-export const WIN_LEVEL_STEP = 1.035; // per-level growth of the per-word base
+// before it, COMPOUNDING. Economy v8's answer is to take the level term out of the per-word award
+// entirely (above): income per word is now flat in level and grows through KEY POWER, rebirth,
+// mastery and momentum instead — levers the player buys, not ones that accrue for free and then
+// race the curve. WIN_LEVEL_STEP survives here because the FLAT grants still want it: a secret
+// found at LV80 should not pay what it paid at LV3.
+export const WIN_LEVEL_STEP = 1.035; // per-level growth of the FLAT one-off grants
 export function winLevelMult(level) {
   const lv = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
   return Math.pow(WIN_LEVEL_STEP, lv - 1);
 }
+
+// The payout keys ('wordBomb') and the gameData ids ('word-bomb') are both real and both used;
+// XP_MULTIPLIERS and mastery are keyed by the id, DIFFICULTY and the mark's `mode` by the payout
+// key. ONE map each way, rather than a per-call-site guess.
+const GAME_KEY = {
+  wordBomb: 'word-bomb',
+  blitz: 'category-blitz',
+  satRush: 'sat-rush',
+  chain: 'chain',
+  fuse: 'fuse',
+};
+/** The gameData-style id ('word-bomb') for either spelling of a mode. */
+export function gameKey(mode) {
+  const k = modeKey(mode);
+  return k ? GAME_KEY[k] || k : 'menu';
+}
+
+// The flat per-word BASE, before any multiplier: what this word's LETTERS are worth at the
+// player's key tier, in wins. keyTierXp × length is the XP; ÷10 is the wins.
+export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF } = {}) {
+  const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
+  const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
+  return (keyTierXp(kt) * len) / 10;
+}
+
 /**
- * The PERMANENT half of a word's payout, as named factors — what the player has BUILT, as opposed
- * to what this particular word was. Exported so the payout receipt (progress/payout.js) can name
- * every multiplier without re-deriving any of them: the breakdown and the payment read the same
+ * THE MULTIPLIER STACK, as named factors — the single definition, used by the XP award, by the
+ * wins payout and by the receipt that explains them. The breakdown and the payment read the same
  * object, so the receipt cannot quote a number the player was not actually paid.
+ *
+ * `bonus` is momentum × the equipped mark × this mode's mastery, aggregated deliberately: three
+ * separate near-1 rows taught nothing, and the player earns them in three different places
+ * anyway. Each is still individually earnable and each still multiplies.
  */
-export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, level, markId } = {}) {
+export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, markId, masteryMult, streakMult } = {}) {
+  const key = modeKey(mode);
+  const id = gameKey(mode);
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  const lv = Number.isFinite(level) ? level : loadProgress().level;
-  // MOMENTUM (repeatable sink): a global +1%/buy wins multiplier, live-read like rebirth (defaults
-  // to ×1 at 0 buys, so every existing payout is unchanged until the player buys in). Applied to the
-  // per-word rate so it scales EVERY mode's wins uniformly.
+  // MOMENTUM (repeatable sink): a global +1%/buy multiplier, live-read like rebirth.
   const mm = Number.isFinite(momentumCount) ? momentumCount : getMomentum();
+  // The equipped MARK. Its xpMult and winsMult were two names for the same lever once the stacks
+  // merged, so BOTH apply — a mark cannot boost one readout and not the other any more.
+  const markWins = markWinsFactors({ markId, mode: key }).mark || 1;
+  const mastery = Number.isFinite(masteryMult) && masteryMult > 0 ? masteryMult : masteryXpMult(id);
+  const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
   return {
-    mode: WINS_MULT[mode] || 1,
+    mode: XP_MULTIPLIERS[id] ?? 1,
     difficulty: DIFFICULTY_MULT[difficulty] ?? 1,
     rebirth: rebirthMult(rc),
-    momentum: momentumMult(mm),
-    level: winLevelMult(lv),
-    // The equipped MARK, if it pays in this mode. Folded in HERE rather than at the call sites so
-    // the payment and the receipt read the same object - a mark cannot boost a payout without
-    // appearing in the breakdown, because there is only one place either could come from.
-    ...markWinsFactors({ markId, mode }),
+    streak: stm,
+    bonus: momentumMult(mm) * markWins * markXpMult(markId) * mastery,
   };
 }
-export function perWordWins(opts = {}) {
+
+/** One word's XP, with the whole stack resolved. The number wins are derived from. */
+export function perWordXp(opts = {}) {
   const f = perWordFactors(opts);
-  return round10(
-    WORD_WINS_BASE * f.mode * f.difficulty * f.rebirth * f.momentum * f.level * (f.mark || 1)
-  );
+  return xpPerWord({
+    mode: gameKey(opts.mode),
+    keyTier: opts.keyTier,
+    rebirthCount: opts.rebirthCount,
+    wordLength: Number.isFinite(opts.wordLength) ? opts.wordLength : WORD_LEN_REF,
+    weight: opts.weight,
+    streakMult: f.streak,
+    difficultyMult: f.difficulty,
+    bonusMult: f.bonus,
+  });
+}
+
+/** One word's WINS: its XP ÷ 10. Exact — every XP grant is a multiple of ten. */
+export function perWordWins(opts = {}) {
+  return Math.round(perWordXp(opts) / 10);
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else
-// (weighted or plain) word count × the per-word rate, snapped to a round 10. Difficulty
-// defaults to ×1 (unspecified / no-difficulty modes).
+// (weighted or plain) word count × the per-word rate. Difficulty defaults to ×1 (unspecified /
+// no-difficulty modes).
 //
 // `weightedWords` — an optional reward-weighted word count that REPLACES the raw count in the
 // multiplication when positive. The <3-word GATE always uses the raw integer count, so a weight
-// can't sneak a sub-3 run past the gate. Omitting it (every current caller) is unchanged: since
-// perWordWins is already a multiple of 10, round10(count × rate) == count × rate. NOTE: live
+// can't sneak a sub-3 run past the gate. Omitting it leaves the plain count × rate. NOTE: live
 // gameplay no longer feeds this — COMBO (progress/combo.js) and LUCKY (progress/luck.js) fold
 // their per-word multipliers into the per-word banking WEIGHT (bankWordWins) instead; this
 // param is retained for the pure recordRound reference + its unit tests.
-export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords, level } = {}) {
+export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords, wordLength } = {}) {
   const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
   if (w < MIN_WORDS) return 0;
   const weight = Number.isFinite(weightedWords) && weightedWords > 0 ? weightedWords : w;
-  return round10(weight * perWordWins({ mode, difficulty, rebirthCount, level }));
+  // Math.round, not round10: wins are XP÷10 and no longer land on a multiple of ten, so snapping
+  // the TOTAL to one would quietly disagree with the sum of the words that produced it.
+  return Math.round(weight * perWordWins({ mode, difficulty, rebirthCount, wordLength }));
 }
 
 // The card's per-ROUND payout preview: a typical round's wins for this mode/difficulty
@@ -255,18 +272,9 @@ export function roundWinsEstimate({ mode, difficulty } = {}) {
   return awardWins({ wordsAccepted: TYPICAL_ROUND_WORDS, mode, difficulty });
 }
 
-// PER-WORD wins preview shown on the menu cards. Base 20 per word, keyed by game.id (NOT the
-// round-mode key used by perWordWins/recordRound — GameCard passes game.id). REBALANCED
-// (sim/rebalance-2) to the SAME per-mode factors as WINS_MULT: WB ×2 · Blitz ×1 · SAT ×0.5 ·
-// CHAIN ×1.9 · FUSE ×1, then × difficulty, snapped to a round 10 (R0 per-word: word-bomb 40,
-// category-blitz 20, sat-rush 10, chain 40, fuse 20 at the ×1 difficulty default). This is the R0
-// BASE per-word rate; the card/dialog copy shows it and ANNOTATES the active rebirth boost
-// separately via currentRebirthMult() below, so the stable base stays readable.
-// TWO MAPS FOR ONE FACT, IN TWO KEY STYLES, IS HOW THEY DRIFT. `WINS_MULT` (camelCase, what the
-// payout actually uses) and `WORD_WINS_MULT` (kebab, what the menu card used) were separate
-// tables — and the kebab one was already MISSING 'category-blitz' entirely, so Blitz fell through
-// to x1. It happens to equal WINS_MULT.blitz today, so nothing was visibly wrong; the next edit to
-// one of them would have been. There is now ONE table and a key normaliser.
+// TWO MAPS FOR ONE FACT, IN TWO KEY STYLES, IS HOW THEY DRIFT. The kebab-keyed per-mode table
+// the menu card used was already MISSING 'category-blitz' entirely, so Blitz fell through to x1.
+// There is now ONE table (XP_MULTIPLIERS) and a key normaliser.
 const MODE_KEY_ALIAS = {
   'word-bomb': 'wordBomb',
   'category-blitz': 'blitz',
@@ -277,17 +285,27 @@ const MODE_KEY_ALIAS = {
 /** Canonical mode key, accepting either the gameData id ('word-bomb') or the payout key. */
 export function modeKey(mode) {
   if (!mode) return null;
-  return MODE_KEY_ALIAS[mode] || (Object.hasOwn(WINS_MULT, mode) ? mode : null);
+  return MODE_KEY_ALIAS[mode] || (PAYOUT_MODES.includes(mode) ? mode : null);
 }
-/** @deprecated kept for callers/tests; now derived from the single WINS_MULT table. */
+/** @deprecated kept for callers/tests; the alias map is the only per-mode key table left. */
 export const WORD_WINS_MULT = MODE_KEY_ALIAS;
 
-// The BASE per-word rate: mode x difficulty only, no player state. Kept because the mode DIALOG
-// and the sims want the stable number.
-export function wordWinsEstimate({ mode, difficulty } = {}) {
-  const diffMult = DIFFICULTY_MULT[difficulty] ?? 1;
-  const modeMult = WINS_MULT[modeKey(mode)] || 1;
-  return round10(WORD_WINS_BASE * modeMult * diffMult);
+// The BASE per-word rate: mode × difficulty on a reference word, with NO earned multipliers —
+// no rebirth, no momentum, no mark, no mastery, no streak. Kept because the mode DIALOG and the
+// sims want the stable number. (Key tier is read live: it is the base now, not a multiplier.)
+export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {}) {
+  return Math.round(
+    xpPerWord({
+      mode: gameKey(mode),
+      keyTier,
+      rebirthCount: 0,
+      wordLength: Number.isFinite(wordLength) ? wordLength : WORD_LEN_REF,
+      weight: 1,
+      streakMult: 1,
+      difficultyMult: DIFFICULTY_MULT[difficulty] ?? 1,
+      bonusMult: 1,
+    }) / 10
+  );
 }
 
 /**
@@ -295,7 +313,7 @@ export function wordWinsEstimate({ mode, difficulty } = {}) {
  *
  * ANDY: "Multipliers should SHOW." The menu card used to print the BASE rate and then append the
  * rebirth multiplier as a separate "(x3)" — leaving the player to do the multiplication, and
- * silently omitting momentum, level and the equipped mark from BOTH numbers. So the card said
+ * silently omitting momentum and the equipped mark from BOTH numbers. So the card said
  * "200 WINS / WORD (x3)" while a word was really paying, say, 763.
  *
  * This returns the resolved rate and the factors behind it, so the card can print the number the
@@ -304,14 +322,16 @@ export function wordWinsEstimate({ mode, difficulty } = {}) {
  *
  * @returns {{ rate:number, base:number, mult:number, factors:object }}
  *   rate   — wins for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
- *   base   — WORD_WINS_BASE, the floor everything scales from
+ *   base   — the reference word's letters at the player's key tier, the floor everything scales from
  *   mult   — rate / base, i.e. everything the player has built, as one number
  */
-export function perWordRateNow({ mode, difficulty, rebirthCount, momentumCount, level, markId } = {}) {
+export function perWordRateNow({ mode, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength } = {}) {
   const key = modeKey(mode);
-  const factors = perWordFactors({ mode: key, difficulty, rebirthCount, momentumCount, level, markId });
-  const rate = perWordWins({ mode: key, difficulty, rebirthCount, momentumCount, level, markId });
-  return { rate, base: WORD_WINS_BASE, mult: WORD_WINS_BASE > 0 ? rate / WORD_WINS_BASE : 1, factors };
+  const opts = { mode: key, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength };
+  const factors = perWordFactors(opts);
+  const rate = perWordWins(opts);
+  const base = wordWinsBase({ keyTier, wordLength });
+  return { rate, base, mult: base > 0 ? rate / base : 1, factors };
 }
 
 // The player's live rebirth WINS multiplier (same ladder as XP), 1 at R0. Exposed so the menu
@@ -454,7 +474,7 @@ export function grantWins(n, label, meta = {}) {
 // and words 4+ each release exactly their own weight — full per-word fidelity, no caller-side
 // buffer. prevWeight/nowWeight DEFAULT to the counts (every word ×1) when omitted, so any caller
 // that doesn't pass a weight behaves byte-identically to the pre-rarity payout.
-export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight, nowWeight, rebirthCount, level } = {}) {
+export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight, nowWeight, rebirthCount, wordLength } = {}) {
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
@@ -465,9 +485,11 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   const paidNow = nowN >= MIN_WORDS ? nowW : 0;
   const deltaWeight = paidNow - paidPrev;
   if (deltaWeight <= 0) return 0;
-  // Snap each grant to a round multiple of 10 (the payout invariant — every grant ends in a
-  // zero) after applying the rarity weight to the base per-word rate.
-  const granted = round10(deltaWeight * perWordWins({ mode, difficulty, rebirthCount, level }));
+  // `wordLength` is THIS word's letters — the same count the XP award used, so the two readouts
+  // stay the same event. On the gate-crossing word the released weight covers words 1-3 and they
+  // are all valued at this word's length, exactly as they are already all valued at this word's
+  // difficulty and rebirth count.
+  const granted = Math.round(deltaWeight * perWordWins({ mode, difficulty, rebirthCount, wordLength }));
   // Through the ONE door, like every other credit — so the per-word money and the bonus money are
   // summable by the same test and renderable by the same component.
   credit(granted, 'WORDS', { kind: 'word', mode });
@@ -478,6 +500,25 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
     saveRounds(r);
   }
   return granted;
+}
+
+// ---- THE AWARD ------------------------------------------------------------------------------
+// Credit one accepted word's XP to the persisted level state; returns creditXp's result plus the
+// gain ({ state, leveledUp, level, gain, mastery }). Persistence happens here so returning to the
+// menu reflects the levels earned in play; the caller may use `leveledUp` to fire a celebration.
+//
+// MOVED FROM xp.js (Economy v8). It computes the SAME product perWordWins() divides by ten —
+// perWordXp() is the one definition — so the XP a word grants and the wins it banks are two
+// readings of one number rather than two calculations that happen to be near each other. Mastery
+// is read BEFORE the word is credited to the mastery track, so a word never retroactively boosts
+// itself.
+export function awardWordXp(opts = {}) {
+  const mode = opts.mode || 'menu';
+  const gain = perWordXp({ ...opts, mode });
+  const res = creditXp(loadProgress(), gain);
+  saveProgress(res.state);
+  const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
+  return { ...res, gain, mastery };
 }
 
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round

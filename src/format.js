@@ -73,3 +73,31 @@ export function formatNum(n) {
   const p = formatNumParts(n);
   return p.num + p.suffix;
 }
+
+/**
+ * A MULTIPLIER, NOT A COUNT. `formatNum` rounds to a whole number below 10,000 — correct for wins
+ * and XP, and wrong for every "×" on the screen: a ×1.6 payout printed as "×2" and a ×1.4 printed
+ * as "×1", so the card claimed a bonus the game did not pay and then claimed no bonus at all.
+ * Both are the same defect, and "×1" is the worse one: it reads as "this upgrade does nothing".
+ *
+ * ONE decimal, trailing .0 stripped — 1.6 → "1.6", 2 → "2", 1.45 → "1.5".
+ *
+ * THE ONE EXTRA RULE: if one decimal would round a real bonus away to a whole number, keep a
+ * second. MOMENTUM is +1% a buy, so a player forty purchases in is on ×1.4 (fine) and one buy in
+ * is on ×1.01 — which at one decimal is "×1" again, the exact bug this function exists to fix,
+ * just further down the scale. Above 10,000 it hands off to formatNum so the rebirth ladder
+ * (3^20) stays "3.49B" rather than a ten-digit number with a pointless ".0" on it.
+ *
+ * NEVER use formatNum for a multiplier.
+ */
+export function formatMult(n) {
+  const v = Number.isFinite(n) ? n : 0;
+  if (Math.abs(v) >= 10000) return formatNum(v);
+  // toPrecision before rounding: 1.45 * 10 is 14.499999999999998 in float64, so a plain
+  // Math.round would give "1.4" for a number the caller wrote as 1.45.
+  const r1 = Math.round(Number((v * 10).toPrecision(12))) / 10;
+  const r = Number.isInteger(r1) && !Number.isInteger(v)
+    ? Math.round(Number((v * 100).toPrecision(12))) / 100
+    : r1;
+  return String(r);
+}

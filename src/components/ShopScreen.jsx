@@ -21,7 +21,7 @@ import {
 import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
-import { formatNum } from '../format';
+import { formatNum, formatMult } from '../format';
 import ShopSticker from './ShopSticker';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
@@ -177,8 +177,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.
     setReveal({
       kind: 'rebirth',
-      name: `×${formatNum(gained)}`,
-      blurb: `Everything you earn from here is multiplied by ${formatNum(gained)}.`,
+      name: `×${formatMult(gained)}`,
+      blurb: `Everything you earn from here is multiplied by ${formatMult(gained)}.`,
       coin: null, // a rebirth spends LEVELS, not wins — no price pill
       colour: '#9A1AFF',
       onClose: onBack,
@@ -345,7 +345,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
               <div className="shop-rb-stat">
                 <span>CURRENT MULTIPLIER</span>
-                <b>×{formatNum(rebirthMult(rebirths))}</b>
+                <b>×{formatMult(rebirthMult(rebirths))}</b>
               </div>
               {/* The NEXT rebirth's level + multiplier, shown at all times (Economy v4). */}
               <div className="shop-rb-stat">
@@ -354,7 +354,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
               <div className="shop-rb-stat">
                 <span>NEXT MULTIPLIER</span>
-                <b>×{formatNum(nextMult)}</b>
+                <b>×{formatMult(nextMult)}</b>
               </div>
             </div>
 
@@ -372,7 +372,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>KEEP:</b> wins, all purchases, lifetime stats — everything else.
               </li>
               <li>
-                <b>GAIN:</b> a permanent ×{formatNum(nextMult)} XP multiplier.
+                <b>GAIN:</b> a permanent ×{formatMult(nextMult)} XP multiplier.
               </li>
             </ul>
 
@@ -388,7 +388,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
               ) : (
                 <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)}>
-                  REBIRTH {rebirths + 1} — GAIN ×{formatNum(nextMult)} XP
+                  REBIRTH {rebirths + 1} — GAIN ×{formatMult(nextMult)} XP
                 </button>
               )
             ) : (
