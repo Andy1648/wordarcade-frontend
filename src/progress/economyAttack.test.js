@@ -21,7 +21,7 @@ import {
   winsLedgerSince,
   UNATTRIBUTED,
   MIN_WORDS,
-  WINS_MULT,
+  PAYOUT_MODES,
 } from './wins.js';
 
 // A fresh in-memory localStorage per test, installed as the global. The ledger is module state, so
@@ -66,7 +66,7 @@ function playRun({ mode, words, weightPerWord = 1, difficulty, level }) {
   return grants;
 }
 
-const ALL_MODES = Object.keys(WINS_MULT); // wordBomb, blitz, satRush, chain, fuse
+const ALL_MODES = PAYOUT_MODES; // wordBomb, blitz, satRush, chain, fuse
 
 test('THE BOOKS BALANCE: ledger total == balance delta == lifetime delta, in every mode', () => {
   withStorage(() => {
@@ -106,12 +106,16 @@ test('no live path can credit UNATTRIBUTED money', () => {
   });
 });
 
-test('every grant ends in a zero — the stated payout invariant, per grant not just in total', () => {
+// THE INVARIANT MOVED (Economy v8). Wins used to be snapped to their own multiple of ten; they
+// are the word's XP ÷ 10 now, and it is the XP that round10 snaps. So a grant is a WHOLE NUMBER
+// of wins — "+15 WINS" is a sentence the game can say — and what must still end in a zero is the
+// XP and the shop prices (pinned in wins.test.js / xp.test.js).
+test('every grant is a whole, non-negative number of wins — per grant, not just in total', () => {
   withStorage(() => {
     for (const mode of ALL_MODES) {
       for (const level of [1, 7, 23, 40]) {
         for (const g of playRun({ mode, words: 9, weightPerWord: 1.7, level })) {
-          assert.equal(g % 10, 0, `${mode} @ lv${level} granted ${g}, which does not end in a zero`);
+          assert.ok(Number.isInteger(g) && g >= 0, `${mode} @ lv${level} granted ${g}`);
         }
       }
     }

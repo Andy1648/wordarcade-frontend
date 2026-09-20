@@ -37,7 +37,8 @@ test.describe('momentum repeatable sink', () => {
   });
 
   test('shop MOMENTUM track hold-to-buy adds a mark and deducts the rising cost', async ({ page }) => {
-    await seed(page, { 'taw.wins': '6000', 'taw.momentum': '0', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }) });
+    // PRICES /10 in Economy v8 (wins are the word's XP ÷ 10), so the first MOMENTUM buy is 500.
+    await seed(page, { 'taw.wins': '600', 'taw.momentum': '0', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }) });
     await page.goto('/?portal=1');
     await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
     await page.waitForTimeout(400);
@@ -50,10 +51,10 @@ test.describe('momentum repeatable sink', () => {
     const buy = page.locator('.shop-keypower').nth(1).locator('.shop-buy');
     await expect(buy).toBeVisible();
     await buy.click();
-    // One mark bought: count 0→1, wins 6000 − 5000 = 1000.
+    // One mark bought: count 0→1, wins 600 − 500 = 100.
     await expect
       .poll(() => page.evaluate(() => Number(localStorage.getItem('taw.momentum'))), { timeout: 4000 })
       .toBe(1);
-    expect(await page.evaluate(() => Number(localStorage.getItem('taw.wins')))).toBe(1000);
+    expect(await page.evaluate(() => Number(localStorage.getItem('taw.wins')))).toBe(100);
   });
 });

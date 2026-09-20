@@ -46,13 +46,13 @@ test('catalog: 5 themes, unique stable ids, default is free at price 0', () => {
   assert.deepEqual(ids, ['default', 'midnight', 'inferno', 'toxic', 'prism']);
   assert.equal(new Set(ids).size, 5);
   assert.equal(themeById('default').price, 0);
-  // Prices + level gates per spec.
-  assert.equal(themeById('midnight').price, 600);
+  // Prices + level gates per spec (prices /10 in Economy v8).
+  assert.equal(themeById('midnight').price, 60);
   assert.equal(themeById('midnight').unlockLevel, 10);
-  assert.equal(themeById('inferno').price, 2500);
-  assert.equal(themeById('toxic').price, 8000);
+  assert.equal(themeById('inferno').price, 250);
+  assert.equal(themeById('toxic').price, 800);
   assert.equal(themeById('toxic').unlockLevel, 30);
-  assert.equal(themeById('prism').price, 25000);
+  assert.equal(themeById('prism').price, 2500);
   // Each theme carries a full var map + a 4-swatch preview + 4 pop colours.
   for (const t of THEMES) {
     assert.equal(t.swatch.length, 4);
@@ -72,13 +72,14 @@ test('ownership: default always owned; others not until bought or unlocked', () 
 test('buyTheme: deducts wins, grants ownership; rejects owned/unaffordable', () => {
   withStorage((map) => {
     const api = winsApi(map);
-    api.saveWins(3000);
-    // unaffordable (prism 25000)
+    // PRICES /10 in Economy v8 (wins are the word's XP ÷ 10).
+    api.saveWins(300);
+    // unaffordable (prism 2500)
     assert.equal(buyTheme('prism', api).ok, false);
-    // affordable (inferno 2500)
+    // affordable (inferno 250)
     const r = buyTheme('inferno', api);
     assert.equal(r.ok, true);
-    assert.equal(r.wins, 500); // 3000 - 2500
+    assert.equal(r.wins, 50); // 300 - 250
     assert.equal(isThemeOwned('inferno'), true);
     // already owned
     assert.equal(buyTheme('inferno', api).reason, 'owned');

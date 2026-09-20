@@ -21,8 +21,8 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { bankWordWins, awardWins, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
-import { awardWordXp, cappedWordMult } from '../progress/xp';
+import { bankWordWins, awardWins, awardWordXp, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
+import { cappedWordMult } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
@@ -31,7 +31,7 @@ import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
-import { formatNum } from '../format';
+import { formatMult } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
 // deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
@@ -144,6 +144,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
       noteWord(view.lastClearedWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
       const banked = bankWordWins({
         mode: 'satRush',
+        wordLength: (view.lastClearedWord || '').length,
         prevWords: satBankedWordsRef.current,
         nowWords: cleared,
         prevWeight,
@@ -315,7 +316,7 @@ function StartScreen({ onPlay, onExit }) {
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">
             <b>{wins}</b> WINS / WORD
-            {mult > 1 && <span className="sr-cover-mult"> (×{formatNum(mult)})</span>}
+            {mult > 1 && <span className="sr-cover-mult"> (×{formatMult(mult)})</span>}
           </span>
           <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
         </div>

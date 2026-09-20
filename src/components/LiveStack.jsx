@@ -16,19 +16,19 @@
 // crowds out the rows that matter. `WordPayout` already handles the "an upgrade is doing nothing
 // on THIS word" case with its own inactive list.
 import { perWordRateNow } from '../progress/wins';
-import { formatNum } from '../format';
+import { formatNum, formatMult } from '../format';
 import './LiveStack.css';
 
 const LABELS = {
   mode: 'MODE',
   difficulty: 'DIFFICULTY',
-  level: 'LEVEL',
   rebirth: 'REBIRTH',
-  momentum: 'MOMENTUM',
-  mark: 'MARK',
+  streak: 'STREAK',
+  bonus: 'BONUS',
 };
-const ORDER = ['mode', 'difficulty', 'level', 'rebirth', 'momentum', 'mark'];
-const mult = (m) => `×${Number(m.toFixed(2))}`;
+const ORDER = ['mode', 'difficulty', 'rebirth', 'streak', 'bonus'];
+// formatMult, not a local toFixed(2): one definition of how a × is written, everywhere.
+const mult = (m) => `×${formatMult(m)}`;
 
 export default function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
   const now = perWordRateNow({ mode, difficulty });

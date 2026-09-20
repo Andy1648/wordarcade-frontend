@@ -52,10 +52,16 @@ test('every mark has an effect, and every effect is a SMALL one', () => {
   }
 });
 
-test("a wins mark's factor key is a REAL payout row — rule 3, enforced", () => {
+test("a wins mark's contribution is a REAL payout row — rule 3, still enforced", () => {
   // A mark that changed a payout without appearing in the receipt would be exactly the defect this
-  // branch exists to fix. markWinsFactors emits `mark`, so `mark` has to be a known factor.
-  assert.ok(PAYOUT_FACTORS.some((f) => f.key === 'mark'), 'payout.js must know the `mark` factor');
+  // branch exists to fix. Economy v8 folded momentum + mark + mastery into ONE aggregate factor
+  // (`bonus`) rather than three near-×1 rows, so the row the mark rides in is `bonus` — but it is
+  // still a named row and still drawn. The rule is "a mark cannot be invisible", not "a mark has
+  // a row of its own".
+  assert.ok(PAYOUT_FACTORS.some((f) => f.key === 'bonus'), 'payout.js must know the `bonus` factor');
+  const bonus = PAYOUT_FACTORS.find((f) => f.key === 'bonus');
+  assert.equal(bonus.kind, 'permanent');
+  assert.ok(bonus.label && bonus.label === bonus.label.toUpperCase());
 });
 
 test('ONE SLOT: equipping replaces, and an un-equip is allowed', () => {

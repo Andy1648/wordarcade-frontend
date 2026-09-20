@@ -5701,7 +5701,6 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .bomb-flame-core {
   opacity: 1;
 }
-=======
 /* ---------- "the rest of the game" offer (deep-link visitors only) ----------
    Shown only to someone who landed on /word-bomb/play or /category-blitz/play and has never seen
    the menu. It lives INSIDE the sticky actions footer so it survives a card that scrolls, and it is

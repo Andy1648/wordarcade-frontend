@@ -87,14 +87,14 @@ import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, awardWins, perWordFactors, WORD_WINS_BASE, subscribeWins } from './progress/wins';
+import { bankWordWins, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
 } from './progress/payout';
 import { rarityCue } from './juice/audio';
 import { useWordSecrets } from './secrets/useWordSecrets';
 import { refundWordSense } from './progress/wordSenseRefund';
-import { awardWordXp, cappedWordMult } from './progress/xp';
+import { cappedWordMult } from './progress/xp';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
 // combo multiplier and a 1/40 lucky ×5, both folded into the per-word reward weight.
@@ -1342,6 +1342,7 @@ function App() {
             // gated on the accept COUNT snapshot taken when the word landed.
             const banked = bankWordWins({
               mode: 'wordBomb',
+              wordLength: (wbWord || '').trim().length,
               difficulty: gameDifficultyRef.current,
               prevWords: wbNowWords - 1,
               nowWords: wbNowWords,
@@ -1365,8 +1366,11 @@ function App() {
                 lucky: wbLucky.winsWeight,
                 cap: uncapped > 0 ? wbWeight / uncapped : 1,
               };
-              const payout = buildPayout({ base: WORD_WINS_BASE, factors, total: banked, band: r.band });
-              notePayout({ base: WORD_WINS_BASE, factors, total: banked });
+              // The base is this word's LETTERS at the player's key tier (Economy v8) — the same
+              // base the payout used, so the receipt still cannot disagree with the ledger.
+              const wbBase = wordWinsBase({ wordLength: (wbWord || '').trim().length });
+              const payout = buildPayout({ base: wbBase, factors, total: banked, band: r.band });
+              notePayout({ base: wbBase, factors, total: banked });
               setLastPayout({
                 key: wbNowWords,
                 word: wbWord,
@@ -1544,6 +1548,7 @@ function App() {
           noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
           const banked = bankWordWins({
             mode: 'blitz',
+            wordLength: (blitzAnswer || '').trim().length,
             difficulty: gameDifficultyRef.current,
             prevWords: blitzNowWords - 1,
             nowWords: blitzNowWords,

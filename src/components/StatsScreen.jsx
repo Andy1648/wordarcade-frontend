@@ -25,7 +25,7 @@ import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
-import { formatNum } from '../format';
+import { formatNum, formatMult } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
@@ -37,7 +37,7 @@ const TABS = [
 ];
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
-const x = (n) => `×${formatNum(Number.isFinite(n) ? n : 0)}`; // formatNum so ×1e11 stays compact
+const x = (n) => `×${formatMult(Number.isFinite(n) ? n : 0)}`; // formatMult: 1dp, and it hands ×1e11 to formatNum
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 // Compact, house-style date (e.g. "AUG 27 2026"). Guarded — a bad stamp reads as a dash.
