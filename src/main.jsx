@@ -32,20 +32,14 @@ try { installChunkReloadGuard() } catch { /* never block startup */ }
 try { initTheme() } catch { /* never block startup */ }
 
 // ---- Third-party boot (perf/first-load): NOTHING third-party runs on the critical path. ----
-// gtag (GA4), Sentry's init and PostHog all start from ONE idle callback scheduled after the
-// window 'load' event. Before that:
-//  - a dataLayer/gtag stub queues any early gtag() calls (analytics.track fires them), so the
-//    real tag processes them on arrival — the standard GA snippet pattern, just later;
-//  - a tiny error shim records uncaught errors / unhandled rejections so the gap between boot
-//    and Sentry.init loses nothing — they are replayed into Sentry once it is up.
+// Sentry's init and PostHog both start from ONE idle callback scheduled after the window 'load'
+// event. Before that, a tiny error shim records uncaught errors / unhandled rejections so the gap
+// between boot and Sentry.init loses nothing — they are replayed into Sentry once it is up.
 // @sentry/react itself is NOT in the boot bundle: the root boundary below is a plain React class
 // (components/ErrorBoundary.js) that reports through captureException(), which queues until the
 // lazily-loaded Sentry is initialised. A render crash still shows the on-brand fallback.
-const GA_ID = 'G-BZ7DLWLDMR';
-window.dataLayer = window.dataLayer || [];
-if (typeof window.gtag !== 'function') {
-  window.gtag = function gtag() { window.dataLayer.push(arguments); };
-}
+// (perf/drop-ga4: Google Analytics was removed entirely — PostHog is the product-analytics sink,
+// with Umami for pageviews. Do not reintroduce a third-party tag manager on this path.)
 
 const earlyErrors = [];
 const shimError = (e) => { earlyErrors.push(e && (e.error || e.message) ? (e.error || e.message) : e); };
@@ -62,23 +56,6 @@ function bootSentry() {
   initSentry();
 }
 
-// Inject gtag.js and fire the ONE page_view per visit ourselves (send_page_view:false stops the
-// config call from double-counting it). Queue order: js → config → page_view, then the script.
-function bootGtag() {
-  if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
-  window.gtag('js', new Date());
-  window.gtag('config', GA_ID, { send_page_view: false });
-  window.gtag('event', 'page_view', {
-    page_location: window.location.href,
-    page_path: window.location.pathname + window.location.search,
-    page_title: document.title,
-  });
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
-  document.head.appendChild(s);
-}
-
 const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
 const afterLoad = (fn) => {
   if (document.readyState === 'complete') fn();
@@ -86,7 +63,6 @@ const afterLoad = (fn) => {
 };
 afterLoad(() => idle(() => {
   try { bootSentry() } catch { /* never block startup */ }
-  try { bootGtag() } catch { /* never block startup */ }
   // Init analytics, THEN fire first_visit (once) + attach the progression session props, so the very
   // first events are already segmented. All guarded — analytics can never block or crash startup.
   Promise.resolve(initAnalytics())
