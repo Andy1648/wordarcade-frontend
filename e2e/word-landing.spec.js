@@ -183,19 +183,36 @@ async function frameCheck(page) {
       const de = document.documentElement;
       const pageScroll = Math.max(de.scrollHeight - de.clientHeight, document.body.scrollHeight - document.body.clientHeight);
       const stageOverflow = sb ? Math.round(sb.bottom - de.clientHeight) : 0;
-      const paidEl = document.querySelector('.payout-total-val');
-      const rows = [...document.querySelectorAll('.wb-receipt .payout-row')].map((r) => ({
-        k: r.querySelector('.payout-k').textContent,
-        m: parseFloat((r.querySelector('.payout-v').textContent || '').replace('×', '')),
-      }));
-      const baseEl = document.querySelector('.wb-receipt .payout-head-val');
+      // The receipt is a HEADLINE (both currencies) over a one-line product, not a BASE row over
+      // a stack of label/value rows — see PayoutBreakdown.jsx. Same facts, read from where they
+      // now live, so this log keeps telling us what the word was actually paid.
+      const paidEl = document.querySelector('.payout-headline-wins');
+      const xpEl = document.querySelector('.payout-headline-xp');
+      const rows = [...document.querySelectorAll('.wb-receipt .payout-term')]
+        .filter((r) => r.querySelector('.payout-k'))
+        .map((r) => ({
+          k: r.querySelector('.payout-k').textContent,
+          m: parseFloat((r.querySelector('.payout-v').textContent || '').replace('×', '')),
+        }));
+      const baseEl = document.querySelector('.wb-receipt .payout-term--base');
       return {
         hits: [...new Set(hits)],
         outside: [...new Set(outside)],
         pageScroll,
         stageOverflow,
         paid: paidEl ? paidEl.textContent.replace(/[^0-9.KMB]/g, '') : null,
-        base: baseEl ? baseEl.textContent.replace(/[^0-9]/g, '') : null,
+        xp: xpEl ? xpEl.textContent.replace(/[^0-9.KMB]/g, '') : null,
+        baseText: baseEl ? baseEl.textContent.trim() : null,
+        // THE BASE, PARSED OUT OF WHAT THE PLAYER IS SHOWN. It used to be a bare "BASE 5" the
+        // panel printed and this probe read back; it is now "5 LETTERS × 10", so the number is
+        // recovered from its own terms. That makes the PAID check below stronger, not weaker: it
+        // now proves the printed sentence multiplies out to the printed total.
+        base: (() => {
+          const t = baseEl ? baseEl.textContent.trim() : '';
+          const mm = t.match(/([\d,]+)\s+LETTERS?\s+.\s+([\d,]+)/i);
+          if (!mm) return null;
+          return (Number(mm[1].replace(/,/g, '')) * Number(mm[2].replace(/,/g, ''))) / 10;
+        })(),
         rows,
         title: (document.querySelector('.game-title') || {}).textContent,
         // The accept toast is gone; a reject toast is still allowed.
@@ -247,7 +264,7 @@ for (const vp of FRAME_VIEWPORTS) {
     console.log(
       `FRAME | ${vp.name} | over=${m.hits.length ? m.hits.join(' ; ') : 'none'}` +
       ` | outside=${m.outside.length ? m.outside.join(' ; ') : 'none'}` +
-      ` | title="${m.title}" | base=${m.base} rows=${m.rows.map((r) => `${r.k}x${r.m}`).join(',')} paid=${m.paid}` +
+      ` | title="${m.title}" | base="${m.baseText}"(${m.base}) rows=${m.rows.map((r) => `${r.k}x${r.m}`).join(',')} xp=${m.xp} paid=${m.paid}` +
       ` | acceptToasts=${m.acceptToasts} | pageScroll=${m.pageScroll} stageBelowFold=${m.stageOverflow}`
     );
 
@@ -264,9 +281,17 @@ for (const vp of FRAME_VIEWPORTS) {
     expect(m.title).toBe('WORD BOMB');
 
     // (2) PAID FOLLOWS FROM THE ROWS. It printed 0 under five live multipliers.
+    // Wins are the word's XP ÷ 10 now (Economy v8), so the snap is on the XP grid: multiply up,
+    // round to a ten, divide back. The base itself comes from the "N LETTERS × M" the panel
+    // prints, so this checks the sentence the player reads, term by term.
     const product = m.rows.reduce((a, r) => a * r.m, 1);
-    const want = Math.round((Number(m.base) * product) / 10) * 10;
+    expect(m.base, 'the receipt must name its base as letters × per-letter').toBeGreaterThan(0);
+    const want = Math.round((m.base * product * 10) / 10) / 10 * 10;
     expect(Math.abs(Number(m.paid.replace(/[^0-9.]/g, '')) - want), `PAID ${m.paid} vs base x rows ${want}`).toBeLessThanOrEqual(10);
+    // (2b) AND BOTH CURRENCIES AGREE. The headline prints the same award twice; if they ever
+    // disagree the player is being shown a number the ledger did not move.
+    expect(Number(m.xp.replace(/[^0-9.]/g, '')), 'the XP headline must be the WINS headline x10')
+      .toBe(Number(m.paid.replace(/[^0-9.]/g, '')) * 10);
 
     // (5) NO DUPLICATE OF THE LANDED WORD. The accept toast said the same word again, bottom-left,
     // at the same moment the landing was showing it at the field with its band and its payout.
@@ -334,6 +359,8 @@ for (const w of [900, 1024, 1100, 1200]) {
         row: px(rec, row),
         used: px(rec, R('.game-stage--wb .game-used')),
         status: px(rec, R('.wb-status')),
+        recH: rec ? Math.round(rec.height) : 0,
+        recW: rec ? Math.round(rec.width) : 0,
         // the row must not overflow its own cap either — that is how SKIP escaped it the first time
         rowOverflow: row ? Math.round(R('.game-skip-btn').right - row.right) : 0,
         phOver,
@@ -341,7 +368,7 @@ for (const w of [900, 1024, 1100, 1200]) {
     });
     // eslint-disable-next-line no-console
     console.log(`RECEIPT | ${w}px | present=${m.present} skip=${m.skip} send=${m.send} row=${m.row}` +
-      ` used=${m.used} status=${m.status} rowOverflow=${m.rowOverflow} placeholderOver=${m.phOver} seat=${m.seat}`);
+      ` used=${m.used} status=${m.status} rowOverflow=${m.rowOverflow} placeholderOver=${m.phOver} seat=${m.seat} rec=${m.recW}x${m.recH}`);
     expect(m.seat, 'the word landing is drawn through a seat').toBe(0);
     expect(m.present, 'the receipt should be shown at this width').toBe(true);
     expect(m.skip, 'the receipt covers SKIP').toBe(0);

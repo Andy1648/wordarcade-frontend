@@ -10,7 +10,7 @@ import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
-import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
+import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -192,6 +192,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       // measurement never feeds back on the previous shrink (no oscillation).
       stage.style.setProperty('--menu-scale', '1');
       stage.style.height = '';
+      // Drop the region height WE set last pass for the same reason: the fit below is recomputed
+      // from the flex-grown region, so the measurement never feeds back on the previous shrink.
       const cs = getComputedStyle(stage);
       const padT = parseFloat(cs.paddingTop) || 0;
       const padB = parseFloat(cs.paddingBottom) || 0;
@@ -216,7 +218,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         if (SCALES.some((c) => el.classList.contains(c))) header += el.offsetHeight;
         else fixed += el.offsetHeight;
       }
-      const gaps = rowGap * Math.max(0, kids.length - 1);
+      // The card region opts OUT of the column's row-gap by a negative margin (it sits ~10px
+      // under the XP bar, not a full gap below it — see --cards-lift). Count the real margin, or
+      // the header shrinks to make room for space the layout does not actually use.
+      let marginAdj = 0;
+      for (const el of kids) {
+        const m = parseFloat(getComputedStyle(el).marginTop) || 0;
+        if (m) marginAdj += m;
+      }
+      const gaps = rowGap * Math.max(0, kids.length - 1) + marginAdj;
       const MINROW = 120; // keep at least this much height for the card region on a short screen
       if (header > 0) {
         const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
@@ -291,6 +301,15 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
       // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
       grid.setAttribute('data-cols', String(best.cols));
+      // WHERE THE LEFTOVER GOES, and why it cannot go where you would want it to. On a wide
+      // screen the cards are WIDTH-bound — five 3:4 cards across a 1850px stage are 328x437, and
+      // the region they sit in is 545px tall — so ~108px is spare and the cards cannot absorb it
+      // (the aspect is locked; the scenes slice-to-cover and a taller box would crop them).
+      // Returning it to the stage was tried and is WRONG: the frame gaps blew past the 16-32px
+      // band and the menu stopped filling the screen (e2e/menu-vgap, e2e/menu-fit, five
+      // viewports). So the region keeps growing and the grid hugs its TOP instead — the space
+      // still exists, it just sits BELOW the cards rather than between the bar and the cards,
+      // which is the one place the brief says it must not be. See .homepage-cards-region.
     };
     const onResize = () => {
       cancelAnimationFrame(raf);
@@ -662,6 +681,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             level={xpProgress.level}
             toNext={xpProgress.toNext}
             frac={xpProgress.frac}
+            /* HOW MANY WORDS, from the REAL rate. perWordRateNow() with no mode resolves the MENU
+               rate — the one thing the player can earn on THIS screen — through the same stack
+               the cards below quote, so it already carries key tier, rebirth, mastery, momentum
+               and the daily streak. The menu is also the SLOWEST rate in the game (every mode
+               multiplies it by 2-5), so the number is a ceiling the player always beats rather
+               than a promise that a mode choice could break. */
+            wordsToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, perWordRateNow({}).xp)))}
+            /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
+               caption line that used to sit under the bar — see below. */
+            firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
+            /* WPM joins the hint row (see .menu-xp-hint) instead of holding a row of its own. */
+            hintRight={<LiveWpm hideZero />}
             intoLevel={xpProgress.intoLevel}
             cost={xpProgress.cost}
             rebirths={rebirths}
@@ -676,21 +707,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             mark={markById(equippedMark)}
             onMarkClick={() => setShowMarks(true)}
           />
-          {/* First-visit XP caption: one line telling a brand-new player where XP comes from. Shown
-              only before LV2 AND only to a genuinely new account (no wins earned, no rebirths — so a
-              rebirthed player back at LV1 never sees it), then never again once they reach LV2. */}
-          {xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0 && (
-            <div className="menu-xp-caption">TYPE ANYWHERE TO EARN XP</div>
-          )}
+          {/* THE FIRST-VISIT CAPTION IS GONE, folded into the bar's own hint line. It said "TYPE
+              ANYWHERE TO EARN XP" on its own row directly under a row that now says "12 WORDS TO
+              LEVEL 2" — two lines of the same small type, saying two halves of one sentence, on
+              the one screen in the app with no vertical room to spare. The hint carries both on a
+              first run ("TYPE ANYWHERE · 12 WORDS TO LEVEL 2") and drops the lead-in afterwards.
+              Its 20px + the cluster's 5px gap are what pay for the hint line at 320x640. */}
           {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
               nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
               fixed UI). */}
           <MomentumRail count={momentum} />
-          {/* WPM (§2): the menu is a live typing self-test — this shows your speed as you type a
-              real word, hidden until you start (hideZero). */}
-          <div className="menu-wpm">
-            <LiveWpm hideZero />
-          </div>
           {/* THE NEXT-UNLOCK TEASER IS GONE (Andy's cut). Three spans promising a cosmetic FRAME,
               which at R1 rendered as "NEXT REBIRTH 1 FRAME REBIRTH 1" — a line that says the same
               word three times and names a reward the player cannot see. No affordance, nothing

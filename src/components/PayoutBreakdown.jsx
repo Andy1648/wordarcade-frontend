@@ -11,11 +11,14 @@
 // Both are read-only readouts of numbers wins.js has already paid. Neither computes a payout, so
 // neither can ever quote a multiplier the player did not actually get.
 import Num from './Num';
+import { formatNum, formatMultExact } from '../format';
 import './PayoutBreakdown.css';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
-// ×2 / ×1.5 / ×2.35 — trailing zeros trimmed, because "×2.00" reads like a different number.
-const mult = (m) => `×${Number(m.toFixed(2))}`;
+// ×2 / ×1.5 / ×2.35 — the EXACT formatter, not the one-decimal `formatMult` the cards use. A
+// receipt names single factors, and the streak ladder runs 1.05 / 1.10 / 1.20 / 1.25: rounded to
+// one decimal a ×1.05 streak prints as "×1.1", which is a multiplier the game did not apply.
+const mult = (m) => `×${formatMultExact(m)}`;
 
 /**
  * ONE WORD. `payout` is buildPayout()'s result; `inactive` is inactivePayoutFactors()'s, which is
@@ -36,33 +39,39 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
     const rest = ranked.slice(limit);
     more = { n: rest.length, mult: rest.reduce((a, r) => a * r.mult, 1) };
   }
+  // THE BASE IS A TERM, NOT A HEADING. "BASE 5" is the one number on the receipt the player
+  // cannot check, because nothing says where a 5 came from. "5 letters × 10" is the same fact
+  // with its working shown — the word's length against what a letter is worth at the player's
+  // key tier — so every term in the product is named and the line multiplies out by hand.
+  const baseTerm = payout.letters && payout.perLetter
+    ? `${payout.letters} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'} × ${formatNum(payout.perLetter)}`
+    : `BASE ${formatNum(payout.base)}`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
-      <div className="payout-head">
-        <span className="payout-head-label">BASE</span>
-        <span className="payout-head-val"><Num value={payout.base} /></span>
+      {/* BOTH CURRENCIES, one above the math that produced them. Wins are the word's XP ÷ 10, so
+          the two headline numbers are one number read twice — printing only the wins half was
+          hiding the half the level bar is counting. */}
+      <div className="payout-headline">
+        <span className="payout-headline-xp">+{formatNum(payout.xp)}<span className="payout-headline-unit"> XP</span></span>
+        <span className="payout-headline-sep" aria-hidden="true">·</span>
+        <span className="payout-headline-wins">+{formatNum(payout.paid)}<span className="payout-headline-unit"> WINS</span></span>
       </div>
-      <div className="payout-rows">
+      {/* EVERY TERM, IN ORDER, ON ONE LINE. A vertical list of label/value pairs read as a table
+          of unrelated facts; the product is a single sentence and now looks like one. */}
+      <div className="payout-math">
+        <span className="payout-term payout-term--base">{baseTerm}</span>
         {rows.map((r) => (
-          <div key={r.key} className={`payout-row payout-row--${r.kind}`}>
+          <span key={r.key} className={`payout-term payout-term--${r.kind}`}>
             <span className="payout-k">{r.label}</span>
             <span className="payout-v">{mult(r.mult)}</span>
-          </div>
+          </span>
         ))}
         {more && (
-          <div className="payout-row payout-row--more">
+          <span className="payout-term payout-term--more">
             <span className="payout-k">+{more.n} MORE</span>
             <span className="payout-v">{mult(more.mult)}</span>
-          </div>
+          </span>
         )}
-      </div>
-      <div className="payout-total">
-        <span className="payout-k">{payout.held ? 'WORTH' : 'PAID'}</span>
-        {/* `paid`, not `total`: the bottom line is the product of the rows above it. `total` is
-            what was BANKED, which is 0 for the first two words of a round (the 3-word gate) — and
-            a receipt that lists five multipliers and then prints 0 is a receipt that contradicts
-            itself. The gate is a separate fact and gets its own caption. */}
-        <Num value={payout.paid} className="payout-total-val" />
       </div>
       {payout.held && (
         <div className="payout-held">HELD — BANKS AT 3 WORDS</div>

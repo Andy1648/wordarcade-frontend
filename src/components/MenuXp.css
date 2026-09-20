@@ -137,8 +137,12 @@
 }
 /* Full bar: the LV label is its own chip sitting on the track's left cap (overlaps it via
    a negative margin; opaque dark fill so it reads over the track). Vertically centred by
-   the bar's flex align-items:center. */
-.menu-xp-bar:not(.is-mini) .menu-xp-lv {
+   the bar's flex align-items:center.
+   NOT ON THE LOUD BAR ANY MORE. The loud bar's numeral lives inside the welded badge
+   (.menu-xp-lvblock), which carries the fill and the rule; leaving this chip on it drew a second
+   dark rounded box around the numeral INSIDE the badge — visible in the 320 and 1920 frames as a
+   black plaque on the cyan. */
+.menu-xp-bar:not(.is-mini):not(.is-loud) .menu-xp-lv {
   position: relative;
   z-index: 3;
   /* fix/visual-real item 5: the LV chip is now SEPARATE from the track (was margin-right:-14px,
@@ -229,11 +233,17 @@
   /* A numeral inside a fixed-width chip cannot take the 28px Bungee display floor
      (.menu-xp-readout), and type that cannot take the floor should not be display type.
      Space Mono data readout instead. */
+  /* SPANNING THE TRACK, one numeral at each end — the XP you have on the left, what the level
+     costs on the right. Centred as one string, the fill's leading edge cut straight through it
+     at the half-way mark, which is exactly when a progress bar is being read. */
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 9px;
   font-family: 'Space Mono', monospace; font-weight: 700;
   text-transform: uppercase;
   font-size: var(--fs-label);
@@ -244,32 +254,45 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
   pointer-events: none;
+  overflow: hidden;
 }
+/* The cost is the quieter of the two: it does not move, and the one that does is the point. */
+.menu-xp-readout-need { color: #ffe94a; }
 
-/* First-visit XP caption — a single quiet line under the bar telling a newcomer where XP comes
-   from. Static (no idle motion, per the menu motion law); removed for good once they hit LV2. */
-.menu-xp-caption {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  text-align: center;
-  /* fix/visual-real item 6: the --menu-scale zoom now lives on the parent .menu-xp-cluster (the
-     caption is inside it), so it must NOT also zoom here or it would scale twice. Its top margin is
-     dropped too — the cluster's gap owns the spacing now. */
+/* ---- THE HINT: the bar's ratio, said in the unit the player controls ---------------------- */
+.menu-xp-hint {
+  flex-basis: 100%;
+  order: 9;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   font-family: 'Space Mono', monospace;
   font-size: var(--fs-label);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
   text-transform: uppercase;
   color: rgba(240, 234, 217, 0.72);
 }
-/* On a very short screen the one-screen menu has no room to spare, so drop this optional
-   onboarding line entirely (display:none also removes it from the fit measurement). */
-@media (max-height: 560px) {
-  .menu-xp-caption {
-    display: none;
-  }
+.menu-xp-hint-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.menu-xp-hint-right {
+  margin-left: auto;
+  flex: none;
+}
+.menu-xp-hint-lead { color: #2effe0; }
+.menu-xp-hint-to-short { display: none; }
+
+/* The first-visit XP caption is GONE — its text now rides the bar's own hint line (see
+   .menu-xp-hint and Homepage.jsx). Two stacked lines of the same small type, one saying where XP
+   comes from and the next saying how far the level is, were one sentence split across two rows on
+   the screen with the tightest vertical budget in the app. */
+
 
 /* ---- Feedback layer (outer backdrop margin, outside the panel border) ---- */
 .menu-xp-fx {
@@ -648,11 +671,12 @@ button.menu-mark:active {
    existing scaleX transform, which is untouched by this block.
    ========================================================================== */
 .menu-xp-bar.is-loud {
-  /* 56px — the DENSE variant, and the one that shipped. 92px with three readings on one line
-     ran together as a single stream of text with the tick segments slicing through it; at 56px
-     the bar holds the level and the progress, nothing else, and nothing is wasted. Still ~1.9x
-     the 30px hairline it replaced. */
-  --xp-track-h: 56px;
+  /* 44px. It was 56, and 56 was measured on the assumption that the track carried the level
+     block's height too; welding the badge INTO the border (see .menu-xp-barrow) means the badge
+     sets the height and the track only has to hold its own numerals. 44 is the touch-target
+     floor, which is the right size for the one bar on the screen, and the 12px it hands back
+     pays for the hint line underneath. */
+  --xp-track-h: 44px;
   /* TWO ROWS. Previously every meta chip shared the track's row, which starved the
      track to ~150px on a 760px bar — the readout and the rate line both overflowed it,
      and the tick segments (10% of a narrow track) read as fat bars. The chips go on
@@ -675,8 +699,7 @@ button.menu-mark:active {
 /* ONE ROW, LEVEL FIRST. The level block leads (it is what the bar is about), then the track
    takes the slack, then the meta chips. The row-break element that produced the old two-row
    layout is gone with the 92px slab — see .menu-xp-break below, which now renders nothing. */
-.menu-xp-bar.is-loud > .menu-xp-lvblock { order: 1; }
-.menu-xp-bar.is-loud > .menu-xp-track { order: 2; }
+.menu-xp-bar.is-loud > .menu-xp-barrow { order: 1; }
 .menu-xp-bar.is-loud > .menu-wins-chip { order: 3; }
 .menu-xp-bar.is-loud > .menu-streak { order: 4; }
 .menu-xp-bar.is-loud > .menu-mark { order: 5; }
@@ -684,6 +707,24 @@ button.menu-mark:active {
 .menu-xp-bar.is-loud > .menu-xp-break { display: none; }
 /* The mini bar never renders two rows, so the break must not occupy space there. */
 .menu-xp-bar:not(.is-loud) .menu-xp-break { display: none; }
+
+/* ---- THE BARROW: the level badge and the track inside ONE border -------------------------
+   The badge used to be a chip of its own — its own 3px border, its own hard shadow, its own gap
+   — sitting NEXT TO a separately-bordered track. Two boxes, four borders, and nothing saying the
+   left one described the right one. One border around the pair, with the badge's right edge as
+   the internal rule, makes it a single object: LEVEL 7, and here is level 7's progress.
+   `overflow:hidden` is what lets the children drop their own radii and still round the corner. */
+.menu-xp-bar.is-loud .menu-xp-barrow {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 240px;
+  min-width: 0;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
+  background: #0d0618;
+}
 
 /* ---- The level block: kicker over numeral, the numeral is the headline ---- */
 .menu-xp-bar.is-loud .menu-xp-lvblock {
@@ -693,22 +734,31 @@ button.menu-mark:active {
   justify-content: center;
   /* INLINE at 56px: a stacked kicker-over-numeral chip needs the height a 92px track had.
      LEVEL and the numeral sit on one baseline now. */
-  flex-direction: row;
-  align-items: baseline;
-  gap: 7px;
-  padding: 5px 11px;
+  /* WELDED: no border of its own but the internal rule, no radius, no shadow — the barrow owns
+     all three. Stacked again (kicker over numeral) because the badge now sets the row's height
+     and a stacked chip is what fills 44px without stretching the type. */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 3px 10px;
   min-width: 0;
-  background: #0d0618;
-  border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 3px 3px 0 #000;
+  flex: none;
+  background: var(--theme-xp-fill, #2effe0);
+  border: 0;
+  border-right: 4px solid #000;
+  border-radius: 0;
+  box-shadow: none;
 }
 .menu-xp-bar.is-loud .menu-xp-label {
   /* --fs-label, matching the base rule: this override is the one that actually paints on a
      desktop menu, and at --fs-micro it was the last 11px text left on the screen. */
   font-size: var(--fs-label);
-  letter-spacing: 0.18em;
-  color: rgba(240, 234, 217, 0.72);
+  letter-spacing: 0.16em;
+  line-height: 1;
+  /* Black ink on the badge's flat fill, per the flat-colour rule — the cream that worked on the
+     dark chip is 1.5:1 on cyan. */
+  color: rgba(0, 0, 0, 0.66);
 }
 /* THE NUMERAL. --fs-h2 (42px) against the --fs-micro (11px) kicker is 3.8x, inside
    Andy's 3-4x. Bungee is legal here precisely because it is finally big enough:
@@ -717,13 +767,13 @@ button.menu-mark:active {
 .menu-xp-bar.is-loud .menu-xp-lv {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  /* --fs-panel (28px) against the --fs-micro (11px) kicker is 2.5x — still display type, and
-     the largest Bungee may be at a 56px bar without overflowing its own chip. */
+  /* --fs-panel (28px) against the --fs-label (13px) kicker is 2.2x — still display type, and
+     --fs-panel is the floor Bungee may ever take. */
   font-size: var(--fs-panel);
-  line-height: 0.92;
-  color: var(--theme-xp-fill, #2effe0);
-  -webkit-text-stroke: 3px #000;
-  paint-order: stroke fill;
+  line-height: 0.9;
+  /* Black on the badge fill, not the fill colour on black: the badge IS the accent now. */
+  color: #000;
+  -webkit-text-stroke: 0;
   letter-spacing: 0;
 }
 
@@ -736,7 +786,10 @@ button.menu-mark:active {
    adds no element to the tree. */
 .menu-xp-bar.is-loud .menu-xp-track {
   height: var(--xp-track-h);
-  border-width: 3px;
+  /* The barrow carries the border and the radius; a second one here would draw a box inside a
+     box and un-weld the thing this change exists to weld. */
+  border: 0;
+  border-radius: 0;
   background-image:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.085) 0 1.5px, transparent 1.5px);
   background-size: 9px 9px;
@@ -769,7 +822,7 @@ button.menu-mark:active {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  border-radius: 5px;
+  border-radius: 0;
   background: repeating-linear-gradient(
     90deg,
     #000 0 4px,
@@ -777,13 +830,11 @@ button.menu-mark:active {
   );
 }
 .menu-xp-bar.is-loud .menu-xp-clip {
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 /* ---- The readout: the XP numbers, now real type instead of a whisper ---- */
 .menu-xp-bar.is-loud .menu-xp-readout {
-  /* Sits in the UPPER half so the rate line below it has its own air. */
-  top: 34%;
   z-index: 2;
   font-size: var(--fs-body);
   -webkit-text-stroke: 3px #000;
@@ -811,9 +862,15 @@ button.menu-mark:active {
    of the five cards until .game-card-badge overflowed its own card. This lands
    near ~120px against the old hairline's 34px.
    ============================================================================ */
+/* 40px under 430px — four fewer pixels than the desktop bar, which is the whole of what a phone
+   can spare once the hint line is under it. Above 430 the bar keeps the full 44. */
+@media (max-width: 430px) {
+  .menu-xp-bar.is-loud {
+    --xp-track-h: 40px;
+  }
+}
 @media (max-width: 600px) {
   .menu-xp-bar.is-loud {
-    --xp-track-h: 44px;
     padding: 6px 8px;
     gap: 6px;
     row-gap: 6px;
@@ -823,20 +880,22 @@ button.menu-mark:active {
 
   /* THE LOUD ROW FIRST. Orders are re-assigned wholesale so the break lands
      between the track and the chips instead of before the level block. */
-  .menu-xp-bar.is-loud > .menu-xp-lvblock { order: 0; }
-  .menu-xp-bar.is-loud > .menu-xp-track { order: 1; }
+  .menu-xp-bar.is-loud > .menu-xp-barrow { order: 0; }
   .menu-xp-bar.is-loud > .menu-xp-break { order: 2; }
   .menu-xp-bar.is-loud > .menu-wins-chip { order: 3; }
   .menu-xp-bar.is-loud > .menu-streak { order: 4; }
   .menu-xp-bar.is-loud > .menu-mark { order: 5; }
   .menu-xp-bar.is-loud > .menu-xp-rank { order: 6; margin-left: 0; }
 
-  .menu-xp-bar.is-loud > .menu-xp-lvblock {
-    gap: 1px;
-    padding: 3px 9px;
+  .menu-xp-bar.is-loud .menu-xp-barrow {
+    border-width: 3px;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .menu-xp-bar.is-loud .menu-xp-lvblock {
+    gap: 0;
+    padding: 2px 7px;
     min-width: 0;
-    border-width: 2px;
-    box-shadow: 2px 2px 0 #000;
+    border-right-width: 3px;
   }
   /* Still display type, one step down. --fs-panel is the floor Bungee may take,
      and it is still ~2.5x the --fs-micro kicker above it. */
@@ -844,14 +903,12 @@ button.menu-mark:active {
     font-size: var(--fs-panel);
     -webkit-text-stroke: 2px #000;
   }
-  .menu-xp-bar.is-loud .menu-xp-track { border-width: 2px; }
+
   /* No room for the rate line at this width; every card prints its own rate. */
   /* LEFT-ALIGNED, not centred: centred put the XP numbers at x~150-270, which
      runs under the nav column. */
   .menu-xp-bar.is-loud .menu-xp-readout {
-    left: 10px;
-    transform: translateY(-50%);
-    top: 50%;
+    padding: 0 7px;
     font-size: var(--fs-label);
     -webkit-text-stroke: 2px #000;
   }
@@ -907,8 +964,8 @@ button.menu-mark:active {
    row) but steps down from --fs-panel so the progress it describes has somewhere to live.
    Scoped to 400px and below: 390px phones keep the bigger numeral, which fits there. */
 @media (max-width: 400px) {
-  .menu-xp-bar.is-loud > .menu-xp-lvblock {
-    padding: 3px 6px;
+  .menu-xp-bar.is-loud .menu-xp-lvblock {
+    padding: 2px 5px;
     gap: 0;
   }
   .menu-xp-bar.is-loud .menu-xp-label {
@@ -922,10 +979,12 @@ button.menu-mark:active {
    decoration, and decoration does not get to outbid the progress bar for width. */
 @media (max-width: 400px) {
   .menu-xp-bar.is-loud {
-    padding: 6px 4px;
+    /* 2px, not 4: the hint line measured 119px against 116px of content box at 320, and the bar's
+       own padding is the only slack left that is not type. Chrome yields before the sentence. */
+    padding: 6px 2px;
     gap: 4px;
   }
-  .menu-xp-bar.is-loud > .menu-xp-lvblock {
+  .menu-xp-bar.is-loud .menu-xp-lvblock {
     padding: 2px 4px;
   }
 }
@@ -942,12 +1001,41 @@ button.menu-mark:active {
    — neither is the account level on an unlocked card — so below 380px the level numeral has no
    other home on this screen. The readout inside the track ("0 / 52.3K") still carries the progress,
    which is what the bar is for. */
+/* THE BADGE STAYS AT 320 NOW, because welding it made it affordable. The free-standing chip cost
+   62px of the 131px of clear width — 16 of that its own border, shadow and the gap to the track.
+   Welded it is the numeral plus 10px of padding and one shared rule: ~34px, which the track can
+   pay out of 131 and still be read. Measured after the change at 320x640, not assumed. */
 @media (max-width: 380px) {
-  .menu-xp-bar.is-loud > .menu-xp-lvblock {
-    display: none;
-  }
   .menu-xp-bar.is-loud {
-    /* Nothing left to sit beside, so the gutter is the only thing holding the track off the nav. */
     gap: 0;
   }
+  .menu-xp-bar.is-loud .menu-xp-lvblock {
+    padding: 2px 4px;
+  }
+  .menu-xp-bar.is-loud .menu-xp-lv {
+    font-size: var(--fs-panel);
+  }
+}
+/* The hint line is the one thing on the bar that can afford to wrap out on the narrowest phones:
+   it repeats, in words, what the readout on the fill already says in numbers. It stays at 320
+   (it is the only place the "N words" framing exists) but loses the first-run lead-in, which is
+   what pushes it past a 262px stage. */
+/* The first-run lead-in goes wherever the corner-nav gutter is in force (<=560px). It costs 16
+   characters — 130px — and the bar has 186px of clear width at 390 and 131px at 320, so keeping it
+   would ellipsise the half of the line that carries the numbers. */
+@media (max-width: 560px) {
+  .menu-xp-hint-lead { display: none; }
+}
+/* THE SENTENCE OUTRANKS THE READOUT ON A PHONE. LiveWpm hides itself with `visibility`, which
+   still RESERVES its width — at 320 that left the hint ellipsised to "12 WO…", a line that costs
+   height and says nothing. The WPM readout goes instead: it is a nicety, and the hint is the only
+   place the "N words to LEVEL n" framing exists. */
+@media (max-width: 430px) {
+  .menu-xp-hint-right { display: none; }
+  .menu-xp-hint-to { display: none; }
+  .menu-xp-hint-to-short { display: inline; }
+  /* AND THE TRACKING GOES. 0.08em is 1px a character, which at 320 is 15px of pure overflow on a
+     line that has 131px of clear width before the corner nav. Measured: 132px tracked, 117px
+     without — the difference between the sentence and "12 WORDS · L…". */
+  .menu-xp-hint { letter-spacing: 0; }
 }

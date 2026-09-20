@@ -10,7 +10,7 @@
 //     FIGURES with trailing zeros trimmed gives 10.4K / 1.28M / 3.1B from one rule.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatNum, formatNumParts, plural, THIN, formatMult} from './format.js';
+import { formatNum, formatNumParts, plural, THIN, formatMult, formatMultExact } from './format.js';
 
 test('below 10,000 reads in full, grouped with a COMMA', () => {
   assert.equal(formatNum(0), '0');
@@ -111,4 +111,30 @@ test('formatMult: big multipliers stay compact, and garbage is guarded', () => {
   assert.equal(formatMult(59049), '59K');
   assert.equal(formatMult(NaN), '0');
   assert.equal(formatMult(undefined), '0');
+});
+
+// ---- formatMultExact — a NAMED factor, printed exactly ---------------------------------------
+// formatMult rounds to one decimal, which is right for a card's combined product and wrong for a
+// receipt's individual terms: the daily-streak ladder is 1.05 / 1.10 / 1.20 / 1.25.
+test('formatMultExact: two decimals, trailing zeros trimmed', () => {
+  assert.equal(formatMultExact(1.05), '1.05'); // formatMult says "1.1" — a bonus that is not paid
+  assert.equal(formatMultExact(1.25), '1.25'); // formatMult says "1.3"
+  assert.equal(formatMultExact(1.1), '1.1');
+  assert.equal(formatMultExact(2), '2');
+  assert.equal(formatMultExact(2.5), '2.5');
+  assert.equal(formatMultExact(1.155), '1.16');
+});
+
+test('formatMultExact: big multipliers stay compact, garbage is guarded', () => {
+  assert.equal(formatMultExact(3486784401), '3.49B'); // the R20 rebirth multiplier, 3^20
+  assert.equal(formatMultExact(NaN), '0');
+  assert.equal(formatMultExact(undefined), '0');
+});
+
+test('the streak ladder survives formatMultExact and does NOT survive formatMult', () => {
+  // The reason there are two formatters, pinned so a future tidy-up cannot merge them.
+  for (const m of [1.05, 1.25]) {
+    assert.equal(formatMultExact(m), String(m));
+    assert.notEqual(formatMult(m), String(m));
+  }
 });

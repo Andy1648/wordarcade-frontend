@@ -94,7 +94,7 @@ import {
 import { rarityCue } from './juice/audio';
 import { useWordSecrets } from './secrets/useWordSecrets';
 import { refundWordSense } from './progress/wordSenseRefund';
-import { cappedWordMult } from './progress/xp';
+import { cappedWordMult, keyTierXp, getKeyTier } from './progress/xp';
 // COMBO + LUCKY parity (feat/parity-wb-blitz): the SAME pure modules CHAIN/FUSE use, reused
 // verbatim (no forked logic) so Word Bomb + Category Blitz score identically — a consecutive-accept
 // combo multiplier and a 1/40 lucky ×5, both folded into the per-word reward weight.
@@ -1367,9 +1367,15 @@ function App() {
                 cap: uncapped > 0 ? wbWeight / uncapped : 1,
               };
               // The base is this word's LETTERS at the player's key tier (Economy v8) — the same
-              // base the payout used, so the receipt still cannot disagree with the ledger.
-              const wbBase = wordWinsBase({ wordLength: (wbWord || '').trim().length });
-              const payout = buildPayout({ base: wbBase, factors, total: banked, band: r.band });
+              // base the payout used, so the receipt still cannot disagree with the ledger. The
+              // two TERMS behind it travel with it so the panel can print "5 LETTERS × 10"
+              // instead of an unexplained "BASE 5".
+              const wbLetters = (wbWord || '').trim().length;
+              const wbBase = wordWinsBase({ wordLength: wbLetters });
+              const wbPerLetter = keyTierXp(getKeyTier());
+              const payout = buildPayout({
+                base: wbBase, factors, total: banked, band: r.band, letters: wbLetters, perLetter: wbPerLetter,
+              });
               notePayout({ base: wbBase, factors, total: banked });
               setLastPayout({
                 key: wbNowWords,

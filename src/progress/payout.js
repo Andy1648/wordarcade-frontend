@@ -51,6 +51,8 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  *
  * @param {object} arg
  * @param {number} arg.base    the flat per-word base before any multiplier (wordWinsBase())
+ * @param {number} [arg.letters]  the word's letter count, so the receipt can NAME the base
+ * @param {number} [arg.perLetter] XP per letter at the player's key tier, ditto
  * @param {object} arg.factors { mode, difficulty, rebirth, streak, bonus, rarity,
  *                               length, combo, lucky } — each a multiplier, missing/1 = inactive
  * @param {number} [arg.total] the amount ACTUALLY banked this call, when the caller knows it.
@@ -66,7 +68,7 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * no receipt. So the bottom line is now what the rows say this word is WORTH, and `held` carries
  * the other fact — that the gate has not released it yet — as a caption instead of as a zero.
  */
-export function buildPayout({ base = 0, factors = {}, total, band } = {}) {
+export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter } = {}) {
   const b = Number.isFinite(base) && base > 0 ? base : 0;
   let product = 1;
   const rows = [];
@@ -89,6 +91,13 @@ export function buildPayout({ base = 0, factors = {}, total, band } = {}) {
     product,
     computed,
     paid: computed, // what the rows add up to — the number the panel prints
+    // THE SAME AWARD IN XP. Wins are the word's XP ÷ 10 (Economy v8), so the receipt can print
+    // both readings off one product instead of the panel multiplying by ten on its own.
+    xp: Math.round(computed * 10),
+    // The BASE, named rather than asserted: "5 letters × 10" instead of a bare "BASE 5". Absent
+    // when the caller does not know them, and the panel falls back to the bare base.
+    letters: Number.isFinite(letters) && letters > 0 ? Math.floor(letters) : null,
+    perLetter: Number.isFinite(perLetter) && perLetter > 0 ? perLetter : null,
     total: banked, // what was actually banked this call (0 before the 3-word gate)
     held: banked <= 0 && computed > 0,
     rows,

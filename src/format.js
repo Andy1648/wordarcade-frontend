@@ -75,6 +75,22 @@ export function formatNum(n) {
 }
 
 /**
+ * A SINGLE NAMED FACTOR, printed exactly. `formatMult` rounds to one decimal, which is right for a
+ * resolved PRODUCT on a card (×3, ×4.5) and wrong for the individual factors a receipt names: the
+ * daily-streak ladder is 1.05 / 1.10 / 1.20 / 1.25, and one decimal turns ×1.05 into "×1.1" and
+ * ×1.25 into "×1.3" — a receipt quoting a multiplier the game did not apply.
+ *
+ * Two decimals, trailing zeros trimmed, so ×2.00 does not read as a different number from ×2.
+ * Use this wherever a factor is shown BESIDE its name (receipts, the streak chip, the live stack);
+ * use `formatMult` for the one combined number on a card.
+ */
+export function formatMultExact(n) {
+  const v = Number.isFinite(n) ? n : 0;
+  if (Math.abs(v) >= 10000) return formatNum(v);
+  return String(Math.round(Number((v * 100).toPrecision(12))) / 100);
+}
+
+/**
  * A MULTIPLIER, NOT A COUNT. `formatNum` rounds to a whole number below 10,000 — correct for wins
  * and XP, and wrong for every "×" on the screen: a ×1.6 payout printed as "×2" and a ×1.4 printed
  * as "×1", so the card claimed a bonus the game did not pay and then claimed no bonus at all.
