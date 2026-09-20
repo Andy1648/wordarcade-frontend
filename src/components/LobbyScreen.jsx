@@ -1,9 +1,7 @@
 // LobbyScreen.jsx
 import { useState, useEffect } from 'react';
-import { GAMES } from '../gameData';
 import { getStoredName, rememberName } from '../playerName';
 import { useSound } from '../contexts/SoundContext';
-import WaveText from './WaveText';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
@@ -42,16 +40,11 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     }
   }, [serverError]);
 
-  function getTitle() {
-    if (mode === 'solo') return 'PLAY SOLO';
-    if (mode === 'join') return 'JOIN ROOM';
-    const game = GAMES.find((g) => g.id === mode);
-    return game ? game.name.replace('\n', ' ') : 'PLAY';
-  }
-
-  function getSubtitle() {
-    if (mode === 'join') return 'ENTER A ROOM CODE TO JOIN A FRIEND';
-    return 'DROP A NAME. LET\'S GO.';
+  // ONE LINE, and it is an instruction rather than a name. The mode the player picked is
+  // already what they just tapped; what they do not know is what this screen wants.
+  function getInstruction() {
+    if (isJoinMode) return `TYPE YOUR NAME AND THE ${ROOM_CODE_LENGTH}-CHARACTER CODE`;
+    return 'TYPE YOUR NAME TO OPEN THE ROOM';
   }
 
   function handleNameChange(event) {
@@ -137,10 +130,11 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
           ← BACK
         </button>
 
-        <div className="lobby-title">
-          <WaveText text={getTitle()} />
-        </div>
-        <div className="lobby-subtitle">{getSubtitle()}</div>
+        {/* THE HEADLINE IS GONE. A screen with one job does not need a title naming the job:
+            .lobby-title ("JOIN ROOM" / the mode name) and .lobby-subtitle were 20px and 16px of
+            decoration above a 16px field, and on a phone the title was the biggest text here.
+            One instruction line replaces both. */}
+        <div className="lobby-instruction">{getInstruction()}</div>
 
         <label className="lobby-field-label" htmlFor="player-name-input">
           YOUR NAME
@@ -162,16 +156,38 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
             <label className="lobby-field-label" htmlFor="room-code-input">
               ROOM CODE
             </label>
-            <input
-              id="room-code-input"
-              className="lobby-code-input"
-              type="text"
-              placeholder="XXXXX"
-              value={roomCode}
-              onChange={handleRoomCodeChange}
-              onKeyDown={handleKeyDown}
-              maxLength={ROOM_CODE_LENGTH}
-            />
+            {/* N SLOTS, ONE PER CHARACTER — not one text field. The player can SEE how many
+                characters they owe, which a single box cannot tell them. It is still ONE input
+                (so paste, autofill and the mobile keyboard all behave); the input itself is
+                transparent and stretched across the slots, and the slots under it render the
+                value. Tapping anywhere focuses the real field. */}
+            <div
+              className="lobby-code-slots"
+              onClick={() => document.getElementById('room-code-input')?.focus()}
+            >
+              {Array.from({ length: ROOM_CODE_LENGTH }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`lobby-code-slot${roomCode.length === i ? ' is-next' : ''}${roomCode[i] ? ' is-filled' : ''}`}
+                  aria-hidden="true"
+                >
+                  {roomCode[i] || ''}
+                </span>
+              ))}
+              <input
+                id="room-code-input"
+                className="lobby-code-input"
+                type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="one-time-code"
+                aria-label={`Room code, ${ROOM_CODE_LENGTH} characters`}
+                value={roomCode}
+                onChange={handleRoomCodeChange}
+                onKeyDown={handleKeyDown}
+                maxLength={ROOM_CODE_LENGTH}
+              />
+            </div>
           </div>
         )}
 

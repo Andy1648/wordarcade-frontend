@@ -181,11 +181,33 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   return (
     <div className="room-wrap">
       <div className="room-box">
-        <div className="room-label">ROOM CODE</div>
-        <div className="room-code" translate="no">
-          <WaveText text={room.code} />
+        {/* THE WAY OUT, IN THE CORNER CLUSTER. It was a full-width LEAVE ROOM button at the
+            very bottom of the box, below the start button — the last thing on a screen whose
+            job is the code at the top. Same control, same class, same handler; it now sits
+            where every other screen keeps its exit (cf. SoloExit) and is >=44px. */}
+        <div className="room-corner">
+          <button
+            className={`room-leave-btn${leaving ? ' disabled' : ''}`}
+            onClick={handleLeave}
+            disabled={leaving}
+          >
+            ← LEAVE
+          </button>
         </div>
-        <div className="room-hint">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
+        {/* THE CODE IS WHY THIS SCREEN EXISTS, so it is the largest thing on it. Four Bungee
+            faces stacked in register — Shade, the accent fill, Inline, Outline — the same
+            treatment as the CHAIN/FUSE hero and the menu wordmark. No text-shadow: the depth
+            is the font's own. The "ROOM CODE" label above it is GONE — a five-character Bungee
+            monogram in the accent does not need to be told what it is, and the line below says
+            what to do with it. WaveText goes too: it splits the string into per-letter spans,
+            which cannot be stacked in register. */}
+        <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
+          <span className="room-code-face room-code-shade" aria-hidden="true">{room.code}</span>
+          <span className="room-code-face room-code-fill" aria-hidden="true">{room.code}</span>
+          <span className="room-code-face room-code-inline" aria-hidden="true">{room.code}</span>
+          <span className="room-code-face room-code-outline" aria-hidden="true">{room.code}</span>
+        </div>
+        <div className="room-instruction">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
 
         {/* One-tap invite: copies (or natively shares, where supported) a
             ?join=CODE deep link that drops a friend STRAIGHT into this room —
@@ -382,13 +404,6 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           <div className="room-waiting-msg">WAITING FOR HOST TO START THE GAME...</div>
         )}
 
-        <button
-          className={`room-leave-btn${leaving ? ' disabled' : ''}`}
-          onClick={handleLeave}
-          disabled={leaving}
-        >
-          LEAVE ROOM
-        </button>
       </div>
     </div>
   );
