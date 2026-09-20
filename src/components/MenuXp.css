@@ -47,7 +47,11 @@
    readout is the leveling bar. Sits just left of the LV chip; no idle motion. */
 .menu-xp-label {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  /* --fs-label (13px), not --fs-micro (11px): this was the last text on the MENU under the 12px
+     floor. Moving this one kicker up a step is the narrow fix — raising --fs-micro itself would
+     move every decoration in the app, and the step is documented as "decoration only", which a
+     word telling a newcomer what the bar IS is not. */
+  font-size: var(--fs-label);
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -700,7 +704,9 @@ button.menu-mark:active {
   box-shadow: 3px 3px 0 #000;
 }
 .menu-xp-bar.is-loud .menu-xp-label {
-  font-size: var(--fs-micro);
+  /* --fs-label, matching the base rule: this override is the one that actually paints on a
+     desktop menu, and at --fs-micro it was the last 11px text left on the screen. */
+  font-size: var(--fs-label);
   letter-spacing: 0.18em;
   color: rgba(240, 234, 217, 0.72);
 }

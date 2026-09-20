@@ -341,7 +341,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 
 /* ==== ART-LED v2 FOREGROUND (feat/cards-live) ===================================
-   The scene fills the card; a foreground overlay carries the ribbon, the mastery
+   The scene fills the card; a foreground overlay carries the ribbon
    chip, and the bottom title bar (or, for SAT RUSH, the manga masthead + foot). All
    sizing is cqw/cqh-based (the card is a `container-type: size`), so text scales
    with the CARD and never clips its bar at any of the five columns' widths. */
@@ -367,7 +367,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   text-transform: uppercase;
   line-height: 0.98;
   font-weight: 400;
-  font-size: clamp(11px, 4.4cqw, 17px);
+  font-size: clamp(12px, 4.4cqw, 17px);
   letter-spacing: 0.02em;
   padding: 8px 52px;
   border-top: 3px solid #000;
@@ -405,22 +405,29 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      integrity (b)/(c)); the max keeps big screens from over-scaling the wordmark. */
   /* min lowered 20→15 so the title stays PROPORTIONAL on a small card instead of hitting a
      fixed floor that would balloon the title bar over the scene (feat/cards-live). */
-  font-size: clamp(15px, 13cqw, 40px);
+  /* THE LOUDEST THING ON THE CARD. Floor 15 -> 22: at 390x844 the cards are 102px wide, the
+     13cqw middle term resolved to 13px, and the game's own NAME was rendering smaller than body
+     copy. 22cqw keeps it proportional on a wide card and the 22px floor is what it may never go
+     below. */
+  font-size: clamp(22px, 22cqw, 40px);
   color: #fff;
   -webkit-text-stroke: 2.5px #000;
   paint-order: stroke fill;
 }
 /* CATEGORY is the one long (8-letter) name — scale it down so it never overruns its
    bar at the narrowest column. */
-[data-game='category-blitz'] .game-card-name { font-size: clamp(15px, 10cqw, 32px); letter-spacing: -0.01em; }
+/* (The old [data-game='category-blitz'] .game-card-name override is GONE. It existed only
+   because "CATEGORY" is eight letters and could not be set at the size every other card's
+   name gets; the card is called BLITZ now, so it takes the default rule and lands within a
+   pixel of its neighbours.) */
 
 .game-card-badge {
   align-self: flex-start;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(8px, 3cqw, 11px);
-  letter-spacing: 0.08em;
-  padding: 3px 9px;
+  font-size: clamp(12px, 3.4cqw, 14px);
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
   border: 2px solid #000;
   border-radius: 6px;
   white-space: nowrap;
@@ -436,12 +443,16 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      "610 / WORD (x6)" still overflowed its own card at an 8px floor (viewport-integrity, both
      themes). The tracking also goes to 0 here — at this size 0.02em is ~1px per character of
      pure overflow, and the string is the one thing on the card that cannot be allowed to clip. */
-  font-size: clamp(7px, 3.2cqw, 12px);
+  /* SECOND LOUDEST, after the name. This line is the whole answer to "what is this mode
+     worth", and it was shipping at 6-7px — built, rendered, and invisible. Floor 15px. */
+  font-size: clamp(15px, 6cqw, 20px);
   letter-spacing: 0;
   color: #ffe9c9;
   white-space: nowrap;
 }
-.game-card-payout-mult { color: #fff; font-weight: 700; }
+/* THE MULTIPLIER IS THE REWARD, so it is the reward colour. It was #fff — the same white as
+   everything else on the bar, at 6px. */
+.game-card-payout-mult { color: #ffe94a; font-weight: 700; }
 
 /* THE UNIT GOES BEFORE THE NUMBERS DO. At 360x640 the five cards are ~65px wide and
    "610 / WORD (x6)" overflows its own card even with the type pinned at its 7px floor — the
@@ -457,11 +468,27 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    multiplier — both of which carry information nothing else on the card carries.
    A CONTAINER query, not a viewport one: card width is set by the grid's column count and the
    fit-math, which move independently of the viewport. */
-@container (max-width: 108px) {
+/* THE THRESHOLDS MOVE UP WITH THE TYPE. They were tuned against a 7px floor; at the 15px this
+   line now sets, "200 WINS (×2)" needs ~130px in an 80px box and the (×2) — the whole reason
+   this line exists — ran straight off the card and out of sight. The staged drop is unchanged
+   in principle, it just fires sooner now the characters are bigger: the inferable words go,
+   the two NUMBERS never do. */
+@container (max-width: 150px) {
   .game-card-payout-per { display: none; }
 }
-@container (max-width: 88px) {
+@container (max-width: 132px) {
   .game-card-payout-unit { display: none; }
+}
+/* AND BELOW ~80px THE WHOLE LINE GOES. At 320x640 the fit-math packs three cards across and
+   each is 58x78; even stripped to "200 (x2)" that is ~70px on a 48px content box at the 12px
+   floor. Wrapping it to two lines fixed the width and then pushed the title bar 18.8px past the
+   bottom of the card, because a 78px card has no second line to give. Everything droppable has
+   already been dropped, the floor may not move, and neither number is worth more than the
+   other — so at this one size the line leaves rather than crowds, which is the brief. A 58px
+   card is a thumbnail: the art and the name identify it, and the payout is back at 390px, which
+   is where a real phone actually is. */
+@container (max-width: 80px) {
+  .game-card-payout { display: none; }
 }
 
 /* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
@@ -499,7 +526,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   -webkit-text-stroke: 0;
   letter-spacing: 0.02em;
   line-height: 0.86;
-  font-size: clamp(18px, 11cqw, 34px);
+  font-size: clamp(22px, 18cqw, 34px);
 }
 [data-game='sat-rush'] .game-card-badge {
   background: #111;
@@ -515,7 +542,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   text-align: center;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(8px, 3cqw, 11px);
+  font-size: clamp(12px, 3.4cqw, 14px);
   letter-spacing: 0.02em;
   color: #111;
   border-top: 3px solid #111;
@@ -530,15 +557,34 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @container (max-width: 170px) {
   .game-card-titlebar { padding: clamp(12px, 9cqw, 20px) clamp(6px, 5cqw, 12px) clamp(6px, 4cqw, 10px); }
   .game-card-masthead { padding: clamp(5px, 4cqw, 10px); }
-  .game-card-name { font-size: clamp(13px, 12cqw, 22px); -webkit-text-stroke-width: 1.5px; }
-  [data-game='sat-rush'] .game-card-name { font-size: clamp(13px, 11cqw, 20px); }
-  .game-card-badge { font-size: clamp(6px, 4.5cqw, 9px); padding: 2px 5px; letter-spacing: 0.04em; }
-  .game-card-payout { font-size: clamp(6px, 4cqw, 9px); }
-  .game-card-foot { font-size: clamp(6px, 4cqw, 9px); padding: clamp(4px, 3cqw, 8px) clamp(5px, 3cqw, 10px); }
-  .game-card-limited-tag { display: none; } /* keep just the SOLO badge in the masthead */
-  .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 13px); padding: 6px 46px; }
-  .game-card-lock-label { font-size: clamp(13px, 5.5cqw, 14px); }
-  .game-card-lock-sub { font-size: clamp(6px, 3.4cqw, 9px); }
+  /* cqw is a share of the card's CONTENT box (~92px at 390x844), not its border box — 20cqw
+     landed at 18.4px there. 26cqw puts the name at 24px on that card and still floors at 12
+     on the 58px card a 320px screen gives. */
+  /* 25cqw, not 26: at 390x844 the name box is 80px and "CHAIN" needed 83 at 26cqw — three
+     pixels of the word gone. 25cqw sets it at 23px, which still clears the 22px bar. */
+  .game-card-name { font-size: clamp(12px, 25cqw, 30px); -webkit-text-stroke-width: 1.5px; }
+  [data-game='sat-rush'] .game-card-name { font-size: clamp(12px, 23cqw, 28px); }
+  /* THE LAST RESORT, and only here. On a 58px card (320x640 packs three across) "CATEGORY" is
+     89px wide at its 12px floor — the floor and "no clipped letters" cannot both hold, so the
+     word breaks rather than losing its end. Every letter stays on the card. */
+  .game-card-name { overflow-wrap: anywhere; }
+  /* FEWER THINGS, BIGGER — not the same things smaller. Everything here used to drop to a
+     6px floor, which is not small type, it is type that has left. On a card this narrow the
+     SOLO/MULTI badge and the cream foot bar cannot be set at 12px without running off their own
+     card, so they GO, and the two things a player actually chooses on — the NAME and what the
+     mode PAYS — get the whole card. */
+  .game-card-badge { display: none; }
+  .game-card-foot { display: none; }
+  .game-card-limited-tag { display: none; }
+  .game-card-payout { font-size: clamp(12px, 18cqw, 20px); }
+  .game-card-ribbon { font-size: clamp(12px, 3.6cqw, 13px); padding: 6px 46px; }
+  /* The LABEL stays — "UNLOCKS AT LV 2" is the whole answer, and it is the one thing a locked
+     card must say. The SUB ("YOU'RE LV 1 · 1 TO GO") goes: at 12px it wraps to three lines and
+     the plaque then covers the card's own name, and the half it adds — your current level — is
+     already on the XP bar at the top of this same screen. Bigger label, fewer words, and you
+     can still see which game it is. */
+  .game-card-lock-sub { display: none; }
+  .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(6px, 4cqw, 12px); }
   .game-card-lock-plaque { padding: clamp(6px, 4cqw, 12px) clamp(8px, 5cqw, 15px); }
 }
 
@@ -588,27 +634,6 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card--glitch::before { opacity: 0 !important; }
 }
 
-/* MASTERY chip (Job 2): a compact "M{n}" tab on the card's TOP-RIGHT corner (the
-   FEATURED / AI ribbon owns the top-left now), shown once the player reaches M2 in
-   that mode. Flat, black outline, hard offset shadow — house language. */
-.game-card-mastery {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 4;
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  font-size: clamp(9px, 3cqw, 12px);
-  line-height: 1;
-  color: #0d0618;
-  background: #2EFFE0;
-  border: 2px solid rgba(0, 0, 0, 0.5);
-  border-radius: 6px;
-  padding: 3px 6px;
-  transform: rotate(-4deg);
-  box-shadow: 2px 2px 0 #000;
-  pointer-events: none;
-}
 
 /* SAT Rush "LIMITED" scarcity stamp — red ink on cream, matching the card's retro-print
    manga palette. Sits INLINE in the masthead tag row (next to the SOLO badge). */
@@ -616,7 +641,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   line-height: 0.98;
-  font-size: clamp(8px, 2.8cqw, 11px);
+  font-size: clamp(12px, 3cqw, 13px);
   letter-spacing: 0.04em;
   color: #C8321E;
   background: #F2EFE7;
@@ -679,7 +704,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-lock-label {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  font-size: clamp(11px, 4.6cqw, 16px);
+  font-size: clamp(13px, 4.6cqw, 16px);
   letter-spacing: 0.02em;
   line-height: 1;
   color: #ffe94a;
@@ -694,7 +719,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* The "YOU'RE LV n · N TO GO" path line — smaller, Space Mono — under the gate. */
 .game-card-lock-sub {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(8px, 2.8cqw, 10px);
+  font-size: clamp(12px, 3cqw, 13px);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #e9dcff;
@@ -714,4 +739,22 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 @media (prefers-reduced-motion: reduce) {
   .game-card--shake { animation: none; }
+}
+
+
+/* ===== LOCK PLAQUE — SMALL-CARD OVERRIDES, AT THE END ON PURPOSE =====================
+   .game-card-lock-label's base rule is declared BELOW the @container blocks above, and at equal
+   specificity the later rule wins — so the small-card sizing written up there never applied and
+   the label kept rendering at its 13px base (measured: display:flex, 13px, 4.1px past the card).
+   These live at the foot of the file, after every base rule they override. */
+@container (max-width: 170px) {
+  /* --fs-label (13px), not a bare 12: every font-size in the app goes through the scale, and
+     typeScale.test.js is the gate that keeps it that way. */
+  .game-card-lock-label { font-size: var(--fs-label); letter-spacing: 0; }
+}
+@container (max-width: 80px) {
+  /* "UNLOCKS AT LV 2" is 15 characters and its longest WORD is wider than the plaque on a 58px
+     card, so it hangs off the edge even at the 12px floor. The padlock glyph already says
+     locked; the level it names is back at 390px, with the payout. */
+  .game-card-lock-label { display: none; }
 }
