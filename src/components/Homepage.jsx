@@ -1,6 +1,6 @@
 // Homepage.jsx
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { GAMES } from '../gameData';
+import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
@@ -681,13 +681,18 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             level={xpProgress.level}
             toNext={xpProgress.toNext}
             frac={xpProgress.frac}
-            /* HOW MANY WORDS, from the REAL rate. perWordRateNow() with no mode resolves the MENU
-               rate — the one thing the player can earn on THIS screen — through the same stack
-               the cards below quote, so it already carries key tier, rebirth, mastery, momentum
-               and the daily streak. The menu is also the SLOWEST rate in the game (every mode
-               multiplies it by 2-5), so the number is a ceiling the player always beats rather
-               than a promise that a mode choice could break. */
-            wordsToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, perWordRateNow({}).xp)))}
+            /* HOW MANY WORDS, AT THE RATE OF THE CARD THE MENU IS POINTING AT. This divided by
+               perWordRateNow({}) — the MENU's own rate — which is arithmetically right and
+               strategically wrong: menu XP is x1, the slowest rate in the game, so the first
+               progression number a new player ever read was the worst one available, printed
+               directly above a FEATURED card advertising twice it.
+               FEATURED_GAME is derived from the same `featured` flag GameCard reads to draw the
+               ribbon (gameData.js), so the hint cannot point at one card and quote another. The
+               call shape is IDENTICAL to the card's — perWordRateNow({ mode: game.id }) with no
+               difficulty, because the menu has none selected — which is what makes "the hint
+               matches the card" a property of the code rather than a coincidence to re-check.
+               Menu typing is still real and still says so; it is just not the headline number. */
+            wordsToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).xp)))}
             /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
