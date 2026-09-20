@@ -10,6 +10,8 @@ import {
   awardWins,
   perWordWins,
   perWordXp,
+  perWordRateNow,
+  modeKey,
   recordRound,
   bankWordWins,
   roundWinsEstimate,
@@ -464,4 +466,22 @@ test('bankWordWins: rarity STACKS with rebirth (CHAIN × R3 × a RARE word)', ()
       Math.round(2.5 * per)
     );
   });
+});
+
+// ---- THE CARD'S TWO LINES COME OUT OF ONE CALL ----------------------------------------------
+// GameCard prints XP above WINS. Computed separately they could drift; perWordRateNow returns
+// both, and this is the assertion that keeps them one number.
+test('perWordRateNow returns the XP and the WINS for the same word, and xp === rate x 10', () => {
+  for (const mode of ['word-bomb', 'category-blitz', 'sat-rush', 'chain', 'fuse']) {
+    for (const difficulty of [undefined, 'chill', 'medium', 'hard']) {
+      const o = { mode, difficulty, rebirthCount: 0, keyTier: 0, streakMult: 1, masteryMult: 1 };
+      const now = perWordRateNow(o);
+      assert.equal(now.xp, perWordXp({ ...o, mode: modeKey(mode) }), `${mode}/${difficulty} xp`);
+      assert.equal(now.rate, Math.round(now.xp / 10), `${mode}/${difficulty} wins`);
+      assert.equal(now.xp, now.rate * 10, `${mode}/${difficulty} xp === rate x 10`);
+      // The multiplier the card prints applies to BOTH lines: rate/base in wins and xp/xpBase in
+      // XP are the same ratio, which is why one "(xN)" can sit on both.
+      assert.ok(Math.abs(now.mult - now.xp / now.xpBase) < 1e-9, `${mode}/${difficulty} mult`);
+    }
+  }
 });

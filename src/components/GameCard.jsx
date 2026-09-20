@@ -254,15 +254,32 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // halves are separate spans, and the CONTAINER query below drops them in order — " / WORD"
   // first, then " WINS" — only once the card is genuinely too narrow to hold them. At every width
   // the player actually sees on a phone or a laptop, the full unit is there.
+  //
+  // AND THE CARD SHOWS XP TOO, ABOVE THE WINS. The card was answering "what does this mode pay"
+  // in one currency while the bar directly above it counts the other, and the player had no way
+  // to connect them. Both lines come out of the SAME perWordRateNow() call — wins are the word's
+  // XP ÷ 10, so the two numbers are one number read twice and cannot disagree. The multiplier is
+  // the same product for both, which is the point: one stack, two readouts.
   const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
+  // The combined multiplier, printed ONCE per line and never on its own — a factor without the
+  // value it produced is the defect this pattern exists to prevent.
+  const multTag = rateNow && rateNow.mult !== 1 && (
+    <span className="game-card-payout-mult"> (×{formatMult(rateNow.mult)})</span>
+  );
+  const xpLine = rateNow && (
+    <>
+      {formatNum(rateNow.xp)}
+      <span className="game-card-payout-unit"> XP</span>
+      <span className="game-card-payout-per"> / WORD</span>
+      {multTag}
+    </>
+  );
   const payout = rateNow && (
     <>
       {formatNum(rateNow.rate)}
       <span className="game-card-payout-unit"> WINS</span>
       <span className="game-card-payout-per"> / WORD</span>
-      {rateNow.mult !== 1 && (
-        <span className="game-card-payout-mult"> (×{formatMult(rateNow.mult)})</span>
-      )}
+      {multTag}
     </>
   );
   // The badge carries its data-driven fill (game.badgeBg / badgeColor) so themes and
@@ -342,13 +359,21 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
                 </div>
               </div>
               <div className="game-card-foot">
-                {payout || game.description}
+                {xpLine ? (
+                  <>
+                    <span className="game-card-xp">{xpLine}</span>
+                    <span className="game-card-payout">{payout}</span>
+                  </>
+                ) : (
+                  game.description
+                )}
               </div>
             </>
           ) : (
             <div className="game-card-titlebar">
               {badge}
               <div className="game-card-name">{game.cardName || game.name}</div>
+              {xpLine && <div className="game-card-xp">{xpLine}</div>}
               {payout && <div className="game-card-payout">{payout}</div>}
             </div>
           )}

@@ -54,6 +54,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* The column's row-gap, as a variable, because ONE child needs to opt out of it: the card
+     region sits ~10px under the XP bar rather than a full gap below it (see
+     .homepage-cards-region). Everything else keeps the full gap. */
+  --stage-rowgap: clamp(22px, 3vh, 30px);
+  /* THE CARDS START RIGHT UNDER THE BAR. 10px, not a row-gap: the bar and the cards are the same
+     conversation — "here is your level, here is what each mode pays toward it" — and 30px of
+     nothing between them read as two unrelated regions. Applied as a negative margin so the
+     stage's row-gap still governs every other pair. */
+  --cards-lift: 10px;
   /* justify-content:center (NOT space-evenly): the --menu-scale RESERVE (Homepage.jsx)
      scales the title/xp/cards to fill the stage MINUS a fixed 44px reserve, and center
      splits that reserve into ~22px SYMMETRIC frame gaps — so the content fills the
@@ -66,7 +75,7 @@
      grows with the title size. Raised (was clamp(16,2.2vh,28)) so the residual gap stays
      ≥12px at every menu-fit viewport (worst case was 1280×720 at 9.4px). Fully counted in
      the fit math (gaps = row-gap × (kids−1)), so the fit-to-one-screen scale compensates. */
-  row-gap: clamp(22px, 3vh, 30px);
+  row-gap: var(--stage-rowgap);
   justify-content: center;
   /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
      (brick + graffiti) shows straight through, so panel + backdrop read as one
@@ -497,12 +506,21 @@ html[data-beat='true'] .homepage-logo {
      short screens. */
   flex: 1 1 auto;
   min-height: 0;
+  /* THE 10px GAP TO THE BAR. The stage's row-gap is 22-30px and is right for every other pair on
+     the column; this one pair is not a pair of regions, it is a bar and the thing it describes. */
+  margin-top: calc(var(--cards-lift) - var(--stage-rowgap));
   /* align-self:stretch overrides the stage's align-items:center so the region is the FULL stage
      width (the JS reads it to size the cards); align-items:center then centres the card group. */
   align-self: stretch;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* TOP, not centre. The region flex-grows to fill the stage (which is what keeps the menu
+     filling the screen and the frame gaps inside their band), and on a wide viewport the 3:4
+     cards cannot use all of it — centring split the surplus above AND below, which put 54px of
+     nothing between the XP bar and the first card. Hugging the top spends the whole surplus
+     below the cards, where it is the bottom bar's breathing room rather than a gap in the
+     middle of a sentence. */
+  justify-content: flex-start;
   align-items: center;
 }
 .homepage-cards-scroll {
@@ -547,14 +565,10 @@ html[data-beat='true'] .homepage-logo {
 /* Magnetic cursor-pull wrapper for the CTAs. Shrink-wraps the button so the
    flex-row layout (centered, gap) is unchanged; its translate/scale + leaning
    box-shadow are set inline by lib/magneticPull.js. No static style of its own. */
-/* WPM (§2): the menu self-test readout, centred just under the XP bar. Compact + static so it
-   never breaks the one-screen fit; hidden until the player types (LiveWpm hideZero). */
-.menu-wpm {
-  display: flex;
-  justify-content: center;
-  /* fix/visual-real item 6: spacing is owned by the .menu-xp-cluster gap now (was margin-top:3px). */
-  min-height: 1em; /* reserve the line so showing/hiding never shifts layout */
-}
+/* WPM (§2): the menu self-test readout. It used to hold a ROW of its own under the XP bar,
+   reserving 1em of line whether or not the player was typing; it now rides the right end of the
+   bar's hint row (see .menu-xp-hint-right in MenuXp.css), which is a row that already exists and
+   is about the same thing. The wrapper and its reserve are gone with the row. */
 
 .homepage-btn-magnet {
   display: inline-flex;
@@ -717,12 +731,13 @@ html[data-beat='true'] .homepage-logo {
    screen — they return ≥600px), and tighten the footer + section gaps. Cards then measure
    ~170px+ wide at 1163×501 (target ≥160). */
 @media (max-height: 600px) {
-  .homepage-stage { row-gap: clamp(18px, 2.4vh, 24px); }
+  /* Through the VARIABLE, so the card region's opt-out (--cards-lift) stays exact. Setting
+     row-gap directly here left the region subtracting a gap the column was not using. */
+  .homepage-stage { --stage-rowgap: clamp(18px, 2.4vh, 24px); }
   /* height guard: was clamp(22px, 5.4vh, 34px) - the vh cap keeps the wordmark off the
      card region on a short screen, so it stays expressed through the token. */
   .homepage-logo { font-size: min(var(--fs-panel), 5.4vh); }
   .menu-xp-cluster { gap: 3px; }
-  .menu-wpm { display: none; }
   .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
   .homepage-footer-links { margin-top: 0; }
 }
@@ -766,7 +781,7 @@ html[data-beat='true'] .homepage-logo {
   }
   .homepage-stage {
     max-height: 100%;
-    row-gap: clamp(16px, 2vh, 22px);
+    --stage-rowgap: clamp(16px, 2vh, 22px);
   }
   /* The card region is still the flex-fill row; the cards are SIZED to fit it, so it never scrolls. */
   .homepage-cards-region {
@@ -1073,22 +1088,24 @@ html[data-beat='true'] .homepage-beat-glow {
 /* (The ladder's THEME accent rules were removed on merge — main's themes system, src/theme/
    themes.css, owns menu colour now. Only the FRAME cosmetics below remain from the ladder.) */
 
-/* FRAMES — a distinct border treatment on the LV badge chip. */
-.homepage-stage[data-menu-frame='frame-bolt'] .menu-xp-lv {
+/* FRAMES — a distinct border treatment on the LV badge. It moved from .menu-xp-lv (the bare
+   numeral) to .menu-xp-lvblock (the welded badge) when the badge absorbed the chip: a border on
+   the numeral itself would now draw a box inside the badge rather than around it. */
+.homepage-stage[data-menu-frame='frame-bolt'] .menu-xp-lvblock {
   border-color: #FFE94A;
   box-shadow: 2px 2px 0 #000, 0 0 0 2px #FFE94A;
 }
-.homepage-stage[data-menu-frame='frame-tape'] .menu-xp-lv { border-style: dashed; }
-.homepage-stage[data-menu-frame='frame-chrome'] .menu-xp-lv {
+.homepage-stage[data-menu-frame='frame-tape'] .menu-xp-lvblock { border-style: dashed; }
+.homepage-stage[data-menu-frame='frame-chrome'] .menu-xp-lvblock {
   border-color: #cfd8e3;
   box-shadow: 3px 3px 0 #000;
 }
-.homepage-stage[data-menu-frame='frame-spike'] .menu-xp-lv { border-width: 4px; }
-.homepage-stage[data-menu-frame='frame-gold'] .menu-xp-lv {
+.homepage-stage[data-menu-frame='frame-spike'] .menu-xp-lvblock { border-width: 4px; }
+.homepage-stage[data-menu-frame='frame-gold'] .menu-xp-lvblock {
   border-color: #FFB800;
   box-shadow: 2px 2px 0 #000, 0 0 0 3px #FFB800;
 }
-.homepage-stage[data-menu-frame^='rebirth'] .menu-xp-lv {
+.homepage-stage[data-menu-frame^='rebirth'] .menu-xp-lvblock {
   border-color: #ff4fa3;
   box-shadow: 2px 2px 0 #000, 0 0 0 3px #ff4fa3;
 }

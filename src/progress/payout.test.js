@@ -155,3 +155,26 @@ test('a round with no multipliers at all reports zero above base and no rows', (
   assert.equal(led.above, 0);
   assert.deepEqual(led.rows, []);
 });
+
+// ---- THE RECEIPT CARRIES BOTH CURRENCIES AND NAMES ITS BASE ---------------------------------
+test('buildPayout reports the award in XP as well as WINS (they are one number)', () => {
+  const r = buildPayout({ base: 5, factors: { mode: 2, difficulty: 1.5 } });
+  assert.equal(r.paid, 15);
+  // Wins are the word's XP / 10 (Economy v8), so the XP is the same award times ten. Asserted
+  // against the WINS figure rather than recomputed, which is the invariant that matters.
+  assert.equal(r.xp, r.paid * 10);
+  assert.equal(r.xp, 150);
+});
+
+test('buildPayout carries the base TERMS so the panel can name them', () => {
+  const r = buildPayout({ base: 5, letters: 5, perLetter: 10, factors: { mode: 2 } });
+  assert.equal(r.letters, 5);
+  assert.equal(r.perLetter, 10);
+  // letters x perLetter IS the base, in XP — the panel prints "5 LETTERS x 10", not "BASE 5".
+  assert.equal(r.letters * r.perLetter, r.base * 10);
+  // Absent/garbage terms degrade to null so the panel falls back to the bare base.
+  const bare = buildPayout({ base: 5, factors: {} });
+  assert.equal(bare.letters, null);
+  assert.equal(bare.perLetter, null);
+  assert.equal(buildPayout({ base: 5, letters: 0, perLetter: -3, factors: {} }).letters, null);
+});

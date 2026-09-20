@@ -320,18 +320,25 @@ export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {})
  * player will actually receive and name what got it there. It is the SAME perWordFactors() the
  * payout uses — the card cannot quote a rate the game will not pay.
  *
- * @returns {{ rate:number, base:number, mult:number, factors:object }}
- *   rate   — wins for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
+ * BOTH CURRENCIES COME OUT OF THE ONE CALL. The card shows XP above WINS, and they are two
+ * readings of a single number (`wins = xp / 10`) — so they are returned together rather than
+ * computed twice at the call site, where the second one could drift.
+ *
+ * @returns {{ rate:number, xp:number, base:number, xpBase:number, mult:number, factors:object }}
+ *   rate   — WINS for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
+ *   xp     — the same word's XP, i.e. rate × 10
  *   base   — the reference word's letters at the player's key tier, the floor everything scales from
+ *   xpBase — that same base in XP
  *   mult   — rate / base, i.e. everything the player has built, as one number
  */
 export function perWordRateNow({ mode, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength } = {}) {
   const key = modeKey(mode);
   const opts = { mode: key, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength };
   const factors = perWordFactors(opts);
-  const rate = perWordWins(opts);
+  const xp = perWordXp(opts);
+  const rate = Math.round(xp / 10);
   const base = wordWinsBase({ keyTier, wordLength });
-  return { rate, base, mult: base > 0 ? rate / base : 1, factors };
+  return { rate, xp, base, xpBase: base * 10, mult: base > 0 ? rate / base : 1, factors };
 }
 
 // The player's live rebirth WINS multiplier (same ladder as XP), 1 at R0. Exposed so the menu

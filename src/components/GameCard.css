@@ -367,7 +367,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   text-transform: uppercase;
   line-height: 0.98;
   font-weight: 400;
-  font-size: clamp(12px, 4.4cqw, 17px);
+  font-size: clamp(13px, 4.4cqw, 17px);
   letter-spacing: 0.02em;
   padding: 8px 52px;
   border-top: 3px solid #000;
@@ -425,7 +425,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   align-self: flex-start;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(12px, 3.4cqw, 14px);
+  font-size: clamp(13px, 3.4cqw, 14px);
   letter-spacing: 0.06em;
   padding: 3px 8px;
   border: 2px solid #000;
@@ -454,6 +454,20 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    everything else on the bar, at 6px. */
 .game-card-payout-mult { color: #ffe94a; font-weight: 700; }
 
+/* THE XP LINE, directly above the wins line and the louder of the two — XP is what the bar on
+   the same screen is counting, and it is the bigger number. Same cqw sizing as the payout (this
+   is the FIT_TO_SLOT case the type test allowlists: card type is sized to the CARD, which the
+   fit-math moves independently of the viewport), one step up so the pair reads as a hierarchy
+   rather than two equal rows. Cyan, matching the XP fill in the bar above. */
+.game-card-xp {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(15px, 6.8cqw, 22px);
+  letter-spacing: 0;
+  color: #2effe0;
+  white-space: nowrap;
+}
+
 /* THE UNIT GOES BEFORE THE NUMBERS DO. At 360x640 the five cards are ~65px wide and
    "610 / WORD (x6)" overflows its own card even with the type pinned at its 7px floor — the
    string is simply longer than the card. Type size cannot fix it, so something has to leave,
@@ -476,8 +490,15 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @container (max-width: 150px) {
   .game-card-payout-per { display: none; }
 }
-@container (max-width: 132px) {
-  .game-card-payout-unit { display: none; }
+/* THE UNIT IS WHAT TELLS THE TWO LINES APART, so it is the LAST thing to go, not the second.
+   It used to drop at 132px, which was right when the card carried ONE payout line — a lone
+   number reads as "the payout" either way. With XP above WINS it is not: at 390 the card read
+   "100" over "10 (×2)", two bare numbers differing by a factor of ten and nothing saying which
+   was which. The MULTIPLIER goes instead. It is the same value on both lines, the bar directly
+   above the cards states the stack, and a factor that is missing tells no lie — a number whose
+   unit is missing does. */
+@container (max-width: 150px) {
+  .game-card-payout-mult { display: none; }
 }
 /* AND BELOW ~80px THE WHOLE LINE GOES. At 320x640 the fit-math packs three cards across and
    each is 58x78; even stripped to "200 (x2)" that is ~70px on a 48px content box at the 12px
@@ -488,8 +509,16 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    card is a thumbnail: the art and the name identify it, and the payout is back at 390px, which
    is where a real phone actually is. */
 @container (max-width: 80px) {
-  .game-card-payout { display: none; }
+  .game-card-payout,
+  .game-card-xp { display: none; }
 }
+
+/* THE FLOOR IS 13px, NOT 12 (feat/progression-display). The previous pass set these to 12 as a
+   compromise on the narrowest card; --fs-label is 13 and is documented as a HARD floor, and a
+   card that renders its badge, its foot bar and its lock plaque at 12 is eight strings of
+   under-floor text on the one screen the player makes a decision on. Measured after the change at
+   320/390/1920: zero rendered text under 13px, and no card overflows its own box.
+   ---- */
 
 /* ---- SAT RUSH: manga masthead (ink on cream) at the TOP + a cream foot bar. ---- */
 /* A SOLID cream band across the top so the black "SAT RUSH" ink and the SOLO/LIMITED badges
@@ -542,13 +571,25 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   text-align: center;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(12px, 3.4cqw, 14px);
+  font-size: clamp(13px, 3.4cqw, 14px);
   letter-spacing: 0.02em;
   color: #111;
   border-top: 3px solid #111;
   background: #F2EFE7;
 }
 .game-card-foot .game-card-payout-mult { color: #111; }
+/* SAT RUSH'S FOOT CARRIES BOTH LINES NOW, so they have to stack — as inline spans they ran side
+   by side and the bar's content measured 470px inside a 317px card at 1920. And they take the
+   foot's OWN ink, not the cards' cyan-and-cream: this bar is the retro-print sub-style's cream
+   paper, and #2effe0 on #F2EFE7 is 1.3:1. The colour belongs to the surface, not to the line. */
+.game-card-foot .game-card-xp,
+.game-card-foot .game-card-payout {
+  display: block;
+  font-size: clamp(13px, 4.4cqw, 16px);
+  color: #111;
+  line-height: 1.25;
+}
+.game-card-foot .game-card-xp { font-weight: 700; }
 
 /* TINY CARDS (a 5-in-one-row fit on a short/narrow viewport can shrink the card below ~170px):
    scale the title-bar chrome down so nothing overflows the card, and drop SAT's second badge so
@@ -562,8 +603,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      on the 58px card a 320px screen gives. */
   /* 25cqw, not 26: at 390x844 the name box is 80px and "CHAIN" needed 83 at 26cqw — three
      pixels of the word gone. 25cqw sets it at 23px, which still clears the 22px bar. */
-  .game-card-name { font-size: clamp(12px, 25cqw, 30px); -webkit-text-stroke-width: 1.5px; }
-  [data-game='sat-rush'] .game-card-name { font-size: clamp(12px, 23cqw, 28px); }
+  .game-card-name { font-size: clamp(13px, 25cqw, 30px); -webkit-text-stroke-width: 1.5px; }
+  [data-game='sat-rush'] .game-card-name { font-size: clamp(13px, 23cqw, 28px); }
   /* THE LAST RESORT, and only here. On a 58px card (320x640 packs three across) "CATEGORY" is
      89px wide at its 12px floor — the floor and "no clipped letters" cannot both hold, so the
      word breaks rather than losing its end. Every letter stays on the card. */
@@ -574,10 +615,17 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      card, so they GO, and the two things a player actually chooses on — the NAME and what the
      mode PAYS — get the whole card. */
   .game-card-badge { display: none; }
-  .game-card-foot { display: none; }
+  /* THE FOOT COMES BACK ON A SMALL CARD. It was dropped here when it carried a badge row and a
+     description at a 12px floor — "the same things smaller" was the thing being refused. What it
+     carries now is the two payout lines, which are the reason the card exists to be chosen from,
+     and they stack at 13px inside it. Measured at 320x640 and 390x844: nothing overflows the
+     card, and SAT stops being the one mode whose price is blank on a phone. */
+  .game-card-foot { padding: clamp(4px, 2.5cqw, 8px) clamp(5px, 3cqw, 10px); }
+  .game-card-foot .game-card-xp,
+  .game-card-foot .game-card-payout { font-size: clamp(13px, 11cqw, 15px); line-height: 1.15; }
   .game-card-limited-tag { display: none; }
-  .game-card-payout { font-size: clamp(12px, 18cqw, 20px); }
-  .game-card-ribbon { font-size: clamp(12px, 3.6cqw, 13px); padding: 6px 46px; }
+  .game-card-payout { font-size: clamp(13px, 18cqw, 20px); }
+  .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 14px); padding: 6px 46px; }
   /* The LABEL stays — "UNLOCKS AT LV 2" is the whole answer, and it is the one thing a locked
      card must say. The SUB ("YOU'RE LV 1 · 1 TO GO") goes: at 12px it wraps to three lines and
      the plaque then covers the card's own name, and the half it adds — your current level — is
@@ -641,7 +689,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   line-height: 0.98;
-  font-size: clamp(12px, 3cqw, 13px);
+  font-size: clamp(13px, 3cqw, 14px);
   letter-spacing: 0.04em;
   color: #C8321E;
   background: #F2EFE7;
@@ -719,7 +767,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* The "YOU'RE LV n · N TO GO" path line — smaller, Space Mono — under the gate. */
 .game-card-lock-sub {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(12px, 3cqw, 13px);
+  font-size: clamp(13px, 3cqw, 14px);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #e9dcff;
