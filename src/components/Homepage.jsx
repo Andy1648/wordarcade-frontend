@@ -36,8 +36,16 @@ import Spotlight from './Spotlight';
 import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../progress/onboarding';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
+import MobileMenu from './MobileMenu';
+import useMediaQuery from '../lib/useMediaQuery';
 import './wall-system.css';
 import './Homepage.css';
+import './MobileMenu.css';
+
+// PHONE FIRST SCREEN (feat/mobile-first-screen). At or below this width the menu renders as
+// three full-width typographic rows instead of the card grid — see MobileMenu.jsx. This is a
+// RENDER branch, not a CSS one, because the win is the ~390 card nodes never mounting.
+const PHONE_MENU_QUERY = '(max-width: 480px)';
 
 // How long a queued connect attempt shows the plain CONNECTING… state before we
 // assume a COLD START (the Render free tier sleeps when idle and takes ~30-60s to
@@ -69,6 +77,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
   const [navigating, setNavigating] = useState(false);
+  // True on phones (<=480px). Drives the whole first-screen swap below.
+  const isPhoneMenu = useMediaQuery(PHONE_MENU_QUERY);
   // CONNECT-GATING: the socket connects in the background while this menu is
   // already live (a cold Render backend can take 30-60s). If the user fires a
   // connect-dependent action (CREATE / JOIN) before the socket is open we must
@@ -184,6 +194,10 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
   useLayoutEffect(() => {
     const stage = stageRef.current;
     if (!stage) return undefined;
+    // PHONE: none of this fit-math applies — the phone menu is a plain flex column that sizes
+    // itself, and every element this measures (corner nav, XP cluster, card grid) is unmounted
+    // at that width. Bailing here also keeps the resize handler's layout reads off phones.
+    if (isPhoneMenu) return undefined;
     let raf = 0;
     const compute = () => {
       // Reset to the natural (unscaled) size for a clean, non-compounding measurement.
@@ -322,7 +336,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, []);
+  }, [isPhoneMenu]);
 
   // NOTE (fix/logic-and-onboarding): the old peek-scroll + "N MORE" pager machinery was
   // REMOVED here. The card-sizing effect above sizes all five cards to fit ONE screen and
@@ -579,7 +593,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     <div className="homepage-wrap">
       <div
         ref={stageRef}
-        className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}`}
+        className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}${isPhoneMenu ? ' is-phone-menu' : ''}`}
         data-menu-frame={menuFrame || undefined}
       >
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
@@ -590,6 +604,23 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
 
+        {/* PHONE (<=480px): the whole desktop menu below — corner nav, wordmark, XP cluster,
+            card grid, bottom bar, footer — is replaced by three full-width typographic rows.
+            Nothing in the desktop branch mounts at this width, which is the point: the card
+            region alone is ~390 DOM nodes. Every component is still imported and still used
+            at every other width; they simply are not rendered here. */}
+        {isPhoneMenu ? (
+          <MobileMenu
+            games={GAMES}
+            onOpen={handleOpenDialog}
+            onJoin={handleJoinRoom}
+            joinLabel={connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN ROOM'}
+            navigating={navigating}
+            musicMuted={musicMuted}
+            onToggleMusic={onToggleMusic}
+          />
+        ) : (
+        <>
         {/* Corner nav — three WORD buttons (not glyphs), stacked in the top-right corner. Each
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
@@ -779,6 +810,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             CREDITS
           </button>
         </div>
+        </>
+        )}
       </div>
 
       {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
@@ -840,7 +873,9 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
 
       {/* FIRST-RUN spotlight (once ever): dim the menu, ring the XP bar, tell the player it
           responds to typing/clicks. pointer-events:none — the dismissing key/click still counts. */}
-      {showMenuSpot && (
+      {/* The spotlight rings the XP bar, which the phone branch does not render — with no
+          target it would dim the menu and point at nothing, so it is desktop/tablet only. */}
+      {showMenuSpot && !isPhoneMenu && (
         <Spotlight
           targetSelector=".menu-xp-bar"
           caption="TYPE OR CLICK ANYWHERE"
