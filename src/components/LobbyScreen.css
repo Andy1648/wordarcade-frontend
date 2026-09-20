@@ -118,32 +118,7 @@
   margin-top: 8px;
 }
 
-.lobby-code-input {
-  width: 100%;
-  font-family: 'Bungee', cursive;
-  line-height: 0.98;
-  font-size: var(--fs-panel);
-  letter-spacing: 6px;
-  text-align: center;
-  text-transform: uppercase;
-  color: #1a0b2e;
-  background: #fff;
-  border: 4px solid #AAAAAA;
-  border-radius: 8px;
-  padding: 12px 14px;
-  outline: none;
-  box-shadow: 4px 4px 0 #000;
-  transition: box-shadow 0.1s;
-}
-
-.lobby-code-input:focus {
-  box-shadow: 4px 4px 0 #FFE94A;
-}
-
-.lobby-code-input::placeholder {
-  color: #ccc;
-  letter-spacing: 6px;
-}
+/* (.lobby-code-input deleted with the join branch.) */
 
 .lobby-field-group {
   margin-top: 22px;
@@ -282,60 +257,11 @@
     padding: 8px 14px;
   }
 }
-/* ===== THE CODE, AS SLOTS (feat/lobby-type) ==========================================
-   One slot per character, so the player can see how many they owe — a single field cannot
-   tell them that. The real <input> is still one element (paste, autofill and the mobile
-   keyboard all keep working); it is laid over the slots at zero opacity and the slots render
-   the value underneath. */
-.lobby-code-slots {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  gap: clamp(6px, 2vw, 10px);
-  width: 100%;
-  cursor: text;
-}
-.lobby-code-slot {
-  flex: 0 1 auto;
-  min-width: max(40px, var(--tap-min) * 0.9);
-  min-height: max(52px, var(--tap-min));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  /* >= 30px: --fs-h2 is clamp(24px, 4.2vw, 42px), so this is 30px the moment the viewport is
-     wide enough and never the reason a code is hard to read. */
-  font-size: max(30px, var(--fs-h2));
-  line-height: 1;
-  color: #FFE94A;
-  background: #1a0b2e;
-  border: 4px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-}
-.lobby-code-slot.is-next {
-  border-color: #2effe0;
-}
-/* The real field: present, focusable and on top, but invisible. Not display:none / width:0 —
-   a browser refuses to focus those, and a refused focus is a phone with no keyboard. */
-.lobby-code-slots .lobby-code-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: transparent;
-  caret-color: transparent;
-  /* >=16px so iOS does not zoom the page when it takes focus */
-  font-size: max(16px, var(--fs-h2));
-  text-align: center;
-  letter-spacing: 1em;
-  opacity: 0;
-}
+/* (THE CODE SLOTS ARE GONE FROM HERE. They were added in feat/lobby-type, and they never
+   rendered: this screen's join branch was gated on `mode === 'join'`, and nothing sets that —
+   goToLobby() only ever gets a game id or 'solo'. The branch is deleted with them and the
+   treatment now lives on PublicRoomsScreen, which is the screen a friend actually types a code
+   into. See the header note in LobbyScreen.jsx.) */
 
 /* THE WAY OUT, IN THE CORNER CLUSTER — top-left of the box, >=44px, same shape as the room's
    and the solo screens'. */
