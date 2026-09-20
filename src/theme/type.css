@@ -52,6 +52,16 @@
      `em` and lives here so the ratio has one home. */
   --fs-unit: 0.45em;
 
+  /* THE PHONE MENU BAND (components/MobileMenu.css, <=480px only). Not a step of the scale: it
+     is a FIT-TO-BAND size — the largest setting at which the widest word of a mode name still
+     clears its band edge to edge ("WORD" at 3.057em, the widest four-letter line).
+     The `30vw - 32px` form, rather than a plain vw, is because the band's usable width is the
+     viewport MINUS a fixed ~96px of chrome (gutters, border, padding, chevron, gap). A pure vw
+     holds a constant FRACTION of the viewport, so it runs out of room on a 320px phone where
+     that fixed 96px is a much bigger share. Capped at 84px so a 480px phablet does not get a
+     wordmark taller than its own band. */
+  --fs-band: clamp(48px, 30vw - 32px, 84px);
+
   /* ---- accessibility floors (referenced by component CSS, asserted by the test) ---- */
   --tap-min: 44px;   /* minimum touch target on both axes */
   --tap-gap: 8px;    /* minimum spacing between two touch targets */

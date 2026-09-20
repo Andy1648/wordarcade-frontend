@@ -17,6 +17,7 @@
 // SVG. There is no CSS-drawn art and no character illustration — the <Mascot> PNG component is
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
+import LayeredWord from './LayeredWord';
 
 // The three PLAYABLE modes, in menu order. CHAIN and FUSE are level-gated and are represented
 // by the single unlock line below rather than by two padlocked cards that cannot be tapped.
@@ -25,13 +26,15 @@ import AudioControls from './AudioControls';
 // drift from the mode dialog / card / SEO copy.
 const MODE_IDS = ['word-bomb', 'category-blitz', 'sat-rush'];
 
-// Per-row palette. Kept here rather than in gameData because these are THIS SCREEN's slab
-// colours (a full-bleed fill behind 50px type), not the card colours — the card palette is
-// tuned for a 109px thumbnail with art behind it and reads far too hot at full width.
+// Per-row palette. The band is INVERTED: the slab is the dark panel base and the NAME carries
+// the mode's neon, set in the chromatic Bungee stack (LayeredWord) — the treatment CHAIN, FUSE,
+// Word Bomb and the room code already use. Flat black type on a flat colour block was below
+// that bar. `sub` is a muted tint of the same accent so each band keeps its identity without
+// competing with the name; every value clears 4.5:1 on the band (8.97:1 at worst).
 const ROW_STYLE = {
-  'word-bomb': { bg: '#2EFFE0', sub: '#0b4a43' },
-  'category-blitz': { bg: '#FF6B3D', sub: '#4a1a08' },
-  'sat-rush': { bg: '#f4efe1', sub: '#4a4438' },
+  'word-bomb': { accent: '#2EFFE0', sub: '#8FC7BF' },
+  'category-blitz': { accent: '#FF6B3D', sub: '#E0A88F' },
+  'sat-rush': { accent: '#FFE94A', sub: '#D6C98A' },
 };
 
 // The in-app route each row points at, so the row is a REAL link: long-press gets a URL,
@@ -133,7 +136,10 @@ export default function MobileMenu({
               key={game.id}
               className={`hp-m-row hp-m-row--${game.id}${navigating ? ' is-disabled' : ''}`}
               href={ROW_HREF[game.id]}
-              style={{ '--row-bg': s.bg, '--row-sub': s.sub }}
+              style={{ '--row-accent': s.accent, '--row-sub': s.sub }}
+              /* The letterform stack is aria-hidden (four copies of the same word), so the
+                 link has to carry the accessible name itself. */
+              aria-label={`${game.name.replace('\n', ' ')} — ${game.description}`}
               onClick={(e) => {
                 // Let a modified click (new tab / new window) behave like a normal link.
                 if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return;
@@ -143,7 +149,10 @@ export default function MobileMenu({
               }}
             >
               <span className="hp-m-row-text">
-                <span className="hp-m-name">{game.name.replace('\n', ' ')}</span>
+                {/* game.name already carries its own break ("WORD\nBOMB"); the stack honours
+                    it, which is what lets the type run at the band's full width instead of
+                    shrinking to fit one long line. */}
+                <LayeredWord className="hp-m-name" text={game.name} accent={s.accent} />
                 <span className="hp-m-desc">{game.description}</span>
               </span>
               <Chevron />

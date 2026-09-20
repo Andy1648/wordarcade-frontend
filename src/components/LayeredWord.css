@@ -1,0 +1,68 @@
+/* LayeredWord.css — the four Bungee chromatic faces stacked in register.
+ *
+ * These class names are NEW and are used only by LayeredWord.jsx, so these rules are outside a
+ * media query without any risk to existing screens: no element anywhere else carries them. The
+ * SIZE deliberately is not set here — the stack inherits font-size and line-height from its
+ * caller, so one component serves a 44px band name and a 96px room code alike.
+ *
+ * NO text-shadow, by rule: the depth is the Shade face, not a fake offset.
+ */
+
+.lw {
+  /* Callers set tracking through THIS, not the letter-spacing property, so the Shade
+     correction below can compose with whatever the caller asked for. */
+  --lw-ls: 0em;
+  display: grid;
+  /* All four faces occupy the SAME grid cell, LEFT-aligned: the Shade extrude is drawn down
+     and to the right of the face, so the four faces share a left edge and Shade overhangs. */
+  justify-items: start;
+  align-items: start;
+  /* Room for that overhang, so a tight flex parent cannot clip it (the same allowance
+     .room-code makes for the same reason). */
+  padding-right: 0.12em;
+  min-width: 0;
+}
+
+.lw-face {
+  grid-area: 1 / 1;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: var(--lw-ls);
+  /* pre-line makes a "\n" in the text a real break, identically on all four faces. */
+  white-space: pre-line;
+}
+
+/* THE SHADE FACE IS NOT METRIC-COMPATIBLE WITH THE OTHER THREE.
+   Measured on this build's fonts: Bungee, Bungee Inline and Bungee Outline share identical
+   advance widths (WORD = 305.7px at 100px), but Bungee Shade runs +0.10em PER CHARACTER
+   (WORD = 345.7px). Stacked at the same tracking the faces therefore drift apart by 0.1em per
+   character — invisible under a single CHAIN glyph, ~0.4em on a 4-character room code, and by
+   the eighth letter of "CATEGORY" the black extrude has walked clean out from under the fill
+   and reads as a second, broken word. Cancelling that 0.1em here is what holds the stack in
+   register at ANY length.
+   (solo-cl-* and room-code-* carry the same latent drift; their strings are short enough that
+   it still passes as a slightly heavy shadow. Migrating them onto this component fixes them.) */
+.lw-shade {
+  font-family: 'Bungee Shade', 'Bungee', cursive;
+  text-transform: uppercase;
+  letter-spacing: calc(var(--lw-ls) - 0.1em);
+  color: #000;
+}
+
+.lw-fill {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  color: var(--lw-accent, #fff);
+}
+
+.lw-inline {
+  font-family: 'Bungee Inline', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.lw-outline {
+  font-family: 'Bungee Outline', 'Bungee', cursive;
+  text-transform: uppercase;
+  color: #000;
+}
