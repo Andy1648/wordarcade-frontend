@@ -11,7 +11,7 @@
 // can drive a flow up to the WebSocket edge and assert the attempt was made
 // (task requirement) without standing up a real game server.
 //
-// It also blocks all non-localhost HTTP (analytics, gtag, umami, Sentry,
+// It also blocks all non-localhost HTTP (analytics, umami, Sentry,
 // PostHog, Google Fonts, Vercel beacons) so runs are hermetic and deterministic
 // and can never reach out to production infrastructure. The app fails open on
 // all of these, so blocking them changes nothing the tests care about.
