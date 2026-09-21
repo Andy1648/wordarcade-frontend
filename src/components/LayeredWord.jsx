@@ -14,19 +14,13 @@
 // screens, and this branch has to prove a byte-identical desktop menu. Migrating them is a
 // clean follow-up, and nothing here changes their rendering in the meantime.
 //
-// ORDER IS LOAD-BEARING, and it is not the order it first looks like it should be. Back to
-// front: Shade (the extrude), Outline (the black keyline), the plain solid face carrying the
-// BEVEL highlight, and Bungee Inline carrying the mode ACCENT on top.
-//
-// Two measured facts drive that (both derived in LayeredWord.css):
-//  1. Bungee Inline is very nearly a SOLID face — 21.00% ink against Bungee's 22.17%, a thin
-//     groove being the whole difference — so whichever of the two is painted second covers the
-//     other almost entirely. The accent therefore rides INLINE, not the solid face: painting
-//     white over the accent washed #2EFFE0 to #B0FBF3.
-//  2. Bungee Outline's stroke sits ON the same contour the groove follows, so with Outline on
-//     top it paints over the groove and the highlight disappears (measured: 0 white pixels).
-//     Dropping it under the bevel leaves the highlight visible (332px) while the outer half of
-//     its stroke still reads as the black keyline (934px).
+// ORDER IS LOAD-BEARING — Shade (the extrude) at the back, then the solid face in the mode's
+// ACCENT, then Bungee Inline's white highlight, then Outline's black keyline on top. Any other
+// order buries a layer: the accent must not composite last, because Bungee Inline is very
+// nearly a solid face (21.00% ink against Bungee's 22.17% — a thin groove is the whole
+// difference), so a solid face painted over it hides the highlight completely.
+// The highlight's strength is therefore controlled by its ALPHA, not by the stacking — see
+// --lw-inline-alpha in LayeredWord.css.
 import './LayeredWord.css';
 
 /**
@@ -46,9 +40,9 @@ export default function LayeredWord({ text, accent, className = '' }) {
       aria-hidden="true"
     >
       <span className="lw-face lw-shade">{text}</span>
-      <span className="lw-face lw-outline">{text}</span>
-      <span className="lw-face lw-bevel">{text}</span>
       <span className="lw-face lw-fill">{text}</span>
+      <span className="lw-face lw-inline">{text}</span>
+      <span className="lw-face lw-outline">{text}</span>
     </span>
   );
 }

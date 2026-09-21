@@ -49,40 +49,33 @@
   color: #000;
 }
 
-/* BUNGEE INLINE IS NOT A HIGHLIGHT DETAIL — IT IS A SECOND SOLID FACE.
+/* THE INLINE FACE IS A WASH, NOT A SPARSE HIGHLIGHT — SO ITS ALPHA IS THE DIAL.
    Measured ink coverage of a 150px "W": Bungee 22.17%, Bungee Inline 21.00%. The two differ by
-   537 pixels out of ~8900 — i.e. Inline is the FULL letter body with a thin groove cut out of
-   it, not a sparse set of inner rules.
-   So the obvious stack (solid accent, then Inline in white) paints white over ~94% of the glyph
-   and lets the accent through only in the groove — the exact inverse of what it looks like it
-   should do. At 0.62 alpha that dropped #2EFFE0 to #B0FBF3 (HSV saturation 0.82 -> 0.30) while
-   the band keyline beside it stayed fully saturated.
-   THE FIX IS THE ORDER, NOT THE ALPHA. The accent rides the INLINE face, so the body is the
-   palette colour at full strength; the plain solid face sits UNDER it carrying the highlight,
-   which is therefore visible only where Inline's groove exposes it. Same four faces, same
-   palette, and the white now reads as a bevel along the stroke instead of a wash across it.
+   537 pixels out of ~8900 — Inline is the FULL letter body with a thin groove cut out of it,
+   not a set of sparse inner rules. Painting it white therefore tints ~94% of the glyph rather
+   than drawing a detail on it, and at 0.62 that dragged #2EFFE0 down to #B0FBF3 (HSV saturation
+   0.82 -> 0.30) while the band keyline beside it stayed fully saturated: neon border, pastel
+   word.
+   Because the face covers the body, the strength of the highlight IS its alpha. Sampling the
+   real four-face stack at 84px on #160f28 gives fill saturation 0.31 / 0.29 / 0.27 at 0.62 and
+   0.74 / 0.69 / 0.64 at 0.10, against an intended 0.82 / 0.76 / 0.71 — so 0.10 keeps the neon
+   and still lifts the face enough to read as a sheen.
+   THE ACCENT MUST NOT COMPOSITE LAST. Painting the solid face over Bungee Inline measures
+   identical to deleting the inline face outright — the solid body hides the highlight
+   completely — so the order below is fixed and only the alpha is tunable. */
 
-   OUTLINE HAD TO MOVE TOO. Its stroke runs along the same contour the groove follows, so with
-   Outline painted last it covered the groove and the highlight vanished — measured over one
-   200px "O": 265 white pixels with Outline off, 0 with it on top. Painted UNDER the bevel
-   instead, the highlight survives (332px) and the outer half of Outline's stroke, which falls
-   outside the solid face's body, still reads as the black keyline (934px).
-
-   If Bungee Inline ever fails to load it falls back to 'Bungee' and the groove simply
-   disappears — the letter stays full-saturation accent, which degrades the right way. */
-
-/* UNDER the accent: seen only through the groove Inline cuts. */
-.lw-bevel {
+/* The solid face carrying the mode colour. */
+.lw-fill {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  color: var(--lw-bevel, rgba(255, 255, 255, 0.92));
+  color: var(--lw-accent, #fff);
 }
 
-/* The face that actually carries the mode colour. */
-.lw-fill {
+/* The sheen. Alpha is the dial; see the note above for why it is this low. */
+.lw-inline {
   font-family: 'Bungee Inline', 'Bungee', cursive;
   text-transform: uppercase;
-  color: var(--lw-accent, #fff);
+  color: rgba(255, 255, 255, var(--lw-inline-alpha, 0.10));
 }
 
 .lw-outline {
