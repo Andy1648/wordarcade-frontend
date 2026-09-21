@@ -1,0 +1,247 @@
+/* MobileMenu.css — the phone (<=480px) first screen.
+ *
+ * EVERY rule in this file sits inside `@media (max-width: 480px)`. Nothing here can reach
+ * desktop or tablet: at 481px and up this stylesheet contributes zero declarations.
+ *
+ * SCOPING RULE (CLAUDE.md): homepage-only styling hangs off `.homepage-stage`, never off
+ * `.wall-surface` — that class is shared by the three game screens, so styling it here would
+ * leak into Word Bomb / Category Blitz / SAT Rush.
+ */
+
+@media (max-width: 480px) {
+  /* The stage becomes a single full-height column. `100dvh` tracks the real visible height as
+     mobile browser chrome collapses, so the three rows always fill exactly one screen with no
+     scroll; the vh fallback is for browsers without dvh. */
+  /* The desktop menu is a centred PANEL: .homepage-wrap adds a 14px gutter and the stage caps
+     at ~374px, which on a phone leaves the "full-width" rows 332px inside a 390px screen. At
+     this breakpoint the menu is the whole screen, so both insets are dropped. .homepage-wrap
+     is rendered only by Homepage.jsx, so this cannot reach another screen. */
+  .homepage-wrap {
+    padding: 0;
+  }
+
+  .homepage-stage.is-phone-menu {
+    display: flex;
+    flex-direction: column;
+    /* STRETCH, not the base rule's `center`: centring makes .hp-m shrink-wrap its content, so
+       the bands quietly stop being full-width the moment the type gets narrower. */
+    align-items: stretch;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    width: 100%;
+    padding: 0;
+    border-width: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .hp-m {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0; /* lets the flex children actually shrink instead of overflowing */
+    gap: 10px;
+    padding: 12px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---- 1. TITLE ROW ---- */
+  .hp-m-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex: 0 0 auto;
+  }
+
+  .hp-m-title {
+    margin: 0;
+    font-family: 'Bungee', 'Bungee Shade', cursive;
+    /* TYPE SCALE (src/theme/type.css, enforced by src/perf/typeScale.test.js): every
+       font-size goes through a --fs-* token. --fs-hero is clamp(42px, 9.5vw, 96px), so this
+       renders 42px at 390px and 45.6px at 480px — the spec's 46px, on the scale. */
+    font-size: var(--fs-hero);
+    line-height: 0.84;
+    letter-spacing: 0.5px;
+    color: #FF4FA3;
+    text-shadow: 3px 3px 0 #000;
+    text-transform: uppercase;
+  }
+
+  /* The sound toggle: a real 44x44 target, right-aligned on the title's row. */
+  .hp-m-top .audio-ctrl {
+    position: static;
+    flex: 0 0 auto;
+  }
+
+  .hp-m-top .audio-ctrl button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* ---- 2. MODE ROWS ---- */
+  .hp-m-modes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .hp-m-row {
+    /* Each row flex-GROWS to share the remaining height equally, so the trio always fills the
+       screen exactly — on a short phone they compress, on a tall one they stretch. */
+    flex: 1 1 0;
+    min-height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px;
+    /* INVERTED BAND: the slab is the dark panel base and the NAME carries the neon (see
+       LayeredWord). The border is the mode accent rather than black — on a dark fill a black
+       outline is invisible, and the house rule wants a COLOURED outline anyway. The hard black
+       offset shadow stays; it is what still reads as a slab against the wall. */
+    border: 4px solid var(--row-accent);
+    border-radius: 8px;
+    box-shadow: 6px 6px 0 #000;
+    background: #160f28;
+    color: var(--row-accent);
+    text-decoration: none;
+    /* Snappy press feedback, transform-only (CLAUDE.md animation budget). */
+    transition: transform 180ms ease;
+  }
+
+  .hp-m-row:active {
+    transform: translate(3px, 3px);
+  }
+
+  .hp-m-row.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .hp-m-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  /* THE NAME FILLS THE BAND. --fs-band is the fit-to-band token (theme/type.css); --band-k is
+     the per-mode trim for a name whose longest word runs past four characters. The stack's
+     four faces are held in register by LayeredWord.css, so the width that has to fit is the
+     regular Bungee advance. */
+  .hp-m-name {
+    font-size: calc(var(--fs-band) * var(--band-k, 1));
+    line-height: 0.84;
+    --lw-ls: -0.01em;
+  }
+
+  /* "CATEGORY" is eight characters against four for BOMB / RUSH, so it needs its own trim to
+     clear the same band width on two lines. */
+  .hp-m-row--category-blitz .hp-m-name {
+    --band-k: 0.61;
+  }
+
+  .hp-m-desc {
+    font-family: 'Space Mono', monospace;
+    font-size: var(--fs-micro);
+    line-height: 1.25;
+    letter-spacing: 0.3px;
+    color: var(--row-sub);
+  }
+
+  .hp-m-chev {
+    flex: 0 0 auto;
+    /* inherits the band's accent via `color` on .hp-m-row */
+    color: currentColor;
+  }
+
+  /* ---- 3. UNLOCK LINE + JOIN ---- */
+  .hp-m-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .hp-m-unlock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Space Mono', monospace;
+    /* The scale floors decorative text at 11px (--fs-micro); the spec's 10px is below it. */
+    font-size: var(--fs-micro);
+    letter-spacing: 0.4px;
+    color: #8f85ad;
+  }
+
+  .hp-m-lock {
+    flex: 0 0 auto;
+  }
+
+  .hp-m-join {
+    /* A text link, not a slab — but still a 44px tap target (padding carries the height, so
+       the visible type stays small while the hit box is full size). */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 4px;
+    background: none;
+    border: 0;
+    /* Bungee may never go below --fs-panel (typeScale.test.js) — small UI text is Space Mono
+       by rule, which is also what keeps this at the 13px the spec asked for. */
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-label);
+    letter-spacing: 0.5px;
+    color: #2EFFE0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .hp-m-join.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* ---- BACKDROP: drop the loose wall ornaments on the HOME view only ----
+     27 discrete decorations: .wall-graffiti-tag (12), .wall-splatter (4), .wall-sticker (6),
+     .wall-paint-drip (5). They live in WallScene, which App renders as a SIBLING of
+     .homepage-stage, so a .homepage-stage descendant selector cannot reach them;
+     `html[data-view='home']` is the existing view hook (App.jsx sets it on <html>, and
+     WallScene.css already scopes with it), which keeps this to the menu without touching
+     WallScene.jsx or the shared .wall-surface class.
+     THE STICKER IS WHY THIS LIST GREW: at 0.22 opacity one of the six sat at (28,293), i.e.
+     squarely in the 10px gap between the first two bands, and read as a sliver of something
+     bleeding through. The base texture (.wall-bricks / .wall-floor-shade / .wall-halftone)
+     stays — that is the wall itself, not an ornament on it. */
+  html[data-view='home'] .wall-graffiti-tag,
+  html[data-view='home'] .wall-splatter,
+  html[data-view='home'] .wall-sticker,
+  html[data-view='home'] .wall-paint-drip {
+    display: none;
+  }
+
+  /* The streetlight pool is sized for the desktop card grid; at this width it just washes
+     the top third. The beat glow STAYS — it is the menu's one sanctioned beat moment. */
+  .homepage-stage.is-phone-menu .homepage-spotlight {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) and (prefers-reduced-motion: reduce) {
+  .hp-m-row {
+    transition: none;
+  }
+
+  .hp-m-row:active {
+    transform: none;
+  }
+}
