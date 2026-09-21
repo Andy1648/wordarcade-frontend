@@ -14,6 +14,7 @@ import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 // The standing multiplier readout — "every win and multiplier visible, no hidden credits".
 import LiveStack from '../components/LiveStack';
 import Mascot from '../components/Mascot';
+import LayeredWord from '../components/LayeredWord';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
 import TeachStrip from '../components/TeachStrip.jsx';
@@ -50,13 +51,17 @@ function HeroRing({ remaining, tMax, redZone, armed }) {
 // The hero letter, built from Bungee's REAL chromatic layer family (Shade / regular / Inline /
 // Outline) stacked in register — NOT a text-shadow stack. Depth comes from the font, matching
 // the CANONICAL MENU TITLE law (CLAUDE.md) applied to the app's one other giant display glyph.
+//
+// The stack itself is now LayeredWord: the four faces and their four colours were written out
+// here AND in RoomScreen AND in MobileMenu, three copies of one recipe. What this hand-rolled
+// copy was missing is the Shade metric correction — Bungee Shade advances +0.10em per character
+// against the other three faces, so the black extrude walked out from under the fill as the
+// string grew. A single CHAIN glyph hid it; a FUSE fragment was already drifting. Only the SIZE
+// and the mode colour live here now (.solo-cl in Solo.css).
 function HeroLetter({ text }) {
   return (
     <div className="solo-center" aria-hidden="true">
-      <span className="solo-cl solo-cl-shade">{text}</span>
-      <span className="solo-cl solo-cl-fill">{text}</span>
-      <span className="solo-cl solo-cl-inline">{text}</span>
-      <span className="solo-cl solo-cl-outline">{text}</span>
+      <LayeredWord className="solo-cl" text={text} />
     </div>
   );
 }

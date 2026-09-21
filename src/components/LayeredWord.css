@@ -40,8 +40,9 @@
    the eighth letter of "CATEGORY" the black extrude has walked clean out from under the fill
    and reads as a second, broken word. Cancelling that 0.1em here is what holds the stack in
    register at ANY length.
-   (solo-cl-* and room-code-* carry the same latent drift; their strings are short enough that
-   it still passes as a slightly heavy shadow. Migrating them onto this component fixes them.) */
+   The solo hero and the room code both carried this drift until they were migrated here — a
+   4-character room code was already ~0.4em out, which is why its extrude read as a heavy
+   shadow rather than as a layer. */
 .lw-shade {
   font-family: 'Bungee Shade', 'Bungee', cursive;
   text-transform: uppercase;
