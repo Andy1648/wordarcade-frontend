@@ -47,33 +47,21 @@
   min-width: 0;
   max-width: 100%;
 }
+/* THE FACES THEMSELVES ARE LayeredWord's (components/LayeredWord.css). The four font-families
+   and the four colours were a second hand-written copy of that recipe here, and that copy did
+   not carry the Bungee Shade metric correction — which on a 4-character code is ~0.4em of slip.
+   What is left is what is SPECIFIC to a room code: its size and its wide tracking. The fill
+   colour is passed as the `accent` prop from the JSX (--lw-accent), and --lw-inline-alpha is
+   pinned to the 0.62 this screen has always used. `padding-right` is zeroed because .room-code
+   already makes the extrude's allowance on BOTH sides (padding: 0 0.12em) and the code is
+   centred, so LayeredWord's own one-sided allowance would shift it off centre. */
 .room-code-face {
   grid-area: 1 / 1;
   font-size: var(--fs-hero);
   line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: clamp(2px, 0.8vw, 6px);
-  white-space: nowrap;
-}
-.room-code-shade {
-  font-family: 'Bungee Shade', 'Bungee', cursive;
-  text-transform: uppercase;
-  color: #000;
-}
-.room-code-fill {
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  color: #ffe94a;
-}
-.room-code-inline {
-  font-family: 'Bungee Inline', 'Bungee', cursive;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
-}
-.room-code-outline {
-  font-family: 'Bungee Outline', 'Bungee', cursive;
-  text-transform: uppercase;
-  color: #000;
+  padding-right: 0;
+  --lw-ls: clamp(2px, 0.8vw, 6px);
+  --lw-inline-alpha: 0.62;
 }
 
 .room-instruction {
@@ -406,7 +394,7 @@
      tracking tightens, which is what actually costs width. (This block used to set
      font-size: var(--fs-panel) = 20px, which made a decorative title the biggest text here.) */
   .room-code-face {
-    letter-spacing: 2px;
+    --lw-ls: 2px;
   }
 
   .room-start-btn,
@@ -791,7 +779,8 @@ html[data-beat='true'] .room-leave-btn {
   background: #2EFFE0;
   border-color: #1A9985;
 }
-
+
+
 /* THE CORNER CLUSTER (feat/lobby-type). One control, top-left of the box, >=44px — the same
    place and shape as the solo screens' exit. */
 .room-corner {

@@ -448,33 +448,22 @@
   line-height: 1;
   pointer-events: none;
 }
+/* THE FACES THEMSELVES ARE LayeredWord's (components/LayeredWord.css) — the four font-families
+   and the black/white/accent colours were declared here as a second copy of that recipe, and
+   that copy did NOT carry the Bungee Shade metric correction. Only what is SPECIFIC to the hero
+   stays: its size, its tracking, and the mode colour. `--lw-inline-alpha` is pinned to the 0.62
+   this screen has always used; the menu's lower 0.10 is a menu decision (it was washing neon
+   band names to pastel) and the hero is a single glyph on a dark stage, not a name on a slab.
+   `padding-right` is zeroed because LayeredWord's overhang allowance would push the glyph off
+   the ring's centre — .solo-center is an absolute overlay and cannot clip the extrude anyway. */
 .solo-cl {
   grid-area: 1 / 1;
   font-size: calc(var(--solo-hero) * var(--solo-hero-letter));
   line-height: 1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.solo-cl-shade {
-  font-family: 'Bungee Shade', 'Bungee', cursive;
-  text-transform: uppercase;
-  color: #000;
-}
-.solo-cl-fill {
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  color: var(--solo-accent);
-}
-.solo-cl-inline {
-  font-family: 'Bungee Inline', 'Bungee', cursive;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
-}
-.solo-cl-outline {
-  font-family: 'Bungee Outline', 'Bungee', cursive;
-  text-transform: uppercase;
-  color: #000;
+  padding-right: 0;
+  --lw-ls: -0.02em;
+  --lw-accent: var(--solo-accent);
+  --lw-inline-alpha: 0.62;
 }
 
 /* Seconds readout — a small chip pinned to the ring's BOTTOM EDGE (the ring's outer radius is

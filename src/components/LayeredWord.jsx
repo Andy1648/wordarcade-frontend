@@ -10,9 +10,10 @@
 // the same four font-families and the same four colours re-declared each time. This is that
 // recipe extracted ONCE so the next screen composes it instead of copying it.
 //
-// The existing call sites are deliberately NOT migrated in this branch: they are on other
-// screens, and this branch has to prove a byte-identical desktop menu. Migrating them is a
-// clean follow-up, and nothing here changes their rendering in the meantime.
+// Both of those call sites are now migrated onto this component, and each kept only what is
+// genuinely its own: the SIZE, the tracking (--lw-ls), the mode colour, and --lw-inline-alpha.
+// They gained the Shade metric correction below in the process, which is the part a hand copy
+// never carried.
 //
 // ORDER IS LOAD-BEARING — Shade (the extrude) at the back, then the solid face in the mode's
 // ACCENT, then Bungee Inline's white highlight, then Outline's black keyline on top. Any other

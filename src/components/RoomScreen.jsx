@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import Mascot from './Mascot';
+import LayeredWord from './LayeredWord';
 import PlayerDot from './PlayerDot';
 import { resolvePlayerColor } from '../playerColors';
 import { inviteLink } from '../share/links.js';
@@ -200,12 +201,15 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             is the font's own. The "ROOM CODE" label above it is GONE — a five-character Bungee
             monogram in the accent does not need to be told what it is, and the line below says
             what to do with it. WaveText goes too: it splits the string into per-letter spans,
-            which cannot be stacked in register. */}
+            which cannot be stacked in register.
+            The stack is LayeredWord now. The hand-written copy here re-declared the same four
+            faces AND lacked the Shade metric correction: Bungee Shade advances +0.10em per
+            character, so on a 4-character code the extrude had already slipped ~0.4em out from
+            under the fill and read as a heavy shadow rather than a layer. This div keeps its own
+            job — the wrapper carries `translate="no"` (an identifier: never translate it), the
+            accessible name, and the beat reaction. */}
         <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
-          <span className="room-code-face room-code-shade" aria-hidden="true">{room.code}</span>
-          <span className="room-code-face room-code-fill" aria-hidden="true">{room.code}</span>
-          <span className="room-code-face room-code-inline" aria-hidden="true">{room.code}</span>
-          <span className="room-code-face room-code-outline" aria-hidden="true">{room.code}</span>
+          <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
         </div>
         <div className="room-instruction">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
 
