@@ -4,7 +4,13 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999; /* above everything, including overlays */
+  /* ABOVE THE APP, BELOW EVERY OVERLAY. It used to be 9999 ("above everything,
+     including overlays"), which meant the spray dots painted ON TOP of the
+     game-over card's text — decoration drawn over the one panel the player has
+     to read. The app content layer is z-index 1 (Transitions.css) and the
+     lowest overlay is .game-over-overlay at 10, so 9 keeps the trail over the
+     board and under anything that is asking to be read. */
+  z-index: 9;
   overflow: hidden;
 }
 

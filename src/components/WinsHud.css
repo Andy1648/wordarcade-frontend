@@ -56,7 +56,9 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  /* TYPE FLOOR: "WORDS TO EARN" / "WINS" is what the number MEANS - the number is
+     unreadable without it, so it is a label, not decoration. */
+  font-size: var(--fs-label);
   letter-spacing: 0.06em;
 }
 

@@ -182,10 +182,14 @@
 
 /* Pink selection to set the game-mode toggle apart from the cyan-selected
    difficulty buttons below it. */
+/* SWAP THE BACKGROUND, SWAP THE INK. The resting button is dark ink on WHITE; the
+   selected state darkens the fill to --v-panel-hi (#221640) and USED TO KEEP THE INK,
+   which measured #000 on #221640 = 1.05:1 - the label was functionally invisible on the
+   one button that matters. Every selected state below takes its ink with its fill. */
 .room-gametype-btn.selected {
   background: var(--v-panel-hi) /* value-group: selection reads via border, not a 2nd hot fill */;
   border-color: #991A75;
-  color: #000;
+  color: var(--v-ink); /* #fff on #221640 = 15.2:1 */
 }
 
 .room-difficulty-row {
@@ -238,6 +242,12 @@
 .room-difficulty-btn.selected {
   background: var(--v-panel-hi) /* value-group: selection reads via border, not a 2nd hot fill */;
   border-color: #1A9985;
+  color: var(--v-ink); /* was the inherited #1a0b2e on #221640 = 1.11:1 */
+}
+/* ...and the sub-line inside it, which has its own dim colour tuned for the WHITE
+   resting face. On the dark selected fill that colour is the same failure one level down. */
+.room-difficulty-btn.selected .room-difficulty-desc {
+  color: var(--v-ink-dim); /* was #666 on #221640 = 2.9:1; #b9aecd there is 8.0:1 */
 }
 
 /* Difficulty name on top: bold + larger (inherits the Bungee button face). */

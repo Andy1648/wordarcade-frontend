@@ -266,7 +266,13 @@
   gap: 12px;
   padding: 14px;
   margin-bottom: 6px;
-  background: #0d0618;
+  /* SURFACE SEPARATION. This card was #0d0618 on a #1a0b2e panel - 1.07:1, i.e. DARKER
+     than the surface it is supposed to sit on top of, so the only thing saying "card"
+     was the border. --v-panel-hi is the value-grouping token for exactly this ("panel,
+     raised"), and it reads as a step UP from the panel instead of a hole in it. The ink
+     on it is unchanged and still clears easily (yellow 13.4:1, cyan 13.0:1, lavender
+     8.6:1 - it was never the text here that failed). */
+  background: var(--v-panel-hi);
   border: 3px solid #ffe94a;
   border-radius: 8px;
   box-shadow: 3px 3px 0 #000;
