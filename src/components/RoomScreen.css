@@ -184,6 +184,10 @@
 
 /* Pink selection to set the game-mode toggle apart from the cyan-selected
    difficulty buttons below it. */
+/* SWAP THE BACKGROUND, SWAP THE INK. The resting button is dark ink on WHITE; the
+   selected state darkens the fill to --v-panel-hi (#221640) and USED TO KEEP THE INK,
+   which measured #000 on #221640 = 1.05:1 - the label was functionally invisible on the
+   one button that matters. Every selected state below takes its ink with its fill. */
 .room-gametype-btn.selected {
   background: var(--v-panel-hi) /* value-group: selection reads via border, not a 2nd hot fill */;
   border-color: #991A75;

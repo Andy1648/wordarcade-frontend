@@ -2914,6 +2914,22 @@ export default function GameScreen({
   // resets the clock (timeRatio jumps back to ~1) - that's the relief release.
   const danger = showCountdown || gameOver ? 0 : Math.pow(1 - timeRatio, 1.8);
 
+  // ---- THE READABLE COUNTDOWN (fix/wb-readability-and-timer) ----
+  // Derived from the SAME timerSeconds / timeRatio the classes above ride, so the
+  // number, the bar and the colour of the screen are one fact stated three ways and
+  // can never drift apart. No timer of its own: App owns the clock (timer_tick).
+  //   timerShown - null while the 3-2-1-GO! splash is up or the game is over (there
+  //                is no live turn to count), so the readout shows "--" instead of a
+  //                stale second from the previous turn.
+  //   timerFill  - the bar's scaleX, clamped, and pinned to empty once time is up.
+  //   wbTimerTier- '' | 'warning' | 'critical', on the SAME 0.6 / 0.3 thresholds the
+  //                wall tint and `critical` use.
+  const timerLive =
+    !showCountdown && !gameOver && typeof timerSeconds === 'number' && timerSeconds >= 0;
+  const timerShown = timerLive ? Math.max(0, Math.round(timerSeconds)) : null;
+  const timerFill = timerLive ? timeRatio : 1;
+  const wbTimerTier = !timerLive ? '' : timeRatio < 0.3 ? 'critical' : timeRatio < 0.6 ? 'warning' : '';
+
   // DISCRETE tension tier for the CSS tension skin (edge vignette / speed lines /
   // HURRY! prompt / final throb). Thresholds mirror the old canvas skin's on
   // t = 1 - timeRatio (speed lines at t≥0.45, HURRY at t≥0.6, GET OUT!/throb/siren
@@ -3237,6 +3253,44 @@ export default function GameScreen({
             <div className={`game-combo${isCategory ? ' category' : ''}`} translate="no">
               {promptValue}
             </div>
+          </div>
+        </div>
+        {/* ===== THE COUNTDOWN (fix/wb-readability-and-timer) =====
+            Measured on a live round: the remaining time drove CSS CLASSES ONLY - the
+            wall's warning/critical tint, the stage's draining/heartbeat, the danger
+            vignette, the bomb's rattle - and the only NUMBER on the board was the one
+            on the bomb's belly, which BombVisual shows at timerSeconds <= 5. For the
+            first ~17 of a 22s turn there was nothing to read: the player could feel the
+            panic and could not tell how long was left.
+
+            It rides EXACTLY the state those classes ride (timerSeconds / maxTimer -> the
+            same timeRatio `critical`, `danger` and `draining` are derived from), so the
+            number can never disagree with the colour of the screen around it.
+
+            BESIDE the prompt, not under it. .wb-top is a shrink-to-fit flex row and the
+            ring's diameter reserves max(topH, botH) on BOTH sides of its row
+            (wbRingSize.js) - a readout stacked UNDER the prompt would cost the ring
+            twice its height. Sat alongside, it is shorter than the plaque it joins and
+            costs the ring nothing. */}
+        <div
+          className={`wb-timer${wbTimerTier ? ` is-${wbTimerTier}` : ''}`}
+          role="timer"
+          aria-label={
+            timerShown == null ? 'Turn timer' : `${timerShown} seconds left this turn`
+          }
+        >
+          <div className="wb-timer-label">TIME</div>
+          <div className="wb-timer-value" translate="no">
+            {timerShown == null ? '--' : timerShown}
+          </div>
+          {/* The depleting bar. scaleX off the SAME ratio - a transform, never a width
+              (CLAUDE.md animation budget: width is layout, scaleX is the compositor).
+              transform-origin is left so it drains toward the empty end. */}
+          <div className="wb-timer-bar" aria-hidden="true">
+            <div
+              className="wb-timer-fill"
+              style={{ transform: `scaleX(${timerFill.toFixed(4)})` }}
+            />
           </div>
         </div>
         </div>
@@ -3826,6 +3880,28 @@ export default function GameScreen({
           {!iWon && <div className="go-slam-flash" />}
           {!iWon && <LossImpact />}
           <div ref={goCardRef} className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
+            {/* ===== COLUMNS ON A LAPTOP, ONE STACK ON A PHONE =========================
+                Measured on a live round: this card was scrollHeight 1388 inside
+                clientHeight 759 - 629px of it, including the entire PLAYERS breakdown
+                and (at 1366x625, where 837px was hidden) the REMATCH button itself,
+                was reachable only by scrolling a card most players never think to
+                scroll. It is not one thing that got too tall; it is ten blocks in a
+                440px column, inside a window with ~900px of empty board either side.
+
+                So the card splits by JOB rather than shrinking by degrees:
+                  .go-col-main  THE VERDICT - mascot, outcome, who won, the word you
+                                could have played, the roast. What you look at first.
+                  .go-col-mid   THE MONEY - what you earned and where it came from.
+                  .go-col-side  THE BREAKDOWN - highlights and the per-player table.
+                                This is the tall one, which is why it gets its own
+                                column at >=1160px instead of riding under the money.
+                  .go-foot      THE EXITS - REMATCH / LEAVE and the other-mode row,
+                                spanning every column so they are the last line of the
+                                card and always above the fold.
+                Below 900px every .go-col is `display: contents`, so the phone card is
+                the same single stack in the same DOM order it has always been.
+                ========================================================================= */}
+            <div className="go-col go-col-main">
             {/* The mascot's emotional reaction, large and centred above the title.
                 The wrapper owns a dedicated transform (celebrate hop / defeat
                 tremble) so it never fights the mascot's own internal layers. */}
@@ -3863,10 +3939,16 @@ export default function GameScreen({
             />
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
+            </div>
+            {/* ===== THE MONEY COLUMN: what you earned and where it came from. ===== */}
+            <div className="go-col go-col-mid">
             <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
             {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
                 from." Every multiplier that contributed, ranked by its share of the total. */}
             <RoundPayout ledger={payoutLedger} />
+            </div>
+            {/* ===== THE BREAKDOWN COLUMN: highlights + the per-player table. ===== */}
+            <div className="go-col go-col-side">
             <GameOverStats
               gameStats={gameStats}
               players={players}
@@ -3875,6 +3957,10 @@ export default function GameScreen({
               staggerIn={goStaggered}
               reduce={goReduce}
             />
+            </div>
+            {/* ===== THE EXITS — span both columns, so they are the last line of the
+                card at every width and can never fall below the fold. ===== */}
+            <div className="go-foot">
             <div className="game-over-actions">
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
@@ -3905,6 +3991,7 @@ export default function GameScreen({
                 mode — the one played least — so game-over is a fork, not a loop back into the same
                 mode. Renders nothing when everything else is still locked. */}
             <TryModeRow current="word-bomb" />
+            </div>
           </div>
         </div>
       )}
