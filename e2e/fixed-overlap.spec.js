@@ -7,6 +7,7 @@
 // (scrims/dialogs, which are SUPPOSED to cover content) are excluded by the area test.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, freezeAnimations } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 320, h: 568 }, { w: 360, h: 640 }, { w: 390, h: 844 }, { w: 430, h: 932 },
@@ -22,7 +23,7 @@ test.describe('fixed control vs primary text (menu)', () => {
       await installBackendMock(page);
       await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); localStorage.setItem('taw.wins', '9999'); localStorage.setItem('taw.winsLifetime', '9999'); } catch { /* */ } });
       await page.goto('/?portal=1');
-      await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+      await menuReady(page);
       await freezeAnimations(page);
       await page.waitForTimeout(200);
       const hits = await page.evaluate(() => {

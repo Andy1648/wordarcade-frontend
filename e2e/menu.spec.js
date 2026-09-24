@@ -5,8 +5,9 @@
 import { test, expect } from '@playwright/test';
 import { GAMES, FEATURED_GAME } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
+import { menuMark, menuMarkAll } from './support/menu.js';
 
-const MENU = { name: 'Type a Word' };
+
 
 // The shipped mode cards, derived from the single source of truth (src/gameData.js)
 // so adding a mode never silently breaks this. Names render across two lines
@@ -49,11 +50,11 @@ test.describe('menu', () => {
     // We leave the menu for the JOIN ROOM / public-rooms browser…
     const back = page.getByRole('button', { name: /←\s*BACK/ });
     await expect(back).toBeVisible();
-    await expect(page.getByRole('img', MENU)).toHaveCount(0);
+    await expect(menuMarkAll(page)).toHaveCount(0);
 
     // …and the BACK control returns us to the menu — the path is reversible.
     await back.click();
-    await expect(page.getByRole('img', MENU)).toBeVisible();
+    await expect(menuMark(page)).toBeVisible();
     await expect(page.locator('.game-card')).toHaveCount(CARDS.length);
   });
 
@@ -70,7 +71,7 @@ test.describe('menu', () => {
     await expect(page.locator('#player-name-input')).toBeVisible();
 
     await back.click();
-    await expect(page.getByRole('img', MENU)).toBeVisible();
+    await expect(menuMark(page)).toBeVisible();
   });
 
   // THE HINT AND THE CARD MUST QUOTE THE SAME RATE, and this compares the two RENDERED strings

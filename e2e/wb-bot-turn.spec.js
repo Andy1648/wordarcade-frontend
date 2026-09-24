@@ -14,6 +14,7 @@
 //      none of the new status / typing / chip nodes introduces one.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 // MOTION MUST BE ON FOR THIS FILE (Batch G). playwright.config.js sets reducedMotion: 'reduce'
 // suite-wide — a sound choice for actionability, since this app's idle loops never "settle" — but
@@ -36,7 +37,7 @@ const INFINITE_BASELINE = 0;
 async function enterGame(page, players) {
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
   await page.waitForTimeout(60);
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });

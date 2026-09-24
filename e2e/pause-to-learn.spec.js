@@ -12,6 +12,7 @@
 //     gloss; the panel must then say something true rather than a filled-in blank.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 const ME = 'me';
 
@@ -24,9 +25,9 @@ async function soloDeath(page, mode) {
     try { localStorage.setItem('taw.runs.chain', '9'); localStorage.setItem('taw.runs.fuse', '9'); } catch { /* blocked */ }
   });
   await page.goto('/?portal=1&soloms=350');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(400);
-  await page.locator(`.game-card-magnet[data-game="${mode}"] .game-card`).click({ force: true });
+  await modeEntry(page, mode).click({ force: true });
   await page.locator('.mode-dialog-btn-create').click();
   await page.locator('.solo-root').waitFor({ state: 'visible' });
   // ARM THE CLOCK FIRST. A solo run's timer only starts once the player types — a run where
@@ -65,7 +66,7 @@ test('word bomb: the hold shows a word containing the fragment that killed the r
   test.setTimeout(60000);
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({
     type: 'room_update',
     payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill',

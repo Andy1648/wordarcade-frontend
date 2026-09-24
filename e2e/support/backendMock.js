@@ -1,3 +1,4 @@
+import { menuReady } from './menu.js';
 // e2e/support/backendMock.js
 //
 // The app opens ONE hardcoded WebSocket to the live Render backend
@@ -174,6 +175,6 @@ export async function freezeAnimations(page) {
 export async function gotoMenu(page) {
   await page.goto('/?portal=1');
   // The homepage wordmark is the menu's stable landmark.
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await freezeAnimations(page);
 }

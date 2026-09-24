@@ -29,6 +29,7 @@ import { installBackendMock, freezeAnimations } from './support/backendMock.js';
 // map is a map that quietly stops matching the app. The arcane-pass screenshot run and the
 // cold-stranger walk import the same list.
 import { VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS } from './support/screens.js';
+import { PHONE_MENU_MAX, isPhoneMenu, menuReady, modeEntry, phoneCanOpen, soloEntryQuery } from './support/menu.js';
 
 // ---- navigation primitives (reused from coverage / gameover specs) ----
 async function bootMenu(page, level = 40, query = '?portal=1') {
@@ -42,23 +43,35 @@ async function bootMenu(page, level = 40, query = '?portal=1') {
     }, level);
   }
   await page.goto(`/${query}`);
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(400);
 }
-const card = (page, id) => page.locator(`.game-card-magnet[data-game="${id}"] .game-card`);
+// THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
+// same Homepage handler, so only the object you press differs (support/menu.js).
+const card = (page, id) => modeEntry(page, id);
 
 async function bootRoom(page, gameType, players) {
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType, hostId: 'me', difficultyKey: 'chill', players } });
   return mock;
 }
 async function enterSolo(page, id) {
   await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
+  // PHONE: CHAIN and FUSE have no card to click — the phone menu replaces both with one
+  // "CHAIN + FUSE UNLOCK AS YOU PLAY" line (MobileMenu.jsx). They are still REACHABLE, by the
+  // shipped /chain/play and /fuse/play deep links, which bridge to ?chain=1 / ?fuse=1
+  // (router.js). That is the path a phone player actually arrives on, so it is the path this
+  // drives — the mode is entered for real, not through a test-only hook.
+  if (isPhoneMenu(page) && !phoneCanOpen(id)) {
+    await page.goto(`/?portal=1&soloms=350&${soloEntryQuery(id)}`);
+    await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
+    return;
+  }
   await page.goto('/?portal=1&soloms=350');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(400);
   await card(page, id).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
@@ -202,6 +215,15 @@ for (const vp of VIEWPORTS) {
     for (const screen of SCREENS) {
       test(`${screen.name}`, async ({ page }) => {
         test.setTimeout(40000);
+        // THE CELL IS SKIPPED ONLY WHEN THE APP HAS NO WAY IN. `phone: false` is a statement
+        // about the product at <=480px (see the note over SCREENS in support/screens.js), and
+        // the reason is printed so a skipped cell reads as a known gap rather than as coverage
+        // quietly going missing. Every other phone cell runs and asserts exactly as it does on
+        // a desktop — the phone tree is measured, not excused.
+        test.skip(
+          vp.width <= PHONE_MENU_MAX && screen.phone === false,
+          `no phone entry point: ${screen.phoneWhy || 'desktop-only'}`
+        );
         // Apply the theme before any navigation in this test (init scripts run on every load,
         // before page scripts) so the app boots already in this palette.
         await page.addInitScript((t) => {

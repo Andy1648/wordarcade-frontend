@@ -2,6 +2,7 @@
 // (the CHAIN / FUSE level gates, plus the play-based bypass).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 async function menu(page, level) {
   await installBackendMock(page);
@@ -11,10 +12,12 @@ async function menu(page, level) {
     }, level);
   }
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(400);
 }
-const card = (page, id) => page.locator(`.game-card-magnet[data-game="${id}"] .game-card`);
+// THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
+// same Homepage handler, so only the object you press differs (support/menu.js).
+const card = (page, id) => modeEntry(page, id);
 
 test.describe('item 2 — worked examples', () => {
   test('WORD BOMB dialog shows TRA → TRAIN, wins rate, and round length', async ({ page }) => {
@@ -99,7 +102,7 @@ test.describe('play-based bypass', () => {
         } catch { /* ignore */ }
       }, key);
       await page.goto('/?portal=1');
-      await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+      await menuReady(page);
       await page.waitForTimeout(400);
       await expect(card(page, id)).not.toHaveClass(/locked/);
     });

@@ -23,6 +23,7 @@
 // that and have their own unit tests. This asserts only that nothing is credited invisibly.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const ME = 'e2e-player';
 
@@ -63,7 +64,7 @@ test('no hidden wins: every credit is on screen, over a 20-word run', async ({ p
 
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
 
   const players = [
     { id: ME, name: 'YOU', lives: 3, isHost: true },

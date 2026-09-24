@@ -3,6 +3,7 @@
 // region's overflow (the featured Word Bomb card was poking past the left clip edge).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 1920, h: 1080 },
@@ -42,7 +43,7 @@ for (const { w, h } of VIEWPORTS) {
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await page.waitForTimeout(200);
     const m = await measure(page);
     // eslint-disable-next-line no-console

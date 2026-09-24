@@ -2,6 +2,7 @@
 // absent at 0) and the SHOP track (hold-to-buy increments the count + the wins multiplier).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 async function seed(page, kv) {
   await page.addInitScript(() => {
@@ -40,7 +41,7 @@ test.describe('momentum repeatable sink', () => {
     // PRICES /10 in Economy v8 (wins are the word's XP ÷ 10), so the first MOMENTUM buy is 500.
     await seed(page, { 'taw.wins': '600', 'taw.momentum': '0', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }) });
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await page.waitForTimeout(400);
     await page.locator('.homepage-nav-btn.is-shop').click();
     await page.locator('.shop-panel').waitFor({ state: 'visible' });

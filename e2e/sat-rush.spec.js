@@ -12,6 +12,7 @@
 // the intro straight to the menu.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { modeEntry } from './support/menu.js';
 
 // The text of an element with its blank / filled word removed, whitespace
 // collapsed — so a briefing card sentence (word filled in) and the in-game
@@ -115,7 +116,7 @@ test.describe('SAT Rush', () => {
   test('LINEUP mode: no study screen, a suspect lineup is served with the word', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
-    await page.locator('[data-game="sat-rush"] .game-card').click();
+    await modeEntry(page, 'sat-rush').click();
 
     // Choose LINEUP — it drops straight into the run (no briefing screen).
     await pickMode(page, 'lineup');
@@ -139,7 +140,7 @@ test.describe('SAT Rush', () => {
   test('the briefing studies 5 words and the first served word is one of them', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
-    await page.locator('[data-game="sat-rush"] .game-card').click();
+    await modeEntry(page, 'sat-rush').click();
     await pickMode(page, 'briefing');
 
     // Five cards; capture each word's surrounding sentence context.

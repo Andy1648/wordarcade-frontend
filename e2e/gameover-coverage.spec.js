@@ -4,6 +4,7 @@
 // console/page errors.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 const isNoise = (t) => /Failed to load resource|net::ERR|ERR_FAILED|the server responded with a status of|status of \d{3}|favicon/i.test(t);
 function attach(page, errors) {
@@ -24,7 +25,7 @@ test.describe('game-over screens render without console errors (JOB 4)', () => {
     attach(page, errors);
     const mock = await installBackendMock(page);
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players: wbPlayers } });
     await page.waitForTimeout(80);
     mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
@@ -44,7 +45,7 @@ test.describe('game-over screens render without console errors (JOB 4)', () => {
     const mock = await installBackendMock(page);
     const players = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'category-blitz', hostId: ME, difficultyKey: 'chill', players } });
     await page.waitForTimeout(80);
     mock.pushToClient({ type: 'game_started', payload: { gameType: 'category-blitz' } });
@@ -68,9 +69,9 @@ test.describe('game-over screens render without console errors (JOB 4)', () => {
   async function enterSolo(page, id) {
     await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, into: 0 })); } catch { /* ignore */ } });
     await page.goto('/?portal=1&soloms=350'); // dev clock cap → fast, deterministic run-over
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await page.waitForTimeout(400);
-    await page.locator(`.game-card-magnet[data-game="${id}"] .game-card`).click({ force: true });
+    await modeEntry(page, id).click({ force: true });
     await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
     await page.locator('.mode-dialog-btn-create').click();
     await page.locator('.solo-root').waitFor({ state: 'visible' });

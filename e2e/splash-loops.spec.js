@@ -7,6 +7,7 @@
 // a second test confirms reduced-motion still stops every loop on the splash.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const MENU_INFINITE_AT_REST = 0;
 
@@ -33,7 +34,7 @@ test.describe('splash infinite-animation budget', () => {
     await expect(page.locator('.splash-ember')).toHaveCount(15);
 
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await page.waitForTimeout(1500);
     const menu = await page.evaluate(runningInfinite);
     expect(menu, 'infinite animations running on the menu at rest').toBe(MENU_INFINITE_AT_REST);

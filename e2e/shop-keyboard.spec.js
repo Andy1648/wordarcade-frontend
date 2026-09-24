@@ -4,6 +4,7 @@
 // and the purchase reveals the shared sticker (feat/shop-reveal-sticker).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
@@ -16,7 +17,7 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
   }, { wins, keytier });
   await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(400);
   await page.locator('.homepage-nav-btn.is-shop').click();
   await page.locator('.shop-panel').waitFor({ state: 'visible' });

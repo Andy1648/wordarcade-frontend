@@ -3,6 +3,7 @@
 // instead of jumping straight into the game.
 import { test, expect } from '@playwright/test';
 import { gotoMenu } from './support/backendMock.js';
+import { modeEntry } from './support/menu.js';
 
 // Seed a high level before first paint so CHAIN (LV2) and FUSE (LV3) are unlocked.
 async function gotoUnlockedMenu(page) {
@@ -19,7 +20,7 @@ for (const mode of [
   test(`${mode.name}: unlocked card opens a PLAY mode dialog (name, rule, per-word wins)`, async ({ page }) => {
     await gotoUnlockedMenu(page);
 
-    const card = page.locator(`.game-card-magnet[data-game="${mode.id}"] .game-card`);
+    const card = modeEntry(page, mode.id);
     await expect(card).toBeVisible();
     // It must NOT be locked (level is high enough).
     await expect(card).not.toHaveClass(/locked/);

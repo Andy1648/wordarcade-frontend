@@ -7,8 +7,9 @@
 import { test, expect } from '@playwright/test';
 import { GAMES } from '../src/gameData.js';
 import { installBackendMock } from './support/backendMock.js';
+import { menuMark } from './support/menu.js';
 
-const MENU = { name: 'Type a Word' };
+
 
 test.describe('intro sequence', () => {
   // Exercise the REAL boot animation here (override the suite-wide reduced-motion
@@ -42,7 +43,7 @@ test.describe('intro sequence', () => {
     await splash.click();
 
     // 4) We end on the menu: the wordmark + the mode cards are present.
-    await expect(page.getByRole('img', MENU)).toBeVisible();
+    await expect(menuMark(page)).toBeVisible();
     await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
 
     // The whole time, the only backend contact was the intercepted socket attempt
@@ -55,7 +56,7 @@ test.describe('intro sequence', () => {
     await page.goto('/?portal=1');
 
     // No splash — the menu is shown immediately (loading is pre-completed).
-    await expect(page.getByRole('img', MENU)).toBeVisible();
+    await expect(menuMark(page)).toBeVisible();
     await expect(page.locator('.splash-screen')).toHaveCount(0);
     await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
   });

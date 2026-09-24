@@ -3,6 +3,7 @@
 // by a non-scroll clip ancestor at any viewport.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 async function menu(page, level) {
   await installBackendMock(page);
@@ -15,7 +16,7 @@ async function menu(page, level) {
     }, level);
   }
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(1500);
 }
 
@@ -54,7 +55,7 @@ function scanFn() {
 test('item 1: mode dialog opens with <= 3 animations and no canvas', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await menu(page, 30);
-  await page.locator('.game-card-magnet[data-game="word-bomb"] .game-card').click();
+  await modeEntry(page, 'word-bomb').click();
   await page.waitForTimeout(60);
   const info = await page.evaluate(() => {
     const inDialog = (a) => { const t = a.effect && a.effect.target; return t && t.closest && t.closest('.mode-dialog-overlay'); };
@@ -73,7 +74,7 @@ for (const { w, h } of VIEWPORTS) {
   test(`item 4: no cut-off elements in the mode dialog @ ${w}x${h}`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await menu(page, 30);
-    await page.locator('.game-card-magnet[data-game="word-bomb"] .game-card').click();
+    await modeEntry(page, 'word-bomb').click();
     await page.waitForTimeout(250);
     const bad = await page.evaluate(scanFn(), '.mode-dialog-shell');
     expect(bad, `cut-off elements @ ${w}x${h}: ${bad.join(', ')}`).toEqual([]);

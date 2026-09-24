@@ -15,6 +15,7 @@
 //     -> taking the offer reaches the menu -> the mode is NOT locked
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuMarkAll } from './support/menu.js';
 
 const MIN_TOUCH = 44;
 
@@ -29,7 +30,10 @@ const MODES = [
   { id: 'sat-rush', path: '/sat-rush/play', root: '.sr-app', exit: '.sr-hud-exit', offer: '.sr-offer' },
 ];
 
-const menuWordmark = (page) => page.getByRole('img', { name: 'Type a Word' });
+// THE MENU'S LANDMARK AT EITHER WIDTH. The desktop wordmark alone was the old test for
+// "are we on the menu"; at <=480px the phone menu renders no wordmark at all, so that
+// question needs the union (support/menu.js).
+const menuWordmark = (page) => menuMarkAll(page);
 
 // A control you can actually hit, that says where it goes, fully inside the viewport.
 async function assertLabelledTouchTarget(page, locator, where) {

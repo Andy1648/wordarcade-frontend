@@ -8,6 +8,7 @@
 // per-viewport report the task asked for.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { modeEntry } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -22,7 +23,7 @@ const VIEWPORTS = [
 async function toBriefing(page) {
   await installBackendMock(page);
   await page.goto('/?satRush=1&portal=1');
-  await page.locator('[data-game="sat-rush"] .game-card').click();
+  await modeEntry(page, 'sat-rush').click();
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(page.locator('.sr-modeselect')).toBeVisible();
   await page.getByRole('button', { name: /BRIEFING/ }).click();
