@@ -234,19 +234,25 @@
    cause is that three separate things all resolve to the ring row's MIDDLE - at two
    players the ring puts both seats at 3 and 9 o'clock (ring centre-y by construction),
    and BOTH rail cards were `align-self: center` onto that same line. The rails are the
-   two that can move: the list card takes the TOP of the row and the readout card the
-   BOTTOM, so the three blocks spread across the row's full height instead of stacking
-   on one stripe. They are in different grid COLUMNS, so neither can ever overlap the
-   other or the ring whatever height they grow to. */
+   two that can move: one takes the TOP of the row and the other the BOTTOM, so the
+   three blocks spread across the row's full height instead of stacking on one stripe.
+   They are in different grid COLUMNS, so neither can ever overlap the other or the
+   ring whatever height they grow to.
+   WHICH SIDE GOES LOW IS NOT ARBITRARY. The LEFT card is the low one, because the
+   board's bottom-RIGHT corner is already occupied: the payout receipt docks there
+   (`.game-stage--wb .wb-receipt-rail`, absolute right/bottom of the stage). Dropping
+   the RIGHT card to the bottom of a now-full-height ring row put it straight under
+   that receipt at 900-1200px - the exact collision e2e/word-landing.spec.js's "the
+   receipt clears the input row" band exists to catch. Low-left, high-right. */
 .game-stage--wb .wb-rail--left {
   grid-area: feed;
   justify-self: end;
-  align-self: start;
+  align-self: end;
 }
 .game-stage--wb .wb-rail--right {
   grid-area: used;
   justify-self: start;
-  align-self: end;
+  align-self: start;
 }
 /* HEAD-TO-HEAD (<=2 players). There is no kill feed at two players, so the LEFT rail
    had nothing in it while the right carried the whole used-word column - the board
@@ -256,7 +262,7 @@
 .game-stage--wb.wb-duo .game-used {
   grid-area: feed;
   justify-self: end;
-  align-self: start;
+  align-self: end;
 }
 /* ...and the header drops its ROUND/MODE badges at <=2p, because the MATCH card now
    carries them. Scoped to the rails layout: the phone board has no right rail, so
@@ -270,13 +276,14 @@
 .game-stage--wb .wb-bottom {
   display: contents;
 }
-/* The RIGHT card is the bottom one in BOTH layouts: at 3+ that is this used-word
-   column, at <=2 it is the MATCH readout (.wb-rail--right above). Left card top,
-   right card bottom, whatever the player count. */
+/* The LEFT card is the low one in BOTH layouts (the receipt owns the bottom-right
+   corner - see .wb-rail--left above): at <=2 that is the used-word column, at 3+ the
+   kill feed. This rule is the 3+ case, where the used-word column takes the RIGHT rail
+   and therefore the top. */
 .game-stage--wb .game-used {
   grid-area: used;
   justify-self: start;
-  align-self: end;
+  align-self: start;
 }
 .game-stage--wb .wb-bottombar {
   grid-area: bot;
@@ -6114,7 +6121,15 @@ html[data-beat='true'] .wb-belly {
   /* TWO PLAYERS SIDE BY SIDE. A head-to-head breakdown is a comparison; stacked, it
      was 303px of column for two cards that fit beside each other. */
   .go-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .go-player-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  /* minmax(0, 1fr), NOT 1fr: a bare `1fr` track has an `auto` minimum, i.e. its own
+     MIN-CONTENT - and one of these five cells holds a whole word (LONGEST: STRONGEST).
+     Five min-content cells inside a half-width player card do not fit, and the grid
+     simply overflowed its card: measured at 1163x501, .go-pstat ran 5px past the
+     card's own clipping box. The zero minimum lets the cells shrink; the wrap below
+     is what they do instead of sticking out. */
+  .go-player-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .go-pstat { min-width: 0; }
+  .go-pstat-val { min-width: 0; overflow-wrap: anywhere; }
 }
 
 /* THREE COLUMNS from 1160px. Two columns still left the BREAKDOWN column carrying the
