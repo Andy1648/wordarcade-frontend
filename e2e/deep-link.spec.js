@@ -15,7 +15,7 @@
 //     -> taking the offer reaches the menu -> the mode is NOT locked
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuMarkAll } from './support/menu.js';
+import { menuMark, menuMarkAll } from './support/menu.js';
 
 const MIN_TOUCH = 44;
 
@@ -546,10 +546,22 @@ test.describe('a cold visitor on a room-mode deep link gets a game, not a lobby'
     await assertLabelledTouchTarget(page, page.locator('.deepland-exit'), 'word-bomb boot failed');
   });
 
+  // THIS TEST USED TO PASS WITHOUT REACHING THE MENU. Its wait was
+  // `getByRole('img', { name: 'Type a Word' })`, and the SPLASH carries that exact role and
+  // label too (SplashScreen.jsx `.splash-logo`) — so the assertion was satisfied while the app
+  // was still on the splash, and "boots the menu" was never actually checked. The landmark is
+  // now menu-only (support/menu.js), which exposed that, so the test drives the real path a
+  // cold visitor takes: the splash is dismissed by a click, exactly as e2e/intro.spec.js does,
+  // and THEN the menu is asserted.
   test('an unknown ?play= value is ignored and boots the menu (a deep link cannot force a game type)', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?play=not-a-mode');
-    await expect(menuWordmark(page)).toBeVisible();
+    // No launch intent was recognised, so the normal cold-visit chain plays: loading -> splash.
+    const splash = page.locator('.splash-screen');
+    await expect(splash).toBeVisible();
+    await splash.click(); // the shipped dismissal (and the audio-unlock gesture)
+    // ...and it lands on the MENU, not in a game: that is the whole claim.
+    await expect(menuMark(page)).toBeVisible({ timeout: 20000 });
     await expect(page.locator('.deepland')).toHaveCount(0);
   });
 });
