@@ -93,9 +93,10 @@ test('the scale holds its ratio and its accessibility floors', () => {
     assert.ok(m, `--fs-${name} is not defined`);
     return m[1].trim();
   };
-  // clamp(min, pref, max) -> [min, max]; a bare px -> [px, px]
+  // clamp(min, pref, max) -> [min, max]; a bare px -> [px, px]. The max may be max(Npx, …vw) — a
+  // cap that keeps growing on an ultrawide (--fs-hero); its px term is the cap at desktop widths.
   const bounds = (v) => {
-    const c = v.match(/^clamp\(\s*([\d.]+)px\s*,[^,]+,\s*([\d.]+)px\s*\)$/);
+    const c = v.match(/^clamp\(\s*([\d.]+)px\s*,[^,]+,\s*(?:max\(\s*)?([\d.]+)px(?:\s*,\s*[\d.]+vw\s*\))?\s*\)$/);
     if (c) return [parseFloat(c[1]), parseFloat(c[2])];
     const p = v.match(/^([\d.]+)px$/);
     assert.ok(p, `--fs token "${v}" must be a px value or clamp(px, …, px)`);

@@ -39,7 +39,10 @@
 
 :root {
   /* ---- the scale ---- */
-  --fs-hero: clamp(42px, 9.5vw, 96px);
+  /* The cap is max(96px, 5vw), not a flat 96 (fix/card-fit-height): 5vw is 96px at 1920, so every
+     screen up to 1920 is unchanged, and past it the hero keeps scaling — 128px at 2560, 172px at
+     3440 — instead of sitting at 96px in a 3440px-wide window. */
+  --fs-hero: clamp(42px, 9.5vw, max(96px, 5vw));
   --fs-h1: clamp(30px, 6.4vw, 64px);
   --fs-h2: clamp(24px, 4.2vw, 42px);
   --fs-panel: clamp(20px, 2.8vw, 28px);

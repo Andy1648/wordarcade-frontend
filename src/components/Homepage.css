@@ -463,7 +463,10 @@ html[data-beat='true'] .homepage-logo {
   align-items: center;
   gap: 5px;
   width: 100%;
-  zoom: var(--menu-scale, 1);
+  /* NO ZOOM (fix/card-fit-height). This cluster used to carry zoom: var(--menu-scale), which
+     shrank its 13px labels under the --fs-label floor on any screen short enough to engage it.
+     --menu-scale now shrinks the WORDMARK only; a short screen gets the [data-fit='short']
+     arrangement below instead of a smaller XP bar. */
 }
 
 .homepage-cards-grid {
@@ -483,6 +486,12 @@ html[data-beat='true'] .homepage-logo {
   gap: var(--gap, clamp(10px, 1.4vw, 20px));
   padding: 0;
 }
+/* A 3-column grid of five ends 3+2: run it on SIX half-tracks, each card spanning two, and start
+   card 4 on the second so the pair of row two sits centred under the three (fix/card-fit-height).
+   A cell is still (width - 2 gaps) / 3, which is what the fit-math sizes the card to. */
+.homepage-cards-grid[data-cols='3'] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.homepage-cards-grid[data-cols='3'] .game-card-magnet { grid-column: span 2; }
+.homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(4):nth-last-child(2) { grid-column: 2 / span 2; }
 /* A 2-column grid of five ends 2+2+1 — span the lone last card across both columns so it
    centres under the pair above instead of hanging off to the left (feat/cards-live). */
 .homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) {
@@ -736,10 +745,68 @@ html[data-beat='true'] .homepage-logo {
   .homepage-stage { --stage-rowgap: clamp(18px, 2.4vh, 24px); }
   /* height guard: was clamp(22px, 5.4vh, 34px) - the vh cap keeps the wordmark off the
      card region on a short screen, so it stays expressed through the token. */
-  .homepage-logo { font-size: min(var(--fs-panel), 5.4vh); }
+  /* --menu-scale now applies here too (fix/card-fit-height): the fit-math takes a short card
+     row's missing height out of the wordmark first — but never under --fs-body (16px). */
+  .homepage-logo { font-size: max(var(--fs-body), calc(min(var(--fs-panel), 5.4vh) * min(1, var(--menu-scale, 1)))); }
   .menu-xp-cluster { gap: 3px; }
   .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
   .homepage-footer-links { margin-top: 0; }
+}
+
+/* ---- SHORT ARRANGEMENT (fix/card-fit-height) -------------------------------------------------
+   Set by the fit-math in Homepage.jsx (data-fit='short') when the normal column cannot give the
+   five cards the width + height their own text needs — measured, not a breakpoint. The cards do NOT
+   get smaller; the page re-flows: the corner nav leaves its top-right stack (which also cost the card
+   row its right-hand reserve) and joins JOIN ROOM and CREDITS in ONE bottom row, so the card region
+   gets that row, that reserve and the tighter gaps. Same controls, same cluster — just one row. */
+.homepage-stage[data-fit='short'] {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'logo logo logo'
+    'xp xp xp'
+    'cards cards cards'
+    'join credits nav';
+  justify-items: center;
+  align-items: center;
+  align-content: stretch;
+  column-gap: clamp(12px, 1.6vw, 24px);
+  /* No uniform row-gap here: each pair gets exactly what it needs. Title -> XP keeps menu-fit's 12px
+     clearance (16px of margin; the wordmark's skew overhang eats ~3 of it), XP -> cards keeps the
+     10px --cards-lift (the region's own margin, lift - rowgap), and only the bottom row runs tight. */
+  --stage-rowgap: 0px;
+}
+.homepage-stage[data-fit='short'] > .homepage-logo-wrap { grid-area: logo; margin-bottom: 16px; }
+.homepage-stage[data-fit='short'] > .menu-xp-cluster { grid-area: xp; }
+.homepage-stage[data-fit='short'] > .homepage-cards-region {
+  grid-area: cards;
+  justify-self: stretch;
+  align-self: stretch;
+}
+.homepage-stage[data-fit='short'] > .homepage-bottom-bar,
+.homepage-stage[data-fit='short'] > .homepage-footer-links,
+.homepage-stage[data-fit='short'] > .homepage-corner-nav {
+  margin-top: clamp(6px, 1.2vh, 16px);
+}
+.homepage-stage[data-fit='short'] > .homepage-bottom-bar {
+  grid-area: join;
+  justify-self: start;
+  padding-left: clamp(8px, 1.6vw, 24px);
+  padding-right: 0;
+}
+.homepage-stage[data-fit='short'] > .homepage-footer-links { grid-area: credits; }
+.homepage-stage[data-fit='short'] > .homepage-footer-links .homepage-credits-link { margin: 0; }
+.homepage-stage[data-fit='short'] > .homepage-corner-nav {
+  grid-area: nav;
+  position: static;
+  justify-self: end;
+  flex-direction: row;
+  align-items: center;
+}
+/* The nav no longer overhangs the card row, so the row gives back the reserve it held for it. */
+.homepage-stage[data-fit='short'] .homepage-cards-scroll {
+  padding-right: clamp(18px, 1.8vw, 30px);
 }
 
 /* LANDSCAPE corner-nav safe-gutter (fix/landscape-nav). In landscape the five cards pack into one
