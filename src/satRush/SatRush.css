@@ -195,7 +195,7 @@
   outline: none;
 }
 .sr-hlabel {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -273,7 +273,7 @@
   align-self: end;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   opacity: 0.65;
@@ -320,7 +320,7 @@
   background: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink);
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -522,7 +522,7 @@
   border-top: 2px solid var(--ink);
   border-bottom: 2px solid var(--ink);
   box-shadow: inset 0 3px 0 -1px var(--paper), inset 0 -3px 0 -1px var(--paper);
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -554,7 +554,7 @@
   border: 2px solid var(--ink);
   background: var(--paper);
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -793,7 +793,7 @@
 }
 .sr-cover-ex-label {
   font-family: var(--font-head);
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.14em;
   opacity: 0.6;
 }
@@ -806,7 +806,7 @@
   text-align: center;
 }
 .sr-cover-ex-arrow {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   line-height: 1;
   opacity: 0.6;
 }
@@ -982,7 +982,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.1em;
 }
 .sr-spell-bar {
@@ -1193,7 +1193,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-panel-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -1424,7 +1424,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   display: flex;
   gap: 18px;
   align-items: center;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   color: var(--paper);
   z-index: 60;
   flex-wrap: wrap;
@@ -1448,7 +1448,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-tuner .hint {
   opacity: 0.34;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1458,7 +1458,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   border: 1px solid rgba(240, 234, 217, 0.4);
   border-radius: 6px;
   padding: 4px 9px;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -1643,7 +1643,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   align-self: flex-start;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--paper);
@@ -1666,7 +1666,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 }
 .sr-brief-meta {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.65;
@@ -1759,7 +1759,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-reencode-tag {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -1804,7 +1804,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-reencode-hint {
   margin-top: 6px;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -1957,7 +1957,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   box-shadow: none;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   text-transform: uppercase;
   letter-spacing: 0.18em;
   cursor: pointer;
@@ -1994,7 +1994,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-lineup-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -2007,7 +2007,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.1em;
 }
 .sr-lineup-grid {
@@ -2061,7 +2061,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   letter-spacing: 0.08em;
 }
 
@@ -2332,4 +2332,61 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   text-transform: uppercase;
   color: var(--sr-ink, #111111);
   opacity: 0.62;
+}
+
+/* THE EARN STRIP, SAT RUSH SCOPE — same reasoning as the .solo-root block in solo/Solo.css: the
+   shared wins pill + multiplier stack are 11px decoration in the room modes, 13px labels here. */
+.sr-app .wins-hud-label,
+.sr-app .lstack-per,
+.sr-app .lstack-row,
+.sr-app .wins-earned-line {
+  font-size: var(--fs-label);
+}
+
+/* THE HUD ON A PHONE. Five stat cells + the exit need ~420px on one row and a phone gives the
+   strip ~355px, so the cells were already running into each other at 11px and the 13px label floor
+   makes that worse. Below 560px the strip folds into two rows of three, each cell setting its
+   label BESIDE its value:
+
+       SCORE 000000 | STREAK 00   | WORD #01
+       ← MENU       | LIVES ♥♥♥   | HEAT ■■■■■
+
+   One text line per row keeps the strip short: it is ~17px taller than the old stacked row, and
+   most of that is the exit's 44px touch floor setting the second row. The exit moves to the left,
+   where CHAIN and FUSE put theirs, which also takes it out from under the fixed wins/WPM chips in
+   the top-right corner (they still sit over WORD #01 — a pre-existing clash with that cluster). */
+@media (max-width: 560px) {
+  .sr-hud {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+  }
+  .sr-hcell {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    padding: 4px 5px;
+    line-height: 1;
+  }
+  .sr-hlabel { letter-spacing: 0.04em; }
+  .sr-heat { gap: 2px; }
+  .sr-heatblock { width: 10px; height: 10px; }
+  .sr-hcell:nth-child(-n + 3) { border-bottom: 2px solid var(--ink); }
+  .sr-hcell:nth-child(3),
+  .sr-hcell:nth-child(5) { border-right: 0; }
+  .sr-hcell:nth-child(4) { grid-area: 2 / 2; }
+  .sr-hcell:nth-child(5) { grid-area: 2 / 3; }
+  /* The clue fields (.sr-fields, which scroll internally) absorb that height. Give a little back:
+     a tighter body gap, and the case-id tracked in so it stays on one line at the 13px floor (at
+     0.16em it wrapped to two, another ~20px). */
+  .sr-body { gap: 12px; }
+  .sr-caseid { letter-spacing: 0.06em; }
+  .sr-hud-exit {
+    grid-area: 2 / 1;
+    justify-content: flex-start;
+    margin-left: 0;
+    padding: 0 6px;
+    border-left: 0;
+    border-right: 2px solid var(--ink);
+  }
 }

@@ -300,7 +300,7 @@
   color: var(--solo-accent);
 }
 .solo-hud .solo-stat span {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label);
   opacity: 0.7;
   letter-spacing: 0.08em;
 }
@@ -1425,4 +1425,15 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   .solo-secondary {
     gap: 8px;
   }
+}
+
+/* THE EARN STRIP, SOLO SCOPE. The wins pill and the multiplier stack are shared with the room
+   modes, where their small print is --fs-micro (11px, decoration). On the solo screens that strip
+   is what the run is paying, so it is a label and takes the 13px floor. Scoped here rather than
+   raising the shared rules, so the room HUDs keep their fit. */
+.solo-root .wins-hud-label,
+.solo-root .lstack-per,
+.solo-root .lstack-row,
+.solo-root .wins-earned-line {
+  font-size: var(--fs-label);
 }
