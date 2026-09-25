@@ -55,7 +55,7 @@ test('§2 buy is a plain click that commits and reveals the sticker', async ({ p
   // item's own name, in place of the old one-line banner.
   const buyBtn = page.locator('.shop-keypower').first().locator('.shop-buy');
   await expect(buyBtn).toBeVisible();
-  // The THEMES section renders above KEY POWER, so scope to the KEY POWER heading specifically.
+  // THEMES and MOMENTUM also have .shop-subtitle headings, so scope to the KEY POWER one specifically.
   await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 0');
   await expect(page.locator('.sticker')).toHaveCount(0);
 

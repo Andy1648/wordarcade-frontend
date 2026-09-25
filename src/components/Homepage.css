@@ -162,7 +162,9 @@
   line-height: 0.98;
   font-size: var(--fs-panel);
   letter-spacing: 0.04em;
-  color: #0d0618;
+  /* INK FOLLOWS THE FILL. The value-group pass moved all three buttons onto --v-panel-hi but only
+     REBIRTH got its ink swapped, so SHOP/STATS were #0d0618 on #221640 = 1.19:1. White is 16.6:1. */
+  color: var(--v-ink);
   border: 3px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
@@ -170,7 +172,7 @@
   transition: transform 0.1s, box-shadow 0.1s;
 }
 .homepage-nav-btn.is-shop { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
-.homepage-nav-btn.is-rebirth { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; color: var(--v-ink); }
+.homepage-nav-btn.is-rebirth { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
 .homepage-nav-btn.is-stats { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
 .homepage-nav-btn:hover {
   transform: translate(-1px, -1px);
