@@ -199,131 +199,213 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     // at that width. Bailing here also keeps the resize handler's layout reads off phones.
     if (isPhoneMenu) return undefined;
     let raf = 0;
+    // ---- CARD FIT (fix/card-fit-height) ------------------------------------------------------
+    // The cards used to be the largest 3:4 box the region's HEIGHT allowed, so a short laptop got
+    // a 171px card and its payout line ran 56-126px off the edge. Now a card has a MINIMUM width —
+    // what its own text needs at the type floor — and a viewport that cannot give it that width at
+    // 3:4 gets a different ARRANGEMENT, never a smaller card:
+    //   1. 'normal' — the old layout; 3:4 cards if they clear the minimum, otherwise cards that
+    //      keep the minimum width and take a squatter box (the scene is slice-to-cover).
+    //   2. 'short'  — the stage re-flows (Homepage.css [data-fit='short']): the corner nav, JOIN
+    //      and CREDITS share ONE bottom row, which frees the nav's right-hand reserve and a row.
+    //   3. still short of height — the WORDMARK (only) shrinks by the measured deficit.
+    // Layout reads here run on mount / resize only, never per frame.
+    const textEm = (el) => {
+      if (!el) return 0;
+      const fs = parseFloat(getComputedStyle(el).fontSize) || 0;
+      if (!fs) return 0;
+      let w = 0;
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+        const r = document.createRange();
+        r.selectNodeContents(n);
+        for (const rc of r.getClientRects()) w += rc.width;
+      }
+      return w / fs;
+    };
+    // Whole-line em (sets the fit-to-slot size) and widest UNBREAKABLE chunk em (sets the minimum
+    // card width): a line may wrap before "/ WORD" and before "(xN)", nowhere else.
+    const lineEms = (lines) => {
+      let whole = 0;
+      let chunk = 0;
+      for (const el of lines) {
+        const all = textEm(el);
+        const per = textEm(el.querySelector('.game-card-payout-per'));
+        const mult = textEm(el.querySelector('.game-card-payout-mult'));
+        whole = Math.max(whole, all);
+        chunk = Math.max(chunk, all - per - mult, per, mult);
+      }
+      return { whole, chunk };
+    };
+    const measureMinW = (grid) => {
+      const q = (sel) => Array.from(grid.querySelectorAll(sel));
+      const xp = lineEms(q('.game-card-titlebar .game-card-xp'));
+      const pay = lineEms(q('.game-card-titlebar .game-card-payout'));
+      const foot = lineEms(q('.game-card-foot .game-card-xp, .game-card-foot .game-card-payout'));
+      if (xp.whole) grid.style.setProperty('--xp-em', xp.whole.toFixed(3));
+      if (pay.whole) grid.style.setProperty('--pay-em', pay.whole.toFixed(3));
+      if (foot.whole) grid.style.setProperty('--foot-em', foot.whole.toFixed(3));
+      // border 2x5 + side padding (bar: clamp(10px, 4.5cqw, 18px); foot: clamp(9px, 3.5cqw, 14px))
+      // + the 2px slack in --line-room, at the 15px (bar) / 13px (foot) floors.
+      const need = (em, floor, padMin, padK, padMax) => {
+        let w = 12 + 2 * padMin + floor * em;
+        const pad = Math.min(padMax, Math.max(padMin, padK * (w - 10)));
+        w = 12 + 2 * pad + floor * em;
+        return Math.ceil(w);
+      };
+      // 182 keeps the card's content box over 170px, where GameCard.css's small-card container
+      // queries start dropping the badge / lock sub-line — this gate forbids hiding text to fit.
+      return Math.max(
+        182,
+        need(Math.max(xp.chunk, pay.chunk), 15, 10, 0.045, 18),
+        need(foot.chunk, 13, 9, 0.035, 14),
+      );
+    };
+    // How far each card's text reaches past its own box (horizontal) and how much height it lacks.
+    // Also publishes each card's --bar-text-h (the title bar's TEXT height) so a locked card's
+    // plaque + scrim sit in the art ABOVE the name instead of on top of it (GameCard.css).
+    const cardShortfall = (grid) => {
+      let wide = 0;
+      let tall = 0;
+      const barText = [];
+      for (const card of grid.getElementsByClassName('game-card')) {
+        const inner = card.clientHeight;
+        for (const el of card.querySelectorAll('.game-card-name, .game-card-xp, .game-card-payout, .game-card-badge')) {
+          if (el.clientWidth) wide = Math.max(wide, el.scrollWidth - el.clientWidth);
+        }
+        const bar = card.querySelector('.game-card-titlebar');
+        if (bar) {
+          const padT = parseFloat(getComputedStyle(bar).paddingTop) || 0;
+          const textH = bar.offsetHeight - padT;
+          const plaque = card.querySelector('.game-card-lock-plaque');
+          // A locked card owes its plaque (plus the lock layer's own 14px padding) above the name.
+          const lockH = plaque ? plaque.offsetHeight + 28 : 0;
+          tall = Math.max(tall, textH + lockH - inner);
+          barText.push([card, textH]);
+        }
+        const mast = card.querySelector('.game-card-masthead');
+        const foot = card.querySelector('.game-card-foot');
+        if (mast && foot) tall = Math.max(tall, mast.offsetHeight + foot.offsetHeight - inner);
+      }
+      for (const [card, h] of barText) card.style.setProperty('--bar-text-h', `${Math.ceil(h)}px`);
+      return { wide, tall };
+    };
+
     const compute = () => {
       // Reset to the natural (unscaled) size for a clean, non-compounding measurement.
-      // Also drop any height WE set last pass so clientHeight reads the full 100% stage
-      // (max-height:100% of the wrap) — the shrink below is recomputed from scratch, so the
-      // measurement never feeds back on the previous shrink (no oscillation).
       stage.style.setProperty('--menu-scale', '1');
       stage.style.height = '';
-      // Drop the region height WE set last pass for the same reason: the fit below is recomputed
-      // from the flex-grown region, so the measurement never feeds back on the previous shrink.
-      const cs = getComputedStyle(stage);
-      const padT = parseFloat(cs.paddingTop) || 0;
-      const padB = parseFloat(cs.paddingBottom) || 0;
-      const rowGap = parseFloat(cs.rowGap) || 0;
-      const inner = stage.clientHeight - padT - padB;
-      if (inner <= 0) return;
-      // In-flow (flex) children only — the absolutely-positioned glow/spotlight/corner
-      // buttons don't take part in the column's height.
-      const kids = Array.from(stage.children).filter((el) => {
-        const p = getComputedStyle(el).position;
-        return p !== 'absolute' && p !== 'fixed' && el.offsetHeight > 0;
-      });
-      if (!kids.length) return;
-      // --menu-scale SHRINKS the title + XP cluster on a short screen so the card region keeps a
-      // usable height (never scales ABOVE 1×, so the title's skew overhang can't eat the title↔XP
-      // gap on a tall screen — menu-fit).
-      const SCALES = ['homepage-logo-wrap', 'menu-xp-cluster'];
-      let header = 0; // the shrinkable title + XP
-      let fixed = 0; // footer / bottom bar (never scaled)
-      for (const el of kids) {
-        if (el.classList.contains('homepage-cards-region')) continue; // the flex-fill row
-        if (SCALES.some((c) => el.classList.contains(c))) header += el.offsetHeight;
-        else fixed += el.offsetHeight;
-      }
-      // The card region opts OUT of the column's row-gap by a negative margin (it sits ~10px
-      // under the XP bar, not a full gap below it — see --cards-lift). Count the real margin, or
-      // the header shrinks to make room for space the layout does not actually use.
-      let marginAdj = 0;
-      for (const el of kids) {
-        const m = parseFloat(getComputedStyle(el).marginTop) || 0;
-        if (m) marginAdj += m;
-      }
-      const gaps = rowGap * Math.max(0, kids.length - 1) + marginAdj;
-      const MINROW = 120; // keep at least this much height for the card region on a short screen
-      if (header > 0) {
-        const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / header));
-        stage.style.setProperty('--menu-scale', scale.toFixed(4));
-      }
-      // LANDSCAPE nav safe-gutter (fix/landscape-nav): the absolute top-right corner nav is a ~200px
-      // tall stacked column. In landscape the five cards pack into ONE full-height row, so without a
-      // reserve the rightmost card (FUSE) packs UNDER the nav and becomes untappable — its centre
-      // hit-tests to a nav button, not the card. Measure the nav's footprint from the RIGHT edge
-      // (button width + its right offset) and expose it as --corner-nav-reserve; the landscape CSS
-      // reserves exactly that much right padding on the card row so no card can ever sit beneath the
-      // nav. MEASURED (not a hardcoded width) so it tracks the real button text at any size.
-      const nav = stage.querySelector('.homepage-corner-nav');
-      if (nav) {
-        const nr = nav.getBoundingClientRect();
-        const reserve = Math.max(0, Math.ceil(window.innerWidth - nr.left) + 12);
-        stage.style.setProperty('--corner-nav-reserve', `${reserve}px`);
-      }
-      // SIZE THE CARDS FROM THE AVAILABLE HEIGHT (feat/cards-live) so ALL FIVE fit ONE SCREEN with
-      // NO scrolling and NO "N MORE" affordance. The card region flex-fills the stage's leftover
-      // height; we size the largest 3:4 card whose ROW(s) fit that height. Prefer 5-in-one-row; if
-      // that makes the card too narrow to read, drop to a 3+2 grid IF two rows give a wider card
-      // (on an ultra-short viewport two rows don't fit, so one row of small cards wins). The scenes
-      // are 3:4 and slice-to-cover, so a whole composition shows at any size — never cropped.
       const region = stage.querySelector('.homepage-cards-region');
       const grid = stage.querySelector('.homepage-cards-grid');
       const scroll = stage.querySelector('.homepage-cards-scroll');
       if (!region || !grid || !scroll) return;
-      const regionH = region.clientHeight;
-      // Measure the available WIDTH from the REGION (full, stable) minus the scroll's gutter —
-      // NOT from the grid, which is shrink-to-content and would feed its just-sized (small) card
-      // width straight back in (a shrinking feedback loop).
-      const scs = getComputedStyle(scroll);
-      const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
-      const availW = region.clientWidth - gutter;
-      if (regionH <= 0 || availW <= 0) return;
-      const gcs = getComputedStyle(grid);
-      const colGap = parseFloat(gcs.columnGap) || 14;
-      const rGap = parseFloat(gcs.rowGap) || colGap;
-      const count = grid.querySelectorAll('.game-card-magnet').length || 5;
-      // Largest 3:4 card (w:h = 3:4) fitting `cols`×`rows` in availW×regionH.
-      const fit = (cols, rows) => {
-        const colW = (availW - (cols - 1) * colGap) / cols;
-        const rowH = (regionH - (rows - 1) * rGap) / rows;
-        // `narrow` drops the height term: the rows may run past the region and the region
-        // scrolls, which is the only way a <360px screen gets a legible card.
-        const h = narrow ? (colW * 4) / 3 : Math.min(rowH, (colW * 4) / 3);
-        return { w: (h * 3) / 4, h, cols };
-      };
-      // Try one row of all five first, then denser grids; pick whichever gives the WIDEST (most
-      // readable) card while all cells fit ONE screen. On a wide screen 5-in-one-row wins; on a
-      // narrow/tall phone a 3+2 or 2-column grid gives bigger cards; on an ultra-short viewport
-      // one small row still wins (extra rows don't fit the height). No scrolling, ever.
-      // NEVER THREE ACROSS ON A <360px SCREEN. The fit-math picks whichever layout yields the
-      // WIDEST card, and on a short 320px viewport that was 3-across — which leaves each card
-      // 58px and each NAME 37px, so all five names pinned to the 12px floor. The floor was
-      // doing its job; the grid was the problem. Two columns is the cap here, trading a little
-      // card area for names that can actually be read.
+      const minW = measureMinW(grid);
       const narrow = window.innerWidth < 360;
-      // exactly TWO columns when narrow — with the height term dropped, one column would win
-      // on width alone and turn the menu into a single 196px stack.
-      const LAYOUTS = narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
-      let best = null;
-      for (const [cols, rows] of LAYOUTS) {
-        if (cols * rows < count) continue; // must hold all five
-        const f = fit(cols, rows);
-        if (f.w > 4 && (!best || f.w > best.w + 0.5)) best = f;
-      }
-      if (!best) return;
-      grid.style.setProperty('--cards-cols', String(best.cols));
-      grid.style.setProperty('--card-w', `${Math.floor(best.w)}px`);
-      grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
-      // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
-      grid.setAttribute('data-cols', String(best.cols));
-      // WHERE THE LEFTOVER GOES, and why it cannot go where you would want it to. On a wide
-      // screen the cards are WIDTH-bound — five 3:4 cards across a 1850px stage are 328x437, and
-      // the region they sit in is 545px tall — so ~108px is spare and the cards cannot absorb it
-      // (the aspect is locked; the scenes slice-to-cover and a taller box would crop them).
-      // Returning it to the stage was tried and is WRONG: the frame gaps blew past the 16-32px
-      // band and the menu stopped filling the screen (e2e/menu-vgap, e2e/menu-fit, five
-      // viewports). So the region keeps growing and the grid hugs its TOP instead — the space
-      // still exists, it just sits BELOW the cards rather than between the bar and the cards,
-      // which is the one place the brief says it must not be. See .homepage-cards-region.
+
+      // One arrangement pass: lay the stage out in `mode`, shrink the wordmark if `deficit` px of
+      // card height is still owed, then pick and apply the card grid. Returns what it could not fit.
+      const pass = (mode, deficit) => {
+        stage.setAttribute('data-fit', mode);
+        const cs = getComputedStyle(stage);
+        const padT = parseFloat(cs.paddingTop) || 0;
+        const padB = parseFloat(cs.paddingBottom) || 0;
+        const rowGap = parseFloat(cs.rowGap) || 0;
+        const inner = stage.clientHeight - padT - padB;
+        if (inner <= 0) return null;
+        // In-flow children only — the absolutely-positioned glow/spotlight/corner buttons don't
+        // take part in the column's height.
+        const kids = Array.from(stage.children).filter((el) => {
+          const p = getComputedStyle(el).position;
+          return p !== 'absolute' && p !== 'fixed' && el.offsetHeight > 0;
+        });
+        if (!kids.length) return null;
+        // --menu-scale SHRINKS the WORDMARK on a short screen so the card region keeps a usable
+        // height (never above 1x — menu-fit). It used to zoom the XP cluster too, which takes the
+        // cluster's 13px labels under the --fs-label floor; the cluster now keeps its size.
+        const logo = stage.querySelector('.homepage-logo-wrap');
+        const logoH = logo ? logo.offsetHeight : 0;
+        if (mode === 'normal') {
+          let fixed = 0;
+          for (const el of kids) {
+            if (el.classList.contains('homepage-cards-region') || el === logo) continue;
+            fixed += el.offsetHeight;
+          }
+          let marginAdj = 0;
+          for (const el of kids) marginAdj += parseFloat(getComputedStyle(el).marginTop) || 0;
+          const gaps = rowGap * Math.max(0, kids.length - 1) + marginAdj;
+          const MINROW = 120;
+          if (logoH > 0) {
+            const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / logoH));
+            stage.style.setProperty('--menu-scale', scale.toFixed(4));
+          }
+        }
+        if (deficit > 0 && logoH > 0) {
+          const cur = parseFloat(stage.style.getPropertyValue('--menu-scale')) || 1;
+          const scale = Math.max(0.4, Math.min(1, cur * (1 - deficit / logoH)));
+          stage.style.setProperty('--menu-scale', scale.toFixed(4));
+        }
+        // LANDSCAPE nav safe-gutter (fix/landscape-nav): the absolute top-right corner nav is a
+        // ~200px stacked column; on a short viewport the card row would pack under it. Measure its
+        // footprint from the right edge and expose it as --corner-nav-reserve (Homepage.css). In
+        // the 'short' arrangement the nav sits in the bottom row instead and the reserve is unused.
+        const nav = stage.querySelector('.homepage-corner-nav');
+        if (nav) {
+          const nr = nav.getBoundingClientRect();
+          const reserve = Math.max(0, Math.ceil(window.innerWidth - nr.left) + 12);
+          stage.style.setProperty('--corner-nav-reserve', `${reserve}px`);
+        }
+        const regionH = region.clientHeight;
+        // Available WIDTH from the REGION (full, stable) minus the scroll's gutter — never from the
+        // shrink-to-content grid, which would feed its own card width back in.
+        const scs = getComputedStyle(scroll);
+        const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
+        const availW = region.clientWidth - gutter;
+        if (regionH <= 0 || availW <= 0) return null;
+        const gcs = getComputedStyle(grid);
+        const colGap = parseFloat(gcs.columnGap) || 14;
+        const rGap = parseFloat(gcs.rowGap) || colGap;
+        const count = grid.querySelectorAll('.game-card-magnet').length || 5;
+        // NEVER THREE ACROSS ON A <360px SCREEN (exactly two columns there; the region scrolls).
+        const LAYOUTS = narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
+        let best = null;
+        for (const [cols, rows] of LAYOUTS) {
+          if (cols * rows < count) continue; // must hold all five
+          const colW = (availW - (cols - 1) * colGap) / cols;
+          const rowH = (regionH - (rows - 1) * rGap) / rows;
+          let f = null;
+          if (narrow) {
+            f = { w: colW, h: (colW * 4) / 3, cols, rows, aspect: true };
+          } else {
+            const w0 = Math.min(colW, (rowH * 3) / 4);
+            if (w0 >= minW) f = { w: w0, h: (w0 * 4) / 3, cols, rows, aspect: true };
+            // The 3:4 card would be under its minimum: it takes the WHOLE column (the wider the
+            // card, the fewer payout lines wrap) and the height there is.
+            else if (colW >= minW) f = { w: colW, h: rowH, cols, rows, aspect: false };
+          }
+          if (!f || f.w <= 4 || f.h <= 4) continue;
+          // A true 3:4 card beats a squat one; among 3:4 the widest wins; among squat the tallest.
+          const better = !best
+            || (f.aspect && !best.aspect)
+            || (f.aspect === best.aspect && (f.aspect ? f.w > best.w + 0.5 : f.h > best.h + 0.5));
+          if (better) best = f;
+        }
+        if (!best) return { wide: minW, tall: 0, rows: 1 };
+        grid.style.setProperty('--cards-cols', String(best.cols));
+        grid.style.setProperty('--card-w', `${Math.floor(best.w)}px`);
+        grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
+        // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
+        grid.setAttribute('data-cols', String(best.cols));
+        if (narrow) return { wide: 0, tall: 0, rows: best.rows };
+        return { ...cardShortfall(grid), rows: best.rows };
+      };
+
+      // WHERE THE LEFTOVER GOES on a wide screen: the 3:4 cards are width-bound and the region
+      // hugs its TOP, so the surplus sits below the cards (see .homepage-cards-region).
+      let r = pass('normal', 0);
+      if (!r || narrow) return;
+      if (r.wide > 0.5 || r.tall > 0.5) r = pass('short', 0);
+      // Still short of height: take it out of the wordmark, a row's worth per row of cards.
+      for (let i = 0; r && r.tall > 0.5 && i < 2; i += 1) r = pass('short', Math.ceil(r.tall * r.rows) + 2);
     };
     const onResize = () => {
       cancelAnimationFrame(raf);
@@ -331,8 +413,13 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     };
     compute();
     raf = requestAnimationFrame(compute); // second pass after fonts/layout settle
+    // The card minimum is MEASURED text; a fallback face measures differently from Space Mono, so
+    // re-fit once the webfonts are in.
+    let live = true;
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (live) onResize(); });
     window.addEventListener('resize', onResize);
     return () => {
+      live = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };

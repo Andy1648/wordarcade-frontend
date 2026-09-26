@@ -31,7 +31,9 @@
 }
 
 .wct-label {
-  font-size: var(--fs-micro);
+  /* --fs-label, not --fs-micro: "ACHIEVEMENT — REBIRTH" is a label a player reads, and --fs-micro
+     (11px) is for decoration only; it was the one sub-13px string on the menu (fix/card-fit-height). */
+  font-size: var(--fs-label);
   letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;

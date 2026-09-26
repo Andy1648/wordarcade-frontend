@@ -74,15 +74,20 @@
     inset 0 0 0 6px rgba(0, 0, 0, 0.55),
     6px 6px 0 #000;
   overflow: hidden;
-  /* ART-LED v2 (feat/cards-live): a true PORTRAIT 3:4 poster whose EXACT size is computed in
-     Homepage.jsx from the available height (--card-w / --card-h, always 3:4) so all five fit one
-     screen without scrolling and every 3:4 scene renders whole (the fallback keeps a 3:4 box if
-     the vars are ever unset). Centred in its grid cell. */
+  /* ART-LED v2 (feat/cards-live): a PORTRAIT 3:4 poster whose EXACT size is computed in
+     Homepage.jsx (--card-w / --card-h) so all five fit one screen without scrolling (the fallback
+     keeps a 3:4 box if the vars are ever unset). Centred in its grid cell. fix/card-fit-height:
+     3:4 is no longer absolute — when a 3:4 box would be narrower than the card's own text needs,
+     the fit-math keeps the width and hands out a squatter box (the scene slices to cover). */
   width: var(--card-w, 100%);
   height: var(--card-h);
   aspect-ratio: 3 / 4;
-  /* container-type INLINE-SIZE: the foreground text sizes off the card WIDTH via cqw units. */
-  container-type: inline-size;
+  /* container-type SIZE (was inline-size; fix/card-fit-height): the foreground text still sizes off
+     the card WIDTH via cqw, and the name can now also read the card HEIGHT (cqh) — on a short
+     viewport the fit-math gives the card a squatter-than-3:4 box instead of a smaller one, and a
+     width-only name would fill that box with two 40px lines. Safe as a size container because the
+     box is always explicit: --card-w/--card-h from the fit-math (aspect-ratio is the fallback). */
+  container-type: size;
   /* The card face composes THREE independent scale factors + a tilt into ONE transform,
      each driven by a CSS variable so they never fight over `transform`:
        --cs         featured resting scale (unchanged)
@@ -392,6 +397,13 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   display: flex;
   flex-direction: column;
   gap: clamp(3px, 1.6cqw, 7px);
+  /* THE LINE'S ROOM: the bar's content width (card content box minus the bar's own side padding,
+     minus 2px of rounding slack). The XP / payout lines divide it by their measured em-width. */
+  --line-room: calc(100cqw - 2 * clamp(10px, 4.5cqw, 18px) - 2px);
+  /* ABOVE THE CORNER RIBBON. theme/arcane.css (unscoped) lifts .game-card-ribbon to z-index 4, which
+     put the FEATURED / AI JUDGED band over the mode NAME once a short viewport's squat card brought
+     the bar up into the corner (card-fit gate (f)). The ribbon is decoration; the name is not. */
+  z-index: 5;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.8) 46%, transparent 100%);
 }
 
@@ -409,11 +421,19 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      13cqw middle term resolved to 13px, and the game's own NAME was rendering smaller than body
      copy. 22cqw keeps it proportional on a wide card and the 22px floor is what it may never go
      below. */
-  font-size: clamp(22px, 22cqw, 40px);
+  /* min(22cqw, 20cqh): on a 3:4 card 20cqh is ~27cqw, so 22cqw always wins there; it only bites
+     when the fit-math hands out a card squatter than 3:4 (fix/card-fit-height), where the name would
+     otherwise take its size from a width the height cannot pay for. Never below the 22px floor. */
+  font-size: clamp(22px, min(22cqw, 20cqh), 40px);
   color: #fff;
   -webkit-text-stroke: 2.5px #000;
   paint-order: stroke fill;
 }
+/* A LOCKED card's name is the LAST line in its bar (no XP / payout under it). At line-height 0.9
+   Bungee's text box (~1.33em) overhangs its line box by ~0.21em top and bottom, so a trailing name
+   reached the card's bottom edge and lost a pixel to the card's clip (card-fit gate, 1366/1280/
+   1440 fresh). Give the overhang back as margin so the whole text box sits inside the card. */
+.game-card-titlebar > .game-card-name:last-child { margin-bottom: 0.22em; }
 /* CATEGORY is the one long (8-letter) name — scale it down so it never overruns its
    bar at the narrowest column. */
 /* (The old [data-game='category-blitz'] .game-card-name override is GONE. It existed only
@@ -445,7 +465,13 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      pure overflow, and the string is the one thing on the card that cannot be allowed to clip. */
   /* SECOND LOUDEST, after the name. This line is the whole answer to "what is this mode
      worth", and it was shipping at 6-7px — built, rendered, and invisible. Floor 15px. */
-  font-size: clamp(15px, 6cqw, 20px);
+  /* FIT-TO-SLOT (fix/card-fit-height). 6cqw alone could never fit a long line: "590K WINS / WORD
+     (x12)" is ~15.3em, and 15.3 x 6cqw is 92% of the card — MORE than the bar's content box at every
+     width in the cqw range, so the line ran off the card however wide the card got. The second term
+     is the size at which the WHOLE line fits (--pay-em is its measured em-width, set by the fit-math
+     in Homepage.jsx). min() means it is never set larger than it was, and never under the floor;
+     below the floor the line wraps at "/ WORD" and "(xN)" instead of being cut or dropped. */
+  font-size: clamp(15px, min(6cqw, calc(var(--line-room) / var(--pay-em, 11))), 20px);
   letter-spacing: 0;
   color: #ffe9c9;
   white-space: nowrap;
@@ -462,11 +488,17 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-xp {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: clamp(15px, 6.8cqw, 22px);
+  font-size: clamp(15px, min(6.8cqw, calc(var(--line-room) / var(--xp-em, 11))), 22px);
   letter-spacing: 0;
   color: #2effe0;
   white-space: nowrap;
 }
+/* THE TWO PLACES A PAYOUT LINE MAY BREAK (fix/card-fit-height): before "/ WORD" and before "(xN)".
+   The line is nowrap, but a break opportunity is governed by the element that owns the space, so
+   these two spans (whose text starts with that space) re-allow it — "590K WINS" stays together,
+   and a line too long for its card at the floor size wraps instead of being clipped or hidden. */
+.game-card-payout-per,
+.game-card-payout-mult { white-space: normal; }
 
 /* THE UNIT GOES BEFORE THE NUMBERS DO. At 360x640 the five cards are ~65px wide and
    "610 / WORD (x6)" overflows its own card even with the type pinned at its 7px floor — the
@@ -574,6 +606,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   font-size: clamp(13px, 3.4cqw, 14px);
   letter-spacing: 0.02em;
   color: #111;
+  --foot-room: calc(100cqw - 2 * clamp(9px, 3.5cqw, 14px) - 2px);
   border-top: 3px solid #111;
   background: #F2EFE7;
 }
@@ -585,7 +618,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-foot .game-card-xp,
 .game-card-foot .game-card-payout {
   display: block;
-  font-size: clamp(13px, 4.4cqw, 16px);
+  /* Same fit-to-slot as the title-bar lines, against the foot's own padding (--foot-em is the
+     widest foot line's measured em-width). */
+  font-size: clamp(13px, min(4.4cqw, calc(var(--foot-room) / var(--foot-em, 14))), 16px);
   color: #111;
   line-height: 1.25;
 }
@@ -710,7 +745,10 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 }
 .game-card-lock {
   position: absolute;
-  inset: 0;
+  /* Stops at the TOP OF THE TITLE-BAR TEXT (--bar-text-h, measured by the fit-math), so the scrim
+     and the centred plaque sit on the ART and never on the badge or the name (fix/card-fit-height;
+     it was inset:0 and covered both at every size). Falls back to the whole card. */
+  inset: 0 0 var(--bar-text-h, 0px) 0;
   z-index: 6;
   display: flex;
   align-items: center;
