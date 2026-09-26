@@ -23,6 +23,7 @@
 // so SAT is gated on .sr-app. This gate covers all five, plus the FUSE 26-tile strip.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { isPhoneMenu, menuReady, modeEntry, phoneCanOpen, soloEntryQuery } from './support/menu.js';
 
 const ME = 'e2e-player';
 async function enterMpGame(page, gameType) {
@@ -31,7 +32,7 @@ async function enterMpGame(page, gameType) {
     : [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType, hostId: ME, difficultyKey: 'chill', players } });
   await page.waitForTimeout(60);
   mock.pushToClient({ type: 'game_started', payload: { gameType } });
@@ -48,9 +49,9 @@ async function enterSat(page) {
   await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
   await page.goto('/?satRush=1&portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(300);
-  await page.locator('[data-game="sat-rush"] .game-card').click({ force: true });
+  await modeEntry(page, 'sat-rush').click({ force: true });
   await page.getByRole('button', { name: 'Play' }).click();
   await page.getByRole('button', { name: /BRIEFING/ }).click();
   await page.locator('.sr-brief-page').waitFor({ state: 'visible', timeout: 6000 });
@@ -80,15 +81,27 @@ const VIEWPORTS = [
   { w: 1280, h: 551 }, // wide-short — the reported regression case
 ];
 const MIN_FILL = 0.9;
-const card = (page, id) => page.locator(`.game-card-magnet[data-game="${id}"] .game-card`);
+// THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
+// same Homepage handler, so only the object you press differs (support/menu.js).
+const card = (page, id) => modeEntry(page, id);
 
 async function enterSolo(page, id) {
   await page.addInitScript(() => {
     try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ }
   });
   await installBackendMock(page);
+  // PHONE: CHAIN and FUSE have no card to click — the phone menu replaces both with one
+  // "CHAIN + FUSE UNLOCK AS YOU PLAY" line (MobileMenu.jsx). They are still REACHABLE, by the
+  // shipped /chain/play and /fuse/play deep links, which bridge to ?chain=1 / ?fuse=1
+  // (router.js). That is the path a phone player actually arrives on, so it is the path this
+  // drives — the mode is entered for real, not through a test-only hook.
+  if (isPhoneMenu(page) && !phoneCanOpen(id)) {
+    await page.goto(`/?portal=1&soloms=20000&${soloEntryQuery(id)}`);
+    await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
+    return;
+  }
   await page.goto('/?portal=1&soloms=20000');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(300);
   await card(page, id).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });

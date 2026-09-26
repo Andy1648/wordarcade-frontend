@@ -5,6 +5,7 @@
 // ignored. The mock simply NEVER sends word_result, standing in for the 20s wake.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const ME = 'e2e-player'; // matches the mock's auto `connected` id, so it's genuinely MY turn
 const players = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 3 }];
@@ -12,7 +13,7 @@ const players = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', na
 test('cold submit: the word shows a pending → WAKING SERVER state (no response)', async ({ page }) => {
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
   await page.waitForTimeout(80);
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });

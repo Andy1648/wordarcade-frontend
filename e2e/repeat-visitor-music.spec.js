@@ -17,6 +17,7 @@
 //     on the recorded element.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuMark } from './support/menu.js';
 
 test.describe('repeat-visitor music', () => {
   test('first gesture starts the music on a no-splash (repeat visitor) load', async ({
@@ -49,7 +50,7 @@ test.describe('repeat-visitor music', () => {
 
     // No splash for a repeat visitor: we land on the menu (the wordmark is the
     // stable landmark). The splash screen must never appear.
-    const wordmark = page.getByRole('img', { name: 'Type a Word' });
+    const wordmark = menuMark(page);
     await expect(wordmark).toBeVisible();
     await expect(page.locator('.splash-screen')).toHaveCount(0);
 

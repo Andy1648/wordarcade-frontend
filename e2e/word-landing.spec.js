@@ -13,6 +13,7 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 fs.mkdirSync('claude/wb-frame-shots', { recursive: true });
 
@@ -35,7 +36,7 @@ async function enterGame(page, playerCount = 2) {
     window.__TAW_NO_ACHIEVEMENT_GRANT = true;
   });
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   const players = mkPlayers(playerCount);
   mock.pushToClient({
     type: 'room_update',
@@ -432,7 +433,7 @@ test('the menu has no secret popup left on it', async ({ page }) => {
     window.__TAW_NO_ACHIEVEMENT_GRANT = true;
   });
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   // Type a palindrome and pause — the exact input that used to raise the sticker.
   for (const ch of 'racecar') await page.keyboard.press(ch);
   await page.waitForTimeout(1200);

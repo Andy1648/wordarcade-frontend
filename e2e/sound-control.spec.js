@@ -20,6 +20,7 @@
 //          not over), which is the only screen that actually has no room.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const ME = 'e2e-player';
 const players = [
@@ -36,7 +37,7 @@ async function bootMenu(page) {
     try { localStorage.setItem('taw.seenGameSpotlight', '1'); } catch { /* blocked */ }
   });
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   return mock;
 }
 

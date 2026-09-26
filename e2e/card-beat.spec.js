@@ -5,6 +5,7 @@
 // within the 20 budget.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 // MOTION MUST BE ON FOR THIS FILE (Batch G). playwright.config.js sets reducedMotion: 'reduce'
 // suite-wide — a sound choice for actionability, since this app's idle loops never "settle" — but
@@ -19,7 +20,7 @@ test('cards pulse on the beat, featured harder, no new loops, within the animati
   await page.setViewportSize({ width: 1920, height: 1080 });
   await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(1000);
   // Disable the 120ms transition so the beat scale jumps straight to its TARGET value — the
   // assertion then reads a deterministic scale instead of sampling mid-interpolation (flaky).

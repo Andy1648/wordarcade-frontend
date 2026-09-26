@@ -5,6 +5,7 @@
 // the card and the viewport clips it tighter than the stage, which clears every card.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -47,7 +48,7 @@ for (const { w, h } of VIEWPORTS) {
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await page.waitForTimeout(300);
     const cards = await perCardMargins(page);
     expect(cards.length).toBe(5);

@@ -12,6 +12,7 @@
 //      the menu — and to nobody else.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 const MIN_TOUCH = 44;
 
@@ -94,14 +95,14 @@ test.describe('the way out of a solo mode', () => {
       // survives this screen. Assert that, and that it still actually takes the click.
       await assertReachableAndLabelled(page, vp);
       await exitBtn(page).click();
-      await expect(page.getByRole('img', { name: 'Type a Word' })).toBeVisible();
+      await menuReady(page);
     });
   }
 
   test('the exit actually reaches the menu mid-run', async ({ page }) => {
     await deepLandChain(page);
     await exitBtn(page).click();
-    await expect(page.getByRole('img', { name: 'Type a Word' })).toBeVisible();
+    await menuReady(page);
     await expect(page.locator('.solo-root')).toHaveCount(0);
   });
 });
@@ -125,20 +126,27 @@ test.describe('the run-over offer', () => {
     expect(restartBox.y).toBeLessThan(offerBox.y);
     // And the button does what it says.
     await offer.locator('button').click();
-    await expect(page.getByRole('img', { name: 'Type a Word' })).toBeVisible();
+    await menuReady(page);
   });
 
+  // RUNS ABOVE THE PHONE BREAKPOINT, and the width is the POINT of the test rather than a
+  // detail of it: what this asserts is PROVENANCE — a player who arrived at CHAIN *through the
+  // menu* is not offered "the rest of the game", because they have already seen it. At <=480px
+  // that journey does not exist: the phone menu has no CHAIN card at all (MobileMenu.jsx
+  // replaces CHAIN and FUSE with one unlock line), so there is no menu->CHAIN path to take and
+  // nothing for the assertion to be about. Its deep-link siblings above still run at 390x844,
+  // where that journey is real. 900px is the narrowest width that still renders a card grid.
   test('a player who came from the menu never sees the offer', async ({ page }) => {
     test.setTimeout(30000);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 900, height: 844 });
     await page.addInitScript(() => {
       try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, into: 0 })); } catch { /* ignore */ }
     });
     await installBackendMock(page);
     await page.goto('/?portal=1&soloms=350');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await page.waitForTimeout(400);
-    await page.locator('.game-card-magnet[data-game="chain"] .game-card').click({ force: true });
+    await modeEntry(page, 'chain').click({ force: true });
     await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
     await page.locator('.mode-dialog-btn-create').click();
     await page.locator('.solo-root').waitFor({ state: 'visible' });

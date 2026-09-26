@@ -23,6 +23,7 @@
 // create_room/add_bot handshake is not needed here because room_update can be pushed directly.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const ME = 'e2e-player';
 const COUNTS = [2, 3, 4, 8];
@@ -44,7 +45,7 @@ async function enterWordBomb(page, n) {
   const players = mkPlayers(n);
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({
     type: 'room_update',
     payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players },

@@ -4,6 +4,7 @@
 // driven screens (room / in-game / multiplayer game-over) are covered separately where feasible.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { joinControl, menuReady, modeEntry } from './support/menu.js';
 
 // Network-resource failures (the backend mock blocks the socket; favicon/asset 404s) are
 // test-harness noise. A real bug is a pageerror (uncaught exception — the Stats ReferenceError
@@ -27,10 +28,12 @@ async function menu(page, errors, level) {
     }, level);
   }
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(500);
 }
-const card = (page, id) => page.locator(`.game-card-magnet[data-game="${id}"] .game-card`);
+// THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
+// same Homepage handler, so only the object you press differs (support/menu.js).
+const card = (page, id) => modeEntry(page, id);
 const assertClean = (errors) => expect(errors, `errors: ${errors.join(' | ')}`).toHaveLength(0);
 
 test.describe('every menu-reachable screen renders without console errors', () => {
@@ -121,7 +124,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('PUBLIC ROOMS browser (JOIN)', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 30);
-    await page.locator('.homepage-btn-join').click(); // JOIN ROOM → browser
+    await joinControl(page).click(); // JOIN ROOM → browser (either width)
     await expect(page.locator('.browser-wrap')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);
@@ -132,7 +135,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
     attach(page, errors);
     const mock = await installBackendMock(page);
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     // Drive the app into the waiting room with a plausible room_update frame.
     mock.pushToClient({
       type: 'room_update',
@@ -154,7 +157,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
     attach(page, errors);
     const mock = await installBackendMock(page);
     await page.goto('/?portal=1');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: 'p1', difficultyKey: 'chill', players: [{ id: 'p1', name: 'YOU', lives: 3, isHost: true }] } });
     await page.waitForTimeout(120);
     mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });

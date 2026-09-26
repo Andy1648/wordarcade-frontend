@@ -12,6 +12,7 @@
 //      the mode judges with, so a canned example (a word for a different fragment) fails here.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 // Seed a genuinely fresh player ONCE, then let the app keep whatever it writes.
 // NOT via addInitScript: that runs on EVERY navigation, so a localStorage.clear() in it wipes the
@@ -33,9 +34,9 @@ async function seedFresh(page) {
 
 async function enterSolo(page, mode) {
   await page.goto('/?portal=1&soloms=350');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(400);
-  await page.locator(`.game-card-magnet[data-game="${mode}"] .game-card`).click({ force: true });
+  await modeEntry(page, mode).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
   await page.locator('.mode-dialog-btn-create').click();
   await page.locator('.solo-root').waitFor({ state: 'visible' });

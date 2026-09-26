@@ -16,6 +16,7 @@
 //     the word-match fix used for MY OWN words can't attribute other players' words.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 const ME = 'e2e-player';
 const players = [
@@ -32,7 +33,7 @@ const turn = (mock, who) =>
 async function enterGame(page) {
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
   await page.waitForTimeout(80);
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });

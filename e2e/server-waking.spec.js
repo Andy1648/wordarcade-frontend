@@ -12,6 +12,7 @@
 // the cold-start threshold so the phase-2 copy trips without a real 4s wait.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, freezeAnimations } from './support/backendMock.js';
+import { joinControl, menuReady } from './support/menu.js';
 
 test.describe('server-waking cold-start copy', () => {
   test('shows the WAKING copy past the threshold, then auto-fires the queued action on open', async ({
@@ -20,10 +21,10 @@ test.describe('server-waking cold-start copy', () => {
     // Hold the socket 'connecting' for 6s; trip the cold-start hint at ~300ms.
     const mock = await installBackendMock(page, { openDelayMs: 6000 });
     await page.goto('/?portal=1&coldstart=300');
-    await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+    await menuReady(page);
     await freezeAnimations(page);
 
-    const join = page.locator('.homepage-btn-join');
+    const join = joinControl(page);
 
     // Socket isn't open yet, so JOIN queues the connect-gated action instead of
     // firing. (It shows CONNECTING… first, then WAKING once the threshold passes.)

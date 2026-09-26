@@ -4,6 +4,7 @@
 // (must be unchanged — every tier effect is a finite, pooled one-shot).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 // MOTION MUST BE ON FOR THIS FILE (Batch G). playwright.config.js sets reducedMotion: 'reduce'
 // suite-wide — a sound choice for actionability, since this app's idle loops never "settle" — but
@@ -23,7 +24,7 @@ async function measure(page, tier) {
   }, tier);
   await installBackendMock(page);
   await page.goto('/?portal=1');
-  await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+  await menuReady(page);
   await page.waitForTimeout(500);
 
   // Start a frame-time recorder + a peak-animation sampler in the page.

@@ -6,6 +6,7 @@
 // corner-nav button. (Portrait text-occlusion stays covered by fixed-overlap.spec.js.)
 import { test, expect } from '@playwright/test';
 import { installBackendMock, freezeAnimations } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 // Landscape phone sizes (both-orientation audit set, rotated): 360x640, 390x844, 412x915 → wide.
 const LANDSCAPE = [
@@ -26,7 +27,7 @@ test.describe('no game card sits under the corner nav (landscape)', () => {
         } catch { /* */ }
       });
       await page.goto('/?portal=1');
-      await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
+      await menuReady(page);
       await freezeAnimations(page);
       await page.waitForTimeout(200);
       const hits = await page.evaluate(() => {

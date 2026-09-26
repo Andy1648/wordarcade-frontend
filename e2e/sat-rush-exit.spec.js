@@ -7,6 +7,7 @@
 // no app console errors.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { menuReady } from './support/menu.js';
 
 test.describe('SAT Rush run exit', () => {
   test('the HUD exit abandons a live run and returns to the menu, no console errors', async ({
@@ -38,7 +39,7 @@ test.describe('SAT Rush run exit', () => {
 
     // Landed back on the menu (the homepage wordmark) — NOT the results page, and
     // the SAT Rush app is fully torn down.
-    await expect(page.getByRole('img', { name: 'Type a Word' })).toBeVisible();
+    await menuReady(page);
     await expect(page.locator('.sr-respage')).toHaveCount(0);
     await expect(page.locator('.sr-app')).toHaveCount(0);
 
