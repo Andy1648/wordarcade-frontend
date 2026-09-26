@@ -206,21 +206,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
         {view === 'shop' ? (
           <div className="shop-body">
-            {/* THEMES — the headline section, ABOVE key power. Each card previews the real palette. */}
-            <h3 className="shop-subtitle">THEMES — RECOLOR YOUR MENU</h3>
-            <div className="shop-grid shop-theme-grid">
-              {THEMES.map((t) => (
-                <ThemeCard
-                  key={t.id}
-                  theme={t}
-                  ownedThemes={ownedThemes}
-                  equippedTheme={equippedTheme}
-                  wins={wins}
-                  onEquipTheme={onEquipTheme}
-                  onBuyTheme={onBuyTheme}
-                />
-              ))}
-            </div>
+            {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
             <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
@@ -258,6 +244,23 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
             </div>
 
+            {/* THEMES — each card previews the real palette. BELOW key power: five theme cards are a full
+                screen at 1366x768, and KEY POWER (the upgrade that raises every payout) sat under them at
+                y=684, below the fold. Income first, cosmetics second. */}
+            <h3 className="shop-subtitle">THEMES — RECOLOR YOUR MENU</h3>
+            <div className="shop-grid shop-theme-grid">
+              {THEMES.map((t) => (
+                <ThemeCard
+                  key={t.id}
+                  theme={t}
+                  ownedThemes={ownedThemes}
+                  equippedTheme={equippedTheme}
+                  wins={wins}
+                  onEquipTheme={onEquipTheme}
+                  onBuyTheme={onBuyTheme}
+                />
+              ))}
+            </div>
             {/* MOMENTUM (repeatable sink): the ONE upgrade you buy forever — cheap, gently-rising
                 cost, +1% wins each, and every buy drops a permanent MARK on the menu rail. Fixes the
                 end-game "nothing to buy" dead stretch (claude/dead-stretch-report.md). */}

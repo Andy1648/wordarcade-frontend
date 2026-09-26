@@ -185,7 +185,7 @@
 .room-gametype-btn.selected {
   background: var(--v-panel-hi) /* value-group: selection reads via border, not a 2nd hot fill */;
   border-color: #991A75;
-  color: #000;
+  color: var(--v-ink); /* was #000 — 1.26:1 on the dark value-group fill */
 }
 
 .room-difficulty-row {
@@ -238,6 +238,11 @@
 .room-difficulty-btn.selected {
   background: var(--v-panel-hi) /* value-group: selection reads via border, not a 2nd hot fill */;
   border-color: #1A9985;
+  /* The fill went dark, so the ink has to go light with it: #1a0b2e on #221640 was 1.11:1. */
+  color: var(--v-ink);
+}
+.room-difficulty-btn.selected .room-difficulty-desc {
+  color: var(--v-ink-dim); /* #666 on #221640 was 2.9:1 */
 }
 
 /* Difficulty name on top: bold + larger (inherits the Bungee button face). */

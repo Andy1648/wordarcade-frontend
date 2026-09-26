@@ -826,6 +826,7 @@
 }
 .solo-restart.is-armed {
   background: var(--solo-accent);
+  color: var(--v-field); /* the fill goes light, so the ink goes dark: white on #2effe0 was 1.27:1 */
   opacity: 1;
 }
 .solo-restart:active {
