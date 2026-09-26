@@ -11,7 +11,7 @@
 // Both are read-only readouts of numbers wins.js has already paid. Neither computes a payout, so
 // neither can ever quote a multiplier the player did not actually get.
 import Num from './Num';
-import { formatNum, formatMultExact } from '../format';
+import { formatNum, formatRate, formatMultExact } from '../format';
 import './PayoutBreakdown.css';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -45,7 +45,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // key tier — so every term in the product is named and the line multiplies out by hand.
   const baseTerm = payout.letters && payout.perLetter
     ? `${payout.letters} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'} × ${formatNum(payout.perLetter)}`
-    : `BASE ${formatNum(payout.base)}`;
+    : `BASE ${formatRate(payout.base)}`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
       {/* BOTH CURRENCIES, one above the math that produced them. Wins are the word's XP ÷ 10, so
@@ -54,7 +54,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
       <div className="payout-headline">
         <span className="payout-headline-xp">+{formatNum(payout.xp)}<span className="payout-headline-unit"> XP</span></span>
         <span className="payout-headline-sep" aria-hidden="true">·</span>
-        <span className="payout-headline-wins">+{formatNum(payout.paid)}<span className="payout-headline-unit"> WINS</span></span>
+        <span className="payout-headline-wins">+{formatRate(payout.paid)}<span className="payout-headline-unit"> WINS</span></span>
       </div>
       {/* EVERY TERM, IN ORDER, ON ONE LINE. A vertical list of label/value pairs read as a table
           of unrelated facts; the product is a single sentence and now looks like one. */}

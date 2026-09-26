@@ -14,6 +14,7 @@ import {
   saveProgress,
   creditXp,
   xpPerWord,
+  roundWordXp,
   keyTierXp,
   getKeyTier,
   XP_MULTIPLIERS,
@@ -49,6 +50,18 @@ function writeInt(key, n) {
   } catch {
     /* storage blocked */
   }
+}
+
+// The TENTHS of a win a word earned beyond the whole wins it banked (0-9, in XP units — a tenth of
+// a win is one XP). Carried into the next bankWordWins so fractional per-word rates are paid in
+// full over a run instead of rounded away each word. See bankWordWins.
+export const WINS_CARRY_KEY = 'taw.winsCarry';
+export function getWinsCarry() {
+  const n = readInt(WINS_CARRY_KEY);
+  return n > 9 ? 9 : n;
+}
+function saveWinsCarry(n) {
+  writeInt(WINS_CARRY_KEY, Math.max(0, Math.min(9, Math.floor(n))));
 }
 
 export function getWins() {
@@ -242,9 +255,14 @@ export function perWordXp(opts = {}) {
   });
 }
 
-/** One word's WINS: its XP ÷ 10. Exact — every XP grant is a multiple of ten. */
+/**
+ * One word's WINS: its XP ÷ 10, EXACTLY — to the tenth. XP is whole (roundWordXp), so a word is
+ * worth whole tenths of a win: 101 XP is 10.1 wins, not "10". Rounding this to an integer is what
+ * made the first nine MOMENTUM marks pay nothing on a 10-win word. The balance is still an
+ * integer; bankWordWins carries the tenths forward rather than dropping them.
+ */
 export function perWordWins(opts = {}) {
-  return Math.round(perWordXp(opts) / 10);
+  return perWordXp(opts) / 10;
 }
 
 // Wins granted for a round (PURE given rebirthCount). <3 accepted words → 0; else
@@ -294,7 +312,7 @@ export const WORD_WINS_MULT = MODE_KEY_ALIAS;
 // no rebirth, no momentum, no mark, no mastery, no streak. Kept because the mode DIALOG and the
 // sims want the stable number. (Key tier is read live: it is the base now, not a multiplier.)
 export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {}) {
-  return Math.round(
+  return (
     xpPerWord({
       mode: gameKey(mode),
       keyTier,
@@ -326,6 +344,7 @@ export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {})
  *
  * @returns {{ rate:number, xp:number, base:number, xpBase:number, mult:number, factors:object }}
  *   rate   — WINS for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
+ *            (exact to a tenth: 10.1 — print it with formatRate, never formatNum)
  *   xp     — the same word's XP, i.e. rate × 10
  *   base   — the reference word's letters at the player's key tier, the floor everything scales from
  *   xpBase — that same base in XP
@@ -336,7 +355,7 @@ export function perWordRateNow({ mode, difficulty, rebirthCount, momentumCount, 
   const opts = { mode: key, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength };
   const factors = perWordFactors(opts);
   const xp = perWordXp(opts);
-  const rate = Math.round(xp / 10);
+  const rate = xp / 10; // exact to the tenth — the same division bankWordWins pays out
   const base = wordWinsBase({ keyTier, wordLength });
   return { rate, xp, base, xpBase: base * 10, mult: base > 0 ? rate / base : 1, factors };
 }
@@ -496,7 +515,15 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   // stay the same event. On the gate-crossing word the released weight covers words 1-3 and they
   // are all valued at this word's length, exactly as they are already all valued at this word's
   // difficulty and rebirth count.
-  const granted = Math.round(deltaWeight * perWordWins({ mode, difficulty, rebirthCount, wordLength }));
+  //
+  // TENTHS ARE CARRIED, NOT ROUNDED AWAY (fix/payout-honesty). A word is worth whole tenths of a
+  // win (its XP ÷ 10), the balance is whole wins. Worked in XP units: this word's XP joins the
+  // carried remainder, whole wins are paid, the leftover 0-9 tenths wait for the next word. So
+  // ten words at 10.1 bank exactly 101 — the card's rate × words, to the win — where rounding
+  // each word would have banked 100 and made +1% momentum worth nothing.
+  const xpOwed = roundWordXp(deltaWeight * perWordXp({ mode, difficulty, rebirthCount, wordLength })) + getWinsCarry();
+  const granted = Math.floor(xpOwed / 10);
+  saveWinsCarry(xpOwed - granted * 10);
   // Through the ONE door, like every other credit — so the per-word money and the bonus money are
   // summable by the same test and renderable by the same component.
   credit(granted, 'WORDS', { kind: 'word', mode });

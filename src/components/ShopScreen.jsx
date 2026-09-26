@@ -21,7 +21,7 @@ import {
 import { getWins, saveWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
-import { formatNum, formatMult } from '../format';
+import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
@@ -224,7 +224,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
                 {/* Your current per-word win rate — context for how far the tier cost is. */}
                 <div className="shop-kp-rate">
-                  YOUR RATE: <b>{formatNum(perWordWins({ mode: 'wordBomb' }))} WINS / WORD</b>
+                  YOUR RATE: <b>{formatRate(perWordWins({ mode: 'wordBomb' }))} WINS / WORD</b>
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
