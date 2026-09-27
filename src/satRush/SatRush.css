@@ -2390,3 +2390,63 @@ html[data-beat='true'] .sr-mult.sr-print::before {
     border-right: 2px solid var(--ink);
   }
 }
+
+/* =====================================================================
+   SHORT LANDSCAPE (laptop with browser chrome: 1280x551, 1366x625): THE POSTER SPREADS.
+   Stacked, the poster's pinned rows (WANTED 84 + case id + mugshots 90 + suspects 145 + reward
+   136 + msg) came to ~550px inside a ~410px frame, and the one region allowed to shrink — the
+   clue FIELDS — was squeezed to ~33px: the LAST SEEN chip peeked out and the sentence, the only
+   thing the player reads to answer, was scrolled out of sight (and the reward fell off the foot).
+   So on a short, wide screen the same poster lays out as a two-column spread under the WANTED
+   header: the case file on the left (case id → LAST SEEN / DESCRIPTION / ALIASES → mugshot
+   slots → msg), the evidence on the right (suspects or the spell-along → REWARD). Same DOM, same
+   order, same retro-print treatment; nothing animates differently. (820px, not 700: stacked 1366x768
+   clipped the clue too.) The fields keep their own
+   scroll for DESCRIPTION / ALIASES, but the clue now has ~170px — room for the longest sentence
+   in the lexicon (143 chars) at the 1280x551 floor. Tall screens are untouched.
+   ===================================================================== */
+@media (min-width: 900px) and (max-height: 820px) {
+  .sr-cardframe {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    column-gap: clamp(18px, 2.2vw, 30px);
+  }
+  .sr-wanted-wrap {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin: 0 0 8px;
+  }
+  .sr-wanted { font-size: clamp(var(--fs-panel), 7vh, var(--fs-h2)); }
+  .sr-caseid { grid-column: 1; grid-row: 2; }
+  .sr-fields {
+    grid-column: 1;
+    grid-row: 3;
+    padding-block: 8px;
+  }
+  /* the sentence stays the largest thing on the page, but at a line height that fits four lines */
+  .sr-sentence {
+    /* on the scale (16-28px); tracks height, and width so a narrow-but-taller laptop (1280x800)
+       still fits the longest clue in the left column */
+    font-size: clamp(var(--fs-body), min(3.6vh, 1.9vw), var(--fs-panel));
+    line-height: 1.4;
+  }
+  .sr-slotwrap { grid-column: 1; grid-row: 4; margin-top: 4px; }
+  .sr-msg { grid-column: 1; grid-row: 5; margin-top: 6px; }
+  .sr-lineup,
+  .sr-spell {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    align-self: start;
+    margin-top: 0;
+  }
+  /* two suspects per row in the narrower column so a 9-10 letter name never crowds its card */
+  .sr-lineup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sr-reward {
+    grid-column: 2;
+    grid-row: 4 / 6;
+    align-self: end;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+}
