@@ -44,7 +44,8 @@
 
 /* 2. WHAT THIS MODE WANTS. */
 .teach-strip-rule {
-  font-size: var(--fs-label);
+  /* THE RULE IS THE DIRECTION, so it takes --fs-body, not the 13px label size (fix/join-screens-scale). */
+  font-size: var(--fs-body);
   color: #f0ead9;
   letter-spacing: 0.04em;
 }
@@ -114,7 +115,8 @@
     padding: 8px 10px;
     gap: 8px;
   }
-  .teach-strip-act { font-size: var(--fs-label); }
+  /* A direction ("TYPE A REAL WORD"): --fs-body on a phone too, not the 13px label size. */
+  .teach-strip-act { font-size: var(--fs-body); }
   .teach-strip-pay { flex-basis: 100%; }
 }
 
@@ -145,7 +147,7 @@
     display: none;
   }
   .teach-strip-rule {
-    font-size: var(--fs-label);
+    font-size: var(--fs-body);
   }
   .teach-strip-close {
     padding: 0 10px;

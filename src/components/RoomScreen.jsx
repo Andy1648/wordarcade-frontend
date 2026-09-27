@@ -4,6 +4,7 @@ import { useSound } from '../contexts/SoundContext';
 import WaveText from './WaveText';
 import Mascot from './Mascot';
 import LayeredWord from './LayeredWord';
+import useFitZoom from '../hooks/useFitZoom';
 import PlayerDot from './PlayerDot';
 import { resolvePlayerColor } from '../playerColors';
 import { inviteLink } from '../share/links.js';
@@ -106,6 +107,10 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
   useEffect(() => () => clearTimeout(inviteCopiedTimerRef.current), []);
 
+  // Scale the lobby to the viewport (see hooks/useFitZoom.js). Above the guard: Rules of Hooks.
+  const boxRef = useRef(null);
+  useFitZoom(boxRef, !!room);
+
   if (!room) return null;
 
   const isHost = myId !== null && myId === room.hostId;
@@ -181,7 +186,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
 
   return (
     <div className="room-wrap">
-      <div className="room-box">
+      <div className="room-box" ref={boxRef}>
         {/* THE WAY OUT, IN THE CORNER CLUSTER. It was a full-width LEAVE ROOM button at the
             very bottom of the box, below the start button — the last thing on a screen whose
             job is the code at the top. Same control, same class, same handler; it now sits
@@ -195,6 +200,12 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             ← LEAVE
           </button>
         </div>
+        {/* TWO COLUMNS ON A LANDSCAPE DESKTOP (fix/join-screens-scale): SHARE (code, invite, roster)
+            on the left, SETUP (bot / mode / difficulty / start) on the right. One stacked column was
+            ~820px tall at design size, so on a 625px laptop the only way to fit it was to shrink the
+            whole screen to 0.6 — and at 8 players START went off the bottom. On phones and portrait
+            both wrappers are display:contents and the screen is the single column it always was. */}
+        <div className="room-col room-col--share">
         {/* THE CODE IS WHY THIS SCREEN EXISTS, so it is the largest thing on it. Four Bungee
             faces stacked in register — Shade, the accent fill, Inline, Outline — the same
             treatment as the CHAIN/FUSE hero and the menu wordmark. No text-shadow: the depth
@@ -269,7 +280,9 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             );
           })}
         </div>
+        </div>
 
+        <div className="room-col room-col--setup">
         {/* Fill the dead air while there still aren't enough players: the mascot
             loiters next to the roster, impatiently swaying (the bored sway is a
             wrapper animation, so it composes with the mascot's own idle bounce +
@@ -407,6 +420,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         ) : (
           <div className="room-waiting-msg">WAITING FOR HOST TO START THE GAME...</div>
         )}
+        </div>
 
       </div>
     </div>

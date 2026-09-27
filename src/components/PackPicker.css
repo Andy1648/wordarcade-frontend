@@ -102,7 +102,10 @@
    outline + offset shadow. */
 .ppp-selall {
   position: absolute; top: 0; right: 0; z-index: 7;
-  font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-micro);
+  font-family: 'Space Mono', monospace; font-weight: 700;
+  /* --fs-label, not --fs-micro: 11px broke the 13px floor, and at 390 the button was 30px tall. */
+  font-size: var(--fs-label);
+  min-height: var(--tap-min);
   letter-spacing: 0.08em; text-transform: uppercase; color: #06121f;
   background: #3DA8FF; border: 2.5px solid #000; border-radius: 9px;
   padding: 5px 10px; cursor: pointer; box-shadow: 2px 2px 0 #000;

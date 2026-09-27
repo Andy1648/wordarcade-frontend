@@ -6,8 +6,10 @@
   /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). The
      public-rooms LIST may still exceed this and scroll when there are many rooms —
      that's expected for this growing-list screen. */
-  min-height: calc(100vh / var(--app-scale, 1));
-  min-height: calc(100dvh / var(--app-scale, 1)); /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
+  /* One viewport. No --app-scale division any more: this view opts out of that zoom and fits its
+     box with hooks/useFitZoom.js instead (see Transitions.css). */
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -78,7 +80,8 @@
 .browser-subtitle {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  /* The screen's one direction line: --fs-body, not the 13px label size (fix/join-screens-scale). */
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #C9B8E8;

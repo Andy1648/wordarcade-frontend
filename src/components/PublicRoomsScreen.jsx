@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
+import useFitZoom from '../hooks/useFitZoom';
 import './PublicRoomsScreen.css';
 
 const MAX_NAME_LENGTH = 20;
@@ -42,6 +43,9 @@ export default function PublicRoomsScreen({
   onBack,
 }) {
   const { sound } = useSound();
+  // Scale the screen to the viewport (see hooks/useFitZoom.js).
+  const boxRef = useRef(null);
+  useFitZoom(boxRef);
   // The row we've sent a join for, locked until we either transition into the
   // room (this screen unmounts) or the server bounces it (cleared below).
   const [joiningCode, setJoiningCode] = useState(null);
@@ -137,7 +141,7 @@ export default function PublicRoomsScreen({
 
   return (
     <div className="browser-wrap">
-      <div className="browser-box">
+      <div className="browser-box" ref={boxRef}>
         <div className="browser-header">
           <button
             className="browser-back-btn"

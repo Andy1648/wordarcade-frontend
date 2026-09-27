@@ -62,6 +62,13 @@
 .view-screen.app-scaled {
   zoom: var(--app-scale, 1);
 }
+/* THE FORM SCREENS OPT OUT (fix/join-screens-scale). Name entry, join-by-code and the room lobby
+   are 500-800px tall; --app-scale's height cap is the 1040px game stage's, so it shrank them to 0.60
+   at 1366x625 and held them near 1.0 on a 1920x1080 monitor. They fit their OWN box to the
+   viewport instead (hooks/useFitZoom.js), so the view wrapper must not zoom them a second time. */
+.view-screen.app-scaled:has(.lobby-wrap, .browser-wrap, .room-wrap) {
+  zoom: 1;
+}
 
 /* ---- CONNECTION LOST overlay (App.jsx) ----
    The mid-game socket-drop dialog. It should land like a knockout, matching the
