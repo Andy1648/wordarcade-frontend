@@ -631,6 +631,51 @@
   font-size: var(--fs-body);
 }
 
+/* LONG-WORD MIRROR (fix/famous-long-words). Past one line's capacity at the 16px floor (SoloShell
+   measures it), the form gets data-wrap and the typed text is DRAWN by this mirror instead —
+   wrapped onto two lines at the same face, size and colour — over the real input, whose own text
+   and native caret go transparent (the native caret would sit at the single-line position, not at
+   the end of the wrapped text). The input underneath still has focus and takes every keystroke.
+   Static: the mirror carries no animation, and its caret is a plain bar, not a blinking loop. */
+.solo-input-mirror {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 clamp(14px, 1.6vw, 24px);
+  border: 4px solid transparent; /* the input's own border width, so the text lines up inside it */
+  pointer-events: none;
+  overflow: hidden;
+}
+.solo-input-mirror-text {
+  font-family: 'Space Mono', monospace;
+  /* --fs-body (16-18px): tappable-text floor. SoloShell's capacity is about the INPUT reaching its
+     own 16px floor, so it does not depend on this size; two lines of it fit the 48px inside. */
+  font-size: var(--fs-body);
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-align: center;
+  color: #fff;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  max-width: 100%;
+}
+.solo-input-mirror-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -0.12em;
+  background: var(--solo-accent);
+}
+.solo-inputwrap[data-wrap='1'] .solo-input {
+  color: transparent;
+  caret-color: transparent;
+}
+
 /* Reject sill — an always-red bar whose OPACITY pulses on each reject. The keyed remount
    restarts the animation; `both` leaves it invisible at rest. */
 .solo-sill {

@@ -64,8 +64,11 @@ writeFileSync(join(SOLO, 'words.accept-ext.txt'), kept.join(' '));
 // maxLength must admit it from the FIRST run, but the extension only loads after a run ends,
 // so words.js reads this length instead of waiting for the ext chunk. Generated here (the last
 // step that writes an accept list), never hand-edited; acceptExt.test.js asserts it matches.
+// The hand-curated famous long words (src/solo/words.famous.txt) are merged into the accept set
+// at load time, so they count here too — pneumonoultramicroscopicsilicovolcanoconiosis is 45.
+const famous = readFileSync(join(SOLO, 'words.famous.txt'), 'utf8').split(/\s+/).filter(Boolean);
 let maxLen = 0;
-for (const list of [recall, accept, kept]) for (const w of list) if (w.length > maxLen) maxLen = w.length;
+for (const list of [recall, accept, kept, famous]) for (const w of list) if (w.length > maxLen) maxLen = w.length;
 writeFileSync(join(SOLO, 'acceptMaxLen.json'), `${JSON.stringify({ maxLen })}
 `);
 
