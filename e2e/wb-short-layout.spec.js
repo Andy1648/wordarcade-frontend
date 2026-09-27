@@ -11,9 +11,13 @@
 // be evenly laid out — so each assertion is re-pointed at the ring-era DOM.
 //
 // Per viewport (one Word Bomb turn via the backend mock) this asserts:
-//   1) BOMB    — the ring is >= 45% of the board's shorter side and the bomb is 0.42 of the
-//                ring (the rebuilt board fixes that share; see wb-ring.spec.js), so the clock
-//                is never a small object lost in a big empty circle.
+//   1) BOMB    — the ring is >= 45% of the board's shorter side and the bomb is the ring's
+//                DESIGNED share, 0.34 (--wb-bomb-w in GameScreen.css), so the clock is never a
+//                small object lost in a big empty circle. The share is a fixed CSS ratio, so it
+//                is gated as a BAND (33-35%), not a floor: it was 0.42 when this gate was written
+//                (58b6f28), and 57dc060 cut it to 0.34 because the bomb's bounding box touched
+//                the diagonal seats. Restoring 0.42 fails every wb-ring.spec.js overlap test
+//                (12/12, measured), so a floor above 34 can only pass on a colliding board.
 //   2) ROW     — the input row is CENTRED on the board (it is the full-width bottom row now,
 //                not a right-hand column), and the text field takes >= 90% of the row width
 //                left after the SEND/SKIP buttons.
@@ -132,14 +136,17 @@ function measure() {
 }
 
 for (const { w, h } of VIEWPORTS) {
-  test(`WB short layout @ ${w}x${h}: ring >=45% of the board, row centred, placeholder unclipped, seats even`, async ({ page }) => {
+  test(`WB short layout @ ${w}x${h}: ring >=45% of the board, bomb 0.34 of it, row centred, placeholder unclipped, seats even`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await enterWordBombTurn(page);
     const m = await page.evaluate(measure);
     // eslint-disable-next-line no-console
     console.log(`[wb-short-layout ${w}x${h}] ${JSON.stringify(m)}`);
     expect(m.err).toBeUndefined();
-    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeGreaterThanOrEqual(39);
+    // The designed share, 0.34 of the ring. Below the band the bomb is shrinking into the ring;
+    // above it the bomb is growing into the seats (wb-ring.spec.js owns the overlap itself).
+    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeGreaterThanOrEqual(33);
+    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeLessThanOrEqual(35);
     expect(m.ringOfStage, 'ring % of the board short side').toBeGreaterThanOrEqual(45);
     expect(m.rowOffCentrePct, `input row off the board centre (${m.rowPx})`).toBeLessThanOrEqual(2);
     expect(m.fieldFill, `field % of row width after buttons (${m.fieldPx})`).toBeGreaterThanOrEqual(90);
