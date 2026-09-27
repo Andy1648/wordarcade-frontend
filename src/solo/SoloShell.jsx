@@ -229,6 +229,7 @@ export default function SoloShell({
             className="solo-input"
             type="text"
             value={input}
+            style={{ '--len': Math.max(input.length, 1) }}
             onChange={(e) => {
               wpmKeyStroke(); // WPM (§2): typing activity opens this word's active-typing span
               onInput(e.target.value);

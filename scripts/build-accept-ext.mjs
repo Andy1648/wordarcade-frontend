@@ -4,14 +4,14 @@
 //
 // WHY: the shipped accept set (RECALL ∪ words.accept.txt ≈ 88k) is FREQUENCY-filtered
 // (only word-list words that also appear in Norvig's count_1w corpus). ~180k real
-// word-list words (3-15, a-z) are therefore rejected as "NOT IN OUR WORD LIST" even
-// though they are valid English. This extension = every word-list word (3-15, a-z) NOT
+// word-list words (3+ letters, a-z) are therefore rejected as "NOT IN OUR WORD LIST" even
+// though they are valid English. This extension = every word-list word (3+ letters, a-z) NOT
 // already accepted, used ONLY to validate human input (never for generation). Generation
 // (words.recall.txt, fragment pools, top-3000, reveal words) is untouched.
 //
 // Source: the `word-list` npm package (v4.1.0, MIT) — the atebits/Words en.txt list,
 // a permissive/public real-word dictionary (the same MEMBERSHIP filter build-words.mjs
-// already uses). Filtered a-z, length 3-15, lowercase, deduped.
+// already uses). Filtered a-z, length 3+ (no upper cap), lowercase, deduped.
 //
 // Run:  node scripts/build-accept-ext.mjs
 // Regenerates the committed asset and prints the counts, brotli size, and the CHAIN
@@ -32,7 +32,7 @@ const ROOT = resolve(__dirname, '..');
 const SOLO = join(ROOT, 'src', 'solo');
 const AZ = /^[a-z]+$/;
 const MIN = 3;
-const MAX = 15;
+const MAX = Infinity; // no upper bound — see ACCEPT_MAX in build-words.mjs
 
 // ---- 1. Build the extension (word-list ∩ [3..15] a-z) MINUS the current accept union.
 const wordList = readFileSync(join(ROOT, 'node_modules', 'word-list', 'words.txt'), 'utf8').trim().split('\n');
@@ -42,7 +42,7 @@ const acceptExtra = readFileSync(join(SOLO, 'words.accept.txt'), 'utf8').split('
 const union = new Set(recall); // current shipped accept set (RECALL ∪ accept.txt)
 for (const w of acceptExtra) union.add(w);
 
-const bigFiltered = new Set(); // all word-list words in the 3-15 a-z band (the full target vocab)
+const bigFiltered = new Set(); // all word-list words of 3+ letters, a-z (the full target vocab)
 for (const raw of wordList) {
   const w = raw.trim().toLowerCase();
   if (w.length < MIN || w.length > MAX) continue;
@@ -119,7 +119,7 @@ const bankNew = worstOver(merged);
 // ---- Report.
 console.log('=== ACCEPTANCE EXTENSION ===');
 console.log(`word-list source:        ${wordList.length} words (word-list v4.1.0, MIT / atebits Words)`);
-console.log(`full 3-15 a-z vocab:     ${bigFiltered.size} words (the target accept set)`);
+console.log(`full 3+ a-z vocab:       ${bigFiltered.size} words (the target accept set)`);
 console.log(`current accept union:    ${union.size} words (RECALL ∪ words.accept.txt)`);
 console.log(`extension increment:     ${ext.length} words  → src/solo/words.accept-ext.txt`);
 console.log(`merged accept set:       ${merged.size} words`);
