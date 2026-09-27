@@ -72,7 +72,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -610,6 +610,16 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
   }
 
+  // Dialog PLAY SOLO (Word Bomb): straight into a round vs a medium bot - App's handlePlaySolo sends
+  // the create/add_bot frames and starts once the bot is seated. Through runWhenConnected like
+  // CREATE, so a cold socket shows WAKING THE SERVER… on the button and fires on open.
+  function handleDialogSolo() {
+    if (navigating || !dialog) return;
+    sound.click();
+    setNavigating(true);
+    runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
+  }
+
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
   // (App's onJoinRoom => handleOpenBrowser). Same flow as the bottom-bar JOIN.
   function handleDialogJoin() {
@@ -935,6 +945,7 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             onCreate={handleDialogCreate}
             onJoin={handleDialogJoin}
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
+            onPlaySolo={dialog.game.id === 'word-bomb' && onPlaySolo ? handleDialogSolo : undefined}
             connecting={connecting}
             coldStart={coldStart}
             blitzPacks={blitzPacks}
