@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
+import KoHero from './KoHero';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
@@ -1207,7 +1208,53 @@ function MissedAnswers({ answers }) {
  * `players` roster (final standings) seeds the per-player rows so everyone
  * appears even if they never played a word.
  */
-function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerIn = false, reduce = true }) {
+/**
+ * GAME STATS behind one tap WHEN THE CARD WOULD NOT FIT (feat/ko-screen).
+ *
+ * A phone card is one column — K.O. hero, the word you missed, the payout breakdown, highlights,
+ * summary, a row per player, then REMATCH — ~1100px of card in 788px of window. And a 4-player card
+ * on a 1280x551 laptop (a 1366 screen at 125% scaling) has ~1265px of content for ~340px of column.
+ * So the per-player breakdown and the highlights fold into this <details>:
+ *   - on a PHONE (<= 899px wide) it always starts closed;
+ *   - on a LAPTOP it starts open, and ONE measurement — at mount and again once the fonts have
+ *     loaded, never per frame — closes it and marks the card compact (data-ko-compact, which also
+ *     moves the highlights in here) only if the card actually overflows.
+ * The payout breakdown never folds: nothing about WINS is ever hidden.
+ */
+function GameOverBreakdown({ children }) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const phone = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 899px)').matches;
+    el.open = !phone;
+    if (phone) return undefined;
+    let live = true;
+    const check = () => {
+      if (!live || !el.isConnected) return;
+      const card = el.closest('.game-over-card');
+      if (!card || card.dataset.koCompact) return;
+      if (card.scrollHeight - card.clientHeight > 0) {
+        card.dataset.koCompact = '1';
+        el.open = false;
+      }
+    };
+    check();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
+    return () => { live = false; };
+  }, []);
+  return (
+    <details className="go-more" ref={ref}>
+      <summary className="go-more-toggle">GAME STATS · ALL PLAYERS</summary>
+      {children}
+    </details>
+  );
+}
+
+// `part` (feat/ko-screen): 'awards' renders only the HIGHLIGHTS; 'table' renders the game summary +
+// the per-player table; omitted, both. The laptop card puts the highlights in the money column and
+// the table in the breakdown column — split by height, so a 4-player card fits a 551px window.
+function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerIn = false, reduce = true, part }) {
   // Entrance choreography only (JUICE 03 parity) — the data/calculations below
   // are unchanged. reduce defaults true so any caller that doesn't opt in keeps
   // the prior static render. Reuses JUICE 03's global @keyframes (no CSS change).
@@ -1335,59 +1382,31 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
     });
   }
 
+  const showAwards = part !== 'table' && awards.length > 0;
+  const showTable = part !== 'awards';
+  if (!showAwards && !showTable) return null;
+
   return (
-    <div className="go-stats">
-      {/* Aggregate headline stats only add value at 3+ players; in a 1v1 they just
-          duplicate what the HIGHLIGHTS + per-player breakdown below already show. */}
-      {players.length > 2 && (
+    <div className={`go-stats${part ? ` go-stats--${part}` : ''}`}>
+      {/* GAME SUMMARY (3+ players): ONE wrapped strip of figures, not seven tiles. The tiles were
+          three rows of 70px boxes — the single biggest reason a 4-player card ran 308px past a
+          625px window. Same seven facts, same order. */}
+      {showTable && players.length > 2 && (
       <>
       <div className="go-section-label">GAME SUMMARY</div>
-      <div className="go-stats-summary">
-        <div className="go-summary-item" style={summaryStyle(0)}>
-          <div className="go-summary-value">
-            <CountUp to={words.length} duration={500} />
-          </div>
-          <div className="go-summary-label">WORDS</div>
-        </div>
-        <div className="go-summary-item" style={summaryStyle(1)}>
-          <div className="go-summary-value">
-            {longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}
-          </div>
-          <div className="go-summary-label">LONGEST</div>
-        </div>
-        <div className="go-summary-item" style={summaryStyle(2)}>
-          <div className="go-summary-value">
-            {fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}
-          </div>
-          <div className="go-summary-label">FASTEST</div>
-        </div>
-        <div className="go-summary-item" style={summaryStyle(3)}>
-          <div className="go-summary-value">{formatDuration(durationMs)}</div>
-          <div className="go-summary-label">SURVIVED</div>
-        </div>
-        <div className="go-summary-item" style={summaryStyle(4)}>
-          <div className="go-summary-value">
-            <CountUp to={bestCombo} duration={500} />
-          </div>
-          <div className="go-summary-label">BEST STREAK</div>
-        </div>
-        <div className="go-summary-item" style={summaryStyle(5)}>
-          <div className="go-summary-value">
-            <CountUp to={timeouts.length} duration={500} />
-          </div>
-          <div className="go-summary-label">TIMEOUTS</div>
-        </div>
-        <div className="go-summary-item" style={summaryStyle(6)}>
-          <div className="go-summary-value">
-            <CountUp to={skips.length} duration={500} />
-          </div>
-          <div className="go-summary-label">SKIPS</div>
-        </div>
-      </div>
+      <ul className="go-sumstrip">
+        <li style={summaryStyle(0)}><b><CountUp to={words.length} duration={500} /></b> WORDS</li>
+        <li style={summaryStyle(1)}><b>{longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}</b> LONGEST</li>
+        <li style={summaryStyle(2)}><b>{fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}</b> FASTEST</li>
+        <li style={summaryStyle(3)}><b>{formatDuration(durationMs)}</b> SURVIVED</li>
+        <li style={summaryStyle(4)}><b><CountUp to={bestCombo} duration={500} /></b> BEST STREAK</li>
+        <li style={summaryStyle(5)}><b><CountUp to={timeouts.length} duration={500} /></b> TIMEOUTS</li>
+        <li style={summaryStyle(6)}><b><CountUp to={skips.length} duration={500} /></b> SKIPS</li>
+      </ul>
       </>
       )}
 
-      {awards.length > 0 && (
+      {showAwards && (
         <>
           <div className="go-section-label">HIGHLIGHTS</div>
           <div className="go-awards">
@@ -1402,54 +1421,48 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
         </>
       )}
 
+      {/* PLAYERS: a real TABLE — the column names once, one row per player. It was a card per
+          player with its own five labels, which is five label rows per player; at four players
+          that block alone was taller than a laptop window. The longest word rides under the name
+          (it is a word, not a number, and would widen a column). */}
+      {showTable && (
+      <>
       <div className="go-section-label">PLAYERS</div>
-      <div className="go-players">
-        {perPlayer.map((p) => {
-          const pc = resolvePlayerColor(playerColors, p.id);
-          return (
-          <div
-            key={p.id}
-            className="go-player"
-            style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
-          >
-            <div className="go-player-name">
-              <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-              <span className="go-player-name-text" translate="no">{p.name}</span>
-            </div>
-            <div className="go-player-grid">
-              <div className="go-pstat">
-                <span className="go-pstat-val">
-                  <CountUp to={p.count} duration={500} />
-                </span>
-                <span className="go-pstat-key">WORDS</span>
-              </div>
-              <div className="go-pstat">
-                <span className="go-pstat-val">
-                  {p.longest ? p.longest.toUpperCase() : '—'}
-                </span>
-                <span className="go-pstat-key">LONGEST</span>
-              </div>
-              <div className="go-pstat">
-                <span className="go-pstat-val">{p.count ? p.avg.toFixed(1) : '—'}</span>
-                <span className="go-pstat-key">AVG LEN</span>
-              </div>
-              <div className="go-pstat">
-                <span className="go-pstat-val">
-                  <CountUp to={p.timeouts} duration={500} />
-                </span>
-                <span className="go-pstat-key">TIMEOUTS</span>
-              </div>
-              <div className="go-pstat">
-                <span className="go-pstat-val">
-                  <CountUp to={p.skips} duration={500} />
-                </span>
-                <span className="go-pstat-key">SKIPS</span>
-              </div>
-            </div>
-          </div>
-          );
-        })}
-      </div>
+      <table className="go-ptable">
+        <thead>
+          <tr>
+            <th scope="col">PLAYER</th>
+            <th scope="col">WORDS</th>
+            <th scope="col">AVG LEN</th>
+            <th scope="col">TIMEOUTS</th>
+            <th scope="col">SKIPS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {perPlayer.map((p) => {
+            const pc = resolvePlayerColor(playerColors, p.id);
+            return (
+              <tr key={p.id} style={{ '--pc': pc.color, '--pc-dark': pc.dark }}>
+                <th scope="row" className="go-pt-name">
+                  <span className="go-pt-who">
+                    <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                    <span className="go-player-name-text" translate="no">{p.name}</span>
+                  </span>
+                  {p.longest ? (
+                    <span className="go-pt-longest">LONGEST <b translate="no">{p.longest.toUpperCase()}</b></span>
+                  ) : null}
+                </th>
+                <td><CountUp to={p.count} duration={500} /></td>
+                <td>{p.count ? p.avg.toFixed(1) : '—'}</td>
+                <td><CountUp to={p.timeouts} duration={500} /></td>
+                <td><CountUp to={p.skips} duration={500} /></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      </>
+      )}
     </div>
   );
 }
@@ -2914,6 +2927,22 @@ export default function GameScreen({
   // resets the clock (timeRatio jumps back to ~1) - that's the relief release.
   const danger = showCountdown || gameOver ? 0 : Math.pow(1 - timeRatio, 1.8);
 
+  // ---- THE READABLE COUNTDOWN (fix/wb-readability-and-timer) ----
+  // Derived from the SAME timerSeconds / timeRatio the classes above ride, so the
+  // number, the bar and the colour of the screen are one fact stated three ways and
+  // can never drift apart. No timer of its own: App owns the clock (timer_tick).
+  //   timerShown - null while the 3-2-1-GO! splash is up or the game is over (there
+  //                is no live turn to count), so the readout shows "--" instead of a
+  //                stale second from the previous turn.
+  //   timerFill  - the bar's scaleX, clamped, and pinned to empty once time is up.
+  //   wbTimerTier- '' | 'warning' | 'critical', on the SAME 0.6 / 0.3 thresholds the
+  //                wall tint and `critical` use.
+  const timerLive =
+    !showCountdown && !gameOver && typeof timerSeconds === 'number' && timerSeconds >= 0;
+  const timerShown = timerLive ? Math.max(0, Math.round(timerSeconds)) : null;
+  const timerFill = timerLive ? timeRatio : 1;
+  const wbTimerTier = !timerLive ? '' : timeRatio < 0.3 ? 'critical' : timeRatio < 0.6 ? 'warning' : '';
+
   // DISCRETE tension tier for the CSS tension skin (edge vignette / speed lines /
   // HURRY! prompt / final throb). Thresholds mirror the old canvas skin's on
   // t = 1 - timeRatio (speed lines at t≥0.45, HURRY at t≥0.6, GET OUT!/throb/siren
@@ -3237,6 +3266,44 @@ export default function GameScreen({
             <div className={`game-combo${isCategory ? ' category' : ''}`} translate="no">
               {promptValue}
             </div>
+          </div>
+        </div>
+        {/* ===== THE COUNTDOWN (fix/wb-readability-and-timer) =====
+            Measured on a live round: the remaining time drove CSS CLASSES ONLY - the
+            wall's warning/critical tint, the stage's draining/heartbeat, the danger
+            vignette, the bomb's rattle - and the only NUMBER on the board was the one
+            on the bomb's belly, which BombVisual shows at timerSeconds <= 5. For the
+            first ~17 of a 22s turn there was nothing to read: the player could feel the
+            panic and could not tell how long was left.
+
+            It rides EXACTLY the state those classes ride (timerSeconds / maxTimer -> the
+            same timeRatio `critical`, `danger` and `draining` are derived from), so the
+            number can never disagree with the colour of the screen around it.
+
+            BESIDE the prompt, not under it. .wb-top is a shrink-to-fit flex row and the
+            ring's diameter reserves max(topH, botH) on BOTH sides of its row
+            (wbRingSize.js) - a readout stacked UNDER the prompt would cost the ring
+            twice its height. Sat alongside, it is shorter than the plaque it joins and
+            costs the ring nothing. */}
+        <div
+          className={`wb-timer${wbTimerTier ? ` is-${wbTimerTier}` : ''}`}
+          role="timer"
+          aria-label={
+            timerShown == null ? 'Turn timer' : `${timerShown} seconds left this turn`
+          }
+        >
+          <div className="wb-timer-label">TIME</div>
+          <div className="wb-timer-value" translate="no">
+            {timerShown == null ? '--' : timerShown}
+          </div>
+          {/* The depleting bar. scaleX off the SAME ratio - a transform, never a width
+              (CLAUDE.md animation budget: width is layout, scaleX is the compositor).
+              transform-origin is left so it drains toward the empty end. */}
+          <div className="wb-timer-bar" aria-hidden="true">
+            <div
+              className="wb-timer-fill"
+              style={{ transform: `scaleX(${timerFill.toFixed(4)})` }}
+            />
           </div>
         </div>
         </div>
@@ -3826,28 +3893,43 @@ export default function GameScreen({
           {!iWon && <div className="go-slam-flash" />}
           {!iWon && <LossImpact />}
           <div ref={goCardRef} className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
+            {/* ===== COLUMNS ON A LAPTOP, ONE STACK ON A PHONE =========================
+                Measured on a live round: this card was scrollHeight 1388 inside
+                clientHeight 759 - 629px of it, including the entire PLAYERS breakdown
+                and (at 1366x625, where 837px was hidden) the REMATCH button itself,
+                was reachable only by scrolling a card most players never think to
+                scroll. It is not one thing that got too tall; it is ten blocks in a
+                440px column, inside a window with ~900px of empty board either side.
+
+                So the card splits by JOB rather than shrinking by degrees:
+                  .go-col-main  THE VERDICT - mascot, outcome, who won, the word you
+                                could have played, the roast. What you look at first.
+                  .go-col-mid   THE MONEY - what you earned and where it came from.
+                  .go-col-side  THE BREAKDOWN - highlights and the per-player table.
+                                This is the tall one, which is why it gets its own
+                                column at >=1160px instead of riding under the money.
+                  .go-foot      THE EXITS - REMATCH / LEAVE and the other-mode row,
+                                spanning every column so they are the last line of the
+                                card and always above the fold.
+                Below 900px every .go-col is `display: contents`, so the phone card is
+                the same single stack in the same DOM order it has always been.
+                ========================================================================= */}
+            <div className="go-col go-col-main">
             {/* The mascot's emotional reaction, large and centred above the title.
                 The wrapper owns a dedicated transform (celebrate hop / defeat
                 tremble) so it never fights the mascot's own internal layers. */}
-            <div className={`go-mascot-wrap ${iWon ? 'win' : 'loss'}`}>
-              <Mascot
-                pose={iWon ? 'celebrate' : 'panic'}
-                emote={iWon ? 'celebrate' : 'slump'}
-                size={150}
-                className="game-over-mascot"
-              />
-            </div>
-            {/* Outcome title routes through the JUICE 03 stamp-slam (win drops the
-                old winner-bounce); loss uses the same slam for consistency. */}
             {iWon ? (
-              <div className="game-over-title win" style={goTitleStyle}>YOU WIN!</div>
+              <>
+                <div className="go-mascot-wrap win">
+                  <Mascot pose="celebrate" emote="celebrate" size={150} className="game-over-mascot" />
+                </div>
+                {/* Outcome title routes through the JUICE 03 stamp-slam. */}
+                <div className="game-over-title win" style={goTitleStyle}>YOU WIN!</div>
+              </>
             ) : (
-              <div className="game-over-title eliminated" style={goTitleStyle}>ELIMINATED</div>
-            )}
-            {!iWon && (
-              <div className="game-over-winner">
-                {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
-              </div>
+              // THE K.O. SIGN (feat/ko-screen): the fight banner replaces the mascot + ELIMINATED +
+              // "RIVAL WINS" stack. It carries its own heading role and winner line.
+              <KoHero winnerName={winner ? winner.name : ''} />
             )}
             {/* PAUSE TO LEARN. Word Bomb ends on a FRAGMENT you could not fill, not on a word
                 you got wrong — so this is a word that WOULD have worked, derived from that last
@@ -3863,18 +3945,32 @@ export default function GameScreen({
             />
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
+            </div>
+            {/* ===== THE MONEY COLUMN: what you earned and where it came from. ===== */}
+            <div className="go-col go-col-mid">
             <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
             {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
                 from." Every multiplier that contributed, ranked by its share of the total. */}
             <RoundPayout ledger={payoutLedger} />
-            <GameOverStats
-              gameStats={gameStats}
-              players={players}
-              winner={winner}
-              playerColors={playerColors}
-              staggerIn={goStaggered}
-              reduce={goReduce}
-            />
+            {/* HIGHLIGHTS ride under the money on a laptop (feat/ko-screen): that column had
+                ~300px of empty space under the payout while the breakdown column ran off the
+                window. On a phone this slot is hidden and the highlights sit in GAME STATS below. */}
+            <div className="go-awards-slot go-awards-slot--mid">
+              <GameOverStats gameStats={gameStats} players={players} winner={winner} playerColors={playerColors} staggerIn={goStaggered} reduce={goReduce} part="awards" />
+            </div>
+            </div>
+            {/* ===== THE BREAKDOWN COLUMN: the game summary + the per-player table. ===== */}
+            <div className="go-col go-col-side">
+            <GameOverBreakdown>
+              <div className="go-awards-slot go-awards-slot--side">
+                <GameOverStats gameStats={gameStats} players={players} winner={winner} playerColors={playerColors} staggerIn={goStaggered} reduce={goReduce} part="awards" />
+              </div>
+              <GameOverStats gameStats={gameStats} players={players} winner={winner} playerColors={playerColors} staggerIn={goStaggered} reduce={goReduce} part="table" />
+            </GameOverBreakdown>
+            </div>
+            {/* ===== THE EXITS — span both columns, so they are the last line of the
+                card at every width and can never fall below the fold. ===== */}
+            <div className="go-foot">
             <div className="game-over-actions">
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
@@ -3905,6 +4001,7 @@ export default function GameScreen({
                 mode — the one played least — so game-over is a fork, not a loop back into the same
                 mode. Renders nothing when everything else is still locked. */}
             <TryModeRow current="word-bomb" />
+            </div>
           </div>
         </div>
       )}

@@ -159,6 +159,12 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
 
     root.classList.add('parallax-on');
 
+    // The three nodes that actually carry a transform. Queried ONCE here, never per
+    // move: the hint is toggled on these, not on the scene root, because it is the
+    // layers that move and a hint on their parent promotes the wrong box.
+    const layers = [...root.querySelectorAll('.wall-parallax-layer')];
+    const hint = (v) => { for (const el of layers) el.style.willChange = v; };
+
     let targetX = 0;
     let targetY = 0;
     let curX = 0;
@@ -177,6 +183,11 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
         rafId = requestAnimationFrame(tick);
       } else {
         rafId = null;
+        // ...and drop the compositor hint the moment the glide is over. These are
+        // always-present idle nodes; a will-change parked on them in CSS held three
+        // promoted layers for the whole session (CLAUDE.md animation budget). ON for
+        // the life of the animation, OFF at rest.
+        hint('');
       }
     };
 
@@ -185,13 +196,17 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
     const onMove = (e) => {
       targetX = (e.clientX / window.innerWidth) * 2 - 1; // -1 (left) .. 1 (right)
       targetY = (e.clientY / window.innerHeight) * 2 - 1; // -1 (top) .. 1 (bottom)
-      if (rafId == null) rafId = requestAnimationFrame(tick);
+      if (rafId == null) {
+        hint('transform');
+        rafId = requestAnimationFrame(tick);
+      }
     };
 
     window.addEventListener('mousemove', onMove, { passive: true });
     return () => {
       window.removeEventListener('mousemove', onMove);
       if (rafId != null) cancelAnimationFrame(rafId);
+      hint('');
       root.classList.remove('parallax-on');
       root.style.removeProperty('--mx');
       root.style.removeProperty('--my');
