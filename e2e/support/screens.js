@@ -9,7 +9,7 @@
 // Exports: VIEWPORTS, SHOT_VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS + the nav primitives.
 import { installBackendMock } from './backendMock.js';
 import { GAMES } from '../../src/gameData.js';
-import { isPhoneMenu, joinControl, menuReady, modeEntry, phoneCanOpen, soloEntryQuery } from './menu.js';
+import { joinControl, menuReady, modeEntry, navControl } from './menu.js';
 
 // The level to seed so a gated mode is still LOCKED. Derived from the real gate, never a literal:
 // this map hardcoded 16 for FUSE, written when FUSE unlocked at LV25. fix/unlock-gates lowered it
@@ -71,16 +71,8 @@ export async function bootRoom(page, gameType, players) {
 export async function enterSolo(page, id) {
   await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
-  // PHONE: CHAIN and FUSE have no card to click — the phone menu replaces both with one
-  // "CHAIN + FUSE UNLOCK AS YOU PLAY" line (MobileMenu.jsx). They are still REACHABLE, by the
-  // shipped /chain/play and /fuse/play deep links, which bridge to ?chain=1 / ?fuse=1
-  // (router.js). That is the path a phone player actually arrives on, so it is the path this
-  // drives — the mode is entered for real, not through a test-only hook.
-  if (isPhoneMenu(page) && !phoneCanOpen(id)) {
-    await page.goto(`/?portal=1&soloms=350&${soloEntryQuery(id)}`);
-    await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
-    return;
-  }
+  // Either width: the desktop card or the phone's CHAIN | FUSE half — both open the same solo
+  // mode dialog, whose PLAY button enters the mode (support/menu.js modeEntry).
   await page.goto('/?portal=1&soloms=350');
   await menuReady(page);
   await page.waitForTimeout(400);
@@ -96,12 +88,11 @@ export const cbPlayers = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', nam
 
 // ---------------------------------------------------------------------------------------------
 // PHONE REACHABILITY. `phone: false` on a screen means THE PRODUCT has no way to open it at
-// <=480px — not that the test is awkward there. MobileMenu.jsx renders exactly three sections
-// (title + sound, three mode rows, unlock line + JOIN), so the corner nav (SHOP / STATS /
-// REBIRTH), the CREDITS footer link and the CHAIN/FUSE cards simply do not exist at that width.
-// A screen reached only through one of those has no phone path to drive, and the matrix skips
-// that CELL with the reason stated, rather than driving a desktop selector that cannot resolve.
-// Every one of these is listed in the branch summary; they are gaps in the app, not in the gate.
+// <=480px — not that the test is awkward there — and the matrix skips that CELL with the reason
+// (`phoneWhy`) stated. No screen carries it today: fix/phone-menu-nav gave the phone menu the
+// CHAIN | FUSE band, the SHOP / STATS / REBIRTH strip and CREDITS, so shop / stats / credits /
+// dialog-chain / dialog-fuse / locked-chain / locked-fuse are all driven at phone width through
+// the same width-agnostic helpers (modeEntry / navControl) as every other screen.
 // ---------------------------------------------------------------------------------------------
 // Each screen: name, root selector, overlay?, and an async nav(page) that lands on it.
 export const SCREENS = [
@@ -109,13 +100,13 @@ export const SCREENS = [
   { name: 'menu', root: '.homepage-wrap', overlay: false, nav: async (page) => bootMenu(page, 40) },
   { name: 'dialog-word-bomb', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'word-bomb').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'dialog-category-blitz', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'category-blitz').click(); await page.locator('.ppp-picker').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-chain', phone: false, phoneWhy: 'the phone menu has no CHAIN card, so its mode dialog has no phone entry', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-fuse', phone: false, phoneWhy: 'the phone menu has no FUSE card, so its mode dialog has no phone entry', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-chain', phone: false, phoneWhy: 'the locked-preview panel opens from the CHAIN card, which the phone menu replaces with one text line', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('chain')); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-fuse', phone: false, phoneWhy: 'the locked-preview panel opens from the FUSE card, which the phone menu replaces with one text line', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('fuse')); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'credits', phone: false, phoneWhy: 'the CREDITS link lives in the desktop footer; the phone menu has no footer', root: '.credits-wrap', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-credits-link').click(); await page.locator('.credits-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'shop', phone: false, phoneWhy: 'SHOP is in the desktop corner nav, which the phone menu does not render', root: '.shop-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-nav-btn.is-shop').click(); await page.locator('.shop-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'stats', phone: false, phoneWhy: 'STATS is in the desktop corner nav, which the phone menu does not render', root: '.stats-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await page.locator('.homepage-nav-btn.is-stats').click(); await page.locator('.stats-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('chain')); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('fuse')); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'credits', root: '.credits-wrap', overlay: true, nav: async (page) => { await bootMenu(page, 40); await navControl(page, 'credits').click(); await page.locator('.credits-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'shop', root: '.shop-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await navControl(page, 'shop').click(); await page.locator('.shop-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'stats', root: '.stats-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await navControl(page, 'stats').click(); await page.locator('.stats-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'lobby', root: '.lobby-wrap', overlay: false, nav: async (page) => { await bootMenu(page, 40); await card(page, 'word-bomb').click(); await page.locator('.mode-dialog-btn-create').click(); await page.locator('.lobby-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'browser', root: '.browser-wrap', overlay: false, nav: async (page) => { await bootMenu(page, 40); await joinControl(page).click(); await page.locator('.browser-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'room', root: '.room-wrap', overlay: false, nav: async (page) => { await bootRoom(page, 'word-bomb', wbPlayers); await page.locator('.room-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },

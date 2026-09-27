@@ -4,7 +4,7 @@
 // scale the fixed overlay's 88dvh past the screen and run it off the top and bottom.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { PHONE_MENU_MAX } from './support/menu.js';
+import { menuReady, navControl } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 }, // wide → app-scale ~1.385: the case the previous pass missed
@@ -19,7 +19,7 @@ const VIEWPORTS = [
   { w: 360, h: 640 },
 ];
 
-async function openVia(page, selector) {
+async function openVia(page, which) {
   await installBackendMock(page);
   await page.addInitScript(() => {
     try {
@@ -29,8 +29,9 @@ async function openVia(page, selector) {
     } catch { /* ignore */ }
   });
   await page.goto('/?portal=1');
-  await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
-  await page.locator(selector).click();
+  // Either tree: the desktop corner nav, or the phone menu's SHOP / REBIRTH strip.
+  await menuReady(page);
+  await navControl(page, which).click();
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
 
@@ -42,15 +43,12 @@ async function measure(page) {
 }
 
 for (const { w, h } of VIEWPORTS) {
-  for (const [view, selector] of [['SHOP', '.homepage-nav-btn.is-shop'], ['REBIRTH', '.homepage-nav-btn.is-rebirth']]) {
+  for (const [view, which] of [['SHOP', 'shop'], ['REBIRTH', 'rebirth']]) {
     test(`${view} panel fits ${w}x${h}: top>=0 and bottom<=innerHeight`, async ({ page }) => {
-      // GATED TO >480px: SHOP and REBIRTH are corner-nav buttons, and the phone menu
-      // (MobileMenu.jsx, <=480px) renders no corner nav — there is no way to open either panel
-      // on a phone, so there is no panel to measure. This is a product gap, reported with the
-      // branch, not a test that was inconvenient to write.
-      test.skip(w <= PHONE_MENU_MAX, `${view} has no phone entry point (no corner nav <=480px)`);
+      // Every width, phones included: at <=480px SHOP and REBIRTH are the phone menu's nav strip
+      // (fix/phone-menu-nav), so the panel is measured there too instead of being skipped.
       await page.setViewportSize({ width: w, height: h });
-      await openVia(page, selector);
+      await openVia(page, which);
       const m = await measure(page);
       // eslint-disable-next-line no-console
       console.log(`[shop-fit] ${view} ${w}x${h}  top=${m.top} bottom=${m.bottom} ih=${m.ih}  ${m.top >= 0 && m.bottom <= m.ih ? 'PASS' : 'FAIL'}`);

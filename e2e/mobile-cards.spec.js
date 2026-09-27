@@ -23,12 +23,14 @@
 //   3. no horizontal scroll AND no vertical scroll — the old spec could only check horizontal,
 //      because vertical scrolling was the mechanism it was testing,
 //   4. every row is a real 44px touch target, which the card grid was never asked about.
-// CHAIN and FUSE are deliberately NOT rows here — the phone menu replaces both with one
-// "CHAIN + FUSE UNLOCK AS YOU PLAY" line — so this asserts that line is present instead of
-// asserting two cards that do not exist. See MobileMenu.jsx.
+//   5. (fix/phone-menu-nav) every OTHER menu destination has an in-view 44px control too: the
+//      CHAIN | FUSE halves, SHOP and STATS, and CREDITS. The first phone menu had none of them
+//      and replaced CHAIN/FUSE with a line of text; this is what keeps them from quietly going
+//      missing again. (REBIRTH is gated on progress exactly like the desktop nav, so on this
+//      fresh profile it is correctly absent — see shop-fit.spec for it at phone width.)
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, PHONE_MODE_IDS, PHONE_MENU_MAX } from './support/menu.js';
+import { menuReady, PHONE_MODE_IDS, PHONE_SOLO_IDS, PHONE_MENU_MAX } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 390, h: 844 },
@@ -47,7 +49,7 @@ for (const { w, h } of VIEWPORTS) {
     await menuReady(page);
     await page.waitForTimeout(400);
 
-    const r = await page.evaluate((ids) => {
+    const r = await page.evaluate(({ ids, soloIds }) => {
       const vh = window.innerHeight;
       const vw = window.innerWidth;
       const de = document.documentElement;
@@ -64,24 +66,33 @@ for (const { w, h } of VIEWPORTS) {
       }
       const footEl = document.querySelector('.hp-m-foot');
       const joinEl = document.querySelector('.hp-m-join');
-      const unlockEl = document.querySelector('.hp-m-unlock');
       const boxOf = (el) => {
         if (!el) return null;
         const b = el.getBoundingClientRect();
-        return { inside: b.top >= -0.5 && b.bottom <= vh + 0.5, h: Math.round(b.height), box: `${Math.round(b.top)}..${Math.round(b.bottom)} of ${vh}` };
+        return {
+          inside: b.top >= -0.5 && b.bottom <= vh + 0.5 && b.left >= -0.5 && b.right <= vw + 0.5,
+          h: Math.round(b.height),
+          w: Math.round(b.width),
+          box: `${Math.round(b.top)}..${Math.round(b.bottom)} of ${vh}`,
+        };
       };
+      const others = {};
+      for (const id of soloIds) others[id] = boxOf(document.querySelector(`.hp-m-solo-btn--${id}`));
+      others.shop = boxOf(document.querySelector('.hp-m-navbtn.is-shop'));
+      others.stats = boxOf(document.querySelector('.hp-m-navbtn.is-stats'));
+      others.credits = boxOf(document.querySelector('.hp-m-credits'));
       return {
         rows,
+        others,
         foot: boxOf(footEl),
         join: boxOf(joinEl),
-        unlockText: unlockEl ? (unlockEl.textContent || '').trim() : null,
         hOver: de.scrollWidth - de.clientWidth,
         vOver: de.scrollHeight - de.clientHeight,
         // No card grid at this width — that is the change, and asserting it keeps this spec
         // honest if the render branch is ever reverted without updating the menu.
         cardsMounted: document.querySelectorAll('.game-card-magnet').length,
       };
-    }, PHONE_MODE_IDS);
+    }, { ids: PHONE_MODE_IDS, soloIds: PHONE_SOLO_IDS });
 
     // eslint-disable-next-line no-console
     console.log(`[mobile-rows ${w}x${h}] ${JSON.stringify(r)}`);
@@ -106,9 +117,12 @@ for (const { w, h } of VIEWPORTS) {
     expect(r.join.inside, `JOIN ROOM pushed out of view @ ${w}x${h} (${r.join.box})`).toBe(true);
     expect(r.join.h, `JOIN ROOM height @ ${w}x${h}`).toBeGreaterThanOrEqual(44);
 
-    // CHAIN + FUSE are represented by the unlock line, not by two padlocked cards.
-    expect(r.unlockText, `the CHAIN/FUSE unlock line @ ${w}x${h}`).toMatch(/CHAIN/i);
-    expect(r.unlockText).toMatch(/FUSE/i);
+    // Every other destination: rendered, fully in view, and a real 44x44 target.
+    for (const [name, b] of Object.entries(r.others)) {
+      expect(b, `${name} control rendered @ ${w}x${h}`).not.toBeNull();
+      expect(b.inside, `${name} pushed out of view @ ${w}x${h} (${b.box})`).toBe(true);
+      expect(Math.min(b.w, b.h), `${name} tap target @ ${w}x${h}`).toBeGreaterThanOrEqual(44);
+    }
 
     expect(r.hOver, `horizontal overflow @ ${w}x${h}`).toBeLessThanOrEqual(0);
     expect(r.vOver, `vertical overflow @ ${w}x${h} — the phone menu is ONE screen`).toBeLessThanOrEqual(0);
