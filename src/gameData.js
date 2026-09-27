@@ -11,6 +11,7 @@
 // without it this module (the single source of truth for the menu grid) cannot be loaded by
 // `node --test`, which is the repo's unit runner. See gameData.test.js.
 import { SAT_RUSH_ENABLED } from './satRush/config.js';
+import { WORD_RACE_ENABLED } from './race/config.js';
 
 const BASE_GAMES = [
   {
@@ -121,6 +122,25 @@ const FUSE_GAME = {
   enabled: true,
 };
 
+// WORD RACE — 2-5 racers, the same seeded fragments for everyone, first to 12 words. DARK-LAUNCHED
+// behind ?race=1 (race/config.js) until the backend's word-race type is deployed: with the flag
+// off this array — and so the menu — is exactly what it was.
+const WORD_RACE_GAME = {
+  id: 'word-race',
+  artKey: 'WordRaceArt',
+  name: 'WORD\nRACE',
+  cardName: 'RACE',
+  description: 'SAME LETTERS FOR EVERYONE. FIRST TO 12 WORDS.',
+  baseColor: '#FF4FA3',
+  iconBg: '#1a0b2e',
+  badgeText: 'MULTI',
+  badgeBg: '#000',
+  badgeColor: '#FF4FA3',
+  textColor: '#000',
+  descColor: '#1a0b2e',
+  enabled: true,
+};
+
 // SAT RUSH (when enabled) keeps slot 3; CHAIN + FUSE are the new slots 4 and 5,
 // so the stagger/rotation rules keyed to those slots land on the new cards.
 export const GAMES = [
@@ -128,6 +148,7 @@ export const GAMES = [
   ...(SAT_RUSH_ENABLED ? [SAT_RUSH_GAME] : []),
   CHAIN_GAME,
   FUSE_GAME,
+  ...(WORD_RACE_ENABLED ? [WORD_RACE_GAME] : []),
 ];
 
 // THE FEATURED MODE, DERIVED — the same flag GameCard reads to draw the ribbon, so the menu

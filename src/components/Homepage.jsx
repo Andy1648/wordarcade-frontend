@@ -72,7 +72,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onPlaySolo, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -620,6 +620,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onCreateRoom, onJoi
     runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
   }
 
+  // Dialog QUICK MATCH (WORD RACE): straight into the race queue - App sends race_quick_match and
+  // the server seats us in the fullest waiting race (or opens one; bots fill after 10s). Same
+  // runWhenConnected path as PLAY SOLO, so a cold socket shows WAKING THE SERVER… on the button.
+  function handleDialogQuickMatch() {
+    if (navigating || !dialog) return;
+    sound.click();
+    setNavigating(true);
+    runWhenConnected('solo', () => onRaceQuickMatch && onRaceQuickMatch());
+  }
+
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
   // (App's onJoinRoom => handleOpenBrowser). Same flow as the bottom-bar JOIN.
   function handleDialogJoin() {
@@ -945,7 +955,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onCreateRoom, onJoi
             onCreate={handleDialogCreate}
             onJoin={handleDialogJoin}
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
-            onPlaySolo={dialog.game.id === 'word-bomb' && onPlaySolo ? handleDialogSolo : undefined}
+            onPlaySolo={
+              dialog.game.id === 'word-bomb' && onPlaySolo
+                ? handleDialogSolo
+                : dialog.game.id === 'word-race' && onRaceQuickMatch
+                  ? handleDialogQuickMatch
+                  : undefined
+            }
             connecting={connecting}
             coldStart={coldStart}
             blitzPacks={blitzPacks}

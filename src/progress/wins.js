@@ -124,7 +124,7 @@ export function saveRounds(rounds) {
 // differently depending on which number you looked at. With one stack there can only be one
 // table, and it is the XP one: menu 1 · WB 2 · Blitz 2 · SAT 3 · CHAIN 4 · FUSE 5.
 /** Every mode that pays, in payout-key spelling. */
-export const PAYOUT_MODES = ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse'];
+export const PAYOUT_MODES = ['wordBomb', 'blitz', 'satRush', 'chain', 'fuse', 'wordRace'];
 
 // Difficulty multiplier for the modes that HAVE a difficulty (Word Bomb / Category Blitz).
 // The engine's difficulty KEYS in ascending order are chill < easy < medium < hard (the
@@ -196,6 +196,7 @@ const GAME_KEY = {
   satRush: 'sat-rush',
   chain: 'chain',
   fuse: 'fuse',
+  wordRace: 'word-race',
 };
 /** The gameData-style id ('word-bomb') for either spelling of a mode. */
 export function gameKey(mode) {
@@ -299,6 +300,7 @@ const MODE_KEY_ALIAS = {
   'sat-rush': 'satRush',
   chain: 'chain',
   fuse: 'fuse',
+  'word-race': 'wordRace',
 };
 /** Canonical mode key, accepting either the gameData id ('word-bomb') or the payout key. */
 export function modeKey(mode) {

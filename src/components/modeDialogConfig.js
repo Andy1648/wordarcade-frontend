@@ -29,6 +29,16 @@ export const MODES = {
     sub: "SOLO · KEEP THE CHAIN ALIVE — EVERY WORD STARTS ON THE PREVIOUS WORD'S LAST LETTER.",
     create: 'PLAY',
   },
+  // WORD RACE: multiplayer, so the full action row — QUICK MATCH (the lead, via the solo slot),
+  // a private room to share, and JOIN WITH CODE.
+  race: {
+    accent: '#FF4FA3', bg: ['#3a0620', '#16030c'], anim: 'streaks',
+    chip: 'MULTI', t1: 'WORD', t2: 'RACE',
+    liner: 'SAME LETTERS. FIRST TO 12 WINS.',
+    sub: 'RACE · 2–5 RACERS · TYPE A WORD WITH YOUR FRAGMENT TO MOVE UP A LANE.',
+    create: 'PRIVATE ROOM',
+    lead: 'QUICK MATCH',
+  },
   fuse: {
     accent: '#FFE94A', bg: ['#3a2a06', '#160f03'], anim: 'flame', solo: true,
     chip: 'SOLO', name: 'FUSE', t1: 'FUSE', t2: '',

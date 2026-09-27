@@ -349,6 +349,46 @@ export function FuseArt() {
   );
 }
 
+// ---- WORD RACE: a hot-pink track field, three lanes racing to a checkered finish on the right,
+//      speed streaks with drippy ends, the IN fragment tile up top, and the mascot's RUN pose
+//      (the real PNG — never drawn in code) sprinting the middle lane. ----
+export function WordRaceArt() {
+  const checks = [];
+  for (let r = 0; r < 12; r += 1) {
+    for (let c = 0; c < 2; c += 1) {
+      if ((r + c) % 2 === 0) checks.push(<rect key={`${r}-${c}`} x={262 + c * 19} y={r * 34} width="19" height="34" fill="#000" />);
+    }
+  }
+  return (
+    <svg {...SCENE_PROPS} className="card-art word-race-art">
+      <rect width="300" height="400" fill="#FF4FA3" />
+      <path d="M0 150 L300 118 L300 262 L0 300 Z" fill="#E23A8C" />
+      {/* lane rules, slightly skewed so the track reads as rushing past */}
+      <path d="M0 152 L262 124" stroke="#1a0b2e" strokeWidth="6" strokeLinecap="round" />
+      <path d="M0 226 L262 196" stroke="#1a0b2e" strokeWidth="6" strokeLinecap="round" strokeDasharray="22 16" />
+      <path d="M0 300 L262 264" stroke="#1a0b2e" strokeWidth="6" strokeLinecap="round" />
+      {/* speed streaks with a drip off each tail — asymmetric on purpose */}
+      <g stroke="#FFE94A" strokeWidth="7" strokeLinecap="round">
+        <path d="M18 186 L92 178" />
+        <path d="M8 250 L70 243" />
+        <path d="M36 214 L88 208" opacity="0.7" />
+      </g>
+      <path d="M22 186 q-3 14 2 22 q4 -7 1 -22" fill="#FFE94A" />
+      <path d="M12 250 q-2 10 3 15 q3 -6 0 -15" fill="#FFE94A" />
+      {/* the checkered finish, cropped by the right edge */}
+      <rect x="262" y="0" width="38" height="400" fill="#fff" />
+      {checks}
+      <path d="M262 0 V400" stroke="#1a0b2e" strokeWidth="5" />
+      {/* the fragment tile, tilted */}
+      <g transform="rotate(-7 96 70)">
+        <rect x="46" y="36" width="100" height="68" rx="10" fill="#1a0b2e" stroke="#000" strokeWidth="6" />
+        <text x="96" y="86" fontSize="42" fontWeight="bold" fill="#FFE94A" textAnchor="middle" fontFamily={BUNGEE}>IN</text>
+      </g>
+      <image href="/mascot-run.png" x="104" y="150" width="128" height="128" />
+    </svg>
+  );
+}
+
 // Lookup map so GameCard can resolve `artKey` strings from gameData.js.
 export const GAME_ART_COMPONENTS = {
   WordBombArt,
@@ -356,4 +396,5 @@ export const GAME_ART_COMPONENTS = {
   SatRushArt,
   ChainArt,
   FuseArt,
+  WordRaceArt,
 };
