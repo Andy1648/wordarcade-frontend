@@ -137,9 +137,6 @@ const magnet = (() => {
  */
 export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
-  // MASTERY (Job 2): a compact "M{level}" chip once the player has started mastering this mode
-  // (≥ M2 — a card showing M1 on every mode reads as clutter to a new player). Read from client
-  // state; the menu re-reads on every return from a game.
 
   // The wrapper element + its magnet state. The card object is shared with the
   // module-level controller; mutating `hovered` here lets the rAF loop add the
