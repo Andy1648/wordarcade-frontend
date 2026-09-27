@@ -1,14 +1,14 @@
-// e2e/ko-screen.spec.js — feat/ko-screen: the Word Bomb LOSS game-over card (the "K.O." sign).
+// e2e/ko-screen.spec.js — feat/ko-screen: the Word Bomb game-over card, LOSS (the "K.O." sign) and WIN.
 //
 // A REAL round, not an empty card: every player plays two words (so the payout breakdown, the
 // highlights, the game summary at 3+ players and a per-player row all exist), then one survivor
-// wins. For 2, 3 and 4 players at each viewport, with motion ON (the harder case):
+// wins (RIVAL on a loss, me on a win). For both outcomes, 2, 3 and 4 players at each viewport, with motion ON (the harder case):
 //   (a) the card does not scroll: scrollHeight - clientHeight === 0
 //   (b) REMATCH is fully inside the card and the viewport, with no scrolling
 //   (c) no rendered text under 13px anywhere on the game-over overlay
 //   (d) zero INFINITE animations running on the screen
 //   (e) the cursor trail sits UNDER the overlay (lower z-index), so it cannot paint over it
-//   (f) the K.O. hero is there and carries an accessible name (the LayeredWord stack is aria-hidden)
+//   (f) on a loss, the K.O. hero is there and carries an accessible name (the LayeredWord stack is aria-hidden)
 //   (g) when the breakdown is folded (phone, or a laptop card that would not fit), its toggle is a
 //       real >= 44px control inside the card
 import { test, expect } from '@playwright/test';
@@ -22,11 +22,12 @@ const VIEWPORTS = [
   { width: 1366, height: 625 },
   { width: 1341, height: 815 },
   { width: 390, height: 844 },
+  { width: 1163, height: 450 },
 ];
 
 test.use({ reducedMotion: 'no-preference' });
 
-async function playToKnockout(page, n) {
+async function playToGameOver(page, n, outcome) {
   const mock = await installBackendMock(page);
   // The real faces: Bungee is wider than the fallback, and a fit measured without it proves nothing.
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
@@ -59,22 +60,28 @@ async function playToKnockout(page, n) {
       await page.waitForTimeout(40);
     }
   }
-  // I am knocked out; RIVAL survives.
-  const final = players.map((p) => ({ ...p, lives: p.id === 'p2' ? 2 : 0 }));
-  mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: 'p2', players: final, combo: 'ing', timerSeconds: 22, usedWords: [] } });
+  // LOSS: I am knocked out and RIVAL survives. WIN: I am the survivor.
+  const winnerId = outcome === 'win' ? ME : 'p2';
+  const final = players.map((p) => ({ ...p, lives: p.id === winnerId ? 2 : 0 }));
+  mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: winnerId, players: final, combo: 'ing', timerSeconds: 22, usedWords: [] } });
   await page.waitForTimeout(80);
-  mock.pushToClient({ type: 'game_over', payload: { winnerId: 'p2' } });
+  mock.pushToClient({ type: 'game_over', payload: { winnerId } });
 }
 
+for (const outcome of ['loss', 'win']) {
 for (const n of [2, 3, 4]) {
   for (const vp of VIEWPORTS) {
-    test(`K.O. card, ${n} players @ ${vp.width}x${vp.height}: fits, REMATCH visible, holds still`, async ({ page }) => {
+    test(`${outcome === 'win' ? 'WIN' : 'K.O.'} card, ${n} players @ ${vp.width}x${vp.height}: fits, REMATCH visible, holds still`, async ({ page }) => {
       await page.setViewportSize(vp);
-      await playToKnockout(page, n);
+      await playToGameOver(page, n, outcome);
 
-      const hero = page.locator('.ko-hero');
-      await expect(hero).toBeVisible();
-      await expect(hero).toHaveAttribute('aria-label', /Knocked out\. RIVAL WINS/);
+      if (outcome === 'win') {
+        await expect(page.locator('.game-over-title.win')).toBeVisible();
+      } else {
+        const hero = page.locator('.ko-hero');
+        await expect(hero).toBeVisible();
+        await expect(hero).toHaveAttribute('aria-label', /Knocked out\. RIVAL WINS/);
+      }
       await page.evaluate(() => document.fonts.ready);
       // Let every finite entrance (slam, pulses, hop, count-ups) run out before judging "at rest".
       await page.waitForTimeout(3200);
@@ -129,4 +136,5 @@ for (const n of [2, 3, 4]) {
       }
     });
   }
+}
 }

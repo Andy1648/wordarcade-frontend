@@ -88,9 +88,10 @@ html[data-beat='true'] .mascot-container {
   100% { transform: rotate(0deg) translate(0, 0); } /* recover upright */
 }
 
-/* Victory: a looping celebration - hop + side-to-side wiggle. */
+/* Victory: three hops + side-to-side wiggle, then it HOLDS the pose. Finite on
+   purpose: the game-over card must run zero infinite animations at rest. */
 .mascot-emote.emote-celebrate {
-  animation: mascot-celebrate 900ms ease-in-out infinite;
+  animation: mascot-celebrate 900ms ease-in-out 3 forwards;
 }
 @keyframes mascot-celebrate {
   0% { transform: translateY(0) rotate(-5deg); }

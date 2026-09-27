@@ -6301,6 +6301,7 @@ html[data-beat='true'] .wb-belly {
   .ko-hero { margin: 2px 0 8px; }
   .ko-hero-bar { min-height: 68px; }
   .ko-hero-mascot .mascot-img { height: 76px; }
+  .game-over-mascot .mascot-img { height: 76px; } /* the WIN pose matches the K.O. hero's */
   .missed-hold { padding: 8px 12px; }
   .game-over-blurb { margin-bottom: 8px; }
   .go-stats { padding: 10px; margin-bottom: 8px; }
@@ -6323,4 +6324,15 @@ html[data-beat='true'] .wb-belly {
   .go-foot { margin-top: 6px; }
   .go-award { padding: 3px 12px; }
   .go-awards-slot--mid .go-stats { margin-top: 8px; }
+}
+
+/* THE WIN TITLE ON A SHORT LAPTOP: at --fs-h1, "YOU WIN!" wrapped to TWO lines in the ~320px
+   verdict column (136px of title) and pushed the win card 38-67px past the fold at 1163x450.
+   One line, sized to the column: still the biggest thing on the card. */
+@media (min-width: 900px) and (max-height: 700px) {
+  .game-over-title.win { white-space: nowrap; font-size: min(var(--fs-h1), 3.8vw); }
+}
+/* VERY SHORT WINDOWS: the celebrate pose steps down from the 76px floor. A static size. */
+@media (min-width: 900px) and (max-height: 520px) {
+  .game-over-mascot .mascot-img { height: 58px; }
 }
