@@ -62,8 +62,10 @@
   box-shadow: 2px 2px 0 #000;
 }
 .teach-strip-eg-tag {
-  font-size: var(--fs-micro);
-  letter-spacing: 0.14em;
+  /* --fs-label, not --fs-micro: 13px is the text floor on every solo screen, and the strip is on
+     screen for exactly the players who most need to read it (first run, fresh profile). */
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
   color: rgba(240, 234, 217, 0.66);
 }
 .teach-strip-eg-word {
@@ -75,8 +77,10 @@
 /* 3. WHAT IT IS WORTH. */
 .teach-strip-pay {
   flex: 0 0 auto;
-  font-size: var(--fs-micro);
-  letter-spacing: 0.12em;
+  font-size: var(--fs-label); /* 13px floor — see .teach-strip-eg-tag */
+  /* tracked in from 0.12em when it grew 11 -> 13px, so the example + pay line + GOT IT still share
+     one row in the 450px strip beside the FUSE/CHAIN hero instead of wrapping GOT IT to a 3rd row */
+  letter-spacing: 0.04em;
   color: var(--theme-ink, #ff4fa3);
 }
 

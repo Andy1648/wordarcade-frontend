@@ -23,6 +23,9 @@ export default [
       'coverage/**',
       'playwright-report/**',
       'test-results/**',
+      // Agent worktrees are full repo copies (each with its own node_modules/dist); walking them
+      // makes `npx eslint .` die with EMFILE.
+      '.claude/**',
     ],
   },
   {
