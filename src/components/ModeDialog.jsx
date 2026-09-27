@@ -72,7 +72,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin. Behind the
  * content sits a STATIC per-mode background (ModeDialogBackground — no canvas, no rAF).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, onPlaySolo, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -253,10 +253,23 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                  inside the dialog, above ModeDialog's own scrim (the Homepage
                  bottom-bar indicator would be hidden behind that scrim). Both are
                  disabled while EITHER is pending so a second tap can't double-fire. */
-              <div className="mode-dialog-actions">
+              <div className={`mode-dialog-actions${onPlaySolo ? ' has-solo' : ''}`}>
+                {/* PLAY SOLO (Word Bomb, feat/wb-solo): straight into a round vs a medium bot - no
+                    name screen, no lobby. It LEADS: it is the one path that ends in a live round
+                    with no one else involved. PLAY (a room you can share) and JOIN are unchanged. */}
+                {onPlaySolo && (
+                  <button
+                    className="mode-dialog-btn mode-dialog-btn-solo"
+                    style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                    onClick={onPlaySolo}
+                    disabled={!!connecting}
+                  >
+                    {connecting === 'solo' ? <ConnectingContent cold={coldStart} /> : 'PLAY SOLO'}
+                  </button>
+                )}
                 <button
                   className="mode-dialog-btn mode-dialog-btn-create"
-                  style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                  style={onPlaySolo ? undefined : { background: accent, borderColor: darken(accent, 0.45) }}
                   onClick={onCreate}
                   disabled={!!connecting}
                 >

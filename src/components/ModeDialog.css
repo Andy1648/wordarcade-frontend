@@ -442,3 +442,18 @@
 .mode-dialog-lower--blitz .mode-ex {
   display: none;
 }
+
+/* PLAY SOLO (Word Bomb, feat/wb-solo). With three CTAs the row wraps: PLAY SOLO takes the whole
+   first line (the lead, accent fill), and PLAY (a shareable room, now the white secondary) sits
+   beside JOIN on the second. One extra row, not a third squeezed column: at 390px three buttons
+   side by side would each be ~110px of Bungee. */
+.mode-dialog-actions.has-solo {
+  flex-wrap: wrap;
+}
+.mode-dialog-btn-solo {
+  flex: 1 1 100%;
+}
+.mode-dialog-actions.has-solo .mode-dialog-btn-create {
+  background: #fff;
+  border-color: #000;
+}

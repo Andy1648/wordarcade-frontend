@@ -1944,6 +1944,16 @@ function App() {
     track('deep_link_started', { mode: VS_BOT_LAUNCH });
   }, [room, send]);
 
+  // PLAY SOLO's start: the vsBot split again - start_game once, the moment the roster is ready.
+  // Armed by handlePlaySolo (below), cleared by goHome.
+  const soloStartPendingRef = useRef(false);
+  useEffect(() => {
+    if (!soloStartPendingRef.current) return;
+    if (!cgRoomReady(room)) return; // human + bot seated
+    soloStartPendingRef.current = false;
+    send('start_game', {});
+  }, [room, send]);
+
   // CrazyGames compliance (cg path only): user-select:none on the body. Scoped by
   // the html.cg-embed class (see index.css) so the default entry is untouched.
   useEffect(() => {
@@ -2029,6 +2039,7 @@ function App() {
   // hooks/useOverlays.js — refactor/app-split step 1; destructured from useOverlays above.)
 
   function goHome() {
+    soloStartPendingRef.current = false; // a PLAY SOLO that never reached its start is abandoned
     // They are on their way to the menu: the "you have never seen the menu" pitch is spent,
     // for the rest of this session as well as (via taw.seenMenu) every later one.
     soloOfferRef.current = false;
@@ -2079,6 +2090,29 @@ function App() {
     send('set_game_type', { gameType: 'category-blitz' });
     send('start_game', { daily: true });
     track('daily_started', { day: currentDayNumber() });
+  }
+
+  // PLAY SOLO (feat/wb-solo): the mode dialog's straight-to-a-round entry for Word Bomb. It was
+  // eight steps (card, PLAY, name, CONTINUE, ADD BOT, pick bot, pick difficulty, START); it is now
+  // the card and this button. NO NEW PROTOCOL: these are the /word-bomb/play deep link's frames
+  // (the vsBot effects above), in the same order, on the same socket - create_room PRIVATE (never
+  // in list_public_rooms), Word Bomb, CHILL for a first-timer / MEDIUM otherwise, a MEDIUM bot -
+  // and start_game goes out once the room_update shows the human + bot seated, from the effect
+  // below. The name is the saved one or a generated one; there is no name screen. Homepage calls
+  // this through runWhenConnected, so on a cold socket it is queued until the socket opens and is
+  // dropped with the menu if the player leaves first. Multiplayer + ADD BOT are untouched.
+  // (soloStartPendingRef is declared beside its start effect, above.)
+  function handlePlaySolo() {
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode('word-bomb');
+    send('create_room', { name, isPublic: false });
+    send('set_game_type', { gameType: 'word-bomb' });
+    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    send('add_bot', { difficulty: 'medium' });
+    soloStartPendingRef.current = true;
+    track('solo_started', { mode: 'word-bomb' });
   }
 
   // QUICK PLAY VS BOT: one tap from the menu into a live 1v1 against a medium
@@ -2443,6 +2477,7 @@ function App() {
         wsStatus={wsStatus}
         serverEventId={serverEventId}
         onSelectGame={(gameId) => goToLobby(gameId)}
+        onPlaySolo={handlePlaySolo}
         onSatRush={goToSatRush}
         onChain={goToChain}
         onFuse={goToFuse}
