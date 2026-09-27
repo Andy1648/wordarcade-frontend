@@ -676,6 +676,12 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
     setLockedPreview({ game });
   }
 
+  // REBIRTH is a prestige-RESET mechanic — noise to a level-1 newcomer with nothing to reset (the
+  // audit's #2 leak). It is shown ONLY once it means something: the player can actually rebirth
+  // now, OR has ever earned wins, OR has already rebirthed. ONE gate, read by both menu trees, so
+  // the phone and desktop menus can never disagree about whether REBIRTH exists yet.
+  const showRebirth = rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths);
+
   return (
     <div className="homepage-wrap">
       <div
@@ -692,7 +698,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
 
         {/* PHONE (<=480px): the whole desktop menu below — corner nav, wordmark, XP cluster,
-            card grid, bottom bar, footer — is replaced by three full-width typographic rows.
+            card grid, bottom bar, footer — is replaced by full-width typographic bands (three
+            mode rows, a CHAIN | FUSE band, a SHOP / STATS / REBIRTH strip, CREDITS + JOIN).
             Nothing in the desktop branch mounts at this width, which is the point: the card
             region alone is ~390 DOM nodes. Every component is still imported and still used
             at every other width; they simply are not rendered here. */}
@@ -705,6 +712,19 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             navigating={navigating}
             musicMuted={musicMuted}
             onToggleMusic={onToggleMusic}
+            /* Everything the desktop corner nav, footer and CHAIN/FUSE cards reach, through the
+               SAME handlers and the same focus-restore refs — the phone gets entry points, not a
+               second copy of the logic. Only one tree mounts, so sharing the refs is safe. */
+            lockedIds={GAMES.filter((g) => isModeLocked(g, xpProgress.level)).map((g) => g.id)}
+            onLockedSelect={handleLockedSelect}
+            onShop={handleShop}
+            onStats={handleStats}
+            onRebirth={showRebirth ? handleRebirth : null}
+            onCredits={handleCredits}
+            shopDot={winsAffordable}
+            shopRef={shopLinkRef}
+            statsRef={statsLinkRef}
+            rebirthRef={rebirthLinkRef}
           />
         ) : (
         <>
@@ -724,11 +744,8 @@ export default function Homepage({ onSelectGame, onCreateRoom, onJoinRoom, onQui
             SHOP
             {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
-          {/* REBIRTH is a prestige-RESET mechanic — noise to a level-1 newcomer with nothing to
-              reset (the audit's #2 leak). Show it ONLY once it means something: the player can
-              actually rebirth now (level has reached the next threshold), OR has ever earned wins,
-              OR has already rebirthed. Until then it stays out of the top nav entirely. */}
-          {(rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths)) && (
+          {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
+          {showRebirth && (
             <button
               ref={rebirthLinkRef}
               type="button"

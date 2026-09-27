@@ -29,7 +29,7 @@ import { installBackendMock, freezeAnimations } from './support/backendMock.js';
 // map is a map that quietly stops matching the app. The arcane-pass screenshot run and the
 // cold-stranger walk import the same list.
 import { VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS } from './support/screens.js';
-import { PHONE_MENU_MAX, isPhoneMenu, menuReady, modeEntry, phoneCanOpen, soloEntryQuery } from './support/menu.js';
+import { PHONE_MENU_MAX, menuReady, modeEntry } from './support/menu.js';
 
 // ---- navigation primitives (reused from coverage / gameover specs) ----
 async function bootMenu(page, level = 40, query = '?portal=1') {
@@ -60,16 +60,7 @@ async function bootRoom(page, gameType, players) {
 async function enterSolo(page, id) {
   await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
-  // PHONE: CHAIN and FUSE have no card to click — the phone menu replaces both with one
-  // "CHAIN + FUSE UNLOCK AS YOU PLAY" line (MobileMenu.jsx). They are still REACHABLE, by the
-  // shipped /chain/play and /fuse/play deep links, which bridge to ?chain=1 / ?fuse=1
-  // (router.js). That is the path a phone player actually arrives on, so it is the path this
-  // drives — the mode is entered for real, not through a test-only hook.
-  if (isPhoneMenu(page) && !phoneCanOpen(id)) {
-    await page.goto(`/?portal=1&soloms=350&${soloEntryQuery(id)}`);
-    await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
-    return;
-  }
+  // Either width: the desktop card or the phone's CHAIN | FUSE half (support/menu.js).
   await page.goto('/?portal=1&soloms=350');
   await menuReady(page);
   await page.waitForTimeout(400);

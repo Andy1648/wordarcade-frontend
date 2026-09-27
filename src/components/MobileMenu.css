@@ -41,7 +41,8 @@
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0; /* lets the flex children actually shrink instead of overflowing */
-    gap: 10px;
+    /* 8px, not 10: five sections share the height now (title, modes, solo pair, nav, foot). */
+    gap: 8px;
     padding: 12px 12px calc(10px + env(safe-area-inset-bottom, 0px));
     position: relative;
     z-index: 2;
@@ -85,7 +86,7 @@
   .hp-m-modes {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     flex: 1 1 auto;
     min-height: 0;
   }
@@ -94,12 +95,17 @@
     /* Each row flex-GROWS to share the remaining height equally, so the trio always fills the
        screen exactly — on a short phone they compress, on a tall one they stretch. */
     flex: 1 1 0;
-    min-height: 88px;
+    min-height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 14px;
+    padding: 10px 14px;
+    /* THE ROW IS THE NAME'S RULER. A size container, so the name below can be sized off the
+       row's real height (cqh) — the rows are whatever is left after the fixed sections, which
+       is 91px on a 320x568 phone and 185px on a 390x844 one. A width-only size (--fs-band)
+       overflowed the short rows. */
+    container-type: size;
     /* INVERTED BAND: the slab is the dark panel base and the NAME carries the neon (see
        LayeredWord). The border is the mode accent rather than black — on a dark fill a black
        outline is invisible, and the house rule wants a COLOURED outline anyway. The hard black
@@ -135,7 +141,17 @@
      four faces are held in register by LayeredWord.css, so the width that has to fit is the
      regular Bungee advance. */
   .hp-m-name {
-    font-size: calc(var(--fs-band) * var(--band-k, 1));
+    /* THE NAME FILLS THE BAND — both ways. --fs-band * --band-k is the width fit (theme/type.css;
+       --band-k trims a name whose longest word runs past four characters). The middle term is
+       the HEIGHT fit: two lines at line-height 0.84 are 1.68em (+ a hair for the Shade face),
+       inside the row's CONTENT box (cqh already excludes the border and padding) less the
+       description block (--name-reserve: two 13px lines + the 6px gap). Floored at --fs-panel,
+       the smallest Bungee is allowed to go. */
+    font-size: clamp(
+      var(--fs-panel),
+      calc((100cqh - var(--name-reserve, 40px)) / 1.72),
+      calc(var(--fs-band) * var(--band-k, 1))
+    );
     line-height: 0.84;
     --lw-ls: -0.01em;
   }
@@ -148,10 +164,24 @@
 
   .hp-m-desc {
     font-family: 'Space Mono', monospace;
-    font-size: var(--fs-micro);
+    /* 13px, the label floor — this was --fs-micro (11px), under the floor for a real sentence. */
+    font-size: var(--fs-label);
     line-height: 1.25;
     letter-spacing: 0.3px;
     color: var(--row-sub);
+  }
+
+  /* A SHORT ROW DROPS ITS DESCRIPTION rather than shrinking the name to a whisper. The same
+     sentence is the first line of the mode dialog the row opens, so nothing is lost; the row's
+     accessible name still carries it (aria-label). */
+  @container (max-height: 150px) {
+    .hp-m-desc {
+      display: none;
+    }
+
+    .hp-m-name {
+      --name-reserve: 2px;
+    }
   }
 
   .hp-m-chev {
@@ -160,7 +190,123 @@
     color: currentColor;
   }
 
-  /* ---- 3. UNLOCK LINE + JOIN ---- */
+  /* ---- 3. CHAIN | FUSE — the split solo band ----
+     Same slab recipe as the mode rows (dark base, accent keyline + name, hard black offset), at a
+     fixed compact height: these two are secondary on a newcomer's screen, where both are locked. */
+  .hp-m-solo {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .hp-m-solo-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    padding: 7px 12px;
+    border: 4px solid var(--row-accent);
+    border-radius: 8px;
+    box-shadow: 5px 5px 0 #000;
+    background: #160f28;
+    color: var(--row-accent);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 180ms ease;
+  }
+
+  .hp-m-solo-btn:active {
+    transform: translate(3px, 3px);
+  }
+
+  .hp-m-solo-btn.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .hp-m-solo-name {
+    font-size: var(--fs-h2);
+    line-height: 0.84;
+    --lw-ls: -0.01em;
+  }
+
+  .hp-m-solo-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-label);
+    line-height: 1.2;
+    letter-spacing: 0.4px;
+    color: var(--row-sub);
+  }
+
+  .hp-m-lock {
+    flex: 0 0 auto;
+  }
+
+  /* ---- 4. SHOP / STATS / REBIRTH — the desktop corner nav, as a strip ----
+     Chrome, not a mode: the desktop corner nav's own recipe (--v-panel-hi fill, --v-ink type, 3px
+     black keyline, 4px hard shadow) so it reads as the same buttons. Space Mono rather than the
+     corner nav's Bungee: Bungee may not go below --fs-panel, and three Bungee words at 20px do
+     not fit 320px. Each slab takes an equal share, so the strip re-flows when REBIRTH is gated. */
+  .hp-m-nav {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .hp-m-navbtn {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-body);
+    letter-spacing: 0.5px;
+    color: var(--v-ink);
+    background: var(--v-panel-hi);
+    border: 3px solid #000;
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 #000;
+    cursor: pointer;
+    transition: transform 180ms ease;
+  }
+
+  .hp-m-navbtn:active {
+    transform: translate(2px, 2px);
+  }
+
+  .hp-m-navbtn.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* The desktop SHOP dot (something is affordable), same size and colour. A circle. */
+  .hp-m-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #FF4FA3;
+    border: 2px solid #000;
+  }
+
+  /* ---- 5. FOOT: CREDITS + JOIN ROOM ---- */
   .hp-m-foot {
     display: flex;
     align-items: center;
@@ -170,35 +316,21 @@
     min-height: 44px;
   }
 
-  .hp-m-unlock {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'Space Mono', monospace;
-    /* The scale floors decorative text at 11px (--fs-micro); the spec's 10px is below it. */
-    font-size: var(--fs-micro);
-    letter-spacing: 0.4px;
-    color: #8f85ad;
-  }
-
-  .hp-m-lock {
-    flex: 0 0 auto;
-  }
-
-  .hp-m-join {
-    /* A text link, not a slab — but still a 44px tap target (padding carries the height, so
-       the visible type stays small while the hit box is full size). */
+  .hp-m-join,
+  .hp-m-credits {
+    /* Text links, not slabs — but still 44px tap targets (padding carries the height, so the
+       visible type stays quiet while the hit box is full size). 16px: tappable text never goes
+       under --fs-body (typeScale.test.js). Small UI text is Space Mono by rule. */
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+    min-width: 44px;
     padding: 0 4px;
     background: none;
     border: 0;
-    /* Bungee may never go below --fs-panel (typeScale.test.js) — small UI text is Space Mono
-       by rule, which is also what keeps this at the 13px the spec asked for. */
     font-family: 'Space Mono', monospace;
     font-weight: 700;
-    font-size: var(--fs-label);
+    font-size: var(--fs-body);
     letter-spacing: 0.5px;
     color: #2EFFE0;
     text-decoration: underline;
@@ -206,7 +338,13 @@
     cursor: pointer;
   }
 
-  .hp-m-join.is-disabled {
+  /* CREDITS is the quiet one — the desktop footer link's weight, in the muted menu violet. */
+  .hp-m-credits {
+    color: #A89EC4;
+  }
+
+  .hp-m-join.is-disabled,
+  .hp-m-credits.is-disabled {
     opacity: 0.6;
     pointer-events: none;
   }
@@ -237,11 +375,15 @@
 }
 
 @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
-  .hp-m-row {
+  .hp-m-row,
+  .hp-m-solo-btn,
+  .hp-m-navbtn {
     transition: none;
   }
 
-  .hp-m-row:active {
+  .hp-m-row:active,
+  .hp-m-solo-btn:active,
+  .hp-m-navbtn:active {
     transform: none;
   }
 }

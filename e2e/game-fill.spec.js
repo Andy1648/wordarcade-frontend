@@ -23,7 +23,7 @@
 // so SAT is gated on .sr-app. This gate covers all five, plus the FUSE 26-tile strip.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { isPhoneMenu, menuReady, modeEntry, phoneCanOpen, soloEntryQuery } from './support/menu.js';
+import { menuReady, modeEntry } from './support/menu.js';
 
 const ME = 'e2e-player';
 async function enterMpGame(page, gameType) {
@@ -90,16 +90,7 @@ async function enterSolo(page, id) {
     try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ }
   });
   await installBackendMock(page);
-  // PHONE: CHAIN and FUSE have no card to click — the phone menu replaces both with one
-  // "CHAIN + FUSE UNLOCK AS YOU PLAY" line (MobileMenu.jsx). They are still REACHABLE, by the
-  // shipped /chain/play and /fuse/play deep links, which bridge to ?chain=1 / ?fuse=1
-  // (router.js). That is the path a phone player actually arrives on, so it is the path this
-  // drives — the mode is entered for real, not through a test-only hook.
-  if (isPhoneMenu(page) && !phoneCanOpen(id)) {
-    await page.goto(`/?portal=1&soloms=20000&${soloEntryQuery(id)}`);
-    await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
-    return;
-  }
+  // Either width: the desktop card or the phone's CHAIN | FUSE half (support/menu.js).
   await page.goto('/?portal=1&soloms=20000');
   await menuReady(page);
   await page.waitForTimeout(300);

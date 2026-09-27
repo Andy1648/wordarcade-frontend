@@ -5,8 +5,10 @@
 // .homepage-stage, of which the card region alone is ~391. None of it is readable at that
 // width; the cards are a horizontal strip of thumbnails with 8px type.
 //
-// This is THREE FULL-WIDTH TYPOGRAPHIC ROWS instead: the title, the three playable modes as
-// big tappable slabs, and one quiet line about what unlocks later. It is a separate COMPONENT
+// This is FULL-WIDTH TYPOGRAPHIC BANDS instead: the title, the three big modes as tappable
+// slabs, a split CHAIN | FUSE band, a SHOP / STATS / REBIRTH strip, and a footer with CREDITS +
+// JOIN ROOM. Everywhere the desktop menu can go, the phone can go — and the whole screen still
+// fits one viewport with no scroll. It is a separate COMPONENT
 // (not a pile of `display:none`) on purpose — see lib/useMediaQuery.js for why the node count
 // is the point.
 //
@@ -19,8 +21,8 @@
 import AudioControls from './AudioControls';
 import LayeredWord from './LayeredWord';
 
-// The three PLAYABLE modes, in menu order. CHAIN and FUSE are level-gated and are represented
-// by the single unlock line below rather than by two padlocked cards that cannot be tapped.
+// The three BIG modes, in menu order. CHAIN and FUSE (level-gated) share the split solo band
+// below it — smaller, because a newcomer meets them locked.
 //
 // `desc` is read from gameData (passed in) so the sub-copy has ONE source of truth and cannot
 // drift from the mode dialog / card / SEO copy.
@@ -88,23 +90,61 @@ function LockGlyph() {
   );
 }
 
+// THE SOLO PAIR. CHAIN and FUSE share one band, split in two: each half is a real control that
+// calls the SAME Homepage handler its desktop card calls — handleOpenDialog when unlocked (the
+// solo mode dialog with its PLAY button), handleLockedSelect when level-gated (the read-only
+// locked-preview panel). The accents are the two palette colours the three big rows do not use,
+// so no band repeats another's colour; FUSE's is a light tint of the house purple because
+// #9A1AFF itself is under 3:1 on the dark band.
+const SOLO_IDS = ['chain', 'fuse'];
+const SOLO_STYLE = {
+  chain: { accent: '#FF4FA3', sub: '#E6A3C4' },
+  fuse: { accent: '#C58BFF', sub: '#C9B3E6' },
+};
+// A locked half keeps its name but drops to the muted menu violet, so "not yet" reads at a
+// glance without dimming the text below contrast.
+const LOCKED_STYLE = { accent: '#A89EC4', sub: '#A89EC4' };
+const SOLO_HREF = { chain: '/chain/play', fuse: '/fuse/play' };
+
+// Let a modified click (new tab / new window) behave like a normal link.
+const isModified = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1;
+
 /**
  * @param games   the GAMES array from gameData (for the description copy)
  * @param onOpen  (gameId, el) => void — the SAME handler the desktop cards call
+ * @param onLockedSelect  (gameId) => void — the SAME handler a desktop locked card calls
+ * @param lockedIds  ids of the modes that are level-gated for this player right now
  * @param onJoin  join-room handler
  * @param joinLabel  node for the JOIN control (carries the CONNECTING… state)
  * @param navigating  true once a navigation has fired (locks the controls)
+ * @param onShop / onStats / onCredits  the desktop corner-nav / footer handlers
+ * @param onRebirth  the desktop REBIRTH handler, or null while REBIRTH is gated off (LV1 etc.)
+ * @param shopDot  true when something in the shop is affordable (the desktop SHOP dot)
+ * @param shopRef / statsRef / rebirthRef  Homepage's focus-restore refs (return from an overlay)
  */
 export default function MobileMenu({
   games,
   onOpen,
+  onLockedSelect,
+  lockedIds = [],
   onJoin,
   joinLabel = 'JOIN ROOM',
   navigating = false,
   musicMuted = false,
   onToggleMusic,
+  onShop,
+  onStats,
+  onRebirth = null,
+  onCredits,
+  shopDot = false,
+  shopRef,
+  statsRef,
+  rebirthRef,
 }) {
   const rows = MODE_IDS
+    .map((id) => games.find((g) => g.id === id))
+    .filter(Boolean);
+  const solos = SOLO_IDS
     .map((id) => games.find((g) => g.id === id))
     .filter(Boolean);
 
@@ -141,8 +181,7 @@ export default function MobileMenu({
                  link has to carry the accessible name itself. */
               aria-label={`${game.name.replace('\n', ' ')} — ${game.description}`}
               onClick={(e) => {
-                // Let a modified click (new tab / new window) behave like a normal link.
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return;
+                if (isModified(e)) return;
                 e.preventDefault();
                 if (navigating) return;
                 onOpen(game.id, e.currentTarget);
@@ -161,14 +200,112 @@ export default function MobileMenu({
         })}
       </nav>
 
-      {/* 3. One quiet line for what is still locked, and JOIN ROOM on the same row. No padlock
-             card art, and no "YOU'RE LV 1 - 19 TO GO" — a countdown to a mode you have not seen
-             is noise on the screen where you are choosing what to play. */}
+      {/* 3. CHAIN + FUSE — one band, two halves. This replaced the "CHAIN + FUSE UNLOCK AS YOU
+             PLAY" line, which named two modes and gave no way to reach either (or even to see
+             what they were). A locked half opens the same read-only preview the padlocked
+             desktop card does; an unlocked half opens the same solo mode dialog. */}
+      <div className="hp-m-solo" role="group" aria-label="Solo modes">
+        {solos.map((game) => {
+          const locked = lockedIds.includes(game.id);
+          const s = locked ? LOCKED_STYLE : SOLO_STYLE[game.id];
+          const style = { '--row-accent': s.accent, '--row-sub': s.sub };
+          const cls = `hp-m-solo-btn hp-m-solo-btn--${game.id}${locked ? ' is-locked' : ''}${navigating ? ' is-disabled' : ''}`;
+          // Locked: the padlock + the level it opens at ("LV 2"). The long form ("unlocks at
+          // level 2") is the aria-label and the preview panel's own copy; spelled out here it
+          // wraps to two lines in a 320px half-band.
+          const body = (
+            <>
+              <LayeredWord className="hp-m-solo-name" text={game.name} accent={s.accent} />
+              <span className="hp-m-solo-sub">
+                {locked && <LockGlyph />}
+                {locked ? `LV ${game.unlockLevel}` : 'SOLO'}
+              </span>
+            </>
+          );
+          if (locked) {
+            return (
+              <button
+                key={game.id}
+                type="button"
+                className={cls}
+                style={style}
+                disabled={navigating}
+                aria-label={`${game.name} — locked, unlocks at level ${game.unlockLevel}`}
+                onClick={() => onLockedSelect && onLockedSelect(game.id)}
+              >
+                {body}
+              </button>
+            );
+          }
+          return (
+            <a
+              key={game.id}
+              className={cls}
+              href={SOLO_HREF[game.id]}
+              style={style}
+              aria-label={`${game.name} — ${game.description}`}
+              onClick={(e) => {
+                if (isModified(e)) return;
+                e.preventDefault();
+                if (navigating) return;
+                onOpen(game.id, e.currentTarget);
+              }}
+            >
+              {body}
+            </a>
+          );
+        })}
+      </div>
+
+      {/* 4. SHOP / STATS / REBIRTH — the desktop corner nav, as one strip of slabs in the thumb
+             zone. REBIRTH obeys the desktop gate exactly (Homepage passes null until it means
+             something), and the strip re-flows to two slabs without it. */}
+      <nav className="hp-m-nav" aria-label="Menu">
+        <button
+          ref={shopRef}
+          type="button"
+          className={`hp-m-navbtn is-shop${navigating ? ' is-disabled' : ''}`}
+          onClick={onShop}
+          disabled={navigating}
+          aria-label={`Open shop${shopDot ? ' — items available' : ''}`}
+        >
+          SHOP
+          {shopDot && <span className="hp-m-dot" aria-hidden="true" />}
+        </button>
+        <button
+          ref={statsRef}
+          type="button"
+          className={`hp-m-navbtn is-stats${navigating ? ' is-disabled' : ''}`}
+          onClick={onStats}
+          disabled={navigating}
+          aria-label="Open stats"
+        >
+          STATS
+        </button>
+        {onRebirth && (
+          <button
+            ref={rebirthRef}
+            type="button"
+            className={`hp-m-navbtn is-rebirth${navigating ? ' is-disabled' : ''}`}
+            onClick={onRebirth}
+            disabled={navigating}
+            aria-label="Open rebirth"
+          >
+            REBIRTH
+          </button>
+        )}
+      </nav>
+
+      {/* 5. The footer: CREDITS (the desktop footer link) on the left, JOIN ROOM on the right. */}
       <div className="hp-m-foot">
-        <span className="hp-m-unlock">
-          <LockGlyph />
-          CHAIN + FUSE UNLOCK AS YOU PLAY
-        </span>
+        <button
+          type="button"
+          className={`hp-m-credits${navigating ? ' is-disabled' : ''}`}
+          onClick={onCredits}
+          disabled={navigating}
+        >
+          CREDITS
+        </button>
         <button
           type="button"
           className={`hp-m-join${navigating ? ' is-disabled' : ''}`}
