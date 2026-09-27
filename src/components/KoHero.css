@@ -1,0 +1,85 @@
+/* KoHero.css — the Word Bomb loss hero: a fighting-game FIGHT BANNER (see KoHero.jsx).
+   Flat fills, colored outlines one shade darker than the fill, hard black offset shadows. */
+
+.ko-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 6px 0 12px;
+}
+
+/* THE SLAB. Purple, skewed like a results bar; the left padding is the mascot's berth. */
+.ko-hero-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: clamp(76px, 14vh, 128px);
+  padding: 0 clamp(14px, 3vw, 28px) 0 clamp(92px, 34%, 170px);
+  background: #9A1AFF;
+  border: 5px solid #5a0a99;
+  border-radius: 8px;
+  box-shadow: 7px 7px 0 #000;
+  transform: skewX(-8deg);
+  /* A size container: the K.O. is sized to THIS slab (cqw), not to the document scale — the
+     same fit-to-slot class as the room code and the solo hero (see perf/typeScale.test.js). */
+  container-type: inline-size;
+}
+
+/* The mascot hangs off the slab's left end, un-skewed so the art is never distorted. */
+.ko-hero-mascot {
+  position: absolute;
+  left: -14px;
+  bottom: -10px;
+  transform: skewX(8deg);
+}
+.ko-hero-mascot .mascot-img {
+  height: clamp(88px, 17vh, 150px);
+  width: auto;
+}
+/* The Mascot's idle breathe is an INFINITE loop; nothing on the game-over screen loops at rest. */
+.ko-hero .mascot-bounce,
+.ko-hero .mascot-img { animation: none; }
+
+.ko-hero-word {
+  /* Fit-to-slot: ~22% of the slab's width, so "K.O." fills the space right of the mascot
+     on a 290px phone slab and a 430px laptop slab alike. */
+  font-size: clamp(48px, 22cqw, 104px);
+  line-height: 1;
+  --ko-rest: skewX(8deg) rotate(-4deg);
+  transform: var(--ko-rest);
+  animation: ko-slam 320ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+@keyframes ko-slam {
+  0% { transform: var(--ko-rest) scale(1.9); opacity: 0; }
+  60% { transform: var(--ko-rest) scale(0.94); opacity: 1; }
+  100% { transform: var(--ko-rest) scale(1); opacity: 1; }
+}
+
+/* WHO WON, on a yellow strip tucked under the slab's right end. */
+.ko-hero-strip {
+  position: relative;
+  align-self: flex-end;
+  margin-top: -6px;
+  margin-right: 8px;
+  background: #FFE94A;
+  border: 4px solid #b3a012;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  padding: 5px 14px;
+  transform: skewX(-8deg);
+}
+.ko-hero-strip-who {
+  display: block;
+  transform: skewX(8deg);
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ko-hero-word { animation: none; }
+}

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
+import KoHero from './KoHero';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
@@ -3905,25 +3906,18 @@ export default function GameScreen({
             {/* The mascot's emotional reaction, large and centred above the title.
                 The wrapper owns a dedicated transform (celebrate hop / defeat
                 tremble) so it never fights the mascot's own internal layers. */}
-            <div className={`go-mascot-wrap ${iWon ? 'win' : 'loss'}`}>
-              <Mascot
-                pose={iWon ? 'celebrate' : 'panic'}
-                emote={iWon ? 'celebrate' : 'slump'}
-                size={150}
-                className="game-over-mascot"
-              />
-            </div>
-            {/* Outcome title routes through the JUICE 03 stamp-slam (win drops the
-                old winner-bounce); loss uses the same slam for consistency. */}
             {iWon ? (
-              <div className="game-over-title win" style={goTitleStyle}>YOU WIN!</div>
+              <>
+                <div className="go-mascot-wrap win">
+                  <Mascot pose="celebrate" emote="celebrate" size={150} className="game-over-mascot" />
+                </div>
+                {/* Outcome title routes through the JUICE 03 stamp-slam. */}
+                <div className="game-over-title win" style={goTitleStyle}>YOU WIN!</div>
+              </>
             ) : (
-              <div className="game-over-title eliminated" style={goTitleStyle}>ELIMINATED</div>
-            )}
-            {!iWon && (
-              <div className="game-over-winner">
-                {winner ? `${winner.name.toUpperCase()} WINS` : 'NO WINNER'}
-              </div>
+              // THE K.O. SIGN (feat/ko-screen): the fight banner replaces the mascot + ELIMINATED +
+              // "RIVAL WINS" stack. It carries its own heading role and winner line.
+              <KoHero winnerName={winner ? winner.name : ''} />
             )}
             {/* PAUSE TO LEARN. Word Bomb ends on a FRAGMENT you could not fill, not on a word
                 you got wrong — so this is a word that WOULD have worked, derived from that last

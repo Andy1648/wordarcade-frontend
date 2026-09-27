@@ -68,7 +68,7 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label); /* 13px floor (was --fs-micro, 11px) */
   letter-spacing: 0.12em;
   color: rgba(240, 234, 217, 0.5);
 }
