@@ -130,3 +130,14 @@
   .spotlight-dim,
   .spotlight-caption { animation: none; }
 }
+
+/* TEXT-AWARE PLACEMENT (avoidTextIn, fix/wb-prompt-overlap). COMPACT: the headline alone, when the
+   full caption has no clear slot but the headline does. HIDDEN: no slot is clear of the board's
+   text at all — the ring marks the field on its own. `visibility`, not display:none, so the node
+   keeps its size and the next resize can re-measure and bring it back. */
+.spotlight-caption.is-compact .spotlight-caption-sub {
+  display: none;
+}
+.spotlight-caption.is-hidden {
+  visibility: hidden;
+}

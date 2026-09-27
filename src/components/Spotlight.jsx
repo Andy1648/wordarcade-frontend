@@ -21,6 +21,7 @@
 //   sub            : optional smaller line under the caption
 //   dim            : draw the dark wash over everything but the target (default true)
 //   avoidSelector  : extra, NON-interactive elements the caption must not print over
+//   avoidTextIn    : a root whose VISIBLE TEXT the caption must never cover (see below)
 //   onDismiss      : called once, on the first key/pointer (caller persists the "seen" flag)
 //
 // WHY `dim` IS OPTIONAL. The wash is a 100vmax box-shadow at rgba(6,3,12,0.76) — it takes the whole
@@ -35,6 +36,16 @@
 // on the solo board the caption happily printed on top of the chain row and the rule line beneath
 // the input — plain divs, invisible to the old obstacle scan. A surface can now name its own
 // content as something to place around.
+//
+// WHY `avoidTextIn` EXISTS. On the Word Bomb board the caption printed over the LIVE FEED, the
+// bottom seats' names and (on a phone) the USED WORDS strip: all plain text, none interactive,
+// and a board is TOO DENSE for "below, else above, else below anyway" to find a clear gap — at
+// 8 players there is no row between the ring and the input at all. With a root named, placement
+// becomes a slot search: below the ring, then above it, each nudged sideways into a gap between
+// the text boxes in that row; the full caption first, then the headline alone. If NO slot is clear
+// the caption is not drawn — the ring still marks the field, and a caption printed over the
+// board's own copy is worse than none (the board's prompt already says what to type). Measured
+// once per mount / resize / fonts-ready, never per frame, like everything else here.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './Spotlight.css';
 
@@ -50,9 +61,37 @@ const EDGE = 10; // min distance the caption keeps from any viewport edge
 const INTERACTIVE =
   'a[href], button, input, textarea, select, [role="button"], [tabindex]:not([tabindex="-1"])';
 
-export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null }) {
+// Every visible text box under `root`, as the ink's own Range rect clipped to the line box that
+// lays it out (a Range reports the font's content area, which overhangs a line-height:1 line).
+function textRects(root, skip) {
+  const out = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+    if (!t.textContent.trim()) continue;
+    const el = t.parentElement;
+    if (!el || (skip && skip.contains(el))) continue;
+    if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+    let lineEl = el;
+    while (lineEl !== root && getComputedStyle(lineEl).display === 'inline') lineEl = lineEl.parentElement;
+    const line = lineEl.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(t);
+    for (const r of range.getClientRects()) {
+      const b = {
+        left: Math.max(r.left, line.left),
+        right: Math.min(r.right, line.right),
+        top: Math.max(r.top, line.top),
+        bottom: Math.min(r.bottom, line.bottom),
+      };
+      if (b.right - b.left >= 1 && b.bottom - b.top >= 1) out.push(b);
+    }
+  }
+  return out;
+}
+
+export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null }) {
   const [rect, setRect] = useState(null); // {left,top,width,height,right,bottom} of the target, or null
-  const [place, setPlace] = useState(null); // {top,left} px for the caption (anchored to the ring)
+  const [place, setPlace] = useState(null); // {top,left[,compact,hidden]} px for the caption (anchored to the ring)
   const capRef = useRef(null);
   const doneRef = useRef(false);
 
@@ -123,6 +162,56 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
         };
       };
 
+      // TEXT-AWARE SLOT SEARCH (avoidTextIn) — see the header. Obstacles are every interactive
+      // control plus every visible text box under the root; a slot is clear when no obstacle
+      // comes within CLEAR px of it on both axes.
+      const textRoot = avoidTextIn ? document.querySelector(avoidTextIn) : null;
+      if (textRoot && capRef.current) {
+        const cap = capRef.current;
+        const textEl = cap.querySelector('.spotlight-caption-text');
+        const subEl = cap.querySelector('.spotlight-caption-sub');
+        // Measure the FULL caption even when the last pass made it compact (sub display:none).
+        // The sub's inline style is not React-managed, so forcing it for one read and clearing it
+        // cannot desync the className React owns. (is-hidden is `visibility`, which keeps size.)
+        if (subEl) subEl.style.display = 'block';
+        const fullW = cap.offsetWidth;
+        const fullH = cap.offsetHeight;
+        if (subEl) subEl.style.display = '';
+        const obstacles = rects.concat(textRects(textRoot, cap));
+        const forms = [{ compact: false, w: fullW, h: fullH }];
+        if (subEl && textEl) forms.push({ compact: true, w: textEl.offsetWidth, h: textEl.offsetHeight });
+        const slot = (w, h, top) => {
+          if (top < EDGE || top + h > vh - EDGE) return null;
+          // Free horizontal intervals in this row, then the one nearest the ring centre.
+          const blocks = obstacles
+            .filter((b) => b.bottom > top - CLEAR && b.top < top + h + CLEAR)
+            .map((b) => [b.left - CLEAR, b.right + CLEAR])
+            .sort((a, b) => a[0] - b[0]);
+          let best = null;
+          let x = EDGE;
+          const consider = (lo, hi) => {
+            if (hi - lo < w) return;
+            const c = Math.max(lo + w / 2, Math.min(cx, hi - w / 2));
+            if (!best || Math.abs(c - cx) < Math.abs(best - cx)) best = c;
+          };
+          for (const [l, r] of blocks) {
+            consider(x, Math.min(l, vw - EDGE));
+            x = Math.max(x, r);
+          }
+          consider(x, vw - EDGE);
+          return best === null ? null : { top, left: best };
+        };
+        for (const f of forms) {
+          const found = slot(f.w, f.h, ringBottom + GAP) || slot(f.w, f.h, ringTop - GAP - f.h);
+          if (found) {
+            setPlace({ ...found, compact: f.compact });
+            return;
+          }
+        }
+        setPlace({ top: 0, left: 0, hidden: true });
+        return;
+      }
+
       // Caption size as laid out. offsetWidth/offsetHeight ignore the appear-scale transform (a
       // scaled reading would mis-place it mid-animation). The caption's compact form on short
       // viewports (one line, no sub) is chosen by a CSS height media query — NOT toggled from
@@ -169,7 +258,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measure);
     };
-  }, [targetSelector, caption, sub, avoidSelector]);
+  }, [targetSelector, caption, sub, avoidSelector, avoidTextIn]);
 
   // Dismiss on the FIRST key/pointer — without ever swallowing it (no preventDefault).
   useEffect(() => {
@@ -197,6 +286,8 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       }
     : null;
   const capStyle = rect && place ? { top: `${place.top}px`, left: `${place.left}px` } : {}; // no target → caption centres via CSS
+  // No clear slot (avoidTextIn): the ring alone. Still MOUNTED (hidden) so a resize can re-measure it.
+  const capClass = `spotlight-caption${rect ? '' : ' is-centered'}${place && place.compact ? ' is-compact' : ''}${place && place.hidden ? ' is-hidden' : ''}`;
 
   return (
     <div className="spotlight-overlay" aria-hidden="true">
@@ -205,7 +296,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       ) : dim ? (
         <div className="spotlight-dim" />
       ) : null}
-      <div ref={capRef} className={`spotlight-caption${rect ? '' : ' is-centered'}`} style={capStyle}>
+      <div ref={capRef} className={capClass} style={capStyle}>
         <span className="spotlight-caption-text">{caption}</span>
         {sub && <span className="spotlight-caption-sub">{sub}</span>}
       </div>
