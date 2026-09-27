@@ -532,3 +532,27 @@
     flex: 0 0 auto;
   }
 }
+
+/* ---- SHORT LANDSCAPE WINDOWS: TWO COLUMNS (fix/join-screens-scale) ----
+   The layout wrappers are display:contents by default, so every other window gets the single
+   column it always had. On a short landscape window (1280x551 is a 1366 laptop at 125% scaling)
+   the stacked screen ran off the bottom of the viewport; side by side — join-by-code on the left,
+   the public list on the right — it fits at full size. */
+.browser-col { display: contents; }
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 720px) {
+  .browser-box {
+    max-width: clamp(380px, 80vw, 1000px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(20px, 2.5vw, 36px);
+    align-items: start;
+    padding: 18px 24px;
+  }
+  .browser-header { grid-column: 1 / -1; }
+  .browser-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .browser-col--list .browser-divider { margin-top: 0; }
+}

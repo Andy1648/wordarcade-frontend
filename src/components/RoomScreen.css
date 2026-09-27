@@ -849,30 +849,47 @@ html[data-beat='true'] .room-leave-btn {
   .room-code-face {
     font-size: var(--fs-h1);
   }
-  /* A BIG ROOM GOES TWO-UP. Past four players the roster is the tallest thing on the screen;
-     two chips per row keeps an 8-player room inside a 625px laptop at full size. */
-  .room-players-list:has(> :nth-child(5)) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  /* Half-width chips: a long name ends in an ellipsis rather than breaking over three lines. */
-  .room-players-list:has(> :nth-child(5)) {
-    gap: 6px;
-  }
-  .room-players-list:has(> :nth-child(5)) .room-player-chip {
-    min-width: 0;
-    /* Tighter rows two-up: four rows of the single-column padding put an 8-player room's last
-       row below a 625px laptop's fold. The type is unchanged. */
-    padding-top: 6px;
-    padding-bottom: 6px;
-  }
-  .room-players-list:has(> :nth-child(5)) .room-player-name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+
+
   .room-col .room-players-list {
     margin-bottom: 0;
   }
+}
+
+/* A BIG ROOM GOES TWO-UP — at EVERY width (fix/join-screens-scale). Past four players the roster is
+   the tallest thing on the screen: on a 390x844 phone an 8-player room pushed DIFFICULTY and START
+   ~200px below the fold with nothing to scroll, and on a 625px laptop it did the same to the last
+   row. Two chips per row, tighter rows, long names ellipsised; the type is unchanged. */
+.room-players-list:has(> :nth-child(5)) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.room-players-list:has(> :nth-child(5)) {
+  gap: 6px;
+}
+.room-players-list:has(> :nth-child(5)) .room-player-chip {
+  min-width: 0;
+  /* Tighter rows two-up: four rows of the single-column padding put an 8-player room's last
+     row below a 625px laptop's fold. The type is unchanged. */
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.room-players-list:has(> :nth-child(5)) .room-player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* SHORT LANDSCAPE WINDOWS (1280x551 = a 1366 laptop at 125% scaling; 1163x501): the code steps
+   down to --fs-h2 and the share line to --fs-body so the SHARE column fits at full size, instead of
+   useFitZoom shrinking every label under the 13px floor to make it fit. */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 720px) {
+  .room-box { padding: 18px 24px; }
+  .room-code-face { font-size: var(--fs-h2); }
+  .room-instruction { font-size: var(--fs-body); margin-bottom: 14px; }
+  .room-players-label { margin-bottom: 8px; }
+  .room-code { margin-bottom: 4px; }
+  .room-invite-row { margin: 4px 0 2px; }
+  .room-players-list:has(> :nth-child(5)) { gap: 4px; }
 }

@@ -157,6 +157,10 @@ export default function PublicRoomsScreen({
           </button>
         </div>
 
+        {/* TWO COLUMNS ON A SHORT LANDSCAPE WINDOW (see PublicRoomsScreen.css): the join-by-code
+            form on the left, the public list on the right. Layout-only wrappers — display:contents
+            everywhere else, so the phone / tall-window screen is the single column it always was. */}
+        <div className="browser-col browser-col--code">
         <div className="browser-title">JOIN ROOM</div>
         <div className="browser-subtitle">ENTER A CODE OR PICK A PUBLIC GAME</div>
 
@@ -229,6 +233,9 @@ export default function PublicRoomsScreen({
           <div className="browser-error" role="alert">{error}</div>
         )}
 
+        </div>
+
+        <div className="browser-col browser-col--list">
         <div className="browser-divider">
           <span>OR PICK A PUBLIC GAME</span>
         </div>
@@ -291,6 +298,7 @@ export default function PublicRoomsScreen({
             })}
           </ul>
         )}
+        </div>
       </div>
     </div>
   );
