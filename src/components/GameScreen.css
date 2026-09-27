@@ -6336,3 +6336,37 @@ html[data-beat='true'] .wb-belly {
 @media (min-width: 900px) and (max-height: 520px) {
   .game-over-mascot .mascot-img { height: 58px; }
 }
+
+/* ---- TEXT ON TEXT, AT THE TOP SEAT (fix/wb-prompt-overlap) ------------------------------------
+   Measured by e2e/wb-text-overlap.spec.js (every visible text box on a live board, pairwise):
+   1. YOUR TURN sat on its own seat's name (2-3px at 1440x900 / 1920x1080: the name's line box is
+      taller than --wb-name-h once --fs-label grows), and the name + flag stack stood ~52px above
+      the ring box, which only reserves one row-gap (20px at 551px tall) - so on short windows the
+      flag ran into the prompt's STR (3-4px at 1280x551 / 1366x625, 4 and 8 players).
+      On MY live seat the flag already says whose seat it is, so the name steps aside and the flag
+      takes the name's slot: one label instead of two stacked, 26px lower, clear of the prompt.
+      Every other seat, and my seat off-turn, keeps its name.
+   2. The live-typing line was meant to follow a top-half seat's name OUTWARD (the rule near
+      .wb-seat--name-out-up .player-status above), but `.wb-seat .player-typing { top }` comes
+      later at equal specificity and won - so the line hung 26px below the avatar, toward the bomb,
+      and at 1280x551 its "..." printed on the bomb-belly fragment. The name is not below a top-half
+      seat, so the 26px it was clearing is empty: the line hugs the avatar instead. */
+.wb-seat--name-out-up:has(> .game-your-turn) .game-player-name-text {
+  display: none;
+}
+.wb-seat--name-out-up .game-your-turn {
+  top: -26px;
+}
+.wb-seat--name-out-up .player-typing {
+  top: calc(100% + 4px);
+  bottom: auto;
+}
+/* 3. A SHORT WINDOW CROWDS THE RING AS HARD AS A NARROW ONE. The one-name rule above fires at
+      <=360px wide; at 1280x551 the ring is ~200px across too, eight names ellipsise to "MAXIM…" /
+      "PENEL…", and each label's line hung on the next seat's colour-dot tier numeral (up to 7x4px).
+      Same answer, same reason: on a crowded short board only the seat on the clock is named. */
+@media (min-width: 900px) and (max-height: 600px) {
+  .wb-ring-crowd .wb-seat .game-player-card:not(.current) .game-player-name-text {
+    display: none;
+  }
+}

@@ -3836,6 +3836,11 @@ export default function GameScreen({
                 targetSelector=".game-input"
                 caption={isCategory ? 'NAME SOMETHING IN THE CATEGORY' : 'TYPE A WORD WITH THESE LETTERS'}
                 sub="START TYPING"
+                // The board is dense: never print over its own text (LIVE FEED, seat names, the
+                // used-words strip) or across its rail CARDS. fix/wb-prompt-overlap — see
+                // Spotlight.jsx `avoidTextIn` / `avoidSelector`.
+                avoidTextIn=".game-stage--wb"
+                avoidSelector=".game-stage--wb .kill-feed, .game-stage--wb .wb-status, .game-stage--wb .game-used"
                 onDismiss={dismissGameSpot}
                 // A live board is now a deep link's FIRST FRAME (/word-bomb/play), and the wash
                 // took the whole thing to a quarter brightness. Ring + caption teach; the wash
