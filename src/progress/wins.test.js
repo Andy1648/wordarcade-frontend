@@ -62,10 +62,12 @@ test('perWordWins is EXACTLY the word’s XP ÷ 10 — every mode × every diffi
       for (const wordLength of [3, 5, 9]) {
         const o = { mode, difficulty, wordLength, rebirthCount: 0, streakMult: 1, masteryMult: 1 };
         const xp = perWordXp(o);
-        assert.equal(xp % 10, 0, `XP must stay a multiple of 10: ${mode}/${difficulty}/${wordLength}`);
+        // WHOLE XP (fix/payout-honesty) — no longer snapped to a multiple of ten, which is what
+        // swallowed the first nine momentum marks. Wins are the exact tenth, not a rounded integer.
+        assert.ok(Number.isInteger(xp), `XP must be whole: ${mode}/${difficulty}/${wordLength}`);
         assert.equal(
           perWordWins(o),
-          Math.round(xp / 10),
+          xp / 10,
           `wins must be XP/10 for ${mode}/${difficulty}/${wordLength} (xp ${xp})`,
         );
       }
@@ -93,7 +95,7 @@ test('perWordWins: key-tier letters × mode × difficulty, on the reference word
   assert.ok(perWordWins({ ...o, keyTier: 3 }) > perWordWins({ ...o, keyTier: 0 }));
   // DIFFICULTY APPLIES TO BOTH READOUTS NOW. It used to touch wins only, so playing on HELL
   // levelled you no faster than CHILL.
-  assert.equal(perWordWins({ ...o, difficulty: 'medium' }), 8); // round10(50 × 1.5) = 80 → 8
+  assert.equal(perWordWins({ ...o, difficulty: 'medium' }), 7.5); // 50 × 1.5 = 75 XP → 7.5 (was round10'd to 8)
   assert.equal(perWordWins({ ...o, difficulty: 'hard' }), 10);
   assert.ok(perWordXp({ ...o, difficulty: 'hard' }) > perWordXp({ ...o, difficulty: 'chill' }));
 });
@@ -213,7 +215,7 @@ test('round/word estimates: card previews are the R0 BASE rate (v8: key-tier let
 // own; they are now the word's XP ÷ 10, and it is the XP that is snapped. So the thing that must
 // end in a zero is the XP — wins are simply whole, and "+15 WINS" is now a sentence the game can
 // say. PRICES still end in a zero: they are read, compared and remembered by the player.
-test('PRICES end in a zero; every XP grant is a multiple of 10; every wins payout is a whole number', () => {
+test('PRICES end in a zero; every XP grant is whole; wins are XP/10 to the tenth; every round payout is a whole number', () => {
   // Shop cosmetics.
   for (const item of [...POP_STYLES, ...SOUND_PACKS]) {
     assert.equal(item.price % 10, 0, `${item.id} price ${item.price}`);
@@ -227,8 +229,8 @@ test('PRICES end in a zero; every XP grant is a multiple of 10; every wins payou
     for (const difficulty of diffs) {
       for (const rebirthCount of rebirths) {
         const o = { mode, difficulty, rebirthCount, keyTier: 0, streakMult: 1, masteryMult: 1 };
-        assert.equal(perWordXp(o) % 10, 0, `XP ${mode}/${difficulty}/R${rebirthCount}`);
-        assert.equal(perWordWins(o), Math.round(perWordXp(o) / 10), `wins==xp/10 ${mode}/${difficulty}/R${rebirthCount}`);
+        assert.ok(Number.isInteger(perWordXp(o)), `XP ${mode}/${difficulty}/R${rebirthCount}`);
+        assert.equal(perWordWins(o), perWordXp(o) / 10, `wins==xp/10 ${mode}/${difficulty}/R${rebirthCount}`);
         for (let w = 0; w <= 20; w++) {
           const paid = awardWins({ wordsAccepted: w, ...o });
           assert.ok(Number.isInteger(paid), `award ${mode}/${difficulty}/R${rebirthCount}/${w} = ${paid}`);
@@ -477,8 +479,8 @@ test('perWordRateNow returns the XP and the WINS for the same word, and xp === r
       const o = { mode, difficulty, rebirthCount: 0, keyTier: 0, streakMult: 1, masteryMult: 1 };
       const now = perWordRateNow(o);
       assert.equal(now.xp, perWordXp({ ...o, mode: modeKey(mode) }), `${mode}/${difficulty} xp`);
-      assert.equal(now.rate, Math.round(now.xp / 10), `${mode}/${difficulty} wins`);
-      assert.equal(now.xp, now.rate * 10, `${mode}/${difficulty} xp === rate x 10`);
+      assert.equal(now.rate, now.xp / 10, `${mode}/${difficulty} wins`);
+      assert.equal(now.xp, Math.round(now.rate * 10), `${mode}/${difficulty} xp === rate x 10`);
       // The multiplier the card prints applies to BOTH lines: rate/base in wins and xp/xpBase in
       // XP are the same ratio, which is why one "(xN)" can sit on both.
       assert.ok(Math.abs(now.mult - now.xp / now.xpBase) < 1e-9, `${mode}/${difficulty} mult`);

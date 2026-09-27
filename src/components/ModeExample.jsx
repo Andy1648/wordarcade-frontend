@@ -5,7 +5,7 @@
 import './ModeExample.css';
 import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
 import { perWordRateNow } from '../progress/wins';
-import { formatNum, formatMult } from '../format';
+import { formatRate, formatMultExact } from '../format';
 
 // Highlight the first occurrence of `sub` within `word` in `color`.
 function hiSub(word, sub, color) {
@@ -97,9 +97,9 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
         <span className="mode-ex-pay">
           {/* The RESOLVED rate, like the mode card — not the base with a rebirth chip bolted on
               for the player to multiply out (and momentum/level/mark missing from both). */}
-          <b style={{ color: accent }}>{formatNum(rateNow.rate)}</b> WINS / WORD
+          <b style={{ color: accent }}>{formatRate(rateNow.rate)}</b> WINS / WORD
           {rateNow.mult !== 1 && (
-            <span className="mode-ex-mult"> (×{formatMult(rateNow.mult)})</span>
+            <span className="mode-ex-mult"> (×{formatMultExact(rateNow.mult)})</span>
           )}
         </span>
         <span className="mode-ex-round">{round}</span>

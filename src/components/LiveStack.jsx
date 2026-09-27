@@ -16,7 +16,8 @@
 // crowds out the rows that matter. `WordPayout` already handles the "an upgrade is doing nothing
 // on THIS word" case with its own inactive list.
 import { perWordRateNow } from '../progress/wins';
-import { formatNum, formatMult } from '../format';
+import { roundWordXp } from '../progress/xp';
+import { formatRate, formatMultExact } from '../format';
 import './LiveStack.css';
 
 const LABELS = {
@@ -27,8 +28,9 @@ const LABELS = {
   bonus: 'BONUS',
 };
 const ORDER = ['mode', 'difficulty', 'rebirth', 'streak', 'bonus'];
-// formatMult, not a local toFixed(2): one definition of how a × is written, everywhere.
-const mult = (m) => `×${formatMult(m)}`;
+// formatMultExact — the RECEIPT's formatter, so a factor here reads exactly as it does on the
+// per-word receipt (×1.05, not the one-decimal ×1.1 the game does not apply).
+const mult = (m) => `×${formatMultExact(m)}`;
 
 export default function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
   const now = perWordRateNow({ mode, difficulty });
@@ -39,18 +41,20 @@ export default function LiveStack({ mode, difficulty, combo = 1, compact = false
   // The live COMBO is not permanent — it is what the player is doing right now — so it rides at the
   // bottom, visually separated, and is the one row that moves while they type.
   const live = combo > 1 ? { key: 'combo', label: 'COMBO', value: combo } : null;
-  const shown = live ? now.rate * combo : now.rate;
+  // With a live combo the word's XP is re-rounded on the same whole-XP grid the award uses, so the
+  // headline is the tenth-exact number a common word would bank right now.
+  const shown = live ? roundWordXp(now.xp * combo) / 10 : now.rate;
 
   return (
     <div className={`lstack${compact ? ' lstack--compact' : ''}`} aria-hidden="true">
       <div className="lstack-head">
-        <span className="lstack-rate">{formatNum(Math.round(shown))}</span>
+        <span className="lstack-rate">{formatRate(shown)}</span>
         <span className="lstack-per">/ WORD</span>
       </div>
       <div className="lstack-rows">
         <div className="lstack-row lstack-row--base">
           <span className="lstack-label">BASE</span>
-          <span className="lstack-val">{formatNum(now.base)}</span>
+          <span className="lstack-val">{formatRate(now.base)}</span>
         </div>
         {rows.map((r) => (
           <div className="lstack-row" key={r.key}>

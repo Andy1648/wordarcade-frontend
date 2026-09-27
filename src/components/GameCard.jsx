@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
 import { perWordRateNow } from '../progress/wins';
-import { formatNum, formatMult } from '../format';
+import { formatNum, formatRate, formatMultExact } from '../format';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -260,8 +260,10 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
   // The combined multiplier, printed ONCE per line and never on its own — a factor without the
   // value it produced is the defect this pattern exists to prevent.
+  // formatMultExact — the RECEIPT's formatter. The one-decimal formatMult printed ×2.02 as ×2 and
+  // ×1.05 as ×1.1: a multiplier the game does not apply (fix/payout-honesty).
   const multTag = rateNow && rateNow.mult !== 1 && (
-    <span className="game-card-payout-mult"> (×{formatMult(rateNow.mult)})</span>
+    <span className="game-card-payout-mult"> (×{formatMultExact(rateNow.mult)})</span>
   );
   const xpLine = rateNow && (
     <>
@@ -273,7 +275,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   );
   const payout = rateNow && (
     <>
-      {formatNum(rateNow.rate)}
+      {formatRate(rateNow.rate)}
       <span className="game-card-payout-unit"> WINS</span>
       <span className="game-card-payout-per"> / WORD</span>
       {multTag}

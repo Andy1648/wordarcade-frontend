@@ -14,7 +14,7 @@
 //
 // Pure and DOM-free (one module-level round ledger, the same pattern wins.js uses for its pending
 // stamp), so the whole thing is unit-testable under node.
-import { round10 } from './xp.js';
+import { roundWordXp } from './xp.js';
 
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
@@ -81,10 +81,10 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
     if (Math.abs(m - 1) > 1e-9) rows.push({ ...f, mult: m });
   }
   // SNAPPED ON THE XP GRID, NOT THE WINS ONE. Wins are the word's XP ÷ 10 and the XP is what
-  // round10 applies to, so a receipt that snapped the WINS total to a multiple of ten would print
-  // 20 for a word that paid 15. Multiply up, snap, divide back: the same arithmetic the payout
-  // itself does, which is the only way the bottom line can match the ledger.
-  const computed = round10(b * product * 10) / 10;
+  // gets rounded (to WHOLE XP — roundWordXp, the same function xpPerWord uses), so the receipt
+  // multiplies up, snaps, and divides back: the same arithmetic the payout itself does, which is
+  // the only way the bottom line can match the ledger. A word can now be worth 10.1 wins.
+  const computed = roundWordXp(b * product * 10) / 10;
   const banked = Number.isFinite(total) ? total : computed;
   return {
     base: b,

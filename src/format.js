@@ -75,6 +75,21 @@ export function formatNum(n) {
 }
 
 /**
+ * A PER-WORD WINS RATE, printed to the tenth it is actually paid at. A word is worth its XP ÷ 10
+ * and XP is whole, so a rate is whole tenths of a win (10.1). `formatNum` rounds to a whole number
+ * below 10,000 — which printed 10.1 as "10" and hid every momentum mark under ten. Same grouping
+ * and same ≥10,000 abbreviation as formatNum; a whole rate prints with no ".0".
+ */
+export function formatRate(n) {
+  const v = Number.isFinite(n) ? n : 0;
+  if (Math.abs(v) >= 10000) return formatNum(v);
+  const r = Math.round(Number((v * 10).toPrecision(12))) / 10;
+  if (Number.isInteger(r)) return formatNum(r);
+  const [i, d] = String(Math.abs(r)).split('.');
+  return (r < 0 ? '-' : '') + grouped(i) + '.' + d;
+}
+
+/**
  * A SINGLE NAMED FACTOR, printed exactly. `formatMult` rounds to one decimal, which is right for a
  * resolved PRODUCT on a card (×3, ×4.5) and wrong for the individual factors a receipt names: the
  * daily-streak ladder is 1.05 / 1.10 / 1.20 / 1.25, and one decimal turns ×1.05 into "×1.1" and

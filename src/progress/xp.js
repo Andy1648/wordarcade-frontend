@@ -349,9 +349,8 @@ export function cappedWordMult(rarityMult = 1, comboMult = 1, luckyMult = 1) {
 
 // XP granted for one accepted word — THE ONE PLACE A WORD'S VALUE IS COMPUTED. Pure given its
 // factors (mode/keyTier/rebirth/streak default to live). `wordLength` is the menu-equivalent letter
-// count; `weight` is the capped per-word reward mult. Snapped to a round 10 like every other XP
-// grant, which is also what makes the WINS readout exact: wins are this number ÷ 10 (wins.js), and
-// a multiple of ten divided by ten is an integer with nothing to round away.
+// count; `weight` is the capped per-word reward mult. Snapped to WHOLE XP (roundWordXp, below) —
+// NOT round10 any more — so wins (this ÷ 10, wins.js) are exact to a tenth of a win.
 //
 // `difficultyMult` and `bonusMult` are the two pass-throughs the unified stack needs and this
 // module cannot resolve itself: DIFFICULTY (it lives in wins.js, next to the tier keys) and the
@@ -376,7 +375,21 @@ export function xpPerWord({
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
   const dm = Number.isFinite(difficultyMult) && difficultyMult > 0 ? difficultyMult : 1;
   const bm = Number.isFinite(bonusMult) && bonusMult > 0 ? bonusMult : 1;
-  return round10(keyTierXp(kt) * len * modeMult * dm * rebirthMult(rc) * wt * stm * bm);
+  return roundWordXp(keyTierXp(kt) * len * modeMult * dm * rebirthMult(rc) * wt * stm * bm);
+}
+
+// THE PER-WORD GRID: WHOLE XP, not round10. ANDY: "nothing hidden." round10 was the grid here
+// until fix/payout-honesty, and it swallowed small multipliers whole: a 100-XP / 10-win word with
+// MOMENTUM ×1.01..×1.04 snapped straight back to 100, and ×1.05 landed on 100 too (half-to-even),
+// so the first NINE marks the shop sold as "+1%" changed nothing that was awarded. One XP is the
+// finest grid that stays an integer, and it is fine enough that every mark moves a 10-win word
+// (100 → 101 → 102 …). Wins are this ÷ 10, so a word is now worth whole TENTHS of a win; the
+// balance stays an integer and the tenths carry forward (wins.js bankWordWins) — nothing rounded
+// away, nothing invented. toPrecision first so float noise (100 × 1.05 = 105.00000000000001, or
+// 12.5 arriving as 12.499999…) cannot tip the rounding. Shared with the receipt (payout.js).
+export function roundWordXp(x) {
+  const v = Number.isFinite(x) ? x : 0;
+  return Math.round(Number(v.toPrecision(12)));
 }
 
 // awardWordXp LIVES IN wins.js NOW (Economy v8). The grant is no longer XP-only: one accepted

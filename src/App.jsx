@@ -1334,7 +1334,9 @@ function App() {
             // The weight IS rarity × combo × lucky, capped. WORD SENSE used to multiply the
             // rarity part again on top of this, invisibly; it is gone (feat/cut-secrets-rarity).
             myWbWeightRef.current += wbWeight;
-            awardWordXp({ mode: 'word-bomb', wordLength: (wbWord || '').trim().length, weight: wbWeight });
+            // DIFFICULTY rides on the XP award exactly as it does on bankWordWins below and on the card's
+            // "XP / WORD" line — without it HELL paid half the XP the card quoted (fix/payout-honesty).
+            awardWordXp({ mode: 'word-bomb', difficulty: gameDifficultyRef.current, wordLength: (wbWord || '').trim().length, weight: wbWeight });
             recordAcceptedWord(wbWord, { mode: 'word-bomb', band: r.band }); // Collection (Job 3)
             noteWord(wbWord, r); // permanent record: distinct / obscure / rarest-ever (guarded)
             // BANK wins for this word (§2): past the 3-word gate every accepted word banks
@@ -1549,7 +1551,7 @@ function App() {
           const prevBlitzWeight = myBlitzWeightRef.current;
           const blitzWeight = cappedWordMult(r.mult, blitzComboMult, blitzLucky.winsWeight);
           myBlitzWeightRef.current += blitzWeight;
-          awardWordXp({ mode: 'category-blitz', wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
+          awardWordXp({ mode: 'category-blitz', difficulty: gameDifficultyRef.current, wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
           recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
           noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
           const banked = bankWordWins({
