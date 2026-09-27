@@ -432,8 +432,10 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* A LOCKED card's name is the LAST line in its bar (no XP / payout under it). At line-height 0.9
    Bungee's text box (~1.33em) overhangs its line box by ~0.21em top and bottom, so a trailing name
    reached the card's bottom edge and lost a pixel to the card's clip (card-fit gate, 1366/1280/
-   1440 fresh). Give the overhang back as margin so the whole text box sits inside the card. */
-.game-card-titlebar > .game-card-name:last-child { margin-bottom: 0.22em; }
+   1440 fresh). Give the overhang back as margin so the whole text box sits inside the card.
+   NOT ONLY WHEN LAST (fix/card-declutter): on an unlocked card the same ~0.21em overhang ran 3-5px
+   into the XP line under the name — text on text, "WORD BOMB" sitting on "100 XP / WORD". */
+.game-card-titlebar > .game-card-name { margin-bottom: 0.22em; }
 /* CATEGORY is the one long (8-letter) name — scale it down so it never overruns its
    bar at the narrowest column. */
 /* (The old [data-game='category-blitz'] .game-card-name override is GONE. It existed only
@@ -622,7 +624,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      widest foot line's measured em-width). */
   font-size: clamp(13px, min(4.4cqw, calc(var(--foot-room) / var(--foot-em, 14))), 16px);
   color: #111;
-  line-height: 1.25;
+  /* 1.5, not 1.25: Space Mono's text box is ~1.48em, so at 1.25 each line's box ran ~4px into
+     the next — the XP line sat on the WINS line (fix/card-declutter, text-on-text audit). */
+  line-height: 1.5;
 }
 .game-card-foot .game-card-xp { font-weight: 700; }
 
@@ -657,7 +661,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      card, and SAT stops being the one mode whose price is blank on a phone. */
   .game-card-foot { padding: clamp(4px, 2.5cqw, 8px) clamp(5px, 3cqw, 10px); }
   .game-card-foot .game-card-xp,
-  .game-card-foot .game-card-payout { font-size: clamp(13px, 11cqw, 15px); line-height: 1.15; }
+  .game-card-foot .game-card-payout { font-size: clamp(13px, 11cqw, 15px); line-height: 1.5; }
   .game-card-limited-tag { display: none; }
   .game-card-payout { font-size: clamp(13px, 18cqw, 20px); }
   .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 14px); padding: 6px 46px; }
