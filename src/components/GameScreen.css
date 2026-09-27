@@ -6178,53 +6178,115 @@ html[data-beat='true'] .wb-belly {
   border-radius: 999px;
 }
 
-/* ===== THE K.O. SCREEN (feat/ko-screen) — LAST in the file on purpose: it re-declares grid
-   tracks set by the game-over layout block above, and equal specificity means source order wins.
+/* ===== THE K.O. SCREEN (feat/ko-screen) — LAST in the file on purpose: it re-declares tracks and
+   sizes set by the game-over layout block above, and equal specificity means source order wins.
 
-   PER-PLAYER STATS AS LABEL / VALUE ROWS, at every width. The five-across grid put five 13px
-   labels in ~45px cells: at 1366x625 "WORDS LONGEST AVG LEN TIMEOUTS SKIPS" printed on top of
-   each other. As rows ("WORDS ... 0") every label has the card's full width, and a head-to-head
-   pair of cards is shorter than the old stacked pair on a phone. */
-.go-player-grid {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1px;
+   MEASURED with real played words (4 players, 2 turns each): the card ran 308px past 1366x625,
+   382px past 1280x551, 196px past 1341x815 and 735px past 390x844, with REMATCH below the fold
+   every time. The breakdown column alone was 767px: seven summary TILES in three rows, then a
+   CARD per player carrying its own five labels. It is rebuilt, not squeezed: */
+
+/* GAME SUMMARY — one wrapped strip of "8 WORDS · 9 LONGEST · …", same seven facts. */
+.go-sumstrip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9a8bbf;
 }
-.go-pstat {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  column-gap: 8px;
-  text-align: left;
+.go-sumstrip b {
+  margin-right: 5px;
+  font-size: var(--fs-body);
+  color: #2EFFE0;
 }
-.go-pstat-key { order: -1; }
-.go-pstat-val {
+
+/* PLAYERS — a table: the column names once, one row per player, the longest word under the name. */
+.go-ptable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+}
+.go-ptable th,
+.go-ptable td {
+  padding: 4px 6px;
   text-align: right;
-  overflow-wrap: anywhere;
+  font-size: var(--fs-body);
+  color: #fff;
+  white-space: nowrap;
 }
-/* Two pairs across on the laptop layout, where each player card is a half-width cell of the
-   breakdown column: five full-width rows made a 4-player breakdown ~95px taller than the old
-   grid; three short rows of pairs are no taller than it was, and still never collide. */
+.go-ptable thead th {
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: #9a8bbf;
+  vertical-align: bottom;
+  white-space: normal;
+}
+.go-ptable thead th:first-child,
+.go-ptable .go-pt-name { text-align: left; }
+.go-ptable tbody tr { background: #1a0b2e; }
+.go-ptable tbody .go-pt-name { border-left: 5px solid var(--pc-dark, #000); }
+.go-ptable tbody tr + tr > * { border-top: 2px solid #0d0618; }
+.go-pt-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pc, #FFE94A);
+}
+.go-pt-longest {
+  display: block;
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  color: #9a8bbf;
+}
+.go-pt-longest b { color: #fff; }
+
+/* GAME STATS toggle (GameOverBreakdown). A real control: >= 44px, flat fill, colored outline,
+   hard black shadow. On a laptop it is open and the toggle is not shown. */
+.go-more > summary { list-style: none; }
+.go-more > summary::-webkit-details-marker { display: none; }
+.go-more-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  margin: 0 0 8px;
+  padding: 0 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #FFE94A;
+  background: #1a0b2e;
+  border: 3px solid #7a6a14;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.go-more-toggle::after { content: '▸'; margin-left: 8px; }
+.go-more[open] > .go-more-toggle::after { content: '▾'; }
+
 @media (min-width: 900px) {
-  .go-player-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-flow: row dense;
-    column-gap: 12px;
-  }
-  /* LONGEST holds a WORD, not a number: in a half cell "STRONGEST" wrapped to three lines. It
-     takes the whole row; `dense` packs the four numbers into two rows of pairs around it. */
-  .go-player-grid > .go-pstat:nth-child(2) { grid-column: 1 / -1; }
+  /* Laptop: the breakdown is simply there; the highlights sit in the money column. */
+  .go-more[open] > .go-more-toggle { display: none; }
+  .go-awards-slot--side { display: none; }
+  .go-awards-slot--mid .go-stats { margin: 10px 0 0; }
+}
+@media (max-width: 899px) {
+  .go-awards-slot--mid { display: none; }
 }
 
-/* PHONE (single-column card): the card was 1187px of content in 788px at 390x844, with REMATCH
-   below the fold. Two things buy it back without dropping a fact:
-     - the two players' cards sit SIDE BY SIDE (they are a comparison), and
-     - REMATCH / LEAVE share ONE row (they were stacked: ~145px of button for two words). */
+/* PHONE (single-column card): REMATCH / LEAVE share ONE row (they were stacked, ~145px of button
+   for two words), and the rest is RHYTHM only — pads, gaps, margins; no text shrinks. */
 @media (max-width: 899px) {
-  .go-players {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-  }
   .go-foot .game-over-actions {
     display: flex;
     flex-direction: row;
@@ -6235,7 +6297,6 @@ html[data-beat='true'] .wb-belly {
     flex: 1 1 0;
     margin: 0;
   }
-  /* The rest is RHYTHM only — pads, gaps and margins. No fact is dropped, no text shrinks. */
   .game-over-card { padding-top: 14px; padding-bottom: 14px; }
   .ko-hero { margin: 2px 0 8px; }
   .ko-hero-bar { min-height: 68px; }
@@ -6246,8 +6307,20 @@ html[data-beat='true'] .wb-belly {
   .go-section-label { margin-bottom: 6px; }
   .go-section-label:not(:first-child) { margin-top: 8px; }
   .go-award { padding: 3px 12px; }
-  .go-player { padding: 6px 8px; }
-  .go-player-name { margin-bottom: 4px; }
   .game-over-rematch { padding: 12px 0; }
   .go-foot { margin-top: 6px; }
+}
+
+/* COMPACT LAPTOP CARD (GameOverBreakdown sets data-ko-compact only when the card overflows): it
+   behaves like the phone card — the highlights move into GAME STATS and the toggle stays usable. */
+.game-over-card[data-ko-compact] .go-awards-slot--mid { display: none; }
+.game-over-card[data-ko-compact] .go-awards-slot--side { display: block; }
+.game-over-card[data-ko-compact] .go-more > .go-more-toggle { display: flex; }
+
+/* SHORT LAPTOP WINDOWS: rhythm only, so a full 4-player card fits 1366x625 without folding. */
+@media (min-width: 900px) and (max-height: 700px) {
+  .game-over-rematch { padding: 12px 0; }
+  .go-foot { margin-top: 6px; }
+  .go-award { padding: 3px 12px; }
+  .go-awards-slot--mid .go-stats { margin-top: 8px; }
 }
