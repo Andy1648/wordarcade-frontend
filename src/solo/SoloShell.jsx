@@ -105,6 +105,31 @@ export default function SoloShell({
 }) {
   const inputRef = useRef(null);
 
+  // LONG WORDS WRAP (fix/famous-long-words). The input shrinks its type to fit a long word on one
+  // line, but never below the 16px input floor (iOS zoom) — and at 16px a 45-letter word
+  // (pneumonoultramicroscopicsilicovolcanoconiosis) is ~440px of Space Mono in a ~284px phone box.
+  // Past that point a MIRROR takes over the display: the same text, wrapped onto two lines at
+  // 16px, over the real input (which keeps focus, value, caret and every event, its own text
+  // made transparent). `capacity` is how many characters fit on ONE line at the floor; it is
+  // measured on mount and on resize only (ResizeObserver), so a keystroke is a pure comparison.
+  const [capacity, setCapacity] = useState(Infinity);
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el || typeof ResizeObserver !== 'function') return undefined;
+    const measure = () => {
+      const cs = getComputedStyle(el);
+      const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      // Space Mono advances 0.612em; 0.62 at the 16px floor leaves a hair of slack. Zero tracking
+      // is what the CSS falls back to before this point (see .solo-input letter-spacing).
+      setCapacity(Math.max(1, Math.floor(room / (16 * 0.62))));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [phase]);
+  const wrapLong = input.length > capacity;
+
   // Keep focus on the field while playing so typing always lands (the field is never
   // cleared on reject, so focus + caret position are the player's evidence).
   useEffect(() => {
@@ -223,7 +248,7 @@ export default function SoloShell({
 
       <div className="solo-secondary">
       {phase === 'playing' ? (
-        <form className="solo-inputwrap" onSubmit={submit}>
+        <form className="solo-inputwrap" onSubmit={submit} data-wrap={wrapLong ? '1' : undefined}>
           <input
             ref={inputRef}
             className="solo-input"
@@ -242,6 +267,14 @@ export default function SoloShell({
             spellCheck="false"
             aria-label={title}
           />
+          {wrapLong ? (
+            <div className="solo-input-mirror" aria-hidden="true">
+              <span className="solo-input-mirror-text">
+                {input}
+                <span className="solo-input-mirror-caret" />
+              </span>
+            </div>
+          ) : null}
           {/* The reject sill: an always-red bar whose OPACITY pulses on each reject
               (keyed remount re-fires the 140ms opacity animation). */}
           <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />

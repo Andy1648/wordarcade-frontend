@@ -38,7 +38,10 @@ test('the ACCEPT lists are no longer capped at 15 letters', () => {
   assert.ok(longest(merged) >= 28, `merged accept longest ${longest(merged)}`);
   // words.js floors the input maxLength at this generated value (so run 1 can type ext words);
   // it must equal the real longest accepted word — regenerate, never hand-edit.
-  assert.equal(JSON.parse(read('./acceptMaxLen.json')).maxLen, longest(merged));
+  // …including the hand-curated famous long words, which words.js merges in at load.
+  const withFamous = new Set(merged);
+  for (const w of read('./words.famous.txt').split(/\s+/)) if (w) withFamous.add(w);
+  assert.equal(JSON.parse(read('./acceptMaxLen.json')).maxLen, longest(withFamous));
 });
 
 test('a 28-letter word validates in CHAIN and FUSE once merged', async () => {
