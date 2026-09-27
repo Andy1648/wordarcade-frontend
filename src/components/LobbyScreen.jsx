@@ -1,7 +1,8 @@
 // LobbyScreen.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getStoredName, rememberName } from '../playerName';
 import { useSound } from '../contexts/SoundContext';
+import useFitZoom from '../hooks/useFitZoom';
 import './LobbyScreen.css';
 
 const MAX_NAME_LENGTH = 20;
@@ -27,6 +28,9 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
   // True once a valid Continue has been sent - locks the button until the
   // screen transitions (success) or the server bounces it back (error below).
   const [submitting, setSubmitting] = useState(false);
+  // Scale the form to the viewport (see hooks/useFitZoom.js).
+  const boxRef = useRef(null);
+  useFitZoom(boxRef);
 
   useEffect(() => {
     if (serverError) {
@@ -97,7 +101,7 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
 
   return (
     <div className="lobby-wrap">
-      <div className="lobby-box">
+      <div className="lobby-box" ref={boxRef}>
         <button
           className="lobby-back-btn"
           onClick={() => {

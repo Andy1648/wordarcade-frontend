@@ -6,8 +6,10 @@
   /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). The
      public-rooms LIST may still exceed this and scroll when there are many rooms —
      that's expected for this growing-list screen. */
-  min-height: calc(100vh / var(--app-scale, 1));
-  min-height: calc(100dvh / var(--app-scale, 1)); /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
+  /* One viewport. No --app-scale division any more: this view opts out of that zoom and fits its
+     box with hooks/useFitZoom.js instead (see Transitions.css). */
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -78,7 +80,8 @@
 .browser-subtitle {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  /* The screen's one direction line: --fs-body, not the 13px label size (fix/join-screens-scale). */
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #C9B8E8;
@@ -528,4 +531,28 @@
   .browser-code-row .browser-code-join-btn {
     flex: 0 0 auto;
   }
+}
+
+/* ---- SHORT LANDSCAPE WINDOWS: TWO COLUMNS (fix/join-screens-scale) ----
+   The layout wrappers are display:contents by default, so every other window gets the single
+   column it always had. On a short landscape window (1280x551 is a 1366 laptop at 125% scaling)
+   the stacked screen ran off the bottom of the viewport; side by side — join-by-code on the left,
+   the public list on the right — it fits at full size. */
+.browser-col { display: contents; }
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 720px) {
+  .browser-box {
+    max-width: clamp(380px, 80vw, 1000px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(20px, 2.5vw, 36px);
+    align-items: start;
+    padding: 18px 24px;
+  }
+  .browser-header { grid-column: 1 / -1; }
+  .browser-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .browser-col--list .browser-divider { margin-top: 0; }
 }

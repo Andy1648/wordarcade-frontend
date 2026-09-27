@@ -6,8 +6,10 @@
   background: transparent;
   width: 100%;
   /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). */
-  min-height: calc(100vh / var(--app-scale, 1));
-  min-height: calc(100dvh / var(--app-scale, 1)); /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
+  /* One viewport. No --app-scale division any more: this view opts out of that zoom and fits its
+     box with hooks/useFitZoom.js instead (see Transitions.css). */
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -272,4 +274,38 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ---- SHORT LANDSCAPE WINDOWS: TWO COLUMNS (fix/join-screens-scale) ----
+   Stacked, this box is ~570px tall at design size. A 1366 laptop at 125% scaling gives the page
+   1280x551, and 1163x501 is a real short window too: the box did not fit, and CONTINUE ended 7px
+   below the viewport with nothing to scroll. Shrinking the whole box to fit would have taken every
+   label under the 13px floor, so on a short landscape window the LAYOUT changes instead: the name
+   field and the visibility toggle sit side by side, and the box is ~150px shorter at the same type
+   sizes. hooks/useFitZoom.js still bounds the box by the viewport as the backstop. */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 720px) {
+  .lobby-box {
+    max-width: clamp(380px, 76vw, 920px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'back   back'
+      'instr  instr'
+      'label  vis'
+      'input  vis'
+      'err    err'
+      'status status'
+      'cont   cont';
+    column-gap: clamp(20px, 2.5vw, 36px);
+    align-items: start;
+    padding: 18px 24px;
+  }
+  .lobby-back-btn { grid-area: back; justify-self: start; }
+  .lobby-instruction { grid-area: instr; }
+  .lobby-box > .lobby-field-label { grid-area: label; }
+  .lobby-input { grid-area: input; }
+  .lobby-field-group { grid-area: vis; margin-top: 0; }
+  .lobby-error { grid-area: err; }
+  .lobby-connection-status { grid-area: status; }
+  .lobby-continue-btn { grid-area: cont; }
 }

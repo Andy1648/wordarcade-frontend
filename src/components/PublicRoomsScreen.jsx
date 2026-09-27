@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
+import useFitZoom from '../hooks/useFitZoom';
 import './PublicRoomsScreen.css';
 
 const MAX_NAME_LENGTH = 20;
@@ -42,6 +43,9 @@ export default function PublicRoomsScreen({
   onBack,
 }) {
   const { sound } = useSound();
+  // Scale the screen to the viewport (see hooks/useFitZoom.js).
+  const boxRef = useRef(null);
+  useFitZoom(boxRef);
   // The row we've sent a join for, locked until we either transition into the
   // room (this screen unmounts) or the server bounces it (cleared below).
   const [joiningCode, setJoiningCode] = useState(null);
@@ -137,7 +141,7 @@ export default function PublicRoomsScreen({
 
   return (
     <div className="browser-wrap">
-      <div className="browser-box">
+      <div className="browser-box" ref={boxRef}>
         <div className="browser-header">
           <button
             className="browser-back-btn"
@@ -153,6 +157,10 @@ export default function PublicRoomsScreen({
           </button>
         </div>
 
+        {/* TWO COLUMNS ON A SHORT LANDSCAPE WINDOW (see PublicRoomsScreen.css): the join-by-code
+            form on the left, the public list on the right. Layout-only wrappers — display:contents
+            everywhere else, so the phone / tall-window screen is the single column it always was. */}
+        <div className="browser-col browser-col--code">
         <div className="browser-title">JOIN ROOM</div>
         <div className="browser-subtitle">ENTER A CODE OR PICK A PUBLIC GAME</div>
 
@@ -225,6 +233,9 @@ export default function PublicRoomsScreen({
           <div className="browser-error" role="alert">{error}</div>
         )}
 
+        </div>
+
+        <div className="browser-col browser-col--list">
         <div className="browser-divider">
           <span>OR PICK A PUBLIC GAME</span>
         </div>
@@ -287,6 +298,7 @@ export default function PublicRoomsScreen({
             })}
           </ul>
         )}
+        </div>
       </div>
     </div>
   );
