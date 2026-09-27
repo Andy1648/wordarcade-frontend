@@ -578,6 +578,9 @@
   position: relative;
   width: 100%;
   max-width: min(680px, 100%);
+  /* A size container so .solo-input can fit long words to its own width in pure CSS
+     (cqw) — no layout read in the keystroke path. */
+  container-type: inline-size;
 }
 .solo-input {
   width: 100%;
@@ -593,9 +596,18 @@
      means this bump costs no vertical space. Static font-size only — this element keeps
      NO transition/animation/transform/filter/will-change (nor any ancestor up to .solo-root). */
   font-size: var(--fs-panel);
+  /* LONG WORDS: the accept lists run to 28 letters, which overflowed the box at phone width.
+     --len (the typed length, a pure style write from SoloShell) shrinks the type so the whole
+     word fits the content box: Space Mono advances 0.612em + the 0.08em tracking ≈ 0.7em per
+     character. Never below the 16px input floor (iOS zoom) — once the size is pinned there,
+     the TRACKING gives way instead (down to 0), which buys a 28-letter word ~36px at 390px.
+     Past that the field scrolls. */
+  font-size: clamp(16px, calc((100cqw - 2 * clamp(14px, 1.6vw, 24px) - 8px) / (var(--len, 1) * 0.7)), var(--fs-panel));
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  /* per-char room minus the 0.62em glyph advance (0.612 + rounding slack), capped at 0.08em */
+  letter-spacing: clamp(0px, calc((100cqw - 2 * clamp(14px, 1.6vw, 24px) - 8px) / var(--len, 1) - 0.62em), 0.08em);
   color: #fff;
   /* Lifted off #1a0b2e: the structure band behind the input is #0c0619, and a black 4px border
      between two near-blacks read as no border at all — the field looked like a hole. */

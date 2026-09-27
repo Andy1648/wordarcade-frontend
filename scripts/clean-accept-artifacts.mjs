@@ -60,6 +60,15 @@ for (const w of ['petroglyphies', 'electorially', 'unperverts']) {
 const kept = ext.filter((w) => !remove.has(w));
 writeFileSync(join(SOLO, 'words.accept-ext.txt'), kept.join(' '));
 
+// The longest word across the WHOLE accept set (base + this extension). The solo input's
+// maxLength must admit it from the FIRST run, but the extension only loads after a run ends,
+// so words.js reads this length instead of waiting for the ext chunk. Generated here (the last
+// step that writes an accept list), never hand-edited; acceptExt.test.js asserts it matches.
+let maxLen = 0;
+for (const list of [recall, accept, kept]) for (const w of list) if (w.length > maxLen) maxLen = w.length;
+writeFileSync(join(SOLO, 'acceptMaxLen.json'), `${JSON.stringify({ maxLen })}
+`);
+
 // Report.
 const merged = new Set(recall);
 for (const w of accept) merged.add(w);
@@ -69,4 +78,5 @@ console.log(`  R1 (-nesses):     ${[...remove].filter((w) => w.endsWith('nesses'
 console.log(`  R2 (named):       ${[...remove].filter((w) => !w.endsWith('nesses')).length}`);
 console.log(`ext:  ${ext.length} -> ${kept.length}  (floor 150000)`);
 console.log(`merged accept:      ${merged.size}  (floor 260000)`);
+console.log(`longest accepted:   ${maxLen} letters  → src/solo/acceptMaxLen.json`);
 console.log(`examples: ${[...remove].slice(0, 12).join(', ')}`);

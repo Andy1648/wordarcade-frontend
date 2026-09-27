@@ -21,6 +21,10 @@
 // increment (see scripts/build-words.mjs), which keeps the shipped assets inside the
 // gzip budget instead of shipping every RECALL word twice.
 
+// {maxLen} — the longest word in the full accept set, written by
+// scripts/clean-accept-artifacts.mjs (tiny; static so it is known before any chunk loads).
+import acceptMaxLen from './acceptMaxLen.json';
+
 // CHAIN reads the top-N most frequent RECALL words as its "common" continuations
 // (dead-end rescue + the live supply readout). 3000 per the spec.
 export const TOP_COMMON = 3000;
@@ -33,7 +37,9 @@ export async function loadSoloWords() {
   const recall = recallRaw.split(' ');
   const accept = new Set(recall);
   for (const w of acceptExtraRaw.split(' ')) accept.add(w);
-  let maxAcceptLen = 0;
+  // Floor at the generated whole-set length (base + the lazy extension), so a long ext word
+  // can be TYPED on the first run too, before the extension chunk lands.
+  let maxAcceptLen = acceptMaxLen.maxLen;
   for (const w of accept) if (w.length > maxAcceptLen) maxAcceptLen = w.length;
   cache = { recall, accept, topCommon: recall.slice(0, TOP_COMMON), maxAcceptLen };
   return cache;

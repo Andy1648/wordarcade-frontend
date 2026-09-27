@@ -20,13 +20,39 @@ test('the extension is a real INCREMENT — every ext word is new (not already a
   assert.ok(ext.length > 150000, `ext only ${ext.length} words`);
   for (let i = 0; i < ext.length; i += 997) {
     assert.equal(union.has(ext[i]), false, `${ext[i]} was already in the union`);
-    assert.ok(/^[a-z]{3,15}$/.test(ext[i]), `${ext[i]} not a 3-15 a-z word`);
+    assert.ok(/^[a-z]{3,}$/.test(ext[i]), `${ext[i]} not a 3+ letter a-z word`);
   }
   assert.ok(merged.size > 260000, `merged accept only ${merged.size}`);
 });
 
 test('generation dict is UNTOUCHED (recall still ~31.5k, frequency-ordered)', () => {
   assert.ok(recall.length >= 31000 && recall.length <= 32000, `recall ${recall.length}`);
+  assert.ok(recall.every((w) => w.length <= 9), 'recall must stay <= 9 letters (prompt supply)');
+});
+
+// fix/solo-long-words: the accept lists were cut at 15 letters, and SoloShell derives the
+// input maxLength from the longest accepted word, so a longer real word could not be typed.
+test('the ACCEPT lists are no longer capped at 15 letters', () => {
+  const longest = (it) => { let m = 0; for (const w of it) if (w.length > m) m = w.length; return m; };
+  assert.ok(longest(union) > 15, `base accept longest ${longest(union)}`);
+  assert.ok(longest(merged) >= 28, `merged accept longest ${longest(merged)}`);
+  // words.js floors the input maxLength at this generated value (so run 1 can type ext words);
+  // it must equal the real longest accepted word — regenerate, never hand-edit.
+  assert.equal(JSON.parse(read('./acceptMaxLen.json')).maxLen, longest(merged));
+});
+
+test('a 28-letter word validates in CHAIN and FUSE once merged', async () => {
+  const { createFuseEngine } = await import('./fuse.js');
+  const word = 'ethylenediaminetetraacetates';
+  assert.equal(word.length, 28);
+  assert.ok(merged.has(word));
+  const chain = createChainEngine({ accept: merged, topCommon, rng: mulberry32(1) });
+  chain.state.requiredLetter = word[0];
+  assert.equal(chain.validate(word), null);
+  const pools = { e: ['ne'], m: ['ne'], h: ['ne'], b: ['ne'] };
+  const fuse = createFuseEngine({ accept: merged, pools, rng: mulberry32(1) });
+  fuse.state.fragment = 'tetra';
+  assert.equal(fuse.validate(word), null);
 });
 
 test('a formerly-rejected real word validates once the extension is merged', () => {

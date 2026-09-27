@@ -16,7 +16,7 @@
 // RECALL = the ~31.5k most frequent words that are 3-9 letters, a-z only, and in
 //          word-list. (The 3-9/a-z/in-list pool is ~62k, so we cap at the most
 //          frequent RECALL_CAP of them.) Frequency-ordered; index === rank.
-// ACCEPT file = the INCREMENT only — every OTHER 3-15/a-z/in-list word by frequency
+// ACCEPT file = the INCREMENT only — every OTHER 3+/a-z/in-list word (no length cap) by frequency
 //          that is NOT already in RECALL (~56k more). The runtime forms the ACCEPT
 //          SET as RECALL ∪ this increment (~88k unique, "~92k"). We ship the
 //          increment rather than the full 92k so RECALL is not shipped twice — the
@@ -47,7 +47,10 @@ const FREQ_CACHE = join(tmpdir(), 'wa-count_1w.txt');
 const RECALL_MIN = 3;
 const RECALL_MAX = 9;
 const ACCEPT_MIN = 3;
-const ACCEPT_MAX = 15;
+// No upper bound: ACCEPT is membership-only, and a 15-letter cap here capped the solo
+// input itself (SoloShell derives maxLength from the longest accepted word), so real
+// long words (electroencephalographically, 27) could not even be typed. RECALL stays 3-9.
+const ACCEPT_MAX = Infinity;
 const RECALL_CAP = 31500; // top-N most frequent → lands inside the asserted 31k-32k band
 
 const AZ = /^[a-z]+$/;
@@ -114,7 +117,7 @@ async function main() {
   }
   assert(recall.length >= 31000 && recall.length <= 32000, `RECALL size ${recall.length} outside 31000-32000`);
 
-  // ACCEPT increment: every 3-15 word by frequency NOT already in RECALL. The
+  // ACCEPT increment: every 3+ letter word by frequency NOT already in RECALL. The
   // runtime unions this with RECALL to get the full accept set.
   const acceptExtra = [];
   for (const w of ranked) {
