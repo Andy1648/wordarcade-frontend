@@ -193,3 +193,35 @@ test('two humans + a bot race: same sequence, synced progress, same winner, per-
   await A.ctx.close();
   await B.ctx.close();
 });
+
+test('quick match, alone: the lobby counts down, bots fill to 3, the race runs', async ({ browser }) => {
+  test.setTimeout(90_000);
+  const pick = wordSource();
+  const A = await openApp(browser);
+  await A.page.locator('.game-card-magnet[data-game="word-race"] .game-card').click();
+  const t0 = Date.now();
+  await A.page.getByRole('button', { name: 'QUICK MATCH' }).click();
+  await expect(A.page.locator('.wr-status')).toHaveText(/BOTS FILL IN \d+s/, { timeout: 15_000 });
+  await expect(A.page.locator('.wr-root[data-race-status]')).toBeVisible({ timeout: 20_000 });
+  const start = lastOf(await log(A.page), 'race_start');
+  const launchMs = Date.now() - t0;
+  expect(start.payload.racers).toHaveLength(3);
+  expect(start.payload.racers.filter((r) => r.isBot)).toHaveLength(2);
+  await expect(A.page.locator('.wr-root[data-race-status="racing"]')).toBeVisible({ timeout: 10_000 });
+  const input = A.page.getByLabel('Your word');
+  const used = [];
+  for (let i = 0; i < 3; i++) {
+    const w = pick(start.payload.fragments[i], used);
+    used.push(w);
+    await input.fill(w);
+    await input.press('Enter');
+    await expect(A.page.locator(`.wr-lane[data-racer-id="${start.payload.racers[0].id}"]`)).toHaveAttribute(
+      'data-racer-index',
+      String(i + 1),
+    );
+  }
+  // The pipeline paid: 3 words cross the payout gate, so the board shows banked wins > 0.
+  await expect(A.page.locator('.wr-earn')).not.toHaveText(/^\+0 WINS/);
+  console.log('QUICK MATCH', JSON.stringify({ clickToRaceStartMs: launchMs, racers: start.payload.racers.length }));
+  await A.ctx.close();
+});

@@ -999,16 +999,17 @@ function App() {
   }, [sound]);
 
   // ---- Analytics bookkeeping (fire-and-forget; never affects gameplay) ----
-  // The WS drain effect below is keyed only on [messages], so reading `room` /
-  // `gameStats` STATE directly inside it would be STALE. We mirror the few values
-  // game_completed needs into refs (always live) so the capture is accurate
-  // without making the drain effect depend on them.
   // WORD RACE: the race_* frames reduce into ONE state object (race/raceState.js) — dispatched from
   // the FIFO drain below, so every frame is applied in arrival order. raceEarned is what THIS race
   // has banked through the wins pipeline (race/racePayout.js), shown on the board + results.
   const [race, dispatchRace] = useReducer(raceReducer, null);
   const [raceEarned, setRaceEarned] = useState({ wins: 0, xp: 0 });
   const raceMyWordsRef = useRef(0); // my accepted words this race (the payout gate's count)
+
+  // The WS drain effect below is keyed only on [messages], so reading `room` /
+  // `gameStats` STATE directly inside it would be STALE. We mirror the few values
+  // game_completed needs into refs (always live) so the capture is accurate
+  // without making the drain effect depend on them.
   const gameStartMsRef = useRef(null); // wall-clock ms when the current game started
   const gameModeRef = useRef(null); // gameType of the current game (from game_started)
   const playerCountRef = useRef(0); // live roster size, synced from room below
@@ -2129,16 +2130,6 @@ function App() {
     track('daily_started', { day: currentDayNumber() });
   }
 
-  // PLAY SOLO (feat/wb-solo): the mode dialog's straight-to-a-round entry for Word Bomb. It was
-  // eight steps (card, PLAY, name, CONTINUE, ADD BOT, pick bot, pick difficulty, START); it is now
-  // the card and this button. NO NEW PROTOCOL: these are the /word-bomb/play deep link's frames
-  // (the vsBot effects above), in the same order, on the same socket - create_room PRIVATE (never
-  // in list_public_rooms), Word Bomb, CHILL for a first-timer / MEDIUM otherwise, a MEDIUM bot -
-  // and start_game goes out once the room_update shows the human + bot seated, from the effect
-  // below. The name is the saved one or a generated one; there is no name screen. Homepage calls
-  // this through runWhenConnected, so on a cold socket it is queued until the socket opens and is
-  // dropped with the menu if the player leaves first. Multiplayer + ADD BOT are untouched.
-  // (soloStartPendingRef is declared beside its start effect, above.)
   // WORD RACE QUICK MATCH: one frame. The server seats us in the fullest waiting race (or opens
   // one), answers room_created/room_joined + room_update (-> the race lobby) and race_queue, and
   // launches the race itself when it fills or 10s pass — bots top up a grid with < 2 humans.
@@ -2152,6 +2143,16 @@ function App() {
     track('race_quick_match', {});
   }
 
+  // PLAY SOLO (feat/wb-solo): the mode dialog's straight-to-a-round entry for Word Bomb. It was
+  // eight steps (card, PLAY, name, CONTINUE, ADD BOT, pick bot, pick difficulty, START); it is now
+  // the card and this button. NO NEW PROTOCOL: these are the /word-bomb/play deep link's frames
+  // (the vsBot effects above), in the same order, on the same socket - create_room PRIVATE (never
+  // in list_public_rooms), Word Bomb, CHILL for a first-timer / MEDIUM otherwise, a MEDIUM bot -
+  // and start_game goes out once the room_update shows the human + bot seated, from the effect
+  // below. The name is the saved one or a generated one; there is no name screen. Homepage calls
+  // this through runWhenConnected, so on a cold socket it is queued until the socket opens and is
+  // dropped with the menu if the player leaves first. Multiplayer + ADD BOT are untouched.
+  // (soloStartPendingRef is declared beside its start effect, above.)
   function handlePlaySolo() {
     const name = playerName || resolvePlayerName();
     setPlayerName(name);
@@ -2198,6 +2199,7 @@ function App() {
       // before this set_game_type lands.
       // WORD RACE private room: lock the type and report my recent pace (bots are paced to it).
       if (mode === WORD_RACE_ID) {
+        dispatchRace({ type: 'reset' }); // no stale quick-match queue state in a private lobby
         send('set_game_type', { gameType: WORD_RACE_ID });
         const pace = recentPace();
         if (pace) send('race_pace', { pace });

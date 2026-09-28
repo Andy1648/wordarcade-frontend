@@ -23,7 +23,8 @@ export default function WordRaceLobby({
   onLeave,
 }) {
   const isHost = room.hostId === myId;
-  const queue = race && race.status === 'queue' ? race : null;
+  // Only THIS room's queue state counts — never a leftover from a quick match the player left.
+  const queue = race && race.status === 'queue' && race.code === room.code ? race : null;
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!queue) return undefined;
