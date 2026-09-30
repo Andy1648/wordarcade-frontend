@@ -299,13 +299,15 @@
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.35);
 }
-/* One-line text. overflow:VISIBLE (never hidden/ellipsis) — a hidden+clipped text box would trip
-   the layout gate's "text clipped" check; the fixed-length copy below already fits the row at 360px
-   once the secondary "words-to-next" fragment is dropped on narrow screens (see the media query). */
+/* WRAPS when it must. It was nowrap on the promise that the copy "already fits the row at 360px" —
+   true in the e2e fallback monospace on Windows, false in real Space Mono (~10% wider): CI on Linux
+   measured the row 286px in a 265px dialog, scrolling the whole dialog sideways on 360-390px phones.
+   Never hidden/ellipsis (the layout gate's clipped-text check); a second line costs one line. */
 .mode-dialog-mastery-txt {
   flex: 1 1 auto;
   min-width: 0;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
   overflow: visible;
 }
 .mode-dialog-mastery-next {
