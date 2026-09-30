@@ -9,6 +9,8 @@
 //   (d) zero INFINITE animations running on the screen
 //   (e) the cursor trail sits UNDER the overlay (lower z-index), so it cannot paint over it
 //   (f) on a loss, the K.O. hero is there and carries an accessible name (the LayeredWord stack is aria-hidden)
+//   (h) the PLAYERS table fits inside its GAME STATS box (layout widths, so the card's tilt does
+//       not skew it) — at 360x640 it ran 55px out of the card before the phone rows stacked
 //   (g) when the breakdown is folded (phone, or a laptop card that would not fit), its toggle is a
 //       real >= 44px control inside the card
 import { test, expect } from '@playwright/test';
@@ -23,6 +25,7 @@ const VIEWPORTS = [
   { width: 1341, height: 815 },
   { width: 390, height: 844 },
   { width: 1163, height: 450 },
+  { width: 360, height: 640 }, // the smallest supported phone — go-ptable overflowed its card here
 ];
 
 test.use({ reducedMotion: 'no-preference' });
@@ -111,7 +114,17 @@ for (const n of [2, 3, 4]) {
         const toggle = document.querySelector('.go-more-toggle');
         const folded = more && !more.open;
         const t = toggle && vis(toggle) ? toggle.getBoundingClientRect() : null;
+        const pt = document.querySelector('.go-ptable');
+        let ptable = null;
+        if (pt) {
+          const box = pt.parentElement;
+          const bcs = getComputedStyle(box);
+          const room = box.clientWidth - parseFloat(bcs.paddingLeft) - parseFloat(bcs.paddingRight);
+          const rows = [...pt.querySelectorAll('tr')].filter((tr) => tr.scrollWidth > tr.clientWidth + 1).length;
+          ptable = { w: pt.offsetWidth, sw: pt.scrollWidth, room: Math.round(room), rows };
+        }
         return {
+          ptable,
           overflow: card.scrollHeight - card.clientHeight,
           rematchInside: r.top >= c.top && r.bottom <= c.bottom && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth,
           small,
@@ -128,6 +141,10 @@ for (const n of [2, 3, 4]) {
       expect(m.rematchInside, 'REMATCH fully visible without scrolling').toBe(true);
       expect(m.small, `text under 13px: ${JSON.stringify(m.small)}`).toEqual([]);
       expect(m.infinite, `infinite animations: ${m.infinite.join(', ')}`).toEqual([]);
+      if (m.ptable) {
+        expect(Math.max(m.ptable.w, m.ptable.sw), `PLAYERS table wider than its box: ${JSON.stringify(m.ptable)}`).toBeLessThanOrEqual(m.ptable.room + 1);
+        expect(m.ptable.rows, 'no PLAYERS row overflows itself').toBe(0);
+      }
       if (m.trailZ !== null) expect(m.trailZ, 'cursor trail must sit under the overlay').toBeLessThan(m.overlayZ);
       if (m.folded) {
         expect(m.toggle, 'a folded breakdown needs its toggle').not.toBeNull();

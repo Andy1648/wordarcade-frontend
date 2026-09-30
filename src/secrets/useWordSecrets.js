@@ -32,6 +32,18 @@ function safeStorage() {
   }
 }
 
+// The 1-in-750 golden-pop RNG. Normally Math.random; a test seam (same family as App.jsx's
+// window.__TAW_LUCKY) lets e2e force it 'off' so a spec pinning an exact wins delta can't be hit by
+// an unseeded MIDAS payout landing in the middle of it. Undefined in production → Math.random.
+function rarePopRng() {
+  try {
+    if (typeof window !== 'undefined' && window.__TAW_RARE_POP === 'off') return 1;
+  } catch {
+    /* no window / blocked → the real RNG */
+  }
+  return Math.random();
+}
+
 /**
  * What a secret actually pays. The catalog numbers (100-250) were set when a word paid 20 wins;
  * at the v7 base of 100 a flat 150 is less than one accepted word, and a reward that small is not
@@ -56,7 +68,7 @@ export function useWordSecrets({ active = true } = {}) {
   const idleRef = useRef(0);
 
   if (detRef.current === null) {
-    detRef.current = createSecretDetector({ storage: safeStorage() });
+    detRef.current = createSecretDetector({ storage: safeStorage(), rng: rarePopRng });
   }
 
   const grant = useCallback((raw) => {

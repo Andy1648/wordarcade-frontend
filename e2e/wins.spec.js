@@ -20,7 +20,7 @@ const readWins = (page) =>
     } catch {
       blitz = 0;
     }
-    return { wins: num('taw.wins'), lifetime: num('taw.winsLifetime'), blitz };
+    return { wins: num('taw.wins'), lifetime: num('taw.winsLifetime'), carry: num('taw.winsCarry'), blitz };
   });
 
 async function playBlitzRound(mock, page, answers) {
@@ -38,6 +38,7 @@ test.describe('wins wiring', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.__TAW_LUCKY = 'off';
+      window.__TAW_RARE_POP = 'off'; // the 1-in-750 MIDAS pop lands ~100 wins inside a delta (seen: 165 vs 65)
     });
   });
 
@@ -45,16 +46,21 @@ test.describe('wins wiring', () => {
   // (T0 = 10 XP/letter), so a 3-letter Blitz answer pays 10 × 3 × mode2 ÷ 10 = 6 and a 5-letter
   // one pays 10. The BANKING arithmetic each test is about — the 3-answer gate, the retroactive
   // release, the no-double-pay rule — is unchanged; only the rate it multiplies.
-  test('a Blitz round_end with 3 accepted answers pays 22 and counts the round', async ({ page }) => {
+  // RE-PINNED for PR #59's carry: bankWordWins pays floor((word XP + carried tenths) / 10) and
+  // carries the 0-9 leftover in taw.winsCarry. 3-letter Blitz = 60 XP/word; the gate releases
+  // CAT+DOG+FOX at combo 1.1+1.2+1.3 = 3.6 → 216 XP → +21 wins, 6 tenths carried (the old
+  // per-grant round(21.6) = 22). Blitz does not underpay: the 0.6 is held, not lost.
+  test('a Blitz round_end with 3 accepted answers pays 21 (+6 tenths carried) and counts the round', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
-    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON 3-letter, combo 1.1/1.2/1.3 → 3.6 × 6 = round(21.6) = 22
+    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON 3-letter, combo 1.1/1.2/1.3 → 3.6 × 60 XP = 216 → 21 c6
     // Poll for the banked wins: bankWordWins writes to localStorage on the async React drain, so a
     // synchronous read here occasionally races the bank under full-suite load (an intermittent 0).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(22);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(21);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(22);
+    expect(after.lifetime - before.lifetime).toBe(21);
+    expect(after.carry).toBe(6);
     expect(after.blitz - before.blitz).toBe(1);
   });
 
@@ -94,6 +100,7 @@ test.describe('wins wiring', () => {
     const after = await readWins(page);
     expect(after.wins - before.wins).toBe(65); // banked per answer, not re-paid at round_end
     expect(after.lifetime - before.lifetime).toBe(65);
+    expect(after.carry).toBe(0); // 360 + 140 + 150 XP — whole wins, nothing carried
     expect(after.blitz - before.blitz).toBe(1);
   });
 });

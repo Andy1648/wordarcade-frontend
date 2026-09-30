@@ -63,6 +63,7 @@ test.describe('Word Bomb scoring (item 2)', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.__TAW_LUCKY = 'off';
+      window.__TAW_RARE_POP = 'off'; // the 1-in-750 MIDAS pop would land ~100 wins inside a delta
     });
   });
 
@@ -101,16 +102,21 @@ test.describe('Word Bomb scoring (item 2)', () => {
     // NO game_over — the player just walks away. The 5 words are already banked, rarity-weighted
     // (unified economy, Job 1 — not a flat 5 × 20):
     //   combo 1.1..1.5 over the 5 accepts: CAT 1×1.1 + BAT 1.5×1.2 + HAT 1×1.3 + RAT 1.5×1.4 +
-    //   MAT 1.5×1.5. All three-letter words, so perWordWins is 6 and the grants are
-    //   round(4.2×6)=25 at the gate, then round(2.1×6)=13 and round(2.25×6)=14 → 52.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(52);
+    //   MAT 1.5×1.5. All three-letter words, so 60 XP/word (10 XP/letter × 3 × WB ×2).
+    //   WINS CARRY (PR #59): each grant is floor((XP + carried tenths) / 10), the rest carries:
+    //     gate  4.2 × 60 = 252 XP        → +25, carry 2
+    //     RAT   2.1 × 60 = 126 + 2 = 128 → +12, carry 8
+    //     MAT  2.25 × 60 = 135 + 8 = 143 → +14, carry 3
+    //   = 51 banked + 0.3 carried = 513 XP ÷ 10 exactly (the old per-grant rounding paid 52).
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(51);
+    expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsCarry')) || 0)).toBe(3);
     expect((await readWins(page)).wb - before.wb).toBe(1);
     // Now the game ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(52); // banked per word, not re-paid at game_over
-    expect(after.lifetime - before.lifetime).toBe(52);
+    expect(after.wins - before.wins).toBe(51); // banked per word, not re-paid at game_over
+    expect(after.lifetime - before.lifetime).toBe(51);
     expect(after.wb - before.wb).toBe(1); // still one round counted
   });
 
