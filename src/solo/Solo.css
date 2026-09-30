@@ -607,7 +607,9 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   /* per-char room minus the 0.62em glyph advance (0.612 + rounding slack), capped at 0.08em */
-  letter-spacing: clamp(0px, calc((100cqw - 2 * clamp(14px, 1.6vw, 24px) - 8px) / var(--len, 1) - 0.62em), 0.08em);
+  /* 0.64em, not 0.62: Space Mono's nominal advance is 0.612em, but hinting rounds it to ~0.625em at
+     16px on Linux/Android, and 0.62 left a 28-letter word 2px past the box there. */
+  letter-spacing: clamp(0px, calc((100cqw - 2 * clamp(14px, 1.6vw, 24px) - 8px) / var(--len, 1) - 0.64em), 0.08em);
   color: #fff;
   /* Lifted off #1a0b2e: the structure band behind the input is #0c0619, and a black 4px border
      between two near-blacks read as no border at all — the field looked like a hole. */
