@@ -70,7 +70,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.16em;
   color: #FFE94A;
   margin-bottom: 6px;
@@ -177,7 +177,7 @@
 .cg-arm-hint {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.1em;
   color: var(--c-purple-text) /* contrast: #9A1AFF text on dark = 3.75 -> 9.05 */;
   text-transform: uppercase;

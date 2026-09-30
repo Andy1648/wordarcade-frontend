@@ -941,7 +941,7 @@
 }
 
 .game-player-you {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   background: #ff4fa3;
   color: #000;
   border: 1.5px solid #991A75;
@@ -1045,7 +1045,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   line-height: 1;
   letter-spacing: 2px;
   color: #FFE94A;
@@ -1459,7 +1459,7 @@
   paint-order: stroke fill;
 }
 .clutch-callout-label {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 1px;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -2378,7 +2378,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.wb-pending-tag { font-size: var(--fs-micro); }
+.wb-pending-tag { font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */; }
 
 /* flight: a neutral "sending…" panel with a three-dot heartbeat. */
 .wb-pending-flight {
@@ -2395,7 +2395,7 @@
   color: #FFE94A;
 }
 .wb-pending-waking {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.06em;
   color: #FFB020;
 }
@@ -3014,7 +3014,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 1px;
   color: #C9B8E8;
   text-align: center;
@@ -3061,7 +3061,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   font-style: italic;
   color: #8B7AA8;
   text-align: center;
@@ -3100,7 +3100,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #000;
   background: #2EFFE0;
   border: 2.5px solid #1A9985;
@@ -3551,7 +3551,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #6b5a8a;
 }
 
@@ -3596,7 +3596,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   line-height: 1.35;
   color: #C9B8E8;
   word-break: break-word;
@@ -4257,7 +4257,7 @@ html[data-beat='true'] .cb-answer-chip {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #fff;
   margin-top: 2px;
   white-space: nowrap;

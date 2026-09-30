@@ -103,13 +103,13 @@
 .menu-streak-flame { font-size: var(--fs-body); }
 .menu-streak-count { font-size: var(--fs-body); }
 .menu-streak-day {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 1px;
   opacity: 0.75;
   align-self: center;
 }
 .menu-streak-mult {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   padding: 2px 5px;
   border-radius: 5px;
   background: #0d0618;
@@ -605,7 +605,7 @@ button.menu-wins-chip:focus-visible {
   padding: 3px 8px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.08em;
   color: #1a0b2e;
   background: #2EFFE0;

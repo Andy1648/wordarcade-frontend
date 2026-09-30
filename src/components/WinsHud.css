@@ -102,7 +102,7 @@
   width: 100%;
   padding: 2px 0;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #ffe94a;
 }
 .wins-earned-line-label {

@@ -12,8 +12,8 @@
 // at >= 13px — its computed font-size x any ancestor CSS zoom x any ancestor scale transform. The
 // only exemptions are things no reader reads: pure glyphs (no letter or digit, e.g. a "·" or "▸"),
 // visually-hidden 1px boxes (screen-reader text), anything not visible (display/visibility/
-// opacity/content-visibility), and text COVERED by a fixed modal layer (the menu receding behind a
-// mode dialog). The last test proves the detector bites.
+// opacity/content-visibility), text COVERED by a fixed modal layer (the menu receding behind a
+// mode dialog), and markup explicitly tagged data-decor (PlayerDot's tier numeral, a superscript). The last test proves the detector bites.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
@@ -148,6 +148,9 @@ function findSmallText(min) {
     const r = el.getBoundingClientRect();
     if (r.width <= 1 || r.height <= 1) continue; // visually-hidden screen-reader text
     if (el.closest('[inert]')) continue; // an inert background is not being read
+    // The one sanctioned --fs-micro use: a digit superscript INSIDE a 14px identity dot (PlayerDot's
+    // duplicate-hue group number). Marked in the markup, never inferred, so nothing else slips by.
+    if (el.closest('[data-decor]')) continue;
     let px = parseFloat(getComputedStyle(el).fontSize) * (el.currentCSSZoom || 1);
     // Every ancestor scale() shrinks the paint without touching font-size. Read the real scale off
     // each transform matrix (hypot of a,b) — a rotation alone is scale 1, not a bbox ratio.
