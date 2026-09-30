@@ -132,11 +132,13 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
       // LUCKY is the same 1-in-40 x5 roll CHAIN/FUSE/WB/Blitz get.
       comboRef.current = comboAccept(comboRef.current);
       const luck = luckyReward(luckyOracleRef.current.next());
+      // SPAM PAYS NOTHING (fix/sat-spam): letters revealed by wrong keystrokes are not earned, so
+      // the word's weight is scaled by the share the player actually typed (engine spamPaidFraction).
       const wWeight = cappedWordMult(
         satRarityMult(rw.mult),
         comboRef.current.mult,
         luck.winsWeight,
-      );
+      ) * (Number.isFinite(view.lastClearedPaid) ? view.lastClearedPaid : 1);
       satWeightRef.current += wWeight + Math.max(0, delta - 1);
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)

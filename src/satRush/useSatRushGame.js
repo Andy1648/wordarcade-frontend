@@ -222,6 +222,8 @@ export function useSatRushGame() {
       const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
       const r = eng.submitCorrect({ revealed });
       if (!r) return;
+      // What this clear actually earned (fix/sat-spam): letters revealed by wrong keys pay nothing.
+      lastClearedRef.current = { ...lastClearedRef.current, paid: r.paidFraction };
       // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
       // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
       addWords('sat-rush');
@@ -503,6 +505,12 @@ export function useSatRushGame() {
       } else {
         // Rejected key: engine bleeds score / decides the every-3rd reveal.
         const k = eng.registerWrongKeystroke();
+        // The word's second spam reveal is a MISS (fix/sat-spam): mashing does not solve words.
+        if (k && k.spamMiss) {
+          juice.wrongKey();
+          doMiss();
+          return;
+        }
         if (k && k.revealedLetter) {
           const rev = input.revealNextLetter();
           if (rev.complete) {
@@ -855,6 +863,8 @@ function buildView(state, cur, eng, input, extra) {
     // RARITY: the last cleared word + its monotonic id (aligned with `cleared`), for scoring/pop.
     lastClearedWord: extra.lastCleared ? extra.lastCleared.word : '',
     clearId: extra.lastCleared ? extra.lastCleared.id : 0,
+    // The share of that clear's wins/XP it earned (1 unless letters were revealed by wrong keys).
+    lastClearedPaid: extra.lastCleared && Number.isFinite(extra.lastCleared.paid) ? extra.lastCleared.paid : 1,
   };
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 

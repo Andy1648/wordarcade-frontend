@@ -64,6 +64,12 @@ export const DEFAULT_CONFIG = {
   wrongKeystrokePenalty: -2, // per rejected key, never a life
   wrongKeystrokeRevealEvery: 3, // every 3rd wrong key reveals the next letter...
   wrongKeystrokeRevealPenalty: -8, // ...for this extra cost
+  // THE SPAM EXPLOIT (fix/sat-spam). Mashing random letters used to SOLVE words: every 3rd wrong
+  // key revealed the next letter — the last one included — and a clear paid full wins however it
+  // was reached, with no life ever at risk. Now a letter revealed by wrong keys pays nothing, each
+  // such reveal zeroes heat, and the word's Nth spam reveal is a miss (a life, a revenant). One
+  // reveal per word forgives a real typo run; a pure spammer is out of lives in a few words.
+  spamRevealMiss: 2,
 };
 
 export const REVEAL_META = 'meta';
@@ -165,6 +171,19 @@ function shuffle(arr, rng) {
  *   encoding is the point. Each keeps its own tier (like a revenant). Unknown
  *   words are ignored; the default [] is byte-identical to no briefing at all.
  */
+/**
+ * The fraction of a cleared word's wins/XP the player earned: its letters minus the ones revealed
+ * by wrong keystrokes, over its length — and 0 once those are half the word or more. Stage reveals
+ * and the spell-along are the game's own design and still pay; only mashing does not.
+ */
+export function spamPaidFraction(length, spamReveals) {
+  const L = Number.isFinite(length) && length > 0 ? length : 0;
+  const n = Number.isFinite(spamReveals) && spamReveals > 0 ? spamReveals : 0;
+  if (!L) return 0;
+  if (n * 2 >= L) return 0;
+  return (L - n) / L;
+}
+
 export function createSatRushEngine({
   words = [],
   rng = Math.random,
@@ -207,6 +226,7 @@ export function createSatRushEngine({
     runLog: [], // ordered per-word outcome for the results/share grid
     current: null, // the live word presentation, or null
     wrongKeystrokes: 0, // for the current word (drives the reveal cadence)
+    spamReveals: 0, // letters of the current word revealed BY WRONG KEYS (pay nothing)
   };
 
   // Draw an unused fresh word of the requested tier. Preference order:
@@ -306,6 +326,7 @@ export function createSatRushEngine({
       });
       state.wordNumber = n;
       state.wrongKeystrokes = 0;
+      state.spamReveals = 0;
       state.current = present;
       return present;
     }
@@ -347,6 +368,7 @@ export function createSatRushEngine({
 
     state.wordNumber = n;
     state.wrongKeystrokes = 0;
+    state.spamReveals = 0;
     state.current = present;
     return present;
   }
@@ -460,6 +482,10 @@ export function createSatRushEngine({
     return {
       gained,
       score: state.score,
+      // The share of this word's WINS/XP the player earned: letters revealed by wrong keys pay
+      // nothing, and a word mostly revealed that way pays nothing at all (spamPaidFraction).
+      paidFraction: spamPaidFraction(cw.length, state.spamReveals),
+      spamReveals: state.spamReveals,
       actualWord: cw.word, // UI shows this on a clear ("the word was PLACID")
       breakdown: {
         base,
@@ -475,21 +501,32 @@ export function createSatRushEngine({
     };
   }
 
-  /** A rejected keystroke: bleed score, never a life; every 3rd reveals a letter. */
+  /**
+   * A rejected keystroke: bleed score; every 3rd reveals a letter. A letter revealed this way is a
+   * SPAM REVEAL: it zeroes heat, pays nothing on the clear, and the word's `spamRevealMiss`-th one
+   * is returned as `spamMiss` — the hook resolves the word as a miss instead of revealing it.
+   */
   function registerWrongKeystroke() {
     const cw = state.current;
     if (!cw || cw.resolved) return null;
     state.wrongKeystrokes += 1;
     let penalty = cfg.wrongKeystrokePenalty;
     let revealedLetter = false;
+    let spamMiss = false;
     if (state.wrongKeystrokes % cfg.wrongKeystrokeRevealEvery === 0) {
       penalty += cfg.wrongKeystrokeRevealPenalty;
-      revealedLetter = true;
+      state.spamReveals += 1;
+      state.heat = 0; // mashing to a letter is not knowing the word
+      state.silverTongue = false;
+      if (state.spamReveals >= cfg.spamRevealMiss) spamMiss = true;
+      else revealedLetter = true;
     }
     state.score = Math.max(0, state.score + penalty); // never negative
     return {
       penalty,
       revealedLetter,
+      spamMiss,
+      spamReveals: state.spamReveals,
       wrongKeystrokes: state.wrongKeystrokes,
       score: state.score,
     };
