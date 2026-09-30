@@ -26,7 +26,8 @@ import LayeredWord from './LayeredWord';
 //
 // `desc` is read from gameData (passed in) so the sub-copy has ONE source of truth and cannot
 // drift from the mode dialog / card / SEO copy.
-const MODE_IDS = ['word-bomb', 'category-blitz', 'sat-rush'];
+// WORD RACE joins as a fourth row only when its (dark-launch) card is in `games` at all.
+const MODE_IDS = ['word-bomb', 'category-blitz', 'sat-rush', 'word-race'];
 
 // Per-row palette. The band is INVERTED: the slab is the dark panel base and the NAME carries
 // the mode's neon, set in the chromatic Bungee stack (LayeredWord) — the treatment CHAIN, FUSE,
@@ -37,6 +38,7 @@ const ROW_STYLE = {
   'word-bomb': { accent: '#2EFFE0', sub: '#8FC7BF' },
   'category-blitz': { accent: '#FF6B3D', sub: '#E0A88F' },
   'sat-rush': { accent: '#FFE94A', sub: '#D6C98A' },
+  'word-race': { accent: '#FF4FA3', sub: '#E6A3C4' },
 };
 
 // The in-app route each row points at, so the row is a REAL link: long-press gets a URL,
@@ -47,6 +49,7 @@ const ROW_HREF = {
   'word-bomb': '/word-bomb/play',
   'category-blitz': '/category-blitz/play',
   'sat-rush': '/sat-rush/play',
+  'word-race': '/?race=1',
 };
 
 function Chevron() {

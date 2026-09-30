@@ -21,6 +21,9 @@ export const XP_MULTIPLIERS = {
   'sat-rush': 3,
   chain: 4,
   fuse: 5,
+  // WORD RACE: a 12-word fragment sprint vs people — no lives, no per-word clock, so it pays
+  // below FUSE (×5, a survival run) and above the turn-based rooms (×2).
+  'word-race': 3,
 };
 
 // round10 — snap to the nearest multiple of 10, HALF-TO-EVEN. Half-to-even (not JS's

@@ -8,7 +8,7 @@ import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
-import { masteryState, masteryNeed, MASTERY_MAX, MASTERY_XP_STEP } from '../progress/mastery';
+import { masteryState, masteryNeed, MASTERY_MAX, MASTERY_XP_STEP, MASTERY_MODES } from '../progress/mastery';
 
 // MASTERY (Job 2): a compact per-mode mastery readout — level, the current XP perk, and words to
 // the next level. Reads client state directly (cheap); shown in every mode dialog.
@@ -47,6 +47,7 @@ const MODE_KEY = {
   'category-blitz': 'blitz',
   chain: 'chain',
   fuse: 'fuse',
+  'word-race': 'race',
 };
 
 function prefersReduced() {
@@ -221,7 +222,11 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            <MasteryLine mode={game.id} accent={accent} inPicker={modeKey === 'blitz'} />
+            {/* Only modes with a mastery track show one — a line promising progress a mode cannot
+                earn (WORD RACE has no track) would be a card number the game never pays. */}
+            {MASTERY_MODES.includes(game.id) && (
+              <MasteryLine mode={game.id} accent={accent} inPicker={modeKey === 'blitz'} />
+            )}
             {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
                 rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
             <ModeExample mode={game.id} accent={accent} />
@@ -264,7 +269,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                     onClick={onPlaySolo}
                     disabled={!!connecting}
                   >
-                    {connecting === 'solo' ? <ConnectingContent cold={coldStart} /> : 'PLAY SOLO'}
+                    {connecting === 'solo' ? <ConnectingContent cold={coldStart} /> : mode.lead || 'PLAY SOLO'}
                   </button>
                 )}
                 <button

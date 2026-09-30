@@ -1,5 +1,5 @@
 // App.jsx
-import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useReducer, lazy, Suspense } from 'react';
 import Homepage from './components/Homepage';
 // Deferred screens: none are on the first-paint path (splash -> menu). Lazy-loading
 // them (esp. the 4k-line GameScreen, which drags the whole share/result-card render
@@ -10,6 +10,13 @@ const LobbyScreen = lazy(() => import('./components/LobbyScreen'));
 const PublicRoomsScreen = lazy(() => import('./components/PublicRoomsScreen'));
 const RoomScreen = lazy(() => import('./components/RoomScreen'));
 const GameScreen = lazy(() => import('./components/GameScreen'));
+// WORD RACE (dark-launched, ?race=1): its board + lobby are only reachable once a race room exists.
+const WordRaceScreen = lazy(() => import('./race/WordRaceScreen'));
+const WordRaceLobby = lazy(() => import('./race/WordRaceLobby'));
+import { raceReducer } from './race/raceState';
+import { WORD_RACE_ID } from './race/config';
+import { bankRaceWord } from './race/racePayout';
+import { recentPace, recordPace } from './race/racePace';
 import WallScene from './components/WallScene';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
@@ -992,6 +999,13 @@ function App() {
   }, [sound]);
 
   // ---- Analytics bookkeeping (fire-and-forget; never affects gameplay) ----
+  // WORD RACE: the race_* frames reduce into ONE state object (race/raceState.js) — dispatched from
+  // the FIFO drain below, so every frame is applied in arrival order. raceEarned is what THIS race
+  // has banked through the wins pipeline (race/racePayout.js), shown on the board + results.
+  const [race, dispatchRace] = useReducer(raceReducer, null);
+  const [raceEarned, setRaceEarned] = useState({ wins: 0, xp: 0 });
+  const raceMyWordsRef = useRef(0); // my accepted words this race (the payout gate's count)
+
   // The WS drain effect below is keyed only on [messages], so reading `room` /
   // `gameStats` STATE directly inside it would be STALE. We mirror the few values
   // game_completed needs into refs (always live) so the capture is accurate
@@ -1047,6 +1061,30 @@ function App() {
     // Track whether this drain carried any action-resolving frame, so we bump the
     // one-shot guard signal exactly once below (even if several arrive together).
     if (RESOLVING_TYPES.has(lastMessage.type)) sawResolving = true;
+
+    // WORD RACE frames: reduce into the race state, and bank MY accepted words through the one
+    // wins pipeline right here (each drained frame is processed exactly once, so a word can never
+    // double-pay). __TAW_RACE_LOG__ is a test hook: only present when a harness installs it.
+    if (typeof lastMessage.type === 'string' && lastMessage.type.startsWith('race_')) {
+      const recvAt = Date.now();
+      dispatchRace({ frame: lastMessage, now: recvAt });
+      if (typeof window !== 'undefined' && Array.isArray(window.__TAW_RACE_LOG__)) {
+        window.__TAW_RACE_LOG__.push({ type: lastMessage.type, payload: lastMessage.payload, at: recvAt });
+      }
+      const rp = lastMessage.payload || {};
+      if (lastMessage.type === 'race_start') {
+        raceMyWordsRef.current = 0;
+        setRaceEarned({ wins: 0, xp: 0 });
+      } else if (lastMessage.type === 'race_word_result' && rp.accepted) {
+        const prevWords = raceMyWordsRef.current;
+        raceMyWordsRef.current = prevWords + 1;
+        const paid = bankRaceWord({ word: rp.word, prevWords });
+        setRaceEarned((e) => ({ wins: e.wins + paid.wins, xp: e.xp + paid.xp }));
+      } else if (lastMessage.type === 'race_over') {
+        const mine = (rp.standings || []).find((st) => st.id === myIdRef.current);
+        if (mine) recordPace(mine.words, mine.reachedAt);
+      }
+    }
 
     if (lastMessage.type === 'connected') {
       setMyId(lastMessage.payload.id);
@@ -2092,6 +2130,19 @@ function App() {
     track('daily_started', { day: currentDayNumber() });
   }
 
+  // WORD RACE QUICK MATCH: one frame. The server seats us in the fullest waiting race (or opens
+  // one), answers room_created/room_joined + room_update (-> the race lobby) and race_queue, and
+  // launches the race itself when it fills or 10s pass — bots top up a grid with < 2 humans.
+  function handleRaceQuickMatch() {
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode(WORD_RACE_ID);
+    dispatchRace({ type: 'reset' });
+    send('race_quick_match', { name, pace: recentPace() || undefined });
+    track('race_quick_match', {});
+  }
+
   // PLAY SOLO (feat/wb-solo): the mode dialog's straight-to-a-round entry for Word Bomb. It was
   // eight steps (card, PLAY, name, CONTINUE, ADD BOT, pick bot, pick difficulty, START); it is now
   // the card and this button. NO NEW PROTOCOL: these are the /word-bomb/play deep link's frames
@@ -2146,6 +2197,13 @@ function App() {
       // into it right away. The server processes messages in order over the
       // same socket, so create_room (which registers the room) is handled
       // before this set_game_type lands.
+      // WORD RACE private room: lock the type and report my recent pace (bots are paced to it).
+      if (mode === WORD_RACE_ID) {
+        dispatchRace({ type: 'reset' }); // no stale quick-match queue state in a private lobby
+        send('set_game_type', { gameType: WORD_RACE_ID });
+        const pace = recentPace();
+        if (pace) send('race_pace', { pace });
+      }
       if (isPreselectableGame(mode)) {
         send('set_game_type', { gameType: mode });
         // Category Blitz create/host path ONLY: lock in the host's chosen packs.
@@ -2300,7 +2358,31 @@ function App() {
   // fixed control must be suppressed here — keyed on which screen actually renders, not on `view`
   // alone, so a menu shown under any non-'home' fallback value can never double up the control.
   let isHomeMenu = false;
-  if (view === 'game') {
+  if (view === 'game' && gameType === WORD_RACE_ID) {
+    screen = (
+      <WordRaceScreen
+        race={race}
+        myId={myId}
+        isHost={isHost}
+        audioSlot={(
+          <AudioControls
+            variant="inline"
+            accent="#FF4FA3"
+            musicMuted={music.isMuted}
+            onToggleMusic={music.toggleMute}
+            sfxMuted={sfxMuted}
+            onToggleSfx={() => setSfxMuted((m) => !m)}
+          />
+        )}
+        earned={raceEarned}
+        rematchPending={rematchPending}
+        onSubmit={(word) => send('submit_word', { word })}
+        onLocalReject={(result) => dispatchRace({ type: 'local', result })}
+        onRematch={handleRematch}
+        onLeave={handleLeaveRequest}
+      />
+    );
+  } else if (view === 'game') {
     screen = (
       <GameScreen
         /* THE SOUND CONTROL, AS A SLOT. The app-wide fixed bottom-right control is suppressed on
@@ -2375,6 +2457,20 @@ function App() {
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
         lastLanding={lastLanding}
+      />
+    );
+  } else if (view === 'room' && room && room.gameType === WORD_RACE_ID) {
+    screen = (
+      <WordRaceLobby
+        room={room}
+        myId={myId}
+        race={race}
+        serverError={serverError}
+        startPending={startPending}
+        botPending={botPending}
+        onStart={handleStartGame}
+        onAddBot={() => fireBot(() => send('race_add_bot', {}))}
+        onLeave={handleLeaveRoom}
       />
     );
   } else if (view === 'room' && room) {
@@ -2478,6 +2574,7 @@ function App() {
         serverEventId={serverEventId}
         onSelectGame={(gameId) => goToLobby(gameId)}
         onPlaySolo={handlePlaySolo}
+        onRaceQuickMatch={handleRaceQuickMatch}
         onSatRush={goToSatRush}
         onChain={goToChain}
         onFuse={goToFuse}
