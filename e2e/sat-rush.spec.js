@@ -52,6 +52,15 @@ test.describe('SAT Rush', () => {
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await expect(page.locator('.sr-brief-card')).toHaveCount(5);
     await expect(page.getByRole('button', { name: /skip/i })).toHaveCount(0);
+    // Study the cards the way a player does: each word with the sentence it lives in.
+    const briefed = [];
+    for (let i = 0; i < 5; i++) {
+      const sentence = page.locator('.sr-brief-card').nth(i).locator('.sr-brief-sentence');
+      briefed.push({
+        word: (await sentence.locator('.sr-brief-fill').innerText()).trim().toLowerCase(),
+        context: await contextOf(sentence, '.sr-brief-fill'),
+      });
+    }
     await page.getByRole('button', { name: 'Start the run' }).click();
 
     // Playing: the ante multiplier and the letter slots are up.
@@ -62,13 +71,17 @@ test.describe('SAT Rush', () => {
     await page.keyboard.press('z');
     await expect(page.locator('.sr-mult')).toBeVisible();
 
-    // A word can be CLEARED without knowing the answer: mashing a wrong key reveals
-    // one letter every 3rd press (engine wrongKeystrokeRevealEvery), so enough
-    // presses reveal the whole word and complete it — a full-credit clear.
+    // A word is CLEARED by knowing it: the served word is one of the five just studied (its
+    // sentence matches a card), and typing it banks points. (Mashing a wrong key used to reveal the
+    // whole word one letter per 3 presses for a full-credit clear — the spam exploit, fix/sat-spam:
+    // the word's second spam reveal is now a miss, and spam-revealed letters pay nothing.)
     const scoreCell = page.locator('.sr-hud .sr-hcell').first().locator('.sr-hval');
-    await expect(scoreCell).toHaveText('000000');
-    for (let i = 0; i < 72; i++) await page.keyboard.press('q');
-    await expect(scoreCell).not.toHaveText('000000'); // a clear banked points
+    const served = await contextOf(page.locator('.sr-sentence'), '.sr-blank');
+    const target = briefed.find((b) => b.context === served);
+    expect(target, 'the served word is one of the briefed words').toBeTruthy();
+    const before = await scoreCell.innerText();
+    await page.keyboard.type(target.word, { delay: 20 });
+    await expect(scoreCell).not.toHaveText(before); // a clear banked points
 
     // Out of lives: give up words (Escape) until the results PAGE appears. STATE-DRIVEN, not fixed
     // waits — the engine owns REAL-TIME pauses (the between-word + re-encode-beat timers), so under
