@@ -116,6 +116,15 @@ export function bestWpm(mode) {
   return loadWpm().best[mode] || 0;
 }
 
+// The best across the PLAYED modes only — never the menu self-test. The menu counts any 2+ letter
+// buffer as a word (no dictionary), so mashing "asdf asdf" on the menu set a best that then paid
+// the SPEED achievements ("Hit 40 WPM in a measured mode") to a player who never played a round
+// (fix/menu-free-wins). Anything that PAYS reads this one.
+export function bestWpmPlayed() {
+  const best = loadWpm().best;
+  return WPM_MODES.filter((m) => m !== 'menu').reduce((mx, m) => Math.max(mx, best[m] || 0), 0);
+}
+
 // The best across ALL modes (for the share card's headline number).
 export function bestWpmOverall() {
   const best = loadWpm().best;
