@@ -6385,8 +6385,11 @@ html[data-beat='true'] .wb-belly {
   .game-over-card .ko-hero-mascot .mascot-img { height: 60px; }
   .game-over-card .game-over-mascot .mascot-img { height: 56px; }
   .game-over-card .missed-hold { padding: 6px 10px; gap: 2px; margin-bottom: 6px; }
-  .game-over-card .missed-hold-nogloss,
   .game-over-card .missed-hold-gloss { margin-top: 0; letter-spacing: 0.04em; }
+  /* The no-definition filler ("A REAL WORD. NEXT TIME IT COUNTS.") is two lines and says nothing
+     the word above it doesn't; on a short phone those ~40px are the card's slack. With the real
+     faces on Linux the 4-player K.O. card ran 21px over when it stayed (a definition still shows). */
+  .game-over-card .missed-hold-nogloss { display: none; }
   .game-over-card .payout-title { margin-bottom: 2px; }
   .game-over-card .payout-rows { padding: 2px 0; gap: 1px; }
   .game-over-card .payout-head { padding: 2px 0; }
