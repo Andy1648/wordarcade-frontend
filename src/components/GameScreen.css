@@ -618,7 +618,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: ROUND 1 / CHILL are words (fix/min-text-sweep) */;
   color: #000;
   border: 3px solid #000;
   padding: 4px 7px;
@@ -2077,7 +2077,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #C9B8E8;
 }
 
@@ -3000,7 +3000,7 @@
   }
 }
 .cb-round-side .cb-section-label {
-  font-size: var(--fs-micro); /* a touch more presence so the rail has its own hierarchy */
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */; /* a touch more presence so the rail has its own hierarchy */
 }
 /* Accepted-answer chips read larger so the running list is legible at a glance
    (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
@@ -3143,7 +3143,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label); /* was --fs-micro: a player's name (fix/min-text-sweep) */
   color: #fff;
   display: flex;
   align-items: center;
@@ -3160,7 +3160,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #2EFFE0;
   flex-shrink: 0;
 }

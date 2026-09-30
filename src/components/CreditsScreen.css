@@ -93,7 +93,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #888;
   margin-top: 8px;
   letter-spacing: 1px;
@@ -105,7 +105,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #2EFFE0;
   margin-bottom: 12px;
   transform: skewX(-3deg);
@@ -136,7 +136,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #C9B8E8;
   margin-top: 8px;
   letter-spacing: 1px;

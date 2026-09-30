@@ -85,7 +85,7 @@
    dim navy outline when OFF. */
 .ppp-pill-count { flex: none; font-family: 'Space Mono', monospace;
   text-transform: uppercase;
-  letter-spacing: 0.08em; font-weight: 700; font-size: var(--fs-micro); line-height: 1; padding: 3px 5px; border-radius: 5px; color: #7f9dc9; border: 2px solid #33517a; }
+  letter-spacing: 0.08em; font-weight: 700; font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */; line-height: 1; padding: 3px 5px; border-radius: 5px; color: #7f9dc9; border: 2px solid #33517a; }
 .ppp-pill.is-on .ppp-pill-count { color: #000; border-color: #000; }
 
 /* ON corner-check tab — black rounded-corner square notch top-right, #3DA8FF check

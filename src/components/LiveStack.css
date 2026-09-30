@@ -27,7 +27,7 @@
   color: #ffe94a;
 }
 .lstack-per {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #7a6a9b;
 }
 
@@ -38,7 +38,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label); /* was --fs-micro: label/value words (fix/min-text-sweep) */
 }
 .lstack-label { color: #9a8ab8; letter-spacing: 0.04em; }
 .lstack-val { color: #2effe0; font-weight: 700; }

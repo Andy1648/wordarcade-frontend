@@ -354,8 +354,10 @@
      clips the title's edges). Shrink it so the title always fits (it can also
      wrap to "TYPE A" / "WORD" thanks to the non-breaking space). */
   .splash-logo { font-size: var(--fs-h1); }
-  .splash-tagline { font-size: var(--fs-micro); }
-  .splash-start { font-size: var(--fs-label); }
+  /* fix/min-text-sweep: the tagline is a sentence (was --fs-micro, 11px), and the start prompt
+     pulses down to scale(0.95), so it needs more than the 13px floor to stay above it. */
+  .splash-tagline { font-size: var(--fs-label); }
+  .splash-start { font-size: var(--fs-body); }
 }
 
 /* Reduced motion: keep the title static, no looping/scale animations — the three
