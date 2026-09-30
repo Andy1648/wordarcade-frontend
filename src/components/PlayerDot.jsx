@@ -12,7 +12,7 @@ export default function PlayerDot({ color, dark, tier = 0, className = '' }) {
       style={{ '--pc': color, '--pc-dark': dark || '#000' }}
       aria-hidden="true"
     >
-      {tier > 0 && <span className="player-dot-tier">{tier + 1}</span>}
+      {tier > 0 && <span className="player-dot-tier" data-decor="numeral">{tier + 1}</span>}
     </span>
   );
 }

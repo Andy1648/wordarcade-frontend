@@ -55,7 +55,7 @@
   color: #06231f;
 }
 .return-bonus-sub {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   font-weight: 700;
   letter-spacing: 0.05em;
   opacity: 0.75;

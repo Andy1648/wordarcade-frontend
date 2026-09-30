@@ -43,13 +43,16 @@ async function assertLabelledTouchTarget(page, locator, where) {
   // land mid-layout — the card is still settling and the control measures short — which made this
   // assertion flake on /chain/play and /fuse/play under parallel load while always passing on
   // retry. Polling asserts the SETTLED size, which is the thing the rule is actually about.
+  // Keep the box the poll SETTLED on: a second boundingBox() call could land on the exit's remount
+  // and read null (CI hit "no box for the exit" right after the poll had passed).
+  let box = null;
   await expect
     .poll(async () => {
       const b = await locator.boundingBox();
+      if (b) box = b;
       return b ? Math.min(b.width, b.height) : 0;
     }, { timeout: 5000, intervals: [100] })
     .toBeGreaterThanOrEqual(MIN_TOUCH);
-  const box = await locator.boundingBox();
   expect(box, `no box for the exit (${where})`).not.toBeNull();
   expect(box.width, `exit width (${where})`).toBeGreaterThanOrEqual(MIN_TOUCH);
   expect(box.height, `exit height (${where})`).toBeGreaterThanOrEqual(MIN_TOUCH);

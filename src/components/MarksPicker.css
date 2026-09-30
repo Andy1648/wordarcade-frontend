@@ -60,7 +60,7 @@
 }
 .marks-intro {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #b9aecd;
   margin: 8px 0 12px;
 }
@@ -127,7 +127,7 @@
 .mark-blurb,
 .mark-lock {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #e7e0f2;
 }
 .mark-card.is-on .mark-blurb {
@@ -144,7 +144,7 @@
   flex: none;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.1em;
   color: #0d0618;
   background: #FFE94A;

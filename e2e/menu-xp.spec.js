@@ -51,14 +51,21 @@ test.describe('menu XP', () => {
       const fill = document.querySelector('.menu-xp-fill');
       // Wait for the initial mount fill-in glide to settle to a true resting bar — poll the
       // transform until it stops changing (frame-count robust; no fixed wall-clock guess).
-      let last = fill.style.transform;
-      for (let stable = 0, guard = 0; stable < 10 && guard < 400; guard += 1) {
-        await sleep(16);
-        if (fill.style.transform === last) stable += 1;
-        else { stable = 0; last = fill.style.transform; }
-      }
+      const settle = async () => {
+        let last = fill.style.transform;
+        for (let stable = 0, guard = 0; stable < 10 && guard < 400; guard += 1) {
+          await sleep(16);
+          if (fill.style.transform === last) stable += 1;
+          else { stable = 0; last = fill.style.transform; }
+        }
+      };
+      await settle();
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
-      await sleep(500); // 500ms after the last keystroke
+      // Converged by FRAMES, not a wall-clock guess: a fixed 500ms read 3 mid-glide frames when the
+      // full suite throttled rendering. The claim under test is that once the glide has converged
+      // it schedules nothing more — so settle, then count.
+      await sleep(500);
+      await settle();
       let xp = 0;
       const orig = window.requestAnimationFrame.bind(window);
       window.requestAnimationFrame = (cb) =>

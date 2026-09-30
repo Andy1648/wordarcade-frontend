@@ -1089,7 +1089,7 @@ html[data-beat='true'] .homepage-beat-glow {
 .connecting-sub {
   font-family: 'Space Mono', monospace;
   font-weight: 400;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.02em;
   text-transform: none;
   margin-top: 2px;

@@ -84,7 +84,7 @@
 }
 .coll-tier-count { font-family: 'Bungee', cursive;
   text-transform: uppercase; font-size: var(--fs-panel); line-height: 1; }
-.coll-tier-name { font-size: var(--fs-micro); letter-spacing: 0.06em; color: #cdbdf0; font-weight: 700; }
+.coll-tier-name { font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */; letter-spacing: 0.06em; color: #cdbdf0; font-weight: 700; }
 
 .coll-empty { font-size: var(--fs-label); color: #b9a7d6; line-height: 1.5; }
 .coll-finds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }

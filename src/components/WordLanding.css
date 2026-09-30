@@ -101,7 +101,7 @@
   left: -12px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.12em;
   padding: 3px 7px;
   color: #0d0618;

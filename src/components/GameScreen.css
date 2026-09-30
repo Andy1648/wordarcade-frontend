@@ -618,7 +618,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: ROUND 1 / CHILL are words (fix/min-text-sweep) */;
   color: #000;
   border: 3px solid #000;
   padding: 4px 7px;
@@ -941,7 +941,7 @@
 }
 
 .game-player-you {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   background: #ff4fa3;
   color: #000;
   border: 1.5px solid #991A75;
@@ -1045,7 +1045,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   line-height: 1;
   letter-spacing: 2px;
   color: #FFE94A;
@@ -1459,7 +1459,7 @@
   paint-order: stroke fill;
 }
 .clutch-callout-label {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 1px;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
@@ -2077,7 +2077,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #C9B8E8;
 }
 
@@ -2378,7 +2378,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.wb-pending-tag { font-size: var(--fs-micro); }
+.wb-pending-tag { font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */; }
 
 /* flight: a neutral "sending…" panel with a three-dot heartbeat. */
 .wb-pending-flight {
@@ -2395,7 +2395,7 @@
   color: #FFE94A;
 }
 .wb-pending-waking {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 0.06em;
   color: #FFB020;
 }
@@ -3000,7 +3000,7 @@
   }
 }
 .cb-round-side .cb-section-label {
-  font-size: var(--fs-micro); /* a touch more presence so the rail has its own hierarchy */
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */; /* a touch more presence so the rail has its own hierarchy */
 }
 /* Accepted-answer chips read larger so the running list is legible at a glance
    (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
@@ -3014,7 +3014,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 1px;
   color: #C9B8E8;
   text-align: center;
@@ -3061,7 +3061,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   font-style: italic;
   color: #8B7AA8;
   text-align: center;
@@ -3100,7 +3100,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #000;
   background: #2EFFE0;
   border: 2.5px solid #1A9985;
@@ -3143,7 +3143,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label); /* was --fs-micro: a player's name (fix/min-text-sweep) */
   color: #fff;
   display: flex;
   align-items: center;
@@ -3160,7 +3160,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -3551,7 +3551,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #6b5a8a;
 }
 
@@ -3596,7 +3596,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   line-height: 1.35;
   color: #C9B8E8;
   word-break: break-word;
@@ -4257,7 +4257,7 @@ html[data-beat='true'] .cb-answer-chip {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #fff;
   margin-top: 2px;
   white-space: nowrap;
@@ -6385,8 +6385,11 @@ html[data-beat='true'] .wb-belly {
   .game-over-card .ko-hero-mascot .mascot-img { height: 60px; }
   .game-over-card .game-over-mascot .mascot-img { height: 56px; }
   .game-over-card .missed-hold { padding: 6px 10px; gap: 2px; margin-bottom: 6px; }
-  .game-over-card .missed-hold-nogloss,
   .game-over-card .missed-hold-gloss { margin-top: 0; letter-spacing: 0.04em; }
+  /* The no-definition filler ("A REAL WORD. NEXT TIME IT COUNTS.") is two lines and says nothing
+     the word above it doesn't; on a short phone those ~40px are the card's slack. With the real
+     faces on Linux the 4-player K.O. card ran 21px over when it stayed (a definition still shows). */
+  .game-over-card .missed-hold-nogloss { display: none; }
   .game-over-card .payout-title { margin-bottom: 2px; }
   .game-over-card .payout-rows { padding: 2px 0; gap: 1px; }
   .game-over-card .payout-head { padding: 2px 0; }
