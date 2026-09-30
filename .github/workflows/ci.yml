@@ -8,10 +8,8 @@
 # would stop all work. New real errors (e.g. an unused import under the strict
 # src/satRush override) still fail the build. Do NOT add `--max-warnings 0`.
 #
-# E2E IS INTENTIONALLY LEFT OUT of CI for now: Playwright needs browsers
-# installed (`npx playwright install`) and the suite runs a full `vite build`
-# + `vite preview` per run (~1.5-2 min), which is too slow/heavy for the gate.
-# Run it locally with `npm run test:e2e`. Revisit if flakes start slipping past.
+# E2E runs in its own workflow (e2e.yml), sharded across 4 runners on every PR.
+# Locally, run only the specs a change touches.
 name: CI
 
 # push is restricted to long-lived branches so a push to a PR branch runs once

@@ -1,0 +1,118 @@
+# E2E: the full Playwright suite on every PR, sharded across 4 runners.
+#
+# WHY IT MOVED HERE. The suite is ~1550 browser tests (~41 min at 2 workers on the dev laptop), and
+# running it locally drove the machine out of memory mid-gate ("Target crashed", runs reaped). The
+# repo is public, so Actions minutes are free: 4 shards x 2 workers finish in a fraction of that and
+# the laptop only runs the specs a change touches.
+#
+# THE GATE. The `e2e` job at the bottom is the one check to read (and to require): it is green only
+# when every shard passed. Its report is ONE merged HTML report (artifact `playwright-report`),
+# built from the shards' blob reports.
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false # every shard reports, so one red shard never hides another's failures
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Browsers are cached by the installed Playwright version; a hit skips the ~150MB download
+      # and only the OS libraries are (re)installed.
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install browser OS deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # playwright.config.js builds + serves the production bundle itself (webServer), and CI=true
+      # (set by Actions) makes it start clean instead of reusing a server.
+      - name: E2E shard ${{ matrix.shard }}/4
+        run: npx playwright test --shard=${{ matrix.shard }}/4 --workers=2 --reporter=list,blob
+
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report
+          retention-days: 7
+
+  e2e:
+    name: e2e
+    if: ${{ !cancelled() }}
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge into one HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 14
+
+      - name: Every shard passed
+        if: ${{ needs.shard.result != 'success' }}
+        run: |
+          echo "One or more e2e shards failed (result: ${{ needs.shard.result }}). See the playwright-report artifact."
+          exit 1
