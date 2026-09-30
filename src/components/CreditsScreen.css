@@ -5,11 +5,14 @@
      comes from body/#root. */
   background: transparent;
   width: 100%;
-  /* Fill exactly one viewport under the --app-scale zoom (see GameScreen.css). */
-  min-height: calc(100vh / var(--app-scale, 1));
-  min-height: calc(100dvh / var(--app-scale, 1)); /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
+  /* Exactly one viewport, 1:1 (fix/min-text-sweep: credits no longer rides --app-scale, which
+     shrank its words to 6.5px on a short laptop). A box taller than the window scrolls INSIDE this
+     page instead of shrinking; `safe` keeps its top reachable when it does. */
+  height: 100vh;
+  height: 100dvh; /* iOS Safari: dynamic viewport (dvh) over URL-bar-inclusive 100vh */
+  overflow-y: auto;
   display: flex;
-  align-items: center;
+  align-items: safe center;
   justify-content: center;
   padding: 24px;
 }
