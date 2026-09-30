@@ -11,7 +11,7 @@ import { loadProgress, getRebirths, getKeyTier, rebirthMult } from './xp.js';
 import { collectionSummary } from './collection.js';
 import { masteryState, MASTERY_MODES } from './mastery.js';
 import { getStreak } from './streak.js';
-import { bestWpmOverall } from './wpm.js';
+import { bestWpmPlayed } from './wpm.js';
 
 export const ACHIEVEMENTS_KEY = 'taw.achievements';
 
@@ -31,7 +31,7 @@ export function achievementSnapshot() {
     distinct: coll.total,
     obscure: coll.byTier.OBSCURE || 0,
     streak: getStreak().count || 0,
-    bestWpm: bestWpmOverall(),
+    bestWpm: bestWpmPlayed(), // played modes only: menu typing is not a measured mode (fix/menu-free-wins)
     keyTier: getKeyTier(),
     rounds: getRounds(),
     mastery,

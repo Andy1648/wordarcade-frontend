@@ -10,6 +10,7 @@ import {
   recentAvgWpm,
   bestWpm,
   bestWpmOverall,
+  bestWpmPlayed,
   RECENT_CAP,
 } from './wpm.js';
 
@@ -66,6 +67,16 @@ test('recordSession: per-mode bests are independent; overall = max across modes'
     assert.equal(bestWpm('satRush'), 40);
     assert.equal(bestWpm('fuse'), 70);
     assert.equal(bestWpmOverall(), 70);
+  });
+});
+
+test('bestWpmPlayed ignores the menu self-test (it pays achievements; menu typing is not play)', () => {
+  withStorage(() => {
+    recordSession({ mode: 'menu', chars: 500, ms: 60000 }); // 100 WPM of menu mashing
+    assert.equal(bestWpmOverall(), 100); // still shown as a personal number
+    assert.equal(bestWpmPlayed(), 0); // but never counts toward a paid SPEED achievement
+    recordSession({ mode: 'chain', chars: 200, ms: 60000 });
+    assert.equal(bestWpmPlayed(), 40);
   });
 });
 
