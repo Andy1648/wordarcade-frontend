@@ -30,6 +30,7 @@ const RACED_COMMON = 22;
 test('rarity race: a word accepted before the index loads still pays its true rarity', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TAW_LUCKY = 'off'; // deterministic payout (combo on, lucky off)
+    window.__TAW_RARE_POP = 'off'; // and no 1-in-750 MIDAS pop inside the total
   });
   const mock = await installBackendMock(page);
   // Hold the rarity chunk ~1.5s so the words below land DURING the race window.
@@ -64,6 +65,7 @@ test('rarity race: a word accepted before the index loads still pays its true ra
 test('control: no race, same words pay the same correct total', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TAW_LUCKY = 'off';
+    window.__TAW_RARE_POP = 'off';
   });
   const mock = await installBackendMock(page);
   await gotoMenu(page);
