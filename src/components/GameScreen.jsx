@@ -1452,10 +1452,10 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
                     <span className="go-pt-longest">LONGEST <b translate="no">{p.longest.toUpperCase()}</b></span>
                   ) : null}
                 </th>
-                <td><CountUp to={p.count} duration={500} /></td>
-                <td>{p.count ? p.avg.toFixed(1) : '—'}</td>
-                <td><CountUp to={p.timeouts} duration={500} /></td>
-                <td><CountUp to={p.skips} duration={500} /></td>
+                <td data-label="WORDS"><CountUp to={p.count} duration={500} /></td>
+                <td data-label="AVG LEN">{p.count ? p.avg.toFixed(1) : '—'}</td>
+                <td data-label="TIMEOUTS"><CountUp to={p.timeouts} duration={500} /></td>
+                <td data-label="SKIPS"><CountUp to={p.skips} duration={500} /></td>
               </tr>
             );
           })}

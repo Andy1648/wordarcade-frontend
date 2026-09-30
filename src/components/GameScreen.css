@@ -6217,7 +6217,7 @@ html[data-beat='true'] .wb-belly {
 }
 .go-ptable th,
 .go-ptable td {
-  padding: 4px 6px;
+  padding: 4px 4px; /* 6px sides ran a 4-player table 4-13px past its box at 1163-1341px */
   text-align: right;
   font-size: var(--fs-body);
   color: #fff;
@@ -6248,6 +6248,65 @@ html[data-beat='true'] .wb-belly {
   color: #9a8bbf;
 }
 .go-pt-longest b { color: #fff; }
+
+/* NARROW PHONES: five columns do not fit. At 360x640 the table needed ~295px and the GAME STATS
+   box gives it ~240 (it ran 55px out of the card), and a long name or LONGEST word only widens
+   it. So each player row STACKS: name + longest across the top, then the four stats as a labeled
+   strip underneath. Same <table> (the header row stays for screen readers, visually hidden); the
+   cell's data-label prints its column name above the number. */
+@media (max-width: 480px) {
+  .go-ptable,
+  .go-ptable tbody { display: block; width: 100%; }
+  /* Visually hidden, still read: every level is a 1px box, so no row pokes out of the clip. */
+  .go-ptable thead,
+  .go-ptable thead tr,
+  .go-ptable thead th {
+    position: absolute;
+    display: block;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .go-ptable tbody tr {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    justify-content: space-between;
+    column-gap: 8px;
+    padding: 4px 8px 6px 8px;
+    border-left: 5px solid var(--pc-dark, #000);
+  }
+  .go-ptable tbody tr + tr { border-top: 2px solid #0d0618; }
+  .go-ptable tbody tr + tr > * { border-top: 0; }
+  .go-ptable tbody .go-pt-name {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding: 0 0 2px;
+    border-left: 0;
+  }
+  .go-ptable .go-pt-who { min-width: 0; }
+  .go-ptable .go-player-name-text,
+  .go-ptable .go-pt-longest {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .go-ptable tbody td {
+    display: block;
+    padding: 0;
+    text-align: left;
+  }
+  .go-ptable tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--fs-label);
+    letter-spacing: 0.06em;
+    color: #9a8bbf;
+  }
+}
 
 /* GAME STATS toggle (GameOverBreakdown). A real control: >= 44px, flat fill, colored outline,
    hard black shadow. On a laptop it is open and the toggle is not shown. */
@@ -6310,6 +6369,33 @@ html[data-beat='true'] .wb-belly {
   .go-award { padding: 3px 12px; }
   .game-over-rematch { padding: 12px 0; }
   .go-foot { margin-top: 6px; }
+}
+
+/* SHORT PHONE (360x640 and friends): with a real round played the card measured 736-762px of
+   content in 584px of card, and it clips (overflow:hidden), so REMATCH and the TRY row were cut
+   off. The payout never folds and no text shrinks — this is rhythm only: the overlay gutter, card
+   and panel pads, the hero slab, the two button rows. The one thing that goes is the roast
+   blurb — flavour, the only block on the card that carries no information. */
+@media (max-width: 899px) and (max-height: 720px) {
+  .game-over-overlay { padding: 8px 10px; }
+  .game-over-card { padding: 10px 14px; max-height: calc(100vh - 16px); }
+  .game-over-card .game-over-blurb { display: none; }
+  .game-over-card .ko-hero { margin: 0 0 6px; }
+  .game-over-card .ko-hero-bar { min-height: 56px; }
+  .game-over-card .ko-hero-mascot .mascot-img { height: 60px; }
+  .game-over-card .game-over-mascot .mascot-img { height: 56px; }
+  .game-over-card .missed-hold { padding: 6px 10px; gap: 2px; margin-bottom: 6px; }
+  .game-over-card .missed-hold-nogloss,
+  .game-over-card .missed-hold-gloss { margin-top: 0; letter-spacing: 0.04em; }
+  .game-over-card .payout-title { margin-bottom: 2px; }
+  .game-over-card .payout-rows { padding: 2px 0; gap: 1px; }
+  .game-over-card .payout-head { padding: 2px 0; }
+  .game-over-card .payout-total { margin-top: 2px; padding-top: 4px; }
+  .game-over-card .go-more-toggle { margin-bottom: 4px; }
+  .game-over-card .game-over-rematch { padding: 8px 0; }
+  .game-over-card .go-foot { margin-top: 4px; }
+  .game-over-card .try-mode-row { margin-top: 6px; }
+  .game-over-card .try-mode-btn { padding: 6px 14px; }
 }
 
 /* COMPACT LAPTOP CARD (GameOverBreakdown sets data-ko-compact only when the card overflows): it
