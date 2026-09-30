@@ -66,7 +66,10 @@
    are 500-800px tall; --app-scale's height cap is the 1040px game stage's, so it shrank them to 0.60
    at 1366x625 and held them near 1.0 on a 1920x1080 monitor. They fit their OWN box to the
    viewport instead (hooks/useFitZoom.js), so the view wrapper must not zoom them a second time. */
-.view-screen.app-scaled:has(.lobby-wrap, .browser-wrap, .room-wrap) {
+/* CREDITS and the WORD RACE lobby opt out too (fix/min-text-sweep): the stage-height cap shrank
+   them to ~0.4-0.6 on a short laptop, so a 13px label painted at 4.6-6.5px. They are plain
+   scrolling pages; at 1:1 a short window scrolls them instead of shrinking the words. */
+.view-screen.app-scaled:has(.lobby-wrap, .browser-wrap, .room-wrap, .credits-wrap, .wr-lobby) {
   zoom: 1;
 }
 

@@ -171,7 +171,7 @@
 .rec-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   letter-spacing: 0.08em;
   color: #b9a7d6;
   text-transform: uppercase;
@@ -217,7 +217,7 @@
 }
 .rec-req {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   letter-spacing: 0.04em;
   color: #8f7eb2; /* a11y MED-2: was #7a6a99 (~4.1:1) → ~5.5:1 on the #0d0618 cell */
   text-transform: uppercase;
@@ -478,7 +478,7 @@
    silhouette board with a found count turns them into something you can be MISSING. */
 .stats-secret-count {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #FFE94A;
@@ -527,6 +527,6 @@
 }
 .stats-secret-hint {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   letter-spacing: 0.04em;
 }

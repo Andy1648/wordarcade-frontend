@@ -42,8 +42,14 @@ export const SHOT_VIEWPORTS = [
 export const TOL = 2; // sub-pixel / rounding tolerance (px)
 export const THEME_IDS = ['default', 'midnight', 'inferno', 'toxic', 'prism'];
 
+// A spec that walks SCREENS as a different player (min-text: a fresh LV1 visitor, a LV60 regular)
+// sets menuLevel; the navs that seed the default LV40 menu use it instead. undefined = untouched,
+// null = seed nothing (a real LV1). Locked-* navs pass their own level and are never overridden.
+export const screenProfile = { menuLevel: undefined };
+
 // ---- navigation primitives (reused from coverage / gameover specs) ----
 export async function bootMenu(page, level = 40, query = '?portal=1') {
+  if (level === 40 && screenProfile.menuLevel !== undefined) level = screenProfile.menuLevel;
   await installBackendMock(page);
   if (level != null) {
     await page.addInitScript((lv) => {

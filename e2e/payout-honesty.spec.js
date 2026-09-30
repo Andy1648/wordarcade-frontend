@@ -44,6 +44,13 @@ for (const s of SETUPS) {
   test(`payout honesty: Word Bomb ${s.label} @ ${s.momentum} momentum — card, receipt and ledger agree`, async ({ page }) => {
     const mock = await installBackendMock(page);
     await page.addInitScript((momentum) => {
+      // Deterministic factors. A LUCKY word carries a 5th factor, and the COMPACT receipt shows the
+      // 4 biggest and folds the rest into "+1 MORE" — which hides WHICH factor it holds, so the
+      // permanent/per-word split below cannot be checked (a full-suite run hit it on "money").
+      // LUCKY's own payout is gated by parity-wb-blitz; the rare pop never shows on a receipt but
+      // lands ~100 wins inside the banked delta.
+      window.__TAW_LUCKY = 'off';
+      window.__TAW_RARE_POP = 'off';
       if (sessionStorage.getItem('ph.seeded')) return;
       sessionStorage.setItem('ph.seeded', '1');
       localStorage.setItem('taw.seenMenu', '1');
