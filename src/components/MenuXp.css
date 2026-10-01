@@ -613,6 +613,7 @@ button.menu-wins-chip:focus-visible {
    the level bar rather than living in a menu nobody opens. Static — the menu has no idle
    loops (see CLAUDE.md MENU MOTION LAW); only hover/press feedback. */
 .menu-mark {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;

@@ -145,6 +145,7 @@ export default function MobileMenu({
   onRebirth = null,
   onCredits,
   shopDot = false,
+  rebirthDot = false,
   shopRef,
   statsRef,
   rebirthRef,
@@ -279,6 +280,17 @@ export default function MobileMenu({
              zone. REBIRTH obeys the desktop gate exactly (Homepage passes null until it means
              something), and the strip re-flows to two slabs without it. */}
       <nav className="hp-m-nav" aria-label="Menu">
+        {/* STATS before SHOP (Andy A4: swap their places) — same order as the desktop stack. */}
+        <button
+          ref={statsRef}
+          type="button"
+          className={`hp-m-navbtn is-stats${navigating ? ' is-disabled' : ''}`}
+          onClick={onStats}
+          disabled={navigating}
+          aria-label="Open stats"
+        >
+          STATS
+        </button>
         <button
           ref={shopRef}
           type="button"
@@ -289,16 +301,6 @@ export default function MobileMenu({
         >
           SHOP
           {shopDot && <span className="hp-m-dot" aria-hidden="true" />}
-        </button>
-        <button
-          ref={statsRef}
-          type="button"
-          className={`hp-m-navbtn is-stats${navigating ? ' is-disabled' : ''}`}
-          onClick={onStats}
-          disabled={navigating}
-          aria-label="Open stats"
-        >
-          STATS
         </button>
         {onLeaderboard && (
           <button
@@ -323,6 +325,7 @@ export default function MobileMenu({
             aria-label="Open rebirth"
           >
             REBIRTH
+            {rebirthDot && <span className="hp-m-dot" aria-hidden="true" />}
           </button>
         )}
       </nav>

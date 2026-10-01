@@ -100,11 +100,8 @@
   opacity: 0.55;
   cursor: default;
 }
-.mark-icon {
-  font-size: var(--fs-panel);
-  line-height: 1;
-  flex: none;
-}
+.mark-art { flex: none; }
+.mark-card.is-locked .mark-art { opacity: 0.7; }
 .mark-body {
   display: flex;
   flex-direction: column;
@@ -151,4 +148,48 @@
   border: 2px solid #000;
   border-radius: 3px;
   padding: 2px 6px;
+}
+
+/* STEP 21 — rank chip, next-rank line, words-worn bar. */
+.mark-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mark-rank {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  border: 2px solid #000;
+  border-radius: 4px;
+  color: #000;
+}
+.mark-rank.r1 { background: #C98A4B; }
+.mark-rank.r2 { background: #CFD8E3; }
+.mark-rank.r3 { background: #FFD54A; }
+.mark-rank.r4 { background: #2EFFE0; }
+.mark-rank.r5 { background: #FF4FA3; color: #fff; }
+.mark-next,
+.mark-words {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: #2EFFE0;
+}
+.mark-words { color: #b9aecd; }
+.mark-card.is-on .mark-next,
+.mark-card.is-on .mark-words { color: #0d0618; }
+.mark-bar {
+  position: relative;
+  display: block;
+  height: 10px;
+  margin: 2px 0;
+  background: #0d0618;
+  border: 2px solid #000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.mark-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: #FFE94A;
+  transform-origin: left center;
 }

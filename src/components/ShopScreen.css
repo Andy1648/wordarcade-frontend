@@ -217,21 +217,16 @@
   color: #d8cfe8; /* solid (was rgba .6, which compounded with the card opacity) */
 }
 
-/* THEME cards: the palette preview is a flat 4-colour swatch strip (a real preview, not a text
-   label), thick black outline + hard offset to match the house sticker look. */
-.shop-theme-swatch {
-  display: flex;
-  width: 100%;
-  max-width: 160px;
-  height: 36px;
-  border: 3px solid #000;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 3px 3px 0 #000;
-}
-.shop-theme-swatch span {
-  flex: 1;
+/* THEME cards (STEP 21 / A12): the preview is a miniature of the MENU in that palette
+   (ThemePreview.jsx), card-wide, thick black outline + hard offset like every other sticker. The
+   equipped theme's preview gets the cyan ring the card already wears. */
+.shop-theme-preview {
   display: block;
+  width: 100%;
+  aspect-ratio: 200 / 124;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
 }
 /* Free-at-level note on a still-gated theme. */
 .shop-theme-gate {
@@ -607,3 +602,22 @@
   paint-order: stroke fill;
   opacity: 0; /* the preview animation drives it */
 }
+
+/* STEP 21 — HOLD TO BUY + BUY MAX on the repeatables. The HOLD tag says the button repeats; the
+   press squash is the existing :active feedback. */
+.shop-buy.is-hold { flex-direction: column; gap: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+.shop-hold-hint {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+}
+.shop-buymax {
+  margin-top: 8px;
+  background: #FF6B3D;
+  border-color: #A8401F;
+  color: #000;
+}
+.shop-buy-main { display: inline-flex; align-items: center; gap: 6px; }
