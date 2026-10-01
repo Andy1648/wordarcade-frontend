@@ -769,8 +769,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
-      if (levelTitleRef.current) levelTitleRef.current.textContent = `${name} FRAME`;
-      if (levelSubRef.current) levelSubRef.current.textContent = 'UNLOCKED';
+      // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
+      // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
+      if (levelTitleRef.current) levelTitleRef.current.textContent = name;
+      if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
       if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
       a.cancel();
       a.play();

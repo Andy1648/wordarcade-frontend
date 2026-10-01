@@ -104,7 +104,7 @@
 }
 
 /* THE LEVEL BAR WEARS THE TIER TOO. The slab's black outline takes the tier colour (its darker
-   shade outside, the fill as an inner rule) from T1, and thickens at T4. Static. */
+   shade outside, the fill as an inner rule) from T1, and its inner rule thickens at T4. Static; never changes the slab's box. */
 .homepage-stage[data-menu-tier='1'] { --tier-fill: #e8dcc0; --tier-line: #9c8f72; }
 .homepage-stage[data-menu-tier='2'] { --tier-fill: #2EFFE0; --tier-line: #0f8f7e; }
 .homepage-stage[data-menu-tier='3'] { --tier-fill: #b9c6d6; --tier-line: #5f6f84; }
@@ -120,8 +120,9 @@
 .homepage-stage[data-menu-tier='5'] .menu-xp-bar.is-loud,
 .homepage-stage[data-menu-tier='6'] .menu-xp-bar.is-loud,
 .homepage-stage[data-menu-tier='7'] .menu-xp-bar.is-loud {
-  border-width: 4px;
-  box-shadow: 5px 5px 0 #000, inset 0 0 0 3px var(--tier-fill);
+  /* thicker by its INNER rule only: the border width is part of the menu's fit math (a 4px
+     border grew the slab 2px and clipped card text at 1163x501), so it never changes. */
+  box-shadow: 5px 5px 0 #000, inset 0 0 0 4px var(--tier-fill);
 }
 
 /* AFFORDABLE-UPGRADE DOT (STEP 22): it arrives with two pulses, then sits still — a notification,

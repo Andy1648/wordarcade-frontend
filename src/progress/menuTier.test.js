@@ -31,6 +31,7 @@ test('L150 is visibly richer than L1 in every motion knob', () => {
 test('every tier has a name and a colour; next-tier level is monotonic', () => {
   for (let t = 0; t <= MAX_TIER; t += 1) {
     assert.ok(TIER_NAMES[t]);
+    assert.ok(TIER_NAMES[t].length <= 6, 'the tier-up headline must fit a 320px menu (as "LEVEL 9" does)');
     assert.ok(TIER_COLORS[t] && TIER_COLORS[t].fill && TIER_COLORS[t].line);
   }
   assert.equal(nextTierLevel(1, 0), LEVEL_TIER_STARTS[1]);
