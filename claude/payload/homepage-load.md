@@ -1,52 +1,49 @@
 # Homepage initial load (no user gesture)
 
-TOTAL: 1,246,830 bytes  (budget 400,000)
+TOTAL: 1,104,009 bytes  (budget 400,000)
 
 ## by kind
-  js          828597
-  css         210530
-  mascot      189690
+  js          766042
+  css         256420
+  mascot       62694
   font         10984
-  other         6397
+  other         7237
   image          632
 
 ## every response, largest first
+     244093  js      /assets/index-Cch0TcrK.js
      240417  js      /assets/words.recall-Dwd2wFmH.js
-     223888  js      /assets/index-B_r0KGNX.js
-     146897  js      /assets/react-vendor-CdSQjxRI.js
-      91609  css     /assets/index-CsagJIVS.css
-      88455  js      /assets/sentry-cQnMAuAd.js
-      73433  css     /assets/GameScreen-Cet96fYN.css
-      69444  js      /assets/GameScreen-C0P7Ca61.js
-      63375  mascot  /mascot-panic.png
-      60699  mascot  /mascot-celebrate.png
-      52233  mascot  /mascot-idle.png
-      14239  js      /assets/ShopScreen-Dv2KZDHV.js
-      13648  js      /assets/StatsScreen-BR7_nKeN.js
+     144490  js      /assets/react-vendor-sTHvLXwT.js
+     105044  css     /assets/index-pmlHh5mz.css
+      97160  css     /assets/GameScreen-Cq-LQg3h.css
+      84590  js      /assets/GameScreen-Q6PKlnwV.js
+      20683  mascot  /mascot-panic.avif
+      15245  mascot  /mascot-celebrate.avif
+      15153  js      /assets/ShopScreen-DNF6riph.js
+      14820  css     /assets/StatsScreen-lL__usXo.css
+      14768  js      /assets/StatsScreen-nlG3-dR2.js
       13383  mascot  /mascot-idle.avif
-      13220  css     /assets/StatsScreen-B0J5jqrV.css
+      13383  mascot  /mascot-idle.avif
+      11383  css     /assets/RoomScreen-Bw08K-N0.css
       10984  font    /fonts/bungee-shade-latin.woff2
-      10181  css     /assets/RoomScreen-jA5oleLM.css
-       9398  js      /assets/ShareBar-BwpRXhC7.js
-       8813  css     /assets/ShopScreen-C32yIX87.css
-       6397  other   /
-       6229  css     /assets/PublicRoomsScreen-DI-z_m_o.css
-       5815  js      /assets/RoomScreen-C8M8A_K6.js
-       4203  js      /assets/PublicRoomsScreen-x8uGbw70.js
-       4054  css     /assets/LobbyScreen-CHgmcAjp.css
-       3355  js      /assets/CopyResultButton-D9lAt0yP.js
-       3204  js      /assets/LobbyScreen-DAXHwPEh.js
+      10855  css     /assets/ShopScreen-CXdDj9Ui.css
+       7925  css     /assets/PublicRoomsScreen-CP0PdP51.css
+       7237  other   /
+       6383  js      /assets/RoomScreen-DCUkJfmV.js
+       4578  js      /assets/PublicRoomsScreen-dJLxRJgy.js
+       4115  js      /assets/TryModeRow-D3t9KGXm.js
+       3860  css     /assets/LobbyScreen-BtZs-C1E.css
+       3427  css     /assets/TryModeRow-DG-PcYcP.css
        2583  js      /assets/lexicon-BVvQpwVZ.js
-       1952  css     /assets/CopyResultButton-BGzrkg0q.css
-       1544  js      /assets/links-CsrBC71G.js
-        823  js      /assets/difficulty-CZm0MBSl.js
-        715  css     /assets/ShareBar-C5Kt5vbO.css
+       2329  js      /assets/LobbyScreen-Dz55tJPp.js
+       1586  js      /assets/teachExample-CxreV_F6.js
+       1542  css     /assets/teachExample-5oQxayni.css
+        823  js      /assets/difficulty-3iwy_1tp.js
         632  image   /art/paint-drip.svg
-        550  js      /assets/WaveText-CeHcGr6A.js
-        324  css     /assets/difficulty-BBXrj9cK.css
+        404  css     /assets/difficulty-Xsgv1lmf.css
         134  js      /registerSW.js
           0  other   /g/collect
           0  other   /g/collect
 
 ## audio requested before a gesture: NONE
-## mascot bytes before a gesture: 189690
+## mascot bytes before a gesture: 62694

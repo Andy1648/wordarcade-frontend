@@ -54,8 +54,9 @@
   overflow: visible;
 }
 .menu-frame-starcount {
-  font-family: 'Bungee', sans-serif;
-  font-size: 16px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
   color: #FFE94A;
   -webkit-text-stroke: 1px #000;
   margin-left: 4px;
