@@ -15,6 +15,8 @@ import {
   myStats,
   nameStatus,
   submitStats,
+  setLastRank,
+  setRankNews,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
@@ -31,7 +33,12 @@ const ERROR_COPY = {
   username_blocked: 'NOT THAT ONE. PICK ANOTHER NAME.',
   username_shape: '3–16 LETTERS, NUMBERS OR _',
   unavailable: 'THE BOARD IS OFFLINE RIGHT NOW.',
+  rate_limited: 'TOO MANY NEW NAMES FROM HERE. TRY LATER.',
+  rename_cooldown: 'ONE NAME CHANGE PER DAY. TRY TOMORROW.',
 };
+
+// STEP 47: a board under this many rows is padded with invitations, never fake players.
+export const MIN_ROWS = 10;
 
 // Rebirth stars: one ★ per rebirth up to five, then ★×N so a 40-rebirth row stays one line.
 export function rebirthStars(n) {
@@ -52,14 +59,17 @@ function Row({ row, mine, flash }) {
     <li className={`lb-row${top}${mine ? ' is-me' : ''}${mine && flash ? ' is-flash' : ''}`} data-rank={row.rank}>
       <span className="lb-rank">{row.rank}</span>
       <span className="lb-who">
-        <span className="lb-name">{row.username}{mine ? ' (YOU)' : ''}</span>
+        <span className="lb-name-line">
+          <span className="lb-name">{row.username}</span>
+          {mine && <span className="lb-you-badge">YOU</span>}
+        </span>
         <span className="lb-lv">
           LV {fmt(row.level)}
           {row.rebirths > 0 && <span className="lb-stars" aria-label={`${row.rebirths} rebirths`}> {rebirthStars(row.rebirths)}</span>}
         </span>
       </span>
       <span className="lb-num lb-words">{fmt(row.lifetime_words)}</span>
-      <span className="lb-num lb-rate">{fmtRate(row.wins_per_word)}</span>
+      <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
   );
 }
@@ -82,8 +92,15 @@ export default function LeaderboardScreen({ onBack }) {
     setLoading(true);
     try {
       await submitStats();
-      setBoard(await fetchBoard());
+      const b = await fetchBoard();
+      setBoard(b);
       setLoadError(false);
+      // Reading the board is reading the news: clear the trophy badge and remember this rank as
+      // the baseline the next rank-up is measured from.
+      setRankNews(false);
+      const mine = getMyProfile();
+      const meNow = mine && (b.rows.find((r) => r.id === mine.id) || b.me);
+      if (meNow) setLastRank(Number(meNow.rank));
     } catch {
       setLoadError(true);
     } finally {
@@ -198,9 +215,26 @@ export default function LeaderboardScreen({ onBack }) {
               </div>
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
               {loadError && <p className="lb-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb-link-btn" onClick={load}>RETRY</button></p>}
-              {!loading && !loadError && board.rows.length === 0 && <p className="lb-note">NOBODY HERE YET. BE #1.</p>}
               <ol className="lb-list">
                 {board.rows.map((r) => <Row key={r.id} row={r} mine={!!profile && r.id === profile.id} flash={flash} />)}
+                {/* NEVER A DEAD BOARD: open places are invitations, numbered, never invented people.
+                    For an unclaimed viewer the first one is a button into the claim field. */}
+                {!loading && !loadError && Array.from({ length: Math.max(0, MIN_ROWS - board.rows.length) }, (_, i) => {
+                  const n = board.rows.length + i + 1;
+                  const first = !profile; // every open place is a way in for an unclaimed viewer
+                  return (
+                    <li key={`slot-${n}`} className={`lb-slot${first && i === 0 ? ' is-open' : ''}`} data-rank={n}>
+                      <span className="lb-rank">{n}</span>
+                      {first ? (
+                        <button type="button" className="lb-slot-btn" onClick={() => { setEditing(true); const el = document.getElementById('lb-name-input'); if (el) el.focus(); }}>
+                          YOUR NAME HERE?
+                        </button>
+                      ) : (
+                        <span className="lb-slot-text">YOUR NAME HERE?</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ol>
               {board.me && (
                 <ol className="lb-list lb-list--me" aria-label="Your rank">

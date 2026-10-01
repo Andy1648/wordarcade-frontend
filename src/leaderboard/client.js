@@ -35,8 +35,11 @@ async function rpc(fn, body) {
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!r.ok) {
-    const err = new Error((data && data.message) || `http_${r.status}`);
-    err.code = (data && data.message) || `http_${r.status}`;
+    let code = (data && data.message) || `http_${r.status}`;
+    // a same-name race that reached the unique index (older DB functions) is still "taken"
+    if (data && (data.code === '23505' || /duplicate key/i.test(code))) code = 'username_taken';
+    const err = new Error(code);
+    err.code = code;
     throw err;
   }
   return data;
@@ -51,6 +54,9 @@ export function getSecret() {
       crypto.getRandomValues(bytes);
       s = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
       localStorage.setItem(SECRET_KEY, s);
+      // Two tabs minting at once: whichever write landed LAST is the one every later call reads, so
+      // re-read rather than trusting the value this tab generated.
+      s = localStorage.getItem(SECRET_KEY) || s;
     }
     return s;
   } catch {
@@ -98,14 +104,21 @@ export async function nameStatus(username) {
 }
 
 /** Claim (or rename to) `username`. Resolves to the profile; rejects with err.code in
- *  username_taken | username_blocked | username_shape | bad_secret | http_*. Pushes stats at once. */
+ *  username_taken | username_blocked | username_shape | bad_secret | rate_limited | rename_cooldown
+ *  | http_*. Pushes stats at once. */
 export async function claimName(username) {
   const secret = getSecret();
   if (!LEADERBOARD_ENABLED || !secret) throw Object.assign(new Error('unavailable'), { code: 'unavailable' });
   const row = await rpc('lb_claim', { p_secret: secret, p_username: username });
   saveMyProfile(row);
   lastSubmit = 0;
-  await submitStats(true);
+  const pushed = await submitStats(true);
+  // Seed the rank-up baseline with where the claim landed — but only if my stats actually reached
+  // the board: a failed push leaves the row at LV1 and would stage a fake "#57 → #3" later.
+  if (pushed) {
+    const rank = await fetchMyRank();
+    if (rank) setLastRank(rank);
+  }
   return row;
 }
 
@@ -145,4 +158,124 @@ export async function fetchBoard(limit = BOARD_SIZE) {
     if (r2.ok) me = (await r2.json())[0] || null;
   }
   return { rows, me };
+}
+
+// ---- STEP 47: pulling players in -------------------------------------------------------------
+// The board's order, as a comparator: rebirths desc, level desc, lifetime words desc. A HYPOTHETICAL
+// row (someone not on the board yet) loses every exact tie — the existing row got there first, the
+// same rule the view's created_at tiebreak applies.
+export function ranksAhead(row, me) {
+  const r = Number(row.rebirths) || 0;
+  const l = Number(row.level) || 0;
+  const w = Number(row.lifetime_words) || 0;
+  if (r !== me.rebirths) return r > me.rebirths;
+  if (l !== me.level) return l > me.level;
+  return w >= me.lifetimeWords;
+}
+
+/** The rank `stats` would take on a board whose top rows are `rows` (null if off the top-N). */
+export function hypotheticalRank(rows, stats, size = BOARD_SIZE) {
+  let ahead = 0;
+  for (const row of rows) if (ranksAhead(row, stats)) ahead += 1;
+  const rank = ahead + 1;
+  return rank <= size ? rank : null;
+}
+
+const PROMPT_SESSION_KEY = 'taw.lb.promptShown'; // seen ON SCREEN this session
+const PROMPT_CHECKED_KEY = 'taw.lb.promptChecked'; // the one board read this session already happened
+const PROMPT_DISMISS_KEY = 'taw.lb.promptDismiss'; // { n, at } across sessions
+const DISMISS_BACKOFF_MS = 7 * 24 * 3600 * 1000;
+/** May the end-screen claim prompt run at all right now? (once per session; 3 ✕ → quiet for a week) */
+export function claimPromptAllowed() {
+  try {
+    if (sessionStorage.getItem(PROMPT_SESSION_KEY) === '1') return false;
+    if (sessionStorage.getItem(PROMPT_CHECKED_KEY) === '0') return false; // checked: off the board
+    const d = JSON.parse(localStorage.getItem(PROMPT_DISMISS_KEY) || 'null');
+    if (d && d.n >= 3 && Date.now() - d.at < DISMISS_BACKOFF_MS) return false;
+    return true;
+  } catch {
+    return false; // no session storage → we can't keep "once per session", so never
+  }
+}
+// The session's one board read, cached: the rank it found, or '0' for "not on the top N / failed".
+function cachedPromptRank() {
+  try { const v = sessionStorage.getItem(PROMPT_CHECKED_KEY); return v == null ? undefined : Number(v) || null; } catch { return null; }
+}
+function cachePromptRank(rank) {
+  try { sessionStorage.setItem(PROMPT_CHECKED_KEY, String(rank || 0)); } catch { /* ignore */ }
+}
+export function markClaimPromptSeen() {
+  try { sessionStorage.setItem(PROMPT_SESSION_KEY, '1'); } catch { /* ignore */ }
+}
+export function noteClaimPromptDismissed() {
+  try {
+    const d = JSON.parse(localStorage.getItem(PROMPT_DISMISS_KEY) || 'null') || { n: 0, at: 0 };
+    const fresh = Date.now() - d.at >= DISMISS_BACKOFF_MS;
+    localStorage.setItem(PROMPT_DISMISS_KEY, JSON.stringify({ n: (fresh && d.n >= 3 ? 0 : d.n) + 1, at: Date.now() }));
+  } catch { /* ignore */ }
+}
+
+/** The rank this browser's stats would claim right now, or null (claimed already / off-board /
+ *  offline). One board read; never throws. */
+export async function rankIfClaimed() {
+  if (!LEADERBOARD_ENABLED || getMyProfile()) return null;
+  // ONE board read per session: a prompt that rendered below the fold and was never scrolled to can
+  // come back on the next end screen with the cached rank, without fetching 100 rows again.
+  const cached = cachedPromptRank();
+  if (cached !== undefined) return cached;
+  cachePromptRank(0); // claim the read before it starts (a second end screen mid-fetch won't refetch)
+  try {
+    const { rows } = await fetchBoard();
+    const rank = hypotheticalRank(rows, myStats());
+    cachePromptRank(rank);
+    return rank;
+  } catch {
+    return null;
+  }
+}
+
+/** My current rank on the live board (claimed players only), or null. */
+export async function fetchMyRank() {
+  const mine = getMyProfile();
+  if (!LEADERBOARD_ENABLED || !mine || !mine.id) return null;
+  try {
+    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
+    if (!r.ok) return null;
+    const row = (await r.json())[0];
+    return row ? Number(row.rank) : null;
+  } catch {
+    return null;
+  }
+}
+
+const LAST_RANK_KEY = 'taw.lb.lastRank';
+const RANK_NEWS_KEY = 'taw.lb.rankNews';
+export function getLastRank() {
+  try { const n = Number(localStorage.getItem(LAST_RANK_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
+}
+export function setLastRank(n) {
+  try { if (Number.isFinite(n) && n > 0) localStorage.setItem(LAST_RANK_KEY, String(n)); } catch { /* ignore */ }
+}
+export function hasRankNews() {
+  try { return localStorage.getItem(RANK_NEWS_KEY) === '1'; } catch { return false; }
+}
+export function setRankNews(on) {
+  try { if (on) localStorage.setItem(RANK_NEWS_KEY, '1'); else localStorage.removeItem(RANK_NEWS_KEY); } catch { /* ignore */ }
+}
+
+/**
+ * Menu-mount check: compares my live rank with the last one this browser saw. Returns
+ * { from, to } when it IMPROVED (and raises the trophy-badge flag), else null. Stores the new rank
+ * either way, so a drop never shows a moment and the next rise is measured from the truth.
+ */
+export async function checkRankUp() {
+  const now = await fetchMyRank();
+  if (!now) return null;
+  const before = getLastRank();
+  setLastRank(now);
+  if (before && now < before) {
+    setRankNews(true);
+    return { from: before, to: now };
+  }
+  return null;
 }

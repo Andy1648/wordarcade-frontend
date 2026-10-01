@@ -1,0 +1,91 @@
+/* RankUpMoment — one finite card (2200ms total), transform/opacity only. Static under reduced
+   motion (the JS timer still removes it). Takes NO pointer events: it never eats a tap. */
+.lb-rankup-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.lb-rankup {
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 26px 16px;
+  background: #FFE94A;
+  border: 4px solid #a8800f;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  rotate: -2deg;
+  animation: lb-rankup-card 2200ms linear both;
+}
+.lb-rankup-kicker {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+}
+.lb-rankup-sub { font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; }
+.lb-rankup-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  margin: 0;
+}
+.lb-rankup-line { display: flex; align-items: baseline; gap: 14px; }
+.lb-rankup-from,
+.lb-rankup-arrow,
+.lb-rankup-to {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 1.1;
+}
+.lb-rankup-from { position: relative; color: #6b5a86; }
+/* the strike-through is a plain rectangle, drawn in at 500ms */
+.lb-rankup-from::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 52%;
+  height: 7px;
+  background: #000;
+  transform-origin: left center;
+  animation: lb-rankup-strike 2200ms linear both;
+}
+.lb-rankup-to { color: #FF4FA3; -webkit-text-stroke: 2px #000; paint-order: stroke fill; animation: lb-rankup-pop 2200ms linear both; }
+
+@keyframes lb-rankup-card {
+  0% { opacity: 0; transform: scale(1.4); animation-timing-function: cubic-bezier(.2, .9, .3, 1.2); }
+  12% { opacity: 1; transform: scale(1); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+@keyframes lb-rankup-strike {
+  0%, 22% { transform: scaleX(0); animation-timing-function: ease-out; }
+  30%, 100% { transform: scaleX(1); }
+}
+@keyframes lb-rankup-pop {
+  0%, 30% { opacity: 0; transform: scale(0.4); animation-timing-function: cubic-bezier(.2, .9, .3, 1.4); }
+  40% { opacity: 1; transform: scale(1.25); }
+  48%, 100% { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lb-rankup,
+  .lb-rankup-from::after,
+  .lb-rankup-to { animation: none; }
+}
+
+/* The trophy's rank-news dot is CYAN — the pink dot already means "something in the shop is
+   affordable", and one colour must not mean two things. */
+.homepage-shop-dot.is-board-news,
+.hp-m-dot.is-board-news { background: #2EFFE0; }

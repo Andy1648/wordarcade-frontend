@@ -124,6 +124,7 @@ const isModified = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.
  * @param navigating  true once a navigation has fired (locks the controls)
  * @param onShop / onStats / onCredits  the desktop corner-nav / footer handlers
  * @param onRebirth  the desktop REBIRTH handler, or null while REBIRTH is gated off (LV1 etc.)
+ * @param boardDot true while a leaderboard rank-up is unread (STEP 47)
  * @param shopDot  true when something in the shop is affordable (the desktop SHOP dot)
  * @param shopRef / statsRef / rebirthRef  Homepage's focus-restore refs (return from an overlay)
  * @param onHookPlay  first-timers only: starts solo Word Bomb from the TYPE A WORD hook; null hides it
@@ -150,6 +151,7 @@ export default function MobileMenu({
   onHookPlay = null,
   hookPlayLabel = null,
   onLeaderboard = null,
+  boardDot = false,
   boardRef,
 }) {
   const rows = MODE_IDS
@@ -305,9 +307,10 @@ export default function MobileMenu({
             className={`hp-m-navbtn is-board${navigating ? ' is-disabled' : ''}`}
             onClick={onLeaderboard}
             disabled={navigating}
-            aria-label="Open leaderboard"
+            aria-label={`Open leaderboard${boardDot ? ' — your rank went up' : ''}`}
           >
             <TrophyIcon size={24} />
+            {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
           </button>
         )}
         {onRebirth && (

@@ -22,6 +22,7 @@ import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
+import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -404,7 +405,12 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         restartLabel: firstRun ? 'PLAY AGAIN' : 'RESTART',
         winsEarned,
         winsBonusLines,
-        tryRow: <TryModeRow current="chain" />,
+        tryRow: (
+          <>
+            <ClaimPrompt />
+            <TryModeRow current="chain" />
+          </>
+        ),
       }}
       onExit={onExit}
       offerMenu={offerMenu}

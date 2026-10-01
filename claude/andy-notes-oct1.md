@@ -10,7 +10,8 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
   stimulation as they progress. Borders/frames that escalate with level and rebirth, notification
   icons when upgrades are affordable, LONGER type animations, more visual stimulation everywhere.
   Think of more ways yourself.
-  - evidence (partial — STEP 22, branch feat/menu-stimulation): MENU TIER (level + rebirth, a
+  - evidence (partial — STEP 22, PR #72 merged (main cf2c04f), LIVE in prod `index-Dz2N6Ap1.js`, markers
+    `taw.menuTierSeen` + `NEW FRAME UNLOCKED`): MENU TIER (level + rebirth, a
     rebirth never lowers it) drives a tier-coloured, thickening frame with SVG corner plates that
     accumulate rivets/spikes/gem/drips/crown, rebirth stars on the top edge, a tier-coloured level
     slab, a one-time "<TIER> FRAME UNLOCKED" moment. Before/after L1 vs L150R3:
@@ -40,7 +41,7 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
 - [ ] **A8. Game modes more rewarding overall.**
   - evidence:
 - [x] **A9. Level-up progress says LETTERS needed, not words.**
-  - evidence: branch docs/andy-checklist (PR below). Menu XP hint now reads e.g. "1,423 LETTERS TO
+  - evidence: PR #71 merged (main d794cd6), LIVE in prod bundle `index-Dz2N6Ap1.js` (marker `"LETTERS"`). Menu XP hint now reads e.g. "1,423 LETTERS TO
     LEVEL 28" (`claude/a9/hint-1280.png`, seeded L27). XP is linear in word length, so letters =
     ceil(toNext × 5 ÷ featured card's XP/word) — the card quotes a 5-letter word. `e2e/menu.spec.js`
     asserts the rendered hint against the rendered card in LETTERS and that "WORDS TO" is gone;
@@ -62,6 +63,9 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
     vectors vs the live DB (`claude/step24/db-parity.mjs`); anon REST probe: direct insert/update/
     delete → 401, wrong secret → refused, blocked name → `username_blocked`. No sign-in of any kind:
     a per-browser secret, username only. QA rows deleted after each run (board starts empty).
+  - STEP 47 (pull players in): PR #73 — end-screen "YOU'D BE #N" claim prompt, menu "#a → #b" rank-up +
+    trophy dot, never-dead board, migration 004 live (claim/rename limits, stats replay/shape rules;
+    probe results in `claude/step47/review.md`).
 - [x] **A14. (Done, keep verified) free menu wins #67, SAT spam #68.**
   - evidence: PR #67 (fix/menu-free-wins) and PR #68 (fix/sat-spam) merged to main (main 115f5e6 →
     0c1fe74); both specs (`e2e/menu-no-free-wins.spec.js`, SAT spam spec) ran green in PR #69's CI.
