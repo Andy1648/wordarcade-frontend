@@ -29,7 +29,7 @@ import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 import MarksPicker from './MarksPicker';
-import { markById, unlockedMarks, getEquippedMark, equipMark } from '../progress/marks';
+import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -166,6 +166,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
+  const [marksNew, setMarksNew] = useState(() => hasUnseenMarks(markUnlocked.map((m) => m.id)));
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
@@ -562,6 +563,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // STEP 21: the worn mark ranked up during the last games → name it once, on the menu, after any
+  // mount-time level/tier card has had its 1.5 s.
+  useEffect(() => {
+    const id = getEquippedMark();
+    const r = takeMarkRankUp(id);
+    if (!r) return undefined;
+    const m = markById(id);
+    const t = setTimeout(() => {
+      if (xpFxRef.current && xpFxRef.current.announce) {
+        xpFxRef.current.announce(`RANK ${MARK_RANK_NAMES[r - 1]}`, `${m.name} MARK`, markBlurbAt(m, r).toUpperCase());
+      }
+    }, 1600);
+    return () => clearTimeout(t);
+  }, []);
   useEffect(() => {
     const rb = consumePendingRebirth();
     if (rb > 0 && xpFxRef.current) {
@@ -754,6 +769,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // now, OR has ever earned wins, OR has already rebirthed. ONE gate, read by both menu trees, so
   // the phone and desktop menus can never disagree about whether REBIRTH exists yet.
   const showRebirth = rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths);
+  // STEP 21: REBIRTH badges itself the moment it's available — it IS an upgrade, the biggest one.
+  const rebirthReady = xpProgress.level >= rebirthThreshold(rebirths);
 
   return (
     <div className="homepage-wrap">
@@ -799,6 +816,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
+            rebirthDot={rebirthReady}
             onCredits={handleCredits}
             shopDot={winsAffordable}
             shopRef={shopLinkRef}
@@ -811,6 +829,34 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
         <nav className="homepage-corner-nav" aria-label="Menu">
+          {/* SHOP and STATS SWAPPED (Andy A4): STATS leads, SHOP sits last in the word stack —
+              nearest the trophy + audio, where the eye lands after the cards. */}
+          <button
+            ref={statsLinkRef}
+            type="button"
+            className={`homepage-nav-btn is-stats${navigating ? ' disabled' : ''}`}
+            onClick={handleStats}
+            onMouseEnter={() => sfx('hover')}
+            disabled={navigating}
+            aria-label="Open stats"
+          >
+            STATS
+          </button>
+          {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
+          {showRebirth && (
+            <button
+              ref={rebirthLinkRef}
+              type="button"
+              className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
+              onClick={handleRebirth}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label={`Open rebirth${rebirthReady ? ' — ready' : ''}`}
+            >
+              REBIRTH
+              {rebirthReady && <span className="homepage-shop-dot" aria-hidden="true" />}
+            </button>
+          )}
           <button
             ref={shopLinkRef}
             type="button"
@@ -822,31 +868,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           >
             SHOP
             {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
-          </button>
-          {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
-          {showRebirth && (
-            <button
-              ref={rebirthLinkRef}
-              type="button"
-              className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
-              onClick={handleRebirth}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label="Open rebirth"
-            >
-              REBIRTH
-            </button>
-          )}
-          <button
-            ref={statsLinkRef}
-            type="button"
-            className={`homepage-nav-btn is-stats${navigating ? ' disabled' : ''}`}
-            onClick={handleStats}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            aria-label="Open stats"
-          >
-            STATS
           </button>
           {LEADERBOARD_ENABLED && onLeaderboard && (
             <button
@@ -940,7 +961,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                brand-new account is a question with no answer yet. */
             markSlot={markUnlocked.length > 0}
             mark={markById(equippedMark)}
-            onMarkClick={() => setShowMarks(true)}
+            markNew={marksNew}
+            onMarkClick={() => {
+              markMarksSeen(markUnlocked.map((m) => m.id));
+              setMarksNew(false);
+              setShowMarks(true);
+            }}
           />
           {/* THE FIRST-VISIT CAPTION IS GONE, folded into the bar's own hint line. It said "TYPE
               ANYWHERE TO EARN XP" on its own row directly under a row that now says "12 WORDS TO

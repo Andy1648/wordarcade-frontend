@@ -24,11 +24,11 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
   - evidence (partial): STEP 22 — level-up starburst + shard ring, tier-up frame slam + name card,
     purchase confetti; all with reduced-motion static fallbacks.
 - [ ] **A3. Marks need much better visuals AND a better system/logic.**
-  - evidence:
+  - evidence (STEP 21, PR pending — branch feat/marks-shop): marks are drawn SVG badges (coin medallion picked of coin/pin/patch, `claude/step21/marks-*.png`), no emoji; NEW SYSTEM: a worn mark ranks I→V with words typed wearing it (150/500/1500/4000), each rank scaling its bonus up to 1.6× (bounded, unit-tested), picker shows rank, this-rank and next-rank payout, words-worn bar; menu names a rank-up once; NEW MARK badge when an unlocked mark hasn't been looked at.
 - [ ] **A4. Shop and stats menus: swap their places.**
-  - evidence:
+  - evidence (STEP 21, PR pending — branch feat/marks-shop): STATS now leads and SHOP sits last in both the desktop corner stack and the phone strip (`e2e/shop-hold.spec.js` asserts order at 1280 and 390; `claude/step21/menu-nav-*.png`).
 - [ ] **A5. No mashing buttons: at worst "hold to buy".**
-  - evidence:
+  - evidence (STEP 21, PR pending — branch feat/marks-shop): KEY POWER + MOMENTUM: tap = 1 buy; HOLD keeps buying, accelerating 420→70 ms, ONE reveal per run ("KEY POWER VII (+7)"); BUY MAX button. e2e: a 1.6 s hold buys ≥5 tiers with exactly 1 sticker. One-off cosmetics stay single-press (nothing to mash).
 - [ ] **A6. Progression:** Andy stopped at ~L125 because upgrades "seem insane eventually". Fix the
   late game. Shop XP multi pops and sound packs priced more exponentially. CHAIN and FUSE bars go
   MUCH higher with better rewards.
@@ -53,7 +53,7 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
   PLAYING. Check it yourself in a live round.
   - evidence:
 - [ ] **A12. Themes in the shop aren't noticeable: make them obvious.**
-  - evidence:
+  - evidence (STEP 21, PR pending — branch feat/marks-shop): every theme card is a miniature of the MENU in that palette (wordmark, level bar, 5 mode cards, pops) instead of a 4-colour strip — `claude/step21/shop-themes-*.png`; e2e asserts ≥150px wide and distinct per theme.
 - [x] **A13. Leaderboard: no Google sign-in, username only, block bad names.**
   - evidence: PR #70 merged (main 05ad2e1); LIVE in production bundle `index-D9gquwJb.js` (marker
     `lb_claim`, ~60 s after merge). Two separate browser profiles on **typeaword.com**: 12/12 checks
@@ -72,7 +72,7 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
 (Oct 1 resume: A9 → 22 → 47 leaderboard pull-in (A13) → 21 → 19 → 20 → 9 → 23 → 16 → rest; full specs in `claude/QUEUE-specs.md`.)
 1. STEP 35 first 5 minutes (in progress) — A1 (feel), A2
 2. STEP 24 leaderboard, LIVE on typeaword.com — A13
-3. Andy quick wins — A4, A5, A9, A12, + affordable-upgrade notification icons (A1)
+3. Andy quick wins — A4, A5, A9, A12, + affordable-upgrade notification icons (A1) — STEP 21 adds dots on REBIRTH (ready) and the mark slot (NEW MARK)
 4. Menu stimulation: escalating level/rebirth frames, longer type animations + STEP 42 rebirth moment — A1, A2
 5. Late-game economy: exponential pops/sound-pack prices, CHAIN/FUSE higher bars + mechanics, mode rewards; FUSE missing-letter steering — A6, A7, A8, A10
 6. STEP 34 collection / marks rework — A3, A1

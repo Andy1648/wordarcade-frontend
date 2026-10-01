@@ -23,6 +23,7 @@ import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, ge
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
+import ThemePreview from './ThemePreview';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
@@ -106,39 +107,75 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       refresh();
     }
   };
-  const onBuyKeyPower = () => {
-    const nextTier = keyTier + 1;
-    if (buyKeyPower().ok) {
-      sndPurchase();
-      const colour = nextTier >= 5 ? '#FFD54A' : '#2EFFE0';
-      setReveal({
-        kind: 'keypower',
-        name: `KEY POWER ${toRoman(nextTier)}`,
-        blurb: `Every letter now pays ${formatNum(keyTierXp(nextTier))} XP.`,
-        coin: `−${formatNum(kpCost)} WINS`,
-        colour,
-        tier: nextTier,
-      });
-      evItemPurchased('key_power', nextTier);
-      refresh();
-    }
+  // One reveal for a run of buys (hold-to-buy / BUY MAX): `n` units, `spent` wins, ending at tier `t`.
+  const revealKeyPower = (t, n, spent) => {
+    setReveal({
+      kind: 'keypower',
+      name: `KEY POWER ${toRoman(t)}${n > 1 ? ` (+${n})` : ''}`,
+      blurb: `Every letter now pays ${formatNum(keyTierXp(t))} XP.`,
+      coin: `−${formatNum(spent)} WINS`,
+      colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
+      tier: t,
+    });
   };
-  const onBuyMomentum = () => {
-    const r = buyMomentum();
-    if (r.ok) {
-      sndPurchase();
-      // The permanent mark lands on the menu rail (see MomentumRail); the sticker names the total.
-      setReveal({
-        kind: 'momentum',
-        name: `MOMENTUM ${r.count}`,
-        blurb: `${r.count} mark${r.count === 1 ? '' : 's'} — every win now pays +${r.count}%.`,
-        coin: `−${formatNum(mCost)} WINS`,
-        colour: '#FF6B3D',
-        tier: r.count,
-      });
-      evItemPurchased('momentum', r.count);
-      refresh();
+  const kpRun = useRef({ n: 0, spent: 0, tier: 0 });
+  const onBuyKeyPower = ({ batch = false } = {}) => {
+    const r = buyKeyPower();
+    if (!r.ok) return false;
+    sndPurchase();
+    evItemPurchased('key_power', r.tier);
+    if (batch) {
+      kpRun.current = { n: kpRun.current.n + 1, spent: kpRun.current.spent + r.spent, tier: r.tier };
+    } else {
+      revealKeyPower(r.tier, 1, r.spent);
     }
+    refresh();
+    return true;
+  };
+  const endKeyPowerRun = () => {
+    const run = kpRun.current;
+    kpRun.current = { n: 0, spent: 0, tier: 0 };
+    if (run.n > 0) revealKeyPower(run.tier, run.n, run.spent);
+  };
+  const buyMaxKeyPower = () => {
+    let guard = 0;
+    while (guard < 500 && onBuyKeyPower({ batch: true })) guard += 1;
+    endKeyPowerRun();
+  };
+  // The permanent mark lands on the menu rail (see MomentumRail); the sticker names the total.
+  const revealMomentum = (count, n, spent) => {
+    setReveal({
+      kind: 'momentum',
+      name: `MOMENTUM ${count}${n > 1 ? ` (+${n})` : ''}`,
+      blurb: `${count} mark${count === 1 ? '' : 's'} — every win now pays +${count}%.`,
+      coin: `−${formatNum(spent)} WINS`,
+      colour: '#FF6B3D',
+      tier: count,
+    });
+  };
+  const mRun = useRef({ n: 0, spent: 0, count: 0 });
+  const onBuyMomentum = ({ batch = false } = {}) => {
+    const r = buyMomentum();
+    if (!r.ok) return false;
+    sndPurchase();
+    evItemPurchased('momentum', r.count);
+    if (batch) {
+      mRun.current = { n: mRun.current.n + 1, spent: mRun.current.spent + r.spent, count: r.count };
+    } else {
+      revealMomentum(r.count, 1, r.spent);
+    }
+    refresh();
+    return true;
+  };
+  const endMomentumRun = () => {
+    const run = mRun.current;
+    mRun.current = { n: 0, spent: 0, count: 0 };
+    if (run.n > 0) revealMomentum(run.count, run.n, run.spent);
+  };
+  const buyMaxMomentum = () => {
+    let guard = 0;
+    while (guard < 500 && onBuyMomentum({ batch: true })) guard += 1;
+    endMomentumRun();
   };
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
@@ -215,7 +252,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <div className="shop-kp-current">
                   <b>{formatNum(keyTierXp(keyTier))}</b> XP PER LETTER
                 </div>
-                {/* What the NEXT tier gives + what it costs (one tier at a time — no buy max). */}
+                {/* What the NEXT tier gives + what it costs. HOLD the buy button to keep buying, or BUY MAX. */}
                 <div className="shop-kp-next">
                   NEXT TIER: <b>{formatNum(keyTierXp(keyTier + 1))} XP</b>
                   {'  ·  '}
@@ -235,7 +272,12 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
               <div className="shop-kp-actions">
                 {wins >= kpCost ? (
-                  <HoldBuy label={formatNum(kpCost)} onCommit={onBuyKeyPower} />
+                  <>
+                    <HoldBuy label={formatNum(kpCost)} onCommit={onBuyKeyPower} onBatchEnd={endKeyPowerRun} />
+                    {wins >= kpCost + keyTierCost(keyTier + 1) && (
+                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxKeyPower}>BUY MAX</button>
+                    )}
+                  </>
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
@@ -296,7 +338,12 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                     MAXED
                   </button>
                 ) : wins >= mCost ? (
-                  <HoldBuy label={formatNum(mCost)} onCommit={onBuyMomentum} />
+                  <>
+                    <HoldBuy label={formatNum(mCost)} onCommit={onBuyMomentum} onBatchEnd={endMomentumRun} />
+                    {!momentumMaxed(momentum + 1) && wins >= mCost + momentumCost(momentum + 1) && (
+                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxMomentum}>BUY MAX</button>
+                    )}
+                  </>
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
@@ -470,11 +517,7 @@ function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBu
   const cls = isEq ? 'equipped' : ownedT ? 'owned' : affordable ? 'buy' : 'locked';
   return (
     <div className={`shop-card shop-theme-card is-${cls}`}>
-      <div className="shop-theme-swatch" aria-hidden="true">
-        {theme.swatch.map((c, i) => (
-          <span key={i} style={{ background: c }} />
-        ))}
-      </div>
+      <ThemePreview theme={theme} />
       <div className="shop-card-name">{theme.name}</div>
       {theme.unlockLevel > 0 && !ownedT && (
         <div className="shop-theme-gate">FREE AT LV {theme.unlockLevel}</div>
@@ -509,15 +552,59 @@ function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBu
 // NOTE: this component must NOT be re-created inside a parent's render (it was, via an inline
 // `const HoldBuyButton = props => <HoldBuy .../>` alias + inline Card/ThemeCard) — a new
 // component identity per render REMOUNTS it. It is module-scoped and rendered directly.
-function HoldBuy({ label, onCommit, className = 'shop-card-btn' }) {
+// HOLD TO BUY (STEP 21 / Andy A5: "no mashing buttons — at worst hold to buy"). A tap buys ONE.
+// Holding keeps buying, accelerating (first repeat after 420 ms, then every 240 → 70 ms), until you
+// let go or can't afford the next one. `onCommit({ batch })` returns true when a buy landed; during a
+// hold every buy is a quiet batch buy, and `onBatchEnd(n)` fires once on release with the count so
+// the reveal ritual plays ONCE for the whole run instead of once per unit. Keyboard: Enter/Space =
+// one buy (the native click). Repeatables only; one-off cosmetics keep a single-press buy.
+function HoldBuy({ label, onCommit, onBatchEnd = null, className = 'shop-card-btn' }) {
+  const timer = useRef(null);
+  const count = useRef(0);
+  const pointerBuy = useRef(false);
+  const stop = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    if (count.current > 0 && onBatchEnd) onBatchEnd(count.current);
+    count.current = 0;
+  };
+  useEffect(() => stop, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const step = (delay) => {
+    timer.current = setTimeout(() => {
+      if (!onCommit({ batch: true })) { stop(); return; }
+      count.current += 1;
+      step(Math.max(70, delay * 0.78));
+    }, delay);
+  };
+  const repeatable = !!onBatchEnd;
   return (
     <button
       type="button"
-      className={`${className} shop-buy`}
-      onClick={onCommit}
-      aria-label={`Buy for ${label}`}
+      className={`${className} shop-buy${repeatable ? ' is-hold' : ''}`}
+      onPointerDown={repeatable ? (e) => {
+        if (e.button !== 0) return;
+        pointerBuy.current = true;
+        if (!onCommit({ batch: true })) return;
+        count.current = 1;
+        timer.current = setTimeout(() => step(240), 420 - 240);
+      } : undefined}
+      onPointerUp={repeatable ? stop : undefined}
+      onPointerLeave={repeatable ? stop : undefined}
+      onPointerCancel={repeatable ? stop : undefined}
+      onClick={() => {
+        if (pointerBuy.current) { pointerBuy.current = false; return; } // the pointer path already bought
+        onCommit({ batch: false });
+      }}
+      aria-label={repeatable ? `Buy for ${label}. Hold to keep buying` : `Buy for ${label}`}
     >
-      <span className="shop-coin" aria-hidden="true" /> {label}
+      {repeatable ? (
+        <>
+          <span className="shop-buy-main"><span className="shop-coin" aria-hidden="true" /> {label}</span>
+          <span className="shop-hold-hint" aria-hidden="true">HOLD</span>
+        </>
+      ) : (
+        <><span className="shop-coin" aria-hidden="true" /> {label}</>
+      )}
     </button>
   );
 }

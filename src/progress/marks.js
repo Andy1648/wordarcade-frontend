@@ -259,3 +259,42 @@ export function markComboKeep(markId = getEquippedMark()) {
   const m = markById(markId);
   return m && m.effect && m.effect.comboKeep ? rankedEffect(m).comboKeep : 0;
 }
+
+// ---- "NEW MARK" badge (STEP 21): which unlocked marks the player has looked at in the picker. -----
+export const MARKS_SEEN_KEY = 'taw.marksSeen';
+export function hasUnseenMarks(unlockedIds = []) {
+  try {
+    const seen = new Set(JSON.parse(localStorage.getItem(MARKS_SEEN_KEY) || '[]'));
+    return unlockedIds.some((id) => !seen.has(id));
+  } catch {
+    return false;
+  }
+}
+export function markMarksSeen(unlockedIds = []) {
+  try {
+    const seen = new Set(JSON.parse(localStorage.getItem(MARKS_SEEN_KEY) || '[]'));
+    for (const id of unlockedIds) seen.add(id);
+    localStorage.setItem(MARKS_SEEN_KEY, JSON.stringify([...seen]));
+  } catch {
+    /* storage blocked */
+  }
+}
+
+// ---- mark RANK-UP news (STEP 21): the rank this browser last celebrated, per mark. ----------------
+const MARK_RANK_SEEN_KEY = 'taw.markRankSeen';
+/** Returns the new rank if `id` ranked up since it was last celebrated (and records it), else 0. */
+export function takeMarkRankUp(id) {
+  if (!id || !BY_ID.has(id)) return 0;
+  try {
+    const seen = JSON.parse(localStorage.getItem(MARK_RANK_SEEN_KEY) || '{}') || {};
+    const now = markRank(id);
+    const before = Number(seen[id]) || 1;
+    if (now !== before) {
+      seen[id] = now;
+      localStorage.setItem(MARK_RANK_SEEN_KEY, JSON.stringify(seen));
+    }
+    return now > before ? now : 0;
+  } catch {
+    return 0;
+  }
+}

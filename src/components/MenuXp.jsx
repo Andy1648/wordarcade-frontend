@@ -49,7 +49,7 @@ const formatMult = (m) => `×${formatMultExact(m)}`;
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, lettersToNext = null, firstRun = false, hintRight = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, firstRun = false, hintRight = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -245,6 +245,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           >
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
+            {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
         ) : (
           <span className="menu-mark" title={`${mark.name} - ${mark.blurb}`}>
@@ -252,6 +253,14 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
           </span>
         )
+      )}
+      {/* NEW MARK (STEP 21): nothing worn but a mark just unlocked → the slot appears as a call to
+          action instead of staying hidden until the player finds the picker in Stats. */}
+      {variant !== 'mini' && markSlot && !mark && markNew && onMarkClick && (
+        <button type="button" className="menu-mark is-new" onClick={onMarkClick} aria-label="New mark unlocked. Choose a mark to wear">
+          <span className="menu-mark-name">NEW MARK</span>
+          <span className="homepage-shop-dot" aria-hidden="true" />
+        </button>
       )}
       <BarRow loud={variant !== 'mini'} level={level}>
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
@@ -763,6 +772,22 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         }
         const { w, h } = layerSizeRef.current;
         if (w && h) spawnShards(w / 2, h * 0.46, tf.tier >= 5 ? TIER_GOLD : TIER_TEAL, Math.min(SHARD_POOL, tf.levelUpShards), 3 + tf.tier * 0.6);
+      }
+    },
+    // STEP 21: a generic one-shot name card on the level-up element (mark rank-ups). Same finite
+    // play + starburst as tierUp; never mutes typing.
+    announce(title, sub = '', detail = '') {
+      const a = levelupAnimRef.current;
+      if (!a) return;
+      popCapRef.current = false;
+      if (levelTitleRef.current) levelTitleRef.current.textContent = title;
+      if (levelSubRef.current) levelSubRef.current.textContent = sub;
+      if (levelDetailRef.current) levelDetailRef.current.textContent = detail;
+      a.cancel();
+      a.play();
+      if (burstAnimRef.current && !prefersReducedMotion()) {
+        burstAnimRef.current.cancel();
+        burstAnimRef.current.play();
       }
     },
     // STEP 22: crossing into a new MENU TIER names the frame the player just earned. Reuses
