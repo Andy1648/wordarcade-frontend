@@ -38,6 +38,7 @@ import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import useMediaQuery from '../lib/useMediaQuery';
+import { hasPlayedBefore } from '../visitHistory';
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -79,6 +80,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [navigating, setNavigating] = useState(false);
   // True on phones (<=480px). Drives the whole first-screen swap below.
   const isPhoneMenu = useMediaQuery(PHONE_MENU_QUERY);
+  // The phone menu's TYPE A WORD hook (WordHook.jsx) is for visitors who have never started a
+  // game. Read once per mount: starting a round navigates away, so it is gone on the way back.
+  const [firstTimer] = useState(() => !hasPlayedBefore());
   // CONNECT-GATING: the socket connects in the background while this menu is
   // already live (a cold Render backend can take 30-60s). If the user fires a
   // connect-dependent action (CREATE / JOIN) before the socket is open we must
@@ -620,6 +624,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
   }
 
+  // Phone hook PLAY SOLO: the first-timer typed a word on the menu and took the one-tap offer.
+  // The same path as the dialog's PLAY SOLO, without a dialog to open first.
+  function handleHookSolo() {
+    if (navigating) return;
+    sound.click();
+    setNavigating(true);
+    runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
+  }
+
   // Dialog QUICK MATCH (WORD RACE): straight into the race queue - App sends race_quick_match and
   // the server seats us in the fullest waiting race (or opens one; bots fill after 10s). Same
   // runWhenConnected path as PLAY SOLO, so a cold socket shows WAKING THE SERVER… on the button.
@@ -729,6 +742,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onOpen={handleOpenDialog}
             onJoin={handleJoinRoom}
             joinLabel={connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN ROOM'}
+            onHookPlay={firstTimer && onPlaySolo ? handleHookSolo : null}
+            hookPlayLabel={connecting === 'solo' && !dialog ? <ConnectingContent cold={coldStart} /> : null}
             navigating={navigating}
             musicMuted={musicMuted}
             onToggleMusic={onToggleMusic}

@@ -20,6 +20,7 @@
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
 import LayeredWord from './LayeredWord';
+import WordHook from './WordHook';
 
 // The three BIG modes, in menu order. CHAIN and FUSE (level-gated) share the split solo band
 // below it — smaller, because a newcomer meets them locked.
@@ -124,6 +125,8 @@ const isModified = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.
  * @param onRebirth  the desktop REBIRTH handler, or null while REBIRTH is gated off (LV1 etc.)
  * @param shopDot  true when something in the shop is affordable (the desktop SHOP dot)
  * @param shopRef / statsRef / rebirthRef  Homepage's focus-restore refs (return from an overlay)
+ * @param onHookPlay  first-timers only: starts solo Word Bomb from the TYPE A WORD hook; null hides it
+ * @param hookPlayLabel  node for the hook's PLAY button while the socket wakes (or null)
  */
 export default function MobileMenu({
   games,
@@ -143,6 +146,8 @@ export default function MobileMenu({
   shopRef,
   statsRef,
   rebirthRef,
+  onHookPlay = null,
+  hookPlayLabel = null,
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -168,6 +173,11 @@ export default function MobileMenu({
           onToggleMusic={onToggleMusic}
         />
       </div>
+
+      {/* 1b. FIRST VISIT ONLY: "TYPE A WORD 👇" + an input. The search visitors who land here
+             from the "type a word" trend get exactly that, then one tap into solo Word Bomb.
+             In flow (not fixed), so the mode rows below simply flex a little shorter. */}
+      {onHookPlay && <WordHook onPlay={onHookPlay} playLabel={hookPlayLabel} navigating={navigating} />}
 
       {/* 2. The three mode rows. They flex-grow to share whatever height is left, so the
              screen always fills exactly one viewport with no scroll at any phone height. */}
