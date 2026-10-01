@@ -16,6 +16,10 @@ export const splashDismissed = () => track('splash_dismissed');
 export const modeOpened = (mode) => track('mode_opened', { mode });
 export const lockedModeClicked = (mode, unlockLevel) => track('locked_mode_clicked', { mode, unlock_level: unlockLevel });
 export const shopOpened = () => track('shop_opened');
+// The phone menu's first-visit TYPE A WORD hook: a word was typed (its LENGTH only, never the word)
+// and the one-tap PLAY SOLO was taken. `lang` is the prompt locale shown ('en' | 'de').
+export const hookWordTyped = (lang, length) => track('hook_word_typed', { lang, length });
+export const hookPlaySolo = (lang) => track('hook_play_solo', { lang });
 
 // ---- the core loop ------------------------------------------------------------------------------
 export const roundStarted = (mode, kind = 'solo') => track('round_started', { mode, kind });

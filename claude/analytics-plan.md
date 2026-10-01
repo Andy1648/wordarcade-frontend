@@ -32,6 +32,8 @@ Set at boot (after init) and refreshed on level-up / rebirth / streak-day:
 | `level_up` | any level-up (`{level}`) | progression velocity + where players stall | `useXpCapture` |
 | `first_wins_earned` | the first-ever payout (once, `{amount}`) | do players reach the economy at all | `Homepage` winsHint gate |
 | `shop_opened` | the SHOP overlay opens (not the rebirth view) | shop discovery rate | `ShopScreen` mount |
+| `hook_word_typed` | a first-time phone visitor typed a word into the menu's TYPE A WORD hook (`lang`, `length` — never the word) | does the "type a word" search traffic engage | `WordHook` submit |
+| `hook_play_solo` | that visitor took the hook's one-tap PLAY SOLO (`lang`) | hook -> first round conversion | `WordHook` PLAY |
 | `item_purchased` | any purchase commits (`{item, tier}`) — cosmetics, KEY POWER, WORD SENSE, MOMENTUM, themes | what players actually spend on | `ShopScreen` buy handlers |
 | `rebirth` | a rebirth is confirmed (`{count}`) | who reaches prestige, and how often | `ShopScreen.confirmRebirth` |
 | `streak_day` | first menu load of an active streak day (`{count}`, once/day) | day-N retention curve | `Homepage` mount |
