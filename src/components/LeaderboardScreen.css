@@ -303,7 +303,20 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-label);
-  color: #A89EC4;
+  /* the board ranks by rebirths then LEVEL — so the level reads as a number, not as grey small print */
+  color: #2EFFE0;
+}
+.lb-name-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.lb-you-badge {
+  flex: none;
+  padding: 1px 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #fff;
+  background: #FF4FA3;
+  border: 2px solid #a3175e;
+  border-radius: 6px;
 }
 
 .lb-stars {

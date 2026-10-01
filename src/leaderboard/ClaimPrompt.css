@@ -15,7 +15,6 @@
   border-radius: 8px;
   box-shadow: 5px 5px 0 #000;
   color: #000;
-  rotate: -1.5deg;
   font-family: 'Space Mono', monospace;
   text-align: left;
   animation: lb-cp-in 280ms cubic-bezier(.2, .9, .3, 1.15) 600ms both;
@@ -37,7 +36,7 @@
 .lb-cp-copy { flex: 1; min-width: 0; }
 .lb-cp-kicker {
   display: block;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #000;
@@ -90,7 +89,12 @@
 .lb-cp-verdict { margin: 0; font-size: var(--fs-label); font-weight: 700; color: #3d3150; }
 .lb-cp-verdict.is-ok { color: #0f6f62; }
 .lb-cp-verdict.is-blocked, .lb-cp-verdict.is-taken, .lb-cp-verdict.is-shape { color: #a3175e; }
-.lb-cp-done { margin: 0; display: flex; align-items: center; gap: 12px; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.04em; }
+.lb-cp-done { margin: 0; flex: 1; font-size: var(--fs-body); font-weight: 700; letter-spacing: 0.04em; }
+
+/* Only the OFFER is a tilted sticker; the form straightens so the input text and caret render crisp. */
+.lb-cp.is-offer { rotate: -1.5deg; }
+.lb-cp-hint { display: block; margin-top: 2px; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.04em; color: #3d3150; }
+.lb-cp-trophy { vertical-align: -3px; }
 
 @media (prefers-reduced-motion: reduce) {
   .lb-cp { animation: none; }

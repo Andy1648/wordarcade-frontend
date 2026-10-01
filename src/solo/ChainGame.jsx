@@ -407,8 +407,8 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         winsBonusLines,
         tryRow: (
           <>
-            <TryModeRow current="chain" />
             <ClaimPrompt />
+            <TryModeRow current="chain" />
           </>
         ),
       }}

@@ -28,19 +28,20 @@
   outline). Never fabricated players. When the viewer is unclaimed, the FIRST placeholder row is a
   button that focuses the claim input.
 
-## Anti-abuse (DB, migration 004)
-- New-name claims: ≤ 3 per IP-hash per hour, ≤ 10 per IP-hash per day (IP from cf-connecting-ip /
-  x-real-ip / first x-forwarded-for, SHA-256 hashed, raw IP never stored).
-- Claim calls per browser secret: ≤ 6 per 10 minutes (stops name-scanning via lb_claim).
-- Renames: 1 per 24h per profile (`name_changed_at`). Error codes `rate_limited`, `rename_cooldown`.
-- Stats: lb_submit keeps the per-row 5s `submitted_at` throttle (003); probe proves a burst of 10
-  pushes in 1s lands exactly 1.
-- Logs older than 2 days are pruned on each claim.
+## Anti-abuse (DB, migration 004 — revised after review, see review.md)
+- New names per network (cf-connecting-ip, else last XFF hop; IPv6 by /64; hashed): ≤ 20/hour, ≤ 60/day,
+  under advisory locks. No usable IP → no per-IP bucket, but a 600/hour site-wide ceiling.
+- Per browser: one profile per secret; renames free within 10 min of the claim, then 1 per 24 h
+  (row-locked). Errors `rate_limited`, `rename_cooldown` (HTTP 400).
+- Stats: 5 s per-row throttle (003) + honest-play shape: rebirths/words never decrease, level only drops
+  with a rebirth, words ≤ 20/s of elapsed time after the first push; violating pushes are ignored.
+- Claim logs older than 2 days are pruned on each new-name claim.
+- Prompt trigger uses LIFETIME words ≥ 1 (the board ranks lifetime stats).
 
 ## Acceptance
 - e2e (mocked API): fresh profile plays a solo round → prompt "YOU'D BE #N" → claims → board shows the
   name → rank improves → next menu shows "#a → #b" and the trophy badge; opening the board clears it.
-- Probe vs live DB: 4th new claim from one IP in an hour → `rate_limited`; 2nd rename in a day →
+- Probe vs live DB: 21st new claim from one network in an hour → `rate_limited`; 2nd rename in a day →
   `rename_cooldown`; 10 submits in 1s → 1 applied.
 - 0 running / 0 infinite animations at rest on menu and end screens after the moments finish.
 - Bot sim (weak / median / strong) reports which see the prompt at a 0-, 10- and 150-player board.

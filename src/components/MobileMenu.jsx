@@ -310,7 +310,7 @@ export default function MobileMenu({
             aria-label={`Open leaderboard${boardDot ? ' — your rank went up' : ''}`}
           >
             <TrophyIcon size={24} />
-            {boardDot && <span className="hp-m-dot" aria-hidden="true" />}
+            {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
           </button>
         )}
         {onRebirth && (

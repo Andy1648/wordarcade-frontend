@@ -68,7 +68,9 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   const prompt = page.locator('.lb-cp');
   await expect(prompt).toBeVisible({ timeout: 10000 });
   await expect(prompt).toContainText('YOU’D BE #4 ON THE BOARD');
-  expect(await page.evaluate(() => sessionStorage.getItem('taw.lb.promptShown'))).toBe('1');
+  // "Seen" is ON SCREEN, not rendered: the session's one shot is spent only once it scrolls into view.
+  await prompt.scrollIntoViewIfNeeded();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('taw.lb.promptShown'))).toBe('1');
 
   // 2. Claim inline.
   await prompt.getByRole('button', { name: 'CLAIM YOUR NAME' }).click();
@@ -77,7 +79,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await input.fill('Typer_47');
   await expect(page.locator('.lb-cp-verdict')).toHaveText('FREE. CLAIM IT.');
   await prompt.getByRole('button', { name: 'CLAIM' }).click();
-  await expect(page.locator('.lb-cp-done')).toContainText('YOU’RE ON THE BOARD');
+  await expect(page.locator('.lb-cp-done')).toContainText('YOU’RE #4.');
   expect(board.calls.claim).toBe(1);
   expect(board.rows.some((r) => r.username === 'Typer_47')).toBe(true);
 
@@ -86,7 +88,8 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await menuReady(page);
   await page.getByRole('button', { name: /Open leaderboard/ }).click();
   const me = page.locator('.lb-row.is-me');
-  await expect(me).toContainText('Typer_47 (YOU)');
+  await expect(me.locator('.lb-name')).toHaveText('Typer_47');
+  await expect(me.locator('.lb-you-badge')).toHaveText('YOU');
   await expect(me).toHaveAttribute('data-rank', '4');
   // 4 real rows → 6 numbered invitations (#5..#10), and none of them pretends to be a player.
   await expect(page.locator('.lb-slot')).toHaveCount(6);
@@ -152,4 +155,25 @@ test('the claim prompt is once per session and never for a claimed player', asyn
   await page.locator('.solo-over').waitFor({ state: 'visible', timeout: 45000 });
   await page.waitForTimeout(1500);
   await expect(page.locator('.lb-cp')).toHaveCount(0);
+});
+
+test('a network over its claim limit gets plain copy, not an error dump', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await installBackendMock(page);
+  await seedUnclaimed(page);
+  await mockBoard(page, SEED);
+  await page.route('https://lb.e2e.invalid/rest/v1/rpc/lb_claim', (route) =>
+    route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'P0001', message: 'rate_limited' }) }));
+  await page.goto('/?chain=1&portal=1');
+  await page.locator('.solo-input').waitFor({ state: 'visible', timeout: 20000 });
+  await playChainLinks(page, 4);
+  await page.locator('.solo-over').waitFor({ state: 'visible', timeout: 45000 });
+  const prompt = page.locator('.lb-cp');
+  await expect(prompt).toBeVisible({ timeout: 10000 });
+  await prompt.getByRole('button', { name: 'CLAIM YOUR NAME' }).click();
+  await page.locator('#lb-cp-input').fill('Typer_48');
+  await expect(page.locator('.lb-cp-verdict')).toHaveText('FREE. CLAIM IT.');
+  await prompt.getByRole('button', { name: 'CLAIM' }).click();
+  await expect(page.locator('.lb-cp-verdict')).toHaveText('THE BOARD IS BUSY FROM THIS NETWORK. TRY IN AN HOUR.');
 });

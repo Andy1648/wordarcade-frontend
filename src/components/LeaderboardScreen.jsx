@@ -59,14 +59,17 @@ function Row({ row, mine, flash }) {
     <li className={`lb-row${top}${mine ? ' is-me' : ''}${mine && flash ? ' is-flash' : ''}`} data-rank={row.rank}>
       <span className="lb-rank">{row.rank}</span>
       <span className="lb-who">
-        <span className="lb-name">{row.username}{mine ? ' (YOU)' : ''}</span>
+        <span className="lb-name-line">
+          <span className="lb-name">{row.username}</span>
+          {mine && <span className="lb-you-badge">YOU</span>}
+        </span>
         <span className="lb-lv">
           LV {fmt(row.level)}
           {row.rebirths > 0 && <span className="lb-stars" aria-label={`${row.rebirths} rebirths`}> {rebirthStars(row.rebirths)}</span>}
         </span>
       </span>
       <span className="lb-num lb-words">{fmt(row.lifetime_words)}</span>
-      <span className="lb-num lb-rate">{fmtRate(row.wins_per_word)}</span>
+      <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
   );
 }
@@ -218,9 +221,9 @@ export default function LeaderboardScreen({ onBack }) {
                     For an unclaimed viewer the first one is a button into the claim field. */}
                 {!loading && !loadError && Array.from({ length: Math.max(0, MIN_ROWS - board.rows.length) }, (_, i) => {
                   const n = board.rows.length + i + 1;
-                  const first = i === 0 && !profile;
+                  const first = !profile; // every open place is a way in for an unclaimed viewer
                   return (
-                    <li key={`slot-${n}`} className={`lb-slot${first ? ' is-open' : ''}`} data-rank={n}>
+                    <li key={`slot-${n}`} className={`lb-slot${first && i === 0 ? ' is-open' : ''}`} data-rank={n}>
                       <span className="lb-rank">{n}</span>
                       {first ? (
                         <button type="button" className="lb-slot-btn" onClick={() => { setEditing(true); const el = document.getElementById('lb-name-input'); if (el) el.focus(); }}>

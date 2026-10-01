@@ -61,7 +61,7 @@ for (const [w, h] of VPS) {
     b.secrets.set('f'.repeat(48), 'id-me');
     await page.goto('/?portal=1');
     await menuReady(page);
-    await page.locator('.lb-rankup').waitFor({ state: 'visible' });
+    await page.locator('.lb-rankup').waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForTimeout(1000);
     await page.screenshot({ path: `claude/step47/shots/rankup-${w}x${h}.png` });
     await page.waitForTimeout(1600);

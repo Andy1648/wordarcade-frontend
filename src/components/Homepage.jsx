@@ -698,7 +698,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [rankUp, setRankUp] = useState(null);
   useEffect(() => {
     let live = true;
-    submitBoardStats()
+    submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
       .then(() => checkRankUp())
       .then((r) => {
         if (live && r) {
@@ -852,7 +852,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               title="Leaderboard"
             >
               <TrophyIcon size={22} />
-              {boardNews && <span className="homepage-shop-dot" aria-hidden="true" />}
+              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           )}
           {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /

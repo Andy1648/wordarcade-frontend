@@ -191,8 +191,8 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
               mode is still locked.
               NOT shown to a deep-link visitor: they have seen no modes at all, so "try FUSE next"
               is a narrower, stranger offer than "here are the other four". They get the offer. */}
-          {offerMenu ? null : <TryModeRow current="sat-rush" />}
           <ClaimPrompt />
+          {offerMenu ? null : <TryModeRow current="sat-rush" />}
         </div>
 
         {/* When the offer is shown its button IS the way out (same onExit), so the plain

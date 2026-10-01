@@ -329,8 +329,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         // "LETTERS n/26", the live count of distinct letters lit this cycle.
         tryRow: (
           <>
-            <TryModeRow current="fuse" />
             <ClaimPrompt />
+            <TryModeRow current="fuse" />
           </>
         ),
       }}

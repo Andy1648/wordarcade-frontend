@@ -74,7 +74,8 @@ for (const vp of VIEWPORTS) {
     await page.locator('.lb-claim-btn').click();
     await expect(page.locator('.lb-you-name')).toHaveText('Typer_99');
     const me = page.locator('.lb-row.is-me');
-    await expect(me).toContainText('Typer_99 (YOU)');
+    await expect(me.locator('.lb-name')).toHaveText('Typer_99');
+    await expect(me.locator('.lb-you-badge')).toHaveText('YOU');
     await expect(me).toContainText('LV 12');
     await expect(me.locator('.lb-stars')).toHaveText(/★★/);
     expect(board.calls.submit).toBeGreaterThanOrEqual(1);
