@@ -1,0 +1,18 @@
+{
+ "l1": {
+  "rest": {
+   "running": 0,
+   "infinite": []
+  },
+  "typingPeak": 26,
+  "afterTyping": 11
+ },
+ "l150r3": {
+  "rest": {
+   "running": 0,
+   "infinite": []
+  },
+  "typingPeak": 60,
+  "afterTyping": 11
+ }
+}

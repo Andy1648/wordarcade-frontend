@@ -377,6 +377,20 @@
 /* One-shot big centre-screen level-up moment: "LEVEL N" + a phrase line under it.
    position:absolute so it never pushes layout or changes the menu height. Hidden at rest.
    The scale/rotate/opacity animate on this container; both lines ride along. */
+/* STEP 22: the comic starburst (public/art/starburst.svg — the SHAPE is the asset) that spins
+   up behind LEVEL N from menu tier 1. Hidden at rest; one finite WAAPI play per level-up. */
+.menu-xp-levelburst {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(62vmin, 520px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  background: #FF4FA3;
+  -webkit-mask: url(/art/starburst.svg) center / 100% 100% no-repeat;
+  mask: url(/art/starburst.svg) center / 100% 100% no-repeat;
+}
 .menu-xp-levelup {
   position: absolute;
   left: 50%;

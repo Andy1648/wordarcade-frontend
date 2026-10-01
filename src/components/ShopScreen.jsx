@@ -23,6 +23,7 @@ import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, ge
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
+import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
 const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -547,6 +548,16 @@ function ShopReveal({ reveal, onDone }) {
     onDoneRef.current();
     if (reveal.onClose) reveal.onClose();
   };
+  // STEP 22 / A1 — a purchase is an EVENT: two confetti volleys from the sticker (pooled juice
+  // particles, finite) in the bought item's colour. Fired once per reveal.
+  useEffect(() => {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const colors = [reveal.colour || '#2EFFE0', '#FFE94A', '#FF4FA3', '#ffffff'];
+    burst(cx, cy, { count: 36, speed: 520, colors, sizeMin: 4, sizeMax: 10, life: 0.8 });
+    const t = setTimeout(() => burst(cx, cy - 40, { count: 20, speed: 360, colors, life: 0.7 }), 180);
+    return () => clearTimeout(t);
+  }, [reveal]);
   useEffect(() => {
     const t = setTimeout(() => finish.current(), REVEAL_MS);
     return () => clearTimeout(t);
