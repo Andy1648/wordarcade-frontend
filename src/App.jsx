@@ -27,6 +27,7 @@ const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 // StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
 // views/footer links), so their bodies are imported by StatsScreen, not lazily as top-level views.
 const StatsScreen = lazy(() => import('./components/StatsScreen'));
+const LeaderboardScreen = lazy(() => import('./components/LeaderboardScreen'));
 const ShopScreen = lazy(() => import('./components/ShopScreen'));
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
@@ -736,6 +737,7 @@ function App() {
     shopViewRef,
     overlayReturnRef,
     goToStats,
+    goToLeaderboard,
     goToShop,
     goToRebirth,
     goToCredits,
@@ -2526,6 +2528,12 @@ function App() {
         <StatsScreen onBack={goHome} />
       </Suspense>
     );
+  } else if (view === 'leaderboard') {
+    screen = (
+      <Suspense fallback={<OverlaySkeleton title="LEADERBOARD" />}>
+        <LeaderboardScreen onBack={goHome} />
+      </Suspense>
+    );
   } else if (view === 'shop') {
     screen = (
       <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'SHOP'} />}>
@@ -2582,6 +2590,7 @@ function App() {
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
         onStats={goToStats}
+        onLeaderboard={goToLeaderboard}
         onShop={goToShop}
         onRebirth={goToRebirth}
         restoreFocus={overlayReturnRef.current}
@@ -2719,7 +2728,7 @@ function App() {
               // gap, credited XP, and never reached the button. Removing the zoom property entirely
               // (rather than overriding it) leaves no zoom to misbehave: visual == hit-test on every
               // browser. GAME views keep the zoom via `.view-screen.app-scaled`.
-              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' || view === 'vs-bot' ? '' : ' app-scaled'}`}
+              className={`view-screen${isHomeMenu || view === 'shop' || view === 'stats' || view === 'leaderboard' || view === CHAIN_VIEW || view === FUSE_VIEW || view === SAT_RUSH_VIEW || view === 'game' || view === 'vs-bot' ? '' : ' app-scaled'}`}
             >
               {/* One Suspense boundary covers every lazy screen (game/room/lobby/
                   browse/credits). The fallback is DELAYED (null for ~450ms): chunks are

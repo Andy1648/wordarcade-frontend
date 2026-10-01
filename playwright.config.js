@@ -69,5 +69,12 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     stdout: 'ignore',
     stderr: 'pipe',
+    // The leaderboard (STEP 24) is ON whenever these are set. e2e points it at a host that does not
+    // exist and mocks every request (e2e/leaderboard.spec.js), so no test ever touches the real board.
+    // Process env beats .env.local in Vite, so a developer's local keys can't leak into a run.
+    env: {
+      VITE_SUPABASE_URL: 'https://lb.e2e.invalid/rest/v1/',
+      VITE_SUPABASE_ANON_KEY: 'e2e-anon-key',
+    },
   },
 });

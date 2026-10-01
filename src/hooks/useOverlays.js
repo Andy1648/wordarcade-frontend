@@ -28,7 +28,7 @@ const TRANSITION_WORDS = {
 // "back" (return). Any view not listed defaults to 1. (Moved verbatim from App.jsx.)
 const NAV_DEPTH = {
   home: 0,
-  credits: 1, stats: 1, shop: 1, collection: 1, achievements: 1,
+  credits: 1, stats: 1, leaderboard: 1, shop: 1, collection: 1, achievements: 1,
   browse: 1, lobby: 1,
   room: 2, game: 2, 'cg-arm': 2,
   [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
@@ -86,6 +86,10 @@ export function useOverlays({ view, setView, sound }) {
     overlayReturnRef.current = 'stats'; // restore focus here when Stats closes
     setView('stats');
   };
+  const goToLeaderboard = () => {
+    overlayReturnRef.current = 'leaderboard'; // restore focus to the trophy when the board closes
+    setView('leaderboard');
+  };
   const goToShop = () => {
     shopViewRef.current = 'shop';
     overlayReturnRef.current = 'shop'; // restore focus here when Shop closes
@@ -107,6 +111,7 @@ export function useOverlays({ view, setView, sound }) {
     shopViewRef,
     overlayReturnRef,
     goToStats,
+    goToLeaderboard,
     goToShop,
     goToRebirth,
     goToCredits,

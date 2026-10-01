@@ -20,6 +20,7 @@
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
 import LayeredWord from './LayeredWord';
+import TrophyIcon from './TrophyIcon';
 import WordHook from './WordHook';
 
 // The three BIG modes, in menu order. CHAIN and FUSE (level-gated) share the split solo band
@@ -148,6 +149,8 @@ export default function MobileMenu({
   rebirthRef,
   onHookPlay = null,
   hookPlayLabel = null,
+  onLeaderboard = null,
+  boardRef,
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -295,6 +298,18 @@ export default function MobileMenu({
         >
           STATS
         </button>
+        {onLeaderboard && (
+          <button
+            ref={boardRef}
+            type="button"
+            className={`hp-m-navbtn is-board${navigating ? ' is-disabled' : ''}`}
+            onClick={onLeaderboard}
+            disabled={navigating}
+            aria-label="Open leaderboard"
+          >
+            <TrophyIcon size={24} />
+          </button>
+        )}
         {onRebirth && (
           <button
             ref={rebirthRef}
