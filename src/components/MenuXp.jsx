@@ -11,6 +11,7 @@ import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
+import { tierFx } from '../progress/menuTier';
 
 // THE BAR IS THE DENSE ONE, and it is the only one. Two layouts were built and screenshotted so
 // the choice could be made from frames; the FILL variant lost on its own preview — at 92px with
@@ -377,6 +378,10 @@ const prefersReducedMotion = () =>
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
 const LEVELUP_MS = 1500;
+// The punch-in curve, applied PER KEYFRAME. It used to sit on the whole effect, which eases the
+// entire 1500ms timeline — so the "900ms hold" was actually crossing its fade keyframe ~500ms in
+// and the level-up flashed by. Linear effect timing + an eased entry keeps the hold a hold.
+const EASE_OUT = 'cubic-bezier(.2,.8,.2,1)';
 const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
 const WINSHINT_MS = 3000; // one-time "WINS BUY UPGRADES IN THE SHOP" explainer — a full 3s read
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
@@ -436,8 +441,17 @@ function pickIndex(anims, poolSize, cap, nextRef) {
 
 // MenuXpFx — imperative: letterPop(char, "+N", scale, colour), edgePulse(colour) per
 // keystroke, celebrate(level) on a level-up.
-export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
+export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   const layerRef = useRef(null);
+  // STEP 22 / A1: the MENU TIER (level + rebirth) lengthens and enriches every pop. Read through
+  // a ref so a level-up mid-typing re-tiers the very next keystroke without re-creating the pool.
+  const tierRef = useRef(tierFx(menuTier));
+  tierRef.current = tierFx(menuTier);
+  const burstRef = useRef(null);
+  // Only a LEVEL-UP / REBIRTH owns the pop budget while it plays; the tier-up name card (which
+  // can fire on menu open) must never mute the player's first keystrokes.
+  const popCapRef = useRef(true);
+  const burstAnimRef = useRef(null);
   const popElsRef = useRef([]);
   const edgeElsRef = useRef([]);
   const levelupRef = useRef(null);
@@ -541,29 +555,44 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
-          { transform: `${CENTER}rotate(-3deg) scale(1.7)`, opacity: 0, offset: 0 }, // 0ms
+          { transform: `${CENTER}rotate(-3deg) scale(1.7)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
           { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.1 }, // 150ms — in
           { transform: `${CENTER}rotate(-3deg) scale(1.06)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
           { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
           { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
           { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
         ],
-        { duration: LEVELUP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+        { duration: LEVELUP_MS, easing: 'linear', fill: 'both' } // ease per-keyframe (below), NOT per-effect
       );
       a.cancel();
       levelupAnimRef.current = a;
+    }
+
+    // LEVEL-UP STARBURST (STEP 22): the comic burst asset spins up behind LEVEL N, once.
+    if (burstRef.current) {
+      const a = burstRef.current.animate(
+        [
+          { transform: `${CENTER}rotate(-20deg) scale(0.2)`, opacity: 0, offset: 0, easing: EASE_OUT },
+          { transform: `${CENTER}rotate(4deg) scale(1.15)`, opacity: 1, offset: 0.3 },
+          { transform: `${CENTER}rotate(12deg) scale(1)`, opacity: 1, offset: 0.7 },
+          { transform: `${CENTER}rotate(18deg) scale(1.1)`, opacity: 0, offset: 1 },
+        ],
+        { duration: LEVELUP_MS, easing: 'linear', fill: 'both' } // ease per-keyframe (below), NOT per-effect
+      );
+      a.cancel();
+      burstAnimRef.current = a;
     }
 
     // Wins stamp — same pooled-element pattern as the level-up (finite, ≤700ms, one node).
     if (winsStampRef.current) {
       const a = winsStampRef.current.animate(
         [
-          { transform: `${CENTER}rotate(-4deg) scale(1.5)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}rotate(-4deg) scale(1.5)`, opacity: 0, offset: 0, easing: EASE_OUT },
           { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 1, offset: 0.16 },
           { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 1, offset: 0.7 },
           { transform: `${CENTER}rotate(-4deg) scale(1)`, opacity: 0, offset: 1 },
         ],
-        { duration: WINSSTAMP_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+        { duration: WINSSTAMP_MS, easing: 'linear', fill: 'both' }
       );
       a.cancel();
       winsStampAnimRef.current = a;
@@ -574,12 +603,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
     if (winsHintRef.current) {
       const a = winsHintRef.current.animate(
         [
-          { transform: `${CENTER}rotate(-2deg) scale(1.35)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}rotate(-2deg) scale(1.35)`, opacity: 0, offset: 0, easing: EASE_OUT },
           { transform: `${CENTER}rotate(-2deg) scale(1)`, opacity: 1, offset: 0.08 },
           { transform: `${CENTER}rotate(-2deg) scale(1)`, opacity: 1, offset: 0.85 },
           { transform: `${CENTER}rotate(-2deg) scale(1)`, opacity: 0, offset: 1 },
         ],
-        { duration: WINSHINT_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
+        { duration: WINSHINT_MS, easing: 'linear', fill: 'both' }
       );
       a.cancel();
       winsHintAnimRef.current = a;
@@ -588,10 +617,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
   }, []);
 
   // Throw SHARD_PER_POP pooled shards from (x,y) — KEY POWER tier T2+ (item 1).
-  function spawnShards(x, y, colour) {
+  function spawnShards(x, y, colour, count = SHARD_PER_POP, reach = 1) {
     const anims = shardAnimsRef.current;
     if (!anims.length) return;
-    for (let k = 0; k < SHARD_PER_POP; k += 1) {
+    for (let k = 0; k < count; k += 1) {
       const i = shardNextRef.current % SHARD_POOL;
       shardNextRef.current = (i + 1) % SHARD_POOL;
       const el = shardElsRef.current[i];
@@ -601,8 +630,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       el.style.top = `${y}px`;
       el.style.background = colour;
       el.style.willChange = 'transform, opacity'; // promote for the airborne window only
-      const ang = (k / SHARD_PER_POP) * Math.PI * 2 + Math.random() * 0.8;
-      const dist = 18 + Math.random() * 16;
+      const ang = (k / count) * Math.PI * 2 + Math.random() * 0.8;
+      const dist = (18 + Math.random() * 16) * reach;
       const dx = Math.cos(ang) * dist;
       const dy = Math.sin(ang) * dist - 6; // slight upward bias
       const rot = Math.random() * 180 - 90;
@@ -620,7 +649,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return; // not measured yet, or no pool
-      const levelup = levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
       const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
@@ -639,15 +668,24 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       el.children[1].style.color = ''; // back to CSS yellow
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
-      if (feelTier >= 2 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, tierColour);
+      // Shards: KEY POWER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
+      // is richer wins, so neither purchase nor progress is ever invisible.
+      const tfx = tierRef.current;
+      const shardN = Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards);
+      if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, tierColour, shardN, 1 + tfx.tier * 0.12);
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
+      // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
+      // further, and lands with a punch (overshoot) before it floats off.
+      const tf = tierRef.current;
+      anim.effect.updateTiming({ duration: tf.popMs });
       anim.effect.setKeyframes([
         { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-8.96px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-49.28px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * (1 + tf.tier * 0.05)}) translateY(-8.96px)`, opacity: 1, offset: 0.18 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-14px)`, opacity: 1, offset: 0.3 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -666,7 +704,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
         // tap landed on the readout → nudge the pop just clear of it (above, else below)
         y = box.t - POP_HALF > 0 ? box.t - POP_HALF : box.bt + POP_HALF;
       }
-      const levelup = levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
       const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
@@ -678,10 +716,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       el.style.top = `${y}px`;
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
       const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
+      // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
+      // further, and lands with a punch (overshoot) before it floats off.
+      const tf = tierRef.current;
+      anim.effect.updateTiming({ duration: tf.popMs });
       anim.effect.setKeyframes([
         { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-8.96px)`, opacity: 1, offset: 0.25 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-49.28px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * (1 + tf.tier * 0.05)}) translateY(-8.96px)`, opacity: 1, offset: 0.18 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-14px)`, opacity: 1, offset: 0.3 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -702,6 +745,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
+      popCapRef.current = true;
       if (levelTitleRef.current) levelTitleRef.current.textContent = `LEVEL ${level}`;
       if (levelSubRef.current) {
         levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
@@ -710,12 +754,41 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
       if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
       a.cancel();
       a.play();
+      // BIGGER at higher tiers: the starburst from T1, and a ring of shards that grows per tier.
+      const tf = tierRef.current;
+      if (!prefersReducedMotion()) {
+        if (tf.levelUpBurst && burstAnimRef.current) {
+          burstAnimRef.current.cancel();
+          burstAnimRef.current.play();
+        }
+        const { w, h } = layerSizeRef.current;
+        if (w && h) spawnShards(w / 2, h * 0.46, tf.tier >= 5 ? TIER_GOLD : TIER_TEAL, Math.min(SHARD_POOL, tf.levelUpShards), 3 + tf.tier * 0.6);
+      }
+    },
+    // STEP 22: crossing into a new MENU TIER names the frame the player just earned. Reuses
+    // the level-up element + starburst (one finite play each).
+    tierUp(name) {
+      const a = levelupAnimRef.current;
+      if (!a) return;
+      popCapRef.current = false;
+      // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
+      // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
+      if (levelTitleRef.current) levelTitleRef.current.textContent = name;
+      if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
+      if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
+      a.cancel();
+      a.play();
+      if (burstAnimRef.current && !prefersReducedMotion()) {
+        burstAnimRef.current.cancel();
+        burstAnimRef.current.play();
+      }
     },
     // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms).
     rebirthCelebration(n) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel();
+      popCapRef.current = true;
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
       if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
       if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
@@ -773,6 +846,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx(_props, ref) {
           }}
         />
       ))}
+      <div className="menu-xp-levelburst" ref={burstRef} />
       <div className="menu-xp-levelup" ref={levelupRef}>
         <span className="menu-xp-levelup-title" ref={levelTitleRef}>
           LEVEL UP

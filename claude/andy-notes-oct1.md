@@ -10,9 +10,19 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
   stimulation as they progress. Borders/frames that escalate with level and rebirth, notification
   icons when upgrades are affordable, LONGER type animations, more visual stimulation everywhere.
   Think of more ways yourself.
-  - evidence:
+  - evidence (partial — STEP 22, branch feat/menu-stimulation): MENU TIER (level + rebirth, a
+    rebirth never lowers it) drives a tier-coloured, thickening frame with SVG corner plates that
+    accumulate rivets/spikes/gem/drips/crown, rebirth stars on the top edge, a tier-coloured level
+    slab, a one-time "<TIER> FRAME UNLOCKED" moment. Before/after L1 vs L150R3:
+    `claude/step22/before-*.png` vs `claude/step22/after-*.png`; 3 art directions compared in
+    `claude/step22/v-{plate,spray,sticker}-*.png` (plate picked). Letter pops 600ms → 1230ms with
+    more rise + shards by tier; level-up gains a starburst + shard ring; purchases fire two confetti
+    volleys; the affordable SHOP dot pulses twice then rests. Fixed: level-up hold was being eaten
+    by effect-level easing (now holds the full 900ms). Perf `claude/step22/perf.json`: 0 running /
+    0 infinite at rest at L1 and L150R3. Still open under A1: STEP 33 sound, STEP 21 badges.
 - [ ] **A2. Anything BIG needs animations** (school Chromebooks don't block them).
-  - evidence:
+  - evidence (partial): STEP 22 — level-up starburst + shard ring, tier-up frame slam + name card,
+    purchase confetti; all with reduced-motion static fallbacks.
 - [ ] **A3. Marks need much better visuals AND a better system/logic.**
   - evidence:
 - [ ] **A4. Shop and stats menus: swap their places.**
@@ -58,6 +68,8 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
     Re-verify after every economy change.
 
 ## Queue order (points-serving steps first)
+
+(Oct 1 resume: A9 → 22 → 47 leaderboard pull-in (A13) → 21 → 19 → 20 → 9 → 23 → 16 → rest; full specs in `claude/QUEUE-specs.md`.)
 1. STEP 35 first 5 minutes (in progress) — A1 (feel), A2
 2. STEP 24 leaderboard, LIVE on typeaword.com — A13
 3. Andy quick wins — A4, A5, A9, A12, + affordable-upgrade notification icons (A1)

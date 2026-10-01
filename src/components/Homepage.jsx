@@ -22,6 +22,9 @@ import { syncThemeUnlocks } from '../theme/themes';
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
+import MenuFrame from './MenuFrame';
+import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
+
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
@@ -518,6 +521,28 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   const menuFrame = currentCosmetic(freeUnlocks, 'frame', rebirths) || '';
 
+  // STEP 22 / A1 — THE MENU TIER. Level + rebirth → how rich the menu looks (corner frame art,
+  // pop length, level-up burst). Crossing into a tier this browser has not seen yet slams the
+  // new frame in once and names it; every level-up punches the corners once.
+  const tier = menuTier(xpProgress.level, rebirths);
+  const [frameFresh, setFrameFresh] = useState(false);
+  const [framePunch, setFramePunch] = useState(0);
+  const lastLevelRef = useRef(xpProgress.level);
+  useEffect(() => {
+    const seen = getSeenTier();
+    if (tier > Math.max(0, seen)) {
+      setSeenTier(tier);
+      setFrameFresh(true);
+      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]);
+    } else if (seen < tier) {
+      setSeenTier(tier);
+    }
+  }, [tier]);
+  useEffect(() => {
+    if (xpProgress.level > lastLevelRef.current) setFramePunch((k) => k + 1);
+    lastLevelRef.current = xpProgress.level;
+  }, [xpProgress.level]);
+
   const shopLinkRef = useRef(null);
   const statsLinkRef = useRef(null);
   const boardLinkRef = useRef(null);
@@ -736,7 +761,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         ref={stageRef}
         className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}${isPhoneMenu ? ' is-phone-menu' : ''}`}
         data-menu-frame={menuFrame || undefined}
+        data-menu-tier={tier}
       >
+        <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
@@ -988,7 +1015,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
           the "+N" popups spawn outside the panel border and never overlap its content. */}
-      <MenuXpFx ref={xpFxRef} />
+      <MenuXpFx ref={xpFxRef} menuTier={tier} />
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
           and the app zoom never clip it; closes back into the source card. */}
