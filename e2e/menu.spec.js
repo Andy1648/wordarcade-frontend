@@ -94,12 +94,14 @@ test.describe('menu', () => {
     expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
     expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split('\n').join(' '));
 
-    const words = Number((m.hint.match(/(\d[\d,]*)\s+WORDS?/) || [])[1].replace(/,/g, ''));
+    // LETTERS, not words (Andy A9): the card quotes XP for a 5-letter word, so a letter is 1/5.
+    const letters = Number((m.hint.match(/(\d[\d,]*)\s+LETTERS?/) || [])[1].replace(/,/g, ''));
     const perWord = Number(m.cardXp.replace(/,/g, '').match(/(\d+)\s*XP/)[1]);
     const cost = Number(m.cost.replace(/[^0-9]/g, ''));
-    expect(words, `hint "${m.hint}" vs card "${m.cardXp}" over ${cost}`).toBe(Math.ceil(cost / perWord));
+    expect(letters, `hint "${m.hint}" vs card "${m.cardXp}" over ${cost}`).toBe(Math.ceil((cost * 5) / perWord));
+    expect(m.hint).not.toMatch(/WORDS? TO/);
     // And it is NOT the menu's own rate, which is the featured mode's divided by its multiplier.
-    expect(words).toBeLessThan(Math.ceil(cost / (perWord / 2)));
+    expect(letters).toBeLessThan(Math.ceil((cost * 5) / (perWord / 2)));
   });
 
 });
