@@ -10,7 +10,7 @@ import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
 import { MomentumRail } from './MomentumRail';
 import { getMomentum } from '../progress/momentum';
-import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow } from '../progress/wins';
+import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -893,7 +893,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                difficulty, because the menu has none selected — which is what makes "the hint
                matches the card" a property of the code rather than a coincidence to re-check.
                Menu typing is still real and still says so; it is just not the headline number. */
-            wordsToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).xp)))}
+            /* LETTERS, NOT WORDS (Andy A9). The card's rate is quoted for a WORD_LEN_REF-letter
+               word and XP is linear in length, so one letter is that rate ÷ WORD_LEN_REF. */
+            lettersToNext={Math.max(1, Math.ceil((xpProgress.toNext * WORD_LEN_REF) / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).xp)))}
             /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}

@@ -46,7 +46,7 @@ const formatMult = (m) => `×${formatMultExact(m)}`;
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, wordsToNext = null, firstRun = false, hintRight = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, lettersToNext = null, firstRun = false, hintRight = null }) {
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -291,18 +291,20 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         )
       )}
       {/* WHAT THE BAR MEANS IN WORDS. "1,240 / 2,281" is a ratio, not a plan; this is the same
-          progress expressed in the only unit the player controls. Derived from the live per-word
-          XP rate (see Homepage), so it moves with KEY POWER, rebirth, mastery and the streak
+          progress expressed in the only unit the player controls. LETTERS, not words (Andy A9):
+          XP is linear in word length, so "283 WORDS" was a 5-letter-word fiction — a player
+          typing long words got there in fewer. Letters is the unit XP is actually paid in.
+          Derived from the live per-word XP rate (see Homepage), so it moves with KEY POWER, rebirth, mastery and the streak
           rather than being a constant dressed up as a measurement.
           On a first run it also carries where XP comes from, which used to be a SEPARATE caption
           line below the bar — two stacked lines of small type saying related things, on the one
           screen with no vertical room to spare. */}
-      {variant !== 'mini' && (Number.isFinite(wordsToNext) || hintRight) && (
+      {variant !== 'mini' && (Number.isFinite(lettersToNext) || hintRight) && (
         <span className="menu-xp-hint">
-          {Number.isFinite(wordsToNext) && wordsToNext > 0 && (
+          {Number.isFinite(lettersToNext) && lettersToNext > 0 && (
             <span className="menu-xp-hint-text" aria-hidden="true">
               {firstRun && <span className="menu-xp-hint-lead">TYPE ANYWHERE · </span>}
-              {formatNum(wordsToNext)} {wordsToNext === 1 ? 'WORD' : 'WORDS'}
+              {formatNum(lettersToNext)} {lettersToNext === 1 ? 'LETTER' : 'LETTERS'}
               {/* "TO LEVEL" spelled out wherever it fits, abbreviated where it does not. At 320
                   the corner-nav gutter leaves the bar 131px and the full sentence is ~148px, so
                   it ellipsised to "12 WORDS TO …" — a line that costs its own height and then

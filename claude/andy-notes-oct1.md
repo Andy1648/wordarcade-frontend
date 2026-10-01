@@ -1,0 +1,76 @@
+# Andy's notes — 2026-10-01 (PRIORITY OVERRIDE)
+
+These outrank everything else in the queue. If a step conflicts with one, Andy's point wins.
+Every queued step that touches a point cites it by its ID (A1…A14). A box is checked ONLY with
+evidence next to it: a PR #, a measured number, or a screenshot path.
+
+## Checklist (his words, emphasis kept)
+
+- [ ] **A1. MENU STIMULATION, THE "SATISFYING FEEL", IS THE #1 PRIORITY**: the player must feel MORE
+  stimulation as they progress. Borders/frames that escalate with level and rebirth, notification
+  icons when upgrades are affordable, LONGER type animations, more visual stimulation everywhere.
+  Think of more ways yourself.
+  - evidence:
+- [ ] **A2. Anything BIG needs animations** (school Chromebooks don't block them).
+  - evidence:
+- [ ] **A3. Marks need much better visuals AND a better system/logic.**
+  - evidence:
+- [ ] **A4. Shop and stats menus: swap their places.**
+  - evidence:
+- [ ] **A5. No mashing buttons: at worst "hold to buy".**
+  - evidence:
+- [ ] **A6. Progression:** Andy stopped at ~L125 because upgrades "seem insane eventually". Fix the
+  late game. Shop XP multi pops and sound packs priced more exponentially. CHAIN and FUSE bars go
+  MUCH higher with better rewards.
+  - evidence:
+- [ ] **A7. Higher mode bars must come with LOGICAL, INTERESTING mechanics**, e.g. CHAIN more wins,
+  FUSE all letters → 5-minute ×5 wins timer + huge bonus. Don't crowd the screen: fewer words, but
+  everything important shows, and everything makes sense.
+  - evidence:
+- [ ] **A8. Game modes more rewarding overall.**
+  - evidence:
+- [x] **A9. Level-up progress says LETTERS needed, not words.**
+  - evidence: branch docs/andy-checklist (PR below). Menu XP hint now reads e.g. "1,423 LETTERS TO
+    LEVEL 28" (`claude/a9/hint-1280.png`, seeded L27). XP is linear in word length, so letters =
+    ceil(toNext × 5 ÷ featured card's XP/word) — the card quotes a 5-letter word. `e2e/menu.spec.js`
+    asserts the rendered hint against the rendered card in LETTERS and that "WORDS TO" is gone;
+    menu/menu-fit/menu-xp/menu-spotlight/overlays specs 23/23 green. The phone menu (≤480px) has no
+    XP hint line, so nothing there said WORDS. The in-game "3 WORDS TO EARN" pill is the wins
+    payout gate (counted in words), not level progress — left as is.
+- [ ] **A10. FUSE: players get stuck on the last ~3 letters**, so steer fragments toward missing letters.
+  - evidence:
+- [ ] **A11. Visual reworks INSIDE game modes**, especially the newer ones, plus font sizes WHILE
+  PLAYING. Check it yourself in a live round.
+  - evidence:
+- [ ] **A12. Themes in the shop aren't noticeable: make them obvious.**
+  - evidence:
+- [x] **A13. Leaderboard: no Google sign-in, username only, block bad names.**
+  - evidence: PR #70 merged (main 05ad2e1); LIVE in production bundle `index-D9gquwJb.js` (marker
+    `lb_claim`, ~60 s after merge). Two separate browser profiles on **typeaword.com**: 12/12 checks
+    pass (both names claimed, both on both boards, leetspeak `f4gg0t_99` refused, `qa_alpha_*` refused
+    as taken): `claude/step24/verify/prod-*.png`. DB enforces the filter too: client/DB parity 50/50
+    vectors vs the live DB (`claude/step24/db-parity.mjs`); anon REST probe: direct insert/update/
+    delete → 401, wrong secret → refused, blocked name → `username_blocked`. No sign-in of any kind:
+    a per-browser secret, username only. QA rows deleted after each run (board starts empty).
+- [x] **A14. (Done, keep verified) free menu wins #67, SAT spam #68.**
+  - evidence: PR #67 (fix/menu-free-wins) and PR #68 (fix/sat-spam) merged to main (main 115f5e6 →
+    0c1fe74); both specs (`e2e/menu-no-free-wins.spec.js`, SAT spam spec) ran green in PR #69's CI.
+    Re-verify after every economy change.
+
+## Queue order (points-serving steps first)
+1. STEP 35 first 5 minutes (in progress) — A1 (feel), A2
+2. STEP 24 leaderboard, LIVE on typeaword.com — A13
+3. Andy quick wins — A4, A5, A9, A12, + affordable-upgrade notification icons (A1)
+4. Menu stimulation: escalating level/rebirth frames, longer type animations + STEP 42 rebirth moment — A1, A2
+5. Late-game economy: exponential pops/sound-pack prices, CHAIN/FUSE higher bars + mechanics, mode rewards; FUSE missing-letter steering — A6, A7, A8, A10
+6. STEP 34 collection / marks rework — A3, A1
+7. STEP 33 sound — A1
+8. In-game visual + font pass, live-round check (STEP 39 phone gameplay folded in) — A11
+9. STEP 32 daily — A8
+10. STEP 37 / 38 bot playtest + bot tuning — A8
+11. STEP 43 stats redesign — A1
+12. STEP 44 weekly leaderboard — A13
+13. STEP 36 word race — A8
+14. STEP 45 fine-tune loop round 2 — A11
+15. STEP 40 Chromebook perf, STEP 41 failure states (housekeeping-class)
+16. STEP 46 final report
