@@ -1,0 +1,140 @@
+/* MenuFrame — STEP 22 escalating corner ornaments. Art is SVG (MenuFrame.jsx); CSS here is
+   placement + one-shot motion only. Static at rest: no infinite animation, no will-change at
+   rest (it is toggled on only for the slam/punch windows via the animation classes). */
+.menu-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+/* RAILS: the stage outline, re-drawn in the tier colour and thickened per tier. A rectangle is
+   CSS's to draw; everything with a shape (the corners) is SVG. T3+ adds an inner rule. */
+.menu-frame-rail {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: var(--rail-w, 3px) solid var(--rail);
+  box-shadow: inset 0 0 0 2px var(--rail-line);
+}
+.menu-frame.tier-2 .menu-frame-rail { --rail-w: 4px; }
+.menu-frame.tier-3 .menu-frame-rail { --rail-w: 5px; box-shadow: inset 0 0 0 2px var(--rail-line), inset 0 0 0 6px #0d0618, inset 0 0 0 8px var(--rail); }
+.menu-frame.tier-4 .menu-frame-rail { --rail-w: 6px; box-shadow: inset 0 0 0 2px var(--rail-line), inset 0 0 0 6px #0d0618, inset 0 0 0 8px var(--rail); }
+.menu-frame.tier-5 .menu-frame-rail,
+.menu-frame.tier-6 .menu-frame-rail,
+.menu-frame.tier-7 .menu-frame-rail { --rail-w: 7px; box-shadow: inset 0 0 0 3px var(--rail-line), inset 0 0 0 7px #0d0618, inset 0 0 0 10px var(--rail); }
+.menu-frame-corner {
+  position: absolute;
+  width: clamp(64px, 11vmin, 124px);
+  aspect-ratio: 1;
+}
+.menu-frame-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* One drawing, mirrored into the four corners (a static transform, not an animation). */
+.menu-frame-corner.is-tl { top: -2px; left: -2px; }
+.menu-frame-corner.is-tr { top: -2px; right: -2px; transform: scaleX(-1); }
+.menu-frame-corner.is-bl { bottom: -2px; left: -2px; transform: scaleY(-1); }
+.menu-frame-corner.is-br { bottom: -2px; right: -2px; transform: scale(-1, -1); }
+
+/* Rebirth stars hang along the top edge, just inside the top-left corner. */
+.menu-frame-stars {
+  position: absolute;
+  top: 10px;
+  left: calc(clamp(64px, 11vmin, 124px) + 6px);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.menu-frame-star {
+  width: clamp(18px, 2.6vmin, 28px);
+  height: auto;
+  overflow: visible;
+}
+.menu-frame-starcount {
+  font-family: 'Bungee', sans-serif;
+  font-size: 16px;
+  color: #FFE94A;
+  -webkit-text-stroke: 1px #000;
+  margin-left: 4px;
+}
+
+/* NEW TIER: the corners slam in from outside, once (380ms). The stars drop in with them. */
+@keyframes menu-frame-slam {
+  0% { opacity: 0; translate: 0 0; scale: 1.8; }
+  60% { opacity: 1; scale: 0.92; }
+  100% { opacity: 1; scale: 1; }
+}
+.menu-frame.is-fresh .menu-frame-corner,
+.menu-frame.is-fresh .menu-frame-stars {
+  animation: menu-frame-slam 380ms cubic-bezier(.2, .9, .3, 1.2) both;
+  will-change: transform, opacity;
+}
+.menu-frame.is-fresh .menu-frame-corner.is-tr { animation-delay: 60ms; }
+.menu-frame.is-fresh .menu-frame-corner.is-br { animation-delay: 120ms; }
+.menu-frame.is-fresh .menu-frame-corner.is-bl { animation-delay: 180ms; }
+.menu-frame.is-fresh .menu-frame-stars { animation-delay: 240ms; }
+
+/* LEVEL UP: every corner punches outward once (280ms). Uses the individual `scale` property so
+   it composes with each corner's static mirror transform instead of overwriting it. */
+@keyframes menu-frame-punch {
+  0% { scale: 1; }
+  35% { scale: 1.22; }
+  100% { scale: 1; }
+}
+.menu-frame-corner.is-punch {
+  animation: menu-frame-punch 280ms cubic-bezier(.3, .8, .3, 1) both;
+}
+
+/* Phone menu: smaller corners so the stacked bands keep their full width. */
+.homepage-stage.is-phone-menu .menu-frame-corner { width: 46px; }
+.homepage-stage.is-phone-menu .menu-frame-stars { top: 4px; left: auto; right: 52px; }
+.homepage-stage.is-phone-menu .menu-frame-star { width: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-frame.is-fresh .menu-frame-corner,
+  .menu-frame.is-fresh .menu-frame-stars,
+  .menu-frame-corner.is-punch {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+/* THE LEVEL BAR WEARS THE TIER TOO. The slab's black outline takes the tier colour (its darker
+   shade outside, the fill as an inner rule) from T1, and thickens at T4. Static. */
+.homepage-stage[data-menu-tier='1'] { --tier-fill: #e8dcc0; --tier-line: #9c8f72; }
+.homepage-stage[data-menu-tier='2'] { --tier-fill: #2EFFE0; --tier-line: #0f8f7e; }
+.homepage-stage[data-menu-tier='3'] { --tier-fill: #b9c6d6; --tier-line: #5f6f84; }
+.homepage-stage[data-menu-tier='4'] { --tier-fill: #e6f1ff; --tier-line: #7d93b3; }
+.homepage-stage[data-menu-tier='5'] { --tier-fill: #FFD54A; --tier-line: #a8800f; }
+.homepage-stage[data-menu-tier='6'] { --tier-fill: #FF4FA3; --tier-line: #a3175e; }
+.homepage-stage[data-menu-tier='7'] { --tier-fill: #9A1AFF; --tier-line: #4f0391; }
+.homepage-stage:not([data-menu-tier='0']) .menu-xp-bar.is-loud {
+  border-color: var(--tier-line);
+  box-shadow: 4px 4px 0 #000, inset 0 0 0 2px var(--tier-fill);
+}
+.homepage-stage[data-menu-tier='4'] .menu-xp-bar.is-loud,
+.homepage-stage[data-menu-tier='5'] .menu-xp-bar.is-loud,
+.homepage-stage[data-menu-tier='6'] .menu-xp-bar.is-loud,
+.homepage-stage[data-menu-tier='7'] .menu-xp-bar.is-loud {
+  border-width: 4px;
+  box-shadow: 5px 5px 0 #000, inset 0 0 0 3px var(--tier-fill);
+}
+
+/* AFFORDABLE-UPGRADE DOT (STEP 22): it arrives with two pulses, then sits still — a notification,
+   not a nag. Finite (2 × 520ms), transform only. */
+@keyframes menu-dot-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.9); }
+  100% { transform: scale(1); }
+}
+.homepage-shop-dot,
+.hp-m-dot {
+  animation: menu-dot-pulse 520ms cubic-bezier(.3, .8, .3, 1) 600ms 2 both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .homepage-shop-dot,
+  .hp-m-dot { animation: none; }
+}
