@@ -1,0 +1,102 @@
+/* ClaimPrompt — STEP 47. Flat fills, coloured outlines, hard black offset shadow (house style).
+   One finite entrance (280ms, transform/opacity) 600ms after mount; static under reduced motion. */
+.lb-cp {
+  position: relative;
+  box-sizing: border-box;
+  width: min(100%, 560px);
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 52px 10px 12px;
+  /* THE STAMP: a tilted yellow sticker, big pink rank numeral (picked of three, see the JSX). */
+  background: #FFE94A;
+  border: 3px solid #a8800f;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  color: #000;
+  rotate: -1.5deg;
+  font-family: 'Space Mono', monospace;
+  text-align: left;
+  animation: lb-cp-in 280ms cubic-bezier(.2, .9, .3, 1.15) 600ms both;
+}
+@keyframes lb-cp-in {
+  0% { opacity: 0; transform: translateY(16px) scale(0.96); }
+  100% { opacity: 1; transform: none; }
+}
+.lb-cp-rank {
+  flex: none;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  color: #FF4FA3;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+.lb-cp-copy { flex: 1; min-width: 0; }
+.lb-cp-kicker {
+  display: block;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #000;
+}
+.lb-cp-go {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #fff;
+  background: #FF4FA3;
+  border: 3px solid #a3175e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.lb-cp-go:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.lb-cp-go:disabled { opacity: 0.5; cursor: default; }
+.lb-cp-x {
+  position: absolute;
+  /* top corner, not centred: the global audio button sits over the bottom-right on phones */
+  top: 2px;
+  right: 2px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+.lb-cp-form { flex: 1; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 4px; align-items: center; }
+.lb-cp-form .lb-cp-rank { grid-row: span 3; }
+.lb-cp-label { font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; color: #000; }
+.lb-cp-row { display: flex; gap: 8px; }
+.lb-cp-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-body);
+  color: #fff;
+  background: #0d0618;
+  border: 3px solid #2EFFE0;
+  border-radius: 8px;
+}
+.lb-cp-verdict { margin: 0; font-size: var(--fs-label); font-weight: 700; color: #3d3150; }
+.lb-cp-verdict.is-ok { color: #0f6f62; }
+.lb-cp-verdict.is-blocked, .lb-cp-verdict.is-taken, .lb-cp-verdict.is-shape { color: #a3175e; }
+.lb-cp-done { margin: 0; display: flex; align-items: center; gap: 12px; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.04em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lb-cp { animation: none; }
+}
+@media (max-width: 480px) {
+  .lb-cp { flex-wrap: wrap; }
+  .lb-cp-copy { flex-basis: calc(100% - 80px); }
+  .lb-cp.is-offer .lb-cp-go { flex: 1 1 100%; }
+}

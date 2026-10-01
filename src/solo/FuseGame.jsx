@@ -21,6 +21,7 @@ import SoloShell from './SoloShell.jsx';
 import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
+import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import poolsRaw from './fragmentPools.json';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
@@ -326,7 +327,12 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         // FUSE's score IS its word count, so a PTS fragment would just repeat the number on the
         // same line — omit it (points=null). The alphabet strip rides the glyph row instead:
         // "LETTERS n/26", the live count of distinct letters lit this cycle.
-        tryRow: <TryModeRow current="fuse" />,
+        tryRow: (
+          <>
+            <TryModeRow current="fuse" />
+            <ClaimPrompt />
+          </>
+        ),
       }}
       onExit={onExit}
       offerMenu={offerMenu}

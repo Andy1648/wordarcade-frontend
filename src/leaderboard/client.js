@@ -98,7 +98,8 @@ export async function nameStatus(username) {
 }
 
 /** Claim (or rename to) `username`. Resolves to the profile; rejects with err.code in
- *  username_taken | username_blocked | username_shape | bad_secret | http_*. Pushes stats at once. */
+ *  username_taken | username_blocked | username_shape | bad_secret | rate_limited | rename_cooldown
+ *  | http_*. Pushes stats at once. */
 export async function claimName(username) {
   const secret = getSecret();
   if (!LEADERBOARD_ENABLED || !secret) throw Object.assign(new Error('unavailable'), { code: 'unavailable' });
@@ -106,6 +107,9 @@ export async function claimName(username) {
   saveMyProfile(row);
   lastSubmit = 0;
   await submitStats(true);
+  // Seed the rank-up baseline with where the claim landed, so the first menu visit measures from here.
+  const rank = await fetchMyRank();
+  if (rank) setLastRank(rank);
   return row;
 }
 
@@ -145,4 +149,92 @@ export async function fetchBoard(limit = BOARD_SIZE) {
     if (r2.ok) me = (await r2.json())[0] || null;
   }
   return { rows, me };
+}
+
+// ---- STEP 47: pulling players in -------------------------------------------------------------
+// The board's order, as a comparator: rebirths desc, level desc, lifetime words desc. A HYPOTHETICAL
+// row (someone not on the board yet) loses every exact tie — the existing row got there first, the
+// same rule the view's created_at tiebreak applies.
+export function ranksAhead(row, me) {
+  const r = Number(row.rebirths) || 0;
+  const l = Number(row.level) || 0;
+  const w = Number(row.lifetime_words) || 0;
+  if (r !== me.rebirths) return r > me.rebirths;
+  if (l !== me.level) return l > me.level;
+  return w >= me.lifetimeWords;
+}
+
+/** The rank `stats` would take on a board whose top rows are `rows` (null if off the top-N). */
+export function hypotheticalRank(rows, stats, size = BOARD_SIZE) {
+  let ahead = 0;
+  for (const row of rows) if (ranksAhead(row, stats)) ahead += 1;
+  const rank = ahead + 1;
+  return rank <= size ? rank : null;
+}
+
+const PROMPT_SESSION_KEY = 'taw.lb.promptShown';
+/** Has the end-screen claim prompt already been shown (or dismissed) this session? */
+export function claimPromptSeen() {
+  try { return sessionStorage.getItem(PROMPT_SESSION_KEY) === '1'; } catch { return true; }
+}
+export function markClaimPromptSeen() {
+  try { sessionStorage.setItem(PROMPT_SESSION_KEY, '1'); } catch { /* ignore */ }
+}
+
+/** The rank this browser's stats would claim right now, or null (claimed already / off-board /
+ *  offline). One board read; never throws. */
+export async function rankIfClaimed() {
+  if (!LEADERBOARD_ENABLED || getMyProfile()) return null;
+  try {
+    const { rows } = await fetchBoard();
+    return hypotheticalRank(rows, myStats());
+  } catch {
+    return null;
+  }
+}
+
+/** My current rank on the live board (claimed players only), or null. */
+export async function fetchMyRank() {
+  const mine = getMyProfile();
+  if (!LEADERBOARD_ENABLED || !mine || !mine.id) return null;
+  try {
+    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
+    if (!r.ok) return null;
+    const row = (await r.json())[0];
+    return row ? Number(row.rank) : null;
+  } catch {
+    return null;
+  }
+}
+
+const LAST_RANK_KEY = 'taw.lb.lastRank';
+const RANK_NEWS_KEY = 'taw.lb.rankNews';
+export function getLastRank() {
+  try { const n = Number(localStorage.getItem(LAST_RANK_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
+}
+export function setLastRank(n) {
+  try { if (Number.isFinite(n) && n > 0) localStorage.setItem(LAST_RANK_KEY, String(n)); } catch { /* ignore */ }
+}
+export function hasRankNews() {
+  try { return localStorage.getItem(RANK_NEWS_KEY) === '1'; } catch { return false; }
+}
+export function setRankNews(on) {
+  try { if (on) localStorage.setItem(RANK_NEWS_KEY, '1'); else localStorage.removeItem(RANK_NEWS_KEY); } catch { /* ignore */ }
+}
+
+/**
+ * Menu-mount check: compares my live rank with the last one this browser saw. Returns
+ * { from, to } when it IMPROVED (and raises the trophy-badge flag), else null. Stores the new rank
+ * either way, so a drop never shows a moment and the next rise is measured from the truth.
+ */
+export async function checkRankUp() {
+  const now = await fetchMyRank();
+  if (!now) return null;
+  const before = getLastRank();
+  setLastRank(now);
+  if (before && now < before) {
+    setRankNews(true);
+    return { from: before, to: now };
+  }
+  return null;
 }

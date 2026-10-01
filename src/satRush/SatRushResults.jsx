@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import TryModeRow from '../share/TryModeRow.jsx';
+import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import { MORE_MODES } from '../gameData';
 
 const C = JUICE.CELEBRATION;
@@ -191,6 +192,7 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
               NOT shown to a deep-link visitor: they have seen no modes at all, so "try FUSE next"
               is a narrower, stranger offer than "here are the other four". They get the offer. */}
           {offerMenu ? null : <TryModeRow current="sat-rush" />}
+          <ClaimPrompt />
         </div>
 
         {/* When the offer is shown its button IS the way out (same onExit), so the plain

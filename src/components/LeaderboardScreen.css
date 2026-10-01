@@ -367,3 +367,37 @@
     transition: none;
   }
 }
+
+/* STEP 47 — open places on a short board: numbered invitations, visibly NOT players (dashed,
+   muted, no stats). The first one is a button into the claim field for an unclaimed viewer. */
+.lb-slot {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px 10px;
+  border: 3px dashed #2a1648;
+  border-radius: 8px;
+  color: #A89EC4;
+}
+.lb-slot .lb-rank { color: #6b5a86; }
+.lb-slot-text,
+.lb-slot-btn {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.04em;
+}
+.lb-slot.is-open { border-color: #FFE94A; color: #FFE94A; }
+.lb-slot-btn {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #FFE94A;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
