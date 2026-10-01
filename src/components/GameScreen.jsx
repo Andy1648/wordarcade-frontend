@@ -28,6 +28,7 @@ import {
 import { applyRingSize } from './wbRingSize';
 import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import TryModeRow from '../share/TryModeRow.jsx';
+import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
@@ -4005,6 +4006,7 @@ export default function GameScreen({
             {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
                 mode — the one played least — so game-over is a fork, not a loop back into the same
                 mode. Renders nothing when everything else is still locked. */}
+            <ClaimPrompt />
             <TryModeRow current="word-bomb" />
             </div>
           </div>
@@ -4301,6 +4303,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
               mode — the one played least — so game-over is a fork, not a loop back into the same
               mode. Renders nothing when everything else is still locked. */}
+          <ClaimPrompt />
           <TryModeRow current="category-blitz" />
         </div>
       </div>
@@ -4750,6 +4753,7 @@ function CategoryBlitzScreen({
             {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
                 mode — the one played least — so game-over is a fork, not a loop back into the same
                 mode. Renders nothing when everything else is still locked. */}
+            <ClaimPrompt />
             <TryModeRow current="category-blitz" />
           </div>
         </div>

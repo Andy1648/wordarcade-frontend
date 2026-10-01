@@ -41,7 +41,8 @@ import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
+import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
 import useMediaQuery from '../lib/useMediaQuery';
 import { hasPlayedBefore } from '../visitHistory';
 import './wall-system.css';
@@ -727,10 +728,26 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   function handleLeaderboard() {
     if (navigating) return;
     sound.click();
+    setRankNews(false); // opening the board is reading the news
+    setBoardNews(false);
     if (onLeaderboard) onLeaderboard();
   }
+  // STEP 47: after the push, compare my live rank with the last one this browser saw. A RISE shows
+  // the "#12 → #7" moment once and badges the trophy until the board is opened.
+  const [boardNews, setBoardNews] = useState(() => LEADERBOARD_ENABLED && hasRankNews());
+  const [rankUp, setRankUp] = useState(null);
   useEffect(() => {
-    submitBoardStats();
+    let live = true;
+    submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
+      .then(() => checkRankUp())
+      .then((r) => {
+        if (live && r) {
+          setRankUp(r);
+          setBoardNews(true);
+        }
+      })
+      .catch(() => {});
+    return () => { live = false; };
   }, []);
 
   function handleShop() {
@@ -785,6 +802,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
+        {rankUp && <RankUpMoment from={rankUp.from} to={rankUp.to} onDone={() => setRankUp(null)} />}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
@@ -814,6 +832,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onShop={handleShop}
             onStats={handleStats}
             onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
+            boardDot={boardNews}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             rebirthDot={rebirthReady}
@@ -877,10 +896,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               onClick={handleLeaderboard}
               onMouseEnter={() => sfx('hover')}
               disabled={navigating}
-              aria-label="Open leaderboard"
+              aria-label={`Open leaderboard${boardNews ? ' — your rank went up' : ''}`}
               title="Leaderboard"
             >
               <TrophyIcon size={22} />
+              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           )}
           {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /
