@@ -31,11 +31,11 @@ export default function ThemePreview({ theme }) {
           <rect x={20 + i * 35} y="94" width="18" height="4" rx="1" fill={i % 2 ? accent : ink} />
         </g>
       ))}
-      {/* letter pops */}
-      <text x="22" y="60" fontFamily="Bungee, sans-serif" fontSize="12" fill={pops[0]} stroke="#000" strokeWidth="1.5" paintOrder="stroke">A</text>
-      <text x="176" y="34" fontFamily="Bungee, sans-serif" fontSize="12" fill={pops[1]} stroke="#000" strokeWidth="1.5" paintOrder="stroke">K</text>
-      <text x="168" y="118" fontFamily="Bungee, sans-serif" fontSize="10" fill={pops[2]} stroke="#000" strokeWidth="1.5" paintOrder="stroke">+10</text>
-      <text x="12" y="118" fontFamily="Bungee, sans-serif" fontSize="10" fill={pops[3]} stroke="#000" strokeWidth="1.5" paintOrder="stroke">Z</text>
+      {/* letter pops — tiles in the four pop colours (shapes, not tiny text: the picture must not
+          add sub-13px text to the page) */}
+      {[[18, 50, -12], [172, 22, 10], [166, 108, -6], [10, 108, 14]].map(([x, y, r], i) => (
+        <rect key={i} x={x} y={y} width="13" height="13" rx="2" fill={pops[i]} stroke="#000" strokeWidth="2" transform={`rotate(${r} ${x + 6.5} ${y + 6.5})`} />
+      ))}
     </svg>
   );
 }
