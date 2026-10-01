@@ -63,7 +63,11 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
     vectors vs the live DB (`claude/step24/db-parity.mjs`); anon REST probe: direct insert/update/
     delete → 401, wrong secret → refused, blocked name → `username_blocked`. No sign-in of any kind:
     a per-browser secret, username only. QA rows deleted after each run (board starts empty).
-  - STEP 47 (pull players in): PR #73 — end-screen "YOU'D BE #N" claim prompt, menu "#a → #b" rank-up +
+  - STEP 47 (pull players in): PR #73 merged (main 6b5e3b5), LIVE `index-DejTQHrr.js` (markers
+    `taw.lb.promptShown`, `taw.lb.rankNews`, `YOUR NAME HERE?`). Verified ON typeaword.com, no mocks
+    (`claude/step47/prod-verify.mjs`, shots `claude/step47/prod/1-4*.png`): real CHAIN round → "YOU'D BE
+    #2" → claimed `zqpLive47` → board #2 + 8 invitation slots → ghost row removed → next menu "RANK UP
+    #2 → #1" + trophy "your rank went up"; throwaway + ghost rows and claim logs deleted (board = 0). — end-screen "YOU'D BE #N" claim prompt, menu "#a → #b" rank-up +
     trophy dot, never-dead board, migration 004 live (claim/rename limits, stats replay/shape rules;
     probe results in `claude/step47/review.md`).
 - [x] **A14. (Done, keep verified) free menu wins #67, SAT spam #68.**
