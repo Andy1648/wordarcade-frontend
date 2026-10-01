@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import { installBackendMock } from '../e2e/support/backendMock.js';
 import { menuReady, navControl } from '../e2e/support/menu.js';
-import { SCREENS, bootMenu, bootRoom, screenProfile, card } from '../e2e/support/screens.js';
+import { SCREENS, bootMenu, screenProfile, card } from '../e2e/support/screens.js';
 import { ACHIEVEMENTS, ACHIEVEMENTS_KEY } from '../src/progress/achievements.js';
 
 // A LV152 regular claimed every achievement long ago; without this the menu fires
@@ -90,6 +90,14 @@ const EXTRA = [
 // player: same navs, the client's real id, the server's real payload shapes.
 const wbP = [{ id: ME, name: 'ZEKE', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 0 }];
 const cbP = [{ id: ME, name: 'ZEKE', isHost: true }, { id: 'p2', name: 'RIVAL' }];
+// screens.js bootRoom hardcodes hostId 'me'; the player must be the host here.
+async function bootRoom(page, gameType, players) {
+  const mock = await installBackendMock(page);
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType, hostId: ME, difficultyKey: 'chill', players } });
+  return mock;
+}
 async function wbGame(page) {
   const m = await bootRoom(page, 'word-bomb', wbP);
   await page.waitForTimeout(80);
@@ -164,6 +172,8 @@ for (const [profileName, profile] of Object.entries(PROFILES)) {
           await page.addInitScript(profile.init);
           if (profileName === 'vet') await page.addInitScript(([k, ids]) => { try { localStorage.setItem(k, JSON.stringify(ids)); } catch { /* blocked */ } }, [ACHIEVEMENTS_KEY, VET_EARNED]);
           try { await screen.nav(page); } finally { screenProfile.menuLevel = undefined; }
+          // FT_CSS: an experiment stylesheet injected after nav — try a fix on pictures before coding it.
+          if (process.env.FT_CSS) await page.addStyleTag({ content: process.env.FT_CSS });
           await settle(page);
           const dir = `${OUT}/${profileName}`;
           fs.mkdirSync(dir, { recursive: true });

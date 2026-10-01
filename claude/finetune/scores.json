@@ -1,0 +1,31 @@
+{
+ "P0": {
+  "dialog-category-blitz": 3.5,
+  "dialog-chain": 7,
+  "dialog-fuse": 7,
+  "dialog-word-bomb": 5.5,
+  "gameover-category-blitz": 4.5,
+  "gameover-chain": 3.5,
+  "gameover-fuse": 3.5,
+  "gameover-word-bomb": 5,
+  "ingame-category-blitz": 4.5,
+  "ingame-chain": 6,
+  "ingame-fuse": 6,
+  "ingame-word-bomb": 4.5,
+  "lobby": 6,
+  "locked-chain": 6.5,
+  "locked-fuse": 6.5,
+  "menu": 6.5,
+  "race-lobby": 6,
+  "race-racing": 7,
+  "race-results": 5.5,
+  "rebirth": 6,
+  "room": 6.5,
+  "sat-briefing": 5.5,
+  "sat-lineup": 5,
+  "sat-modeselect": 6.5,
+  "sat-results": 4,
+  "shop": 5.5,
+  "stats": 4.5
+ }
+}
