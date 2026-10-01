@@ -1,0 +1,3 @@
+# ~200MB of frames per pass: regenerate with e2e-shots/finetune.spec.js, never commit.
+pass-*/
+*.log
