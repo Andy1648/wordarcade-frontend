@@ -30,7 +30,7 @@ Two independent subagents (a design reviewer and a breaker) read spec + code + s
 | 3 | IP limit locks out classrooms | high | FIXED (see breaker 5) + copy "THE BOARD IS BUSY FROM THIS NETWORK. TRY IN AN HOUR." |
 | 4 | re-fetch per game | high | FIXED (breaker 7) |
 | 5 | rank-up card eats taps on mode cards | high | FIXED: pointer-events none, it never blocks |
-| 6 | rank-up lands on top of achievement toasts | high | FIXED: shown after a 1.2 s beat |
+| 6 | rank-up lands on top of achievement toasts | high | FIXED: shown after a 1.6 s beat (clears the menu's 1.5 s level-up / tier-up card) |
 | 7 | copy drift, emoji | med | FIXED: "YOU'RE #N. FIND IT UNDER [TrophyIcon] ON THE MENU.", ✕ on the done state, no emoji |
 | 8 | headlines in body font | med | FIXED: RANK UP in Bungee 28+; prompt kicker up to body size (a 28px Bungee sentence doesn't fit 390px) |
 | 9 | strike-through weak; dot colour means two things | med | FIXED: 7px black strike; rank-news dot is CYAN (pink = shop) |

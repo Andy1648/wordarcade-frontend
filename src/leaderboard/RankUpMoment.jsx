@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './RankUpMoment.css';
 
-export const RANKUP_DELAY_MS = 1200;
+export const RANKUP_DELAY_MS = 1600; // after the 1.5 s level-up / tier-up card (MenuXpFx)
 export const RANKUP_MS = 2200;
 
 export default function RankUpMoment({ from, to, onDone }) {
