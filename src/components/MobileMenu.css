@@ -294,6 +294,14 @@
     pointer-events: none;
   }
 
+  /* The leaderboard trophy: an icon slab, so it takes a fixed 52px (a full 44px target + keyline)
+     instead of an equal share, and SHOP / STATS / REBIRTH keep the width their words need at 320px. */
+  .hp-m-navbtn.is-board {
+    flex: 0 0 52px;
+    padding: 0;
+    color: #FFE94A;
+  }
+
   /* The desktop SHOP dot (something is affordable), same size and colour. A circle. */
   .hp-m-dot {
     position: absolute;

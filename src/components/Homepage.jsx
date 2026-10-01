@@ -37,6 +37,8 @@ import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../pr
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
+import TrophyIcon from './TrophyIcon';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats } from '../leaderboard/client.js';
 import useMediaQuery from '../lib/useMediaQuery';
 import { hasPlayedBefore } from '../visitHistory';
 import './wall-system.css';
@@ -73,7 +75,7 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -518,6 +520,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   const shopLinkRef = useRef(null);
   const statsLinkRef = useRef(null);
+  const boardLinkRef = useRef(null);
   const rebirthLinkRef = useRef(null);
   // THEMES: grant any level-unlocked theme (LV10 MIDNIGHT, LV30 TOXIC) as progression reaches it,
   // so the free path works even if the player never opens the shop. Idempotent + persisted.
@@ -529,6 +532,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     if (restoreFocus === 'shop' && shopLinkRef.current) shopLinkRef.current.focus();
     else if (restoreFocus === 'stats' && statsLinkRef.current) statsLinkRef.current.focus();
+    else if (restoreFocus === 'leaderboard' && boardLinkRef.current) boardLinkRef.current.focus();
     else if (restoreFocus === 'rebirth' && rebirthLinkRef.current) rebirthLinkRef.current.focus();
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -678,6 +682,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (onStats) onStats();
   }
 
+  // STEP 24: the leaderboard. Every menu visit also pushes this browser's stats to the board (if it
+  // has claimed a name; throttled to once per 30 s inside client.js, fire-and-forget, never blocks).
+  function handleLeaderboard() {
+    if (navigating) return;
+    sound.click();
+    if (onLeaderboard) onLeaderboard();
+  }
+  useEffect(() => {
+    submitBoardStats();
+  }, []);
+
   function handleShop() {
     if (navigating) return;
     sound.click();
@@ -754,6 +769,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onLockedSelect={handleLockedSelect}
             onShop={handleShop}
             onStats={handleStats}
+            onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
+            boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             onCredits={handleCredits}
             shopDot={winsAffordable}
@@ -804,6 +821,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           >
             STATS
           </button>
+          {LEADERBOARD_ENABLED && onLeaderboard && (
+            <button
+              ref={boardLinkRef}
+              type="button"
+              className={`homepage-nav-btn is-board${navigating ? ' disabled' : ''}`}
+              onClick={handleLeaderboard}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label="Open leaderboard"
+              title="Leaderboard"
+            >
+              <TrophyIcon size={22} />
+            </button>
+          )}
           {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /
               STATS / audio) on the menu instead of floating as an orphan fixed button bottom-right —
               exactly the grouping CLAUDE.md's NO ORPHAN FIXED UI rule prescribes. The global fixed
