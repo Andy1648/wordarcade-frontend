@@ -62,6 +62,12 @@ export async function installBackendMock(page, opts = {}) {
     if (host === 'localhost' || host === '127.0.0.1' || host === '') {
       return route.continue();
     }
+    // The screenshot CAMERA (e2e-shots/, SHOT_FONTS=1) lets Google Fonts through: Bungee and
+    // Space Mono load from there, and a frame without them is every heading in the cursive
+    // fallback — a picture of a font failure, not of the app. Gates never set it.
+    if (process.env.SHOT_FONTS && (host === 'fonts.googleapis.com' || host === 'fonts.gstatic.com')) {
+      return route.continue();
+    }
     return route.abort();
   });
 

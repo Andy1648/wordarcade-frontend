@@ -43,7 +43,9 @@ file name after "__") from 1 to 10 against this fixed rubric, judged across all 
    2  broken at one or more viewports (clipped, overlapping, unusable)
 Weigh: proportions, hierarchy (is the one thing that matters the loudest?), cramped or empty space,
 reward feedback, style consistency with the brief and the other screens, perceived craft.
-Use whole or half points. Be calibrated and consistent, not generous.
+Use whole or half points. Be calibrated and consistent, not generous. Note: SAT RUSH screens
+(sat-*) have a deliberate cream-paper retro-print sub-style per the brief - judge them against
+that, not the neon look.
 
 Return ONLY a markdown table: | screen | score | one-line reason |, one row per screen, sorted by
 screen name, then a final line "AVERAGE: x.xx".

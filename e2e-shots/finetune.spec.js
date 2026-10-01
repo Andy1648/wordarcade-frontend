@@ -6,12 +6,12 @@
 //   vet   LV152, 6 rebirths, a big balance, every first-run flag seen.
 // Reuses min-text.spec.js's navigation so the camera and the 13px gate drive the same screens.
 //
-// Run:  FT_OUT=claude/finetune/pass-1/before npx playwright test --config=playwright.shots.config.js finetune
+// Run:  SHOT_FONTS=1 FT_OUT=claude/finetune/pass-1/before npx playwright test --config=playwright.shots.config.js finetune
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import { installBackendMock } from '../e2e/support/backendMock.js';
 import { menuReady, navControl } from '../e2e/support/menu.js';
-import { SCREENS, bootMenu, screenProfile, card } from '../e2e/support/screens.js';
+import { SCREENS, bootMenu, bootRoom, screenProfile, card } from '../e2e/support/screens.js';
 import { ACHIEVEMENTS, ACHIEVEMENTS_KEY } from '../src/progress/achievements.js';
 
 // A LV152 regular claimed every achievement long ago; without this the menu fires
@@ -27,7 +27,7 @@ const VIEWPORTS = [
 ];
 
 const ME = 'e2e-player';
-const racers = [{ id: ME, name: 'YOU' }, { id: 'p2', name: 'RIVAL' }, { id: 'b1', name: 'BOT', isBot: true }];
+const racers = [{ id: ME, name: 'ZEKE' }, { id: 'p2', name: 'RIVAL' }, { id: 'b1', name: 'SPRITZ', isBot: true }];
 async function raceRoom(page) {
   const mock = await installBackendMock(page);
   await page.goto('/?portal=1&race=1');
@@ -77,12 +77,44 @@ const EXTRA = [
     nav: async (page) => {
       const m = await raceRoom(page);
       await raceStart(page, m);
-      m.pushToClient({ type: 'race_over', payload: { winnerId: 'p2', reason: 'target', standings: [{ id: 'p2', name: 'RIVAL', words: 12, reachedAt: 41000 }, { id: ME, name: 'YOU', words: 7 }, { id: 'b1', name: 'BOT', words: 5 }] } });
+      m.pushToClient({ type: 'race_over', payload: { winnerId: 'p2', reason: 'target', standings: [{ id: 'p2', name: 'RIVAL', place: 1, words: 12, reachedAt: 41000 }, { id: ME, name: 'ZEKE', place: 2, words: 7 }, { id: 'b1', name: 'SPRITZ', isBot: true, place: 3, words: 5 }] } });
       await page.locator('.wr-over').waitFor({ state: 'visible' });
       await page.waitForTimeout(500);
     },
   },
 ];
+
+// The shared screen map seeds its multiplayer rooms with player id 'me', but the mock socket
+// tells the client it is 'e2e-player' — so every room/in-game/game-over frame it drives is a
+// SPECTATOR's view ("waiting for host", "THEIR TURN", "YOU WINS"). The camera photographs the
+// player: same navs, the client's real id, the server's real payload shapes.
+const wbP = [{ id: ME, name: 'ZEKE', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 0 }];
+const cbP = [{ id: ME, name: 'ZEKE', isHost: true }, { id: 'p2', name: 'RIVAL' }];
+async function wbGame(page) {
+  const m = await bootRoom(page, 'word-bomb', wbP);
+  await page.waitForTimeout(80);
+  m.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
+  await page.waitForTimeout(80);
+  m.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbP, combo: 'at', usedWords: [], timerSeconds: 30 } });
+  await page.locator('.game-wrap').waitFor({ state: 'visible' });
+  return m;
+}
+async function cbGame(page) {
+  const m = await bootRoom(page, 'category-blitz', cbP);
+  await page.waitForTimeout(80);
+  m.pushToClient({ type: 'game_started', payload: { gameType: 'category-blitz' } });
+  await page.waitForTimeout(80);
+  m.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 60, category: 'FRUITS', categoryId: 'fruits', rerollsRemaining: 1 } });
+  await page.locator('.game-wrap').waitFor({ state: 'visible' });
+  return m;
+}
+const AS_PLAYER = {
+  room: async (page) => { await bootRoom(page, 'word-bomb', wbP); await page.locator('.room-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); },
+  'ingame-word-bomb': async (page) => { await wbGame(page); await page.waitForTimeout(300); },
+  'ingame-category-blitz': async (page) => { await cbGame(page); await page.waitForTimeout(300); },
+  'gameover-word-bomb': async (page) => { const m = await wbGame(page); await page.waitForTimeout(80); m.pushToClient({ type: 'game_over', payload: { winnerId: ME } }); await page.locator('.game-over-overlay').waitFor({ state: 'visible' }); await page.waitForTimeout(500); },
+  'gameover-category-blitz': async (page) => { const m = await cbGame(page); await page.waitForTimeout(60); m.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'ZEKE', score: 30 }, { id: 'p2', name: 'RIVAL', score: 10 }] } }); await page.locator('.game-over-overlay').waitFor({ state: 'visible' }); await page.waitForTimeout(500); },
+};
 
 // Screens the step asks for (splash / credits / public-room browser are out of scope).
 const SKIP = new Set(['splash', 'credits', 'browser']);
@@ -116,7 +148,7 @@ async function settle(page) {
   ).catch(() => {});
 }
 
-const ALL = [...SCREENS.filter((s) => !SKIP.has(s.name)).map((s) => ({ name: s.name, nav: s.nav })), ...EXTRA];
+const ALL = [...SCREENS.filter((s) => !SKIP.has(s.name)).map((s) => ({ name: s.name, nav: AS_PLAYER[s.name] || s.nav })), ...EXTRA];
 const ONLY = process.env.FT_ONLY ? new Set(process.env.FT_ONLY.split(',')) : null;
 
 for (const [profileName, profile] of Object.entries(PROFILES)) {
