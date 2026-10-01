@@ -100,6 +100,89 @@ export const MARKS = [
 ];
 
 const BY_ID = new Map(MARKS.map((m) => [m.id, m]));
+
+// ---- MARK RANKS (STEP 21 / Andy A3: "marks need a better system") -------------------------------
+// A worn mark GROWS. Every accepted in-game word typed while wearing it counts toward that mark's
+// rank, I → V, and each rank scales the mark's BONUS (the part above ×1, or the chance) — so a mark
+// you've lived in is visibly better than one you just put on, and switching marks is a real cost.
+// Bounded: rank V is 1.6× the rank-I bonus (+25% → +40%; ETERNAL +50% → +80%; a 30% chance → 48%),
+// so rule 2 still holds — a mark is never the reason a number is large.
+export const MARK_WORDS_KEY = 'taw.markWords';
+export const MARK_RANK_WORDS = [0, 150, 500, 1500, 4000]; // words worn to REACH rank I..V
+export const MARK_RANK_SCALE = [1, 1.15, 1.3, 1.45, 1.6];
+export const MARK_RANK_NAMES = ['I', 'II', 'III', 'IV', 'V'];
+export const MAX_MARK_RANK = MARK_RANK_WORDS.length; // 5
+
+function loadMarkWords() {
+  try {
+    const o = JSON.parse(localStorage.getItem(MARK_WORDS_KEY) || '{}');
+    return o && typeof o === 'object' ? o : {};
+  } catch {
+    return {};
+  }
+}
+export function markWords(id) {
+  const n = Number(loadMarkWords()[id]);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+/** Rank 1..5 for a words-worn count. */
+export function rankForWords(words) {
+  let r = 1;
+  for (let i = 0; i < MARK_RANK_WORDS.length; i += 1) if (words >= MARK_RANK_WORDS[i]) r = i + 1;
+  return r;
+}
+export function markRank(id) {
+  return rankForWords(markWords(id));
+}
+/** { rank, words, into, need, frac, maxed } — the picker's progress bar to the next rank. */
+export function markProgress(id) {
+  const words = markWords(id);
+  const rank = rankForWords(words);
+  if (rank >= MAX_MARK_RANK) return { rank, words, into: 0, need: 0, frac: 1, maxed: true };
+  const lo = MARK_RANK_WORDS[rank - 1];
+  const hi = MARK_RANK_WORDS[rank];
+  return { rank, words, into: words - lo, need: hi - lo, frac: (words - lo) / (hi - lo), maxed: false };
+}
+/** Credit one accepted word to the EQUIPPED mark. Returns { id, rank, rankedUp } or null. */
+export function addMarkWord(id = getEquippedMark()) {
+  if (!id || !BY_ID.has(id)) return null;
+  const all = loadMarkWords();
+  const before = rankForWords(Number(all[id]) || 0);
+  all[id] = (Number(all[id]) || 0) + 1;
+  try {
+    localStorage.setItem(MARK_WORDS_KEY, JSON.stringify(all));
+  } catch {
+    return null;
+  }
+  const rank = rankForWords(all[id]);
+  return { id, rank, rankedUp: rank > before };
+}
+/** A mark's effect at a rank: every bonus scaled by MARK_RANK_SCALE (mode unchanged). */
+export function effectAtRank(effect = {}, rank = 1) {
+  const k = MARK_RANK_SCALE[Math.max(1, Math.min(MAX_MARK_RANK, rank)) - 1];
+  const out = { ...effect };
+  if (effect.winsMult) out.winsMult = 1 + (effect.winsMult - 1) * k;
+  if (effect.xpMult) out.xpMult = 1 + (effect.xpMult - 1) * k;
+  if (effect.rarityStep) out.rarityStep = effect.rarityStep * k;
+  if (effect.comboKeep) out.comboKeep = effect.comboKeep * k;
+  return out;
+}
+const MODE_LABEL = { wordBomb: 'WORD BOMB', blitz: 'CATEGORY BLITZ', satRush: 'SAT RUSH' };
+const pct = (x) => `${Math.round(x * 100)}%`;
+/** The promise, with THIS rank's numbers — what the picker prints and the payout pays. */
+export function markBlurbAt(m, rank = 1) {
+  if (!m) return '';
+  const e = effectAtRank(m.effect, rank);
+  const where = e.mode ? `in ${MODE_LABEL[e.mode] || e.mode}` : 'in every mode';
+  if (e.winsMult) return `+${pct(e.winsMult - 1)} wins ${where}.`;
+  if (e.xpMult) return `+${pct(e.xpMult - 1)} XP ${where}.`;
+  if (e.rarityStep) return `${pct(e.rarityStep)} chance a word counts one RARITY TIER higher.`;
+  if (e.comboKeep) return `${pct(e.comboKeep)} chance a broken COMBO survives.`;
+  return m.blurb;
+}
+function rankedEffect(m) {
+  return effectAtRank(m.effect, markRank(m.id));
+}
 export function markById(id) {
   return BY_ID.get(id) || null;
 }
@@ -156,23 +239,23 @@ export function markWinsFactors({ markId = getEquippedMark(), mode } = {}) {
   const m = markById(markId);
   if (!m || !m.effect || !m.effect.winsMult) return {};
   if (m.effect.mode && m.effect.mode !== mode) return {};
-  return { mark: m.effect.winsMult };
+  return { mark: rankedEffect(m).winsMult };
 }
 
 /** The equipped mark's XP multiplier (×1 when it has none). Applied in the same stack as mastery. */
 export function markXpMult(markId = getEquippedMark()) {
   const m = markById(markId);
-  return m && m.effect && m.effect.xpMult ? m.effect.xpMult : 1;
+  return m && m.effect && m.effect.xpMult ? rankedEffect(m).xpMult : 1;
 }
 
 /** The equipped mark's per-word chance to bump a word one rarity tier (0 when it has none). */
 export function markRarityStep(markId = getEquippedMark()) {
   const m = markById(markId);
-  return m && m.effect && m.effect.rarityStep ? m.effect.rarityStep : 0;
+  return m && m.effect && m.effect.rarityStep ? rankedEffect(m).rarityStep : 0;
 }
 
 /** The equipped mark's chance that a broken combo survives (0 when it has none). */
 export function markComboKeep(markId = getEquippedMark()) {
   const m = markById(markId);
-  return m && m.effect && m.effect.comboKeep ? m.effect.comboKeep : 0;
+  return m && m.effect && m.effect.comboKeep ? rankedEffect(m).comboKeep : 0;
 }

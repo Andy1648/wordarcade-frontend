@@ -20,7 +20,7 @@ import {
   XP_MULTIPLIERS,
 } from './xp.js';
 import { momentumMult, getMomentum } from './momentum.js';
-import { markWinsFactors, markXpMult } from './marks.js';
+import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { addMasteryWord, masteryXpMult } from './mastery.js';
 import { getStreakMult } from './streak.js';
 
@@ -554,7 +554,10 @@ export function awardWordXp(opts = {}) {
   const res = creditXp(loadProgress(), gain);
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
-  return { ...res, gain, mastery };
+  // The worn MARK grows with play (STEP 21). After the gain is computed, like mastery, so a word
+  // never retroactively boosts itself. Menu typing doesn't count — marks grow in games.
+  const mark = mode !== 'menu' ? addMarkWord() : null;
+  return { ...res, gain, mastery, mark };
 }
 
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round

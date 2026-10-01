@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import {
   MARKS, MARKS_EQUIPPED_KEY, markById, unlockedMarks, getEquippedMark, equipMark,
   markWinsFactors, markXpMult, markRarityStep, markComboKeep,
+  MARK_RANK_WORDS, MARK_RANK_SCALE, MAX_MARK_RANK, rankForWords, markRank, markProgress, addMarkWord,
+  effectAtRank, markBlurbAt, MARK_WORDS_KEY,
 } from './marks.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import { PAYOUT_FACTORS } from './payout.js';
@@ -135,4 +137,55 @@ test('markById is the only lookup, and it is guarded', () => {
   assert.equal(markById('mk-bomber').name, 'BOMBER');
   assert.equal(markById('nope'), null);
   assert.equal(markById(undefined), null);
+});
+
+// ---- MARK RANKS (STEP 21 / A3) -----------------------------------------------------------------
+test('ranks climb I..V at the documented word counts', () => {
+  assert.equal(MAX_MARK_RANK, 5);
+  assert.equal(rankForWords(0), 1);
+  assert.equal(rankForWords(MARK_RANK_WORDS[1] - 1), 1);
+  assert.equal(rankForWords(MARK_RANK_WORDS[1]), 2);
+  assert.equal(rankForWords(10 ** 9), 5);
+  for (let i = 1; i < MARK_RANK_WORDS.length; i += 1) assert.ok(MARK_RANK_WORDS[i] > MARK_RANK_WORDS[i - 1]);
+});
+
+test('a rank scales the BONUS, bounded so rank V is still never the reason a number is large', () => {
+  for (const m of MARKS) {
+    const v = effectAtRank(m.effect, MAX_MARK_RANK);
+    if (v.winsMult) assert.ok(v.winsMult > m.effect.winsMult && v.winsMult <= 1.8, `${m.id} V winsMult ${v.winsMult}`);
+    if (v.xpMult) assert.ok(v.xpMult > m.effect.xpMult && v.xpMult <= 1.8, `${m.id} V xpMult`);
+    if (v.rarityStep) assert.ok(v.rarityStep <= 0.25, `${m.id} V rarityStep`);
+    if (v.comboKeep) assert.ok(v.comboKeep <= 0.5, `${m.id} V comboKeep`);
+    assert.equal(v.mode, m.effect.mode);
+  }
+  assert.deepEqual(effectAtRank({ winsMult: 1.25 }, 1), { winsMult: 1.25 });
+  assert.equal(MARK_RANK_SCALE[0], 1);
+});
+
+test('only the WORN mark grows, one word at a time, and its payout factor follows its rank', () => {
+  withStorage({ [MARKS_EQUIPPED_KEY]: 'mk-bomber' }, (map) => {
+    assert.equal(markRank('mk-bomber'), 1);
+    assert.equal(markWinsFactors({ mode: 'wordBomb' }).mark, 1.25);
+    map.set(MARK_WORDS_KEY, JSON.stringify({ 'mk-bomber': MARK_RANK_WORDS[1] - 1 }));
+    const r = addMarkWord();
+    assert.deepEqual(r, { id: 'mk-bomber', rank: 2, rankedUp: true });
+    assert.equal(markRank('mk-sprinter'), 1, 'a mark you are not wearing does not grow');
+    assert.ok(Math.abs(markWinsFactors({ mode: 'wordBomb' }).mark - (1 + 0.25 * MARK_RANK_SCALE[1])) < 1e-9);
+    const p = markProgress('mk-bomber');
+    assert.equal(p.rank, 2);
+    assert.equal(p.into, 0);
+    assert.equal(p.need, MARK_RANK_WORDS[2] - MARK_RANK_WORDS[1]);
+  });
+});
+
+test('the blurb prints the numbers the rank actually pays', () => {
+  const bomber = MARKS.find((m) => m.id === 'mk-bomber');
+  assert.equal(markBlurbAt(bomber, 1), '+25% wins in WORD BOMB.');
+  assert.equal(markBlurbAt(bomber, 5), '+40% wins in WORD BOMB.');
+  const metro = MARKS.find((m) => m.id === 'mk-metronome');
+  assert.equal(markBlurbAt(metro, 5), '48% chance a broken COMBO survives.');
+});
+
+test('nothing equipped → addMarkWord is a no-op', () => {
+  withStorage({}, () => { assert.equal(addMarkWord(), null); });
 });

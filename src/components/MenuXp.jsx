@@ -8,6 +8,8 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } f
 import './MenuXp.css';
 import { formatNum, formatMultExact } from '../format';
 import { rankTitle } from '../progress/rank';
+import MarkBadge from './MarkBadge';
+import { markRank } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 
 // THE BAR IS THE DENSE ONE, and it is the only one. Two layouts were built and screenshotted so
@@ -240,12 +242,12 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
             title={`${mark.name} - ${mark.blurb}`}
           >
-            <span className="menu-mark-icon" aria-hidden="true">{mark.icon}</span>
+            <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
           </button>
         ) : (
           <span className="menu-mark" title={`${mark.name} - ${mark.blurb}`}>
-            <span className="menu-mark-icon" aria-hidden="true">{mark.icon}</span>
+            <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
           </span>
         )
