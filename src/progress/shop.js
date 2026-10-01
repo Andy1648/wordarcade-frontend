@@ -15,10 +15,10 @@ import { THEMES, isThemeOwned } from '../theme/themes.js';
 // an order of magnitude smaller and every price followed it down. The LADDER is untouched.
 // COSMETIC PRICES ARE AN EXPONENTIAL LADDER (Economy v7). v6 priced them 150 / 400 / 900 / 2000
 // - roughly linear steps against an income that compounds, so the whole cosmetic sink was cleared
-// inside the first hour and then paid for nothing for the remaining 199. One ×5 ladder per list,
-// from a base that is one good round: every rung costs five of the last one, so the last item in
+// inside the first hour and then paid for nothing for the remaining 199. One ×COSMETIC_PRICE_STEP (6, v9) ladder per list,
+// from a base that is one good round: every rung costs six of the last one, so the last item in
 // each list stays a genuine goal instead of pocket change.
-export const COSMETIC_PRICE_STEP = 5;
+export const COSMETIC_PRICE_STEP = 6;
 export const POP_PRICE_BASE = 60; // the first PAID pop style (was 600)
 export const SOUND_PRICE_BASE = 100; // the first PAID sound pack, 3 are free (was 1000)
 /** The i-th PAID rung of a ladder (i = 1 for the first paid item). */
@@ -31,6 +31,16 @@ export const POP_STYLES = [
   { id: 'inferno', name: 'INFERNO', price: cosmeticPrice(POP_PRICE_BASE, 2), xpMult: 1.1, blurb: 'Orange blaze' },
   { id: 'void', name: 'VOID', price: cosmeticPrice(POP_PRICE_BASE, 3), xpMult: 1.15, blurb: 'Purple void' },
   { id: 'prism', name: 'PRISM', price: cosmeticPrice(POP_PRICE_BASE, 4), xpMult: 1.25, blurb: 'Rainbow split' },
+  // STEP 19 / Andy A6: the ladder keeps going, ×5 a rung, so a late-game player always has a next pop
+  // to chase (v8 ended at 7,500 wins — pocket change by L100).
+  { id: 'toxic', name: 'TOXIC', price: cosmeticPrice(POP_PRICE_BASE, 5), xpMult: 1.35, blurb: 'Acid green' },
+  { id: 'ember', name: 'EMBER', price: cosmeticPrice(POP_PRICE_BASE, 6), xpMult: 1.45, blurb: 'Hot coals' },
+  { id: 'frost', name: 'FROST', price: cosmeticPrice(POP_PRICE_BASE, 7), xpMult: 1.6, blurb: 'Ice blue' },
+  { id: 'gold', name: 'GOLD', price: cosmeticPrice(POP_PRICE_BASE, 8), xpMult: 1.75, blurb: 'Solid gold' },
+  { id: 'plasma', name: 'PLASMA', price: cosmeticPrice(POP_PRICE_BASE, 9), xpMult: 1.95, blurb: 'Pink plasma' },
+  { id: 'nova', name: 'NOVA', price: cosmeticPrice(POP_PRICE_BASE, 10), xpMult: 2.2, blurb: 'Star white' },
+  { id: 'eclipse', name: 'ECLIPSE', price: cosmeticPrice(POP_PRICE_BASE, 11), xpMult: 2.5, blurb: 'Black sun' },
+  { id: 'legend', name: 'LEGEND', price: cosmeticPrice(POP_PRICE_BASE, 12), xpMult: 3.0, blurb: 'The last pop' },
 ];
 export const SOUND_PACKS = [
   { id: 'thock', name: 'THOCK', price: 0, xpMult: 1.0, blurb: 'Deep thock' },
@@ -39,6 +49,12 @@ export const SOUND_PACKS = [
   { id: 'marble', name: 'MARBLE', price: cosmeticPrice(SOUND_PRICE_BASE, 1), xpMult: 1.05, blurb: 'Marble click' },
   { id: 'typewriter', name: 'TYPEWRITER', price: cosmeticPrice(SOUND_PRICE_BASE, 2), xpMult: 1.1, blurb: 'Typewriter' },
   { id: 'silent', name: 'SILENT', price: cosmeticPrice(SOUND_PRICE_BASE, 3), xpMult: 1.15, blurb: 'Near silent' },
+  { id: 'arcade', name: 'ARCADE', price: cosmeticPrice(SOUND_PRICE_BASE, 4), xpMult: 1.25, blurb: 'Coin-op click' },
+  { id: 'vinyl', name: 'VINYL', price: cosmeticPrice(SOUND_PRICE_BASE, 5), xpMult: 1.35, blurb: 'Warm crackle' },
+  { id: 'glass', name: 'GLASS', price: cosmeticPrice(SOUND_PRICE_BASE, 6), xpMult: 1.5, blurb: 'Glass tap' },
+  { id: 'steel', name: 'STEEL', price: cosmeticPrice(SOUND_PRICE_BASE, 7), xpMult: 1.7, blurb: 'Steel switch' },
+  { id: 'bass', name: 'BASS', price: cosmeticPrice(SOUND_PRICE_BASE, 8), xpMult: 1.95, blurb: 'Sub thump' },
+  { id: 'crystal', name: 'CRYSTAL', price: cosmeticPrice(SOUND_PRICE_BASE, 9), xpMult: 2.3, blurb: 'Crystal ping' },
 ];
 
 export const OWNED_KEY = 'taw.owned';

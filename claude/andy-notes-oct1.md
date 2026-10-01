@@ -24,16 +24,21 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
 - [ ] **A2. Anything BIG needs animations** (school Chromebooks don't block them).
   - evidence (partial): STEP 22 — level-up starburst + shard ring, tier-up frame slam + name card,
     purchase confetti; all with reduced-motion static fallbacks.
-- [ ] **A3. Marks need much better visuals AND a better system/logic.**
-  - evidence (STEP 21, PR pending — branch feat/marks-shop): marks are drawn SVG badges (coin medallion picked of coin/pin/patch, `claude/step21/marks-*.png`), no emoji; NEW SYSTEM: a worn mark ranks I→V with words typed wearing it (150/500/1500/4000), each rank scaling its bonus up to 1.6× (bounded, unit-tested), picker shows rank, this-rank and next-rank payout, words-worn bar; menu names a rank-up once; NEW MARK badge when an unlocked mark hasn't been looked at.
-- [ ] **A4. Shop and stats menus: swap their places.**
-  - evidence (STEP 21, PR pending — branch feat/marks-shop): STATS now leads and SHOP sits last in both the desktop corner stack and the phone strip (`e2e/shop-hold.spec.js` asserts order at 1280 and 390; `claude/step21/menu-nav-*.png`).
-- [ ] **A5. No mashing buttons: at worst "hold to buy".**
-  - evidence (STEP 21, PR pending — branch feat/marks-shop): KEY POWER + MOMENTUM: tap = 1 buy; HOLD keeps buying, accelerating 420→70 ms, ONE reveal per run ("KEY POWER VII (+7)"); BUY MAX button. e2e: a 1.6 s hold buys ≥5 tiers with exactly 1 sticker. One-off cosmetics stay single-press (nothing to mash).
+- [x] **A3. Marks need much better visuals AND a better system/logic.**
+  - evidence (STEP 21, PR #74 merged (main 8f87dc7), LIVE `index-BrzobZCV.js` — markers `taw.markWords`, `WORDS WORN`, `BUY MAX`): marks are drawn SVG badges (coin medallion picked of coin/pin/patch, `claude/step21/marks-*.png`), no emoji; NEW SYSTEM: a worn mark ranks I→V with words typed wearing it (150/500/1500/4000), each rank scaling its bonus up to 1.6× (bounded, unit-tested), picker shows rank, this-rank and next-rank payout, words-worn bar; menu names a rank-up once; NEW MARK badge when an unlocked mark hasn't been looked at.
+- [x] **A4. Shop and stats menus: swap their places.**
+  - evidence (STEP 21, PR #74 merged (main 8f87dc7), LIVE `index-BrzobZCV.js` — markers `taw.markWords`, `WORDS WORN`, `BUY MAX`): STATS now leads and SHOP sits last in both the desktop corner stack and the phone strip (`e2e/shop-hold.spec.js` asserts order at 1280 and 390; `claude/step21/menu-nav-*.png`).
+- [x] **A5. No mashing buttons: at worst "hold to buy".**
+  - evidence (STEP 21, PR #74 merged (main 8f87dc7), LIVE `index-BrzobZCV.js` — markers `taw.markWords`, `WORDS WORN`, `BUY MAX`): KEY POWER + MOMENTUM: tap = 1 buy; HOLD keeps buying, accelerating 420→70 ms, ONE reveal per run ("KEY POWER VII (+7)"); BUY MAX button. e2e: a 1.6 s hold buys ≥5 tiers with exactly 1 sticker. One-off cosmetics stay single-press (nothing to mash).
 - [ ] **A6. Progression:** Andy stopped at ~L125 because upgrades "seem insane eventually". Fix the
   late game. Shop XP multi pops and sound packs priced more exponentially. CHAIN and FUSE bars go
   MUCH higher with better rewards.
-  - evidence:
+  - evidence (STEP 19, PR pending — branch feat/progression-rebalance): Economy v9. Whole-economy sim of
+    the live modules (`claude/progression/econ-sim.mjs`, 3 players × 200 h): BEFORE every sink empty by
+    minute 11, numbers past 1e15 at L150, late gaps 16–22 HOURS; AFTER median gap 1.1 min (30 d) / 4.5 min
+    (200 h), max 10–13 min, numbers ≤ ~1e9, cosmetics last 160 h+ (12 pops / 9 sounds, ×6 a rung),
+    rebirth climb-back ~50% of the previous climb, CHAIN/FUSE mastery to M50 with a wins bonus every 5
+    levels. `claude/progression/after-report.md`, charts `before-after-*.png`. In-run CHAIN/FUSE bars: STEP 20.
 - [ ] **A7. Higher mode bars must come with LOGICAL, INTERESTING mechanics**, e.g. CHAIN more wins,
   FUSE all letters → 5-minute ×5 wins timer + huge bonus. Don't crowd the screen: fewer words, but
   everything important shows, and everything makes sense.
@@ -53,8 +58,8 @@ evidence next to it: a PR #, a measured number, or a screenshot path.
 - [ ] **A11. Visual reworks INSIDE game modes**, especially the newer ones, plus font sizes WHILE
   PLAYING. Check it yourself in a live round.
   - evidence:
-- [ ] **A12. Themes in the shop aren't noticeable: make them obvious.**
-  - evidence (STEP 21, PR pending — branch feat/marks-shop): every theme card is a miniature of the MENU in that palette (wordmark, level bar, 5 mode cards, pops) instead of a 4-colour strip — `claude/step21/shop-themes-*.png`; e2e asserts ≥150px wide and distinct per theme.
+- [x] **A12. Themes in the shop aren't noticeable: make them obvious.**
+  - evidence (STEP 21, PR #74 merged (main 8f87dc7), LIVE `index-BrzobZCV.js` — markers `taw.markWords`, `WORDS WORN`, `BUY MAX`): every theme card is a miniature of the MENU in that palette (wordmark, level bar, 5 mode cards, pops) instead of a 4-colour strip — `claude/step21/shop-themes-*.png`; e2e asserts ≥150px wide and distinct per theme.
 - [x] **A13. Leaderboard: no Google sign-in, username only, block bad names.**
   - evidence: PR #70 merged (main 05ad2e1); LIVE in production bundle `index-D9gquwJb.js` (marker
     `lb_claim`, ~60 s after merge). Two separate browser profiles on **typeaword.com**: 12/12 checks

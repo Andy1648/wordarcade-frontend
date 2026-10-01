@@ -76,12 +76,13 @@ test('milestones pay wins (× rebirth) once each as the count crosses them', () 
 
 test('milestone wins scale with the live rebirth multiplier', () => {
   withStorage({ 'taw.rebirths': '2' }, () => {
-    // v7: rebirthMult is 3^rc, so R2 is ×9 (the v6 table said ×2) and the 100-word milestone
-    // pays 5000 × 9. Written through rebirthMult - the claim is that the milestone SCALES.
+    // v9: rebirthMult is additive (1 + rc), so R2 is ×3 and the 100-word milestone pays
+    // 5000 × 3 = 15,000. Written through rebirthMult - the claim is that the milestone SCALES.
     let last;
     for (let i = 0; i < 100; i++) last = recordAcceptedWord(`w${i}`, { mode: 'chain', band: 'COMMON' });
     assert.equal(last.milestone.n, 100);
     assert.equal(last.milestone.wins, Math.round(5000 * rebirthMult(2)));
+    assert.equal(last.milestone.wins, 15000);
   });
 });
 

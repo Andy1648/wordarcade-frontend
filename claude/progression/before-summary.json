@@ -1,0 +1,3095 @@
+{
+ "tag": "before",
+ "generatedAt": "2026-10-01T12:37:42.719Z",
+ "config": {
+  "seed": 1648,
+  "days30": 30,
+  "tailHours": 200,
+  "archetypes": [
+   {
+    "id": "casual",
+    "label": "CASUAL 10 min/day",
+    "minPerDay": 10,
+    "wordsPerMin": 12,
+    "typingWpm": 45
+   },
+   {
+    "id": "regular",
+    "label": "REGULAR 30 min/day",
+    "minPerDay": 30,
+    "wordsPerMin": 15,
+    "typingWpm": 55
+   },
+   {
+    "id": "grinder",
+    "label": "GRINDER 60 min/day",
+    "minPerDay": 60,
+    "wordsPerMin": 18,
+    "typingWpm": 70
+   }
+  ],
+  "modeMix": {
+   "word-bomb": 0.3,
+   "chain": 0.25,
+   "fuse": 0.2,
+   "sat-rush": 0.15,
+   "category-blitz": 0.1
+  },
+  "roundLen": {
+   "word-bomb": 12,
+   "category-blitz": 10,
+   "sat-rush": 15,
+   "chain": 25,
+   "fuse": 20
+  },
+  "roundLenJitter": 0.4,
+  "difficulty": {
+   "word-bomb": "easy",
+   "category-blitz": "easy"
+  },
+  "missRate": 0.08,
+  "vocab": {
+   "size": 20000,
+   "zipfS": 1,
+   "obscureP": 0.01,
+   "obscurePool": 3000,
+   "satDeck": 1000
+  },
+  "lengthDist": [
+   [
+    3,
+    0.12
+   ],
+   [
+    4,
+    0.26
+   ],
+   [
+    5,
+    0.26
+   ],
+   [
+    6,
+    0.18
+   ],
+   [
+    7,
+    0.1
+   ],
+   [
+    8,
+    0.05
+   ],
+   [
+    9,
+    0.02
+   ],
+   [
+    10,
+    0.01
+   ]
+  ],
+  "satLengthDist": [
+   [
+    6,
+    0.15
+   ],
+   [
+    7,
+    0.25
+   ],
+   [
+    8,
+    0.25
+   ],
+   [
+    9,
+    0.2
+   ],
+   [
+    10,
+    0.15
+   ]
+  ],
+  "satBandMix": [
+   [
+    "UNCOMMON",
+    0.12
+   ],
+   [
+    "RARE",
+    0.5
+   ],
+   [
+    "OBSCURE",
+    0.38
+   ]
+  ],
+  "achievementEveryRounds": 5,
+  "incomeWindowMin": 10,
+  "levelMarks": [
+   10,
+   25,
+   50,
+   75,
+   100,
+   125,
+   150,
+   200,
+   250,
+   300
+  ],
+  "snapshotLevels": [
+   50,
+   100,
+   125,
+   150,
+   200
+  ],
+  "affordLevels": [
+   100,
+   125,
+   150
+  ],
+  "trivialSec": 10,
+  "wallMin": 60,
+  "absurd": 1000000000
+ },
+ "curve": {
+  "needAt": {
+   "1": 600,
+   "10": 2280,
+   "30": 44410,
+   "50": 2369610,
+   "75": 341722170,
+   "100": 49279798160,
+   "125": 7106646075260,
+   "150": 1024850350885420,
+   "200": 21313363302199040000,
+   "250": 4.432446696818398e+23,
+   "300": 9.217965011701959e+27
+  },
+  "constants": {
+   "CURVE_BASE": 600,
+   "CURVE_BREAK": 30,
+   "EARLY_CURVE_EXP": 1.16,
+   "TOP_CURVE_EXP": 1.22,
+   "REBIRTH_MULT_BASE": 3,
+   "MOMENTUM_BASE": 500,
+   "MOMENTUM_RATIO": 1.05,
+   "MOMENTUM_MAX": 200,
+   "MASTERY_MAX": 20,
+   "MASTERY_BASE": 50,
+   "MASTERY_GROWTH": 1.4
+  },
+  "rebirthThresholds": [
+   15,
+   25,
+   40,
+   60,
+   75,
+   100,
+   125,
+   150,
+   175,
+   200,
+   225,
+   260,
+   300,
+   340
+  ],
+  "rebirthEconomics": [
+   {
+    "rebirth": 1,
+    "gateLevel": 15,
+    "xpToClimb": 26220,
+    "multAfter": 3,
+    "xpToClimbOverMult": 26220
+   },
+   {
+    "rebirth": 2,
+    "gateLevel": 25,
+    "xpToClimb": 128410,
+    "multAfter": 9,
+    "xpToClimbOverMult": 42803.333333333336
+   },
+   {
+    "rebirth": 3,
+    "gateLevel": 40,
+    "xpToClimb": 1546470,
+    "multAfter": 27,
+    "xpToClimbOverMult": 171830
+   },
+   {
+    "rebirth": 4,
+    "gateLevel": 60,
+    "xpToClimb": 78749880,
+    "multAfter": 81,
+    "xpToClimbOverMult": 2916662.222222222
+   },
+   {
+    "rebirth": 5,
+    "gateLevel": 75,
+    "xpToClimb": 1553354530,
+    "multAfter": 243,
+    "xpToClimbOverMult": 19177216.419753086
+   },
+   {
+    "rebirth": 6,
+    "gateLevel": 100,
+    "xpToClimb": 223999154520,
+    "multAfter": 729,
+    "xpToClimbOverMult": 921807220.2469136
+   },
+   {
+    "rebirth": 7,
+    "gateLevel": 125,
+    "xpToClimb": 32302936777710,
+    "multAfter": 2187,
+    "xpToClimbOverMult": 44311298734.855965
+   },
+   {
+    "rebirth": 8,
+    "gateLevel": 150,
+    "xpToClimb": 4658410685914790,
+    "multAfter": 6561,
+    "xpToClimbOverMult": 2130046038369.8171
+   },
+   {
+    "rebirth": 9,
+    "gateLevel": 175,
+    "xpToClimb": 671790008309669600,
+    "multAfter": 19683,
+    "xpToClimbOverMult": 102391405015953.3
+   },
+   {
+    "rebirth": 10,
+    "gateLevel": 200,
+    "xpToClimb": 96878924100904830000,
+    "multAfter": 59049,
+    "xpToClimbOverMult": 4921959259305229
+   },
+   {
+    "rebirth": 11,
+    "gateLevel": 225,
+    "xpToClimb": 1.3970922191244468e+22,
+    "multAfter": 177147,
+    "xpToClimbOverMult": 236598794073472320
+   },
+   {
+    "rebirth": 12,
+    "gateLevel": 260,
+    "xpToClimb": 1.4716995176722442e+25,
+    "multAfter": 531441,
+    "xpToClimbOverMult": 83077868531346520000
+   },
+   {
+    "rebirth": 13,
+    "gateLevel": 300,
+    "xpToClimb": 4.189984096228163e+28,
+    "multAfter": 1594323,
+    "xpToClimbOverMult": 7.884194287283373e+22
+   }
+  ],
+  "keyTiers": [
+   {
+    "tier": 0,
+    "xpPerLetter": 10,
+    "costToReach": 0
+   },
+   {
+    "tier": 1,
+    "xpPerLetter": 25,
+    "costToReach": 10
+   },
+   {
+    "tier": 2,
+    "xpPerLetter": 60,
+    "costToReach": 60
+   },
+   {
+    "tier": 3,
+    "xpPerLetter": 150,
+    "costToReach": 360
+   },
+   {
+    "tier": 4,
+    "xpPerLetter": 375,
+    "costToReach": 2160
+   },
+   {
+    "tier": 5,
+    "xpPerLetter": 940,
+    "costToReach": 12960
+   },
+   {
+    "tier": 6,
+    "xpPerLetter": 2350,
+    "costToReach": 77760
+   },
+   {
+    "tier": 7,
+    "xpPerLetter": 5875,
+    "costToReach": 466560
+   },
+   {
+    "tier": 8,
+    "xpPerLetter": 14690,
+    "costToReach": 2799360
+   },
+   {
+    "tier": 9,
+    "xpPerLetter": 36720,
+    "costToReach": 16796160
+   },
+   {
+    "tier": 10,
+    "xpPerLetter": 91800,
+    "costToReach": 100776960
+   },
+   {
+    "tier": 11,
+    "xpPerLetter": 229500,
+    "costToReach": 604661760
+   },
+   {
+    "tier": 12,
+    "xpPerLetter": 573750,
+    "costToReach": 3627970560
+   },
+   {
+    "tier": 13,
+    "xpPerLetter": 1434380,
+    "costToReach": 21767823360
+   },
+   {
+    "tier": 14,
+    "xpPerLetter": 3585950,
+    "costToReach": 130606940160
+   },
+   {
+    "tier": 15,
+    "xpPerLetter": 8964880,
+    "costToReach": 783641640960
+   },
+   {
+    "tier": 16,
+    "xpPerLetter": 22412200,
+    "costToReach": 4701849845760
+   }
+  ],
+  "masteryWordsToMax": 104411,
+  "masteryWordsTo": {
+   "2": 70,
+   "5": 497,
+   "10": 3440,
+   "15": 19271,
+   "20": 104411
+  },
+  "cosmeticPrices": [
+   {
+    "id": "chrome",
+    "price": 60
+   },
+   {
+    "id": "inferno",
+    "price": 300
+   },
+   {
+    "id": "void",
+    "price": 1500
+   },
+   {
+    "id": "prism",
+    "price": 7500
+   },
+   {
+    "id": "marble",
+    "price": 100
+   },
+   {
+    "id": "typewriter",
+    "price": 500
+   },
+   {
+    "id": "silent",
+    "price": 2500
+   }
+  ],
+  "themePrices": [
+   {
+    "id": "default",
+    "price": 0,
+    "freeAt": 0
+   },
+   {
+    "id": "midnight",
+    "price": 60,
+    "freeAt": 10
+   },
+   {
+    "id": "inferno",
+    "price": 250,
+    "freeAt": 0
+   },
+   {
+    "id": "toxic",
+    "price": 800,
+    "freeAt": 30
+   },
+   {
+    "id": "prism",
+    "price": 2500,
+    "freeAt": 0
+   }
+  ]
+ },
+ "archetypes": [
+  {
+   "archetype": {
+    "id": "casual",
+    "label": "CASUAL 10 min/day",
+    "minPerDay": 10,
+    "wordsPerMin": 12,
+    "typingWpm": 45
+   },
+   "timeToLevel": {
+    "10": {
+     "minute": 1.2499999999999998,
+     "hours": 0.02083333333333333,
+     "words": 15,
+     "rebirths": 0,
+     "totalLevelUps": 9,
+     "keyTier": 2
+    },
+    "25": {
+     "minute": 3.916666666666669,
+     "hours": 0.06527777777777782,
+     "words": 47,
+     "rebirths": 1,
+     "totalLevelUps": 46,
+     "keyTier": 3
+    },
+    "50": {
+     "minute": 6.416666666666661,
+     "hours": 0.10694444444444434,
+     "words": 77,
+     "rebirths": 3,
+     "totalLevelUps": 138,
+     "keyTier": 4
+    },
+    "75": {
+     "minute": 10.833333333333341,
+     "hours": 0.1805555555555557,
+     "words": 130,
+     "rebirths": 4,
+     "totalLevelUps": 223,
+     "keyTier": 7
+    },
+    "100": {
+     "minute": 14.583333333333368,
+     "hours": 0.24305555555555614,
+     "words": 175,
+     "rebirths": 5,
+     "totalLevelUps": 323,
+     "keyTier": 12
+    },
+    "125": {
+     "minute": 20.083333333333318,
+     "hours": 0.334722222222222,
+     "words": 241,
+     "rebirths": 6,
+     "totalLevelUps": 448,
+     "keyTier": 15
+    },
+    "150": {
+     "minute": 36.58333333333328,
+     "hours": 0.6097222222222213,
+     "words": 439,
+     "rebirths": 7,
+     "totalLevelUps": 597,
+     "keyTier": 18
+    },
+    "200": {
+     "minute": 263.83333333334315,
+     "hours": 4.397222222222386,
+     "words": 3166,
+     "rebirths": 9,
+     "totalLevelUps": 971,
+     "keyTier": 24
+    },
+    "250": {
+     "minute": 1965.2499999993302,
+     "hours": 32.7541666666555,
+     "words": 23583,
+     "rebirths": 11,
+     "totalLevelUps": 1444,
+     "keyTier": 29
+    }
+   },
+   "at30days": {
+    "minute": 300.0000000000016,
+    "hours": 5.000000000000027,
+    "day": 29,
+    "level": 204,
+    "highestLevel": 204,
+    "totalLevelUps": 1174,
+    "rebirths": 10,
+    "keyTier": 24,
+    "momentum": 200,
+    "wins": 24107219570725250000,
+    "winsLifetime": 33583982247541375000,
+    "words": 3600,
+    "distinctWords": 1754,
+    "ownedCosmetics": 11,
+    "ownedThemes": 5,
+    "mastery": {
+     "word-bomb": 6,
+     "category-blitz": 3,
+     "sat-rush": 4,
+     "chain": 7,
+     "fuse": 6
+    },
+    "achievements": 23,
+    "equippedMark": "mk-eternal",
+    "incomePerMin": 644835285737211600
+   },
+   "at200h": {
+    "minute": 12000.000000015785,
+    "hours": 200.0000000002631,
+    "day": 1199,
+    "level": 280,
+    "highestLevel": 280,
+    "totalLevelUps": 1733,
+    "rebirths": 12,
+    "keyTier": 32,
+    "momentum": 200,
+    "wins": 7.083177416364563e+25,
+    "winsLifetime": 8.674909638353682e+25,
+    "words": 144000,
+    "distinctWords": 16407,
+    "ownedCosmetics": 11,
+    "ownedThemes": 5,
+    "mastery": {
+     "word-bomb": 16,
+     "category-blitz": 12,
+     "sat-rush": 14,
+     "chain": 18,
+     "fuse": 16
+    },
+    "achievements": 29,
+    "equippedMark": "mk-eternal",
+    "incomePerMin": 1.0425799176871572e+22
+   },
+   "rebirths": [
+    {
+     "n": 1,
+     "minute": 3.166666666666668,
+     "hours": 0.0527777777777778,
+     "levelAt": 21,
+     "mult": 3,
+     "keyTier": 2,
+     "day": 0,
+     "levelAfter1Word": 12,
+     "levelAfter1Min": 28,
+     "minToPrevGate": 0.5000000000000009
+    },
+    {
+     "n": 2,
+     "minute": 4.666666666666667,
+     "hours": 0.07777777777777778,
+     "levelAt": 30,
+     "mult": 9,
+     "keyTier": 3,
+     "day": 0,
+     "levelAfter1Word": 26,
+     "levelAfter1Min": null,
+     "minToPrevGate": 0.2499999999999991
+    },
+    {
+     "n": 3,
+     "minute": 5.499999999999997,
+     "hours": 0.09166666666666662,
+     "levelAt": 40,
+     "mult": 27,
+     "keyTier": 4,
+     "day": 0,
+     "levelAfter1Word": 31,
+     "levelAfter1Min": 51,
+     "minToPrevGate": 0.2499999999999991
+    },
+    {
+     "n": 4,
+     "minute": 9.083333333333329,
+     "hours": 0.15138888888888882,
+     "levelAt": 62,
+     "mult": 81,
+     "keyTier": 6,
+     "day": 0,
+     "levelAfter1Word": 55,
+     "levelAfter1Min": 70,
+     "minToPrevGate": 0.2500000000000018
+    },
+    {
+     "n": 5,
+     "minute": 11.416666666666679,
+     "hours": 0.19027777777777796,
+     "levelAt": 76,
+     "mult": 243,
+     "keyTier": 7,
+     "day": 0,
+     "levelAfter1Word": 71,
+     "levelAfter1Min": 86,
+     "minToPrevGate": 0.16666666666666785
+    },
+    {
+     "n": 6,
+     "minute": 15.000000000000037,
+     "hours": 0.2500000000000006,
+     "levelAt": 101,
+     "mult": 729,
+     "keyTier": 12,
+     "day": 1,
+     "levelAfter1Word": 96,
+     "levelAfter1Min": 111,
+     "minToPrevGate": 0.16666666666666785
+    },
+    {
+     "n": 7,
+     "minute": 20.99999999999997,
+     "hours": 0.34999999999999953,
+     "levelAt": 125,
+     "mult": 2187,
+     "keyTier": 15,
+     "day": 1,
+     "levelAfter1Word": 107,
+     "levelAfter1Min": 124,
+     "minToPrevGate": 1.2499999999999822
+    },
+    {
+     "n": 8,
+     "minute": 38.416666666666664,
+     "hours": 0.6402777777777777,
+     "levelAt": 151,
+     "mult": 6561,
+     "keyTier": 18,
+     "day": 3,
+     "levelAfter1Word": 128,
+     "levelAfter1Min": 144,
+     "minToPrevGate": 2.833333333333414
+    },
+    {
+     "n": 9,
+     "minute": 91.9166666666658,
+     "hours": 1.5319444444444301,
+     "levelAt": 175,
+     "mult": 19683,
+     "keyTier": 21,
+     "day": 9,
+     "levelAfter1Word": 152,
+     "levelAfter1Min": 165,
+     "minToPrevGate": 6.0833333333329875
+    },
+    {
+     "n": 10,
+     "minute": 265.1666666666762,
+     "hours": 4.419444444444603,
+     "levelAt": 200,
+     "mult": 59049,
+     "keyTier": 24,
+     "day": 26,
+     "levelAfter1Word": 168,
+     "levelAfter1Min": 183,
+     "minToPrevGate": 14.416666666663389
+    },
+    {
+     "n": 11,
+     "minute": 665.4166666666898,
+     "hours": 11.090277777778164,
+     "levelAt": 225,
+     "mult": 177147,
+     "keyTier": 26,
+     "day": 66,
+     "levelAfter1Word": 190,
+     "levelAfter1Min": 201,
+     "minToPrevGate": 52.08333333335702
+    },
+    {
+     "n": 12,
+     "minute": 4221.083333335858,
+     "hours": 70.35138888893097,
+     "levelAt": 260,
+     "mult": 531441,
+     "keyTier": 30,
+     "day": 421,
+     "levelAfter1Word": 212,
+     "levelAfter1Min": 224,
+     "minToPrevGate": 585.8333333312021
+    }
+   ],
+   "maxLevelsInOneWord": 211,
+   "allCosmeticsOwnedAtMin": 5.499999999999997,
+   "momentumMaxedAtMin": 11.416666666666679,
+   "gaps": {
+    "days30": {
+     "all": {
+      "count": 319,
+      "median": 1.4166666666668277,
+      "p90": 9.583333333334423,
+      "max": 33.416666666670466,
+      "over10": 7,
+      "top": [
+       {
+        "len": 33.416666666670466,
+        "startMin": 185.41666666667027,
+        "endMin": 218.83333333334073,
+        "from": "MASTERY sat-rush M4",
+        "to": "MASTERY fuse M5",
+        "levelAtEnd": 197,
+        "rebirths": 9,
+        "keyTier": 23
+       },
+       {
+        "len": 30.91666666667018,
+        "startMin": 221.00000000000765,
+        "endMin": 251.91666666667783,
+        "from": "ACH DEFUSER",
+        "to": "MASTERY chain M7",
+        "levelAtEnd": 199,
+        "rebirths": 9,
+        "keyTier": 23
+       },
+       {
+        "len": 20.249999999999247,
+        "startMin": 110.16666666666477,
+        "endMin": 130.416666666664,
+        "from": "KEY T22",
+        "to": "MARK mk-student rank 4",
+        "levelAtEnd": 186,
+        "rebirths": 9,
+        "keyTier": 22
+       },
+       {
+        "len": 19.416666666662252,
+        "startMin": 279.9166666666728,
+        "endMin": 299.3333333333351,
+        "from": "MASTERY fuse M6",
+        "to": "ACH RITUAL",
+        "levelAtEnd": 204,
+        "rebirths": 10,
+        "keyTier": 24
+       },
+       {
+        "len": 18.166666666668732,
+        "startMin": 167.25000000000153,
+        "endMin": 185.41666666667027,
+        "from": "ACH BOMB SQUAD",
+        "to": "MASTERY sat-rush M4",
+        "levelAtEnd": 194,
+        "rebirths": 9,
+        "keyTier": 23
+       },
+       {
+        "len": 12.000000000001364,
+        "startMin": 131.99999999999753,
+        "endMin": 143.9999999999989,
+        "from": "ACH WALKING DICTIONARY",
+        "to": "MASTERY fuse M4",
+        "levelAtEnd": 189,
+        "rebirths": 9,
+        "keyTier": 22
+       }
+      ]
+     },
+     "strict": {
+      "count": 105,
+      "median": 1.4166666666668277,
+      "p90": 9.583333333334423,
+      "max": 33.416666666670466,
+      "over10": 7,
+      "top": [
+       {
+        "len": 33.416666666670466,
+        "startMin": 185.41666666667027,
+        "endMin": 218.83333333334073,
+        "from": "MASTERY sat-rush M4",
+        "to": "MASTERY fuse M5",
+        "levelAtEnd": 197,
+        "rebirths": 9,
+        "keyTier": 23
+       },
+       {
+        "len": 30.91666666667018,
+        "startMin": 221.00000000000765,
+        "endMin": 251.91666666667783,
+        "from": "ACH DEFUSER",
+        "to": "MASTERY chain M7",
+        "levelAtEnd": 199,
+        "rebirths": 9,
+        "keyTier": 23
+       },
+       {
+        "len": 20.249999999999247,
+        "startMin": 110.16666666666477,
+        "endMin": 130.416666666664,
+        "from": "KEY T22",
+        "to": "MARK mk-student rank 4",
+        "levelAtEnd": 186,
+        "rebirths": 9,
+        "keyTier": 22
+       },
+       {
+        "len": 19.416666666662252,
+        "startMin": 279.9166666666728,
+        "endMin": 299.3333333333351,
+        "from": "MASTERY fuse M6",
+        "to": "ACH RITUAL",
+        "levelAtEnd": 204,
+        "rebirths": 10,
+        "keyTier": 24
+       },
+       {
+        "len": 18.166666666668732,
+        "startMin": 167.25000000000153,
+        "endMin": 185.41666666667027,
+        "from": "ACH BOMB SQUAD",
+        "to": "MASTERY sat-rush M4",
+        "levelAtEnd": 194,
+        "rebirths": 9,
+        "keyTier": 23
+       },
+       {
+        "len": 12.000000000001364,
+        "startMin": 131.99999999999753,
+        "endMin": 143.9999999999989,
+        "from": "ACH WALKING DICTIONARY",
+        "to": "MASTERY fuse M4",
+        "levelAtEnd": 189,
+        "rebirths": 9,
+        "keyTier": 22
+       }
+      ]
+     }
+    },
+    "tail": {
+     "all": {
+      "count": 390,
+      "median": 7.749999999998238,
+      "p90": 209.3333333337141,
+      "max": 979.250000007125,
+      "over10": 69,
+      "top": [
+       {
+        "len": 979.250000007125,
+        "startMin": 10850.583333340755,
+        "endMin": 11829.83333334788,
+        "from": "MASTERY word-bomb M16",
+        "to": "MASTERY chain M18",
+        "levelAtEnd": 280,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 888.9166666731344,
+        "startMin": 9961.666666667621,
+        "endMin": 10850.583333340755,
+        "from": "MASTERY fuse M16",
+        "to": "MASTERY word-bomb M16",
+        "levelAtEnd": 279,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 786.2500000057207,
+        "startMin": 8622.583333324545,
+        "endMin": 9408.833333330265,
+        "from": "MASTERY sat-rush M14",
+        "to": "MASTERY category-blitz M12",
+        "levelAtEnd": 277,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 730.6666666676783,
+        "startMin": 7797.583333322847,
+        "endMin": 8528.249999990525,
+        "from": "MASTERY word-bomb M15",
+        "to": "MASTERY chain M17",
+        "levelAtEnd": 275,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 679.2499999975289,
+        "startMin": 7118.333333325318,
+        "endMin": 7797.583333322847,
+        "from": "KEY T32",
+        "to": "MASTERY word-bomb M15",
+        "levelAtEnd": 274,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 599.499999997819,
+        "startMin": 4917.499999999991,
+        "endMin": 5516.99999999781,
+        "from": "MASTERY fuse M14",
+        "to": "MASTERY word-bomb M14",
+        "levelAtEnd": 266,
+        "rebirths": 12,
+        "keyTier": 31
+       }
+      ]
+     },
+     "strict": {
+      "count": 176,
+      "median": 7.749999999998238,
+      "p90": 209.3333333337141,
+      "max": 979.250000007125,
+      "over10": 69,
+      "top": [
+       {
+        "len": 979.250000007125,
+        "startMin": 10850.583333340755,
+        "endMin": 11829.83333334788,
+        "from": "MASTERY word-bomb M16",
+        "to": "MASTERY chain M18",
+        "levelAtEnd": 280,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 888.9166666731344,
+        "startMin": 9961.666666667621,
+        "endMin": 10850.583333340755,
+        "from": "MASTERY fuse M16",
+        "to": "MASTERY word-bomb M16",
+        "levelAtEnd": 279,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 786.2500000057207,
+        "startMin": 8622.583333324545,
+        "endMin": 9408.833333330265,
+        "from": "MASTERY sat-rush M14",
+        "to": "MASTERY category-blitz M12",
+        "levelAtEnd": 277,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 730.6666666676783,
+        "startMin": 7797.583333322847,
+        "endMin": 8528.249999990525,
+        "from": "MASTERY word-bomb M15",
+        "to": "MASTERY chain M17",
+        "levelAtEnd": 275,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 679.2499999975289,
+        "startMin": 7118.333333325318,
+        "endMin": 7797.583333322847,
+        "from": "KEY T32",
+        "to": "MASTERY word-bomb M15",
+        "levelAtEnd": 274,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 599.499999997819,
+        "startMin": 4917.499999999991,
+        "endMin": 5516.99999999781,
+        "from": "MASTERY fuse M14",
+        "to": "MASTERY word-bomb M14",
+        "levelAtEnd": 266,
+        "rebirths": 12,
+        "keyTier": 31
+       }
+      ]
+     }
+    }
+   },
+   "eventCounts": {
+    "mode-unlock": 2,
+    "frame": 5,
+    "rank": 9,
+    "buy-key": 32,
+    "buy-cosmetic": 7,
+    "buy-theme": 4,
+    "menu-tier": 7,
+    "rebirth": 12,
+    "achievement": 29,
+    "buy-momentum": 200,
+    "collection": 5,
+    "mastery": 71,
+    "mark-rank": 7
+   },
+   "afford": {
+    "100": {
+     "level": 100,
+     "minute": 14.583333333333368,
+     "rebirths": 5,
+     "incomePerMin": 2536972751.8991513,
+     "keyPower": {
+      "tier": 13,
+      "price": 21767823360,
+      "minutes": 8.58023537844655,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 5.499999999999997
+     },
+     "nextRebirthAt": 100
+    },
+    "125": {
+     "level": 125,
+     "minute": 20.083333333333318,
+     "rebirths": 6,
+     "incomePerMin": 381042072282.8089,
+     "keyPower": {
+      "tier": 16,
+      "price": 4701849845760,
+      "minutes": 12.339450648038397,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 5.499999999999997
+     },
+     "nextRebirthAt": 125
+    },
+    "150": {
+     "level": 150,
+     "minute": 36.58333333333328,
+     "rebirths": 7,
+     "incomePerMin": 44011648715469.67,
+     "keyPower": {
+      "tier": 19,
+      "price": 1015599566684160,
+      "minutes": 23.075699191591212,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 5.499999999999997
+     },
+     "nextRebirthAt": 150
+    }
+   },
+   "mastery": [
+    {
+     "mode": "chain",
+     "m": 2,
+     "minute": 18.416666666666675
+    },
+    {
+     "mode": "fuse",
+     "m": 2,
+     "minute": 25.499999999999908
+    },
+    {
+     "mode": "chain",
+     "m": 3,
+     "minute": 37.16666666666663
+    },
+    {
+     "mode": "chain",
+     "m": 4,
+     "minute": 62.91666666666736
+    },
+    {
+     "mode": "chain",
+     "m": 5,
+     "minute": 96.41666666666555
+    },
+    {
+     "mode": "fuse",
+     "m": 3,
+     "minute": 102.0833333333319
+    },
+    {
+     "mode": "fuse",
+     "m": 4,
+     "minute": 143.9999999999989
+    },
+    {
+     "mode": "chain",
+     "m": 6,
+     "minute": 159.08333333333394
+    },
+    {
+     "mode": "fuse",
+     "m": 5,
+     "minute": 218.83333333334073
+    },
+    {
+     "mode": "chain",
+     "m": 7,
+     "minute": 251.91666666667783
+    },
+    {
+     "mode": "fuse",
+     "m": 6,
+     "minute": 279.9166666666728
+    },
+    {
+     "mode": "chain",
+     "m": 8,
+     "minute": 370.5833333333189
+    },
+    {
+     "mode": "fuse",
+     "m": 7,
+     "minute": 412.5833333333093
+    },
+    {
+     "mode": "chain",
+     "m": 9,
+     "minute": 541.999999999967
+    },
+    {
+     "mode": "fuse",
+     "m": 8,
+     "minute": 583.083333333319
+    },
+    {
+     "mode": "chain",
+     "m": 10,
+     "minute": 786.9166666667451
+    },
+    {
+     "mode": "fuse",
+     "m": 9,
+     "minute": 802.166666666752
+    },
+    {
+     "mode": "chain",
+     "m": 11,
+     "minute": 1150.416666666738
+    },
+    {
+     "mode": "fuse",
+     "m": 10,
+     "minute": 1216.750000000011
+    },
+    {
+     "mode": "chain",
+     "m": 12,
+     "minute": 1636.5833333329624
+    },
+    {
+     "mode": "fuse",
+     "m": 11,
+     "minute": 1762.9166666661808
+    },
+    {
+     "mode": "chain",
+     "m": 13,
+     "minute": 2227.999999999582
+    },
+    {
+     "mode": "fuse",
+     "m": 12,
+     "minute": 2547.083333333496
+    },
+    {
+     "mode": "chain",
+     "m": 14,
+     "minute": 3216.666666668047
+    },
+    {
+     "mode": "fuse",
+     "m": 13,
+     "minute": 3436.25000000178
+    },
+    {
+     "mode": "chain",
+     "m": 15,
+     "minute": 4385.33333333526
+    },
+    {
+     "mode": "fuse",
+     "m": 14,
+     "minute": 4917.499999999991
+    },
+    {
+     "mode": "chain",
+     "m": 16,
+     "minute": 6075.333333329112
+    },
+    {
+     "mode": "fuse",
+     "m": 15,
+     "minute": 7014.249999992363
+    },
+    {
+     "mode": "chain",
+     "m": 17,
+     "minute": 8528.249999990525
+    },
+    {
+     "mode": "fuse",
+     "m": 16,
+     "minute": 9961.666666667621
+    },
+    {
+     "mode": "chain",
+     "m": 18,
+     "minute": 11829.83333334788
+    }
+   ],
+   "gapsByLevelBand": [
+    {
+     "band": "L1-25",
+     "n": 39,
+     "median": 0.08333333333333326,
+     "p90": 1.4166666666665861,
+     "max": 52.66666666647507
+    },
+    {
+     "band": "L26-50",
+     "n": 8,
+     "median": 0.16666666666666607,
+     "p90": 0.16666666666666696,
+     "max": 0.5833333333333313
+    },
+    {
+     "band": "L51-75",
+     "n": 4,
+     "median": 0.7499999999999973,
+     "p90": 1.4166666666666616,
+     "max": 1.4166666666666616
+    },
+    {
+     "band": "L76-100",
+     "n": 8,
+     "median": 0.6666666666666714,
+     "p90": 1.3333333333333428,
+     "max": 1.9166666666666803
+    },
+    {
+     "band": "L101-125",
+     "n": 6,
+     "median": 0.7499999999999893,
+     "p90": 2.1666666666666554,
+     "max": 2.1666666666666554
+    },
+    {
+     "band": "L126-150",
+     "n": 4,
+     "median": 4.3333333333334565,
+     "p90": 6.999999999999936,
+     "max": 6.999999999999936
+    },
+    {
+     "band": "L151-+",
+     "n": 107,
+     "median": 22.499999999994884,
+     "p90": 343.08333333356177,
+     "max": 979.250000007125
+    }
+   ],
+   "simSeconds": 43.156
+  },
+  {
+   "archetype": {
+    "id": "regular",
+    "label": "REGULAR 30 min/day",
+    "minPerDay": 30,
+    "wordsPerMin": 15,
+    "typingWpm": 55
+   },
+   "timeToLevel": {
+    "10": {
+     "minute": 0.9333333333333332,
+     "hours": 0.015555555555555553,
+     "words": 14,
+     "rebirths": 0,
+     "totalLevelUps": 9,
+     "keyTier": 2
+    },
+    "25": {
+     "minute": 2.4666666666666677,
+     "hours": 0.041111111111111126,
+     "words": 37,
+     "rebirths": 1,
+     "totalLevelUps": 40,
+     "keyTier": 3
+    },
+    "50": {
+     "minute": 4.533333333333337,
+     "hours": 0.07555555555555561,
+     "words": 68,
+     "rebirths": 3,
+     "totalLevelUps": 139,
+     "keyTier": 5
+    },
+    "75": {
+     "minute": 9.066666666666654,
+     "hours": 0.1511111111111109,
+     "words": 136,
+     "rebirths": 4,
+     "totalLevelUps": 230,
+     "keyTier": 9
+    },
+    "100": {
+     "minute": 11.533333333333312,
+     "hours": 0.19222222222222188,
+     "words": 173,
+     "rebirths": 5,
+     "totalLevelUps": 336,
+     "keyTier": 12
+    },
+    "125": {
+     "minute": 17.533333333333292,
+     "hours": 0.29222222222222155,
+     "words": 263,
+     "rebirths": 6,
+     "totalLevelUps": 467,
+     "keyTier": 15
+    },
+    "150": {
+     "minute": 30.399999999999913,
+     "hours": 0.5066666666666653,
+     "words": 456,
+     "rebirths": 7,
+     "totalLevelUps": 616,
+     "keyTier": 18
+    },
+    "200": {
+     "minute": 229.53333333332543,
+     "hours": 3.825555555555424,
+     "words": 3443,
+     "rebirths": 9,
+     "totalLevelUps": 989,
+     "keyTier": 24
+    },
+    "250": {
+     "minute": 1646.1999999998175,
+     "hours": 27.436666666663623,
+     "words": 24693,
+     "rebirths": 11,
+     "totalLevelUps": 1462,
+     "keyTier": 29
+    }
+   },
+   "at30days": {
+    "minute": 900.0000000002848,
+    "hours": 15.000000000004746,
+    "day": 29,
+    "level": 238,
+    "highestLevel": 238,
+    "totalLevelUps": 1450,
+    "rebirths": 11,
+    "keyTier": 28,
+    "momentum": 200,
+    "wins": 1.1048099587098904e+22,
+    "winsLifetime": 2.332998401602879e+22,
+    "words": 13500,
+    "distinctWords": 4610,
+    "ownedCosmetics": 11,
+    "ownedThemes": 5,
+    "mastery": {
+     "word-bomb": 9,
+     "category-blitz": 5,
+     "sat-rush": 7,
+     "chain": 11,
+     "fuse": 9
+    },
+    "achievements": 27,
+    "equippedMark": "mk-eternal",
+    "incomePerMin": 99691899644102600000
+   },
+   "at200h": {
+    "minute": 12000.000000042352,
+    "hours": 200.00000000070585,
+    "day": 399,
+    "level": 284,
+    "highestLevel": 284,
+    "totalLevelUps": 1755,
+    "rebirths": 12,
+    "keyTier": 33,
+    "momentum": 200,
+    "wins": 8.791344302986109e+25,
+    "winsLifetime": 1.8341737634921357e+26,
+    "words": 180000,
+    "distinctWords": 17752,
+    "ownedCosmetics": 11,
+    "ownedThemes": 5,
+    "mastery": {
+     "word-bomb": 17,
+     "category-blitz": 13,
+     "sat-rush": 15,
+     "chain": 18,
+     "fuse": 17
+    },
+    "achievements": 29,
+    "equippedMark": "mk-eternal",
+    "incomePerMin": 2.8494872159637125e+22
+   },
+   "rebirths": [
+    {
+     "n": 1,
+     "minute": 1.7333333333333332,
+     "hours": 0.028888888888888888,
+     "levelAt": 17,
+     "mult": 3,
+     "keyTier": 2,
+     "day": 0,
+     "levelAfter1Word": 7,
+     "levelAfter1Min": 28,
+     "minToPrevGate": 0.33333333333333326
+    },
+    {
+     "n": 2,
+     "minute": 3.400000000000004,
+     "hours": 0.05666666666666673,
+     "levelAt": 34,
+     "mult": 9,
+     "keyTier": 3,
+     "day": 0,
+     "levelAfter1Word": 17,
+     "levelAfter1Min": null,
+     "minToPrevGate": 0.33333333333333437
+    },
+    {
+     "n": 3,
+     "minute": 4.266666666666671,
+     "hours": 0.07111111111111118,
+     "levelAt": 42,
+     "mult": 27,
+     "keyTier": 4,
+     "day": 0,
+     "levelAfter1Word": 40,
+     "levelAfter1Min": 56,
+     "minToPrevGate": 0.13333333333333286
+    },
+    {
+     "n": 4,
+     "minute": 8.066666666666658,
+     "hours": 0.13444444444444428,
+     "levelAt": 67,
+     "mult": 81,
+     "keyTier": 6,
+     "day": 0,
+     "levelAfter1Word": 55,
+     "levelAfter1Min": 75,
+     "minToPrevGate": 0.2666666666666657
+    },
+    {
+     "n": 5,
+     "minute": 9.866666666666651,
+     "hours": 0.1644444444444442,
+     "levelAt": 82,
+     "mult": 243,
+     "keyTier": 9,
+     "day": 0,
+     "levelAfter1Word": 76,
+     "levelAfter1Min": 92,
+     "minToPrevGate": 0.1999999999999993
+    },
+    {
+     "n": 6,
+     "minute": 13.399999999999972,
+     "hours": 0.22333333333333286,
+     "levelAt": 107,
+     "mult": 729,
+     "keyTier": 12,
+     "day": 0,
+     "levelAfter1Word": 94,
+     "levelAfter1Min": 113,
+     "minToPrevGate": 0.466666666666665
+    },
+    {
+     "n": 7,
+     "minute": 18.066666666666624,
+     "hours": 0.3011111111111104,
+     "levelAt": 125,
+     "mult": 2187,
+     "keyTier": 15,
+     "day": 0,
+     "levelAfter1Word": 113,
+     "levelAfter1Min": 128,
+     "minToPrevGate": 0.7333333333333307
+    },
+    {
+     "n": 8,
+     "minute": 30.46666666666658,
+     "hours": 0.5077777777777763,
+     "levelAt": 150,
+     "mult": 6561,
+     "keyTier": 18,
+     "day": 0,
+     "levelAfter1Word": 134,
+     "levelAfter1Min": 146,
+     "minToPrevGate": 1.9333333333333478
+    },
+    {
+     "n": 9,
+     "minute": 78.33333333333401,
+     "hours": 1.305555555555567,
+     "levelAt": 175,
+     "mult": 19683,
+     "keyTier": 21,
+     "day": 2,
+     "levelAfter1Word": 145,
+     "levelAfter1Min": 162,
+     "minToPrevGate": 4.799999999999727
+    },
+    {
+     "n": 10,
+     "minute": 229.66666666665876,
+     "hours": 3.827777777777646,
+     "levelAt": 200,
+     "mult": 59049,
+     "keyTier": 24,
+     "day": 7,
+     "levelAfter1Word": 170,
+     "levelAfter1Min": 186,
+     "minToPrevGate": 12.599999999999284
+    },
+    {
+     "n": 11,
+     "minute": 576.6000000000274,
+     "hours": 9.610000000000458,
+     "levelAt": 225,
+     "mult": 177147,
+     "keyTier": 26,
+     "day": 19,
+     "levelAfter1Word": 189,
+     "levelAfter1Min": 202,
+     "minToPrevGate": 45.40000000003613
+    },
+    {
+     "n": 12,
+     "minute": 3439.1999999981867,
+     "hours": 57.31999999996978,
+     "levelAt": 260,
+     "mult": 531441,
+     "keyTier": 30,
+     "day": 114,
+     "levelAfter1Word": 215,
+     "levelAfter1Min": 228,
+     "minToPrevGate": 475.59999999956744
+    }
+   ],
+   "maxLevelsInOneWord": 214,
+   "allCosmeticsOwnedAtMin": 4.266666666666671,
+   "momentumMaxedAtMin": 8.999999999999988,
+   "gaps": {
+    "days30": {
+     "all": {
+      "count": 347,
+      "median": 2.2666666666666586,
+      "p90": 22.999999999998693,
+      "max": 66.13333333338596,
+      "over10": 23,
+      "top": [
+       {
+        "len": 66.13333333338596,
+        "startMin": 810.2000000002133,
+        "endMin": 876.3333333335993,
+        "from": "KEY T28",
+        "to": "ACH RITUAL",
+        "levelAtEnd": 238,
+        "rebirths": 11,
+        "keyTier": 28
+       },
+       {
+        "len": 63.60000000005061,
+        "startMin": 668.6000000001006,
+        "endMin": 732.2000000001512,
+        "from": "ACH KEYBOARD WARRIOR",
+        "to": "MASTERY fuse M9",
+        "levelAtEnd": 233,
+        "rebirths": 11,
+        "keyTier": 27
+       },
+       {
+        "len": 62.20000000004194,
+        "startMin": 503.19999999997657,
+        "endMin": 565.4000000000185,
+        "from": "MASTERY fuse M8",
+        "to": "MASTERY chain M10",
+        "levelAtEnd": 224,
+        "rebirths": 10,
+        "keyTier": 26
+       },
+       {
+        "len": 55.00000000004377,
+        "startMin": 732.2000000001512,
+        "endMin": 787.200000000195,
+        "from": "MASTERY fuse M9",
+        "to": "MASTERY word-bomb M9",
+        "levelAtEnd": 234,
+        "rebirths": 11,
+        "keyTier": 27
+       },
+       {
+        "len": 46.466666666703645,
+        "startMin": 608.4000000000527,
+        "endMin": 654.8666666667564,
+        "from": "KEY T27",
+        "to": "MASTERY category-blitz M5",
+        "levelAtEnd": 228,
+        "rebirths": 11,
+        "keyTier": 27
+       },
+       {
+        "len": 38.599999999997806,
+        "startMin": 434.8666666666471,
+        "endMin": 473.4666666666449,
+        "from": "MASTERY chain M9",
+        "to": "MASTERY category-blitz M4",
+        "levelAtEnd": 221,
+        "rebirths": 10,
+        "keyTier": 26
+       }
+      ]
+     },
+     "strict": {
+      "count": 130,
+      "median": 2.4666666666667894,
+      "p90": 22.999999999998693,
+      "max": 66.13333333338596,
+      "over10": 23,
+      "top": [
+       {
+        "len": 66.13333333338596,
+        "startMin": 810.2000000002133,
+        "endMin": 876.3333333335993,
+        "from": "KEY T28",
+        "to": "ACH RITUAL",
+        "levelAtEnd": 238,
+        "rebirths": 11,
+        "keyTier": 28
+       },
+       {
+        "len": 63.60000000005061,
+        "startMin": 668.6000000001006,
+        "endMin": 732.2000000001512,
+        "from": "ACH KEYBOARD WARRIOR",
+        "to": "MASTERY fuse M9",
+        "levelAtEnd": 233,
+        "rebirths": 11,
+        "keyTier": 27
+       },
+       {
+        "len": 62.20000000004194,
+        "startMin": 503.19999999997657,
+        "endMin": 565.4000000000185,
+        "from": "MASTERY fuse M8",
+        "to": "MASTERY chain M10",
+        "levelAtEnd": 224,
+        "rebirths": 10,
+        "keyTier": 26
+       },
+       {
+        "len": 55.00000000004377,
+        "startMin": 732.2000000001512,
+        "endMin": 787.200000000195,
+        "from": "MASTERY fuse M9",
+        "to": "MASTERY word-bomb M9",
+        "levelAtEnd": 234,
+        "rebirths": 11,
+        "keyTier": 27
+       },
+       {
+        "len": 46.466666666703645,
+        "startMin": 608.4000000000527,
+        "endMin": 654.8666666667564,
+        "from": "KEY T27",
+        "to": "MASTERY category-blitz M5",
+        "levelAtEnd": 228,
+        "rebirths": 11,
+        "keyTier": 27
+       },
+       {
+        "len": 38.599999999997806,
+        "startMin": 434.8666666666471,
+        "endMin": 473.4666666666449,
+        "from": "MASTERY chain M9",
+        "to": "MASTERY category-blitz M4",
+        "levelAtEnd": 221,
+        "rebirths": 10,
+        "keyTier": 26
+       }
+      ]
+     }
+    },
+    "tail": {
+     "all": {
+      "count": 395,
+      "median": 6.933333333332939,
+      "p90": 238.7333333331162,
+      "max": 1008.0666666795023,
+      "over10": 68,
+      "top": [
+       {
+        "len": 1008.0666666795023,
+        "startMin": 8626.133333332726,
+        "endMin": 9634.200000012228,
+        "from": "MASTERY word-bomb M16",
+        "to": "MASTERY chain M18",
+        "levelAtEnd": 280,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 959.0666666788784,
+        "startMin": 11040.066666696795,
+        "endMin": 11999.133333375674,
+        "from": "MASTERY category-blitz M13",
+        "to": "MASTERY word-bomb M17",
+        "levelAtEnd": 284,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 843.7333333384886,
+        "startMin": 7782.399999994237,
+        "endMin": 8626.133333332726,
+        "from": "MASTERY category-blitz M12",
+        "to": "MASTERY word-bomb M16",
+        "levelAtEnd": 279,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 700.06666666603,
+        "startMin": 6196.533333329013,
+        "endMin": 6896.599999995043,
+        "from": "MASTERY word-bomb M15",
+        "to": "MASTERY chain M17",
+        "levelAtEnd": 276,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 587.6666666741494,
+        "startMin": 10089.000000018019,
+        "endMin": 10676.666666692168,
+        "from": "KEY T33",
+        "to": "MASTERY fuse M17",
+        "levelAtEnd": 282,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 522.7333333328579,
+        "startMin": 7093.533333328197,
+        "endMin": 7616.266666661055,
+        "from": "MASTERY sat-rush M14",
+        "to": "MASTERY fuse M16",
+        "levelAtEnd": 277,
+        "rebirths": 12,
+        "keyTier": 32
+       }
+      ]
+     },
+     "strict": {
+      "count": 178,
+      "median": 7.400000000000368,
+      "p90": 238.7333333331162,
+      "max": 1008.0666666795023,
+      "over10": 68,
+      "top": [
+       {
+        "len": 1008.0666666795023,
+        "startMin": 8626.133333332726,
+        "endMin": 9634.200000012228,
+        "from": "MASTERY word-bomb M16",
+        "to": "MASTERY chain M18",
+        "levelAtEnd": 280,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 959.0666666788784,
+        "startMin": 11040.066666696795,
+        "endMin": 11999.133333375674,
+        "from": "MASTERY category-blitz M13",
+        "to": "MASTERY word-bomb M17",
+        "levelAtEnd": 284,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 843.7333333384886,
+        "startMin": 7782.399999994237,
+        "endMin": 8626.133333332726,
+        "from": "MASTERY category-blitz M12",
+        "to": "MASTERY word-bomb M16",
+        "levelAtEnd": 279,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 700.06666666603,
+        "startMin": 6196.533333329013,
+        "endMin": 6896.599999995043,
+        "from": "MASTERY word-bomb M15",
+        "to": "MASTERY chain M17",
+        "levelAtEnd": 276,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 587.6666666741494,
+        "startMin": 10089.000000018019,
+        "endMin": 10676.666666692168,
+        "from": "KEY T33",
+        "to": "MASTERY fuse M17",
+        "levelAtEnd": 282,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 522.7333333328579,
+        "startMin": 7093.533333328197,
+        "endMin": 7616.266666661055,
+        "from": "MASTERY sat-rush M14",
+        "to": "MASTERY fuse M16",
+        "levelAtEnd": 277,
+        "rebirths": 12,
+        "keyTier": 32
+       }
+      ]
+     }
+    }
+   },
+   "eventCounts": {
+    "mode-unlock": 2,
+    "frame": 5,
+    "rank": 9,
+    "buy-key": 33,
+    "buy-cosmetic": 7,
+    "buy-theme": 4,
+    "menu-tier": 7,
+    "rebirth": 12,
+    "achievement": 29,
+    "buy-momentum": 200,
+    "collection": 5,
+    "mark-rank": 7,
+    "mastery": 75
+   },
+   "afford": {
+    "100": {
+     "level": 100,
+     "minute": 11.533333333333312,
+     "rebirths": 5,
+     "incomePerMin": 2437207324.2857194,
+     "keyPower": {
+      "tier": 13,
+      "price": 21767823360,
+      "minutes": 8.931461489998423,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 4.266666666666671
+     },
+     "nextRebirthAt": 100
+    },
+    "125": {
+     "level": 125,
+     "minute": 17.533333333333292,
+     "rebirths": 6,
+     "incomePerMin": 352206931946.51526,
+     "keyPower": {
+      "tier": 16,
+      "price": 4701849845760,
+      "minutes": 13.34968002979,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 4.266666666666671
+     },
+     "nextRebirthAt": 125
+    },
+    "150": {
+     "level": 150,
+     "minute": 30.399999999999913,
+     "rebirths": 7,
+     "incomePerMin": 52954330194129.82,
+     "keyPower": {
+      "tier": 19,
+      "price": 1015599566684160,
+      "minutes": 19.178782225381504,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 4.266666666666671
+     },
+     "nextRebirthAt": 150
+    }
+   },
+   "mastery": [
+    {
+     "mode": "fuse",
+     "m": 2,
+     "minute": 14.7333333333333
+    },
+    {
+     "mode": "chain",
+     "m": 2,
+     "minute": 20.133333333333283
+    },
+    {
+     "mode": "chain",
+     "m": 3,
+     "minute": 35.40000000000008
+    },
+    {
+     "mode": "fuse",
+     "m": 3,
+     "minute": 53.26666666666763
+    },
+    {
+     "mode": "chain",
+     "m": 4,
+     "minute": 58.80000000000124
+    },
+    {
+     "mode": "fuse",
+     "m": 4,
+     "minute": 88.06666666666679
+    },
+    {
+     "mode": "chain",
+     "m": 5,
+     "minute": 102.66666666666596
+    },
+    {
+     "mode": "chain",
+     "m": 6,
+     "minute": 138.46666666666394
+    },
+    {
+     "mode": "fuse",
+     "m": 5,
+     "minute": 153.19999999999644
+    },
+    {
+     "mode": "chain",
+     "m": 7,
+     "minute": 217.7333333333261
+    },
+    {
+     "mode": "fuse",
+     "m": 6,
+     "minute": 220.86666666665926
+    },
+    {
+     "mode": "chain",
+     "m": 8,
+     "minute": 310.0666666666542
+    },
+    {
+     "mode": "fuse",
+     "m": 7,
+     "minute": 371.999999999984
+    },
+    {
+     "mode": "chain",
+     "m": 9,
+     "minute": 434.8666666666471
+    },
+    {
+     "mode": "fuse",
+     "m": 8,
+     "minute": 503.19999999997657
+    },
+    {
+     "mode": "chain",
+     "m": 10,
+     "minute": 565.4000000000185
+    },
+    {
+     "mode": "fuse",
+     "m": 9,
+     "minute": 732.2000000001512
+    },
+    {
+     "mode": "chain",
+     "m": 11,
+     "minute": 797.1333333335363
+    },
+    {
+     "mode": "fuse",
+     "m": 10,
+     "minute": 1078.3333333336673
+    },
+    {
+     "mode": "chain",
+     "m": 12,
+     "minute": 1172.4000000002484
+    },
+    {
+     "mode": "fuse",
+     "m": 11,
+     "minute": 1559.0666666665634
+    },
+    {
+     "mode": "chain",
+     "m": 13,
+     "minute": 1699.599999999769
+    },
+    {
+     "mode": "fuse",
+     "m": 12,
+     "minute": 2127.533333332713
+    },
+    {
+     "mode": "chain",
+     "m": 14,
+     "minute": 2410.5999999991222
+    },
+    {
+     "mode": "fuse",
+     "m": 13,
+     "minute": 2841.8666666653967
+    },
+    {
+     "mode": "chain",
+     "m": 15,
+     "minute": 3388.3333333315663
+    },
+    {
+     "mode": "fuse",
+     "m": 14,
+     "minute": 3907.9999999977604
+    },
+    {
+     "mode": "chain",
+     "m": 16,
+     "minute": 4874.4666666635485
+    },
+    {
+     "mode": "fuse",
+     "m": 15,
+     "minute": 5444.799999996363
+    },
+    {
+     "mode": "chain",
+     "m": 17,
+     "minute": 6896.599999995043
+    },
+    {
+     "mode": "fuse",
+     "m": 16,
+     "minute": 7616.266666661055
+    },
+    {
+     "mode": "chain",
+     "m": 18,
+     "minute": 9634.200000012228
+    },
+    {
+     "mode": "fuse",
+     "m": 17,
+     "minute": 10676.666666692168
+    }
+   ],
+   "gapsByLevelBand": [
+    {
+     "band": "L1-25",
+     "n": 38,
+     "median": 0.06666666666666665,
+     "p90": 2.199999999999994,
+     "max": 50.866666666620404
+    },
+    {
+     "band": "L26-50",
+     "n": 7,
+     "median": 0.20000000000000062,
+     "p90": 0.4666666666666681,
+     "max": 0.5333333333333332
+    },
+    {
+     "band": "L51-75",
+     "n": 4,
+     "median": 0.6666666666666643,
+     "p90": 0.8666666666666636,
+     "max": 0.8666666666666636
+    },
+    {
+     "band": "L76-100",
+     "n": 6,
+     "median": 0.3999999999999986,
+     "p90": 1.2666666666666622,
+     "max": 1.2666666666666622
+    },
+    {
+     "band": "L101-125",
+     "n": 6,
+     "median": 0.6666666666666643,
+     "p90": 0.7999999999999972,
+     "max": 0.7999999999999972
+    },
+    {
+     "band": "L126-150",
+     "n": 4,
+     "median": 2.2666666666666586,
+     "p90": 2.9999999999999893,
+     "max": 2.9999999999999893
+    },
+    {
+     "band": "L151-+",
+     "n": 113,
+     "median": 18.599999999998943,
+     "p90": 363.40000000462715,
+     "max": 1008.0666666795023
+    }
+   ],
+   "simSeconds": 49.874
+  },
+  {
+   "archetype": {
+    "id": "grinder",
+    "label": "GRINDER 60 min/day",
+    "minPerDay": 60,
+    "wordsPerMin": 18,
+    "typingWpm": 70
+   },
+   "timeToLevel": {
+    "10": {
+     "minute": 0.8333333333333336,
+     "hours": 0.013888888888888893,
+     "words": 15,
+     "rebirths": 0,
+     "totalLevelUps": 9,
+     "keyTier": 2
+    },
+    "25": {
+     "minute": 1.555555555555556,
+     "hours": 0.025925925925925932,
+     "words": 28,
+     "rebirths": 1,
+     "totalLevelUps": 38,
+     "keyTier": 3
+    },
+    "50": {
+     "minute": 4.16666666666666,
+     "hours": 0.06944444444444434,
+     "words": 75,
+     "rebirths": 3,
+     "totalLevelUps": 147,
+     "keyTier": 6
+    },
+    "75": {
+     "minute": 6.4444444444444295,
+     "hours": 0.10740740740740716,
+     "words": 116,
+     "rebirths": 4,
+     "totalLevelUps": 232,
+     "keyTier": 8
+    },
+    "100": {
+     "minute": 8.666666666666645,
+     "hours": 0.14444444444444407,
+     "words": 156,
+     "rebirths": 5,
+     "totalLevelUps": 337,
+     "keyTier": 12
+    },
+    "125": {
+     "minute": 12.44444444444441,
+     "hours": 0.20740740740740682,
+     "words": 224,
+     "rebirths": 6,
+     "totalLevelUps": 461,
+     "keyTier": 15
+    },
+    "150": {
+     "minute": 23.666666666666835,
+     "hours": 0.39444444444444726,
+     "words": 426,
+     "rebirths": 7,
+     "totalLevelUps": 610,
+     "keyTier": 18
+    },
+    "200": {
+     "minute": 189.72222222221131,
+     "hours": 3.162037037036855,
+     "words": 3415,
+     "rebirths": 9,
+     "totalLevelUps": 983,
+     "keyTier": 24
+    },
+    "250": {
+     "minute": 1421.9444444449678,
+     "hours": 23.699074074082795,
+     "words": 25595,
+     "rebirths": 11,
+     "totalLevelUps": 1456,
+     "keyTier": 29
+    }
+   },
+   "at30days": {
+    "minute": 1800.000000001211,
+    "hours": 30.000000000020183,
+    "day": 29,
+    "level": 252,
+    "highestLevel": 252,
+    "totalLevelUps": 1458,
+    "rebirths": 11,
+    "keyTier": 29,
+    "momentum": 200,
+    "wins": 2.8299720049102325e+23,
+    "winsLifetime": 3.5668850706459395e+23,
+    "words": 32400,
+    "distinctWords": 7980,
+    "ownedCosmetics": 11,
+    "ownedThemes": 5,
+    "mastery": {
+     "word-bomb": 11,
+     "category-blitz": 8,
+     "sat-rush": 10,
+     "chain": 13,
+     "fuse": 12
+    },
+    "achievements": 28,
+    "equippedMark": "mk-eternal",
+    "incomePerMin": 433740551964324660000
+   },
+   "at200h": {
+    "minute": 12000.055555512978,
+    "hours": 200.0009259252163,
+    "day": 200,
+    "level": 286,
+    "highestLevel": 286,
+    "totalLevelUps": 1751,
+    "rebirths": 12,
+    "keyTier": 33,
+    "momentum": 200,
+    "wins": 1.9574207069868055e+26,
+    "winsLifetime": 2.9124600401803233e+26,
+    "words": 216001,
+    "distinctWords": 18841,
+    "ownedCosmetics": 11,
+    "ownedThemes": 5,
+    "mastery": {
+     "word-bomb": 17,
+     "category-blitz": 13,
+     "sat-rush": 16,
+     "chain": 19,
+     "fuse": 17
+    },
+    "achievements": 30,
+    "equippedMark": "mk-eternal",
+    "incomePerMin": 6.393178631779694e+22
+   },
+   "rebirths": [
+    {
+     "n": 1,
+     "minute": 1.3333333333333337,
+     "hours": 0.02222222222222223,
+     "levelAt": 15,
+     "mult": 3,
+     "keyTier": 2,
+     "day": 0,
+     "levelAfter1Word": 10,
+     "levelAfter1Min": null,
+     "minToPrevGate": 0.11111111111111116
+    },
+    {
+     "n": 2,
+     "minute": 2.222222222222222,
+     "hours": 0.03703703703703703,
+     "levelAt": 34,
+     "mult": 9,
+     "keyTier": 3,
+     "day": 0,
+     "levelAfter1Word": 23,
+     "levelAfter1Min": 44,
+     "minToPrevGate": 0.22222222222222143
+    },
+    {
+     "n": 3,
+     "minute": 4.055555555555549,
+     "hours": 0.06759259259259248,
+     "levelAt": 49,
+     "mult": 27,
+     "keyTier": 4,
+     "day": 0,
+     "levelAfter1Word": 43,
+     "levelAfter1Min": 62,
+     "minToPrevGate": 0.16666666666666607
+    },
+    {
+     "n": 4,
+     "minute": 5.444444444444433,
+     "hours": 0.09074074074074055,
+     "levelAt": 64,
+     "mult": 81,
+     "keyTier": 6,
+     "day": 0,
+     "levelAfter1Word": 60,
+     "levelAfter1Min": 75,
+     "minToPrevGate": 0.16666666666666607
+    },
+    {
+     "n": 5,
+     "minute": 7.222222222222205,
+     "hours": 0.12037037037037007,
+     "levelAt": 81,
+     "mult": 243,
+     "keyTier": 8,
+     "day": 0,
+     "levelAfter1Word": 79,
+     "levelAfter1Min": 94,
+     "minToPrevGate": 0.11111111111111072
+    },
+    {
+     "n": 6,
+     "minute": 8.888888888888866,
+     "hours": 0.14814814814814778,
+     "levelAt": 100,
+     "mult": 729,
+     "keyTier": 12,
+     "day": 0,
+     "levelAfter1Word": 97,
+     "levelAfter1Min": 114,
+     "minToPrevGate": 0.11111111111111072
+    },
+    {
+     "n": 7,
+     "minute": 12.66666666666663,
+     "hours": 0.2111111111111105,
+     "levelAt": 125,
+     "mult": 2187,
+     "keyTier": 15,
+     "day": 0,
+     "levelAfter1Word": 104,
+     "levelAfter1Min": 127,
+     "minToPrevGate": 0.777777777777775
+    },
+    {
+     "n": 8,
+     "minute": 24.055555555555735,
+     "hours": 0.4009259259259289,
+     "levelAt": 150,
+     "mult": 6561,
+     "keyTier": 18,
+     "day": 0,
+     "levelAfter1Word": 131,
+     "levelAfter1Min": 148,
+     "minToPrevGate": 1.5000000000000426
+    },
+    {
+     "n": 9,
+     "minute": 63.000000000001286,
+     "hours": 1.0500000000000214,
+     "levelAt": 175,
+     "mult": 19683,
+     "keyTier": 21,
+     "day": 1,
+     "levelAfter1Word": 148,
+     "levelAfter1Min": 169,
+     "minToPrevGate": 4.500000000000121
+    },
+    {
+     "n": 10,
+     "minute": 190.11111111110012,
+     "hours": 3.168518518518335,
+     "levelAt": 200,
+     "mult": 59049,
+     "keyTier": 24,
+     "day": 3,
+     "levelAfter1Word": 174,
+     "levelAfter1Min": 188,
+     "minToPrevGate": 12.888888888885958
+    },
+    {
+     "n": 11,
+     "minute": 492.0555555554759,
+     "hours": 8.200925925924599,
+     "levelAt": 225,
+     "mult": 177147,
+     "keyTier": 26,
+     "day": 8,
+     "levelAfter1Word": 181,
+     "levelAfter1Min": 200,
+     "minToPrevGate": 45.27777777776754
+    },
+    {
+     "n": 12,
+     "minute": 2922.7222222254754,
+     "hours": 48.71203703709126,
+     "levelAt": 260,
+     "mult": 531441,
+     "keyTier": 30,
+     "day": 48,
+     "levelAfter1Word": 211,
+     "levelAfter1Min": 229,
+     "minToPrevGate": 403.6111111118453
+    }
+   ],
+   "maxLevelsInOneWord": 210,
+   "allCosmeticsOwnedAtMin": 4.055555555555549,
+   "momentumMaxedAtMin": 7.222222222222205,
+   "gaps": {
+    "days30": {
+     "all": {
+      "count": 363,
+      "median": 3.2777777777770325,
+      "p90": 56.66666666555875,
+      "max": 144.77777777804113,
+      "over10": 34,
+      "top": [
+       {
+        "len": 144.77777777804113,
+        "startMin": 1285.0555555558299,
+        "endMin": 1429.833333333871,
+        "from": "MASTERY word-bomb M11",
+        "to": "MASTERY chain M13",
+        "levelAtEnd": 250,
+        "rebirths": 11,
+        "keyTier": 29
+       },
+       {
+        "len": 107.61111111130685,
+        "startMin": 1514.1666666673577,
+        "endMin": 1621.7777777786646,
+        "from": "MASTERY category-blitz M8",
+        "to": "MASTERY sat-rush M10",
+        "levelAtEnd": 251,
+        "rebirths": 11,
+        "keyTier": 29
+       },
+       {
+        "len": 103.72222222219864,
+        "startMin": 599.499999999896,
+        "endMin": 703.2222222220946,
+        "from": "MASTERY fuse M9",
+        "to": "KEY T28",
+        "levelAtEnd": 235,
+        "rebirths": 11,
+        "keyTier": 28
+       },
+       {
+        "len": 100.05555555573756,
+        "startMin": 1185.0000000000923,
+        "endMin": 1285.0555555558299,
+        "from": "MASTERY fuse M11",
+        "to": "MASTERY word-bomb M11",
+        "levelAtEnd": 248,
+        "rebirths": 11,
+        "keyTier": 29
+       },
+       {
+        "len": 93.72222222220091,
+        "startMin": 925.2777777775997,
+        "endMin": 1018.9999999998006,
+        "from": "MASTERY word-bomb M10",
+        "to": "MASTERY chain M12",
+        "levelAtEnd": 243,
+        "rebirths": 11,
+        "keyTier": 28
+       },
+       {
+        "len": 84.33333333348673,
+        "startMin": 1429.833333333871,
+        "endMin": 1514.1666666673577,
+        "from": "MASTERY chain M13",
+        "to": "MASTERY category-blitz M8",
+        "levelAtEnd": 250,
+        "rebirths": 11,
+        "keyTier": 29
+       }
+      ]
+     },
+     "strict": {
+      "count": 144,
+      "median": 3.2777777777770325,
+      "p90": 56.66666666555875,
+      "max": 144.77777777804113,
+      "over10": 34,
+      "top": [
+       {
+        "len": 144.77777777804113,
+        "startMin": 1285.0555555558299,
+        "endMin": 1429.833333333871,
+        "from": "MASTERY word-bomb M11",
+        "to": "MASTERY chain M13",
+        "levelAtEnd": 250,
+        "rebirths": 11,
+        "keyTier": 29
+       },
+       {
+        "len": 107.61111111130685,
+        "startMin": 1514.1666666673577,
+        "endMin": 1621.7777777786646,
+        "from": "MASTERY category-blitz M8",
+        "to": "MASTERY sat-rush M10",
+        "levelAtEnd": 251,
+        "rebirths": 11,
+        "keyTier": 29
+       },
+       {
+        "len": 103.72222222219864,
+        "startMin": 599.499999999896,
+        "endMin": 703.2222222220946,
+        "from": "MASTERY fuse M9",
+        "to": "KEY T28",
+        "levelAtEnd": 235,
+        "rebirths": 11,
+        "keyTier": 28
+       },
+       {
+        "len": 100.05555555573756,
+        "startMin": 1185.0000000000923,
+        "endMin": 1285.0555555558299,
+        "from": "MASTERY fuse M11",
+        "to": "MASTERY word-bomb M11",
+        "levelAtEnd": 248,
+        "rebirths": 11,
+        "keyTier": 29
+       },
+       {
+        "len": 93.72222222220091,
+        "startMin": 925.2777777775997,
+        "endMin": 1018.9999999998006,
+        "from": "MASTERY word-bomb M10",
+        "to": "MASTERY chain M12",
+        "levelAtEnd": 243,
+        "rebirths": 11,
+        "keyTier": 28
+       },
+       {
+        "len": 84.33333333348673,
+        "startMin": 1429.833333333871,
+        "endMin": 1514.1666666673577,
+        "from": "MASTERY chain M13",
+        "to": "MASTERY category-blitz M8",
+        "levelAtEnd": 250,
+        "rebirths": 11,
+        "keyTier": 29
+       }
+      ]
+     }
+    },
+    "tail": {
+     "all": {
+      "count": 398,
+      "median": 5.000000000000142,
+      "p90": 208.1111111080827,
+      "max": 1318.3888888697038,
+      "over10": 66,
+      "top": [
+       {
+        "len": 1318.3888888697038,
+        "startMin": 9974.333333320234,
+        "endMin": 11292.722222189937,
+        "from": "MASTERY word-bomb M17",
+        "to": "MASTERY chain M19",
+        "levelAtEnd": 285,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 1028.7222222240935,
+        "startMin": 7042.555555566302,
+        "endMin": 8071.277777790396,
+        "from": "MASTERY word-bomb M16",
+        "to": "MASTERY chain M18",
+        "levelAtEnd": 280,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 786.9999999885476,
+        "startMin": 9187.333333331686,
+        "endMin": 9974.333333320234,
+        "from": "MASTERY category-blitz M13",
+        "to": "MASTERY word-bomb M17",
+        "levelAtEnd": 284,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 655.7777777789706,
+        "startMin": 5026.944444451525,
+        "endMin": 5682.722222230495,
+        "from": "MASTERY word-bomb M15",
+        "to": "MASTERY chain M17",
+        "levelAtEnd": 275,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 613.500000001116,
+        "startMin": 6429.055555565186,
+        "endMin": 7042.555555566302,
+        "from": "MASTERY fuse M16",
+        "to": "MASTERY word-bomb M16",
+        "levelAtEnd": 278,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 507.88888888149813,
+        "startMin": 8482.16666667528,
+        "endMin": 8990.055555556779,
+        "from": "KEY T33",
+        "to": "MASTERY fuse M17",
+        "levelAtEnd": 282,
+        "rebirths": 12,
+        "keyTier": 33
+       }
+      ]
+     },
+     "strict": {
+      "count": 179,
+      "median": 5.388888888889042,
+      "p90": 236.55555555598585,
+      "max": 1318.3888888697038,
+      "over10": 66,
+      "top": [
+       {
+        "len": 1318.3888888697038,
+        "startMin": 9974.333333320234,
+        "endMin": 11292.722222189937,
+        "from": "MASTERY word-bomb M17",
+        "to": "MASTERY chain M19",
+        "levelAtEnd": 285,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 1028.7222222240935,
+        "startMin": 7042.555555566302,
+        "endMin": 8071.277777790396,
+        "from": "MASTERY word-bomb M16",
+        "to": "MASTERY chain M18",
+        "levelAtEnd": 280,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 786.9999999885476,
+        "startMin": 9187.333333331686,
+        "endMin": 9974.333333320234,
+        "from": "MASTERY category-blitz M13",
+        "to": "MASTERY word-bomb M17",
+        "levelAtEnd": 284,
+        "rebirths": 12,
+        "keyTier": 33
+       },
+       {
+        "len": 655.7777777789706,
+        "startMin": 5026.944444451525,
+        "endMin": 5682.722222230495,
+        "from": "MASTERY word-bomb M15",
+        "to": "MASTERY chain M17",
+        "levelAtEnd": 275,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 613.500000001116,
+        "startMin": 6429.055555565186,
+        "endMin": 7042.555555566302,
+        "from": "MASTERY fuse M16",
+        "to": "MASTERY word-bomb M16",
+        "levelAtEnd": 278,
+        "rebirths": 12,
+        "keyTier": 32
+       },
+       {
+        "len": 507.88888888149813,
+        "startMin": 8482.16666667528,
+        "endMin": 8990.055555556779,
+        "from": "KEY T33",
+        "to": "MASTERY fuse M17",
+        "levelAtEnd": 282,
+        "rebirths": 12,
+        "keyTier": 33
+       }
+      ]
+     }
+    }
+   },
+   "eventCounts": {
+    "mode-unlock": 2,
+    "frame": 5,
+    "buy-key": 33,
+    "buy-cosmetic": 7,
+    "buy-theme": 4,
+    "rank": 9,
+    "menu-tier": 7,
+    "rebirth": 12,
+    "achievement": 30,
+    "buy-momentum": 200,
+    "mastery": 77,
+    "collection": 5,
+    "mark-rank": 7
+   },
+   "afford": {
+    "100": {
+     "level": 100,
+     "minute": 8.666666666666645,
+     "rebirths": 5,
+     "incomePerMin": 2951714680.615392,
+     "keyPower": {
+      "tier": 13,
+      "price": 21767823360,
+      "minutes": 7.374636682520313,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 4.055555555555549
+     },
+     "nextRebirthAt": 100
+    },
+    "125": {
+     "level": 125,
+     "minute": 12.44444444444441,
+     "rebirths": 6,
+     "incomePerMin": 399831453431.04767,
+     "keyPower": {
+      "tier": 16,
+      "price": 4701849845760,
+      "minutes": 11.7595797064296,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 4.055555555555549
+     },
+     "nextRebirthAt": 125
+    },
+    "150": {
+     "level": 150,
+     "minute": 23.666666666666835,
+     "rebirths": 7,
+     "incomePerMin": 50066058134228.92,
+     "keyPower": {
+      "tier": 19,
+      "price": 1015599566684160,
+      "minutes": 20.28519129589353,
+      "flag": "ok"
+     },
+     "momentum": {
+      "count": 201,
+      "price": null,
+      "minutes": null,
+      "flag": "maxed"
+     },
+     "cosmetic": {
+      "id": null,
+      "price": null,
+      "minutes": null,
+      "flag": "none-left",
+      "ownedAllAtMin": 4.055555555555549
+     },
+     "nextRebirthAt": 150
+    }
+   },
+   "mastery": [
+    {
+     "mode": "fuse",
+     "m": 2,
+     "minute": 6.999999999999983
+    },
+    {
+     "mode": "chain",
+     "m": 2,
+     "minute": 15.611111111111065
+    },
+    {
+     "mode": "fuse",
+     "m": 3,
+     "minute": 25.72222222222245
+    },
+    {
+     "mode": "chain",
+     "m": 3,
+     "minute": 36.33333333333386
+    },
+    {
+     "mode": "chain",
+     "m": 4,
+     "minute": 48.16666666666753
+    },
+    {
+     "mode": "fuse",
+     "m": 4,
+     "minute": 70.38888888889038
+    },
+    {
+     "mode": "chain",
+     "m": 5,
+     "minute": 80.22222222222399
+    },
+    {
+     "mode": "chain",
+     "m": 6,
+     "minute": 123.44444444444744
+    },
+    {
+     "mode": "fuse",
+     "m": 5,
+     "minute": 126.50000000000308
+    },
+    {
+     "mode": "fuse",
+     "m": 6,
+     "minute": 172.2222222222153
+    },
+    {
+     "mode": "chain",
+     "m": 7,
+     "minute": 192.44444444443292
+    },
+    {
+     "mode": "fuse",
+     "m": 7,
+     "minute": 243.22222222219915
+    },
+    {
+     "mode": "chain",
+     "m": 8,
+     "minute": 306.9444444444069
+    },
+    {
+     "mode": "fuse",
+     "m": 8,
+     "minute": 366.4999999999489
+    },
+    {
+     "mode": "chain",
+     "m": 9,
+     "minute": 387.1111111110553
+    },
+    {
+     "mode": "chain",
+     "m": 10,
+     "minute": 524.2222222221353
+    },
+    {
+     "mode": "fuse",
+     "m": 9,
+     "minute": 599.499999999896
+    },
+    {
+     "mode": "chain",
+     "m": 11,
+     "minute": 738.5555555554199
+    },
+    {
+     "mode": "fuse",
+     "m": 10,
+     "minute": 781.7222222220768
+    },
+    {
+     "mode": "chain",
+     "m": 12,
+     "minute": 1018.9999999998006
+    },
+    {
+     "mode": "fuse",
+     "m": 11,
+     "minute": 1185.0000000000923
+    },
+    {
+     "mode": "chain",
+     "m": 13,
+     "minute": 1429.833333333871
+    },
+    {
+     "mode": "fuse",
+     "m": 12,
+     "minute": 1660.7222222231799
+    },
+    {
+     "mode": "chain",
+     "m": 14,
+     "minute": 2064.9444444461374
+    },
+    {
+     "mode": "fuse",
+     "m": 13,
+     "minute": 2299.611111113231
+    },
+    {
+     "mode": "chain",
+     "m": 15,
+     "minute": 2885.5000000031855
+    },
+    {
+     "mode": "fuse",
+     "m": 14,
+     "minute": 3229.666666670478
+    },
+    {
+     "mode": "chain",
+     "m": 16,
+     "minute": 4102.944444449844
+    },
+    {
+     "mode": "fuse",
+     "m": 15,
+     "minute": 4587.500000006281
+    },
+    {
+     "mode": "chain",
+     "m": 17,
+     "minute": 5682.722222230495
+    },
+    {
+     "mode": "fuse",
+     "m": 16,
+     "minute": 6429.055555565186
+    },
+    {
+     "mode": "chain",
+     "m": 18,
+     "minute": 8071.277777790396
+    },
+    {
+     "mode": "fuse",
+     "m": 17,
+     "minute": 8990.055555556779
+    },
+    {
+     "mode": "chain",
+     "m": 19,
+     "minute": 11292.722222189937
+    }
+   ],
+   "gapsByLevelBand": [
+    {
+     "band": "L1-25",
+     "n": 37,
+     "median": 0.05555555555555558,
+     "p90": 1.5555555555552019,
+     "max": 79.77777777775964
+    },
+    {
+     "band": "L26-50",
+     "n": 6,
+     "median": 0.11111111111111116,
+     "p90": 0.33333333333333215,
+     "max": 0.33333333333333215
+    },
+    {
+     "band": "L51-75",
+     "n": 6,
+     "median": 0.11111111111111072,
+     "p90": 1.0555555555555518,
+     "max": 1.0555555555555518
+    },
+    {
+     "band": "L76-100",
+     "n": 5,
+     "median": 0.44444444444444287,
+     "p90": 1.1111111111111072,
+     "max": 1.1111111111111072
+    },
+    {
+     "band": "L101-125",
+     "n": 3,
+     "median": 0.9999999999999964,
+     "p90": 1.722222222222216,
+     "max": 1.722222222222216
+    },
+    {
+     "band": "L126-150",
+     "n": 7,
+     "median": 1.0555555555555518,
+     "p90": 1.666666666666714,
+     "max": 3.833333333333428
+    },
+    {
+     "band": "L151-+",
+     "n": 115,
+     "median": 17.166666666662763,
+     "p90": 323.00000000058753,
+     "max": 1318.3888888697038
+    }
+   ],
+   "simSeconds": 56.257
+  }
+ ]
+}

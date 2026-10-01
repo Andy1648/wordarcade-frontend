@@ -3,6 +3,8 @@
 // winsLifetime) and enables equip. REBIRTH: its own icon opens straight into the rebirth view,
 // gated on level, and (when eligible) zeroes xp while preserving wins + purchases.
 import { test, expect } from '@playwright/test';
+import { POP_STYLES, SOUND_PACKS } from '../src/progress/shop.js';
+import { THEMES } from '../src/theme/themes.js';
 import { installBackendMock } from './support/backendMock.js';
 
 async function openVia(page, seed, selector) {
@@ -42,7 +44,8 @@ test.describe('shop', () => {
     // 16 cards = 5 POP STYLES + 6 SOUND PACKS (the original 11 cosmetics) + 5 THEMES
     // (default/midnight/inferno/toxic/prism — themes render as .shop-card too via .shop-theme-card;
     // feat/themes added them). KEY POWER + MOMENTUM are upgrade TRACKS, not .shop-card, so not counted.
-    await expect(page.locator('.shop-card')).toHaveCount(16);
+    // Derived from the catalog: STEP 19 lengthened both cosmetic ladders.
+    await expect(page.locator('.shop-card')).toHaveCount(POP_STYLES.length + SOUND_PACKS.length + THEMES.length);
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });

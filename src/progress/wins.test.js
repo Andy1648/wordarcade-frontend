@@ -100,11 +100,13 @@ test('perWordWins: key-tier letters × mode × difficulty, on the reference word
   assert.ok(perWordXp({ ...o, difficulty: 'hard' }) > perWordXp({ ...o, difficulty: 'chill' }));
 });
 
-test('perWordWins: REBIRTH multiplies wins on the same ladder as XP (now 3^rc)', () => {
+test('perWordWins: REBIRTH multiplies wins on the same ladder as XP (v9: additive 1 + rc)', () => {
   const wb = (rc) => perWordWins({ mode: 'wordBomb', rebirthCount: rc, keyTier: 0, streakMult: 1, masteryMult: 1 });
-  assert.equal(wb(1), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(1)) / 10); // ×3
-  assert.equal(wb(2), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(2)) / 10); // ×9
-  assert.equal(wb(3), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(3)) / 10); // ×27
+  assert.equal(wb(1), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(1)) / 10); // ×2
+  assert.equal(wb(2), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(2)) / 10); // ×3
+  assert.equal(wb(3), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(3)) / 10); // ×4
+  assert.equal(wb(1), 20); // 10 XP × 5 letters × WB ×2 × R1 ×2 ÷ 10
+  assert.equal(wb(3), 40);
   assert.equal(wb(10), (keyTierXp(0) * WORD_LEN_REF * 2 * rebirthMult(10)) / 10);
   // FUSE carries its own mode multiplier on top — the omission that used to hide here passed
   // only because FUSE happened to be ×1 at the time.

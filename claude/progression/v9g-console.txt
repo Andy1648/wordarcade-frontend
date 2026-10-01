@@ -1,0 +1,93 @@
+TYPE A WORD — whole-economy sim [v9g]  (src: src)
+archetypes play daily; 30-day window + tail to 200h total play. Run time 40.5s.
+
+1) TIME TO FIRST REACH LEVEL (play time; rebirth resets counted)
+   level                       casual                   regular                   grinder
+   L10                1.4m 17w R0 d1            1.2m 18w R0 d1            1.5m 27w R0 d1
+   L25                5.9m 71w R1 d1            5.0m 75w R1 d1            3.4m 62w R1 d1
+   L50              18.3m 220w R3 d2          14.2m 213w R3 d1          10.7m 193w R3 d1
+   L75              32.2m 387w R4 d4          23.4m 351w R4 d1          17.4m 313w R4 d1
+   L100             43.9m 527w R5 d5          34.9m 524w R5 d2          28.2m 508w R5 d1
+   L125             63.6m 763w R6 d7          53.5m 802w R6 d2          42.1m 757w R6 d1
+   L150           92.5m 1110w R7 d10         75.6m 1134w R7 d3         61.3m 1104w R7 d2
+   L200            2.6h 1884w R9 d16          2.0h 1832w R9 d5        110.1m 1982w R9 d2
+   L250           3.9h 2780w R11 d24         3.0h 2738w R11 d7         2.6h 2758w R11 d3
+   L300           5.2h 3726w R12 d32         4.1h 3693w R12 d9         3.4h 3693w R12 d4
+   at30days: casual L291 (max L291) R12 T617 mom142 levelUps=1748 | regular L440 (max L465) R17 T14504 mom200 levelUps=3793 | grinder L554 (max L554) R18 T13306 mom200 levelUps=4419
+   at200h: casual L615 (max L615) R20 T13648 mom200 levelUps=5641 | regular L642 (max L642) R20 T16604 mom200 levelUps=5662 | grinder L648 (max L648) R20 T15864 mom200 levelUps=5671
+   rebirths: R<n>@<play time> [level 1 word after the reset / 1 minute after / time to regain the level you left]:
+     casual:
+       R1@3.2m[L4/L16/55.0s] R2@7.8m[L8/L25/2.4m] R3@13.8m[L16/L31/2.4m] R4@25.8m[L26/L50/2.9m] R5@32.8m[L34/L53/3.9m] R6@44.5m[L35/L67/8.8m] R7@64.6m[L37/L64/14.6m] R8@92.8m[L47/L92/15.4m] R9@2.1h[L59/L92/19.1m] R10@2.6h[L48/L95/20.2m] R11@3.2h[L67/L120/24.0m] R12@4.0h[L63/L141/37.2m] R13@5.2h[L74/L135/48.4m] R14@6.9h[L80/L143/71.4m] R15@10.1h[L88/L172/2.1h] R16@13.8h[L124/L227/30.7m] R17@15.9h[L148/L261/106.1m] R18@22.7h[L162/L281/6.3h] R19@48.6h[L176/L281/21.8h] R20@115.3h[L162/L290/54.8h]
+     regular:
+       R1@3.4m[L2/L20/52.0s] R2@5.3m[L4/L26/1.1m] R3@11.1m[L17/L37/1.7m] R4@18.1m[L30/L51/2.1m] R5@24.1m[L30/L59/3.6m] R6@36.1m[L40/L65/6.9m] R7@53.8m[L34/L67/9.1m] R8@76.4m[L50/L88/12.8m] R9@97.4m[L48/L90/14.0m] R10@2.0h[L50/L106/16.2m] R11@2.5h[L54/L109/20.0m] R12@3.2h[L60/L126/28.1m] R13@4.1h[L59/L130/47.7m] R14@5.6h[L91/L134/68.6m] R15@8.2h[L76/L154/106.3m] R16@13.0h[L142/L275/21.1m] R17@14.4h[L146/L330/77.3m] R18@19.0h[L135/L287/3.9h] R19@35.6h[L167/L311/14.6h] R20@80.4h[L174/L326/37.4h]
+     grinder:
+       R1@2.2m[L3/L21/23.3s] R2@4.1m[L6/L27/56.7s] R3@8.2m[L11/L36/1.5m] R4@14.4m[L27/L57/1.9m] R5@17.8m[L26/L56/4.4m] R6@29.8m[L33/L63/7.2m] R7@42.4m[L41/L78/7.8m] R8@61.6m[L49/L94/11.4m] R9@85.1m[L48/L98/17.2m] R10@110.8m[L54/L105/11.7m] R11@2.1h[L65/L129/14.4m] R12@2.6h[L64/L151/20.9m] R13@3.4h[L80/L144/31.6m] R14@4.6h[L72/L144/61.4m] R15@6.9h[L70/L148/99.2m] R16@10.5h[L179/L315/20.2m] R17@11.8h[L161/L313/69.7m] R18@15.9h[L145/L327/4.1h] R19@32.0h[L184/L335/13.0h] R20@72.8h[L226/L324/33.4h]
+
+2) GAPS BETWEEN MEANINGFUL REWARD EVENTS (minutes of play). strict = no momentum, no <10s purchases
+   casual   days30 all    n=892   median 1.0m    p90 2.1m    max 3.5m    gaps>10m: 0
+   casual   days30 strict n=651   median 1.1m    p90 2.2m    max 9.8m    gaps>10m: 0
+   casual   tail   all    n=14149 median 4.9m    p90 7.3m    max 11.0m   gaps>10m: 9
+   casual   tail   strict n=3510  median 4.9m    p90 7.3m    max 11.0m   gaps>10m: 9
+   regular  days30 all    n=14887 median 1.1m    p90 2.1m    max 12.4m   gaps>10m: 1
+   regular  days30 strict n=1409  median 1.1m    p90 2.2m    max 14.9m   gaps>10m: 3
+   regular  tail   all    n=17117 median 4.7m    p90 6.8m    max 12.4m   gaps>10m: 3
+   regular  tail   strict n=3639  median 4.7m    p90 6.8m    max 14.9m   gaps>10m: 5
+   grinder  days30 all    n=13726 median 1.1m    p90 5.2m    max 8.3m    gaps>10m: 0
+   grinder  days30 strict n=1625  median 1.2m    p90 5.2m    max 8.3m    gaps>10m: 0
+   grinder  tail   all    n=16389 median 3.7m    p90 5.3m    max 8.4m    gaps>10m: 0
+   grinder  tail   strict n=4288  median 3.7m    p90 5.3m    max 8.4m    gaps>10m: 0
+   longest STRICT gaps over the full tail:
+     casual   11.0m   from 160.4h [KEY T13197] -> [KEY T13198] (R20, L593)
+     casual   11.0m   from 40.0h [KEY T11897] -> [KEY T11898] (R18, L545)
+     casual   10.7m   from 68.6h [KEY T12196] -> [KEY T12197] (R19, L557)
+     regular  14.9m   from 13.0h [REBIRTH 16 (x17.0)] -> [KEY T14490] (R16, L409)
+     regular  12.4m   from 13.4h [KEY T14492] -> [KEY T14493] (R16, L438)
+     regular  11.1m   from 5.1h [MASTERY chain M15] -> [KEY T818] (R13, L323)
+     grinder  8.4m    from 90.9h [KEY T14187] -> [KEY T14188] (R20, L578)
+     grinder  8.3m    from 16.9h [KEY T13143] -> [KEY T13144] (R18, L463)
+     grinder  7.9m    from 16.6h [KEY T13140] -> [KEY T13141] (R18, L454)
+   strict gap by level band (median / p90 / max):
+     casual   L1-25:0.0s/1.5m/6.4m  L26-50:15.0s/1.2m/2.0m  L51-75:0.0s/1.1m/2.6m  L76-100:0.0s/1.2m/2.5m  L101-125:0.0s/1.3m/3.3m  L126-150:0.0s/2.2m/2.7m  L151-+:4.3m/7.2m/11.0m
+     regular  L1-25:0.0s/56.0s/8.8m  L26-50:4.0s/52.0s/1.9m  L51-75:0.0s/48.0s/2.2m  L76-100:0.0s/1.1m/1.9m  L101-125:0.0s/1.1m/2.2m  L126-150:0.0s/1.3m/4.0m  L151-+:4.2m/6.7m/14.9m
+     grinder  L1-25:0.0s/1.2m/6.9m  L26-50:6.7s/33.3s/1.7m  L51-75:0.0s/50.0s/1.3m  L76-100:0.0s/50.0s/1.4m  L101-125:0.0s/1.1m/1.8m  L126-150:10.0s/1.1m/2.2m  L151-+:3.4m/5.3m/8.4m
+
+3) AFFORDABILITY at first reach of L100/L125/L150 (price / income → minutes; TRIVIAL <10s, WALL >60m)
+   casual   L100 R5 income 1.52e+6/min | KEY T85 365,760 = 14.5s ok | MOM#87 374,470 = 14.8s ok | COSMETIC 937,500 = 37.1s ok
+   casual   L125 R6 income 1.84e+6/min | KEY T133 891,520 = 29.0s ok | MOM#99 942,970 = 30.7s ok | COSMETIC 937,500 = 30.5s ok
+   casual   L150 R7 income 3.29e+6/min | KEY T192 1.92e+6 = 35.1s ok | MOM#109 2.04e+6 = 37.2s ok | COSMETIC 4.69e+6 = 1.4m ok
+   regular  L100 R5 income 1.81e+6/min | KEY T80 332,210 = 11.0s ok | MOM#86 346,730 = 11.5s ok | COSMETIC 937,500 = 31.1s ok
+   regular  L125 R6 income 3.35e+6/min | KEY T137 937,530 = 16.8s ok | MOM#99 942,970 = 16.9s ok | COSMETIC 937,500 = 16.8s ok
+   regular  L150 R7 income 4.27e+6/min | KEY T191 1.91e+6 = 26.8s ok | MOM#109 2.04e+6 = 28.6s ok | COSMETIC 4.69e+6 = 1.1m ok
+   grinder  L100 R5 income 1.63e+6/min | KEY T95 437,360 = 16.1s ok | MOM#90 471,720 = 17.3s ok | COSMETIC 937,500 = 34.5s ok
+   grinder  L125 R6 income 3.26e+6/min | KEY T139 960,960 = 17.7s ok | MOM#100 1.02e+6 = 18.7s ok | COSMETIC 1.56e+6 = 28.7s ok
+   grinder  L150 R7 income 4.81e+6/min | KEY T186 1.82e+6 = 22.7s ok | MOM#108 1.89e+6 = 23.5s ok | COSMETIC 4.69e+6 = 58.5s ok
+   sinks exhausted: casual: all cosmetics+themes owned at 13.5h, MOMENTUM 200/200 at 13.5h | regular: all cosmetics+themes owned at 12.9h, MOMENTUM 200/200 at 12.9h | grinder: all cosmetics+themes owned at 10.4h, MOMENTUM 200/200 at 10.4h
+
+4) MAGNITUDES at first reach (flag > 1e+9; '!!' = above MAX_SAFE_INTEGER)
+   casual   L50   R3 T15: need 342,670 XP | XP/word 36,522 | wins/word 3,652 | words/level 11.5 | balance 137,475 | next key 23,500
+   casual   L100  R5 T84: need 5.48e+6 XP | XP/word 410,025 | wins/word 41,003 | words/level 16.6 | balance 4.09e+6 | next key 365,760
+   casual   L125  R6 T132: need 1.34e+7 XP | XP/word 902,177 | wins/word 90,218 | words/level 18.6 | balance 2.11e+6 | next key 891,520
+   casual   L150  R7 T191: need 2.78e+7 XP | XP/word 1.60e+6 | wins/word 160,461 | words/level 21.5 | balance 2.25e+6 | next key 1.92e+6
+   casual   L200  R9 T373: need 8.77e+7 XP | XP/word 4.98e+6 | wins/word 498,068 | words/level 21.9 | balance 2.35e+7 | next key 8.09e+6
+   regular  L50   R3 T15: need 342,670 XP | XP/word 36,767 | wins/word 3,677 | words/level 11.6 | balance 138,821 | next key 23,500
+   regular  L100  R5 T79: need 5.48e+6 XP | XP/word 365,464 | wins/word 36,546 | words/level 18.9 | balance 9.38e+6 | next key 332,210
+   regular  L125  R6 T136: need 1.34e+7 XP | XP/word 823,409 | wins/word 82,341 | words/level 20.4 | balance 1.18e+7 | next key 937,530
+   regular  L150  R7 T190: need 2.78e+7 XP | XP/word 1.49e+6 | wins/word 148,591 | words/level 23.2 | balance 2.36e+6 | next key 1.91e+6
+   regular  L200  R9 T442: need 8.77e+7 XP | XP/word 5.28e+6 | wins/word 527,707 | words/level 20.8 | balance 2.11e+7 | next key 1.11e+7
+   grinder  L50   R3 T17: need 342,670 XP | XP/word 40,989 | wins/word 4,099 | words/level 10.4 | balance 21,319 | next key 27,210
+   grinder  L100  R5 T94: need 5.48e+6 XP | XP/word 431,780 | wins/word 43,178 | words/level 15.6 | balance 402,946 | next key 437,360
+   grinder  L125  R6 T138: need 1.34e+7 XP | XP/word 839,678 | wins/word 83,968 | words/level 19.8 | balance 3.11e+6 | next key 960,960
+   grinder  L150  R7 T185: need 2.78e+7 XP | XP/word 1.41e+6 | wins/word 140,628 | words/level 24.8 | balance 1.12e+7 | next key 1.82e+6
+   grinder  L200  R9 T505: need 8.77e+7 XP | XP/word 5.82e+6 | wins/word 581,561 | words/level 18.9 | balance 1.82e+7 | next key 1.43e+7
+
+5) MASTERY (MASTERY_MAX 50; words to max 49,980; to M10 612)
+   casual   chain final M50 (30d M13) | M5 36.2m M10 2.2h M15 6.1h M20 13.7h | last level-up 186.0h
+   casual   fuse  final M43 (30d M11) | M5 76.9m M10 4.1h M15 9.6h M20 21.0h | last level-up 195.3h
+   regular  chain final M50 (30d M23) | M5 34.6m M10 117.1m M15 5.1h M20 9.6h | last level-up 151.4h
+   regular  fuse  final M47 (30d M18) | M5 52.5m M10 3.1h M15 8.3h M20 19.0h | last level-up 196.5h
+   grinder  chain final M50 (30d M31) | M5 35.7m M10 87.2m M15 5.0h M20 8.9h | last level-up 125.7h
+   grinder  fuse  final M50 (30d M26) | M5 25.1m M10 2.4h M15 5.9h M20 13.5h | last level-up 199.4h
+
+CURVE FACTS: need(L): L1 600, L10 2,280, L30 44,410, L50 342,670, L75 1.73e+6, L100 5.48e+6, L125 1.34e+7, L150 2.78e+7, L200 8.77e+7, L250 2.14e+8, L300 4.44e+8
+  rebirth: XP to re-climb to the gate ÷ the PREVIOUS multiplier (= base-XP effort per rebirth):
+  R1@L15:26,220  R2@L25:64,205  R3@L40:360,967  R4@L60:2.05e+6  R5@L75:5.04e+6  R6@L100:1.78e+7  R7@L125:4.69e+7  R8@L150:1.02e+8  R9@L175:1.97e+8  R10@L200:3.47e+8  R11@L225:5.68e+8  R12@L260:1.08e+9  R13@L300:2.03e+9

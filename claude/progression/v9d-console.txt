@@ -1,0 +1,102 @@
+TYPE A WORD — whole-economy sim [v9d]  (src: src)
+archetypes play daily; 30-day window + tail to 200h total play. Run time 132.8s.
+
+1) TIME TO FIRST REACH LEVEL (play time; rebirth resets counted)
+   level                       casual                   regular                   grinder
+   L10                1.4m 17w R0 d1            1.2m 18w R0 d1            1.5m 27w R0 d1
+   L25                5.2m 63w R1 d1            3.9m 58w R1 d1            3.2m 58w R1 d1
+   L50              15.7m 188w R3 d2          11.6m 174w R3 d1           9.4m 169w R3 d1
+   L75              25.9m 311w R4 d3          20.0m 300w R4 d1          13.8m 249w R4 d1
+   L100             37.5m 450w R5 d4          30.6m 459w R5 d2          19.0m 342w R5 d1
+   L125             55.3m 664w R6 d6          47.5m 712w R6 d2          31.8m 573w R6 d1
+   L150             82.3m 988w R7 d9         70.5m 1058w R7 d3          47.5m 855w R7 d1
+   L200            2.5h 1785w R9 d15        113.1m 1696w R9 d4        102.5m 1845w R9 d2
+   L250           3.6h 2584w R11 d22         2.8h 2538w R11 d6         2.7h 2876w R11 d3
+   L300           4.8h 3443w R12 d29         3.9h 3498w R12 d8         3.7h 3965w R12 d4
+   at30days: casual L217 (max L301) R13 T779 mom143 levelUps=1974 | regular L399 (max L511) R18 T1793 mom168 levelUps=4267 | grinder L476 (max L700) R22 T2979 mom183 levelUps=6871
+   at200h: casual L3141 (max L3141) R70 T1085156 mom200 levelUps=102256 | regular L3022 (max L3803) R84 T2070262 mom200 levelUps=150917 | grinder L1579 (max L1579) R39 T17922 mom200 levelUps=27509
+   rebirths: R<n>@<play time> [level 1 word after the reset / 1 minute after / time to regain the level you left]:
+     casual:
+       R1@3.2m[L5/L19/50.0s] R2@5.5m[L6/L28/50.0s] R3@11.4m[L17/L38/2.4m] R4@18.4m[L28/L50/2.8m] R5@27.2m[L33/L60/4.3m] R6@38.4m[L34/L64/5.8m] R7@56.0m[L46/L78/13.3m] R8@82.4m[L45/L77/18.3m] R9@117.0m[L45/L82/20.8m] R10@2.5h[L66/L117/18.3m] R11@3.0h[L66/L118/21.3m] R12@3.7h[L74/L135/30.3m] R13@4.8h[L71/L143/51.8m] R14@6.3h[L76/L160/65.5m] R15@8.1h[L93/L160/88.8m] R16@10.4h[L82/L156/104.7m] R17@13.1h[L94/L178/2.4h] R18@16.7h[L94/L185/2.8h] R19@21.2h[L89/L158/3.7h] R20@26.4h[L111/L188/4.5h] R21@32.8h[L135/L209/5.3h] R22@40.5h[L111/L208/6.2h] R23@49.2h[L121/L219/7.3h] R24@59.1h[L120/L215/8.4h] R25@70.6h[L107/L200/7.1h] R26@77.8h[L276/L432/19.0m] R27@78.2h[L287/L531/13.2m] R28@78.4h[L322/L684/10.0m] R29@78.6h[L307/L642/12.6m] R30@78.9h[L289/L571/11.7m] R31@79.1h[L323/L630/15.5m] R32@79.4h[L329/L765/12.7m] R33@79.7h[L337/L689/14.9m] R34@80.0h[L413/L740/17.6m] R35@80.3h[L431/L735/15.1m] R36@80.6h[L428/L811/20.7m] R37@81.0h[L422/L792/23.2m] R38@81.4h[L438/L780/28.7m] R39@82.0h[L462/L804/31.1m] R40@82.6h[L378/L726/36.7m] R41@83.3h[L421/L744/46.7m] R42@84.1h[L447/L792/46.2m] R43@85.0h[L405/L684/56.6m] R44@86.0h[L425/L855/58.7m] R45@87.1h[L428/L771/65.0m] R46@88.4h[L350/L718/69.0m] R47@89.7h[L373/L778/84.4m] R48@91.3h[L465/L798/94.9m] R49@93.0h[L410/L776/93.2m] R50@94.8h[L506/L847/103.8m] R51@96.7h[L504/L785/2.0h] R52@99.0h[L661/L868/2.2h] R53@101.4h[L424/L724/2.3h] R54@104.1h[L471/L849/2.6h] R55@106.9h[L477/L782/2.6h] R56@109.9h[L432/L774/3.3h] R57@113.5h[L500/L865/3.2h] R58@117.1h[L452/L836/3.6h] R59@121.1h[L433/L780/3.9h] R60@125.4h[L493/L911/4.1h] R61@129.9h[L490/L786/4.4h] R62@134.8h[L390/L782/4.9h] R63@140.2h[L474/L753/5.3h] R64@146.0h[L480/L898/5.8h] R65@152.2h[L443/L771/6.3h] R66@159.1h[L510/L981/6.8h] R67@166.4h[L518/L991/7.0h] R68@174.1h[L423/L831/7.4h] R69@182.2h[L426/L862/7.9h] R70@190.8h[L408/L764/8.6h]
+     regular:
+       R1@2.5m[L5/L22/24.0s] R2@4.3m[L9/L28/52.0s] R3@8.1m[L9/L33/1.8m] R4@15.1m[L23/L49/2.6m] R5@22.2m[L31/L62/3.6m] R6@31.5m[L38/L72/7.1m] R7@47.7m[L39/L69/11.7m] R8@70.7m[L49/L90/12.6m] R9@94.1m[L55/L115/9.4m] R10@113.4m[L51/L103/17.0m] R11@2.3h[L78/L139/17.7m] R12@3.0h[L66/L139/28.9m] R13@3.9h[L61/L123/47.5m] R14@5.2h[L60/L135/59.3m] R15@6.9h[L97/L152/68.9m] R16@8.7h[L84/L171/90.5m] R17@11.2h[L119/L173/114.3m] R18@14.2h[L105/L179/2.6h] R19@18.1h[L95/L188/2.9h] R20@22.0h[L90/L193/3.6h] R21@27.2h[L114/L217/4.3h] R22@33.1h[L138/L231/4.8h] R23@40.0h[L166/L259/6.0h] R24@48.1h[L138/L254/6.8h] R25@57.3h[L147/L252/8.0h] R26@65.5h[L249/L537/13.7m] R27@65.8h[L277/L572/12.5m] R28@66.0h[L278/L591/11.1m] R29@66.2h[L344/L692/10.1m] R30@66.4h[L340/L792/6.2m] R31@66.6h[L436/L735/7.9m] R32@66.7h[L358/L748/10.6m] R33@66.9h[L403/L683/11.9m] R34@67.2h[L387/L744/10.3m] R35@67.4h[L338/L739/13.1m] R36@67.6h[L469/L849/14.5m] R37@67.9h[L501/L844/14.5m] R38@68.2h[L475/L1004/14.3m] R39@68.5h[L437/L922/12.6m] R40@68.7h[L422/L865/13.9m] R41@69.0h[L454/L854/14.2m] R42@69.3h[L555/L989/18.4m] R43@69.6h[L411/L854/22.3m] R44@70.0h[L438/L859/25.0m] R45@70.5h[L560/L926/26.9m] R46@71.0h[L417/L931/32.7m] R47@71.6h[L607/L985/36.5m] R48@72.3h[L426/L905/37.0m] R49@73.0h[L621/L1150/37.2m] R50@73.7h[L423/L879/43.5m] R51@74.5h[L401/L914/53.5m] R52@75.5h[L453/L938/57.3m] R53@76.5h[L607/L1063/61.8m] R54@77.7h[L494/L987/62.7m] R55@78.8h[L486/L906/67.5m] R56@80.1h[L479/L916/76.6m] R57@81.6h[L487/L992/73.3m] R58@82.9h[L510/L1174/86.3m] R59@84.5h[L493/L1044/108.3m] R60@86.5h[L447/L987/108.3m] R61@88.5h[L576/L1041/118.6m] R62@90.6h[L450/L882/2.1h] R63@92.9h[L500/L1016/2.2h] R64@95.3h[L538/L1001/2.5h] R65@98.0h[L740/L1094/2.7h] R66@100.9h[L476/L930/2.8h] R67@103.9h[L480/L993/3.0h] R68@107.1h[L614/L994/3.3h] R69@110.6h[L731/L1141/3.3h] R70@114.1h[L475/L865/3.8h] R71@118.2h[L537/L1023/3.6h] R72@122.1h[L584/L1063/4.3h] R73@126.8h[L536/L1135/4.3h] R74@131.5h[L573/L1108/4.6h] R75@136.5h[L598/L1097/4.9h] R76@141.8h[L569/L918/5.5h] R77@147.7h[L606/L1118/5.4h] R78@153.5h[L467/L959/5.8h] R79@159.7h[L442/L945/6.2h] R80@166.4h[L548/L1090/6.6h] R81@173.5h[L478/L969/6.8h] R82@180.9h[L531/L1065/7.5h] R83@189.0h[L523/L1056/7.8h] R84@197.4h[L695/L1094/never]
+     grinder:
+       R1@2.2m[L5/L25/16.7s] R2@4.1m[L8/L30/1.2m] R3@7.2m[L22/L42/1.2m] R4@11.7m[L32/L62/2.1m] R5@14.4m[L35/L72/1.9m] R6@19.4m[L35/L63/5.2m] R7@32.5m[L38/L73/7.8m] R8@48.4m[L47/L90/13.2m] R9@72.4m[L44/L93/18.2m] R10@102.7m[L60/L113/15.9m] R11@2.2h[L61/L126/19.6m] R12@2.8h[L73/L128/31.1m] R13@3.7h[L74/L127/37.7m] R14@4.9h[L68/L138/52.9m] R15@6.3h[L90/L156/65.3m] R16@8.0h[L88/L174/88.9m] R17@10.3h[L84/L183/102.9m] R18@12.9h[L103/L196/115.8m] R19@15.9h[L98/L196/2.8h] R20@19.7h[L84/L196/3.0h] R21@24.1h[L100/L188/3.7h] R22@29.4h[L107/L220/4.0h] R23@35.0h[L99/L206/4.9h] R24@41.7h[L120/L215/5.7h] R25@49.3h[L125/L244/2.0h] R26@51.9h[L170/L312/2.3h] R27@54.9h[L148/L301/2.7h] R28@58.5h[L167/L337/3.5h] R29@62.9h[L224/L330/4.5h] R30@68.5h[L188/L360/4.9h] R31@74.7h[L156/L318/6.1h] R32@82.2h[L170/L305/7.1h] R33@91.0h[L152/L311/8.4h] R34@101.2h[L170/L339/9.6h] R35@112.7h[L175/L339/11.2h] R36@126.1h[L169/L378/13.1h] R37@141.8h[L170/L335/14.7h] R38@159.2h[L211/L374/17.2h] R39@179.5h[L183/L330/18.7h]
+
+2) GAPS BETWEEN MEANINGFUL REWARD EVENTS (minutes of play). strict = no momentum, no <10s purchases
+   casual   days30 all    n=1032  median 1.1m    p90 2.2m    max 3.3m    gaps>10m: 0
+   casual   days30 strict n=706   median 1.1m    p90 2.2m    max 10.4m   gaps>10m: 1
+   casual   tail   all    n=1085586 median 1.8m    p90 3.0m    max 6.5h    gaps>10m: 61
+   casual   tail   strict n=995208 median 1.8m    p90 3.0m    max 6.5h    gaps>10m: 63
+   regular  days30 all    n=2099  median 1.1m    p90 2.0m    max 3.4m    gaps>10m: 0
+   regular  days30 strict n=1677  median 1.1m    p90 2.1m    max 8.5m    gaps>10m: 0
+   regular  tail   all    n=2070710 median 1.4m    p90 2.4m    max 8.4h    gaps>10m: 65
+   regular  tail   strict n=1980261 median 1.4m    p90 2.4m    max 8.4h    gaps>10m: 66
+   grinder  days30 all    n=3320  median 1.1m    p90 1.8m    max 3.1m    gaps>10m: 0
+   grinder  days30 strict n=3061  median 1.1m    p90 1.8m    max 3.1m    gaps>10m: 0
+   grinder  tail   all    n=18328 median 1.9m    p90 5.2m    max 8.2m    gaps>10m: 0
+   grinder  tail   strict n=6232  median 1.9m    p90 5.3m    max 12.1m   gaps>10m: 1
+   longest STRICT gaps over the full tail:
+     casual   6.5h    from 159.1h [REBIRTH 66 (x67.0)] -> [KEY T1085152] (R66, L2879)
+     casual   6.3h    from 166.4h [REBIRTH 67 (x68.0)] -> [KEY T1085153] (R67, L2894)
+     casual   5.8h    from 174.1h [REBIRTH 68 (x69.0)] -> [KEY T1085154] (R68, L2863)
+     regular  8.4h    from 189.0h [REBIRTH 83 (x84.0)] -> [REBIRTH 84 (x85.0)] (R84, L1)
+     regular  6.8h    from 166.8h [MASTERY sat-rush M15] -> [REBIRTH 81 (x82.0)] (R81, L1)
+     regular  5.8h    from 147.7h [REBIRTH 77 (x78.0)] -> [REBIRTH 78 (x79.0)] (R78, L1)
+     grinder  12.1m   from 49.5h [ACH TRUE MASTER] -> [KEY T15912] (R25, L574)
+     grinder  8.2m    from 78.4h [KEY T16297] -> [KEY T16298] (R31, L1049)
+     grinder  8.0m    from 52.9h [KEY T15954] -> [KEY T15955] (R26, L785)
+   strict gap by level band (median / p90 / max):
+     casual   L1-25:0.0s/0.0s/4.9h  L26-50:15.0s/55.0s/1.3m  L51-75:0.0s/1.2m/1.7m  L76-100:0.0s/1.3m/2.5m  L101-125:0.0s/1.3m/2.7m  L126-150:0.0s/1.5m/2.5m  L151-+:0.0s/0.0s/6.5h
+     regular  L1-25:0.0s/0.0s/8.4h  L26-50:4.0s/40.0s/1.1m  L51-75:0.0s/56.0s/1.9m  L76-100:0.0s/1.3m/1.7m  L101-125:0.0s/1.1m/2.1m  L126-150:0.0s/1.1m/2.3m  L151-+:0.0s/0.0s/4.8h
+     grinder  L1-25:0.0s/1.8m/5.1m  L26-50:0.0s/40.0s/56.7s  L51-75:3.3s/36.7s/1.1m  L76-100:0.0s/1.1m/1.3m  L101-125:0.0s/53.3s/1.8m  L126-150:0.0s/1.1m/2.4m  L151-+:1.3m/5.1m/12.1m
+
+3) AFFORDABILITY at first reach of L100/L125/L150 (price / income → minutes; TRIVIAL <10s, WALL >60m)
+   casual   L100 R5 income 1.10e+6/min | KEY T98 287,510 = 15.6s ok | MOM#84 297,260 = 16.2s ok | COSMETIC 312,500 = 17.0s ok
+   casual   L125 R6 income 1.96e+6/min | KEY T152 700,040 = 21.4s ok | MOM#95 693,110 = 21.2s ok | COSMETIC 937,500 = 28.7s ok
+   casual   L150 R7 income 4.26e+6/min | KEY T210 1.41e+6 = 19.8s ok | MOM#105 1.50e+6 = 21.1s ok | COSMETIC 1.56e+6 = 22.0s ok
+   regular  L100 R5 income 1.31e+6/min | KEY T106 326,910 = 15.0s ok | MOM#86 346,730 = 15.9s ok | COSMETIC 937,500 = 43.0s ok
+   regular  L125 R6 income 2.28e+6/min | KEY T155 724,030 = 19.0s ok | MOM#96 748,560 = 19.7s ok | COSMETIC 937,500 = 24.6s ok
+   regular  L150 R7 income 3.62e+6/min | KEY T217 1.50e+6 = 24.8s ok | MOM#105 1.50e+6 = 24.8s ok | COSMETIC 1.56e+6 = 25.9s ok
+   grinder  L100 R5 income 2.92e+6/min | KEY T127 441,750 = 9.1s TRIVIAL | MOM#89 436,780 = 9.0s TRIVIAL | COSMETIC 937,500 = 19.2s ok
+   grinder  L125 R6 income 3.00e+6/min | KEY T169 841,220 = 16.9s ok | MOM#98 873,120 = 17.5s ok | COSMETIC 937,500 = 18.8s ok
+   grinder  L150 R7 income 6.34e+6/min | KEY T227 1.62e+6 = 15.3s ok | MOM#106 1.62e+6 = 15.3s ok | COSMETIC 4.69e+6 = 44.3s ok
+   sinks exhausted: casual: all cosmetics+themes owned at 77.5h, MOMENTUM 200/200 at 77.5h | regular: all cosmetics+themes owned at 65.3h, MOMENTUM 200/200 at 65.3h | grinder: all cosmetics+themes owned at 49.5h, MOMENTUM 200/200 at 49.5h
+
+4) MAGNITUDES at first reach (flag > 1e+9; '!!' = above MAX_SAFE_INTEGER)
+   casual   L50   R3 T22: need 342,670 XP | XP/word 48,960 | wins/word 4,896 | words/level 8.5 | balance 94,710 | next key 23,230
+   casual   L100  R5 T97: need 5.48e+6 XP | XP/word 440,423 | wins/word 44,042 | words/level 15.5 | balance 2.83e+6 | next key 287,510
+   casual   L125  R6 T151: need 1.34e+7 XP | XP/word 866,517 | wins/word 86,652 | words/level 19.0 | balance 4.75e+6 | next key 700,040
+   casual   L150  R7 T209: need 2.78e+7 XP | XP/word 1.55e+6 | wins/word 155,082 | words/level 22.3 | balance 1.69e+7 | next key 1.41e+6
+   casual   L200  R9 T499: need 8.77e+7 XP | XP/word 5.90e+6 | wins/word 589,952 | words/level 18.5 | balance 2.85e+7 | next key 8.73e+6
+   regular  L50   R3 T21: need 342,670 XP | XP/word 46,488 | wins/word 4,649 | words/level 9.1 | balance 91,557 | next key 21,940
+   regular  L100  R5 T105: need 5.48e+6 XP | XP/word 445,784 | wins/word 44,578 | words/level 15.1 | balance 406,778 | next key 326,910
+   regular  L125  R6 T154: need 1.34e+7 XP | XP/word 845,916 | wins/word 84,592 | words/level 19.7 | balance 2.96e+6 | next key 724,030
+   regular  L150  R7 T216: need 2.78e+7 XP | XP/word 1.53e+6 | wins/word 152,975 | words/level 22.6 | balance 4.05e+6 | next key 1.50e+6
+   regular  L200  R9 T545: need 8.77e+7 XP | XP/word 5.71e+6 | wins/word 571,181 | words/level 19.1 | balance 3.49e+7 | next key 1.03e+7
+   grinder  L50   R3 T23: need 342,670 XP | XP/word 51,120 | wins/word 5,112 | words/level 8.3 | balance 129,531 | next key 24,550
+   grinder  L100  R5 T126: need 5.48e+6 XP | XP/word 543,044 | wins/word 54,304 | words/level 12.6 | balance 1.33e+6 | next key 441,750
+   grinder  L125  R6 T168: need 1.34e+7 XP | XP/word 884,010 | wins/word 88,401 | words/level 18.6 | balance 1.43e+6 | next key 841,220
+   grinder  L150  R7 T226: need 2.78e+7 XP | XP/word 1.49e+6 | wins/word 148,946 | words/level 22.9 | balance 286,975 | next key 1.62e+6
+   grinder  L200  R9 T371: need 8.77e+7 XP | XP/word 3.54e+6 | wins/word 354,409 | words/level 30.8 | balance 3.63e+7 | next key 5.01e+6
+
+5) MASTERY (MASTERY_MAX 20; words to max 104,411; to M10 3,440)
+   casual   chain final M18 (30d M7) | M5 96.4m M10 13.1h M15 73.1h M20 — | last level-up 197.2h
+   casual   fuse  final M16 (30d M6) | M5 3.6h M10 20.3h M15 116.9h M20 — | last level-up 166.0h
+   regular  chain final M18 (30d M11) | M5 102.7m M10 9.4h M15 56.5h M20 — | last level-up 160.6h
+   regular  fuse  final M17 (30d M9) | M5 2.6h M10 18.0h M15 90.7h M20 — | last level-up 177.9h
+   grinder  chain final M19 (30d M13) | M5 80.2m M10 8.7h M15 48.1h M20 — | last level-up 188.2h
+   grinder  fuse  final M17 (30d M12) | M5 2.1h M10 13.0h M15 76.5h M20 — | last level-up 149.8h
+
+CURVE FACTS: need(L): L1 600, L10 2,280, L30 44,410, L50 342,670, L75 1.73e+6, L100 5.48e+6, L125 1.34e+7, L150 2.78e+7, L200 8.77e+7, L250 2.14e+8, L300 4.44e+8
+  rebirth: XP to re-climb to the gate ÷ the PREVIOUS multiplier (= base-XP effort per rebirth):
+  R1@L15:26,220  R2@L25:64,205  R3@L40:360,967  R4@L60:2.05e+6  R5@L75:5.04e+6  R6@L100:1.78e+7  R7@L125:4.69e+7  R8@L150:1.02e+8  R9@L175:1.97e+8  R10@L200:3.47e+8  R11@L225:5.68e+8  R12@L260:1.08e+9  R13@L300:2.03e+9
+file:///C:/Users/andyw_tnc0kix/Downloads/wordarcade-frontend_1/wa-19/claude/progression/econ-sim.mjs:756
+fs.writeFileSync(path.join(OUT, `${TAG}.json`), JSON.stringify(json, null, 1));
+                                                     ^
+
+RangeError: Invalid string length
+    at JSON.stringify (<anonymous>)
+    at file:///C:/Users/andyw_tnc0kix/Downloads/wordarcade-frontend_1/wa-19/claude/progression/econ-sim.mjs:756:54
+
+Node.js v24.17.0

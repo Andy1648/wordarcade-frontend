@@ -2,8 +2,8 @@
 // owned, unaffordable), and equipping (instant, per-type slot). IDs are stable save keys.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buy, equip, isOwned, getOwned, getEquipped, buyKeyPower, canAffordAny, POP_STYLES, SOUND_PACKS } from './shop.js';
-import { getKeyTier } from './xp.js';
+import { buy, equip, isOwned, getOwned, getEquipped, buyKeyPower, canAffordAny, POP_STYLES, SOUND_PACKS, COSMETIC_PRICE_STEP } from './shop.js';
+import { getKeyTier, keyTierCostAt } from './xp.js';
 
 const ALL_COSMETICS = [...POP_STYLES, ...SOUND_PACKS].map((i) => i.id);
 
@@ -30,11 +30,28 @@ test('the four defaults are owned from the start', () => {
   });
 });
 
-// ECONOMY v8: the ×5 cosmetic ladder is unchanged, but every price fell by ten with the currency
-// (CHROME 60, INFERNO 300, VOID 1500, PRISM 7500) — wins are the word's XP ÷ 10 now, so leaving
-// the prices where they were would have made the shop ten times more expensive by accident. These tests are priced off the
-// CATALOG rather than off a literal, so the ladder can be retuned without editing them again.
+// ECONOMY v8 cut every price by ten with the currency; v9 (STEP 19) steepened the ladder to ×6 a rung
+// and lengthened both lists. These tests are priced off the CATALOG rather than off a literal, so the
+// ladder can be retuned without editing them again — the ladder itself is pinned once, below.
 const priceOf = (id) => [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id).price;
+
+test('cosmetic ladders: each paid rung costs ×COSMETIC_PRICE_STEP the last, and pays a bigger XP mult', () => {
+  assert.equal(COSMETIC_PRICE_STEP, 6);
+  assert.equal(priceOf('chrome'), 60);
+  assert.equal(priceOf('inferno'), 360);
+  assert.equal(priceOf('marble'), 100);
+  for (const list of [POP_STYLES, SOUND_PACKS]) {
+    const paid = list.filter((i) => i.price > 0);
+    assert.ok(paid.length >= 6, 'the v9 ladders run long enough to stay a goal');
+    for (let i = 1; i < paid.length; i++) {
+      assert.equal(paid[i].price, paid[i - 1].price * COSMETIC_PRICE_STEP, `${paid[i].id} is one rung above ${paid[i - 1].id}`);
+      assert.ok(paid[i].xpMult > paid[i - 1].xpMult, `${paid[i].id} must out-perform ${paid[i - 1].id}`);
+      assert.ok(Number.isSafeInteger(paid[i].price), `${paid[i].id} price is an exact integer`);
+    }
+  }
+  // Stable, unique save keys.
+  assert.equal(new Set(ALL_COSMETICS).size, ALL_COSMETICS.length);
+});
 
 test('buying deducts wins, adds to owned, and leaves winsLifetime untouched', () => {
   const cost = priceOf('chrome');
@@ -62,7 +79,7 @@ test('cannot buy the same item twice; a second attempt does not re-charge', () =
 
 test('cannot buy an unaffordable item; wins unchanged', () => {
   withStorage({ 'taw.wins': '100' }, (map) => {
-    const r = buy('prism'); // 2000
+    const r = buy('prism'); // far above 100 at any ladder step
     assert.equal(r.ok, false);
     assert.equal(r.reason, 'unaffordable');
     assert.equal(map.get('taw.wins'), '100');
@@ -71,25 +88,46 @@ test('cannot buy an unaffordable item; wins unchanged', () => {
 });
 
 test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', () => {
-  withStorage({ 'taw.wins': '100', 'taw.keytier': '0' }, (map) => {
-    const r = buyKeyPower(); // T0→T1 costs 10 (prices /10 in v8)
+  // v9: KEY POWER is priced in WORDS (keyTierCostAt) — T1 200, T2 510, T3 830 at R0.
+  const t1 = keyTierCostAt(1, 0);
+  const t2 = keyTierCostAt(2, 0);
+  const t3 = keyTierCostAt(3, 0);
+  assert.deepEqual([t1, t2, t3], [200, 510, 830]);
+  withStorage({ 'taw.wins': String(t1 + t2 + 100), 'taw.keytier': '0' }, (map) => {
+    const r = buyKeyPower();
     assert.equal(r.ok, true);
     assert.equal(r.tier, 1);
-    assert.equal(r.spent, 10);
-    assert.equal(r.wins, 90);
+    assert.equal(r.spent, t1);
+    assert.equal(r.wins, t2 + 100);
     assert.equal(map.get('taw.keytier'), '1');
-    assert.equal(map.get('taw.wins'), '90');
-    // T2 costs 60, which 90 DOES cover.
+    assert.equal(map.get('taw.wins'), String(t2 + 100));
+    // T2 is covered exactly by what is left (+100).
     const second = buyKeyPower();
     assert.equal(second.ok, true);
-    assert.equal(second.spent, 60);
-    assert.equal(map.get('taw.wins'), '30');
-    // T3 costs 360 — 30 left is not enough, and a refused buy spends nothing.
+    assert.equal(second.spent, t2);
+    assert.equal(map.get('taw.wins'), '100');
+    // T3 — 100 left is not enough, and a refused buy spends nothing.
     const again = buyKeyPower();
     assert.equal(again.ok, false);
     assert.equal(again.spent, 0);
+    assert.equal(map.get('taw.wins'), '100');
     assert.equal(map.get('taw.keytier'), '2'); // unchanged by the refusal
     assert.equal(getKeyTier(), 2);
+  });
+});
+
+test('buyKeyPower charges the REBIRTH-scaled price (rebirth never makes KEY POWER cheaper)', () => {
+  const r1Price = keyTierCostAt(1, 1); // ×2 at R1
+  assert.equal(r1Price, 2 * keyTierCostAt(1, 0));
+  withStorage({ 'taw.wins': String(r1Price - 10), 'taw.keytier': '0', 'taw.rebirths': '1' }, (map) => {
+    assert.equal(buyKeyPower().ok, false, 'the R0 price is not enough at R1');
+    assert.equal(map.get('taw.keytier'), '0');
+  });
+  withStorage({ 'taw.wins': String(r1Price), 'taw.keytier': '0', 'taw.rebirths': '1' }, (map) => {
+    const r = buyKeyPower();
+    assert.equal(r.ok, true);
+    assert.equal(r.spent, r1Price);
+    assert.equal(map.get('taw.wins'), '0');
   });
 });
 
@@ -109,7 +147,7 @@ test('equip requires ownership and sets the right slot', () => {
 });
 
 // canAffordAny — the "something to buy" dot. It must count EVERYTHING purchasable, not only
-// cosmetics (the bug: the dot went dark forever once all 11 cosmetics were owned while Key
+// cosmetics (the bug: the dot went dark forever once all cosmetics were owned while Key
 // Power / Word Sense / Momentum / themes were still affordable).
 test('canAffordAny stays true when all cosmetics are owned but non-cosmetic sinks are affordable', () => {
   withStorage({ 'taw.owned': JSON.stringify(ALL_COSMETICS) }, () => {

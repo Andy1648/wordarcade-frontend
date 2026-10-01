@@ -66,17 +66,28 @@ export function round10(x) {
 // constant after a value the game never uses is how a curve gets retuned by feel instead of by
 // arithmetic.
 //
-// TOP_CURVE_EXP > EARLY_CURVE_EXP is an invariant with a test on it (xp.test.js): the whole v6
+// (v8 history: TOP_CURVE_EXP > EARLY_CURVE_EXP guarded a flattening tail. v9 guards "never cheaper per level" instead.)
 // defect was a tail that went the other way, getting CHEAPER per level while income compounded.
 // Every value is snapped to a round multiple of 10 (round10, half-to-even).
 export const CURVE_BASE = 600; // need(1) EXACTLY — the whole curve scales from here
 export const CURVE_BREAK = 30; // level at which the curve HARDENS (levels 1..30 are the early game)
 export const EARLY_CURVE_EXP = 1.16; // per-level growth at/below the break
-export const TOP_CURVE_EXP = 1.22; // per-level growth ABOVE the break — must exceed EARLY
+export const TOP_CURVE_EXP = 1.22; // v8 growth above the break — kept for the before/after record only
+// ECONOMY v9 (STEP 19 / Andy A6): above the break the curve is POLYNOMIAL, not geometric. A geometric
+// tail (×1.22 a level) outran every income source after ~L175 and produced the multi-hour walls and
+// 19-digit level costs in claude/progression/before-report.md; a power of the level grows the time
+// per level gently instead.
+export const CURVE_POW = 4;
+// Past CURVE_TAIL the curve turns geometric again (×CURVE_TAIL_EXP a level): the polynomial alone let
+// the very long tail (KEY tiers → levels → rebirths → income) run away to L3,000 in the 200 h sim.
+export const CURVE_TAIL = 300;
+export const CURVE_TAIL_EXP = 1.03;
 export function need(n) {
   if (n <= CURVE_BREAK) return round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, n - 1));
   const base = round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1)); // need(30)
-  return round10(base * Math.pow(TOP_CURVE_EXP, n - CURVE_BREAK));
+  const poly = (L) => base * Math.pow(L / CURVE_BREAK, CURVE_POW);
+  if (n <= CURVE_TAIL) return round10(poly(n));
+  return round10(poly(CURVE_TAIL) * Math.pow(CURVE_TAIL_EXP, n - CURVE_TAIL));
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -98,7 +109,9 @@ export function levelFromXp(xp) {
     level += 1;
   }
   const cost = need(level);
-  const intoLevel = total - spent;
+  // At the LEVEL_CAP the remainder can exceed one level's cost (only a hand-made legacy total gets
+  // here): clamp so the bar reads full rather than reporting frac > 1 / a negative toNext.
+  const intoLevel = Math.min(total - spent, cost);
   return {
     level,
     intoLevel,
@@ -122,7 +135,9 @@ export function levelFromXp(xp) {
 // The LEVEL THRESHOLDS stay tabled (REBIRTH_TABLE below) - those are the published gates and
 // they are unchanged; only the `mult` column is superseded by the formula.
 // Everything EXCEPT xp survives a rebirth (wins, winsLifetime, owned, equipped, rounds).
-export const REBIRTH_MULT_BASE = 3;
+export const REBIRTH_MULT_BASE = 3; // v8 (×3 per rebirth, compounding) — kept for the record
+// v9: rebirth adds a flat +REBIRTH_MULT_STEP each time — ×2 at R1, ×11 at R10 (v8: ×59,049).
+export const REBIRTH_MULT_STEP = 1;
 export const REBIRTH_KEY = 'taw.rebirths';
 // LEVELS ONLY. The `mult` column is retained so the published v6 table stays readable next to
 // what replaced it, but NOTHING reads it any more - rebirthMult() is REBIRTH_MULT_BASE^rc.
@@ -176,11 +191,10 @@ export function rebirthThreshold(rebirthCount) {
   return REBIRTH_TABLE[last].level + REBIRTH_PAST_LEVEL_STEP * (rc - last);
 }
 // The permanent XP+WINS multiplier AFTER `rebirthCount` rebirths: REBIRTH_MULT_BASE^rc, with
-// rc=0 → ×1. One formula, no table lookup and no cliff - R1 ×3, R10 ×59,049, R20 ×3.49e9.
+// rc=0 → ×1. v9: 1 + rc (R1 ×2, R10 ×11, R20 ×21) — see REBIRTH_MULT_STEP above. (v8 was 3^rc.)
 export function rebirthMult(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  if (rc === 0) return 1;
-  return Math.pow(REBIRTH_MULT_BASE, rc);
+  return 1 + REBIRTH_MULT_STEP * rc;
 }
 // A flat wins reward scaled by the player's CURRENT rebirth multiplier — the ONE place both the
 // grant and its on-screen quote go through, so Collection/Achievement payouts show exactly what
@@ -231,21 +245,19 @@ export function doRebirth() {
 //   T6   2,350           77,760       (699,840)
 //   T7   5,875           466,560      (4,199,040)
 //   T8   14,690          2,799,360    (25,194,240)
-// Past T8 the pattern continues: effect ×2.5, cost ×6, each round10 (half-to-even).
+// (v8 history: past T8 the effect went ×2.5 and the cost ×6 a tier. v9 replaced both — below.)
 export const KEYTIER_KEY = 'taw.keytier';
-export const KEY_TIERS = [
-  { xp: 10, cost: 0 }, //          T0
-  { xp: 25, cost: 10 }, //         T1
-  { xp: 60, cost: 60 }, //         T2
-  { xp: 150, cost: 360 }, //       T3
-  { xp: 375, cost: 2160 }, //      T4
-  { xp: 940, cost: 12960 }, //     T5
-  { xp: 2350, cost: 77760 }, //    T6
-  { xp: 5875, cost: 466560 }, //   T7
-  { xp: 14690, cost: 2799360 }, // T8
-];
-const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
-const TIER_COST_STEP = 6; // cost multiplier per tier past T8
+// ECONOMY v9: KEY POWER adds a flat +KEY_XP_PER_TIER XP per letter per tier (T1 = 25, as before), and
+// its PRICE is denominated in WORDS — about KEY_PRICE_WORDS reference words at the rate you have now,
+// growing linearly (KEY_PRICE_SOFT). v8 multiplied XP ×2.5 a tier for ×6 the price, and because wins
+// (= XP ÷ 10) buy the next tier, per-word value compounded through 14 orders of magnitude. Priced in
+// words, a tier is always "a few minutes of play" away and the numbers stay human.
+export const KEY_XP_BASE = 10;
+export const KEY_XP_PER_TIER = 15;
+export const KEY_PRICE_WORDS = 40;
+export const KEY_PRICE_SOFT = 60; // price in words grows LINEARLY: ×2 at T61, ×11 at T601 — never a wall
+const KEY_REF_LETTERS = 5; // = wins.js WORD_LEN_REF (not imported: wins.js imports this module)
+export const KEY_TIERS = Array.from({ length: 9 }, (_, t) => ({ xp: KEY_XP_BASE + KEY_XP_PER_TIER * t }));
 
 export function getKeyTier() {
   try {
@@ -266,27 +278,27 @@ export function saveKeyTier(n) {
 }
 
 // XP PER LETTER at a given tier. Within the table it's the published value; past T8 it extends
-// ×2.5 per tier from T8's 14,690, each step round10 (half-to-even).
+// v9: +KEY_XP_PER_TIER per tier, linear, forever.
 export function keyTierXp(tier) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  if (t < KEY_TIERS.length) return KEY_TIERS[t].xp;
-  let xp = KEY_TIERS[KEY_TIERS.length - 1].xp;
-  for (let i = KEY_TIERS.length; i <= t; i++) xp = round10(xp * TIER_XP_STEP);
-  return xp;
+  return KEY_XP_BASE + KEY_XP_PER_TIER * t;
 }
 // The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past
 // T8 it extends ×6 per tier from T8's 2,799,360, each step round10.
-export function keyTierCostAt(tier) {
+// Price to BUY tier `tier` (tier >= 1): KEY_PRICE_WORDS × growth^(tier-1) reference words, each worth
+// the wins a 5-letter word pays at the tier being LEFT, at the player's rebirth multiplier.
+export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  if (t < KEY_TIERS.length) return KEY_TIERS[t].cost;
-  let cost = KEY_TIERS[KEY_TIERS.length - 1].cost;
-  for (let i = KEY_TIERS.length; i <= t; i++) cost = round10(cost * TIER_COST_STEP);
-  return cost;
+  if (t === 0) return 0;
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  const words = KEY_PRICE_WORDS * (1 + (t - 1) / KEY_PRICE_SOFT);
+  const refWins = (keyTierXp(t - 1) * KEY_REF_LETTERS) / 10;
+  return round10(words * refWins * rebirthMult(rc));
 }
 // The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
-export function keyTierCost(tier) {
+export function keyTierCost(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier >= 0 ? Math.floor(tier) : 0;
-  return keyTierCostAt(t + 1);
+  return keyTierCostAt(t + 1, rebirthCount);
 }
 
 // (Level-ups no longer pay wins — wins come ONLY from finishing rounds. The old

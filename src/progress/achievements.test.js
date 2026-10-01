@@ -54,10 +54,11 @@ test('rebirth scaling: the same achievement pays more at higher rebirth', () => 
   withStorage({ 'wa_words': wc, 'taw.rebirths': '2', 'taw.wins': '0' }, () => {
     const newly = checkAchievements();
     const vol1 = newly.find((a) => a.id === 'vol-1');
-    // v7: the rebirth multiplier is 3^rc, so R2 is ×9 (the v6 table said ×2). Written through
-    // rebirthMult so the NEXT retune does not need to touch this file - the claim is "the same
-    // achievement pays more at higher rebirth", not "it pays exactly 200".
+    // v9: the rebirth multiplier is ADDITIVE (1 + rc), so R2 is ×3 (v7/v8 paid 3^rc = ×9). Written
+    // through rebirthMult so the claim is "the same achievement pays more at higher rebirth".
     assert.equal(vol1.wins, Math.round(100 * rebirthMult(2)));
+    assert.equal(vol1.wins, 300);
+    assert.ok(vol1.wins > 100, 'a rebirth pays more than R0');
   });
 });
 

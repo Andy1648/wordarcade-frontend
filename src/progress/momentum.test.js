@@ -10,6 +10,7 @@ import {
   momentumMaxed,
   MOMENTUM_BASE,
   MOMENTUM_MAX,
+  MOMENTUM_RATIO,
 } from './momentum.js';
 import { round10 } from './xp.js';
 import { perWordWins } from './wins.js';
@@ -31,16 +32,24 @@ function withStorage(seed, fn) {
   }
 }
 
-test('momentumCost rises ×1.05 from 500, round10; Infinity at the cap', () => {
+test('momentumCost rises ×MOMENTUM_RATIO (1.1, v9) from 500, round10; Infinity at the cap', () => {
   // 500, not 5000: every price fell by 10 in v8 with the currency (see shop.js).
+  assert.equal(MOMENTUM_RATIO, 1.1); // v9: was 1.05 — all 200 buys landed in the first 2 h
   assert.equal(momentumCost(0), 500); // the first buy
-  assert.equal(momentumCost(1), round10(MOMENTUM_BASE * 1.05)); // 530
-  assert.equal(momentumCost(10), round10(MOMENTUM_BASE * Math.pow(1.05, 10)));
-  assert.ok(momentumCost(199) > momentumCost(100)); // strictly rising
+  assert.equal(momentumCost(1), 550);
+  assert.equal(momentumCost(10), round10(MOMENTUM_BASE * Math.pow(MOMENTUM_RATIO, 10))); // 1,300
+  assert.equal(momentumCost(10), 1300);
+  for (let c = 0; c < MOMENTUM_MAX; c++) {
+    assert.equal(momentumCost(c), round10(MOMENTUM_BASE * Math.pow(MOMENTUM_RATIO, c)), `cost(${c})`);
+  }
+  // Strictly rising, every step, through the last buy.
+  for (let c = 1; c < MOMENTUM_MAX; c++) assert.ok(momentumCost(c) > momentumCost(c - 1), `cost(${c}) > cost(${c - 1})`);
+  // The last buy is still an exact integer (no float-precision garbage in the shop).
+  assert.ok(momentumCost(MOMENTUM_MAX - 1) < Number.MAX_SAFE_INTEGER);
   assert.equal(momentumCost(MOMENTUM_MAX), Infinity); // nothing left to buy
   assert.equal(momentumCost(MOMENTUM_MAX + 5), Infinity);
   // Every finite cost ends in a zero (payout invariant).
-  for (let c = 0; c < MOMENTUM_MAX; c += 7) assert.equal(momentumCost(c) % 10, 0, `cost(${c})`);
+  for (let c = 0; c < MOMENTUM_MAX; c++) assert.equal(momentumCost(c) % 10, 0, `cost(${c})`);
 });
 
 test('momentumMult stacks +1% per buy: ×1 at 0, ×1.01 at 1, ×2 at 100, ×3 at 200 (capped)', () => {

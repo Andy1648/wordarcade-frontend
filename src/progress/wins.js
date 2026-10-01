@@ -21,7 +21,7 @@ import {
 } from './xp.js';
 import { momentumMult, getMomentum } from './momentum.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
-import { addMasteryWord, masteryXpMult } from './mastery.js';
+import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS, MASTERY_MILESTONE_EVERY } from './mastery.js';
 import { getStreakMult } from './streak.js';
 
 export const WINS_KEY = 'taw.wins';
@@ -554,6 +554,16 @@ export function awardWordXp(opts = {}) {
   const res = creditXp(loadProgress(), gain);
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
+  // MASTERY MILESTONE (STEP 19): every 5th mastery level pays MASTERY_MILESTONE_WORDS × (level ÷ 5)
+  // words' worth of THIS mode's wins, through the labelled door so it is drawn wherever bonuses are.
+  if (mastery && mastery.leveledUp && isMasteryMilestone(mastery.level)) {
+    const words = MASTERY_MILESTONE_WORDS * (mastery.level / MASTERY_MILESTONE_EVERY);
+    const amount = Math.round(words * perWordWins({ ...opts, mode }));
+    if (amount > 0) {
+      grantWins(amount, `MASTERY — ${modeLabel(mode)} M${mastery.level}`, { detail: `mastery-${mode}-${mastery.level}`, mode });
+      mastery.milestoneWins = amount;
+    }
+  }
   // The worn MARK grows with play (STEP 21). After the gain is computed, like mastery, so a word
   // never retroactively boosts itself. Menu typing doesn't count — marks grow in games.
   const mark = mode !== 'menu' ? addMarkWord() : null;
@@ -577,4 +587,9 @@ export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
     }
   }
   return granted;
+}
+
+const MODE_LABELS = { 'word-bomb': 'WORD BOMB', 'category-blitz': 'BLITZ', 'sat-rush': 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE', 'word-race': 'WORD RACE' };
+function modeLabel(mode) {
+  return MODE_LABELS[mode] || String(mode || '').toUpperCase();
 }

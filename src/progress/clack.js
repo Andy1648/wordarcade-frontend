@@ -20,6 +20,12 @@ const PARAMS = {
   marble: { lowpass: 3000, body: 150, press: 0.25 },
   typewriter: { lowpass: 4600, body: 220, press: 0.24 },
   silent: null,
+  arcade: { lowpass: 5200, body: 190, press: 0.22 },
+  vinyl: { lowpass: 1500, body: 120, press: 0.26, smooth: true },
+  glass: { lowpass: 6800, body: 300, press: 0.18 },
+  steel: { lowpass: 5800, body: 240, press: 0.26 },
+  bass: { lowpass: 1100, body: 95, press: 0.32 },
+  crystal: { lowpass: 7600, body: 360, press: 0.16, smooth: true },
 };
 const CLACK_KEY = 'taw.clack';
 const PENT = [0, 3, 5, 7, 10]; // C minor pentatonic semitone ladder (shared key with the events)

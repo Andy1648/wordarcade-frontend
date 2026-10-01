@@ -19,6 +19,10 @@ import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard } from './lib/chunkReload'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
+import { migrateEconomyV9 } from './progress/econMigrate'
+
+// ECONOMY v9 (STEP 19): rescale a v8 save ONCE, before anything reads the wallet.
+migrateEconomyV9()
 import { getStreak } from './progress/streak'
 
 // STALE CHUNK SELF-HEAL: installed FIRST, before anything can request a lazy route chunk.
