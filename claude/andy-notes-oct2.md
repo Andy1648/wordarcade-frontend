@@ -107,7 +107,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] H2 Simplified where there was no headroom: beat sync no longer re-renders App or restyles <html> per beat (desktop menu typing 116 → 148 frames / 4 s); CHAIN/FUSE run-over hitch 700 → 200 ms / 683 → 67 ms. Headroom: phone + in-game multiplayer ≤1% long frames — this cycle's new one-shots (CLUTCH, FRENZY, WINNER row, world swish) live there; no new menu animation (it is the one screen over budget)
 
 ## STEP 60 — Fine-tune loop
-- [x] T1 STEP 30 method run as three loops until the scores stopped improving (each closed by the < 0.3 stop rule): loop A O0 4.87 → O1 5.61 → O2 5.89 (PR #88); loop B → O3 6.11 → O4 6.41 → O5 6.48 (PRs #88, #89); loop C C0 6.35 → C1 6.17 (fresh reviewers, ±0.15 spread) (PRs #90, #91); camera made realistic (PR #93) → D0 6.26. Table + pass log: claude/finetune/scores.md. All merged with CI green; #88–#90 verified live (marker greps).
+- [x] T1 STEP 30 method run as three loops until the scores stopped improving (each closed by the < 0.3 stop rule): loop A O0 4.87 → O1 5.61 → O2 5.89 (PR #88); loop B → O3 6.11 → O4 6.41 → O5 6.48 (PRs #88, #89); loop C C0 6.35 → C1 6.17 (fresh reviewers, ±0.15 spread) (PRs #90, #91); camera made realistic (PR #93) → D0 6.26; D0 fixes: forge claim copy, menu spotlight without dim, SAT phone earn pill off the HUD (PR #94), race names (PR #95), locked-preview close (PR #96) — all CI green, #93–#95 verified live. Table + pass log: claude/finetune/scores.md. All merged with CI green; #88–#90 verified live (marker greps).
 
 ## STEP 61 — Redeem codes (merged PR #87, 1d26db6)
 - [x] R1 CODES entry at the end of the shop: one field + REDEEM + one answer line; a good code lands in REWARDS to claim (never pays on its own) — e2e/redeem-codes.spec.js, claude/codes/shop-codes-390.png, shop-codes-1280.png
@@ -116,3 +116,10 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## Queue: Batch A / Batch B
 - [ ] BLOCKED — the Oct 1 queue lists "Batch A, Batch B" by name only; their contents are not in claude/QUEUE-specs.md, this checklist, or any session transcript (the only "BATCH A" prompt is the Sept 16 batch, already shipped then). Needs Andy to re-paste them. Moved on to fine-tune loop B.
+
+## Open at 08:00 Oct 2 (carried forward, each needs its own step)
+- Migrations 005 / 006 / 007 not applied (letters + CJK names, cloud save, redeem codes): Andy pastes each into the Supabase SQL editor and runs it; the client already feature-detects all three.
+- Batch A / Batch B: contents never recorded — needs Andy to re-paste.
+- 1920x1080 scale-up (panels sit at ~35–45% width; the app-scale zoom is height-capped and overlays opt out).
+- WB phone ring is width-bound (0.72 of a 344px board) → a ~280px vertical band on tall phones; needs a layout change, not a formula tweak (the stack formula is pinned by wbRingSize.test).
+- B3 general in-play body-text pass.
