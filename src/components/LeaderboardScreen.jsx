@@ -79,8 +79,6 @@ const fmtRate = (n) => {
   return v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v.toFixed(1);
 };
 
-// The MAIN stat: lifetime letters when the board carries them (migration 005), else words.
-const mainStat = (row) => (row.lifetime_letters != null ? row.lifetime_letters : row.lifetime_words);
 
 function Row({ row, mine, flash }) {
   const top = row.rank <= 3 ? ` is-top${row.rank}` : '';
@@ -94,7 +92,8 @@ function Row({ row, mine, flash }) {
         </span>
         <span className="lb-lv">LV {fmt(row.level)}</span>
       </span>
-      <span className="lb-num lb-words">{fmt(mainStat(row))}</span>
+      {/* WORDS is the main stat — the board ranks by it (Andy oct2). */}
+      <span className="lb-num lb-words">{fmt(row.lifetime_words)}</span>
       <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
   );
@@ -314,7 +313,7 @@ export default function LeaderboardScreen({ onBack }) {
           {LEADERBOARD_ENABLED && (
             <>
               <div className="lb-cols" aria-hidden="true">
-                <span>#</span><span>PLAYER</span><span className="lb-num">{caps.letters ? 'LETTERS' : 'WORDS'}</span><span className="lb-num">WINS/WORD</span>
+                <span>#</span><span>PLAYER</span><span className="lb-num">WORDS</span><span className="lb-num">WINS/WORD</span>
               </div>
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
               {loadError && <p className="lb-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb-link-btn" onClick={load}>RETRY</button></p>}
@@ -346,7 +345,7 @@ export default function LeaderboardScreen({ onBack }) {
               )}
               {!profile && (
                 <p className="lb-note lb-preview">
-                  YOU'D SHOW AS LV {fmt(stats.level)} · {caps.letters ? `${fmt(stats.lifetimeLetters)} LETTERS` : `${fmt(stats.lifetimeWords)} WORDS`}
+                  YOU'D SHOW AS LV {fmt(stats.level)} · {fmt(stats.lifetimeWords)} WORDS
                 </p>
               )}
             </>

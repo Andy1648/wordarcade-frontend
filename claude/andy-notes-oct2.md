@@ -22,6 +22,8 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [ ] A5 BUG: SHOP dot with nothing affordable. Dot only when something can actually be bought/claimed; test: fresh LV1 profile, 0 wins → no shop dot.
 - [ ] A6 RACE = ENTIRE-WORD racing (monkeytype/TypeRacer): same sequence of whole words for every racer, type each in full, advance; first to finish or most at the cap wins. Keep the game CARD exactly. Backend additive (new race variant; WB/Blitz untouched), unit-tested, prod WB smoke after deploy, revert via PR if it fails. Live 2-tab race on PROD: same words, same winner, progress <=250 ms apart. Payout via the existing pipeline, matches the card.
 
+- [x] A7 (Andy, added 12:40 ET) BOARD RANKS BY LIFETIME WORDS, not letters (letters began at #79, no backfill → everyone else showed 0). Andy re-sorted public.leaderboard by lifetime_words in Supabase (NOT reverted; recorded as 009_board_by_words.sql). PROD verified: 15 rows strictly descending by lifetime_words (#1 Daan 1,061 … elol 321 at #6 despite 2,742 letters). WORDS is the main stat on the board column + "YOU'D SHOW AS", the rank-up moment ("N WORDS · ON THE LEADERBOARD"), the claim prompt ("N WORDS · NO SIGN-IN…"); the ticker only names LV / rank moves (no stat). ranksAhead = words → level → rebirths (rank.test.js); boardMock + leaderboard / leaderboard-pull e2e updated (11/11). PR #109
+
 ### P2 — STEP 9 Blitz list-only
 - [ ] B9.1 backend: only complete enumerable categories; judge removed from scoring; reason "NOT ON THE LIST"; 8 good + 8 junk unit tests per category
 - [ ] B9.2 prod check: zzzzzzzz rejected; WB smoke (revert via PR if it fails)

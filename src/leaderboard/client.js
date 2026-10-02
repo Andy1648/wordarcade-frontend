@@ -270,24 +270,18 @@ export async function fetchBoard(limit = BOARD_SIZE) {
 }
 
 // ---- STEP 47: pulling players in -------------------------------------------------------------
-// The board's order, as a comparator: rebirths desc, level desc, lifetime words desc. A HYPOTHETICAL
-// row (someone not on the board yet) loses every exact tie — the existing row got there first, the
-// same rule the view's created_at tiebreak applies.
+// The board's order, as a comparator: LIFETIME WORDS desc, then level, then rebirths (Andy oct2: the
+// board ranks by WORDS — letters only began counting at PR #79 with no backfill, so everyone else
+// showed 0; Andy re-sorted public.leaderboard by lifetime_words in Supabase, recorded in
+// 009_board_by_words.sql). A HYPOTHETICAL row (someone not on the board yet) loses every exact tie —
+// the existing row got there first, the same rule the view's created_at tiebreak applies.
 export function ranksAhead(row, me) {
-  // STEP 51: a board that carries LETTERS ranks by them first (letters, level, rebirths).
-  if (row.lifetime_letters != null && me.lifetimeLetters != null) {
-    const L = Number(row.lifetime_letters) || 0;
-    if (L !== me.lifetimeLetters) return L > me.lifetimeLetters;
-    const lv = Number(row.level) || 0;
-    if (lv !== me.level) return lv > me.level;
-    return (Number(row.rebirths) || 0) >= me.rebirths;
-  }
-  const r = Number(row.rebirths) || 0;
-  const l = Number(row.level) || 0;
   const w = Number(row.lifetime_words) || 0;
-  if (r !== me.rebirths) return r > me.rebirths;
+  const l = Number(row.level) || 0;
+  const r = Number(row.rebirths) || 0;
+  if (w !== me.lifetimeWords) return w > me.lifetimeWords;
   if (l !== me.level) return l > me.level;
-  return w >= me.lifetimeWords;
+  return r >= me.rebirths;
 }
 
 /** The rank `stats` would take on a board whose top rows are `rows` (null if off the top-N). */

@@ -5,7 +5,7 @@
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
-// carries letters, the board ranks by lifetime_letters. Without it the mock is the v1 DB (lb_caps 404s).
+// carries letters; the board ranks by lifetime_words either way (Andy oct2, 009). Without it the mock is the v1 DB (lb_caps 404s).
 export async function mockBoard(page, seed = [], { caps = false, shared = null } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
@@ -15,9 +15,8 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
   const calls = { claim: 0, submit: 0 };
   const ranked = () => rows
     .slice()
-    .sort(caps
-      ? (a, b) => b.lifetime_letters - a.lifetime_letters || b.level - a.level || b.rebirths - a.rebirths
-      : (a, b) => b.rebirths - a.rebirths || b.level - a.level || b.lifetime_words - a.lifetime_words)
+    // the production view (009_board_by_words.sql): lifetime words, then level, then rebirths
+    .sort((a, b) => b.lifetime_words - a.lifetime_words || b.level - a.level || b.rebirths - a.rebirths)
     .map((r, i) => {
       const out = { ...r, rank: i + 1 };
       if (!caps) delete out.lifetime_letters;
