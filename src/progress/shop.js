@@ -7,7 +7,6 @@ import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
 import { layerOpen } from './claims.js';
-import { THEMES, isThemeOwned } from '../theme/themes.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
 // cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
@@ -196,8 +195,8 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   if (Number.isFinite(kCost) && bal >= kCost) return true;
   // LETTER FORGE — uncapped, so there is always a next forge to buy (once it has been revealed).
   if ((layerOpen('forge') || forgeBuys() > 0) && bal >= forgeCost(forgeBuys())) return true;
-  // Buyable menu themes (priced, not yet owned or level-granted).
-  if (THEMES.some((t) => t.price > 0 && !isThemeOwned(t.id) && bal >= t.price)) return true;
+  // Themes are NOT counted: they left the shop in STEP 50 (worlds), so a "buyable" theme lit the dot
+  // with nothing on the shelf (Andy oct2 A5 — a 60-win balance showed a dot for MIDNIGHT).
   return false;
 }
 
