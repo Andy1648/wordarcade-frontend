@@ -39,10 +39,10 @@
      --wall-tint             faint colored cast washed over the concrete
      --wall-light            streetlight color (warm white by default)
 
-   REUSE: the game modes build ON this — they apply .wall-surface and only
-   override the tokens (Word Bomb grimier/hotter, Category Blitz electric cyan),
-   inheriting the same surface + tag-panel + spotlight + handstyle vocabulary
-   instead of each hardcoding its own background.
+   WHO USES IT (true Oct 2026): the MENU stage, the CHAIN/FUSE solo shell and the
+   RACE lobby + race screen apply .wall-surface and override its tokens. Word Bomb,
+   Category Blitz and SAT RUSH do NOT (an older note said the game modes all build
+   on this; they don't).
    ---------------------------------------------------------------------------- */
 
 /* ============================ SURFACE ================================ */
