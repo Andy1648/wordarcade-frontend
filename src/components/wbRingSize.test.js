@@ -137,3 +137,23 @@ test('rails layout: the ring takes the play area between the rows (not the talle
   const big = ringDiameter({ stageW: 1740, stageH: 1000, contentW: 1684, contentH: 920, headH: 56, topH: 118, botH: 76, railW: 260, rowGap: 30, colGap: 22, layout: 'rails' });
   assert.ok(big > 520 && big <= 720, `1920 ring ${big}`);
 });
+
+// ---- PHONE (Andy oct2: the phone ring is a LAYOUT, not a 0.72 guess) ----------------------------
+import { WB_RING_OF_WIDTH_PHONE } from './wbRingSize.js';
+// Real measured boxes (claude/wb-phone/measure.jsonl): stage = content + padding, the stack heights
+// are the header / prompt / input rows the app actually renders.
+const PHONE_390 = { stageW: 344, stageH: 828, contentW: 330, contentH: 820, headH: 44, topH: 147, botH: 110, rowGap: 20, layout: 'phone' };
+test('phone 390x844: the ring spans the board width instead of 0.72 of it', () => {
+  const d = ringDiameter(PHONE_390);
+  assert.equal(d, Math.floor(330 * WB_RING_OF_WIDTH_PHONE));
+  assert.ok(d > 247 * 1.15, `${d}px — the old ring was 247px`);
+});
+test('phone: the ring never exceeds the row between the prompt and the input', () => {
+  const short = { ...PHONE_390, contentH: 520 };
+  const rowH = 520 - (44 + 20) - 147 - 110 - 2 * 20 - WB_FLAG_ROOM;
+  assert.equal(ringDiameter(short), rowH);
+});
+test('phone: never wider than the content box, never negative', () => {
+  assert.ok(ringDiameter({ ...PHONE_390, contentH: 100 }) === 0);
+  assert.ok(ringDiameter(PHONE_390) <= PHONE_390.contentW);
+});

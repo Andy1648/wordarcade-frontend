@@ -41,6 +41,15 @@ export const WB_FLAG_ROOM = 28;
 // its board is worse than a slightly small one, so the board always wins: this is
 // the only place the 220px floor can be overruled, and only downward.
 export const WB_RING_OF_STAGE_MAX = 0.75;
+// PHONE (Andy oct2: "the WB phone ring — a layout change, not a formula tweak"). On a phone the board
+// is one column and the ring row already takes ALL the slack between the prompt and the input
+// (`auto auto 1fr auto`), but the size still came from the old CENTRED layout: the taller stack
+// reserved on BOTH sides, then 0.72 of the board's width, then a 0.75 cap. Measured: a 247px ring at
+// 390x844 with ~250px of empty height around it, 163px at 360x640. The phone layout sizes the ring to
+// the row it actually has — the height between the stacks (minus the YOUR TURN flag) and up to
+// WB_RING_OF_WIDTH_PHONE of the board's content width (seats sit INSIDE the square, so it never
+// reaches the board's edge).
+export const WB_RING_OF_WIDTH_PHONE = 0.92;
 
 /**
  * Pure geometry — exported so it can be unit-tested without a DOM.
@@ -70,6 +79,12 @@ export function ringDiameter({
   // the ring may only take the height that remains after the TALLER of the two
   // stacks has been reserved on BOTH sides.
   const reserved = Math.max(topH, botH) + rowGap;
+  if (layout === 'phone') {
+    // the ring row's real height: what the header, prompt and input stacks leave, minus the flag
+    const rowH = playH - topH - botH - 2 * rowGap - WB_FLAG_ROOM;
+    const d = Math.min(contentW * WB_RING_OF_WIDTH_PHONE, rowH, WB_RING_MAX);
+    return Math.max(0, Math.floor(d));
+  }
   // Rails: whichever leaves MORE — when the two stacks are near-equal the old symmetric reserve is
   // the roomier one (the flag allowance would cost 28px), when they differ the new one is.
   const freeHeight = layout === 'rails'
@@ -124,7 +139,7 @@ export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
     railW,
     rowGap,
     colGap,
-    layout: stack ? 'stack' : 'rails',
+    layout: stack ? 'phone' : 'rails',
   });
   stage.style.setProperty('--wb-size', `${d}px`);
   return d;
