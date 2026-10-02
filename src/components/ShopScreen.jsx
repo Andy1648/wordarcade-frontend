@@ -17,6 +17,8 @@ import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, 
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
+import RedeemCodes from './RedeemCodes';
+import { LEADERBOARD_ENABLED } from '../leaderboard/client';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
@@ -341,6 +343,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 />
               ))}
             </div>
+
+            {/* STEP 61: CODES — last, small; the shop's job is spending, a code is a side door. */}
+            {LEADERBOARD_ENABLED && (
+              <>
+                <h3 className="shop-subtitle">CODES</h3>
+                <RedeemCodes />
+              </>
+            )}
           </div>
         ) : (
           <div className="shop-body">

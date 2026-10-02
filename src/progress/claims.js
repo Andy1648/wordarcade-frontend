@@ -31,6 +31,7 @@ export const CLAIM_KINDS = {
   rank: 'RANK UP',
   mark: 'NEW MARK',
   layer: 'NEW SYSTEM',
+  code: 'CODE',
 };
 
 // Per-kind side effects of claiming (a NEW MARK becomes owned, …). Registered by the owning module.

@@ -746,3 +746,76 @@
 .shop-perk .shop-card-btn {
   grid-area: btn;
 }
+
+/* ---- STEP 61: CODES — one field, one button, one answer line ---------------------------------- */
+.shop-codes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.shop-codes-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #b9aecd;
+}
+.shop-codes-row {
+  display: flex;
+  gap: 8px;
+}
+.shop-codes-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #0d0618;
+  border: 3px solid #4a2f7a;
+  border-radius: 8px;
+}
+.shop-codes-input:focus {
+  outline: none;
+  border-color: #2effe0;
+}
+.shop-codes-btn {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #0d0618;
+  background: #ffe94a;
+  border: 3px solid #a8950f;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+.shop-codes-btn:active {
+  transform: translate(2px, 2px);
+}
+.shop-codes-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.shop-codes-msg {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+}
+.shop-codes-msg.is-ok {
+  color: #2effe0;
+}
+.shop-codes-msg.is-bad {
+  color: #ff6b3d;
+}

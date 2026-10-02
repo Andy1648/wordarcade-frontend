@@ -15,6 +15,7 @@ export const KIND_COLOUR = {
   rank: '#FF4FA3',
   mark: '#C58BFF',
   layer: '#FF6B3D',
+  code: '#FFE94A',
 };
 
 export default function ClaimsPanel({ onClose, onReveal }) {

@@ -110,6 +110,6 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [ ] T1 STEP 30 method over every screen touched since Oct 1, until scores stop improving (score table)
 
 ## STEP 61 — Redeem codes
-- [ ] R1 CODES entry in the shop
-- [ ] R2 Codes server-side in Supabase (expiry, one use per player)
-- [ ] R3 Andy creates codes by adding rows in the Table Editor (instructions)
+- [x] R1 CODES entry at the end of the shop: one field + REDEEM + one answer line; a good code lands in REWARDS to claim (never pays on its own) — e2e/redeem-codes.spec.js, claude/codes/shop-codes-390.png, shop-codes-1280.png
+- [x] R2 Server-side: supabase/migrations/007_redeem_codes.sql — public.redeem_codes (RLS on, no policies: the anon key cannot list codes), lb_redeem checks active / expiry / max_uses / one per player (claimed profile, else device secret), 12 tries per player per hour. BLOCKED for prod until Andy runs 007 in the SQL editor — until then the shop answers "CODES AREN'T SWITCHED ON YET" (tested).
+- [x] R3 Instructions for Andy at the top of 007_redeem_codes.sql: Table Editor → redeem_codes → Insert row (code, wins, label, expires_at, max_uses, active)
