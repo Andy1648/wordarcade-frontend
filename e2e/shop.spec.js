@@ -4,7 +4,6 @@
 // gated on level, and (when eligible) zeroes xp while preserving wins + purchases.
 import { test, expect } from '@playwright/test';
 import { POP_STYLES, SOUND_PACKS } from '../src/progress/shop.js';
-import { THEMES } from '../src/theme/themes.js';
 import { installBackendMock } from './support/backendMock.js';
 
 async function openVia(page, seed, selector) {
@@ -46,7 +45,9 @@ test.describe('shop', () => {
     // (default/midnight/inferno/toxic/prism — themes render as .shop-card too via .shop-theme-card;
     // feat/themes added them). KEY POWER + MOMENTUM are upgrade TRACKS, not .shop-card, so not counted.
     // Derived from the catalog: STEP 19 lengthened both cosmetic ladders.
-    await expect(page.locator('.shop-card')).toHaveCount(POP_STYLES.length + SOUND_PACKS.length + THEMES.length);
+    // STEP 50: THEMES left the shop (worlds replaced them), so the cards are the cosmetics only.
+    await expect(page.locator('.shop-card')).toHaveCount(POP_STYLES.length + SOUND_PACKS.length);
+    await expect(page.locator('.shop-theme-card')).toHaveCount(0);
     expect(await page.locator('.shop-card.is-locked').count()).toBeGreaterThan(0);
 
     const chrome = page.locator('.shop-card', { hasText: 'CHROME' });
