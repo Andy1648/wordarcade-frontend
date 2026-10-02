@@ -1252,6 +1252,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           // clear slot, drops to its compact headline, or hides and lets the ring teach.
           avoidTextIn=".homepage-stage"
           avoidSelector=".homepage-logo-wrap, .homepage-cards-region, .homepage-corner-nav"
+          // No wash (fine-tune oct2): a first-time player's first screen was ~70% dimmed behind a
+          // ring; the ring + the bar's own TYPE ANYWHERE line teach without hiding the modes.
+          dim={false}
           onDismiss={dismissMenuSpot}
         />
       )}
