@@ -567,12 +567,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
-          { transform: `${CENTER}rotate(-3deg) scale(1.7)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
-          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.1 }, // 150ms — in
-          { transform: `${CENTER}rotate(-3deg) scale(1.06)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
+          // STEP 50 / Andy N2 ("bigger text includes animated text: level-ups"): the card now SETTLES
+          // at ×1.2 (was ×1) — bigger for the whole hold — and slams in from ×2.
+          { transform: `${CENTER}rotate(-3deg) scale(2)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
+          { transform: `${CENTER}rotate(-3deg) scale(1.4)`, opacity: 1, offset: 0.1 }, // 150ms — in
+          { transform: `${CENTER}rotate(-3deg) scale(1.26)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 0, offset: 1 }, // 1500ms — fade out
         ],
         { duration: LEVELUP_MS, easing: 'linear', fill: 'both' } // ease per-keyframe (below), NOT per-effect
       );
@@ -795,14 +797,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     },
     // STEP 22: crossing into a new MENU TIER names the frame the player just earned. Reuses
     // the level-up element + starburst (one finite play each).
-    tierUp(name) {
+    tierUp(name, worldName = '') {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
       // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
       // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
       if (levelTitleRef.current) levelTitleRef.current.textContent = name;
-      if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
+      // STEP 50: a new tier is a new WORLD — name it.
+      if (levelSubRef.current) levelSubRef.current.textContent = worldName ? `NEW WORLD: ${worldName}` : 'NEW FRAME UNLOCKED';
       if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
       a.cancel();
       a.play();

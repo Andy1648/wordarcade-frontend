@@ -15,13 +15,13 @@ import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, f
 import { canAffordAny, buyKeyPower, buyForge } from '../progress/shop';
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
-import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import MenuFrame from './MenuFrame';
+import WorldBackdrop, { worldFor } from './WorldBackdrop';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
 
 import ScreenBoundary from './ScreenBoundary';
@@ -43,6 +43,7 @@ import ClaimsPanel from '../claims/ClaimsPanel.jsx';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
+import { queueClaim } from '../progress/claims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
 import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
@@ -534,7 +535,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // STEP 22 / A1 — THE MENU TIER. Level + rebirth → how rich the menu looks (corner frame art,
   // pop length, level-up burst). Crossing into a tier this browser has not seen yet slams the
   // new frame in once and names it; every level-up punches the corners once.
-  const tier = menuTier(xpProgress.level, rebirths);
+  // STEP 50: the shown tier is the BEST this player has reached — a rebirth resets the level, and
+  // the menu (frame + WORLD) must never move back a world for it.
+  const [worldFrom] = useState(() => getSeenTier());
+  const tier = Math.max(menuTier(xpProgress.level, rebirths), worldFrom);
   const [frameFresh, setFrameFresh] = useState(false);
   const [framePunch, setFramePunch] = useState(0);
   const lastLevelRef = useRef(xpProgress.level);
@@ -543,7 +547,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (tier > Math.max(0, seen)) {
       setSeenTier(tier);
       setFrameFresh(true);
-      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]);
+      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier], (worldFor(tier) || {}).name || '');
     } else if (seen < tier) {
       setSeenTier(tier);
     }
@@ -559,9 +563,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rebirthLinkRef = useRef(null);
   // THEMES: grant any level-unlocked theme (LV10 MIDNIGHT, LV30 TOXIC) as progression reaches it,
   // so the free path works even if the player never opens the shop. Idempotent + persisted.
+  // (STEP 50: themes are retired — no more level-granted themes. A refund for BOUGHT ones waits as
+  // a claim; it is queued here, where the claims module is loaded.)
   useEffect(() => {
-    syncThemeUnlocks(xpProgress.level);
-  }, [xpProgress.level]);
+    try {
+      const n = Number(localStorage.getItem('taw.themeRefundPending'));
+      if (n > 0) {
+        queueClaim({ id: 'theme-refund', kind: 'welcome', label: 'THEME REFUND', amount: n, detail: 'themes-retired' });
+        localStorage.removeItem('taw.themeRefundPending');
+      }
+    } catch {
+      /* blocked */
+    }
+  }, []);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
   useEffect(() => {
@@ -818,6 +832,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-menu-frame={menuFrame || undefined}
         data-menu-tier={tier}
       >
+        <WorldBackdrop tier={tier} from={worldFrom} />
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
             menu's one piece of ambient motion now that the idle loops are gone.

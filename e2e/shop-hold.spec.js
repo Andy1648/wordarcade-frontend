@@ -80,17 +80,11 @@ test('STATS sits before SHOP in both menu trees (A4)', async ({ page }) => {
   expect(o.indexOf('stats')).toBeLessThan(o.indexOf('shop'));
 });
 
-test('every theme card shows a miniature menu in its own palette (A12)', async ({ page }) => {
+test('STEP 50: the shop sells no themes — the WORLD is earned, not bought', async ({ page }) => {
   await boot(page, { 'taw.wins': '100' });
   await openShop(page);
-  const previews = page.locator('.shop-theme-card .shop-theme-preview');
-  const n = await page.locator('.shop-theme-card').count();
-  expect(n).toBeGreaterThanOrEqual(5);
-  await expect(previews).toHaveCount(n);
-  const fills = await previews.evaluateAll((els) => els.map((e) => e.querySelector('rect').getAttribute('fill')));
-  expect(new Set(fills).size, 'each preview is painted in a different background').toBe(n);
-  const box = await previews.first().boundingBox();
-  expect(box.width, 'big enough to read as a menu').toBeGreaterThanOrEqual(150);
+  await expect(page.locator('.shop-theme-card')).toHaveCount(0);
+  await expect(page.locator('.shop-subtitle', { hasText: 'THEMES' })).toHaveCount(0);
 });
 
 test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async ({ page }) => {

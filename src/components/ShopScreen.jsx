@@ -11,23 +11,12 @@ import { forgeLevels, forgeBuys, forgeCost, nextForgeLetter, FORGE_PCT } from '.
 import ForgeStrip from './ForgeStrip';
 import { layerOpen } from '../progress/claims';
 import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
-import {
-  THEMES,
-  themeById,
-  getOwnedThemes,
-  isThemeOwned,
-  syncThemeUnlocks,
-  buyTheme,
-  getEquippedTheme,
-  setEquippedTheme,
-} from '../theme/themes';
-import { getWins, saveWins, perWordWins } from '../progress/wins';
+import { getWins, perWordWins } from '../progress/wins';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
-import ThemePreview from './ThemePreview';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
@@ -42,12 +31,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
   const [forge, setForge] = useState(() => forgeLevels());
-  // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
-  const [ownedThemes, setOwnedThemes] = useState(() => {
-    syncThemeUnlocks(loadProgress().level);
-    return getOwnedThemes();
-  });
-  const [equippedTheme, setEquippedThemeState] = useState(() => getEquippedTheme());
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -191,32 +174,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
   };
-  // THEMES: buy → reveal ritual → apply live (setEquippedTheme repaints the root immediately, so
-  // the shop + menu behind it recolor the instant the theme lands). Equipping an owned theme is
-  // instant + live too.
-  const onBuyTheme = (id) => {
-    const r = buyTheme(id, { getWins, saveWins });
-    if (r.ok) {
-      sndPurchase();
-      const t = themeById(id);
-      setReveal({
-        kind: 'theme',
-        name: t.name,
-        blurb: `Your menu is now ${t.name}.`,
-        coin: `−${formatNum(t.price)} WINS`,
-        colour: t.vars['--theme-ink'],
-        swatch: t.swatch,
-      });
-      evItemPurchased(`theme:${id}`);
-      setOwnedThemes(getOwnedThemes());
-      setWins(getWins());
-      setEquippedTheme(id); // apply the just-bought theme live
-      setEquippedThemeState(getEquippedTheme());
-    }
-  };
-  const onEquipTheme = (id) => {
-    if (setEquippedTheme(id)) setEquippedThemeState(getEquippedTheme());
-  };
   const confirmRebirth = () => {
     const gained = nextMult;
     // Zeroes xp (HEAD START may lift the new climb), pays the stars for how far past the gate the
@@ -300,23 +257,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
             </div>
 
-            {/* THEMES — each card previews the real palette. BELOW key power: five theme cards are a full
-                screen at 1366x768, and KEY POWER (the upgrade that raises every payout) sat under them at
-                y=684, below the fold. Income first, cosmetics second. */}
-            <h3 className="shop-subtitle">THEMES — RECOLOR YOUR MENU</h3>
-            <div className="shop-grid shop-theme-grid">
-              {THEMES.map((t) => (
-                <ThemeCard
-                  key={t.id}
-                  theme={t}
-                  ownedThemes={ownedThemes}
-                  equippedTheme={equippedTheme}
-                  wins={wins}
-                  onEquipTheme={onEquipTheme}
-                  onBuyTheme={onBuyTheme}
-                />
-              ))}
-            </div>
+            {/* THEMES are gone from the shop (STEP 50, Andy oct2): the menu's look is now the WORLD
+                your border tier has reached — earned by playing, not bought. */}
             {/* LETTER FORGE (Andy oct2 — replaced MOMENTUM, which capped at 200 and did nothing you
                 could see). Uncapped: each buy forges the next letter one level; a word pays +5% per
                 forged level of every letter in it. The strip IS the state — 26 letters at their levels. */}
@@ -562,43 +504,6 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
   );
 }
 
-// THEME card: a real PALETTE SWATCH (flat colour strip, not a text label) is the preview, then
-// the name, a free-at-level note for gated themes, and EQUIPPED / EQUIP / buy / locked+progress
-// — the same states as the cosmetic cards, so themes read as first-class shop goods. Module-scoped
-// + prop-driven for the same re-mount reason as Card above.
-function ThemeCard({ theme, ownedThemes, equippedTheme, wins, onEquipTheme, onBuyTheme }) {
-  const ownedT = isThemeOwned(theme.id, ownedThemes);
-  const isEq = equippedTheme === theme.id;
-  const affordable = wins >= theme.price;
-  const cls = isEq ? 'equipped' : ownedT ? 'owned' : affordable ? 'buy' : 'locked';
-  return (
-    <div className={`shop-card shop-theme-card is-${cls}`}>
-      <ThemePreview theme={theme} />
-      <div className="shop-card-name">{theme.name}</div>
-      {theme.unlockLevel > 0 && !ownedT && (
-        <div className="shop-theme-gate">FREE AT LV {theme.unlockLevel}</div>
-      )}
-      {isEq ? (
-        <div className="shop-card-tag">EQUIPPED</div>
-      ) : ownedT ? (
-        <button type="button" className="shop-card-btn" onClick={() => onEquipTheme(theme.id)}>
-          EQUIP
-        </button>
-      ) : affordable ? (
-        <HoldBuy label={formatNum(theme.price)} onCommit={() => onBuyTheme(theme.id)} />
-      ) : (
-        <>
-          <div className="shop-card-price">
-            <span className="shop-coin" aria-hidden="true" />
-            {formatNum(theme.price)}
-          </div>
-          <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
-          <ProgressBar value={theme.price > 0 ? wins / theme.price : 1} />
-        </>
-      )}
-    </div>
-  );
-}
 
 // §2 — the BUY button: a plain click commits. It was a press-and-HOLD gate (400ms fill,
 // wall-clock timer, pointerup cancelled) with nothing on screen saying "hold", so every upgrade

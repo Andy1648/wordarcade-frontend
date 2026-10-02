@@ -11,10 +11,19 @@
 // scattered thresholds that drift apart. PURE — unit-tested in menuTier.test.js.
 
 // Level at which each level-tier starts. T0 is L1.
-export const LEVEL_TIER_STARTS = [1, 10, 25, 50, 100, 150, 250];
-export const MAX_TIER = 7;
+// STEP 50 (Andy oct2: "border tiers get many more steps — satisfaction must not run out; plan
+// tiers to L1000+ and rebirth tiers"): 15 level tiers to L1000, plus one per rebirth, to T24. Every
+// tier past T0 is also a WORLD — the menu's background (worldsData.js / WorldBackdrop).
+export const LEVEL_TIER_STARTS = [1, 10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 600, 750, 900, 1000];
+export const MAX_TIER = 24;
+// The frame's FX (pop length, shards) stop growing at this tier — past it, the climb is the world.
+export const FX_TIER_CAP = 7;
 
-export const TIER_NAMES = ['PLAIN', 'TAPED', 'BOLTED', 'STEEL', 'CHROME', 'GOLD', 'NEON', 'LEGEND'];
+export const TIER_NAMES = [
+  'PLAIN', 'TAPED', 'BOLTED', 'STEEL', 'CHROME', 'GOLD', 'NEON', 'LEGEND',
+  'ICE', 'VINE', 'WAVE', 'CANDY', 'STORM', 'GEM', 'MOON', 'COSMIC',
+  'SOLAR', 'NIGHT', 'TOXIC', 'ABYSS', 'MAGMA', 'FROST', 'GILDED', 'VOID', 'MYTHIC',
+];
 
 export function levelTier(level) {
   const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 1;
@@ -41,13 +50,13 @@ export function nextTierLevel(level, rebirths = 0) {
 // animations"), more shards, a bigger level-up. All finite one-shots; the counts feed pooled
 // nodes, so a higher tier costs more simultaneous animations during typing, never at rest.
 export function tierFx(tier) {
-  const t = Math.max(0, Math.min(MAX_TIER, Math.floor(tier) || 0));
+  const t = Math.max(0, Math.min(FX_TIER_CAP, Math.floor(tier) || 0));
   return {
     tier: t,
     popMs: 600 + t * 90, // 600ms at T0 → 1230ms at T7
     popRise: 49 + t * 9, // px of upward travel
     shards: t >= 2 ? Math.min(6, 2 + Math.floor(t / 2)) : 0, // T2 3 → T7 5 (and KEY POWER still adds its own)
-    levelUpBurst: t >= 1, // the starburst behind LEVEL N
+    levelUpBurst: true, // the starburst behind LEVEL N — every tier (STEP 50: T0 level-ups were bare text on the cards)
     levelUpShards: 6 + t * 3,
   };
 }
@@ -63,6 +72,24 @@ export const TIER_COLORS = [
   { fill: '#FFD54A', line: '#a8800f' }, // GOLD
   { fill: '#FF4FA3', line: '#a3175e' }, // NEON
   { fill: '#9A1AFF', line: '#4f0391' }, // LEGEND
+  // STEP 50: T8-T24 take their colour from their world's accent.
+  { fill: '#e6f1ff', line: '#7d93b3' }, // ICE
+  { fill: '#C8FF3D', line: '#6f8f14' }, // VINE
+  { fill: '#2EFFE0', line: '#0f8f7e' }, // WAVE
+  { fill: '#FF4FA3', line: '#a3175e' }, // CANDY
+  { fill: '#FFE94A', line: '#a8950f' }, // STORM
+  { fill: '#6a2bb0', line: '#3d1a6e' }, // GEM
+  { fill: '#b9c6d6', line: '#5f6f84' }, // MOON
+  { fill: '#9A1AFF', line: '#4f0391' }, // COSMIC
+  { fill: '#FF6B3D', line: '#a8381a' }, // SOLAR
+  { fill: '#2EFFE0', line: '#0f8f7e' }, // NIGHT
+  { fill: '#C8FF3D', line: '#6f8f14' }, // TOXIC
+  { fill: '#9A1AFF', line: '#4f0391' }, // ABYSS
+  { fill: '#FF6B3D', line: '#a8381a' }, // MAGMA
+  { fill: '#e6f1ff', line: '#7d93b3' }, // FROST
+  { fill: '#FFD54A', line: '#a8800f' }, // GILDED
+  { fill: '#FFE94A', line: '#a8950f' }, // VOID
+  { fill: '#FF4FA3', line: '#a3175e' }, // MYTHIC
 ];
 
 // localStorage: the highest tier this browser has SEEN on the menu, so crossing into a new
