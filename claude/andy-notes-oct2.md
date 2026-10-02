@@ -107,9 +107,12 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] H2 Simplified where there was no headroom: beat sync no longer re-renders App or restyles <html> per beat (desktop menu typing 116 → 148 frames / 4 s); CHAIN/FUSE run-over hitch 700 → 200 ms / 683 → 67 ms. Headroom: phone + in-game multiplayer ≤1% long frames — this cycle's new one-shots (CLUTCH, FRENZY, WINNER row, world swish) live there; no new menu animation (it is the one screen over budget)
 
 ## STEP 60 — Fine-tune loop
-- [ ] T1 IN PROGRESS — claude/finetune/scores.md "Oct 2 loop": O0 4.87 → O1 5.61 (pass 1); pass 2 shooting
+- [ ] T1 IN PROGRESS — claude/finetune/scores.md "Oct 2 loop": O0 4.87 → O1 5.61 → O2 5.89; loop A closed by its stop rule (+0.28 < 0.3); loop B running (Andy /goal: keep going until 08:00 ET)
 
 ## STEP 61 — Redeem codes (merged PR #87, 1d26db6)
 - [x] R1 CODES entry at the end of the shop: one field + REDEEM + one answer line; a good code lands in REWARDS to claim (never pays on its own) — e2e/redeem-codes.spec.js, claude/codes/shop-codes-390.png, shop-codes-1280.png
 - [x] R2 Server-side: supabase/migrations/007_redeem_codes.sql — public.redeem_codes (RLS on, no policies: the anon key cannot list codes), lb_redeem checks active / expiry / max_uses / one per player (claimed profile, else device secret), 12 tries per player per hour. BLOCKED for prod until Andy runs 007 in the SQL editor — until then the shop answers "CODES AREN'T SWITCHED ON YET" (tested).
 - [x] R3 Instructions for Andy at the top of 007_redeem_codes.sql: Table Editor → redeem_codes → Insert row (code, wins, label, expires_at, max_uses, active)
+
+## Queue: Batch A / Batch B
+- [ ] BLOCKED — the Oct 1 queue lists "Batch A, Batch B" by name only; their contents are not in claude/QUEUE-specs.md, this checklist, or any session transcript (the only "BATCH A" prompt is the Sept 16 batch, already shipped then). Needs Andy to re-paste them. Moved on to fine-tune loop B.

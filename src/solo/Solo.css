@@ -775,13 +775,19 @@
   line-height: 0.98;
   /* THE ONE BIG THING on the card (fine-tune oct2 / Andy N3): the result. It was --fs-panel, the
      same size as the hint word under it. */
-  font-size: var(--fs-h1);
+  font-size: min(var(--fs-h1), 9.5vw);
+  white-space: nowrap; /* "CHAIN BROKE" on one line — two lines pushed PLAY AGAIN off a 625px screen */
   color: var(--solo-accent);
   margin: 0;
 }
-@media (max-height: 560px) {
+/* A short laptop (1366x625) or a landscape phone: the result steps down a size and the mascot
+   goes, so the whole card — PLAY AGAIN included — fits without scrolling (fine-tune oct2 pass 3). */
+@media (max-height: 720px) {
   .solo-deathcard h2 {
     font-size: var(--fs-h2);
+  }
+  .solo-deathcard .solo-death-mascot {
+    display: none;
   }
 }
 /* ...and the "you could have played" hint steps down under it. */
