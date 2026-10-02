@@ -61,7 +61,7 @@ async function readReceipt(page) {
   return page.evaluate(() => {
     const num = document.querySelector('.wins-earned-num');
     return {
-      total: num ? Number((num.textContent || '').replace(/[^0-9]/g, '')) : null,
+      total: num ? Number(num.getAttribute('data-wins-total')) : null, // exact (the text abbreviates past 9,999)
       lines: [...document.querySelectorAll('[data-wins-line]')].map((n) => ({
         label: n.getAttribute('data-wins-line'),
         amount: Number(n.getAttribute('data-wins-amount') || 0),

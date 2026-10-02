@@ -840,7 +840,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     winsStamp(amount) {
       const a = winsStampAnimRef.current;
       if (!a || !winsStampRef.current) return;
-      winsStampRef.current.textContent = `+${amount} WINS`;
+      winsStampRef.current.textContent = `+${formatNum(amount)} WINS`;
       a.cancel();
       a.play();
     },
