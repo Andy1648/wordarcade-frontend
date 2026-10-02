@@ -833,3 +833,14 @@
   .shop-rb-hero { padding: 8px 12px; }
   .shop-rb-hero-val { font-size: var(--fs-h1); }
 }
+
+/* Compact cosmetic tiles (fine-tune oct2): the price never breaks across lines ("6 / 000"), and the
+   NEXT flag sits on the tile's bottom edge instead of over its centred name ("CHRO[NEXT]"). */
+.shop-grid--compact .shop-card button,
+.shop-grid--compact .shop-card button * {
+  white-space: nowrap;
+}
+.shop-grid--compact .shop-card-next {
+  top: auto;
+  bottom: -10px;
+}
