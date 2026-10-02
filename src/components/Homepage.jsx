@@ -1,5 +1,5 @@
 // Homepage.jsx
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -45,8 +45,10 @@ import { useClaims } from '../claims/useClaims.js';
 import { queueClaim } from '../progress/claims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
-import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
-import DevResetNotice from '../leaderboard/DevResetNotice.jsx';
+// Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
+// so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
+const RankUpMoment = lazy(() => import('../leaderboard/RankUpMoment.jsx'));
+const DevResetNotice = lazy(() => import('../leaderboard/DevResetNotice.jsx'));
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -899,8 +901,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
-        {devReset && <DevResetNotice onDone={() => setDevReset(false)} />}
-        {rankUp && <RankUpMoment from={rankUp.from} to={rankUp.to} onDone={() => setRankUp(null)} />}
+        {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
+        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onDone={() => setRankUp(null)} /></Suspense>}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
