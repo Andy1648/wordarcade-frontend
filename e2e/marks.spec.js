@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
-test('reveal → claim a mark → wear it as MAIN (desktop)', async ({ page }) => {
+test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → wear it as MAIN (desktop)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await installBackendMock(page);
   await page.addInitScript(() => {
@@ -19,20 +19,13 @@ test('reveal → claim a mark → wear it as MAIN (desktop)', async ({ page }) =
   });
   await page.goto('/?portal=1');
   await menuReady(page);
-  const rewards = page.locator('.homepage-nav-btn.is-stats'); // claims ride STATS (Andy oct2 A4)
-  await expect(rewards).toBeVisible();
-  await rewards.click();
-  await page.locator('.claims-panel').waitFor();
-  // The NEW SYSTEM reveal.
-  await page.locator('.claims-row', { hasText: 'MARKS' }).filter({ hasText: 'NEW SYSTEM' }).locator('.claims-btn').click();
-  await expect(page.locator('.sticker')).toContainText('NEW SYSTEM');
-  await page.locator('.sticker').click();
-  // The mark itself, claimed → its reveal → the picker opens on dismiss.
-  await rewards.click();
-  await page.locator('.claims-row', { hasText: 'BOMBER' }).locator('.claims-btn').click();
-  await expect(page.locator('.sticker')).toContainText('BOMBER');
-  await expect(page.locator('.sticker')).toContainText('+100%');
-  await page.locator('.sticker').click();
+  // Andy oct2 evening E4: marks and the MARKS system never sit in the claim inbox.
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('taw.marksOwned') || '[]'))).toContain('mk-bomber');
+  const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]').map((c) => c.id));
+  expect(claims.filter((id) => id.startsWith('mark-') || id.startsWith('layer-'))).toEqual([]);
+  const btn = page.locator('.menu-mark');
+  await expect(btn).toContainText('NEW MARK');
+  await btn.click();
   await page.locator('.marks-overlay').waitFor();
   const card = page.locator('.mark-card', { hasText: 'BOMBER' });
   await expect(card.locator('.mark-tier')).toHaveText('COMMON');
@@ -41,10 +34,6 @@ test('reveal → claim a mark → wear it as MAIN (desktop)', async ({ page }) =
   await expect(card.locator('.mark-on')).toHaveText('MAIN');
   await page.locator('.marks-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×2');
-  // The mark claims are gone; what is left is the LETTER FORGE reveal (LV 12 ≥ 8).
-  const left = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]').map((c) => c.id));
-  expect(left.filter((id) => id.startsWith('mark-') || id === 'layer-marks')).toEqual([]);
-  expect(left).toContain('layer-forge');
 });
 
 test('before LV 10 there is no marks layer at all', async ({ page }) => {

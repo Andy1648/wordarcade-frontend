@@ -69,9 +69,8 @@ test('milestones pay wins (× rebirth) once each as the count crosses them', () 
     for (let i = 0; i < 100; i++) last = recordAcceptedWord(`word${i}`, { mode: 'fuse', band: 'COMMON' });
     // The 100th distinct word crosses the 100 milestone → +5000 wins (rebirth ×1).
     assert.deepEqual(last.milestone, { n: 100, wins: 5000 });
-    assert.equal(getWins() - before, 0, 'queued for the player to claim (Andy oct2)');
-    assert.equal(claimAll().wins, 5000);
-    assert.equal(getWins() - before, 5000);
+    assert.equal(getWins() - before, 5000, 'E4: paid as it is crossed (earned by playing), no inbox');
+    assert.equal(claimAll().wins, 0);
     // Crossing again does not re-pay (already claimed).
     const again = recordAcceptedWord('word50', { mode: 'fuse', band: 'COMMON' }); // dup
     assert.equal(again.milestone, null);
