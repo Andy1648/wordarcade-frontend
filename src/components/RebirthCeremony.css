@@ -88,7 +88,7 @@
 
 .rbc-reset { display: flex; flex-direction: column; }
 .rbc-level { flex-direction: column; align-items: flex-start; gap: 2px; }
-.rbc-level-val { display: inline-flex; align-items: baseline; gap: 10px; font-family: 'Bungee', cursive; font-size: var(--fs-h2); line-height: 1.05; }
+.rbc-level-val { display: inline-flex; align-items: baseline; gap: 10px; font-family: 'Bungee', cursive; text-transform: uppercase; font-size: var(--fs-h2); line-height: 1.05; }
 .rbc-arrow { font-size: var(--fs-panel); color: #c9b8e8; }
 .rbc-from { position: relative; color: #8a7aa6; }
 /* the strike-through is a plain rectangle, drawn in */
