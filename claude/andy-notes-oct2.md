@@ -83,7 +83,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## STEP 54 — Join mid-game
 - [x] J1 Room code chip in the game header (own line under the prompt on phones) — PR #83 (2bcb1da), e2e/join-midgame.spec.js
 - [x] J2 Code-join mid-round = spectator ("WATCHING — DEALT IN NEXT TURN"), dealt in at the next turn advance; additive (allowSpectate only on code-join, WB only) — backend PR #8 (joinMidgame.test.js, full backend suite green) + frontend PR #83
-- [ ] J3 Verified on production with two browsers (revert via PR if WB smoke fails)
+- [x] J3 Verified on PRODUCTION with two real clients: B code-joins mid-round → spectator → dealt in at the next turn (11.5 s later); WB smoke word accepted; frontend markers live — claude/join-midgame/prod-run-2026-10-02.txt. No revert needed.
 
 ## STEP 55 — Word lists
 - [x] V1 Solo modes (FUSE/CHAIN) + server dictionary (WB/Blitz) both expanded — frontend PR #80 (words.common.txt, 626 words), backend PR #9 (COMMON_PROPER, 951 words)
