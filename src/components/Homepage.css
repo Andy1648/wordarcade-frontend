@@ -867,6 +867,54 @@ html[data-beat='true'] .homepage-logo {
   }
 }
 
+/* ---- STEP 58: where the nav cluster lives (Homepage NAV_LAYOUT; ?nav= to compare) ----------
+   'stack' = the old behaviour: the top-right column on a tall screen, but on a SHORT screen (a
+   laptop browser, 1280x551) the nav dropped into the bottom row beside JOIN ROOM — SHOP and REBIRTH
+   at the bottom of the page. 'top' = the nav is at the top on every screen: the tall column is
+   unchanged, the short arrangement puts it on the wordmark's row, right side. 'rail' = a column
+   down the left edge (squeezes the card row; kept only for comparison). */
+.homepage-stage[data-nav='top'][data-fit='short'] {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas:
+    '. logo nav'
+    'xp xp xp'
+    'cards cards cards'
+    'join credits .';
+}
+.homepage-stage[data-nav='top'][data-fit='short'] > .homepage-corner-nav {
+  margin-top: 0;
+  margin-bottom: 16px;
+  align-self: start;
+  gap: 6px;
+}
+.homepage-stage[data-nav='top'][data-fit='short'] .homepage-nav-btn:not(.is-board) {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.02em;
+  padding: 0 6px;
+}
+.homepage-stage[data-nav='top'][data-fit='short'] .homepage-nav-btn.is-rewards {
+  width: 44px;
+  padding: 0;
+}
+.homepage-nav-glyph { display: none; }
+.homepage-stage[data-nav='top'][data-fit='short'] .is-rewards .homepage-nav-word { display: none; }
+.homepage-stage[data-nav='top'][data-fit='short'] .is-rewards .homepage-nav-glyph { display: inline; }
+.homepage-stage[data-nav='rail']:not([data-fit='short']) > .homepage-corner-nav {
+  right: auto;
+  left: clamp(12px, 2vw, 24px);
+  top: 50%;
+  transform: translateY(-50%);
+  align-items: stretch;
+}
+.homepage-stage[data-nav='rail']:not([data-fit='short']) .homepage-nav-btn {
+  width: auto;
+}
+.homepage-stage[data-nav='rail']:not([data-fit='short']) .homepage-cards-scroll {
+  padding-left: 170px;
+}
+
 /* ---- Responsive ---- */
 
 /* The column count and card size are computed in Homepage.jsx from the available height at ALL
