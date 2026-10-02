@@ -511,3 +511,10 @@
   .mode-ex-tag,
   .mode-ex-line { display: none; }
 }
+/* ...and on a short LAPTOP the mastery line steps out too and the title drops a size, so the PLAY
+   row is inside the panel at 1366x625 (fine-tune oct2, loop B: PLAY was clipped by the edge). The
+   mastery line lives on in the mode's own screens. */
+@media (min-width: 481px) and (max-height: 700px) {
+  .mode-dialog-mastery { display: none; }
+  .mode-dialog-title { font-size: var(--fs-h2); }
+}
