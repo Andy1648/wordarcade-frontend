@@ -13,7 +13,8 @@ import { getRebirths } from '../progress/xp.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
-import { backupNow, restoreIfAhead, parseRecoveryCode } from '../save/cloudSave.js';
+import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY } from '../save/cloudSave.js';
+import { exportSave } from '../save/saveBackup.js';
 import { queueClaim } from '../progress/claims.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
@@ -219,15 +220,55 @@ export async function submitStats(force = false) {
  * On the menu: if this browser has a secret and the cloud save is AHEAD of local progress, import it
  * and report { restored: true } (the caller reloads). Also re-learns the profile after a wipe.
  */
-export async function restoreFromCloud() {
+export async function restoreFromCloud({ restore = true } = {}) {
   if (!LEADERBOARD_ENABLED) return { restored: false };
   const secret = peekSecret();
   if (!secret) return { restored: false };
   const caps = await boardCaps();
   if (!caps.cloud) return { restored: false };
-  const r = await restoreIfAhead({ rpc, secret });
+  const r = await restoreIfAhead({ rpc, secret, restore });
   if (r.id && r.username && !getMyProfile()) saveMyProfile({ id: r.id, username: r.username });
+  if (r.resetAll) return obeyDevReset(secret);
   return r;
+}
+
+/**
+ * 012_admin_reset: the dev set profiles.reset_all for this name. Wipe like Stats → RESET ALL PROGRESS
+ * but keep the claim + device secret, then lb_reset_ack stores the fresh save (the one time a LOWER
+ * save is accepted), zeroes the board row and clears the flag. Leaves a notice for the reloaded menu.
+ * Returns { reset: true } — the caller reloads so every module re-reads zeros. If the ack fails the
+ * flag stays set and the next boot repeats this (the wipe is idempotent).
+ */
+export async function obeyDevReset(secret = peekSecret()) {
+  wipeProgressKeys(localStorage, [SECRET_KEY, PROFILE_KEY]);
+  let acked = false;
+  try {
+    const r = await rpc('lb_reset_ack', { p_secret: secret, p_blob: exportSave(), p_score: localScore().toString() });
+    acked = !!(r && r.reset);
+  } catch {
+    acked = false;
+  }
+  try {
+    localStorage.setItem(DEV_RESET_NOTICE_KEY, '1');
+  } catch {
+    /* blocked */
+  }
+  return { restored: false, reset: true, acked };
+}
+/** The one-shot "reset by the dev" notice (set by obeyDevReset before the reload): peek, then clear. */
+export function hasDevResetNotice() {
+  try {
+    return localStorage.getItem(DEV_RESET_NOTICE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+export function clearDevResetNotice() {
+  try {
+    localStorage.removeItem(DEV_RESET_NOTICE_KEY);
+  } catch {
+    /* blocked */
+  }
 }
 /** A recovery code typed on a new device: adopt that identity, then restore. */
 export async function adoptRecoveryCode(code) {
