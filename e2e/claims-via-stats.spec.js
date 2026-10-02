@@ -43,6 +43,9 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1280, height: 800 }, { 
     expect(db.width, 'notification dot (was 10x10)').toBeGreaterThanOrEqual(18);
     await stats.click();
     await page.locator('.claims-panel').waitFor({ state: 'visible' });
+    // ...and Stats itself is one tap on
+    await page.locator('.claims-to-stats').click();
+    await page.locator('.stats-panel').waitFor({ state: 'visible' });
   });
 }
 

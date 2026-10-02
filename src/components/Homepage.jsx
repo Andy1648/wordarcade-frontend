@@ -1201,7 +1201,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <ClaimsPanel onClose={() => setShowClaims(false)} onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }} />
+          <ClaimsPanel
+            onClose={() => setShowClaims(false)}
+            onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
+            onStats={() => { setShowClaims(false); handleStats(); }}
+          />
         </ScreenBoundary>
       )}
       {claimReveal && <ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} />}

@@ -267,3 +267,24 @@
     padding: 0 6px;
   }
 }
+
+/* OPEN STATS → (Andy oct2 A4: claims ride STATS) — a quiet mono link under the list, never the lead. */
+.claims-to-stats {
+  display: block;
+  margin: 14px auto 0;
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  color: #d8c9f0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.claims-to-stats:hover {
+  color: #fff;
+}

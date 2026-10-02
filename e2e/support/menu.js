@@ -126,3 +126,17 @@ export function soloEntryQuery(id) {
   if (!q) throw new Error(`soloEntryQuery: no deep link for "${id}"`);
   return q;
 }
+
+/**
+ * Open the STATS screen. Claims ride the STATS button (Andy oct2 A4): while any claim waits, STATS
+ * opens the claims panel first, and its OPEN STATS → link goes on to Stats.
+ */
+export async function openStats(page) {
+  await navControl(page, 'stats').click();
+  const which = await Promise.race([
+    page.locator('.stats-overlay, .stats-panel').first().waitFor({ state: 'visible' }).then(() => 'stats'),
+    page.locator('.claims-panel').waitFor({ state: 'visible' }).then(() => 'claims'),
+  ]);
+  if (which === 'claims') await page.locator('.claims-to-stats').click();
+  await page.locator('.stats-panel').waitFor({ state: 'visible' });
+}

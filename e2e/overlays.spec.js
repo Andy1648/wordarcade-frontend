@@ -4,6 +4,7 @@
 // the console. Covers Stats, Shop, and the Rebirth view — each opened from its own menu icon.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { openStats } from './support/menu.js';
 
 // Seed a realistic progressed state so every readout (KEY POWER tier, wins, rebirth mult, level)
 // renders with real values rather than the empty defaults.
@@ -44,7 +45,7 @@ test.describe('overlays render without console errors', () => {
   test('STATS opens, renders the panel, and throws zero errors', async ({ page }) => {
     const errors = [];
     await gotoSeededMenu(page, errors);
-    await page.locator('.homepage-nav-btn.is-stats').click();
+    await openStats(page); // claims ride STATS (Andy oct2 A4)
     const panel = page.locator('.stats-panel');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('KEY POWER'); // the row that used to crash
