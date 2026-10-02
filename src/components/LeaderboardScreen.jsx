@@ -27,6 +27,7 @@ import {
 import { formatRecoveryCode } from '../save/cloudSave.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
+import { formatNum, formatRate } from '../format';
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -76,11 +77,10 @@ function NameTag({ name, rebirths }) {
   );
 }
 
-const fmt = (n) => Number(n || 0).toLocaleString('en-US');
-const fmtRate = (n) => {
-  const v = Number(n || 0);
-  return v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v.toFixed(1);
-};
+// ONE number format app-wide (Andy oct2 evening E2): the old private fmtRate only knew K, so a
+// 1e9 wins/word read "1000000.0K". format.js names every tier (K M B T … to 1e306).
+const fmt = (n) => formatNum(Number(n) || 0);
+const fmtRate = (n) => formatRate(Number(n) || 0);
 
 
 function Row({ row, mine, flash }) {

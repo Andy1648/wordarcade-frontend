@@ -8,6 +8,7 @@
 // for the same duration under reduced motion.
 import { useEffect, useRef, useState } from 'react';
 import { myStats } from './client.js';
+import { formatNum } from '../format';
 import './RankUpMoment.css';
 
 export const RANKUP_DELAY_MS = 1600; // after the 1.5 s level-up / tier-up card (MenuXpFx)
@@ -35,7 +36,7 @@ export default function RankUpMoment({ from, to, onDone }) {
             <span className="lb-rankup-arrow">→</span>
             <span className="lb-rankup-to">#{to}</span>
           </span>
-          <span className="lb-rankup-sub">LV {Number(level || 1).toLocaleString('en-US')} · ON THE LEADERBOARD</span>
+          <span className="lb-rankup-sub">LV {formatNum(Number(level) || 1)} · ON THE LEADERBOARD</span>
         </div>
       )}
     </div>

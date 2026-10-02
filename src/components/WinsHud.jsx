@@ -6,6 +6,7 @@
 // MIN_WORDS payout gate it makes the gate explicit — "3 WORDS TO EARN" — then flips to the
 // running "+N WINS" once the gate is crossed, so a player is never left staring at nothing.
 import './WinsHud.css';
+import { formatNum } from '../format';
 import { MIN_WORDS } from '../progress/wins';
 import LiveWpm from './LiveWpm';
 
@@ -19,7 +20,7 @@ export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
     <>
       {earning ? (
         <div className="wins-hud" aria-live="polite" aria-label={`${amount} wins so far`}>
-          <span className="wins-hud-plus">+{amount}</span>
+          <span className="wins-hud-plus">+{formatNum(amount)}</span>
           <span className="wins-hud-label">WINS</span>
         </div>
       ) : (
@@ -70,16 +71,17 @@ export function WinsEarnedTotal({ amount, lines = [] }) {
       {words > 0 && (
         <div className="wins-earned-line" data-wins-line="WORDS" data-wins-amount={words}>
           <span className="wins-earned-line-label">WORDS</span>
-          <span className="wins-earned-line-amt">+{words}</span>
+          <span className="wins-earned-line-amt">+{formatNum(words)}</span>
         </div>
       )}
       {bonus.map((l) => (
         <div className="wins-earned-line" key={l.id} data-wins-line={l.label} data-wins-amount={l.amount}>
           <span className="wins-earned-line-label">{l.label}</span>
-          <span className="wins-earned-line-amt">+{l.amount}</span>
+          <span className="wins-earned-line-amt">+{formatNum(l.amount)}</span>
         </div>
       ))}
-      <span className="wins-earned-num">+{total}</span>
+      {/* data-wins-total: the exact figure for gates — the text is abbreviated past 9,999 (12.3K) */}
+      <span className="wins-earned-num" data-wins-total={total}>+{formatNum(total)}</span>
       <span className="wins-earned-label">WINS EARNED</span>
     </div>
   );

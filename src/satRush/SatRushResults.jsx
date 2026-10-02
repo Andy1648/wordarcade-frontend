@@ -5,6 +5,7 @@
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
 // working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
+import { formatNum } from '../format';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -87,7 +88,7 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
   }, []);
 
   const avgAnte = results.avgAnte ? `${Number(results.avgAnte).toFixed(1)}×` : '—';
-  const fmt = (n) => Number(n || 0).toLocaleString('en-US');
+  const fmt = (n) => formatNum(Number(n) || 0); // the one app-wide number format (E2)
   const hardest = results.hardestWord ? results.hardestWord.word.toUpperCase() : null;
 
 
