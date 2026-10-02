@@ -5,6 +5,7 @@ import { boostRemaining, boostMult } from '../progress/boost.js';
 import { formatFrenzy } from '../progress/frenzy.js';
 import { useTimerClock } from './useTimerClock.js';
 import './BoostPill.css';
+import './MechanicScale.css';
 
 export default function BoostPill({ className = '' }) {
   const { ms, active } = useTimerClock(boostRemaining);
