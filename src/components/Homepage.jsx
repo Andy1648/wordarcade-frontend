@@ -26,7 +26,7 @@ import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menu
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
-import MarksPicker from './MarksPicker';
+import MarksIndex from './MarksIndex';
 import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
@@ -936,6 +936,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             boardDot={boardNews}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
+            onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
+            marksDot={marksNew}
             rebirthDot={rebirthReady}
             onCredits={handleCredits}
             shopDot={winsAffordable}
@@ -1231,7 +1233,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
       {showMarks && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
-          <MarksPicker
+          <MarksIndex
             unlockedIds={markUnlocked.map((m) => m.id)}
             equippedId={equippedMark}
             achievementNames={ACH_NAME}
