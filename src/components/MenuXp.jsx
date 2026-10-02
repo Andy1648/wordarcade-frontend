@@ -4,6 +4,7 @@
 // parked on the idle pool). The fx-layer size + XP bar box are measured on
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
+import BoostPill from '../frenzy/BoostPill';
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
 import { formatNum, formatMultExact } from '../format';
@@ -175,6 +176,8 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}`}
       aria-hidden={variant === 'mini' ? 'true' : undefined}
     >
+      {/* R10: a live BOOST code's gold pill rides the wins chip (it multiplies what the chip counts). */}
+      {variant !== 'mini' && <BoostPill className="menu-boost-pill" />}
       {variant !== 'mini' && wins != null && (
         onWinsClick ? (
           <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>

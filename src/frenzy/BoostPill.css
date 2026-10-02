@@ -1,0 +1,37 @@
+/* R10 BOOST pill — flat gold, darker-gold outline, hard black offset; the clock in ink. */
+.boost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  background: #ffe94a;
+  color: #1a0b2e;
+  border: 3px solid #b8a020;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.boost-pill-name {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+}
+/* the last 10 s: red, and a pulse that runs out with the clock (10 × 1 s, finite) */
+.boost-pill.is-ending {
+  background: #ff5c5c;
+  border-color: #a82020;
+  color: #fff;
+  animation: boost-pill-pulse 1s cubic-bezier(0.3, 0.8, 0.3, 1) 10;
+}
+@keyframes boost-pill-pulse {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boost-pill.is-ending { animation: none; }
+}

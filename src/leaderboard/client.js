@@ -427,7 +427,18 @@ export async function redeemCode(raw) {
     return { ok: false, reason: 'offline' };
   }
   if (!res || res.error) return { ok: false, reason: (res && REDEEM_REASONS[res.error] && res.error) || 'bad_code' };
-  const wins = Math.max(0, Math.round(Number(res.wins) || 0));
-  queueClaim({ id: `code:${res.code}`, kind: 'code', label: `CODE — ${String(res.label || res.code).toUpperCase()}`, amount: wins });
-  return { ok: true, code: res.code, wins, label: res.label || res.code };
+  // R10 (migration 010): a code may be a BOOST (×boost_mult on every mode for boost_min minutes) and a
+  // wins code may be PER-LEVEL (wins × the player's level at claim). Before 010 runs the response has
+  // none of these fields and this is exactly the old wins code. Floats are fine (no-caps).
+  const wins = Math.max(0, Number(res.wins) || 0);
+  const label = String(res.label || res.code).toUpperCase();
+  if (res.kind === 'boost') {
+    const mult = Number(res.boost_mult) > 1 ? Math.floor(Number(res.boost_mult)) : 3;
+    const min = Number(res.boost_min) > 0 ? Number(res.boost_min) : 10;
+    queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `BOOST — ${label}`, amount: 0, meta: { mult, min } });
+    return { ok: true, code: res.code, kind: 'boost', mult, min, wins: 0, label: res.label || res.code };
+  }
+  const perLevel = res.per_level === true;
+  queueClaim({ id: `code:${res.code}`, kind: 'code', label: `CODE — ${label}`, amount: wins, meta: perLevel ? { perLevel: true } : undefined });
+  return { ok: true, code: res.code, wins, perLevel, label: res.label || res.code };
 }

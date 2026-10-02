@@ -6,7 +6,7 @@
 //
 // It took the welcome-back card's slot (top-centre, same look family), and replaces that card.
 import { useEffect, useMemo, useState } from 'react';
-import { claim, claimAll, CLAIM_KINDS } from '../progress/claims.js';
+import { claim, claimAll, claimAmount, CLAIM_KINDS } from '../progress/claims.js';
 import { useClaims } from './useClaims.js';
 import { KIND_COLOUR } from './ClaimsPanel.jsx';
 import { formatNum } from '../format.js';
@@ -64,7 +64,7 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
   }, [fresh.length]);
   if (!fresh.length) return null;
   const one = fresh.length === 1 && list.length === 1 ? fresh[0] : null;
-  const total = list.reduce((a, c) => a + (c.amount || 0), 0);
+  const total = list.reduce((a, c) => a + claimAmount(c), 0);
   const k = one ? KIND_COLOUR[one.kind] : '#FFE94A';
   return (
     <div className="claim-pop" role="status" aria-live="polite" style={{ '--k': k }}>
@@ -86,7 +86,7 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
           later();
         }}
       >
-        {one ? (one.amount > 0 ? `CLAIM +${formatNum(one.amount)}` : 'CLAIM') : total > 0 ? `OPEN +${formatNum(total)}` : 'OPEN'}
+        {one ? (one.kind === 'boost' && one.meta ? `START ×${one.meta.mult}` : claimAmount(one) > 0 ? `CLAIM +${formatNum(claimAmount(one))}` : 'CLAIM') : total > 0 ? `OPEN +${formatNum(total)}` : 'OPEN'}
       </button>
       <button type="button" className="claim-pop-later" onClick={later}>
         LATER

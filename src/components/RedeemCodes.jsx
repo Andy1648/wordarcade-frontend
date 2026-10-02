@@ -22,7 +22,15 @@ export default function RedeemCodes() {
     setBusy(false);
     if (r.ok) {
       setValue('');
-      setMsg({ ok: true, text: r.wins > 0 ? `+${formatNum(r.wins)} WINS — CLAIM IT IN REWARDS` : 'REDEEMED — CLAIM IT IN REWARDS' });
+      // Claims ride the STATS button (Andy oct2 A4). R10: a BOOST code / a PER-LEVEL code say so.
+      const text = r.kind === 'boost'
+        ? `BOOST ×${r.mult} · ${r.min} MIN — CLAIM IT IN STATS TO START`
+        : r.perLevel
+          ? `+${formatNum(r.wins)} WINS × YOUR LEVEL — CLAIM IT IN STATS`
+          : r.wins > 0
+            ? `+${formatNum(r.wins)} WINS — CLAIM IT IN STATS`
+            : 'REDEEMED — CLAIM IT IN STATS';
+      setMsg({ ok: true, text });
     } else {
       setMsg({ ok: false, text: REDEEM_REASONS[r.reason] || REDEEM_REASONS.bad_code });
     }

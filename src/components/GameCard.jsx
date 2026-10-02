@@ -292,7 +292,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     perkHead ? (
       <>
         <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>{perkHead}</span>
-        <span className="game-card-perk-tail"> · LONGER = MORE</span>
+        {/* R10: a live BOOST multiplies FRENZY — the FUSE card says how they stack */}
+        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? ` × BOOST ×${rateNow.factors.boost}` : ' · LONGER = MORE'}</span>
       </>
     ) : (
       <>LONGER = MORE</>

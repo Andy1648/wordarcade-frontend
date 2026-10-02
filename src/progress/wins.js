@@ -24,6 +24,7 @@ import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS, MASTERY_MILESTONE_EVERY } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
+import { boostMult } from './boost.js';
 import { starPowerMult } from './stars.js';
 import { setRateBoost } from './xp.js';
 import { addLetters } from './letters.js';
@@ -248,6 +249,8 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),
+    // BOOST (boost.js, R10): a redeem code's wall-clock ×N on EVERY mode; stacks with FRENZY.
+    boost: boostMult(),
     // LETTER FORGE (forge.js, replaced MOMENTUM): +5% per forged level of each letter in THIS word.
     // Word-specific (×1 when no word is given — the card's reference rate is the base, and the
     // forge is one of the things that makes a real word worth MORE than it).
@@ -277,7 +280,7 @@ export function perWordXp(opts = {}) {
     weight: opts.weight,
     streakMult: f.streak,
     difficultyMult: f.difficulty,
-    bonusMult: f.bonus * f.frenzy * f.forge,
+    bonusMult: f.bonus * f.frenzy * f.boost * f.forge,
   });
 }
 
