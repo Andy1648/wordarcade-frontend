@@ -9,7 +9,7 @@ import './MenuXp.css';
 import { formatNum, formatMultExact } from '../format';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
-import { markRank } from '../progress/marks';
+import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
 
@@ -239,12 +239,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <button
             type="button"
             className="menu-mark"
+            style={{ background: markTier(mark).colour }}
             onClick={onMarkClick}
             aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
             title={`${mark.name} - ${mark.blurb}`}
           >
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
+            {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
+            <span className="menu-mark-mult" aria-hidden="true">×{Math.round(markMainMult(mark, markRank(mark.id)) * 10) / 10}</span>
             {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
         ) : (

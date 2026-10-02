@@ -41,6 +41,7 @@ import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import ClaimsPanel from '../claims/ClaimsPanel.jsx';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
+import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
@@ -170,6 +171,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // exist while something is pending (the badge IS the notification).
   const claims = useClaims();
   const [showClaims, setShowClaims] = useState(false);
+  const [claimReveal, setClaimReveal] = useState(null); // the NEW SYSTEM / NEW MARK reveal sticker
   const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
@@ -1138,12 +1140,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
 
       {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
-      {!showClaims && <ClaimPopup onOpenPanel={() => setShowClaims(true)} />}
+      {!showClaims && !claimReveal && <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <ClaimsPanel onClose={() => setShowClaims(false)} />
+          <ClaimsPanel onClose={() => setShowClaims(false)} onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }} />
         </ScreenBoundary>
       )}
+      {claimReveal && <ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} />}
 
       {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
       {showMarks && (

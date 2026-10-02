@@ -5,8 +5,9 @@ import {
   MARKS, MARKS_EQUIPPED_KEY, markById, unlockedMarks, getEquippedMark, equipMark,
   markWinsFactors, markXpMult, markRarityStep, markComboKeep,
   MARK_RANK_WORDS, MARK_RANK_SCALE, MAX_MARK_RANK, rankForWords, markRank, markProgress, addMarkWord,
-  effectAtRank, markBlurbAt, MARK_WORDS_KEY,
+  effectAtRank, markBlurbAt, MARK_WORDS_KEY, MARK_TIERS, markMainMult, checkMarkClaims, MARKS_OWNED_KEY,
 } from './marks.js';
+import { listClaims, claim } from './claims.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import { PAYOUT_FACTORS } from './payout.js';
 
@@ -26,8 +27,9 @@ function withStorage(seed, fn) {
   }
 }
 
-test('there are 6-8 marks and every one is unique', () => {
-  assert.ok(MARKS.length >= 6 && MARKS.length <= 8, `${MARKS.length} marks`);
+test('STEP 49: a collection of 16 unique marks across all four tiers', () => {
+  assert.equal(MARKS.length, 16);
+  for (const t of Object.keys(MARK_TIERS)) assert.ok(MARKS.some((m) => m.tier === t), `no ${t} mark`);
   assert.equal(new Set(MARKS.map((m) => m.id)).size, MARKS.length);
   assert.equal(new Set(MARKS.map((m) => m.name)).size, MARKS.length);
 });
@@ -44,7 +46,7 @@ test('every mark has an effect, and every effect is a SMALL one', () => {
   for (const m of MARKS) {
     assert.ok(m.blurb && m.icon && m.name, m.id);
     const e = m.effect || {};
-    const keys = Object.keys(e).filter((k) => k !== 'mode');
+    const keys = Object.keys(e).filter((k) => k !== 'mode' && k !== 'modes');
     assert.ok(keys.length > 0, `${m.id} has no effect`);
     // Rule 2: a mark is worth equipping and is never the reason a number is large.
     if (e.winsMult) assert.ok(e.winsMult > 1 && e.winsMult <= 1.5, `${m.id} winsMult ${e.winsMult}`);
@@ -90,20 +92,25 @@ test('a mark you have not earned cannot be equipped, even by hand-editing storag
   });
 });
 
-test('unlockedMarks takes an array or a Set and lists only what the achievements earned', () => {
+test('unlockedMarks (a save never through the marks layer) lists only what the achievements earned', () => {
   assert.deepEqual(unlockedMarks([]).map((m) => m.id), []);
   assert.deepEqual(unlockedMarks(['m-wb-5']).map((m) => m.id), ['mk-bomber']);
   assert.deepEqual(unlockedMarks(new Set(['m-wb-5', 'dist-500'])).map((m) => m.id), ['mk-bomber', 'mk-magpie']);
 });
 
-test('a MODE-scoped mark pays in its mode and nowhere else', () => {
-  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber', mode: 'wordBomb' }), { mark: 1.25 });
-  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber', mode: 'satRush' }), {}, 'not its mode');
-  // A global mark pays everywhere.
-  assert.deepEqual(markWinsFactors({ markId: 'mk-magpie', mode: 'satRush' }), { mark: 1.15 });
-  // A mark with no wins effect contributes no wins row at all (rather than a ×1 one).
-  assert.deepEqual(markWinsFactors({ markId: 'mk-student', mode: 'fuse' }), {});
+test('STEP 49: the WORN mark pays its tier bonus everywhere, its flavour perk only in its mode', () => {
+  // COMMON = ×2 main; BOMBER's +25% flavour applies in Word Bomb only.
+  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber', mode: 'wordBomb' }), { mark: 2 * 1.25 });
+  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber', mode: 'satRush' }), { mark: 2 }, 'main bonus still pays outside its mode');
+  assert.deepEqual(markWinsFactors({ markId: 'mk-magpie', mode: 'satRush' }), { mark: 2 * 1.15 });
+  // A mark whose flavour is XP still pays its MAIN bonus on wins.
+  assert.deepEqual(markWinsFactors({ markId: 'mk-student', mode: 'fuse' }), { mark: 2 });
   assert.deepEqual(markWinsFactors({ markId: null, mode: 'fuse' }), {});
+  // Rarer pays more: COMMON ×2, RARE ×2.5, EPIC ×3, LEGENDARY ×4 (rank I, before flavour).
+  assert.equal(markMainMult(markById('mk-bomber'), 1), 2);
+  assert.equal(markMainMult(markById('mk-linguist'), 1), 2.5);
+  assert.equal(markMainMult(markById('mk-nova'), 1), 3);
+  assert.equal(markMainMult(markById('mk-legend'), 1), 4);
 });
 
 test('the non-wins effects read as neutral when nothing relevant is equipped', () => {
@@ -149,7 +156,7 @@ test('ranks climb I..V at the documented word counts', () => {
   for (let i = 1; i < MARK_RANK_WORDS.length; i += 1) assert.ok(MARK_RANK_WORDS[i] > MARK_RANK_WORDS[i - 1]);
 });
 
-test('a rank scales the BONUS, bounded so rank V is still never the reason a number is large', () => {
+test('a rank scales the flavour perk, bounded', () => {
   for (const m of MARKS) {
     const v = effectAtRank(m.effect, MAX_MARK_RANK);
     if (v.winsMult) assert.ok(v.winsMult > m.effect.winsMult && v.winsMult <= 1.8, `${m.id} V winsMult ${v.winsMult}`);
@@ -165,12 +172,13 @@ test('a rank scales the BONUS, bounded so rank V is still never the reason a num
 test('only the WORN mark grows, one word at a time, and its payout factor follows its rank', () => {
   withStorage({ [MARKS_EQUIPPED_KEY]: 'mk-bomber' }, (map) => {
     assert.equal(markRank('mk-bomber'), 1);
-    assert.equal(markWinsFactors({ mode: 'wordBomb' }).mark, 1.25);
+    assert.equal(markWinsFactors({ mode: 'wordBomb' }).mark, 2 * 1.25);
     map.set(MARK_WORDS_KEY, JSON.stringify({ 'mk-bomber': MARK_RANK_WORDS[1] - 1 }));
     const r = addMarkWord();
     assert.deepEqual(r, { id: 'mk-bomber', rank: 2, rankedUp: true });
     assert.equal(markRank('mk-sprinter'), 1, 'a mark you are not wearing does not grow');
-    assert.ok(Math.abs(markWinsFactors({ mode: 'wordBomb' }).mark - (1 + 0.25 * MARK_RANK_SCALE[1])) < 1e-9);
+    const k = MARK_RANK_SCALE[1];
+    assert.ok(Math.abs(markWinsFactors({ mode: 'wordBomb' }).mark - (1 + 1 * k) * (1 + 0.25 * k)) < 1e-9);
     const p = markProgress('mk-bomber');
     assert.equal(p.rank, 2);
     assert.equal(p.into, 0);
@@ -188,4 +196,26 @@ test('the blurb prints the numbers the rank actually pays', () => {
 
 test('nothing equipped → addMarkWord is a no-op', () => {
   withStorage({}, () => { assert.equal(addMarkWord(), null); });
+});
+
+test('STEP 49: marks unlock at LV 10 with a NEW SYSTEM reveal, and every new mark is a CLAIM', () => {
+  withStorage({ [MARKS_OWNED_KEY]: '[]' }, () => {
+    assert.deepEqual(checkMarkClaims({ level: 5, earned: ['m-wb-5'] }), [], 'not before LV 10');
+    assert.equal(listClaims().length, 0);
+    const q = checkMarkClaims({ level: 10, earned: ['m-wb-5'] });
+    assert.ok(listClaims().some((c) => c.id === 'layer-marks' && c.kind === 'layer'));
+    assert.deepEqual(q.map((c) => c.detail), ['mk-bomber']);
+    assert.deepEqual(unlockedMarks(['m-wb-5']).map((m) => m.id), [], 'not yours until claimed');
+    claim('mark-mk-bomber');
+    assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-bomber']);
+    assert.deepEqual(checkMarkClaims({ level: 12, earned: ['m-wb-5'] }), [], 'no repeat claim');
+  });
+});
+
+test('STEP 49: an existing save keeps the marks it had, with no claim flood', () => {
+  withStorage({}, () => {
+    checkMarkClaims({ level: 40, earned: ['m-wb-5', 'dist-500'] });
+    assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-bomber', 'mk-magpie']);
+    assert.equal(listClaims().filter((c) => c.kind === 'mark').length, 0);
+  });
 });

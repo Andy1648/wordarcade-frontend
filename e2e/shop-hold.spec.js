@@ -106,7 +106,9 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   await expect(card.locator('svg.mark-badge')).toBeVisible();
   await expect(card.locator('.mark-rank')).toHaveText('RANK II');
   await expect(card.locator('.mark-blurb')).toHaveText('+29% wins in WORD BOMB.');
-  await expect(card.locator('.mark-next')).toHaveText('RANK III: +32% wins in WORD BOMB.');
+  // STEP 49: the MAIN bonus (COMMON: +100% at rank I, ×1.15 / ×1.3 at II / III) leads; the flavour follows.
+  await expect(card.locator('.mark-main')).toHaveText('+115% WINS · EVERY MODE');
+  await expect(card.locator('.mark-next')).toHaveText('RANK III: +130% WINS');
   await expect(card.locator('.mark-words')).toHaveText('170 / 350 WORDS WORN');
   // no emoji left in the picker
   const text = await page.locator('.marks-card').innerText();

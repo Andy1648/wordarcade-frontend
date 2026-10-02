@@ -7,8 +7,12 @@
 // newly-satisfied achievement, and returns the newly-earned list for a toast. Never throws.
 import { readWordCount } from '../wordCount.js';
 import { getWinsLifetime, getRounds, winLevelMult, perWordWins } from './wins.js';
-import { queueClaim } from './claims.js';
 import { rankFor, RANKS } from './rank.js';
+import { forgeBuys } from './forge.js';
+import { frenzyCount } from './frenzy.js';
+import { checkMarkClaims } from './marks.js';
+import { queueClaim, layerOpen, openLayer } from './claims.js';
+import { FORGE_UNLOCK_LEVEL } from './forge.js';
 import { loadProgress, getRebirths, getKeyTier, rebirthMult } from './xp.js';
 import { collectionSummary } from './collection.js';
 import { masteryState, MASTERY_MODES } from './mastery.js';
@@ -36,6 +40,8 @@ export function achievementSnapshot() {
     bestWpm: bestWpmPlayed(), // played modes only: menu typing is not a measured mode (fix/menu-free-wins)
     keyTier: getKeyTier(),
     rounds: getRounds(),
+    forge: (() => { try { return forgeBuys(); } catch { return 0; } })(),
+    frenzies: frenzyCount(),
     mastery,
     minMastery,
   };
@@ -64,6 +70,7 @@ export const ACHIEVEMENTS = [
   { id: 'reb-1', cat: 'PROGRESSION', name: 'REBIRTH', hint: 'Rebirth for the first time.', base: 5000, test: (s) => s.rebirths >= 1 },
   { id: 'lv-50', cat: 'PROGRESSION', name: 'VETERAN', hint: 'Reach level 50.', base: 20000, test: (s) => s.level >= 50 },
   { id: 'reb-5', cat: 'PROGRESSION', name: 'REBIRTH ×5', hint: 'Rebirth 5 times.', base: 50000, test: (s) => s.rebirths >= 5 },
+  { id: 'lv-300', cat: 'PROGRESSION', name: 'MYTHIC', hint: 'Reach level 300.', base: 500000, test: (s) => s.level >= 300 },
   // ---- STREAKS ----
   { id: 'streak-3', cat: 'STREAKS', name: 'HABIT', hint: 'Play 3 days in a row.', base: 1000, test: (s) => s.streak >= 3 },
   { id: 'streak-7', cat: 'STREAKS', name: 'DEDICATED', hint: 'Play 7 days in a row.', base: 5000, test: (s) => s.streak >= 7 },
@@ -77,6 +84,8 @@ export const ACHIEVEMENTS = [
   { id: 'm-all-3', cat: 'MODES', name: 'JACK OF ALL', hint: 'Reach Mastery 3 in every mode.', base: 10000, test: (s) => s.minMastery >= 3 },
   // ---- ECONOMY ----
   { id: 'kp-5', cat: 'ECONOMY', name: 'POWER USER', hint: 'Buy KEY POWER tier 5.', base: 10000, test: (s) => s.keyTier >= 5 },
+  { id: 'forge-26', cat: 'ECONOMY', name: 'FULL ALPHABET', hint: 'Forge all 26 letters.', base: 20000, test: (s) => s.forge >= 26 },
+  { id: 'frenzy-1', cat: 'MODES', name: 'FRENZY!', hint: 'Light all 26 letters in FUSE.', base: 10000, test: (s) => s.frenzies >= 1 },
   // 'ws-3' (BUY WORD SENSE TIER 3) was retired with the upgrade itself. The id stays OUT of the
   // catalog rather than being repointed: anyone who already earned it keeps it in their earned set
   // harmlessly, and repointing a published id at a different requirement would silently change
@@ -195,6 +204,18 @@ export function checkAchievements() {
   }
   if (newly.length) saveEarned([...earned]);
   checkRankClaims();
+  // LETTER FORGE reveal (LV 8). Already forging (or a migrated MOMENTUM save) → simply open.
+  if (!layerOpen('forge')) {
+    if (snap.forge > 0) openLayer('forge');
+    else if (snap.level >= FORGE_UNLOCK_LEVEL || snap.rebirths > 0) {
+      queueClaim({ id: 'layer-forge', kind: 'layer', label: 'NEW SYSTEM — LETTER FORGE', detail: 'forge', meta: { blurb: 'SHOP → LETTER FORGE: forge letters one level at a time. Every forged letter in a word pays +5% more. No cap.' } });
+    }
+  }
+  try {
+    checkMarkClaims({ level: snap.level, rebirths: snap.rebirths, earned });
+  } catch {
+    /* marks are best-effort; achievements already stand */
+  }
   return newly;
 }
 

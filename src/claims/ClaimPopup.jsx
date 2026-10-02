@@ -27,7 +27,7 @@ function saveSeen(set) {
   }
 }
 
-export default function ClaimPopup({ onOpenPanel }) {
+export default function ClaimPopup({ onOpenPanel, onReveal }) {
   const list = useClaims();
   const [seen, setSeen] = useState(loadSeen);
   const fresh = useMemo(() => list.filter((c) => !seen.has(c.id)), [list, seen]);
@@ -64,8 +64,10 @@ export default function ClaimPopup({ onOpenPanel }) {
         type="button"
         className="claims-btn"
         onClick={() => {
-          if (one) claim(one.id);
-          else if (onOpenPanel) onOpenPanel();
+          if (one) {
+            const r = claim(one.id);
+            if (r && (r.kind === 'layer' || r.kind === 'mark') && onReveal) onReveal(r);
+          } else if (onOpenPanel) onOpenPanel();
           else claimAll();
           later();
         }}

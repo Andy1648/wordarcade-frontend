@@ -9,6 +9,8 @@ import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyForge } from '../progress/shop';
 import { forgeLevels, forgeBuys, forgeCost, nextForgeLetter, FORGE_PCT } from '../progress/forge';
 import ForgeStrip from './ForgeStrip';
+import { layerOpen } from '../progress/claims';
+import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import {
   THEMES,
   themeById,
@@ -76,6 +78,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const fBuys = forgeBuys(forge);
+  const forgeOpen = layerOpen('forge') || fBuys > 0;
   const fCost = forgeCost(fBuys);
   const fNext = nextForgeLetter(forge);
   const fNextLv = (forge[fNext] || 0) + 1;
@@ -317,7 +320,17 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             {/* LETTER FORGE (Andy oct2 — replaced MOMENTUM, which capped at 200 and did nothing you
                 could see). Uncapped: each buy forges the next letter one level; a word pays +5% per
                 forged level of every letter in it. The strip IS the state — 26 letters at their levels. */}
-            <h3 className="shop-subtitle">LETTER FORGE — {fBuys} FORGED</h3>
+            <h3 className="shop-subtitle">LETTER FORGE{forgeOpen ? ` — ${fBuys} FORGED` : ''}</h3>
+            {!forgeOpen ? (
+              <div className="shop-keypower shop-forge is-locked">
+                <div className="shop-kp-info">
+                  <div className="shop-kp-next">
+                    <b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}
+                  </div>
+                  <div className="shop-kp-rate">FORGE LETTERS: EVERY FORGED LETTER IN A WORD PAYS MORE. NO CAP.</div>
+                </div>
+              </div>
+            ) : (
             <div className="shop-keypower shop-forge">
               <div className="shop-kp-info">
                 <ForgeStrip levels={forge} next={fNext} />
@@ -350,6 +363,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 )}
               </div>
             </div>
+            )}
 
             <h3 className="shop-subtitle">POP STYLES</h3>
             {/* Andy oct2: cosmetics are collectibles, not the headline — small tiles, KEY POWER stays big. */}

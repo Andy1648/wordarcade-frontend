@@ -54,10 +54,22 @@ export function startFrenzy(now = Date.now()) {
   const until = now + len;
   try {
     localStorage.setItem(FRENZY_KEY, String(until));
+    localStorage.setItem(FRENZY_COUNT_KEY, String(frenzyCount() + 1));
   } catch {
     /* storage blocked — no frenzy */
   }
   return { started: true, remaining: len };
+}
+
+export const FRENZY_COUNT_KEY = 'taw.frenzyCount';
+/** How many FRENZYs the player has ever started (the FRENZY! achievement + PYRO mark). */
+export function frenzyCount() {
+  try {
+    const n = Number(localStorage.getItem(FRENZY_COUNT_KEY));
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
 }
 
 /** m:ss for a countdown. */

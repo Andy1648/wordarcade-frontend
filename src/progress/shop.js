@@ -6,6 +6,7 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
+import { layerOpen } from './claims.js';
 import { THEMES, isThemeOwned } from '../theme/themes.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
@@ -193,8 +194,8 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
-  // LETTER FORGE — uncapped, so there is always a next forge to buy.
-  if (bal >= forgeCost(forgeBuys())) return true;
+  // LETTER FORGE — uncapped, so there is always a next forge to buy (once it has been revealed).
+  if ((layerOpen('forge') || forgeBuys() > 0) && bal >= forgeCost(forgeBuys())) return true;
   // Buyable menu themes (priced, not yet owned or level-granted).
   if (THEMES.some((t) => t.price > 0 && !isThemeOwned(t.id) && bal >= t.price)) return true;
   return false;

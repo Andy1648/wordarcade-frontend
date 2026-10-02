@@ -145,6 +145,10 @@ export function forgeMigrateMomentum() {
   }
 }
 
+// THE FORGE IS A REVEAL (STEP 49 "more reveal moments"): it opens at FORGE_UNLOCK_LEVEL with a
+// claimable NEW SYSTEM card. A save that already forged (or migrated MOMENTUM) has it open.
+export const FORGE_UNLOCK_LEVEL = 8;
+
 // One-shot "a letter was just forged" flag for the menu rail's pop (same pattern as the old
 // momentum pop): set by the shop on a buy, consumed once by the rail on the next menu mount.
 let pendingPop = null;

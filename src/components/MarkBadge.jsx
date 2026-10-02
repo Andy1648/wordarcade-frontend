@@ -81,6 +81,70 @@ const GLYPHS = {
       strokeLinejoin="round"
     />
   ),
+  // ---- STEP 49: the eight new marks, same hand: uneven, chunky ink, flat fills ----
+  'mk-linker': (
+    <g stroke={INK} strokeWidth="4" fill="none" strokeLinecap="round">
+      <rect x="24" y="40" width="30" height="18" rx="9" transform="rotate(-24 39 49)" stroke="#2EFFE0" strokeWidth="8" />
+      <rect x="24" y="40" width="30" height="18" rx="9" transform="rotate(-24 39 49)" />
+      <rect x="46" y="44" width="30" height="18" rx="9" transform="rotate(-24 61 53)" stroke="#FF4FA3" strokeWidth="8" />
+      <rect x="46" y="44" width="30" height="18" rx="9" transform="rotate(-24 61 53)" />
+    </g>
+  ),
+  'mk-veteran': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <path d="M38 24 L50 40 L62 24 L66 27 L54 46 L46 46 L34 27 Z" fill="#FF4FA3" />
+      <circle cx="50" cy="60" r="16" fill="#FFD54A" />
+      <path d="M50 51 L53 57 L60 57 L54 61 L57 68 L50 64 L43 68 L46 61 L40 57 L47 57 Z" fill="#fff" strokeWidth="2" />
+    </g>
+  ),
+  'mk-phoenix': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <path d="M50 78 C34 74 26 60 32 44 C36 52 40 54 42 50 C40 40 44 30 52 24 C52 34 58 38 62 34 C66 42 70 52 66 62 C62 72 56 76 50 78 Z" fill="#FF6B3D" />
+      <path d="M50 72 C42 68 40 60 44 52 C46 58 50 58 52 54 C56 58 60 62 58 66 C56 70 54 72 50 72 Z" fill="#FFE94A" strokeWidth="2.5" />
+    </g>
+  ),
+  'mk-smith': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <path d="M26 70 L74 70 L68 62 L32 62 Z" fill="#5F6F84" />
+      <path d="M36 62 L40 54 L60 54 L64 62 Z" fill="#CFD8E3" />
+      <path d="M48 46 L66 28" strokeWidth="6" strokeLinecap="round" />
+      <rect x="58" y="18" width="20" height="12" rx="2" transform="rotate(45 68 24)" fill="#FF6B3D" />
+      <path d="M30 50 L26 44 M36 46 L35 39 M24 56 L18 54" stroke="#FFE94A" strokeWidth="3" strokeLinecap="round" />
+    </g>
+  ),
+  'mk-curator': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <rect x="26" y="34" width="48" height="36" rx="4" fill="#9A1AFF" />
+      <path d="M26 42 L38 42 L42 36 L58 36" fill="none" />
+      <rect x="32" y="26" width="30" height="16" rx="2" fill="#fff" transform="rotate(-6 47 34)" />
+      <path d="M36 32 L54 30" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M50 50 L53 57 L60 58 L55 63 L56 70 L50 66 L44 70 L45 63 L40 58 L47 57 Z" fill="#FFE94A" strokeWidth="2" />
+    </g>
+  ),
+  'mk-pyro': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <rect x="30" y="38" width="12" height="34" rx="3" fill="#FF4FA3" transform="rotate(-10 36 55)" />
+      <rect x="44" y="34" width="12" height="38" rx="3" fill="#FF6B3D" />
+      <rect x="58" y="38" width="12" height="34" rx="3" fill="#FFE94A" transform="rotate(10 64 55)" />
+      <path d="M50 34 C50 28 54 26 56 22" fill="none" strokeLinecap="round" />
+      <path d="M56 22 L60 16 L59 23 L66 21 L60 26 Z" fill="#FFE94A" strokeWidth="2" />
+    </g>
+  ),
+  'mk-nova': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <path d="M50 18 L56 42 L80 38 L60 52 L74 74 L50 60 L28 76 L40 52 L20 36 L44 42 Z" fill="#fff" />
+      <circle cx="50" cy="50" r="9" fill="#2EFFE0" />
+    </g>
+  ),
+  'mk-legend': (
+    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
+      <path d="M24 66 L28 34 L40 48 L50 26 L60 48 L72 34 L76 66 Z" fill="#FFD54A" />
+      <path d="M24 66 L76 66 L74 74 L26 74 Z" fill="#A8800F" />
+      <circle cx="50" cy="56" r="5" fill="#FF4FA3" strokeWidth="2.5" />
+      <circle cx="35" cy="58" r="3.5" fill="#2EFFE0" strokeWidth="2" />
+      <circle cx="65" cy="58" r="3.5" fill="#2EFFE0" strokeWidth="2" />
+    </g>
+  ),
 };
 const LOCK = (
   <g stroke="#6b5a86" strokeWidth="4" strokeLinejoin="round" fill="none">
