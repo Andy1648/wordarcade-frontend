@@ -5,7 +5,7 @@
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
-// carries letters; the board ranks by lifetime_words either way (Andy oct2, 009). Without it the mock is the v1 DB (lb_caps 404s).
+// carries letters; the board ranks by rebirths, then level, then words either way (Andy oct2, 009 / 011). Without it the mock is the v1 DB (lb_caps 404s).
 export async function mockBoard(page, seed = [], { caps = false, shared = null } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
@@ -15,8 +15,8 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
   const calls = { claim: 0, submit: 0 };
   const ranked = () => rows
     .slice()
-    // the production view (009_board_by_words.sql): lifetime words, then level, then rebirths
-    .sort((a, b) => b.lifetime_words - a.lifetime_words || b.level - a.level || b.rebirths - a.rebirths)
+    // the production view (009 / 011): rebirths, then LEVEL, then lifetime words (Andy oct2, later)
+    .sort((a, b) => b.rebirths - a.rebirths || b.level - a.level || b.lifetime_words - a.lifetime_words)
     .map((r, i) => {
       const out = { ...r, rank: i + 1 };
       if (!caps) delete out.lifetime_letters;
@@ -97,10 +97,10 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
       const or = url.searchParams.get('or');
       if (or) {
         const n = (re) => Number((or.match(re) || [])[1]);
-        const w = n(/lifetime_words\.gt\.(\d+)/);
+        const rb = n(/rebirths\.gt\.(\d+)/);
         const l = n(/level\.gt\.(\d+)/);
-        const rb = n(/rebirths\.gte\.(\d+)/);
-        const ahead = ranked().filter((r) => r.lifetime_words > w || (r.lifetime_words === w && (r.level > l || (r.level === l && r.rebirths >= rb)))).length;
+        const w = n(/lifetime_words\.gte\.(\d+)/);
+        const ahead = ranked().filter((r) => r.rebirths > rb || (r.rebirths === rb && (r.level > l || (r.level === l && r.lifetime_words >= w)))).length;
         return route.fulfill({ status: 200, headers: { 'content-range': `*/${ahead}`, 'access-control-expose-headers': 'content-range' }, body: '' });
       }
       const id = url.searchParams.get('id');

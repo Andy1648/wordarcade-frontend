@@ -90,10 +90,11 @@ function Row({ row, mine, flash }) {
           <NameTag name={row.username} rebirths={row.rebirths} />
           {mine && <span className="lb-you-badge">YOU</span>}
         </span>
-        <span className="lb-lv">LV {fmt(row.level)}</span>
+        {/* words are SECONDARY now (Andy oct2, later: the board ranks by LEVEL) */}
+        <span className="lb-lv lb-words-sub">{fmt(row.lifetime_words)} WORDS</span>
       </span>
-      {/* WORDS is the main stat — the board ranks by it (Andy oct2). */}
-      <span className="lb-num lb-words">{fmt(row.lifetime_words)}</span>
+      {/* LV is the headline — the board ranks by rebirths, then LEVEL (rebirth = the name's colour). */}
+      <span className="lb-num lb-level">LV {fmt(row.level)}</span>
       <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
   );
@@ -313,7 +314,7 @@ export default function LeaderboardScreen({ onBack }) {
           {LEADERBOARD_ENABLED && (
             <>
               <div className="lb-cols" aria-hidden="true">
-                <span>#</span><span>PLAYER</span><span className="lb-num">WORDS</span><span className="lb-num">WINS/WORD</span>
+                <span>#</span><span>PLAYER</span><span className="lb-num">LEVEL</span><span className="lb-num">WINS/WORD</span>
               </div>
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
               {loadError && <p className="lb-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb-link-btn" onClick={load}>RETRY</button></p>}

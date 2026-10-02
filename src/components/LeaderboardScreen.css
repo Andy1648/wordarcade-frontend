@@ -303,9 +303,11 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-label);
-  /* the board ranks by rebirths then LEVEL — so the level reads as a number, not as grey small print */
+  /* the board ranks by rebirths then LEVEL — the headline column carries it; this line is the secondary words */
   color: #2EFFE0;
 }
+.lb-num.lb-level { color: #2EFFE0; }
+.lb-lv.lb-words-sub { color: #c9b8e8; }
 .lb-name-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .lb-you-badge {
   flex: none;
@@ -323,7 +325,7 @@
   color: #FFE94A;
 }
 
-.lb-num.lb-words,
+.lb-num.lb-level,
 .lb-num.lb-rate {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
