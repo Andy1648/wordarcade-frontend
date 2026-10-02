@@ -1,0 +1,735 @@
+{
+  "generatedAt": "2026-10-02T03:03:37.866Z",
+  "wordsCommonTxtPresent": true,
+  "acceptSizes": {
+    "firstRun": 89143,
+    "merged": 271308
+  },
+  "probe": {
+    "total": 3910,
+    "byCategory": {
+      "months": 12,
+      "days": 7,
+      "continents_regions": 23,
+      "countries": 198,
+      "states_provinces": 47,
+      "cities": 291,
+      "nationalities_languages": 124,
+      "mild_insults": 206,
+      "holidays_planets": 22,
+      "modern": 34,
+      "common_top3000": 3000
+    }
+  },
+  "FUSE": {
+    "firstRun": {
+      "fragments": 1026,
+      "fragmentsWithAProbeWord": 1026,
+      "fragmentsWithARejectedCommonWord": 13,
+      "pctFragmentsAffected": 1.3,
+      "perTier": {
+        "e": {
+          "fragments": 113,
+          "withProbe": 113,
+          "affected": 3,
+          "probeHits": 11280,
+          "rejectedHits": 3
+        },
+        "m": {
+          "fragments": 190,
+          "withProbe": 190,
+          "affected": 1,
+          "probeHits": 4397,
+          "rejectedHits": 1
+        },
+        "h": {
+          "fragments": 318,
+          "withProbe": 318,
+          "affected": 4,
+          "probeHits": 3515,
+          "rejectedHits": 4
+        },
+        "b": {
+          "fragments": 405,
+          "withProbe": 405,
+          "affected": 5,
+          "probeHits": 9581,
+          "rejectedHits": 5
+        }
+      },
+      "worstFragments": [
+        {
+          "f": "ch",
+          "tier": "e",
+          "rejected": 1,
+          "of": 140,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "ma",
+          "tier": "e",
+          "rejected": 1,
+          "of": 170,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "rt",
+          "tier": "e",
+          "rejected": 1,
+          "of": 99,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "mar",
+          "tier": "m",
+          "rejected": 1,
+          "of": 26,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "atc",
+          "tier": "h",
+          "rejected": 1,
+          "of": 10,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "sm",
+          "tier": "h",
+          "rejected": 1,
+          "of": 9,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tc",
+          "tier": "h",
+          "rejected": 1,
+          "of": 17,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tch",
+          "tier": "h",
+          "rejected": 1,
+          "of": 16,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "mar",
+          "tier": "b",
+          "rejected": 1,
+          "of": 26,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "rt",
+          "tier": "b",
+          "rejected": 1,
+          "of": 99,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "sm",
+          "tier": "b",
+          "rejected": 1,
+          "of": 9,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tc",
+          "tier": "b",
+          "rejected": 1,
+          "of": 17,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tch",
+          "tier": "b",
+          "rejected": 1,
+          "of": 16,
+          "sample": [
+            "smartwatch"
+          ]
+        }
+      ]
+    },
+    "merged": {
+      "fragments": 1026,
+      "fragmentsWithAProbeWord": 1026,
+      "fragmentsWithARejectedCommonWord": 13,
+      "pctFragmentsAffected": 1.3,
+      "perTier": {
+        "e": {
+          "fragments": 113,
+          "withProbe": 113,
+          "affected": 3,
+          "probeHits": 11280,
+          "rejectedHits": 3
+        },
+        "m": {
+          "fragments": 190,
+          "withProbe": 190,
+          "affected": 1,
+          "probeHits": 4397,
+          "rejectedHits": 1
+        },
+        "h": {
+          "fragments": 318,
+          "withProbe": 318,
+          "affected": 4,
+          "probeHits": 3515,
+          "rejectedHits": 4
+        },
+        "b": {
+          "fragments": 405,
+          "withProbe": 405,
+          "affected": 5,
+          "probeHits": 9581,
+          "rejectedHits": 5
+        }
+      },
+      "worstFragments": [
+        {
+          "f": "ch",
+          "tier": "e",
+          "rejected": 1,
+          "of": 140,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "ma",
+          "tier": "e",
+          "rejected": 1,
+          "of": 170,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "rt",
+          "tier": "e",
+          "rejected": 1,
+          "of": 99,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "mar",
+          "tier": "m",
+          "rejected": 1,
+          "of": 26,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "atc",
+          "tier": "h",
+          "rejected": 1,
+          "of": 10,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "sm",
+          "tier": "h",
+          "rejected": 1,
+          "of": 9,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tc",
+          "tier": "h",
+          "rejected": 1,
+          "of": 17,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tch",
+          "tier": "h",
+          "rejected": 1,
+          "of": 16,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "mar",
+          "tier": "b",
+          "rejected": 1,
+          "of": 26,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "rt",
+          "tier": "b",
+          "rejected": 1,
+          "of": 99,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "sm",
+          "tier": "b",
+          "rejected": 1,
+          "of": 9,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tc",
+          "tier": "b",
+          "rejected": 1,
+          "of": 17,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        {
+          "f": "tch",
+          "tier": "b",
+          "rejected": 1,
+          "of": 16,
+          "sample": [
+            "smartwatch"
+          ]
+        }
+      ]
+    }
+  },
+  "CHAIN": {
+    "firstRun": {
+      "probeWords": 3910,
+      "rejected": 1,
+      "pctRejected": 0,
+      "byCategory": {
+        "months": {
+          "probe": 12,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "days": {
+          "probe": 7,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "continents_regions": {
+          "probe": 23,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "countries": {
+          "probe": 196,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "states_provinces": {
+          "probe": 45,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "cities": {
+          "probe": 284,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "nationalities_languages": {
+          "probe": 123,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "mild_insults": {
+          "probe": 206,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "holidays_planets": {
+          "probe": 22,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "modern": {
+          "probe": 34,
+          "rejected": 1,
+          "pct": 2.9,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        "common_top3000": {
+          "probe": 2958,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        }
+      },
+      "lettersAffected": 1,
+      "letters": 26
+    },
+    "merged": {
+      "probeWords": 3910,
+      "rejected": 1,
+      "pctRejected": 0,
+      "byCategory": {
+        "months": {
+          "probe": 12,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "days": {
+          "probe": 7,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "continents_regions": {
+          "probe": 23,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "countries": {
+          "probe": 196,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "states_provinces": {
+          "probe": 45,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "cities": {
+          "probe": 284,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "nationalities_languages": {
+          "probe": 123,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "mild_insults": {
+          "probe": 206,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "holidays_planets": {
+          "probe": 22,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        },
+        "modern": {
+          "probe": 34,
+          "rejected": 1,
+          "pct": 2.9,
+          "sample": [
+            "smartwatch"
+          ]
+        },
+        "common_top3000": {
+          "probe": 2958,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        }
+      },
+      "lettersAffected": 1,
+      "letters": 26
+    }
+  },
+  "SAT_RUSH": "N/A — SAT Rush asks for ONE known target word (engine.js wordMap); there is no open dictionary to expand.",
+  "WORD_BOMB_backend": {
+    "note": "backend dictionary.js isValidWord logic, read-only; NOT changed by STEP 55",
+    "probeWords": 3910,
+    "rejected": 657,
+    "pctRejected": 16.8,
+    "byCategory": {
+      "months": {
+        "probe": 12,
+        "rejected": 9,
+        "pct": 75,
+        "sample": [
+          "january",
+          "february",
+          "april",
+          "june",
+          "july",
+          "september",
+          "october",
+          "november",
+          "december"
+        ]
+      },
+      "days": {
+        "probe": 7,
+        "rejected": 7,
+        "pct": 100,
+        "sample": [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+          "sunday"
+        ]
+      },
+      "continents_regions": {
+        "probe": 23,
+        "rejected": 17,
+        "pct": 73.9,
+        "sample": [
+          "africa",
+          "antarctica",
+          "asia",
+          "australia",
+          "europe",
+          "america",
+          "americas",
+          "oceania",
+          "eurasia",
+          "atlantic",
+          "caribbean",
+          "scandinavia"
+        ]
+      },
+      "countries": {
+        "probe": 196,
+        "rejected": 183,
+        "pct": 93.4,
+        "sample": [
+          "afghanistan",
+          "albania",
+          "algeria",
+          "andorra",
+          "angola",
+          "argentina",
+          "armenia",
+          "austria",
+          "azerbaijan",
+          "bahamas",
+          "bahrain",
+          "bangladesh"
+        ]
+      },
+      "states_provinces": {
+        "probe": 45,
+        "rejected": 44,
+        "pct": 97.8,
+        "sample": [
+          "alabama",
+          "alaska",
+          "arizona",
+          "arkansas",
+          "california",
+          "colorado",
+          "connecticut",
+          "delaware",
+          "florida",
+          "idaho",
+          "illinois",
+          "indiana"
+        ]
+      },
+      "cities": {
+        "probe": 284,
+        "rejected": 252,
+        "pct": 88.7,
+        "sample": [
+          "london",
+          "paris",
+          "berlin",
+          "madrid",
+          "barcelona",
+          "moscow",
+          "rome",
+          "milan",
+          "venice",
+          "naples",
+          "turin",
+          "palermo"
+        ]
+      },
+      "nationalities_languages": {
+        "probe": 123,
+        "rejected": 108,
+        "pct": 87.8,
+        "sample": [
+          "american",
+          "african",
+          "european",
+          "asian",
+          "canadian",
+          "mexican",
+          "brazilian",
+          "argentine",
+          "argentinian",
+          "chilean",
+          "peruvian",
+          "colombian"
+        ]
+      },
+      "mild_insults": {
+        "probe": 206,
+        "rejected": 5,
+        "pct": 2.4,
+        "sample": [
+          "peabrain",
+          "newb",
+          "cringey",
+          "cringy",
+          "noobish"
+        ]
+      },
+      "holidays_planets": {
+        "probe": 22,
+        "rejected": 14,
+        "pct": 63.6,
+        "sample": [
+          "christmas",
+          "christmases",
+          "halloween",
+          "hanukkah",
+          "chanukah",
+          "kwanzaa",
+          "ramadan",
+          "diwali",
+          "xmas",
+          "jupiter",
+          "saturn",
+          "uranus"
+        ]
+      },
+      "modern": {
+        "probe": 34,
+        "rejected": 14,
+        "pct": 41.2,
+        "sample": [
+          "selfie",
+          "selfies",
+          "emoji",
+          "emojis",
+          "wifi",
+          "youtuber",
+          "youtubers",
+          "olympic",
+          "kungfu",
+          "livestream",
+          "livestreams",
+          "esports"
+        ]
+      },
+      "common_top3000": {
+        "probe": 2958,
+        "rejected": 4,
+        "pct": 0.1,
+        "sample": [
+          "google",
+          "christian",
+          "jesus",
+          "intel"
+        ]
+      }
+    },
+    "rejectedByPlaceNameBlocklist": 350
+  },
+  "corpusTop25kGap": {
+    "tokens": 24370,
+    "rejectedFirstRun": 5223,
+    "rejectedMerged": 5223,
+    "sampleMerged": [
+      "jan",
+      "sex",
+      "ebay",
+      "dvd",
+      "usa",
+      "dec",
+      "oct",
+      "nov",
+      "rss",
+      "porn",
+      "faq",
+      "david",
+      "feb",
+      "sep",
+      "microsoft",
+      "url",
+      "aug",
+      "apr",
+      "nude",
+      "jul",
+      "sony",
+      "html",
+      "eur",
+      "pdf",
+      "usr",
+      "com",
+      "robert",
+      "george",
+      "fri",
+      "cnet",
+      "ltd",
+      "inc",
+      "thomas",
+      "tue",
+      "ass",
+      "paypal",
+      "thu",
+      "nokia",
+      "carolina",
+      "anal"
+    ]
+  }
+}

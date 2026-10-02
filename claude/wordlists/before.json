@@ -1,0 +1,1152 @@
+{
+  "generatedAt": "2026-10-02T03:03:36.942Z",
+  "wordsCommonTxtPresent": false,
+  "acceptSizes": {
+    "firstRun": 88517,
+    "merged": 270705
+  },
+  "probe": {
+    "total": 3910,
+    "byCategory": {
+      "months": 12,
+      "days": 7,
+      "continents_regions": 23,
+      "countries": 198,
+      "states_provinces": 47,
+      "cities": 291,
+      "nationalities_languages": 124,
+      "mild_insults": 206,
+      "holidays_planets": 22,
+      "modern": 34,
+      "common_top3000": 3000
+    }
+  },
+  "FUSE": {
+    "firstRun": {
+      "fragments": 1026,
+      "fragmentsWithAProbeWord": 1026,
+      "fragmentsWithARejectedCommonWord": 762,
+      "pctFragmentsAffected": 74.3,
+      "perTier": {
+        "e": {
+          "fragments": 113,
+          "withProbe": 113,
+          "affected": 112,
+          "probeHits": 11280,
+          "rejectedHits": 1746
+        },
+        "m": {
+          "fragments": 190,
+          "withProbe": 190,
+          "affected": 148,
+          "probeHits": 4397,
+          "rejectedHits": 771
+        },
+        "h": {
+          "fragments": 318,
+          "withProbe": 318,
+          "affected": 203,
+          "probeHits": 3515,
+          "rejectedHits": 600
+        },
+        "b": {
+          "fragments": 405,
+          "withProbe": 405,
+          "affected": 299,
+          "probeHits": 9581,
+          "rejectedHits": 1669
+        }
+      },
+      "worstFragments": [
+        {
+          "f": "ia",
+          "tier": "m",
+          "rejected": 100,
+          "of": 148,
+          "sample": [
+            "asia",
+            "australia",
+            "oceania",
+            "eurasia",
+            "scandinavia",
+            "siberia"
+          ]
+        },
+        {
+          "f": "ia",
+          "tier": "b",
+          "rejected": 100,
+          "of": 148,
+          "sample": [
+            "asia",
+            "australia",
+            "oceania",
+            "eurasia",
+            "scandinavia",
+            "siberia"
+          ]
+        },
+        {
+          "f": "in",
+          "tier": "e",
+          "rejected": 59,
+          "of": 444,
+          "sample": [
+            "scandinavia",
+            "argentina",
+            "bahrain",
+            "benin",
+            "dominica",
+            "eswatini"
+          ]
+        },
+        {
+          "f": "er",
+          "tier": "e",
+          "rejected": 55,
+          "of": 419,
+          "sample": [
+            "september",
+            "october",
+            "december",
+            "america",
+            "americas",
+            "siberia"
+          ]
+        },
+        {
+          "f": "ri",
+          "tier": "e",
+          "rejected": 54,
+          "of": 185,
+          "sample": [
+            "april",
+            "friday",
+            "africa",
+            "america",
+            "americas",
+            "caribbean"
+          ]
+        },
+        {
+          "f": "ra",
+          "tier": "e",
+          "rejected": 52,
+          "of": 184,
+          "sample": [
+            "australia",
+            "eurasia",
+            "sahara",
+            "andorra",
+            "bahrain",
+            "france"
+          ]
+        },
+        {
+          "f": "ra",
+          "tier": "b",
+          "rejected": 52,
+          "of": 184,
+          "sample": [
+            "australia",
+            "eurasia",
+            "sahara",
+            "andorra",
+            "bahrain",
+            "france"
+          ]
+        },
+        {
+          "f": "la",
+          "tier": "e",
+          "rejected": 49,
+          "of": 155,
+          "sample": [
+            "atlantic",
+            "himalayas",
+            "bangladesh",
+            "belarus",
+            "finland",
+            "guatemala"
+          ]
+        },
+        {
+          "f": "la",
+          "tier": "b",
+          "rejected": 49,
+          "of": 155,
+          "sample": [
+            "atlantic",
+            "himalayas",
+            "bangladesh",
+            "belarus",
+            "finland",
+            "guatemala"
+          ]
+        },
+        {
+          "f": "ta",
+          "tier": "e",
+          "rejected": 48,
+          "of": 152,
+          "sample": [
+            "antarctica",
+            "afghanistan",
+            "bhutan",
+            "italy",
+            "kazakhstan",
+            "kyrgyzstan"
+          ]
+        },
+        {
+          "f": "ma",
+          "tier": "e",
+          "rejected": 45,
+          "of": 170,
+          "sample": [
+            "himalayas",
+            "bahamas",
+            "denmark",
+            "germany",
+            "guatemala",
+            "jamaica"
+          ]
+        },
+        {
+          "f": "ni",
+          "tier": "e",
+          "rejected": 42,
+          "of": 109,
+          "sample": [
+            "oceania",
+            "afghanistan",
+            "albania",
+            "armenia",
+            "benin",
+            "bosnia"
+          ]
+        },
+        {
+          "f": "ni",
+          "tier": "b",
+          "rejected": 42,
+          "of": 109,
+          "sample": [
+            "oceania",
+            "afghanistan",
+            "albania",
+            "armenia",
+            "benin",
+            "bosnia"
+          ]
+        },
+        {
+          "f": "en",
+          "tier": "e",
+          "rejected": 39,
+          "of": 256,
+          "sample": [
+            "argentina",
+            "armenia",
+            "benin",
+            "denmark",
+            "grenada",
+            "kenya"
+          ]
+        },
+        {
+          "f": "na",
+          "tier": "e",
+          "rejected": 36,
+          "of": 90,
+          "sample": [
+            "scandinavia",
+            "argentina",
+            "botswana",
+            "ghana",
+            "grenada",
+            "guyana"
+          ]
+        }
+      ]
+    },
+    "merged": {
+      "fragments": 1026,
+      "fragmentsWithAProbeWord": 1026,
+      "fragmentsWithARejectedCommonWord": 736,
+      "pctFragmentsAffected": 71.7,
+      "perTier": {
+        "e": {
+          "fragments": 113,
+          "withProbe": 113,
+          "affected": 112,
+          "probeHits": 11280,
+          "rejectedHits": 1673
+        },
+        "m": {
+          "fragments": 190,
+          "withProbe": 190,
+          "affected": 146,
+          "probeHits": 4397,
+          "rejectedHits": 734
+        },
+        "h": {
+          "fragments": 318,
+          "withProbe": 318,
+          "affected": 190,
+          "probeHits": 3515,
+          "rejectedHits": 570
+        },
+        "b": {
+          "fragments": 405,
+          "withProbe": 405,
+          "affected": 288,
+          "probeHits": 9581,
+          "rejectedHits": 1595
+        }
+      },
+      "worstFragments": [
+        {
+          "f": "ia",
+          "tier": "m",
+          "rejected": 100,
+          "of": 148,
+          "sample": [
+            "asia",
+            "australia",
+            "oceania",
+            "eurasia",
+            "scandinavia",
+            "siberia"
+          ]
+        },
+        {
+          "f": "ia",
+          "tier": "b",
+          "rejected": 100,
+          "of": 148,
+          "sample": [
+            "asia",
+            "australia",
+            "oceania",
+            "eurasia",
+            "scandinavia",
+            "siberia"
+          ]
+        },
+        {
+          "f": "in",
+          "tier": "e",
+          "rejected": 55,
+          "of": 444,
+          "sample": [
+            "scandinavia",
+            "argentina",
+            "bahrain",
+            "benin",
+            "dominica",
+            "eswatini"
+          ]
+        },
+        {
+          "f": "ri",
+          "tier": "e",
+          "rejected": 53,
+          "of": 185,
+          "sample": [
+            "april",
+            "friday",
+            "africa",
+            "america",
+            "americas",
+            "caribbean"
+          ]
+        },
+        {
+          "f": "er",
+          "tier": "e",
+          "rejected": 52,
+          "of": 419,
+          "sample": [
+            "september",
+            "october",
+            "december",
+            "america",
+            "americas",
+            "siberia"
+          ]
+        },
+        {
+          "f": "ra",
+          "tier": "e",
+          "rejected": 51,
+          "of": 184,
+          "sample": [
+            "australia",
+            "eurasia",
+            "sahara",
+            "andorra",
+            "bahrain",
+            "france"
+          ]
+        },
+        {
+          "f": "ra",
+          "tier": "b",
+          "rejected": 51,
+          "of": 184,
+          "sample": [
+            "australia",
+            "eurasia",
+            "sahara",
+            "andorra",
+            "bahrain",
+            "france"
+          ]
+        },
+        {
+          "f": "la",
+          "tier": "e",
+          "rejected": 49,
+          "of": 155,
+          "sample": [
+            "atlantic",
+            "himalayas",
+            "bangladesh",
+            "belarus",
+            "finland",
+            "guatemala"
+          ]
+        },
+        {
+          "f": "la",
+          "tier": "b",
+          "rejected": 49,
+          "of": 155,
+          "sample": [
+            "atlantic",
+            "himalayas",
+            "bangladesh",
+            "belarus",
+            "finland",
+            "guatemala"
+          ]
+        },
+        {
+          "f": "ta",
+          "tier": "e",
+          "rejected": 46,
+          "of": 152,
+          "sample": [
+            "antarctica",
+            "afghanistan",
+            "bhutan",
+            "italy",
+            "kazakhstan",
+            "kyrgyzstan"
+          ]
+        },
+        {
+          "f": "ma",
+          "tier": "e",
+          "rejected": 45,
+          "of": 170,
+          "sample": [
+            "himalayas",
+            "bahamas",
+            "denmark",
+            "germany",
+            "guatemala",
+            "jamaica"
+          ]
+        },
+        {
+          "f": "ni",
+          "tier": "e",
+          "rejected": 40,
+          "of": 109,
+          "sample": [
+            "oceania",
+            "afghanistan",
+            "albania",
+            "armenia",
+            "benin",
+            "bosnia"
+          ]
+        },
+        {
+          "f": "ni",
+          "tier": "b",
+          "rejected": 40,
+          "of": 109,
+          "sample": [
+            "oceania",
+            "afghanistan",
+            "albania",
+            "armenia",
+            "benin",
+            "bosnia"
+          ]
+        },
+        {
+          "f": "en",
+          "tier": "e",
+          "rejected": 38,
+          "of": 256,
+          "sample": [
+            "argentina",
+            "armenia",
+            "benin",
+            "denmark",
+            "grenada",
+            "kenya"
+          ]
+        },
+        {
+          "f": "na",
+          "tier": "e",
+          "rejected": 36,
+          "of": 90,
+          "sample": [
+            "scandinavia",
+            "argentina",
+            "botswana",
+            "ghana",
+            "grenada",
+            "guyana"
+          ]
+        }
+      ]
+    }
+  },
+  "CHAIN": {
+    "firstRun": {
+      "probeWords": 3910,
+      "rejected": 627,
+      "pctRejected": 16,
+      "byCategory": {
+        "months": {
+          "probe": 12,
+          "rejected": 8,
+          "pct": 66.7,
+          "sample": [
+            "january",
+            "february",
+            "april",
+            "june",
+            "july",
+            "september",
+            "october",
+            "december"
+          ]
+        },
+        "days": {
+          "probe": 7,
+          "rejected": 7,
+          "pct": 100,
+          "sample": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+          ]
+        },
+        "continents_regions": {
+          "probe": 23,
+          "rejected": 17,
+          "pct": 73.9,
+          "sample": [
+            "africa",
+            "antarctica",
+            "asia",
+            "australia",
+            "europe",
+            "america",
+            "americas",
+            "oceania",
+            "eurasia",
+            "atlantic",
+            "caribbean",
+            "scandinavia"
+          ]
+        },
+        "countries": {
+          "probe": 196,
+          "rejected": 166,
+          "pct": 84.7,
+          "sample": [
+            "afghanistan",
+            "albania",
+            "algeria",
+            "andorra",
+            "argentina",
+            "armenia",
+            "austria",
+            "azerbaijan",
+            "bahamas",
+            "bahrain",
+            "bangladesh",
+            "barbados"
+          ]
+        },
+        "states_provinces": {
+          "probe": 45,
+          "rejected": 39,
+          "pct": 86.7,
+          "sample": [
+            "alabama",
+            "arizona",
+            "arkansas",
+            "california",
+            "connecticut",
+            "delaware",
+            "florida",
+            "idaho",
+            "illinois",
+            "indiana",
+            "iowa",
+            "kansas"
+          ]
+        },
+        "cities": {
+          "probe": 284,
+          "rejected": 236,
+          "pct": 83.1,
+          "sample": [
+            "london",
+            "madrid",
+            "barcelona",
+            "moscow",
+            "rome",
+            "milan",
+            "venice",
+            "naples",
+            "turin",
+            "palermo",
+            "verona",
+            "pisa"
+          ]
+        },
+        "nationalities_languages": {
+          "probe": 123,
+          "rejected": 98,
+          "pct": 79.7,
+          "sample": [
+            "american",
+            "african",
+            "european",
+            "asian",
+            "canadian",
+            "mexican",
+            "brazilian",
+            "argentinian",
+            "chilean",
+            "peruvian",
+            "colombian",
+            "venezuelan"
+          ]
+        },
+        "mild_insults": {
+          "probe": 206,
+          "rejected": 20,
+          "pct": 9.7,
+          "sample": [
+            "doofuses",
+            "halfwit",
+            "halfwits",
+            "numbskulls",
+            "numskull",
+            "meatheads",
+            "birdbrains",
+            "peabrain",
+            "dunderhead",
+            "nincompoops",
+            "ninnies",
+            "doltish"
+          ]
+        },
+        "holidays_planets": {
+          "probe": 22,
+          "rejected": 14,
+          "pct": 63.6,
+          "sample": [
+            "christmas",
+            "christmases",
+            "halloween",
+            "hanukkah",
+            "chanukah",
+            "kwanzaa",
+            "ramadan",
+            "diwali",
+            "xmas",
+            "jupiter",
+            "saturn",
+            "uranus"
+          ]
+        },
+        "modern": {
+          "probe": 34,
+          "rejected": 22,
+          "pct": 64.7,
+          "sample": [
+            "selfie",
+            "selfies",
+            "emoji",
+            "emojis",
+            "wifi",
+            "youtuber",
+            "youtubers",
+            "hashtag",
+            "hashtags",
+            "tweets",
+            "tweeted",
+            "tweeting"
+          ]
+        },
+        "common_top3000": {
+          "probe": 2958,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        }
+      },
+      "lettersAffected": 26,
+      "letters": 26
+    },
+    "merged": {
+      "probeWords": 3910,
+      "rejected": 604,
+      "pctRejected": 15.4,
+      "byCategory": {
+        "months": {
+          "probe": 12,
+          "rejected": 8,
+          "pct": 66.7,
+          "sample": [
+            "january",
+            "february",
+            "april",
+            "june",
+            "july",
+            "september",
+            "october",
+            "december"
+          ]
+        },
+        "days": {
+          "probe": 7,
+          "rejected": 7,
+          "pct": 100,
+          "sample": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+          ]
+        },
+        "continents_regions": {
+          "probe": 23,
+          "rejected": 17,
+          "pct": 73.9,
+          "sample": [
+            "africa",
+            "antarctica",
+            "asia",
+            "australia",
+            "europe",
+            "america",
+            "americas",
+            "oceania",
+            "eurasia",
+            "atlantic",
+            "caribbean",
+            "scandinavia"
+          ]
+        },
+        "countries": {
+          "probe": 196,
+          "rejected": 166,
+          "pct": 84.7,
+          "sample": [
+            "afghanistan",
+            "albania",
+            "algeria",
+            "andorra",
+            "argentina",
+            "armenia",
+            "austria",
+            "azerbaijan",
+            "bahamas",
+            "bahrain",
+            "bangladesh",
+            "barbados"
+          ]
+        },
+        "states_provinces": {
+          "probe": 45,
+          "rejected": 39,
+          "pct": 86.7,
+          "sample": [
+            "alabama",
+            "arizona",
+            "arkansas",
+            "california",
+            "connecticut",
+            "delaware",
+            "florida",
+            "idaho",
+            "illinois",
+            "indiana",
+            "iowa",
+            "kansas"
+          ]
+        },
+        "cities": {
+          "probe": 284,
+          "rejected": 236,
+          "pct": 83.1,
+          "sample": [
+            "london",
+            "madrid",
+            "barcelona",
+            "moscow",
+            "rome",
+            "milan",
+            "venice",
+            "naples",
+            "turin",
+            "palermo",
+            "verona",
+            "pisa"
+          ]
+        },
+        "nationalities_languages": {
+          "probe": 123,
+          "rejected": 98,
+          "pct": 79.7,
+          "sample": [
+            "american",
+            "african",
+            "european",
+            "asian",
+            "canadian",
+            "mexican",
+            "brazilian",
+            "argentinian",
+            "chilean",
+            "peruvian",
+            "colombian",
+            "venezuelan"
+          ]
+        },
+        "mild_insults": {
+          "probe": 206,
+          "rejected": 5,
+          "pct": 2.4,
+          "sample": [
+            "peabrain",
+            "newb",
+            "cringey",
+            "cringy",
+            "noobish"
+          ]
+        },
+        "holidays_planets": {
+          "probe": 22,
+          "rejected": 14,
+          "pct": 63.6,
+          "sample": [
+            "christmas",
+            "christmases",
+            "halloween",
+            "hanukkah",
+            "chanukah",
+            "kwanzaa",
+            "ramadan",
+            "diwali",
+            "xmas",
+            "jupiter",
+            "saturn",
+            "uranus"
+          ]
+        },
+        "modern": {
+          "probe": 34,
+          "rejected": 14,
+          "pct": 41.2,
+          "sample": [
+            "selfie",
+            "selfies",
+            "emoji",
+            "emojis",
+            "wifi",
+            "youtuber",
+            "youtubers",
+            "olympic",
+            "kungfu",
+            "livestream",
+            "livestreams",
+            "esports"
+          ]
+        },
+        "common_top3000": {
+          "probe": 2958,
+          "rejected": 0,
+          "pct": 0,
+          "sample": []
+        }
+      },
+      "lettersAffected": 26,
+      "letters": 26
+    }
+  },
+  "SAT_RUSH": "N/A — SAT Rush asks for ONE known target word (engine.js wordMap); there is no open dictionary to expand.",
+  "WORD_BOMB_backend": {
+    "note": "backend dictionary.js isValidWord logic, read-only; NOT changed by STEP 55",
+    "probeWords": 3910,
+    "rejected": 657,
+    "pctRejected": 16.8,
+    "byCategory": {
+      "months": {
+        "probe": 12,
+        "rejected": 9,
+        "pct": 75,
+        "sample": [
+          "january",
+          "february",
+          "april",
+          "june",
+          "july",
+          "september",
+          "october",
+          "november",
+          "december"
+        ]
+      },
+      "days": {
+        "probe": 7,
+        "rejected": 7,
+        "pct": 100,
+        "sample": [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+          "sunday"
+        ]
+      },
+      "continents_regions": {
+        "probe": 23,
+        "rejected": 17,
+        "pct": 73.9,
+        "sample": [
+          "africa",
+          "antarctica",
+          "asia",
+          "australia",
+          "europe",
+          "america",
+          "americas",
+          "oceania",
+          "eurasia",
+          "atlantic",
+          "caribbean",
+          "scandinavia"
+        ]
+      },
+      "countries": {
+        "probe": 196,
+        "rejected": 183,
+        "pct": 93.4,
+        "sample": [
+          "afghanistan",
+          "albania",
+          "algeria",
+          "andorra",
+          "angola",
+          "argentina",
+          "armenia",
+          "austria",
+          "azerbaijan",
+          "bahamas",
+          "bahrain",
+          "bangladesh"
+        ]
+      },
+      "states_provinces": {
+        "probe": 45,
+        "rejected": 44,
+        "pct": 97.8,
+        "sample": [
+          "alabama",
+          "alaska",
+          "arizona",
+          "arkansas",
+          "california",
+          "colorado",
+          "connecticut",
+          "delaware",
+          "florida",
+          "idaho",
+          "illinois",
+          "indiana"
+        ]
+      },
+      "cities": {
+        "probe": 284,
+        "rejected": 252,
+        "pct": 88.7,
+        "sample": [
+          "london",
+          "paris",
+          "berlin",
+          "madrid",
+          "barcelona",
+          "moscow",
+          "rome",
+          "milan",
+          "venice",
+          "naples",
+          "turin",
+          "palermo"
+        ]
+      },
+      "nationalities_languages": {
+        "probe": 123,
+        "rejected": 108,
+        "pct": 87.8,
+        "sample": [
+          "american",
+          "african",
+          "european",
+          "asian",
+          "canadian",
+          "mexican",
+          "brazilian",
+          "argentine",
+          "argentinian",
+          "chilean",
+          "peruvian",
+          "colombian"
+        ]
+      },
+      "mild_insults": {
+        "probe": 206,
+        "rejected": 5,
+        "pct": 2.4,
+        "sample": [
+          "peabrain",
+          "newb",
+          "cringey",
+          "cringy",
+          "noobish"
+        ]
+      },
+      "holidays_planets": {
+        "probe": 22,
+        "rejected": 14,
+        "pct": 63.6,
+        "sample": [
+          "christmas",
+          "christmases",
+          "halloween",
+          "hanukkah",
+          "chanukah",
+          "kwanzaa",
+          "ramadan",
+          "diwali",
+          "xmas",
+          "jupiter",
+          "saturn",
+          "uranus"
+        ]
+      },
+      "modern": {
+        "probe": 34,
+        "rejected": 14,
+        "pct": 41.2,
+        "sample": [
+          "selfie",
+          "selfies",
+          "emoji",
+          "emojis",
+          "wifi",
+          "youtuber",
+          "youtubers",
+          "olympic",
+          "kungfu",
+          "livestream",
+          "livestreams",
+          "esports"
+        ]
+      },
+      "common_top3000": {
+        "probe": 2958,
+        "rejected": 4,
+        "pct": 0.1,
+        "sample": [
+          "google",
+          "christian",
+          "jesus",
+          "intel"
+        ]
+      }
+    },
+    "rejectedByPlaceNameBlocklist": 350
+  },
+  "corpusTop25kGap": {
+    "tokens": 24370,
+    "rejectedFirstRun": 5714,
+    "rejectedMerged": 5714,
+    "sampleMerged": [
+      "jan",
+      "sex",
+      "january",
+      "ebay",
+      "dvd",
+      "american",
+      "usa",
+      "december",
+      "june",
+      "october",
+      "september",
+      "july",
+      "dec",
+      "april",
+      "america",
+      "oct",
+      "february",
+      "nov",
+      "london",
+      "washington",
+      "rss",
+      "california",
+      "porn",
+      "australia",
+      "faq",
+      "david",
+      "feb",
+      "sep",
+      "france",
+      "microsoft",
+      "url",
+      "aug",
+      "apr",
+      "nude",
+      "europe",
+      "germany",
+      "jul",
+      "florida",
+      "friday",
+      "sony"
+    ]
+  }
+}
