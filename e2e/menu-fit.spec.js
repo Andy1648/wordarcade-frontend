@@ -53,8 +53,17 @@ test.describe('menu fit (item 1)', () => {
       // Let the layout effect run its passes. Polled, not a fixed 120ms: on a slow CI runner the
       // fit-math's second pass (after the webfont swap) landed after the fixed wait and the test
       // measured the pre-fit frame (gap -12.1 at 1600x900). The requirement itself is unchanged.
-      await expect.poll(async () => (await measure(page)).gap, { timeout: 4000 }).toBeGreaterThanOrEqual(12);
-      const m = await measure(page);
+      // ...and SETTLED: on CI a late font-swap re-fit could re-measure the pre-fit frame (-12.1) a beat
+      // after the first good reading, so the layout must read clear on 3 consecutive polls ~150ms apart.
+      let m = null;
+      let streak = 0;
+      await expect.poll(async () => {
+        const cur = await measure(page);
+        streak = cur.gap >= 12 ? streak + 1 : 0;
+        m = cur;
+        if (streak < 3) await page.waitForTimeout(150);
+        return streak;
+      }, { timeout: 8000 }).toBeGreaterThanOrEqual(3);
       // eslint-disable-next-line no-console
       console.log(`[menu-fit] ${w}x${h}  gap=${m.gap}px  content=${m.contentH}px (${Math.round((m.contentH / h) * 100)}% of vh)  scale=${m.scale}  hscroll=${m.bodyScrollW - m.bodyClientW}`);
 

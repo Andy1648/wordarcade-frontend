@@ -2595,3 +2595,69 @@ body:has(.sr-app) .wpm-hud {
     left: 12px;
   }
 }
+
+/* KEYBOARD UP (Batch A, Andy oct2): on a phone with the keyboard open the layout is ~400-500px
+   tall. The six suspect chips pushed the REWARD footer — the multiplier + drain, the mode's timer —
+   off the poster's clip. At those heights the suspect grid scrolls inside the poster instead and the
+   footer stays pinned on screen (e2e/keyboard-up.spec.js). */
+@media (max-width: 520px) and (max-height: 560px) {
+  /* the mugshot slots shrink rather than wrap: a 9+ letter word wrapped to a second row and pushed
+     the REWARD footer off the poster (seen at random — it depends on the word) */
+  .sr-slots {
+    --gap: 3px;
+    --slot-min: 20px;
+  }
+  /* the case id line is the one poster field nobody reads mid-capture */
+  .sr-caseid {
+    display: none;
+  }
+  .sr-fields {
+    min-height: 52px;
+    padding-block: 4px;
+  }
+  .sr-lineup {
+    flex: 1 0 96px;
+    min-height: 96px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 6px;
+  }
+  .sr-suspect {
+    min-height: 34px;
+  }
+  .sr-reward {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+  /* the footer keeps the multiplier + pips + drain; the caption box is the cut */
+  .sr-reward .sr-antebox,
+  .sr-reward-label {
+    display: none;
+  }
+  .sr-mult {
+    font-size: var(--fs-h2);
+  }
+  .sr-wanted {
+    font-size: var(--fs-panel);
+  }
+}
+/* ...and the smallest phones (360x400 with the keyboard up): one row of suspects shows, the rest scroll */
+@media (max-width: 520px) and (max-height: 440px) {
+  .sr-lineup {
+    flex-basis: 52px;
+    min-height: 52px;
+    margin-top: 2px;
+  }
+  /* the chips themselves say who's standing; the caption row is the cut at this height */
+  .sr-lineup-head {
+    display: none;
+  }
+  .sr-fields {
+    min-height: 40px;
+    padding-block: 2px;
+  }
+  .sr-reward {
+    margin-top: 2px;
+    padding-top: 2px;
+  }
+}
