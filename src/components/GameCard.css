@@ -357,7 +357,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   pointer-events: none; /* the whole card face stays ONE click target */
 }
 
-/* Corner ribbon (FEATURED / AI JUDGED) — a diagonal banner cropping the top-left
+/* Corner ribbon (FEATURED / AI BUILT) — a diagonal banner cropping the top-left
    corner (the card's overflow:hidden clips its bleed; it's aria-hidden so the
    viewport-integrity clip walk skips its intentional off-corner overhang). */
 .game-card-ribbon {
@@ -401,7 +401,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      minus 2px of rounding slack). The XP / payout lines divide it by their measured em-width. */
   --line-room: calc(100cqw - 2 * clamp(10px, 4.5cqw, 18px) - 2px);
   /* ABOVE THE CORNER RIBBON. theme/arcane.css (unscoped) lifts .game-card-ribbon to z-index 4, which
-     put the FEATURED / AI JUDGED band over the mode NAME once a short viewport's squat card brought
+     put the FEATURED / AI BUILT band over the mode NAME once a short viewport's squat card brought
      the bar up into the corner (card-fit gate (f)). The ribbon is decoration; the name is not. */
   z-index: 5;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.8) 46%, transparent 100%);

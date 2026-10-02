@@ -42,7 +42,7 @@ const BASE_GAMES = [
     // 22.3 at 390, 12 vs 16 at 360) purely because its longest word is longer. Shorter word,
     // same size as its neighbours. Nothing else reads cardName; id/routes/SEO are untouched.
     cardName: 'BLITZ',
-    description: 'AI JUDGES YOUR ANSWERS — GET CREATIVE.',
+    description: 'NAME AS MANY AS YOU CAN. IF IT’S ON THE LIST, IT SCORES.',
     baseColor: '#3DA8FF',
     iconBg: '#fff',
     badgeText: 'SOLO/MULTI', // no spaces — matches Word Bomb's badge and fits the pill (fix/qa-sweep §3)
@@ -51,8 +51,8 @@ const BASE_GAMES = [
     textColor: '#000',
     descColor: '#1a0b2e',
     enabled: true,
-    // Drives the compact "AI JUDGED" pill on the card (GameCard.jsx) so it reads
-    // as "AI Category Blitz" without touching the big two-line title.
+    // Drives the compact "AI BUILT" ribbon on the card (GameCard.jsx): the category lists were built
+    // with AI; scoring is list-only (STEP 9) — no AI judges an answer.
     aiJudged: true,
   },
 ];

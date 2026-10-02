@@ -210,7 +210,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
             {modeKey === 'blitz' && (
               <div className="mode-dialog-ai-badge">
                 <span className="mode-dialog-ai-badge-ai">AI</span>
-                <span className="mode-dialog-ai-badge-judged">JUDGED</span>
+                <span className="mode-dialog-ai-badge-judged">BUILT</span>
               </div>
             )}
             <div className="mode-dialog-title">

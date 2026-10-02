@@ -368,7 +368,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               aria-label; the ribbon bleeds off the corner, so aria-hidden keeps it out of
               the viewport-integrity clip walk). */}
           {game.featured && <div className="game-card-ribbon is-featured" aria-hidden="true">FEATURED</div>}
-          {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI JUDGED</div>}
+          {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI BUILT</div>}
 
 
           {game.id === 'sat-rush' ? (

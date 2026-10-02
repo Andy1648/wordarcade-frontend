@@ -216,8 +216,8 @@
   gap: clamp(9px, 1.7vh, 14px);
 }
 
-/* "AI JUDGED" badge above the CATEGORY / BLITZ title in the blitz dialog: "AI"
-   prominent with a small spaced "JUDGED" beneath, in the blitz accent, tilted
+/* "AI BUILT" badge above the CATEGORY / BLITZ title in the blitz dialog: "AI"
+   prominent with a small spaced "BUILT" beneath, in the blitz accent, tilted
    like a sticker. Left-aligned with the rest of the lower block. */
 .mode-dialog-ai-badge {
   display: inline-flex;

@@ -15,7 +15,7 @@ export const MODES = {
   blitz: {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
     chip: 'SOLO/MULTI', t1: 'CATEGORY', t2: 'BLITZ',
-    liner: 'AI JUDGES YOU. GET CREATIVE.',
+    liner: 'IF IT’S ON THE LIST, IT SCORES.',
     sub: 'SPEED ROUND · NAME AS MANY AS YOU CAN BEFORE TIME RUNS OUT.',
     // PLAY (not CREATE) — see the note on bomb above.
     create: 'PLAY',
