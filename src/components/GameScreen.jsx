@@ -1713,6 +1713,9 @@ export default function GameScreen({
   onShakeRef.current = onShake;
 
   const isMyTurn = !!gameState && gameState.currentPlayerId === myId;
+  // STEP 54: joined a round in progress by code → I'm WATCHING until the next turn deals me in
+  // (the server lists me in turn_update.spectators; I am not in players yet).
+  const isLateJoiner = !!gameState && Array.isArray(gameState.spectators) && gameState.spectators.some((p) => p.id === myId);
   const inputEnabled = isMyTurn && !gameOver && !showCountdown;
 
   // Drop focus into the input the moment the turn swings to us, so the
@@ -3232,6 +3235,13 @@ export default function GameScreen({
                   the SFX engine -- that toggle is now a row inside this panel, so one control owns
                   music, keystrokes, events, game SFX and volume. It is inline rather than fixed
                   because the fixed corner version sat on top of SKIP at phone widths. */}
+              {/* STEP 54: the room code stays on screen during the game, so a friend can join
+                  mid-round (they watch, then get dealt in at the next turn). */}
+              {roomCode && (
+                <span className="game-room-code" title="Friends can join with this code — they're dealt in next turn">
+                  ROOM <b>{roomCode}</b>
+                </span>
+              )}
               {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
@@ -3239,11 +3249,19 @@ export default function GameScreen({
             </div>
           </div>
         </div>
+        {isLateJoiner && (
+          <div className="game-spectating" role="status">
+            WATCHING — YOU&apos;RE DEALT IN NEXT TURN
+          </div>
+        )}
 
         {/* ===== TOP STACK: the fragment prompt. Its own grid area, with an EQUAL
             1fr track above and below the ring row, which is what centres the ring
             in the board below the header. ===== */}
         <div className="wb-top" ref={wbTopRef}>
+          {/* STEP 54, PHONES: the header has no room for the code chip, so it rides under the
+              prompt here instead (hidden at desktop widths, where the header carries it). */}
+          {roomCode && <div className="game-room-code-line">ROOM <b>{roomCode}</b></div>}
         {/* THE FRAGMENT sits directly ABOVE the ring, horizontally centred on the
             bomb at the ring's centre. It is NOT overlaid on the bomb: the ring's free
             centre is only as wide as the circle leaves after the seats, and a 96px

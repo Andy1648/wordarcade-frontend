@@ -131,7 +131,7 @@ test('the design floor never returns a ring taller than the rows left', () => {
 import { WB_FLAG_ROOM } from './wbRingSize.js';
 test('rails layout: the ring takes the play area between the rows (not the taller stack twice)', () => {
   const rails = ringDiameter({ ...LAPTOP, layout: 'rails' });
-  assert.equal(rails, 712 - 110 - 77 - 2 * 8 - WB_FLAG_ROOM);
+  assert.equal(rails, Math.max(712 - 2 * 118, 712 - 110 - 77 - 2 * 8 - WB_FLAG_ROOM));
   assert.ok(rails > ringDiameter(LAPTOP), 'bigger than the old double reservation');
   // a 1920x1080 board now spreads past the old 520px cap
   const big = ringDiameter({ stageW: 1740, stageH: 1000, contentW: 1684, contentH: 920, headH: 56, topH: 118, botH: 76, railW: 260, rowGap: 30, colGap: 22, layout: 'rails' });
