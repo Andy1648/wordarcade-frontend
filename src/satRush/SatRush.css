@@ -2450,3 +2450,94 @@ html[data-beat='true'] .sr-mult.sr-print::before {
     padding-top: 8px;
   }
 }
+
+/* ---- STEP 57: CASE CLOSED, clear and consistent ------------------------------------------------ */
+.sr-hero-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 3vw, 22px);
+}
+.sr-capt-value {
+  font-family: var(--font-head);
+  font-size: var(--fs-hero);
+  line-height: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+.sr-capt-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.sr-capt-label {
+  font-family: var(--font-head);
+  font-size: var(--fs-panel);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.sr-capt-away {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--redink, #c8321e);
+}
+.sr-winsline {
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.sr-winsline b {
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: var(--fs-panel);
+  letter-spacing: 0.02em;
+  margin-right: 6px;
+}
+.sr-resline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  padding: 8px 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity 0.34s ease;
+}
+.sr-resline.in {
+  opacity: 1;
+}
+.sr-resline b {
+  font-size: var(--fs-body);
+}
+/* the other-modes offer, readable on paper (it was yellow on cream) */
+.sr-results .try-mode-btn {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-resline {
+    opacity: 1;
+    transition: none;
+  }
+}
+/* the primary action reads as primary (ink plate), MENU stays the paper ghost */
+.sr-results-actions .sr-btn:not(.sr-btn-ghost):not(.sr-offer-btn) {
+  color: var(--paper);
+  background: var(--ink);
+}

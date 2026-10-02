@@ -104,15 +104,17 @@ test.describe('SAT Rush', () => {
       )
       .toBe(true);
 
-    // Results: the retro-print PAGE, the DEAD stamp, the AVG ANTE hero, the words
-    // mastered line, and the paper actions.
+    // Results: the retro-print PAGE, the DEAD stamp, the CAPTURED hero + WINS EARNED (STEP 57: the
+    // same lead every mode's run-over card has), the mode's own numbers on one line, the actions.
     // The SHARE button assertion is GONE with the share pipeline itself — Andy: "no one in the
     // history uses that". This was the only place in e2e/ that reached it by ROLE rather than by
     // class, which is why the class-name sweep over the deletion missed it.
     await expect(page.locator('.sr-respage')).toBeVisible();
     await expect(page.locator('.sr-dead')).toBeVisible();
-    await expect(page.locator('.sr-ante-value')).toBeVisible();
-    await expect(page.locator('.sr-mastered')).toBeVisible();
+    await expect(page.locator('.sr-capt-value')).toBeVisible();
+    await expect(page.locator('.sr-winsline')).toContainText('wins earned');
+    await expect(page.locator('.sr-resline')).toContainText('avg ante');
+    await expect(page.locator('.sr-resline')).toContainText('mastered');
     const runItBack = page.getByRole('button', { name: 'Run it back' });
     await expect(runItBack).toBeVisible();
 

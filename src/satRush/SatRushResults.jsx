@@ -26,8 +26,12 @@ function frameOf(e) {
 }
 
 export default function SatRushResults({ results, winsEarned = 0, onAgain, onExit, offerMenu = false }) {
-  const finalScore = results.score || 0;
-  const finalAnte = results.avgAnte ?? 0;
+  // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
+  // the page leads with what every other mode's run-over card leads with — how many you got (here:
+  // CAPTURED) and the WINS it paid — and the mode's own numbers (score, avg ante, streak, mastered)
+  // move to one ruled line under them. These two are what count up.
+  const finalScore = results.cleared || 0;
+  const finalAnte = winsEarned || 0;
   const [score, setScore] = useState(0);
   const [ante, setAnte] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -57,7 +61,7 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
         const eased = 1 - Math.pow(1 - p, 3);
         const s = Math.round(finalScore * eased);
         setScore(s);
-        setAnte(+(finalAnte * eased).toFixed(1));
+        setAnte(Math.round(finalAnte * eased));
         if (s - lastTick >= C.score.tickEvery) {
           lastTick = s;
           juice.scoreTick(p);
@@ -82,9 +86,8 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const anteStr = finalAnte ? ante.toFixed(1) : '—';
-  const anteHero = `${anteStr}×`;
-  const scoreStr = String(score).padStart(6, '0');
+  const avgAnte = results.avgAnte ? `${Number(results.avgAnte).toFixed(1)}×` : '—';
+  const fmt = (n) => Number(n || 0).toLocaleString('en-US');
   const hardest = results.hardestWord ? results.hardestWord.word.toUpperCase() : null;
 
 
@@ -94,46 +97,30 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
         <div className="sr-dead">CASE CLOSED</div>
 
-        {/* AVG ANTE — the headline stat: big ink display with the screentone plate behind. */}
+        {/* THE ONE BIG THING: how many you captured (and how many got away). */}
         <div className="sr-panel sr-hero">
-          <div className="sr-ante-value sr-print" data-v={anteHero} aria-label={`average ante ${anteStr} times`}>
-            {anteHero}
-          </div>
-          <div className="sr-panel-label">avg ante — how fast you knew them</div>
-          {/* Words mastered (box ≥ 3) — the number that makes the mode legibly a
-              study tool, sitting beside the ante. */}
-          <div className="sr-mastered" aria-label={`${results.mastered || 0} words mastered`}>
-            <b>{results.mastered || 0}</b> {results.mastered === 1 ? 'word' : 'words'} mastered
+          <div className="sr-hero-row">
+            <div className="sr-capt-value sr-print" data-v={String(score)} aria-label={`${finalScore} captured`}>
+              {score}
+            </div>
+            <div className="sr-capt-side">
+              <span className="sr-capt-label">captured</span>
+              <span className="sr-capt-away">{results.missed || 0} got away</span>
+            </div>
           </div>
         </div>
 
-        {/* SCORE — zero-padded Bungee ink. */}
-        <div className="sr-panel sr-scorepanel">
-          <div className="sr-score-value">{scoreStr}</div>
-          <div className="sr-panel-label">score</div>
+        {/* WINS EARNED — the same second number every mode's run-over card has. */}
+        <div className="sr-winsline" aria-label={`${finalAnte} wins earned`}>
+          <b>+{fmt(ante)}</b> wins earned
         </div>
 
-        {/* WINS EARNED (item 2) — the run's payout, large, kept in the manga ink register
-            rather than the neon pill so the sanctioned SAT Rush treatment stays intact. */}
-        <div className="sr-panel sr-winspanel">
-          <div className="sr-score-value">+{winsEarned}</div>
-          <div className="sr-panel-label">wins earned</div>
-        </div>
-
-        {/* cleared / missed / best-streak — a ruled strip like the in-game HUD. */}
-        <div className={`sr-resstrip${revealed ? ' in' : ''}`}>
-          <div className="sr-hcell">
-            <span className="sr-hlabel">cleared</span>
-            <b className="sr-hval">{results.cleared}</b>
-          </div>
-          <div className="sr-hcell">
-            <span className="sr-hlabel">missed</span>
-            <b className="sr-hval">{results.missed}</b>
-          </div>
-          <div className="sr-hcell">
-            <span className="sr-hlabel">best streak</span>
-            <b className="sr-hval">{results.bestStreak}</b>
-          </div>
+        {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
+        <div className={`sr-resline${revealed ? ' in' : ''}`}>
+          <span>score <b>{fmt(results.score)}</b></span>
+          <span>avg ante <b>{avgAnte}</b></span>
+          <span>best streak <b>{results.bestStreak || 0}</b></span>
+          <span>mastered <b>{results.mastered || 0}</b></span>
         </div>
 
         {/* runLog film-strip: one small ruled frame per word, in order. */}
