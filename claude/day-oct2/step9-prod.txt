@@ -1,0 +1,8 @@
+STEP 9 — PRODUCTION checks after the Render deploy of chain-reaction-backend #11 (2026-10-02 ~13:58 ET)
+raw protocol, solo room + bot on wss://chain-reaction-backend-i6kx.onrender.com:
+  category "US states" (curated: true)
+  zzzzzzzz    -> {"accepted":false,"reason":"not_on_list","code":"not_on_list"}
+  texas       -> {"accepted":true,"code":"list_hit"}
+  puerto rico -> {"accepted":false,"reason":"not_on_list","code":"not_on_list"}
+earlier polls drew American football positions / Asian countries / Human body systems — all curated.
+prod Word Bomb smoke right after: fragment "ive" -> "lives" accepted. No revert needed.
