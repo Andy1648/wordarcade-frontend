@@ -87,6 +87,28 @@ export function shouldRestore(cloudBlob, storage) {
   return { restore: false, reason: 'local-ahead', cloud, local };
 }
 
+// ---- admin FULL RESET (012_admin_reset.sql) -------------------------------------------------------
+/**
+ * Wipe exactly like Stats → RESET ALL PROGRESS (every taw.* key) except the `keep` keys — the claimed
+ * name and the device secret, so the player stays on the board. Returns the removed key count.
+ */
+export function wipeProgressKeys(storage, keep = []) {
+  const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+  if (!s) return 0;
+  const doomed = [];
+  try {
+    for (let i = 0; i < s.length; i += 1) {
+      const k = s.key(i);
+      if (k && k.startsWith('taw.') && !keep.includes(k)) doomed.push(k);
+    }
+    doomed.forEach((k) => s.removeItem(k));
+  } catch {
+    /* storage blocked */
+  }
+  return doomed.length;
+}
+export const DEV_RESET_NOTICE_KEY = 'taw.devResetNotice';
+
 // ---- network (injected so this file stays testable and client.js owns the transport) -------------
 /**
  * Back up now if due. `rpc` = client.js rpc; `secret` = the device secret. Never throws.
@@ -110,10 +132,14 @@ export async function backupNow({ rpc, secret, force = false, storage } = {}) {
  * Restore from the cloud if it is ahead. Returns { restored, username } — the caller reloads the
  * page when restored (every module re-reads its keys). Never lowers progress, never throws.
  */
-export async function restoreIfAhead({ rpc, secret, storage } = {}) {
+export async function restoreIfAhead({ rpc, secret, storage, restore = true } = {}) {
   if (!rpc || !secret) return { restored: false };
   try {
     const r = await rpc('lb_load', { p_secret: secret });
+    // 012_admin_reset: the dev flagged this profile for a FULL RESET — that outranks any restore (the
+    // cloud copy is the progress being reset). The caller obeys via obeyDevReset in client.js.
+    if (r && r.reset_all === true) return { restored: false, resetAll: true, username: r.username, id: r.id };
+    if (!restore) return { restored: false, username: r && r.username, id: r && r.id, reason: 'check-only' };
     if (!r || !r.blob) return { restored: false, username: r && r.username, id: r && r.id };
     const d = shouldRestore(r.blob, storage);
     if (!d.restore) return { restored: false, username: r.username, id: r.id, reason: d.reason };

@@ -44,7 +44,18 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
       if (!pid) return json(400, { message: 'no_profile' });
       const row = rows.find((r) => r.id === pid);
       const sv = saves.get(pid);
-      return json(200, { id: pid, username: row && row.username, blob: sv ? sv.blob : null, score: sv ? sv.score : 0 });
+      return json(200, { id: pid, username: row && row.username, blob: sv ? sv.blob : null, score: sv ? sv.score : 0, reset_all: !!(row && row.reset_all) });
+    }
+    // 012_admin_reset.sql: only while flagged — store the (lower) fresh save, zero the row, clear the flag
+    if (caps && url.pathname.endsWith('/rpc/lb_reset_ack')) {
+      const pid = secrets.get(body.p_secret);
+      if (!pid) return json(400, { message: 'no_profile' });
+      const row = rows.find((r) => r.id === pid);
+      calls.resetAck = (calls.resetAck || 0) + 1;
+      if (!row || !row.reset_all) return json(200, { reset: false, reason: 'not_flagged' });
+      saves.set(pid, { blob: body.p_blob, score: String(body.p_score) });
+      Object.assign(row, { level: 1, rebirths: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, reset_all: false });
+      return json(200, { reset: true });
     }
     if (caps && url.pathname.endsWith('/rpc/lb_submit2')) {
       calls.submit += 1;

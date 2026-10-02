@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { progressScoreFromKeys, shouldRestore, formatRecoveryCode, parseRecoveryCode, restoreIfAhead, backupNow } from './cloudSave.js';
+import { progressScoreFromKeys, shouldRestore, formatRecoveryCode, parseRecoveryCode, restoreIfAhead, backupNow, wipeProgressKeys } from './cloudSave.js';
 import { exportSave } from './saveBackup.js';
 
 function withStorage(seed, fn) {
@@ -70,4 +70,33 @@ test('recovery code round-trips the secret', () => {
   assert.equal(parseRecoveryCode(code), secret);
   assert.equal(parseRecoveryCode(' ' + code.toLowerCase() + ' '), secret);
   assert.equal(parseRecoveryCode('nope'), null);
+});
+
+// ---- 012_admin_reset ------------------------------------------------------------------------------
+test('wipeProgressKeys removes every taw.* key except the kept claim + secret, and nothing else', () => {
+  const m = new Map(Object.entries({ 'taw.xp': xp(40), 'taw.wins': '99', 'taw.rebirths': '3', 'taw.lb.secret': 'abc', 'taw.lb.profile': '{"id":"p"}', other: 'x' }));
+  const store = { get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, removeItem: (k) => m.delete(k) };
+  assert.equal(wipeProgressKeys(store, ['taw.lb.secret', 'taw.lb.profile']), 3);
+  assert.deepEqual([...m.keys()].sort(), ['other', 'taw.lb.profile', 'taw.lb.secret']);
+});
+
+test('a dev reset flag outranks a restore: nothing is imported, resetAll is reported', async () => {
+  const cloud = withStorage({ 'taw.xp': xp(90) }, () => exportSave());
+  await withStorage({ 'taw.xp': xp(2) }, async (m) => {
+    const rpc = async () => ({ id: 'p', username: 'N', blob: cloud, score: '1', reset_all: true });
+    const r = await restoreIfAhead({ rpc, secret: 's' });
+    assert.equal(r.resetAll, true);
+    assert.equal(r.restored, false);
+    assert.equal(JSON.parse(m.get('taw.xp')).lv, 2, 'the cloud save was NOT imported');
+  });
+});
+
+test('check-only (restore: false) never imports even when the cloud is ahead', async () => {
+  const cloud = withStorage({ 'taw.xp': xp(90) }, () => exportSave());
+  await withStorage({ 'taw.xp': xp(2) }, async (m) => {
+    const rpc = async () => ({ id: 'p', username: 'N', blob: cloud, score: '1', reset_all: false });
+    const r = await restoreIfAhead({ rpc, secret: 's', restore: false });
+    assert.equal(r.restored, false);
+    assert.equal(JSON.parse(m.get('taw.xp')).lv, 2);
+  });
 });

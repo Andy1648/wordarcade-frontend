@@ -44,8 +44,9 @@ import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim } from '../progress/claims.js';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
+import DevResetNotice from '../leaderboard/DevResetNotice.jsx';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -97,6 +98,9 @@ const NAV_LAYOUT = (() => {
     return 'top';
   }
 })();
+
+// One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
+let cloudBootChecked = false;
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -791,20 +795,32 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the "#12 → #7" moment once and badges the trophy until the board is opened.
   const [boardNews, setBoardNews] = useState(() => LEADERBOARD_ENABLED && hasRankNews());
   const [rankUp, setRankUp] = useState(null);
+  // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
+  const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
+  useEffect(() => { if (devReset) clearDevResetNotice(); }, [devReset]);
   // STEP 52 — CLOUD SAVE: if the cloud copy of this player's progress is AHEAD of this browser (a
   // wiped Safari, a new device after a recovery code), bring it back and reload into it. Once per
   // session at most, and never when local progress is equal or ahead (cloudSave.js).
+  // 012_admin_reset: the same lb_load also carries the dev's FULL RESET flag, so it runs once per PAGE
+  // LOAD (not once per session): a reset outranks the restore, wipes, and reloads into a fresh LV 1.
   useEffect(() => {
-    if (!LEADERBOARD_ENABLED) return undefined;
-    let live = true;
+    if (!LEADERBOARD_ENABLED || cloudBootChecked) return undefined;
+    cloudBootChecked = true;
+    let restore = true;
     try {
-      if (sessionStorage.getItem('taw.cloud.restored') === '1') return undefined;
+      if (sessionStorage.getItem('taw.cloud.restored') === '1') restore = false;
     } catch {
       return undefined;
     }
-    restoreFromCloud()
+    restoreFromCloud({ restore })
       .then((r) => {
-        if (!live || !r || !r.restored) return;
+        if (r && r.reset) {
+          window.location.reload(); // even if the menu unmounted: every module must re-read zeros
+          return;
+        }
+        // the save is already imported by now, so the reload must not depend on this mount (StrictMode
+        // remounts in dev; a quick tap into a mode unmounts the menu)
+        if (!r || !r.restored) return;
         try {
           sessionStorage.setItem('taw.cloud.restored', '1');
         } catch {
@@ -813,7 +829,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         window.location.reload();
       })
       .catch(() => {});
-    return () => { live = false; };
+    return undefined;
   }, []);
   useEffect(() => {
     let live = true;
@@ -883,6 +899,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             menu's one piece of ambient motion now that the idle loops are gone.
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
+        {devReset && <DevResetNotice onDone={() => setDevReset(false)} />}
         {rankUp && <RankUpMoment from={rankUp.from} to={rankUp.to} onDone={() => setRankUp(null)} />}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}

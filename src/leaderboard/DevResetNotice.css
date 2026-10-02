@@ -1,0 +1,38 @@
+/* DevResetNotice — one finite card over the menu (transform/opacity only, no loop). */
+.dev-reset-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 31;
+  display: grid;
+  place-items: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.dev-reset-card {
+  margin: 0;
+  max-width: 560px;
+  padding: 14px 22px;
+  background: #FFE94A;
+  border: 4px solid #a8800f;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  color: #000;
+  /* a 7-word sentence: Space Mono, not Bungee (type.css: Bungee never for strings over 3 words) */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-panel);
+  line-height: 1.2;
+  text-align: center;
+  animation: dev-reset-card 3600ms linear both;
+}
+@keyframes dev-reset-card {
+  0% { opacity: 0; transform: scale(1.3); animation-timing-function: cubic-bezier(.2, .9, .3, 1.2); }
+  9% { opacity: 1; transform: scale(1); }
+  90% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dev-reset-card { animation: none; }
+}
