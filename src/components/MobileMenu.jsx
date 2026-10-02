@@ -156,6 +156,8 @@ export default function MobileMenu({
   onShop,
   onStats,
   onRebirth = null,
+  onMarks = null, // E6: the MARKS index (desktop reaches it from the mark chip by the level)
+  marksDot = false,
   onCredits,
   shopDot = false,
   rebirthDot = false,
@@ -345,6 +347,18 @@ export default function MobileMenu({
           >
             REBIRTH
             {rebirthDot && <span className="hp-m-dot" aria-hidden="true" />}
+          </button>
+        )}
+        {onMarks && (
+          <button
+            type="button"
+            className={`hp-m-navbtn is-marks${navigating ? ' is-disabled' : ''}`}
+            onClick={onMarks}
+            disabled={navigating}
+            aria-label={`Open marks${marksDot ? ' — new mark' : ''}`}
+          >
+            MARKS
+            {marksDot && <span className="hp-m-dot" aria-hidden="true" />}
           </button>
         )}
       </nav>

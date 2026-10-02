@@ -26,13 +26,21 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   const btn = page.locator('.menu-mark');
   await expect(btn).toContainText('NEW MARK');
   await btn.click();
-  await page.locator('.marks-overlay').waitFor();
-  const card = page.locator('.mark-card', { hasText: 'BOMBER' });
-  await expect(card.locator('.mark-tier')).toHaveText('COMMON');
-  await expect(card.locator('.mark-main')).toContainText('+100% WINS');
-  await card.click();
-  await expect(card.locator('.mark-on')).toHaveText('MAIN');
-  await page.locator('.marks-close').click();
+  // E6: the MARKS INDEX — tap a mark, SET AS MAIN, and it becomes the hero at the top
+  await page.locator('.mx-panel').waitFor();
+  await expect(page.locator('.mx-hero')).toContainText('NO MAIN YET');
+  const tile = page.locator('.mx-tile', { hasText: 'BOMBER' });
+  await tile.click();
+  const detail = page.locator('.mx-detail');
+  await expect(detail.locator('.mx-detail-tier')).toContainText('COMMON');
+  await expect(detail.locator('.mx-detail-pct')).toContainText('+100% WINS');
+  await detail.getByRole('button', { name: 'SET AS MAIN' }).click();
+  await expect(page.locator('.mx-hero .mx-hero-name')).toHaveText('BOMBER');
+  await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
+  // a locked mark says exactly how to get it
+  await page.locator('.mx-tile.is-locked').first().click();
+  await expect(page.locator('.mx-howto')).toContainText('HOW TO GET IT:');
+  await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×2');
 });
 
@@ -75,10 +83,10 @@ for (const [label, seed] of [
     const btn = page.locator('.menu-mark');
     await expect(btn).toBeVisible();
     await btn.click();
-    await page.locator('.marks-overlay').waitFor();
-    await page.locator('.marks-close').click();
+    await page.locator('.mx-panel').waitFor();
+    await page.locator('.mx-close').click();
     // still there after the picker closes with nothing worn — the old disappearing act
-    await expect(page.locator('.marks-overlay')).toHaveCount(0);
+    await expect(page.locator('.mx-panel')).toHaveCount(0);
     await expect(btn).toBeVisible();
   });
 }

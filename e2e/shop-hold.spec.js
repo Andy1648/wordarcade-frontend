@@ -96,15 +96,16 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   const slot = page.locator('.menu-mark').first();
   await expect(slot.locator('svg.mark-badge')).toBeVisible();
   await slot.click();
-  const card = page.locator('.mark-card.is-on');
-  await expect(card.locator('svg.mark-badge')).toBeVisible();
-  await expect(card.locator('.mark-rank')).toHaveText('RANK II');
-  await expect(card.locator('.mark-blurb')).toHaveText('+29% wins in WORD BOMB.');
-  // STEP 49: the MAIN bonus (COMMON: +100% at rank I, ×1.15 / ×1.3 at II / III) leads; the flavour follows.
-  await expect(card.locator('.mark-main')).toHaveText('+115% WINS · EVERY MODE');
-  await expect(card.locator('.mark-next')).toHaveText('RANK III: +130% WINS');
-  await expect(card.locator('.mark-words')).toHaveText('170 / 350 WORDS WORN');
-  // no emoji left in the picker
-  const text = await page.locator('.marks-card').innerText();
+  // E6: the MARKS INDEX — the worn mark is the hero at the top
+  const hero = page.locator('.mx-hero');
+  await expect(hero.locator('svg.mark-badge')).toBeVisible();
+  await expect(hero.locator('.mx-hero-name')).toHaveText('BOMBER');
+  await expect(hero.locator('.mx-hero-kicker')).toHaveText('YOUR MAIN · RANK II');
+  // STEP 49: the MAIN bonus (COMMON: +100% at rank I, ×1.15 / ×1.3 at II / III) leads; the perk follows.
+  await expect(hero.locator('.mx-hero-pct')).toContainText('+115%');
+  await expect(hero.locator('.mx-hero-perk')).toHaveText('PLUS ITS PERK: +29% wins in WORD BOMB.');
+  await expect(hero.locator('.mx-hero-rank')).toContainText('TYPE 180 MORE WORDS WEARING IT → RANK III: +130%');
+  // no emoji left in the index
+  const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
 });
