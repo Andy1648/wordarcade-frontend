@@ -12,5 +12,13 @@ import acceptExtraRaw from './words.accept.txt?raw';
 // in word-list, so a regeneration would silently drop them. Every entry was checked against
 // Wiktionary (en.wiktionary.org) before it went in; see the file's history for the check.
 import famousRaw from './words.famous.txt?raw';
+// STEP 55 — COMMON PROPER-NOUN WORDS + MILD INSULTS (one per line, hand-curated): months, days,
+// countries, major cities, US states, nationalities/languages, holidays, planets, a few modern
+// words, and mild idiot-class insults. word-list is lowercase-only, so none of these can come from
+// the generated lists — like the famous list, a regeneration would drop them if they lived there.
+// Source + safety filter (slur / profanity / leaderboard-name blocklists):
+// claude/wordlists/build-common.mjs; measured by claude/wordlists/measure.mjs (before/after.json). ACCEPTANCE ONLY —
+// never generated or displayed (CHAIN's top-3000 and the reveal words read RECALL, not this).
+import commonRaw from './words.common.txt?raw';
 
-export { recallRaw, acceptExtraRaw, famousRaw };
+export { recallRaw, acceptExtraRaw, famousRaw, commonRaw };
