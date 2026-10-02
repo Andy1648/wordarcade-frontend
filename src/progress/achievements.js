@@ -6,14 +6,14 @@
 // Pure catalog + guarded store. `checkAchievements()` snapshots the live progress once, grants any
 // newly-satisfied achievement, and returns the newly-earned list for a toast. Never throws.
 import { readWordCount } from '../wordCount.js';
-import { getWinsLifetime, getRounds, winLevelMult, perWordWins } from './wins.js';
+import { getWinsLifetime, getRounds, perWordWins } from './wins.js';
 import { rankFor, RANKS } from './rank.js';
 import { forgeBuys } from './forge.js';
 import { frenzyCount } from './frenzy.js';
 import { checkMarkClaims } from './marks.js';
 import { queueClaim, layerOpen, openLayer } from './claims.js';
 import { FORGE_UNLOCK_LEVEL } from './forge.js';
-import { loadProgress, getRebirths, getKeyTier, rebirthMult } from './xp.js';
+import { loadProgress, getRebirths, getKeyTier } from './xp.js';
 import { collectionSummary } from './collection.js';
 import { masteryState, MASTERY_MODES } from './mastery.js';
 import { getStreak } from './streak.js';
@@ -140,10 +140,26 @@ export function isEarned(id) {
  * it will actually be paid rather than the catalog base (the same class of mismatch
  * rebirthScaledWins was added to fix).
  */
-export function achievementPayout(a, snap = achievementSnapshot()) {
+// FINE-TUNE LOOP 1 (Andy oct2 evening: "no runaway — no single reward skips more than ~3 levels'
+// worth"). A reward is priced in WORDS at the player's live per-word rate, so it is always a few
+// minutes of play — at LV1 and at LV900 alike. The old rebirth × 1.015^level scale drifted away from
+// what a word actually pays: the progression sim (claude/econ-oct2/loop-1.md) had WALKING DICTIONARY
+// pay 4.8e19 wins at LV850 (≈633,000 minutes of play) and PAPER CHASE 8 minutes' worth at LV57.
+// The catalogue `base` still orders them: rarer achievements pay more words.
+export function achievementWords(a) {
+  const b = Number(a && a.base) || 0;
+  if (b >= 1000000) return 25;
+  if (b >= 250000) return 22;
+  if (b >= 50000) return 18;
+  if (b >= 10000) return 14;
+  if (b >= 2000) return 10;
+  return 6;
+}
+// `snap` is accepted for call-site compatibility; the rate is read live (rebirth, key tier, marks…).
+// eslint-disable-next-line no-unused-vars
+export function achievementPayout(a, snap) {
   if (!a) return 0;
-  const scale = rebirthMult(snap.rebirths) * (a.secret ? winLevelMult(snap.level) : 1);
-  return Math.round(a.base * scale);
+  return Math.round(achievementWords(a) * perWordWins({ mode: 'wordBomb' }));
 }
 
 /**

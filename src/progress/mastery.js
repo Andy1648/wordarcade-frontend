@@ -23,7 +23,7 @@ export const MASTERY_HARD_CAP = 9999;
 export const MASTERY_BASE = 30;
 export const MASTERY_QUAD = 1.2;
 export const MASTERY_MILESTONE_EVERY = 5;
-export const MASTERY_MILESTONE_WORDS = 40; // M5 pays 40 words' worth of this mode's wins, M50 pays 400
+export const MASTERY_MILESTONE_WORDS = 30; // every 5th mastery level pays 30 words' worth of this mode's wins (loop 1: flat — it compounded to 7 minutes of play by M15)
 // The perk: +3% XP for that mode per mastery level above M1 (M1 = base, M50 = +147%).
 export const MASTERY_XP_STEP = 0.03;
 
