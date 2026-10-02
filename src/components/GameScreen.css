@@ -2640,6 +2640,10 @@
   font-size: var(--fs-body);
   padding: 9px 0;
   box-shadow: 3px 3px 0 #000;
+  /* OUTLINE beside REMATCH (fine-tune oct2): a full pink slab was as loud as the primary. */
+  color: #ff4fa3;
+  background: transparent;
+  border-color: #ff4fa3;
 }
 
 .game-over-leave.secondary:active {

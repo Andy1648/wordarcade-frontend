@@ -897,3 +897,38 @@ html[data-beat='true'] .room-leave-btn {
   .room-invite-row { margin: 4px 0 2px; }
   .room-players-list:has(> :nth-child(5)) { gap: 4px; }
 }
+
+/* SELECTION READS THE RIGHT WAY ROUND (fine-tune oct2). Resting toggles were bright white and the
+   SELECTED one went dark, so the chosen mode looked like the switched-OFF one. Now resting = the
+   dark panel with dim ink, selected = the flat accent fill with dark ink (pink for mode, cyan for
+   difficulty), the same "lit = on" rule the shop and pack picker use. */
+.room-gametype-btn,
+.room-difficulty-btn {
+  color: var(--v-ink-dim);
+  background: #0d0618;
+  border-color: #3a2b52;
+}
+.room-difficulty-btn .room-difficulty-desc {
+  color: var(--v-ink-dim);
+}
+.room-gametype-btn.selected {
+  background: #ff4fa3;
+  border-color: #991a75;
+  color: #0d0618;
+}
+.room-difficulty-btn.selected {
+  background: #2effe0;
+  border-color: #1a9985;
+  color: #0d0618;
+}
+.room-difficulty-btn.selected .room-difficulty-desc {
+  color: #0d0618;
+}
+/* PHONE: START GAME stays on screen — it rides the bottom of the scrolling room card. */
+@media (max-width: 480px) {
+  .room-start-btn {
+    position: sticky;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 3;
+  }
+}

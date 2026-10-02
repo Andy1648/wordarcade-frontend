@@ -80,7 +80,9 @@
   padding: 10px 18px 0;
 }
 .stats-tab {
-  flex: 1 1 0;
+  /* auto basis (was 0): equal thirds gave ACHIEVEMENTS 110px for ~125px of text at 390, so the
+     labels ran into each other (fine-tune oct2). Each tab now starts at its own label width. */
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 44px; /* touch target */
   display: flex;
@@ -206,20 +208,30 @@
 .rec-cell--locked .rec-label {
   color: #8f7eb2; /* a11y MED-2: was #6f5f8e (~3.5:1 on #0d0618) → ~5.5:1, still clearly muted/locked */
 }
+/* The silhouette bar read as a loading skeleton (fine-tune oct2), so a locked record now shows
+   its GOAL instead: a "GOAL" tag above the requirement, in the reward yellow. */
 .rec-silhouette {
-  height: 16px;
-  width: 62%;
+  display: inline-block;
+  align-self: flex-start;
+  padding: 1px 6px;
+  border: 2px solid #4a3a1a;
   border-radius: 4px;
-  background: #2a1f3d;
 }
-.rec-cell--wide.rec-cell--locked .rec-silhouette {
-  width: 40%;
+.rec-silhouette::before {
+  content: 'GOAL';
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.1em;
+  color: #ffe94a;
 }
+
 .rec-req {
   font-family: 'Space Mono', monospace;
   font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   letter-spacing: 0.04em;
-  color: #8f7eb2; /* a11y MED-2: was #7a6a99 (~4.1:1) → ~5.5:1 on the #0d0618 cell */
+  color: #d8c9f0; /* the goal is the readable line now, not a muted footnote */
+  font-weight: 700;
   text-transform: uppercase;
 }
 

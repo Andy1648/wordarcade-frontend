@@ -195,7 +195,9 @@ export default function SoloShell({
             It is now IN this row at top-LEFT rather than an absolutely-positioned corner orphan
             (CLAUDE.md NO ORPHAN FIXED UI). Solo.css keeps it at z-61 so it still outranks the
             .solo-over scrim and stays reachable on the death card. */}
-        <SoloExit onExit={onExit} />
+        {/* On the death card the way out moves INTO the card (fine-tune oct2: the HUD-row copy sat
+            mid-screen, half over the card's text on a phone, attached to nothing). */}
+        {phase !== 'over' && <SoloExit onExit={onExit} />}
         <div className="solo-hud-stats">{hud}</div>
         {phase === 'playing' && (
           <div className="solo-hud-wins">
@@ -326,6 +328,7 @@ export default function SoloShell({
       {phase === 'over' ? (
         <div className="solo-over">
           <div className="solo-deathcard">
+            <SoloExit onExit={onExit} />
             {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
                 solo death card a face + a first read above the copy. */}
             <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />

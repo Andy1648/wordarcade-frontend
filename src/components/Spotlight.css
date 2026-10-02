@@ -56,8 +56,10 @@
   transform: translate(-50%, -50%);
 }
 .spotlight-caption-text {
-  /* STEP 53: the Word Bomb coach headline is the screen's one big thing on a first game. */
-  font-size: var(--fs-band);
+  /* STEP 53: the coach headline is the screen's one big thing on a first game — at --fs-h1, not
+     --fs-band (the phone MENU band's fit-to-band size, 84px on a laptop): "NAME SOMETHING IN THE
+     CATEGORY" at 84px nowrap ran ~1,400px wide and off both edges (fine-tune oct2). */
+  font-size: var(--fs-h1);
   color: #ffe94a;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -68,6 +70,12 @@
      ring (a wrapped 2-line caption was what overran onto the game cards). width:max-content on
      the wrapper lets it size to this line; max-width:92vw is the only wrap fallback. */
   white-space: nowrap;
+}
+/* A headline wider than its wrapper wraps to balanced lines instead of overflowing — at any width:
+   Bungee at --fs-h1 is ~48px a letter, so a 30-letter rule needs 1,400px. */
+.spotlight-caption-text {
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* …EXCEPT when one line cannot fit. `white-space: nowrap` overrides the wrapper's max-width, so

@@ -558,7 +558,8 @@
 .shop-card-next {
   position: absolute;
   top: -10px;
-  left: 8px;
+  /* top-RIGHT (fine-tune oct2): at top-left it sat on the item's name ("CH[NEXT]ROME"). */
+  right: 8px;
   /* was Bungee, below the 28px display floor: small UI text is a mono label */
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;

@@ -116,7 +116,7 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
         </div>
 
         {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
-        <div className={`sr-resline${revealed ? ' in' : ''}`}>
+        <div className="sr-resline in">
           <span>score <b>{fmt(results.score)}</b></span>
           <span>avg ante <b>{avgAnte}</b></span>
           <span>best streak <b>{results.bestStreak || 0}</b></span>
@@ -161,7 +161,8 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
           </div>
         )}
 
-        <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
+        {/* The exits never wait for the count-up (fine-tune oct2: the page read as a dead end for ~2 s). */}
+        <div className="sr-results-actions in">
           <button type="button" className="sr-btn" onClick={onAgain}>
             Run it back
           </button>

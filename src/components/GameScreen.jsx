@@ -3960,13 +3960,14 @@ export default function GameScreen({
                 fragment. Word Bomb has no client-side dictionary (the server judges it), so the
                 solo acceptance list is pulled LAZILY and only here, at game over: it never
                 touches the play path or first paint. See the loader effect above. */}
-            <MissedWordHold
+            {/* Loss only (fine-tune oct2): "you could have played…" read as a scolding beside YOU WIN! */}
+            {!iWon && <MissedWordHold
               key={`wb-miss-${missedWord || ''}`}
               word={missedWord}
               gloss={glossFor(missedWord)}
               prompt={missCombo}
               promptLabel="A WORD CONTAINING"
-            />
+            />}
             {/* A random FNF-voice roast blurb under the result. */}
             <div className="game-over-blurb">{endBlurb}</div>
             </div>

@@ -459,3 +459,18 @@
   background: #fff;
   border-color: #000;
 }
+
+/* SECONDARY ROW (fine-tune oct2): with PLAY SOLO leading, PLAY + JOIN WITH CODE were two ~110px
+   white Bungee slabs ("JOIN / WITH / CODE" on three lines) that outweighed the lead and pushed the
+   dialog past a 625px-tall laptop, cutting the WORD BOMB title off the top. They are a mono label
+   row now: still outlined + shadowed, 44px+, one line each. */
+.mode-dialog-actions.has-solo .mode-dialog-btn-create,
+.mode-dialog-actions.has-solo .mode-dialog-btn-join {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  min-height: 48px;
+  padding: 10px 12px;
+}

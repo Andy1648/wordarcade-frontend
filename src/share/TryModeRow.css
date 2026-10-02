@@ -10,11 +10,14 @@
 }
 
 .try-mode-btn {
-  font-family: 'Bungee', system-ui, sans-serif;
+  /* Space Mono at body size (fine-tune oct2): in Bungee --fs-panel the upsell's label was BIGGER
+     than REMATCH's, so the quiet option shouted loudest. */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   text-transform: uppercase;
-  line-height: 0.98;
-  font-size: var(--fs-panel);
-  letter-spacing: 0.5px;
+  line-height: 1.1;
+  font-size: var(--fs-body);
+  letter-spacing: 0.08em;
   color: #FFE94A;
   background: transparent; /* the ghost: outline only, no fill */
   border: 3px solid #FFE94A;

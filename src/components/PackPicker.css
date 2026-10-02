@@ -43,7 +43,7 @@
    columns and lets the ellipsized labels shrink. */
 /* auto-fill + minmax(128px,1fr): 3 columns on wide dialogs, 2 on a phone — so pill
    labels always have room instead of collapsing to 0 and clipping (fix/qa-sweep §7). */
-.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; width: 100%; }
+.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr)); /* 168 (was 128): a 6-letter pack name fits on ONE line beside its emoji + count — at 128 MOVIES broke as MO/VI/ES (fine-tune oct2) */ gap: 10px; width: 100%; }
 
 /* ============================ MOTION KEYFRAMES ============================ */
 /* ONE select-pop — a ~180ms overshoot on toggle. */
@@ -78,7 +78,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  letter-spacing: 0.08em; font-size: var(--fs-body) /* floor: tappable text is never below 16px */; line-height: 1.05; color: #7f9dc9; overflow: hidden; overflow-wrap: anywhere; }
+  letter-spacing: 0.08em; font-size: var(--fs-body) /* floor: tappable text is never below 16px */; line-height: 1.05; color: #7f9dc9; overflow: hidden; overflow-wrap: break-word; }
 .ppp-pill.is-on .ppp-pill-label { color: #000; }
 
 /* Per-tile category count — small mono chip on the right. Black-on-blue when ON,
