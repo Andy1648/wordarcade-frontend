@@ -33,12 +33,14 @@ let cache = null;
 
 export async function loadSoloWords() {
   if (cache) return cache;
-  const { recallRaw, acceptExtraRaw, famousRaw } = await import('./wordsData.js');
+  const { recallRaw, acceptExtraRaw, famousRaw, commonRaw } = await import('./wordsData.js');
   const recall = recallRaw.split(' ');
   const accept = new Set(recall);
   for (const w of acceptExtraRaw.split(' ')) accept.add(w);
   // The hand-curated famous long words (antidisestablishmentarianism & co. — see wordsData.js).
   for (const w of famousRaw.split(/\s+/)) if (w) accept.add(w.toLowerCase());
+  // STEP 55: common proper-noun words (october, london, france…) + mild insults — see wordsData.js.
+  for (const w of (commonRaw || '').split(/\s+/)) if (w) accept.add(w.toLowerCase());
   // Floor at the generated whole-set length (base + the lazy extension), so a long ext word
   // can be TYPED on the first run too, before the extension chunk lands.
   let maxAcceptLen = acceptMaxLen.maxLen;
