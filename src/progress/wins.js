@@ -27,8 +27,9 @@ import { frenzyMult } from './frenzy.js';
 import { starPowerMult } from './stars.js';
 import { setRateBoost } from './xp.js';
 
-// Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER.
-setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult());
+// Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
+// worn mark's MAIN bonus (STEP 49 — a ×2-×4 mark priced against base words made KEY trivial).
+setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult() * ((markWinsFactors({ mode: 'wordBomb' }).mark) || 1));
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';

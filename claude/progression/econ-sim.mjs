@@ -392,18 +392,10 @@ function simulate(arch) {
     const un = MARKS.unlockedMarks(earned);
     if (!un.length) return;
     let best = null, bestV = 0;
+    // STEP 49: a mark's value is its MAIN bonus × its flavour, averaged over the mode mix.
     for (const m of un) {
-      const e = MARKS.effectAtRank(m.effect, MARKS.markRank(m.id));
-      let v = 1;
-      if (e.winsMult) {
-        if (e.mode) {
-          let share = 0;
-          for (const [gm, s] of modePairs) if (PAYOUT_KEY[gm] === e.mode) share += s;
-          v = 1 + (e.winsMult - 1) * share;
-        } else v = e.winsMult;
-      } else if (e.xpMult) v = e.xpMult;
-      else if (e.rarityStep) v = 1.05;
-      else if (e.comboKeep) v = 1.03;
+      let v = 0;
+      for (const [gm, share] of modePairs) v += share * ((MARKS.markWinsFactors({ markId: m.id, mode: PAYOUT_KEY[gm] }).mark || 1) * MARKS.markXpMult(m.id));
       if (v > bestV) (bestV = v), (best = m.id);
     }
     if (best && MARKS.getEquippedMark() !== best) MARKS.equipMark(best, earned);

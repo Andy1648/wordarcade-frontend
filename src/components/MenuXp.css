@@ -653,8 +653,13 @@ button.menu-mark:active {
    (viewport-integrity). Below 560px the badge drops its NAME and keeps only the icon — the slot
    is still visible and still tappable at 44px, which is the whole job of it on the menu; the
    name is one tap away in the picker. */
+/* STEP 49: the MAIN bonus beside the title, in ink on the tier-coloured chip. */
+.menu-mark-mult {
+  color: #1a0b2e;
+}
 @media (max-width: 560px) {
-  .menu-mark-name {
+  .menu-mark-name,
+  .menu-mark-mult {
     display: none;
   }
   .menu-mark {
