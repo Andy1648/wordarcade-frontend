@@ -273,10 +273,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const all = textEm(el);
         const per = textEm(el.querySelector('.game-card-payout-per'));
         const mult = textEm(el.querySelector('.game-card-payout-mult'));
-        // The perk line's " · LONGER = MORE" tail drops whole on a narrow card, so it never sets
-        // the minimum card width (Andy oct2 perk line).
+        // The perk's second line ("LONGER WORDS PAY MORE", its own block since E3) drops whole on a
+        // narrow or short card (then it measures 0), so it never sets the minimum card width; the
+        // slot is sized to the WIDER of the two lines, not their sum.
         const tail = textEm(el.querySelector('.game-card-perk-tail'));
-        whole = Math.max(whole, all);
+        whole = Math.max(whole, all - tail, tail);
         chunk = Math.max(chunk, all - per - mult - tail, per, mult);
       }
       return { whole, chunk };

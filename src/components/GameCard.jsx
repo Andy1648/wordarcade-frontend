@@ -277,26 +277,33 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // screens"; the card's number is the BASE, and it should say what makes a word worth MORE).
   // It names the ONE thing that sets this mode apart, then the universal rule:
   //   SAT RUSH / CHAIN  POWER ×N  — the mode's multiplier against Word Bomb, really paid per word
-  //   FUSE              FRENZY ×5 — the timed ×5 its full strip unlocks (a live clock while it runs)
-  //   every mode        LONGER WORDS = MORE
+  //   FUSE              ALL LETTERS → FRENZY ×5 — the timed ×5 its full strip unlocks (a live clock while it runs)
+  //   every mode        LONGER WORDS PAY MORE (its own second line since E3)
   // It keeps the .game-card-xp slot (and its fit-to-slot sizing); the " · LONGER…" tail is its own
   // span that drops WHOLE on a narrow card (GameCard.css), so a narrow card keeps the perk head.
   const power = modePower(game.id);
   const isFuse = game.id === 'fuse';
   const perkHead = isFuse
-    ? (frenzy.active ? `FRENZY ${formatFrenzy(frenzy.ms)}` : `FRENZY ×${FRENZY_MULT}`)
+    ? (frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `ALL LETTERS → FRENZY ×${FRENZY_MULT}`)
     : power > 1 ? `POWER ×${formatMultExact(power)}`
     : game.id === 'word-bomb' ? `WIN +${Math.round(WINNER_BONUS * 100)}%` // O12: the end-of-game bonus
     : null;
   const xpLine = rateNow && (
     perkHead ? (
       <>
-        <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>{perkHead}</span>
+        <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>
+          {/* FUSE's head may wrap before "FRENZY ×5" (the breakable span the fit-math discounts) */}
+          {isFuse && !frenzy.active ? <>ALL LETTERS →<span className="game-card-payout-per"> FRENZY ×{FRENZY_MULT}</span></> : perkHead}
+        </span>
         {/* R10: a live BOOST multiplies FRENZY — the FUSE card says how they stack */}
-        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? ` × BOOST ×${rateNow.factors.boost}` : ' · LONGER = MORE'}</span>
+        {/* E3 (Andy oct2 evening): TWO rules, TWO lines — "FRENZY ×5 · LONGER = MORE" read as one rule.
+            The second line is its own block and still drops whole on a narrow card. */}
+        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? `× BOOST ×${rateNow.factors.boost}` : 'LONGER WORDS PAY MORE'}</span>
       </>
     ) : (
-      <>LONGER = MORE</>
+      // the same allowed break as "/ WORD": the line may wrap before PAY MORE, so its length never
+      // sets the minimum card width (Homepage measureMinW reads .game-card-payout-per as breakable)
+      <>LONGER WORDS<span className="game-card-payout-per"> PAY MORE</span></>
     )
   );
   const payout = rateNow && (

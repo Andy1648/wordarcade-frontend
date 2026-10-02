@@ -48,7 +48,7 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
       </div>
       <div className="lstack-rows">
         <div className="lstack-row lstack-row--base">
-          <span className="lstack-label">LONGER = MORE</span>
+          <span className="lstack-label">LONGER WORDS PAY MORE</span>
         </div>
         {frenzy > 0 && (
           <div className="lstack-row lstack-row--frenzy">

@@ -506,8 +506,15 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-perk.is-live { color: #ff6b3d; }
 .game-card-foot .game-card-perk { color: #c8321e; }
 /* The tail is one phrase: it wraps or drops WHOLE, never as "LONGER =" / "MORE". */
-.game-card-perk-tail { white-space: nowrap; }
+.game-card-perk-tail { display: block; white-space: nowrap; color: #c9b8e8; }
+/* SAT RUSH's cream footer: the second line in its ink, not the dark cards' lavender */
+.game-card-foot .game-card-perk-tail { color: #3a2a20; }
 @container (max-width: 230px) {
+  .game-card-perk-tail { display: none; }
+}
+/* …and on a SHORT screen: the second line costs a row the 1163x501 card does not have (it pushed
+   the SOLO/MULTI badge out of the card). The rule still reads in the dialog and the in-game stack. */
+@media (max-height: 600px) {
   .game-card-perk-tail { display: none; }
 }
 

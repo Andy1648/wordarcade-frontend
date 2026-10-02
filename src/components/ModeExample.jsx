@@ -133,14 +133,14 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
             WIN THE GAME +{Math.round(WINNER_BONUS * 100)}% <span className="mode-ex-power-vs">OF ITS WINS</span>
           </span>
         )}
-        <span className="mode-ex-longer">LONGER WORDS = MORE</span>
+        <span className="mode-ex-longer">LONGER WORDS PAY MORE</span>
       </div>
       {mode === 'fuse' && (
         <div className={`mode-ex-frenzy${frenzy.active ? ' is-live' : ''}`}>
           {frenzy.active ? (
             <>FRENZY LIVE — ×{FRENZY_MULT} WINS FOR {formatFrenzy(frenzy.ms)}</>
           ) : (
-            <>LIGHT ALL 26 LETTERS → <b>FRENZY</b>: ×{FRENZY_MULT} WINS FOR {frenzyMinutes()} MIN, EVEN BETWEEN RUNS · STACKS WITH BOOST CODES</>
+            <>LIGHT ALL LETTERS → <b>FRENZY ×{FRENZY_MULT}</b> FOR {frenzyMinutes()} MIN</>
           )}
         </div>
       )}

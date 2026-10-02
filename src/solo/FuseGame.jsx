@@ -9,7 +9,7 @@ import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, bankWeight, awardWins, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
-import { startFrenzy, formatFrenzy, FRENZY_MULT, FRENZY_TRIGGER_WORDS, isClutch, CLUTCH_WORDS } from '../progress/frenzy.js';
+import { startFrenzy, formatFrenzy, frenzyMinutes, FRENZY_MULT, FRENZY_TRIGGER_WORDS, isClutch, CLUTCH_WORDS } from '../progress/frenzy.js';
 import ClutchBurst from '../frenzy/ClutchBurst.jsx';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock.js';
 import FrenzyBurst from '../frenzy/FrenzyBurst.jsx';
@@ -292,7 +292,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       {/* THE GOAL, SAID ONCE (Andy oct2: FRENZY must be OBVIOUS in-game). Dark: what the strip is
           for. Live: the countdown, in the mode's flame orange. */}
       <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}${frenzy.active && frenzy.ms <= 10000 ? ' is-ending' : ''}`}>
-        {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL 26 → FRENZY ×${FRENZY_MULT} WINS`}
+        {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL LETTERS → FRENZY ×${FRENZY_MULT} FOR ${frenzyMinutes()} MIN`}
       </div>
       <div className="solo-strip-big">
         {ALPHABET.map((ch) => (
