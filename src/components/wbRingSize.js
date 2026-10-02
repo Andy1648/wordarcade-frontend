@@ -70,8 +70,10 @@ export function ringDiameter({
   // the ring may only take the height that remains after the TALLER of the two
   // stacks has been reserved on BOTH sides.
   const reserved = Math.max(topH, botH) + rowGap;
+  // Rails: whichever leaves MORE — when the two stacks are near-equal the old symmetric reserve is
+  // the roomier one (the flag allowance would cost 28px), when they differ the new one is.
   const freeHeight = layout === 'rails'
-    ? playH - topH - botH - 2 * rowGap - WB_FLAG_ROOM
+    ? Math.max(playH - 2 * reserved, playH - topH - botH - 2 * rowGap - WB_FLAG_ROOM)
     : playH - 2 * reserved;
   // Same argument horizontally: the rails are equal 1fr tracks either side.
   const freeWidth = contentW - 2 * (railW + colGap);
