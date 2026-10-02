@@ -120,7 +120,7 @@ test('a claimed name survives a reload and pushes stats from the menu', async ({
 });
 
 // ---- STEP 51 against a DB with migration 005 (letters + Chinese names) ----------------------------
-test('after migration 005: LETTERS is the main stat, Chinese names claim, Chinese slurs are refused', async ({ page }) => {
+test('after migration 005: WORDS stays the main stat (Andy oct2), Chinese names claim, Chinese slurs are refused', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openMenu(page, { level: 12, rebirths: 2 });
   const board = await mockBoard(page, SEED, { caps: true }); // after openMenu: its catch-all route must not win
@@ -128,7 +128,8 @@ test('after migration 005: LETTERS is the main stat, Chinese names claim, Chines
   await page.goto('/?portal=1');
   await menuReady(page);
   await page.locator('.homepage-nav-btn.is-board').click();
-  await expect(page.locator('.lb-cols')).toContainText('LETTERS');
+  await expect(page.locator('.lb-cols')).toContainText('WORDS');
+  await expect(page.locator('.lb-cols')).not.toContainText('LETTERS');
   const input = page.locator('.lb-claim-input');
   await input.fill('傻逼王');
   await expect(page.locator('.lb-verdict')).toHaveText('NOT THAT ONE. PICK ANOTHER NAME.');
@@ -137,6 +138,7 @@ test('after migration 005: LETTERS is the main stat, Chinese names claim, Chines
   await page.locator('.lb-claim-btn').click();
   const me = page.locator('.lb-row.is-me');
   await expect(me.locator('.lb-name')).toHaveText('小明打字');
-  await expect(me.locator('.lb-words')).toHaveText('123,456');
+  // the board ranks by lifetime WORDS; 123,456 typed letters must not show as the main stat
+  await expect(me.locator('.lb-words')).toHaveText('0');
   expect(board.calls.submit).toBeGreaterThanOrEqual(1);
 });

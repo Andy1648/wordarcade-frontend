@@ -1,0 +1,8 @@
+A6 — live 2-tab ENTIRE-WORD race on PRODUCTION (typeaword.com/?race=1 + chain-reaction-backend on Render), 2026-10-02 ~13:30 ET
+driver: two Playwright browser contexts, each QUICK MATCH from the RACE card, typing the word shown.
+variant words · 25 words (mode clip driving body religion accuracy …) · racers ULTRARACCOON59, ULTRANINJA47
+typed 25 / 14 · winner: ULTRARACCOON59 (finish) · standings 25 / 13
+same words on both tabs: true · same winner on both tabs: true
+race_progress frames compared: 38 · arrival skew between tabs: max 200 ms, p50 16 ms (gate <= 250 ms)
+payout (existing bankRaceWord pipeline): A banked +441 WINS · +4,230 XP; B +243 WINS · +2,250 XP
+prod WB smoke after the backend deploy (before this): word accepted ("extracted") — no revert needed
