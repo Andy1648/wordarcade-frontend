@@ -11,10 +11,8 @@ import {
   CURVE_TAIL,
   CURVE_TAIL_EXP,
   REBIRTH_MULT_STEP,
-  KEY_XP_BASE,
-  KEY_XP_PER_TIER,
-  KEY_PRICE_WORDS,
-  KEY_PRICE_SOFT,
+  TIER_XP_STEP,
+  TIER_COST_STEP,
   round10,
   levelFromXp,
   creditXp,
@@ -219,65 +217,47 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
   assert.equal(XP_MULTIPLIERS.fuse, 2); // oct2: = Word Bomb; FRENZY is its edge
 });
 
-// ---- Key Power — Economy v9 (STEP 19): linear effect, price in WORDS ----
-test('keyTierXp is linear: 10 + 15 XP per letter per tier', () => {
-  assert.equal(KEY_XP_BASE, 10);
-  assert.equal(KEY_XP_PER_TIER, 15);
-  assert.equal(keyTierXp(0), 10);
-  assert.equal(keyTierXp(1), 25); // T1 is unchanged from v8
-  assert.equal(keyTierXp(2), 40);
-  assert.equal(keyTierXp(8), 130);
-  assert.equal(keyTierXp(100), 1510);
-  for (let t = 1; t <= 1000; t++) assert.equal(keyTierXp(t) - keyTierXp(t - 1), 15, `T${t} adds +15`);
-  // KEY_TIERS (the shop table) agrees with the formula.
+// ---- Key Power — RESTORED v8 (Andy oct2 KP2): XP ×2.5 a tier, price ×6 a tier in wins ----
+test('keyTierXp: the v8 table, then ×2.5 a tier forever (T1 = 25)', () => {
+  const table = [10, 25, 60, 150, 375, 940, 2350, 5875, 14690];
+  table.forEach((x, t) => assert.equal(keyTierXp(t), x, `T${t}`));
   KEY_TIERS.forEach((row, t) => assert.equal(row.xp, keyTierXp(t), `KEY_TIERS[${t}]`));
-  // Garbage reads as T0.
+  assert.equal(TIER_XP_STEP, 2.5);
+  assert.equal(keyTierXp(9), round10(14690 * 2.5));
+  for (let t = 9; t <= 60; t++) assert.ok(Math.abs(keyTierXp(t) / keyTierXp(t - 1) - 2.5) < 0.01, `T${t} is ×2.5`);
+  // Nobody's XP/letter drops vs v9 (10 + 15t) at their tier.
+  for (let t = 0; t <= 1000; t++) assert.ok(keyTierXp(t) >= 10 + 15 * t, `T${t} >= v9`);
   assert.equal(keyTierXp(-3), 10);
   assert.equal(keyTierXp(undefined), 10);
 });
 
-test('keyTierCostAt: the v9 price in words — T0 free, then a published table at R0', () => {
-  // round10(40 words × (1 + (t-1)/60) × keyTierXp(t-1)·5/10 wins per word × rebirthMult(rc)).
-  assert.equal(KEY_PRICE_WORDS, 40);
-  assert.equal(KEY_PRICE_SOFT, 60);
-  const costs = [0, 200, 510, 830, 1160, 1490, 1840];
+test('keyTierCostAt: the v8 prices — 10 · 6^(t-1) wins, flat (no rebirth scaling)', () => {
+  const costs = [0, 10, 60, 360, 2160, 12960, 77760, 466560, 2799360];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t, 0), c, `T${t} cost`));
-  for (let t = 1; t <= 500; t++) {
-    const words = KEY_PRICE_WORDS * (1 + (t - 1) / KEY_PRICE_SOFT);
-    assert.equal(keyTierCostAt(t, 0), round10((words * (keyTierXp(t - 1) * 5)) / 10), `T${t} formula`);
-  }
-  // The price in WORDS of the tier being left grows only linearly: 40 at T1, ~80 by T61 — never a wall.
-  const wordsAt = (t) => keyTierCostAt(t, 0) / ((keyTierXp(t - 1) * 5) / 10);
-  assert.ok(Math.abs(wordsAt(1) - 40) < 1e-9);
-  assert.ok(Math.abs(wordsAt(61) - 80) < 0.5, `T61 is ~80 words (${wordsAt(61)})`);
-  // Strictly rising.
-  for (let t = 1; t <= 500; t++) assert.ok(keyTierCostAt(t, 0) > keyTierCostAt(t - 1, 0), `T${t} > T${t - 1}`);
+  assert.equal(TIER_COST_STEP, 6);
+  assert.equal(keyTierCostAt(9, 0), round10(2799360 * 6));
+  for (let t = 1; t <= 300; t++) assert.ok(keyTierCostAt(t, 0) > keyTierCostAt(t - 1, 0), `T${t} rising`);
+  assert.equal(keyTierCostAt(5, 7), keyTierCostAt(5, 0), 'flat across rebirths');
+  assert.equal(keyTierCost(4), keyTierCostAt(5));
 });
 
-test('KEY POWER price scales with rebirthMult — a rebirth never makes a tier cheaper vs income', () => {
-  for (const rc of [1, 2, 3, 10]) {
-    assert.equal(keyTierCostAt(0, rc), 0, 'T0 is free at any rebirth');
-    for (let t = 1; t <= 50; t++) {
-      const words = KEY_PRICE_WORDS * (1 + (t - 1) / KEY_PRICE_SOFT);
-      assert.equal(keyTierCostAt(t, rc), round10(words * ((keyTierXp(t - 1) * 5) / 10) * rebirthMult(rc)), `T${t} R${rc}`);
-      // Rebirth multiplies income by rebirthMult(rc); the price must keep pace (±round10 snap).
-      assert.ok(Math.abs(keyTierCostAt(t, rc) - keyTierCostAt(t, 0) * rebirthMult(rc)) <= 10 * rebirthMult(rc), `T${t} R${rc} tracks the mult`);
-      assert.ok(keyTierCostAt(t, rc) > keyTierCostAt(t, rc - 1), `T${t} costs more at R${rc} than R${rc - 1}`);
+test('NO CAPS: T60+ prices and effects are finite and display through the named-suffix ladder', async () => {
+  const { formatNum } = await import('../format.js');
+  for (const t of [60, 100, 200, 300]) {
+    const x = keyTierXp(t);
+    const c = keyTierCostAt(t, 0);
+    assert.ok(Number.isFinite(x) && Number.isFinite(c), `T${t} finite`);
+    for (const v of [x, c]) {
+      const s = formatNum(v);
+      assert.ok(/^[\d.]+[A-Za-z]+$/.test(s) && !/e\+|NaN|Infinity/.test(s), `T${t}: ${v} -> ${s}`);
     }
   }
-  assert.equal(keyTierCostAt(1, 1), 400); // ×2 at R1
-  assert.equal(keyTierCostAt(1, 3), 800); // ×4 at R3
-  // The price in words of the tier being left is the SAME at every rebirth (income and price scale together).
-  const wordsAtIncome = (t, rc) => keyTierCostAt(t, rc) / (((keyTierXp(t - 1) * 5) / 10) * rebirthMult(rc));
-  assert.ok(Math.abs(wordsAtIncome(1, 5) - wordsAtIncome(1, 0)) < 1e-9);
-  // Omitted rebirth count reads the stored one.
-  withStorage({ 'taw.rebirths': '2' }, () => assert.equal(keyTierCostAt(1), keyTierCostAt(1, 2)));
-  withStorage({}, () => assert.equal(keyTierCostAt(1), keyTierCostAt(1, 0)));
 });
 
+
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
-  assert.equal(keyTierCost(0, 0), 200); // standing at T0, buying T1 costs 200
-  assert.equal(keyTierCost(3, 0), 1160); // at T3, T4 costs 1,160
+  assert.equal(keyTierCost(0, 0), 10); // v8: standing at T0, buying T1 costs 10
+  assert.equal(keyTierCost(3, 0), 2160); // at T3, T4 costs 2,160
   for (let t = 0; t < 40; t++) {
     assert.equal(keyTierCost(t, 0), keyTierCostAt(t + 1, 0));
     assert.equal(keyTierCost(t, 2), keyTierCostAt(t + 1, 2));
@@ -285,9 +265,8 @@ test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () 
 });
 
 test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
-  // v9 prices grow quadratically in t (linear words × linear XP), so far tiers stay exact integers.
-  for (let t = 0; t <= 1000; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
-  for (let t = 0; t <= 100; t += 1) assert.equal(keyTierCostAt(t, 7) % 10, 0, `keyTierCostAt(${t}, R7)`);
+  // v8 ×6 a tier: exact integers until ~T20 (6^20 ≈ 3.7e15 < 2^53); past that floats, which is fine.
+  for (let t = 0; t <= 18; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
   assert.equal(KEY_TIERS.length, 9); // T0..T8 tabled for the shop
 });
 
@@ -327,21 +306,21 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
 test('the XP stack (single source): key tier × mode × rebirth', () => {
   // tier 0 (10 XP/letter) + menu (×1) + R0 (×1) = 10.
   assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0 }), 10);
-  // tier 2 (40 XP/letter) + sat-rush (×10, oct2) + R1 (×2, v9 additive) → 40·10·2 = 800.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 800);
+  // tier 2 (60 XP/letter, v8) + sat-rush (×10, oct2) + R1 (×2, additive) → 60·10·2 = 1200.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 1200);
   assert.equal(
     xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }),
     round10(keyTierXp(2) * XP_MULTIPLIERS['sat-rush'] * rebirthMult(1)),
   );
-  // tier 4 (70 XP/letter) at menu R0.
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0 }), 70);
+  // tier 4 (375 XP/letter, v8) at menu R0 → round10.
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0 }), round10(375));
 });
 
 test('xpPerInput applies pop/sound/streak multipliers (Stats MENU XP / LETTER must match the pop)', () => {
   // The Stats readout now calls xpPerInput with the equipped cosmetic mults, so cosmetics and
   // streak MUST feed the number — the old base×rebirth omitted them and under-reported.
   const base = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, streakMult: 1 });
-  assert.equal(base, keyTierXp(2)); // 40
+  assert.equal(base, keyTierXp(2)); // 60 (v8)
   // A PRISM pop (×1.25) must lift it above base, snapped ×10.
   const prism = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.25, streakMult: 1 });
   assert.equal(prism, round10(base * 1.25));

@@ -258,17 +258,26 @@ export function doRebirth() {
 //   T8   14,690          2,799,360    (25,194,240)
 // (v8 history: past T8 the effect went ×2.5 and the cost ×6 a tier. v9 replaced both — below.)
 export const KEYTIER_KEY = 'taw.keytier';
-// ECONOMY v9: KEY POWER adds a flat +KEY_XP_PER_TIER XP per letter per tier (T1 = 25, as before), and
-// its PRICE is denominated in WORDS — about KEY_PRICE_WORDS reference words at the rate you have now,
-// growing linearly (KEY_PRICE_SOFT). v8 multiplied XP ×2.5 a tier for ×6 the price, and because wins
-// (= XP ÷ 10) buy the next tier, per-word value compounded through 14 orders of magnitude. Priced in
-// words, a tier is always "a few minutes of play" away and the numbers stay human.
-export const KEY_XP_BASE = 10;
-export const KEY_XP_PER_TIER = 15;
-export const KEY_PRICE_WORDS = 40;
-export const KEY_PRICE_SOFT = 60; // price in words grows LINEARLY: ×2 at T61, ×11 at T601 — never a wall
-const KEY_REF_LETTERS = 5; // = wins.js WORD_LEN_REF (not imported: wins.js imports this module)
-export const KEY_TIERS = Array.from({ length: 9 }, (_, t) => ({ xp: KEY_XP_BASE + KEY_XP_PER_TIER * t }));
+// KEY POWER — RESTORED TO v8 (Andy oct2 KP2: "keep it very close to the old one"). v9 made it +15 XP
+// per letter a tier, priced in words — late tiers added ~10% and felt like nothing. Back to the v8
+// ladder: XP per letter ×2.5 a tier, price ×6 a tier IN WINS (the T1–T8 table above, extended by those
+// steps forever). T1 = 25. NO CAPS: past a double's range the numbers display through the named-suffix
+// ladder (format.js) — tested at T60+. A save's tier NUMBER is kept, and v8 pays at least what v9 did
+// at every tier (v9 = 10 + 15t; floored at it anyway — nobody's XP/letter drops).
+export const KEY_TIERS = [
+  { xp: 10, cost: 0 }, //          T0
+  { xp: 25, cost: 10 }, //         T1
+  { xp: 60, cost: 60 }, //         T2
+  { xp: 150, cost: 360 }, //       T3
+  { xp: 375, cost: 2160 }, //      T4
+  { xp: 940, cost: 12960 }, //     T5
+  { xp: 2350, cost: 77760 }, //    T6
+  { xp: 5875, cost: 466560 }, //   T7
+  { xp: 14690, cost: 2799360 }, // T8
+];
+export const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
+export const TIER_COST_STEP = 6; // cost multiplier per tier past T8
+const V9_XP = (t) => 10 + 15 * t; // the floor: what v9 paid at a tier
 
 export function getKeyTier() {
   try {
@@ -289,20 +298,37 @@ export function saveKeyTier(n) {
 }
 
 // XP PER LETTER at a given tier. Within the table it's the published value; past T8 it extends
-// v9: +KEY_XP_PER_TIER per tier, linear, forever.
+// ×2.5 per tier from T8's 14,690, each step round10. Never below the v9 value at the same tier.
 export function keyTierXp(tier) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  return KEY_XP_BASE + KEY_XP_PER_TIER * t;
+  let xp;
+  if (t < KEY_TIERS.length) xp = KEY_TIERS[t].xp;
+  else {
+    xp = KEY_TIERS[KEY_TIERS.length - 1].xp;
+    for (let i = KEY_TIERS.length; i <= t && Number.isFinite(xp); i++) xp = round10(xp * TIER_XP_STEP);
+  }
+  return Math.max(xp, V9_XP(t));
 }
-// The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past
-// T8 it extends ×6 per tier from T8's 2,799,360, each step round10.
-// Price to BUY tier `tier` (tier >= 1): KEY_PRICE_WORDS × growth^(tier-1) reference words, each worth
-// the wins a 5-letter word pays at the tier being LEFT, at the player's rebirth multiplier.
-// THE RATE BOOST the shop prices against (Andy oct2). KEY POWER and the LETTER FORGE are priced
-// "in words at your rate"; once the forge and STAR POWER multiply that rate, a price in base words
-// would get relatively cheaper with every buy (econ-sim: KEY tiers fell to ~9 s of income). wins.js
-// installs the real boost (forge average × STAR POWER) at load — injected, because those modules
-// import this one.
+// The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past T8
+// it extends ×6 per tier from T8's 2,799,360, each step round10. (rebirthCount accepted and ignored —
+// v8 prices were flat wins; the signature stays so callers don't change.)
+// eslint-disable-next-line no-unused-vars
+export function keyTierCostAt(tier, rebirthCount) {
+  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
+  if (t < KEY_TIERS.length) return KEY_TIERS[t].cost;
+  let cost = KEY_TIERS[KEY_TIERS.length - 1].cost;
+  for (let i = KEY_TIERS.length; i <= t && Number.isFinite(cost); i++) cost = round10(cost * TIER_COST_STEP);
+  return cost;
+}
+// The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
+export function keyTierCost(tier, rebirthCount) {
+  const t = Number.isFinite(tier) && tier >= 0 ? Math.floor(tier) : 0;
+  return keyTierCostAt(t + 1, rebirthCount);
+}
+
+// THE RATE BOOST the shop prices the LETTER FORGE against (forge.js reads priceRateBoost). KEY POWER is
+// back on fixed wins prices (v8), but the forge still prices "in words at your rate"; wins.js installs
+// the real boost (forge average × STAR POWER) at load — injected, because those modules import this one.
 let rateBoost = () => 1;
 export function setRateBoost(fn) {
   if (typeof fn === 'function') rateBoost = fn;
@@ -310,19 +336,6 @@ export function setRateBoost(fn) {
 export function priceRateBoost() {
   const b = rateBoost();
   return Number.isFinite(b) && b > 0 ? b : 1;
-}
-export function keyTierCostAt(tier, rebirthCount) {
-  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  if (t === 0) return 0;
-  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  const words = KEY_PRICE_WORDS * (1 + (t - 1) / KEY_PRICE_SOFT);
-  const refWins = (keyTierXp(t - 1) * KEY_REF_LETTERS) / 10;
-  return round10(words * refWins * rebirthMult(rc) * priceRateBoost());
-}
-// The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
-export function keyTierCost(tier, rebirthCount) {
-  const t = Number.isFinite(tier) && tier >= 0 ? Math.floor(tier) : 0;
-  return keyTierCostAt(t + 1, rebirthCount);
 }
 
 // (Level-ups no longer pay wins — wins come ONLY from finishing rounds. The old

@@ -11,13 +11,15 @@ function withStorage(seed, fn) {
 }
 
 test('a v8 save with an inflated balance keeps its tiers and gets a v9-sized balance, once', () => {
-  withStorage({ 'taw.wins': String(2.4e12), 'taw.keytier': '15', 'taw.rebirths': '6', 'taw.xp': JSON.stringify({ lv: 125, into: 0 }) }, (map) => {
+  // KEY POWER is back on v8 prices (Andy oct2 KP2), which the cap reads live: at T15 ten more v8 tiers
+  // cost far more than 2.4e12, so the case is exercised at T0 (ten tiers ≈ 1.2e8 wins).
+  withStorage({ 'taw.wins': String(2.4e12), 'taw.keytier': '0', 'taw.rebirths': '6', 'taw.xp': JSON.stringify({ lv: 125, into: 0 }) }, (map) => {
     let cap = 0;
-    for (let i = 1; i <= MIGRATE_WINS_TIERS; i++) cap += keyTierCostAt(15 + i, 6);
+    for (let i = 1; i <= MIGRATE_WINS_TIERS; i++) cap += keyTierCostAt(i, 6);
     const r = migrateEconomyV9();
     assert.equal(r.migrated, true);
     assert.equal(Number(map.get('taw.wins')), cap);
-    assert.equal(map.get('taw.keytier'), '15');
+    assert.equal(map.get('taw.keytier'), '0');
     assert.equal(map.get('taw.rebirths'), '6');
     assert.equal(map.get(ECON_VERSION_KEY), '9');
     map.set('taw.wins', '999999999');
