@@ -12,7 +12,7 @@ test('CHAIN mount loads the base word data but NOT the acceptance extension chun
   await page.goto('/?chain=1&portal=1');
 
   // The CHAIN screen mounts (its root is the stable landmark).
-  await page.locator('.solo-root').waitFor({ state: 'visible', timeout: 15000 });
+  await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible', timeout: 15000 });
   // Give the base word-data chunk time to arrive and the engine to build.
   await page.waitForTimeout(2500);
 

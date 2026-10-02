@@ -354,7 +354,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             </div>
 
             <h3 className="shop-subtitle">POP STYLES</h3>
-            <div className="shop-grid">
+            {/* Andy oct2: cosmetics are collectibles, not the headline — small tiles, KEY POWER stays big. */}
+            <div className="shop-grid shop-grid--compact">
               {POP_STYLES.map((item) => (
                 <Card
                   key={item.id}
@@ -371,7 +372,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             </div>
 
             <h3 className="shop-subtitle">SOUND PACKS</h3>
-            <div className="shop-grid">
+            <div className="shop-grid shop-grid--compact">
               {SOUND_PACKS.map((item) => (
                 <Card
                   key={item.id}
@@ -476,10 +477,9 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
   const isNextGoal = !isOwnedItem && cheapestUnowned && item.id === cheapestUnowned.id;
   const cls = isEquipped ? 'equipped' : isOwnedItem ? 'owned' : affordable ? 'buy' : 'locked';
   return (
-    <div className={`shop-card is-${cls}${isNextGoal ? ' is-next' : ''}`}>
+    <div className={`shop-card shop-card--compact is-${cls}${isNextGoal ? ' is-next' : ''}`} title={item.blurb}>
       {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
       <div className="shop-card-name">{item.name}</div>
-      <div className="shop-card-blurb">{item.blurb}</div>
       {item.xpMult > 1 && (
         <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% XP</div>
       )}
@@ -498,7 +498,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
             {formatNum(item.price)}
           </div>
           {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
-          <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>
+          {/* §3 — the NEXT goal keeps its gap line; the rest of the compact tiles show the bar only. */}
+          {isNextGoal && <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>}
           <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
         </>
       )}

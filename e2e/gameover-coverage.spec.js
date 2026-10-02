@@ -74,7 +74,7 @@ test.describe('game-over screens render without console errors (JOB 4)', () => {
     await modeEntry(page, id).click({ force: true });
     await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
     await page.locator('.mode-dialog-btn-create').click();
-    await page.locator('.solo-root').waitFor({ state: 'visible' });
+    await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
     // Arm the clock deterministically: fill the play field (arm-on-first-keystroke). fill()
     // targets the element and fires the change the game listens on, unlike keyboard.type which
     // depends on ambient focus (that was the flaky part).

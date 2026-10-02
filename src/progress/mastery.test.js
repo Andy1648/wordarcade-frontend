@@ -67,7 +67,7 @@ test('milestones land every 5th level and never at M1', () => {
   assert.equal(count, MASTERY_MAX / MASTERY_MILESTONE_EVERY);
 });
 
-test('masteryFromWords derives level + progress and caps at MASTERY_MAX (M50)', () => {
+test('masteryFromWords derives level + progress and keeps going past M50 (no dead end)', () => {
   assert.equal(MASTERY_MAX, 50);
   const toM2 = masteryNeed(1);
   assert.deepEqual(masteryFromWords(0).level, 1);
@@ -76,15 +76,15 @@ test('masteryFromWords derives level + progress and caps at MASTERY_MAX (M50)', 
   const at2 = masteryFromWords(toM2);
   assert.equal(at2.intoLevel, 0);
   assert.equal(at2.need, masteryNeed(2));
-  // Exactly the cumulative total → the cap; one short → M49.
   assert.equal(masteryFromWords(masteryWordsToReach(MASTERY_MAX)).level, MASTERY_MAX);
   assert.equal(masteryFromWords(masteryWordsToReach(MASTERY_MAX) - 1).level, MASTERY_MAX - 1);
-  // Astronomically many words → clamped to the cap, no further need.
-  const maxed = masteryFromWords(10 ** 9);
-  assert.equal(maxed.level, MASTERY_MAX);
-  assert.equal(maxed.maxed, true);
-  assert.equal(maxed.need, 0);
-  assert.equal(maxed.frac, 1);
+  // Past the M50 goal the bar still has a next level and a cost — never "MAXED".
+  const past = masteryFromWords(masteryWordsToReach(MASTERY_MAX) + masteryNeed(MASTERY_MAX));
+  assert.equal(past.level, MASTERY_MAX + 1);
+  assert.equal(past.maxed, false);
+  assert.ok(past.need > 0);
+  const huge = masteryFromWords(10 ** 9);
+  assert.ok(huge.level > 1000 && !huge.maxed, `1e9 words → M${huge.level}`);
 });
 
 test('masteryWordsToReach is the cumulative sum of the curve', () => {

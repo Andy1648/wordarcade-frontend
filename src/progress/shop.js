@@ -18,9 +18,9 @@ import { THEMES, isThemeOwned } from '../theme/themes.js';
 // inside the first hour and then paid for nothing for the remaining 199. One ×COSMETIC_PRICE_STEP (6, v9) ladder per list,
 // from a base that is one good round: every rung costs six of the last one, so the last item in
 // each list stays a genuine goal instead of pocket change.
-export const COSMETIC_PRICE_STEP = 6;
-export const POP_PRICE_BASE = 60; // the first PAID pop style (was 600)
-export const SOUND_PRICE_BASE = 100; // the first PAID sound pack, 3 are free (was 1000)
+export const COSMETIC_PRICE_STEP = 5; // oct2: ×5 a rung from a ×100 base — top pop ~2.9e11, under the 1e12 readability cap
+export const POP_PRICE_BASE = 6000; // oct2 (Andy: "pop styles/sound packs cost MORE"): ×10 the v9 base — each rung is minutes of play, not seconds
+export const SOUND_PRICE_BASE = 10000; // oct2: ×10 the v9 base (3 packs stay free)
 /** The i-th PAID rung of a ladder (i = 1 for the first paid item). */
 export function cosmeticPrice(base, i) {
   return Math.round(base * Math.pow(COSMETIC_PRICE_STEP, Math.max(0, i - 1)));

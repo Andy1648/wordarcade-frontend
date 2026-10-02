@@ -39,7 +39,7 @@ async function enterSolo(page, mode) {
   await modeEntry(page, mode).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
   await page.locator('.mode-dialog-btn-create').click();
-  await page.locator('.solo-root').waitFor({ state: 'visible' });
+  await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
   await page.locator('.solo-input').waitFor({ state: 'visible' });
 }
 

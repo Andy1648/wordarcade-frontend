@@ -36,10 +36,10 @@ test('the four defaults are owned from the start', () => {
 const priceOf = (id) => [...POP_STYLES, ...SOUND_PACKS].find((i) => i.id === id).price;
 
 test('cosmetic ladders: each paid rung costs ×COSMETIC_PRICE_STEP the last, and pays a bigger XP mult', () => {
-  assert.equal(COSMETIC_PRICE_STEP, 6);
-  assert.equal(priceOf('chrome'), 60);
-  assert.equal(priceOf('inferno'), 360);
-  assert.equal(priceOf('marble'), 100);
+  assert.equal(COSMETIC_PRICE_STEP, 5); // oct2: ×5 a rung from a ×100 base (Andy: cosmetics cost MORE)
+  assert.equal(priceOf('chrome'), 6000);
+  assert.equal(priceOf('inferno'), 30000);
+  assert.equal(priceOf('marble'), 10000);
   for (const list of [POP_STYLES, SOUND_PACKS]) {
     const paid = list.filter((i) => i.price > 0);
     assert.ok(paid.length >= 6, 'the v9 ladders run long enough to stay a goal');
