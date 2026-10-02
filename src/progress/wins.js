@@ -26,6 +26,7 @@ import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
 import { starPowerMult } from './stars.js';
 import { setRateBoost } from './xp.js';
+import { addLetters } from './letters.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn mark's MAIN bonus (STEP 49 — a ×2-×4 mark priced against base words made KEY trivial).
@@ -594,6 +595,8 @@ export function awardWordXp(opts = {}) {
   // The worn MARK grows with play (STEP 21). After the gain is computed, like mastery, so a word
   // never retroactively boosts itself. Menu typing doesn't count — marks grow in games.
   const mark = mode !== 'menu' ? addMarkWord() : null;
+  // LIFETIME LETTERS (leaderboard main stat): every accepted letter in a game.
+  if (mode !== 'menu' && Number.isFinite(opts.wordLength) && opts.wordLength > 0) addLetters(opts.wordLength);
   return { ...res, gain, mastery, mark };
 }
 

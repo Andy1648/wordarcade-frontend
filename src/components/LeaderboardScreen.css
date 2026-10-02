@@ -414,3 +414,11 @@
   text-underline-offset: 4px;
   cursor: pointer;
 }
+
+/* STEP 51: the rebirth tier is the NAME — its colour, and a frame from PHOENIX (R5) up. */
+.lb-name.is-framed {
+  padding: 0 6px;
+  border: 2px solid var(--rb);
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+}

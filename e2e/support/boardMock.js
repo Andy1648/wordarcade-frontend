@@ -4,20 +4,44 @@
 // Ranking matches the view: rebirths, level, lifetime words, then first-come (stable sort).
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 
-export async function mockBoard(page, seed = []) {
-  const rows = seed.map((r) => ({ ...r }));
+// `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
+// carries letters, the board ranks by lifetime_letters. Without it the mock is the v1 DB (lb_caps 404s).
+export async function mockBoard(page, seed = [], { caps = false } = {}) {
+  const rows = seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r }));
   const secrets = new Map();
   const calls = { claim: 0, submit: 0 };
   const ranked = () => rows
     .slice()
-    .sort((a, b) => b.rebirths - a.rebirths || b.level - a.level || b.lifetime_words - a.lifetime_words)
-    .map((r, i) => ({ ...r, rank: i + 1 }));
+    .sort(caps
+      ? (a, b) => b.lifetime_letters - a.lifetime_letters || b.level - a.level || b.rebirths - a.rebirths
+      : (a, b) => b.rebirths - a.rebirths || b.level - a.level || b.lifetime_words - a.lifetime_words)
+    .map((r, i) => {
+      const out = { ...r, rank: i + 1 };
+      if (!caps) delete out.lifetime_letters;
+      return out;
+    });
   await page.route('https://lb.e2e.invalid/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());
     const json = (status, body) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     let body = null;
     try { body = req.postDataJSON(); } catch { body = null; }
+    if (url.pathname.endsWith('/rpc/lb_caps')) {
+      return caps ? json(200, { letters: true, cjk: true }) : json(404, { message: 'Could not find the function public.lb_caps' });
+    }
+    if (caps && url.pathname.endsWith('/rpc/lb_submit2')) {
+      calls.submit += 1;
+      const row = rows.find((r) => r.id === secrets.get(body.p_secret));
+      if (!row) return json(404, { message: 'no_profile' });
+      Object.assign(row, {
+        level: body.p_level,
+        rebirths: body.p_rebirths,
+        lifetime_words: body.p_lifetime_words,
+        lifetime_letters: body.p_lifetime_letters,
+        wins_per_word: body.p_wins_per_word,
+      });
+      return route.fulfill({ status: 204, body: '' });
+    }
     if (url.pathname.endsWith('/rpc/lb_name_status')) {
       const n = body.p_username;
       if (isNameBlocked(n)) return json(200, 'blocked');
@@ -31,7 +55,7 @@ export async function mockBoard(page, seed = []) {
       if (rows.some((r) => r.username.toLowerCase() === n.toLowerCase() && r.id !== mine)) return json(409, { message: 'username_taken' });
       let row = rows.find((r) => r.id === mine);
       if (!row) {
-        row = { id: `id-${rows.length + 1}`, username: n, level: 1, rebirths: 0, lifetime_words: 0, wins_per_word: 0 };
+        row = { id: `id-${rows.length + 1}`, username: n, level: 1, rebirths: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0 };
         rows.push(row);
         secrets.set(body.p_secret, row.id);
       } else {

@@ -3,7 +3,7 @@
 // PURE (no DOM/React) so "every level maps to exactly one rank" is unit-testable.
 //
 // The bands partition ALL levels 1..∞ with no gaps and no overlaps: each entry owns [min, next
-// entry's min). The last band (UNREAL) runs to infinity.
+// entry's min). The last band (BEYOND) runs to infinity.
 
 export const RANKS = [
   { min: 1, name: 'ROOKIE' }, //   LV 1-4    green
@@ -15,7 +15,16 @@ export const RANKS = [
   { min: 41, name: 'MENACE' }, //  LV 41-55
   { min: 56, name: 'WARLORD' }, // LV 56-75
   { min: 76, name: 'DEMON' }, //   LV 76-99
-  { min: 100, name: 'UNREAL' }, // LV 100+
+  { min: 100, name: 'UNREAL' }, // LV 100-149
+  // STEP 51 (Andy oct2: "add MORE RANKS") — levels now run past L1000, so the ladder does too.
+  { min: 150, name: 'MYTHIC' }, //  LV 150-199
+  { min: 200, name: 'TITAN' }, //   LV 200-299
+  { min: 300, name: 'ORACLE' }, //  LV 300-399
+  { min: 400, name: 'IMMORTAL' }, //LV 400-499
+  { min: 500, name: 'COSMIC' }, //  LV 500-649
+  { min: 650, name: 'ETERNAL' }, // LV 650-799
+  { min: 800, name: 'INFINITE' }, //LV 800-999
+  { min: 1000, name: 'BEYOND' }, // LV 1000+
 ];
 
 export const MAX_RANK_NAME_LEN = 8;

@@ -55,7 +55,9 @@ for (const vp of VIEWPORTS) {
     await expect(page.locator('.lb-panel')).toBeVisible();
     await expect(page.locator('.lb-row')).toHaveCount(3);
     await expect(page.locator('.lb-row').first()).toContainText('WordWizard');
-    await expect(page.locator('.lb-row').first().locator('.lb-stars')).toHaveText(/★×6/);
+    // STEP 51: no stars — 6 rebirths = PHOENIX: an orange, FRAMED name.
+    await expect(page.locator('.lb-row').first().locator('.lb-name.is-framed')).toHaveText('WordWizard');
+    await expect(page.locator('.lb-row').first().locator('.lb-stars')).toHaveCount(0);
 
     // Leetspeak bad name: refused on the client, never sent.
     const input = page.locator('.lb-claim-input');
@@ -77,7 +79,7 @@ for (const vp of VIEWPORTS) {
     await expect(me.locator('.lb-name')).toHaveText('Typer_99');
     await expect(me.locator('.lb-you-badge')).toHaveText('YOU');
     await expect(me).toContainText('LV 12');
-    await expect(me.locator('.lb-stars')).toHaveText(/★★/);
+    await expect(me.locator('.lb-name')).toHaveCSS('color', 'rgb(46, 255, 224)'); // R2 = cyan
     expect(board.calls.submit).toBeGreaterThanOrEqual(1);
 
     const m = await page.evaluate(() => {
@@ -115,4 +117,26 @@ test('a claimed name survives a reload and pushes stats from the menu', async ({
   await page.getByRole('button', { name: 'Open leaderboard' }).click();
   await expect(page.locator('.lb-you-name')).toHaveText('Reloader');
   await expect(page.locator('.lb-claim')).toHaveCount(0);
+});
+
+// ---- STEP 51 against a DB with migration 005 (letters + Chinese names) ----------------------------
+test('after migration 005: LETTERS is the main stat, Chinese names claim, Chinese slurs are refused', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openMenu(page, { level: 12, rebirths: 2 });
+  const board = await mockBoard(page, SEED, { caps: true }); // after openMenu: its catch-all route must not win
+  await page.addInitScript(() => localStorage.setItem('taw.letters', '123456'));
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.locator('.homepage-nav-btn.is-board').click();
+  await expect(page.locator('.lb-cols')).toContainText('LETTERS');
+  const input = page.locator('.lb-claim-input');
+  await input.fill('傻逼王');
+  await expect(page.locator('.lb-verdict')).toHaveText('NOT THAT ONE. PICK ANOTHER NAME.');
+  await input.fill('小明打字');
+  await expect(page.locator('.lb-verdict')).toHaveText(/FREE/);
+  await page.locator('.lb-claim-btn').click();
+  const me = page.locator('.lb-row.is-me');
+  await expect(me.locator('.lb-name')).toHaveText('小明打字');
+  await expect(me.locator('.lb-words')).toHaveText('123,456');
+  expect(board.calls.submit).toBeGreaterThanOrEqual(1);
 });
