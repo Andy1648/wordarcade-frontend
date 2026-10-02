@@ -14,6 +14,7 @@ import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode } from '../save/cloudSave.js';
+import { queueClaim } from '../progress/claims.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -394,4 +395,45 @@ export async function checkRankUp() {
     return { from: before, to: now };
   }
   return null;
+}
+
+// ---- STEP 61: redeem codes ---------------------------------------------------------------------
+// Codes live server-side (supabase/migrations/007_redeem_codes.sql): Andy adds rows in the Table
+// Editor; the server checks expiry, the use cap and one-per-player. A redeemed code's wins do NOT
+// land directly — they queue as a claim (Andy oct2: everything outside a game is CLAIMED), so the
+// REWARDS badge lights and the player taps it in.
+// Returns { ok: true, code, wins, label } or { ok: false, reason } where reason is one of
+// bad_code / expired / used_up / already_redeemed / rate_limited / not_ready (007 not applied) /
+// offline.
+export const REDEEM_REASONS = {
+  bad_code: "THAT CODE DOESN'T EXIST",
+  expired: 'THAT CODE HAS EXPIRED',
+  used_up: 'THAT CODE HAS BEEN USED UP',
+  already_redeemed: 'YOU ALREADY REDEEMED THAT CODE',
+  rate_limited: 'TOO MANY TRIES — WAIT AN HOUR',
+  not_ready: 'CODES AREN’T SWITCHED ON YET',
+  offline: 'COULDN’T REACH THE SERVER — TRY AGAIN',
+};
+export function normaliseCode(raw) {
+  return String(raw || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 32);
+}
+export async function redeemCode(raw) {
+  const code = normaliseCode(raw);
+  if (code.length < 3) return { ok: false, reason: 'bad_code' };
+  if (!LEADERBOARD_ENABLED) return { ok: false, reason: 'not_ready' };
+  const secret = getSecret();
+  if (!secret) return { ok: false, reason: 'offline' };
+  let res;
+  try {
+    res = await rpc('lb_redeem', { p_secret: secret, p_code: code });
+  } catch (e) {
+    const m = String((e && e.code) || '');
+    if (/rate_limited/.test(m)) return { ok: false, reason: 'rate_limited' };
+    if (/lb_redeem|PGRST202|http_404|Could not find the function/i.test(m)) return { ok: false, reason: 'not_ready' };
+    return { ok: false, reason: 'offline' };
+  }
+  if (!res || res.error) return { ok: false, reason: (res && REDEEM_REASONS[res.error] && res.error) || 'bad_code' };
+  const wins = Math.max(0, Math.round(Number(res.wins) || 0));
+  queueClaim({ id: `code:${res.code}`, kind: 'code', label: `CODE — ${String(res.label || res.code).toUpperCase()}`, amount: wins });
+  return { ok: true, code: res.code, wins, label: res.label || res.code };
 }
