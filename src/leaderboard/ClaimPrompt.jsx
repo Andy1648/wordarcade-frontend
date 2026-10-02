@@ -3,7 +3,7 @@
 // "YOU'D BE #N ON THE BOARD — CLAIM YOUR NAME", shown after a run ONLY when: the board is on, this
 // browser has no name, it has banked at least one word (lifetime — the board ranks lifetime stats, so
 // a 0-word run by a player with history still has a place to claim), those stats would land on the
-// top 100, and it hasn't been SEEN this session (or dismissed 3× in a week). One tap opens an inline
+// top 10 (or anywhere below it — the rank is counted on the server), and it hasn't been SEEN this session (or dismissed 3× in a week). One tap opens an inline
 // name field (same client filter + server verdict as the board); a claim lands without leaving the
 // end screen. A failed board read shows nothing — never an error on an end screen.
 //

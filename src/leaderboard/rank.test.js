@@ -26,6 +26,6 @@ test('letters never decide the order (they began counting at #79 with no backfil
 
 test('off the top-N returns null', () => {
   const rows = Array.from({ length: 100 }, () => row(5, 100, 100));
-  assert.equal(hypotheticalRank(rows, me(0, 1, 1)), null);
-  assert.equal(hypotheticalRank(rows.slice(0, 99), me(0, 1, 1)), 100);
+  assert.equal(hypotheticalRank(rows, me(0, 1, 1), 100), null);
+  assert.equal(hypotheticalRank(rows.slice(0, 99), me(0, 1, 1), 100), 100);
 });
