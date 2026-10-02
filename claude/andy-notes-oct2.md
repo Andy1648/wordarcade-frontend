@@ -7,6 +7,45 @@ receipts, dialogs, tutorials, leaderboard).
 
 Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
+## Oct 2 DAY RUN goal (11:41 ET → 08:00 ET Oct 3). Order: P0 migration checks → P1 Andy's six → the rest
+### P0 — migrations 005/006/007 (Andy ran them; verify on PRODUCTION)
+- [ ] P0.1 letters sort the board (lb_caps reports letters; board order = taw.letters)
+- [ ] P0.2 a Chinese name can be claimed; a Chinese slur is rejected (DB side, not just client)
+- [ ] P0.3 cloud save restores after clearing localStorage (recovery code / auto-restore)
+- [ ] P0.4 a test redeem code works once then refuses; test row deleted after
+
+### P1 — Andy's six (outrank everything except P0; every word matters)
+- [ ] A1 WORLDS: revert the new world backdrops. SAME floating-word background as before, shifted to different positions per tier ("as if the scene moved"), same smooth ONE-transform swish. Keep the 24 border tiers. New art only if genuinely high quality (it isn't).
+- [ ] A2 Remove the "N online" count from the menu.
+- [ ] A3 MARKS button sometimes missing on Andy's laptop (1280x551, real LV27 profile). Find why (fit-math? load race?) and make it ALWAYS present.
+- [ ] A4 Remove the separate star/claim icon; claims happen via the STATS icon whenever it has a notification. Notification dots clearly larger (measure before/after).
+- [ ] A5 BUG: SHOP dot with nothing affordable. Dot only when something can actually be bought/claimed; test: fresh LV1 profile, 0 wins → no shop dot.
+- [ ] A6 RACE = ENTIRE-WORD racing (monkeytype/TypeRacer): same sequence of whole words for every racer, type each in full, advance; first to finish or most at the cap wins. Keep the game CARD exactly. Backend additive (new race variant; WB/Blitz untouched), unit-tested, prod WB smoke after deploy, revert via PR if it fails. Live 2-tab race on PROD: same words, same winner, progress <=250 ms apart. Payout via the existing pipeline, matches the card.
+
+### P2 — STEP 9 Blitz list-only
+- [ ] B9.1 backend: only complete enumerable categories; judge removed from scoring; reason "NOT ON THE LIST"; 8 good + 8 junk unit tests per category
+- [ ] B9.2 prod check: zzzzzzzz rejected; WB smoke (revert via PR if it fails)
+- [ ] B9.3 frontend: ribbon AI JUDGED → AI BUILT; no "judged by AI" claims anywhere; no empty packs
+
+### P3 — Batch A (contents from the Oct 2 day goal)
+- [ ] BA1 bot playtest every mode (50 games each); fix the top 3 unfun moments per mode
+- [ ] BA2 WB bot win-rate tuning: median human vs MEDIUM wins 45–60%
+- [ ] BA3 phone gameplay with the keyboard up: input / prompt / timer always visible
+- [ ] BA4 4x-throttled input latency < 50 ms
+- [ ] BA5 failure states (offline, WS drop, cold start) — no lost wins
+
+### P4 — Batch B
+- [ ] BB1 rebirth ceremony showing kept-vs-reset
+- [ ] BB2 stats page redesign worth screenshotting
+- [ ] BB3 weekly leaderboard reset Monday 00:00 ET, server-side
+
+### P5 — the rest
+- [ ] WB phone ring layout fixed (a layout change, not a formula tweak)
+- [ ] Andy's notes re-check: cosmetics auto-equip on buy (N1), animated reward text bigger (N2), ONE big thing per screen — cut the end-game wins breakdown down (N3/N4)
+- [ ] Until 08:00 ET Oct 3: keep running fine-tune passes over every screen
+
+### Day-run log
+
 ## Andy's newest notes (Oct 2, later)
 - [x] N1 Buying a cosmetic AUTO-EQUIPS it — PR #76 (shop.js `buy` equips; unit test + e2e/shop.spec.js 'auto-equips')
 - [x] N2 Animated reward text is bigger: rarity pop --fs-panel → --fs-hero and receipt WINS → --fs-h2 (PR #82); level-up moment (PR #78, src/components/MenuXp.css): plate held at ×1.2, title --fs-hero, "+N WINS" --fs-h2, detail --fs-panel, sub-line --fs-label → --fs-body, shots claude/worlds/levelup/after-1280.png / after-390.png; in-game "+N WINS" landing pop --fs-panel → --fs-h2 (phone --fs-body → --fs-panel) and menu letter pops --fs-panel → --fs-h2 (PR #88, all live). e2e word-landing / menu-xp / wb-short-layout green at the new sizes.
@@ -115,7 +154,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] R3 Instructions for Andy at the top of 007_redeem_codes.sql: Table Editor → redeem_codes → Insert row (code, wins, label, expires_at, max_uses, active)
 
 ## Queue: Batch A / Batch B
-- [ ] BLOCKED — the Oct 1 queue lists "Batch A, Batch B" by name only; their contents are not in claude/QUEUE-specs.md, this checklist, or any session transcript (the only "BATCH A" prompt is the Sept 16 batch, already shipped then). Needs Andy to re-paste them. Moved on to fine-tune loop B.
+- [x] (superseded) contents now recorded in the DAY RUN goal above (P3/P4). Was: BLOCKED — the Oct 1 queue lists "Batch A, Batch B" by name only; their contents are not in claude/QUEUE-specs.md, this checklist, or any session transcript (the only "BATCH A" prompt is the Sept 16 batch, already shipped then). Needs Andy to re-paste them. Moved on to fine-tune loop B.
 
 ## Open at 08:00 Oct 2 (carried forward, each needs its own step)
 - Migrations 005 / 006 / 007 not applied (letters + CJK names, cloud save, redeem codes): Andy pastes each into the Supabase SQL editor and runs it; the client already feature-detects all three.
