@@ -64,3 +64,5 @@
 @media (max-width: 900px) {
   .lstack { display: none; }
 }
+.lstack-row--boost .lstack-label,
+.lstack-row--boost .lstack-val { color: #ffe94a; }

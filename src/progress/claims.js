@@ -19,6 +19,7 @@
 // PURE + guarded store, like every progress module: blocked storage → claims are granted on the
 // spot instead (never lost, never throws).
 import { grantWins } from './wins.js';
+import { startBoost } from './boost.js';
 
 export const CLAIMS_KEY = 'taw.claims';
 const MAX_CLAIMS = 200; // a bound on a corrupt/huge save, not a design limit
@@ -32,6 +33,7 @@ export const CLAIM_KINDS = {
   mark: 'NEW MARK',
   layer: 'NEW SYSTEM',
   code: 'CODE',
+  boost: 'BOOST',
 };
 
 // Per-kind side effects of claiming (a NEW MARK becomes owned, …). Registered by the owning module.
@@ -110,7 +112,7 @@ export function queueClaim({ id, kind, label, amount = 0, detail, meta } = {}) {
     id,
     kind,
     label: label || CLAIM_KINDS[kind] || 'REWARD',
-    amount: Number.isFinite(amount) && amount > 0 ? Math.round(amount) : 0,
+    amount: Number.isFinite(amount) && amount > 0 ? amount : 0, // no rounding cap (no-caps); floats bank fine
     detail: detail || null,
     meta: meta || null,
     ts: Date.now(),
@@ -125,6 +127,23 @@ export function queueClaim({ id, kind, label, amount = 0, detail, meta } = {}) {
   return claim;
 }
 
+// R10 (Andy oct2): a PER-LEVEL redeem code pays its wins × the player's level AT CLAIM TIME, so a code
+// scales with the player and never goes dead. Every display of a claim's value reads this too.
+function currentLevel() {
+  try {
+    const lv = Number(JSON.parse(localStorage.getItem('taw.xp') || '{}').lv);
+    return Number.isFinite(lv) && lv >= 1 ? Math.floor(lv) : 1;
+  } catch {
+    return 1;
+  }
+}
+/** What a claim pays if claimed now. */
+export function claimAmount(c) {
+  if (!c) return 0;
+  const base = Number.isFinite(c.amount) && c.amount > 0 ? c.amount : 0;
+  return c.meta && c.meta.perLevel ? base * currentLevel() : base;
+}
+
 /** Claim one: pays it (if it pays) through the labelled door and removes it. Returns it or null. */
 export function claim(id) {
   const arr = load();
@@ -132,7 +151,8 @@ export function claim(id) {
   if (i < 0) return null;
   const [c] = arr.splice(i, 1);
   save(arr);
-  if (c.amount > 0) grantWins(c.amount, c.label, { detail: c.detail || c.id, claimed: true });
+  const pay = claimAmount(c);
+  if (pay > 0) grantWins(pay, c.label, { detail: c.detail || c.id, claimed: true });
   runHandler(c);
   emit();
   return c;
@@ -144,15 +164,23 @@ export function claimAll() {
   let wins = 0;
   for (const c of arr) {
     runHandler(c);
-    if (c.amount > 0) {
-      grantWins(c.amount, c.label, { detail: c.detail || c.id, claimed: true });
-      wins += c.amount;
+    const pay = claimAmount(c);
+    if (pay > 0) {
+      grantWins(pay, c.label, { detail: c.detail || c.id, claimed: true });
+      wins += pay;
     }
   }
   save([]);
   emit();
   return { count: arr.length, wins };
 }
+
+// ---- BOOST codes (R10) ----------------------------------------------------------------------------
+// A 'boost' claim starts (or extends) the BOOST timer: ×meta.mult on every mode for meta.min minutes.
+registerClaimHandler('boost', (c) => {
+  const m = (c && c.meta) || {};
+  startBoost(m.mult, m.min);
+});
 
 // ---- NEW SYSTEM layers (STEP 49 reveal moments) -------------------------------------------------
 // A 'layer' claim's `detail` names the system; claiming it OPENS that system for good.

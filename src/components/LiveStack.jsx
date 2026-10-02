@@ -15,6 +15,7 @@
 // Factors at exactly x1 are omitted: a list where half the rows say "x1" teaches nothing and
 // crowds out the rows that matter. `WordPayout` already handles the "an upgrade is doing nothing
 // on THIS word" case with its own inactive list.
+import BoostPill from '../frenzy/BoostPill';
 import { perWordRateNow } from '../progress/wins';
 import { roundWordXp } from '../progress/xp';
 import { formatRate, formatMultExact } from '../format';
@@ -30,6 +31,7 @@ const mult = (m) => `×${formatMultExact(m)}`;
 export default function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
   const now = perWordRateNow({ mode, difficulty });
   const frenzy = Number.isFinite(now.factors.frenzy) && now.factors.frenzy > 1 ? now.factors.frenzy : 0;
+  const boost = Number.isFinite(now.factors.boost) && now.factors.boost > 1 ? now.factors.boost : 0;
 
   // The live COMBO is what the player is doing right now — the one row that moves while they type.
   const live = combo > 1 ? { key: 'combo', label: 'COMBO', value: combo } : null;
@@ -51,6 +53,11 @@ export default function LiveStack({ mode, difficulty, combo = 1, compact = false
           <div className="lstack-row lstack-row--frenzy">
             <span className="lstack-label">FRENZY</span>
             <span className="lstack-val">{mult(frenzy)}</span>
+          </div>
+        )}
+        {boost > 0 && (
+          <div className="lstack-row lstack-row--boost">
+            <BoostPill />
           </div>
         )}
         {live && (

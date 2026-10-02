@@ -35,6 +35,8 @@ export const PAYOUT_FACTORS = [
   // FUSE FRENZY — ×5 for five real minutes after a full strip (frenzy.js). Timed, so it reads with
   // the per-word rows rather than the permanent ones.
   { key: 'frenzy', label: 'FRENZY', kind: 'word' },
+  // BOOST — a redeem code's ×N on every mode for its minutes (boost.js); stacks with FRENZY.
+  { key: 'boost', label: 'BOOST', kind: 'word' },
   // LETTER FORGE (forge.js): +5% per forged level of each letter in THIS word.
   { key: 'forge', label: 'FORGE', kind: 'word' },
   { key: 'rarity', label: 'RARITY', kind: 'word' },

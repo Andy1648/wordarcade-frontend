@@ -291,7 +291,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       </div>
       {/* THE GOAL, SAID ONCE (Andy oct2: FRENZY must be OBVIOUS in-game). Dark: what the strip is
           for. Live: the countdown, in the mode's flame orange. */}
-      <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}`}>
+      <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}${frenzy.active && frenzy.ms <= 10000 ? ' is-ending' : ''}`}>
         {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL 26 → FRENZY ×${FRENZY_MULT} WINS`}
       </div>
       <div className="solo-strip-big">

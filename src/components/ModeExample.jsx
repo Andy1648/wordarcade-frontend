@@ -140,7 +140,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
           {frenzy.active ? (
             <>FRENZY LIVE — ×{FRENZY_MULT} WINS FOR {formatFrenzy(frenzy.ms)}</>
           ) : (
-            <>LIGHT ALL 26 LETTERS → <b>FRENZY</b>: ×{FRENZY_MULT} WINS FOR {frenzyMinutes()} MIN, EVEN BETWEEN RUNS</>
+            <>LIGHT ALL 26 LETTERS → <b>FRENZY</b>: ×{FRENZY_MULT} WINS FOR {frenzyMinutes()} MIN, EVEN BETWEEN RUNS · STACKS WITH BOOST CODES</>
           )}
         </div>
       )}

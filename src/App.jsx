@@ -18,6 +18,7 @@ import { WORD_RACE_ID } from './race/config';
 import { bankRaceWord } from './race/racePayout';
 import { recentPace, recordPace } from './race/racePace';
 import WallScene from './components/WallScene';
+import TimerOver from './frenzy/TimerOver';
 import TransitionOverlay from './components/TransitionOverlay';
 import LoadingScreen from './components/LoadingScreen';
 import { markAppReady } from './lib/bootReady.js';
@@ -2712,6 +2713,8 @@ function App() {
     //                   while the shake (an ancestor transform) never affects it.
     <SoundContext.Provider value={soundValue}>
     <div className="app-viewport">
+      {/* R10: FRENZY OVER / BOOST OVER — a finite moment when either clock hits 0, on any screen. */}
+      <TimerOver />
       <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
         <div className="app-scroll">
           <WallScene intensity={bgIntensity} resetKey={view} />

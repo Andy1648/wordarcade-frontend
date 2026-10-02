@@ -14,6 +14,7 @@
 // PURE + guarded store, like every other progress module: blocked storage → no frenzy, never throws.
 
 import { frenzyBonusMs } from './stars.js';
+import { announceTimers } from './boost.js';
 
 export const FRENZY_KEY = 'taw.frenzyUntil';
 export const FRENZY_MODE = 'fuse';
@@ -58,6 +59,7 @@ export function startFrenzy(now = Date.now()) {
   } catch {
     /* storage blocked — no frenzy */
   }
+  announceTimers();
   return { started: true, remaining: len };
 }
 

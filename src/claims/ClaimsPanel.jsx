@@ -3,7 +3,7 @@
 // labelled ledger (claims.js → grantWins), so the wins toast + the balance tick exactly as before —
 // the difference is the player pressed the button.
 import { useEffect, useRef, useState } from 'react';
-import { claim, claimAll, CLAIM_KINDS } from '../progress/claims.js';
+import { claim, claimAll, claimAmount, CLAIM_KINDS } from '../progress/claims.js';
 import { useClaims } from './useClaims.js';
 import { formatNum } from '../format.js';
 import './ClaimsPanel.css';
@@ -16,6 +16,7 @@ export const KIND_COLOUR = {
   mark: '#C58BFF',
   layer: '#FF6B3D',
   code: '#FFE94A',
+  boost: '#FFE94A',
 };
 
 export default function ClaimsPanel({ onClose, onReveal, onStats }) {
@@ -30,7 +31,7 @@ export default function ClaimsPanel({ onClose, onReveal, onStats }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  const total = list.reduce((a, c) => a + (c.amount || 0), 0);
+  const total = list.reduce((a, c) => a + claimAmount(c), 0);
   const stamp = (wins) => setPaid({ key: Date.now(), wins });
   return (
     <div
@@ -64,11 +65,11 @@ export default function ClaimsPanel({ onClose, onReveal, onStats }) {
                       className="claims-btn"
                       onClick={() => {
                         const r = claim(c.id);
-                        if (r && r.amount) stamp(r.amount);
+                        if (r && claimAmount(r)) stamp(claimAmount(r));
                         if (r && (r.kind === 'layer' || r.kind === 'mark') && onReveal) onReveal(r);
                       }}
                     >
-                      {c.amount > 0 ? `CLAIM +${formatNum(c.amount)}` : 'CLAIM'}
+                      {c.kind === 'boost' && c.meta ? `START ×${c.meta.mult} · ${c.meta.min} MIN` : claimAmount(c) > 0 ? `CLAIM +${formatNum(claimAmount(c))}` : 'CLAIM'}
                     </button>
                   </li>
                 ))}
