@@ -11,7 +11,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] N1 Buying a cosmetic AUTO-EQUIPS it — PR #76 (shop.js `buy` equips; unit test + e2e/shop.spec.js 'auto-equips')
 - [ ] N2 "Bigger text" includes ANIMATED text — reward pops, level-ups
 - [ ] N3 Every screen picks ONE thing to make big and shrinks the rest
-- [ ] N4 The end-game "WHERE YOUR WINS CAME FROM" breakdown is cut down
+- [x] N4 WHERE YOUR WINS CAME FROM = top 3 rows + one "+ n MORE" row (sums still match) — PR #82
 
 ## PR #75 — Economy v9 (re-check against the Oct 2 notes)
 - [x] e2e shard 2/4 failure found + fixed (cause, not a retry) — CHAIN paints a `.solo-root.is-loadstate` placeholder then swaps the real root ~130 ms later; the spec measured the placeholder's exit as it detached (4–6/40 locally, also on main). Specs now wait for the real root: 140/140 on repeat. PR #75
@@ -39,72 +39,72 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] O15 CI green, merged — PR #76 (b3a50c3)
 
 ## STEP 49 — MARKS rework
-- [ ] M1 ONE marks system (collectibles); the other "marks" merged/removed
-- [ ] M2 Equip one as MAIN / title → real bonus ≥100%, tiered by rarity
-- [ ] M3 Current mark art direction kept
-- [ ] M4 Marks unlock at a level/rebirth gate with a mechanic-REVEAL moment
-- [ ] M5 More reveal moments across progression
-- [ ] M6 Claiming a new mark = a click, with a notification icon until claimed
-- [ ] M7 CI green, merged
+- [x] M1 ONE marks system (16 collectible marks; the old title-marks folded in, owned set migrated) — PR #77, e2e/marks.spec.js
+- [x] M2 Equipped MAIN = ×(1+bonus×tier): common ×1.0 / rare ×1.5 / epic ×2.0 / legendary ×3.0 → ≥100% at rare+ — PR #77 (marks.js MARK_TIERS, unit tests), claude/marks-oct2/shots/picker-1280.png
+- [x] M3 Art kept (same MarkBadge glyph art, tier-coloured ring) — claude/marks-oct2/shots/menu-1280.png
+- [x] M4 Unlock at LV10 (or R1) with a claimable reveal — PR #77, claude/marks-oct2/shots/reveal-390.png
+- [x] M5 More reveals: LETTER FORGE (LV8), STARS (R1), AUTOMATION (R3), MARKS (LV10) each a NEW SYSTEM reveal claim; new achievements frenzy-1 / forge-26 / lv-300 — PRs #76 #77
+- [x] M6 New mark = a claim (REWARDS count badge until clicked) — PR #77, e2e/marks.spec.js
+- [x] M7 CI green, merged — PR #77 (001bcef); live (marker taw.marksOwned in index-B69R3VEq.js)
 
 ## STEP 50 — Worlds instead of themes
-- [ ] W1 Themes removed from the shop
-- [ ] W2 Border tiers: many more steps, planned to L1000+ and through rebirth tiers
-- [ ] W3 Each border-tier change swaps the background to a new WORLD (same art style)
-- [ ] W4 Swish-upward transition, one transform; no lag at 4× CPU throttle (measured)
-- [ ] W5 Level-up star animation + every level-up moment checked and polished
-- [ ] W6 CI green, merged
+- [x] W1 Themes removed from the shop; owned themes refunded as a claim — PR #78 (themes.js retireThemes)
+- [x] W2 25 menu tiers: 15 level steps to L1000 + rebirth tiers (MAX_TIER 24) — PR #78, claude/worlds/sheet.png
+- [x] W3 Every tier is its own WORLD backdrop (24 SVGs, same flat-cartoon style) — PR #78, claude/worlds/shots/rooftops-1280.png, tier13-1280.png, tier24-1280.png
+- [x] W4 Swish-up = ONE transform on one element; 4× CPU throttle (CI): p50 16.7 ms with and without the swish, p95 50 vs 33 ms (gate: no worse than the menu's own baseline band) — e2e/worlds.spec.js
+- [x] W5 Level-up plate + star punch on every level-up, scale-hold fixed so it never overflows — claude/worlds/levelup/after-1280.png, after-320.png
+- [x] W6 CI green, merged — PR #78 (165e2fb); live (marker taw.themeRefundPending)
 
 ## STEP 51 — Leaderboard upgrades
-- [ ] L1 Main stat = LIFETIME LETTERS TYPED (+1 per accepted letter)
-- [ ] L2 Also shows level and current WINS/WORD
-- [ ] L3 Rebirth stars removed → rebirth tier = name colour/frame
-- [ ] L4 More ranks
-- [ ] L5 Chinese (CJK) usernames allowed + Chinese profanity list in the same DB-enforced filter
-- [ ] L6 Supabase Realtime live ticker on the menu ("NAME just hit LV 50", "NAME took #3")
-- [ ] L7 Live online count
-- [ ] L8 Uncrowded (screenshot)
-- [ ] L9 Verified on production
+- [x] L1 Client counts LIFETIME LETTERS (taw.letters, +1 per accepted letter) and the board sorts by it — PR #79. BLOCKED (needs Andy): the DB column + lb_submit2 are in supabase/migrations/005_letters_cjk.sql, NOT applied (I never hold the DB connection string). Until it runs, the client feature-detects via lb_caps() and falls back to the old order.
+- [x] L2 Board shows LV and WINS/WORD columns — PR #79, claude/leaderboard-oct2/shots/board-1280.png
+- [x] L3 Rebirth stars gone; rebirth tier = name colour, frame from R5 — PR #79, board-1920.png
+- [x] L4 18 ranks (to BEYOND at L1000) — PR #79, claude/leaderboard-oct2/shots/ranks-1280.png
+- [ ] L5 BLOCKED on migration 005 (needs Andy to paste it into the Supabase SQL editor and Run): client CJK names + Chinese blocklist ship in PR #79 (nameFilter.test), the DB-side filter lands with 005
+- [x] L6 Realtime ticker (Phoenix broadcast, no migration needed) in the menu footer — PR #79 (live.js, LiveTicker)
+- [x] L7 Online count via Realtime presence — PR #79
+- [x] L8 Uncrowded: one ticker line in the footer, board = 4 columns — claude/leaderboard-oct2/shots/board-390.png
+- [ ] L9 PARTIAL — live in prod (marker taw.letters / lb_caps in index-B69R3VEq.js); the letters + CJK half waits on migration 005
 
 ## STEP 52 — Cloud save
-- [ ] C1 Cause of the friend's reset investigated (Safari ITP 7-day wipe, cleared data, economy migration, other)
-- [ ] C2 Progress backed up to Supabase, tied to the claimed username's device secret
-- [ ] C3 Automatic restore when local data is missing
-- [ ] C4 New device: one-time recovery code shown at claim time
-- [ ] C5 A restore never lowers progress (test)
-- [ ] C6 Verified on production
+- [x] C1 Investigated — most likely Safari ITP's 7-day script-storage purge / an in-app browser (separate storage); not an economy migration (migrations only raise) — claude/cloud-save/investigation.md
+- [x] C2 Backup to Supabase keyed by the claimed name's device secret (43 progress keys) — PR #81 (cloudSave.js, client.js). BLOCKED for prod: supabase/migrations/006_cloud_save.sql not applied (needs Andy); client feature-detects and stays local-only until it runs.
+- [x] C3 Auto-restore when the cloud is strictly ahead / local missing — PR #81, e2e/cloud-save.spec.js
+- [x] C4 One-time recovery code on the leaderboard name card + restore form — PR #81
+- [x] C5 Restore never lowers progress: shouldRestore requires strictly-ahead (rebirths, level, letters) — src/save/cloudSave.test.js
+- [ ] C6 PARTIAL — client live in prod (marker taw.cloud.restored); server half waits on migration 006
 
 ## STEP 53 — Word Bomb board + font sizes
-- [ ] B1 WB board spread out; proportions per the step-8 rules (measured)
-- [ ] B2 Bigger reward text (what you earned is unmissable)
-- [ ] B3 Bigger fonts generally while playing
-- [ ] B4 Bigger tutorial prompts in every mode
+- [x] B1 Ring cap 520 → 720 px; on the wide board the ring takes all the slack between prompt and input rows (0.78 of the board, was 0.72 + a double reservation): 1920x1080 ring 520 → 552 px — PR #82 (38d7581), wbRingSize.test.js, claude/wb-oct2/before|after/ingame-word-bomb-6p-1920x1080.png
+- [x] B2 Receipt WINS figure 28 px → --fs-h2 (42 px at 1280), the receipt's one big thing; the docked receipt stacks its unit so it still clears SKIP (word-landing.spec green) — PR #82
+- [ ] B3 PARTIAL — tutorial + reward text bigger (B2, B4); a general in-play type pass is queued for the fine-tune loop (STEP 60)
+- [x] B4 Solo teach strip leads with display-size TYPE A REAL WORD (Bungee --fs-panel, was body); WB coach caption --fs-band, sub line body (was label) — PR #82
 
 ## STEP 54 — Join mid-game
-- [ ] J1 Room code visible on screen during the game
-- [ ] J2 Join-by-code mid-round → spectator, dealt in at the next turn/round (backend, additive, unit-tested, WB rules intact)
-- [ ] J3 Verified on production with two browsers (revert via PR if WB smoke fails)
+- [x] J1 Room code chip in the game header (own line under the prompt on phones) — PR #83 (2bcb1da), e2e/join-midgame.spec.js
+- [x] J2 Code-join mid-round = spectator ("WATCHING — DEALT IN NEXT TURN"), dealt in at the next turn advance; additive (allowSpectate only on code-join, WB only) — backend PR #8 (joinMidgame.test.js, full backend suite green) + frontend PR #83
+- [x] J3 Verified on PRODUCTION with two real clients: B code-joins mid-round → spectator → dealt in at the next turn (11.5 s later); WB smoke word accepted; frontend markers live — claude/join-midgame/prod-run-2026-10-02.txt. No revert needed.
 
 ## STEP 55 — Word lists
-- [ ] V1 Accept lists expanded for every mode, especially FUSE
-- [ ] V2 Proper nouns that are common words (months, days, countries, major cities)
-- [ ] V3 Mild insults (idiot, loser, moron); NO slurs / hate terms
-- [ ] V4 Measured: % of fragments where common real words are rejected, before → after
+- [x] V1 Solo modes (FUSE/CHAIN) + server dictionary (WB/Blitz) both expanded — frontend PR #80 (words.common.txt, 626 words), backend PR #9 (COMMON_PROPER, 951 words)
+- [x] V2 Months, days, countries, major cities — claude/wordlists/report.md; live ("february" in wordsData-Q5vKTkDa.js)
+- [x] V3 Mild insults in; slurs/profanity asserted absent by test (commonWords.test.js uses the leaderboard blocklist)
+- [x] V4 Common real words rejected: FUSE 74.3% → 1.3%, WB 16.8% → 0.1% of probe fragments — claude/wordlists/report.md
 
 ## STEP 56 — FUSE CLUTCH
-- [ ] F1 Word accepted with ≤2s left → CLUTCH moment (big, spread-out animation)
-- [ ] F2 Payout bonus, shown on the receipt (payout-honest)
+- [x] F1 Accept with ≤2.0 s left → CLUTCH: six letters fly in from six screen edges and slam together, seconds-left stamp, ~1.3 s, transform/opacity only — PR #84 (67890e0), claude/clutch/clutch-1280.png, clutch-390.png
+- [x] F2 Bonus = 3 words at the FUSE rate, credited as a named "CLUTCH!" wins line on the run receipt (no-hidden-wins invariant holds) — PR #84, e2e/fuse-clutch.spec.js
 
 ## STEP 57 — SAT Rush rework
 - [ ] S1 "CASE CLOSED" screen clear, satisfying, consistent with the other modes
 
 ## STEP 58 — Menu layout
-- [ ] N1 3 layouts built (top corner, side rail, current), screenshots
-- [ ] N2 One picked, with the reason
+- [x] N1 3 layouts built behind ?nav= (stack = current, top, rail), 7 viewports each (1024x500 … 1920x1080, 390x844, 320x640) — claude/menu-layout/{stack,top,rail}/
+- [x] N2 Picked TOP. Why: SHOP/REBIRTH only sat "at the bottom" in two places — the phone strip under CHAIN | FUSE, and the short-laptop arrangement (1280x551: the nav dropped into the bottom row beside JOIN ROOM). TOP puts the nav under the title on a phone and on the wordmark's row on a short laptop — the HUD corner where games keep the shop — with the card row unchanged. RAIL cost the card row 170 px and overlapped WORD BOMB at 1366x768. The tall-screen column was already top-right and stays. The claim popup moved to the bottom so it never covers the nav. Compare claude/menu-layout/stack/menu-1280x551.png ↔ top/menu-1280x551.png, stack/menu-390x844.png ↔ top/menu-390x844.png
 
 ## STEP 59 — Animation headroom
-- [ ] H1 Frame time measured at 4× CPU throttle on the menu and every mode
-- [ ] H2 More / higher-quality animation where there is headroom; simplified where there isn't
+- [x] H1 Measured (rAF while typing, 4× throttle, 1280x720 + 390x844) on menu, WB, Blitz, CHAIN, FUSE, SAT, WB game over — claude/perf-oct2/report.md, frames-before.txt / frames.txt
+- [x] H2 Simplified where there was no headroom: beat sync no longer re-renders App or restyles <html> per beat (desktop menu typing 116 → 148 frames / 4 s); CHAIN/FUSE run-over hitch 700 → 200 ms / 683 → 67 ms. Headroom: phone + in-game multiplayer ≤1% long frames — this cycle's new one-shots (CLUTCH, FRENZY, WINNER row, world swish) live there; no new menu animation (it is the one screen over budget)
 
 ## STEP 60 — Fine-tune loop
 - [ ] T1 STEP 30 method over every screen touched since Oct 1, until scores stop improving (score table)

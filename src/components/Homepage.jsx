@@ -85,6 +85,20 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
+// STEP 58 (Andy oct2: "SHOP / REBIRTH sit at the bottom and feel odd"): where the menu's nav
+// cluster lives. Three layouts were built and compared (claude/menu-layout/) — 'top' won; 'stack'
+// (the old desktop corner column + phone bottom strip) and 'rail' stay reachable with ?nav= for a
+// side-by-side look. Read once at module load: a layout never changes under a mounted menu.
+const NAV_LAYOUTS = ['top', 'rail', 'stack'];
+const NAV_LAYOUT = (() => {
+  try {
+    const q = new URLSearchParams(window.location.search).get('nav');
+    return NAV_LAYOUTS.includes(q) ? q : 'top';
+  } catch {
+    return 'top';
+  }
+})();
+
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
@@ -863,6 +877,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}${isPhoneMenu ? ' is-phone-menu' : ''}`}
         data-menu-frame={menuFrame || undefined}
         data-menu-tier={tier}
+        data-nav={NAV_LAYOUT}
       >
         <WorldBackdrop tier={tier} from={worldFrom} />
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
@@ -909,6 +924,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             shopRef={shopLinkRef}
             statsRef={statsLinkRef}
             rebirthRef={rebirthLinkRef}
+            navLayout={NAV_LAYOUT}
             rewardsCount={claims.length}
             onRewards={() => setShowClaims(true)}
           />
@@ -929,7 +945,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               disabled={navigating}
               aria-label={`Open rewards — ${claims.length} to claim`}
             >
-              REWARDS
+              {/* The word on a tall screen; the phone strip's ★ where the nav shares the
+                  wordmark's row (STEP 58 short arrangement) and every pixel of it counts. */}
+              <span className="homepage-nav-word">REWARDS</span>
+              <span className="homepage-nav-glyph" aria-hidden="true">★</span>
               <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>
             </button>
           )}

@@ -167,6 +167,7 @@ export default function MobileMenu({
   onLeaderboard = null,
   boardDot = false,
   boardRef,
+  navLayout = 'top',
   rewardsCount = 0,
   onRewards = null,
 }) {
@@ -178,7 +179,7 @@ export default function MobileMenu({
     .filter(Boolean);
 
   return (
-    <div className="hp-m">
+    <div className="hp-m" data-nav={navLayout}>
       {/* 1. TITLE + the sound toggle, sharing one row. The toggle JOINS this cluster rather
              than floating as its own fixed control (CLAUDE.md: NO ORPHAN FIXED UI). */}
       <div className="hp-m-top">

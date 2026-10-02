@@ -405,6 +405,39 @@
   }
 }
 
+/* ---- STEP 58: where the nav strip lives (Homepage NAV_LAYOUT, ?nav= to compare) ----
+   'stack' = the old thumb-zone strip under CHAIN | FUSE. 'top' = the strip right under the title,
+   where a player looks for SHOP. 'rail' = a column beside the mode rows. */
+@media (max-width: 480px) {
+  .hp-m[data-nav='top'] > .hp-m-top { order: -2; }
+  .hp-m[data-nav='top'] > .hp-m-nav { order: -1; }
+
+  .hp-m[data-nav='rail'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'top top'
+      'hook hook'
+      'modes nav'
+      'solo solo'
+      'foot foot';
+  }
+  .hp-m[data-nav='rail'] > .hp-m-top { grid-area: top; }
+  .hp-m[data-nav='rail'] > .hp-m-hook { grid-area: hook; }
+  .hp-m[data-nav='rail'] > .hp-m-modes { grid-area: modes; min-height: 0; }
+  .hp-m[data-nav='rail'] > .hp-m-solo { grid-area: solo; }
+  .hp-m[data-nav='rail'] > .hp-m-foot { grid-area: foot; }
+  .hp-m[data-nav='rail'] > .hp-m-nav {
+    grid-area: nav;
+    flex-direction: column;
+  }
+  .hp-m[data-nav='rail'] > .hp-m-nav .hp-m-navbtn {
+    flex: 1 1 0;
+    font-size: var(--fs-label);
+  }
+}
+
 @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
   .hp-m-row,
   .hp-m-solo-btn,

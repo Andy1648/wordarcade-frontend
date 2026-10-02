@@ -94,9 +94,10 @@ import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins } from './progress/wins';
+import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins, grantWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
+  noteRoundBonus, winnerBonusFor, WINNER_BONUS,
 } from './progress/payout';
 import { rarityCue } from './juice/audio';
 import { useWordSecrets } from './secrets/useWordSecrets';
@@ -845,11 +846,13 @@ function App() {
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
-  // pulse with the track. beatCount increments per detected beat, which we use
-  // to fire a light app-wide shake.
-  const { beatCount } = useBeatSync(
+  // pulse with the track. Each detected beat calls onBeatRef.current (assigned below, every
+  // render, so it reads the live view) — no App re-render per beat (STEP 59).
+  const onBeatRef = useRef(null);
+  useBeatSync(
     music.getFrequencyData,
-    music.isPlaying && !music.isMuted
+    music.isPlaying && !music.isMuted,
+    onBeatRef
   );
 
   // App-wide screen shake at three intensities (light=beat, medium=accept,
@@ -871,15 +874,10 @@ function App() {
   // app tree on every drum hit), so it's now gated to the game view; the menu
   // stays calm. `view` is in the deps so the guard reads the live view, not a
   // stale closure (a view change alone never has a new beat, so it won't shake).
-  const prevBeatRef = useRef(0);
-  useEffect(() => {
-    if (beatCount > prevBeatRef.current) {
-      prevBeatRef.current = beatCount;
-      if (view === 'game') triggerShake('light');
-    }
-    // triggerShake is stable enough; we react to beatCount (and read live view).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beatCount, view]);
+  // Assigned on every render, so the handler always sees the live `view` (never a stale one).
+  onBeatRef.current = () => {
+    if (view === 'game') triggerShake('light');
+  };
 
   // The connection dropped WHILE in an active room/game. The seat is gone
   // server-side (no resume), so we don't auto-reconnect or reload - we show a
@@ -1667,6 +1665,16 @@ function App() {
       } else {
         // WINS: already banked per-word during play (bankWordWins in word_result) — NO
         // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
+        // WINNER BONUS (Andy oct2 O12): winning the game pays +50% of what this game's words
+        // earned — a game result, so it credits directly (not a claim). noteRoundBonus refuses a
+        // second note for the same game, so a re-delivered game_over can never pay twice.
+        if (payload.winnerId && payload.winnerId === myIdRef.current) {
+          const led = readPayoutLedger();
+          const bonus = winnerBonusFor(led ? led.total : 0);
+          if (noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: 1 + WINNER_BONUS, wins: bonus })) {
+            grantWins(bonus, 'WINNER BONUS', { mode: 'word-bomb' });
+          }
+        }
         // The receipt for the whole game, read once and frozen for the end screen.
         setPayoutLedger(readPayoutLedger());
       }

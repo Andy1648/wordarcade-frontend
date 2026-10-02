@@ -1,0 +1,13 @@
+node claude/join-midgame/prod-join.mjs src/solo/words.accept.txt   (wss://chain-reaction-backend-i6kx.onrender.com, 01:2x ET Oct 2)
+  0.3 both connected
+  0.4 room MDPLE
+  2.1 A: game_started
+  3.6 PASS B joined mid-round (room_joined)
+  3.6 PASS B received game_started (enters the game screen)
+  3.6 PASS B listed as spectator
+  3.6 PASS B not seated mid-round
+ 15.1 PASS B dealt in at the next turn (players: QAHOST,VOCAB-VADER,QALATE)
+ 31.2 PASS WB smoke: "functors" accepted
+ 31.2 PASS A got a turn and played
+ 31.7 ALL PASS
+Frontend live: "DEALT IN NEXT TURN" in GameScreen-C4ZlJJ5i.js (index-DSW-g89g.js); "CLUTCH" in FuseGame-BOCFOCgy.js.

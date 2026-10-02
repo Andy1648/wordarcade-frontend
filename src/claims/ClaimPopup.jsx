@@ -44,8 +44,18 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
       if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ') return; // keyboard users reach the buttons
       later();
     };
+    // ...and a tap anywhere but its own buttons goes through to what is under it and means "not now"
+    // too (the popup is pointer-transparent, see ClaimsPanel.css), so it can never block the menu.
+    const onDown = (e) => {
+      if (e.target && e.target.closest && e.target.closest('.claim-pop button')) return;
+      later();
+    };
     window.addEventListener('keydown', onKey, { capture: true });
-    return () => window.removeEventListener('keydown', onKey, { capture: true });
+    window.addEventListener('pointerdown', onDown, { capture: true });
+    return () => {
+      window.removeEventListener('keydown', onKey, { capture: true });
+      window.removeEventListener('pointerdown', onDown, { capture: true });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fresh.length]);
   if (!fresh.length) return null;

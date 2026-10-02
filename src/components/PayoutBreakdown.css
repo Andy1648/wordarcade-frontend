@@ -162,6 +162,17 @@
 .payout-row--more .payout-k {
   color: #6b5a8a;
 }
+/* O12: an end-of-round bonus (WINNER) — yellow, the colour of the wins it pays, and set off from
+   the factor rows above it by a rule. */
+.payout-row--bonus {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 2px dashed #3a2a55;
+}
+.payout-row--bonus .payout-k,
+.payout-row--bonus .payout-v {
+  color: #FFE94A;
+}
 .payout-row .payout-k {
   flex: none;
   min-width: 86px;
