@@ -934,36 +934,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
         <nav className="homepage-corner-nav" aria-label="Menu">
-          {/* REWARDS (Andy oct2): leads the stack while something is waiting to be claimed — the
-              count badge is the notification, and it goes away with the last claim. */}
-          {claims.length > 0 && (
-            <button
-              type="button"
-              className={`homepage-nav-btn is-rewards${navigating ? ' disabled' : ''}`}
-              onClick={() => setShowClaims(true)}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label={`Open rewards — ${claims.length} to claim`}
-            >
-              {/* The word on a tall screen; the phone strip's ★ where the nav shares the
-                  wordmark's row (STEP 58 short arrangement) and every pixel of it counts. */}
-              <span className="homepage-nav-word">REWARDS</span>
-              <span className="homepage-nav-glyph" aria-hidden="true">★</span>
-              <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>
-            </button>
-          )}
+          {/* NO SEPARATE REWARDS BUTTON (Andy oct2 A4): claims happen through STATS. While anything is
+              waiting, STATS wears the count badge and opens the claims; with nothing waiting it opens
+              Stats as always. */}
           {/* SHOP and STATS SWAPPED (Andy A4): STATS leads, SHOP sits last in the word stack —
               nearest the trophy + audio, where the eye lands after the cards. */}
           <button
             ref={statsLinkRef}
             type="button"
             className={`homepage-nav-btn is-stats${navigating ? ' disabled' : ''}`}
-            onClick={handleStats}
+            onClick={claims.length > 0 ? () => setShowClaims(true) : handleStats}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
-            aria-label="Open stats"
+            aria-label={claims.length > 0 ? `Open stats — ${claims.length} to claim` : 'Open stats'}
           >
             STATS
+            {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>}
           </button>
           {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
           {showRebirth && (
