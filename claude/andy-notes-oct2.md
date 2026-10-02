@@ -7,6 +7,12 @@ receipts, dialogs, tutorials, leaderboard).
 
 Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
+## Andy's newest notes (Oct 2, later)
+- [ ] N1 Buying a cosmetic AUTO-EQUIPS it
+- [ ] N2 "Bigger text" includes ANIMATED text — reward pops, level-ups
+- [ ] N3 Every screen picks ONE thing to make big and shrinks the rest
+- [ ] N4 The end-game "WHERE YOUR WINS CAME FROM" breakdown is cut down
+
 ## PR #75 — Economy v9 (re-check against the Oct 2 notes)
 - [ ] e2e shard 2/4 failure found + fixed (cause, not a retry)
 - [ ] KEY POWER price / XP-per-letter curve LESS exponential

@@ -8,8 +8,6 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
-import { MomentumRail } from './MomentumRail';
-import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
@@ -250,8 +248,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const all = textEm(el);
         const per = textEm(el.querySelector('.game-card-payout-per'));
         const mult = textEm(el.querySelector('.game-card-payout-mult'));
+        // The perk line's " · LONGER = MORE" tail drops whole on a narrow card, so it never sets
+        // the minimum card width (Andy oct2 perk line).
+        const tail = textEm(el.querySelector('.game-card-perk-tail'));
         whole = Math.max(whole, all);
-        chunk = Math.max(chunk, all - per - mult, per, mult);
+        chunk = Math.max(chunk, all - per - mult - tail, per, mult);
       }
       return { whole, chunk };
     };
@@ -475,9 +476,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [streak] = useState(() => getStreak().count);
   // Freeze tokens (earned 1 per 7 days) shown on the menu BEFORE they're needed (Job 10).
   const [streakFreezes] = useState(() => getStreak().freezes || 0);
-  // MOMENTUM buys — snapshotted on mount (bought only in the shop, which remounts this screen on
-  // return). Drives the MomentumRail trophy under the XP bar (each buy = one permanent mark).
-  const [momentum] = useState(() => getMomentum());
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
@@ -1018,10 +1016,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               the one screen in the app with no vertical room to spare. The hint carries both on a
               first run ("TYPE ANYWHERE · 12 WORDS TO LEVEL 2") and drops the lead-in afterwards.
               Its 20px + the cluster's 5px gap are what pay for the hint line at 320x640. */}
-          {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
-              nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
-              fixed UI). */}
-          <MomentumRail count={momentum} />
+          {/* (The MOMENTUM rail is gone with MOMENTUM — Andy oct2: the LETTER FORGE replaced it, and
+              its 22px row was part of what pushed SHOP / REBIRTH down the screen.) */}
           {/* THE NEXT-UNLOCK TEASER IS GONE (Andy's cut). Three spans promising a cosmetic FRAME,
               which at R1 rendered as "NEXT REBIRTH 1 FRAME REBIRTH 1" — a line that says the same
               word three times and names a reward the player cannot see. No affordance, nothing

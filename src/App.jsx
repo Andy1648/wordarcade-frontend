@@ -94,7 +94,7 @@ import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins } from './progress/wins';
+import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
 } from './progress/payout';
@@ -1370,10 +1370,10 @@ function App() {
             const wbWeight = cappedWordMult(r.mult, wbComboMult, wbLucky.winsWeight);
             // The weight IS rarity × combo × lucky, capped. WORD SENSE used to multiply the
             // rarity part again on top of this, invisibly; it is gone (feat/cut-secrets-rarity).
-            myWbWeightRef.current += wbWeight;
+            myWbWeightRef.current += bankWeight(wbWeight, (wbWord || '').trim()); // + LETTER FORGE (per word)
             // DIFFICULTY rides on the XP award exactly as it does on bankWordWins below and on the card's
             // "XP / WORD" line — without it HELL paid half the XP the card quoted (fix/payout-honesty).
-            awardWordXp({ mode: 'word-bomb', difficulty: gameDifficultyRef.current, wordLength: (wbWord || '').trim().length, weight: wbWeight });
+            awardWordXp({ mode: 'word-bomb', difficulty: gameDifficultyRef.current, wordLength: (wbWord || '').trim().length, weight: wbWeight, word: (wbWord || '').trim() });
             recordAcceptedWord(wbWord, { mode: 'word-bomb', band: r.band }); // Collection (Job 3)
             noteWord(wbWord, r); // permanent record: distinct / obscure / rarest-ever (guarded)
             // BANK wins for this word (§2): past the 3-word gate every accepted word banks
@@ -1398,7 +1398,7 @@ function App() {
             {
               const uncapped = r.mult * wbComboMult * wbLucky.winsWeight;
               const factors = {
-                ...perWordFactors({ mode: 'wordBomb', difficulty: gameDifficultyRef.current }),
+                ...perWordFactors({ mode: 'wordBomb', difficulty: gameDifficultyRef.current, word: (wbWord || '').trim() }),
                 rarity: r.bandMult ?? r.mult,
                 length: r.lengthMult ?? 1,
                 combo: wbComboMult,
@@ -1587,8 +1587,8 @@ function App() {
           const r = rarityOf(blitzAnswer);
           const prevBlitzWeight = myBlitzWeightRef.current;
           const blitzWeight = cappedWordMult(r.mult, blitzComboMult, blitzLucky.winsWeight);
-          myBlitzWeightRef.current += blitzWeight;
-          awardWordXp({ mode: 'category-blitz', difficulty: gameDifficultyRef.current, wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight });
+          myBlitzWeightRef.current += bankWeight(blitzWeight, (blitzAnswer || '').trim()); // + LETTER FORGE (per word)
+          awardWordXp({ mode: 'category-blitz', difficulty: gameDifficultyRef.current, wordLength: (blitzAnswer || '').trim().length, weight: blitzWeight, word: (blitzAnswer || '').trim() });
           recordAcceptedWord(blitzAnswer, { mode: 'category-blitz', band: r.band }); // Collection (Job 3)
           noteWord(blitzAnswer, r); // permanent record: distinct / obscure / rarest-ever (guarded)
           const banked = bankWordWins({

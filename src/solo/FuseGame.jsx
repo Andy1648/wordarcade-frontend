@@ -8,7 +8,7 @@ import { exampleContaining } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
+import { bankWordWins, bankWeight, awardWins, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
 import { startFrenzy, formatFrenzy, FRENZY_MULT, FRENZY_TRIGGER_WORDS } from '../progress/frenzy.js';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock.js';
 import FrenzyBurst from '../frenzy/FrenzyBurst.jsx';
@@ -220,8 +220,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       // matching CHAIN. Capped at ×40 (Job 1). The SAME weight also grants XP (unified loop).
       const rw = rarityOf(s.lastWord);
       const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
-      fuseWeightRef.current += wWeight + Math.max(0, delta - 1);
-      awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight });
+      fuseWeightRef.current += bankWeight(wWeight, s.lastWord || '') + Math.max(0, delta - 1); // + LETTER FORGE
+      awardWordXp({ mode: 'fuse', wordLength: (s.lastWord || '').length, weight: wWeight, word: s.lastWord || '' });
       recordAcceptedWord(s.lastWord, { mode: 'fuse', band: rw.band }); // Collection (Job 3)
       wpmAddWord(s.lastWord); // WPM: count the solved word's chars
       noteWord(s.lastWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)

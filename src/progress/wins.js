@@ -19,7 +19,7 @@ import {
   getKeyTier,
   XP_MULTIPLIERS,
 } from './xp.js';
-import { momentumMult, getMomentum } from './momentum.js';
+import { forgeMultForWord } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS, MASTERY_MILESTONE_EVERY } from './mastery.js';
 import { getStreakMult } from './streak.js';
@@ -222,12 +222,10 @@ export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF } = {}) {
  * separate near-1 rows taught nothing, and the player earns them in three different places
  * anyway. Each is still individually earnable and each still multiplies.
  */
-export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, markId, masteryMult, streakMult } = {}) {
+export function perWordFactors({ mode, difficulty, rebirthCount, markId, masteryMult, streakMult, word } = {}) {
   const key = modeKey(mode);
   const id = gameKey(mode);
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  // MOMENTUM (repeatable sink): a global +1%/buy multiplier, live-read like rebirth.
-  const mm = Number.isFinite(momentumCount) ? momentumCount : getMomentum();
   // The equipped MARK. Its xpMult and winsMult were two names for the same lever once the stacks
   // merged, so BOTH apply — a mark cannot boost one readout and not the other any more.
   const markWins = markWinsFactors({ markId, mode: key }).mark || 1;
@@ -238,11 +236,26 @@ export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, 
     difficulty: DIFFICULTY_MULT[difficulty] ?? 1,
     rebirth: rebirthMult(rc),
     streak: stm,
-    bonus: momentumMult(mm) * markWins * markXpMult(markId) * mastery,
+    bonus: markWins * markXpMult(markId) * mastery,
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),
+    // LETTER FORGE (forge.js, replaced MOMENTUM): +5% per forged level of each letter in THIS word.
+    // Word-specific (×1 when no word is given — the card's reference rate is the base, and the
+    // forge is one of the things that makes a real word worth MORE than it).
+    forge: forgeMultForWord(word),
   };
+}
+
+/**
+ * A word's BANKING weight: its per-word multiplier (rarity × combo × lucky, already capped) × its
+ * LETTER FORGE. Callers accumulate this into the running weight they hand bankWordWins, so every
+ * word — including the ones the 3-word gate holds — banks at its own forge. (awardWordXp applies
+ * the forge to XP itself, from `word`; pass it the UN-forged weight.)
+ */
+export function bankWeight(weight, word) {
+  const w = Number.isFinite(weight) && weight > 0 ? weight : 1;
+  return w * forgeMultForWord(word);
 }
 
 /** One word's XP, with the whole stack resolved. The number wins are derived from. */
@@ -256,7 +269,7 @@ export function perWordXp(opts = {}) {
     weight: opts.weight,
     streakMult: f.streak,
     difficultyMult: f.difficulty,
-    bonusMult: f.bonus * f.frenzy,
+    bonusMult: f.bonus * f.frenzy * f.forge,
   });
 }
 
@@ -356,9 +369,9 @@ export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {})
  *   xpBase — that same base in XP
  *   mult   — rate / base, i.e. everything the player has built, as one number
  */
-export function perWordRateNow({ mode, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength } = {}) {
+export function perWordRateNow({ mode, difficulty, rebirthCount, markId, keyTier, wordLength } = {}) {
   const key = modeKey(mode);
-  const opts = { mode: key, difficulty, rebirthCount, momentumCount, markId, keyTier, wordLength };
+  const opts = { mode: key, difficulty, rebirthCount, markId, keyTier, wordLength };
   const factors = perWordFactors(opts);
   const xp = perWordXp(opts);
   const rate = xp / 10; // exact to the tenth — the same division bankWordWins pays out
@@ -527,6 +540,9 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   // carried remainder, whole wins are paid, the leftover 0-9 tenths wait for the next word. So
   // ten words at 10.1 bank exactly 101 — the card's rate × words, to the win — where rounding
   // each word would have banked 100 and made +1% momentum worth nothing.
+  // LETTER FORGE is NOT applied here: it is word-specific, so it rides each word's WEIGHT
+  // (bankWeight below), the way rarity does — the gate-crossing word then releases words 1-3 each
+  // at their OWN forge rather than all at this word's.
   const xpOwed = roundWordXp(deltaWeight * perWordXp({ mode, difficulty, rebirthCount, wordLength })) + getWinsCarry();
   const granted = Math.floor(xpOwed / 10);
   saveWinsCarry(xpOwed - granted * 10);
@@ -562,7 +578,7 @@ export function awardWordXp(opts = {}) {
   // words' worth of THIS mode's wins, through the labelled door so it is drawn wherever bonuses are.
   if (mastery && mastery.leveledUp && isMasteryMilestone(mastery.level)) {
     const words = MASTERY_MILESTONE_WORDS * (mastery.level / MASTERY_MILESTONE_EVERY);
-    const amount = Math.round(words * perWordWins({ ...opts, mode }));
+    const amount = Math.round(words * perWordWins({ ...opts, mode, word: undefined })); // the BASE word, not this one
     if (amount > 0) {
       grantWins(amount, `MASTERY — ${modeLabel(mode)} M${mastery.level}`, { detail: `mastery-${mode}-${mastery.level}`, mode });
       mastery.milestoneWins = amount;

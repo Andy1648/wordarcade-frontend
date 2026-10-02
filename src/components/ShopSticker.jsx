@@ -7,7 +7,7 @@
 //   pop style  → the pop letter in that style's colour
 //   key power  → the tier number on a key cap
 //   word sense → the tier number on a lens
-//   momentum   → the momentum mark
+//   forge      → the forged letter + its level
 //   rebirth    → the multiplier arrow
 // Ribbon "★ UNLOCKED ★", the item's name, one line of what it actually does, and the PRICE as a
 // red debit pill (money left your pocket — it must never read like a payout).
@@ -120,21 +120,18 @@ function GlyphLens({ tier = 1, colour = '#FFD54A' }) {
   );
 }
 
-// MOMENTUM → the mark that lands on the menu rail, with its running count.
-function GlyphMomentum({ count = 1, colour = '#FF6B3D' }) {
+// LETTER FORGE → the forged letter on an anvil-hot tile, its new level in the corner.
+function GlyphForge({ letter = 'E', level = 1, colour = '#FF6B3D' }) {
   return (
     <svg viewBox="0 0 96 96" className="sticker-glyph" aria-hidden="true">
-      <g transform="rotate(6 48 48)">
-        <path d="M48 8 L72 48 L48 88 L24 48 Z" fill={colour} {...S9} />
-        <text
-          x="48"
-          y="58"
-          textAnchor="middle"
-          fontFamily="Bungee, system-ui, sans-serif"
-          fontSize="24"
-          fill="#0d0618"
-        >
-          {count}
+      <g transform="rotate(-5 48 48)">
+        <rect x="14" y="14" width="68" height="68" rx="10" fill={colour} {...S9} />
+        <text x="48" y="64" textAnchor="middle" fontFamily="Bungee, system-ui, sans-serif" fontSize="44" fill="#0d0618">
+          {letter}
+        </text>
+        <circle cx="76" cy="76" r="14" fill="#FFE94A" {...S} />
+        <text x="76" y="82" textAnchor="middle" fontFamily="Bungee, system-ui, sans-serif" fontSize="16" fill="#0d0618">
+          {level}
         </text>
       </g>
     </svg>
@@ -162,8 +159,8 @@ function glyphFor(reveal) {
       return <GlyphKeyTier tier={reveal.tier} colour={reveal.colour} />;
     case 'wordsense':
       return <GlyphLens tier={reveal.tier} colour={reveal.colour} />;
-    case 'momentum':
-      return <GlyphMomentum count={reveal.tier} colour={reveal.colour} />;
+    case 'forge':
+      return <GlyphForge letter={reveal.letter} level={reveal.tier} colour={reveal.colour} />;
     case 'rebirth':
       return <GlyphRebirth colour={reveal.colour} />;
     default:

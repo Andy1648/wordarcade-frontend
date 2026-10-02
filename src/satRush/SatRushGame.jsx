@@ -21,7 +21,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { bankWordWins, awardWins, awardWordXp, perWordRateNow } from '../progress/wins';
+import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordRateNow } from '../progress/wins';
 import { cappedWordMult, modePower } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
@@ -139,8 +139,8 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
         comboRef.current.mult,
         luck.winsWeight,
       ) * (Number.isFinite(view.lastClearedPaid) ? view.lastClearedPaid : 1);
-      satWeightRef.current += wWeight + Math.max(0, delta - 1);
-      awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight });
+      satWeightRef.current += bankWeight(wWeight, view.lastClearedWord || '') + Math.max(0, delta - 1); // + LETTER FORGE
+      awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight, word: view.lastClearedWord || '' });
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
       noteWord(view.lastClearedWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)

@@ -35,6 +35,8 @@ export const PAYOUT_FACTORS = [
   // FUSE FRENZY — ×5 for five real minutes after a full strip (frenzy.js). Timed, so it reads with
   // the per-word rows rather than the permanent ones.
   { key: 'frenzy', label: 'FRENZY', kind: 'word' },
+  // LETTER FORGE (forge.js): +5% per forged level of each letter in THIS word.
+  { key: 'forge', label: 'FORGE', kind: 'word' },
   { key: 'rarity', label: 'RARITY', kind: 'word' },
   { key: 'length', label: 'LENGTH', kind: 'word' },
   { key: 'combo', label: 'COMBO', kind: 'word' },
@@ -124,7 +126,7 @@ export function inactivePayoutFactors(factors = {}, { band } = {}) {
   if (num(factors.lucky) === 1) off('lucky', 'no lucky roll');
   if (num(factors.rebirth) === 1) off('rebirth', 'no rebirths yet');
   if (num(factors.streak) === 1) off('streak', 'streak under 3 days');
-  if (num(factors.bonus) === 1) off('bonus', 'no momentum, mark or mastery yet');
+  if (num(factors.bonus) === 1) off('bonus', 'no mark or mastery yet');
   return out;
 }
 

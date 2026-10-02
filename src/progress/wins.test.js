@@ -125,7 +125,7 @@ test('perWordWins: REBIRTH multiplies wins on the same ladder as XP (v9: additiv
 // momentum, which are levers the player buys rather than ones that accrue and then race the
 // curve. winLevelMult survives for the FLAT one-off grants (secret finds, secret achievements).
 test('perWordWins is FLAT in level (v8); winLevelMult survives for the flat grants', () => {
-  const at = (lv) => perWordWins({ mode: 'wordBomb', rebirthCount: 0, momentumCount: 0, level: lv, keyTier: 0, streakMult: 1, masteryMult: 1 });
+  const at = (lv) => perWordWins({ mode: 'wordBomb', rebirthCount: 0, level: lv, keyTier: 0, streakMult: 1, masteryMult: 1 });
   assert.equal(at(1), at(50));
   assert.equal(at(50), at(300), 'a level must not silently multiply a word’s payout any more');
   // The helper itself is unchanged and still exported — achievements.js and useWordSecrets.js

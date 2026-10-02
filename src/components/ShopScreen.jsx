@@ -6,8 +6,9 @@
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyMomentum } from '../progress/shop';
-import { getMomentum, momentumCost, momentumMult, momentumMaxed, MOMENTUM_MAX } from '../progress/momentum';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyForge } from '../progress/shop';
+import { forgeLevels, forgeBuys, forgeCost, nextForgeLetter, FORGE_PCT } from '../progress/forge';
+import ForgeStrip from './ForgeStrip';
 import {
   THEMES,
   themeById,
@@ -37,7 +38,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
-  const [momentum, setMomentum] = useState(() => getMomentum());
+  const [forge, setForge] = useState(() => forgeLevels());
   // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
   const [ownedThemes, setOwnedThemes] = useState(() => {
     syncThemeUnlocks(loadProgress().level);
@@ -71,9 +72,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
-  const mMaxed = momentumMaxed(momentum);
-  const mCost = momentumCost(momentum); // Infinity when maxed
-  const mProgress = mMaxed ? 1 : mCost > 0 ? Math.min(1, wins / mCost) : 1;
+  const fBuys = forgeBuys(forge);
+  const fCost = forgeCost(fBuys);
+  const fNext = nextForgeLetter(forge);
+  const fNextLv = (forge[fNext] || 0) + 1;
+  const fProgress = fCost > 0 ? Math.min(1, wins / fCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
@@ -85,7 +88,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());
-    setMomentum(getMomentum());
+    setForge(forgeLevels());
   };
   const onBuy = (id) => {
     if (buy(id).ok) {
@@ -142,40 +145,42 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     while (guard < 500 && onBuyKeyPower({ batch: true })) guard += 1;
     endKeyPowerRun();
   };
-  // The permanent mark lands on the menu rail (see MomentumRail); the sticker names the total.
-  const revealMomentum = (count, n, spent) => {
+  // LETTER FORGE (replaced MOMENTUM): the sticker names the letter(s) just forged and what a
+  // letter level pays, in plain words.
+  const revealForge = (letter, level, n, spent) => {
     setReveal({
-      kind: 'momentum',
-      name: `MOMENTUM ${count}${n > 1 ? ` (+${n})` : ''}`,
-      blurb: `${count} mark${count === 1 ? '' : 's'} — every win now pays +${count}%.`,
+      kind: 'forge',
+      name: n > 1 ? `FORGED ×${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
+      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word now pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: '#FF6B3D',
-      tier: count,
+      tier: level,
+      letter: letter.toUpperCase(),
     });
   };
-  const mRun = useRef({ n: 0, spent: 0, count: 0 });
-  const onBuyMomentum = ({ batch = false } = {}) => {
-    const r = buyMomentum();
+  const fRun = useRef({ n: 0, spent: 0, letter: 'e', level: 1 });
+  const onBuyForge = ({ batch = false } = {}) => {
+    const r = buyForge();
     if (!r.ok) return false;
     sndPurchase();
-    evItemPurchased('momentum', r.count);
+    evItemPurchased('forge', r.count);
     if (batch) {
-      mRun.current = { n: mRun.current.n + 1, spent: mRun.current.spent + r.spent, count: r.count };
+      fRun.current = { n: fRun.current.n + 1, spent: fRun.current.spent + r.spent, letter: r.letter, level: r.level };
     } else {
-      revealMomentum(r.count, 1, r.spent);
+      revealForge(r.letter, r.level, 1, r.spent);
     }
     refresh();
     return true;
   };
-  const endMomentumRun = () => {
-    const run = mRun.current;
-    mRun.current = { n: 0, spent: 0, count: 0 };
-    if (run.n > 0) revealMomentum(run.count, run.n, run.spent);
+  const endForgeRun = () => {
+    const run = fRun.current;
+    fRun.current = { n: 0, spent: 0, letter: 'e', level: 1 };
+    if (run.n > 0) revealForge(run.letter, run.level, run.n, run.spent);
   };
-  const buyMaxMomentum = () => {
+  const buyMaxForge = () => {
     let guard = 0;
-    while (guard < 500 && onBuyMomentum({ batch: true })) guard += 1;
-    endMomentumRun();
+    while (guard < 500 && onBuyForge({ batch: true })) guard += 1;
+    endForgeRun();
   };
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
@@ -304,50 +309,38 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 />
               ))}
             </div>
-            {/* MOMENTUM (repeatable sink): the ONE upgrade you buy forever — cheap, gently-rising
-                cost, +1% wins each, and every buy drops a permanent MARK on the menu rail. Fixes the
-                end-game "nothing to buy" dead stretch (claude/dead-stretch-report.md). */}
-            <h3 className="shop-subtitle">MOMENTUM — {momentum} / {MOMENTUM_MAX} MARKS</h3>
-            <div className="shop-keypower">
+            {/* LETTER FORGE (Andy oct2 — replaced MOMENTUM, which capped at 200 and did nothing you
+                could see). Uncapped: each buy forges the next letter one level; a word pays +5% per
+                forged level of every letter in it. The strip IS the state — 26 letters at their levels. */}
+            <h3 className="shop-subtitle">LETTER FORGE — {fBuys} FORGED</h3>
+            <div className="shop-keypower shop-forge">
               <div className="shop-kp-info">
-                <div className="shop-kp-current">
-                  <b>×{momentumMult(momentum).toFixed(2)}</b> WINS · <b>{momentum}</b> MARKS ON YOUR MENU
+                <ForgeStrip levels={forge} next={fNext} />
+                <div className="shop-kp-next">
+                  NEXT: <b>{fNext.toUpperCase()} → LV {fNextLv}</b>
+                  {'  ·  '}
+                  <b><span className="shop-coin" aria-hidden="true" /> {formatNum(fCost)} WINS</b>
                 </div>
-                {mMaxed ? (
-                  <div className="shop-kp-next">ALL {MOMENTUM_MAX} MARKS EARNED — MAXED</div>
-                ) : (
-                  <div className="shop-kp-next">
-                    NEXT: <b>+1% (×{momentumMult(momentum + 1).toFixed(2)})</b>
-                    {'  ·  '}
-                    <b><span className="shop-coin" aria-hidden="true" /> {formatNum(mCost)} WINS</b>
-                  </div>
-                )}
-                <div className="shop-kp-rate">BUY AGAIN, FOREVER — EACH BUY LEAVES A MARK</div>
+                <div className="shop-kp-rate">
+                  +{Math.round(FORGE_PCT * 100)}% PER LEVEL, PER LETTER IN THE WORD — LONGER WORDS FORGE MORE. NO CAP.
+                </div>
                 <div className="shop-goal">
-                  {mMaxed
-                    ? 'MOMENTUM MAXED'
-                    : wins >= mCost
-                    ? 'READY TO UNLOCK'
-                    : `UNLOCKS AT ${formatNum(mCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                  {wins >= fCost ? 'READY TO FORGE' : `FORGE AT ${formatNum(fCost)} WINS — YOU HAVE ${formatNum(wins)}`}
                 </div>
-                <ProgressBar value={mProgress} />
+                <ProgressBar value={fProgress} />
               </div>
               <div className="shop-kp-actions">
-                {mMaxed ? (
-                  <button type="button" className="shop-card-btn" disabled>
-                    MAXED
-                  </button>
-                ) : wins >= mCost ? (
+                {wins >= fCost ? (
                   <>
-                    <HoldBuy label={formatNum(mCost)} onCommit={onBuyMomentum} onBatchEnd={endMomentumRun} />
-                    {!momentumMaxed(momentum + 1) && wins >= mCost + momentumCost(momentum + 1) && (
-                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxMomentum}>BUY MAX</button>
+                    <HoldBuy label={formatNum(fCost)} onCommit={onBuyForge} onBatchEnd={endForgeRun} />
+                    {wins >= fCost + forgeCost(fBuys + 1) && (
+                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxForge}>BUY MAX</button>
                     )}
                   </>
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
-                    {formatNum(mCost)}
+                    {formatNum(fCost)}
                   </button>
                 )}
               </div>

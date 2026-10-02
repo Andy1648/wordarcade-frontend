@@ -278,8 +278,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   //   SAT RUSH / CHAIN  POWER ×N  — the mode's multiplier against Word Bomb, really paid per word
   //   FUSE              FRENZY ×5 — the timed ×5 its full strip unlocks (a live clock while it runs)
   //   every mode        LONGER WORDS = MORE
-  // It keeps the .game-card-xp slot (and its fit-to-slot sizing) and the " · LONGER…" tail rides
-  // the same breakable/droppable span the payout's "/ WORD" does, so a narrow card keeps the perk.
+  // It keeps the .game-card-xp slot (and its fit-to-slot sizing); the " · LONGER…" tail is its own
+  // span that drops WHOLE on a narrow card (GameCard.css), so a narrow card keeps the perk head.
   const power = modePower(game.id);
   const isFuse = game.id === 'fuse';
   const perkHead = isFuse
@@ -289,7 +289,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     perkHead ? (
       <>
         <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>{perkHead}</span>
-        <span className="game-card-payout-per game-card-perk-tail"> · LONGER = MORE</span>
+        <span className="game-card-perk-tail"> · LONGER = MORE</span>
       </>
     ) : (
       <>LONGER WORDS = MORE</>

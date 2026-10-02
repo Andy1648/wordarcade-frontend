@@ -34,7 +34,7 @@ const SETUPS = [
   { diff: 'hard', label: 'HELL', momentum: 10 },
 ];
 const PERMANENT = new Set(['MODE', 'DIFFICULTY', 'REBIRTH', 'STREAK', 'BONUS']);
-const PER_WORD = new Set(['COMBO', 'LUCKY']); // what the card legitimately cannot know
+const PER_WORD = new Set(['COMBO', 'LUCKY', 'FORGE']); // what the card legitimately cannot know (FORGE depends on the word's letters)
 
 const num = (s) => Number(String(s).replace(/[^0-9.]/g, ''));
 
@@ -56,6 +56,8 @@ for (const s of SETUPS) {
       localStorage.setItem('taw.seenMenu', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.seenGameSpotlight', '1');
+      // Andy oct2: MOMENTUM became the LETTER FORGE; an old momentum count migrates buy-for-buy, so
+      // this seed now means "N forged letters" and the receipt carries a per-word FORGE row.
       localStorage.setItem('taw.momentum', String(momentum));
     }, s.momentum);
     await page.goto('/?portal=1');
