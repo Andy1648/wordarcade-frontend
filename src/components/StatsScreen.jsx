@@ -207,7 +207,10 @@ export default function StatsScreen({ onBack }) {
   // live level into the stored peak so it's always current; streak/rebirths read from their stores.
   const records = readRecords();
   const highestLevel = Math.max(records.maxLevel, level);
-  const recordCells = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
+  // EARNED FIRST (fine-tune oct2 / Andy N3): the records you hold lead the grid at full size; the
+  // locked ones follow as compact one-line goals, so the screen's big thing is what you've done.
+  const recordCellsAll = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
+  const recordCells = [...recordCellsAll.filter((c) => !c.locked), ...recordCellsAll.filter((c) => c.locked)];
   // SAT RUSH spaced-repetition: the persistent WORDS YOU KEEP MISSING list, read
   // from the SAT lexicon store (lexicon.load is storage-access-safe on its own).
   const satMissing = satLexicon.mostMissed(

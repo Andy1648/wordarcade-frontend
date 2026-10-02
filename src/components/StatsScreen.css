@@ -542,3 +542,16 @@
   font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   letter-spacing: 0.04em;
 }
+
+/* LOCKED = a compact goal row, not a full tile (fine-tune oct2, loop B): eleven identical GOAL
+   tiles read as a wall of placeholders. Locked records span the row as one short line (label ·
+   goal) under the records you hold, which keep the full tile and the big value. */
+.rec-cell--locked {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 6px 12px;
+  box-shadow: 2px 2px 0 #0a0414;
+}

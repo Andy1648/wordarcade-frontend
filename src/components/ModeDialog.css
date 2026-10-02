@@ -495,9 +495,13 @@
    laptop the SOLO / SOLO-MULTI chip was crushed to a ~20px sliver UNDER the title instead of the
    body scrolling. Children keep their size; the body scrolls. The Blitz lower block (the pack
    picker's own scroller) is the one deliberate shrinker and keeps its rule. */
-.mode-dialog-content > :not(.mode-dialog-lower--blitz) {
-  flex-shrink: 0;
+@media (min-width: 481px) {
+  .mode-dialog-content > :not(.mode-dialog-lower--blitz) {
+    flex-shrink: 0;
+  }
 }
+/* (Desktop only: the phone dialog's fit is held by viewport-integrity at 360x640 with the old
+   shrink behaviour, and the chip squash was a 1366x625 bug.) */
 
 /* A 625px-tall laptop cannot show title + mastery + the full worked example + CTAs: the PLAY row
    was clipped by the panel edge (fine-tune oct2, loop B). Below 700px only the worked-example
