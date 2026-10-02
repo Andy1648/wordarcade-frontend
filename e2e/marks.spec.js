@@ -61,3 +61,50 @@ test('before LV 10 there is no marks layer at all', async ({ page }) => {
   const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]'));
   expect(claims.filter((c) => c.kind === 'mark' || c.id === 'layer-marks')).toEqual([]);
 });
+
+// Andy oct2 A3: "the MARKS button sometimes shows and sometimes doesn't" (1280x551, LV27). It rendered
+// only while a mark was worn OR a new one was unseen — open the picker without wearing one and it was
+// gone until the next unlock. Once MARKS is revealed it is ALWAYS there.
+for (const [label, seed] of [
+  ['owned, not worn, already seen', { 'taw.marksOwned': '["mk-bomber"]', 'taw.marksSeen': '["mk-bomber"]', 'taw.marksRevealed': '1' }],
+  ['revealed, nothing owned yet', { 'taw.marksOwned': '[]', 'taw.marksRevealed': '1' }],
+  ['old LV27 save with no marks keys', {}],
+]) {
+  test(`MARKS button is present at 1280x551, LV27 — ${label}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 551 });
+    await installBackendMock(page);
+    await page.addInitScript((seed) => {
+      if (sessionStorage.getItem('mk3.seeded')) return;
+      sessionStorage.setItem('mk3.seeded', '1');
+      localStorage.setItem('taw.seenMenu', '1');
+      localStorage.setItem('taw.seenMenuSpotlight', '1');
+      localStorage.setItem('taw.xp', JSON.stringify({ lv: 27, into: 0 }));
+      for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
+    }, seed);
+    await page.goto('/?portal=1');
+    await menuReady(page);
+    const btn = page.locator('.menu-mark');
+    await expect(btn).toBeVisible();
+    await btn.click();
+    await page.locator('.marks-overlay').waitFor();
+    await page.locator('.marks-close').click();
+    // still there after the picker closes with nothing worn — the old disappearing act
+    await expect(page.locator('.marks-overlay')).toHaveCount(0);
+    await expect(btn).toBeVisible();
+  });
+}
+
+test('no MARKS button before the system is revealed (LV5)', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 551 });
+  await installBackendMock(page);
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('mk4.seeded')) return;
+    sessionStorage.setItem('mk4.seeded', '1');
+    localStorage.setItem('taw.seenMenu', '1');
+    localStorage.setItem('taw.seenMenuSpotlight', '1');
+    localStorage.setItem('taw.xp', JSON.stringify({ lv: 5, into: 0 }));
+  });
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await expect(page.locator('.menu-mark')).toHaveCount(0);
+});

@@ -28,7 +28,7 @@ import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 import MarksPicker from './MarksPicker';
-import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt } from '../progress/marks';
+import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -1069,7 +1069,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             freezes={streakFreezes}
             /* The slot is only drawn once there is something to put in it — an empty badge on a
                brand-new account is a question with no answer yet. */
-            markSlot={markUnlocked.length > 0}
+            /* Andy oct2 A3: once MARKS is revealed (LV10 / R1) the slot is always there. */
+            markSlot={markUnlocked.length > 0 || marksRevealed()}
             mark={markById(equippedMark)}
             markNew={marksNew}
             onMarkClick={() => {

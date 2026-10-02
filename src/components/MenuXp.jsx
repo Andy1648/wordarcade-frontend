@@ -257,12 +257,18 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )
       )}
-      {/* NEW MARK (STEP 21): nothing worn but a mark just unlocked → the slot appears as a call to
-          action instead of staying hidden until the player finds the picker in Stats. */}
-      {variant !== 'mini' && markSlot && !mark && markNew && onMarkClick && (
-        <button type="button" className="menu-mark is-new" onClick={onMarkClick} aria-label="New mark unlocked. Choose a mark to wear">
-          <span className="menu-mark-name">NEW MARK</span>
-          <span className="homepage-shop-dot" aria-hidden="true" />
+      {/* NOTHING WORN → a MARKS button, ALWAYS (Andy oct2 A3). It used to render only while a new
+          mark was unseen, so opening the picker without wearing one made the button vanish until
+          the next unlock — "sometimes it shows, sometimes it doesn't". The dot says a mark is new. */}
+      {variant !== 'mini' && markSlot && !mark && onMarkClick && (
+        <button
+          type="button"
+          className={`menu-mark is-empty${markNew ? ' is-new' : ''}`}
+          onClick={onMarkClick}
+          aria-label={markNew ? 'New mark unlocked. Choose a mark to wear' : 'Marks. Choose a mark to wear'}
+        >
+          <span className="menu-mark-name">{markNew ? 'NEW MARK' : 'MARKS'}</span>
+          {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
         </button>
       )}
       <BarRow loud={variant !== 'mini'} level={level}>
