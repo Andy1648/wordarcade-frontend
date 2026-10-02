@@ -19,7 +19,7 @@ test('reveal → claim a mark → wear it as MAIN (desktop)', async ({ page }) =
   });
   await page.goto('/?portal=1');
   await menuReady(page);
-  const rewards = page.locator('.homepage-nav-btn.is-rewards');
+  const rewards = page.locator('.homepage-nav-btn.is-stats'); // claims ride STATS (Andy oct2 A4)
   await expect(rewards).toBeVisible();
   await rewards.click();
   await page.locator('.claims-panel').waitFor();

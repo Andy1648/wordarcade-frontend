@@ -8,6 +8,7 @@
 // overlay is opened at four viewports incl. two short heights (--app-scale < 1, the regression case).
 import { test, expect } from '@playwright/test';
 import { gotoMenu } from './support/backendMock.js';
+import { openStats } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 1280, h: 640 },
@@ -19,9 +20,9 @@ const VIEWPORTS = [
 // name -> { open(page), root, panel }
 const OVERLAYS = {
   shop: { root: '.shop-overlay', panel: '.shop-panel', open: async (p) => { await p.locator('.homepage-nav-btn.is-shop').click(); await p.locator('.shop-overlay').waitFor(); } },
-  stats: { root: '.stats-overlay', panel: '.stats-panel', open: async (p) => { await p.locator('.homepage-nav-btn.is-stats').click(); await p.locator('.stats-overlay').waitFor(); } },
-  collection: { root: '.stats-overlay', panel: '.stats-panel', open: async (p) => { await p.locator('.homepage-nav-btn.is-stats').click(); await p.locator('.stats-overlay').waitFor(); await p.getByRole('tab', { name: 'COLLECTION' }).click(); } },
-  achievements: { root: '.stats-overlay', panel: '.stats-panel', open: async (p) => { await p.locator('.homepage-nav-btn.is-stats').click(); await p.locator('.stats-overlay').waitFor(); await p.getByRole('tab', { name: 'ACHIEVEMENTS' }).click(); } },
+  stats: { root: '.stats-overlay', panel: '.stats-panel', open: async (p) => { await openStats(p); } },
+  collection: { root: '.stats-overlay', panel: '.stats-panel', open: async (p) => { await openStats(p); await p.getByRole('tab', { name: 'COLLECTION' }).click(); } },
+  achievements: { root: '.stats-overlay', panel: '.stats-panel', open: async (p) => { await openStats(p); await p.getByRole('tab', { name: 'ACHIEVEMENTS' }).click(); } },
 };
 
 async function measure(page, rootSel, panelSel) {

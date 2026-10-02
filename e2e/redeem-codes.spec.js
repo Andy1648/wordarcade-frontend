@@ -58,7 +58,7 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
     // claim it: exactly its wins
     await page.locator('.shop-close').click();
     await expect(page.locator('.shop-panel')).toHaveCount(0);
-    const open = page.getByRole('button', { name: /Open rewards/ });
+    const open = page.getByRole('button', { name: /Open stats — \d+ to claim/ });
     await open.first().click();
     const row = page.locator('.claims-row').filter({ hasText: 'LAUNCH GIFT' }).first();
     await row.waitFor();
