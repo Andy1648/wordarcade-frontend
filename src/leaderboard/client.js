@@ -25,7 +25,7 @@ export const LEADERBOARD_ENABLED = !!(BASE && KEY);
 
 const SECRET_KEY = 'taw.lb.secret';
 const PROFILE_KEY = 'taw.lb.profile';
-export const BOARD_SIZE = 100;
+export const BOARD_SIZE = 10; // Andy oct2 LB10: the board shows the TOP 10; anyone below gets a pinned row with their real rank
 const SUBMIT_EVERY_MS = 30 * 1000;
 
 function headers() {
@@ -326,18 +326,47 @@ export function noteClaimPromptDismissed() {
   } catch { /* ignore */ }
 }
 
-/** The rank this browser's stats would claim right now, or null (claimed already / off-board /
- *  offline). One board read; never throws. */
+/**
+ * The TRUE rank `stats` would take on the live board — counted on the SERVER (how many rows rank
+ * ahead under the view's order: words, then level, then rebirths; an exact tie goes to the existing
+ * row), so it is right past the visible top 10 (Andy oct2 LB10). null when offline.
+ */
+export async function serverRankFor(stats) {
+  if (!LEADERBOARD_ENABLED || !stats) return null;
+  const w = Math.max(0, Math.floor(Number(stats.lifetimeWords) || 0));
+  const l = Math.max(1, Math.floor(Number(stats.level) || 1));
+  const rb = Math.max(0, Math.floor(Number(stats.rebirths) || 0));
+  const or = `(lifetime_words.gt.${w},and(lifetime_words.eq.${w},level.gt.${l}),and(lifetime_words.eq.${w},level.eq.${l},rebirths.gte.${rb}))`;
+  try {
+    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=id&or=${encodeURIComponent(or)}`, {
+      method: 'HEAD',
+      headers: { ...headers(), Prefer: 'count=exact' },
+    });
+    if (!r.ok) return null;
+    const total = Number(String(r.headers.get('content-range') || '').split('/')[1]);
+    return Number.isFinite(total) ? total + 1 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The rank this browser's stats would claim right now — TRUE past the top 10 — or null (claimed
+ *  already / offline). Never throws. */
 export async function rankIfClaimed() {
   if (!LEADERBOARD_ENABLED || getMyProfile()) return null;
-  // ONE board read per session: a prompt that rendered below the fold and was never scrolled to can
-  // come back on the next end screen with the cached rank, without fetching 100 rows again.
+  // ONE rank read per session: a prompt that rendered below the fold and was never scrolled to can
+  // come back on the next end screen with the cached rank, without asking the server again.
   const cached = cachedPromptRank();
   if (cached !== undefined) return cached;
   cachePromptRank(0); // claim the read before it starts (a second end screen mid-fetch won't refetch)
   try {
-    const { rows } = await fetchBoard();
-    const rank = hypotheticalRank(rows, myStats());
+    const stats = myStats();
+    let rank = await serverRankFor(stats);
+    if (rank == null) {
+      // the count endpoint failed: estimate from the top rows (a rank past them is unknown, not "unranked")
+      const { rows } = await fetchBoard();
+      rank = hypotheticalRank(rows, stats);
+    }
     cachePromptRank(rank);
     return rank;
   } catch {

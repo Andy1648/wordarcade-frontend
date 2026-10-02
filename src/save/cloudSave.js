@@ -39,10 +39,15 @@ export function progressScoreFromKeys(keys) {
   } catch {
     lv = 1;
   }
-  const rb = Math.min(999, Math.floor(num(get('taw.rebirths'))));
-  const letters = Math.min(9e9, Math.floor(num(get('taw.letters'))));
-  // rebirths × 1e16 + level × 1e10 + letters — exact in a numeric(30,0); compared as BigInt below.
-  return BigInt(rb) * 10n ** 16n + BigInt(Math.min(99999, lv)) * 10n ** 10n + BigInt(letters);
+  // NO CAPS (Andy oct2): rebirths are the top key and UNCAPPED (was 999); level and letters are
+  // sub-keys, each bounded below 1e12 only so it can never spill into the key above (level 1e12 and
+  // a trillion letters are not reachable). Every old score is <= the new score for the same save, so
+  // a stored cloud save never blocks the next one. The DB column becomes plain numeric (011_no_caps).
+  const rb = Math.floor(num(get('taw.rebirths')));
+  const SUB = 10n ** 12n;
+  const lvKey = BigInt(Math.min(Math.floor(lv), 1e12 - 1));
+  const letters = BigInt(Math.min(Math.floor(num(get('taw.letters'))), 1e12 - 1));
+  return BigInt(rb) * SUB * SUB + lvKey * SUB + letters;
 }
 export function localScore(storage) {
   const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);

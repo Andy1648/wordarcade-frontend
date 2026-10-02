@@ -93,6 +93,16 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
       return route.fulfill({ status: 204, body: '' });
     }
     if (url.pathname.endsWith('/leaderboard')) {
+      // LB10: the server-side rank count (HEAD + Prefer: count=exact with the view's order as an or=).
+      const or = url.searchParams.get('or');
+      if (or) {
+        const n = (re) => Number((or.match(re) || [])[1]);
+        const w = n(/lifetime_words\.gt\.(\d+)/);
+        const l = n(/level\.gt\.(\d+)/);
+        const rb = n(/rebirths\.gte\.(\d+)/);
+        const ahead = ranked().filter((r) => r.lifetime_words > w || (r.lifetime_words === w && (r.level > l || (r.level === l && r.rebirths >= rb)))).length;
+        return route.fulfill({ status: 200, headers: { 'content-range': `*/${ahead}`, 'access-control-expose-headers': 'content-range' }, body: '' });
+      }
       const id = url.searchParams.get('id');
       const all = ranked();
       return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));

@@ -68,7 +68,10 @@ test('homepage initial load stays inside the payload budget', async ({ page }) =
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(2500); // let any idle-callback work fire too
 
-  const preGesture = seen.slice();
+  // One entry per URL: a second <picture> asking for the same file (splash → menu mascot) is a
+  // memory-cache hit, but Playwright still reports it with a full body — on CI's slower box that
+  // double-counted mascot-idle.avif (+13,383) and tripped the ratchet with nothing downloaded twice.
+  const preGesture = seen.filter((r, i) => seen.findIndex((o) => o.url === r.url) === i);
   const total = preGesture.reduce((a, r) => a + r.bytes, 0);
   const byKind = {};
   for (const r of preGesture) byKind[r.kind] = (byKind[r.kind] || 0) + r.bytes;
