@@ -33,7 +33,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] O9 Wins only from playing — non-game rewards no longer credit on their own; e2e menu-no-free-wins asserts no write before a claim — PR #76
 - [x] O10 Achievements, collection milestones, welcome-back, rank-ups (+ marks, new systems) are CLAIMED via popup or REWARDS button with a count badge — PR #76, claude/econ-oct2/shots/claims-popup-390.png, claims-panel-1280.png
 - [x] O11 XP / WORD removed from cards, dialog, SAT cover; in-game chip trimmed to rate / COMBO / FRENZY — PR #76
-- [x] O12 Cards: WINS / WORD (base word) + POWER ×N / FRENZY ×5 + LONGER = MORE; the (×N) tag is only what the player built. No end-of-round winner bonus exists in the game, so no example was added (it would advertise a reward the game does not pay) — PR #76
+- [ ] O12 PARTIAL — cards: WINS / WORD (base word) + POWER ×N / FRENZY ×5 + LONGER = MORE; the (×N) tag is only what the player built (PR #76). OPEN: the game has no end-of-round WINNER bonus to advertise yet — building one (Tier 1, game-over path) is queued after STEP 54.
 - [x] O13 Cards, dialog, SAT cover, phone solo band, receipt rows (FRENZY, FORGE), shop, rebirth; no stale MOMENTUM / XP-per-word copy left (grep) — PR #76
 - [x] O14 econ-sim extended (forge, frenzy, claims, stars/perks/automation, bad-time rebirths) — claude/econ-oct2/report.md: median gap 1.0–2.6 m, p90 ≤ 13 m, max 24 m
 - [x] O15 CI green, merged — PR #76 (b3a50c3)
