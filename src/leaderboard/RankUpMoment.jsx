@@ -17,8 +17,8 @@ export default function RankUpMoment({ from, to, onDone }) {
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
   const [on, setOn] = useState(false);
-  // Andy oct2: the board ranks by lifetime WORDS, so the moment names the stat that moved you.
-  const [words] = useState(() => myStats().lifetimeWords);
+  // Andy oct2 (later): the board ranks by LEVEL (after rebirths), so the moment names the level.
+  const [level] = useState(() => myStats().level);
   useEffect(() => {
     const a = setTimeout(() => setOn(true), RANKUP_DELAY_MS);
     const b = setTimeout(() => doneRef.current && doneRef.current(), RANKUP_DELAY_MS + RANKUP_MS);
@@ -35,7 +35,7 @@ export default function RankUpMoment({ from, to, onDone }) {
             <span className="lb-rankup-arrow">→</span>
             <span className="lb-rankup-to">#{to}</span>
           </span>
-          <span className="lb-rankup-sub">{Number(words || 0).toLocaleString('en-US')} WORDS · ON THE LEADERBOARD</span>
+          <span className="lb-rankup-sub">LV {Number(level || 1).toLocaleString('en-US')} · ON THE LEADERBOARD</span>
         </div>
       )}
     </div>
