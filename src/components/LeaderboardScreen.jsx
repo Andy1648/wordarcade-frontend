@@ -11,6 +11,9 @@ import {
   LEADERBOARD_ENABLED,
   claimName,
   fetchBoard,
+  fetchWeekly,
+  weekResetInMs,
+  formatResetIn,
   getMyProfile,
   myStats,
   nameStatus,
@@ -100,6 +103,24 @@ function Row({ row, mine, flash }) {
   );
 }
 
+// BB3: a THIS WEEK row — words typed this ET week are the number; the level is the small line.
+function WeekRow({ row, mine }) {
+  const top = row.rank <= 3 ? ` is-top${row.rank}` : '';
+  return (
+    <li className={`lb-row lb-row--week${top}${mine ? ' is-me' : ''}`} data-rank={row.rank}>
+      <span className="lb-rank">{row.rank}</span>
+      <span className="lb-who">
+        <span className="lb-name-line">
+          <NameTag name={row.username} rebirths={row.rebirths} />
+          {mine && <span className="lb-you-badge">YOU</span>}
+        </span>
+        <span className="lb-lv lb-words-sub">LV {fmt(row.level)}</span>
+      </span>
+      <span className="lb-num lb-level lb-week-words">{fmt(row.week_words)}</span>
+    </li>
+  );
+}
+
 export default function LeaderboardScreen({ onBack }) {
   const [board, setBoard] = useState({ rows: [], me: null });
   const [loading, setLoading] = useState(LEADERBOARD_ENABLED);
@@ -118,11 +139,24 @@ export default function LeaderboardScreen({ onBack }) {
   const [restoreDraft, setRestoreDraft] = useState('');
   const [restoreMsg, setRestoreMsg] = useState(null);
   const overlayRef = useRef(null);
+  // BB3: ALL-TIME (rebirths → level) or THIS WEEK (words typed this ET week; resets Monday 00:00 ET
+  // in the DB). The switch exists only once 013_weekly_board.sql is applied (lb_caps.weekly).
+  const [view, setView] = useState('all');
+  const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false });
   useEffect(() => {
     let live = true;
     boardCaps().then((c) => { if (live) setCaps(c); });
     return () => { live = false; };
   }, []);
+  async function openWeek() {
+    setView('week');
+    try {
+      const w = await fetchWeekly();
+      setWeek({ ...w, loaded: true, error: false });
+    } catch {
+      setWeek((w) => ({ ...w, loaded: true, error: true }));
+    }
+  }
 
   async function load() {
     if (!LEADERBOARD_ENABLED) return;
@@ -311,7 +345,32 @@ export default function LeaderboardScreen({ onBack }) {
             )
           )}
 
-          {LEADERBOARD_ENABLED && (
+          {LEADERBOARD_ENABLED && caps.weekly && (
+            <div className="lb-tabs" role="tablist" aria-label="Board">
+              <button type="button" role="tab" aria-selected={view === 'all'} className={`lb-tab${view === 'all' ? ' is-on' : ''}`} onClick={() => setView('all')}>ALL-TIME</button>
+              <button type="button" role="tab" aria-selected={view === 'week'} className={`lb-tab${view === 'week' ? ' is-on' : ''}`} onClick={openWeek}>THIS WEEK</button>
+            </div>
+          )}
+          {LEADERBOARD_ENABLED && view === 'week' && (
+            <>
+              <div className="lb-cols lb-cols--week" aria-hidden="true">
+                <span>#</span><span>PLAYER</span><span className="lb-num">WORDS THIS WEEK</span>
+              </div>
+              {!week.loaded && <p className="lb-note">LOADING THIS WEEK…</p>}
+              {week.error && <p className="lb-note">COULDN’T LOAD THIS WEEK. <button type="button" className="lb-link-btn" onClick={openWeek}>RETRY</button></p>}
+              {week.loaded && !week.error && week.rows.length === 0 && <p className="lb-note">NOBODY HAS TYPED THIS WEEK YET. BE FIRST.</p>}
+              <ol className="lb-list">
+                {week.rows.map((r) => <WeekRow key={r.id} row={r} mine={!!profile && r.id === profile.id} />)}
+              </ol>
+              {week.me && (
+                <ol className="lb-list lb-list--me" aria-label="Your rank this week">
+                  <WeekRow row={week.me} mine />
+                </ol>
+              )}
+              <p className="lb-note lb-week-reset">RESETS MONDAY 00:00 ET · IN {formatResetIn(weekResetInMs())}</p>
+            </>
+          )}
+          {LEADERBOARD_ENABLED && view === 'all' && (
             <>
               <div className="lb-cols" aria-hidden="true">
                 <span>#</span><span>PLAYER</span><span className="lb-num">LEVEL</span><span className="lb-num">WINS/WORD</span>

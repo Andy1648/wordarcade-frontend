@@ -147,8 +147,8 @@ export function boardCaps() {
   if (!LEADERBOARD_ENABLED) return Promise.resolve({ letters: false, cjk: false });
   if (!capsPromise) {
     capsPromise = rpc('lb_caps', {})
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud) }))
-      .catch(() => ({ letters: false, cjk: false, cloud: false }));
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly) }))
+      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false }));
   }
   return capsPromise;
 }
@@ -308,6 +308,41 @@ export async function fetchBoard(limit = BOARD_SIZE) {
     if (r2.ok) me = (await r2.json())[0] || null;
   }
   return { rows, me };
+}
+
+// ---- BB3: THIS WEEK (013_weekly_board.sql) ------------------------------------------------------
+/** The weekly board (words typed this ET week; resets Monday 00:00 ET in the DB) + my own row. */
+export async function fetchWeekly(limit = BOARD_SIZE) {
+  if (!LEADERBOARD_ENABLED) return { rows: [], me: null };
+  const cols = 'rank,id,username,level,rebirths,week_words';
+  const r = await fetch(`${BASE}/rest/v1/leaderboard_weekly?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { code: `http_${r.status}` });
+  const rows = await r.json();
+  const mine = getMyProfile();
+  let me = null;
+  if (mine && mine.id && !rows.some((x) => x.id === mine.id)) {
+    const r2 = await fetch(`${BASE}/rest/v1/leaderboard_weekly?select=${cols}&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
+    if (r2.ok) me = (await r2.json())[0] || null;
+  }
+  return { rows, me };
+}
+
+const DOW = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+/** ms until the weekly board resets: the next Monday 00:00 in America/New_York (DST-safe to the hour). */
+export function weekResetInMs(now = Date.now()) {
+  const parts = {};
+  for (const p of new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23' }).formatToParts(new Date(now))) parts[p.type] = p.value;
+  const since = (((DOW[parts.weekday] || 0) * 24 + Number(parts.hour) % 24) * 60 + Number(parts.minute)) * 60 + Number(parts.second);
+  return Math.max(0, 7 * 24 * 3600 - since) * 1000;
+}
+/** "3D 4H" / "4H 12M" / "12M" — the reset countdown, coarse on purpose. */
+export function formatResetIn(ms) {
+  const m = Math.max(0, Math.floor(ms / 60000));
+  const d = Math.floor(m / 1440);
+  const h = Math.floor((m % 1440) / 60);
+  if (d > 0) return `${d}D ${h}H`;
+  if (h > 0) return `${h}H ${m % 60}M`;
+  return `${Math.max(1, m)}M`;
 }
 
 // ---- STEP 47: pulling players in -------------------------------------------------------------

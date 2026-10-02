@@ -6,7 +6,9 @@ import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
 // carries letters; the board ranks by rebirths, then level, then words either way (Andy oct2, 009 / 011). Without it the mock is the v1 DB (lb_caps 404s).
-export async function mockBoard(page, seed = [], { caps = false, shared = null } = {}) {
+// `weekly` emulates 013_weekly_board.sql (BB3): lb_caps.weekly, a per-submit week_words counter (the
+// first submit is a baseline), and the leaderboard_weekly view (week_words > 0, most first).
+export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
   const rows = db.rows;
@@ -29,7 +31,7 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
     let body = null;
     try { body = req.postDataJSON(); } catch { body = null; }
     if (url.pathname.endsWith('/rpc/lb_caps')) {
-      return caps ? json(200, { letters: true, cjk: true, cloud: true }) : json(404, { message: 'Could not find the function public.lb_caps' });
+      return caps ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}) }) : json(404, { message: 'Could not find the function public.lb_caps' });
     }
     if (caps && url.pathname.endsWith('/rpc/lb_save')) {
       const pid = secrets.get(body.p_secret);
@@ -61,6 +63,11 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
       calls.submit += 1;
       const row = rows.find((r) => r.id === secrets.get(body.p_secret));
       if (!row) return json(404, { message: 'no_profile' });
+      if (weekly) {
+        const delta = row.submitted ? Math.max(0, body.p_lifetime_words - (row.lifetime_words || 0)) : 0;
+        row.week_words = (row.week_words || 0) + delta;
+        row.submitted = true;
+      }
       Object.assign(row, {
         level: body.p_level,
         rebirths: body.p_rebirths,
@@ -102,6 +109,13 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null }
         wins_per_word: body.p_wins_per_word,
       });
       return route.fulfill({ status: 204, body: '' });
+    }
+    if (weekly && url.pathname.endsWith('/rest/v1/leaderboard_weekly')) {
+      const all = rows.filter((r) => (r.week_words || 0) > 0).slice()
+        .sort((a, b) => b.week_words - a.week_words || b.level - a.level)
+        .map((r, i) => ({ rank: i + 1, id: r.id, username: r.username, level: r.level, rebirths: r.rebirths, week_words: r.week_words }));
+      const id = url.searchParams.get('id');
+      return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
     }
     if (url.pathname.endsWith('/leaderboard')) {
       // LB10: the server-side rank count (HEAD + Prefer: count=exact with the view's order as an or=).
