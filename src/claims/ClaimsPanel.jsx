@@ -17,7 +17,7 @@ export const KIND_COLOUR = {
   layer: '#FF6B3D',
 };
 
-export default function ClaimsPanel({ onClose }) {
+export default function ClaimsPanel({ onClose, onReveal }) {
   const list = useClaims();
   const [paid, setPaid] = useState(null); // { key, wins } for the stamp after a claim
   const closeRef = useRef(null);
@@ -64,6 +64,7 @@ export default function ClaimsPanel({ onClose }) {
                       onClick={() => {
                         const r = claim(c.id);
                         if (r && r.amount) stamp(r.amount);
+                        if (r && (r.kind === 'layer' || r.kind === 'mark') && onReveal) onReveal(r);
                       }}
                     >
                       {c.amount > 0 ? `CLAIM +${formatNum(c.amount)}` : 'CLAIM'}
@@ -76,8 +77,10 @@ export default function ClaimsPanel({ onClose }) {
                 type="button"
                 className="claims-all"
                 onClick={() => {
+                  const reveals = list.filter((c) => c.kind === 'layer' || c.kind === 'mark');
                   const r = claimAll();
                   if (r.wins) stamp(r.wins);
+                  if (reveals.length && onReveal) onReveal(reveals[reveals.length - 1]);
                 }}
               >
                 CLAIM ALL{total > 0 ? ` +${formatNum(total)} WINS` : ''}

@@ -22,7 +22,7 @@ async function openShop(page, kv) {
 }
 
 test('the shop draws the forge; a buy forges E and charges the quoted price', async ({ page }) => {
-  await openShop(page, { 'taw.wins': '100000', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }) });
+  await openShop(page, { 'taw.wins': '100000', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }), 'taw.layer.forge': '1' });
   await expect(page.locator('.shop-subtitle', { hasText: 'LETTER FORGE' })).toBeVisible();
   await expect(page.locator('.forge-tile')).toHaveCount(26);
   await expect(page.locator('.forge-tile.is-forged')).toHaveCount(0);

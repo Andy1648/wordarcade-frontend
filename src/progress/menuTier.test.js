@@ -7,14 +7,16 @@ test('level tier climbs at the documented starts', () => {
   assert.equal(levelTier(9), 0);
   assert.equal(levelTier(10), 1);
   assert.equal(levelTier(150), 5);
-  assert.equal(levelTier(10000), 6);
+  assert.equal(levelTier(1000), 14); // STEP 50: tiers run to L1000
+  assert.equal(levelTier(10000), 14);
   assert.equal(levelTier(undefined), 0);
 });
 
 test('a rebirth never makes the menu poorer: each rebirth is worth a tier', () => {
   assert.equal(menuTier(1, 1), 1);
   assert.equal(menuTier(1, 3), 3);
-  assert.equal(menuTier(150, 3), MAX_TIER);
+  assert.equal(menuTier(150, 3), 8);
+  assert.equal(menuTier(1000, 10), MAX_TIER); // STEP 50: 24 tiers, L1000 + 10 rebirths tops out
   assert.ok(menuTier(1, 1) >= menuTier(1, 0));
 });
 
@@ -35,5 +37,7 @@ test('every tier has a name and a colour; next-tier level is monotonic', () => {
     assert.ok(TIER_COLORS[t] && TIER_COLORS[t].fill && TIER_COLORS[t].line);
   }
   assert.equal(nextTierLevel(1, 0), LEVEL_TIER_STARTS[1]);
-  assert.equal(nextTierLevel(150, 2), null);
+  assert.equal(nextTierLevel(150, 2), 200);
+  assert.equal(nextTierLevel(1000, 10), null);
+  assert.equal(MAX_TIER, 24);
 });

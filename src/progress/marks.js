@@ -20,9 +20,28 @@
 // reason to chase those beyond the one-off payout. They SURVIVE rebirth — their own storage key,
 // untouched by doRebirth.
 //
+// STEP 49 (Andy oct2) — ONE MARKS SYSTEM, AND THE WORN MARK MATTERS. The shop's MOMENTUM "marks"
+// are gone (the LETTER FORGE replaced them), so this is the only thing called a mark. Marks are
+// COLLECTIBLES in four rarity TIERS; the one you wear is your MAIN — your title on the menu and the
+// board — and it pays a REAL bonus on every word: COMMON +100%, RARE +150%, EPIC +200%,
+// LEGENDARY +300% (rule 2 above was retired by Andy: "≥100%, not 10–25%"). Rank I–V still grows
+// that bonus with the words you wear it for, and each mark keeps its small flavour perk on top.
+// Marks unlock at LV 10 with a NEW SYSTEM reveal, and every new mark is a CLAIM (claims.js) — it
+// is yours when you press CLAIM, with the REWARDS badge up until you do.
+//
 // Pure + guarded store. No DOM, no React.
+import { queueClaim, registerClaimHandler } from './claims.js';
 
 export const MARKS_EQUIPPED_KEY = 'taw.mark';
+export const MARKS_OWNED_KEY = 'taw.marksOwned';
+export const MARKS_UNLOCK_LEVEL = 10;
+// The MAIN bonus by tier (the part above ×1, at rank I).
+export const MARK_TIERS = {
+  common: { name: 'COMMON', bonus: 1.0, colour: '#2EFFE0' },
+  rare: { name: 'RARE', bonus: 1.5, colour: '#FFE94A' },
+  epic: { name: 'EPIC', bonus: 2.0, colour: '#FF4FA3' },
+  legendary: { name: 'LEGENDARY', bonus: 3.0, colour: '#FF6B3D' },
+};
 
 // `effect` is the machine-readable version of `blurb`, read by markPayoutFactors() below and by
 // the rarity roll in games. Keep the two in sync — the blurb is what the player is promised.
@@ -33,6 +52,7 @@ export const MARKS_EQUIPPED_KEY = 'taw.mark';
 export const MARKS = [
   {
     id: 'mk-bomber',
+    tier: 'common',
     name: 'BOMBER',
     icon: '💣',
     from: 'm-wb-5',
@@ -41,6 +61,7 @@ export const MARKS = [
   },
   {
     id: 'mk-sprinter',
+    tier: 'common',
     name: 'SPRINTER',
     icon: '⚡',
     from: 'm-blitz-5',
@@ -49,6 +70,7 @@ export const MARKS = [
   },
   {
     id: 'mk-scholar',
+    tier: 'rare',
     // SAVANT, not SCHOLAR: the achievement that unlocks it is already called SCHOLAR, and a locked
     // card reading "SCHOLAR — unlocks with SCHOLAR" reads as a bug.
     name: 'SAVANT',
@@ -59,6 +81,7 @@ export const MARKS = [
   },
   {
     id: 'mk-linguist',
+    tier: 'rare',
     name: 'LINGUIST',
     icon: '📖',
     from: 'sec-dict',
@@ -67,6 +90,7 @@ export const MARKS = [
   },
   {
     id: 'mk-metronome',
+    tier: 'rare',
     name: 'METRONOME',
     icon: '🎯',
     from: 'wpm-70',
@@ -75,6 +99,7 @@ export const MARKS = [
   },
   {
     id: 'mk-student',
+    tier: 'common',
     name: 'STUDENT',
     icon: '📈',
     from: 'lv-15',
@@ -83,6 +108,7 @@ export const MARKS = [
   },
   {
     id: 'mk-magpie',
+    tier: 'common',
     name: 'MAGPIE',
     icon: '🪙',
     from: 'dist-500',
@@ -91,12 +117,22 @@ export const MARKS = [
   },
   {
     id: 'mk-eternal',
+    tier: 'legendary',
     name: 'ETERNAL',
     icon: '♾️',
     from: 'sec-eternal',
-    blurb: '+50% wins in every mode. The reward for ten rebirths.',
+    blurb: '+50% more on top. The reward for ten rebirths.',
     effect: { winsMult: 1.5 },
   },
+  // ---- STEP 49: eight more, so the collection has a long tail and every tier has a few ----
+  { id: 'mk-linker', tier: 'common', name: 'LINKER', icon: '🔗', from: 'm-chain-5', blurb: '+25% wins in CHAIN.', effect: { winsMult: 1.25, mode: 'chain' } },
+  { id: 'mk-veteran', tier: 'common', name: 'VETERAN', icon: '🎖', from: 'lv-50', blurb: '+20% XP in every mode.', effect: { xpMult: 1.2 } },
+  { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins in every mode.', effect: { winsMult: 1.2 } },
+  { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
+  { id: 'mk-curator', tier: 'epic', name: 'CURATOR', icon: '🗂', from: 'dist-2500', blurb: '15% chance a word counts one RARITY TIER higher.', effect: { rarityStep: 0.15 } },
+  { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
+  { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins in every mode.', effect: { winsMult: 1.25 } },
+  { id: 'mk-legend', tier: 'legendary', name: 'LEGEND', icon: '👑', from: 'lv-300', blurb: '+40% XP in every mode.', effect: { xpMult: 1.4 } },
 ];
 
 const BY_ID = new Map(MARKS.map((m) => [m.id, m]));
@@ -187,11 +223,105 @@ export function markById(id) {
   return BY_ID.get(id) || null;
 }
 
+/** The MAIN bonus a mark pays at a rank: 1 + tier bonus × the rank scale (COMMON I = ×2). */
+export function markMainMult(m, rank = 1) {
+  if (!m) return 1;
+  const t = MARK_TIERS[m.tier] || MARK_TIERS.common;
+  const k = MARK_RANK_SCALE[Math.max(1, Math.min(MAX_MARK_RANK, rank)) - 1];
+  return 1 + t.bonus * k;
+}
+export function markTier(m) {
+  return MARK_TIERS[(m && m.tier) || 'common'];
+}
+
+function loadOwned() {
+  try {
+    const raw = localStorage.getItem(MARKS_OWNED_KEY);
+    if (raw == null) return null;
+    const a = JSON.parse(raw);
+    return Array.isArray(a) ? a.filter((id) => BY_ID.has(id)) : [];
+  } catch {
+    return null; // unreadable / blocked store: fall back to the achievement-derived set
+  }
+}
+function saveOwned(ids) {
+  try {
+    localStorage.setItem(MARKS_OWNED_KEY, JSON.stringify([...new Set(ids)]));
+  } catch {
+    /* blocked */
+  }
+}
+export function ownedMarkIds() {
+  return loadOwned() || [];
+}
+/** Claiming a NEW MARK makes it yours. */
+registerClaimHandler('mark', (c) => {
+  if (c && c.detail && BY_ID.has(c.detail)) saveOwned([...ownedMarkIds(), c.detail]);
+});
+
+/**
+ * THE MARKS LAYER (STEP 49). Called on every menu return (achievements.checkAchievements). Until
+ * the player reaches LV 10 (or has rebirthed) marks are not a thing yet. The first time they are,
+ * a NEW SYSTEM claim reveals them. After that, every mark whose achievement is earned and that the
+ * player does not own yet becomes a NEW MARK claim. A save from before this step keeps every mark
+ * it had (migrated straight to owned, no claims).
+ */
+export function checkMarkClaims({ level = 1, rebirths = 0, earned = [] } = {}) {
+  const earnedSet = earned instanceof Set ? earned : new Set(earned);
+  let owned = loadOwned();
+  if (owned == null) {
+    // migration: an existing save owns exactly what it had unlocked
+    owned = MARKS.filter((m) => earnedSet.has(m.from)).map((m) => m.id);
+    saveOwned(owned);
+    if (owned.length) saveRevealed();
+  }
+  if (!isRevealed()) {
+    if (level < MARKS_UNLOCK_LEVEL && rebirths < 1) return [];
+    saveRevealed();
+    queueClaim({
+      id: 'layer-marks',
+      kind: 'layer',
+      label: 'NEW SYSTEM — MARKS',
+      detail: 'marks',
+      meta: { blurb: 'Earn MARKS from achievements. WEAR ONE: it is your title and pays +100% to +300% on every word.' },
+    });
+  }
+  const queued = [];
+  for (const m of MARKS) {
+    if (!earnedSet.has(m.from) || owned.includes(m.id)) continue;
+    const c = queueClaim({ id: `mark-${m.id}`, kind: 'mark', label: `NEW MARK — ${m.name}`, detail: m.id, meta: { tier: m.tier } });
+    if (c) queued.push(c);
+  }
+  return queued;
+}
+const REVEALED_KEY = 'taw.marksRevealed';
+function isRevealed() {
+  try {
+    return localStorage.getItem(REVEALED_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+function saveRevealed() {
+  try {
+    localStorage.setItem(REVEALED_KEY, '1');
+  } catch {
+    /* blocked */
+  }
+}
+export function marksRevealed() {
+  return isRevealed();
+}
+
 /**
  * Which marks the player has UNLOCKED, given the set of earned achievement ids. A mark is unlocked
  * by its source achievement and by nothing else — there is no separate currency or grind.
  */
 export function unlockedMarks(earnedAchievementIds = []) {
+  // STEP 49: a mark is yours once CLAIMED (taw.marksOwned). A save that has never been through the
+  // marks layer (no owned key yet) falls back to its earned achievements, as before.
+  const owned = loadOwned();
+  if (owned != null) return MARKS.filter((m) => owned.includes(m.id));
   const earned = earnedAchievementIds instanceof Set ? earnedAchievementIds : new Set(earnedAchievementIds);
   return MARKS.filter((m) => earned.has(m.from));
 }
@@ -237,9 +367,15 @@ export function equipMark(id, earnedAchievementIds = []) {
  */
 export function markWinsFactors({ markId = getEquippedMark(), mode } = {}) {
   const m = markById(markId);
-  if (!m || !m.effect || !m.effect.winsMult) return {};
-  if (m.effect.mode && m.effect.mode !== mode) return {};
-  return { mark: rankedEffect(m).winsMult };
+  if (!m) return {};
+  // The MAIN bonus (every mode) × the flavour perk (its mode / modes, when it has one).
+  let mult = markMainMult(m, markRank(m.id));
+  const e = m.effect || {};
+  if (e.winsMult) {
+    const inMode = e.modes ? e.modes.includes(mode) : !e.mode || e.mode === mode;
+    if (inMode) mult *= rankedEffect(m).winsMult;
+  }
+  return { mark: mult };
 }
 
 /** The equipped mark's XP multiplier (×1 when it has none). Applied in the same stack as mastery. */

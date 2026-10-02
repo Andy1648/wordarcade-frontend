@@ -33,6 +33,26 @@ export const CLAIM_KINDS = {
   layer: 'NEW SYSTEM',
 };
 
+// Per-kind side effects of claiming (a NEW MARK becomes owned, …). Registered by the owning module.
+// A hoisted function holds the map: marks.js registers while this module may still be mid-evaluation
+// (claims → wins → marks → claims), when a module-level `const` would not exist yet.
+function handlerStore() {
+  if (!handlerStore.map) handlerStore.map = new Map();
+  return handlerStore.map;
+}
+export function registerClaimHandler(kind, fn) {
+  if (kind && typeof fn === 'function') handlerStore().set(kind, fn);
+}
+function runHandler(c) {
+  const h = handlerStore().get(c.kind);
+  if (!h) return;
+  try {
+    h(c);
+  } catch {
+    /* a handler must never lose the claim's money */
+  }
+}
+
 const listeners = new Set();
 function emit() {
   for (const fn of listeners) {
@@ -112,6 +132,7 @@ export function claim(id) {
   const [c] = arr.splice(i, 1);
   save(arr);
   if (c.amount > 0) grantWins(c.amount, c.label, { detail: c.detail || c.id, claimed: true });
+  runHandler(c);
   emit();
   return c;
 }
@@ -121,6 +142,7 @@ export function claimAll() {
   const arr = load();
   let wins = 0;
   for (const c of arr) {
+    runHandler(c);
     if (c.amount > 0) {
       grantWins(c.amount, c.label, { detail: c.detail || c.id, claimed: true });
       wins += c.amount;
@@ -129,4 +151,30 @@ export function claimAll() {
   save([]);
   emit();
   return { count: arr.length, wins };
+}
+
+// ---- NEW SYSTEM layers (STEP 49 reveal moments) -------------------------------------------------
+// A 'layer' claim's `detail` names the system; claiming it OPENS that system for good.
+const LAYER_KEY = (detail) => `taw.layer.${detail}`;
+registerClaimHandler('layer', (c) => {
+  try {
+    if (c && c.detail) localStorage.setItem(LAYER_KEY(c.detail), '1');
+  } catch {
+    /* blocked */
+  }
+});
+/** Has the player claimed (opened) this system? */
+export function layerOpen(detail) {
+  try {
+    return localStorage.getItem(LAYER_KEY(detail)) === '1';
+  } catch {
+    return true; // blocked storage: never hide a system the player cannot unlock
+  }
+}
+export function openLayer(detail) {
+  try {
+    localStorage.setItem(LAYER_KEY(detail), '1');
+  } catch {
+    /* blocked */
+  }
 }

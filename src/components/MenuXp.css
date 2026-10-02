@@ -402,8 +402,22 @@
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  /* STEP 50: a flat PLATE behind the card so LEVEL N never sits on the mode-card art unreadably.
+     Never wider than the fx layer it lives in (it would be clipped at 360px): it wraps instead. */
+  padding: 10px 22px 12px;
+  /* the card is held at ×1.2 (MenuXp levelup keyframes), so its LAID-OUT width is capped at the
+     fx layer ÷ 1.2 — the scaled card then still fits inside the layer that clips it */
+  max-width: calc((100% - 24px) / 1.2);
+  box-sizing: border-box;
+  background: #1a0b2e;
+  border: 4px solid #a8950f;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
 }
 .menu-xp-levelup-title {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   font-size: var(--fs-hero);
@@ -417,7 +431,7 @@
   /* was Bungee, below the 28px display floor: small UI text is a mono label */
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body); /* STEP 50 / Andy N2: was --fs-label — the phrase is part of the moment */
   line-height: 1;
   text-transform: uppercase;
   color: #ffe94a;
@@ -653,8 +667,13 @@ button.menu-mark:active {
    (viewport-integrity). Below 560px the badge drops its NAME and keeps only the icon — the slot
    is still visible and still tappable at 44px, which is the whole job of it on the menu; the
    name is one tap away in the picker. */
+/* STEP 49: the MAIN bonus beside the title, in ink on the tier-coloured chip. */
+.menu-mark-mult {
+  color: #1a0b2e;
+}
 @media (max-width: 560px) {
-  .menu-mark-name {
+  .menu-mark-name,
+  .menu-mark-mult {
     display: none;
   }
   .menu-mark {

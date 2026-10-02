@@ -180,5 +180,33 @@ export function equippedPopColors() {
 // Apply the persisted theme on boot. Call once as early as possible (main.jsx) so the menu paints
 // in the right palette with no flash.
 export function initTheme() {
+  retireThemes();
   applyTheme(getEquippedTheme());
+}
+
+// STEP 50 (Andy oct2: "Worlds instead of themes. Remove themes from the shop."). Once per save:
+// the menu goes back to the DEFAULT palette (the WORLD backdrop is the look now), and every theme
+// the player BOUGHT with wins is refunded as a claim — never silently, never lost. Level-granted
+// themes (MIDNIGHT LV10, TOXIC LV30) cost nothing, so a theme with an unlock level is only refunded
+// when the player owns it below that level would have granted it... which we cannot know; they are
+// refunded too — a few hundred wins is cheaper than a player who feels robbed.
+export const THEMES_RETIRED_KEY = 'taw.themesRetired';
+export function retireThemes(queue) {
+  try {
+    if (typeof localStorage === 'undefined' || localStorage.getItem(THEMES_RETIRED_KEY)) return 0;
+    let owned = [];
+    try {
+      owned = JSON.parse(localStorage.getItem(THEMES_OWNED_KEY) || '[]');
+    } catch {
+      owned = [];
+    }
+    const refund = THEMES.filter((t) => t.price > 0 && Array.isArray(owned) && owned.includes(t.id)).reduce((a, t) => a + t.price, 0);
+    localStorage.setItem(THEME_KEY, DEFAULT_THEME_ID);
+    localStorage.setItem(THEMES_RETIRED_KEY, '1');
+    if (refund > 0 && typeof queue === 'function') queue(refund);
+    else if (refund > 0) localStorage.setItem('taw.themeRefundPending', String(refund));
+    return refund;
+  } catch {
+    return 0;
+  }
 }

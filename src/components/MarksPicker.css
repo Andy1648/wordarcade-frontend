@@ -193,3 +193,30 @@
   background: #FFE94A;
   transform-origin: left center;
 }
+
+/* STEP 49 — tier: the card's outline is the tier colour; the MAIN bonus is the line that matters. */
+.mark-card {
+  border-color: var(--tier, #000);
+}
+.mark-card.is-locked {
+  border-color: #3b2a5c;
+}
+.mark-tier {
+  padding: 0 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: #0d0618;
+  background: var(--tier, #2effe0);
+  border-radius: 6px;
+}
+.mark-main {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #2effe0;
+}
+.mark-card.is-on .mark-main {
+  color: #0d0618;
+}

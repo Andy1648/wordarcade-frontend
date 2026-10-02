@@ -1,14 +1,17 @@
 // e2e/shop-reveal-sticker.spec.js — feat/shop-reveal-sticker: the shop's purchase reveal is the
 // shared reveal STICKER, not the old black box with a star and a one-line banner.
 //
-// Buying the INFERNO theme (250 wins; 2,500 before the Economy v8 price /10) must show a sticker that
-// says what happened: the UNLOCKED ribbon, the item's name, the price as a debit, and its own art
-// (the theme's swatch strip). Clicking it dismisses it and leaves the SHOP open — the sticker is a
+// Buying the INFERNO pop style (STEP 50: themes left the shop, so the pop of the same name is the
+// item now) must show a sticker that says what happened: the UNLOCKED ribbon, the item's name, the
+// price as a debit, and its own art. Clicking it dismisses it and leaves the SHOP open — the sticker is a
 // modal whose backdrop swallows the click, so it can never fall through to the shop behind it.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { formatNum } from '../src/format.js';
 import { menuReady } from './support/menu.js';
+import { POP_STYLES } from '../src/progress/shop.js';
+
+const INFERNO_PRICE = POP_STYLES.find((p) => p.id === 'inferno').price;
 
 // MOTION MUST BE ON FOR THIS FILE (Batch G). playwright.config.js sets reducedMotion: 'reduce'
 // suite-wide — a sound choice for actionability, since this app's idle loops never "settle" — but
@@ -24,6 +27,7 @@ async function openShop(page, { wins = 999999 } = {}) {
   await page.addInitScript((w) => {
     try {
       localStorage.setItem('taw.wins', String(w));
+      localStorage.setItem('taw.econ', '9'); // a v9 save: the one-time balance cap must not apply
       localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 }));
     } catch { /* */ }
   }, wins);
@@ -37,7 +41,7 @@ async function openShop(page, { wins = 999999 } = {}) {
 
 // Buying is a plain click (fix/shop-click-buy removed the unlabelled 400ms hold gate).
 
-test('buying INFERNO reveals a sticker naming the theme and its price', async ({ page }) => {
+test('buying INFERNO reveals a sticker naming the item and its price', async ({ page }) => {
   await openShop(page);
   const inferno = page.locator('.shop-card', { hasText: 'INFERNO' }).first();
   await expect(inferno).toBeVisible();
@@ -50,11 +54,11 @@ test('buying INFERNO reveals a sticker naming the theme and its price', async ({
   // The price is formatted by src/format.js, which groups with a THIN SPACE (U+2009) rather than
   // a comma as of feat/progression-clarity — a comma at four digits reads as a decimal point to
   // half the world. Asserted through the same formatter so the test cannot drift from the UI.
-  await expect(sticker).toContainText(formatNum(250)); // INFERNO, 2500 before the v8 price /10
+  await expect(sticker).toContainText(formatNum(INFERNO_PRICE));
   // It is the SHOP skin of the shared shell, and the price reads as a debit (spent, not earned).
   await expect(page.locator('.shop-sticker')).toHaveCount(1);
-  await expect(sticker.locator('.sticker-coin.is-debit')).toContainText(formatNum(250));
-  // The item's OWN art, not a generic star: the theme's swatch strip is an inline SVG.
+  await expect(sticker.locator('.sticker-coin.is-debit')).toContainText(formatNum(INFERNO_PRICE));
+  // The item's OWN art, not a generic star: the pop letter in its colour is an inline SVG.
   await expect(sticker.locator('svg.sticker-glyph')).toHaveCount(1);
   await expect(page.locator('.shop-reveal')).toHaveCount(0); // the old black box is gone
 });

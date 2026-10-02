@@ -9,7 +9,7 @@ import './MenuXp.css';
 import { formatNum, formatMultExact } from '../format';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
-import { markRank } from '../progress/marks';
+import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
 
@@ -239,12 +239,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <button
             type="button"
             className="menu-mark"
+            style={{ background: markTier(mark).colour }}
             onClick={onMarkClick}
             aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
             title={`${mark.name} - ${mark.blurb}`}
           >
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
+            {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
+            <span className="menu-mark-mult" aria-hidden="true">×{Math.round(markMainMult(mark, markRank(mark.id)) * 10) / 10}</span>
             {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
         ) : (
@@ -564,11 +567,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
         [
-          { transform: `${CENTER}rotate(-3deg) scale(1.7)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
-          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.1 }, // 150ms — in
-          { transform: `${CENTER}rotate(-3deg) scale(1.06)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
+          // STEP 50 / Andy N2 ("bigger text includes animated text: level-ups"): the card now SETTLES
+          // at ×1.2 (was ×1) — bigger for the whole hold — and slams in from ×2.
+          { transform: `${CENTER}rotate(-3deg) scale(2)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
+          { transform: `${CENTER}rotate(-3deg) scale(1.4)`, opacity: 1, offset: 0.1 }, // 150ms — in
+          { transform: `${CENTER}rotate(-3deg) scale(1.26)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
+          // ends back at ×1: `fill: both` HOLDS this frame, and a held ×1.2 box (invisible, but still
+          // laid out) overhung the fx layer at 360px (viewport-integrity).
           { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
         ],
         { duration: LEVELUP_MS, easing: 'linear', fill: 'both' } // ease per-keyframe (below), NOT per-effect
@@ -792,14 +799,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     },
     // STEP 22: crossing into a new MENU TIER names the frame the player just earned. Reuses
     // the level-up element + starburst (one finite play each).
-    tierUp(name) {
+    tierUp(name, worldName = '') {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
       // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
       // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
       if (levelTitleRef.current) levelTitleRef.current.textContent = name;
-      if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
+      // STEP 50: a new tier is a new WORLD — name it.
+      if (levelSubRef.current) levelSubRef.current.textContent = worldName ? `NEW WORLD: ${worldName}` : 'NEW FRAME UNLOCKED';
       if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
       a.cancel();
       a.play();
