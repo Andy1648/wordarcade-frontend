@@ -2585,3 +2585,13 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 body:has(.sr-app) .wpm-hud {
   display: none;
 }
+/* PHONE: the pill sat on the poster's SCORE / STREAK strip (every fine-tune reviewer flagged it).
+   It takes the empty margin under the poster instead — bottom-left, opposite the sound button. */
+@media (max-width: 480px) {
+  .sr-app .wins-hud {
+    top: auto;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    right: auto;
+    left: 12px;
+  }
+}
