@@ -9,8 +9,8 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## Andy's newest notes (Oct 2, later)
 - [x] N1 Buying a cosmetic AUTO-EQUIPS it — PR #76 (shop.js `buy` equips; unit test + e2e/shop.spec.js 'auto-equips')
-- [ ] N2 IN PROGRESS — rarity pop --fs-hero, receipt WINS --fs-h2 (PR #82); level-up plate 1.2× hold (PR #78); in-game "+N WINS" landing pop --fs-panel → --fs-h2 (phone body → panel) and menu letter pops --fs-panel → --fs-h2 (fine-tune pass 2, finetune/oct2)
-- [ ] N3 IN PROGRESS — applied per screen in the fine-tune loop: CASE CLOSED = CAPTURED (#85); death card = the result title (--fs-h1), hint steps down; WB game over: REMATCH the one filled button, LEAVE outline, upsell mono ghost; WB dialog: PLAY SOLO leads, PLAY/JOIN a mono row; round receipt top 3 + n MORE (#82)
+- [x] N2 Animated reward text is bigger: rarity pop --fs-panel → --fs-hero and receipt WINS → --fs-h2 (PR #82); level-up plate 1.2× scale-hold (PR #78); in-game "+N WINS" landing pop --fs-panel → --fs-h2 (phone --fs-body → --fs-panel) and menu letter pops --fs-panel → --fs-h2 (PR #88, all live). e2e word-landing / menu-xp / wb-short-layout green at the new sizes.
+- [x] N3 One big thing per screen, applied screen by screen through the fine-tune loops: CASE CLOSED = CAPTURED (#85); round receipt = top 3 + n MORE (#82); CHAIN/FUSE death card = the result title (--fs-h1), hint below it, MENU in the card (#88, #89); WB game over = REMATCH the one filled button, LEAVE outline, cross-mode upsell a quiet mono ghost (#88); dialogs = the lead CTA, secondary actions a mono row (#88); stats = records you hold first, locked ones as one-line goals (#89); room = lit = selected (#88). Per-screen scores in claude/finetune/scores.md.
 - [x] N4 WHERE YOUR WINS CAME FROM = top 3 rows + one "+ n MORE" row (sums still match) — PR #82
 
 ## PR #75 — Economy v9 (re-check against the Oct 2 notes)
@@ -77,7 +77,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## STEP 53 — Word Bomb board + font sizes
 - [x] B1 Ring cap 520 → 720 px; on the wide board the ring takes all the slack between prompt and input rows (0.78 of the board, was 0.72 + a double reservation): 1920x1080 ring 520 → 552 px — PR #82 (38d7581), wbRingSize.test.js, claude/wb-oct2/before|after/ingame-word-bomb-6p-1920x1080.png
 - [x] B2 Receipt WINS figure 28 px → --fs-h2 (42 px at 1280), the receipt's one big thing; the docked receipt stacks its unit so it still clears SKIP (word-landing.spec green) — PR #82
-- [ ] B3 PARTIAL — tutorial + reward text bigger (B2, B4); a general in-play type pass is queued for the fine-tune loop (STEP 60)
+- [ ] B3 PARTIAL — reward + tutorial + coach text bigger (B2, B4, N2; PRs #82, #88); a general in-play body-text pass is NOT done: the WB board at 1280x551 is height-bound (its actors are what is small), noted as the top open item in claude/finetune/scores.md
 - [x] B4 Solo teach strip leads with display-size TYPE A REAL WORD (Bungee --fs-panel, was body); WB coach caption --fs-band, sub line body (was label) — PR #82
 
 ## STEP 54 — Join mid-game
@@ -107,7 +107,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] H2 Simplified where there was no headroom: beat sync no longer re-renders App or restyles <html> per beat (desktop menu typing 116 → 148 frames / 4 s); CHAIN/FUSE run-over hitch 700 → 200 ms / 683 → 67 ms. Headroom: phone + in-game multiplayer ≤1% long frames — this cycle's new one-shots (CLUTCH, FRENZY, WINNER row, world swish) live there; no new menu animation (it is the one screen over budget)
 
 ## STEP 60 — Fine-tune loop
-- [ ] T1 IN PROGRESS — claude/finetune/scores.md: loop A O0 4.87 → O1 5.61 → O2 5.89 (PR #88); loop B O3 6.11 → O4 6.41 → O5 6.48 (PRs #88, #89); both closed by the < 0.3 stop rule; loop C running from C0 6.35 (Andy /goal: keep going until 08:00 ET)
+- [x] T1 STEP 30 method run as three loops until the scores stopped improving (each closed by the < 0.3 stop rule): loop A O0 4.87 → O1 5.61 → O2 5.89 (PR #88); loop B → O3 6.11 → O4 6.41 → O5 6.48 (PRs #88, #89); loop C C0 6.35 → C1 6.17 (fresh reviewers, ±0.15 spread) (PRs #90, #91). Table + pass log: claude/finetune/scores.md. All merged with CI green; #88–#90 verified live (marker greps).
 
 ## STEP 61 — Redeem codes (merged PR #87, 1d26db6)
 - [x] R1 CODES entry at the end of the shop: one field + REDEEM + one answer line; a good code lands in REWARDS to claim (never pays on its own) — e2e/redeem-codes.spec.js, claude/codes/shop-codes-390.png, shop-codes-1280.png
