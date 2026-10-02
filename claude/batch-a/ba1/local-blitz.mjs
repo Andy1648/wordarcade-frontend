@@ -85,7 +85,11 @@ function report(log) {
     gameOver: log.frames.some((f) => f.type === 'game_over'),
     frameTypes: [...new Set(log.frames.map((f) => f.type))],
     errors: log.errors,
-    sampleProgress: (log.frames.find((f) => f.type === 'player_progress') || {}).payload,
+    botAnswers: log.frames.filter((f) => f.type === 'round_end').map((f) => {
+      const ps = f.payload.playerResults || f.payload.players || [];
+      const b = (Array.isArray(ps) ? ps : Object.values(ps)).find((x) => x && (x.id === botId || x.playerId === botId));
+      return b ? (b.answers || b.words || []).map((a) => (typeof a === 'string' ? a : a.answer || a.text)) : Object.keys(f.payload);
+    }),
   };
 }
 

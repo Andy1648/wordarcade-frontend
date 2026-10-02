@@ -40,6 +40,8 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ### Andy, ~14:20 ET — DONE FIRST
 - [x] VERCEL free limit (100 deploys/day, api-deployments-free-per-day) — PR #124 (MERGED a259259; main's vercel.json parses, git block present): vercel.json `git.deploymentEnabled {"**": false, "main": true}` → only main deploys (JSON validated: the rewrite's `\.` survived; a Bash heredoc had silently dropped it on the first try — the CLAUDE.md trap). **Until the 24 h window resets, merges to main do NOT reach typeaword.com: prod checks for anything merged during the freeze are "pending Vercel limit" and are verified on the local preview build; re-verify on prod once deploys resume.** Batch small fixes into fewer PRs.
+- 17:00 ET PROD VERIFIED (marker greps in the live bundle + lazy chunks): #123 (navigator.onLine), #125 (rebirths.gt), #126 (lb_reset_ack), #127 (ONLY YOUR LEVEL RESETS — Shop chunk), #128 (PLAYING SINCE — Stats chunk), #129 (*270 SAT, 0.07 heat CHAIN), #130 (difficultyKey reads a constant, not "medium").
+- Main went RED at #129 (two checks): payload ratchet 1,260,124 > 1,260,000 (real growth) and a stale e2e (word-bomb-scoring RACE case expected 25, ignoring the +13 WINNER BONUS the happy path already expects; passed only when the poll beat the bonus). Both fixed in PR #133 (MERGED): rank-up + dev-reset moments lazy (−3.4 KB) and the spec expects 25 + 13.
 - Vercel deploys RESUMED by 16:25 ET: the live index bundle carries #125's rank order (`rebirths.gt`). Re-verify on prod (marker greps) for every merge since #124: #121 #122 #123 #125 #126 #127 #128 #129 #130 — #126's markers not live yet at 16:25. Main merged into #121/#122/#123/#125/#126 for the payload-gate fix. #121's ko-screen 360x640 failure did not reproduce locally (108/108) = CI flake.
 
 - [x] PAYLOAD gate (found while gating #121–#125): main has failed shard 2/4 since #120 (a8c4b58) — CI's payload ratchet counted mascot-idle.avif TWICE (a memory-cache repeat Playwright still reports with a body: 1,260,564 incl. the dupe vs 1,247,181 real). Spec now counts each URL once; ratchet unchanged. In PR #124.
@@ -57,7 +59,8 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
   - WB preset — PR #130 (MERGED, Tier 1 — **ANDY: 2-device play-test**): returning players' PLAY SOLO = HARD ('easy'), not CRAZY (win 16% → 44%).
   - WB backend — be#13 (MERGED, PROD smoke OK, CHILL opens at 15 s on prod): choking bot concedes ≤6 s; CHILL 20 → 15 s + medium miss 0.06. Local 2-context test claude/batch-a/ba1/local-wb.json.
   - Blitz backend — be#14 (MERGED): 12 broad tier-1 lists (US states/body systems were in ~69% of games), 7 dead lists benched, MEDIUM bot first answer 3–5.5 s. Local test local-blitz.json. Bot canon (aliases/misspellings) + singular/plural double-score = follow-up PR.
-  - RACE backend — be#15 (CI): bots 300 ms/char (40 WPM human was last 100%). Local: 40 WPM 2nd of 3, 50 WPM 1st (local-race-*.json).
+  - Blitz bot canon — be#16 (CI): bot plays only canonical spellings from blitzCanon.json (88 lists, 3,482 members, every accept entry one member's canon/alias), MEDIUM top-60% by popularity, never a second form of a member. Local: bot answered "nervous system, … massachusetts, napoleon, french open" — no misspellings (claude/batch-a/ba1/local-blitz-canon.json).
+  - RACE backend — be#15 (MERGED, prod smokes OK): bots 300 ms/char (40 WPM human was last 100%). Local: 40 WPM 2nd of 3, 50 WPM 1st (local-race-*.json).
 - [x] BA2 — backend #12 (MERGED; prod WB smoke passed): wordBombBot missChance ×2.6 under pressure + fumbles; median human vs MEDIUM 18.6% → 51.3% (sim claude/batch-a/wb-winrate-sim.mjs). Also BA1's WB fumble fix.
 - [x] BA3 keyboard up — PR #114: interactive-widget=resizes-content; Blitz + SAT compact at <=560px tall; e2e/keyboard-up.spec.js 5 modes x 3 cells. (iOS not covered — it ignores interactive-widget.)
 - [x] BA4 PR #121 (MERGED): WB draft moved to an external store (keystroke re-renders only the input), beat shake via WAAPI, LiveStack/WallScene/DecorPane memo; e2e/input-latency.spec.js (local < 50 ms; CI-aware gate); claude/batch-a/latency.md
@@ -66,11 +69,11 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ### P4 — Batch B
 - [x] BB1 — PR #127 (MERGED): RebirthCeremony — ×N hero, RESET (LV 200 → 1, struck) vs KEPT (wins, key tier, forge, cosmetics, marks, words) with real values; shots claude/batch-b/bb1-ceremony-*.png
 - [x] BB2 — PR #128 (MERGED): STATS opens on a PLAYER CARD — name + rank, LV hero, R badge, WORDS TYPED / WINS EARNED / BEST WPM / RAREST WORD, since + streak + TYPEAWORD.COM; before/after claude/batch-b/bb2-*.png
-- [ ] BB3 weekly leaderboard reset Monday 00:00 ET, server-side
+- [ ] BB3 — PR #132 (CI; **ANDY: run 013_weekly_board.sql**, SQL in the PR body): THIS WEEK board = words typed this America/New_York week; the reset is the week KEY changing at Monday 00:00 ET inside the DB (no cron); lb_submit2 counts words since the last accepted submit (first submit = baseline); ALL-TIME / THIS WEEK switch only once lb_caps.weekly; "RESETS MONDAY 00:00 ET · IN 2D 7H"; e2e/leaderboard-weekly.spec.js; shot claude/batch-b/bb3-weekly-1280x720.png
 
 ### P5 — the rest
-- [ ] WB phone ring layout fixed (a layout change, not a formula tweak)
-- [ ] Andy's notes re-check: cosmetics auto-equip on buy (N1), animated reward text bigger (N2), ONE big thing per screen — cut the end-game wins breakdown down (N3/N4)
+- [ ] WB phone ring — PR #134 (CI): the phone ring is sized to the ROW it actually has (between prompt and input stacks) and up to 0.92 of the board width, instead of the old centred-layout reserve + 0.72-of-width guess: 247 → 283 px @390x844, 263 → 303 @412x915, 276 → 320 @430x932 (360x640 height-bound 163 → 168). claude/wb-phone/before|after-*.png. Local gate run was killed by the OS for low memory (1,430 worker crashes) — CI is the gate.
+- [x] Andy's notes re-check (17:00 ET): N1 shop.spec 'auto-equips', N2 word-landing / menu-xp sizes, N4 receipt top 3 + MORE (payout-honesty, solo-endgame, winner-bonus) — all in CI's full e2e on every PR tonight; main's only reds were the two #133 fixed. Evening sweep, fresh LV1 @1280x551: menu, WB dialog, shop, stats, board, CHAIN, FUSE, SAT — 0 visible text < 13 px (claude/finetune/evening/).
 - [ ] Until 08:00 ET Oct 3: keep running fine-tune passes over every screen
 
 ### Day-run log
