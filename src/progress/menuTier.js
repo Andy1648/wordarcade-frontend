@@ -13,7 +13,8 @@
 // Level at which each level-tier starts. T0 is L1.
 // STEP 50 (Andy oct2: "border tiers get many more steps — satisfaction must not run out; plan
 // tiers to L1000+ and rebirth tiers"): 15 level tiers to L1000, plus one per rebirth, to T24. Every
-// tier past T0 is also a WORLD — the menu's background (worldsData.js / WorldBackdrop).
+// tier also MOVES THE WALL (Andy oct2 A1): the same floating words/stickers sit in a new layout per
+// tier (sceneLayout.js), and a climb swishes the scene up (WallScene, listening for SCENE_EVENT).
 export const LEVEL_TIER_STARTS = [1, 10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 600, 750, 900, 1000];
 export const MAX_TIER = 24;
 // The frame's FX (pop length, shards) stop growing at this tier — past it, the climb is the world.
@@ -103,10 +104,16 @@ export function getSeenTier() {
     return -1;
   }
 }
+// Fired on window when the seen tier rises — the wall (WallScene, mounted once in App) moves.
+export const SCENE_EVENT = 'taw:menu-tier';
 export function setSeenTier(t) {
+  const prev = getSeenTier();
   try {
     localStorage.setItem(SEEN_KEY, String(t));
   } catch {
     /* storage blocked — the moment may replay, harmless */
+  }
+  if (t > prev && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+    window.dispatchEvent(new CustomEvent(SCENE_EVENT, { detail: { tier: t } }));
   }
 }

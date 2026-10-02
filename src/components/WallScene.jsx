@@ -18,6 +18,8 @@ import {
   PaintSplatter3,
   PaintSplatter5,
 } from './decor/PaintSplatters';
+import { scenePositions } from '../progress/sceneLayout';
+import { getSeenTier, SCENE_EVENT } from '../progress/menuTier';
 import './WallScene.css';
 
 // ---- Self-writing graffiti: words that spray-paint themselves onto the wall
@@ -99,6 +101,89 @@ const DRIPS = [
   { left: 90, w: 2, h: 200, c: PURPLE, op: 0.10 },
 ];
 
+// ---- THE SCENE MOVES WITH THE TIER (Andy oct2 A1) ----------------------------------------------
+// Same pieces, same art, a new place per menu tier (sceneLayout.js; tier 0 = the layout above).
+// The 22 pieces are numbered splatters → tags → stickers so one shuffled grid spreads all of them.
+const N_PIECES = WALL_SPLATTERS.length + TAGS.length + STICKERS.length;
+function placed(tier) {
+  const p = scenePositions(N_PIECES, tier);
+  const at = (item, i) => (p ? { ...item, top: p[i].top, left: p[i].left, rot: p[i].rot } : item);
+  const s0 = WALL_SPLATTERS.length;
+  const t0 = s0 + TAGS.length;
+  return {
+    splatters: WALL_SPLATTERS.map((x, i) => at(x, i)),
+    tags: TAGS.map((x, i) => at(x, s0 + i)),
+    stickers: STICKERS.map((x, i) => at(x, t0 + i)),
+  };
+}
+const SWISH_MS = 820;
+
+/** One full-wall pane of the static decor, laid out for `tier`. */
+function DecorPane({ tier, className = '' }) {
+  const { splatters, tags, stickers } = placed(tier);
+  return (
+    <div className={`wall-decor-pane ${className}`}>
+      {/* Detailed spray-paint splatters (organic blob + droplets + drips). */}
+      {splatters.map((sp, i) => {
+        const Splat = sp.comp;
+        return (
+          <div
+            key={`splat${i}`}
+            className="wall-splatter"
+            style={{
+              top: `${sp.top}%`,
+              left: `${sp.left}%`,
+              width: `${sp.size}px`,
+              height: `${sp.size}px`,
+              opacity: sp.op,
+              transform: `rotate(${sp.rot}deg)`,
+            }}
+          >
+            <Splat color={sp.color} className="wall-splatter-svg" />
+          </div>
+        );
+      })}
+
+      {/* Spray-painted graffiti tags - each enhanced with per-letter rotation,
+          paint drips and an overspray haze so it reads as hand-sprayed, not typed. */}
+      {tags.map((t, i) => (
+        <GraffitiTag
+          key={`tag${i}`}
+          word={t.word}
+          fill={t.c.fill}
+          line={t.c.line}
+          size={t.size}
+          top={t.top}
+          left={t.left}
+          rotation={t.rot}
+          opacity={t.op}
+          drip={t.drip}
+        />
+      ))}
+
+      {/* Stickers - each a static inline SVG at its resting tilt. */}
+      {stickers.map((st, i) => (
+        <svg
+          key={`stk${i}`}
+          className="wall-sticker"
+          viewBox="-50 -50 100 100"
+          aria-hidden="true"
+          style={{
+            top: `${st.top}%`,
+            left: `${st.left}%`,
+            width: `${st.size}px`,
+            height: `${st.size}px`,
+            opacity: st.op,
+            '--rot': `${st.rot}deg`,
+          }}
+        >
+          <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 /**
  * @param {object} props
  * @param {'calm'|'warning'|'critical'} props.intensity - drives a tension class
@@ -110,6 +195,34 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
   // is capped so the oldest drops off rather than the wall filling up forever.
   const [tags, setTags] = useState([]);
   const tagIdRef = useRef(0);
+
+  // The scene's tier = the best menu tier this player has SEEN (menuTier.js). When the menu sees a
+  // new one, the old layout and the new one sit stacked in ONE element that translates up one wall
+  // height — a single finite transform, will-change only while it runs (.is-swish). Reduced motion:
+  // the new layout simply appears.
+  const [scene, setScene] = useState(() => Math.max(0, getSeenTier()));
+  const [swish, setSwish] = useState(null); // { from, key } while the swish runs
+  const sceneRef = useRef(scene);
+  useEffect(() => {
+    let t = null;
+    const onTier = (e) => {
+      const next = Math.max(0, Math.floor(Number(e && e.detail && e.detail.tier) || 0));
+      const prev = sceneRef.current;
+      if (next <= prev) return;
+      sceneRef.current = next;
+      setScene(next);
+      const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      setSwish({ from: prev, key: Date.now() });
+      clearTimeout(t);
+      t = setTimeout(() => setSwish(null), SWISH_MS + 60);
+    };
+    window.addEventListener(SCENE_EVENT, onTier);
+    return () => {
+      window.removeEventListener(SCENE_EVENT, onTier);
+      clearTimeout(t);
+    };
+  }, []);
 
   // WallScene is mounted ONCE and persists across every screen (it never
   // unmounts), so without this the self-written tags accumulate for the whole
@@ -243,63 +356,14 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
       {/* ===== MID layer: tags, splatters, stickers. Moderate travel, WITH the
           cursor. ===== */}
       <div className="wall-parallax-layer wall-layer-mid">
-        {/* Detailed spray-paint splatters (organic blob + droplets + drips). */}
-        {WALL_SPLATTERS.map((sp, i) => {
-          const Splat = sp.comp;
-          return (
-            <div
-              key={`splat${i}`}
-              className="wall-splatter"
-              style={{
-                top: `${sp.top}%`,
-                left: `${sp.left}%`,
-                width: `${sp.size}px`,
-                height: `${sp.size}px`,
-                opacity: sp.op,
-                transform: `rotate(${sp.rot}deg)`,
-              }}
-            >
-              <Splat color={sp.color} className="wall-splatter-svg" />
-            </div>
-          );
-        })}
-
-        {/* Spray-painted graffiti tags - each enhanced with per-letter rotation,
-            paint drips and an overspray haze so it reads as hand-sprayed, not typed. */}
-        {TAGS.map((t, i) => (
-          <GraffitiTag
-            key={`tag${i}`}
-            word={t.word}
-            fill={t.c.fill}
-            line={t.c.line}
-            size={t.size}
-            top={t.top}
-            left={t.left}
-            rotation={t.rot}
-            opacity={t.op}
-            drip={t.drip}
-          />
-        ))}
-
-        {/* Stickers - each a static inline SVG at its resting tilt. */}
-        {STICKERS.map((st, i) => (
-          <svg
-            key={`stk${i}`}
-            className="wall-sticker"
-            viewBox="-50 -50 100 100"
-            aria-hidden="true"
-            style={{
-              top: `${st.top}%`,
-              left: `${st.left}%`,
-              width: `${st.size}px`,
-              height: `${st.size}px`,
-              opacity: st.op,
-              '--rot': `${st.rot}deg`,
-            }}
-          >
-            <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
-          </svg>
-        ))}
+        {/* The static decor, laid out for the scene's tier. During a tier climb the OLD layout
+            sits on top and the NEW one a wall-height below it, and the stack moves up once. */}
+        {/* Panes are keyed by TIER, so the layout already on screen is kept (not re-mounted) as the
+            old pane — only the new layout mounts when a swish starts. */}
+        <div className={`wall-decor-stack${swish ? ' is-swish' : ''}`} data-scene={scene}>
+          {swish && <DecorPane key={`t${swish.from}`} tier={swish.from} className="is-old" />}
+          <DecorPane key={`t${scene}`} tier={scene} className="is-new" />
+        </div>
 
         {/* Self-writing graffiti: each tag draws its outline stroke-by-stroke,
             then the fill spray-fills in (see graffiti-draw in the CSS). */}
