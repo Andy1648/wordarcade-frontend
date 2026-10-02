@@ -38,6 +38,15 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 - [x] LB10 — PR #120 (MERGED): BOARD_SIZE 10, pinned real-rank row via a server count query, end-screen YOU'D BE #N true past 10 (e2e/leaderboard-top10.spec.js). Was: LEADERBOARD TOP 10 (Andy, ~14:05): BOARD_SIZE 100 → 10; off-board player gets ONE pinned row with their real server rank ("#37 YOU"), never "unranked"; hypotheticalRank / end-screen "you'd be #N" true past 10; "TOP 100" copy → "TOP 10"; e2e specs expecting 100 rows fixed.
 
+### Andy's notes, Oct 2 evening (~17:50 ET) — OUTRANK EVERYTHING; each a separate PR
+- [ ] E0 Andy ran ALL pending SQL (008, 010–013, ZZTEST-ONCE row, a LEVEL-ONLY board view, reset_all for imbetterthanandy). Re-check prod: lb_caps, ZZTEST redeem twice, board order; finish P0.4; then tell Andy to delete the ZZTEST-ONCE row.
+- [ ] E1 BOARD = LEVEL ONLY: level desc, lifetime_words desc, created_at asc (rebirths NOT ranked — "idc abt rebirth"). Update 011 + any migration rebuilding public.leaderboard, hypotheticalRank / server count, copy, e2e specs.
+- [ ] E2 Leaderboard wins/word uses a private fmtRate that only knows K (Xavi shows "1000000.0K" — the old 1e9 cap). Use formatNum; grep src/ for every other private number formatter and replace.
+- [ ] E3 FRENZY copy confusing ("FRENZY ×5 LONGER = MORE" reads as one rule). Two separate lines everywhere: "LONGER WORDS PAY MORE" and "LIGHT ALL LETTERS → FRENZY ×5 FOR 5 MIN". Every card, dialog, receipt, tutorial.
+- [ ] E4 TOO MANY REWARDS: only ACHIEVEMENTS + STATS milestones (level-ups / rank-ups) go through the claim inbox; everything else pays silently or is cut. PR lists every claim source keep/cut + reason.
+- [ ] E5 PROPORTIONS TOO SMALL, esp. new mechanics (FRENZY, BOOST, weekly board, marks, rank-ups): one big thing per screen, scaled up hard; new mechanics get hero type + an animation; before/after px. QUALITY PROTOCOL (3 versions → adversarial reviewer → pick).
+- [ ] E6 MARKS INDEX page: inventory grid of every mark (owned; unowned locked + how to get); tap → SET AS MAIN (title + BIG bonus as today); current main big at top; reached from the MARKS button. QUALITY PROTOCOL.
+
 ### Andy, ~14:20 ET — DONE FIRST
 - [x] VERCEL free limit (100 deploys/day, api-deployments-free-per-day) — PR #124 (MERGED a259259; main's vercel.json parses, git block present): vercel.json `git.deploymentEnabled {"**": false, "main": true}` → only main deploys (JSON validated: the rewrite's `\.` survived; a Bash heredoc had silently dropped it on the first try — the CLAUDE.md trap). **Until the 24 h window resets, merges to main do NOT reach typeaword.com: prod checks for anything merged during the freeze are "pending Vercel limit" and are verified on the local preview build; re-verify on prod once deploys resume.** Batch small fixes into fewer PRs.
 - 17:20 ET: #133 LIVE — RankUpMoment-*.js and DevResetNotice-*.js are their own chunks; rank-up copy absent from the index bundle. Fine-tune: #135 (MERGED) leaderboard hides its column headers over a load error; phone sweep 390x844 (menu, shop, stats, board, WB game, CHAIN, FUSE, SAT) 0 text < 13 px.
