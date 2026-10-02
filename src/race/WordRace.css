@@ -249,6 +249,7 @@
 .wr-typeword {
   display: inline-flex;
   font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
   font-size: var(--fs-hero);
   line-height: 1;
   letter-spacing: 0.04em;
