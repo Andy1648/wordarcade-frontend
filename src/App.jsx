@@ -2356,16 +2356,20 @@ function App() {
     if (conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || ''))) {
       return; // slow/metered: don't steal the menu's bandwidth — load screens on navigation
     }
+    // A warm-up that fails (offline, a flaky network) is harmless — navigation lazy-loads on demand —
+    // so its rejection is caught here instead of surfacing as an uncaught error ("Unable to preload
+    // CSS …" in the failure-states OFFLINE run).
+    const quiet = (p) => p.catch(() => {});
     const warm = () => {
-      import('./components/GameScreen');
-      import('./components/RoomScreen');
-      import('./components/LobbyScreen');
-      import('./components/PublicRoomsScreen');
+      quiet(import('./components/GameScreen'));
+      quiet(import('./components/RoomScreen'));
+      quiet(import('./components/LobbyScreen'));
+      quiet(import('./components/PublicRoomsScreen'));
       // Overlays too: Stats/Shop open OVER the menu, so a cold chunk fetch there reads as a
       // blank box (the shared Suspense fallback is null). Warming them makes the common open
       // instant; the OverlaySkeleton below covers the rare still-cold open.
-      import('./components/StatsScreen');
-      import('./components/ShopScreen');
+      quiet(import('./components/StatsScreen'));
+      quiet(import('./components/ShopScreen'));
     };
     const ric = typeof window !== 'undefined' && window.requestIdleCallback;
     const id = ric ? ric(warm, { timeout: 2500 }) : setTimeout(warm, 1200);
