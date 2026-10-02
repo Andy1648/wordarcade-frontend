@@ -82,9 +82,10 @@ test.describe('Word Bomb scoring (item 2)', () => {
     //   = 4.2 weight × 6 perWordWins (T0 10 XP/letter × 3 letters × WB ×2 ÷ 10) = round(25.2) = 25
     // Poll for the payout instead of a fixed wait: each accepted word banks via bankWordWins →
     // localStorage on the async React drain, so a fixed sleep occasionally reads a pre-bank value.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(25);
+    // ...plus the WINNER BONUS (O12): this player won, so game_over adds +50% of the game's 25 = 13.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(25 + 13);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(25);
+    expect(after.lifetime - before.lifetime).toBe(25 + 13);
     expect(after.wb - before.wb).toBe(1);
   });
 
@@ -111,12 +112,13 @@ test.describe('Word Bomb scoring (item 2)', () => {
     await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(51);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsCarry')) || 0)).toBe(3);
     expect((await readWins(page)).wb - before.wb).toBe(1);
-    // Now the game ends for real — the removed end payout must add NOTHING (no double-pay).
+    // Now the game ends for real — the words are NOT re-paid (no double-pay); the only addition is
+    // the WINNER BONUS (O12), +50% of the 51 the game's words earned = 26.
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(51); // banked per word, not re-paid at game_over
-    expect(after.lifetime - before.lifetime).toBe(51);
+    expect(after.wins - before.wins).toBe(51 + 26); // banked per word + the winner bonus, nothing re-paid
+    expect(after.lifetime - before.lifetime).toBe(51 + 26);
     expect(after.wb - before.wb).toBe(1); // still one round counted
   });
 
