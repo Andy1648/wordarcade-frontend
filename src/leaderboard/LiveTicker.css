@@ -14,19 +14,6 @@
   text-transform: uppercase;
   color: #d8c9f0;
 }
-.live-online {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #2effe0;
-}
-.live-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #2effe0;
-  border: 2px solid #0f8f7e;
-}
 .live-tick {
   overflow: hidden;
   text-overflow: ellipsis;
