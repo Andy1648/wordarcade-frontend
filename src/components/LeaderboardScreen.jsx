@@ -96,7 +96,7 @@ function Row({ row, mine, flash }) {
         {/* words are SECONDARY now (Andy oct2, later: the board ranks by LEVEL) */}
         <span className="lb-lv lb-words-sub">{fmt(row.lifetime_words)} WORDS</span>
       </span>
-      {/* LV is the headline — the board ranks by rebirths, then LEVEL (rebirth = the name's colour). */}
+      {/* LV is the headline — the board ranks by LEVEL only (rebirth is just the name's colour). */}
       <span className="lb-num lb-level">LV {fmt(row.level)}</span>
       <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
@@ -139,7 +139,7 @@ export default function LeaderboardScreen({ onBack }) {
   const [restoreDraft, setRestoreDraft] = useState('');
   const [restoreMsg, setRestoreMsg] = useState(null);
   const overlayRef = useRef(null);
-  // BB3: ALL-TIME (rebirths → level) or THIS WEEK (words typed this ET week; resets Monday 00:00 ET
+  // BB3: ALL-TIME (level) or THIS WEEK (words typed this ET week; resets Monday 00:00 ET
   // in the DB). The switch exists only once 013_weekly_board.sql is applied (lb_caps.weekly).
   const [view, setView] = useState('all');
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false });

@@ -98,7 +98,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await expect(page.locator('.lb-row')).toHaveCount(4);
   await page.locator('.lb-close').click();
 
-  // 4. I level past LexiLoop's LV40 (the board ranks by rebirths, then LEVEL — Andy oct2) — the next
+  // 4. I level past LexiLoop's LV40 (the board ranks by LEVEL only — Andy oct2 evening) — the next
   //    menu visit pushes it and shows the rank-up.
   await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, into: 0 })));
   await page.goto('/?portal=1');
