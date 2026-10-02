@@ -29,7 +29,7 @@ async function soloDeath(page, mode) {
   await page.waitForTimeout(400);
   await modeEntry(page, mode).click({ force: true });
   await page.locator('.mode-dialog-btn-create').click();
-  await page.locator('.solo-root').waitFor({ state: 'visible' });
+  await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
   // ARM THE CLOCK FIRST. A solo run's timer only starts once the player types — a run where
   // nobody touches the keyboard never ends, so waiting for a death card without typing waits
   // forever. One junk character arms it; the clock then runs out on its own.

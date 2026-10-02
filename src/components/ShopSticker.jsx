@@ -25,6 +25,14 @@ const POP_COLOURS = {
   inferno: '#FF6B3D',
   void: '#9A1AFF',
   prism: '#FFE94A',
+  toxic: '#9EFF2E',
+  ember: '#FF3D2E',
+  frost: '#4CE0FF',
+  gold: '#FFD54A',
+  plasma: '#FF4FA3',
+  nova: '#FFFFFF',
+  eclipse: '#3D3150',
+  legend: '#B44CFF',
 };
 
 const S = { fill: 'none', stroke: '#000', strokeWidth: 8, strokeLinecap: 'round', strokeLinejoin: 'round' };

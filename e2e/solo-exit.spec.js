@@ -40,7 +40,9 @@ async function deepLandChain(page, { fast = false } = {}) {
   await installBackendMock(page);
   const fastParams = fast ? '&soloms=350&portal=1' : '';
   await page.goto('/?chain=1' + fastParams);
-  await page.locator('.solo-root').waitFor({ state: 'visible' });
+  // CHAIN first paints a .solo-root.is-loadstate placeholder (with its own exit) and swaps in the
+  // real root ~130ms later — wait for the REAL one, or the exit we measure is detached mid-assert.
+  await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
 }
 
 // Arm the clock (arm-on-first-keystroke) so the run ends; fill() targets the element rather than

@@ -13,36 +13,49 @@
 export const MASTERY_KEY = 'taw.mastery';
 // Menu/XP-style mode ids (the ones passed to awardWordXp) — one mastery track per playable mode.
 export const MASTERY_MODES = ['word-bomb', 'category-blitz', 'sat-rush', 'chain', 'fuse'];
-export const MASTERY_MAX = 20;
-export const MASTERY_BASE = 50;
-export const MASTERY_GROWTH = 1.4;
-// The perk: +3% XP for that mode per mastery level above M1 (M1 = base, M20 = +57%).
+// ECONOMY v9 (STEP 19 / Andy A6: "CHAIN and FUSE bars go MUCH higher with better rewards"): the bar
+// runs to M50 (was M20) on a QUADRATIC per-level cost (was ×1.4 a level, whose late levels were 16 h+
+// apart), and every 5th level pays a wins MILESTONE (wins.js awardWordXp → grantWins, so it shows).
+// oct2 (Andy: "nothing caps at a dead end"): M50 is the headline GOAL, not a ceiling — the bar keeps
+// going (same quadratic, a milestone every 5 levels) forever. MASTERY_HARD_CAP only bounds the loop.
+export const MASTERY_MAX = 50;
+export const MASTERY_HARD_CAP = 9999;
+export const MASTERY_BASE = 30;
+export const MASTERY_QUAD = 1.2;
+export const MASTERY_MILESTONE_EVERY = 5;
+export const MASTERY_MILESTONE_WORDS = 40; // M5 pays 40 words' worth of this mode's wins, M50 pays 400
+// The perk: +3% XP for that mode per mastery level above M1 (M1 = base, M50 = +147%).
 export const MASTERY_XP_STEP = 0.03;
 
-// Words to advance FROM `level` to level+1: round(50 × 1.4^level). M1→M2 = 70, M2→M3 = 98, …
+// Words to advance FROM `level` to level+1: round(30 + 1.2 × level²). M1→M2 = 31, M10→M11 = 150,
+// M49→M50 = 2,911; M50 in ~50k words of one mode.
 export function masteryNeed(level) {
   const l = Number.isFinite(level) && level > 0 ? Math.floor(level) : 1;
-  return Math.round(MASTERY_BASE * Math.pow(MASTERY_GROWTH, l));
+  return Math.round(MASTERY_BASE + MASTERY_QUAD * l * l);
+}
+/** Is `level` a milestone level (pays wins on reaching it)? */
+export function isMasteryMilestone(level) {
+  return Number.isFinite(level) && level > 1 && level % MASTERY_MILESTONE_EVERY === 0;
 }
 
 // Cumulative words to REACH a mastery level (M1 = 0). Pure helper for the pacing sim / dialog copy.
 export function masteryWordsToReach(level) {
-  const target = Number.isFinite(level) && level > 1 ? Math.min(MASTERY_MAX, Math.floor(level)) : 1;
+  const target = Number.isFinite(level) && level > 1 ? Math.min(MASTERY_HARD_CAP, Math.floor(level)) : 1;
   let sum = 0;
   for (let n = 1; n < target; n++) sum += masteryNeed(n);
   return sum;
 }
 
-// Derive {level, intoLevel, need, frac, maxed, words} from a cumulative word count. Caps at M20.
+// Derive {level, intoLevel, need, frac, maxed, words} from a cumulative word count. Uncapped past M50 (bounded only by MASTERY_HARD_CAP).
 export function masteryFromWords(words) {
   const total = Number.isFinite(words) && words > 0 ? Math.floor(words) : 0;
   let level = 1;
   let spent = 0;
-  while (level < MASTERY_MAX && total - spent >= masteryNeed(level)) {
+  while (level < MASTERY_HARD_CAP && total - spent >= masteryNeed(level)) {
     spent += masteryNeed(level);
     level += 1;
   }
-  const maxed = level >= MASTERY_MAX;
+  const maxed = level >= MASTERY_HARD_CAP;
   const need = maxed ? 0 : masteryNeed(level);
   const intoLevel = total - spent;
   return { level, intoLevel, need, frac: need > 0 ? intoLevel / need : 1, maxed, words: total };
@@ -99,7 +112,7 @@ export function addMasteryWord(mode) {
   return { level: after, leveledUp: after > before };
 }
 
-// The per-mode XP multiplier from mastery: 1 at M1, +3%/level, up to ×1.57 at M20. Unknown mode → 1.
+// The per-mode XP multiplier from mastery: 1 at M1, +3%/level (×2.47 at M50, and it keeps climbing — linear, never a wall). Unknown mode → 1.
 export function masteryXpMult(mode) {
   if (!MASTERY_MODES.includes(mode)) return 1;
   const lvl = masteryState(mode).level;

@@ -1,7 +1,7 @@
 // momentum.js — MOMENTUM: the REPEATABLE wins sink (the retention fix for the ~162 h end-game dead
 // stretch, see claude/dead-stretch-report.md). Unlike KEY POWER / WORD SENSE (finite ×6 tier ladders
 // that eventually run out and leave 100+ h gaps with nothing to buy), MOMENTUM is ONE upgrade you buy
-// over and over: the price rises gently (×1.05) from a low base, so the next purchase is always
+// over and over: the price rises gently (×1.10) from a low base, so the next purchase is always
 // minutes-to-hours away and it never runs dry. Each buy grants a small STACKING wins bonus (+1%),
 // and — critically — leaves a permanent VISIBLE mark on the menu (see MomentumRail), so 200 buys read
 // as 200 marks of evidence, not a hidden 1.05^n number.
@@ -12,7 +12,7 @@ import { round10 } from './xp.js';
 
 export const MOMENTUM_KEY = 'taw.momentum';
 export const MOMENTUM_BASE = 500; // wins price of the FIRST buy (was 5000 — prices /10 in v8)
-export const MOMENTUM_RATIO = 1.05; // price ×1.05 per buy — a gentle climb, always something to buy
+export const MOMENTUM_RATIO = 1.1; // v9 (STEP 19): was 1.05 — all 200 buys went in the first 2 h // price ×1.10 per buy — a gentle climb, always something to buy
 export const MOMENTUM_MAX = 200; // buys available; 200 × +1% = ×3.0 wins at the top
 export const MOMENTUM_PCT = 0.01; // wins bonus per buy (+1%), stacking additively
 

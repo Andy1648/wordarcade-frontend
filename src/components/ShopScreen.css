@@ -184,7 +184,32 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+/* COMPACT cosmetic tiles (Andy oct2: pop styles / sound packs read smaller than the upgrades):
+   2-up on a phone, 4-up tablet, 6-up desktop; name + XP + price only, blurb moves to the tooltip. */
+.shop-grid.shop-grid--compact {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .shop-grid.shop-grid--compact { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 900px) {
+  .shop-grid.shop-grid--compact { grid-template-columns: repeat(6, 1fr); }
+}
+.shop-card.shop-card--compact {
+  min-height: 0;
+  padding: 8px 6px;
+  gap: 4px;
+}
+.shop-card--compact .shop-card-name {
+  font-size: var(--fs-label);
+}
+.shop-card--compact .shop-card-xp,
+.shop-card--compact .shop-card-price {
+  font-size: var(--fs-label);
+}
 .shop-card {
+  position: relative; /* anchors the NEXT badge — without it the badge flew to the page corner */
   display: flex;
   flex-direction: column;
   align-items: center;

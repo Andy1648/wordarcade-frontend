@@ -25,3 +25,8 @@ tools/satRush/.scratch/
 *.njsproj
 *.sln
 *.sw?
+# per-run sim output (multi-MB); the committed record is *-summary.json + *-console.txt
+claude/progression/*.json
+!claude/progression/*-summary.json
+!claude/progression/sets1.json
+claude/progression/.sweep/

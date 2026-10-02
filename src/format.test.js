@@ -104,8 +104,9 @@ test('formatMult: a real bonus never renders as "×1"', () => {
 });
 
 test('formatMult: big multipliers stay compact, and garbage is guarded', () => {
-  // The rebirth ladder is 3^rc, so it reaches 3.49B — a ten-digit number with ".0" on it is not
-  // a readable multiplier. Above 10,000 it hands off to formatNum.
+  // v8's rebirth ladder was 3^rc and reached 3.49B (v9 is additive, but combined multipliers can
+  // still be large) — a ten-digit number with ".0" on it is not a readable multiplier. Above 10,000
+  // it hands off to formatNum.
   assert.equal(formatMult(3486784401), formatNum(3486784401));
   assert.equal(formatMult(3486784401), '3.49B');
   assert.equal(formatMult(59049), '59K');
@@ -126,7 +127,7 @@ test('formatMultExact: two decimals, trailing zeros trimmed', () => {
 });
 
 test('formatMultExact: big multipliers stay compact, garbage is guarded', () => {
-  assert.equal(formatMultExact(3486784401), '3.49B'); // the R20 rebirth multiplier, 3^20
+  assert.equal(formatMultExact(3486784401), '3.49B'); // 3^20 (v8's R20 rebirth multiplier)
   assert.equal(formatMultExact(NaN), '0');
   assert.equal(formatMultExact(undefined), '0');
 });

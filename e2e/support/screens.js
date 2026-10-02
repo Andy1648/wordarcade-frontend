@@ -85,7 +85,7 @@ export async function enterSolo(page, id) {
   await card(page, id).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
   await page.locator('.mode-dialog-btn-create').click();
-  await page.locator('.solo-root').waitFor({ state: 'visible' });
+  await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
 }
 
 export const ME = 'me';

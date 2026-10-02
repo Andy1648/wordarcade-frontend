@@ -18,10 +18,13 @@
 //     earned; a refund is not earnings, and inflating it would corrupt every achievement gated on
 //     it. (The original purchase did not decrement it either, so the pair stays consistent.)
 //
-// The old price ladder was KEY POWER's, reused: tier N cost keyTierCostAt(N). That function still
-// ships, so the refund is computed from the real prices rather than a copied table.
-import { keyTierCostAt } from './xp.js';
+// The old price ladder was KEY POWER's v8 ladder, reused: tier N cost 10 / 60 / 360 / 2,160 / 12,960.
+// KEY POWER itself is priced differently since Economy v9 (STEP 19), so the prices that were ACTUALLY
+// PAID are frozen here — a refund must return what was spent, not what the tier costs today.
 import { getWins, saveWins } from './wins.js';
+
+const WORDSENSE_PRICES = [0, 10, 60, 360, 2160, 12960];
+const keyTierCostAt = (i) => WORDSENSE_PRICES[i] || 0;
 
 export const WORDSENSE_KEY = 'taw.wordsense'; // the deleted feature's tier store
 export const WORDSENSE_REFUND_KEY = 'taw.wordsenseRefunded';

@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  refundWordSense, wordSenseRefundAmount, WORDSENSE_KEY, WORDSENSE_REFUND_KEY,
+  refundWordSense, wordSenseRefundAmount, WORDSENSE_KEY, WORDSENSE_REFUND_KEY, WORDSENSE_MAX_TIER,
 } from './wordSenseRefund.js';
 import { keyTierCostAt } from './xp.js';
 
@@ -25,20 +25,36 @@ function withStorage(seed, fn, { throwOnSet = false } = {}) {
   }
 }
 
-test('the refund is the sum of the prices actually paid, off the real ladder', () => {
+// The FROZEN v8 KEY POWER ladder WORD SENSE was sold on. KEY POWER is re-priced in v9 (STEP 19), so
+// the refund must NOT follow keyTierCostAt any more — it returns what was actually paid.
+const PAID_V8 = [10, 60, 360, 2160, 12960]; // tiers 1..5
+
+test('the refund is the sum of the frozen v8 prices actually paid', () => {
   assert.equal(wordSenseRefundAmount(0), 0);
-  assert.equal(wordSenseRefundAmount(1), keyTierCostAt(1));
-  assert.equal(wordSenseRefundAmount(3), keyTierCostAt(1) + keyTierCostAt(2) + keyTierCostAt(3));
+  assert.equal(wordSenseRefundAmount(1), 10);
+  assert.equal(wordSenseRefundAmount(2), 10 + 60);
+  assert.equal(wordSenseRefundAmount(3), 10 + 60 + 360); // 430
+  for (let t = 1; t <= WORDSENSE_MAX_TIER; t++) {
+    const paid = PAID_V8.slice(0, t).reduce((a, b) => a + b, 0);
+    assert.equal(wordSenseRefundAmount(t), paid, `tier ${t}`);
+  }
+  assert.equal(wordSenseRefundAmount(5), 15550); // the whole ladder
   // Clamped to the ladder's real length: a hand-edited tier cannot mint wins.
-  assert.equal(wordSenseRefundAmount(99), wordSenseRefundAmount(5));
+  assert.equal(wordSenseRefundAmount(99), wordSenseRefundAmount(WORDSENSE_MAX_TIER));
   assert.equal(wordSenseRefundAmount(-4), 0);
   assert.equal(wordSenseRefundAmount(undefined), 0);
+});
+
+test('the refund is decoupled from the live (v9) KEY POWER price', () => {
+  // If this ever matches the v9 ladder again, the refund has silently drifted off what was paid.
+  assert.notEqual(wordSenseRefundAmount(1), keyTierCostAt(1, 0));
+  assert.notEqual(wordSenseRefundAmount(3), keyTierCostAt(1, 0) + keyTierCostAt(2, 0) + keyTierCostAt(3, 0));
 });
 
 test('a player who bought tiers gets every win back, and the tier key is cleared', () => {
   withStorage({ 'taw.wordsense': '3', 'taw.wins': '1000', 'taw.winsLifetime': '50000' }, (map) => {
     const paid = refundWordSense();
-    assert.equal(paid, wordSenseRefundAmount(3));
+    assert.equal(paid, 430); // 10 + 60 + 360, the v8 prices paid for T1..T3
     assert.equal(Number(map.get('taw.wins')), 1000 + paid);
     assert.equal(map.get(WORDSENSE_KEY), undefined, 'the dead tier key is removed');
     assert.equal(map.get(WORDSENSE_REFUND_KEY), '1');

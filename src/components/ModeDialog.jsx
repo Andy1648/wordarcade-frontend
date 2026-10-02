@@ -8,7 +8,7 @@ import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
-import { masteryState, masteryNeed, MASTERY_MAX, MASTERY_XP_STEP, MASTERY_MODES } from '../progress/mastery';
+import { masteryState, masteryNeed, MASTERY_XP_STEP, MASTERY_MODES, MASTERY_MILESTONE_EVERY } from '../progress/mastery';
 
 // MASTERY (Job 2): a compact per-mode mastery readout — level, the current XP perk, and words to
 // the next level. Reads client state directly (cheap); shown in every mode dialog.
@@ -19,7 +19,7 @@ function MasteryLine({ mode, accent, inPicker = false }) {
     // `--picker`: this is the pack-picker (blitz) dialog, the only one where the picker fights the
     // mastery row for space. It is hidden on short-and-narrow phones (see ModeDialog.css) so the
     // picker keeps a visible height; every other dialog / viewport keeps the mastery readout.
-    <div className={`mode-dialog-mastery${inPicker ? ' mode-dialog-mastery--picker' : ''}`} aria-label={`Mastery level ${st.level} of ${MASTERY_MAX}`}>
+    <div className={`mode-dialog-mastery${inPicker ? ' mode-dialog-mastery--picker' : ''}`} aria-label={`Mastery level ${st.level}`}>
       <span className="mode-dialog-mastery-lv" style={{ color: accent, borderColor: accent }}>
         M{st.level}
       </span>
@@ -27,6 +27,10 @@ function MasteryLine({ mode, accent, inPicker = false }) {
         {pct > 0 ? `+${pct}% XP THIS MODE` : 'MASTERY — PLAY TO LEVEL UP'}
         {!st.maxed && (
           <span className="mode-dialog-mastery-next"> · {st.intoLevel}/{st.need} TO M{st.level + 1}</span>
+        )}
+        {/* STEP 19: every 5th level pays a wins bonus — name the next one so the bar has a goal. */}
+        {!st.maxed && (
+          <span className="mode-dialog-mastery-next"> · BONUS AT M{Math.ceil((st.level + 1) / MASTERY_MILESTONE_EVERY) * MASTERY_MILESTONE_EVERY}</span>
         )}
         {st.maxed && <span className="mode-dialog-mastery-next"> · MAXED</span>}
       </span>
