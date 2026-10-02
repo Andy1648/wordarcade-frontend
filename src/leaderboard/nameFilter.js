@@ -44,9 +44,27 @@ export function nameSquash(name) {
 }
 
 export const NAME_SHAPE = /^[A-Za-z0-9_]{3,16}$/;
+// STEP 51 (Andy oct2): Chinese names. A name with any CJK ideograph may be 2-12 chars of CJK + ASCII.
+// Mirrors supabase/migrations/005_letters_cjk.sql; only offered once the DB reports it (lb_caps).
+const CJK_CHAR = /[㐀-䶿一-鿿]/;
+export const NAME_SHAPE_CJK = /^[A-Za-z0-9_㐀-䶿一-鿿]{2,12}$/;
+// Chinese profanity / slurs, matched as SUBSTRINGS of the raw name (no leet applies to ideographs).
+// The DB's private.blocked_terms kind 'cjk' is seeded with the same list (005_letters_cjk.sql).
+export const CJK_TERMS = [
+  '操你', '肏', '傻逼', '傻屄', '煞笔', '沙比', '妈的', '他妈', '你妈', '尼玛', '草泥马', '日你',
+  '屌', '鸡巴', '几把', '屄', '逼', '婊子', '贱人', '贱货', '王八蛋', '狗日', '狗娘', '杂种',
+  '混蛋', '滚蛋', '去死', '死全家', '脑残', '弱智', '妓女', '卖淫', '色情', '淫', '强奸', '轮奸',
+  '阴茎', '阴道', '做爱', '性交', '黑鬼', '支那', '小日本', '鬼子', '棒子', '阿三', '基佬', '死基',
+  '纳粹', '希特勒', '恐怖分子', '自杀', '毒品', '冰毒',
+];
+export function hasCjk(name) {
+  return CJK_CHAR.test(String(name || ''));
+}
 const EXACT = new Set(ALL_TERMS.map((t) => String(t).toLowerCase().replace(/[^a-z]/g, '')).filter(Boolean));
 
 export function isNameBlocked(name) {
+  const raw = String(name || '');
+  if (CJK_TERMS.some((t) => raw.includes(t))) return true;
   const plain = String(name || '').toLowerCase().replace(/[^a-z]/g, '');
   const leet = nameLeet(name);
   const squash = nameSquash(name);
@@ -55,8 +73,10 @@ export function isNameBlocked(name) {
 }
 
 /** 'ok' | 'shape' | 'blocked' — the client's instant verdict (the DB adds 'taken'). */
-export function nameVerdict(name) {
-  if (!NAME_SHAPE.test(String(name || ''))) return 'shape';
+export function nameVerdict(name, { cjk = false } = {}) {
+  const n = String(name || '');
+  const shapeOk = NAME_SHAPE.test(n) || (cjk && hasCjk(n) && NAME_SHAPE_CJK.test(n));
+  if (!shapeOk) return 'shape';
   if (isNameBlocked(name)) return 'blocked';
   return 'ok';
 }

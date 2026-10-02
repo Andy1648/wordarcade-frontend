@@ -17,6 +17,7 @@ import {
   submitStats,
   setLastRank,
   setRankNews,
+  boardCaps,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
@@ -40,11 +41,33 @@ const ERROR_COPY = {
 // STEP 47: a board under this many rows is padded with invitations, never fake players.
 export const MIN_ROWS = 10;
 
-// Rebirth stars: one ★ per rebirth up to five, then ★×N so a 40-rebirth row stays one line.
-export function rebirthStars(n) {
+// STEP 51 (Andy oct2): no rebirth stars — the REBIRTH TIER is the name's colour and frame.
+// R0 plain white · R1-2 cyan · R3-4 yellow · R5-9 orange · R10-19 pink · R20+ purple, framed.
+export const REBIRTH_TIERS = [
+  { min: 0, name: 'R0', colour: '#ffffff', frame: false },
+  { min: 1, name: 'REBORN', colour: '#2EFFE0', frame: false },
+  { min: 3, name: 'TWICE-BORN', colour: '#FFE94A', frame: false },
+  { min: 5, name: 'PHOENIX', colour: '#FF6B3D', frame: true },
+  { min: 10, name: 'ETERNAL', colour: '#FF4FA3', frame: true },
+  { min: 20, name: 'ASCENDED', colour: '#C58BFF', frame: true },
+];
+export function rebirthTier(n) {
   const r = Math.max(0, Math.floor(Number(n) || 0));
-  if (r === 0) return '';
-  return r <= 5 ? '★'.repeat(r) : `★×${r}`;
+  let t = REBIRTH_TIERS[0];
+  for (const x of REBIRTH_TIERS) if (r >= x.min) t = x;
+  return t;
+}
+function NameTag({ name, rebirths }) {
+  const t = rebirthTier(rebirths);
+  return (
+    <span
+      className={`lb-name${t.frame ? ' is-framed' : ''}`}
+      style={{ color: t.colour, '--rb': t.colour }}
+      title={rebirths > 0 ? `${rebirths} rebirth${rebirths === 1 ? '' : 's'} — ${t.name}` : undefined}
+    >
+      {name}
+    </span>
+  );
 }
 
 const fmt = (n) => Number(n || 0).toLocaleString('en-US');
@@ -53,6 +76,9 @@ const fmtRate = (n) => {
   return v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v.toFixed(1);
 };
 
+// The MAIN stat: lifetime letters when the board carries them (migration 005), else words.
+const mainStat = (row) => (row.lifetime_letters != null ? row.lifetime_letters : row.lifetime_words);
+
 function Row({ row, mine, flash }) {
   const top = row.rank <= 3 ? ` is-top${row.rank}` : '';
   return (
@@ -60,15 +86,12 @@ function Row({ row, mine, flash }) {
       <span className="lb-rank">{row.rank}</span>
       <span className="lb-who">
         <span className="lb-name-line">
-          <span className="lb-name">{row.username}</span>
+          <NameTag name={row.username} rebirths={row.rebirths} />
           {mine && <span className="lb-you-badge">YOU</span>}
         </span>
-        <span className="lb-lv">
-          LV {fmt(row.level)}
-          {row.rebirths > 0 && <span className="lb-stars" aria-label={`${row.rebirths} rebirths`}> {rebirthStars(row.rebirths)}</span>}
-        </span>
+        <span className="lb-lv">LV {fmt(row.level)}</span>
       </span>
-      <span className="lb-num lb-words">{fmt(row.lifetime_words)}</span>
+      <span className="lb-num lb-words">{fmt(mainStat(row))}</span>
       <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
   );
@@ -85,7 +108,13 @@ export default function LeaderboardScreen({ onBack }) {
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState(null);
   const [flash, setFlash] = useState(false);
+  const [caps, setCaps] = useState({ letters: false, cjk: false });
   const overlayRef = useRef(null);
+  useEffect(() => {
+    let live = true;
+    boardCaps().then((c) => { if (live) setCaps(c); });
+    return () => { live = false; };
+  }, []);
 
   async function load() {
     if (!LEADERBOARD_ENABLED) return;
@@ -120,7 +149,7 @@ export default function LeaderboardScreen({ onBack }) {
   // Instant client verdict; the server's "taken" after a short pause.
   useEffect(() => {
     if (!draft) { setVerdict(null); return undefined; }
-    const local = nameVerdict(draft);
+    const local = nameVerdict(draft, { cjk: caps.cjk });
     if (local !== 'ok') { setVerdict(local); return undefined; }
     if (profile && draft.toLowerCase() === profile.username.toLowerCase()) { setVerdict('ok'); return undefined; }
     setVerdict('checking');
@@ -129,7 +158,7 @@ export default function LeaderboardScreen({ onBack }) {
       nameStatus(draft).then((v) => { if (live) setVerdict(v); }).catch(() => { if (live) setVerdict('ok'); });
     }, 350);
     return () => { live = false; clearTimeout(t); };
-  }, [draft, profile]);
+  }, [draft, profile, caps.cjk]);
 
   async function claim(e) {
     e.preventDefault();
@@ -178,6 +207,7 @@ export default function LeaderboardScreen({ onBack }) {
                   className="lb-claim-input"
                   value={draft}
                   onChange={(e) => { setDraft(e.target.value.replace(/\s/g, '_').slice(0, 16)); setClaimError(null); }}
+                  lang={caps.cjk ? 'zh' : undefined}
                   maxLength={16}
                   autoComplete="off"
                   autoCorrect="off"
@@ -192,7 +222,7 @@ export default function LeaderboardScreen({ onBack }) {
                 </button>
               </div>
               <p id="lb-claim-verdict" className={`lb-verdict is-${claimError ? 'blocked' : verdict || 'idle'}`} aria-live="polite">
-                {claimError || (verdict ? VERDICT_COPY[verdict] : 'NO SIGN-IN. JUST A NAME.')}
+                {claimError || (verdict === 'shape' && caps.cjk ? '3–16 LETTERS, NUMBERS OR _ · 中文 2–12 字' : verdict ? VERDICT_COPY[verdict] : 'NO SIGN-IN. JUST A NAME.')}
               </p>
               {profile && (
                 <button type="button" className="lb-link-btn" onClick={() => { setEditing(false); setDraft(''); setClaimError(null); }}>
@@ -211,7 +241,7 @@ export default function LeaderboardScreen({ onBack }) {
           {LEADERBOARD_ENABLED && (
             <>
               <div className="lb-cols" aria-hidden="true">
-                <span>#</span><span>PLAYER</span><span className="lb-num">WORDS</span><span className="lb-num">WINS/WORD</span>
+                <span>#</span><span>PLAYER</span><span className="lb-num">{caps.letters ? 'LETTERS' : 'WORDS'}</span><span className="lb-num">WINS/WORD</span>
               </div>
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
               {loadError && <p className="lb-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb-link-btn" onClick={load}>RETRY</button></p>}
@@ -243,7 +273,7 @@ export default function LeaderboardScreen({ onBack }) {
               )}
               {!profile && (
                 <p className="lb-note lb-preview">
-                  YOU'D SHOW AS LV {fmt(stats.level)} {rebirthStars(stats.rebirths)} · {fmt(stats.lifetimeWords)} WORDS
+                  YOU'D SHOW AS LV {fmt(stats.level)} · {caps.letters ? `${fmt(stats.lifetimeLetters)} LETTERS` : `${fmt(stats.lifetimeWords)} WORDS`}
                 </p>
               )}
             </>

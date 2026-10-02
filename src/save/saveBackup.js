@@ -31,6 +31,7 @@ export const PROGRESS_KEYS = [
   'taw.marksRevealed',
   'taw.markWords',
   'taw.stars',
+  'taw.letters',
   'taw.mastery',
   'taw.collection',
   'taw.achievements',

@@ -22,6 +22,7 @@ import AudioControls from './AudioControls';
 import LayeredWord from './LayeredWord';
 import TrophyIcon from './TrophyIcon';
 import WordHook from './WordHook';
+import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
@@ -367,6 +368,7 @@ export default function MobileMenu({
         >
           CREDITS
         </button>
+        {onLeaderboard && <LiveTicker className="hp-m-live" />}
         <button
           type="button"
           className={`hp-m-join${navigating ? ' is-disabled' : ''}`}

@@ -12,6 +12,7 @@
 import { getRebirths } from '../progress/xp.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
+import { getLetters } from '../progress/letters.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -87,13 +88,29 @@ function readLevel() {
   }
 }
 
-/** The numbers this browser reports: level, rebirths, lifetime words (every mode), WINS/WORD. */
+/** The numbers this browser reports: level, rebirths, lifetime words + LETTERS (STEP 51), WINS/WORD. */
 export function myStats() {
   let words = 0;
   for (const m of MASTERY_MODES) words += masteryWords(m) || 0;
   let wpw = 0;
   try { wpw = perWordRateNow({ mode: 'word-bomb' }).rate || 0; } catch { wpw = 0; }
-  return { level: readLevel(), rebirths: getRebirths() || 0, lifetimeWords: words, winsPerWord: Math.round(wpw * 10) / 10 };
+  let letters = 0;
+  try { letters = getLetters(); } catch { letters = 0; }
+  return { level: readLevel(), rebirths: getRebirths() || 0, lifetimeWords: words, lifetimeLetters: letters, winsPerWord: Math.round(wpw * 10) / 10 };
+}
+
+// ---- what the DB can do (STEP 51) ------------------------------------------------------------
+// supabase/migrations/005_letters_cjk.sql adds LETTERS + Chinese names and a lb_caps() probe. Until
+// it is applied the probe 404s and everything below keeps the v1 behaviour (words, ASCII names).
+let capsPromise = null;
+export function boardCaps() {
+  if (!LEADERBOARD_ENABLED) return Promise.resolve({ letters: false, cjk: false });
+  if (!capsPromise) {
+    capsPromise = rpc('lb_caps', {})
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk) }))
+      .catch(() => ({ letters: false, cjk: false }));
+  }
+  return capsPromise;
 }
 
 // ---- API -------------------------------------------------------------------------------------
@@ -131,13 +148,25 @@ export async function submitStats(force = false) {
   lastSubmit = now;
   const s = myStats();
   try {
-    await rpc('lb_submit', {
-      p_secret: getSecret(),
-      p_level: s.level,
-      p_rebirths: s.rebirths,
-      p_lifetime_words: s.lifetimeWords,
-      p_wins_per_word: s.winsPerWord,
-    });
+    const caps = await boardCaps();
+    if (caps.letters) {
+      await rpc('lb_submit2', {
+        p_secret: getSecret(),
+        p_level: s.level,
+        p_rebirths: s.rebirths,
+        p_lifetime_words: s.lifetimeWords,
+        p_lifetime_letters: s.lifetimeLetters,
+        p_wins_per_word: s.winsPerWord,
+      });
+    } else {
+      await rpc('lb_submit', {
+        p_secret: getSecret(),
+        p_level: s.level,
+        p_rebirths: s.rebirths,
+        p_lifetime_words: s.lifetimeWords,
+        p_wins_per_word: s.winsPerWord,
+      });
+    }
     return true;
   } catch {
     return false;
@@ -147,7 +176,8 @@ export async function submitStats(force = false) {
 /** The top of the board + (if I have a name and I'm below it) my own row. */
 export async function fetchBoard(limit = BOARD_SIZE) {
   if (!LEADERBOARD_ENABLED) return { rows: [], me: null };
-  const cols = 'rank,id,username,level,rebirths,lifetime_words,wins_per_word';
+  const caps = await boardCaps();
+  const cols = `rank,id,username,level,rebirths,lifetime_words,${caps.letters ? 'lifetime_letters,' : ''}wins_per_word`;
   const r = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
   if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { code: `http_${r.status}` });
   const rows = await r.json();
@@ -165,6 +195,14 @@ export async function fetchBoard(limit = BOARD_SIZE) {
 // row (someone not on the board yet) loses every exact tie — the existing row got there first, the
 // same rule the view's created_at tiebreak applies.
 export function ranksAhead(row, me) {
+  // STEP 51: a board that carries LETTERS ranks by them first (letters, level, rebirths).
+  if (row.lifetime_letters != null && me.lifetimeLetters != null) {
+    const L = Number(row.lifetime_letters) || 0;
+    if (L !== me.lifetimeLetters) return L > me.lifetimeLetters;
+    const lv = Number(row.level) || 0;
+    if (lv !== me.level) return lv > me.level;
+    return (Number(row.rebirths) || 0) >= me.rebirths;
+  }
   const r = Number(row.rebirths) || 0;
   const l = Number(row.level) || 0;
   const w = Number(row.lifetime_words) || 0;

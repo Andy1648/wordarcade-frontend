@@ -47,6 +47,8 @@ import { queueClaim } from '../progress/claims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
 import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
+import LiveTicker from '../leaderboard/LiveTicker.jsx';
+import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
 import { hasPlayedBefore } from '../visitHistory';
 import './wall-system.css';
@@ -553,7 +555,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     }
   }, [tier]);
   useEffect(() => {
-    if (xpProgress.level > lastLevelRef.current) setFramePunch((k) => k + 1);
+    if (xpProgress.level > lastLevelRef.current) {
+      setFramePunch((k) => k + 1);
+      // STEP 51 ticker: "NAME just hit LV 50" (claimed players, milestone levels only)
+      for (let lv = lastLevelRef.current + 1; lv <= xpProgress.level; lv += 1) if (isLevelMilestone(lv)) announceTick('lv', lv);
+    }
     lastLevelRef.current = xpProgress.level;
   }, [xpProgress.level]);
 
@@ -615,6 +621,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   useEffect(() => {
     const rb = consumePendingRebirth();
+    if (rb > 0) announceTick('rb', rb); // STEP 51 ticker: "NAME reached REBIRTH 5"
     if (rb > 0 && xpFxRef.current) {
       xpFxRef.current.rebirthCelebration(rb);
     } else {
@@ -779,6 +786,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         if (live && r) {
           setRankUp(r);
           setBoardNews(true);
+          if (r.to <= 10) announceTick('rank', r.to); // STEP 51 ticker: "NAME took #3"
         }
       })
       .catch(() => {});
@@ -1105,6 +1113,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           >
             CREDITS
           </button>
+          {/* STEP 51: the live room — online count + other players' moments — joins the footer. */}
+          {LEADERBOARD_ENABLED && <LiveTicker className="homepage-live" />}
         </div>
         </>
         )}
@@ -1155,7 +1165,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
 
       {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
-      {!showClaims && !claimReveal && <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />}
+      {/* The popup never floats over another overlay (rank ladder, marks, a mode dialog). */}
+      {!showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview && (
+        <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
+      )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
           <ClaimsPanel onClose={() => setShowClaims(false)} onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }} />

@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RANKS, rankTitle, rankFor, MAX_RANK_NAME_LEN } from './rank.js';
 
-test('there are ~10 bands and names are ALL CAPS, unique, ≤ 8 chars', () => {
-  assert.ok(RANKS.length >= 8 && RANKS.length <= 12, `band count ${RANKS.length}`);
+test('there are 18 bands (STEP 51: more ranks) and names are ALL CAPS, unique, ≤ 8 chars', () => {
+  assert.equal(RANKS.length, 18, `band count ${RANKS.length}`);
   const names = RANKS.map((r) => r.name);
   assert.equal(new Set(names).size, names.length, 'duplicate rank name');
   for (const n of names) {
@@ -43,7 +43,10 @@ test('band boundaries land on the right rank', () => {
   assert.equal(rankTitle(30), 'BRAWLER');
   assert.equal(rankTitle(31), 'SHARK');
   assert.equal(rankTitle(100), 'UNREAL');
-  assert.equal(rankTitle(99999), 'UNREAL');
+  assert.equal(rankTitle(149), 'UNREAL');
+  assert.equal(rankTitle(150), 'MYTHIC'); // STEP 51: more ranks past L100
+  assert.equal(rankTitle(1000), 'BEYOND');
+  assert.equal(rankTitle(99999), 'BEYOND');
 });
 
 test('out-of-range / garbage levels fall back to LV 1 (ROOKIE), never throw', () => {

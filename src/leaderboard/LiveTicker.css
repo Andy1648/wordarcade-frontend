@@ -1,0 +1,50 @@
+.live-ticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d8c9f0;
+}
+.live-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #2effe0;
+}
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2effe0;
+  border: 2px solid #0f8f7e;
+}
+.live-tick {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffe94a;
+  animation: live-tick-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes live-tick-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-tick {
+    animation: none;
+  }
+}
