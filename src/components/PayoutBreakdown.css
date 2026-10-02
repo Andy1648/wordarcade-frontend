@@ -35,8 +35,10 @@
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
 }
-.payout-headline-xp { color: #2effe0; }
-.payout-headline-wins { color: #ffe94a; }
+.payout-headline-xp { color: #2effe0; font-size: var(--fs-panel); }
+/* STEP 53 (Andy oct2: "bigger reward text so the player clearly sees what they earned"): the WINS
+   figure is the receipt's ONE big thing; XP rides beside it at the old size. */
+.payout-headline-wins { color: #ffe94a; font-size: var(--fs-h2); }
 .payout-headline-sep { color: #6b5a8a; }
 /* The unit rides the numeral at --fs-unit (0.45em of whatever the figure is set at), the same
    ratio <Num> uses, so "XP" never competes with the number it labels. */
@@ -247,6 +249,10 @@
   line-height: 1.05;
 }
 .payout--compact .payout-headline-sep { display: none; }
+/* The docked receipt's WINS figure (STEP 53, Andy N2: bigger) keeps --fs-h2, and its unit drops
+   under the number so the figure fits the 152px column instead of pushing the receipt leftward
+   onto SKIP (word-landing.spec "the receipt clears the input row"). */
+.payout--compact .payout-headline-wins .payout-headline-unit { display: block; }
 .payout--compact .payout-math {
   margin-top: 5px;
   padding-top: 5px;

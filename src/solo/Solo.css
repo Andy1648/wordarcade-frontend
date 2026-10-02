@@ -1155,7 +1155,9 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #ffe94a;
-  margin-bottom: -12px; /* hugs the strip it describes (the deck gap is 22px) */
+  /* sits in the deck's own gap above the strip; a negative margin collided with the tiles on phones,
+     where the deck gap is smaller */
+  margin-bottom: 0;
 }
 .solo-frenzy-goal.is-live {
   margin-bottom: 0; /* the plaque's own box + shadow need the full gap, or it sits on the tiles */

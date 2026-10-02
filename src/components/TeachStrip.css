@@ -36,7 +36,11 @@
 /* 1. WHAT THE ACT IS. The loudest thing in the strip, because "you type a real word" is the
    single fact players were not getting. */
 .teach-strip-act {
-  font-size: var(--fs-body);
+  /* STEP 53 (Andy oct2: "bigger tutorial prompts in every mode"): the ACT is the strip's one big
+     thing — display type, not a body line. */
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
   color: var(--theme-xp-fill, #2effe0);
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -78,7 +82,7 @@
 /* 3. WHAT IT IS WORTH. */
 .teach-strip-pay {
   flex: 0 0 auto;
-  font-size: var(--fs-label); /* 13px floor — see .teach-strip-eg-tag */
+  font-size: var(--fs-body); /* STEP 53: was --fs-label */
   /* tracked in from 0.12em when it grew 11 -> 13px, so the example + pay line + GOT IT still share
      one row in the 450px strip beside the FUSE/CHAIN hero instead of wrapping GOT IT to a 3rd row */
   letter-spacing: 0.04em;
@@ -116,7 +120,7 @@
     gap: 8px;
   }
   /* A direction ("TYPE A REAL WORD"): --fs-body on a phone too, not the 13px label size. */
-  .teach-strip-act { font-size: var(--fs-body); }
+  .teach-strip-act { font-size: var(--fs-panel); }
   .teach-strip-pay { flex-basis: 100%; }
 }
 
