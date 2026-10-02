@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { starsForRebirth, rebirthAdvice, starStep, buyPerk, starsState, addStars, rebirthWithStars, starPowerMult, headStartLevel, runAutomation, perkCost } from './stars.js';
 import { rebirthThreshold, loadProgress } from './xp.js';
-import { listClaims } from './claims.js';
+import { listClaims, layerOpen } from './claims.js';
 import { perWordWins } from './wins.js';
 
 function withStorage(seed, fn) {
@@ -38,11 +38,12 @@ test('rebirthWithStars banks the stars and queues the layer reveals at R1 and R3
     assert.equal(r.rc, 1);
     assert.equal(r.stars, 3);
     assert.equal(starsState().balance, 3);
-    assert.ok(listClaims().some((c) => c.id === 'layer-stars'));
+    assert.ok(layerOpen('stars'), 'E4: STAR PERKS opens at once (no inbox)');
     m.set('taw.rebirths', '2');
     m.set('taw.xp', JSON.stringify({ lv: rebirthThreshold(2), into: 0 }));
     rebirthWithStars();
-    assert.ok(listClaims().some((c) => c.id === 'layer-auto'));
+    assert.ok(layerOpen('auto'), 'E4: AUTOMATION opens at once');
+    assert.equal(listClaims().length, 0);
   });
 });
 

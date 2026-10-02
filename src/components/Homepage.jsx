@@ -42,7 +42,7 @@ import ClaimsPanel from '../claims/ClaimsPanel.jsx';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
-import { queueClaim } from '../progress/claims.js';
+import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
@@ -198,6 +198,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
   const [marksNew, setMarksNew] = useState(() => hasUnseenMarks(markUnlocked.map((m) => m.id)));
+  // E4: a new mark is owned the moment it unlocks (no inbox), so re-check on every claims event —
+  // the MARKS button then says NEW MARK without waiting for the next menu mount.
+  const markIdsKey = markUnlocked.map((m) => m.id).join(',');
+  useEffect(() => {
+    if (hasUnseenMarks(markIdsKey ? markIdsKey.split(',') : [])) setMarksNew(true);
+  }, [markIdsKey, claims]);
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
@@ -803,6 +809,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // STEP 52 — CLOUD SAVE: if the cloud copy of this player's progress is AHEAD of this browser (a
   // wiped Safari, a new device after a recovery code), bring it back and reload into it. Once per
   // session at most, and never when local progress is equal or ahead (cloudSave.js).
+  // E4: claims that no longer belong in the inbox (codes, marks, systems, collection, welcome back)
+  // are applied or dropped once — the inbox is achievements + rank-ups only.
+  useEffect(() => { trimClaimInbox(); }, []);
   // 012_admin_reset: the same lb_load also carries the dev's FULL RESET flag, so it runs once per PAGE
   // LOAD (not once per session): a reset outranks the restore, wipes, and reloads into a fresh LV 1.
   useEffect(() => {

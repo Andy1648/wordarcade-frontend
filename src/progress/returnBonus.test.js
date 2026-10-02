@@ -59,16 +59,15 @@ test('pendingReturnBonus gates on >=6h away and not-yet-claimed-today', () => {
   });
 });
 
-test('claimReturnBonus grants once, then is blocked the same calendar day', () => {
+test('claimReturnBonus fires once a day — and pays nothing since E4 (welcome back is cut)', () => {
   const now = Date.UTC(2026, 7, 28, 12, 0, 0);
   withStorage({ 'taw.rebirths': '0' }, () => {
     const before = getWins();
     const first = claimReturnBonus(now - 10 * HOUR, now);
     assert.ok(first);
-    assert.equal(first.wins, 10 * PER_HOUR_WINS); // 1000
-    assert.equal(getWins() - before, 0, 'queued, not credited (Andy oct2)');
-    assert.equal(claimAll().wins, 1000);
-    assert.equal(getWins() - before, 1000);
+    assert.equal(first.wins, 10 * PER_HOUR_WINS); // 1000 (the computed bonus, no longer paid)
+    assert.equal(getWins() - before, 0, 'not credited');
+    assert.equal(claimAll().wins, 0, 'and not in the inbox (Andy oct2 evening E4)');
     // Same day, another eligible-looking return → blocked (already claimed today).
     const second = claimReturnBonus(now - 9 * HOUR, now + HOUR);
     assert.equal(second, null);
