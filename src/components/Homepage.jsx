@@ -26,7 +26,8 @@ import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menu
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
-import MarksIndex from './MarksIndex';
+// E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
+const MarksIndex = lazy(() => import('./MarksIndex'));
 import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
@@ -1233,13 +1234,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
       {showMarks && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
-          <MarksIndex
-            unlockedIds={markUnlocked.map((m) => m.id)}
-            equippedId={equippedMark}
-            achievementNames={ACH_NAME}
-            onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
-            onClose={() => setShowMarks(false)}
-          />
+          <Suspense fallback={null}>
+            <MarksIndex
+              unlockedIds={markUnlocked.map((m) => m.id)}
+              equippedId={equippedMark}
+              achievementNames={ACH_NAME}
+              onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
+              onClose={() => setShowMarks(false)}
+            />
+          </Suspense>
         </ScreenBoundary>
       )}
 
