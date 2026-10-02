@@ -27,8 +27,6 @@ const SENSITIVITY = 2.2; // current flux must exceed local-average flux * this
 const MIN_FLUX = 0.025; // floor so quiet/steady passages don't false-trigger
 const COOLDOWN_MS = 130; // min gap between beats (no double-trigger per hit)
 const BEAT_HOLD_MS = 120; // how long data-beat stays "true" per hit
-// Slow decay of the observed max flux so --beat-intensity stays responsive.
-const MAX_DECAY = 0.999;
 
 // The whole-viewport screen flash is pink on every beat (was a random palette
 // pick, which read as a multicolour strobe). [TUNABLE: for slight variety, pick
@@ -44,14 +42,23 @@ function applyNeutral(root) {
   root.removeAttribute('data-beat');
 }
 
-export function useBeatSync(getFrequencyData, active) {
+// STEP 59 (measured at 4x CPU throttle, 1280x720 menu while typing): with music on, the menu ran
+// 93 frames / 2.6 s and 1.09 s of style recalc; muted, 139 frames and 0.32 s. Two costs per beat:
+//   1. `setBeatCount` re-rendered the WHOLE App on every beat (App only used it to shake in-game).
+//      Beats are now delivered through `onBeatRef` — a ref the caller points at its handler — so a
+//      beat costs no React render unless the handler itself sets state.
+//   2. Two custom properties written on <html> every beat. A custom property on the root is
+//      inherited, so each write re-resolves EVERY element's style: measured, dropping the per-beat
+//      --beat-intensity write alone took the menu from ~93 to 125 frames / 2.6 s and halved style
+//      recalc (1.1 s -> 0.64 s). Both are now written ONCE when the music starts: --flash-color
+//      never changed, and --beat-intensity is a constant 1 (every pop at full strength) — the
+//      per-hit strength was not worth a document-wide restyle four times a second.
+export function useBeatSync(getFrequencyData, active, onBeatRef = null) {
   const [isAnalysing, setIsAnalysing] = useState(false);
-  const [beatCount, setBeatCount] = useState(0);
 
   const rafRef = useRef(null);
   const fluxHistRef = useRef([]); // recent flux readings (max HISTORY_FRAMES)
   const lastBeatRef = useRef(0); // perf timestamp of the last accepted beat
-  const maxFluxRef = useRef(MIN_FLUX); // observed peak flux, for intensity
   const holdTimerRef = useRef(null); // pending data-beat removal
 
   useEffect(() => {
@@ -65,6 +72,9 @@ export function useBeatSync(getFrequencyData, active) {
     }
 
     setIsAnalysing(true);
+    // Pink wash for the whole-viewport screen flash (same colour every beat) — written once.
+    root.style.setProperty('--flash-color', FLASH_COLOR);
+    root.style.setProperty('--beat-intensity', '1');
 
     const loop = () => {
       const data = getFrequencyData();
@@ -77,9 +87,6 @@ export function useBeatSync(getFrequencyData, active) {
       // source. The prompt's per-beat reaction now runs entirely off the discrete
       // data-beat class + the once-per-beat --beat-intensity below.
 
-      // Track a decaying observed max flux so intensity is relative to recent hits.
-      maxFluxRef.current = Math.max(flux, maxFluxRef.current * MAX_DECAY, MIN_FLUX);
-
       // ---- Spectral-flux onset detection vs an adaptive local threshold ----
       const hist = fluxHistRef.current;
       const avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
@@ -88,10 +95,6 @@ export function useBeatSync(getFrequencyData, active) {
       const isOnset = flux > MIN_FLUX && flux > avg * SENSITIVITY;
       if (isOnset && now - lastBeatRef.current > COOLDOWN_MS) {
         lastBeatRef.current = now;
-        const intensity = Math.min(1, flux / maxFluxRef.current);
-        root.style.setProperty('--beat-intensity', intensity.toFixed(3));
-        // Pink wash for the whole-viewport screen flash (same colour every beat).
-        root.style.setProperty('--flash-color', FLASH_COLOR);
 
         // Flip data-beat on for BEAT_HOLD_MS so CSS one-shot pops fire. Removing
         // and (next beat) re-adding the attribute restarts the animation.
@@ -102,7 +105,7 @@ export function useBeatSync(getFrequencyData, active) {
           holdTimerRef.current = null;
         }, BEAT_HOLD_MS);
 
-        setBeatCount((c) => c + 1);
+        if (onBeatRef && typeof onBeatRef.current === 'function') onBeatRef.current();
       }
 
       // Push current flux into the running-average window.
@@ -123,7 +126,7 @@ export function useBeatSync(getFrequencyData, active) {
       fluxHistRef.current = [];
       applyNeutral(root);
     };
-  }, [getFrequencyData, active]);
+  }, [getFrequencyData, active, onBeatRef]);
 
-  return { beatCount, isAnalysing };
+  return { isAnalysing };
 }

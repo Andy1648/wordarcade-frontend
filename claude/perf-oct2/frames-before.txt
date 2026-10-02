@@ -1,0 +1,14 @@
+menu                   1280x720 settle=6000  n=116  p50=16.8  p95=83.4  max=150  long(>34ms)=28.4%
+ingame-word-bomb       1280x720 settle=6000  n=203  p50=16.7  p95=33.4  max=50  long(>34ms)=1.5%
+ingame-category-blitz  1280x720 settle=6000  n=223  p50=16.7  p95=33.3  max=34  long(>34ms)=0.0%
+ingame-chain           1280x720 settle=6000  n=178  p50=16.7  p95=33.4  max=700  long(>34ms)=2.2%
+ingame-fuse            1280x720 settle=6000  n=187  p50=16.7  p95=33.3  max=683  long(>34ms)=1.6%
+sat-play               1280x720 settle=6000  n=194  p50=16.7  p95=33.4  max=83  long(>34ms)=4.1%
+gameover-word-bomb     1280x720 settle=6000  n=182  p50=16.7  p95=49.9  max=83  long(>34ms)=5.5%
+menu                   390x844 settle=6000  n=236  p50=16.7  p95=16.8  max=33  long(>34ms)=0.0%
+ingame-word-bomb       390x844 settle=6000  n=220  p50=16.7  p95=33.3  max=33  long(>34ms)=0.0%
+ingame-category-blitz  390x844 settle=6000  n=229  p50=16.7  p95=33.3  max=33  long(>34ms)=0.0%
+ingame-chain           390x844 settle=6000  n=181  p50=16.7  p95=33.3  max=667  long(>34ms)=2.8%
+ingame-fuse            390x844 settle=6000  n=193  p50=16.7  p95=16.8  max=667  long(>34ms)=1.6%
+sat-play               390x844 settle=6000  n=202  p50=16.7  p95=33.4  max=150  long(>34ms)=5.0%
+gameover-word-bomb     390x844 settle=6000  n=220  p50=16.7  p95=33.4  max=50  long(>34ms)=0.9%

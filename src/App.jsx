@@ -846,11 +846,13 @@ function App() {
 
   // Beat sync: while music is audibly playing, drive global --beat-* CSS vars
   // (and the data-beat attribute) off the live frequency analysis so animations
-  // pulse with the track. beatCount increments per detected beat, which we use
-  // to fire a light app-wide shake.
-  const { beatCount } = useBeatSync(
+  // pulse with the track. Each detected beat calls onBeatRef.current (assigned below, every
+  // render, so it reads the live view) — no App re-render per beat (STEP 59).
+  const onBeatRef = useRef(null);
+  useBeatSync(
     music.getFrequencyData,
-    music.isPlaying && !music.isMuted
+    music.isPlaying && !music.isMuted,
+    onBeatRef
   );
 
   // App-wide screen shake at three intensities (light=beat, medium=accept,
@@ -872,15 +874,10 @@ function App() {
   // app tree on every drum hit), so it's now gated to the game view; the menu
   // stays calm. `view` is in the deps so the guard reads the live view, not a
   // stale closure (a view change alone never has a new beat, so it won't shake).
-  const prevBeatRef = useRef(0);
-  useEffect(() => {
-    if (beatCount > prevBeatRef.current) {
-      prevBeatRef.current = beatCount;
-      if (view === 'game') triggerShake('light');
-    }
-    // triggerShake is stable enough; we react to beatCount (and read live view).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beatCount, view]);
+  // Assigned on every render, so the handler always sees the live `view` (never a stale one).
+  onBeatRef.current = () => {
+    if (view === 'game') triggerShake('light');
+  };
 
   // The connection dropped WHILE in an active room/game. The seat is gone
   // server-side (no resume), so we don't auto-reconnect or reload - we show a
