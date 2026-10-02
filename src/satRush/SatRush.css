@@ -2638,10 +2638,19 @@ body:has(.sr-app) .wpm-hud {
 /* ...and the smallest phones (360x400 with the keyboard up): one row of suspects shows, the rest scroll */
 @media (max-width: 520px) and (max-height: 440px) {
   .sr-lineup {
-    flex-basis: 64px;
-    min-height: 64px;
+    flex-basis: 52px;
+    min-height: 52px;
+    margin-top: 2px;
+  }
+  .sr-lineup-head {
+    margin-bottom: 2px;
   }
   .sr-fields {
-    min-height: 44px;
+    min-height: 40px;
+    padding-block: 2px;
+  }
+  .sr-reward {
+    margin-top: 2px;
+    padding-top: 2px;
   }
 }
