@@ -193,25 +193,9 @@
 .claim-pop button {
   pointer-events: auto;
 }
-/* STEP 58: on a short laptop the nav shares the wordmark's row on the RIGHT, so the popup takes
-   the empty top-LEFT corner instead of the centre. */
-body:has(.homepage-stage[data-fit='short'][data-nav='top']) .claim-pop {
-  top: 12px;
-  bottom: auto;
-  left: 16px;
-  transform: none;
-  animation-name: claim-pop-in-left;
-}
-@keyframes claim-pop-in-left {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* ONE SLOT on every desktop size (fine-tune oct2, loop C: it sat top-left on a short laptop and
+   bottom-centre elsewhere — three places across four viewports). Bottom-centre, over the CREDITS
+   line only, pointer-transparent. Phones keep their compact top row (below). */
 @keyframes claim-pop-in {
   from {
     opacity: 0;

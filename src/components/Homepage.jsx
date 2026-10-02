@@ -1248,6 +1248,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           targetSelector=".menu-xp-bar"
           caption="TYPE OR CLICK ANYWHERE"
           sub="IT FILLS YOUR LEVEL BAR"
+          // Never over the wordmark or a card title (fine-tune oct2, loop C): the caption picks a
+          // clear slot, drops to its compact headline, or hides and lets the ring teach.
+          avoidTextIn=".homepage-stage"
+          avoidSelector=".homepage-logo-wrap, .homepage-cards-region, .homepage-corner-nav"
           onDismiss={dismissMenuSpot}
         />
       )}
