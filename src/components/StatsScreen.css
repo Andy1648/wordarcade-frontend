@@ -555,3 +555,94 @@
   padding: 6px 12px;
   box-shadow: 2px 2px 0 #0a0414;
 }
+
+/* ---- BB2: PLAYER CARD (static; flat colours, coloured outline, hard black shadow) ---------------- */
+.pc-card {
+  --pc-c: #2EFFE0;
+  --pc-d: #128f7d;
+  margin: 2px 0 14px;
+  padding: 12px 14px 10px;
+  background: #12071f;
+  border: 4px solid var(--pc-d);
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+}
+.pc-tier-1 { --pc-c: #FF4FA3; --pc-d: #a3175e; }
+.pc-tier-2 { --pc-c: #FFE94A; --pc-d: #a8800f; }
+.pc-tier-3 { --pc-c: #FF6B3D; --pc-d: #a3381a; }
+.pc-tier-4, .pc-tier-5 { --pc-c: #9A1AFF; --pc-d: #5c0fa3; }
+.pc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.pc-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: var(--pc-c);
+}
+.pc-rank {
+  flex: none;
+  padding: 1px 8px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #000;
+  background: var(--pc-c);
+  border: 2px solid var(--pc-d);
+  border-radius: 6px;
+}
+.pc-hero { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 8px; }
+.pc-lv-unit,
+.pc-lv,
+.pc-rb {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
+}
+.pc-lv-unit { font-size: var(--fs-panel); color: #c9b8e8; }
+.pc-lv {
+  font-size: var(--fs-hero);
+  letter-spacing: -0.02em;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.pc-rb { margin-left: auto; font-size: var(--fs-panel); color: var(--pc-c); }
+.pc-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.pc-cell {
+  min-width: 0;
+  padding: 6px 10px 7px;
+  background: #1a0b2e;
+  border: 2px solid #3a2160;
+  border-radius: 8px;
+}
+.pc-label { font-size: var(--fs-label); letter-spacing: 0.08em; color: #c9b8e8; }
+.pc-val {
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--fs-panel);
+  line-height: 1.15;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pc-sub { margin: 0; font-size: var(--fs-label); letter-spacing: 0.06em; color: var(--pc-c); }
+.pc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: #c9b8e8;
+}
+.pc-site { margin-left: auto; color: var(--pc-c); font-weight: 700; }

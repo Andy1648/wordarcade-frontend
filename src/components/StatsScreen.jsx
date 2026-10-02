@@ -29,6 +29,8 @@ import { formatNum, formatMult } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
+import { MASTERY_MODES, masteryWords } from '../progress/mastery';
+import { getMyProfile } from '../leaderboard/client';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -211,6 +213,25 @@ export default function StatsScreen({ onBack }) {
   // locked ones follow as compact one-line goals, so the screen's big thing is what you've done.
   const recordCellsAll = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
   const recordCells = [...recordCellsAll.filter((c) => !c.locked), ...recordCellsAll.filter((c) => c.locked)];
+  // BB2 (Andy oct2): the PLAYER CARD — the screen worth screenshotting. LEVEL is the hero (the board
+  // ranks by it); four big numbers under it; who / rank / rebirths / since on one strip.
+  let wordsTyped = 0;
+  for (const m of MASTERY_MODES) wordsTyped += masteryWords(m) || 0;
+  const me = getMyProfile();
+  const card = {
+    name: me && me.username ? me.username : null,
+    rank: rankTitle(level),
+    level,
+    rebirths,
+    cells: [
+      { label: 'WORDS TYPED', value: fmt(wordsTyped) },
+      { label: 'WINS EARNED', value: fmt(getWinsLifetime()) },
+      { label: 'BEST WPM', value: bestWpm > 0 ? fmt(Math.round(bestWpm)) : '—' },
+      { label: 'RAREST WORD', value: records.rarest ? records.rarest.word.toUpperCase() : '—', sub: records.rarest ? records.rarest.band : '' },
+    ],
+    since: records.firstPlayed > 0 ? fmtDate(records.firstPlayed) : null,
+    streak: getStreak().count,
+  };
   // SAT RUSH spaced-repetition: the persistent WORDS YOU KEEP MISSING list, read
   // from the SAT lexicon store (lexicon.load is storage-access-safe on its own).
   const satMissing = satLexicon.mostMissed(
@@ -248,9 +269,10 @@ export default function StatsScreen({ onBack }) {
         <div className="stats-body">
           {tab === 'stats' && (
           <>
+          <PlayerCard card={card} />
           {/* PERSONAL RECORDS — the headline grid (record-surface). Every cell is EARNED (a value)
               or LOCKED (a silhouette + how to unlock it), never an empty slot. Static, zero motion. */}
-          <h3 className="stats-subtitle stats-subtitle--first">PERSONAL RECORDS</h3>
+          <h3 className="stats-subtitle">PERSONAL RECORDS</h3>
           <div className="rec-grid">
             {recordCells.map((c) => (
               <div
@@ -460,5 +482,37 @@ export default function StatsScreen({ onBack }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// BB2 — the PLAYER CARD. Static (this screen has no motion); a flat card in the house style.
+function PlayerCard({ card }) {
+  const tier = Math.min(card.rebirths, 5);
+  return (
+    <section className={`pc-card pc-tier-${tier}`} aria-label="Player card">
+      <div className="pc-top">
+        <span className="pc-name">{card.name || 'YOU'}</span>
+        <span className="pc-rank">{card.rank}</span>
+      </div>
+      <div className="pc-hero">
+        <span className="pc-lv-unit">LV</span>
+        <span className="pc-lv">{fmt(card.level)}</span>
+        {card.rebirths > 0 && <span className="pc-rb">R{fmt(card.rebirths)}</span>}
+      </div>
+      <dl className="pc-grid">
+        {card.cells.map((c) => (
+          <div className="pc-cell" key={c.label}>
+            <dt className="pc-label">{c.label}</dt>
+            <dd className="pc-val">{c.value}</dd>
+            {c.sub ? <dd className="pc-sub">{c.sub}</dd> : null}
+          </div>
+        ))}
+      </dl>
+      <div className="pc-foot">
+        {card.since ? <span>PLAYING SINCE {card.since}</span> : <span>FIRST GAME: TODAY</span>}
+        {card.streak > 0 && <span>{fmt(card.streak)}-DAY STREAK</span>}
+        <span className="pc-site">TYPEAWORD.COM</span>
+      </div>
+    </section>
   );
 }
