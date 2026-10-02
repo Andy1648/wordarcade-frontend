@@ -317,16 +317,16 @@ function drawLucky(oracle) {
   return oracle.next();
 }
 
-/**
- * Top-level view state manager + the single shared WebSocket connection
- * for the whole app.
- */
 // BA1 (oct2): a returning player's PLAY SOLO vs the MEDIUM bot uses 'easy' (labelled HARD: 15 s start,
 // 6 s floor), not 'medium' (CRAZY: 4 s floor) — on CRAZY a median player won 16% (n=400) and 82% of
 // games ended inside 60 s; on HARD it is 44%. Multiplayer rooms are unchanged.
 // claude/batch-a/ba1/section-wb-race.md
 const SOLO_RETURNING_PRESET = 'easy';
 
+/**
+ * Top-level view state manager + the single shared WebSocket connection
+ * for the whole app.
+ */
 function App() {
   // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
   // starts on the home menu, exactly as before.
