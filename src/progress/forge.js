@@ -20,7 +20,7 @@
 // keeps going where MOMENTUM stopped at 200.
 //
 // PURE + guarded store: blocked storage → no forge (×1), never throws.
-import { keyTierXp, getKeyTier, rebirthMult, getRebirths, round10 } from './xp.js';
+import { keyTierXp, getKeyTier, rebirthMult, getRebirths, round10, priceRateBoost } from './xp.js';
 
 export const FORGE_KEY = 'taw.forge';
 export const FORGE_ORDER = 'etaoinshrdlcumwfgypbvkjxqz'; // English letter frequency, most common first
@@ -86,14 +86,27 @@ export function forgeMultForWord(word, levels) {
   return 1 + FORGE_PCT * sum;
 }
 
-/** Wins price of the next forge, standing at `buys` buys. Priced in reference words at your rate. */
+/** The forge's boost on an AVERAGE reference word after `buys` buys (5 letters at the mean level). */
+export function forgeAvgMult(buys) {
+  const n = Number.isFinite(buys) && buys > 0 ? buys : 0;
+  return 1 + FORGE_PCT * REF_LETTERS * (n / 26);
+}
+
+/**
+ * Wins price of the next forge, standing at `buys` buys: FORGE_PRICE_WORDS × (1 + n/SOFT) reference
+ * words at your rate — and that rate INCLUDES what the forge itself already pays (forgeAvgMult). A
+ * price in un-forged words got relatively cheaper with every buy and the forge ran away (econ-sim:
+ * 700k buys in 200 h). Priced in forged words, each buy is a fixed few minutes of play.
+ */
 export function forgeCost(buys = forgeBuys(), { keyTier, rebirthCount } = {}) {
   const n = Number.isFinite(buys) && buys > 0 ? Math.floor(buys) : 0;
   const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const words = FORGE_PRICE_WORDS * (1 + n / FORGE_PRICE_SOFT);
   const refWins = (keyTierXp(kt) * REF_LETTERS) / 10;
-  return Math.max(10, round10(words * refWins * rebirthMult(rc)));
+  // priceRateBoost() already carries the CURRENT forge average; re-base it to the buy being priced.
+  const boost = (priceRateBoost() / forgeAvgMult(forgeBuys())) * forgeAvgMult(n);
+  return Math.max(10, round10(words * refWins * rebirthMult(rc) * boost));
 }
 
 /** Forge the next letter (no payment — shop.js charges). Returns { letter, level }. */

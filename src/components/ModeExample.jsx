@@ -7,7 +7,7 @@ import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
 import { perWordRateNow } from '../progress/wins';
 import { formatRate, formatMultExact } from '../format';
 import { modePower } from '../progress/xp';
-import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
+import { FRENZY_MULT, formatFrenzy, frenzyMinutes } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 
 // Highlight the first occurrence of `sub` within `word` in `color`.
@@ -123,7 +123,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
           {frenzy.active ? (
             <>FRENZY LIVE — ×{FRENZY_MULT} WINS FOR {formatFrenzy(frenzy.ms)}</>
           ) : (
-            <>LIGHT ALL 26 LETTERS → <b>FRENZY</b>: ×{FRENZY_MULT} WINS FOR 5 MIN, EVEN BETWEEN RUNS</>
+            <>LIGHT ALL 26 LETTERS → <b>FRENZY</b>: ×{FRENZY_MULT} WINS FOR {frenzyMinutes()} MIN, EVEN BETWEEN RUNS</>
           )}
         </div>
       )}

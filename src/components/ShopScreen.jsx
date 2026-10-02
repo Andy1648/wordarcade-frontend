@@ -20,7 +20,8 @@ import {
   setEquippedTheme,
 } from '../theme/themes';
 import { getWins, saveWins, perWordWins } from '../progress/wins';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
@@ -65,6 +66,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const rebirths = getRebirths();
   const threshold = rebirthThreshold(rebirths);
   const nextMult = rebirthMult(rebirths + 1);
+  const advice = rebirthAdvice(level, rebirths);
+  const [stars, setStars] = useState(() => starsState());
   const rebirthReady = level >= threshold;
 
   // §3 — the shop always shows a visible NEXT GOAL with a progress bar. KEY POWER's
@@ -213,7 +216,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   };
   const confirmRebirth = () => {
     const gained = nextMult;
-    doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
+    // Zeroes xp (HEAD START may lift the new climb), pays the stars for how far past the gate the
+    // player went, queues the REBIRTH N celebration + any layer-unlock claim (stars.js).
+    const { stars: starsGot } = rebirthWithStars();
     sndRebirth(); // Job 11: rebirth swell
     { const n = getRebirths(); evRebirth(n); refreshSessionProps({ rebirths: n }); } // analytics
     setConfirming(false);
@@ -221,7 +226,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setReveal({
       kind: 'rebirth',
       name: `×${formatMult(gained)}`,
-      blurb: `Everything you earn from here is multiplied by ${formatMult(gained)}.`,
+      blurb: `Everything you earn from here is multiplied by ${formatMult(gained)}.${starsGot ? ` +${starsGot} ★ for STAR PERKS.` : ''}`,
       coin: null, // a rebirth spends LEVELS, not wins — no price pill
       colour: '#9A1AFF',
       onClose: onBack,
@@ -383,23 +388,28 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
           </div>
         ) : (
           <div className="shop-body">
-            <div className="shop-rebirth-stats">
-              <div className="shop-rb-stat">
-                <span>REBIRTHS</span>
-                <b>{rebirths}</b>
+            {/* ONE BIG THING (Andy oct2): what a rebirth gets you, right now — the new multiplier
+                and the stars — with the Sell-Lemons-style warning when waiting a level or two pays more. */}
+            <div className={`shop-rb-hero${advice.badTime ? ' is-bad' : ''}`}>
+              <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO GET</div>
+              <div className="shop-rb-hero-val">
+                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS</span>
+                {rebirthReady && (
+                  <>
+                    {' · +'}
+                    {advice.stars} <span className="shop-rb-star">★</span>
+                  </>
+                )}
               </div>
-              <div className="shop-rb-stat">
-                <span>CURRENT MULTIPLIER</span>
-                <b>×{formatMult(rebirthMult(rebirths))}</b>
-              </div>
-              {/* The NEXT rebirth's level + multiplier, shown at all times (Economy v4). */}
-              <div className="shop-rb-stat">
-                <span>NEXT REBIRTH AT</span>
-                <b>LEVEL {threshold}</b>
-              </div>
-              <div className="shop-rb-stat">
-                <span>NEXT MULTIPLIER</span>
-                <b>×{formatMult(nextMult)}</b>
+              {rebirthReady && (
+                <div className="shop-rb-advice">
+                  {advice.badTime
+                    ? `BAD TIME — WAIT ${advice.nextIn} LV = +1 ★`
+                    : `NEXT ★ IN ${advice.nextIn} LEVELS · NOW IS FINE`}
+                </div>
+              )}
+              <div className="shop-rb-now">
+                NOW ×{formatMult(rebirthMult(rebirths))} · {rebirths} REBIRTH{rebirths === 1 ? '' : 'S'}
               </div>
             </div>
 
@@ -417,7 +427,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>KEEP:</b> wins, all purchases, lifetime stats — everything else.
               </li>
               <li>
-                <b>GAIN:</b> a permanent ×{formatMult(nextMult)} XP multiplier.
+                <b>GAIN:</b> a permanent ×{formatMult(nextMult)} on wins and XP, and ★ for STAR PERKS.
               </li>
             </ul>
 
@@ -433,13 +443,51 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
               ) : (
                 <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)}>
-                  REBIRTH {rebirths + 1} — GAIN ×{formatMult(nextMult)} XP
+                  REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {advice.stars} ★
                 </button>
               )
             ) : (
               <button type="button" className="shop-rebirth" disabled aria-disabled="true">
                 REACH LEVEL {threshold} TO REBIRTH — YOU'RE LV {level}
               </button>
+            )}
+
+            {/* LAYER 1/2 — STAR PERKS and AUTOMATION (stars.js). Hidden until the first rebirth
+                unlocks them (the claimable reveal names it); AUTOMATION shows its gate until R3. */}
+            {rebirths >= 1 && (
+              <>
+                <h3 className="shop-subtitle">STAR PERKS — {stars.balance} ★</h3>
+                <div className="shop-perks">
+                  {PERKS.map((p) => {
+                    const lv = stars.perks[p.id] || 0;
+                    const open = layerUnlocked(p.layer, rebirths);
+                    const maxed = lv >= p.max;
+                    const cost = perkCost(p.id, lv);
+                    return (
+                      <div key={p.id} className={`shop-perk${open ? '' : ' is-locked'}`}>
+                        <div className="shop-perk-name">
+                          {p.name}
+                          {p.max > 1 && lv > 0 && <span className="shop-perk-lv"> LV {lv}</span>}
+                        </div>
+                        <div className="shop-perk-blurb">{open ? p.blurb : `UNLOCKS AT REBIRTH ${LAYER_AUTO_AT}`}</div>
+                        <button
+                          type="button"
+                          className="shop-card-btn"
+                          disabled={!open || maxed || stars.balance < cost}
+                          onClick={() => {
+                            if (buyPerk(p.id, rebirths).ok) {
+                              sndPurchase();
+                              setStars(starsState());
+                            }
+                          }}
+                        >
+                          {maxed ? (p.max === 1 ? 'ON' : 'MAXED') : `${cost} ★`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         )}

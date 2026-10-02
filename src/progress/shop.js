@@ -146,7 +146,9 @@ export function buy(id) {
   const next = wins - item.price;
   saveWins(next); // spendable balance only — never winsLifetime
   saveOwned([...getOwned(), id]);
-  return { ok: true, wins: next };
+  // Andy oct2: buying a cosmetic EQUIPS it — you bought it to see/hear it.
+  equip(id);
+  return { ok: true, wins: next, equipped: true };
 }
 
 // Buy the NEXT Key Power TIER: deducts the next tier's cost from wins, bumps taw.keytier by 1.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { forgeLevels, forgeBuys, nextForgeLetter, forgeMultForWord, forgeCost, forgeOne, forgeMany, forgeMigrateMomentum, FORGE_ORDER, FORGE_KEY } from './forge.js';
+import { forgeLevels, forgeBuys, nextForgeLetter, forgeMultForWord, forgeCost, forgeOne, forgeMany, forgeMigrateMomentum, forgeAvgMult, FORGE_ORDER, FORGE_KEY } from './forge.js';
 import { buyForge } from './shop.js';
 import { getWins } from './wins.js';
 
@@ -27,11 +27,12 @@ test('a word pays +5% per forged level of EVERY letter it contains (longer words
   assert.ok(forgeMultForWord('settees', lv) > forgeMultForWord('tees', lv));
 });
 
-test('NO CAP: price grows linearly in words, finite at 10,000 buys', () => {
+test('NO CAP: price grows linearly in FORGED words, finite at 10,000 buys', () => {
   const a = forgeCost(0, { keyTier: 0, rebirthCount: 0 });
   const b = forgeCost(40, { keyTier: 0, rebirthCount: 0 });
   const z = forgeCost(10000, { keyTier: 0, rebirthCount: 0 });
-  assert.equal(b, 2 * a);
+  // Twice the words at buy 40, and each word is worth the forge's own boost by then.
+  assert.ok(Math.abs(b - 2 * a * forgeAvgMult(40)) <= 10, `${b} vs ${2 * a * forgeAvgMult(40)}`);
   assert.ok(Number.isFinite(z) && z > b);
   withStorage({}, () => {
     forgeMany(5000);

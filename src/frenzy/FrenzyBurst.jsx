@@ -7,7 +7,7 @@
 // are pure trig. position:fixed + pointer-events:none, so it can never block the input. Reduced
 // motion: the slab shows still for the same duration and the letters stay hidden.
 import { useEffect, useRef, useState } from 'react';
-import { FRENZY_MULT } from '../progress/frenzy.js';
+import { FRENZY_MULT, frenzyMinutes } from '../progress/frenzy.js';
 import { formatNum } from '../format.js';
 import './FrenzyBurst.css';
 
@@ -79,7 +79,7 @@ export default function FrenzyBurst({ bonus = 0, started = true, onDone }) {
       ))}
       <div className="frenzy-slab">
         <div className="frenzy-slab-title">{started ? 'FRENZY' : 'FULL STRIP'}</div>
-        <div className="frenzy-slab-mult">{started ? `×${FRENZY_MULT} WINS · 5 MIN` : `FRENZY STILL ×${FRENZY_MULT}`}</div>
+        <div className="frenzy-slab-mult">{started ? `×${FRENZY_MULT} WINS · ${frenzyMinutes()} MIN` : `FRENZY STILL ×${FRENZY_MULT}`}</div>
         {bonus > 0 && <div className="frenzy-slab-bonus">+{formatNum(bonus)} WINS</div>}
       </div>
     </div>

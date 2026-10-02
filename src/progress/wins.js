@@ -19,11 +19,16 @@ import {
   getKeyTier,
   XP_MULTIPLIERS,
 } from './xp.js';
-import { forgeMultForWord } from './forge.js';
+import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS, MASTERY_MILESTONE_EVERY } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
+import { starPowerMult } from './stars.js';
+import { setRateBoost } from './xp.js';
+
+// Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER.
+setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult());
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -236,7 +241,8 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     difficulty: DIFFICULTY_MULT[difficulty] ?? 1,
     rebirth: rebirthMult(rc),
     streak: stm,
-    bonus: markWins * markXpMult(markId) * mastery,
+    // + STAR POWER (stars.js, the late-game layer): +10% a level, folded into BONUS like the mark.
+    bonus: markWins * markXpMult(markId) * mastery * starPowerMult(),
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),

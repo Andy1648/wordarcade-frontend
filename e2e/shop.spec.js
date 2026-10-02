@@ -28,7 +28,7 @@ const openShop = (page, seed) => openVia(page, seed, '.homepage-nav-btn.is-shop'
 const openRebirth = (page, seed) => openVia(page, seed, '.homepage-nav-btn.is-rebirth');
 
 test.describe('shop', () => {
-  test('SHOP icon: no tabs; locked items visible+dimmed; buying deducts wins only and enables equip', async ({ page }) => {
+  test('SHOP icon: no tabs; locked items visible+dimmed; buying deducts wins only and auto-equips', async ({ page }) => {
     // ECONOMY v8: the ×5 cosmetic ladder is unchanged but every price fell by ten with the
     // currency (CHROME 60, INFERNO 300, VOID 1500, PRISM 7500), because wins are now the word's
     // XP ÷ 10. The purse is seeded off the catalog so the ladder can be retuned without editing
@@ -58,7 +58,7 @@ test.describe('shop', () => {
     // clicks), so dismiss it before touching the card underneath.
     await page.locator('.sticker').click();
     await expect(page.locator('.sticker')).toHaveCount(0);
-    await chrome.locator('.shop-card-btn').click(); // now EQUIP (owned → a plain click button again)
+    // Andy oct2: buying EQUIPS it — no second click.
     await expect(chrome.locator('.shop-card-tag')).toHaveText('EQUIPPED');
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
   });

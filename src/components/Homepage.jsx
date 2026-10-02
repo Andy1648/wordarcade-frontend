@@ -12,7 +12,8 @@ import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, mar
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
-import { canAffordAny } from '../progress/shop';
+import { canAffordAny, buyKeyPower, buyForge } from '../progress/shop';
+import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
@@ -568,6 +569,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     else if (restoreFocus === 'rebirth' && rebirthLinkRef.current) rebirthLinkRef.current.focus();
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // AUTOMATION (stars.js layer 2): AUTO-KEY / AUTO-FORGE spend on every menu return, and the menu
+  // says what they bought, once.
+  useEffect(() => {
+    const r = runAutomation({ buyKey: buyKeyPower, buyForge });
+    if (!r.keys && !r.forges) return undefined;
+    const parts = [];
+    if (r.keys) parts.push(`+${r.keys} KEY POWER`);
+    if (r.forges) parts.push(`+${r.forges} FORGE`);
+    const t = setTimeout(() => {
+      if (xpFxRef.current && xpFxRef.current.announce) xpFxRef.current.announce('AUTOMATION', parts.join(' · '), 'BOUGHT WHILE YOU PLAYED');
+    }, 800);
+    return () => clearTimeout(t);
   }, []);
   // STEP 21: the worn mark ranked up during the last games → name it once, on the menu, after any
   // mount-time level/tier card has had its 1.5 s.

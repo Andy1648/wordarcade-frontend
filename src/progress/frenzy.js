@@ -13,6 +13,8 @@
 //
 // PURE + guarded store, like every other progress module: blocked storage → no frenzy, never throws.
 
+import { frenzyBonusMs } from './stars.js';
+
 export const FRENZY_KEY = 'taw.frenzyUntil';
 export const FRENZY_MODE = 'fuse';
 export const FRENZY_MULT = 5;
@@ -48,17 +50,23 @@ export function frenzyMult(mode, now = Date.now()) {
 export function startFrenzy(now = Date.now()) {
   const left = frenzyRemaining(now);
   if (left > 0) return { started: false, remaining: left };
-  const until = now + FRENZY_MS;
+  const len = FRENZY_MS + frenzyBonusMs(); // + FRENZY+ star perk
+  const until = now + len;
   try {
     localStorage.setItem(FRENZY_KEY, String(until));
   } catch {
     /* storage blocked — no frenzy */
   }
-  return { started: true, remaining: FRENZY_MS };
+  return { started: true, remaining: len };
 }
 
 /** m:ss for a countdown. */
 export function formatFrenzy(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/** How long a FRENZY lasts for this player, in whole minutes (5 + the FRENZY+ star perk). */
+export function frenzyMinutes() {
+  return Math.round((FRENZY_MS + frenzyBonusMs()) / 60000);
 }
