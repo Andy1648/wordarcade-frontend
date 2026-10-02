@@ -9,13 +9,13 @@ test('an empty board puts anyone at #1', () => {
   assert.equal(hypotheticalRank([], me(0, 1, 1)), 1);
 });
 
-test('Andy oct2: order is LIFETIME WORDS, then level, then rebirths; exact ties go to the existing row', () => {
+test('Andy oct2: order is REBIRTHS, then LEVEL, then lifetime words; exact ties go to the existing row', () => {
   const rows = [row(2, 10, 50), row(0, 99, 9000), row(0, 40, 100)];
-  assert.equal(hypotheticalRank(rows, me(9, 500, 10)), 4, 'rebirths + level do not beat words');
-  assert.equal(hypotheticalRank(rows, me(0, 1, 9001)), 1);
-  assert.equal(hypotheticalRank(rows, me(0, 40, 101)), 2);
-  assert.equal(hypotheticalRank(rows, me(0, 41, 100)), 2, 'level breaks a words tie');
-  assert.equal(hypotheticalRank(rows, me(0, 40, 100)), 3, 'tie loses');
+  assert.equal(hypotheticalRank(rows, me(3, 1, 0)), 1, 'a rebirth beats any level');
+  assert.equal(hypotheticalRank(rows, me(0, 500, 99999)), 2, 'level and words do not beat a rebirth');
+  assert.equal(hypotheticalRank(rows, me(0, 41, 0)), 3, 'level beats words');
+  assert.equal(hypotheticalRank(rows, me(0, 40, 101)), 3, 'words break a level tie');
+  assert.equal(hypotheticalRank(rows, me(0, 40, 100)), 4, 'tie loses');
   assert.equal(ranksAhead(row(0, 40, 100), me(0, 40, 100)), true);
 });
 
