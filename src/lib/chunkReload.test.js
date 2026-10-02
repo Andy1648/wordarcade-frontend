@@ -86,3 +86,24 @@ test('blocked sessionStorage → never reloads (an unguardable loop is worse tha
   assert.equal(reloadOnceForStaleChunk(), false);
   assert.equal(calls.reloads, 0);
 });
+
+test('OFFLINE: a failed chunk is not a stale build — no reload, and the one retry is not spent', () => {
+  const store = new Map();
+  const prev = { ss: globalThis.sessionStorage, nav: globalThis.navigator, win: globalThis.window };
+  let reloads = 0;
+  globalThis.sessionStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) };
+  Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true, writable: true });
+  globalThis.window = { location: { reload: () => { reloads += 1; } } };
+  try {
+    assert.equal(reloadOnceForStaleChunk(), false);
+    assert.equal(reloads, 0);
+    assert.equal(store.size, 0, 'the retry flag is untouched');
+    globalThis.navigator.onLine = true;
+    assert.equal(reloadOnceForStaleChunk(), true, 'back online, the one retry is still there');
+    assert.equal(reloads, 1);
+  } finally {
+    globalThis.sessionStorage = prev.ss;
+    Object.defineProperty(globalThis, 'navigator', { value: prev.nav, configurable: true, writable: true });
+    globalThis.window = prev.win;
+  }
+});
