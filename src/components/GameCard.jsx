@@ -292,7 +292,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         <span className="game-card-perk-tail"> · LONGER = MORE</span>
       </>
     ) : (
-      <>LONGER WORDS = MORE</>
+      <>LONGER = MORE</>
     )
   );
   const payout = rateNow && (
