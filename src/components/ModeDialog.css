@@ -498,3 +498,12 @@
 .mode-dialog-content > :not(.mode-dialog-lower--blitz) {
   flex-shrink: 0;
 }
+
+/* A 625px-tall laptop cannot show title + mastery + the full worked example + CTAs: the PLAY row
+   was clipped by the panel edge (fine-tune oct2, loop B). Below 700px only the worked-example
+   LINES step out (tag + "AIN → RAIN · AGAIN"); the WINS / WORD row, the perks and the FUSE
+   FRENZY plaque stay — those are the dialog's promises (Andy oct2 O5). */
+@media (max-height: 700px) {
+  .mode-ex-tag,
+  .mode-ex-line { display: none; }
+}

@@ -150,3 +150,11 @@
 .spotlight-caption.is-hidden {
   visibility: hidden;
 }
+
+/* LAPTOPS (fine-tune oct2, loop B): at --fs-h1 the in-game coach headline ran past the board's
+   panel at 1280 and 1920. A desktop caption is --fs-h2 inside a 720px measure — still the loudest
+   thing on a first-game board, never wider than the board. Phones keep --fs-h1. */
+@media (min-width: 701px) {
+  .spotlight-caption { max-width: min(92vw, 720px); }
+  .spotlight-caption-text { font-size: var(--fs-h2); }
+}
