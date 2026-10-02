@@ -77,7 +77,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## STEP 53 — Word Bomb board + font sizes
 - [x] B1 Ring cap 520 → 720 px; on the wide board the ring takes all the slack between prompt and input rows (0.78 of the board, was 0.72 + a double reservation): 1920x1080 ring 520 → 552 px — PR #82 (38d7581), wbRingSize.test.js, claude/wb-oct2/before|after/ingame-word-bomb-6p-1920x1080.png
 - [x] B2 Receipt WINS figure 28 px → --fs-h2 (42 px at 1280), the receipt's one big thing; the docked receipt stacks its unit so it still clears SKIP (word-landing.spec green) — PR #82
-- [ ] B3 PARTIAL — reward + tutorial + coach text bigger (B2, B4, N2; PRs #82, #88); a general in-play body-text pass is NOT done: the WB board at 1280x551 is height-bound (its actors are what is small), noted as the top open item in claude/finetune/scores.md
+- [x] B3 Bigger fonts while playing: everything read mid-round steps --fs-label (13px) → --fs-body (16–18px) — WB fragment label, used-word strip, kill feed, MATCH facts, player status; CHAIN/FUSE HUD, hero caption, death-card lines (seat names stay label-size: the ring's name caps clip a bigger name at 1163x501). Gates green: wb-text-overlap, word-landing, wb-short-layout, wb-readability, viewport-integrity in-game cells (533 + 65). Shots: claude/b3-shots/. PR finetune/b3-text
 - [x] B4 Solo teach strip leads with display-size TYPE A REAL WORD (Bungee --fs-panel, was body); WB coach caption --fs-band, sub line body (was label) — PR #82
 
 ## STEP 54 — Join mid-game
@@ -122,4 +122,3 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - Batch A / Batch B: contents never recorded — needs Andy to re-paste.
 - 1920x1080 scale-up (panels sit at ~35–45% width; the app-scale zoom is height-capped and overlays opt out).
 - WB phone ring is width-bound (0.72 of a 344px board) → a ~280px vertical band on tall phones; needs a layout change, not a formula tweak (the stack formula is pinned by wbRingSize.test).
-- B3 general in-play body-text pass.
