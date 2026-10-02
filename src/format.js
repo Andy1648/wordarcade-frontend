@@ -31,7 +31,22 @@ export function plural(n, singular, pluralForm = `${singular}s`) {
   return `${formatNum(count)} ${count === 1 ? singular : pluralForm}`;
 }
 
-const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi'];
+// NO CAPS (Andy oct2): the ladder runs past Qi with NAMED short-scale tiers all the way to the top of
+// a double (1.8e308), so a number never falls back to raw digits or "e+": … Qi Sx Sp Oc No Dc Ud Dd Td
+// Qad Qid Sxd Spd Ocd Nod Vg Uvg … Tg … Qag … Ng Ce UCe. Tier t = 10^(3t); the -illion index is t-1.
+const FIRST = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No'];
+const UNIT = ['', 'U', 'D', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No'];
+const TENS = ['', 'Dc', 'Vg', 'Tg', 'Qag', 'Qig', 'Sxg', 'Spg', 'Ocg', 'Ng'];
+const TENS_TAIL = ['', 'd', 'vg', 'tg', 'qag', 'qig', 'sxg', 'spg', 'ocg', 'ng'];
+function illionName(n) {
+  if (n >= 100) return (UNIT[n - 100] || '') + 'Ce'; // centillion (1e303), uncentillion (1e306)
+  const u = n % 10;
+  const d = Math.floor(n / 10);
+  return u === 0 ? TENS[d] : UNIT[u] + TENS_TAIL[d];
+}
+const SUFFIXES = [...FIRST];
+for (let n = 10; n <= 101; n += 1) SUFFIXES.push(illionName(n)); // up to 1e306 (×1000 more is past a double)
+export { SUFFIXES };
 
 /** Group the integer part in threes: 1234567 → "1,234,567". */
 function grouped(n) {
@@ -45,6 +60,9 @@ function grouped(n) {
  * @returns {{ num: string, suffix: string, exact: boolean }}
  */
 export function formatNumParts(n) {
+  // Past a double: say so, never print 0 or "Infinity".
+  if (n === Infinity) return { num: '∞', suffix: '', exact: false };
+  if (n === -Infinity) return { num: '-∞', suffix: '', exact: false };
   const num = Number.isFinite(n) ? n : 0;
   const sign = num < 0 ? '-' : '';
   let abs = Math.abs(num);

@@ -47,6 +47,33 @@ test('big tiers: rebirth multipliers and huge XP stay compact (up to 1e18)', () 
   assert.ok(!/(NaN|Infinity)/.test(formatNum(1e21))); // never throws / never NaN past the ladder
 });
 
+test('NO CAPS (Andy oct2): named tiers all the way up; never raw digits, never e+', () => {
+  assert.equal(formatNum(1e15), '1Qa');
+  assert.equal(formatNum(1e21), '1Sx');
+  assert.equal(formatNum(1e24), '1Sp');
+  assert.equal(formatNum(1e27), '1Oc');
+  assert.equal(formatNum(1e30), '1No');
+  assert.equal(formatNum(1e33), '1Dc');
+  assert.equal(formatNum(1e36), '1Ud');
+  assert.equal(formatNum(1e39), '1Dd');
+  assert.equal(formatNum(1e42), '1Td');
+  assert.equal(formatNum(1e45), '1Qad');
+  assert.equal(formatNum(1e63), '1Vg');
+  assert.equal(formatNum(2.5e66), '2.5Uvg');
+  assert.equal(formatNum(1e93), '1Tg');
+  assert.equal(formatNum(1e303), '1Ce');
+  assert.equal(formatNum(4.56e300), '4.56Nong'); // novem-nonagint-illion: unit No + tens ng
+  for (let e = 4; e <= 307; e += 1) { // below 1e4 numbers print exact
+    const s = formatNum(1.23 * 10 ** e);
+    assert.ok(/^[\d.]+[A-Za-z]*$/.test(s) && !/e\+|NaN|Infinity/.test(s), `1.23e${e} -> ${s}`);
+    assert.ok(s.replace(/[A-Za-z]+$/, '').replace('.', '').length <= 4, `3 sig figs at 1.23e${e}: ${s}`);
+  }
+  assert.equal(formatNum(Number.MAX_VALUE), '180UCe'); // 1.797e308 = 179.7 × 1e306
+  assert.doesNotThrow(() => formatNum(Infinity));
+  assert.equal(formatNum(Infinity), '∞');
+  assert.equal(formatNum(NaN), '0');
+});
+
 test('formatNumParts splits the numeral from the unit so they can be typeset apart', () => {
   assert.deepEqual(formatNumParts(47110), { num: '47.1', suffix: 'K', exact: false });
   assert.deepEqual(formatNumParts(999), { num: '999', suffix: '', exact: true });

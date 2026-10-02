@@ -39,12 +39,30 @@ export const COLLECTION_MILESTONES = [
   { n: 2500, wins: 2000000 },
   { n: 5000, wins: 20000000 },
 ];
+// NO CAPS (Andy oct2): the ladder never ends — past 5,000 every milestone doubles the words and pays
+// ×10 the wins (10,000 → 2e8, 20,000 → 2e9, …). The first five stay exactly as they were.
+export function milestoneAt(i) {
+  if (i < COLLECTION_MILESTONES.length) return COLLECTION_MILESTONES[i];
+  const k = i - COLLECTION_MILESTONES.length + 1;
+  return { n: 5000 * 2 ** k, wins: 20000000 * 10 ** k };
+}
+/** Every milestone up to `total`, plus the next one to chase. */
+export function milestonesThrough(total) {
+  const out = [];
+  for (let i = 0; ; i += 1) {
+    const m = milestoneAt(i);
+    out.push(m);
+    if (m.n > total) return out;
+  }
+}
 
 const DAY_MS = 86400000;
 const today = () => Math.floor(Date.now() / DAY_MS);
 
 function fresh() {
-  return { v: COLLECTION_VERSION, seq: 0, w: {}, ms: [] };
+  // ev: words evicted from the 5,000-word detail store (LRU), kept as plain strings so the LIFETIME
+  // count keeps rising past the storage cap (NO CAPS) and a re-typed evicted word is not "new" again.
+  return { v: COLLECTION_VERSION, seq: 0, w: {}, ms: [], ev: [] };
 }
 
 // Session cache: the whole store can reach ~140KB at the 5,000-word cap, and a word is accepted
@@ -70,7 +88,8 @@ export function loadCollection() {
         for (const [word, e] of Object.entries(o.w)) {
           if (Array.isArray(e) && e.length === 4 && e.every((x) => Number.isFinite(x))) w[word] = e;
         }
-        data = { v: COLLECTION_VERSION, seq, w, ms };
+        const ev = Array.isArray(o.ev) ? o.ev.filter((x) => typeof x === 'string') : [];
+        data = { v: COLLECTION_VERSION, seq, w, ms, ev };
       }
     }
   } catch {
@@ -111,6 +130,11 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
     save(data);
     return { isNew: false, count: Object.keys(data.w).length, milestone: null };
   }
+  // A word that was evicted to the plain list comes back into the detail store — not new, no count.
+  if (!Array.isArray(data.ev)) data.ev = [];
+  const evAt = data.ev.indexOf(w);
+  const returning = evAt >= 0;
+  if (returning) data.ev.splice(evAt, 1);
   // New word. Evict LRU if at the cap.
   const keys = Object.keys(data.w);
   if (keys.length >= COLLECTION_CAP) {
@@ -123,14 +147,21 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
         lruWord = k;
       }
     }
-    if (lruWord != null) delete data.w[lruWord];
+    if (lruWord != null) {
+      delete data.w[lruWord];
+      data.ev.push(lruWord);
+    }
   }
   data.w[w] = [bandIdx(band), modeIdx(mode), today(), data.seq];
-  const count = Object.keys(data.w).length;
+  const count = Object.keys(data.w).length + data.ev.length;
+  if (returning) {
+    save(data);
+    return { isNew: false, count, milestone: null };
+  }
   // Milestone: the highest threshold now satisfied that hasn't been claimed. (Count only rises by 1
   // per new word, but guarding on "not yet claimed" is robust to an imported/edited save.)
   let milestone = null;
-  for (const m of COLLECTION_MILESTONES) {
+  for (const m of milestonesThrough(count)) {
     if (count >= m.n && !data.ms.includes(m.n)) {
       data.ms.push(m.n);
       const granted = rebirthScaledWins(m.wins);
@@ -149,7 +180,8 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
 }
 
 export function countOf() {
-  return Object.keys(loadCollection().w).length;
+  const d = loadCollection();
+  return Object.keys(d.w).length + (Array.isArray(d.ev) ? d.ev.length : 0);
 }
 
 // A summary for the Collection screen: total, per-tier counts, next milestone, and the rarest finds
@@ -157,7 +189,7 @@ export function countOf() {
 export function collectionSummary(rarestLimit = 40) {
   const data = loadCollection();
   const entries = Object.entries(data.w); // [word, [band, mode, day, recency]]
-  const total = entries.length;
+  const total = entries.length + (Array.isArray(data.ev) ? data.ev.length : 0); // lifetime, past the cap
   const byTier = { COMMON: 0, UNCOMMON: 0, RARE: 0, OBSCURE: 0 };
   for (const [, e] of entries) byTier[TIERS[e[0]] || 'COMMON'] += 1;
   // Rarest finds: OBSCURE then RARE, most-recent first within a tier.
@@ -166,9 +198,10 @@ export function collectionSummary(rarestLimit = 40) {
     .sort((a, b) => b[1][0] - a[1][0] || b[1][3] - a[1][3])
     .slice(0, rarestLimit)
     .map(([word, e]) => ({ word, tier: TIERS[e[0]], mode: COLLECTION_MODES[e[1]] || 'word-bomb', day: e[2] }));
-  const nextMilestone = COLLECTION_MILESTONES.find((m) => total < m.n) || null;
+  const milestones = milestonesThrough(total);
+  const nextMilestone = milestones.find((m) => total < m.n) || null;
   const claimed = data.ms.slice();
-  return { total, byTier, rarest, nextMilestone, milestones: COLLECTION_MILESTONES, claimed, cap: COLLECTION_CAP };
+  return { total, byTier, rarest, nextMilestone, milestones, claimed, cap: COLLECTION_CAP };
 }
 
 // Test/dev hook: wipe the collection (and the session cache).

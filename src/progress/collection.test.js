@@ -4,6 +4,7 @@ import { claimAll } from './claims.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  milestonesThrough,
   recordAcceptedWord,
   collectionSummary,
   countOf,
@@ -97,17 +98,24 @@ function seedStore(n, { allClaimed = true } = {}) {
   return JSON.stringify({ v: 1, seq: n, w, ms: allClaimed ? COLLECTION_MILESTONES.map((m) => m.n) : [] });
 }
 
-test('LRU cap: at 5,000 the least-recently-SEEN word is evicted, never exceeding the cap', () => {
+test('LRU cap: at 5,000 the least-recently-SEEN word leaves the DETAIL store; the lifetime count keeps going', () => {
   withStorage({ [COLLECTION_KEY]: seedStore(COLLECTION_CAP) }, () => {
     assert.equal(countOf(), COLLECTION_CAP);
     // w0 has recency 1 (oldest). Touch w5 so it is refreshed, then add a new word → w0 evicts.
     recordAcceptedWord('w5', { mode: 'word-bomb', band: 'COMMON' }); // dup → refresh recency
     recordAcceptedWord('brandnew', { mode: 'word-bomb', band: 'COMMON' });
-    assert.equal(countOf(), COLLECTION_CAP); // still capped, never exceeds
+    // NO CAPS (Andy oct2): the DETAIL store stays at 5,000, the LIFETIME count keeps rising.
+    assert.equal(Object.keys(loadCollection().w).length, COLLECTION_CAP); // detail store never exceeds
+    assert.equal(countOf(), COLLECTION_CAP + 1); // the lifetime count does
     const w = loadCollection().w;
     assert.ok(w['brandnew'], 'new word present');
     assert.ok(w['w5'], 'freshly-touched w5 survives');
     assert.ok(!w['w0'], 'the least-recently-seen word (w0) was evicted');
+    assert.deepEqual(loadCollection().ev, ['w0'], 'the evicted word is remembered as a plain string');
+    // typing the evicted word again is NOT a new word (no double count)
+    const again = recordAcceptedWord('w0', { mode: 'word-bomb', band: 'COMMON' });
+    assert.equal(again.isNew, false);
+    assert.equal(countOf(), COLLECTION_CAP + 1);
   });
 });
 
@@ -136,4 +144,11 @@ test('storage failure → never throws; session stays consistent in-memory but n
   } finally {
     globalThis.localStorage = saved;
   }
+});
+
+test('NO CAPS: the collection keeps counting past the 5,000-word store and its milestones never end', () => {
+  const m = milestonesThrough(50000);
+  assert.deepEqual(m.slice(0, 5).map((x) => x.n), [100, 500, 1000, 2500, 5000]);
+  assert.deepEqual(m.slice(5, 8), [{ n: 10000, wins: 2e8 }, { n: 20000, wins: 2e9 }, { n: 40000, wins: 2e10 }]);
+  assert.ok(m[m.length - 1].n > 50000, 'there is always a next milestone');
 });
