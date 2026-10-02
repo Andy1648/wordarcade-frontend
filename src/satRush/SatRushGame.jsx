@@ -320,7 +320,8 @@ function StartScreen({ onPlay, onExit }) {
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">
             <b>{formatRate(rate)}</b> WINS / WORD
-            <span className="sr-cover-mult"> · POWER ×{power} · LONGER WORDS = MORE</span>
+            <span className="sr-cover-mult"> · POWER ×{power}</span>
+            <span className="sr-cover-longer">LONGER WORDS PAY MORE</span>
           </span>
           <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
         </div>
