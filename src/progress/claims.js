@@ -22,6 +22,26 @@ import { grantWins } from './wins.js';
 import { startBoost } from './boost.js';
 
 export const CLAIMS_KEY = 'taw.claims';
+
+// E4 (Andy oct2 evening: "TOO MANY REWARDS"). Only ACHIEVEMENTS and STATS milestones (rank-ups) go
+// through the claim inbox. Everything else either applies at once, silently, or is cut:
+//   inbox    achievement, rank                   — the rewards worth a moment
+//   instant  code, boost                         — typing the code IS the claim (BOOST starts now)
+//            mark                                — owned on unlock; the MARKS button's NEW dot says so
+//            layer (forge / stars / auto / marks) — the system simply opens
+//            theme-refund                         — money owed, not a reward
+//            collection milestone                 — earned BY PLAYING (N distinct words); pays when
+//                                                   crossed, itemised on that run's receipt like any bonus,
+//                                                   and the COLLECTION tab's "+N WINS" stays true
+//   cut      welcome back                        — a gift for being away; wins come only from playing (O9)
+const INBOX_KINDS = new Set(['achievement', 'rank']);
+const CUT_KINDS = new Set(['welcome']);
+export function claimPolicy(kind, id) {
+  if (INBOX_KINDS.has(kind)) return 'inbox';
+  if (id === 'theme-refund') return 'instant';
+  if (CUT_KINDS.has(kind)) return 'cut';
+  return 'instant';
+}
 const MAX_CLAIMS = 200; // a bound on a corrupt/huge save, not a design limit
 
 /** kind → the label the panel files it under. */
@@ -106,6 +126,8 @@ export function pendingCount() {
  */
 export function queueClaim({ id, kind, label, amount = 0, detail, meta } = {}) {
   if (!id || !kind) return null;
+  const policy = claimPolicy(kind, id);
+  if (policy === 'cut') return null;
   const arr = load();
   if (arr.some((c) => c.id === id)) return null;
   const claim = {
@@ -117,6 +139,14 @@ export function queueClaim({ id, kind, label, amount = 0, detail, meta } = {}) {
     meta: meta || null,
     ts: Date.now(),
   };
+  if (policy === 'instant') {
+    // applied now, through the same labelled door a claim uses — never stored, never in the inbox
+    const pay = claimAmount(claim);
+    if (pay > 0) grantWins(pay, claim.label, { detail: claim.detail || claim.id, claimed: true });
+    runHandler(claim);
+    emit(); // listeners re-read what changed (a mark now owned, a system now open)
+    return { ...claim, instant: true, paid: pay };
+  }
   arr.push(claim);
   if (!save(arr)) {
     // Storage blocked: the reward still reaches the player (the old behaviour), just unclaimed.
@@ -206,4 +236,29 @@ export function openLayer(detail) {
   } catch {
     /* blocked */
   }
+}
+
+/**
+ * E4 migration: a save from before the trim may hold claims that no longer belong in the inbox.
+ * Instant ones are applied now (a code's wins, a mark, a system), cut ones are dropped. Idempotent;
+ * call once on menu mount.
+ */
+export function trimClaimInbox() {
+  const arr = load();
+  if (!arr.length) return { applied: 0, dropped: 0 };
+  const keep = [];
+  let applied = 0;
+  let dropped = 0;
+  for (const c of arr) {
+    const p = claimPolicy(c.kind, c.id);
+    if (p === 'inbox') { keep.push(c); continue; }
+    if (p === 'cut') { dropped += 1; continue; }
+    const pay = claimAmount(c);
+    if (pay > 0) grantWins(pay, c.label, { detail: c.detail || c.id, claimed: true });
+    runHandler(c);
+    applied += 1;
+  }
+  save(keep);
+  emit();
+  return { applied, dropped };
 }

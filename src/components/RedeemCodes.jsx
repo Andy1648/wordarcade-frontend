@@ -22,14 +22,14 @@ export default function RedeemCodes() {
     setBusy(false);
     if (r.ok) {
       setValue('');
-      // Claims ride the STATS button (Andy oct2 A4). R10: a BOOST code / a PER-LEVEL code say so.
+      // E4 (Andy oct2 evening): a code applies the moment it is redeemed — no inbox, no second step.
       const text = r.kind === 'boost'
-        ? `BOOST ×${r.mult} · ${r.min} MIN — CLAIM IT IN STATS TO START`
+        ? `BOOST ×${r.mult} · ${r.min} MIN — STARTED`
         : r.perLevel
-          ? `+${formatNum(r.wins)} WINS × YOUR LEVEL — CLAIM IT IN STATS`
+          ? `+${formatNum(r.wins)} WINS × YOUR LEVEL — ADDED`
           : r.wins > 0
-            ? `+${formatNum(r.wins)} WINS — CLAIM IT IN STATS`
-            : 'REDEEMED — CLAIM IT IN STATS';
+            ? `+${formatNum(r.wins)} WINS — ADDED`
+            : 'REDEEMED';
       setMsg({ ok: true, text });
     } else {
       setMsg({ ok: false, text: REDEEM_REASONS[r.reason] || REDEEM_REASONS.bad_code });

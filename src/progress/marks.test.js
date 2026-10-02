@@ -198,15 +198,13 @@ test('nothing equipped → addMarkWord is a no-op', () => {
   withStorage({}, () => { assert.equal(addMarkWord(), null); });
 });
 
-test('STEP 49: marks unlock at LV 10 with a NEW SYSTEM reveal, and every new mark is a CLAIM', () => {
+test('STEP 49 + E4: marks unlock at LV 10; the system opens and a new mark is OWNED at once (no inbox)', () => {
   withStorage({ [MARKS_OWNED_KEY]: '[]' }, () => {
     assert.deepEqual(checkMarkClaims({ level: 5, earned: ['m-wb-5'] }), [], 'not before LV 10');
     assert.equal(listClaims().length, 0);
     const q = checkMarkClaims({ level: 10, earned: ['m-wb-5'] });
-    assert.ok(listClaims().some((c) => c.id === 'layer-marks' && c.kind === 'layer'));
     assert.deepEqual(q.map((c) => c.detail), ['mk-bomber']);
-    assert.deepEqual(unlockedMarks(['m-wb-5']).map((m) => m.id), [], 'not yours until claimed');
-    claim('mark-mk-bomber');
+    assert.equal(listClaims().length, 0, 'E4: marks and the MARKS system never sit in the inbox');
     assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-bomber']);
     assert.deepEqual(checkMarkClaims({ level: 12, earned: ['m-wb-5'] }), [], 'no repeat claim');
   });

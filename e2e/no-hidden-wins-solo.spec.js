@@ -124,17 +124,18 @@ test('CHAIN: every credit is on screen — the run total must equal the balance 
   expect(anon, `credits with no reason: ${JSON.stringify(anon)}`).toEqual([]);
 
   // THIS TEST MUST NOT PASS VACUOUSLY. The seed leaves the collection one word short of the
-  // 100-word milestone, so the first accepted link crosses it. Since Andy oct2 a milestone is a
-  // CLAIM, not a mid-run credit: it must be QUEUED (taw.claims) and must NOT be in this run's
-  // balance — the invariant below then proves no milestone money slipped in unannounced.
-  const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]'));
-  expect(
-    claims.some((c) => c.id === 'col-100'),
-    `the 100-word milestone was not queued as a claim — the run did not cross it, so this test `
-      + `proved nothing. Claims: ${JSON.stringify(claims)}`,
-  ).toBe(true);
+  // 100-word milestone, so the first accepted link crosses it. Since E4 (Andy oct2 evening: only
+  // achievements + rank-ups use the claim inbox) a milestone PAYS as it is crossed — so it must be
+  // ON this run's card as its own COLLECTION line, and the invariant below proves the money that
+  // moved is exactly the money shown.
   const collection = shown.lines.filter((l) => (l.label || '').startsWith('COLLECTION'));
-  expect(collection, 'a milestone was credited mid-run instead of queued for a claim').toEqual([]);
+  expect(
+    collection.length === 1 && collection[0].amount > 0,
+    `the 100-word milestone is not on the card — the run did not cross it (test vacuous) or it paid `
+      + `with nothing on screen. Lines: ${JSON.stringify(shown.lines)}`,
+  ).toBe(true);
+  const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]'));
+  expect(claims.filter((c) => c.kind === 'collection'), 'E4: a milestone never sits in the inbox').toEqual([]);
 
   expect(shown.total, 'WINS EARNED does not equal the sum of its own lines').toBe(lineSum);
 

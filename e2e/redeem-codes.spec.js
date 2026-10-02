@@ -46,29 +46,21 @@ async function redeem(page, code) {
 }
 
 for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
-  test(`a code lands in REWARDS, pays once, and never twice @ ${vp.width}`, async ({ page }) => {
+  test(`E4: a code pays the moment it is redeemed — once, never twice, never via the inbox @ ${vp.width}`, async ({ page }) => {
     await page.setViewportSize(vp);
     await boot(page);
     await navControl(page, 'shop').click();
     await expect(page.locator('.shop-codes')).toBeVisible();
     await expect(await redeem(page, 'nope')).toHaveText("THAT CODE DOESN'T EXIST");
     const before = await wins(page);
-    await expect(await redeem(page, 'gift-2026')).toHaveText('+25K WINS — CLAIM IT IN STATS');
-    expect(await wins(page), 'a code never pays on its own').toBe(before);
+    await expect(await redeem(page, 'gift-2026')).toHaveText('+25K WINS — ADDED');
+    await expect.poll(() => wins(page)).toBe(before + 25000);
     await page.locator('.shop-codes').screenshot({ path: `claude/codes/shop-codes-${vp.width}.png` });
     await page.screenshot({ path: `claude/codes/shop-${vp.width}.png` });
     const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]'));
-    expect(claims.filter((c) => c.kind === 'code').map((c) => [c.label, c.amount])).toEqual([['CODE — LAUNCH GIFT', 25000]]);
+    expect(claims.filter((c) => c.kind === 'code'), 'E4: codes never sit in the inbox').toEqual([]);
     await expect(await redeem(page, 'GIFT-2026')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
-    // claim it: exactly its wins
-    await page.locator('.shop-close').click();
-    await expect(page.locator('.shop-panel')).toHaveCount(0);
-    const open = page.getByRole('button', { name: /Open stats — \d+ to claim/ });
-    await open.first().click();
-    const row = page.locator('.claims-row').filter({ hasText: 'LAUNCH GIFT' }).first();
-    await row.waitFor();
-    await row.getByRole('button', { name: /CLAIM/ }).click();
-    await expect.poll(() => wins(page)).toBe(before + 25000);
+    expect(await wins(page), 'never twice').toBe(before + 25000);
   });
 }
 
@@ -79,38 +71,24 @@ test('a DB without migration 007 says codes are not switched on', async ({ page 
   await expect(await redeem(page, 'GIFT-2026')).toHaveText('CODES AREN’T SWITCHED ON YET');
 });
 
-// ---- R10 (migration 010): SCALING + BOOST codes ----
-async function claimRow(page, text) {
-  await page.locator('.shop-close').click();
-  await page.getByRole('button', { name: /Open stats — \d+ to claim/ }).first().click();
-  const row = page.locator('.claims-row').filter({ hasText: text }).first();
-  await row.waitFor();
-  return row;
-}
-
-test('a PER-LEVEL code pays wins × the level at claim (LV20 → 1,000 × 20)', async ({ page }) => {
+// ---- R10 (migration 010): SCALING + BOOST codes — applied at redeem since E4 ----
+test('a PER-LEVEL code pays wins × the level at redeem (LV20 → 1,000 × 20)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await boot(page);
   await navControl(page, 'shop').click();
-  await expect(await redeem(page, 'levelup')).toHaveText(/^\+1.000 WINS × YOUR LEVEL — CLAIM IT IN STATS$/);
   const before = await wins(page);
-  const row = await claimRow(page, 'LEVEL UP');
-  await expect(row.getByRole('button', { name: /CLAIM/ })).toHaveText('CLAIM +20K');
-  await row.getByRole('button', { name: /CLAIM/ }).click();
+  await expect(await redeem(page, 'levelup')).toHaveText(/^\+1.000 WINS × YOUR LEVEL — ADDED$/);
   await expect.poll(() => wins(page)).toBe(before + 20000);
 });
 
-test('a BOOST code: claim starts ×3 on everything, a gold pill counts down on the menu, nothing under 13px', async ({ page }) => {
+test('a BOOST code starts ×3 on everything at once; a gold pill counts down on the menu, nothing under 13px', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await boot(page);
   await navControl(page, 'shop').click();
-  await expect(await redeem(page, 'triple')).toHaveText('BOOST ×3 · 10 MIN — CLAIM IT IN STATS TO START');
   const before = await wins(page);
-  const row = await claimRow(page, 'TRIPLE');
-  await expect(row.getByRole('button', { name: /START/ })).toHaveText('START ×3 · 10 MIN');
-  await row.getByRole('button', { name: /START/ }).click();
+  await expect(await redeem(page, 'triple')).toHaveText('BOOST ×3 · 10 MIN — STARTED');
   expect(await wins(page), 'a boost pays nothing by itself').toBe(before);
-  await page.keyboard.press('Escape');
+  await page.locator('.shop-close').click();
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
   expect(boost.mult).toBe(3);
   expect(boost.until - Date.now()).toBeGreaterThan(9 * 60 * 1000);
