@@ -86,7 +86,6 @@ import {
 } from './visitHistory';
 import { hasSeenMenu } from './progress/onboarding';
 import { claimReturnBonus } from './progress/returnBonus';
-import ReturnBonusCard from './components/ReturnBonusCard';
 // EVERY BONUS WIN, ANNOUNCED WHEN IT LANDS. Mounted once at app level rather than per mode, so a
 // credit that fires in CHAIN, SAT Rush or on the menu is as visible as one in Word Bomb — the
 // hidden 5,000 Andy reported was a collection milestone, which can fire in any mode.
@@ -592,10 +591,8 @@ function App() {
   // RETURN BONUS (Job 6): claim once on mount using the last-seen time captured at module load. The
   // wins are granted here (they returned after >=6h, at most once/calendar day); the card is shown
   // only on the home menu (a deep-link into a game doesn't overlay the return card).
-  const [returnCard, setReturnCard] = useState(null);
   useEffect(() => {
-    const b = claimReturnBonus(LAST_SEEN_AT_LOAD);
-    if (b) setReturnCard(b);
+    claimReturnBonus(LAST_SEEN_AT_LOAD); // queues the WELCOME BACK claim (claims.js) when due
   }, []);
 
   // ACHIEVEMENTS (Job 7): re-evaluate whenever we land on the home menu (so anything earned during a
@@ -2745,10 +2742,8 @@ function App() {
           {/* Bonus-wins announcements (achievements, collection milestones, the return bonus).
               Transient, pointer-events:none, docked under the wins pill's column. */}
           <WinsCreditToast />
-          {/* RETURN BONUS (Job 6): the welcome-back card, only over the home menu. */}
-          {returnCard && view === 'home' && (
-            <ReturnBonusCard bonus={returnCard} onDismiss={() => setReturnCard(null)} />
-          )}
+          {/* RETURN BONUS (Job 6): the welcome-back bonus is now a CLAIM (Andy oct2) — the menu's
+              ClaimPopup announces it with a CLAIM button, so the old "already granted" card is gone. */}
           {/* Invite-link arrival: a friend tapped a ?join= link and we're
               connecting + joining in the background. One clear line so the
               wait (cold backend spin-up) never reads as a broken link.

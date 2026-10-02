@@ -40,6 +40,9 @@ import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../pr
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
+import ClaimsPanel from '../claims/ClaimsPanel.jsx';
+import ClaimPopup from '../claims/ClaimPopup.jsx';
+import { useClaims } from '../claims/useClaims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
 import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
@@ -164,6 +167,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
   // menu anyway.
   const [showMarks, setShowMarks] = useState(false);
+  // REWARDS (Andy oct2): non-game rewards wait here until claimed; the button + its count only
+  // exist while something is pending (the badge IS the notification).
+  const claims = useClaims();
+  const [showClaims, setShowClaims] = useState(false);
   const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
@@ -841,6 +848,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             shopRef={shopLinkRef}
             statsRef={statsLinkRef}
             rebirthRef={rebirthLinkRef}
+            rewardsCount={claims.length}
+            onRewards={() => setShowClaims(true)}
           />
         ) : (
         <>
@@ -848,6 +857,21 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
         <nav className="homepage-corner-nav" aria-label="Menu">
+          {/* REWARDS (Andy oct2): leads the stack while something is waiting to be claimed — the
+              count badge is the notification, and it goes away with the last claim. */}
+          {claims.length > 0 && (
+            <button
+              type="button"
+              className={`homepage-nav-btn is-rewards${navigating ? ' disabled' : ''}`}
+              onClick={() => setShowClaims(true)}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label={`Open rewards — ${claims.length} to claim`}
+            >
+              REWARDS
+              <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>
+            </button>
+          )}
           {/* SHOP and STATS SWAPPED (Andy A4): STATS leads, SHOP sits last in the word stack —
               nearest the trophy + audio, where the eye lands after the cards. */}
           <button
@@ -1100,6 +1124,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             level={xpProgress.level}
             onClose={() => setLockedPreview(null)}
           />
+        </ScreenBoundary>
+      )}
+
+      {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
+      {!showClaims && <ClaimPopup onOpenPanel={() => setShowClaims(true)} />}
+      {showClaims && (
+        <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
+          <ClaimsPanel onClose={() => setShowClaims(false)} />
         </ScreenBoundary>
       )}
 

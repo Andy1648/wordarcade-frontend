@@ -5,7 +5,7 @@
 //
 // PURE given (lastSeenMs, now): the caller captures lastSeenMs at module load BEFORE the app
 // re-stamps wa_last_seen. Guarded store, never throws.
-import { grantWins } from './wins.js';
+import { queueClaim } from './claims.js';
 import { rebirthMult, getRebirths } from './xp.js';
 
 export const RETURN_CLAIM_KEY = 'taw.returnClaim'; // the calendar day (local date string) last claimed
@@ -62,7 +62,8 @@ export function claimReturnBonus(lastSeenMs, now = Date.now()) {
   if (!p.eligible) return null;
   // Already had a card (ReturnBonusCard); labelled anyway so the ledger is complete and the
   // no-hidden-wins sum covers it like everything else.
-  grantWins(p.wins, 'WELCOME BACK', { detail: 'return-bonus' });
+  // Andy oct2: queued for the player to CLAIM (claims.js), not credited on mount.
+  queueClaim({ id: `welcome-${localDayKey(now)}`, kind: 'welcome', label: 'WELCOME BACK', amount: p.wins, detail: 'return-bonus' });
   markClaimed(now);
   return { granted: true, wins: p.wins, hoursAway: Math.min(p.hoursAway, CAP_HOURS) };
 }

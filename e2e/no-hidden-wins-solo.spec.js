@@ -123,17 +123,18 @@ test('CHAIN: every credit is on screen — the run total must equal the balance 
   const anon = shown.lines.filter((l) => !l.label || l.label === 'UNATTRIBUTED');
   expect(anon, `credits with no reason: ${JSON.stringify(anon)}`).toEqual([]);
 
-  // THIS TEST MUST NOT PASS VACUOUSLY. If no bonus lands during the run, `total === delta` holds
-  // trivially and proves nothing about the defect it was written for. The seed leaves the
-  // collection one word short of the 100-word milestone, so the first accepted link must cross it
-  // and the card must carry a named COLLECTION row. Without this assertion the whole spec is
-  // satisfied by a run that never exercised the fix.
-  const collection = shown.lines.filter((l) => (l.label || '').startsWith('COLLECTION'));
+  // THIS TEST MUST NOT PASS VACUOUSLY. The seed leaves the collection one word short of the
+  // 100-word milestone, so the first accepted link crosses it. Since Andy oct2 a milestone is a
+  // CLAIM, not a mid-run credit: it must be QUEUED (taw.claims) and must NOT be in this run's
+  // balance — the invariant below then proves no milestone money slipped in unannounced.
+  const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]'));
   expect(
-    collection.length,
-    `no COLLECTION milestone line on the card — the run did not cross the 100-word milestone, so `
-      + `this test proved nothing. Lines: ${JSON.stringify(shown.lines)}`,
-  ).toBeGreaterThan(0);
+    claims.some((c) => c.id === 'col-100'),
+    `the 100-word milestone was not queued as a claim — the run did not cross it, so this test `
+      + `proved nothing. Claims: ${JSON.stringify(claims)}`,
+  ).toBe(true);
+  const collection = shown.lines.filter((l) => (l.label || '').startsWith('COLLECTION'));
+  expect(collection, 'a milestone was credited mid-run instead of queued for a claim').toEqual([]);
 
   expect(shown.total, 'WINS EARNED does not equal the sum of its own lines').toBe(lineSum);
 

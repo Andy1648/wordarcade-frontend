@@ -166,6 +166,8 @@ export default function MobileMenu({
   onLeaderboard = null,
   boardDot = false,
   boardRef,
+  rewardsCount = 0,
+  onRewards = null,
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -292,6 +294,19 @@ export default function MobileMenu({
              zone. REBIRTH obeys the desktop gate exactly (Homepage passes null until it means
              something), and the strip re-flows to two slabs without it. */}
       <nav className="hp-m-nav" aria-label="Menu">
+        {/* REWARDS (Andy oct2) — only while a claim is waiting; the count is the notification. */}
+        {rewardsCount > 0 && onRewards && (
+          <button
+            type="button"
+            className={`hp-m-navbtn is-rewards${navigating ? ' is-disabled' : ''}`}
+            onClick={onRewards}
+            disabled={navigating}
+            aria-label={`Open rewards — ${rewardsCount} to claim`}
+          >
+            <span className="hp-m-gift" aria-hidden="true">★</span>
+            <span className="hp-m-count" aria-hidden="true">{rewardsCount}</span>
+          </button>
+        )}
         {/* STATS before SHOP (Andy A4: swap their places) — same order as the desktop stack. */}
         <button
           ref={statsRef}
