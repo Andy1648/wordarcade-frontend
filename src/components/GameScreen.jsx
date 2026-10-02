@@ -93,6 +93,8 @@ const REJECTION_MESSAGES = {
   // accept (the client can't know the dictionary). Phrased as the server overruling. (JOB C Path B.)
   not_a_word: 'NOT IN OUR WORD LIST',
   not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
+  // STEP 9 (list-only Blitz): the server's only reject for a well-formed answer.
+  not_on_list: 'NOT ON THE LIST',
 };
 
 // Category Blitz is always a fixed 3 rounds (mirrors the backend's
@@ -5017,7 +5019,8 @@ function CategoryBlitzScreen({
             )}
           </div>
 
-          {/* While the AI judge is running (list-miss), show a subtle "checking…"
+          {/* (Pre-STEP 9: shown while the AI judge ran. Blitz is list-only now, so the server never sends ai_check;
+              kept for an old server.) A subtle "checking…"
               chip instead of the previous result toast; it clears the instant the
               answer_result lands and the normal accept/reject toast plays. */}
           {checkingAnswer ? (
