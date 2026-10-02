@@ -36,7 +36,7 @@ Redeem codes: wins, per-level wins, or BOOST.
 ### Menu
 TOP nav: STATS / REBIRTH / SHOP / trophy (leaderboard) / audio — one cluster. The wall behind the menu is
 WallScene's floating sprayed words; each of the 24 border tiers re-lays the same words out (sceneLayout.js)
-and a tier climb swishes the scene up with ONE transform. The leaderboard ranks by **rebirths, then LEVEL** (words break ties; top 10 + your pinned real rank).
+and a tier climb swishes the scene up with ONE transform. The leaderboard ranks by **LEVEL only** (words break ties; rebirths are not ranked — Andy oct2 evening; top 10 + your pinned real rank; a THIS WEEK board by words typed resets Monday 00:00 ET).
 
 ---
 

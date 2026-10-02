@@ -138,7 +138,7 @@ test('after migration 005: LEVEL is the main stat (Andy oct2), Chinese names cla
   await page.locator('.lb-claim-btn').click();
   const me = page.locator('.lb-row.is-me');
   await expect(me.locator('.lb-name')).toHaveText('小明打字');
-  // the board ranks by rebirths then LEVEL; 123,456 typed letters must not show as the main stat
+  // the board ranks by LEVEL only; 123,456 typed letters must not show as the main stat
   await expect(me.locator('.lb-level')).toHaveText('LV 12');
   await expect(me.locator('.lb-words-sub')).toHaveText('0 WORDS');
   expect(board.calls.submit).toBeGreaterThanOrEqual(1);

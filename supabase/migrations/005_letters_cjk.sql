@@ -89,8 +89,11 @@ grant execute on function public.lb_submit2(text, integer, integer, bigint, bigi
 
 -- ---- the board: LETTERS first ----------------------------------------------------------------------
 drop view if exists public.leaderboard;
+-- BOARD = LEVEL ONLY (Andy oct2 evening: "idc abt rebirth"; he ran this view on prod): level desc,
+-- lifetime_words desc, created_at asc. Every migration that (re)builds public.leaderboard carries it, so a
+-- re-run of any one of them can never put rebirths (or letters) back into the ranking.
 create view public.leaderboard with (security_invoker = true) as
-  select row_number() over (order by lifetime_letters desc, level desc, rebirths desc, created_at asc) as rank,
+  select row_number() over (order by level desc, lifetime_words desc, created_at asc) as rank,
          id, username, level, rebirths, lifetime_words, lifetime_letters, wins_per_word
     from public.profiles;
 grant select on public.leaderboard to anon, authenticated;

@@ -152,8 +152,11 @@ returns text language sql stable security definer set search_path = public, priv
 $$;
 
 -- The board: rank by rebirths, then level, then lifetime words (ties broken by who got there first).
+-- BOARD = LEVEL ONLY (Andy oct2 evening: "idc abt rebirth"; he ran this view on prod): level desc,
+-- lifetime_words desc, created_at asc. Every migration that (re)builds public.leaderboard carries it, so a
+-- re-run of any one of them can never put rebirths (or letters) back into the ranking.
 create or replace view public.leaderboard with (security_invoker = true) as
-  select row_number() over (order by rebirths desc, level desc, lifetime_words desc, created_at asc) as rank,
+  select row_number() over (order by level desc, lifetime_words desc, created_at asc) as rank,
          id, username, level, rebirths, lifetime_words, wins_per_word
     from public.profiles;
 grant select on public.leaderboard to anon, authenticated;
