@@ -178,3 +178,23 @@ test('buildPayout carries the base TERMS so the panel can name them', () => {
   assert.equal(bare.perLetter, null);
   assert.equal(buildPayout({ base: 5, letters: 0, perLetter: -3, factors: {} }).letters, null);
 });
+
+// O12 — the WINNER bonus: +50% of the game's word wins, its own row, in the TOTAL, paid once.
+import { noteRoundBonus, winnerBonusFor, WINNER_BONUS } from './payout.js';
+test('winner bonus is +50% of the round, rides the total, and is noted once per round', async () => {
+  const { beginPayoutLedger, notePayout, readPayoutLedger } = await import('./payout.js');
+  assert.equal(WINNER_BONUS, 0.5);
+  assert.equal(winnerBonusFor(0), 0);
+  assert.equal(winnerBonusFor(301), 151);
+  beginPayoutLedger('word-bomb');
+  notePayout({ base: 100, factors: {}, total: 100 });
+  notePayout({ base: 100, factors: {}, total: 200 });
+  const b = winnerBonusFor(readPayoutLedger().total);
+  assert.equal(b, 150);
+  assert.equal(noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: 1.5, wins: b }), true);
+  assert.equal(noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: 1.5, wins: b }), false, 'a re-delivered game_over never pays twice');
+  const led = readPayoutLedger();
+  assert.equal(led.total, 450);
+  assert.deepEqual(led.bonuses.map((x) => [x.key, x.wins]), [['winner', 150]]);
+  assert.equal(noteRoundBonus({ key: 'winner', wins: 0 }), false);
+});

@@ -142,7 +142,24 @@ export function inactivePayoutFactors(factors = {}, { band } = {}) {
 let ledger = null;
 
 export function beginPayoutLedger(mode) {
-  ledger = { mode: mode || null, words: 0, base: 0, total: 0, logs: {}, logSum: 0 };
+  ledger = { mode: mode || null, words: 0, base: 0, total: 0, logs: {}, logSum: 0, bonuses: [] };
+}
+
+// ---- END-OF-ROUND BONUSES (Andy oct2 O12) -----------------------------------------------------
+// A bonus the ROUND pays once at its end (today: WINNER), on top of the words. It is not a
+// per-word factor, so it never enters the ln-share split above; it is its own row with its own
+// figure, and the TOTAL includes it. Returns false when there is no open round or this bonus was
+// already noted for it — the caller pays only on true, so a re-delivered game_over never double-pays.
+export const WINNER_BONUS = 0.5; // winning the game pays +50% of what the game's words earned
+export function winnerBonusFor(roundTotal) {
+  const t = Number.isFinite(roundTotal) ? roundTotal : 0;
+  return t > 0 ? Math.max(1, Math.round(t * WINNER_BONUS)) : 0;
+}
+export function noteRoundBonus({ key, label, mult = 1, wins = 0 } = {}) {
+  if (!ledger || !key || !(wins > 0)) return false;
+  if (ledger.bonuses.some((b) => b.key === key)) return false;
+  ledger.bonuses.push({ key, label: label || key.toUpperCase(), mult, wins: Math.round(wins) });
+  return true;
 }
 
 /** Fold one word's payout into the round ledger. Silently ignored if no round is open. */
@@ -182,7 +199,9 @@ export function readPayoutLedger() {
     });
   }
   rows.sort((a, b) => b.share - a.share);
-  return { mode: ledger.mode, words: ledger.words, base: ledger.base, total: ledger.total, above, rows };
+  const bonuses = ledger.bonuses.map((b) => ({ ...b }));
+  const bonusTotal = bonuses.reduce((a, b) => a + b.wins, 0);
+  return { mode: ledger.mode, words: ledger.words, base: ledger.base, total: ledger.total + bonusTotal, above, rows, bonuses };
 }
 
 export function clearPayoutLedger() {

@@ -6,6 +6,7 @@ import { perWordRateNow } from '../progress/wins';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
+import { WINNER_BONUS } from '../progress/payout';
 import { formatRate, formatMultExact } from '../format';
 import './GameCard.css';
 
@@ -284,7 +285,9 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   const isFuse = game.id === 'fuse';
   const perkHead = isFuse
     ? (frenzy.active ? `FRENZY ${formatFrenzy(frenzy.ms)}` : `FRENZY ×${FRENZY_MULT}`)
-    : power > 1 ? `POWER ×${formatMultExact(power)}` : null;
+    : power > 1 ? `POWER ×${formatMultExact(power)}`
+    : game.id === 'word-bomb' ? `WIN +${Math.round(WINNER_BONUS * 100)}%` // O12: the end-of-game bonus
+    : null;
   const xpLine = rateNow && (
     perkHead ? (
       <>

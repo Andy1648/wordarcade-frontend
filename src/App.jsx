@@ -94,9 +94,10 @@ import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins } from './progress/wins';
+import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins, grantWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
+  noteRoundBonus, winnerBonusFor, WINNER_BONUS,
 } from './progress/payout';
 import { rarityCue } from './juice/audio';
 import { useWordSecrets } from './secrets/useWordSecrets';
@@ -1667,6 +1668,16 @@ function App() {
       } else {
         // WINS: already banked per-word during play (bankWordWins in word_result) — NO
         // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
+        // WINNER BONUS (Andy oct2 O12): winning the game pays +50% of what this game's words
+        // earned — a game result, so it credits directly (not a claim). noteRoundBonus refuses a
+        // second note for the same game, so a re-delivered game_over can never pay twice.
+        if (payload.winnerId && payload.winnerId === myIdRef.current) {
+          const led = readPayoutLedger();
+          const bonus = winnerBonusFor(led ? led.total : 0);
+          if (noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: 1 + WINNER_BONUS, wins: bonus })) {
+            grantWins(bonus, 'WINNER BONUS', { mode: 'word-bomb' });
+          }
+        }
         // The receipt for the whole game, read once and frozen for the end screen.
         setPayoutLedger(readPayoutLedger());
       }

@@ -2,6 +2,7 @@
 // LockedPreviewDialog (locked). Shows the actual mechanic (not a description), the per-word
 // wins rate, and the typical round length. Newgrounds treatment (thick black border, hard
 // offset shadow, flat fill) lives in ModeExample.css. STATIC — no animation.
+import { WINNER_BONUS } from '../progress/payout';
 import './ModeExample.css';
 import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
 import { perWordRateNow } from '../progress/wins';
@@ -114,6 +115,11 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
         {power > 1 && (
           <span className="mode-ex-power" style={{ color: accent }}>
             POWER ×{formatMultExact(power)} <span className="mode-ex-power-vs">VS WORD BOMB</span>
+          </span>
+        )}
+        {mode === 'word-bomb' && (
+          <span className="mode-ex-power" style={{ color: accent }}>
+            WIN THE GAME +{Math.round(WINNER_BONUS * 100)}% <span className="mode-ex-power-vs">OF ITS WINS</span>
           </span>
         )}
         <span className="mode-ex-longer">LONGER WORDS = MORE</span>
