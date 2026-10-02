@@ -4,7 +4,7 @@
  * desktop or tablet: at 481px and up this stylesheet contributes zero declarations.
  *
  * SCOPING RULE (CLAUDE.md): homepage-only styling hangs off `.homepage-stage`, never off
- * `.wall-surface` — that class is shared by the three game screens, so styling it here would
+ * `.wall-surface` — that class is shared with the CHAIN/FUSE shell and RACE, so styling it here would
  * leak into Word Bomb / Category Blitz / SAT Rush.
  */
 
