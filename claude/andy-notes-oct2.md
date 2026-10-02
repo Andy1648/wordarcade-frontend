@@ -8,35 +8,35 @@ receipts, dialogs, tutorials, leaderboard).
 Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## Andy's newest notes (Oct 2, later)
-- [ ] N1 Buying a cosmetic AUTO-EQUIPS it
+- [x] N1 Buying a cosmetic AUTO-EQUIPS it — PR #76 (shop.js `buy` equips; unit test + e2e/shop.spec.js 'auto-equips')
 - [ ] N2 "Bigger text" includes ANIMATED text — reward pops, level-ups
 - [ ] N3 Every screen picks ONE thing to make big and shrinks the rest
 - [ ] N4 The end-game "WHERE YOUR WINS CAME FROM" breakdown is cut down
 
 ## PR #75 — Economy v9 (re-check against the Oct 2 notes)
-- [ ] e2e shard 2/4 failure found + fixed (cause, not a retry)
-- [ ] KEY POWER price / XP-per-letter curve LESS exponential
-- [ ] Pop styles / sound packs cost MORE
-- [ ] Pop styles / sound packs visually SMALLER in the shop
-- [ ] Nothing caps at a dead end (in #75's scope: mastery; MOMENTUM → STEP 48)
-- [ ] CI green, merged
+- [x] e2e shard 2/4 failure found + fixed (cause, not a retry) — CHAIN paints a `.solo-root.is-loadstate` placeholder then swaps the real root ~130 ms later; the spec measured the placeholder's exit as it detached (4–6/40 locally, also on main). Specs now wait for the real root: 140/140 on repeat. PR #75
+- [x] KEY POWER price / XP-per-letter curve LESS exponential — XP/letter +15 per tier (linear), price ~quadratic in tier (v8: ×2.5 effect / ×6 price per tier). PR #75; later priced against the full rate so it stays 11–25 s of income (PR #76, claude/econ-oct2/report.md)
+- [x] Pop styles / sound packs cost MORE — first pop 60 → 6,000, ×5 a rung; the ladder spreads over ~13 h of play (was ~3 h). PR #75 (claude/progression/oct2-cosm-console.txt)
+- [x] Pop styles / sound packs visually SMALLER in the shop — compact 2/4/6-up tiles. PR #75, claude/oct2/pr75-shop-cosmetics-390.png / -1280.png
+- [x] Nothing caps at a dead end — mastery keeps levelling past M50 (PR #75); MOMENTUM's 200-cap replaced by the uncapped LETTER FORGE (PR #76)
+- [x] CI green, merged — PR #75 (1303cdd); live on typeaword.com (marker "Black sun" in index-CJ-Cu4GF.js)
 
 ## STEP 48 — Economy rules
-- [ ] O1 NO dead-end caps: shop MOMENTUM ("marks", caps at 200, no gameplay) replaced by an UNCAPPED boost with a VISIBLE effect
-- [ ] O2 SAT Rush earns much more per word than Word Bomb (its card power is real in the payout)
-- [ ] O3 CHAIN: higher wins per word than Word Bomb
-- [ ] O4 FUSE: SAME wins per word as Word Bomb; FRENZY (5 min, ×5 wins, persists across runs) is why its bar is higher — OBVIOUS on the card
-- [ ] O5 … and in the FUSE dialog
-- [ ] O6 … and in-game (FUSE HUD countdown + trigger moment)
-- [ ] O7 Late game: 1–2 new layers/systems (Sell-Lemons logic: each prestige layer unlocks a new system)
-- [ ] O8 Rebirth panel shows "REBIRTH TO GET: N" and warns when it's a bad time
-- [ ] O9 Wins ONLY from playing games
-- [ ] O10 Achievements / titles / badges / rank-ups are CLAIMED (popup or click) with a notification icon until claimed
-- [ ] O11 "XP per word" removed from game-mode screens
-- [ ] O12 Cards show the BASE + "LONGER WORDS = MORE" + end-of-round bonus (animated winner's-multiplier example only if it earns its space)
-- [ ] O13 Updated everywhere: cards, receipts, dialogs, tutorials, leaderboard
-- [ ] O14 econ-sim extended; before/after report
-- [ ] O15 CI green, merged
+- [x] O1 MOMENTUM → uncapped LETTER FORGE (each buy forges a letter; +5%/level per letter in the word; FORGE row on the receipt; 26-tile strip in the shop) — PR #76, claude/econ-oct2/shots/forge-390.png
+- [x] O2 SAT ×10 = POWER ×5 vs Word Bomb (50 vs 10 wins/word at T0) — PR #76, wins.test.js
+- [x] O3 CHAIN POWER ×2 (20 vs 10) — PR #76
+- [x] O4 FUSE = Word Bomb per word (10); FRENZY ×5 for 5 real minutes after a full strip; card says FRENZY ×5 / live clock — PR #76, claude/econ-oct2/shots/menu-1280-frenzy.png
+- [x] O5 … dialog: FRENZY plaque (rule / live countdown) — PR #76
+- [x] O6 … in-game: goal line over the strip, live FRENZY chip, FrenzyBurst moment; steering: median bot FRENZY every 10.3 min of FUSE (was 84) — PR #76, claude/econ-oct2/shots/fuse-390-frenzy.png, frenzy-sim.txt
+- [x] O7 STARS (R1: STAR POWER uncapped / FRENZY+ / HEAD START) + AUTOMATION (R3: AUTO-KEY / AUTO-FORGE), each a claimable NEW SYSTEM reveal — PR #76
+- [x] O8 Rebirth hero "REBIRTH N TO GET ×M WINS · +S ★" + "BAD TIME — WAIT n LV = +1 ★" — PR #76, claude/econ-oct2/shots/rebirth-390-badtime.png
+- [x] O9 Wins only from playing — non-game rewards no longer credit on their own; e2e menu-no-free-wins asserts no write before a claim — PR #76
+- [x] O10 Achievements, collection milestones, welcome-back, rank-ups (+ marks, new systems) are CLAIMED via popup or REWARDS button with a count badge — PR #76, claude/econ-oct2/shots/claims-popup-390.png, claims-panel-1280.png
+- [x] O11 XP / WORD removed from cards, dialog, SAT cover; in-game chip trimmed to rate / COMBO / FRENZY — PR #76
+- [x] O12 Cards: WINS / WORD (base word) + POWER ×N / FRENZY ×5 + LONGER = MORE; the (×N) tag is only what the player built. No end-of-round winner bonus exists in the game, so no example was added (it would advertise a reward the game does not pay) — PR #76
+- [x] O13 Cards, dialog, SAT cover, phone solo band, receipt rows (FRENZY, FORGE), shop, rebirth; no stale MOMENTUM / XP-per-word copy left (grep) — PR #76
+- [x] O14 econ-sim extended (forge, frenzy, claims, stars/perks/automation, bad-time rebirths) — claude/econ-oct2/report.md: median gap 1.0–2.6 m, p90 ≤ 13 m, max 24 m
+- [x] O15 CI green, merged — PR #76 (b3a50c3)
 
 ## STEP 49 — MARKS rework
 - [ ] M1 ONE marks system (collectibles); the other "marks" merged/removed
