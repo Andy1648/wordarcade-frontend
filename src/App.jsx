@@ -876,8 +876,20 @@ function App() {
   // stays calm. `view` is in the deps so the guard reads the live view, not a
   // stale closure (a view change alone never has a new beat, so it won't shake).
   // Assigned on every render, so the handler always sees the live `view` (never a stale one).
+  // INPUT LATENCY (Batch A): the beat shake used to be App STATE — set, then cleared 100 ms later —
+  // so every beat in a game re-rendered the WHOLE app (wall decor and all) twice, and a beat landing
+  // on a keystroke made that key cost ~50 ms at 4x CPU. It is a half-pixel nudge: run it straight on
+  // the wrapper as one finite WAAPI animation (transform only), no React render at all.
+  const appShakeRef = useRef(null);
   onBeatRef.current = () => {
-    if (view === 'game') triggerShake('light');
+    if (view !== 'game') return;
+    const el = appShakeRef.current;
+    if (!el || typeof el.animate !== 'function') return;
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.animate(
+      [{ transform: 'translate(0, 0)' }, { transform: 'translate(-0.5px, 0.5px)' }, { transform: 'translate(0, 0)' }],
+      { duration: 100, easing: 'ease-in-out' }
+    );
   };
 
   // The connection dropped WHILE in an active room/game. The seat is gone
@@ -2715,7 +2727,7 @@ function App() {
     <div className="app-viewport">
       {/* R10: FRENZY OVER / BOOST OVER — a finite moment when either clock hits 0, on any screen. */}
       <TimerOver />
-      <div className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
+      <div ref={appShakeRef} className={`app-shake${shake ? ` shake-${shake}` : ''}`}>
         <div className="app-scroll">
           <WallScene intensity={bgIntensity} resetKey={view} />
           <ParticleField />

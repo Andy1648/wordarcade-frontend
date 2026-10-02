@@ -9,7 +9,7 @@
 // frequent parent re-render - e.g. the Word Bomb tension class flipping every
 // second - never reshuffles a fresh random layout. React just swaps the
 // `intensity` class on the container; the DOM nodes are stable.
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { StickerInner } from './decor/Stickers';
 import GraffitiTag from './decor/GraffitiTag';
 import {
@@ -118,8 +118,8 @@ function placed(tier) {
 }
 const SWISH_MS = 820;
 
-/** One full-wall pane of the static decor, laid out for `tier`. */
-function DecorPane({ tier, className = '' }) {
+/** One full-wall pane of the static decor, laid out for `tier`. Memoised: it only changes with its tier. */
+const DecorPane = memo(function DecorPane({ tier, className = '' }) {
   const { splatters, tags, stickers } = placed(tier);
   return (
     <div className={`wall-decor-pane ${className}`}>
@@ -182,7 +182,7 @@ function DecorPane({ tier, className = '' }) {
       ))}
     </div>
   );
-}
+});
 
 /**
  * @param {object} props
@@ -190,7 +190,7 @@ function DecorPane({ tier, className = '' }) {
  *   so the wall reddens as a Word Bomb turn runs down. Defaults to the resting
  *   'calm' on every non-game screen.
  */
-export default function WallScene({ intensity = 'calm', resetKey }) {
+function WallScene({ intensity = 'calm', resetKey }) {
   // Live self-writing tags. A new one spray-paints itself every 10-15s; the list
   // is capped so the oldest drops off rather than the wall filling up forever.
   const [tags, setTags] = useState([]);
@@ -430,3 +430,6 @@ export default function WallScene({ intensity = 'calm', resetKey }) {
     </div>
   );
 }
+
+// Memoised (Batch A, input latency): App re-renders for many reasons the wall doesn't care about.
+export default memo(WallScene);

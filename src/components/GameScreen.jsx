@@ -1,5 +1,5 @@
 // GameScreen.jsx
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import KoHero from './KoHero';
@@ -1613,6 +1613,41 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
 // ~42px; 54 is that plus the slot's own breathing room.
 const REACT_H = 54;
 
+// ---- INPUT LATENCY (Batch A, Andy oct2: keystroke → paint < 50 ms at 4x CPU) ----------------------
+// The word being typed used to be GameScreen state, so EVERY keystroke re-rendered this whole screen
+// (ring, seats, strips, HUD) — measured p95 64-72 ms at 4x CPU. It now lives in a tiny store; only the
+// input and the player's own seat mirror subscribe, so a keystroke re-renders those two nodes.
+function createDraftStore() {
+  let value = '';
+  const subs = new Set();
+  return {
+    get: () => value,
+    set: (next) => {
+      const v = typeof next === 'function' ? next(value) : next;
+      if (v === value) return;
+      value = v;
+      subs.forEach((f) => f());
+    },
+    subscribe: (f) => {
+      subs.add(f);
+      return () => subs.delete(f);
+    },
+  };
+}
+function useDraft(store) {
+  return useSyncExternalStore(store.subscribe, store.get, store.get);
+}
+/** The controlled input, subscribed to the draft store (it alone re-renders per keystroke). */
+function DraftInput({ store, inputRef, onDraftChange, ...rest }) {
+  const value = useDraft(store);
+  return <input ref={inputRef} value={value} onChange={(event) => onDraftChange(event.target.value)} {...rest} />;
+}
+/** My own seat's live typing line, subscribed to the same store. */
+function MyDraftMirror({ store }) {
+  const draft = useDraft(store);
+  return draft ? <LiveTypeText text={draft} /> : <span className="player-typing-empty">...</span>;
+}
+
 export default function GameScreen({
   // The app's sound control, handed down as an element so this screen can host it in its header
   // cluster without knowing anything about music or the SFX engine. See App.jsx.
@@ -1671,7 +1706,10 @@ export default function GameScreen({
   payoutLedger = null,
   lastLanding = null,
 }) {
-  const [draft, setDraft] = useState('');
+  const draftStoreRef = useRef(null);
+  if (!draftStoreRef.current) draftStoreRef.current = createDraftStore();
+  const draftStore = draftStoreRef.current;
+  const setDraft = draftStore.set; // every existing setDraft(...) call writes the store
   // SKIP is a one-shot, irreversible action (it costs a life), so a rapid
   // double-tap must not send two skip_turn frames. This locks the button from the
   // first click until the turn actually advances. Cleared by the turn-change effect
@@ -2048,8 +2086,8 @@ export default function GameScreen({
   const pendingClearRef = useRef(null);
   // Live draft mirror so the async result handler can tell whether the field is
   // still empty (safe to restore a rejected word) without a stale closure.
-  const draftRef = useRef('');
-  draftRef.current = draft;
+  // The live draft for the async result handler: read straight from the store.
+  const draftRef = { get current() { return draftStore.get(); } };
   function schedulePendingClear(ms) {
     if (pendingClearRef.current) clearTimeout(pendingClearRef.current);
     pendingClearRef.current = setTimeout(() => {
@@ -2994,7 +3032,7 @@ export default function GameScreen({
   const panicking = isMyTurn && !showCountdown && !gameOver && timeRatio < 0.3;
 
   function submit() {
-    const word = draft.trim();
+    const word = draftStore.get().trim();
     if (!word || !inputEnabled) return;
 
     // INSTANT LOCAL REJECT (feel/gameplay-smoothness, proposal a): the three Word
@@ -3472,11 +3510,7 @@ export default function GameScreen({
                     if (isMe) {
                       return (
                         <div className="player-typing">
-                          {draft ? (
-                            <LiveTypeText text={draft} />
-                          ) : (
-                            <span className="player-typing-empty">...</span>
-                          )}
+                          <MyDraftMirror store={draftStore} />
                         </div>
                       );
                     }
@@ -3757,16 +3791,15 @@ export default function GameScreen({
                 )}
               </div>
             )}
-            <input
-              ref={inputRef}
+            <DraftInput
+              store={draftStore}
+              inputRef={inputRef}
               className={`game-input${inputShake ? ' input-shake' : ''}`}
               type="text"
-              value={draft}
-              onChange={(event) => {
-                const value = event.target.value;
+              onDraftChange={(value) => {
                 // Soft key tick on actual character entry (a char was added, not
                 // a deletion/select). onChange already ignores modifiers/arrows.
-                if (value.length > draft.length) {
+                if (value.length > draftStore.get().length) {
                   sound.keystroke();
                   // Optional floating-letter flourish (Word Bomb only, default
                   // OFF via JUICE.FLOATERS — noisy at speed). Purely cosmetic.
