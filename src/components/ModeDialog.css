@@ -489,3 +489,32 @@
   white-space: nowrap;
   font-size: max(var(--fs-panel), min(var(--fs-h1), 4.4vw));
 }
+
+/* NOTHING IN THE BODY SQUASHES (fine-tune oct2, loop B): the body is a flex column with
+   min-height:0 so it can scroll, but its children kept the default flex-shrink:1 — on a 625px
+   laptop the SOLO / SOLO-MULTI chip was crushed to a ~20px sliver UNDER the title instead of the
+   body scrolling. Children keep their size; the body scrolls. The Blitz lower block (the pack
+   picker's own scroller) is the one deliberate shrinker and keeps its rule. */
+@media (min-width: 481px) {
+  .mode-dialog-content > :not(.mode-dialog-lower--blitz) {
+    flex-shrink: 0;
+  }
+}
+/* (Desktop only: the phone dialog's fit is held by viewport-integrity at 360x640 with the old
+   shrink behaviour, and the chip squash was a 1366x625 bug.) */
+
+/* A 625px-tall laptop cannot show title + mastery + the full worked example + CTAs: the PLAY row
+   was clipped by the panel edge (fine-tune oct2, loop B). Below 700px only the worked-example
+   LINES step out (tag + "AIN → RAIN · AGAIN"); the WINS / WORD row, the perks and the FUSE
+   FRENZY plaque stay — those are the dialog's promises (Andy oct2 O5). */
+@media (max-height: 700px) {
+  .mode-ex-tag,
+  .mode-ex-line { display: none; }
+}
+/* ...and on a short LAPTOP the mastery line steps out too and the title drops a size, so the PLAY
+   row is inside the panel at 1366x625 (fine-tune oct2, loop B: PLAY was clipped by the edge). The
+   mastery line lives on in the mode's own screens. */
+@media (min-width: 481px) and (max-height: 700px) {
+  .mode-dialog-mastery { display: none; }
+  .mode-dialog-title { font-size: var(--fs-h2); }
+}
