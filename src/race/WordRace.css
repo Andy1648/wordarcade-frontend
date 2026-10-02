@@ -244,6 +244,40 @@
 .wr-hero-sub b {
   color: var(--wr-accent);
 }
+/* ENTIRE-WORD racing (Andy oct2 A6): the word to type, lit letter by letter. Static colour swaps
+   only — nothing animates here (per-keystroke paths stay pure writes). */
+.wr-typeword {
+  display: inline-flex;
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-hero);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #f4ecff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.wr-tl.is-ok {
+  color: var(--wr-accent);
+}
+.wr-tl.is-bad {
+  color: #ff4fa3;
+  text-decoration: underline 4px #ff4fa3;
+  text-underline-offset: 6px;
+}
+.wr-upcoming {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #b9a6d8;
+}
+.wr-up:first-child {
+  color: #f4ecff;
+}
 .wr-hero-done {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;

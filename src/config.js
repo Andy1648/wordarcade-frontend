@@ -6,4 +6,7 @@
 // Render serves over https, so the WebSocket equivalent is wss (secure
 // WebSocket) at the same host - no separate port needed, Render routes
 // the upgrade request through the same domain.
-export const BACKEND_WS_URL = 'wss://chain-reaction-backend-i6kx.onrender.com';
+// VITE_BACKEND_WS_URL (build-time) points a LOCAL build at a local backend for pre-merge testing of a
+// backend change (Andy oct2: test backend changes with real browsers BEFORE merging). Unset = prod.
+export const BACKEND_WS_URL =
+  (import.meta.env && import.meta.env.VITE_BACKEND_WS_URL) || 'wss://chain-reaction-backend-i6kx.onrender.com';

@@ -1,5 +1,8 @@
 // WordRaceScreen.jsx — the live WORD RACE board: one lane per racer, the hero fragment, the input,
-// and the results card. Everything it shows comes from the server's race_* frames (raceState.js);
+// and the results card. ENTIRE-WORD racing (Andy oct2 A6, race.variant 'words'): the hero is the
+// WORD to type, lit letter by letter as you type it, with the next words queued beside it
+// (monkeytype / TypeRacer); typing it exactly sends it at once and moves you to the next word
+// without waiting for the server, which still decides progress and the winner. Everything it shows comes from the server's race_* frames (raceState.js);
 // the only thing decided locally is the instant reject for the three rules the client can check
 // from its own state (the same mirror Word Bomb uses), and the dictionary is always the server's.
 //
@@ -57,23 +60,43 @@ export default function WordRaceScreen({
   const target = race?.target || 12;
   const racers = race?.racers || [];
   const me = racers.find((r) => r.id === myId) || null;
-  const fragment = myFragment(race, myId);
-  const nextFragment = me && race ? race.fragments[me.index + 1] || null : null;
+  const result = race?.lastResult || null;
+  const resultSeq = race?.resultSeq || 0;
+  const wordsMode = race?.variant === 'words';
+  // ENTIRE WORDS: the word I'm on runs AHEAD of the server by the words I've already sent, so I can
+  // type straight into the next one (the server applies them in order; it never needs the dictionary).
+  const [sentIndex, setSentIndex] = useState(0);
+  const myIndex = me ? (wordsMode ? Math.max(me.index, sentIndex) : me.index) : 0;
+  const fragment = wordsMode ? (race?.fragments[myIndex] || null) : myFragment(race, myId);
+  const nextFragment = me && race ? race.fragments[myIndex + 1] || null : null;
+  const upcoming = wordsMode && race ? race.fragments.slice(myIndex + 1, myIndex + 5) : [];
   const used = useMemo(() => new Set(race?.myWords || []), [race?.myWords]);
 
   const goIn = race?.goAt ? race.goAt - now : 0;
   const counting = status === 'countdown' && goIn > 0;
   const live = status === 'racing' || (status === 'countdown' && goIn <= 0);
   const timeLeft = race?.endsAt ? race.endsAt - now : race?.capMs || 90000;
-  const finished = me && me.index >= target;
+  const finished = me && myIndex >= target;
+  // A new race (rematch) starts the local cursor over.
+  const seed = race?.seed;
+  useEffect(() => {
+    setSentIndex(0);
+    setText('');
+  }, [seed]);
+  // A rejected word (only possible if the race ended under it) hands the cursor back to the server.
+  useEffect(() => {
+    if (wordsMode && result && !result.accepted && !result.local && me) setSentIndex(me.index);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultSeq]);
 
   // A result for ME: clear the box on an accept; nudge it on a reject (the reason stays as text).
-  const result = race?.lastResult || null;
-  const resultSeq = race?.resultSeq || 0;
   useEffect(() => {
     if (!resultSeq || !result) return;
-    if (result.accepted) setText('');
-    else setShakeSeq((n) => n + 1);
+    // ENTIRE WORDS clear the box the moment the word is typed (sendWord), so a late accept must not
+    // wipe the NEXT word already being typed.
+    if (result.accepted) {
+      if (!wordsMode) setText('');
+    } else setShakeSeq((n) => n + 1);
     // Only a NEW result should act — resultSeq is the event counter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultSeq]);
@@ -82,10 +105,48 @@ export default function WordRaceScreen({
     if (live && inputRef.current) inputRef.current.focus();
   }, [live]);
 
+  function sendWord(word) {
+    setSentIndex(myIndex + 1);
+    setText('');
+    onSubmit(word);
+  }
+
+  // ENTIRE WORDS: letters only; the exact word sends itself; SPACE / ENTER on a wrong word nudges.
+  function onType(raw) {
+    const hasBreak = /\s/.test(raw);
+    const clean = raw.replace(/[^a-zA-Z]/g, '').slice(0, 30);
+    if (!wordsMode) {
+      setText(clean);
+      return;
+    }
+    if (live && !finished && fragment && clean.toLowerCase() === fragment) {
+      sendWord(fragment);
+      return;
+    }
+    setText(clean);
+    if (hasBreak && clean) submitWord(clean);
+  }
+
+  function submitWord(raw) {
+    const word = raw.trim().toLowerCase();
+    if (!word || !live || finished) return;
+    const reason = precheck(word, fragment, used, race?.variant);
+    if (reason) {
+      onLocalReject({ accepted: false, word, reason, fragment, index: myIndex });
+      return;
+    }
+    if (wordsMode) sendWord(word);
+    else onSubmit(word);
+  }
+
   function submit(e) {
     e.preventDefault();
     const word = text.trim().toLowerCase();
     if (!word || !live || finished) return;
+    if (wordsMode) {
+      submitWord(word);
+      return;
+    }
     // Mirror of the server's own rules — surfaced same-frame; only the dictionary round-trips.
     const reason = precheck(word, fragment, used);
     if (reason) {
@@ -165,12 +226,29 @@ export default function WordRaceScreen({
               </span>
             ) : finished ? (
               <span className="wr-hero-done">FINISHED — WAITING ON THE FIELD</span>
+            ) : fragment && wordsMode ? (
+              <>
+                <span className="wr-sr">Type the word {fragment}</span>
+                {/* The word, lit as you type it: typed-right letters in the accent, a wrong letter red. */}
+                <span className="wr-typeword" aria-hidden="true">
+                  {fragment.split('').map((ch, i) => {
+                    const t = text[i] ? text[i].toLowerCase() : null;
+                    const cls = t == null ? '' : t === ch ? ' is-ok' : ' is-bad';
+                    return <span key={i} className={`wr-tl${cls}`}>{ch.toUpperCase()}</span>;
+                  })}
+                  {text.length > fragment.length && <span className="wr-tl is-bad">{text.slice(fragment.length).toUpperCase()}</span>}
+                </span>
+                <span className="wr-upcoming" aria-label="Next words">
+                  {upcoming.map((w, i) => <span key={`${myIndex}-${i}`} className="wr-up">{w.toUpperCase()}</span>)}
+                </span>
+                <span className="wr-hero-sub">WORD {myIndex + 1} OF {target}</span>
+              </>
             ) : fragment ? (
               <>
                 <span className="wr-sr">Type a word containing {fragment}</span>
                 <LayeredWord className="wr-hero-word" text={fragment.toUpperCase()} accent={ACCENT} />
                 <span className="wr-hero-sub">
-                  WORD {me ? me.index + 1 : 1} OF {target}
+                  WORD {myIndex + 1} OF {target}
                   {nextFragment && <> · NEXT <b>{nextFragment.toUpperCase()}</b></>}
                 </span>
               </>
@@ -182,9 +260,9 @@ export default function WordRaceScreen({
               ref={inputRef}
               className="wr-input"
               value={text}
-              onChange={(e) => setText(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 30))}
+              onChange={(e) => onType(e.target.value)}
               disabled={!live || finished}
-              placeholder={counting ? 'GET READY…' : 'TYPE A WORD'}
+              placeholder={counting ? 'GET READY…' : wordsMode ? 'TYPE THE WORD' : 'TYPE A WORD'}
               aria-label="Your word"
               autoComplete="off"
               autoCorrect="off"

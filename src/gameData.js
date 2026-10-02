@@ -122,7 +122,8 @@ const FUSE_GAME = {
   enabled: true,
 };
 
-// WORD RACE — 2-5 racers, the same seeded fragments for everyone, first to 12 words. DARK-LAUNCHED
+// WORD RACE — 2-5 racers type the SAME sequence of whole words (Andy oct2 A6: entire-word racing,
+// monkeytype / TypeRacer style), first to 25. DARK-LAUNCHED
 // behind ?race=1 (race/config.js) until the backend's word-race type is deployed: with the flag
 // off this array — and so the menu — is exactly what it was.
 const WORD_RACE_GAME = {
@@ -130,7 +131,7 @@ const WORD_RACE_GAME = {
   artKey: 'WordRaceArt',
   name: 'WORD\nRACE',
   cardName: 'RACE',
-  description: 'SAME LETTERS FOR EVERYONE. FIRST TO 12 WORDS.',
+  description: 'SAME WORDS FOR EVERYONE. FIRST TO 25 WINS.',
   baseColor: '#FF4FA3',
   iconBg: '#1a0b2e',
   badgeText: 'MULTI',
