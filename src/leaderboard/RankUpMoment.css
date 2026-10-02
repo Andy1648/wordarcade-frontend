@@ -85,7 +85,3 @@
   .lb-rankup-to { animation: none; }
 }
 
-/* The trophy's rank-news dot is CYAN — the pink dot already means "something in the shop is
-   affordable", and one colour must not mean two things. */
-.homepage-shop-dot.is-board-news,
-.hp-m-dot.is-board-news { background: #2EFFE0; }
