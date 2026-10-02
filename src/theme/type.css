@@ -154,3 +154,37 @@
   min-width: var(--tap-min);
   font-size: var(--fs-body);
 }
+
+/* BIG SCREENS (fine-tune oct2: at 1920x1080 every overlay and solo/race screen rendered at its 1366
+   size — panels at 35–45% of the width with 13px labels, the rest of the screen empty). The scale
+   steps up ~1.2x on a screen with the room for it, scoped to the overlay / game-screen containers
+   (NOT :root): the menu has its own fit-math and its wordmark is locked, so it is left alone.
+   Order stays strictly descending (h1 64 > h2 50 > panel 34 > body 21 > label 16 > micro 13). */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .shop-overlay,
+  .stats-overlay,
+  .mode-dialog-overlay,
+  .lp-overlay,
+  .solo-root,
+  .wr-root,
+  .lobby-wrap,
+  .room-wrap,
+  .sr-app {
+    --fs-h2: 50px;
+    --fs-panel: 34px;
+    --fs-body: 21px;
+    --fs-label: 16px;
+    --fs-micro: 13px;
+  }
+  /* ...and the panels widen with their type (:root-prefixed so they beat the components' own
+     rules, which load later). */
+  :root .shop-panel { width: min(92vw, 1120px); }
+  :root .stats-panel { max-width: 580px; }
+  :root .mode-dialog-shell { width: min(90vw, 760px); }
+  :root .lp-panel { width: min(560px, 92vw); }
+  :root .solo-deathcard { max-width: 540px; }
+  :root .wr-root { width: min(1220px, 94vw); }
+  :root .wr-roster { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  :root .lobby-box,
+  :root .room-box { max-width: 760px; }
+}

@@ -50,8 +50,10 @@ test.describe('menu fit (item 1)', () => {
     test(`${w}x${h}: title clears XP bar, fits one screen, no h-scroll`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await gotoMenu(page);
-      // Let the layout effect run its two passes.
-      await page.waitForTimeout(120);
+      // Let the layout effect run its passes. Polled, not a fixed 120ms: on a slow CI runner the
+      // fit-math's second pass (after the webfont swap) landed after the fixed wait and the test
+      // measured the pre-fit frame (gap -12.1 at 1600x900). The requirement itself is unchanged.
+      await expect.poll(async () => (await measure(page)).gap, { timeout: 4000 }).toBeGreaterThanOrEqual(12);
       const m = await measure(page);
       // eslint-disable-next-line no-console
       console.log(`[menu-fit] ${w}x${h}  gap=${m.gap}px  content=${m.contentH}px (${Math.round((m.contentH / h) * 100)}% of vh)  scale=${m.scale}  hscroll=${m.bodyScrollW - m.bodyClientW}`);

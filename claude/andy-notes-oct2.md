@@ -77,7 +77,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## STEP 53 — Word Bomb board + font sizes
 - [x] B1 Ring cap 520 → 720 px; on the wide board the ring takes all the slack between prompt and input rows (0.78 of the board, was 0.72 + a double reservation): 1920x1080 ring 520 → 552 px — PR #82 (38d7581), wbRingSize.test.js, claude/wb-oct2/before|after/ingame-word-bomb-6p-1920x1080.png
 - [x] B2 Receipt WINS figure 28 px → --fs-h2 (42 px at 1280), the receipt's one big thing; the docked receipt stacks its unit so it still clears SKIP (word-landing.spec green) — PR #82
-- [x] B3 Bigger fonts while playing: everything read mid-round steps --fs-label (13px) → --fs-body (16–18px) — WB fragment label, used-word strip, kill feed, MATCH facts, player status; CHAIN/FUSE HUD, hero caption, death-card lines (seat names stay label-size: the ring's name caps clip a bigger name at 1163x501). Gates green: wb-text-overlap, word-landing, wb-short-layout, wb-readability, viewport-integrity in-game cells (533 + 65). Shots: claude/b3-shots/. PR finetune/b3-text
+- [x] B3 Bigger fonts while playing: everything read mid-round steps --fs-label (13px) → --fs-body (16–18px) — WB fragment label, used-word strip, kill feed, MATCH facts, player status; CHAIN/FUSE HUD, hero caption, death-card lines (seat names and the fragment label stay label-size: the ring's name caps clip a bigger name at 1163x501, and the label's height comes out of the ring). Gates green: wb-text-overlap, word-landing, wb-short-layout, wb-readability, viewport-integrity in-game cells (533 + 65). Shots: claude/b3-shots/. PR #99 (CI green)
 - [x] B4 Solo teach strip leads with display-size TYPE A REAL WORD (Bungee --fs-panel, was body); WB coach caption --fs-band, sub line body (was label) — PR #82
 
 ## STEP 54 — Join mid-game
@@ -120,5 +120,5 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## Open at 08:00 Oct 2 (carried forward, each needs its own step)
 - Migrations 005 / 006 / 007 not applied (letters + CJK names, cloud save, redeem codes): Andy pastes each into the Supabase SQL editor and runs it; the client already feature-detects all three.
 - Batch A / Batch B: contents never recorded — needs Andy to re-paste.
-- 1920x1080 scale-up (panels sit at ~35–45% width; the app-scale zoom is height-capped and overlays opt out).
+- [x] 1920x1080 scale-up DONE after 08:00: at >= 1800x1000 the overlay / solo / race / lobby / room containers take a ~1.2x type scale (body 21, label 16, panel 34, h2 50) and their panels widen (shop 1120, dialog 760, death card 540, race 1220); the menu (own fit-math, locked wordmark) is untouched. Gates: viewport-integrity 1920 + 2560 cells, menu-fit, card-fit (267 passed), shop/race (77). Shots: claude/big-screens-shots/. PR finetune/big-screens
 - WB phone ring is width-bound (0.72 of a 344px board) → a ~280px vertical band on tall phones; needs a layout change, not a formula tweak (the stack formula is pinned by wbRingSize.test).
