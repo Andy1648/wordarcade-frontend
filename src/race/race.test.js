@@ -144,3 +144,24 @@ test('PAYOUT HONESTY: XP per word equals the card XP line', () => {
     assert.equal(bankRaceWord({ word: 'sting', prevWords: 5 }).xp, card.xp);
   });
 });
+
+// ---- ENTIRE-WORD racing (Andy oct2 A6) ----
+test('race_start (variant words) stores the words as the sequence', () => {
+  const s = raceReducer(null, {
+    frame: { type: 'race_start', payload: { seed: 1, variant: 'words', words: ['house', 'river'], fragments: ['house', 'river'], target: 2, capMs: 60000, racers: [{ id: 'a', name: 'A' }], serverNow: 0, goAt: 3000 } },
+    now: 0,
+  });
+  assert.equal(s.variant, 'words');
+  assert.deepEqual(s.fragments, ['house', 'river']);
+  assert.equal(s.target, 2);
+});
+
+test('precheck (words): only the exact word passes; anything else is wrong_word', () => {
+  assert.equal(precheck(' HOUSE ', 'house', new Set(), 'words'), null);
+  assert.equal(precheck('houses', 'house', new Set(), 'words'), 'wrong_word');
+  assert.equal(precheck('hou', 'house', new Set(), 'words'), 'wrong_word');
+  assert.equal(precheck('mouse', 'house', new Set(), 'words'), 'wrong_word');
+  assert.ok(RACE_REASON_COPY.wrong_word);
+  // the fragment race keeps its own rules
+  assert.equal(precheck('mouse', 'ous', new Set()), null);
+});

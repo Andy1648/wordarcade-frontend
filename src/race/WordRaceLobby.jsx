@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import LayeredWord from '../components/LayeredWord';
 import Mascot from '../components/Mascot';
+import { RACE_WORDS } from './config';
 import './WordRace.css';
 
 const MAX_RACERS = 5;
@@ -57,8 +58,8 @@ export default function WordRaceLobby({
       )}
 
       <p className="wr-rules">
-        SAME 12 FRAGMENTS FOR EVERYONE. TYPE A WORD WITH YOUR FRAGMENT TO MOVE UP. FIRST TO 12 — OR MOST
-        WORDS AT 1:30 — WINS.
+        SAME WORDS FOR EVERYONE. TYPE EACH ONE IN FULL TO MOVE UP. FIRST TO {RACE_WORDS} — OR MOST WORDS
+        AT 1:00 — WINS.
       </p>
 
       <ol className="wr-roster" aria-label="Racers">
