@@ -70,7 +70,7 @@
   text-transform: uppercase;
   font-size: var(--fs-label); /* 13px floor (was --fs-micro, 11px) */
   letter-spacing: 0.12em;
-  color: rgba(240, 234, 217, 0.5);
+  color: rgba(240, 234, 217, 0.82); /* was 0.5 (~3:1, near-invisible on the dark card — fine-tune oct2) */
 }
 
 @media (max-width: 600px) {

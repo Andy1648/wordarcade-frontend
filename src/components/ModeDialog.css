@@ -143,7 +143,9 @@
   right: 0;
   bottom: 0;
   height: 170px;
-  background: linear-gradient(to bottom, rgba(10, 4, 16, 0) 0%, rgba(10, 4, 16, 0.82) 100%);
+  /* The legibility FADE is gone (flat-colour rule): the dark facet of the panel fill now sits
+     under the CTAs instead. */
+  display: none;
 }
 
 /* Dialog body (chip + title + liner + example + the CTAs). Visible immediately — it fades in

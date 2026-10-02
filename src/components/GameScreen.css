@@ -6536,3 +6536,14 @@ html[data-beat='true'] .wb-belly {
 @media (min-width: 701px) and (max-height: 600px) {
   .game-stage--wb.wb-duo .wb-rail--right { display: none; }
 }
+
+/* ONE HEADER ROW EVERYWHERE (fine-tune oct2, loop C): outside the Word Bomb ring board the header's
+   right cluster still stacked ROUND / sound / LEAVE into a ~180px column, which on Category Blitz
+   ate the board's top-right corner. Same row as Word Bomb above 480px. */
+@media (min-width: 481px) {
+  .game-header-right {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+}

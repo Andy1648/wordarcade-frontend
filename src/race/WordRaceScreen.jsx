@@ -232,8 +232,11 @@ export default function WordRaceScreen({
               </li>
             ))}
           </ol>
+          {/* A zero run says what earns, not "+0" (fine-tune oct2: a literal +0 read as broken). */}
           <p className="wr-earn wr-earn-final">
-            YOU BANKED +{formatNum(earned?.wins || 0)} WINS · +{formatNum(earned?.xp || 0)} XP
+            {(earned?.wins || 0) > 0 || (earned?.xp || 0) > 0
+              ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS · +{formatNum(earned?.xp || 0)} XP</>
+              : <>NO WINS THIS RACE — 3 WORDS START THE BANK</>}
           </p>
           <div className="wr-over-actions">
             <button type="button" className="wr-btn wr-btn-go" onClick={onRematch} disabled={rematchPending}>
