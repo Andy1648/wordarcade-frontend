@@ -23,8 +23,17 @@
 // therefore cannot change any input to this function.
 
 export const WB_RING_MIN = 220;
-export const WB_RING_MAX = 520;
-export const WB_RING_OF_STAGE = 0.72;
+// STEP 53 (Andy oct2: "spread the Word Bomb board out — the middle feels weird"): the ring may now
+// grow to 720px (was 520) and, on the wide board, 0.78 of its shorter side (was 0.72) — on a 1920x1080
+// board the seats sat inside ±260px of a 1700px stage.
+export const WB_RING_MAX = 720;
+export const WB_RING_OF_STAGE = 0.72; // the phone STACK's design size (unchanged)
+export const WB_RING_OF_STAGE_RAILS = 0.78; // the wide RAILS board's
+// RAILS layout only: the grid gives the ring row ALL the slack between the prompt and input rows
+// (`auto auto 1fr auto`), so the ring may use it all — minus room for the active seat's YOUR TURN
+// flag, which floats above the ring box. The old rule reserved the TALLER stack on BOTH sides, a
+// leftover from when the ring row was centred between two equal 1fr tracks.
+export const WB_FLAG_ROOM = 28;
 // A HARD CEILING ON THE BOARD'S SHORTER SIDE, applied after the 220px design floor.
 // On a 320px phone the app frame (a 15px scrollbar gutter each edge plus the wrap's
 // own padding) leaves a 274px-wide board, and 0.72 of that is 197px - under the
@@ -48,6 +57,7 @@ export function ringDiameter({
   railW = 0,
   rowGap = 0,
   colGap = 0,
+  layout = 'stack',
 }) {
   // THE HEADER ROW is chrome: it is taken off the TOP of the content box once, and
   // the ring is then centred in what is left (the PLAY AREA). It is the one band
@@ -60,11 +70,13 @@ export function ringDiameter({
   // the ring may only take the height that remains after the TALLER of the two
   // stacks has been reserved on BOTH sides.
   const reserved = Math.max(topH, botH) + rowGap;
-  const freeHeight = playH - 2 * reserved;
+  const freeHeight = layout === 'rails'
+    ? playH - topH - botH - 2 * rowGap - WB_FLAG_ROOM
+    : playH - 2 * reserved;
   // Same argument horizontally: the rails are equal 1fr tracks either side.
   const freeWidth = contentW - 2 * (railW + colGap);
   const shorterSide = Math.min(stageW, stageH);
-  const design = shorterSide * WB_RING_OF_STAGE;
+  const design = shorterSide * (layout === 'rails' ? WB_RING_OF_STAGE_RAILS : WB_RING_OF_STAGE);
   const d = Math.min(design, freeHeight, freeWidth);
   const floored = Math.max(WB_RING_MIN, Math.min(WB_RING_MAX, Math.floor(d)));
   // THE FLOOR IS A PREFERENCE; THE SPACE IS A CONSTRAINT. `floored` can raise the ring
@@ -110,6 +122,7 @@ export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
     railW,
     rowGap,
     colGap,
+    layout: stack ? 'stack' : 'rails',
   });
   stage.style.setProperty('--wb-size', `${d}px`);
   return d;

@@ -56,7 +56,8 @@
   transform: translate(-50%, -50%);
 }
 .spotlight-caption-text {
-  font-size: var(--fs-panel);
+  /* STEP 53: the Word Bomb coach headline is the screen's one big thing on a first game. */
+  font-size: var(--fs-band);
   color: #ffe94a;
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -88,7 +89,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body); /* STEP 53: bigger tutorial prompts (was --fs-label) */
   letter-spacing: 0.12em;
   color: #2effe0;
   text-shadow: 2px 2px 0 #000;
@@ -104,7 +105,7 @@
     display: none;
   }
   .spotlight-caption-text {
-    font-size: var(--fs-body);
+    font-size: var(--fs-panel); /* STEP 53: was --fs-body — still one short line on a short laptop */
     -webkit-text-stroke-width: 2px;
     text-shadow: 3px 3px 0 #000;
   }

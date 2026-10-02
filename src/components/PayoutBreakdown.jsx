@@ -98,9 +98,16 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
  * which is the only attribution that sums to exactly what was earned and gives two equal
  * multipliers equal credit (see payout.js).
  */
+// STEP 53 / Andy N4 ("cut the end-game WHERE YOUR WINS CAME FROM breakdown down"): the biggest
+// three contributors keep their rows; everything smaller folds into ONE "+ n MORE" row, so the
+// panel is three lines and a total, never a table. The folded row's wins are the exact sum of what
+// it folds, so the rows still add up to the total.
+const ROUND_ROWS_SHOWN = 3;
 export function RoundPayout({ ledger }) {
   if (!ledger || !ledger.words) return null;
   const top = ledger.rows.length ? ledger.rows[0].share : 1;
+  const shown = ledger.rows.slice(0, ROUND_ROWS_SHOWN);
+  const rest = ledger.rows.slice(ROUND_ROWS_SHOWN);
   return (
     <div className="payout payout--round" aria-label="Where your wins came from">
       <div className="payout-title">WHERE YOUR WINS CAME FROM</div>
@@ -112,7 +119,7 @@ export function RoundPayout({ ledger }) {
         <div className="payout-none">NO MULTIPLIERS THIS ROUND — every word paid the flat base.</div>
       ) : (
         <div className="payout-rows">
-          {ledger.rows.map((r) => (
+          {shown.map((r) => (
             <div key={r.key} className={`payout-row payout-row--${r.kind}`}>
               <span className="payout-k">{r.label}</span>
               {/* Width is a share of the BIGGEST row, not of 100%, so the smallest contributor is
@@ -122,6 +129,14 @@ export function RoundPayout({ ledger }) {
               <Num value={r.wins} prefix="+" className="payout-v" />
             </div>
           ))}
+          {rest.length > 0 && (
+            <div className="payout-row payout-row--more">
+              <span className="payout-k">+ {rest.length} MORE</span>
+              <span className="payout-bar" style={{ '--w': '0%' }} />
+              <span className="payout-avg" />
+              <Num value={rest.reduce((a, r) => a + r.wins, 0)} prefix="+" className="payout-v" />
+            </div>
+          )}
         </div>
       )}
       <div className="payout-total">

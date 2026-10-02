@@ -9,7 +9,7 @@
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   line-height: 0.98;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-hero); /* STEP 53 / Andy N2: animated reward text is big (was --fs-panel) */
   letter-spacing: 0.03em;
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
