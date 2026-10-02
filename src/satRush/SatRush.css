@@ -2541,3 +2541,47 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   color: var(--paper);
   background: var(--ink);
 }
+
+/* PHONE LINEUP (fine-tune oct2, pass 2): three columns at 390 left ~100px a chip, and an 8–9
+   letter suspect in display type was clipped at both edges ("OVETOU", "ULPABL") — the player was
+   choosing between words they could not read. Two columns, and the word never clips. */
+@media (max-width: 480px) {
+  .sr-lineup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sr-suspect {
+    padding: 6px 4px;
+  }
+  .sr-suspect-word {
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+}
+
+/* SAT RUSH KEEPS ITS PRINT REGISTER FOR THE SHARED CHROME TOO (fine-tune oct2, loop B): the wins
+   pill and the live /WORD stack were the house neon (yellow fill, purple card) floating in the
+   page's margin — the one place the retro-print sub-style broke. Same components, same positions,
+   inked on paper. The WPM chip has nothing to say in a vocab mode and is dropped here. */
+.sr-app .wins-hud {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: var(--ink);
+}
+.sr-app .wins-hud * {
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+}
+.sr-stack-dock .lstack {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.sr-stack-dock .lstack * {
+  color: var(--ink);
+}
+body:has(.sr-app) .wpm-hud {
+  display: none;
+}

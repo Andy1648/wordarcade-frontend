@@ -52,7 +52,11 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
     };
     window.addEventListener('keydown', onKey, { capture: true });
     window.addEventListener('pointerdown', onDown, { capture: true });
+    // It tucks itself away after a while too: the REWARDS badge keeps the reminder, so the popup
+    // never has to sit over the menu for good (fine-tune oct2).
+    const tuck = setTimeout(later, 8000);
     return () => {
+      clearTimeout(tuck);
       window.removeEventListener('keydown', onKey, { capture: true });
       window.removeEventListener('pointerdown', onDown, { capture: true });
     };

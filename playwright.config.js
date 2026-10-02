@@ -7,7 +7,9 @@
 // the "assert the attempt was made" boundary.
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173; // vite preview's default port
+// PW_PORT lets parallel worktrees each run their own preview: a shared 4173 with
+// reuseExistingServer silently serves one checkout's build to another's tests.
+const PORT = Number(process.env.PW_PORT) || 4173; // vite preview's default port
 const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
@@ -63,7 +65,7 @@ export default defineConfig({
   // Build a fresh production bundle and serve it via `vite preview`. Locally we
   // reuse an already-running preview (fast iteration); CI always starts clean.
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
+    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: BASE_URL,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,

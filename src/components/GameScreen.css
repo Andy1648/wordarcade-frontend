@@ -2640,6 +2640,10 @@
   font-size: var(--fs-body);
   padding: 9px 0;
   box-shadow: 3px 3px 0 #000;
+  /* OUTLINE beside REMATCH (fine-tune oct2): a full pink slab was as loud as the primary. */
+  color: #ff4fa3;
+  background: transparent;
+  border-color: #ff4fa3;
 }
 
 .game-over-leave.secondary:active {
@@ -6523,4 +6527,12 @@ html[data-beat='true'] .wb-belly {
     font-size: var(--fs-body);
     letter-spacing: 0.14em;
   }
+}
+
+/* SHORT LAPTOP, 2 PLAYERS (fine-tune oct2, pass 2): at 1280x551 the MATCH card (round / turn /
+   streak / mode) was taller than the ring row, so it was clipped at the bottom and sat over the
+   active seat's YOUR TURN flag. It is a readout, not a control — on a board this short it goes,
+   and the ring and its flag have the row to themselves. */
+@media (min-width: 701px) and (max-height: 600px) {
+  .game-stage--wb.wb-duo .wb-rail--right { display: none; }
 }

@@ -18,15 +18,14 @@
   place-items: center;
 }
 
-/* Dim + light blur behind the dialog so the menu reads as "pushed back". Fades in
-   via the .is-in class (added a frame after mount). Clicking it closes. */
+/* A FLAT dim behind the dialog so the menu reads as "pushed back" — no blur (CLAUDE.md: flat
+   colours only, no blur; the fine-tune reviewer flagged it, and a full-viewport backdrop blur is
+   also the most expensive thing a fade can paint). Fades in via .is-in. Clicking it closes. */
 .mode-dialog-scrim {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: rgba(13, 6, 24, 0.62);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(13, 6, 24, 0.8);
   opacity: 0;
   transition: opacity 0.3s ease;
   cursor: pointer;
@@ -458,4 +457,35 @@
 .mode-dialog-actions.has-solo .mode-dialog-btn-create {
   background: #fff;
   border-color: #000;
+}
+
+/* SECONDARY ROW (fine-tune oct2): with PLAY SOLO leading, PLAY + JOIN WITH CODE were two ~110px
+   white Bungee slabs ("JOIN / WITH / CODE" on three lines) that outweighed the lead and pushed the
+   dialog past a 625px-tall laptop, cutting the WORD BOMB title off the top. They are a mono label
+   row now: still outlined + shadowed, 44px+, one line each. */
+.mode-dialog-actions.has-solo .mode-dialog-btn-create,
+.mode-dialog-actions.has-solo .mode-dialog-btn-join {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  min-height: 48px;
+  padding: 10px 12px;
+}
+
+/* EVERY DIALOG (fine-tune oct2, pass 2): JOIN WITH CODE is the secondary action and reads as one —
+   a one-line mono label, not a three-line Bungee slab that set the CTA row's height to ~115px and
+   squeezed the Blitz pack picker down to a single visible row. */
+.mode-dialog-btn-join {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+}
+/* The Blitz title on ONE line ("CATEGORY BLITZ" wrapped to two at 1920 and ate the picker's room). */
+.mode-dialog-content:has(.mode-dialog-lower--blitz) .mode-dialog-title {
+  white-space: nowrap;
+  font-size: max(var(--fs-panel), min(var(--fs-h1), 4.4vw));
 }

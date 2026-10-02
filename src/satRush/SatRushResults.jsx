@@ -115,8 +115,31 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
           <b>+{fmt(ante)}</b> wins earned
         </div>
 
+        {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
+            at 1280x551 / 1366x625 they were below the fold under the study panels). */}
+        <div className="sr-results-actions in">
+          <button type="button" className="sr-btn" onClick={onAgain}>
+            Run it back
+          </button>
+          {/* A deep-link visitor has never seen the menu, so their way on is the OFFER below —
+              the whole grid — and the generic Menu button beside it would be a second control
+              doing the same thing. Everyone else gets the normal Menu button. */}
+          {offerMenu ? null : (
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
+              Menu
+            </button>
+          )}
+          {/* SECOND ROW (feat/solo-endgame): a DIFFERENT unlocked mode — the one played least —
+              so the run ends on a fork, not only "run it back". Nothing renders when every other
+              mode is still locked.
+              NOT shown to a deep-link visitor: they have seen no modes at all, so "try FUSE next"
+              is a narrower, stranger offer than "here are the other four". They get the offer. */}
+          <ClaimPrompt />
+          {offerMenu ? null : <TryModeRow current="sat-rush" />}
+        </div>
+
         {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
-        <div className={`sr-resline${revealed ? ' in' : ''}`}>
+        <div className="sr-resline in">
           <span>score <b>{fmt(results.score)}</b></span>
           <span>avg ante <b>{avgAnte}</b></span>
           <span>best streak <b>{results.bestStreak || 0}</b></span>
@@ -160,27 +183,6 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
             </ul>
           </div>
         )}
-
-        <div className={`sr-results-actions${revealed ? ' in' : ''}`}>
-          <button type="button" className="sr-btn" onClick={onAgain}>
-            Run it back
-          </button>
-          {/* A deep-link visitor has never seen the menu, so their way on is the OFFER below —
-              the whole grid — and the generic Menu button beside it would be a second control
-              doing the same thing. Everyone else gets the normal Menu button. */}
-          {offerMenu ? null : (
-            <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
-              Menu
-            </button>
-          )}
-          {/* SECOND ROW (feat/solo-endgame): a DIFFERENT unlocked mode — the one played least —
-              so the run ends on a fork, not only "run it back". Nothing renders when every other
-              mode is still locked.
-              NOT shown to a deep-link visitor: they have seen no modes at all, so "try FUSE next"
-              is a narrower, stranger offer than "here are the other four". They get the offer. */}
-          <ClaimPrompt />
-          {offerMenu ? null : <TryModeRow current="sat-rush" />}
-        </div>
 
         {/* When the offer is shown its button IS the way out (same onExit), so the plain
                   MENU/LEAVE button beside it would be two adjacent controls doing one thing. The

@@ -438,6 +438,16 @@
   }
 }
 
+/* Five slabs in one strip at 390 (★ / STATS / SHOP / trophy / REBIRTH): the icon slabs take 46px
+   and the word slabs drop their side padding + tracking so REBIRTH fits (fine-tune oct2: it was
+   clipped at the right edge). */
+@media (max-width: 480px) {
+  .hp-m-nav { gap: 6px; }
+  .hp-m-navbtn { padding: 0 3px; letter-spacing: 0; }
+  .hp-m-navbtn.is-board,
+  .hp-m-navbtn.is-rewards { flex: 0 0 46px; }
+}
+
 @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
   .hp-m-row,
   .hp-m-solo-btn,

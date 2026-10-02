@@ -127,7 +127,8 @@
 .wl-wins {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  font-size: var(--fs-panel);
+  /* Andy N2 ("bigger text includes animated text"): the payout pop is --fs-h2 (was --fs-panel). */
+  font-size: var(--fs-h2);
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 3px #000;
@@ -193,6 +194,6 @@
     font-size: var(--fs-body);
   }
   .wl-wins {
-    font-size: var(--fs-body);
+    font-size: var(--fs-panel); /* N2: was --fs-body */
   }
 }

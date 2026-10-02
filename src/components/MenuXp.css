@@ -320,7 +320,7 @@
 .menu-xp-pop-letter {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-h2); /* Andy N2: animated reward text is bigger (was --fs-panel) */
   line-height: 1;
   color: #2effe0; /* tier colour set inline; the +N below stays yellow */
   -webkit-text-stroke: 3px #000;

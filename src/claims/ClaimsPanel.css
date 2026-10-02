@@ -169,7 +169,9 @@
 /* The popup on the menu: the welcome-back card's place and look, now with a CLAIM. */
 .claim-pop {
   position: fixed;
-  top: 12px;
+  /* Desktop: bottom-centre, over the CREDITS line only — at the top it sat on the wordmark
+     (fine-tune oct2). Phones and the short-laptop layout override this below. */
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 130;
@@ -194,6 +196,8 @@
 /* STEP 58: on a short laptop the nav shares the wordmark's row on the RIGHT, so the popup takes
    the empty top-LEFT corner instead of the centre. */
 body:has(.homepage-stage[data-fit='short'][data-nav='top']) .claim-pop {
+  top: 12px;
+  bottom: auto;
   left: 16px;
   transform: none;
   animation-name: claim-pop-in-left;
@@ -211,7 +215,7 @@ body:has(.homepage-stage[data-fit='short'][data-nav='top']) .claim-pop {
 @keyframes claim-pop-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -10px);
+    transform: translate(-50%, 10px);
   }
   to {
     opacity: 1;
@@ -259,6 +263,7 @@ body:has(.homepage-stage[data-fit='short'][data-nav='top']) .claim-pop {
 @media (max-width: 480px) {
   .claim-pop {
     top: 8px;
+    bottom: auto;
     width: calc(100vw - 24px);
     max-width: calc(100vw - 24px);
     gap: 6px;

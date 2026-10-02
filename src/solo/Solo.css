@@ -773,9 +773,26 @@
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   line-height: 0.98;
-  font-size: var(--fs-panel);
+  /* THE ONE BIG THING on the card (fine-tune oct2 / Andy N3): the result. It was --fs-panel, the
+     same size as the hint word under it. */
+  font-size: min(var(--fs-h1), 9.5vw);
+  white-space: nowrap; /* "CHAIN BROKE" on one line — two lines pushed PLAY AGAIN off a 625px screen */
   color: var(--solo-accent);
   margin: 0;
+}
+/* A short laptop (1366x625) or a landscape phone: the result steps down a size and the mascot
+   goes, so the whole card — PLAY AGAIN included — fits without scrolling (fine-tune oct2 pass 3). */
+@media (max-height: 720px) {
+  .solo-deathcard h2 {
+    font-size: var(--fs-h2);
+  }
+  .solo-deathcard .solo-death-mascot {
+    display: none;
+  }
+}
+/* ...and the "you could have played" hint steps down under it. */
+.solo-deathcard .missed-hold-word {
+  font-size: var(--fs-panel);
 }
 .solo-death-killed {
   font-size: var(--fs-label);
@@ -875,17 +892,17 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   font-size: var(--fs-body);
-  color: #ffffff /* contrast: 1.56 -> 12.75 on #3a2b52 */;
-  background: #3a2b52;
+  /* ALWAYS the mode's accent (fine-tune oct2: the un-armed grey slab read as DISABLED). Before it
+     arms it is only a touch quieter and carries no "· ENTER". */
+  color: var(--v-field); /* light fill, dark ink: white on #2effe0 was 1.27:1 */
+  background: var(--solo-accent);
   border: 4px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.85;
 }
 .solo-restart.is-armed {
-  background: var(--solo-accent);
-  color: var(--v-field); /* the fill goes light, so the ink goes dark: white on #2effe0 was 1.27:1 */
   opacity: 1;
 }
 .solo-restart:active {
@@ -1517,4 +1534,23 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 .solo-root .lstack-row,
 .solo-root .wins-earned-line {
   font-size: var(--fs-label);
+}
+
+/* The way out, inside the death card's top-left corner (fine-tune oct2). */
+.solo-deathcard {
+  position: relative;
+}
+.solo-deathcard > .solo-exit {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+/* SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the second letter row (n–z) was cut by the
+   bottom edge. The FRENZY goal line steps out (the HUD's FRENZY chip and the dialog carry it) and
+   the strip packs tighter, so all 26 letters fit. */
+@media (min-width: 701px) and (max-height: 600px) {
+  .solo-frenzy-goal { display: none; }
+  .solo-strip-big { max-width: 440px; gap: 4px; }
+  .solo-strip-big span { width: calc((100% - 13 * 4px) / 13); border-width: 3px; box-shadow: 3px 3px 0 #000; }
 }
