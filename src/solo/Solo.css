@@ -775,7 +775,8 @@
   line-height: 0.98;
   /* THE ONE BIG THING on the card (fine-tune oct2 / Andy N3): the result. It was --fs-panel, the
      same size as the hint word under it. */
-  font-size: min(var(--fs-h1), 9.5vw);
+  /* Sized to the CARD, not the viewport (container units): 9.5vw overran a 420px card at 1920. */
+  font-size: clamp(var(--fs-panel), 9cqi, var(--fs-h1));
   white-space: nowrap; /* "CHAIN BROKE" on one line — two lines pushed PLAY AGAIN off a 625px screen */
   color: var(--solo-accent);
   margin: 0;
@@ -1536,14 +1537,14 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   font-size: var(--fs-label);
 }
 
-/* The way out, inside the death card's top-left corner (fine-tune oct2). */
+/* The way out, inside the death card as its own first row (fine-tune oct2). In flow, not
+   absolute: absolute, it sat on the title once the short-screen layout dropped the mascot. */
 .solo-deathcard {
   position: relative;
+  container-type: inline-size;
 }
 .solo-deathcard > .solo-exit {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  align-self: flex-start;
 }
 
 /* SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the second letter row (n–z) was cut by the

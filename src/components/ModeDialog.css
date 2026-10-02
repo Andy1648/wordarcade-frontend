@@ -489,3 +489,12 @@
   white-space: nowrap;
   font-size: max(var(--fs-panel), min(var(--fs-h1), 4.4vw));
 }
+
+/* NOTHING IN THE BODY SQUASHES (fine-tune oct2, loop B): the body is a flex column with
+   min-height:0 so it can scroll, but its children kept the default flex-shrink:1 — on a 625px
+   laptop the SOLO / SOLO-MULTI chip was crushed to a ~20px sliver UNDER the title instead of the
+   body scrolling. Children keep their size; the body scrolls. The Blitz lower block (the pack
+   picker's own scroller) is the one deliberate shrinker and keeps its rule. */
+.mode-dialog-content > :not(.mode-dialog-lower--blitz) {
+  flex-shrink: 0;
+}
