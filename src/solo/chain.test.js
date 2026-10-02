@@ -89,14 +89,14 @@ test('multiplier rises 0.25 per fresh end-letter and caps at 2.5', () => {
   assert.deepEqual(seen, [1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.5]);
 });
 
-test('multiplier resets to 1.0 on a repeat end-letter', () => {
+test('a repeat end-letter costs ONE multiplier step, not the streak (BA1)', () => {
   const { accept, topCommon } = synth();
   for (const w of ['aab', 'bbc', 'ccb']) accept.add(w); // ...c then back to ending on b
   const eng = createChainEngine({ accept, topCommon, rng: () => 0 });
   eng.submit('aab'); // end b (fresh) → 1.25
   eng.submit('bbc'); // end c (fresh) → 1.5
-  const r = eng.submit('ccb'); // end b (repeat) → reset
-  assert.equal(r.multiplier, 1.0);
+  const r = eng.submit('ccb'); // end b (repeat) → one step down
+  assert.equal(r.multiplier, 1.25);
 });
 
 test('multiplier resets to 1.0 on a rejection', () => {

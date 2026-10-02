@@ -215,16 +215,17 @@ const _real = (() => {
   return { accept, pools: { e: raw.e.split(' '), m: raw.m.split(' '), h: raw.h.split(' '), b: raw.b.split(' ') } };
 })();
 
-test('steering: from 19 lit letters, most fragments lead to a still-dark letter', () => {
+test('steering: from STEER_FROM lit letters, most fragments lead to a still-dark letter', () => {
   let x = 7;
   const rng = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
   const eng = createFuseEngine({ ..._real, rng });
   eng.start();
-  const dark = ['j', 'q', 'x', 'z', 'v', 'k', 'w'];
-  for (const c of 'abcdefghilmnoprstuy') eng.state.lettersUsed.add(c);
+  const ALL = 'abcdefghilmnoprstuyvkwjqxz'; // the common letters first, the hard ones last
+  for (const c of ALL.slice(0, STEER_FROM)) eng.state.lettersUsed.add(c);
+  const dark = ALL.slice(STEER_FROM).split('');
   assert.equal(eng.state.lettersUsed.size, STEER_FROM);
   let leading = 0;
-  const N = 300;
+  const N = 60; // a run is ~20 words; served fragments never repeat (BA1), so 300 would drain the leads
   for (let i = 0; i < N; i++) {
     const { fragment } = eng.serve();
     if (dark.some((c) => Object.values(eng.fragmentsLeadingTo(c)).some((arr) => arr.includes(fragment)))) leading += 1;
@@ -240,7 +241,7 @@ test('steering: every letter, including j (no fragment contains it), has fragmen
   }
 });
 
-test('steering off below 19 lit letters (the early run is untouched)', () => {
+test('steering off below STEER_FROM lit letters (the early run is untouched)', () => {
   const eng = createFuseEngine({ ..._real, steerP: 1 });
   eng.start();
   for (const c of 'abcdefghilmnopr') eng.state.lettersUsed.add(c); // 15
@@ -252,4 +253,30 @@ test('steering off below 19 lit letters (the early run is untouched)', () => {
     if (['j', 'q', 'x', 'z'].some((c) => fragment.includes(c))) jq += 1;
   }
   assert.ok(jq < 30, `steering leaked below the threshold (${jq}/100)`);
+});
+
+test('BA1: a run never serves the same fragment twice while steering (the no-repeat test checks FRAGMENTS)', () => {
+  let x = 11;
+  const rng = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const eng = createFuseEngine({ ..._real, rng, steerP: 1 });
+  eng.start();
+  for (const c of 'abcdefghilmnoprstuyvk'.slice(0, STEER_FROM)) eng.state.lettersUsed.add(c);
+  const seen = new Set();
+  for (let i = 0; i < 40; i++) {
+    const { fragment } = eng.serve();
+    assert.ok(!seen.has(fragment), `fragment "${fragment}" served twice`);
+    seen.add(fragment);
+  }
+});
+
+test('BA1: steering prefers a fragment that CONTAINS a dark letter when one exists', () => {
+  let x = 5;
+  const rng = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const eng = createFuseEngine({ ..._real, rng, steerP: 1 });
+  eng.start();
+  for (const c of 'abcdefghilmnoprstuyvkwjqx') eng.state.lettersUsed.add(c); // only z dark
+  // the pools hold only a few z fragments and none repeats, so check the serves while they last
+  const zFrags = new Set(Object.values(eng.fragmentsLeadingTo('z')).flat().filter((f) => f.includes('z')));
+  assert.ok(zFrags.size > 0, 'some fragment contains z');
+  for (let i = 0; i < zFrags.size; i++) assert.ok(eng.serve().fragment.includes('z'), `serve ${i} skipped an unserved z fragment`);
 });

@@ -53,7 +53,7 @@ export const DEFAULT_CONFIG = {
   // normally and keeps the streak, but leaves heat unchanged (never reset), so
   // SILVER TONGUE stays something you earn by knowing words.
   heatMaxRevealed: 1,
-  tierEvery: 12, // tier = min(5, 1 + floor(wordNumber / tierEvery))
+  tierEvery: 20, // tier = min(5, 1 + floor(wordNumber / tierEvery)). BA1: was 12 — every slot was tier 5 from word 48, 64% of words shown were unknowable to a median player
   tierMax: 5,
   deepCutEvery: 15, // every Nth word is a deep cut (forced tier 5 when fresh)
   deepCutIntervalScale: 1.55, // deep cut slows the STAGE cadence only (never spell-along)
@@ -124,7 +124,10 @@ export function effectiveStageIntervalMs(baseMs, { isDeepCut = false, mode = 'br
  * the tests read the one formula.
  */
 export function lineupWindowMs(baseMs, len = 0) {
-  return Math.round(baseMs * 1.4) + (len || 0) * 200;
+  // BA1 (oct2): 270 ms a letter (was 200 = 60 wpm; a median typist is ~35 wpm). At 200 the buzzer
+  // took 29% of 11+-letter words from players ALREADY TYPING the right suspect; at 270 it is 11%,
+  // and lineup runs still end on lives (sim: claude/batch-a/ba1/satrush-sim.mjs, LW_PER_LETTER).
+  return Math.round(baseMs * 1.4) + (len || 0) * 270;
 }
 
 /**
@@ -414,7 +417,9 @@ export function createSatRushEngine({
     const tickMs = cfg.spellAlongMs;
     return {
       tickMs,
-      autoRevealMax: cw.length - 1, // last letter is never auto-revealed
+      // BA1 (oct2): the last TWO letters are the player's (was length-1: a "miss" meant failing to
+      // type one letter after being shown the rest, so briefing never ended — 50/50 sim runs hit the cap)
+      autoRevealMax: Math.max(1, cw.length - 2),
       finalHoldMs: 2 * tickMs,
     };
   }

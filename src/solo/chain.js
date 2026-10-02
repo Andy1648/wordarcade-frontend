@@ -21,12 +21,17 @@ export function chainT(k) {
   return CHAIN_TMAX_FLOOR + 13500 * Math.exp(-k / 10);
 }
 
-// HEAT — the anti-exploit rule. Time is scaled by (1 - min(0.95, 0.06 * endCount)),
+// HEAT — the anti-exploit rule. Time is scaled by (1 - min(0.95, 0.07 * max(0, endCount - 1))),
 // where endCount is how many times THIS run has ENDED a word on the required letter.
-// No grace period: heat applies from the very first repeat. The 0.95 cap is load-bearing
-// (at 0.60 the plural-pump exploit returns). Never returns a negative multiplier.
+// GRACE of 1 at 0.07 a repeat (BA1 oct2; was no grace at 0.06): a median player ends on e/s 3-4 times
+// a run just by playing, and the ungraced rule caused 29% of deaths (E: 20% of deaths, 13% of
+// landings) — now 11% (claude/batch-a/ba1/chain-sim.mjs). A grace of 2 measured better for players
+// but let the shortest-word bot reach 75 links (the anti-exploit SIM test caps it at 60); the
+// steeper 0.07 catches heat back up by the ~7th repeat. The 0.95 cap is load-bearing (at 0.60 the
+// plural-pump exploit returns). Never returns a negative multiplier.
+export const HEAT_GRACE = 1;
 export function heatMul(endCount) {
-  return 1 - Math.min(0.95, 0.06 * endCount);
+  return 1 - Math.min(0.95, 0.07 * Math.max(0, endCount - HEAT_GRACE));
 }
 
 // Score for one accepted link.
@@ -143,7 +148,9 @@ export function createChainEngine({ accept, topCommon = [], rng = Math.random } 
 
     // Multiplier: +step for a fresh end-letter (capped), reset on a repeat letter.
     if (fresh) state.multiplier = Math.min(CHAIN_MULT_CAP, state.multiplier + CHAIN_MULT_STEP);
-    else state.multiplier = CHAIN_MULT_BASE;
+    // BA1 (oct2): a repeated end letter costs ONE step, not the whole streak — only ~8 end letters
+    // are common, so the full reset left 39-46% of late-run words at x1.0. Score/PB only, not wins.
+    else state.multiplier = Math.max(CHAIN_MULT_BASE, state.multiplier - CHAIN_MULT_STEP);
 
     const gained = chainScore(word.length, state.multiplier);
     state.score += gained;

@@ -2,7 +2,7 @@
 // and drives it through the shared clock hook + shell. All rules live in chain.js; this
 // file is glue + presentation.
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW } from './chain.js';
+import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW, heatMul } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { exampleStartingWith } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
@@ -260,8 +260,9 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         : ''
     : '';
   const outCap = outState === 'dead' ? 'DEAD END' : outState === 'thin' ? 'FEW LEFT' : '';
-  // Heat as a 0..1 fill: endCount * 0.06 / 0.95 (the heatMul ramp, normalised to its cap).
-  const outHeat = outLetter ? Math.min(1, (g.engine.endCountOf(outLetter) * 0.06) / 0.95) : 0;
+  // Heat as a 0..1 fill: the heatMul ramp, normalised to its 0.95 cap (reads heatMul so the meter
+  // follows the rule — grace included — instead of a copy of its constants).
+  const outHeat = outLetter ? Math.min(1, (1 - heatMul(g.engine.endCountOf(outLetter))) / 0.95) : 0;
 
   // LOWER DECK (fill): the chain IS the composition — the recent accepted words run across
   // the lower half as linked chips, join-letters (the last letter of one = first of the next)

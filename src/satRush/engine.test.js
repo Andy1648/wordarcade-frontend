@@ -277,18 +277,18 @@ test('any miss zeroes heat, breaks silver, and resets the streak', () => {
 
 // --- tier curve boundaries -------------------------------------------------
 
-test('tier curve steps up exactly at 12/24/36/48 (tierEvery 12)', () => {
+test('tier curve steps up exactly at 20/40/60/80 (tierEvery 20, BA1)', () => {
   const pairs = [
     [1, 1],
-    [11, 1],
-    [12, 2],
-    [23, 2],
-    [24, 3],
-    [35, 3],
-    [36, 4],
-    [47, 4],
-    [48, 5],
-    [100, 5],
+    [19, 1],
+    [20, 2],
+    [39, 2],
+    [40, 3],
+    [59, 3],
+    [60, 4],
+    [79, 4],
+    [80, 5],
+    [150, 5],
   ];
   for (const [n, tier] of pairs) assert.equal(curveTier(n), tier, `wordNumber ${n}`);
 });
@@ -382,12 +382,12 @@ test('a spell-along clear at heat cap keeps silver (heat UNCHANGED, not reset)',
 
 // --- spell-along endgame data ----------------------------------------------
 
-test('endgame(): autoRevealMax = length-1, tickMs = spellAlongMs, finalHoldMs = 2*tickMs', () => {
+test('endgame(): autoRevealMax = length-2 (BA1: the last two letters are yours), tickMs = spellAlongMs, finalHoldMs = 2*tickMs', () => {
   const eng = engine();
   const cur = eng.nextWord();
   const eg = eng.endgame();
   assert.equal(eg.tickMs, DEFAULT_CONFIG.spellAlongMs);
-  assert.equal(eg.autoRevealMax, cur.length - 1); // last letter is never auto-revealed
+  assert.equal(eg.autoRevealMax, Math.max(1, cur.length - 2)); // the last two letters are never auto-revealed
   assert.equal(eg.finalHoldMs, 2 * DEFAULT_CONFIG.spellAlongMs);
 });
 
@@ -447,7 +447,7 @@ test('the deep-cut and LINEUP scales STACK multiplicatively (lineup deep cut)', 
 test('(b) the last-call window is UNCHANGED by the lineup scale (never a 12s coin flip)', () => {
   const base = DEFAULT_CONFIG.stageIntervalMs;
   const len = 7;
-  const expected = Math.round(base * 1.4) + len * 200;
+  const expected = Math.round(base * 1.4) + len * 270;
   // lineupWindowMs takes the UNSCALED base only — there is no scale argument that
   // could stretch it, so a 3x (or any) stage scale leaves the window identical.
   assert.equal(lineupWindowMs(base, len), expected);

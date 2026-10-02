@@ -357,7 +357,13 @@ export function useSatRushGame() {
     // flat across a 5s..12s spread. The dev/live ?stage= override still wins when it has been
     // moved off the shipped default — otherwise tuning the slider would do nothing.
     const tuned = cfgRef.current.stageMs;
-    const base = tuned !== SAT_RUSH_STAGE_MS ? tuned : stageMsForCard(c);
+    // BA1 (oct2): the per-card cost lives on the RAW row — `c` is the engine's presentation object,
+    // which carries no costMs, so passing `c` silently fell back to the flat default on every card
+    // (x5 was unreachable on words a median player knows cold). LINEUP keeps the flat base: its x3
+    // stage scale on a per-card beat would make 24 s stages.
+    const base = tuned !== SAT_RUSH_STAGE_MS
+      ? tuned
+      : (modeRef.current === 'lineup' ? SAT_RUSH_STAGE_MS : stageMsForCard(c.row || c));
     const interval = effectiveStageIntervalMs(
       base,
       { isDeepCut: c.isDeepCut, mode: modeRef.current },
