@@ -1,0 +1,68 @@
+[
+  {
+    "label": "A",
+    "categories": [
+      "US presidents",
+      "Rugby union positions",
+      "Roman emperors"
+    ],
+    "botFirstAnswerS": [
+      7.5,
+      7.4,
+      8.1
+    ],
+    "typed": 36,
+    "acceptedMine": 34,
+    "gameOver": true,
+    "frameTypes": [
+      "connected",
+      "room_created",
+      "room_update",
+      "game_started",
+      "round_start",
+      "answer_result",
+      "player_progress",
+      "timer_tick",
+      "round_end",
+      "game_over"
+    ],
+    "errors": [],
+    "sampleProgress": {
+      "playerId": "54d65dcf-576d-46a9-97b9-ab230ec05c42",
+      "answerCount": 1
+    }
+  },
+  {
+    "label": "B",
+    "categories": [
+      "Human body systems",
+      "Irish counties",
+      "Apex Legends legends"
+    ],
+    "botFirstAnswerS": [
+      7.7,
+      7.6,
+      6.2
+    ],
+    "typed": 36,
+    "acceptedMine": 36,
+    "gameOver": true,
+    "frameTypes": [
+      "connected",
+      "room_created",
+      "room_update",
+      "game_started",
+      "round_start",
+      "answer_result",
+      "player_progress",
+      "timer_tick",
+      "round_end",
+      "game_over"
+    ],
+    "errors": [],
+    "sampleProgress": {
+      "playerId": "71ae9b2a-dc93-4392-a5dc-cdcbaf2376fe",
+      "answerCount": 1
+    }
+  }
+]
